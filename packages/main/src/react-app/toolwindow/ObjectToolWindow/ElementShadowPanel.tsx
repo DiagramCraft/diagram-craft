@@ -7,6 +7,7 @@ import { ColorPicker } from '../../components/ColorPicker';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Property } from './types';
+import { PropertyEditor } from '../../components/PropertyEditor';
 
 type FormProps = {
   diagram: Diagram;
@@ -40,43 +41,28 @@ export const ElementShadowPanelForm = ({
           isDefaultValue={!color.isSet}
           defaultValue={color.defaultVal}
         />
-        <NumberInput
-          value={round((1 - opacity.val) * 100).toString()}
-          onChange={v => opacity.set(v === undefined ? undefined : (100 - (v ?? 100)) / 100)}
-          style={{ width: '45px' }}
-          min={0}
-          max={100}
-          defaultUnit={'%'}
-          isDefaultValue={!opacity.isSet}
-          defaultValue={round((1 - opacity.val) * 100)}
+        <PropertyEditor
+          property={opacity}
+          formatValue={v => round((1 - v) * 100)}
+          storeValue={v => (100 - v) / 100}
+          render={props => (
+            <NumberInput {...props} style={{ width: '45px' }} min={0} max={100} defaultUnit={'%'} />
+          )}
         />
       </div>
       <div className={'cmp-labeled-table__label'}>Position:</div>
       <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
-        <NumberInput
-          value={x.val}
-          onChange={x.set}
-          style={{ width: '45px' }}
-          defaultUnit={'px'}
-          isDefaultValue={!x.isSet}
-          defaultValue={x.defaultVal}
+        <PropertyEditor
+          property={x}
+          render={p => <NumberInput {...p} style={{ width: '45px' }} defaultUnit={'px'} />}
         />
-        <NumberInput
-          value={y.val}
-          onChange={y.set}
-          style={{ width: '45px' }}
-          defaultUnit={'px'}
-          isDefaultValue={!y.isSet}
-          defaultValue={y.defaultVal}
+        <PropertyEditor
+          property={y}
+          render={p => <NumberInput {...p} style={{ width: '45px' }} defaultUnit={'px'} />}
         />
-        <NumberInput
-          value={blur.val}
-          onChange={blur.set}
-          min={0}
-          style={{ width: '45px' }}
-          defaultUnit={'px'}
-          isDefaultValue={!blur.isSet}
-          defaultValue={blur.defaultVal}
+        <PropertyEditor
+          property={blur}
+          render={p => <NumberInput {...p} min={0} style={{ width: '45px' }} defaultUnit={'px'} />}
         />
       </div>
     </div>

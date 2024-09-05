@@ -21,7 +21,7 @@ export const ResetContextMenu = (props: Props) => {
 };
 
 type Props = {
-  disabled: boolean;
+  disabled?: boolean;
   onReset: () => void;
   children: React.ReactNode;
 };

@@ -16,6 +16,7 @@ import { RegularLayer } from './diagramLayer';
 import { deserializeDiagramElements } from './serialization/deserialize';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { stencilLoaderRegistry } from '@diagram-craft/canvas-app/loaders';
+import { Property } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
 
 export type NodeCapability =
   | 'children'
@@ -56,6 +57,24 @@ export type CustomPropertyDefinition = {
       onChange: (value: boolean | undefined, uow: UnitOfWork) => void;
     }
 );
+
+export const asProperty = (
+  customProp: CustomPropertyDefinition,
+  change: (cb: (uow: UnitOfWork) => void) => void
+): Property<unknown> => {
+  return {
+    val: customProp.value,
+    defaultVal: customProp.defaultValue,
+    set: (v: unknown) => {
+      change(uow => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        customProp.onChange(v as any, uow);
+      });
+    },
+    hasMultipleValues: false,
+    isSet: customProp.isSet
+  };
+};
 
 export interface NodeDefinition {
   type: string;

@@ -22,6 +22,7 @@ import { round } from '@diagram-craft/utils/math';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Property } from './types';
+import { PropertyEditor } from '../../components/PropertyEditor';
 
 type FormProps = {
   diagram: Diagram;
@@ -65,15 +66,11 @@ export const NodeTextPanelForm = ({
     <div className={'cmp-labeled-table'}>
       <div className={'cmp-labeled-table__label'}>Font:</div>
       <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
-        <NumberInput
-          defaultUnit={'pt'}
-          value={fontSize.val}
-          min={1}
-          style={{ width: '45px' }}
-          onChange={fontSize.set}
-          hasMultipleValues={fontSize.hasMultipleValues}
-          defaultValue={fontSize.defaultVal}
-          isDefaultValue={!fontSize.isSet}
+        <PropertyEditor
+          property={fontSize}
+          render={props => (
+            <NumberInput {...props} defaultUnit={'pt'} min={1} style={{ width: '45px' }} />
+          )}
         />
         <Select.Root
           value={font.val}
@@ -224,17 +221,13 @@ export const NodeTextPanelForm = ({
 
       <div className={'cmp-labeled-table__label'}>Line height:</div>
       <div className={'cmp-labeled-table__value'}>
-        <NumberInput
-          defaultUnit={'%'}
-          value={round(lineHeight.val * 100)}
-          min={0}
-          style={{ width: '45px' }}
-          onChange={v => {
-            lineHeight.set(v ? v / 100 : 0);
-          }}
-          hasMultipleValues={lineHeight.hasMultipleValues}
-          defaultValue={round(lineHeight.defaultVal * 100)}
-          isDefaultValue={!lineHeight.isSet}
+        <PropertyEditor
+          property={lineHeight}
+          formatValue={v => round(v * 100)}
+          storeValue={v => v / 100}
+          render={props => (
+            <NumberInput {...props} defaultUnit={'%'} min={0} style={{ width: '45px' }} />
+          )}
         />
       </div>
 
@@ -256,45 +249,49 @@ export const NodeTextPanelForm = ({
         >
           <div style={{ gridArea: 'gap1' }}></div>
           <div style={{ gridArea: 'gap2' }}></div>
-          <NumberInput
-            defaultUnit={'px'}
-            value={top.val}
-            min={0}
-            style={{ gridArea: 'top', width: '100%' }}
-            onChange={top.set}
-            hasMultipleValues={top.hasMultipleValues}
-            defaultValue={top.defaultVal}
-            isDefaultValue={!top.isSet}
+          <PropertyEditor
+            property={top}
+            render={props => (
+              <NumberInput
+                {...props}
+                defaultUnit={'px'}
+                min={0}
+                style={{ gridArea: 'top', width: '100%' }}
+              />
+            )}
           />
-          <NumberInput
-            defaultUnit={'px'}
-            value={left.val}
-            min={0}
-            style={{ gridArea: 'left', width: '100%' }}
-            onChange={left.set}
-            hasMultipleValues={left.hasMultipleValues}
-            defaultValue={left.defaultVal}
-            isDefaultValue={!left.isSet}
+          <PropertyEditor
+            property={left}
+            render={props => (
+              <NumberInput
+                {...props}
+                defaultUnit={'px'}
+                min={0}
+                style={{ gridArea: 'left', width: '100%' }}
+              />
+            )}
           />
-          <NumberInput
-            defaultUnit={'px'}
-            value={bottom.val}
-            min={0}
-            style={{ gridArea: 'bottom', width: '100%' }}
-            onChange={bottom.set}
-            hasMultipleValues={bottom.hasMultipleValues}
-            defaultValue={bottom.defaultVal}
-            isDefaultValue={!bottom.isSet}
+          <PropertyEditor
+            property={bottom}
+            render={props => (
+              <NumberInput
+                {...props}
+                defaultUnit={'px'}
+                min={0}
+                style={{ gridArea: 'bottom', width: '100%' }}
+              />
+            )}
           />
-          <NumberInput
-            defaultUnit={'px'}
-            value={right.val}
-            min={0}
-            style={{ gridArea: 'right', width: '100%' }}
-            onChange={right.set}
-            hasMultipleValues={right.hasMultipleValues}
-            defaultValue={right.defaultVal}
-            isDefaultValue={!right.isSet}
+          <PropertyEditor
+            property={right}
+            render={props => (
+              <NumberInput
+                {...props}
+                defaultUnit={'px'}
+                min={0}
+                style={{ gridArea: 'right', width: '100%' }}
+              />
+            )}
           />
         </div>
       </div>

@@ -14,6 +14,7 @@ import { Select } from '@diagram-craft/app-components/Select';
 import { useTableProperty } from '../../hooks/useTable';
 import { DashSelector } from './components/DashSelector';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
+import { PropertyEditor } from '../../components/PropertyEditor';
 
 export const NodeTableStrokePanel = (props: Props) => {
   const $d = useDiagram();
@@ -102,15 +103,11 @@ export const NodeTableStrokePanel = (props: Props) => {
 
         <div className={'cmp-labeled-table__label'}>Style:</div>
         <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
-          <NumberInput
-            defaultUnit={'px'}
-            value={strokeWidth.val}
-            min={1}
-            style={{ width: '35px' }}
-            onChange={strokeWidth.set}
-            hasMultipleValues={strokeWidth.hasMultipleValues}
-            defaultValue={strokeWidth.defaultVal}
-            isDefaultValue={!strokeWidth.isSet}
+          <PropertyEditor
+            property={strokeWidth}
+            render={props => (
+              <NumberInput {...props} defaultUnit={'px'} min={1} style={{ width: '35px' }} />
+            )}
           />
           <DashSelector
             value={pattern.val}
@@ -125,23 +122,17 @@ export const NodeTableStrokePanel = (props: Props) => {
             <div className={'cmp-labeled-table'}>
               <div className={'cmp-labeled-table__label'}>Stroke:</div>
               <div className={'cmp-labeled-table__value util-hstack'}>
-                <NumberInput
-                  defaultUnit={'%'}
-                  value={strokeSize.val}
-                  min={1}
-                  style={{ width: '45px' }}
-                  onChange={strokeSize.set}
-                  defaultValue={strokeSize.defaultVal}
-                  isDefaultValue={!strokeSize.isSet}
+                <PropertyEditor
+                  property={strokeSize}
+                  render={props => (
+                    <NumberInput {...props} defaultUnit={'%'} min={1} style={{ width: '45px' }} />
+                  )}
                 />
-                <NumberInput
-                  defaultUnit={'%'}
-                  value={strokeSpacing.val}
-                  min={1}
-                  style={{ width: '45px' }}
-                  onChange={strokeSpacing.set}
-                  defaultValue={strokeSpacing.defaultVal}
-                  isDefaultValue={!strokeSpacing.isSet}
+                <PropertyEditor
+                  property={strokeSpacing}
+                  render={props => (
+                    <NumberInput {...props} defaultUnit={'%'} min={1} style={{ width: '45px' }} />
+                  )}
                 />
               </div>
 
@@ -178,13 +169,11 @@ export const NodeTableStrokePanel = (props: Props) => {
                 </Select.Root>
 
                 {lineJoin.val === 'miter' && (
-                  <NumberInput
-                    value={miterLimit.val * 10}
-                    min={0}
-                    style={{ width: '50px' }}
-                    onChange={v => miterLimit.set((v ?? 1) / 10)}
-                    defaultValue={miterLimit.defaultVal}
-                    isDefaultValue={!miterLimit.isSet}
+                  <PropertyEditor
+                    property={miterLimit}
+                    formatValue={v => v * 10}
+                    storeValue={v => v / 10}
+                    render={props => <NumberInput {...props} min={0} style={{ width: '50px' }} />}
                   />
                 )}
               </div>

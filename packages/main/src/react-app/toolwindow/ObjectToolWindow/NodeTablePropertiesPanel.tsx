@@ -7,6 +7,7 @@ import { useDiagram } from '../../context/DiagramContext';
 import { Select } from '@diagram-craft/app-components/Select';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import {
+  asProperty,
   CustomPropertyDefinition,
   EdgeDefinition,
   NodeDefinition
@@ -14,6 +15,7 @@ import {
 import { useTable } from '../../hooks/useTable';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
+import { PropertyEditor } from '../../components/PropertyEditor';
 
 export const NodeTablePropertiesPanel = (props: Props) => {
   const diagram = useDiagram();
@@ -38,26 +40,31 @@ export const NodeTablePropertiesPanel = (props: Props) => {
     <ToolWindowPanel mode={props.mode ?? 'accordion'} title={def.name} id={'custom'}>
       <div className={'cmp-labeled-table'}>
         {Object.entries(customProperties).map(([key, value]) => {
+          const prop = asProperty(value, cb => {
+            const uow = new UnitOfWork(diagram, true);
+            cb(uow);
+            commitWithUndo(uow, `Change ${value.label}`);
+          });
+
           if (value.type === 'number') {
             return (
               <React.Fragment key={key}>
                 <div className={'cmp-labeled-table__label'}>{value.label}:</div>
                 <div className={'cmp-labeled-table__value'}>
-                  <NumberInput
-                    defaultUnit={value.unit ?? ''}
-                    validUnits={value.unit ? [value.unit] : []}
-                    value={value.value}
-                    min={value.minValue ?? 0}
-                    max={value.maxValue ?? 100}
-                    step={value.step ?? 1}
-                    style={{ width: '50px' }}
-                    onChange={ev => {
-                      const uow = new UnitOfWork(diagram, true);
-                      value.onChange(ev, uow);
-                      commitWithUndo(uow, `Change ${value.label}`);
-                    }}
-                    defaultValue={value.defaultValue}
-                    isDefaultValue={!value.isSet}
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                  <PropertyEditor<any>
+                    property={prop}
+                    render={props => (
+                      <NumberInput
+                        {...props}
+                        defaultUnit={value.unit ?? ''}
+                        validUnits={value.unit ? [value.unit] : []}
+                        min={value.minValue ?? 0}
+                        max={value.maxValue ?? 100}
+                        step={value.step ?? 1}
+                        style={{ width: '50px' }}
+                      />
+                    )}
                   />
                 </div>
               </React.Fragment>

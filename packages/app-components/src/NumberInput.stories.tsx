@@ -46,7 +46,7 @@ export const WithDefaultValue: Story = {
   args: {
     value: '77 px',
     onChange: fn(),
-    isDefaultValue: true
+    state: 'unset'
   }
 };
 

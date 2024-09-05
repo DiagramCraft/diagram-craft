@@ -10,6 +10,7 @@ import { ColorPicker } from '../../components/ColorPicker';
 import { DashSelector } from './components/DashSelector';
 import { Select } from '@diagram-craft/app-components/Select';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
+import { PropertyEditor } from '../../components/PropertyEditor';
 
 export const EdgeLinePanel = (props: Props) => {
   const $d = useDiagram();
@@ -93,14 +94,11 @@ export const EdgeLinePanel = (props: Props) => {
                   defaultValue={startType.defaultVal}
                   isDefaultValue={!startType.isSet}
                 />
-                <NumberInput
-                  defaultUnit={'%'}
-                  value={startSize.val}
-                  min={1}
-                  style={{ width: '50px' }}
-                  onChange={startSize.set}
-                  defaultValue={startSize.defaultVal}
-                  isDefaultValue={!startSize.isSet}
+                <PropertyEditor
+                  property={startSize}
+                  render={props => (
+                    <NumberInput {...props} defaultUnit={'%'} min={1} style={{ width: '50px' }} />
+                  )}
                 />
               </div>
 
@@ -112,14 +110,11 @@ export const EdgeLinePanel = (props: Props) => {
                   defaultValue={endType.defaultVal}
                   isDefaultValue={!endType.isSet}
                 />
-                <NumberInput
-                  defaultUnit={'%'}
-                  value={endSize.val}
-                  min={1}
-                  style={{ width: '50px' }}
-                  onChange={endSize.set}
-                  defaultValue={endSize.defaultVal}
-                  isDefaultValue={!endSize.isSet}
+                <PropertyEditor
+                  property={endSize}
+                  render={props => (
+                    <NumberInput {...props} defaultUnit={'%'} min={1} style={{ width: '50px' }} />
+                  )}
                 />
               </div>
             </>
@@ -151,14 +146,11 @@ export const EdgeLinePanel = (props: Props) => {
 
           <div className={'cmp-labeled-table__label'}>Width:</div>
           <div className={'cmp-labeled-table__value'}>
-            <NumberInput
-              defaultUnit={'px'}
-              value={strokeWidth.val}
-              min={1}
-              style={{ width: '45px' }}
-              onChange={strokeWidth.set}
-              defaultValue={strokeWidth.defaultVal}
-              isDefaultValue={!strokeWidth.isSet}
+            <PropertyEditor
+              property={strokeWidth}
+              render={props => (
+                <NumberInput {...props} defaultUnit={'px'} min={1} style={{ width: '45px' }} />
+              )}
             />
           </div>
 
@@ -170,23 +162,18 @@ export const EdgeLinePanel = (props: Props) => {
               isDefaultValue={!pattern.isSet}
               defaultValue={pattern.defaultVal}
             />
-            <NumberInput
-              defaultUnit={'%'}
-              value={strokeSize.val}
-              min={1}
-              style={{ width: '45px' }}
-              onChange={strokeSize.set}
-              defaultValue={strokeSize.defaultVal}
-              isDefaultValue={!strokeSize.isSet}
+            <PropertyEditor
+              property={strokeSize}
+              render={props => (
+                <NumberInput {...props} defaultUnit={'%'} min={1} style={{ width: '45px' }} />
+              )}
             />
-            <NumberInput
-              defaultUnit={'%'}
-              value={strokeSpacing.val}
-              min={1}
-              style={{ width: '45px' }}
-              onChange={strokeSpacing.set}
-              defaultValue={strokeSpacing.defaultVal}
-              isDefaultValue={!strokeSpacing.isSet}
+
+            <PropertyEditor
+              property={strokeSpacing}
+              render={props => (
+                <NumberInput {...props} defaultUnit={'%'} min={1} style={{ width: '45px' }} />
+              )}
             />
           </div>
 
@@ -211,14 +198,16 @@ export const EdgeLinePanel = (props: Props) => {
                     <Select.Item value={'above-arc'}>Arc when above</Select.Item>
                   </Select.Root>
 
-                  <NumberInput
-                    defaultUnit={'px'}
-                    value={lineHopsSize.val}
-                    min={0}
-                    style={{ width: '50px' }}
-                    onChange={lineHopsSize.set}
-                    defaultValue={lineHopsSize.defaultVal}
-                    isDefaultValue={!lineHopsSize.isSet}
+                  <PropertyEditor
+                    property={lineHopsSize}
+                    render={props => (
+                      <NumberInput
+                        {...props}
+                        defaultUnit={'px'}
+                        min={0}
+                        style={{ width: '50px' }}
+                      />
+                    )}
                   />
                 </div>
               </div>
@@ -259,25 +248,20 @@ export const EdgeLinePanel = (props: Props) => {
             </Select.Root>
 
             {lineJoin.val === 'miter' && (
-              <NumberInput
-                value={miterLimit.val * 10}
-                min={0}
-                style={{ width: '50px' }}
-                onChange={v => miterLimit.set((v ?? 1) / 10)}
-                defaultValue={miterLimit.defaultVal * 10}
-                isDefaultValue={!miterLimit.isSet}
+              <PropertyEditor
+                property={miterLimit}
+                formatValue={v => v * 10}
+                storeValue={v => v / 10}
+                render={props => <NumberInput {...props} min={0} style={{ width: '50px' }} />}
               />
             )}
 
             {lineJoin.val === 'round' && (
-              <NumberInput
-                defaultUnit={'px'}
-                value={rounding.val}
-                min={0}
-                style={{ width: '50px' }}
-                onChange={rounding.set}
-                defaultValue={rounding.defaultVal}
-                isDefaultValue={!rounding.isSet}
+              <PropertyEditor
+                property={rounding}
+                render={props => (
+                  <NumberInput {...props} defaultUnit={'px'} min={0} style={{ width: '50px' }} />
+                )}
               />
             )}
           </div>

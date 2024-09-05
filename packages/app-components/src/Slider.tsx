@@ -32,8 +32,6 @@ export const Slider = (props: Props) => {
         style={{ width: '50px' }}
         onChange={props.onChange}
         disabled={props.disabled}
-        defaultValue={props.defaultValue}
-        isDefaultValue={props.isDefaultValue}
       />
     </div>
   );

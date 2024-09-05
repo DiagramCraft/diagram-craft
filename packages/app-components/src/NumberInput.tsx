@@ -3,7 +3,6 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { propsUtils } from '@diagram-craft/utils/propsUtils';
 import { extractDataAttributes } from './utils';
 import styles from './NumberInput.module.css';
-import { ResetContextMenu } from './ResetContextMenu';
 
 type UnitAndValue = [string, string | undefined];
 
@@ -73,11 +72,7 @@ export const NumberInput = (props: Props) => {
     formatValue(props.value.toString(), props.defaultUnit, props.value.toString())
   );
   const hasFocus = useRef(false);
-  const isDefaultValue =
-    !props.hasMultipleValues &&
-    props.isDefaultValue &&
-    props.defaultValue !== undefined &&
-    Number(parseNumberAndUnit(currentValue)?.[0]) === props.defaultValue;
+  const isDefaultValue = props.state === 'unset' && !props.isIndeterminate;
 
   const updateCurrentValue = useCallback(() => {
     setCurrentValue(formatValue(props.value.toString(), props.defaultUnit, currentValue));
@@ -103,88 +98,79 @@ export const NumberInput = (props: Props) => {
     [props]
   );
 
-  if (origValue !== props.value.toString() && !hasFocus.current && !props.hasMultipleValues) {
+  if (origValue !== props.value.toString() && !hasFocus.current && !props.isIndeterminate) {
     setOrigValue(props.value.toString());
     updateCurrentValue();
   }
 
   return (
-    <ResetContextMenu
-      disabled={props.defaultValue === undefined}
-      onReset={() => {
-        setCurrentValue(formatValue(props.defaultValue!.toString(), props.defaultUnit, origValue));
-        props.onChange(undefined);
-      }}
+    <div
+      className={styles.cmpNumberInput} /*$c('cmp-number-input', { error: error })}*/
+      data-error={error}
+      data-is-default-value={isDefaultValue}
+      style={props.style ?? {}}
+      {...extractDataAttributes(props)}
     >
-      <div
-        className={styles.cmpNumberInput} /*$c('cmp-number-input', { error: error })}*/
-        data-error={error}
-        data-is-default-value={isDefaultValue}
-        style={props.style ?? {}}
-        {...extractDataAttributes(props)}
-      >
-        {props.label && <div className={styles.cmpNumberInputLabel}>{props.label}</div>}
-        <input
-          {...propsUtils.filterDomProperties(props)}
-          placeholder={props.hasMultipleValues ? '···' : undefined}
-          type={'text'}
-          value={props.hasMultipleValues ? '' : currentValue}
-          disabled={props.disabled}
-          onFocus={() => {
-            hasFocus.current = true;
-          }}
-          onBlur={() => {
-            hasFocus.current = true;
-            updateCurrentValue();
-          }}
-          onChange={ev => {
-            const p = parseNumberAndUnit(ev.target.value);
-            setCurrentValue(ev.target.value);
+      {props.label && <div className={styles.cmpNumberInputLabel}>{props.label}</div>}
+      <input
+        {...propsUtils.filterDomProperties(props)}
+        placeholder={props.isIndeterminate ? '···' : undefined}
+        type={'text'}
+        value={props.isIndeterminate ? '' : currentValue}
+        disabled={props.disabled}
+        onFocus={() => {
+          hasFocus.current = true;
+        }}
+        onBlur={() => {
+          hasFocus.current = true;
+          updateCurrentValue();
+        }}
+        onChange={ev => {
+          const p = parseNumberAndUnit(ev.target.value);
+          setCurrentValue(ev.target.value);
 
-            if (ev.target.value === '') {
-              setError(false);
-              props.onChange(undefined);
-              return;
-            }
-
-            if (!p) {
-              setError(true);
-              return;
-            }
-
+          if (ev.target.value === '') {
             setError(false);
-            props.onChange(parseFloat(p[0]!), p[1] ?? props.defaultUnit);
+            props.onChange(undefined);
             return;
-          }}
-          {...extractDataAttributes(props)}
-        />
-        <AdjustButton
-          className={styles.cmpNumberInputBtnUp}
-          disabled={props.disabled}
-          onClick={() => adjust(props.step ? Number(props.step) : 1)}
-        >
-          <TbChevronUp size={'11px'} />
-        </AdjustButton>
-        <AdjustButton
-          className={styles.cmpNumberInputBtnDown}
-          disabled={props.disabled}
-          onClick={() => adjust(props.step ? -1 * Number(props.step) : -1)}
-        >
-          <TbChevronDown size={'11px'} />
-        </AdjustButton>
-      </div>
-    </ResetContextMenu>
+          }
+
+          if (!p) {
+            setError(true);
+            return;
+          }
+
+          setError(false);
+          props.onChange(parseFloat(p[0]!), p[1] ?? props.defaultUnit);
+          return;
+        }}
+        {...extractDataAttributes(props)}
+      />
+      <AdjustButton
+        className={styles.cmpNumberInputBtnUp}
+        disabled={props.disabled}
+        onClick={() => adjust(props.step ? Number(props.step) : 1)}
+      >
+        <TbChevronUp size={'11px'} />
+      </AdjustButton>
+      <AdjustButton
+        className={styles.cmpNumberInputBtnDown}
+        disabled={props.disabled}
+        onClick={() => adjust(props.step ? -1 * Number(props.step) : -1)}
+      >
+        <TbChevronDown size={'11px'} />
+      </AdjustButton>
+    </div>
   );
 };
 
 type Props = {
   validUnits?: string[];
   defaultUnit?: string;
-  defaultValue?: string | number;
-  isDefaultValue?: boolean;
   value: string | number;
   label?: string;
-  hasMultipleValues?: boolean;
+  isIndeterminate?: boolean;
+  state?: 'set' | 'unset' | 'overridden';
   onChange: (value: number | undefined, unit?: string) => void;
 } & Omit<
   React.DetailedHTMLProps<React.InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>,

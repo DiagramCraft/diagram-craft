@@ -11,6 +11,7 @@ import { DashSelector } from './components/DashSelector';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Property } from './types';
 import { LineCap, LineJoin } from '@diagram-craft/model/diagramProps';
+import { PropertyEditor } from '../../components/PropertyEditor';
 
 type FormProps = {
   diagram: Diagram;
@@ -55,16 +56,13 @@ export const NodeStrokePanelForm = ({
 
       <div className={'cmp-labeled-table__label'}>Style:</div>
       <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
-        <NumberInput
-          defaultUnit={'px'}
-          defaultValue={strokeWidth.defaultVal}
-          isDefaultValue={!strokeWidth.isSet}
-          value={strokeWidth.val}
-          min={1}
-          style={{ width: '35px' }}
-          onChange={n => strokeWidth.set(n!)}
-          hasMultipleValues={strokeWidth.hasMultipleValues}
+        <PropertyEditor
+          property={strokeWidth}
+          render={props => (
+            <NumberInput {...props} defaultUnit={'px'} min={1} style={{ width: '35px' }} />
+          )}
         />
+
         <DashSelector
           value={pattern.val}
           onValueChange={value => {
@@ -78,23 +76,18 @@ export const NodeStrokePanelForm = ({
           <div className={'cmp-labeled-table'}>
             <div className={'cmp-labeled-table__label'}>Stroke:</div>
             <div className={'cmp-labeled-table__value util-hstack'}>
-              <NumberInput
-                defaultUnit={'%'}
-                value={strokeSize.val}
-                min={1}
-                style={{ width: '45px' }}
-                onChange={n => strokeSize.set(n!)}
-                isDefaultValue={!strokeSize.isSet}
-                defaultValue={strokeSize.defaultVal}
+              <PropertyEditor
+                property={strokeSize}
+                render={props => (
+                  <NumberInput {...props} defaultUnit={'%'} min={1} style={{ width: '45px' }} />
+                )}
               />
-              <NumberInput
-                defaultUnit={'%'}
-                value={strokeSpacing.val}
-                min={1}
-                style={{ width: '45px' }}
-                onChange={n => strokeSpacing.set(n!)}
-                isDefaultValue={!strokeSpacing.isSet}
-                defaultValue={strokeSpacing.defaultVal}
+
+              <PropertyEditor
+                property={strokeSpacing}
+                render={props => (
+                  <NumberInput {...props} defaultUnit={'%'} min={1} style={{ width: '45px' }} />
+                )}
               />
             </div>
 
@@ -131,13 +124,11 @@ export const NodeStrokePanelForm = ({
               </Select.Root>
 
               {lineJoin.val === 'miter' && (
-                <NumberInput
-                  value={miterLimit.val * 10}
-                  min={0}
-                  style={{ width: '50px' }}
-                  onChange={v => miterLimit.set(v === undefined ? undefined : (v ?? 1) / 10)}
-                  isDefaultValue={!miterLimit.isSet}
-                  defaultValue={miterLimit.defaultVal * 10}
+                <PropertyEditor
+                  property={miterLimit}
+                  formatValue={v => v * 10}
+                  storeValue={v => v / 10}
+                  render={props => <NumberInput {...props} min={0} style={{ width: '50px' }} />}
                 />
               )}
             </div>
