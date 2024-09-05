@@ -20,7 +20,7 @@ declare global {
   }
 }
 
-const $defaults = registerCustomNodeDefaults('trapezoid', { slantLeft: 5, slantRight: 5 });
+registerCustomNodeDefaults('trapezoid', { slantLeft: 5, slantRight: 5 });
 
 const slantLeftPropDef = (def: DiagramNode): CustomPropertyDefinition & { type: 'number' } => ({
   id: 'slantLeft',
@@ -29,7 +29,6 @@ const slantLeftPropDef = (def: DiagramNode): CustomPropertyDefinition & { type: 
   value: def.renderProps.custom.trapezoid.slantLeft,
   maxValue: 60,
   unit: 'px',
-  defaultValue: $defaults().slantLeft,
   isSet: def.editProps.custom?.trapezoid?.slantLeft !== undefined,
   onChange: (value: number | undefined, uow: UnitOfWork) => {
     if (value === undefined) {
@@ -48,7 +47,6 @@ const slantRightPropDef = (def: DiagramNode): CustomPropertyDefinition & { type:
   value: def.renderProps.custom.trapezoid.slantRight,
   maxValue: 60,
   unit: 'px',
-  defaultValue: $defaults().slantRight,
   isSet: def.editProps.custom?.trapezoid?.slantRight !== undefined,
   onChange: (value: number | undefined, uow: UnitOfWork) => {
     if (value === undefined) {

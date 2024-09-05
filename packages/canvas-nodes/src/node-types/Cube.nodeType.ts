@@ -26,7 +26,7 @@ declare global {
   }
 }
 
-const $defaults = registerCustomNodeDefaults('cube', { size: 10 });
+registerCustomNodeDefaults('cube', { size: 10 });
 
 // Custom properties ************************************************************
 
@@ -38,7 +38,6 @@ const Size = {
     value: node.renderProps.custom.cube.size,
     maxValue: 50,
     unit: 'px',
-    defaultValue: $defaults().size,
     isSet: node.editProps.custom?.cube?.size !== undefined,
     onChange: (value: number | undefined, uow: UnitOfWork) => Size.set(value, node, uow)
   }),

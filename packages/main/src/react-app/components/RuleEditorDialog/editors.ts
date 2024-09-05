@@ -71,7 +71,6 @@ export function makeProperty<
       onChange(v);
     },
     hasMultipleValues: false,
-    defaultVal: accessor.get(defaults, propertyPath) as V,
     isSet: isSet
   } as Property<V>;
 }

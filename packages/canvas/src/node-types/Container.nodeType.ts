@@ -56,7 +56,7 @@ declare global {
   }
 }
 
-const $defaults = registerCustomNodeDefaults('container', {
+registerCustomNodeDefaults('container', {
   containerResize: 'none',
   childResize: 'fixed',
   layout: 'manual',
@@ -343,7 +343,6 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
           { value: 'grow', label: 'Auto Grow' },
           { value: 'both', label: 'Both' }
         ],
-        defaultValue: $defaults().containerResize,
         isSet: node.editProps.custom?.container?.containerResize !== undefined,
         onChange: (value: string | undefined, uow: UnitOfWork) => {
           assertIsContainerResizeOrUndefined(value);
@@ -360,7 +359,6 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
           { value: 'horizontal', label: 'Horizontal' },
           { value: 'vertical', label: 'Vertical' }
         ],
-        defaultValue: $defaults().layout,
         isSet: node.editProps.custom?.container?.layout !== undefined,
         onChange: (value: string | undefined, uow: UnitOfWork) => {
           assertIsLayoutTypeOrUndefined(value);
@@ -373,7 +371,6 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
         label: 'Gap',
         value: node.renderProps.custom.container.gap,
         unit: 'px',
-        defaultValue: $defaults().gap,
         isSet: node.editProps.custom?.container?.gap !== undefined,
         onChange: (value: number | undefined, uow: UnitOfWork) => {
           node.updateCustomProps('container', props => (props.gap = value), uow);
@@ -388,7 +385,6 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
           { value: 'between', label: 'Between' },
           { value: 'around', label: 'Around' }
         ],
-        defaultValue: $defaults().gapType,
         isSet: node.editProps.custom?.container?.gapType !== undefined,
         onChange: (value: string | undefined, uow: UnitOfWork) => {
           assertIsGapTypeOrUndefined(value);
@@ -405,7 +401,6 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
           { value: 'scale', label: 'Scale' },
           { value: 'fill', label: 'Fill' }
         ],
-        defaultValue: $defaults().childResize,
         isSet: node.editProps.custom?.container?.childResize !== undefined,
         onChange: (value: string | undefined, uow: UnitOfWork) => {
           assertIsChildResizeOrUndefined(value);

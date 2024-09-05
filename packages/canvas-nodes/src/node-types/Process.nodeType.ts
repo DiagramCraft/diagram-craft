@@ -25,7 +25,7 @@ declare global {
   }
 }
 
-const $defaults = registerCustomNodeDefaults('process', { size: 10 });
+registerCustomNodeDefaults('process', { size: 10 });
 
 // Custom properties ************************************************************
 
@@ -37,7 +37,6 @@ const Size = {
     value: node.renderProps.custom.process.size,
     maxValue: 50,
     unit: '%',
-    defaultValue: $defaults().size,
     isSet: node.editProps.custom?.process?.size !== undefined,
     onChange: (value: number | undefined, uow: UnitOfWork) => Size.set(value, node, uow)
   }),

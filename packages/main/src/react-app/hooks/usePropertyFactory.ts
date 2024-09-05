@@ -71,7 +71,6 @@ export const makePropertyHook = <
         // the default value - but the isDefaultVal might result in a different result
         redraw();
       },
-      defaultVal: defaultValue,
       hasMultipleValues: false,
       isSet: isSet
     };
@@ -145,7 +144,6 @@ export const makePropertyArrayHook = <
         redraw();
       },
       hasMultipleValues: multiple,
-      defaultVal: defaultValue,
       isSet: isSet
     };
   }) as PropertyArrayHook<TBase, TObj>;

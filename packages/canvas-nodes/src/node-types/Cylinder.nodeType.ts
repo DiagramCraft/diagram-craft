@@ -29,7 +29,7 @@ declare global {
   }
 }
 
-const $defaults = registerCustomNodeDefaults('cylinder', { size: 30, direction: 'north' });
+registerCustomNodeDefaults('cylinder', { size: 30, direction: 'north' });
 
 // Custom properties ************************************************************
 
@@ -41,7 +41,6 @@ const Size = {
     value: node.renderProps.custom.cylinder.size,
     maxValue: Number.MAX_VALUE,
     unit: 'px',
-    defaultValue: $defaults().size,
     isSet: node.editProps.custom?.cylinder?.size !== undefined,
     onChange: (value: number | undefined, uow: UnitOfWork) => Size.set(value, node, uow)
   }),
@@ -68,7 +67,6 @@ const Direction = {
       { value: 'west', label: 'West' }
     ],
     value: node.renderProps.custom.cylinder.direction,
-    defaultValue: $defaults().direction,
     isSet: node.editProps.custom?.cylinder?.direction !== undefined,
     onChange: (value: string | undefined, uow: UnitOfWork) => Direction.set(value, node, uow)
   }),

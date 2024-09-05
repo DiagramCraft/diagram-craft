@@ -36,7 +36,6 @@ export type CustomPropertyDefinition = {
   | {
       type: 'number';
       value: number;
-      defaultValue: number;
       minValue?: number;
       maxValue?: number;
       step?: number;
@@ -46,14 +45,12 @@ export type CustomPropertyDefinition = {
   | {
       type: 'select';
       value: string;
-      defaultValue: string;
       options: ReadonlyArray<{ value: string; label: string }>;
       onChange: (value: string | undefined, uow: UnitOfWork) => void;
     }
   | {
       type: 'boolean';
       value: boolean;
-      defaultValue: boolean;
       onChange: (value: boolean | undefined, uow: UnitOfWork) => void;
     }
 );
@@ -64,7 +61,6 @@ export const asProperty = (
 ): Property<unknown> => {
   return {
     val: customProp.value,
-    defaultVal: customProp.defaultValue,
     set: (v: unknown) => {
       change(uow => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

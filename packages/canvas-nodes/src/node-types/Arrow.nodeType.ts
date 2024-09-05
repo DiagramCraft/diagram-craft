@@ -41,7 +41,6 @@ const Notch = {
     value: $defaults(node.renderProps.custom.arrow).notch,
     maxValue: 50,
     unit: 'px',
-    defaultValue: $defaults().notch,
     isSet: node.editProps.custom?.arrow?.notch !== undefined,
     onChange: (value: number | undefined, uow: UnitOfWork) => Notch.set(value, node, uow)
   }),
@@ -62,7 +61,6 @@ const ArrowControlX = {
     label: 'Pointiness',
     type: 'number',
     value: $defaults(node.renderProps.custom.arrow).x,
-    defaultValue: $defaults().x,
     isSet: node.editProps.custom?.arrow?.x !== undefined,
     maxValue: 50,
     unit: 'px',
@@ -85,7 +83,6 @@ const ArrowControlY = {
     label: 'Thickness',
     type: 'number',
     value: $defaults(node.renderProps.custom.arrow).y,
-    defaultValue: $defaults().y,
     isSet: node.editProps.custom?.arrow?.y !== undefined,
     maxValue: 50,
     unit: '%',

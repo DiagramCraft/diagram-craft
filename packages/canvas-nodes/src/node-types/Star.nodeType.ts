@@ -23,7 +23,7 @@ declare global {
   }
 }
 
-const $defaults = registerCustomNodeDefaults('star', { numberOfSides: 5, innerRadius: 0.5 });
+registerCustomNodeDefaults('star', { numberOfSides: 5, innerRadius: 0.5 });
 
 export class StarNodeDefinition extends ShapeNodeDefinition {
   constructor() {
@@ -58,7 +58,6 @@ export class StarNodeDefinition extends ShapeNodeDefinition {
         type: 'number',
         label: 'Sides',
         value: def.renderProps.custom.star.numberOfSides,
-        defaultValue: $defaults().numberOfSides,
         isSet: def.editProps.custom?.star?.numberOfSides !== undefined,
         onChange: (value: number | undefined, uow: UnitOfWork) => {
           def.updateCustomProps('star', props => (props.numberOfSides = value), uow);
@@ -71,7 +70,6 @@ export class StarNodeDefinition extends ShapeNodeDefinition {
         value: round(def.renderProps.custom.star.innerRadius * 100),
         maxValue: 100,
         unit: '%',
-        defaultValue: $defaults().innerRadius * 100,
         isSet: def.editProps.custom?.star?.innerRadius !== undefined,
         onChange: (value: number | undefined, uow: UnitOfWork) => {
           if (value === undefined) {

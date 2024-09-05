@@ -26,7 +26,7 @@ declare global {
   }
 }
 
-const $defaults = registerCustomNodeDefaults('curlyBracket', { size: 50 });
+registerCustomNodeDefaults('curlyBracket', { size: 50 });
 
 // Custom properties ************************************************************
 
@@ -38,7 +38,6 @@ const Size = {
     value: node.renderProps.custom.curlyBracket.size,
     maxValue: 50,
     unit: '%',
-    defaultValue: $defaults().size,
     isSet: node.editProps.custom?.curlyBracket?.size !== undefined,
     onChange: (value: number | undefined, uow: UnitOfWork) => Size.set(value, node, uow)
   }),

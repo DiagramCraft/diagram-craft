@@ -25,7 +25,7 @@ declare global {
   }
 }
 
-const $defaults = registerCustomNodeDefaults('umlModule', {
+registerCustomNodeDefaults('umlModule', {
   jettyWidth: 20,
   jettyHeight: 10
 });
@@ -40,7 +40,6 @@ const JettyWidth = {
     value: JettyWidth.get(node.renderProps.custom.umlModule),
     maxValue: 50,
     unit: 'px',
-    defaultValue: $defaults().jettyWidth,
     isSet: node.editProps.custom?.umlModule?.jettyWidth !== undefined,
     onChange: (value: number | undefined, uow: UnitOfWork) => JettyWidth.set(value, node, uow)
   }),
@@ -65,7 +64,6 @@ const JettyHeight = {
     value: JettyHeight.get(node.renderProps.custom.umlModule),
     maxValue: 50,
     unit: 'px',
-    defaultValue: $defaults().jettyHeight,
     isSet: node.editProps.custom?.umlModule?.jettyHeight !== undefined,
     onChange: (value: number | undefined, uow: UnitOfWork) => JettyHeight.set(value, node, uow)
   }),
