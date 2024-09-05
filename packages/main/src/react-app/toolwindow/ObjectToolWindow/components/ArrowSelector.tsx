@@ -6,7 +6,12 @@ const PREVIEW_SCALE = 0.75;
 
 export const ArrowSelector = (props: Props) => {
   return (
-    <Select.Root value={props.value ?? 'NONE'} onValueChange={props.onValueChange}>
+    <Select.Root
+      value={props.value ?? 'NONE'}
+      onValueChange={props.onValueChange}
+      defaultValue={props.defaultValue}
+      isDefaultValue={props.isDefaultValue}
+    >
       <Select.Item key={'NONE'} value={'NONE'}>
         <ArrowPreview width={30} type={'NONE'} end={undefined} bg={'var(--secondary-bg)'} />
       </Select.Item>
@@ -25,4 +30,6 @@ export const ArrowSelector = (props: Props) => {
 interface Props {
   value?: string;
   onValueChange: (value: string | undefined) => void;
+  defaultValue?: string;
+  isDefaultValue: boolean;
 }

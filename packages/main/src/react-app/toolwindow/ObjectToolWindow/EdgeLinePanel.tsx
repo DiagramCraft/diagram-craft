@@ -65,6 +65,8 @@ export const EdgeLinePanel = (props: Props) => {
                 assertEdgeType(value);
                 type.set(value);
               }}
+              defaultValue={type.defaultVal}
+              isDefaultValue={!type.isSet}
             >
               <ToggleButtonGroup.Item value={'straight'}>
                 <TbLine />
@@ -85,25 +87,39 @@ export const EdgeLinePanel = (props: Props) => {
             <>
               <div className={'cmp-labeled-table__label'}>Line start:</div>
               <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
-                <ArrowSelector value={startType.val} onValueChange={startType.set} />
+                <ArrowSelector
+                  value={startType.val}
+                  onValueChange={startType.set}
+                  defaultValue={startType.defaultVal}
+                  isDefaultValue={!startType.isSet}
+                />
                 <NumberInput
                   defaultUnit={'%'}
                   value={startSize.val}
                   min={1}
                   style={{ width: '50px' }}
                   onChange={startSize.set}
+                  defaultValue={startSize.defaultVal}
+                  isDefaultValue={!startSize.isSet}
                 />
               </div>
 
               <div className={'cmp-labeled-table__label'}>Line end:</div>
               <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
-                <ArrowSelector value={endType.val} onValueChange={endType.set} />
+                <ArrowSelector
+                  value={endType.val}
+                  onValueChange={endType.set}
+                  defaultValue={endType.defaultVal}
+                  isDefaultValue={!endType.isSet}
+                />
                 <NumberInput
                   defaultUnit={'%'}
                   value={endSize.val}
                   min={1}
                   style={{ width: '50px' }}
                   onChange={endSize.set}
+                  defaultValue={endSize.defaultVal}
+                  isDefaultValue={!endSize.isSet}
                 />
               </div>
             </>
@@ -117,6 +133,8 @@ export const EdgeLinePanel = (props: Props) => {
               onChange={strokeColor.set}
               customPalette={$d.document.customPalette.colors}
               onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+              defaultValue={strokeColor.defaultVal}
+              isDefaultValue={!strokeColor.isSet}
             />
             {!supportsFill && (
               <ColorPicker
@@ -125,6 +143,8 @@ export const EdgeLinePanel = (props: Props) => {
                 onChange={fillColor.set}
                 customPalette={$d.document.customPalette.colors}
                 onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+                defaultValue={fillColor.defaultVal}
+                isDefaultValue={!fillColor.isSet}
               />
             )}
           </div>
@@ -137,6 +157,8 @@ export const EdgeLinePanel = (props: Props) => {
               min={1}
               style={{ width: '45px' }}
               onChange={strokeWidth.set}
+              defaultValue={strokeWidth.defaultVal}
+              isDefaultValue={!strokeWidth.isSet}
             />
           </div>
 
@@ -154,6 +176,8 @@ export const EdgeLinePanel = (props: Props) => {
               min={1}
               style={{ width: '45px' }}
               onChange={strokeSize.set}
+              defaultValue={strokeSize.defaultVal}
+              isDefaultValue={!strokeSize.isSet}
             />
             <NumberInput
               defaultUnit={'%'}
@@ -161,6 +185,8 @@ export const EdgeLinePanel = (props: Props) => {
               min={1}
               style={{ width: '45px' }}
               onChange={strokeSpacing.set}
+              defaultValue={strokeSpacing.defaultVal}
+              isDefaultValue={!strokeSpacing.isSet}
             />
           </div>
 
@@ -175,6 +201,8 @@ export const EdgeLinePanel = (props: Props) => {
                       lineHopsType.set(v as any);
                     }}
                     value={lineHopsType.val}
+                    defaultValue={lineHopsType.defaultVal}
+                    isDefaultValue={!lineHopsType.isSet}
                   >
                     <Select.Item value={'none'}>None</Select.Item>
                     <Select.Item value={'below-hide'}>Gap when below</Select.Item>
@@ -189,6 +217,8 @@ export const EdgeLinePanel = (props: Props) => {
                     min={0}
                     style={{ width: '50px' }}
                     onChange={lineHopsSize.set}
+                    defaultValue={lineHopsSize.defaultVal}
+                    isDefaultValue={!lineHopsSize.isSet}
                   />
                 </div>
               </div>
@@ -203,6 +233,8 @@ export const EdgeLinePanel = (props: Props) => {
                 lineCap.set(v as any);
               }}
               value={lineCap.val}
+              defaultValue={lineCap.defaultVal}
+              isDefaultValue={!lineCap.isSet}
             >
               <Select.Item value={'butt'}>Butt</Select.Item>
               <Select.Item value={'round'}>Round</Select.Item>
@@ -218,6 +250,8 @@ export const EdgeLinePanel = (props: Props) => {
                 lineJoin.set(v as any);
               }}
               value={lineJoin.val}
+              defaultValue={lineJoin.defaultVal}
+              isDefaultValue={!lineJoin.isSet}
             >
               <Select.Item value={'miter'}>Miter</Select.Item>
               <Select.Item value={'round'}>Round</Select.Item>
@@ -230,6 +264,8 @@ export const EdgeLinePanel = (props: Props) => {
                 min={0}
                 style={{ width: '50px' }}
                 onChange={v => miterLimit.set((v ?? 1) / 10)}
+                defaultValue={miterLimit.defaultVal * 10}
+                isDefaultValue={!miterLimit.isSet}
               />
             )}
 
@@ -240,6 +276,8 @@ export const EdgeLinePanel = (props: Props) => {
                 min={0}
                 style={{ width: '50px' }}
                 onChange={rounding.set}
+                defaultValue={rounding.defaultVal}
+                isDefaultValue={!rounding.isSet}
               />
             )}
           </div>
