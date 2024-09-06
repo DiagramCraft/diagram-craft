@@ -40,7 +40,7 @@ const JettyWidth = {
     value: JettyWidth.get(node.renderProps.custom.umlModule),
     maxValue: 50,
     unit: 'px',
-    isSet: node.editProps.custom?.umlModule?.jettyWidth !== undefined,
+    isSet: node.storedProps.custom?.umlModule?.jettyWidth !== undefined,
     onChange: (value: number | undefined, uow: UnitOfWork) => JettyWidth.set(value, node, uow)
   }),
 
@@ -64,7 +64,7 @@ const JettyHeight = {
     value: JettyHeight.get(node.renderProps.custom.umlModule),
     maxValue: 50,
     unit: 'px',
-    isSet: node.editProps.custom?.umlModule?.jettyHeight !== undefined,
+    isSet: node.storedProps.custom?.umlModule?.jettyHeight !== undefined,
     onChange: (value: number | undefined, uow: UnitOfWork) => JettyHeight.set(value, node, uow)
   }),
 

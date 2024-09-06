@@ -53,7 +53,7 @@ export class RegularPolygonNodeDefinition extends ShapeNodeDefinition {
         type: 'number',
         label: 'Sides',
         value: def.renderProps.custom.regularPolygon.numberOfSides,
-        isSet: def.editProps.custom?.regularPolygon?.numberOfSides !== undefined,
+        isSet: def.storedProps.custom?.regularPolygon?.numberOfSides !== undefined,
         onChange: (value: number | undefined, uow: UnitOfWork) => {
           def.updateCustomProps('regularPolygon', props => (props.numberOfSides = value), uow);
         }

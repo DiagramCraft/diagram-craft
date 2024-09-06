@@ -39,9 +39,21 @@ export interface DiagramElement extends AbstractElement, AttachmentConsumer {
 
   setBounds(bounds: Box, uow: UnitOfWork): void;
 
+  /**
+   * Includes stored props as well as props from currently applied stylesheet
+   */
   editProps: ElementPropsForEditing;
+
+  /**
+   * Includes edit props plus defaults and any conditional styling props
+   */
   renderProps: ElementPropsForRendering;
+
+  /**
+   * Only props that are stored in the element
+   */
   storedProps: ElementProps;
+
   updateProps(callback: (props: NodeProps | EdgeProps) => void, uow: UnitOfWork): void;
 
   metadata: DeepReadonly<ElementMetadata>;

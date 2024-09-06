@@ -35,7 +35,7 @@ export class ParallelogramNodeDefinition extends ShapeNodeDefinition {
         value: node.renderProps.custom.parallelogram.slant,
         maxValue: 60,
         unit: 'px',
-        isSet: node.editProps.custom?.parallelogram?.slant !== undefined,
+        isSet: node.storedProps.custom?.parallelogram?.slant !== undefined,
         onChange: (value: number | undefined, uow: UnitOfWork) => {
           node.updateCustomProps('parallelogram', props => (props.slant = value), uow);
         }

@@ -144,7 +144,7 @@ export class SwimlaneNodeDefinition extends ShapeNodeDefinition {
         type: 'boolean',
         label: 'Title',
         value: node.renderProps.custom.swimlane.title,
-        isSet: node.editProps.custom?.swimlane?.title !== undefined,
+        isSet: node.storedProps.custom?.swimlane?.title !== undefined,
         onChange: (value: boolean | undefined, uow: UnitOfWork) => {
           node.updateCustomProps('swimlane', props => (props.title = value), uow);
         }
@@ -155,7 +155,7 @@ export class SwimlaneNodeDefinition extends ShapeNodeDefinition {
         label: 'Title Size',
         unit: 'px',
         value: node.renderProps.custom.swimlane.titleSize,
-        isSet: node.editProps.custom?.swimlane?.titleSize !== undefined,
+        isSet: node.storedProps.custom?.swimlane?.titleSize !== undefined,
         onChange: (value: number | undefined, uow: UnitOfWork) => {
           node.updateCustomProps('swimlane', props => (props.titleSize = value), uow);
         }
@@ -165,7 +165,7 @@ export class SwimlaneNodeDefinition extends ShapeNodeDefinition {
         type: 'boolean',
         label: 'Outer Border',
         value: node.renderProps.custom.swimlane.outerBorder,
-        isSet: node.editProps.custom?.swimlane?.outerBorder !== undefined,
+        isSet: node.storedProps.custom?.swimlane?.outerBorder !== undefined,
         onChange: (value: boolean | undefined, uow: UnitOfWork) => {
           node.updateCustomProps('swimlane', props => (props.outerBorder = value), uow);
         }
@@ -175,7 +175,7 @@ export class SwimlaneNodeDefinition extends ShapeNodeDefinition {
         type: 'boolean',
         label: 'Horizontal Border',
         value: node.renderProps.custom.swimlane.horizontalBorder,
-        isSet: node.editProps.custom?.swimlane?.horizontalBorder !== undefined,
+        isSet: node.storedProps.custom?.swimlane?.horizontalBorder !== undefined,
         onChange: (value: boolean | undefined, uow: UnitOfWork) => {
           node.updateCustomProps('swimlane', props => (props.horizontalBorder = value), uow);
         }
@@ -185,7 +185,7 @@ export class SwimlaneNodeDefinition extends ShapeNodeDefinition {
         type: 'boolean',
         label: 'Title Border',
         value: node.renderProps.custom.swimlane.titleBorder,
-        isSet: node.editProps.custom?.swimlane?.titleBorder !== undefined,
+        isSet: node.storedProps.custom?.swimlane?.titleBorder !== undefined,
         onChange: (value: boolean | undefined, uow: UnitOfWork) => {
           node.updateCustomProps('swimlane', props => (props.titleBorder = value), uow);
         }
@@ -195,7 +195,7 @@ export class SwimlaneNodeDefinition extends ShapeNodeDefinition {
         type: 'boolean',
         label: 'Fill',
         value: node.renderProps.custom.swimlane.fill,
-        isSet: node.editProps.custom?.swimlane?.fill !== undefined,
+        isSet: node.storedProps.custom?.swimlane?.fill !== undefined,
         onChange: (value: boolean | undefined, uow: UnitOfWork) => {
           node.updateCustomProps('swimlane', props => (props.fill = value), uow);
         }

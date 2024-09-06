@@ -37,7 +37,7 @@ const Size = {
     value: node.renderProps.custom.process.size,
     maxValue: 50,
     unit: '%',
-    isSet: node.editProps.custom?.process?.size !== undefined,
+    isSet: node.storedProps.custom?.process?.size !== undefined,
     onChange: (value: number | undefined, uow: UnitOfWork) => Size.set(value, node, uow)
   }),
 

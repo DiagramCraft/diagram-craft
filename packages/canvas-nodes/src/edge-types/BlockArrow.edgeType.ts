@@ -46,7 +46,7 @@ const ArrowDepth = {
     type: 'number',
     value: round(edge.renderProps.custom.blockArrow.arrowDepth),
     unit: 'px',
-    isSet: edge.editProps.custom?.blockArrow?.arrowDepth !== undefined,
+    isSet: edge.storedProps.custom?.blockArrow?.arrowDepth !== undefined,
     onChange: (value: number | undefined, uow: UnitOfWork) => ArrowDepth.set(value, edge, uow)
   }),
 
@@ -67,7 +67,7 @@ const ArrowWidth = {
     type: 'number',
     value: round(edge.renderProps.custom.blockArrow.arrowWidth),
     unit: 'px',
-    isSet: edge.editProps.custom?.blockArrow?.arrowWidth !== undefined,
+    isSet: edge.storedProps.custom?.blockArrow?.arrowWidth !== undefined,
     onChange: (value: number | undefined, uow: UnitOfWork) => ArrowWidth.set(value, edge, uow)
   }),
 
@@ -88,7 +88,7 @@ const Width = {
     type: 'number',
     value: round(edge.renderProps.custom.blockArrow.width),
     unit: 'px',
-    isSet: edge.editProps.custom?.blockArrow?.width !== undefined,
+    isSet: edge.storedProps.custom?.blockArrow?.width !== undefined,
     onChange: (value: number | undefined, uow: UnitOfWork) => Width.set(value, edge, uow)
   }),
 

@@ -41,7 +41,7 @@ const Size = {
     value: node.renderProps.custom.cylinder.size,
     maxValue: Number.MAX_VALUE,
     unit: 'px',
-    isSet: node.editProps.custom?.cylinder?.size !== undefined,
+    isSet: node.storedProps.custom?.cylinder?.size !== undefined,
     onChange: (value: number | undefined, uow: UnitOfWork) => Size.set(value, node, uow)
   }),
 
@@ -67,7 +67,7 @@ const Direction = {
       { value: 'west', label: 'West' }
     ],
     value: node.renderProps.custom.cylinder.direction,
-    isSet: node.editProps.custom?.cylinder?.direction !== undefined,
+    isSet: node.storedProps.custom?.cylinder?.direction !== undefined,
     onChange: (value: string | undefined, uow: UnitOfWork) => Direction.set(value, node, uow)
   }),
 

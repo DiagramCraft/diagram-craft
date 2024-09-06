@@ -38,7 +38,7 @@ const Size = {
     value: node.renderProps.custom.curlyBracket.size,
     maxValue: 50,
     unit: '%',
-    isSet: node.editProps.custom?.curlyBracket?.size !== undefined,
+    isSet: node.storedProps.custom?.curlyBracket?.size !== undefined,
     onChange: (value: number | undefined, uow: UnitOfWork) => Size.set(value, node, uow)
   }),
 

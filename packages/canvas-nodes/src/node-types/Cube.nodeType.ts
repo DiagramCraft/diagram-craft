@@ -38,7 +38,7 @@ const Size = {
     value: node.renderProps.custom.cube.size,
     maxValue: 50,
     unit: 'px',
-    isSet: node.editProps.custom?.cube?.size !== undefined,
+    isSet: node.storedProps.custom?.cube?.size !== undefined,
     onChange: (value: number | undefined, uow: UnitOfWork) => Size.set(value, node, uow)
   }),
 

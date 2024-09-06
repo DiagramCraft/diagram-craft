@@ -45,7 +45,7 @@ const InnerRadius = {
     value: node.renderProps.custom.blockArc.innerRadius,
     maxValue: 99,
     unit: '%',
-    isSet: node.editProps.custom?.blockArc?.innerRadius !== undefined,
+    isSet: node.storedProps.custom?.blockArc?.innerRadius !== undefined,
     onChange: (value: number | undefined, uow: UnitOfWork) => InnerRadius.set(value, node, uow)
   }),
 
@@ -67,7 +67,7 @@ const StartAngle = {
     value: node.renderProps.custom.blockArc.startAngle,
     maxValue: 360,
     unit: '°',
-    isSet: node.editProps.custom?.blockArc?.startAngle !== undefined,
+    isSet: node.storedProps.custom?.blockArc?.startAngle !== undefined,
     onChange: (value: number | undefined, uow: UnitOfWork) => StartAngle.set(value, node, uow)
   }),
 
@@ -93,7 +93,7 @@ const EndAngle = {
     value: node.renderProps.custom.blockArc.endAngle,
     maxValue: 360,
     unit: '°',
-    isSet: node.editProps.custom?.blockArc?.endAngle !== undefined,
+    isSet: node.storedProps.custom?.blockArc?.endAngle !== undefined,
     onChange: (value: number | undefined, uow: UnitOfWork) => EndAngle.set(value, node, uow)
   }),
 

@@ -196,7 +196,7 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
         label: 'Padding',
         value: node.renderProps.custom.table.gap,
         unit: 'px',
-        isSet: node.editProps.custom?.table?.gap !== undefined,
+        isSet: node.storedProps.custom?.table?.gap !== undefined,
         onChange: (value: number | undefined, uow: UnitOfWork) => {
           node.updateCustomProps('table', props => (props.gap = value), uow);
         }
@@ -206,7 +206,7 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
         type: 'boolean',
         label: 'Title',
         value: node.renderProps.custom.table.title,
-        isSet: node.editProps.custom?.table?.title !== undefined,
+        isSet: node.storedProps.custom?.table?.title !== undefined,
         onChange: (value: boolean | undefined, uow: UnitOfWork) => {
           node.updateCustomProps('table', props => (props.title = value), uow);
         }
@@ -217,7 +217,7 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
         label: 'Title Size',
         unit: 'px',
         value: node.renderProps.custom.table.titleSize,
-        isSet: node.editProps.custom?.table?.titleSize !== undefined,
+        isSet: node.storedProps.custom?.table?.titleSize !== undefined,
         onChange: (value: number | undefined, uow: UnitOfWork) => {
           node.updateCustomProps('table', props => (props.titleSize = value), uow);
         }

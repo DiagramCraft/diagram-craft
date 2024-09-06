@@ -29,7 +29,7 @@ const slantLeftPropDef = (def: DiagramNode): CustomPropertyDefinition & { type: 
   value: def.renderProps.custom.trapezoid.slantLeft,
   maxValue: 60,
   unit: 'px',
-  isSet: def.editProps.custom?.trapezoid?.slantLeft !== undefined,
+  isSet: def.storedProps.custom?.trapezoid?.slantLeft !== undefined,
   onChange: (value: number | undefined, uow: UnitOfWork) => {
     if (value === undefined) {
       def.updateCustomProps('trapezoid', props => (props.slantLeft = undefined), uow);
@@ -47,7 +47,7 @@ const slantRightPropDef = (def: DiagramNode): CustomPropertyDefinition & { type:
   value: def.renderProps.custom.trapezoid.slantRight,
   maxValue: 60,
   unit: 'px',
-  isSet: def.editProps.custom?.trapezoid?.slantRight !== undefined,
+  isSet: def.storedProps.custom?.trapezoid?.slantRight !== undefined,
   onChange: (value: number | undefined, uow: UnitOfWork) => {
     if (value === undefined) {
       def.updateCustomProps('trapezoid', props => (props.slantRight = undefined), uow);

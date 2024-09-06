@@ -343,7 +343,7 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
           { value: 'grow', label: 'Auto Grow' },
           { value: 'both', label: 'Both' }
         ],
-        isSet: node.editProps.custom?.container?.containerResize !== undefined,
+        isSet: node.storedProps.custom?.container?.containerResize !== undefined,
         onChange: (value: string | undefined, uow: UnitOfWork) => {
           assertIsContainerResizeOrUndefined(value);
           node.updateCustomProps('container', props => (props.containerResize = value), uow);
@@ -359,7 +359,7 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
           { value: 'horizontal', label: 'Horizontal' },
           { value: 'vertical', label: 'Vertical' }
         ],
-        isSet: node.editProps.custom?.container?.layout !== undefined,
+        isSet: node.storedProps.custom?.container?.layout !== undefined,
         onChange: (value: string | undefined, uow: UnitOfWork) => {
           assertIsLayoutTypeOrUndefined(value);
           node.updateCustomProps('container', props => (props.layout = value), uow);
@@ -371,7 +371,7 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
         label: 'Gap',
         value: node.renderProps.custom.container.gap,
         unit: 'px',
-        isSet: node.editProps.custom?.container?.gap !== undefined,
+        isSet: node.storedProps.custom?.container?.gap !== undefined,
         onChange: (value: number | undefined, uow: UnitOfWork) => {
           node.updateCustomProps('container', props => (props.gap = value), uow);
         }
@@ -385,7 +385,7 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
           { value: 'between', label: 'Between' },
           { value: 'around', label: 'Around' }
         ],
-        isSet: node.editProps.custom?.container?.gapType !== undefined,
+        isSet: node.storedProps.custom?.container?.gapType !== undefined,
         onChange: (value: string | undefined, uow: UnitOfWork) => {
           assertIsGapTypeOrUndefined(value);
           node.updateCustomProps('container', props => (props.gapType = value), uow);
@@ -401,7 +401,7 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
           { value: 'scale', label: 'Scale' },
           { value: 'fill', label: 'Fill' }
         ],
-        isSet: node.editProps.custom?.container?.childResize !== undefined,
+        isSet: node.storedProps.custom?.container?.childResize !== undefined,
         onChange: (value: string | undefined, uow: UnitOfWork) => {
           assertIsChildResizeOrUndefined(value);
           node.updateCustomProps('container', props => (props.childResize = value), uow);

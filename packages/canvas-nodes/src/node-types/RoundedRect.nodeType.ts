@@ -48,7 +48,7 @@ export class RoundedRectNodeDefinition extends ShapeNodeDefinition {
         value: def.renderProps.custom.roundedRect.radius,
         maxValue: 60,
         unit: 'px',
-        isSet: def.editProps.custom?.roundedRect?.radius !== undefined,
+        isSet: def.storedProps.custom?.roundedRect?.radius !== undefined,
         onChange: (value: number | undefined, uow: UnitOfWork) => {
           if (value === undefined) {
             def.updateCustomProps('roundedRect', props => (props.radius = undefined), uow);

@@ -58,7 +58,7 @@ export class StarNodeDefinition extends ShapeNodeDefinition {
         type: 'number',
         label: 'Sides',
         value: def.renderProps.custom.star.numberOfSides,
-        isSet: def.editProps.custom?.star?.numberOfSides !== undefined,
+        isSet: def.storedProps.custom?.star?.numberOfSides !== undefined,
         onChange: (value: number | undefined, uow: UnitOfWork) => {
           def.updateCustomProps('star', props => (props.numberOfSides = value), uow);
         }
@@ -70,7 +70,7 @@ export class StarNodeDefinition extends ShapeNodeDefinition {
         value: round(def.renderProps.custom.star.innerRadius * 100),
         maxValue: 100,
         unit: '%',
-        isSet: def.editProps.custom?.star?.innerRadius !== undefined,
+        isSet: def.storedProps.custom?.star?.innerRadius !== undefined,
         onChange: (value: number | undefined, uow: UnitOfWork) => {
           if (value === undefined) {
             def.updateCustomProps('star', props => (props.innerRadius = undefined), uow);

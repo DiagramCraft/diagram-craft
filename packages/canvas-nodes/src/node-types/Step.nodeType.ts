@@ -36,7 +36,7 @@ const Size = {
     value: node.renderProps.custom.step.size,
     maxValue: 50,
     unit: 'px',
-    isSet: node.editProps.custom?.step?.size !== undefined,
+    isSet: node.storedProps.custom?.step?.size !== undefined,
     onChange: (value: number | undefined, uow: UnitOfWork) => Size.set(value, node, uow)
   }),
 

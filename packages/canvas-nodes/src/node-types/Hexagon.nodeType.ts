@@ -36,7 +36,7 @@ const Size = {
     value: node.renderProps.custom.hexagon.size,
     maxValue: 50,
     unit: '%',
-    isSet: node.editProps.custom?.hexagon?.size !== undefined,
+    isSet: node.storedProps.custom?.hexagon?.size !== undefined,
     onChange: (value: number | undefined, uow: UnitOfWork) => Size.set(value, node, uow)
   }),
 
