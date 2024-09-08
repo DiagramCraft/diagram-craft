@@ -8,6 +8,7 @@ import { ElementShadowEditor } from './ElementShadowEditor';
 import { DeepReadonly } from '@diagram-craft/utils/types';
 import { NodeEffectsEditor } from './NodeEffectsEditor';
 import { NodeTextEditor } from './NodeTextEditor';
+import { NodeAdvancedPropertiesEditor } from './NodeAdvancedPropertiesEditor';
 
 export type Editor = (props: {
   props: NodeProps | EdgeProps;
@@ -40,6 +41,11 @@ export const NODE_EDITORS: EditorRegistry<Editor> = {
   text: {
     name: 'Text',
     editor: NodeTextEditor,
+    pick: (props: NodeProps | EdgeProps) => ({ text: (props as NodeProps).text })
+  },
+  advanced: {
+    name: 'Advanced',
+    editor: NodeAdvancedPropertiesEditor,
     pick: (props: NodeProps | EdgeProps) => ({ text: (props as NodeProps).text })
   }
 };
