@@ -14,9 +14,53 @@ import { Select } from '@diagram-craft/app-components/Select';
 import { useTableProperty } from '../../hooks/useTable';
 import { DashSelector } from './components/DashSelector';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
-import { Editor, PropertyEditor } from '../../components/PropertyEditor';
-import { Property } from './types';
-import { asValueArray } from '@diagram-craft/app-components/utils';
+import { PropertyEditor } from '../../components/PropertyEditor';
+import { MultiProperty, Property } from './types';
+
+class StrokeProperty extends MultiProperty<string[]> {
+  constructor(
+    private readonly outerBorder: Property<boolean>,
+    private readonly horizontalBorder: Property<boolean>,
+    private readonly vertical: Property<boolean>
+  ) {
+    super([outerBorder, horizontalBorder, vertical]);
+  }
+
+  formatAsString(val: unknown[]): string {
+    const s: string[] = [];
+
+    if (val[0]) s.push('Outer');
+    if (val[0] === false) s.push('No outer');
+
+    if (val[1]) s.push('Horizontal');
+    if (val[1] === false) s.push('No horizontal');
+
+    if (val[2]) s.push('Vertical');
+    if (val[2] === false) s.push('No vertical');
+
+    return s.join(', ');
+  }
+
+  get val() {
+    const d: string[] = [];
+    if (this.outerBorder.val) d.push('outer');
+    if (this.horizontalBorder.val) d.push('horizontal');
+    if (this.vertical.val) d.push('vertical');
+    return d;
+  }
+
+  set(val: string[] | undefined) {
+    if (val === undefined) {
+      this.outerBorder.set(undefined);
+      this.horizontalBorder.set(undefined);
+      this.vertical.set(undefined);
+    } else {
+      this.outerBorder.set(val.includes('outer'));
+      this.horizontalBorder.set(val.includes('horizontal'));
+      this.vertical.set(val.includes('vertical'));
+    }
+  }
+}
 
 export const NodeTableStrokePanel = (props: Props) => {
   const $d = useDiagram();
@@ -39,6 +83,8 @@ export const NodeTableStrokePanel = (props: Props) => {
 
   const outerBorder = useTableProperty($d, 'custom.table.outerBorder');
 
+  const stroke = new StrokeProperty(outerBorder, horizontalBorder, verticalBorder);
+
   return (
     <ToolWindowPanel
       mode={props.mode ?? 'accordion'}
@@ -51,30 +97,8 @@ export const NodeTableStrokePanel = (props: Props) => {
       <div className={'cmp-labeled-table'}>
         <div className={'cmp-labeled-table__label'}>Border:</div>
         <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
-          <Editor
-            val={asValueArray({
-              outer: outerBorder.val,
-              horizontal: horizontalBorder.val,
-              vertical: verticalBorder.val
-            })}
-            set={value => {
-              if (!!outerBorder.val !== value?.includes('outer'))
-                outerBorder.set(value?.includes('outer'));
-              if (!!horizontalBorder.val !== value?.includes('horizontal'))
-                horizontalBorder.set(value?.includes('horizontal'));
-              if (!!verticalBorder.val !== value?.includes('vertical'))
-                verticalBorder.set(value?.includes('vertical'));
-            }}
-            isIndeterminate={
-              outerBorder.hasMultipleValues ||
-              horizontalBorder.hasMultipleValues ||
-              verticalBorder.hasMultipleValues
-            }
-            state={
-              !outerBorder.isSet && !horizontalBorder.isSet && !verticalBorder.isSet
-                ? 'unset'
-                : 'set'
-            }
+          <PropertyEditor
+            property={stroke}
             render={props => (
               <ToggleButtonGroup.Root {...props} type={'multiple'}>
                 <ToggleButtonGroup.Item value={'outer'}>

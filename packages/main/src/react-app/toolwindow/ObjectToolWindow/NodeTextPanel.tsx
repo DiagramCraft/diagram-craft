@@ -11,7 +11,7 @@ import {
   TbUnderline
 } from 'react-icons/tb';
 import { RxTextAlignBottom, RxTextAlignMiddle, RxTextAlignTop } from 'react-icons/rx';
-import { ColorPicker } from '../../components/ColorPicker';
+import { ColorPicker, ColorPreview } from '../../components/ColorPicker';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { useDiagram } from '../../context/DiagramContext';
@@ -21,9 +21,8 @@ import { HAlign, VAlign } from '@diagram-craft/model/diagramProps';
 import { round } from '@diagram-craft/utils/math';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { Property } from './types';
-import { Editor, PropertyEditor } from '../../components/PropertyEditor';
-import { asValueArray } from '@diagram-craft/app-components/utils';
+import { MultiProperty, Property } from './types';
+import { PropertyEditor } from '../../components/PropertyEditor';
 
 type FormProps = {
   diagram: Diagram;
@@ -44,6 +43,63 @@ type FormProps = {
   lineHeight: Property<number>;
 };
 
+class FormatProperty extends MultiProperty<string[]> {
+  constructor(
+    private readonly isBold: Property<boolean>,
+    private readonly isItalic: Property<boolean>,
+    private readonly textDecoration: Property<'none' | 'underline' | 'line-through' | 'overline'>
+  ) {
+    super([isBold, isItalic, textDecoration]);
+  }
+
+  formatAsString(val: unknown[]): string {
+    const s: string[] = [];
+    if (val[0]) s.push('Bold');
+    if (val[0] === false) s.push('Regular');
+
+    if (val[1]) s.push('Italic');
+    if (val[1] === false) s.push('Normal');
+
+    if (val[2] === 'underline') s.push('Underline');
+    if (val[2] === 'line-through') s.push('Strikethrough');
+    if (val[2] === 'overline') s.push('Overline');
+
+    return s.join(', ');
+  }
+
+  get val() {
+    const d: string[] = [];
+    if (this.isBold.val) d.push('bold');
+    if (this.isItalic.val) d.push('italic');
+    if (this.textDecoration.val === 'underline') d.push('underline');
+    if (this.textDecoration.val === 'line-through') d.push('strikethrough');
+    return d;
+  }
+
+  set(value: string[] | undefined) {
+    if (value === undefined) {
+      this.isBold.set(undefined);
+      this.isItalic.set(undefined);
+      this.textDecoration.set(undefined);
+    } else {
+      if (this.isBold.val !== value.includes('bold')) this.isBold.set(value.includes('bold'));
+      if (this.isItalic.val !== value.includes('italic'))
+        this.isItalic.set(value.includes('italic'));
+
+      const isUnderlineChanged =
+        value.includes('underline') !== (this.textDecoration.val === 'underline');
+      const isStrikethroughChanged =
+        value.includes('strikethrough') !== (this.textDecoration.val === 'line-through');
+
+      if (isUnderlineChanged) {
+        this.textDecoration.set(value.includes('underline') ? 'underline' : undefined);
+      } else if (isStrikethroughChanged) {
+        this.textDecoration.set(value.includes('strikethrough') ? 'line-through' : undefined);
+      }
+    }
+  }
+}
+
 export const NodeTextPanelForm = ({
   diagram: $d,
   config: $cfg,
@@ -63,6 +119,9 @@ export const NodeTextPanelForm = ({
   lineHeight
 }: FormProps) => {
   const fonts = $cfg.fonts;
+
+  const format = new FormatProperty(isBold, isItalic, textDecoration);
+
   return (
     <div className={'cmp-labeled-table'}>
       <div className={'cmp-labeled-table__label'}>Font:</div>
@@ -89,35 +148,8 @@ export const NodeTextPanelForm = ({
 
       <div></div>
       <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
-        <Editor
-          val={asValueArray({
-            bold: isBold.val,
-            italic: isItalic.val,
-            underline: textDecoration.val === 'underline',
-            strikethrough: textDecoration.val === 'line-through'
-          })}
-          set={value => {
-            if (!!isBold.val !== value?.includes('bold')) isBold.set(value?.includes('bold'));
-            if (!!isItalic.val !== value?.includes('italic'))
-              isItalic.set(value?.includes('italic'));
-
-            const isUnderlineChanged =
-              value?.includes('underline') !== (textDecoration.val === 'underline');
-            const isStrikethroughChanged =
-              value?.includes('strikethrough') !== (textDecoration.val === 'line-through');
-
-            if (isUnderlineChanged) {
-              textDecoration.set(value?.includes('underline') ? 'underline' : undefined);
-            } else if (isStrikethroughChanged) {
-              textDecoration.set(value.includes('strikethrough') ? 'line-through' : undefined);
-            }
-          }}
-          state={!isBold.isSet && !isItalic.isSet && !textDecoration.isSet ? 'unset' : 'set'}
-          isIndeterminate={
-            isBold.hasMultipleValues ||
-            isItalic.hasMultipleValues ||
-            textDecoration.hasMultipleValues
-          }
+        <PropertyEditor
+          property={format}
           render={props => (
             <ToggleButtonGroup.Root {...props} aria-label="Formatting options" type={'multiple'}>
               <ToggleButtonGroup.Item value={'bold'}>
@@ -163,6 +195,7 @@ export const NodeTextPanelForm = ({
               onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
             />
           )}
+          renderValue={props => <ColorPreview {...props} />}
         />
       </div>
 

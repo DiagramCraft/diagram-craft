@@ -33,6 +33,9 @@ import { Direction } from '@diagram-craft/geometry/direction';
 import { EdgeDefinition } from './elementDefinitionRegistry';
 import { isEmptyString } from '@diagram-craft/utils/strings';
 import { assert } from '@diagram-craft/utils/assert';
+import { RuleLayer } from './diagramLayerRule';
+import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
+import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
 
 const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
   endpoint instanceof ConnectedEndpoint;
@@ -147,14 +150,70 @@ export class DiagramEdge
 
   /* Props *************************************************************************************************** */
 
-  private populatePropsCache() {
+  getPropsInfo<T extends PropPath<EdgeProps>>(path: T): PropertyInfo<PropPathValue<EdgeProps, T>> {
+    const { styleProps, ruleProps } = this.getPropsSources();
+
+    const accessor = new DynamicAccessor<EdgeProps>();
+
+    const dest: PropertyInfo<PropPathValue<EdgeProps, T>> = [];
+
+    dest.push({
+      val: accessor.get(makeWriteable(edgeDefaults), path) as PropPathValue<EdgeProps, T>,
+      type: 'default'
+    });
+
+    if (styleProps) {
+      dest.push({
+        val: accessor.get(styleProps, path) as PropPathValue<EdgeProps, T>,
+        type: 'style',
+        id: this.#metadata.style
+      });
+    }
+
+    dest.push({
+      val: accessor.get(this.#props, path) as PropPathValue<EdgeProps, T>,
+      type: 'stored'
+    });
+
+    for (const rp of ruleProps) {
+      dest.push({
+        val: accessor.get(rp[1], path) as PropPathValue<EdgeProps, T>,
+        type: 'rule',
+        id: rp[0]
+      });
+    }
+
+    return dest.filter(e => e.val !== undefined);
+  }
+
+  private getPropsSources() {
     const styleProps = this.diagram.document.styles.edgeStyles.find(
       s => s.id === this.#metadata.style
     )?.props;
 
+    const ruleProps = this.diagram.layers.visible
+      .filter(l => l.type === 'rule')
+      .map(l => [l.id, ((l as RuleLayer).adjustments().get(this.id) ?? {}) as EdgeProps]);
+
+    return { styleProps, ruleProps: ruleProps as [string, EdgeProps][] };
+  }
+
+  private populatePropsCache() {
+    const { styleProps, ruleProps } = this.getPropsSources();
+
+    const consolidatedRulesProps = ruleProps.reduce(
+      (p, c) => deepMerge<EdgeProps>({}, p, c[1]),
+      {}
+    );
+
     const propsForEditing = deepMerge({}, styleProps ?? {}, this.#props) as DeepRequired<EdgeProps>;
 
-    const propsForRendering = deepMerge({}, makeWriteable(edgeDefaults), propsForEditing);
+    const propsForRendering = deepMerge(
+      {},
+      makeWriteable(edgeDefaults),
+      propsForEditing,
+      consolidatedRulesProps
+    );
 
     this.cache.set('props.forEditing', propsForEditing);
     this.cache.set('props.forRendering', propsForRendering);

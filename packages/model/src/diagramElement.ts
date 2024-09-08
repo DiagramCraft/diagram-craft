@@ -13,6 +13,8 @@ import { Layer } from './diagramLayer';
 import { Diagram } from './diagram';
 import { AttachmentConsumer } from './attachment';
 import { DeepReadonly } from '@diagram-craft/utils/types';
+import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
+import { PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 
 // eslint-disable-next-line
 type Snapshot = any;
@@ -53,6 +55,10 @@ export interface DiagramElement extends AbstractElement, AttachmentConsumer {
    * Only props that are stored in the element
    */
   storedProps: ElementProps;
+
+  getPropsInfo<T extends PropPath<ElementProps>>(
+    path: T
+  ): PropertyInfo<PropPathValue<ElementProps, T>>;
 
   updateProps(callback: (props: NodeProps | EdgeProps) => void, uow: UnitOfWork): void;
 

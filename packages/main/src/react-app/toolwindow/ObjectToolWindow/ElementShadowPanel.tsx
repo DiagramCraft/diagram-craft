@@ -3,7 +3,7 @@ import { useDiagram } from '../../context/DiagramContext';
 import { ConfigurationContextType, useConfiguration } from '../../context/ConfigurationContext';
 import { useElementProperty } from '../../hooks/useProperty';
 import { ToolWindowPanel } from '../ToolWindowPanel';
-import { ColorPicker } from '../../components/ColorPicker';
+import { ColorPicker, ColorPreview } from '../../components/ColorPicker';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Property } from './types';
@@ -42,6 +42,7 @@ export const ElementShadowPanelForm = ({
               onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
             />
           )}
+          renderValue={props => <ColorPreview {...props} />}
         />
         <PropertyEditor
           property={opacity}

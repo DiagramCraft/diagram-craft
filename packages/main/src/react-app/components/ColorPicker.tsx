@@ -167,3 +167,17 @@ type Props = {
   onChangeCustomPalette: (idx: number, s: string) => void;
   canClearColor?: boolean;
 };
+
+export const ColorPreview = (props: { value: string }) => {
+  return (
+    <div
+      className={'cmp-color-picker__well'}
+      style={{
+        width: '12px',
+        height: '12px',
+        border: '1px solid var(--cmp-border)',
+        backgroundColor: props.value
+      }}
+    ></div>
+  );
+};

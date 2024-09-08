@@ -1,4 +1,4 @@
-import { ColorPicker } from '../../components/ColorPicker';
+import { ColorPicker, ColorPreview } from '../../components/ColorPicker';
 import { useNodeProperty } from '../../hooks/useProperty';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { TbAdjustmentsHorizontal } from 'react-icons/tb';
@@ -52,6 +52,7 @@ export const NodeStrokePanelForm = ({
               onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
             />
           )}
+          renderValue={props => <ColorPreview {...props} />}
         />
       </div>
 
@@ -65,6 +66,7 @@ export const NodeStrokePanelForm = ({
         />
 
         <DashSelector property={pattern} />
+
         <PopoverButton label={<TbAdjustmentsHorizontal />}>
           <div className={'cmp-labeled-table'}>
             <div className={'cmp-labeled-table__label'}>Stroke:</div>

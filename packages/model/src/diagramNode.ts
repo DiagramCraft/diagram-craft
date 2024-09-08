@@ -24,6 +24,8 @@ import { applyTemplate } from './template';
 import { isEmptyString } from '@diagram-craft/utils/strings';
 import { Anchor } from './anchor';
 import { RuleLayer } from './diagramLayerRule';
+import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
+import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;
@@ -160,7 +162,56 @@ export class DiagramNode
 
   /* Props *************************************************************************************************** */
 
-  protected populatePropsCache() {
+  getPropsInfo<T extends PropPath<NodeProps>>(path: T): PropertyInfo<PropPathValue<NodeProps, T>> {
+    const { parentProps, styleProps, textStyleProps, ruleProps } = this.getPropsSources();
+
+    const accessor = new DynamicAccessor<NodeProps>();
+
+    const dest: PropertyInfo<PropPathValue<NodeProps, T>> = [];
+
+    dest.push({
+      val: accessor.get(makeWriteable(nodeDefaults), path) as PropPathValue<NodeProps, T>,
+      type: 'default'
+    });
+
+    if (styleProps) {
+      dest.push({
+        val: accessor.get(styleProps, path) as PropPathValue<NodeProps, T>,
+        type: 'style',
+        id: this.#metadata.style
+      });
+    }
+
+    if (textStyleProps) {
+      dest.push({
+        val: accessor.get(textStyleProps, path) as PropPathValue<NodeProps, T>,
+        type: 'textStyle',
+        id: this.#metadata.textStyle
+      });
+    }
+
+    dest.push({
+      val: accessor.get(parentProps, path) as PropPathValue<NodeProps, T>,
+      type: 'parent'
+    });
+
+    dest.push({
+      val: accessor.get(this.#props, path) as PropPathValue<NodeProps, T>,
+      type: 'stored'
+    });
+
+    for (const rp of ruleProps) {
+      dest.push({
+        val: accessor.get(rp[1], path) as PropPathValue<NodeProps, T>,
+        type: 'rule',
+        id: rp[0]
+      });
+    }
+
+    return dest.filter(e => e.val !== undefined);
+  }
+
+  private getPropsSources() {
     const styleProps = this.diagram.document.styles.nodeStyles.find(
       s => s.id === this.#metadata.style
     )?.props;
@@ -172,15 +223,30 @@ export class DiagramNode
     const parentProps: Partial<NodeProps> = deepClone(
       this.#parent && this.#props.inheritStyle ? makeWriteable(this.#parent.editProps) : {}
     );
+
+    const ruleProps = this.diagram.layers.visible
+      .filter(l => l.type === 'rule')
+      .map(l => [l.id, ((l as RuleLayer).adjustments().get(this.id) ?? {}) as NodeProps]);
+
+    return {
+      parentProps,
+      styleProps,
+      textStyleProps,
+      ruleProps: ruleProps as [string, NodeProps][]
+    };
+  }
+
+  protected populatePropsCache() {
+    const { parentProps, styleProps, textStyleProps, ruleProps } = this.getPropsSources();
+
     // Let's not inherit the debug property - as it's useful to be able
     // to set this on individual nodes
     parentProps.debug = {};
 
-    const ruleProps: NodeProps =
-      this.diagram.layers.visible
-        .filter(l => l.type === 'rule')
-        .map(l => ((l as RuleLayer).adjustments().get(this.id) ?? {}) as NodeProps)
-        .reduce((p, c) => deepMerge<NodeProps>({}, p, c), {}) ?? {};
+    const consolidatedRulesProps = ruleProps.reduce(
+      (p, c) => deepMerge<NodeProps>({}, p, c[1]),
+      {}
+    );
 
     const propsForEditing = deepMerge<NodeProps>(
       {},
@@ -194,7 +260,7 @@ export class DiagramNode
       {},
       makeWriteable(nodeDefaults),
       propsForEditing,
-      ruleProps
+      consolidatedRulesProps
     );
 
     this.cache.set('props.forEditing', propsForEditing);

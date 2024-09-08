@@ -8,7 +8,8 @@ import {
   range,
   smallest,
   smallestIndex,
-  unique
+  unique,
+  uniqueWithCount
 } from './array';
 
 describe('smallest', () => {
@@ -185,5 +186,42 @@ describe('hasElements', () => {
 
   test('should return false for undefined', () => {
     expect(hasElements(undefined)).toBe(false);
+  });
+});
+
+describe('uniqueWithCount', () => {
+  test('should return an array of unique elements with their counts', () => {
+    expect(uniqueWithCount([1, 2, 2, 3, 3, 3])).toEqual([
+      { val: 3, count: 3 },
+      { val: 2, count: 2 },
+      { val: 1, count: 1 }
+    ]);
+  });
+
+  test('should return an empty array when input is an empty array', () => {
+    expect(uniqueWithCount([])).toEqual([]);
+  });
+
+  test('should handle arrays with one element', () => {
+    expect(uniqueWithCount([42])).toEqual([{ val: 42, count: 1 }]);
+  });
+
+  test('should count elements based on the return value of respectTo', () => {
+    expect(uniqueWithCount([{ id: 1 }, { id: 2 }, { id: 2 }], e => e.id)).toEqual([
+      { val: { id: 2 }, count: 2 },
+      { val: { id: 1 }, count: 1 }
+    ]);
+  });
+
+  test('should handle arrays with all elements being the same', () => {
+    expect(uniqueWithCount([2, 2, 2])).toEqual([{ val: 2, count: 3 }]);
+  });
+
+  test('should handle arrays with no duplicates', () => {
+    expect(uniqueWithCount([1, 2, 3])).toEqual([
+      { val: 1, count: 1 },
+      { val: 2, count: 1 },
+      { val: 3, count: 1 }
+    ]);
   });
 });

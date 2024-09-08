@@ -3,9 +3,9 @@ import { UndoableAction } from '@diagram-craft/model/undoManager';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { DeepReadonly } from '@diagram-craft/utils/types';
-import { unique } from '@diagram-craft/utils/array';
+import { unique, uniqueWithCount } from '@diagram-craft/utils/array';
 import { useRedraw } from './useRedraw';
-import { Property } from '../toolwindow/ObjectToolWindow/types';
+import { Property, PropertyInfo } from '../toolwindow/ObjectToolWindow/types';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -87,6 +87,7 @@ export const makePropertyArrayHook = <
   getArr: (obj: TBase) => TItem[],
   getObj: (e: TItem) => DeepReadonly<TObj>,
   getStoredObj: (e: TItem) => DeepReadonly<TObj>,
+  getPropertyInfo: (e: TItem, path: TPath) => PropertyInfo<TValue>,
   updateObj: (obj: TBase, e: TItem, cb: (obj: TObj) => void) => void,
   subscribe: (obj: TBase, handler: () => void) => void,
   defaults: TObj,
@@ -106,13 +107,25 @@ export const makePropertyArrayHook = <
     const defaultValue = defaultValueOverride ?? (accessor.get(defaults, path) as TValue);
     const [value, setValue] = useState<TValue>(defaultValue);
     const [multiple, setMultiple] = useState(false);
+    const [values, setValues] = useState<Array<{ val: TValue; count: number }> | undefined>();
     const redraw = useRedraw();
     const handler = () => {
       const accessor = new DynamicAccessor<TObj>();
-      const arr = unique(getArr(obj).map(obj => accessor.get(getObj(obj) as TObj, path)));
+      const fullArray = getArr(obj).map(obj => accessor.get(getObj(obj) as TObj, path));
+      const arr = unique(fullArray);
 
-      if (arr.length === 1) setValue((arr[0]! as TValue) ?? defaultValue);
-      else setValue(defaultValue);
+      if (arr.length === 1) {
+        setValue((arr[0]! as TValue) ?? defaultValue);
+        setValues([
+          {
+            val: (arr[0]! as TValue) ?? defaultValue,
+            count: getArr(obj).length
+          }
+        ]);
+      } else {
+        setValue(defaultValue);
+        setValues(uniqueWithCount(fullArray).map(e => ({ val: e.val as TValue, count: e.count })));
+      }
 
       setMultiple(arr.length > 1);
     };
@@ -144,7 +157,9 @@ export const makePropertyArrayHook = <
         redraw();
       },
       hasMultipleValues: multiple,
-      isSet: isSet
+      isSet: isSet,
+      info: multiple ? undefined : getPropertyInfo(getArr(obj)[0], path),
+      values: values
     };
   }) as PropertyArrayHook<TBase, TObj>;
 };

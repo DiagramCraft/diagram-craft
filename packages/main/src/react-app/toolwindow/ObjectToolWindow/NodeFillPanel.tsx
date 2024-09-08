@@ -5,7 +5,7 @@ import { Slider } from '@diagram-craft/app-components/Slider';
 import { ConfigurationContextType, useConfiguration } from '../../context/ConfigurationContext';
 import { useDiagram } from '../../context/DiagramContext';
 import { Collapsible } from '@diagram-craft/app-components/Collapsible';
-import { ColorPicker } from '../../components/ColorPicker';
+import { ColorPicker, ColorPreview } from '../../components/ColorPicker';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useElementProperty } from '../../hooks/useProperty';
 import { useEventListener } from '../../hooks/useEventListener';
@@ -189,6 +189,7 @@ export const NodeFillPanelForm = ({
                   onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
                 />
               )}
+              renderValue={props => <ColorPreview {...props} />}
             />
 
             {type.val === 'gradient' && (
@@ -203,6 +204,7 @@ export const NodeFillPanelForm = ({
                       onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
                     />
                   )}
+                  renderValue={props => <ColorPreview {...props} />}
                 />
               </>
             )}
@@ -286,6 +288,7 @@ export const NodeFillPanelForm = ({
                   onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
                 />
               )}
+              renderValue={props => <ColorPreview {...props} />}
             />
             <PropertyEditor
               property={color2}
@@ -297,6 +300,7 @@ export const NodeFillPanelForm = ({
                   onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
                 />
               )}
+              renderValue={props => <ColorPreview {...props} />}
             />
           </div>
         </>

@@ -25,6 +25,23 @@ export const ArrowSelector = (props: Props) => {
           })}
         </Select.Root>
       )}
+      renderValue={props => {
+        const type = props.value;
+        const arrow = ARROW_SHAPES[type]?.(PREVIEW_SCALE, 1);
+        return (
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              background: 'var(--cmp-bg)',
+              padding: '5px 10px',
+              borderRadius: '2px'
+            }}
+          >
+            <ArrowPreview width={30} type={type} end={arrow} bg={'var(--secondary-bg)'} />
+          </div>
+        );
+      }}
     />
   );
 };

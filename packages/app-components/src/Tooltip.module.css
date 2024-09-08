@@ -12,6 +12,8 @@
   animation-duration: 250ms;
   will-change: opacity;
 
+  z-index: 500;
+
   .cmp-tooltip__arrow {
     fill: var(--primary-bg);
   }

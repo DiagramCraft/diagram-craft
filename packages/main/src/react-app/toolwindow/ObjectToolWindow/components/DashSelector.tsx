@@ -3,12 +3,18 @@ import { Select } from '@diagram-craft/app-components/Select';
 import { Property } from '../types';
 import { PropertyEditor } from '../../../components/PropertyEditor';
 
-const DashPatternPreview = (props: { type: string; pattern?: string; width?: number }) => (
+const DashPatternPreview = (props: {
+  type: string;
+  pattern?: string;
+  width?: number;
+  color?: string;
+}) => (
   <svg width={props.width ?? 30} height={10}>
     <path
       d={`M 0 5 L ${props.width ?? 30} 5`}
       strokeWidth={'1'}
       strokeDasharray={props.pattern ?? undefined}
+      stroke={props.color ?? 'unset'}
       style={{ fill: 'none' }}
     />
   </svg>
@@ -30,6 +36,28 @@ export const DashSelector = (props: Props) => {
           })}
         </Select.Root>
       )}
+      renderValue={props => {
+        const type = props.value;
+        const pattern = DASH_PATTERNS[type];
+        return (
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              background: 'var(--cmp-bg)',
+              padding: '5px 10px',
+              borderRadius: '2px'
+            }}
+          >
+            <DashPatternPreview
+              type={type}
+              pattern={pattern?.(0.5, 0.5)}
+              width={30}
+              color={'var(--cmp-fg)'}
+            />
+          </div>
+        );
+      }}
     />
   );
 };

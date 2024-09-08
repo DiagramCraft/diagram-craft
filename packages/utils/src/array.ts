@@ -92,6 +92,26 @@ export const unique = <T>(arr: ReadonlyArray<T>, respectTo: (e: T) => unknown = 
   return result;
 };
 
+export const uniqueWithCount = <T>(
+  arr: ReadonlyArray<T>,
+  respectTo: (e: T) => unknown = a => a
+): Array<{ val: T; count: number }> => {
+  const seen = new Map<unknown, { val: T; count: number }>();
+  for (let i = 0; i < arr.length; i++) {
+    const e = arr[i];
+    const key = respectTo(e);
+    const existing = seen.get(key);
+    if (existing) {
+      existing.count++;
+    } else {
+      seen.set(key, { val: e, count: 1 });
+    }
+  }
+  const result = Array.from(seen.values());
+  result.sort((a, b) => b.count - a.count);
+  return result;
+};
+
 /**
  * Groups the elements of an array into a Map based on the return value of the `respectTo` function.
  *
