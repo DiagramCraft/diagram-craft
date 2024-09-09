@@ -8,7 +8,7 @@ export function assertGridType(s: string | undefined): asserts s is GridType | u
     throw new Error(`invalid grid type: ${s}`);
 }
 
-type EdgeType = 'straight' | 'bezier' | 'curved' | 'orthogonal';
+export type EdgeType = 'straight' | 'bezier' | 'curved' | 'orthogonal';
 
 export function assertEdgeType(s: string | undefined): asserts s is EdgeType | undefined {
   if (

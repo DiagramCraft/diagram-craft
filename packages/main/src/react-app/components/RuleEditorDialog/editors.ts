@@ -12,6 +12,7 @@ import { NodeAdvancedPropertiesEditor } from './NodeAdvancedPropertiesEditor';
 import { NodeCustomPropertiesEditor } from './NodeCustomPropertiesEditor';
 import { EdgeCustomPropertiesEditor } from './EdgeCustomPropertiesEditor';
 import { EdgeEffectsEditor } from './EdgeEffectsEditor';
+import { EdgeLineEditor } from './EdgeLineEditor';
 
 export type Editor = (props: {
   props: NodeProps | EdgeProps;
@@ -76,6 +77,18 @@ export const EDGE_EDITORS: EditorRegistry<Editor> = {
     name: 'Effects',
     editor: EdgeEffectsEditor,
     pick: (props: NodeProps | EdgeProps) => ({ effects: props.effects })
+  },
+  edgeLine: {
+    name: 'Line',
+    editor: EdgeLineEditor,
+    pick: (props: NodeProps | EdgeProps) => ({
+      stroke: props.stroke,
+      fill: props.fill,
+      type: (props as EdgeProps).type,
+      arrow: (props as EdgeProps).arrow,
+      routing: (props as EdgeProps).routing,
+      lineHops: (props as EdgeProps).lineHops
+    })
   }
 };
 

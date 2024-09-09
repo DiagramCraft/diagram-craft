@@ -92,6 +92,25 @@ export const unique = <T>(arr: ReadonlyArray<T>, respectTo: (e: T) => unknown = 
   return result;
 };
 
+/**
+ * Returns a new array with unique elements, along with the count of each unique element.
+ *
+ * This function takes an array and a function `respectTo` that determines the uniqueness of each element. It returns a new array of objects, where each object has two properties: `val` (the unique element) and `count` (the number of times that element appears in the original array).
+ *
+ * The returned array is sorted in descending order by the `count` property.
+ *
+ * @param arr - The array to be processed.
+ * @param [respectTo=(a => a)] - The function used to determine the uniqueness of elements. By default, it is the identity function.
+ * @returns An array of objects, where each object has a `val` property (the unique element) and a `count` property (the number of times that element appears in the original array).
+ *
+ * @example
+ * // returns [{ val: 3, count: 3 }, { val: 2, count: 2 }, { val: 1, count: 1 }]
+ * uniqueWithCount([1, 2, 2, 3, 3, 3]);
+ *
+ * @example
+ * // returns [{ val: { id: 2 }, count: 2 }, { val: { id: 1 }, count: 1 }]
+ * uniqueWithCount([{ id: 1 }, { id: 2 }, { id: 2 }], e => e.id);
+ */
 export const uniqueWithCount = <T>(
   arr: ReadonlyArray<T>,
   respectTo: (e: T) => unknown = a => a

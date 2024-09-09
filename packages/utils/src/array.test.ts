@@ -265,4 +265,42 @@ describe('sortBy', () => {
   test('should handle arrays with no duplicates', () => {
     expect(sortBy([3, 1, 2], e => e)).toEqual([1, 2, 3]);
   });
+  describe('respectTo', () => {
+    test('should return the same value for primitive types', () => {
+      const respectTo = <T>(e: T) => e;
+      expect(respectTo(5)).toBe(5);
+      expect(respectTo('test')).toBe('test');
+      expect(respectTo(true)).toBe(true);
+    });
+
+    test('should return the same reference for objects', () => {
+      const respectTo = <T>(e: T) => e;
+      const obj = { id: 1 };
+      expect(respectTo(obj)).toBe(obj);
+    });
+
+    test('should handle null and undefined', () => {
+      const respectTo = <T>(e: T) => e;
+      expect(respectTo(null)).toBeNull();
+      expect(respectTo(undefined)).toBeUndefined();
+    });
+
+    test('should work with arrays', () => {
+      const respectTo = <T>(e: T) => e;
+      const arr = [1, 2, 3];
+      expect(respectTo(arr)).toBe(arr);
+    });
+
+    test('should work with functions', () => {
+      const respectTo = <T>(e: T) => e;
+      const func = () => {};
+      expect(respectTo(func)).toBe(func);
+    });
+
+    test('should handle Symbol', () => {
+      const respectTo = <T>(e: T) => e;
+      const sym = Symbol('test');
+      expect(respectTo(sym)).toBe(sym);
+    });
+  });
 });
