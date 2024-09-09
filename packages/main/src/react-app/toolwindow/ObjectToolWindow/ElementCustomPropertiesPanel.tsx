@@ -21,6 +21,78 @@ import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { PropertyEditor } from '../../components/PropertyEditor';
 import { Property } from './types';
 
+export const ElementCustomPropertiesPanelForm = ({
+  customProperties,
+  onChange
+}: {
+  element: DiagramElement;
+  customProperties: readonly CustomPropertyDefinition[];
+  onChange: (value: CustomPropertyDefinition) => (cb: (uow: UnitOfWork) => void) => void;
+}) => {
+  return (
+    <div className={'cmp-labeled-table cmp-labeled-table--wide'}>
+      {Object.entries(customProperties).map(([key, value]) => {
+        const prop = asProperty(value, onChange(value));
+
+        if (value.type === 'number') {
+          return (
+            <React.Fragment key={key}>
+              <div className={'cmp-labeled-table__label'}>{value.label}:</div>
+              <div className={'cmp-labeled-table__value'}>
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                <PropertyEditor<any>
+                  property={prop}
+                  render={props => (
+                    <NumberInput
+                      {...props}
+                      defaultUnit={value.unit ?? ''}
+                      validUnits={value.unit ? [value.unit] : []}
+                      min={value.minValue ?? 0}
+                      max={value.maxValue ?? 100}
+                      step={value.step ?? 1}
+                      style={{ width: '50px' }}
+                    />
+                  )}
+                />
+              </div>
+            </React.Fragment>
+          );
+        } else if (value.type === 'boolean') {
+          return (
+            <React.Fragment key={key}>
+              <div className={'cmp-labeled-table__label'}>{value.label}:</div>
+              <div className={'cmp-labeled-table__value'}>
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                <PropertyEditor<any> property={prop} render={props => <Checkbox {...props} />} />
+              </div>
+            </React.Fragment>
+          );
+        } else if (value.type === 'select') {
+          return (
+            <React.Fragment key={key}>
+              <div className={'cmp-labeled-table__label'}>{value.label}:</div>
+              <div className={'cmp-labeled-table__value'}>
+                <PropertyEditor
+                  property={prop as Property<string>}
+                  render={props => (
+                    <Select.Root {...props}>
+                      {value.options.map(o => (
+                        <Select.Item key={o.value} value={o.value}>
+                          {o.label}
+                        </Select.Item>
+                      ))}
+                    </Select.Root>
+                  )}
+                />
+              </div>
+            </React.Fragment>
+          );
+        }
+      })}
+    </div>
+  );
+};
+
 export const ElementCustomPropertiesPanel = (props: Props) => {
   const diagram = useDiagram();
   const [element, setElement] = useState<DiagramElement | undefined>(undefined);
@@ -70,72 +142,19 @@ export const ElementCustomPropertiesPanel = (props: Props) => {
     return <div></div>;
   }
 
+  const onChange = (value: CustomPropertyDefinition) => (cb: (uow: UnitOfWork) => void) => {
+    const uow = new UnitOfWork(diagram, true);
+    cb(uow);
+    commitWithUndo(uow, `Change ${value.label}`);
+  };
+
   return (
     <ToolWindowPanel mode={props.mode ?? 'accordion'} title={def.name} id={'custom'}>
-      <div className={'cmp-labeled-table cmp-labeled-table--wide'}>
-        {Object.entries(customProperties).map(([key, value]) => {
-          const prop = asProperty(value, cb => {
-            const uow = new UnitOfWork(diagram, true);
-            cb(uow);
-            commitWithUndo(uow, `Change ${value.label}`);
-          });
-
-          if (value.type === 'number') {
-            return (
-              <React.Fragment key={key}>
-                <div className={'cmp-labeled-table__label'}>{value.label}:</div>
-                <div className={'cmp-labeled-table__value'}>
-                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                  <PropertyEditor<any>
-                    property={prop}
-                    render={props => (
-                      <NumberInput
-                        {...props}
-                        defaultUnit={value.unit ?? ''}
-                        validUnits={value.unit ? [value.unit] : []}
-                        min={value.minValue ?? 0}
-                        max={value.maxValue ?? 100}
-                        step={value.step ?? 1}
-                        style={{ width: '50px' }}
-                      />
-                    )}
-                  />
-                </div>
-              </React.Fragment>
-            );
-          } else if (value.type === 'boolean') {
-            return (
-              <React.Fragment key={key}>
-                <div className={'cmp-labeled-table__label'}>{value.label}:</div>
-                <div className={'cmp-labeled-table__value'}>
-                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                  <PropertyEditor<any> property={prop} render={props => <Checkbox {...props} />} />
-                </div>
-              </React.Fragment>
-            );
-          } else if (value.type === 'select') {
-            return (
-              <React.Fragment key={key}>
-                <div className={'cmp-labeled-table__label'}>{value.label}:</div>
-                <div className={'cmp-labeled-table__value'}>
-                  <PropertyEditor
-                    property={prop as Property<string>}
-                    render={props => (
-                      <Select.Root {...props}>
-                        {value.options.map(o => (
-                          <Select.Item key={o.value} value={o.value}>
-                            {o.label}
-                          </Select.Item>
-                        ))}
-                      </Select.Root>
-                    )}
-                  />
-                </div>
-              </React.Fragment>
-            );
-          }
-        })}
-      </div>
+      <ElementCustomPropertiesPanelForm
+        element={element}
+        customProperties={customProperties}
+        onChange={onChange}
+      />
     </ToolWindowPanel>
   );
 };

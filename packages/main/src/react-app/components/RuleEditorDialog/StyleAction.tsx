@@ -19,10 +19,14 @@ export const StyleAction = (props: Props) => {
       style={{ display: 'grid', gap: '0.5rem', position: 'relative', gridTemplateColumns: '1fr' }}
     >
       <Select.Root
-        value={props.action?.kind ?? ''}
+        value={props.action.kind ?? ''}
         placeholder={'Style'}
         onChange={k => {
           props.action.kind = k;
+
+          if (props.action.type !== 'set-props') throw new VerifyNotReached();
+          props.action.props = {};
+
           props.onChange(props.action);
         }}
       >
@@ -44,12 +48,10 @@ export const StyleAction = (props: Props) => {
           }}
         >
           <div style={{ maxWidth: '250px' }}>
-            {entry && (
-              <entry.editor
-                props={props.action.props ?? {}}
-                onChange={() => props.onChange(props.action)}
-              />
-            )}
+            <entry.editor
+              props={props.action.props ?? {}}
+              onChange={() => props.onChange(props.action)}
+            />
           </div>
         </div>
       )}

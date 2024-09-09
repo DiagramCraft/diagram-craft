@@ -8,6 +8,7 @@ import {
   range,
   smallest,
   smallestIndex,
+  sortBy,
   unique,
   uniqueWithCount
 } from './array';
@@ -223,5 +224,45 @@ describe('uniqueWithCount', () => {
       { val: 2, count: 1 },
       { val: 3, count: 1 }
     ]);
+  });
+});
+
+describe('sortBy', () => {
+  test('should sort an array of numbers in ascending order', () => {
+    expect(sortBy([3, 1, 2], e => e)).toEqual([1, 2, 3]);
+  });
+
+  test('should sort an array of strings in alphabetical order', () => {
+    expect(sortBy(['banana', 'apple', 'cherry'], e => e)).toEqual(['apple', 'banana', 'cherry']);
+  });
+
+  test('should sort an array of objects based on a numeric property', () => {
+    expect(sortBy([{ id: 3 }, { id: 1 }, { id: 2 }], e => e.id)).toEqual([
+      { id: 1 },
+      { id: 2 },
+      { id: 3 }
+    ]);
+  });
+
+  test('should sort an array of objects based on a string property', () => {
+    expect(
+      sortBy([{ name: 'banana' }, { name: 'apple' }, { name: 'cherry' }], e => e.name)
+    ).toEqual([{ name: 'apple' }, { name: 'banana' }, { name: 'cherry' }]);
+  });
+
+  test('should return an empty array when input is an empty array', () => {
+    expect(sortBy([], e => e)).toEqual([]);
+  });
+
+  test('should handle arrays with one element', () => {
+    expect(sortBy([42], e => e)).toEqual([42]);
+  });
+
+  test('should handle arrays with all elements being the same', () => {
+    expect(sortBy([2, 2, 2], e => e)).toEqual([2, 2, 2]);
+  });
+
+  test('should handle arrays with no duplicates', () => {
+    expect(sortBy([3, 1, 2], e => e)).toEqual([1, 2, 3]);
   });
 });

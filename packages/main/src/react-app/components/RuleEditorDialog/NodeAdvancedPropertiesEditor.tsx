@@ -4,8 +4,6 @@ import { NodeAdvancedPropertiesPanelForm } from '../../toolwindow/ObjectInfoTool
 
 export const NodeAdvancedPropertiesEditor: Editor = props => {
   const $p = props.props as NodeProps;
-  $p.stroke ??= {};
-  $p.stroke.enabled = true;
 
   const onChange = () => {
     props.onChange();

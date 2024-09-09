@@ -237,3 +237,26 @@ export const isEmpty = (arr: Array<unknown> | undefined | null) => {
 export const hasElements = <T>(arr: Array<T> | undefined | null): arr is Array<T> & [T] => {
   return !isEmpty(arr);
 };
+
+/**
+ * Sorts an array based on a provided function that extracts a value to compare.
+ *
+ * @param arr - The array to be sorted.
+ * @param respectTo - The function used to extract the value to compare for each element.
+ * @returns A new array sorted based on the extracted values. Please note that the arr parameter is also sorted in place
+ *
+ * @example
+ * // returns [{ id: 1 }, { id: 2 }, { id: 3 }]
+ * sortBy([{ id: 3 }, { id: 1 }, { id: 2 }], e => e.id);
+ *
+ * @example
+ * // returns ['apple', 'banana', 'cherry']
+ * sortBy(['cherry', 'banana', 'apple'], e => e);
+ */
+export const sortBy = <T>(arr: Array<T>, respectTo: (e: T) => string | number): T[] => {
+  return arr.sort((a, b) => {
+    const x = respectTo(a);
+    const y = respectTo(b);
+    return x < y ? -1 : x > y ? 1 : 0;
+  });
+};

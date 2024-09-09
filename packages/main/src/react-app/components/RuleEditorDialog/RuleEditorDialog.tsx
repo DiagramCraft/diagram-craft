@@ -278,6 +278,24 @@ export const RuleEditorDialog = (props: Props) => {
             props.onSave(rule);
           },
           label: 'Save'
+        },
+        {
+          type: 'secondary',
+          onClick: () => {
+            console.log(
+              JSON.stringify(
+                {
+                  name: ref.current!.value,
+                  type,
+                  clauses,
+                  actions
+                },
+                undefined,
+                '  '
+              )
+            );
+          },
+          label: 'Dump'
         }
       ]}
       title={'Rule Editor'}
