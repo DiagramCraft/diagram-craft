@@ -158,7 +158,10 @@ export const makePropertyArrayHook = <
       },
       hasMultipleValues: multiple,
       isSet: isSet,
-      info: multiple ? undefined : getPropertyInfo(getArr(obj)[0], path),
+      info:
+        multiple || getArr(obj)[0] === undefined
+          ? undefined
+          : getPropertyInfo(getArr(obj)[0], path),
       values: values
     };
   }) as PropertyArrayHook<TBase, TObj>;
