@@ -11,6 +11,7 @@ import { NodeTextEditor } from './NodeTextEditor';
 import { NodeAdvancedPropertiesEditor } from './NodeAdvancedPropertiesEditor';
 import { NodeCustomPropertiesEditor } from './NodeCustomPropertiesEditor';
 import { EdgeCustomPropertiesEditor } from './EdgeCustomPropertiesEditor';
+import { EdgeEffectsEditor } from './EdgeEffectsEditor';
 
 export type Editor = (props: {
   props: NodeProps | EdgeProps;
@@ -70,6 +71,11 @@ export const EDGE_EDITORS: EditorRegistry<Editor> = {
     name: 'Type specific properties',
     editor: EdgeCustomPropertiesEditor,
     pick: (props: NodeProps | EdgeProps) => ({ custom: (props as EdgeProps).custom })
+  },
+  edgeEffects: {
+    name: 'Effects',
+    editor: EdgeEffectsEditor,
+    pick: (props: NodeProps | EdgeProps) => ({ effects: props.effects })
   }
 };
 
