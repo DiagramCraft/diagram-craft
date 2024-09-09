@@ -1,4 +1,4 @@
-import { DeepPartial, DeepReadonly, DeepRequired } from '@diagram-craft/utils/types';
+import { DeepPartial, DeepReadonly, DeepRequired, makeWriteable } from '@diagram-craft/utils/types';
 import { deepMerge } from '@diagram-craft/utils/object';
 import { NodePropsForRendering } from './diagramNode';
 import { EdgePropsForRendering } from './diagramEdge';
@@ -200,6 +200,17 @@ export function registerCustomNodeDefaults<K extends keyof CustomNodeProps>(
   return (d?: CustomNodeProps[K]) => deepMerge({}, v, d ?? undefined);
 }
 
+export const elementDefaults: DeepReadonly<ElementProps> =
+  createDefaultsProxy<ElementPropsForRendering>(_elementDefaults);
+
+export const nodeDefaults: NodePropsForRendering =
+  createDefaultsProxy<NodePropsForRendering>(_nodeDefaults);
+
+const _mergedEdgeDefaults = makeWriteable(
+  // @ts-ignore
+  deepMerge<EdgePropsForRendering>({}, nodeDefaults, _edgeDefaults)
+);
+
 export function registerCustomEdgeDefaults<K extends keyof CustomEdgeProps>(
   k: K,
   v: DeepRequired<CustomEdgeProps[K]>
@@ -209,19 +220,16 @@ export function registerCustomEdgeDefaults<K extends keyof CustomEdgeProps>(
   // @ts-expect-error
   _edgeDefaults['custom'][k] = v;
 
+  // @ts-expect-error
+  _mergedEdgeDefaults.custom ??= {};
+  // @ts-expect-error
+  _mergedEdgeDefaults['custom'][k] = v;
+
   // TODO: Maybe we can use a Proxy here to make it immutable and more performant
 
   // @ts-ignore
   return (d?: CustomEdgeProps[K]) => deepMerge({}, v, d ?? {});
 }
 
-export const elementDefaults: DeepReadonly<ElementProps> =
-  createDefaultsProxy<ElementPropsForRendering>(_elementDefaults);
-
-export const nodeDefaults: NodePropsForRendering =
-  createDefaultsProxy<NodePropsForRendering>(_nodeDefaults);
-
-export const edgeDefaults: EdgePropsForRendering = createDefaultsProxy<EdgePropsForRendering>(
-  // @ts-ignore
-  deepMerge<EdgePropsForRendering>({}, nodeDefaults, _edgeDefaults)
-);
+export const edgeDefaults: EdgePropsForRendering =
+  createDefaultsProxy<EdgePropsForRendering>(_mergedEdgeDefaults);

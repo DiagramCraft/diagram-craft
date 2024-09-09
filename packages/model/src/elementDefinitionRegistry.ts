@@ -206,6 +206,10 @@ export class EdgeDefinitionRegistry {
     this.#defaultValue = value;
   }
 
+  list() {
+    return this.edges.keys();
+  }
+
   register(edge: EdgeDefinition) {
     this.edges.set(edge.type, edge);
   }

@@ -238,14 +238,13 @@ export const RuleEditorDialog = (props: Props) => {
 
   const editors = type === 'node' ? NODE_EDITORS : EDGE_EDITORS;
 
-  const filteredActions = actions.filter(
-    action =>
-      action.type !== 'set-props' || action.kind === undefined || (action.kind ?? '') in editors
-  );
+  const isValidaAction = (action: EditableAdjustmentRuleAction) =>
+    action.type !== 'set-props' || action.kind === undefined || (action.kind ?? '') in editors;
+  const filteredActions = actions.filter(isValidaAction);
   if (filteredActions.length === 0) {
     const newAction = { id: newid() };
     actions.push(newAction);
-    filteredActions.push(newAction);
+    setActions(actions);
   }
 
   return (
@@ -378,8 +377,8 @@ export const RuleEditorDialog = (props: Props) => {
           <div></div>
           <div></div>
 
-          {filteredActions.map((action, idx) => {
-            return (
+          {actions.map((action, idx) => {
+            return !isValidaAction(action) ? null : (
               <React.Fragment key={action.id}>
                 <Select.Root
                   value={action.type ?? ''}

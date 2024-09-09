@@ -10,6 +10,7 @@ import { NodeEffectsEditor } from './NodeEffectsEditor';
 import { NodeTextEditor } from './NodeTextEditor';
 import { NodeAdvancedPropertiesEditor } from './NodeAdvancedPropertiesEditor';
 import { NodeCustomPropertiesEditor } from './NodeCustomPropertiesEditor';
+import { EdgeCustomPropertiesEditor } from './EdgeCustomPropertiesEditor';
 
 export type Editor = (props: {
   props: NodeProps | EdgeProps;
@@ -44,15 +45,18 @@ export const NODE_EDITORS: EditorRegistry<Editor> = {
     editor: NodeTextEditor,
     pick: (props: NodeProps | EdgeProps) => ({ text: (props as NodeProps).text })
   },
-  custom: {
+  nodeCustom: {
     name: 'Type specific properties',
     editor: NodeCustomPropertiesEditor,
-    pick: (props: NodeProps | EdgeProps) => ({ text: (props as NodeProps).text })
+    pick: (props: NodeProps | EdgeProps) => ({ custom: (props as NodeProps).custom })
   },
   advanced: {
     name: 'Advanced',
     editor: NodeAdvancedPropertiesEditor,
-    pick: (props: NodeProps | EdgeProps) => ({ text: (props as NodeProps).text })
+    pick: (props: NodeProps | EdgeProps) => ({
+      capabilities: (props as NodeProps).capabilities,
+      inheritStyle: (props as NodeProps).inheritStyle
+    })
   }
 };
 
@@ -61,6 +65,11 @@ export const EDGE_EDITORS: EditorRegistry<Editor> = {
     name: 'Shadow',
     editor: ElementShadowEditor,
     pick: (props: NodeProps | EdgeProps) => ({ shadow: props.shadow })
+  },
+  edgeCustom: {
+    name: 'Type specific properties',
+    editor: EdgeCustomPropertiesEditor,
+    pick: (props: NodeProps | EdgeProps) => ({ custom: (props as EdgeProps).custom })
   }
 };
 

@@ -1,6 +1,5 @@
 import { Editor } from './editors';
 import { useDiagram } from '../../context/DiagramContext';
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { newid } from '@diagram-craft/utils/id';
 import { deepClone } from '@diagram-craft/utils/object';
 import { useState } from 'react';
@@ -9,32 +8,35 @@ import { ElementCustomPropertiesPanelForm } from '../../toolwindow/ObjectToolWin
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { sortBy } from '@diagram-craft/utils/array';
+import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
+import { FreeEndpoint } from '@diagram-craft/model/endpoint';
 
-export const NodeCustomPropertiesEditor: Editor = props => {
-  const $p = props.props as NodeProps;
+export const EdgeCustomPropertiesEditor: Editor = props => {
+  const $p = props.props as EdgeProps;
   const $d = useDiagram();
 
   const [type, setType] = useState('');
 
-  const node = new DiagramNode(
+  const edge = new DiagramEdge(
     newid(),
-    type === '' ? 'rect' : type,
-    { x: 0, y: 0, w: 1000, h: 1000, r: 0 },
-    $d,
-    $d.activeLayer,
+    new FreeEndpoint({ x: 0, y: 0 }),
+    new FreeEndpoint({ x: 100, y: 100 }),
     deepClone($p),
-    {}
+    {},
+    [],
+    $d,
+    $d.activeLayer
   );
 
-  const nodeTypesWithCustomProps: string[] = [];
-  for (const key of $d.document.nodeDefinitions.list()) {
-    const def = $d.document.nodeDefinitions.get(key);
-    const customProps = def.getCustomPropertyDefinitions(node);
+  const edgeTypesWithCustomProps: string[] = [];
+  for (const key of $d.document.edgeDefinitions.list()) {
+    const def = $d.document.edgeDefinitions.get(key);
+    const customProps = def.getCustomPropertyDefinitions(edge);
     if (customProps.length > 0) {
-      nodeTypesWithCustomProps.push(key);
+      edgeTypesWithCustomProps.push(key);
     }
   }
-  sortBy(nodeTypesWithCustomProps, e => $d.document.nodeDefinitions.get(e).name);
+  sortBy(edgeTypesWithCustomProps, e => $d.document.edgeDefinitions.get(e).name);
 
   const onChange = () => {
     props.onChange();
@@ -53,10 +55,10 @@ export const NodeCustomPropertiesEditor: Editor = props => {
           }}
           style={{ width: '100%', marginBottom: '0.75rem' }}
         >
-          {nodeTypesWithCustomProps.map(e => {
+          {edgeTypesWithCustomProps.map(e => {
             return (
               <Select.Item key={e} value={e}>
-                {$d.document.nodeDefinitions.get(e).name}
+                {$d.document.edgeDefinitions.get(e).name}
               </Select.Item>
             );
           })}
@@ -66,17 +68,17 @@ export const NodeCustomPropertiesEditor: Editor = props => {
       {type !== 'rect' && type !== '' && (
         <div>
           <ElementCustomPropertiesPanelForm
-            element={node}
-            customProperties={$d.document.nodeDefinitions
+            element={edge}
+            customProperties={$d.document.edgeDefinitions
               .get(type)
-              .getCustomPropertyDefinitions(node)}
+              .getCustomPropertyDefinitions(edge)}
             onChange={(_value: CustomPropertyDefinition) => {
               return (cb: (uow: UnitOfWork) => void) => {
                 const uow = new UnitOfWork($d, false);
                 cb(uow);
                 uow.abort();
 
-                $p.custom = node.storedProps.custom;
+                $p.custom = edge.storedProps.custom;
                 onChange();
               };
             }}
