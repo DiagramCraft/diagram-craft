@@ -84,6 +84,8 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
   }
 
   render(props: EdgeComponentProps) {
+    if (props.element.renderProps.hidden) return svg.g({});
+
     const $d = props.element.diagram;
     const actionMap = props.actionMap;
 

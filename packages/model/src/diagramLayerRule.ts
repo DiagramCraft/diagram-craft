@@ -93,16 +93,14 @@ export class RuleLayer extends Layer {
     for (const k of result) {
       for (const action of rule.actions) {
         notImplemented.true(
-          action.type === 'set-props' || action.type === 'set-stylesheet',
+          action.type === 'set-props' || action.type === 'set-stylesheet' || action.type === 'hide',
           'Not implemented yet'
         );
-        if (action.type === 'set-props') {
-          if (!res.has(k)) res.set(k, deepClone(DEFAULT_ADJUSTMENT_RULE));
+        if (!res.has(k)) res.set(k, deepClone(DEFAULT_ADJUSTMENT_RULE));
 
+        if (action.type === 'set-props') {
           res.set(k, deepMerge(res.get(k)!, { props: deepClone(action.props) } as Adjustment));
         } else if (action.type === 'set-stylesheet') {
-          if (!res.has(k)) res.set(k, deepClone(DEFAULT_ADJUSTMENT_RULE));
-
           res.set(
             k,
             deepMerge(res.get(k)!, {
@@ -110,6 +108,8 @@ export class RuleLayer extends Layer {
               textStyle: action.textStyle
             } as Adjustment)
           );
+        } else if (action.type === 'hide') {
+          res.set(k, deepMerge(res.get(k)!, { props: { hidden: true } } as Adjustment));
         }
       }
     }

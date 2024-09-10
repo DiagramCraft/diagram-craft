@@ -359,6 +359,10 @@ export class DiagramNode
     }, uow);
   }
 
+  isHidden() {
+    return this.renderProps.hidden;
+  }
+
   /* Name **************************************************************************************************** */
 
   get data() {

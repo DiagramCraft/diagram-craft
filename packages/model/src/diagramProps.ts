@@ -105,6 +105,8 @@ declare global {
   interface CustomEdgeProps {}
 
   interface ElementProps {
+    hidden?: boolean;
+
     stroke?: {
       enabled?: boolean;
       color?: string;

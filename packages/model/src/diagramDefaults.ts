@@ -43,8 +43,9 @@ export const DefaultStyles = {
 
 const _elementDefaults: Pick<
   ElementPropsForRendering,
-  'debug' | 'geometry' | 'fill' | 'shadow' | 'stroke' | 'inheritStyle'
+  'debug' | 'geometry' | 'fill' | 'shadow' | 'stroke' | 'inheritStyle' | 'hidden'
 > = {
+  hidden: false,
   geometry: {
     flipV: false,
     flipH: false

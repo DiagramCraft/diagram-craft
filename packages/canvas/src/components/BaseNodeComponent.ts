@@ -104,6 +104,8 @@ export class BaseNodeComponent<
   }
 
   render(props: NodeComponentProps): VNode {
+    if (props.element.renderProps.hidden) return svg.g({});
+
     const $d = props.element.diagram;
 
     const onMouseDown = (e: MouseEvent) => {

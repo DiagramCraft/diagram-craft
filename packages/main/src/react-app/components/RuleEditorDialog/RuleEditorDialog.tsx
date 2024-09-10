@@ -17,6 +17,7 @@ import {
   AdjustmentRuleAction,
   AdjustmentRuleClause
 } from '@diagram-craft/model/diagramLayerRuleTypes';
+import { HideAction } from './HideAction';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -412,7 +413,13 @@ export const RuleEditorDialog = (props: Props) => {
                   />
                 )}
 
-                {action.type !== 'set-props' && action.type !== 'set-stylesheet' && <div></div>}
+                {action.type === 'hide' && (
+                  <HideAction action={action} type={type} onChange={a => changeAction(action, a)} />
+                )}
+
+                {action.type !== 'set-props' &&
+                  action.type !== 'set-stylesheet' &&
+                  action.type !== 'hide' && <div></div>}
 
                 <Button
                   type={'icon-only'}

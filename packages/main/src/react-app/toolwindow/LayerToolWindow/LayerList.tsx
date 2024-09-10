@@ -199,11 +199,8 @@ const RuleEntry = (props: { rule: AdjustmentRule; layer: RuleLayer; diagram: Dia
               props: {
                 rule: props.rule
               },
-              onCancel: () => {
-                console.log('cancel');
-              },
+              onCancel: () => {},
               onOk: (rule: AdjustmentRule) => {
-                console.log('ok', rule);
                 const uow = new UnitOfWork(props.diagram, true);
                 props.layer.replaceRule(props.rule, rule, uow);
                 commitWithUndo(uow, 'Update rule');

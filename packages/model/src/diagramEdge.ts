@@ -299,6 +299,10 @@ export class DiagramEdge
     };
   }
 
+  isHidden() {
+    return this.renderProps.hidden;
+  }
+
   /* Name **************************************************************************************************** */
 
   get data() {
