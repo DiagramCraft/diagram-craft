@@ -5,47 +5,12 @@ import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { parseAndQuery } from '@diagram-craft/query/query';
 import { assert, notImplemented } from '@diagram-craft/utils/assert';
 import { nodeDefaults } from './diagramDefaults';
-
-export type AdjustmentRule = {
-  id: string;
-  name: string;
-  type: 'edge' | 'node';
-  clauses: AdjustmentRuleClause[];
-  actions: AdjustmentRuleAction[];
-};
-
-export type AdjustmentRuleClause = { id: string } & (
-  | {
-      type: 'query';
-      query: string;
-    }
-  | {
-      type: 'any';
-      clauses: AdjustmentRuleClause[];
-    }
-  | {
-      type: 'props';
-      path: string;
-      relation: 'eq' | 'neq' | 'gt' | 'lt' | 'contains' | 'matches' | 'set';
-      value: string;
-    }
-);
-
-export type AdjustmentRuleAction = { id: string } & (
-  | {
-      type: 'set-props';
-      props: ElementProps;
-    }
-  | {
-      type: 'set-stylesheet';
-      stylesheet: string;
-    }
-  | {
-      type: 'hide';
-    }
-);
-
-export type Adjustment = NodeProps | EdgeProps;
+import {
+  Adjustment,
+  AdjustmentRule,
+  AdjustmentRuleClause,
+  DEFAULT_ADJUSTMENT_RULE
+} from './diagramLayerRuleTypes';
 
 type Result = Map<string, Adjustment>;
 
@@ -127,14 +92,28 @@ export class RuleLayer extends Layer {
     const result = results.reduce((p, c) => p.intersection(c), results[0]);
     for (const k of result) {
       for (const action of rule.actions) {
-        notImplemented.true(action.type === 'set-props', 'Not implemented yet');
+        notImplemented.true(
+          action.type === 'set-props' || action.type === 'set-stylesheet',
+          'Not implemented yet'
+        );
         if (action.type === 'set-props') {
-          if (!res.has(k)) res.set(k, deepClone(action.props));
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          else res.set(k, deepMerge(res.get(k) as any, action.props));
+          if (!res.has(k)) res.set(k, deepClone(DEFAULT_ADJUSTMENT_RULE));
+
+          res.set(k, deepMerge(res.get(k)!, { props: deepClone(action.props) } as Adjustment));
+        } else if (action.type === 'set-stylesheet') {
+          if (!res.has(k)) res.set(k, deepClone(DEFAULT_ADJUSTMENT_RULE));
+
+          res.set(
+            k,
+            deepMerge(res.get(k)!, {
+              elementStyle: action.elementStyle,
+              textStyle: action.textStyle
+            } as Adjustment)
+          );
         }
       }
     }
+
     return res;
   }
 

@@ -6,7 +6,7 @@ import { OffsetType } from '../endpoint';
 import { StylesheetSnapshot } from '../unitOfWork';
 import { DataSchema } from '../diagramDataSchemas';
 import { Canvas } from '../diagram';
-import { AdjustmentRule } from '../diagramLayerRule';
+import { AdjustmentRule } from '../diagramLayerRuleTypes';
 
 interface Reference {
   id: string;

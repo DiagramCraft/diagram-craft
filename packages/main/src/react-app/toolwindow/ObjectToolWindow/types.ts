@@ -16,7 +16,15 @@ export type PropertyInfo<V> = Array<PropertyInfoEntry<V>>;
 
 type PropertyInfoEntry<V> = {
   val: V;
-  type: 'default' | 'stored' | 'style' | 'textStyle' | 'rule' | 'parent';
+  type:
+    | 'default'
+    | 'stored'
+    | 'style'
+    | 'textStyle'
+    | 'rule'
+    | 'ruleStyle'
+    | 'ruleTextStyle'
+    | 'parent';
   id?: string;
 };
 
@@ -38,7 +46,6 @@ export abstract class MultiProperty<T> implements Property<T> {
   }
 
   get info() {
-    // eslint-disable-next-line
     const info: PropertyInfo<string> = [];
 
     // Default value

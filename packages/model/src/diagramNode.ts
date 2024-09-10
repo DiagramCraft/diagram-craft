@@ -23,9 +23,9 @@ import { Point } from '@diagram-craft/geometry/point';
 import { applyTemplate } from './template';
 import { isEmptyString } from '@diagram-craft/utils/strings';
 import { Anchor } from './anchor';
-import { RuleLayer } from './diagramLayerRule';
 import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
+import { getAdjustments } from './diagramLayerRuleTypes';
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;
@@ -163,7 +163,14 @@ export class DiagramNode
   /* Props *************************************************************************************************** */
 
   getPropsInfo<T extends PropPath<NodeProps>>(path: T): PropertyInfo<PropPathValue<NodeProps, T>> {
-    const { parentProps, styleProps, textStyleProps, ruleProps } = this.getPropsSources();
+    const {
+      parentProps,
+      styleProps,
+      textStyleProps,
+      ruleProps,
+      ruleStyleProps,
+      ruleTextStyleProps
+    } = this.getPropsSources();
 
     const accessor = new DynamicAccessor<NodeProps>();
 
@@ -187,6 +194,20 @@ export class DiagramNode
         val: accessor.get(textStyleProps, path) as PropPathValue<NodeProps, T>,
         type: 'textStyle',
         id: this.#metadata.textStyle
+      });
+    }
+
+    if (ruleStyleProps) {
+      dest.push({
+        val: accessor.get(ruleStyleProps, path) as PropPathValue<NodeProps, T>,
+        type: 'ruleStyle'
+      });
+    }
+
+    if (ruleTextStyleProps) {
+      dest.push({
+        val: accessor.get(ruleTextStyleProps, path) as PropPathValue<NodeProps, T>,
+        type: 'ruleTextStyle'
       });
     }
 
@@ -224,20 +245,42 @@ export class DiagramNode
       this.#parent && this.#props.inheritStyle ? makeWriteable(this.#parent.editProps) : {}
     );
 
-    const ruleProps = this.diagram.layers.visible
-      .filter(l => l.type === 'rule')
-      .map(l => [l.id, ((l as RuleLayer).adjustments().get(this.id) ?? {}) as NodeProps]);
+    const adjustments = getAdjustments(this.diagram, this.id);
+    const ruleProps = adjustments.map(([k, v]) => [k, v.props]);
+
+    const ruleElementStyle = adjustments
+      .map(([, v]) => v.elementStyle)
+      .filter(e => !!e)
+      .at(-1);
+    const ruleStyleProps =
+      this.diagram.document.styles.nodeStyles.find(s => s.id === ruleElementStyle)?.props ?? {};
+
+    const ruleTextStyle = adjustments
+      .map(([, v]) => v.textStyle)
+      .filter(e => !!e)
+      .at(-1);
+    const ruleTextStyleProps =
+      this.diagram.document.styles.textStyles.find(s => s.id === ruleTextStyle)?.props ?? {};
 
     return {
       parentProps,
       styleProps,
       textStyleProps,
-      ruleProps: ruleProps as [string, NodeProps][]
+      ruleProps: ruleProps as [string, NodeProps][],
+      ruleStyleProps,
+      ruleTextStyleProps
     };
   }
 
   protected populatePropsCache() {
-    const { parentProps, styleProps, textStyleProps, ruleProps } = this.getPropsSources();
+    const {
+      parentProps,
+      styleProps,
+      textStyleProps,
+      ruleProps,
+      ruleStyleProps,
+      ruleTextStyleProps
+    } = this.getPropsSources();
 
     // Let's not inherit the debug property - as it's useful to be able
     // to set this on individual nodes
@@ -252,6 +295,8 @@ export class DiagramNode
       {},
       styleProps ?? {},
       textStyleProps ?? {},
+      ruleStyleProps,
+      ruleTextStyleProps,
       parentProps,
       this.#props
     ) as DeepRequired<NodeProps>;

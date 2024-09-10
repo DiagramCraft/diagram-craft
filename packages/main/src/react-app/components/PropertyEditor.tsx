@@ -115,6 +115,8 @@ export function PropertyEditor<T>(props: Props<T>) {
                       {e.type === 'style' && 'Element stylesheet'}
                       {e.type === 'textStyle' && 'Text stylesheet'}
                       {e.type === 'rule' && 'Layer rule'}
+                      {e.type === 'ruleStyle' && 'Layer rule element stylesheet'}
+                      {e.type === 'ruleTextStyle' && 'Layer rule text stylesheet'}
                       {e.type === 'parent' && 'Parent element'}
                     </div>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>

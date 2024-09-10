@@ -33,9 +33,9 @@ import { Direction } from '@diagram-craft/geometry/direction';
 import { EdgeDefinition } from './elementDefinitionRegistry';
 import { isEmptyString } from '@diagram-craft/utils/strings';
 import { assert } from '@diagram-craft/utils/assert';
-import { RuleLayer } from './diagramLayerRule';
 import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
+import { getAdjustments } from './diagramLayerRuleTypes';
 
 const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
   endpoint instanceof ConnectedEndpoint;
@@ -151,7 +151,7 @@ export class DiagramEdge
   /* Props *************************************************************************************************** */
 
   getPropsInfo<T extends PropPath<EdgeProps>>(path: T): PropertyInfo<PropPathValue<EdgeProps, T>> {
-    const { styleProps, ruleProps } = this.getPropsSources();
+    const { styleProps, ruleProps, ruleStyleProps } = this.getPropsSources();
 
     const accessor = new DynamicAccessor<EdgeProps>();
 
@@ -167,6 +167,13 @@ export class DiagramEdge
         val: accessor.get(styleProps, path) as PropPathValue<EdgeProps, T>,
         type: 'style',
         id: this.#metadata.style
+      });
+    }
+
+    if (ruleStyleProps) {
+      dest.push({
+        val: accessor.get(ruleStyleProps, path) as PropPathValue<EdgeProps, T>,
+        type: 'ruleStyle'
       });
     }
 
@@ -191,22 +198,33 @@ export class DiagramEdge
       s => s.id === this.#metadata.style
     )?.props;
 
-    const ruleProps = this.diagram.layers.visible
-      .filter(l => l.type === 'rule')
-      .map(l => [l.id, ((l as RuleLayer).adjustments().get(this.id) ?? {}) as EdgeProps]);
+    const adjustments = getAdjustments(this.diagram, this.id);
+    const ruleProps = adjustments.map(([k, v]) => [k, v.props]);
 
-    return { styleProps, ruleProps: ruleProps as [string, EdgeProps][] };
+    const ruleElementStyle = adjustments
+      .map(([, v]) => v.elementStyle)
+      .filter(e => !!e)
+      .at(-1);
+    const ruleStyleProps =
+      this.diagram.document.styles.edgeStyles.find(s => s.id === ruleElementStyle)?.props ?? {};
+
+    return { styleProps, ruleProps: ruleProps as [string, EdgeProps][], ruleStyleProps };
   }
 
   private populatePropsCache() {
-    const { styleProps, ruleProps } = this.getPropsSources();
+    const { styleProps, ruleProps, ruleStyleProps } = this.getPropsSources();
 
     const consolidatedRulesProps = ruleProps.reduce(
       (p, c) => deepMerge<EdgeProps>({}, p, c[1]),
       {}
     );
 
-    const propsForEditing = deepMerge({}, styleProps ?? {}, this.#props) as DeepRequired<EdgeProps>;
+    const propsForEditing = deepMerge(
+      {},
+      styleProps ?? {},
+      ruleStyleProps,
+      this.#props
+    ) as DeepRequired<EdgeProps>;
 
     const propsForRendering = deepMerge(
       {},

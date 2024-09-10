@@ -28,9 +28,10 @@ import { DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElem
 import { shorten } from '@diagram-craft/utils/strings';
 import { useLayoutEffect, useRef } from 'react';
 import { ReferenceLayer } from '@diagram-craft/model/diagramLayerReference';
-import { AdjustmentRule, RuleLayer } from '@diagram-craft/model/diagramLayerRule';
+import { RuleLayer } from '@diagram-craft/model/diagramLayerRule';
 import { addHighlight, removeHighlight } from '@diagram-craft/canvas/highlight';
 import { useApplicationTriggers } from '../../context/ActionsContext';
+import { AdjustmentRule } from '@diagram-craft/model/diagramLayerRuleTypes';
 
 const ELEMENT_INSTANCES = 'application/x-diagram-craft-element-instances';
 const LAYER_INSTANCES = 'application/x-diagram-craft-layer-instances';

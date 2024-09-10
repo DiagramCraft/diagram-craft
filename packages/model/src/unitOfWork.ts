@@ -3,11 +3,11 @@ import { assert } from '@diagram-craft/utils/assert';
 import { SerializedEdge, SerializedNode } from './serialization/types';
 import { Stylesheet, StylesheetType } from './diagramStyles';
 import { Layer, LayerManager, LayerType } from './diagramLayer';
-import { AdjustmentRule } from './diagramLayerRule';
 import { Diagram, DiagramEvents } from './diagram';
 import { EventKey } from '@diagram-craft/utils/event';
 import { DiagramNode } from './diagramNode';
 import { DiagramEdge } from './diagramEdge';
+import { AdjustmentRule } from './diagramLayerRuleTypes';
 
 type ActionCallback = () => void;
 

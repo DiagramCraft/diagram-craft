@@ -1,11 +1,6 @@
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { Select } from '@diagram-craft/app-components/Select';
-import {
-  AdjustmentRule,
-  AdjustmentRuleAction,
-  AdjustmentRuleClause,
-  validProps
-} from '@diagram-craft/model/diagramLayerRule';
+import { validProps } from '@diagram-craft/model/diagramLayerRule';
 import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbLine, TbPentagon, TbPlus, TbTrash } from 'react-icons/tb';
@@ -16,6 +11,12 @@ import { newid } from '@diagram-craft/utils/id';
 import { EDGE_EDITORS, Editor, EditorTypes, NODE_EDITORS } from './editors';
 import { StyleAction } from './StyleAction';
 import { TreeSelect } from '@diagram-craft/app-components/TreeSelect';
+import { StyleSheetAction } from './StyleSheetAction';
+import {
+  AdjustmentRule,
+  AdjustmentRuleAction,
+  AdjustmentRuleClause
+} from '@diagram-craft/model/diagramLayerRuleTypes';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -402,7 +403,16 @@ export const RuleEditorDialog = (props: Props) => {
                     onChange={a => changeAction(action, a)}
                   />
                 )}
-                {action.type !== 'set-props' && <div></div>}
+
+                {action.type === 'set-stylesheet' && (
+                  <StyleSheetAction
+                    action={action}
+                    type={type}
+                    onChange={a => changeAction(action, a)}
+                  />
+                )}
+
+                {action.type !== 'set-props' && action.type !== 'set-stylesheet' && <div></div>}
 
                 <Button
                   type={'icon-only'}
