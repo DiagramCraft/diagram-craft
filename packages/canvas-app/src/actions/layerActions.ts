@@ -118,7 +118,12 @@ export class LayerToggleLockedAction extends AbstractToggleAction {
   }
 
   isEnabled(context: ActionContext): boolean {
-    return context.id !== undefined && this.diagram.layers.byId(context.id) !== undefined;
+    return (
+      context.id !== undefined &&
+      this.diagram.layers.byId(context.id) !== undefined &&
+      this.diagram.layers.byId(context.id)?.type !== 'reference' &&
+      this.diagram.layers.byId(context.id)?.type !== 'rule'
+    );
   }
 
   getState(context: ActionContext): boolean {

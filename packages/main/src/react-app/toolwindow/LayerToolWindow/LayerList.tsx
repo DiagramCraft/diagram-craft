@@ -137,7 +137,11 @@ const LayerEntry = (props: { layer: Layer }) => {
           ) : (
             ''
           )}
-          {layer.type !== 'reference' ? <LockToggle layer={layer} diagram={diagram} /> : ''}
+          {layer.type !== 'reference' && layer.type !== 'rule' ? (
+            <LockToggle layer={layer} diagram={diagram} />
+          ) : (
+            ''
+          )}
           <VisibilityToggle layer={layer} diagram={diagram} />
         </Tree.NodeAction>
         {!(layer instanceof ReferenceLayer) && (

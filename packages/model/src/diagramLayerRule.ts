@@ -63,6 +63,10 @@ export class RuleLayer extends Layer {
     this.diagram.on('elementRemove', () => this.#cache.clear());
   }
 
+  isLocked(): boolean {
+    return false;
+  }
+
   adjustments(): Result {
     if (this.#cache.has('result')) return this.#cache.get('result') as Result;
 
