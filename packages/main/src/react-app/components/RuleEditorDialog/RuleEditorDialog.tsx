@@ -274,13 +274,12 @@ export const RuleEditorDialog = (props: Props) => {
               // TODO: Additional validations
               .filter(a => a.type !== undefined)
               .map(a => a as AdjustmentRuleAction);
-            //console.log(rule);
 
             props.onSave(rule);
           },
           label: 'Save'
-        },
-        {
+        }
+        /*{
           type: 'secondary',
           onClick: () => {
             console.log(
@@ -297,7 +296,7 @@ export const RuleEditorDialog = (props: Props) => {
             );
           },
           label: 'Dump'
-        }
+        }*/
       ]}
       title={'Rule Editor'}
     >

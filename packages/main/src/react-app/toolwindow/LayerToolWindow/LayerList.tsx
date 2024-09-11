@@ -30,8 +30,9 @@ import { useLayoutEffect, useRef } from 'react';
 import { ReferenceLayer } from '@diagram-craft/model/diagramLayerReference';
 import { RuleLayer } from '@diagram-craft/model/diagramLayerRule';
 import { addHighlight, removeHighlight } from '@diagram-craft/canvas/highlight';
-import { useApplicationTriggers } from '../../context/ActionsContext';
+import { useActions, useApplicationTriggers } from '../../context/ActionsContext';
 import { AdjustmentRule } from '@diagram-craft/model/diagramLayerRuleTypes';
+import { RuleContextMenu } from './RuleContextMenu';
 
 const ELEMENT_INSTANCES = 'application/x-diagram-craft-element-instances';
 const LAYER_INSTANCES = 'application/x-diagram-craft-layer-instances';
@@ -174,50 +175,46 @@ const RuleEntry = (props: { rule: AdjustmentRule; layer: RuleLayer; diagram: Dia
   const applicationTriggers = useApplicationTriggers();
   const e = props.rule;
 
+  const actions = useActions();
+
   const icon = <TbFilterCog />;
 
   return (
-    <Tree.Node
-      key={e.id}
-      onClick={() => {
-        const keys = [...props.layer.runRule(props.rule).keys()];
-        for (const key of keys) {
-          addHighlight(props.diagram.lookup(key)!, 'search-match');
-        }
-        setTimeout(() => {
+    <RuleContextMenu layer={props.layer} rule={props.rule}>
+      <Tree.Node
+        key={e.id}
+        onClick={() => {
+          const keys = [...props.layer.runRule(props.rule).keys()];
           for (const key of keys) {
-            removeHighlight(props.diagram.lookup(key)!, 'search-match');
+            addHighlight(props.diagram.lookup(key)!, 'search-match');
           }
-        }, 1000);
-      }}
-    >
-      <Tree.NodeLabel>
-        {icon} &nbsp;{shorten(e.name, 25)}
-      </Tree.NodeLabel>
-      <Tree.NodeAction style={{ display: 'flex', gap: '0.35rem' }}>
-        <span
-          style={{ cursor: 'pointer' }}
-          onClick={e => {
-            applicationTriggers.showDialog?.({
-              name: 'ruleEditor',
-              props: {
-                rule: props.rule
-              },
-              onCancel: () => {},
-              onOk: (rule: AdjustmentRule) => {
-                const uow = new UnitOfWork(props.diagram, true);
-                props.layer.replaceRule(props.rule, rule, uow);
-                commitWithUndo(uow, 'Update rule');
-              }
-            });
-            e.preventDefault();
-            e.stopPropagation();
-          }}
-        >
-          <TbPencil />
-        </span>
-      </Tree.NodeAction>
-    </Tree.Node>
+          setTimeout(() => {
+            for (const key of keys) {
+              removeHighlight(props.diagram.lookup(key)!, 'search-match');
+            }
+          }, 1000);
+        }}
+      >
+        <Tree.NodeLabel>
+          {icon} &nbsp;{shorten(e.name, 25)}
+        </Tree.NodeLabel>
+        <Tree.NodeAction style={{ display: 'flex', gap: '0.35rem' }}>
+          <span
+            style={{ cursor: 'pointer' }}
+            onClick={e => {
+              actions.actionMap['RULE_LAYER_EDIT']!.execute({
+                id: `${props.layer.id}:${props.rule.id}`,
+                applicationTriggers
+              });
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+          >
+            <TbPencil />
+          </span>
+        </Tree.NodeAction>
+      </Tree.Node>
+    </RuleContextMenu>
   );
 };
 

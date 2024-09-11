@@ -25,6 +25,7 @@ import { selectionResizeActions } from './actions/selectionResizeAction';
 import { createLinkedNodeActions } from './actions/linkedNodeAction';
 import { exportActions } from './actions/exportAction';
 import { styleCopyActions } from './actions/styleCopyAction';
+import { ruleLayerActions } from './actions/ruleLayerActions';
 
 export const defaultCanvasActions: ActionMapFactory = (state: AppState) => ({
   ...edgeTextAddActions(state),
@@ -52,7 +53,8 @@ export const defaultCanvasActions: ActionMapFactory = (state: AppState) => ({
   ...debugActions(state),
   ...exportActions(state),
   ...layerActions(state),
-  ...toolActions(state)
+  ...toolActions(state),
+  ...ruleLayerActions(state)
 });
 
 export const defaultMacKeymap: KeyMap = {

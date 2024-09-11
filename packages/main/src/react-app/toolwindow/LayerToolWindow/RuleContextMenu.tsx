@@ -1,12 +1,12 @@
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { ActionContextMenuItem } from '../../components/ActionContextMenuItem';
 import React, { useState } from 'react';
-import { ToggleActionContextMenuItem } from '../../components/ToggleActionContextMenuItem';
 import { MessageDialog, MessageDialogState } from '../../components/MessageDialog';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { useApplicationTriggers } from '../../context/ActionsContext';
+import { AdjustmentRule } from '@diagram-craft/model/diagramLayerRuleTypes';
 
-export const LayerContextMenu = (props: Props) => {
+export const RuleContextMenu = (props: Props) => {
   const [confirmDeleteDialog, setConfirmDeleteDialog] = useState<MessageDialogState>(
     MessageDialog.INITIAL_STATE
   );
@@ -19,32 +19,20 @@ export const LayerContextMenu = (props: Props) => {
         <ContextMenu.Portal>
           <ContextMenu.Content className="cmp-context-menu">
             <ActionContextMenuItem
-              action={'LAYER_RENAME'}
-              context={{ id: props.layer?.id, applicationTriggers }}
+              action={'RULE_LAYER_EDIT'}
+              context={{ id: `${props.layer.id}:${props.rule.id}`, applicationTriggers }}
             >
-              Rename...
+              Edit
             </ActionContextMenuItem>
-            <ToggleActionContextMenuItem
-              action={'LAYER_TOGGLE_VISIBILITY'}
-              context={{ id: props.layer?.id }}
-            >
-              Visible
-            </ToggleActionContextMenuItem>
-            <ToggleActionContextMenuItem
-              action={'LAYER_TOGGLE_LOCK'}
-              context={{ id: props.layer?.id }}
-            >
-              Locked
-            </ToggleActionContextMenuItem>
             <ActionContextMenuItem
-              action={'LAYER_DELETE_LAYER'}
-              context={{ id: props.layer?.id }}
+              action={'RULE_LAYER_DELETE'}
+              context={{ id: `${props.layer.id}:${props.rule.id}`, applicationTriggers }}
               onBeforeSelect={async () => {
                 return new Promise<boolean>(resolve => {
                   setConfirmDeleteDialog({
                     isOpen: true,
                     title: 'Delete layer',
-                    message: 'Are you sure you want to delete this layer?',
+                    message: 'Are you sure you want to delete this rule?',
                     buttons: [
                       {
                         label: 'Cancel',
@@ -63,27 +51,6 @@ export const LayerContextMenu = (props: Props) => {
             >
               Delete
             </ActionContextMenuItem>
-            <ContextMenu.Separator className="cmp-context-menu__separator" />
-            <ActionContextMenuItem
-              action={'RULE_LAYER_ADD'}
-              context={{
-                id: props.layer?.id,
-                applicationTriggers
-              }}
-            >
-              Add rule
-            </ActionContextMenuItem>
-
-            <ContextMenu.Separator className="cmp-context-menu__separator" />
-            <ActionContextMenuItem action={'LAYER_ADD'}>New layer...</ActionContextMenuItem>
-
-            <ActionContextMenuItem action={'LAYER_ADD_REFERENCE'}>
-              New reference layer...
-            </ActionContextMenuItem>
-
-            <ActionContextMenuItem action={'LAYER_ADD_ADJUSTMENT'}>
-              New adjustment layer...
-            </ActionContextMenuItem>
           </ContextMenu.Content>
         </ContextMenu.Portal>
       </ContextMenu.Root>
@@ -97,6 +64,7 @@ export const LayerContextMenu = (props: Props) => {
 };
 
 type Props = {
-  layer?: Layer | undefined;
+  layer: Layer;
+  rule: AdjustmentRule;
   children: React.ReactNode;
 };

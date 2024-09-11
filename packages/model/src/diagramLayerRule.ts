@@ -218,7 +218,7 @@ export class RuleLayer extends Layer {
 
   replaceRule(existing: AdjustmentRule, newRule: AdjustmentRule, uow: UnitOfWork) {
     uow.snapshot(this);
-    this.#rules = this.#rules.map(r => (r !== existing ? r : newRule));
+    this.#rules = this.#rules.map(r => (r.id !== existing.id ? r : newRule));
     uow.updateElement(this);
   }
 
