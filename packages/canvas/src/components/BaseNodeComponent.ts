@@ -358,7 +358,8 @@ export class BaseNodeComponent<
             L ${x + w} ${y}
             Z`,
           'clip-path': `url(#${props.element.id}-glass-clip)`,
-          'fill': `url(#${props.element.id}-glass-gradient)`
+          'fill': `url(#${props.element.id}-glass-gradient)`,
+          'style': `pointer-events: none;`
         })
       );
     }
