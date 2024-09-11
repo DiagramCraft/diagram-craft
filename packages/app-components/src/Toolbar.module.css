@@ -127,5 +127,8 @@
       padding: 15px 10px;
       margin-right: 2px;
     }
+    .cmp-toolbar__separator {
+      margin: 0 10px;
+    }
   }
 }

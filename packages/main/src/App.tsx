@@ -581,22 +581,23 @@ export const App = (props: {
                   <ActionToolbarButton action={'IMAGE_INSERT'}>
                     <TbPlus size={'17.5px'} />
                   </ActionToolbarButton>
+                  <Toolbar.Separator />
                 </Toolbar.Root>
-              </div>
 
-              <div className={'_document'}>
-                {activeDoc.url ? urlToName(activeDoc.url) : 'Untitled'}
+                <div className={'_document'}>
+                  {activeDoc.url ? urlToName(activeDoc.url) : 'Untitled'}
 
-                <DirtyIndicator
-                  dirty={dirty}
-                  onDirtyChange={
-                    url
-                      ? async () => {
-                          applicationTriggers.loadFromUrl?.(url);
-                        }
-                      : undefined
-                  }
-                />
+                  <DirtyIndicator
+                    dirty={dirty}
+                    onDirtyChange={
+                      url
+                        ? async () => {
+                            applicationTriggers.loadFromUrl?.(url);
+                          }
+                        : undefined
+                    }
+                  />
+                </div>
               </div>
 
               <div className={'_extra-tools'}>

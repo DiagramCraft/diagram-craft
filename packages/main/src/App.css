@@ -265,8 +265,8 @@ input[type="checkbox"][data-field-state='overridden'] {
   grid-area: menu;
   background: var(--primary-bg);
   display: grid;
-  grid-template-areas: "menu tools document extra-tools";
-  grid-template-columns: 80px 1fr 20fr 1fr;
+  grid-template-areas: "menu tools extra-tools";
+  grid-template-columns: 80px 20fr 1fr;
 
   > ._menu-button {
     position: relative;
@@ -302,12 +302,20 @@ input[type="checkbox"][data-field-state='overridden'] {
       background-color: var(--highlight-bg);
       color: var(--highlight-fg);
     }
-  }
-  > ._document {
-    grid-area: document;
-    display: flex;
-    gap: 1rem;
-    justify-self: center;
+
+    >[role="toolbar"] {
+      width: auto;
+    }
+
+    > ._document {
+      margin-left: 0.25rem;
+      /*grid-area: document;*/
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      justify-self: center;
+      color: var(--primary-fg);
+    }
   }
   > ._extra-tools {
     grid-area: extra-tools;
