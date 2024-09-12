@@ -4,9 +4,10 @@ import { useEventListener } from './hooks/useEventListener';
 import { UserState } from '@diagram-craft/canvas/UserState';
 import { IconType } from 'react-icons/lib/cjs/iconBase';
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
+import { ErrorBoundary } from './ErrorBoundary';
 
 export const SideBarPage = (props: SideBarPage) => {
-  return props.children;
+  return <ErrorBoundary>{props.children}</ErrorBoundary>;
 };
 
 type SideBarPage = {

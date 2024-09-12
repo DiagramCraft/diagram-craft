@@ -1,62 +1,23 @@
 import './App.css';
 import { useEffect, useRef, useState } from 'react';
-import { LayerToolWindow } from './react-app/toolwindow/LayerToolWindow/LayerToolWindow';
 import * as ContextMenu from '@radix-ui/react-context-menu';
-import { Toolbar } from '@diagram-craft/app-components/Toolbar';
-import {
-  TbCheck,
-  TbChevronRight,
-  TbDatabaseEdit,
-  TbFile,
-  TbHelpSquare,
-  TbHistory,
-  TbInfoCircle,
-  TbLine,
-  TbLocation,
-  TbMenu2,
-  TbMoon,
-  TbPalette,
-  TbPencil,
-  TbPentagonPlus,
-  TbPhotoPlus,
-  TbPlus,
-  TbPointer,
-  TbPolygon,
-  TbSearch,
-  TbSquarePlus2,
-  TbStack,
-  TbSun,
-  TbTablePlus,
-  TbTextSize,
-  TbZoomIn,
-  TbZoomOut
-} from 'react-icons/tb';
 import { CanvasContextMenu } from './react-app/context-menu-dispatcher/CanvasContextMenu';
 import { ContextMenuDispatcher } from './react-app/context-menu-dispatcher/ContextMenuDispatcher';
 import { SelectionContextMenu } from './react-app/context-menu-dispatcher/SelectionContextMenu';
 import { ContextSpecificToolbar } from './react-app/toolbar/ContextSpecificToolbar';
-import { SideBar, SideBarPage } from './react-app/SideBar';
-import { PickerToolWindow } from './react-app/toolwindow/PickerToolWindow/PickerToolWindow';
-import { ObjectToolWindow } from './react-app/toolwindow/ObjectToolWindow/ObjectToolWindow';
 import { EdgeContextMenu } from './react-app/context-menu-dispatcher/EdgeContextMenu';
 import { useEventListener } from './react-app/hooks/useEventListener';
 import { useRedraw } from './react-app/hooks/useRedraw';
 import { defaultAppActions, defaultMacAppKeymap } from './react-app/appActionMap';
-import { ObjectInfoToolWindow } from './react-app/toolwindow/ObjectInfoToolWindow/ObjectInfoToolWindow';
 import { DocumentTabs } from './react-app/DocumentTabs';
-import { HistoryToolWindow } from './react-app/toolwindow/HistoryToolWindow/HistoryToolWindow';
 import { Ruler } from './react-app/Ruler';
-import { ActionsContext, useActions } from './react-app/context/ActionsContext';
+import { ActionsContext } from './react-app/context/ActionsContext';
 import { DiagramContext } from './react-app/context/DiagramContext';
 import { ConfigurationContext } from './react-app/context/ConfigurationContext';
 import { defaultPalette } from './react-app/toolwindow/ObjectToolWindow/components/palette';
-import { DocumentToolWindow } from './react-app/toolwindow/DocumentToolWindow/DocumentToolWindow';
-import { ActionToggleButton } from './react-app/toolbar/ActionToggleButton';
 import { LayerIndicator } from './react-app/LayerIndicator';
 import { NodeTypePopup, NodeTypePopupState } from './react-app/NodeTypePopup';
 import { MessageDialog, MessageDialogState } from './react-app/components/MessageDialog';
-import { ObjectDataToolWindow } from './react-app/toolwindow/ObjectDataToolWindow/ObjectDataToolWindow';
-import { QueryToolWindow } from './react-app/toolwindow/QueryToolWindow/QueryToolWindow';
 import {
   canvasDragOverHandler,
   canvasDropHandler
@@ -78,22 +39,15 @@ import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { HelpMessage } from './react-app/components/HelpMessage';
 import { DiagramFactory, DocumentFactory } from '@diagram-craft/model/serialization/deserialize';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { DirtyIndicator } from './react-app/DirtyIndicator';
 import { loadFileFromUrl } from '@diagram-craft/canvas-app/loaders';
 import { ErrorBoundary } from './react-app/ErrorBoundary';
-import { SelectToolWindow } from './react-app/toolwindow/SelectToolWindow/SelectToolWindow';
 import { FreehandTool } from '@diagram-craft/canvas-app/tools/freehandTool';
 import { PanTool } from '@diagram-craft/canvas-app/tools/panTool';
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { ActionDropdownMenuItem } from './react-app/components/ActionDropdownMenuItem';
-import { ToggleActionDropdownMenuItem } from './react-app/components/ToggleActionDropdownMenuItem';
 import { FileDialog } from './react-app/FileDialog';
-import { urlToName } from '@diagram-craft/utils/url';
 import { newid } from '@diagram-craft/utils/id';
 import { RegularLayer } from '@diagram-craft/model/diagramLayer';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ApplicationTriggers, ContextMenuTarget } from '@diagram-craft/canvas/ApplicationTriggers';
-import { ActionToolbarButton } from './react-app/toolbar/ActionToolbarButton';
 import { ImageInsertDialog } from './react-app/ImageInsertDialog';
 import { TableInsertDialog } from './react-app/TableInsertDialog';
 import { RectTool } from '@diagram-craft/canvas-app/tools/rectTool';
@@ -102,6 +56,11 @@ import { StringInputDialog } from './react-app/components/StringInputDialog';
 import { RuleEditorDialog } from './react-app/components/RuleEditorDialog/RuleEditorDialog';
 import { application } from './application';
 import { useOnChange } from './react-app/hooks/useOnChange';
+import { MainMenu } from './react-app/MainMenu';
+import { MainToolbar } from './react-app/MainToolbar';
+import { AuxToolbar } from './react-app/AuxToolbar';
+import { RightSidebar } from './react-app/RightSidebar';
+import { LeftSidebar } from './react-app/LeftSidebar';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -120,21 +79,6 @@ const tools: Record<ToolType, ToolContructor> = {
   freehand: FreehandTool,
   pan: PanTool,
   rect: RectTool
-};
-
-const DarkModeToggleButton = () => {
-  const redraw = useRedraw();
-  const { actionMap } = useActions();
-  useEventListener(actionMap['TOGGLE_DARK_MODE']!, 'actionchanged', redraw);
-  return (
-    <Toolbar.Button onClick={() => actionMap['TOGGLE_DARK_MODE']?.execute()}>
-      {actionMap['TOGGLE_DARK_MODE']?.getState({}) ? (
-        <TbSun size={'17.5px'} />
-      ) : (
-        <TbMoon size={'17.5px'} />
-      )}
-    </Toolbar.Button>
-  );
 };
 
 export type DiagramRef = {
@@ -408,275 +352,18 @@ export const App = (props: {
 
           <div id="app" className={'dark-theme'}>
             <div id="menu">
-              <DropdownMenu.Root>
-                <DropdownMenu.Trigger asChild>
-                  <button className={'_menu-button'}>
-                    <TbMenu2 size={'24px'} />
-                  </button>
-                </DropdownMenu.Trigger>
-
-                <DropdownMenu.Portal>
-                  <DropdownMenu.Content className="cmp-context-menu" sideOffset={2} align={'start'}>
-                    <DropdownMenu.Sub>
-                      <DropdownMenu.SubTrigger className="cmp-context-menu__sub-trigger">
-                        File
-                        <div className="cmp-context-menu__right-slot">
-                          <TbChevronRight />
-                        </div>
-                      </DropdownMenu.SubTrigger>
-                      <DropdownMenu.Portal>
-                        <DropdownMenu.SubContent
-                          className="cmp-context-menu"
-                          sideOffset={2}
-                          alignOffset={-5}
-                        >
-                          <ActionDropdownMenuItem action={'FILE_NEW'}>New</ActionDropdownMenuItem>
-                          <ActionDropdownMenuItem action={'FILE_OPEN'}>
-                            Open...
-                          </ActionDropdownMenuItem>
-
-                          <DropdownMenu.Sub>
-                            <DropdownMenu.SubTrigger
-                              className="cmp-context-menu__sub-trigger"
-                              disabled={
-                                userState.current.recentFiles.filter(
-                                  url => url !== application.model.activeDocument.url
-                                ).length === 0
-                              }
-                            >
-                              Open Recent...
-                              <div className="cmp-context-menu__right-slot">
-                                <TbChevronRight />
-                              </div>
-                            </DropdownMenu.SubTrigger>
-                            <DropdownMenu.Portal>
-                              <DropdownMenu.SubContent
-                                className="cmp-context-menu"
-                                sideOffset={2}
-                                alignOffset={-5}
-                              >
-                                {userState.current.recentFiles
-                                  .filter(url => url !== application.model.activeDocument.url)
-                                  .map(url => (
-                                    <DropdownMenu.Item
-                                      key={url}
-                                      className="cmp-context-menu__item"
-                                      onSelect={() => applicationTriggers.loadFromUrl?.(url)}
-                                    >
-                                      {urlToName(url)}
-                                    </DropdownMenu.Item>
-                                  ))}
-                              </DropdownMenu.SubContent>
-                            </DropdownMenu.Portal>
-                          </DropdownMenu.Sub>
-                          <ActionDropdownMenuItem action={'FILE_SAVE'}>Save</ActionDropdownMenuItem>
-                          <ActionDropdownMenuItem action={'FILE_SAVE'}>
-                            Save As...
-                          </ActionDropdownMenuItem>
-                        </DropdownMenu.SubContent>
-                      </DropdownMenu.Portal>
-                    </DropdownMenu.Sub>
-
-                    <DropdownMenu.Sub>
-                      <DropdownMenu.SubTrigger className="cmp-context-menu__sub-trigger">
-                        Edit
-                        <div className="cmp-context-menu__right-slot">
-                          <TbChevronRight />
-                        </div>
-                      </DropdownMenu.SubTrigger>
-                      <DropdownMenu.Portal>
-                        <DropdownMenu.SubContent
-                          className="cmp-context-menu"
-                          sideOffset={2}
-                          alignOffset={-5}
-                        >
-                          <ActionDropdownMenuItem action={'UNDO'}>Undo</ActionDropdownMenuItem>
-                          <ActionDropdownMenuItem action={'REDO'}>Redo</ActionDropdownMenuItem>
-                          <DropdownMenu.Separator className="cmp-context-menu__separator" />
-
-                          <ActionDropdownMenuItem action={'CLIPBOARD_CUT'}>
-                            Cut
-                          </ActionDropdownMenuItem>
-                          <ActionDropdownMenuItem action={'CLIPBOARD_COPY'}>
-                            Copy
-                          </ActionDropdownMenuItem>
-                          <ActionDropdownMenuItem action={'DUPLICATE'}>
-                            Duplicate
-                          </ActionDropdownMenuItem>
-                        </DropdownMenu.SubContent>
-                      </DropdownMenu.Portal>
-                    </DropdownMenu.Sub>
-
-                    <DropdownMenu.Sub>
-                      <DropdownMenu.SubTrigger className="cmp-context-menu__sub-trigger">
-                        View
-                        <div className="cmp-context-menu__right-slot">
-                          <TbChevronRight />
-                        </div>
-                      </DropdownMenu.SubTrigger>
-                      <DropdownMenu.Portal>
-                        <DropdownMenu.SubContent
-                          className="cmp-context-menu"
-                          sideOffset={2}
-                          alignOffset={-5}
-                        >
-                          <ActionDropdownMenuItem action={'ZOOM_IN'}>
-                            Zoom In
-                          </ActionDropdownMenuItem>
-                          <ActionDropdownMenuItem action={'ZOOM_OUT'}>
-                            Zoom Out
-                          </ActionDropdownMenuItem>
-                          <DropdownMenu.Separator className="cmp-context-menu__separator" />
-                          <ToggleActionDropdownMenuItem action={'TOGGLE_RULER'}>
-                            Ruler
-                          </ToggleActionDropdownMenuItem>
-                          <ToggleActionDropdownMenuItem action={'TOGGLE_HELP'}>
-                            Help
-                          </ToggleActionDropdownMenuItem>
-                          <ToggleActionDropdownMenuItem action={'TOGGLE_DARK_MODE'}>
-                            Dark Mode
-                          </ToggleActionDropdownMenuItem>
-                        </DropdownMenu.SubContent>
-                      </DropdownMenu.Portal>
-                    </DropdownMenu.Sub>
-
-                    <DropdownMenu.Arrow className="cmp-context-menu__arrow" />
-                  </DropdownMenu.Content>
-                </DropdownMenu.Portal>
-              </DropdownMenu.Root>
-
-              <div className={'_tools'}>
-                <Toolbar.Root size={'large'}>
-                  <ActionToggleButton action={'TOOL_MOVE'}>
-                    <TbPointer size={'17.5px'} />
-                  </ActionToggleButton>
-                  <ActionToggleButton action={'TOOL_RECT'}>
-                    <TbSquarePlus2 size={'17.5px'} />
-                  </ActionToggleButton>
-                  <ActionToggleButton action={'TOOL_EDGE'}>
-                    <TbLine size={'17.5px'} />
-                  </ActionToggleButton>
-                  <ActionToggleButton action={'TOOL_TEXT'}>
-                    <TbTextSize size={'17.5px'} />
-                  </ActionToggleButton>
-                  <ActionToggleButton action={'TOOL_FREEHAND'}>
-                    <TbPencil size={'17.5px'} />
-                  </ActionToggleButton>
-                  <ActionToggleButton action={'TOOL_PEN'}>
-                    <TbPolygon size={'17.5px'} />
-                  </ActionToggleButton>
-                  <ActionToggleButton action={'TOOL_NODE'}>
-                    <TbLocation size={'17.5px'} transform={'scale(-1,1)'} />
-                  </ActionToggleButton>
-                  <Toolbar.Separator />
-                  <ActionToolbarButton action={'IMAGE_INSERT'}>
-                    <TbPhotoPlus size={'17.5px'} />
-                  </ActionToolbarButton>
-                  <ActionToolbarButton action={'TABLE_INSERT'}>
-                    <TbTablePlus size={'17.5px'} />
-                  </ActionToolbarButton>
-                  <ActionToolbarButton action={'IMAGE_INSERT'}>
-                    <TbPlus size={'17.5px'} />
-                  </ActionToolbarButton>
-                  <Toolbar.Separator />
-                </Toolbar.Root>
-
-                <div className={'_document'}>
-                  {application.model.activeDocument.url
-                    ? urlToName(application.model.activeDocument.url)
-                    : 'Untitled'}
-
-                  <DirtyIndicator
-                    dirty={dirty}
-                    onDirtyChange={
-                      url
-                        ? async () => {
-                            applicationTriggers.loadFromUrl?.(url);
-                          }
-                        : undefined
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className={'_extra-tools'}>
-                <Toolbar.Root>
-                  <ActionToggleButton action={'TOGGLE_HELP'}>
-                    <TbHelpSquare size={'17.5px'} />
-                  </ActionToggleButton>
-
-                  <Toolbar.Button onClick={() => actionMap['ZOOM_OUT']?.execute()}>
-                    <TbZoomOut size={'17.5px'} />
-                  </Toolbar.Button>
-                  <Toolbar.Button onClick={() => actionMap['ZOOM_IN']?.execute()}>
-                    <TbZoomIn size={'17.5px'} />
-                  </Toolbar.Button>
-
-                  <DarkModeToggleButton />
-                </Toolbar.Root>
-              </div>
+              <MainMenu userState={userState.current} />
+              <MainToolbar dirty={dirty} />
+              <AuxToolbar />
             </div>
+
             <div id="window-area">
               <div id="toolbar">
                 <ContextSpecificToolbar />
               </div>
 
-              <SideBar side={'left'}>
-                <SideBarPage icon={TbPentagonPlus}>
-                  <ErrorBoundary>
-                    <PickerToolWindow />
-                  </ErrorBoundary>
-                </SideBarPage>
-                <SideBarPage icon={TbStack}>
-                  <ErrorBoundary>
-                    <LayerToolWindow />
-                  </ErrorBoundary>
-                </SideBarPage>
-                <SideBarPage icon={TbCheck}>
-                  <ErrorBoundary>
-                    <SelectToolWindow diagram={$d} />
-                  </ErrorBoundary>
-                </SideBarPage>
-                <SideBarPage icon={TbFile}>
-                  <ErrorBoundary>
-                    <DocumentToolWindow
-                      document={doc}
-                      value={$d.id}
-                      onValueChange={v => {
-                        setActiveDiagram(doc.getById(v)!, applicationState.current);
-                      }}
-                    />
-                  </ErrorBoundary>
-                </SideBarPage>
-                <SideBarPage icon={TbHistory}>
-                  <ErrorBoundary>
-                    <HistoryToolWindow />
-                  </ErrorBoundary>
-                </SideBarPage>
-                <SideBarPage icon={TbSearch}>
-                  <ErrorBoundary>
-                    <QueryToolWindow />
-                  </ErrorBoundary>
-                </SideBarPage>
-              </SideBar>
-
-              <SideBar side={'right'}>
-                <SideBarPage icon={TbPalette}>
-                  <ErrorBoundary>
-                    <ObjectToolWindow />
-                  </ErrorBoundary>
-                </SideBarPage>
-                <SideBarPage icon={TbInfoCircle}>
-                  <ErrorBoundary>
-                    <ObjectInfoToolWindow />
-                  </ErrorBoundary>
-                </SideBarPage>
-                <SideBarPage icon={TbDatabaseEdit}>
-                  <ErrorBoundary>
-                    <ObjectDataToolWindow />
-                  </ErrorBoundary>
-                </SideBarPage>
-              </SideBar>
+              <LeftSidebar applicationState={applicationState.current} />
+              <RightSidebar />
 
               <div id="canvas-area" className={'light-theme'}>
                 <ErrorBoundary>
