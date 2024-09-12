@@ -25,27 +25,6 @@ export const RuleContextMenu = (props: Props) => {
             <ActionContextMenuItem
               action={'RULE_LAYER_DELETE'}
               context={{ id: `${props.layer.id}:${props.rule.id}` }}
-              onBeforeSelect={async () => {
-                return new Promise<boolean>(resolve => {
-                  setConfirmDeleteDialog({
-                    isOpen: true,
-                    title: 'Delete layer',
-                    message: 'Are you sure you want to delete this rule?',
-                    buttons: [
-                      {
-                        label: 'Cancel',
-                        type: 'cancel',
-                        onClick: () => resolve(false)
-                      },
-                      {
-                        label: 'Delete',
-                        type: 'danger',
-                        onClick: () => resolve(true)
-                      }
-                    ]
-                  });
-                });
-              }}
             >
               Delete
             </ActionContextMenuItem>

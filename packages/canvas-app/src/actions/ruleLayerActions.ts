@@ -31,18 +31,29 @@ export class RuleLayerDeleteAction extends AbstractAction {
   execute(context: ActionContext): void {
     precondition.is.present(context.id);
 
-    // TODO: Need to change such that it's possible to pass more arguments to the action
-    const [layerId, ruleId] = context.id.split(':');
+    // TODO: This should be a confirm dialog
+    application.ui.showMessageDialog?.(
+      'Delete layer',
+      'Are you sure you want to delete this rule?',
+      'Yes',
+      'No',
+      () => {
+        precondition.is.present(context.id);
 
-    const layer = this.diagram.layers.byId(layerId) as RuleLayer;
-    const rule = layer.byId(ruleId);
+        // TODO: Need to change such that it's possible to pass more arguments to the action
+        const [layerId, ruleId] = context.id.split(':');
 
-    assert.present(rule, 'Rule with id ' + ruleId + ' not found');
+        const layer = this.diagram.layers.byId(layerId) as RuleLayer;
+        const rule = layer.byId(ruleId);
 
-    const uow = new UnitOfWork(this.diagram, true);
+        assert.present(rule, 'Rule with id ' + ruleId + ' not found');
 
-    layer.removeRule(rule, uow);
-    commitWithUndo(uow, 'Delete rule');
+        const uow = new UnitOfWork(this.diagram, true);
+
+        layer.removeRule(rule, uow);
+        commitWithUndo(uow, 'Delete rule');
+      }
+    );
   }
 }
 

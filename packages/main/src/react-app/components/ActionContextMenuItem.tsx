@@ -12,12 +12,9 @@ export const ActionContextMenuItem = (props: Props) => {
       className="cmp-context-menu__item"
       disabled={!actionMap[props.action]?.isEnabled(props.context ?? {})}
       onSelect={async () => {
-        const res = (await props.onBeforeSelect?.()) ?? true;
-        if (res === false) return;
-
         const a: Action = actionMap[props.action]!;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        a.execute(props.context ?? {}, res as any);
+        a.execute(props.context ?? {});
       }}
     >
       {props.children}{' '}
@@ -32,5 +29,4 @@ type Props = {
   action: keyof ActionMap;
   context?: ActionContext;
   children: React.ReactNode;
-  onBeforeSelect?: () => Promise<boolean | unknown>;
 };

@@ -47,22 +47,33 @@ export class LayerDeleteAction extends AbstractAction {
   execute(context: ActionContext): void {
     precondition.is.present(context.id);
 
-    const uow = new UnitOfWork(this.diagram, true);
+    // TODO: This should be a confirm dialog
+    application.ui.showMessageDialog?.(
+      'Delete layer',
+      'Are you sure you want to delete this layer?',
+      'Yes',
+      'No',
+      () => {
+        const uow = new UnitOfWork(this.diagram, true);
 
-    const layer = this.diagram.layers.byId(context.id);
-    assert.present(layer);
+        precondition.is.present(context.id);
 
-    this.diagram.layers.remove(layer, uow);
+        const layer = this.diagram.layers.byId(context.id);
+        assert.present(layer);
 
-    const snapshots = uow.commit();
-    this.diagram.undoManager.add(
-      new CompoundUndoableAction([
-        new SnapshotUndoableAction('Delete layer', this.diagram, snapshots.onlyUpdated()),
-        ...(layer instanceof RegularLayer
-          ? [new ElementDeleteUndoableAction(this.diagram, layer, layer.elements, false)]
-          : []),
-        new LayerDeleteUndoableAction(this.diagram, layer)
-      ])
+        this.diagram.layers.remove(layer, uow);
+
+        const snapshots = uow.commit();
+        this.diagram.undoManager.add(
+          new CompoundUndoableAction([
+            new SnapshotUndoableAction('Delete layer', this.diagram, snapshots.onlyUpdated()),
+            ...(layer instanceof RegularLayer
+              ? [new ElementDeleteUndoableAction(this.diagram, layer, layer.elements, false)]
+              : []),
+            new LayerDeleteUndoableAction(this.diagram, layer)
+          ])
+        );
+      }
     );
   }
 }

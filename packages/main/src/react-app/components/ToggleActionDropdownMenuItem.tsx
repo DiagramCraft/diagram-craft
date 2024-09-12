@@ -18,11 +18,8 @@ export const ToggleActionDropdownMenuItem = (props: Props) => {
       disabled={!actionMap[props.action]?.isEnabled(props.context ?? {})}
       checked={(action as ToggleAction).getState(props.context ?? {})}
       onCheckedChange={async () => {
-        const res = (await props.onBeforeSelect?.()) ?? true;
-        if (res === false) return;
-
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        action.execute(props.context ?? {}, res as any);
+        action.execute(props.context ?? {});
         redraw();
       }}
     >
@@ -41,5 +38,4 @@ type Props = {
   action: keyof ActionMap;
   context?: ActionContext;
   children: React.ReactNode;
-  onBeforeSelect?: () => Promise<boolean | unknown>;
 };

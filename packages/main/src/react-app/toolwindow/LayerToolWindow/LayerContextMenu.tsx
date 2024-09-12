@@ -1,15 +1,10 @@
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { ActionContextMenuItem } from '../../components/ActionContextMenuItem';
-import React, { useState } from 'react';
+import React from 'react';
 import { ToggleActionContextMenuItem } from '../../components/ToggleActionContextMenuItem';
-import { MessageDialog, MessageDialogState } from '../../components/MessageDialog';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 
 export const LayerContextMenu = (props: Props) => {
-  const [confirmDeleteDialog, setConfirmDeleteDialog] = useState<MessageDialogState>(
-    MessageDialog.INITIAL_STATE
-  );
-
   return (
     <>
       <ContextMenu.Root>
@@ -31,31 +26,7 @@ export const LayerContextMenu = (props: Props) => {
             >
               Locked
             </ToggleActionContextMenuItem>
-            <ActionContextMenuItem
-              action={'LAYER_DELETE_LAYER'}
-              context={{ id: props.layer?.id }}
-              onBeforeSelect={async () => {
-                return new Promise<boolean>(resolve => {
-                  setConfirmDeleteDialog({
-                    isOpen: true,
-                    title: 'Delete layer',
-                    message: 'Are you sure you want to delete this layer?',
-                    buttons: [
-                      {
-                        label: 'Cancel',
-                        type: 'cancel',
-                        onClick: () => resolve(false)
-                      },
-                      {
-                        label: 'Delete',
-                        type: 'danger',
-                        onClick: () => resolve(true)
-                      }
-                    ]
-                  });
-                });
-              }}
-            >
+            <ActionContextMenuItem action={'LAYER_DELETE_LAYER'} context={{ id: props.layer?.id }}>
               Delete
             </ActionContextMenuItem>
             <ContextMenu.Separator className="cmp-context-menu__separator" />
@@ -81,11 +52,6 @@ export const LayerContextMenu = (props: Props) => {
           </ContextMenu.Content>
         </ContextMenu.Portal>
       </ContextMenu.Root>
-
-      <MessageDialog
-        {...confirmDeleteDialog}
-        onClose={() => setConfirmDeleteDialog(MessageDialog.INITIAL_STATE)}
-      />
     </>
   );
 };
