@@ -3,10 +3,10 @@ import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { assert } from '@diagram-craft/utils/assert';
 import { serializeDiagramDocument } from '@diagram-craft/model/serialization/serialize';
-import { ApplicationTriggers } from '@diagram-craft/canvas/ApplicationTriggers';
+import { application } from '../../application';
 
 export const fileSaveActions = (state: ActionConstructionParameters) => ({
-  FILE_SAVE: new FileSaveAction(state.diagram, state.applicationTriggers)
+  FILE_SAVE: new FileSaveAction(state.diagram)
 });
 
 declare global {
@@ -14,10 +14,7 @@ declare global {
 }
 
 class FileSaveAction extends AbstractAction {
-  constructor(
-    private readonly diagram: Diagram,
-    private readonly applicationTriggers: ApplicationTriggers
-  ) {
+  constructor(private readonly diagram: Diagram) {
     super();
 
     if (diagram.document.url) {
@@ -46,7 +43,7 @@ class FileSaveAction extends AbstractAction {
       if (data.status !== 'ok') {
         console.error('Failed to save document');
       } else {
-        this.applicationTriggers.clearDirty?.();
+        application.ui.clearDirty?.();
       }
     });
   }

@@ -6,10 +6,10 @@ import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoAction
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { newid } from '@diagram-craft/utils/id';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
-import { ApplicationTriggers } from '@diagram-craft/canvas/ApplicationTriggers';
+import { application } from '../../application';
 
 export const imageInsertActions = (state: ActionConstructionParameters) => ({
-  IMAGE_INSERT: new ImageInsertAction(state.diagram, state.applicationTriggers)
+  IMAGE_INSERT: new ImageInsertAction(state.diagram)
 });
 
 declare global {
@@ -27,16 +27,13 @@ declare global {
 }
 
 class ImageInsertAction extends AbstractAction {
-  constructor(
-    private readonly diagram: Diagram,
-    private readonly applicationTriggers: ApplicationTriggers
-  ) {
+  constructor(private readonly diagram: Diagram) {
     super();
     this.addCriterion(diagram, 'change', () => diagram.activeLayer.type === 'regular');
   }
 
   execute(_context: ActionContext): void {
-    this.applicationTriggers?.showDialog?.({
+    application.ui?.showDialog?.({
       name: 'imageInsert',
       props: {},
       onOk: async data => {

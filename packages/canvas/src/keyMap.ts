@@ -2,12 +2,10 @@ import { ApplicationState } from './ApplicationState';
 import { Action, ActionContext, ActionEvents, ToggleAction } from './action';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { ApplicationTriggers } from './ApplicationTriggers';
 
 export type ActionConstructionParameters = {
   diagram: Diagram;
   applicationState: ApplicationState;
-  applicationTriggers: ApplicationTriggers;
 };
 
 type Alt = 'A-' | '';

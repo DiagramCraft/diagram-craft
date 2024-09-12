@@ -7,12 +7,12 @@ import { assert, precondition } from '@diagram-craft/utils/assert';
 import { AdjustmentRule } from '@diagram-craft/model/diagramLayerRuleTypes';
 import { RuleLayer } from '@diagram-craft/model/diagramLayerRule';
 import { newid } from '@diagram-craft/utils/id';
-import { ApplicationTriggers } from '@diagram-craft/canvas/ApplicationTriggers';
+import { application } from '../application';
 
 export const ruleLayerActions = (state: ActionConstructionParameters) => ({
-  RULE_LAYER_EDIT: new RuleLayerEditAction(state.diagram, state.applicationTriggers),
+  RULE_LAYER_EDIT: new RuleLayerEditAction(state.diagram),
   RULE_LAYER_DELETE: new RuleLayerDeleteAction(state.diagram),
-  RULE_LAYER_ADD: new RuleLayerAddAction(state.diagram, state.applicationTriggers)
+  RULE_LAYER_ADD: new RuleLayerAddAction(state.diagram)
 });
 
 declare global {
@@ -47,10 +47,7 @@ export class RuleLayerDeleteAction extends AbstractAction {
 }
 
 export class RuleLayerEditAction extends AbstractAction {
-  constructor(
-    protected readonly diagram: Diagram,
-    private readonly applicationTriggers: ApplicationTriggers
-  ) {
+  constructor(protected readonly diagram: Diagram) {
     super();
   }
 
@@ -69,7 +66,7 @@ export class RuleLayerEditAction extends AbstractAction {
 
     assert.present(rule, 'Rule with id ' + ruleId + ' not found');
 
-    this.applicationTriggers.showDialog?.({
+    application.ui.showDialog?.({
       name: 'ruleEditor',
       props: {
         rule: rule
@@ -85,10 +82,7 @@ export class RuleLayerEditAction extends AbstractAction {
 }
 
 export class RuleLayerAddAction extends AbstractAction {
-  constructor(
-    protected readonly diagram: Diagram,
-    private readonly applicationTriggers: ApplicationTriggers
-  ) {
+  constructor(protected readonly diagram: Diagram) {
     super();
   }
 
@@ -124,7 +118,7 @@ export class RuleLayerAddAction extends AbstractAction {
 
     assert.present(rule);
 
-    this.applicationTriggers.showDialog?.({
+    application.ui.showDialog?.({
       name: 'ruleEditor',
       props: {
         rule: rule

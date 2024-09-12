@@ -100,6 +100,8 @@ import { RectTool } from '@diagram-craft/canvas-app/tools/rectTool';
 import { ReferenceLayerDialog } from './react-app/components/NewReferenceLayerDialog';
 import { StringInputDialog } from './react-app/components/StringInputDialog';
 import { RuleEditorDialog } from './react-app/components/RuleEditorDialog/RuleEditorDialog';
+import { application } from './application';
+import { useOnChange } from './react-app/hooks/useOnChange';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -140,29 +142,12 @@ export type DiagramRef = {
   url: string;
 };
 
-type ActiveDocument = {
-  doc: DiagramDocument;
-  url?: string;
-};
-
-type ActiveDiagram = {
-  diagram: Diagram;
-  actionMap: Partial<ActionMap>;
-};
-
-const createActiveDiagram = (
-  $d: Diagram,
-  applicationState: ApplicationState,
-  applicationTriggers: ApplicationTriggers
-): ActiveDiagram => {
-  return {
+const setActiveDiagram = ($d: Diagram, applicationState: ApplicationState) => {
+  application.model.activeDiagram = $d;
+  application.actions = makeActionMap(defaultAppActions)({
     diagram: $d,
-    actionMap: makeActionMap(defaultAppActions)({
-      diagram: $d,
-      applicationState: applicationState,
-      applicationTriggers: applicationTriggers
-    })
-  };
+    applicationState: applicationState
+  });
 };
 
 declare global {
@@ -186,10 +171,8 @@ export const App = (props: {
   const applicationState = useRef(new ApplicationState());
   const userState = useRef(new UserState());
 
-  const [activeDoc, setActiveDoc] = useState<ActiveDocument>({
-    doc: props.doc,
-    url: props.url
-  });
+  useEventListener(application.model, 'activeDiagramChange', redraw);
+  useEventListener(application.model, 'activeDocumentChange', redraw);
 
   const applicationTriggers: ApplicationTriggers = {
     pushHelp: (id: string, message: string) => {
@@ -272,10 +255,11 @@ export const App = (props: {
     },
     loadFromUrl: async (url: string) => {
       const doc = await loadFileFromUrl(url, props.documentFactory, props.diagramFactory);
-      setActiveDoc({ doc, url });
-      setActiveDiagram(
-        createActiveDiagram(doc.diagrams[0], applicationState.current, applicationTriggers)
-      );
+      doc.url = url;
+
+      application.model.activeDocument = doc;
+      setActiveDiagram(doc.diagrams[0], applicationState.current);
+
       Autosave.clear();
       setDirty(false);
 
@@ -290,8 +274,10 @@ export const App = (props: {
         UnitOfWork.immediate(diagram)
       );
       doc.addDiagram(diagram);
-      setActiveDoc({ doc, url: undefined });
-      setActiveDiagram(createActiveDiagram(diagram, applicationState.current, applicationTriggers));
+
+      application.model.activeDocument = doc;
+      setActiveDiagram(diagram, applicationState.current);
+
       Autosave.clear();
       setDirty(false);
     },
@@ -300,10 +286,12 @@ export const App = (props: {
       setDirty(false);
     }
   };
+  application.ui = applicationTriggers;
 
-  const [activeDiagram, setActiveDiagram] = useState<ActiveDiagram>(
-    createActiveDiagram(activeDoc.doc.diagrams[0], applicationState.current, applicationTriggers)
-  );
+  useOnChange(props.doc, () => {
+    application.model.activeDocument = props.doc;
+    setActiveDiagram(props.doc.diagrams[0], applicationState.current);
+  });
 
   const [dirty, setDirty] = useState(Autosave.exists());
   const [popoverState, setPopoverState] = useState<NodeTypePopupState>(NodeTypePopup.INITIAL_STATE);
@@ -327,10 +315,10 @@ export const App = (props: {
     redraw();
   }, [svgRef.current]);
 
-  const $d = activeDiagram.diagram;
-  const actionMap = activeDiagram.actionMap;
-  const doc = activeDoc.doc;
-  const url = activeDoc.url;
+  const $d = application.model.activeDiagram;
+  const actionMap = application.actions;
+  const doc = application.model.activeDocument;
+  const url = application.model.activeDocument.url;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const autosave = (event: any) => {
@@ -451,8 +439,9 @@ export const App = (props: {
                             <DropdownMenu.SubTrigger
                               className="cmp-context-menu__sub-trigger"
                               disabled={
-                                userState.current.recentFiles.filter(url => url !== activeDoc.url)
-                                  .length === 0
+                                userState.current.recentFiles.filter(
+                                  url => url !== application.model.activeDocument.url
+                                ).length === 0
                               }
                             >
                               Open Recent...
@@ -467,7 +456,7 @@ export const App = (props: {
                                 alignOffset={-5}
                               >
                                 {userState.current.recentFiles
-                                  .filter(url => url !== activeDoc.url)
+                                  .filter(url => url !== application.model.activeDocument.url)
                                   .map(url => (
                                     <DropdownMenu.Item
                                       key={url}
@@ -593,7 +582,9 @@ export const App = (props: {
                 </Toolbar.Root>
 
                 <div className={'_document'}>
-                  {activeDoc.url ? urlToName(activeDoc.url) : 'Untitled'}
+                  {application.model.activeDocument.url
+                    ? urlToName(application.model.activeDocument.url)
+                    : 'Untitled'}
 
                   <DirtyIndicator
                     dirty={dirty}
@@ -652,13 +643,7 @@ export const App = (props: {
                       document={doc}
                       value={$d.id}
                       onValueChange={v => {
-                        setActiveDiagram(
-                          createActiveDiagram(
-                            doc.getById(v)!,
-                            applicationState.current,
-                            applicationTriggers
-                          )
-                        );
+                        setActiveDiagram(doc.getById(v)!, applicationState.current);
                       }}
                     />
                   </ErrorBoundary>
@@ -761,13 +746,7 @@ export const App = (props: {
                 <DocumentTabs
                   value={$d.id}
                   onValueChange={v => {
-                    setActiveDiagram(
-                      createActiveDiagram(
-                        doc.getById(v)!,
-                        applicationState.current,
-                        applicationTriggers
-                      )
-                    );
+                    setActiveDiagram(doc.getById(v)!, applicationState.current);
                   }}
                   document={doc}
                 />

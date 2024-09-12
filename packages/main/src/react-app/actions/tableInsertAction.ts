@@ -7,10 +7,10 @@ import { newid } from '@diagram-craft/utils/id';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
-import { ApplicationTriggers } from '@diagram-craft/canvas/ApplicationTriggers';
+import { application } from '../../application';
 
 export const tableInsertActions = (state: ActionConstructionParameters) => ({
-  TABLE_INSERT: new TableInsertAction(state.diagram, state.applicationTriggers)
+  TABLE_INSERT: new TableInsertAction(state.diagram)
 });
 
 declare global {
@@ -28,10 +28,7 @@ declare global {
 }
 
 class TableInsertAction extends AbstractAction {
-  constructor(
-    private readonly diagram: Diagram,
-    private readonly applicationTriggers: ApplicationTriggers
-  ) {
+  constructor(private readonly diagram: Diagram) {
     super();
     this.addCriterion(diagram, 'change', () => diagram.activeLayer.type === 'regular');
   }
@@ -39,7 +36,7 @@ class TableInsertAction extends AbstractAction {
   execute(_context: ActionContext): void {
     assertRegularLayer(this.diagram.activeLayer);
 
-    this.applicationTriggers.showDialog?.({
+    application.ui.showDialog?.({
       name: 'tableInsert',
       props: {},
       onOk: async props => {

@@ -17,16 +17,16 @@ import { Layer, LayerType, RegularLayer } from '@diagram-craft/model/diagramLaye
 import { assert, precondition } from '@diagram-craft/utils/assert';
 import { newid } from '@diagram-craft/utils/id';
 import { ReferenceLayer } from '@diagram-craft/model/diagramLayerReference';
-import { ApplicationTriggers } from '@diagram-craft/canvas/ApplicationTriggers';
+import { application } from '../application';
 
 export const layerActions = (state: ActionConstructionParameters) => ({
   LAYER_DELETE_LAYER: new LayerDeleteAction(state.diagram),
   LAYER_TOGGLE_VISIBILITY: new LayerToggleVisibilityAction(state.diagram),
   LAYER_TOGGLE_LOCK: new LayerToggleLockedAction(state.diagram),
-  LAYER_RENAME: new LayerRenameAction(state.diagram, state.applicationTriggers),
-  LAYER_ADD: new LayerAddAction(state.diagram, state.applicationTriggers, 'regular'),
-  LAYER_ADD_ADJUSTMENT: new LayerAddAction(state.diagram, state.applicationTriggers, 'adjustment'),
-  LAYER_ADD_REFERENCE: new LayerAddAction(state.diagram, state.applicationTriggers, 'reference'),
+  LAYER_RENAME: new LayerRenameAction(state.diagram),
+  LAYER_ADD: new LayerAddAction(state.diagram, 'regular'),
+  LAYER_ADD_ADJUSTMENT: new LayerAddAction(state.diagram, 'adjustment'),
+  LAYER_ADD_REFERENCE: new LayerAddAction(state.diagram, 'reference'),
   LAYER_SELECTION_MOVE: new LayerSelectionMoveAction(state.diagram),
   LAYER_SELECTION_MOVE_NEW: new LayerSelectionMoveNewAction(state.diagram)
 });
@@ -148,10 +148,7 @@ export class LayerToggleLockedAction extends AbstractToggleAction {
 }
 
 export class LayerRenameAction extends AbstractAction<string | undefined> {
-  constructor(
-    protected readonly diagram: Diagram,
-    private readonly applicationTriggers: ApplicationTriggers
-  ) {
+  constructor(protected readonly diagram: Diagram) {
     super();
   }
 
@@ -170,7 +167,7 @@ export class LayerRenameAction extends AbstractAction<string | undefined> {
       layer.setName(typeof name === 'string' ? name : 'New name', uow);
       commitWithUndo(uow, `Rename layer`);
     } else {
-      this.applicationTriggers.showDialog?.({
+      application.ui.showDialog?.({
         name: 'stringInput',
         props: {
           title: 'Rename layer',
@@ -192,7 +189,6 @@ export class LayerRenameAction extends AbstractAction<string | undefined> {
 export class LayerAddAction extends AbstractAction<string | undefined> {
   constructor(
     protected readonly diagram: Diagram,
-    private readonly applicationTriggers: ApplicationTriggers,
     private readonly type: LayerType
   ) {
     super();
@@ -213,7 +209,7 @@ export class LayerAddAction extends AbstractAction<string | undefined> {
         ])
       );
     } else if (this.type === 'reference') {
-      this.applicationTriggers.showDialog?.({
+      application.ui.showDialog?.({
         name: 'newReferenceLayer',
         props: {},
         onOk: async ({ diagramId, layerId, name }) => {
@@ -238,7 +234,7 @@ export class LayerAddAction extends AbstractAction<string | undefined> {
         onCancel: () => {}
       });
     } else {
-      this.applicationTriggers.showDialog?.({
+      application.ui.showDialog?.({
         name: 'stringInput',
         props: {
           title: 'New adjustment layer',
