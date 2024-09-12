@@ -1,5 +1,5 @@
 import { AbstractSelectionAction } from './abstractSelectionAction';
-import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap';
+import { ActionMapFactory, ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { Point } from '@diagram-craft/geometry/point';
@@ -19,7 +19,7 @@ declare global {
   }
 }
 
-export const selectionMoveActions: ActionMapFactory = (state: State) => {
+export const selectionMoveActions: ActionMapFactory = (state: ActionConstructionParameters) => {
   const $d = state.diagram;
   const grid = () => $d.props.grid?.size ?? 10;
   return {

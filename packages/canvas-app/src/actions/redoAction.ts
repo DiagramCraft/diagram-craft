@@ -1,4 +1,4 @@
-import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap';
+import { ActionMapFactory, ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
 import { AbstractAction } from '@diagram-craft/canvas/action';
 import { Diagram } from '@diagram-craft/model/diagram';
 
@@ -8,7 +8,7 @@ declare global {
   }
 }
 
-export const redoActions: ActionMapFactory = (state: State) => ({
+export const redoActions: ActionMapFactory = (state: ActionConstructionParameters) => ({
   REDO: new RedoAction(state.diagram)
 });
 

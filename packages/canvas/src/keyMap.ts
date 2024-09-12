@@ -2,13 +2,12 @@ import { ApplicationState } from './ApplicationState';
 import { Action, ActionContext, ActionEvents, ToggleAction } from './action';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { Diagram } from '@diagram-craft/model/diagram';
+import { ApplicationTriggers } from './ApplicationTriggers';
 
-export type State = {
+export type ActionConstructionParameters = {
   diagram: Diagram;
-};
-
-export type AppState = State & {
   applicationState: ApplicationState;
+  applicationTriggers: ApplicationTriggers;
 };
 
 type Alt = 'A-' | '';
@@ -45,12 +44,12 @@ export type Actions = {
   keyMap: KeyMap;
 };
 
-export type ActionMapFactory = (state: AppState) => Partial<ActionMap>;
+export type ActionMapFactory = (state: ActionConstructionParameters) => Partial<ActionMap>;
 
 export type ActionName = keyof ActionMap & string;
 
 export const makeActionMap = (...factories: ActionMapFactory[]): ActionMapFactory => {
-  return (state: AppState) => {
+  return (state: ActionConstructionParameters) => {
     const actions: Partial<ActionMap> = {};
     for (const factory of factories) {
       Object.assign(actions, factory(state));

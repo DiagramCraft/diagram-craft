@@ -1,4 +1,4 @@
-import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap';
+import { ActionMapFactory, ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
 import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
 import { LengthOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
 import { precondition } from '@diagram-craft/utils/assert';
@@ -19,7 +19,7 @@ declare global {
   }
 }
 
-export const edgeTextAddActions: ActionMapFactory = (state: State) => ({
+export const edgeTextAddActions: ActionMapFactory = (state: ActionConstructionParameters) => ({
   EDGE_TEXT_ADD: new EdgeTextAddAction(state.diagram)
 });
 

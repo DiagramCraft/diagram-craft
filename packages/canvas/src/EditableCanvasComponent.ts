@@ -167,14 +167,7 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
           return;
         }
 
-        if (
-          !findAndExecuteAction(
-            e,
-            { point: this.point, applicationTriggers: props.applicationTriggers },
-            keyMap,
-            actionMap
-          )
-        ) {
+        if (!findAndExecuteAction(e, { point: this.point }, keyMap, actionMap)) {
           this.tool?.onKeyDown(e);
         }
       };

@@ -1,8 +1,9 @@
-import { State } from '@diagram-craft/canvas/keyMap';
+import { ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
 import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
+import { ApplicationTriggers } from '@diagram-craft/canvas/ApplicationTriggers';
 
-export const fileNewActions = (_state: State) => ({
-  FILE_NEW: new FileNewAction()
+export const fileNewActions = (state: ActionConstructionParameters) => ({
+  FILE_NEW: new FileNewAction(state.applicationTriggers)
 });
 
 declare global {
@@ -10,11 +11,11 @@ declare global {
 }
 
 class FileNewAction extends AbstractAction {
-  constructor() {
+  constructor(private readonly applicationTriggers: ApplicationTriggers) {
     super();
   }
 
-  execute(context: ActionContext): void {
-    context.applicationTriggers?.newDocument?.();
+  execute(_context: ActionContext): void {
+    this.applicationTriggers.newDocument?.();
   }
 }

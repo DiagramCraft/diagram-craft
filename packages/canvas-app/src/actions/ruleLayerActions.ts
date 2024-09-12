@@ -1,4 +1,4 @@
-import { State } from '@diagram-craft/canvas/keyMap';
+import { ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
 import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -7,11 +7,12 @@ import { assert, precondition } from '@diagram-craft/utils/assert';
 import { AdjustmentRule } from '@diagram-craft/model/diagramLayerRuleTypes';
 import { RuleLayer } from '@diagram-craft/model/diagramLayerRule';
 import { newid } from '@diagram-craft/utils/id';
+import { ApplicationTriggers } from '@diagram-craft/canvas/ApplicationTriggers';
 
-export const ruleLayerActions = (state: State) => ({
-  RULE_LAYER_EDIT: new RuleLayerEditAction(state.diagram),
+export const ruleLayerActions = (state: ActionConstructionParameters) => ({
+  RULE_LAYER_EDIT: new RuleLayerEditAction(state.diagram, state.applicationTriggers),
   RULE_LAYER_DELETE: new RuleLayerDeleteAction(state.diagram),
-  RULE_LAYER_ADD: new RuleLayerAddAction(state.diagram)
+  RULE_LAYER_ADD: new RuleLayerAddAction(state.diagram, state.applicationTriggers)
 });
 
 declare global {
@@ -46,7 +47,10 @@ export class RuleLayerDeleteAction extends AbstractAction {
 }
 
 export class RuleLayerEditAction extends AbstractAction {
-  constructor(protected readonly diagram: Diagram) {
+  constructor(
+    protected readonly diagram: Diagram,
+    private readonly applicationTriggers: ApplicationTriggers
+  ) {
     super();
   }
 
@@ -65,7 +69,7 @@ export class RuleLayerEditAction extends AbstractAction {
 
     assert.present(rule, 'Rule with id ' + ruleId + ' not found');
 
-    context.applicationTriggers?.showDialog?.({
+    this.applicationTriggers.showDialog?.({
       name: 'ruleEditor',
       props: {
         rule: rule
@@ -81,7 +85,10 @@ export class RuleLayerEditAction extends AbstractAction {
 }
 
 export class RuleLayerAddAction extends AbstractAction {
-  constructor(protected readonly diagram: Diagram) {
+  constructor(
+    protected readonly diagram: Diagram,
+    private readonly applicationTriggers: ApplicationTriggers
+  ) {
     super();
   }
 
@@ -117,7 +124,7 @@ export class RuleLayerAddAction extends AbstractAction {
 
     assert.present(rule);
 
-    context.applicationTriggers?.showDialog?.({
+    this.applicationTriggers.showDialog?.({
       name: 'ruleEditor',
       props: {
         rule: rule

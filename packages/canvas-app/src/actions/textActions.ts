@@ -1,4 +1,4 @@
-import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap';
+import { ActionMapFactory, ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
 import { AbstractToggleAction } from '@diagram-craft/canvas/action';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Diagram } from '@diagram-craft/model/diagram';
@@ -12,7 +12,7 @@ declare global {
   }
 }
 
-export const textActions: ActionMapFactory = (state: State) => ({
+export const textActions: ActionMapFactory = (state: ActionConstructionParameters) => ({
   TEXT_BOLD: new TextAction(state.diagram, 'bold'),
   TEXT_ITALIC: new TextAction(state.diagram, 'italic'),
   TEXT_UNDERLINE: new TextDecorationAction(state.diagram, 'underline')

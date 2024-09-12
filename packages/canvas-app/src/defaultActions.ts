@@ -17,7 +17,11 @@ import { duplicateActions } from './actions/duplicateAction';
 import { debugActions } from './actions/debugActions';
 import { layerActions } from './actions/layerActions';
 import { toolActions } from './actions/toolAction';
-import { ActionMapFactory, AppState, KeyMap } from '@diagram-craft/canvas/src/keyMap';
+import {
+  ActionMapFactory,
+  ActionConstructionParameters,
+  KeyMap
+} from '@diagram-craft/canvas/src/keyMap';
 import { groupActions } from './actions/groupAction';
 import { tableActions } from '@diagram-craft/canvas/actions/tableActions';
 import { selectionMoveActions } from './actions/selectionMoveAction';
@@ -27,7 +31,7 @@ import { exportActions } from './actions/exportAction';
 import { styleCopyActions } from './actions/styleCopyAction';
 import { ruleLayerActions } from './actions/ruleLayerActions';
 
-export const defaultCanvasActions: ActionMapFactory = (state: AppState) => ({
+export const defaultCanvasActions: ActionMapFactory = (state: ActionConstructionParameters) => ({
   ...edgeTextAddActions(state),
   ...tableActions(state),
   ...clipboardActions(state),

@@ -1,4 +1,4 @@
-import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap';
+import { ActionMapFactory, ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
 import { AbstractAction, Action, ActionContext } from '@diagram-craft/canvas/action';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -10,7 +10,7 @@ declare global {
   }
 }
 
-export const waypointAddActions: ActionMapFactory = (state: State) => ({
+export const waypointAddActions: ActionMapFactory = (state: ActionConstructionParameters) => ({
   WAYPOINT_ADD: new WaypointAddAction(state.diagram)
 });
 

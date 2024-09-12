@@ -1,5 +1,5 @@
 import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSelectionAction';
-import { State } from '@diagram-craft/canvas/keyMap';
+import { ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
@@ -11,7 +11,7 @@ declare global {
   interface ActionMap extends ReturnType<typeof styleCopyActions> {}
 }
 
-export const styleCopyActions = (state: State) => ({
+export const styleCopyActions = (state: ActionConstructionParameters) => ({
   STYLE_COPY: new StyleCopyAction(state.diagram),
   STYLE_PASTE: new StylePasteAction(state.diagram)
 });

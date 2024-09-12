@@ -1,4 +1,4 @@
-import { ActionMapFactory, AppState } from '@diagram-craft/canvas/keyMap';
+import { ActionMapFactory, ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
 import { AbstractToggleAction } from '@diagram-craft/canvas/action';
 import { UserState } from '@diagram-craft/canvas/UserState';
 
@@ -15,7 +15,7 @@ declare global {
   }
 }
 
-export const sidebarActions: ActionMapFactory = (_state: AppState) => ({
+export const sidebarActions: ActionMapFactory = (_state: ActionConstructionParameters) => ({
   SIDEBAR_SHAPES: new SidebarAction('left', 0),
   SIDEBAR_LAYERS: new SidebarAction('left', 1),
   SIDEBAR_SELECT: new SidebarAction('left', 2),

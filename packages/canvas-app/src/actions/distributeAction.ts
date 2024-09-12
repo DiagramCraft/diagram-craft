@@ -1,5 +1,5 @@
 import { AbstractSelectionAction } from './abstractSelectionAction';
-import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap';
+import { ActionMapFactory, ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
 import { Box } from '@diagram-craft/geometry/box';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -13,7 +13,7 @@ declare global {
   }
 }
 
-export const distributeActions: ActionMapFactory = (state: State) => ({
+export const distributeActions: ActionMapFactory = (state: ActionConstructionParameters) => ({
   DISTRIBUTE_HORIZONTAL: new DistributeAction(state.diagram, 'horizontal'),
   DISTRIBUTE_VERTICAL: new DistributeAction(state.diagram, 'vertical')
 });

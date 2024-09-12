@@ -1,5 +1,5 @@
 import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSelectionAction';
-import { State } from '@diagram-craft/canvas/keyMap';
+import { ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
 import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
 import { UndoableAction } from '@diagram-craft/model/undoManager';
 import { assertRegularLayer, RegularLayer } from '@diagram-craft/model/diagramLayer';
@@ -14,7 +14,7 @@ declare global {
   interface ActionMap extends ReturnType<typeof clipboardActions> {}
 }
 
-export const clipboardActions = (state: State) => ({
+export const clipboardActions = (state: ActionConstructionParameters) => ({
   CLIPBOARD_COPY: new ClipboardCopyAction('copy', state.diagram),
   CLIPBOARD_CUT: new ClipboardCopyAction('cut', state.diagram),
   CLIPBOARD_PASTE: new ClipboardPasteAction(state.diagram)

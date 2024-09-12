@@ -1,5 +1,5 @@
 import { AbstractSelectionAction } from './abstractSelectionAction';
-import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap';
+import { ActionMapFactory, ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
 import { Translation } from '@diagram-craft/geometry/transform';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -13,7 +13,7 @@ declare global {
   }
 }
 
-export const duplicateActions: ActionMapFactory = (state: State) => ({
+export const duplicateActions: ActionMapFactory = (state: ActionConstructionParameters) => ({
   DUPLICATE: new DuplicateAction(state.diagram)
 });
 

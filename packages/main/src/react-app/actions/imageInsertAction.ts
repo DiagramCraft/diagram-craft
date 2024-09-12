@@ -1,4 +1,4 @@
-import { State } from '@diagram-craft/canvas/keyMap';
+import { ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
 import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Attachment } from '@diagram-craft/model/attachment';
@@ -6,9 +6,10 @@ import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoAction
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { newid } from '@diagram-craft/utils/id';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
+import { ApplicationTriggers } from '@diagram-craft/canvas/ApplicationTriggers';
 
-export const imageInsertActions = (state: State) => ({
-  IMAGE_INSERT: new ImageInsertAction(state.diagram)
+export const imageInsertActions = (state: ActionConstructionParameters) => ({
+  IMAGE_INSERT: new ImageInsertAction(state.diagram, state.applicationTriggers)
 });
 
 declare global {
@@ -26,13 +27,16 @@ declare global {
 }
 
 class ImageInsertAction extends AbstractAction {
-  constructor(private readonly diagram: Diagram) {
+  constructor(
+    private readonly diagram: Diagram,
+    private readonly applicationTriggers: ApplicationTriggers
+  ) {
     super();
     this.addCriterion(diagram, 'change', () => diagram.activeLayer.type === 'regular');
   }
 
-  execute(context: ActionContext): void {
-    context.applicationTriggers?.showDialog?.({
+  execute(_context: ActionContext): void {
+    this.applicationTriggers?.showDialog?.({
       name: 'imageInsert',
       props: {},
       onOk: async data => {

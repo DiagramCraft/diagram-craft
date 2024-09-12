@@ -1,5 +1,5 @@
 import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSelectionAction';
-import { State } from '@diagram-craft/canvas/keyMap';
+import { ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
 import { Box } from '@diagram-craft/geometry/box';
 import { UndoableAction } from '@diagram-craft/model/undoManager';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
@@ -9,7 +9,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { newid } from '@diagram-craft/utils/id';
 import { assertRegularLayer, RegularLayer } from '@diagram-craft/model/diagramLayer';
 
-export const groupActions = (state: State) => ({
+export const groupActions = (state: ActionConstructionParameters) => ({
   GROUP_GROUP: new GroupAction(state.diagram, 'group'),
   GROUP_UNGROUP: new GroupAction(state.diagram, 'ungroup')
 });

@@ -1,4 +1,4 @@
-import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap';
+import { ActionMapFactory, ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
 import { AbstractAction } from '@diagram-craft/canvas/action';
 import { Diagram } from '@diagram-craft/model/diagram';
 
@@ -10,7 +10,7 @@ declare global {
   }
 }
 
-export const selectAllActions: ActionMapFactory = (state: State) => ({
+export const selectAllActions: ActionMapFactory = (state: ActionConstructionParameters) => ({
   SELECT_ALL: new SelectAllAction(state.diagram, 'all'),
   SELECT_ALL_NODES: new SelectAllAction(state.diagram, 'nodes'),
   SELECT_ALL_EDGES: new SelectAllAction(state.diagram, 'edges')

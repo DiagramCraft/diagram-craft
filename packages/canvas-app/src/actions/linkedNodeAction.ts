@@ -12,11 +12,11 @@ import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
 import { createResizeCanvasActionToFit } from '@diagram-craft/model/helpers/canvasResizeHelper';
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
-import { State } from '@diagram-craft/canvas/keyMap';
 import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSelectionAction';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Angle } from '@diagram-craft/geometry/angle';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
+import { ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
 
 const OFFSET = 100;
 const SECONDARY_OFFSET = 20;
@@ -153,7 +153,7 @@ export const createLinkedNode = (
   return newNode;
 };
 
-export const createLinkedNodeActions = ({ diagram }: State) => {
+export const createLinkedNodeActions = ({ diagram }: ActionConstructionParameters) => {
   return {
     CREATE_LINKED_NODE_E: new CreateLinkedNodeAction(diagram, 'e'),
     CREATE_LINKED_NODE_W: new CreateLinkedNodeAction(diagram, 'w'),

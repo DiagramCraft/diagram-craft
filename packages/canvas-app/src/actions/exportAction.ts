@@ -1,10 +1,10 @@
-import { State } from '@diagram-craft/canvas/keyMap';
+import { ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
 import { AbstractAction } from '@diagram-craft/canvas/action';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Box } from '@diagram-craft/geometry/box';
 import { blobToDataURL } from '@diagram-craft/model/attachment';
 
-export const exportActions = (state: State) => ({
+export const exportActions = (state: ActionConstructionParameters) => ({
   FILE_EXPORT_IMAGE: new ExportImageAction(state.diagram)
 });
 

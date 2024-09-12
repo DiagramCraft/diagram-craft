@@ -1,4 +1,4 @@
-import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap';
+import { ActionMapFactory, ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
 import { AbstractToggleAction } from '@diagram-craft/canvas/action';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { MagnetType } from '@diagram-craft/model/snap/magnet';
@@ -13,7 +13,7 @@ declare global {
   }
 }
 
-export const toggleMagnetTypeActions: ActionMapFactory = (state: State) => ({
+export const toggleMagnetTypeActions: ActionMapFactory = (state: ActionConstructionParameters) => ({
   TOGGLE_MAGNET_TYPE_SIZE: new ToggleMagnetTypeAction(state.diagram, 'size'),
   TOGGLE_MAGNET_TYPE_GRID: new ToggleMagnetTypeAction(state.diagram, 'grid'),
   TOGGLE_MAGNET_TYPE_CANVAS: new ToggleMagnetTypeAction(state.diagram, 'canvas'),

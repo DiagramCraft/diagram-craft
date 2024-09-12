@@ -4,13 +4,11 @@ import React, { useState } from 'react';
 import { ToggleActionContextMenuItem } from '../../components/ToggleActionContextMenuItem';
 import { MessageDialog, MessageDialogState } from '../../components/MessageDialog';
 import { Layer } from '@diagram-craft/model/diagramLayer';
-import { useApplicationTriggers } from '../../context/ActionsContext';
 
 export const LayerContextMenu = (props: Props) => {
   const [confirmDeleteDialog, setConfirmDeleteDialog] = useState<MessageDialogState>(
     MessageDialog.INITIAL_STATE
   );
-  const applicationTriggers = useApplicationTriggers();
 
   return (
     <>
@@ -18,10 +16,7 @@ export const LayerContextMenu = (props: Props) => {
         <ContextMenu.Trigger asChild={true}>{props.children}</ContextMenu.Trigger>
         <ContextMenu.Portal>
           <ContextMenu.Content className="cmp-context-menu">
-            <ActionContextMenuItem
-              action={'LAYER_RENAME'}
-              context={{ id: props.layer?.id, applicationTriggers }}
-            >
+            <ActionContextMenuItem action={'LAYER_RENAME'} context={{ id: props.layer?.id }}>
               Rename...
             </ActionContextMenuItem>
             <ToggleActionContextMenuItem
@@ -67,8 +62,7 @@ export const LayerContextMenu = (props: Props) => {
             <ActionContextMenuItem
               action={'RULE_LAYER_ADD'}
               context={{
-                id: props.layer?.id,
-                applicationTriggers
+                id: props.layer?.id
               }}
             >
               Add rule

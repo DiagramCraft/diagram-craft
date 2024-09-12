@@ -1,8 +1,8 @@
-import { AppState } from '@diagram-craft/canvas/keyMap';
+import { ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
 import { ApplicationState, ToolType } from '@diagram-craft/canvas/ApplicationState';
 import { AbstractToggleAction } from '@diagram-craft/canvas/action';
 
-export const toolActions = (state: AppState) => ({
+export const toolActions = (state: ActionConstructionParameters) => ({
   TOOL_MOVE: new ToolAction('move', state.applicationState, true),
   TOOL_TEXT: new ToolAction('text', state.applicationState),
   TOOL_EDGE: new ToolAction('edge', state.applicationState),

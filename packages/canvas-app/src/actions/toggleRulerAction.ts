@@ -1,4 +1,4 @@
-import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap';
+import { ActionMapFactory, ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
 import { AbstractToggleAction } from '@diagram-craft/canvas/action';
 import { Diagram } from '@diagram-craft/model/diagram';
 
@@ -8,7 +8,7 @@ declare global {
   }
 }
 
-export const toggleRulerActions: ActionMapFactory = (state: State) => ({
+export const toggleRulerActions: ActionMapFactory = (state: ActionConstructionParameters) => ({
   TOGGLE_RULER: new ToggleRulerAction(state.diagram)
 });
 

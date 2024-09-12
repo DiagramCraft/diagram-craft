@@ -1,6 +1,6 @@
 import { AbstractAction, ActionContext } from '../action';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { ActionMapFactory, State } from '../keyMap';
+import { ActionMapFactory, ActionConstructionParameters } from '../keyMap';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -22,7 +22,7 @@ declare global {
   }
 }
 
-export const tableActions: ActionMapFactory = (state: State) => ({
+export const tableActions: ActionMapFactory = (state: ActionConstructionParameters) => ({
   TABLE_ROW_INSERT_BEFORE: new TableInsertAction(state.diagram, 'row', -1),
   TABLE_ROW_INSERT_AFTER: new TableInsertAction(state.diagram, 'row', 1),
   TABLE_ROW_REMOVE: new TableRemoveAction(state.diagram, 'row'),

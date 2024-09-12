@@ -1,4 +1,4 @@
-import { State } from '@diagram-craft/canvas/keyMap';
+import { ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
 import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
@@ -7,9 +7,10 @@ import { newid } from '@diagram-craft/utils/id';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
+import { ApplicationTriggers } from '@diagram-craft/canvas/ApplicationTriggers';
 
-export const tableInsertActions = (state: State) => ({
-  TABLE_INSERT: new TableInsertAction(state.diagram)
+export const tableInsertActions = (state: ActionConstructionParameters) => ({
+  TABLE_INSERT: new TableInsertAction(state.diagram, state.applicationTriggers)
 });
 
 declare global {
@@ -27,15 +28,18 @@ declare global {
 }
 
 class TableInsertAction extends AbstractAction {
-  constructor(private readonly diagram: Diagram) {
+  constructor(
+    private readonly diagram: Diagram,
+    private readonly applicationTriggers: ApplicationTriggers
+  ) {
     super();
     this.addCriterion(diagram, 'change', () => diagram.activeLayer.type === 'regular');
   }
 
-  execute(context: ActionContext): void {
+  execute(_context: ActionContext): void {
     assertRegularLayer(this.diagram.activeLayer);
 
-    context.applicationTriggers?.showDialog?.({
+    this.applicationTriggers.showDialog?.({
       name: 'tableInsert',
       props: {},
       onOk: async props => {

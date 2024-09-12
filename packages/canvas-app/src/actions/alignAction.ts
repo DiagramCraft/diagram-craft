@@ -1,5 +1,5 @@
 import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSelectionAction';
-import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap';
+import { ActionMapFactory, ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
@@ -17,7 +17,7 @@ declare global {
   }
 }
 
-export const alignActions: ActionMapFactory = (state: State) => ({
+export const alignActions: ActionMapFactory = (state: ActionConstructionParameters) => ({
   ALIGN_TOP: new AlignAction('top', state.diagram),
   ALIGN_BOTTOM: new AlignAction('bottom', state.diagram),
   ALIGN_CENTER_HORIZONTAL: new AlignAction('center-horizontal', state.diagram),

@@ -30,7 +30,7 @@ import { useLayoutEffect, useRef } from 'react';
 import { ReferenceLayer } from '@diagram-craft/model/diagramLayerReference';
 import { RuleLayer } from '@diagram-craft/model/diagramLayerRule';
 import { addHighlight, removeHighlight } from '@diagram-craft/canvas/highlight';
-import { useActions, useApplicationTriggers } from '../../context/ActionsContext';
+import { useActions } from '../../context/ActionsContext';
 import { AdjustmentRule } from '@diagram-craft/model/diagramLayerRuleTypes';
 import { RuleContextMenu } from './RuleContextMenu';
 
@@ -172,7 +172,6 @@ const LayerEntry = (props: { layer: Layer }) => {
 };
 
 const RuleEntry = (props: { rule: AdjustmentRule; layer: RuleLayer; diagram: Diagram }) => {
-  const applicationTriggers = useApplicationTriggers();
   const e = props.rule;
 
   const actions = useActions();
@@ -203,8 +202,7 @@ const RuleEntry = (props: { rule: AdjustmentRule; layer: RuleLayer; diagram: Dia
             style={{ cursor: 'pointer' }}
             onClick={e => {
               actions.actionMap['RULE_LAYER_EDIT']!.execute({
-                id: `${props.layer.id}:${props.rule.id}`,
-                applicationTriggers
+                id: `${props.layer.id}:${props.rule.id}`
               });
               e.preventDefault();
               e.stopPropagation();

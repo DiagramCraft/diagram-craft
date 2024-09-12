@@ -1,5 +1,5 @@
 import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSelectionAction';
-import { State } from '@diagram-craft/canvas/keyMap';
+import { ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
@@ -9,7 +9,7 @@ declare global {
   interface ActionMap extends ReturnType<typeof selectionRestackActions> {}
 }
 
-export const selectionRestackActions = (state: State) => ({
+export const selectionRestackActions = (state: ActionConstructionParameters) => ({
   SELECTION_RESTACK_BOTTOM: new SelectionRestackAction('bottom', state.diagram),
   SELECTION_RESTACK_DOWN: new SelectionRestackAction('down', state.diagram),
   SELECTION_RESTACK_TOP: new SelectionRestackAction('top', state.diagram),

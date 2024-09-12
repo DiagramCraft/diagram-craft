@@ -1,4 +1,4 @@
-import { State } from '@diagram-craft/canvas/keyMap';
+import { ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
 import { AbstractAction } from '@diagram-craft/canvas/action';
 import { Diagram } from '@diagram-craft/model/diagram';
 import {
@@ -8,7 +8,7 @@ import {
 import { Translation } from '@diagram-craft/geometry/transform';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
-export const debugActions = (state: State) => ({
+export const debugActions = (state: ActionConstructionParameters) => ({
   DOCUMENT_DUMP: new DumpDocument(state.diagram),
   SELECTION_DUMP: new DumpSelectionAction(state.diagram),
   SELECTION_REDRAW: new RedrawAction(state.diagram)

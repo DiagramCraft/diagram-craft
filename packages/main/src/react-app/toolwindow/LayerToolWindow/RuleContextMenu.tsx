@@ -3,14 +3,12 @@ import { ActionContextMenuItem } from '../../components/ActionContextMenuItem';
 import React, { useState } from 'react';
 import { MessageDialog, MessageDialogState } from '../../components/MessageDialog';
 import { Layer } from '@diagram-craft/model/diagramLayer';
-import { useApplicationTriggers } from '../../context/ActionsContext';
 import { AdjustmentRule } from '@diagram-craft/model/diagramLayerRuleTypes';
 
 export const RuleContextMenu = (props: Props) => {
   const [confirmDeleteDialog, setConfirmDeleteDialog] = useState<MessageDialogState>(
     MessageDialog.INITIAL_STATE
   );
-  const applicationTriggers = useApplicationTriggers();
 
   return (
     <>
@@ -20,13 +18,13 @@ export const RuleContextMenu = (props: Props) => {
           <ContextMenu.Content className="cmp-context-menu">
             <ActionContextMenuItem
               action={'RULE_LAYER_EDIT'}
-              context={{ id: `${props.layer.id}:${props.rule.id}`, applicationTriggers }}
+              context={{ id: `${props.layer.id}:${props.rule.id}` }}
             >
               Edit
             </ActionContextMenuItem>
             <ActionContextMenuItem
               action={'RULE_LAYER_DELETE'}
-              context={{ id: `${props.layer.id}:${props.rule.id}`, applicationTriggers }}
+              context={{ id: `${props.layer.id}:${props.rule.id}` }}
               onBeforeSelect={async () => {
                 return new Promise<boolean>(resolve => {
                   setConfirmDeleteDialog({

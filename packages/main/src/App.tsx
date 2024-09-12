@@ -150,12 +150,17 @@ type ActiveDiagram = {
   actionMap: Partial<ActionMap>;
 };
 
-const createActiveDiagram = ($d: Diagram, applicationState: ApplicationState): ActiveDiagram => {
+const createActiveDiagram = (
+  $d: Diagram,
+  applicationState: ApplicationState,
+  applicationTriggers: ApplicationTriggers
+): ActiveDiagram => {
   return {
     diagram: $d,
     actionMap: makeActionMap(defaultAppActions)({
       diagram: $d,
-      applicationState: applicationState
+      applicationState: applicationState,
+      applicationTriggers: applicationTriggers
     })
   };
 };
@@ -185,54 +190,6 @@ export const App = (props: {
     doc: props.doc,
     url: props.url
   });
-  const [activeDiagram, setActiveDiagram] = useState<ActiveDiagram>(
-    createActiveDiagram(activeDoc.doc.diagrams[0], applicationState.current)
-  );
-
-  const [dirty, setDirty] = useState(Autosave.exists());
-  const [popoverState, setPopoverState] = useState<NodeTypePopupState>(NodeTypePopup.INITIAL_STATE);
-  const [messageDialogState, setMessageDialogState] = useState<MessageDialogState>(
-    MessageDialog.INITIAL_STATE
-  );
-  const [dialogState, setDialogState] = useState<
-    ApplicationTriggers.DialogState<keyof ApplicationTriggers.Dialogs> | undefined
-  >(undefined);
-  const contextMenuTarget = useRef<ContextMenuTarget | null>(null);
-
-  const svgRef = useRef<SVGSVGElement>(null);
-
-  useEffect(() => {
-    if (props.url) userState.current.addRecentFile(props.url);
-  }, [props.url]);
-
-  // TODO: Can we change this to use state instead - see https://stackoverflow.com/questions/59600572/how-to-rerender-when-refs-change
-  //       Can be tested if ruler indicators work at startup immediately or not
-  useEffect(() => {
-    redraw();
-  }, [svgRef.current]);
-
-  const $d = activeDiagram.diagram;
-  const actionMap = activeDiagram.actionMap;
-  const doc = activeDoc.doc;
-  const url = activeDoc.url;
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const autosave = (event: any) => {
-    if (event.silent) return;
-
-    Autosave.asyncSave(url, doc);
-    setDirty(true);
-  };
-
-  useEventListener($d, 'change', autosave);
-  useEventListener($d, 'elementAdd', autosave);
-  useEventListener($d, 'elementChange', autosave);
-  useEventListener($d, 'elementRemove', autosave);
-  useEventListener(doc, 'diagramremoved', autosave);
-  useEventListener(doc, 'diagramadded', autosave);
-  useEventListener(doc, 'diagramchanged', autosave);
-
-  const keyMap = defaultMacAppKeymap;
 
   const applicationTriggers: ApplicationTriggers = {
     pushHelp: (id: string, message: string) => {
@@ -316,7 +273,9 @@ export const App = (props: {
     loadFromUrl: async (url: string) => {
       const doc = await loadFileFromUrl(url, props.documentFactory, props.diagramFactory);
       setActiveDoc({ doc, url });
-      setActiveDiagram(createActiveDiagram(doc.diagrams[0], applicationState.current));
+      setActiveDiagram(
+        createActiveDiagram(doc.diagrams[0], applicationState.current, applicationTriggers)
+      );
       Autosave.clear();
       setDirty(false);
 
@@ -332,7 +291,7 @@ export const App = (props: {
       );
       doc.addDiagram(diagram);
       setActiveDoc({ doc, url: undefined });
-      setActiveDiagram(createActiveDiagram(diagram, applicationState.current));
+      setActiveDiagram(createActiveDiagram(diagram, applicationState.current, applicationTriggers));
       Autosave.clear();
       setDirty(false);
     },
@@ -341,6 +300,55 @@ export const App = (props: {
       setDirty(false);
     }
   };
+
+  const [activeDiagram, setActiveDiagram] = useState<ActiveDiagram>(
+    createActiveDiagram(activeDoc.doc.diagrams[0], applicationState.current, applicationTriggers)
+  );
+
+  const [dirty, setDirty] = useState(Autosave.exists());
+  const [popoverState, setPopoverState] = useState<NodeTypePopupState>(NodeTypePopup.INITIAL_STATE);
+  const [messageDialogState, setMessageDialogState] = useState<MessageDialogState>(
+    MessageDialog.INITIAL_STATE
+  );
+  const [dialogState, setDialogState] = useState<
+    ApplicationTriggers.DialogState<keyof ApplicationTriggers.Dialogs> | undefined
+  >(undefined);
+  const contextMenuTarget = useRef<ContextMenuTarget | null>(null);
+
+  const svgRef = useRef<SVGSVGElement>(null);
+
+  useEffect(() => {
+    if (props.url) userState.current.addRecentFile(props.url);
+  }, [props.url]);
+
+  // TODO: Can we change this to use state instead - see https://stackoverflow.com/questions/59600572/how-to-rerender-when-refs-change
+  //       Can be tested if ruler indicators work at startup immediately or not
+  useEffect(() => {
+    redraw();
+  }, [svgRef.current]);
+
+  const $d = activeDiagram.diagram;
+  const actionMap = activeDiagram.actionMap;
+  const doc = activeDoc.doc;
+  const url = activeDoc.url;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const autosave = (event: any) => {
+    if (event.silent) return;
+
+    Autosave.asyncSave(url, doc);
+    setDirty(true);
+  };
+
+  useEventListener($d, 'change', autosave);
+  useEventListener($d, 'elementAdd', autosave);
+  useEventListener($d, 'elementChange', autosave);
+  useEventListener($d, 'elementRemove', autosave);
+  useEventListener(doc, 'diagramremoved', autosave);
+  useEventListener(doc, 'diagramadded', autosave);
+  useEventListener(doc, 'diagramchanged', autosave);
+
+  const keyMap = defaultMacAppKeymap;
 
   return (
     <DiagramContext.Provider value={$d}>
@@ -645,7 +653,11 @@ export const App = (props: {
                       value={$d.id}
                       onValueChange={v => {
                         setActiveDiagram(
-                          createActiveDiagram(doc.getById(v)!, applicationState.current)
+                          createActiveDiagram(
+                            doc.getById(v)!,
+                            applicationState.current,
+                            applicationTriggers
+                          )
                         );
                       }}
                     />
@@ -750,7 +762,11 @@ export const App = (props: {
                   value={$d.id}
                   onValueChange={v => {
                     setActiveDiagram(
-                      createActiveDiagram(doc.getById(v)!, applicationState.current)
+                      createActiveDiagram(
+                        doc.getById(v)!,
+                        applicationState.current,
+                        applicationTriggers
+                      )
                     );
                   }}
                   document={doc}

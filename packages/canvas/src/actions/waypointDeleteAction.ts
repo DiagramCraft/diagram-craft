@@ -1,4 +1,4 @@
-import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap';
+import { ActionMapFactory, ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
 import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
 import { PointOnPath } from '@diagram-craft/geometry/pathPosition';
 import { Diagram } from '@diagram-craft/model/diagram';
@@ -13,7 +13,7 @@ declare global {
   }
 }
 
-export const waypointDeleteActions: ActionMapFactory = (state: State) => ({
+export const waypointDeleteActions: ActionMapFactory = (state: ActionConstructionParameters) => ({
   WAYPOINT_DELETE: new WaypointDeleteAction(state.diagram)
 });
 

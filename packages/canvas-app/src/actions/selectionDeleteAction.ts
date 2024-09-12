@@ -1,5 +1,5 @@
 import { AbstractSelectionAction } from './abstractSelectionAction';
-import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap';
+import { ActionMapFactory, ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { ElementDeleteUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { isNode } from '@diagram-craft/model/diagramElement';
@@ -11,7 +11,7 @@ declare global {
   }
 }
 
-export const selectionDeleteActions: ActionMapFactory = (state: State) => ({
+export const selectionDeleteActions: ActionMapFactory = (state: ActionConstructionParameters) => ({
   SELECTION_DELETE: new SelectionDeleteAction(state.diagram)
 });
 

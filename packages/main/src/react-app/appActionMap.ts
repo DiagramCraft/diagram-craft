@@ -1,7 +1,11 @@
 import { ToggleDarkModeAction } from './actions/toggleDarkMode';
 import { ZoomAction } from './actions/zoomAction';
 import { sidebarActions } from './actions/SidebarAction';
-import { ActionMapFactory, AppState, KeyMap } from '@diagram-craft/canvas/keyMap';
+import {
+  ActionMapFactory,
+  ActionConstructionParameters,
+  KeyMap
+} from '@diagram-craft/canvas/keyMap';
 import { defaultCanvasActions, defaultMacKeymap } from '@diagram-craft/canvas-app/defaultActions';
 import { ToggleHelpAction } from './actions/toggleHelp';
 import { fileNewActions } from './actions/fileNewAction';
@@ -10,7 +14,7 @@ import { fileSaveActions } from './actions/fileSaveAction';
 import { imageInsertActions } from './actions/imageInsertAction';
 import { tableInsertActions } from './actions/tableInsertAction';
 
-export const defaultAppActions: ActionMapFactory = (state: AppState) => ({
+export const defaultAppActions: ActionMapFactory = (state: ActionConstructionParameters) => ({
   ...defaultCanvasActions(state),
   TOGGLE_HELP: new ToggleHelpAction(),
   TOGGLE_DARK_MODE: new ToggleDarkModeAction(),
