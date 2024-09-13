@@ -10,28 +10,7 @@ export function assertGridType(s: string | undefined): asserts s is GridType | u
 
 export type EdgeType = 'straight' | 'bezier' | 'curved' | 'orthogonal';
 
-export function assertEdgeType(s: string | undefined): asserts s is EdgeType | undefined {
-  if (
-    !(s === 'straight' || s === 'bezier' || s === 'curved' || s === 'orthogonal' || s === undefined)
-  )
-    throw new Error();
-}
-
 export type FillType = 'solid' | 'gradient' | 'image' | 'texture' | 'pattern';
-
-export function assertFillType(s: string | undefined): asserts s is FillType | undefined {
-  if (
-    !(
-      s === 'solid' ||
-      s === 'gradient' ||
-      s === 'image' ||
-      s === 'texture' ||
-      s === 'pattern' ||
-      s === undefined
-    )
-  )
-    throw new Error();
-}
 
 export type HAlign = 'left' | 'center' | 'right';
 
