@@ -11,7 +11,7 @@ import { isSerializedEndpointFree } from '@diagram-craft/model/serialization/ser
 import { deserializeDiagramElements } from '@diagram-craft/model/serialization/deserialize';
 import { ELEMENTS_CONTENT_TYPE } from './clipboard';
 import { RegularLayer } from '@diagram-craft/model/diagramLayer';
-import { KeyboardActionArgs } from '@diagram-craft/canvas/action';
+import { BaseActionArgs } from '@diagram-craft/canvas/action';
 
 /* This contains paste handlers which are the code that is executed once
  * an item is pasted. Depending on the type of item pasted (image, node, etc)
@@ -60,12 +60,12 @@ export abstract class PasteHandler {
     content: Blob,
     diagram: Diagram,
     layer: RegularLayer,
-    context: KeyboardActionArgs
+    context: BaseActionArgs
   ): Promise<void>;
 }
 
 class ImagePasteHandler extends PasteHandler {
-  async paste(content: Blob, diagram: Diagram, layer: RegularLayer, context: KeyboardActionArgs) {
+  async paste(content: Blob, diagram: Diagram, layer: RegularLayer, context: BaseActionArgs) {
     const hash = await this.hash(content);
 
     const point = (await this.getPastePoint(hash)) ?? context.point!;
@@ -101,7 +101,7 @@ class ImagePasteHandler extends PasteHandler {
 }
 
 class TextPasteHandler extends PasteHandler {
-  async paste(content: Blob, diagram: Diagram, layer: RegularLayer, context: KeyboardActionArgs) {
+  async paste(content: Blob, diagram: Diagram, layer: RegularLayer, context: BaseActionArgs) {
     const hash = await this.hash(content);
 
     const point = (await this.getPastePoint(hash)) ?? context.point!;
@@ -132,7 +132,7 @@ class TextPasteHandler extends PasteHandler {
 }
 
 class ElementsPasteHandler extends PasteHandler {
-  async paste(content: Blob, diagram: Diagram, layer: RegularLayer, context: KeyboardActionArgs) {
+  async paste(content: Blob, diagram: Diagram, layer: RegularLayer, context: BaseActionArgs) {
     const hash = await this.hash(content);
 
     const text = await content.text();

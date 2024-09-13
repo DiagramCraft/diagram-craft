@@ -1,5 +1,5 @@
 import { ApplicationState } from './ApplicationState';
-import { Action, ActionEvents, KeyboardActionArgs, ToggleAction } from './action';
+import { Action, ActionEvents, BaseActionArgs, ToggleAction } from './action';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { Diagram } from '@diagram-craft/model/diagram';
 
@@ -70,7 +70,7 @@ const findAction = (
 
 export const findAndExecuteAction = (
   e: KeyboardEvent,
-  actionArg: Pick<KeyboardActionArgs, 'point'>,
+  actionArg: Pick<BaseActionArgs, 'point'>,
   keyMap: KeyMap,
   actionMap: Partial<ActionMap>
 ): boolean => {

@@ -15,3 +15,5 @@ export const makeWriteable = <T>(o: DeepReadonly<T>): DeepWriteable<T> => o as D
 export const isEnum = <T extends string>(o: unknown, values: T[]): o is T => {
   return !(typeof o !== 'string' || !values.includes(o as T));
 };
+
+export type EmptyObject = Record<string, never>;

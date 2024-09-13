@@ -1,13 +1,27 @@
 import { UndoableAction } from '@diagram-craft/model/undoManager';
 import { Emitter, EventEmitter, EventKey, EventMap } from '@diagram-craft/utils/event';
 import { Point } from '@diagram-craft/geometry/point';
+import { EmptyObject } from '@diagram-craft/utils/types';
 
 export type ActionEvents = {
-  actionChanged: Record<string, never>;
-  actionTriggered: Record<string, never>;
+  /**
+   * This event is emitted when the action is enabled or disabled.
+   */
+  actionChanged: EmptyObject;
+
+  /**
+   * This event is emitted when the action is triggered.
+   */
+  actionTriggered: EmptyObject;
 };
 
-export type KeyboardActionArgs = { point?: Point; source?: 'keyboard' | 'mouse' | 'ui-element' };
+/**
+ * This is the base action args that will be provided for actions triggered from keybindings or
+ * other non-explicit means
+ *
+ * It includes the current mouse position and the source of the action (e.g. mouse, keyboard, etc)
+ */
+export type BaseActionArgs = { point?: Point; source?: 'keyboard' | 'mouse' | 'ui-element' };
 
 export interface Action<T = undefined> extends Emitter<ActionEvents> {
   execute: (arg: Partial<T>) => void;
@@ -21,7 +35,7 @@ export abstract class AbstractAction<T = undefined>
   protected criteria: Array<() => boolean> = [];
   protected enabled: boolean = true;
 
-  isEnabled(_arg: Partial<T>): boolean {
+  isEnabled(_arg: Partial<T> | T): boolean {
     return this.enabled;
   }
 
@@ -64,8 +78,7 @@ export interface ToggleAction<T = unknown> extends Action<T> {
   getState: (arg: T) => boolean;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export class ToggleActionUndoableAction<T = any> implements UndoableAction {
+export class ToggleActionUndoableAction<T = undefined> implements UndoableAction {
   constructor(
     public description: string,
     private readonly action: ToggleAction<T>,
