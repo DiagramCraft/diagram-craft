@@ -319,16 +319,12 @@ export class BaseNodeComponent<
       const { x, y, w, h } = props.element.bounds;
       children.push(
         makeLinearGradient(`${props.element.id}-glass-gradient`, {
-          // @ts-ignore
           fill: {
             color: 'rgba(255, 255, 255, 0.1)',
             color2: 'rgba(255, 255, 255, 0.8)',
             gradient: {
-              type: 'linear',
               direction: -Math.PI / 2
-            },
-            type: 'gradient',
-            enabled: true
+            }
           }
         })
       );

@@ -158,7 +158,7 @@ describe('deepClear function', () => {
   test('ignores null values in source', () => {
     const source = { a: null };
     const target = { a: 1, b: 2 };
-    // @ts-ignore
+    // @ts-expect-error ...
     deepClear(source, target);
     expect(target).toEqual({ a: 1, b: 2 });
   });
@@ -173,7 +173,7 @@ describe('deepClear function', () => {
   test('leaves target unchanged if it has no matching properties with source', () => {
     const source = { x: 1 };
     const target = { a: 1, b: 2 };
-    // @ts-ignore
+    // @ts-expect-error ...
     deepClear(source, target);
     expect(target).toEqual({ a: 1, b: 2 });
   });
@@ -181,7 +181,7 @@ describe('deepClear function', () => {
   test('removes properties from target if they are explicitly set to undefined in source', () => {
     const source = { a: undefined };
     const target = { a: 1, b: 2 };
-    // @ts-ignore
+    // @ts-expect-error ...
     deepClear(source, target);
     expect(target).toEqual({ b: 2 });
   });

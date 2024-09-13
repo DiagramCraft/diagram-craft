@@ -26,6 +26,8 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
+    //"noUncheckedIndexedAccess": true,
+
     "paths": {
       "@diagram-craft/main/*": ["./packages/main/src/*"],
       "@diagram-craft/app-components/*": ["./packages/app-components/src/*"],

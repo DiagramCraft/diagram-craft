@@ -2,14 +2,19 @@ export const extractDataAttributes = (
   props: Record<string, unknown>,
   include?: string[] | undefined
 ) =>
-  Object.keys(props).reduce((acc, key) => {
-    if (key.startsWith('data-') && (include === undefined || include.includes(key.substring(5)))) {
-      // @ts-ignore
-      acc[key] = props[key];
-    }
+  Object.keys(props).reduce(
+    (acc, key) => {
+      if (
+        key.startsWith('data-') &&
+        (include === undefined || include.includes(key.substring(5)))
+      ) {
+        acc[key] = props[key];
+      }
 
-    return acc;
-  }, {});
+      return acc;
+    },
+    {} as Record<string, unknown>
+  );
 
 export type DataAttributes = { [dataAttibute: `data-${string}`]: string };
 
@@ -30,14 +35,16 @@ const MOUSE_EVENTS = [
 ];
 
 export const extractMouseEvents = (props: Record<string, unknown>) =>
-  Object.keys(props).reduce((acc, key) => {
-    if (MOUSE_EVENTS.includes(key)) {
-      // @ts-ignore
-      acc[key] = props[key];
-    }
+  Object.keys(props).reduce(
+    (acc, key) => {
+      if (MOUSE_EVENTS.includes(key)) {
+        acc[key] = props[key];
+      }
 
-    return acc;
-  }, {});
+      return acc;
+    },
+    {} as Record<string, unknown>
+  );
 
 export const asValueArray = (d: Record<string, boolean>) => {
   return Object.entries(d)

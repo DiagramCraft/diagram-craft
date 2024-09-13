@@ -98,7 +98,7 @@ export class DiagramEdge
     this.#start = start;
     this.#end = end;
     this.#props = props as EdgeProps;
-    this.#metadata = metadata ?? {};
+    this.#metadata = metadata;
     this.#waypoints = midpoints;
     this.#diagram = diagram;
     this.#layer = layer;
@@ -205,8 +205,9 @@ export class DiagramEdge
       .map(([, v]) => v.elementStyle)
       .filter(e => !!e)
       .at(-1);
-    const ruleStyleProps =
-      this.diagram.document.styles.edgeStyles.find(s => s.id === ruleElementStyle)?.props ?? {};
+    const ruleStyleProps = this.diagram.document.styles.edgeStyles.find(
+      s => s.id === ruleElementStyle
+    )?.props;
 
     return { styleProps, ruleProps: ruleProps as [string, EdgeProps][], ruleStyleProps };
   }
@@ -222,7 +223,7 @@ export class DiagramEdge
     const propsForEditing = deepMerge(
       {},
       styleProps ?? {},
-      ruleStyleProps,
+      ruleStyleProps ?? {},
       this.#props
     ) as DeepRequired<EdgeProps>;
 
@@ -654,7 +655,7 @@ export class DiagramEdge
   /* ***** ***** ******************************************************************************************** */
 
   isLocked() {
-    return this.layer.isLocked() ?? false;
+    return this.layer.isLocked();
   }
 
   path() {

@@ -83,7 +83,7 @@ declare global {
     };
   }
 
-  type Data = Record<string, string | number | boolean>;
+  type Data = Record<string, string | number | boolean | undefined>;
 
   interface ElementMetadata {
     name?: string;

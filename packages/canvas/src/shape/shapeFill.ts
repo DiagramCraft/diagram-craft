@@ -260,7 +260,15 @@ export class FillPattern extends Component<FillPatternProps> {
 
 export const makeLinearGradient = (
   gradientId: string,
-  nodeProps: { fill: NodePropsForRendering['fill'] }
+  nodeProps: {
+    fill: {
+      color: string;
+      color2: string;
+      gradient: {
+        direction: number;
+      };
+    };
+  }
 ) => {
   return svg.linearGradient(
     {
