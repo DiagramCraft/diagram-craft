@@ -62,6 +62,6 @@ export class SelectionResizeAction extends AbstractSelectionAction {
     );
     commitWithUndo(uow, 'Resized');
 
-    this.emit('actiontriggered', {});
+    this.emit('actionTriggered', {});
   }
 }

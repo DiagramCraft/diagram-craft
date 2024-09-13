@@ -58,7 +58,7 @@ export class AlignAction extends AbstractSelectionAction {
 
     commitWithUndo(uow, `Align ${this.mode}`);
 
-    this.emit('actiontriggered', {});
+    this.emit('actionTriggered', {});
   }
 
   // y + h === Y       => y = Y - h       => y = Y - h * offset (offset = 1)

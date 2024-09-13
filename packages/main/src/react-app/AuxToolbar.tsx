@@ -9,7 +9,7 @@ import { useEventListener } from './hooks/useEventListener';
 const DarkModeToggleButton = () => {
   const redraw = useRedraw();
   const { actionMap } = useActions();
-  useEventListener(actionMap['TOGGLE_DARK_MODE']!, 'actionchanged', redraw);
+  useEventListener(actionMap['TOGGLE_DARK_MODE']!, 'actionChanged', redraw);
   return (
     <Toolbar.Button onClick={() => actionMap['TOGGLE_DARK_MODE']?.execute()}>
       {actionMap['TOGGLE_DARK_MODE']?.getState(undefined) ? (

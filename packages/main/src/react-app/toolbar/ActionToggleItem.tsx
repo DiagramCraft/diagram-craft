@@ -14,7 +14,7 @@ export const ActionToggleItem = (props: Props) => {
     actions!.setActionState(props.action, (actionMap[props.action] as ToggleAction).getState({}));
   }, [props.action, actionMap, actions]);
 
-  useEventListener(actionMap[props.action]!, 'actionchanged', ({ action }) => {
+  useEventListener(actionMap[props.action]!, 'actionChanged', ({ action }) => {
     actions!.setActionState(props.action, (action as ToggleAction).getState({}));
   });
 

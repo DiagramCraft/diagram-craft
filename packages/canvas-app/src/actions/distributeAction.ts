@@ -41,7 +41,7 @@ export class DistributeAction extends AbstractSelectionAction {
 
     commitWithUndo(uow, `Distribute ${this.mode}`);
 
-    this.emit('actiontriggered', {});
+    this.emit('actionTriggered', {});
   }
 
   private calculateAndUpdateBounds(orientation: 'x' | 'y', size: 'w' | 'h', uow: UnitOfWork): void {

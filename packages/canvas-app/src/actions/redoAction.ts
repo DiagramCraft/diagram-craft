@@ -17,13 +17,13 @@ export class RedoAction extends AbstractAction {
     super();
     const cb = () => {
       this.enabled = this.diagram.undoManager.redoableActions.length > 0;
-      this.emit('actionchanged', {});
+      this.emit('actionChanged');
     };
     this.diagram.undoManager.on('change', cb);
   }
 
   execute(): void {
     this.diagram.undoManager.redo();
-    this.emit('actiontriggered', {});
+    this.emit('actionTriggered', {});
   }
 }

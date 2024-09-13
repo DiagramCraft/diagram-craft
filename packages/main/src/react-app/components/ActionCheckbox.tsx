@@ -9,7 +9,7 @@ export const ActionCheckbox = (props: Props) => {
   const id = useId();
   const redraw = useRedraw();
 
-  useEventListener(actionMap[props.action]!, 'actionchanged', ({ action }) => {
+  useEventListener(actionMap[props.action]!, 'actionChanged', ({ action }) => {
     if (action === actionMap[props.action]) redraw();
   });
 

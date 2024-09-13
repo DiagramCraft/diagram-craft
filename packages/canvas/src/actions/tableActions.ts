@@ -136,7 +136,7 @@ export class TableRemoveAction extends AbstractAction {
 
     diagram.selectionState.on('change', () => {
       this.enabled = this.isEnabled();
-      this.emit('actionchanged', {});
+      this.emit('actionChanged');
     });
 
     this.enabled = this.isEnabled();
@@ -194,7 +194,7 @@ export class TableInsertAction extends AbstractAction {
 
     diagram.selectionState.on('change', () => {
       this.enabled = this.isEnabled();
-      this.emit('actionchanged', {});
+      this.emit('actionChanged');
     });
 
     this.enabled = this.isEnabled();

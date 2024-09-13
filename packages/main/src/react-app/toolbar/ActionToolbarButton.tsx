@@ -9,7 +9,7 @@ export function ActionToolbarButton<K extends keyof ActionMap>(props: Props<K>) 
   const [enabled, setEnabled] = useState(false);
 
   const action = actionMap[props.action]!;
-  useEventListener(action, 'actionchanged', () => {
+  useEventListener(action, 'actionChanged', () => {
     setEnabled(action.isEnabled({}));
   });
 

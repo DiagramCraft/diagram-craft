@@ -9,7 +9,7 @@ import { Toolbar } from '@diagram-craft/app-components/Toolbar';
 export const ActionToggleButton = (props: Props) => {
   const { actionMap } = useActions();
   const redraw = useRedraw();
-  useEventListener(actionMap[props.action]!, 'actionchanged', redraw);
+  useEventListener(actionMap[props.action]!, 'actionChanged', redraw);
 
   return (
     <Toolbar.ToggleGroup type={'single'}>

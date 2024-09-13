@@ -65,7 +65,7 @@ export class ClipboardPasteAction extends AbstractAction<KeyboardActionArgs> {
         this.enabled = false;
         this.layer = undefined;
       }
-      this.emit('actionchanged', {});
+      this.emit('actionChanged');
     });
   }
 
@@ -81,7 +81,7 @@ export class ClipboardPasteAction extends AbstractAction<KeyboardActionArgs> {
       }
     });
 
-    this.emit('actiontriggered', {});
+    this.emit('actionTriggered', {});
   }
 }
 
@@ -103,7 +103,7 @@ export class ClipboardCopyAction extends AbstractSelectionAction {
         this.deleteSelection();
       }
 
-      this.emit('actiontriggered', {});
+      this.emit('actionTriggered', {});
     });
   }
 

@@ -11,7 +11,7 @@ export class ToggleDarkModeAction extends AbstractToggleAction {
     super();
     setTimeout(() => {
       this.state = document.querySelectorAll('.dark-theme').length > 0;
-      this.emit('actionchanged', {});
+      this.emit('actionChanged');
     }, 1000);
   }
 
@@ -34,6 +34,6 @@ export class ToggleDarkModeAction extends AbstractToggleAction {
       document.body.classList.add('dark-theme');
       this.state = true;
     }
-    this.emit('actionchanged', {});
+    this.emit('actionChanged');
   }
 }

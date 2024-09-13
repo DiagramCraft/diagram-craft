@@ -54,6 +54,6 @@ export class SelectionRestackAction extends AbstractSelectionAction {
 
     commitWithUndo(uow, 'Restack selection');
 
-    this.emit('actiontriggered', {});
+    this.emit('actionTriggered', {});
   }
 }

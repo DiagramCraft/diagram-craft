@@ -3,8 +3,8 @@ import { Emitter, EventEmitter, EventKey, EventMap } from '@diagram-craft/utils/
 import { Point } from '@diagram-craft/geometry/point';
 
 export type ActionEvents = {
-  actionchanged: Record<string, never>;
-  actiontriggered: Record<string, never>;
+  actionChanged: Record<string, never>;
+  actionTriggered: Record<string, never>;
 };
 
 export type KeyboardActionArgs = { point?: Point; source?: 'keyboard' | 'mouse' | 'ui-element' };
@@ -39,7 +39,7 @@ export abstract class AbstractAction<T = undefined>
       if (result === this.enabled) return;
 
       this.enabled = result;
-      this.emit('actionchanged');
+      this.emit('actionChanged');
     };
 
     target.on(k, listener);

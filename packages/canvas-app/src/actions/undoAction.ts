@@ -15,13 +15,13 @@ export class UndoAction extends AbstractAction {
     super();
     const cb = () => {
       this.enabled = this.diagram.undoManager.undoableActions.length > 0;
-      this.emit('actionchanged', {});
+      this.emit('actionChanged');
     };
     this.diagram.undoManager.on('change', cb);
   }
 
   execute(): void {
     this.diagram.undoManager.undo();
-    this.emit('actiontriggered', {});
+    this.emit('actionTriggered', {});
   }
 }

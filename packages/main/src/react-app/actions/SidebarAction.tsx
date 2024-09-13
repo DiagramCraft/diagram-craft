@@ -44,7 +44,7 @@ export class SidebarAction extends AbstractToggleAction {
       const prevState = this.state;
       this.state = this.userState[key] === idx;
       if (this.state !== prevState) {
-        this.emit('actionchanged', {});
+        this.emit('actionChanged');
       }
     });
   }
@@ -56,6 +56,6 @@ export class SidebarAction extends AbstractToggleAction {
     } else {
       this.userState[key] = this.idx;
     }
-    this.emit('actiontriggered', {});
+    this.emit('actionTriggered', {});
   }
 }

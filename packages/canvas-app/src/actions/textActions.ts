@@ -35,7 +35,7 @@ export class TextAction extends AbstractToggleAction {
       } else {
         this.enabled = false;
       }
-      this.emit('actionchanged', {});
+      this.emit('actionChanged');
     };
     callback();
     diagram.selectionState.on('add', callback);
@@ -57,7 +57,7 @@ export class TextAction extends AbstractToggleAction {
     commitWithUndo(uow, `Text: ${this.prop}`);
 
     this.state = !!node.renderProps.text![this.prop];
-    this.emit('actionchanged', {});
+    this.emit('actionChanged');
   }
 }
 
@@ -75,7 +75,7 @@ export class TextDecorationAction extends AbstractToggleAction {
       } else {
         this.enabled = false;
       }
-      this.emit('actionchanged', {});
+      this.emit('actionChanged');
     };
     callback();
     diagram.selectionState.on('add', callback);
@@ -100,6 +100,6 @@ export class TextDecorationAction extends AbstractToggleAction {
     commitWithUndo(uow, `Text decoration`);
 
     this.state = node.renderProps.text!.textDecoration === this.prop;
-    this.emit('actionchanged', {});
+    this.emit('actionChanged');
   }
 }

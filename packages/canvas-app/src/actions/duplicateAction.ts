@@ -51,6 +51,6 @@ export class DuplicateAction extends AbstractSelectionAction {
     this.diagram.selectionState.clear();
     this.diagram.selectionState.setElements(newElements);
 
-    this.emit('actiontriggered', {});
+    this.emit('actionTriggered', {});
   }
 }

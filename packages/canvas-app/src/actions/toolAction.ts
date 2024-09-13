@@ -28,13 +28,13 @@ export class ToolAction extends AbstractToggleAction {
       const prevState = this.state;
       this.state = e.tool === tool;
       if (this.state !== prevState) {
-        this.emit('actionchanged', {});
+        this.emit('actionChanged');
       }
     });
   }
 
   execute() {
     this.applicationState.tool = this.tool;
-    this.emit('actiontriggered', {});
+    this.emit('actionTriggered', {});
   }
 }
