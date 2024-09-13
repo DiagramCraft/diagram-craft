@@ -4,7 +4,10 @@ import { useActions } from '../context/ActionsContext';
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
 import { Tooltip } from '@diagram-craft/app-components/Tooltip';
 
-export function ActionToolbarButton<K extends keyof ActionMap>(props: Props<K>) {
+export function ActionToolbarButton<
+  K extends keyof ActionMap,
+  P = Parameters<ActionMap[K]['execute']>[0]
+>(props: Props<K, P>) {
   const { actionMap } = useActions();
   const [enabled, setEnabled] = useState(false);
 
@@ -34,8 +37,7 @@ export function ActionToolbarButton<K extends keyof ActionMap>(props: Props<K>) 
   );
 }
 
-type Props<K extends keyof ActionMap> = {
+type Props<K extends keyof ActionMap, P = Parameters<ActionMap[K]['execute']>[0]> = {
   action: K;
-  arg: Parameters<ActionMap[K]['execute']>[0];
   children: React.ReactNode;
-};
+} & (P extends undefined ? { arg?: never } : { arg: P });

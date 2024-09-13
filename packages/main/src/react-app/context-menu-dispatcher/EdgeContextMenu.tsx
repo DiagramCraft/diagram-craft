@@ -23,9 +23,7 @@ export const EdgeContextMenu = (props: Props) => {
       >
         Delete waypoint
       </ActionContextMenuItem>
-      <ActionContextMenuItem arg={undefined} action={'EDGE_FLIP'}>
-        Flip edge
-      </ActionContextMenuItem>
+      <ActionContextMenuItem action={'EDGE_FLIP'}>Flip edge</ActionContextMenuItem>
     </>
   );
 };

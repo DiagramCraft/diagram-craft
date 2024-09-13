@@ -46,15 +46,13 @@ export const LayerIndicator = () => {
 
         <DropdownMenu.Portal>
           <DropdownMenu.Content className="cmp-context-menu" sideOffset={5}>
-            <ActionDropdownMenuItem arg={undefined} action={'LAYER_ADD'}>
-              New layer...
-            </ActionDropdownMenuItem>
+            <ActionDropdownMenuItem action={'LAYER_ADD'}>New layer...</ActionDropdownMenuItem>
 
-            <ActionDropdownMenuItem arg={undefined} action={'LAYER_ADD_REFERENCE'}>
+            <ActionDropdownMenuItem action={'LAYER_ADD_REFERENCE'}>
               New reference layer...
             </ActionDropdownMenuItem>
 
-            <ActionDropdownMenuItem arg={undefined} action={'LAYER_ADD_ADJUSTMENT'}>
+            <ActionDropdownMenuItem action={'LAYER_ADD_ADJUSTMENT'}>
               New adjustment layer...
             </ActionDropdownMenuItem>
             <DropdownMenu.Item

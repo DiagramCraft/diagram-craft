@@ -3,7 +3,10 @@ import React from 'react';
 import { useActions } from '../context/ActionsContext';
 import { findKeyBindingsForAction, formatKeyBinding } from '@diagram-craft/canvas/keyMap';
 
-export function ActionContextMenuItem<K extends keyof ActionMap>(props: Props<K>) {
+export function ActionContextMenuItem<
+  K extends keyof ActionMap,
+  P = Parameters<ActionMap[K]['execute']>[0]
+>(props: Props<K, P>) {
   const { actionMap, keyMap } = useActions();
 
   return (
@@ -12,7 +15,7 @@ export function ActionContextMenuItem<K extends keyof ActionMap>(props: Props<K>
       disabled={!actionMap[props.action]?.isEnabled(props.arg ?? {})}
       onSelect={async () => {
         const a = actionMap[props.action]!;
-        a.execute(props.arg);
+        a.execute(props.arg ?? {});
       }}
     >
       {props.children}{' '}
@@ -23,8 +26,7 @@ export function ActionContextMenuItem<K extends keyof ActionMap>(props: Props<K>
   );
 }
 
-type Props<K extends keyof ActionMap> = {
+type Props<K extends keyof ActionMap, P = Parameters<ActionMap[K]['execute']>[0]> = {
   action: K;
-  arg: Parameters<ActionMap[K]['execute']>[0];
   children: React.ReactNode;
-};
+} & (P extends undefined ? { arg?: never } : { arg: P });

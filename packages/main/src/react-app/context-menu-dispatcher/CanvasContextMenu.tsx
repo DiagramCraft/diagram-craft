@@ -9,22 +9,12 @@ export const CanvasContextMenu = (props: Props) => {
         Paste
       </ActionContextMenuItem>
       <ContextMenu.Separator className="cmp-context-menu__separator" />
-      <ActionContextMenuItem arg={undefined} action={'UNDO'}>
-        Undo
-      </ActionContextMenuItem>
-      <ActionContextMenuItem arg={undefined} action={'REDO'}>
-        Redo
-      </ActionContextMenuItem>
+      <ActionContextMenuItem action={'UNDO'}>Undo</ActionContextMenuItem>
+      <ActionContextMenuItem action={'REDO'}>Redo</ActionContextMenuItem>
       <ContextMenu.Separator className="cmp-context-menu__separator" />
-      <ActionContextMenuItem arg={undefined} action={'SELECT_ALL'}>
-        Select All
-      </ActionContextMenuItem>
-      <ActionContextMenuItem arg={undefined} action={'SELECT_ALL_NODES'}>
-        Select Nodes
-      </ActionContextMenuItem>
-      <ActionContextMenuItem arg={undefined} action={'SELECT_ALL_EDGES'}>
-        Select Edges
-      </ActionContextMenuItem>
+      <ActionContextMenuItem action={'SELECT_ALL'}>Select All</ActionContextMenuItem>
+      <ActionContextMenuItem action={'SELECT_ALL_NODES'}>Select Nodes</ActionContextMenuItem>
+      <ActionContextMenuItem action={'SELECT_ALL_EDGES'}>Select Edges</ActionContextMenuItem>
     </>
   );
 };

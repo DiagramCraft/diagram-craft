@@ -32,15 +32,13 @@ export const LayerContextMenu = (props: Props) => {
             </ActionContextMenuItem>
 
             <ContextMenu.Separator className="cmp-context-menu__separator" />
-            <ActionContextMenuItem arg={undefined} action={'LAYER_ADD'}>
-              New layer...
-            </ActionContextMenuItem>
+            <ActionContextMenuItem action={'LAYER_ADD'}>New layer...</ActionContextMenuItem>
 
-            <ActionContextMenuItem arg={undefined} action={'LAYER_ADD_REFERENCE'}>
+            <ActionContextMenuItem action={'LAYER_ADD_REFERENCE'}>
               New reference layer...
             </ActionContextMenuItem>
 
-            <ActionContextMenuItem arg={undefined} action={'LAYER_ADD_ADJUSTMENT'}>
+            <ActionContextMenuItem action={'LAYER_ADD_ADJUSTMENT'}>
               New adjustment layer...
             </ActionContextMenuItem>
           </ContextMenu.Content>

@@ -43,13 +43,13 @@ export const MainToolbar = ({ dirty }: { dirty: boolean }) => {
           <TbLocation size={'17.5px'} transform={'scale(-1,1)'} />
         </ActionToggleButton>
         <Toolbar.Separator />
-        <ActionToolbarButton arg={undefined} action={'IMAGE_INSERT'}>
+        <ActionToolbarButton action={'IMAGE_INSERT'}>
           <TbPhotoPlus size={'17.5px'} />
         </ActionToolbarButton>
-        <ActionToolbarButton arg={undefined} action={'TABLE_INSERT'}>
+        <ActionToolbarButton action={'TABLE_INSERT'}>
           <TbTablePlus size={'17.5px'} />
         </ActionToolbarButton>
-        <ActionToolbarButton arg={undefined} action={'IMAGE_INSERT'}>
+        <ActionToolbarButton action={'IMAGE_INSERT'}>
           <TbPlus size={'17.5px'} />
         </ActionToolbarButton>
         <Toolbar.Separator />

@@ -30,12 +30,8 @@ export const MainMenu = ({ userState }: Props) => {
             </DropdownMenu.SubTrigger>
             <DropdownMenu.Portal>
               <DropdownMenu.SubContent className="cmp-context-menu" sideOffset={2} alignOffset={-5}>
-                <ActionDropdownMenuItem arg={undefined} action={'FILE_NEW'}>
-                  New
-                </ActionDropdownMenuItem>
-                <ActionDropdownMenuItem arg={undefined} action={'FILE_OPEN'}>
-                  Open...
-                </ActionDropdownMenuItem>
+                <ActionDropdownMenuItem action={'FILE_NEW'}>New</ActionDropdownMenuItem>
+                <ActionDropdownMenuItem action={'FILE_OPEN'}>Open...</ActionDropdownMenuItem>
 
                 <DropdownMenu.Sub>
                   <DropdownMenu.SubTrigger
@@ -71,12 +67,8 @@ export const MainMenu = ({ userState }: Props) => {
                     </DropdownMenu.SubContent>
                   </DropdownMenu.Portal>
                 </DropdownMenu.Sub>
-                <ActionDropdownMenuItem arg={undefined} action={'FILE_SAVE'}>
-                  Save
-                </ActionDropdownMenuItem>
-                <ActionDropdownMenuItem arg={undefined} action={'FILE_SAVE'}>
-                  Save As...
-                </ActionDropdownMenuItem>
+                <ActionDropdownMenuItem action={'FILE_SAVE'}>Save</ActionDropdownMenuItem>
+                <ActionDropdownMenuItem action={'FILE_SAVE'}>Save As...</ActionDropdownMenuItem>
               </DropdownMenu.SubContent>
             </DropdownMenu.Portal>
           </DropdownMenu.Sub>
@@ -90,23 +82,13 @@ export const MainMenu = ({ userState }: Props) => {
             </DropdownMenu.SubTrigger>
             <DropdownMenu.Portal>
               <DropdownMenu.SubContent className="cmp-context-menu" sideOffset={2} alignOffset={-5}>
-                <ActionDropdownMenuItem arg={undefined} action={'UNDO'}>
-                  Undo
-                </ActionDropdownMenuItem>
-                <ActionDropdownMenuItem arg={undefined} action={'REDO'}>
-                  Redo
-                </ActionDropdownMenuItem>
+                <ActionDropdownMenuItem action={'UNDO'}>Undo</ActionDropdownMenuItem>
+                <ActionDropdownMenuItem action={'REDO'}>Redo</ActionDropdownMenuItem>
                 <DropdownMenu.Separator className="cmp-context-menu__separator" />
 
-                <ActionDropdownMenuItem arg={undefined} action={'CLIPBOARD_CUT'}>
-                  Cut
-                </ActionDropdownMenuItem>
-                <ActionDropdownMenuItem arg={undefined} action={'CLIPBOARD_COPY'}>
-                  Copy
-                </ActionDropdownMenuItem>
-                <ActionDropdownMenuItem arg={undefined} action={'DUPLICATE'}>
-                  Duplicate
-                </ActionDropdownMenuItem>
+                <ActionDropdownMenuItem action={'CLIPBOARD_CUT'}>Cut</ActionDropdownMenuItem>
+                <ActionDropdownMenuItem action={'CLIPBOARD_COPY'}>Copy</ActionDropdownMenuItem>
+                <ActionDropdownMenuItem action={'DUPLICATE'}>Duplicate</ActionDropdownMenuItem>
               </DropdownMenu.SubContent>
             </DropdownMenu.Portal>
           </DropdownMenu.Sub>
@@ -120,20 +102,16 @@ export const MainMenu = ({ userState }: Props) => {
             </DropdownMenu.SubTrigger>
             <DropdownMenu.Portal>
               <DropdownMenu.SubContent className="cmp-context-menu" sideOffset={2} alignOffset={-5}>
-                <ActionDropdownMenuItem arg={undefined} action={'ZOOM_IN'}>
-                  Zoom In
-                </ActionDropdownMenuItem>
-                <ActionDropdownMenuItem arg={undefined} action={'ZOOM_OUT'}>
-                  Zoom Out
-                </ActionDropdownMenuItem>
+                <ActionDropdownMenuItem action={'ZOOM_IN'}>Zoom In</ActionDropdownMenuItem>
+                <ActionDropdownMenuItem action={'ZOOM_OUT'}>Zoom Out</ActionDropdownMenuItem>
                 <DropdownMenu.Separator className="cmp-context-menu__separator" />
-                <ToggleActionDropdownMenuItem arg={undefined} action={'TOGGLE_RULER'}>
+                <ToggleActionDropdownMenuItem action={'TOGGLE_RULER'}>
                   Ruler
                 </ToggleActionDropdownMenuItem>
-                <ToggleActionDropdownMenuItem arg={undefined} action={'TOGGLE_HELP'}>
+                <ToggleActionDropdownMenuItem action={'TOGGLE_HELP'}>
                   Help
                 </ToggleActionDropdownMenuItem>
-                <ToggleActionDropdownMenuItem arg={undefined} action={'TOGGLE_DARK_MODE'}>
+                <ToggleActionDropdownMenuItem action={'TOGGLE_DARK_MODE'}>
                   Dark Mode
                 </ToggleActionDropdownMenuItem>
               </DropdownMenu.SubContent>
