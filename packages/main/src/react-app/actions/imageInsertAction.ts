@@ -1,5 +1,5 @@
 import { ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
-import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
+import { AbstractAction } from '@diagram-craft/canvas/action';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Attachment } from '@diagram-craft/model/attachment';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
@@ -32,7 +32,7 @@ class ImageInsertAction extends AbstractAction {
     this.addCriterion(diagram, 'change', () => diagram.activeLayer.type === 'regular');
   }
 
-  execute(_context: ActionContext): void {
+  execute(): void {
     application.ui?.showDialog?.({
       name: 'imageInsert',
       props: {},

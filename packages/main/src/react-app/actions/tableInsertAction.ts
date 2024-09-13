@@ -1,5 +1,5 @@
 import { ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
-import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
+import { AbstractAction } from '@diagram-craft/canvas/action';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
@@ -33,7 +33,7 @@ class TableInsertAction extends AbstractAction {
     this.addCriterion(diagram, 'change', () => diagram.activeLayer.type === 'regular');
   }
 
-  execute(_context: ActionContext): void {
+  execute(): void {
     assertRegularLayer(this.diagram.activeLayer);
 
     application.ui.showDialog?.({

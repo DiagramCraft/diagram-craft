@@ -1,5 +1,5 @@
 import { ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
-import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
+import { AbstractAction } from '@diagram-craft/canvas/action';
 import { application } from '../../application';
 
 export const fileNewActions = (_state: ActionConstructionParameters) => ({
@@ -15,7 +15,7 @@ class FileNewAction extends AbstractAction {
     super();
   }
 
-  execute(_context: ActionContext): void {
+  execute(): void {
     application.ui.newDocument?.();
   }
 }

@@ -1,5 +1,5 @@
 import { AbstractSelectionAction } from './abstractSelectionAction';
-import { ActionMapFactory, ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
+import { ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
 import { Translation } from '@diagram-craft/geometry/transform';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -8,12 +8,10 @@ import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoAction
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
 
 declare global {
-  interface ActionMap {
-    DUPLICATE: DuplicateAction;
-  }
+  interface ActionMap extends ReturnType<typeof duplicateActions> {}
 }
 
-export const duplicateActions: ActionMapFactory = (state: ActionConstructionParameters) => ({
+export const duplicateActions = (state: ActionConstructionParameters) => ({
   DUPLICATE: new DuplicateAction(state.diagram)
 });
 
@@ -53,6 +51,6 @@ export class DuplicateAction extends AbstractSelectionAction {
     this.diagram.selectionState.clear();
     this.diagram.selectionState.setElements(newElements);
 
-    this.emit('actiontriggered', { action: this });
+    this.emit('actiontriggered', {});
   }
 }

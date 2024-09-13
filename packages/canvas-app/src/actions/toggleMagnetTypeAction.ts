@@ -33,7 +33,7 @@ export class ToggleMagnetTypeAction extends AbstractToggleAction {
 
     this.diagram.snapManagerConfig.on('change', () => {
       this.state = diagram.snapManagerConfig.magnetTypes.includes(magnetType);
-      this.emit('actionchanged', { action: this });
+      this.emit('actionchanged', {});
     });
   }
 

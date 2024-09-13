@@ -17,13 +17,25 @@ const DocumentsContextMenu = (props: DocumentsContextMenuProps) => {
       <ContextMenu.Trigger asChild={true}>{props.children}</ContextMenu.Trigger>
       <ContextMenu.Portal>
         <ContextMenu.Content className="cmp-context-menu">
-          <ActionContextMenuItem action={'EDGE_FLIP'}>Rename...</ActionContextMenuItem>
-          <ActionContextMenuItem action={'EDGE_FLIP'}>Add</ActionContextMenuItem>
-          <ActionContextMenuItem action={'EDGE_FLIP'}>Add subpage</ActionContextMenuItem>
-          <ActionContextMenuItem action={'EDGE_FLIP'}>Delete</ActionContextMenuItem>
+          <ActionContextMenuItem arg={undefined} action={'EDGE_FLIP'}>
+            Rename...
+          </ActionContextMenuItem>
+          <ActionContextMenuItem arg={undefined} action={'EDGE_FLIP'}>
+            Add
+          </ActionContextMenuItem>
+          <ActionContextMenuItem arg={undefined} action={'EDGE_FLIP'}>
+            Add subpage
+          </ActionContextMenuItem>
+          <ActionContextMenuItem arg={undefined} action={'EDGE_FLIP'}>
+            Delete
+          </ActionContextMenuItem>
           <ContextMenu.Separator className="cmp-context-menu__separator" />
-          <ActionContextMenuItem action={'EDGE_FLIP'}>Sheet 1.1</ActionContextMenuItem>
-          <ActionContextMenuItem action={'EDGE_FLIP'}>Sheet 1.2</ActionContextMenuItem>
+          <ActionContextMenuItem arg={undefined} action={'EDGE_FLIP'}>
+            Sheet 1.1
+          </ActionContextMenuItem>
+          <ActionContextMenuItem arg={undefined} action={'EDGE_FLIP'}>
+            Sheet 1.2
+          </ActionContextMenuItem>
         </ContextMenu.Content>
       </ContextMenu.Portal>
     </ContextMenu.Root>

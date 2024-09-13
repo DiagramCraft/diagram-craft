@@ -5,16 +5,26 @@ import { ContextMenuTarget } from '@diagram-craft/canvas/ApplicationTriggers';
 export const CanvasContextMenu = (props: Props) => {
   return (
     <>
-      <ActionContextMenuItem action={'CLIPBOARD_PASTE'} context={{ point: props.target.pos }}>
+      <ActionContextMenuItem action={'CLIPBOARD_PASTE'} arg={{ point: props.target.pos }}>
         Paste
       </ActionContextMenuItem>
       <ContextMenu.Separator className="cmp-context-menu__separator" />
-      <ActionContextMenuItem action={'UNDO'}>Undo</ActionContextMenuItem>
-      <ActionContextMenuItem action={'REDO'}>Redo</ActionContextMenuItem>
+      <ActionContextMenuItem arg={undefined} action={'UNDO'}>
+        Undo
+      </ActionContextMenuItem>
+      <ActionContextMenuItem arg={undefined} action={'REDO'}>
+        Redo
+      </ActionContextMenuItem>
       <ContextMenu.Separator className="cmp-context-menu__separator" />
-      <ActionContextMenuItem action={'SELECT_ALL'}>Select All</ActionContextMenuItem>
-      <ActionContextMenuItem action={'SELECT_ALL_NODES'}>Select Nodes</ActionContextMenuItem>
-      <ActionContextMenuItem action={'SELECT_ALL_EDGES'}>Select Edges</ActionContextMenuItem>
+      <ActionContextMenuItem arg={undefined} action={'SELECT_ALL'}>
+        Select All
+      </ActionContextMenuItem>
+      <ActionContextMenuItem arg={undefined} action={'SELECT_ALL_NODES'}>
+        Select Nodes
+      </ActionContextMenuItem>
+      <ActionContextMenuItem arg={undefined} action={'SELECT_ALL_EDGES'}>
+        Select Edges
+      </ActionContextMenuItem>
     </>
   );
 };

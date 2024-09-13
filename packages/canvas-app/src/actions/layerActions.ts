@@ -2,7 +2,6 @@ import { ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
 import {
   AbstractAction,
   AbstractToggleAction,
-  ActionContext,
   ToggleActionUndoableAction
 } from '@diagram-craft/canvas/action';
 import { Diagram } from '@diagram-craft/model/diagram';
@@ -35,17 +34,19 @@ declare global {
   interface ActionMap extends ReturnType<typeof layerActions> {}
 }
 
-export class LayerDeleteAction extends AbstractAction {
+type LayerActionArg = { id?: string };
+
+export class LayerDeleteAction extends AbstractAction<LayerActionArg> {
   constructor(protected readonly diagram: Diagram) {
     super();
   }
 
-  isEnabled(context: ActionContext): boolean {
-    return context.id !== undefined && this.diagram.layers.byId(context.id) !== undefined;
+  isEnabled({ id }: LayerActionArg): boolean {
+    return id !== undefined && this.diagram.layers.byId(id) !== undefined;
   }
 
-  execute(context: ActionContext): void {
-    precondition.is.present(context.id);
+  execute({ id }: LayerActionArg): void {
+    precondition.is.present(id);
 
     // TODO: This should be a confirm dialog
     application.ui.showMessageDialog?.(
@@ -56,9 +57,9 @@ export class LayerDeleteAction extends AbstractAction {
       () => {
         const uow = new UnitOfWork(this.diagram, true);
 
-        precondition.is.present(context.id);
+        precondition.is.present(id);
 
-        const layer = this.diagram.layers.byId(context.id);
+        const layer = this.diagram.layers.byId(id);
         assert.present(layer);
 
         this.diagram.layers.remove(layer, uow);
@@ -95,109 +96,103 @@ class LayerDeleteUndoableAction implements UndoableAction {
   }
 }
 
-export class LayerToggleVisibilityAction extends AbstractToggleAction {
+export class LayerToggleVisibilityAction extends AbstractToggleAction<LayerActionArg> {
   constructor(protected readonly diagram: Diagram) {
     super();
   }
 
-  isEnabled(context: ActionContext): boolean {
-    return context.id !== undefined && this.diagram.layers.byId(context.id) !== undefined;
+  isEnabled({ id }: LayerActionArg): boolean {
+    return id !== undefined && this.diagram.layers.byId(id) !== undefined;
   }
 
-  getState(context: ActionContext): boolean {
-    if (!context.id) return false;
-    const layer = this.diagram.layers.byId(context.id);
+  getState({ id }: LayerActionArg): boolean {
+    if (!id) return false;
+    const layer = this.diagram.layers.byId(id);
     assert.present(layer);
     return this.diagram.layers.visible.includes(layer);
   }
 
-  execute(context: ActionContext): void {
-    precondition.is.present(context.id);
+  execute({ id }: LayerActionArg): void {
+    precondition.is.present(id);
 
-    const layer = this.diagram.layers.byId(context.id);
+    const layer = this.diagram.layers.byId(id);
     assert.present(layer);
 
     this.diagram.layers.toggleVisibility(layer);
     this.diagram.undoManager.add(
-      new ToggleActionUndoableAction('Toggle layer visibility', this, context)
+      new ToggleActionUndoableAction('Toggle layer visibility', this, { id })
     );
   }
 }
 
-export class LayerToggleLockedAction extends AbstractToggleAction {
+export class LayerToggleLockedAction extends AbstractToggleAction<LayerActionArg> {
   constructor(protected readonly diagram: Diagram) {
     super();
   }
 
-  isEnabled(context: ActionContext): boolean {
+  isEnabled({ id }: LayerActionArg): boolean {
     return (
-      context.id !== undefined &&
-      this.diagram.layers.byId(context.id) !== undefined &&
-      this.diagram.layers.byId(context.id)?.type !== 'reference' &&
-      this.diagram.layers.byId(context.id)?.type !== 'rule'
+      id !== undefined &&
+      this.diagram.layers.byId(id) !== undefined &&
+      this.diagram.layers.byId(id)?.type !== 'reference' &&
+      this.diagram.layers.byId(id)?.type !== 'rule'
     );
   }
 
-  getState(context: ActionContext): boolean {
-    if (!context.id) return false;
-    const layer = this.diagram.layers.byId(context.id);
+  getState({ id }: LayerActionArg): boolean {
+    if (!id) return false;
+    const layer = this.diagram.layers.byId(id);
     assert.present(layer);
     return layer.isLocked();
   }
 
-  execute(context: ActionContext): void {
-    precondition.is.present(context.id);
+  execute({ id }: LayerActionArg): void {
+    precondition.is.present(id);
 
-    const layer = this.diagram.layers.byId(context.id);
+    const layer = this.diagram.layers.byId(id);
     assert.present(layer);
 
     layer.locked = !layer.isLocked();
     this.diagram.undoManager.add(
-      new ToggleActionUndoableAction('Toggle layer locked', this, context)
+      new ToggleActionUndoableAction('Toggle layer locked', this, { id })
     );
   }
 }
 
-export class LayerRenameAction extends AbstractAction<string | undefined> {
+export class LayerRenameAction extends AbstractAction<LayerActionArg> {
   constructor(protected readonly diagram: Diagram) {
     super();
   }
 
-  isEnabled(context: ActionContext): boolean {
-    return context.id !== undefined && this.diagram.layers.byId(context.id) !== undefined;
+  isEnabled({ id }: LayerActionArg): boolean {
+    return id !== undefined && this.diagram.layers.byId(id) !== undefined;
   }
 
-  execute(context: ActionContext, name: string | undefined): void {
-    precondition.is.present(context.id);
+  execute({ id }: LayerActionArg): void {
+    precondition.is.present(id);
 
-    const layer = this.diagram.layers.byId(context.id);
+    const layer = this.diagram.layers.byId(id);
     assert.present(layer);
 
-    if (typeof name === 'string') {
-      const uow = new UnitOfWork(this.diagram, true);
-      layer.setName(typeof name === 'string' ? name : 'New name', uow);
-      commitWithUndo(uow, `Rename layer`);
-    } else {
-      application.ui.showDialog?.({
-        name: 'stringInput',
-        props: {
-          title: 'Rename layer',
-          description: 'Enter a new name for the layer.',
-          saveButtonLabel: 'Rename',
-          value: layer.name
-        },
-        onOk: async name => {
-          const uow = new UnitOfWork(this.diagram, true);
-          layer.setName(name, uow);
-          commitWithUndo(uow, `Rename layer`);
-        },
-        onCancel: () => {}
-      });
-    }
+    application.ui.showDialog?.({
+      name: 'stringInput',
+      props: {
+        title: 'Rename layer',
+        description: 'Enter a new name for the layer.',
+        saveButtonLabel: 'Rename',
+        value: layer.name
+      },
+      onOk: async name => {
+        const uow = new UnitOfWork(this.diagram, true);
+        layer.setName(name, uow);
+        commitWithUndo(uow, `Rename layer`);
+      },
+      onCancel: () => {}
+    });
   }
 }
 
-export class LayerAddAction extends AbstractAction<string | undefined> {
+export class LayerAddAction extends AbstractAction {
   constructor(
     protected readonly diagram: Diagram,
     private readonly type: LayerType
@@ -205,21 +200,8 @@ export class LayerAddAction extends AbstractAction<string | undefined> {
     super();
   }
 
-  execute(_context: ActionContext, name: string | undefined): void {
-    if (typeof name === 'string') {
-      const uow = new UnitOfWork(this.diagram, true);
-
-      const layer = new RegularLayer(newid(), name, [], this.diagram);
-      this.diagram.layers.add(layer, uow);
-
-      const snapshots = uow.commit();
-      this.diagram.undoManager.add(
-        new CompoundUndoableAction([
-          new LayerAddUndoableAction(this.diagram, layer),
-          new SnapshotUndoableAction('Add layer', this.diagram, snapshots)
-        ])
-      );
-    } else if (this.type === 'reference') {
+  execute(): void {
+    if (this.type === 'reference') {
       application.ui.showDialog?.({
         name: 'newReferenceLayer',
         props: {},
@@ -295,17 +277,17 @@ class LayerAddUndoableAction implements UndoableAction {
   }
 }
 
-export class LayerSelectionMoveAction extends AbstractAction {
+export class LayerSelectionMoveAction extends AbstractAction<LayerActionArg> {
   constructor(protected readonly diagram: Diagram) {
     super();
   }
 
-  execute(context: ActionContext): void {
-    precondition.is.present(context.id);
+  execute({ id }: LayerActionArg): void {
+    precondition.is.present(id);
 
     const uow = new UnitOfWork(this.diagram, true);
 
-    const layer = this.diagram.layers.byId(context.id!)!;
+    const layer = this.diagram.layers.byId(id!)!;
     assert.present(layer);
 
     this.diagram.moveElement(this.diagram.selectionState.elements, uow, layer!);

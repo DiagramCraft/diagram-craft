@@ -31,104 +31,104 @@ describe('abstractSelectionAction', () => {
 
     describe('MultipleType', () => {
       test('should be disabled if no elements selected regardless of MultipleType', () => {
-        expect(new TestAction(diagram, MultipleType.Both).isEnabled({})).toBe(false);
-        expect(new TestAction(diagram, MultipleType.SingleOnly).isEnabled({})).toBe(false);
-        expect(new TestAction(diagram, MultipleType.MultipleOnly).isEnabled({})).toBe(false);
+        expect(new TestAction(diagram, MultipleType.Both).isEnabled(undefined)).toBe(false);
+        expect(new TestAction(diagram, MultipleType.SingleOnly).isEnabled(undefined)).toBe(false);
+        expect(new TestAction(diagram, MultipleType.MultipleOnly).isEnabled(undefined)).toBe(false);
       });
 
       test('should be enabled if elements selected and MultipleType is Both', () => {
         const action = new TestAction(diagram, MultipleType.Both);
 
-        expect(action.isEnabled({})).toBe(false);
+        expect(action.isEnabled(undefined)).toBe(false);
 
         diagram.selectionState.setElements([el1]);
-        expect(action.isEnabled({})).toBe(true);
+        expect(action.isEnabled(undefined)).toBe(true);
 
         diagram.selectionState.setElements([el1, el2]);
-        expect(action.isEnabled({})).toBe(true);
+        expect(action.isEnabled(undefined)).toBe(true);
       });
 
       test('should be enabled if elements selected and MultipleType is SingleOnly', () => {
         const action = new TestAction(diagram, MultipleType.SingleOnly);
 
-        expect(action.isEnabled({})).toBe(false);
+        expect(action.isEnabled(undefined)).toBe(false);
 
         diagram.selectionState.setElements([el1]);
-        expect(action.isEnabled({})).toBe(true);
+        expect(action.isEnabled(undefined)).toBe(true);
 
         diagram.selectionState.setElements([el1, el2]);
-        expect(action.isEnabled({})).toBe(false);
+        expect(action.isEnabled(undefined)).toBe(false);
       });
 
       test('should be enabled if elements selected and MultipleType is MultipleOnly', () => {
         const action = new TestAction(diagram, MultipleType.MultipleOnly);
 
-        expect(action.isEnabled({})).toBe(false);
+        expect(action.isEnabled(undefined)).toBe(false);
 
         diagram.selectionState.setElements([el1]);
-        expect(action.isEnabled({})).toBe(false);
+        expect(action.isEnabled(undefined)).toBe(false);
 
         diagram.selectionState.setElements([el1, el2]);
-        expect(action.isEnabled({})).toBe(true);
+        expect(action.isEnabled(undefined)).toBe(true);
       });
     });
 
     describe('ElementType', () => {
       test('should be disabled if no elements selected regardless of ElementType', () => {
-        expect(new TestAction(diagram, MultipleType.Both, ElementType.Both).isEnabled({})).toBe(
-          false
-        );
-        expect(new TestAction(diagram, MultipleType.Both, ElementType.Node).isEnabled({})).toBe(
-          false
-        );
-        expect(new TestAction(diagram, MultipleType.Both, ElementType.Edge).isEnabled({})).toBe(
-          false
-        );
+        expect(
+          new TestAction(diagram, MultipleType.Both, ElementType.Both).isEnabled(undefined)
+        ).toBe(false);
+        expect(
+          new TestAction(diagram, MultipleType.Both, ElementType.Node).isEnabled(undefined)
+        ).toBe(false);
+        expect(
+          new TestAction(diagram, MultipleType.Both, ElementType.Edge).isEnabled(undefined)
+        ).toBe(false);
       });
 
       test('should be enabled if elements selected and ElementType is Both', () => {
         const action = new TestAction(diagram, MultipleType.Both, ElementType.Both);
 
-        expect(action.isEnabled({})).toBe(false);
+        expect(action.isEnabled(undefined)).toBe(false);
 
         diagram.selectionState.setElements([el1]);
-        expect(action.isEnabled({})).toBe(true);
+        expect(action.isEnabled(undefined)).toBe(true);
 
         diagram.selectionState.setElements([edge1]);
-        expect(action.isEnabled({})).toBe(true);
+        expect(action.isEnabled(undefined)).toBe(true);
 
         diagram.selectionState.setElements([el1, edge1]);
-        expect(action.isEnabled({})).toBe(true);
+        expect(action.isEnabled(undefined)).toBe(true);
       });
 
       test('should be enabled if elements selected and ElementType is Node', () => {
         const action = new TestAction(diagram, MultipleType.Both, ElementType.Node);
 
-        expect(action.isEnabled({})).toBe(false);
+        expect(action.isEnabled(undefined)).toBe(false);
 
         diagram.selectionState.setElements([el1]);
-        expect(action.isEnabled({})).toBe(true);
+        expect(action.isEnabled(undefined)).toBe(true);
 
         diagram.selectionState.setElements([edge1]);
-        expect(action.isEnabled({})).toBe(false);
+        expect(action.isEnabled(undefined)).toBe(false);
 
         diagram.selectionState.setElements([el1, edge1]);
-        expect(action.isEnabled({})).toBe(true);
+        expect(action.isEnabled(undefined)).toBe(true);
       });
 
       test('should be enabled if elements selected and ElementType is Edge', () => {
         const action = new TestAction(diagram, MultipleType.Both, ElementType.Edge);
 
-        expect(action.isEnabled({})).toBe(false);
+        expect(action.isEnabled(undefined)).toBe(false);
 
         diagram.selectionState.setElements([el1]);
-        expect(action.isEnabled({})).toBe(false);
+        expect(action.isEnabled(undefined)).toBe(false);
 
         diagram.selectionState.setElements([edge1]);
-        expect(action.isEnabled({})).toBe(true);
+        expect(action.isEnabled(undefined)).toBe(true);
 
         diagram.selectionState.setElements([el1, edge1]);
-        expect(action.isEnabled({})).toBe(true);
+        expect(action.isEnabled(undefined)).toBe(true);
       });
     });
   });

@@ -40,6 +40,6 @@ export class SelectionDeleteAction extends AbstractSelectionAction {
       )
     );
 
-    this.emit('actiontriggered', { action: this });
+    this.emit('actiontriggered', {});
   }
 }

@@ -1,5 +1,5 @@
 import { ActionMapFactory, ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
-import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
+import { AbstractAction } from '@diagram-craft/canvas/action';
 import { LengthOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
 import { precondition } from '@diagram-craft/utils/assert';
 import { Diagram } from '@diagram-craft/model/diagram';
@@ -12,6 +12,7 @@ import {
   SnapshotUndoableAction
 } from '@diagram-craft/model/diagramUndoActions';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
+import { Point } from '@diagram-craft/geometry/point';
 
 declare global {
   interface ActionMap {
@@ -23,13 +24,18 @@ export const edgeTextAddActions: ActionMapFactory = (state: ActionConstructionPa
   EDGE_TEXT_ADD: new EdgeTextAddAction(state.diagram)
 });
 
-export class EdgeTextAddAction extends AbstractAction {
+type EdgeTextAddActionArg = {
+  point?: Point;
+  id?: string;
+};
+
+export class EdgeTextAddAction extends AbstractAction<EdgeTextAddActionArg> {
   constructor(private readonly diagram: Diagram) {
     super();
     this.addCriterion(diagram, 'change', () => diagram.activeLayer.type === 'regular');
   }
 
-  execute(context: ActionContext): void {
+  execute(context: EdgeTextAddActionArg): void {
     precondition.is.present(context.point);
 
     const edge = this.diagram.edgeLookup.get(context.id!);

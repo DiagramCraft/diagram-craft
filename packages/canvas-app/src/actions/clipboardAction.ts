@@ -1,6 +1,6 @@
 import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSelectionAction';
 import { ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
-import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
+import { AbstractAction, KeyboardActionArgs } from '@diagram-craft/canvas/action';
 import { UndoableAction } from '@diagram-craft/model/undoManager';
 import { assertRegularLayer, RegularLayer } from '@diagram-craft/model/diagramLayer';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
@@ -51,7 +51,7 @@ export class PasteUndoableAction implements UndoableAction {
   }
 }
 
-export class ClipboardPasteAction extends AbstractAction {
+export class ClipboardPasteAction extends AbstractAction<KeyboardActionArgs> {
   layer: RegularLayer | undefined;
 
   constructor(protected readonly diagram: Diagram) {
@@ -65,11 +65,11 @@ export class ClipboardPasteAction extends AbstractAction {
         this.enabled = false;
         this.layer = undefined;
       }
-      this.emit('actionchanged', { action: this });
+      this.emit('actionchanged', {});
     });
   }
 
-  execute(context: ActionContext) {
+  execute(context: KeyboardActionArgs) {
     CLIPBOARD.read().then(clip => {
       for (const c of clip) {
         for (const [contentType, handler] of Object.entries(PASTE_HANDLERS)) {
@@ -81,7 +81,7 @@ export class ClipboardPasteAction extends AbstractAction {
       }
     });
 
-    this.emit('actiontriggered', { action: this });
+    this.emit('actiontriggered', {});
   }
 }
 
@@ -103,7 +103,7 @@ export class ClipboardCopyAction extends AbstractSelectionAction {
         this.deleteSelection();
       }
 
-      this.emit('actiontriggered', { action: this });
+      this.emit('actiontriggered', {});
     });
   }
 

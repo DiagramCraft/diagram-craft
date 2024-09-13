@@ -21,7 +21,7 @@ export class ToggleRulerAction extends AbstractToggleAction {
 
     this.diagram.on('change', () => {
       this.state = diagram.props.ruler?.enabled ?? true;
-      this.emit('actionchanged', { action: this });
+      this.emit('actionchanged', {});
     });
   }
 

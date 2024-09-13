@@ -3,23 +3,22 @@ import React from 'react';
 import { useActions } from '../context/ActionsContext';
 import { TbCheck } from 'react-icons/tb';
 import { useRedraw } from '../hooks/useRedraw';
-import { Action, ActionContext, ToggleAction } from '@diagram-craft/canvas/action';
+import { ToggleAction } from '@diagram-craft/canvas/action';
 import { findKeyBindingsForAction, formatKeyBinding } from '@diagram-craft/canvas/keyMap';
 
-export const ToggleActionDropdownMenuItem = (props: Props) => {
+export function ToggleActionDropdownMenuItem<K extends keyof ActionMap>(props: Props<K>) {
   const redraw = useRedraw();
   const { actionMap, keyMap } = useActions();
 
-  const action: Action = actionMap[props.action]!;
+  const action = actionMap[props.action]!;
 
   return (
     <DropdownMenu.CheckboxItem
       className="cmp-context-menu__item"
-      disabled={!actionMap[props.action]?.isEnabled(props.context ?? {})}
-      checked={(action as ToggleAction).getState(props.context ?? {})}
+      disabled={!actionMap[props.action]?.isEnabled(props.arg ?? {})}
+      checked={(action as ToggleAction).getState(props.arg ?? {})}
       onCheckedChange={async () => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        action.execute(props.context ?? {});
+        action.execute(props.arg ?? {});
         redraw();
       }}
     >
@@ -32,10 +31,10 @@ export const ToggleActionDropdownMenuItem = (props: Props) => {
       </div>
     </DropdownMenu.CheckboxItem>
   );
-};
+}
 
-type Props = {
-  action: keyof ActionMap;
-  context?: ActionContext;
+type Props<K extends keyof ActionMap> = {
+  action: K;
+  arg: Parameters<ActionMap[K]['execute']>[0];
   children: React.ReactNode;
 };

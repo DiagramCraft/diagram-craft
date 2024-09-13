@@ -1,20 +1,18 @@
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import React from 'react';
 import { useActions } from '../context/ActionsContext';
-import { Action, ActionContext } from '@diagram-craft/canvas/action';
 import { findKeyBindingsForAction, formatKeyBinding } from '@diagram-craft/canvas/keyMap';
 
-export const ActionDropdownMenuItem = (props: Props) => {
+export function ActionDropdownMenuItem<K extends keyof ActionMap>(props: Props<K>) {
   const { actionMap, keyMap } = useActions();
 
   return (
     <DropdownMenu.Item
       className="cmp-context-menu__item"
-      disabled={!actionMap[props.action]?.isEnabled(props.context ?? {})}
+      disabled={!actionMap[props.action]?.isEnabled(props.arg ?? {})}
       onSelect={async () => {
-        const a: Action = actionMap[props.action]!;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        a.execute(props.context ?? {});
+        const a = actionMap[props.action]!;
+        a.execute(props.arg);
       }}
     >
       {props.children}{' '}
@@ -23,10 +21,10 @@ export const ActionDropdownMenuItem = (props: Props) => {
       </div>
     </DropdownMenu.Item>
   );
-};
+}
 
-type Props = {
-  action: keyof ActionMap;
-  context?: ActionContext;
+type Props<K extends keyof ActionMap> = {
+  action: K;
+  arg: Parameters<ActionMap[K]['execute']>[0];
   children: React.ReactNode;
 };

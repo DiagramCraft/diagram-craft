@@ -1,11 +1,12 @@
 import { ActionMapFactory, ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
-import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
+import { AbstractAction } from '@diagram-craft/canvas/action';
 import { PointOnPath } from '@diagram-craft/geometry/pathPosition';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { precondition } from '@diagram-craft/utils/assert';
 import { smallest } from '@diagram-craft/utils/array';
+import { Point } from '@diagram-craft/geometry/point';
 
 declare global {
   interface ActionMap {
@@ -17,12 +18,17 @@ export const waypointDeleteActions: ActionMapFactory = (state: ActionConstructio
   WAYPOINT_DELETE: new WaypointDeleteAction(state.diagram)
 });
 
-export class WaypointDeleteAction extends AbstractAction {
+type WaypointDeleteActionArg = {
+  id?: string;
+  point?: Point;
+};
+
+export class WaypointDeleteAction extends AbstractAction<WaypointDeleteActionArg> {
   constructor(private readonly diagram: Diagram) {
     super();
   }
 
-  execute(context: ActionContext): void {
+  execute(context: WaypointDeleteActionArg): void {
     precondition.is.present(context.point);
 
     const edge = this.diagram.edgeLookup.get(context.id!);

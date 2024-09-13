@@ -27,15 +27,15 @@ describe('AlignActions', () => {
   describe('enabled', () => {
     test('should not be enabled when there the selection is only one or empty', () => {
       diagram.selectionState.setElements([]);
-      expect(new AlignAction('top', diagram).isEnabled({})).toBe(false);
+      expect(new AlignAction('top', diagram).isEnabled(undefined)).toBe(false);
 
       diagram.selectionState.setElements([layer.elements[0]]);
-      expect(new AlignAction('top', diagram).isEnabled({})).toBe(false);
+      expect(new AlignAction('top', diagram).isEnabled(undefined)).toBe(false);
     });
 
     test('should be enabled when there are more than one element selected', () => {
       diagram.selectionState.setElements(layer.elements);
-      expect(new AlignAction('top', diagram).isEnabled({})).toBe(true);
+      expect(new AlignAction('top', diagram).isEnabled(undefined)).toBe(true);
     });
   });
 

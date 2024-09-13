@@ -18,13 +18,13 @@ export const RuleContextMenu = (props: Props) => {
           <ContextMenu.Content className="cmp-context-menu">
             <ActionContextMenuItem
               action={'RULE_LAYER_EDIT'}
-              context={{ id: `${props.layer.id}:${props.rule.id}` }}
+              arg={{ id: `${props.layer.id}:${props.rule.id}` }}
             >
               Edit
             </ActionContextMenuItem>
             <ActionContextMenuItem
               action={'RULE_LAYER_DELETE'}
-              context={{ id: `${props.layer.id}:${props.rule.id}` }}
+              arg={{ id: `${props.layer.id}:${props.rule.id}` }}
             >
               Delete
             </ActionContextMenuItem>

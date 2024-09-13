@@ -1,5 +1,5 @@
 import { ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
-import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
+import { AbstractAction } from '@diagram-craft/canvas/action';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { assert } from '@diagram-craft/utils/assert';
 import { serializeDiagramDocument } from '@diagram-craft/model/serialization/serialize';
@@ -24,7 +24,7 @@ class FileSaveAction extends AbstractAction {
     }
   }
 
-  execute(_context: ActionContext): void {
+  execute(): void {
     const url = this.diagram.document.url;
     assert.present(url);
 

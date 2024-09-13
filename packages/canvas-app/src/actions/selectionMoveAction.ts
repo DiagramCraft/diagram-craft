@@ -53,6 +53,6 @@ export class SelectionMoveAction extends AbstractSelectionAction {
     );
     commitWithUndo(uow, 'Move');
 
-    this.emit('actiontriggered', { action: this });
+    this.emit('actiontriggered', {});
   }
 }

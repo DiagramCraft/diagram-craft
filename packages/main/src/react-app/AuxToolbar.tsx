@@ -12,7 +12,7 @@ const DarkModeToggleButton = () => {
   useEventListener(actionMap['TOGGLE_DARK_MODE']!, 'actionchanged', redraw);
   return (
     <Toolbar.Button onClick={() => actionMap['TOGGLE_DARK_MODE']?.execute()}>
-      {actionMap['TOGGLE_DARK_MODE']?.getState({}) ? (
+      {actionMap['TOGGLE_DARK_MODE']?.getState(undefined) ? (
         <TbSun size={'17.5px'} />
       ) : (
         <TbMoon size={'17.5px'} />

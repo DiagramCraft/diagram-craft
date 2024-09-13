@@ -1,5 +1,5 @@
 import { ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
-import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
+import { AbstractAction } from '@diagram-craft/canvas/action';
 import { application } from '../../application';
 
 export const fileOpenActions = (_state: ActionConstructionParameters) => ({
@@ -25,7 +25,7 @@ class FileOpenAction extends AbstractAction {
     super();
   }
 
-  execute(_context: ActionContext): void {
+  execute(): void {
     application.ui.showDialog?.({
       name: 'fileOpen',
       props: {},

@@ -11,42 +11,36 @@ export const LayerContextMenu = (props: Props) => {
         <ContextMenu.Trigger asChild={true}>{props.children}</ContextMenu.Trigger>
         <ContextMenu.Portal>
           <ContextMenu.Content className="cmp-context-menu">
-            <ActionContextMenuItem action={'LAYER_RENAME'} context={{ id: props.layer?.id }}>
+            <ActionContextMenuItem action={'LAYER_RENAME'} arg={{ id: props.layer?.id }}>
               Rename...
             </ActionContextMenuItem>
             <ToggleActionContextMenuItem
               action={'LAYER_TOGGLE_VISIBILITY'}
-              context={{ id: props.layer?.id }}
+              arg={{ id: props.layer?.id }}
             >
               Visible
             </ToggleActionContextMenuItem>
-            <ToggleActionContextMenuItem
-              action={'LAYER_TOGGLE_LOCK'}
-              context={{ id: props.layer?.id }}
-            >
+            <ToggleActionContextMenuItem action={'LAYER_TOGGLE_LOCK'} arg={{ id: props.layer?.id }}>
               Locked
             </ToggleActionContextMenuItem>
-            <ActionContextMenuItem action={'LAYER_DELETE_LAYER'} context={{ id: props.layer?.id }}>
+            <ActionContextMenuItem action={'LAYER_DELETE_LAYER'} arg={{ id: props.layer?.id }}>
               Delete
             </ActionContextMenuItem>
             <ContextMenu.Separator className="cmp-context-menu__separator" />
-            <ActionContextMenuItem
-              action={'RULE_LAYER_ADD'}
-              context={{
-                id: props.layer?.id
-              }}
-            >
+            <ActionContextMenuItem action={'RULE_LAYER_ADD'} arg={{ id: props.layer?.id }}>
               Add rule
             </ActionContextMenuItem>
 
             <ContextMenu.Separator className="cmp-context-menu__separator" />
-            <ActionContextMenuItem action={'LAYER_ADD'}>New layer...</ActionContextMenuItem>
+            <ActionContextMenuItem arg={undefined} action={'LAYER_ADD'}>
+              New layer...
+            </ActionContextMenuItem>
 
-            <ActionContextMenuItem action={'LAYER_ADD_REFERENCE'}>
+            <ActionContextMenuItem arg={undefined} action={'LAYER_ADD_REFERENCE'}>
               New reference layer...
             </ActionContextMenuItem>
 
-            <ActionContextMenuItem action={'LAYER_ADD_ADJUSTMENT'}>
+            <ActionContextMenuItem arg={undefined} action={'LAYER_ADD_ADJUSTMENT'}>
               New adjustment layer...
             </ActionContextMenuItem>
           </ContextMenu.Content>

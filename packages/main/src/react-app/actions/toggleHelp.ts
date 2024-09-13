@@ -31,6 +31,6 @@ export class ToggleHelpAction extends AbstractToggleAction {
     }
 
     this.userState.showHelp = this.state;
-    this.emit('actionchanged', { action: this });
+    this.emit('actionchanged', {});
   }
 }

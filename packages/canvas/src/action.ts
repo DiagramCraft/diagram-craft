@@ -1,35 +1,31 @@
-import { Point } from '@diagram-craft/geometry/point';
 import { UndoableAction } from '@diagram-craft/model/undoManager';
 import { Emitter, EventEmitter, EventKey, EventMap } from '@diagram-craft/utils/event';
+import { Point } from '@diagram-craft/geometry/point';
 
 export type ActionEvents = {
-  actionchanged: { action: Action };
-  actiontriggered: { action: Action };
+  actionchanged: Record<string, never>;
+  actiontriggered: Record<string, never>;
 };
 
-export type ActionContext = {
-  point?: Point;
-  id?: string;
-  source?: 'keyboard' | 'mouse' | 'ui-element';
-};
+export type KeyboardActionArgs = { point?: Point; source?: 'keyboard' | 'mouse' | 'ui-element' };
 
-export interface Action<T = unknown> extends Emitter<ActionEvents> {
-  execute: (context: ActionContext, arg?: T) => void;
-  isEnabled: (context: ActionContext) => boolean;
+export interface Action<T = undefined> extends Emitter<ActionEvents> {
+  execute: (arg: Partial<T>) => void;
+  isEnabled: (arg: Partial<T> | T) => boolean;
 }
 
-export abstract class AbstractAction<T = unknown>
+export abstract class AbstractAction<T = undefined>
   extends EventEmitter<ActionEvents>
   implements Action<T>
 {
   protected criteria: Array<() => boolean> = [];
   protected enabled: boolean = true;
 
-  isEnabled(_context: ActionContext): boolean {
+  isEnabled(_arg: Partial<T>): boolean {
     return this.enabled;
   }
 
-  abstract execute(context: ActionContext, arg?: T): void;
+  abstract execute(arg: Partial<T>): void;
 
   addCriterion<T extends EventMap>(
     target: EventEmitter<T>,
@@ -43,8 +39,7 @@ export abstract class AbstractAction<T = unknown>
       if (result === this.enabled) return;
 
       this.enabled = result;
-      // @ts-ignore
-      this.emit('actionchanged', { action: this });
+      this.emit('actionchanged');
     };
 
     target.on(k, listener);
@@ -52,35 +47,36 @@ export abstract class AbstractAction<T = unknown>
   }
 }
 
-export abstract class AbstractToggleAction<T = unknown>
+export abstract class AbstractToggleAction<T = undefined>
   extends AbstractAction<T>
   implements ToggleAction<T>
 {
   protected state: boolean = true;
 
-  getState(_context: ActionContext): boolean {
+  getState(_arg: Partial<T>): boolean {
     return this.state;
   }
 
-  abstract execute(context: ActionContext, arg?: T): void;
+  abstract execute(arg: Partial<T>): void;
 }
 
 export interface ToggleAction<T = unknown> extends Action<T> {
-  getState: (context: ActionContext) => boolean;
+  getState: (arg: T) => boolean;
 }
 
-export class ToggleActionUndoableAction implements UndoableAction {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export class ToggleActionUndoableAction<T = any> implements UndoableAction {
   constructor(
     public description: string,
-    private readonly action: ToggleAction,
-    private readonly context: ActionContext
+    private readonly action: ToggleAction<T>,
+    private readonly arg: T
   ) {}
 
   undo() {
-    this.action.execute(this.context);
+    this.action.execute(this.arg);
   }
 
   redo() {
-    this.action.execute(this.context);
+    this.action.execute(this.arg);
   }
 }

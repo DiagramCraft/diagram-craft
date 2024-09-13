@@ -1,45 +1,41 @@
 import React, { useEffect, useState } from 'react';
 import { useEventListener } from '../hooks/useEventListener';
 import { useActions } from '../context/ActionsContext';
-import { ActionContext, ActionEvents } from '@diagram-craft/canvas/action';
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
 import { Tooltip } from '@diagram-craft/app-components/Tooltip';
 
-export const ActionToolbarButton = (props: Props) => {
+export function ActionToolbarButton<K extends keyof ActionMap>(props: Props<K>) {
   const { actionMap } = useActions();
   const [enabled, setEnabled] = useState(false);
 
-  useEventListener(
-    actionMap[props.action]!,
-    'actionchanged',
-    ({ action }: ActionEvents['actionchanged']) => {
-      setEnabled(action.isEnabled({}));
-    }
-  );
+  const action = actionMap[props.action]!;
+  useEventListener(action, 'actionchanged', () => {
+    setEnabled(action.isEnabled({}));
+  });
 
   useEffect(() => {
-    const v = actionMap[props.action]?.isEnabled({});
+    const v = action.isEnabled({});
     if (v !== enabled) {
       setEnabled(!!v);
     }
-  }, [enabled, props.action, actionMap]);
+  }, [enabled, action]);
 
   return (
     <Tooltip message={props.action as string}>
       <Toolbar.Button
         disabled={!enabled}
         onClick={() => {
-          actionMap[props.action]!.execute(props.context ?? {});
+          actionMap[props.action]!.execute(props.arg ?? {});
         }}
       >
         {props.children}
       </Toolbar.Button>
     </Tooltip>
   );
-};
+}
 
-type Props = {
-  action: keyof ActionMap;
+type Props<K extends keyof ActionMap> = {
+  action: K;
+  arg: Parameters<ActionMap[K]['execute']>[0];
   children: React.ReactNode;
-  context?: ActionContext;
 };

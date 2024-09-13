@@ -81,7 +81,7 @@ export const ContextSpecificToolbar = () => {
           <ElementStylesheetToolbarButton selectionType={selectionType} nodeType={nodeType} />
 
           <EdgeLineToolbarButton />
-          <ActionToolbarButton action={'EDGE_FLIP'}>
+          <ActionToolbarButton arg={undefined} action={'EDGE_FLIP'}>
             <TbArrowsExchange2 />
           </ActionToolbarButton>
           <ElementShadowToolbarButton />

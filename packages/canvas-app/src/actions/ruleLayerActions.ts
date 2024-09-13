@@ -1,5 +1,5 @@
 import { ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
-import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
+import { AbstractAction } from '@diagram-craft/canvas/action';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
@@ -19,17 +19,19 @@ declare global {
   interface ActionMap extends ReturnType<typeof ruleLayerActions> {}
 }
 
-export class RuleLayerDeleteAction extends AbstractAction {
+type LayerActionArg = { id?: string };
+
+export class RuleLayerDeleteAction extends AbstractAction<LayerActionArg> {
   constructor(protected readonly diagram: Diagram) {
     super();
   }
 
-  isEnabled(context: ActionContext): boolean {
-    return context.id !== undefined;
+  isEnabled({ id }: LayerActionArg): boolean {
+    return id !== undefined;
   }
 
-  execute(context: ActionContext): void {
-    precondition.is.present(context.id);
+  execute({ id }: LayerActionArg): void {
+    precondition.is.present(id);
 
     // TODO: This should be a confirm dialog
     application.ui.showMessageDialog?.(
@@ -38,10 +40,10 @@ export class RuleLayerDeleteAction extends AbstractAction {
       'Yes',
       'No',
       () => {
-        precondition.is.present(context.id);
+        precondition.is.present(id);
 
         // TODO: Need to change such that it's possible to pass more arguments to the action
-        const [layerId, ruleId] = context.id.split(':');
+        const [layerId, ruleId] = id.split(':');
 
         const layer = this.diagram.layers.byId(layerId) as RuleLayer;
         const rule = layer.byId(ruleId);
@@ -57,20 +59,20 @@ export class RuleLayerDeleteAction extends AbstractAction {
   }
 }
 
-export class RuleLayerEditAction extends AbstractAction {
+export class RuleLayerEditAction extends AbstractAction<LayerActionArg> {
   constructor(protected readonly diagram: Diagram) {
     super();
   }
 
-  isEnabled(context: ActionContext): boolean {
-    return context.id !== undefined;
+  isEnabled({ id }: LayerActionArg): boolean {
+    return id !== undefined;
   }
 
-  execute(context: ActionContext): void {
-    precondition.is.present(context.id);
+  execute({ id }: LayerActionArg): void {
+    precondition.is.present(id);
 
     // TODO: Need to change such that it's possible to pass more arguments to the action
-    const [layerId, ruleId] = context.id.split(':');
+    const [layerId, ruleId] = id.split(':');
 
     const layer = this.diagram.layers.byId(layerId) as RuleLayer;
     const rule = layer.byId(ruleId);
@@ -92,23 +94,23 @@ export class RuleLayerEditAction extends AbstractAction {
   }
 }
 
-export class RuleLayerAddAction extends AbstractAction {
+export class RuleLayerAddAction extends AbstractAction<LayerActionArg> {
   constructor(protected readonly diagram: Diagram) {
     super();
   }
 
-  isEnabled(context: ActionContext): boolean {
+  isEnabled({ id }: LayerActionArg): boolean {
     return (
-      context.id !== undefined &&
-      this.diagram.layers.byId(context.id) !== undefined &&
-      this.diagram.layers.byId(context.id)?.type === 'rule'
+      id !== undefined &&
+      this.diagram.layers.byId(id) !== undefined &&
+      this.diagram.layers.byId(id)?.type === 'rule'
     );
   }
 
-  execute(context: ActionContext): void {
-    precondition.is.present(context.id);
+  execute({ id }: LayerActionArg): void {
+    precondition.is.present(id);
 
-    const layerId = context.id;
+    const layerId = id;
 
     const layer = this.diagram.layers.byId(layerId) as RuleLayer;
     const rule: AdjustmentRule = {

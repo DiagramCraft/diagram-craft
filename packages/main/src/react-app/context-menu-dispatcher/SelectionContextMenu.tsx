@@ -14,17 +14,31 @@ export const SelectionContextMenu = () => {
 
   return (
     <>
-      <ActionContextMenuItem action={'CLIPBOARD_CUT'}>Cut</ActionContextMenuItem>
-      <ActionContextMenuItem action={'CLIPBOARD_COPY'}>Copy</ActionContextMenuItem>
-      <ActionContextMenuItem action={'DUPLICATE'}>Duplicate</ActionContextMenuItem>
+      <ActionContextMenuItem arg={undefined} action={'CLIPBOARD_CUT'}>
+        Cut
+      </ActionContextMenuItem>
+      <ActionContextMenuItem arg={undefined} action={'CLIPBOARD_COPY'}>
+        Copy
+      </ActionContextMenuItem>
+      <ActionContextMenuItem arg={undefined} action={'DUPLICATE'}>
+        Duplicate
+      </ActionContextMenuItem>
       <ContextMenu.Separator className="cmp-context-menu__separator" />
 
-      <ActionContextMenuItem action={'STYLE_COPY'}>Copy Style</ActionContextMenuItem>
-      <ActionContextMenuItem action={'STYLE_PASTE'}>Paste Style</ActionContextMenuItem>
+      <ActionContextMenuItem arg={undefined} action={'STYLE_COPY'}>
+        Copy Style
+      </ActionContextMenuItem>
+      <ActionContextMenuItem arg={undefined} action={'STYLE_PASTE'}>
+        Paste Style
+      </ActionContextMenuItem>
       <ContextMenu.Separator className="cmp-context-menu__separator" />
 
-      <ActionContextMenuItem action={'GROUP_GROUP'}>Group</ActionContextMenuItem>
-      <ActionContextMenuItem action={'GROUP_UNGROUP'}>Ungroup</ActionContextMenuItem>
+      <ActionContextMenuItem arg={undefined} action={'GROUP_GROUP'}>
+        Group
+      </ActionContextMenuItem>
+      <ActionContextMenuItem arg={undefined} action={'GROUP_UNGROUP'}>
+        Ungroup
+      </ActionContextMenuItem>
       <ContextMenu.Separator className="cmp-context-menu__separator" />
 
       <ContextMenu.Sub>
@@ -36,8 +50,12 @@ export const SelectionContextMenu = () => {
         </ContextMenu.SubTrigger>
         <ContextMenu.Portal>
           <ContextMenu.SubContent className="cmp-context-menu" sideOffset={2} alignOffset={-5}>
-            <ActionContextMenuItem action={'SELECTION_DUMP'}>Dump</ActionContextMenuItem>
-            <ActionContextMenuItem action={'SELECTION_REDRAW'}>Redraw</ActionContextMenuItem>
+            <ActionContextMenuItem arg={undefined} action={'SELECTION_DUMP'}>
+              Dump
+            </ActionContextMenuItem>
+            <ActionContextMenuItem arg={undefined} action={'SELECTION_REDRAW'}>
+              Redraw
+            </ActionContextMenuItem>
           </ContextMenu.SubContent>
         </ContextMenu.Portal>
       </ContextMenu.Sub>
@@ -52,17 +70,23 @@ export const SelectionContextMenu = () => {
         </ContextMenu.SubTrigger>
         <ContextMenu.Portal>
           <ContextMenu.SubContent className="cmp-context-menu" sideOffset={2} alignOffset={-5}>
-            <ActionContextMenuItem action={'ALIGN_TOP'}>Align Top Edges</ActionContextMenuItem>
-            <ActionContextMenuItem action={'ALIGN_BOTTOM'}>
+            <ActionContextMenuItem arg={undefined} action={'ALIGN_TOP'}>
+              Align Top Edges
+            </ActionContextMenuItem>
+            <ActionContextMenuItem arg={undefined} action={'ALIGN_BOTTOM'}>
               Align Bottom Edges
             </ActionContextMenuItem>
-            <ActionContextMenuItem action={'ALIGN_LEFT'}>Align Left Edges</ActionContextMenuItem>
-            <ActionContextMenuItem action={'ALIGN_RIGHT'}>Align Right Edges</ActionContextMenuItem>
+            <ActionContextMenuItem arg={undefined} action={'ALIGN_LEFT'}>
+              Align Left Edges
+            </ActionContextMenuItem>
+            <ActionContextMenuItem arg={undefined} action={'ALIGN_RIGHT'}>
+              Align Right Edges
+            </ActionContextMenuItem>
             <ContextMenu.Separator className="cmp-context-menu__separator" />
-            <ActionContextMenuItem action={'ALIGN_CENTER_HORIZONTAL'}>
+            <ActionContextMenuItem arg={undefined} action={'ALIGN_CENTER_HORIZONTAL'}>
               Align Centers Horizontally
             </ActionContextMenuItem>
-            <ActionContextMenuItem action={'ALIGN_CENTER_VERTICAL'}>
+            <ActionContextMenuItem arg={undefined} action={'ALIGN_CENTER_VERTICAL'}>
               Align Centers Vertically
             </ActionContextMenuItem>
           </ContextMenu.SubContent>
@@ -78,16 +102,16 @@ export const SelectionContextMenu = () => {
         </ContextMenu.SubTrigger>
         <ContextMenu.Portal>
           <ContextMenu.SubContent className="cmp-context-menu" sideOffset={2} alignOffset={-5}>
-            <ActionContextMenuItem action={'SELECTION_RESTACK_TOP'}>
+            <ActionContextMenuItem arg={undefined} action={'SELECTION_RESTACK_TOP'}>
               Move to front
             </ActionContextMenuItem>
-            <ActionContextMenuItem action={'SELECTION_RESTACK_UP'}>
+            <ActionContextMenuItem arg={undefined} action={'SELECTION_RESTACK_UP'}>
               Move forward
             </ActionContextMenuItem>
-            <ActionContextMenuItem action={'SELECTION_RESTACK_BOTTOM'}>
+            <ActionContextMenuItem arg={undefined} action={'SELECTION_RESTACK_BOTTOM'}>
               Move to back
             </ActionContextMenuItem>
-            <ActionContextMenuItem action={'SELECTION_RESTACK_DOWN'}>
+            <ActionContextMenuItem arg={undefined} action={'SELECTION_RESTACK_DOWN'}>
               Move backward
             </ActionContextMenuItem>
           </ContextMenu.SubContent>
@@ -103,7 +127,7 @@ export const SelectionContextMenu = () => {
         </ContextMenu.SubTrigger>
         <ContextMenu.Portal>
           <ContextMenu.SubContent className="cmp-context-menu" sideOffset={2} alignOffset={-5}>
-            <ActionContextMenuItem action={'LAYER_SELECTION_MOVE_NEW'}>
+            <ActionContextMenuItem arg={undefined} action={'LAYER_SELECTION_MOVE_NEW'}>
               Create new layer
             </ActionContextMenuItem>
             <ContextMenu.Separator className="cmp-context-menu__separator" />
@@ -111,7 +135,7 @@ export const SelectionContextMenu = () => {
               <ActionContextMenuItem
                 key={layer.id}
                 action={'LAYER_SELECTION_MOVE'}
-                context={{ id: layer.id }}
+                arg={{ id: layer.id }}
               >
                 {layer.name}
               </ActionContextMenuItem>

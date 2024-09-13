@@ -46,13 +46,15 @@ export const LayerIndicator = () => {
 
         <DropdownMenu.Portal>
           <DropdownMenu.Content className="cmp-context-menu" sideOffset={5}>
-            <ActionDropdownMenuItem action={'LAYER_ADD'}>New layer...</ActionDropdownMenuItem>
+            <ActionDropdownMenuItem arg={undefined} action={'LAYER_ADD'}>
+              New layer...
+            </ActionDropdownMenuItem>
 
-            <ActionDropdownMenuItem action={'LAYER_ADD_REFERENCE'}>
+            <ActionDropdownMenuItem arg={undefined} action={'LAYER_ADD_REFERENCE'}>
               New reference layer...
             </ActionDropdownMenuItem>
 
-            <ActionDropdownMenuItem action={'LAYER_ADD_ADJUSTMENT'}>
+            <ActionDropdownMenuItem arg={undefined} action={'LAYER_ADD_ADJUSTMENT'}>
               New adjustment layer...
             </ActionDropdownMenuItem>
             <DropdownMenu.Item
@@ -65,7 +67,7 @@ export const LayerIndicator = () => {
             </DropdownMenu.Item>
             <ToggleActionDropdownMenuItem
               action={'LAYER_TOGGLE_LOCK'}
-              context={{ id: diagram.activeLayer.id }}
+              arg={{ id: diagram.activeLayer.id }}
             >
               Locked
             </ToggleActionDropdownMenuItem>

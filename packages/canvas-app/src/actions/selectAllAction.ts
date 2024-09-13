@@ -32,6 +32,6 @@ export class SelectAllAction extends AbstractAction {
     } else if (this.mode === 'edges') {
       this.diagram.selectionState.setElements(Object.values(this.diagram.edgeLookup));
     }
-    this.emit('actiontriggered', { action: this });
+    this.emit('actiontriggered', {});
   }
 }

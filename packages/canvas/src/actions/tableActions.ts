@@ -1,4 +1,4 @@
-import { AbstractAction, ActionContext } from '../action';
+import { AbstractAction } from '../action';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { ActionMapFactory, ActionConstructionParameters } from '../keyMap';
 import { isNode } from '@diagram-craft/model/diagramElement';
@@ -91,7 +91,7 @@ export class TableDistributeAction extends AbstractAction {
     super();
   }
 
-  execute(_context: ActionContext): void {
+  execute(): void {
     const tableElement = getTableNode(this.diagram);
     if (!tableElement) return;
 
@@ -135,21 +135,21 @@ export class TableRemoveAction extends AbstractAction {
     super();
 
     diagram.selectionState.on('change', () => {
-      this.enabled = this.isEnabled({} as ActionContext);
-      this.emit('actionchanged', { action: this });
+      this.enabled = this.isEnabled();
+      this.emit('actionchanged', {});
     });
 
-    this.enabled = this.isEnabled({} as ActionContext);
+    this.enabled = this.isEnabled();
   }
 
-  isEnabled(_context: ActionContext): boolean {
+  isEnabled(): boolean {
     const elements = this.diagram.selectionState.elements;
     return (
       elements.length === 1 && isNode(elements[0]) && elements[0].parent?.nodeType === 'tableRow'
     );
   }
 
-  execute(_context: ActionContext): void {
+  execute(): void {
     const rowIdx = getCellRow(this.diagram);
     const colIdx = getCellColumn(this.diagram);
 
@@ -193,21 +193,21 @@ export class TableInsertAction extends AbstractAction {
     super();
 
     diagram.selectionState.on('change', () => {
-      this.enabled = this.isEnabled({} as ActionContext);
-      this.emit('actionchanged', { action: this });
+      this.enabled = this.isEnabled();
+      this.emit('actionchanged', {});
     });
 
-    this.enabled = this.isEnabled({} as ActionContext);
+    this.enabled = this.isEnabled();
   }
 
-  isEnabled(_context: ActionContext): boolean {
+  isEnabled(): boolean {
     const elements = this.diagram.selectionState.elements;
     return (
       elements.length === 1 && isNode(elements[0]) && elements[0].parent?.nodeType === 'tableRow'
     );
   }
 
-  execute(_context: ActionContext): void {
+  execute(): void {
     const rowIdx = getCellRow(this.diagram);
     const colIdx = getCellColumn(this.diagram);
 

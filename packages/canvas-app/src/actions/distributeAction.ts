@@ -1,5 +1,5 @@
 import { AbstractSelectionAction } from './abstractSelectionAction';
-import { ActionMapFactory, ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
+import { ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
 import { Box } from '@diagram-craft/geometry/box';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -7,13 +7,10 @@ import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { isNode } from '@diagram-craft/model/diagramElement';
 
 declare global {
-  interface ActionMap {
-    DISTRIBUTE_VERTICAL: DistributeAction;
-    DISTRIBUTE_HORIZONTAL: DistributeAction;
-  }
+  interface ActionMap extends ReturnType<typeof distributeActions> {}
 }
 
-export const distributeActions: ActionMapFactory = (state: ActionConstructionParameters) => ({
+export const distributeActions = (state: ActionConstructionParameters) => ({
   DISTRIBUTE_HORIZONTAL: new DistributeAction(state.diagram, 'horizontal'),
   DISTRIBUTE_VERTICAL: new DistributeAction(state.diagram, 'vertical')
 });
@@ -44,7 +41,7 @@ export class DistributeAction extends AbstractSelectionAction {
 
     commitWithUndo(uow, `Distribute ${this.mode}`);
 
-    this.emit('actiontriggered', { action: this });
+    this.emit('actiontriggered', {});
   }
 
   private calculateAndUpdateBounds(orientation: 'x' | 'y', size: 'w' | 'h', uow: UnitOfWork): void {

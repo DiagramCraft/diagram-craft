@@ -1,5 +1,5 @@
 import { ApplicationState } from './ApplicationState';
-import { Action, ActionContext, ActionEvents, ToggleAction } from './action';
+import { Action, ActionEvents, KeyboardActionArgs, ToggleAction } from './action';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { Diagram } from '@diagram-craft/model/diagram';
 
@@ -60,7 +60,7 @@ const findAction = (
   e: KeyboardEvent,
   keyMap: KeyMap,
   actionMap: Partial<ActionMap>
-): Action | undefined => {
+): Action<unknown> | undefined => {
   const actionKey: KeyBinding = `${e.altKey ? ALT : ''}${e.ctrlKey ? CTRL : ''}${e.metaKey ? META : ''}${
     e.shiftKey ? SHIFT : ''
   }${e.code as KeyCode}`;
@@ -70,7 +70,7 @@ const findAction = (
 
 export const findAndExecuteAction = (
   e: KeyboardEvent,
-  actionContext: ActionContext,
+  actionArg: Pick<KeyboardActionArgs, 'point'>,
   keyMap: KeyMap,
   actionMap: Partial<ActionMap>
 ): boolean => {
@@ -84,7 +84,9 @@ export const findAndExecuteAction = (
   const action = findAction(e, keyMap, actionMap);
   if (action === undefined) return false;
 
-  action.execute({ ...actionContext, source: 'keyboard' });
+  // TODO: Should check if the action is enabled or not
+
+  action.execute({ ...actionArg, source: 'keyboard' });
 
   e.preventDefault();
 
