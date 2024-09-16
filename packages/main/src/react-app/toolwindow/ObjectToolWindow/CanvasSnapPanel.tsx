@@ -1,8 +1,8 @@
-import { useDiagram } from '../../context/DiagramContext';
 import { useSnapManagerProperty } from '../../hooks/useProperty';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { ActionCheckbox } from '../../components/ActionCheckbox';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
+import { useDiagram } from '../../../application';
 
 export const CanvasSnapPanel = (props: Props) => {
   const diagram = useDiagram();

@@ -1,5 +1,4 @@
-import { AbstractAction } from '@diagram-craft/canvas/action';
-import { Diagram } from '@diagram-craft/model/diagram';
+import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
 import { LayerType } from '@diagram-craft/model/diagramLayer';
 
 export type MultipleType = 'single-only' | 'multiple-only' | 'both';
@@ -18,17 +17,19 @@ export const ElementType: Record<string, ElementType> = {
   Both: 'both'
 };
 
-export abstract class AbstractSelectionAction extends AbstractAction {
+export abstract class AbstractSelectionAction<
+  C extends ActionContext = ActionContext
+> extends AbstractAction<undefined, C> {
   protected constructor(
-    protected readonly diagram: Diagram,
+    context: C,
     protected readonly multipleType: MultipleType,
     protected readonly elementType: ElementType = 'both',
     protected readonly layerTypes: LayerType[] | undefined = undefined
   ) {
-    super();
+    super(context);
 
     const cb = () => {
-      const $s = this.diagram.selectionState;
+      const $s = this.context.model.activeDiagram.selectionState;
       if ($s.isEmpty()) {
         return false;
       }
@@ -61,8 +62,8 @@ export abstract class AbstractSelectionAction extends AbstractAction {
 
       return true;
     };
-    this.addCriterion(this.diagram.selectionState, 'add', cb);
-    this.addCriterion(this.diagram.selectionState, 'remove', cb);
+    this.addCriterion(this.context.model.activeDiagram.selectionState, 'add', cb);
+    this.addCriterion(this.context.model.activeDiagram.selectionState, 'remove', cb);
   }
 
   abstract execute(): void;

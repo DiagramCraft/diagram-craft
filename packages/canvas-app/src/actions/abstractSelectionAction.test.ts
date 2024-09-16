@@ -1,21 +1,30 @@
 import { beforeEach, describe, expect, test } from 'vitest';
 import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSelectionAction';
-import { Diagram } from '@diagram-craft/model/diagram';
 import { DocumentBuilder } from '@diagram-craft/model/test-support/builder';
+import { Diagram } from '@diagram-craft/model/diagram';
+import { ActionContext } from '@diagram-craft/canvas/action';
 
 class TestAction extends AbstractSelectionAction {
   public constructor(
-    protected readonly diagram: Diagram,
+    protected readonly context: ActionContext,
     protected readonly multipleType: MultipleType,
     protected readonly elementType: ElementType = 'both'
   ) {
-    super(diagram, multipleType, elementType);
+    super(context, multipleType, elementType);
   }
 
   execute() {
     return;
   }
 }
+
+const mkContext = (d: Diagram) => {
+  return {
+    model: {
+      activeDiagram: d
+    }
+  } as ActionContext;
+};
 
 describe('abstractSelectionAction', () => {
   describe('isEnabled', () => {
@@ -31,13 +40,19 @@ describe('abstractSelectionAction', () => {
 
     describe('MultipleType', () => {
       test('should be disabled if no elements selected regardless of MultipleType', () => {
-        expect(new TestAction(diagram, MultipleType.Both).isEnabled(undefined)).toBe(false);
-        expect(new TestAction(diagram, MultipleType.SingleOnly).isEnabled(undefined)).toBe(false);
-        expect(new TestAction(diagram, MultipleType.MultipleOnly).isEnabled(undefined)).toBe(false);
+        expect(new TestAction(mkContext(diagram), MultipleType.Both).isEnabled(undefined)).toBe(
+          false
+        );
+        expect(
+          new TestAction(mkContext(diagram), MultipleType.SingleOnly).isEnabled(undefined)
+        ).toBe(false);
+        expect(
+          new TestAction(mkContext(diagram), MultipleType.MultipleOnly).isEnabled(undefined)
+        ).toBe(false);
       });
 
       test('should be enabled if elements selected and MultipleType is Both', () => {
-        const action = new TestAction(diagram, MultipleType.Both);
+        const action = new TestAction(mkContext(diagram), MultipleType.Both);
 
         expect(action.isEnabled(undefined)).toBe(false);
 
@@ -49,7 +64,7 @@ describe('abstractSelectionAction', () => {
       });
 
       test('should be enabled if elements selected and MultipleType is SingleOnly', () => {
-        const action = new TestAction(diagram, MultipleType.SingleOnly);
+        const action = new TestAction(mkContext(diagram), MultipleType.SingleOnly);
 
         expect(action.isEnabled(undefined)).toBe(false);
 
@@ -61,7 +76,7 @@ describe('abstractSelectionAction', () => {
       });
 
       test('should be enabled if elements selected and MultipleType is MultipleOnly', () => {
-        const action = new TestAction(diagram, MultipleType.MultipleOnly);
+        const action = new TestAction(mkContext(diagram), MultipleType.MultipleOnly);
 
         expect(action.isEnabled(undefined)).toBe(false);
 
@@ -76,18 +91,24 @@ describe('abstractSelectionAction', () => {
     describe('ElementType', () => {
       test('should be disabled if no elements selected regardless of ElementType', () => {
         expect(
-          new TestAction(diagram, MultipleType.Both, ElementType.Both).isEnabled(undefined)
+          new TestAction(mkContext(diagram), MultipleType.Both, ElementType.Both).isEnabled(
+            undefined
+          )
         ).toBe(false);
         expect(
-          new TestAction(diagram, MultipleType.Both, ElementType.Node).isEnabled(undefined)
+          new TestAction(mkContext(diagram), MultipleType.Both, ElementType.Node).isEnabled(
+            undefined
+          )
         ).toBe(false);
         expect(
-          new TestAction(diagram, MultipleType.Both, ElementType.Edge).isEnabled(undefined)
+          new TestAction(mkContext(diagram), MultipleType.Both, ElementType.Edge).isEnabled(
+            undefined
+          )
         ).toBe(false);
       });
 
       test('should be enabled if elements selected and ElementType is Both', () => {
-        const action = new TestAction(diagram, MultipleType.Both, ElementType.Both);
+        const action = new TestAction(mkContext(diagram), MultipleType.Both, ElementType.Both);
 
         expect(action.isEnabled(undefined)).toBe(false);
 
@@ -102,7 +123,7 @@ describe('abstractSelectionAction', () => {
       });
 
       test('should be enabled if elements selected and ElementType is Node', () => {
-        const action = new TestAction(diagram, MultipleType.Both, ElementType.Node);
+        const action = new TestAction(mkContext(diagram), MultipleType.Both, ElementType.Node);
 
         expect(action.isEnabled(undefined)).toBe(false);
 
@@ -117,7 +138,7 @@ describe('abstractSelectionAction', () => {
       });
 
       test('should be enabled if elements selected and ElementType is Edge', () => {
-        const action = new TestAction(diagram, MultipleType.Both, ElementType.Edge);
+        const action = new TestAction(mkContext(diagram), MultipleType.Both, ElementType.Edge);
 
         expect(action.isEnabled(undefined)).toBe(false);
 

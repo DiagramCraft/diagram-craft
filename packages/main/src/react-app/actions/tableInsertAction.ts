@@ -1,16 +1,14 @@
-import { ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
 import { AbstractAction } from '@diagram-craft/canvas/action';
-import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { newid } from '@diagram-craft/utils/id';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
-import { application } from '../../application';
+import { Application } from '../../application';
 
-export const tableInsertActions = (state: ActionConstructionParameters) => ({
-  TABLE_INSERT: new TableInsertAction(state.diagram)
+export const tableInsertActions = (application: Application) => ({
+  TABLE_INSERT: new TableInsertAction(application)
 });
 
 declare global {
@@ -27,16 +25,20 @@ declare global {
   }
 }
 
-class TableInsertAction extends AbstractAction {
-  constructor(private readonly diagram: Diagram) {
-    super();
-    this.addCriterion(diagram, 'change', () => diagram.activeLayer.type === 'regular');
+class TableInsertAction extends AbstractAction<undefined, Application> {
+  constructor(application: Application) {
+    super(application);
+    this.addCriterion(
+      application.model.activeDiagram,
+      'change',
+      () => application.model.activeDiagram.activeLayer.type === 'regular'
+    );
   }
 
   execute(): void {
-    assertRegularLayer(this.diagram.activeLayer);
+    assertRegularLayer(this.context.model.activeDiagram.activeLayer);
 
-    application.ui.showDialog?.({
+    this.context.ui.showDialog?.({
       name: 'tableInsert',
       props: {},
       onOk: async props => {
@@ -45,13 +47,13 @@ class TableInsertAction extends AbstractAction {
         const colWidth = 100;
         const rowHeight = 40;
 
-        const uow = new UnitOfWork(this.diagram, false);
+        const uow = new UnitOfWork(this.context.model.activeDiagram, false);
 
         const bounds = { w: colWidth * width, h: rowHeight * height, x: 0, y: 0, r: 0 };
 
         // TODO: We should look at the viewport and try to center the table in the viewport
-        bounds.x = (this.diagram.canvas.w - bounds.w) / 2;
-        bounds.y = (this.diagram.canvas.h - bounds.h) / 2;
+        bounds.x = (this.context.model.activeDiagram.canvas.w - bounds.w) / 2;
+        bounds.y = (this.context.model.activeDiagram.canvas.h - bounds.h) / 2;
 
         const elements: DiagramElement[] = [];
 
@@ -59,8 +61,8 @@ class TableInsertAction extends AbstractAction {
           newid(),
           'table',
           bounds,
-          this.diagram,
-          this.diagram.activeLayer,
+          this.context.model.activeDiagram,
+          this.context.model.activeDiagram.activeLayer,
           {},
           {}
         );
@@ -71,8 +73,8 @@ class TableInsertAction extends AbstractAction {
             newid(),
             'tableRow',
             { w: bounds.w, h: rowHeight, x: 0, y: r * rowHeight, r: 0 },
-            this.diagram,
-            this.diagram.activeLayer,
+            this.context.model.activeDiagram,
+            this.context.model.activeDiagram.activeLayer,
             {},
             {}
           );
@@ -84,8 +86,8 @@ class TableInsertAction extends AbstractAction {
               newid(),
               'text',
               { w: colWidth, h: rowHeight, x: c * colWidth, y: 0, r: 0 },
-              this.diagram,
-              this.diagram.activeLayer,
+              this.context.model.activeDiagram,
+              this.context.model.activeDiagram.activeLayer,
               {
                 fill: {
                   enabled: true
@@ -102,12 +104,12 @@ class TableInsertAction extends AbstractAction {
         }
 
         uow.commit();
-        assertRegularLayer(this.diagram.activeLayer);
-        this.diagram.undoManager.addAndExecute(
+        assertRegularLayer(this.context.model.activeDiagram.activeLayer);
+        this.context.model.activeDiagram.undoManager.addAndExecute(
           new ElementAddUndoableAction(
             elements,
-            this.diagram,
-            this.diagram.activeLayer,
+            this.context.model.activeDiagram,
+            this.context.model.activeDiagram.activeLayer,
             'Add table'
           )
         );

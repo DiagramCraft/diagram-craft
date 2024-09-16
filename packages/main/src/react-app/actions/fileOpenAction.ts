@@ -1,9 +1,8 @@
-import { ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
 import { AbstractAction } from '@diagram-craft/canvas/action';
-import { application } from '../../application';
+import { Application } from '../../application';
 
-export const fileOpenActions = (_state: ActionConstructionParameters) => ({
-  FILE_OPEN: new FileOpenAction()
+export const fileOpenActions = (application: Application) => ({
+  FILE_OPEN: new FileOpenAction(application)
 });
 
 declare global {
@@ -20,17 +19,17 @@ declare global {
   }
 }
 
-class FileOpenAction extends AbstractAction {
-  constructor() {
-    super();
+class FileOpenAction extends AbstractAction<unknown, Application> {
+  constructor(application: Application) {
+    super(application);
   }
 
   execute(): void {
-    application.ui.showDialog?.({
+    this.context.ui.showDialog?.({
       name: 'fileOpen',
       props: {},
       onOk: data => {
-        application.ui.loadFromUrl?.(data as string);
+        this.context.ui.loadFromUrl?.(data as string);
       },
       onCancel: () => {}
     });

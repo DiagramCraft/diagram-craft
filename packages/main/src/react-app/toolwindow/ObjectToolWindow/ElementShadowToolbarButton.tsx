@@ -1,8 +1,8 @@
 import { TbStackBackward } from 'react-icons/tb';
-import { useDiagram } from '../../context/DiagramContext';
 import { useElementProperty } from '../../hooks/useProperty';
 import { ToolbarToggleItemWithPopover } from '../../components/ToolbarToggleItemWithPopover';
 import { ElementShadowPanel } from './ElementShadowPanel';
+import { useDiagram } from '../../../application';
 
 export const ElementShadowToolbarButton = () => {
   const $d = useDiagram();

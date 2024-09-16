@@ -1,45 +1,48 @@
 import { AbstractSelectionAction } from './abstractSelectionAction';
-import { ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
 import { Translation } from '@diagram-craft/geometry/transform';
-import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
+import { ActionContext } from '@diagram-craft/canvas/action';
 
 declare global {
   interface ActionMap extends ReturnType<typeof duplicateActions> {}
 }
 
-export const duplicateActions = (state: ActionConstructionParameters) => ({
-  DUPLICATE: new DuplicateAction(state.diagram)
+export const duplicateActions = (application: ActionContext) => ({
+  DUPLICATE: new DuplicateAction(application)
 });
 
 const OFFSET = 10;
 
 export class DuplicateAction extends AbstractSelectionAction {
-  constructor(protected readonly diagram: Diagram) {
-    super(diagram, 'both');
-    this.addCriterion(diagram, 'change', () => diagram.activeLayer.type === 'regular');
+  constructor(context: ActionContext) {
+    super(context, 'both');
+    this.addCriterion(
+      context.model.activeDiagram,
+      'change',
+      () => context.model.activeDiagram.activeLayer.type === 'regular'
+    );
   }
 
   execute() {
     // TODO: Support cloning of edges
-    const uow = new UnitOfWork(this.diagram);
+    const uow = new UnitOfWork(this.context.model.activeDiagram);
 
     const newElements: DiagramNode[] = [];
-    for (const el of this.diagram.selectionState.nodes) {
+    for (const el of this.context.model.activeDiagram.selectionState.nodes) {
       const newEl = el.duplicate();
       newEl.transform([new Translation({ x: OFFSET, y: OFFSET })], uow);
       newElements.push(newEl);
     }
 
-    assertRegularLayer(this.diagram.activeLayer);
-    this.diagram.undoManager.addAndExecute(
+    assertRegularLayer(this.context.model.activeDiagram.activeLayer);
+    this.context.model.activeDiagram.undoManager.addAndExecute(
       new ElementAddUndoableAction(
         newElements,
-        this.diagram,
-        this.diagram.activeLayer,
+        this.context.model.activeDiagram,
+        this.context.model.activeDiagram.activeLayer,
         'Duplicate nodes'
       )
     );
@@ -48,8 +51,8 @@ export class DuplicateAction extends AbstractSelectionAction {
     // are fired after
     uow.commit();
 
-    this.diagram.selectionState.clear();
-    this.diagram.selectionState.setElements(newElements);
+    this.context.model.activeDiagram.selectionState.clear();
+    this.context.model.activeDiagram.selectionState.setElements(newElements);
 
     this.emit('actionTriggered', {});
   }

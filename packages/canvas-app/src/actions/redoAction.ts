@@ -1,29 +1,25 @@
-import { ActionMapFactory, ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
-import { AbstractAction } from '@diagram-craft/canvas/action';
-import { Diagram } from '@diagram-craft/model/diagram';
+import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
 
 declare global {
-  interface ActionMap {
-    REDO: RedoAction;
-  }
+  interface ActionMap extends ReturnType<typeof redoActions> {}
 }
 
-export const redoActions: ActionMapFactory = (state: ActionConstructionParameters) => ({
-  REDO: new RedoAction(state.diagram)
+export const redoActions = (context: ActionContext) => ({
+  REDO: new RedoAction(context)
 });
 
 export class RedoAction extends AbstractAction {
-  constructor(private readonly diagram: Diagram) {
-    super();
+  constructor(context: ActionContext) {
+    super(context);
     const cb = () => {
-      this.enabled = this.diagram.undoManager.redoableActions.length > 0;
+      this.enabled = this.context.model.activeDiagram.undoManager.redoableActions.length > 0;
       this.emit('actionChanged');
     };
-    this.diagram.undoManager.on('change', cb);
+    this.context.model.activeDiagram.undoManager.on('change', cb);
   }
 
   execute(): void {
-    this.diagram.undoManager.redo();
+    this.context.model.activeDiagram.undoManager.redo();
     this.emit('actionTriggered', {});
   }
 }

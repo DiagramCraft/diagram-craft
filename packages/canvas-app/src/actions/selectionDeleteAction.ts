@@ -1,40 +1,41 @@
 import { AbstractSelectionAction } from './abstractSelectionAction';
-import { ActionMapFactory, ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
-import { Diagram } from '@diagram-craft/model/diagram';
 import { ElementDeleteUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
+import { ActionContext } from '@diagram-craft/canvas/action';
 
 declare global {
-  interface ActionMap {
-    SELECTION_DELETE: SelectionDeleteAction;
-  }
+  interface ActionMap extends ReturnType<typeof selectionDeleteActions> {}
 }
 
-export const selectionDeleteActions: ActionMapFactory = (state: ActionConstructionParameters) => ({
-  SELECTION_DELETE: new SelectionDeleteAction(state.diagram)
+export const selectionDeleteActions = (context: ActionContext) => ({
+  SELECTION_DELETE: new SelectionDeleteAction(context)
 });
 
 export class SelectionDeleteAction extends AbstractSelectionAction {
-  constructor(protected readonly diagram: Diagram) {
-    super(diagram, 'both');
-    this.addCriterion(diagram, 'change', () => diagram.activeLayer.type === 'regular');
+  constructor(context: ActionContext) {
+    super(context, 'both');
+    this.addCriterion(
+      context.model.activeDiagram,
+      'change',
+      () => context.model.activeDiagram.activeLayer.type === 'regular'
+    );
   }
 
   execute(): void {
-    if (this.diagram.selectionState.isEmpty()) return;
+    if (this.context.model.activeDiagram.selectionState.isEmpty()) return;
 
-    const deletableElements = this.diagram.selectionState.elements.filter(e => {
+    const deletableElements = this.context.model.activeDiagram.selectionState.elements.filter(e => {
       return !(isNode(e) && e.renderProps.capabilities.deletable === false);
     });
 
     if (deletableElements.length === 0) return;
 
-    assertRegularLayer(this.diagram.activeLayer);
-    this.diagram.undoManager.addAndExecute(
+    assertRegularLayer(this.context.model.activeDiagram.activeLayer);
+    this.context.model.activeDiagram.undoManager.addAndExecute(
       new ElementDeleteUndoableAction(
-        this.diagram,
-        this.diagram.activeLayer,
+        this.context.model.activeDiagram,
+        this.context.model.activeDiagram.activeLayer,
         deletableElements,
         true
       )

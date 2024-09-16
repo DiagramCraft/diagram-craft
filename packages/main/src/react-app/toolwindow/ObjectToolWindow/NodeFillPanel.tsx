@@ -3,7 +3,6 @@ import { FillType } from '@diagram-craft/model/diagramProps';
 import { round } from '@diagram-craft/utils/math';
 import { Slider } from '@diagram-craft/app-components/Slider';
 import { ConfigurationContextType, useConfiguration } from '../../context/ConfigurationContext';
-import { useDiagram } from '../../context/DiagramContext';
 import { Collapsible } from '@diagram-craft/app-components/Collapsible';
 import { ColorPicker, ColorPreview } from '../../components/ColorPicker';
 import { useRedraw } from '../../hooks/useRedraw';
@@ -15,6 +14,7 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Property } from './types';
 import { PropertyEditor } from '../../components/PropertyEditor';
+import { useDiagram } from '../../../application';
 
 const TEXTURES = [
   'bubbles1.jpeg',

@@ -1,9 +1,9 @@
 import { TbBorderStyle2 } from 'react-icons/tb';
 import { useNodeProperty } from '../../hooks/useProperty';
-import { useDiagram } from '../../context/DiagramContext';
 import { NodeStrokePanel } from './NodeStrokePanel';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
+import { useDiagram } from '../../../application';
 
 export const NodeStrokeToolbarButton = () => {
   const diagram = useDiagram();

@@ -1,6 +1,6 @@
 import { DRAG_DROP_MANAGER } from '../dragDropManager';
 import { CanvasState } from '../EditableCanvasComponent';
-import { Component, createEffect } from '../component/component';
+import { Component, createEffect, Observable } from '../component/component';
 import * as svg from '../component/vdom-svg';
 import { VNode } from '../component/vdom';
 import { MoveDrag } from '../drag/moveDrag';
@@ -17,16 +17,18 @@ type State = 'background' | 'node' | 'handle';
 const ANCHOR_SIZE = 4;
 const SCALE = 10;
 
+type Props = CanvasState & { hoverElement: Observable<string | undefined> };
+
 // TODO: All these timeouts are a bit ugly... should find a better way
 //       to describe the state machine - or somehow subscribe to mouse move events
 //       to trigger the hiding of the handles
 //
-export class AnchorHandlesComponent extends Component<CanvasState> {
+export class AnchorHandlesComponent extends Component<Props> {
   private hoverNode: DiagramElement | undefined;
   private state: State = 'background';
   private timeout: number | undefined = undefined;
 
-  render(props: CanvasState) {
+  render(props: Props) {
     const diagram = props.diagram;
 
     createEffect(() => {
@@ -43,7 +45,8 @@ export class AnchorHandlesComponent extends Component<CanvasState> {
 
     // Whenever an element is hovered, we capture the element (and reset any previous state)
     createEffect(() => {
-      const cb = ({ element }: { element: string | undefined }) => {
+      const cb = (p: { newValue: string | undefined }) => {
+        const element = p.newValue;
         this.clearTimeout();
 
         if (element === undefined) {
@@ -55,9 +58,9 @@ export class AnchorHandlesComponent extends Component<CanvasState> {
           this.setState(el, 'node');
         }
       };
-      props.applicationState.on('hoverElementChange', cb);
-      return () => props.applicationState.off('hoverElementChange', cb);
-    }, [props.applicationState]);
+      props.hoverElement.on('change', cb);
+      return () => props.hoverElement.off('change', cb);
+    }, [props.hoverElement]);
 
     // When the selection is changes, we reset the state
     createEffect(() => {

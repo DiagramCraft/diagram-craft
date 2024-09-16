@@ -3,7 +3,6 @@ import { useNodeProperty } from '../../hooks/useProperty';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { TbAdjustmentsHorizontal } from 'react-icons/tb';
 import { ToolWindowPanel } from '../ToolWindowPanel';
-import { useDiagram } from '../../context/DiagramContext';
 import { PopoverButton } from '../../components/PopoverButton';
 import { ConfigurationContextType, useConfiguration } from '../../context/ConfigurationContext';
 import { Select } from '@diagram-craft/app-components/Select';
@@ -12,6 +11,7 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { Property } from './types';
 import { LineCap, LineJoin } from '@diagram-craft/model/diagramProps';
 import { PropertyEditor } from '../../components/PropertyEditor';
+import { useDiagram } from '../../../application';
 
 type FormProps = {
   diagram: Diagram;

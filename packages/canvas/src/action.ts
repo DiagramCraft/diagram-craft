@@ -2,6 +2,7 @@ import { UndoableAction } from '@diagram-craft/model/undoManager';
 import { Emitter, EventEmitter, EventKey, EventMap } from '@diagram-craft/utils/event';
 import { Point } from '@diagram-craft/geometry/point';
 import { EmptyObject } from '@diagram-craft/utils/types';
+import { model } from './modelState';
 
 export type ActionEvents = {
   /**
@@ -23,17 +24,27 @@ export type ActionEvents = {
  */
 export type BaseActionArgs = { point?: Point; source?: 'keyboard' | 'mouse' | 'ui-element' };
 
+export type ActionContext = {
+  model: typeof model;
+};
+
 export interface Action<T = undefined> extends Emitter<ActionEvents> {
   execute: (arg: Partial<T>) => void;
   isEnabled: (arg: Partial<T> | T) => boolean;
 }
 
-export abstract class AbstractAction<T = undefined>
+export abstract class AbstractAction<T = undefined, C extends ActionContext = ActionContext>
   extends EventEmitter<ActionEvents>
   implements Action<T>
 {
   protected criteria: Array<() => boolean> = [];
   protected enabled: boolean = true;
+  protected context: C;
+
+  constructor(context: C) {
+    super();
+    this.context = context;
+  }
 
   isEnabled(_arg: Partial<T> | T): boolean {
     return this.enabled;
@@ -61,11 +72,16 @@ export abstract class AbstractAction<T = undefined>
   }
 }
 
-export abstract class AbstractToggleAction<T = undefined>
-  extends AbstractAction<T>
+export abstract class AbstractToggleAction<T = undefined, C extends ActionContext = ActionContext>
+  extends AbstractAction<T, C>
   implements ToggleAction<T>
 {
   protected state: boolean = true;
+
+  constructor(context: C) {
+    super(context);
+    this.context = context;
+  }
 
   getState(_arg: Partial<T>): boolean {
     return this.state;

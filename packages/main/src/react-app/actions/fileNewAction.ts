@@ -1,21 +1,20 @@
-import { ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
 import { AbstractAction } from '@diagram-craft/canvas/action';
-import { application } from '../../application';
+import { Application } from '../../application';
 
-export const fileNewActions = (_state: ActionConstructionParameters) => ({
-  FILE_NEW: new FileNewAction()
+export const fileNewActions = (application: Application) => ({
+  FILE_NEW: new FileNewAction(application)
 });
 
 declare global {
   interface ActionMap extends ReturnType<typeof fileNewActions> {}
 }
 
-class FileNewAction extends AbstractAction {
-  constructor() {
-    super();
+class FileNewAction extends AbstractAction<undefined, Application> {
+  constructor(application: Application) {
+    super(application);
   }
 
   execute(): void {
-    application.ui.newDocument?.();
+    this.context.ui.newDocument?.();
   }
 }

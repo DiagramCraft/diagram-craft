@@ -11,7 +11,6 @@ import {
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { VerifyNotReached } from '@diagram-craft/utils/assert';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
-import { useDiagram } from '../../context/DiagramContext';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
 import { ToolWindowPanel } from '../ToolWindowPanel';
@@ -20,6 +19,7 @@ import { Select } from '@diagram-craft/app-components/Select';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { PropertyEditor } from '../../components/PropertyEditor';
 import { Property } from './types';
+import { useDiagram } from '../../../application';
 
 export const ElementCustomPropertiesPanelForm = ({
   customProperties,

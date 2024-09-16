@@ -1,11 +1,12 @@
 import { useEventListener } from '../hooks/useEventListener';
 import { useRedraw } from '../hooks/useRedraw';
 import React, { useId } from 'react';
-import { useActions } from '../context/ActionsContext';
 import { ToggleAction } from '@diagram-craft/canvas/action';
+import { useApplication } from '../../application';
 
 export const ActionCheckbox = (props: Props) => {
-  const { actionMap } = useActions();
+  const application = useApplication();
+  const actionMap = application.actions;
   const id = useId();
   const redraw = useRedraw();
 

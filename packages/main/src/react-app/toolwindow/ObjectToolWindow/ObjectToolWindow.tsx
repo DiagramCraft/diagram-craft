@@ -10,7 +10,6 @@ import { CanvasPanel } from './CanvasPanel';
 import { CanvasGridPanel } from './CanvasGridPanel';
 import { CanvasSnapPanel } from './CanvasSnapPanel';
 import { NodeStrokePanel } from './NodeStrokePanel';
-import { useDiagram } from '../../context/DiagramContext';
 import { LabelNodePanel } from './LabelNodePanel';
 import { NodeEffectsPanel } from './NodeEffectsPanel';
 import { ElementStylesheetPanel } from './ElementStylesheetPanel';
@@ -25,6 +24,7 @@ import { NodeAdvancedPropertiesPanel } from '../ObjectInfoToolWindow/NodeAdvance
 import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { ElementAnchorsPanel } from '../ObjectInfoToolWindow/ElementAnchorsPanel';
 import { NodeTableToolbarPanel } from './NodeTableToolbarPanel';
+import { useDiagram } from '../../../application';
 
 type Type = 'diagram' | 'mixed' | 'single-label-node' | 'node' | 'edge' | 'table' | 'table-cell';
 

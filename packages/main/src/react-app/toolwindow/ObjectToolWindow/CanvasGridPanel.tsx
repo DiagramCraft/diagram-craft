@@ -4,11 +4,11 @@ import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
 import { useConfiguration } from '../../context/ConfigurationContext';
 import { useDiagramProperty } from '../../hooks/useProperty';
-import { useDiagram } from '../../context/DiagramContext';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { ColorPicker } from '../../components/ColorPicker';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
+import { useDiagram } from '../../../application';
 
 export const CanvasGridPanel = (props: Props) => {
   const $d = useDiagram();

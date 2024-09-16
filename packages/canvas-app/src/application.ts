@@ -6,9 +6,8 @@ export interface BaseApplicationInterface<U extends ApplicationTriggers = Applic
   ui: U;
 }
 
-class BaseApplication implements BaseApplicationInterface {
+export class Application implements BaseApplicationInterface {
   model = model;
-
   #ui: ApplicationTriggers | undefined;
 
   get ui() {
@@ -19,5 +18,3 @@ class BaseApplication implements BaseApplicationInterface {
     this.#ui = triggers;
   }
 }
-
-export const application = new BaseApplication();

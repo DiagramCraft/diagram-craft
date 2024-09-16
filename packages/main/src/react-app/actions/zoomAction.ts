@@ -1,26 +1,28 @@
-import { AbstractToggleAction } from '@diagram-craft/canvas/action';
-import { Diagram } from '@diagram-craft/model/diagram';
+import { AbstractToggleAction, ActionContext } from '@diagram-craft/canvas/action';
 
 declare global {
-  interface ActionMap {
-    ZOOM_IN: ZoomAction;
-    ZOOM_OUT: ZoomAction;
-  }
+  interface ActionMap extends ReturnType<typeof zoomActions> {}
 }
+
+export const zoomActions = (context: ActionContext) => ({
+  ZOOM_IN: new ZoomAction('in', context),
+  ZOOM_OUT: new ZoomAction('out', context)
+});
 
 export class ZoomAction extends AbstractToggleAction {
   constructor(
-    private readonly diagram: Diagram,
-    private readonly direction: 'in' | 'out'
+    private readonly direction: 'in' | 'out',
+    context: ActionContext
   ) {
-    super();
+    super(context);
   }
 
   execute(): void {
+    const diagram = this.context.model.activeDiagram;
     if (this.direction === 'in') {
-      this.diagram.viewBox.zoom(0.9, this.diagram.viewBox.midpoint);
+      diagram.viewBox.zoom(0.9, diagram.viewBox.midpoint);
     } else {
-      this.diagram.viewBox.zoom(1.1, this.diagram.viewBox.midpoint);
+      diagram.viewBox.zoom(1.1, diagram.viewBox.midpoint);
     }
   }
 }

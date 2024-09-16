@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 import { useRedraw } from '../../hooks/useRedraw';
 import { LayerList } from './LayerList';
-import { useDiagram } from '../../context/DiagramContext';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
+import { useDiagram } from '../../../application';
 
 export const LayerToolWindow = () => {
   const diagram = useDiagram();

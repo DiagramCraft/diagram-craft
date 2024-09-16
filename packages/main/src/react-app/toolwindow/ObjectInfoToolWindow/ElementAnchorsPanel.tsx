@@ -1,10 +1,10 @@
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { useNodeProperty } from '../../hooks/useProperty';
-import { useDiagram } from '../../context/DiagramContext';
 import { Select } from '@diagram-craft/app-components/Select';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { PropertyEditor } from '../../components/PropertyEditor';
 import { Property } from '../ObjectToolWindow/types';
+import { useDiagram } from '../../../application';
 
 export const ElementAnchorsPanel = (props: Props) => {
   const diagram = useDiagram();

@@ -6,11 +6,11 @@ import { Angle } from '@diagram-craft/geometry/angle';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { $c } from '@diagram-craft/utils/classname';
 import { round } from '@diagram-craft/utils/math';
-import { useDiagram } from '../../context/DiagramContext';
 import { useNodeProperty } from '../../hooks/useProperty';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { ToggleButton } from '@diagram-craft/app-components/ToggleButton';
+import { useDiagram } from '../../../application';
 
 const origins: Record<string, Point> = {
   tl: { x: 0, y: 0 },

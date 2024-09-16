@@ -1,8 +1,8 @@
-import { ToolType } from './ApplicationState';
 import { Point } from '@diagram-craft/geometry/point';
 import { DragDopManager, Modifiers } from './dragDropManager';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { ApplicationTriggers } from './ApplicationTriggers';
+import { ToolType } from '@diagram-craft/main/tools';
 
 export interface Tool {
   type: ToolType;

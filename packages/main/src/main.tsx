@@ -14,7 +14,7 @@ import { registerDrawioBaseNodeTypes } from '@diagram-craft/canvas-drawio/regist
 import { fileLoaderRegistry, stencilLoaderRegistry } from '@diagram-craft/canvas-app/loaders';
 import { DiagramRef } from './App';
 import { Autosave } from './Autosave';
-import { UserState } from '@diagram-craft/canvas/UserState';
+import { UserState } from './UserState';
 
 stencilLoaderRegistry.drawioManual = () =>
   import('@diagram-craft/canvas-drawio/drawioLoaders').then(m => m.stencilLoaderDrawioManual);

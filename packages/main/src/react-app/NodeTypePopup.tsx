@@ -1,4 +1,3 @@
-import { useDiagram } from './context/DiagramContext';
 import { PickerCanvas } from './PickerCanvas';
 import { assert } from '@diagram-craft/utils/assert';
 import { useCallback, useMemo } from 'react';
@@ -13,6 +12,7 @@ import { SnapshotUndoableAction } from '@diagram-craft/model/diagramUndoActions'
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { assignNewBounds, assignNewIds } from '@diagram-craft/model/helpers/cloneHelper';
 import { Popover } from '@diagram-craft/app-components/Popover';
+import { useDiagram } from '../application';
 
 export const NodeTypePopup = (props: Props) => {
   const diagram = useDiagram();

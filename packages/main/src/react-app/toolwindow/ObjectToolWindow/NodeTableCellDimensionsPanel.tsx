@@ -1,7 +1,6 @@
 import { useEventListener } from '../../hooks/useEventListener';
 import { useRedraw } from '../../hooks/useRedraw';
 import { ToolWindowPanel } from '../ToolWindowPanel';
-import { useDiagram } from '../../context/DiagramContext';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -9,6 +8,7 @@ import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { isEdge } from '@diagram-craft/model/diagramElement';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { useTable } from '../../hooks/useTable';
+import { useDiagram } from '../../../application';
 
 export const NodeTableCellDimensionsPanel = (props: Props) => {
   const diagram = useDiagram();

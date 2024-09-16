@@ -11,7 +11,6 @@ import { commitWithUndo, SnapshotUndoableAction } from '@diagram-craft/model/dia
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { newid } from '@diagram-craft/utils/id';
-import { useDiagram } from '../../context/DiagramContext';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
 import { useElementMetadata } from '../../hooks/useProperty';
@@ -24,6 +23,7 @@ import { TbDots } from 'react-icons/tb';
 import { StringInputDialog } from '../../components/StringInputDialog';
 import { JSONDialog } from '../../components/JSONDialog';
 import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
+import { useDiagram } from '../../../application';
 
 export const ElementStylesheetPanel = (props: Props) => {
   const $d = useDiagram();

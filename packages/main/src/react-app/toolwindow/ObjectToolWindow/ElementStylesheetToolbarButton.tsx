@@ -1,5 +1,4 @@
 import { useElementMetadata } from '../../hooks/useProperty';
-import { useDiagram } from '../../context/DiagramContext';
 import { Select } from '@diagram-craft/app-components/Select';
 import { SelectionType } from '@diagram-craft/model/selectionState';
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
@@ -9,6 +8,7 @@ import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { TbBaseline, TbPalette } from 'react-icons/tb';
 import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 import { PropertyEditor } from '../../components/PropertyEditor';
+import { useDiagram } from '../../../application';
 
 export const ElementStylesheetToolbarButton = (props: Props) => {
   const $d = useDiagram();

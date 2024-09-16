@@ -1,22 +1,21 @@
 import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSelectionAction';
-import { ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
-import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { assert } from '@diagram-craft/utils/assert';
+import { ActionContext } from '@diagram-craft/canvas/action';
 
 declare global {
   interface ActionMap extends ReturnType<typeof alignActions> {}
 }
 
-export const alignActions = (state: ActionConstructionParameters) => ({
-  ALIGN_TOP: new AlignAction('top', state.diagram),
-  ALIGN_BOTTOM: new AlignAction('bottom', state.diagram),
-  ALIGN_CENTER_HORIZONTAL: new AlignAction('center-horizontal', state.diagram),
-  ALIGN_LEFT: new AlignAction('left', state.diagram),
-  ALIGN_RIGHT: new AlignAction('right', state.diagram),
-  ALIGN_CENTER_VERTICAL: new AlignAction('center-vertical', state.diagram)
+export const alignActions = (context: ActionContext) => ({
+  ALIGN_TOP: new AlignAction('top', context),
+  ALIGN_BOTTOM: new AlignAction('bottom', context),
+  ALIGN_CENTER_HORIZONTAL: new AlignAction('center-horizontal', context),
+  ALIGN_LEFT: new AlignAction('left', context),
+  ALIGN_RIGHT: new AlignAction('right', context),
+  ALIGN_CENTER_VERTICAL: new AlignAction('center-vertical', context)
 });
 
 type Mode = 'top' | 'bottom' | 'right' | 'left' | 'center-vertical' | 'center-horizontal';
@@ -24,15 +23,15 @@ type Mode = 'top' | 'bottom' | 'right' | 'left' | 'center-vertical' | 'center-ho
 export class AlignAction extends AbstractSelectionAction {
   constructor(
     private readonly mode: Mode,
-    diagram: Diagram
+    context: ActionContext
   ) {
-    super(diagram, MultipleType.MultipleOnly, ElementType.Node);
+    super(context, MultipleType.MultipleOnly, ElementType.Node);
   }
 
   execute(): void {
-    const uow = new UnitOfWork(this.diagram, true);
+    const uow = new UnitOfWork(this.context.model.activeDiagram, true);
 
-    const first = this.diagram.selectionState.elements[0];
+    const first = this.context.model.activeDiagram.selectionState.elements[0];
     assert.present(first); // Note: this is safe as this is a AbstractSelectionAction
 
     switch (this.mode) {
@@ -65,7 +64,7 @@ export class AlignAction extends AbstractSelectionAction {
   // y + h / 2 === Y   => y = Y - h / 2   => y = Y - h * offset (offset = 0.5)
   // y === Y           => y = Y           => y = Y - h * offset (offset = 0)
   private alignY(y: number, offset: number, uow: UnitOfWork) {
-    this.diagram.selectionState.elements.forEach(e => {
+    this.context.model.activeDiagram.selectionState.elements.forEach(e => {
       if (isNode(e) && e.renderProps.capabilities.movable === false) return;
       e.setBounds({ ...e.bounds, y: y - e.bounds.h * offset }, uow);
     });
@@ -75,7 +74,7 @@ export class AlignAction extends AbstractSelectionAction {
   // x + w / 2 === X   => x = X - w / 2   => x = X - w * offset (offset = 0.5)
   // x === X           => x = X           => x = X - w * offset (offset = 0)
   private alignX(x: number, offset: number, uow: UnitOfWork) {
-    this.diagram.selectionState.elements.forEach(e => {
+    this.context.model.activeDiagram.selectionState.elements.forEach(e => {
       if (isNode(e) && e.renderProps.capabilities.movable === false) return;
       e.setBounds({ ...e.bounds, x: x - e.bounds.w * offset }, uow);
     });

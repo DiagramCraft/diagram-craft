@@ -1,7 +1,5 @@
-import { ActionMapFactory, ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
-import { AbstractAction } from '@diagram-craft/canvas/action';
+import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
 import { PointOnPath } from '@diagram-craft/geometry/pathPosition';
-import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { precondition } from '@diagram-craft/utils/assert';
@@ -9,13 +7,11 @@ import { smallest } from '@diagram-craft/utils/array';
 import { Point } from '@diagram-craft/geometry/point';
 
 declare global {
-  interface ActionMap {
-    WAYPOINT_DELETE: WaypointDeleteAction;
-  }
+  interface ActionMap extends ReturnType<typeof waypointDeleteActions> {}
 }
 
-export const waypointDeleteActions: ActionMapFactory = (state: ActionConstructionParameters) => ({
-  WAYPOINT_DELETE: new WaypointDeleteAction(state.diagram)
+export const waypointDeleteActions = (context: ActionContext) => ({
+  WAYPOINT_DELETE: new WaypointDeleteAction(context)
 });
 
 type WaypointDeleteActionArg = {
@@ -24,14 +20,14 @@ type WaypointDeleteActionArg = {
 };
 
 export class WaypointDeleteAction extends AbstractAction<WaypointDeleteActionArg> {
-  constructor(private readonly diagram: Diagram) {
-    super();
+  constructor(context: ActionContext) {
+    super(context);
   }
 
   execute(context: WaypointDeleteActionArg): void {
     precondition.is.present(context.point);
 
-    const edge = this.diagram.edgeLookup.get(context.id!);
+    const edge = this.context.model.activeDiagram.edgeLookup.get(context.id!);
     precondition.is.present(edge);
 
     const path = edge.path();
@@ -51,7 +47,7 @@ export class WaypointDeleteAction extends AbstractAction<WaypointDeleteActionArg
       (a, b) => a.d - b.d
     )!.idx;
 
-    const uow = new UnitOfWork(this.diagram, true);
+    const uow = new UnitOfWork(this.context.model.activeDiagram, true);
     edge.removeWaypoint(edge.waypoints[closestWaypointIndex], uow);
 
     commitWithUndo(uow, 'Delete waypoint');

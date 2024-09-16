@@ -1,36 +1,36 @@
-import { ActionMapFactory, ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
-import { AbstractAction } from '@diagram-craft/canvas/action';
-import { Diagram } from '@diagram-craft/model/diagram';
+import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
 
 declare global {
-  interface ActionMap {
-    SELECT_ALL: SelectAllAction;
-    SELECT_ALL_NODES: SelectAllAction;
-    SELECT_ALL_EDGES: SelectAllAction;
-  }
+  interface ActionMap extends ReturnType<typeof selectAllActions> {}
 }
 
-export const selectAllActions: ActionMapFactory = (state: ActionConstructionParameters) => ({
-  SELECT_ALL: new SelectAllAction(state.diagram, 'all'),
-  SELECT_ALL_NODES: new SelectAllAction(state.diagram, 'nodes'),
-  SELECT_ALL_EDGES: new SelectAllAction(state.diagram, 'edges')
+export const selectAllActions = (context: ActionContext) => ({
+  SELECT_ALL: new SelectAllAction('all', context),
+  SELECT_ALL_NODES: new SelectAllAction('nodes', context),
+  SELECT_ALL_EDGES: new SelectAllAction('edges', context)
 });
 
 export class SelectAllAction extends AbstractAction {
   constructor(
-    private readonly diagram: Diagram,
-    private readonly mode: 'all' | 'nodes' | 'edges' = 'all'
+    private readonly mode: 'all' | 'nodes' | 'edges' = 'all',
+    context: ActionContext
   ) {
-    super();
+    super(context);
   }
 
   execute(): void {
     if (this.mode === 'all') {
-      this.diagram.selectionState.setElements(this.diagram.visibleElements());
+      this.context.model.activeDiagram.selectionState.setElements(
+        this.context.model.activeDiagram.visibleElements()
+      );
     } else if (this.mode === 'nodes') {
-      this.diagram.selectionState.setElements(Object.values(this.diagram.nodeLookup));
+      this.context.model.activeDiagram.selectionState.setElements(
+        Object.values(this.context.model.activeDiagram.nodeLookup)
+      );
     } else if (this.mode === 'edges') {
-      this.diagram.selectionState.setElements(Object.values(this.diagram.edgeLookup));
+      this.context.model.activeDiagram.selectionState.setElements(
+        Object.values(this.context.model.activeDiagram.edgeLookup)
+      );
     }
     this.emit('actionTriggered', {});
   }

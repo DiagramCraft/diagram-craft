@@ -1,13 +1,14 @@
 import React from 'react';
 import { useEventListener } from '../hooks/useEventListener';
 import { useRedraw } from '../hooks/useRedraw';
-import { useActions } from '../context/ActionsContext';
 import { ToggleAction } from '@diagram-craft/canvas/action';
 import { ActionName } from '@diagram-craft/canvas/keyMap';
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
+import { useApplication } from '../../application';
 
 export const ActionToggleButton = (props: Props) => {
-  const { actionMap } = useActions();
+  const application = useApplication();
+  const actionMap = application.actions;
   const redraw = useRedraw();
   useEventListener(actionMap[props.action]!, 'actionChanged', redraw);
 

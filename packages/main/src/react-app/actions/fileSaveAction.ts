@@ -1,23 +1,21 @@
-import { ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
 import { AbstractAction } from '@diagram-craft/canvas/action';
-import { Diagram } from '@diagram-craft/model/diagram';
 import { assert } from '@diagram-craft/utils/assert';
 import { serializeDiagramDocument } from '@diagram-craft/model/serialization/serialize';
-import { application } from '../../application';
+import { Application } from '../../application';
 
-export const fileSaveActions = (state: ActionConstructionParameters) => ({
-  FILE_SAVE: new FileSaveAction(state.diagram)
+export const fileSaveActions = (application: Application) => ({
+  FILE_SAVE: new FileSaveAction(application)
 });
 
 declare global {
   interface ActionMap extends ReturnType<typeof fileSaveActions> {}
 }
 
-class FileSaveAction extends AbstractAction {
-  constructor(private readonly diagram: Diagram) {
-    super();
+class FileSaveAction extends AbstractAction<undefined, Application> {
+  constructor(application: Application) {
+    super(application);
 
-    if (diagram.document.url) {
+    if (application.model.activeDocument.url) {
       this.enabled = true;
     } else {
       this.enabled = false;
@@ -25,10 +23,10 @@ class FileSaveAction extends AbstractAction {
   }
 
   execute(): void {
-    const url = this.diagram.document.url;
+    const url = this.context.model.activeDocument.url;
     assert.present(url);
 
-    serializeDiagramDocument(this.diagram.document!).then(async e => {
+    serializeDiagramDocument(this.context.model.activeDocument!).then(async e => {
       const serialized = JSON.stringify(e);
       const response = await fetch(`http://localhost:3000/api/fs/${url}`, {
         method: 'PUT',
@@ -43,7 +41,7 @@ class FileSaveAction extends AbstractAction {
       if (data.status !== 'ok') {
         console.error('Failed to save document');
       } else {
-        application.ui.clearDirty?.();
+        this.context.ui.clearDirty?.();
       }
     });
   }

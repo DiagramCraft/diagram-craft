@@ -11,10 +11,10 @@ import {
   TbRowRemove
 } from 'react-icons/tb';
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
-import { useDiagram } from '../../context/DiagramContext';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
 import { useTable } from '../../hooks/useTable';
+import { useDiagram } from '../../../application';
 
 export const NodeTableToolbarPanel = () => {
   const diagram = useDiagram();

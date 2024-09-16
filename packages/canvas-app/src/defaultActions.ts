@@ -16,12 +16,7 @@ import { edgeFlipActions } from './actions/edgeFlipAction';
 import { duplicateActions } from './actions/duplicateAction';
 import { debugActions } from './actions/debugActions';
 import { layerActions } from './actions/layerActions';
-import { toolActions } from './actions/toolAction';
-import {
-  ActionMapFactory,
-  ActionConstructionParameters,
-  KeyMap
-} from '@diagram-craft/canvas/src/keyMap';
+import { ActionMapFactory, KeyMap } from '@diagram-craft/canvas/src/keyMap';
 import { groupActions } from './actions/groupAction';
 import { tableActions } from '@diagram-craft/canvas/actions/tableActions';
 import { selectionMoveActions } from './actions/selectionMoveAction';
@@ -30,35 +25,35 @@ import { createLinkedNodeActions } from './actions/linkedNodeAction';
 import { exportActions } from './actions/exportAction';
 import { styleCopyActions } from './actions/styleCopyAction';
 import { ruleLayerActions } from './actions/ruleLayerActions';
+import { Application } from './application';
 
-export const defaultCanvasActions: ActionMapFactory = (state: ActionConstructionParameters) => ({
-  ...edgeTextAddActions(state),
-  ...tableActions(state),
-  ...clipboardActions(state),
-  ...styleCopyActions(state),
-  ...undoActions(state),
-  ...redoActions(state),
-  ...selectAllActions(state),
-  ...selectionDeleteActions(state),
-  ...selectionMoveActions(state),
-  ...selectionResizeActions(state),
-  ...createLinkedNodeActions(state),
-  ...selectionRestackActions(state),
-  ...alignActions(state),
-  ...toggleMagnetTypeActions(state),
-  ...distributeActions(state),
-  ...waypointAddActions(state),
-  ...waypointDeleteActions(state),
-  ...toggleRulerActions(state),
-  ...textActions(state),
-  ...edgeFlipActions(state),
-  ...duplicateActions(state),
-  ...groupActions(state),
-  ...debugActions(state),
-  ...exportActions(state),
-  ...layerActions(state),
-  ...toolActions(state),
-  ...ruleLayerActions(state)
+export const defaultCanvasActions: ActionMapFactory<Application> = application => ({
+  ...edgeTextAddActions(application),
+  ...tableActions(application),
+  ...clipboardActions(application),
+  ...styleCopyActions(application),
+  ...undoActions(application),
+  ...redoActions(application),
+  ...selectAllActions(application),
+  ...selectionDeleteActions(application),
+  ...selectionMoveActions(application),
+  ...selectionResizeActions(application),
+  ...createLinkedNodeActions(application),
+  ...selectionRestackActions(application),
+  ...alignActions(application),
+  ...toggleMagnetTypeActions(application),
+  ...distributeActions(application),
+  ...waypointAddActions(application),
+  ...waypointDeleteActions(application),
+  ...toggleRulerActions(application),
+  ...textActions(application),
+  ...edgeFlipActions(application),
+  ...duplicateActions(application),
+  ...groupActions(application),
+  ...debugActions(application),
+  ...exportActions(application),
+  ...layerActions(application),
+  ...ruleLayerActions(application)
 });
 
 export const defaultMacKeymap: KeyMap = {
@@ -69,11 +64,6 @@ export const defaultMacKeymap: KeyMap = {
   'M-KeyV': 'CLIPBOARD_PASTE',
   'M-KeyD': 'DUPLICATE',
   'Backspace': 'SELECTION_DELETE',
-  'M-Digit1': 'TOOL_MOVE',
-  'M-Digit4': 'TOOL_TEXT',
-  'M-Digit3': 'TOOL_EDGE',
-  'M-Digit6': 'TOOL_PEN',
-  'M-Digit7': 'TOOL_NODE',
   'M-KeyO': 'FILE_OPEN',
   'M-KeyE': 'FILE_EXPORT_IMAGE',
 

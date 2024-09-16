@@ -1,14 +1,16 @@
-import { AbstractToggleAction } from '@diagram-craft/canvas/action';
+import { AbstractToggleAction, ActionContext } from '@diagram-craft/canvas/action';
 
 declare global {
-  interface ActionMap {
-    TOGGLE_DARK_MODE: ToggleDarkModeAction;
-  }
+  interface ActionMap extends ReturnType<typeof toggleDarkModeActions> {}
 }
 
+export const toggleDarkModeActions = (context: ActionContext) => ({
+  TOGGLE_DARK_MODE: new ToggleDarkModeAction(context)
+});
+
 export class ToggleDarkModeAction extends AbstractToggleAction {
-  constructor() {
-    super();
+  constructor(context: ActionContext) {
+    super(context);
     setTimeout(() => {
       this.state = document.querySelectorAll('.dark-theme').length > 0;
       this.emit('actionChanged');

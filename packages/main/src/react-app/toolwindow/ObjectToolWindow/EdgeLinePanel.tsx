@@ -1,6 +1,5 @@
 import { TbLine, TbShape3, TbVectorBezier2, TbVectorSpline } from 'react-icons/tb';
 import { ArrowSelector } from './components/ArrowSelector';
-import { useDiagram } from '../../context/DiagramContext';
 import { ConfigurationContextType, useConfiguration } from '../../context/ConfigurationContext';
 import { useEdgeProperty } from '../../hooks/useProperty';
 import { ToolWindowPanel } from '../ToolWindowPanel';
@@ -13,6 +12,7 @@ import { PropertyEditor } from '../../components/PropertyEditor';
 import { Property } from './types';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { EdgeType, LineCap, LineJoin } from '@diagram-craft/model/diagramProps';
+import { useDiagram } from '../../../application';
 
 type FormProps = {
   diagram: Diagram;

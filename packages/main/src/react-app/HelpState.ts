@@ -1,52 +1,19 @@
 import { EventEmitter } from '@diagram-craft/utils/event';
 
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace Extensions {
-    interface Tools {}
-  }
-}
-
-export interface Tools extends Extensions.Tools {}
-
-export type ToolType = keyof Tools;
-
 type Help = {
   id: string;
   message: string;
 };
 
-type ApplicationStateEvents = {
-  toolChange: { tool: ToolType };
-  hoverElementChange: { element: string | undefined };
+type HelpStateEvents = {
   helpChange: { help: Help | undefined };
 };
 
-export class ApplicationState extends EventEmitter<ApplicationStateEvents> {
-  #tool: ToolType = 'move';
-  #hoverElement: string | undefined = undefined;
+export class HelpState extends EventEmitter<HelpStateEvents> {
   #help: Array<Help> = [];
 
   constructor() {
     super();
-  }
-
-  set tool(tool: ToolType) {
-    this.#tool = tool;
-    this.emit('toolChange', { tool });
-  }
-
-  get tool(): ToolType {
-    return this.#tool;
-  }
-
-  set hoverElement(element: string | undefined) {
-    this.#hoverElement = element;
-    this.emit('hoverElementChange', { element });
-  }
-
-  get hoverElement(): string | undefined {
-    return this.#hoverElement;
   }
 
   pushHelp(help: Help | undefined) {

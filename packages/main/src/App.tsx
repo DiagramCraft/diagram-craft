@@ -11,8 +11,6 @@ import { useRedraw } from './react-app/hooks/useRedraw';
 import { defaultAppActions, defaultMacAppKeymap } from './react-app/appActionMap';
 import { DocumentTabs } from './react-app/DocumentTabs';
 import { Ruler } from './react-app/Ruler';
-import { ActionsContext } from './react-app/context/ActionsContext';
-import { DiagramContext } from './react-app/context/DiagramContext';
 import { ConfigurationContext } from './react-app/context/ConfigurationContext';
 import { defaultPalette } from './react-app/toolwindow/ObjectToolWindow/components/palette';
 import { LayerIndicator } from './react-app/LayerIndicator';
@@ -29,8 +27,6 @@ import { TextTool } from '@diagram-craft/canvas-app/tools/textTool';
 import { EdgeTool } from '@diagram-craft/canvas-app/tools/edgeTool';
 import { NodeTool } from '@diagram-craft/canvas/tools/nodeTool';
 import { PenTool } from '@diagram-craft/canvas-app/tools/penTool';
-import { ApplicationState, ToolType } from '@diagram-craft/canvas/ApplicationState';
-import { UserState } from '@diagram-craft/canvas/UserState';
 import { makeActionMap } from '@diagram-craft/canvas/keyMap';
 import { EditableCanvas } from '@diagram-craft/canvas-react/EditableCanvas';
 import { edgeDefaults, nodeDefaults } from '@diagram-craft/model/diagramDefaults';
@@ -54,13 +50,16 @@ import { RectTool } from '@diagram-craft/canvas-app/tools/rectTool';
 import { ReferenceLayerDialog } from './react-app/components/NewReferenceLayerDialog';
 import { StringInputDialog } from './react-app/components/StringInputDialog';
 import { RuleEditorDialog } from './react-app/components/RuleEditorDialog/RuleEditorDialog';
-import { application } from './application';
 import { useOnChange } from './react-app/hooks/useOnChange';
 import { MainMenu } from './react-app/MainMenu';
 import { MainToolbar } from './react-app/MainToolbar';
 import { AuxToolbar } from './react-app/AuxToolbar';
 import { RightSidebar } from './react-app/RightSidebar';
 import { LeftSidebar } from './react-app/LeftSidebar';
+import { Application, ApplicationContext } from './application';
+import { UserState } from './UserState';
+import { ToolType } from './tools';
+import { HelpState } from './react-app/HelpState';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -86,12 +85,9 @@ export type DiagramRef = {
   url: string;
 };
 
-const setActiveDiagram = ($d: Diagram, applicationState: ApplicationState) => {
+const setActiveDiagram = ($d: Diagram, application: Application) => {
   application.model.activeDiagram = $d;
-  application.actions = makeActionMap(defaultAppActions)({
-    diagram: $d,
-    applicationState: applicationState
-  });
+  application.actions = makeActionMap(defaultAppActions)(application);
 };
 
 declare global {
@@ -112,25 +108,27 @@ export const App = (props: {
   diagramFactory: DiagramFactory<Diagram>;
 }) => {
   const redraw = useRedraw();
-  const applicationState = useRef(new ApplicationState());
-  const userState = useRef(new UserState());
+  const helpState = useRef(new HelpState());
 
-  useEventListener(application.model, 'activeDiagramChange', redraw);
-  useEventListener(application.model, 'activeDocumentChange', redraw);
+  const userState = useRef(new UserState());
+  const application = useRef(new Application());
+
+  useEventListener(application.current.model, 'activeDiagramChange', redraw);
+  useEventListener(application.current.model, 'activeDocumentChange', redraw);
 
   const applicationTriggers: ApplicationTriggers = {
     pushHelp: (id: string, message: string) => {
-      const help = applicationState.current.help;
+      const help = helpState.current.help;
       if (help && help.id === id && help.message === message) return;
       queueMicrotask(() => {
-        applicationState.current.pushHelp({ id, message });
+        helpState.current.pushHelp({ id, message });
       });
     },
     popHelp: (id: string) => {
-      applicationState.current.popHelp(id);
+      helpState.current.popHelp(id);
     },
     setHelp: (message: string) => {
-      applicationState.current.setHelp({ id: 'default', message });
+      helpState.current.setHelp({ id: 'default', message });
     },
     showContextMenu: <T extends keyof ApplicationTriggers.ContextMenus>(
       type: T,
@@ -201,8 +199,8 @@ export const App = (props: {
       const doc = await loadFileFromUrl(url, props.documentFactory, props.diagramFactory);
       doc.url = url;
 
-      application.model.activeDocument = doc;
-      setActiveDiagram(doc.diagrams[0], applicationState.current);
+      application.current.model.activeDocument = doc;
+      setActiveDiagram(doc.diagrams[0], application.current);
 
       Autosave.clear();
       setDirty(false);
@@ -219,8 +217,8 @@ export const App = (props: {
       );
       doc.addDiagram(diagram);
 
-      application.model.activeDocument = doc;
-      setActiveDiagram(diagram, applicationState.current);
+      application.current.model.activeDocument = doc;
+      setActiveDiagram(diagram, application.current);
 
       Autosave.clear();
       setDirty(false);
@@ -230,11 +228,11 @@ export const App = (props: {
       setDirty(false);
     }
   };
-  application.ui = applicationTriggers;
+  application.current.ui = applicationTriggers;
 
   useOnChange(props.doc, () => {
-    application.model.activeDocument = props.doc;
-    setActiveDiagram(props.doc.diagrams[0], applicationState.current);
+    application.current.model.activeDocument = props.doc;
+    setActiveDiagram(props.doc.diagrams[0], application.current);
   });
 
   const [dirty, setDirty] = useState(Autosave.exists());
@@ -259,10 +257,10 @@ export const App = (props: {
     redraw();
   }, [svgRef.current]);
 
-  const $d = application.model.activeDiagram;
-  const actionMap = application.actions;
-  const doc = application.model.activeDocument;
-  const url = application.model.activeDocument.url;
+  const $d = application.current.model.activeDiagram;
+  const actionMap = application.current.actions;
+  const doc = application.current.model.activeDocument;
+  const url = application.current.model.activeDocument.url;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const autosave = (event: any) => {
@@ -281,171 +279,166 @@ export const App = (props: {
   useEventListener(doc, 'diagramchanged', autosave);
 
   const keyMap = defaultMacAppKeymap;
+  application.current.keyMap = keyMap;
 
   return (
-    <DiagramContext.Provider value={$d}>
-      <ActionsContext.Provider
-        value={{ actions: { actionMap, keyMap }, applicationTriggers: applicationTriggers }}
+    <ApplicationContext.Provider value={{ application: application.current }}>
+      <ConfigurationContext.Provider
+        value={{
+          palette: {
+            primary: defaultPalette
+          },
+          defaults: {
+            node: nodeDefaults,
+            edge: edgeDefaults
+          },
+          fonts: {
+            'Times': 'Times',
+            'Arial': 'Arial',
+            'Sans Serif': 'sans-serif',
+            'Helvetica': 'Helvetica',
+            'Verdana': 'Verdana',
+            'Courier': 'Courier',
+            'Comic Sans': 'Comic Sans MS',
+            'Impact': 'Impact',
+            'Tahoma': 'Tahoma',
+            'Trebuchet': 'Trebuchet MS',
+            'Georgia': 'Georgia'
+          }
+        }}
       >
-        <ConfigurationContext.Provider
-          value={{
-            palette: {
-              primary: defaultPalette
-            },
-            defaults: {
-              node: nodeDefaults,
-              edge: edgeDefaults
-            },
-            fonts: {
-              'Times': 'Times',
-              'Arial': 'Arial',
-              'Sans Serif': 'sans-serif',
-              'Helvetica': 'Helvetica',
-              'Verdana': 'Verdana',
-              'Courier': 'Courier',
-              'Comic Sans': 'Comic Sans MS',
-              'Impact': 'Impact',
-              'Tahoma': 'Tahoma',
-              'Trebuchet': 'Trebuchet MS',
-              'Georgia': 'Georgia'
-            }
-          }}
-        >
-          {/* Dialogs */}
-          <FileDialog
-            open={dialogState?.name === 'fileOpen'}
-            onOpen={dialogState?.onOk}
-            onCancel={dialogState?.onCancel}
-          />
-          <ImageInsertDialog
-            open={dialogState?.name === 'imageInsert'}
-            onInsert={dialogState?.onOk}
-            onCancel={dialogState?.onCancel}
-            diagram={$d}
-          />
-          <TableInsertDialog
-            open={dialogState?.name === 'tableInsert'}
-            onInsert={dialogState?.onOk}
-            onCancel={dialogState?.onCancel}
-          />
-          <ReferenceLayerDialog
-            open={dialogState?.name === 'newReferenceLayer'}
-            diagram={$d}
-            /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-            onCreate={dialogState?.onOk as any}
-            onCancel={dialogState?.onCancel}
-          />
-          <StringInputDialog
-            open={dialogState?.name === 'stringInput'}
-            {...dialogState?.props}
-            /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-            onSave={dialogState?.onOk as any}
-            onCancel={dialogState?.onCancel}
-          />
-          <RuleEditorDialog
-            open={dialogState?.name === 'ruleEditor'}
-            {...dialogState?.props}
-            /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-            onSave={dialogState?.onOk as any}
-            onCancel={dialogState?.onCancel}
-          />
+        {/* Dialogs */}
+        <FileDialog
+          open={dialogState?.name === 'fileOpen'}
+          onOpen={dialogState?.onOk}
+          onCancel={dialogState?.onCancel}
+        />
+        <ImageInsertDialog
+          open={dialogState?.name === 'imageInsert'}
+          onInsert={dialogState?.onOk}
+          onCancel={dialogState?.onCancel}
+          diagram={$d}
+        />
+        <TableInsertDialog
+          open={dialogState?.name === 'tableInsert'}
+          onInsert={dialogState?.onOk}
+          onCancel={dialogState?.onCancel}
+        />
+        <ReferenceLayerDialog
+          open={dialogState?.name === 'newReferenceLayer'}
+          diagram={$d}
+          /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+          onCreate={dialogState?.onOk as any}
+          onCancel={dialogState?.onCancel}
+        />
+        <StringInputDialog
+          open={dialogState?.name === 'stringInput'}
+          {...dialogState?.props}
+          /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+          onSave={dialogState?.onOk as any}
+          onCancel={dialogState?.onCancel}
+        />
+        <RuleEditorDialog
+          open={dialogState?.name === 'ruleEditor'}
+          {...dialogState?.props}
+          /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+          onSave={dialogState?.onOk as any}
+          onCancel={dialogState?.onCancel}
+        />
 
-          <div id="app" className={'dark-theme'}>
-            <div id="menu">
-              <MainMenu userState={userState.current} />
-              <MainToolbar dirty={dirty} />
-              <AuxToolbar />
-            </div>
-
-            <div id="window-area">
-              <div id="toolbar">
-                <ContextSpecificToolbar />
-              </div>
-
-              <LeftSidebar applicationState={applicationState.current} />
-              <RightSidebar />
-
-              <div id="canvas-area" className={'light-theme'}>
-                <ErrorBoundary>
-                  <ContextMenu.Root>
-                    <ContextMenu.Trigger asChild={true}>
-                      <EditableCanvas
-                        ref={svgRef}
-                        diagram={$d}
-                        /* Note: this uid here to force redraw in case the diagram is reloaded */
-                        key={$d.uid}
-                        actionMap={actionMap}
-                        tools={tools}
-                        keyMap={keyMap}
-                        applicationState={applicationState.current}
-                        offset={
-                          (userState.current.panelLeft ?? -1) >= 0
-                            ? {
-                                x: 250, // Corresponding to left panel width
-                                y: 0
-                              }
-                            : Point.ORIGIN
-                        }
-                        className={'canvas'}
-                        onDrop={canvasDropHandler($d)}
-                        onDragOver={canvasDragOverHandler()}
-                        applicationTriggers={applicationTriggers}
-                      />
-                    </ContextMenu.Trigger>
-                    <ContextMenu.Portal>
-                      <ContextMenu.Content className="cmp-context-menu">
-                        <ContextMenuDispatcher
-                          state={contextMenuTarget}
-                          createContextMenu={state => {
-                            if (state.type === 'canvas') {
-                              return (
-                                <CanvasContextMenu target={state as ContextMenuTarget<'canvas'>} />
-                              );
-                            } else if (state.type === 'selection') {
-                              return <SelectionContextMenu />;
-                            } else {
-                              return (
-                                <EdgeContextMenu target={state as ContextMenuTarget<'edge'>} />
-                              );
-                            }
-                          }}
-                        />
-                      </ContextMenu.Content>
-                    </ContextMenu.Portal>
-                  </ContextMenu.Root>
-                </ErrorBoundary>
-
-                <Ruler orientation={'horizontal'} canvasRef={svgRef.current} />
-                <Ruler orientation={'vertical'} canvasRef={svgRef.current} />
-
-                <NodeTypePopup
-                  {...popoverState}
-                  onClose={() => setPopoverState(NodeTypePopup.INITIAL_STATE)}
-                />
-
-                <MessageDialog
-                  {...messageDialogState}
-                  onClose={() => setMessageDialogState(MessageDialog.INITIAL_STATE)}
-                />
-              </div>
-
-              <div id="tabs">
-                <DocumentTabs
-                  value={$d.id}
-                  onValueChange={v => {
-                    setActiveDiagram(doc.getById(v)!, applicationState.current);
-                  }}
-                  document={doc}
-                />
-
-                <LayerIndicator />
-              </div>
-            </div>
-
-            <HelpMessage applicationState={applicationState.current} actionMap={actionMap} />
+        <div id="app" className={'dark-theme'}>
+          <div id="menu">
+            <MainMenu userState={userState.current} />
+            <MainToolbar dirty={dirty} />
+            <AuxToolbar />
           </div>
-        </ConfigurationContext.Provider>
-      </ActionsContext.Provider>
-    </DiagramContext.Provider>
+
+          <div id="window-area">
+            <div id="toolbar">
+              <ContextSpecificToolbar />
+            </div>
+
+            <LeftSidebar />
+            <RightSidebar />
+
+            <div id="canvas-area" className={'light-theme'}>
+              <ErrorBoundary>
+                <ContextMenu.Root>
+                  <ContextMenu.Trigger asChild={true}>
+                    <EditableCanvas
+                      ref={svgRef}
+                      diagram={$d}
+                      /* Note: this uid here to force redraw in case the diagram is reloaded */
+                      key={$d.uid}
+                      actionMap={actionMap}
+                      tools={tools}
+                      tool={application.current.tool}
+                      keyMap={keyMap}
+                      offset={
+                        (userState.current.panelLeft ?? -1) >= 0
+                          ? {
+                              x: 250, // Corresponding to left panel width
+                              y: 0
+                            }
+                          : Point.ORIGIN
+                      }
+                      className={'canvas'}
+                      onDrop={canvasDropHandler($d)}
+                      onDragOver={canvasDragOverHandler()}
+                      applicationTriggers={applicationTriggers}
+                    />
+                  </ContextMenu.Trigger>
+                  <ContextMenu.Portal>
+                    <ContextMenu.Content className="cmp-context-menu">
+                      <ContextMenuDispatcher
+                        state={contextMenuTarget}
+                        createContextMenu={state => {
+                          if (state.type === 'canvas') {
+                            return (
+                              <CanvasContextMenu target={state as ContextMenuTarget<'canvas'>} />
+                            );
+                          } else if (state.type === 'selection') {
+                            return <SelectionContextMenu />;
+                          } else {
+                            return <EdgeContextMenu target={state as ContextMenuTarget<'edge'>} />;
+                          }
+                        }}
+                      />
+                    </ContextMenu.Content>
+                  </ContextMenu.Portal>
+                </ContextMenu.Root>
+              </ErrorBoundary>
+
+              <Ruler orientation={'horizontal'} canvasRef={svgRef.current} />
+              <Ruler orientation={'vertical'} canvasRef={svgRef.current} />
+
+              <NodeTypePopup
+                {...popoverState}
+                onClose={() => setPopoverState(NodeTypePopup.INITIAL_STATE)}
+              />
+
+              <MessageDialog
+                {...messageDialogState}
+                onClose={() => setMessageDialogState(MessageDialog.INITIAL_STATE)}
+              />
+            </div>
+
+            <div id="tabs">
+              <DocumentTabs
+                value={$d.id}
+                onValueChange={v => {
+                  setActiveDiagram(doc.getById(v)!, application.current);
+                }}
+                document={doc}
+              />
+
+              <LayerIndicator />
+            </div>
+          </div>
+
+          <HelpMessage helpState={helpState.current} />
+        </div>
+      </ConfigurationContext.Provider>
+    </ApplicationContext.Provider>
   );
 };

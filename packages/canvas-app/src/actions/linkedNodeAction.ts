@@ -13,10 +13,9 @@ import { createResizeCanvasActionToFit } from '@diagram-craft/model/helpers/canv
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSelectionAction';
-import { Diagram } from '@diagram-craft/model/diagram';
 import { Angle } from '@diagram-craft/geometry/angle';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
-import { ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
+import { ActionContext } from '@diagram-craft/canvas/action';
 
 const OFFSET = 100;
 const SECONDARY_OFFSET = 20;
@@ -153,16 +152,16 @@ export const createLinkedNode = (
   return newNode;
 };
 
-export const createLinkedNodeActions = ({ diagram }: ActionConstructionParameters) => {
+export const createLinkedNodeActions = (context: ActionContext) => {
   return {
-    CREATE_LINKED_NODE_E: new CreateLinkedNodeAction(diagram, 'e'),
-    CREATE_LINKED_NODE_W: new CreateLinkedNodeAction(diagram, 'w'),
-    CREATE_LINKED_NODE_N: new CreateLinkedNodeAction(diagram, 'n'),
-    CREATE_LINKED_NODE_S: new CreateLinkedNodeAction(diagram, 's'),
-    CREATE_LINKED_NODE_KEEP_E: new CreateLinkedNodeAction(diagram, 'e', true),
-    CREATE_LINKED_NODE_KEEP_W: new CreateLinkedNodeAction(diagram, 'w', true),
-    CREATE_LINKED_NODE_KEEP_N: new CreateLinkedNodeAction(diagram, 'n', true),
-    CREATE_LINKED_NODE_KEEP_S: new CreateLinkedNodeAction(diagram, 's', true)
+    CREATE_LINKED_NODE_E: new CreateLinkedNodeAction(context, 'e'),
+    CREATE_LINKED_NODE_W: new CreateLinkedNodeAction(context, 'w'),
+    CREATE_LINKED_NODE_N: new CreateLinkedNodeAction(context, 'n'),
+    CREATE_LINKED_NODE_S: new CreateLinkedNodeAction(context, 's'),
+    CREATE_LINKED_NODE_KEEP_E: new CreateLinkedNodeAction(context, 'e', true),
+    CREATE_LINKED_NODE_KEEP_W: new CreateLinkedNodeAction(context, 'w', true),
+    CREATE_LINKED_NODE_KEEP_N: new CreateLinkedNodeAction(context, 'n', true),
+    CREATE_LINKED_NODE_KEEP_S: new CreateLinkedNodeAction(context, 's', true)
   };
 };
 
@@ -172,17 +171,17 @@ declare global {
 
 export class CreateLinkedNodeAction extends AbstractSelectionAction {
   constructor(
-    diagram: Diagram,
+    context: ActionContext,
     protected readonly direction: Direction,
     protected readonly keepSelection: boolean = false
   ) {
-    super(diagram, MultipleType.SingleOnly, ElementType.Node, ['regular']);
+    super(context, MultipleType.SingleOnly, ElementType.Node, ['regular']);
   }
 
   execute(): void {
     if (!this.enabled) return;
 
-    const $sel = this.diagram.selectionState;
+    const $sel = this.context.model.activeDiagram.selectionState;
     const node = $sel.nodes[0];
 
     let best: [number, Anchor | undefined] = [Number.MAX_SAFE_INTEGER, undefined];

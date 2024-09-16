@@ -1,5 +1,4 @@
 import { Editor } from './editors';
-import { useDiagram } from '../../context/DiagramContext';
 import { newid } from '@diagram-craft/utils/id';
 import { deepClone } from '@diagram-craft/utils/object';
 import { useState } from 'react';
@@ -10,6 +9,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { sortBy } from '@diagram-craft/utils/array';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { FreeEndpoint } from '@diagram-craft/model/endpoint';
+import { useDiagram } from '../../../application';
 
 export const EdgeCustomPropertiesEditor: Editor = props => {
   const $p = props.props as EdgeProps;

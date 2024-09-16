@@ -1,8 +1,8 @@
 import { TbMagnet } from 'react-icons/tb';
 import { CanvasSnapPanel } from './CanvasSnapPanel';
-import { useDiagram } from '../../context/DiagramContext';
 import { useSnapManagerProperty } from '../../hooks/useProperty';
 import { ToolbarToggleItemWithPopover } from '../../components/ToolbarToggleItemWithPopover';
+import { useDiagram } from '../../../application';
 
 export const CanvasSnapToolbarButton = () => {
   const diagram = useDiagram();

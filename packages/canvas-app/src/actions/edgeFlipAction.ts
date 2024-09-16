@@ -1,11 +1,10 @@
-import { ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
-import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSelectionAction';
+import { ActionContext } from '@diagram-craft/canvas/action';
 
-export const edgeFlipActions = (state: ActionConstructionParameters) => ({
-  EDGE_FLIP: new EdgeFlipAction(state.diagram)
+export const edgeFlipActions = (application: ActionContext) => ({
+  EDGE_FLIP: new EdgeFlipAction(application)
 });
 
 declare global {
@@ -13,13 +12,13 @@ declare global {
 }
 
 export class EdgeFlipAction extends AbstractSelectionAction {
-  constructor(diagram: Diagram) {
-    super(diagram, MultipleType.Both, ElementType.Edge);
+  constructor(context: ActionContext) {
+    super(context, MultipleType.Both, ElementType.Edge);
   }
 
   execute(): void {
-    const uow = new UnitOfWork(this.diagram, true);
-    for (const edge of this.diagram.selectionState.edges) {
+    const uow = new UnitOfWork(this.context.model.activeDiagram, true);
+    for (const edge of this.context.model.activeDiagram.selectionState.edges) {
       edge.flip(uow);
     }
 

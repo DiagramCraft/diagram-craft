@@ -1,8 +1,8 @@
 import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
 import { TbCircleArrowRightFilled, TbCircleDotted } from 'react-icons/tb';
-import { useDiagram } from '../../context/DiagramContext';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
+import { useDiagram } from '../../../application';
 
 const formatTimestamp = (ts: Date | undefined) => {
   if (!ts) {

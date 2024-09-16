@@ -1,17 +1,19 @@
-import { AbstractToggleAction } from '@diagram-craft/canvas/action';
-import { UserState } from '@diagram-craft/canvas/UserState';
+import { AbstractToggleAction, ActionContext } from '@diagram-craft/canvas/action';
+import { UserState } from '../../UserState';
 
 declare global {
-  interface ActionMap {
-    TOGGLE_HELP: ToggleHelpAction;
-  }
+  interface ActionMap extends ReturnType<typeof toggleHelpActions> {}
 }
+
+export const toggleHelpActions = (context: ActionContext) => ({
+  TOGGLE_HELP: new ToggleHelpAction(context)
+});
 
 export class ToggleHelpAction extends AbstractToggleAction {
   private userState: UserState;
 
-  constructor() {
-    super();
+  constructor(context: ActionContext) {
+    super(context);
 
     this.userState = UserState.get();
     this.state = this.userState.showHelp;

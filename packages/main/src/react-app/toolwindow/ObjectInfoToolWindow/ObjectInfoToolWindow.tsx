@@ -2,8 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { SelectionInfoDetails } from './SelectionInfoDetails';
 import { NodeInfoDetails } from './NodeInfoDetails';
 import { EdgeInfoDetails } from './EdgeInfoDetails';
-import { useDiagram } from '../../context/DiagramContext';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
+import { useDiagram } from '../../../application';
 
 export const ObjectInfoToolWindow = () => {
   const diagram = useDiagram();

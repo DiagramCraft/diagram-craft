@@ -5,6 +5,16 @@ import {
   DocumentBuilder,
   LayerBuilder
 } from '@diagram-craft/model/test-support/builder';
+import { Diagram } from '@diagram-craft/model/diagram';
+import { ActionContext } from '@diagram-craft/canvas/action';
+
+const mkContext = (d: Diagram) => {
+  return {
+    model: {
+      activeDiagram: d
+    }
+  } as ActionContext;
+};
 
 describe('AlignActions', () => {
   let diagram: DiagramBuilder;
@@ -27,15 +37,15 @@ describe('AlignActions', () => {
   describe('enabled', () => {
     test('should not be enabled when there the selection is only one or empty', () => {
       diagram.selectionState.setElements([]);
-      expect(new AlignAction('top', diagram).isEnabled(undefined)).toBe(false);
+      expect(new AlignAction('top', mkContext(diagram)).isEnabled(undefined)).toBe(false);
 
       diagram.selectionState.setElements([layer.elements[0]]);
-      expect(new AlignAction('top', diagram).isEnabled(undefined)).toBe(false);
+      expect(new AlignAction('top', mkContext(diagram)).isEnabled(undefined)).toBe(false);
     });
 
     test('should be enabled when there are more than one element selected', () => {
       diagram.selectionState.setElements(layer.elements);
-      expect(new AlignAction('top', diagram).isEnabled(undefined)).toBe(true);
+      expect(new AlignAction('top', mkContext(diagram)).isEnabled(undefined)).toBe(true);
     });
   });
 
@@ -44,7 +54,7 @@ describe('AlignActions', () => {
       const [e1, e2, e3] = layer.elements;
       diagram.selectionState.setElements([e1, e2, e3]);
 
-      new AlignAction('top', diagram).execute();
+      new AlignAction('top', mkContext(diagram)).execute();
       expect(e1.bounds.y).toBe(10);
       expect(e2.bounds.y).toBe(10);
       expect(e3.bounds.y).toBe(10);
@@ -54,7 +64,7 @@ describe('AlignActions', () => {
       const [e1, e2, e3] = layer.elements;
       diagram.selectionState.setElements([e1, e2, e3]);
 
-      new AlignAction('bottom', diagram).execute();
+      new AlignAction('bottom', mkContext(diagram)).execute();
       expect(e1.bounds.y).toBe(10);
       expect(e2.bounds.y).toBe(-40);
       expect(e3.bounds.y).toBe(50);
@@ -64,7 +74,7 @@ describe('AlignActions', () => {
       const [e1, e2, e3] = layer.elements;
       diagram.selectionState.setElements([e1, e2, e3]);
 
-      new AlignAction('center-horizontal', diagram).execute();
+      new AlignAction('center-horizontal', mkContext(diagram)).execute();
       expect(e1.bounds.y).toBe(10);
       expect(e2.bounds.y).toBe(-15);
       expect(e3.bounds.y).toBe(30);
@@ -74,7 +84,7 @@ describe('AlignActions', () => {
       const [e1, e2, e3] = layer.elements;
       diagram.selectionState.setElements([e1, e2, e3]);
 
-      new AlignAction('left', diagram).execute();
+      new AlignAction('left', mkContext(diagram)).execute();
       expect(e1.bounds.x).toBe(10);
       expect(e2.bounds.x).toBe(10);
       expect(e3.bounds.x).toBe(10);
@@ -84,7 +94,7 @@ describe('AlignActions', () => {
       const [e1, e2, e3] = layer.elements;
       diagram.selectionState.setElements([e1, e2, e3]);
 
-      new AlignAction('right', diagram).execute();
+      new AlignAction('right', mkContext(diagram)).execute();
       expect(e1.bounds.x).toBe(10);
       expect(e2.bounds.x).toBe(40);
       expect(e3.bounds.x).toBe(10);
@@ -94,7 +104,7 @@ describe('AlignActions', () => {
       const [e1, e2, e3] = layer.elements;
       diagram.selectionState.setElements([e1, e2, e3]);
 
-      new AlignAction('center-vertical', diagram).execute();
+      new AlignAction('center-vertical', mkContext(diagram)).execute();
       expect(e1.bounds.x).toBe(10);
       expect(e2.bounds.x).toBe(25);
       expect(e3.bounds.x).toBe(10);

@@ -3,7 +3,6 @@ import { useEventListener } from '../../hooks/useEventListener';
 import { useRedraw } from '../../hooks/useRedraw';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { ToolWindowPanel } from '../ToolWindowPanel';
-import { useDiagram } from '../../context/DiagramContext';
 import { Select } from '@diagram-craft/app-components/Select';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import {
@@ -17,6 +16,7 @@ import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { PropertyEditor } from '../../components/PropertyEditor';
 import { Property } from './types';
+import { useDiagram } from '../../../application';
 
 export const NodeTablePropertiesPanel = (props: Props) => {
   const diagram = useDiagram();

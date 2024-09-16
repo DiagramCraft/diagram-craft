@@ -1,8 +1,6 @@
-import { ActionMapFactory, ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
-import { AbstractAction } from '@diagram-craft/canvas/action';
+import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
 import { LengthOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
 import { precondition } from '@diagram-craft/utils/assert';
-import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { newid } from '@diagram-craft/utils/id';
@@ -15,13 +13,11 @@ import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
 import { Point } from '@diagram-craft/geometry/point';
 
 declare global {
-  interface ActionMap {
-    EDGE_TEXT_ADD: EdgeTextAddAction;
-  }
+  interface ActionMap extends ReturnType<typeof edgeTextAddActions> {}
 }
 
-export const edgeTextAddActions: ActionMapFactory = (state: ActionConstructionParameters) => ({
-  EDGE_TEXT_ADD: new EdgeTextAddAction(state.diagram)
+export const edgeTextAddActions = (context: ActionContext) => ({
+  EDGE_TEXT_ADD: new EdgeTextAddAction(context)
 });
 
 type EdgeTextAddActionArg = {
@@ -30,31 +26,35 @@ type EdgeTextAddActionArg = {
 };
 
 export class EdgeTextAddAction extends AbstractAction<EdgeTextAddActionArg> {
-  constructor(private readonly diagram: Diagram) {
-    super();
-    this.addCriterion(diagram, 'change', () => diagram.activeLayer.type === 'regular');
+  constructor(context: ActionContext) {
+    super(context);
+    this.addCriterion(
+      context.model.activeDiagram,
+      'change',
+      () => context.model.activeDiagram.activeLayer.type === 'regular'
+    );
   }
 
   execute(context: EdgeTextAddActionArg): void {
     precondition.is.present(context.point);
 
-    const edge = this.diagram.edgeLookup.get(context.id!);
+    const edge = this.context.model.activeDiagram.edgeLookup.get(context.id!);
 
     precondition.is.present(edge);
     assertRegularLayer(edge.layer);
-    assertRegularLayer(this.diagram.activeLayer);
+    assertRegularLayer(this.context.model.activeDiagram.activeLayer);
 
     const path = edge.path();
     const projection = path.projectPoint(context.point);
 
-    const uow = new UnitOfWork(this.diagram, true);
+    const uow = new UnitOfWork(this.context.model.activeDiagram, true);
 
     const textNode = new DiagramNode(
       newid(),
       'text',
       { ...projection.point, r: 0, w: 100, h: 10 },
-      this.diagram,
-      this.diagram.activeLayer,
+      this.context.model.activeDiagram,
+      this.context.model.activeDiagram.activeLayer,
       {
         text: { align: 'center' },
         labelForEdgeId: edge.id,
@@ -88,16 +88,24 @@ export class EdgeTextAddAction extends AbstractAction<EdgeTextAddActionArg> {
     uow.updateElement(edge);
 
     const snapshots = uow.commit();
-    this.diagram.undoManager.add(
+    this.context.model.activeDiagram.undoManager.add(
       new CompoundUndoableAction([
-        new ElementAddUndoableAction([textNode], this.diagram, this.diagram.activeLayer),
-        new SnapshotUndoableAction(`Add edge text`, this.diagram, snapshots.onlyUpdated())
+        new ElementAddUndoableAction(
+          [textNode],
+          this.context.model.activeDiagram,
+          this.context.model.activeDiagram.activeLayer
+        ),
+        new SnapshotUndoableAction(
+          `Add edge text`,
+          this.context.model.activeDiagram,
+          snapshots.onlyUpdated()
+        )
       ])
     );
 
     // Setting focus must be done after the element has been successfully rendered
     setTimeout(() => {
-      this.diagram.document.nodeDefinitions.get('text').requestFocus(textNode);
+      this.context.model.activeDiagram.document.nodeDefinitions.get('text').requestFocus(textNode);
     }, 10);
   }
 }

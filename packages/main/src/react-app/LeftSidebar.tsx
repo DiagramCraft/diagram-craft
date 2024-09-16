@@ -6,12 +6,12 @@ import { SelectToolWindow } from './toolwindow/SelectToolWindow/SelectToolWindow
 import { DocumentToolWindow } from './toolwindow/DocumentToolWindow/DocumentToolWindow';
 import { HistoryToolWindow } from './toolwindow/HistoryToolWindow/HistoryToolWindow';
 import { QueryToolWindow } from './toolwindow/QueryToolWindow/QueryToolWindow';
-import { application } from '../application';
 import { makeActionMap } from '@diagram-craft/canvas/keyMap';
 import { defaultAppActions } from './appActionMap';
-import { ApplicationState } from '@diagram-craft/canvas/ApplicationState';
+import { useApplication } from '../application';
 
-export const LeftSidebar = ({ applicationState }: { applicationState: ApplicationState }) => {
+export const LeftSidebar = () => {
+  const application = useApplication();
   return (
     <SideBar side={'left'}>
       <SideBarPage icon={TbPentagonPlus}>
@@ -29,10 +29,7 @@ export const LeftSidebar = ({ applicationState }: { applicationState: Applicatio
           value={application.model.activeDiagram.id}
           onValueChange={v => {
             application.model.activeDiagram = application.model.activeDocument.getById(v)!;
-            application.actions = makeActionMap(defaultAppActions)({
-              diagram: application.model.activeDiagram,
-              applicationState: applicationState
-            });
+            application.actions = makeActionMap(defaultAppActions)(application);
           }}
         />
       </SideBarPage>

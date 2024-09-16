@@ -1,18 +1,18 @@
 import { TbAdjustments, TbCheck, TbEye, TbEyeOff, TbLink, TbLock, TbStack2 } from 'react-icons/tb';
 import { useRedraw } from './hooks/useRedraw';
-import { useDiagram } from './context/DiagramContext';
 import { useEventListener } from './hooks/useEventListener';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { useActions } from './context/ActionsContext';
 import { ActionDropdownMenuItem } from './components/ActionDropdownMenuItem';
 import { ToggleActionDropdownMenuItem } from './components/ToggleActionDropdownMenuItem';
 import { Tooltip } from '@diagram-craft/app-components/Tooltip';
+import { useApplication, useDiagram } from '../application';
 
 export const LayerIndicator = () => {
   const redraw = useRedraw();
   const diagram = useDiagram();
   const layers = diagram.layers.all.toReversed();
-  const actions = useActions();
+  const application = useApplication();
+  const actions = application.actions;
 
   useEventListener(diagram, 'change', redraw);
 
@@ -58,7 +58,7 @@ export const LayerIndicator = () => {
             <DropdownMenu.Item
               className="cmp-context-menu__item"
               onSelect={() => {
-                actions.actionMap['SIDEBAR_LAYERS']?.execute();
+                actions['SIDEBAR_LAYERS']?.execute();
               }}
             >
               Show layer panel

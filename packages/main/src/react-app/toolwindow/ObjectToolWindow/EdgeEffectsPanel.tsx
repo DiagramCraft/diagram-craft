@@ -1,6 +1,5 @@
 import { round } from '@diagram-craft/utils/math';
 import { useRedraw } from '../../hooks/useRedraw';
-import { useDiagram } from '../../context/DiagramContext';
 import { useEdgeProperty } from '../../hooks/useProperty';
 import { useEventListener } from '../../hooks/useEventListener';
 import { ToolWindowPanel } from '../ToolWindowPanel';
@@ -8,6 +7,7 @@ import { Slider } from '@diagram-craft/app-components/Slider';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { PropertyEditor } from '../../components/PropertyEditor';
 import { Property } from './types';
+import { useDiagram } from '../../../application';
 
 type FormProps = {
   opacity: Property<number>;

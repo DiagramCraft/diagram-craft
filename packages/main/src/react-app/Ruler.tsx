@@ -1,9 +1,8 @@
 import { useEventListener } from './hooks/useEventListener';
 import { useRedraw } from './hooks/useRedraw';
 import { useCallback, useEffect, useRef } from 'react';
-
-import { useDiagram } from './context/DiagramContext';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
+import { useDiagram } from '../application';
 
 type Tick = {
   pos: number;

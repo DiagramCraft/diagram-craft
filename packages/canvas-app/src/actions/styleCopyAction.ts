@@ -1,34 +1,37 @@
 import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSelectionAction';
-import { ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
-import { Diagram } from '@diagram-craft/model/diagram';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { isEdge, isNode } from '@diagram-craft/model/diagramElement';
+import { ActionContext } from '@diagram-craft/canvas/action';
 
 declare global {
   interface ActionMap extends ReturnType<typeof styleCopyActions> {}
 }
 
-export const styleCopyActions = (state: ActionConstructionParameters) => ({
-  STYLE_COPY: new StyleCopyAction(state.diagram),
-  STYLE_PASTE: new StylePasteAction(state.diagram)
+export const styleCopyActions = (context: ActionContext) => ({
+  STYLE_COPY: new StyleCopyAction(context),
+  STYLE_PASTE: new StylePasteAction(context)
 });
 
 let currentNodeStyle: NodeProps = {};
 let currentEdgeStyle: EdgeProps = {};
 
 export class StyleCopyAction extends AbstractSelectionAction {
-  constructor(diagram: Diagram) {
-    super(diagram, MultipleType.SingleOnly, ElementType.Both);
+  constructor(context: ActionContext) {
+    super(context, MultipleType.SingleOnly, ElementType.Both);
   }
 
   execute(): void {
-    if (this.diagram.selectionState.isNodesOnly()) {
-      currentNodeStyle = deepClone(this.diagram.selectionState.nodes[0].storedProps);
-    } else if (this.diagram.selectionState.isEdgesOnly()) {
-      currentEdgeStyle = deepClone(this.diagram.selectionState.edges[0].storedProps);
+    if (this.context.model.activeDiagram.selectionState.isNodesOnly()) {
+      currentNodeStyle = deepClone(
+        this.context.model.activeDiagram.selectionState.nodes[0].storedProps
+      );
+    } else if (this.context.model.activeDiagram.selectionState.isEdgesOnly()) {
+      currentEdgeStyle = deepClone(
+        this.context.model.activeDiagram.selectionState.edges[0].storedProps
+      );
     } else {
       VERIFY_NOT_REACHED();
     }
@@ -36,13 +39,13 @@ export class StyleCopyAction extends AbstractSelectionAction {
 }
 
 export class StylePasteAction extends AbstractSelectionAction {
-  constructor(diagram: Diagram) {
-    super(diagram, MultipleType.Both, ElementType.Both);
+  constructor(context: ActionContext) {
+    super(context, MultipleType.Both, ElementType.Both);
   }
 
   execute(): void {
-    const uow = new UnitOfWork(this.diagram, true);
-    for (const e of this.diagram.selectionState.elements) {
+    const uow = new UnitOfWork(this.context.model.activeDiagram, true);
+    for (const e of this.context.model.activeDiagram.selectionState.elements) {
       if (isNode(e)) {
         e.updateProps(p => {
           for (const k in currentNodeStyle) {

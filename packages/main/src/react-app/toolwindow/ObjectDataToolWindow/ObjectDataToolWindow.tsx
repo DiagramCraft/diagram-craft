@@ -1,4 +1,3 @@
-import { useDiagram } from '../../context/DiagramContext';
 import React, { ChangeEvent, useCallback, useState } from 'react';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
@@ -22,6 +21,7 @@ import { useElementMetadata } from '../../hooks/useProperty';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { Button } from '@diagram-craft/app-components/Button';
+import { useDiagram } from '../../../application';
 
 const makeTemplate = (): DataSchema => {
   return {

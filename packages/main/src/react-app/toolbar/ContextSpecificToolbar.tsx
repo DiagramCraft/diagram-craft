@@ -3,7 +3,6 @@ import { ActionToolbarButton } from './ActionToolbarButton';
 import { useEventListener } from '../hooks/useEventListener';
 import { useCallback, useEffect, useState } from 'react';
 import { ActionToggleButton } from './ActionToggleButton';
-import { useDiagram } from '../context/DiagramContext';
 import { SelectionType } from '@diagram-craft/model/selectionState';
 import { ElementTextFontToolbarButton } from '../toolwindow/ObjectToolWindow/ElementTextFontToolbarButton';
 import { ElementTextFontSizeToolbarButton } from '../toolwindow/ObjectToolWindow/ElementTextFontSizeToolbarButton';
@@ -17,6 +16,7 @@ import { CanvasGridToolbarButton } from '../toolwindow/ObjectToolWindow/CanvasGr
 import { CanvasSnapToolbarButton } from '../toolwindow/ObjectToolWindow/CanvasSnapToolbarButton';
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
 import { ElementStylesheetToolbarButton } from '../toolwindow/ObjectToolWindow/ElementStylesheetToolbarButton';
+import { useDiagram } from '../../application';
 
 export const ContextSpecificToolbar = () => {
   const diagram = useDiagram();

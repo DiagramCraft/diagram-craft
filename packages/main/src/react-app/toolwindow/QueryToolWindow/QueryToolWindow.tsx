@@ -1,5 +1,4 @@
 import { parseAndQuery } from '@diagram-craft/query/query';
-import { useDiagram } from '../../context/DiagramContext';
 import { useRef, useState } from 'react';
 import {
   TbArrowDownRight,
@@ -15,6 +14,7 @@ import { useRedraw } from '../../hooks/useRedraw';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { Button } from '@diagram-craft/app-components/Button';
+import { useDiagram } from '../../../application';
 
 const replacer = (key: string, value: unknown) => {
   if (key === 'parent') return value ? '...' : undefined;

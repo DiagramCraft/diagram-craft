@@ -1,9 +1,9 @@
 import { TbPaint } from 'react-icons/tb';
 import { NodeFillPanel } from './NodeFillPanel';
-import { useDiagram } from '../../context/DiagramContext';
 import { useNodeProperty } from '../../hooks/useProperty';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
+import { useDiagram } from '../../../application';
 
 // TODO: Make this disable if selection includes edges
 export const NodeFillToolbarButton = () => {

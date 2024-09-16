@@ -1,6 +1,5 @@
-import { AbstractAction } from '../action';
+import { AbstractAction, ActionContext } from '../action';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { ActionMapFactory, ActionConstructionParameters } from '../keyMap';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -9,28 +8,18 @@ import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
 
 declare global {
-  interface ActionMap {
-    TABLE_ROW_INSERT_BEFORE: TableInsertAction;
-    TABLE_ROW_INSERT_AFTER: TableInsertAction;
-    TABLE_ROW_REMOVE: TableRemoveAction;
-    TABLE_ROW_DISTRIBUTE: TableDistributeAction;
-
-    TABLE_COLUMN_INSERT_BEFORE: TableInsertAction;
-    TABLE_COLUMN_INSERT_AFTER: TableInsertAction;
-    TABLE_COLUMN_REMOVE: TableRemoveAction;
-    TABLE_COLUMN_DISTRIBUTE: TableDistributeAction;
-  }
+  interface ActionMap extends ReturnType<typeof tableActions> {}
 }
 
-export const tableActions: ActionMapFactory = (state: ActionConstructionParameters) => ({
-  TABLE_ROW_INSERT_BEFORE: new TableInsertAction(state.diagram, 'row', -1),
-  TABLE_ROW_INSERT_AFTER: new TableInsertAction(state.diagram, 'row', 1),
-  TABLE_ROW_REMOVE: new TableRemoveAction(state.diagram, 'row'),
-  TABLE_ROW_DISTRIBUTE: new TableDistributeAction(state.diagram, 'row'),
-  TABLE_COLUMN_INSERT_BEFORE: new TableInsertAction(state.diagram, 'column', -1),
-  TABLE_COLUMN_INSERT_AFTER: new TableInsertAction(state.diagram, 'column', 1),
-  TABLE_COLUMN_REMOVE: new TableRemoveAction(state.diagram, 'column'),
-  TABLE_COLUMN_DISTRIBUTE: new TableDistributeAction(state.diagram, 'column')
+export const tableActions = (context: ActionContext) => ({
+  TABLE_ROW_INSERT_BEFORE: new TableInsertAction('row', -1, context),
+  TABLE_ROW_INSERT_AFTER: new TableInsertAction('row', 1, context),
+  TABLE_ROW_REMOVE: new TableRemoveAction('row', context),
+  TABLE_ROW_DISTRIBUTE: new TableDistributeAction('row', context),
+  TABLE_COLUMN_INSERT_BEFORE: new TableInsertAction('column', -1, context),
+  TABLE_COLUMN_INSERT_AFTER: new TableInsertAction('column', 1, context),
+  TABLE_COLUMN_REMOVE: new TableRemoveAction('column', context),
+  TABLE_COLUMN_DISTRIBUTE: new TableDistributeAction('column', context)
 });
 
 const getTableNode = (diagram: Diagram): DiagramNode | undefined => {
@@ -85,14 +74,14 @@ const getCellColumn = (diagram: Diagram): number | undefined => {
 
 export class TableDistributeAction extends AbstractAction {
   constructor(
-    private readonly diagram: Diagram,
-    private readonly type: 'row' | 'column'
+    private readonly type: 'row' | 'column',
+    context: ActionContext
   ) {
-    super();
+    super(context);
   }
 
   execute(): void {
-    const tableElement = getTableNode(this.diagram);
+    const tableElement = getTableNode(this.context.model.activeDiagram);
     if (!tableElement) return;
 
     if (this.type === 'row') {
@@ -106,7 +95,7 @@ export class TableDistributeAction extends AbstractAction {
       ) as DiagramNode[];
       const rowHeight = h / rows.length;
 
-      const uow = new UnitOfWork(this.diagram, true);
+      const uow = new UnitOfWork(this.context.model.activeDiagram, true);
       rows.forEach(r => adjustRowHeight(r, rowHeight, uow));
       commitWithUndo(uow, 'Distribute rows');
     } else {
@@ -118,7 +107,7 @@ export class TableDistributeAction extends AbstractAction {
 
       const columnWidth = w / colCount;
 
-      const uow = new UnitOfWork(this.diagram, true);
+      const uow = new UnitOfWork(this.context.model.activeDiagram, true);
       for (let i = 0; i < colCount; i++) {
         adjustColumnWidth(i, tableElement, columnWidth, uow);
       }
@@ -129,12 +118,12 @@ export class TableDistributeAction extends AbstractAction {
 
 export class TableRemoveAction extends AbstractAction {
   constructor(
-    private readonly diagram: Diagram,
-    private readonly type: 'row' | 'column'
+    private readonly type: 'row' | 'column',
+    context: ActionContext
   ) {
-    super();
+    super(context);
 
-    diagram.selectionState.on('change', () => {
+    context.model.activeDiagram.selectionState.on('change', () => {
       this.enabled = this.isEnabled();
       this.emit('actionChanged');
     });
@@ -143,23 +132,23 @@ export class TableRemoveAction extends AbstractAction {
   }
 
   isEnabled(): boolean {
-    const elements = this.diagram.selectionState.elements;
+    const elements = this.context.model.activeDiagram.selectionState.elements;
     return (
       elements.length === 1 && isNode(elements[0]) && elements[0].parent?.nodeType === 'tableRow'
     );
   }
 
   execute(): void {
-    const rowIdx = getCellRow(this.diagram);
-    const colIdx = getCellColumn(this.diagram);
+    const rowIdx = getCellRow(this.context.model.activeDiagram);
+    const colIdx = getCellColumn(this.context.model.activeDiagram);
 
-    const table = getTableNode(this.diagram);
+    const table = getTableNode(this.context.model.activeDiagram);
     if (!table) return;
 
     if (this.type === 'row') {
       if (rowIdx === undefined) return;
 
-      const uow = new UnitOfWork(this.diagram, true);
+      const uow = new UnitOfWork(this.context.model.activeDiagram, true);
       const row = table.children[rowIdx];
       uow.snapshot(row);
       table.removeChild(row, uow);
@@ -169,7 +158,7 @@ export class TableRemoveAction extends AbstractAction {
     } else {
       if (colIdx === undefined) return;
 
-      const uow = new UnitOfWork(this.diagram, true);
+      const uow = new UnitOfWork(this.context.model.activeDiagram, true);
       for (const r of table.children) {
         const cell = (r as DiagramNode).children[colIdx];
         uow.snapshot(cell);
@@ -180,19 +169,19 @@ export class TableRemoveAction extends AbstractAction {
       commitWithUndo(uow, 'Remove column');
     }
 
-    this.diagram.selectionState.clear();
+    this.context.model.activeDiagram.selectionState.clear();
   }
 }
 
 export class TableInsertAction extends AbstractAction {
   constructor(
-    private readonly diagram: Diagram,
     private readonly type: 'row' | 'column',
-    private readonly position: -1 | 1
+    private readonly position: -1 | 1,
+    context: ActionContext
   ) {
-    super();
+    super(context);
 
-    diagram.selectionState.on('change', () => {
+    context.model.activeDiagram.selectionState.on('change', () => {
       this.enabled = this.isEnabled();
       this.emit('actionChanged');
     });
@@ -201,23 +190,23 @@ export class TableInsertAction extends AbstractAction {
   }
 
   isEnabled(): boolean {
-    const elements = this.diagram.selectionState.elements;
+    const elements = this.context.model.activeDiagram.selectionState.elements;
     return (
       elements.length === 1 && isNode(elements[0]) && elements[0].parent?.nodeType === 'tableRow'
     );
   }
 
   execute(): void {
-    const rowIdx = getCellRow(this.diagram);
-    const colIdx = getCellColumn(this.diagram);
+    const rowIdx = getCellRow(this.context.model.activeDiagram);
+    const colIdx = getCellColumn(this.context.model.activeDiagram);
 
-    const table = getTableNode(this.diagram);
+    const table = getTableNode(this.context.model.activeDiagram);
     if (!table) return;
 
     if (this.type === 'row') {
       if (rowIdx === undefined) return;
 
-      const uow = new UnitOfWork(this.diagram, true);
+      const uow = new UnitOfWork(this.context.model.activeDiagram, true);
       const current = table.children[rowIdx] as DiagramNode;
       const newRow = current.duplicate();
 
@@ -243,7 +232,7 @@ export class TableInsertAction extends AbstractAction {
     } else {
       if (colIdx === undefined) return;
 
-      const uow = new UnitOfWork(this.diagram, true);
+      const uow = new UnitOfWork(this.context.model.activeDiagram, true);
 
       for (const r of table.children) {
         const cell = (r as DiagramNode).children[colIdx] as DiagramNode;

@@ -1,33 +1,29 @@
-import { ActionMapFactory, ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
-import { AbstractToggleAction } from '@diagram-craft/canvas/action';
-import { Diagram } from '@diagram-craft/model/diagram';
+import { AbstractToggleAction, ActionContext } from '@diagram-craft/canvas/action';
 
 declare global {
-  interface ActionMap {
-    TOGGLE_RULER: ToggleRulerAction;
-  }
+  interface ActionMap extends ReturnType<typeof toggleRulerActions> {}
 }
 
-export const toggleRulerActions: ActionMapFactory = (state: ActionConstructionParameters) => ({
-  TOGGLE_RULER: new ToggleRulerAction(state.diagram)
+export const toggleRulerActions = (context: ActionContext) => ({
+  TOGGLE_RULER: new ToggleRulerAction(context)
 });
 
 export class ToggleRulerAction extends AbstractToggleAction {
   state: boolean;
 
-  constructor(private readonly diagram: Diagram) {
-    super();
-    this.state = diagram.props.ruler?.enabled ?? true;
+  constructor(context: ActionContext) {
+    super(context);
+    this.state = context.model.activeDiagram.props.ruler?.enabled ?? true;
 
-    this.diagram.on('change', () => {
-      this.state = diagram.props.ruler?.enabled ?? true;
+    this.context.model.activeDiagram.on('change', () => {
+      this.state = context.model.activeDiagram.props.ruler?.enabled ?? true;
       this.emit('actionChanged');
     });
   }
 
   execute(): void {
-    this.diagram.props.ruler ??= {};
-    this.diagram.props.ruler.enabled = !this.state;
-    this.diagram.update();
+    this.context.model.activeDiagram.props.ruler ??= {};
+    this.context.model.activeDiagram.props.ruler.enabled = !this.state;
+    this.context.model.activeDiagram.update();
   }
 }

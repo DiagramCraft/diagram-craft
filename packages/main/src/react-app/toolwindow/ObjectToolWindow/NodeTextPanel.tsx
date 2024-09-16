@@ -14,7 +14,6 @@ import { RxTextAlignBottom, RxTextAlignMiddle, RxTextAlignTop } from 'react-icon
 import { ColorPicker, ColorPreview } from '../../components/ColorPicker';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { ToolWindowPanel } from '../ToolWindowPanel';
-import { useDiagram } from '../../context/DiagramContext';
 import { ConfigurationContextType, useConfiguration } from '../../context/ConfigurationContext';
 import { Select } from '@diagram-craft/app-components/Select';
 import { HAlign, VAlign } from '@diagram-craft/model/diagramProps';
@@ -23,6 +22,7 @@ import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGro
 import { Diagram } from '@diagram-craft/model/diagram';
 import { MultiProperty, Property } from './types';
 import { PropertyEditor } from '../../components/PropertyEditor';
+import { useDiagram } from '../../../application';
 
 type FormProps = {
   diagram: Diagram;

@@ -1,4 +1,3 @@
-import { useDiagram } from '../../context/DiagramContext';
 import { Tree } from '@diagram-craft/app-components/Tree';
 import {
   TbAdjustments,
@@ -30,9 +29,9 @@ import { useLayoutEffect, useRef } from 'react';
 import { ReferenceLayer } from '@diagram-craft/model/diagramLayerReference';
 import { RuleLayer } from '@diagram-craft/model/diagramLayerRule';
 import { addHighlight, removeHighlight } from '@diagram-craft/canvas/highlight';
-import { useActions } from '../../context/ActionsContext';
 import { AdjustmentRule } from '@diagram-craft/model/diagramLayerRuleTypes';
 import { RuleContextMenu } from './RuleContextMenu';
+import { useApplication, useDiagram } from '../../../application';
 
 const ELEMENT_INSTANCES = 'application/x-diagram-craft-element-instances';
 const LAYER_INSTANCES = 'application/x-diagram-craft-layer-instances';
@@ -174,7 +173,8 @@ const LayerEntry = (props: { layer: Layer }) => {
 const RuleEntry = (props: { rule: AdjustmentRule; layer: RuleLayer; diagram: Diagram }) => {
   const e = props.rule;
 
-  const actions = useActions();
+  const application = useApplication();
+  const actions = application.actions;
 
   const icon = <TbFilterCog />;
 
@@ -201,7 +201,7 @@ const RuleEntry = (props: { rule: AdjustmentRule; layer: RuleLayer; diagram: Dia
           <span
             style={{ cursor: 'pointer' }}
             onClick={e => {
-              actions.actionMap['RULE_LAYER_EDIT']!.execute({
+              actions['RULE_LAYER_EDIT']!.execute({
                 id: `${props.layer.id}:${props.rule.id}`
               });
               e.preventDefault();

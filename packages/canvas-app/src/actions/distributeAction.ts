@@ -1,18 +1,17 @@
 import { AbstractSelectionAction } from './abstractSelectionAction';
-import { ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
 import { Box } from '@diagram-craft/geometry/box';
-import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { isNode } from '@diagram-craft/model/diagramElement';
+import { ActionContext } from '@diagram-craft/canvas/action';
 
 declare global {
   interface ActionMap extends ReturnType<typeof distributeActions> {}
 }
 
-export const distributeActions = (state: ActionConstructionParameters) => ({
-  DISTRIBUTE_HORIZONTAL: new DistributeAction(state.diagram, 'horizontal'),
-  DISTRIBUTE_VERTICAL: new DistributeAction(state.diagram, 'vertical')
+export const distributeActions = (context: ActionContext) => ({
+  DISTRIBUTE_HORIZONTAL: new DistributeAction('horizontal', context),
+  DISTRIBUTE_VERTICAL: new DistributeAction('vertical', context)
 });
 
 const minBounds = (b: Box) => {
@@ -25,14 +24,14 @@ const maxBounds = (b: Box) => {
 
 export class DistributeAction extends AbstractSelectionAction {
   constructor(
-    protected readonly diagram: Diagram,
-    private readonly mode: 'vertical' | 'horizontal'
+    private readonly mode: 'vertical' | 'horizontal',
+    context: ActionContext
   ) {
-    super(diagram, 'multiple-only');
+    super(context, 'multiple-only');
   }
 
   execute(): void {
-    const uow = new UnitOfWork(this.diagram, true);
+    const uow = new UnitOfWork(this.context.model.activeDiagram, true);
 
     const boundsOrientation = this.mode === 'vertical' ? 'y' : 'x';
     const boundsSize = this.mode === 'vertical' ? 'h' : 'w';
@@ -45,7 +44,7 @@ export class DistributeAction extends AbstractSelectionAction {
   }
 
   private calculateAndUpdateBounds(orientation: 'x' | 'y', size: 'w' | 'h', uow: UnitOfWork): void {
-    const elementsInOrder = this.diagram.selectionState.elements.toSorted(
+    const elementsInOrder = this.context.model.activeDiagram.selectionState.elements.toSorted(
       (a, b) => minBounds(a.bounds)[orientation] - minBounds(b.bounds)[orientation]
     );
 
@@ -54,9 +53,15 @@ export class DistributeAction extends AbstractSelectionAction {
     const max = maxBounds(elementsInOrder.at(-1)!.bounds)[orientation];
 
     const totalSpace =
-      max - min - this.diagram.selectionState.elements.reduce((p, c) => p + c.bounds[size], 0);
+      max -
+      min -
+      this.context.model.activeDiagram.selectionState.elements.reduce(
+        (p, c) => p + c.bounds[size],
+        0
+      );
 
-    const difference = totalSpace / (this.diagram.selectionState.elements.length - 1);
+    const difference =
+      totalSpace / (this.context.model.activeDiagram.selectionState.elements.length - 1);
 
     let currentPosition = min + Math.abs(minimal.bounds[size] + difference);
     for (const e of elementsInOrder.slice(1)) {

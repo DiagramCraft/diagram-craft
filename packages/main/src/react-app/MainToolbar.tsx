@@ -13,11 +13,12 @@ import {
   TbTextSize
 } from 'react-icons/tb';
 import { ActionToolbarButton } from './toolbar/ActionToolbarButton';
-import { application } from '../application';
 import { urlToName } from '@diagram-craft/utils/url';
 import { DirtyIndicator } from './DirtyIndicator';
+import { useApplication } from '../application';
 
 export const MainToolbar = ({ dirty }: { dirty: boolean }) => {
+  const application = useApplication();
   return (
     <div className={'_tools'}>
       <Toolbar.Root size={'large'}>

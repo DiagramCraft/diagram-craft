@@ -1,5 +1,4 @@
 import { Editor } from './editors';
-import { useDiagram } from '../../context/DiagramContext';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { newid } from '@diagram-craft/utils/id';
 import { deepClone } from '@diagram-craft/utils/object';
@@ -9,6 +8,7 @@ import { ElementCustomPropertiesPanelForm } from '../../toolwindow/ObjectToolWin
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { sortBy } from '@diagram-craft/utils/array';
+import { useDiagram } from '../../../application';
 
 export const NodeCustomPropertiesEditor: Editor = props => {
   const $p = props.props as NodeProps;

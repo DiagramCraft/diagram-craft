@@ -1,5 +1,4 @@
 import { round } from '@diagram-craft/utils/math';
-import { useDiagram } from '../../context/DiagramContext';
 import { ConfigurationContextType, useConfiguration } from '../../context/ConfigurationContext';
 import { useElementProperty } from '../../hooks/useProperty';
 import { ToolWindowPanel } from '../ToolWindowPanel';
@@ -8,6 +7,7 @@ import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Property } from './types';
 import { PropertyEditor } from '../../components/PropertyEditor';
+import { useDiagram } from '../../../application';
 
 type FormProps = {
   diagram: Diagram;

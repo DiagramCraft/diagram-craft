@@ -1,7 +1,7 @@
 import * as ReactToolbar from '@radix-ui/react-toolbar';
 import React, { useState } from 'react';
-import { useActions } from '../context/ActionsContext';
 import { ToggleAction } from '@diagram-craft/canvas/action';
+import { useApplication } from '../../application';
 
 type ActionToggleGroupContextType = {
   setActionState(action: keyof ActionMap, state: boolean): void;
@@ -12,7 +12,8 @@ export const ActionToggleGroupContext = React.createContext<
 >(undefined);
 
 export const ActionToggleGroup = (props: Props) => {
-  const { actionMap } = useActions();
+  const application = useApplication();
+  const actionMap = application.actions;
   const [values, setValues] = useState<Record<string, boolean>>({});
 
   return (

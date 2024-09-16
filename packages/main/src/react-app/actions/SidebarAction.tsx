@@ -1,29 +1,19 @@
-import { ActionMapFactory, ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
-import { AbstractToggleAction } from '@diagram-craft/canvas/action';
-import { UserState } from '@diagram-craft/canvas/UserState';
+import { AbstractToggleAction, ActionContext } from '@diagram-craft/canvas/action';
+import { UserState } from '../../UserState';
 
 declare global {
-  interface ActionMap {
-    SIDEBAR_SHAPES: SidebarAction;
-    SIDEBAR_LAYERS: SidebarAction;
-    SIDEBAR_SELECT: SidebarAction;
-    SIDEBAR_DOCUMENT: SidebarAction;
-    SIDEBAR_HISTORY: SidebarAction;
-    SIDEBAR_STYLE: SidebarAction;
-    SIDEBAR_INFO: SidebarAction;
-    SIDEBAR_DATA: SidebarAction;
-  }
+  interface ActionMap extends ReturnType<typeof sidebarActions> {}
 }
 
-export const sidebarActions: ActionMapFactory = (_state: ActionConstructionParameters) => ({
-  SIDEBAR_SHAPES: new SidebarAction('left', 0),
-  SIDEBAR_LAYERS: new SidebarAction('left', 1),
-  SIDEBAR_SELECT: new SidebarAction('left', 2),
-  SIDEBAR_DOCUMENT: new SidebarAction('left', 3),
-  SIDEBAR_HISTORY: new SidebarAction('left', 4),
-  SIDEBAR_STYLE: new SidebarAction('right', 0),
-  SIDEBAR_INFO: new SidebarAction('right', 1),
-  SIDEBAR_DATA: new SidebarAction('right', 2)
+export const sidebarActions = (context: ActionContext) => ({
+  SIDEBAR_SHAPES: new SidebarAction('left', 0, context),
+  SIDEBAR_LAYERS: new SidebarAction('left', 1, context),
+  SIDEBAR_SELECT: new SidebarAction('left', 2, context),
+  SIDEBAR_DOCUMENT: new SidebarAction('left', 3, context),
+  SIDEBAR_HISTORY: new SidebarAction('left', 4, context),
+  SIDEBAR_STYLE: new SidebarAction('right', 0, context),
+  SIDEBAR_INFO: new SidebarAction('right', 1, context),
+  SIDEBAR_DATA: new SidebarAction('right', 2, context)
 });
 
 export class SidebarAction extends AbstractToggleAction {
@@ -31,9 +21,10 @@ export class SidebarAction extends AbstractToggleAction {
 
   constructor(
     private readonly side: 'left' | 'right',
-    private readonly idx: number
+    private readonly idx: number,
+    context: ActionContext
   ) {
-    super();
+    super(context);
 
     this.userState = UserState.get();
 

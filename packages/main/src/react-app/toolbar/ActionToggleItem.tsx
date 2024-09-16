@@ -2,12 +2,13 @@ import * as ReactToolbar from '@radix-ui/react-toolbar';
 import React, { useContext, useEffect } from 'react';
 import { ActionToggleGroupContext } from './ActionToggleGroup';
 import { useEventListener } from '../hooks/useEventListener';
-import { useActions } from '../context/ActionsContext';
 import { ToggleAction } from '@diagram-craft/canvas/action';
 import { ActionName } from '@diagram-craft/canvas/keyMap';
+import { useApplication } from '../../application';
 
 export const ActionToggleItem = (props: Props) => {
-  const { actionMap } = useActions();
+  const application = useApplication();
+  const actionMap = application.actions;
   const actions = useContext(ActionToggleGroupContext);
 
   useEffect(() => {

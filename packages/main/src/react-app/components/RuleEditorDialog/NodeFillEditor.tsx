@@ -1,8 +1,8 @@
 import { useConfiguration } from '../../context/ConfigurationContext';
-import { useDiagram } from '../../context/DiagramContext';
 import { NodeFillPanelForm } from '../../toolwindow/ObjectToolWindow/NodeFillPanel';
 import { elementDefaults } from '@diagram-craft/model/diagramDefaults';
 import { Editor, makeProperty } from './editors';
+import { useDiagram } from '../../../application';
 
 export const NodeFillEditor: Editor = props => {
   const $p = props.props;

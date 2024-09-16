@@ -7,7 +7,6 @@ import {
   TbBorderVertical
 } from 'react-icons/tb';
 import { ToolWindowPanel } from '../ToolWindowPanel';
-import { useDiagram } from '../../context/DiagramContext';
 import { PopoverButton } from '../../components/PopoverButton';
 import { useConfiguration } from '../../context/ConfigurationContext';
 import { Select } from '@diagram-craft/app-components/Select';
@@ -16,6 +15,7 @@ import { DashSelector } from './components/DashSelector';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
 import { PropertyEditor } from '../../components/PropertyEditor';
 import { MultiProperty, Property } from './types';
+import { useDiagram } from '../../../application';
 
 class StrokeProperty extends MultiProperty<string[]> {
   constructor(

@@ -1,21 +1,15 @@
-import { ActionMapFactory, ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
-import { AbstractToggleAction } from '@diagram-craft/canvas/action';
+import { AbstractToggleAction, ActionContext } from '@diagram-craft/canvas/action';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { Diagram } from '@diagram-craft/model/diagram';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 
 declare global {
-  interface ActionMap {
-    TEXT_BOLD: TextAction;
-    TEXT_ITALIC: TextAction;
-    TEXT_UNDERLINE: TextDecorationAction;
-  }
+  interface ActionMap extends ReturnType<typeof textActions> {}
 }
 
-export const textActions: ActionMapFactory = (state: ActionConstructionParameters) => ({
-  TEXT_BOLD: new TextAction(state.diagram, 'bold'),
-  TEXT_ITALIC: new TextAction(state.diagram, 'italic'),
-  TEXT_UNDERLINE: new TextDecorationAction(state.diagram, 'underline')
+export const textActions = (context: ActionContext) => ({
+  TEXT_BOLD: new TextAction('bold', context),
+  TEXT_ITALIC: new TextAction('italic', context),
+  TEXT_UNDERLINE: new TextDecorationAction('underline', context)
 });
 
 // TODO: Maybe we can create an AbstractPropertyAction that takes a prop name and a value and
@@ -23,13 +17,16 @@ export const textActions: ActionMapFactory = (state: ActionConstructionParameter
 
 export class TextAction extends AbstractToggleAction {
   constructor(
-    protected readonly diagram: Diagram,
-    private readonly prop: 'bold' | 'italic'
+    private readonly prop: 'bold' | 'italic',
+    context: ActionContext
   ) {
-    super();
+    super(context);
     const callback = () => {
-      if (diagram.selectionState.isNodesOnly() && diagram.selectionState.nodes.length === 1) {
-        const node = diagram.selectionState.nodes[0];
+      if (
+        context.model.activeDiagram.selectionState.isNodesOnly() &&
+        context.model.activeDiagram.selectionState.nodes.length === 1
+      ) {
+        const node = context.model.activeDiagram.selectionState.nodes[0];
         this.enabled = node.nodeType === 'text';
         this.state = !!node.renderProps.text?.[this.prop];
       } else {
@@ -38,15 +35,15 @@ export class TextAction extends AbstractToggleAction {
       this.emit('actionChanged');
     };
     callback();
-    diagram.selectionState.on('add', callback);
-    diagram.selectionState.on('remove', callback);
-    diagram.undoManager.on('execute', callback);
+    context.model.activeDiagram.selectionState.on('add', callback);
+    context.model.activeDiagram.selectionState.on('remove', callback);
+    context.model.activeDiagram.undoManager.on('execute', callback);
   }
 
   execute(): void {
-    const node = this.diagram.selectionState.nodes[0];
+    const node = this.context.model.activeDiagram.selectionState.nodes[0];
 
-    const uow = new UnitOfWork(this.diagram, true);
+    const uow = new UnitOfWork(this.context.model.activeDiagram, true);
 
     node.updateProps(p => {
       p.text ??= {};
@@ -63,13 +60,16 @@ export class TextAction extends AbstractToggleAction {
 
 export class TextDecorationAction extends AbstractToggleAction {
   constructor(
-    protected readonly diagram: Diagram,
-    private readonly prop: 'underline' | 'line-through' | 'overline'
+    private readonly prop: 'underline' | 'line-through' | 'overline',
+    context: ActionContext
   ) {
-    super();
+    super(context);
     const callback = () => {
-      if (diagram.selectionState.isNodesOnly() && diagram.selectionState.nodes.length === 1) {
-        const node = diagram.selectionState.nodes[0];
+      if (
+        context.model.activeDiagram.selectionState.isNodesOnly() &&
+        context.model.activeDiagram.selectionState.nodes.length === 1
+      ) {
+        const node = context.model.activeDiagram.selectionState.nodes[0];
         this.enabled = node.nodeType === 'text';
         this.state = node.renderProps.text?.textDecoration === this.prop;
       } else {
@@ -78,15 +78,15 @@ export class TextDecorationAction extends AbstractToggleAction {
       this.emit('actionChanged');
     };
     callback();
-    diagram.selectionState.on('add', callback);
-    diagram.selectionState.on('remove', callback);
-    diagram.undoManager.on('execute', callback);
+    context.model.activeDiagram.selectionState.on('add', callback);
+    context.model.activeDiagram.selectionState.on('remove', callback);
+    context.model.activeDiagram.undoManager.on('execute', callback);
   }
 
   execute(): void {
-    const node = this.diagram.selectionState.nodes[0];
+    const node = this.context.model.activeDiagram.selectionState.nodes[0];
 
-    const uow = new UnitOfWork(this.diagram, true);
+    const uow = new UnitOfWork(this.context.model.activeDiagram, true);
 
     node.updateProps(p => {
       p.text ??= {};

@@ -1,11 +1,9 @@
-import { ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
-import { AbstractAction } from '@diagram-craft/canvas/action';
-import { Diagram } from '@diagram-craft/model/diagram';
+import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
 import { Box } from '@diagram-craft/geometry/box';
 import { blobToDataURL } from '@diagram-craft/model/attachment';
 
-export const exportActions = (state: ActionConstructionParameters) => ({
-  FILE_EXPORT_IMAGE: new ExportImageAction(state.diagram)
+export const exportActions = (context: ActionContext) => ({
+  FILE_EXPORT_IMAGE: new ExportImageAction(context)
 });
 
 declare global {
@@ -24,16 +22,18 @@ const MARGIN = 50;
 const SCALE = 2;
 
 class ExportImageAction extends AbstractAction {
-  constructor(private readonly diagram: Diagram) {
-    super();
+  constructor(context: ActionContext) {
+    super(context);
   }
 
   execute(): void {
     const run = async () => {
-      const bounds = Box.boundingBox(this.diagram.visibleElements().map(e => e.bounds));
+      const bounds = Box.boundingBox(
+        this.context.model.activeDiagram.visibleElements().map(e => e.bounds)
+      );
 
       const clonedSvg = document
-        .getElementById(`diagram-${this.diagram.id}`)!
+        .getElementById(`diagram-${this.context.model.activeDiagram.id}`)!
         .cloneNode(true) as HTMLElement;
       clonedSvg.setAttribute('width', bounds.w.toString());
       clonedSvg.setAttribute('height', bounds.h.toString());
@@ -63,7 +63,7 @@ class ExportImageAction extends AbstractAction {
       clonedSvg.querySelectorAll('.svg-edge__backing').forEach(e => e.remove());
 
       // Need to embed all object urls
-      for (const [, a] of this.diagram.document.attachments.attachments) {
+      for (const [, a] of this.context.model.activeDiagram.document.attachments.attachments) {
         const dataUrl = await a.getDataUrl();
         clonedSvg.querySelectorAll('image[href="' + a.url + '"]').forEach(e => {
           e.setAttribute('href', dataUrl);

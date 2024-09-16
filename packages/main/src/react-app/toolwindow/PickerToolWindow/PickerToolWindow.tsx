@@ -1,11 +1,11 @@
 import { ObjectPicker } from './ObjectPicker';
-import { useDiagram } from '../../context/DiagramContext';
 import { useCallback, useState } from 'react';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
-import { UserState } from '@diagram-craft/canvas/UserState';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { unique } from '@diagram-craft/utils/array';
+import { UserState } from '../../../UserState';
+import { useDiagram } from '../../../application';
 
 const SIZE = 35;
 

@@ -1,4 +1,3 @@
-import { useDiagram } from '../../context/DiagramContext';
 import { PickerCanvas } from '../../PickerCanvas';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { assertRegularLayer, RegularLayer } from '@diagram-craft/model/diagramLayer';
@@ -10,6 +9,7 @@ import { Stencil, StencilPackage } from '@diagram-craft/model/elementDefinitionR
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { useMemo, useState } from 'react';
 import { Browser } from '@diagram-craft/canvas/browser';
+import { useDiagram } from '../../../application';
 
 const encodeSvg = (svgString: string) => svgString.replace('«', '&#171;').replace('»', '&#187;');
 

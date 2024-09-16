@@ -1,9 +1,9 @@
 import { TbTextSize } from 'react-icons/tb';
 import { useNodeProperty } from '../../hooks/useProperty';
 import { NodeTextPanel } from './NodeTextPanel';
-import { useDiagram } from '../../context/DiagramContext';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
+import { useDiagram } from '../../../application';
 
 export const ElementTextToolbarButton = () => {
   const diagram = useDiagram();

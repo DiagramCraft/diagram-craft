@@ -1,16 +1,17 @@
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { TbChevronRight, TbMenu2 } from 'react-icons/tb';
 import { ActionDropdownMenuItem } from './components/ActionDropdownMenuItem';
-import { application } from '../application';
 import { urlToName } from '@diagram-craft/utils/url';
 import { ToggleActionDropdownMenuItem } from './components/ToggleActionDropdownMenuItem';
-import { UserState } from '@diagram-craft/canvas/UserState';
+import { useApplication } from '../application';
+import { UserState } from '../UserState';
 
 type Props = {
   userState: UserState;
 };
 
 export const MainMenu = ({ userState }: Props) => {
+  const application = useApplication();
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>

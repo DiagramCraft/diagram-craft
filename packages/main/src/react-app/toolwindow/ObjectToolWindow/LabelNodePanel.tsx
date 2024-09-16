@@ -1,5 +1,4 @@
 import { TbRestore } from 'react-icons/tb';
-import { useDiagram } from '../../context/DiagramContext';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
@@ -10,6 +9,7 @@ import { Slider } from '@diagram-craft/app-components/Slider';
 import { Select } from '@diagram-craft/app-components/Select';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Button } from '@diagram-craft/app-components/Button';
+import { useDiagram } from '../../../application';
 
 const values = {
   'independent': 'Independent',

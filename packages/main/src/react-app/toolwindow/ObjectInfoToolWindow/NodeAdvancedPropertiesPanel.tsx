@@ -1,9 +1,9 @@
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { useNodeProperty } from '../../hooks/useProperty';
-import { useDiagram } from '../../context/DiagramContext';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { PropertyEditor } from '../../components/PropertyEditor';
 import { Property } from '../ObjectToolWindow/types';
+import { useDiagram } from '../../../application';
 
 type FormProps = {
   resizableH: Property<boolean>;

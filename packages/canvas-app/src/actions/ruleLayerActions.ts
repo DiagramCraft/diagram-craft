@@ -1,18 +1,16 @@
-import { ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
 import { AbstractAction } from '@diagram-craft/canvas/action';
-import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { assert, precondition } from '@diagram-craft/utils/assert';
 import { AdjustmentRule } from '@diagram-craft/model/diagramLayerRuleTypes';
 import { RuleLayer } from '@diagram-craft/model/diagramLayerRule';
 import { newid } from '@diagram-craft/utils/id';
-import { application } from '../application';
+import { Application } from '../application';
 
-export const ruleLayerActions = (state: ActionConstructionParameters) => ({
-  RULE_LAYER_EDIT: new RuleLayerEditAction(state.diagram),
-  RULE_LAYER_DELETE: new RuleLayerDeleteAction(state.diagram),
-  RULE_LAYER_ADD: new RuleLayerAddAction(state.diagram)
+export const ruleLayerActions = (application: Application) => ({
+  RULE_LAYER_EDIT: new RuleLayerEditAction(application),
+  RULE_LAYER_DELETE: new RuleLayerDeleteAction(application),
+  RULE_LAYER_ADD: new RuleLayerAddAction(application)
 });
 
 declare global {
@@ -21,9 +19,9 @@ declare global {
 
 type LayerActionArg = { id?: string };
 
-export class RuleLayerDeleteAction extends AbstractAction<LayerActionArg> {
-  constructor(protected readonly diagram: Diagram) {
-    super();
+export class RuleLayerDeleteAction extends AbstractAction<LayerActionArg, Application> {
+  constructor(application: Application) {
+    super(application);
   }
 
   isEnabled({ id }: LayerActionArg): boolean {
@@ -34,7 +32,7 @@ export class RuleLayerDeleteAction extends AbstractAction<LayerActionArg> {
     precondition.is.present(id);
 
     // TODO: This should be a confirm dialog
-    application.ui.showMessageDialog?.(
+    this.context.ui.showMessageDialog?.(
       'Delete layer',
       'Are you sure you want to delete this rule?',
       'Yes',
@@ -45,12 +43,12 @@ export class RuleLayerDeleteAction extends AbstractAction<LayerActionArg> {
         // TODO: Need to change such that it's possible to pass more arguments to the action
         const [layerId, ruleId] = id.split(':');
 
-        const layer = this.diagram.layers.byId(layerId) as RuleLayer;
+        const layer = this.context.model.activeDiagram.layers.byId(layerId) as RuleLayer;
         const rule = layer.byId(ruleId);
 
         assert.present(rule, 'Rule with id ' + ruleId + ' not found');
 
-        const uow = new UnitOfWork(this.diagram, true);
+        const uow = new UnitOfWork(this.context.model.activeDiagram, true);
 
         layer.removeRule(rule, uow);
         commitWithUndo(uow, 'Delete rule');
@@ -59,9 +57,9 @@ export class RuleLayerDeleteAction extends AbstractAction<LayerActionArg> {
   }
 }
 
-export class RuleLayerEditAction extends AbstractAction<LayerActionArg> {
-  constructor(protected readonly diagram: Diagram) {
-    super();
+export class RuleLayerEditAction extends AbstractAction<LayerActionArg, Application> {
+  constructor(application: Application) {
+    super(application);
   }
 
   isEnabled({ id }: LayerActionArg): boolean {
@@ -74,19 +72,19 @@ export class RuleLayerEditAction extends AbstractAction<LayerActionArg> {
     // TODO: Need to change such that it's possible to pass more arguments to the action
     const [layerId, ruleId] = id.split(':');
 
-    const layer = this.diagram.layers.byId(layerId) as RuleLayer;
+    const layer = this.context.model.activeDiagram.layers.byId(layerId) as RuleLayer;
     const rule = layer.byId(ruleId);
 
     assert.present(rule, 'Rule with id ' + ruleId + ' not found');
 
-    application.ui.showDialog?.({
+    this.context.ui.showDialog?.({
       name: 'ruleEditor',
       props: {
         rule: rule
       },
       onCancel: () => {},
       onOk: (rule: AdjustmentRule) => {
-        const uow = new UnitOfWork(this.diagram, true);
+        const uow = new UnitOfWork(this.context.model.activeDiagram, true);
         layer.replaceRule(rule, rule, uow);
         commitWithUndo(uow, 'Update rule');
       }
@@ -94,16 +92,16 @@ export class RuleLayerEditAction extends AbstractAction<LayerActionArg> {
   }
 }
 
-export class RuleLayerAddAction extends AbstractAction<LayerActionArg> {
-  constructor(protected readonly diagram: Diagram) {
-    super();
+export class RuleLayerAddAction extends AbstractAction<LayerActionArg, Application> {
+  constructor(application: Application) {
+    super(application);
   }
 
   isEnabled({ id }: LayerActionArg): boolean {
     return (
       id !== undefined &&
-      this.diagram.layers.byId(id) !== undefined &&
-      this.diagram.layers.byId(id)?.type === 'rule'
+      this.context.model.activeDiagram.layers.byId(id) !== undefined &&
+      this.context.model.activeDiagram.layers.byId(id)?.type === 'rule'
     );
   }
 
@@ -112,7 +110,7 @@ export class RuleLayerAddAction extends AbstractAction<LayerActionArg> {
 
     const layerId = id;
 
-    const layer = this.diagram.layers.byId(layerId) as RuleLayer;
+    const layer = this.context.model.activeDiagram.layers.byId(layerId) as RuleLayer;
     const rule: AdjustmentRule = {
       id: newid(),
       clauses: [
@@ -131,14 +129,14 @@ export class RuleLayerAddAction extends AbstractAction<LayerActionArg> {
 
     assert.present(rule);
 
-    application.ui.showDialog?.({
+    this.context.ui.showDialog?.({
       name: 'ruleEditor',
       props: {
         rule: rule
       },
       onCancel: () => {},
       onOk: (rule: AdjustmentRule) => {
-        const uow = new UnitOfWork(this.diagram, true);
+        const uow = new UnitOfWork(this.context.model.activeDiagram, true);
         layer.addRule(rule, uow);
         commitWithUndo(uow, 'Add rule');
       }

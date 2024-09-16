@@ -1,15 +1,13 @@
-import { ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
 import { AbstractAction } from '@diagram-craft/canvas/action';
-import { Diagram } from '@diagram-craft/model/diagram';
 import { Attachment } from '@diagram-craft/model/attachment';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { newid } from '@diagram-craft/utils/id';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
-import { application } from '../../application';
+import { Application } from '../../application';
 
-export const imageInsertActions = (state: ActionConstructionParameters) => ({
-  IMAGE_INSERT: new ImageInsertAction(state.diagram)
+export const imageInsertActions = (application: Application) => ({
+  IMAGE_INSERT: new ImageInsertAction(application)
 });
 
 declare global {
@@ -26,24 +24,28 @@ declare global {
   }
 }
 
-class ImageInsertAction extends AbstractAction {
-  constructor(private readonly diagram: Diagram) {
-    super();
-    this.addCriterion(diagram, 'change', () => diagram.activeLayer.type === 'regular');
+class ImageInsertAction extends AbstractAction<undefined, Application> {
+  constructor(application: Application) {
+    super(application);
+    this.addCriterion(
+      application.model.activeDiagram,
+      'change',
+      () => application.model.activeDiagram.activeLayer.type === 'regular'
+    );
   }
 
   execute(): void {
-    application.ui?.showDialog?.({
+    this.context.ui?.showDialog?.({
       name: 'imageInsert',
       props: {},
       onOk: async data => {
         let att: Attachment;
         if (data instanceof Blob) {
-          att = await this.diagram.document.attachments.addAttachment(data);
+          att = await this.context.model.activeDocument.attachments.addAttachment(data);
         } else {
           const res = await fetch(data as string);
           const blob = await res.blob();
-          att = await this.diagram.document.attachments.addAttachment(blob);
+          att = await this.context.model.activeDocument.attachments.addAttachment(blob);
         }
 
         const img = await createImageBitmap(att.content);
@@ -55,14 +57,14 @@ class ImageInsertAction extends AbstractAction {
           'rect',
           {
             // TODO: Improve placement to ensure it's at least partially placed within the current viewport
-            x: (this.diagram.canvas.w - width) / 2,
-            y: (this.diagram.canvas.h - height) / 2,
+            x: (this.context.model.activeDiagram.canvas.w - width) / 2,
+            y: (this.context.model.activeDiagram.canvas.h - height) / 2,
             w: width,
             h: height,
             r: 0
           },
-          this.diagram,
-          this.diagram.activeLayer,
+          this.context.model.activeDiagram,
+          this.context.model.activeDiagram.activeLayer,
           {
             fill: {
               type: 'image',
@@ -75,9 +77,14 @@ class ImageInsertAction extends AbstractAction {
           {}
         );
 
-        assertRegularLayer(this.diagram.activeLayer);
-        this.diagram.undoManager.addAndExecute(
-          new ElementAddUndoableAction([e], this.diagram, this.diagram.activeLayer, 'Insert image')
+        assertRegularLayer(this.context.model.activeDiagram.activeLayer);
+        this.context.model.activeDiagram.undoManager.addAndExecute(
+          new ElementAddUndoableAction(
+            [e],
+            this.context.model.activeDiagram,
+            this.context.model.activeDiagram.activeLayer,
+            'Insert image'
+          )
         );
       },
       onCancel: () => {}

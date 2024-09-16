@@ -1,14 +1,14 @@
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
 import { ActionToggleButton } from './toolbar/ActionToggleButton';
 import { TbHelpSquare, TbMoon, TbSun, TbZoomIn, TbZoomOut } from 'react-icons/tb';
-import { application } from '../application';
 import { useRedraw } from './hooks/useRedraw';
-import { useActions } from './context/ActionsContext';
 import { useEventListener } from './hooks/useEventListener';
+import { useApplication } from '../application';
 
 const DarkModeToggleButton = () => {
   const redraw = useRedraw();
-  const { actionMap } = useActions();
+  const application = useApplication();
+  const actionMap = application.actions;
   useEventListener(actionMap['TOGGLE_DARK_MODE']!, 'actionChanged', redraw);
   return (
     <Toolbar.Button onClick={() => actionMap['TOGGLE_DARK_MODE']?.execute()}>
@@ -21,6 +21,7 @@ const DarkModeToggleButton = () => {
   );
 };
 export const AuxToolbar = () => {
+  const application = useApplication();
   return (
     <div className={'_extra-tools'}>
       <Toolbar.Root>

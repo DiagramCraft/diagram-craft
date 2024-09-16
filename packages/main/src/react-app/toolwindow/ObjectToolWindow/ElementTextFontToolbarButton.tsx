@@ -1,7 +1,7 @@
 import { useConfiguration } from '../../context/ConfigurationContext';
 import { useNodeProperty } from '../../hooks/useProperty';
-import { useDiagram } from '../../context/DiagramContext';
 import { Select } from '@diagram-craft/app-components/Select';
+import { useDiagram } from '../../../application';
 
 export const ElementTextFontToolbarButton = (_props: Props) => {
   const { fonts } = useConfiguration();

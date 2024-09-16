@@ -1,9 +1,37 @@
 import { apply, DOMElement, insert, VNode, VNodeData } from './vdom';
 import { shallowEquals } from '@diagram-craft/utils/object';
+import { EventEmitter } from '@diagram-craft/utils/event';
 
 type Callback = () => void | (() => void);
 
 let CURRENT_EFFECT_MANAGER: EffectManager | undefined = undefined;
+
+export class Observable<T> extends EventEmitter<{ change: { newValue: T } }> {
+  #value: T;
+
+  constructor(value: T) {
+    super();
+    this.#value = value;
+  }
+
+  get() {
+    return this.#value;
+  }
+
+  set(newValue: T) {
+    this.#value = newValue;
+    this.emit('change', { newValue });
+  }
+
+  get value() {
+    return this.#value;
+  }
+
+  set value(newValue: T) {
+    this.#value = newValue;
+    this.emit('change', { newValue });
+  }
+}
 
 /**
  * Create an effect that will run the dependency function whenever the deps change.

@@ -1,10 +1,10 @@
 import { EdgeLinePanel } from './EdgeLinePanel';
 import { ArrowPreview } from './components/ArrowPreview';
 import { ARROW_SHAPES } from '@diagram-craft/canvas/arrowShapes';
-import { useDiagram } from '../../context/DiagramContext';
 import { useEdgeProperty } from '../../hooks/useProperty';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
+import { useDiagram } from '../../../application';
 
 export const EdgeLineToolbarButton = () => {
   const diagram = useDiagram();

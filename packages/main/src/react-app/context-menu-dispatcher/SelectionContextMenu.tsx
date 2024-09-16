@@ -2,8 +2,8 @@ import * as ContextMenu from '@radix-ui/react-context-menu';
 import { ActionContextMenuItem } from '../components/ActionContextMenuItem';
 import { TbChevronRight } from 'react-icons/tb';
 import { useRedraw } from '../hooks/useRedraw';
-import { useDiagram } from '../context/DiagramContext';
 import { useEventListener } from '../hooks/useEventListener';
+import { useDiagram } from '../../application';
 
 export const SelectionContextMenu = () => {
   const redraw = useRedraw();

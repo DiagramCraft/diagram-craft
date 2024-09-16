@@ -1,27 +1,25 @@
-import { ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
-import { AbstractAction } from '@diagram-craft/canvas/action';
-import { Diagram } from '@diagram-craft/model/diagram';
+import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
 
 declare global {
   interface ActionMap extends ReturnType<typeof undoActions> {}
 }
 
-export const undoActions = (state: ActionConstructionParameters) => ({
-  UNDO: new UndoAction(state.diagram)
+export const undoActions = (context: ActionContext) => ({
+  UNDO: new UndoAction(context)
 });
 
 export class UndoAction extends AbstractAction {
-  constructor(private readonly diagram: Diagram) {
-    super();
+  constructor(context: ActionContext) {
+    super(context);
     const cb = () => {
-      this.enabled = this.diagram.undoManager.undoableActions.length > 0;
+      this.enabled = this.context.model.activeDiagram.undoManager.undoableActions.length > 0;
       this.emit('actionChanged');
     };
-    this.diagram.undoManager.on('change', cb);
+    this.context.model.activeDiagram.undoManager.on('change', cb);
   }
 
   execute(): void {
-    this.diagram.undoManager.undo();
+    this.context.model.activeDiagram.undoManager.undo();
     this.emit('actionTriggered', {});
   }
 }

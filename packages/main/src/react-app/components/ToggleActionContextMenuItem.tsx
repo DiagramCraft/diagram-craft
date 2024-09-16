@@ -1,14 +1,16 @@
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import React from 'react';
-import { useActions } from '../context/ActionsContext';
 import { TbCheck } from 'react-icons/tb';
 import { useRedraw } from '../hooks/useRedraw';
 import { ToggleAction } from '@diagram-craft/canvas/action';
 import { findKeyBindingsForAction, formatKeyBinding } from '@diagram-craft/canvas/keyMap';
+import { useApplication } from '../../application';
 
 export function ToggleActionContextMenuItem<K extends keyof ActionMap>(props: Props<K>) {
   const redraw = useRedraw();
-  const { actionMap, keyMap } = useActions();
+  const application = useApplication();
+  const actionMap = application.actions;
+  const keyMap = application.keyMap;
 
   const action = actionMap[props.action]!;
 

@@ -1,8 +1,8 @@
 import { TbGrid3X3 } from 'react-icons/tb';
 import { CanvasGridPanel } from './CanvasGridPanel';
-import { useDiagram } from '../../context/DiagramContext';
 import { useDiagramProperty } from '../../hooks/useProperty';
 import { ToolbarToggleItemWithPopover } from '../../components/ToolbarToggleItemWithPopover';
+import { useDiagram } from '../../../application';
 
 export const CanvasGridToolbarButton = () => {
   const diagram = useDiagram();

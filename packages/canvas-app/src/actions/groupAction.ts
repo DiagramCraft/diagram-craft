@@ -1,5 +1,4 @@
 import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSelectionAction';
-import { ActionConstructionParameters } from '@diagram-craft/canvas/keyMap';
 import { Box } from '@diagram-craft/geometry/box';
 import { UndoableAction } from '@diagram-craft/model/undoManager';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
@@ -8,10 +7,11 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { newid } from '@diagram-craft/utils/id';
 import { assertRegularLayer, RegularLayer } from '@diagram-craft/model/diagramLayer';
+import { ActionContext } from '@diagram-craft/canvas/action';
 
-export const groupActions = (state: ActionConstructionParameters) => ({
-  GROUP_GROUP: new GroupAction(state.diagram, 'group'),
-  GROUP_UNGROUP: new GroupAction(state.diagram, 'ungroup')
+export const groupActions = (context: ActionContext) => ({
+  GROUP_GROUP: new GroupAction('group', context),
+  GROUP_UNGROUP: new GroupAction('ungroup', context)
 });
 
 declare global {
@@ -104,29 +104,35 @@ class UndoableGroupAction implements UndoableAction {
 
 export class GroupAction extends AbstractSelectionAction {
   constructor(
-    protected readonly diagram: Diagram,
-    private readonly type: 'group' | 'ungroup'
+    private readonly type: 'group' | 'ungroup',
+    context: ActionContext
   ) {
     super(
-      diagram,
+      context,
       type === 'group' ? MultipleType.MultipleOnly : MultipleType.Both,
       ElementType.Both,
       ['regular']
     );
 
-    this.addCriterion(diagram, 'change', () => this.diagram.activeLayer instanceof RegularLayer);
+    this.addCriterion(
+      context.model.activeDiagram,
+      'change',
+      () => this.context.model.activeDiagram.activeLayer instanceof RegularLayer
+    );
 
     if (type === 'ungroup') {
-      this.addCriterion(this.diagram.selectionState, 'add', () =>
-        this.diagram.selectionState.nodes.some(e => e.nodeType === 'group')
+      this.addCriterion(this.context.model.activeDiagram.selectionState, 'add', () =>
+        this.context.model.activeDiagram.selectionState.nodes.some(e => e.nodeType === 'group')
       );
-      this.addCriterion(this.diagram.selectionState, 'remove', () =>
-        this.diagram.selectionState.nodes.some(e => e.nodeType === 'group')
+      this.addCriterion(this.context.model.activeDiagram.selectionState, 'remove', () =>
+        this.context.model.activeDiagram.selectionState.nodes.some(e => e.nodeType === 'group')
       );
     }
   }
 
   execute(): void {
-    this.diagram.undoManager.addAndExecute(new UndoableGroupAction(this.diagram, this.type));
+    this.context.model.activeDiagram.undoManager.addAndExecute(
+      new UndoableGroupAction(this.context.model.activeDiagram, this.type)
+    );
   }
 }

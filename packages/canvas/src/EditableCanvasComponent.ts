@@ -6,9 +6,14 @@ import { DocumentBoundsComponent } from './components/DocumentBoundsComponent';
 import { DRAG_DROP_MANAGER, Modifiers } from './dragDropManager';
 import { BACKGROUND, Tool, ToolContructor } from './tool';
 import { DragLabelComponent } from './components/DragLabelComponent';
-import { ApplicationState, ToolType } from './ApplicationState';
 import { AnchorHandlesComponent } from '@diagram-craft/canvas/components/AnchorHandlesComponent';
-import { $cmp, Component, ComponentVNodeData, createEffect } from './component/component';
+import {
+  $cmp,
+  Component,
+  ComponentVNodeData,
+  createEffect,
+  Observable
+} from './component/component';
 import * as svg from './component/vdom-svg';
 import * as html from './component/vdom-html';
 import { ShapeNodeDefinition } from './shape/shapeNodeDefinition';
@@ -32,6 +37,7 @@ import { assertRegularLayer, RegularLayer } from '@diagram-craft/model/diagramLa
 import { assertReferenceLayer, ReferenceLayer } from '@diagram-craft/model/diagramLayerReference';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { ToolType } from '@diagram-craft/main/tools';
 
 const removeSuffix = (s: string) => {
   return s.replace(/---.+$/, '');
@@ -74,6 +80,8 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
 
   private point: Point = { x: 0, y: 0 };
 
+  private hoverElement = new Observable<string | undefined>(undefined);
+
   setTool(tool: Tool | undefined) {
     this.tool = tool;
     this.redraw();
@@ -85,9 +93,9 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
 
     // State
     const selection = diagram.selectionState;
-    const resetTool = () => (props.applicationState.tool = props.initialTool ?? 'move');
+    const resetTool = () => props.tool.set(props.initialTool ?? 'move');
 
-    this.tool ??= new props.tools[props.applicationState.tool]!(
+    this.tool ??= new props.tools[props.tool.get()]!(
       diagram,
       DRAG_DROP_MANAGER,
       this.svgRef,
@@ -96,9 +104,9 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
     );
 
     createEffect(() => {
-      const cb = (s: { tool: ToolType }) => {
+      const cb = (s: { newValue: ToolType }) => {
         this.setTool(
-          new props.tools[s.tool]!(
+          new props.tools[s.newValue]!(
             diagram,
             DRAG_DROP_MANAGER,
             this.svgRef,
@@ -106,11 +114,11 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
             resetTool
           )
         );
-        this.updateToolClassOnSvg(s.tool);
+        this.updateToolClassOnSvg(s.newValue);
       };
-      props.applicationState.on('toolChange', cb);
-      return () => props.applicationState.off('toolChange', cb);
-    }, [diagram, props.applicationState]);
+      props.tool.on('change', cb);
+      return () => props.tool.off('change', cb);
+    }, [diagram, props.tool]);
 
     // ---> start useCanvasZoomAndPan
 
@@ -162,7 +170,7 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
           !e.shiftKey
         ) {
           if (this.tool?.type !== 'pan') {
-            props.applicationState.tool = 'pan';
+            props.tool.set('pan');
           }
           return;
         }
@@ -227,7 +235,6 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
     };
 
     const canvasState = {
-      applicationState: props.applicationState,
       applicationTriggers: props.applicationTriggers,
       diagram
     };
@@ -268,14 +275,14 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
               },
               mousedown: e => {
                 if (e.button === 1) {
-                  const currentTool = props.applicationState.tool;
+                  const currentTool = props.tool.get();
                   const panTool = new PanTool(
                     diagram,
                     DRAG_DROP_MANAGER,
                     this.svgRef,
                     props.applicationTriggers,
                     () => {
-                      props.applicationState.tool = currentTool;
+                      props.tool.set(currentTool);
                     }
                   );
                   this.setTool(panTool);
@@ -289,16 +296,16 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
               mouseover: e => {
                 const el = getAncestorDiagramElement(e.target as SVGElement);
                 if (!el) return;
-                // TODO: Do we need to call onMouseOver if we keep the state in ApplicationState?
                 this.tool!.onMouseOver(el.id, EventHelper.point(e));
-                props.applicationState.hoverElement = el.id;
+                props.onMouseOver?.(e, el);
+                this.hoverElement.value = el.id;
               },
               mouseout: e => {
                 const el = getAncestorDiagramElement(e.target as SVGElement);
                 if (!el) return;
-                // TODO: Do we need to call onMouseOver if we keep the state in ApplicationState?
                 this.tool!.onMouseOut(el.id, EventHelper.point(e));
-                props.applicationState.hoverElement = undefined;
+                props.onMouseOut?.(e, el);
+                this.hoverElement.value = undefined;
               },
               mouseup: e => this.tool!.onMouseUp(EventHelper.point(e)),
               mousemove: e => {
@@ -393,7 +400,10 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
             this.subComponent($cmp(SelectionMarqueeComponent), { ...canvasState }),
 
             this.tool.type === 'move'
-              ? this.subComponent($cmp(AnchorHandlesComponent), { ...canvasState })
+              ? this.subComponent($cmp(AnchorHandlesComponent), {
+                  ...canvasState,
+                  hoverElement: this.hoverElement
+                })
               : svg.g({})
           ]
         )
@@ -565,7 +575,7 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
 }
 
 export type Props = {
-  applicationState: ApplicationState;
+  tool: Observable<ToolType>;
   offset: Point;
   applicationTriggers: ApplicationTriggers;
   className?: string;
@@ -579,10 +589,11 @@ export type Props = {
   onDrag?: (e: DragEvent) => void;
   onDragOver?: (e: DragEvent) => void;
   onContextMenu?: (e: MouseEvent) => void;
+  onMouseOver?: (e: MouseEvent, el: { type: 'edge' | 'node'; id: string }) => void;
+  onMouseOut?: (e: MouseEvent, el: { type: 'edge' | 'node'; id: string }) => void;
 };
 
 export type CanvasState = {
-  applicationState: ApplicationState;
   applicationTriggers: ApplicationTriggers;
   diagram: Diagram;
 };
