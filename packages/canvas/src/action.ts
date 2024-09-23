@@ -33,42 +33,94 @@ export interface Action<T = undefined> extends Emitter<ActionEvents> {
   isEnabled: (arg: Partial<T> | T) => boolean;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export class ActionCriteria<T extends EventMap = any> {
+  private triggerCallback: { (): void } | undefined;
+
+  static Simple(callback: () => boolean): ActionCriteria {
+    return new ActionCriteria(callback);
+  }
+
+  static EventTriggered<T extends EventMap>(
+    target: EventEmitter<T>,
+    k: EventKey<T>,
+    callback: () => boolean
+  ) {
+    return new ActionCriteria<T>(callback, target, k);
+  }
+
+  constructor(
+    public readonly callback: () => boolean,
+    public readonly target?: EventEmitter<T>,
+    public readonly eventName?: EventKey<T>
+  ) {}
+
+  attach(cb: () => void) {
+    if (this.target) {
+      this.target.on(this.eventName!, cb);
+      this.triggerCallback = cb;
+    }
+  }
+
+  detach() {
+    if (this.target && this.triggerCallback) {
+      this.target.off(this.eventName!, this.triggerCallback);
+    }
+  }
+}
+
 export abstract class AbstractAction<T = undefined, C extends ActionContext = ActionContext>
   extends EventEmitter<ActionEvents>
   implements Action<T>
 {
-  protected criteria: Array<() => boolean> = [];
-  protected enabled: boolean = true;
+  private criteria: Array<ActionCriteria> = [];
+  private enabled: boolean = true;
   protected context: C;
 
-  constructor(context: C) {
+  constructor(context: C, bindCriteria = true) {
     super();
     this.context = context;
+
+    this.context.model.on('activeDiagramChange', () => this.bindCriteria());
+    this.context.model.on('activeDocumentChange', () => this.bindCriteria());
+
+    // Need to be able to control this, as setting local fields happens after
+    // parent constructors are run. Hence, when subclasses has fields set in the
+    // constructor, these will not be set before bindCriteria is run
+    if (bindCriteria) this.bindCriteria();
+    else queueMicrotask(() => this.bindCriteria());
   }
 
   isEnabled(_arg: Partial<T> | T): boolean {
     return this.enabled;
   }
 
+  getCriteria(_context: C): Array<ActionCriteria> | ActionCriteria {
+    return [];
+  }
+
   abstract execute(arg: Partial<T>): void;
 
-  addCriterion<T extends EventMap>(
-    target: EventEmitter<T>,
-    k: EventKey<T>,
-    callback: () => boolean
-  ) {
-    this.criteria.push(callback);
+  protected bindCriteria() {
+    for (const c of this.criteria) {
+      c.detach();
+    }
 
-    const listener = () => {
-      const result = this.criteria.reduce((acc, criterion) => acc && criterion(), true);
-      if (result === this.enabled) return;
+    const criteria = this.getCriteria(this.context);
+    this.criteria = Array.isArray(criteria) ? criteria : [criteria];
 
-      this.enabled = result;
-      this.emit('actionChanged');
-    };
+    for (const c of this.criteria) {
+      c.attach(() => this.evaluateCriteria());
+    }
+    this.evaluateCriteria();
+  }
 
-    target.on(k, listener);
-    listener();
+  private evaluateCriteria() {
+    const result = this.criteria.reduce((acc, criterion) => acc && criterion.callback(), true);
+    if (result === this.enabled) return;
+
+    this.enabled = result;
+    this.emit('actionChanged');
   }
 }
 

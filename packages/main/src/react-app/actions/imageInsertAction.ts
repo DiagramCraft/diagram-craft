@@ -1,4 +1,4 @@
-import { AbstractAction } from '@diagram-craft/canvas/action';
+import { AbstractAction, ActionCriteria } from '@diagram-craft/canvas/action';
 import { Attachment } from '@diagram-craft/model/attachment';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
@@ -27,7 +27,10 @@ declare global {
 class ImageInsertAction extends AbstractAction<undefined, Application> {
   constructor(application: Application) {
     super(application);
-    this.addCriterion(
+  }
+
+  getCriteria(application: Application) {
+    return ActionCriteria.EventTriggered(
       application.model.activeDiagram,
       'change',
       () => application.model.activeDiagram.activeLayer.type === 'regular'

@@ -21,7 +21,9 @@ class TestAction extends AbstractSelectionAction {
 const mkContext = (d: Diagram) => {
   return {
     model: {
-      activeDiagram: d
+      activeDiagram: d,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      on: (_a: any, _b: any, _c: any) => {}
     }
   } as ActionContext;
 };

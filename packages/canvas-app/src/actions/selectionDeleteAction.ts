@@ -2,7 +2,7 @@ import { AbstractSelectionAction } from './abstractSelectionAction';
 import { ElementDeleteUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
-import { ActionContext } from '@diagram-craft/canvas/action';
+import { ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 
 declare global {
   interface ActionMap extends ReturnType<typeof selectionDeleteActions> {}
@@ -15,11 +15,17 @@ export const selectionDeleteActions = (context: ActionContext) => ({
 export class SelectionDeleteAction extends AbstractSelectionAction {
   constructor(context: ActionContext) {
     super(context, 'both');
-    this.addCriterion(
-      context.model.activeDiagram,
-      'change',
-      () => context.model.activeDiagram.activeLayer.type === 'regular'
-    );
+  }
+
+  getCriteria(context: ActionContext): ActionCriteria[] {
+    return [
+      ...super.getCriteria(context),
+      ActionCriteria.EventTriggered(
+        context.model.activeDiagram,
+        'change',
+        () => context.model.activeDiagram.activeLayer.type === 'regular'
+      )
+    ];
   }
 
   execute(): void {

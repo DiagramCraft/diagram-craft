@@ -1,4 +1,4 @@
-import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
+import { AbstractAction, ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 
 declare global {
   interface ActionMap extends ReturnType<typeof undoActions> {}
@@ -11,11 +11,14 @@ export const undoActions = (context: ActionContext) => ({
 export class UndoAction extends AbstractAction {
   constructor(context: ActionContext) {
     super(context);
-    const cb = () => {
-      this.enabled = this.context.model.activeDiagram.undoManager.undoableActions.length > 0;
-      this.emit('actionChanged');
-    };
-    this.context.model.activeDiagram.undoManager.on('change', cb);
+  }
+
+  getCriteria(context: ActionContext) {
+    return ActionCriteria.EventTriggered(
+      context.model.activeDiagram.undoManager,
+      'change',
+      () => context.model.activeDiagram.undoManager.undoableActions.length > 0
+    );
   }
 
   execute(): void {

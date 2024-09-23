@@ -7,7 +7,7 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { newid } from '@diagram-craft/utils/id';
 import { assertRegularLayer, RegularLayer } from '@diagram-craft/model/diagramLayer';
-import { ActionContext } from '@diagram-craft/canvas/action';
+import { ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 
 export const groupActions = (context: ActionContext) => ({
   GROUP_GROUP: new GroupAction('group', context),
@@ -113,21 +113,32 @@ export class GroupAction extends AbstractSelectionAction {
       ElementType.Both,
       ['regular']
     );
+  }
 
-    this.addCriterion(
-      context.model.activeDiagram,
-      'change',
-      () => this.context.model.activeDiagram.activeLayer instanceof RegularLayer
+  getCriteria(context: ActionContext) {
+    const dest: ActionCriteria[] = [...super.getCriteria(context)];
+    dest.push(
+      ActionCriteria.EventTriggered(
+        context.model.activeDiagram,
+        'change',
+        () => context.model.activeDiagram.activeLayer instanceof RegularLayer
+      )
     );
 
-    if (type === 'ungroup') {
-      this.addCriterion(this.context.model.activeDiagram.selectionState, 'add', () =>
-        this.context.model.activeDiagram.selectionState.nodes.some(e => e.nodeType === 'group')
+    if (this.type == 'ungroup') {
+      dest.push(
+        ActionCriteria.EventTriggered(context.model.activeDiagram.selectionState, 'add', () =>
+          context.model.activeDiagram.selectionState.nodes.some(e => e.nodeType === 'group')
+        )
       );
-      this.addCriterion(this.context.model.activeDiagram.selectionState, 'remove', () =>
-        this.context.model.activeDiagram.selectionState.nodes.some(e => e.nodeType === 'group')
+      dest.push(
+        ActionCriteria.EventTriggered(context.model.activeDiagram.selectionState, 'remove', () =>
+          context.model.activeDiagram.selectionState.nodes.some(e => e.nodeType === 'group')
+        )
       );
     }
+
+    return dest;
   }
 
   execute(): void {

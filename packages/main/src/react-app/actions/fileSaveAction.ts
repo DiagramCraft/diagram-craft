@@ -1,4 +1,4 @@
-import { AbstractAction } from '@diagram-craft/canvas/action';
+import { AbstractAction, ActionCriteria } from '@diagram-craft/canvas/action';
 import { assert } from '@diagram-craft/utils/assert';
 import { serializeDiagramDocument } from '@diagram-craft/model/serialization/serialize';
 import { Application } from '../../application';
@@ -14,12 +14,10 @@ declare global {
 class FileSaveAction extends AbstractAction<undefined, Application> {
   constructor(application: Application) {
     super(application);
+  }
 
-    if (application.model.activeDocument.url) {
-      this.enabled = true;
-    } else {
-      this.enabled = false;
-    }
+  getCriteria(application: Application) {
+    return [ActionCriteria.Simple(() => !!application.model.activeDocument.url)];
   }
 
   execute(): void {

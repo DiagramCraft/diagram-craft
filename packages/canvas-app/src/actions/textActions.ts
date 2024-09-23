@@ -1,4 +1,4 @@
-import { AbstractToggleAction, ActionContext } from '@diagram-craft/canvas/action';
+import { AbstractToggleAction, ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 
@@ -27,10 +27,7 @@ export class TextAction extends AbstractToggleAction {
         context.model.activeDiagram.selectionState.nodes.length === 1
       ) {
         const node = context.model.activeDiagram.selectionState.nodes[0];
-        this.enabled = node.nodeType === 'text';
         this.state = !!node.renderProps.text?.[this.prop];
-      } else {
-        this.enabled = false;
       }
       this.emit('actionChanged');
     };
@@ -38,6 +35,25 @@ export class TextAction extends AbstractToggleAction {
     context.model.activeDiagram.selectionState.on('add', callback);
     context.model.activeDiagram.selectionState.on('remove', callback);
     context.model.activeDiagram.undoManager.on('execute', callback);
+  }
+
+  getCriteria(context: ActionContext) {
+    const callback = () => {
+      if (
+        context.model.activeDiagram.selectionState.isNodesOnly() &&
+        context.model.activeDiagram.selectionState.nodes.length === 1
+      ) {
+        const node = context.model.activeDiagram.selectionState.nodes[0];
+        return node.nodeType === 'text';
+      } else {
+        return false;
+      }
+    };
+    return [
+      ActionCriteria.EventTriggered(context.model.activeDiagram.selectionState, 'add', callback),
+      ActionCriteria.EventTriggered(context.model.activeDiagram.selectionState, 'remove', callback),
+      ActionCriteria.EventTriggered(context.model.activeDiagram.undoManager, 'execute', callback)
+    ];
   }
 
   execute(): void {
@@ -70,10 +86,7 @@ export class TextDecorationAction extends AbstractToggleAction {
         context.model.activeDiagram.selectionState.nodes.length === 1
       ) {
         const node = context.model.activeDiagram.selectionState.nodes[0];
-        this.enabled = node.nodeType === 'text';
         this.state = node.renderProps.text?.textDecoration === this.prop;
-      } else {
-        this.enabled = false;
       }
       this.emit('actionChanged');
     };
@@ -81,6 +94,25 @@ export class TextDecorationAction extends AbstractToggleAction {
     context.model.activeDiagram.selectionState.on('add', callback);
     context.model.activeDiagram.selectionState.on('remove', callback);
     context.model.activeDiagram.undoManager.on('execute', callback);
+  }
+
+  getCriteria(context: ActionContext) {
+    const callback = () => {
+      if (
+        context.model.activeDiagram.selectionState.isNodesOnly() &&
+        context.model.activeDiagram.selectionState.nodes.length === 1
+      ) {
+        const node = context.model.activeDiagram.selectionState.nodes[0];
+        return node.nodeType === 'text';
+      } else {
+        return false;
+      }
+    };
+    return [
+      ActionCriteria.EventTriggered(context.model.activeDiagram.selectionState, 'add', callback),
+      ActionCriteria.EventTriggered(context.model.activeDiagram.selectionState, 'remove', callback),
+      ActionCriteria.EventTriggered(context.model.activeDiagram.undoManager, 'execute', callback)
+    ];
   }
 
   execute(): void {

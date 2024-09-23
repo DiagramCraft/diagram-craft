@@ -1,5 +1,10 @@
 import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSelectionAction';
-import { AbstractAction, ActionContext, BaseActionArgs } from '@diagram-craft/canvas/action';
+import {
+  AbstractAction,
+  ActionContext,
+  ActionCriteria,
+  BaseActionArgs
+} from '@diagram-craft/canvas/action';
 import { UndoableAction } from '@diagram-craft/model/undoManager';
 import { assertRegularLayer, RegularLayer } from '@diagram-craft/model/diagramLayer';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
@@ -55,16 +60,18 @@ export class ClipboardPasteAction extends AbstractAction<BaseActionArgs> {
 
   constructor(context: ActionContext) {
     super(context);
-    context.model.activeDiagram.on('change', () => {
+  }
+
+  getCriteria(context: ActionContext) {
+    return ActionCriteria.EventTriggered(context.model.activeDiagram, 'change', () => {
       const activeLayer = context.model.activeDiagram.activeLayer;
       if (activeLayer instanceof RegularLayer) {
-        this.enabled = true;
         this.layer = activeLayer;
+        return true;
       } else {
-        this.enabled = false;
         this.layer = undefined;
+        return false;
       }
-      this.emit('actionChanged');
     });
   }
 

@@ -1,4 +1,4 @@
-import { AbstractAction } from '@diagram-craft/canvas/action';
+import { AbstractAction, ActionCriteria } from '@diagram-craft/canvas/action';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { newid } from '@diagram-craft/utils/id';
@@ -28,7 +28,10 @@ declare global {
 class TableInsertAction extends AbstractAction<undefined, Application> {
   constructor(application: Application) {
     super(application);
-    this.addCriterion(
+  }
+
+  getCriteria(application: Application) {
+    return ActionCriteria.EventTriggered(
       application.model.activeDiagram,
       'change',
       () => application.model.activeDiagram.activeLayer.type === 'regular'
@@ -36,7 +39,9 @@ class TableInsertAction extends AbstractAction<undefined, Application> {
   }
 
   execute(): void {
-    assertRegularLayer(this.context.model.activeDiagram.activeLayer);
+    const $d = this.context.model.activeDiagram;
+
+    assertRegularLayer($d.activeLayer);
 
     this.context.ui.showDialog?.({
       name: 'tableInsert',
@@ -47,25 +52,17 @@ class TableInsertAction extends AbstractAction<undefined, Application> {
         const colWidth = 100;
         const rowHeight = 40;
 
-        const uow = new UnitOfWork(this.context.model.activeDiagram, false);
+        const uow = new UnitOfWork($d, false);
 
         const bounds = { w: colWidth * width, h: rowHeight * height, x: 0, y: 0, r: 0 };
 
         // TODO: We should look at the viewport and try to center the table in the viewport
-        bounds.x = (this.context.model.activeDiagram.canvas.w - bounds.w) / 2;
-        bounds.y = (this.context.model.activeDiagram.canvas.h - bounds.h) / 2;
+        bounds.x = ($d.canvas.w - bounds.w) / 2;
+        bounds.y = ($d.canvas.h - bounds.h) / 2;
 
         const elements: DiagramElement[] = [];
 
-        const table = new DiagramNode(
-          newid(),
-          'table',
-          bounds,
-          this.context.model.activeDiagram,
-          this.context.model.activeDiagram.activeLayer,
-          {},
-          {}
-        );
+        const table = new DiagramNode(newid(), 'table', bounds, $d, $d.activeLayer, {}, {});
         elements.push(table);
 
         for (let r = 0; r < height; r++) {
@@ -73,8 +70,8 @@ class TableInsertAction extends AbstractAction<undefined, Application> {
             newid(),
             'tableRow',
             { w: bounds.w, h: rowHeight, x: 0, y: r * rowHeight, r: 0 },
-            this.context.model.activeDiagram,
-            this.context.model.activeDiagram.activeLayer,
+            $d,
+            $d.activeLayer,
             {},
             {}
           );
@@ -86,8 +83,8 @@ class TableInsertAction extends AbstractAction<undefined, Application> {
               newid(),
               'text',
               { w: colWidth, h: rowHeight, x: c * colWidth, y: 0, r: 0 },
-              this.context.model.activeDiagram,
-              this.context.model.activeDiagram.activeLayer,
+              $d,
+              $d.activeLayer,
               {
                 fill: {
                   enabled: true
@@ -104,14 +101,9 @@ class TableInsertAction extends AbstractAction<undefined, Application> {
         }
 
         uow.commit();
-        assertRegularLayer(this.context.model.activeDiagram.activeLayer);
-        this.context.model.activeDiagram.undoManager.addAndExecute(
-          new ElementAddUndoableAction(
-            elements,
-            this.context.model.activeDiagram,
-            this.context.model.activeDiagram.activeLayer,
-            'Add table'
-          )
+        assertRegularLayer($d.activeLayer);
+        $d.undoManager.addAndExecute(
+          new ElementAddUndoableAction(elements, $d, $d.activeLayer, 'Add table')
         );
       },
       onCancel: () => {}

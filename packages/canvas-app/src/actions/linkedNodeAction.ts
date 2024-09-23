@@ -179,8 +179,6 @@ export class CreateLinkedNodeAction extends AbstractSelectionAction {
   }
 
   execute(): void {
-    if (!this.enabled) return;
-
     const $sel = this.context.model.activeDiagram.selectionState;
     const node = $sel.nodes[0];
 

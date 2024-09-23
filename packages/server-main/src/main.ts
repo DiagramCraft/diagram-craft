@@ -127,9 +127,11 @@ const put = async (relPath: string, event: H3Event) => {
       }
 
       if (fs.statSync(p).isFile()) {
+        // @ts-ignore
         fs.writeFileSync(p, body);
       }
     } else {
+      // @ts-ignore
       fs.writeFileSync(p, body);
     }
 

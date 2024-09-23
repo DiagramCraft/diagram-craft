@@ -4,7 +4,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
-import { ActionContext } from '@diagram-craft/canvas/action';
+import { ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 
 declare global {
   interface ActionMap extends ReturnType<typeof duplicateActions> {}
@@ -19,11 +19,17 @@ const OFFSET = 10;
 export class DuplicateAction extends AbstractSelectionAction {
   constructor(context: ActionContext) {
     super(context, 'both');
-    this.addCriterion(
-      context.model.activeDiagram,
-      'change',
-      () => context.model.activeDiagram.activeLayer.type === 'regular'
-    );
+  }
+
+  getCriteria(context: ActionContext): ActionCriteria[] {
+    return [
+      ...super.getCriteria(context),
+      ActionCriteria.EventTriggered(
+        context.model.activeDiagram,
+        'change',
+        () => context.model.activeDiagram.activeLayer.type === 'regular'
+      )
+    ];
   }
 
   execute() {

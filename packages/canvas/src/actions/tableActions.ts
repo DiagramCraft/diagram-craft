@@ -1,4 +1,4 @@
-import { AbstractAction, ActionContext } from '../action';
+import { AbstractAction, ActionContext, ActionCriteria } from '../action';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
@@ -122,19 +122,20 @@ export class TableRemoveAction extends AbstractAction {
     context: ActionContext
   ) {
     super(context);
-
-    context.model.activeDiagram.selectionState.on('change', () => {
-      this.enabled = this.isEnabled();
-      this.emit('actionChanged');
-    });
-
-    this.enabled = this.isEnabled();
   }
 
-  isEnabled(): boolean {
-    const elements = this.context.model.activeDiagram.selectionState.elements;
-    return (
-      elements.length === 1 && isNode(elements[0]) && elements[0].parent?.nodeType === 'tableRow'
+  getCriteria(context: ActionContext) {
+    return ActionCriteria.EventTriggered(
+      context.model.activeDiagram.selectionState,
+      'change',
+      () => {
+        const elements = context.model.activeDiagram.selectionState.elements;
+        return (
+          elements.length === 1 &&
+          isNode(elements[0]) &&
+          elements[0].parent?.nodeType === 'tableRow'
+        );
+      }
     );
   }
 
@@ -180,19 +181,20 @@ export class TableInsertAction extends AbstractAction {
     context: ActionContext
   ) {
     super(context);
-
-    context.model.activeDiagram.selectionState.on('change', () => {
-      this.enabled = this.isEnabled();
-      this.emit('actionChanged');
-    });
-
-    this.enabled = this.isEnabled();
   }
 
-  isEnabled(): boolean {
-    const elements = this.context.model.activeDiagram.selectionState.elements;
-    return (
-      elements.length === 1 && isNode(elements[0]) && elements[0].parent?.nodeType === 'tableRow'
+  getCriteria(context: ActionContext) {
+    return ActionCriteria.EventTriggered(
+      context.model.activeDiagram.selectionState,
+      'change',
+      () => {
+        const elements = context.model.activeDiagram.selectionState.elements;
+        return (
+          elements.length === 1 &&
+          isNode(elements[0]) &&
+          elements[0].parent?.nodeType === 'tableRow'
+        );
+      }
     );
   }
 

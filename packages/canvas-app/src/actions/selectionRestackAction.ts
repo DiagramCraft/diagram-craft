@@ -2,7 +2,7 @@ import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSe
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { assertRegularLayer, RegularLayer } from '@diagram-craft/model/diagramLayer';
-import { ActionContext } from '@diagram-craft/canvas/action';
+import { ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 
 declare global {
   interface ActionMap extends ReturnType<typeof selectionRestackActions> {}
@@ -23,11 +23,17 @@ export class SelectionRestackAction extends AbstractSelectionAction {
     context: ActionContext
   ) {
     super(context, MultipleType.Both, ElementType.Both, ['regular']);
-    this.addCriterion(
-      context.model.activeDiagram,
-      'change',
-      () => context.model.activeDiagram.activeLayer instanceof RegularLayer
-    );
+  }
+
+  getCriteria(context: ActionContext): ActionCriteria[] {
+    return [
+      ...super.getCriteria(context),
+      ActionCriteria.EventTriggered(
+        context.model.activeDiagram,
+        'change',
+        () => context.model.activeDiagram.activeLayer instanceof RegularLayer
+      )
+    ];
   }
 
   execute(): void {

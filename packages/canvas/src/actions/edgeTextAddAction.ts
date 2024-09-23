@@ -1,4 +1,4 @@
-import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
+import { AbstractAction, ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 import { LengthOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
 import { precondition } from '@diagram-craft/utils/assert';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -28,7 +28,10 @@ type EdgeTextAddActionArg = {
 export class EdgeTextAddAction extends AbstractAction<EdgeTextAddActionArg> {
   constructor(context: ActionContext) {
     super(context);
-    this.addCriterion(
+  }
+
+  getCriteria(context: ActionContext) {
+    return ActionCriteria.EventTriggered(
       context.model.activeDiagram,
       'change',
       () => context.model.activeDiagram.activeLayer.type === 'regular'
