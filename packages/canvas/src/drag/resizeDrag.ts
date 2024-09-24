@@ -103,7 +103,7 @@ export class ResizeDrag extends AbstractDrag {
       selection.guides = [];
 
       if (isConstraintDrag(modifiers)) {
-        this.applyAspectRatioContraint(aspectRatio, newBounds, localOriginal, lcs);
+        this.applyAspectRatioConstraint(aspectRatio, newBounds, localOriginal, lcs);
       }
     } else {
       const snapManager = this.diagram.createSnapManager();
@@ -117,7 +117,7 @@ export class ResizeDrag extends AbstractDrag {
       newBounds.h = result.adjusted.h;
 
       if (isConstraintDrag(modifiers)) {
-        this.applyAspectRatioContraint(aspectRatio, newBounds, localOriginal, lcs);
+        this.applyAspectRatioConstraint(aspectRatio, newBounds, localOriginal, lcs);
         selection.guides = snapManager.reviseGuides(result.guides, WritableBox.asBox(newBounds));
       }
     }
@@ -165,7 +165,7 @@ export class ResizeDrag extends AbstractDrag {
     this.emit('dragEnd');
   }
 
-  private applyAspectRatioContraint(
+  private applyAspectRatioConstraint(
     aspectRatio: number,
     newBounds: WritableBox,
     localOriginal: Box,
