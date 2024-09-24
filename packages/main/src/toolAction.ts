@@ -1,4 +1,4 @@
-import { AbstractToggleAction } from '@diagram-craft/canvas/action';
+import { AbstractToggleAction, ActionCriteria } from '@diagram-craft/canvas/action';
 import { Application } from './application';
 import { ToolType } from './tools';
 
@@ -31,6 +31,15 @@ export class ToolAction extends AbstractToggleAction<undefined, Application> {
         this.emit('actionChanged');
       }
     });
+  }
+
+  getCriteria(context: Application) {
+    if (this.tool === 'move') return [];
+    return ActionCriteria.EventTriggered(
+      context.model.activeDiagram,
+      'change',
+      () => context.model.activeDiagram.activeLayer.type === 'regular'
+    );
   }
 
   execute() {

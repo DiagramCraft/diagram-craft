@@ -21,6 +21,7 @@ export const ActionToggleButton = (props: Props) => {
         onClick={() => {
           actionMap[props.action]!.execute({});
         }}
+        disabled={!actionMap[props.action]!.isEnabled(undefined)}
       >
         {props.children}
       </Toolbar.ToggleItem>
