@@ -108,6 +108,10 @@ export class AnchorHandlesComponent extends Component<Props> {
         }
       : node.bounds;
 
+    if (diagram.activeLayer.type !== 'regular') {
+      return svg.g({});
+    }
+
     const children: VNode[] = [];
 
     node.anchors.forEach(a => {
