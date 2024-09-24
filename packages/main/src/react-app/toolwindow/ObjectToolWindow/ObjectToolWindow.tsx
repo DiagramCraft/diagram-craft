@@ -25,6 +25,7 @@ import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { ElementAnchorsPanel } from '../ObjectInfoToolWindow/ElementAnchorsPanel';
 import { NodeTableToolbarPanel } from './NodeTableToolbarPanel';
 import { useDiagram } from '../../../application';
+import { useRedraw } from '../../hooks/useRedraw';
 
 type Type = 'diagram' | 'mixed' | 'single-label-node' | 'node' | 'edge' | 'table' | 'table-cell';
 
@@ -42,6 +43,7 @@ const TABS: Record<Type, TabType[]> = {
 
 export const ObjectToolWindow = () => {
   const diagram = useDiagram();
+  const redraw = useRedraw();
 
   const [type, setType] = useState<Type>('diagram');
   const [tab, setTab] = useState<TabType>('style');
@@ -82,6 +84,9 @@ export const ObjectToolWindow = () => {
   };
   useEventListener(diagram.selectionState, 'change', callback);
   useEffect(callback, [diagram.selectionState]);
+
+  // To update overrides in style panel as rule layers are toggled
+  useEventListener(diagram, 'change', redraw);
 
   const tabs = TABS[type];
 
