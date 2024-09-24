@@ -58,7 +58,6 @@ export const QueryToolWindow = () => {
   const queries: { q: string; output: unknown }[] = [];
 
   let qs = queryString;
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     const m = qs.match(/^(.*?)\|\s*?drilldown\(([^)]+)\)\s*?\|(.*)$/);
 

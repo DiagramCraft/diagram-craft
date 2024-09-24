@@ -54,8 +54,6 @@
     "@storybook/test": "^8.2.9",
     "@types/react": "^18.2.67",
     "@types/react-dom": "^18.2.22",
-    "@typescript-eslint/eslint-plugin": "^7.13.1",
-    "@typescript-eslint/parser": "^7.13.0",
     "@vitejs/plugin-react": "^4.2.1",
     "storybook": "^8.2.9",
     "tsx": "^4.7.1",

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-function-type */
 
-// eslint-disable-next-line @typescript-eslint/ban-types
 export const debounce = (fn: Function, ms = 0) => {
   let timeoutId: ReturnType<typeof setTimeout>;
   return function (this: any, ...args: any[]) {
@@ -9,7 +9,6 @@ export const debounce = (fn: Function, ms = 0) => {
   };
 };
 
-// eslint-disable-next-line @typescript-eslint/ban-types
 export const debounceMicrotask = (fn: Function) => {
   let queued = false;
   return function (this: any, ...args: any[]) {
