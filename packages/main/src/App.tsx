@@ -85,9 +85,13 @@ export type DiagramRef = {
   url: string;
 };
 
-const setActiveDiagram = ($d: Diagram, application: Application) => {
+const updateApplicationModel = ($d: Diagram, application: Application) => {
+  application.model.activeDocument = $d.document;
   application.model.activeDiagram = $d;
-  application.actions = makeActionMap(defaultAppActions)(application);
+  if (!application.ready) {
+    application.actions = makeActionMap(defaultAppActions)(application);
+  }
+  application.ready = true;
 };
 
 declare global {
@@ -199,8 +203,7 @@ export const App = (props: {
       const doc = await loadFileFromUrl(url, props.documentFactory, props.diagramFactory);
       doc.url = url;
 
-      application.current.model.activeDocument = doc;
-      setActiveDiagram(doc.diagrams[0], application.current);
+      updateApplicationModel(doc.diagrams[0], application.current);
 
       Autosave.clear();
       setDirty(false);
@@ -217,8 +220,7 @@ export const App = (props: {
       );
       doc.addDiagram(diagram);
 
-      application.current.model.activeDocument = doc;
-      setActiveDiagram(diagram, application.current);
+      updateApplicationModel(diagram, application.current);
 
       Autosave.clear();
       setDirty(false);
@@ -231,8 +233,7 @@ export const App = (props: {
   application.current.ui = applicationTriggers;
 
   useOnChange(props.doc, () => {
-    application.current.model.activeDocument = props.doc;
-    setActiveDiagram(props.doc.diagrams[0], application.current);
+    updateApplicationModel(props.doc.diagrams[0], application.current);
   });
 
   const [dirty, setDirty] = useState(Autosave.exists());
@@ -427,7 +428,7 @@ export const App = (props: {
               <DocumentTabs
                 value={$d.id}
                 onValueChange={v => {
-                  setActiveDiagram(doc.getById(v)!, application.current);
+                  updateApplicationModel(doc.getById(v)!, application.current);
                 }}
                 document={doc}
               />

@@ -10,12 +10,11 @@ export class Application extends BaseApplication {
     super();
   }
 
+  ready: boolean = false;
   actions: Partial<ActionMap> = {};
   keyMap: KeyMap = {};
   tool = new Observable<ToolType>('move');
 }
-
-//export const application = new Application(baseApplication);
 
 export const ApplicationContext = React.createContext<{ application: Application } | undefined>(
   undefined

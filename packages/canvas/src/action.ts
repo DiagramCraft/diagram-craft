@@ -77,18 +77,12 @@ export abstract class AbstractAction<T = undefined, C extends ActionContext = Ac
   private enabled: boolean = true;
   protected context: C;
 
-  constructor(context: C, bindCriteria = true) {
+  constructor(context: C) {
     super();
     this.context = context;
 
     this.context.model.on('activeDiagramChange', () => this.bindCriteria());
     this.context.model.on('activeDocumentChange', () => this.bindCriteria());
-
-    // Need to be able to control this, as setting local fields happens after
-    // parent constructors are run. Hence, when subclasses has fields set in the
-    // constructor, these will not be set before bindCriteria is run
-    if (bindCriteria) this.bindCriteria();
-    else queueMicrotask(() => this.bindCriteria());
   }
 
   isEnabled(_arg: Partial<T> | T): boolean {
@@ -101,7 +95,7 @@ export abstract class AbstractAction<T = undefined, C extends ActionContext = Ac
 
   abstract execute(arg: Partial<T>): void;
 
-  protected bindCriteria() {
+  bindCriteria() {
     for (const c of this.criteria) {
       c.detach();
     }

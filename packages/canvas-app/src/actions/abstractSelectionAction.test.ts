@@ -11,6 +11,7 @@ class TestAction extends AbstractSelectionAction {
     protected readonly elementType: ElementType = 'both'
   ) {
     super(context, multipleType, elementType);
+    this.bindCriteria();
   }
 
   execute() {

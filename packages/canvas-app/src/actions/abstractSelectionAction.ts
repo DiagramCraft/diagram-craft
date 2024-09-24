@@ -26,8 +26,7 @@ export abstract class AbstractSelectionAction<
     protected readonly elementType: ElementType = 'both',
     protected readonly layerTypes: LayerType[] | undefined = undefined
   ) {
-    super(context, false);
-    this.bindCriteria();
+    super(context);
   }
 
   getCriteria(context: C) {

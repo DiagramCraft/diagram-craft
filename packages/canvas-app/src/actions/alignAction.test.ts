@@ -39,15 +39,21 @@ describe('AlignActions', () => {
   describe('enabled', () => {
     test('should not be enabled when there the selection is only one or empty', () => {
       diagram.selectionState.setElements([]);
-      expect(new AlignAction('top', mkContext(diagram)).isEnabled(undefined)).toBe(false);
+      const action1 = new AlignAction('top', mkContext(diagram));
+      action1.bindCriteria();
+      expect(action1.isEnabled(undefined)).toBe(false);
 
       diagram.selectionState.setElements([layer.elements[0]]);
-      expect(new AlignAction('top', mkContext(diagram)).isEnabled(undefined)).toBe(false);
+      const action2 = new AlignAction('top', mkContext(diagram));
+      action2.bindCriteria();
+      expect(action2.isEnabled(undefined)).toBe(false);
     });
 
     test('should be enabled when there are more than one element selected', () => {
       diagram.selectionState.setElements(layer.elements);
-      expect(new AlignAction('top', mkContext(diagram)).isEnabled(undefined)).toBe(true);
+      const action = new AlignAction('top', mkContext(diagram));
+      action.bindCriteria();
+      expect(action.isEnabled(undefined)).toBe(true);
     });
   });
 

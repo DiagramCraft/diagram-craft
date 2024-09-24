@@ -1,4 +1,11 @@
-import { Action, ActionContext, ActionEvents, BaseActionArgs, ToggleAction } from './action';
+import {
+  AbstractAction,
+  Action,
+  ActionContext,
+  ActionEvents,
+  BaseActionArgs,
+  ToggleAction
+} from './action';
 import { EventEmitter } from '@diagram-craft/utils/event';
 
 type Alt = 'A-' | '';
@@ -49,6 +56,13 @@ export const makeActionMap = <K extends ActionContext>(
     for (const factory of factories) {
       Object.assign(actions, factory(context));
     }
+
+    Object.values(actions).forEach(action => {
+      if (action instanceof AbstractAction) {
+        action.bindCriteria();
+      }
+    });
+
     return actions;
   };
 };
