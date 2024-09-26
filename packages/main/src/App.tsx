@@ -410,8 +410,8 @@ export const App = (props: {
                 </ContextMenu.Root>
               </ErrorBoundary>
 
-              <Ruler orientation={'horizontal'} canvasRef={svgRef.current} />
-              <Ruler orientation={'vertical'} canvasRef={svgRef.current} />
+              <Ruler orientation={'horizontal'} />
+              <Ruler orientation={'vertical'} />
 
               <NodeTypePopup
                 {...popoverState}

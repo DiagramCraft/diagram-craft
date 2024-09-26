@@ -9,7 +9,7 @@ type Tick = {
   lbl: string;
 };
 
-export const Ruler = ({ canvasRef, orientation }: Props) => {
+export const Ruler = ({ orientation }: Props) => {
   const diagram = useDiagram();
   const viewbox = diagram.viewBox;
 
@@ -61,14 +61,11 @@ export const Ruler = ({ canvasRef, orientation }: Props) => {
       updateCursorLine();
     };
 
-    const currentCanvas = canvasRef;
-    if (!currentCanvas) return;
-
-    currentCanvas.addEventListener('mousemove', handler);
+    document.addEventListener('mousemove', handler);
     return () => {
-      currentCanvas.removeEventListener('mousemove', handler);
+      document!.removeEventListener('mousemove', handler);
     };
-  }, [diagram.props.ruler?.enabled, orientation, canvasRef, viewbox, updateCursorLine]);
+  }, [diagram.props.ruler?.enabled, orientation, viewbox, updateCursorLine]);
 
   if (diagram.props.ruler?.enabled === false) return null;
 
@@ -152,6 +149,5 @@ export const Ruler = ({ canvasRef, orientation }: Props) => {
 };
 
 type Props = {
-  canvasRef: SVGSVGElement | null;
   orientation: 'horizontal' | 'vertical';
 };
