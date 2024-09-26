@@ -1,4 +1,4 @@
-import { AbstractToggleAction, ActionContext } from '@diagram-craft/canvas/action';
+import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
 
 declare global {
   interface ActionMap extends ReturnType<typeof zoomActions> {}
@@ -9,7 +9,7 @@ export const zoomActions = (context: ActionContext) => ({
   ZOOM_OUT: new ZoomAction('out', context)
 });
 
-export class ZoomAction extends AbstractToggleAction {
+export class ZoomAction extends AbstractAction {
   constructor(
     private readonly direction: 'in' | 'out',
     context: ActionContext

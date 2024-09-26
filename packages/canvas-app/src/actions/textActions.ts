@@ -21,38 +21,44 @@ export class TextAction extends AbstractToggleAction {
     context: ActionContext
   ) {
     super(context);
+  }
+
+  getStateCriteria(context: ActionContext) {
+    const $d = context.model.activeDiagram;
+
     const callback = () => {
-      if (
-        context.model.activeDiagram.selectionState.isNodesOnly() &&
-        context.model.activeDiagram.selectionState.nodes.length === 1
-      ) {
-        const node = context.model.activeDiagram.selectionState.nodes[0];
-        this.state = !!node.renderProps.text?.[this.prop];
+      if ($d.selectionState.isNodesOnly() && $d.selectionState.nodes.length === 1) {
+        const node = $d.selectionState.nodes[0];
+        return !!node.renderProps.text?.[this.prop];
       }
-      this.emit('actionChanged');
+
+      return false;
     };
-    callback();
-    context.model.activeDiagram.selectionState.on('add', callback);
-    context.model.activeDiagram.selectionState.on('remove', callback);
-    context.model.activeDiagram.undoManager.on('execute', callback);
+
+    return [
+      ActionCriteria.EventTriggered($d.selectionState, 'add', callback),
+      ActionCriteria.EventTriggered($d.selectionState, 'remove', callback),
+      ActionCriteria.EventTriggered($d.undoManager, 'execute', callback)
+    ];
+
+    return super.getStateCriteria(context);
   }
 
   getCriteria(context: ActionContext) {
+    const $d = context.model.activeDiagram;
+
     const callback = () => {
-      if (
-        context.model.activeDiagram.selectionState.isNodesOnly() &&
-        context.model.activeDiagram.selectionState.nodes.length === 1
-      ) {
-        const node = context.model.activeDiagram.selectionState.nodes[0];
+      if ($d.selectionState.isNodesOnly() && $d.selectionState.nodes.length === 1) {
+        const node = $d.selectionState.nodes[0];
         return node.nodeType === 'text';
-      } else {
-        return false;
       }
+
+      return false;
     };
     return [
-      ActionCriteria.EventTriggered(context.model.activeDiagram.selectionState, 'add', callback),
-      ActionCriteria.EventTriggered(context.model.activeDiagram.selectionState, 'remove', callback),
-      ActionCriteria.EventTriggered(context.model.activeDiagram.undoManager, 'execute', callback)
+      ActionCriteria.EventTriggered($d.selectionState, 'add', callback),
+      ActionCriteria.EventTriggered($d.selectionState, 'remove', callback),
+      ActionCriteria.EventTriggered($d.undoManager, 'execute', callback)
     ];
   }
 
@@ -80,38 +86,37 @@ export class TextDecorationAction extends AbstractToggleAction {
     context: ActionContext
   ) {
     super(context);
+  }
+
+  getStateCriteria(context: ActionContext) {
+    const $d = context.model.activeDiagram;
     const callback = () => {
-      if (
-        context.model.activeDiagram.selectionState.isNodesOnly() &&
-        context.model.activeDiagram.selectionState.nodes.length === 1
-      ) {
-        const node = context.model.activeDiagram.selectionState.nodes[0];
-        this.state = node.renderProps.text?.textDecoration === this.prop;
+      if ($d.selectionState.isNodesOnly() && $d.selectionState.nodes.length === 1) {
+        const node = $d.selectionState.nodes[0];
+        return node.renderProps.text?.textDecoration === this.prop;
       }
-      this.emit('actionChanged');
+      return false;
     };
-    callback();
-    context.model.activeDiagram.selectionState.on('add', callback);
-    context.model.activeDiagram.selectionState.on('remove', callback);
-    context.model.activeDiagram.undoManager.on('execute', callback);
+    return [
+      ActionCriteria.EventTriggered($d.selectionState, 'add', callback),
+      ActionCriteria.EventTriggered($d.selectionState, 'remove', callback),
+      ActionCriteria.EventTriggered($d.undoManager, 'execute', callback)
+    ];
   }
 
   getCriteria(context: ActionContext) {
+    const $d = context.model.activeDiagram;
     const callback = () => {
-      if (
-        context.model.activeDiagram.selectionState.isNodesOnly() &&
-        context.model.activeDiagram.selectionState.nodes.length === 1
-      ) {
-        const node = context.model.activeDiagram.selectionState.nodes[0];
+      if ($d.selectionState.isNodesOnly() && $d.selectionState.nodes.length === 1) {
+        const node = $d.selectionState.nodes[0];
         return node.nodeType === 'text';
-      } else {
-        return false;
       }
+      return false;
     };
     return [
-      ActionCriteria.EventTriggered(context.model.activeDiagram.selectionState, 'add', callback),
-      ActionCriteria.EventTriggered(context.model.activeDiagram.selectionState, 'remove', callback),
-      ActionCriteria.EventTriggered(context.model.activeDiagram.undoManager, 'execute', callback)
+      ActionCriteria.EventTriggered($d.selectionState, 'add', callback),
+      ActionCriteria.EventTriggered($d.selectionState, 'remove', callback),
+      ActionCriteria.EventTriggered($d.undoManager, 'execute', callback)
     ];
   }
 

@@ -1,4 +1,4 @@
-import { AbstractToggleAction, ActionContext } from '@diagram-craft/canvas/action';
+import { AbstractToggleAction, ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 
 declare global {
   interface ActionMap extends ReturnType<typeof toggleRulerActions> {}
@@ -9,16 +9,16 @@ export const toggleRulerActions = (context: ActionContext) => ({
 });
 
 export class ToggleRulerAction extends AbstractToggleAction {
-  state: boolean;
-
   constructor(context: ActionContext) {
     super(context);
-    this.state = context.model.activeDiagram.props.ruler?.enabled ?? true;
+  }
 
-    this.context.model.activeDiagram.on('change', () => {
-      this.state = context.model.activeDiagram.props.ruler?.enabled ?? true;
-      this.emit('actionChanged');
-    });
+  getStateCriteria(context: ActionContext) {
+    return ActionCriteria.EventTriggered(
+      context.model.activeDiagram,
+      'change',
+      () => context.model.activeDiagram.props.ruler?.enabled ?? true
+    );
   }
 
   execute(): void {

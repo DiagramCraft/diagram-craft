@@ -1,19 +1,20 @@
 import { UndoableAction } from '@diagram-craft/model/undoManager';
 import { Emitter, EventEmitter, EventKey, EventMap } from '@diagram-craft/utils/event';
 import { Point } from '@diagram-craft/geometry/point';
-import { EmptyObject } from '@diagram-craft/utils/types';
 import { model } from './modelState';
 
 export type ActionEvents = {
   /**
    * This event is emitted when the action is enabled or disabled.
    */
-  actionChanged: EmptyObject;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  actionChanged: { action?: Action<any> };
 
   /**
    * This event is emitted when the action is triggered.
    */
-  actionTriggered: EmptyObject;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  actionTriggered: { action?: Action<any> };
 };
 
 /**
@@ -122,15 +123,46 @@ export abstract class AbstractToggleAction<T = undefined, C extends ActionContex
   extends AbstractAction<T, C>
   implements ToggleAction<T>
 {
-  protected state: boolean = true;
+  private stateCriteria: Array<ActionCriteria> = [];
+  protected state: boolean = false;
 
   constructor(context: C) {
     super(context);
     this.context = context;
+
+    this.context.model.on('activeDiagramChange', () => this.bindStateCriteria());
+    this.context.model.on('activeDocumentChange', () => this.bindStateCriteria());
+    this.bindStateCriteria();
+  }
+
+  getStateCriteria(_context: C): ActionCriteria[] | ActionCriteria {
+    return [];
   }
 
   getState(_arg: Partial<T>): boolean {
     return this.state;
+  }
+
+  bindStateCriteria() {
+    for (const c of this.stateCriteria) {
+      c.detach();
+    }
+
+    const criteria = this.getStateCriteria(this.context);
+    this.stateCriteria = Array.isArray(criteria) ? criteria : [criteria];
+
+    for (const c of this.stateCriteria) {
+      c.attach(() => this.evaluateStateCriteria());
+    }
+    this.evaluateStateCriteria();
+  }
+
+  private evaluateStateCriteria() {
+    const result = this.stateCriteria.reduce((acc, criterion) => acc && criterion.callback(), true);
+    if (result === this.state) return;
+
+    this.state = result;
+    this.emit('actionChanged', { action: this });
   }
 
   abstract execute(arg: Partial<T>): void;
