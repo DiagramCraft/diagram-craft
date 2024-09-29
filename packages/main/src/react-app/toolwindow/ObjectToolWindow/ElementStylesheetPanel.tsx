@@ -15,7 +15,6 @@ import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
 import { useElementMetadata } from '../../hooks/useProperty';
 import { useState } from 'react';
-import { MessageDialog, MessageDialogState } from '../../components/MessageDialog';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { Select } from '@diagram-craft/app-components/Select';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
@@ -23,10 +22,11 @@ import { TbDots } from 'react-icons/tb';
 import { StringInputDialog } from '../../components/StringInputDialog';
 import { JSONDialog } from '../../components/JSONDialog';
 import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
-import { useDiagram } from '../../../application';
+import { useApplication, useDiagram } from '../../../application';
 
 export const ElementStylesheetPanel = (props: Props) => {
   const $d = useDiagram();
+  const application = useApplication();
   const redraw = useRedraw();
 
   const isText = props.type === 'text';
@@ -37,9 +37,6 @@ export const ElementStylesheetPanel = (props: Props) => {
   const style = useElementMetadata($d, 'style', DefaultStyles.node.default);
   const textStyle = useElementMetadata($d, 'textStyle', DefaultStyles.text.default);
 
-  const [confirmDeleteDialog, setConfirmDeleteDialog] = useState<MessageDialogState>(
-    MessageDialog.INITIAL_STATE
-  );
   const [newDialog, setNewDialog] = useState(false);
   const [modifyDialog, setModifyDialog] = useState<Stylesheet<StylesheetType> | undefined>(
     undefined
@@ -141,31 +138,30 @@ export const ElementStylesheetPanel = (props: Props) => {
                 <DropdownMenu.Item
                   className="cmp-context-menu__item"
                   onSelect={() => {
-                    setConfirmDeleteDialog({
-                      isOpen: true,
-                      title: 'Confirm delete',
-                      message: 'Are you sure you want to delete this style?',
-                      buttons: [
-                        {
-                          label: 'Yes',
-                          type: 'danger',
-                          onClick: () => {
-                            const uow = new UnitOfWork($d, true);
+                    application.ui.showDialog?.({
+                      name: 'message',
+                      props: {
+                        title: 'Confirm delete',
+                        message: 'Are you sure you want to delete this style?',
+                        okLabel: 'Yes',
+                        okType: 'danger',
+                        cancelLabel: 'No'
+                      },
+                      onOk: () => {
+                        const uow = new UnitOfWork($d, true);
 
-                            const s = $d.document.styles.get($s.val)!;
-                            $d.document.styles.deleteStylesheet($s.val, uow);
+                        const s = $d.document.styles.get($s.val)!;
+                        $d.document.styles.deleteStylesheet($s.val, uow);
 
-                            const snapshots = uow.commit();
-                            uow.diagram.undoManager.add(
-                              new CompoundUndoableAction([
-                                new DeleteStylesheetUndoableAction(uow.diagram, s),
-                                new SnapshotUndoableAction('Delete style', uow.diagram, snapshots)
-                              ])
-                            );
-                          }
-                        },
-                        { label: 'No', type: 'cancel', onClick: () => {} }
-                      ]
+                        const snapshots = uow.commit();
+                        uow.diagram.undoManager.add(
+                          new CompoundUndoableAction([
+                            new DeleteStylesheetUndoableAction(uow.diagram, s),
+                            new SnapshotUndoableAction('Delete style', uow.diagram, snapshots)
+                          ])
+                        );
+                      },
+                      onCancel: () => {}
                     });
                   }}
                 >
@@ -191,11 +187,6 @@ export const ElementStylesheetPanel = (props: Props) => {
               </DropdownMenu.Content>
             </DropdownMenu.Portal>
           </DropdownMenu.Root>
-
-          <MessageDialog
-            {...confirmDeleteDialog}
-            onClose={() => setConfirmDeleteDialog(MessageDialog.INITIAL_STATE)}
-          />
 
           <StringInputDialog
             open={newDialog}

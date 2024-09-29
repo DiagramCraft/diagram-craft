@@ -49,12 +49,15 @@ export class LayerDeleteAction extends AbstractAction<LayerActionArg, Applicatio
     precondition.is.present(id);
 
     // TODO: This should be a confirm dialog
-    this.context.ui.showMessageDialog?.(
-      'Delete layer',
-      'Are you sure you want to delete this layer?',
-      'Yes',
-      'No',
-      () => {
+    this.context.ui.showDialog?.({
+      name: 'message',
+      props: {
+        title: 'Delete layer',
+        message: 'Are you sure you want to delete this layer?',
+        okLabel: 'Yes',
+        cancelLabel: 'No'
+      },
+      onOk: () => {
         const uow = new UnitOfWork(this.context.model.activeDiagram, true);
 
         precondition.is.present(id);
@@ -85,8 +88,9 @@ export class LayerDeleteAction extends AbstractAction<LayerActionArg, Applicatio
             new LayerDeleteUndoableAction(this.context.model.activeDiagram, layer)
           ])
         );
-      }
-    );
+      },
+      onCancel: () => {}
+    });
   }
 }
 

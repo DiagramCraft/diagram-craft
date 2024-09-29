@@ -2,7 +2,6 @@ import React, { ChangeEvent, useCallback, useState } from 'react';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
 import { TbDots, TbPencil, TbTrash } from 'react-icons/tb';
-import { MessageDialog, MessageDialogState } from '../../components/MessageDialog';
 import { JSONDialog } from '../../components/JSONDialog';
 import {
   AddSchemaUndoableAction,
@@ -21,7 +20,7 @@ import { useElementMetadata } from '../../hooks/useProperty';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { Button } from '@diagram-craft/app-components/Button';
-import { useDiagram } from '../../../application';
+import { useApplication, useDiagram } from '../../../application';
 
 const makeTemplate = (): DataSchema => {
   return {
@@ -45,10 +44,7 @@ const makeTemplate = (): DataSchema => {
 export const ObjectDataToolWindow = () => {
   const $d = useDiagram();
   const redraw = useRedraw();
-
-  const [confirmDeleteDialog, setConfirmDeleteDialog] = useState<MessageDialogState>(
-    MessageDialog.INITIAL_STATE
-  );
+  const application = useApplication();
 
   const [modifyDialog, setModifyDialog] = useState<DataSchema | undefined>(undefined);
 
@@ -213,39 +209,34 @@ export const ObjectDataToolWindow = () => {
                             </button>
                             <button
                               onClick={() => {
-                                setConfirmDeleteDialog({
-                                  isOpen: true,
-                                  title: 'Confirm delete',
-                                  message: 'Are you sure you want to delete this schema?',
-                                  buttons: [
-                                    {
-                                      label: 'Yes',
-                                      type: 'danger',
-                                      onClick: () => {
-                                        const uow = new UnitOfWork($d, true);
-                                        const schemas = $d.document.schemas;
-                                        schemas.removeSchema(s, uow);
+                                application.ui.showDialog?.({
+                                  name: 'message',
+                                  props: {
+                                    title: 'Confirm delete',
+                                    message: 'Are you sure you want to delete this schema?',
+                                    okLabel: 'Yes',
+                                    okType: 'danger',
+                                    cancelLabel: 'No'
+                                  },
+                                  onOk: () => {
+                                    const uow = new UnitOfWork($d, true);
+                                    const schemas = $d.document.schemas;
+                                    schemas.removeSchema(s, uow);
 
-                                        const snapshots = uow.commit();
-                                        $d.undoManager.add(
-                                          new CompoundUndoableAction([
-                                            new DeleteSchemaUndoableAction(uow.diagram, s),
-                                            new SnapshotUndoableAction(
-                                              'Delete schema',
-                                              uow.diagram,
-                                              snapshots
-                                            )
-                                          ])
-                                        );
-                                        redraw();
-                                      }
-                                    },
-                                    {
-                                      label: 'No',
-                                      type: 'cancel',
-                                      onClick: () => {}
-                                    }
-                                  ]
+                                    const snapshots = uow.commit();
+                                    $d.undoManager.add(
+                                      new CompoundUndoableAction([
+                                        new DeleteSchemaUndoableAction(uow.diagram, s),
+                                        new SnapshotUndoableAction(
+                                          'Delete schema',
+                                          uow.diagram,
+                                          snapshots
+                                        )
+                                      ])
+                                    );
+                                    redraw();
+                                  },
+                                  onCancel: () => {}
                                 });
                               }}
                             >
@@ -354,11 +345,6 @@ export const ObjectDataToolWindow = () => {
           </Accordion.ItemContent>
         </Accordion.Item>
       </Accordion.Root>
-
-      <MessageDialog
-        {...confirmDeleteDialog}
-        onClose={() => setConfirmDeleteDialog(MessageDialog.INITIAL_STATE)}
-      />
 
       <JSONDialog<DataSchema>
         title={'Modify schema'}

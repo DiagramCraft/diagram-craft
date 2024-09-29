@@ -32,12 +32,15 @@ export class RuleLayerDeleteAction extends AbstractAction<LayerActionArg, Applic
     precondition.is.present(id);
 
     // TODO: This should be a confirm dialog
-    this.context.ui.showMessageDialog?.(
-      'Delete layer',
-      'Are you sure you want to delete this rule?',
-      'Yes',
-      'No',
-      () => {
+    this.context.ui.showDialog?.({
+      name: 'message',
+      props: {
+        title: 'Delete layer',
+        message: 'Are you sure you want to delete this rule?',
+        okLabel: 'Yes',
+        cancelLabel: 'No'
+      },
+      onOk: () => {
         precondition.is.present(id);
 
         // TODO: Need to change such that it's possible to pass more arguments to the action
@@ -52,8 +55,9 @@ export class RuleLayerDeleteAction extends AbstractAction<LayerActionArg, Applic
 
         layer.removeRule(rule, uow);
         commitWithUndo(uow, 'Delete rule');
-      }
-    );
+      },
+      onCancel: () => {}
+    });
   }
 }
 

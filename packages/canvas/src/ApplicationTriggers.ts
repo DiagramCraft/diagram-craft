@@ -1,4 +1,5 @@
 import { Point } from '@diagram-craft/geometry/point';
+import { EmptyObject } from '@diagram-craft/utils/types';
 
 export interface ApplicationTriggers extends Extensions.ApplicationTriggers {
   showContextMenu?: <T extends keyof ApplicationTriggers.ContextMenus>(
@@ -10,18 +11,11 @@ export interface ApplicationTriggers extends Extensions.ApplicationTriggers {
 
   showNodeLinkPopup?: (point: Point, sourceNodeId: string, edgeId: string) => void;
 
-  showMessageDialog?: (
-    title: string,
-    message: string,
-    okLabel: string,
-    cancelLabel: string,
-    onClick: () => void
-  ) => void;
-
   showDialog?: <T extends keyof ApplicationTriggers.Dialogs>(
     state: ApplicationTriggers.DialogState<T>
   ) => void;
 
+  // TODO: Move this out of ApplicationTriggers
   setHelp?: (message: string) => void;
   pushHelp?: (id: string, message: string) => void;
   popHelp?: (id: string) => void;
@@ -43,7 +37,18 @@ export namespace ApplicationTriggers {
     onCancel: () => void;
   };
 
-  export interface Dialogs extends Extensions.Dialogs {}
+  export interface Dialogs extends Extensions.Dialogs {
+    message: {
+      props: {
+        title: string;
+        message: string;
+        okLabel: string;
+        okType?: 'default' | 'secondary' | 'danger';
+        cancelLabel: string;
+      };
+      callback: EmptyObject;
+    };
+  }
 }
 
 declare global {

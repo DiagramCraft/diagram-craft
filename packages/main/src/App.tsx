@@ -15,7 +15,7 @@ import { ConfigurationContext } from './react-app/context/ConfigurationContext';
 import { defaultPalette } from './react-app/toolwindow/ObjectToolWindow/components/palette';
 import { LayerIndicator } from './react-app/LayerIndicator';
 import { NodeTypePopup, NodeTypePopupState } from './react-app/NodeTypePopup';
-import { MessageDialog, MessageDialogState } from './react-app/components/MessageDialog';
+import { MessageDialog } from './react-app/components/MessageDialog';
 import {
   canvasDragOverHandler,
   canvasDropHandler
@@ -169,36 +169,6 @@ export const App = (props: {
         }
       });
     },
-    showMessageDialog: (
-      title: string,
-      message: string,
-      okLabel: string,
-      cancelLabel: string,
-      onClick: () => void
-    ) => {
-      setMessageDialogState({
-        isOpen: true,
-        title,
-        message,
-        buttons: [
-          {
-            label: okLabel,
-            type: 'default',
-            onClick: () => {
-              onClick();
-              setMessageDialogState(MessageDialog.INITIAL_STATE);
-            }
-          },
-          {
-            label: cancelLabel,
-            type: 'cancel',
-            onClick: () => {
-              setMessageDialogState(MessageDialog.INITIAL_STATE);
-            }
-          }
-        ]
-      });
-    },
     loadFromUrl: async (url: string) => {
       const doc = await loadFileFromUrl(url, props.documentFactory, props.diagramFactory);
       doc.url = url;
@@ -238,9 +208,6 @@ export const App = (props: {
 
   const [dirty, setDirty] = useState(Autosave.exists());
   const [popoverState, setPopoverState] = useState<NodeTypePopupState>(NodeTypePopup.INITIAL_STATE);
-  const [messageDialogState, setMessageDialogState] = useState<MessageDialogState>(
-    MessageDialog.INITIAL_STATE
-  );
   const [dialogState, setDialogState] = useState<
     ApplicationTriggers.DialogState<keyof ApplicationTriggers.Dialogs> | undefined
   >(undefined);
@@ -346,6 +313,13 @@ export const App = (props: {
           onSave={dialogState?.onOk as any}
           onCancel={dialogState?.onCancel}
         />
+        <MessageDialog
+          open={dialogState?.name === 'message'}
+          {...dialogState?.props}
+          /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+          onOk={dialogState?.onOk as any}
+          onCancel={dialogState?.onCancel}
+        />
 
         <div id="app" className={'dark-theme'}>
           <div id="menu">
@@ -416,11 +390,6 @@ export const App = (props: {
               <NodeTypePopup
                 {...popoverState}
                 onClose={() => setPopoverState(NodeTypePopup.INITIAL_STATE)}
-              />
-
-              <MessageDialog
-                {...messageDialogState}
-                onClose={() => setMessageDialogState(MessageDialog.INITIAL_STATE)}
               />
             </div>
 

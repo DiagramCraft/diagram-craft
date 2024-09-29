@@ -1,15 +1,10 @@
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { ActionContextMenuItem } from '../../components/ActionContextMenuItem';
-import React, { useState } from 'react';
-import { MessageDialog, MessageDialogState } from '../../components/MessageDialog';
+import React from 'react';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { AdjustmentRule } from '@diagram-craft/model/diagramLayerRuleTypes';
 
 export const RuleContextMenu = (props: Props) => {
-  const [confirmDeleteDialog, setConfirmDeleteDialog] = useState<MessageDialogState>(
-    MessageDialog.INITIAL_STATE
-  );
-
   return (
     <>
       <ContextMenu.Root>
@@ -31,11 +26,6 @@ export const RuleContextMenu = (props: Props) => {
           </ContextMenu.Content>
         </ContextMenu.Portal>
       </ContextMenu.Root>
-
-      <MessageDialog
-        {...confirmDeleteDialog}
-        onClose={() => setConfirmDeleteDialog(MessageDialog.INITIAL_STATE)}
-      />
     </>
   );
 };
