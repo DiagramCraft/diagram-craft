@@ -17,7 +17,7 @@ import { getAnchorPosition, getClosestAnchor } from '@diagram-craft/model/anchor
 import { Box } from '@diagram-craft/geometry/box';
 import { assert } from '@diagram-craft/utils/assert';
 import { Line } from '@diagram-craft/geometry/line';
-import { ApplicationTriggers } from '../ApplicationTriggers';
+import { Context } from '../ApplicationTriggers';
 import { SnapManager } from '@diagram-craft/model/snap/snapManager';
 
 export class EdgeEndpointMoveDrag extends AbstractDrag {
@@ -32,7 +32,7 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
     private readonly diagram: Diagram,
     public readonly edge: DiagramEdge,
     private readonly type: 'start' | 'end',
-    private applicationTriggers: ApplicationTriggers
+    private context: Context
   ) {
     super();
     this.uow = new UnitOfWork(this.edge.diagram, true);
@@ -40,7 +40,7 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
     // TODO: Make a helper for this ... as well as getting edges and nodes from ids
     document.getElementById(`diagram-${this.diagram.id}`)!.style.cursor = 'move';
 
-    this.applicationTriggers.pushHelp?.(
+    this.context.help.push(
       'EdgeEndpointMoveDrag',
       'Move waypoint. Cmd-drag to attach to any point in node.'
     );
@@ -127,7 +127,7 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
     commitWithUndo(this.uow, 'Move edge endpoint');
     document.getElementById(`diagram-${this.diagram.id}`)!.style.cursor = 'unset';
 
-    this.applicationTriggers.popHelp?.('EdgeEndpointMoveDrag');
+    this.context.help.pop('EdgeEndpointMoveDrag');
     this.emit('dragEnd');
   }
 

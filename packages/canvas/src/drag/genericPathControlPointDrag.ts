@@ -3,7 +3,7 @@ import { AbstractDrag, Modifiers } from '../dragDropManager';
 import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
-import { ApplicationTriggers } from '../ApplicationTriggers';
+import { Context } from '../ApplicationTriggers';
 
 export class GenericPathControlPointDrag extends AbstractDrag {
   private readonly uow: UnitOfWork;
@@ -12,12 +12,12 @@ export class GenericPathControlPointDrag extends AbstractDrag {
     private readonly editablePath: EditablePath,
     private readonly waypointIdx: number,
     private readonly controlPoint: 'p1' | 'p2',
-    private readonly applicationTriggers: ApplicationTriggers
+    private readonly context: Context
   ) {
     super();
     this.uow = new UnitOfWork(this.editablePath.node.diagram, true);
 
-    this.applicationTriggers.pushHelp?.(
+    this.context.help.push(
       'GenericPathControlPointDrag',
       'Move control point. Cmd-drag - symmetric, Alt-drag - smooth'
     );
@@ -39,6 +39,6 @@ export class GenericPathControlPointDrag extends AbstractDrag {
     this.editablePath.commitToNode(this.uow);
     commitWithUndo(this.uow, 'Edit path');
 
-    this.applicationTriggers.popHelp?.('GenericPathControlPointDrag');
+    this.context.help.pop('GenericPathControlPointDrag');
   }
 }

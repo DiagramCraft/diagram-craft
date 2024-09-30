@@ -1,6 +1,6 @@
 import { AbstractToggleAction, ActionCriteria } from '@diagram-craft/canvas/action';
 import { Application } from './application';
-import { ToolType } from './tools';
+import { ToolType } from '@diagram-craft/canvas/tool';
 
 export const toolActions = (context: Application) => ({
   TOOL_MOVE: new ToolAction('move', context),

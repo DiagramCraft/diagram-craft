@@ -6,7 +6,7 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { newid } from '@diagram-craft/utils/id';
-import { ApplicationTriggers } from '@diagram-craft/canvas/ApplicationTriggers';
+import { Context } from '@diagram-craft/canvas/ApplicationTriggers';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
 
 declare global {
@@ -48,15 +48,15 @@ export class FreehandTool extends AbstractTool {
   private points: Point[] = [];
 
   constructor(
-    protected readonly diagram: Diagram,
-    protected readonly drag: DragDopManager,
-    protected readonly svg: SVGSVGElement | null,
-    protected readonly applicationTriggers: ApplicationTriggers,
-    protected readonly resetTool: () => void
+    diagram: Diagram,
+    drag: DragDopManager,
+    svg: SVGSVGElement | null,
+    context: Context,
+    resetTool: () => void
   ) {
-    super('freehand', diagram, drag, svg, applicationTriggers, resetTool);
+    super('freehand', diagram, drag, svg, context, resetTool);
 
-    applicationTriggers.setHelp?.('Draw shape');
+    context.help.set('Draw shape');
     assertRegularLayer(diagram.activeLayer);
   }
 

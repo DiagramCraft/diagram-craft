@@ -3,7 +3,7 @@ import { AbstractDrag, Modifiers } from '../dragDropManager';
 import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
-import { ApplicationTriggers } from '../ApplicationTriggers';
+import { Context } from '../ApplicationTriggers';
 
 export class NodeDrag extends AbstractDrag {
   private startTime: number;
@@ -16,7 +16,7 @@ export class NodeDrag extends AbstractDrag {
   constructor(
     private readonly editablePath: EditablePath,
     private readonly waypointIndices: number[],
-    private readonly applicationTriggers: ApplicationTriggers
+    private readonly context: Context
   ) {
     super();
 
@@ -25,7 +25,7 @@ export class NodeDrag extends AbstractDrag {
 
     this.initialPositions = this.waypointIndices.map(idx => this.editablePath.waypoints[idx].point);
 
-    this.applicationTriggers.pushHelp?.('NodeDrag', 'Move waypoints');
+    this.context.help.push('NodeDrag', 'Move waypoints');
   }
 
   onDrag(coord: Point, _modifiers: Modifiers) {
@@ -62,6 +62,6 @@ export class NodeDrag extends AbstractDrag {
     this.editablePath.commitToNode(this.uow);
     commitWithUndo(this.uow, 'Edit path');
 
-    this.applicationTriggers.popHelp?.('NodeDrag');
+    this.context.help.pop('NodeDrag');
   }
 }

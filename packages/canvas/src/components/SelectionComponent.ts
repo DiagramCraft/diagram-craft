@@ -81,7 +81,7 @@ export class SelectionComponent extends Component<CanvasState> {
             key: `edge-selection-${e.id}`,
             edge: e,
             diagram,
-            applicationTriggers: props.applicationTriggers
+            context: props.context
           })
         ),
         ...selection.nodes

@@ -2,8 +2,6 @@ import { Application as BaseApplication } from '@diagram-craft/canvas-app/applic
 import React from 'react';
 import { assert } from '@diagram-craft/utils/assert';
 import { KeyMap } from '@diagram-craft/canvas/keyMap';
-import { Observable } from '@diagram-craft/canvas/component/component';
-import { ToolType } from './tools';
 
 export class Application extends BaseApplication {
   constructor() {
@@ -11,9 +9,7 @@ export class Application extends BaseApplication {
   }
 
   ready: boolean = false;
-  actions: Partial<ActionMap> = {};
   keyMap: KeyMap = {};
-  tool = new Observable<ToolType>('move');
 }
 
 export const ApplicationContext = React.createContext<{ application: Application } | undefined>(

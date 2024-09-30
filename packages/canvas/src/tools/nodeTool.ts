@@ -1,6 +1,6 @@
 import { AbstractTool, BACKGROUND } from '../tool';
 import { addHighlight, Highlights, removeHighlight } from '../highlight';
-import { ApplicationTriggers } from '../ApplicationTriggers';
+import { Context } from '../ApplicationTriggers';
 import { Point } from '@diagram-craft/geometry/point';
 import { DragDopManager, Modifiers } from '../dragDropManager';
 import { Diagram } from '@diagram-craft/model/diagram';
@@ -19,13 +19,13 @@ declare global {
 
 export class NodeTool extends AbstractTool {
   constructor(
-    protected readonly diagram: Diagram,
-    protected readonly drag: DragDopManager,
-    protected readonly svg: SVGSVGElement | null,
-    protected readonly applicationTriggers: ApplicationTriggers,
-    protected readonly resetTool: () => void
+    diagram: Diagram,
+    drag: DragDopManager,
+    svg: SVGSVGElement | null,
+    context: Context,
+    resetTool: () => void
   ) {
-    super('node', diagram, drag, svg, applicationTriggers, resetTool);
+    super('node', diagram, drag, svg, context, resetTool);
 
     if (
       diagram.selectionState.getSelectionType() !== 'single-node' &&
@@ -34,7 +34,7 @@ export class NodeTool extends AbstractTool {
       diagram.selectionState.clear();
     }
 
-    applicationTriggers.setHelp?.('Select element');
+    context.help.set('Select element');
   }
 
   onMouseOver(id: string, point: Point) {
@@ -74,7 +74,7 @@ export class NodeTool extends AbstractTool {
       if (el.nodeType === 'generic-path') {
         this.diagram.selectionState.setElements([el]);
       } else if (el.nodeType !== 'text') {
-        this.applicationTriggers.showDialog!({
+        this.context.ui.showDialog!({
           name: 'message',
           props: {
             title: 'Convert to path',

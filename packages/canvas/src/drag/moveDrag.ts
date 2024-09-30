@@ -19,7 +19,7 @@ import {
 import { excludeLabelNodes, includeAll, SelectionState } from '@diagram-craft/model/selectionState';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { largest } from '@diagram-craft/utils/array';
-import { ApplicationTriggers } from '../ApplicationTriggers';
+import { Context } from '../ApplicationTriggers';
 import { assertRegularLayer, RegularLayer } from '@diagram-craft/model/diagramLayer';
 
 const getId = (e: DiagramElement) => (isNode(e) ? `node-${e.id}` : `edge-${e.id}`);
@@ -57,7 +57,7 @@ export class MoveDrag extends AbstractDrag {
     private readonly diagram: Diagram,
     private readonly offset: Point,
     private modifiers: Modifiers,
-    private applicationTriggers: ApplicationTriggers
+    private context: Context
   ) {
     super();
 
@@ -68,7 +68,7 @@ export class MoveDrag extends AbstractDrag {
 
     assertRegularLayer(this.diagram.activeLayer);
 
-    this.applicationTriggers.pushHelp?.(
+    this.context.help.push(
       'MoveDrag',
       'Move elements. Shift+Click - add, Shift - constrain, Option - free, Cmd - duplicate'
     );
@@ -257,7 +257,7 @@ export class MoveDrag extends AbstractDrag {
     this.uow.commit();
     selection.rebaseline();
 
-    this.applicationTriggers.popHelp?.('MoveDrag');
+    this.context.help.pop('MoveDrag');
   }
 
   private constrainDrag(selection: SelectionState, coord: Point) {

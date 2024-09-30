@@ -22,7 +22,7 @@ import { EdgeEndpointMoveDrag } from '@diagram-craft/canvas/drag/edgeEndpointMov
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
-import { ApplicationTriggers } from '@diagram-craft/canvas/ApplicationTriggers';
+import { Context } from '@diagram-craft/canvas/ApplicationTriggers';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
 
 declare global {
@@ -38,16 +38,16 @@ export class EdgeTool extends AbstractTool {
   private currentAnchor: Anchor | undefined = undefined;
 
   constructor(
-    protected readonly diagram: Diagram,
-    protected readonly drag: DragDopManager,
-    protected readonly svg: SVGSVGElement | null,
-    protected readonly applicationTriggers: ApplicationTriggers,
-    protected readonly resetTool: () => void
+    diagram: Diagram,
+    drag: DragDopManager,
+    svg: SVGSVGElement | null,
+    context: Context,
+    resetTool: () => void
   ) {
-    super('edge', diagram, drag, svg, applicationTriggers, resetTool);
+    super('edge', diagram, drag, svg, context, resetTool);
 
     assertRegularLayer(diagram.activeLayer);
-    applicationTriggers.setHelp?.('Click to add edge');
+    context.help.set('Click to add edge');
   }
 
   onMouseDown(_id: string, point: Point, _modifiers: Modifiers) {
@@ -81,7 +81,7 @@ export class EdgeTool extends AbstractTool {
     this.diagram.selectionState.setElements([nd]);
     this.resetTool();
 
-    const drag = new EdgeEndpointMoveDrag(this.diagram, nd, 'end', this.applicationTriggers);
+    const drag = new EdgeEndpointMoveDrag(this.diagram, nd, 'end', this.context);
     drag.on('dragEnd', () => {
       // Coalesce the element add and edge endpoint move into one undoable action
       undoManager.add(new CompoundUndoableAction([...undoManager.getToMark()]));

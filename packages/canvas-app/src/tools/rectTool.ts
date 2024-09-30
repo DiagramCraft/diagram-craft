@@ -1,5 +1,5 @@
 import { AbstractTool } from '@diagram-craft/canvas/tool';
-import { ApplicationTriggers } from '@diagram-craft/canvas/ApplicationTriggers';
+import { Context } from '@diagram-craft/canvas/ApplicationTriggers';
 import {
   DRAG_DROP_MANAGER,
   DragDopManager,
@@ -30,16 +30,16 @@ export class RectTool extends AbstractTool {
   private startPoint: Point | undefined;
 
   constructor(
-    protected readonly diagram: Diagram,
-    protected readonly drag: DragDopManager,
-    protected readonly svg: SVGSVGElement | null,
-    protected readonly applicationTriggers: ApplicationTriggers,
-    protected readonly resetTool: () => void
+    diagram: Diagram,
+    drag: DragDopManager,
+    svg: SVGSVGElement | null,
+    context: Context,
+    resetTool: () => void
   ) {
-    super('rect', diagram, drag, svg, applicationTriggers, resetTool);
+    super('rect', diagram, drag, svg, context, resetTool);
 
     assertRegularLayer(diagram.activeLayer);
-    applicationTriggers.setHelp?.('Click and drag to add rectangle');
+    context.help.set('Click and drag to add rectangle');
   }
 
   onMouseDown(_id: string, point: Point, _modifiers: Modifiers) {

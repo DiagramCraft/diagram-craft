@@ -137,7 +137,7 @@ export class AnchorHandlesComponent extends Component<Props> {
                 if (diagram.activeLayer.type !== 'regular') return;
 
                 DRAG_DROP_MANAGER.initiate(
-                  new AnchorHandleDrag(node, a.id, EventHelper.point(e), props.applicationTriggers)
+                  new AnchorHandleDrag(node, a.id, EventHelper.point(e), props.context)
                 );
                 this.clearTimeout();
                 this.setState(undefined, 'background');

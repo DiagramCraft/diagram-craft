@@ -1,8 +1,18 @@
 import { Point } from '@diagram-craft/geometry/point';
 import { DragDopManager, Modifiers } from './dragDropManager';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { ApplicationTriggers } from './ApplicationTriggers';
-import { ToolType } from '@diagram-craft/main/tools';
+import { Context } from './ApplicationTriggers';
+
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace Extensions {
+    interface Tools {}
+  }
+}
+
+export interface Tools extends Extensions.Tools {}
+
+export type ToolType = keyof Tools;
 
 export interface Tool {
   type: ToolType;
@@ -20,12 +30,12 @@ export interface Tool {
   onKeyUp(e: KeyboardEvent): void;
 }
 
-export type ToolContructor = {
+export type ToolConstructor = {
   new (
     diagram: Diagram,
     drag: DragDopManager,
     svg: SVGSVGElement | null,
-    applicationTriggers: ApplicationTriggers,
+    context: Context,
     resetTool: () => void
   ): Tool;
 };
@@ -41,7 +51,7 @@ export abstract class AbstractTool implements Tool {
     protected readonly diagram: Diagram,
     protected readonly drag: DragDopManager,
     protected readonly svg: SVGSVGElement | null,
-    protected readonly applicationTriggers: ApplicationTriggers,
+    protected readonly context: Context,
     protected readonly resetTool: () => void
   ) {}
 

@@ -1,5 +1,5 @@
 import { AbstractTool, BACKGROUND } from '../tool';
-import { ApplicationTriggers } from '../ApplicationTriggers';
+import { Context } from '../ApplicationTriggers';
 import { DragDopManager, Modifiers } from '../dragDropManager';
 import { MarqueeDrag } from '../drag/marqueeDrag';
 import { MoveDrag } from '../drag/moveDrag';
@@ -26,16 +26,16 @@ export class MoveTool extends AbstractTool {
   private deferredMouseAction: DeferredMouseAction | undefined;
 
   constructor(
-    protected readonly diagram: Diagram,
-    protected readonly drag: DragDopManager,
-    protected readonly svg: SVGSVGElement | null,
-    protected readonly applicationTriggers: ApplicationTriggers,
-    protected readonly resetTool: () => void
+    diagram: Diagram,
+    drag: DragDopManager,
+    svg: SVGSVGElement | null,
+    context: Context,
+    resetTool: () => void
   ) {
-    super('move', diagram, drag, svg, applicationTriggers, resetTool);
+    super('move', diagram, drag, svg, context, resetTool);
     if (this.svg) this.svg.style.cursor = 'default';
 
-    applicationTriggers.setHelp?.('Select elements. Shift+click - add');
+    context.help.set('Select elements. Shift+click - add');
   }
 
   onMouseOver(id: string, _point: Point) {
@@ -89,11 +89,7 @@ export class MoveTool extends AbstractTool {
     } else if (isClickOnBackground) {
       if (!modifiers.shiftKey) selection.clear();
       this.drag.initiate(
-        new MarqueeDrag(
-          this.diagram,
-          this.diagram.viewBox.toDiagramPoint(point),
-          this.applicationTriggers
-        )
+        new MarqueeDrag(this.diagram, this.diagram.viewBox.toDiagramPoint(point), this.context)
       );
       return;
     } else {
@@ -135,7 +131,7 @@ export class MoveTool extends AbstractTool {
           this.diagram,
           Point.subtract(this.diagram.viewBox.toDiagramPoint(point), selection.bounds),
           modifiers,
-          this.applicationTriggers
+          this.context
         )
       );
     }

@@ -1,5 +1,5 @@
 import { AbstractTool } from '@diagram-craft/canvas/tool';
-import { ApplicationTriggers } from '@diagram-craft/canvas/ApplicationTriggers';
+import { Context } from '@diagram-craft/canvas/ApplicationTriggers';
 import {
   DRAG_DROP_MANAGER,
   DragDopManager,
@@ -30,16 +30,16 @@ export class TextTool extends AbstractTool {
   private startPoint: Point | undefined;
 
   constructor(
-    protected readonly diagram: Diagram,
-    protected readonly drag: DragDopManager,
-    protected readonly svg: SVGSVGElement | null,
-    protected readonly applicationTriggers: ApplicationTriggers,
-    protected readonly resetTool: () => void
+    diagram: Diagram,
+    drag: DragDopManager,
+    svg: SVGSVGElement | null,
+    context: Context,
+    resetTool: () => void
   ) {
-    super('text', diagram, drag, svg, applicationTriggers, resetTool);
+    super('text', diagram, drag, svg, context, resetTool);
 
     assertRegularLayer(diagram.activeLayer);
-    applicationTriggers.setHelp?.('Click to add text');
+    context.help.set('Click to add text');
   }
 
   onMouseDown(_id: string, point: Point, _modifiers: Modifiers) {

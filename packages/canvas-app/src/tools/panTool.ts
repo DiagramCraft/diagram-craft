@@ -1,5 +1,5 @@
 import { AbstractTool } from '@diagram-craft/canvas/tool';
-import { ApplicationTriggers } from '@diagram-craft/canvas/ApplicationTriggers';
+import { Context } from '@diagram-craft/canvas/ApplicationTriggers';
 import { DragDopManager, Modifiers } from '@diagram-craft/canvas/dragDropManager';
 import { AbsoluteOffset, Point } from '@diagram-craft/geometry/point';
 import { Diagram } from '@diagram-craft/model/diagram';
@@ -23,12 +23,12 @@ export class PanTool extends AbstractTool {
     diagram: Diagram,
     drag: DragDopManager,
     svg: SVGSVGElement | null,
-    applicationTriggers: ApplicationTriggers,
+    context: Context,
     resetTool: () => void
   ) {
-    super('pan', diagram, drag, svg, applicationTriggers, resetTool);
+    super('pan', diagram, drag, svg, context, resetTool);
 
-    applicationTriggers.pushHelp?.('pan', 'Click and drag to pan');
+    context.help.push('pan', 'Click and drag to pan');
   }
 
   setResetOnMouseUp(reset: boolean) {
@@ -36,7 +36,7 @@ export class PanTool extends AbstractTool {
   }
 
   onKeyUp() {
-    this.applicationTriggers.popHelp?.('pan');
+    this.context.help.pop('pan');
     this.resetTool();
   }
 

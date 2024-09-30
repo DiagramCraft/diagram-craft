@@ -9,7 +9,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { Direction } from '@diagram-craft/geometry/direction';
 import { createLinkedNode } from '@diagram-craft/canvas-app/actions/linkedNodeAction';
-import { ApplicationTriggers } from '../ApplicationTriggers';
+import { Context } from '../ApplicationTriggers';
 import { assertRegularLayer, RegularLayer } from '@diagram-craft/model/diagramLayer';
 
 export class AnchorHandleDrag extends AbstractDrag {
@@ -20,7 +20,7 @@ export class AnchorHandleDrag extends AbstractDrag {
     private readonly node: DiagramNode,
     private readonly anchorId: string,
     private readonly point: Point,
-    private readonly applicationTriggers: ApplicationTriggers
+    private readonly context: Context
   ) {
     super();
 
@@ -51,7 +51,7 @@ export class AnchorHandleDrag extends AbstractDrag {
     diagram.selectionState.setElements([this.edge]);
 
     // TODO: This is the wrong this.element to use
-    this.delegate = new EdgeEndpointMoveDrag(diagram, this.edge, 'end', applicationTriggers);
+    this.delegate = new EdgeEndpointMoveDrag(diagram, this.edge, 'end', this.context);
   }
 
   onDragEnd() {
@@ -92,11 +92,7 @@ export class AnchorHandleDrag extends AbstractDrag {
     // In case we have connected to an existing node, we don't need to show the popup
     if (this.edge.end.isConnected) return;
 
-    this.applicationTriggers.showNodeLinkPopup?.(
-      this.edge.end.position,
-      this.node!.id,
-      this.edge.id
-    );
+    this.context.ui.showNodeLinkPopup?.(this.edge.end.position, this.node!.id, this.edge.id);
   }
 
   onDrag(coord: Point, _modifiers: Modifiers): void {

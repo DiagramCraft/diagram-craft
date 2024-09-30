@@ -22,10 +22,11 @@ import { makeOpacity } from '../effects/opacity';
 import { DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import { EdgeComponentProps } from './BaseEdgeComponent';
 import { ShapeEdgeDefinition } from '../shape/shapeEdgeDefinition';
-import { Context, OnDoubleClick, OnMouseDown } from '../context';
+import { OnDoubleClick, OnMouseDown } from '../context';
 import { getHighlights, getHighlightValue, hasHighlight, Highlights } from '../highlight';
 import { Zoom } from './zoom';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { Context } from '../ApplicationTriggers';
 
 export type NodeComponentProps = {
   element: DiagramNode;
@@ -33,7 +34,9 @@ export type NodeComponentProps = {
   onDoubleClick?: OnDoubleClick;
   mode?: 'picker' | 'canvas';
   isReadOnly?: boolean;
-} & Context;
+
+  context: Context;
+};
 
 /**
  * The properties that are passed to the buildShape method of a BaseNodeComponent.
@@ -53,7 +56,9 @@ export type BaseShapeBuildShapeProps = {
     onMouseDown: OnMouseDown;
     onDoubleClick?: OnDoubleClick;
   };
-} & Context;
+
+  context: Context;
+};
 
 export class BaseNodeComponent<
   T extends Pick<ShapeNodeDefinition, 'getBoundingPathBuilder' | 'supports'> = ShapeNodeDefinition
@@ -222,9 +227,7 @@ export class BaseNodeComponent<
         onDoubleClick: props.onDoubleClick
       },
 
-      actionMap: props.actionMap,
-      tool: props.tool,
-      applicationTriggers: props.applicationTriggers
+      context: props.context
     };
 
     const shapeBuilder = new ShapeBuilder({
@@ -240,7 +243,7 @@ export class BaseNodeComponent<
 
     const shapeVNodes = [...shapeBuilder.nodes];
 
-    if (isSingleSelected && props.tool?.type === 'move') {
+    if (isSingleSelected && props.context.tool.get() === 'move') {
       for (const cp of shapeBuilder.controlPoints) {
         shapeVNodes.push(makeControlPoint(cp, props.element));
       }
@@ -445,9 +448,7 @@ export class BaseNodeComponent<
       onMouseDown: props.childProps.onMouseDown,
       isReadOnly: props.isReadOnly,
 
-      tool: props.tool,
-      applicationTriggers: props.applicationTriggers,
-      actionMap: props.actionMap
+      context: props.context
     };
 
     if (isNode(child)) {

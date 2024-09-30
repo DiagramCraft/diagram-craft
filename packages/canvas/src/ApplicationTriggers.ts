@@ -1,5 +1,8 @@
 import { Point } from '@diagram-craft/geometry/point';
 import { EmptyObject } from '@diagram-craft/utils/types';
+import { model } from './modelState';
+import { Observable } from './component/component';
+import { ToolType } from './tool';
 
 export interface ApplicationTriggers extends Extensions.ApplicationTriggers {
   showContextMenu?: <T extends keyof ApplicationTriggers.ContextMenus>(
@@ -14,11 +17,20 @@ export interface ApplicationTriggers extends Extensions.ApplicationTriggers {
   showDialog?: <T extends keyof ApplicationTriggers.Dialogs>(
     state: ApplicationTriggers.DialogState<T>
   ) => void;
+}
 
-  // TODO: Move this out of ApplicationTriggers
-  setHelp?: (message: string) => void;
-  pushHelp?: (id: string, message: string) => void;
-  popHelp?: (id: string) => void;
+export interface Help {
+  set: (message: string) => void;
+  push: (id: string, message: string) => void;
+  pop: (id: string) => void;
+}
+
+export interface Context {
+  model: typeof model;
+  ui: ApplicationTriggers;
+  help: Help;
+  tool: Observable<ToolType>;
+  actions: Partial<ActionMap>;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-namespace

@@ -19,17 +19,19 @@ import { ShapeEdgeDefinition } from '../shape/shapeEdgeDefinition';
 import { EdgeCapability } from '@diagram-craft/model/elementDefinitionRegistry';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
 import { makeControlPoint } from '../shape/ShapeControlPoint';
-import { Context, OnDoubleClick, OnMouseDown } from '../context';
+import { OnDoubleClick, OnMouseDown } from '../context';
 import { getHighlights } from '../highlight';
 import { EdgeEndpointMoveDrag } from '../drag/edgeEndpointMoveDrag';
 import { Zoom } from './zoom';
+import { Context } from '../ApplicationTriggers';
 
 export type EdgeComponentProps = {
   element: DiagramEdge;
   onMouseDown?: OnMouseDown;
   onDoubleClick?: OnDoubleClick;
   isReadOnly?: boolean;
-} & Context;
+  context: Context;
+};
 
 const makeArrowMarker = (
   id: string,
@@ -87,7 +89,7 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
     if (props.element.renderProps.hidden) return svg.g({});
 
     const $d = props.element.diagram;
-    const actionMap = props.actionMap;
+    const actionMap = props.context.actions;
 
     const onMouseDown = (e: MouseEvent) => {
       if (e.button !== 0) return;
@@ -96,7 +98,7 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
     };
 
     const onContextMenu = (event: MouseEvent) => {
-      props.applicationTriggers.showContextMenu?.(
+      props.context.ui.showContextMenu?.(
         'edge',
         $d.viewBox.toDiagramPoint(EventHelper.point(event)),
         event,
@@ -138,9 +140,7 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
                 );
                 uow.commit();
 
-                DRAG_DROP_MANAGER.initiate(
-                  new EdgeWaypointDrag(props.element, idx, props.applicationTriggers)
-                );
+                DRAG_DROP_MANAGER.initiate(new EdgeWaypointDrag(props.element, idx, props.context));
                 e.stopPropagation();
               },
               contextmenu: onContextMenu
@@ -177,7 +177,7 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
                         props.element,
                         idx,
                         name as keyof ControlPoints,
-                        props.applicationTriggers
+                        props.context
                       )
                     );
                     e.stopPropagation();
@@ -206,9 +206,7 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
               },
               mousedown: e => {
                 if (e.button !== 0) return;
-                DRAG_DROP_MANAGER.initiate(
-                  new EdgeWaypointDrag(props.element, idx, props.applicationTriggers)
-                );
+                DRAG_DROP_MANAGER.initiate(new EdgeWaypointDrag(props.element, idx, props.context));
                 e.stopPropagation();
               },
               contextmenu: onContextMenu
@@ -234,7 +232,7 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
     this.buildShape(basePath, shapeBuilder, props.element, edgeProps);
 
     const controlPoints: VNode[] = [];
-    if (isSingleSelected && props.tool?.type === 'move') {
+    if (isSingleSelected && props.context.tool.get() === 'move') {
       for (const cp of shapeBuilder.controlPoints) {
         controlPoints.push(makeControlPoint(cp, props.element));
       }

@@ -67,7 +67,8 @@ export class CanvasComponent extends Component<CanvasProps> {
                   // @ts-ignore
                   {
                     element: edge,
-                    applicationTriggers: {},
+                    // @ts-ignore
+                    context: {},
                     onMouseDown: (_id: string, _coord: Point, _modifiers: Modifiers) => {}
                   }
                 );
@@ -82,7 +83,8 @@ export class CanvasComponent extends Component<CanvasProps> {
                   {
                     key: `node-${node.nodeType}-${id}`,
                     element: node,
-                    applicationTriggers: {},
+                    // @ts-ignore
+                    context: {},
                     onMouseDown: (_id: string, _coord: Point, _modifiers: Modifiers) => {}
                   }
                 );

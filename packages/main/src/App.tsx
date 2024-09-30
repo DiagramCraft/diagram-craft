@@ -21,7 +21,7 @@ import {
   canvasDropHandler
 } from './react-app/toolwindow/PickerToolWindow/PickerToolWindow.handlers';
 import { Point } from '@diagram-craft/geometry/point';
-import { ToolContructor } from '@diagram-craft/canvas/tool';
+import { ToolConstructor, ToolType } from '@diagram-craft/canvas/tool';
 import { MoveTool } from '@diagram-craft/canvas/tools/moveTool';
 import { TextTool } from '@diagram-craft/canvas-app/tools/textTool';
 import { EdgeTool } from '@diagram-craft/canvas-app/tools/edgeTool';
@@ -43,7 +43,11 @@ import { FileDialog } from './react-app/FileDialog';
 import { newid } from '@diagram-craft/utils/id';
 import { RegularLayer } from '@diagram-craft/model/diagramLayer';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { ApplicationTriggers, ContextMenuTarget } from '@diagram-craft/canvas/ApplicationTriggers';
+import {
+  ApplicationTriggers,
+  ContextMenuTarget,
+  Help
+} from '@diagram-craft/canvas/ApplicationTriggers';
 import { ImageInsertDialog } from './react-app/ImageInsertDialog';
 import { TableInsertDialog } from './react-app/TableInsertDialog';
 import { RectTool } from '@diagram-craft/canvas-app/tools/rectTool';
@@ -58,7 +62,6 @@ import { RightSidebar } from './react-app/RightSidebar';
 import { LeftSidebar } from './react-app/LeftSidebar';
 import { Application, ApplicationContext } from './application';
 import { UserState } from './UserState';
-import { ToolType } from './tools';
 import { HelpState } from './react-app/HelpState';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
@@ -69,7 +72,7 @@ const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   (e as any)._triggered = true;
 };
 
-const tools: Record<ToolType, ToolContructor> = {
+const tools: Record<ToolType, ToolConstructor> = {
   move: MoveTool,
   text: TextTool,
   edge: EdgeTool,
@@ -120,20 +123,23 @@ export const App = (props: {
   useEventListener(application.current.model, 'activeDiagramChange', redraw);
   useEventListener(application.current.model, 'activeDocumentChange', redraw);
 
-  const applicationTriggers: ApplicationTriggers = {
-    pushHelp: (id: string, message: string) => {
+  const help: Help = {
+    push: (id: string, message: string) => {
       const help = helpState.current.help;
       if (help && help.id === id && help.message === message) return;
       queueMicrotask(() => {
         helpState.current.pushHelp({ id, message });
       });
     },
-    popHelp: (id: string) => {
+    pop: (id: string) => {
       helpState.current.popHelp(id);
     },
-    setHelp: (message: string) => {
+    set: (message: string) => {
       helpState.current.setHelp({ id: 'default', message });
-    },
+    }
+  };
+
+  const applicationTriggers: ApplicationTriggers = {
     showContextMenu: <T extends keyof ApplicationTriggers.ContextMenus>(
       type: T,
       point: Point,
@@ -201,6 +207,7 @@ export const App = (props: {
     }
   };
   application.current.ui = applicationTriggers;
+  application.current.help = help;
 
   useOnChange(props.doc, () => {
     updateApplicationModel(props.doc.diagrams[0], application.current);
@@ -347,7 +354,6 @@ export const App = (props: {
                       key={$d.uid}
                       actionMap={actionMap}
                       tools={tools}
-                      tool={application.current.tool}
                       keyMap={keyMap}
                       offset={
                         (userState.current.panelLeft ?? -1) >= 0
@@ -360,7 +366,7 @@ export const App = (props: {
                       className={'canvas'}
                       onDrop={canvasDropHandler($d)}
                       onDragOver={canvasDragOverHandler()}
-                      applicationTriggers={applicationTriggers}
+                      context={application.current}
                     />
                   </ContextMenu.Trigger>
                   <ContextMenu.Portal>

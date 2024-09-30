@@ -1,5 +1,5 @@
 import { AbstractTool } from '@diagram-craft/canvas/tool';
-import { ApplicationTriggers } from '@diagram-craft/canvas/ApplicationTriggers';
+import { Context } from '@diagram-craft/canvas/ApplicationTriggers';
 import { DragDopManager, Modifiers } from '@diagram-craft/canvas/dragDropManager';
 import { Point } from '@diagram-craft/geometry/point';
 import { PathUtils } from '@diagram-craft/geometry/pathUtils';
@@ -29,18 +29,18 @@ export class PenTool extends AbstractTool {
   private numberOfPoints: number = 0;
 
   constructor(
-    protected readonly diagram: Diagram,
-    protected readonly drag: DragDopManager,
-    protected readonly svg: SVGSVGElement | null,
-    protected readonly applicationTriggers: ApplicationTriggers,
-    protected readonly resetTool: () => void
+    diagram: Diagram,
+    drag: DragDopManager,
+    svg: SVGSVGElement | null,
+    context: Context,
+    resetTool: () => void
   ) {
-    super('pen', diagram, drag, svg, applicationTriggers, resetTool);
+    super('pen', diagram, drag, svg, context, resetTool);
     if (this.svg) this.svg.style.cursor = 'default';
 
     assertRegularLayer(diagram.activeLayer);
 
-    applicationTriggers.setHelp?.(
+    context.help.set(
       "Click to add corners. Press 'Escape' to cancel or any other key to complete the shape"
     );
   }

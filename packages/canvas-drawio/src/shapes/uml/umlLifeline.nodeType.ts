@@ -97,13 +97,11 @@ export class UmlLifeline extends SimpleShapeNodeDefinition {
       props.cmp.subComponent(() => new nodeComponent(shape as ShapeNodeDefinition), {
         mode: 'canvas',
         element: node,
-        actionMap: props.actionMap,
         onDoubleClick: shapeBuilder.makeOnDblclickHandle(),
         onMouseDown: (_id, coord, modifiers) => {
           props.childProps.onMouseDown?.(props.node.id, coord, modifiers);
         },
-        applicationTriggers: props.applicationTriggers,
-        tool: props.tool
+        context: props.context
       })
     );
 

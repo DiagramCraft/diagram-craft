@@ -80,8 +80,8 @@ class GenericPathComponent extends BaseNodeComponent {
 
     const z = new Zoom(props.node.diagram.viewBox.zoomLevel);
 
-    if (props.isSingleSelected && props.tool?.type === 'node') {
-      props.applicationTriggers.pushHelp?.(
+    if (props.isSingleSelected && props.context.tool.get() === 'node') {
+      props.context.help.push(
         'GenericPathComponent',
         'Edge Dbl-click - add waypoint, Edge Cmd-Dbl-Click - straighten, Waypoint Click - select, Waypoint Shift-Click - multi-select, Waypoint Cmd-Dbl-Click - delete'
       );
@@ -107,21 +107,21 @@ class GenericPathComponent extends BaseNodeComponent {
         })
       );
     } else {
-      props.applicationTriggers.popHelp?.('GenericPathComponent');
+      props.context.help.pop('GenericPathComponent');
     }
 
     shapeBuilder.boundaryPath(paths.all(), undefined, undefined, {
       map: v => {
         v.data.on ??= {};
         v.data.on.dblclick =
-          props.tool?.type === 'node' ? onDoubleClick : shapeBuilder.makeOnDblclickHandle();
+          props.context.tool.get() === 'node' ? onDoubleClick : shapeBuilder.makeOnDblclickHandle();
         v.data.style ??= '';
         return v;
       }
     });
     shapeBuilder.text(this);
 
-    if (props.isSingleSelected && props.tool?.type === 'node') {
+    if (props.isSingleSelected && props.context.tool.get() === 'node') {
       editablePath.waypoints.map((wp, idx) => {
         if (this.selectedWaypoints.includes(idx)) {
           shapeBuilder.add(
@@ -147,12 +147,7 @@ class GenericPathComponent extends BaseNodeComponent {
                 mousedown: e => {
                   if (e.button !== 0) return;
                   drag.initiate(
-                    new GenericPathControlPointDrag(
-                      editablePath,
-                      idx,
-                      'p1',
-                      props.applicationTriggers
-                    )
+                    new GenericPathControlPointDrag(editablePath, idx, 'p1', props.context)
                   );
                   e.stopPropagation();
                 }
@@ -184,12 +179,7 @@ class GenericPathComponent extends BaseNodeComponent {
                 mousedown: e => {
                   if (e.button !== 0) return;
                   drag.initiate(
-                    new GenericPathControlPointDrag(
-                      editablePath,
-                      idx,
-                      'p2',
-                      props.applicationTriggers
-                    )
+                    new GenericPathControlPointDrag(editablePath, idx, 'p2', props.context)
                   );
                   e.stopPropagation();
                 }
@@ -220,9 +210,7 @@ class GenericPathComponent extends BaseNodeComponent {
                   this.setSelectedWaypoints([idx]);
                 }
 
-                drag.initiate(
-                  new NodeDrag(editablePath, this.selectedWaypoints, props.applicationTriggers)
-                );
+                drag.initiate(new NodeDrag(editablePath, this.selectedWaypoints, props.context));
 
                 e.stopPropagation();
               },
