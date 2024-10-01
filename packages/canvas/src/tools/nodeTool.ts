@@ -1,6 +1,6 @@
 import { AbstractTool, BACKGROUND } from '../tool';
 import { addHighlight, Highlights, removeHighlight } from '../highlight';
-import { Context } from '../context';
+import { Context, MessageDialogCommand } from '../context';
 import { Point } from '@diagram-craft/geometry/point';
 import { DragDopManager, Modifiers } from '../dragDropManager';
 import { Diagram } from '@diagram-craft/model/diagram';
@@ -74,22 +74,22 @@ export class NodeTool extends AbstractTool {
       if (el.nodeType === 'generic-path') {
         this.diagram.selectionState.setElements([el]);
       } else if (el.nodeType !== 'text') {
-        this.context.ui.showDialog!({
-          name: 'message',
-          props: {
-            title: 'Convert to path',
-            message: 'Do you want to convert this shape to a editable path?',
-            okLabel: 'Yes',
-            cancelLabel: 'Cancel'
-          },
-          onOk: () => {
-            const uow = new UnitOfWork(this.diagram, true);
-            el.convertToPath(uow);
-            commitWithUndo(uow, 'Convert to path');
-            this.diagram.selectionState.setElements([el]);
-          },
-          onCancel: () => {}
-        });
+        this.context.ui.showDialog(
+          new MessageDialogCommand(
+            {
+              title: 'Convert to path',
+              message: 'Do you want to convert this shape to a editable path?',
+              okLabel: 'Yes',
+              cancelLabel: 'Cancel'
+            },
+            () => {
+              const uow = new UnitOfWork(this.diagram, true);
+              el.convertToPath(uow);
+              commitWithUndo(uow, 'Convert to path');
+              this.diagram.selectionState.setElements([el]);
+            }
+          )
+        );
       }
     }
   }

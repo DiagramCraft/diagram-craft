@@ -5,6 +5,7 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { newid } from '@diagram-craft/utils/id';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
 import { Application } from '../../application';
+import { ImageInsertDialog } from '../ImageInsertDialog';
 
 export const imageInsertActions = (application: Application) => ({
   IMAGE_INSERT: new ImageInsertAction(application)
@@ -12,16 +13,6 @@ export const imageInsertActions = (application: Application) => ({
 
 declare global {
   interface ActionMap extends ReturnType<typeof imageInsertActions> {}
-
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace Extensions {
-    interface Dialogs {
-      imageInsert: {
-        props: Record<string, never>;
-        callback: Blob | string;
-      };
-    }
-  }
 }
 
 class ImageInsertAction extends AbstractAction<undefined, Application> {
@@ -38,10 +29,8 @@ class ImageInsertAction extends AbstractAction<undefined, Application> {
   }
 
   execute(): void {
-    this.context.ui?.showDialog({
-      name: 'imageInsert',
-      props: {},
-      onOk: async data => {
+    this.context.ui?.showDialog(
+      ImageInsertDialog.create(async data => {
         let att: Attachment;
         if (data instanceof Blob) {
           att = await this.context.model.activeDocument.attachments.addAttachment(data);
@@ -89,8 +78,7 @@ class ImageInsertAction extends AbstractAction<undefined, Application> {
             'Insert image'
           )
         );
-      },
-      onCancel: () => {}
-    });
+      })
+    );
   }
 }

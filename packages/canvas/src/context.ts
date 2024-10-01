@@ -18,7 +18,8 @@ export interface UIActions {
 
   showNodeLinkPopup: (point: Point, sourceNodeId: string, edgeId: string) => void;
 
-  showDialog: <T extends keyof UIActions.Dialogs>(state: UIActions.DialogState<T>) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  showDialog: (command: DialogCommand<any, any>) => void;
 }
 
 export interface Help {
@@ -35,6 +36,31 @@ export interface Context {
   actions: Partial<ActionMap>;
 }
 
+export interface DialogCommand<P, D> {
+  id: string;
+  props: P;
+  onOk: (data: D) => void;
+  onCancel: () => void;
+}
+
+type MessageDialogProps = {
+  title: string;
+  message: string;
+  okLabel: string;
+  okType?: 'default' | 'secondary' | 'danger';
+  cancelLabel: string;
+};
+
+export class MessageDialogCommand implements DialogCommand<MessageDialogProps, EmptyObject> {
+  id = 'message';
+
+  constructor(
+    public readonly props: MessageDialogProps,
+    public readonly onOk: (data: EmptyObject) => void,
+    public readonly onCancel: () => void = () => {}
+  ) {}
+}
+
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace UIActions {
   export interface ContextMenus extends Extensions.ContextMenus {
@@ -42,33 +68,6 @@ export namespace UIActions {
     selection: object;
     edge: { id: string };
     node: { id: string };
-  }
-
-  export type DialogState<T extends keyof Dialogs> = {
-    name: T;
-    props: Dialogs[T]['props'];
-    onOk: (data: Dialogs[T]['callback']) => void;
-    onCancel: () => void;
-  };
-
-  export interface Dialogs extends Extensions.Dialogs {
-    message: {
-      props: {
-        title: string;
-        message: string;
-        okLabel: string;
-        okType?: 'default' | 'secondary' | 'danger';
-        cancelLabel: string;
-      };
-      callback: EmptyObject;
-    };
-  }
-}
-
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace Extensions {
-    interface Dialogs {}
   }
 }
 

@@ -17,6 +17,8 @@ import { assert, precondition } from '@diagram-craft/utils/assert';
 import { newid } from '@diagram-craft/utils/id';
 import { ReferenceLayer } from '@diagram-craft/model/diagramLayerReference';
 import { Application } from '../application';
+import { MessageDialogCommand } from '@diagram-craft/canvas/context';
+import { ReferenceLayerDialogCommand, StringInputDialogCommand } from '../dialogs';
 
 export const layerActions = (application: Application) => ({
   LAYER_DELETE_LAYER: new LayerDeleteAction(application),
@@ -49,48 +51,48 @@ export class LayerDeleteAction extends AbstractAction<LayerActionArg, Applicatio
     precondition.is.present(id);
 
     // TODO: This should be a confirm dialog
-    this.context.ui.showDialog({
-      name: 'message',
-      props: {
-        title: 'Delete layer',
-        message: 'Are you sure you want to delete this layer?',
-        okLabel: 'Yes',
-        cancelLabel: 'No'
-      },
-      onOk: () => {
-        const uow = new UnitOfWork(this.context.model.activeDiagram, true);
+    this.context.ui.showDialog(
+      new MessageDialogCommand(
+        {
+          title: 'Delete layer',
+          message: 'Are you sure you want to delete this layer?',
+          okLabel: 'Yes',
+          cancelLabel: 'No'
+        },
+        () => {
+          const uow = new UnitOfWork(this.context.model.activeDiagram, true);
 
-        precondition.is.present(id);
+          precondition.is.present(id);
 
-        const layer = this.context.model.activeDiagram.layers.byId(id);
-        assert.present(layer);
+          const layer = this.context.model.activeDiagram.layers.byId(id);
+          assert.present(layer);
 
-        this.context.model.activeDiagram.layers.remove(layer, uow);
+          this.context.model.activeDiagram.layers.remove(layer, uow);
 
-        const snapshots = uow.commit();
-        this.context.model.activeDiagram.undoManager.add(
-          new CompoundUndoableAction([
-            new SnapshotUndoableAction(
-              'Delete layer',
-              this.context.model.activeDiagram,
-              snapshots.onlyUpdated()
-            ),
-            ...(layer instanceof RegularLayer
-              ? [
-                  new ElementDeleteUndoableAction(
-                    this.context.model.activeDiagram,
-                    layer,
-                    layer.elements,
-                    false
-                  )
-                ]
-              : []),
-            new LayerDeleteUndoableAction(this.context.model.activeDiagram, layer)
-          ])
-        );
-      },
-      onCancel: () => {}
-    });
+          const snapshots = uow.commit();
+          this.context.model.activeDiagram.undoManager.add(
+            new CompoundUndoableAction([
+              new SnapshotUndoableAction(
+                'Delete layer',
+                this.context.model.activeDiagram,
+                snapshots.onlyUpdated()
+              ),
+              ...(layer instanceof RegularLayer
+                ? [
+                    new ElementDeleteUndoableAction(
+                      this.context.model.activeDiagram,
+                      layer,
+                      layer.elements,
+                      false
+                    )
+                  ]
+                : []),
+              new LayerDeleteUndoableAction(this.context.model.activeDiagram, layer)
+            ])
+          );
+        }
+      )
+    );
   }
 }
 
@@ -193,21 +195,21 @@ export class LayerRenameAction extends AbstractAction<LayerActionArg, Applicatio
     const layer = this.context.model.activeDiagram.layers.byId(id);
     assert.present(layer);
 
-    this.context.ui.showDialog({
-      name: 'stringInput',
-      props: {
-        title: 'Rename layer',
-        description: 'Enter a new name for the layer.',
-        saveButtonLabel: 'Rename',
-        value: layer.name
-      },
-      onOk: async name => {
-        const uow = new UnitOfWork(this.context.model.activeDiagram, true);
-        layer.setName(name, uow);
-        commitWithUndo(uow, `Rename layer`);
-      },
-      onCancel: () => {}
-    });
+    this.context.ui.showDialog(
+      new StringInputDialogCommand(
+        {
+          title: 'Rename layer',
+          description: 'Enter a new name for the layer.',
+          saveButtonLabel: 'Rename',
+          value: layer.name
+        },
+        async name => {
+          const uow = new UnitOfWork(this.context.model.activeDiagram, true);
+          layer.setName(name, uow);
+          commitWithUndo(uow, `Rename layer`);
+        }
+      )
+    );
   }
 }
 
@@ -221,10 +223,8 @@ export class LayerAddAction extends AbstractAction<undefined, Application> {
 
   execute(): void {
     if (this.type === 'reference') {
-      this.context.ui.showDialog({
-        name: 'newReferenceLayer',
-        props: {},
-        onOk: async ({ diagramId, layerId, name }) => {
+      this.context.ui.showDialog(
+        new ReferenceLayerDialogCommand(async ({ diagramId, layerId, name }) => {
           const diagram = this.context.model.activeDiagram;
           const uow = new UnitOfWork(diagram, true);
 
@@ -243,40 +243,39 @@ export class LayerAddAction extends AbstractAction<undefined, Application> {
               new SnapshotUndoableAction('Add layer', diagram, snapshots)
             ])
           );
-        },
-        onCancel: () => {}
-      });
+        })
+      );
     } else {
-      this.context.ui.showDialog({
-        name: 'stringInput',
-        props: {
-          title: 'New adjustment layer',
-          description: 'Enter a new name for the adjustment layer.',
-          saveButtonLabel: 'Create',
-          value: ''
-        },
-        onOk: async name => {
-          const diagram = this.context.model.activeDiagram;
-          const uow = new UnitOfWork(diagram, true);
+      this.context.ui.showDialog(
+        new StringInputDialogCommand(
+          {
+            title: 'New adjustment layer',
+            description: 'Enter a new name for the adjustment layer.',
+            saveButtonLabel: 'Create',
+            value: ''
+          },
+          async name => {
+            const diagram = this.context.model.activeDiagram;
+            const uow = new UnitOfWork(diagram, true);
 
-          const layer = new RegularLayer(
-            newid(),
-            typeof name === 'string' ? name : 'New Layer',
-            [],
-            diagram
-          );
-          diagram.layers.add(layer, uow);
+            const layer = new RegularLayer(
+              newid(),
+              typeof name === 'string' ? name : 'New Layer',
+              [],
+              diagram
+            );
+            diagram.layers.add(layer, uow);
 
-          const snapshots = uow.commit();
-          diagram.undoManager.add(
-            new CompoundUndoableAction([
-              new LayerAddUndoableAction(diagram, layer),
-              new SnapshotUndoableAction('Add layer', diagram, snapshots)
-            ])
-          );
-        },
-        onCancel: () => {}
-      });
+            const snapshots = uow.commit();
+            diagram.undoManager.add(
+              new CompoundUndoableAction([
+                new LayerAddUndoableAction(diagram, layer),
+                new SnapshotUndoableAction('Add layer', diagram, snapshots)
+              ])
+            );
+          }
+        )
+      );
     }
   }
 }

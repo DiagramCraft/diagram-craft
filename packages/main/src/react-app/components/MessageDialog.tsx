@@ -31,6 +31,6 @@ type Props = {
   okLabel?: string;
   okType?: 'default' | 'secondary' | 'danger';
   cancelLabel?: string;
-  onOk?: () => void;
+  onOk: () => void;
   onCancel?: () => void;
 };

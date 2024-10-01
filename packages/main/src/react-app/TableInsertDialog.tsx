@@ -1,6 +1,8 @@
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { useState } from 'react';
+import { DialogCommand } from '@diagram-craft/canvas/context';
+import { EmptyObject } from '@diagram-craft/utils/types';
 
 export const TableInsertDialog = (props: Props) => {
   const [width, setWidth] = useState(6);
@@ -16,7 +18,7 @@ export const TableInsertDialog = (props: Props) => {
         {
           label: 'Insert',
           type: 'default',
-          onClick: () => props.onInsert!({ width, height })
+          onClick: () => props.onOk!({ width, height })
         }
       ]}
     >
@@ -35,8 +37,20 @@ export const TableInsertDialog = (props: Props) => {
   );
 };
 
+TableInsertDialog.create = (
+  onOk: Props['onOk'],
+  onCancel: Props['onCancel'] = () => {}
+): DialogCommand<EmptyObject, { width: number; height: number }> => {
+  return {
+    id: 'tableInsert',
+    props: {},
+    onOk: onOk,
+    onCancel: onCancel
+  };
+};
+
 type Props = {
   open: boolean;
-  onInsert?: (d: { width: number; height: number }) => void;
+  onOk: (d: { width: number; height: number }) => void;
   onCancel?: () => void;
 };

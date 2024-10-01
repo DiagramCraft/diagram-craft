@@ -1,10 +1,10 @@
 import { Dialog } from '@diagram-craft/app-components/Dialog';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styles from './ImageInsertDialog.module.css';
 import { TbFile, TbFolder } from 'react-icons/tb';
-import React from 'react';
-import { Diagram } from '@diagram-craft/model/diagram';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
+import { DialogCommand } from '@diagram-craft/canvas/context';
+import { EmptyObject } from '@diagram-craft/utils/types';
 
 type DirEntry = {
   name: string;
@@ -63,7 +63,7 @@ const ImageInsertDialogBrowser = (props: Props) => {
                     <a
                       href={'#'}
                       onClick={() => {
-                        props.onInsert!(path.join('/') + '/' + entry.name);
+                        props.onOk!(path.join('/') + '/' + entry.name);
                       }}
                     >
                       <TbFile /> {entry.name}
@@ -106,7 +106,7 @@ export const ImageInsertDialog = (props: Props) => {
             type={'file'}
             style={{ display: 'none', width: 0 }}
             onChange={async e => {
-              props.onInsert!(e.target.files![0]);
+              props.onOk!(e.target.files![0]);
             }}
           />
         </Tabs.Content>
@@ -118,9 +118,20 @@ export const ImageInsertDialog = (props: Props) => {
   );
 };
 
+ImageInsertDialog.create = (
+  onOk: Props['onOk'],
+  onCancel: Props['onCancel'] = () => {}
+): DialogCommand<EmptyObject, string | Blob> => {
+  return {
+    id: 'imageInsert',
+    props: {},
+    onOk: onOk,
+    onCancel: onCancel
+  };
+};
+
 type Props = {
-  diagram: Diagram;
   open: boolean;
-  onInsert?: (url: string | Blob) => void;
+  onOk: (url: string | Blob) => void;
   onCancel?: () => void;
 };

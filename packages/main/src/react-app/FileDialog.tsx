@@ -1,8 +1,9 @@
 import { Dialog } from '@diagram-craft/app-components/Dialog';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styles from './FileDialog.module.css';
 import { TbFile, TbFolder } from 'react-icons/tb';
-import React from 'react';
+import { DialogCommand } from '@diagram-craft/canvas/context';
+import { EmptyObject } from '@diagram-craft/utils/types';
 
 type DirEntry = {
   name: string;
@@ -67,8 +68,8 @@ export const FileDialog = (props: Props) => {
                       <a
                         href={'#'}
                         onClick={() => {
-                          if (props.onOpen) {
-                            props.onOpen(path.join('/') + '/' + entry.name);
+                          if (props.onOk) {
+                            props.onOk(path.join('/') + '/' + entry.name);
                           }
                         }}
                       >
@@ -86,8 +87,20 @@ export const FileDialog = (props: Props) => {
   );
 };
 
+FileDialog.create = (
+  onOk: Props['onOk'],
+  onCancel: Props['onCancel'] = () => {}
+): DialogCommand<EmptyObject, string> => {
+  return {
+    id: 'fileOpen',
+    props: {},
+    onOk: onOk,
+    onCancel: onCancel
+  };
+};
+
 type Props = {
   open: boolean;
-  onOpen?: (file: string) => void;
+  onOk: (file: string) => void;
   onCancel?: () => void;
 };

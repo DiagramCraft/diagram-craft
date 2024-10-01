@@ -43,7 +43,7 @@ import { FileDialog } from './react-app/FileDialog';
 import { newid } from '@diagram-craft/utils/id';
 import { RegularLayer } from '@diagram-craft/model/diagramLayer';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { ContextMenuTarget, Help, UIActions } from '@diagram-craft/canvas/context';
+import { ContextMenuTarget, DialogCommand, Help, UIActions } from '@diagram-craft/canvas/context';
 import { ImageInsertDialog } from './react-app/ImageInsertDialog';
 import { TableInsertDialog } from './react-app/TableInsertDialog';
 import { RectTool } from '@diagram-craft/canvas-app/tools/rectTool';
@@ -144,16 +144,15 @@ export const App = (props: {
         edgeId: edgId
       });
     },
-    showDialog: <T extends keyof UIActions.Dialogs>(dialogState: UIActions.DialogState<T>) => {
+    showDialog: (dialog: DialogCommand<unknown, unknown>) => {
       setDialogState({
-        ...dialogState,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        onOk: (data: any) => {
-          dialogState.onOk(data);
+        ...dialog,
+        onOk: (data: unknown) => {
+          dialog.onOk(data);
           setDialogState(undefined);
         },
         onCancel: () => {
-          dialogState.onCancel();
+          dialog.onCancel();
           setDialogState(undefined);
         }
       });
@@ -198,9 +197,8 @@ export const App = (props: {
 
   const [dirty, setDirty] = useState(Autosave.exists());
   const [popoverState, setPopoverState] = useState<NodeTypePopupState>(NodeTypePopup.INITIAL_STATE);
-  const [dialogState, setDialogState] = useState<
-    UIActions.DialogState<keyof UIActions.Dialogs> | undefined
-  >(undefined);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [dialogState, setDialogState] = useState<DialogCommand<any, any> | undefined>(undefined);
   const contextMenuTarget = useRef<ContextMenuTarget | null>(null);
 
   const svgRef = useRef<SVGSVGElement>(null);
@@ -267,47 +265,45 @@ export const App = (props: {
       >
         {/* Dialogs */}
         <FileDialog
-          open={dialogState?.name === 'fileOpen'}
-          onOpen={dialogState?.onOk}
+          open={dialogState?.id === 'fileOpen'}
+          {...dialogState?.props}
+          onOk={dialogState?.onOk}
           onCancel={dialogState?.onCancel}
         />
         <ImageInsertDialog
-          open={dialogState?.name === 'imageInsert'}
-          onInsert={dialogState?.onOk}
+          open={dialogState?.id === 'imageInsert'}
+          {...dialogState?.props}
+          onOk={dialogState?.onOk}
           onCancel={dialogState?.onCancel}
-          diagram={$d}
         />
         <TableInsertDialog
-          open={dialogState?.name === 'tableInsert'}
-          onInsert={dialogState?.onOk}
+          open={dialogState?.id === 'tableInsert'}
+          {...dialogState?.props}
+          onOk={dialogState?.onOk}
           onCancel={dialogState?.onCancel}
         />
         <ReferenceLayerDialog
-          open={dialogState?.name === 'newReferenceLayer'}
-          diagram={$d}
-          /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-          onCreate={dialogState?.onOk as any}
+          open={dialogState?.id === 'newReferenceLayer'}
+          {...dialogState?.props}
+          onOk={dialogState?.onOk}
           onCancel={dialogState?.onCancel}
         />
         <StringInputDialog
-          open={dialogState?.name === 'stringInput'}
+          open={dialogState?.id === 'stringInput'}
           {...dialogState?.props}
-          /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-          onSave={dialogState?.onOk as any}
+          onOk={dialogState?.onOk}
           onCancel={dialogState?.onCancel}
         />
         <RuleEditorDialog
-          open={dialogState?.name === 'ruleEditor'}
+          open={dialogState?.id === 'ruleEditor'}
           {...dialogState?.props}
-          /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-          onSave={dialogState?.onOk as any}
+          onOk={dialogState?.onOk}
           onCancel={dialogState?.onCancel}
         />
         <MessageDialog
-          open={dialogState?.name === 'message'}
+          open={dialogState?.id === 'message'}
           {...dialogState?.props}
-          /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-          onOk={dialogState?.onOk as any}
+          onOk={dialogState?.onOk}
           onCancel={dialogState?.onCancel}
         />
 

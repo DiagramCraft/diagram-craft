@@ -21,6 +21,7 @@ import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { Button } from '@diagram-craft/app-components/Button';
 import { useApplication, useDiagram } from '../../../application';
+import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 
 const makeTemplate = (): DataSchema => {
   return {
@@ -209,35 +210,35 @@ export const ObjectDataToolWindow = () => {
                             </button>
                             <button
                               onClick={() => {
-                                application.ui.showDialog({
-                                  name: 'message',
-                                  props: {
-                                    title: 'Confirm delete',
-                                    message: 'Are you sure you want to delete this schema?',
-                                    okLabel: 'Yes',
-                                    okType: 'danger',
-                                    cancelLabel: 'No'
-                                  },
-                                  onOk: () => {
-                                    const uow = new UnitOfWork($d, true);
-                                    const schemas = $d.document.schemas;
-                                    schemas.removeSchema(s, uow);
+                                application.ui.showDialog(
+                                  new MessageDialogCommand(
+                                    {
+                                      title: 'Confirm delete',
+                                      message: 'Are you sure you want to delete this schema?',
+                                      okLabel: 'Yes',
+                                      okType: 'danger',
+                                      cancelLabel: 'No'
+                                    },
+                                    () => {
+                                      const uow = new UnitOfWork($d, true);
+                                      const schemas = $d.document.schemas;
+                                      schemas.removeSchema(s, uow);
 
-                                    const snapshots = uow.commit();
-                                    $d.undoManager.add(
-                                      new CompoundUndoableAction([
-                                        new DeleteSchemaUndoableAction(uow.diagram, s),
-                                        new SnapshotUndoableAction(
-                                          'Delete schema',
-                                          uow.diagram,
-                                          snapshots
-                                        )
-                                      ])
-                                    );
-                                    redraw();
-                                  },
-                                  onCancel: () => {}
-                                });
+                                      const snapshots = uow.commit();
+                                      $d.undoManager.add(
+                                        new CompoundUndoableAction([
+                                          new DeleteSchemaUndoableAction(uow.diagram, s),
+                                          new SnapshotUndoableAction(
+                                            'Delete schema',
+                                            uow.diagram,
+                                            snapshots
+                                          )
+                                        ])
+                                      );
+                                      redraw();
+                                    }
+                                  )
+                                );
                               }}
                             >
                               <TbTrash />

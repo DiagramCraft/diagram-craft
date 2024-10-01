@@ -1,34 +1,14 @@
-import { ComponentProps, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
+import { StringInputDialogProps } from '@diagram-craft/canvas-app/dialogs';
 
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace Extensions {
-    interface Dialogs {
-      stringInput: {
-        props: {
-          value?: string;
-          title?: string;
-          description?: string;
-          label?: string;
-          saveButtonLabel?: string;
-        };
-        callback: string;
-      };
-    }
-  }
-}
-
-export const StringInputDialog = (props: {
+type Props = {
   open: boolean;
-  value?: string;
-  title?: string;
-  description?: string;
-  label?: string;
-  saveButtonLabel?: string;
-  onSave?: (v: string) => void;
+  onOk: (v: string) => void;
   onCancel?: () => void;
-}) => {
+} & StringInputDialogProps;
+
+export const StringInputDialog = (props: Props) => {
   const ref = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (!props.open) return;
@@ -48,7 +28,7 @@ export const StringInputDialog = (props: {
           label: props.saveButtonLabel ?? 'Ok',
           type: 'default',
           onClick: () => {
-            props.onSave?.(ref.current!.value);
+            props.onOk?.(ref.current!.value);
           }
         },
         { label: 'Cancel', type: 'cancel', onClick: () => {} }
@@ -72,5 +52,3 @@ export const StringInputDialog = (props: {
     </Dialog>
   );
 };
-
-export type StringInputDialogState = Omit<ComponentProps<typeof StringInputDialog>, 'onClose'>;

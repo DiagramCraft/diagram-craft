@@ -18,20 +18,7 @@ import {
   AdjustmentRuleClause
 } from '@diagram-craft/model/diagramLayerRuleTypes';
 import { HideAction } from './HideAction';
-
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace Extensions {
-    interface Dialogs {
-      ruleEditor: {
-        props: {
-          rule: AdjustmentRule;
-        };
-        callback: AdjustmentRule;
-      };
-    }
-  }
-}
+import { RuleEditorDialogProps } from '@diagram-craft/canvas-app/dialogs';
 
 export type EditableAdjustmentRuleAction = Partial<AdjustmentRuleAction> & { kind?: string };
 export type EditableAdjustmentRuleClause = Partial<AdjustmentRuleClause>;
@@ -275,7 +262,7 @@ export const RuleEditorDialog = (props: Props) => {
               .filter(a => a.type !== undefined)
               .map(a => a as AdjustmentRuleAction);
 
-            props.onSave(rule);
+            props.onOk(rule);
           },
           label: 'Save'
         }
@@ -452,7 +439,6 @@ export const RuleEditorDialog = (props: Props) => {
 
 type Props = {
   open: boolean;
-  onSave: (rule: AdjustmentRule) => void;
-  onCancel: (() => void) | undefined;
-  rule?: AdjustmentRule;
-};
+  onOk: (rule: AdjustmentRule) => void;
+  onCancel?: () => void;
+} & RuleEditorDialogProps;

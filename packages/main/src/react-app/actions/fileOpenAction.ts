@@ -1,5 +1,6 @@
 import { AbstractAction } from '@diagram-craft/canvas/action';
 import { Application } from '../../application';
+import { FileDialog } from '../FileDialog';
 
 export const fileOpenActions = (application: Application) => ({
   FILE_OPEN: new FileOpenAction(application)
@@ -7,16 +8,6 @@ export const fileOpenActions = (application: Application) => ({
 
 declare global {
   interface ActionMap extends ReturnType<typeof fileOpenActions> {}
-
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace Extensions {
-    interface Dialogs {
-      fileOpen: {
-        props: Record<string, never>;
-        callback: string;
-      };
-    }
-  }
 }
 
 class FileOpenAction extends AbstractAction<unknown, Application> {
@@ -25,13 +16,10 @@ class FileOpenAction extends AbstractAction<unknown, Application> {
   }
 
   execute(): void {
-    this.context.ui.showDialog({
-      name: 'fileOpen',
-      props: {},
-      onOk: data => {
-        this.context.ui.loadDocument(data as string);
-      },
-      onCancel: () => {}
-    });
+    this.context.ui.showDialog(
+      FileDialog.create((data: string) => {
+        this.context.ui.loadDocument(data);
+      })
+    );
   }
 }

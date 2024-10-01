@@ -23,6 +23,7 @@ import { StringInputDialog } from '../../components/StringInputDialog';
 import { JSONDialog } from '../../components/JSONDialog';
 import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 import { useApplication, useDiagram } from '../../../application';
+import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 
 export const ElementStylesheetPanel = (props: Props) => {
   const $d = useDiagram();
@@ -138,31 +139,31 @@ export const ElementStylesheetPanel = (props: Props) => {
                 <DropdownMenu.Item
                   className="cmp-context-menu__item"
                   onSelect={() => {
-                    application.ui.showDialog({
-                      name: 'message',
-                      props: {
-                        title: 'Confirm delete',
-                        message: 'Are you sure you want to delete this style?',
-                        okLabel: 'Yes',
-                        okType: 'danger',
-                        cancelLabel: 'No'
-                      },
-                      onOk: () => {
-                        const uow = new UnitOfWork($d, true);
+                    application.ui.showDialog(
+                      new MessageDialogCommand(
+                        {
+                          title: 'Confirm delete',
+                          message: 'Are you sure you want to delete this style?',
+                          okLabel: 'Yes',
+                          okType: 'danger',
+                          cancelLabel: 'No'
+                        },
+                        () => {
+                          const uow = new UnitOfWork($d, true);
 
-                        const s = $d.document.styles.get($s.val)!;
-                        $d.document.styles.deleteStylesheet($s.val, uow);
+                          const s = $d.document.styles.get($s.val)!;
+                          $d.document.styles.deleteStylesheet($s.val, uow);
 
-                        const snapshots = uow.commit();
-                        uow.diagram.undoManager.add(
-                          new CompoundUndoableAction([
-                            new DeleteStylesheetUndoableAction(uow.diagram, s),
-                            new SnapshotUndoableAction('Delete style', uow.diagram, snapshots)
-                          ])
-                        );
-                      },
-                      onCancel: () => {}
-                    });
+                          const snapshots = uow.commit();
+                          uow.diagram.undoManager.add(
+                            new CompoundUndoableAction([
+                              new DeleteStylesheetUndoableAction(uow.diagram, s),
+                              new SnapshotUndoableAction('Delete style', uow.diagram, snapshots)
+                            ])
+                          );
+                        }
+                      )
+                    );
                   }}
                 >
                   Delete
@@ -195,7 +196,7 @@ export const ElementStylesheetPanel = (props: Props) => {
             title={'New style'}
             saveButtonLabel={'Create'}
             value={renameDialog?.name ?? ''}
-            onSave={v => {
+            onOk={v => {
               const id = newid();
               const commonProps = getCommonProps(
                 $d.selectionState.elements.map(e => e.editProps)
@@ -254,7 +255,7 @@ export const ElementStylesheetPanel = (props: Props) => {
             description={'Enter a new name for the style.'}
             saveButtonLabel={'Rename'}
             value={renameDialog?.name ?? ''}
-            onSave={v => {
+            onOk={v => {
               const uow = new UnitOfWork($d, true);
               const stylesheet = $d.document.styles.get(renameDialog!.id)!;
               stylesheet.setName(v, uow);

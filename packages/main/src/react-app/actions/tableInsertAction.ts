@@ -6,6 +6,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
 import { Application } from '../../application';
+import { TableInsertDialog } from '../TableInsertDialog';
 
 export const tableInsertActions = (application: Application) => ({
   TABLE_INSERT: new TableInsertAction(application)
@@ -13,16 +14,6 @@ export const tableInsertActions = (application: Application) => ({
 
 declare global {
   interface ActionMap extends ReturnType<typeof tableInsertActions> {}
-
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace Extensions {
-    interface Dialogs {
-      tableInsert: {
-        props: Record<string, never>;
-        callback: { width: number; height: number };
-      };
-    }
-  }
 }
 
 class TableInsertAction extends AbstractAction<undefined, Application> {
@@ -43,10 +34,8 @@ class TableInsertAction extends AbstractAction<undefined, Application> {
 
     assertRegularLayer($d.activeLayer);
 
-    this.context.ui.showDialog({
-      name: 'tableInsert',
-      props: {},
-      onOk: async props => {
+    this.context.ui.showDialog(
+      TableInsertDialog.create(async props => {
         const { width, height } = props as { width: number; height: number };
 
         const colWidth = 100;
@@ -105,8 +94,7 @@ class TableInsertAction extends AbstractAction<undefined, Application> {
         $d.undoManager.addAndExecute(
           new ElementAddUndoableAction(elements, $d, $d.activeLayer, 'Add table')
         );
-      },
-      onCancel: () => {}
-    });
+      })
+    );
   }
 }

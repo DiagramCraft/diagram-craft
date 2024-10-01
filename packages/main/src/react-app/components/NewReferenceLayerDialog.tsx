@@ -3,24 +3,11 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { useEffect, useRef, useState } from 'react';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { Select } from '@diagram-craft/app-components/Select';
-
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace Extensions {
-    interface Dialogs {
-      newReferenceLayer: {
-        props: Record<string, never>;
-        callback: {
-          diagramId: string;
-          layerId: string;
-          name: string;
-        };
-      };
-    }
-  }
-}
+import { useDiagram } from '../../application';
+import { ReferenceLayerDialogSaveArg } from '@diagram-craft/canvas-app/dialogs';
 
 export const ReferenceLayerDialog = (props: Props) => {
+  const $d = useDiagram();
   const [selectedDiagram, setSelectedDiagram] = useState<Diagram | null>(null);
   const [selectedLayer, setSelectedLayer] = useState<Layer | null>(null);
   const ref = useRef<HTMLInputElement>(null);
@@ -32,7 +19,7 @@ export const ReferenceLayerDialog = (props: Props) => {
   });
 
   const onDiagramChange = (diagram: string | undefined) => {
-    setSelectedDiagram(props.diagram.document.getById(diagram!)!);
+    setSelectedDiagram($d.document.getById(diagram!)!);
     setSelectedLayer(null);
   };
 
@@ -57,7 +44,7 @@ export const ReferenceLayerDialog = (props: Props) => {
           onClick: () => {
             // TODO: Better feedback for missing values
             if (selectedDiagram?.id && selectedLayer?.id && ref.current?.value) {
-              props.onCreate?.({
+              props.onOk?.({
                 diagramId: selectedDiagram.id,
                 layerId: selectedLayer.id,
                 name: ref.current!.value
@@ -93,8 +80,8 @@ export const ReferenceLayerDialog = (props: Props) => {
             onChange={onDiagramChange}
             placeholder={'Sheet'}
           >
-            {props.diagram.document.diagrams
-              .filter(d => d !== props.diagram)
+            {$d.document.diagrams
+              .filter(d => d !== $d)
               .map(d => {
                 return (
                   <Select.Item value={d.id} key={d.id}>
@@ -125,7 +112,6 @@ export const ReferenceLayerDialog = (props: Props) => {
 
 type Props = {
   open: boolean;
-  onCreate?: (data: { diagramId: string; layerId: string; name: string }) => void;
+  onOk?: (data: ReferenceLayerDialogSaveArg) => void;
   onCancel?: () => void;
-  diagram: Diagram;
 };
