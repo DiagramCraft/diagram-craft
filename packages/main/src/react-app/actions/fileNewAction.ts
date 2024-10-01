@@ -15,6 +15,6 @@ class FileNewAction extends AbstractAction<undefined, Application> {
   }
 
   execute(): void {
-    this.context.ui.newDocument?.();
+    this.context.ui.newDocument();
   }
 }

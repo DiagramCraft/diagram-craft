@@ -29,7 +29,7 @@ class FileOpenAction extends AbstractAction<unknown, Application> {
       name: 'fileOpen',
       props: {},
       onOk: data => {
-        this.context.ui.loadFromUrl?.(data as string);
+        this.context.ui.loadDocument(data as string);
       },
       onCancel: () => {}
     });

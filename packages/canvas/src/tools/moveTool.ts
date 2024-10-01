@@ -1,5 +1,5 @@
 import { AbstractTool, BACKGROUND } from '../tool';
-import { Context } from '../ApplicationTriggers';
+import { Context } from '../context';
 import { DragDopManager, Modifiers } from '../dragDropManager';
 import { MarqueeDrag } from '../drag/marqueeDrag';
 import { MoveDrag } from '../drag/moveDrag';

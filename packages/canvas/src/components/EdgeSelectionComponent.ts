@@ -6,7 +6,7 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { $c } from '@diagram-craft/utils/classname';
 import { Zoom } from './zoom';
-import { Context } from '../ApplicationTriggers';
+import { Context } from '../context';
 
 export class EdgeSelectionComponent extends Component<Props> {
   render(props: Props) {

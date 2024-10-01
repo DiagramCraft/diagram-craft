@@ -17,7 +17,7 @@ import { getAnchorPosition, getClosestAnchor } from '@diagram-craft/model/anchor
 import { Box } from '@diagram-craft/geometry/box';
 import { assert } from '@diagram-craft/utils/assert';
 import { Line } from '@diagram-craft/geometry/line';
-import { Context } from '../ApplicationTriggers';
+import { Context } from '../context';
 import { SnapManager } from '@diagram-craft/model/snap/snapManager';
 
 export class EdgeEndpointMoveDrag extends AbstractDrag {

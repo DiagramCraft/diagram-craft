@@ -31,7 +31,7 @@ import { rawHTML } from './component/vdom';
 import styles from './canvas.css?inline';
 import { Browser } from './browser';
 import { PanTool } from '@diagram-craft/canvas-app/tools/panTool';
-import { Context } from './ApplicationTriggers';
+import { Context } from './context';
 import { unique } from '@diagram-craft/utils/array';
 import { assertRegularLayer, RegularLayer } from '@diagram-craft/model/diagramLayer';
 import { assertReferenceLayer, ReferenceLayer } from '@diagram-craft/model/diagramLayerReference';

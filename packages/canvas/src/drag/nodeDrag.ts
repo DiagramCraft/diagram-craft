@@ -3,7 +3,7 @@ import { AbstractDrag, Modifiers } from '../dragDropManager';
 import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
-import { Context } from '../ApplicationTriggers';
+import { Context } from '../context';
 
 export class NodeDrag extends AbstractDrag {
   private startTime: number;

@@ -23,7 +23,7 @@ import { OnDoubleClick, OnMouseDown } from '../context';
 import { getHighlights } from '../highlight';
 import { EdgeEndpointMoveDrag } from '../drag/edgeEndpointMoveDrag';
 import { Zoom } from './zoom';
-import { Context } from '../ApplicationTriggers';
+import { Context } from '../context';
 
 export type EdgeComponentProps = {
   element: DiagramEdge;

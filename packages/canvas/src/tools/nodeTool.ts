@@ -1,6 +1,6 @@
 import { AbstractTool, BACKGROUND } from '../tool';
 import { addHighlight, Highlights, removeHighlight } from '../highlight';
-import { Context } from '../ApplicationTriggers';
+import { Context } from '../context';
 import { Point } from '@diagram-craft/geometry/point';
 import { DragDopManager, Modifiers } from '../dragDropManager';
 import { Diagram } from '@diagram-craft/model/diagram';

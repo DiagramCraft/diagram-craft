@@ -26,7 +26,7 @@ import { OnDoubleClick, OnMouseDown } from '../context';
 import { getHighlights, getHighlightValue, hasHighlight, Highlights } from '../highlight';
 import { Zoom } from './zoom';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { Context } from '../ApplicationTriggers';
+import { Context } from '../context';
 
 export type NodeComponentProps = {
   element: DiagramNode;

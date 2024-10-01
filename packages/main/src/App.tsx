@@ -43,11 +43,7 @@ import { FileDialog } from './react-app/FileDialog';
 import { newid } from '@diagram-craft/utils/id';
 import { RegularLayer } from '@diagram-craft/model/diagramLayer';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import {
-  ApplicationTriggers,
-  ContextMenuTarget,
-  Help
-} from '@diagram-craft/canvas/ApplicationTriggers';
+import { ContextMenuTarget, Help, UIActions } from '@diagram-craft/canvas/context';
 import { ImageInsertDialog } from './react-app/ImageInsertDialog';
 import { TableInsertDialog } from './react-app/TableInsertDialog';
 import { RectTool } from '@diagram-craft/canvas-app/tools/rectTool';
@@ -60,7 +56,7 @@ import { MainToolbar } from './react-app/MainToolbar';
 import { AuxToolbar } from './react-app/AuxToolbar';
 import { RightSidebar } from './react-app/RightSidebar';
 import { LeftSidebar } from './react-app/LeftSidebar';
-import { Application, ApplicationContext } from './application';
+import { Application, ApplicationContext, ApplicationUIActions } from './application';
 import { UserState } from './UserState';
 import { HelpState } from './react-app/HelpState';
 
@@ -97,17 +93,6 @@ const updateApplicationModel = ($d: Diagram, application: Application) => {
   application.ready = true;
 };
 
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace Extensions {
-    interface ApplicationTriggers {
-      loadFromUrl?: (url: string) => void;
-      newDocument?: () => void;
-      clearDirty?: () => void;
-    }
-  }
-}
-
 export const App = (props: {
   url?: string;
   doc: DiagramDocument;
@@ -139,12 +124,12 @@ export const App = (props: {
     }
   };
 
-  const applicationTriggers: ApplicationTriggers = {
-    showContextMenu: <T extends keyof ApplicationTriggers.ContextMenus>(
+  const uiActions: ApplicationUIActions = {
+    showContextMenu: <T extends keyof UIActions.ContextMenus>(
       type: T,
       point: Point,
       mouseEvent: MouseEvent,
-      args: ApplicationTriggers.ContextMenus[T]
+      args: UIActions.ContextMenus[T]
     ) => {
       oncePerEvent(mouseEvent, () => {
         contextMenuTarget.current = { type, ...args, pos: point };
@@ -159,9 +144,7 @@ export const App = (props: {
         edgeId: edgId
       });
     },
-    showDialog: <T extends keyof ApplicationTriggers.Dialogs>(
-      dialogState: ApplicationTriggers.DialogState<T>
-    ) => {
+    showDialog: <T extends keyof UIActions.Dialogs>(dialogState: UIActions.DialogState<T>) => {
       setDialogState({
         ...dialogState,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -175,7 +158,7 @@ export const App = (props: {
         }
       });
     },
-    loadFromUrl: async (url: string) => {
+    loadDocument: async (url: string) => {
       const doc = await loadFileFromUrl(url, props.documentFactory, props.diagramFactory);
       doc.url = url;
 
@@ -206,7 +189,7 @@ export const App = (props: {
       setDirty(false);
     }
   };
-  application.current.ui = applicationTriggers;
+  application.current.ui = uiActions;
   application.current.help = help;
 
   useOnChange(props.doc, () => {
@@ -216,7 +199,7 @@ export const App = (props: {
   const [dirty, setDirty] = useState(Autosave.exists());
   const [popoverState, setPopoverState] = useState<NodeTypePopupState>(NodeTypePopup.INITIAL_STATE);
   const [dialogState, setDialogState] = useState<
-    ApplicationTriggers.DialogState<keyof ApplicationTriggers.Dialogs> | undefined
+    UIActions.DialogState<keyof UIActions.Dialogs> | undefined
   >(undefined);
   const contextMenuTarget = useRef<ContextMenuTarget | null>(null);
 

@@ -1,6 +1,6 @@
 import { ActionContextMenuItem } from '../components/ActionContextMenuItem';
 import * as ContextMenu from '@radix-ui/react-context-menu';
-import { ContextMenuTarget } from '@diagram-craft/canvas/ApplicationTriggers';
+import { ContextMenuTarget } from '@diagram-craft/canvas/context';
 
 export const CanvasContextMenu = (props: Props) => {
   return (

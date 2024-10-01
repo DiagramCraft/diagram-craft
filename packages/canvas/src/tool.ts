@@ -1,7 +1,7 @@
 import { Point } from '@diagram-craft/geometry/point';
 import { DragDopManager, Modifiers } from './dragDropManager';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { Context } from './ApplicationTriggers';
+import { Context } from './context';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace

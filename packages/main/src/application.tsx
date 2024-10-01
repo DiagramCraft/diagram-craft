@@ -2,8 +2,15 @@ import { Application as BaseApplication } from '@diagram-craft/canvas-app/applic
 import React from 'react';
 import { assert } from '@diagram-craft/utils/assert';
 import { KeyMap } from '@diagram-craft/canvas/keyMap';
+import { UIActions } from '@diagram-craft/canvas/context';
 
-export class Application extends BaseApplication {
+export interface ApplicationUIActions extends UIActions {
+  loadDocument: (url: string) => void;
+  newDocument: () => void;
+  clearDirty: () => void;
+}
+
+export class Application extends BaseApplication<ApplicationUIActions> {
   constructor() {
     super();
   }

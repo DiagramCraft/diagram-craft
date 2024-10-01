@@ -1,17 +1,16 @@
 import { model } from '@diagram-craft/canvas/modelState';
-import { ApplicationTriggers, Context, Help } from '@diagram-craft/canvas/ApplicationTriggers';
+import { UIActions, Context, Help } from '@diagram-craft/canvas/context';
 import { Observable } from '@diagram-craft/canvas/component/component';
 import { ToolType } from '@diagram-craft/canvas/tool';
 
-export interface BaseApplicationInterface<U extends ApplicationTriggers = ApplicationTriggers>
-  extends Context {
+export interface BaseApplicationInterface<U extends UIActions = UIActions> extends Context {
   model: typeof model;
   ui: U;
 }
 
-export class Application implements BaseApplicationInterface {
+export class Application<U extends UIActions = UIActions> implements BaseApplicationInterface<U> {
   model = model;
-  #ui: ApplicationTriggers | undefined;
+  #ui: U | undefined;
   #help: Help | undefined;
   actions: Partial<ActionMap> = {};
   tool = new Observable<ToolType>('move');
@@ -20,7 +19,7 @@ export class Application implements BaseApplicationInterface {
     return this.#ui!;
   }
 
-  set ui(triggers: ApplicationTriggers) {
+  set ui(triggers: U) {
     this.#ui = triggers;
   }
 

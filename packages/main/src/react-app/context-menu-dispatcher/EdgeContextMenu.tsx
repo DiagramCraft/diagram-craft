@@ -1,5 +1,5 @@
 import { ActionContextMenuItem } from '../components/ActionContextMenuItem';
-import { ContextMenuTarget } from '@diagram-craft/canvas/ApplicationTriggers';
+import { ContextMenuTarget } from '@diagram-craft/canvas/context';
 
 export const EdgeContextMenu = (props: Props) => {
   return (

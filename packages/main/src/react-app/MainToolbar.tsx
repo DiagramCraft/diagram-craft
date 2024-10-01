@@ -66,7 +66,7 @@ export const MainToolbar = ({ dirty }: { dirty: boolean }) => {
           onDirtyChange={
             application.model.activeDocument.url
               ? async () => {
-                  application.ui.loadFromUrl?.(application.model.activeDocument.url!);
+                  application.ui.loadDocument(application.model.activeDocument.url!);
                 }
               : undefined
           }

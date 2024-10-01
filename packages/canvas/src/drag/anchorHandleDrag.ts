@@ -9,7 +9,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { Direction } from '@diagram-craft/geometry/direction';
 import { createLinkedNode } from '@diagram-craft/canvas-app/actions/linkedNodeAction';
-import { Context } from '../ApplicationTriggers';
+import { Context } from '../context';
 import { assertRegularLayer, RegularLayer } from '@diagram-craft/model/diagramLayer';
 
 export class AnchorHandleDrag extends AbstractDrag {
