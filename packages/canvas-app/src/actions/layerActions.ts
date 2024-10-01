@@ -49,7 +49,7 @@ export class LayerDeleteAction extends AbstractAction<LayerActionArg, Applicatio
     precondition.is.present(id);
 
     // TODO: This should be a confirm dialog
-    this.context.ui.showDialog?.({
+    this.context.ui.showDialog({
       name: 'message',
       props: {
         title: 'Delete layer',
@@ -193,7 +193,7 @@ export class LayerRenameAction extends AbstractAction<LayerActionArg, Applicatio
     const layer = this.context.model.activeDiagram.layers.byId(id);
     assert.present(layer);
 
-    this.context.ui.showDialog?.({
+    this.context.ui.showDialog({
       name: 'stringInput',
       props: {
         title: 'Rename layer',
@@ -221,7 +221,7 @@ export class LayerAddAction extends AbstractAction<undefined, Application> {
 
   execute(): void {
     if (this.type === 'reference') {
-      this.context.ui.showDialog?.({
+      this.context.ui.showDialog({
         name: 'newReferenceLayer',
         props: {},
         onOk: async ({ diagramId, layerId, name }) => {
@@ -247,7 +247,7 @@ export class LayerAddAction extends AbstractAction<undefined, Application> {
         onCancel: () => {}
       });
     } else {
-      this.context.ui.showDialog?.({
+      this.context.ui.showDialog({
         name: 'stringInput',
         props: {
           title: 'New adjustment layer',

@@ -43,7 +43,7 @@ class TableInsertAction extends AbstractAction<undefined, Application> {
 
     assertRegularLayer($d.activeLayer);
 
-    this.context.ui.showDialog?.({
+    this.context.ui.showDialog({
       name: 'tableInsert',
       props: {},
       onOk: async props => {

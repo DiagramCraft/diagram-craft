@@ -138,7 +138,7 @@ export const ElementStylesheetPanel = (props: Props) => {
                 <DropdownMenu.Item
                   className="cmp-context-menu__item"
                   onSelect={() => {
-                    application.ui.showDialog?.({
+                    application.ui.showDialog({
                       name: 'message',
                       props: {
                         title: 'Confirm delete',

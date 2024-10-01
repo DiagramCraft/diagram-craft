@@ -25,7 +25,7 @@ class FileOpenAction extends AbstractAction<unknown, Application> {
   }
 
   execute(): void {
-    this.context.ui.showDialog?.({
+    this.context.ui.showDialog({
       name: 'fileOpen',
       props: {},
       onOk: data => {

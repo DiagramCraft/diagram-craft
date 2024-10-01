@@ -9,16 +9,16 @@ export type OnMouseDown = (id: string, coord: Point, modifiers: Modifiers) => vo
 export type OnDoubleClick = (id: string, coord: Point) => void;
 
 export interface UIActions {
-  showContextMenu?: <T extends keyof UIActions.ContextMenus>(
+  showContextMenu: <T extends keyof UIActions.ContextMenus>(
     type: T,
     point: Point,
     mouseEvent: MouseEvent,
     args: UIActions.ContextMenus[T]
   ) => void;
 
-  showNodeLinkPopup?: (point: Point, sourceNodeId: string, edgeId: string) => void;
+  showNodeLinkPopup: (point: Point, sourceNodeId: string, edgeId: string) => void;
 
-  showDialog?: <T extends keyof UIActions.Dialogs>(state: UIActions.DialogState<T>) => void;
+  showDialog: <T extends keyof UIActions.Dialogs>(state: UIActions.DialogState<T>) => void;
 }
 
 export interface Help {

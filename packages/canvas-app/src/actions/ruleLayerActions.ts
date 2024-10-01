@@ -32,7 +32,7 @@ export class RuleLayerDeleteAction extends AbstractAction<LayerActionArg, Applic
     precondition.is.present(id);
 
     // TODO: This should be a confirm dialog
-    this.context.ui.showDialog?.({
+    this.context.ui.showDialog({
       name: 'message',
       props: {
         title: 'Delete layer',
@@ -81,7 +81,7 @@ export class RuleLayerEditAction extends AbstractAction<LayerActionArg, Applicat
 
     assert.present(rule, 'Rule with id ' + ruleId + ' not found');
 
-    this.context.ui.showDialog?.({
+    this.context.ui.showDialog({
       name: 'ruleEditor',
       props: {
         rule: rule
@@ -133,7 +133,7 @@ export class RuleLayerAddAction extends AbstractAction<LayerActionArg, Applicati
 
     assert.present(rule);
 
-    this.context.ui.showDialog?.({
+    this.context.ui.showDialog({
       name: 'ruleEditor',
       props: {
         rule: rule

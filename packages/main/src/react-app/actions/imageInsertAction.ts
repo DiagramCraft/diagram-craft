@@ -38,7 +38,7 @@ class ImageInsertAction extends AbstractAction<undefined, Application> {
   }
 
   execute(): void {
-    this.context.ui?.showDialog?.({
+    this.context.ui?.showDialog({
       name: 'imageInsert',
       props: {},
       onOk: async data => {

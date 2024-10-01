@@ -338,14 +338,14 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
                 );
 
                 if (isClickOnSelection) {
-                  props.context.ui.showContextMenu?.(
+                  props.context.ui.showContextMenu(
                     'selection',
                     diagram.viewBox.toDiagramPoint(point),
                     event,
                     {}
                   );
                 } else {
-                  props.context.ui.showContextMenu?.(
+                  props.context.ui.showContextMenu(
                     'canvas',
                     diagram.viewBox.toDiagramPoint(point),
                     event,

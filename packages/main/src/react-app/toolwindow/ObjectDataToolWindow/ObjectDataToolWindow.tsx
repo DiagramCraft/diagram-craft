@@ -209,7 +209,7 @@ export const ObjectDataToolWindow = () => {
                             </button>
                             <button
                               onClick={() => {
-                                application.ui.showDialog?.({
+                                application.ui.showDialog({
                                   name: 'message',
                                   props: {
                                     title: 'Confirm delete',

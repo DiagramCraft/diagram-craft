@@ -92,7 +92,7 @@ export class AnchorHandleDrag extends AbstractDrag {
     // In case we have connected to an existing node, we don't need to show the popup
     if (this.edge.end.isConnected) return;
 
-    this.context.ui.showNodeLinkPopup?.(this.edge.end.position, this.node!.id, this.edge.id);
+    this.context.ui.showNodeLinkPopup(this.edge.end.position, this.node!.id, this.edge.id);
   }
 
   onDrag(coord: Point, _modifiers: Modifiers): void {
