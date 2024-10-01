@@ -39,7 +39,7 @@ class FileSaveAction extends AbstractAction<undefined, Application> {
       if (data.status !== 'ok') {
         console.error('Failed to save document');
       } else {
-        this.context.ui.clearDirty();
+        this.context.file.clearDirty();
       }
     });
   }

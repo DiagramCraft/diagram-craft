@@ -60,7 +60,7 @@ export const MainMenu = ({ userState }: Props) => {
                           <DropdownMenu.Item
                             key={url}
                             className="cmp-context-menu__item"
-                            onSelect={() => application.ui.loadDocument(url)}
+                            onSelect={() => application.file.loadDocument(url)}
                           >
                             {urlToName(url)}
                           </DropdownMenu.Item>

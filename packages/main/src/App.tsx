@@ -56,7 +56,7 @@ import { MainToolbar } from './react-app/MainToolbar';
 import { AuxToolbar } from './react-app/AuxToolbar';
 import { RightSidebar } from './react-app/RightSidebar';
 import { LeftSidebar } from './react-app/LeftSidebar';
-import { Application, ApplicationContext, ApplicationUIActions } from './application';
+import { Application, ApplicationContext } from './application';
 import { UserState } from './UserState';
 import { HelpState } from './react-app/HelpState';
 
@@ -124,7 +124,7 @@ export const App = (props: {
     }
   };
 
-  const uiActions: ApplicationUIActions = {
+  const uiActions: UIActions = {
     showContextMenu: <T extends keyof UIActions.ContextMenus>(
       type: T,
       point: Point,
@@ -156,7 +156,11 @@ export const App = (props: {
           setDialogState(undefined);
         }
       });
-    },
+    }
+  };
+  application.current.ui = uiActions;
+  application.current.help = help;
+  application.current.file = {
     loadDocument: async (url: string) => {
       const doc = await loadFileFromUrl(url, props.documentFactory, props.diagramFactory);
       doc.url = url;
@@ -188,8 +192,6 @@ export const App = (props: {
       setDirty(false);
     }
   };
-  application.current.ui = uiActions;
-  application.current.help = help;
 
   useOnChange(props.doc, () => {
     updateApplicationModel(props.doc.diagrams[0], application.current);

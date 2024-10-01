@@ -18,7 +18,7 @@ class FileOpenAction extends AbstractAction<unknown, Application> {
   execute(): void {
     this.context.ui.showDialog(
       FileDialog.create((data: string) => {
-        this.context.ui.loadDocument(data);
+        this.context.file.loadDocument(data);
       })
     );
   }
