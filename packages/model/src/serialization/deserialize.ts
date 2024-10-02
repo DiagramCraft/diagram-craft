@@ -190,10 +190,10 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
   }
 
   if (document.styles) {
-    for (const edgeStyle of doc.styles.edgeStyles) {
+    for (const edgeStyle of document.styles.edgeStyles) {
       doc.styles.addStylesheet(deserializeStylesheet(edgeStyle));
     }
-    for (const nodeStyle of doc.styles.nodeStyles) {
+    for (const nodeStyle of document.styles.nodeStyles) {
       doc.styles.addStylesheet(deserializeStylesheet(nodeStyle));
     }
   }
