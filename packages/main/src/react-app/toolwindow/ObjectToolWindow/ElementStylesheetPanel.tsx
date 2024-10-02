@@ -19,11 +19,11 @@ import { ToolWindowPanel } from '../ToolWindowPanel';
 import { Select } from '@diagram-craft/app-components/Select';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { TbDots } from 'react-icons/tb';
-import { StringInputDialog } from '../../components/StringInputDialog';
 import { JSONDialog } from '../../components/JSONDialog';
 import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 import { useApplication, useDiagram } from '../../../application';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
+import { StringInputDialogCommand } from '@diagram-craft/canvas-app/dialogs';
 
 export const ElementStylesheetPanel = (props: Props) => {
   const $d = useDiagram();
@@ -38,11 +38,7 @@ export const ElementStylesheetPanel = (props: Props) => {
   const style = useElementMetadata($d, 'style', DefaultStyles.node.default);
   const textStyle = useElementMetadata($d, 'textStyle', DefaultStyles.text.default);
 
-  const [newDialog, setNewDialog] = useState(false);
   const [modifyDialog, setModifyDialog] = useState<Stylesheet<StylesheetType> | undefined>(
-    undefined
-  );
-  const [renameDialog, setRenameDialog] = useState<Stylesheet<StylesheetType> | undefined>(
     undefined
   );
 
@@ -131,7 +127,51 @@ export const ElementStylesheetPanel = (props: Props) => {
                 <DropdownMenu.Item
                   className="cmp-context-menu__item"
                   onSelect={() => {
-                    setNewDialog(true);
+                    application.ui.showDialog(
+                      new StringInputDialogCommand(
+                        {
+                          label: 'Name',
+                          title: 'New style',
+                          saveButtonLabel: 'Create',
+                          value: ''
+                        },
+                        v => {
+                          const id = newid();
+                          const commonProps = getCommonProps(
+                            $d.selectionState.elements.map(e => e.editProps)
+                          ) as NodeProps & EdgeProps;
+                          const s = new Stylesheet(
+                            isText
+                              ? 'text'
+                              : isNode($d.selectionState.elements[0])
+                                ? 'node'
+                                : 'edge',
+                            id,
+                            v,
+                            {
+                              ...(isText ? { text: commonProps.text } : commonProps)
+                            }
+                          );
+                          const uow = new UnitOfWork($d, true);
+
+                          $d.document.styles.addStylesheet(s, uow);
+                          $d.document.styles.setStylesheet(
+                            $d.selectionState.elements[0],
+                            id,
+                            uow,
+                            true
+                          );
+
+                          const snapshots = uow.commit();
+                          uow.diagram.undoManager.add(
+                            new CompoundUndoableAction([
+                              new AddStylesheetUndoableAction(uow.diagram, s),
+                              new SnapshotUndoableAction('Delete style', uow.diagram, snapshots)
+                            ])
+                          );
+                        }
+                      )
+                    );
                   }}
                 >
                   Save As...
@@ -179,7 +219,23 @@ export const ElementStylesheetPanel = (props: Props) => {
                 <DropdownMenu.Item
                   className="cmp-context-menu__item"
                   onSelect={() => {
-                    setRenameDialog($d.document.styles.get($s.val));
+                    application.ui.showDialog(
+                      new StringInputDialogCommand(
+                        {
+                          label: 'Name',
+                          title: 'Rename style',
+                          description: 'Enter a new name for the style.',
+                          saveButtonLabel: 'Rename',
+                          value: $d.document.styles.get($s.val)?.name ?? ''
+                        },
+                        v => {
+                          const uow = new UnitOfWork($d, true);
+                          const stylesheet = $d.document.styles.get($s.val)!;
+                          stylesheet.setName(v, uow);
+                          commitWithUndo(uow, 'Rename style');
+                        }
+                      )
+                    );
                   }}
                 >
                   Rename
@@ -188,41 +244,6 @@ export const ElementStylesheetPanel = (props: Props) => {
               </DropdownMenu.Content>
             </DropdownMenu.Portal>
           </DropdownMenu.Root>
-
-          <StringInputDialog
-            open={newDialog}
-            onCancel={() => setNewDialog(!newDialog)}
-            label={'Name'}
-            title={'New style'}
-            saveButtonLabel={'Create'}
-            value={renameDialog?.name ?? ''}
-            onOk={v => {
-              const id = newid();
-              const commonProps = getCommonProps(
-                $d.selectionState.elements.map(e => e.editProps)
-              ) as NodeProps & EdgeProps;
-              const s = new Stylesheet(
-                isText ? 'text' : isNode($d.selectionState.elements[0]) ? 'node' : 'edge',
-                id,
-                v,
-                {
-                  ...(isText ? { text: commonProps.text } : commonProps)
-                }
-              );
-              const uow = new UnitOfWork($d, true);
-
-              $d.document.styles.addStylesheet(s, uow);
-              $d.document.styles.setStylesheet($d.selectionState.elements[0], id, uow, true);
-
-              const snapshots = uow.commit();
-              uow.diagram.undoManager.add(
-                new CompoundUndoableAction([
-                  new AddStylesheetUndoableAction(uow.diagram, s),
-                  new SnapshotUndoableAction('Delete style', uow.diagram, snapshots)
-                ])
-              );
-            }}
-          />
 
           <JSONDialog
             open={modifyDialog !== undefined}
@@ -244,22 +265,6 @@ export const ElementStylesheetPanel = (props: Props) => {
               } else {
                 uow.abort();
               }
-            }}
-          />
-
-          <StringInputDialog
-            open={renameDialog !== undefined}
-            onCancel={() => setRenameDialog(undefined)}
-            label={'Name'}
-            title={'Rename style'}
-            description={'Enter a new name for the style.'}
-            saveButtonLabel={'Rename'}
-            value={renameDialog?.name ?? ''}
-            onOk={v => {
-              const uow = new UnitOfWork($d, true);
-              const stylesheet = $d.document.styles.get(renameDialog!.id)!;
-              stylesheet.setName(v, uow);
-              commitWithUndo(uow, 'Rename style');
             }}
           />
         </div>
