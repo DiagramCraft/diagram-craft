@@ -59,6 +59,7 @@ import { LeftSidebar } from './react-app/LeftSidebar';
 import { Application, ApplicationContext } from './application';
 import { UserState } from './UserState';
 import { HelpState } from './react-app/HelpState';
+import { JSONDialog } from './react-app/components/JSONDialog';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -304,6 +305,12 @@ export const App = (props: {
         />
         <MessageDialog
           open={dialogState?.id === 'message'}
+          {...dialogState?.props}
+          onOk={dialogState?.onOk}
+          onCancel={dialogState?.onCancel}
+        />
+        <JSONDialog
+          open={dialogState?.id === 'json'}
           {...dialogState?.props}
           onOk={dialogState?.onOk}
           onCancel={dialogState?.onCancel}

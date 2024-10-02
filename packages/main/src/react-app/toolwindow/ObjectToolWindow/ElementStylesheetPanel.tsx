@@ -14,7 +14,6 @@ import { newid } from '@diagram-craft/utils/id';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
 import { useElementMetadata } from '../../hooks/useProperty';
-import { useState } from 'react';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { Select } from '@diagram-craft/app-components/Select';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
@@ -37,10 +36,6 @@ export const ElementStylesheetPanel = (props: Props) => {
 
   const style = useElementMetadata($d, 'style', DefaultStyles.node.default);
   const textStyle = useElementMetadata($d, 'textStyle', DefaultStyles.text.default);
-
-  const [modifyDialog, setModifyDialog] = useState<Stylesheet<StylesheetType> | undefined>(
-    undefined
-  );
 
   if ($d.selectionState.isEmpty()) return null;
   if ($d.selectionState.getSelectionType() === 'mixed') return null;
@@ -211,7 +206,31 @@ export const ElementStylesheetPanel = (props: Props) => {
                 <DropdownMenu.Item
                   className="cmp-context-menu__item"
                   onSelect={() => {
-                    setModifyDialog($d.document.styles.get($s.val));
+                    const style = $d.document.styles.get($s.val);
+                    application.ui.showDialog(
+                      JSONDialog.create(
+                        {
+                          title: 'Modify style',
+                          label: 'Style definition',
+                          data: {
+                            props: {
+                              ...(style?.props ?? {})
+                            }
+                          }
+                        },
+                        e => {
+                          // TODO: Maybe to ask confirmation to apply to all selected nodes or copy
+                          const uow = new UnitOfWork($d, true);
+                          const stylesheet = $d.document.styles.get(style!.id);
+                          if (stylesheet) {
+                            stylesheet.setProps(e.props, uow);
+                            commitWithUndo(uow, 'Modify style');
+                          } else {
+                            uow.abort();
+                          }
+                        }
+                      )
+                    );
                   }}
                 >
                   Modify
@@ -244,29 +263,6 @@ export const ElementStylesheetPanel = (props: Props) => {
               </DropdownMenu.Content>
             </DropdownMenu.Portal>
           </DropdownMenu.Root>
-
-          <JSONDialog
-            open={modifyDialog !== undefined}
-            onClose={() => setModifyDialog(undefined)}
-            title={'Modify style'}
-            label={'Style definition'}
-            data={{
-              props: {
-                ...(modifyDialog?.props ?? {})
-              }
-            }}
-            onModify={e => {
-              // TODO: Maybe to ask confirmation to apply to all selected nodes or copy
-              const uow = new UnitOfWork($d, true);
-              const stylesheet = $d.document.styles.get(modifyDialog!.id);
-              if (stylesheet) {
-                stylesheet.setProps(e.props, uow);
-                commitWithUndo(uow, 'Modify style');
-              } else {
-                uow.abort();
-              }
-            }}
-          />
         </div>
       </div>
     </ToolWindowPanel>

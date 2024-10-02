@@ -1,14 +1,19 @@
 import { ComponentProps, useEffect, useRef, useState } from 'react';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
+import { DialogCommand } from '@diagram-craft/canvas/context';
+
+type Props<T> = {
+  title: string;
+  description?: string;
+  label: string;
+  data: T | undefined;
+};
 
 export function JSONDialog<T>(
   props: Omit<ComponentProps<typeof Dialog>, 'children' | 'title' | 'buttons'> & {
-    title: string;
-    description?: string;
-    label: string;
-    data: T | undefined;
-    onModify: (v: T) => void;
-  }
+    onOk: (v: T) => void;
+    onCancel?: () => void;
+  } & Props<T>
 ) {
   const ref = useRef<HTMLTextAreaElement>(null);
   const [error, setError] = useState<string | undefined>(undefined);
@@ -24,7 +29,7 @@ export function JSONDialog<T>(
     <Dialog
       title={props.title}
       open={props.open}
-      onClose={props.onClose}
+      onClose={() => {}}
       buttons={[
         {
           label: 'Save',
@@ -36,10 +41,10 @@ export function JSONDialog<T>(
               setError(e?.toString());
               throw e;
             }
-            props.onModify(JSON.parse(ref.current!.value));
+            props.onOk(JSON.parse(ref.current!.value));
           }
         },
-        { label: 'Cancel', type: 'cancel', onClick: () => {} }
+        { label: 'Cancel', type: 'cancel', onClick: props.onCancel ?? (() => {}) }
       ]}
     >
       {props.description && <p>{props.description}</p>}
@@ -57,3 +62,18 @@ export function JSONDialog<T>(
     </Dialog>
   );
 }
+
+function create<T>(
+  props: Props<T>,
+  onOk: (v: T) => void,
+  onCancel: () => void = () => {}
+): DialogCommand<Props<T>, T> {
+  return {
+    id: 'json',
+    props: props,
+    onCancel: onCancel,
+    onOk: onOk
+  };
+}
+
+JSONDialog.create = create;
