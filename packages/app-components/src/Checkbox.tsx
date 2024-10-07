@@ -1,13 +1,25 @@
 import { extractMouseEvents } from './utils';
 import { ToggleButtonGroup } from './ToggleButtonGroup';
 import { TbCheckbox, TbSquare } from 'react-icons/tb';
+import { useEffect, useRef } from 'react';
 
 export const Checkbox = (props: Props) => {
   // TODO: Implement indeterminate state
+  const ref = useRef<HTMLInputElement>(null);
+
+  // Note: it's not clear why this is needed, but for some reason,
+  //       without it, the checkbox in data schema popup doesn't work
+  useEffect(() => {
+    setTimeout(() => {
+      ref.current!.checked = props.value;
+    });
+  }, [props.value]);
+
   return (
     <>
       <input
         {...extractMouseEvents(props)}
+        ref={ref}
         type="checkbox"
         checked={props.value}
         data-field-state={props.isIndeterminate ? 'indeterminate' : props.state}

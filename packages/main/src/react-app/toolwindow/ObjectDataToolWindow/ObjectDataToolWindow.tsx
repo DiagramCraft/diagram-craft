@@ -22,6 +22,7 @@ import { Popover } from '@diagram-craft/app-components/Popover';
 import { Button } from '@diagram-craft/app-components/Button';
 import { useApplication, useDiagram } from '../../../application';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
+import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 
 const makeTemplate = (): DataSchema => {
   return {
@@ -193,11 +194,10 @@ export const ObjectDataToolWindow = () => {
                   <div className={'cmp-schema-selector__schemas'}>
                     {$d.document.schemas.all.map(s => (
                       <div key={s.id} className={'cmp-schema-selector__schema'}>
-                        <input
-                          type={'checkbox'}
-                          checked={schemas.includes(s.id)}
-                          onChange={e => {
-                            if (e.currentTarget.checked) {
+                        <Checkbox
+                          value={schemas.includes(s.id)}
+                          onChange={v => {
+                            if (v) {
                               addSchemaToSelection(s.id);
                             } else {
                               removeSchemaFromSelection(s.id);
