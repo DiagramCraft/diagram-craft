@@ -19,6 +19,7 @@ import { ReferenceLayer } from '@diagram-craft/model/diagramLayerReference';
 import { Application } from '../application';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { ReferenceLayerDialogCommand, StringInputDialogCommand } from '../dialogs';
+import { RuleLayer } from '@diagram-craft/model/diagramLayerRule';
 
 export const layerActions = (application: Application) => ({
   LAYER_DELETE_LAYER: new LayerDeleteAction(application),
@@ -26,8 +27,8 @@ export const layerActions = (application: Application) => ({
   LAYER_TOGGLE_LOCK: new LayerToggleLockedAction(application),
   LAYER_RENAME: new LayerRenameAction(application),
   LAYER_ADD: new LayerAddAction('regular', application),
-  LAYER_ADD_ADJUSTMENT: new LayerAddAction('adjustment', application),
   LAYER_ADD_REFERENCE: new LayerAddAction('reference', application),
+  LAYER_ADD_RULE: new LayerAddAction('rule', application),
   LAYER_SELECTION_MOVE: new LayerSelectionMoveAction(application),
   LAYER_SELECTION_MOVE_NEW: new LayerSelectionMoveNewAction(application)
 });
@@ -249,7 +250,7 @@ export class LayerAddAction extends AbstractAction<undefined, Application> {
       this.context.ui.showDialog(
         new StringInputDialogCommand(
           {
-            title: 'New adjustment layer',
+            title: this.type === 'rule' ? 'New rule layer' : 'New layer',
             description: 'Enter a new name for the adjustment layer.',
             saveButtonLabel: 'Create',
             value: ''
@@ -258,12 +259,15 @@ export class LayerAddAction extends AbstractAction<undefined, Application> {
             const diagram = this.context.model.activeDiagram;
             const uow = new UnitOfWork(diagram, true);
 
-            const layer = new RegularLayer(
-              newid(),
-              typeof name === 'string' ? name : 'New Layer',
-              [],
-              diagram
-            );
+            const layer =
+              this.type === 'rule'
+                ? new RuleLayer(newid(), typeof name === 'string' ? name : 'New Layer', diagram, [])
+                : new RegularLayer(
+                    newid(),
+                    typeof name === 'string' ? name : 'New Layer',
+                    [],
+                    diagram
+                  );
             diagram.layers.add(layer, uow);
 
             const snapshots = uow.commit();

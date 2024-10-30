@@ -6,7 +6,7 @@ import { Diagram } from './diagram';
 import { groupBy } from '@diagram-craft/utils/array';
 import { AttachmentConsumer } from './attachment';
 
-export type LayerType = 'regular' | 'adjustment' | 'rule' | 'reference';
+export type LayerType = 'regular' | 'rule' | 'reference';
 export type StackPosition = { element: DiagramElement; idx: number };
 
 export class Layer implements UOWTrackable<LayerSnapshot>, AttachmentConsumer {

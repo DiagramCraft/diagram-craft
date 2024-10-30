@@ -1,6 +1,5 @@
 import { Tree } from '@diagram-craft/app-components/Tree';
 import {
-  TbAdjustments,
   TbBoxMultiple,
   TbEye,
   TbEyeOff,
@@ -126,11 +125,7 @@ const LayerEntry = (props: { layer: Layer }) => {
       >
         <Tree.NodeLabel>{layer.name}</Tree.NodeLabel>
         <Tree.NodeAction style={{ display: 'flex', gap: '0.35rem' }}>
-          {layer.type === 'adjustment' ? (
-            <div style={{ color: 'var(--blue-11)' }}>
-              <TbAdjustments />
-            </div>
-          ) : layer.type === 'reference' ? (
+          {layer.type === 'reference' ? (
             <div style={{ color: 'var(--blue-11)' }}>
               <TbLink />
             </div>
