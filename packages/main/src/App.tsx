@@ -60,6 +60,7 @@ import { Application, ApplicationContext } from './application';
 import { UserState } from './UserState';
 import { HelpState } from './react-app/HelpState';
 import { JSONDialog } from './react-app/components/JSONDialog';
+import { CanvasOutline } from './react-app/CanvasOutline';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -380,6 +381,7 @@ export const App = (props: {
 
               <Ruler orientation={'horizontal'} />
               <Ruler orientation={'vertical'} />
+              <CanvasOutline />
 
               <NodeTypePopup
                 {...popoverState}

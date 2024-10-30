@@ -38,7 +38,7 @@ export const SideBar = (props: Props) => {
       if (selected === -1) {
         document.getElementById(`toolbar`)!.style.marginLeft = '0';
         document.getElementById(`tabs`)!.style.marginLeft = '0';
-        document.body.style.setProperty('--left-indent', '0');
+        document.body.style.setProperty('--left-indent', '0px');
       } else {
         document.getElementById(`toolbar`)!.style.marginLeft = d;
         document.getElementById(`tabs`)!.style.marginLeft = d;
@@ -48,7 +48,7 @@ export const SideBar = (props: Props) => {
       if (selected === -1) {
         document.getElementById(`toolbar`)!.style.marginRight = '0';
         document.getElementById(`tabs`)!.style.marginRight = '0';
-        document.body.style.setProperty('--right-indent', d);
+        document.body.style.setProperty('--right-indent', '0px');
       } else {
         document.getElementById(`toolbar`)!.style.marginRight = d;
         document.getElementById(`tabs`)!.style.marginRight = d;
