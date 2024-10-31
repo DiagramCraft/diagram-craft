@@ -26,9 +26,12 @@ import { RoundingPathRenderer } from '../effects/rounding';
 import { SVGGBuilder } from './SVGGBuilder';
 import { newid } from '@diagram-craft/utils/id';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 
 const defaultOnChange = (element: DiagramNode) => (text: string) => {
-  UnitOfWork.execute(element.diagram, uow => element.setText(text, uow));
+  const uow = new UnitOfWork(element.diagram, true);
+  element.setText(text, uow);
+  commitWithUndo(uow, 'Change text');
 };
 
 type ShapeBuilderProps = {

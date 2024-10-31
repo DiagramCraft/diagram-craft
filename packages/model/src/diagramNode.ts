@@ -584,6 +584,8 @@ export class DiagramNode
     this.#props = snapshot.props as NodeProps;
     this.#highlights = [];
     this.#nodeType = snapshot.nodeType;
+    this.#text = snapshot.texts;
+    this.#metadata = snapshot.metadata;
 
     this.setChildren(
       snapshot.children.map(c => {
