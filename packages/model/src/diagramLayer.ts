@@ -27,7 +27,7 @@ export abstract class Layer<T extends RegularLayer | RuleLayer = RegularLayer | 
   #name: string;
   protected _type: LayerType = 'regular';
 
-  protected readonly diagram: Diagram;
+  readonly diagram: Diagram;
 
   protected constructor(
     public readonly id: string,

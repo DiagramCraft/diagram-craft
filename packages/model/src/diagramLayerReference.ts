@@ -30,6 +30,11 @@ export class ReferenceLayer<
     return this.#reference;
   }
 
+  referenceName() {
+    const l = this.resolve();
+    return `${l.diagram.name} / ${l.name}`;
+  }
+
   // TODO: Do we need to cache this
   resolve(): T {
     const layer = this.diagram.document

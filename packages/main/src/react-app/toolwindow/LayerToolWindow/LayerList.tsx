@@ -1,5 +1,7 @@
 import { Tree } from '@diagram-craft/app-components/Tree';
 import {
+  TbAdjustments,
+  TbArrowNarrowRight,
   TbBoxMultiple,
   TbEye,
   TbEyeOff,
@@ -123,15 +125,20 @@ const LayerEntry = (props: { layer: Layer }) => {
           diagram.layers.active = layer;
         }}
       >
-        <Tree.NodeLabel>{layer.name}</Tree.NodeLabel>
+        <Tree.NodeLabel>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.1rem'
+            }}
+          >
+            {layer.type === 'reference' ? <TbLink /> : undefined}
+            {layer.resolve().type === 'rule' ? <TbAdjustments /> : undefined}
+            {layer.name}
+          </div>
+        </Tree.NodeLabel>
         <Tree.NodeAction style={{ display: 'flex', gap: '0.35rem' }}>
-          {layer.type === 'reference' ? (
-            <div style={{ color: 'var(--blue-11)' }}>
-              <TbLink />
-            </div>
-          ) : (
-            ''
-          )}
           {layer.type !== 'reference' && layer.type !== 'rule' ? (
             <LockToggle layer={layer} diagram={diagram} />
           ) : (
@@ -158,6 +165,17 @@ const LayerEntry = (props: { layer: Layer }) => {
             {!(layer instanceof RegularLayer) && !(layer instanceof RuleLayer) && (
               <div style={{ color: 'red' }}>Not implemented yet</div>
             )}
+          </Tree.Children>
+        )}
+        {layer instanceof ReferenceLayer && (
+          <Tree.Children>
+            <div style={{ display: 'contents' }}>
+              <Tree.Node>
+                <Tree.NodeLabel style={{ fontStyle: 'italic' }}>
+                  <TbArrowNarrowRight /> {layer.referenceName()}
+                </Tree.NodeLabel>
+              </Tree.Node>
+            </div>
           </Tree.Children>
         )}
       </Tree.Node>
