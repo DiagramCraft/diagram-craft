@@ -1,5 +1,5 @@
 import { Diagram } from './diagram';
-import { RuleLayer } from './diagramLayerRule';
+import { isResolvableToRuleLayer } from './diagramLayer';
 
 export type AdjustmentRule = {
   id: string;
@@ -56,12 +56,9 @@ export const DEFAULT_ADJUSTMENT_RULE: Adjustment = {
 
 export const getAdjustments = (diagram: Diagram, id: string) => {
   return diagram.layers.visible
-    .filter(l => l.type === 'rule')
+    .filter(l => isResolvableToRuleLayer(l))
     .map(
       l =>
-        [l.id, (l as RuleLayer).adjustments().get(id) ?? DEFAULT_ADJUSTMENT_RULE] as [
-          string,
-          Adjustment
-        ]
+        [l.id, l.resolve().adjustments().get(id) ?? DEFAULT_ADJUSTMENT_RULE] as [string, Adjustment]
     );
 };

@@ -15,6 +15,11 @@ export function isResolvableToRegularLayer(l: Layer): l is Layer<RegularLayer> {
   return true;
 }
 
+export function isResolvableToRuleLayer(l: Layer): l is Layer<RuleLayer> {
+  if (l.resolve().type !== 'rule') return false;
+  return true;
+}
+
 export abstract class Layer<T extends RegularLayer | RuleLayer = RegularLayer | RuleLayer>
   implements UOWTrackable<LayerSnapshot>, AttachmentConsumer
 {

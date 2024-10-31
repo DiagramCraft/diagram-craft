@@ -1,4 +1,4 @@
-import { assertRegularLayer, Layer, RegularLayer } from './diagramLayer';
+import { Layer, RegularLayer } from './diagramLayer';
 import { Diagram } from './diagram';
 import { LayerSnapshot, UnitOfWork } from './unitOfWork';
 import { RuleLayer } from './diagramLayerRule';
@@ -11,12 +11,6 @@ type LayerReference = {
 type RegularLayerSnapshot = LayerSnapshot & {
   reference: LayerReference;
 };
-
-export function assertReferenceLayer(l: Layer): asserts l is ReferenceLayer {
-  if (l.type !== 'reference') {
-    throw new Error('Layer is not a reference layer');
-  }
-}
 
 export class ReferenceLayer<
   T extends RegularLayer | RuleLayer = RegularLayer | RuleLayer
@@ -36,11 +30,11 @@ export class ReferenceLayer<
     return this.#reference;
   }
 
+  // TODO: Do we need to cache this
   resolve(): T {
     const layer = this.diagram.document
       .getById(this.reference.diagramId)!
       .layers.byId(this.reference.layerId)!;
-    assertRegularLayer(layer);
     return layer as unknown as T;
   }
 
