@@ -1,6 +1,7 @@
-import { assertRegularLayer, Layer } from './diagramLayer';
+import { assertRegularLayer, Layer, RegularLayer } from './diagramLayer';
 import { Diagram } from './diagram';
 import { LayerSnapshot, UnitOfWork } from './unitOfWork';
+import { RuleLayer } from './diagramLayerRule';
 
 type LayerReference = {
   layerId: string;
@@ -17,7 +18,9 @@ export function assertReferenceLayer(l: Layer): asserts l is ReferenceLayer {
   }
 }
 
-export class ReferenceLayer extends Layer {
+export class ReferenceLayer<
+  T extends RegularLayer | RuleLayer = RegularLayer | RuleLayer
+> extends Layer<T> {
   #reference: LayerReference;
 
   constructor(id: string, name: string, diagram: Diagram, reference: LayerReference) {
@@ -33,16 +36,12 @@ export class ReferenceLayer extends Layer {
     return this.#reference;
   }
 
-  get elements() {
-    return this.getReferencedLayer().elements;
-  }
-
-  private getReferencedLayer() {
+  resolve(): T {
     const layer = this.diagram.document
       .getById(this.reference.diagramId)!
       .layers.byId(this.reference.layerId)!;
     assertRegularLayer(layer);
-    return layer;
+    return layer as unknown as T;
   }
 
   restore(snapshot: RegularLayerSnapshot, uow: UnitOfWork) {
@@ -53,7 +52,7 @@ export class ReferenceLayer extends Layer {
   toJSON() {
     return {
       ...super.toJSON(),
-      elements: this.elements
+      reference: this.reference
     };
   }
 

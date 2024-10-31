@@ -48,7 +48,7 @@ export const validProps = (_type: 'edge' | 'node'): Prop[] => {
   ];
 };
 
-export class RuleLayer extends Layer {
+export class RuleLayer extends Layer<RuleLayer> {
   #rules: Array<AdjustmentRule> = [];
   #cache = new Map<string, unknown>();
 
@@ -65,6 +65,10 @@ export class RuleLayer extends Layer {
 
   isLocked(): boolean {
     return false;
+  }
+
+  resolve() {
+    return this;
   }
 
   adjustments(): Result {

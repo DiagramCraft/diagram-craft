@@ -33,8 +33,7 @@ import { Browser } from './browser';
 import { PanTool } from '@diagram-craft/canvas-app/tools/panTool';
 import { Context } from './context';
 import { unique } from '@diagram-craft/utils/array';
-import { assertRegularLayer, RegularLayer } from '@diagram-craft/model/diagramLayer';
-import { assertReferenceLayer, ReferenceLayer } from '@diagram-craft/model/diagramLayerReference';
+import { isResolvableToRegularLayer, Layer, RegularLayer } from '@diagram-craft/model/diagramLayer';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 
@@ -383,13 +382,8 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
             svg.g(
               {},
               ...diagram.layers.visible.flatMap(layer => {
-                if (layer.type === 'reference') {
-                  assertReferenceLayer(layer);
-                  return this.renderLayer(layer, diagram, onEdgeDoubleClick, props);
-                } else if (layer.type === 'regular') {
-                  assertRegularLayer(layer);
-                  return this.renderLayer(layer, diagram, onEdgeDoubleClick, props);
-                }
+                if (!isResolvableToRegularLayer(layer)) return null;
+                return this.renderLayer(layer, diagram, onEdgeDoubleClick, props);
               })
             ),
 
@@ -412,13 +406,13 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
   }
 
   private renderLayer(
-    layer: RegularLayer | ReferenceLayer,
+    layer: Layer<RegularLayer>,
     $d: Diagram,
     onEdgeDoubleClick: (id: string, coord: Point) => void,
     props: ComponentProps
   ) {
     const diagram = $d;
-    return layer.elements.map(e => {
+    return layer.resolve().elements.map(e => {
       const id = e.id;
       if (e.type === 'edge') {
         const edge = e as DiagramEdge;

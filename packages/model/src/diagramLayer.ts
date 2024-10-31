@@ -5,11 +5,19 @@ import { DiagramEdge } from './diagramEdge';
 import { Diagram } from './diagram';
 import { groupBy } from '@diagram-craft/utils/array';
 import { AttachmentConsumer } from './attachment';
+import { RuleLayer } from './diagramLayerRule';
 
 export type LayerType = 'regular' | 'rule' | 'reference';
 export type StackPosition = { element: DiagramElement; idx: number };
 
-export class Layer implements UOWTrackable<LayerSnapshot>, AttachmentConsumer {
+export function isResolvableToRegularLayer(l: Layer): l is Layer<RegularLayer> {
+  if (l.resolve().type !== 'regular') return false;
+  return true;
+}
+
+export abstract class Layer<T extends RegularLayer | RuleLayer = RegularLayer | RuleLayer>
+  implements UOWTrackable<LayerSnapshot>, AttachmentConsumer
+{
   #locked = false;
   #name: string;
   protected _type: LayerType = 'regular';
@@ -50,6 +58,8 @@ export class Layer implements UOWTrackable<LayerSnapshot>, AttachmentConsumer {
     this.#locked = value;
     this.diagram.emit('change', { diagram: this.diagram });
   }
+
+  abstract resolve(): T;
 
   /* Snapshot ************************************************************************************************ */
 
@@ -240,7 +250,7 @@ export function assertRegularLayer(l: Layer): asserts l is RegularLayer {
   }
 }
 
-export class RegularLayer extends Layer {
+export class RegularLayer extends Layer<RegularLayer> {
   #elements: Array<DiagramElement> = [];
 
   constructor(id: string, name: string, elements: ReadonlyArray<DiagramElement>, diagram: Diagram) {
@@ -253,6 +263,10 @@ export class RegularLayer extends Layer {
 
   get elements(): ReadonlyArray<DiagramElement> {
     return this.#elements;
+  }
+
+  resolve() {
+    return this;
   }
 
   // TODO: Add some tests for the stack operations
