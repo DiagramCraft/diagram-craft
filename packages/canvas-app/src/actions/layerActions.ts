@@ -51,6 +51,38 @@ export class LayerDeleteAction extends AbstractAction<LayerActionArg, Applicatio
   execute({ id }: LayerActionArg): void {
     precondition.is.present(id);
 
+    const performDelete = (layer: Layer) => {
+      const uow = new UnitOfWork(this.context.model.activeDiagram, true);
+
+      for (const ref of layer.getInboundReferences()) {
+        ref.diagram.layers.remove(ref, uow);
+      }
+
+      this.context.model.activeDiagram.layers.remove(layer, uow);
+
+      const snapshots = uow.commit();
+      this.context.model.activeDiagram.undoManager.add(
+        new CompoundUndoableAction([
+          new SnapshotUndoableAction(
+            'Delete layer',
+            this.context.model.activeDiagram,
+            snapshots.onlyUpdated()
+          ),
+          ...(layer instanceof RegularLayer
+            ? [
+                new ElementDeleteUndoableAction(
+                  this.context.model.activeDiagram,
+                  layer,
+                  layer.elements,
+                  false
+                )
+              ]
+            : []),
+          new LayerDeleteUndoableAction(this.context.model.activeDiagram, layer)
+        ])
+      );
+    };
+
     // TODO: This should be a confirm dialog
     this.context.ui.showDialog(
       new MessageDialogCommand(
@@ -61,36 +93,34 @@ export class LayerDeleteAction extends AbstractAction<LayerActionArg, Applicatio
           cancelLabel: 'No'
         },
         () => {
-          const uow = new UnitOfWork(this.context.model.activeDiagram, true);
-
           precondition.is.present(id);
 
           const layer = this.context.model.activeDiagram.layers.byId(id);
           assert.present(layer);
 
-          this.context.model.activeDiagram.layers.remove(layer, uow);
-
-          const snapshots = uow.commit();
-          this.context.model.activeDiagram.undoManager.add(
-            new CompoundUndoableAction([
-              new SnapshotUndoableAction(
-                'Delete layer',
-                this.context.model.activeDiagram,
-                snapshots.onlyUpdated()
-              ),
-              ...(layer instanceof RegularLayer
-                ? [
-                    new ElementDeleteUndoableAction(
-                      this.context.model.activeDiagram,
-                      layer,
-                      layer.elements,
-                      false
-                    )
-                  ]
-                : []),
-              new LayerDeleteUndoableAction(this.context.model.activeDiagram, layer)
-            ])
-          );
+          if (layer.getInboundReferences().length > 0) {
+            queueMicrotask(() => {
+              this.context.ui.showDialog(
+                // TODO: This should be a confirm dialog
+                new MessageDialogCommand(
+                  {
+                    title: 'Delete layer',
+                    message:
+                      'This layer is referenced by other layers. ' +
+                      'Are you sure you want to delete this layer ' +
+                      '(all referencing layers will be deleted)?',
+                    okLabel: 'Yes',
+                    cancelLabel: 'No'
+                  },
+                  () => {
+                    performDelete(layer);
+                  }
+                )
+              );
+            });
+          } else {
+            performDelete(layer);
+          }
         }
       )
     );

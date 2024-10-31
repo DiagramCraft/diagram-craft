@@ -7,6 +7,7 @@ import { groupBy } from '@diagram-craft/utils/array';
 import { AttachmentConsumer } from './attachment';
 import { RuleLayer } from './diagramLayerRule';
 import { assert } from '@diagram-craft/utils/assert';
+import { ReferenceLayer } from './diagramLayerReference';
 
 export type LayerType = 'regular' | 'rule' | 'reference';
 export type StackPosition = { element: DiagramElement; idx: number };
@@ -19,6 +20,10 @@ export function isResolvableToRegularLayer(l: Layer): l is Layer<RegularLayer> {
 export function isResolvableToRuleLayer(l: Layer): l is Layer<RuleLayer> {
   if (l.resolve()?.type !== 'rule') return false;
   return true;
+}
+
+export function isReferenceLayer(l: Layer): l is ReferenceLayer {
+  return l.type === 'reference';
 }
 
 export abstract class Layer<T extends RegularLayer | RuleLayer = RegularLayer | RuleLayer>
@@ -71,6 +76,22 @@ export abstract class Layer<T extends RegularLayer | RuleLayer = RegularLayer | 
     const r = this.resolve();
     assert.present(r);
     return r;
+  }
+
+  getInboundReferences() {
+    const inboundReferences: ReferenceLayer[] = [];
+    const doc = this.diagram.document;
+    for (const d of doc.diagrams) {
+      for (const l of d.layers.all) {
+        if (isReferenceLayer(l)) {
+          const ref = l.reference;
+          if (ref.diagramId === this.diagram.id && ref.layerId === this.id) {
+            inboundReferences.push(l);
+          }
+        }
+      }
+    }
+    return inboundReferences;
   }
 
   /* Snapshot ************************************************************************************************ */
