@@ -59,6 +59,9 @@ export const getAdjustments = (diagram: Diagram, id: string) => {
     .filter(l => isResolvableToRuleLayer(l))
     .map(
       l =>
-        [l.id, l.resolve().adjustments().get(id) ?? DEFAULT_ADJUSTMENT_RULE] as [string, Adjustment]
+        [l.id, l.resolveForced().adjustments().get(id) ?? DEFAULT_ADJUSTMENT_RULE] as [
+          string,
+          Adjustment
+        ]
     );
 };

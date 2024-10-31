@@ -134,7 +134,7 @@ const LayerEntry = (props: { layer: Layer }) => {
             }}
           >
             {layer.type === 'reference' ? <TbLink /> : undefined}
-            {layer.resolve().type === 'rule' ? <TbAdjustments /> : undefined}
+            {layer.resolveForced().type === 'rule' ? <TbAdjustments /> : undefined}
             {layer.name}
           </div>
         </Tree.NodeLabel>

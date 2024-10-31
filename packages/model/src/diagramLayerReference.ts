@@ -31,15 +31,15 @@ export class ReferenceLayer<
   }
 
   referenceName() {
-    const l = this.resolve();
+    const l = this.resolve()!;
     return `${l.diagram.name} / ${l.name}`;
   }
 
   // TODO: Do we need to cache this
-  resolve(): T {
+  resolve(): T | undefined {
     const layer = this.diagram.document
-      .getById(this.reference.diagramId)!
-      .layers.byId(this.reference.layerId)!;
+      .getById(this.reference.diagramId)
+      ?.layers.byId(this.reference.layerId);
     return layer as unknown as T;
   }
 

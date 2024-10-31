@@ -97,12 +97,28 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   }
 
   emit<K extends EventKey<DiagramEvents>>(eventName: K, params?: DiagramEvents[K]) {
+    // This is triggered for instance when a rule layer toggles visibility
     if (eventName === 'change') {
       for (const k of this.edgeLookup.values()) {
         k.cache.clear();
       }
       for (const k of this.nodeLookup.values()) {
         k.cache.clear();
+      }
+
+      // Need to handle all referenced layers separately as the edgeLookup and nodeLookup
+      // won't contain these elements
+      for (const l of this.layers.all) {
+        if (l.type === 'reference') {
+          const resolved = l.resolve();
+          if (resolved?.type === 'regular') {
+            for (const e of (resolved as RegularLayer).elements) {
+              if (e instanceof DiagramNode || e instanceof DiagramEdge) {
+                e.cache.clear();
+              }
+            }
+          }
+        }
       }
     }
     super.emit(eventName, params);

@@ -6,17 +6,18 @@ import { Diagram } from './diagram';
 import { groupBy } from '@diagram-craft/utils/array';
 import { AttachmentConsumer } from './attachment';
 import { RuleLayer } from './diagramLayerRule';
+import { assert } from '@diagram-craft/utils/assert';
 
 export type LayerType = 'regular' | 'rule' | 'reference';
 export type StackPosition = { element: DiagramElement; idx: number };
 
 export function isResolvableToRegularLayer(l: Layer): l is Layer<RegularLayer> {
-  if (l.resolve().type !== 'regular') return false;
+  if (l.resolve()?.type !== 'regular') return false;
   return true;
 }
 
 export function isResolvableToRuleLayer(l: Layer): l is Layer<RuleLayer> {
-  if (l.resolve().type !== 'rule') return false;
+  if (l.resolve()?.type !== 'rule') return false;
   return true;
 }
 
@@ -64,7 +65,13 @@ export abstract class Layer<T extends RegularLayer | RuleLayer = RegularLayer | 
     this.diagram.emit('change', { diagram: this.diagram });
   }
 
-  abstract resolve(): T;
+  abstract resolve(): T | undefined;
+
+  resolveForced(): T {
+    const r = this.resolve();
+    assert.present(r);
+    return r;
+  }
 
   /* Snapshot ************************************************************************************************ */
 

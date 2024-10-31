@@ -40,10 +40,7 @@ export class DiagramBuilder extends Diagram {
 }
 
 export class LayerBuilder extends RegularLayer {
-  constructor(
-    id: string,
-    protected readonly diagram: Diagram
-  ) {
+  constructor(id: string, diagram: Diagram) {
     super(id, id, [], diagram);
   }
 

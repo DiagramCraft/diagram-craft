@@ -412,7 +412,7 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
     props: ComponentProps
   ) {
     const diagram = $d;
-    return layer.resolve().elements.map(e => {
+    return layer.resolveForced().elements.map(e => {
       const id = e.id;
 
       e.activeDiagram = $d;
