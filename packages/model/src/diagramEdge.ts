@@ -71,6 +71,7 @@ export class DiagramEdge
   #cache: Map<string, unknown> | undefined = undefined;
 
   #diagram: Diagram;
+  #activeDiagram: Diagram;
   #layer: Layer;
   #parent?: DiagramNode;
 
@@ -101,6 +102,7 @@ export class DiagramEdge
     this.#metadata = metadata;
     this.#waypoints = midpoints;
     this.#diagram = diagram;
+    this.#activeDiagram = diagram;
     this.#layer = layer;
 
     if (start instanceof ConnectedEndpoint)
@@ -198,7 +200,7 @@ export class DiagramEdge
       s => s.id === this.#metadata.style
     )?.props;
 
-    const adjustments = getAdjustments(this.diagram, this.id);
+    const adjustments = getAdjustments(this.#activeDiagram, this.id);
     const ruleProps = adjustments.map(([k, v]) => [k, v.props]);
 
     const ruleElementStyle = adjustments
@@ -339,6 +341,17 @@ export class DiagramEdge
   }
 
   /* Diagram/layer ******************************************************************************************* */
+
+  get activeDiagram() {
+    return this.#activeDiagram;
+  }
+
+  set activeDiagram(diagram: Diagram) {
+    if (this.#activeDiagram !== diagram) {
+      this.cache.clear();
+    }
+    this.#activeDiagram = diagram;
+  }
 
   get diagram() {
     return this.#diagram;

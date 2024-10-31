@@ -414,6 +414,9 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
     const diagram = $d;
     return layer.resolve().elements.map(e => {
       const id = e.id;
+
+      e.activeDiagram = $d;
+
       if (e.type === 'edge') {
         const edge = e as DiagramEdge;
         const edgeDef = diagram.document.edgeDefinitions.get(edge.renderProps.shape);

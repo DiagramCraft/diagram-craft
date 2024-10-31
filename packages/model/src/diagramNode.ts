@@ -55,6 +55,7 @@ export class DiagramNode
 
   #nodeType: 'group' | string;
   #diagram: Diagram;
+  #activeDiagram: Diagram;
   #layer: Layer;
   #parent?: DiagramNode;
 
@@ -84,6 +85,7 @@ export class DiagramNode
     this.#nodeType = nodeType;
     this.#children = [];
     this.#diagram = diagram;
+    this.#activeDiagram = diagram;
     this.#layer = layer;
     this.#text = text;
 
@@ -245,7 +247,7 @@ export class DiagramNode
       this.#parent && this.#props.inheritStyle ? makeWriteable(this.#parent.editProps) : {}
     );
 
-    const adjustments = getAdjustments(this.diagram, this.id);
+    const adjustments = getAdjustments(this.#activeDiagram, this.id);
     const ruleProps = adjustments.map(([k, v]) => [k, v.props]);
 
     const ruleElementStyle = adjustments
@@ -403,6 +405,17 @@ export class DiagramNode
   }
 
   /* Diagram/layer ******************************************************************************************* */
+
+  get activeDiagram() {
+    return this.#activeDiagram;
+  }
+
+  set activeDiagram(diagram: Diagram) {
+    if (this.#activeDiagram !== diagram) {
+      this.cache.clear();
+    }
+    this.#activeDiagram = diagram;
+  }
 
   get diagram() {
     return this.#diagram;
