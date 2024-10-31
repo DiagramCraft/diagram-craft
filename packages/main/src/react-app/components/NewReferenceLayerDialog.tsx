@@ -97,7 +97,7 @@ export const ReferenceLayerDialog = (props: Props) => {
             placeholder={'Layer'}
           >
             {selectedDiagram?.layers.all
-              .filter(l => l.type === 'regular')
+              .filter(l => l.type === 'regular' || l.type === 'rule')
               .map(l => (
                 <Select.Item value={l.id} key={l.id}>
                   {l.name}
