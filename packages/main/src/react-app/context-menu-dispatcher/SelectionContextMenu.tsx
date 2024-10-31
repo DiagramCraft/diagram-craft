@@ -14,6 +14,9 @@ export const SelectionContextMenu = () => {
 
   return (
     <>
+      <ActionContextMenuItem action={'TEXT_EDIT'}>Edit...</ActionContextMenuItem>
+      <ContextMenu.Separator className="cmp-context-menu__separator" />
+
       <ActionContextMenuItem action={'CLIPBOARD_CUT'}>Cut</ActionContextMenuItem>
       <ActionContextMenuItem action={'CLIPBOARD_COPY'}>Copy</ActionContextMenuItem>
       <ActionContextMenuItem action={'DUPLICATE'}>Duplicate</ActionContextMenuItem>

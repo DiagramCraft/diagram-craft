@@ -1,15 +1,19 @@
 import { AbstractToggleAction, ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
+import { Application } from '../application';
+import { StringInputDialogCommand } from '../dialogs';
+import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSelectionAction';
 
 declare global {
   interface ActionMap extends ReturnType<typeof textActions> {}
 }
 
-export const textActions = (context: ActionContext) => ({
+export const textActions = (context: Application) => ({
   TEXT_BOLD: new TextAction('bold', context),
   TEXT_ITALIC: new TextAction('italic', context),
-  TEXT_UNDERLINE: new TextDecorationAction('underline', context)
+  TEXT_UNDERLINE: new TextDecorationAction('underline', context),
+  TEXT_EDIT: new TextEditAction(context)
 });
 
 // TODO: Maybe we can create an AbstractPropertyAction that takes a prop name and a value and
@@ -138,5 +142,32 @@ export class TextDecorationAction extends AbstractToggleAction {
 
     this.state = node.renderProps.text!.textDecoration === this.prop;
     this.emit('actionChanged');
+  }
+}
+
+export class TextEditAction extends AbstractSelectionAction<Application> {
+  constructor(application: Application) {
+    super(application, MultipleType.SingleOnly, ElementType.Node);
+  }
+
+  execute(): void {
+    const selectedItem = this.context.model.activeDiagram.selectionState.nodes[0];
+    this.context.ui.showDialog(
+      new StringInputDialogCommand(
+        {
+          label: 'Text',
+          title: 'Edit text',
+          description: 'Enter a new text for the selected text.',
+          value: selectedItem.texts.text,
+          saveButtonLabel: 'Save',
+          type: 'text'
+        },
+        (d: string) => {
+          const uow = new UnitOfWork(selectedItem.diagram, true);
+          selectedItem.setText(d, uow);
+          commitWithUndo(uow, 'Edit text');
+        }
+      )
+    );
   }
 }

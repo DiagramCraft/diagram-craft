@@ -9,11 +9,13 @@ type Props = {
 } & StringInputDialogProps;
 
 export const StringInputDialog = (props: Props) => {
-  const ref = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const areaRef = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
     if (!props.open) return;
     setTimeout(() => {
-      ref.current?.focus();
+      inputRef.current?.focus();
+      areaRef.current?.focus();
     }, 100);
   });
   return (
@@ -28,7 +30,11 @@ export const StringInputDialog = (props: Props) => {
           label: props.saveButtonLabel ?? 'Ok',
           type: 'default',
           onClick: () => {
-            props.onOk?.(ref.current!.value);
+            if (props.type === 'string' || props.type === undefined) {
+              props.onOk?.(inputRef.current!.value);
+            } else {
+              props.onOk?.(areaRef.current!.value);
+            }
           }
         },
         { label: 'Cancel', type: 'cancel', onClick: () => {} }
@@ -37,18 +43,34 @@ export const StringInputDialog = (props: Props) => {
       {props.description && <p>{props.description}</p>}
 
       <label>{props.label ?? 'Name'}:</label>
-      <div className={'cmp-text-input'}>
-        <input
-          ref={ref}
-          type={'text'}
-          size={40}
-          defaultValue={props.value ?? ''}
-          onKeyDown={e => {
-            // TODO: Why is this needed?
-            e.stopPropagation();
-          }}
-        />
-      </div>
+      {(props.type === 'string' || props.type === undefined) && (
+        <div className={'cmp-text-input'}>
+          <input
+            ref={inputRef}
+            type={'text'}
+            size={40}
+            defaultValue={props.value ?? ''}
+            onKeyDown={e => {
+              // TODO: Why is this needed?
+              e.stopPropagation();
+            }}
+          />
+        </div>
+      )}
+      {props.type === 'text' && (
+        <div className={'cmp-text-input'}>
+          <textarea
+            ref={areaRef}
+            cols={40}
+            rows={10}
+            defaultValue={props.value ?? ''}
+            onKeyDown={e => {
+              // TODO: Why is this needed?
+              e.stopPropagation();
+            }}
+          />
+        </div>
+      )}
     </Dialog>
   );
 };

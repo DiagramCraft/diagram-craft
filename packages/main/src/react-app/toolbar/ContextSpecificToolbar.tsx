@@ -54,6 +54,8 @@ export const ContextSpecificToolbar = () => {
           <ElementTextFontToolbarButton />
           <ElementTextFontSizeToolbarButton />
 
+          <Toolbar.Separator style={{ marginRight: '-5px', backgroundColor: 'transparent' }} />
+
           <ActionToggleButton action={'TEXT_BOLD'}>
             <TbBold />
           </ActionToggleButton>

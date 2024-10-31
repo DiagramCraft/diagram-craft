@@ -8,6 +8,7 @@ export type StringInputDialogProps = {
   description?: string;
   label?: string;
   saveButtonLabel?: string;
+  type?: 'string' | 'text';
 };
 
 export class StringInputDialogCommand implements DialogCommand<StringInputDialogProps, string> {
