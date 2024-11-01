@@ -354,7 +354,7 @@ export const App = (props: {
                       }
                       className={'canvas'}
                       onDrop={canvasDropHandler($d)}
-                      onDragOver={canvasDragOverHandler()}
+                      onDragOver={canvasDragOverHandler($d)}
                       context={application.current}
                     />
                   </ContextMenu.Trigger>

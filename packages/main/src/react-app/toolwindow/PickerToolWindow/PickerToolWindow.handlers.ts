@@ -68,9 +68,14 @@ export const canvasDropHandler = ($d: Diagram) => {
   };
 };
 
-export const canvasDragOverHandler = () => {
+export const canvasDragOverHandler = ($d: Diagram) => {
   return (e: DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer!.dropEffect = 'copy';
+    const activeLayer = $d.activeLayer;
+    if (activeLayer.isLocked() || activeLayer.resolve()?.type === 'rule') {
+      e.dataTransfer!.dropEffect = 'none';
+    } else {
+      e.preventDefault();
+      e.dataTransfer!.dropEffect = 'copy';
+    }
   };
 };
