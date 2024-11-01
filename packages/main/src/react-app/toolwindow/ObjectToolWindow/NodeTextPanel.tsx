@@ -258,6 +258,7 @@ export const NodeTextPanelForm = ({
         <div
           style={{
             display: 'grid',
+            maxWidth: '10rem',
             gap: '0.2rem',
             gridTemplateAreas: '"gap1 top gap2" "left bottom right"',
             gridTemplateRows: 'repeat(2, 1fr)',

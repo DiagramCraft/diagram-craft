@@ -13,14 +13,14 @@ type TextStyleProps = { text: Omit<NodeProps['text'], 'text' | 'style'> };
 type NodeStyleProps = Omit<NodeProps, 'name' | 'text' | 'data' | 'style'>;
 type EdgeStyleProps = Omit<EdgeProps, 'name' | 'text' | 'data' | 'style'>;
 
-export class Stylesheet<
-  T extends StylesheetType,
-  P = {
-    node: NodeStyleProps;
-    edge: EdgeStyleProps;
-    text: TextStyleProps;
-  }[T]
-> implements UOWTrackable<StylesheetSnapshot>
+type TypeMap = {
+  node: NodeStyleProps;
+  edge: EdgeStyleProps;
+  text: TextStyleProps;
+};
+
+export class Stylesheet<T extends StylesheetType, P = TypeMap[T]>
+  implements UOWTrackable<StylesheetSnapshot>
 {
   id: string;
   #name: string;

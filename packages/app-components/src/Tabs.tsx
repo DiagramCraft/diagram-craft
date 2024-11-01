@@ -1,6 +1,6 @@
 import * as RadixTabs from '@radix-ui/react-tabs';
 import styles from './Tabs.module.css';
-import React from 'react';
+import React, { CSSProperties } from 'react';
 
 const Root = (props: RootProps) => {
   return (
@@ -38,7 +38,11 @@ type TriggerProps = {
 
 const Content = (props: ContentProps) => {
   return (
-    <RadixTabs.Content className={styles.cmpTabsContent} value={props.value}>
+    <RadixTabs.Content
+      className={styles.cmpTabsContent}
+      value={props.value}
+      style={props.style ?? {}}
+    >
       {props.children}
     </RadixTabs.Content>
   );
@@ -47,6 +51,7 @@ const Content = (props: ContentProps) => {
 type ContentProps = {
   value: string;
   children: React.ReactNode;
+  style?: CSSProperties;
 };
 
 export const Tabs = {
