@@ -17,8 +17,6 @@ import { largest, smallest } from '@diagram-craft/utils/array';
 import { Angle } from '@diagram-craft/geometry/angle';
 import { SnapManagerConfig } from './snapManagerConfig';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 type SnapResult<T> = {
   guides: ReadonlyArray<Guide>;
   adjusted: T;
@@ -112,8 +110,8 @@ export class SnapManager {
   private matchMagnets(
     selfMagnets: ReadonlyArray<Magnet>,
     otherMagnets: ReadonlyArray<Magnet>
-  ): ReadonlyArray<MatchingMagnetPair<any>> {
-    const dest: MatchingMagnetPair<any>[] = [];
+  ): ReadonlyArray<MatchingMagnetPair<MagnetType>> {
+    const dest: MatchingMagnetPair<MagnetType>[] = [];
 
     for (const other of otherMagnets) {
       for (const self of selfMagnets) {
@@ -221,7 +219,12 @@ export class SnapManager {
     );
     const snapProviders = new SnapProviders(this.diagram, this.eligibleNodePredicate);
 
-    const magnets = Magnet.forNode(b, 'source').filter(s => directions.includes(s.matchDirection!));
+    const isAllDirections = directions.length === 4;
+    const magnets = Magnet.forNode(b, 'source').filter(
+      s =>
+        directions.includes(s.matchDirection!) ||
+        (isAllDirections && s.matchDirection === undefined)
+    );
 
     const magnetsToMatchAgainst = snapProviders.getMagnets(enabledSnapProviders, b);
 
@@ -267,7 +270,7 @@ export class SnapManager {
   private generateGuides(
     bounds: Box,
     selfMagnets: ReadonlyArray<Magnet>,
-    matchingMagnets: ReadonlyArray<MatchingMagnetPair<any>>,
+    matchingMagnets: ReadonlyArray<MatchingMagnetPair<MagnetType>>,
     snapProviders: SnapProviders,
     enabledSnapProviders: ReadonlyArray<MagnetType>
   ) {
@@ -291,7 +294,7 @@ export class SnapManager {
           // only keep items on the right side of the self magnet
           .filter(e => e.distance >= 0)
 
-          // and remove anything that is close post anspping
+          // and remove anything that is close post snapping
           .filter(e => Math.abs(orthogonalLineDistance(e.matching.line, e.self.line, oAxis)) < 1),
         (a, b) =>
           enabledSnapProviders.indexOf(a.matching.type) -

@@ -55,7 +55,7 @@ export type MagnetOfType<T extends MagnetType> = Magnet & { type: T };
 
 export const Magnet = {
   forNode: (node: Box, type: 'source' = 'source'): ReadonlyArray<Magnet> => {
-    const center: Magnet[] = [
+    const magnets: Magnet[] = [
       {
         line: Line.horizontal(node.y + node.h / 2, [node.x, node.x + node.w]),
         axis: Axis.h,
@@ -68,32 +68,33 @@ export const Magnet = {
       }
     ];
 
-    if (node.r !== 0) return center;
+    if (node.r !== 0) return magnets;
 
-    center.push({
+    magnets.push({
       line: Line.of({ x: node.x, y: node.y }, { x: node.x + node.w, y: node.y }),
       axis: Axis.h,
       type,
       matchDirection: 'n'
     });
-    center.push({
+    magnets.push({
       line: Line.of({ x: node.x, y: node.y + node.h }, { x: node.x + node.w, y: node.y + node.h }),
       axis: Axis.h,
       type,
       matchDirection: 's'
     });
-    center.push({
+    magnets.push({
       line: Line.of({ x: node.x, y: node.y }, { x: node.x, y: node.y + node.h }),
       axis: Axis.v,
       type,
       matchDirection: 'w'
     });
-    center.push({
+    magnets.push({
       line: Line.of({ x: node.x + node.w, y: node.y }, { x: node.x + node.w, y: node.y + node.h }),
       axis: Axis.v,
       type,
       matchDirection: 'e'
     });
-    return center;
+
+    return magnets;
   }
 };
