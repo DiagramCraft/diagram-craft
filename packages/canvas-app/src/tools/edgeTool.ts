@@ -105,8 +105,8 @@ export class EdgeTool extends AbstractTool {
     });
   }
 
-  onMouseOver(id: string, point: Point) {
-    super.onMouseOver(id, point);
+  onMouseOver(id: string, point: Point, target: EventTarget) {
+    super.onMouseOver(id, point, target);
 
     const el = this.diagram.lookup(id)!;
 
@@ -117,7 +117,7 @@ export class EdgeTool extends AbstractTool {
     }
   }
 
-  onMouseOut(id: string, _point: Point) {
+  onMouseOut(id: string, _point: Point, target: EventTarget) {
     if (this.currentElement) {
       const el = this.diagram.lookup(this.currentElement);
       removeHighlight(el, Highlights.NODE__EDGE_CONNECT);
@@ -127,7 +127,7 @@ export class EdgeTool extends AbstractTool {
         }
       }
     }
-    super.onMouseOut(id, _point);
+    super.onMouseOut(id, _point, target);
   }
 
   onMouseUp(_point: Point) {

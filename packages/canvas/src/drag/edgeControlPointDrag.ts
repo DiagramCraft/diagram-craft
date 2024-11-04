@@ -1,4 +1,4 @@
-import { AbstractDrag, Modifiers } from '../dragDropManager';
+import { Drag, DragEvents, Modifiers } from '../dragDropManager';
 import { Point } from '@diagram-craft/geometry/point';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -12,7 +12,7 @@ const otherCp = (cIdx: 'cp1' | 'cp2') => (cIdx === 'cp1' ? 'cp2' : 'cp1');
 const isSmoothDrag = (modifiers: Modifiers) => modifiers.metaKey;
 const isSymmetricDrag = (modifiers: Modifiers) => modifiers.altKey;
 
-export class EdgeControlPointDrag extends AbstractDrag {
+export class EdgeControlPointDrag extends Drag {
   private readonly uow: UnitOfWork;
 
   constructor(
@@ -30,7 +30,7 @@ export class EdgeControlPointDrag extends AbstractDrag {
     );
   }
 
-  onDrag(coord: Point, modifiers: Modifiers) {
+  onDrag({ offset, modifiers }: DragEvents.DragStart) {
     const wp = this.edge.waypoints[this.waypointIdx];
 
     const cIdx = this.controlPointIdx;
@@ -50,7 +50,7 @@ export class EdgeControlPointDrag extends AbstractDrag {
     }
 
     const controlPoints = {
-      [cIdx]: Point.subtract(coord, wp!.point),
+      [cIdx]: Point.subtract(offset, wp!.point),
       [ocIdx]: otherControlPoint
     } as ControlPoints;
 

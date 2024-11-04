@@ -18,51 +18,62 @@ export type State = {
   }[];
 };
 
-// TODO: These events does not seem to be triggered properly
-type DragEvents = {
+// eslint-disable-next-line @typescript-eslint/no-namespace
+export namespace DragEvents {
+  export class DragStart {
+    constructor(
+      public offset: Point,
+      public modifiers: Modifiers,
+      public target: EventTarget
+    ) {}
+  }
+
+  export class DragEnd {
+    constructor(public target: EventTarget) {}
+  }
+
+  export class DragEnter {
+    constructor(
+      public target: EventTarget,
+      public id: string
+    ) {}
+  }
+
+  export class DragLeave {
+    constructor(
+      public target: EventTarget,
+      public id: string
+    ) {}
+  }
+
+  export type DragKeyDown = KeyboardEvent;
+  export type DragKeyUp = KeyboardEvent;
+}
+
+export abstract class Drag extends EventEmitter<{
   drag: { coord: Point; modifiers: Modifiers };
   dragEnd: void;
   stateChange: { state: State };
-};
-
-export interface Drag extends EventEmitter<DragEvents> {
-  onDrag: (coord: Point, modifiers: Modifiers) => void;
-  onDragEnd: () => void;
-
-  onKeyDown?: (event: KeyboardEvent) => void;
-  onKeyUp?: (event: KeyboardEvent) => void;
-  onDragEnter?: (id: string) => void;
-  onDragLeave?: (id?: string) => void;
-
-  state: State;
-}
-
-export abstract class AbstractDrag extends EventEmitter<DragEvents> implements Drag {
+}> {
   #state: State;
+  isGlobal = false;
 
   protected constructor() {
     super();
     this.#state = {};
   }
 
-  abstract onDrag(coord: Point, modifiers: Modifiers): void;
-  abstract onDragEnd(): void;
+  abstract onDrag(_event: DragEvents.DragStart): void;
 
-  onKeyDown(_event: KeyboardEvent): void {
-    // Do nothing
-  }
+  abstract onDragEnd(_event: DragEvents.DragEnd): void;
 
-  onKeyUp(_event: KeyboardEvent): void {
-    // Do nothing
-  }
+  onKeyDown(_event: DragEvents.DragKeyDown): void {}
 
-  onDragEnter(_id: string): void {
-    // Do nothing
-  }
+  onKeyUp(_event: DragEvents.DragKeyUp): void {}
 
-  onDragLeave(): void {
-    // Do nothing
-  }
+  onDragEnter(_event: DragEvents.DragEnter): void {}
+
+  onDragLeave(_event: DragEvents.DragLeave): void {}
 
   setState(state: State) {
     this.#state = state;
@@ -74,13 +85,11 @@ export abstract class AbstractDrag extends EventEmitter<DragEvents> implements D
   }
 }
 
-type DragDopEvents = {
+export class DragDopManager extends EventEmitter<{
   dragStart: { drag: Drag };
   dragEnd: { drag: Drag };
   dragStateChange: { drag: Drag; state: State };
-};
-
-export class DragDopManager extends EventEmitter<DragDopEvents> {
+}> {
   private drag?: Drag;
 
   initiate(drag: Drag, onEndCallback = () => {}) {

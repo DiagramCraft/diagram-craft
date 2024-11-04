@@ -1,5 +1,4 @@
-import { AbstractDrag, Modifiers } from '../dragDropManager';
-import { Point } from '@diagram-craft/geometry/point';
+import { Drag, DragEvents, Modifiers } from '../dragDropManager';
 import { Box } from '@diagram-craft/geometry/box';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
@@ -11,7 +10,7 @@ import { excludeLabelNodes, includeAll } from '@diagram-craft/model/selectionSta
 
 const isFreeDrag = (m: Modifiers) => m.altKey;
 
-export class RotateDrag extends AbstractDrag {
+export class RotateDrag extends Drag {
   private readonly uow: UnitOfWork;
 
   constructor(private readonly diagram: Diagram) {
@@ -19,7 +18,7 @@ export class RotateDrag extends AbstractDrag {
     this.uow = new UnitOfWork(this.diagram, true);
   }
 
-  onDrag(coord: Point, modifiers: Modifiers) {
+  onDrag(event: DragEvents.DragStart) {
     const selection = this.diagram.selectionState;
     selection.guides = [];
 
@@ -29,10 +28,10 @@ export class RotateDrag extends AbstractDrag {
 
     const center = Box.center(selection.source.boundingBox);
 
-    const targetAngle = Vector.angle(Vector.from(center, coord)) + Math.PI / 2 - Math.PI / 4;
+    const targetAngle = Vector.angle(Vector.from(center, event.offset)) + Math.PI / 2 - Math.PI / 4;
 
     const result = snapManager.snapRotate({ ...before, r: targetAngle });
-    const adjustedAngle = isFreeDrag(modifiers) ? targetAngle : result.adjusted.r;
+    const adjustedAngle = isFreeDrag(event.modifiers) ? targetAngle : result.adjusted.r;
 
     this.diagram.transformElements(
       selection.filter(

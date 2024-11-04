@@ -1,4 +1,4 @@
-import { AbstractDrag, Modifiers } from '../dragDropManager';
+import { Drag, DragEvents } from '../dragDropManager';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { EdgeEndpointMoveDrag } from './edgeEndpointMoveDrag';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
@@ -12,7 +12,7 @@ import { createLinkedNode } from '@diagram-craft/canvas-app/actions/linkedNodeAc
 import { Context } from '../context';
 import { assertRegularLayer, RegularLayer } from '@diagram-craft/model/diagramLayer';
 
-export class AnchorHandleDrag extends AbstractDrag {
+export class AnchorHandleDrag extends Drag {
   edge: DiagramEdge;
   private delegate: EdgeEndpointMoveDrag;
 
@@ -95,15 +95,15 @@ export class AnchorHandleDrag extends AbstractDrag {
     this.context.ui.showNodeLinkPopup(this.edge.end.position, this.node!.id, this.edge.id);
   }
 
-  onDrag(coord: Point, _modifiers: Modifiers): void {
-    this.delegate.onDrag(coord, _modifiers);
+  onDrag(event: DragEvents.DragStart): void {
+    this.delegate.onDrag(event);
   }
 
-  onDragEnter(id: string) {
-    this.delegate.onDragEnter(id);
+  onDragEnter(event: DragEvents.DragEnter): void {
+    this.delegate.onDragEnter(event);
   }
 
-  onDragLeave() {
-    this.delegate.onDragLeave();
+  onDragLeave(event: DragEvents.DragLeave) {
+    this.delegate.onDragLeave(event);
   }
 }

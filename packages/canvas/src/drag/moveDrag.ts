@@ -1,4 +1,4 @@
-import { AbstractDrag, Modifiers } from '../dragDropManager';
+import { Drag, DragEvents, Modifiers } from '../dragDropManager';
 import { addHighlight, Highlights, removeHighlight } from '../highlight';
 import { Axis } from '@diagram-craft/geometry/axis';
 import { Point } from '@diagram-craft/geometry/point';
@@ -44,7 +44,7 @@ const isFreeDrag = (m: Modifiers) => m.altKey;
 const isDuplicateDrag = (e: KeyboardEvent | Modifiers) =>
   ('metaKey' in e && e.metaKey) || ('key' in e && e.key === 'Meta');
 
-export class MoveDrag extends AbstractDrag {
+export class MoveDrag extends Drag {
   #snapAngle?: Axis;
   #hasDuplicatedSelection?: boolean = false;
   #dragStarted = false;
@@ -74,7 +74,7 @@ export class MoveDrag extends AbstractDrag {
     );
   }
 
-  onDragEnter(id: string) {
+  onDragEnter({ id }: DragEvents.DragEnter) {
     const selection = this.diagram.selectionState;
     if (selection.getSelectionType() !== 'single-node') return;
 
@@ -114,7 +114,7 @@ export class MoveDrag extends AbstractDrag {
     }
   }
 
-  onDrag(coord: Point, modifiers: Modifiers): void {
+  onDrag({ offset, modifiers }: DragEvents.DragStart): void {
     const selection = this.diagram.selectionState;
     selection.setDragging(true);
 
@@ -130,7 +130,7 @@ export class MoveDrag extends AbstractDrag {
     }
 
     // Determine the delta between the current mouse position and the original mouse position
-    const delta = Point.subtract(coord, Point.add(selection.bounds, this.offset));
+    const delta = Point.subtract(offset, Point.add(selection.bounds, this.offset));
     const newPos = Point.add(selection.bounds, delta);
 
     const newBounds = Box.asReadWrite(selection.bounds);
@@ -140,7 +140,7 @@ export class MoveDrag extends AbstractDrag {
     let snapDirections = Direction.all();
 
     if (isConstraintDrag(modifiers)) {
-      const res = this.constrainDrag(selection, coord);
+      const res = this.constrainDrag(selection, offset);
       snapDirections = res.availableSnapDirections;
       newBounds.x = res.adjustedPosition.x;
       newBounds.y = res.adjustedPosition.y;

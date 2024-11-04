@@ -1,4 +1,4 @@
-import { AbstractDrag, Modifiers } from '../dragDropManager';
+import { Drag, DragEvents, Modifiers } from '../dragDropManager';
 import { addHighlight, Highlights, removeHighlight } from '../highlight';
 import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -20,7 +20,7 @@ import { Line } from '@diagram-craft/geometry/line';
 import { Context } from '../context';
 import { SnapManager } from '@diagram-craft/model/snap/snapManager';
 
-export class EdgeEndpointMoveDrag extends AbstractDrag {
+export class EdgeEndpointMoveDrag extends Drag {
   private readonly uow: UnitOfWork;
   private hoverElement: string | undefined;
   private modifiers: Modifiers | undefined;
@@ -48,7 +48,7 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
     this.snapManager = this.diagram.createSnapManager();
   }
 
-  onDragEnter(id: string): void {
+  onDragEnter({ id }: DragEvents.DragEnter): void {
     if (id === this.edge.id) return;
 
     const type = this.type;
@@ -78,7 +78,7 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
     addHighlight(el, Highlights.NODE__EDGE_CONNECT);
   }
 
-  onDragLeave(id?: string): void {
+  onDragLeave({ id }: DragEvents.DragLeave): void {
     if (id === this.edge.id) return;
 
     if (this.hoverElement) {
@@ -87,19 +87,19 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
     this.hoverElement = undefined;
   }
 
-  onDrag(p: Point, modifiers: Modifiers) {
+  onDrag({ offset, modifiers }: DragEvents.DragStart) {
     const selection = this.diagram.selectionState;
     selection.guides = [];
 
-    this.point = p;
+    this.point = offset;
 
     this.modifiers = modifiers;
 
     if (this.hoverElement && this.diagram.nodeLookup.has(this.hoverElement)) {
       if (modifiers.metaKey) {
-        this.attachToPoint(p);
+        this.attachToPoint(offset);
       } else {
-        this.attachToClosestAnchor(p);
+        this.attachToClosestAnchor(offset);
       }
     } else {
       if (!this.modifiers.shiftKey) {

@@ -1,4 +1,4 @@
-import { AbstractDrag } from '../dragDropManager';
+import { Drag, DragEvents } from '../dragDropManager';
 import { precondition } from '@diagram-craft/utils/assert';
 import { Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
@@ -7,7 +7,7 @@ import { SelectionState } from '@diagram-craft/model/selectionState';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { Context } from '../context';
 
-export class MarqueeDrag extends AbstractDrag {
+export class MarqueeDrag extends Drag {
   constructor(
     private readonly diagram: Diagram,
     private readonly offset: Point,
@@ -20,11 +20,11 @@ export class MarqueeDrag extends AbstractDrag {
     );
   }
 
-  onDrag(coord: Point) {
+  onDrag({ offset }: DragEvents.DragStart) {
     this.diagram.selectionState.marquee.bounds = Box.normalize({
       ...this.offset,
-      w: coord.x - this.offset.x,
-      h: coord.y - this.offset.y,
+      w: offset.x - this.offset.x,
+      h: offset.y - this.offset.y,
       r: 0
     });
 

@@ -1,11 +1,11 @@
 import { EditablePath } from '../editablePath';
-import { AbstractDrag, Modifiers } from '../dragDropManager';
+import { Drag, DragEvents } from '../dragDropManager';
 import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { Context } from '../context';
 
-export class NodeDrag extends AbstractDrag {
+export class NodeDrag extends Drag {
   private startTime: number;
   private lastPoint: Point | undefined;
   private startPoint: Point | undefined;
@@ -28,23 +28,23 @@ export class NodeDrag extends AbstractDrag {
     this.context.help.push('NodeDrag', 'Move waypoints');
   }
 
-  onDrag(coord: Point, _modifiers: Modifiers) {
+  onDrag({ offset }: DragEvents.DragStart) {
     if (!this.lastPoint) {
-      this.startPoint = coord;
+      this.startPoint = offset;
     }
 
     for (let i = 0; i < this.waypointIndices.length; i++) {
       const waypointIdx = this.waypointIndices[i];
       const wp = this.editablePath.waypoints[waypointIdx];
 
-      const delta = Point.subtract(coord, this.startPoint!);
+      const delta = Point.subtract(offset, this.startPoint!);
       const newPosition = Point.add(this.initialPositions[i], delta);
       wp.point = this.editablePath.toLocalCoordinate(newPosition);
     }
     this.editablePath.commitToNode(this.uow);
     this.uow.notify();
 
-    this.lastPoint = coord;
+    this.lastPoint = offset;
   }
 
   onDragEnd(): void {

@@ -1,6 +1,6 @@
 import { AbstractTool, BACKGROUND } from '../tool';
 import { Context } from '../context';
-import { DragDopManager, Modifiers } from '../dragDropManager';
+import { DragDopManager, DragEvents, Modifiers } from '../dragDropManager';
 import { MarqueeDrag } from '../drag/marqueeDrag';
 import { MoveDrag } from '../drag/moveDrag';
 import { Point } from '@diagram-craft/geometry/point';
@@ -38,12 +38,12 @@ export class MoveTool extends AbstractTool {
     context.help.set('Select elements. Shift+click - add');
   }
 
-  onMouseOver(id: string, _point: Point) {
-    this.drag.current()?.onDragEnter?.(id);
+  onMouseOver(id: string, _point: Point, target: EventTarget) {
+    this.drag.current()?.onDragEnter?.(new DragEvents.DragEnter(target, id));
   }
 
-  onMouseOut(id: string, _point: Point) {
-    this.drag.current()?.onDragLeave?.(id);
+  onMouseOut(id: string, _point: Point, target: EventTarget) {
+    this.drag.current()?.onDragLeave?.(new DragEvents.DragLeave(target, id));
   }
 
   onMouseDown(id: string, point: Point, modifiers: Modifiers) {
@@ -137,10 +137,10 @@ export class MoveTool extends AbstractTool {
     }
   }
 
-  onMouseUp(_point: Point) {
+  onMouseUp(_point: Point, target: EventTarget) {
     const current = this.drag.current();
     try {
-      current?.onDragEnd();
+      current?.onDragEnd(new DragEvents.DragEnd(target));
       this.deferredMouseAction?.callback();
     } finally {
       this.drag.clear();
@@ -148,10 +148,12 @@ export class MoveTool extends AbstractTool {
     }
   }
 
-  onMouseMove(point: Point, modifiers: Modifiers) {
+  onMouseMove(point: Point, modifiers: Modifiers, target: EventTarget) {
     const current = this.drag.current();
     try {
-      current?.onDrag(this.diagram.viewBox.toDiagramPoint(point), modifiers);
+      current?.onDrag(
+        new DragEvents.DragStart(this.diagram.viewBox.toDiagramPoint(point), modifiers, target)
+      );
     } finally {
       this.deferredMouseAction = undefined;
     }

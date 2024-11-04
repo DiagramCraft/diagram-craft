@@ -18,13 +18,10 @@ export interface Tool {
   type: ToolType;
 
   onMouseDown(id: string, point: Point, modifiers: Modifiers): void;
-
-  onMouseUp(point: Point): void;
-
-  onMouseMove(point: Point, modifiers: Modifiers): void;
-
-  onMouseOver(id: string, point: Point): void;
-  onMouseOut(id: string, point: Point): void;
+  onMouseUp(point: Point, target: EventTarget): void;
+  onMouseMove(point: Point, modifiers: Modifiers, target: EventTarget): void;
+  onMouseOver(id: string, point: Point, target: EventTarget): void;
+  onMouseOut(id: string, point: Point, target: EventTarget): void;
 
   onKeyDown(e: KeyboardEvent): void;
   onKeyUp(e: KeyboardEvent): void;
@@ -57,15 +54,15 @@ export abstract class AbstractTool implements Tool {
 
   abstract onMouseDown(id: string, point: Point, modifiers: Modifiers): void;
 
-  abstract onMouseUp(point: Point): void;
+  abstract onMouseUp(point: Point, target: EventTarget): void;
 
-  abstract onMouseMove(point: Point, modifiers: Modifiers): void;
+  abstract onMouseMove(point: Point, modifiers: Modifiers, target: EventTarget): void;
 
-  onMouseOver(id: string, _point: Point): void {
+  onMouseOver(id: string, _point: Point, _target: EventTarget): void {
     this.currentElement = id;
   }
 
-  onMouseOut(_id: string, _point: Point): void {
+  onMouseOut(_id: string, _point: Point, _target: EventTarget): void {
     this.currentElement = undefined;
   }
 

@@ -2,7 +2,7 @@ import { AbstractTool, BACKGROUND } from '../tool';
 import { addHighlight, Highlights, removeHighlight } from '../highlight';
 import { Context, MessageDialogCommand } from '../context';
 import { Point } from '@diagram-craft/geometry/point';
-import { DragDopManager, Modifiers } from '../dragDropManager';
+import { DragDopManager, DragEvents, Modifiers } from '../dragDropManager';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -37,8 +37,8 @@ export class NodeTool extends AbstractTool {
     context.help.set('Select element');
   }
 
-  onMouseOver(id: string, point: Point) {
-    super.onMouseOver(id, point);
+  onMouseOver(id: string, point: Point, target: EventTarget) {
+    super.onMouseOver(id, point, target);
 
     const el = this.diagram.lookup(id);
     if (this.diagram.selectionState.elements.includes(el!)) return;
@@ -51,8 +51,8 @@ export class NodeTool extends AbstractTool {
     }
   }
 
-  onMouseOut(id: string, point: Point) {
-    super.onMouseOut(id, point);
+  onMouseOut(id: string, point: Point, target: EventTarget) {
+    super.onMouseOut(id, point, target);
 
     const el = this.diagram.lookup(id);
     if (isNode(el)) {
@@ -94,15 +94,21 @@ export class NodeTool extends AbstractTool {
     }
   }
 
-  onMouseUp(_point: Readonly<{ x: number; y: number }>): void {
+  onMouseUp(_point: Readonly<{ x: number; y: number }>, target: EventTarget): void {
     const current = this.drag.current();
-    current?.onDragEnd();
+    current?.onDragEnd(new DragEvents.DragEnd(target));
     this.drag.clear();
   }
 
-  onMouseMove(point: Readonly<{ x: number; y: number }>, modifiers: Modifiers): void {
+  onMouseMove(
+    point: Readonly<{ x: number; y: number }>,
+    modifiers: Modifiers,
+    target: EventTarget
+  ): void {
     const current = this.drag.current();
-    current?.onDrag(this.diagram.viewBox.toDiagramPoint(point), modifiers);
+    current?.onDrag(
+      new DragEvents.DragStart(this.diagram.viewBox.toDiagramPoint(point), modifiers, target)
+    );
   }
 
   onKeyDown(e: KeyboardEvent) {

@@ -1,10 +1,10 @@
-import { AbstractDrag, Modifiers } from '../dragDropManager';
+import { Drag, DragEvents } from '../dragDropManager';
 import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 
-export class ShapeControlPointDrag extends AbstractDrag {
+export class ShapeControlPointDrag extends Drag {
   private readonly uow: UnitOfWork;
   constructor(
     private readonly element: DiagramElement,
@@ -14,13 +14,13 @@ export class ShapeControlPointDrag extends AbstractDrag {
     this.uow = new UnitOfWork(this.element.diagram, true);
   }
 
-  onDrag(coord: Point, _modifiers: Modifiers) {
+  onDrag(event: DragEvents.DragStart) {
     const bounds = this.element.bounds;
     const nodeProps = this.element.renderProps;
 
     const p = {
-      x: (coord.x - bounds.x) / bounds.w,
-      y: (coord.y - bounds.y) / bounds.h
+      x: (event.offset.x - bounds.x) / bounds.w,
+      y: (event.offset.y - bounds.y) / bounds.h
     };
 
     const transformedCoord = {

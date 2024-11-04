@@ -1,11 +1,10 @@
-import { AbstractDrag, Modifiers } from '../dragDropManager';
-import { Point } from '@diagram-craft/geometry/point';
+import { Drag, DragEvents } from '../dragDropManager';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { Context } from '../context';
 
-export class EdgeWaypointDrag extends AbstractDrag {
+export class EdgeWaypointDrag extends Drag {
   private readonly uow: UnitOfWork;
 
   constructor(
@@ -19,8 +18,8 @@ export class EdgeWaypointDrag extends AbstractDrag {
     this.context.help.push('EdgeWaypointDrag', 'Move waypoint');
   }
 
-  onDrag(coord: Point, _modifiers: Modifiers) {
-    this.edge.moveWaypoint(this.edge.waypoints[this.waypointIdx], coord, this.uow);
+  onDrag({ offset }: DragEvents.DragStart) {
+    this.edge.moveWaypoint(this.edge.waypoints[this.waypointIdx], offset, this.uow);
     this.uow.notify();
   }
 

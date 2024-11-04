@@ -1,4 +1,4 @@
-import { AbstractDrag, Modifiers } from '../dragDropManager';
+import { Drag, DragEvents, Modifiers } from '../dragDropManager';
 import { LocalCoordinateSystem } from '@diagram-craft/geometry/lcs';
 import { Box, WritableBox } from '@diagram-craft/geometry/box';
 import { Point } from '@diagram-craft/geometry/point';
@@ -15,7 +15,7 @@ export type ResizeType = 'n' | 's' | 'e' | 'w' | 'nw' | 'ne' | 'sw' | 'se';
 const isConstraintDrag = (m: Modifiers) => m.shiftKey;
 const isFreeDrag = (m: Modifiers) => m.altKey;
 
-export class ResizeDrag extends AbstractDrag {
+export class ResizeDrag extends Drag {
   private readonly uow: UnitOfWork;
   private readonly originalBounds: Box;
 
@@ -29,7 +29,7 @@ export class ResizeDrag extends AbstractDrag {
     this.originalBounds = this.diagram.selectionState.bounds;
   }
 
-  onDrag(coord: Point, modifiers: Modifiers): void {
+  onDrag(event: DragEvents.DragStart): void {
     const selection = this.diagram.selectionState;
 
     const before = this.originalBounds;
@@ -41,7 +41,7 @@ export class ResizeDrag extends AbstractDrag {
     const localTarget = Box.asReadWrite(lcs.toLocal(before));
     const localOriginal = lcs.toLocal(original);
 
-    const delta = Point.subtract(lcs.toLocal(coord), lcs.toLocal(this.offset));
+    const delta = Point.subtract(lcs.toLocal(event.offset), lcs.toLocal(this.offset));
 
     const aspectRatio = localOriginal.w / localOriginal.h;
 
@@ -99,10 +99,10 @@ export class ResizeDrag extends AbstractDrag {
 
     const newBounds = Box.asReadWrite(lcs.toGlobal(WritableBox.asBox(localTarget)));
 
-    if (isFreeDrag(modifiers)) {
+    if (isFreeDrag(event.modifiers)) {
       selection.guides = [];
 
-      if (isConstraintDrag(modifiers)) {
+      if (isConstraintDrag(event.modifiers)) {
         this.applyAspectRatioConstraint(aspectRatio, newBounds, localOriginal, lcs);
       }
     } else {
@@ -116,7 +116,7 @@ export class ResizeDrag extends AbstractDrag {
       newBounds.w = result.adjusted.w;
       newBounds.h = result.adjusted.h;
 
-      if (isConstraintDrag(modifiers)) {
+      if (isConstraintDrag(event.modifiers)) {
         this.applyAspectRatioConstraint(aspectRatio, newBounds, localOriginal, lcs);
         selection.guides = snapManager.reviseGuides(result.guides, WritableBox.asBox(newBounds));
       }

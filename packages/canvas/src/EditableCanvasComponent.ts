@@ -295,18 +295,18 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
               mouseover: e => {
                 const el = getAncestorDiagramElement(e.target as SVGElement);
                 if (!el) return;
-                this.tool!.onMouseOver(el.id, EventHelper.point(e));
+                this.tool!.onMouseOver(el.id, EventHelper.point(e), e.currentTarget!);
                 props.onMouseOver?.(e, el);
                 this.hoverElement.value = el.id;
               },
               mouseout: e => {
                 const el = getAncestorDiagramElement(e.target as SVGElement);
                 if (!el) return;
-                this.tool!.onMouseOut(el.id, EventHelper.point(e));
+                this.tool!.onMouseOut(el.id, EventHelper.point(e), e.currentTarget!);
                 props.onMouseOut?.(e, el);
                 this.hoverElement.value = undefined;
               },
-              mouseup: e => this.tool!.onMouseUp(EventHelper.point(e)),
+              mouseup: e => this.tool!.onMouseUp(EventHelper.point(e), e.currentTarget!),
               mousemove: e => {
                 // TODO: Could we cache this and only update in case a resize happens?
                 const b = (e.currentTarget! as SVGSVGElement).getBoundingClientRect();
@@ -315,7 +315,8 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
                     x: e.clientX - b.x,
                     y: e.clientY - b.y
                   },
-                  e
+                  e,
+                  e.currentTarget!
                 );
                 if (e.x >= b.left && e.x <= b.right && e.y >= b.top && e.y <= b.bottom) {
                   this.point = diagram.viewBox.toDiagramPoint({

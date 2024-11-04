@@ -1,11 +1,10 @@
 import { EditablePath } from '../editablePath';
-import { AbstractDrag, Modifiers } from '../dragDropManager';
-import { Point } from '@diagram-craft/geometry/point';
+import { Drag, DragEvents } from '../dragDropManager';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { Context } from '../context';
 
-export class GenericPathControlPointDrag extends AbstractDrag {
+export class GenericPathControlPointDrag extends Drag {
   private readonly uow: UnitOfWork;
 
   constructor(
@@ -23,11 +22,11 @@ export class GenericPathControlPointDrag extends AbstractDrag {
     );
   }
 
-  onDrag(coord: Point, modifiers: Modifiers) {
+  onDrag({ offset, modifiers }: DragEvents.DragStart) {
     const wp = this.editablePath.waypoints[this.waypointIdx];
     wp.updateControlPoint(
       this.controlPoint,
-      this.editablePath.toLocalCoordinate(coord),
+      this.editablePath.toLocalCoordinate(offset),
       modifiers.metaKey ? 'symmetric' : modifiers.altKey ? 'smooth' : 'corner'
     );
 

@@ -1,4 +1,4 @@
-import { AbstractDrag, Modifiers } from '../dragDropManager';
+import { Drag, DragEvents } from '../dragDropManager';
 import { Path } from '@diagram-craft/geometry/path';
 import { Point } from '@diagram-craft/geometry/point';
 import { LengthOffsetOnPath, TimeOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
@@ -6,7 +6,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramEdge, ResolvedLabelNode } from '@diagram-craft/model/diagramEdge';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 
-export class LabelAttachmentPointDrag extends AbstractDrag {
+export class LabelAttachmentPointDrag extends Drag {
   private readonly uow: UnitOfWork;
 
   constructor(
@@ -18,8 +18,8 @@ export class LabelAttachmentPointDrag extends AbstractDrag {
     this.uow = new UnitOfWork(this.edge.diagram, true);
   }
 
-  onDrag(coord: Point, _modifiers: Modifiers): void {
-    const pointOnPath = this.path.projectPoint(coord);
+  onDrag(event: DragEvents.DragStart): void {
+    const pointOnPath = this.path.projectPoint(event.offset);
     const timeOffset = LengthOffsetOnPath.toTimeOffsetOnPath(pointOnPath, this.path);
 
     const prevOffset = this.path.pointAt(

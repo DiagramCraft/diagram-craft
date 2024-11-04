@@ -128,12 +128,12 @@ export class PenTool extends AbstractTool {
     this.resetState();
   }
 
-  onMouseOver(id: string, point: Point) {
-    super.onMouseOver(id, point);
+  onMouseOver(id: string, point: Point, target: EventTarget) {
+    super.onMouseOver(id, point, target);
   }
 
-  onMouseOut(id: string, point: Point) {
-    super.onMouseOut(id, point);
+  onMouseOut(id: string, point: Point, target: EventTarget) {
+    super.onMouseOut(id, point, target);
   }
 
   onMouseUp(_point: Readonly<{ x: number; y: number }>): void {}
