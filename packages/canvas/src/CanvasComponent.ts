@@ -64,12 +64,13 @@ export class CanvasComponent extends Component<CanvasProps> {
                 return this.subComponent(
                   () =>
                     new (edgeDef as ShapeEdgeDefinition).component!(edgeDef as ShapeEdgeDefinition),
-                  // @ts-ignore
                   {
                     element: edge,
                     // @ts-ignore
                     context: {},
-                    onMouseDown: (_id: string, _coord: Point, _modifiers: Modifiers) => {}
+                    onMouseDown:
+                      props.onMouseDown ??
+                      ((_id: string, _coord: Point, _modifiers: Modifiers) => {})
                   }
                 );
               } else {
@@ -79,13 +80,14 @@ export class CanvasComponent extends Component<CanvasProps> {
                 return this.subComponent(
                   () =>
                     new (nodeDef as ShapeNodeDefinition).component!(nodeDef as ShapeNodeDefinition),
-                  // @ts-ignore
                   {
                     key: `node-${node.nodeType}-${id}`,
                     element: node,
                     // @ts-ignore
                     context: {},
-                    onMouseDown: (_id: string, _coord: Point, _modifiers: Modifiers) => {}
+                    onMouseDown:
+                      props.onMouseDown ??
+                      ((_id: string, _coord: Point, _modifiers: Modifiers) => {})
                   }
                 );
               }
@@ -109,4 +111,5 @@ export type CanvasProps = {
   height?: string | number;
   onClick?: (e: MouseEvent) => void;
   viewBox?: string;
+  onMouseDown?: (_id: string, _coord: Point, _modifiers: Modifiers) => void;
 };

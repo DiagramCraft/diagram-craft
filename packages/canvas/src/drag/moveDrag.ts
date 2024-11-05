@@ -44,37 +44,29 @@ const isFreeDrag = (m: Modifiers) => m.altKey;
 const isDuplicateDrag = (e: KeyboardEvent | Modifiers) =>
   ('metaKey' in e && e.metaKey) || ('key' in e && e.key === 'Meta');
 
-export class MoveDrag extends Drag {
+export abstract class AbstractMoveDrag extends Drag {
   #snapAngle?: Axis;
-  #hasDuplicatedSelection?: boolean = false;
-  #dragStarted = false;
   #currentElement: DiagramElement | undefined = undefined;
   #keys: string[] = [];
 
-  private readonly uow: UnitOfWork;
+  protected dragStarted = false;
+  protected readonly uow: UnitOfWork;
 
   constructor(
-    private readonly diagram: Diagram,
-    private readonly offset: Point,
-    private modifiers: Modifiers,
-    private context: Context
+    protected readonly diagram: Diagram,
+    protected readonly offset: Point,
+    protected modifiers: Modifiers,
+    protected context: Context
   ) {
     super();
 
-    this.uow = new UnitOfWork(this.diagram, true);
-    if (isDuplicateDrag(this.modifiers)) {
-      this.duplicate();
-    }
-
     assertRegularLayer(this.diagram.activeLayer);
-
-    this.context.help.push(
-      'MoveDrag',
-      'Move elements. Shift+Click - add, Shift - constrain, Option - free, Cmd - duplicate'
-    );
+    this.uow = new UnitOfWork(this.diagram, true);
   }
 
   onDragEnter({ id }: DragEvents.DragEnter) {
+    if (!id) return;
+
     const selection = this.diagram.selectionState;
     if (selection.getSelectionType() !== 'single-node') return;
 
@@ -102,16 +94,6 @@ export class MoveDrag extends Drag {
   onKeyDown(event: KeyboardEvent) {
     this.#keys.push(event.key);
     this.updateState(this.diagram.selectionState.bounds);
-
-    if (isDuplicateDrag(event)) {
-      this.duplicate();
-    }
-  }
-
-  onKeyUp(event: KeyboardEvent) {
-    if (isDuplicateDrag(event)) {
-      this.removeDuplicate();
-    }
   }
 
   onDrag({ offset, modifiers }: DragEvents.DragStart): void {
@@ -124,8 +106,8 @@ export class MoveDrag extends Drag {
     }
 
     // Disable pointer events on the first onDrag event
-    if (!this.#dragStarted) {
-      this.#dragStarted = true;
+    if (!this.dragStarted) {
+      this.dragStarted = true;
       disablePointerEvents(selection.elements);
     }
 
@@ -188,7 +170,6 @@ export class MoveDrag extends Drag {
 
     this.clearHighlight();
     enablePointerEvents(selection.elements);
-    this.#hasDuplicatedSelection = false;
 
     const snapshots = this.uow.commit();
 
@@ -256,8 +237,6 @@ export class MoveDrag extends Drag {
 
     this.uow.commit();
     selection.rebaseline();
-
-    this.context.help.pop('MoveDrag');
   }
 
   private constrainDrag(selection: SelectionState, coord: Point) {
@@ -284,6 +263,73 @@ export class MoveDrag extends Drag {
       availableSnapDirections: snapDirections,
       adjustedPosition: Point.add(selection.source.boundingBox, Vector.fromPolar(snapAngle, length))
     };
+  }
+
+  private clearHighlight() {
+    if (!this.#currentElement) return;
+    removeHighlight(this.#currentElement, Highlights.NODE__DROP_TARGET);
+  }
+
+  private setHighlight() {
+    if (!this.#currentElement) return;
+    addHighlight(this.#currentElement, Highlights.NODE__DROP_TARGET);
+  }
+
+  private getLastState(max: number) {
+    const last: [number, number][] = [];
+    for (let i = 1; i <= max; i++) {
+      last[i] = [i, this.#keys.lastIndexOf(i.toString())];
+    }
+    return largest(last.slice(1).toReversed(), (a, b) => a[1] - b[1])![0];
+  }
+
+  private updateState(newPos: { x: number; y: number }) {
+    const lastState = this.getLastState(2);
+    this.setState({
+      label: `x: ${newPos.x.toFixed(0)}, y: ${newPos.y.toFixed(0)}`,
+      modifiers:
+        this.#currentElement?.type === 'edge'
+          ? [
+              { key: '1', label: 'Split', isActive: lastState === 1 },
+              { key: '2', label: 'Attach as label', isActive: lastState === 2 }
+            ]
+          : []
+    });
+  }
+}
+
+export class MoveDrag extends AbstractMoveDrag {
+  #hasDuplicatedSelection?: boolean = false;
+
+  constructor(diagram: Diagram, offset: Point, modifiers: Modifiers, context: Context) {
+    super(diagram, offset, modifiers, context);
+
+    this.context.help.push(
+      'MoveDrag',
+      'Move elements. Shift+Click - add, Shift - constrain, Option - free, Cmd - duplicate'
+    );
+  }
+
+  onKeyUp(event: KeyboardEvent) {
+    super.onKeyUp(event);
+
+    if (isDuplicateDrag(event)) {
+      this.removeDuplicate();
+    }
+  }
+
+  onKeyDown(event: KeyboardEvent) {
+    super.onKeyDown(event);
+
+    if (isDuplicateDrag(event)) {
+      this.duplicate();
+    }
+  }
+
+  onDragEnd() {
+    super.onDragEnd();
+    this.#hasDuplicatedSelection = false;
+    this.context.help.pop('MoveDrag');
   }
 
   private duplicate() {
@@ -319,7 +365,7 @@ export class MoveDrag extends Drag {
     this.uow.notify();
 
     // To ensure that pointer events are disabled at the next drag event
-    this.#dragStarted = false;
+    this.dragStarted = false;
   }
 
   private removeDuplicate() {
@@ -348,37 +394,5 @@ export class MoveDrag extends Drag {
     });
 
     this.uow.notify();
-  }
-
-  private clearHighlight() {
-    if (!this.#currentElement) return;
-    removeHighlight(this.#currentElement, Highlights.NODE__DROP_TARGET);
-  }
-
-  private setHighlight() {
-    if (!this.#currentElement) return;
-    addHighlight(this.#currentElement, Highlights.NODE__DROP_TARGET);
-  }
-
-  private getLastState(max: number) {
-    const last: [number, number][] = [];
-    for (let i = 1; i <= max; i++) {
-      last[i] = [i, this.#keys.lastIndexOf(i.toString())];
-    }
-    return largest(last.slice(1).toReversed(), (a, b) => a[1] - b[1])![0];
-  }
-
-  private updateState(newPos: { x: number; y: number }) {
-    const lastState = this.getLastState(2);
-    this.setState({
-      label: `x: ${newPos.x.toFixed(0)}, y: ${newPos.y.toFixed(0)}`,
-      modifiers:
-        this.#currentElement?.type === 'edge'
-          ? [
-              { key: '1', label: 'Split', isActive: lastState === 1 },
-              { key: '2', label: 'Attach as label', isActive: lastState === 2 }
-            ]
-          : []
-    });
   }
 }

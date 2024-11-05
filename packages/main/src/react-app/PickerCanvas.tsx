@@ -3,6 +3,7 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import React, { useCallback, useRef, useState } from 'react';
 import * as Portal from '@radix-ui/react-portal';
 import { Point } from '@diagram-craft/geometry/point';
+import { Modifiers } from '@diagram-craft/canvas/dragDropManager';
 
 export const PickerCanvas = (props: PickerCanvasProps) => {
   const diagram = props.diagram;
@@ -87,6 +88,7 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
         onClick={props.onClick}
         diagram={diagram}
         viewBox={`${props.diagram.viewBox.svgViewboxString}`}
+        onMouseDown={props.onMouseDown}
       />
     </div>
   );
@@ -101,4 +103,5 @@ type PickerCanvasProps = {
   diagramHeight?: number;
   showHover?: boolean;
   name?: string;
+  onMouseDown?: (_id: string, _coord: Point, _modifiers: Modifiers) => void;
 };

@@ -18,6 +18,48 @@ export type State = {
   }[];
 };
 
+export const bindDocumentDragAndDrop = () => {
+  document.addEventListener('mousemove', event => {
+    const drag = DRAG_DROP_MANAGER.current();
+    if (!drag || !drag.isGlobal) return;
+
+    drag.onDrag(
+      new DragEvents.DragStart({ x: event.clientX, y: event.clientY }, event, event.currentTarget!)
+    );
+  });
+  document.addEventListener('mouseup', event => {
+    const drag = DRAG_DROP_MANAGER.current();
+    if (!drag || !drag.isGlobal) return;
+
+    drag.onDragEnd(new DragEvents.DragEnd(event.currentTarget!));
+    DRAG_DROP_MANAGER.clear();
+  });
+  document.addEventListener('mouseout', event => {
+    const drag = DRAG_DROP_MANAGER.current();
+    if (!drag || !drag.isGlobal) return;
+
+    drag.onDragLeave(new DragEvents.DragLeave(event.currentTarget!));
+  });
+  document.addEventListener('mouseoover', event => {
+    const drag = DRAG_DROP_MANAGER.current();
+    if (!drag || !drag.isGlobal) return;
+
+    drag.onDragEnter(new DragEvents.DragEnter(event.currentTarget!));
+  });
+  document.addEventListener('keydown', event => {
+    const drag = DRAG_DROP_MANAGER.current();
+    if (!drag || !drag.isGlobal) return;
+
+    drag.onKeyDown(event!);
+  });
+  document.addEventListener('keyup', event => {
+    const drag = DRAG_DROP_MANAGER.current();
+    if (!drag || !drag.isGlobal) return;
+
+    drag.onKeyUp(event!);
+  });
+};
+
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace DragEvents {
   export class DragStart {
@@ -35,14 +77,14 @@ export namespace DragEvents {
   export class DragEnter {
     constructor(
       public target: EventTarget,
-      public id: string
+      public id?: string
     ) {}
   }
 
   export class DragLeave {
     constructor(
       public target: EventTarget,
-      public id: string
+      public id?: string
     ) {}
   }
 

@@ -50,6 +50,7 @@ export class EdgeEndpointMoveDrag extends Drag {
 
   onDragEnter({ id }: DragEvents.DragEnter): void {
     if (id === this.edge.id) return;
+    if (!id) return;
 
     const type = this.type;
 

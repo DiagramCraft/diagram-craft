@@ -61,6 +61,7 @@ import { UserState } from './UserState';
 import { HelpState } from './react-app/HelpState';
 import { JSONDialog } from './react-app/components/JSONDialog';
 import { CanvasOutline } from './react-app/CanvasOutline';
+import { bindDocumentDragAndDrop } from '@diagram-craft/canvas/dragDropManager';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -237,6 +238,8 @@ export const App = (props: {
   useEventListener(doc, 'diagramremoved', autosave);
   useEventListener(doc, 'diagramadded', autosave);
   useEventListener(doc, 'diagramchanged', autosave);
+
+  useEffect(() => bindDocumentDragAndDrop());
 
   const keyMap = defaultMacAppKeymap;
   application.current.keyMap = keyMap;
