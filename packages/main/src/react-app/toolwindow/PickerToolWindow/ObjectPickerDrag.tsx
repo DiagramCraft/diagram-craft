@@ -21,6 +21,7 @@ import { Box } from '@diagram-craft/geometry/box';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 import { deepClone } from '@diagram-craft/utils/object';
+import { clamp } from '@diagram-craft/utils/math';
 
 enum State {
   INSIDE,
@@ -144,18 +145,18 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
   private addDragImage(point: Point) {
     if (this.#dragImage) return;
 
-    const scale = this.diagram.viewBox.zoomLevel;
+    const scale = clamp(this.diagram.viewBox.zoomLevel, 0.3, 3);
 
     const svgNode = getAncestorWithTagName(this.#sourceElement, 'svg');
     assert.present(svgNode);
 
     const clonedSvg = svgNode.cloneNode(true) as SVGElement;
-    clonedSvg.setAttribute('width', this.source.bounds.w.toString());
-    clonedSvg.setAttribute('height', this.source.bounds.h.toString());
+    clonedSvg.setAttribute('width', (this.source.bounds.w / scale).toString());
+    clonedSvg.setAttribute('height', (this.source.bounds.h / scale).toString());
     clonedSvg.setAttribute('style', `background: transparent;`);
     clonedSvg.setAttribute(
       'viewBox',
-      `-2 -2 ${this.source.bounds.w * scale + 4} ${this.source.bounds.h * scale + 4}`
+      `-2 -2 ${this.source.bounds.w + 4} ${this.source.bounds.h + 4}`
     );
 
     this.#dragImage = document.createElement('div');
