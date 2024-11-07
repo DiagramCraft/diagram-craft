@@ -250,8 +250,10 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
             ...(props.width ? { width: props.width } : {}),
             ...(props.height ? { height: props.height } : {}),
             id: `diagram-${diagram.id}`,
-            class:
-              (props.className ?? 'canvas') + ' ' + (Browser.isChrome() ? 'browser-chrome' : ''),
+            class: [
+              props.className ?? 'canvas editable-canvas',
+              Browser.isChrome() ? 'browser-chrome' : ''
+            ].join(' '),
             preserveAspectRatio: 'none',
             viewBox: diagram.viewBox.svgViewboxString,
             style: `user-select: none`,

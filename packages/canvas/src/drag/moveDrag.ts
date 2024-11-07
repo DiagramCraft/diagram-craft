@@ -86,7 +86,7 @@ export abstract class AbstractMoveDrag extends Drag {
     }
   }
 
-  onDragLeave() {
+  onDragLeave(_event: DragEvents.DragLeave) {
     this.clearHighlight();
     this.#currentElement = undefined;
   }

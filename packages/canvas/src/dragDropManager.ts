@@ -38,13 +38,15 @@ export const bindDocumentDragAndDrop = () => {
     const drag = DRAG_DROP_MANAGER.current();
     if (!drag || !drag.isGlobal) return;
 
-    drag.onDragLeave(new DragEvents.DragLeave(event.currentTarget!));
+    drag.onDragLeave(new DragEvents.DragLeave(event.target!));
   });
-  document.addEventListener('mouseoover', event => {
+  document.addEventListener('mouseover', event => {
     const drag = DRAG_DROP_MANAGER.current();
     if (!drag || !drag.isGlobal) return;
 
-    drag.onDragEnter(new DragEvents.DragEnter(event.currentTarget!));
+    drag.onDragEnter(
+      new DragEvents.DragEnter({ x: event.clientX, y: event.clientY }, event.target!)
+    );
   });
   document.addEventListener('keydown', event => {
     const drag = DRAG_DROP_MANAGER.current();
@@ -76,6 +78,7 @@ export namespace DragEvents {
 
   export class DragEnter {
     constructor(
+      public offset: Point,
       public target: EventTarget,
       public id?: string
     ) {}

@@ -283,6 +283,10 @@ export function assertRegularLayer(l: Layer): asserts l is RegularLayer {
   }
 }
 
+export function isRegularLayer(l: Layer): l is RegularLayer {
+  return l.type === 'regular';
+}
+
 export class RegularLayer extends Layer<RegularLayer> {
   #elements: Array<DiagramElement> = [];
 

@@ -1,17 +1,15 @@
 import { PickerCanvas } from '../../PickerCanvas';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { assertRegularLayer, RegularLayer } from '@diagram-craft/model/diagramLayer';
+import { isRegularLayer, RegularLayer } from '@diagram-craft/model/diagramLayer';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
-import { serializeDiagramElement } from '@diagram-craft/model/serialization/serialize';
 import { newid } from '@diagram-craft/utils/id';
 import { Stencil, StencilPackage } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { useMemo, useState } from 'react';
-import { Browser } from '@diagram-craft/canvas/browser';
-import { useDiagram } from '../../../application';
-
-const encodeSvg = (svgString: string) => svgString.replace('«', '&#171;').replace('»', '&#187;');
+import { useApplication, useDiagram } from '../../../application';
+import { DRAG_DROP_MANAGER } from '@diagram-craft/canvas/dragDropManager';
+import { ObjectPickerDrag } from './ObjectPickerDrag';
 
 const NODE_CACHE = new Map<string, [Diagram, DiagramNode]>();
 
@@ -46,6 +44,7 @@ const makeDiagramNode = (diagram: Diagram, n: Stencil, pkg: string) => {
 export const ObjectPicker = (props: Props) => {
   const diagram = useDiagram();
   const [showHover, setShowHover] = useState(true);
+  const app = useApplication();
 
   const stencils = props.package.stencils;
   const diagrams = useMemo(() => {
@@ -54,94 +53,8 @@ export const ObjectPicker = (props: Props) => {
 
   return (
     <div className={'cmp-object-picker'}>
-      {diagrams.map(([d, n], idx) => (
-        <div
-          key={d.id}
-          draggable={true}
-          onDragStart={ev => {
-            ev.dataTransfer.setData('text/plain', props.package + '/' + stencils[idx].id);
-
-            // Note: we know for a fact that there's only one layer in the diagram
-            assertRegularLayer(d.activeLayer);
-            const elements = d.activeLayer.elements;
-            ev.dataTransfer.setData(
-              'application/x-diagram-craft-elements',
-              JSON.stringify({
-                elements: elements.map(e => serializeDiagramElement(e)),
-                attachments: {},
-                dimensions: n.bounds
-              })
-            );
-
-            const clonedSvg = (
-              ev.target as HTMLElement
-            ).firstElementChild?.firstElementChild?.firstElementChild!.cloneNode(
-              true
-            ) as HTMLElement;
-            clonedSvg.setAttribute('width', n.bounds.w.toString());
-            clonedSvg.setAttribute('height', n.bounds.h.toString());
-
-            const canvasFg = getComputedStyle(document.getElementById('app')!).getPropertyValue(
-              '--canvas-fg'
-            );
-            const canvasBg = getComputedStyle(document.getElementById('app')!).getPropertyValue(
-              '--canvas-bg'
-            );
-            const canvasBg2 = getComputedStyle(document.getElementById('app')!).getPropertyValue(
-              '--canvas-bg2'
-            );
-
-            clonedSvg.setAttribute(
-              'style',
-              `--canvas-fg: ${canvasFg}; --canvas-bg: ${canvasBg}; --canvas-bg2: ${canvasBg2};`
-            );
-            clonedSvg.setAttribute('viewBox', `-2 -2 ${n.bounds.w + 4} ${n.bounds.h + 4}`);
-
-            const canvas = document.createElement('canvas');
-            canvas.width = n.bounds.w * 2;
-            canvas.height = n.bounds.h * 2;
-
-            const ctx = canvas.getContext('2d')!;
-            ctx.scale(2, 2);
-
-            const img = new Image();
-            const svgData = encodeSvg(new XMLSerializer().serializeToString(clonedSvg));
-
-            img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
-            ctx.drawImage(img, 0, 0);
-
-            const div = document.createElement('div');
-            div.id = 'drag-image';
-
-            const dragImage = new Image();
-            dragImage.src = canvas.toDataURL('image/png');
-            dragImage.width = n.bounds.w;
-            dragImage.height = n.bounds.h;
-
-            div.style.position = 'absolute';
-
-            document.body.style.overflow = 'hidden';
-            div.style.zIndex = '1000';
-            div.style.top = '100%';
-            div.style.left = '100%';
-            div.appendChild(img);
-            document.body.appendChild(div);
-
-            if (Browser.isChrome()) {
-              ev.dataTransfer.setDragImage(div, 2, 2);
-            }
-
-            canvas.remove();
-
-            setShowHover(false);
-          }}
-          onDragEnd={() => {
-            setShowHover(true);
-            document.getElementById('drag-image')?.remove();
-          }}
-          style={{ background: 'transparent' }}
-          data-width={d.viewBox.dimensions.w}
-        >
+      {diagrams.map(([d, node], idx) => (
+        <div key={d.id} style={{ background: 'transparent' }} data-width={d.viewBox.dimensions.w}>
           <PickerCanvas
             width={props.size}
             height={props.size}
@@ -151,9 +64,17 @@ export const ObjectPicker = (props: Props) => {
             showHover={showHover}
             name={
               stencils[idx].name ??
-              diagram.document.nodeDefinitions.get(n.nodeType).name ??
+              diagram.document.nodeDefinitions.get(node.nodeType).name ??
               'unknown'
             }
+            onMouseDown={ev => {
+              if (!isRegularLayer(diagram.activeLayer)) return;
+
+              setShowHover(false);
+              DRAG_DROP_MANAGER.initiate(new ObjectPickerDrag(ev, node, diagram, app), () =>
+                setShowHover(true)
+              );
+            }}
           />
         </div>
       ))}

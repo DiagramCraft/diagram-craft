@@ -38,8 +38,8 @@ export class MoveTool extends AbstractTool {
     context.help.set('Select elements. Shift+click - add');
   }
 
-  onMouseOver(id: string, _point: Point, target: EventTarget) {
-    this.drag.current()?.onDragEnter?.(new DragEvents.DragEnter(target, id));
+  onMouseOver(id: string, point: Point, target: EventTarget) {
+    this.drag.current()?.onDragEnter?.(new DragEvents.DragEnter(point, target, id));
   }
 
   onMouseOut(id: string, _point: Point, target: EventTarget) {

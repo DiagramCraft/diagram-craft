@@ -355,7 +355,6 @@ export const App = (props: {
                             }
                           : Point.ORIGIN
                       }
-                      className={'canvas'}
                       onDrop={canvasDropHandler($d)}
                       onDragOver={canvasDragOverHandler($d)}
                       context={application.current}
