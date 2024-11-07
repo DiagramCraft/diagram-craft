@@ -115,7 +115,7 @@ const stencilRegistry: StencilRegistryConfig = [
       name: 'Arrows',
       url: '/stencils/arrows.xml',
       foreground: 'var(--canvas-fg)',
-      background: 'transparent'
+      background: 'var(--canvas-bg2)'
     }
   },
   {
@@ -124,7 +124,7 @@ const stencilRegistry: StencilRegistryConfig = [
       name: 'Basic',
       url: '/stencils/basic.xml',
       foreground: 'var(--canvas-fg)',
-      background: 'transparent'
+      background: 'var(--canvas-bg2)'
     }
   }
 ];
