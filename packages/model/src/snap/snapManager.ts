@@ -13,7 +13,7 @@ import { Line } from '@diagram-craft/geometry/line';
 import { Range } from '@diagram-craft/geometry/range';
 import { Direction } from '@diagram-craft/geometry/direction';
 import { VerifyNotReached } from '@diagram-craft/utils/assert';
-import { largest, smallest } from '@diagram-craft/utils/array';
+import { groupBy, largest, smallest } from '@diagram-craft/utils/array';
 import { Angle } from '@diagram-craft/geometry/angle';
 import { SnapManagerConfig } from './snapManagerConfig';
 
@@ -33,6 +33,7 @@ export interface SnapProvider<T extends MagnetType> {
   getMagnets(box: Box): ReadonlyArray<MagnetOfType<T>>;
   makeGuide(box: Box, match: MatchingMagnetPair<T>, axis: Axis): Guide | undefined;
   moveMagnet(magnet: MagnetOfType<T>, delta: Point): void;
+  consolidate(guides: Guide[]): Guide[];
 }
 
 class SourceSnapProvider implements SnapProvider<'source'> {
@@ -46,6 +47,10 @@ class SourceSnapProvider implements SnapProvider<'source'> {
 
   moveMagnet(magnet: MagnetOfType<'source'>, delta: Point): void {
     magnet.line = Line.move(magnet.line, delta);
+  }
+
+  consolidate(guides: Guide[]): Guide[] {
+    return guides;
   }
 }
 
@@ -309,7 +314,15 @@ export class SnapManager {
 
     // TODO: Remove guides that are too close to each other or redundant (e.g. center if both left and right)
 
-    return guides;
+    // Consolidate guides
+    const consolidatedGuides: Guide[] = [];
+    const groupedGuides = groupBy(guides, g => g.matchingMagnet.type);
+    for (const [type, guidesOfType] of groupedGuides) {
+      const snapProvider = snapProviders.get(type);
+      consolidatedGuides.push(...snapProvider.consolidate(guidesOfType));
+    }
+
+    return consolidatedGuides;
   }
 
   reviseGuides(guides: ReadonlyArray<Guide>, b: Box): ReadonlyArray<Guide> {

@@ -6,6 +6,7 @@ import { Box } from '@diagram-craft/geometry/box';
 import { Line } from '@diagram-craft/geometry/line';
 import { Axis } from '@diagram-craft/geometry/axis';
 import { Point } from '@diagram-craft/geometry/point';
+import { assert } from '@diagram-craft/utils/assert';
 
 export class GridSnapProvider implements SnapProvider<'grid'> {
   constructor(private readonly diagram: Diagram) {}
@@ -64,5 +65,24 @@ export class GridSnapProvider implements SnapProvider<'grid'> {
 
   moveMagnet(magnet: MagnetOfType<'grid'>, delta: Point): void {
     magnet.line = Line.move(magnet.line, delta);
+  }
+
+  consolidate(guides: Guide[]): Guide[] {
+    assert.true(guides.every(g => g.selfMagnet.type === 'source'));
+    let result = [...guides] as Array<Guide & { selfMagnet: MagnetOfType<'source'> }>;
+
+    if (result.find(c => c.selfMagnet.subtype === 'center' && c.selfMagnet.axis === 'h')) {
+      result = result.filter(
+        c => !(c.selfMagnet.subtype !== 'center' && c.selfMagnet.axis === 'h')
+      );
+    }
+
+    if (result.find(c => c.selfMagnet.subtype === 'center' && c.selfMagnet.axis === 'v')) {
+      result = result.filter(
+        c => !(c.selfMagnet.subtype !== 'center' && c.selfMagnet.axis === 'v')
+      );
+    }
+
+    return result;
   }
 }

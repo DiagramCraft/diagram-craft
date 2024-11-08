@@ -173,4 +173,8 @@ export class NodeDistanceSnapProvider
       dp.rangeB = Range.add(dp.rangeB, delta[Axis.toXY(magnet.axis)]);
     });
   }
+
+  consolidate(guides: Guide[]): Guide[] {
+    return guides;
+  }
 }

@@ -37,4 +37,8 @@ export class CanvasSnapProvider implements SnapProvider<'canvas'> {
   moveMagnet(magnet: MagnetOfType<'canvas'>, delta: Point): void {
     magnet.line = Line.move(magnet.line, delta);
   }
+
+  consolidate(guides: Guide[]): Guide[] {
+    return guides;
+  }
 }

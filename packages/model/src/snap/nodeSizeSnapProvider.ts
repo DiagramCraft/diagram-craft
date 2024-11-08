@@ -122,4 +122,8 @@ export class NodeSizeSnapProvider extends AbstractNodeSnapProvider implements Sn
   moveMagnet(magnet: MagnetOfType<'size'>, delta: Point): void {
     magnet.line = Line.move(magnet.line, delta);
   }
+
+  consolidate(guides: Guide[]): Guide[] {
+    return guides;
+  }
 }

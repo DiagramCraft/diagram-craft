@@ -29,8 +29,9 @@ export type DistancePairWithRange = DistancePair & {
 export type Magnet = BaseMagnet &
   (
     | {
-        type: 'source' | 'canvas' | 'grid';
+        type: 'canvas' | 'grid';
       }
+    | { type: 'source'; subtype?: string }
     | {
         type: 'size';
         size: number;
@@ -59,12 +60,14 @@ export const Magnet = {
       {
         line: Line.horizontal(node.y + node.h / 2, [node.x, node.x + node.w]),
         axis: Axis.h,
-        type
+        type,
+        subtype: 'center'
       },
       {
         line: Line.vertical(node.x + node.w / 2, [node.y, node.y + node.h]),
         axis: Axis.v,
-        type
+        type,
+        subtype: 'center'
       }
     ];
 

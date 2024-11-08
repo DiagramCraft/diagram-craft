@@ -100,4 +100,8 @@ export class NodeSnapProvider implements SnapProvider<'node'> {
   moveMagnet(magnet: MagnetOfType<'node'>, delta: Point): void {
     magnet.line = Line.move(magnet.line, delta);
   }
+
+  consolidate(guides: Guide[]): Guide[] {
+    return guides;
+  }
 }
