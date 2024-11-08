@@ -35,7 +35,8 @@ export const Ruler = ({ orientation }: Props) => {
 
   const updateSelection = useCallback(() => {
     const bounds = diagram.selectionState.bounds;
-    const selRect = selRef.current!;
+    const selRect = selRef.current;
+    if (!selRect) return;
 
     if (orientation === 'horizontal') {
       selRect.setAttribute('x', toScreenX(bounds.x).toString());
