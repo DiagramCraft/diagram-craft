@@ -27,7 +27,8 @@
     "syncpack": "^12.4.0",
     "typescript": "^5.7.2",
     "vite-tsconfig-paths": "^4.3.2",
-    "vitest": "^1.6.0"
+    "vitest": "^1.6.0",
+    "tsx": "^4.19.2"
   },
   "dependencies": {
     "globals": "^15.9.0"
