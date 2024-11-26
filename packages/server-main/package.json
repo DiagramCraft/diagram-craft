@@ -6,7 +6,7 @@
   "main": "src/index.ts",
   "scripts": {
     "test": "vitest",
-    "dev":  "npx --yes listhen -w ./src/main.ts"
+    "dev": "npx --yes listhen -w ./src/main.ts"
   },
   "keywords": [],
   "author": "Magnus Johansson",
