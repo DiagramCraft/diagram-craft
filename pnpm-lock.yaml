@@ -113,8 +113,8 @@ importers:
         version: 5.3.0(react@18.3.1)
     devDependencies:
       '@storybook/preview-api':
-        specifier: ^8.2.4
-        version: 8.2.4(storybook@8.4.5)
+        specifier: ^8.4.5
+        version: 8.4.5(storybook@8.4.5)
       '@storybook/react':
         specifier: ^8.4.5
         version: 8.4.5(@storybook/test@8.4.5)(react-dom@18.3.1)(react@18.3.1)(storybook@8.4.5)(typescript@5.7.2)
@@ -3550,14 +3550,6 @@ packages:
     resolution: {integrity: sha512-t39JaMy3UX4StbUH/tIDcaflBDxTcyIq853wQtBMhVL3e1+Dw3MIiiG/5bw79HU4R7kSmPVLXIIbV3FmXkq7KQ==}
     peerDependencies:
       storybook: ^8.2.0 || ^8.3.0-0 || ^8.4.0-0 || ^8.5.0-0 || ^8.6.0-0
-    dependencies:
-      storybook: 8.4.5(prettier@3.4.1)
-    dev: true
-
-  /@storybook/preview-api@8.2.4(storybook@8.4.5):
-    resolution: {integrity: sha512-IxOiUYYzNnk1OOz3zQBhsa3P1fsgqeMBZcH7TjiQWs9osuWG20oqsFR6+Z3dxoW8IuQHvpnREGKvAbRsDsThcA==}
-    peerDependencies:
-      storybook: ^8.2.4
     dependencies:
       storybook: 8.4.5(prettier@3.4.1)
     dev: true
