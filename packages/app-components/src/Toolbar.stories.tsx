@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { themeDecorator } from '../.storybook/common';
 import { Toolbar } from './Toolbar';
 import {
-  Tb3DRotate,
+  TbRotate,
   TbAbacus,
   TbBasketCog,
   TbChevronDown,
@@ -31,7 +31,7 @@ export const Primary: Story = {
         <TbAbacus />
       </Toolbar.Button>,
       <Toolbar.Button key={2} value={'italic'}>
-        <Tb3DRotate />
+        <TbRotate />
       </Toolbar.Button>,
       <Toolbar.Separator key={'s'} />,
       <Toolbar.Button key={3} value={'cog'}>
@@ -60,7 +60,7 @@ export const Focus: Story = {
         <TbAbacus />
       </Toolbar.Button>,
       <Toolbar.Button key={2} value={'italic'}>
-        <Tb3DRotate />
+        <TbRotate />
       </Toolbar.Button>,
       <Toolbar.Separator key={'s'} />,
       <Toolbar.Button key={3} value={'cog'} data-focus={'true'}>
@@ -89,7 +89,7 @@ export const Hover: Story = {
         <TbAbacus />
       </Toolbar.Button>,
       <Toolbar.Button key={2} value={'italic'} data-hover={'true'}>
-        <Tb3DRotate />
+        <TbRotate />
       </Toolbar.Button>,
       <Toolbar.Separator key={'s'} />,
       <Toolbar.Button key={3} value={'cog'}>
@@ -118,7 +118,7 @@ export const Disabled: Story = {
         <TbAbacus />
       </Toolbar.Button>,
       <Toolbar.Button key={2} value={'italic'} disabled={true}>
-        <Tb3DRotate />
+        <TbRotate />
       </Toolbar.Button>,
       <Toolbar.Separator key={'s'} />,
       <Toolbar.Button key={3} value={'cog'}>
@@ -148,7 +148,7 @@ export const Large: Story = {
         <TbAbacus size={'17.5px'} />
       </Toolbar.Button>,
       <Toolbar.Button key={2} value={'italic'} disabled={true}>
-        <Tb3DRotate size={'17.5px'} />
+        <TbRotate size={'17.5px'} />
       </Toolbar.Button>,
       <Toolbar.Separator key={'s'} />,
       <Toolbar.Button key={3} value={'cog'}>
@@ -175,7 +175,7 @@ export const Vertical: Story = {
         <TbAbacus />
       </Toolbar.Button>,
       <Toolbar.Button key={2} value={'italic'} disabled={true}>
-        <Tb3DRotate />
+        <TbRotate />
       </Toolbar.Button>,
       <Toolbar.Separator key={'s'} />,
       <Toolbar.Button key={3} value={'cog'}>

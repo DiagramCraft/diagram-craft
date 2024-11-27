@@ -1,5 +1,5 @@
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
-import { IconType } from 'react-icons/lib/cjs/iconBase';
+import { IconType } from 'react-icons';
 
 export const ToolWindowButton = (props: Props) => {
   return (

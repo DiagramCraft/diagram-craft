@@ -1,8 +1,8 @@
 import { TbChevronDown } from 'react-icons/tb';
 import React from 'react';
-import { IconType } from 'react-icons/lib/cjs/iconBase';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
+import { IconType } from 'react-icons';
 
 export const ToolbarToggleItemWithPopover = (props: Props) => {
   return (

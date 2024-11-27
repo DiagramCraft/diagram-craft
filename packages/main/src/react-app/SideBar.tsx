@@ -1,10 +1,10 @@
 import { ToolWindowButton } from './toolwindow/ToolWindowButton';
 import React, { useEffect, useState } from 'react';
 import { useEventListener } from './hooks/useEventListener';
-import { IconType } from 'react-icons/lib/cjs/iconBase';
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
 import { ErrorBoundary } from './ErrorBoundary';
 import { UserState } from '../UserState';
+import { IconType } from 'react-icons';
 
 export const SideBarPage = (props: SideBarPage) => {
   return <ErrorBoundary>{props.children}</ErrorBoundary>;
