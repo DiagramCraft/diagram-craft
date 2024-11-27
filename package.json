@@ -16,7 +16,9 @@
   "author": "Magnus Johansson",
   "pnpm": {
     "overrides": {
-      "ws": "^8.18.0"
+      "ws": "^8.18.0",
+      "braces": "^3.0.3",
+      "micromatch": "^4.0.8"
     }
   },
   "devDependencies": {
