@@ -223,6 +223,9 @@ const isPropsDirty = (
         // TODO: We should add some normalization - or check compared to default value instead
         //        if (key === 'shadow' && keys.length === 1 && props[key].enabled === false) continue;
 
+        // A missing object is considered non-dirty
+        if (isObj(props[key])) continue;
+
         console.log('missing key', key, props[key]);
         return true;
       } else {

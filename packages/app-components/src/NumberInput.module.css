@@ -75,8 +75,9 @@
 
 .cmp-number-input__label {
   font-size: 11px;
-  margin-top: -1px;
+  margin-top: -2px;
   margin-right: 0.15rem;
+  padding-right: 4px;
   color: var(--cmp-fg);
   width: 15px;
   border-right: 1px solid var(--cmp-border);
