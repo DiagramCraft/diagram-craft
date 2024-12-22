@@ -43,7 +43,7 @@ export const DefaultStyles = {
 
 const _elementDefaults: Pick<
   ElementPropsForRendering,
-  'debug' | 'geometry' | 'fill' | 'shadow' | 'stroke' | 'inheritStyle' | 'hidden'
+  'debug' | 'geometry' | 'fill' | 'shadow' | 'stroke' | 'inheritStyle' | 'hidden' | 'indicators'
 > = {
   hidden: false,
   geometry: {
@@ -97,7 +97,18 @@ const _elementDefaults: Pick<
     boundingPath: false,
     anchors: false
   },
-  inheritStyle: true
+  inheritStyle: true,
+  indicators: {
+    _default: {
+      enabled: false,
+      color: 'red',
+      direction: 'e',
+      shape: 'none',
+      type: 'manual',
+      height: 10,
+      width: 10
+    }
+  }
 };
 
 const _nodeDefaults: Omit<NodePropsForRendering, 'labelForEdgeId' | 'name' | 'custom'> = {

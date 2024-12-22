@@ -1,5 +1,6 @@
 import { DeepWriteable } from '@diagram-craft/utils/types';
 import { deepClone } from '@diagram-craft/utils/object';
+import { Direction } from '@diagram-craft/geometry/direction';
 
 type GridType = 'lines' | 'dots';
 
@@ -34,6 +35,16 @@ export type LineJoin = 'miter' | 'round' | 'bevel';
 
 export function assertLineJoin(s: string | undefined): asserts s is LineJoin | undefined {
   if (!(s === 'miter' || s === 'round' || s === 'bevel' || s === undefined)) throw new Error();
+}
+
+export interface Indicator {
+  enabled: boolean;
+  shape?: string;
+  color?: string;
+  height?: number;
+  width?: number;
+  direction?: Direction;
+  type: 'manual' | 'automatic';
 }
 
 declare global {
@@ -153,6 +164,8 @@ declare global {
     };
 
     inheritStyle?: boolean;
+
+    indicators?: Record<string, Indicator>;
   }
 
   interface EdgeProps extends ElementProps {
