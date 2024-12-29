@@ -106,7 +106,9 @@ const _elementDefaults: Pick<
       shape: 'none',
       type: 'manual',
       height: 10,
-      width: 10
+      width: 10,
+      position: 'e',
+      offset: 10
     }
   }
 };

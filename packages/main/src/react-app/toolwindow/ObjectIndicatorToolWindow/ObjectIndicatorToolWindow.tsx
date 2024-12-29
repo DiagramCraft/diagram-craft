@@ -93,7 +93,7 @@ export const ObjectIndicatorToolWindow = (props: Props) => {
               <div className={'cmp-labeled-table__value util-vcenter'}>
                 <Select.Root
                   value={indicators['_default']?.direction ?? 'e'}
-                  onChange={v => update('0', 'direction', (v ?? 'e') as Direction)}
+                  onChange={v => update('_default', 'direction', (v ?? 'e') as Direction)}
                   style={{ width: '90%' }}
                 >
                   <Select.Item value={'e'}>East</Select.Item>
@@ -128,8 +128,34 @@ export const ObjectIndicatorToolWindow = (props: Props) => {
                 />
                 <NumberInput
                   value={indicators['0']?.height ?? 10}
-                  label={'w'}
-                  onChange={v => update('_default', 'width', Number(v))}
+                  label={'h'}
+                  onChange={v => update('_default', 'height', Number(v))}
+                />
+              </div>
+
+              <div className={'cmp-labeled-table__label'}>Position:</div>
+              <div className={'cmp-labeled-table__value util-vcenter'}>
+                <Select.Root
+                  value={indicators['_default']?.position ?? 'e'}
+                  onChange={v => update('_default', 'position', (v ?? 'e') as any)}
+                  style={{ width: '90%' }}
+                >
+                  <Select.Item value={'e'}>East</Select.Item>
+                  <Select.Item value={'ne'}>North East</Select.Item>
+                  <Select.Item value={'n'}>North</Select.Item>
+                  <Select.Item value={'nw'}>North West</Select.Item>
+                  <Select.Item value={'w'}>West</Select.Item>
+                  <Select.Item value={'sw'}>South West</Select.Item>
+                  <Select.Item value={'s'}>Sout</Select.Item>
+                  <Select.Item value={'se'}>Sout East</Select.Item>
+                </Select.Root>
+              </div>
+
+              <div className={'cmp-labeled-table__label'}>Offset:</div>
+              <div className={'cmp-labeled-table__value util-vcenter'}>
+                <NumberInput
+                  value={indicators['0']?.offset ?? 10}
+                  onChange={v => update('_default', 'offset', Number(v))}
                 />
               </div>
             </div>

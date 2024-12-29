@@ -45,6 +45,8 @@ export interface Indicator {
   width?: number;
   direction?: Direction;
   type: 'manual' | 'automatic';
+  position?: 'ne' | 'n' | 'nw' | 'w' | 'sw' | 's' | 'se' | 'e' | 'c';
+  offset?: number;
 }
 
 declare global {

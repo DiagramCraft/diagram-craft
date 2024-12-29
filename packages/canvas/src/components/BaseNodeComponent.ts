@@ -22,11 +22,14 @@ import { makeOpacity } from '../effects/opacity';
 import { DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import { EdgeComponentProps } from './BaseEdgeComponent';
 import { ShapeEdgeDefinition } from '../shape/shapeEdgeDefinition';
-import { OnDoubleClick, OnMouseDown } from '../context';
+import { Context, OnDoubleClick, OnMouseDown } from '../context';
 import { getHighlights, getHighlightValue, hasHighlight, Highlights } from '../highlight';
 import { Zoom } from './zoom';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { Context } from '../context';
+import { Indicator } from '@diagram-craft/model/diagramProps';
+import { DeepRequired } from '@diagram-craft/utils/types';
+import { INDICATORS } from './indicators';
+import { Box, WritableBox } from '@diagram-craft/geometry/box';
 
 export type NodeComponentProps = {
   element: DiagramNode;
@@ -276,6 +279,13 @@ export class BaseNodeComponent<
 
     const z = new Zoom($d.viewBox.zoomLevel);
 
+    /* Handle indicators */
+    for (const indicator of Object.values(nodeProps.indicators)) {
+      if (!indicator.enabled) continue;
+
+      children.push(this.buildIndicator(props, indicator));
+    }
+
     /* Add anchors ******************************************************************* */
 
     if (isEdgeConnect) {
@@ -378,6 +388,65 @@ export class BaseNodeComponent<
         style: style.filter ? `filter: ${style.filter}` : ''
       },
       ...children
+    );
+  }
+
+  private buildIndicator(props: NodeComponentProps, indicator: DeepRequired<Indicator>) {
+    const renderer = INDICATORS[indicator.shape] ?? INDICATORS['none'];
+
+    const eBounds = props.element.bounds;
+
+    const bounds: WritableBox = Box.asReadWrite({
+      x: eBounds.x + indicator.offset,
+      y: eBounds.y + eBounds.h / 2 - indicator.height / 2,
+      w: indicator.width,
+      h: indicator.height,
+      r: eBounds.r
+    });
+
+    if (indicator.position === 'e') {
+      // Do nothing
+    } else if (indicator.position === 'ne') {
+      bounds.y = eBounds.y + indicator.offset;
+    } else if (indicator.position === 'n') {
+      bounds.y = eBounds.y + indicator.offset;
+      bounds.x = eBounds.x + eBounds.w / 2 - indicator.width / 2;
+    } else if (indicator.position === 'nw') {
+      bounds.y = eBounds.y + indicator.offset;
+      bounds.x = eBounds.x + eBounds.w - indicator.width - indicator.offset;
+    } else if (indicator.position === 'w') {
+      bounds.x = eBounds.x + eBounds.w - indicator.width - indicator.offset;
+    } else if (indicator.position === 'sw') {
+      bounds.x = eBounds.x + eBounds.w - indicator.width - indicator.offset;
+      bounds.y = eBounds.y + eBounds.h - indicator.height - indicator.offset;
+    } else if (indicator.position === 's') {
+      bounds.y = eBounds.y + eBounds.h - indicator.height - indicator.offset;
+      bounds.x = eBounds.x + eBounds.w / 2 - indicator.width / 2;
+    } else if (indicator.position === 'se') {
+      bounds.y = eBounds.y + eBounds.h - indicator.height - indicator.offset;
+    }
+
+    let r = 0;
+    if (indicator.direction === 'w') r = 180;
+    else if (indicator.direction === 'n') r = 270;
+    else if (indicator.direction === 's') r = 90;
+
+    return svg.g(
+      {
+        transform: `
+          rotate(${r} ${bounds.x + bounds.w / 2}, ${bounds.y + bounds.h / 2})
+          translate(${bounds.x}, ${bounds.y})
+        `
+      },
+      svg.rect({
+        'x': 0,
+        'y': 0,
+        'width': indicator.width,
+        'height': indicator.height,
+        'stroke-width': 0,
+        'fill': 'transparent'
+      }),
+      renderer(WritableBox.asBox(bounds), indicator, props.element.renderProps.fill.color)
     );
   }
 
