@@ -104,7 +104,6 @@ const _elementDefaults: Pick<
       color: 'red',
       direction: 'e',
       shape: 'none',
-      type: 'manual',
       height: 10,
       width: 10,
       position: 'e',

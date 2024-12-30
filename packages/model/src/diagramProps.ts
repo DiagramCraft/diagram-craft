@@ -44,7 +44,6 @@ export interface Indicator {
   height?: number;
   width?: number;
   direction?: Direction;
-  type: 'manual' | 'automatic';
   position?: 'ne' | 'n' | 'nw' | 'w' | 'sw' | 's' | 'se' | 'e' | 'c';
   offset?: number;
 }

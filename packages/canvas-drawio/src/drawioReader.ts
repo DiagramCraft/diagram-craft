@@ -620,6 +620,29 @@ const getNodeProps = (style: StyleManager, isEdge: boolean) => {
     props.capabilities.deletable = false;
   }
 
+  if (style.get('indicatorShape')) {
+    let shape = style.get('indicatorShape');
+    if (shape === 'ellipse') shape = 'circle';
+
+    const directionS = style.str('indicatorDirection', 'east');
+    let direction: 'n' | 's' | 'e' | 'w' = 'e';
+    if (directionS === 'east') direction = 'e';
+    if (directionS === 'west') direction = 'w';
+    if (directionS === 'north') direction = 'n';
+    if (directionS === 'south') direction = 's';
+
+    props.indicators = {
+      _default: {
+        enabled: true,
+        shape: shape,
+        color: style.str('indicatorColor', 'black'),
+        direction: direction,
+        width: style.num('indicatorWidth', 10),
+        height: style.num('indicatorHeight', 10)
+      }
+    };
+  }
+
   return props;
 };
 

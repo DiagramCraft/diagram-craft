@@ -37,7 +37,10 @@ type StringKey =
   | 'imageVerticalAlign'
   | 'participant'
   | 'overflow'
-  | 'whiteSpace';
+  | 'whiteSpace'
+  | 'indicatorShape'
+  | 'indicatorColor'
+  | 'indicatorDirection';
 
 type BooleanKey =
   | 'rounded'
@@ -100,7 +103,9 @@ type NumKey =
   | 'startAngle'
   | 'notch'
   | 'jettyHeight'
-  | 'jettyWidth';
+  | 'jettyWidth'
+  | 'indicatorWidth'
+  | 'indicatorHeight';
 
 type AllKeys = StringKey | BooleanKey | NumKey;
 

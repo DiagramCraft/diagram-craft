@@ -392,8 +392,6 @@ export class BaseNodeComponent<
   }
 
   private buildIndicator(props: NodeComponentProps, indicator: DeepRequired<Indicator>) {
-    const renderer = INDICATORS[indicator.shape] ?? INDICATORS['none'];
-
     const eBounds = props.element.bounds;
 
     const bounds: WritableBox = Box.asReadWrite({
@@ -426,10 +424,15 @@ export class BaseNodeComponent<
       bounds.y = eBounds.y + eBounds.h - indicator.height - indicator.offset;
     }
 
-    let r = 0;
-    if (indicator.direction === 'w') r = 180;
-    else if (indicator.direction === 'n') r = 270;
-    else if (indicator.direction === 's') r = 90;
+    const DIRECTIONS = {
+      e: 0,
+      w: 180,
+      n: 270,
+      s: 90
+    };
+    let r = DIRECTIONS[indicator.direction];
+
+    const renderer = INDICATORS[indicator.shape] ?? INDICATORS['none'];
 
     return svg.g(
       {
