@@ -402,25 +402,25 @@ export class BaseNodeComponent<
       r: eBounds.r
     });
 
-    if (indicator.position === 'e') {
+    if (indicator.position === 'w') {
       // Do nothing
-    } else if (indicator.position === 'ne') {
+    } else if (indicator.position === 'nw') {
       bounds.y = eBounds.y + indicator.offset;
     } else if (indicator.position === 'n') {
       bounds.y = eBounds.y + indicator.offset;
       bounds.x = eBounds.x + eBounds.w / 2 - indicator.width / 2;
-    } else if (indicator.position === 'nw') {
+    } else if (indicator.position === 'ne') {
       bounds.y = eBounds.y + indicator.offset;
       bounds.x = eBounds.x + eBounds.w - indicator.width - indicator.offset;
-    } else if (indicator.position === 'w') {
+    } else if (indicator.position === 'e') {
       bounds.x = eBounds.x + eBounds.w - indicator.width - indicator.offset;
-    } else if (indicator.position === 'sw') {
+    } else if (indicator.position === 'se') {
       bounds.x = eBounds.x + eBounds.w - indicator.width - indicator.offset;
       bounds.y = eBounds.y + eBounds.h - indicator.height - indicator.offset;
     } else if (indicator.position === 's') {
       bounds.y = eBounds.y + eBounds.h - indicator.height - indicator.offset;
       bounds.x = eBounds.x + eBounds.w / 2 - indicator.width / 2;
-    } else if (indicator.position === 'se') {
+    } else if (indicator.position === 'sw') {
       bounds.y = eBounds.y + eBounds.h - indicator.height - indicator.offset;
     }
 

@@ -93,6 +93,25 @@
       max-width: calc(100% + 20px);
       border-bottom: 2px solid var(--slate-1);
     }
+
+    > .cmp-accordion {
+      margin: -5px -10px;
+
+      .cmp-accordion__trigger {
+        font-weight: normal;
+      }
+
+      .cmp-accordion__chevron {
+        color: var(--primary-fg);
+      }
+
+      .cmp-accordion__header_btn {
+        color: var(--primary-fg);
+        > a {
+          color: var(--primary-fg);
+        }
+      }
+    }
   }
 
   .cmp-accordion__chevron {

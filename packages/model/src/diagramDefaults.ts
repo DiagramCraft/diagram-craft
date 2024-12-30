@@ -106,7 +106,7 @@ const _elementDefaults: Pick<
       shape: 'none',
       height: 10,
       width: 10,
-      position: 'e',
+      position: 'w',
       offset: 10
     }
   }
