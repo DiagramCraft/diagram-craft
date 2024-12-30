@@ -71,10 +71,10 @@ export const useEdgeProperty: PropertyArrayHook<Diagram, EdgeProps> = makeProper
   },
   makeWriteable(edgeDefaults),
   {
-    onAfterSet: (diagram, edges, path, oldValue, newValue) => {
+    onAfterSet: (diagram, edges, path, oldValue, newValue, message) => {
       diagram.undoManager.add(
         new PropertyArrayUndoableAction<DiagramEdge, EdgeProps>(
-          `Change edge ${path}`,
+          message ?? `Change edge ${path}`,
           edges,
           path,
           oldValue,
@@ -102,10 +102,10 @@ export const useNodeProperty: PropertyArrayHook<Diagram, NodeProps> = makeProper
   },
   makeWriteable(nodeDefaults),
   {
-    onAfterSet: (diagram, nodes, path, oldValue, newValue) => {
+    onAfterSet: (diagram, nodes, path, oldValue, newValue, message) => {
       diagram.undoManager.add(
         new PropertyArrayUndoableAction<DiagramNode, NodeProps>(
-          `Change node ${path}`,
+          message ?? `Change node ${path}`,
           nodes,
           path,
           oldValue,
@@ -135,10 +135,10 @@ export const useElementProperty: PropertyArrayHook<Diagram, ElementProps> = make
   },
   makeWriteable(elementDefaults),
   {
-    onAfterSet: (diagram, elements, path, oldValue, newValue) => {
+    onAfterSet: (diagram, elements, path, oldValue, newValue, message) => {
       diagram.undoManager.add(
         new PropertyArrayUndoableAction<DiagramElement, ElementProps>(
-          `Change element ${path}`,
+          message ?? `Change element ${path}`,
           elements,
           path,
           oldValue,
@@ -165,10 +165,10 @@ export const useElementMetadata: PropertyArrayHook<Diagram, ElementMetadata> =
     },
     {},
     {
-      onAfterSet: (diagram, elements, path, oldValue, newValue) => {
+      onAfterSet: (diagram, elements, path, oldValue, newValue, message) => {
         diagram.undoManager.add(
           new PropertyArrayUndoableAction<DiagramElement, ElementMetadata>(
-            `Change element ${path}`,
+            message ?? `Change element ${path}`,
             elements,
             path,
             oldValue,

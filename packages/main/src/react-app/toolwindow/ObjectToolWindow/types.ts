@@ -2,7 +2,7 @@ import { unique } from '@diagram-craft/utils/array';
 
 export type Property<V> = {
   val: V;
-  set: (value: V | undefined) => void;
+  set: (value: V | undefined, message?: string) => void;
   hasMultipleValues: boolean;
   isSet: boolean;
   info?: PropertyInfo<V>;

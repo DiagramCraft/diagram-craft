@@ -39,7 +39,13 @@ export const makePropertyHook = <
   updateObj: (obj: TBase, cb: (obj: TObj) => void) => void,
   subscribe: (obj: TBase, handler: () => void) => void,
   callbacks?: {
-    onAfterSet?: (obj: TBase, path: TPath, oldValue: TValue, newValue: TValue) => void;
+    onAfterSet?: (
+      obj: TBase,
+      path: TPath,
+      oldValue: TValue,
+      newValue: TValue,
+      message?: string
+    ) => void;
   }
 ): PropertyHook<TBase, TObj> => {
   return ((obj: TBase, path: TPath, defaultValue: TValue) => {
@@ -60,11 +66,11 @@ export const makePropertyHook = <
 
     return {
       val: value,
-      set: (v: TValue) => {
+      set: (v: TValue, message?: string) => {
         updateObj(obj, p => {
           new DynamicAccessor<TObj>().set(p, path, v);
         });
-        callbacks?.onAfterSet?.(obj, path, value, v);
+        callbacks?.onAfterSet?.(obj, path, value, v, message);
         setValue(v ?? defaultValue);
 
         // Need to force redraw, as the current value may be the same as
@@ -97,7 +103,8 @@ export const makePropertyArrayHook = <
       items: TItem[],
       path: TPath,
       oldValues: TValue[],
-      value: TValue
+      value: TValue,
+      message?: string
     ) => void;
   }
 ): PropertyArrayHook<TBase, TObj> => {
@@ -141,14 +148,14 @@ export const makePropertyArrayHook = <
 
     return {
       val: value,
-      set: (v: TValue) => {
+      set: (v: TValue, message?: string) => {
         const oldValues = getArr(obj).map(obj => accessor.get(getObj(obj) as TObj, path));
         getArr(obj).forEach(n => {
           updateObj(obj, n, p => {
             accessor.set(p, path, v);
           });
         });
-        callbacks?.onAfterSet?.(obj, getArr(obj), path, oldValues as TValue[], v);
+        callbacks?.onAfterSet?.(obj, getArr(obj), path, oldValues as TValue[], v, message);
         setValue(v ?? defaultValue);
         setMultiple(false);
 
