@@ -622,7 +622,7 @@ const getNodeProps = (style: StyleManager, isEdge: boolean) => {
 
   if (style.get('indicatorShape')) {
     let shape = style.get('indicatorShape');
-    if (shape === 'ellipse') shape = 'circle';
+    if (shape === 'ellipse') shape = 'disc';
 
     const directionS = style.str('indicatorDirection', 'east');
     let direction: 'n' | 's' | 'e' | 'w' = 'e';

@@ -422,6 +422,9 @@ export class BaseNodeComponent<
       bounds.x = eBounds.x + eBounds.w / 2 - indicator.width / 2;
     } else if (indicator.position === 'sw') {
       bounds.y = eBounds.y + eBounds.h - indicator.height - indicator.offset;
+    } else if (indicator.position === 'c') {
+      bounds.x = eBounds.x + eBounds.w / 2 - indicator.width / 2;
+      bounds.y = eBounds.y + eBounds.h / 2 - indicator.height / 2;
     }
 
     const DIRECTIONS = {

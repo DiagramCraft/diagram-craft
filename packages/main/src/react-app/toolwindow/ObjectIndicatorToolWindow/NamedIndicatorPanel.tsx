@@ -11,6 +11,35 @@ import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { IndicatorForm } from './IndicatorForm';
 import { useElementProperty } from '../../hooks/useProperty';
 
+const path = (id: string, rest: string): any => `indicators.${id}.${rest}`;
+
+const FormWrapper = (props: {
+  indicator: Indicator;
+  update: <K extends keyof Indicator>(key: K, value: Indicator[K]) => void;
+  id: string;
+}) => {
+  const $d = useDiagram();
+  const shape = useElementProperty($d, path(props.id, 'shape'), 'disc');
+  const color = useElementProperty($d, path(props.id, 'color'), 'red');
+  const width = useElementProperty($d, path(props.id, 'width'), 10);
+  const height = useElementProperty($d, path(props.id, 'height'), 10);
+  const offset = useElementProperty($d, path(props.id, 'offset'), 10);
+  const direction = useElementProperty($d, path(props.id, 'direction'), 'e');
+  const position = useElementProperty($d, path(props.id, 'position'), 'w');
+
+  return (
+    <IndicatorForm
+      shape={shape}
+      color={color}
+      width={width}
+      height={height}
+      offset={offset}
+      direction={direction}
+      position={position}
+    />
+  );
+};
+
 export const NamedIndicatorPanel = (_props: { mode?: 'accordion' | 'panel' }) => {
   const $d = useDiagram();
   const indicators = useElementProperty($d, 'indicators');
@@ -46,6 +75,8 @@ export const NamedIndicatorPanel = (_props: { mode?: 'accordion' | 'panel' }) =>
 
           const newIndicator: Indicator = {
             enabled: false,
+
+            // TODO: Remove this and find a better way to handle defaults for dynamic objects such as indicators
             width: 10,
             height: 10,
             direction: 'e',
@@ -175,7 +206,9 @@ export const NamedIndicatorPanel = (_props: { mode?: 'accordion' | 'panel' }) =>
                             />
                           </div>
                         </div>
-                        <IndicatorForm
+                        <FormWrapper
+                          key={k}
+                          id={k}
                           indicator={indicators.val[k]}
                           update={(p, v) => {
                             update(k, p, v);

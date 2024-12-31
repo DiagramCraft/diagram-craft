@@ -18,6 +18,14 @@ export const DefaultIndicatorPanel = (props: { mode?: 'accordion' | 'panel' }) =
     indicators.set(newIndicators);
   };
 
+  const shape = useElementProperty($d, 'indicators._default.shape');
+  const color = useElementProperty($d, 'indicators._default.color');
+  const width = useElementProperty($d, 'indicators._default.width');
+  const height = useElementProperty($d, 'indicators._default.height');
+  const offset = useElementProperty($d, 'indicators._default.offset');
+  const direction = useElementProperty($d, 'indicators._default.direction');
+  const position = useElementProperty($d, 'indicators._default.position');
+
   return (
     <ToolWindowPanel
       mode={props.mode ?? 'accordion'}
@@ -30,10 +38,13 @@ export const DefaultIndicatorPanel = (props: { mode?: 'accordion' | 'panel' }) =
       }}
     >
       <IndicatorForm
-        indicator={indicators.val['_default']}
-        update={(key, value) => {
-          update('_default', key, value);
-        }}
+        shape={shape}
+        color={color}
+        width={width}
+        height={height}
+        offset={offset}
+        direction={direction}
+        position={position}
       />
     </ToolWindowPanel>
   );

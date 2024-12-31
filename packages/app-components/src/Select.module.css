@@ -40,7 +40,7 @@
 .cmp-select-content {
   overflow: hidden;
   background-color: var(--cmp-hover-bg);
-  z-index: 100;
+  z-index: 600;
   border-radius: 6px;
   box-shadow: var(--popover-shadow);
 

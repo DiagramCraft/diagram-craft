@@ -125,7 +125,7 @@ export function PropertyEditor<T>(props: Props<T>) {
                       })}
                     </div>
                     <div>
-                      {e.type === 'stored' && (
+                      {e.type === 'stored' && info.length > 1 && (
                         <a
                           href={'#'}
                           onClick={() => {

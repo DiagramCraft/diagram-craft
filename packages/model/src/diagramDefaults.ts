@@ -7,7 +7,14 @@ import { ElementPropsForRendering } from './diagramElement';
 const createDefaultsProxy = <T extends object>(target: DeepPartial<T>, path?: string): T =>
   new Proxy<T>(target as T, {
     get(_target, property) {
-      const item = target[property as keyof T];
+      let item = target[property as keyof T];
+
+      // Note: special handling of the indicators object, as the keys are not
+      // defined (except for _default)
+      if (path === '.indicators') {
+        item = (target as any)['_default'] as any;
+      }
+
       if (item === null || item === undefined) {
         if (property === 'toJSON') return undefined;
         if (item === null) return null;
@@ -103,7 +110,7 @@ const _elementDefaults: Pick<
       enabled: false,
       color: 'red',
       direction: 'e',
-      shape: 'none',
+      shape: 'disc',
       height: 10,
       width: 10,
       position: 'w',
