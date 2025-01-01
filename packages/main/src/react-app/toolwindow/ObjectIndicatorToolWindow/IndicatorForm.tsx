@@ -100,7 +100,12 @@ export const IndicatorForm = (props: IndicatorFormProps) => {
           property={props.offset}
           render={props => <NumberInput {...props} label="Δ" />}
         />
-
+      </div>
+      <div className={'cmp-labeled-table__label'}></div>
+      <div
+        className={'cmp-labeled-table__value util-vcenter'}
+        style={{ display: 'grid', gridTemplateColumns: '4rem 4rem', gap: '0.25rem' }}
+      >
         <PropertyEditor
           property={props.direction as Property<string>}
           render={props => (
