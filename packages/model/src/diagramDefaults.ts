@@ -1,4 +1,4 @@
-import { DeepPartial, DeepReadonly, DeepRequired, makeWriteable } from '@diagram-craft/utils/types';
+import { DeepPartial, DeepRequired, makeWriteable } from '@diagram-craft/utils/types';
 import { deepMerge, isObj } from '@diagram-craft/utils/object';
 import { NodePropsForRendering } from './diagramNode';
 import { EdgePropsForRendering } from './diagramEdge';
@@ -352,9 +352,6 @@ const _edgeDefaults: Omit<EdgePropsForRendering, 'custom' | 'shape'> = {
     roundingAmount: 20
   }
 };
-
-export const elementDefaults: DeepReadonly<ElementProps> =
-  createDefaultsProxy<ElementPropsForRendering>(_elementDefaults);
 
 export const nodeDefaults: NodePropsForRendering =
   createDefaultsProxy<NodePropsForRendering>(_nodeDefaults);

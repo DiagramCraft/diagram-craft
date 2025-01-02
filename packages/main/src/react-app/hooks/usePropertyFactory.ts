@@ -6,6 +6,7 @@ import { DeepReadonly } from '@diagram-craft/utils/types';
 import { unique, uniqueWithCount } from '@diagram-craft/utils/array';
 import { useRedraw } from './useRedraw';
 import { Property, PropertyInfo } from '../toolwindow/ObjectToolWindow/types';
+import { Defaults } from '@diagram-craft/model/diagramDefaults';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -96,7 +97,7 @@ export const makePropertyArrayHook = <
   getPropertyInfo: (e: TItem, path: TPath) => PropertyInfo<TValue>,
   updateObj: (obj: TBase, e: TItem, cb: (obj: TObj) => void) => void,
   subscribe: (obj: TBase, handler: () => void) => void,
-  defaults: TObj,
+  defaults: Defaults<TObj>,
   callbacks?: {
     onAfterSet?: (
       obj: TBase,
@@ -111,7 +112,7 @@ export const makePropertyArrayHook = <
   return ((obj: TBase, path: TPath, defaultValueOverride?: TValue) => {
     const accessor = new DynamicAccessor<TObj>();
 
-    const defaultValue = defaultValueOverride ?? (accessor.get(defaults, path) as TValue);
+    const defaultValue = defaultValueOverride ?? (defaults.get(path) as TValue);
     const [value, setValue] = useState<TValue>(defaultValue);
     const [multiple, setMultiple] = useState(false);
     const [values, setValues] = useState<Array<{ val: TValue; count: number }> | undefined>();
