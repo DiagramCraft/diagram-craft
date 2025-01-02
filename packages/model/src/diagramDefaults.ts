@@ -6,21 +6,21 @@ import { ElementPropsForRendering } from './diagramElement';
 import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 
 export class Defaults<T> {
-  private readonly defaults: Record<string, any> = {};
-  private readonly patterns: Record<string, Record<string, any>> = {};
+  private readonly defaults: Record<string, unknown> = {};
+  private readonly patterns: Record<string, Record<string, unknown>> = {};
 
   private defaultsObjects: T | undefined;
-  private patternDefaultsObjects: Record<string, any> | undefined;
+  private patternDefaultsObjects: Record<string, unknown> | undefined;
 
   constructor(defaults?: DeepPartial<T>) {
     this.unfoldAndAdd(defaults ?? {}, this.defaults);
   }
 
   get<K extends PropPath<T>>(key: K): PropPathValue<T, K> | undefined {
-    return this.getRaw(key);
+    return this.getRaw(key) as PropPathValue<T, K> | undefined;
   }
 
-  getRaw(key: string): any | undefined {
+  getRaw(key: string): unknown | undefined {
     const v = this.defaults[key];
     if (v !== undefined) return v;
 
@@ -51,7 +51,7 @@ export class Defaults<T> {
     this.unfoldAndAdd(value, this.defaults, key.split('.'));
   }
 
-  addPattern<K extends PropPath<T>>(key: `${K}.*`, value: any): void {
+  addPattern<K extends PropPath<T>>(key: `${K}.*`, value: unknown): void {
     this.defaultsObjects = undefined;
     this.patternDefaultsObjects = undefined;
 
@@ -72,11 +72,13 @@ export class Defaults<T> {
     const patternDefaults = {};
     const accessor = new DynamicAccessor<DeepPartial<T>>();
     for (const [key, value] of Object.entries(this.patternDefaultsObjects!)) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       accessor.set(patternDefaults, key as PropPath<DeepPartial<T>>, {} as any);
       const patternRoot = accessor.get(props, key as PropPath<DeepPartial<T>>);
       if (patternRoot) {
         for (const k of Object.keys(patternRoot)) {
-          accessor.set(patternDefaults, (key + '.' + k) as PropPath<DeepPartial<T>>, value);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          accessor.set(patternDefaults, (key + '.' + k) as PropPath<DeepPartial<T>>, value as any);
         }
       }
     }
@@ -130,8 +132,8 @@ export class Defaults<T> {
     return obj as T;
   }
 
-  private createPatternDefaultsObject(): Record<string, any> {
-    const dest: Record<string, any> = {};
+  private createPatternDefaultsObject(): Record<string, unknown> {
+    const dest: Record<string, unknown> = {};
     const accessor = new DynamicAccessor();
 
     for (const [pattern, patternSpec] of Object.entries(this.patterns)) {
@@ -146,7 +148,7 @@ export class Defaults<T> {
     return dest;
   }
 
-  private unfoldAndAdd(value: any, obj: Record<string, any>, path: string[] = []): void {
+  private unfoldAndAdd(value: unknown, obj: Record<string, unknown>, path: string[] = []): void {
     if (isObj(value) && value !== null && value !== undefined) {
       for (const key of Object.keys(value)) {
         this.unfoldAndAdd(value[key], obj, [...path, key]);
@@ -173,7 +175,7 @@ class ParentDefaults<T> extends Defaults<T> {
     }
   }
 
-  addPattern<K extends PropPath<T>>(key: `${K}.*`, value: any): void {
+  addPattern<K extends PropPath<T>>(key: `${K}.*`, value: unknown): void {
     super.addPattern(key, value);
     for (const child of this.children) {
       child.addPattern(key, value);

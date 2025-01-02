@@ -433,7 +433,7 @@ export class BaseNodeComponent<
       n: 270,
       s: 90
     };
-    let r = DIRECTIONS[indicator.direction];
+    const r = DIRECTIONS[indicator.direction];
 
     const renderer = INDICATORS[indicator.shape] ?? INDICATORS['none'];
 

@@ -169,7 +169,7 @@ export const getCommonProps = <T extends Record<string, unknown>>(arr: Array<T>)
 const isPropsDirty = (
   props: Record<string, unknown>,
   stylesheetProps: Record<string, unknown>,
-  defaults: Defaults<any>,
+  defaults: Defaults<unknown>,
   path: string[],
   strict = true
 ): boolean => {
@@ -196,6 +196,7 @@ const isPropsDirty = (
         if (Object.keys(props[key]).length === 0) continue;
 
         // Also an object with all defaults is equivalent to undefined
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         if (defaults.isDefaults(props[key] as any, [...path, key].join('.') as any)) continue;
 
         // TODO: We should add some normalization - or check compared to default value instead

@@ -11,6 +11,7 @@ import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { IndicatorForm } from './IndicatorForm';
 import { useElementProperty } from '../../hooks/useProperty';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const path = (id: string, rest: string): any => `indicators.${id}.${rest}`;
 
 const FormWrapper = (props: {
