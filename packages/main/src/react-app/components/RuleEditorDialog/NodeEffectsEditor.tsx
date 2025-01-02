@@ -1,4 +1,4 @@
-import { nodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { nodeDefaults2 } from '@diagram-craft/model/diagramDefaults';
 import { Editor, makeProperty } from './editors';
 import { NodeEffectsPanelForm } from '../../toolwindow/ObjectToolWindow/NodeEffectsPanel';
 import { useDiagram } from '../../../application';
@@ -15,16 +15,17 @@ export const NodeEffectsEditor: Editor = props => {
   return (
     <NodeEffectsPanelForm
       diagram={diagram}
-      rounding={makeProperty($p, 'effects.rounding', nodeDefaults, onChange)}
-      roundingAmount={makeProperty($p, 'effects.roundingAmount', nodeDefaults, onChange)}
-      reflection={makeProperty($p, 'effects.reflection', nodeDefaults, onChange)}
-      reflectionStrength={makeProperty($p, 'effects.reflectionStrength', nodeDefaults, onChange)}
-      blur={makeProperty($p, 'effects.blur', nodeDefaults, onChange)}
-      opacity={makeProperty($p, 'effects.opacity', nodeDefaults, onChange)}
-      glass={makeProperty($p, 'effects.glass', nodeDefaults, onChange)}
-      sketch={makeProperty($p, 'effects.sketch', nodeDefaults, onChange)}
-      sketchStrength={makeProperty($p, 'effects.sketchStrength', nodeDefaults, onChange)}
-      sketchFillType={makeProperty($p, 'effects.sketchFillType', nodeDefaults, onChange)}
+      /* @ts-ignore */
+      rounding={makeProperty($p, 'effects.rounding', nodeDefaults2, onChange)}
+      roundingAmount={makeProperty($p, 'effects.roundingAmount', nodeDefaults2, onChange)}
+      reflection={makeProperty($p, 'effects.reflection', nodeDefaults2, onChange)}
+      reflectionStrength={makeProperty($p, 'effects.reflectionStrength', nodeDefaults2, onChange)}
+      blur={makeProperty($p, 'effects.blur', nodeDefaults2, onChange)}
+      opacity={makeProperty($p, 'effects.opacity', nodeDefaults2, onChange)}
+      glass={makeProperty($p, 'effects.glass', nodeDefaults2, onChange)}
+      sketch={makeProperty($p, 'effects.sketch', nodeDefaults2, onChange)}
+      sketchStrength={makeProperty($p, 'effects.sketchStrength', nodeDefaults2, onChange)}
+      sketchFillType={makeProperty($p, 'effects.sketchFillType', nodeDefaults2, onChange)}
     />
   );
 };

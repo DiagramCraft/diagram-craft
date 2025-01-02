@@ -1,4 +1,4 @@
-import { edgeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { edgeDefaults2 } from '@diagram-craft/model/diagramDefaults';
 import { Editor, makeProperty } from './editors';
 import { EdgeLinePanelForm } from '../../toolwindow/ObjectToolWindow/EdgeLinePanel';
 import { useConfiguration } from '../../context/ConfigurationContext';
@@ -20,23 +20,23 @@ export const EdgeLineEditor: Editor = props => {
       supportsArrows={true}
       supportsLineHops={true}
       supportsFill={true}
-      strokeColor={makeProperty($p, 'stroke.color', edgeDefaults, onChange)}
-      fillColor={makeProperty($p, 'fill.color', edgeDefaults, onChange)}
-      pattern={makeProperty($p, 'stroke.pattern', edgeDefaults, onChange)}
-      strokeSize={makeProperty($p, 'stroke.patternSize', edgeDefaults, onChange)}
-      strokeSpacing={makeProperty($p, 'stroke.patternSpacing', edgeDefaults, onChange)}
-      strokeWidth={makeProperty($p, 'stroke.width', edgeDefaults, onChange)}
-      type={makeProperty($p, 'type', edgeDefaults, onChange)}
-      startType={makeProperty($p, 'arrow.start.type', edgeDefaults, onChange)}
-      startSize={makeProperty($p, 'arrow.start.size', edgeDefaults, onChange)}
-      endType={makeProperty($p, 'arrow.end.type', edgeDefaults, onChange)}
-      endSize={makeProperty($p, 'arrow.end.size', edgeDefaults, onChange)}
-      rounding={makeProperty($p, 'routing.rounding', edgeDefaults, onChange)}
-      lineHopsSize={makeProperty($p, 'lineHops.size', edgeDefaults, onChange)}
-      lineHopsType={makeProperty($p, 'lineHops.type', edgeDefaults, onChange)}
-      lineCap={makeProperty($p, 'stroke.lineCap', edgeDefaults, onChange)}
-      lineJoin={makeProperty($p, 'stroke.lineJoin', edgeDefaults, onChange)}
-      miterLimit={makeProperty($p, 'stroke.miterLimit', edgeDefaults, onChange)}
+      strokeColor={makeProperty($p, 'stroke.color', edgeDefaults2, onChange)}
+      fillColor={makeProperty($p, 'fill.color', edgeDefaults2, onChange)}
+      pattern={makeProperty($p, 'stroke.pattern', edgeDefaults2, onChange)}
+      strokeSize={makeProperty($p, 'stroke.patternSize', edgeDefaults2, onChange)}
+      strokeSpacing={makeProperty($p, 'stroke.patternSpacing', edgeDefaults2, onChange)}
+      strokeWidth={makeProperty($p, 'stroke.width', edgeDefaults2, onChange)}
+      type={makeProperty($p, 'type', edgeDefaults2, onChange)}
+      startType={makeProperty($p, 'arrow.start.type', edgeDefaults2, onChange)}
+      startSize={makeProperty($p, 'arrow.start.size', edgeDefaults2, onChange)}
+      endType={makeProperty($p, 'arrow.end.type', edgeDefaults2, onChange)}
+      endSize={makeProperty($p, 'arrow.end.size', edgeDefaults2, onChange)}
+      rounding={makeProperty($p, 'routing.rounding', edgeDefaults2, onChange)}
+      lineHopsSize={makeProperty($p, 'lineHops.size', edgeDefaults2, onChange)}
+      lineHopsType={makeProperty($p, 'lineHops.type', edgeDefaults2, onChange)}
+      lineCap={makeProperty($p, 'stroke.lineCap', edgeDefaults2, onChange)}
+      lineJoin={makeProperty($p, 'stroke.lineJoin', edgeDefaults2, onChange)}
+      miterLimit={makeProperty($p, 'stroke.miterLimit', edgeDefaults2, onChange)}
     />
   );
 };

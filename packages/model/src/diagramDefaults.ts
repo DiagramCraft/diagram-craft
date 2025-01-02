@@ -367,15 +367,12 @@ const _mergedEdgeDefaults = makeWriteable(
 export const edgeDefaults: EdgePropsForRendering =
   createDefaultsProxy<EdgePropsForRendering>(_mergedEdgeDefaults);
 
-export const nodeDefaults2 = new Defaults<NodePropsForRendering>(_nodeDefaults);
-export const edgeDefaults2 = new Defaults<EdgePropsForRendering>(_mergedEdgeDefaults);
-export const elementDefaults2 = new ParentDefaults<DeepReadonly<ElementProps>>(
-  // @ts-ignore
+export const nodeDefaults2 = new Defaults<NodeProps>(_nodeDefaults);
+export const edgeDefaults2 = new Defaults<EdgeProps>(_mergedEdgeDefaults);
+export const elementDefaults2 = new ParentDefaults<ElementProps>(
   [
-    // @ts-ignore
-    nodeDefaults2,
-    // @ts-ignore
-    edgeDefaults2
+    nodeDefaults2 as unknown as Defaults<ElementProps>,
+    edgeDefaults2 as unknown as Defaults<ElementProps>
   ],
   _elementDefaults
 );
@@ -389,6 +386,7 @@ export function registerCustomNodeDefaults<K extends keyof CustomNodeProps>(
   // @ts-expect-error
   _nodeDefaults['custom'][k] = v;
 
+  // @ts-ignore
   nodeDefaults2.add(`custom.${k}`, v);
 
   // @ts-ignore

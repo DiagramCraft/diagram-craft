@@ -1,5 +1,5 @@
 import { useConfiguration } from '../../context/ConfigurationContext';
-import { elementDefaults } from '@diagram-craft/model/diagramDefaults';
+import { elementDefaults2 } from '@diagram-craft/model/diagramDefaults';
 import { Editor, makeProperty } from './editors';
 import { ElementShadowPanelForm } from '../../toolwindow/ObjectToolWindow/ElementShadowPanel';
 import { useDiagram } from '../../../application';
@@ -20,11 +20,11 @@ export const ElementShadowEditor: Editor = props => {
     <ElementShadowPanelForm
       config={$cfg}
       diagram={diagram}
-      color={makeProperty($p, 'shadow.color', elementDefaults, onChange)}
-      opacity={makeProperty($p, 'shadow.opacity', elementDefaults, onChange)}
-      x={makeProperty($p, 'shadow.x', elementDefaults, onChange)}
-      y={makeProperty($p, 'shadow.y', elementDefaults, onChange)}
-      blur={makeProperty($p, 'shadow.blur', elementDefaults, onChange)}
+      color={makeProperty($p, 'shadow.color', elementDefaults2, onChange)}
+      opacity={makeProperty($p, 'shadow.opacity', elementDefaults2, onChange)}
+      x={makeProperty($p, 'shadow.x', elementDefaults2, onChange)}
+      y={makeProperty($p, 'shadow.y', elementDefaults2, onChange)}
+      blur={makeProperty($p, 'shadow.blur', elementDefaults2, onChange)}
     />
   );
 };

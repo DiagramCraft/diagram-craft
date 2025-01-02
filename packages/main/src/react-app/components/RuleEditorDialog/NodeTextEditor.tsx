@@ -1,4 +1,4 @@
-import { nodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { nodeDefaults2 } from '@diagram-craft/model/diagramDefaults';
 import { Editor, makeProperty } from './editors';
 import { NodeTextPanelForm } from '../../toolwindow/ObjectToolWindow/NodeTextPanel';
 import { useConfiguration } from '../../context/ConfigurationContext';
@@ -18,20 +18,20 @@ export const NodeTextEditor: Editor = props => {
     <NodeTextPanelForm
       diagram={diagram}
       config={config}
-      font={makeProperty($p, 'text.font', nodeDefaults, onChange)}
-      fontSize={makeProperty($p, 'text.fontSize', nodeDefaults, onChange)}
-      lineHeight={makeProperty($p, 'text.lineHeight', nodeDefaults, onChange)}
-      isBold={makeProperty($p, 'text.bold', nodeDefaults, onChange)}
-      isItalic={makeProperty($p, 'text.italic', nodeDefaults, onChange)}
-      textDecoration={makeProperty($p, 'text.textDecoration', nodeDefaults, onChange)}
-      textTransform={makeProperty($p, 'text.textTransform', nodeDefaults, onChange)}
-      color={makeProperty($p, 'text.color', nodeDefaults, onChange)}
-      align={makeProperty($p, 'text.align', nodeDefaults, onChange)}
-      valign={makeProperty($p, 'text.valign', nodeDefaults, onChange)}
-      top={makeProperty($p, 'text.top', nodeDefaults, onChange)}
-      left={makeProperty($p, 'text.left', nodeDefaults, onChange)}
-      bottom={makeProperty($p, 'text.bottom', nodeDefaults, onChange)}
-      right={makeProperty($p, 'text.right', nodeDefaults, onChange)}
+      font={makeProperty($p, 'text.font', nodeDefaults2, onChange)}
+      fontSize={makeProperty($p, 'text.fontSize', nodeDefaults2, onChange)}
+      lineHeight={makeProperty($p, 'text.lineHeight', nodeDefaults2, onChange)}
+      isBold={makeProperty($p, 'text.bold', nodeDefaults2, onChange)}
+      isItalic={makeProperty($p, 'text.italic', nodeDefaults2, onChange)}
+      textDecoration={makeProperty($p, 'text.textDecoration', nodeDefaults2, onChange)}
+      textTransform={makeProperty($p, 'text.textTransform', nodeDefaults2, onChange)}
+      color={makeProperty($p, 'text.color', nodeDefaults2, onChange)}
+      align={makeProperty($p, 'text.align', nodeDefaults2, onChange)}
+      valign={makeProperty($p, 'text.valign', nodeDefaults2, onChange)}
+      top={makeProperty($p, 'text.top', nodeDefaults2, onChange)}
+      left={makeProperty($p, 'text.left', nodeDefaults2, onChange)}
+      bottom={makeProperty($p, 'text.bottom', nodeDefaults2, onChange)}
+      right={makeProperty($p, 'text.right', nodeDefaults2, onChange)}
     />
   );
 };
