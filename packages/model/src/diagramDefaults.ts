@@ -35,6 +35,8 @@ export class Defaults<T> {
           .slice(1)
           .join('.');
 
+        if (k === '') return this.patterns[p];
+
         const v = this.patterns[p][k];
         if (v !== undefined) return v;
       }
@@ -70,6 +72,7 @@ export class Defaults<T> {
     const patternDefaults = {};
     const accessor = new DynamicAccessor<DeepPartial<T>>();
     for (const [key, value] of Object.entries(this.patternDefaultsObjects!)) {
+      accessor.set(patternDefaults, key as PropPath<DeepPartial<T>>, {} as any);
       const patternRoot = accessor.get(props, key as PropPath<DeepPartial<T>>);
       if (patternRoot) {
         for (const k of Object.keys(patternRoot)) {
@@ -78,7 +81,33 @@ export class Defaults<T> {
       }
     }
 
-    return deepMerge(patternDefaults, this.defaultsObjects!, props) as T;
+    return deepMerge({}, patternDefaults, this.defaultsObjects!, props) as T;
+  }
+
+  isDefaults<K extends PropPath<T>>(props: DeepPartial<T>, path?: K): boolean {
+    const isSameAsDefaults = (
+      props: Record<string, unknown>,
+      defaults: Record<string, unknown>
+    ): boolean => {
+      for (const key of Object.keys(props)) {
+        if (isObj(props[key])) {
+          // In case we add props that are not part of the defaults object, this
+          // is still considered same as defaults
+          if (defaults[key] === undefined) continue;
+          if (!isSameAsDefaults(props[key], defaults[key] as Record<string, unknown>)) {
+            return false;
+          }
+        } else if (props[key] !== defaults[key]) {
+          return false;
+        }
+      }
+      return true;
+    };
+
+    // @ts-ignore
+    const propsToVerify = (path ? new DynamicAccessor().get(props, path) : props) ?? {};
+    const defaultsToVerify = path ? this.getRaw(path) : this.defaultsObjects;
+    return isSameAsDefaults(propsToVerify, defaultsToVerify as Record<string, unknown>);
   }
 
   dump() {
@@ -152,37 +181,6 @@ class ParentDefaults<T> extends Defaults<T> {
   }
 }
 
-const createDefaultsProxy = <T extends object>(target: DeepPartial<T>, path?: string): T =>
-  new Proxy<T>(target as T, {
-    get(_target, property) {
-      let item = target[property as keyof T];
-
-      // Note: special handling of the indicators object, as the keys are not
-      // defined (except for _default)
-      if (path === '.indicators') {
-        item = (target as any)['_default'] as any;
-      }
-
-      if (item === null || item === undefined) {
-        if (property === 'toJSON') return undefined;
-        if (item === null) return null;
-        console.log(item);
-        throw new Error(`${path ?? ''}#${String(property)} is not defined in defaults`);
-      }
-
-      if (item && typeof item === 'object') {
-        return createDefaultsProxy(
-          item as unknown as object,
-          (path ?? '') + '.' + String(property)
-        );
-      }
-      return item;
-    },
-    set() {
-      throw new Error('defaults are immutable');
-    }
-  });
-
 export const DefaultStyles = {
   node: {
     default: 'default',
@@ -198,7 +196,7 @@ export const DefaultStyles = {
 
 const _elementDefaults: Pick<
   ElementPropsForRendering,
-  'debug' | 'geometry' | 'fill' | 'shadow' | 'stroke' | 'inheritStyle' | 'hidden' | 'indicators'
+  'debug' | 'geometry' | 'fill' | 'shadow' | 'stroke' | 'inheritStyle' | 'hidden'
 > = {
   hidden: false,
   geometry: {
@@ -252,22 +250,13 @@ const _elementDefaults: Pick<
     boundingPath: false,
     anchors: false
   },
-  inheritStyle: true,
-  indicators: {
-    _default: {
-      enabled: false,
-      color: 'red',
-      direction: 'e',
-      shape: 'disc',
-      height: 10,
-      width: 10,
-      position: 'w',
-      offset: 10
-    }
-  }
+  inheritStyle: true
 };
 
-const _nodeDefaults: Omit<NodePropsForRendering, 'labelForEdgeId' | 'name' | 'custom'> = {
+const _nodeDefaults: Omit<
+  NodePropsForRendering,
+  'labelForEdgeId' | 'name' | 'custom' | 'indicators'
+> = {
   ..._elementDefaults,
 
   effects: {
@@ -323,7 +312,7 @@ const _nodeDefaults: Omit<NodePropsForRendering, 'labelForEdgeId' | 'name' | 'cu
   }
 };
 
-const _edgeDefaults: Omit<EdgePropsForRendering, 'custom' | 'shape'> = {
+const _edgeDefaults: Omit<EdgePropsForRendering, 'custom' | 'shape' | 'indicators'> = {
   ..._elementDefaults,
   type: 'straight',
   arrow: {
@@ -353,16 +342,10 @@ const _edgeDefaults: Omit<EdgePropsForRendering, 'custom' | 'shape'> = {
   }
 };
 
-export const nodeDefaults: NodePropsForRendering =
-  createDefaultsProxy<NodePropsForRendering>(_nodeDefaults);
-
 const _mergedEdgeDefaults = makeWriteable(
   // @ts-ignore
-  deepMerge<EdgePropsForRendering>({}, nodeDefaults, _edgeDefaults)
+  deepMerge<EdgePropsForRendering>({}, _nodeDefaults, _edgeDefaults)
 );
-
-export const edgeDefaults: EdgePropsForRendering =
-  createDefaultsProxy<EdgePropsForRendering>(_mergedEdgeDefaults);
 
 export const nodeDefaults2 = new Defaults<NodeProps>(_nodeDefaults);
 export const edgeDefaults2 = new Defaults<EdgeProps>(_mergedEdgeDefaults);
@@ -373,6 +356,17 @@ export const elementDefaults2 = new ParentDefaults<ElementProps>(
   ],
   _elementDefaults
 );
+
+elementDefaults2.addPattern('indicators.*', {
+  enabled: false,
+  color: 'red',
+  direction: 'e',
+  shape: 'disc',
+  height: 10,
+  width: 10,
+  position: 'w',
+  offset: 10
+});
 
 export function registerCustomNodeDefaults<K extends keyof CustomNodeProps>(
   k: K,

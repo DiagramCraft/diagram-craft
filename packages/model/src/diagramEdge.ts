@@ -17,15 +17,10 @@ import {
   FreeEndpoint,
   PointInNodeEndpoint
 } from './endpoint';
-import { DefaultStyles, edgeDefaults } from './diagramDefaults';
+import { DefaultStyles, edgeDefaults2 } from './diagramDefaults';
 import { buildEdgePath } from './edgePathBuilder';
 import { isHorizontal, isParallel, isPerpendicular, isReadable, isVertical } from './labelNode';
-import {
-  DeepReadonly,
-  DeepRequired,
-  DeepWriteable,
-  makeWriteable
-} from '@diagram-craft/utils/types';
+import { DeepReadonly, DeepRequired, DeepWriteable } from '@diagram-craft/utils/types';
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { newid } from '@diagram-craft/utils/id';
 import { isDifferent } from '@diagram-craft/utils/math';
@@ -160,7 +155,7 @@ export class DiagramEdge
     const dest: PropertyInfo<PropPathValue<EdgeProps, T>> = [];
 
     dest.push({
-      val: accessor.get(makeWriteable(edgeDefaults), path) as PropPathValue<EdgeProps, T>,
+      val: edgeDefaults2.get(path) as PropPathValue<EdgeProps, T>,
       type: 'default'
     });
 
@@ -231,8 +226,7 @@ export class DiagramEdge
 
     const propsForRendering = deepMerge(
       {},
-      makeWriteable(edgeDefaults),
-      propsForEditing,
+      edgeDefaults2.merge(propsForEditing),
       consolidatedRulesProps
     );
 

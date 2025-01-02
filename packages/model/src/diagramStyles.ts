@@ -5,7 +5,7 @@ import { DiagramDocument } from './diagramDocument';
 import { Diagram } from './diagram';
 import { common, deepClear, deepClone, deepMerge, isObj } from '@diagram-craft/utils/object';
 import { assert } from '@diagram-craft/utils/assert';
-import { DefaultStyles, edgeDefaults, nodeDefaults } from './diagramDefaults';
+import { Defaults, DefaultStyles, edgeDefaults2, nodeDefaults2 } from './diagramDefaults';
 
 export type StylesheetType = 'node' | 'edge' | 'text';
 
@@ -166,37 +166,15 @@ export const getCommonProps = <T extends Record<string, unknown>>(arr: Array<T>)
   return e as Partial<T>;
 };
 
-const isDefaults = (props: Record<string, unknown>, defaults: Record<string, unknown>): boolean => {
-  for (const key of Object.keys(props)) {
-    if (isObj(props[key])) {
-      if (!isDefaults(props[key], defaults[key] as Record<string, unknown>)) {
-        return false;
-      }
-    } else if (props[key] !== defaults[key]) {
-      return false;
-    }
-  }
-  return true;
-};
-
 const isPropsDirty = (
   props: Record<string, unknown>,
   stylesheetProps: Record<string, unknown>,
-  defaults: Record<string, unknown>,
+  defaults: Defaults<any>,
   path: string[],
   strict = true
 ): boolean => {
   for (const key of Object.keys(props)) {
     if (isObj(props[key])) {
-      // Need to get the default value wrapped in a try/catch as the default proxy being
-      // used, will throw an exception in case the property is not found
-      let defaultValue: Record<string, unknown> | undefined;
-      try {
-        defaultValue = defaults[key] as Record<string, unknown>;
-      } catch (e) {
-        defaultValue = undefined;
-      }
-
       // For custom props, we allow the stylesheet to include additional props
       if (key === 'custom' && path.length === 0) {
         if (stylesheetProps[key] === undefined) continue;
@@ -204,7 +182,7 @@ const isPropsDirty = (
         const customPropsDirty = isPropsDirty(
           props[key],
           stylesheetProps[key] as Record<string, unknown>,
-          defaultValue ?? {},
+          defaults,
           [...path, key],
           false
         );
@@ -218,7 +196,7 @@ const isPropsDirty = (
         if (Object.keys(props[key]).length === 0) continue;
 
         // Also an object with all defaults is equivalent to undefined
-        if (isDefaults(props[key], defaultValue ?? {})) continue;
+        if (defaults.isDefaults(props[key] as any, [...path, key].join('.') as any)) continue;
 
         // TODO: We should add some normalization - or check compared to default value instead
         //        if (key === 'shadow' && keys.length === 1 && props[key].enabled === false) continue;
@@ -232,7 +210,7 @@ const isPropsDirty = (
         const dirty = isPropsDirty(
           props[key],
           stylesheetProps[key] as Record<string, unknown>,
-          defaultValue ?? {},
+          defaults,
           [...path, key],
           strict
         );
@@ -264,7 +242,8 @@ export const isSelectionDirty = ($d: Diagram, isText: boolean) => {
     return isPropsDirty(
       propsFromElement,
       stylesheet?.props ?? {},
-      isNode(e) ? nodeDefaults : edgeDefaults,
+      // @ts-ignore
+      isNode(e) ? nodeDefaults2 : edgeDefaults2,
       []
     );
   });

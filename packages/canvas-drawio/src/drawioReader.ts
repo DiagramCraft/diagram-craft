@@ -73,7 +73,7 @@ import { registerUMLShapes } from './shapes/uml/uml';
 import { registerAndroidShapes } from './shapes/android/android';
 import { StyleManager } from './styleManager';
 import { coalesce } from '@diagram-craft/utils/strings';
-import { nodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { nodeDefaults2 } from '@diagram-craft/model/diagramDefaults';
 import { xIterElements, xNum } from '@diagram-craft/utils/xml';
 import { parseNum } from '@diagram-craft/utils/number';
 
@@ -579,7 +579,10 @@ const getNodeProps = (style: StyleManager, isEdge: boolean) => {
   if (style.is('rounded')) {
     props.effects ??= {};
     props.effects.rounding = true;
-    props.effects.roundingAmount = style.num('arcSize', nodeDefaults.effects.roundingAmount);
+    props.effects.roundingAmount = style.num(
+      'arcSize',
+      nodeDefaults2.get('effects.roundingAmount')
+    );
   }
 
   if (style.is('shadow')) {

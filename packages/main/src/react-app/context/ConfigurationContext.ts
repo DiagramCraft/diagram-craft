@@ -1,7 +1,5 @@
 import React from 'react';
 import { assert } from '@diagram-craft/utils/assert';
-import { NodePropsForRendering } from '@diagram-craft/model/diagramNode';
-import { EdgePropsForRendering } from '@diagram-craft/model/diagramEdge';
 
 export type ConfigurationContextType = {
   palette: {
@@ -9,11 +7,6 @@ export type ConfigurationContextType = {
   };
 
   fonts: Record<string, string>;
-
-  defaults: {
-    node: NodePropsForRendering;
-    edge: EdgePropsForRendering;
-  };
 
   // TODO: Add styles, patterns, fonts etc
 };

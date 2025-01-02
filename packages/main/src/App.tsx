@@ -29,7 +29,6 @@ import { NodeTool } from '@diagram-craft/canvas/tools/nodeTool';
 import { PenTool } from '@diagram-craft/canvas-app/tools/penTool';
 import { makeActionMap } from '@diagram-craft/canvas/keyMap';
 import { EditableCanvas } from '@diagram-craft/canvas-react/EditableCanvas';
-import { edgeDefaults, nodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { Autosave } from './Autosave';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { HelpMessage } from './react-app/components/HelpMessage';
@@ -250,10 +249,6 @@ export const App = (props: {
         value={{
           palette: {
             primary: defaultPalette
-          },
-          defaults: {
-            node: nodeDefaults,
-            edge: edgeDefaults
           },
           fonts: {
             'Times': 'Times',

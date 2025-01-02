@@ -6,7 +6,7 @@ import { DiagramNodeSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
 import { DiagramEdge, ResolvedLabelNode } from './diagramEdge';
 import { Diagram } from './diagram';
 import { Layer, RegularLayer } from './diagramLayer';
-import { DefaultStyles, nodeDefaults } from './diagramDefaults';
+import { DefaultStyles, nodeDefaults2 } from './diagramDefaults';
 import {
   AnchorEndpoint,
   ConnectedEndpoint,
@@ -179,7 +179,7 @@ export class DiagramNode
     const dest: PropertyInfo<PropPathValue<NodeProps, T>> = [];
 
     dest.push({
-      val: accessor.get(makeWriteable(nodeDefaults), path) as PropPathValue<NodeProps, T>,
+      val: nodeDefaults2.get(path) as PropPathValue<NodeProps, T>,
       type: 'default'
     });
 
@@ -305,9 +305,7 @@ export class DiagramNode
 
     const propsForRendering = deepMerge(
       {},
-      //nodeDefaults2.merge(propsForEditing),
-      makeWriteable(nodeDefaults),
-      propsForEditing,
+      nodeDefaults2.merge(propsForEditing),
       consolidatedRulesProps
     );
 
