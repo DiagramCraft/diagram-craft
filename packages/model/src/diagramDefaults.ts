@@ -347,17 +347,17 @@ const _mergedEdgeDefaults = makeWriteable(
   deepMerge<EdgePropsForRendering>({}, _nodeDefaults, _edgeDefaults)
 );
 
-export const nodeDefaults2 = new Defaults<NodeProps>(_nodeDefaults);
-export const edgeDefaults2 = new Defaults<EdgeProps>(_mergedEdgeDefaults);
-export const elementDefaults2 = new ParentDefaults<ElementProps>(
+export const nodeDefaults = new Defaults<NodeProps>(_nodeDefaults);
+export const edgeDefaults = new Defaults<EdgeProps>(_mergedEdgeDefaults);
+export const elementDefaults = new ParentDefaults<ElementProps>(
   [
-    nodeDefaults2 as unknown as Defaults<ElementProps>,
-    edgeDefaults2 as unknown as Defaults<ElementProps>
+    nodeDefaults as unknown as Defaults<ElementProps>,
+    edgeDefaults as unknown as Defaults<ElementProps>
   ],
   _elementDefaults
 );
 
-elementDefaults2.addPattern('indicators.*', {
+elementDefaults.addPattern('indicators.*', {
   enabled: false,
   color: 'red',
   direction: 'e',
@@ -378,7 +378,7 @@ export function registerCustomNodeDefaults<K extends keyof CustomNodeProps>(
   _nodeDefaults['custom'][k] = v;
 
   // @ts-ignore
-  nodeDefaults2.add(`custom.${k}`, v);
+  nodeDefaults.add(`custom.${k}`, v);
 
   // @ts-ignore
   return (d?: CustomNodeProps[K]) => deepMerge({}, v, d ?? undefined);
@@ -401,7 +401,7 @@ export function registerCustomEdgeDefaults<K extends keyof CustomEdgeProps>(
   // TODO: Maybe we can use a Proxy here to make it immutable and more performant
 
   // @ts-ignore
-  edgeDefaults2.add(`custom.${k}`, v);
+  edgeDefaults.add(`custom.${k}`, v);
 
   // @ts-ignore
   return (d?: CustomEdgeProps[K]) => deepMerge({}, v, d ?? {});

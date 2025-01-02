@@ -5,7 +5,7 @@ import { DiagramDocument } from './diagramDocument';
 import { Diagram } from './diagram';
 import { common, deepClear, deepClone, deepMerge, isObj } from '@diagram-craft/utils/object';
 import { assert } from '@diagram-craft/utils/assert';
-import { Defaults, DefaultStyles, edgeDefaults2, nodeDefaults2 } from './diagramDefaults';
+import { Defaults, DefaultStyles, edgeDefaults, nodeDefaults } from './diagramDefaults';
 
 export type StylesheetType = 'node' | 'edge' | 'text';
 
@@ -243,7 +243,7 @@ export const isSelectionDirty = ($d: Diagram, isText: boolean) => {
       propsFromElement,
       stylesheet?.props ?? {},
       // @ts-ignore
-      isNode(e) ? nodeDefaults2 : edgeDefaults2,
+      isNode(e) ? nodeDefaults : edgeDefaults,
       []
     );
   });

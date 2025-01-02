@@ -4,7 +4,7 @@ import { Diagram } from './diagram';
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { parseAndQuery } from '@diagram-craft/query/query';
 import { assert, notImplemented } from '@diagram-craft/utils/assert';
-import { nodeDefaults2 } from './diagramDefaults';
+import { nodeDefaults } from './diagramDefaults';
 import {
   Adjustment,
   AdjustmentRule,
@@ -47,7 +47,7 @@ export const validProps = (_type: 'edge' | 'node'): Prop[] => {
     {
       value: 'props',
       label: 'Style properties',
-      items: defaultProps(nodeDefaults2.merge({}), 'renderProps')
+      items: defaultProps(nodeDefaults.merge({}), 'renderProps')
     }
   ];
 };

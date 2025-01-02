@@ -17,7 +17,7 @@ import {
   FreeEndpoint,
   PointInNodeEndpoint
 } from './endpoint';
-import { DefaultStyles, edgeDefaults2 } from './diagramDefaults';
+import { DefaultStyles, edgeDefaults } from './diagramDefaults';
 import { buildEdgePath } from './edgePathBuilder';
 import { isHorizontal, isParallel, isPerpendicular, isReadable, isVertical } from './labelNode';
 import { DeepReadonly, DeepRequired, DeepWriteable } from '@diagram-craft/utils/types';
@@ -155,7 +155,7 @@ export class DiagramEdge
     const dest: PropertyInfo<PropPathValue<EdgeProps, T>> = [];
 
     dest.push({
-      val: edgeDefaults2.get(path) as PropPathValue<EdgeProps, T>,
+      val: edgeDefaults.get(path) as PropPathValue<EdgeProps, T>,
       type: 'default'
     });
 
@@ -226,7 +226,7 @@ export class DiagramEdge
 
     const propsForRendering = deepMerge(
       {},
-      edgeDefaults2.merge(propsForEditing),
+      edgeDefaults.merge(propsForEditing),
       consolidatedRulesProps
     );
 
