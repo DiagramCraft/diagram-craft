@@ -372,11 +372,6 @@ export function registerCustomNodeDefaults<K extends keyof CustomNodeProps>(
   k: K,
   v: DeepRequired<CustomNodeProps[K]>
 ) {
-  // @ts-expect-error
-  _nodeDefaults.custom ??= {};
-  // @ts-expect-error
-  _nodeDefaults['custom'][k] = v;
-
   // @ts-ignore
   nodeDefaults.add(`custom.${k}`, v);
 
@@ -388,18 +383,6 @@ export function registerCustomEdgeDefaults<K extends keyof CustomEdgeProps>(
   k: K,
   v: DeepRequired<CustomEdgeProps[K]>
 ) {
-  // @ts-expect-error
-  _edgeDefaults.custom ??= {};
-  // @ts-expect-error
-  _edgeDefaults['custom'][k] = v;
-
-  // @ts-expect-error
-  _mergedEdgeDefaults.custom ??= {};
-  // @ts-expect-error
-  _mergedEdgeDefaults['custom'][k] = v;
-
-  // TODO: Maybe we can use a Proxy here to make it immutable and more performant
-
   // @ts-ignore
   edgeDefaults.add(`custom.${k}`, v);
 
