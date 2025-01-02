@@ -305,6 +305,7 @@ export class DiagramNode
 
     const propsForRendering = deepMerge(
       {},
+      //nodeDefaults2.merge(propsForEditing),
       makeWriteable(nodeDefaults),
       propsForEditing,
       consolidatedRulesProps
