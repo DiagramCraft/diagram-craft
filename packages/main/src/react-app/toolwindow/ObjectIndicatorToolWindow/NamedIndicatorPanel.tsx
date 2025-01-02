@@ -75,16 +75,7 @@ export const NamedIndicatorPanel = (_props: { mode?: 'accordion' | 'panel' }) =>
           }
 
           const newIndicator: Indicator = {
-            enabled: false,
-
-            // TODO: Remove this and find a better way to handle defaults for dynamic objects such as indicators
-            width: 10,
-            height: 10,
-            direction: 'e',
-            color: 'red',
-            shape: 'disc',
-            offset: 10,
-            position: 'ne'
+            enabled: false
           };
 
           const newIndicators = { ...indicators.val };
