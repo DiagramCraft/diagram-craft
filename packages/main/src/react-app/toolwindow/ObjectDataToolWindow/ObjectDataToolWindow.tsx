@@ -14,7 +14,6 @@ import { commitWithUndo, SnapshotUndoableAction } from '@diagram-craft/model/dia
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { newid } from '@diagram-craft/utils/id';
 import { unique } from '@diagram-craft/utils/array';
-import { Collapsible } from '@diagram-craft/app-components/Collapsible';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { useElementMetadata } from '../../hooks/useProperty';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
@@ -294,78 +293,89 @@ export const ObjectDataToolWindow = () => {
             </div>
           </div>*/}
 
-          <div className={'cmp-labeled-table'}>
+          <Accordion.Root
+            type={'multiple'}
+            defaultValue={['_custom', ...schemas.map(s => s ?? '')]}
+          >
             {schemas.map(schemaName => {
               if (schemaName === undefined) return undefined;
 
               const schema = $d.document.schemas.get(schemaName!);
 
               return (
-                <React.Fragment key={schema.id}>
-                  <Collapsible label={schema.name} defaultOpen={true}>
-                    {schema.fields.map(f => {
+                <Accordion.Item key={schema.id} value={schema.id}>
+                  <Accordion.ItemHeader>{schema.name}</Accordion.ItemHeader>
+                  <Accordion.ItemContent>
+                    <div className={'cmp-labeled-table'}>
+                      {schema.fields.map(f => {
+                        const v = unique(
+                          $d.selectionState.elements.map(e => {
+                            return e.metadata.data?.data?.find(d => d.schema === schemaName)?.data[
+                              f.id
+                            ];
+                          })
+                        );
+
+                        return (
+                          <React.Fragment key={f.id}>
+                            <div className={'cmp-labeled-table__label util-a-top-center'}>
+                              {f.name}:
+                            </div>
+                            <div className={'cmp-labeled-table__value cmp-text-input'}>
+                              {f.type === 'text' && (
+                                <input
+                                  type={'text'}
+                                  value={v.length > 1 ? '***' : (v[0] ?? '')}
+                                  onChange={e => changeCallback('data', schemaName, f.id, e)}
+                                />
+                              )}
+                              {f.type === 'longtext' && (
+                                <textarea
+                                  style={{ height: '40px' }}
+                                  value={v.length > 1 ? '***' : (v[0] ?? '')}
+                                  onChange={e => changeCallback('data', schemaName, f.id, e)}
+                                />
+                              )}
+                            </div>
+                          </React.Fragment>
+                        );
+                      })}
+                    </div>
+                  </Accordion.ItemContent>
+                </Accordion.Item>
+              );
+            })}
+
+            {customDataKeys.length > 0 && (
+              <Accordion.Item value={'_custom'}>
+                <Accordion.ItemHeader>Custom data</Accordion.ItemHeader>
+                <Accordion.ItemContent>
+                  <div className={'cmp-labeled-table'}>
+                    {customDataKeys.map(k => {
                       const v = unique(
                         $d.selectionState.elements.map(e => {
-                          return e.metadata.data?.data?.find(d => d.schema === schemaName)?.data[
-                            f.id
-                          ];
+                          return e.metadata.data?.customData?.[k]?.toString();
                         })
                       );
 
                       return (
-                        <React.Fragment key={f.id}>
-                          <div className={'cmp-labeled-table__label util-a-top-center'}>
-                            {f.name}:
-                          </div>
+                        <React.Fragment key={k}>
+                          <div className={'cmp-labeled-table__label util-a-top-center'}>{k}:</div>
                           <div className={'cmp-labeled-table__value cmp-text-input'}>
-                            {f.type === 'text' && (
-                              <input
-                                type={'text'}
-                                value={v.length > 1 ? '***' : v[0] ?? ''}
-                                onChange={e => changeCallback('data', schemaName, f.id, e)}
-                              />
-                            )}
-                            {f.type === 'longtext' && (
-                              <textarea
-                                style={{ height: '40px' }}
-                                value={v.length > 1 ? '***' : v[0] ?? ''}
-                                onChange={e => changeCallback('data', schemaName, f.id, e)}
-                              />
-                            )}
+                            <textarea
+                              style={{ height: '40px' }}
+                              value={v.length > 1 ? '***' : (v[0] ?? '')}
+                              onChange={e => changeCallback('custom', '', k, e)}
+                            />
                           </div>
                         </React.Fragment>
                       );
                     })}
-                    <div style={{ height: '0.5rem' }}></div>
-                  </Collapsible>
-                </React.Fragment>
-              );
-            })}
-
-            <Collapsible label={'Custom data'} defaultOpen={true}>
-              {customDataKeys.map(k => {
-                const v = unique(
-                  $d.selectionState.elements.map(e => {
-                    return e.metadata.data?.customData?.[k]?.toString();
-                  })
-                );
-
-                return (
-                  <React.Fragment key={k}>
-                    <div className={'cmp-labeled-table__label util-a-top-center'}>{k}:</div>
-                    <div className={'cmp-labeled-table__value cmp-text-input'}>
-                      <textarea
-                        style={{ height: '40px' }}
-                        value={v.length > 1 ? '***' : v[0] ?? ''}
-                        onChange={e => changeCallback('custom', '', k, e)}
-                      />
-                    </div>
-                  </React.Fragment>
-                );
-              })}
-            </Collapsible>
-            <br />
-          </div>
+                  </div>
+                </Accordion.ItemContent>
+              </Accordion.Item>
+            )}
+          </Accordion.Root>
         </Accordion.ItemContent>
       </Accordion.Item>
     </Accordion.Root>
