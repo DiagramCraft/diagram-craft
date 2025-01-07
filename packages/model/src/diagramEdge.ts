@@ -224,10 +224,8 @@ export class DiagramEdge
       this.#props
     ) as DeepRequired<EdgeProps>;
 
-    const propsForRendering = deepMerge(
-      {},
-      edgeDefaults.merge(propsForEditing),
-      consolidatedRulesProps
+    const propsForRendering = edgeDefaults.merge(
+      deepMerge({}, propsForEditing, consolidatedRulesProps)
     );
 
     this.cache.set('props.forEditing', propsForEditing);

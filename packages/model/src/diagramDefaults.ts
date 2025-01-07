@@ -26,7 +26,8 @@ export class Defaults<T> {
 
     // Attempt to use patterns
     for (const p of Object.keys(this.patterns)) {
-      if (key.startsWith(p)) {
+      if (key === p) return {};
+      else if (key.startsWith(p)) {
         // This takes property like a.b.c.d.e, with a pattern such as a.b.*,
         // and extracts d.e
         const k = key

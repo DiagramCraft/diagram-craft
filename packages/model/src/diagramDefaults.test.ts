@@ -23,7 +23,7 @@ describe('Defaults', () => {
   });
 
   describe('add pattern', () => {
-    test.only('can add pattern defaults', () => {
+    test('can add pattern defaults', () => {
       const d = new Defaults<{ test: Record<string, { inner1: string; inner2: number }> }>();
       d.addPattern('test.*', {
         inner1: 'lorem',
@@ -37,13 +37,13 @@ describe('Defaults', () => {
 
   describe('merge', () => {
     test('simple merge', () => {
-      const d = new Defaults<{ test: { inner1: string; inner2: number } }>();
+      const d = new Defaults<{ test: Record<string, { name: string }> }>();
       d.add('test', {
-        inner1: 'lorem',
-        inner2: 34
+        inner1: { name: 'lorem' },
+        inner2: { name: '34' }
       });
-      expect(d.merge({ test: { inner2: 35 } })).toStrictEqual({
-        test: { inner1: 'lorem', inner2: 35 }
+      expect(d.merge({ test: { inner2: { name: '35' } } })).toStrictEqual({
+        test: { inner1: { name: 'lorem' }, inner2: { name: '35' } }
       });
     });
 
@@ -54,7 +54,7 @@ describe('Defaults', () => {
         inner2: 34
       });
       expect(d.merge({ test: { abc: { inner1: 'ipsum' } } })).toStrictEqual({
-        test: { abc: { inner1: 'ipsum', inner2: 35 } }
+        test: { abc: { inner1: 'ipsum', inner2: 34 } }
       });
     });
   });

@@ -303,10 +303,8 @@ export class DiagramNode
       this.#props
     ) as DeepRequired<NodeProps>;
 
-    const propsForRendering = deepMerge(
-      {},
-      nodeDefaults.merge(propsForEditing),
-      consolidatedRulesProps
+    const propsForRendering = nodeDefaults.merge(
+      deepMerge({}, propsForEditing, consolidatedRulesProps)
     );
 
     this.cache.set('props.forEditing', propsForEditing);
