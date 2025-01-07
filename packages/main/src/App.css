@@ -222,6 +222,7 @@ input[type="checkbox"]:focus {
 
 input[type="checkbox"]:disabled {
   color: var(--cmp-disabled-fg);
+  --__fg: var(--cmp-disabled-fg);
   cursor: not-allowed;
 }
 

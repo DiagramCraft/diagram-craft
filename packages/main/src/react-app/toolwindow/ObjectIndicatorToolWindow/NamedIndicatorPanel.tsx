@@ -7,7 +7,6 @@ import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { TbFilterCog, TbPencil, TbPlus, TbTrash } from 'react-icons/tb';
 import { Tooltip } from '@diagram-craft/app-components/Tooltip';
-import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { IndicatorForm } from './IndicatorForm';
 import { useElementProperty } from '../../hooks/useProperty';
 
@@ -142,11 +141,15 @@ export const NamedIndicatorPanel = (_props: { mode?: 'accordion' | 'panel' }) =>
   const indicatorKeys = Object.keys(indicators.val).filter(k => k !== '_default');
 
   const ruleIndicatorKeys: string[] = [];
+  const enabledRruleIndicatorKeys: string[] = [];
   if ($d.selectionState.elements.length === 1) {
     const keys = Object.keys($d.selectionState.elements[0].renderProps.indicators ?? {});
     for (const k of keys) {
       if (!indicators.val[k]) {
         ruleIndicatorKeys.push(k);
+        if ($d.selectionState.elements[0].renderProps.indicators[k].enabled) {
+          enabledRruleIndicatorKeys.push(k);
+        }
       }
     }
   }
@@ -182,7 +185,33 @@ export const NamedIndicatorPanel = (_props: { mode?: 'accordion' | 'panel' }) =>
                   return (
                     <Accordion.Item value={k} key={k}>
                       <Accordion.ItemHeader>
-                        {k}
+                        <div className={'util-hstack'} style={{ gap: '0.5rem' }}>
+                          <input
+                            className="cmp-accordion__enabled"
+                            type={'checkbox'}
+                            checked={
+                              indicators.val[k]?.enabled ??
+                              enabledRruleIndicatorKeys.includes(k) ??
+                              false
+                            }
+                            disabled={isRuleAdded}
+                            onChange={() => {
+                              update(k, 'enabled', !indicators.val[k]?.enabled);
+                            }}
+                            onClick={e => {
+                              if (
+                                indicators.val[k]?.enabled ||
+                                (e.target as HTMLElement).parentElement!.parentElement?.dataset[
+                                  'state'
+                                ] === 'open'
+                              ) {
+                                e.stopPropagation();
+                              }
+                            }}
+                          />
+
+                          <span>{k}</span>
+                        </div>
 
                         {isRuleAdded && (
                           <Accordion.ItemHeaderButtons>
@@ -214,18 +243,6 @@ export const NamedIndicatorPanel = (_props: { mode?: 'accordion' | 'panel' }) =>
                         )}
                       </Accordion.ItemHeader>
                       <Accordion.ItemContent>
-                        <div className={'cmp-labeled-table'} style={{ marginBottom: '0.5rem' }}>
-                          <div className={'cmp-labeled-table__label'}>Enabled:</div>
-                          <div className={'cmp-labeled-table__value util-vcenter'}>
-                            <Checkbox
-                              value={indicators.val[k]?.enabled}
-                              onChange={v => {
-                                update(k, 'enabled', v ?? false);
-                              }}
-                              disabled={isRuleAdded}
-                            />
-                          </div>
-                        </div>
                         <FormWrapper
                           key={k}
                           id={k}
