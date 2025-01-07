@@ -14,9 +14,11 @@ type IndicatorFormProps = {
   position: Property<'n' | 's' | 'w' | 'e' | 'c' | 'ne' | 'nw' | 'se' | 'sw'>;
   direction: Property<'n' | 's' | 'e' | 'w'>;
   offset: Property<number>;
+  isReadOnly?: boolean;
 };
 
 export const IndicatorForm = (props: IndicatorFormProps) => {
+  const $p = props;
   const diagram = useDiagram();
 
   const $cfg = useConfiguration();
@@ -27,7 +29,7 @@ export const IndicatorForm = (props: IndicatorFormProps) => {
         <PropertyEditor
           property={props.shape}
           render={props => (
-            <Select.Root {...props}>
+            <Select.Root {...props} disabled={$p.isReadOnly}>
               <Select.Item value={'disc'}>Disc</Select.Item>
               <Select.Item value={'triangle'}>Triangle</Select.Item>
               <Select.Item value={'star'}>Star</Select.Item>
@@ -47,6 +49,7 @@ export const IndicatorForm = (props: IndicatorFormProps) => {
           render={props => (
             <ColorPicker
               {...props}
+              disabled={$p.isReadOnly}
               palette={$cfg.palette.primary}
               customPalette={diagram.document.customPalette.colors}
               onChangeCustomPalette={(idx, v) => diagram.document.customPalette.setColor(idx, v)}
@@ -62,12 +65,12 @@ export const IndicatorForm = (props: IndicatorFormProps) => {
       >
         <PropertyEditor
           property={props.width}
-          render={props => <NumberInput {...props} label={'w'} />}
+          render={props => <NumberInput {...props} disabled={$p.isReadOnly} label={'w'} />}
         />
 
         <PropertyEditor
           property={props.height}
-          render={props => <NumberInput {...props} label={'h'} />}
+          render={props => <NumberInput {...props} disabled={$p.isReadOnly} label={'h'} />}
         />
       </div>
 
@@ -76,7 +79,7 @@ export const IndicatorForm = (props: IndicatorFormProps) => {
         <PropertyEditor
           property={props.position as Property<string>}
           render={props => (
-            <Select.Root {...props}>
+            <Select.Root {...props} disabled={$p.isReadOnly}>
               <Select.Item value={'e'}>East</Select.Item>
               <Select.Item value={'ne'}>North East</Select.Item>
               <Select.Item value={'n'}>North</Select.Item>
@@ -98,7 +101,7 @@ export const IndicatorForm = (props: IndicatorFormProps) => {
       >
         <PropertyEditor
           property={props.offset}
-          render={props => <NumberInput {...props} label="Δ" />}
+          render={props => <NumberInput {...props} disabled={$p.isReadOnly} label="Δ" />}
         />
       </div>
       <div className={'cmp-labeled-table__label'}></div>
@@ -109,7 +112,7 @@ export const IndicatorForm = (props: IndicatorFormProps) => {
         <PropertyEditor
           property={props.direction as Property<string>}
           render={props => (
-            <Select.Root {...props}>
+            <Select.Root {...props} disabled={$p.isReadOnly}>
               <Select.Item value={'e'}>East</Select.Item>
               <Select.Item value={'n'}>North</Select.Item>
               <Select.Item value={'w'}>West</Select.Item>

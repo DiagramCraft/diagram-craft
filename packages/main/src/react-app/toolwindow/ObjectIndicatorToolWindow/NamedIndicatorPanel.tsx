@@ -5,7 +5,7 @@ import { deepClone } from '@diagram-craft/utils/object';
 import { StringInputDialogCommand } from '@diagram-craft/canvas-app/dialogs';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
-import { TbPencil, TbPlus, TbTrash } from 'react-icons/tb';
+import { TbFilterCog, TbPencil, TbPlus, TbTrash } from 'react-icons/tb';
 import { Tooltip } from '@diagram-craft/app-components/Tooltip';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { IndicatorForm } from './IndicatorForm';
@@ -18,6 +18,7 @@ const FormWrapper = (props: {
   indicator: Indicator;
   update: <K extends keyof Indicator>(key: K, value: Indicator[K]) => void;
   id: string;
+  isReadOnly?: boolean;
 }) => {
   const $d = useDiagram();
   const shape = useElementProperty($d, path(props.id, 'shape'), 'disc');
@@ -30,6 +31,7 @@ const FormWrapper = (props: {
 
   return (
     <IndicatorForm
+      isReadOnly={props.isReadOnly}
       shape={shape}
       color={color}
       width={width}
@@ -137,6 +139,18 @@ export const NamedIndicatorPanel = (_props: { mode?: 'accordion' | 'panel' }) =>
     );
   };
 
+  const indicatorKeys = Object.keys(indicators.val).filter(k => k !== '_default');
+
+  const ruleIndicatorKeys: string[] = [];
+  if ($d.selectionState.elements.length === 1) {
+    const keys = Object.keys($d.selectionState.elements[0].renderProps.indicators ?? {});
+    for (const k of keys) {
+      if (!indicators.val[k]) {
+        ruleIndicatorKeys.push(k);
+      }
+    }
+  }
+
   return (
     <Accordion.Item value="named">
       <Accordion.ItemHeader>
@@ -152,7 +166,7 @@ export const NamedIndicatorPanel = (_props: { mode?: 'accordion' | 'panel' }) =>
         </Accordion.ItemHeaderButtons>
       </Accordion.ItemHeader>
       <Accordion.ItemContent>
-        {Object.keys(indicators.val).filter(k => k !== '_default').length > 0 && (
+        {(indicatorKeys.length > 0 || ruleIndicatorKeys.length > 0) && (
           <>
             <Accordion.Root
               type={'multiple'}
@@ -161,30 +175,43 @@ export const NamedIndicatorPanel = (_props: { mode?: 'accordion' | 'panel' }) =>
                 setVisible(v);
               }}
             >
-              {Object.keys(indicators.val)
-                .filter(k => k !== '_default')
+              {[...Object.keys(indicators.val).filter(k => k !== '_default'), ...ruleIndicatorKeys]
                 .toSorted()
                 .map(k => {
+                  const isRuleAdded = ruleIndicatorKeys.includes(k);
                   return (
                     <Accordion.Item value={k} key={k}>
                       <Accordion.ItemHeader>
                         {k}
-                        <Accordion.ItemHeaderButtons>
-                          <Tooltip message={'Delete indicator'}>
-                            <a
-                              href={'#'}
-                              style={{ marginRight: '0.5rem' }}
-                              onClick={() => deleteIndicator(k)}
-                            >
-                              <TbTrash />
-                            </a>
-                          </Tooltip>
-                          <Tooltip message={'Rename indicator'}>
-                            <a href={'#'} onClick={() => rename(k)}>
-                              <TbPencil />
-                            </a>
-                          </Tooltip>
-                        </Accordion.ItemHeaderButtons>
+
+                        {isRuleAdded && (
+                          <Accordion.ItemHeaderButtons>
+                            <Tooltip message={'Added by rule'}>
+                              <span>
+                                <TbFilterCog />
+                              </span>
+                            </Tooltip>
+                          </Accordion.ItemHeaderButtons>
+                        )}
+
+                        {!isRuleAdded && (
+                          <Accordion.ItemHeaderButtons>
+                            <Tooltip message={'Delete indicator'}>
+                              <a
+                                href={'#'}
+                                style={{ marginRight: '0.5rem' }}
+                                onClick={() => deleteIndicator(k)}
+                              >
+                                <TbTrash />
+                              </a>
+                            </Tooltip>
+                            <Tooltip message={'Rename indicator'}>
+                              <a href={'#'} onClick={() => rename(k)}>
+                                <TbPencil />
+                              </a>
+                            </Tooltip>
+                          </Accordion.ItemHeaderButtons>
+                        )}
                       </Accordion.ItemHeader>
                       <Accordion.ItemContent>
                         <div className={'cmp-labeled-table'} style={{ marginBottom: '0.5rem' }}>
@@ -195,6 +222,7 @@ export const NamedIndicatorPanel = (_props: { mode?: 'accordion' | 'panel' }) =>
                               onChange={v => {
                                 update(k, 'enabled', v ?? false);
                               }}
+                              disabled={isRuleAdded}
                             />
                           </div>
                         </div>
@@ -202,6 +230,7 @@ export const NamedIndicatorPanel = (_props: { mode?: 'accordion' | 'panel' }) =>
                           key={k}
                           id={k}
                           indicator={indicators.val[k]}
+                          isReadOnly={isRuleAdded}
                           update={(p, v) => {
                             update(k, p, v);
                           }}
@@ -215,7 +244,7 @@ export const NamedIndicatorPanel = (_props: { mode?: 'accordion' | 'panel' }) =>
           </>
         )}
 
-        {Object.keys(indicators.val).filter(k => k !== '_default').length === 0 && (
+        {indicatorKeys.length === 0 && ruleIndicatorKeys.length === 0 && (
           <div>No named indicators</div>
         )}
       </Accordion.ItemContent>

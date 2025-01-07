@@ -26,6 +26,7 @@ export const Checkbox = (props: Props) => {
         onChange={e => {
           props.onChange(e.target.checked);
         }}
+        disabled={props.disabled}
       />
       {props.label && <span>&nbsp;{props.label}</span>}
     </>
@@ -59,4 +60,5 @@ type Props = {
   isIndeterminate?: boolean;
   onChange: (value: boolean | undefined) => void;
   label?: string;
+  disabled?: boolean;
 };

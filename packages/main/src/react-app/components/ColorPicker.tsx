@@ -65,6 +65,7 @@ export const ColorPicker = (props: Props) => {
           <button
             {...extractMouseEvents(props)}
             data-field-state={props.isIndeterminate ? 'indeterminate' : props.state}
+            disabled={props.disabled}
           >
             <div
               className={'cmp-color-picker__well'}
@@ -166,6 +167,7 @@ type Props = {
   onChange: (s: string | undefined) => void;
   onChangeCustomPalette: (idx: number, s: string) => void;
   canClearColor?: boolean;
+  disabled?: boolean;
 };
 
 export const ColorPreview = (props: { value: string }) => {
