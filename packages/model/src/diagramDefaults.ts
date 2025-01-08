@@ -20,7 +20,7 @@ export class Defaults<T> {
     return this.getRaw(key) as PropPathValue<T, K> | undefined;
   }
 
-  getRaw(key: string): unknown | undefined {
+  getRaw(key: string, failOnMissing = true): unknown | undefined {
     const v = this.defaults[key];
     if (v !== undefined) return v;
 
@@ -43,7 +43,11 @@ export class Defaults<T> {
       }
     }
 
-    throw new Error(`Property ${key} is not defined in defaults`);
+    if (failOnMissing) {
+      throw new Error(`Property ${key} is not defined in defaults`);
+    }
+
+    return undefined;
   }
 
   add<K extends PropPath<T>>(key: K, value: PropPathValue<T, K>): void {
@@ -109,7 +113,7 @@ export class Defaults<T> {
 
     // @ts-ignore
     const propsToVerify = (path ? new DynamicAccessor().get(props, path) : props) ?? {};
-    const defaultsToVerify = path ? this.getRaw(path) : this.defaultsObjects;
+    const defaultsToVerify = path ? this.getRaw(path, false) : this.defaultsObjects;
     return isSameAsDefaults(propsToVerify, defaultsToVerify as Record<string, unknown>);
   }
 
