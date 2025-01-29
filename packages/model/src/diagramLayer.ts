@@ -81,7 +81,7 @@ export abstract class Layer<T extends RegularLayer | RuleLayer = RegularLayer | 
   getInboundReferences() {
     const inboundReferences: ReferenceLayer[] = [];
     const doc = this.diagram.document;
-    for (const d of doc.diagrams) {
+    for (const d of doc.nestedDiagramsIterator()) {
       for (const l of d.layers.all) {
         if (isReferenceLayer(l)) {
           const ref = l.reference;

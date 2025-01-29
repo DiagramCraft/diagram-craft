@@ -45,7 +45,7 @@ export const DocumentToolWindow = (props: Props) => {
         <Accordion.ItemHeader>Document structure</Accordion.ItemHeader>
         <Accordion.ItemContent>
           <Tree.Root>
-            {props.document.diagrams.map(node => (
+            {props.document.topLevelDiagrams.map(node => (
               <Tree.Node key={node.id} isOpen={true}>
                 <Tree.NodeLabel>
                   <DiagramLabel diagram={node} onValueChange={props.onValueChange} />

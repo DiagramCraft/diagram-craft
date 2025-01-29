@@ -9,7 +9,6 @@ import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinit
 import { precondition } from '@diagram-craft/utils/assert';
 import { isNode } from './diagramElement';
 import { UnitOfWork } from './unitOfWork';
-import { RegularLayer } from './diagramLayer';
 import { Data, DataProvider, DataProviderRegistry } from './dataProvider';
 import { DefaultDataProvider, DefaultDataProviderId } from './dataProviderDefault';
 import { UrlDataProvider, UrlDataProviderId } from './dataProviderUrl';
@@ -89,7 +88,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     }
   };
 
-  diagrams: Diagram[] = [];
+  #diagrams: Diagram[] = [];
 
   url: string | undefined;
 
@@ -100,6 +99,10 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     super();
   }
 
+  get topLevelDiagrams() {
+    return this.#diagrams;
+  }
+
   *nestedDiagramsIterator() {
     function* unnest(d: Diagram): Generator<Diagram> {
       for (const sd of d.diagrams) {
@@ -108,7 +111,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
       }
     }
 
-    for (const d of this.diagrams) {
+    for (const d of this.#diagrams) {
       yield d;
       yield* unnest(d);
     }
@@ -134,23 +137,23 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
 
   getById(id: string) {
     return (
-      this.diagrams.find(d => d.id === id) ??
-      this.diagrams.map(d => d.findChildDiagramById(id)).find(d => d !== undefined)
+      this.#diagrams.find(d => d.id === id) ??
+      this.#diagrams.map(d => d.findChildDiagramById(id)).find(d => d !== undefined)
     );
   }
 
   addDiagram(diagram: Diagram) {
-    precondition.is.false(!!this.diagrams.find(d => d.id === diagram.id));
+    precondition.is.false(!!this.#diagrams.find(d => d.id === diagram.id));
 
-    this.diagrams.push(diagram);
+    this.#diagrams.push(diagram);
     diagram.document = this;
     this.emit('diagramadded', { node: diagram });
   }
 
   removeDiagram(diagram: Diagram) {
-    const idx = this.diagrams.indexOf(diagram);
+    const idx = this.#diagrams.indexOf(diagram);
     if (idx !== -1) {
-      this.diagrams.splice(idx, 1);
+      this.#diagrams.splice(idx, 1);
       this.emit('diagramremoved', { node: diagram });
     }
   }
@@ -161,7 +164,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
 
   toJSON() {
     return {
-      diagrams: this.diagrams,
+      diagrams: this.#diagrams,
       styles: this.styles,
       props: this.props,
       customPalette: this.customPalette
@@ -169,31 +172,27 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
   }
 
   getAttachmentsInUse() {
-    return this.diagrams.flatMap(e => e.getAttachmentsInUse());
+    return [...this.nestedDiagramsIterator().flatMap(e => e.getAttachmentsInUse())];
   }
 
   // TODO: We should probably move this into the diagram loaders and/or deserialization
   //       This way, warnings as anchors are determined during deserialization are triggered
   async load() {
     const loadedTypes = new Set<string>();
-    for (const diagram of this.diagrams) {
+    for (const diagram of this.nestedDiagramsIterator()) {
       const uow = UnitOfWork.immediate(diagram);
-      for (const layer of diagram.layers.all) {
-        if (layer instanceof RegularLayer) {
-          for (const element of (layer as RegularLayer).elements) {
-            if (isNode(element)) {
-              const s = element.nodeType;
-              if (!this.nodeDefinitions.hasRegistration(s)) {
-                if (!(await this.nodeDefinitions.load(s))) {
-                  console.warn(`Node definition ${s} not loaded`);
-                } else {
-                  element.invalidate(uow);
-                  loadedTypes.add(s);
-                }
-              } else if (loadedTypes.has(s)) {
-                element.invalidate(uow);
-              }
+      for (const element of diagram.allElementsIterator()) {
+        if (isNode(element)) {
+          const s = element.nodeType;
+          if (!this.nodeDefinitions.hasRegistration(s)) {
+            if (!(await this.nodeDefinitions.load(s))) {
+              console.warn(`Node definition ${s} not loaded`);
+            } else {
+              element.invalidate(uow);
+              loadedTypes.add(s);
             }
+          } else if (loadedTypes.has(s)) {
+            element.invalidate(uow);
           }
         }
       }

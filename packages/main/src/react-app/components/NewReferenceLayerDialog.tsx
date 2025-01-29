@@ -75,12 +75,13 @@ export const ReferenceLayerDialog = (props: Props) => {
       <div style={{ paddingTop: '0.5rem' }}>
         <label>{'Reference'}:</label>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
+          {/* TODO: Support nested diagrams */}
           <Select.Root
             value={selectedDiagram?.id ?? ''}
             onChange={onDiagramChange}
             placeholder={'Sheet'}
           >
-            {$d.document.diagrams
+            {$d.document.topLevelDiagrams
               .filter(d => d !== $d)
               .map(d => {
                 return (

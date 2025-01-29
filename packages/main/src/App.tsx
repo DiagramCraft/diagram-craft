@@ -167,7 +167,7 @@ export const App = (props: {
       const doc = await loadFileFromUrl(url, props.documentFactory, props.diagramFactory);
       doc.url = url;
 
-      updateApplicationModel(doc.diagrams[0], application.current);
+      updateApplicationModel(doc.topLevelDiagrams[0], application.current);
 
       Autosave.clear();
       setDirty(false);
@@ -196,7 +196,7 @@ export const App = (props: {
   };
 
   useOnChange(props.doc, () => {
-    updateApplicationModel(props.doc.diagrams[0], application.current);
+    updateApplicationModel(props.doc.topLevelDiagrams[0], application.current);
   });
 
   const [dirty, setDirty] = useState(Autosave.exists());

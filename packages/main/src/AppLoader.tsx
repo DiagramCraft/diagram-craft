@@ -49,7 +49,7 @@ export const AppLoader = (props: Props) => {
     }
   }, [props.diagramFactory, props.documentFactory]);
 
-  if (doc && doc.diagrams.length === 0) {
+  if (doc && doc.topLevelDiagrams.length === 0) {
     console.error('Doc contains no diagrams');
     return null;
   }

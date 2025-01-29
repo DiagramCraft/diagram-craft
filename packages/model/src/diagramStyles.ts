@@ -366,15 +366,16 @@ export class DiagramStyles {
   }
 
   modifyStylesheet(stylesheet: Stylesheet<StylesheetType>, uow: UnitOfWork) {
-    for (const diagram of this.document.diagrams) {
-      for (const node of diagram.nodeLookup.values()) {
-        if (node.metadata.style === stylesheet.id || node.metadata.textStyle === stylesheet.id) {
-          this.setStylesheet(node, stylesheet.id, uow, false);
-        }
-      }
-      for (const edge of diagram.edgeLookup.values()) {
-        if (edge.metadata.style === stylesheet.id) {
-          this.setStylesheet(edge, stylesheet.id, uow, false);
+    for (const diagram of this.document.nestedDiagramsIterator()) {
+      for (const el of diagram.allElementsIterator()) {
+        if (isNode(el)) {
+          if (el.metadata.style === stylesheet.id || el.metadata.textStyle === stylesheet.id) {
+            this.setStylesheet(el, stylesheet.id, uow, false);
+          }
+        } else {
+          if (el.metadata.style === stylesheet.id) {
+            this.setStylesheet(el, stylesheet.id, uow, false);
+          }
         }
       }
     }
@@ -389,15 +390,16 @@ export class DiagramStyles {
     const stylesheet = this.get(id);
     if (!stylesheet) return;
 
-    for (const diagram of this.document.diagrams) {
-      for (const node of diagram.nodeLookup.values()) {
-        if (node.metadata.style === id || node.metadata.textStyle === id) {
-          this.clearStylesheetFromElement(node, stylesheet, uow);
-        }
-      }
-      for (const edge of diagram.edgeLookup.values()) {
-        if (edge.metadata.style === id) {
-          this.clearStylesheetFromElement(edge, stylesheet, uow);
+    for (const diagram of this.document.nestedDiagramsIterator()) {
+      for (const el of diagram.allElementsIterator()) {
+        if (isNode(el)) {
+          if (el.metadata.style === id || el.metadata.textStyle === id) {
+            this.clearStylesheetFromElement(el, stylesheet, uow);
+          }
+        } else {
+          if (el.metadata.style === id) {
+            this.clearStylesheetFromElement(el, stylesheet, uow);
+          }
         }
       }
     }

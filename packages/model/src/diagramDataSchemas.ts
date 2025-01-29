@@ -51,19 +51,10 @@ export class DiagramDataSchemas {
       this.#schemas.splice(idx, 1);
     }
 
-    for (const diagram of this.document.diagrams) {
-      for (const node of diagram.nodeLookup.values()) {
-        if (node.metadata.data?.data?.find(d => d.schema === schema.id)) {
-          node.updateMetadata(props => {
-            props.data ??= {};
-            props.data.data ??= [];
-            props.data.data = props.data.data.filter(d => d.schema !== schema.id);
-          }, uow);
-        }
-      }
-      for (const edge of diagram.edgeLookup.values()) {
-        if (edge.metadata.data?.data?.find(d => d.schema === schema.id)) {
-          edge.updateMetadata(props => {
+    for (const diagram of this.document.nestedDiagramsIterator()) {
+      for (const e of diagram.allElementsIterator()) {
+        if (e.metadata.data?.data?.find(d => d.schema === schema.id)) {
+          e.updateMetadata(props => {
             props.data ??= {};
             props.data.data ??= [];
             props.data.data = props.data.data.filter(d => d.schema !== schema.id);

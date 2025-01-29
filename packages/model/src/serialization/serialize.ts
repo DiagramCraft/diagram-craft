@@ -38,7 +38,7 @@ export const serializeDiagramDocument = async (
   document: DiagramDocument
 ): Promise<SerializedDiagramDocument> => {
   return {
-    diagrams: document.diagrams.map(serializeDiagram),
+    diagrams: document.topLevelDiagrams.map(serializeDiagram),
     attachments: await serializeAttachments(document.attachments),
     customPalette: serializeCustomPalette(document.customPalette),
     styles: serializeStyles(document.styles),

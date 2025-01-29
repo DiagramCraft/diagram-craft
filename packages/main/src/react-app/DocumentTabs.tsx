@@ -41,15 +41,13 @@ export const DocumentTabs = (props: Props) => {
   useEventListener(props.document, 'diagramchanged', redraw);
   useEventListener(props.document, 'diagramadded', redraw);
 
-  const selection = props.document.diagrams.find(
-    d => d.id === props.value || d.findChildDiagramById(props.value) !== undefined
-  )?.id;
+  const selection = props.document.getById(props.value)?.id;
 
   return (
     <div className={'cmp-document-tabs'}>
       <Tabs.Root value={selection} onValueChange={props.onValueChange}>
         <Tabs.List className="cmp-document-tabs__tabs" aria-label="Diagrams in document">
-          {props.document.diagrams.map(d => (
+          {props.document.topLevelDiagrams.map(d => (
             <Tabs.Trigger
               key={d.id}
               className="cmp-document-tabs__tab-trigger util-vcenter"
@@ -84,7 +82,7 @@ export const DocumentTabs = (props: Props) => {
 
           const diagram = new Diagram(
             id,
-            'Sheet ' + (props.document.diagrams.length + 1).toString(),
+            'Sheet ' + (props.document.topLevelDiagrams.length + 1).toString(),
             props.document
           );
           diagram.layers.add(
