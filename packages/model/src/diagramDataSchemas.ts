@@ -13,6 +13,7 @@ type DataSchemaField = {
 export type DataSchema = {
   id: string;
   name: string;
+  source: 'document' | 'external';
   fields: DataSchemaField[];
 };
 
@@ -31,7 +32,9 @@ export class DiagramDataSchemas {
   }
 
   get(id: string) {
-    return this.#schemas.find(s => s.id === id) ?? { id: '', name: '', fields: [] };
+    return (
+      this.#schemas.find(s => s.id === id) ?? { id: '', name: '', source: 'document', fields: [] }
+    );
   }
 
   addSchema(schema: DataSchema) {

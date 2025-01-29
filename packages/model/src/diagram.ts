@@ -136,6 +136,11 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     return this.#document!;
   }
 
+  *allElementsIterator(): Generator<DiagramElement> {
+    yield* Object.values(this.nodeLookup);
+    yield* Object.values(this.edgeLookup);
+  }
+
   lookup(id: string): DiagramElement | undefined {
     return this.nodeLookup.get(id) ?? this.edgeLookup.get(id);
   }

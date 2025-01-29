@@ -76,18 +76,22 @@ declare global {
 
   type Data = Record<string, string | number | boolean | undefined>;
 
+  interface ElementDataEntry {
+    schema: string;
+    type: 'schema' | 'external';
+    external?: {
+      uid: string;
+    };
+    data: Record<string, string>;
+    enabled?: boolean;
+  }
+
   interface ElementMetadata {
     name?: string;
     style?: string;
     textStyle?: string;
     data?: {
-      data?: Array<{
-        schema: string;
-        // TODO: Need to add some stuff to support derived-from
-        type: 'schema' | 'derived-from';
-        data: Record<string, string>;
-        enabled?: boolean;
-      }>;
+      data?: Array<ElementDataEntry>;
       customData?: Data;
     };
   }

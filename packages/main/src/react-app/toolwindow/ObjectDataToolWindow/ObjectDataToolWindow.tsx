@@ -27,6 +27,7 @@ const makeTemplate = (): DataSchema => {
   return {
     id: newid(),
     name: 'New schema',
+    source: 'document',
     fields: [
       {
         id: 'field1',

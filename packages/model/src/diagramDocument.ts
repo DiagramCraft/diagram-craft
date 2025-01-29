@@ -10,6 +10,12 @@ import { precondition } from '@diagram-craft/utils/assert';
 import { isNode } from './diagramElement';
 import { UnitOfWork } from './unitOfWork';
 import { RegularLayer } from './diagramLayer';
+import { Data, DataProvider, DataProviderRegistry } from './dataProvider';
+import { DefaultDataProvider, DefaultDataProviderId } from './dataProviderDefault';
+import { UrlDataProvider, UrlDataProviderId } from './dataProviderUrl';
+
+const makeMatchingDataPredicate = (data: Data) => (dt: ElementDataEntry) =>
+  dt.type === 'external' && dt.external?.uid === data._uid;
 
 export type DocumentEvents = {
   diagramchanged: { after: Diagram };
@@ -27,6 +33,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     {
       id: 'default',
       name: 'Default',
+      source: 'document',
       fields: [
         {
           id: 'name',
@@ -41,6 +48,36 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
       ]
     }
   ]);
+
+  #dataProvider: DataProvider | undefined;
+
+  #dataProviderUpdateListener = (data: Data) => {
+    for (const d of this.nestedDiagramsIterator()) {
+      for (const e of d.allElementsIterator()) {
+        const predicate = makeMatchingDataPredicate(data);
+        if (e.metadata.data?.data?.find(predicate)) {
+          e.updateMetadata(cb => {
+            const toUpdate = cb.data!.data!.find(predicate)!;
+            toUpdate.data = data;
+          }, UnitOfWork.immediate(d));
+        }
+      }
+    }
+  };
+
+  #dataProviderDeleteListener = (data: Data) => {
+    for (const d of this.nestedDiagramsIterator()) {
+      for (const e of d.allElementsIterator()) {
+        const predicate = makeMatchingDataPredicate(data);
+        if (e.metadata.data?.data?.find(predicate)) {
+          e.updateMetadata(cb => {
+            cb.data ??= {};
+            cb.data!.data = cb.data?.data?.filter(dt => !predicate(dt));
+          }, UnitOfWork.immediate(d));
+        }
+      }
+    }
+  };
 
   // TODO: To be loaded from file
   props: DocumentProps = {
@@ -61,6 +98,38 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     public readonly edgeDefinitions: EdgeDefinitionRegistry
   ) {
     super();
+  }
+
+  *nestedDiagramsIterator() {
+    function* unnest(d: Diagram): Generator<Diagram> {
+      for (const sd of d.diagrams) {
+        yield sd;
+        yield* unnest(sd);
+      }
+    }
+
+    for (const d of this.diagrams) {
+      yield d;
+      yield* unnest(d);
+    }
+  }
+
+  get dataProvider() {
+    return this.#dataProvider;
+  }
+
+  set dataProvider(dataProvider: DataProvider | undefined) {
+    this.#dataProvider?.off?.('add', this.#dataProviderUpdateListener);
+    this.#dataProvider?.off?.('update', this.#dataProviderUpdateListener);
+    this.#dataProvider?.off?.('delete', this.#dataProviderDeleteListener);
+
+    this.#dataProvider = dataProvider;
+
+    if (this.#dataProvider) {
+      this.#dataProvider.on('add', this.#dataProviderUpdateListener);
+      this.#dataProvider.on('update', this.#dataProviderUpdateListener);
+      this.#dataProvider.on('delete', this.#dataProviderDeleteListener);
+    }
   }
 
   getById(id: string) {
@@ -131,3 +200,9 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     }
   }
 }
+
+/*
+ * Register default data providers
+ */
+DataProviderRegistry.register(DefaultDataProviderId, (s: string) => new DefaultDataProvider(s));
+DataProviderRegistry.register(UrlDataProviderId, (s: string) => new UrlDataProvider(s));

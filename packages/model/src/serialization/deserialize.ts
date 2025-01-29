@@ -24,6 +24,7 @@ import { Stylesheet } from '../diagramStyles';
 import { DefaultStyles } from '../diagramDefaults';
 import { ReferenceLayer } from '../diagramLayerReference';
 import { RuleLayer } from '../diagramLayerRule';
+import { DataProviderRegistry } from '../dataProvider';
 
 const isNodeDef = (element: SerializedElement | SerializedLayer): element is SerializedNode =>
   element.type === 'node';
@@ -211,6 +212,15 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
     for (const val of Object.values(document.attachments)) {
       const buf = Uint8Array.from(atob(val), c => c.charCodeAt(0));
       await doc.attachments.addAttachment(new Blob([buf]));
+    }
+  }
+
+  if (document.data?.providerId) {
+    const provider = DataProviderRegistry.get(document.data.providerId);
+    if (provider) {
+      doc.dataProvider = provider(document.data.data!);
+    } else {
+      console.warn(`Provider ${document.data.providerId} not found`);
     }
   }
 

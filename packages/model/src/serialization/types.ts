@@ -47,6 +47,10 @@ export interface SerializedDiagramDocument {
   customPalette: ReadonlyArray<string>;
   styles: SerializedStyles;
   schemas: ReadonlyArray<DataSchema>;
+  data?: {
+    providerId?: string;
+    data?: string;
+  };
 }
 
 export interface SerializedStyles {
