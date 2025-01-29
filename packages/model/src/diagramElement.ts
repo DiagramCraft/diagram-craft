@@ -12,7 +12,7 @@ import { UnitOfWork } from './unitOfWork';
 import { Layer } from './diagramLayer';
 import { Diagram } from './diagram';
 import { AttachmentConsumer } from './attachment';
-import { DeepReadonly } from '@diagram-craft/utils/types';
+import { DeepReadonly, FlatObject } from '@diagram-craft/utils/types';
 import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
 import { PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 
@@ -36,7 +36,7 @@ export interface DiagramElement extends AbstractElement, AttachmentConsumer {
   readonly parent?: DiagramNode;
 
   readonly name: string;
-  readonly data: Data;
+  readonly dataForTemplate: FlatObject;
 
   isHidden(): boolean;
 

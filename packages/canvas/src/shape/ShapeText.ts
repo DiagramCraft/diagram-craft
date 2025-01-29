@@ -4,7 +4,7 @@ import * as html from '../component/vdom-html';
 import { rawHTML, VNode } from '../component/vdom';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { Box } from '@diagram-craft/geometry/box';
-import { DeepReadonly } from '@diagram-craft/utils/types';
+import { DeepReadonly, FlatObject } from '@diagram-craft/utils/types';
 import { HTMLParser, stripTags } from '@diagram-craft/utils/html';
 import { hash64 } from '@diagram-craft/utils/hash';
 import { applyTemplate } from '@diagram-craft/model/template';
@@ -20,7 +20,7 @@ const withPx = (n?: number) => (n ? n + 'px' : undefined);
 
 export type ShapeTextProps = {
   id: string;
-  metadata: DeepReadonly<Data> | undefined;
+  metadata: DeepReadonly<FlatObject> | undefined;
   textProps: NodeProps['text'];
   text: string;
   bounds: Box;

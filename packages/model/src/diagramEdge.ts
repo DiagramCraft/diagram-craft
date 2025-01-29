@@ -300,8 +300,14 @@ export class DiagramEdge
 
   /* Name **************************************************************************************************** */
 
-  get data() {
-    return this.metadata.data?.customData ?? {};
+  get dataForTemplate() {
+    return deepMerge(
+      {
+        name: this.#metadata.name
+      },
+      this.metadata.data?.customData ?? {},
+      ...(this.metadata.data?.data?.map(d => d.data) ?? [])
+    );
   }
 
   get name() {

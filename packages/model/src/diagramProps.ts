@@ -1,4 +1,4 @@
-import { DeepWriteable } from '@diagram-craft/utils/types';
+import { DeepWriteable, FlatObject } from '@diagram-craft/utils/types';
 import { deepClone } from '@diagram-craft/utils/object';
 import { Direction } from '@diagram-craft/geometry/direction';
 
@@ -74,15 +74,13 @@ declare global {
     };
   }
 
-  type Data = Record<string, string | number | boolean | undefined>;
-
   interface ElementDataEntry {
     schema: string;
     type: 'schema' | 'external';
     external?: {
       uid: string;
     };
-    data: Record<string, string>;
+    data: FlatObject;
     enabled?: boolean;
   }
 
@@ -92,7 +90,7 @@ declare global {
     textStyle?: string;
     data?: {
       data?: Array<ElementDataEntry>;
-      customData?: Data;
+      customData?: FlatObject;
     };
   }
 

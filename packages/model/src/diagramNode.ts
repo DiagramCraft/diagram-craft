@@ -364,10 +364,16 @@ export class DiagramNode
 
   /* Name **************************************************************************************************** */
 
-  get data() {
-    if (this.isLabelNode()) return this.labelEdge()!.data;
+  get dataForTemplate() {
+    if (this.isLabelNode()) return this.labelEdge()!.dataForTemplate;
 
-    return this.metadata.data?.customData ?? {};
+    return deepMerge(
+      {
+        name: this.#metadata.name
+      },
+      this.metadata.data?.customData ?? {},
+      ...(this.metadata.data?.data?.map(d => d.data) ?? [])
+    );
   }
 
   get name() {
@@ -380,7 +386,7 @@ export class DiagramNode
 
     const text = this.getText();
     if (text) {
-      const metadata = this.data;
+      const metadata = this.dataForTemplate;
 
       if (text[0] === '<') {
         try {

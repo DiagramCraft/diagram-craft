@@ -1,4 +1,6 @@
-export const applyTemplate = (text: string, props: Data) => {
+import { FlatObject } from '@diagram-craft/utils/types';
+
+export const applyTemplate = (text: string, props: FlatObject) => {
   for (const match of text.matchAll(/%(\w+)%/g)) {
     const key = match[1];
     const value = props[key];

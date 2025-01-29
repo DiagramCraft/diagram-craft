@@ -114,7 +114,7 @@ export class ShapeBuilder {
         cmp.subComponent<ShapeTextProps>($cmp(ShapeText), {
           key: `text_${id}_${this.props.element.id}`,
           id: `text_${id}_${this.props.element.id}`,
-          metadata: this.props.element.data,
+          metadata: this.props.element.dataForTemplate,
           textProps: textProps ?? (this.props.elementProps as NodeProps).text,
           text: text ?? this.props.element.getText(),
           bounds: bounds ?? this.props.element.bounds,

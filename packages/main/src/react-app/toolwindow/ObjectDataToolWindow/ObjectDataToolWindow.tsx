@@ -326,14 +326,14 @@ export const ObjectDataToolWindow = () => {
                               {f.type === 'text' && (
                                 <input
                                   type={'text'}
-                                  value={v.length > 1 ? '***' : (v[0] ?? '')}
+                                  value={v.length > 1 ? '***' : (v[0]?.toString() ?? '')}
                                   onChange={e => changeCallback('data', schemaName, f.id, e)}
                                 />
                               )}
                               {f.type === 'longtext' && (
                                 <textarea
                                   style={{ height: '40px' }}
-                                  value={v.length > 1 ? '***' : (v[0] ?? '')}
+                                  value={v.length > 1 ? '***' : (v[0]?.toString() ?? '')}
                                   onChange={e => changeCallback('data', schemaName, f.id, e)}
                                 />
                               )}
