@@ -51,8 +51,8 @@ export class DiagramDataSchemas {
       this.#schemas.splice(idx, 1);
     }
 
-    for (const diagram of this.document.nestedDiagramsIterator()) {
-      for (const e of diagram.allElementsIterator()) {
+    for (const diagram of this.document.diagramIterator({ nest: true })) {
+      for (const e of diagram.allElements()) {
         if (e.metadata.data?.data?.find(d => d.schema === schema.id)) {
           e.updateMetadata(props => {
             props.data ??= {};

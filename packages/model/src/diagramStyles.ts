@@ -366,8 +366,8 @@ export class DiagramStyles {
   }
 
   modifyStylesheet(stylesheet: Stylesheet<StylesheetType>, uow: UnitOfWork) {
-    for (const diagram of this.document.nestedDiagramsIterator()) {
-      for (const el of diagram.allElementsIterator()) {
+    for (const diagram of this.document.diagramIterator({ nest: true })) {
+      for (const el of diagram.allElements()) {
         if (isNode(el)) {
           if (el.metadata.style === stylesheet.id || el.metadata.textStyle === stylesheet.id) {
             this.setStylesheet(el, stylesheet.id, uow, false);
@@ -390,8 +390,8 @@ export class DiagramStyles {
     const stylesheet = this.get(id);
     if (!stylesheet) return;
 
-    for (const diagram of this.document.nestedDiagramsIterator()) {
-      for (const el of diagram.allElementsIterator()) {
+    for (const diagram of this.document.diagramIterator({ nest: true })) {
+      for (const el of diagram.allElements()) {
         if (isNode(el)) {
           if (el.metadata.style === id || el.metadata.textStyle === id) {
             this.clearStylesheetFromElement(el, stylesheet, uow);

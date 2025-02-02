@@ -16,6 +16,28 @@ import { assert } from '@diagram-craft/utils/assert';
 import { AttachmentConsumer } from './attachment';
 import { newid } from '@diagram-craft/utils/id';
 
+export type DiagramIteratorOpts = {
+  nest?: boolean;
+  earlyExit?: boolean;
+  filter?: (d: Diagram) => boolean;
+};
+
+export function* diagramIterator(
+  arr: readonly Diagram[],
+  opts: DiagramIteratorOpts
+): Generator<Diagram> {
+  for (const d of arr) {
+    if (opts.filter && !opts.filter(d)) continue;
+
+    yield d;
+    if (opts.earlyExit) return;
+
+    if (opts.nest && d.diagrams) {
+      yield* diagramIterator(d.diagrams, opts);
+    }
+  }
+}
+
 export type Canvas = Omit<Box, 'r'>;
 
 export type DiagramEvents = {
@@ -136,9 +158,13 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     return this.#document!;
   }
 
-  *allElementsIterator(): Generator<DiagramElement> {
+  *allElements(): Generator<DiagramElement> {
     yield* Object.values(this.nodeLookup);
     yield* Object.values(this.edgeLookup);
+  }
+
+  visibleElements() {
+    return this.layers.visible.flatMap(l => (l instanceof RegularLayer ? l.elements : []));
   }
 
   lookup(id: string): DiagramElement | undefined {
@@ -166,10 +192,6 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     }
   }
 
-  visibleElements() {
-    return this.layers.visible.flatMap(l => (l instanceof RegularLayer ? l.elements : []));
-  }
-
   get canvas() {
     return this.#canvas;
   }
@@ -177,13 +199,6 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   set canvas(b: Canvas) {
     this.#canvas = b;
     this.update();
-  }
-
-  findChildDiagramById(id: string): Diagram | undefined {
-    return (
-      this.diagrams.find(d => d.id === id) ??
-      this.diagrams.map(d => d.findChildDiagramById(id)).find(d => d !== undefined)
-    );
   }
 
   // TODO: Check layer level events are emitted

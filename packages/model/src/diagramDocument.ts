@@ -1,7 +1,7 @@
 import { DiagramPalette } from './diagramPalette';
 import { DiagramStyles } from './diagramStyles';
 import { DiagramDataSchemas } from './diagramDataSchemas';
-import { Diagram } from './diagram';
+import { Diagram, diagramIterator, DiagramIteratorOpts } from './diagram';
 import { AttachmentConsumer, AttachmentManager } from './attachment';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { range } from '@diagram-craft/utils/array';
@@ -12,6 +12,7 @@ import { UnitOfWork } from './unitOfWork';
 import { Data, DataProvider, DataProviderRegistry } from './dataProvider';
 import { DefaultDataProvider, DefaultDataProviderId } from './dataProviderDefault';
 import { UrlDataProvider, UrlDataProviderId } from './dataProviderUrl';
+import { Generators } from '@diagram-craft/utils/generator';
 
 const makeMatchingDataPredicate = (data: Data) => (dt: ElementDataEntry) =>
   dt.type === 'external' && dt.external?.uid === data._uid;
@@ -51,8 +52,8 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
   #dataProvider: DataProvider | undefined;
 
   #dataProviderUpdateListener = (data: Data) => {
-    for (const d of this.nestedDiagramsIterator()) {
-      for (const e of d.allElementsIterator()) {
+    for (const d of this.diagramIterator({ nest: true })) {
+      for (const e of d.allElements()) {
         const predicate = makeMatchingDataPredicate(data);
         if (e.metadata.data?.data?.find(predicate)) {
           e.updateMetadata(cb => {
@@ -65,8 +66,8 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
   };
 
   #dataProviderDeleteListener = (data: Data) => {
-    for (const d of this.nestedDiagramsIterator()) {
-      for (const e of d.allElementsIterator()) {
+    for (const d of this.diagramIterator({ nest: true })) {
+      for (const e of d.allElements()) {
         const predicate = makeMatchingDataPredicate(data);
         if (e.metadata.data?.data?.find(predicate)) {
           e.updateMetadata(cb => {
@@ -103,18 +104,8 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     return this.#diagrams;
   }
 
-  *nestedDiagramsIterator() {
-    function* unnest(d: Diagram): Generator<Diagram> {
-      for (const sd of d.diagrams) {
-        yield sd;
-        yield* unnest(sd);
-      }
-    }
-
-    for (const d of this.#diagrams) {
-      yield d;
-      yield* unnest(d);
-    }
+  *diagramIterator(opts: DiagramIteratorOpts = {}) {
+    yield* diagramIterator(this.#diagrams, opts);
   }
 
   get dataProvider() {
@@ -136,9 +127,12 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
   }
 
   getById(id: string) {
-    return (
-      this.#diagrams.find(d => d.id === id) ??
-      this.#diagrams.map(d => d.findChildDiagramById(id)).find(d => d !== undefined)
+    return Generators.first(
+      this.diagramIterator({
+        nest: true,
+        filter: (d: Diagram) => d.id === id,
+        earlyExit: true
+      })
     );
   }
 
@@ -172,16 +166,16 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
   }
 
   getAttachmentsInUse() {
-    return [...this.nestedDiagramsIterator().flatMap(e => e.getAttachmentsInUse())];
+    return [...this.diagramIterator({ nest: true }).flatMap(e => e.getAttachmentsInUse())];
   }
 
   // TODO: We should probably move this into the diagram loaders and/or deserialization
   //       This way, warnings as anchors are determined during deserialization are triggered
   async load() {
     const loadedTypes = new Set<string>();
-    for (const diagram of this.nestedDiagramsIterator()) {
+    for (const diagram of this.diagramIterator({ nest: true })) {
       const uow = UnitOfWork.immediate(diagram);
-      for (const element of diagram.allElementsIterator()) {
+      for (const element of diagram.allElements()) {
         if (isNode(element)) {
           const s = element.nodeType;
           if (!this.nodeDefinitions.hasRegistration(s)) {
