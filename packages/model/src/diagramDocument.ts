@@ -53,29 +53,35 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
 
   #dataProviderUpdateListener = (data: Data) => {
     for (const d of this.diagramIterator({ nest: true })) {
+      const uow = new UnitOfWork(d);
       for (const e of d.allElements()) {
         const predicate = makeMatchingDataPredicate(data);
-        if (e.metadata.data?.data?.find(predicate)) {
+        const existing = e.metadata.data?.data?.find(predicate);
+        if (existing && JSON.stringify(existing) !== JSON.stringify(data)) {
           e.updateMetadata(cb => {
             const toUpdate = cb.data!.data!.find(predicate)!;
             toUpdate.data = data;
-          }, UnitOfWork.immediate(d));
+          }, uow);
         }
       }
+      uow.commit();
     }
   };
 
   #dataProviderDeleteListener = (data: Data) => {
     for (const d of this.diagramIterator({ nest: true })) {
+      const uow = new UnitOfWork(d);
       for (const e of d.allElements()) {
         const predicate = makeMatchingDataPredicate(data);
-        if (e.metadata.data?.data?.find(predicate)) {
+        const existing = e.metadata.data?.data?.find(predicate);
+        if (existing && JSON.stringify(existing) !== JSON.stringify(data)) {
           e.updateMetadata(cb => {
             cb.data ??= {};
             cb.data!.data = cb.data?.data?.filter(dt => !predicate(dt));
-          }, UnitOfWork.immediate(d));
+          }, uow);
         }
       }
+      uow.commit();
     }
   };
 

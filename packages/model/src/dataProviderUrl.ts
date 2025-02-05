@@ -36,8 +36,8 @@ export class UrlDataProvider
       this.schemaUrl = d.schemaUrl;
       this.dataUrl = d.dataUrl;
 
-      this.refreshSchemas().then(() => {
-        this.refreshData();
+      this.refreshSchemas(false).then(() => {
+        this.refreshData(false);
       });
     } else {
       this.data = [];
@@ -58,11 +58,11 @@ export class UrlDataProvider
     return this.data.filter(data => data._schemaId === schema.id && q.matches(data));
   }
 
-  async refreshData(): Promise<void> {
+  async refreshData(force = true): Promise<void> {
     const oldDataMap = new Map();
     this.data.forEach(d => oldDataMap.set(d._uid, d));
 
-    const newData = await this.fetchData();
+    const newData = await this.fetchData(force);
 
     const newDataIds = new Set();
     this.data.forEach(d => newDataIds.add(d._uid));
@@ -86,8 +86,8 @@ export class UrlDataProvider
     }
   }
 
-  async refreshSchemas(): Promise<void> {
-    this.schemas = await this.fetchSchemas();
+  async refreshSchemas(force = true): Promise<void> {
+    this.schemas = await this.fetchSchemas(force);
   }
 
   serialize(): string {
@@ -99,15 +99,19 @@ export class UrlDataProvider
     });
   }
 
-  private async fetchData(): Promise<DataWithSchema[]> {
+  private async fetchData(force = true): Promise<DataWithSchema[]> {
     assert.present(this.dataUrl);
-    const res = await fetch(this.dataUrl);
+    const res = await fetch(this.dataUrl, {
+      cache: force ? 'no-cache' : 'default'
+    });
     return res.json();
   }
 
-  private async fetchSchemas(): Promise<DataSchema[]> {
+  private async fetchSchemas(force = true): Promise<DataSchema[]> {
     assert.present(this.schemaUrl);
-    const res = await fetch(this.schemaUrl);
+    const res = await fetch(this.schemaUrl, {
+      cache: force ? 'no-cache' : 'default'
+    });
     return res.json();
   }
 }

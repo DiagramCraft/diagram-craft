@@ -1,10 +1,15 @@
 import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { useApplication, useDiagram } from '../../../application';
 import { Select } from '@diagram-craft/app-components/Select';
-import { Data, DataProvider } from '@diagram-craft/model/dataProvider';
+import {
+  Data,
+  DataProvider,
+  RefreshableDataProvider,
+  RefreshableSchemaProvider
+} from '@diagram-craft/model/dataProvider';
 import { useEffect, useState } from 'react';
 import { useRedraw } from '../../hooks/useRedraw';
-import { TbChevronDown, TbChevronRight } from 'react-icons/tb';
+import { TbChevronDown, TbChevronRight, TbRefresh, TbSettings } from 'react-icons/tb';
 import { DRAG_DROP_MANAGER } from '@diagram-craft/canvas/dragDropManager';
 import { ObjectPickerDrag } from '../PickerToolWindow/ObjectPickerDrag';
 import { Diagram } from '@diagram-craft/model/diagram';
@@ -12,6 +17,7 @@ import { newid } from '@diagram-craft/utils/id';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { isRegularLayer } from '@diagram-craft/model/diagramLayer';
 import { DataSchema } from '@diagram-craft/model/diagramDataSchemas';
+import { assert } from '@diagram-craft/utils/assert';
 
 const makeDiagramNode = (diagram: Diagram, item: Data, schema: DataSchema): DiagramNode => {
   return Diagram.createForNode(
@@ -160,10 +166,38 @@ export const DataToolWindow = () => {
     setSelectedSchema(dataProvider.schemas[0].id);
   }
 
+  const provider = document.dataProvider;
+
   return (
     <Accordion.Root type="multiple" defaultValue={['query', 'response']}>
       <Accordion.Item value="query">
-        <Accordion.ItemHeader>Data Query</Accordion.ItemHeader>
+        <Accordion.ItemHeader>
+          Data Source
+          <Accordion.ItemHeaderButtons>
+            <a
+              className={'cmp-button cmp-button--icon-only'}
+              style={{ marginRight: '0.5rem' }}
+              aria-disabled={
+                !provider || (!('refreshData' in provider) && !('refreshSchemas' in provider))
+              }
+              onClick={async () => {
+                assert.present(provider);
+
+                if ('refreshData' in provider) {
+                  await (provider as RefreshableDataProvider).refreshData();
+                }
+                if ('refreshSchemas' in provider) {
+                  await (provider as RefreshableSchemaProvider).refreshSchemas();
+                }
+              }}
+            >
+              <TbRefresh />
+            </a>
+            <a className={'cmp-button cmp-button--icon-only'}>
+              <TbSettings />
+            </a>
+          </Accordion.ItemHeaderButtons>
+        </Accordion.ItemHeader>
         <Accordion.ItemContent>
           <div
             style={{

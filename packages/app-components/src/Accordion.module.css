@@ -34,7 +34,14 @@
       color: var(--blue-10);
       > a {
         display: flex;
-        color: var(--blue-10);
+        color: var(--tertiary-fg);
+        &:hover {
+          color: var(--blue-10);
+        }
+        &[aria-disabled="true"] {
+          color: var(--dimmed-fg);
+          pointer-events: none;
+        }
       }
     }
 

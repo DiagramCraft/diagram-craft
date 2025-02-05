@@ -160,8 +160,8 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   }
 
   *allElements(): Generator<DiagramElement> {
-    yield* Object.values(this.nodeLookup);
-    yield* Object.values(this.edgeLookup);
+    yield* this.nodeLookup.values();
+    yield* this.edgeLookup.values();
   }
 
   visibleElements() {
