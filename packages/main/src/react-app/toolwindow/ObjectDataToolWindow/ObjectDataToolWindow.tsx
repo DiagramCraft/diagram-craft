@@ -146,10 +146,18 @@ export const ObjectDataToolWindow = () => {
     $d.selectionState.elements.flatMap(e => Object.keys(e.metadata.data?.customData ?? {}))
   ).toSorted();
 
+  const externalData = unique(
+    $d.selectionState.elements
+      .flatMap(e => e.metadata.data?.data ?? [])
+      .filter(d => d.type === 'external')
+  ).toSorted();
+
   // Get all schemas from all selected elements
   const schemas = $d.selectionState.elements.flatMap(e =>
     e.metadata.data?.data?.filter(d => d.enabled).map(d => d.schema)
   );
+
+  const externalSchemas = $d.document.dataProvider?.schemas ?? [];
 
   if ($d.selectionState.elements.length === 0)
     return (
@@ -376,6 +384,29 @@ export const ObjectDataToolWindow = () => {
                 </Accordion.ItemContent>
               </Accordion.Item>
             )}
+
+            {externalData.length > 0 &&
+              $d.selectionState.elements.length === 1 &&
+              externalData.map(d => {
+                const s = externalSchemas.find(s => s.id === d.schema)!;
+                return (
+                  <Accordion.Item key={d.external!.uid} value={'_custom'}>
+                    <Accordion.ItemHeader>{s.name} (external)</Accordion.ItemHeader>
+                    <Accordion.ItemContent>
+                      <div className={'cmp-labeled-table'}>
+                        {s.fields.map(f => {
+                          return (
+                            <React.Fragment key={f.id}>
+                              <div className={'cmp-labeled-table__label'}>{f.name}:</div>
+                              <div className={'cmp-labeled-table__value'}>{d.data[f.id]}</div>
+                            </React.Fragment>
+                          );
+                        })}
+                      </div>
+                    </Accordion.ItemContent>
+                  </Accordion.Item>
+                );
+              })}
           </Accordion.Root>
         </Accordion.ItemContent>
       </Accordion.Item>
