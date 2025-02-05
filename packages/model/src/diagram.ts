@@ -15,6 +15,7 @@ import { EventEmitter, EventKey } from '@diagram-craft/utils/event';
 import { assert } from '@diagram-craft/utils/assert';
 import { AttachmentConsumer } from './attachment';
 import { newid } from '@diagram-craft/utils/id';
+import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinitionRegistry';
 
 export type DiagramIteratorOpts = {
   nest?: boolean;
@@ -334,5 +335,26 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
   getAttachmentsInUse() {
     return this.layers.getAttachmentsInUse();
+  }
+
+  public static createForNode(
+    node: DiagramNode,
+    nodeDefinitions: NodeDefinitionRegistry,
+    edgeDefinitions: EdgeDefinitionRegistry
+  ) {
+    const dest = new Diagram(
+      newid(),
+      newid(),
+      new DiagramDocument(nodeDefinitions, edgeDefinitions)
+    );
+
+    const uow = UnitOfWork.immediate(dest);
+
+    const layer = new RegularLayer(newid(), newid(), [], dest);
+    dest.layers.add(layer, uow);
+
+    layer.addElement(node, uow);
+
+    return dest;
   }
 }

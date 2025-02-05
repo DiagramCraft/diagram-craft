@@ -5,15 +5,10 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { Context } from '@diagram-craft/canvas/context';
 import { Point } from '@diagram-craft/geometry/point';
 import { DRAG_DROP_MANAGER, DragEvents } from '@diagram-craft/canvas/dragDropManager';
-import {
-  getAncestorWithClass,
-  getAncestorWithTagName,
-  setPosition
-} from '@diagram-craft/utils/dom';
+import { getAncestorWithClass, setPosition } from '@diagram-craft/utils/dom';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
-import { assert } from '@diagram-craft/utils/assert';
 import { deserializeDiagramElements } from '@diagram-craft/model/serialization/deserialize';
 import { serializeDiagramElement } from '@diagram-craft/model/serialization/serialize';
 import { assignNewBounds, assignNewIds } from '@diagram-craft/model/helpers/cloneHelper';
@@ -22,6 +17,8 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 import { deepClone } from '@diagram-craft/utils/object';
 import { clamp } from '@diagram-craft/utils/math';
+import { CanvasComponent } from '@diagram-craft/canvas/CanvasComponent';
+import { insert } from '@diagram-craft/canvas/component/vdom';
 
 enum State {
   INSIDE,
@@ -29,7 +26,6 @@ enum State {
 }
 
 export class ObjectPickerDrag extends AbstractMoveDrag {
-  readonly #sourceElement: HTMLElement;
   readonly #originalSelectionState: readonly DiagramElement[];
 
   #state: State = State.OUTSIDE;
@@ -45,7 +41,6 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
     super(diagram, Point.ORIGIN, event, context);
     this.isGlobal = true;
 
-    this.#sourceElement = event.target! as HTMLElement;
     this.#originalSelectionState = diagram.selectionState.elements;
 
     this.addDragImage({ x: event.clientX, y: event.clientY });
@@ -147,14 +142,23 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
 
     const scale = clamp(this.diagram.viewBox.zoomLevel, 0.3, 3);
 
-    const svgNode = getAncestorWithTagName(this.#sourceElement, 'svg');
-    assert.present(svgNode);
+    const dest = Diagram.createForNode(
+      this.source.duplicate(),
+      this.diagram.document.nodeDefinitions,
+      this.diagram.document.edgeDefinitions
+    );
 
-    const clonedSvg = svgNode.cloneNode(true) as SVGElement;
-    clonedSvg.setAttribute('width', (this.source.bounds.w / scale).toString());
-    clonedSvg.setAttribute('height', (this.source.bounds.h / scale).toString());
-    clonedSvg.setAttribute('style', `background: transparent;`);
-    clonedSvg.setAttribute(
+    const canvas = new CanvasComponent();
+    const $canvasVdomNode = canvas.render({
+      diagram: dest,
+      width: (this.source.bounds.w / scale).toString(),
+      height: (this.source.bounds.h / scale).toString()
+    });
+    insert($canvasVdomNode);
+
+    const $canvasEl = $canvasVdomNode.el!;
+    $canvasEl.style.background = 'transparent';
+    $canvasEl.setAttribute(
       'viewBox',
       `-2 -2 ${this.source.bounds.w + 4} ${this.source.bounds.h + 4}`
     );
@@ -164,7 +168,7 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
     this.#dragImage.style.position = 'absolute';
     this.#dragImage.style.zIndex = '1000';
     this.#dragImage.style.pointerEvents = 'none';
-    this.#dragImage.appendChild(clonedSvg);
+    this.#dragImage.appendChild($canvasEl);
     document.body.appendChild(this.#dragImage);
   }
 
