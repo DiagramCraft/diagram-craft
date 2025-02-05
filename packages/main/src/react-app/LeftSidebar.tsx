@@ -1,5 +1,13 @@
 import { SideBar, SideBarPage } from './SideBar';
-import { TbCheck, TbFile, TbHistory, TbPentagonPlus, TbSearch, TbStack } from 'react-icons/tb';
+import {
+  TbCheck,
+  TbDatabaseSearch,
+  TbFile,
+  TbHistory,
+  TbPentagonPlus,
+  TbSearch,
+  TbStack
+} from 'react-icons/tb';
 import { PickerToolWindow } from './toolwindow/PickerToolWindow/PickerToolWindow';
 import { LayerToolWindow } from './toolwindow/LayerToolWindow/LayerToolWindow';
 import { SelectToolWindow } from './toolwindow/SelectToolWindow/SelectToolWindow';
@@ -9,6 +17,7 @@ import { QueryToolWindow } from './toolwindow/QueryToolWindow/QueryToolWindow';
 import { makeActionMap } from '@diagram-craft/canvas/keyMap';
 import { defaultAppActions } from './appActionMap';
 import { useApplication } from '../application';
+import { DataToolWindow } from './toolwindow/DataToolWindow/DataToolWindow';
 
 export const LeftSidebar = () => {
   const application = useApplication();
@@ -38,6 +47,9 @@ export const LeftSidebar = () => {
       </SideBarPage>
       <SideBarPage icon={TbSearch}>
         <QueryToolWindow />
+      </SideBarPage>
+      <SideBarPage icon={TbDatabaseSearch}>
+        <DataToolWindow />
       </SideBarPage>
     </SideBar>
   );

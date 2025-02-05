@@ -279,7 +279,7 @@
                   },
                   "clip": false,
                   "type": "point",
-                  "normal": -2.6645352591003757e-15,
+                  "normal": -3.552713678800501e-15,
                   "isPrimary": false
                 },
                 {
@@ -290,7 +290,7 @@
                   },
                   "clip": false,
                   "type": "point",
-                  "normal": 1.5707963267948963,
+                  "normal": 1.5707963267948968,
                   "isPrimary": true
                 },
                 {
@@ -301,7 +301,7 @@
                   },
                   "clip": false,
                   "type": "point",
-                  "normal": 3.141592653589791,
+                  "normal": 3.1415926535897896,
                   "isPrimary": false
                 }
               ],
@@ -1618,6 +1618,7 @@
     {
       "id": "default",
       "name": "Default",
+      "source": "document",
       "fields": [
         {
           "id": "name",
@@ -1631,5 +1632,9 @@
         }
       ]
     }
-  ]
+  ],
+  "data": {
+    "providerId": "urlDataProvider",
+    "data": "{ \"schema\": [], \"data\": [], \"schemaUrl\": \"/data/dataset1/schemas.json\", \"dataUrl\": \"/data/dataset1/data.json\" }"
+  }
 }

@@ -1,9 +1,6 @@
 import { PickerCanvas } from '../../PickerCanvas';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { isRegularLayer, RegularLayer } from '@diagram-craft/model/diagramLayer';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
-import { newid } from '@diagram-craft/utils/id';
+import { isRegularLayer } from '@diagram-craft/model/diagramLayer';
 import { Stencil, StencilPackage } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { useMemo, useState } from 'react';
@@ -13,32 +10,25 @@ import { ObjectPickerDrag } from './ObjectPickerDrag';
 
 const NODE_CACHE = new Map<string, [Diagram, DiagramNode]>();
 
-const makeDiagramNode = (diagram: Diagram, n: Stencil, pkg: string) => {
+const makeDiagramNode = (mainDiagram: Diagram, n: Stencil, pkg: string) => {
   const cacheKey = pkg + '/' + n.id;
 
   if (NODE_CACHE.has(cacheKey)) {
     return NODE_CACHE.get(cacheKey)!;
   }
 
-  const uow = UnitOfWork.immediate(diagram);
-
-  const dest = new Diagram(
-    newid(),
-    n.node.name,
-    new DiagramDocument(diagram.document.nodeDefinitions, diagram.document.edgeDefinitions)
+  const { node, diagram } = Diagram.createForNode(
+    d => n.node(d),
+    mainDiagram.document.nodeDefinitions,
+    mainDiagram.document.edgeDefinitions
   );
 
-  const layer = new RegularLayer('default', 'Default', [], dest);
-  dest.layers.add(layer, uow);
+  diagram.viewBox.dimensions = { w: node.bounds.w + 10, h: node.bounds.h + 10 };
+  diagram.viewBox.offset = { x: -5, y: -5 };
 
-  const node = n.node(dest);
-  dest.viewBox.dimensions = { w: node.bounds.w + 10, h: node.bounds.h + 10 };
-  dest.viewBox.offset = { x: -5, y: -5 };
-  layer.addElement(node, uow);
+  NODE_CACHE.set(cacheKey, [diagram, node]);
 
-  NODE_CACHE.set(cacheKey, [dest, node]);
-
-  return [dest, node] as const;
+  return [diagram, node] as const;
 };
 
 export const ObjectPicker = (props: Props) => {

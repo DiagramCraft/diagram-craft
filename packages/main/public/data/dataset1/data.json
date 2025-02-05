@@ -1,0 +1,32 @@
+[
+  {
+    "_schemaId": "component",
+    "_uid": "1",
+    "name": "Frontend",
+    "description": "Web frontend"
+  },
+  {
+    "_schemaId": "component",
+    "_uid": "2",
+    "name": "Backend",
+    "description": "NodeJS backend"
+  },
+  {
+    "_schemaId": "component",
+    "_uid": "3",
+    "name": "Database",
+    "description": "Postgresql database"
+  },
+  {
+    "_schemaId": "actor",
+    "_uid": "4",
+    "role": "Administrator",
+    "description": "Administrator"
+  },
+  {
+    "_schemaId": "actor",
+    "_uid": "5",
+    "role": "User",
+    "description": "User"
+  }
+]

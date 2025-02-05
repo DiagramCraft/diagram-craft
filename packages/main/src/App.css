@@ -810,7 +810,8 @@ foreignObject {
     margin-left: -10px;
     margin-right: -10px;
     padding-left: 5px;
-    margin-bottom: 0.25rem;
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
     margin-top: 0;
     max-height: 100px;
     overflow: hidden;

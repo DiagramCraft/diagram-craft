@@ -142,8 +142,8 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
 
     const scale = clamp(this.diagram.viewBox.zoomLevel, 0.3, 3);
 
-    const dest = Diagram.createForNode(
-      this.source.duplicate(),
+    const { diagram: dest } = Diagram.createForNode(
+      () => this.source.duplicate(),
       this.diagram.document.nodeDefinitions,
       this.diagram.document.edgeDefinitions
     );

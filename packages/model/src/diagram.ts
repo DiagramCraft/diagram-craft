@@ -338,7 +338,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   }
 
   public static createForNode(
-    node: DiagramNode,
+    factory: (diagram: Diagram, layer: Layer) => DiagramNode,
     nodeDefinitions: NodeDefinitionRegistry,
     edgeDefinitions: EdgeDefinitionRegistry
   ) {
@@ -353,8 +353,13 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     const layer = new RegularLayer(newid(), newid(), [], dest);
     dest.layers.add(layer, uow);
 
+    const node = factory(dest, layer);
     layer.addElement(node, uow);
 
-    return dest;
+    return {
+      diagram: dest,
+      layer: layer,
+      node: node
+    };
   }
 }

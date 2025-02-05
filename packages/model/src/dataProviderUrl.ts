@@ -11,7 +11,7 @@ import { assert } from '@diagram-craft/utils/assert';
 
 type DataWithSchema = Data & { _schemaId: string };
 
-export const UrlDataProviderId = 'defaultDataProvider';
+export const UrlDataProviderId = 'urlDataProvider';
 
 export class UrlDataProvider
   extends EventEmitter<DataProviderEventMap>

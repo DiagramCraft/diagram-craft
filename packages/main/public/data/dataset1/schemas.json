@@ -1,0 +1,53 @@
+[
+  {
+    "id": "component",
+    "name": "Component",
+    "source": "external",
+    "fields": [
+      {
+        "id": "name",
+        "name": "Name",
+        "type": "text"
+      },
+      {
+        "id": "notes",
+        "name": "Notes",
+        "type": "longtext"
+      }
+    ]
+  },
+  {
+    "id": "entity",
+    "name": "Entity",
+    "source": "external",
+    "fields": [
+      {
+        "id": "name",
+        "name": "Name",
+        "type": "text"
+      },
+      {
+        "id": "notes",
+        "name": "Notes",
+        "type": "longtext"
+      }
+    ]
+  },
+  {
+    "id": "actor",
+    "name": "Actor",
+    "source": "external",
+    "fields": [
+      {
+        "id": "role",
+        "name": "Role",
+        "type": "text"
+      },
+      {
+        "id": "notes",
+        "name": "Notes",
+        "type": "longtext"
+      }
+    ]
+  }
+]
