@@ -13,9 +13,9 @@ export interface MutableSchemaProvider extends SchemaProvider {
 export type Data = Record<string, string> & { _uid: string };
 
 export type DataProviderEventMap = {
-  delete: Data;
-  update: Data;
-  add: Data;
+  delete: { data: Data[] };
+  update: { data: Data[] };
+  add: { data: Data[] };
 };
 
 export interface DataProvider extends SchemaProvider, Emitter<DataProviderEventMap> {

@@ -13,9 +13,10 @@ import { Data, DataProvider, DataProviderRegistry } from './dataProvider';
 import { DefaultDataProvider, DefaultDataProviderId } from './dataProviderDefault';
 import { UrlDataProvider, UrlDataProviderId } from './dataProviderUrl';
 import { Generators } from '@diagram-craft/utils/generator';
+import { deepEquals } from '@diagram-craft/utils/object';
 
-const makeMatchingDataPredicate = (data: Data) => (dt: ElementDataEntry) =>
-  dt.type === 'external' && dt.external?.uid === data._uid;
+const byUid = (uid: string) => (dt: ElementDataEntry) =>
+  dt.type === 'external' && dt.external?.uid === uid;
 
 export type DocumentEvents = {
   diagramchanged: { after: Diagram };
@@ -51,34 +52,44 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
 
   #dataProvider: DataProvider | undefined;
 
-  #dataProviderUpdateListener = (data: Data) => {
+  #dataProviderUpdateListener = (data: { data: Data[] }) => {
     for (const d of this.diagramIterator({ nest: true })) {
       const uow = new UnitOfWork(d);
       for (const e of d.allElements()) {
-        const predicate = makeMatchingDataPredicate(data);
-        const existing = e.metadata.data?.data?.find(predicate);
-        if (existing && JSON.stringify(existing) !== JSON.stringify(data)) {
-          e.updateMetadata(cb => {
-            const toUpdate = cb.data!.data!.find(predicate)!;
-            toUpdate.data = data;
-          }, uow);
+        const externalData = e.metadata.data?.data?.filter(d => d.type === 'external') ?? [];
+        if (externalData.length === 0) continue;
+
+        for (const dt of data.data) {
+          const predicate = byUid(dt._uid);
+          const existing = externalData.find(predicate);
+          if (existing && !deepEquals<unknown>(existing, dt)) {
+            e.updateMetadata(cb => {
+              const toUpdate = cb.data!.data!.find(predicate)!;
+              toUpdate.data = dt;
+            }, uow);
+          }
         }
       }
       uow.commit();
     }
   };
 
-  #dataProviderDeleteListener = (data: Data) => {
+  #dataProviderDeleteListener = (data: { data: Data[] }) => {
     for (const d of this.diagramIterator({ nest: true })) {
       const uow = new UnitOfWork(d);
       for (const e of d.allElements()) {
-        const predicate = makeMatchingDataPredicate(data);
-        const existing = e.metadata.data?.data?.find(predicate);
-        if (existing && JSON.stringify(existing) !== JSON.stringify(data)) {
-          e.updateMetadata(cb => {
-            cb.data ??= {};
-            cb.data!.data = cb.data?.data?.filter(dt => !predicate(dt));
-          }, uow);
+        const externalData = e.metadata.data?.data?.filter(d => d.type === 'external') ?? [];
+        if (externalData.length === 0) continue;
+
+        for (const dt of data.data) {
+          const predicate = byUid(dt._uid);
+          const existing = externalData.find(predicate);
+          if (existing && !deepEquals<unknown>(existing, dt)) {
+            e.updateMetadata(cb => {
+              cb.data ??= {};
+              cb.data!.data = cb.data?.data?.filter(dt => !predicate(dt));
+            }, uow);
+          }
         }
       }
       uow.commit();

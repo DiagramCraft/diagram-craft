@@ -67,23 +67,31 @@ export class UrlDataProvider
     const newDataIds = new Set();
     this.data.forEach(d => newDataIds.add(d._uid));
 
+    const updates: Data[] = [];
+    const adds: Data[] = [];
+    const deletes: Data[] = [];
+
     this.data = [];
     for (const d of newData) {
       this.data.push(d);
 
       const oldEntry = oldDataMap.get(d._uid);
       if (oldEntry) {
-        this.emit('update', d);
+        updates.push(d);
       } else {
-        this.emit('add', d);
+        adds.push(d);
       }
     }
 
     for (const [oldId, oldEntry] of oldDataMap.entries()) {
       if (!newDataIds.has(oldId)) {
-        this.emit('delete', oldEntry);
+        deletes.push(oldEntry);
       }
     }
+
+    this.emitAsync('update', { data: updates });
+    this.emitAsync('add', { data: adds });
+    this.emitAsync('delete', { data: deletes });
   }
 
   async refreshSchemas(force = true): Promise<void> {
