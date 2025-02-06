@@ -19,7 +19,7 @@ export class UrlDataProvider
 {
   id = UrlDataProviderId;
 
-  schemas: DataSchema[];
+  schemas: DataSchema[] = [];
 
   private data: DataWithSchema[] = [];
 
@@ -31,7 +31,7 @@ export class UrlDataProvider
 
     if (s) {
       const d = JSON.parse(s);
-      this.schemas = d.schemas;
+      this.schemas = d.schemas ?? [];
       this.data = d.data;
       this.schemaUrl = d.schemaUrl;
       this.dataUrl = d.dataUrl;
@@ -89,13 +89,30 @@ export class UrlDataProvider
       }
     }
 
-    this.emitAsync('update', { data: updates });
-    this.emitAsync('add', { data: adds });
-    this.emitAsync('delete', { data: deletes });
+    this.emitAsync('updateData', { data: updates });
+    this.emitAsync('addData', { data: adds });
+    this.emitAsync('deleteData', { data: deletes });
   }
 
   async refreshSchemas(force = true): Promise<void> {
-    this.schemas = await this.fetchSchemas(force);
+    const newSchema = await this.fetchSchemas(force);
+
+    for (const schema of newSchema) {
+      const oldSchema = this.schemas.find(s => s.id === schema.id);
+      if (oldSchema) {
+        this.emit('updateSchema', oldSchema);
+      } else {
+        this.emit('addSchema', schema);
+      }
+    }
+
+    for (const schema of this.schemas) {
+      if (!this.schemas.find(s => s.id === schema.id)) {
+        this.emit('deleteSchema', schema);
+      }
+    }
+
+    this.schemas = newSchema;
   }
 
   serialize(): string {

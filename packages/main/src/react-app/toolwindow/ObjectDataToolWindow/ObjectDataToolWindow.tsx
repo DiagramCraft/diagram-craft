@@ -146,18 +146,10 @@ export const ObjectDataToolWindow = () => {
     $d.selectionState.elements.flatMap(e => Object.keys(e.metadata.data?.customData ?? {}))
   ).toSorted();
 
-  const externalData = unique(
-    $d.selectionState.elements
-      .flatMap(e => e.metadata.data?.data ?? [])
-      .filter(d => d.type === 'external')
-  ).toSorted();
-
   // Get all schemas from all selected elements
   const schemas = $d.selectionState.elements.flatMap(e =>
     e.metadata.data?.data?.filter(d => d.enabled).map(d => d.schema)
   );
-
-  const externalSchemas = $d.document.dataProvider?.schemas ?? [];
 
   if ($d.selectionState.elements.length === 0)
     return (
@@ -213,59 +205,62 @@ export const ObjectDataToolWindow = () => {
                           }}
                         />
                         {s.name}
-                        <div className={'cmp-schema-selector__schema-actions'}>
-                          <button
-                            onClick={() => {
-                              application.ui.showDialog(
-                                JSONDialog.create(
-                                  {
-                                    title: 'Modify schema',
-                                    label: 'Schema',
-                                    data: s
-                                  },
-                                  saveSchema
-                                )
-                              );
-                            }}
-                          >
-                            <TbPencil />
-                          </button>
-                          <button
-                            onClick={() => {
-                              application.ui.showDialog(
-                                new MessageDialogCommand(
-                                  {
-                                    title: 'Confirm delete',
-                                    message: 'Are you sure you want to delete this schema?',
-                                    okLabel: 'Yes',
-                                    okType: 'danger',
-                                    cancelLabel: 'No'
-                                  },
-                                  () => {
-                                    const uow = new UnitOfWork($d, true);
-                                    const schemas = $d.document.schemas;
-                                    schemas.removeSchema(s, uow);
 
-                                    const snapshots = uow.commit();
-                                    $d.undoManager.add(
-                                      new CompoundUndoableAction([
-                                        new DeleteSchemaUndoableAction(uow.diagram, s),
-                                        new SnapshotUndoableAction(
-                                          'Delete schema',
-                                          uow.diagram,
-                                          snapshots
-                                        )
-                                      ])
-                                    );
-                                    redraw();
-                                  }
-                                )
-                              );
-                            }}
-                          >
-                            <TbTrash />
-                          </button>
-                        </div>
+                        {s.source !== 'external' && (
+                          <div className={'cmp-schema-selector__schema-actions'}>
+                            <button
+                              onClick={() => {
+                                application.ui.showDialog(
+                                  JSONDialog.create(
+                                    {
+                                      title: 'Modify schema',
+                                      label: 'Schema',
+                                      data: s
+                                    },
+                                    saveSchema
+                                  )
+                                );
+                              }}
+                            >
+                              <TbPencil />
+                            </button>
+                            <button
+                              onClick={() => {
+                                application.ui.showDialog(
+                                  new MessageDialogCommand(
+                                    {
+                                      title: 'Confirm delete',
+                                      message: 'Are you sure you want to delete this schema?',
+                                      okLabel: 'Yes',
+                                      okType: 'danger',
+                                      cancelLabel: 'No'
+                                    },
+                                    () => {
+                                      const uow = new UnitOfWork($d, true);
+                                      const schemas = $d.document.schemas;
+                                      schemas.removeSchema(s, uow);
+
+                                      const snapshots = uow.commit();
+                                      $d.undoManager.add(
+                                        new CompoundUndoableAction([
+                                          new DeleteSchemaUndoableAction(uow.diagram, s),
+                                          new SnapshotUndoableAction(
+                                            'Delete schema',
+                                            uow.diagram,
+                                            snapshots
+                                          )
+                                        ])
+                                      );
+                                      redraw();
+                                    }
+                                  )
+                                );
+                              }}
+                            >
+                              <TbTrash />
+                            </button>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -311,9 +306,17 @@ export const ObjectDataToolWindow = () => {
 
               const schema = $d.document.schemas.get(schemaName!);
 
+              const isExternal = $d.selectionState.elements.some(e => {
+                return (
+                  e.metadata.data?.data?.find(d => d.schema === schemaName)?.type === 'external'
+                );
+              });
+
               return (
                 <Accordion.Item key={schema.id} value={schema.id}>
-                  <Accordion.ItemHeader>{schema.name}</Accordion.ItemHeader>
+                  <Accordion.ItemHeader>
+                    {schema.name} {isExternal ? '(external)' : ''}
+                  </Accordion.ItemHeader>
                   <Accordion.ItemContent>
                     <div className={'cmp-labeled-table'}>
                       {schema.fields.map(f => {
@@ -335,6 +338,7 @@ export const ObjectDataToolWindow = () => {
                                 <input
                                   type={'text'}
                                   value={v.length > 1 ? '***' : (v[0]?.toString() ?? '')}
+                                  disabled={isExternal}
                                   onChange={e => changeCallback('data', schemaName, f.id, e)}
                                 />
                               )}
@@ -342,6 +346,7 @@ export const ObjectDataToolWindow = () => {
                                 <textarea
                                   style={{ height: '40px' }}
                                   value={v.length > 1 ? '***' : (v[0]?.toString() ?? '')}
+                                  disabled={isExternal}
                                   onChange={e => changeCallback('data', schemaName, f.id, e)}
                                 />
                               )}
@@ -384,29 +389,6 @@ export const ObjectDataToolWindow = () => {
                 </Accordion.ItemContent>
               </Accordion.Item>
             )}
-
-            {externalData.length > 0 &&
-              $d.selectionState.elements.length === 1 &&
-              externalData.map(d => {
-                const s = externalSchemas.find(s => s.id === d.schema)!;
-                return (
-                  <Accordion.Item key={d.external!.uid} value={'_custom'}>
-                    <Accordion.ItemHeader>{s.name} (external)</Accordion.ItemHeader>
-                    <Accordion.ItemContent>
-                      <div className={'cmp-labeled-table'}>
-                        {s.fields.map(f => {
-                          return (
-                            <React.Fragment key={f.id}>
-                              <div className={'cmp-labeled-table__label'}>{f.name}:</div>
-                              <div className={'cmp-labeled-table__value'}>{d.data[f.id]}</div>
-                            </React.Fragment>
-                          );
-                        })}
-                      </div>
-                    </Accordion.ItemContent>
-                  </Accordion.Item>
-                );
-              })}
           </Accordion.Root>
         </Accordion.ItemContent>
       </Accordion.Item>

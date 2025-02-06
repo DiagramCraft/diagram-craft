@@ -37,6 +37,10 @@ export class DiagramDataSchemas {
     );
   }
 
+  has(id: string) {
+    return this.#schemas.find(s => s.id === id);
+  }
+
   addSchema(schema: DataSchema) {
     if (this.#schemas.find(s => s.id === schema.id)) {
       this.changeSchema(schema);

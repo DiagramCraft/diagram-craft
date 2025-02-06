@@ -38,7 +38,8 @@ const makeDiagramNode = (diagram: Diagram, item: Data, schema: DataSchema): Diag
                   uid: item._uid
                 },
                 data: item,
-                schema: schema.id
+                schema: schema.id,
+                enabled: true
               }
             ]
           }
@@ -145,13 +146,13 @@ export const DataToolWindow = () => {
 
     const rd = () => redraw();
 
-    dataProvider.on('add', rd);
-    dataProvider.on('update', rd);
-    dataProvider.on('delete', rd);
+    dataProvider.on('addData', rd);
+    dataProvider.on('updateData', rd);
+    dataProvider.on('deleteData', rd);
     return () => {
-      dataProvider.off('add', rd);
-      dataProvider.off('update', rd);
-      dataProvider.off('delete', rd);
+      dataProvider.off('addData', rd);
+      dataProvider.off('updateData', rd);
+      dataProvider.off('deleteData', rd);
     };
   }, [dataProvider]);
 

@@ -44,7 +44,7 @@ export class DefaultDataProvider
 
   addData(schema: DataSchema, data: Data) {
     this.data.push({ ...data, _schemaId: schema.id });
-    this.emit('add', { data: [data] });
+    this.emit('addData', { data: [data] });
   }
 
   deleteData(schema: DataSchema, data: Data) {
@@ -52,7 +52,7 @@ export class DefaultDataProvider
     if (idx < 0) return;
     this.data.splice(idx, 1);
 
-    this.emit('delete', { data: [data] });
+    this.emit('deleteData', { data: [data] });
   }
 
   updateData(schema: DataSchema, data: Data) {
@@ -61,7 +61,7 @@ export class DefaultDataProvider
     this.data.splice(idx, 1);
 
     this.data.push({ ...data, _schemaId: schema.id });
-    this.emit('update', { data: [data] });
+    this.emit('updateData', { data: [data] });
   }
 
   updateSchema(schema: DataSchema) {

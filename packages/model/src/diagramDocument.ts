@@ -1,6 +1,6 @@
 import { DiagramPalette } from './diagramPalette';
 import { DiagramStyles } from './diagramStyles';
-import { DiagramDataSchemas } from './diagramDataSchemas';
+import { DataSchema, DiagramDataSchemas } from './diagramDataSchemas';
 import { Diagram, diagramIterator, DiagramIteratorOpts } from './diagram';
 import { AttachmentConsumer, AttachmentManager } from './attachment';
 import { EventEmitter } from '@diagram-craft/utils/event';
@@ -52,7 +52,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
 
   #dataProvider: DataProvider | undefined;
 
-  #dataProviderUpdateListener = (data: { data: Data[] }) => {
+  #dataProviderUpdateDataListener = (data: { data: Data[] }) => {
     for (const d of this.diagramIterator({ nest: true })) {
       const uow = new UnitOfWork(d);
       for (const e of d.allElements()) {
@@ -74,7 +74,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     }
   };
 
-  #dataProviderDeleteListener = (data: { data: Data[] }) => {
+  #dataProviderDeleteDataListener = (data: { data: Data[] }) => {
     for (const d of this.diagramIterator({ nest: true })) {
       const uow = new UnitOfWork(d);
       for (const e of d.allElements()) {
@@ -93,6 +93,18 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
         }
       }
       uow.commit();
+    }
+  };
+
+  #dataProviderDeleteSchemaListener = (s: DataSchema) => {
+    this.schemas.removeSchema(s, UnitOfWork.immediate(this.#diagrams[0]));
+  };
+
+  #dataProviderUpdateSchemaListener = (s: DataSchema) => {
+    if (this.schemas.has(s.id)) {
+      this.schemas.changeSchema(s);
+    } else {
+      this.schemas.addSchema(s);
     }
   };
 
@@ -130,16 +142,22 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
   }
 
   set dataProvider(dataProvider: DataProvider | undefined) {
-    this.#dataProvider?.off?.('add', this.#dataProviderUpdateListener);
-    this.#dataProvider?.off?.('update', this.#dataProviderUpdateListener);
-    this.#dataProvider?.off?.('delete', this.#dataProviderDeleteListener);
+    this.#dataProvider?.off?.('addData', this.#dataProviderUpdateDataListener);
+    this.#dataProvider?.off?.('updateData', this.#dataProviderUpdateDataListener);
+    this.#dataProvider?.off?.('deleteData', this.#dataProviderDeleteDataListener);
+    this.#dataProvider?.off?.('addSchema', this.#dataProviderUpdateSchemaListener);
+    this.#dataProvider?.off?.('updateSchema', this.#dataProviderUpdateSchemaListener);
+    this.#dataProvider?.off?.('deleteSchema', this.#dataProviderDeleteSchemaListener);
 
     this.#dataProvider = dataProvider;
 
     if (this.#dataProvider) {
-      this.#dataProvider.on('add', this.#dataProviderUpdateListener);
-      this.#dataProvider.on('update', this.#dataProviderUpdateListener);
-      this.#dataProvider.on('delete', this.#dataProviderDeleteListener);
+      this.#dataProvider.on('addData', this.#dataProviderUpdateDataListener);
+      this.#dataProvider.on('updateData', this.#dataProviderUpdateDataListener);
+      this.#dataProvider.on('deleteData', this.#dataProviderDeleteDataListener);
+      this.#dataProvider.on('addSchema', this.#dataProviderUpdateSchemaListener);
+      this.#dataProvider.on('updateSchema', this.#dataProviderUpdateSchemaListener);
+      this.#dataProvider.on('deleteSchema', this.#dataProviderDeleteSchemaListener);
     }
   }
 
