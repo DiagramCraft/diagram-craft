@@ -110,12 +110,8 @@
 
       .cmp-accordion__chevron {
         color: var(--primary-fg);
-      }
-
-      .cmp-accordion__header_btn {
-        color: var(--primary-fg);
-        > a {
-          color: var(--primary-fg);
+        &:hover {
+          color: var(--blue-10);
         }
       }
     }
