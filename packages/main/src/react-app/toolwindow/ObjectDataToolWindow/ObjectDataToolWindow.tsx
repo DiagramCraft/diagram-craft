@@ -1,7 +1,7 @@
 import React, { ChangeEvent, useCallback } from 'react';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
-import { TbDots, TbPencil, TbTrash } from 'react-icons/tb';
+import { TbDots, TbLinkOff, TbPencil, TbTrash } from 'react-icons/tb';
 import { JSONDialog } from '../../components/JSONDialog';
 import {
   AddSchemaUndoableAction,
@@ -14,7 +14,7 @@ import { commitWithUndo, SnapshotUndoableAction } from '@diagram-craft/model/dia
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { newid } from '@diagram-craft/utils/id';
 import { unique } from '@diagram-craft/utils/array';
-import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { useElementMetadata } from '../../hooks/useProperty';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { Popover } from '@diagram-craft/app-components/Popover';
@@ -87,6 +87,24 @@ export const ObjectDataToolWindow = () => {
         VERIFY_NOT_REACHED();
       }
       commitWithUndo(uow, 'Update data');
+    },
+    [$d]
+  );
+
+  const clearExternalLinkage = useCallback(
+    (schemaId: string) => {
+      const uow = new UnitOfWork($d, true);
+      $d.selectionState.elements.forEach(e => {
+        e.updateMetadata(p => {
+          p.data ??= { data: [] };
+          const item = p.data.data!.find(d => d.type === 'external' && d.schema === schemaId);
+          assert.present(item);
+          item.external = undefined;
+          item.type = 'schema';
+        }, uow);
+      });
+      commitWithUndo(uow, 'Break external data link');
+      redraw();
     },
     [$d]
   );
@@ -316,6 +334,21 @@ export const ObjectDataToolWindow = () => {
                 <Accordion.Item key={schema.id} value={schema.id}>
                   <Accordion.ItemHeader>
                     {schema.name} {isExternal ? '(external)' : ''}
+                    <Accordion.ItemHeaderButtons>
+                      {/*                      <a className={'cmp-button cmp-button--icon-only'}>
+                        <TbTrash />
+                      </a>
+                      */}
+                      {isExternal && (
+                        <a
+                          className={'cmp-button cmp-button--icon-only'}
+                          style={{ marginLeft: '0.5rem' }}
+                          onClick={() => clearExternalLinkage(schema.id)}
+                        >
+                          <TbLinkOff />
+                        </a>
+                      )}
+                    </Accordion.ItemHeaderButtons>
                   </Accordion.ItemHeader>
                   <Accordion.ItemContent>
                     <div className={'cmp-labeled-table'}>
