@@ -149,6 +149,23 @@ export const ObjectDataToolWindow = () => {
     [$d]
   );
 
+  const removeDataFromSelection = useCallback(
+    (schema: string) => {
+      $d.selectionState.elements.forEach(e => {
+        const entry = e.metadata.data?.data?.find(s => s.schema === schema);
+        if (entry?.enabled) {
+          const uow = new UnitOfWork($d, true);
+          e.updateMetadata(p => {
+            p.data!.data ??= [];
+            p.data!.data = p.data!.data!.filter(s => s.schema !== schema);
+          }, uow);
+          commitWithUndo(uow, 'Add schema to selection');
+        }
+      });
+    },
+    [$d]
+  );
+
   const saveSchema = useCallback((s: DataSchema) => {
     const schemas = $d.document.schemas;
     const isNew = schemas.get(s.id).id === '';
@@ -335,10 +352,12 @@ export const ObjectDataToolWindow = () => {
                   <Accordion.ItemHeader>
                     {schema.name} {isExternal ? '(external)' : ''}
                     <Accordion.ItemHeaderButtons>
-                      {/*                      <a className={'cmp-button cmp-button--icon-only'}>
+                      <a
+                        className={'cmp-button cmp-button--icon-only'}
+                        onClick={() => removeDataFromSelection(schema.id)}
+                      >
                         <TbTrash />
                       </a>
-                      */}
                       {isExternal && (
                         <a
                           className={'cmp-button cmp-button--icon-only'}
