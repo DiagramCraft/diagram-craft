@@ -19,6 +19,7 @@ import { isRegularLayer } from '@diagram-craft/model/diagramLayer';
 import { DataSchema } from '@diagram-craft/model/diagramDataSchemas';
 import { assert } from '@diagram-craft/utils/assert';
 import { DataProviderSettingsDialog } from './DataProviderSettingsDialog';
+import { Button } from '@diagram-craft/app-components/Button';
 
 const makeDiagramNode = (diagram: Diagram, item: Data, schema: DataSchema): DiagramNode => {
   return Diagram.createForNode(
@@ -54,7 +55,11 @@ const makeDiagramNode = (diagram: Diagram, item: Data, schema: DataSchema): Diag
   ).node;
 };
 
-const DataProviderResponse = (props: { dataProvider: DataProvider; selectedSchema: string }) => {
+const DataProviderResponse = (props: {
+  dataProvider: DataProvider;
+  selectedSchema: string;
+  search: string;
+}) => {
   const app = useApplication();
   const diagram = useDiagram();
   const [expanded, setExpanded] = useState<string[]>([]);
@@ -63,9 +68,14 @@ const DataProviderResponse = (props: { dataProvider: DataProvider; selectedSchem
     props.dataProvider?.schemas?.find(s => s.id === props.selectedSchema) ??
     props.dataProvider?.schemas?.[0];
 
+  const data =
+    props.search.trim() !== ''
+      ? props.dataProvider.queryData(schema, props.search)
+      : props.dataProvider.getData(schema);
+
   return (
     <div className={'cmp-query-response'}>
-      {props.dataProvider.getData(schema)?.map(item => (
+      {data?.map(item => (
         <div
           key={item._uid}
           className={`cmp-query-response__item ${expanded.includes(item._uid) ? 'cmp-query-response__item--expanded' : ''}`}
@@ -119,10 +129,12 @@ const DataProviderQueryView = (props: {
   dataProvider: DataProvider;
   selectedSchema: string;
   onChangeSchema: (s: string | undefined) => void;
+  onSearch: (s: string) => void;
 }) => {
+  const [search, setSearch] = useState<string>('');
   return (
-    <div style={{ width: '100%' }}>
-      <div>
+    <div style={{ width: '100%' }} className={'util-vstack'}>
+      <div className={'util-hstack'}>
         <Select.Root value={props.selectedSchema} onChange={props.onChangeSchema}>
           {props.dataProvider.schemas?.map?.(schema => (
             <Select.Item key={schema.id} value={schema.id}>
@@ -130,6 +142,21 @@ const DataProviderQueryView = (props: {
             </Select.Item>
           ))}
         </Select.Root>
+      </div>
+      <div className={'util-hstack'}>
+        <input
+          className={'cmp-text-input'}
+          type={'text'}
+          value={search}
+          onChange={ev => setSearch(ev.target.value)}
+          onKeyDown={ev => {
+            if (ev.key === 'Enter') {
+              props.onSearch(search);
+            }
+          }}
+        />
+
+        <Button onClick={() => props.onSearch(search)}>Search</Button>
       </div>
     </div>
   );
@@ -140,6 +167,7 @@ export const DataToolWindow = () => {
   const $diagram = useDiagram();
   const [providerSettingsWindow, setProviderSettingsWindow] = useState<boolean>(false);
   const document = $diagram.document;
+  const [search, setSearch] = useState<string>('');
 
   const dataProvider = document.dataProvider;
 
@@ -219,6 +247,7 @@ export const DataToolWindow = () => {
 
               {dataProvider !== undefined && (
                 <DataProviderQueryView
+                  onSearch={setSearch}
                   dataProvider={dataProvider}
                   selectedSchema={selectedSchema!}
                   onChangeSchema={setSelectedSchema}
@@ -231,7 +260,11 @@ export const DataToolWindow = () => {
           <Accordion.Item value="response">
             <Accordion.ItemHeader>Items</Accordion.ItemHeader>
             <Accordion.ItemContent>
-              <DataProviderResponse dataProvider={dataProvider} selectedSchema={selectedSchema!} />
+              <DataProviderResponse
+                dataProvider={dataProvider}
+                selectedSchema={selectedSchema!}
+                search={search}
+              />
             </Accordion.ItemContent>
           </Accordion.Item>
         )}
