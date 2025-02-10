@@ -17,9 +17,11 @@ export const ElementType: Record<string, ElementType> = {
   Both: 'both'
 };
 
+// TODO: Switch the order of these type parameters
 export abstract class AbstractSelectionAction<
-  C extends ActionContext = ActionContext
-> extends AbstractAction<undefined, C> {
+  C extends ActionContext = ActionContext,
+  T = undefined
+> extends AbstractAction<T, C> {
   protected constructor(
     context: C,
     protected readonly multipleType: MultipleType,
@@ -71,5 +73,5 @@ export abstract class AbstractSelectionAction<
     ];
   }
 
-  abstract execute(): void;
+  abstract execute(arg?: Partial<T>): void;
 }

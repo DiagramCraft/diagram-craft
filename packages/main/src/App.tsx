@@ -61,6 +61,7 @@ import { HelpState } from './react-app/HelpState';
 import { JSONDialog } from './react-app/components/JSONDialog';
 import { CanvasOutline } from './react-app/CanvasOutline';
 import { bindDocumentDragAndDrop } from '@diagram-craft/canvas/dragDropManager';
+import { ExternalDataLinkDialog } from './react-app/components/ExternalDataLinkDialog';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -310,6 +311,12 @@ export const App = (props: {
         />
         <JSONDialog
           open={dialogState?.id === 'json'}
+          {...dialogState?.props}
+          onOk={dialogState?.onOk}
+          onCancel={dialogState?.onCancel}
+        />
+        <ExternalDataLinkDialog
+          open={dialogState?.id === 'externalDataLink'}
           {...dialogState?.props}
           onOk={dialogState?.onOk}
           onCancel={dialogState?.onCancel}

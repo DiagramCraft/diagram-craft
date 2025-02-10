@@ -1,4 +1,4 @@
-import React, { ChangeEvent, useCallback, useState } from 'react';
+import React, { ChangeEvent, useCallback } from 'react';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
 import { TbDots, TbLink, TbLinkOff, TbPencil, TbTrash } from 'react-icons/tb';
@@ -14,15 +14,14 @@ import { commitWithUndo, SnapshotUndoableAction } from '@diagram-craft/model/dia
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { newid } from '@diagram-craft/utils/id';
 import { unique } from '@diagram-craft/utils/array';
-import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { useElementMetadata } from '../../hooks/useProperty';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { Button } from '@diagram-craft/app-components/Button';
-import { useApplication, useDiagram, useDocument } from '../../../application';
+import { useApplication, useDiagram } from '../../../application';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
-import { Dialog } from '@diagram-craft/app-components/Dialog';
 
 const makeTemplate = (): DataSchema => {
   return {
@@ -44,106 +43,14 @@ const makeTemplate = (): DataSchema => {
   };
 };
 
-const ExternalLinkDialog = (props: {
-  onSave: (s: string) => void;
-  onCancel: () => void;
-  schema: DataSchema;
-}) => {
-  const $d = useDocument();
-  const [search, setSearch] = useState('');
-  const [activeQuery, setActiveQuery] = useState<string | undefined>(undefined);
-  const [selected, setSelected] = useState<string | undefined>(undefined);
-
-  const data =
-    activeQuery !== undefined && activeQuery.trim() !== ''
-      ? $d.dataProvider?.queryData(props.schema, activeQuery)
-      : $d.dataProvider?.getData(props.schema);
-
-  return (
-    <Dialog
-      buttons={[
-        {
-          type: 'default',
-          onClick: () => (selected ? props.onSave(selected) : props.onCancel()),
-          label: 'Ok'
-        },
-        {
-          type: 'cancel',
-          onClick: props.onCancel,
-          label: 'Cancel'
-        }
-      ]}
-      onClose={() => props.onCancel()}
-      open={true}
-      title={'Link data'}
-    >
-      <div className={'util-vstack'} style={{ gap: '1rem' }}>
-        <div className={'util-hstack'}>
-          <input
-            className={'cmp-text-input'}
-            type={'text'}
-            value={search}
-            onChange={ev => setSearch(ev.target.value)}
-            onKeyDown={ev => {
-              if (ev.key === 'Enter') {
-                setActiveQuery(search);
-              }
-            }}
-          />
-
-          <Button onClick={() => setActiveQuery(search)}>Search</Button>
-        </div>
-
-        <div
-          className={'util-vstack'}
-          style={{
-            background: 'var(--cmp-bg)',
-            border: '1px solid var(--cmp-border)',
-            borderRadius: 'var(--cmp-radius)',
-            padding: '0.5rem 0.25rem',
-            overflow: 'auto',
-            maxHeight: '100%',
-            scrollbarGutter: 'stable',
-            scrollbarWidth: 'thin',
-            scrollbarColor: 'var(--tertiary-fg) var(--primary-bg)'
-          }}
-        >
-          {data?.map(item => (
-            <div
-              key={item.id}
-              style={{
-                display: 'flex',
-                gap: '0.25rem',
-                alignItems: 'center'
-              }}
-            >
-              <input
-                type={'radio'}
-                name={'dataItemId'}
-                onClick={() => {
-                  setSelected(item._uid);
-                }}
-              />
-              <span style={{ paddingTop: '3px' }}>
-                {item['name'] ?? item[props.schema.fields[0].id]}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </Dialog>
-  );
-};
-
 export const ObjectDataToolWindow = () => {
   const $d = useDiagram();
   const redraw = useRedraw();
   const application = useApplication();
 
-  const [externalLinkDialog, setExternalLinkDialog] = useState<DataSchema | undefined>(undefined);
-
   useEventListener($d.selectionState, 'change', redraw);
   useEventListener($d, 'change', redraw);
+  useEventListener($d, 'uowCommit', redraw);
 
   const name = useElementMetadata($d, 'name', '');
 
@@ -187,17 +94,9 @@ export const ObjectDataToolWindow = () => {
 
   const clearExternalLinkage = useCallback(
     (schemaId: string) => {
-      const uow = new UnitOfWork($d, true);
-      $d.selectionState.elements.forEach(e => {
-        e.updateMetadata(p => {
-          p.data ??= { data: [] };
-          const item = p.data.data!.find(d => d.type === 'external' && d.schema === schemaId);
-          assert.present(item);
-          item.external = undefined;
-          item.type = 'schema';
-        }, uow);
+      application.actions['EXTERNAL_DATA_UNLINK']!.execute({
+        schemaId: schemaId
       });
-      commitWithUndo(uow, 'Break external data link');
       redraw();
     },
     [$d]
@@ -262,7 +161,9 @@ export const ObjectDataToolWindow = () => {
 
   const addExternalLinkage = useCallback(
     (schema: DataSchema) => {
-      setExternalLinkDialog(schema);
+      application.actions['EXTERNAL_DATA_LINK']!.execute({
+        schemaId: schema.id
+      });
     },
     [$d]
   );
@@ -552,38 +453,6 @@ export const ObjectDataToolWindow = () => {
           </Accordion.ItemContent>
         </Accordion.Item>
       </Accordion.Root>
-      {externalLinkDialog && (
-        <ExternalLinkDialog
-          schema={externalLinkDialog}
-          onCancel={() => {
-            setExternalLinkDialog(undefined);
-          }}
-          onSave={(id: string) => {
-            const uow = new UnitOfWork($d, true);
-            $d.selectionState.elements.forEach(e => {
-              e.updateMetadata(p => {
-                p.data ??= { data: [] };
-                const item = p.data.data!.find(d => d.schema === externalLinkDialog.id);
-                assert.present(item);
-                item.external = {
-                  uid: id
-                };
-                item.type = 'external';
-
-                const [data] = $d.document.dataProvider!.getById([id]);
-                for (const k of Object.keys(data)) {
-                  if (k.startsWith('_')) continue;
-                  item.data[k] = data[k];
-                }
-              }, uow);
-            });
-            commitWithUndo(uow, 'Break external data link');
-            redraw();
-
-            setExternalLinkDialog(undefined);
-          }}
-        />
-      )}
     </>
   );
 };

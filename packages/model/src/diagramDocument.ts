@@ -14,6 +14,7 @@ import { DefaultDataProvider, DefaultDataProviderId } from './dataProviderDefaul
 import { UrlDataProvider, UrlDataProviderId } from './dataProviderUrl';
 import { Generators } from '@diagram-craft/utils/generator';
 import { deepEquals } from '@diagram-craft/utils/object';
+import { SerializedElement } from './serialization/types';
 
 const byUid = (uid: string) => (dt: ElementDataEntry) =>
   dt.type === 'external' && dt.external?.uid === uid;
@@ -22,6 +23,12 @@ export type DocumentEvents = {
   diagramchanged: { after: Diagram };
   diagramadded: { node: Diagram };
   diagramremoved: { node: Diagram };
+};
+
+export type DataTemplate = {
+  id: string;
+  schemaId: string;
+  template: SerializedElement;
 };
 
 export class DiagramDocument extends EventEmitter<DocumentEvents> implements AttachmentConsumer {
@@ -108,6 +115,8 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     }
   };
 
+  #dataProviderTemplates: DataTemplate[] = [];
+
   // TODO: To be loaded from file
   props: DocumentProps = {
     query: {
@@ -127,6 +136,23 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     public readonly edgeDefinitions: EdgeDefinitionRegistry
   ) {
     super();
+  }
+
+  // TODO: Consider moving all of this to a DataTemplates class, with methods
+  //       such as .add, .remove and .getAll
+  addDataTemplate(template: DataTemplate) {
+    this.#dataProviderTemplates.push(template);
+  }
+
+  removeDataTemplate(template: DataTemplate) {
+    const idx = this.#dataProviderTemplates.indexOf(template);
+    if (idx !== -1) {
+      this.#dataProviderTemplates.splice(idx, 1);
+    }
+  }
+
+  get dataTemplates() {
+    return this.#dataProviderTemplates;
   }
 
   get topLevelDiagrams() {

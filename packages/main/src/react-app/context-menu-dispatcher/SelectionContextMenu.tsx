@@ -46,6 +46,73 @@ export const SelectionContextMenu = () => {
       </ContextMenu.Sub>
       <ContextMenu.Separator className="cmp-context-menu__separator" />
 
+      {diagram.document.dataProvider !== undefined &&
+        diagram.selectionState.getSelectionType() === 'single-node' && (
+          <>
+            <ContextMenu.Sub>
+              <ContextMenu.SubTrigger className="cmp-context-menu__sub-trigger">
+                External Data
+                <div className="cmp-context-menu__right-slot">
+                  <TbChevronRight />
+                </div>
+              </ContextMenu.SubTrigger>
+              <ContextMenu.Portal>
+                <ContextMenu.SubContent
+                  className="cmp-context-menu"
+                  sideOffset={2}
+                  alignOffset={-5}
+                >
+                  {diagram.document.dataProvider.schemas.map(schema => {
+                    return (
+                      <ContextMenu.Sub key={schema.id}>
+                        <ContextMenu.SubTrigger className="cmp-context-menu__sub-trigger">
+                          {schema.name}
+                          <div className="cmp-context-menu__right-slot">
+                            <TbChevronRight />
+                          </div>
+                        </ContextMenu.SubTrigger>
+                        <ContextMenu.Portal>
+                          <ContextMenu.SubContent
+                            className="cmp-context-menu"
+                            sideOffset={2}
+                            alignOffset={-5}
+                          >
+                            <ActionContextMenuItem
+                              action={'EXTERNAL_DATA_LINK'}
+                              arg={{ schemaId: schema.id }}
+                            >
+                              Link
+                            </ActionContextMenuItem>
+                            <ActionContextMenuItem
+                              action={'EXTERNAL_DATA_UNLINK'}
+                              arg={{ schemaId: schema.id }}
+                            >
+                              Unlink
+                            </ActionContextMenuItem>
+                            <ActionContextMenuItem
+                              action={'EXTERNAL_DATA_CLEAR'}
+                              arg={{ schemaId: schema.id }}
+                            >
+                              Unlink & Clear
+                            </ActionContextMenuItem>
+                            <ActionContextMenuItem
+                              action={'EXTERNAL_DATA_MAKE_TEMPLATE'}
+                              arg={{ schemaId: schema.id }}
+                            >
+                              Make template
+                            </ActionContextMenuItem>
+                          </ContextMenu.SubContent>
+                        </ContextMenu.Portal>
+                      </ContextMenu.Sub>
+                    );
+                  })}
+                </ContextMenu.SubContent>
+              </ContextMenu.Portal>
+            </ContextMenu.Sub>
+            <ContextMenu.Separator className="cmp-context-menu__separator" />
+          </>
+        )}
+
       <ContextMenu.Sub>
         <ContextMenu.SubTrigger className="cmp-context-menu__sub-trigger">
           Align

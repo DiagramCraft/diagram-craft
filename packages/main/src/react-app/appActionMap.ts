@@ -11,6 +11,7 @@ import { imageInsertActions } from './actions/imageInsertAction';
 import { tableInsertActions } from './actions/tableInsertAction';
 import { Application } from '../application';
 import { toolActions } from '../toolAction';
+import { externalDataActions } from './actions/externalDataActions';
 
 export const defaultAppActions: ActionMapFactory<Application> = application => ({
   ...toolActions(application),
@@ -23,7 +24,8 @@ export const defaultAppActions: ActionMapFactory<Application> = application => (
   ...fileNewActions(application),
   ...fileSaveActions(application),
   ...imageInsertActions(application),
-  ...tableInsertActions(application)
+  ...tableInsertActions(application),
+  ...externalDataActions(application)
 });
 
 export const defaultMacAppKeymap: KeyMap = {

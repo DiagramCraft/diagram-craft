@@ -7,6 +7,7 @@ import { StylesheetSnapshot } from '../unitOfWork';
 import { DataSchema } from '../diagramDataSchemas';
 import { Canvas } from '../diagram';
 import { AdjustmentRule } from '../diagramLayerRuleTypes';
+import { DataTemplate } from '../diagramDocument';
 
 interface Reference {
   id: string;
@@ -51,6 +52,7 @@ export interface SerializedDiagramDocument {
     providerId?: string;
     data?: string;
   };
+  dataTemplates: DataTemplate[];
 }
 
 export interface SerializedStyles {

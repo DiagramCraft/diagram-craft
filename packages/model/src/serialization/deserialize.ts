@@ -224,6 +224,8 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
     }
   }
 
+  document.dataTemplates?.forEach(t => doc.addDataTemplate(t));
+
   return doc;
 };
 
