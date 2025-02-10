@@ -1,5 +1,5 @@
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
-import { ReactNode } from 'react';
+import { MouseEventHandler, ReactNode } from 'react';
 import { usePortal } from './PortalContext';
 import styles from './Dialog.module.css';
 
@@ -76,5 +76,5 @@ type Props = {
 export type Button = {
   label: string;
   type: 'default' | 'secondary' | 'cancel' | 'danger';
-  onClick: () => void;
+  onClick: MouseEventHandler<HTMLButtonElement>;
 };

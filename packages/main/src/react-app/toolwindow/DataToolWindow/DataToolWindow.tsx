@@ -18,6 +18,7 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { isRegularLayer } from '@diagram-craft/model/diagramLayer';
 import { DataSchema } from '@diagram-craft/model/diagramDataSchemas';
 import { assert } from '@diagram-craft/utils/assert';
+import { DataProviderSettingsDialog } from './DataProviderSettingsDialog';
 
 const makeDiagramNode = (diagram: Diagram, item: Data, schema: DataSchema): DiagramNode => {
   return Diagram.createForNode(
@@ -137,6 +138,7 @@ const DataProviderQueryView = (props: {
 export const DataToolWindow = () => {
   const redraw = useRedraw();
   const $diagram = useDiagram();
+  const [providerSettingsWindow, setProviderSettingsWindow] = useState<boolean>(false);
   const document = $diagram.document;
 
   const dataProvider = document.dataProvider;
@@ -162,6 +164,7 @@ export const DataToolWindow = () => {
 
   if (
     dataProvider?.schemas &&
+    dataProvider?.schemas?.length > 0 &&
     dataProvider?.schemas.find(s => s.id === selectedSchema) === undefined
   ) {
     setSelectedSchema(dataProvider.schemas[0].id);
@@ -170,64 +173,73 @@ export const DataToolWindow = () => {
   const provider = document.dataProvider;
 
   return (
-    <Accordion.Root type="multiple" defaultValue={['query', 'response']}>
-      <Accordion.Item value="query">
-        <Accordion.ItemHeader>
-          Data Source
-          <Accordion.ItemHeaderButtons>
-            <a
-              className={'cmp-button cmp-button--icon-only'}
-              style={{ marginRight: '0.5rem' }}
-              aria-disabled={
-                !provider || (!('refreshData' in provider) && !('refreshSchemas' in provider))
-              }
-              onClick={async () => {
-                assert.present(provider);
+    <>
+      <Accordion.Root type="multiple" defaultValue={['query', 'response']}>
+        <Accordion.Item value="query">
+          <Accordion.ItemHeader>
+            Data Source
+            <Accordion.ItemHeaderButtons>
+              <a
+                className={'cmp-button cmp-button--icon-only'}
+                style={{ marginRight: '0.5rem' }}
+                aria-disabled={
+                  !provider || (!('refreshData' in provider) && !('refreshSchemas' in provider))
+                }
+                onClick={async () => {
+                  assert.present(provider);
 
-                if ('refreshData' in provider) {
-                  await (provider as RefreshableDataProvider).refreshData();
-                }
-                if ('refreshSchemas' in provider) {
-                  await (provider as RefreshableSchemaProvider).refreshSchemas();
-                }
+                  if ('refreshData' in provider) {
+                    await (provider as RefreshableDataProvider).refreshData();
+                  }
+                  if ('refreshSchemas' in provider) {
+                    await (provider as RefreshableSchemaProvider).refreshSchemas();
+                  }
+                }}
+              >
+                <TbRefresh />
+              </a>
+              <a
+                className={'cmp-button cmp-button--icon-only'}
+                onClick={() => setProviderSettingsWindow(true)}
+              >
+                <TbSettings />
+              </a>
+            </Accordion.ItemHeaderButtons>
+          </Accordion.ItemHeader>
+          <Accordion.ItemContent>
+            <div
+              style={{
+                marginBottom: '0.5rem',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
               }}
             >
-              <TbRefresh />
-            </a>
-            <a className={'cmp-button cmp-button--icon-only'}>
-              <TbSettings />
-            </a>
-          </Accordion.ItemHeaderButtons>
-        </Accordion.ItemHeader>
-        <Accordion.ItemContent>
-          <div
-            style={{
-              marginBottom: '0.5rem',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}
-          >
-            {dataProvider === undefined && <div></div>}
+              {dataProvider === undefined && <div>No data provider configured</div>}
 
-            {dataProvider !== undefined && (
-              <DataProviderQueryView
-                dataProvider={dataProvider}
-                selectedSchema={selectedSchema!}
-                onChangeSchema={setSelectedSchema}
-              />
-            )}
-          </div>
-        </Accordion.ItemContent>
-      </Accordion.Item>
-      <Accordion.Item value="response">
-        <Accordion.ItemHeader>Items</Accordion.ItemHeader>
-        <Accordion.ItemContent>
-          {dataProvider !== undefined && (
-            <DataProviderResponse dataProvider={dataProvider} selectedSchema={selectedSchema!} />
-          )}
-        </Accordion.ItemContent>
-      </Accordion.Item>
-    </Accordion.Root>
+              {dataProvider !== undefined && (
+                <DataProviderQueryView
+                  dataProvider={dataProvider}
+                  selectedSchema={selectedSchema!}
+                  onChangeSchema={setSelectedSchema}
+                />
+              )}
+            </div>
+          </Accordion.ItemContent>
+        </Accordion.Item>
+        {dataProvider !== undefined && (
+          <Accordion.Item value="response">
+            <Accordion.ItemHeader>Items</Accordion.ItemHeader>
+            <Accordion.ItemContent>
+              <DataProviderResponse dataProvider={dataProvider} selectedSchema={selectedSchema!} />
+            </Accordion.ItemContent>
+          </Accordion.Item>
+        )}
+      </Accordion.Root>
+      <DataProviderSettingsDialog
+        onClose={() => setProviderSettingsWindow(false)}
+        open={providerSettingsWindow}
+      />
+    </>
   );
 };

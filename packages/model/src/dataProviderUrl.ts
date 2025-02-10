@@ -45,6 +45,16 @@ export class UrlDataProvider
     }
   }
 
+  async verifySettings(): Promise<string | undefined> {
+    try {
+      await this.fetchSchemas(true);
+      await this.fetchData(true);
+    } catch (e) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return 'Error fetching data: ' + (e as any).toString();
+    }
+  }
+
   getById(ids: Array<string>): Data[] {
     return this.data.filter(data => ids.includes(data._uid));
   }

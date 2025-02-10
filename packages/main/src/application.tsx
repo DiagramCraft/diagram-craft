@@ -41,3 +41,8 @@ export const useDiagram = () => {
   const application = useApplication();
   return application.model.activeDiagram;
 };
+
+export const useDocument = () => {
+  const application = useApplication();
+  return application.model.activeDocument;
+};

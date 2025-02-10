@@ -25,8 +25,12 @@ export class DefaultDataProvider
     super();
 
     const d = JSON.parse(s);
-    this.schemas = d.schemas;
-    this.data = d.data;
+    this.schemas = d.schemas ?? [];
+    this.data = d.data ?? [];
+  }
+
+  async verifySettings(): Promise<string | undefined> {
+    return undefined;
   }
 
   getById(ids: Array<string>): Data[] {

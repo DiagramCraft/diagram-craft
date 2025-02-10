@@ -30,6 +30,7 @@ export interface DataProvider extends SchemaProvider, Emitter<DataProviderEventM
   queryData(schema: DataSchema, query: string): Array<Data>;
 
   serialize(): string;
+  verifySettings(): Promise<string | undefined>;
 }
 
 export interface MutableDataProvider extends DataProvider {
