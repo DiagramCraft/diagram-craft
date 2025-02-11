@@ -17,11 +17,7 @@ const makeDiagramNode = (mainDiagram: Diagram, n: Stencil, pkg: string) => {
     return NODE_CACHE.get(cacheKey)!;
   }
 
-  const { node, diagram } = Diagram.createForNode(
-    d => n.node(d),
-    mainDiagram.document.nodeDefinitions,
-    mainDiagram.document.edgeDefinitions
-  );
+  const { node, diagram } = Diagram.createForNode(d => n.node(d), mainDiagram.document.definitions);
 
   diagram.viewBox.dimensions = { w: node.bounds.w + 10, h: node.bounds.h + 10 };
   diagram.viewBox.offset = { x: -5, y: -5 };

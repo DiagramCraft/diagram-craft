@@ -159,6 +159,13 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     return this.#diagrams;
   }
 
+  get definitions() {
+    return {
+      nodeDefinitions: this.nodeDefinitions,
+      edgeDefinitions: this.edgeDefinitions
+    };
+  }
+
   *diagramIterator(opts: DiagramIteratorOpts = {}) {
     yield* diagramIterator(this.#diagrams, opts);
   }

@@ -20,38 +20,83 @@ import { DataSchema } from '@diagram-craft/model/diagramDataSchemas';
 import { assert } from '@diagram-craft/utils/assert';
 import { DataProviderSettingsDialog } from './DataProviderSettingsDialog';
 import { Button } from '@diagram-craft/app-components/Button';
+import { PickerCanvas } from '../../PickerCanvas';
+import { DataTemplate } from '@diagram-craft/model/diagramDocument';
+import { deserializeDiagramElements } from '@diagram-craft/model/serialization/deserialize';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { deepClone } from '@diagram-craft/utils/object';
+import { Definitions } from '@diagram-craft/model/elementDefinitionRegistry';
 
-const makeDiagramNode = (diagram: Diagram, item: Data, schema: DataSchema): DiagramNode => {
+const NODE_CACHE = new Map<string, DiagramNode>();
+
+const makeDataReference = (item: Data, schema: DataSchema): ElementDataEntry => {
+  return {
+    type: 'external',
+    external: {
+      uid: item._uid
+    },
+    data: item,
+    schema: schema.id,
+    enabled: true
+  };
+};
+
+const makeTemplateNode = (
+  item: Data,
+  schema: DataSchema,
+  definitions: Definitions,
+  template: DataTemplate
+) => {
+  const cacheKey = item._uid + '/' + template.id;
+
+  if (NODE_CACHE.has(cacheKey)) {
+    return NODE_CACHE.get(cacheKey)!;
+  }
+
+  const tpl = deepClone(template.template);
+  const { node, diagram } = Diagram.createForNode(
+    (diagram, layer) => deserializeDiagramElements([tpl], diagram, layer)[0] as DiagramNode,
+    definitions
+  );
+  node.setBounds({ ...node.bounds, x: 0, y: 0 }, UnitOfWork.immediate(node.diagram));
+
+  node.updateMetadata(cb => {
+    cb.data ??= {};
+    cb.data.data ??= [];
+
+    cb.data.data = cb.data.data.filter(e => e.schema !== schema.id);
+
+    cb.data.data.push(makeDataReference(item, schema));
+  }, UnitOfWork.immediate(node.diagram));
+
+  diagram.viewBox.dimensions = { w: node.bounds.w + 10, h: node.bounds.h + 10 };
+  diagram.viewBox.offset = { x: -5, y: -5 };
+
+  NODE_CACHE.set(cacheKey, node);
+
+  return node;
+};
+
+const makeDefaultNode = (item: Data, schema: DataSchema, definitions: Definitions): DiagramNode => {
   return Diagram.createForNode(
-    (d, l) =>
+    (diagram, layer) =>
       new DiagramNode(
         newid(),
         'rect',
         { w: 100, h: 100, y: 0, x: 0, r: 0 },
-        d,
-        l,
+        diagram,
+        layer,
         {},
         {
           data: {
-            data: [
-              {
-                type: 'external',
-                external: {
-                  uid: item._uid
-                },
-                data: item,
-                schema: schema.id,
-                enabled: true
-              }
-            ]
+            data: [makeDataReference(item, schema)]
           }
         },
         {
           text: `%${schema.fields[0].id}%`
         }
       ),
-    diagram.document.nodeDefinitions,
-    diagram.document.edgeDefinitions
+    definitions
   ).node;
 };
 
@@ -62,6 +107,7 @@ const DataProviderResponse = (props: {
 }) => {
   const app = useApplication();
   const diagram = useDiagram();
+  const document = diagram.document;
   const [expanded, setExpanded] = useState<string[]>([]);
 
   const schema =
@@ -75,52 +121,98 @@ const DataProviderResponse = (props: {
 
   return (
     <div className={'cmp-query-response'}>
-      {data?.map(item => (
-        <div
-          key={item._uid}
-          className={`cmp-query-response__item ${expanded.includes(item._uid) ? 'cmp-query-response__item--expanded' : ''}`}
-          style={{ cursor: 'move' }}
-        >
-          <>
-            <div
-              style={{ cursor: 'default' }}
-              onClick={() => {
-                if (expanded.includes(item._uid)) {
-                  setExpanded(expanded.filter(e => e !== item._uid));
-                } else {
-                  setExpanded([...expanded, item._uid]);
-                }
-              }}
-            >
-              {expanded.includes(item._uid) ? <TbChevronDown /> : <TbChevronRight />}
-            </div>
+      {data?.map(item => {
+        const dataTemplates = document.dataTemplates.filter(t => t.schemaId === schema.id);
+        return (
+          <div
+            key={item._uid}
+            className={`util-draggable cmp-query-response__item ${expanded.includes(item._uid) ? 'cmp-query-response__item--expanded' : ''}`}
+          >
+            <>
+              <div
+                style={{ cursor: 'default' }}
+                onClick={() => {
+                  if (expanded.includes(item._uid)) {
+                    setExpanded(expanded.filter(e => e !== item._uid));
+                  } else {
+                    setExpanded([...expanded, item._uid]);
+                  }
+                }}
+              >
+                {expanded.includes(item._uid) ? <TbChevronDown /> : <TbChevronRight />}
+              </div>
 
-            <div
-              onMouseDown={ev => {
-                if (!isRegularLayer(diagram.activeLayer)) return;
+              <div
+                onMouseDown={ev => {
+                  if (!isRegularLayer(diagram.activeLayer)) return;
 
-                DRAG_DROP_MANAGER.initiate(
-                  // @ts-ignore
-                  new ObjectPickerDrag(ev, makeDiagramNode(diagram, item, schema), diagram, app)
-                );
-              }}
-            >
-              {item['name'] ?? item[schema.fields[0].id]}
-              {expanded.includes(item._uid) && (
-                <div>
-                  {Object.keys(item)
-                    .filter(k => !k.startsWith('_'))
-                    .map(k => (
-                      <div key={k}>
-                        {k}: {item[k]}
+                  const node =
+                    dataTemplates.length > 0
+                      ? makeTemplateNode(item, schema, document.definitions, dataTemplates[0])
+                      : makeDefaultNode(item, schema, document.definitions);
+
+                  // @ts-expect-error MouseEvent is not compatible with React MouseEvent
+                  DRAG_DROP_MANAGER.initiate(new ObjectPickerDrag(ev, node, diagram, app));
+                }}
+              >
+                {item[schema.fields[0].id]}
+
+                {expanded.includes(item._uid) && (
+                  <>
+                    <div>
+                      {schema.fields.map(k => (
+                        <div key={k.id}>
+                          {k.name}: {item[k.id] ?? '-'}
+                        </div>
+                      ))}
+                    </div>
+
+                    {dataTemplates.length > 0 && (
+                      <div
+                        className={'cmp-object-picker'}
+                        style={{
+                          border: '1px solid var(--cmp-border)',
+                          borderRadius: 'var(--cmp-radius)',
+                          background: 'var(--cmp-bg)',
+                          padding: '0.25rem',
+                          margin: '0.25rem 0.5rem 0 0'
+                        }}
+                      >
+                        {dataTemplates
+                          .map(t => makeTemplateNode(item, schema, document.definitions, t))
+                          .map(n => (
+                            <div
+                              key={n.id}
+                              style={{ background: 'transparent' }}
+                              data-width={n.diagram.viewBox.dimensions.w}
+                            >
+                              <PickerCanvas
+                                width={42}
+                                height={42}
+                                diagramWidth={n.diagram.viewBox.dimensions.w}
+                                diagramHeight={n.diagram.viewBox.dimensions.h}
+                                diagram={n.diagram}
+                                showHover={true}
+                                name={''}
+                                onMouseDown={ev => {
+                                  if (!isRegularLayer(diagram.activeLayer)) return;
+
+                                  DRAG_DROP_MANAGER.initiate(
+                                    new ObjectPickerDrag(ev, n, diagram, app)
+                                  );
+                                }}
+                              />
+                            </div>
+                          ))}
                       </div>
-                    ))}
-                </div>
-              )}
-            </div>
-          </>
-        </div>
-      ))}
+                    )}
+                  </>
+                )}
+              </div>
+            </>
+          </div>
+        );
+      })}
     </div>
   );
 };
@@ -134,7 +226,7 @@ const DataProviderQueryView = (props: {
   const [search, setSearch] = useState<string>('');
   return (
     <div style={{ width: '100%' }} className={'util-vstack'}>
-      <div className={'util-hstack'}>
+      <div>
         <Select.Root value={props.selectedSchema} onChange={props.onChangeSchema}>
           {props.dataProvider.schemas?.map?.(schema => (
             <Select.Item key={schema.id} value={schema.id}>

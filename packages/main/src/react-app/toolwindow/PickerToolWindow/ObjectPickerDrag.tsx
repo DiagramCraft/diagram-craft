@@ -144,8 +144,7 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
 
     const { diagram: dest } = Diagram.createForNode(
       () => this.source.duplicate(),
-      this.diagram.document.nodeDefinitions,
-      this.diagram.document.edgeDefinitions
+      this.diagram.document.definitions
     );
 
     const canvas = new CanvasComponent();

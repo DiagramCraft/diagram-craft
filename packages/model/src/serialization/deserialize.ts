@@ -58,9 +58,12 @@ export const deserializeDiagramElements = (
   diagramElements: ReadonlyArray<SerializedElement>,
   diagram: Diagram,
   layer: Layer,
-  nodeLookup: Record<string, DiagramNode>,
-  edgeLookup: Record<string, DiagramEdge>
+  nodeLookup?: Record<string, DiagramNode>,
+  edgeLookup?: Record<string, DiagramEdge>
 ) => {
+  nodeLookup ??= {};
+  edgeLookup ??= {};
+
   const allNodes = diagramElements.filter(isNodeDef);
 
   // Index skeleton nodes

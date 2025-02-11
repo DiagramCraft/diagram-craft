@@ -935,6 +935,9 @@ body[data-dragmimetype='application/x-diagram-craft-element-instances'] *[data-d
 .util-square {
   aspect-ratio: 1/1;
 }
+.util-draggable {
+  cursor: move;
+}
 
 
 /* Animations */

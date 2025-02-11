@@ -221,6 +221,11 @@ export class EdgeDefinitionRegistry {
   }
 }
 
+export type Definitions = {
+  nodeDefinitions: NodeDefinitionRegistry;
+  edgeDefinitions: EdgeDefinitionRegistry;
+};
+
 const isNodeDefinition = (type: string | NodeDefinition): type is NodeDefinition =>
   typeof type !== 'string';
 
