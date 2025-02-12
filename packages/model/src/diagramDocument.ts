@@ -28,6 +28,7 @@ export type DocumentEvents = {
 export type DataTemplate = {
   id: string;
   schemaId: string;
+  name: string;
   template: SerializedElement;
 };
 
@@ -144,11 +145,17 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     this.#dataProviderTemplates.push(template);
   }
 
-  removeDataTemplate(template: DataTemplate) {
-    const idx = this.#dataProviderTemplates.indexOf(template);
+  removeDataTemplate(template: DataTemplate | string) {
+    const idx = this.#dataProviderTemplates.findIndex(
+      t => t.id === (typeof template === 'string' ? template : template.id)
+    );
     if (idx !== -1) {
       this.#dataProviderTemplates.splice(idx, 1);
     }
+  }
+
+  updateDataTemplate(_template: DataTemplate) {
+    // Do nothing for now
   }
 
   get dataTemplates() {

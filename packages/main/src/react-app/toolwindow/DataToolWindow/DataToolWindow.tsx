@@ -26,6 +26,8 @@ import { deserializeDiagramElements } from '@diagram-craft/model/serialization/d
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { deepClone } from '@diagram-craft/utils/object';
 import { Definitions } from '@diagram-craft/model/elementDefinitionRegistry';
+import * as ContextMenu from '@radix-ui/react-context-menu';
+import { ActionContextMenuItem } from '../../components/ActionContextMenuItem';
 
 const NODE_CACHE = new Map<string, DiagramNode>();
 
@@ -179,29 +181,61 @@ const DataProviderResponse = (props: {
                         }}
                       >
                         {dataTemplates
-                          .map(t => makeTemplateNode(item, schema, document.definitions, t))
-                          .map(n => (
+                          .map(
+                            t =>
+                              [t, makeTemplateNode(item, schema, document.definitions, t)] as [
+                                DataTemplate,
+                                DiagramNode
+                              ]
+                          )
+                          .map(([t, n]) => (
                             <div
                               key={n.id}
                               style={{ background: 'transparent' }}
                               data-width={n.diagram.viewBox.dimensions.w}
                             >
-                              <PickerCanvas
-                                width={42}
-                                height={42}
-                                diagramWidth={n.diagram.viewBox.dimensions.w}
-                                diagramHeight={n.diagram.viewBox.dimensions.h}
-                                diagram={n.diagram}
-                                showHover={true}
-                                name={''}
-                                onMouseDown={ev => {
-                                  if (!isRegularLayer(diagram.activeLayer)) return;
+                              <ContextMenu.Root>
+                                <ContextMenu.Trigger asChild>
+                                  <div
+                                    onPointerDown={ev => {
+                                      if (!isRegularLayer(diagram.activeLayer)) return;
+                                      if (ev.button !== 0) return;
 
-                                  DRAG_DROP_MANAGER.initiate(
-                                    new ObjectPickerDrag(ev, n, diagram, app)
-                                  );
-                                }}
-                              />
+                                      DRAG_DROP_MANAGER.initiate(
+                                        // @ts-ignore
+                                        new ObjectPickerDrag(ev, n, diagram, app)
+                                      );
+                                    }}
+                                  >
+                                    <PickerCanvas
+                                      width={42}
+                                      height={42}
+                                      diagramWidth={n.diagram.viewBox.dimensions.w}
+                                      diagramHeight={n.diagram.viewBox.dimensions.h}
+                                      diagram={n.diagram}
+                                      showHover={true}
+                                      name={t.name ?? ''}
+                                      onMouseDown={() => {}}
+                                    />
+                                  </div>
+                                </ContextMenu.Trigger>
+                                <ContextMenu.Portal>
+                                  <ContextMenu.Content className="cmp-context-menu">
+                                    <ActionContextMenuItem
+                                      action={'EXTERNAL_DATA_LINK_RENAME_TEMPLATE'}
+                                      arg={{ templateId: t.id }}
+                                    >
+                                      Rename...
+                                    </ActionContextMenuItem>
+                                    <ActionContextMenuItem
+                                      action={'EXTERNAL_DATA_LINK_REMOVE_TEMPLATE'}
+                                      arg={{ templateId: t.id }}
+                                    >
+                                      Remove
+                                    </ActionContextMenuItem>
+                                  </ContextMenu.Content>
+                                </ContextMenu.Portal>
+                              </ContextMenu.Root>
                             </div>
                           ))}
                       </div>

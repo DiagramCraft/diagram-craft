@@ -13,12 +13,15 @@ import { getExternalDataStatus } from '@diagram-craft/model/externalDataHelpers'
 import { DataTemplate } from '@diagram-craft/model/diagramDocument';
 import { newid } from '@diagram-craft/utils/id';
 import { serializeDiagramElement } from '@diagram-craft/model/serialization/serialize';
+import { AbstractAction } from '@diagram-craft/canvas/action';
 
 export const externalDataActions = (application: Application) => ({
   EXTERNAL_DATA_UNLINK: new ExternalDataUnlinkAction(application),
   EXTERNAL_DATA_MAKE_TEMPLATE: new ExternalDataMakeTemplateAction(application),
   EXTERNAL_DATA_LINK: new ExternalDataLinkAction(application),
-  EXTERNAL_DATA_CLEAR: new ExternalDataClear(application)
+  EXTERNAL_DATA_CLEAR: new ExternalDataClear(application),
+  EXTERNAL_DATA_LINK_REMOVE_TEMPLATE: new ExternalDataLinkRemoveTemplate(application),
+  EXTERNAL_DATA_LINK_RENAME_TEMPLATE: new ExternalDataLinkRenameTemplate(application)
 });
 
 declare global {
@@ -183,11 +186,66 @@ export class ExternalDataMakeTemplateAction extends AbstractSelectionAction<
   }
 
   execute(arg: Partial<SchemaArg>): void {
-    const template: DataTemplate = {
-      id: newid(),
-      schemaId: arg.schemaId!,
-      template: serializeDiagramElement(this.context.model.activeDiagram.selectionState.elements[0])
-    };
-    this.context.model.activeDocument.addDataTemplate(template);
+    this.context.ui.showDialog({
+      id: 'stringInput',
+      props: {
+        value: '',
+        title: 'Template name',
+        label: 'Name',
+        saveButtonLabel: 'Create',
+        type: 'string'
+      },
+      onCancel: () => {},
+      onOk: (v: string) => {
+        const template: DataTemplate = {
+          id: newid(),
+          schemaId: arg.schemaId!,
+          name: v,
+          template: serializeDiagramElement(
+            this.context.model.activeDiagram.selectionState.elements[0]
+          )
+        };
+        this.context.model.activeDocument.addDataTemplate(template);
+      }
+    });
+  }
+}
+
+export class ExternalDataLinkRemoveTemplate extends AbstractAction<
+  { templateId: string },
+  Application
+> {
+  execute(arg: Partial<{ templateId: string }>): void {
+    this.context.model.activeDocument.removeDataTemplate(arg.templateId!);
+    this.context.model.activeDiagram.update();
+  }
+}
+
+export class ExternalDataLinkRenameTemplate extends AbstractAction<
+  { templateId: string },
+  Application
+> {
+  execute(arg: Partial<{ templateId: string }>): void {
+    const template = this.context.model.activeDocument.dataTemplates.find(
+      t => t.id === arg.templateId
+    );
+    assert.present(template);
+
+    this.context.ui.showDialog({
+      id: 'stringInput',
+      props: {
+        value: template.name ?? '',
+        title: 'Rename template',
+        label: 'Name',
+        saveButtonLabel: 'Rename',
+        type: 'string'
+      },
+      onCancel: () => {},
+      onOk: (v: string) => {
+        template.name = v;
+        this.context.model.activeDocument.updateDataTemplate(template);
+      }
+    });
+    this.context.model.activeDiagram.update();
   }
 }
