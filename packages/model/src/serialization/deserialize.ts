@@ -25,6 +25,7 @@ import { DefaultStyles } from '../diagramDefaults';
 import { ReferenceLayer } from '../diagramLayerReference';
 import { RuleLayer } from '../diagramLayerRule';
 import { DataProviderRegistry } from '../dataProvider';
+import { DiagramDocumentDataTemplates } from '../diagramDocumentDataTemplates';
 
 const isNodeDef = (element: SerializedElement | SerializedLayer): element is SerializedNode =>
   element.type === 'node';
@@ -227,7 +228,7 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
     }
   }
 
-  document.dataTemplates?.forEach(t => doc.addDataTemplate(t));
+  doc.dataTemplates = new DiagramDocumentDataTemplates(doc, document.dataTemplates);
 
   return doc;
 };

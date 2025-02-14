@@ -17,7 +17,7 @@ export type DataSchema = {
   fields: DataSchemaField[];
 };
 
-export class DiagramDataSchemas {
+export class DiagramDocumentDataSchemas {
   #schemas: DataSchema[] = [];
 
   constructor(

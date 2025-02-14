@@ -1,6 +1,6 @@
 import { DiagramPalette } from './diagramPalette';
 import { DiagramStyles } from './diagramStyles';
-import { DataSchema, DiagramDataSchemas } from './diagramDataSchemas';
+import { DataSchema, DiagramDocumentDataSchemas } from './diagramDocumentDataSchemas';
 import { Diagram, diagramIterator, DiagramIteratorOpts } from './diagram';
 import { AttachmentConsumer, AttachmentManager } from './attachment';
 import { EventEmitter } from '@diagram-craft/utils/event';
@@ -15,6 +15,7 @@ import { UrlDataProvider, UrlDataProviderId } from './dataProviderUrl';
 import { Generators } from '@diagram-craft/utils/generator';
 import { deepEquals } from '@diagram-craft/utils/object';
 import { SerializedElement } from './serialization/types';
+import { DiagramDocumentDataTemplates } from './diagramDocumentDataTemplates';
 
 const byUid = (uid: string) => (dt: ElementDataEntry) =>
   dt.type === 'external' && dt.external?.uid === uid;
@@ -38,7 +39,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
   styles = new DiagramStyles(this);
 
   // TODO: To be loaded from file
-  schemas = new DiagramDataSchemas(this, [
+  schemas = new DiagramDocumentDataSchemas(this, [
     {
       id: 'default',
       name: 'Default',
@@ -116,8 +117,6 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     }
   };
 
-  #dataProviderTemplates: DataTemplate[] = [];
-
   // TODO: To be loaded from file
   props: DocumentProps = {
     query: {
@@ -131,6 +130,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
   #diagrams: Diagram[] = [];
 
   url: string | undefined;
+  dataTemplates = new DiagramDocumentDataTemplates(this);
 
   constructor(
     public readonly nodeDefinitions: NodeDefinitionRegistry,
@@ -141,26 +141,6 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
 
   // TODO: Consider moving all of this to a DataTemplates class, with methods
   //       such as .add, .remove and .getAll
-  addDataTemplate(template: DataTemplate) {
-    this.#dataProviderTemplates.push(template);
-  }
-
-  removeDataTemplate(template: DataTemplate | string) {
-    const idx = this.#dataProviderTemplates.findIndex(
-      t => t.id === (typeof template === 'string' ? template : template.id)
-    );
-    if (idx !== -1) {
-      this.#dataProviderTemplates.splice(idx, 1);
-    }
-  }
-
-  updateDataTemplate(_template: DataTemplate) {
-    // Do nothing for now
-  }
-
-  get dataTemplates() {
-    return this.#dataProviderTemplates;
-  }
 
   get topLevelDiagrams() {
     return this.#diagrams;

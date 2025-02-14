@@ -1,4 +1,4 @@
-import { DataSchema } from './diagramDataSchemas';
+import { DataSchema } from './diagramDocumentDataSchemas';
 import { Emitter } from '@diagram-craft/utils/event';
 
 export interface SchemaProvider {

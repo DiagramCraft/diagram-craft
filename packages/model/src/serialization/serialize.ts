@@ -18,7 +18,7 @@ import { NotImplementedYet, VerifyNotReached } from '@diagram-craft/utils/assert
 import { AttachmentManager } from '../attachment';
 import { DiagramPalette } from '../diagramPalette';
 import { DiagramStyles } from '../diagramStyles';
-import { DiagramDataSchemas } from '../diagramDataSchemas';
+import { DiagramDocumentDataSchemas } from '../diagramDocumentDataSchemas';
 import { ReferenceLayer } from '../diagramLayerReference';
 import { RuleLayer } from '../diagramLayerRule';
 
@@ -43,7 +43,7 @@ export const serializeDiagramDocument = async (
     customPalette: serializeCustomPalette(document.customPalette),
     styles: serializeStyles(document.styles),
     schemas: serializeSchemas(document.schemas),
-    dataTemplates: document.dataTemplates,
+    dataTemplates: document.dataTemplates.all(),
     data: {
       providerId: document.dataProvider?.id,
       data: document.dataProvider?.serialize()
@@ -62,7 +62,7 @@ const serializeStyles = (styles: DiagramStyles): SerializedStyles => {
   };
 };
 
-const serializeSchemas = (schemas: DiagramDataSchemas) => {
+const serializeSchemas = (schemas: DiagramDocumentDataSchemas) => {
   return schemas.all;
 };
 

@@ -16,7 +16,7 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { newid } from '@diagram-craft/utils/id';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { isRegularLayer } from '@diagram-craft/model/diagramLayer';
-import { DataSchema } from '@diagram-craft/model/diagramDataSchemas';
+import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { assert } from '@diagram-craft/utils/assert';
 import { DataProviderSettingsDialog } from './DataProviderSettingsDialog';
 import { Button } from '@diagram-craft/app-components/Button';
@@ -124,7 +124,7 @@ const DataProviderResponse = (props: {
   return (
     <div className={'cmp-query-response'}>
       {data?.map(item => {
-        const dataTemplates = document.dataTemplates.filter(t => t.schemaId === schema.id);
+        const dataTemplates = document.dataTemplates.bySchema(schema.id);
         return (
           <div
             key={item._uid}

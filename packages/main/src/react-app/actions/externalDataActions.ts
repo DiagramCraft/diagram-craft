@@ -8,7 +8,7 @@ import {
   ElementType,
   MultipleType
 } from '@diagram-craft/canvas-app/actions/abstractSelectionAction';
-import { DataSchema } from '@diagram-craft/model/diagramDataSchemas';
+import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { getExternalDataStatus } from '@diagram-craft/model/externalDataHelpers';
 import { DataTemplate } from '@diagram-craft/model/diagramDocument';
 import { newid } from '@diagram-craft/utils/id';
@@ -205,7 +205,7 @@ export class ExternalDataMakeTemplateAction extends AbstractSelectionAction<
             this.context.model.activeDiagram.selectionState.elements[0]
           )
         };
-        this.context.model.activeDocument.addDataTemplate(template);
+        this.context.model.activeDocument.dataTemplates.add(template);
       }
     });
   }
@@ -216,7 +216,7 @@ export class ExternalDataLinkRemoveTemplate extends AbstractAction<
   Application
 > {
   execute(arg: Partial<{ templateId: string }>): void {
-    this.context.model.activeDocument.removeDataTemplate(arg.templateId!);
+    this.context.model.activeDocument.dataTemplates.remove(arg.templateId!);
     this.context.model.activeDiagram.update();
   }
 }
@@ -226,9 +226,7 @@ export class ExternalDataLinkRenameTemplate extends AbstractAction<
   Application
 > {
   execute(arg: Partial<{ templateId: string }>): void {
-    const template = this.context.model.activeDocument.dataTemplates.find(
-      t => t.id === arg.templateId
-    );
+    const template = this.context.model.activeDocument.dataTemplates.byId(arg.templateId!);
     assert.present(template);
 
     this.context.ui.showDialog({
@@ -243,7 +241,7 @@ export class ExternalDataLinkRenameTemplate extends AbstractAction<
       onCancel: () => {},
       onOk: (v: string) => {
         template.name = v;
-        this.context.model.activeDocument.updateDataTemplate(template);
+        this.context.model.activeDocument.dataTemplates.update(template);
       }
     });
     this.context.model.activeDiagram.update();

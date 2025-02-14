@@ -4,7 +4,7 @@ import { EdgePropsForEditing } from '../diagramEdge';
 import { NodePropsForEditing, NodeTexts } from '../diagramNode';
 import { OffsetType } from '../endpoint';
 import { StylesheetSnapshot } from '../unitOfWork';
-import { DataSchema } from '../diagramDataSchemas';
+import { DataSchema } from '../diagramDocumentDataSchemas';
 import { Canvas } from '../diagram';
 import { AdjustmentRule } from '../diagramLayerRuleTypes';
 import { DataTemplate } from '../diagramDocument';

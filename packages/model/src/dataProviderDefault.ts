@@ -5,7 +5,7 @@ import {
   MutableDataProvider,
   MutableSchemaProvider
 } from './dataProvider';
-import { DataSchema } from './diagramDataSchemas';
+import { DataSchema } from './diagramDocumentDataSchemas';
 import { EventEmitter } from '@diagram-craft/utils/event';
 
 type DataWithSchema = Data & { _schemaId: string };

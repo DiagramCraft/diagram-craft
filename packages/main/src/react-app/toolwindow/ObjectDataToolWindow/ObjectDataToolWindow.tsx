@@ -8,7 +8,7 @@ import {
   DataSchema,
   DeleteSchemaUndoableAction,
   ModifySchemaUndoableAction
-} from '@diagram-craft/model/diagramDataSchemas';
+} from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo, SnapshotUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';

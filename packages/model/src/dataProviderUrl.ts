@@ -5,7 +5,7 @@ import {
   RefreshableDataProvider,
   RefreshableSchemaProvider
 } from './dataProvider';
-import { DataSchema } from './diagramDataSchemas';
+import { DataSchema } from './diagramDocumentDataSchemas';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { assert } from '@diagram-craft/utils/assert';
 
