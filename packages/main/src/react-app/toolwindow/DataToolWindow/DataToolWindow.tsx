@@ -28,6 +28,7 @@ import { deepClone } from '@diagram-craft/utils/object';
 import { Definitions } from '@diagram-craft/model/elementDefinitionRegistry';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { ActionContextMenuItem } from '../../components/ActionContextMenuItem';
+import { useEventListener } from '../../hooks/useEventListener';
 
 const NODE_CACHE = new Map<string, DiagramNode>();
 
@@ -311,6 +312,10 @@ export const DataToolWindow = () => {
       dataProvider.off('deleteData', rd);
     };
   }, [dataProvider]);
+
+  useEventListener(document.data.templates, 'add', redraw);
+  useEventListener(document.data.templates, 'update', redraw);
+  useEventListener(document.data.templates, 'remove', redraw);
 
   const [selectedSchema, setSelectedSchema] = useState<string | undefined>(
     dataProvider?.schemas?.[0]?.id

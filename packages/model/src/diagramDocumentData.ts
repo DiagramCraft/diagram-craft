@@ -4,6 +4,7 @@ import { DiagramDocument } from './diagramDocument';
 import { DiagramDocumentDataTemplates } from './diagramDocumentDataTemplates';
 import { UnitOfWork } from './unitOfWork';
 import { deepEquals } from '@diagram-craft/utils/object';
+import { EventEmitter } from '@diagram-craft/utils/event';
 
 const makeDataListener =
   (document: DiagramDocument, mode: 'update' | 'delete') => (data: { data: Data[] }) => {
@@ -71,7 +72,7 @@ const DEFAULT_SCHEMA: DataSchema[] = [
   }
 ];
 
-export class DiagramDocumentData {
+export class DiagramDocumentData extends EventEmitter<{ change: void }> {
   #document: DiagramDocument;
 
   #provider: DataProvider | undefined;
@@ -84,6 +85,7 @@ export class DiagramDocumentData {
   #updateSchemaListener: (s: DataSchema) => void;
 
   constructor(document: DiagramDocument) {
+    super();
     this.#document = document;
 
     this.#schemas = new DiagramDocumentDataSchemas(this.#document, DEFAULT_SCHEMA);
@@ -93,6 +95,13 @@ export class DiagramDocumentData {
     this.#deleteDataListener = makeDataListener(document, 'delete');
     this.#deleteSchemaListener = makeDeleteSchemaListener(document);
     this.#updateSchemaListener = makeUpdateSchemaListener(document);
+
+    this.#schemas.on('add', () => this.emit('change'));
+    this.#schemas.on('remove', () => this.emit('change'));
+    this.#schemas.on('update', () => this.emit('change'));
+    this.#templates.on('add', () => this.emit('change'));
+    this.#templates.on('remove', () => this.emit('change'));
+    this.#templates.on('update', () => this.emit('change'));
   }
 
   get provider() {
@@ -108,6 +117,7 @@ export class DiagramDocumentData {
     this.#provider?.off?.('deleteSchema', this.#deleteSchemaListener);
 
     this.#provider = dataProvider;
+    this.emit('change');
 
     if (this.#provider) {
       this.#provider.on('addData', this.#updateDataListener);

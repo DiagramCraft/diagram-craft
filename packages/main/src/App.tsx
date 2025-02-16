@@ -238,6 +238,7 @@ export const App = (props: {
   useEventListener(doc, 'diagramremoved', autosave);
   useEventListener(doc, 'diagramadded', autosave);
   useEventListener(doc, 'diagramchanged', autosave);
+  useEventListener(doc.data, 'change', autosave);
 
   useEffect(() => bindDocumentDragAndDrop());
 
