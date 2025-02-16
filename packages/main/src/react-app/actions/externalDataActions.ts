@@ -151,7 +151,7 @@ export class ExternalDataLinkAction extends AbstractSelectionAction<Application,
             };
             item.type = 'external';
 
-            const [data] = $d.document.dataProvider!.getById([v]);
+            const [data] = $d.document.data.provider!.getById([v]);
             for (const k of Object.keys(data)) {
               if (k.startsWith('_')) continue;
               item.data[k] = data[k];
@@ -161,7 +161,7 @@ export class ExternalDataLinkAction extends AbstractSelectionAction<Application,
         commitWithUndo(uow, 'Link external data');
       },
       props: {
-        schema: this.context.model.activeDocument.schemas.get(arg.schemaId!)!
+        schema: this.context.model.activeDocument.data.schemas.get(arg.schemaId!)!
       }
     });
   }
@@ -205,7 +205,7 @@ export class ExternalDataMakeTemplateAction extends AbstractSelectionAction<
             this.context.model.activeDiagram.selectionState.elements[0]
           )
         };
-        this.context.model.activeDocument.dataTemplates.add(template);
+        this.context.model.activeDocument.data.templates.add(template);
       }
     });
   }
@@ -216,7 +216,7 @@ export class ExternalDataLinkRemoveTemplate extends AbstractAction<
   Application
 > {
   execute(arg: Partial<{ templateId: string }>): void {
-    this.context.model.activeDocument.dataTemplates.remove(arg.templateId!);
+    this.context.model.activeDocument.data.templates.remove(arg.templateId!);
     this.context.model.activeDiagram.update();
   }
 }
@@ -226,7 +226,7 @@ export class ExternalDataLinkRenameTemplate extends AbstractAction<
   Application
 > {
   execute(arg: Partial<{ templateId: string }>): void {
-    const template = this.context.model.activeDocument.dataTemplates.byId(arg.templateId!);
+    const template = this.context.model.activeDocument.data.templates.byId(arg.templateId!);
     assert.present(template);
 
     this.context.ui.showDialog({
@@ -241,7 +241,7 @@ export class ExternalDataLinkRenameTemplate extends AbstractAction<
       onCancel: () => {},
       onOk: (v: string) => {
         template.name = v;
-        this.context.model.activeDocument.dataTemplates.update(template);
+        this.context.model.activeDocument.data.templates.update(template);
       }
     });
     this.context.model.activeDiagram.update();

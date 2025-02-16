@@ -25,7 +25,6 @@ import { DefaultStyles } from '../diagramDefaults';
 import { ReferenceLayer } from '../diagramLayerReference';
 import { RuleLayer } from '../diagramLayerRule';
 import { DataProviderRegistry } from '../dataProvider';
-import { DiagramDocumentDataTemplates } from '../diagramDocumentDataTemplates';
 
 const isNodeDef = (element: SerializedElement | SerializedLayer): element is SerializedNode =>
   element.type === 'node';
@@ -205,7 +204,7 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
 
   if (document.schemas) {
     for (const schema of document.schemas) {
-      doc.schemas.addSchema(schema);
+      doc.data.schemas.add(schema);
     }
   }
 
@@ -222,13 +221,13 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
   if (document.data?.providerId) {
     const provider = DataProviderRegistry.get(document.data.providerId);
     if (provider) {
-      doc.dataProvider = provider(document.data.data!);
+      doc.data.provider = provider(document.data.data!);
     } else {
       console.warn(`Provider ${document.data.providerId} not found`);
     }
   }
 
-  doc.dataTemplates = new DiagramDocumentDataTemplates(doc, document.dataTemplates);
+  doc.data.templates.replaceBy(document.data?.templates ?? []);
 
   return doc;
 };

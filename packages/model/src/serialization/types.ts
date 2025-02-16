@@ -51,8 +51,8 @@ export interface SerializedDiagramDocument {
   data?: {
     providerId?: string;
     data?: string;
+    templates: DataTemplate[];
   };
-  dataTemplates: DataTemplate[];
 }
 
 export interface SerializedStyles {

@@ -55,8 +55,8 @@ const DefaultDataProviderSettings = (_props: ProviderSettingsProps<DefaultDataPr
 export function DataProviderSettingsDialog(props: { onClose: () => void; open: boolean }) {
   const document = useDocument();
   const [provider, setProvider] = useState<DataProvider | undefined>(
-    document.dataProvider
-      ? DataProviderRegistry.get(document.dataProvider.id)!(document.dataProvider.serialize())
+    document.data.provider
+      ? DataProviderRegistry.get(document.data.provider.id)!(document.data.provider.serialize())
       : undefined
   );
   const [providers, setProviders] = useState<Record<string, DataProvider | undefined>>({
@@ -72,7 +72,7 @@ export function DataProviderSettingsDialog(props: { onClose: () => void; open: b
           label: 'Close',
           onClick: e => {
             if (provider === undefined) {
-              document.dataProvider = provider;
+              document.data.provider = provider;
               props.onClose();
             } else {
               e.preventDefault();
@@ -80,7 +80,7 @@ export function DataProviderSettingsDialog(props: { onClose: () => void; open: b
               const error = provider.verifySettings();
               error.then(f => {
                 if (!f) {
-                  document.dataProvider = provider;
+                  document.data.provider = provider;
                   props.onClose();
                 } else {
                   setErrorMessage(f);

@@ -1,6 +1,5 @@
 import { DiagramPalette } from './diagramPalette';
 import { DiagramStyles } from './diagramStyles';
-import { DataSchema, DiagramDocumentDataSchemas } from './diagramDocumentDataSchemas';
 import { Diagram, diagramIterator, DiagramIteratorOpts } from './diagram';
 import { AttachmentConsumer, AttachmentManager } from './attachment';
 import { EventEmitter } from '@diagram-craft/utils/event';
@@ -9,16 +8,12 @@ import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinit
 import { precondition } from '@diagram-craft/utils/assert';
 import { isNode } from './diagramElement';
 import { UnitOfWork } from './unitOfWork';
-import { Data, DataProvider, DataProviderRegistry } from './dataProvider';
+import { DataProviderRegistry } from './dataProvider';
 import { DefaultDataProvider, DefaultDataProviderId } from './dataProviderDefault';
 import { UrlDataProvider, UrlDataProviderId } from './dataProviderUrl';
 import { Generators } from '@diagram-craft/utils/generator';
-import { deepEquals } from '@diagram-craft/utils/object';
 import { SerializedElement } from './serialization/types';
-import { DiagramDocumentDataTemplates } from './diagramDocumentDataTemplates';
-
-const byUid = (uid: string) => (dt: ElementDataEntry) =>
-  dt.type === 'external' && dt.external?.uid === uid;
+import { DiagramDocumentData } from './diagramDocumentData';
 
 export type DocumentEvents = {
   diagramchanged: { after: Diagram };
@@ -39,85 +34,6 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
   styles = new DiagramStyles(this);
 
   // TODO: To be loaded from file
-  schemas = new DiagramDocumentDataSchemas(this, [
-    {
-      id: 'default',
-      name: 'Default',
-      source: 'document',
-      fields: [
-        {
-          id: 'name',
-          name: 'Name',
-          type: 'text'
-        },
-        {
-          id: 'notes',
-          name: 'Notes',
-          type: 'longtext'
-        }
-      ]
-    }
-  ]);
-
-  #dataProvider: DataProvider | undefined;
-
-  #dataProviderUpdateDataListener = (data: { data: Data[] }) => {
-    for (const d of this.diagramIterator({ nest: true })) {
-      const uow = new UnitOfWork(d);
-      for (const e of d.allElements()) {
-        const externalData = e.metadata.data?.data?.filter(d => d.type === 'external') ?? [];
-        if (externalData.length === 0) continue;
-
-        for (const dt of data.data) {
-          const predicate = byUid(dt._uid);
-          const existing = externalData.find(predicate);
-          if (existing && !deepEquals<unknown>(existing, dt)) {
-            e.updateMetadata(cb => {
-              const toUpdate = cb.data!.data!.find(predicate)!;
-              toUpdate.data = dt;
-            }, uow);
-          }
-        }
-      }
-      uow.commit();
-    }
-  };
-
-  #dataProviderDeleteDataListener = (data: { data: Data[] }) => {
-    for (const d of this.diagramIterator({ nest: true })) {
-      const uow = new UnitOfWork(d);
-      for (const e of d.allElements()) {
-        const externalData = e.metadata.data?.data?.filter(d => d.type === 'external') ?? [];
-        if (externalData.length === 0) continue;
-
-        for (const dt of data.data) {
-          const predicate = byUid(dt._uid);
-          const existing = externalData.find(predicate);
-          if (existing && !deepEquals<unknown>(existing, dt)) {
-            e.updateMetadata(cb => {
-              cb.data ??= {};
-              cb.data!.data = cb.data?.data?.filter(dt => !predicate(dt));
-            }, uow);
-          }
-        }
-      }
-      uow.commit();
-    }
-  };
-
-  #dataProviderDeleteSchemaListener = (s: DataSchema) => {
-    this.schemas.removeSchema(s, UnitOfWork.immediate(this.#diagrams[0]));
-  };
-
-  #dataProviderUpdateSchemaListener = (s: DataSchema) => {
-    if (this.schemas.has(s.id)) {
-      this.schemas.changeSchema(s);
-    } else {
-      this.schemas.addSchema(s);
-    }
-  };
-
-  // TODO: To be loaded from file
   props: DocumentProps = {
     query: {
       saved: [
@@ -130,13 +46,15 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
   #diagrams: Diagram[] = [];
 
   url: string | undefined;
-  dataTemplates = new DiagramDocumentDataTemplates(this);
+
+  readonly data: DiagramDocumentData;
 
   constructor(
     public readonly nodeDefinitions: NodeDefinitionRegistry,
     public readonly edgeDefinitions: EdgeDefinitionRegistry
   ) {
     super();
+    this.data = new DiagramDocumentData(this);
   }
 
   // TODO: Consider moving all of this to a DataTemplates class, with methods
@@ -155,30 +73,6 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
 
   *diagramIterator(opts: DiagramIteratorOpts = {}) {
     yield* diagramIterator(this.#diagrams, opts);
-  }
-
-  get dataProvider() {
-    return this.#dataProvider;
-  }
-
-  set dataProvider(dataProvider: DataProvider | undefined) {
-    this.#dataProvider?.off?.('addData', this.#dataProviderUpdateDataListener);
-    this.#dataProvider?.off?.('updateData', this.#dataProviderUpdateDataListener);
-    this.#dataProvider?.off?.('deleteData', this.#dataProviderDeleteDataListener);
-    this.#dataProvider?.off?.('addSchema', this.#dataProviderUpdateSchemaListener);
-    this.#dataProvider?.off?.('updateSchema', this.#dataProviderUpdateSchemaListener);
-    this.#dataProvider?.off?.('deleteSchema', this.#dataProviderDeleteSchemaListener);
-
-    this.#dataProvider = dataProvider;
-
-    if (this.#dataProvider) {
-      this.#dataProvider.on('addData', this.#dataProviderUpdateDataListener);
-      this.#dataProvider.on('updateData', this.#dataProviderUpdateDataListener);
-      this.#dataProvider.on('deleteData', this.#dataProviderDeleteDataListener);
-      this.#dataProvider.on('addSchema', this.#dataProviderUpdateSchemaListener);
-      this.#dataProvider.on('updateSchema', this.#dataProviderUpdateSchemaListener);
-      this.#dataProvider.on('deleteSchema', this.#dataProviderDeleteSchemaListener);
-    }
   }
 
   getById(id: string) {

@@ -169,7 +169,7 @@ export const ObjectDataToolWindow = () => {
   );
 
   const saveSchema = useCallback((s: DataSchema) => {
-    const schemas = $d.document.schemas;
+    const schemas = $d.document.data.schemas;
     const isNew = schemas.get(s.id).id === '';
     if (isNew) {
       $d.undoManager.addAndExecute(new AddSchemaUndoableAction($d, s));
@@ -233,7 +233,7 @@ export const ObjectDataToolWindow = () => {
                       Schemas
                     </h2>
                     <div className={'cmp-schema-selector__schemas'}>
-                      {$d.document.schemas.all.map(s => (
+                      {$d.document.data.schemas.all.map(s => (
                         <div key={s.id} className={'cmp-schema-selector__schema'}>
                           <Checkbox
                             value={schemas.includes(s.id)}
@@ -278,8 +278,8 @@ export const ObjectDataToolWindow = () => {
                                       },
                                       () => {
                                         const uow = new UnitOfWork($d, true);
-                                        const schemas = $d.document.schemas;
-                                        schemas.removeSchema(s, uow);
+                                        const schemas = $d.document.data.schemas;
+                                        schemas.removeAndClearUsage(s, uow);
 
                                         const snapshots = uow.commit();
                                         $d.undoManager.add(
@@ -338,7 +338,7 @@ export const ObjectDataToolWindow = () => {
               {schemas.map(schemaName => {
                 if (schemaName === undefined) return undefined;
 
-                const schema = $d.document.schemas.get(schemaName!);
+                const schema = $d.document.data.schemas.get(schemaName!);
 
                 const isExternal = $d.selectionState.elements.some(e => {
                   return (

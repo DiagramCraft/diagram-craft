@@ -42,11 +42,11 @@ export const serializeDiagramDocument = async (
     attachments: await serializeAttachments(document.attachments),
     customPalette: serializeCustomPalette(document.customPalette),
     styles: serializeStyles(document.styles),
-    schemas: serializeSchemas(document.schemas),
-    dataTemplates: document.dataTemplates.all(),
+    schemas: serializeSchemas(document.data.schemas),
     data: {
-      providerId: document.dataProvider?.id,
-      data: document.dataProvider?.serialize()
+      providerId: document.data.provider?.id,
+      data: document.data.provider?.serialize(),
+      templates: document.data.templates.all()
     }
   };
 };

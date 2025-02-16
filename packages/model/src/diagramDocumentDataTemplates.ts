@@ -1,31 +1,41 @@
-import { DataTemplate, DiagramDocument } from './diagramDocument';
+import { DataTemplate } from './diagramDocument';
+import { EventEmitter } from '@diagram-craft/utils/event';
+import { assert } from '@diagram-craft/utils/assert';
 
-export class DiagramDocumentDataTemplates {
+export class DiagramDocumentDataTemplates extends EventEmitter<{
+  update: { template: DataTemplate };
+  add: { template: DataTemplate };
+  remove: { template: DataTemplate };
+}> {
   #dataProviderTemplates: DataTemplate[] = [];
-  #diagramDocument: DiagramDocument;
 
-  constructor(diagramDocument: DiagramDocument, templates?: DataTemplate[]) {
-    this.#diagramDocument = diagramDocument;
+  constructor(templates?: DataTemplate[]) {
+    super();
     this.#dataProviderTemplates = templates ?? [];
   }
 
   add(template: DataTemplate) {
     this.#dataProviderTemplates.push(template);
-    this.notify();
+    this.emit('add', { template });
   }
 
   remove(template: DataTemplate | string) {
+    const tpl = this.#dataProviderTemplates.find(
+      t => t.id === (typeof template === 'string' ? template : template.id)
+    );
     const idx = this.#dataProviderTemplates.findIndex(
       t => t.id === (typeof template === 'string' ? template : template.id)
     );
     if (idx !== -1) {
       this.#dataProviderTemplates.splice(idx, 1);
+
+      assert.present(tpl);
+      this.emit('remove', { template: tpl });
     }
-    this.notify();
   }
 
   update(_template: DataTemplate) {
-    this.notify();
+    this.emit('update', { template: _template });
   }
 
   all() {
@@ -40,9 +50,8 @@ export class DiagramDocumentDataTemplates {
     return this.#dataProviderTemplates.filter(t => t.schemaId === schema);
   }
 
-  private notify() {
-    for (const d of this.#diagramDocument.diagramIterator({ nest: true })) {
-      d.emit('change');
-    }
+  replaceBy(templates: DataTemplate[]) {
+    this.#dataProviderTemplates = templates ?? [];
+    // TODO: Should we emit events here?
   }
 }

@@ -46,7 +46,7 @@ export const SelectionContextMenu = () => {
       </ContextMenu.Sub>
       <ContextMenu.Separator className="cmp-context-menu__separator" />
 
-      {diagram.document.dataProvider !== undefined &&
+      {diagram.document.data.provider !== undefined &&
         diagram.selectionState.getSelectionType() === 'single-node' && (
           <>
             <ContextMenu.Sub>
@@ -62,7 +62,7 @@ export const SelectionContextMenu = () => {
                   sideOffset={2}
                   alignOffset={-5}
                 >
-                  {diagram.document.dataProvider.schemas.map(schema => {
+                  {diagram.document.data.provider.schemas.map(schema => {
                     return (
                       <ContextMenu.Sub key={schema.id}>
                         <ContextMenu.SubTrigger className="cmp-context-menu__sub-trigger">

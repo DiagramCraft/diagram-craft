@@ -3,6 +3,7 @@ import { UnitOfWork } from './unitOfWork';
 import { UndoableAction } from './undoManager';
 import { Diagram } from './diagram';
 import { deepClone } from '@diagram-craft/utils/object';
+import { EventEmitter } from '@diagram-craft/utils/event';
 
 type DataSchemaField = {
   id: string;
@@ -17,13 +18,18 @@ export type DataSchema = {
   fields: DataSchemaField[];
 };
 
-export class DiagramDocumentDataSchemas {
+export class DiagramDocumentDataSchemas extends EventEmitter<{
+  update: { schema: DataSchema };
+  add: { schema: DataSchema };
+  remove: { schema: DataSchema };
+}> {
   #schemas: DataSchema[] = [];
 
   constructor(
     private readonly document: DiagramDocument,
     schemas?: DataSchema[]
   ) {
+    super();
     this.#schemas = schemas ?? [];
   }
 
@@ -41,19 +47,31 @@ export class DiagramDocumentDataSchemas {
     return this.#schemas.find(s => s.id === id);
   }
 
-  addSchema(schema: DataSchema) {
+  add(schema: DataSchema) {
     if (this.#schemas.find(s => s.id === schema.id)) {
-      this.changeSchema(schema);
+      this.update(schema);
+      this.emit('update', { schema });
     } else {
       this.#schemas.push(schema);
+      this.emit('add', { schema });
     }
   }
 
-  removeSchema(schema: DataSchema, uow: UnitOfWork) {
+  /**
+   * @deprecated Avoid using as it doesn't clear usage of schema in existing elements.
+   *             Please use removeAndClearUsage instead
+   * @param schema
+   */
+  remove(schema: DataSchema) {
     const idx = this.#schemas.indexOf(schema);
     if (idx !== -1) {
       this.#schemas.splice(idx, 1);
+      this.emit('remove', { schema });
     }
+  }
+
+  removeAndClearUsage(schema: DataSchema, uow: UnitOfWork) {
+    this.remove(schema);
 
     for (const diagram of this.document.diagramIterator({ nest: true })) {
       for (const e of diagram.allElements()) {
@@ -68,10 +86,11 @@ export class DiagramDocumentDataSchemas {
     }
   }
 
-  changeSchema(schema: DataSchema) {
+  update(schema: DataSchema) {
     const dest = this.get(schema.id);
     dest.name = schema.name;
     dest.fields = schema.fields;
+    this.emit('update', { schema });
   }
 }
 
@@ -84,11 +103,11 @@ export class DeleteSchemaUndoableAction implements UndoableAction {
   ) {}
 
   undo(uow: UnitOfWork) {
-    this.diagram.document.schemas.removeSchema(this.schema, uow);
+    this.diagram.document.data.schemas.removeAndClearUsage(this.schema, uow);
   }
 
   redo() {
-    this.diagram.document.schemas.addSchema(this.schema);
+    this.diagram.document.data.schemas.add(this.schema);
   }
 }
 
@@ -101,11 +120,11 @@ export class AddSchemaUndoableAction implements UndoableAction {
   ) {}
 
   undo(uow: UnitOfWork) {
-    this.diagram.document.schemas.removeSchema(this.schema, uow);
+    this.diagram.document.data.schemas.removeAndClearUsage(this.schema, uow);
   }
 
   redo() {
-    this.diagram.document.schemas.addSchema(this.schema);
+    this.diagram.document.data.schemas.add(this.schema);
   }
 }
 
@@ -120,14 +139,14 @@ export class ModifySchemaUndoableAction implements UndoableAction {
     schema: DataSchema
   ) {
     this.schema = deepClone(schema);
-    this.oldSchema = deepClone(this.diagram.document.schemas.get(schema.id));
+    this.oldSchema = deepClone(this.diagram.document.data.schemas.get(schema.id));
   }
 
   undo() {
-    this.diagram.document.schemas.changeSchema(this.oldSchema);
+    this.diagram.document.data.schemas.update(this.oldSchema);
   }
 
   redo() {
-    this.diagram.document.schemas.changeSchema(this.schema);
+    this.diagram.document.data.schemas.update(this.schema);
   }
 }

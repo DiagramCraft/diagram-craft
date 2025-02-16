@@ -124,7 +124,7 @@ const DataProviderResponse = (props: {
   return (
     <div className={'cmp-query-response'}>
       {data?.map(item => {
-        const dataTemplates = document.dataTemplates.bySchema(schema.id);
+        const dataTemplates = document.data.templates.bySchema(schema.id);
         return (
           <div
             key={item._uid}
@@ -295,7 +295,7 @@ export const DataToolWindow = () => {
   const document = $diagram.document;
   const [search, setSearch] = useState<string>('');
 
-  const dataProvider = document.dataProvider;
+  const dataProvider = document.data.provider;
 
   useEffect(() => {
     if (!dataProvider) return;
@@ -324,7 +324,7 @@ export const DataToolWindow = () => {
     setSelectedSchema(dataProvider.schemas[0].id);
   }
 
-  const provider = document.dataProvider;
+  const provider = document.data.provider;
 
   return (
     <>

@@ -19,8 +19,8 @@ export const ExternalDataLinkDialog = (props: Props) => {
   const data = !props.open
     ? []
     : activeQuery !== undefined && activeQuery.trim() !== ''
-      ? $d.dataProvider?.queryData(props.schema, activeQuery)
-      : $d.dataProvider?.getData(props.schema);
+      ? $d.data.provider?.queryData(props.schema, activeQuery)
+      : $d.data.provider?.getData(props.schema);
 
   return (
     <Dialog
