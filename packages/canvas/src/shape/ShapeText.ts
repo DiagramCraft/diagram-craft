@@ -7,7 +7,7 @@ import { Box } from '@diagram-craft/geometry/box';
 import { DeepReadonly, FlatObject } from '@diagram-craft/utils/types';
 import { HTMLParser, stripTags } from '@diagram-craft/utils/html';
 import { hash64 } from '@diagram-craft/utils/hash';
-import { applyTemplate } from '@diagram-craft/model/template';
+import { applyLineBreaks, applyTemplate } from '@diagram-craft/model/template';
 import { HTMLToSvgTransformer, SvgTextHelper } from './svgTextUtils';
 
 const VALIGN_TO_FLEX_JUSTIFY = {
@@ -41,6 +41,8 @@ const requiresForeignObject = (s: string) => {
   return s.includes('<table') || s.includes('<hr');
 };
 
+const RAW_TEXT_DATA_ATTR = 'raw';
+
 export class ShapeText extends Component<ShapeTextProps> {
   private width: number = 0;
   private height: number = 0;
@@ -53,6 +55,8 @@ export class ShapeText extends Component<ShapeTextProps> {
       console.warn('editable not found');
       return;
     }
+
+    editable.innerHTML = editable.dataset[RAW_TEXT_DATA_ATTR]!;
 
     editable.contentEditable = 'true';
     editable.style.pointerEvents = 'auto';
@@ -138,6 +142,7 @@ export class ShapeText extends Component<ShapeTextProps> {
             {
               class: 'svg-node__text',
               style: styleString,
+              [`data-${RAW_TEXT_DATA_ATTR}`]: applyLineBreaks(props.text),
               on: {
                 paste: (e: ClipboardEvent) => {
                   const data = e.clipboardData!.getData('text/html');
@@ -148,7 +153,7 @@ export class ShapeText extends Component<ShapeTextProps> {
                 keydown: (e: KeyboardEvent) => {
                   const target = e.target as HTMLElement;
                   if (e.key === 'Escape') {
-                    target.innerText = props.text ?? '';
+                    target.innerHTML = applyLineBreaks(target.dataset[RAW_TEXT_DATA_ATTR]);
                     target.blur();
                   } else if (e.key === 'Enter' && e.metaKey) {
                     target.blur();
@@ -160,7 +165,11 @@ export class ShapeText extends Component<ShapeTextProps> {
                   const target = e.target as HTMLElement;
                   target.contentEditable = 'false';
                   target.style.pointerEvents = 'none';
+
+                  target.dataset[RAW_TEXT_DATA_ATTR] = target.innerHTML;
                   props.onChange(target.innerHTML);
+
+                  target.innerHTML = applyTemplate(target.innerHTML, metadata, true);
 
                   updateBounds(target.offsetWidth, target.offsetHeight);
                 }
@@ -180,7 +189,7 @@ export class ShapeText extends Component<ShapeTextProps> {
                 }
               }
             },
-            [rawHTML(applyTemplate((props.text ?? '').replaceAll('\n', '<br>'), metadata))]
+            [rawHTML(applyTemplate(props.text, metadata, true))]
           )
         ]
       )
