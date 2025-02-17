@@ -14,6 +14,8 @@ import { DataTemplate } from '@diagram-craft/model/diagramDocument';
 import { newid } from '@diagram-craft/utils/id';
 import { serializeDiagramElement } from '@diagram-craft/model/serialization/serialize';
 import { AbstractAction } from '@diagram-craft/canvas/action';
+import { makeUndoableAction } from '@diagram-craft/model/undoManager';
+import { deepClone } from '@diagram-craft/utils/object';
 
 export const externalDataActions = (application: Application) => ({
   EXTERNAL_DATA_UNLINK: new ExternalDataUnlinkAction(application),
@@ -205,7 +207,15 @@ export class ExternalDataMakeTemplateAction extends AbstractSelectionAction<
             this.context.model.activeDiagram.selectionState.elements[0]
           )
         };
-        this.context.model.activeDocument.data.templates.add(template);
+
+        const $d = this.context.model.activeDiagram;
+        const $doc = this.context.model.activeDocument;
+        $d.undoManager.addAndExecute(
+          makeUndoableAction('Create template', {
+            redo: () => $doc.data.templates.add(template),
+            undo: () => $doc.data.templates.remove(template.id)
+          })
+        );
       }
     });
   }
@@ -216,8 +226,18 @@ export class ExternalDataLinkRemoveTemplate extends AbstractAction<
   Application
 > {
   execute(arg: Partial<{ templateId: string }>): void {
-    this.context.model.activeDocument.data.templates.remove(arg.templateId!);
-    this.context.model.activeDiagram.update();
+    const $d = this.context.model.activeDiagram;
+    const $doc = this.context.model.activeDocument;
+
+    const template = $doc.data.templates.byId(arg.templateId!);
+    assert.present(template);
+
+    $d.undoManager.addAndExecute(
+      makeUndoableAction('Remove template', {
+        redo: () => $doc.data.templates.remove(arg.templateId!),
+        undo: () => $doc.data.templates.add(template)
+      })
+    );
   }
 }
 
@@ -226,8 +246,13 @@ export class ExternalDataLinkRenameTemplate extends AbstractAction<
   Application
 > {
   execute(arg: Partial<{ templateId: string }>): void {
-    const template = this.context.model.activeDocument.data.templates.byId(arg.templateId!);
+    const $d = this.context.model.activeDiagram;
+    const $doc = this.context.model.activeDocument;
+
+    const template = $doc.data.templates.byId(arg.templateId!);
     assert.present(template);
+
+    const oldTemplate = deepClone(template);
 
     this.context.ui.showDialog({
       id: 'stringInput',
@@ -241,9 +266,14 @@ export class ExternalDataLinkRenameTemplate extends AbstractAction<
       onCancel: () => {},
       onOk: (v: string) => {
         template.name = v;
-        this.context.model.activeDocument.data.templates.update(template);
+
+        $d.undoManager.addAndExecute(
+          makeUndoableAction('Rename template', {
+            redo: () => $doc.data.templates.update(template),
+            undo: () => $doc.data.templates.update(oldTemplate)
+          })
+        );
       }
     });
-    this.context.model.activeDiagram.update();
   }
 }

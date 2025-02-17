@@ -1,7 +1,18 @@
 import { UnitOfWork } from './unitOfWork';
 import { Diagram } from './diagram';
 import { EventEmitter } from '@diagram-craft/utils/event';
-import { assert } from '@diagram-craft/utils/assert';
+import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+
+export const makeUndoableAction = (
+  description: string,
+  props: { undo: (uow: UnitOfWork) => void; redo: (uow: UnitOfWork) => void }
+): UndoableAction => {
+  return {
+    description,
+    undo: props.undo,
+    redo: props.redo
+  };
+};
 
 export type UndoableAction = {
   undo: (uow: UnitOfWork) => void;
@@ -15,6 +26,8 @@ export type UndoableAction = {
 
 export class CompoundUndoableAction implements UndoableAction {
   private readonly actions: UndoableAction[];
+
+  name: string | undefined;
 
   constructor(actions?: UndoableAction[]) {
     this.actions = actions ?? [];
@@ -95,12 +108,17 @@ export class UndoManager extends EventEmitter<UndoEvents> {
     }
     actions.reverse();
 
+    if (actions.length === 0) return;
     this.add(new CompoundUndoableAction(actions));
   }
 
   add(action: UndoableAction) {
     if (this.undoableActions.at(-1)?.merge?.(action)) {
       return;
+    }
+
+    if (action instanceof CompoundUndoableAction && !action.hasActions()) {
+      VERIFY_NOT_REACHED();
     }
 
     action.timestamp = new Date();
