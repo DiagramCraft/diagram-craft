@@ -33,6 +33,7 @@ export type SerializedDiagram = {
   id: string;
   name: string;
   layers: ReadonlyArray<SerializedLayer>;
+  activeLayerId?: string;
   diagrams: ReadonlyArray<SerializedDiagram>;
   zoom?: {
     x: number;

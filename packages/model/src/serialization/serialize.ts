@@ -91,6 +91,7 @@ export const serializeDiagram = (diagram: Diagram): SerializedDiagram => {
     id: diagram.id,
     name: diagram.name,
     layers: diagram.layers.all.map(l => serializeLayer(l)),
+    activeLayerId: diagram.activeLayer.id,
     diagrams: diagram.diagrams.map(d => serializeDiagram(d)),
     zoom: {
       x: diagram.viewBox.offset.x,

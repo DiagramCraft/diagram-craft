@@ -281,6 +281,13 @@ const deserializeDiagrams = <T extends Diagram>(
       }
     }
 
+    if ($d.activeLayerId) {
+      const l = newDiagram.layers.byId($d.activeLayerId);
+      if (l) {
+        newDiagram.layers.active = l;
+      }
+    }
+
     if ($d.zoom) {
       newDiagram.viewBox.zoom($d.zoom.zoom);
       newDiagram.viewBox.pan({ x: $d.zoom.x, y: $d.zoom.y });
