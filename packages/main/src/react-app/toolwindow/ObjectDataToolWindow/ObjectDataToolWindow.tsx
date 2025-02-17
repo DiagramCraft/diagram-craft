@@ -184,8 +184,10 @@ export const ObjectDataToolWindow = () => {
   ).toSorted();
 
   // Get all schemas from all selected elements
-  const schemas = $d.selectionState.elements.flatMap(e =>
-    e.metadata.data?.data?.filter(d => d.enabled).map(d => d.schema)
+  const schemas = unique(
+    $d.selectionState.elements.flatMap(e =>
+      e.metadata.data?.data?.filter(d => d.enabled).map(d => d.schema)
+    )
   );
 
   if ($d.selectionState.elements.length === 0)
