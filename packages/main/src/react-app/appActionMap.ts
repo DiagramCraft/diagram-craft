@@ -12,12 +12,14 @@ import { tableInsertActions } from './actions/tableInsertAction';
 import { Application } from '../application';
 import { toolActions } from '../toolAction';
 import { externalDataActions } from './actions/externalDataActions';
+import { previewActions } from './actions/previewAction';
 
 export const defaultAppActions: ActionMapFactory<Application> = application => ({
   ...toolActions(application),
   ...defaultCanvasActions(application),
   ...toggleHelpActions(application),
   ...toggleDarkModeActions(application),
+  ...previewActions(application),
   ...zoomActions(application),
   ...sidebarActions(application),
   ...fileOpenActions(application),

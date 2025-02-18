@@ -55,13 +55,14 @@ import { MainToolbar } from './react-app/MainToolbar';
 import { AuxToolbar } from './react-app/AuxToolbar';
 import { RightSidebar } from './react-app/RightSidebar';
 import { LeftSidebar } from './react-app/LeftSidebar';
-import { Application, ApplicationContext } from './application';
+import { Application, ApplicationContext, ApplicationUIActions } from './application';
 import { UserState } from './UserState';
 import { HelpState } from './react-app/HelpState';
 import { JSONDialog } from './react-app/components/JSONDialog';
 import { CanvasOutline } from './react-app/CanvasOutline';
 import { bindDocumentDragAndDrop } from '@diagram-craft/canvas/dragDropManager';
 import { ExternalDataLinkDialog } from './react-app/components/ExternalDataLinkDialog';
+import { Preview } from './react-app/Preview';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -104,6 +105,7 @@ export const App = (props: {
 }) => {
   const redraw = useRedraw();
   const helpState = useRef(new HelpState());
+  const [preview, setPreview] = useState<boolean>(false);
 
   const userState = useRef(new UserState());
   const application = useRef(new Application());
@@ -127,7 +129,7 @@ export const App = (props: {
     }
   };
 
-  const uiActions: UIActions = {
+  const uiActions: ApplicationUIActions = {
     showContextMenu: <T extends keyof UIActions.ContextMenus>(
       type: T,
       point: Point,
@@ -159,7 +161,8 @@ export const App = (props: {
           setDialogState(undefined);
         }
       });
-    }
+    },
+    showPreview: () => setPreview(true)
   };
   application.current.ui = uiActions;
   application.current.help = help;
@@ -409,6 +412,8 @@ export const App = (props: {
 
           <HelpMessage helpState={helpState.current} />
         </div>
+
+        {preview && <Preview onClose={() => setPreview(false)} />}
       </ConfigurationContext.Provider>
     </ApplicationContext.Provider>
   );

@@ -1,0 +1,38 @@
+.preview {
+  position: absolute;
+  background: var(--canvas-bg);
+  top: 10px;
+  right: 10px;
+  bottom: 10px;
+  left: 10px;
+
+  .preview__tools {
+    position: absolute;
+    right: 15px;
+    top: 10px;
+    button {
+      margin-left: 0.5rem;
+      color: black;
+      svg {
+        width: 1.5rem;
+        height: 1.5rem;
+      }
+    }
+
+    z-index: 1000;
+  }
+
+  .preview__canvas {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+
+    > div {
+      position: absolute;
+      inset: 0;
+    }
+  }
+}
+
