@@ -1,8 +1,8 @@
 import { useDiagram } from '../application';
 import styles from './Preview.module.css';
-import { TbWindowMaximize, TbX } from 'react-icons/tb';
+import { TbWindowMaximize, TbWindowMinimize, TbX } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Canvas } from '@diagram-craft/canvas-react/Canvas';
 
 type Props = {
@@ -11,6 +11,7 @@ type Props = {
 
 export const Preview = (props: Props) => {
   const diagram = useDiagram();
+  const [isFullScreen, setIsFullScreen] = useState(false);
 
   useEffect(() => {
     const cb = (e: KeyboardEvent) => {
@@ -25,12 +26,45 @@ export const Preview = (props: Props) => {
   }, []);
 
   return (
-    <div className={styles.preview}>
+    <div className={styles.preview} id={'preview'}>
       <div className={styles.previewTools}>
-        <Button type={'icon-only'} onClick={props.onClose}>
-          <TbWindowMaximize />
-        </Button>
-        <Button type={'icon-only'} onClick={props.onClose}>
+        {!isFullScreen && (
+          <Button
+            type={'icon-only'}
+            onClick={() => {
+              document.getElementById('preview')?.requestFullscreen();
+              setIsFullScreen(true);
+            }}
+          >
+            <TbWindowMaximize />
+          </Button>
+        )}
+        {isFullScreen && (
+          <Button
+            type={'icon-only'}
+            onClick={async () => {
+              try {
+                await document.exitFullscreen();
+                setIsFullScreen(false);
+              } catch (e) {
+                // Ignore
+              }
+            }}
+          >
+            <TbWindowMinimize />
+          </Button>
+        )}
+        <Button
+          type={'icon-only'}
+          onClick={async () => {
+            try {
+              await document.exitFullscreen();
+            } catch (e) {
+              // Ignore
+            }
+            props.onClose();
+          }}
+        >
           <TbX />
         </Button>
       </div>
