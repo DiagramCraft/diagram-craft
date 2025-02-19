@@ -8,7 +8,7 @@ import { useApplication, useDiagram } from '../../../application';
 import { DRAG_DROP_MANAGER } from '@diagram-craft/canvas/dragDropManager';
 import { ObjectPickerDrag } from './ObjectPickerDrag';
 
-const NODE_CACHE = new Map<string, [Diagram, DiagramNode]>();
+const NODE_CACHE = new Map<string, [Diagram, DiagramNode, DiagramNode]>();
 
 const makeDiagramNode = (mainDiagram: Diagram, n: Stencil, pkg: string) => {
   const cacheKey = pkg + '/' + n.id;
@@ -17,14 +17,26 @@ const makeDiagramNode = (mainDiagram: Diagram, n: Stencil, pkg: string) => {
     return NODE_CACHE.get(cacheKey)!;
   }
 
-  const { node, diagram } = Diagram.createForNode(d => n.node(d), mainDiagram.document.definitions);
+  const { node: stencilNode, diagram: stencilDiagram } = Diagram.createForNode(
+    d => n.node(d),
+    mainDiagram.document.definitions
+  );
+  stencilDiagram.viewBox.dimensions = {
+    w: stencilNode.bounds.w + 10,
+    h: stencilNode.bounds.h + 10
+  };
+  stencilDiagram.viewBox.offset = { x: -5, y: -5 };
 
-  diagram.viewBox.dimensions = { w: node.bounds.w + 10, h: node.bounds.h + 10 };
-  diagram.viewBox.offset = { x: -5, y: -5 };
+  const { node: canvasNode, diagram: canvasDiagram } = Diagram.createForNode(
+    d => n.canvasNode(d),
+    mainDiagram.document.definitions
+  );
+  canvasDiagram.viewBox.dimensions = { w: canvasNode.bounds.w + 10, h: canvasNode.bounds.h + 10 };
+  canvasDiagram.viewBox.offset = { x: -5, y: -5 };
 
-  NODE_CACHE.set(cacheKey, [diagram, node]);
+  NODE_CACHE.set(cacheKey, [stencilDiagram, stencilNode, canvasNode]);
 
-  return [diagram, node] as const;
+  return [stencilDiagram, stencilNode, canvasNode] as const;
 };
 
 export const ObjectPicker = (props: Props) => {
@@ -39,7 +51,7 @@ export const ObjectPicker = (props: Props) => {
 
   return (
     <div className={'cmp-object-picker'}>
-      {diagrams.map(([d, node], idx) => (
+      {diagrams.map(([d, node, canvasNode], idx) => (
         <div key={d.id} style={{ background: 'transparent' }} data-width={d.viewBox.dimensions.w}>
           <PickerCanvas
             width={props.size}
@@ -57,7 +69,7 @@ export const ObjectPicker = (props: Props) => {
               if (!isRegularLayer(diagram.activeLayer)) return;
 
               setShowHover(false);
-              DRAG_DROP_MANAGER.initiate(new ObjectPickerDrag(ev, node, diagram, app), () =>
+              DRAG_DROP_MANAGER.initiate(new ObjectPickerDrag(ev, canvasNode, diagram, app), () =>
                 setShowHover(true)
               );
             }}

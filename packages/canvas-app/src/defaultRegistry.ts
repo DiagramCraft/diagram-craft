@@ -52,7 +52,6 @@ export const defaultNodeRegistry = () => {
     props: mode => ({
       custom: {
         roundedRect: {
-          // TODO: The mode switch doesn't work
           radius: mode === 'picker' ? 20 : 10
         }
       }

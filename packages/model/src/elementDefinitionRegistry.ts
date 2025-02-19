@@ -242,7 +242,8 @@ export type MakeStencilNodeOpts = {
 export type MakeStencilNodeOptsProps = (t: 'picker' | 'canvas') => Partial<NodeProps>;
 
 export const makeStencilNode =
-  (type: string | NodeDefinition, opts?: MakeStencilNodeOpts) => ($d: Diagram) => {
+  (type: string | NodeDefinition, t: 'picker' | 'canvas', opts?: MakeStencilNodeOpts) =>
+  ($d: Diagram) => {
     const typeId = isNodeDefinition(type) ? type.type : type;
 
     const n = new DiagramNode(
@@ -254,7 +255,7 @@ export const makeStencilNode =
       ),
       $d,
       $d.activeLayer,
-      opts?.props?.('picker') ?? {},
+      opts?.props?.(t) ?? {},
       opts?.metadata ?? {},
       opts?.texts
     );
@@ -278,10 +279,12 @@ export const registerStencil = (
   def: NodeDefinition,
   opts?: MakeStencilNodeOpts
 ) => {
+  reg.register(def);
   pkg.stencils.push({
     id: opts?.id ?? def.type,
     name: opts?.name ?? def.name,
-    node: makeStencilNode(reg.register(def), opts)
+    node: makeStencilNode(def, 'picker', opts),
+    canvasNode: makeStencilNode(def, 'canvas', opts)
   });
 };
 
@@ -289,6 +292,7 @@ export type Stencil = {
   id: string;
   name?: string;
   node: (diagram: Diagram) => DiagramNode;
+  canvasNode: (diagram: Diagram) => DiagramNode;
 };
 
 export type StencilPackage = {
@@ -345,32 +349,34 @@ export class StencilRegistry extends EventEmitter<StencilEvents> {
 export const loadStencilsFromYaml = (stencils: any) => {
   const dest: Array<Stencil> = [];
   for (const stencil of stencils.stencils) {
+    const mkNode = (diagram: Diagram) => {
+      const uow = UnitOfWork.immediate(diagram);
+
+      const dest = new Diagram(
+        newid(),
+        stencil.name,
+        new DiagramDocument(diagram.document.nodeDefinitions, diagram.document.edgeDefinitions)
+      );
+
+      const layer = new RegularLayer('default', 'Default', [], dest);
+      dest.layers.add(layer, uow);
+
+      const node = deserializeDiagramElements(
+        [stencil.node],
+        dest,
+        dest.activeLayer,
+        {},
+        {}
+      )[0] as DiagramNode;
+      layer.addElement(node, uow);
+
+      return node;
+    };
     dest.push({
       id: stencil.id,
       name: stencil.name,
-      node: (diagram: Diagram) => {
-        const uow = UnitOfWork.immediate(diagram);
-
-        const dest = new Diagram(
-          newid(),
-          stencil.name,
-          new DiagramDocument(diagram.document.nodeDefinitions, diagram.document.edgeDefinitions)
-        );
-
-        const layer = new RegularLayer('default', 'Default', [], dest);
-        dest.layers.add(layer, uow);
-
-        const node = deserializeDiagramElements(
-          [stencil.node],
-          dest,
-          dest.activeLayer,
-          {},
-          {}
-        )[0] as DiagramNode;
-        layer.addElement(node, uow);
-
-        return node;
-      }
+      node: mkNode,
+      canvasNode: mkNode
     });
   }
   return dest;
