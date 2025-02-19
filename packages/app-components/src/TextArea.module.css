@@ -1,0 +1,42 @@
+.cmp-text-area {
+  border-radius: var(--cmp-radius);
+  background-color: var(--cmp-bg);
+  color: var(--cmp-fg);
+  border: 1px solid var(--cmp-border);
+  padding: 1px 0 0 3px;
+  line-height: 1;
+  box-sizing: border-box;
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  &:focus-within,
+  &:has(*[data-focus="true"]) {
+    box-shadow: var(--cmp-focus-shadow) !important;
+  }
+
+  &[data-error='true'] {
+    color: var(--error-fg);
+    > textarea {
+      color: var(--error-fg);
+    }
+  }
+
+  &:has(> textarea:disabled) {
+    border-color: transparent;
+  }
+
+  > textarea {
+    color: var(--primary-fg);
+    border: none;
+    background: none;
+    font-size: 11px;
+    &:focus,
+    &[data-focus="true"] {
+      outline: none;
+    }
+    &:disabled {
+      color: var(--cmp-disabled-fg);
+    }
+  }
+}

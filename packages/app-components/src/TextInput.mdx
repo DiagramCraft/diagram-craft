@@ -1,0 +1,35 @@
+import { Canvas, Meta } from '@storybook/blocks';
+
+import * as TextInputStories from './TextInput.stories';
+
+<Meta of={TextInputStories} />
+
+# TextInput
+
+## States
+
+### Default
+
+<Canvas of={TextInputStories.Primary} />
+
+### Focus state
+
+<Canvas of={TextInputStories.Focus} />
+
+### Error state
+
+<Canvas of={TextInputStories.Error} />
+
+### With default value
+
+<Canvas of={TextInputStories.WithDefaultValue} />
+
+### Disabled
+
+<Canvas of={TextInputStories.Disabled} />
+
+## Variants
+
+### With label
+
+<Canvas of={TextInputStories.WithLabel} />

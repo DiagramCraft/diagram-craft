@@ -1,0 +1,35 @@
+import { Canvas, Meta } from '@storybook/blocks';
+
+import * as TextAreaStories from './TextArea.stories';
+
+<Meta of={TextAreaStories} />
+
+# TextArea
+
+## States
+
+### Default
+
+<Canvas of={TextAreaStories.Primary} />
+
+### Focus state
+
+<Canvas of={TextAreaStories.Focus} />
+
+### Error state
+
+<Canvas of={TextAreaStories.Error} />
+
+### With default value
+
+<Canvas of={TextAreaStories.WithDefaultValue} />
+
+### Disabled
+
+<Canvas of={TextAreaStories.Disabled} />
+
+## Variants
+
+### With label
+
+<Canvas of={TextAreaStories.WithLabel} />
