@@ -9,7 +9,7 @@ import { ShapeEdgeDefinition } from './shape/shapeEdgeDefinition';
 import { rawHTML } from './component/vdom';
 import styles from './canvas.css?inline';
 import { Browser } from './browser';
-import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
+import { isResolvableToRegularLayer } from '@diagram-craft/model/diagramLayer';
 
 // TODO: Would be nice to merge this with EditableCanvasComponent
 export class CanvasComponent extends Component<CanvasProps> {
@@ -54,8 +54,8 @@ export class CanvasComponent extends Component<CanvasProps> {
         svg.g(
           {},
           ...diagram.layers.visible.flatMap(layer => {
-            assertRegularLayer(layer);
-            return layer.elements.map(e => {
+            if (!isResolvableToRegularLayer(layer)) return null;
+            return layer.resolveForced().elements.map(e => {
               const id = e.id;
               if (e.type === 'edge') {
                 const edge = diagram.edgeLookup.get(id)!;
