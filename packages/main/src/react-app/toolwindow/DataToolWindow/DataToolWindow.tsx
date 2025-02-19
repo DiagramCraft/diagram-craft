@@ -29,6 +29,7 @@ import { Definitions } from '@diagram-craft/model/elementDefinitionRegistry';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { ActionContextMenuItem } from '../../components/ActionContextMenuItem';
 import { useEventListener } from '../../hooks/useEventListener';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 
 const NODE_CACHE = new Map<string, DiagramNode>();
 
@@ -271,11 +272,9 @@ const DataProviderQueryView = (props: {
         </Select.Root>
       </div>
       <div className={'util-hstack'}>
-        <input
-          className={'cmp-text-input'}
-          type={'text'}
+        <TextInput
           value={search}
-          onChange={ev => setSearch(ev.target.value)}
+          onChange={v => setSearch(v ?? '')}
           onKeyDown={ev => {
             if (ev.key === 'Enter') {
               props.onSearch(search);

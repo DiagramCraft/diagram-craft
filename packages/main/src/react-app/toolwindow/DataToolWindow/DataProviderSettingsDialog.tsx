@@ -8,6 +8,7 @@ import {
 } from '@diagram-craft/model/dataProviderDefault';
 import { Select } from '@diagram-craft/app-components/Select';
 import { useState } from 'react';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 
 type ProviderSettingsProps<T extends DataProvider> = {
   provider: T;
@@ -20,29 +21,24 @@ const UrlDataProviderSettings = (props: ProviderSettingsProps<UrlDataProvider>) 
     <div className={'util-vstack'}>
       <div className={'util-vstack'} style={{ gap: '0.2rem' }}>
         <label>{'Data URL'}:</label>
-        <div className={'cmp-text-input'}>
-          <input
-            type="text"
-            value={dataUrl}
-            onChange={e => {
-              setDataUrl(e.target.value);
-              props.provider.dataUrl = e.currentTarget.value;
-            }}
-          />
-        </div>
+        <TextInput
+          type="text"
+          value={dataUrl}
+          onChange={v => {
+            setDataUrl(v ?? '');
+            props.provider.dataUrl = v;
+          }}
+        />
       </div>
       <div className={'util-vstack'} style={{ gap: '0.2rem' }}>
         <label>{'Schema URL'}:</label>
-        <div className={'cmp-text-input'}>
-          <input
-            type="text"
-            value={schemaUrl}
-            onChange={e => {
-              setSchemaUrl(e.target.value);
-              props.provider.schemaUrl = e.currentTarget.value;
-            }}
-          />
-        </div>
+        <TextInput
+          value={schemaUrl}
+          onChange={v => {
+            setSchemaUrl(v ?? '');
+            props.provider.schemaUrl = v;
+          }}
+        />
       </div>
     </div>
   );

@@ -22,6 +22,8 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { useApplication, useDiagram } from '../../../application';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { TextArea } from '@diagram-craft/app-components/TextArea';
 
 const makeTemplate = (): DataSchema => {
   return {
@@ -209,8 +211,8 @@ export const ObjectDataToolWindow = () => {
             <Accordion.ItemContent>
               <div className={'cmp-labeled-table'}>
                 <div className={'cmp-labeled-table__label util-a-top-center'}>Name:</div>
-                <div className={'cmp-labeled-table__value cmp-text-input'}>
-                  <input type={'text'} value={name.val} onChange={e => name.set(e.target.value)} />
+                <div className={'cmp-labeled-table__value'}>
+                  <TextInput value={name.val} onChange={v => name.set(v)} />
                 </div>
               </div>
             </Accordion.ItemContent>
@@ -395,21 +397,20 @@ export const ObjectDataToolWindow = () => {
                               <div className={'cmp-labeled-table__label util-a-top-center'}>
                                 {f.name}:
                               </div>
-                              <div className={'cmp-labeled-table__value cmp-text-input'}>
+                              <div className={'cmp-labeled-table__value'}>
                                 {f.type === 'text' && (
-                                  <input
-                                    type={'text'}
+                                  <TextInput
                                     value={v.length > 1 ? '***' : (v[0]?.toString() ?? '')}
                                     disabled={isExternal}
-                                    onChange={e => changeCallback('data', schemaName, f.id, e)}
+                                    onChange={(_, e) => changeCallback('data', schemaName, f.id, e)}
                                   />
                                 )}
                                 {f.type === 'longtext' && (
-                                  <textarea
+                                  <TextArea
                                     style={{ height: '40px' }}
                                     value={v.length > 1 ? '***' : (v[0]?.toString() ?? '')}
                                     disabled={isExternal}
-                                    onChange={e => changeCallback('data', schemaName, f.id, e)}
+                                    onChange={(_, e) => changeCallback('data', schemaName, f.id, e)}
                                   />
                                 )}
                               </div>
@@ -437,11 +438,12 @@ export const ObjectDataToolWindow = () => {
                         return (
                           <React.Fragment key={k}>
                             <div className={'cmp-labeled-table__label util-a-top-center'}>{k}:</div>
-                            <div className={'cmp-labeled-table__value cmp-text-input'}>
-                              <textarea
+                            <div className={'cmp-labeled-table__value'}>
+                              <TextArea
+                                value={v[0] ?? ''}
+                                isIndeterminate={v.length > 1}
                                 style={{ height: '40px' }}
-                                value={v.length > 1 ? '***' : (v[0] ?? '')}
-                                onChange={e => changeCallback('custom', '', k, e)}
+                                onChange={(_, e) => changeCallback('custom', '', k, e)}
                               />
                             </div>
                           </React.Fragment>

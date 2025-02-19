@@ -5,6 +5,7 @@ import { Layer } from '@diagram-craft/model/diagramLayer';
 import { Select } from '@diagram-craft/app-components/Select';
 import { useDiagram } from '../../application';
 import { ReferenceLayerDialogSaveArg } from '@diagram-craft/canvas-app/dialogs';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 
 export const ReferenceLayerDialog = (props: Props) => {
   const $d = useDiagram();
@@ -58,18 +59,7 @@ export const ReferenceLayerDialog = (props: Props) => {
     >
       <div>
         <label>{'Name'}:</label>
-        <div className={'cmp-text-input'}>
-          <input
-            ref={ref}
-            type={'text'}
-            size={40}
-            defaultValue={''}
-            onKeyDown={e => {
-              // TODO: Why is this needed?
-              e.stopPropagation();
-            }}
-          />
-        </div>
+        <TextInput ref={ref} value={''} size={40} />
       </div>
 
       <div style={{ paddingTop: '0.5rem' }}>

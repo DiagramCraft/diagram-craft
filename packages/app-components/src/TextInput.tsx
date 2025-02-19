@@ -1,9 +1,9 @@
-import React, { useRef, useState } from 'react';
+import React, { ChangeEvent, useRef, useState } from 'react';
 import { propsUtils } from '@diagram-craft/utils/propsUtils';
 import { extractDataAttributes } from './utils';
 import styles from './TextInput.module.css';
 
-export const TextInput = (props: Props) => {
+export const TextInput = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
   const [error, setError] = useState(false);
   const [origValue, setOrigValue] = useState(props.value.toString());
   const [currentValue, setCurrentValue] = useState(props.value.toString());
@@ -16,7 +16,7 @@ export const TextInput = (props: Props) => {
 
   return (
     <div
-      className={styles.cmpTextInput2}
+      className={styles.cmpTextInput}
       {...extractDataAttributes(props)}
       data-error={error}
       data-field-state={props.isIndeterminate ? 'indeterminate' : props.state}
@@ -24,6 +24,7 @@ export const TextInput = (props: Props) => {
     >
       {props.label && <div className={styles.cmpTextInputLabel}>{props.label}</div>}
       <input
+        ref={ref}
         {...propsUtils.filterDomProperties(props)}
         placeholder={props.isIndeterminate ? '···' : undefined}
         type={'text'}
@@ -41,7 +42,7 @@ export const TextInput = (props: Props) => {
 
           if (ev.target.value === '') {
             setError(false);
-            props.onChange(undefined);
+            props.onChange?.(undefined, ev);
             return;
           }
 
@@ -51,21 +52,21 @@ export const TextInput = (props: Props) => {
           }
 
           setError(false);
-          props.onChange(p);
+          props.onChange?.(p, ev);
           return;
         }}
         {...extractDataAttributes(props)}
       />
     </div>
   );
-};
+});
 
 type Props = {
   value: string | number;
   label?: string;
   isIndeterminate?: boolean;
   state?: 'set' | 'unset' | 'overridden';
-  onChange: (value: string | undefined) => void;
+  onChange?: (value: string | undefined, ev: ChangeEvent<HTMLInputElement>) => void;
 } & Omit<
   React.DetailedHTMLProps<React.InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>,
   'onChange' | 'value'

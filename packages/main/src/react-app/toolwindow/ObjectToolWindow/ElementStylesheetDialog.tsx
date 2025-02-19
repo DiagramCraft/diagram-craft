@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { StylesheetType } from '@diagram-craft/model/diagramStyles';
 import { deepClone } from '@diagram-craft/utils/object';
 import { useRedraw } from '../../hooks/useRedraw';
+import { TextArea } from '@diagram-craft/app-components/TextArea';
 
 export const ElementStylesheetDialog = (props: Props) => {
   const redraw = useRedraw();
@@ -55,20 +56,19 @@ export const ElementStylesheetDialog = (props: Props) => {
           ))}
           <Tabs.Content value="json">
             <div style={{ padding: '0.5rem 0' }}>
-              <div className={'cmp-text-input'}>
-                <textarea
-                  rows={30}
-                  cols={60}
-                  defaultValue={JSON.stringify(data ?? {}, undefined, 2)}
-                  onChange={e => {
-                    try {
-                      setData(JSON.parse(e.target.value));
-                    } catch (e) {
-                      // Ignore
-                    }
-                  }}
-                />
-              </div>
+              <TextArea
+                rows={30}
+                cols={60}
+                value={JSON.stringify(data ?? {}, undefined, 2)}
+                style={{ maxHeight: '275px' }}
+                onChange={v => {
+                  try {
+                    setData(JSON.parse(v ?? ''));
+                  } catch (e) {
+                    // Ignore
+                  }
+                }}
+              />
             </div>
           </Tabs.Content>
         </Tabs.Root>

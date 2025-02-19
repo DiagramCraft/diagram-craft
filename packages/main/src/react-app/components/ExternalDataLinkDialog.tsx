@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { Button } from '@diagram-craft/app-components/Button';
 import { ExternalDataLinkActionProps } from '../actions/externalDataActions';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 
 type Props = {
   open: boolean;
@@ -42,11 +43,9 @@ export const ExternalDataLinkDialog = (props: Props) => {
     >
       <div className={'util-vstack'} style={{ gap: '1rem' }}>
         <div className={'util-hstack'}>
-          <input
-            className={'cmp-text-input'}
-            type={'text'}
+          <TextInput
+            onChange={v => setSearch(v ?? '')}
             value={search}
-            onChange={ev => setSearch(ev.target.value)}
             onKeyDown={ev => {
               if (ev.key === 'Enter') {
                 setActiveQuery(search);

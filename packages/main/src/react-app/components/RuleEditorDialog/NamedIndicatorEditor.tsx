@@ -3,6 +3,7 @@ import { IndicatorForm } from '../../toolwindow/ObjectIndicatorToolWindow/Indica
 import { nodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { useState } from 'react';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const path = (id: string, rest: string): any => `indicators.${id}.${rest}`;
@@ -24,23 +25,21 @@ export const NamedIndicatorEditor: Editor = props => {
   const offset = makeProperty($p, path(id, 'offset'), nodeDefaults, onChange);
   const direction = makeProperty($p, path(id, 'direction'), nodeDefaults, onChange);
   const position = makeProperty($p, path(id, 'position'), nodeDefaults, onChange);
-
   const enabled = makeProperty($p, path(id, 'enabled'), nodeDefaults, onChange);
 
   return (
     <div>
       <div className={'cmp-labeled-table'} style={{ marginBottom: '0.5rem' }}>
         <div className={'cmp-labeled-table__label'}>Name:</div>
-        <div className={'cmp-labeled-table__valueŒ cmp-text-input'}>
-          <input
-            type={'text'}
+        <div className={'cmp-labeled-table__value'}>
+          <TextInput
             value={id}
-            onChange={e => {
+            onChange={v => {
               $p.indicators ??= {};
-              $p.indicators![e.target.value] = $p.indicators![id];
+              $p.indicators![v ?? ''] = $p.indicators![id];
               delete $p.indicators![id];
 
-              setId(e.target.value);
+              setId(v ?? '');
               onChange();
             }}
           />

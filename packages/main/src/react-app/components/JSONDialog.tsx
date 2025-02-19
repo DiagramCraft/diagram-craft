@@ -1,6 +1,7 @@
 import { ComponentProps, useEffect, useRef, useState } from 'react';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { DialogCommand } from '@diagram-craft/canvas/context';
+import { TextArea } from '@diagram-craft/app-components/TextArea';
 
 type Props<T> = {
   title: string;
@@ -50,15 +51,13 @@ export function JSONDialog<T>(
       {props.description && <p>{props.description}</p>}
 
       <label>{props.label ?? 'JSON'}:</label>
-      <div className={'cmp-text-input'}>
-        <textarea
-          ref={ref}
-          rows={30}
-          cols={60}
-          defaultValue={JSON.stringify(props.data ? props.data : {}, undefined, 2)}
-        />
-      </div>
-      {error && <div className={'cmp-text-input__error'}>Error: {error}</div>}
+      <TextArea
+        ref={ref}
+        rows={30}
+        cols={60}
+        value={JSON.stringify(props.data ? props.data : {}, undefined, 2)}
+      />
+      {error && <div className={'cmp-error'}>Error: {error}</div>}
     </Dialog>
   );
 }

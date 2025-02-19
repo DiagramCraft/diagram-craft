@@ -15,6 +15,7 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { Button } from '@diagram-craft/app-components/Button';
 import { useDiagram } from '../../../application';
+import { TextArea } from '@diagram-craft/app-components/TextArea';
 
 const replacer = (key: string, value: unknown) => {
   if (key === 'parent') return value ? '...' : undefined;
@@ -192,9 +193,7 @@ export const QueryToolWindow = () => {
             </div>
           </div>
 
-          <div className={'cmp-text-input'}>
-            <textarea ref={ref} defaultValue={queryString} style={{ height: '100px' }} />
-          </div>
+          <TextArea ref={ref} value={queryString} style={{ minHeight: '100px' }} />
           <div
             style={{ display: 'flex', justifyContent: 'end', marginTop: '0.5rem', gap: '0.5rem' }}
           >
@@ -244,7 +243,7 @@ export const QueryToolWindow = () => {
         <Accordion.ItemHeader>Response</Accordion.ItemHeader>
         <Accordion.ItemContent>
           <div className={'cmp-query-response'}>
-            {!!error && <div className={'cmp-text-input__error'}>{error.toString()}</div>}
+            {!!error && <div className={'cmp-error'}>{error.toString()}</div>}
             {res &&
               res.map((e, idx) => (
                 <div

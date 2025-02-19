@@ -1,6 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { StringInputDialogProps } from '@diagram-craft/canvas-app/dialogs';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { TextArea } from '@diagram-craft/app-components/TextArea';
 
 type Props = {
   open: boolean;
@@ -44,32 +46,28 @@ export const StringInputDialog = (props: Props) => {
 
       <label>{props.label ?? 'Name'}:</label>
       {(props.type === 'string' || props.type === undefined) && (
-        <div className={'cmp-text-input'}>
-          <input
-            ref={inputRef}
-            type={'text'}
-            size={40}
-            defaultValue={props.value ?? ''}
-            onKeyDown={e => {
-              // TODO: Why is this needed?
-              e.stopPropagation();
-            }}
-          />
-        </div>
+        <TextInput
+          ref={inputRef}
+          type={'text'}
+          size={40}
+          value={props.value ?? ''}
+          onKeyDown={e => {
+            // TODO: Why is this needed?
+            e.stopPropagation();
+          }}
+        />
       )}
       {props.type === 'text' && (
-        <div className={'cmp-text-input'}>
-          <textarea
-            ref={areaRef}
-            cols={40}
-            rows={10}
-            defaultValue={props.value ?? ''}
-            onKeyDown={e => {
-              // TODO: Why is this needed?
-              e.stopPropagation();
-            }}
-          />
-        </div>
+        <TextArea
+          ref={areaRef}
+          cols={40}
+          rows={10}
+          value={props.value ?? ''}
+          onKeyDown={e => {
+            // TODO: Why is this needed?
+            e.stopPropagation();
+          }}
+        />
       )}
     </Dialog>
   );

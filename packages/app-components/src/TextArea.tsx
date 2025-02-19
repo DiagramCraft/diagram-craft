@@ -1,9 +1,9 @@
-import React, { useRef, useState } from 'react';
+import React, { ChangeEvent, useRef, useState } from 'react';
 import { propsUtils } from '@diagram-craft/utils/propsUtils';
 import { extractDataAttributes } from './utils';
 import styles from './TextArea.module.css';
 
-export const TextArea = (props: Props) => {
+export const TextArea = React.forwardRef<HTMLTextAreaElement, Props>((props, ref) => {
   const [error, setError] = useState(false);
   const [origValue, setOrigValue] = useState(props.value.toString());
   const [currentValue, setCurrentValue] = useState(props.value.toString());
@@ -14,9 +14,6 @@ export const TextArea = (props: Props) => {
     setCurrentValue(props.value.toString());
   }
 
-  console.log(props);
-  console.log(props.isIndeterminate ? '' : currentValue);
-
   return (
     <div
       className={styles.cmpTextArea}
@@ -26,6 +23,7 @@ export const TextArea = (props: Props) => {
       style={props.style ?? {}}
     >
       <textarea
+        ref={ref}
         {...propsUtils.filterDomProperties(props)}
         placeholder={props.isIndeterminate ? '···' : undefined}
         disabled={props.disabled}
@@ -41,7 +39,7 @@ export const TextArea = (props: Props) => {
 
           if (ev.target.value === '') {
             setError(false);
-            props.onChange(undefined);
+            props.onChange?.(undefined, ev);
             return;
           }
 
@@ -51,7 +49,7 @@ export const TextArea = (props: Props) => {
           }
 
           setError(false);
-          props.onChange(p);
+          props.onChange?.(p, ev);
           return;
         }}
         value={props.isIndeterminate ? '' : currentValue}
@@ -61,14 +59,14 @@ export const TextArea = (props: Props) => {
       </textarea>
     </div>
   );
-};
+});
 
 type Props = {
   value: string | number;
   isIndeterminate?: boolean;
   state?: 'set' | 'unset' | 'overridden';
-  onChange: (value: string | undefined) => void;
+  onChange?: (value: string | undefined, ev: ChangeEvent<HTMLTextAreaElement>) => void;
 } & Omit<
-  React.DetailedHTMLProps<React.InputHTMLAttributes<HTMLTextAreaElement>, HTMLTextAreaElement>,
+  React.DetailedHTMLProps<React.TextareaHTMLAttributes<HTMLTextAreaElement>, HTMLTextAreaElement>,
   'onChange' | 'value'
 >;

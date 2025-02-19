@@ -59,52 +59,7 @@
   }
 }
 
-.cmp-text-input {
-  border-radius: 4px;
-  background-color: var(--cmp-bg);
-  border: 1px solid var(--cmp-border);
-  color: var(--primary-fg);
-  height: 25px;
-  padding: 1px 0 0 3px;
-  line-height: 1;
-  box-sizing: border-box;
-  position: relative;
-  display: flex;
-  align-items: center;
-
-  &:focus-within {
-    box-shadow: var(--cmp-focus-shadow);
-    outline: none;
-  }
-
-  &:has(> textarea) {
-    height: unset;
-  }
-
-  > input {
-    color: var(--cmp-fg);
-    border: none;
-    background: none;
-    font-size: 11px;
-    width: 100%;
-    &:focus {
-      outline: none;
-    }
-  }
-
-  > textarea {
-    color: var(--cmp-fg);
-    height: 200px;
-    width: 100%;
-    border: none;
-    background: none;
-    font-size: 11px;
-    &:focus {
-      outline: none;
-    }
-  }
-}
-.cmp-text-input__error {
+.cmp-error {
   color: var(--error-fg);
   margin-top: 0.25rem;
 }

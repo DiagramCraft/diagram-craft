@@ -5,10 +5,6 @@
   border: 1px solid var(--cmp-border);
   padding: 1px 0 0 3px;
   line-height: 1;
-  box-sizing: border-box;
-  position: relative;
-  display: flex;
-  align-items: center;
 
   &:focus-within,
   &:has(*[data-focus="true"]) {
@@ -31,6 +27,7 @@
     border: none;
     background: none;
     font-size: 11px;
+    width: calc(100% - 5px);
     &:focus,
     &[data-focus="true"] {
       outline: none;

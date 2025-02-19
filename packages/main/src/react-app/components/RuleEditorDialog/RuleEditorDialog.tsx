@@ -19,6 +19,8 @@ import {
 } from '@diagram-craft/model/diagramLayerRuleTypes';
 import { HideAction } from './HideAction';
 import { RuleEditorDialogProps } from '@diagram-craft/canvas-app/dialogs';
+import { TextArea } from '@diagram-craft/app-components/TextArea';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 
 export type EditableAdjustmentRuleAction = Partial<AdjustmentRuleAction> & { kind?: string };
 export type EditableAdjustmentRuleClause = Partial<AdjustmentRuleClause>;
@@ -71,24 +73,20 @@ const ClauseList = (props: ClauseListProps) => {
               {!props.indent && <Select.Item value={'any'}>Any</Select.Item>}
             </Select.Root>
             {c.type === 'query' && (
-              <>
-                <div className={'cmp-text-input'}>
-                  <textarea
-                    style={{ height: '3rem', resize: 'vertical' }}
-                    defaultValue={c.query ?? ''}
-                    onKeyDown={e => {
-                      // TODO: Why is this needed?
-                      e.stopPropagation();
-                    }}
-                    onChange={e => {
-                      const newClauses = [...props.clauses];
-                      // @ts-ignore
-                      newClauses[idx].query = e.target.value;
-                      props.onChange(newClauses);
-                    }}
-                  />
-                </div>
-              </>
+              <TextArea
+                style={{ minHeight: '3rem', resize: 'vertical' }}
+                value={c.query ?? ''}
+                onKeyDown={e => {
+                  // TODO: Why is this needed?
+                  e.stopPropagation();
+                }}
+                onChange={e => {
+                  const newClauses = [...props.clauses];
+                  // @ts-ignore
+                  newClauses[idx].query = e.target.value;
+                  props.onChange(newClauses);
+                }}
+              />
             )}
             {c.type === 'any' && (
               <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
@@ -129,17 +127,14 @@ const ClauseList = (props: ClauseListProps) => {
                   <Select.Item value={'gt'}>Greater Than</Select.Item>
                   <Select.Item value={'lt'}>Less Than</Select.Item>
                 </Select.Root>
-                <div className={'cmp-text-input'}>
-                  <input
-                    value={c.value ?? ''}
-                    type={'text'}
-                    onChange={e => {
-                      c.value = e.target.value;
-                      c.relation ??= 'eq';
-                      props.onChange([...props.clauses]);
-                    }}
-                  />
-                </div>
+                <TextInput
+                  value={c.value ?? ''}
+                  onChange={v => {
+                    c.value = v;
+                    c.relation ??= 'eq';
+                    props.onChange([...props.clauses]);
+                  }}
+                />
               </div>
             )}
             {c.type !== 'query' && c.type !== 'any' && c.type !== 'props' && <div></div>}
@@ -297,18 +292,7 @@ export const RuleEditorDialog = (props: Props) => {
       >
         <div>
           <label>{'Name'}:</label>
-          <div className={'cmp-text-input'}>
-            <input
-              ref={ref}
-              type={'text'}
-              size={40}
-              defaultValue={rule?.name ?? ''}
-              onKeyDown={e => {
-                // TODO: Why is this needed?
-                e.stopPropagation();
-              }}
-            />
-          </div>
+          <TextInput ref={ref} value={rule?.name ?? ''} size={40} />
         </div>
         <div>
           <label>{'Type'}:</label>
