@@ -307,18 +307,25 @@ export type StencilEvents = {
   change: { stencilRegistry: StencilRegistry };
 };
 
+const DELIMITER = '@@';
+
 export class StencilRegistry extends EventEmitter<StencilEvents> {
   private stencils = new Map<string, StencilPackage>();
   private activeStencils = new Set<string>();
 
   register(pkg: StencilPackage, activate = false) {
+    const stencils = pkg.stencils.map(s => ({
+      ...s,
+      id: pkg.id + DELIMITER + s.id
+    }));
+
     if (this.stencils.has(pkg.id)) {
       this.stencils.get(pkg.id)!.stencils = unique(
-        [...this.stencils.get(pkg.id)!.stencils, ...pkg.stencils],
+        [...(this.stencils.get(pkg.id)?.stencils ?? []), ...stencils],
         e => e.id
       );
     } else {
-      this.stencils.set(pkg.id, pkg);
+      this.stencils.set(pkg.id, { ...pkg, stencils });
     }
 
     if (activate) {
@@ -326,6 +333,12 @@ export class StencilRegistry extends EventEmitter<StencilEvents> {
     }
 
     this.emitAsync('change', { stencilRegistry: this });
+  }
+
+  getStencil(id: string) {
+    assert.true(id.includes(DELIMITER), 'Invalid id');
+    const [pkgId, _] = id.split(DELIMITER);
+    return this.get(pkgId)?.stencils.find(s => s.id === id);
   }
 
   get(id: string): StencilPackage {
@@ -342,6 +355,22 @@ export class StencilRegistry extends EventEmitter<StencilEvents> {
     return [...this.activeStencils.values()]
       .filter(s => this.stencils.has(s))
       .map(s => this.stencils.get(s)!);
+  }
+
+  search(s: string) {
+    const results: Stencil[] = [];
+    for (const pkg of this.stencils.values()) {
+      if (pkg.name.toLowerCase().includes(s.toLowerCase())) {
+        results.push(...pkg.stencils);
+      } else {
+        for (const stencil of pkg.stencils) {
+          if (stencil.name?.toLowerCase()?.includes(s.toLowerCase())) {
+            results.push(stencil);
+          }
+        }
+      }
+    }
+    return results;
   }
 }
 

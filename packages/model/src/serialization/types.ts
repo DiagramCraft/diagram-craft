@@ -8,6 +8,7 @@ import { DataSchema } from '../diagramDocumentDataSchemas';
 import { Canvas } from '../diagram';
 import { AdjustmentRule } from '../diagramLayerRuleTypes';
 import { DataTemplate } from '../diagramDocument';
+import { Json } from '@diagram-craft/utils/types';
 
 interface Reference {
   id: string;
@@ -49,6 +50,7 @@ export interface SerializedDiagramDocument {
   customPalette: ReadonlyArray<string>;
   styles: SerializedStyles;
   schemas: ReadonlyArray<DataSchema>;
+  extra: Record<string, Json>;
   data?: {
     providerId?: string;
     data?: string;

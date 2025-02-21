@@ -43,6 +43,7 @@ export const serializeDiagramDocument = async (
     customPalette: serializeCustomPalette(document.customPalette),
     styles: serializeStyles(document.styles),
     schemas: serializeSchemas(document.data.schemas),
+    extra: document.extra,
     data: {
       providerId: document.data.provider?.id,
       data: document.data.provider?.serialize(),

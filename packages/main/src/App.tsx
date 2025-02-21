@@ -63,6 +63,7 @@ import { CanvasOutline } from './react-app/CanvasOutline';
 import { bindDocumentDragAndDrop } from '@diagram-craft/canvas/dragDropManager';
 import { ExternalDataLinkDialog } from './react-app/components/ExternalDataLinkDialog';
 import { Preview } from './react-app/Preview';
+import { ShapeSelectDialog } from './react-app/ShapeSelectDialog';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -321,6 +322,12 @@ export const App = (props: {
         />
         <ExternalDataLinkDialog
           open={dialogState?.id === 'externalDataLink'}
+          {...dialogState?.props}
+          onOk={dialogState?.onOk}
+          onCancel={dialogState?.onCancel}
+        />
+        <ShapeSelectDialog
+          open={dialogState?.id === 'shapeSelect'}
           {...dialogState?.props}
           onOk={dialogState?.onOk}
           onCancel={dialogState?.onCancel}

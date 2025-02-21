@@ -8,7 +8,7 @@ import { useApplication, useDiagram } from '../../../application';
 import { DRAG_DROP_MANAGER } from '@diagram-craft/canvas/dragDropManager';
 import { ObjectPickerDrag } from './ObjectPickerDrag';
 
-const NODE_CACHE = new Map<string, [Diagram, DiagramNode, DiagramNode]>();
+const NODE_CACHE = new Map<string, [Stencil, Diagram, DiagramNode, DiagramNode]>();
 
 const makeDiagramNode = (mainDiagram: Diagram, n: Stencil, pkg: string) => {
   const cacheKey = pkg + '/' + n.id;
@@ -34,9 +34,9 @@ const makeDiagramNode = (mainDiagram: Diagram, n: Stencil, pkg: string) => {
   canvasDiagram.viewBox.dimensions = { w: canvasNode.bounds.w + 10, h: canvasNode.bounds.h + 10 };
   canvasDiagram.viewBox.offset = { x: -5, y: -5 };
 
-  NODE_CACHE.set(cacheKey, [stencilDiagram, stencilNode, canvasNode]);
+  NODE_CACHE.set(cacheKey, [n, stencilDiagram, stencilNode, canvasNode]);
 
-  return [stencilDiagram, stencilNode, canvasNode] as const;
+  return [n, stencilDiagram, stencilNode, canvasNode] as const;
 };
 
 export const ObjectPicker = (props: Props) => {
@@ -51,7 +51,7 @@ export const ObjectPicker = (props: Props) => {
 
   return (
     <div className={'cmp-object-picker'}>
-      {diagrams.map(([d, node, canvasNode], idx) => (
+      {diagrams.map(([stencil, d, node, canvasNode], idx) => (
         <div key={d.id} style={{ background: 'transparent' }} data-width={d.viewBox.dimensions.w}>
           <PickerCanvas
             width={props.size}
@@ -69,8 +69,9 @@ export const ObjectPicker = (props: Props) => {
               if (!isRegularLayer(diagram.activeLayer)) return;
 
               setShowHover(false);
-              DRAG_DROP_MANAGER.initiate(new ObjectPickerDrag(ev, canvasNode, diagram, app), () =>
-                setShowHover(true)
+              DRAG_DROP_MANAGER.initiate(
+                new ObjectPickerDrag(ev, canvasNode, diagram, stencil.id, app),
+                () => setShowHover(true)
               );
             }}
           />

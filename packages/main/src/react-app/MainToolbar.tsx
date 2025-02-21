@@ -50,7 +50,7 @@ export const MainToolbar = ({ dirty }: { dirty: boolean }) => {
         <ActionToolbarButton action={'TABLE_INSERT'}>
           <TbTablePlus size={'17.5px'} />
         </ActionToolbarButton>
-        <ActionToolbarButton action={'IMAGE_INSERT'}>
+        <ActionToolbarButton action={'SHAPE_INSERT'}>
           <TbPlus size={'17.5px'} />
         </ActionToolbarButton>
         <Toolbar.Separator />

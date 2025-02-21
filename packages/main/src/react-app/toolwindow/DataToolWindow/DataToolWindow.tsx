@@ -155,8 +155,16 @@ const DataProviderResponse = (props: {
                       ? makeTemplateNode(item, schema, document.definitions, dataTemplates[0])
                       : makeDefaultNode(item, schema, document.definitions);
 
-                  // @ts-expect-error MouseEvent is not compatible with React MouseEvent
-                  DRAG_DROP_MANAGER.initiate(new ObjectPickerDrag(ev, node, diagram, app));
+                  DRAG_DROP_MANAGER.initiate(
+                    new ObjectPickerDrag(
+                      // @ts-expect-error
+                      ev,
+                      node,
+                      diagram,
+                      undefined,
+                      app
+                    )
+                  );
                 }}
               >
                 {item[schema.fields[0].id]}
@@ -204,8 +212,14 @@ const DataProviderResponse = (props: {
                                       if (ev.button !== 0) return;
 
                                       DRAG_DROP_MANAGER.initiate(
-                                        // @ts-ignore
-                                        new ObjectPickerDrag(ev, n, diagram, app)
+                                        new ObjectPickerDrag(
+                                          // @ts-expect-error
+                                          ev,
+                                          n,
+                                          diagram,
+                                          undefined,
+                                          app
+                                        )
                                       );
                                     }}
                                   >

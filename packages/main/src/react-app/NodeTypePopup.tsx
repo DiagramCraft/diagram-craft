@@ -13,6 +13,7 @@ import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { assignNewBounds, assignNewIds } from '@diagram-craft/model/helpers/cloneHelper';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { useDiagram } from '../application';
+import { registerStencilUse } from '@diagram-craft/canvas-app/recentStencils';
 
 export const NodeTypePopup = (props: Props) => {
   const diagram = useDiagram();
@@ -52,6 +53,8 @@ export const NodeTypePopup = (props: Props) => {
           new SnapshotUndoableAction('Add element', uow.diagram, snapshots)
         ])
       );
+
+      registerStencilUse(registration.id, diagram.document);
 
       props.onClose();
     },
@@ -120,16 +123,16 @@ export const NodeTypePopup = (props: Props) => {
           className={'cmp-object-picker'}
           style={{ marginTop: '0.1rem', border: '1px solid transparent' }}
         >
-          {diagramsAndNodes.map((d, idx) => (
+          {diagramsAndNodes.map(([stencil, d], idx) => (
             <div key={idx} style={{ background: 'transparent' }}>
               <PickerCanvas
-                name={d[1].name}
+                name={d.name}
                 width={size}
                 height={size}
-                diagramWidth={d[1].viewBox.dimensions.w}
-                diagramHeight={d[1].viewBox.dimensions.h}
-                diagram={d[1]}
-                onClick={() => addNode(d[0])}
+                diagramWidth={d.viewBox.dimensions.w}
+                diagramHeight={d.viewBox.dimensions.h}
+                diagram={d}
+                onClick={() => addNode(stencil)}
               />
             </div>
           ))}

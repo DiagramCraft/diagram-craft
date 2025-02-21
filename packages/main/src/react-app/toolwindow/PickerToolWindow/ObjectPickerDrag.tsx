@@ -19,6 +19,7 @@ import { deepClone } from '@diagram-craft/utils/object';
 import { clamp } from '@diagram-craft/utils/math';
 import { CanvasComponent } from '@diagram-craft/canvas/CanvasComponent';
 import { insert } from '@diagram-craft/canvas/component/vdom';
+import { registerStencilUse } from '@diagram-craft/canvas-app/recentStencils';
 
 enum State {
   INSIDE,
@@ -36,6 +37,7 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
     event: MouseEvent,
     readonly source: DiagramNode,
     readonly diagram: Diagram,
+    readonly stencilId: string | undefined,
     context: Context
   ) {
     super(diagram, Point.ORIGIN, event, context);
@@ -78,6 +80,10 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
 
       super.onDragEnd();
     });
+
+    if (this.stencilId) {
+      registerStencilUse(this.stencilId, this.diagram.document);
+    }
   }
 
   onDragEnter(event: DragEvents.DragEnter) {

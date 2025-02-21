@@ -26,7 +26,7 @@ export const TextInput = React.forwardRef<HTMLInputElement, Props>((props, ref) 
       <input
         ref={ref}
         {...propsUtils.filterDomProperties(props)}
-        placeholder={props.isIndeterminate ? '···' : undefined}
+        placeholder={props.isIndeterminate ? '···' : props.placeholder}
         type={'text'}
         value={props.isIndeterminate ? '' : currentValue}
         disabled={props.disabled}
@@ -62,7 +62,7 @@ export const TextInput = React.forwardRef<HTMLInputElement, Props>((props, ref) 
 });
 
 type Props = {
-  value: string | number;
+  value: string;
   label?: string;
   isIndeterminate?: boolean;
   state?: 'set' | 'unset' | 'overridden';

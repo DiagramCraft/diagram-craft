@@ -228,6 +228,7 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
   }
 
   doc.data.templates.replaceBy(document.data?.templates ?? []);
+  doc.extra = document.extra ?? {};
 
   return doc;
 };

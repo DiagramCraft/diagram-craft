@@ -135,7 +135,8 @@
 }
 
 .dark-theme #left,
-.dark-theme .cmp-node-type-popup
+.dark-theme .cmp-node-type-popup,
+.dark-theme .cmp-shape-select-dialog
 {
   --canvas-fg: var(--slate-11);
   --canvas-bg: var(--slate-2);
@@ -145,7 +146,8 @@
   }
 }
 .light-theme #left,
-.light-theme .cmp-node-type-popup
+.light-theme .cmp-node-type-popup,
+.light-theme .cmp-shape-select-dialog
 {
   --canvas-fg: var(--slate-11);
   --canvas-bg: var(--slate-4);
