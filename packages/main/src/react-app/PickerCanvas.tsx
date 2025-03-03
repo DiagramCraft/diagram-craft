@@ -81,7 +81,14 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
               viewBox={props.diagram.viewBox.svgViewboxString}
             />
 
-            <div style={{ lineHeight: '14px', justifySelf: 'flex-end', marginTop: 'auto' }}>
+            <div
+              style={{
+                lineHeight: '14px',
+                justifySelf: 'flex-end',
+                marginTop: 'auto',
+                textAlign: 'center'
+              }}
+            >
               {props.name}
             </div>
           </div>
