@@ -112,6 +112,17 @@ export class DiagramNode
     return this.#nodeType;
   }
 
+  changeNodeType(nodeType: string, uow: UnitOfWork) {
+    uow.snapshot(this);
+    this.#nodeType = nodeType;
+    this.#children = [];
+    uow.updateElement(this);
+
+    this.#cache?.clear();
+    this.invalidateAnchors(uow);
+    this.getDefinition().onPropUpdate(this, uow);
+  }
+
   get cache() {
     if (!this.#cache) {
       this.#cache = new Map<string, unknown>();

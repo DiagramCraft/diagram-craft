@@ -246,3 +246,14 @@ export const deepIsEmpty = (obj: any | undefined | null) => {
 
   return true;
 };
+
+/**
+ * Retrieves the keys of the given object as an array of strings or symbols, properly typed as keys of the object.
+ *
+ * @template T - The type of the object.
+ * @param {T} obj - The object whose keys are to be retrieved.
+ * @returns {Array<keyof T>} An array containing the keys of the object, typed as the keys of the input object.
+ */
+export const objectKeys = <T extends Props>(obj: T): Array<keyof T> => {
+  return Object.keys(obj) as Array<keyof T>;
+};

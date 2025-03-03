@@ -40,7 +40,7 @@ export interface DialogCommand<P, D> {
   id: string;
   props: P;
   onOk: (data: D) => void;
-  onCancel: () => void;
+  onCancel?: () => void;
 }
 
 type MessageDialogProps = {
@@ -48,7 +48,7 @@ type MessageDialogProps = {
   message: string;
   okLabel: string;
   okType?: 'default' | 'secondary' | 'danger';
-  cancelLabel: string;
+  cancelLabel: string | undefined;
 };
 
 export class MessageDialogCommand implements DialogCommand<MessageDialogProps, EmptyObject> {

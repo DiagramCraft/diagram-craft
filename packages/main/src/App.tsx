@@ -158,7 +158,7 @@ export const App = (props: {
           setDialogState(undefined);
         },
         onCancel: () => {
-          dialog.onCancel();
+          dialog.onCancel?.();
           setDialogState(undefined);
         }
       });
