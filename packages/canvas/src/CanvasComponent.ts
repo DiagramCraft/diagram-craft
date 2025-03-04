@@ -1,15 +1,16 @@
-import { Component } from './component/component';
+import { Component, createEffect } from './component/component';
 import * as svg from './component/vdom-svg';
 import * as html from './component/vdom-html';
 import { Point } from '@diagram-craft/geometry/point';
 import { Modifiers } from './dragDropManager';
-import { Diagram } from '@diagram-craft/model/diagram';
+import { Diagram, DiagramEvents } from '@diagram-craft/model/diagram';
 import { ShapeNodeDefinition } from './shape/shapeNodeDefinition';
 import { ShapeEdgeDefinition } from './shape/shapeEdgeDefinition';
 import { rawHTML } from './component/vdom';
 import styles from './canvas.css?inline';
 import { Browser } from './browser';
 import { isResolvableToRegularLayer } from '@diagram-craft/model/diagramLayer';
+import { EventKey } from '@diagram-craft/utils/event';
 
 // TODO: Would be nice to merge this with EditableCanvasComponent
 export class CanvasComponent extends Component<CanvasProps> {
@@ -26,8 +27,20 @@ export class CanvasComponent extends Component<CanvasProps> {
     };
   }
 
+  private onDiagramRedraw(eventName: EventKey<DiagramEvents>, diagram: Diagram) {
+    createEffect(() => {
+      const cb = () => this.redraw();
+      diagram.on(eventName, cb);
+      return () => diagram.off(eventName, cb);
+    }, [diagram]);
+  }
+
   render(props: CanvasProps) {
     const diagram = props.diagram;
+
+    this.onDiagramRedraw('elementAdd', diagram);
+    this.onDiagramRedraw('elementRemove', diagram);
+    this.onDiagramRedraw('change', diagram);
 
     return html.svg(
       {

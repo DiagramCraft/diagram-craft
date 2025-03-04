@@ -36,6 +36,13 @@
         background: var(--canvas-bg2);
       }
     }
+
+    .svg-node, .svg-edge {
+      cursor: default;
+    }
+    .svg-node--with-action .svg-node {
+      cursor: pointer;
+    }
   }
 }
 
