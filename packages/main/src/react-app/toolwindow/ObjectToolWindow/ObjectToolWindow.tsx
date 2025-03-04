@@ -26,6 +26,7 @@ import { ElementAnchorsPanel } from '../ObjectInfoToolWindow/ElementAnchorsPanel
 import { NodeTableToolbarPanel } from './NodeTableToolbarPanel';
 import { useDiagram } from '../../../application';
 import { useRedraw } from '../../hooks/useRedraw';
+import { NodeActionPropertiesPanel } from '../ObjectInfoToolWindow/NodeActionPropertiesPanel';
 
 type Type = 'diagram' | 'mixed' | 'single-label-node' | 'node' | 'edge' | 'table' | 'table-cell';
 
@@ -219,9 +220,14 @@ export const ObjectToolWindow = () => {
             <Accordion.Root
               type="multiple"
               disabled={true}
-              defaultValue={['anchors', 'advanced-props']}
+              defaultValue={['anchors', 'action-props', 'advanced-props']}
             >
-              {type === 'node' && <ElementAnchorsPanel />}
+              {type === 'node' && (
+                <>
+                  <ElementAnchorsPanel />
+                  <NodeActionPropertiesPanel />
+                </>
+              )}
               <NodeAdvancedPropertiesPanel />
             </Accordion.Root>
           </Tabs.Content>

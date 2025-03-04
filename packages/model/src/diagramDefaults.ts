@@ -266,6 +266,11 @@ const _nodeDefaults: Omit<
 > = {
   ..._elementDefaults,
 
+  action: {
+    type: 'none',
+    url: ''
+  },
+
   effects: {
     blur: 0,
     glass: false,
