@@ -34,6 +34,8 @@ type FormProps = {
 
 export const NodeActionPropertiesPanelForm = ({ type, url }: FormProps) => {
   const document = useDocument();
+  const diagram = useDiagram();
+
   return (
     <div className={'cmp-labeled-table'}>
       <div className={'cmp-labeled-table__label'}>Type:</div>
@@ -50,6 +52,7 @@ export const NodeActionPropertiesPanelForm = ({ type, url }: FormProps) => {
               <Select.Item value={'none'}>None</Select.Item>
               <Select.Item value={'url'}>URL</Select.Item>
               <Select.Item value={'diagram'}>Sheet</Select.Item>
+              <Select.Item value={'layer'}>Toggle Layer</Select.Item>
             </Select.Root>
           )}
         />
@@ -76,6 +79,26 @@ export const NodeActionPropertiesPanelForm = ({ type, url }: FormProps) => {
                   value={coalesce(props.value, document.topLevelDiagrams[0].id)!}
                 >
                   <DiagramList level={0} list={document.topLevelDiagrams} />
+                </Select.Root>
+              )}
+            />
+          </div>
+        </>
+      )}
+
+      {type.val === 'layer' && (
+        <>
+          <div className={'cmp-labeled-table__label'}>Layer:</div>
+          <div className={'cmp-labeled-table__value'}>
+            <PropertyEditor
+              property={url}
+              render={props => (
+                <Select.Root {...props} value={diagram.activeLayer.id!}>
+                  {diagram.layers.all.map(layer => (
+                    <Select.Item key={layer.id} value={layer.id}>
+                      {layer.name}
+                    </Select.Item>
+                  ))}
                 </Select.Root>
               )}
             />
