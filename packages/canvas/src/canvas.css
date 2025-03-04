@@ -17,6 +17,11 @@
   }
 }
 
+.svg-node--with-action .svg-node:hover {
+  stroke: var(--cmp-focus-border) !important;
+  stroke-width: 2px !important;
+}
+
 .browser-chrome .svg-node__text {
   left: 50%;
   transform: translateX(-50%);
