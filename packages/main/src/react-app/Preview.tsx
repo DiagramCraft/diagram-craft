@@ -1,4 +1,4 @@
-import { useDiagram } from '../application';
+import { useApplication, useDiagram } from '../application';
 import styles from './Preview.module.css';
 import { TbWindowMaximize, TbWindowMinimize, TbX } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
@@ -10,6 +10,7 @@ type Props = {
 };
 
 export const Preview = (props: Props) => {
+  const application = useApplication();
   const diagram = useDiagram();
   const [isFullScreen, setIsFullScreen] = useState(false);
 
@@ -70,7 +71,14 @@ export const Preview = (props: Props) => {
       </div>
 
       <div className={styles.previewCanvas}>
-        <Canvas diagram={diagram} width={'100%'} height={'100%'} />
+        <Canvas
+          diagram={diagram}
+          width={'100%'}
+          height={'100%'}
+          onMouseDown={(id: string) => {
+            application.actions['SELECTION_EXECUTE_ACTION']?.execute({ id });
+          }}
+        />
       </div>
     </div>
   );

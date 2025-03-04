@@ -374,12 +374,17 @@ export class BaseNodeComponent<
     }
 
     const transform = `${Transforms.rotate(props.element.bounds)} ${nodeProps.geometry.flipH ? Transforms.flipH(props.element.bounds) : ''} ${nodeProps.geometry.flipV ? Transforms.flipV(props.element.bounds) : ''}`;
+    const hasAction =
+      props.element.renderProps.action.type !== undefined &&
+      props.element.renderProps.action.type !== 'none';
     return svg.g(
       {
         id: `node-${props.element.id}`,
         class:
           'svg-node ' +
           (props.isReadOnly ? 'svg-readonly' : '') +
+          ' ' +
+          (hasAction ? 'svg-node--with-action' : '') +
           ' ' +
           getHighlights(props.element)
             .map(h => `svg-node--highlight-${h}`)
