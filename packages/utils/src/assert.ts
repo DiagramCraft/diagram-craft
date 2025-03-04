@@ -34,7 +34,7 @@ type AssertType = {
   present: <T = unknown>(arg: T, msg?: string) => asserts arg is NonNullable<T>;
   notPresent: <T = unknown>(arg: T | undefined, msg?: string) => asserts arg is undefined;
   arrayWithExactlyOneElement: <T = unknown>(
-    arg: T[] | undefined | null,
+    arg: readonly T[] | T[] | undefined | null,
     msg?: string
   ) => asserts arg is [T];
   arrayNotEmpty: <T = unknown>(
@@ -56,7 +56,7 @@ const makeAssertions = (error: (m: string) => void) => ({
     if (!is.notPresent(arg)) error(msg ?? 'not present');
   },
   arrayWithExactlyOneElement: <T = unknown>(
-    arg: T[] | undefined | null,
+    arg: T[] | readonly T[] | undefined | null,
     msg?: string
   ): asserts arg is [T] => {
     if (!is.arrayWithExactlyOneElement(arg)) error(msg ?? 'array has not exactly one element');

@@ -15,6 +15,7 @@ import { externalDataActions } from './actions/externalDataActions';
 import { previewActions } from './actions/previewAction';
 import { shapeInsertActions } from './actions/shapeInsertAction';
 import { selectionChangeShapeActions } from './actions/selectionChangeShapeAction';
+import { selectionExecuteActionActions } from './actions/selectionExecuteActionAction';
 
 export const defaultAppActions: ActionMapFactory<Application> = application => ({
   ...toolActions(application),
@@ -31,7 +32,8 @@ export const defaultAppActions: ActionMapFactory<Application> = application => (
   ...shapeInsertActions(application),
   ...tableInsertActions(application),
   ...externalDataActions(application),
-  ...selectionChangeShapeActions(application)
+  ...selectionChangeShapeActions(application),
+  ...selectionExecuteActionActions(application)
 });
 
 export const defaultMacAppKeymap: KeyMap = {
