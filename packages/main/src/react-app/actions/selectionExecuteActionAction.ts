@@ -46,9 +46,14 @@ export class SelectionExecuteAction extends AbstractSelectionAction<Application>
       case 'url':
         window.open(node.renderProps.action.url, '_blank');
         return;
-      case 'diagram':
-        // TODO: Implement
+
+      case 'diagram': {
+        const newDiagram = this.context.model.activeDocument.getById(node.renderProps.action.url);
+        assert.present(newDiagram);
+        this.context.model.activeDiagram = newDiagram;
         return;
+      }
+
       case 'layer':
         // TODO: Implement
         return;

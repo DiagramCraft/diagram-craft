@@ -2,9 +2,30 @@ import { ToolWindowPanel } from '../ToolWindowPanel';
 import { useNodeProperty } from '../../hooks/useProperty';
 import { PropertyEditor } from '../../components/PropertyEditor';
 import { Property } from '../ObjectToolWindow/types';
-import { useDiagram } from '../../../application';
+import { useDiagram, useDocument } from '../../../application';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
+import { coalesce } from '@diagram-craft/utils/strings';
+import { Diagram } from '@diagram-craft/model/diagram';
+import React from 'react';
+
+const DiagramList = (props: { list: readonly Diagram[]; level: number }) => {
+  return (
+    <>
+      {props.list.map(diagram => {
+        return (
+          <React.Fragment key={diagram.id}>
+            <Select.Item value={diagram.id}>
+              <span style={{ width: `${props.level * 10}px`, display: 'inline-block' }} />
+              {diagram.name}
+            </Select.Item>
+            <DiagramList list={diagram.diagrams} level={props.level + 1} />
+          </React.Fragment>
+        );
+      })}
+    </>
+  );
+};
 
 type FormProps = {
   type: Property<'url' | 'diagram' | 'layer' | 'none'>;
@@ -12,6 +33,7 @@ type FormProps = {
 };
 
 export const NodeActionPropertiesPanelForm = ({ type, url }: FormProps) => {
+  const document = useDocument();
   return (
     <div className={'cmp-labeled-table'}>
       <div className={'cmp-labeled-table__label'}>Type:</div>
@@ -27,6 +49,7 @@ export const NodeActionPropertiesPanelForm = ({ type, url }: FormProps) => {
             >
               <Select.Item value={'none'}>None</Select.Item>
               <Select.Item value={'url'}>URL</Select.Item>
+              <Select.Item value={'diagram'}>Sheet</Select.Item>
             </Select.Root>
           )}
         />
@@ -37,6 +60,25 @@ export const NodeActionPropertiesPanelForm = ({ type, url }: FormProps) => {
           <div className={'cmp-labeled-table__label'}>URL:</div>
           <div className={'cmp-labeled-table__value'}>
             <PropertyEditor property={url} render={props => <TextInput {...props} />} />
+          </div>
+        </>
+      )}
+
+      {type.val === 'diagram' && (
+        <>
+          <div className={'cmp-labeled-table__label'}>Diagram:</div>
+          <div className={'cmp-labeled-table__value'}>
+            <PropertyEditor
+              property={url}
+              render={props => (
+                <Select.Root
+                  {...props}
+                  value={coalesce(props.value, document.topLevelDiagrams[0].id)!}
+                >
+                  <DiagramList level={0} list={document.topLevelDiagrams} />
+                </Select.Root>
+              )}
+            />
           </div>
         </>
       )}
