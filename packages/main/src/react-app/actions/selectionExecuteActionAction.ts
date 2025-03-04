@@ -37,6 +37,8 @@ export class SelectionExecuteAction extends AbstractSelectionAction<Application>
   }
 
   execute(): void {
+    const document = this.context.model.activeDocument;
+
     const diagram = this.context.model.activeDiagram;
     assert.arrayWithExactlyOneElement(diagram.selectionState.nodes);
 
@@ -48,15 +50,22 @@ export class SelectionExecuteAction extends AbstractSelectionAction<Application>
         return;
 
       case 'diagram': {
-        const newDiagram = this.context.model.activeDocument.getById(node.renderProps.action.url);
+        const newDiagram = document.getById(node.renderProps.action.url);
         assert.present(newDiagram);
         this.context.model.activeDiagram = newDiagram;
         return;
       }
 
-      case 'layer':
+      case 'layer': {
+        const layer = diagram.layers.byId(node.renderProps.action.url);
+        assert.present(layer);
+
+        diagram.layers.toggleVisibility(layer);
+
         // TODO: Implement
         return;
+      }
+
       case 'none':
       case undefined:
         // Do nothing
