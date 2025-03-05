@@ -74,10 +74,7 @@ export const NodeActionPropertiesPanelForm = ({ type, url }: FormProps) => {
             <PropertyEditor
               property={url}
               render={props => (
-                <Select.Root
-                  {...props}
-                  value={coalesce(props.value, document.topLevelDiagrams[0].id)!}
-                >
+                <Select.Root {...props} value={coalesce(props.value, '')!} placeholder={'Select'}>
                   <DiagramList level={0} list={document.topLevelDiagrams} />
                 </Select.Root>
               )}
@@ -93,7 +90,7 @@ export const NodeActionPropertiesPanelForm = ({ type, url }: FormProps) => {
             <PropertyEditor
               property={url}
               render={props => (
-                <Select.Root {...props} value={diagram.activeLayer.id!}>
+                <Select.Root {...props} value={diagram.activeLayer.id ?? ''} placeholder={'Select'}>
                   {diagram.layers.all.map(layer => (
                     <Select.Item key={layer.id} value={layer.id}>
                       {layer.name}

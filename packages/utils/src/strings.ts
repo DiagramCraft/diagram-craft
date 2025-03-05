@@ -27,7 +27,7 @@ export const shorten = (str: string, length: number) => {
  * coalesce(undefined, null, "");
  */
 export const coalesce = (...args: (string | undefined | null)[]) =>
-  args.find(a => a !== undefined && a !== null && a.trim() !== '');
+  args.find(a => !isEmptyString(a));
 
 /**
  * Returns true if the provided string is null, undefined or empty.

@@ -8,6 +8,7 @@ import { ActionCriteria } from '@diagram-craft/canvas/action';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { assert } from '@diagram-craft/utils/assert';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { isEmptyString } from '@diagram-craft/utils/strings';
 
 declare global {
   interface ActionMap extends ReturnType<typeof selectionExecuteActionActions> {}
@@ -30,7 +31,8 @@ export class SelectionExecuteAction extends AbstractSelectionAction<Application,
           return (
             isNode(e) &&
             e.renderProps.action.type !== undefined &&
-            e.renderProps.action.type !== 'none'
+            e.renderProps.action.type !== 'none' &&
+            !isEmptyString(e.renderProps.action.url)
           );
         });
       })
@@ -60,14 +62,16 @@ export class SelectionExecuteAction extends AbstractSelectionAction<Application,
 
       case 'diagram': {
         const newDiagram = document.getById(node.renderProps.action.url);
-        assert.present(newDiagram);
+        if (newDiagram === undefined) return;
+
         this.context.model.activeDiagram = newDiagram;
         return;
       }
 
       case 'layer': {
         const layer = diagram.layers.byId(node.renderProps.action.url);
-        assert.present(layer);
+        if (layer === undefined) return;
+
         diagram.layers.toggleVisibility(layer);
         return;
       }
