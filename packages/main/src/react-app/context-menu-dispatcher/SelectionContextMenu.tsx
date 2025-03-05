@@ -18,7 +18,9 @@ export const SelectionContextMenu = () => {
       <ActionContextMenuItem action={'SELECTION_CHANGE_SHAPE'}>
         Change Shape...
       </ActionContextMenuItem>
-      <ActionContextMenuItem action={'SELECTION_EXECUTE_ACTION'}>Act</ActionContextMenuItem>
+      <ActionContextMenuItem action={'SELECTION_EXECUTE_ACTION'} arg={{}}>
+        Act
+      </ActionContextMenuItem>
       <ContextMenu.Separator className="cmp-context-menu__separator" />
 
       <ActionContextMenuItem action={'CLIPBOARD_CUT'}>Cut</ActionContextMenuItem>

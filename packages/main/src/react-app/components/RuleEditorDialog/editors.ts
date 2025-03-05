@@ -15,6 +15,7 @@ import { EdgeEffectsEditor } from './EdgeEffectsEditor';
 import { EdgeLineEditor } from './EdgeLineEditor';
 import { Defaults } from '@diagram-craft/model/diagramDefaults';
 import { NamedIndicatorEditor } from './NamedIndicatorEditor';
+import { NodeActionPropertiesEditor } from './NodeActionPropertiesEditor';
 
 export type Editor = (props: {
   props: NodeProps | EdgeProps;
@@ -58,6 +59,13 @@ export const NODE_EDITORS: EditorRegistry<Editor> = {
     name: 'Indicator',
     editor: NamedIndicatorEditor,
     pick: (props: NodeProps | EdgeProps) => ({ indicators: (props as NodeProps).indicators })
+  },
+  action: {
+    name: 'Action',
+    editor: NodeActionPropertiesEditor,
+    pick: (props: NodeProps | EdgeProps) => ({
+      action: (props as NodeProps).action
+    })
   },
   advanced: {
     name: 'Advanced',
