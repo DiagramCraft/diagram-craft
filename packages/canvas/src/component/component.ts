@@ -47,6 +47,10 @@ export const createEffect = (callback: Callback, deps: unknown[]) => {
   CURRENT_EFFECT_MANAGER!.add(callback, deps);
 };
 
+export const isInComponent = () => {
+  return !!CURRENT_EFFECT_MANAGER;
+};
+
 type Registration = {
   cleanup: () => void;
   deps: unknown[];

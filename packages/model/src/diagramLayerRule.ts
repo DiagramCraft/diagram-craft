@@ -47,7 +47,7 @@ export const validProps = (_type: 'edge' | 'node'): Prop[] => {
     {
       value: 'props',
       label: 'Style properties',
-      items: defaultProps(nodeDefaults.merge({}), 'renderProps')
+      items: defaultProps(nodeDefaults.applyDefaults({}), 'renderProps')
     }
   ];
 };
