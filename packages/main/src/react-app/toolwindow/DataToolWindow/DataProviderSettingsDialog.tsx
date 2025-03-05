@@ -68,7 +68,7 @@ export function DataProviderSettingsDialog(props: { onClose: () => void; open: b
           label: 'Close',
           onClick: e => {
             if (provider === undefined) {
-              document.data.provider = provider;
+              document.data.setProvider(provider);
               props.onClose();
             } else {
               e.preventDefault();
@@ -76,7 +76,7 @@ export function DataProviderSettingsDialog(props: { onClose: () => void; open: b
               const error = provider.verifySettings();
               error.then(f => {
                 if (!f) {
-                  document.data.provider = provider;
+                  document.data.setProvider(provider);
                   props.onClose();
                 } else {
                   setErrorMessage(f);

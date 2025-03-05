@@ -221,7 +221,7 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
   if (document.data?.providerId) {
     const provider = DataProviderRegistry.get(document.data.providerId);
     if (provider) {
-      doc.data.provider = provider(document.data.data!);
+      doc.data.setProvider(provider(document.data.data!), true);
     } else {
       console.warn(`Provider ${document.data.providerId} not found`);
     }
