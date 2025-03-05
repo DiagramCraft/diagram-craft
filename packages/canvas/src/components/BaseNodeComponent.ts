@@ -30,6 +30,7 @@ import { Indicator } from '@diagram-craft/model/diagramProps';
 import { DeepRequired } from '@diagram-craft/utils/types';
 import { INDICATORS } from './indicators';
 import { Box, WritableBox } from '@diagram-craft/geometry/box';
+import { isEmptyString } from '@diagram-craft/utils/strings';
 
 export type NodeComponentProps = {
   element: DiagramNode;
@@ -376,7 +377,8 @@ export class BaseNodeComponent<
     const transform = `${Transforms.rotate(props.element.bounds)} ${nodeProps.geometry.flipH ? Transforms.flipH(props.element.bounds) : ''} ${nodeProps.geometry.flipV ? Transforms.flipV(props.element.bounds) : ''}`;
     const hasAction =
       props.element.renderProps.action.type !== undefined &&
-      props.element.renderProps.action.type !== 'none';
+      props.element.renderProps.action.type !== 'none' &&
+      !isEmptyString(props.element.renderProps.action.url);
     return svg.g(
       {
         id: `node-${props.element.id}`,
