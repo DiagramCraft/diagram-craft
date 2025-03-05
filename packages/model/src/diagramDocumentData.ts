@@ -45,6 +45,7 @@ const makeDeleteSchemaListener = (document: DiagramDocument) => (s: DataSchema) 
 const makeUpdateSchemaListener = (document: DiagramDocument) => (s: DataSchema) => {
   const schemas = document.data.schemas;
   if (schemas.has(s.id)) {
+    if (deepEquals(schemas.get(s.id), s)) return;
     schemas.update(s);
   } else {
     schemas.add(s);
@@ -108,7 +109,7 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
     return this.#provider;
   }
 
-  set provider(dataProvider: DataProvider | undefined) {
+  setProvider(dataProvider: DataProvider | undefined, initial = false) {
     this.#provider?.off?.('addData', this.#updateDataListener);
     this.#provider?.off?.('updateData', this.#updateDataListener);
     this.#provider?.off?.('deleteData', this.#deleteDataListener);
@@ -117,7 +118,7 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
     this.#provider?.off?.('deleteSchema', this.#deleteSchemaListener);
 
     this.#provider = dataProvider;
-    this.emit('change');
+    if (!initial) this.emit('change');
 
     if (this.#provider) {
       this.#provider.on('addData', this.#updateDataListener);
