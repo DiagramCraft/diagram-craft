@@ -35,7 +35,8 @@ const EDITORS = {
     { name: 'Shadow', editor: NODE_EDITORS['shadow'].editor },
     { name: 'Effects', editor: NODE_EDITORS['effects'].editor },
     { name: 'Custom', editor: NODE_EDITORS['nodeCustom'].editor },
-    { name: 'Advanced', editor: NODE_EDITORS['advanced'].editor }
+    { name: 'Advanced', editor: NODE_EDITORS['advanced'].editor },
+    { name: 'Action', editor: NODE_EDITORS['action'].editor }
   ],
   edge: [
     { name: 'Line', editor: EDGE_EDITORS['edgeLine'].editor },
@@ -84,7 +85,7 @@ export const ElementStylesheetPanel = (props: Props) => {
   return (
     <>
       <ToolWindowPanel
-        mode={props.mode ?? $d.selectionState.isNodesOnly() ? 'headless' : 'accordion'}
+        mode={(props.mode ?? $d.selectionState.isNodesOnly()) ? 'headless' : 'accordion'}
         id="stylesheet"
         title={'Style'}
         hasCheckbox={false}
