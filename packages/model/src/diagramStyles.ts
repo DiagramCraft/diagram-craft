@@ -195,17 +195,15 @@ const isPropsDirty = (
         // An empty object is considered equivalent to undefined
         if (Object.keys(props[key]).length === 0) continue;
 
-        // Also an object with all defaults is equivalent to undefined
+        // Also an object with all defaults is not dirty
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if (defaults.isDefaults(props[key] as any, [...path, key].join('.') as any)) continue;
+        if (defaults.isSameAsDefaults(props, [...path, key].join('.') as any)) continue;
 
-        // TODO: We should add some normalization - or check compared to default value instead
-        //        if (key === 'shadow' && keys.length === 1 && props[key].enabled === false) continue;
-
+        // TODO: It's unclear if this should be here or not
         // A missing object is considered non-dirty
-        if (isObj(props[key])) continue;
-
-        console.log('missing key', key, props[key]);
+        //if (isObj(props[key])) continue;
+        //
+        //console.log('missing key', key, props[key]);
         return true;
       } else {
         const dirty = isPropsDirty(
@@ -218,7 +216,6 @@ const isPropsDirty = (
         if (dirty) return true;
       }
     } else if (props[key] !== undefined && props[key] !== stylesheetProps[key]) {
-      //      console.log('key', key, props[key], stylesheetProps[key]);
       return true;
     }
   }

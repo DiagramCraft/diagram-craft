@@ -1,19 +1,64 @@
 import { DeepPartial, DeepRequired, makeWriteable } from '@diagram-craft/utils/types';
-import { deepMerge, isObj } from '@diagram-craft/utils/object';
+import { deepMerge, isObj, unfoldObject } from '@diagram-craft/utils/object';
 import { NodePropsForRendering } from './diagramNode';
 import { EdgePropsForRendering } from './diagramEdge';
 import { ElementPropsForRendering } from './diagramElement';
 import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
+import { assert } from '@diagram-craft/utils/assert';
+
+export class DiagramDefaultsPrivate {
+  static isSameAsDefaults(
+    props: Record<string, unknown>,
+    defaults: Record<string, unknown>
+  ): boolean {
+    for (const key of Object.keys(props)) {
+      if (isObj(props[key])) {
+        // In case we add props that are not part of the defaults object, this
+        // is still considered same as defaults
+        if (defaults[key] === undefined) continue;
+        if (
+          !DiagramDefaultsPrivate.isSameAsDefaults(
+            props[key],
+            defaults[key] as Record<string, unknown>
+          )
+        ) {
+          return false;
+        }
+      } else if (props[key] !== defaults[key]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Extracts and returns a suffix from a given key based on a provided prefix length.
+   *
+   * This takes property like a.b.c.d.e, with a pattern such as a.b.* and extracts d.e
+   * key='a.b.c.d.e', p='a.b]
+   *
+   * @param key - The full string key from which the suffix is derived.
+   * @param pattern - The prefix string used to determine the starting point for suffix extraction.
+   * @return The extracted suffix obtained by removing the prefix and processing the remaining string.
+   */
+  static getSuffix(key: string, pattern: string) {
+    return key
+      .slice(pattern.length + 1)
+      .split('.')
+      .slice(1)
+      .join('.');
+  }
+}
 
 export class Defaults<T> {
-  private readonly defaults: Record<string, unknown> = {};
+  private readonly defaults: Record<string, unknown>;
   private readonly patterns: Record<string, Record<string, unknown>> = {};
 
-  private defaultsObjects: T | undefined;
-  private patternDefaultsObjects: Record<string, unknown> | undefined;
+  private cachedDefaultsObject: T | undefined;
+  private cachedPatternDefaultsObjects: Record<string, unknown> | undefined;
 
   constructor(defaults?: DeepPartial<T>) {
-    this.unfoldAndAdd(defaults ?? {}, this.defaults);
+    this.defaults = unfoldObject({}, defaults ?? {});
   }
 
   get<K extends PropPath<T>>(key: K): PropPathValue<T, K> | undefined {
@@ -28,13 +73,7 @@ export class Defaults<T> {
     for (const p of Object.keys(this.patterns)) {
       if (key === p) return {};
       else if (key.startsWith(p)) {
-        // This takes property like a.b.c.d.e, with a pattern such as a.b.*,
-        // and extracts d.e
-        const k = key
-          .slice(p.length + 1)
-          .split('.')
-          .slice(1)
-          .join('.');
+        const k = DiagramDefaultsPrivate.getSuffix(key, p);
 
         if (k === '') return this.patterns[p];
 
@@ -51,100 +90,82 @@ export class Defaults<T> {
   }
 
   add<K extends PropPath<T>>(key: K, value: PropPathValue<T, K>): void {
-    this.defaultsObjects = undefined;
+    this.cachedDefaultsObject = undefined;
 
-    this.unfoldAndAdd(value, this.defaults, key.split('.'));
+    unfoldObject(this.defaults, value, key.split('.'));
   }
 
   addPattern<K extends PropPath<T>>(key: `${K}.*`, value: unknown): void {
-    this.defaultsObjects = undefined;
-    this.patternDefaultsObjects = undefined;
+    this.cachedDefaultsObject = undefined;
+    this.cachedPatternDefaultsObjects = undefined;
 
-    this.patterns[key.slice(0, -2)] ??= {};
-    this.unfoldAndAdd(value, this.patterns[key.slice(0, -2)]);
+    const offset = '.*'.length;
+    this.patterns[key.slice(0, -offset)] ??= {};
+    unfoldObject(this.patterns[key.slice(0, -offset)], value);
   }
 
-  merge(props: DeepPartial<T>): T {
-    if (this.defaultsObjects === undefined) {
-      this.defaultsObjects = this.createDefaultsObject();
-    }
+  applyDefaults(props: DeepPartial<T>): T {
+    this.cachedDefaultsObject ??= this.createDefaultsObject();
+    assert.present(this.cachedDefaultsObject);
 
-    if (this.patternDefaultsObjects === undefined) {
-      this.patternDefaultsObjects = this.createPatternDefaultsObject();
-    }
+    this.cachedPatternDefaultsObjects ??= this.createPatternDefaultsObject();
 
     // Handle patterns
     const patternDefaults = {};
     const accessor = new DynamicAccessor<DeepPartial<T>>();
-    for (const [key, value] of Object.entries(this.patternDefaultsObjects!)) {
+    for (const [key, value] of Object.entries(this.cachedPatternDefaultsObjects!)) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       accessor.set(patternDefaults, key as PropPath<DeepPartial<T>>, {} as any);
+
       const patternRoot = accessor.get(props, key as PropPath<DeepPartial<T>>);
-      if (patternRoot) {
-        for (const k of Object.keys(patternRoot)) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          accessor.set(patternDefaults, (key + '.' + k) as PropPath<DeepPartial<T>>, value as any);
-        }
+      if (!patternRoot) continue;
+
+      for (const k of Object.keys(patternRoot)) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        accessor.set(patternDefaults, (key + '.' + k) as PropPath<DeepPartial<T>>, value as any);
       }
     }
 
-    return deepMerge({}, patternDefaults, this.defaultsObjects!, props) as T;
+    return deepMerge({}, patternDefaults, this.cachedDefaultsObject, props) as T;
   }
 
-  isDefaults<K extends PropPath<T>>(props: DeepPartial<T>, path?: K): boolean {
-    const isSameAsDefaults = (
-      props: Record<string, unknown>,
-      defaults: Record<string, unknown>
-    ): boolean => {
-      for (const key of Object.keys(props)) {
-        if (isObj(props[key])) {
-          // In case we add props that are not part of the defaults object, this
-          // is still considered same as defaults
-          if (defaults[key] === undefined) continue;
-          if (!isSameAsDefaults(props[key], defaults[key] as Record<string, unknown>)) {
-            return false;
-          }
-        } else if (props[key] !== defaults[key]) {
-          return false;
-        }
-      }
-      return true;
-    };
+  isSameAsDefaults<K extends PropPath<T>>(props: DeepPartial<T>, path?: K): boolean {
+    this.cachedDefaultsObject ??= this.createDefaultsObject();
+    assert.present(this.cachedDefaultsObject);
 
-    // @ts-ignore
-    const propsToVerify = (path ? new DynamicAccessor().get(props, path) : props) ?? {};
-    const defaultsToVerify = path ? this.getRaw(path, false) : this.defaultsObjects;
-    return isSameAsDefaults(propsToVerify, defaultsToVerify as Record<string, unknown>);
+    let defaultsToVerify: Record<string, unknown>;
+    let propsToVerify: Record<string, unknown>;
+
+    if (path) {
+      const accessor = new DynamicAccessor<Record<string, unknown>>();
+      propsToVerify = accessor.get(props, path) as Record<string, unknown>;
+      defaultsToVerify = accessor.get(this.cachedDefaultsObject, path) as Record<string, unknown>;
+    } else {
+      propsToVerify = props ?? {};
+      defaultsToVerify = this.cachedDefaultsObject;
+    }
+
+    return DiagramDefaultsPrivate.isSameAsDefaults(propsToVerify, defaultsToVerify);
   }
 
-  dump() {
-    console.log('----------------------------------------------------------');
-    console.log('defaults', this.defaults);
-    console.log('patterns', this.patterns);
-    console.log('defaultsObjects', this.createDefaultsObject());
-    console.log('patternDefaultsObjects', this.createPatternDefaultsObject());
-  }
-
-  private createDefaultsObject(): T {
+  private createDefaultsObject() {
     const obj = {};
-    const accessor = new DynamicAccessor();
+    const accessor = new DynamicAccessor<Record<string, unknown>>();
 
     for (const [key, value] of Object.entries(this.defaults)) {
-      // @ts-ignore
       accessor.set(obj, key, value);
     }
 
     return obj as T;
   }
 
-  private createPatternDefaultsObject(): Record<string, unknown> {
+  private createPatternDefaultsObject() {
     const dest: Record<string, unknown> = {};
-    const accessor = new DynamicAccessor();
+    const accessor = new DynamicAccessor<Record<string, unknown>>();
 
     for (const [pattern, patternSpec] of Object.entries(this.patterns)) {
       const obj = {};
       for (const [key, value] of Object.entries(patternSpec)) {
-        // @ts-ignore
         accessor.set(obj, key, value);
       }
       dest[pattern] = obj;
@@ -152,20 +173,14 @@ export class Defaults<T> {
 
     return dest;
   }
-
-  private unfoldAndAdd(value: unknown, obj: Record<string, unknown>, path: string[] = []): void {
-    if (isObj(value) && value !== null && value !== undefined) {
-      for (const key of Object.keys(value)) {
-        this.unfoldAndAdd(value[key], obj, [...path, key]);
-      }
-    } else {
-      obj[path.join('.')] = value;
-    }
-  }
 }
 
-// @ts-ignore
-class ParentDefaults<T> extends Defaults<T> {
+/**
+ * The ParentDefaults class extends the Defaults class to manage a collection of child Defaults instances.
+ * It provides functionality to apply default values and patterns to both the parent instance
+ * and the associated child instances.
+ */
+export class ParentDefaults<T> extends Defaults<T> {
   constructor(
     private readonly children: Defaults<T>[],
     defaults?: DeepPartial<T>

@@ -1,4 +1,4 @@
-import { Component, createEffect } from './component/component';
+import { Component, createEffect, isInComponent } from './component/component';
 import * as svg from './component/vdom-svg';
 import * as html from './component/vdom-html';
 import { Point } from '@diagram-craft/geometry/point';
@@ -28,6 +28,8 @@ export class CanvasComponent extends Component<CanvasProps> {
   }
 
   private onDiagramRedraw(eventName: EventKey<DiagramEvents>, diagram: Diagram) {
+    if (!isInComponent()) return;
+
     createEffect(() => {
       const cb = () => this.redraw();
       diagram.on(eventName, cb);

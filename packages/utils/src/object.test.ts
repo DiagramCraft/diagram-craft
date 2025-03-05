@@ -1,4 +1,4 @@
-import { common, deepClear, deepEquals, deepIsEmpty, deepMerge } from './object';
+import { common, deepClear, deepEquals, deepIsEmpty, deepMerge, unfoldObject } from './object';
 import { describe, expect, test } from 'vitest';
 import { UNSAFE } from './testUtils';
 
@@ -9,7 +9,6 @@ describe('common function', () => {
     const result = common(obj1, obj2);
     expect(result).to.deep.equal({ a: 1, c: { d: 3 } });
   });
-
   test('should return an empty object if there are no common properties', () => {
     const obj1 = { a: 1, b: 2 };
     const obj2 = { c: 1, d: 2 } as unknown as UNSAFE<typeof obj1>;
@@ -29,6 +28,52 @@ describe('common function', () => {
     const obj1 = 'not an object' as unknown as UNSAFE<typeof obj2>;
     const result = common(obj1, obj2);
     expect(result).to.deep.equal({});
+  });
+});
+
+describe('unfoldObject function', () => {
+  test('should unfold a flat object correctly', () => {
+    const obj = { a: 1, b: 2, c: 3 };
+    const dest: Record<string, unknown> = {};
+    unfoldObject(dest, obj);
+    expect(dest).toEqual({ a: 1, b: 2, c: 3 });
+  });
+
+  test('should handle a nested object correctly', () => {
+    const obj = { a: 1, b: { c: 2, d: { e: 3 } } };
+    const dest: Record<string, unknown> = {};
+    unfoldObject(dest, obj);
+    expect(dest).toEqual({ 'a': 1, 'b.c': 2, 'b.d.e': 3 });
+  });
+
+  /* TODO: Should we support arrays
+  test('should handle objects with arrays', () => {
+    const obj = { a: [1, 2, { b: 3 }] };
+    const dest: Record<string, unknown> = {};
+    unfoldObject(dest, obj);
+    expect(dest).toEqual({ 'a.0': 1, 'a.1': 2, 'a.2.b': 3 });
+  });
+   */
+
+  test('should handle nested keys with null and primitive values', () => {
+    const obj = { a: null, b: { c: 42, d: 'hello' }, e: true };
+    const dest: Record<string, unknown> = {};
+    unfoldObject(dest, obj);
+    expect(dest).toEqual({ 'a': null, 'b.c': 42, 'b.d': 'hello', 'e': true });
+  });
+
+  test('should return an empty object when input is empty', () => {
+    const obj = {};
+    const dest: Record<string, unknown> = {};
+    unfoldObject(dest, obj);
+    expect(dest).toEqual({});
+  });
+
+  test('should handle multiple data types in values', () => {
+    const obj = { a: 123, b: 'text', c: true };
+    const dest: Record<string, unknown> = {};
+    unfoldObject(dest, obj);
+    expect(dest).toEqual({ a: 123, b: 'text', c: true });
   });
 });
 

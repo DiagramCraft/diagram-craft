@@ -257,3 +257,27 @@ export const deepIsEmpty = (obj: any | undefined | null) => {
 export const objectKeys = <T extends Props>(obj: T): Array<keyof T> => {
   return Object.keys(obj) as Array<keyof T>;
 };
+
+/**
+ * Recursively unfolds a nested object into a flat key-value mapping where
+ * keys represent the path to the original nested property.
+ *
+ * @param dest  - The destination object where unfolded key-value pairs are stored.
+ * @param value - The current value to process, which may be an object or a primitive.
+ * @param path  - An array representing the current path within the nested object.
+ *                Defaults to an empty array for initial calls.
+ */
+export const unfoldObject = (
+  dest: Record<string, unknown>,
+  value: unknown,
+  path: string[] = []
+): Record<string, unknown> => {
+  if (isObj(value) && value !== null) {
+    for (const key of Object.keys(value)) {
+      unfoldObject(dest, value[key], [...path, key]);
+    }
+  } else {
+    dest[path.join('.')] = value;
+  }
+  return dest;
+};
