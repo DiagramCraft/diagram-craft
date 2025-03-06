@@ -103,4 +103,22 @@ export class Viewbox extends EventEmitter<ViewboxEvents> {
       y: this.windowSize.h / 2
     };
   }
+
+  get aspectRatio() {
+    return this.#dimensions.w / this.#dimensions.h;
+  }
 }
+
+export const fitInAspectRatio = (w: number, h: number, aspectRatio: number) => {
+  if (aspectRatio < 1) {
+    return {
+      w: h * aspectRatio,
+      h
+    };
+  } else {
+    return {
+      w,
+      h: w / aspectRatio
+    };
+  }
+};
