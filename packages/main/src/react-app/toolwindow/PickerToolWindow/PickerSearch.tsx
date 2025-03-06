@@ -32,6 +32,9 @@ export const PickerSearch = () => {
               setSearch(e.currentTarget.value);
             }
           }}
+          onClear={() => {
+            setSearch('');
+          }}
         />
         <Button
           onClick={() => {
