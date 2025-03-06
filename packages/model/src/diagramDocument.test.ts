@@ -25,7 +25,7 @@ describe('DiagramDocument', () => {
       const document = new DiagramDocument(nodeDefinitions, edgeDefinitions);
 
       const diagram2 = { id: 'diagram2' } as Diagram;
-      const diagram1 = { id: 'diagram1', diagrams: [diagram2] } as any as Diagram;
+      const diagram1 = { id: 'diagram1', diagrams: [diagram2] } as unknown as Diagram;
       document.addDiagram(diagram1);
 
       const result = document.getById('diagram2');
