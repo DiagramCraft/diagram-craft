@@ -357,7 +357,7 @@ export class StencilRegistry extends EventEmitter<StencilEvents> {
       .map(s => this.stencils.get(s)!);
   }
 
-  search(s: string) {
+  search(s: string): Stencil[] {
     const results: Stencil[] = [];
     for (const pkg of this.stencils.values()) {
       if (pkg.name.toLowerCase().includes(s.toLowerCase())) {

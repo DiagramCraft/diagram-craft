@@ -6,15 +6,20 @@ import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { unique } from '@diagram-craft/utils/array';
 import { UserState } from '../../../UserState';
 import { useDiagram } from '../../../application';
+import { PickerSearch } from './PickerSearch';
+import { PickerConfig } from './pickerConfig';
 
-const SIZE = 35;
+const SEARCH_KEY = '__search';
 
 export const PickerToolWindow = () => {
   const diagram = useDiagram();
   const stencilRegistry = diagram.document.nodeDefinitions.stencilRegistry;
 
   const userState = UserState.get();
-  const [open, setOpen] = useState(userState.stencils.filter(s => s.isOpen).map(s => s.id));
+  const [open, setOpen] = useState([
+    SEARCH_KEY,
+    ...userState.stencils.filter(s => s.isOpen).map(s => s.id)
+  ]);
   const [loaded, setLoaded] = useState(userState.stencils.filter(s => s.isOpen).map(s => s.id));
   const redraw = useRedraw();
 
@@ -48,10 +53,20 @@ export const PickerToolWindow = () => {
 
   return (
     <Accordion.Root type="multiple" value={open} onValueChange={setOpenStencils}>
+      <Accordion.Item value={SEARCH_KEY}>
+        <Accordion.ItemHeader>Search</Accordion.ItemHeader>
+        <Accordion.ItemContent>
+          <PickerSearch />
+        </Accordion.ItemContent>
+      </Accordion.Item>
+
       <Accordion.Item value="basic-shapes">
         <Accordion.ItemHeader>Basic shapes</Accordion.ItemHeader>
         <Accordion.ItemContent>
-          <ObjectPicker size={SIZE} package={stencilRegistry.get('default')!} />
+          <ObjectPicker
+            size={PickerConfig.size}
+            stencils={stencilRegistry.get('default')!.stencils}
+          />
         </Accordion.ItemContent>
       </Accordion.Item>
 
@@ -63,7 +78,9 @@ export const PickerToolWindow = () => {
           <Accordion.Item key={group.id} value={group.id}>
             <Accordion.ItemHeader>{group.name}</Accordion.ItemHeader>
             <Accordion.ItemContent forceMount={true}>
-              {loaded.includes(group.id) && <ObjectPicker size={SIZE} package={group} />}
+              {loaded.includes(group.id) && (
+                <ObjectPicker size={PickerConfig.size} stencils={group.stencils} />
+              )}
             </Accordion.ItemContent>
           </Accordion.Item>
         ))}

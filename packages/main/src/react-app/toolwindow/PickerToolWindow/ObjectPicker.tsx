@@ -1,7 +1,7 @@
 import { PickerCanvas } from '../../PickerCanvas';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { isRegularLayer } from '@diagram-craft/model/diagramLayer';
-import { Stencil, StencilPackage } from '@diagram-craft/model/elementDefinitionRegistry';
+import { Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { useMemo, useState } from 'react';
 import { useApplication, useDiagram } from '../../../application';
@@ -10,8 +10,8 @@ import { ObjectPickerDrag } from './ObjectPickerDrag';
 
 const NODE_CACHE = new Map<string, [Stencil, Diagram, DiagramNode, DiagramNode]>();
 
-const makeDiagramNode = (mainDiagram: Diagram, n: Stencil, pkg: string) => {
-  const cacheKey = pkg + '/' + n.id;
+const makeDiagramNode = (mainDiagram: Diagram, n: Stencil) => {
+  const cacheKey = n.id;
 
   if (NODE_CACHE.has(cacheKey)) {
     return NODE_CACHE.get(cacheKey)!;
@@ -44,9 +44,9 @@ export const ObjectPicker = (props: Props) => {
   const [showHover, setShowHover] = useState(true);
   const app = useApplication();
 
-  const stencils = props.package.stencils;
+  const stencils = props.stencils;
   const diagrams = useMemo(() => {
-    return stencils.map(n => makeDiagramNode(diagram, n, props.package.id));
+    return stencils.map(n => makeDiagramNode(diagram, n));
   }, [diagram, stencils]);
 
   return (
@@ -83,5 +83,5 @@ export const ObjectPicker = (props: Props) => {
 
 type Props = {
   size: number;
-  package: StencilPackage;
+  stencils: Stencil[];
 };
