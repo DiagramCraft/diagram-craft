@@ -3,8 +3,10 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import React, { useCallback, useRef, useState } from 'react';
 import * as Portal from '@radix-ui/react-portal';
 import { Point } from '@diagram-craft/geometry/point';
+import { useApplication } from '../application';
 
 export const PickerCanvas = (props: PickerCanvasProps) => {
+  const application = useApplication();
   const diagram = props.diagram;
   const timeout = useRef<number | null>(null);
   const [hover, setHover] = useState<Point | undefined>(undefined);
@@ -74,6 +76,7 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
             }}
           >
             <Canvas
+              context={application}
               width={80}
               height={80}
               onClick={() => {}}
@@ -96,6 +99,7 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
       )}
 
       <Canvas
+        context={application}
         width={props.width ?? 40}
         height={props.height ?? 40}
         onClick={props.onClick}
