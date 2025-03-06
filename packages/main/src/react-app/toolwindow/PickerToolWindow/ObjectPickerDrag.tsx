@@ -155,6 +155,7 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
 
     const canvas = new CanvasComponent();
     const $canvasVdomNode = canvas.render({
+      context: this.context,
       diagram: dest,
       width: (this.source.bounds.w / scale).toString(),
       height: (this.source.bounds.h / scale).toString()

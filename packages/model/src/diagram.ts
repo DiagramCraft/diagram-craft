@@ -28,10 +28,10 @@ export function* diagramIterator(
   opts: DiagramIteratorOpts
 ): Generator<Diagram> {
   for (const d of arr) {
-    if (opts.filter && !opts.filter(d)) continue;
-
-    yield d;
-    if (opts.earlyExit) return;
+    if (!opts.filter || opts.filter(d)) {
+      yield d;
+      if (opts.earlyExit) return;
+    }
 
     if (opts.nest && d.diagrams) {
       yield* diagramIterator(d.diagrams, opts);

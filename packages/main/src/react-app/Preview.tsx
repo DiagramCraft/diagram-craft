@@ -72,6 +72,7 @@ export const Preview = (props: Props) => {
 
       <div className={styles.previewCanvas}>
         <Canvas
+          context={application}
           diagram={diagram}
           width={'100%'}
           height={'100%'}

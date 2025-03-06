@@ -11,6 +11,7 @@ import styles from './canvas.css?inline';
 import { Browser } from './browser';
 import { isResolvableToRegularLayer } from '@diagram-craft/model/diagramLayer';
 import { EventKey } from '@diagram-craft/utils/event';
+import { Context } from './context';
 
 // TODO: Would be nice to merge this with EditableCanvasComponent
 export class CanvasComponent extends Component<CanvasProps> {
@@ -81,8 +82,7 @@ export class CanvasComponent extends Component<CanvasProps> {
                     new (edgeDef as ShapeEdgeDefinition).component!(edgeDef as ShapeEdgeDefinition),
                   {
                     element: edge,
-                    // @ts-ignore
-                    context: {},
+                    context: props.context,
                     onMouseDown:
                       props.onMouseDown ??
                       ((_id: string, _coord: Point, _modifiers: Modifiers) => {})
@@ -98,8 +98,7 @@ export class CanvasComponent extends Component<CanvasProps> {
                   {
                     key: `node-${node.nodeType}-${id}`,
                     element: node,
-                    // @ts-ignore
-                    context: {},
+                    context: props.context,
                     onMouseDown:
                       props.onMouseDown ??
                       ((_id: string, _coord: Point, _modifiers: Modifiers) => {})
@@ -120,6 +119,7 @@ export class CanvasComponent extends Component<CanvasProps> {
 }
 
 export type CanvasProps = {
+  context: Context;
   className?: string;
   diagram: Diagram;
   width?: string | number;
