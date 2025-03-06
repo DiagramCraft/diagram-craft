@@ -64,6 +64,7 @@ import { bindDocumentDragAndDrop } from '@diagram-craft/canvas/dragDropManager';
 import { ExternalDataLinkDialog } from './react-app/components/ExternalDataLinkDialog';
 import { Preview } from './react-app/Preview';
 import { ShapeSelectDialog } from './react-app/ShapeSelectDialog';
+import { ZoomTool } from '@diagram-craft/canvas-app/tools/zoomTool';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -81,7 +82,8 @@ const tools: Record<ToolType, ToolConstructor> = {
   pen: PenTool,
   freehand: FreehandTool,
   pan: PanTool,
-  rect: RectTool
+  rect: RectTool,
+  zoom: ZoomTool
 };
 
 export type DiagramRef = {
