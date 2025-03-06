@@ -2,6 +2,8 @@ import React, { ChangeEvent, useRef, useState } from 'react';
 import { propsUtils } from '@diagram-craft/utils/propsUtils';
 import { extractDataAttributes } from './utils';
 import styles from './TextInput.module.css';
+import { Button } from './Button';
+import { TbX } from 'react-icons/tb';
 
 export const TextInput = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
   const [error, setError] = useState(false);
@@ -27,7 +29,7 @@ export const TextInput = React.forwardRef<HTMLInputElement, Props>((props, ref) 
         ref={ref}
         {...propsUtils.filterDomProperties(props)}
         placeholder={props.isIndeterminate ? '···' : props.placeholder}
-        type={'text'}
+        type={props.type}
         value={props.isIndeterminate ? '' : currentValue}
         disabled={props.disabled}
         onFocus={() => {
@@ -57,6 +59,18 @@ export const TextInput = React.forwardRef<HTMLInputElement, Props>((props, ref) 
         }}
         {...extractDataAttributes(props)}
       />
+      {props.onClear && currentValue !== '' && (
+        <Button
+          type={'icon-only'}
+          style={{ paddingRight: '0.25rem' }}
+          onClick={() => {
+            setCurrentValue('');
+            props.onClear!();
+          }}
+        >
+          <TbX />
+        </Button>
+      )}
     </div>
   );
 });
@@ -66,6 +80,7 @@ type Props = {
   label?: string;
   isIndeterminate?: boolean;
   state?: 'set' | 'unset' | 'overridden';
+  onClear?: () => void;
   onChange?: (value: string | undefined, ev: ChangeEvent<HTMLInputElement>) => void;
 } & Omit<
   React.DetailedHTMLProps<React.InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>,
