@@ -409,6 +409,7 @@ export const App = (props: {
             <div id="tabs">
               <DocumentTabs
                 value={$d.id}
+                userState={userState.current}
                 onValueChange={v => {
                   updateApplicationModel(doc.getById(v)!, application.current);
                 }}

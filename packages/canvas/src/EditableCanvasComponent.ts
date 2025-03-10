@@ -535,23 +535,9 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
     }, [selection]);
   }
 
-  private adjustViewbox(diagram: Diagram, offset: Point) {
+  private adjustViewbox(diagram: Diagram, _offset: Point) {
     const rect = this.svgRef!.getBoundingClientRect();
 
-    if (diagram.viewBox.zoomLevel === 1) {
-      if (diagram.visibleElements().length === 0) {
-        diagram.viewBox.pan({
-          x: Math.floor(-(rect.width - diagram.canvas.w) / 2 + diagram.canvas.x),
-          y: Math.floor(-(rect.height - diagram.canvas.h) / 2 + diagram.canvas.y)
-        });
-      } else {
-        const bounds = Box.boundingBox(diagram.visibleElements().map(e => e.bounds));
-        diagram.viewBox.pan({
-          x: bounds.x - 50 - offset.x,
-          y: bounds.y - 50 - offset.y
-        });
-      }
-    }
     diagram.viewBox.dimensions = {
       w: Math.floor(rect.width * diagram.viewBox.zoomLevel),
       h: Math.floor(rect.height * diagram.viewBox.zoomLevel)
