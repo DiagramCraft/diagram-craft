@@ -10,6 +10,7 @@ import { newid } from '@diagram-craft/utils/id';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { ActionContextMenuItem } from './components/ActionContextMenuItem';
 import { ReactNode } from 'react';
+import { UserState } from '../UserState';
 
 const DocumentsContextMenu = (props: DocumentsContextMenuProps) => {
   return (
@@ -76,6 +77,7 @@ export const DocumentTabs = (props: Props) => {
       <button
         className={'cmp-document-tabs__add'}
         onClick={() => {
+          // TODO: Convert to action
           const id = newid();
 
           // TODO: Add undo here
@@ -90,6 +92,11 @@ export const DocumentTabs = (props: Props) => {
             UnitOfWork.immediate(diagram)
           );
 
+          diagram.viewBox.pan({
+            x: (props.userState.panelLeft ?? -1) >= 0 ? -280 : -30,
+            y: -30
+          });
+
           props.document.addDiagram(diagram);
           props.onValueChange(id);
         }}
@@ -103,5 +110,6 @@ export const DocumentTabs = (props: Props) => {
 type Props = {
   value: string;
   onValueChange: (v: string) => void;
+  userState: UserState;
   document: DiagramDocument;
 };
