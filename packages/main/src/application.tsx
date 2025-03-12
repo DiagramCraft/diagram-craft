@@ -3,18 +3,21 @@ import React from 'react';
 import { assert } from '@diagram-craft/utils/assert';
 import { KeyMap } from '@diagram-craft/canvas/keyMap';
 import { UIActions } from '@diagram-craft/canvas/context';
+import { UserState } from './UserState';
 
 export interface ApplicationUIActions extends UIActions {
   showPreview: () => void;
 }
 
 export class Application extends BaseApplication<ApplicationUIActions> {
-  constructor() {
+  constructor(userState: UserState) {
     super();
+    this.userState = userState;
   }
 
   ready: boolean = false;
   keyMap: KeyMap = {};
+  userState: UserState;
   #file: FileActions | undefined;
 
   set file(file: FileActions) {

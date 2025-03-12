@@ -63,9 +63,6 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     this.data = new DiagramDocumentData(this);
   }
 
-  // TODO: Consider moving all of this to a DataTemplates class, with methods
-  //       such as .add, .remove and .getAll
-
   get topLevelDiagrams() {
     return this.#diagrams;
   }
@@ -91,18 +88,45 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     );
   }
 
-  addDiagram(diagram: Diagram) {
-    precondition.is.false(!!this.#diagrams.find(d => d.id === diagram.id));
+  getDiagramPath(diagram: Diagram, startAt?: Diagram): Diagram[] {
+    const dest: Diagram[] = [];
 
-    this.#diagrams.push(diagram);
+    for (const d of startAt ? startAt.diagrams : this.#diagrams) {
+      if (d === diagram) {
+        dest.push(d);
+      } else {
+        const p = this.getDiagramPath(diagram, d);
+        if (p.length > 0) {
+          dest.push(d);
+          dest.push(...p);
+        }
+      }
+    }
+
+    return dest;
+  }
+
+  addDiagram(diagram: Diagram, parent?: Diagram) {
+    precondition.is.false(!!this.getById(diagram.id));
+
+    if (parent) {
+      (parent.diagrams as Diagram[]).push(diagram);
+    } else {
+      this.#diagrams.push(diagram);
+    }
+
     diagram.document = this;
     this.emit('diagramadded', { node: diagram });
   }
 
   removeDiagram(diagram: Diagram) {
-    const idx = this.#diagrams.indexOf(diagram);
+    const path = this.getDiagramPath(diagram);
+
+    const diagrams = path.length === 1 ? this.#diagrams : (path.at(-2)!.diagrams as Diagram[]);
+
+    const idx = diagrams.indexOf(diagram);
     if (idx !== -1) {
-      this.#diagrams.splice(idx, 1);
+      diagrams.splice(idx, 1);
       this.emit('diagramremoved', { node: diagram });
     }
   }

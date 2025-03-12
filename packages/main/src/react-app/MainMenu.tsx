@@ -4,14 +4,10 @@ import { ActionDropdownMenuItem } from './components/ActionDropdownMenuItem';
 import { urlToName } from '@diagram-craft/utils/url';
 import { ToggleActionDropdownMenuItem } from './components/ToggleActionDropdownMenuItem';
 import { useApplication } from '../application';
-import { UserState } from '../UserState';
 
-type Props = {
-  userState: UserState;
-};
-
-export const MainMenu = ({ userState }: Props) => {
+export const MainMenu = () => {
   const application = useApplication();
+  const userState = application.userState;
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
