@@ -63,6 +63,14 @@ export type DiagramEvents = {
   uowCommit: { removed: DiagramElement[]; added: DiagramElement[]; updated: DiagramElement[] };
 };
 
+export const DiagramFactory = {
+  empty: (id: string, name: string, document: DiagramDocument) => {
+    const d = new Diagram(id, name, document);
+    d.layers.add(new RegularLayer('default', 'Default', [], d), UnitOfWork.immediate(d));
+    return d;
+  }
+};
+
 export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentConsumer {
   #canvas: Canvas = { x: 0, y: 0, w: 640, h: 640 };
   #document: DiagramDocument | undefined;
@@ -89,7 +97,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
   constructor(
     readonly id: string,
-    readonly name: string,
+    public name: string,
     document: DiagramDocument
   ) {
     super();

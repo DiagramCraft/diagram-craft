@@ -111,7 +111,7 @@ export const App = (props: {
   const [preview, setPreview] = useState<boolean>(false);
 
   const userState = useRef(new UserState());
-  const application = useRef(new Application());
+  const application = useRef(new Application(userState.current));
 
   useEventListener(application.current.model, 'activeDiagramChange', redraw);
   useEventListener(application.current.model, 'activeDocumentChange', redraw);
@@ -337,7 +337,7 @@ export const App = (props: {
 
         <div id="app" className={'dark-theme'}>
           <div id="menu">
-            <MainMenu userState={userState.current} />
+            <MainMenu />
             <MainToolbar dirty={dirty} />
             <AuxToolbar />
           </div>
@@ -407,14 +407,7 @@ export const App = (props: {
             </div>
 
             <div id="tabs">
-              <DocumentTabs
-                value={$d.id}
-                userState={userState.current}
-                onValueChange={v => {
-                  updateApplicationModel(doc.getById(v)!, application.current);
-                }}
-                document={doc}
-              />
+              <DocumentTabs document={doc} />
 
               <LayerIndicator />
             </div>
