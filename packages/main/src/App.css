@@ -498,7 +498,6 @@ foreignObject {
   }
   .cmp-drag-label__modifiers {
     margin: 0.25rem -0.5rem 0 -0.5rem;
-    margin-top: 0.25rem;
     padding: 0.25rem 0.5rem 0 0.5rem;
     display: flex;
     gap: 0.5rem;
