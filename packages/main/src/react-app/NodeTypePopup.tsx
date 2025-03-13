@@ -4,7 +4,7 @@ import { useCallback, useMemo } from 'react';
 import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
-import { Diagram } from '@diagram-craft/model/diagram';
+import { Diagram, DocumentBuilder } from '@diagram-craft/model/diagram';
 import { assertRegularLayer, RegularLayer } from '@diagram-craft/model/diagramLayer';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
@@ -80,13 +80,11 @@ export const NodeTypePopup = (props: Props) => {
   const diagramsAndNodes: Array<[Stencil, Diagram]> = useMemo(() => {
     const nodes = diagram.document.nodeDefinitions.stencilRegistry.get('default')!.stencils;
     return nodes.map(n => {
-      const dest = new Diagram(
+      const { diagram: dest, layer } = DocumentBuilder.empty(
         n.id,
         n.name ?? n.id,
         new DiagramDocument(diagram.document.nodeDefinitions, diagram.document.edgeDefinitions)
       );
-      const layer = new RegularLayer('default', 'Default', [], dest);
-      dest.layers.add(layer, UnitOfWork.immediate(dest));
 
       const node = n.node(dest);
       dest.viewBox.dimensions = { w: node.bounds.w + 10, h: node.bounds.h + 10 };

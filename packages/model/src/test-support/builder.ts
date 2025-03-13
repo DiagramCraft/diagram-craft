@@ -11,7 +11,7 @@ import { DiagramNode } from '../diagramNode';
 import { DiagramEdge } from '../diagramEdge';
 import { FreeEndpoint } from '../endpoint';
 
-export class DocumentBuilder {
+export class TestDocumentBuilder {
   private document: DiagramDocument;
 
   constructor() {
@@ -19,7 +19,7 @@ export class DocumentBuilder {
   }
 
   newDiagram() {
-    return new DiagramBuilder(this.document);
+    return new TestDiagramBuilder(this.document);
   }
 
   build() {
@@ -27,19 +27,19 @@ export class DocumentBuilder {
   }
 }
 
-export class DiagramBuilder extends Diagram {
+export class TestDiagramBuilder extends Diagram {
   constructor(document: DiagramDocument) {
     super('1', '1', document);
   }
 
   newLayer(id?: string) {
-    const layer = new LayerBuilder(id ?? (this.layers.all.length + 1).toString(), this);
+    const layer = new TestLayerBuilder(id ?? (this.layers.all.length + 1).toString(), this);
     this.layers.add(layer, UnitOfWork.immediate(this));
     return layer;
   }
 }
 
-export class LayerBuilder extends RegularLayer {
+export class TestLayerBuilder extends RegularLayer {
   constructor(id: string, diagram: Diagram) {
     super(id, id, [], diagram);
   }

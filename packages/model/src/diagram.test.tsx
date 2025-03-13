@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { Diagram } from './diagram';
+import { Diagram, DocumentBuilder } from './diagram';
 import { DiagramNode } from './diagramNode';
 import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinitionRegistry';
 import { assertRegularLayer, RegularLayer } from './diagramLayer';
@@ -52,14 +52,10 @@ describe('Diagram', () => {
     const nodeDefinitionRegistry = new NodeDefinitionRegistry();
     nodeDefinitionRegistry.register(new TestNodeDefinition('rect', 'Rectangle'));
 
-    const diagram = new Diagram(
+    const { diagram } = DocumentBuilder.empty(
       '1',
       '1',
       new DiagramDocument(nodeDefinitionRegistry, new EdgeDefinitionRegistry())
-    );
-    diagram.layers.add(
-      new RegularLayer('default', 'Default', [], diagram),
-      new UnitOfWork(diagram)
     );
 
     const uow = new UnitOfWork(diagram);
