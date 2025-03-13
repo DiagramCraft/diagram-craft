@@ -1,12 +1,10 @@
-import { Diagram } from '../diagram';
+import { Diagram, DocumentBuilder } from '../diagram';
 import { DiagramNode } from '../diagramNode';
 import { DiagramEdge } from '../diagramEdge';
 import { FreeEndpoint } from '../endpoint';
 import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from '../elementDefinitionRegistry';
 import { TestNodeDefinition } from '../TestNodeDefinition';
 import { DiagramDocument } from '../diagramDocument';
-import { RegularLayer } from '../diagramLayer';
-import { UnitOfWork } from '../unitOfWork';
 
 const createNode = (diagram: Diagram) =>
   new DiagramNode(
@@ -41,10 +39,13 @@ const createDiagram = () => {
   const registry = new NodeDefinitionRegistry();
   registry.register(new TestNodeDefinition('rect', 'Rectangle'));
 
-  const d = new Diagram('1', 'test', new DiagramDocument(registry, new EdgeDefinitionRegistry()));
-  d.layers.add(new RegularLayer('default', 'Default', [], d), UnitOfWork.immediate(d));
+  const { diagram } = DocumentBuilder.empty(
+    '1',
+    'test',
+    new DiagramDocument(registry, new EdgeDefinitionRegistry())
+  );
 
-  return d;
+  return diagram;
 };
 
 export const TestFactory = {

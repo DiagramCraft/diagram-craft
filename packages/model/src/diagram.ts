@@ -63,11 +63,12 @@ export type DiagramEvents = {
   uowCommit: { removed: DiagramElement[]; added: DiagramElement[]; updated: DiagramElement[] };
 };
 
-export const DiagramFactory = {
+export const DocumentBuilder = {
   empty: (id: string, name: string, document: DiagramDocument) => {
-    const d = new Diagram(id, name, document);
-    d.layers.add(new RegularLayer('default', 'Default', [], d), UnitOfWork.immediate(d));
-    return d;
+    const diagram = new Diagram(id, name, document);
+    const layer = new RegularLayer('default', 'Default', [], diagram);
+    diagram.layers.add(layer, UnitOfWork.immediate(diagram));
+    return { diagram, layer };
   }
 };
 

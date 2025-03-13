@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, test } from 'vitest';
 import { AlignAction } from './alignAction';
 import {
-  DiagramBuilder,
-  DocumentBuilder,
-  LayerBuilder
+  TestDiagramBuilder,
+  TestDocumentBuilder,
+  TestLayerBuilder
 } from '@diagram-craft/model/test-support/builder';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { ActionContext } from '@diagram-craft/canvas/action';
@@ -19,11 +19,11 @@ const mkContext = (d: Diagram) => {
 };
 
 describe('AlignActions', () => {
-  let diagram: DiagramBuilder;
-  let layer: LayerBuilder;
+  let diagram: TestDiagramBuilder;
+  let layer: TestLayerBuilder;
 
   beforeEach(() => {
-    diagram = new DocumentBuilder().newDiagram();
+    diagram = new TestDocumentBuilder().newDiagram();
     layer = diagram.newLayer();
     layer.addNode('1', 'rect', {
       bounds: { x: 10, y: 10, w: 100, h: 100, r: 0 }

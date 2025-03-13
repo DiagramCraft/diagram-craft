@@ -8,11 +8,10 @@ import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from './unitOfWork';
 import { Anchor } from './anchor';
 import { Box } from '@diagram-craft/geometry/box';
-import { Diagram } from './diagram';
+import { Diagram, DocumentBuilder } from './diagram';
 import { newid } from '@diagram-craft/utils/id';
 import { unique } from '@diagram-craft/utils/array';
 import { DiagramDocument } from './diagramDocument';
-import { RegularLayer } from './diagramLayer';
 import { deserializeDiagramElements } from './serialization/deserialize';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { stencilLoaderRegistry } from '@diagram-craft/canvas-app/loaders';
@@ -379,16 +378,11 @@ export const loadStencilsFromYaml = (stencils: any) => {
   const dest: Array<Stencil> = [];
   for (const stencil of stencils.stencils) {
     const mkNode = (diagram: Diagram) => {
-      const uow = UnitOfWork.immediate(diagram);
-
-      const dest = new Diagram(
+      const { diagram: dest, layer } = DocumentBuilder.empty(
         newid(),
         stencil.name,
         new DiagramDocument(diagram.document.nodeDefinitions, diagram.document.edgeDefinitions)
       );
-
-      const layer = new RegularLayer('default', 'Default', [], dest);
-      dest.layers.add(layer, uow);
 
       const node = deserializeDiagramElements(
         [stencil.node],
@@ -397,7 +391,7 @@ export const loadStencilsFromYaml = (stencils: any) => {
         {},
         {}
       )[0] as DiagramNode;
-      layer.addElement(node, uow);
+      layer.addElement(node, UnitOfWork.immediate(diagram));
 
       return node;
     };

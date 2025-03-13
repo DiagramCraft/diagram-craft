@@ -1,7 +1,7 @@
 import { AbstractAction } from '@diagram-craft/canvas/action';
 import { Application } from '../../application';
 import { newid } from '@diagram-craft/utils/id';
-import { DiagramFactory } from '@diagram-craft/model/diagram';
+import { DocumentBuilder } from '@diagram-craft/model/diagram';
 import { assert, precondition } from '@diagram-craft/utils/assert';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { StringInputDialogCommand } from '@diagram-craft/canvas-app/dialogs';
@@ -35,7 +35,11 @@ class DiagramAddAction extends AbstractAction<{ parentId?: string }, Application
         redo: () => {
           const peerDiagrams = parent ? parent.diagrams : document.topLevelDiagrams;
 
-          const newDiagram = DiagramFactory.empty(id, `Sheet ${peerDiagrams.length + 1}`, document);
+          const { diagram: newDiagram } = DocumentBuilder.empty(
+            id,
+            `Sheet ${peerDiagrams.length + 1}`,
+            document
+          );
 
           newDiagram.viewBox.pan({
             x: (this.context.userState.panelLeft ?? -1) >= 0 ? -280 : -30,
