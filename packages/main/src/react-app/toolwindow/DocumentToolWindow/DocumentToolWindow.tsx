@@ -20,17 +20,19 @@ const DiagramTreeNode = (props: { diagram: Diagram } & Pick<Props, 'value' | 'on
   return (
     <>
       {props.diagram.diagrams.map(node => (
-        <Tree.Node key={node.id}>
+        <Tree.Node key={node.id} isOpen={true}>
           <Tree.NodeLabel>
             <DiagramLabel diagram={node} onValueChange={props.onValueChange} />
           </Tree.NodeLabel>
           <Tree.NodeValue>{props.value === node.id ? 'Active' : ''}</Tree.NodeValue>
           {node.diagrams.length > 0 && (
-            <DiagramTreeNode
-              diagram={node}
-              onValueChange={props.onValueChange}
-              value={props.value}
-            />
+            <Tree.Children>
+              <DiagramTreeNode
+                diagram={node}
+                onValueChange={props.onValueChange}
+                value={props.value}
+              />
+            </Tree.Children>
           )}
         </Tree.Node>
       ))}
