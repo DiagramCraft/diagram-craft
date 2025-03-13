@@ -6,11 +6,8 @@ import { ElementPropsForRendering } from './diagramElement';
 import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { assert } from '@diagram-craft/utils/assert';
 
-export class DiagramDefaultsPrivate {
-  static isSameAsDefaults(
-    props: Record<string, unknown>,
-    defaults: Record<string, unknown>
-  ): boolean {
+export const DiagramDefaultsPrivate = {
+  isSameAsDefaults(props: Record<string, unknown>, defaults: Record<string, unknown>): boolean {
     for (const key of Object.keys(props)) {
       if (isObj(props[key])) {
         // In case we add props that are not part of the defaults object, this
@@ -29,7 +26,7 @@ export class DiagramDefaultsPrivate {
       }
     }
     return true;
-  }
+  },
 
   /**
    * Extracts and returns a suffix from a given key based on a provided prefix length.
@@ -41,14 +38,14 @@ export class DiagramDefaultsPrivate {
    * @param pattern - The prefix string used to determine the starting point for suffix extraction.
    * @return The extracted suffix obtained by removing the prefix and processing the remaining string.
    */
-  static getSuffix(key: string, pattern: string) {
+  getSuffix(key: string, pattern: string) {
     return key
       .slice(pattern.length + 1)
       .split('.')
       .slice(1)
       .join('.');
   }
-}
+};
 
 export class Defaults<T> {
   private readonly defaults: Record<string, unknown>;
