@@ -42,11 +42,11 @@ export class DragLabelComponent extends Component<CanvasState> {
       return () => document.removeEventListener('mousemove', cb);
     }, []);
 
-    if (!this.state) return html.div({ style: 'display: none' });
+    if (!this.state) return html.div({ class: 'cmp-drag-label', style: 'display: none' });
 
     const s = this.state!;
 
-    return html.div({ class: 'cmp-drag-label' }, [
+    return html.div({ class: 'cmp-drag-label', style: '' }, [
       html.div({}, [text(s.label ?? '')]),
       s.props &&
         html.div(
