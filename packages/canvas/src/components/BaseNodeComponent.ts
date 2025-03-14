@@ -1,13 +1,8 @@
-import { $cmp, Component } from '../component/component';
+import { Component } from '../component/component';
 import { VNode } from '../component/vdom';
 import { DASH_PATTERNS } from '../dashPatterns';
 import { makeShadowFilter } from '../effects/shadow';
-import {
-  FillPattern,
-  makeLinearGradient,
-  makeRadialGradient,
-  PatternFillColorAdjustment
-} from '../shape/shapeFill';
+import { addFillComponents, makeLinearGradient } from '../shape/shapeFill';
 import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
 import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
@@ -176,38 +171,17 @@ export class BaseNodeComponent<
       style.fill = nodeProps.fill.color;
     }
 
-    if (nodeProps.fill.type === 'gradient') {
-      const gradientId = `node-${props.element.id}-gradient`;
-      style.fill = `url(#${gradientId})`;
-
-      /* For a gradient we need to add its definition */
-      switch (nodeProps.fill.gradient.type) {
-        case 'linear':
-          children.push(makeLinearGradient(gradientId, nodeProps));
-          break;
-        case 'radial':
-          children.push(makeRadialGradient(gradientId, nodeProps));
-          break;
-        default:
-          VERIFY_NOT_REACHED();
-      }
-    } else if (nodeProps.fill.type === 'image' || nodeProps.fill.type === 'texture') {
-      const patternId = `node-${props.element.id}-pattern`;
-      style.fill = `url(#${patternId})`;
-
-      /* An image based fill has both color adjustments and the fill itself */
-      children.push(this.subComponent($cmp(PatternFillColorAdjustment), { patternId, nodeProps }));
-      children.push(
-        this.subComponent($cmp(FillPattern), { patternId, nodeProps, def: props.element })
-      );
-    } else if (nodeProps.fill.type === 'pattern' && nodeProps.fill.pattern !== '') {
-      const patternId = `node-${props.element.id}-pattern`;
-      style.fill = `url(#${patternId})`;
-
-      children.push(
-        this.subComponent($cmp(FillPattern), { patternId, nodeProps, def: props.element })
-      );
-    }
+    addFillComponents(
+      'node',
+      props.element.id,
+      nodeProps.fill.type,
+      nodeProps.fill,
+      props.element.diagram,
+      props.element.bounds,
+      style,
+      children,
+      this
+    );
 
     if (!this.def.supports('fill')) {
       style.fill = 'none';
@@ -333,12 +307,10 @@ export class BaseNodeComponent<
       const { x, y, w, h } = props.element.bounds;
       children.push(
         makeLinearGradient(`${props.element.id}-glass-gradient`, {
-          fill: {
-            color: 'rgba(255, 255, 255, 0.1)',
-            color2: 'rgba(255, 255, 255, 0.8)',
-            gradient: {
-              direction: -Math.PI / 2
-            }
+          color: 'rgba(255, 255, 255, 0.1)',
+          color2: 'rgba(255, 255, 255, 0.8)',
+          gradient: {
+            direction: -Math.PI / 2
           }
         })
       );
