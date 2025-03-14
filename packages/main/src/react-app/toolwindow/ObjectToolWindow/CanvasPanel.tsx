@@ -5,22 +5,61 @@ import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
 import { useDiagramProperty } from '../../hooks/useProperty';
 import { ToolWindowPanel } from '../ToolWindowPanel';
-import { ColorPicker } from '../../components/ColorPicker';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { useDiagram } from '../../../application';
+import { FillPanelForm } from './FillPanel';
+import { nodeDefaults } from '@diagram-craft/model/diagramDefaults';
+
+const DEFAULTS = nodeDefaults.applyDefaults({}).fill!;
 
 export const CanvasPanel = (props: Props) => {
+  const $d = useDiagram();
   const $cfg = useConfiguration();
   const redraw = useRedraw();
-  const diagram = useDiagram();
 
-  useEventListener(diagram, 'change', redraw);
-  const bg = useDiagramProperty(diagram, 'background.color', 'white');
+  useEventListener($d, 'change', redraw);
 
-  const bounds = { ...diagram.canvas, r: 0 };
+  const bounds = { ...$d.canvas, r: 0 };
+
+  const color = useDiagramProperty($d, 'background.color', 'white');
+  const pattern = useDiagramProperty($d, 'background.pattern', '');
+  const image = useDiagramProperty($d, 'background.image.id', '');
+  const imageFit = useDiagramProperty($d, 'background.image.fit', DEFAULTS.image!.fit);
+  const imageW = useDiagramProperty($d, 'background.image.w', DEFAULTS.image!.w);
+  const imageH = useDiagramProperty($d, 'background.image.h', DEFAULTS.image!.h);
+  const imageScale = useDiagramProperty($d, 'background.image.scale', DEFAULTS.image!.scale);
+  const imageTint = useDiagramProperty($d, 'background.image.tint', DEFAULTS.image!.tint);
+  const imageTintStrength = useDiagramProperty(
+    $d,
+    'background.image.tintStrength',
+    DEFAULTS.image!.tintStrength
+  );
+  const imageBrightness = useDiagramProperty(
+    $d,
+    'background.image.brightness',
+    DEFAULTS.image!.brightness
+  );
+  const imageContrast = useDiagramProperty(
+    $d,
+    'background.image.contrast',
+    DEFAULTS.image!.contrast
+  );
+  const imageSaturation = useDiagramProperty(
+    $d,
+    'background.image.saturation',
+    DEFAULTS.image!.saturation
+  );
+  const color2 = useDiagramProperty($d, 'background.color2', DEFAULTS.color2);
+  const type = useDiagramProperty($d, 'background.type', 'solid');
+  const gradientDirection = useDiagramProperty(
+    $d,
+    'background.gradient.direction',
+    DEFAULTS.gradient!.direction
+  );
+  const gradientType = useDiagramProperty($d, 'background.gradient.type', 'linear');
 
   const updateBounds = (newBounds: Box) => {
-    diagram.canvas = newBounds;
+    $d.canvas = newBounds;
   };
 
   return (
@@ -31,19 +70,6 @@ export const CanvasPanel = (props: Props) => {
       hasCheckbox={false}
     >
       <div className={'cmp-labeled-table'}>
-        <div className={'cmp-labeled-table__label'}>Color:</div>
-        <div className={'cmp-labeled-table__value'}>
-          <ColorPicker
-            palette={$cfg.palette.primary}
-            value={bg.val ?? 'transparent'}
-            onChange={v => {
-              bg.set(v);
-            }}
-            customPalette={diagram.document.customPalette.colors}
-            onChangeCustomPalette={(idx, v) => diagram.document.customPalette.setColor(idx, v)}
-          />
-        </div>
-
         <div
           className={'cmp-labeled-table__label'}
           style={{ alignSelf: 'start', marginTop: '0.25rem' }}
@@ -126,6 +152,29 @@ export const CanvasPanel = (props: Props) => {
             </div>
           </div>
         </div>
+      </div>
+
+      <div style={{ marginTop: '0.5rem' }}>
+        <FillPanelForm
+          config={$cfg}
+          diagram={$d}
+          type={type}
+          imageBrightness={imageBrightness}
+          imageScale={imageScale}
+          imageContrast={imageContrast}
+          color={color}
+          imageSaturation={imageSaturation}
+          color2={color2}
+          image={image}
+          gradientDirection={gradientDirection}
+          gradientType={gradientType}
+          imageFit={imageFit}
+          imageH={imageH}
+          imageTint={imageTint}
+          imageTintStrength={imageTintStrength}
+          imageW={imageW}
+          pattern={pattern}
+        />
       </div>
     </ToolWindowPanel>
   );

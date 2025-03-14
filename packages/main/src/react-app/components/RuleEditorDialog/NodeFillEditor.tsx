@@ -1,8 +1,8 @@
 import { useConfiguration } from '../../context/ConfigurationContext';
-import { NodeFillPanelForm } from '../../toolwindow/ObjectToolWindow/NodeFillPanel';
 import { elementDefaults } from '@diagram-craft/model/diagramDefaults';
 import { Editor, makeProperty } from './editors';
 import { useDiagram } from '../../../application';
+import { FillPanelForm } from '../../toolwindow/ObjectToolWindow/FillPanel';
 
 export const NodeFillEditor: Editor = props => {
   const $p = props.props;
@@ -17,7 +17,7 @@ export const NodeFillEditor: Editor = props => {
   };
 
   return (
-    <NodeFillPanelForm
+    <FillPanelForm
       config={$cfg}
       diagram={diagram}
       color={makeProperty($p, 'fill.color', elementDefaults, onChange)}

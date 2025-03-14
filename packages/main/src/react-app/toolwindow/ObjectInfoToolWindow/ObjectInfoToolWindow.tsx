@@ -4,6 +4,7 @@ import { NodeInfoDetails } from './NodeInfoDetails';
 import { EdgeInfoDetails } from './EdgeInfoDetails';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { useDiagram } from '../../../application';
+import { DiagramInfoDetails } from './DiagramInfoDetails';
 
 export const ObjectInfoToolWindow = () => {
   const diagram = useDiagram();
@@ -43,6 +44,7 @@ export const ObjectInfoToolWindow = () => {
           {state === 'selection' && <SelectionInfoDetails obj={diagram.selectionState} />}
           {state === 'node' && <NodeInfoDetails obj={diagram.nodeLookup.get(nodeId!)!} />}
           {state === 'edge' && <EdgeInfoDetails obj={diagram.edgeLookup.get(edgeId!)!} />}
+          {state === undefined && <DiagramInfoDetails obj={diagram} />}
         </Accordion.ItemContent>
       </Accordion.Item>
     </Accordion.Root>

@@ -1,7 +1,11 @@
 import { Component } from '../component/component';
 import * as svg from '../component/vdom-svg';
-import { toInlineCSS } from '../component/vdom';
+import { toInlineCSS, VNode } from '../component/vdom';
 import { CanvasState } from '../EditableCanvasComponent';
+import { addFillComponents } from '../shape/shapeFill';
+import { assert } from '@diagram-craft/utils/assert';
+import { nodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { DeepRequired } from '@diagram-craft/utils/types';
 
 export class DocumentBoundsComponent extends Component<CanvasState> {
   render(props: CanvasState) {
@@ -12,17 +16,42 @@ export class DocumentBoundsComponent extends Component<CanvasState> {
 
     const style: Partial<CSSStyleDeclaration> = {};
 
-    if (diagram.props.background?.color) {
-      style.fill = diagram.props.background.color;
+    const children: VNode[] = [];
+
+    const fill = nodeDefaults.applyDefaults({ fill: diagram.props.background })
+      .fill as DeepRequired<NodeProps['fill']>;
+    assert.present(fill);
+
+    const fillType = diagram.props.background?.type ?? 'solid';
+    if (fillType === 'solid') {
+      if (fill.color) {
+        style.fill = fill.color;
+      }
+    } else {
+      addFillComponents(
+        'diagram',
+        props.diagram.id,
+        fillType,
+        fill,
+        diagram,
+        diagram.canvas,
+        style,
+        children,
+        this
+      );
     }
 
-    return svg.rect({
-      class: 'svg-doc-bounds',
-      x: diagram.canvas.x,
-      y: diagram.canvas.y,
-      width: diagram.canvas.w,
-      height: diagram.canvas.h,
-      style: toInlineCSS(style)
-    });
+    return svg.g(
+      {},
+      svg.rect({
+        class: 'svg-doc-bounds',
+        x: diagram.canvas.x,
+        y: diagram.canvas.y,
+        width: diagram.canvas.w,
+        height: diagram.canvas.h,
+        style: toInlineCSS(style)
+      }),
+      ...children
+    );
   }
 }

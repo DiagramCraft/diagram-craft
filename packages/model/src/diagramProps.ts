@@ -57,9 +57,7 @@ declare global {
   }
 
   interface DiagramProps {
-    background?: {
-      color?: string;
-    };
+    background?: NodeProps['fill'];
     grid?: {
       enabled?: boolean;
       size?: number;

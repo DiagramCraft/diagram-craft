@@ -1,13 +1,17 @@
-import { Component } from '../component/component';
+import { $cmp, Component } from '../component/component';
 import { rawHTML, VNode } from '../component/vdom';
 import * as svg from '../component/vdom-svg';
 import { Box } from '@diagram-craft/geometry/box';
-import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
+import { NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { Angle } from '@diagram-craft/geometry/angle';
+import { Diagram } from '@diagram-craft/model/diagram';
+import { FillType } from '@diagram-craft/model/diagramProps';
+import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+import { DeepRequired } from '@diagram-craft/utils/types';
 
-const getPatternProps = (nodeProps: NodePropsForRendering, bounds: Box) => {
-  if (nodeProps.fill.image) {
-    if (nodeProps.fill.image.fit === 'fill') {
+const getPatternProps = (fill: NodePropsForRendering['fill'], bounds: Omit<Box, 'r'>) => {
+  if (fill.image) {
+    if (fill.image.fit === 'fill') {
       return {
         patternUnits: 'objectBoundingBox',
         width: 1,
@@ -17,17 +21,17 @@ const getPatternProps = (nodeProps: NodePropsForRendering, bounds: Box) => {
         imgHeight: 1,
         preserveAspectRatio: 'xMidYMid slice'
       };
-    } else if (nodeProps.fill.image.fit === 'keep') {
+    } else if (fill.image.fit === 'keep') {
       return {
         patternUnits: 'objectBoundingBox',
         width: 1,
         height: 1,
         patternContentUnits: 'userSpaceOnUse',
-        imgWith: nodeProps.fill.image.w,
-        imgHeight: nodeProps.fill.image.h,
+        imgWith: fill.image.w,
+        imgHeight: fill.image.h,
         preserveAspectRatio: 'xMidYMid slice'
       };
-    } else if (nodeProps.fill.image.fit === 'contain') {
+    } else if (fill.image.fit === 'contain') {
       return {
         patternUnits: 'objectBoundingBox',
         width: 1,
@@ -37,7 +41,7 @@ const getPatternProps = (nodeProps: NodePropsForRendering, bounds: Box) => {
         imgHeight: bounds.h,
         preserveAspectRatio: 'xMidYMid meet'
       };
-    } else if (nodeProps.fill.image.fit === 'cover') {
+    } else if (fill.image.fit === 'cover') {
       return {
         patternUnits: 'objectBoundingBox',
         width: 1,
@@ -47,14 +51,14 @@ const getPatternProps = (nodeProps: NodePropsForRendering, bounds: Box) => {
         imgHeight: bounds.h,
         preserveAspectRatio: 'xMidYMid slice'
       };
-    } else if (nodeProps.fill.image.fit === 'tile') {
+    } else if (fill.image.fit === 'tile') {
       return {
         patternUnits: 'userSpaceOnUse',
-        width: Math.max(1, nodeProps.fill.image.w * nodeProps.fill.image.scale),
-        height: Math.max(1, nodeProps.fill.image.h * nodeProps.fill.image.scale),
+        width: Math.max(1, fill.image.w * fill.image.scale),
+        height: Math.max(1, fill.image.h * fill.image.scale),
         patternContentUnits: 'userSpaceOnUse',
-        imgWith: Math.max(1, nodeProps.fill.image.w * nodeProps.fill.image.scale),
-        imgHeight: Math.max(1, nodeProps.fill.image.h * nodeProps.fill.image.scale),
+        imgWith: Math.max(1, fill.image.w * fill.image.scale),
+        imgHeight: Math.max(1, fill.image.h * fill.image.scale),
         preserveAspectRatio: 'xMidYMid slice'
       };
     }
@@ -73,21 +77,21 @@ const getPatternProps = (nodeProps: NodePropsForRendering, bounds: Box) => {
 
 type FillProps = {
   patternId: string;
-  nodeProps: NodePropsForRendering;
+  fill: NodePropsForRendering['fill'];
 };
 
 export class PatternFillColorAdjustment extends Component<FillProps> {
   render(props: FillProps) {
-    const nodeProps = props.nodeProps;
+    const fill = props.fill;
     const filterChildren: VNode[] = [];
 
-    if (nodeProps.fill.image.tint !== '') {
+    if (fill.image.tint !== '') {
       filterChildren.push(
         svg.feFlood({
           'result': 'fill',
           'width': '100%',
           'height': '100%',
-          'flood-color': nodeProps.fill.image.tint,
+          'flood-color': fill.image.tint,
           'flood-opacity': '1'
         })
       );
@@ -114,50 +118,50 @@ export class PatternFillColorAdjustment extends Component<FillProps> {
           operator: 'arithmetic',
           k1: '0',
           k4: '0',
-          k2: nodeProps.fill.image.tintStrength,
-          k3: (1 - nodeProps.fill.image.tintStrength).toString()
+          k2: fill.image.tintStrength,
+          k3: (1 - fill.image.tintStrength).toString()
         })
       );
     }
 
-    if (nodeProps.fill.image.saturation !== 1) {
+    if (fill.image.saturation !== 1) {
       filterChildren.push(
         svg.feColorMatrix({
           type: 'saturate',
-          values: nodeProps.fill.image.saturation?.toString()
+          values: fill.image.saturation?.toString()
         })
       );
     }
 
-    if (nodeProps.fill.image.brightness !== 1) {
+    if (fill.image.brightness !== 1) {
       filterChildren.push(
         svg.feComponentTransfer(
           {},
-          svg.feFuncR({ type: 'linear', slope: nodeProps.fill.image.brightness }),
-          svg.feFuncG({ type: 'linear', slope: nodeProps.fill.image.brightness }),
-          svg.feFuncB({ type: 'linear', slope: nodeProps.fill.image.brightness })
+          svg.feFuncR({ type: 'linear', slope: fill.image.brightness }),
+          svg.feFuncG({ type: 'linear', slope: fill.image.brightness }),
+          svg.feFuncB({ type: 'linear', slope: fill.image.brightness })
         )
       );
     }
 
-    if (nodeProps.fill.image.contrast !== 1) {
+    if (fill.image.contrast !== 1) {
       filterChildren.push(
         svg.feComponentTransfer(
           {},
           svg.feFuncR({
             type: 'linear',
-            slope: nodeProps.fill.image.contrast,
-            intercept: -(0.5 * nodeProps.fill.image.contrast) + 0.5
+            slope: fill.image.contrast,
+            intercept: -(0.5 * fill.image.contrast) + 0.5
           }),
           svg.feFuncG({
             type: 'linear',
-            slope: nodeProps.fill.image.contrast,
-            intercept: -(0.5 * nodeProps.fill.image.contrast) + 0.5
+            slope: fill.image.contrast,
+            intercept: -(0.5 * fill.image.contrast) + 0.5
           }),
           svg.feFuncB({
             type: 'linear',
-            slope: nodeProps.fill.image.contrast,
-            intercept: -(0.5 * nodeProps.fill.image.contrast) + 0.5
+            slope: fill.image.contrast,
+            intercept: -(0.5 * fill.image.contrast) + 0.5
           })
         )
       );
@@ -167,9 +171,10 @@ export class PatternFillColorAdjustment extends Component<FillProps> {
 }
 
 type FillPatternProps = {
-  def: DiagramNode;
   patternId: string;
-  nodeProps: NodePropsForRendering;
+  fill: NodePropsForRendering['fill'];
+  bounds: Omit<Box, 'r'>;
+  diagram: Diagram;
 };
 
 export class FillPattern extends Component<FillPatternProps> {
@@ -181,21 +186,21 @@ export class FillPattern extends Component<FillPatternProps> {
   };
 
   render(props: FillPatternProps) {
-    const nodeProps = props.nodeProps;
+    const fill = props.fill;
 
-    const patternProps = getPatternProps(nodeProps, props.def.bounds);
+    const patternProps = getPatternProps(fill, props.bounds);
 
     let imageUrl = '';
-    if (nodeProps.fill.type === 'image' || nodeProps.fill.type === 'texture') {
-      if (nodeProps.fill.image.url && nodeProps.fill.image.url !== '') {
-        imageUrl = nodeProps.fill.image.url;
+    if (fill.type === 'image' || fill.type === 'texture') {
+      if (fill.image.url && fill.image.url !== '') {
+        imageUrl = fill.image.url;
       } else {
-        const att = props.def.diagram.document.attachments.getAttachment(nodeProps.fill.image.id);
+        const att = props.diagram.document.attachments.getAttachment(fill.image.id);
         imageUrl = att?.url ?? '';
       }
-    } else if (nodeProps.fill.type === 'pattern') {
-      props.def.diagram.document.attachments
-        .getAttachment(nodeProps.fill.pattern)!
+    } else if (fill.type === 'pattern' && fill.pattern !== '') {
+      props.diagram.document.attachments
+        .getAttachment(fill.pattern)!
         .content.text()
         .then(t => {
           if (this.pattern !== t) {
@@ -209,17 +214,17 @@ export class FillPattern extends Component<FillPatternProps> {
         rawHTML(
           this.pattern
             .replace('#ID#', props.patternId)
-            .replaceAll('#BG#', nodeProps.fill.color)
-            .replaceAll('#FG#', nodeProps.fill.color2)
+            .replaceAll('#BG#', fill.color)
+            .replaceAll('#FG#', fill.color2)
         )
       );
     }
 
     const filterNeeded =
-      nodeProps.fill.image.tint !== '' ||
-      nodeProps.fill.image.saturation !== 1 ||
-      nodeProps.fill.image.brightness !== 1 ||
-      nodeProps.fill.image.contrast !== 1;
+      fill.image.tint !== '' ||
+      fill.image.saturation !== 1 ||
+      fill.image.brightness !== 1 ||
+      fill.image.contrast !== 1;
 
     const patternChildren: VNode[] = [];
 
@@ -227,7 +232,7 @@ export class FillPattern extends Component<FillPatternProps> {
       svg.rect({
         width: patternProps.imgWith.toString(),
         height: patternProps.imgHeight.toString(),
-        fill: nodeProps.fill.color
+        fill: fill.color
       })
     );
 
@@ -260,36 +265,110 @@ export class FillPattern extends Component<FillPatternProps> {
 
 export const makeLinearGradient = (
   gradientId: string,
-  nodeProps: {
-    fill: {
-      color: string;
-      color2: string;
-      gradient: {
-        direction: number;
-      };
+  fill: {
+    color: string;
+    color2: string;
+    gradient: {
+      direction: number;
     };
   }
 ) => {
   return svg.linearGradient(
     {
       id: gradientId,
-      gradientTransform: `rotate(${Angle.toDeg(nodeProps.fill.gradient.direction)} 0.5 0.5)`
+      gradientTransform: `rotate(${Angle.toDeg(fill.gradient.direction)} 0.5 0.5)`
     },
-    svg.stop({ 'offset': '0%', 'stop-color': nodeProps.fill.color }),
-    svg.stop({ 'offset': '100%', 'stop-color': nodeProps.fill.color2 })
+    svg.stop({
+      'offset': '0%',
+      'stop-color': fill.color
+    }),
+    svg.stop({
+      'offset': '100%',
+      'stop-color': fill.color2
+    })
   );
 };
 
-export const makeRadialGradient = (
-  gradientId: string,
-  nodeProps: { fill: NodePropsForRendering['fill'] }
-) => {
+export const makeRadialGradient = (gradientId: string, fill: NodePropsForRendering['fill']) => {
   return svg.radialGradient(
     {
       id: gradientId,
-      gradientTransform: `rotate(${Angle.toDeg(nodeProps.fill.gradient.direction)} 0.5 0.5)`
+      gradientTransform: `rotate(${Angle.toDeg(fill.gradient.direction)} 0.5 0.5)`
     },
-    svg.stop({ 'offset': '0%', 'stop-color': nodeProps.fill.color }),
-    svg.stop({ 'offset': '100%', 'stop-color': nodeProps.fill.color2 })
+    svg.stop({
+      'offset': '0%',
+      'stop-color': fill.color
+    }),
+    svg.stop({
+      'offset': '100%',
+      'stop-color': fill.color2
+    })
   );
+};
+
+export const addFillComponents = (
+  type: 'diagram' | 'node',
+  id: string,
+  fillType: FillType,
+  fill: DeepRequired<NodeProps>['fill'],
+  diagram: Diagram,
+  bounds: Omit<Box, 'r'>,
+  style: Partial<CSSStyleDeclaration> = {},
+  children: VNode[],
+  cmp: Component<unknown>
+) => {
+  if (fillType === 'gradient') {
+    const gradientId = `node-${id}-gradient`;
+    style.fill = `url(#${gradientId})`;
+
+    /* For a gradient we need to add its definition */
+    switch (fill.gradient.type ?? 'linear') {
+      case 'linear':
+        children.push(makeLinearGradient(gradientId, fill));
+        break;
+      case 'radial':
+        children.push(makeRadialGradient(gradientId, fill));
+        break;
+      default:
+        VERIFY_NOT_REACHED();
+    }
+  } else if (fillType === 'pattern') {
+    const patternId = `${type}-${id}-pattern`;
+    style.fill = `url(#${patternId})`;
+
+    /* An image based fill has both color adjustments and the fill itself */
+    children.push(
+      cmp.subComponent($cmp(PatternFillColorAdjustment), {
+        patternId,
+        fill
+      })
+    );
+    children.push(
+      cmp.subComponent($cmp(FillPattern), {
+        patternId,
+        fill,
+        bounds,
+        diagram
+      })
+    );
+  } else if (fillType === 'image' || fillType === 'texture') {
+    const patternId = `${type}-${id}-pattern`;
+    style.fill = `url(#${patternId})`;
+
+    /* An image based fill has both color adjustments and the fill itself */
+    children.push(
+      cmp.subComponent($cmp(PatternFillColorAdjustment), {
+        patternId,
+        fill
+      })
+    );
+    children.push(
+      cmp.subComponent($cmp(FillPattern), {
+        patternId,
+        fill,
+        bounds,
+        diagram
+      })
+    );
+  }
 };
