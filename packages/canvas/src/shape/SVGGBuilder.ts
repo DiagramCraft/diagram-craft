@@ -187,11 +187,11 @@ export class SVGGBuilder {
     if (this.#fill!.type === 'gradient') {
       this.#fillGradientId = newid();
       if (this.#fill!.gradient?.type === 'linear') {
-        // @ts-ignore
-        this.g.children.push(makeLinearGradient(this.#fillGradientId, { fill: this.#fill }));
+        // @ts-expect-error
+        this.g.children.push(makeLinearGradient(this.#fillGradientId, this.#fill!));
       } else {
-        // @ts-ignore
-        this.g.children.push(makeRadialGradient(this.#fillGradientId, { fill: this.#fill }));
+        // @ts-expect-error
+        this.g.children.push(makeRadialGradient(this.#fillGradientId, this.#fill!));
       }
     }
 
