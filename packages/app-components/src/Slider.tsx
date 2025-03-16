@@ -12,7 +12,7 @@ export const Slider = (props: Props) => {
         value={[props.value]}
         max={props.max ?? 100}
         step={1}
-        disabled={props.disabled}
+        disabled={props.disabled || props.isIndeterminate}
         onValueChange={v => props.onChange(v[0])}
       >
         <ReactSlider.Track className={styles.cmpSliderTrack}>
@@ -33,6 +33,7 @@ export const Slider = (props: Props) => {
         state={props.state}
         onChange={props.onChange}
         disabled={props.disabled}
+        isIndeterminate={props.isIndeterminate}
       />
     </div>
   );

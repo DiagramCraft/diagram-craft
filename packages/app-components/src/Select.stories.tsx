@@ -118,6 +118,31 @@ export const Disabled: Story = {
   }
 };
 
+export const Indeterminate: Story = {
+  args: {
+    value: 'lorem',
+    children: [
+      <Select.Item key={1} value={'lorem'}>
+        Lorem
+      </Select.Item>,
+      <Select.Item key={2} value={'ipsum'}>
+        Ipsum
+      </Select.Item>,
+      <Select.Item key={3} value={'dolor'}>
+        Dolor
+      </Select.Item>,
+      <Select.Item key={4} value={'sit'}>
+        Sit
+      </Select.Item>,
+      <Select.Item key={5} value={'amet'}>
+        Amet
+      </Select.Item>
+    ],
+    onChange: fn(),
+    isIndeterminate: true
+  }
+};
+
 export const Open: Story = {
   args: {
     'value': 'lorem',

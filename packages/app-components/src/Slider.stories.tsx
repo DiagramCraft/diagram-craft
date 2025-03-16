@@ -57,3 +57,13 @@ export const Disabled: Story = {
     disabled: true
   }
 };
+
+export const Indeterminate: Story = {
+  args: {
+    value: 70,
+    max: 100,
+    unit: 'px',
+    onChange: fn(),
+    isIndeterminate: true
+  }
+};
