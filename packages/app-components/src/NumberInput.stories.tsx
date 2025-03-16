@@ -50,6 +50,14 @@ export const WithDefaultValue: Story = {
   }
 };
 
+export const Indeterminate: Story = {
+  args: {
+    value: '77 px',
+    onChange: fn(),
+    isIndeterminate: true
+  }
+};
+
 export const Disabled: Story = {
   args: {
     value: '77 px',
