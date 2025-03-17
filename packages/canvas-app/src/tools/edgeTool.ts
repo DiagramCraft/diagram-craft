@@ -7,7 +7,7 @@ import {
 } from '@diagram-craft/canvas/dragDropManager';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
-import { AnchorEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
+import { AnchorEndpoint, ConnectedEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { newid } from '@diagram-craft/utils/id';
 import {
@@ -24,6 +24,7 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { Context } from '@diagram-craft/canvas/context';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
+import { assert } from '@diagram-craft/utils/assert';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -34,8 +35,28 @@ declare global {
   }
 }
 
+class EdgeToolEdgeEndpointMoveDrag extends EdgeEndpointMoveDrag {
+  constructor(diagram: Diagram, edge: DiagramEdge, direction: 'start' | 'end', context: Context) {
+    super(diagram, edge, direction, context);
+  }
+
+  onDragEnd() {
+    super.onDragEnd();
+
+    // Only if holding shift and not being over an element
+    if (this.modifiers?.shiftKey && this.hoverElement === undefined) {
+      this.context.ui.showNodeLinkPopup(
+        this.point!,
+        (this.edge.start as ConnectedEndpoint)!.node.id,
+        this.edge.id
+      );
+    }
+  }
+}
+
 export class EdgeTool extends AbstractTool {
   private currentAnchor: Anchor | undefined = undefined;
+  private edge: DiagramEdge | undefined = undefined;
 
   constructor(
     diagram: Diagram,
@@ -55,7 +76,7 @@ export class EdgeTool extends AbstractTool {
 
     undoManager.setMark();
 
-    const nd = new DiagramEdge(
+    this.edge = new DiagramEdge(
       newid(),
       this.currentAnchor
         ? new AnchorEndpoint(
@@ -75,28 +96,31 @@ export class EdgeTool extends AbstractTool {
 
     assertRegularLayer(this.diagram.activeLayer);
     undoManager.addAndExecute(
-      new ElementAddUndoableAction([nd], this.diagram, this.diagram.activeLayer, 'Add edge')
+      new ElementAddUndoableAction([this.edge], this.diagram, this.diagram.activeLayer, 'Add edge')
     );
 
-    this.diagram.selectionState.setElements([nd]);
+    this.diagram.selectionState.setElements([this.edge]);
     this.resetTool();
 
-    const drag = new EdgeEndpointMoveDrag(this.diagram, nd, 'end', this.context);
+    const drag = new EdgeToolEdgeEndpointMoveDrag(this.diagram, this.edge, 'end', this.context);
     drag.on('dragEnd', () => {
       // Coalesce the element add and edge endpoint move into one undoable action
       undoManager.add(new CompoundUndoableAction([...undoManager.getToMark()]));
     });
 
     DRAG_DROP_MANAGER.initiate(drag, () => {
+      const edge = this.edge;
+      assert.present(edge);
+
       if (this.currentElement) {
         removeHighlight(this.diagram.lookup(this.currentElement!), Highlights.NODE__EDGE_CONNECT);
       }
-      if (Point.distance(nd.end.position, nd.start.position) < 5) {
+      if (Point.distance(edge.end.position, edge.start.position) < 5) {
         UnitOfWork.execute(this.diagram, uow => {
-          nd.setEnd(
+          edge.setEnd(
             new FreeEndpoint({
-              x: nd.start.position.x + 10,
-              y: nd.start.position.y + 10
+              x: edge.start.position.x + 10,
+              y: edge.start.position.y + 10
             }),
             uow
           );
@@ -130,7 +154,7 @@ export class EdgeTool extends AbstractTool {
     super.onMouseOut(id, _point, target);
   }
 
-  onMouseUp(_point: Point) {
+  onMouseUp(_point: Point, _modifiers: Modifiers) {
     // Do nothing
   }
 

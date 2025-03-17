@@ -137,7 +137,7 @@ export class MoveTool extends AbstractTool {
     }
   }
 
-  onMouseUp(_point: Point, target: EventTarget) {
+  onMouseUp(_point: Point, _modifiers: Modifiers, target: EventTarget) {
     const current = this.drag.current();
     try {
       current?.onDragEnd(new DragEvents.DragEnd(target));

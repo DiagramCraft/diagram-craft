@@ -94,7 +94,11 @@ export class NodeTool extends AbstractTool {
     }
   }
 
-  onMouseUp(_point: Readonly<{ x: number; y: number }>, target: EventTarget): void {
+  onMouseUp(
+    _point: Readonly<{ x: number; y: number }>,
+    _modifiers: Modifiers,
+    target: EventTarget
+  ): void {
     const current = this.drag.current();
     current?.onDragEnd(new DragEvents.DragEnd(target));
     this.drag.clear();

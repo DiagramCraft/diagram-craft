@@ -22,8 +22,8 @@ import { SnapManager } from '@diagram-craft/model/snap/snapManager';
 
 export class EdgeEndpointMoveDrag extends Drag {
   private readonly uow: UnitOfWork;
-  private hoverElement: string | undefined;
-  private modifiers: Modifiers | undefined;
+  protected hoverElement: string | undefined;
+  protected modifiers: Modifiers | undefined;
 
   point: Point | undefined;
   private snapManager: SnapManager;
@@ -32,7 +32,7 @@ export class EdgeEndpointMoveDrag extends Drag {
     private readonly diagram: Diagram,
     public readonly edge: DiagramEdge,
     private readonly type: 'start' | 'end',
-    private context: Context
+    protected context: Context
   ) {
     super();
     this.uow = new UnitOfWork(this.edge.diagram, true);
