@@ -308,7 +308,7 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
                 props.onMouseOut?.(e, el);
                 this.hoverElement.value = undefined;
               },
-              mouseup: e => this.tool!.onMouseUp(EventHelper.point(e), e.currentTarget!),
+              mouseup: e => this.tool!.onMouseUp(EventHelper.point(e), e, e.currentTarget!),
               mousemove: e => {
                 // TODO: Could we cache this and only update in case a resize happens?
                 const b = (e.currentTarget! as SVGSVGElement).getBoundingClientRect();

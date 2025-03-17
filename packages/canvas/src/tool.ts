@@ -18,7 +18,7 @@ export interface Tool {
   type: ToolType;
 
   onMouseDown(id: string, point: Point, modifiers: Modifiers): void;
-  onMouseUp(point: Point, target: EventTarget): void;
+  onMouseUp(point: Point, modifiers: Modifiers, target: EventTarget): void;
   onMouseMove(point: Point, modifiers: Modifiers, target: EventTarget): void;
   onMouseOver(id: string, point: Point, target: EventTarget): void;
   onMouseOut(id: string, point: Point, target: EventTarget): void;
@@ -54,7 +54,7 @@ export abstract class AbstractTool implements Tool {
 
   abstract onMouseDown(id: string, point: Point, modifiers: Modifiers): void;
 
-  abstract onMouseUp(point: Point, target: EventTarget): void;
+  abstract onMouseUp(point: Point, modifiers: Modifiers, target: EventTarget): void;
 
   abstract onMouseMove(point: Point, modifiers: Modifiers, target: EventTarget): void;
 
