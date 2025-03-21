@@ -150,7 +150,7 @@ export const deserializeDiagramElements = (
 
     edgeLookup[e.id] = edge;
 
-    if (e.labelNodes) {
+    if (e.labelNodes && e.labelNodes.length > 0) {
       // Note, we don't commit the UOW here
       edge.setLabelNodes(
         e.labelNodes.map(ln => ({
