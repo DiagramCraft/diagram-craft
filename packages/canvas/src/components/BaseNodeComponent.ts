@@ -215,7 +215,7 @@ export class BaseNodeComponent<
     });
     this.buildShape(buildProps, shapeBuilder);
 
-    if (!shapeBuilder.boundaryPathExists) {
+    if (!shapeBuilder.boundaryPathExists && props.element.nodeType !== 'group') {
       console.warn('Node has no boundary path', props.element.id, props.element.nodeType);
     }
 
