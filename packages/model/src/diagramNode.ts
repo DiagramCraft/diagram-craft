@@ -1,4 +1,4 @@
-import { AbstractNode, LabelNode } from './types';
+import { NodeInterface, LabelNode } from './types';
 import { Box } from '@diagram-craft/geometry/box';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { DiagramElement, isEdge, isNode } from './diagramElement';
@@ -41,7 +41,7 @@ export type NodePropsForEditing = DeepReadonly<NodeProps>;
 export type NodeTexts = { text: string } & Record<string, string>;
 
 export class DiagramNode
-  implements AbstractNode, DiagramElement, UOWTrackable<DiagramNodeSnapshot>
+  implements NodeInterface, DiagramElement, UOWTrackable<DiagramNodeSnapshot>
 {
   readonly type = 'node';
 

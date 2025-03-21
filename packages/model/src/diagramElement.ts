@@ -5,7 +5,7 @@ import {
   NodePropsForEditing,
   NodePropsForRendering
 } from './diagramNode';
-import { AbstractElement } from './types';
+import { ElementInterface } from './types';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { Box } from '@diagram-craft/geometry/box';
 import { UnitOfWork } from './unitOfWork';
@@ -23,7 +23,7 @@ type Snapshot = any;
 export type ElementPropsForEditing = EdgePropsForEditing | NodePropsForEditing;
 export type ElementPropsForRendering = EdgePropsForRendering | NodePropsForRendering;
 
-export interface DiagramElement extends AbstractElement, AttachmentConsumer {
+export interface DiagramElement extends ElementInterface, AttachmentConsumer {
   invalidate(uow: UnitOfWork): void;
   detach(uow: UnitOfWork): void;
   duplicate(ctx?: DuplicationContext, id?: string | undefined): DiagramElement;

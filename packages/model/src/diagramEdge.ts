@@ -1,5 +1,5 @@
 import { DiagramNode, DuplicationContext } from './diagramNode';
-import { AbstractEdge, LabelNode, Waypoint } from './types';
+import { EdgeInterface, LabelNode, Waypoint } from './types';
 import { Point } from '@diagram-craft/geometry/point';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { Box } from '@diagram-craft/geometry/box';
@@ -57,7 +57,7 @@ export type EdgePropsForEditing = DeepReadonly<EdgeProps>;
 export type EdgePropsForRendering = DeepReadonly<DeepRequired<EdgeProps>>;
 
 export class DiagramEdge
-  implements AbstractEdge, DiagramElement, UOWTrackable<DiagramEdgeSnapshot>
+  implements EdgeInterface, DiagramElement, UOWTrackable<DiagramEdgeSnapshot>
 {
   readonly type = 'edge';
 

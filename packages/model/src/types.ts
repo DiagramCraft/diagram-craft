@@ -2,12 +2,12 @@ import { Box } from '@diagram-craft/geometry/box';
 import { Point } from '@diagram-craft/geometry/point';
 import { Anchor } from './anchor';
 
-export interface AbstractElement {
+export interface ElementInterface {
   id: string;
   type: string;
 }
 
-export interface AbstractNode extends AbstractElement {
+export interface NodeInterface extends ElementInterface {
   type: 'node';
   nodeType: 'group' | string;
   id: string;
@@ -32,7 +32,7 @@ export type LabelNode = Readonly<{
   type: LabelNodeType;
 }>;
 
-export interface AbstractEdge extends AbstractElement {
+export interface EdgeInterface extends ElementInterface {
   type: 'edge';
   id: string;
   waypoints?: ReadonlyArray<Waypoint>;
