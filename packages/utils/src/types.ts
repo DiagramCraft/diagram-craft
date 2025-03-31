@@ -21,3 +21,5 @@ export type EmptyObject = Record<string, never>;
 export type FlatObject = Record<string, string | number | boolean | undefined>;
 
 export type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
+
+export type Mutable<T> = { -readonly [k in keyof T]: T[k] };

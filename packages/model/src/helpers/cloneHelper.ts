@@ -3,15 +3,14 @@ import { newid } from '@diagram-craft/utils/id';
 import { Box } from '@diagram-craft/geometry/box';
 import { Point, Scale } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from '../unitOfWork';
+import { Mutable } from '@diagram-craft/utils/types';
 
 // TODO: Ensure linking between edges and nodes works
 //       See ElementsPasteHandler
 export const assignNewIds = (elements: readonly DiagramElement[]) => {
   for (const e of elements) {
-    e.id = newid();
-    if (isNode(e)) {
-      assignNewIds(e.children);
-    }
+    (e as Mutable<DiagramElement>).id = newid();
+    assignNewIds(e.children);
   }
 };
 
