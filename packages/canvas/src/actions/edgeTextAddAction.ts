@@ -49,7 +49,7 @@ export class EdgeTextAddAction extends AbstractAction<EdgeTextAddActionArg> {
     const textNode = new DiagramNode(
       newid(),
       'text',
-      { ...projection.point, r: 0, w: 100, h: 10 },
+      { ...projection.point, r: 0, w: 100, h: 0 },
       this.context.model.activeDiagram,
       this.context.model.activeDiagram.activeLayer,
       {

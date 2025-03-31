@@ -71,14 +71,17 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     this.#props = (props ?? {}) as NodeProps;
     this.#anchors = anchorCache;
 
-    if (!this.#anchors) {
-      this.invalidateAnchors(UnitOfWork.immediate(diagram));
-    }
-
     this._metadata.style ??=
       this.nodeType === 'text' ? DefaultStyles.node.text : DefaultStyles.node.default;
 
     this._metadata.textStyle ??= DefaultStyles.text.default;
+
+    // Note: It is important that this comes last, as it might trigger
+    //       events etc - so important that everything is set up before
+    //       that to avoid flashing of incorrect formatting/style
+    if (!this.#anchors) {
+      this.invalidateAnchors(UnitOfWork.immediate(diagram));
+    }
   }
 
   getDefinition() {
