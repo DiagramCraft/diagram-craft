@@ -10,7 +10,9 @@ import { Mutable } from '@diagram-craft/utils/types';
 export const assignNewIds = (elements: readonly DiagramElement[]) => {
   for (const e of elements) {
     (e as Mutable<DiagramElement>).id = newid();
-    assignNewIds(e.children);
+    if (isNode(e)) {
+      assignNewIds(e.children);
+    }
   }
 };
 
