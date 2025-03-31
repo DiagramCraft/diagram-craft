@@ -323,10 +323,13 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
 
     // Only trigger parent.onChildChanged in case this node has indeed changed
     if (node.parent && !Box.isEqual(node.bounds, boundsBefore)) {
-      uow.registerOnCommitCallback('onChildChanged', node.parent, () => {
-        const parentDef = node.parent!.getDefinition();
-        parentDef.onChildChanged(node.parent!, uow);
-      });
+      if (isNode(node.parent)) {
+        uow.registerOnCommitCallback('onChildChanged', node.parent, () => {
+          assert.node(node.parent!);
+          const parentDef = node.parent.getDefinition();
+          parentDef.onChildChanged(node.parent, uow);
+        });
+      }
     }
   }
 
