@@ -56,7 +56,7 @@ export type SelectionType =
 type ElementPredicate = (e: DiagramElement) => boolean;
 
 export const excludeLabelNodes: ElementPredicate = (n: DiagramElement) =>
-  !(isNode(n) && n.isLabelNode());
+  !isNode(n) || !n.isLabelNode();
 
 export const includeAll: ElementPredicate = () => true;
 
@@ -158,10 +158,11 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
     if (this.isEmpty()) {
       return 'empty';
     } else if (this.#elements.length === 1) {
-      if (isNode(this.#elements[0]) && this.#elements[0].isLabelNode()) {
+      const [element] = this.#elements;
+      if (isNode(element) && element.isLabelNode()) {
         return 'single-label-node';
       }
-      return isNode(this.#elements[0]) ? 'single-node' : 'single-edge';
+      return isNode(element) ? 'single-node' : 'single-edge';
     } else if (this.isNodesOnly()) {
       return 'nodes';
     } else if (this.isEdgesOnly()) {

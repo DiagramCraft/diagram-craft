@@ -5,8 +5,7 @@ import { UnitOfWork } from '../unitOfWork';
 import { Layer, RegularLayer } from '../diagramLayer';
 import { isSerializedEndpointAnchor, isSerializedEndpointConnected } from './serialize';
 import { DiagramDocument } from '../diagramDocument';
-import { DiagramElement } from '../diagramElement';
-import { VERIFY_NOT_REACHED, VerifyNotReached } from '@diagram-craft/utils/assert';
+import { VerifyNotReached } from '@diagram-craft/utils/assert';
 import {
   SerializedAnchorEndpoint,
   SerializedDiagram,
@@ -62,15 +61,17 @@ export const deserializeDiagramElements = (
   // Pass 1: create placeholders for all nodes
   for (const n of diagramElements) {
     for (const c of unfoldGroup(n)) {
-      if (c.type === 'edge') continue;
+      if (c.type !== 'node') continue;
 
-      // Note: this is for backwards compatibility only
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const textProps: any = c.props.text;
-      if (textProps && textProps.text && (!c.texts || !c.texts.text)) {
-        c.texts ??= { text: textProps.text };
-        c.texts.text = textProps.text;
-        delete textProps.text;
+      COMPATIBILITY: {
+        // Note: this is for backwards compatibility only
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const textProps: any = c.props.text;
+        if (textProps && textProps.text && (!c.texts || !c.texts.text)) {
+          c.texts ??= { text: textProps.text };
+          c.texts.text = textProps.text;
+          delete textProps.text;
+        }
       }
 
       nodeLookup[c.id] = new DiagramNode(
@@ -95,8 +96,7 @@ export const deserializeDiagramElements = (
     for (const e of unfoldGroup(n)) {
       if (e.type !== 'edge') continue;
 
-      const start = e.start;
-      const end = e.end;
+      const { start, end } = e;
 
       const startEndpoint = deserializeEndpoint(start, nodeLookup);
       const endEndpoint = deserializeEndpoint(end, nodeLookup);
@@ -151,33 +151,18 @@ export const deserializeDiagramElements = (
     if (n.type === 'edge') {
       const edge = edgeLookup[n.id];
       if (n.labelNodes && n.labelNodes.length > 0) {
-        // Note, we don't commit the UOW here
         edge.setLabelNodes(
-          n.labelNodes.map(ln => ({
-            ...ln,
-            node: nodeLookup[ln.id]
-          })),
+          n.labelNodes.map(ln => ({ ...ln, node: nodeLookup[ln.id] })),
           uow
-          //UnitOfWork.immediate(diagram)
         );
       }
     }
   }
 
-  // Pass 4: gather all elements
-  const elements: DiagramElement[] = [];
-  for (const n of diagramElements) {
-    if (n.type === 'node') {
-      elements.push(nodeLookup[n.id]);
-    } else if (n.type === 'edge') {
-      elements.push(edgeLookup[n.id]);
-    } else {
-      VERIFY_NOT_REACHED();
-    }
-  }
-
-  // Pass 5: only return the top-level elements
-  return elements.filter(e => e.parent === undefined);
+  // Pass 4: gather all elements - only keep the top-level elements
+  return diagramElements
+    .map(n => (n.type === 'node' ? nodeLookup[n.id] : edgeLookup[n.id]))
+    .filter(e => e.parent === undefined);
 };
 
 export type DocumentFactory = () => DiagramDocument;

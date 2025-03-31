@@ -245,7 +245,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     // Remove from groups
     // TODO: Can optimize by grouping by parent - probably not worth it
     for (const el of elements) {
-      if (el.parent && isNode(el.parent)) {
+      if (el.parent) {
         uow.snapshot(el.parent);
         el.parent.removeChild(el, uow);
       }
@@ -273,9 +273,9 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
       uow.snapshot(ref.element);
 
       const idx = parent.children.indexOf(ref.element);
-      if (ref.relation === 'above' && isNode(parent)) {
+      if (ref.relation === 'above') {
         parent.setChildren(parent.children.toSpliced(idx + 1, 0, ...elements), uow);
-      } else if (ref.relation === 'below' && isNode(parent)) {
+      } else if (ref.relation === 'below') {
         parent.setChildren(parent.children.toSpliced(idx, 0, ...elements), uow);
       } else {
         ref.element.setChildren([...ref.element.children, ...elements], uow);

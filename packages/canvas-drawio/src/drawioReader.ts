@@ -1322,10 +1322,7 @@ export const drawioReader = async (
     if (diagram.visibleElements().length > 0) {
       const bounds = Box.boundingBox(
         diagram.visibleElements().flatMap(e => {
-          if (isEdge(e) && e.children.length > 0) {
-            return [e.bounds, ...e.children.flatMap(c => c.bounds)];
-          }
-          return [e.bounds];
+          return isEdge(e) ? [e.bounds, ...e.children.flatMap(c => c.bounds)] : [e.bounds];
         })
       );
 

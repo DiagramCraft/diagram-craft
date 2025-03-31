@@ -23,7 +23,6 @@ type Snapshot = any;
 export type ElementPropsForEditing = EdgePropsForEditing | NodePropsForEditing;
 export type ElementPropsForRendering = EdgePropsForRendering | NodePropsForRendering;
 
-// TODO: Merge this with DiagramElement
 export abstract class DiagramElement implements ElementInterface, AttachmentConsumer {
   readonly type: string;
   readonly id: string;
@@ -183,6 +182,7 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
       else if (isEdge(c)) this.diagram.edgeLookup.set(c.id, c);
     });
 
+    // TODO: We should update nodeLookup and edgeLookup here
     oldChildren.filter(c => !children.includes(c)).forEach(c => c._setParent(undefined));
 
     this._children.forEach(c => uow.updateElement(c));
@@ -222,6 +222,8 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
 
     this._children = this.children.filter(c => c !== child);
     child._setParent(undefined);
+
+    // TODO: We should clear nodeLookup and edgeLookup here
 
     uow.updateElement(this);
     uow.updateElement(child);

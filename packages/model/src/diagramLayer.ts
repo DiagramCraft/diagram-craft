@@ -338,7 +338,7 @@ export class RegularLayer extends Layer<RegularLayer> {
 
     for (const [parent, positions] of newPositions) {
       positions.sort((a, b) => a.idx - b.idx);
-      if (parent && isNode(parent)) {
+      if (parent) {
         parent.setChildren(
           positions.map(e => e.element),
           uow

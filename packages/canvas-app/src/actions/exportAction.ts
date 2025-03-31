@@ -31,10 +31,7 @@ class ExportImageAction extends AbstractAction {
     const run = async () => {
       const bounds = Box.boundingBox(
         this.context.model.activeDiagram.visibleElements().flatMap(e => {
-          if (isEdge(e) && e.children.length > 0) {
-            return [e.bounds, ...e.children.map(c => c.bounds)];
-          }
-          return [e.bounds];
+          return isEdge(e) ? [e.bounds, ...e.children.map(c => c.bounds)] : [e.bounds];
         })
       );
 

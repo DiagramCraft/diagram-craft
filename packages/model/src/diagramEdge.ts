@@ -290,6 +290,8 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   /* Bounds ************************************************************************************************* */
 
   // TODO: This is probably not a sufficient way to calculate the bounding box
+  //       Maybe we should include the extent of labels as well as the curve itself - i.e
+  //       all points
   get bounds() {
     return Box.fromCorners(this.#start.position, this.#end.position);
   }
@@ -391,6 +393,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   }
 
   addChild(child: DiagramElement, uow: UnitOfWork) {
+    // Note: we don't support edges to be children of edges
     assert.true(isNode(child));
 
     super.addChild(child, uow);
@@ -398,6 +401,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   }
 
   setChildren(children: ReadonlyArray<DiagramElement>, uow: UnitOfWork) {
+    // Note: we don't support edges to be children of edges
     assert.true(children.every(isNode));
 
     super.setChildren(children, uow);
@@ -407,27 +411,29 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   private syncLabelNodesBasedOnChildren(uow: UnitOfWork) {
     uow.snapshot(this);
 
-    const newLabelNodes =
+    // Find all children with corresponding label node
+    const existingLabelNodes =
       this.#labelNodes?.filter(ln => this._children.find(c => c.id === ln.node.id)) ?? [];
 
+    const newLabelNodes: ResolvedLabelNode[] = [];
     for (const c of this._children) {
-      if (isNode(c)) {
-        if (!newLabelNodes.find(ln => ln.node === c)) {
-          newLabelNodes.push({
-            id: c.id,
-            node: c,
-            type: 'perpendicular',
-            offset: {
-              x: 0,
-              y: 0
-            },
-            timeOffset: 0
-          });
-        }
+      assert.node(c);
+
+      if (!existingLabelNodes.find(ln => ln.node === c)) {
+        newLabelNodes.push({
+          id: c.id,
+          node: c,
+          type: 'perpendicular',
+          offset: {
+            x: 0,
+            y: 0
+          },
+          timeOffset: 0
+        });
       }
     }
 
-    this.#labelNodes = newLabelNodes;
+    this.#labelNodes = [...existingLabelNodes, ...newLabelNodes];
     uow.updateElement(this);
 
     this.labelNodeConsistencyInvariant();
