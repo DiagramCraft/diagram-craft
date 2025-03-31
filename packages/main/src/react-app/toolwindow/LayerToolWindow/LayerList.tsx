@@ -13,7 +13,7 @@ import {
   TbPencil,
   TbRectangle,
   TbTable,
-  TbTableRow
+  TbTableRow,
   TbTextSize
 } from 'react-icons/tb';
 import { useRedraw } from '../../hooks/useRedraw';
