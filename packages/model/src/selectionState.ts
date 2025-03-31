@@ -214,7 +214,7 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
     });
     oldElements.forEach(e => {
       if (elements.includes(e)) return;
-      this.emit('remove', { element: e });
+      this.emitAsync('remove', { element: e });
     });
 
     this.recalculateBoundingBox();
