@@ -26,6 +26,11 @@ type EventListenerMap = {
   [K in keyof HTMLElementEventMap]?: (this: Document, ev: DocumentEventMap[K]) => unknown;
 };
 
+type ValidEvents = Exclude<
+  keyof GlobalEventHandlers,
+  'addEventListener' | 'removeEventListener' | 'onerror'
+>;
+
 export interface VNodeData extends Record<string, unknown> {
   on?: Partial<EventListenerMap>;
   hooks?: {
@@ -186,18 +191,20 @@ const updateEvents = (oldVNode: VNode, newVNode: VNode) => {
   if (oldKeys.length === 0 && newKeys.length === 0) return;
 
   const newNode = newVNode.el! as DOMElement;
-  const oldNode = oldVNode.el! as DOMElement;
+
+  // Note: We have changed to assign to the `on{...}` properties instead
+  //       of using addEventListener/removeEventListener - as we only
+  //       support one event listener per event - assigning like this
+  //       makes cleanup significantly easier
 
   for (const key of oldKeys) {
-    const value = oldEvents[key as keyof EventListenerMap];
-    oldNode.removeEventListener(key, value! as EventListener);
+    newNode[('on' + key) as unknown as ValidEvents] = null;
   }
 
   for (const key of newKeys) {
     const value = newEvents[key as keyof EventListenerMap];
-    //if (oldEvents[key as keyof EventListenerMap] !== value) {
-    newNode.addEventListener(key, value as EventListener);
-    //}
+
+    newNode[('on' + key) as unknown as ValidEvents] = value as EventListener;
   }
 };
 
