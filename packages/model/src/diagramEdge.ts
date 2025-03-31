@@ -397,7 +397,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     assert.true(isNode(child));
 
     super.addChild(child, uow);
-    this.syncChildrenBasedOnLabelNodes(uow);
+    this.syncLabelNodesBasedOnChildren(uow);
   }
 
   setChildren(children: ReadonlyArray<DiagramElement>, uow: UnitOfWork) {

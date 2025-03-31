@@ -181,6 +181,11 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     return this.nodeLookup.get(id) ?? this.edgeLookup.get(id);
   }
 
+  register(element: DiagramElement) {
+    if (isNode(element)) this.nodeLookup.set(element.id, element);
+    else if (isEdge(element)) this.edgeLookup.set(element.id, element);
+  }
+
   createSnapManager() {
     const selection = this.selectionState.nodes;
 

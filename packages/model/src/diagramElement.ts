@@ -178,14 +178,20 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
     this._children.forEach(c => {
       uow.snapshot(c);
       c._setParent(this);
-      if (isNode(c)) this.diagram.nodeLookup.set(c.id, c);
-      else if (isEdge(c)) this.diagram.edgeLookup.set(c.id, c);
+      this.diagram.register(c);
     });
 
     // TODO: We should update nodeLookup and edgeLookup here
-    oldChildren.filter(c => !children.includes(c)).forEach(c => c._setParent(undefined));
+    oldChildren
+      .filter(c => !children.includes(c))
+      .forEach(c => {
+        uow.removeElement(c);
+        c._setParent(undefined);
+      });
 
-    this._children.forEach(c => uow.updateElement(c));
+    this._children.forEach(c => {
+      uow.updateElement(c);
+    });
     uow.updateElement(this);
   }
 
@@ -194,6 +200,9 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
     uow: UnitOfWork,
     relation?: { ref: DiagramElement; type: 'after' | 'before' }
   ) {
+    assert.true(child.diagram === this.diagram);
+    assert.false(this.children.includes(child));
+
     uow.snapshot(this);
     uow.snapshot(child);
 
@@ -212,11 +221,15 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
     }
     child._setParent(this);
 
+    this.diagram.register(child);
+
     uow.updateElement(this);
     uow.updateElement(child);
   }
 
   removeChild(child: DiagramElement, uow: UnitOfWork) {
+    assert.true(this.children.includes(child));
+
     uow.snapshot(this);
     uow.snapshot(child);
 
@@ -226,7 +239,7 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
     // TODO: We should clear nodeLookup and edgeLookup here
 
     uow.updateElement(this);
-    uow.updateElement(child);
+    uow.removeElement(child);
   }
 }
 
