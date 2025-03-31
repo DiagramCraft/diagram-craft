@@ -262,6 +262,12 @@ describe('DiagramEdge', () => {
       edge.addLabelNode(labelNode, uow);
       edge.removeLabelNode(labelNode, uow);
       expect(edge.labelNodes).toEqual([]);
+      expect(edge.children).toEqual([]);
+    });
+
+    it('should fail if the label node is not present', () => {
+      const labelNode = TestFactory.createLabelNode(TestFactory.createNode(diagram));
+      expect(() => edge.removeLabelNode(labelNode, uow)).toThrow();
     });
   });
 });

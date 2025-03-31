@@ -493,6 +493,8 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   }
 
   removeLabelNode(labelNode: ResolvedLabelNode, uow: UnitOfWork) {
+    assert.true(this.labelNodes?.includes(labelNode));
+
     uow.snapshot(this);
 
     this.setLabelNodes(

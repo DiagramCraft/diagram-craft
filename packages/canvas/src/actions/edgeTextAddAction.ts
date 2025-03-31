@@ -1,16 +1,12 @@
 import { AbstractAction, ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 import { LengthOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
 import { precondition } from '@diagram-craft/utils/assert';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { newid } from '@diagram-craft/utils/id';
-import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
-import {
-  ElementAddUndoableAction,
-  SnapshotUndoableAction
-} from '@diagram-craft/model/diagramUndoActions';
+import { makeUndoableAction } from '@diagram-craft/model/undoManager';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
 import { Point } from '@diagram-craft/geometry/point';
+import { ResolvedLabelNode } from '@diagram-craft/model/diagramEdge';
 
 declare global {
   interface ActionMap extends ReturnType<typeof edgeTextAddActions> {}
@@ -50,8 +46,6 @@ export class EdgeTextAddAction extends AbstractAction<EdgeTextAddActionArg> {
     const path = edge.path();
     const projection = path.projectPoint(context.point);
 
-    const uow = new UnitOfWork(this.context.model.activeDiagram, true);
-
     const textNode = new DiagramNode(
       newid(),
       'text',
@@ -69,31 +63,19 @@ export class EdgeTextAddAction extends AbstractAction<EdgeTextAddActionArg> {
       { text: 'Label' }
     );
 
-    edge.addLabelNode(
-      {
-        timeOffset: LengthOffsetOnPath.toTimeOffsetOnPath(projection, path).pathT,
-        offset: { x: 0, y: 0 },
-        id: textNode.id,
-        node: textNode,
-        type: 'horizontal'
-      },
-      uow
-    );
+    const labelNode: ResolvedLabelNode = {
+      timeOffset: LengthOffsetOnPath.toTimeOffsetOnPath(projection, path).pathT,
+      offset: { x: 0, y: 0 },
+      id: textNode.id,
+      node: textNode,
+      type: 'horizontal'
+    };
 
-    const snapshots = uow.commit();
-    this.context.model.activeDiagram.undoManager.add(
-      new CompoundUndoableAction([
-        new ElementAddUndoableAction(
-          [textNode],
-          this.context.model.activeDiagram,
-          this.context.model.activeDiagram.activeLayer
-        ),
-        new SnapshotUndoableAction(
-          `Add edge text`,
-          this.context.model.activeDiagram,
-          snapshots.onlyUpdated()
-        )
-      ])
+    this.context.model.activeDiagram.undoManager.addAndExecute(
+      makeUndoableAction('Add label', {
+        redo: uow => edge.addLabelNode(labelNode, uow),
+        undo: uow => edge.removeChild(textNode, uow)
+      })
     );
 
     // Setting focus must be done after the element has been successfully rendered
