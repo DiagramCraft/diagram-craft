@@ -1,6 +1,7 @@
 import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
 import { Box } from '@diagram-craft/geometry/box';
 import { blobToDataURL } from '@diagram-craft/model/attachment';
+import { isEdge } from '@diagram-craft/model/diagramElement';
 
 export const exportActions = (context: ActionContext) => ({
   FILE_EXPORT_IMAGE: new ExportImageAction(context)
@@ -29,7 +30,9 @@ class ExportImageAction extends AbstractAction {
   execute(): void {
     const run = async () => {
       const bounds = Box.boundingBox(
-        this.context.model.activeDiagram.visibleElements().map(e => e.bounds)
+        this.context.model.activeDiagram.visibleElements().flatMap(e => {
+          return isEdge(e) ? [e.bounds, ...e.children.map(c => c.bounds)] : [e.bounds];
+        })
       );
 
       const clonedSvg = document

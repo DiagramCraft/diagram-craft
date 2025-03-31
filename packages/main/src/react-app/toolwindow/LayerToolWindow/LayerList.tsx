@@ -13,7 +13,8 @@ import {
   TbPencil,
   TbRectangle,
   TbTable,
-  TbTableRow
+  TbTableRow,
+  TbTextSize
 } from 'react-icons/tb';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
@@ -280,6 +281,8 @@ const ElementEntry = (props: { element: DiagramElement }) => {
     icon = <TbBoxMultiple />;
   } else if (isNode(e) && e.nodeType === 'table') {
     icon = <TbTable />;
+  } else if (isNode(e) && e.nodeType === 'text') {
+    icon = <TbTextSize />;
   } else if (isNode(e) && e.nodeType === 'tableRow') {
     icon = <TbTableRow />;
   }
@@ -302,10 +305,10 @@ const ElementEntry = (props: { element: DiagramElement }) => {
       }}
     >
       <Tree.NodeLabel>
-        {icon} &nbsp;{shorten(e.name, 25)}
+        {icon} &nbsp;{shorten(e.name, 20)}
       </Tree.NodeLabel>
 
-      {childrenAllowed && (
+      {(childrenAllowed || (isEdge(e) && e.children.length > 0)) && (
         <Tree.Children>
           {e.children.toReversed().map(c => (
             <ElementEntry key={c.id} element={c} />

@@ -166,8 +166,14 @@ export class UnitOfWork {
     this.#invalidatedElements.add(element);
   }
 
-  contains(element: Trackable) {
-    return this.#elementsToUpdate.has(element.id) || this.#elementsToRemove.has(element.id);
+  contains(element: Trackable, type?: 'update' | 'remove') {
+    if (type === 'update') {
+      return this.#elementsToUpdate.has(element.id);
+    } else if (type === 'remove') {
+      return this.#elementsToRemove.has(element.id);
+    } else {
+      return this.#elementsToUpdate.has(element.id) || this.#elementsToRemove.has(element.id);
+    }
   }
 
   updateElement(element: Trackable) {

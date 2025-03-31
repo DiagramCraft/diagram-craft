@@ -141,7 +141,15 @@ export abstract class Component<P = Record<string, never>> {
 
   detach() {
     this.onDetach(this.currentProps!);
-    if (this.element?.el) this.element.el.remove();
+    // Note: the check with contains here is to avoid the issue explained at
+    //       https://stackoverflow.com/questions/21926083/failed-to-execute-removechild-on-node
+    if (this.element?.el && this.element.el.parentElement?.contains(this.element.el)) {
+      try {
+        this.element.el.remove();
+      } catch {
+        // Ignore
+      }
+    }
     this.effectManager.cleanup();
   }
 

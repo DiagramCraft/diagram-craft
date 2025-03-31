@@ -43,7 +43,7 @@ export class NodeSnapProvider implements SnapProvider<'node'> {
 
     for (const node of this.diagram.visibleElements()) {
       if (!isNode(node)) continue;
-      if (node.renderProps.labelForEdgeId) continue;
+      if (node.isLabelNode()) continue;
       if (!this.eligibleNodePredicate(node.id)) continue;
       for (const other of Magnet.forNode(node.bounds)) {
         // TODO: We should be able to filter out even more here

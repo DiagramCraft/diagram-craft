@@ -10,13 +10,9 @@ import { ShapeBuilder } from '../shape/ShapeBuilder';
 import { makeControlPoint } from '../shape/ShapeControlPoint';
 import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
-import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { makeReflection } from '../effects/reflection';
 import { makeBlur } from '../effects/blur';
 import { makeOpacity } from '../effects/opacity';
-import { DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
-import { EdgeComponentProps } from './BaseEdgeComponent';
-import { ShapeEdgeDefinition } from '../shape/shapeEdgeDefinition';
 import { Context, OnDoubleClick, OnMouseDown } from '../context';
 import { getHighlights, getHighlightValue, hasHighlight, Highlights } from '../highlight';
 import { Zoom } from './zoom';
@@ -71,13 +67,14 @@ export class BaseNodeComponent<
       const { w: width, h: height } = size;
       const { bounds } = props.node;
 
-      if (width > bounds.w || height > bounds.h) {
+      // Note: we want label nodes to always be as small as possible
+      if (width > bounds.w || height > bounds.h || props.node.isLabelNode()) {
         const newBounds = {
           x: bounds.x,
           y: bounds.y,
           r: bounds.r,
-          h: Math.max(height, bounds.h),
-          w: Math.max(width, bounds.w)
+          h: props.node.isLabelNode() ? height : Math.max(height, bounds.h),
+          w: props.node.isLabelNode() ? width : Math.max(width, bounds.w)
         };
 
         if (props.node.renderProps.text.align === 'center' && width > bounds.w) {
@@ -215,7 +212,7 @@ export class BaseNodeComponent<
     });
     this.buildShape(buildProps, shapeBuilder);
 
-    if (!shapeBuilder.boundaryPathExists) {
+    if (!shapeBuilder.boundaryPathExists && props.element.nodeType !== 'group') {
       console.warn('Node has no boundary path', props.element.id, props.element.nodeType);
     }
 
@@ -491,31 +488,6 @@ export class BaseNodeComponent<
         'marker-end': 'url(#boundary-path-arrow)'
       })
     );
-  }
-
-  protected makeElement(child: DiagramElement, props: BaseShapeBuildShapeProps) {
-    const p: NodeComponentProps & EdgeComponentProps = {
-      key: isNode(child) ? `node-${child.id}` : `edge-${child.id}`,
-      // @ts-expect-error - this is fine as child is either node or edge
-      element: child,
-      onDoubleClick: props.childProps.onDoubleClick,
-      onMouseDown: props.childProps.onMouseDown,
-      isReadOnly: props.isReadOnly,
-
-      context: props.context
-    };
-
-    if (isNode(child)) {
-      const nodeDefinition = child.getDefinition() as ShapeNodeDefinition;
-      const nodeComponent = nodeDefinition.component!;
-      return this.subComponent(() => new nodeComponent(nodeDefinition), p);
-    } else if (isEdge(child)) {
-      const edgeDefinition = child.getDefinition() as ShapeEdgeDefinition;
-      const edgeComponent = edgeDefinition.component!;
-      return this.subComponent(() => new edgeComponent(edgeDefinition), p);
-    } else {
-      VERIFY_NOT_REACHED();
-    }
   }
 }
 

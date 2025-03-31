@@ -48,7 +48,11 @@ type AssertType = {
   fail: (msg?: string) => void;
 };
 
-const makeAssertions = (error: (m: string) => void) => ({
+declare global {
+  interface AssertTypeExtensions {}
+}
+
+const makeAssertions = (error: (m: string) => void): AssertType & AssertTypeExtensions => ({
   present: <T = unknown>(arg: T, msg?: string): asserts arg is NonNullable<T> => {
     if (!is.present(arg)) error(msg ?? 'not present');
   },
@@ -74,19 +78,20 @@ const makeAssertions = (error: (m: string) => void) => ({
   },
   fail: (msg?: string) => {
     error(msg ?? 'fail');
-  }
+  },
+  ...({} as AssertTypeExtensions)
 });
 
-export const assert: AssertType = makeAssertions(m => {
+export const assert: AssertType & AssertTypeExtensions = makeAssertions(m => {
   throw new Error(m);
 });
 
-export const notImplemented: AssertType = makeAssertions(m => {
+export const notImplemented: AssertType & AssertTypeExtensions = makeAssertions(m => {
   throw new NotImplementedYet(m);
 });
 
-export const precondition: { is: AssertType } = { is: assert };
+export const precondition: { is: AssertType & AssertTypeExtensions } = { is: assert };
 
-export const postcondition: { is: AssertType } = { is: assert };
+export const postcondition: { is: AssertType & AssertTypeExtensions } = { is: assert };
 
-export const invariant: { is: AssertType } = { is: assert };
+export const invariant: { is: AssertType & AssertTypeExtensions } = { is: assert };

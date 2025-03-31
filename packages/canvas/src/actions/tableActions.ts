@@ -6,6 +6,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
+import { assert } from '@diagram-craft/utils/assert';
 
 declare global {
   interface ActionMap extends ReturnType<typeof tableActions> {}
@@ -25,7 +26,12 @@ export const tableActions = (context: ActionContext) => ({
 const getTableNode = (diagram: Diagram): DiagramNode | undefined => {
   const elements = diagram.selectionState.elements;
   if (elements.length === 1 && isNode(elements[0])) {
-    if (elements[0].parent?.nodeType === 'tableRow') return elements[0].parent.parent;
+    if (isNode(elements[0].parent) && elements[0].parent?.nodeType === 'tableRow') {
+      assert.node(elements[0].parent.parent!);
+      assert.true(elements[0].parent.parent.nodeType === 'table');
+
+      return elements[0].parent.parent;
+    }
     if (elements[0].nodeType === 'table') return elements[0];
   }
 };
@@ -133,6 +139,7 @@ export class TableRemoveAction extends AbstractAction {
         return (
           elements.length === 1 &&
           isNode(elements[0]) &&
+          isNode(elements[0].parent) &&
           elements[0].parent?.nodeType === 'tableRow'
         );
       }
@@ -192,6 +199,7 @@ export class TableInsertAction extends AbstractAction {
         return (
           elements.length === 1 &&
           isNode(elements[0]) &&
+          isNode(elements[0].parent) &&
           elements[0].parent?.nodeType === 'tableRow'
         );
       }

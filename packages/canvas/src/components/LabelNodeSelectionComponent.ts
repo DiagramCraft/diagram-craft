@@ -10,7 +10,7 @@ import { Zoom } from './zoom';
 
 export class LabelNodeSelectionComponent extends Component<Props> {
   render(props: Props) {
-    precondition.is.present(props.node.renderProps.labelForEdgeId);
+    precondition.is.present(props.node.isLabelNode());
 
     const center = Box.center(props.node.bounds);
     const edge = props.node.labelEdge();

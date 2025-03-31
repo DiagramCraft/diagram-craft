@@ -9,13 +9,14 @@ import { ShapeBuilder } from '../shape/ShapeBuilder';
 import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
 import { Point } from '@diagram-craft/geometry/point';
-import { DiagramElement } from '@diagram-craft/model/diagramElement';
+import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { Scale, Transform } from '@diagram-craft/geometry/transform';
 import { assert } from '@diagram-craft/utils/assert';
 import { deepMerge } from '@diagram-craft/utils/object';
 import { Modifiers } from '../dragDropManager';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { hasHighlight, Highlights } from '../highlight';
+import { renderElement } from '../components/renderElement';
 
 type TypeOrPropsFn<T> = T | ((p: NodePropsForRendering) => T);
 
@@ -155,17 +156,18 @@ export class FlexShapeNodeDefinition<
           {}
         );
 
+        const onDoubleClick = builder.makeOnDblclickHandle('1');
         builder.add(
           svg.g(
             {},
-            this.makeElement(node, {
+            renderElement(this, node, {
               ...props,
               childProps: {
                 ...props.childProps,
                 onMouseDown: (_id: string, coord: Point, m: Modifiers) => {
                   props.childProps.onMouseDown(props.node.id, coord, m);
                 },
-                onDoubleClick: builder.makeOnDblclickHandle('1')
+                onDoubleClick: () => onDoubleClick?.()
               }
             })
           )
@@ -191,7 +193,7 @@ export class FlexShapeNodeDefinition<
             ...props.node.children.map(child =>
               svg.g(
                 { transform: Transforms.rotateBack(props.node.bounds) },
-                this.makeElement(child, props)
+                renderElement(this, child, props)
               )
             )
           )
@@ -236,7 +238,7 @@ export class FlexShapeNodeDefinition<
   }
 
   onChildChanged(node: DiagramNode, uow: UnitOfWork) {
-    if (node.parent) {
+    if (node.parent && isNode(node.parent)) {
       const parentDef = node.parent.getDefinition();
       parentDef.onChildChanged(node.parent, uow);
     }

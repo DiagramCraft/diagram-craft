@@ -14,6 +14,7 @@ import { Transforms } from '../component/vdom-svg';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { hasHighlight, Highlights } from '../highlight';
+import { renderElement } from '../components/renderElement';
 
 declare global {
   interface CustomNodeProps {
@@ -181,9 +182,10 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
 
     // Only trigger parent.onChildChanged in case this node has indeed changed
     if (node.parent && !Box.isEqual(node.bounds, boundsBefore)) {
+      assert.true(isNode(node.parent));
       uow.registerOnCommitCallback('onChildChanged', node.parent, () => {
-        const parentDef = node.parent!.getDefinition();
-        parentDef.onChildChanged(node.parent!, uow);
+        const parentDef = (node.parent! as DiagramNode).getDefinition();
+        parentDef.onChildChanged(node.parent! as DiagramNode, uow);
       });
     }
   }
@@ -254,7 +256,7 @@ class TableComponent extends BaseNodeComponent {
       builder.add(
         svg.g(
           { transform: Transforms.rotateBack(props.node.bounds) },
-          this.makeElement(child, props)
+          renderElement(this, child, props)
         )
       );
     });

@@ -19,11 +19,11 @@ import { ShapeEdgeDefinition } from '../shape/shapeEdgeDefinition';
 import { EdgeCapability } from '@diagram-craft/model/elementDefinitionRegistry';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
 import { makeControlPoint } from '../shape/ShapeControlPoint';
-import { OnDoubleClick, OnMouseDown } from '../context';
+import { Context, OnDoubleClick, OnMouseDown } from '../context';
 import { getHighlights } from '../highlight';
 import { EdgeEndpointMoveDrag } from '../drag/edgeEndpointMoveDrag';
 import { Zoom } from './zoom';
-import { Context } from '../context';
+import { renderElement } from './renderElement';
 
 export type EdgeComponentProps = {
   element: DiagramEdge;
@@ -243,6 +243,17 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
       DRAG_DROP_MANAGER.current() instanceof EdgeEndpointMoveDrag &&
       (DRAG_DROP_MANAGER.current() as EdgeEndpointMoveDrag).edge.id === props.element.id;
 
+    const children = props.element.children.map(child =>
+      renderElement(this, child, {
+        context: props.context,
+        isReadOnly: false,
+        childProps: {
+          onMouseDown: props.onMouseDown!,
+          onDoubleClick: undefined
+        }
+      })
+    );
+
     return svg.g(
       {
         id: `edge-${props.element.id}`,
@@ -264,7 +275,8 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
       ...arrowMarkers,
       ...shapeBuilder.nodes,
       ...points,
-      ...controlPoints
+      ...controlPoints,
+      ...children
     );
   }
 

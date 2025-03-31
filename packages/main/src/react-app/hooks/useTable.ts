@@ -10,6 +10,7 @@ import {
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { useEventListener } from './useEventListener';
 import { nodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { assert } from '@diagram-craft/utils/assert';
 
 export const useTable = (diagram: Diagram) => {
   const [element, setElement] = useState<DiagramNode | undefined>(undefined);
@@ -27,7 +28,8 @@ export const useTable = (diagram: Diagram) => {
         const el = diagram.selectionState.elements[0] as DiagramNode;
         if (el.nodeType === 'table') {
           setElement(el);
-        } else if (el.parent?.nodeType === 'tableRow') {
+        } else if (el.parent && isNode(el.parent) && el.parent.nodeType === 'tableRow') {
+          assert.node(el.parent.parent!);
           setElement(el.parent.parent);
         } else {
           setElement(undefined);
@@ -56,7 +58,7 @@ export const useTableProperty: PropertyArrayHook<Diagram, NodeProps> = makePrope
 
     const node = nodes[0] as DiagramNode;
     if (node.nodeType === 'table') return [node];
-    if (node.parent?.nodeType === 'tableRow') return [node.parent.parent];
+    if (isNode(node.parent) && node.parent?.nodeType === 'tableRow') return [node.parent.parent];
     return [];
   }) as (d: Diagram) => DiagramNode[],
   node => node.editProps,

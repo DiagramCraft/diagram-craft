@@ -6,7 +6,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramNode, NodeTexts } from '@diagram-craft/model/diagramNode';
 import { Box } from '@diagram-craft/geometry/box';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
-import { DiagramElement } from '@diagram-craft/model/diagramElement';
+import { DiagramElement, isEdge } from '@diagram-craft/model/diagramElement';
 import { FreeEndpoint, PointInNodeEndpoint } from '@diagram-craft/model/endpoint';
 import { _p, Point } from '@diagram-craft/geometry/point';
 import { assert } from '@diagram-craft/utils/assert';
@@ -858,7 +858,6 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         assert.present(edge);
 
         const textNode = createLabelNode(id, edge, value, props, '#ffffff', uow);
-        nodes.push(textNode);
 
         // Note: This used to be done with queue.add - unclear why
         attachLabelNode(textNode, edge, $geometry, uow);
@@ -989,7 +988,6 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           const labelBg = style.str('labelBackgroundColor') ?? 'transparent';
 
           const textNode = createLabelNode(`${id}-label`, edge, value, props, labelBg, uow);
-          nodes.push(textNode);
 
           queue.add(() => attachLabelNode(textNode, edge, $geometry, uow));
           queue.add(() => calculateLabelNodeActualSize(style, textNode, value, uow));
@@ -1322,7 +1320,11 @@ export const drawioReader = async (
     await parseMxGraphModel($mxGraphModel, diagram);
 
     if (diagram.visibleElements().length > 0) {
-      const bounds = Box.boundingBox(diagram.visibleElements().map(e => e.bounds));
+      const bounds = Box.boundingBox(
+        diagram.visibleElements().flatMap(e => {
+          return isEdge(e) ? [e.bounds, ...e.children.flatMap(c => c.bounds)] : [e.bounds];
+        })
+      );
 
       const pageWidth = xNum($mxGraphModel, 'pageWidth', 100);
       const pageHeight = xNum($mxGraphModel, 'pageHeight', 100);

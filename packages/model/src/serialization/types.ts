@@ -1,4 +1,4 @@
-import { AbstractEdge, AbstractNode } from '../types';
+import { EdgeInterface, NodeInterface } from '../types';
 import { Point } from '@diagram-craft/geometry/point';
 import { EdgePropsForEditing } from '../diagramEdge';
 import { NodePropsForEditing, NodeTexts } from '../diagramNode';
@@ -65,7 +65,7 @@ export interface SerializedStyles {
 
 export type SerializedStylesheet = Omit<StylesheetSnapshot, '_snapshotType'>;
 
-export interface SerializedNode extends AbstractNode {
+export interface SerializedNode extends NodeInterface {
   edges?: Record<string, ReadonlyArray<Reference>>;
   children?: ReadonlyArray<SerializedElement>;
   props: NodePropsForEditing;
@@ -93,11 +93,12 @@ export type SerializedEndpoint =
   | SerializedPointInNodeEndpoint
   | SerializedFreeEndpoint;
 
-export interface SerializedEdge extends AbstractEdge {
+export interface SerializedEdge extends EdgeInterface {
   start: SerializedEndpoint;
   end: SerializedEndpoint;
   props: EdgePropsForEditing;
   metadata: ElementMetadata;
+  children?: ReadonlyArray<SerializedElement>;
 }
 
 export type SerializedElement = SerializedNode | SerializedEdge;

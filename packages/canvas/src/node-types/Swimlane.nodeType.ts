@@ -14,6 +14,7 @@ import { Transforms } from '../component/vdom-svg';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { hasHighlight, Highlights } from '../highlight';
+import { renderElement } from '../components/renderElement';
 
 declare global {
   interface CustomNodeProps {
@@ -129,8 +130,10 @@ export class SwimlaneNodeDefinition extends ShapeNodeDefinition {
     }
 
     // Only trigger parent.onChildChanged in case this node has indeed changed
-    if (node.parent && !Box.isEqual(node.bounds, boundsBefore)) {
+    if (node.parent && isNode(node.parent) && !Box.isEqual(node.bounds, boundsBefore)) {
       uow.registerOnCommitCallback('onChildChanged', node.parent, () => {
+        assert.node(node.parent!);
+
         const parentDef = node.parent!.getDefinition();
         parentDef.onChildChanged(node.parent!, uow);
       });
@@ -243,7 +246,7 @@ class SwimlaneComponent extends BaseNodeComponent {
       builder.add(
         svg.g(
           { transform: Transforms.rotateBack(props.node.bounds) },
-          this.makeElement(child, props)
+          renderElement(this, child, props)
         )
       );
     });

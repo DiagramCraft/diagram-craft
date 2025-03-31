@@ -1,11 +1,11 @@
 /// <reference types="vitest" />
-import { defineConfig } from 'vite';
+import { defineConfig, UserConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import * as path from 'node:path';
 import yaml from '@rollup/plugin-yaml';
 
 // https://vitejs.dev/config/
-export default defineConfig({
+const userConfig: UserConfig = {
   plugins: [react(), yaml()],
   test: {
     fakeTimers: {
@@ -52,5 +52,15 @@ export default defineConfig({
       '@diagram-craft/utils': path.join(__dirname, '../../packages/utils/src'),
       '@diagram-craft/app-components': path.join(__dirname, '../../packages/app-components/src')
     }
+  }
+};
+export default defineConfig(({ command, mode, isSsrBuild, isPreview }) => {
+  if (command === 'serve') {
+    return userConfig;
+  } else {
+    userConfig.esbuild ??= {
+      dropLabels: ['DEBUG']
+    };
+    return userConfig;
   }
 });

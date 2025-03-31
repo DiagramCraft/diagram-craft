@@ -13,6 +13,7 @@ import { AnchorEndpoint } from './endpoint';
 import { newid } from '@diagram-craft/utils/id';
 import { deepClone } from '@diagram-craft/utils/object';
 import { assertRegularLayer, RegularLayer } from './diagramLayer';
+import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 
 export class BaseEdgeDefinition implements EdgeDefinition {
   public readonly name: string;
@@ -73,6 +74,8 @@ export class BaseEdgeDefinition implements EdgeDefinition {
     coord: Point,
     uow: UnitOfWork
   ) {
+    if (element.isLabelNode()) return;
+
     const path = edge.path();
     const projection = path.projectPoint(coord);
 
@@ -87,13 +90,18 @@ export class BaseEdgeDefinition implements EdgeDefinition {
       uow
     );
 
-    element.updateProps(props => (props.labelForEdgeId = edge.id), uow);
-
     // TODO: Perhaps create a helper to add an element as a label edge
     // TODO: Maybe use detach here
     if (edge.parent) {
       if (element.parent) {
-        element.parent.removeChild(element, uow);
+        if (isNode(element.parent)) {
+          element.parent.removeChild(element, uow);
+        } else {
+          // This means that element.parent is an edge - implying
+          // element is a label node - however, we've already covered
+          // this case at the beginning of the function
+          VERIFY_NOT_REACHED();
+        }
       }
 
       edge.parent.addChild(element, uow);

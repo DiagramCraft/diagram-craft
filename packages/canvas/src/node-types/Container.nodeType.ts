@@ -15,6 +15,7 @@ import { assert } from '@diagram-craft/utils/assert';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { hasHighlight, Highlights } from '../highlight';
 import { isEnum } from '@diagram-craft/utils/types';
+import { renderElement } from '../components/renderElement';
 
 type ContainerResize = 'none' | 'shrink' | 'grow' | 'both';
 function assertIsContainerResizeOrUndefined(
@@ -323,10 +324,13 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
 
     // Only trigger parent.onChildChanged in case this node has indeed changed
     if (node.parent && !Box.isEqual(node.bounds, boundsBefore)) {
-      uow.registerOnCommitCallback('onChildChanged', node.parent, () => {
-        const parentDef = node.parent!.getDefinition();
-        parentDef.onChildChanged(node.parent!, uow);
-      });
+      if (isNode(node.parent)) {
+        uow.registerOnCommitCallback('onChildChanged', node.parent, () => {
+          assert.node(node.parent!);
+          const parentDef = node.parent.getDefinition();
+          parentDef.onChildChanged(node.parent, uow);
+        });
+      }
     }
   }
 
@@ -439,7 +443,7 @@ export class ContainerComponent extends BaseNodeComponent {
       builder.add(
         svg.g(
           { transform: Transforms.rotateBack(props.node.bounds) },
-          this.makeElement(child, props)
+          renderElement(this, child, props)
         )
       );
     });
