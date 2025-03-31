@@ -890,22 +890,23 @@ export class DiagramNode
   }
 
   labelNode() {
-    if (!this.#props.labelForEdgeId) return undefined;
+    if (!this.isLabelNode()) return undefined;
     const edge = this.labelEdge();
     assert.present(edge);
     assert.present(edge.labelNodes);
     return edge.labelNodes.find(n => n.node === this);
   }
 
-  labelEdge() {
-    if (!this.#props.labelForEdgeId) return undefined;
-    const edge = this.diagram.edgeLookup.get(this.#props.labelForEdgeId);
+  labelEdge(): DiagramEdge | undefined {
+    if (!this.isLabelNode()) return undefined;
+    const edge = this.parent;
     assert.present(edge);
+    assert.edge(edge);
     return edge;
   }
 
   updateLabelNode(labelNode: Partial<LabelNode>, uow: UnitOfWork) {
-    if (!this.#props.labelForEdgeId) return;
+    if (!this.isLabelNode()) return;
 
     uow.snapshot(this);
 

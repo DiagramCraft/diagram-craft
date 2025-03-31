@@ -43,7 +43,7 @@ export abstract class AbstractNodeSnapProvider {
 
     for (const node of this.diagram.visibleElements()) {
       if (!isNode(node)) continue;
-      if (node.renderProps.labelForEdgeId) continue;
+      if (node.isLabelNode()) continue;
       if (!this.eligibleNodePredicate(node.id)) continue;
       if (Box.intersects(node.bounds, box)) continue;
       if (node.bounds.r !== 0) continue;

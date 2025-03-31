@@ -73,6 +73,8 @@ export class BaseEdgeDefinition implements EdgeDefinition {
     coord: Point,
     uow: UnitOfWork
   ) {
+    if (element.isLabelNode()) return;
+
     const path = edge.path();
     const projection = path.projectPoint(coord);
 
