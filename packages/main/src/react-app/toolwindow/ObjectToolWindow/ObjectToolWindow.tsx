@@ -27,6 +27,7 @@ import { NodeTableToolbarPanel } from './NodeTableToolbarPanel';
 import { useDiagram } from '../../../application';
 import { useRedraw } from '../../hooks/useRedraw';
 import { NodeActionPropertiesPanel } from '../ObjectInfoToolWindow/NodeActionPropertiesPanel';
+import { isNode } from '@diagram-craft/model/diagramElement';
 
 type Type = 'diagram' | 'mixed' | 'single-label-node' | 'node' | 'edge' | 'table' | 'table-cell';
 
@@ -63,7 +64,7 @@ export const ObjectToolWindow = () => {
       setType('table');
     } else if (
       diagram.selectionState.isNodesOnly() &&
-      diagram.selectionState.nodes.every(e => e.parent?.nodeType === 'tableRow')
+      diagram.selectionState.nodes.every(e => isNode(e.parent) && e.parent?.nodeType === 'tableRow')
     ) {
       setType('table-cell');
     } else if (diagram.selectionState.getSelectionType() === 'mixed') {
