@@ -1322,7 +1322,14 @@ export const drawioReader = async (
     await parseMxGraphModel($mxGraphModel, diagram);
 
     if (diagram.visibleElements().length > 0) {
-      const bounds = Box.boundingBox(diagram.visibleElements().map(e => e.bounds));
+      const bounds = Box.boundingBox(
+        diagram.visibleElements().flatMap(e => {
+          if (isEdge(e) && e.children.length > 0) {
+            return [e.bounds, ...e.children.flatMap(c => c.bounds)];
+          }
+          return [e.bounds];
+        })
+      );
 
       const pageWidth = xNum($mxGraphModel, 'pageWidth', 100);
       const pageHeight = xNum($mxGraphModel, 'pageHeight', 100);
