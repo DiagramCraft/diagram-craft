@@ -74,7 +74,7 @@ export class EdgeTextAddAction extends AbstractAction<EdgeTextAddActionArg> {
     this.context.model.activeDiagram.undoManager.addAndExecute(
       makeUndoableAction('Add label', {
         redo: uow => edge.addLabelNode(labelNode, uow),
-        undo: uow => edge.removeChild(textNode, uow)
+        undo: uow => edge.removeLabelNode(labelNode, uow)
       })
     );
 
