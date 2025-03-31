@@ -71,13 +71,14 @@ export class BaseNodeComponent<
       const { w: width, h: height } = size;
       const { bounds } = props.node;
 
-      if (width > bounds.w || height > bounds.h) {
+      // Note: we want label nodes to always be as small as possible
+      if (width > bounds.w || height > bounds.h || props.node.isLabelNode()) {
         const newBounds = {
           x: bounds.x,
           y: bounds.y,
           r: bounds.r,
-          h: Math.max(height, bounds.h),
-          w: Math.max(width, bounds.w)
+          h: props.node.isLabelNode() ? height : Math.max(height, bounds.h),
+          w: props.node.isLabelNode() ? width : Math.max(width, bounds.w)
         };
 
         if (props.node.renderProps.text.align === 'center' && width > bounds.w) {
