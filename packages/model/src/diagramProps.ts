@@ -195,8 +195,6 @@ declare global {
   }
 
   interface NodeProps extends ElementProps {
-    labelForEdgeId?: string;
-
     action?: {
       type: 'url' | 'diagram' | 'layer' | 'none';
       url?: string;

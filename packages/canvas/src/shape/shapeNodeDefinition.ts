@@ -13,7 +13,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { round } from '@diagram-craft/utils/math';
 import { Anchor, AnchorStrategy, BoundaryDirection } from '@diagram-craft/model/anchor';
-import { VerifyNotReached } from '@diagram-craft/utils/assert';
+import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
 
 type NodeShapeConstructor<T extends ShapeNodeDefinition> = {
   new (shapeNodeDefinition: T): BaseNodeComponent<T>;
@@ -76,7 +76,7 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
 
   getAnchors(node: DiagramNode) {
     const anchorStrategy = node.getDefinition().supports('anchors-configurable')
-      ? node.renderProps.anchors.type ?? 'shape-defaults'
+      ? (node.renderProps.anchors.type ?? 'shape-defaults')
       : 'shape-defaults';
 
     if (anchorStrategy === 'shape-defaults') {
@@ -167,8 +167,10 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
 
     this.layoutChildren(node, uow);
 
-    if (node.parent && !Box.isEqual(node.bounds, boundsBefore)) {
+    if (node.parent && isNode(node.parent) && !Box.isEqual(node.bounds, boundsBefore)) {
       uow.registerOnCommitCallback('onChildChanged', node.parent, () => {
+        assert.node(node.parent!);
+
         const parentDef = node.parent!.getDefinition();
         parentDef.onChildChanged(node.parent!, uow);
       });

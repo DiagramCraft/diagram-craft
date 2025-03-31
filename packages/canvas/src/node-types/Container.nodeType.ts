@@ -15,6 +15,7 @@ import { assert } from '@diagram-craft/utils/assert';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { hasHighlight, Highlights } from '../highlight';
 import { isEnum } from '@diagram-craft/utils/types';
+import { renderElement } from '../components/renderElement';
 
 type ContainerResize = 'none' | 'shrink' | 'grow' | 'both';
 function assertIsContainerResizeOrUndefined(
@@ -442,7 +443,7 @@ export class ContainerComponent extends BaseNodeComponent {
       builder.add(
         svg.g(
           { transform: Transforms.rotateBack(props.node.bounds) },
-          this.makeElement(child, props)
+          renderElement(this, child, props)
         )
       );
     });

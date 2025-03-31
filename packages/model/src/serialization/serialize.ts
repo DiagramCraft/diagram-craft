@@ -163,7 +163,8 @@ export const serializeDiagramElement = (element: DiagramElement): SerializedElem
       })),
       waypoints: edge.waypoints,
       props: edge.storedProps,
-      metadata: edge.metadata
+      metadata: edge.metadata,
+      children: edge.children.map(serializeDiagramElement) as SerializedNode[]
     };
   } else {
     throw new VerifyNotReached();

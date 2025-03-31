@@ -1,4 +1,4 @@
-import { NodeInterface, LabelNode } from './types';
+import { LabelNode } from './types';
 import { Box } from '@diagram-craft/geometry/box';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { DiagramElement, isEdge, isNode } from './diagramElement';
@@ -31,43 +31,26 @@ export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;
 };
 
-type OptionalKeys = 'labelForEdgeId';
-
-export type NodePropsForRendering = DeepReadonly<
-  DeepRequired<Omit<NodeProps, OptionalKeys>> & Pick<NodeProps, OptionalKeys>
->;
+export type NodePropsForRendering = DeepReadonly<DeepRequired<NodeProps>>;
 export type NodePropsForEditing = DeepReadonly<NodeProps>;
 
 export type NodeTexts = { text: string } & Record<string, string>;
 
-export class DiagramNode
-  implements NodeInterface, DiagramElement, UOWTrackable<DiagramNodeSnapshot>
-{
-  readonly type = 'node';
-
-  readonly id: string;
+export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramNodeSnapshot> {
   readonly edges: Map<string | undefined, DiagramEdge[]> = new Map<
     string | undefined,
     DiagramEdge[]
   >();
 
-  #cache: Map<string, unknown> | undefined = undefined;
-
   #nodeType: 'group' | string;
-  #diagram: Diagram;
-  #activeDiagram: Diagram;
-  #layer: Layer;
-  #parent?: DiagramNode;
 
   #props: NodeProps = {};
-  #metadata: ElementMetadata = {};
   #text: NodeTexts = {
     text: ''
   };
 
   #bounds: Box;
   #anchors?: ReadonlyArray<Anchor>;
-  #children: ReadonlyArray<DiagramElement>;
 
   constructor(
     id: string,
@@ -80,16 +63,10 @@ export class DiagramNode
     text: NodeTexts = { text: '' },
     anchorCache?: ReadonlyArray<Anchor>
   ) {
-    this.id = id;
+    super('node', id, diagram, layer, metadata);
     this.#bounds = bounds;
     this.#nodeType = nodeType;
-    this.#children = [];
-    this.#diagram = diagram;
-    this.#activeDiagram = diagram;
-    this.#layer = layer;
     this.#text = text;
-
-    this.#metadata = metadata ?? {};
 
     this.#props = (props ?? {}) as NodeProps;
     this.#anchors = anchorCache;
@@ -98,10 +75,10 @@ export class DiagramNode
       this.invalidateAnchors(UnitOfWork.immediate(diagram));
     }
 
-    this.#metadata.style ??=
+    this._metadata.style ??=
       this.nodeType === 'text' ? DefaultStyles.node.text : DefaultStyles.node.default;
 
-    this.#metadata.textStyle ??= DefaultStyles.text.default;
+    this._metadata.textStyle ??= DefaultStyles.text.default;
   }
 
   getDefinition() {
@@ -115,32 +92,12 @@ export class DiagramNode
   changeNodeType(nodeType: string, uow: UnitOfWork) {
     uow.snapshot(this);
     this.#nodeType = nodeType;
-    this.#children = [];
+    this._children = [];
     uow.updateElement(this);
 
-    this.#cache?.clear();
+    this._cache?.clear();
     this.invalidateAnchors(uow);
     this.getDefinition().onPropUpdate(this, uow);
-  }
-
-  get cache() {
-    if (!this.#cache) {
-      this.#cache = new Map<string, unknown>();
-    }
-    return this.#cache;
-  }
-
-  /* Highlights ********************************************************************************************** */
-
-  #highlights: ReadonlyArray<string> = [];
-
-  set highlights(highlights: ReadonlyArray<string>) {
-    this.#highlights = highlights;
-    this.diagram.emitAsync('elementHighlighted', { element: this });
-  }
-
-  get highlights() {
-    return this.#highlights;
   }
 
   /* Text **************************************************************************************************** */
@@ -153,24 +110,11 @@ export class DiagramNode
     uow.snapshot(this);
     this.#text[id === '1' ? 'text' : id] = text;
     uow.updateElement(this);
-    this.#cache?.clear();
+    this._cache?.clear();
   }
 
   get texts() {
     return this.#text;
-  }
-
-  /* Metadata ************************************************************************************************ */
-
-  get metadata() {
-    return this.#metadata;
-  }
-
-  updateMetadata(callback: (props: ElementMetadata) => void, uow: UnitOfWork) {
-    uow.snapshot(this);
-    callback(this.#metadata);
-    uow.updateElement(this);
-    this.#cache?.clear();
   }
 
   /* Props *************************************************************************************************** */
@@ -198,7 +142,7 @@ export class DiagramNode
       dest.push({
         val: accessor.get(styleProps, path) as PropPathValue<NodeProps, T>,
         type: 'style',
-        id: this.#metadata.style
+        id: this._metadata.style
       });
     }
 
@@ -206,7 +150,7 @@ export class DiagramNode
       dest.push({
         val: accessor.get(textStyleProps, path) as PropPathValue<NodeProps, T>,
         type: 'textStyle',
-        id: this.#metadata.textStyle
+        id: this._metadata.textStyle
       });
     }
 
@@ -247,18 +191,19 @@ export class DiagramNode
 
   private getPropsSources() {
     const styleProps = this.diagram.document.styles.nodeStyles.find(
-      s => s.id === this.#metadata.style
+      s => s.id === this._metadata.style
     )?.props;
 
     const textStyleProps = this.diagram.document.styles.textStyles.find(
-      s => s.id === this.#metadata.textStyle
+      s => s.id === this._metadata.textStyle
     )?.props;
 
-    const parentProps: Partial<NodeProps> = deepClone(
-      this.#parent && this.#props.inheritStyle ? makeWriteable(this.#parent.editProps) : {}
+    const parentProps: Partial<NodeProps & EdgeProps> = deepClone(
+      // @ts-expect-error this.#parent.editProps cannot be properly typed
+      this._parent && this.#props.inheritStyle ? makeWriteable(this._parent.editProps) : {}
     );
 
-    const adjustments = getAdjustments(this.#activeDiagram, this.id);
+    const adjustments = getAdjustments(this._activeDiagram, this.id);
     const ruleProps = adjustments.map(([k, v]) => [k, v.props]);
 
     const ruleElementStyle = adjustments
@@ -321,7 +266,7 @@ export class DiagramNode
     this.cache.set('props.forEditing', propsForEditing);
     this.cache.set('props.forRendering', propsForRendering);
 
-    for (const child of this.#children) {
+    for (const child of this._children) {
       if (isNode(child)) {
         child.populatePropsCache();
       }
@@ -352,7 +297,7 @@ export class DiagramNode
     callback(this.#props);
     uow.updateElement(this);
 
-    this.#cache?.clear();
+    this._cache?.clear();
     this.invalidateAnchors(uow);
     this.getDefinition().onPropUpdate(this, uow);
   }
@@ -369,10 +314,6 @@ export class DiagramNode
     }, uow);
   }
 
-  isHidden() {
-    return this.renderProps.hidden;
-  }
-
   /* Name **************************************************************************************************** */
 
   get dataForTemplate() {
@@ -380,7 +321,7 @@ export class DiagramNode
 
     return deepMerge(
       {
-        name: this.#metadata.name
+        name: this._metadata.name
       },
       this.metadata.data?.customData ?? {},
       ...(this.metadata.data?.data?.map(d => d.data) ?? [])
@@ -388,10 +329,10 @@ export class DiagramNode
   }
 
   get name() {
-    if (this.#cache?.has('name')) return this.#cache.get('name') as string;
+    if (this._cache?.has('name')) return this._cache.get('name') as string;
 
-    if (!isEmptyString(this.#metadata.name)) {
-      this.cache.set('name', this.#metadata.name!);
+    if (!isEmptyString(this._metadata.name)) {
+      this.cache.set('name', this._metadata.name!);
       return this.cache.get('name') as string;
     }
 
@@ -418,65 +359,10 @@ export class DiagramNode
     return this.nodeType + ' / ' + this.id;
   }
 
-  /* Diagram/layer ******************************************************************************************* */
-
-  get activeDiagram() {
-    return this.#activeDiagram;
-  }
-
-  set activeDiagram(diagram: Diagram) {
-    if (this.#activeDiagram !== diagram) {
-      this.cache.clear();
-    }
-    this.#activeDiagram = diagram;
-  }
-
-  get diagram() {
-    return this.#diagram;
-  }
-
-  get layer() {
-    return this.#layer;
-  }
-
-  _setLayer(layer: Layer, diagram: Diagram) {
-    this.#layer = layer;
-    this.#diagram = diagram;
-  }
-
-  /* Parent ************************************************************************************************** */
-
-  get parent() {
-    return this.#parent;
-  }
-
-  _setParent(parent: DiagramNode | undefined) {
-    this.#parent = parent;
-  }
-
   /* Children *********************************************************************************************** */
 
-  get children() {
-    return this.#children;
-  }
-
   setChildren(children: ReadonlyArray<DiagramElement>, uow: UnitOfWork) {
-    uow.snapshot(this);
-
-    const oldChildren = this.children;
-
-    this.#children = children;
-    this.#children.forEach(c => {
-      uow.snapshot(c);
-      c._setParent(this);
-      if (isNode(c)) this.diagram.nodeLookup.set(c.id, c);
-      else if (isEdge(c)) this.diagram.edgeLookup.set(c.id, c);
-    });
-
-    oldChildren.filter(c => !children.includes(c)).forEach(c => c._setParent(undefined));
-
-    this.#children.forEach(c => uow.updateElement(c));
-    uow.updateElement(this);
+    super.setChildren(children, uow);
 
     uow.registerOnCommitCallback('onChildChanged', this, () => {
       this.getDefinition().onChildChanged(this, uow);
@@ -488,23 +374,7 @@ export class DiagramNode
     uow: UnitOfWork,
     relation?: { ref: DiagramElement; type: 'after' | 'before' }
   ) {
-    uow.snapshot(this);
-
-    if (relation) {
-      const children = this.children;
-      const index = children.indexOf(relation.ref);
-      if (relation.type === 'after') {
-        this.#children = [...children.slice(0, index + 1), child, ...children.slice(index + 1)];
-      } else {
-        this.#children = [...children.slice(0, index), child, ...children.slice(index)];
-      }
-    } else {
-      this.#children = [...this.children, child];
-    }
-    child._setParent(this);
-
-    uow.updateElement(this);
-    uow.updateElement(child);
+    super.addChild(child, uow, relation);
 
     uow.registerOnCommitCallback('onChildChanged', this, () => {
       this.getDefinition().onChildChanged(this, uow);
@@ -512,13 +382,7 @@ export class DiagramNode
   }
 
   removeChild(child: DiagramElement, uow: UnitOfWork) {
-    uow.snapshot(this);
-
-    this.#children = this.children.filter(c => c !== child);
-    child._setParent(undefined);
-
-    uow.updateElement(this);
-    uow.updateElement(child);
+    super.removeChild(child, uow);
 
     uow.registerOnCommitCallback('onChildChanged', this, () => {
       this.getDefinition().onChildChanged(this, uow);
@@ -536,10 +400,6 @@ export class DiagramNode
     const oldBounds = this.bounds;
     this.#bounds = bounds;
     if (!Box.isEqual(oldBounds, this.bounds)) uow.updateElement(this);
-  }
-
-  isLocked() {
-    return this.layer.isLocked();
   }
 
   /* Anchors ************************************************************************************************ */
@@ -583,7 +443,7 @@ export class DiagramNode
       nodeType: this.nodeType,
       bounds: deepClone(this.bounds),
       props: deepClone(this.#props),
-      metadata: deepClone(this.#metadata),
+      metadata: deepClone(this._metadata),
       children: this.children.map(c => c.id),
       edges: Object.fromEntries(
         [...this.edges.entries()].map(([k, v]) => [k, v.map(e => ({ id: e.id }))])
@@ -596,10 +456,10 @@ export class DiagramNode
   restore(snapshot: DiagramNodeSnapshot, uow: UnitOfWork) {
     this.setBounds(snapshot.bounds, uow);
     this.#props = snapshot.props as NodeProps;
-    this.#highlights = [];
+    this._highlights = [];
     this.#nodeType = snapshot.nodeType;
     this.#text = snapshot.texts;
-    this.#metadata = snapshot.metadata;
+    this._metadata = snapshot.metadata;
 
     this.setChildren(
       snapshot.children.map(c => {
@@ -618,7 +478,7 @@ export class DiagramNode
     }
 
     uow.updateElement(this);
-    this.#cache?.clear();
+    this._cache?.clear();
   }
 
   convertToPath(uow: UnitOfWork) {
@@ -654,7 +514,7 @@ export class DiagramNode
       this.diagram,
       this.layer,
       deepClone(this.#props) as NodeProps,
-      deepClone(this.#metadata) as ElementMetadata,
+      deepClone(this._metadata) as ElementMetadata,
       deepClone(this.#text) as NodeTexts,
       this.#anchors
     );
@@ -774,11 +634,6 @@ export class DiagramNode
   }
 
   detach(uow: UnitOfWork) {
-    // Update any parent
-    if (this.parent) {
-      this.parent.removeChild(this, uow);
-    }
-
     this.diagram.nodeLookup.delete(this.id);
 
     // "Detach" any edges that connects to this node
@@ -797,14 +652,8 @@ export class DiagramNode
       }
     }
 
-    // Update edge for which this node is a label node
-    if (this.isLabelNode()) {
-      const edge = this.labelEdge()!;
-      const labelNode = this.labelNode()!;
-      edge.removeLabelNode(labelNode, uow);
-      this.updateProps(p => {
-        p.labelForEdgeId = undefined;
-      }, uow);
+    if (this.parent) {
+      this.parent.removeChild(this, uow);
     }
 
     // Note, need to check if the element is still in the layer to avoid infinite recursion
@@ -824,32 +673,35 @@ export class DiagramNode
 
     if (this.parent && !isChild) {
       const parent = this.parent;
-      uow.registerOnCommitCallback('onChildChanged', parent, () => {
-        parent.getDefinition().onChildChanged(parent, uow);
-      });
-    }
+      if (isNode(parent)) {
+        uow.registerOnCommitCallback('onChildChanged', parent, () => {
+          parent.getDefinition().onChildChanged(parent, uow);
+        });
+      } else {
+        assert.true(this.isLabelNode());
 
-    // TODO: This should be possible to put in the invalidation() method
-    if (this.isLabelNode() && !isChild) {
-      if (uow.contains(this.labelEdge()!)) return;
+        // TODO: This should be possible to put in the invalidation() method
 
-      const labelNode = this.labelNode();
-      assert.present(labelNode);
+        if (uow.contains(this.labelEdge()!)) return;
 
-      const dx = this.bounds.x - previousBounds.x;
-      const dy = this.bounds.y - previousBounds.y;
+        const labelNode = this.labelNode();
+        assert.present(labelNode);
 
-      const clampAmount = 100;
+        const dx = this.bounds.x - previousBounds.x;
+        const dy = this.bounds.y - previousBounds.y;
 
-      this.updateLabelNode(
-        {
-          offset: {
-            x: clamp(labelNode.offset.x + dx, -clampAmount, clampAmount),
-            y: clamp(labelNode.offset.y + dy, -clampAmount, clampAmount)
-          }
-        },
-        uow
-      );
+        const clampAmount = 100;
+
+        this.updateLabelNode(
+          {
+            offset: {
+              x: clamp(labelNode.offset.x + dx, -clampAmount, clampAmount),
+              y: clamp(labelNode.offset.y + dy, -clampAmount, clampAmount)
+            }
+          },
+          uow
+        );
+      }
     }
 
     uow.updateElement(this);
@@ -886,7 +738,7 @@ export class DiagramNode
   }
 
   isLabelNode() {
-    return !!this.#props.labelForEdgeId;
+    return this.parent !== undefined && isEdge(this.parent);
   }
 
   labelNode() {
@@ -905,6 +757,7 @@ export class DiagramNode
     return edge;
   }
 
+  // TODO: Is this really needed - shouldn't this be part of DiagramEdge
   updateLabelNode(labelNode: Partial<LabelNode>, uow: UnitOfWork) {
     if (!this.isLabelNode()) return;
 

@@ -214,7 +214,9 @@ export abstract class AbstractMoveDrag extends Drag {
         }
 
         // Move elements out of a container
-      } else if (selection.elements.every(e => e.parent?.nodeType === 'container')) {
+      } else if (
+        selection.elements.every(e => isNode(e.parent) && e.parent?.nodeType === 'container')
+      ) {
         this.diagram.moveElement(
           selection.elements,
           this.uow,

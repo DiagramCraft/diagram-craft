@@ -308,7 +308,7 @@ const ElementEntry = (props: { element: DiagramElement }) => {
         {icon} &nbsp;{shorten(e.name, 20)}
       </Tree.NodeLabel>
 
-      {childrenAllowed && (
+      {(childrenAllowed || (isEdge(e) && e.children.length > 0)) && (
         <Tree.Children>
           {e.children.toReversed().map(c => (
             <ElementEntry key={c.id} element={c} />

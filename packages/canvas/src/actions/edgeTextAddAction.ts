@@ -60,7 +60,6 @@ export class EdgeTextAddAction extends AbstractAction<EdgeTextAddActionArg> {
       this.context.model.activeDiagram.activeLayer,
       {
         text: { align: 'center' },
-        labelForEdgeId: edge.id,
         fill: {
           enabled: true,
           color: '#ffffff'
@@ -69,13 +68,6 @@ export class EdgeTextAddAction extends AbstractAction<EdgeTextAddActionArg> {
       {},
       { text: 'Label' }
     );
-
-    // Add text node to any parent group
-    if (edge.parent) {
-      edge.parent.setChildren([...edge.parent.children, textNode], uow);
-    }
-
-    edge.layer.addElement(textNode, uow);
 
     edge.addLabelNode(
       {
@@ -87,8 +79,6 @@ export class EdgeTextAddAction extends AbstractAction<EdgeTextAddActionArg> {
       },
       uow
     );
-
-    uow.updateElement(edge);
 
     const snapshots = uow.commit();
     this.context.model.activeDiagram.undoManager.add(

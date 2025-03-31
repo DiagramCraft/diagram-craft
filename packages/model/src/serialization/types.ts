@@ -98,6 +98,7 @@ export interface SerializedEdge extends EdgeInterface {
   end: SerializedEndpoint;
   props: EdgePropsForEditing;
   metadata: ElementMetadata;
+  children?: ReadonlyArray<SerializedElement>;
 }
 
 export type SerializedElement = SerializedNode | SerializedEdge;

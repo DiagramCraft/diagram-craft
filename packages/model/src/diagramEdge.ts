@@ -1,12 +1,12 @@
 import { DiagramNode, DuplicationContext } from './diagramNode';
-import { EdgeInterface, LabelNode, Waypoint } from './types';
+import { LabelNode, Waypoint } from './types';
 import { Point } from '@diagram-craft/geometry/point';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { Box } from '@diagram-craft/geometry/box';
 import { PointOnPath, TimeOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
 import { CubicSegment, LineSegment } from '@diagram-craft/geometry/pathSegment';
 import { Transform } from '@diagram-craft/geometry/transform';
-import { DiagramElement, isEdge } from './diagramElement';
+import { DiagramElement, isEdge, isNode } from './diagramElement';
 import { DiagramEdgeSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
 import { Diagram } from './diagram';
 import { Layer, RegularLayer } from './diagramLayer';
@@ -56,22 +56,8 @@ const intersectionListIsSame = (a: Intersection[], b: Intersection[]) => {
 export type EdgePropsForEditing = DeepReadonly<EdgeProps>;
 export type EdgePropsForRendering = DeepReadonly<DeepRequired<EdgeProps>>;
 
-export class DiagramEdge
-  implements EdgeInterface, DiagramElement, UOWTrackable<DiagramEdgeSnapshot>
-{
-  readonly type = 'edge';
-
-  readonly id: string;
-
-  #cache: Map<string, unknown> | undefined = undefined;
-
-  #diagram: Diagram;
-  #activeDiagram: Diagram;
-  #layer: Layer;
-  #parent?: DiagramNode;
-
+export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramEdgeSnapshot> {
   #props: EdgeProps = {};
-  #metadata: ElementMetadata = {};
 
   #intersections: Intersection[] = [];
   #waypoints: ReadonlyArray<Waypoint> = [];
@@ -90,59 +76,22 @@ export class DiagramEdge
     diagram: Diagram,
     layer: Layer
   ) {
-    this.id = id;
+    super('edge', id, diagram, layer, metadata);
     this.#start = start;
     this.#end = end;
     this.#props = props as EdgeProps;
-    this.#metadata = metadata;
     this.#waypoints = midpoints;
-    this.#diagram = diagram;
-    this.#activeDiagram = diagram;
-    this.#layer = layer;
 
     if (start instanceof ConnectedEndpoint)
       start.node._addEdge(start instanceof AnchorEndpoint ? start.anchorId : undefined, this);
     if (end instanceof ConnectedEndpoint)
       end.node._addEdge(end instanceof AnchorEndpoint ? end.anchorId : undefined, this);
 
-    this.#metadata.style ??= DefaultStyles.edge.default;
+    this._metadata.style ??= DefaultStyles.edge.default;
   }
 
   getDefinition(): EdgeDefinition {
     return this.diagram.document.edgeDefinitions.get(this.renderProps.shape);
-  }
-
-  get cache() {
-    if (!this.#cache) {
-      this.#cache = new Map<string, unknown>();
-    }
-    return this.#cache;
-  }
-
-  /* Highlights ********************************************************************************************** */
-
-  #highlights: ReadonlyArray<string> = [];
-
-  set highlights(highlights: ReadonlyArray<string>) {
-    this.#highlights = highlights;
-    this.diagram.emitAsync('elementHighlighted', { element: this });
-  }
-
-  get highlights() {
-    return this.#highlights;
-  }
-
-  /* Metadata ************************************************************************************************ */
-
-  get metadata() {
-    return this.#metadata;
-  }
-
-  updateMetadata(callback: (props: ElementMetadata) => void, uow: UnitOfWork) {
-    uow.snapshot(this);
-    callback(this.#metadata);
-    uow.updateElement(this);
-    this.#cache?.clear();
   }
 
   /* Props *************************************************************************************************** */
@@ -163,7 +112,7 @@ export class DiagramEdge
       dest.push({
         val: accessor.get(styleProps, path) as PropPathValue<EdgeProps, T>,
         type: 'style',
-        id: this.#metadata.style
+        id: this._metadata.style
       });
     }
 
@@ -192,10 +141,10 @@ export class DiagramEdge
 
   private getPropsSources() {
     const styleProps = this.diagram.document.styles.edgeStyles.find(
-      s => s.id === this.#metadata.style
+      s => s.id === this._metadata.style
     )?.props;
 
-    const adjustments = getAdjustments(this.#activeDiagram, this.id);
+    const adjustments = getAdjustments(this._activeDiagram, this.id);
     const ruleProps = adjustments.map(([k, v]) => [k, v.props]);
 
     const ruleElementStyle = adjustments
@@ -269,7 +218,7 @@ export class DiagramEdge
 
     uow.updateElement(this);
 
-    this.#cache?.clear();
+    this._cache?.clear();
   }
 
   updateCustomProps<K extends keyof CustomEdgeProps>(
@@ -303,7 +252,7 @@ export class DiagramEdge
   get dataForTemplate() {
     return deepMerge(
       {
-        name: this.#metadata.name
+        name: this._metadata.name
       },
       this.metadata.data?.customData ?? {},
       ...(this.metadata.data?.data?.map(d => d.data) ?? [])
@@ -316,8 +265,8 @@ export class DiagramEdge
       return this.#labelNodes[0].node.name;
     }
 
-    if (!isEmptyString(this.#metadata.name)) {
-      this.cache.set('name', this.#metadata.name!);
+    if (!isEmptyString(this._metadata.name)) {
+      this.cache.set('name', this._metadata.name!);
       return this.cache.get('name') as string;
     }
 
@@ -336,42 +285,6 @@ export class DiagramEdge
 
     // ... finally we use the id
     return this.id;
-  }
-
-  /* Diagram/layer ******************************************************************************************* */
-
-  get activeDiagram() {
-    return this.#activeDiagram;
-  }
-
-  set activeDiagram(diagram: Diagram) {
-    if (this.#activeDiagram !== diagram) {
-      this.cache.clear();
-    }
-    this.#activeDiagram = diagram;
-  }
-
-  get diagram() {
-    return this.#diagram;
-  }
-
-  get layer() {
-    return this.#layer;
-  }
-
-  _setLayer(layer: Layer, diagram: Diagram) {
-    this.#layer = layer;
-    this.#diagram = diagram;
-  }
-
-  /* Parent ************************************************************************************************** */
-
-  get parent() {
-    return this.#parent;
-  }
-
-  _setParent(parent: DiagramNode | undefined) {
-    this.#parent = parent;
   }
 
   /* Bounds ************************************************************************************************* */
@@ -472,14 +385,99 @@ export class DiagramEdge
     return this.#labelNodes;
   }
 
-  setLabelNodes(labelNodes: ReadonlyArray<ResolvedLabelNode> | undefined, uow: UnitOfWork) {
+  removeChild(child: DiagramElement, uow: UnitOfWork) {
+    super.removeChild(child, uow);
+    this.syncLabelNodesBasedOnChildren(uow);
+  }
+
+  addChild(child: DiagramElement, uow: UnitOfWork) {
+    assert.true(isNode(child));
+
+    super.addChild(child, uow);
+    this.syncChildrenBasedOnLabelNodes(uow);
+  }
+
+  setChildren(children: ReadonlyArray<DiagramElement>, uow: UnitOfWork) {
+    assert.true(children.every(isNode));
+
+    super.setChildren(children, uow);
+    this.syncLabelNodesBasedOnChildren(uow);
+  }
+
+  private syncLabelNodesBasedOnChildren(uow: UnitOfWork) {
     uow.snapshot(this);
 
-    this.#labelNodes = labelNodes;
-    this.#labelNodes?.forEach(ln => {
-      ln.node.updateProps(p => (p.labelForEdgeId = this.id), uow);
-    });
+    const newLabelNodes =
+      this.#labelNodes?.filter(ln => this._children.find(c => c.id === ln.node.id)) ?? [];
+
+    for (const c of this._children) {
+      if (isNode(c)) {
+        if (!newLabelNodes.find(ln => ln.node === c)) {
+          newLabelNodes.push({
+            id: c.id,
+            node: c,
+            type: 'perpendicular',
+            offset: {
+              x: 0,
+              y: 0
+            },
+            timeOffset: 0
+          });
+        }
+      }
+    }
+
+    this.#labelNodes = newLabelNodes;
     uow.updateElement(this);
+
+    this.labelNodeConsistencyInvariant();
+  }
+
+  private syncChildrenBasedOnLabelNodes(uow: UnitOfWork) {
+    uow.snapshot(this);
+
+    this.#labelNodes?.forEach(ln => {
+      const layer = ln.node.layer;
+      if (layer instanceof RegularLayer) {
+        const inLayerElements = layer.elements.find(e => e === ln.node);
+        if (inLayerElements) {
+          layer.removeElement(ln.node, uow);
+        }
+
+        if (!this._children.find(c => c.id === ln.node.id)) {
+          super.addChild(ln.node, uow);
+        }
+
+        assert.true(ln.node.parent === this);
+
+        const inDiagram =
+          layer.diagram.nodeLookup.has(ln.node.id) || layer.diagram.edgeLookup.has(ln.node.id);
+        if (!inDiagram) {
+          layer.addElement(ln.node, uow);
+        }
+      } else {
+        assert.fail('Label nodes should be part of regular layer');
+      }
+
+      uow.snapshot(ln.node);
+      uow.updateElement(ln.node);
+    });
+
+    for (const c of this._children) {
+      if (!this.#labelNodes?.find(ln => ln.node === c)) {
+        this.removeChild(c, uow);
+      }
+    }
+
+    uow.updateElement(this);
+
+    this.labelNodeConsistencyInvariant();
+  }
+
+  setLabelNodes(labelNodes: ReadonlyArray<ResolvedLabelNode> | undefined, uow: UnitOfWork) {
+    this.#labelNodes = labelNodes;
+
+    this.syncChildrenBasedOnLabelNodes(uow);
   }
 
   addLabelNode(labelNode: ResolvedLabelNode, uow: UnitOfWork) {
@@ -495,6 +493,40 @@ export class DiagramEdge
       this.labelNodes?.filter(ln => ln !== labelNode),
       uow
     );
+  }
+
+  private labelNodeConsistencyInvariant() {
+    DEBUG: {
+      // Check that labelNodes and children have the same length
+      assert.true(
+        this.#labelNodes?.length === this._children.length,
+        `Label nodes don't match children - different length; ${this._children.length} != ${this.#labelNodes?.length}`
+      );
+
+      // Check that labelNodes and children have the same nodes
+      for (const ln of this.#labelNodes ?? []) {
+        assert.true(
+          !!this._children.find(c => c.id === ln.node.id),
+          `Label node doesn't match children - different ids; ${this._children.map(c => c.id).join(', ')} != ${this.#labelNodes?.map(ln => ln.node.id).join(', ')}`
+        );
+      }
+
+      // Check that no children are elements of the layer
+      for (const c of this._children) {
+        assert.false(
+          c.layer instanceof RegularLayer && !!c.layer.elements.find(e => e === c),
+          "Label node doesn't match children - element"
+        );
+      }
+
+      // Check that all children are part of the element mapping of the diagram
+      for (const c of this._children) {
+        assert.true(
+          c.diagram.nodeLookup.has(c.id) || c.diagram.edgeLookup.has(c.id),
+          "Label node doesn't match children - diagram"
+        );
+      }
+    }
   }
 
   /* Waypoints ********************************************************************************************** */
@@ -592,7 +624,7 @@ export class DiagramEdge
       id: this.id,
       type: 'edge',
       props: deepClone(this.#props),
-      metadata: deepClone(this.#metadata),
+      metadata: deepClone(this._metadata),
       start: this.start.serialize(),
       end: this.end.serialize(),
       waypoints: deepClone(this.waypoints),
@@ -608,24 +640,20 @@ export class DiagramEdge
   // TODO: Add assertions for lookups
   restore(snapshot: DiagramEdgeSnapshot, uow: UnitOfWork) {
     this.#props = snapshot.props as EdgeProps;
-    this.#highlights = [];
+    this._highlights = [];
     this.#start = Endpoint.deserialize(snapshot.start, this.diagram.nodeLookup);
     this.#end = Endpoint.deserialize(snapshot.end, this.diagram.nodeLookup);
     this.#waypoints = (snapshot.waypoints ?? []) as Array<Waypoint>;
 
-    const oldLabelNodes = this.#labelNodes ?? [];
     this.#labelNodes = snapshot.labelNodes?.map(ln => ({
       ...ln,
       node: this.diagram.nodeLookup.get(ln.id)!
     }));
-    for (const ln of oldLabelNodes) {
-      if (!this.#labelNodes?.find(e => e.node === ln.node)) {
-        ln.node.updateProps(p => (p.labelForEdgeId = undefined), uow);
-      }
-    }
+
+    this.syncChildrenBasedOnLabelNodes(uow);
 
     uow.updateElement(this);
-    this.#cache?.clear();
+    this._cache?.clear();
   }
 
   duplicate(ctx?: DuplicationContext, id?: string | undefined) {
@@ -636,7 +664,7 @@ export class DiagramEdge
       this.start,
       this.end,
       deepClone(this.#props) as EdgeProps,
-      deepClone(this.#metadata) as ElementMetadata,
+      deepClone(this._metadata) as ElementMetadata,
       deepClone(this.waypoints) as Array<Waypoint>,
       this.diagram,
       this.layer
@@ -654,7 +682,6 @@ export class DiagramEdge
         ...l,
         node: newNode
       });
-      newNode.updateProps(p => p.labelForEdgeId, uow);
     }
     edge.setLabelNodes(newLabelNodes, uow);
 

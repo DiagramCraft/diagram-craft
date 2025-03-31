@@ -13,8 +13,6 @@ import {
   SerializedDiagramDocument,
   SerializedElement,
   SerializedFreeEndpoint,
-  SerializedLayer,
-  SerializedNode,
   SerializedPointInNodeEndpoint,
   SerializedStylesheet
 } from './types';
@@ -26,17 +24,14 @@ import { ReferenceLayer } from '../diagramLayerReference';
 import { RuleLayer } from '../diagramLayerRule';
 import { DataProviderRegistry } from '../dataProvider';
 
-const isNodeDef = (element: SerializedElement | SerializedLayer): element is SerializedNode =>
-  element.type === 'node';
-
-const unfoldGroup = (node: SerializedNode) => {
+const unfoldGroup = (node: SerializedElement) => {
   const recurse = (
     nodes: ReadonlyArray<SerializedElement>,
-    parent?: SerializedNode | undefined
-  ): (SerializedElement & { parent?: SerializedNode | undefined })[] => {
+    parent?: SerializedElement | undefined
+  ): (SerializedElement & { parent?: SerializedElement | undefined })[] => {
     return [
       ...nodes.map(n => ({ ...n, parent })),
-      ...nodes.flatMap(n => (n.type === 'node' ? recurse(n.children ?? [], n) : []))
+      ...nodes.flatMap(n => recurse(n.children ?? [], n))
     ];
   };
 
@@ -64,10 +59,8 @@ export const deserializeDiagramElements = (
   nodeLookup ??= {};
   edgeLookup ??= {};
 
-  const allNodes = diagramElements.filter(isNodeDef);
-
-  // Index skeleton nodes
-  for (const n of allNodes) {
+  // Pass 1: create placeholders for all nodes
+  for (const n of diagramElements) {
     for (const c of unfoldGroup(n)) {
       if (c.type === 'edge') continue;
 
@@ -97,71 +90,81 @@ export const deserializeDiagramElements = (
     }
   }
 
-  // Resolve relations
+  // Pass 2: create placeholders for all edges
+  for (const n of diagramElements) {
+    for (const e of unfoldGroup(n)) {
+      if (e.type !== 'edge') continue;
+
+      const start = e.start;
+      const end = e.end;
+
+      const startEndpoint = deserializeEndpoint(start, nodeLookup);
+      const endEndpoint = deserializeEndpoint(end, nodeLookup);
+
+      const edge = new DiagramEdge(
+        e.id,
+        startEndpoint,
+        endEndpoint,
+        e.props,
+        {
+          style: 'default-edge',
+          ...e.metadata
+        },
+        (e.waypoints ?? []) as Array<Waypoint>,
+        diagram,
+        layer
+      );
+
+      if (isSerializedEndpointAnchor(start)) {
+        const startNode = nodeLookup[start.node.id];
+        startNode.edges.set(start.anchor, [...(startNode.edges.get(start.anchor) ?? []), edge]);
+      } else if (isSerializedEndpointConnected(start)) {
+        const startNode = nodeLookup[start.node.id];
+        startNode.edges.set(undefined, [...(startNode.edges.get(undefined) ?? []), edge]);
+      }
+
+      if (isSerializedEndpointAnchor(end)) {
+        const endNode = nodeLookup[end.node.id];
+        endNode.edges.set(end.anchor, [...(endNode.edges.get(end.anchor) ?? []), edge]);
+      } else if (isSerializedEndpointConnected(end)) {
+        const endNode = nodeLookup[end.node.id];
+        endNode.edges.set(undefined, [...(endNode.edges.get(undefined) ?? []), edge]);
+      }
+
+      edgeLookup[e.id] = edge;
+    }
+  }
+
+  // Pass 3: resolve relations
   const uow = new UnitOfWork(diagram, false, true);
-  for (const n of allNodes) {
+  for (const n of diagramElements) {
     for (const c of unfoldGroup(n)) {
-      if (c.type === 'edge') continue;
-      nodeLookup[c.id].setChildren(c.children?.map(c2 => nodeLookup[c2.id]) ?? [], uow);
+      const el = c.type === 'node' ? nodeLookup[c.id] : edgeLookup[c.id];
+      el.setChildren(c.children?.map(c2 => nodeLookup[c2.id]) ?? [], uow);
+
       if (c.parent) {
-        nodeLookup[c.id]._setParent(nodeLookup[c.parent.id]);
+        const resolvedParent = nodeLookup[c.parent.id] ?? edgeLookup[c.parent.id];
+        el._setParent(resolvedParent);
+      }
+    }
+
+    if (n.type === 'edge') {
+      const edge = edgeLookup[n.id];
+      if (n.labelNodes && n.labelNodes.length > 0) {
+        // Note, we don't commit the UOW here
+        edge.setLabelNodes(
+          n.labelNodes.map(ln => ({
+            ...ln,
+            node: nodeLookup[ln.id]
+          })),
+          uow
+          //UnitOfWork.immediate(diagram)
+        );
       }
     }
   }
 
-  for (const e of diagramElements) {
-    if (e.type !== 'edge') continue;
-
-    const start = e.start;
-    const end = e.end;
-
-    const startEndpoint = deserializeEndpoint(start, nodeLookup);
-    const endEndpoint = deserializeEndpoint(end, nodeLookup);
-
-    const edge = new DiagramEdge(
-      e.id,
-      startEndpoint,
-      endEndpoint,
-      e.props,
-      {
-        style: 'default-edge',
-        ...e.metadata
-      },
-      (e.waypoints ?? []) as Array<Waypoint>,
-      diagram,
-      layer
-    );
-
-    if (isSerializedEndpointAnchor(start)) {
-      const startNode = nodeLookup[start.node.id];
-      startNode.edges.set(start.anchor, [...(startNode.edges.get(start.anchor) ?? []), edge]);
-    } else if (isSerializedEndpointConnected(start)) {
-      const startNode = nodeLookup[start.node.id];
-      startNode.edges.set(undefined, [...(startNode.edges.get(undefined) ?? []), edge]);
-    }
-
-    if (isSerializedEndpointAnchor(end)) {
-      const endNode = nodeLookup[end.node.id];
-      endNode.edges.set(end.anchor, [...(endNode.edges.get(end.anchor) ?? []), edge]);
-    } else if (isSerializedEndpointConnected(end)) {
-      const endNode = nodeLookup[end.node.id];
-      endNode.edges.set(undefined, [...(endNode.edges.get(undefined) ?? []), edge]);
-    }
-
-    edgeLookup[e.id] = edge;
-
-    if (e.labelNodes && e.labelNodes.length > 0) {
-      // Note, we don't commit the UOW here
-      edge.setLabelNodes(
-        e.labelNodes.map(ln => ({
-          ...ln,
-          node: nodeLookup[ln.id]
-        })),
-        UnitOfWork.immediate(diagram)
-      );
-    }
-  }
-
+  // Pass 4: gather all elements
   const elements: DiagramElement[] = [];
   for (const n of diagramElements) {
     if (n.type === 'node') {
@@ -172,7 +175,9 @@ export const deserializeDiagramElements = (
       VERIFY_NOT_REACHED();
     }
   }
-  return elements;
+
+  // Pass 5: only return the top-level elements
+  return elements.filter(e => e.parent === undefined);
 };
 
 export type DocumentFactory = () => DiagramDocument;

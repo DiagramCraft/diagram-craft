@@ -93,11 +93,12 @@ export class UmlLifeline extends SimpleShapeNodeDefinition {
       { text: '' }
     );
 
+    const onDoubleClick = shapeBuilder.makeOnDblclickHandle();
     shapeBuilder.add(
       props.cmp.subComponent(() => new nodeComponent(shape as ShapeNodeDefinition), {
         mode: 'canvas',
         element: node,
-        onDoubleClick: shapeBuilder.makeOnDblclickHandle(),
+        onDoubleClick: () => onDoubleClick?.(),
         onMouseDown: (_id, coord, modifiers) => {
           props.childProps.onMouseDown?.(props.node.id, coord, modifiers);
         },

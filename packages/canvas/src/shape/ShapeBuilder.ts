@@ -251,8 +251,10 @@ export class ShapeBuilder {
     ) {
       return;
     }
-    return () => {
+    return (e?: MouseEvent) => {
       ShapeText.edit(textId, this.props.element.id);
+      e?.preventDefault?.();
+      e?.stopPropagation?.();
     };
   }
 

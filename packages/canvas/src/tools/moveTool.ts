@@ -6,7 +6,7 @@ import { MoveDrag } from '../drag/moveDrag';
 import { Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { getDiagramElementPath } from '@diagram-craft/model/diagramElement';
+import { getDiagramElementPath, isNode } from '@diagram-craft/model/diagramElement';
 import { assert } from '@diagram-craft/utils/assert';
 
 type DeferredMouseAction = {
@@ -67,7 +67,7 @@ export class MoveTool extends AbstractTool {
         if (path.length > 0) {
           for (let i = 0; i < path.length; i++) {
             const parent = path[i];
-            if (parent.getDefinition().supports('select')) {
+            if (isNode(parent) && parent.getDefinition().supports('select')) {
               if (selection.nodes.includes(parent)) {
                 break;
               } else {
@@ -110,7 +110,7 @@ export class MoveTool extends AbstractTool {
       if (path.length > 0) {
         for (let i = 0; i < path.length; i++) {
           const parent = path[i];
-          if (parent.getDefinition().supports('select')) {
+          if (isNode(parent) && parent.getDefinition().supports('select')) {
             if (selection.nodes.includes(parent)) {
               selection.toggle(parent);
               break;

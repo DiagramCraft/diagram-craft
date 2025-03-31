@@ -1,4 +1,3 @@
-import { DiagramNode } from './diagramNode';
 import { DiagramElement, isNode } from './diagramElement';
 import { LayerSnapshot, LayersSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
 import { DiagramEdge } from './diagramEdge';
@@ -312,8 +311,8 @@ export class RegularLayer extends Layer<RegularLayer> {
 
     const byParent = groupBy(elements, e => e.parent);
 
-    const snapshot = new Map<DiagramNode | undefined, StackPosition[]>();
-    const newPositions = new Map<DiagramNode | undefined, StackPosition[]>();
+    const snapshot = new Map<DiagramElement | undefined, StackPosition[]>();
+    const newPositions = new Map<DiagramElement | undefined, StackPosition[]>();
 
     for (const [parent, elements] of byParent) {
       const existing = parent?.children ?? this.elements;
@@ -334,12 +333,12 @@ export class RegularLayer extends Layer<RegularLayer> {
     return snapshot;
   }
 
-  stackSet(newPositions: Map<DiagramNode | undefined, StackPosition[]>, uow: UnitOfWork) {
+  stackSet(newPositions: Map<DiagramElement | undefined, StackPosition[]>, uow: UnitOfWork) {
     uow.snapshot(this);
 
     for (const [parent, positions] of newPositions) {
       positions.sort((a, b) => a.idx - b.idx);
-      if (parent) {
+      if (parent && isNode(parent)) {
         parent.setChildren(
           positions.map(e => e.element),
           uow

@@ -14,6 +14,7 @@ import { Transforms } from '../component/vdom-svg';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { hasHighlight, Highlights } from '../highlight';
+import { renderElement } from '../components/renderElement';
 
 declare global {
   interface CustomNodeProps {
@@ -245,7 +246,7 @@ class SwimlaneComponent extends BaseNodeComponent {
       builder.add(
         svg.g(
           { transform: Transforms.rotateBack(props.node.bounds) },
-          this.makeElement(child, props)
+          renderElement(this, child, props)
         )
       );
     });

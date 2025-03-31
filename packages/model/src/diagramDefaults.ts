@@ -272,10 +272,7 @@ const _elementDefaults: Pick<
   inheritStyle: true
 };
 
-const _nodeDefaults: Omit<
-  NodePropsForRendering,
-  'labelForEdgeId' | 'name' | 'custom' | 'indicators'
-> = {
+const _nodeDefaults: Omit<NodePropsForRendering, 'name' | 'custom' | 'indicators'> = {
   ..._elementDefaults,
 
   action: {

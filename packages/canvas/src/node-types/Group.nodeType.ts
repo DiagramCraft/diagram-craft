@@ -6,6 +6,8 @@ import { ShapeBuilder } from '../shape/ShapeBuilder';
 import { Box } from '@diagram-craft/geometry/box';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { isNode } from '@diagram-craft/model/diagramElement';
+import { renderElement } from '../components/renderElement';
 
 export class GroupNodeDefinition extends ShapeNodeDefinition {
   constructor() {
@@ -19,7 +21,7 @@ export class GroupNodeDefinition extends ShapeNodeDefinition {
     const newBounds = Box.boundingBox(childrenBounds);
     node.setBounds(newBounds, uow);
 
-    if (node.parent) {
+    if (node.parent && isNode(node.parent)) {
       const parentDef = node.parent.getDefinition();
       parentDef.onChildChanged(node.parent, uow);
     }
@@ -34,7 +36,7 @@ class GroupComponent extends BaseNodeComponent {
         ...props.node.children.map(child =>
           svg.g(
             { transform: Transforms.rotateBack(props.node.bounds) },
-            this.makeElement(child, props)
+            renderElement(this, child, props)
           )
         )
       )
