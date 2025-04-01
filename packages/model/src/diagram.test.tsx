@@ -1,13 +1,10 @@
 import { describe, expect, test } from 'vitest';
-import { Diagram, DocumentBuilder } from './diagram';
 import { DiagramNode } from './diagramNode';
-import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinitionRegistry';
 import { assertRegularLayer, RegularLayer } from './diagramLayer';
 import { UnitOfWork } from './unitOfWork';
-import { TestNodeDefinition } from './TestNodeDefinition';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { newid } from '@diagram-craft/utils/id';
-import { DiagramDocument } from './diagramDocument';
+import { TestModel } from './test-support/builder';
 
 const bounds = {
   x: 0,
@@ -19,14 +16,7 @@ const bounds = {
 
 describe('Diagram', () => {
   test('visibleElements()', () => {
-    const registry = new NodeDefinitionRegistry();
-    registry.register(new TestNodeDefinition('rect', 'Rectangle'));
-
-    const diagram = new Diagram(
-      newid(),
-      'Name',
-      new DiagramDocument(registry, new EdgeDefinitionRegistry())
-    );
+    const diagram = TestModel.newDiagram();
 
     const layer1 = new RegularLayer(newid(), 'Layer 1', [], diagram);
     diagram.layers.add(layer1, new UnitOfWork(diagram));
@@ -49,14 +39,8 @@ describe('Diagram', () => {
   });
 
   test('transform rotate', () => {
-    const nodeDefinitionRegistry = new NodeDefinitionRegistry();
-    nodeDefinitionRegistry.register(new TestNodeDefinition('rect', 'Rectangle'));
-
-    const { diagram } = DocumentBuilder.empty(
-      '1',
-      '1',
-      new DiagramDocument(nodeDefinitionRegistry, new EdgeDefinitionRegistry())
-    );
+    const diagram = TestModel.newDiagram();
+    diagram.newLayer();
 
     const uow = new UnitOfWork(diagram);
 
