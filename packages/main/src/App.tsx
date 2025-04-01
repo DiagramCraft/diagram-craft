@@ -355,6 +355,7 @@ export const App = (props: {
                 <ContextMenu.Root>
                   <ContextMenu.Trigger asChild={true}>
                     <EditableCanvas
+                      id={`diagram-${$d.id}`}
                       ref={svgRef}
                       diagram={$d}
                       /* Note: this uid here to force redraw in case the diagram is reloaded */

@@ -4,7 +4,20 @@ import React, { useCallback, useRef, useState } from 'react';
 import * as Portal from '@radix-ui/react-portal';
 import { Point } from '@diagram-craft/geometry/point';
 import { useApplication } from '../application';
+import { CanvasComponent, CanvasProps } from '@diagram-craft/canvas/CanvasComponent';
 
+class PickerCanvasComponent extends CanvasComponent {
+  protected getMemoKey(props: CanvasProps): unknown | undefined {
+    return {
+      id: props.diagram.id,
+      width: props.width,
+      height: props.height,
+      viewBox: props.viewBox,
+      onClick: props.onClick,
+      className: props.className
+    };
+  }
+}
 export const PickerCanvas = (props: PickerCanvasProps) => {
   const application = useApplication();
   const diagram = props.diagram;
@@ -76,12 +89,14 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
             }}
           >
             <Canvas
+              id={`picker-canvas-portal-${props.diagram.id}`}
               context={application}
               width={80}
               height={80}
               onClick={() => {}}
               diagram={diagram}
               viewBox={props.diagram.viewBox.svgViewboxString}
+              canvasFactory={() => new PickerCanvasComponent()}
             />
 
             <div
@@ -99,12 +114,14 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
       )}
 
       <Canvas
+        id={`picker-canvas-${props.diagram.id}`}
         context={application}
         width={props.width ?? 40}
         height={props.height ?? 40}
         onClick={props.onClick}
         diagram={diagram}
         viewBox={`${props.diagram.viewBox.svgViewboxString}`}
+        canvasFactory={() => new PickerCanvasComponent()}
       />
     </div>
   );
@@ -112,8 +129,8 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
 
 type PickerCanvasProps = {
   diagram: Diagram;
-  width?: string | number;
-  height?: string | number;
+  width?: number;
+  height?: number;
   onClick?: (e: MouseEvent) => void;
   diagramWidth?: number;
   diagramHeight?: number;

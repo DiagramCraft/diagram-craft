@@ -1,17 +1,20 @@
-import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef } from 'react';
 import { CanvasComponent, CanvasProps } from '@diagram-craft/canvas/CanvasComponent';
 
-export const Canvas = forwardRef<SVGSVGElement, CanvasProps>((props, _ref) => {
+type CanvasFactory = {
+  canvasFactory?: () => CanvasComponent;
+};
+
+export const Canvas = forwardRef<SVGSVGElement, CanvasProps & CanvasFactory>((props, _ref) => {
   const diagram = props.diagram;
+
   const svgRef = useRef<SVGSVGElement | null>(null);
 
+  const factory = props.canvasFactory ?? (() => new CanvasComponent());
   const ref = useRef<HTMLDivElement>(null);
-  const cmpRef = useRef<CanvasComponent>(new CanvasComponent());
+  const cmpRef = useRef(factory());
 
-  const cmpProps: CanvasProps = {
-    ...props,
-    diagram
-  };
+  const cmpProps = { ...props, diagram };
 
   if (ref.current) {
     cmpRef.current.update(cmpProps);
@@ -24,6 +27,13 @@ export const Canvas = forwardRef<SVGSVGElement, CanvasProps>((props, _ref) => {
     cmpRef.current.attach(ref.current!, cmpProps);
     svgRef.current = cmpRef.current.getSvgElement();
   });
+
+  useLayoutEffect(() => {
+    return () => {
+      cmpRef.current.detach();
+      cmpRef.current = factory();
+    };
+  }, []);
 
   return <div ref={ref}></div>;
 });

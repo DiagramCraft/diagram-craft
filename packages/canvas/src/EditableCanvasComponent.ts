@@ -7,35 +7,23 @@ import { DRAG_DROP_MANAGER, Modifiers } from './dragDropManager';
 import { BACKGROUND, Tool, ToolConstructor, ToolType } from './tool';
 import { DragLabelComponent } from './components/DragLabelComponent';
 import { AnchorHandlesComponent } from '@diagram-craft/canvas/components/AnchorHandlesComponent';
-import {
-  $cmp,
-  Component,
-  ComponentVNodeData,
-  createEffect,
-  Observable
-} from './component/component';
+import { $cmp, createEffect, Observable } from './component/component';
 import * as svg from './component/vdom-svg';
 import * as html from './component/vdom-html';
-import { ShapeNodeDefinition } from './shape/shapeNodeDefinition';
-import { NodeComponentProps } from './components/BaseNodeComponent';
 import { Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
-import { Diagram, DiagramEvents } from '@diagram-craft/model/diagram';
+import { Diagram } from '@diagram-craft/model/diagram';
 import { ViewboxEvents } from '@diagram-craft/model/viewBox';
 import { DiagramElement, getTopMostNode, isNode } from '@diagram-craft/model/diagramElement';
 import { SelectionState, SelectionStateEvents } from '@diagram-craft/model/selectionState';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
-import { EventKey } from '@diagram-craft/utils/event';
-import { ShapeEdgeDefinition } from './shape/shapeEdgeDefinition';
 import { rawHTML } from './component/vdom';
 import styles from './canvas.css?inline';
-import { Browser } from './browser';
 import { PanTool } from '@diagram-craft/canvas-app/tools/panTool';
 import { Context } from './context';
 import { unique } from '@diagram-craft/utils/array';
-import { isResolvableToRegularLayer, Layer, RegularLayer } from '@diagram-craft/model/diagramLayer';
-import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { isResolvableToRegularLayer } from '@diagram-craft/model/diagramLayer';
+import { CanvasComponentBase } from './CanvasComponent';
 
 const removeSuffix = (s: string) => {
   return s.replace(/---.+$/, '');
@@ -69,12 +57,11 @@ const getAncestorDiagramElement = (
 
 type ComponentProps = Props & Actions & { diagram: Diagram };
 
-export class EditableCanvasComponent extends Component<ComponentProps> {
+export class EditableCanvasComponent extends CanvasComponentBase<ComponentProps> {
+  protected defaultClassName = 'canvas editable-canvas';
+
   private svgRef: SVGSVGElement | null = null;
   private tool: Tool | undefined;
-
-  private nodeRefs: Map<string, Component<unknown> | null> = new Map();
-  private edgeRefs: Map<string, Component<unknown> | null> = new Map();
 
   private point: Point = { x: 0, y: 0 };
 
@@ -220,9 +207,9 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
       };
     }, [diagram]);
 
-    this.onDiagramRedraw('elementAdd', diagram);
-    this.onDiagramRedraw('elementRemove', diagram);
-    this.onDiagramRedraw('change', diagram);
+    this.onEventRedraw('elementAdd', diagram);
+    this.onEventRedraw('elementRemove', diagram);
+    this.onEventRedraw('change', diagram);
 
     this.onSelectionRedrawElement(selection);
 
@@ -232,6 +219,9 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
         id
       });
     };
+
+    const onMouseDown = (id: string, coord: Point, modifiers: Modifiers) =>
+      this.tool!.onMouseDown(id, coord, modifiers);
 
     const canvasState = {
       context: props.context,
@@ -247,13 +237,11 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
         this.subComponent($cmp(DragLabelComponent), { ...canvasState }),
         html.svg(
           {
-            ...(props.width ? { width: props.width } : {}),
-            ...(props.height ? { height: props.height } : {}),
-            id: `diagram-${diagram.id}`,
-            class: [
-              props.className ?? 'canvas editable-canvas',
-              Browser.isChrome() ? 'browser-chrome' : ''
-            ].join(' '),
+            id: props.id,
+            class: this.getClassName(props),
+
+            ...this.dimensionAttributes(props),
+
             preserveAspectRatio: 'none',
             viewBox: diagram.viewBox.svgViewboxString,
             style: `user-select: none`,
@@ -371,12 +359,7 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
           },
           [
             svg.style({}, rawHTML(styles)),
-            svg.defs(
-              svg.filter(
-                { id: 'reflection-filter', filterUnits: 'objectBoundingBox' },
-                svg.feGaussianBlur({ stdDeviation: 0.5 })
-              )
-            ),
+            this.svgFilterDefs(),
 
             this.subComponent($cmp(DocumentBoundsComponent), { ...canvasState }),
 
@@ -386,7 +369,7 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
               {},
               ...diagram.layers.visible.flatMap(layer => {
                 if (!isResolvableToRegularLayer(layer)) return null;
-                return this.renderLayer(layer, diagram, onEdgeDoubleClick, props);
+                return this.renderLayer(layer, diagram, onMouseDown, onEdgeDoubleClick, props);
               })
             ),
 
@@ -406,86 +389,6 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
         )
       ]
     );
-  }
-
-  private renderLayer(
-    layer: Layer<RegularLayer>,
-    $d: Diagram,
-    onEdgeDoubleClick: (id: string, coord: Point) => void,
-    props: ComponentProps
-  ) {
-    const diagram = $d;
-    return layer.resolveForced().elements.map(e => {
-      const id = e.id;
-
-      e.activeDiagram = $d;
-
-      if (e.type === 'edge') {
-        const edge = e as DiagramEdge;
-        const edgeDef = diagram.document.edgeDefinitions.get(edge.renderProps.shape);
-
-        return this.subComponent(
-          () => new (edgeDef as ShapeEdgeDefinition).component!(edgeDef as ShapeEdgeDefinition),
-          {
-            key: `edge-${id}`,
-            onDoubleClick: onEdgeDoubleClick,
-            onMouseDown: (id: string, coord: Point, modifiers: Modifiers) =>
-              this.tool!.onMouseDown(id, coord, modifiers),
-            element: edge,
-            context: props.context,
-            isReadOnly: layer.type === 'reference'
-          },
-          {
-            onCreate: element => {
-              this.edgeRefs.set(
-                id,
-                (element.data as ComponentVNodeData<unknown>).component.instance!
-              );
-            },
-            onRemove: element => {
-              /* Note: Need to check if the instance is the same as the one we have stored,
-               *       as removes and adds can come out of order */
-              const instance = element.data as ComponentVNodeData<unknown>;
-              if (this.edgeRefs.get(id) === instance.component.instance) {
-                this.edgeRefs.set(id, null);
-              }
-            }
-          }
-        );
-      } else {
-        const node = e as DiagramNode;
-        const nodeDef = diagram.document.nodeDefinitions.get(node.nodeType);
-
-        return this.subComponent<NodeComponentProps>(
-          () => new (nodeDef as ShapeNodeDefinition).component!(nodeDef as ShapeNodeDefinition),
-          {
-            key: `node-${node.nodeType}-${id}`,
-            element: node,
-            onMouseDown: (id: string, coord: Point, modifiers: Modifiers) =>
-              this.tool!.onMouseDown(id, coord, modifiers),
-            context: props.context,
-            isReadOnly: layer.type === 'reference'
-          },
-          {
-            onCreate: element => {
-              this.nodeRefs.set(
-                id,
-                (element.data as ComponentVNodeData<NodeComponentProps>).component.instance!
-              );
-            },
-            onRemove: element => {
-              /* Note: Need to check if the instance is the same as the one we have stored,
-               *       as removes and adds can come out of order */
-              const instance = (element.data as ComponentVNodeData<NodeComponentProps>).component
-                .instance;
-              if (this.nodeRefs.get(id) === instance) {
-                this.nodeRefs.set(id, null);
-              }
-            }
-          }
-        );
-      }
-    });
   }
 
   private updateToolClassOnSvg(s: ToolType) {
@@ -510,14 +413,6 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
       }
     }
   };
-
-  private onDiagramRedraw(eventName: EventKey<DiagramEvents>, diagram: Diagram) {
-    createEffect(() => {
-      const cb = () => this.redraw();
-      diagram.on(eventName, cb);
-      return () => diagram.off(eventName, cb);
-    }, [diagram]);
-  }
 
   private onSelectionRedrawElement(selection: SelectionState) {
     createEffect(() => {
@@ -547,23 +442,18 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
       h: Math.floor(rect.height)
     };
   }
-
-  getSvgElement(): SVGSVGElement {
-    return document.getElementById(
-      `diagram-${this.currentProps?.diagram.id}`
-    )! as unknown as SVGSVGElement;
-  }
 }
 
 export type Props = {
+  id: string;
   offset: Point;
   context: Context;
   className?: string;
   diagram: Diagram;
   tools: Partial<Record<ToolType, ToolConstructor>>;
   initialTool?: ToolType;
-  width?: string | number;
-  height?: string | number;
+  width?: number;
+  height?: number;
   onClick?: (e: MouseEvent) => void;
   onDrop?: (e: DragEvent) => void;
   onDrag?: (e: DragEvent) => void;
