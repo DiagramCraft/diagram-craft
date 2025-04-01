@@ -139,14 +139,14 @@ const LayerEntry = (props: { layer: Layer }) => {
             {layer.name}
           </div>
         </Tree.NodeLabel>
-        <Tree.NodeAction style={{ display: 'flex', gap: '0.35rem' }}>
+        <Tree.NodeCell className="cmp-tree__node__action">
           {layer.type !== 'reference' && layer.type !== 'rule' ? (
             <LockToggle layer={layer} diagram={diagram} />
           ) : (
             ''
           )}
           <VisibilityToggle layer={layer} diagram={diagram} />
-        </Tree.NodeAction>
+        </Tree.NodeCell>
         {!(layer instanceof ReferenceLayer) && (
           <Tree.Children>
             {layer instanceof RegularLayer && (
@@ -211,7 +211,7 @@ const RuleEntry = (props: { rule: AdjustmentRule; layer: RuleLayer; diagram: Dia
         <Tree.NodeLabel>
           {icon} &nbsp;{shorten(e.name, 25)}
         </Tree.NodeLabel>
-        <Tree.NodeAction style={{ display: 'flex', gap: '0.35rem' }}>
+        <Tree.NodeCell className="cmp-tree__node__action">
           <span
             style={{ cursor: 'pointer' }}
             onClick={e => {
@@ -224,7 +224,7 @@ const RuleEntry = (props: { rule: AdjustmentRule; layer: RuleLayer; diagram: Dia
           >
             <TbPencil />
           </span>
-        </Tree.NodeAction>
+        </Tree.NodeCell>
       </Tree.Node>
     </RuleContextMenu>
   );
@@ -304,8 +304,9 @@ const ElementEntry = (props: { element: DiagramElement }) => {
         diagram.selectionState.toggle(e);
       }}
     >
-      <Tree.NodeLabel>
-        {icon} &nbsp;{shorten(e.name, 20)}
+      <Tree.NodeLabel style={{ width: 'calc(100% + 15px)' }}>
+        <Tree.NodeLabelIcon>{icon}</Tree.NodeLabelIcon>
+        <Tree.NodeLabelText>{e.name}</Tree.NodeLabelText>
       </Tree.NodeLabel>
 
       {(childrenAllowed || (isEdge(e) && e.children.length > 0)) && (
@@ -352,6 +353,7 @@ export const LayerList = () => {
       <Tree.Root
         ref={ref}
         className={'cmp-layer-list'}
+        style={{ gridTemplateColumns: '92% min-content min-content' }}
         data-dragmimetype={'application/x-diagram-craft-element-instances'}
       >
         {layers.map(l => (

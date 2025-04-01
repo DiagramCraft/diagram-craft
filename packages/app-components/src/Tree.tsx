@@ -102,25 +102,37 @@ const NodeLabel = (props: { children: React.ReactNode } & React.HTMLAttributes<H
   );
 };
 
-const NodeValue = (props: { children: React.ReactNode } & React.HTMLAttributes<HTMLDivElement>) => {
+const NodeCell = (props: { children: React.ReactNode } & React.HTMLAttributes<HTMLDivElement>) => {
   return (
     <div
       {...propsUtils.filterDomProperties(props)}
-      {...propsUtils.filterDomProperties(props)}
-      className={`${styles.cmpTreeNodeValue} ${props.className ?? ''}`}
+      className={`${styles.cmpTreeNodeCell} ${props.className ?? ''}`}
     >
       {props.children}
     </div>
   );
 };
 
-const NodeAction = (
+const NodeLabelText = (
   props: { children: React.ReactNode } & React.HTMLAttributes<HTMLDivElement>
 ) => {
   return (
     <div
       {...propsUtils.filterDomProperties(props)}
-      className={`${styles.cmpTreeNodeAction} ${props.className ?? ''}`}
+      className={`${styles.cmpTreeNodeLabelText} ${props.className ?? ''}`}
+    >
+      {props.children}
+    </div>
+  );
+};
+
+const NodeLabelIcon = (
+  props: { children: React.ReactNode } & React.HTMLAttributes<HTMLDivElement>
+) => {
+  return (
+    <div
+      {...propsUtils.filterDomProperties(props)}
+      className={`${styles.cmpTreeNodeLabelIcon} ${props.className ?? ''}`}
     >
       {props.children}
     </div>
@@ -134,8 +146,9 @@ const Children = (props: { children: React.ReactNode }) => {
 export const Tree = {
   Root,
   Node,
-  NodeAction,
-  NodeValue,
+  NodeCell,
   NodeLabel,
+  NodeLabelText,
+  NodeLabelIcon,
   Children
 };

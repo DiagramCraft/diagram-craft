@@ -13,11 +13,11 @@ export const NodeInfoDetails = (props: Props) => {
     <Tree.Root>
       <Tree.Node>
         <Tree.NodeLabel>id</Tree.NodeLabel>
-        <Tree.NodeValue>{props.obj.id}</Tree.NodeValue>
+        <Tree.NodeCell>{props.obj.id}</Tree.NodeCell>
       </Tree.Node>
       <Tree.Node>
         <Tree.NodeLabel>nodeType</Tree.NodeLabel>
-        <Tree.NodeValue>{props.obj.nodeType}</Tree.NodeValue>
+        <Tree.NodeCell>{props.obj.nodeType}</Tree.NodeCell>
       </Tree.Node>
       <Tree.Node isOpen={true}>
         <Tree.NodeLabel>bounds</Tree.NodeLabel>

@@ -8,7 +8,7 @@ export const ObjectTreeNode = (props: Props) => {
       return (
         <Tree.Node key={key}>
           <Tree.NodeLabel>{key}</Tree.NodeLabel>
-          <Tree.NodeValue>-</Tree.NodeValue>
+          <Tree.NodeCell>-</Tree.NodeCell>
         </Tree.Node>
       );
     }
@@ -16,7 +16,7 @@ export const ObjectTreeNode = (props: Props) => {
       return (
         <Tree.Node key={key}>
           <Tree.NodeLabel>{key}</Tree.NodeLabel>
-          <Tree.NodeValue>{round(v).toString()}</Tree.NodeValue>
+          <Tree.NodeCell>{round(v).toString()}</Tree.NodeCell>
         </Tree.Node>
       );
     }
@@ -24,7 +24,7 @@ export const ObjectTreeNode = (props: Props) => {
       return (
         <Tree.Node key={key}>
           <Tree.NodeLabel>{key}</Tree.NodeLabel>
-          <Tree.NodeValue>{v.toString()}</Tree.NodeValue>
+          <Tree.NodeCell>{v.toString()}</Tree.NodeCell>
         </Tree.Node>
       );
     }
