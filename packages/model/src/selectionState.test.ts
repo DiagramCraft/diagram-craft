@@ -1,13 +1,13 @@
 import { Guide, SelectionState } from './selectionState';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { TestDiagramBuilder, TestDocumentBuilder, TestLayerBuilder } from './test-support/builder';
+import { TestDiagramBuilder, TestModel, TestLayerBuilder } from './test-support/builder';
 
 describe('SelectionState', () => {
   let diagram: TestDiagramBuilder;
   let layer: TestLayerBuilder;
 
   beforeEach(() => {
-    diagram = TestDocumentBuilder.newDiagram();
+    diagram = TestModel.newDiagram();
     layer = diagram.newLayer();
 
     vi.useFakeTimers();
@@ -18,7 +18,7 @@ describe('SelectionState', () => {
   });
 
   test('isEmpty()', () => {
-    const emptySelection = new SelectionState(TestDocumentBuilder.newDiagram());
+    const emptySelection = new SelectionState(TestModel.newDiagram());
     expect(emptySelection.isEmpty()).toBe(true);
     expect(emptySelection.bounds.w).toBe(0);
     expect(emptySelection.bounds.h).toBe(0);

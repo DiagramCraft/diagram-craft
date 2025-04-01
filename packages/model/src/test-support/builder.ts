@@ -12,7 +12,7 @@ import { DiagramEdge, ResolvedLabelNode } from '../diagramEdge';
 import { FreeEndpoint } from '../endpoint';
 import { newid } from '@diagram-craft/utils/id';
 
-export class TestDocumentBuilder {
+export class TestModel {
   static newDiagram() {
     const document = new DiagramDocument(defaultNodeRegistry(), defaultEdgeRegistry());
     return new TestDiagramBuilder(document);
@@ -52,18 +52,7 @@ export class TestLayerBuilder extends RegularLayer {
       bounds?: Box;
     }
   ) {
-    const node = new TestDiagramNodeBuilder(
-      id ?? newid(),
-      type ?? 'rect',
-      options?.bounds ?? {
-        x: 0,
-        y: 0,
-        w: 10,
-        h: 10,
-        r: 0
-      },
-      this.diagram
-    );
+    const node = this.createNode(id, type, options);
     this.addElement(node, UnitOfWork.immediate(this.diagram));
     return node;
   }
@@ -90,16 +79,7 @@ export class TestLayerBuilder extends RegularLayer {
   }
 
   addEdge(id?: string) {
-    const edge = new DiagramEdge(
-      id ?? newid(),
-      new FreeEndpoint({ x: 0, y: 0 }),
-      new FreeEndpoint({ x: 100, y: 100 }),
-      {},
-      {},
-      [],
-      this.diagram,
-      this
-    );
+    const edge = this.createEdge(id);
     this.addElement(edge, UnitOfWork.immediate(this.diagram));
     return edge;
   }

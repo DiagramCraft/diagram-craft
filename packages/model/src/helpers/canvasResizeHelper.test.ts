@@ -2,11 +2,11 @@ import { _test, createResizeCanvasActionToFit } from './canvasResizeHelper';
 import { describe, expect, it } from 'vitest';
 import { Canvas } from '../diagram';
 import { Box } from '@diagram-craft/geometry/box';
-import { TestDocumentBuilder } from '../test-support/builder';
+import { TestModel } from '../test-support/builder';
 
 describe('ResizeCanvasUndoableAction', () => {
   it('correctly undoes the canvas resize', () => {
-    const diagram = TestDocumentBuilder.newDiagram();
+    const diagram = TestModel.newDiagram();
     const beforeCanvas = { x: 0, y: 0, w: 100, h: 100 };
     const afterCanvas = { x: 0, y: 0, w: 200, h: 200 };
     diagram.canvas = afterCanvas;
@@ -18,7 +18,7 @@ describe('ResizeCanvasUndoableAction', () => {
   });
 
   it('correctly redoes the canvas resize', () => {
-    const diagram = TestDocumentBuilder.newDiagram();
+    const diagram = TestModel.newDiagram();
     const beforeCanvas = { x: 0, y: 0, w: 100, h: 100 };
     const afterCanvas = { x: 0, y: 0, w: 200, h: 200 };
     diagram.canvas = beforeCanvas;
@@ -82,7 +82,7 @@ describe('resizeCanvas', () => {
 
 describe('createResizeCanvasActionToFit', () => {
   it('returns undefined if the canvas does not need resizing', () => {
-    const diagram = TestDocumentBuilder.newDiagram();
+    const diagram = TestModel.newDiagram();
     diagram.canvas = { x: 100, y: 100, w: 200, h: 200 };
 
     const bbox: Box = { x: 150, y: 150, w: 100, h: 100, r: 0 };
@@ -92,7 +92,7 @@ describe('createResizeCanvasActionToFit', () => {
   });
 
   it('returns a ResizeCanvasUndoableAction if the canvas needs resizing', () => {
-    const diagram = TestDocumentBuilder.newDiagram();
+    const diagram = TestModel.newDiagram();
     diagram.canvas = { x: 100, y: 100, w: 200, h: 200 };
 
     const bbox: Box = { x: 50, y: 50, w: 300, h: 300, r: 0 };

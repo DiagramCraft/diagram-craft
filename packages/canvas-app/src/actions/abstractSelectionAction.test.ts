@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from 'vitest';
 import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSelectionAction';
-import { TestDocumentBuilder } from '@diagram-craft/model/test-support/builder';
+import { TestModel } from '@diagram-craft/model/test-support/builder';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { ActionContext } from '@diagram-craft/canvas/action';
 
@@ -31,7 +31,7 @@ const mkContext = (d: Diagram) => {
 
 describe('abstractSelectionAction', () => {
   describe('isEnabled', () => {
-    const diagram = TestDocumentBuilder.newDiagram();
+    const diagram = TestModel.newDiagram();
     const layer = diagram.newLayer();
     const el1 = layer.addNode('1', 'rect', {});
     const el2 = layer.addNode('2', 'rect', {});

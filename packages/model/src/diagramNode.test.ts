@@ -3,7 +3,7 @@ import { UnitOfWork } from './unitOfWork';
 import {
   TestDiagramBuilder,
   TestDiagramNodeBuilder,
-  TestDocumentBuilder,
+  TestModel,
   TestLayerBuilder
 } from './test-support/builder';
 
@@ -16,7 +16,7 @@ describe('DiagramNode', () => {
   const resetUow = () => (uow = UnitOfWork.immediate(diagram));
 
   beforeEach(() => {
-    diagram = TestDocumentBuilder.newDiagram();
+    diagram = TestModel.newDiagram();
     layer = diagram.newLayer();
 
     uow = UnitOfWork.immediate(diagram);
@@ -139,7 +139,7 @@ describe('DiagramNode', () => {
 
     it('should not add the child if it is already present in a different diagram', () => {
       const child = layer.createNode();
-      const otherDiagram = TestDocumentBuilder.newDiagram();
+      const otherDiagram = TestModel.newDiagram();
       const other = otherDiagram.newLayer().createNode();
       expect(() => other.addChild(child, uow)).toThrow();
     });

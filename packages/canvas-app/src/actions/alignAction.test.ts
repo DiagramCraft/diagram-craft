@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test } from 'vitest';
 import { AlignAction } from './alignAction';
 import {
   TestDiagramBuilder,
-  TestDocumentBuilder,
+  TestModel,
   TestLayerBuilder
 } from '@diagram-craft/model/test-support/builder';
 import { Diagram } from '@diagram-craft/model/diagram';
@@ -23,7 +23,7 @@ describe('AlignActions', () => {
   let layer: TestLayerBuilder;
 
   beforeEach(() => {
-    diagram = TestDocumentBuilder.newDiagram();
+    diagram = TestModel.newDiagram();
     layer = diagram.newLayer();
     layer.addNode('1', 'rect', {
       bounds: { x: 10, y: 10, w: 100, h: 100, r: 0 }

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { UnitOfWork } from './unitOfWork';
 import { AnchorEndpoint } from './endpoint';
 import { DiagramEdge } from './diagramEdge';
-import { TestDiagramBuilder, TestDocumentBuilder, TestLayerBuilder } from './test-support/builder';
+import { TestDiagramBuilder, TestModel, TestLayerBuilder } from './test-support/builder';
 
 describe('DiagramEdge', () => {
   let diagram: TestDiagramBuilder;
@@ -13,7 +13,7 @@ describe('DiagramEdge', () => {
   const resetUow = () => (uow = UnitOfWork.immediate(diagram));
 
   beforeEach(() => {
-    diagram = TestDocumentBuilder.newDiagram();
+    diagram = TestModel.newDiagram();
     layer = diagram.newLayer();
 
     uow = UnitOfWork.immediate(diagram);
@@ -133,7 +133,7 @@ describe('DiagramEdge', () => {
 
     it('should not add the child if it is already present in a different diagram', () => {
       const child = layer.createNode();
-      const otherDiagram = TestDocumentBuilder.newDiagram();
+      const otherDiagram = TestModel.newDiagram();
       const otherEdge = otherDiagram.newLayer().addEdge();
       expect(() => otherEdge.addChild(child, uow)).toThrow();
     });
