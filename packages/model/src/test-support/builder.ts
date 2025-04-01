@@ -20,7 +20,9 @@ export class TestModel {
 
   static newDiagramWithLayer() {
     const document = new DiagramDocument(defaultNodeRegistry(), defaultEdgeRegistry());
-    return new TestDiagramBuilder(document);
+    const diagram = new TestDiagramBuilder(document);
+    diagram.newLayer();
+    return diagram;
   }
 
   static newDocument() {

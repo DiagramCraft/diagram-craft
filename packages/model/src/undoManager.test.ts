@@ -1,22 +1,10 @@
 import { describe, expect, test } from 'vitest';
 import { UndoManager } from './undoManager';
-import { TestNodeDefinition } from './TestNodeDefinition';
-import { NodeDefinitionRegistry } from './elementDefinitionRegistry';
-import { Diagram } from './diagram';
-import { DiagramDocument } from './diagramDocument';
-import {
-  defaultEdgeRegistry,
-  defaultNodeRegistry
-} from '@diagram-craft/canvas-app/defaultRegistry';
-
-const doc = new DiagramDocument(defaultNodeRegistry(), defaultEdgeRegistry());
+import { TestModel } from './test-support/builder';
 
 describe('UndoManager', () => {
   test('add()', () => {
-    const registry = new NodeDefinitionRegistry();
-    registry.register(new TestNodeDefinition('rect', 'Rectangle'));
-
-    const d = new Diagram('id', 'name', doc);
+    const d = TestModel.newDiagram();
     const manager = new UndoManager(d);
     let x = 0;
 
@@ -36,10 +24,7 @@ describe('UndoManager', () => {
   });
 
   test('addAndExecute()', () => {
-    const registry = new NodeDefinitionRegistry();
-    registry.register(new TestNodeDefinition('rect', 'Rectangle'));
-
-    const d = new Diagram('id', 'name', doc);
+    const d = TestModel.newDiagram();
     const manager = new UndoManager(d);
     let x = 0;
 
@@ -58,10 +43,7 @@ describe('UndoManager', () => {
   });
 
   test('undo()', () => {
-    const registry = new NodeDefinitionRegistry();
-    registry.register(new TestNodeDefinition('rect', 'Rectangle'));
-
-    const d = new Diagram('id', 'name', doc);
+    const d = TestModel.newDiagram();
     const manager = new UndoManager(d);
     let x = 0;
 
@@ -82,10 +64,7 @@ describe('UndoManager', () => {
   });
 
   test('redo()', () => {
-    const registry = new NodeDefinitionRegistry();
-    registry.register(new TestNodeDefinition('rect', 'Rectangle'));
-
-    const d = new Diagram('id', 'name', doc);
+    const d = TestModel.newDiagram();
     const manager = new UndoManager(d);
     let x = 0;
 
