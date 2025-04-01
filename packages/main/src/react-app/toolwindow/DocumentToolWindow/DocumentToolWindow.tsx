@@ -24,7 +24,7 @@ const DiagramTreeNode = (props: { diagram: Diagram } & Pick<Props, 'value' | 'on
           <Tree.NodeLabel>
             <DiagramLabel diagram={node} onValueChange={props.onValueChange} />
           </Tree.NodeLabel>
-          <Tree.NodeValue>{props.value === node.id ? 'Active' : ''}</Tree.NodeValue>
+          <Tree.NodeCell>{props.value === node.id ? 'Active' : ''}</Tree.NodeCell>
           {node.diagrams.length > 0 && (
             <Tree.Children>
               <DiagramTreeNode
@@ -52,7 +52,7 @@ export const DocumentToolWindow = (props: Props) => {
                 <Tree.NodeLabel>
                   <DiagramLabel diagram={node} onValueChange={props.onValueChange} />
                 </Tree.NodeLabel>
-                <Tree.NodeValue>{props.value === node.id ? 'Active' : ''}</Tree.NodeValue>
+                <Tree.NodeCell>{props.value === node.id ? 'Active' : ''}</Tree.NodeCell>
                 {node.diagrams.length > 0 && (
                   <Tree.Children>
                     <DiagramTreeNode
