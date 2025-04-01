@@ -8,22 +8,23 @@ import { UnitOfWork } from '../unitOfWork';
 import { RegularLayer } from '../diagramLayer';
 import { Box } from '@diagram-craft/geometry/box';
 import { DiagramNode } from '../diagramNode';
-import { DiagramEdge } from '../diagramEdge';
+import { DiagramEdge, ResolvedLabelNode } from '../diagramEdge';
 import { FreeEndpoint } from '../endpoint';
+import { newid } from '@diagram-craft/utils/id';
 
-export class TestDocumentBuilder {
-  private document: DiagramDocument;
-
-  constructor() {
-    this.document = new DiagramDocument(defaultNodeRegistry(), defaultEdgeRegistry());
+export class TestModel {
+  static newDiagram() {
+    const document = new DiagramDocument(defaultNodeRegistry(), defaultEdgeRegistry());
+    return new TestDiagramBuilder(document);
   }
 
-  newDiagram() {
-    return new TestDiagramBuilder(this.document);
+  static newDiagramWithLayer() {
+    const document = new DiagramDocument(defaultNodeRegistry(), defaultEdgeRegistry());
+    return new TestDiagramBuilder(document);
   }
 
-  build() {
-    return this.document;
+  static newDocument() {
+    return new DiagramDocument(defaultNodeRegistry(), defaultEdgeRegistry());
   }
 }
 
@@ -45,34 +46,47 @@ export class TestLayerBuilder extends RegularLayer {
   }
 
   addNode(
-    id: string,
-    type: string,
-    options: {
+    id?: string,
+    type?: string,
+    options?: {
       bounds?: Box;
     }
   ) {
-    const node = new DiagramNode(
-      id,
-      type,
-      options.bounds ?? {
-        x: 0,
-        y: 0,
-        w: 100,
-        h: 100,
-        r: 0
-      },
-      this.diagram,
-      this,
-      {},
-      {}
-    );
+    const node = this.createNode(id, type, options);
     this.addElement(node, UnitOfWork.immediate(this.diagram));
     return node;
   }
 
-  addEdge(id: string) {
-    const edge = new DiagramEdge(
-      id,
+  createNode(
+    id?: string,
+    type?: string,
+    options?: {
+      bounds?: Box;
+    }
+  ) {
+    return new TestDiagramNodeBuilder(
+      id ?? newid(),
+      type ?? 'rect',
+      options?.bounds ?? {
+        x: 0,
+        y: 0,
+        w: 10,
+        h: 10,
+        r: 0
+      },
+      this.diagram
+    );
+  }
+
+  addEdge(id?: string) {
+    const edge = this.createEdge(id);
+    this.addElement(edge, UnitOfWork.immediate(this.diagram));
+    return edge;
+  }
+
+  createEdge(id?: string) {
+    return new DiagramEdge(
+      id ?? newid(),
       new FreeEndpoint({ x: 0, y: 0 }),
       new FreeEndpoint({ x: 100, y: 100 }),
       {},
@@ -81,7 +95,21 @@ export class TestLayerBuilder extends RegularLayer {
       this.diagram,
       this
     );
-    this.addElement(edge, UnitOfWork.immediate(this.diagram));
-    return edge;
+  }
+}
+
+export class TestDiagramNodeBuilder extends DiagramNode {
+  constructor(id: string, type: string, bounds: Box, diagram: Diagram) {
+    super(id, type, bounds, diagram, diagram.activeLayer, {}, {});
+  }
+
+  asLabelNode(): ResolvedLabelNode {
+    return {
+      node: this,
+      type: 'perpendicular',
+      offset: { x: 0, y: 0 },
+      timeOffset: 0,
+      id: newid()
+    };
   }
 }
