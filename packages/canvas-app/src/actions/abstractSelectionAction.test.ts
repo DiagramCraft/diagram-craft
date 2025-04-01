@@ -31,7 +31,7 @@ const mkContext = (d: Diagram) => {
 
 describe('abstractSelectionAction', () => {
   describe('isEnabled', () => {
-    const diagram = new TestDocumentBuilder().newDiagram();
+    const diagram = TestDocumentBuilder.newDiagram();
     const layer = diagram.newLayer();
     const el1 = layer.addNode('1', 'rect', {});
     const el2 = layer.addNode('2', 'rect', {});

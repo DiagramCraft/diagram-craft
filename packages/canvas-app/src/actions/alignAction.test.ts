@@ -23,7 +23,7 @@ describe('AlignActions', () => {
   let layer: TestLayerBuilder;
 
   beforeEach(() => {
-    diagram = new TestDocumentBuilder().newDiagram();
+    diagram = TestDocumentBuilder.newDiagram();
     layer = diagram.newLayer();
     layer.addNode('1', 'rect', {
       bounds: { x: 10, y: 10, w: 100, h: 100, r: 0 }

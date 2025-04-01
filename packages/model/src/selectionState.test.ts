@@ -1,26 +1,31 @@
 import { Guide, SelectionState } from './selectionState';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { DiagramNode } from './diagramNode';
-import { TestFactory } from './helpers/testFactory';
+import { TestDiagramBuilder, TestDocumentBuilder, TestLayerBuilder } from './test-support/builder';
 
 describe('SelectionState', () => {
+  let diagram: TestDiagramBuilder;
+  let layer: TestLayerBuilder;
+
   beforeEach(() => {
+    diagram = TestDocumentBuilder.newDiagram();
+    layer = diagram.newLayer();
+
     vi.useFakeTimers();
   });
+
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
   test('isEmpty()', () => {
-    const emptySelection = new SelectionState(TestFactory.createDiagram());
+    const emptySelection = new SelectionState(TestDocumentBuilder.newDiagram());
     expect(emptySelection.isEmpty()).toBe(true);
     expect(emptySelection.bounds.w).toBe(0);
     expect(emptySelection.bounds.h).toBe(0);
   });
 
   test('toggle()', () => {
-    const diagram = TestFactory.createDiagram();
-    const element: DiagramNode = TestFactory.createNode(diagram);
+    const element = layer.addNode();
 
     const selectionState = new SelectionState(diagram);
 
@@ -59,69 +64,62 @@ describe('SelectionState', () => {
 
   describe('getSelectionType()', () => {
     test('empty selection', () => {
-      const selectionState = new SelectionState(TestFactory.createDiagram());
+      const selectionState = new SelectionState(diagram);
       expect(selectionState.getSelectionType()).toBe('empty');
     });
 
     test('single node', () => {
-      const d = TestFactory.createDiagram();
-      const selectionState = new SelectionState(d);
-      selectionState.toggle(TestFactory.createNode(d));
+      const selectionState = new SelectionState(diagram);
+      selectionState.toggle(layer.addNode());
       expect(selectionState.getSelectionType()).toBe('single-node');
     });
 
     test('single edge', () => {
-      const d = TestFactory.createDiagram();
-      const selectionState = new SelectionState(d);
-      selectionState.toggle(TestFactory.createEdge(d));
+      const selectionState = new SelectionState(diagram);
+      selectionState.toggle(layer.addEdge());
       expect(selectionState.getSelectionType()).toBe('single-edge');
     });
 
     test('multiple nodes', () => {
-      const d = TestFactory.createDiagram();
-      const selectionState = new SelectionState(d);
-      selectionState.toggle(TestFactory.createNode(d));
-      selectionState.toggle(TestFactory.createNode(d));
+      const selectionState = new SelectionState(diagram);
+      selectionState.toggle(layer.addNode());
+      selectionState.toggle(layer.addNode());
       expect(selectionState.getSelectionType()).toBe('nodes');
     });
 
     test('multiple edges', () => {
-      const d = TestFactory.createDiagram();
-      const selectionState = new SelectionState(d);
-      selectionState.toggle(TestFactory.createEdge(d));
-      selectionState.toggle(TestFactory.createEdge(d));
+      const selectionState = new SelectionState(diagram);
+      selectionState.toggle(layer.addEdge());
+      selectionState.toggle(layer.addEdge());
       expect(selectionState.getSelectionType()).toBe('edges');
     });
 
     test('mixed', () => {
-      const d = TestFactory.createDiagram();
-      const selectionState = new SelectionState(d);
-      selectionState.toggle(TestFactory.createNode(d));
-      selectionState.toggle(TestFactory.createEdge(d));
+      const selectionState = new SelectionState(diagram);
+      selectionState.toggle(layer.addNode());
+      selectionState.toggle(layer.addEdge());
       expect(selectionState.getSelectionType()).toBe('mixed');
     });
   });
 
   test('isNodesOnly()', () => {
-    const d = TestFactory.createDiagram();
-    const selectionState = new SelectionState(d);
-    selectionState.toggle(TestFactory.createNode(d));
+    const selectionState = new SelectionState(diagram);
+    selectionState.toggle(layer.addNode());
     expect(selectionState.isNodesOnly()).toBe(true);
-    selectionState.toggle(TestFactory.createEdge(d));
+    selectionState.toggle(layer.addEdge());
     expect(selectionState.isNodesOnly()).toBe(false);
   });
 
   test('isEdgesOnly()', () => {
-    const d = TestFactory.createDiagram();
-    const selectionState = new SelectionState(d);
-    selectionState.toggle(TestFactory.createEdge(d));
+    const selectionState = new SelectionState(diagram);
+    selectionState.toggle(layer.addEdge());
     expect(selectionState.isEdgesOnly()).toBe(true);
-    selectionState.toggle(TestFactory.createNode(d));
+    selectionState.toggle(layer.addNode());
     expect(selectionState.isEdgesOnly()).toBe(false);
   });
 
   test('set guides', () => {
-    const selectionState = new SelectionState(TestFactory.createDiagram());
+    const selectionState = new SelectionState(diagram);
 
     const changeCb = vi.fn();
     selectionState.on('change', changeCb);
