@@ -1,12 +1,18 @@
-import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef } from 'react';
 import { CanvasComponent, CanvasProps } from '@diagram-craft/canvas/CanvasComponent';
-import { BaseCanvasComponent } from '@diagram-craft/canvas/BaseCanvasComponent';
+import { BaseCanvasComponent, BaseCanvasProps } from '@diagram-craft/canvas/BaseCanvasComponent';
 
-type CanvasFactory = {
-  canvasFactory?: () => BaseCanvasComponent;
+type CanvasFactory<C extends BaseCanvasComponent> = {
+  canvasFactory?: () => C;
 };
 
-export const Canvas = forwardRef<SVGSVGElement, CanvasProps & CanvasFactory>((props, _ref) => {
+interface CanvasComponentType extends React.FC<CanvasProps & CanvasFactory<BaseCanvasComponent>> {
+  <C extends BaseCanvasComponent<P>, P extends BaseCanvasProps>(
+    props: P & CanvasFactory<C> & { ref?: React.Ref<SVGSVGElement> }
+  ): ReturnType<React.FC<P & CanvasFactory<C> & { ref?: React.Ref<SVGSVGElement> }>>;
+}
+
+export const Canvas: CanvasComponentType = forwardRef((props, _ref) => {
   const diagram = props.diagram;
 
   const svgRef = useRef<SVGSVGElement | null>(null);

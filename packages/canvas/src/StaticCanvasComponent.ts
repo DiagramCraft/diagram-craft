@@ -6,7 +6,9 @@ import { rawHTML } from './component/vdom';
 import { isResolvableToRegularLayer } from '@diagram-craft/model/diagramLayer';
 import styles from './canvas.css?inline';
 
-export class StaticCanvasComponent extends BaseCanvasComponent<CanvasProps> {
+export type StaticCanvasProps = CanvasProps & {};
+
+export class StaticCanvasComponent extends BaseCanvasComponent<StaticCanvasProps> {
   protected defaultClassName = 'canvas';
   protected preserveAspectRatio = 'xMidYMid';
 
@@ -14,7 +16,7 @@ export class StaticCanvasComponent extends BaseCanvasComponent<CanvasProps> {
     return props.viewBox;
   }
 
-  render(props: CanvasProps) {
+  render(props: StaticCanvasProps) {
     const diagram = props.diagram;
 
     const viewBox = this.viewBox(props);
