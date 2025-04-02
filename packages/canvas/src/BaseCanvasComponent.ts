@@ -37,6 +37,9 @@ export abstract class BaseCanvasComponent<
   protected nodeRefs: Map<string, Component<unknown> | null> = new Map();
   protected edgeRefs: Map<string, Component<unknown> | null> = new Map();
 
+  protected abstract defaultClassName: string;
+  protected abstract preserveAspectRatio: string;
+
   getSvgElement(): SVGSVGElement {
     assert.present(this.currentProps);
     return document.getElementById(this.currentProps.id)! as unknown as SVGSVGElement;
@@ -50,7 +53,7 @@ export abstract class BaseCanvasComponent<
         id: props.id,
         class: this.getClassName(props),
 
-        ...this.dimensionAttributes(props),
+        ...this.getDimension(props),
 
         preserveAspectRatio: this.preserveAspectRatio,
         style: `user-select: none`,
@@ -67,33 +70,33 @@ export abstract class BaseCanvasComponent<
           {},
           ...props.diagram.layers.visible.flatMap(layer => {
             if (!isResolvableToRegularLayer(layer)) return null;
-            return this.renderLayer(layer, props.diagram, undefined, undefined, props);
+            return this.renderLayer(layer, props.diagram, undefined, undefined);
           })
         )
       ]
     );
   }
 
+  protected viewBox(props: P): string | undefined {
+    return props.diagram.viewBox.svgViewboxString;
+  }
+
   protected renderLayer(
     layer: Layer<RegularLayer>,
     $d: Diagram,
     onMouseDown: ((id: string, coord: Point, modifiers: Modifiers) => void) | undefined,
-    onEdgeDoubleClick: ((id: string, coord: Point) => void) | undefined,
-
-    // TODO: Can we replace this by using this.currentProps instead
-    props: P
+    onEdgeDoubleClick: ((id: string, coord: Point) => void) | undefined
   ) {
-    assert.present(this.currentProps);
-
-    const diagram = $d;
     return layer.resolveForced().elements.map(e => {
+      assert.present(this.currentProps);
+
       const id = e.id;
 
       e.activeDiagram = $d;
 
       if (isEdge(e)) {
         const edge = e;
-        const edgeDef = diagram.document.edgeDefinitions.get(edge.renderProps.shape);
+        const edgeDef = $d.document.edgeDefinitions.get(edge.renderProps.shape);
 
         return this.subComponent(
           () => new (edgeDef as ShapeEdgeDefinition).component!(edgeDef as ShapeEdgeDefinition),
@@ -102,7 +105,7 @@ export abstract class BaseCanvasComponent<
             onDoubleClick: onEdgeDoubleClick,
             onMouseDown: onMouseDown ?? (() => {}),
             element: edge,
-            context: props.context,
+            context: this.currentProps.context,
             isReadOnly: layer.type === 'reference'
           },
           {
@@ -124,7 +127,7 @@ export abstract class BaseCanvasComponent<
         );
       } else if (isNode(e)) {
         const node = e;
-        const nodeDef = diagram.document.nodeDefinitions.get(node.nodeType);
+        const nodeDef = $d.document.nodeDefinitions.get(node.nodeType);
 
         return this.subComponent<NodeComponentProps>(
           () => new (nodeDef as ShapeNodeDefinition).component!(nodeDef as ShapeNodeDefinition),
@@ -132,7 +135,7 @@ export abstract class BaseCanvasComponent<
             key: `node-${node.nodeType}-${id}`,
             element: node,
             onMouseDown: onMouseDown ?? (() => {}),
-            context: props.context,
+            context: this.currentProps.context,
             isReadOnly: layer.type === 'reference'
           },
           {
@@ -178,7 +181,7 @@ export abstract class BaseCanvasComponent<
     );
   }
 
-  protected dimensionAttributes(props: P) {
+  protected getDimension(props: P): { width?: string | number; height?: string | number } {
     return {
       ...(props.width ? { width: props.width } : {}),
       ...(props.height ? { height: props.height } : {})
@@ -191,9 +194,4 @@ export abstract class BaseCanvasComponent<
       Browser.isChrome() ? 'browser-chrome' : ''
     ].join(' ');
   }
-
-  protected abstract viewBox(props: P): string | undefined;
-
-  protected abstract defaultClassName: string;
-  protected abstract preserveAspectRatio: string;
 }

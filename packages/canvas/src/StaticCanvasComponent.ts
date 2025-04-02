@@ -24,7 +24,7 @@ export class StaticCanvasComponent extends BaseCanvasComponent<CanvasProps> {
         id: props.id,
         class: this.getClassName(props),
 
-        ...this.dimensionAttributes(props),
+        ...this.getDimension(props),
 
         preserveAspectRatio: this.preserveAspectRatio,
         style: `user-select: none`,
@@ -41,7 +41,7 @@ export class StaticCanvasComponent extends BaseCanvasComponent<CanvasProps> {
           {},
           ...diagram.layers.visible.flatMap(layer => {
             if (!isResolvableToRegularLayer(layer)) return null;
-            return this.renderLayer(layer, diagram, props.onMouseDown, undefined, props);
+            return this.renderLayer(layer, diagram, props.onMouseDown, undefined);
           })
         )
       ]

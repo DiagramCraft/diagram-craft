@@ -74,10 +74,6 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
     this.redraw();
   }
 
-  protected viewBox(props: ComponentProps): string | undefined {
-    return props.diagram.viewBox.svgViewboxString;
-  }
-
   render(props: ComponentProps) {
     const diagram = props.diagram;
     const { actionMap, keyMap } = props;
@@ -247,7 +243,7 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
             id: props.id,
             class: this.getClassName(props),
 
-            ...this.dimensionAttributes(props),
+            ...this.getDimension(props),
 
             preserveAspectRatio: this.preserveAspectRatio,
             style: `user-select: none`,
@@ -376,7 +372,7 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
               {},
               ...diagram.layers.visible.flatMap(layer => {
                 if (!isResolvableToRegularLayer(layer)) return null;
-                return this.renderLayer(layer, diagram, onMouseDown, onEdgeDoubleClick, props);
+                return this.renderLayer(layer, diagram, onMouseDown, onEdgeDoubleClick);
               })
             ),
 
