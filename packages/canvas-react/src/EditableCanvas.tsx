@@ -1,5 +1,8 @@
 import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef } from 'react';
-import { EditableCanvasComponent, Props } from '@diagram-craft/canvas/EditableCanvasComponent';
+import {
+  EditableCanvasComponent,
+  Props
+} from '@diagram-craft/canvas/canvas/EditableCanvasComponent';
 import { Actions } from '@diagram-craft/canvas/keyMap';
 
 export const EditableCanvas = forwardRef<SVGSVGElement, Props & Actions>((props, _ref) => {
@@ -9,14 +12,9 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props & Actions>((props,
   const svgRef = useRef<SVGSVGElement | null>(null);
 
   const ref = useRef<HTMLDivElement>(null);
-  const cmpRef = useRef<EditableCanvasComponent>(new EditableCanvasComponent());
+  const cmpRef = useRef(new EditableCanvasComponent());
 
-  const cmpProps = {
-    ...props,
-    diagram,
-    actionMap,
-    keyMap
-  };
+  const cmpProps = { ...props, diagram, actionMap, keyMap };
 
   if (ref.current) {
     // TODO: Is this needed or not?

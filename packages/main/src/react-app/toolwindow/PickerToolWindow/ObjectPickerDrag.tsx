@@ -17,9 +17,9 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 import { deepClone } from '@diagram-craft/utils/object';
 import { clamp } from '@diagram-craft/utils/math';
-import { CanvasComponent } from '@diagram-craft/canvas/CanvasComponent';
 import { insert } from '@diagram-craft/canvas/component/vdom';
 import { registerStencilUse } from '@diagram-craft/canvas-app/recentStencils';
+import { StaticCanvasComponent } from '@diagram-craft/canvas/canvas/StaticCanvasComponent';
 
 enum State {
   INSIDE,
@@ -153,13 +153,16 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
       this.diagram.document.definitions
     );
 
-    const canvas = new CanvasComponent();
-    const $canvasVdomNode = canvas.render({
+    const props = {
+      id: `canvas-drag-image-${dest.id}`,
       context: this.context,
       diagram: dest,
-      width: (this.source.bounds.w / scale).toString(),
-      height: (this.source.bounds.h / scale).toString()
-    });
+      width: this.source.bounds.w / scale,
+      height: this.source.bounds.h / scale
+    };
+
+    const canvas = new StaticCanvasComponent(props);
+    const $canvasVdomNode = canvas.render(props);
     insert($canvasVdomNode);
 
     const $canvasEl = $canvasVdomNode.el!;
