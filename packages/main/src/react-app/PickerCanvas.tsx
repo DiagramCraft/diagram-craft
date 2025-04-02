@@ -4,20 +4,8 @@ import React, { useCallback, useRef, useState } from 'react';
 import * as Portal from '@radix-ui/react-portal';
 import { Point } from '@diagram-craft/geometry/point';
 import { useApplication } from '../application';
-import { CanvasComponent, CanvasProps } from '@diagram-craft/canvas/CanvasComponent';
+import { StaticCanvasComponent } from '@diagram-craft/canvas/StaticCanvasComponent';
 
-class PickerCanvasComponent extends CanvasComponent {
-  protected getMemoKey(props: CanvasProps): unknown | undefined {
-    return {
-      id: props.diagram.id,
-      width: props.width,
-      height: props.height,
-      viewBox: props.viewBox,
-      onClick: props.onClick,
-      className: props.className
-    };
-  }
-}
 export const PickerCanvas = (props: PickerCanvasProps) => {
   const application = useApplication();
   const diagram = props.diagram;
@@ -96,7 +84,7 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
               onClick={() => {}}
               diagram={diagram}
               viewBox={props.diagram.viewBox.svgViewboxString}
-              canvasFactory={() => new PickerCanvasComponent()}
+              canvasFactory={() => new StaticCanvasComponent()}
             />
 
             <div
@@ -121,7 +109,7 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
         onClick={props.onClick}
         diagram={diagram}
         viewBox={`${props.diagram.viewBox.svgViewboxString}`}
-        canvasFactory={() => new PickerCanvasComponent()}
+        canvasFactory={() => new StaticCanvasComponent()}
       />
     </div>
   );

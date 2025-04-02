@@ -1,23 +1,14 @@
-import * as svg from './component/vdom-svg';
+import { CanvasProps } from './CanvasComponent';
+import { BaseCanvasComponent } from './BaseCanvasComponent';
 import * as html from './component/vdom-html';
-import { Point } from '@diagram-craft/geometry/point';
-import { Modifiers } from './dragDropManager';
+import * as svg from './component/vdom-svg';
 import { rawHTML } from './component/vdom';
-import styles from './canvas.css?inline';
 import { isResolvableToRegularLayer } from '@diagram-craft/model/diagramLayer';
-import { BaseCanvasComponent, BaseCanvasProps } from './BaseCanvasComponent';
+import styles from './canvas.css?inline';
 
-// TODO: Change CanvasComponent to InteractiveCanvasComponent
-//       Add capabilities/callback to InteractiveCanvasComponent
-
-export class CanvasComponent extends BaseCanvasComponent<CanvasProps> {
+export class StaticCanvasComponent extends BaseCanvasComponent<CanvasProps> {
   protected defaultClassName = 'canvas';
   protected preserveAspectRatio = 'xMidYMid';
-
-  constructor(props?: CanvasProps) {
-    super();
-    this.currentProps = props;
-  }
 
   protected viewBox(props: CanvasProps): string | undefined {
     return props.viewBox;
@@ -25,10 +16,6 @@ export class CanvasComponent extends BaseCanvasComponent<CanvasProps> {
 
   render(props: CanvasProps) {
     const diagram = props.diagram;
-
-    this.onEventRedraw('elementAdd', diagram);
-    this.onEventRedraw('elementRemove', diagram);
-    this.onEventRedraw('change', diagram);
 
     const viewBox = this.viewBox(props);
 
@@ -60,9 +47,15 @@ export class CanvasComponent extends BaseCanvasComponent<CanvasProps> {
       ]
     );
   }
-}
 
-export type CanvasProps = BaseCanvasProps & {
-  viewBox?: string;
-  onMouseDown?: (_id: string, _coord: Point, _modifiers: Modifiers) => void;
-};
+  protected getMemoKey(props: CanvasProps): unknown | undefined {
+    return {
+      id: props.diagram.id,
+      width: props.width,
+      height: props.height,
+      viewBox: props.viewBox,
+      onClick: props.onClick,
+      className: props.className
+    };
+  }
+}

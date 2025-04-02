@@ -23,7 +23,7 @@ import { PanTool } from '@diagram-craft/canvas-app/tools/panTool';
 import { Context } from './context';
 import { unique } from '@diagram-craft/utils/array';
 import { isResolvableToRegularLayer } from '@diagram-craft/model/diagramLayer';
-import { CanvasComponentBase } from './CanvasComponent';
+import { BaseCanvasComponent, BaseCanvasProps } from './BaseCanvasComponent';
 
 const removeSuffix = (s: string) => {
   return s.replace(/---.+$/, '');
@@ -57,8 +57,9 @@ const getAncestorDiagramElement = (
 
 type ComponentProps = Props & Actions & { diagram: Diagram };
 
-export class EditableCanvasComponent extends CanvasComponentBase<ComponentProps> {
+export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps> {
   protected defaultClassName = 'canvas editable-canvas';
+  protected preserveAspectRatio = 'none';
 
   private svgRef: SVGSVGElement | null = null;
   private tool: Tool | undefined;
@@ -71,6 +72,10 @@ export class EditableCanvasComponent extends CanvasComponentBase<ComponentProps>
   setTool(tool: Tool | undefined) {
     this.tool = tool;
     this.redraw();
+  }
+
+  protected viewBox(props: ComponentProps): string | undefined {
+    return props.diagram.viewBox.svgViewboxString;
   }
 
   render(props: ComponentProps) {
@@ -228,6 +233,8 @@ export class EditableCanvasComponent extends CanvasComponentBase<ComponentProps>
       diagram
     };
 
+    const viewBox = this.viewBox(props);
+
     return html.div(
       {
         class: 'light-theme canvas-wrapper'
@@ -242,9 +249,9 @@ export class EditableCanvasComponent extends CanvasComponentBase<ComponentProps>
 
             ...this.dimensionAttributes(props),
 
-            preserveAspectRatio: 'none',
-            viewBox: diagram.viewBox.svgViewboxString,
+            preserveAspectRatio: this.preserveAspectRatio,
             style: `user-select: none`,
+            ...(viewBox ? { viewBox: viewBox } : {}),
             hooks: {
               onInsert: node => {
                 this.svgRef = node.el! as SVGSVGElement;
@@ -444,17 +451,10 @@ export class EditableCanvasComponent extends CanvasComponentBase<ComponentProps>
   }
 }
 
-export type Props = {
-  id: string;
+export type Props = BaseCanvasProps & {
   offset: Point;
-  context: Context;
-  className?: string;
-  diagram: Diagram;
   tools: Partial<Record<ToolType, ToolConstructor>>;
   initialTool?: ToolType;
-  width?: number;
-  height?: number;
-  onClick?: (e: MouseEvent) => void;
   onDrop?: (e: DragEvent) => void;
   onDrag?: (e: DragEvent) => void;
   onDragOver?: (e: DragEvent) => void;

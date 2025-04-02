@@ -160,6 +160,8 @@ export abstract class Component<P = Record<string, never>> {
   }
 
   protected create(props: P) {
+    this.currentProps = props;
+
     const newElement = this.doRender(props);
 
     insert(newElement);
