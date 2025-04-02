@@ -1,13 +1,17 @@
 import { CanvasProps } from './CanvasComponent';
 import { BaseCanvasComponent } from './BaseCanvasComponent';
-import * as html from './component/vdom-html';
-import * as svg from './component/vdom-svg';
-import { rawHTML } from './component/vdom';
+import * as html from '../component/vdom-html';
+import * as svg from '../component/vdom-svg';
+import { rawHTML } from '../component/vdom';
 import { isResolvableToRegularLayer } from '@diagram-craft/model/diagramLayer';
 import styles from './canvas.css?inline';
 
 export type StaticCanvasProps = CanvasProps & {};
 
+/**
+ * The StaticCanvasComponent is intended for displaying a canvas that neither updates
+ * in case the underlying diagram changes nor any type of interactivity like zoom, pan etc
+ */
 export class StaticCanvasComponent extends BaseCanvasComponent<StaticCanvasProps> {
   protected defaultClassName = 'canvas';
   protected preserveAspectRatio = 'xMidYMid';

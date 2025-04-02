@@ -1,6 +1,9 @@
 import React, { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef } from 'react';
-import { CanvasComponent, CanvasProps } from '@diagram-craft/canvas/CanvasComponent';
-import { BaseCanvasComponent, BaseCanvasProps } from '@diagram-craft/canvas/BaseCanvasComponent';
+import { CanvasComponent, CanvasProps } from '@diagram-craft/canvas/canvas/CanvasComponent';
+import {
+  BaseCanvasComponent,
+  BaseCanvasProps
+} from '@diagram-craft/canvas/canvas/BaseCanvasComponent';
 
 type CanvasFactory<C extends BaseCanvasComponent> = {
   canvasFactory?: () => C;

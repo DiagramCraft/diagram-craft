@@ -1,7 +1,7 @@
 import { Component } from '../component/component';
 import * as svg from '../component/vdom-svg';
 import { toInlineCSS, VNode } from '../component/vdom';
-import { CanvasState } from '../EditableCanvasComponent';
+import { CanvasState } from '../canvas/EditableCanvasComponent';
 import { addFillComponents } from '../shape/shapeFill';
 import { assert } from '@diagram-craft/utils/assert';
 import { nodeDefaults } from '@diagram-craft/model/diagramDefaults';

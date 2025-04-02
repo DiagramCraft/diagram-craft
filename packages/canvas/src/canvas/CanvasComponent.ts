@@ -1,8 +1,8 @@
-import * as svg from './component/vdom-svg';
-import * as html from './component/vdom-html';
+import * as svg from '../component/vdom-svg';
+import * as html from '../component/vdom-html';
 import { Point } from '@diagram-craft/geometry/point';
-import { Modifiers } from './dragDropManager';
-import { rawHTML } from './component/vdom';
+import { Modifiers } from '../dragDropManager';
+import { rawHTML } from '../component/vdom';
 import styles from './canvas.css?inline';
 import { isResolvableToRegularLayer } from '@diagram-craft/model/diagramLayer';
 import { BaseCanvasComponent, BaseCanvasProps } from './BaseCanvasComponent';

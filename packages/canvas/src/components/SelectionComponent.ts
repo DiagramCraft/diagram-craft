@@ -7,7 +7,7 @@ import { EdgeSelectionComponent } from '@diagram-craft/canvas/components/EdgeSel
 import { $cmp, Component, createEffect } from '../component/component';
 import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
-import { CanvasState } from '../EditableCanvasComponent';
+import { CanvasState } from '../canvas/EditableCanvasComponent';
 import { $c } from '@diagram-craft/utils/classname';
 import { ViewboxEvents } from '@diagram-craft/model/viewBox';
 

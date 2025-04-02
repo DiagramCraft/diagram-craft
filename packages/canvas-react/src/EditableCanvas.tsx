@@ -1,5 +1,8 @@
 import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef } from 'react';
-import { EditableCanvasComponent, Props } from '@diagram-craft/canvas/EditableCanvasComponent';
+import {
+  EditableCanvasComponent,
+  Props
+} from '@diagram-craft/canvas/canvas/EditableCanvasComponent';
 import { Actions } from '@diagram-craft/canvas/keyMap';
 
 export const EditableCanvas = forwardRef<SVGSVGElement, Props & Actions>((props, _ref) => {

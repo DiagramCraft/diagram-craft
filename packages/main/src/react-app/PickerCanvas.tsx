@@ -4,7 +4,7 @@ import React, { useCallback, useRef, useState } from 'react';
 import * as Portal from '@radix-ui/react-portal';
 import { Point } from '@diagram-craft/geometry/point';
 import { useApplication } from '../application';
-import { StaticCanvasComponent } from '@diagram-craft/canvas/StaticCanvasComponent';
+import { StaticCanvasComponent } from '@diagram-craft/canvas/canvas/StaticCanvasComponent';
 
 export const PickerCanvas = (props: PickerCanvasProps) => {
   const application = useApplication();
