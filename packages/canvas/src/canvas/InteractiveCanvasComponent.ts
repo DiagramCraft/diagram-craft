@@ -7,10 +7,11 @@ import styles from './canvas.css?inline';
 import { isResolvableToRegularLayer } from '@diagram-craft/model/diagramLayer';
 import { BaseCanvasComponent, BaseCanvasProps } from './BaseCanvasComponent';
 
-// TODO: Change CanvasComponent to InteractiveCanvasComponent
-//       Add capabilities/callback to InteractiveCanvasComponent
-
-export class CanvasComponent extends BaseCanvasComponent<CanvasProps> {
+/**
+ * InteractiveCanvasComponent is used when displaying a canvas with basic interactivity
+ * (zom/pan) and live updates in case the underlying model changes
+ */
+export class InteractiveCanvasComponent extends BaseCanvasComponent<CanvasProps> {
   protected defaultClassName = 'canvas';
   protected preserveAspectRatio = 'xMidYMid';
 

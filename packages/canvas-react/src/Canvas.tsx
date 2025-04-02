@@ -1,5 +1,8 @@
 import React, { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef } from 'react';
-import { CanvasComponent, CanvasProps } from '@diagram-craft/canvas/canvas/CanvasComponent';
+import {
+  InteractiveCanvasComponent,
+  CanvasProps
+} from '@diagram-craft/canvas/canvas/InteractiveCanvasComponent';
 import {
   BaseCanvasComponent,
   BaseCanvasProps
@@ -20,7 +23,7 @@ export const Canvas: CanvasComponentType = forwardRef((props, _ref) => {
 
   const svgRef = useRef<SVGSVGElement | null>(null);
 
-  const factory = props.canvasFactory ?? (() => new CanvasComponent());
+  const factory = props.canvasFactory ?? (() => new InteractiveCanvasComponent());
   const ref = useRef<HTMLDivElement>(null);
   const cmpRef = useRef(factory());
 

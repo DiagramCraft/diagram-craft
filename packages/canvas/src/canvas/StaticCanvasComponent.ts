@@ -1,4 +1,4 @@
-import { CanvasProps } from './CanvasComponent';
+import { CanvasProps } from './InteractiveCanvasComponent';
 import { BaseCanvasComponent } from './BaseCanvasComponent';
 import * as html from '../component/vdom-html';
 import * as svg from '../component/vdom-svg';
