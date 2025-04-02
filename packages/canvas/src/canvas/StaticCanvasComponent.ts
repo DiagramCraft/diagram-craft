@@ -16,6 +16,11 @@ export class StaticCanvasComponent extends BaseCanvasComponent<StaticCanvasProps
   protected defaultClassName = 'canvas';
   protected preserveAspectRatio = 'xMidYMid';
 
+  constructor(props?: CanvasProps) {
+    super();
+    this.currentProps = props;
+  }
+
   protected viewBox(props: CanvasProps): string | undefined {
     return props.viewBox;
   }
