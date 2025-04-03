@@ -9,6 +9,49 @@ import { BaseCanvasComponent, BaseCanvasProps } from './BaseCanvasComponent';
 import { createEffect } from '../component/component';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
 import { Viewbox, ViewboxEvents } from '@diagram-craft/model/viewBox';
+import { Diagram } from '@diagram-craft/model/diagram';
+
+export const createUpdateOnViewboxChangeEffect = (
+  svgRef: () => SVGSVGElement | null,
+  viewbox: Viewbox,
+  diagram: Diagram
+) => {
+  createEffect(() => {
+    const cb = ({ viewbox }: ViewboxEvents['viewbox']) => {
+      svgRef()?.setAttribute('viewBox', viewbox.svgViewboxString);
+      svgRef()?.style.setProperty('--zoom', viewbox.zoomLevel.toString());
+    };
+    viewbox.on('viewbox', cb);
+    return () => viewbox.off('viewbox', cb);
+  }, [diagram, viewbox]);
+};
+
+export const createZoomPanOnMouseEventEffect = (
+  svgRef: () => SVGSVGElement | null,
+  viewbox: Viewbox,
+  diagram: Diagram
+) => {
+  createEffect(() => {
+    const ref = svgRef();
+    if (!ref) return;
+
+    const cb = (e: WheelEvent) => {
+      e.preventDefault();
+      if (e.ctrlKey) {
+        const delta = e.deltaY;
+        const normalized = -(delta % 3 ? delta * 10 : delta / 3);
+        viewbox.zoom(normalized > 0 ? 1 / 1.008 : 1.008, EventHelper.point(e));
+      } else {
+        viewbox.pan({
+          x: viewbox.offset.x + e.deltaX * viewbox.zoomLevel,
+          y: viewbox.offset.y + e.deltaY * viewbox.zoomLevel
+        });
+      }
+    };
+    ref.addEventListener('wheel', cb);
+    return () => ref.removeEventListener('wheel', cb);
+  }, [diagram, svgRef()]);
+};
 
 /**
  * InteractiveCanvasComponent is used when displaying a canvas with basic interactivity
@@ -64,34 +107,9 @@ export class InteractiveCanvasComponent extends BaseCanvasComponent<InteractiveC
     this.onEventRedraw('elementRemove', diagram);
     this.onEventRedraw('change', diagram);
 
-    createEffect(() => {
-      const cb = ({ viewbox }: ViewboxEvents['viewbox']) => {
-        this.svgRef?.setAttribute('viewBox', viewbox.svgViewboxString);
-        this.svgRef?.style.setProperty('--zoom', viewbox.zoomLevel.toString());
-      };
-      viewbox.on('viewbox', cb);
-      return () => viewbox.off('viewbox', cb);
-    }, [diagram, viewbox]);
+    createUpdateOnViewboxChangeEffect(() => this.svgRef, viewbox, diagram);
 
-    createEffect(() => {
-      if (!this.svgRef) return;
-
-      const cb = (e: WheelEvent) => {
-        e.preventDefault();
-        if (e.ctrlKey) {
-          const delta = e.deltaY;
-          const normalized = -(delta % 3 ? delta * 10 : delta / 3);
-          viewbox.zoom(normalized > 0 ? 1 / 1.008 : 1.008, EventHelper.point(e));
-        } else {
-          viewbox.pan({
-            x: viewbox.offset.x + e.deltaX * viewbox.zoomLevel,
-            y: viewbox.offset.y + e.deltaY * viewbox.zoomLevel
-          });
-        }
-      };
-      this.svgRef!.addEventListener('wheel', cb);
-      return () => this.svgRef!.removeEventListener('wheel', cb);
-    }, [diagram, this.svgRef]);
+    createZoomPanOnMouseEventEffect(() => this.svgRef, viewbox, diagram);
 
     createEffect(() => {
       const cb = () => this.adjustViewbox(viewbox);

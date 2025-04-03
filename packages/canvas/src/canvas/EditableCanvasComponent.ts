@@ -24,6 +24,10 @@ import { Context } from '../context';
 import { unique } from '@diagram-craft/utils/array';
 import { isResolvableToRegularLayer } from '@diagram-craft/model/diagramLayer';
 import { BaseCanvasComponent, BaseCanvasProps } from './BaseCanvasComponent';
+import {
+  createUpdateOnViewboxChangeEffect,
+  createZoomPanOnMouseEventEffect
+} from './InteractiveCanvasComponent';
 
 const removeSuffix = (s: string) => {
   return s.replace(/---.+$/, '');
@@ -109,34 +113,8 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
 
     // ---> start useCanvasZoomAndPan
 
-    createEffect(() => {
-      const cb = ({ viewbox }: ViewboxEvents['viewbox']) => {
-        this.svgRef?.setAttribute('viewBox', viewbox.svgViewboxString);
-        this.svgRef?.style.setProperty('--zoom', viewbox.zoomLevel.toString());
-      };
-      diagram.viewBox.on('viewbox', cb);
-      return () => diagram.viewBox.off('viewbox', cb);
-    }, [diagram, diagram.viewBox]);
-
-    createEffect(() => {
-      if (!this.svgRef) return;
-
-      const cb = (e: WheelEvent) => {
-        e.preventDefault();
-        if (e.ctrlKey) {
-          const delta = e.deltaY;
-          const normalized = -(delta % 3 ? delta * 10 : delta / 3);
-          diagram.viewBox.zoom(normalized > 0 ? 1 / 1.008 : 1.008, EventHelper.point(e));
-        } else {
-          diagram.viewBox.pan({
-            x: diagram.viewBox.offset.x + e.deltaX * diagram.viewBox.zoomLevel,
-            y: diagram.viewBox.offset.y + e.deltaY * diagram.viewBox.zoomLevel
-          });
-        }
-      };
-      this.svgRef!.addEventListener('wheel', cb);
-      return () => this.svgRef!.removeEventListener('wheel', cb);
-    }, [diagram, this.svgRef]);
+    createUpdateOnViewboxChangeEffect(() => this.svgRef, diagram.viewBox, diagram);
+    createZoomPanOnMouseEventEffect(() => this.svgRef, diagram.viewBox, diagram);
 
     createEffect(() => {
       const cb = () => this.adjustViewbox(diagram);
