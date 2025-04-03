@@ -1,4 +1,4 @@
-import { CanvasProps } from './InteractiveCanvasComponent';
+import { InteractiveCanvasProps } from './InteractiveCanvasComponent';
 import { BaseCanvasComponent } from './BaseCanvasComponent';
 import * as html from '../component/vdom-html';
 import * as svg from '../component/vdom-svg';
@@ -6,7 +6,7 @@ import { rawHTML } from '../component/vdom';
 import { isResolvableToRegularLayer } from '@diagram-craft/model/diagramLayer';
 import styles from './canvas.css?inline';
 
-export type StaticCanvasProps = CanvasProps & {};
+export type StaticCanvasProps = Omit<InteractiveCanvasProps, 'viewbox'> & { viewbox?: string };
 
 /**
  * The StaticCanvasComponent is intended for displaying a canvas that neither updates
@@ -16,19 +16,19 @@ export class StaticCanvasComponent extends BaseCanvasComponent<StaticCanvasProps
   protected defaultClassName = 'canvas';
   protected preserveAspectRatio = 'xMidYMid';
 
-  constructor(props?: CanvasProps) {
+  constructor(props?: StaticCanvasProps) {
     super();
     this.currentProps = props;
   }
 
-  protected viewBox(props: CanvasProps): string | undefined {
-    return props.viewBox;
+  protected getViewboxString(props: StaticCanvasProps): string | undefined {
+    return props.viewbox;
   }
 
   render(props: StaticCanvasProps) {
     const diagram = props.diagram;
 
-    const viewBox = this.viewBox(props);
+    const viewBox = this.getViewboxString(props);
 
     return html.svg(
       {
@@ -59,12 +59,12 @@ export class StaticCanvasComponent extends BaseCanvasComponent<StaticCanvasProps
     );
   }
 
-  protected getMemoKey(props: CanvasProps): unknown | undefined {
+  protected getMemoKey(props: StaticCanvasProps): unknown | undefined {
     return {
       id: props.diagram.id,
       width: props.width,
       height: props.height,
-      viewBox: props.viewBox,
+      viewBox: props.viewbox,
       onClick: props.onClick,
       className: props.className
     };

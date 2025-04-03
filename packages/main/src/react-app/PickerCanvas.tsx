@@ -4,7 +4,10 @@ import React, { useCallback, useRef, useState } from 'react';
 import * as Portal from '@radix-ui/react-portal';
 import { Point } from '@diagram-craft/geometry/point';
 import { useApplication } from '../application';
-import { StaticCanvasComponent } from '@diagram-craft/canvas/canvas/StaticCanvasComponent';
+import {
+  StaticCanvasComponent,
+  StaticCanvasProps
+} from '@diagram-craft/canvas/canvas/StaticCanvasComponent';
 
 export const PickerCanvas = (props: PickerCanvasProps) => {
   const application = useApplication();
@@ -76,14 +79,14 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
                 'hsl(206 22% 7% / 35%) 0px 10px 38px -10px, hsl(206 22% 7% / 20%) 0px 10px 20px -15px'
             }}
           >
-            <Canvas
+            <Canvas<StaticCanvasComponent, StaticCanvasProps>
               id={`picker-canvas-portal-${props.diagram.id}`}
               context={application}
               width={80}
               height={80}
               onClick={() => {}}
               diagram={diagram}
-              viewBox={props.diagram.viewBox.svgViewboxString}
+              viewbox={props.diagram.viewBox.svgViewboxString}
               canvasFactory={() => new StaticCanvasComponent()}
             />
 
@@ -101,14 +104,14 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
         </Portal.Root>
       )}
 
-      <Canvas
+      <Canvas<StaticCanvasComponent, StaticCanvasProps>
         id={`picker-canvas-${props.diagram.id}`}
         context={application}
         width={props.width ?? 40}
         height={props.height ?? 40}
         onClick={props.onClick}
         diagram={diagram}
-        viewBox={`${props.diagram.viewBox.svgViewboxString}`}
+        viewbox={`${props.diagram.viewBox.svgViewboxString}`}
         canvasFactory={() => new StaticCanvasComponent()}
       />
     </div>

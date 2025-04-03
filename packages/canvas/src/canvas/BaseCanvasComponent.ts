@@ -46,7 +46,7 @@ export abstract class BaseCanvasComponent<
   }
 
   render(props: P): VNode {
-    const viewBox = this.viewBox(props);
+    const viewBox = this.getViewboxString(props);
 
     return html.svg(
       {
@@ -77,7 +77,7 @@ export abstract class BaseCanvasComponent<
     );
   }
 
-  protected viewBox(props: P): string | undefined {
+  protected getViewboxString(props: P): string | undefined {
     return props.diagram.viewBox.svgViewboxString;
   }
 
