@@ -22,10 +22,23 @@ export class Viewbox extends EventEmitter<ViewboxEvents> {
   // This is mainly for debugging purposes
   readonly uid = newid();
 
-  constructor(size: Extent) {
+  constructor(p: Extent | Viewbox) {
     super();
-    this.#dimensions = size;
-    this.windowSize = size;
+
+    if (p instanceof Viewbox) {
+      this.#dimensions = p.dimensions;
+      this.#offset = p.offset;
+      this.#initialized = p.isInitialized();
+      this.zoomLevel = p.zoomLevel;
+      this.windowSize = p.windowSize;
+    } else {
+      this.#dimensions = p;
+      this.windowSize = p;
+    }
+  }
+
+  duplicate() {
+    return new Viewbox(this);
   }
 
   isInitialized() {

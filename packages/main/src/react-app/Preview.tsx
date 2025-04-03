@@ -4,6 +4,11 @@ import { TbWindowMaximize, TbWindowMinimize, TbX } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { useEffect, useState } from 'react';
 import { Canvas } from '@diagram-craft/canvas-react/Canvas';
+import {
+  InteractiveCanvasProps,
+  InteractiveCanvasComponent
+} from '@diagram-craft/canvas/canvas/InteractiveCanvasComponent';
+import { Viewbox } from '@diagram-craft/model/viewBox';
 
 type Props = {
   onClose: () => void;
@@ -13,6 +18,11 @@ export const Preview = (props: Props) => {
   const application = useApplication();
   const diagram = useDiagram();
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const [viewbox, setViewbox] = useState<Viewbox | undefined>();
+
+  useEffect(() => {
+    setViewbox(diagram.viewBox.duplicate());
+  }, [diagram]);
 
   useEffect(() => {
     const cb = (e: KeyboardEvent) => {
@@ -25,6 +35,8 @@ export const Preview = (props: Props) => {
       document.removeEventListener('keydown', cb);
     };
   }, []);
+
+  if (!viewbox) return null;
 
   return (
     <div className={styles.preview} id={'preview'}>
@@ -71,10 +83,11 @@ export const Preview = (props: Props) => {
       </div>
 
       <div className={styles.previewCanvas}>
-        <Canvas
+        <Canvas<InteractiveCanvasComponent, InteractiveCanvasProps>
           id={`preview-canvas-${diagram.id}`}
           context={application}
           diagram={diagram}
+          viewbox={viewbox}
           width={'100%'}
           height={'100%'}
           onMouseDown={(id: string) => {

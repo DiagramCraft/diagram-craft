@@ -14,7 +14,7 @@ import { Viewbox, ViewboxEvents } from '@diagram-craft/model/viewBox';
  * InteractiveCanvasComponent is used when displaying a canvas with basic interactivity
  * (zom/pan) and live updates in case the underlying model changes
  */
-export class InteractiveCanvasComponent extends BaseCanvasComponent<CanvasProps> {
+export class InteractiveCanvasComponent extends BaseCanvasComponent<InteractiveCanvasProps> {
   protected defaultClassName = 'canvas';
   protected preserveAspectRatio = 'xMidYMid';
 
@@ -22,14 +22,14 @@ export class InteractiveCanvasComponent extends BaseCanvasComponent<CanvasProps>
 
   private readonly viewbox: Viewbox;
 
-  constructor(props?: CanvasProps) {
+  constructor(props?: InteractiveCanvasProps) {
     super();
     this.currentProps = props;
 
     this.viewbox = new Viewbox({ w: 100, h: 100 });
   }
 
-  protected getViewboxString(props: CanvasProps): string | undefined {
+  protected getViewboxString(props: InteractiveCanvasProps): string | undefined {
     const viewbox = props.viewbox ?? this.viewbox;
     return viewbox.svgViewboxString;
   }
@@ -47,7 +47,7 @@ export class InteractiveCanvasComponent extends BaseCanvasComponent<CanvasProps>
     };
   }
 
-  onAttach(props: CanvasProps) {
+  onAttach(props: InteractiveCanvasProps) {
     super.onAttach(props);
 
     if (!props.viewbox) {
@@ -56,7 +56,7 @@ export class InteractiveCanvasComponent extends BaseCanvasComponent<CanvasProps>
     }
   }
 
-  render(props: CanvasProps) {
+  render(props: InteractiveCanvasProps) {
     const diagram = props.diagram;
     const viewbox = props.viewbox ?? this.viewbox;
 
@@ -143,7 +143,7 @@ export class InteractiveCanvasComponent extends BaseCanvasComponent<CanvasProps>
   }
 }
 
-export type CanvasProps = BaseCanvasProps & {
+export type InteractiveCanvasProps = BaseCanvasProps & {
   viewbox?: Viewbox;
   onMouseDown?: (_id: string, _coord: Point, _modifiers: Modifiers) => void;
 };

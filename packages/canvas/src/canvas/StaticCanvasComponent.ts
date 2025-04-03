@@ -1,4 +1,4 @@
-import { CanvasProps } from './InteractiveCanvasComponent';
+import { InteractiveCanvasProps } from './InteractiveCanvasComponent';
 import { BaseCanvasComponent } from './BaseCanvasComponent';
 import * as html from '../component/vdom-html';
 import * as svg from '../component/vdom-svg';
@@ -6,7 +6,7 @@ import { rawHTML } from '../component/vdom';
 import { isResolvableToRegularLayer } from '@diagram-craft/model/diagramLayer';
 import styles from './canvas.css?inline';
 
-export type StaticCanvasProps = Omit<CanvasProps, 'viewbox'> & { viewbox?: string };
+export type StaticCanvasProps = Omit<InteractiveCanvasProps, 'viewbox'> & { viewbox?: string };
 
 /**
  * The StaticCanvasComponent is intended for displaying a canvas that neither updates

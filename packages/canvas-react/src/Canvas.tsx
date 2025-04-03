@@ -1,7 +1,7 @@
 import React, { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef } from 'react';
 import {
   InteractiveCanvasComponent,
-  CanvasProps
+  InteractiveCanvasProps
 } from '@diagram-craft/canvas/canvas/InteractiveCanvasComponent';
 import {
   BaseCanvasComponent,
@@ -12,7 +12,8 @@ type CanvasFactory<C extends BaseCanvasComponent> = {
   canvasFactory?: () => C;
 };
 
-interface CanvasComponentType extends React.FC<CanvasProps & CanvasFactory<BaseCanvasComponent>> {
+interface CanvasComponentType
+  extends React.FC<InteractiveCanvasProps & CanvasFactory<BaseCanvasComponent>> {
   <C extends BaseCanvasComponent<P>, P extends BaseCanvasProps>(
     props: P & CanvasFactory<C> & { ref?: React.Ref<SVGSVGElement> }
   ): ReturnType<React.FC<P & CanvasFactory<C> & { ref?: React.Ref<SVGSVGElement> }>>;
