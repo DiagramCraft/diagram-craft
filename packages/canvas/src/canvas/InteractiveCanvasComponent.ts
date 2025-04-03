@@ -20,7 +20,7 @@ export class InteractiveCanvasComponent extends BaseCanvasComponent<CanvasProps>
 
   private svgRef: SVGSVGElement | null = null;
 
-  private viewbox: Viewbox;
+  private readonly viewbox: Viewbox;
 
   constructor(props?: CanvasProps) {
     super();
@@ -29,31 +29,36 @@ export class InteractiveCanvasComponent extends BaseCanvasComponent<CanvasProps>
     this.viewbox = new Viewbox({ w: 100, h: 100 });
   }
 
-  protected getViewboxString(_props: CanvasProps): string | undefined {
-    return this.viewbox.svgViewboxString;
+  protected getViewboxString(props: CanvasProps): string | undefined {
+    const viewbox = props.viewbox ?? this.viewbox;
+    return viewbox.svgViewboxString;
   }
 
-  private adjustViewbox() {
+  private adjustViewbox(viewbox: Viewbox) {
     const rect = this.svgRef!.getBoundingClientRect();
 
-    this.viewbox.dimensions = {
-      w: Math.floor(rect.width * this.viewbox.zoomLevel),
-      h: Math.floor(rect.height * this.viewbox.zoomLevel)
+    viewbox.dimensions = {
+      w: Math.floor(rect.width * viewbox.zoomLevel),
+      h: Math.floor(rect.height * viewbox.zoomLevel)
     };
-    this.viewbox.windowSize = {
+    viewbox.windowSize = {
       w: Math.floor(rect.width),
       h: Math.floor(rect.height)
     };
   }
 
-  onAttach(_props: CanvasProps) {
-    super.onAttach(_props);
-    this.viewbox.dimensions = _props.diagram.viewBox.dimensions;
-    this.viewbox.windowSize = _props.diagram.viewBox.windowSize;
+  onAttach(props: CanvasProps) {
+    super.onAttach(props);
+
+    if (!props.viewbox) {
+      this.viewbox.dimensions = props.diagram.viewBox.dimensions;
+      this.viewbox.windowSize = props.diagram.viewBox.windowSize;
+    }
   }
 
   render(props: CanvasProps) {
     const diagram = props.diagram;
+    const viewbox = props.viewbox ?? this.viewbox;
 
     this.onEventRedraw('elementAdd', diagram);
     this.onEventRedraw('elementRemove', diagram);
@@ -64,9 +69,9 @@ export class InteractiveCanvasComponent extends BaseCanvasComponent<CanvasProps>
         this.svgRef?.setAttribute('viewBox', viewbox.svgViewboxString);
         this.svgRef?.style.setProperty('--zoom', viewbox.zoomLevel.toString());
       };
-      this.viewbox.on('viewbox', cb);
-      return () => this.viewbox.off('viewbox', cb);
-    }, [diagram, this.viewbox]);
+      viewbox.on('viewbox', cb);
+      return () => viewbox.off('viewbox', cb);
+    }, [diagram, viewbox]);
 
     createEffect(() => {
       if (!this.svgRef) return;
@@ -76,11 +81,11 @@ export class InteractiveCanvasComponent extends BaseCanvasComponent<CanvasProps>
         if (e.ctrlKey) {
           const delta = e.deltaY;
           const normalized = -(delta % 3 ? delta * 10 : delta / 3);
-          this.viewbox.zoom(normalized > 0 ? 1 / 1.008 : 1.008, EventHelper.point(e));
+          viewbox.zoom(normalized > 0 ? 1 / 1.008 : 1.008, EventHelper.point(e));
         } else {
-          this.viewbox.pan({
-            x: this.viewbox.offset.x + e.deltaX * this.viewbox.zoomLevel,
-            y: this.viewbox.offset.y + e.deltaY * this.viewbox.zoomLevel
+          viewbox.pan({
+            x: viewbox.offset.x + e.deltaX * viewbox.zoomLevel,
+            y: viewbox.offset.y + e.deltaY * viewbox.zoomLevel
           });
         }
       };
@@ -89,7 +94,7 @@ export class InteractiveCanvasComponent extends BaseCanvasComponent<CanvasProps>
     }, [diagram, this.svgRef]);
 
     createEffect(() => {
-      const cb = () => this.adjustViewbox();
+      const cb = () => this.adjustViewbox(viewbox);
       window.addEventListener('resize', cb);
       return () => window.removeEventListener('resize', cb);
     }, [diagram]);
@@ -139,6 +144,6 @@ export class InteractiveCanvasComponent extends BaseCanvasComponent<CanvasProps>
 }
 
 export type CanvasProps = BaseCanvasProps & {
-  viewBox?: string;
+  viewbox?: Viewbox;
   onMouseDown?: (_id: string, _coord: Point, _modifiers: Modifiers) => void;
 };

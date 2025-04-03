@@ -6,7 +6,7 @@ import { rawHTML } from '../component/vdom';
 import { isResolvableToRegularLayer } from '@diagram-craft/model/diagramLayer';
 import styles from './canvas.css?inline';
 
-export type StaticCanvasProps = CanvasProps & {};
+export type StaticCanvasProps = Omit<CanvasProps, 'viewbox'> & { viewbox?: string };
 
 /**
  * The StaticCanvasComponent is intended for displaying a canvas that neither updates
@@ -16,13 +16,13 @@ export class StaticCanvasComponent extends BaseCanvasComponent<StaticCanvasProps
   protected defaultClassName = 'canvas';
   protected preserveAspectRatio = 'xMidYMid';
 
-  constructor(props?: CanvasProps) {
+  constructor(props?: StaticCanvasProps) {
     super();
     this.currentProps = props;
   }
 
-  protected getViewboxString(props: CanvasProps): string | undefined {
-    return props.viewBox;
+  protected getViewboxString(props: StaticCanvasProps): string | undefined {
+    return props.viewbox;
   }
 
   render(props: StaticCanvasProps) {
@@ -59,12 +59,12 @@ export class StaticCanvasComponent extends BaseCanvasComponent<StaticCanvasProps
     );
   }
 
-  protected getMemoKey(props: CanvasProps): unknown | undefined {
+  protected getMemoKey(props: StaticCanvasProps): unknown | undefined {
     return {
       id: props.diagram.id,
       width: props.width,
       height: props.height,
-      viewBox: props.viewBox,
+      viewBox: props.viewbox,
       onClick: props.onClick,
       className: props.className
     };
