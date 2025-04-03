@@ -29,7 +29,7 @@ export class InteractiveCanvasComponent extends BaseCanvasComponent<CanvasProps>
     this.viewbox = new Viewbox({ w: 100, h: 100 });
   }
 
-  protected viewBox(_props: CanvasProps): string | undefined {
+  protected getViewboxString(_props: CanvasProps): string | undefined {
     return this.viewbox.svgViewboxString;
   }
 
@@ -94,7 +94,7 @@ export class InteractiveCanvasComponent extends BaseCanvasComponent<CanvasProps>
       return () => window.removeEventListener('resize', cb);
     }, [diagram]);
 
-    const viewBox = this.viewBox(props);
+    const viewBox = this.getViewboxString(props);
 
     return html.svg(
       {

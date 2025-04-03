@@ -21,14 +21,14 @@ export class StaticCanvasComponent extends BaseCanvasComponent<StaticCanvasProps
     this.currentProps = props;
   }
 
-  protected viewBox(props: CanvasProps): string | undefined {
+  protected getViewboxString(props: CanvasProps): string | undefined {
     return props.viewBox;
   }
 
   render(props: StaticCanvasProps) {
     const diagram = props.diagram;
 
-    const viewBox = this.viewBox(props);
+    const viewBox = this.getViewboxString(props);
 
     return html.svg(
       {

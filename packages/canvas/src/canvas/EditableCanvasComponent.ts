@@ -229,7 +229,7 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
       diagram
     };
 
-    const viewBox = this.viewBox(props);
+    const viewBox = this.getViewboxString(props);
 
     return html.div(
       {
