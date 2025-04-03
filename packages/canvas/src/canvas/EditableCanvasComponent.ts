@@ -139,7 +139,7 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
     }, [diagram, this.svgRef]);
 
     createEffect(() => {
-      const cb = () => this.adjustViewbox(diagram, props.offset);
+      const cb = () => this.adjustViewbox(diagram);
       window.addEventListener('resize', cb);
       return () => window.removeEventListener('resize', cb);
     }, [diagram]);
@@ -251,7 +251,7 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
             hooks: {
               onInsert: node => {
                 this.svgRef = node.el! as SVGSVGElement;
-                this.adjustViewbox(diagram, props.offset);
+                this.adjustViewbox(diagram);
 
                 // Note: this causes an extra redraw, but it's necessary to ensure that
                 //       the wheel events (among others) are bound correctly
@@ -433,7 +433,7 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
     }, [selection]);
   }
 
-  private adjustViewbox(diagram: Diagram, _offset: Point) {
+  private adjustViewbox(diagram: Diagram) {
     const rect = this.svgRef!.getBoundingClientRect();
 
     diagram.viewBox.dimensions = {
