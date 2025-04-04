@@ -1,6 +1,13 @@
 import { useApplication, useDiagram } from '../application';
 import styles from './Preview.module.css';
-import { TbWindowMaximize, TbWindowMinimize, TbX } from 'react-icons/tb';
+import {
+  TbWindowMaximize,
+  TbWindowMinimize,
+  TbX,
+  TbZoomIn,
+  TbZoomOut,
+  TbZoomScan
+} from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { useEffect, useState } from 'react';
 import { Canvas } from '@diagram-craft/canvas-react/Canvas';
@@ -9,6 +16,7 @@ import {
   InteractiveCanvasComponent
 } from '@diagram-craft/canvas/canvas/InteractiveCanvasComponent';
 import { Viewbox } from '@diagram-craft/model/viewBox';
+import { assert } from '@diagram-craft/utils/assert';
 
 type Props = {
   onClose: () => void;
@@ -36,11 +44,54 @@ export const Preview = (props: Props) => {
     };
   }, []);
 
+  const OFFSET = 40;
+
+  const zoomFit = () => {
+    assert.present(viewbox);
+
+    if (diagram.canvas.w > diagram.canvas.h * viewbox.aspectRatio) {
+      viewbox.dimensions = {
+        w: diagram.canvas.w + OFFSET,
+        h: (diagram.canvas.w + OFFSET) / viewbox.aspectRatio
+      };
+    } else {
+      viewbox.dimensions = {
+        w: (diagram.canvas.h + OFFSET) * viewbox.aspectRatio,
+        h: diagram.canvas.h + OFFSET
+      };
+    }
+
+    viewbox.offset = {
+      x: diagram.canvas.x + (diagram.canvas.w - viewbox.dimensions.w) / 2,
+      y: diagram.canvas.y + (diagram.canvas.h - viewbox.dimensions.h) / 2
+    };
+  };
+
   if (!viewbox) return null;
 
   return (
     <div className={styles.preview} id={'preview'}>
       <div className={styles.previewTools}>
+        <Button
+          type={'icon-only'}
+          onClick={() => {
+            viewbox.zoom(1.1, viewbox?.midpoint);
+          }}
+        >
+          <TbZoomOut />
+        </Button>
+        <Button
+          type={'icon-only'}
+          onClick={() => {
+            viewbox.zoom(0.9, viewbox?.midpoint);
+          }}
+        >
+          <TbZoomIn />
+        </Button>
+        <Button type={'icon-only'} onClick={() => zoomFit()}>
+          <TbZoomScan />
+        </Button>
+
         {!isFullScreen && (
           <Button
             type={'icon-only'}
