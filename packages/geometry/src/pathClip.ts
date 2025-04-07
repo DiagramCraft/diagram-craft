@@ -25,7 +25,7 @@ const SENTINEL_VERTEX: Vertex = {
 SENTINEL_VERTEX.prev = SENTINEL_VERTEX;
 SENTINEL_VERTEX.next = SENTINEL_VERTEX;
 
-export type BooleanOperations =
+export type BooleanOperation =
   | 'A union B'
   | 'A not B'
   | 'B not A'
@@ -40,33 +40,33 @@ export type BooleanOperations =
 export const applyBooleanOperation = (
   a: CompoundPath,
   b: CompoundPath,
-  operation: BooleanOperations
-): CompoundPath => {
+  operation: BooleanOperation
+): CompoundPath[] => {
   const vertices = getClipVertices(a, b);
 
   switch (operation) {
     case 'A union B':
       classifyClipVertices(vertices, [a, b], [false, false]);
-      return clipVertices(vertices);
+      return [clipVertices(vertices)];
     case 'A not B':
       classifyClipVertices(vertices, [a, b], [false, true]);
-      return clipVertices(vertices);
+      return [clipVertices(vertices)];
     case 'B not A':
       classifyClipVertices(vertices, [a, b], [true, false]);
-      return clipVertices(vertices);
+      return [clipVertices(vertices)];
     case 'A intersection B':
       classifyClipVertices(vertices, [a, b], [true, true]);
-      return clipVertices(vertices);
+      return [clipVertices(vertices)];
     case 'A xor B': {
       const cp1 = applyBooleanOperation(a, b, 'A not B');
       const cp2 = applyBooleanOperation(a, b, 'B not A');
-      return new CompoundPath([...cp1.all(), ...cp2.all()]);
+      return [...cp1, ...cp2];
     }
     case 'A divide B': {
-      return new CompoundPath([
-        ...applyBooleanOperation(a, b, 'A xor B').all(),
-        ...applyBooleanOperation(a, b, 'A intersection B').all()
-      ]);
+      return [
+        ...applyBooleanOperation(a, b, 'A xor B'),
+        ...applyBooleanOperation(a, b, 'A intersection B')
+      ];
     }
     default:
       throw new VerifyNotReached();
@@ -297,6 +297,12 @@ export const clipVertices = (p: [Array<Vertex>, Array<Vertex>]) => {
 
   const dest: Vertex[][] = [];
 
+  const markAsProcessed = (current: Vertex) => {
+    unprocessedIntersectingPoints = unprocessedIntersectingPoints.filter(
+      v => v !== current && v !== current.neighbor
+    );
+  };
+
   // while unprocessed intersecting points in subject polygon
   while (unprocessedIntersectingPoints.length > 0) {
     let current: Vertex = unprocessedIntersectingPoints[0];
@@ -312,7 +318,7 @@ export const clipVertices = (p: [Array<Vertex>, Array<Vertex>]) => {
     //   ...
     // until PolygonClosed
     do {
-      unprocessedIntersectingPoints = unprocessedIntersectingPoints.filter(v => v !== current);
+      markAsProcessed(current);
 
       let maxLoop = 1000;
 
@@ -349,6 +355,8 @@ export const clipVertices = (p: [Array<Vertex>, Array<Vertex>]) => {
 
       current = current.neighbor;
       currentContour.push(current);
+
+      markAsProcessed(current);
     } while (dest.at(-1)![0] !== current);
   }
 

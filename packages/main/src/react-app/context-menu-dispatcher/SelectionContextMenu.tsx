@@ -121,6 +121,37 @@ export const SelectionContextMenu = () => {
 
       <ContextMenu.Sub>
         <ContextMenu.SubTrigger className="cmp-context-menu__sub-trigger">
+          Geometry
+          <div className="cmp-context-menu__right-slot">
+            <TbChevronRight />
+          </div>
+        </ContextMenu.SubTrigger>
+        <ContextMenu.Portal>
+          <ContextMenu.SubContent className="cmp-context-menu" sideOffset={2} alignOffset={-5}>
+            <ActionContextMenuItem action={'SELECTION_GEOMETRY_CONVERT_TO_CURVES'}>
+              Convert to curves
+            </ActionContextMenuItem>
+            <ActionContextMenuItem action={'SELECTION_GEOMETRY_BOOLEAN_UNION'}>
+              Union
+            </ActionContextMenuItem>
+            <ActionContextMenuItem action={'SELECTION_GEOMETRY_BOOLEAN_INTERSECTION'}>
+              Intersect
+            </ActionContextMenuItem>
+            <ActionContextMenuItem action={'SELECTION_GEOMETRY_BOOLEAN_A_NOT_B'}>
+              Subtract
+            </ActionContextMenuItem>
+            <ActionContextMenuItem action={'SELECTION_GEOMETRY_BOOLEAN_XOR'}>
+              Exclusive Or
+            </ActionContextMenuItem>
+            <ActionContextMenuItem action={'SELECTION_GEOMETRY_BOOLEAN_DIVIDE'}>
+              Divide
+            </ActionContextMenuItem>
+          </ContextMenu.SubContent>
+        </ContextMenu.Portal>
+      </ContextMenu.Sub>
+
+      <ContextMenu.Sub>
+        <ContextMenu.SubTrigger className="cmp-context-menu__sub-trigger">
           Align
           <div className="cmp-context-menu__right-slot">
             <TbChevronRight />

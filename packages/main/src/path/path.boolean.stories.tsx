@@ -101,15 +101,19 @@ const BooleanTest = () => {
         <path d={s1} stroke={'rgb(200, 200, 200)'} fill={'rgba(195, 195, 195, 0.25)'} />
         <path d={s2} stroke={'rgb(200, 200, 200)'} fill={'rgba(195, 195, 195, 0.25)'} />
 
-        {aUnionB.all().map((p, idx) => (
-          <path key={idx} d={p.asSvgPath()} stroke={'red'} fill={'rgba(255, 0, 0, 0.25)'} />
-        ))}
+        {aUnionB
+          .flatMap(cp => cp.all())
+          .map((p, idx) => (
+            <path key={idx} d={p.asSvgPath()} stroke={'red'} fill={'rgba(255, 0, 0, 0.25)'} />
+          ))}
 
-        {aUnionB.all().map(p => {
-          return p.segments.map((s, sidx) => (
-            <circle key={sidx} cx={s.start.x} cy={s.start.y} r={2} fill={'black'} />
-          ));
-        })}
+        {aUnionB
+          .flatMap(cp => cp.all())
+          .map(p => {
+            return p.segments.map((s, sidx) => (
+              <circle key={sidx} cx={s.start.x} cy={s.start.y} r={2} fill={'black'} />
+            ));
+          })}
       </g>
 
       <g transform={'translate(200, 200)'}>
@@ -120,15 +124,19 @@ const BooleanTest = () => {
         <path d={s1} stroke={'rgb(200, 200, 200)'} fill={'rgba(195, 195, 195, 0.25)'} />
         <path d={s2} stroke={'rgb(200, 200, 200)'} fill={'rgba(195, 195, 195, 0.25)'} />
 
-        {aNotB.all().map((p, idx) => (
-          <path key={idx} d={p.asSvgPath()} stroke={'red'} fill={'rgba(255, 0, 0, 0.25)'} />
-        ))}
+        {aNotB
+          .flatMap(cp => cp.all())
+          .map((p, idx) => (
+            <path key={idx} d={p.asSvgPath()} stroke={'red'} fill={'rgba(255, 0, 0, 0.25)'} />
+          ))}
 
-        {aNotB.all().map(p => {
-          return p.segments.map((s, sidx) => (
-            <circle key={sidx} cx={s.start.x} cy={s.start.y} r={2} fill={'black'} />
-          ));
-        })}
+        {aNotB
+          .flatMap(cp => cp.all())
+          .map(p => {
+            return p.segments.map((s, sidx) => (
+              <circle key={sidx} cx={s.start.x} cy={s.start.y} r={2} fill={'black'} />
+            ));
+          })}
       </g>
 
       <g transform={'translate(400, 200)'}>
@@ -139,15 +147,19 @@ const BooleanTest = () => {
         <path d={s1} stroke={'rgb(200, 200, 200)'} fill={'rgba(195, 195, 195, 0.25)'} />
         <path d={s2} stroke={'rgb(200, 200, 200)'} fill={'rgba(195, 195, 195, 0.25)'} />
 
-        {bNotA.all().map((p, idx) => (
-          <path key={idx} d={p.asSvgPath()} stroke={'red'} fill={'rgba(255, 0, 0, 0.25)'} />
-        ))}
+        {bNotA
+          .flatMap(cp => cp.all())
+          .map((p, idx) => (
+            <path key={idx} d={p.asSvgPath()} stroke={'red'} fill={'rgba(255, 0, 0, 0.25)'} />
+          ))}
 
-        {bNotA.all().map(p => {
-          return p.segments.map((s, sidx) => (
-            <circle key={sidx} cx={s.start.x} cy={s.start.y} r={2} fill={'black'} />
-          ));
-        })}
+        {bNotA
+          .flatMap(cp => cp.all())
+          .map(p => {
+            return p.segments.map((s, sidx) => (
+              <circle key={sidx} cx={s.start.x} cy={s.start.y} r={2} fill={'black'} />
+            ));
+          })}
       </g>
 
       <g transform={'translate(0, 400)'}>
@@ -158,15 +170,19 @@ const BooleanTest = () => {
         <path d={s1} stroke={'rgb(200, 200, 200)'} fill={'rgba(195, 195, 195, 0.25)'} />
         <path d={s2} stroke={'rgb(200, 200, 200)'} fill={'rgba(195, 195, 195, 0.25)'} />
 
-        {aIntersectionB.all().map((p, idx) => (
-          <path key={idx} d={p.asSvgPath()} stroke={'red'} fill={'rgba(255, 0, 0, 0.25)'} />
-        ))}
+        {aIntersectionB
+          .flatMap(cp => cp.all())
+          .map((p, idx) => (
+            <path key={idx} d={p.asSvgPath()} stroke={'red'} fill={'rgba(255, 0, 0, 0.25)'} />
+          ))}
 
-        {aIntersectionB.all().map(p =>
-          p.segments.map((s, sidx) => {
-            return <circle key={sidx} cx={s.start.x} cy={s.start.y} r={2} fill={'black'} />;
-          })
-        )}
+        {aIntersectionB
+          .flatMap(cp => cp.all())
+          .map(p =>
+            p.segments.map((s, sidx) => {
+              return <circle key={sidx} cx={s.start.x} cy={s.start.y} r={2} fill={'black'} />;
+            })
+          )}
       </g>
 
       <g transform={'translate(200, 400)'}>
@@ -177,15 +193,19 @@ const BooleanTest = () => {
         <path d={s1} stroke={'rgb(200, 200, 200)'} fill={'rgba(195, 195, 195, 0.25)'} />
         <path d={s2} stroke={'rgb(200, 200, 200)'} fill={'rgba(195, 195, 195, 0.25)'} />
 
-        {aXorB.all().map((p, idx) => (
-          <path key={idx} d={p.asSvgPath()} stroke={'red'} fill={'rgba(255, 0, 0, 0.25)'} />
-        ))}
+        {aXorB
+          .flatMap(cp => cp.all())
+          .map((p, idx) => (
+            <path key={idx} d={p.asSvgPath()} stroke={'red'} fill={'rgba(255, 0, 0, 0.25)'} />
+          ))}
 
-        {aXorB.all().map(p => {
-          return p.segments.map((s, sidx) => (
-            <circle key={sidx} cx={s.start.x} cy={s.start.y} r={2} fill={'black'} />
-          ));
-        })}
+        {aXorB
+          .flatMap(cp => cp.all())
+          .map(p => {
+            return p.segments.map((s, sidx) => (
+              <circle key={sidx} cx={s.start.x} cy={s.start.y} r={2} fill={'black'} />
+            ));
+          })}
       </g>
 
       <g transform={'translate(400, 400)'}>
@@ -196,15 +216,19 @@ const BooleanTest = () => {
         <path d={s1} stroke={'rgb(200, 200, 200)'} fill={'rgba(195, 195, 195, 0.25)'} />
         <path d={s2} stroke={'rgb(200, 200, 200)'} fill={'rgba(195, 195, 195, 0.25)'} />
 
-        {aDivideB.all().map((p, idx) => (
-          <path key={idx} d={p.asSvgPath()} stroke={'red'} fill={'rgba(255, 0, 0, 0.25)'} />
-        ))}
+        {aDivideB
+          .flatMap(cp => cp.all())
+          .map((p, idx) => (
+            <path key={idx} d={p.asSvgPath()} stroke={'red'} fill={'rgba(255, 0, 0, 0.25)'} />
+          ))}
 
-        {aDivideB.all().map(p => {
-          return p.segments.map((s, sidx) => (
-            <circle key={sidx} cx={s.start.x} cy={s.start.y} r={2} fill={'black'} />
-          ));
-        })}
+        {aDivideB
+          .flatMap(cp => cp.all())
+          .map(p => {
+            return p.segments.map((s, sidx) => (
+              <circle key={sidx} cx={s.start.x} cy={s.start.y} r={2} fill={'black'} />
+            ));
+          })}
       </g>
     </svg>
   );
