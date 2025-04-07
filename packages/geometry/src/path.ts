@@ -145,6 +145,12 @@ export class Path {
     );
   }
 
+  isInside(p: Point) {
+    const line = new Path(p, [['L', Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER]]);
+    const intersections = this.intersections(line);
+    return intersections.length % 2 !== 0;
+  }
+
   processSegments(fn: (segments: ReadonlyArray<PathSegment>) => PathSegment[]) {
     this.#segmentList = new SegmentList(fn(this.segmentList.segments));
     this.#path = this.#segmentList.segments.flatMap(e => e.raw());
@@ -173,19 +179,24 @@ export class Path {
     };
   }
 
-  intersections(other: Path, extend = false): ReadonlyArray<WithSegment<PointOnPath>> {
-    const dest: WithSegment<PointOnPath>[] = [];
+  intersections(
+    other: Path,
+    extend = false
+  ): ReadonlyArray<WithSegment<PointOnPath> & { otherSegment: number }> {
+    const dest: Array<WithSegment<PointOnPath> & { otherSegment: number }> = [];
 
     const segments = this.segments;
     for (let idx = 0; idx < segments.length; idx++) {
       const segment = segments[idx];
-      for (const otherSegment of other.segments) {
+      for (let oIdx = 0; oIdx < other.segments.length; oIdx++) {
+        const otherSegment = other.segments[oIdx];
         const intersections = segment.intersectionsWith(otherSegment, extend);
         if (!intersections) continue;
         dest.push(
           ...intersections.map(i => ({
             point: i,
-            segment: idx
+            segment: idx,
+            otherSegment: oIdx
           }))
         );
       }

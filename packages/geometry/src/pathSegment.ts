@@ -19,13 +19,7 @@ export interface PathSegment {
   lengthAtT(t: number): number;
   tangent(t: number): Vector;
   bounds(): Box;
-  //tangentAt(t: number): Vector;
-  //normalAt(t: number): Vector;
-  //boundingBox(): Box;
-  //splitAt(t: number): [PathSegment, PathSegment];
-  //project(p: Point): { t: number, distance: number };
-
-  //normalize(): NormalizedSegment[];
+  reverse(): PathSegment;
 
   start: Point;
   end: Point;
@@ -97,6 +91,10 @@ export class LineSegment implements PathSegment {
   bounds() {
     return Box.fromLine(Line.of(this.start, this.end));
   }
+
+  reverse() {
+    return new LineSegment(this.end, this.start);
+  }
 }
 
 export class CubicSegment extends CubicBezier implements PathSegment {
@@ -116,6 +114,10 @@ export class CubicSegment extends CubicBezier implements PathSegment {
       Point.add(s.end, Vector.scale(Vector.from(s.end, s.start), 0.25)),
       s.end
     );
+  }
+
+  reverse() {
+    return new CubicSegment(this.end, this.p2, this.p1, this.start);
   }
 
   split(t: number): [CubicSegment, CubicSegment] {
