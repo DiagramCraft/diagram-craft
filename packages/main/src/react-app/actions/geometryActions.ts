@@ -16,6 +16,7 @@ import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { RegularLayer } from '@diagram-craft/model/diagramLayer';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { newid } from '@diagram-craft/utils/id';
+import { ActionCriteria } from '@diagram-craft/canvas/action';
 
 declare global {
   interface ActionMap extends ReturnType<typeof geometryActions> {}
@@ -72,6 +73,19 @@ class SelectionBooleanOperation extends AbstractSelectionAction<Application> {
     super(context, MultipleType.Both, ElementType.Node);
   }
 
+  getCriteria(context: Application) {
+    const cb = () => {
+      const $s = context.model.activeDiagram.selectionState;
+      return $s.nodes.length === 2;
+    };
+
+    return [
+      ...super.getCriteria(context),
+
+      ActionCriteria.EventTriggered(context.model.activeDiagram.selectionState, 'add', cb),
+      ActionCriteria.EventTriggered(context.model.activeDiagram.selectionState, 'remove', cb)
+    ];
+  }
   execute() {
     const diagram = this.context.model.activeDiagram;
 
