@@ -317,15 +317,15 @@ export const clipVertices = (p: [Array<Vertex>, Array<Vertex>]) => {
     // repeat
     //   ...
     // until PolygonClosed
+    let maxOuterLoop = 1000;
     do {
       markAsProcessed(current);
-
-      let maxLoop = 1000;
 
       if (current.type === 'in->out') {
         // repeat
         //   ...
         // until current->intersect
+        let maxLoop = 1000;
         do {
           // current = current->next
           current = current.next;
@@ -333,11 +333,13 @@ export const clipVertices = (p: [Array<Vertex>, Array<Vertex>]) => {
 
           // newVertex(current)
           currentContour.push(current);
-        } while (maxLoop-- > 0);
+        } while (--maxLoop > 0);
+        assert.true(maxLoop > 0);
       } else if (current.type === 'out->in') {
         // repeat
         //   ...
         // until current->intersect
+        let maxLoop = 1000;
         do {
           // current = current->prev
           current = current.prev;
@@ -345,7 +347,8 @@ export const clipVertices = (p: [Array<Vertex>, Array<Vertex>]) => {
 
           // newVertex(current)
           currentContour.push(current);
-        } while (maxLoop-- > 0);
+        } while (--maxLoop > 0);
+        assert.true(maxLoop > 0);
       } else {
         VERIFY_NOT_REACHED();
       }
@@ -357,7 +360,8 @@ export const clipVertices = (p: [Array<Vertex>, Array<Vertex>]) => {
       currentContour.push(current);
 
       markAsProcessed(current);
-    } while (dest.at(-1)![0] !== current);
+    } while (dest.at(-1)![0] !== current && --maxOuterLoop > 0);
+    assert.true(maxOuterLoop > 0);
   }
 
   return new CompoundPath(
