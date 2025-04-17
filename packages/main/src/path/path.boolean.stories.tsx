@@ -8,13 +8,9 @@ import {
 } from '@diagram-craft/geometry/pathClip';
 import { Path } from '@diagram-craft/geometry/path';
 
-const BooleanTest = () => {
-  const p1 = PathBuilder.fromString(
-    'M 0.1865,0.0781 C 0.3899,0.1569,0.6487,-0.0614,0.8521,0.0174 L 1,1 L 0.2604,1 C 0.242,0.7695,-0.2645,0.4693,0.1865,0.0781'
-  );
-  const p2 = PathBuilder.fromString(
-    'M 0,0 L 0.7539,0 C 0.801,0.25,1.1308,0.2143,0.9424,1 C 0.7068,0.9601,0.2356,0.8802,0,0.8403 L 0,0'
-  );
+const BooleanTest = (props: { p1: string; p2: string }) => {
+  const p1 = PathBuilder.fromString(props.p1);
+  const p2 = PathBuilder.fromString(props.p2);
 
   p1.setTransform([new Translation({ x: -0.3, y: -0.3 }), new Scale(100, 100)]);
   p2.setTransform([new Translation({ x: -0.6, y: -0.6 }), new Scale(100, 100)]);
@@ -56,11 +52,11 @@ const BooleanTest = () => {
       {/* Clipped path */}
       <g transform={'translate(200, 0)'}>
         <text x={0} y={-80} width={200} textAnchor={'middle'}>
-          Clipped paths
+          Clipped paths A
         </text>
 
-        <path d={s1} stroke={'gray'} fill={'rgba(195, 195, 195, 0.25)'} />
-        <path d={s2} stroke={'gray'} fill={'rgba(195, 195, 195, 0.25)'} />
+        <path d={s1} stroke={'rgb(220, 220, 220)'} fill={'rgba(195, 195, 195, 0.25)'} />
+        <path d={s2} stroke={'rgb(220, 220, 220)'} fill={'rgba(195, 195, 195, 0.25)'} />
 
         {subject.map((s, idx) => {
           const p = new Path(s.segment.start, s.segment.raw());
@@ -74,11 +70,37 @@ const BooleanTest = () => {
           );
         })}
 
-        {subject
-          .filter(v => v.intersect)
-          .map((s, idx) => (
-            <circle key={idx} cx={s.point.x} cy={s.point.y} r={2} fill={'black'} />
-          ))}
+        {subject.map((s, idx) => (
+          <circle
+            key={idx}
+            cx={s.point.x}
+            cy={s.point.y}
+            r={2}
+            fill={s.intersect ? (s.type === 'in->out' ? 'green' : 'red') : 'gray'}
+          />
+        ))}
+
+        {subject.map((s, idx) => {
+          const p = new Path(s.segment.start, s.segment.raw());
+          return (
+            <path
+              key={idx}
+              d={p.asSvgPath()}
+              stroke={idx % 2 === 0 ? 'green' : 'blue'}
+              fill={'none'}
+            />
+          );
+        })}
+      </g>
+
+      {/* Clipped path */}
+      <g transform={'translate(400, 0)'}>
+        <text x={0} y={-80} width={200} textAnchor={'middle'}>
+          Clipped paths B
+        </text>
+
+        <path d={s1} stroke={'rgb(220, 220, 220)'} fill={'rgba(195, 195, 195, 0.25)'} />
+        <path d={s2} stroke={'rgb(220, 220, 220)'} fill={'rgba(195, 195, 195, 0.25)'} />
 
         {clip.map((s, idx) => {
           const p = new Path(s.segment.start, s.segment.raw());
@@ -86,7 +108,29 @@ const BooleanTest = () => {
             <path
               key={idx}
               d={p.asSvgPath()}
-              stroke={idx % 2 === 0 ? 'green' : 'pink'}
+              stroke={idx % 2 === 0 ? 'red' : 'blue'}
+              fill={'none'}
+            />
+          );
+        })}
+
+        {clip.map((s, idx) => (
+          <circle
+            key={idx}
+            cx={s.point.x}
+            cy={s.point.y}
+            r={2}
+            fill={s.intersect ? (s.type === 'in->out' ? 'green' : 'red') : 'gray'}
+          />
+        ))}
+
+        {clip.map((s, idx) => {
+          const p = new Path(s.segment.start, s.segment.raw());
+          return (
+            <path
+              key={idx}
+              d={p.asSvgPath()}
+              stroke={idx % 2 === 0 ? 'green' : 'blue'}
               fill={'none'}
             />
           );
@@ -248,5 +292,22 @@ type Story = StoryObj<typeof meta>;
 
 // More on writing stories with args: https://storybook.js.org/docs/react/writing-stories/args
 export const Primary: Story = {
-  args: {}
+  args: {
+    p1: 'M 0.1865,0.0781 C 0.3899,0.1569,0.6487,-0.0614,0.8521,0.0174 L 1,1 L 0.2604,1 C 0.242,0.7695,-0.2645,0.4693,0.1865,0.0781',
+    p2: 'M 0,0 L 0.7539,0 C 0.801,0.25,1.1308,0.2143,0.9424,1 C 0.7068,0.9601,0.2356,0.8802,0,0.8403 L 0,0'
+  }
+};
+
+export const OnEdge: Story = {
+  args: {
+    p1: 'M 0,0 L 0,1 L 1,1 L 1,0 L 0,0',
+    p2: 'M 0,0.5 L 0.5,0 L 1,0.5 L 0.3,1 L 0,0.5'
+  }
+};
+
+export const OnEdge2: Story = {
+  args: {
+    p1: 'M 0,0 L 0,1 L 1,1 L 1,0 L 0,0',
+    p2: 'M 0.4,0.2 L 0.8,0 L 1,0.5 L 0.3,1 L 0.4,0.2'
+  }
 };
