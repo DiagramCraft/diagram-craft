@@ -3,6 +3,7 @@ import { Point } from './point';
 import { PathSegment } from './pathSegment';
 import { assert, VERIFY_NOT_REACHED, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { Path } from './path';
+import { MultiMap } from '@diagram-craft/utils/multimap';
 
 type VertexType = 'in->out' | 'out->in';
 
@@ -162,7 +163,7 @@ export const getClipVertices = (cp1: CompoundPath, cp2: CompoundPath): [Vertex[]
   assert.true(cp1.all().length === 1);
   assert.true(cp2.all().length === 1);
 
-  const intersectionVertices: Map<PathSegment, Vertex[]> = new Map();
+  const intersectionVertices: MultiMap<PathSegment, Vertex> = new MultiMap();
 
   for (const s of cp1.singularPath().segments) {
     for (const c of cp2.singularPath().segments) {
@@ -193,11 +194,8 @@ export const getClipVertices = (cp1: CompoundPath, cp2: CompoundPath): [Vertex[]
         i1.neighbor = i2;
         i2.neighbor = i1;
 
-        if (!intersectionVertices.has(s)) intersectionVertices.set(s, []);
-        if (!intersectionVertices.has(c)) intersectionVertices.set(c, []);
-
-        intersectionVertices.get(s)!.push(i1);
-        intersectionVertices.get(c)!.push(i2);
+        intersectionVertices.add(s, i1);
+        intersectionVertices.add(c, i2);
       }
     }
   }
