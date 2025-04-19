@@ -1,13 +1,16 @@
 import { CompoundPath } from './pathBuilder';
 import { Point } from './point';
 import { PathSegment } from './pathSegment';
-import { assert, VERIFY_NOT_REACHED, VerifyNotReached } from '@diagram-craft/utils/assert';
+import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { Path } from './path';
+import { Vector } from './vector';
 import { MultiMap } from '@diagram-craft/utils/multimap';
+import { isSame } from '@diagram-craft/utils/math';
 
 type VertexType = 'in->out' | 'out->in';
 
 type Vertex = {
+  label?: string;
   point: Point;
   segment: PathSegment;
   alpha: number;
@@ -19,7 +22,7 @@ type Vertex = {
   | { intersect: false; neighbor?: never; type?: VertexType }
 );
 
-// @ts-expect-error placeholder value to handle partial contstruction
+// @ts-expect-error placeholder value to handle partial construction
 const SENTINEL_VERTEX: Vertex = {
   point: { x: -Infinity, y: -Infinity }
 };
@@ -35,7 +38,7 @@ export type BooleanOperation =
   | 'A divide B';
 
 /*
- * The implementation is based on https://www.inf.usi.ch/hormann/papers/Greiner.1998.ECO.pdf
+ * This implementation is based on https://www.inf.usi.ch/hormann/papers/Greiner.1998.ECO.pdf
  */
 
 export const applyBooleanOperation = (
@@ -69,18 +72,17 @@ export const applyBooleanOperation = (
         ...applyBooleanOperation(a, b, 'A intersection B')
       ];
     }
-    default:
-      throw new VerifyNotReached();
   }
 };
 
 const clipSegments = (vertices: Vertex[]) => {
   for (let i = 0; i < vertices.length; i++) {
     const current = vertices[i];
+    if (current.intersect && current.alpha !== 0) continue;
 
     const clips: Vertex[] = [];
     for (let j = i + 1; j < vertices.length; j++) {
-      if (!vertices[j].intersect) break;
+      if (!vertices[j].intersect || vertices[j].alpha === 0) break;
       clips.push(vertices[j]);
     }
 
@@ -107,9 +109,15 @@ const makeLinkedList = (vertices: Vertex[]) => {
   }
 };
 
-const sortIntoVertexList = (p: CompoundPath, intersectionVertices: Map<PathSegment, Vertex[]>) => {
+const sortIntoVertexList = (
+  p: CompoundPath,
+  intersectionVertices: MultiMap<PathSegment, Vertex>
+) => {
   const dest: Vertex[] = [];
   for (const s of p.singularPath().segments) {
+    const intersectionsOnSegment = intersectionVertices.get(s) ?? [];
+    intersectionsOnSegment.sort((a, b) => a.alpha - b.alpha);
+
     dest.push({
       point: s.start,
       segment: s,
@@ -118,9 +126,94 @@ const sortIntoVertexList = (p: CompoundPath, intersectionVertices: Map<PathSegme
       prev: SENTINEL_VERTEX,
       next: SENTINEL_VERTEX
     });
-    dest.push(...(intersectionVertices.get(s) ?? []).sort((a, b) => a.alpha - b.alpha));
+
+    dest.push(...intersectionsOnSegment);
   }
   return dest;
+};
+
+// NOTE: At this point, the vertices are part of a linked list
+const removeDuplicatePoints = (vertices: Vertex[]) => {
+  const vertexSet = new Set<Vertex>(vertices);
+
+  for (let i = 0; i < vertices.length; i++) {
+    const current = vertices[i];
+    if (!vertexSet.has(current)) continue;
+
+    const next = vertices[(i + 1) % vertices.length];
+    const prev = vertices[(i + vertices.length - 1) % vertices.length];
+
+    if (prev.intersect && isSame(prev.alpha, 1)) {
+      prev.prev.next = current;
+      current.prev = prev.prev;
+
+      vertexSet.delete(prev);
+
+      current.intersect = true;
+      current.alpha = 0;
+      current.neighbor = prev.neighbor;
+      current.neighbor.neighbor = current;
+    }
+
+    if (
+      Point.isEqual(next.point, current.point) &&
+      next.intersect &&
+      isSame(next.alpha, current.alpha) &&
+      !isSame(next.alpha, 0)
+    ) {
+      next.next.prev = current;
+      current.next = next.next;
+
+      vertexSet.delete(next);
+
+      next.neighbor.neighbor = current;
+    }
+
+    if (next.intersect && isSame(next.alpha, 0)) {
+      next.next.prev = current;
+      current.next = next.next;
+
+      vertexSet.delete(next);
+
+      current.intersect = true;
+      current.alpha = 0;
+      current.neighbor = next.neighbor;
+      current.neighbor.neighbor = current;
+    }
+
+    if (current.neighbor) {
+      assert.true(current.neighbor.neighbor === current);
+      assert.true(current.intersect);
+      assert.true(current.neighbor.intersect);
+    }
+  }
+
+  // Remove all elements from vertices that are not part of vertexSet
+  const dest = vertices.filter(v => vertexSet.has(v));
+  vertices.splice(0, vertices.length, ...dest);
+
+  DEBUG: {
+    for (const v of vertices) {
+      if (v.intersect) {
+        assert.true(v.neighbor.neighbor === v);
+        assert.true(v.neighbor.intersect);
+      }
+    }
+  }
+};
+
+const dumpVertexList = (vertices: Vertex[]) => {
+  const label = (v: Vertex) => `${v.label}_${v.intersect ? '*' : '_'}`;
+
+  const l1 = vertices.map(v => label(v));
+  const l2 = vertices.map(v => (v.intersect ? '  |  ' : ' '.repeat(5)));
+  const l3 = vertices.map(v => (v.intersect ? v.alpha.toFixed(3) : ' '.repeat(5)));
+  const l4 = vertices.map(v => (v.intersect ? label(v.neighbor) : ' '.repeat(5)));
+  console.log(l1.join(' --- '));
+  console.log(l2.join('     '));
+  console.log(l3.join('     '));
+  console.log(l2.join('     '));
+  console.log(l4.join('     '));
 };
 
 const arrangeSegments = (dest: Vertex[][]) => {
@@ -146,6 +239,73 @@ const arrangeSegments = (dest: Vertex[][]) => {
   return paths;
 };
 
+const assertConsistency = (subjectVertices: Vertex[], clipVertices: Vertex[]) => {
+  const subjectVerticesSet = new Set<Vertex>();
+  for (let i = 0; i < subjectVertices.length; i++) {
+    const current = subjectVertices[i];
+    assert.false(subjectVerticesSet.has(current));
+    subjectVerticesSet.add(current);
+
+    const next = subjectVertices[(i + 1) % subjectVertices.length];
+    const prev = subjectVertices[(i + subjectVertices.length - 1) % subjectVertices.length];
+
+    assert.true(current.next === next);
+    assert.true(current.prev === prev);
+  }
+
+  const clipVerticesSet = new Set<Vertex>();
+  for (let i = 0; i < clipVertices.length; i++) {
+    const current = clipVertices[i];
+    assert.false(clipVerticesSet.has(current));
+    clipVerticesSet.add(current);
+
+    const next = clipVertices[(i + 1) % clipVertices.length];
+    const prev = clipVertices[(i + clipVertices.length - 1) % clipVertices.length];
+
+    assert.true(current.next === next);
+    assert.true(current.prev === prev);
+  }
+
+  // Check that neighbors are consistent
+  for (const v of subjectVertices) {
+    assert.true(v.prev.next === v);
+    assert.true(v.next.prev === v);
+
+    if (v.neighbor) {
+      assert.true(v === v.neighbor.neighbor);
+      assert.true(clipVerticesSet.has(v.neighbor));
+    }
+  }
+  for (const v of clipVertices) {
+    assert.true(v.prev.next === v);
+    assert.true(v.next.prev === v);
+
+    if (v.neighbor) {
+      assert.true(v === v.neighbor.neighbor);
+      assert.true(subjectVerticesSet.has(v.neighbor));
+    }
+  }
+};
+
+const assertPathSegmentsAreConnected = (subjectVertices: Vertex[], clipVertices: Vertex[]) => {
+  for (let i = 0; i < subjectVertices.length; i++) {
+    const current = subjectVertices[i];
+    const next = subjectVertices[(i + 1) % subjectVertices.length];
+    if (!Point.isEqual(current.segment.end, next.point, 0.1)) {
+      console.log(current.segment.end, next.point);
+      //assert.fail();
+    }
+  }
+  for (let i = 0; i < clipVertices.length; i++) {
+    const current = clipVertices[i];
+    const next = clipVertices[(i + 1) % clipVertices.length];
+    if (!Point.isEqual(current.segment.end, next.point, 0.1)) {
+      console.log(current.segment.end, next.point);
+      assert.fail();
+    }
+  }
+};
+
 /*
   for each vertex Si of subject polygon do
     for each vertex Cj of clip polygon do
@@ -163,28 +323,28 @@ export const getClipVertices = (cp1: CompoundPath, cp2: CompoundPath): [Vertex[]
   assert.true(cp1.all().length === 1);
   assert.true(cp2.all().length === 1);
 
-  const intersectionVertices: MultiMap<PathSegment, Vertex> = new MultiMap();
+  const intersectionVertices = new MultiMap<PathSegment, Vertex>();
 
-  for (const s of cp1.singularPath().segments) {
-    for (const c of cp2.singularPath().segments) {
-      const intersections = s.intersectionsWith(c) ?? [];
+  for (const thisSegment of cp1.singularPath().segments) {
+    for (const otherSegment of cp2.singularPath().segments) {
+      const intersections = thisSegment.intersectionsWith(otherSegment);
+      if (!intersections) continue;
+
       for (const intersection of intersections) {
-        const p1 = s.projectPoint(intersection);
         const i1: Vertex = {
           point: intersection,
-          segment: s,
-          alpha: p1.t,
+          segment: thisSegment,
+          alpha: thisSegment.projectPoint(intersection).t,
           intersect: true,
           prev: SENTINEL_VERTEX,
           next: SENTINEL_VERTEX,
           neighbor: SENTINEL_VERTEX
         };
 
-        const p2 = c.projectPoint(intersection);
         const i2: Vertex = {
           point: intersection,
-          segment: c,
-          alpha: p2.t,
+          segment: otherSegment,
+          alpha: otherSegment.projectPoint(intersection).t,
           intersect: true,
           prev: SENTINEL_VERTEX,
           next: SENTINEL_VERTEX,
@@ -194,8 +354,8 @@ export const getClipVertices = (cp1: CompoundPath, cp2: CompoundPath): [Vertex[]
         i1.neighbor = i2;
         i2.neighbor = i1;
 
-        intersectionVertices.add(s, i1);
-        intersectionVertices.add(c, i2);
+        intersectionVertices.add(thisSegment, i1);
+        intersectionVertices.add(otherSegment, i2);
       }
     }
   }
@@ -208,12 +368,40 @@ export const getClipVertices = (cp1: CompoundPath, cp2: CompoundPath): [Vertex[]
   makeLinkedList(subjectVertices);
   makeLinkedList(clipVertices);
 
+  // This is just for debugging purposes
+  subjectVertices.forEach((e, i) => (e.label = 's_' + i));
+  clipVertices.forEach((e, i) => (e.label = 'c_' + i));
+
+  console.log('BEFORE');
+  dumpVertexList(subjectVertices);
+  dumpVertexList(clipVertices);
+
+  // Remove duplicate points'
+  removeDuplicatePoints(subjectVertices);
+  removeDuplicatePoints(clipVertices);
+
+  console.log('AFTER');
+  dumpVertexList(subjectVertices);
+  dumpVertexList(clipVertices);
+
+  DEBUG: {
+    assertConsistency(subjectVertices, clipVertices);
+  }
+
   // Clip segments
   clipSegments(subjectVertices);
   clipSegments(clipVertices);
 
+  DEBUG: {
+    assertPathSegmentsAreConnected(subjectVertices, clipVertices);
+  }
+
   return [subjectVertices, clipVertices];
 };
+
+const isDegeneracy = (v: Vertex) =>
+  v.intersect &&
+  (v.alpha === 0 || v.alpha === 1 || v.neighbor.alpha === 0 || v.neighbor.alpha === 1);
 
 /*
   for both polygons P do
@@ -231,7 +419,7 @@ export const getClipVertices = (cp1: CompoundPath, cp2: CompoundPath): [Vertex[]
   end for
  */
 export const classifyClipVertices = (
-  intersections: [Array<Vertex>, Array<Vertex>],
+  vertices: [Array<Vertex>, Array<Vertex>],
   paths: [CompoundPath, CompoundPath],
   type: [boolean, boolean]
 ) => {
@@ -254,9 +442,45 @@ export const classifyClipVertices = (
     if (type[i]) status = !status;
 
     // for each vertex Pi of polygon do
-    for (const intersection of intersections[i]) {
+    for (let i1 = 0; i1 < vertices[i].length; i1++) {
+      const intersection = vertices[i][i1];
+
       // if Pi->intersect then
       if (intersection.intersect) {
+        if (isDegeneracy(intersection)) {
+          const ot1 = Vector.angle(
+            Vector.from(intersection.point, intersection.neighbor.prev.point)
+          );
+
+          const ot2 = Vector.angle(
+            Vector.from(intersection.point, intersection.neighbor.next.point)
+          );
+
+          const t1 = Vector.angle(Vector.from(intersection.point, intersection.prev.point));
+
+          const t2 = Vector.angle(Vector.from(intersection.point, intersection.next.point));
+
+          const arr = [
+            { label: 'o', angle: ot1 },
+            { label: 'o', angle: ot2 },
+            { label: 't', angle: t1 },
+            { label: 't', angle: t2 }
+          ];
+          arr.sort((a, b) => a.angle - b.angle);
+
+          if (
+            i1 > 0 &&
+            (arr[0].label === arr[1].label ||
+              arr[1].label === arr[2].label ||
+              arr[2].label === arr[3].label)
+          ) {
+            // @ts-ignore
+            intersection.intersect = false;
+            intersection.neighbor.intersect = false;
+            continue;
+          }
+        }
+
         // Pi->entry_exit = status
         intersection.type = status ? 'in->out' : 'out->in';
 
@@ -351,7 +575,6 @@ export const clipVertices = (p: [Array<Vertex>, Array<Vertex>]) => {
         VERIFY_NOT_REACHED();
       }
 
-      assert.false(maxLoop === 0);
       assert.present(current.neighbor);
 
       current = current.neighbor;
