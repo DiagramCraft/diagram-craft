@@ -48,14 +48,20 @@ export const applyBooleanOperation = (
 ): CompoundPath[] => {
   const vertices = getClipVertices(a, b);
 
+  // This is sufficient as any intersection will be in each list of vertices
+  const isIntersecting = vertices[0].filter(v => v.intersect).length > 0;
+
   switch (operation) {
     case 'A union B':
+      if (!isIntersecting) return [a, b];
       classifyClipVertices(vertices, [a, b], [false, false]);
       return [clipVertices(vertices)];
     case 'A not B':
+      if (!isIntersecting) return [a];
       classifyClipVertices(vertices, [a, b], [false, true]);
       return [clipVertices(vertices)];
     case 'B not A':
+      if (!isIntersecting) return [b];
       classifyClipVertices(vertices, [a, b], [true, false]);
       return [clipVertices(vertices)];
     case 'A intersection B':
