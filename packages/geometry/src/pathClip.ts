@@ -64,9 +64,12 @@ export const applyBooleanOperation = (
       if (!isIntersecting) return [b];
       classifyClipVertices(vertices, [a, b], [true, false]);
       return [clipVertices(vertices)];
-    case 'A intersection B':
+    case 'A intersection B': {
       classifyClipVertices(vertices, [a, b], [true, true]);
-      return [clipVertices(vertices)];
+
+      const intersection = clipVertices(vertices);
+      return intersection.segments().length > 0 ? [intersection] : [];
+    }
     case 'A xor B': {
       const cp1 = applyBooleanOperation(a, b, 'A not B');
       const cp2 = applyBooleanOperation(a, b, 'B not A');

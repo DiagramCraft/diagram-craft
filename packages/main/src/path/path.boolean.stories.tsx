@@ -7,13 +7,14 @@ import {
   getClipVertices
 } from '@diagram-craft/geometry/pathClip';
 import { Path } from '@diagram-craft/geometry/path';
+import { TEST_CASES } from '@diagram-craft/geometry/pathClip.testCases';
 
-const BooleanTest = (props: { p1: string; p2: string }) => {
+const BooleanTest = (props: { p1: string; p2: string; p1Offset: number; p2Offset: number }) => {
   const p1 = PathBuilder.fromString(props.p1);
   const p2 = PathBuilder.fromString(props.p2);
 
-  p1.setTransform([new Translation({ x: -0.3, y: -0.3 }), new Scale(100, 100)]);
-  p2.setTransform([new Translation({ x: -0.6, y: -0.6 }), new Scale(100, 100)]);
+  p1.setTransform([new Translation({ x: props.p1Offset, y: props.p1Offset }), new Scale(100, 100)]);
+  p2.setTransform([new Translation({ x: props.p2Offset, y: props.p2Offset }), new Scale(100, 100)]);
 
   const cp1 = p1.getPaths();
   const cp2 = p2.getPaths();
@@ -311,27 +312,20 @@ type Story = StoryObj<typeof meta>;
 export const Primary: Story = {
   args: {
     p1: 'M 0.1865,0.0781 C 0.3899,0.1569,0.6487,-0.0614,0.8521,0.0174 L 1,1 L 0.2604,1 C 0.242,0.7695,-0.2645,0.4693,0.1865,0.0781',
-    p2: 'M 0,0 L 0.7539,0 C 0.801,0.25,1.1308,0.2143,0.9424,1 C 0.7068,0.9601,0.2356,0.8802,0,0.8403 L 0,0'
+    p1Offset: -0.3,
+    p2: 'M 0,0 L 0.7539,0 C 0.801,0.25,1.1308,0.2143,0.9424,1 C 0.7068,0.9601,0.2356,0.8802,0,0.8403 L 0,0',
+    p2Offset: -0.6
   }
 };
 
 export const OnEdge: Story = {
-  args: {
-    p1: 'M 0,0 L 0,1 L 1,1 L 1,0 L 0,0',
-    p2: 'M 0,0.5 L 0.5,0 L 1,0.5 L 0.3,1 L 0,0.5'
-  }
+  args: TEST_CASES.OnEdge
 };
 
 export const OnEdge2: Story = {
-  args: {
-    p1: 'M 0,0 L 0,1 L 1,1 L 1,0 L 0,0',
-    p2: 'M 0.4,0.2 L 0.8,0 L 1,0.5 L 0.3,1 L 0.4,0.2'
-  }
+  args: TEST_CASES.OnEdge2
 };
 
 export const NonIntersecting: Story = {
-  args: {
-    p1: 'M 0,0 L 0,0.25 L 0.25,0.25 L 0.25,0 L 0,0',
-    p2: 'M 0.6,0.6 L 0.6,1 L 1,1 L 1,0.6 L 0.6,0.6'
-  }
+  args: TEST_CASES.NonIntersecting
 };
