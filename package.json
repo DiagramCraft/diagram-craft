@@ -9,7 +9,9 @@
     "client:dev": "pnpm run -C packages/main dev",
     "client:build": "pnpm run -C packages/main build",
     "client:preview": "pnpm run -C packages/main preview",
-    "test": "vitest",
+    "test": "vitest run",
+    "test:watch": "vitest watch",
+    "test:bench": "vitest bench",
     "lint": "eslint . --report-unused-disable-directives && tsc --noEmit"
   },
   "keywords": [],
