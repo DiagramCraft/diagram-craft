@@ -308,7 +308,6 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// More on writing stories with args: https://storybook.js.org/docs/react/writing-stories/args
 export const Primary: Story = {
   args: {
     p1: 'M 0.1865,0.0781 C 0.3899,0.1569,0.6487,-0.0614,0.8521,0.0174 L 1,1 L 0.2604,1 C 0.242,0.7695,-0.2645,0.4693,0.1865,0.0781',
@@ -327,5 +326,12 @@ export const OnEdge2: Story = {
   args: {
     p1: 'M 0,0 L 0,1 L 1,1 L 1,0 L 0,0',
     p2: 'M 0.4,0.2 L 0.8,0 L 1,0.5 L 0.3,1 L 0.4,0.2'
+  }
+};
+
+export const NonIntersecting: Story = {
+  args: {
+    p1: 'M 0,0 L 0,0.25 L 0.25,0.25 L 0.25,0 L 0,0',
+    p2: 'M 0.6,0.6 L 0.6,1 L 1,1 L 1,0.6 L 0.6,0.6'
   }
 };
