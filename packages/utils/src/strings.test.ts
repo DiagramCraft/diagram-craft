@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { coalesce, isEmptyString, shorten } from './strings';
+import { coalesce, isEmptyString, padRight, shorten } from './strings';
 
 describe('shorten', () => {
   test('should return the original string when it is shorter than the specified length', () => {
@@ -50,6 +50,36 @@ describe('coalesce', () => {
 
   test('should return undefined when all strings are empty', () => {
     expect(coalesce('', '', '')).toBeUndefined();
+  });
+});
+
+describe('padRight', () => {
+  test('should pad the string to the required length with default spaces', () => {
+    expect(padRight('Hello', 8)).toBe('Hello   ');
+  });
+
+  test('should return the original string if it is already equal to the target length', () => {
+    expect(padRight('Hello', 5)).toBe('Hello');
+  });
+
+  test('should return the original string if it is longer than the target length', () => {
+    expect(padRight('Hello, World!', 5)).toBe('Hello, World!');
+  });
+
+  test('should pad the string with a custom character', () => {
+    expect(padRight('Hello', 10, '.')).toBe('Hello.....');
+  });
+
+  test('should pad the string with a custom multiple-character string', () => {
+    expect(padRight('Hi', 8, '123')).toBe('Hi123123');
+  });
+
+  test('should handle an empty string and pad it to the target length', () => {
+    expect(padRight('', 4)).toBe('    ');
+  });
+
+  test('should return the original string if the target length is less than or equal to 0', () => {
+    expect(padRight('Hello', 0)).toBe('Hello');
   });
 });
 

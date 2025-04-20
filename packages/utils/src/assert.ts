@@ -45,14 +45,14 @@ type AssertType = {
   true: (arg: any, msg?: string) => asserts arg is true;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   false: (arg: any, msg?: string) => asserts arg is false;
-  fail: (msg?: string) => void;
+  fail: (msg?: string) => never;
 };
 
 declare global {
   interface AssertTypeExtensions {}
 }
 
-const makeAssertions = (error: (m: string) => void): AssertType & AssertTypeExtensions => ({
+const makeAssertions = (error: (m: string) => never): AssertType & AssertTypeExtensions => ({
   present: <T = unknown>(arg: T, msg?: string): asserts arg is NonNullable<T> => {
     if (!is.present(arg)) error(msg ?? 'not present');
   },

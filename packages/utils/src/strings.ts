@@ -36,3 +36,21 @@ export const coalesce = (...args: (string | undefined | null)[]) =>
  */
 export const isEmptyString = (s: string | undefined | null) =>
   s === null || s === undefined || s.trim() === '';
+
+/**
+ * Pads the given string on the right side with a specified character(s) until it reaches the desired length.
+ *
+ * If the string's length is already greater than or equal to the specified length, no padding is added.
+ * The default padding character is a single space (' ').
+ *
+ * @param {string} str - The string to be padded on the right.
+ * @param {number} length - The target length of the resulting string after padding.
+ * @param {string} [pad=' '] - The character(s) to use for padding. Defaults to a single space.
+ * @returns {string} The string padded on the right to the desired length.
+ */
+export const padRight = (str: string, length: number, pad = ' ') => {
+  while (str.length < length) {
+    str += pad;
+  }
+  return str;
+};
