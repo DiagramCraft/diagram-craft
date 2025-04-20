@@ -87,15 +87,16 @@ const clipSegments = (vertices: Vertex[]) => {
     }
 
     if (clips.length === 0) continue;
-
     clips.reverse();
 
     let remaining = current.segment;
 
+    let r = 1;
     for (const c of clips) {
-      const clipped = current.segment.split(c.alpha);
-      remaining = clipped[0];
-      c.segment = clipped[1];
+      const [a, b] = remaining.split(c.alpha / r);
+      r = c.alpha;
+      remaining = a;
+      c.segment = b;
     }
 
     current.segment = remaining;
@@ -202,16 +203,39 @@ const removeDuplicatePoints = (vertices: Vertex[]) => {
   }
 };
 
-const dumpVertexList = (vertices: Vertex[]) => {
+// @ts-ignore
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const dumpVertexList = (
+  vertices: Vertex[],
+  options: {
+    alpha?: boolean;
+    length?: boolean;
+  } = {
+    alpha: true
+  }
+) => {
   const label = (v: Vertex) => `${v.label}_${v.intersect ? '*' : '_'}`;
 
   const l1 = vertices.map(v => label(v));
   const l2 = vertices.map(v => (v.intersect ? '  |  ' : ' '.repeat(5)));
-  const l3 = vertices.map(v => (v.intersect ? v.alpha.toFixed(3) : ' '.repeat(5)));
+
   const l4 = vertices.map(v => (v.intersect ? label(v.neighbor) : ' '.repeat(5)));
   console.log(l1.join(' --- '));
   console.log(l2.join('     '));
-  console.log(l3.join('     '));
+
+  if (options.length) {
+    const len = vertices.map(v => {
+      const l = v.segment.length();
+      return l.toFixed(4 - Math.floor(l).toString().length);
+    });
+    console.log(len.join('     '));
+  }
+
+  if (options.alpha) {
+    const alpha = vertices.map(v => (v.intersect ? v.alpha.toFixed(3) : ' '.repeat(5)));
+    console.log(alpha.join('     '));
+  }
+
   console.log(l2.join('     '));
   console.log(l4.join('     '));
 };
@@ -292,7 +316,7 @@ const assertPathSegmentsAreConnected = (subjectVertices: Vertex[], clipVertices:
     const current = subjectVertices[i];
     const next = subjectVertices[(i + 1) % subjectVertices.length];
     if (!Point.isEqual(current.segment.end, next.point, 0.1)) {
-      console.log(current.segment.end, next.point);
+      console.log(i, current.segment.end, next.point);
       //assert.fail();
     }
   }
@@ -372,17 +396,9 @@ export const getClipVertices = (cp1: CompoundPath, cp2: CompoundPath): [Vertex[]
   subjectVertices.forEach((e, i) => (e.label = 's_' + i));
   clipVertices.forEach((e, i) => (e.label = 'c_' + i));
 
-  console.log('BEFORE');
-  dumpVertexList(subjectVertices);
-  dumpVertexList(clipVertices);
-
   // Remove duplicate points'
   removeDuplicatePoints(subjectVertices);
   removeDuplicatePoints(clipVertices);
-
-  console.log('AFTER');
-  dumpVertexList(subjectVertices);
-  dumpVertexList(clipVertices);
 
   DEBUG: {
     assertConsistency(subjectVertices, clipVertices);

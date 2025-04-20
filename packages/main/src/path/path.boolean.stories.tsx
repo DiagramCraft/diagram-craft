@@ -80,6 +80,21 @@ const BooleanTest = (props: { p1: string; p2: string }) => {
           />
         ))}
 
+        <circle
+          cx={subject[0].point.x}
+          cy={subject[0].point.y}
+          r={5}
+          stroke={'red'}
+          fill={'none'}
+        />
+        <circle
+          cx={subject[1].point.x}
+          cy={subject[1].point.y}
+          r={5}
+          stroke={'green'}
+          fill={'none'}
+        />
+
         {subject.map((s, idx) => {
           const p = new Path(s.segment.start, s.segment.raw());
           return (
@@ -123,6 +138,9 @@ const BooleanTest = (props: { p1: string; p2: string }) => {
             fill={s.intersect ? (s.type === 'in->out' ? 'green' : 'red') : 'gray'}
           />
         ))}
+
+        <circle cx={clip[0].point.x} cy={clip[0].point.y} r={5} stroke={'red'} fill={'none'} />
+        <circle cx={clip[1].point.x} cy={clip[1].point.y} r={5} stroke={'green'} fill={'none'} />
 
         {clip.map((s, idx) => {
           const p = new Path(s.segment.start, s.segment.raw());
