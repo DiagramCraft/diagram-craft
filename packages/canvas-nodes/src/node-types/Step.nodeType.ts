@@ -4,7 +4,7 @@ import {
   BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
-import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
+import { PathListBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathListBuilder';
 import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
@@ -87,7 +87,7 @@ export class StepNodeDefinition extends ShapeNodeDefinition {
   getBoundingPathBuilder(def: DiagramNode) {
     const sizePct = def.renderProps.custom.step.size / def.bounds.w;
 
-    return new PathBuilder(unitCoordinateSystem(def.bounds))
+    return new PathListBuilder(unitCoordinateSystem(def.bounds))
       .moveTo(_p(0, 0))
       .lineTo(_p(1 - sizePct, 0))
       .lineTo(_p(1, 0.5))

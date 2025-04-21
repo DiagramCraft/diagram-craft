@@ -4,7 +4,7 @@ import {
   BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
-import { PathBuilder } from '@diagram-craft/geometry/pathBuilder';
+import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
@@ -197,7 +197,7 @@ export class CylinderNodeDefinition extends ShapeNodeDefinition {
     const size = CylinderNodeTypePrivate.getSize(def);
     const lcs = CylinderNodeTypePrivate.getLcs(def);
 
-    return new PathBuilder(p => lcs.toGlobal(p))
+    return new PathListBuilder(p => lcs.toGlobal(p))
       .moveTo(_p(0, size / 2))
       .arcTo(_p(0.5, size), 0.5, size / 2, 0, 0, 0)
       .arcTo(_p(1, size / 2), 0.5, size / 2, 0, 0, 0);
@@ -207,7 +207,7 @@ export class CylinderNodeDefinition extends ShapeNodeDefinition {
     const size = CylinderNodeTypePrivate.getSize(def);
     const lcs = CylinderNodeTypePrivate.getLcs(def);
 
-    return new PathBuilder(p => lcs.toGlobal(p))
+    return new PathListBuilder(p => lcs.toGlobal(p))
       .moveTo(_p(0, size / 2))
       .arcTo(_p(0.5, 0), 0.5, size / 2, 0, 0, 1)
       .arcTo(_p(1, size / 2), 0.5, size / 2, 0, 0, 1)

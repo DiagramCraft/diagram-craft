@@ -1,7 +1,7 @@
 import { DiagramEdge } from './diagramEdge';
 import { ControlPoints, Waypoint } from './types';
 import { Direction } from '@diagram-craft/geometry/direction';
-import { PathBuilder } from '@diagram-craft/geometry/pathBuilder';
+import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { Point } from '@diagram-craft/geometry/point';
 import { Path } from '@diagram-craft/geometry/path';
 import {
@@ -19,7 +19,7 @@ import { Box } from '@diagram-craft/geometry/box';
 type Result = {
   startDirection: Direction;
   endDirection: Direction;
-  path: PathBuilder;
+  path: PathListBuilder;
   availableDirections: ReadonlyArray<Direction>;
   preferredDirection: ReadonlyArray<Direction>;
 };
@@ -47,7 +47,7 @@ const addSegment = (
 
   return dirInOrder
     .flatMap(direction => {
-      const makeEntry = (p: PathBuilder, endDirection: Direction): Result => ({
+      const makeEntry = (p: PathListBuilder, endDirection: Direction): Result => ({
         startDirection: direction,
         endDirection,
         path: p,
@@ -58,11 +58,11 @@ const addSegment = (
       switch (direction) {
         case 'n':
         case 's': {
-          const full = new PathBuilder();
+          const full = new PathListBuilder();
           full.lineTo({ x: px, y });
           full.lineTo({ x, y });
 
-          const half = new PathBuilder();
+          const half = new PathListBuilder();
           half.lineTo({ x: px, y: py + (y - py) / 2 });
           half.lineTo({ x, y: py + (y - py) / 2 });
           half.lineTo({ x, y });
@@ -71,11 +71,11 @@ const addSegment = (
         }
         case 'e':
         case 'w': {
-          const full = new PathBuilder();
+          const full = new PathListBuilder();
           full.lineTo({ x, y: py });
           full.lineTo({ x, y });
 
-          const half = new PathBuilder();
+          const half = new PathListBuilder();
           half.lineTo({ x: px + (x - px) / 2, y: py });
           half.lineTo({ x: px + (x - px) / 2, y });
           half.lineTo({ x, y });
@@ -135,7 +135,7 @@ const buildOrthogonalEdgePath = (
     em = readjustConnectionPoint(em, edge.waypoints.at(-1)!.point, edge.end.node.bounds);
   }
 
-  const path = new PathBuilder();
+  const path = new PathListBuilder();
   path.moveTo(sm);
 
   let availableDirections = Direction.all();
@@ -175,7 +175,7 @@ const buildOrthogonalEdgePath = (
 };
 
 const buildBezierEdgePath = (edge: DiagramEdge) => {
-  const path = new PathBuilder();
+  const path = new PathListBuilder();
 
   path.moveTo(edge.start.position);
   if (edge.waypoints.length === 0) {
@@ -213,7 +213,7 @@ const buildBezierEdgePath = (edge: DiagramEdge) => {
 };
 
 const buildStraightEdgePath = (edge: DiagramEdge) => {
-  const path = new PathBuilder();
+  const path = new PathListBuilder();
 
   path.moveTo(edge.start.position);
   edge.waypoints.forEach(wp => {

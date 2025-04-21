@@ -4,7 +4,10 @@ import {
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { PathBuilder, translateCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
+import {
+  PathListBuilder,
+  translateCoordinateSystem
+} from '@diagram-craft/geometry/pathListBuilder';
 import { _p } from '@diagram-craft/geometry/point';
 
 const TAB_WIDTH = 50;
@@ -31,7 +34,7 @@ export class Folder extends SimpleShapeNodeDefinition {
 
    */
   getBoundingPathBuilder(node: DiagramNode) {
-    const pb = new PathBuilder(translateCoordinateSystem(node.bounds));
+    const pb = new PathListBuilder(translateCoordinateSystem(node.bounds));
     pb.moveTo(_p(0, 0))
       .lineTo(_p(TAB_WIDTH, 0))
       .lineTo(_p(TAB_WIDTH, TAB_HEIGHT))

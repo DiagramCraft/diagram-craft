@@ -3,7 +3,7 @@ import { Indicator } from '@diagram-craft/model/diagramProps';
 import { Box } from '@diagram-craft/geometry/box';
 import { VNode } from '../component/vdom';
 import * as svg from '../component/vdom-svg';
-import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
+import { PathListBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathListBuilder';
 import { _p, Point } from '@diagram-craft/geometry/point';
 import { Vector } from '@diagram-craft/geometry/vector';
 
@@ -37,7 +37,7 @@ const StarIndicator = (bounds: Box, indicator: DeepRequired<Indicator>) => {
   const start = -Math.PI / 2;
   const dTheta = (2 * Math.PI) / sides;
 
-  const pathBuilder = new PathBuilder(
+  const pathBuilder = new PathListBuilder(
     unitCoordinateSystem({
       ...bounds,
       x: 0,
@@ -61,7 +61,7 @@ const StarIndicator = (bounds: Box, indicator: DeepRequired<Indicator>) => {
 };
 
 const ActorIndicator = (bounds: Box, indicator: DeepRequired<Indicator>) => {
-  const b = new PathBuilder(
+  const b = new PathListBuilder(
     unitCoordinateSystem({
       ...bounds,
       x: 0,
@@ -86,7 +86,7 @@ const ActorIndicator = (bounds: Box, indicator: DeepRequired<Indicator>) => {
 };
 
 const LockIndicator = (bounds: Box, indicator: DeepRequired<Indicator>) => {
-  const b = new PathBuilder(
+  const b = new PathListBuilder(
     unitCoordinateSystem({
       ...bounds,
       x: 0,
@@ -115,7 +115,7 @@ const LockIndicator = (bounds: Box, indicator: DeepRequired<Indicator>) => {
 };
 
 const CommentIndicator = (bounds: Box, indicator: DeepRequired<Indicator>, fillColor: string) => {
-  const b = new PathBuilder(
+  const b = new PathListBuilder(
     unitCoordinateSystem({
       ...bounds,
       x: 0,
@@ -144,7 +144,7 @@ const CommentIndicator = (bounds: Box, indicator: DeepRequired<Indicator>, fillC
 };
 
 const NoteIndicator = (bounds: Box, indicator: DeepRequired<Indicator>, fillColor: string) => {
-  const b = new PathBuilder(
+  const b = new PathListBuilder(
     unitCoordinateSystem({
       ...bounds,
       x: 0,

@@ -2,7 +2,7 @@ import { Point } from './point';
 import { Vector } from './vector';
 import { Line } from './line';
 import { CubicBezier } from './bezier';
-import { RawSegment } from './pathBuilder';
+import { RawSegment } from './pathListBuilder';
 import { Projection } from './path';
 import { LengthOffsetOnPath } from './pathPosition';
 import { Box } from './box';
