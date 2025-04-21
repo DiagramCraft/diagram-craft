@@ -140,5 +140,87 @@ describe('pathClip', () => {
         ]);
       });
     });
+
+    describe('CircleInRectangle', () => {
+      const [p1, p2] = makePaths(TEST_CASES.CircleInRectangle());
+
+      it('A union B', () => {
+        expect(applyBooleanOperation(p1, p2, 'A union B').map(p => p.asSvgPath())).toStrictEqual([
+          'M 50,50 L 400,50 L 400,350 L 50,350 L 50,50'
+        ]);
+      });
+
+      it('A not B', () => {
+        expect(applyBooleanOperation(p1, p2, 'A not B').map(p => p.asSvgPath())).toStrictEqual([]);
+      });
+
+      it('B not A', () => {
+        expect(applyBooleanOperation(p1, p2, 'B not A').map(p => p.asSvgPath())).toStrictEqual([
+          'M 50,50 L 400,50 L 400,350 L 50,350 L 50,50 M 210,75 C 140.96,75,85,130.96,85,200 C 85,269.04,140.96,325,210,325 C 279.04,325,335,269.04,335,200 C 335,130.96,279.04,75,210,75'
+        ]);
+      });
+
+      it('A intersection B', () => {
+        expect(
+          applyBooleanOperation(p1, p2, 'A intersection B').map(p => p.asSvgPath())
+        ).toStrictEqual([
+          'M 210,75 A 125,125,0,0,1,335,200 A 125,125,0,0,1,210,325 A 125,125,0,0,1,85,200 A 125,125,0,0,1,210,75'
+        ]);
+      });
+
+      it('A xor B', () => {
+        expect(applyBooleanOperation(p1, p2, 'A xor B').map(p => p.asSvgPath())).toStrictEqual([
+          'M 50,50 L 400,50 L 400,350 L 50,350 L 50,50 M 210,75 C 140.96,75,85,130.96,85,200 C 85,269.04,140.96,325,210,325 C 279.04,325,335,269.04,335,200 C 335,130.96,279.04,75,210,75'
+        ]);
+      });
+
+      it('A divide B', () => {
+        expect(applyBooleanOperation(p1, p2, 'A divide B').map(p => p.asSvgPath())).toStrictEqual([
+          'M 50,50 L 400,50 L 400,350 L 50,350 L 50,50 M 210,75 C 140.96,75,85,130.96,85,200 C 85,269.04,140.96,325,210,325 C 279.04,325,335,269.04,335,200 C 335,130.96,279.04,75,210,75',
+          'M 210,75 A 125,125,0,0,1,335,200 A 125,125,0,0,1,210,325 A 125,125,0,0,1,85,200 A 125,125,0,0,1,210,75'
+        ]);
+      });
+    });
+  });
+
+  describe('CircleInRectangleInverted', () => {
+    const [p1, p2] = makePaths(TEST_CASES.CircleInRectangleInverted());
+
+    it('A union B', () => {
+      expect(applyBooleanOperation(p1, p2, 'A union B').map(p => p.asSvgPath())).toStrictEqual([
+        'M 210,75 A 125,125,0,0,1,335,200 A 125,125,0,0,1,210,325 A 125,125,0,0,1,85,200 A 125,125,0,0,1,210,75'
+      ]);
+    });
+
+    it('A not B', () => {
+      expect(applyBooleanOperation(p1, p2, 'A not B').map(p => p.asSvgPath())).toStrictEqual([
+        'M 50,50 L 400,50 L 400,350 L 50,350 L 50,50 M 210,75 C 140.96,75,85,130.96,85,200 C 85,269.04,140.96,325,210,325 C 279.04,325,335,269.04,335,200 C 335,130.96,279.04,75,210,75'
+      ]);
+    });
+
+    it('B not A', () => {
+      expect(applyBooleanOperation(p1, p2, 'B not A').map(p => p.asSvgPath())).toStrictEqual([]);
+    });
+
+    it('A intersection B', () => {
+      expect(
+        applyBooleanOperation(p1, p2, 'A intersection B').map(p => p.asSvgPath())
+      ).toStrictEqual([
+        'M 210,75 A 125,125,0,0,1,335,200 A 125,125,0,0,1,210,325 A 125,125,0,0,1,85,200 A 125,125,0,0,1,210,75'
+      ]);
+    });
+
+    it('A xor B', () => {
+      expect(applyBooleanOperation(p1, p2, 'A xor B').map(p => p.asSvgPath())).toStrictEqual([
+        'M 50,50 L 400,50 L 400,350 L 50,350 L 50,50 M 210,75 C 140.96,75,85,130.96,85,200 C 85,269.04,140.96,325,210,325 C 279.04,325,335,269.04,335,200 C 335,130.96,279.04,75,210,75'
+      ]);
+    });
+
+    it('A divide B', () => {
+      expect(applyBooleanOperation(p1, p2, 'A divide B').map(p => p.asSvgPath())).toStrictEqual([
+        'M 50,50 L 400,50 L 400,350 L 50,350 L 50,50 M 210,75 C 140.96,75,85,130.96,85,200 C 85,269.04,140.96,325,210,325 C 279.04,325,335,269.04,335,200 C 335,130.96,279.04,75,210,75',
+        'M 210,75 A 125,125,0,0,1,335,200 A 125,125,0,0,1,210,325 A 125,125,0,0,1,85,200 A 125,125,0,0,1,210,75'
+      ]);
+    });
   });
 });
