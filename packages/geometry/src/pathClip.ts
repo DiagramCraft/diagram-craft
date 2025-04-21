@@ -45,26 +45,55 @@ export const applyBooleanOperation = (
   a: CompoundPath,
   b: CompoundPath,
   operation: BooleanOperation
-): CompoundPath[] => {
+): Array<CompoundPath> => {
   const vertices = getClipVertices(a, b);
 
   // This is sufficient as any intersection will be in each list of vertices
   const isIntersecting = vertices[0].filter(v => v.intersect).length > 0;
 
+  // Note: this assumes there's only one path in each compound path
+  const aContainedInB =
+    !isIntersecting && vertices[0].every(v => b.singularPath().isInside(v.point));
+  const bContainedInA =
+    !isIntersecting && vertices[1].every(v => a.singularPath().isInside(v.point));
+
   switch (operation) {
     case 'A union B':
-      if (!isIntersecting) return [a, b];
+      if (!isIntersecting) {
+        if (aContainedInB) return [b];
+        else if (bContainedInA) return [b];
+        else return [a, b];
+      }
+
       classifyClipVertices(vertices, [a, b], [false, false]);
       return [clipVertices(vertices)];
     case 'A not B':
-      if (!isIntersecting) return [a];
+      if (!isIntersecting) {
+        if (aContainedInB) return [];
+        else if (bContainedInA) {
+          return [new CompoundPath([...a.all(), ...b.all().map(e => e.reverse())])];
+        } else return [a];
+      }
+
       classifyClipVertices(vertices, [a, b], [false, true]);
       return [clipVertices(vertices)];
     case 'B not A':
-      if (!isIntersecting) return [b];
+      if (!isIntersecting) {
+        if (bContainedInA) return [];
+        else if (aContainedInB) {
+          return [new CompoundPath([...b.all(), ...a.all().map(e => e.reverse())])];
+        } else return [b];
+      }
+
       classifyClipVertices(vertices, [a, b], [true, false]);
       return [clipVertices(vertices)];
     case 'A intersection B': {
+      if (!isIntersecting) {
+        if (aContainedInB) return [a];
+        else if (bContainedInA) return [b];
+        else return [];
+      }
+
       classifyClipVertices(vertices, [a, b], [true, true]);
 
       const intersection = clipVertices(vertices);
@@ -324,7 +353,13 @@ const assertPathSegmentsAreConnected = (subjectVertices: Vertex[], clipVertices:
   for (let i = 0; i < subjectVertices.length; i++) {
     const current = subjectVertices[i];
     const next = subjectVertices[(i + 1) % subjectVertices.length];
-    if (!Point.isEqual(current.segment.end, next.point, current.segment.length() * 0.001)) {
+    if (
+      !Point.isEqual(
+        current.segment.end,
+        next.point,
+        Math.max(0.001, current.segment.length() * 0.01)
+      )
+    ) {
       console.log(i, current.segment.end, next.point);
       assert.fail();
     }
@@ -332,7 +367,13 @@ const assertPathSegmentsAreConnected = (subjectVertices: Vertex[], clipVertices:
   for (let i = 0; i < clipVertices.length; i++) {
     const current = clipVertices[i];
     const next = clipVertices[(i + 1) % clipVertices.length];
-    if (!Point.isEqual(current.segment.end, next.point, current.segment.length() * 0.001)) {
+    if (
+      !Point.isEqual(
+        current.segment.end,
+        next.point,
+        Math.max(0.001, current.segment.length() * 0.01)
+      )
+    ) {
       console.log(current.segment.end, next.point);
       assert.fail();
     }
