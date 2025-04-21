@@ -131,12 +131,7 @@ export class Path {
     const newSegmentList: PathSegment[] = [];
     const segments = makeSegmentList(this.#start, this.#path).segments;
     for (let i = segments.length - 1; i >= 0; i--) {
-      const s = segments[i];
-      const start = s.start;
-      const end = s.end;
-      s.end = start;
-      s.start = end;
-      newSegmentList.push(s);
+      newSegmentList.push(segments[i].reverse());
     }
 
     return new Path(

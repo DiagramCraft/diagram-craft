@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { PathBuilder } from '@diagram-craft/geometry/pathBuilder';
+import { CompoundPath, PathBuilder } from '@diagram-craft/geometry/pathBuilder';
 import {
   applyBooleanOperation,
   classifyClipVertices,
@@ -8,6 +8,8 @@ import {
 import { Path } from '@diagram-craft/geometry/path';
 import { TEST_CASES } from '@diagram-craft/geometry/pathClip.testCases';
 import { Box } from '@diagram-craft/geometry/box';
+import { Scale, Translation } from '@diagram-craft/geometry/transform';
+import { _p, Point } from '@diagram-craft/geometry/point';
 
 const BooleanTest = (props: { p1: PathBuilder; p2: PathBuilder }) => {
   const p1 = props.p1;
@@ -34,6 +36,37 @@ const BooleanTest = (props: { p1: PathBuilder; p2: PathBuilder }) => {
 
   const scale = Math.min(120 / bounds.w, 120 / bounds.h);
   const svgTransform = `scale(${scale}, ${scale}) translate(${-bounds.x}, ${-bounds.y}) `;
+
+  const classifyPath = (p: CompoundPath) => {
+    const sharedWithSubject = p
+      .all()
+      .every(seg =>
+        seg.segments.every(
+          s =>
+            subject.some(v => Point.isEqual(v.point, s.start) || Point.isEqual(v.point, s.end)) ||
+            cp1.singularPath().isInside(s.start)
+        )
+      );
+    const sharesWithClip = p
+      .all()
+      .every(seg =>
+        seg.segments.every(
+          s =>
+            clip.some(v => Point.isEqual(v.point, s.start) || Point.isEqual(v.point, s.end)) ||
+            cp2.singularPath().isInside(s.start)
+        )
+      );
+
+    if (sharedWithSubject && sharesWithClip) {
+      return 'both';
+    } else if (sharedWithSubject) {
+      return 'subject';
+    } else if (sharesWithClip) {
+      return 'clip';
+    } else {
+      return 'both';
+    }
+  };
 
   return (
     <svg
@@ -234,17 +267,15 @@ const BooleanTest = (props: { p1: PathBuilder; p2: PathBuilder }) => {
               strokeWidth={1 / scale}
             />
 
-            {aUnionB
-              .flatMap(cp => cp.all())
-              .map((p, idx) => (
-                <path
-                  key={idx}
-                  d={p.asSvgPath()}
-                  stroke={'red'}
-                  fill={'rgba(255, 0, 0, 0.25)'}
-                  strokeWidth={1 / scale}
-                />
-              ))}
+            {aUnionB.map((p, idx) => (
+              <path
+                key={idx}
+                d={p.asSvgPath()}
+                stroke={'red'}
+                fill={'rgba(255, 0, 0, 0.25)'}
+                strokeWidth={1 / scale}
+              />
+            ))}
 
             {aUnionB
               .flatMap(cp => cp.all())
@@ -278,17 +309,15 @@ const BooleanTest = (props: { p1: PathBuilder; p2: PathBuilder }) => {
               strokeWidth={1 / scale}
             />
 
-            {aNotB
-              .flatMap(cp => cp.all())
-              .map((p, idx) => (
-                <path
-                  key={idx}
-                  d={p.asSvgPath()}
-                  stroke={'red'}
-                  fill={'rgba(255, 0, 0, 0.25)'}
-                  strokeWidth={1 / scale}
-                />
-              ))}
+            {aNotB.map((p, idx) => (
+              <path
+                key={idx}
+                d={p.asSvgPath()}
+                stroke={'blue'}
+                fill={'rgba(0, 0, 255, 0.25)'}
+                strokeWidth={1 / scale}
+              />
+            ))}
 
             {aNotB
               .flatMap(cp => cp.all())
@@ -322,17 +351,15 @@ const BooleanTest = (props: { p1: PathBuilder; p2: PathBuilder }) => {
               strokeWidth={1 / scale}
             />
 
-            {bNotA
-              .flatMap(cp => cp.all())
-              .map((p, idx) => (
-                <path
-                  key={idx}
-                  d={p.asSvgPath()}
-                  stroke={'red'}
-                  fill={'rgba(255, 0, 0, 0.25)'}
-                  strokeWidth={1 / scale}
-                />
-              ))}
+            {bNotA.map((p, idx) => (
+              <path
+                key={idx}
+                d={p.asSvgPath()}
+                stroke={'green'}
+                fill={'rgba(0, 255, 0, 0.25)'}
+                strokeWidth={1 / scale}
+              />
+            ))}
 
             {bNotA
               .flatMap(cp => cp.all())
@@ -366,17 +393,15 @@ const BooleanTest = (props: { p1: PathBuilder; p2: PathBuilder }) => {
               strokeWidth={1 / scale}
             />
 
-            {aIntersectionB
-              .flatMap(cp => cp.all())
-              .map((p, idx) => (
-                <path
-                  key={idx}
-                  d={p.asSvgPath()}
-                  stroke={'red'}
-                  fill={'rgba(255, 0, 0, 0.25)'}
-                  strokeWidth={1 / scale}
-                />
-              ))}
+            {aIntersectionB.map((p, idx) => (
+              <path
+                key={idx}
+                d={p.asSvgPath()}
+                stroke={'red'}
+                fill={'rgba(255, 0, 0, 0.25)'}
+                strokeWidth={1 / scale}
+              />
+            ))}
 
             {aIntersectionB
               .flatMap(cp => cp.all())
@@ -412,17 +437,24 @@ const BooleanTest = (props: { p1: PathBuilder; p2: PathBuilder }) => {
               strokeWidth={1 / scale}
             />
 
-            {aXorB
-              .flatMap(cp => cp.all())
-              .map((p, idx) => (
+            {aXorB.map((p, idx) => {
+              const k = classifyPath(p);
+              return (
                 <path
                   key={idx}
                   d={p.asSvgPath()}
-                  stroke={'red'}
-                  fill={'rgba(255, 0, 0, 0.25)'}
+                  stroke={k === 'subject' ? 'blue' : k === 'clip' ? 'green' : 'red'}
+                  fill={
+                    k === 'subject'
+                      ? 'rgba(0, 0, 255, 0.25)'
+                      : k === 'clip'
+                        ? 'rgba(0, 255, 0, 0.25)'
+                        : 'rgba(255, 0, 0, 0.25)'
+                  }
                   strokeWidth={1 / scale}
                 />
-              ))}
+              );
+            })}
 
             {aXorB
               .flatMap(cp => cp.all())
@@ -456,17 +488,24 @@ const BooleanTest = (props: { p1: PathBuilder; p2: PathBuilder }) => {
               strokeWidth={1 / scale}
             />
 
-            {aDivideB
-              .flatMap(cp => cp.all())
-              .map((p, idx) => (
+            {aDivideB.map((p, idx) => {
+              const k = classifyPath(p);
+              return (
                 <path
                   key={idx}
                   d={p.asSvgPath()}
-                  stroke={'red'}
-                  fill={'rgba(255, 0, 0, 0.25)'}
+                  stroke={k === 'subject' ? 'blue' : k === 'clip' ? 'green' : 'red'}
+                  fill={
+                    k === 'subject'
+                      ? 'rgba(0, 0, 255, 0.25)'
+                      : k === 'clip'
+                        ? 'rgba(0, 255, 0, 0.25)'
+                        : 'rgba(255, 0, 0, 0.25)'
+                  }
                   strokeWidth={1 / scale}
                 />
-              ))}
+              );
+            })}
 
             {aDivideB
               .flatMap(cp => cp.all())
@@ -498,10 +537,10 @@ export const Primary: Story = {
   args: {
     p1: PathBuilder.fromString(
       'M 0.1865,0.0781 C 0.3899,0.1569,0.6487,-0.0614,0.8521,0.0174 L 1,1 L 0.2604,1 C 0.242,0.7695,-0.2645,0.4693,0.1865,0.0781'
-    ),
+    ).setTransform([new Translation(_p(-0.3, -0.3)), new Scale(100, 100)]),
     p2: PathBuilder.fromString(
       'M -0.6,-0.6 L 0.1539,-0.6 C 0.201,-0.35,0.5308,-0.4143,0.3424,0.4 C 0.1068,0.3601,-0.4356,0.2802,-0.6,0.2403 L -0.6,-0.6'
-    )
+    ).setTransform([new Scale(100, 100)])
   }
 };
 
@@ -519,4 +558,16 @@ export const NonIntersecting: Story = {
 
 export const CircleOverlappingRectangle: Story = {
   args: TEST_CASES.CircleOverlappingRectangle()
+};
+
+export const CircleInRectangle: Story = {
+  args: TEST_CASES.CircleInRectangle()
+};
+
+export const CircleInRectangleInverted: Story = {
+  args: TEST_CASES.CircleInRectangleInverted()
+};
+
+export const RectangleInCircle: Story = {
+  args: TEST_CASES.RectangleInCircle()
 };

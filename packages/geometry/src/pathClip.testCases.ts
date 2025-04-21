@@ -49,5 +49,17 @@ export const TEST_CASES = {
   CircleOverlappingRectangle: () => ({
     p1: makeRect(50, 50, 300, 200),
     p2: makeCircle(355, 240, 125)
+  }),
+  CircleInRectangle: () => ({
+    p1: makeCircle(210, 200, 125),
+    p2: makeRect(50, 50, 350, 300)
+  }),
+  CircleInRectangleInverted: () => ({
+    p2: makeCircle(210, 200, 125),
+    p1: makeRect(50, 50, 350, 300)
+  }),
+  RectangleInCircle: () => ({
+    p1: makeRect(150, 150, 150, 150),
+    p2: makeCircle(210, 200, 185)
   })
 };

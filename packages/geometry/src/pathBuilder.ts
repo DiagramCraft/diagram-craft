@@ -301,6 +301,7 @@ export class PathBuilder {
   setTransform(transform: Transform[]) {
     this.transformList = transform;
     this.clearCache();
+    return this;
   }
 
   getPaths() {
