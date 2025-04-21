@@ -324,17 +324,17 @@ const assertPathSegmentsAreConnected = (subjectVertices: Vertex[], clipVertices:
   for (let i = 0; i < subjectVertices.length; i++) {
     const current = subjectVertices[i];
     const next = subjectVertices[(i + 1) % subjectVertices.length];
-    if (!Point.isEqual(current.segment.end, next.point, 0.1)) {
+    if (!Point.isEqual(current.segment.end, next.point, current.segment.length() * 0.001)) {
       console.log(i, current.segment.end, next.point);
-      //assert.fail();
+      assert.fail();
     }
   }
   for (let i = 0; i < clipVertices.length; i++) {
     const current = clipVertices[i];
     const next = clipVertices[(i + 1) % clipVertices.length];
-    if (!Point.isEqual(current.segment.end, next.point, 0.1)) {
+    if (!Point.isEqual(current.segment.end, next.point, current.segment.length() * 0.001)) {
       console.log(current.segment.end, next.point);
-      //assert.fail();
+      assert.fail();
     }
   }
 };

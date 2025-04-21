@@ -15,10 +15,6 @@ const BooleanTest = (props: { p1: PathBuilder; p2: PathBuilder }) => {
 
   const bounds = Box.boundingBox([p1.getPaths().bounds(), p2.getPaths().bounds()]);
 
-  //const transform = TransformFactory.fromTo(bounds, { x: -50, y: -50, w: 100, h: 100, r: 0 })
-  //p1.setTransform(TransformFactory.fromTo(bounds, { x: -50, y: -50, w: 100, h: 100, r: 0 }));
-  //p2.setTransform(TransformFactory.fromTo(bounds, { x: -50, y: -50, w: 100, h: 100, r: 0 }));
-
   const cp1 = p1.getPaths();
   const cp2 = p2.getPaths();
 
@@ -36,7 +32,6 @@ const BooleanTest = (props: { p1: PathBuilder; p2: PathBuilder }) => {
   const aXorB = applyBooleanOperation(cp1, cp2, 'A xor B');
   const aDivideB = applyBooleanOperation(cp1, cp2, 'A divide B');
 
-  console.log(bounds);
   const scale = Math.min(120 / bounds.w, 120 / bounds.h);
   const svgTransform = `scale(${scale}, ${scale}) translate(${-bounds.x}, ${-bounds.y}) `;
 
