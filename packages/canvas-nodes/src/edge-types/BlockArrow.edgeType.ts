@@ -2,7 +2,7 @@ import { Path } from '@diagram-craft/geometry/path';
 import { BaseEdgeComponent } from '@diagram-craft/canvas/components/BaseEdgeComponent';
 import { LengthOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
 import { Vector } from '@diagram-craft/geometry/vector';
-import { RawSegment } from '@diagram-craft/geometry/pathBuilder';
+import { RawSegment } from '@diagram-craft/geometry/pathListBuilder';
 import { Point } from '@diagram-craft/geometry/point';
 import { DeepReadonly, DeepRequired } from '@diagram-craft/utils/types';
 import { ShapeEdgeDefinition } from '@diagram-craft/canvas/shape/shapeEdgeDefinition';

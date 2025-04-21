@@ -4,7 +4,7 @@ import {
   BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
-import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
+import { PathListBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathListBuilder';
 import { _p, Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
 import { Vector } from '@diagram-craft/geometry/vector';
@@ -37,7 +37,7 @@ export class StarNodeDefinition extends ShapeNodeDefinition {
     const start = -Math.PI / 2;
     const dTheta = (2 * Math.PI) / sides;
 
-    const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
+    const pathBuilder = new PathListBuilder(unitCoordinateSystem(def.bounds));
     pathBuilder.moveTo(Point.of(0.5, 0));
 
     for (let i = 0; i < sides; i++) {

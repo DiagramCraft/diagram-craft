@@ -14,7 +14,7 @@ import {
   TimeOffsetOnSegment,
   WithSegment
 } from './pathPosition';
-import { RawSegment } from './pathBuilder';
+import { RawSegment } from './pathListBuilder';
 import { BezierUtils } from './bezier';
 import { Box } from './box';
 import { assert, VERIFY_NOT_REACHED, VerifyNotReached } from '@diagram-craft/utils/assert';
@@ -144,6 +144,11 @@ export class Path {
     const line = new Path(p, [['L', Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER]]);
     const intersections = this.intersections(line);
     return intersections.length % 2 !== 0;
+  }
+
+  isOn(p: Point) {
+    const pp = this.projectPoint(p);
+    return Point.isEqual(pp.point, p, 0.001);
   }
 
   processSegments(fn: (segments: ReadonlyArray<PathSegment>) => PathSegment[]) {

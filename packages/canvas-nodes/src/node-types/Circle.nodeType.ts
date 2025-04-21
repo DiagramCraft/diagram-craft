@@ -4,7 +4,7 @@ import {
   BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
-import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
+import { PathListBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathListBuilder';
 import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Anchor } from '@diagram-craft/model/anchor';
@@ -25,7 +25,7 @@ export class CircleNodeDefinition extends ShapeNodeDefinition {
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const b = new PathBuilder(unitCoordinateSystem(def.bounds));
+    const b = new PathListBuilder(unitCoordinateSystem(def.bounds));
     b.moveTo(_p(0.5, 0));
     b.arcTo(_p(1, 0.5), 0.5, 0.5, 0, 0, 1);
     b.arcTo(_p(0.5, 1), 0.5, 0.5, 0, 0, 1);

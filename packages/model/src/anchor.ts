@@ -3,7 +3,7 @@ import { DiagramNode } from './diagramNode';
 import { Box } from '@diagram-craft/geometry/box';
 import { Range } from '@diagram-craft/geometry/range';
 import { Line } from '@diagram-craft/geometry/line';
-import { CompoundPath } from '@diagram-craft/geometry/pathBuilder';
+import { PathList } from '@diagram-craft/geometry/pathListBuilder';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { Path } from '@diagram-craft/geometry/path';
 import { PointOnPath } from '@diagram-craft/geometry/pathPosition';
@@ -126,7 +126,7 @@ export const makeAnchorId = (p: Point) => {
 };
 
 export const AnchorStrategy = {
-  getAnchorsByDirection: (node: DiagramNode, paths: CompoundPath, numberOfDirections: number) => {
+  getAnchorsByDirection: (node: DiagramNode, paths: PathList, numberOfDirections: number) => {
     const newAnchors: Array<Anchor> = [];
     newAnchors.push({ id: 'c', start: { x: 0.5, y: 0.5 }, clip: true, type: 'center' });
 
@@ -168,7 +168,7 @@ export const AnchorStrategy = {
   },
   getEdgeAnchors: (
     node: DiagramNode,
-    paths: CompoundPath,
+    paths: PathList,
     numberPerEdge = 1,
     direction: BoundaryDirection = 'unknown'
   ) => {

@@ -1,6 +1,6 @@
 import { Path } from './path';
 import { Box } from './box';
-import { RawSegment } from './pathBuilder';
+import { RawSegment } from './pathListBuilder';
 
 export const PathUtils = {
   scalePath: (path: Path, fromBounds: Box, toBounds: Box) => {

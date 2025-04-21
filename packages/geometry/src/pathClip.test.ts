@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { applyBooleanOperation } from './pathClip';
-import { CompoundPath, PathBuilder } from './pathBuilder';
+import { PathList, PathListBuilder } from './pathListBuilder';
 import { TEST_CASES } from './pathClip.testCases';
 
-const makePaths = (props: { p1: PathBuilder; p2: PathBuilder }): [CompoundPath, CompoundPath] => {
+const makePaths = (props: { p1: PathListBuilder; p2: PathListBuilder }): [PathList, PathList] => {
   const cp1 = props.p1.getPaths();
   const cp2 = props.p2.getPaths();
 

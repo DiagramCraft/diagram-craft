@@ -1,4 +1,4 @@
-import { CompoundPath, PathBuilder } from '@diagram-craft/geometry/pathBuilder';
+import { PathList, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { Box } from '@diagram-craft/geometry/box';
 import {
   applyBooleanOperation,
@@ -8,7 +8,7 @@ import {
 import { Point } from '@diagram-craft/geometry/point';
 import { Path } from '@diagram-craft/geometry/path';
 
-export const BooleanTest = (props: { p1: PathBuilder; p2: PathBuilder }) => {
+export const BooleanTest = (props: { p1: PathListBuilder; p2: PathListBuilder }) => {
   const p1 = props.p1;
   const p2 = props.p2;
 
@@ -34,7 +34,7 @@ export const BooleanTest = (props: { p1: PathBuilder; p2: PathBuilder }) => {
   const scale = Math.min(120 / bounds.w, 120 / bounds.h);
   const svgTransform = `scale(${scale}, ${scale}) translate(${-bounds.x}, ${-bounds.y}) `;
 
-  const classifyPath = (p: CompoundPath) => {
+  const classifyPath = (p: PathList) => {
     const sharedWithSubject = p
       .all()
       .every(seg =>

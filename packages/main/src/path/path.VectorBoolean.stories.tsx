@@ -25,3 +25,19 @@ export const CircleInRectangle: Story = {
 export const RectangleInCircle: Story = {
   args: TEST_CASES.RectangleInCircle()
 };
+
+export const CircleOnRectangle: Story = {
+  args: TEST_CASES.CircleOnRectangle()
+};
+
+export const RectOverRectWithHole: Story = {
+  args: TEST_CASES.RectOverRectWithHole()
+};
+
+export const CircleOverTwoRects: Story = {
+  args: TEST_CASES.CircleOverTwoRects()
+};
+
+export const CircleOverlappingCircle: Story = {
+  args: TEST_CASES.CircleOverlappingCircle()
+};

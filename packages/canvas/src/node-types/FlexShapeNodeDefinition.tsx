@@ -2,7 +2,7 @@ import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
 import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../components/BaseNodeComponent';
 import { NodeCapability } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
-import { PathBuilder } from '@diagram-craft/geometry/pathBuilder';
+import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { Box } from '@diagram-craft/geometry/box';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
@@ -233,7 +233,7 @@ export class FlexShapeNodeDefinition<
     });
   }
 
-  getBoundingPathBuilder(node: DiagramNode): PathBuilder {
+  getBoundingPathBuilder(node: DiagramNode): PathListBuilder {
     return this.config.boundary.getBoundingPathBuilder(node);
   }
 

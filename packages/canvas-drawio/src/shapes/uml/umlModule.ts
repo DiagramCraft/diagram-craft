@@ -10,7 +10,10 @@ import {
   BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
-import { PathBuilder, translateCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
+import {
+  PathListBuilder,
+  translateCoordinateSystem
+} from '@diagram-craft/geometry/pathListBuilder';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { _p } from '@diagram-craft/geometry/point';
 
@@ -113,7 +116,7 @@ export class UmlModuleNodeDefinition extends ShapeNodeDefinition {
     const height = JettyHeight.get(node.renderProps.custom.umlModule);
     const hw = width / 2;
 
-    const pb = new PathBuilder(translateCoordinateSystem(node.bounds));
+    const pb = new PathListBuilder(translateCoordinateSystem(node.bounds));
     pb.moveTo(_p(hw, 0))
       .lineTo(_p(node.bounds.w, 0))
       .lineTo(_p(node.bounds.w, node.bounds.h))

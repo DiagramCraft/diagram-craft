@@ -1,6 +1,6 @@
 import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../components/BaseNodeComponent';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
-import { PathBuilder, PathBuilderHelper } from '@diagram-craft/geometry/pathBuilder';
+import { PathListBuilder, PathBuilderHelper } from '@diagram-craft/geometry/pathListBuilder';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -251,7 +251,7 @@ class SwimlaneComponent extends BaseNodeComponent {
       );
     });
 
-    const pathBuilder = new PathBuilder();
+    const pathBuilder = new PathListBuilder();
 
     const hasOuterBorder = shapeProps.outerBorder !== false;
     const hasTitleBorder = shapeProps.titleBorder !== false;
@@ -280,7 +280,7 @@ class SwimlaneComponent extends BaseNodeComponent {
       startY += titleSize;
 
       if (hasTitleBorder) {
-        const titlePathBuilder = new PathBuilder();
+        const titlePathBuilder = new PathListBuilder();
         titlePathBuilder.moveTo(Point.of(bounds.x, startY));
         titlePathBuilder.lineTo(Point.of(bounds.x, bounds.y));
         titlePathBuilder.lineTo(Point.of(bounds.x + bounds.w, bounds.y));
@@ -299,7 +299,7 @@ class SwimlaneComponent extends BaseNodeComponent {
         // In case we have an outer border, the above code draws a transparent outline,
         // so we are now missing the bottom border
         if (hasOuterBorder) {
-          const titlePathBuilder = new PathBuilder();
+          const titlePathBuilder = new PathListBuilder();
           titlePathBuilder.moveTo(Point.of(bounds.x, startY));
           titlePathBuilder.lineTo(Point.of(bounds.x + bounds.w, startY));
 

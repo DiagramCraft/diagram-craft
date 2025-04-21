@@ -1,4 +1,4 @@
-import { CompoundPath } from './pathBuilder';
+import { PathList } from './pathListBuilder';
 import { Point } from './point';
 import { PathSegment } from './pathSegment';
 import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
@@ -42,24 +42,28 @@ export type BooleanOperation =
  */
 
 export const applyBooleanOperation = (
-  a: CompoundPath,
-  b: CompoundPath,
+  a: PathList,
+  b: PathList,
   operation: BooleanOperation
-): Array<CompoundPath> => {
+): Array<PathList> => {
   const vertices = getClipVertices(a, b);
 
-  // This is sufficient as any intersection will be in each list of vertices
-  const isIntersecting = vertices[0].filter(v => v.intersect).length > 0;
+  // We need to classify vertices to determine if each intersection is also a crossing
+  classifyClipVertices(vertices, [a, b], [false, false]);
+
+  const isCrossing =
+    vertices[0].filter(v => v.intersect).length > 0 &&
+    vertices[1].filter(v => v.intersect).length > 0;
 
   // Note: this assumes there's only one path in each compound path
   const aContainedInB =
-    !isIntersecting && vertices[0].every(v => b.singularPath().isInside(v.point));
+    !isCrossing && vertices[0].every(v => b.isInside(v.point) || b.isOn(v.point));
   const bContainedInA =
-    !isIntersecting && vertices[1].every(v => a.singularPath().isInside(v.point));
+    !isCrossing && vertices[1].every(v => a.isInside(v.point) || a.isOn(v.point));
 
   switch (operation) {
     case 'A union B':
-      if (!isIntersecting) {
+      if (!isCrossing) {
         if (aContainedInB) return [b];
         else if (bContainedInA) return [b];
         else return [a, b];
@@ -68,27 +72,27 @@ export const applyBooleanOperation = (
       classifyClipVertices(vertices, [a, b], [false, false]);
       return [clipVertices(vertices)];
     case 'A not B':
-      if (!isIntersecting) {
+      if (!isCrossing) {
         if (aContainedInB) return [];
         else if (bContainedInA) {
-          return [new CompoundPath([...a.all(), ...b.all().map(e => e.reverse())])];
+          return [new PathList([...a.all(), ...b.all().map(e => e.reverse())])];
         } else return [a];
       }
 
       classifyClipVertices(vertices, [a, b], [false, true]);
       return [clipVertices(vertices)];
     case 'B not A':
-      if (!isIntersecting) {
+      if (!isCrossing) {
         if (bContainedInA) return [];
         else if (aContainedInB) {
-          return [new CompoundPath([...b.all(), ...a.all().map(e => e.reverse())])];
+          return [new PathList([...b.all(), ...a.all().map(e => e.reverse())])];
         } else return [b];
       }
 
       classifyClipVertices(vertices, [a, b], [true, false]);
       return [clipVertices(vertices)];
     case 'A intersection B': {
-      if (!isIntersecting) {
+      if (!isCrossing) {
         if (aContainedInB) return [a];
         else if (bContainedInA) return [b];
         else return [];
@@ -148,10 +152,7 @@ const makeLinkedList = (vertices: Vertex[]) => {
   }
 };
 
-const sortIntoVertexList = (
-  p: CompoundPath,
-  intersectionVertices: MultiMap<PathSegment, Vertex>
-) => {
+const sortIntoVertexList = (p: PathList, intersectionVertices: MultiMap<PathSegment, Vertex>) => {
   const dest: Vertex[] = [];
   for (const s of p.singularPath().segments) {
     const intersectionsOnSegment = intersectionVertices.get(s) ?? [];
@@ -393,7 +394,7 @@ const assertPathSegmentsAreConnected = (subjectVertices: Vertex[], clipVertices:
     end for
   end for
  */
-export const getClipVertices = (cp1: CompoundPath, cp2: CompoundPath): [Vertex[], Vertex[]] => {
+export const getClipVertices = (cp1: PathList, cp2: PathList): [Vertex[], Vertex[]] => {
   assert.true(cp1.all().length === 1);
   assert.true(cp2.all().length === 1);
 
@@ -486,7 +487,7 @@ const isDegeneracy = (v: Vertex) =>
  */
 export const classifyClipVertices = (
   vertices: [Array<Vertex>, Array<Vertex>],
-  paths: [CompoundPath, CompoundPath],
+  paths: [PathList, PathList],
   type: [boolean, boolean]
 ) => {
   assert.true(paths[0].all().length === 1);
@@ -651,7 +652,7 @@ export const clipVertices = (p: [Array<Vertex>, Array<Vertex>]) => {
     assert.true(maxOuterLoop > 0);
   }
 
-  return new CompoundPath(
+  return new PathList(
     arrangeSegments(dest).map(arr => {
       return new Path(
         arr[0].start,

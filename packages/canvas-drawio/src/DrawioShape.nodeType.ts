@@ -1,6 +1,6 @@
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { PathBuilder, PathBuilderHelper } from '@diagram-craft/geometry/pathBuilder';
+import { PathListBuilder, PathBuilderHelper } from '@diagram-craft/geometry/pathListBuilder';
 import { Point } from '@diagram-craft/geometry/point';
 import {
   BaseNodeComponent,
@@ -100,7 +100,7 @@ class Compiler {
   private compileBoundingPath(): string {
     if (!this.$el) return '';
 
-    const pathBuilder = new PathBuilder();
+    const pathBuilder = new PathListBuilder();
     const background = this.$el.querySelector('background');
     this.parseElement(background, pathBuilder);
 
@@ -130,7 +130,7 @@ class Compiler {
     return newAnchors;
   }
 
-  private parseElement(element: Element | null, pathBuilder: PathBuilder) {
+  private parseElement(element: Element | null, pathBuilder: PathListBuilder) {
     if (!element) return;
 
     const outlines = element!.childNodes;
@@ -159,7 +159,7 @@ const compile = (def: DiagramNode, $el: Element | undefined): CompiledShape => {
   return compiled;
 };
 
-const parseShapeElement = ($el: Element, pathBuilder: PathBuilder) => {
+const parseShapeElement = ($el: Element, pathBuilder: PathListBuilder) => {
   Metrics.counter('parseShapeElement');
 
   if ($el.nodeName === 'rect') {
@@ -268,9 +268,9 @@ export class DrawioShapeNodeDefinition extends ShapeNodeDefinition {
     const shape = parse(def, this.stencil);
     const compiledShape = compile(def, shape);
 
-    if (compiledShape.boundingPath === '') return new PathBuilder();
+    if (compiledShape.boundingPath === '') return new PathListBuilder();
 
-    return PathBuilder.fromString(
+    return PathListBuilder.fromString(
       compiledShape.boundingPath,
       makeShapeTransform(compiledShape.size, def.bounds)
     );
@@ -511,7 +511,7 @@ class DrawioShapeComponent extends BaseNodeComponent {
       } else if (isShapeElement($el)) {
         if (!backgroundDrawn) drawBackground();
 
-        const pathBuilder = new PathBuilder(makeShapeTransform({ w, h }, props.node.bounds));
+        const pathBuilder = new PathListBuilder(makeShapeTransform({ w, h }, props.node.bounds));
         parseShapeElement($el, pathBuilder);
 
         if (pathBuilder.getPaths().all().length === 0) continue;

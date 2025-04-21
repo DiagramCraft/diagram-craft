@@ -34,7 +34,7 @@ export type RawCubicSegment = ['C', number, number, number, number, number, numb
  * @property {number} 1 - The x-coordinate of the end point of the line.
  * @property {number} 2 - The y-coordinate of the end point of the line.
  */
-export type RawLineSegment = ['L', number, number];
+type RawLineSegment = ['L', number, number];
 
 /**
  * Represents a raw arc segment in an SVG path.
@@ -48,7 +48,7 @@ export type RawLineSegment = ['L', number, number];
  * @property {number} 6 - The x-coordinate of the end point of the arc.
  * @property {number} 7 - The y-coordinate of the end point of the arc.
  */
-export type RawArcSegment = ['A', number, number, number, 0 | 1, 0 | 1, number, number];
+type RawArcSegment = ['A', number, number, number, 0 | 1, 0 | 1, number, number];
 
 /**
  * Represents a raw curve segment in an SVG path.
@@ -57,7 +57,7 @@ export type RawArcSegment = ['A', number, number, number, 0 | 1, 0 | 1, number, 
  * @property {number} 1 - The x-coordinate of the end point of the curve.
  * @property {number} 2 - The y-coordinate of the end point of the curve.
  */
-export type RawCurveSegment = ['T', number, number];
+type RawCurveSegment = ['T', number, number];
 
 /**
  * Represents a raw quadratic Bézier curve segment in an SVG path.
@@ -68,7 +68,7 @@ export type RawCurveSegment = ['T', number, number];
  * @property {number} 3 - The x-coordinate of the end point of the curve.
  * @property {number} 4 - The y-coordinate of the end point of the curve.
  */
-export type RawQuadSegment = ['Q', number, number, number, number];
+type RawQuadSegment = ['Q', number, number, number, number];
 
 export type RawSegment =
   | RawCubicSegment
@@ -90,7 +90,7 @@ export const inverseUnitCoordinateSystem = (b: Box) => {
   return (p: Point) => ({ x: (p.x - b.x) / b.w, y: (p.y - b.y) / b.h });
 };
 
-export class CompoundPath {
+export class PathList {
   constructor(private readonly paths: Path[]) {}
 
   singularPath() {
@@ -126,7 +126,7 @@ export class CompoundPath {
       dest.push(PathUtils.scalePath(p, source, target));
     }
 
-    return new CompoundPath(dest);
+    return new PathList(dest);
   }
 
   projectPoint(p: Point): { pathIdx: number; offset: TimeOffsetOnSegment & LengthOffsetOnPath } {
@@ -148,13 +148,26 @@ export class CompoundPath {
     return best!;
   }
 
-  split(p: { pathIdx: number; offset: TimeOffsetOnSegment }): [CompoundPath, CompoundPath] {
+  split(p: { pathIdx: number; offset: TimeOffsetOnSegment }): [PathList, PathList] {
     const [before, after] = this.paths[p.pathIdx].split(p.offset);
 
     return [
-      new CompoundPath([...this.paths.slice(0, p.pathIdx), before]),
-      new CompoundPath([after, ...this.paths.slice(p.pathIdx + 1)])
+      new PathList([...this.paths.slice(0, p.pathIdx), before]),
+      new PathList([after, ...this.paths.slice(p.pathIdx + 1)])
     ];
+  }
+
+  isInside(p: Point): boolean {
+    const line = new Path(p, [['L', Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER]]);
+    const intersections = this.all().flatMap(p => p.intersections(line));
+    return intersections.length % 2 !== 0;
+  }
+
+  isOn(p: Point): boolean {
+    for (const path of this.paths) {
+      if (path.isOn(p)) return true;
+    }
+    return false;
   }
 }
 
@@ -169,7 +182,7 @@ type Part = {
   instructions: RawSegment[];
 };
 
-export class PathBuilder {
+export class PathListBuilder {
   private parts: Part[] = [{ start: undefined, instructions: [] }];
 
   private transformList: Transform[] | undefined = undefined;
@@ -183,7 +196,7 @@ export class PathBuilder {
   constructor(private readonly transform: PathBuilderTransform = p => p) {}
 
   static fromString(path: string, transform: PathBuilderTransform = p => p) {
-    const d = new PathBuilder(transform);
+    const d = new PathListBuilder(transform);
 
     parseSvgPath(path).forEach(p => {
       const [t, ...params] = p;
@@ -284,10 +297,17 @@ export class PathBuilder {
   // TODO: Is there a way to not have to need this method
   //       ... it's a bit weird that it just appends the instructions without
   //       checking that the start corresponds to the end of the previous path
-  appendInstructions(path: PathBuilder) {
+  appendInstructions(path: PathListBuilder) {
     for (const p of path.active.instructions) {
       this.active.instructions.push(p);
     }
+  }
+
+  append(path: PathListBuilder) {
+    for (const p of path.parts) {
+      this.parts.push(p);
+    }
+    return this;
   }
 
   setRotation(rotation: number, centerOfRotation: Point) {
@@ -312,7 +332,7 @@ export class PathBuilder {
       }
     }
 
-    return new CompoundPath(paths);
+    return new PathList(paths);
   }
 
   isPathIsClockwise(p: Path) {
@@ -455,7 +475,7 @@ export class PathBuilder {
 }
 
 export const PathBuilderHelper = {
-  rect: (b: PathBuilder, box: Box) => {
+  rect: (b: PathListBuilder, box: Box) => {
     b.moveTo(Point.of(box.x, box.y));
     b.lineTo(Point.of(box.x + box.w, box.y));
     b.lineTo(Point.of(box.x + box.w, box.y + box.h));

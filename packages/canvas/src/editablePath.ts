@@ -3,10 +3,10 @@ import { Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
 import { Vector } from '@diagram-craft/geometry/vector';
 import {
-  CompoundPath,
+  PathList,
   inverseUnitCoordinateSystem,
-  PathBuilder
-} from '@diagram-craft/geometry/pathBuilder';
+  PathListBuilder
+} from '@diagram-craft/geometry/pathListBuilder';
 import { CubicSegment, LineSegment, PathSegment } from '@diagram-craft/geometry/pathSegment';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -103,7 +103,7 @@ export class EditablePath {
   private originalSvgPath: string;
 
   constructor(
-    path: CompoundPath,
+    path: PathList,
     public readonly node: DiagramNode
   ) {
     this.buildFromPath(path.segments());
@@ -163,7 +163,7 @@ export class EditablePath {
 
   private getPath(type: 'as-stored' | 'as-displayed') {
     const bounds = this.node.bounds;
-    const pb = new PathBuilder(
+    const pb = new PathListBuilder(
       type === 'as-displayed' ? p => p : inverseUnitCoordinateSystem(bounds)
     );
 
@@ -205,7 +205,7 @@ export class EditablePath {
     return pb.getPaths();
   }
 
-  private resizePathToUnitLCS(): { path: CompoundPath; bounds: Box } {
+  private resizePathToUnitLCS(): { path: PathList; bounds: Box } {
     const rot = this.node.bounds.r;
 
     const nodePath = new GenericPathNodeDefinition().getBoundingPathBuilder(this.node).getPaths();
@@ -213,7 +213,7 @@ export class EditablePath {
 
     // Raw path and raw bounds represent the path in the original unit coordinate system,
     // but since waypoints have been moved, some points may lie outside the [0, 1] range
-    const rawPath = PathBuilder.fromString(
+    const rawPath = PathListBuilder.fromString(
       this.node.renderProps.custom.genericPath?.path ?? this.originalSvgPath
     ).getPaths();
     const rawBounds = rawPath.bounds();
@@ -225,7 +225,7 @@ export class EditablePath {
     const diff = Point.subtract(startPointAfter, startPointBefore);
 
     return {
-      path: PathBuilder.fromString(rawPath.asSvgPath(), p => ({
+      path: PathListBuilder.fromString(rawPath.asSvgPath(), p => ({
         x: p.x * (1 / rawBounds.w) - rawBounds.x,
         y: p.y * (1 / rawBounds.h) - rawBounds.y
       })).getPaths(),

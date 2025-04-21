@@ -4,7 +4,7 @@ import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { makeLinearGradient, makeRadialGradient } from './shapeFill';
 import { newid } from '@diagram-craft/utils/id';
 import { DASH_PATTERNS } from '../dashPatterns';
-import { PathBuilder } from '@diagram-craft/geometry/pathBuilder';
+import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { Point } from '@diagram-craft/geometry/point';
 import { Path } from '@diagram-craft/geometry/path';
 import { RenderedStyledPath, StyledPath } from './PathRenderer';
@@ -37,7 +37,7 @@ export class SVGGBuilder {
   #strokeStack: NodeProps['stroke'][] = [];
   #fillStack: NodeProps['fill'][] = [];
 
-  #shapes: (Path | PathBuilder)[] = [];
+  #shapes: (Path | PathListBuilder)[] = [];
 
   constructor(
     private readonly g: VNode & { type: 's' },
@@ -65,7 +65,7 @@ export class SVGGBuilder {
   static SVGPathBuilder = class {
     constructor(
       private readonly parent: SVGGBuilder,
-      private readonly b: PathBuilder,
+      private readonly b: PathListBuilder,
       x?: number,
       y?: number
     ) {
@@ -139,13 +139,13 @@ export class SVGGBuilder {
   };
 
   path(x?: number, y?: number) {
-    const pb = new PathBuilder();
+    const pb = new PathListBuilder();
     this.#shapes.push(pb);
 
     return new SVGGBuilder.SVGPathBuilder(this, pb, x, y);
   }
 
-  addShape(shape: Path | PathBuilder) {
+  addShape(shape: Path | PathListBuilder) {
     this.#shapes.push(shape);
     return this;
   }
@@ -251,7 +251,7 @@ export class SVGGBuilder {
   private applyBacking() {
     this.g.children.push(
       ...this.#shapes.map(s => {
-        const p = s instanceof PathBuilder ? s.getPaths().asSvgPath() : s.asSvgPath();
+        const p = s instanceof PathListBuilder ? s.getPaths().asSvgPath() : s.asSvgPath();
         return svg.path({
           'd': p,
           'class': 'svg-node__backing',
@@ -267,7 +267,7 @@ export class SVGGBuilder {
     this.g.children.push(
       ...this.#shapes.flatMap(s => {
         const styledPaths: StyledPath[] = [];
-        if (s instanceof PathBuilder) {
+        if (s instanceof PathListBuilder) {
           const paths = s.getPaths().all();
           for (const p of paths) {
             styledPaths.push({ path: p, style });
@@ -294,7 +294,7 @@ export class SVGGBuilder {
     const ew = w * this.#w;
     const eh = h * this.#h;
 
-    const pathBuilder = new PathBuilder();
+    const pathBuilder = new PathListBuilder();
 
     pathBuilder.moveTo(Point.of(ex + rx, ey));
     pathBuilder.lineTo(Point.of(ex + ew - rx, ey));
@@ -319,7 +319,7 @@ export class SVGGBuilder {
     const ex = this.#x + cx * this.#w;
     const ey = this.#y + cy * this.#h;
 
-    const b = new PathBuilder();
+    const b = new PathListBuilder();
     b.moveTo(Point.of(ex, ey - ry));
     b.arcTo(Point.of(ex + rx, ey), rx, ry, 0, 0, 1);
     b.arcTo(Point.of(ex, ey + ry), rx, ry, 0, 0, 1);

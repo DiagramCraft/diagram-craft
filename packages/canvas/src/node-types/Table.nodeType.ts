@@ -1,6 +1,6 @@
 import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../components/BaseNodeComponent';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
-import { PathBuilder, PathBuilderHelper } from '@diagram-craft/geometry/pathBuilder';
+import { PathListBuilder, PathBuilderHelper } from '@diagram-craft/geometry/pathListBuilder';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -263,7 +263,7 @@ class TableComponent extends BaseNodeComponent {
 
     const gap = props.nodeProps.custom.table.gap;
 
-    const pathBuilder = new PathBuilder();
+    const pathBuilder = new PathListBuilder();
 
     if (props.nodeProps.custom.table.outerBorder !== false) {
       const nodeProps = props.nodeProps;

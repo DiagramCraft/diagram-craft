@@ -7,7 +7,7 @@ import { GenericPathControlPointDrag } from '../drag/genericPathControlPointDrag
 import { NodeDrag } from '../drag/nodeDrag';
 import * as svg from '../component/vdom-svg';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
-import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
+import { PathListBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathListBuilder';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
@@ -33,7 +33,7 @@ export class GenericPathNodeDefinition extends ShapeNodeDefinition {
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
-    return PathBuilder.fromString(
+    return PathListBuilder.fromString(
       def.renderProps.custom.genericPath.path,
       unitCoordinateSystem(def.bounds)
     );

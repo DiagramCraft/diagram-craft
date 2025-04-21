@@ -2,7 +2,7 @@ import { DiagramNode, NodeTexts } from './diagramNode';
 import { assert } from '@diagram-craft/utils/assert';
 import { DiagramElement } from './diagramElement';
 import { DiagramEdge } from './diagramEdge';
-import { CompoundPath } from '@diagram-craft/geometry/pathBuilder';
+import { PathList } from '@diagram-craft/geometry/pathListBuilder';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from './unitOfWork';
@@ -78,7 +78,7 @@ export interface NodeDefinition {
   supports(capability: NodeCapability): boolean;
   getCustomPropertyDefinitions(node: DiagramNode): ReadonlyArray<CustomPropertyDefinition>;
 
-  getBoundingPath(node: DiagramNode): CompoundPath;
+  getBoundingPath(node: DiagramNode): PathList;
 
   // This returns anchors in local coordinates [0-1], [0-1]
   getAnchors(node: DiagramNode): ReadonlyArray<Anchor>;

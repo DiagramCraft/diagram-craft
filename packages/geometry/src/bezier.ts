@@ -1,5 +1,5 @@
 import { Point } from './point';
-import { RawCubicSegment } from './pathBuilder';
+import { RawCubicSegment } from './pathListBuilder';
 import { Box } from './box';
 import { Line } from './line';
 import { Vector } from './vector';
