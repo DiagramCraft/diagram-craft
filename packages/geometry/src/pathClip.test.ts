@@ -13,7 +13,7 @@ const makePaths = (props: { p1: PathBuilder; p2: PathBuilder }): [CompoundPath, 
 describe('pathClip', () => {
   describe('integration tests', () => {
     describe('onEdge', () => {
-      const [p1, p2] = makePaths(TEST_CASES.OnEdge());
+      const [p1, p2] = makePaths(TEST_CASES._OnEdge());
 
       it('A union B', () => {
         expect(applyBooleanOperation(p1, p2, 'A union B').map(p => p.asSvgPath())).toStrictEqual([
@@ -56,7 +56,7 @@ describe('pathClip', () => {
     });
 
     describe('onEdge2', () => {
-      const [p1, p2] = makePaths(TEST_CASES.OnEdge2());
+      const [p1, p2] = makePaths(TEST_CASES._OnEdge2());
 
       it('A union B', () => {
         expect(applyBooleanOperation(p1, p2, 'A union B').map(p => p.asSvgPath())).toStrictEqual([
@@ -99,7 +99,7 @@ describe('pathClip', () => {
     });
 
     describe('nonIntersecting', () => {
-      const [p1, p2] = makePaths(TEST_CASES.NonIntersecting());
+      const [p1, p2] = makePaths(TEST_CASES._NonIntersecting());
 
       it('A union B', () => {
         expect(applyBooleanOperation(p1, p2, 'A union B').map(p => p.asSvgPath())).toStrictEqual([
@@ -184,7 +184,7 @@ describe('pathClip', () => {
   });
 
   describe('CircleInRectangleInverted', () => {
-    const [p1, p2] = makePaths(TEST_CASES.CircleInRectangleInverted());
+    const [p1, p2] = makePaths(TEST_CASES._CircleInRectangleInverted());
 
     it('A union B', () => {
       expect(applyBooleanOperation(p1, p2, 'A union B').map(p => p.asSvgPath())).toStrictEqual([

@@ -24,7 +24,7 @@ const makeRect = (x: number, y: number, w: number, h: number) => {
 };
 
 export const TEST_CASES = {
-  OnEdge: () => ({
+  _OnEdge: () => ({
     p1: makeRect(0, 0, 100, 100),
     p2: new PathBuilder()
       .moveTo(_p(-30, 10))
@@ -33,7 +33,7 @@ export const TEST_CASES = {
       .lineTo(_p(0, 80))
       .lineTo(_p(-30, 10))
   }),
-  OnEdge2: () => ({
+  _OnEdge2: () => ({
     p1: makeRect(0, 0, 100, 100),
     p2: new PathBuilder()
       .moveTo(_p(10, -10))
@@ -42,7 +42,7 @@ export const TEST_CASES = {
       .lineTo(_p(0, 80))
       .lineTo(_p(10, -10))
   }),
-  NonIntersecting: () => ({
+  _NonIntersecting: () => ({
     p1: makeRect(20, 20, 30, 30),
     p2: makeRect(70, 70, 40, 40)
   }),
@@ -54,7 +54,7 @@ export const TEST_CASES = {
     p1: makeCircle(210, 200, 125),
     p2: makeRect(50, 50, 350, 300)
   }),
-  CircleInRectangleInverted: () => ({
+  _CircleInRectangleInverted: () => ({
     p2: makeCircle(210, 200, 125),
     p1: makeRect(50, 50, 350, 300)
   }),
