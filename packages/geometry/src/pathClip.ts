@@ -54,14 +54,14 @@ export const applyBooleanOperation = (
   classifyClipVertices(vertices, [a, b], [false, false]);
 
   const isCrossing =
-    vertices[0].filter(v => v.intersect).length > 0 &&
-    vertices[1].filter(v => v.intersect).length > 0;
+    vertices[0][0].filter(v => v.intersect).length > 0 &&
+    vertices[1][0].filter(v => v.intersect).length > 0;
 
   // Note: this assumes there's only one path in each compound path
   const aContainedInB =
-    !isCrossing && vertices[0].every(v => b.isInside(v.point) || b.isOn(v.point));
+    !isCrossing && vertices[0][0].every(v => b.isInside(v.point) || b.isOn(v.point));
   const bContainedInA =
-    !isCrossing && vertices[1].every(v => a.isInside(v.point) || a.isOn(v.point));
+    !isCrossing && vertices[1][0].every(v => a.isInside(v.point) || a.isOn(v.point));
 
   switch (operation) {
     case 'A union B':
@@ -414,7 +414,7 @@ const assertPathSegmentsAreConnected = (
     end for
   end for
  */
-export const getClipVertices = (cp1: PathList, cp2: PathList): [Vertex[], Vertex[]] => {
+export const getClipVertices = (cp1: PathList, cp2: PathList): [VertexList[], VertexList[]] => {
   const intersectionVertices = new MultiMap<PathSegment, Vertex>();
 
   for (const p1 of cp1.all()) {
@@ -484,7 +484,7 @@ export const getClipVertices = (cp1: PathList, cp2: PathList): [Vertex[], Vertex
     assertPathSegmentsAreConnected(subjectVertices, clipVertices);
   }
 
-  return [subjectVertices[0], clipVertices[0]];
+  return [subjectVertices, clipVertices];
 };
 
 const isDegeneracy = (v: Vertex) =>
@@ -507,76 +507,78 @@ const isDegeneracy = (v: Vertex) =>
   end for
  */
 export const classifyClipVertices = (
-  vertices: [Array<Vertex>, Array<Vertex>],
+  vertices: [Array<VertexList>, Array<VertexList>],
   paths: [PathList, PathList],
   type: [boolean, boolean]
 ) => {
-  assert.true(paths[0].all().length === 1);
-  assert.true(paths[1].all().length === 1);
+  const doClassifyClipVertices = (pVertexList: Array<VertexList>, start: boolean, q: PathList) => {
+    for (let i = 0; i < pVertexList.length; i += 1) {
+      const pVertices = pVertexList[i];
+      const p0 = pVertices[0].point;
 
-  // for both polygons P do
-  for (const i of [0, 1]) {
-    const p = paths[i].singularPath();
-    const p0 = p.segments[0].start;
+      /*
+        if P0 inside other polygon
+          status = exit
+        else
+          status = entry
+        end if
+      */
+      let status = q.isInside(p0);
+      if (start) status = !status;
 
-    /*
-      if P0 inside other polygon
-        status = exit
-      else
-        status = entry
-      end if
-     */
-    let status = paths[1 - i].singularPath().isInside(p0);
-    if (type[i]) status = !status;
+      // for each vertex Pi of polygon do
+      for (let j = 0; j < pVertices.length; j++) {
+        const intersection = pVertices[j];
 
-    // for each vertex Pi of polygon do
-    for (let i1 = 0; i1 < vertices[i].length; i1++) {
-      const intersection = vertices[i][i1];
+        // if Pi->intersect then
+        if (intersection.intersect) {
+          if (isDegeneracy(intersection)) {
+            const ot1 = Vector.angle(
+              Vector.from(intersection.point, intersection.neighbor.prev.point)
+            );
 
-      // if Pi->intersect then
-      if (intersection.intersect) {
-        if (isDegeneracy(intersection)) {
-          const ot1 = Vector.angle(
-            Vector.from(intersection.point, intersection.neighbor.prev.point)
-          );
+            const ot2 = Vector.angle(
+              Vector.from(intersection.point, intersection.neighbor.next.point)
+            );
 
-          const ot2 = Vector.angle(
-            Vector.from(intersection.point, intersection.neighbor.next.point)
-          );
+            const t1 = Vector.angle(Vector.from(intersection.point, intersection.prev.point));
 
-          const t1 = Vector.angle(Vector.from(intersection.point, intersection.prev.point));
+            const t2 = Vector.angle(Vector.from(intersection.point, intersection.next.point));
 
-          const t2 = Vector.angle(Vector.from(intersection.point, intersection.next.point));
+            const arr = [
+              { label: 'o', angle: ot1 },
+              { label: 'o', angle: ot2 },
+              { label: 't', angle: t1 },
+              { label: 't', angle: t2 }
+            ];
+            arr.sort((a, b) => a.angle - b.angle);
 
-          const arr = [
-            { label: 'o', angle: ot1 },
-            { label: 'o', angle: ot2 },
-            { label: 't', angle: t1 },
-            { label: 't', angle: t2 }
-          ];
-          arr.sort((a, b) => a.angle - b.angle);
-
-          if (
-            i1 > 0 &&
-            (arr[0].label === arr[1].label ||
-              arr[1].label === arr[2].label ||
-              arr[2].label === arr[3].label)
-          ) {
-            // @ts-ignore
-            intersection.intersect = false;
-            intersection.neighbor.intersect = false;
-            continue;
+            if (
+              j > 0 &&
+              (arr[0].label === arr[1].label ||
+                arr[1].label === arr[2].label ||
+                arr[2].label === arr[3].label)
+            ) {
+              // @ts-ignore
+              intersection.intersect = false;
+              intersection.neighbor.intersect = false;
+              continue;
+            }
           }
+
+          // Pi->entry_exit = status
+          intersection.type = status ? 'in->out' : 'out->in';
+
+          // toggle status
+          status = !status;
         }
-
-        // Pi->entry_exit = status
-        intersection.type = status ? 'in->out' : 'out->in';
-
-        // toggle status
-        status = !status;
       }
     }
-  }
+  };
+
+  // for both polygons P do
+  doClassifyClipVertices(vertices[0], type[0], paths[1]);
+  doClassifyClipVertices(vertices[1], type[1], paths[0]);
 };
 
 /*
@@ -600,10 +602,10 @@ export const classifyClipVertices = (
     until PolygonClosed
   end while
  */
-export const clipVertices = (p: [Array<Vertex>, Array<Vertex>]) => {
+export const clipVertices = (p: [Array<VertexList>, Array<VertexList>]) => {
   const [subject] = p;
 
-  let unprocessedIntersectingPoints = subject.filter(v => v.intersect);
+  let unprocessedIntersectingPoints = subject.flatMap(e => e).filter(v => v.intersect);
 
   const dest: Vertex[][] = [];
 
