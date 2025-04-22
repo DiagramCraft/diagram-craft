@@ -152,23 +152,32 @@ const makeLinkedList = (vertices: Vertex[]) => {
   }
 };
 
-const sortIntoVertexList = (p: PathList, intersectionVertices: MultiMap<PathSegment, Vertex>) => {
-  const dest: Vertex[] = [];
-  for (const s of p.singularPath().segments) {
-    const intersectionsOnSegment = intersectionVertices.get(s) ?? [];
-    intersectionsOnSegment.sort((a, b) => a.alpha - b.alpha);
+const sortIntoVertexList = (
+  pathList: PathList,
+  intersectionVertices: MultiMap<PathSegment, Vertex>
+) => {
+  const dest: Vertex[][] = [];
+  for (const path of pathList.all()) {
+    const vertexList: Vertex[] = [];
+    dest.push(vertexList);
 
-    dest.push({
-      point: s.start,
-      segment: s,
-      alpha: 0,
-      intersect: false,
-      prev: SENTINEL_VERTEX,
-      next: SENTINEL_VERTEX
-    });
+    for (const segment of path.segments) {
+      const intersectionsOnSegment = intersectionVertices.get(segment) ?? [];
+      intersectionsOnSegment.sort((a, b) => a.alpha - b.alpha);
 
-    dest.push(...intersectionsOnSegment);
+      vertexList.push({
+        point: segment.start,
+        segment: segment,
+        alpha: 0,
+        intersect: false,
+        prev: SENTINEL_VERTEX,
+        next: SENTINEL_VERTEX
+      });
+
+      vertexList.push(...intersectionsOnSegment);
+    }
   }
+
   return dest;
 };
 
@@ -395,42 +404,43 @@ const assertPathSegmentsAreConnected = (subjectVertices: Vertex[], clipVertices:
   end for
  */
 export const getClipVertices = (cp1: PathList, cp2: PathList): [Vertex[], Vertex[]] => {
-  assert.true(cp1.all().length === 1);
-  assert.true(cp2.all().length === 1);
-
   const intersectionVertices = new MultiMap<PathSegment, Vertex>();
 
-  for (const thisSegment of cp1.singularPath().segments) {
-    for (const otherSegment of cp2.singularPath().segments) {
-      const intersections = thisSegment.intersectionsWith(otherSegment);
-      if (!intersections) continue;
+  for (const p1 of cp1.all()) {
+    for (const p2 of cp2.all()) {
+      for (const thisSegment of p1.segments) {
+        for (const otherSegment of p2.segments) {
+          const intersections = thisSegment.intersectionsWith(otherSegment);
+          if (!intersections) continue;
 
-      for (const intersection of intersections) {
-        const i1: Vertex = {
-          point: intersection,
-          segment: thisSegment,
-          alpha: thisSegment.projectPoint(intersection).t,
-          intersect: true,
-          prev: SENTINEL_VERTEX,
-          next: SENTINEL_VERTEX,
-          neighbor: SENTINEL_VERTEX
-        };
+          for (const intersection of intersections) {
+            const i1: Vertex = {
+              point: intersection,
+              segment: thisSegment,
+              alpha: thisSegment.projectPoint(intersection).t,
+              intersect: true,
+              prev: SENTINEL_VERTEX,
+              next: SENTINEL_VERTEX,
+              neighbor: SENTINEL_VERTEX
+            };
 
-        const i2: Vertex = {
-          point: intersection,
-          segment: otherSegment,
-          alpha: otherSegment.projectPoint(intersection).t,
-          intersect: true,
-          prev: SENTINEL_VERTEX,
-          next: SENTINEL_VERTEX,
-          neighbor: SENTINEL_VERTEX
-        };
+            const i2: Vertex = {
+              point: intersection,
+              segment: otherSegment,
+              alpha: otherSegment.projectPoint(intersection).t,
+              intersect: true,
+              prev: SENTINEL_VERTEX,
+              next: SENTINEL_VERTEX,
+              neighbor: SENTINEL_VERTEX
+            };
 
-        i1.neighbor = i2;
-        i2.neighbor = i1;
+            i1.neighbor = i2;
+            i2.neighbor = i1;
 
-        intersectionVertices.add(thisSegment, i1);
-        intersectionVertices.add(otherSegment, i2);
+            intersectionVertices.add(thisSegment, i1);
+            intersectionVertices.add(otherSegment, i2);
+          }
+        }
       }
     }
   }
@@ -440,30 +450,30 @@ export const getClipVertices = (cp1: PathList, cp2: PathList): [Vertex[], Vertex
   const clipVertices = sortIntoVertexList(cp2, intersectionVertices);
 
   // Fix linked list
-  makeLinkedList(subjectVertices);
-  makeLinkedList(clipVertices);
+  subjectVertices.forEach(vertexList => makeLinkedList(vertexList));
+  clipVertices.forEach(vertexList => makeLinkedList(vertexList));
 
   // This is just for debugging purposes
-  subjectVertices.forEach((e, i) => (e.label = 's_' + i));
-  clipVertices.forEach((e, i) => (e.label = 'c_' + i));
+  subjectVertices.forEach(vertexList => vertexList.forEach((e, i) => (e.label = 's_' + i)));
+  clipVertices.forEach(vertexList => vertexList.forEach((e, i) => (e.label = 'c_' + i)));
 
   // Remove duplicate points'
-  removeDuplicatePoints(subjectVertices);
-  removeDuplicatePoints(clipVertices);
+  subjectVertices.forEach(vertexList => removeDuplicatePoints(vertexList));
+  clipVertices.forEach(vertexList => removeDuplicatePoints(vertexList));
 
   DEBUG: {
-    assertConsistency(subjectVertices, clipVertices);
+    assertConsistency(subjectVertices[0], clipVertices[0]);
   }
 
   // Clip segments
-  clipSegments(subjectVertices);
-  clipSegments(clipVertices);
+  subjectVertices.forEach(vertexList => clipSegments(vertexList));
+  clipVertices.forEach(vertexList => clipSegments(vertexList));
 
   DEBUG: {
-    assertPathSegmentsAreConnected(subjectVertices, clipVertices);
+    assertPathSegmentsAreConnected(subjectVertices[0], clipVertices[0]);
   }
 
-  return [subjectVertices, clipVertices];
+  return [subjectVertices[0], clipVertices[0]];
 };
 
 const isDegeneracy = (v: Vertex) =>
