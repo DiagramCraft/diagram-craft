@@ -22,6 +22,8 @@ type Vertex = {
   | { intersect: false; neighbor?: never; type?: VertexType }
 );
 
+type VertexList = Vertex[];
+
 // @ts-expect-error placeholder value to handle partial construction
 const SENTINEL_VERTEX: Vertex = {
   point: { x: -Infinity, y: -Infinity }
@@ -156,9 +158,9 @@ const sortIntoVertexList = (
   pathList: PathList,
   intersectionVertices: MultiMap<PathSegment, Vertex>
 ) => {
-  const dest: Vertex[][] = [];
+  const dest: VertexList[] = [];
   for (const path of pathList.all()) {
-    const vertexList: Vertex[] = [];
+    const vertexList: VertexList = [];
     dest.push(vertexList);
 
     for (const segment of path.segments) {
@@ -288,7 +290,7 @@ const dumpVertexList = (
   console.log(l4.join('     '));
 };
 
-const arrangeSegments = (dest: Vertex[][]) => {
+const arrangeSegments = (dest: VertexList[]) => {
   const paths: PathSegment[][] = [];
 
   for (const contour of dest) {
@@ -311,81 +313,90 @@ const arrangeSegments = (dest: Vertex[][]) => {
   return paths;
 };
 
-const assertConsistency = (subjectVertices: Vertex[], clipVertices: Vertex[]) => {
+const assertConsistency = (subjectVertices: VertexList[], clipVertices: VertexList[]) => {
+  // 1. Assert that each vertex only exists once
+
   const subjectVerticesSet = new Set<Vertex>();
-  for (let i = 0; i < subjectVertices.length; i++) {
-    const current = subjectVertices[i];
-    assert.false(subjectVerticesSet.has(current));
-    subjectVerticesSet.add(current);
-
-    const next = subjectVertices[(i + 1) % subjectVertices.length];
-    const prev = subjectVertices[(i + subjectVertices.length - 1) % subjectVertices.length];
-
-    assert.true(current.next === next);
-    assert.true(current.prev === prev);
+  for (const vertexList of subjectVertices) {
+    for (const vertex of vertexList) {
+      assert.false(subjectVerticesSet.has(vertex));
+      subjectVerticesSet.add(vertex);
+    }
   }
 
   const clipVerticesSet = new Set<Vertex>();
-  for (let i = 0; i < clipVertices.length; i++) {
-    const current = clipVertices[i];
-    assert.false(clipVerticesSet.has(current));
-    clipVerticesSet.add(current);
-
-    const next = clipVertices[(i + 1) % clipVertices.length];
-    const prev = clipVertices[(i + clipVertices.length - 1) % clipVertices.length];
-
-    assert.true(current.next === next);
-    assert.true(current.prev === prev);
-  }
-
-  // Check that neighbors are consistent
-  for (const v of subjectVertices) {
-    assert.true(v.prev.next === v);
-    assert.true(v.next.prev === v);
-
-    if (v.neighbor) {
-      assert.true(v === v.neighbor.neighbor);
-      assert.true(clipVerticesSet.has(v.neighbor));
+  for (const vertexList of clipVertices) {
+    for (const vertex of vertexList) {
+      assert.false(clipVerticesSet.has(vertex));
+      clipVerticesSet.add(vertex);
     }
   }
-  for (const v of clipVertices) {
-    assert.true(v.prev.next === v);
-    assert.true(v.next.prev === v);
 
-    if (v.neighbor) {
-      assert.true(v === v.neighbor.neighbor);
-      assert.true(subjectVerticesSet.has(v.neighbor));
+  // 2. Assert the linked list and neighbors
+
+  const verifyLinkedListAndNeighbor = (vertexList: VertexList, set: Set<Vertex>) => {
+    for (let i = 0; i < vertexList.length; i++) {
+      const current = vertexList[i];
+
+      const next = vertexList[(i + 1) % vertexList.length];
+      const prev = vertexList[(i + vertexList.length - 1) % vertexList.length];
+
+      assert.true(current.next === next);
+      assert.true(current.prev === prev);
+
+      assert.true(current.prev.next === current);
+      assert.true(current.next.prev === current);
+
+      if (current.neighbor) {
+        assert.true(current === current.neighbor.neighbor);
+        assert.true(set.has(current.neighbor));
+      }
     }
+  };
+
+  for (const vertexList of subjectVertices) {
+    verifyLinkedListAndNeighbor(vertexList, clipVerticesSet);
+  }
+
+  for (const vertexList of clipVertices) {
+    verifyLinkedListAndNeighbor(vertexList, subjectVerticesSet);
   }
 };
 
-const assertPathSegmentsAreConnected = (subjectVertices: Vertex[], clipVertices: Vertex[]) => {
-  for (let i = 0; i < subjectVertices.length; i++) {
-    const current = subjectVertices[i];
-    const next = subjectVertices[(i + 1) % subjectVertices.length];
-    if (
-      !Point.isEqual(
-        current.segment.end,
-        next.point,
-        Math.max(0.001, current.segment.length() * 0.01)
-      )
-    ) {
-      console.log(i, current.segment.end, next.point);
-      assert.fail();
+const assertPathSegmentsAreConnected = (
+  subjectVertices: VertexList[],
+  clipVertices: VertexList[]
+) => {
+  for (const vertexList of subjectVertices) {
+    for (let i = 0; i < vertexList.length; i++) {
+      const current = vertexList[i];
+      const next = vertexList[(i + 1) % vertexList.length];
+      if (
+        !Point.isEqual(
+          current.segment.end,
+          next.point,
+          Math.max(0.001, current.segment.length() * 0.01)
+        )
+      ) {
+        console.log(i, current.segment.end, next.point);
+        assert.fail();
+      }
     }
   }
-  for (let i = 0; i < clipVertices.length; i++) {
-    const current = clipVertices[i];
-    const next = clipVertices[(i + 1) % clipVertices.length];
-    if (
-      !Point.isEqual(
-        current.segment.end,
-        next.point,
-        Math.max(0.001, current.segment.length() * 0.01)
-      )
-    ) {
-      console.log(current.segment.end, next.point);
-      assert.fail();
+  for (const vertexList of clipVertices) {
+    for (let i = 0; i < vertexList.length; i++) {
+      const current = vertexList[i];
+      const next = vertexList[(i + 1) % vertexList.length];
+      if (
+        !Point.isEqual(
+          current.segment.end,
+          next.point,
+          Math.max(0.001, current.segment.length() * 0.01)
+        )
+      ) {
+        console.log(current.segment.end, next.point);
+        assert.fail();
+      }
     }
   }
 };
@@ -462,7 +473,7 @@ export const getClipVertices = (cp1: PathList, cp2: PathList): [Vertex[], Vertex
   clipVertices.forEach(vertexList => removeDuplicatePoints(vertexList));
 
   DEBUG: {
-    assertConsistency(subjectVertices[0], clipVertices[0]);
+    assertConsistency(subjectVertices, clipVertices);
   }
 
   // Clip segments
@@ -470,7 +481,7 @@ export const getClipVertices = (cp1: PathList, cp2: PathList): [Vertex[], Vertex
   clipVertices.forEach(vertexList => clipSegments(vertexList));
 
   DEBUG: {
-    assertPathSegmentsAreConnected(subjectVertices[0], clipVertices[0]);
+    assertPathSegmentsAreConnected(subjectVertices, clipVertices);
   }
 
   return [subjectVertices[0], clipVertices[0]];
