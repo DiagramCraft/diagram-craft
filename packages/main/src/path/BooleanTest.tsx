@@ -40,8 +40,10 @@ export const BooleanTest = (props: { p1: PathListBuilder; p2: PathListBuilder })
       .every(seg =>
         seg.segments.every(
           s =>
-            subject.some(v => Point.isEqual(v.point, s.start) || Point.isEqual(v.point, s.end)) ||
-            cp1.singularPath().isInside(s.start)
+            subject
+              .flatMap(e => e)
+              .some(v => Point.isEqual(v.point, s.start) || Point.isEqual(v.point, s.end)) ||
+            cp1.isInside(s.start)
         )
       );
     const sharesWithClip = p
@@ -49,8 +51,10 @@ export const BooleanTest = (props: { p1: PathListBuilder; p2: PathListBuilder })
       .every(seg =>
         seg.segments.every(
           s =>
-            clip.some(v => Point.isEqual(v.point, s.start) || Point.isEqual(v.point, s.end)) ||
-            cp2.singularPath().isInside(s.start)
+            clip
+              .flatMap(e => e)
+              .some(v => Point.isEqual(v.point, s.start) || Point.isEqual(v.point, s.end)) ||
+            cp2.isInside(s.start)
         )
       );
 
@@ -109,58 +113,64 @@ export const BooleanTest = (props: { p1: PathListBuilder; p2: PathListBuilder })
               strokeWidth={1 / scale}
             />
 
-            {subject.map((s, idx) => {
-              const p = new Path(s.segment.start, s.segment.raw());
-              return (
-                <path
-                  key={idx}
-                  d={p.asSvgPath()}
-                  stroke={idx % 2 === 0 ? 'red' : 'blue'}
-                  fill={'none'}
-                  strokeWidth={1 / scale}
-                />
-              );
-            })}
+            {subject
+              .flatMap(e => e)
+              .map((s, idx) => {
+                const p = new Path(s.segment.start, s.segment.raw());
+                return (
+                  <path
+                    key={idx}
+                    d={p.asSvgPath()}
+                    stroke={idx % 2 === 0 ? 'red' : 'blue'}
+                    fill={'none'}
+                    strokeWidth={1 / scale}
+                  />
+                );
+              })}
 
-            {subject.map((s, idx) => (
-              <circle
-                key={idx}
-                cx={s.point.x}
-                cy={s.point.y}
-                r={2 / scale}
-                fill={s.intersect ? (s.type === 'in->out' ? 'green' : 'red') : 'gray'}
-              />
-            ))}
+            {subject
+              .flatMap(e => e)
+              .map((s, idx) => (
+                <circle
+                  key={idx}
+                  cx={s.point.x}
+                  cy={s.point.y}
+                  r={2 / scale}
+                  fill={s.intersect ? (s.type === 'in->out' ? 'green' : 'red') : 'gray'}
+                />
+              ))}
 
             <circle
-              cx={subject[0].point.x}
-              cy={subject[0].point.y}
+              cx={subject.flatMap(e => e)[0].point.x}
+              cy={subject.flatMap(e => e)[0].point.y}
               r={5 / scale}
               strokeWidth={1 / scale}
               stroke={'red'}
               fill={'none'}
             />
             <circle
-              cx={subject[1].point.x}
-              cy={subject[1].point.y}
+              cx={subject.flatMap(e => e)[1].point.x}
+              cy={subject.flatMap(e => e)[1].point.y}
               r={5 / scale}
               stroke={'green'}
               strokeWidth={1 / scale}
               fill={'none'}
             />
 
-            {subject.map((s, idx) => {
-              const p = new Path(s.segment.start, s.segment.raw());
-              return (
-                <path
-                  key={idx}
-                  d={p.asSvgPath()}
-                  stroke={idx % 2 === 0 ? 'green' : 'blue'}
-                  fill={'none'}
-                  strokeWidth={1 / scale}
-                />
-              );
-            })}
+            {subject
+              .flatMap(e => e)
+              .map((s, idx) => {
+                const p = new Path(s.segment.start, s.segment.raw());
+                return (
+                  <path
+                    key={idx}
+                    d={p.asSvgPath()}
+                    stroke={idx % 2 === 0 ? 'green' : 'blue'}
+                    fill={'none'}
+                    strokeWidth={1 / scale}
+                  />
+                );
+              })}
           </g>
         </g>
       </g>
@@ -187,58 +197,64 @@ export const BooleanTest = (props: { p1: PathListBuilder; p2: PathListBuilder })
               strokeWidth={1 / scale}
             />
 
-            {clip.map((s, idx) => {
-              const p = new Path(s.segment.start, s.segment.raw());
-              return (
-                <path
-                  key={idx}
-                  d={p.asSvgPath()}
-                  stroke={idx % 2 === 0 ? 'red' : 'blue'}
-                  fill={'none'}
-                  strokeWidth={1 / scale}
-                />
-              );
-            })}
+            {clip
+              .flatMap(e => e)
+              .map((s, idx) => {
+                const p = new Path(s.segment.start, s.segment.raw());
+                return (
+                  <path
+                    key={idx}
+                    d={p.asSvgPath()}
+                    stroke={idx % 2 === 0 ? 'red' : 'blue'}
+                    fill={'none'}
+                    strokeWidth={1 / scale}
+                  />
+                );
+              })}
 
-            {clip.map((s, idx) => (
-              <circle
-                key={idx}
-                cx={s.point.x}
-                cy={s.point.y}
-                r={2 / scale}
-                fill={s.intersect ? (s.type === 'in->out' ? 'green' : 'red') : 'gray'}
-              />
-            ))}
+            {clip
+              .flatMap(e => e)
+              .map((s, idx) => (
+                <circle
+                  key={idx}
+                  cx={s.point.x}
+                  cy={s.point.y}
+                  r={2 / scale}
+                  fill={s.intersect ? (s.type === 'in->out' ? 'green' : 'red') : 'gray'}
+                />
+              ))}
 
             <circle
-              cx={clip[0].point.x}
-              cy={clip[0].point.y}
+              cx={clip.flatMap(e => e)[0].point.x}
+              cy={clip.flatMap(e => e)[0].point.y}
               r={5 / scale}
               stroke={'red'}
               strokeWidth={1 / scale}
               fill={'none'}
             />
             <circle
-              cx={clip[1].point.x}
-              cy={clip[1].point.y}
+              cx={clip.flatMap(e => e)[1].point.x}
+              cy={clip.flatMap(e => e)[1].point.y}
               r={5 / scale}
               stroke={'green'}
               strokeWidth={1 / scale}
               fill={'none'}
             />
 
-            {clip.map((s, idx) => {
-              const p = new Path(s.segment.start, s.segment.raw());
-              return (
-                <path
-                  key={idx}
-                  d={p.asSvgPath()}
-                  stroke={idx % 2 === 0 ? 'green' : 'blue'}
-                  fill={'none'}
-                  strokeWidth={1 / scale}
-                />
-              );
-            })}
+            {clip
+              .flatMap(e => e)
+              .map((s, idx) => {
+                const p = new Path(s.segment.start, s.segment.raw());
+                return (
+                  <path
+                    key={idx}
+                    d={p.asSvgPath()}
+                    stroke={idx % 2 === 0 ? 'green' : 'blue'}
+                    fill={'none'}
+                    strokeWidth={1 / scale}
+                  />
+                );
+              })}
           </g>
         </g>
       </g>

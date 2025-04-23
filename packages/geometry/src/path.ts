@@ -396,4 +396,16 @@ export class Path {
     this.#path.push(segment);
     this.#segmentList = undefined;
   }
+
+  isClockwise() {
+    const segments = this.segments;
+    let sum = 0;
+    for (let i = 0; i < segments.length; i++) {
+      const s = segments[i];
+      const next = segments[(i + 1) % segments.length];
+      sum += (next.start.x - s.start.x) * (-next.start.y - s.start.y);
+    }
+
+    return sum < 0;
+  }
 }

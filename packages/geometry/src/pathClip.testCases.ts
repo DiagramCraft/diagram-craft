@@ -13,6 +13,18 @@ const makeCircle = (cx: number, cy: number, r: number) => {
   return b;
 };
 
+const makeCircleHole = (cx: number, cy: number, r: number) => {
+  const b = new PathListBuilder(
+    unitCoordinateSystem({ x: cx - r, y: cy - r, w: 2 * r, h: 2 * r, r: 0 })
+  );
+  b.moveTo(_p(0.5, 0));
+  b.arcTo(_p(0, 0.5), 0.5, 0.5, 0, 0, 0);
+  b.arcTo(_p(0.5, 1), 0.5, 0.5, 0, 0, 0);
+  b.arcTo(_p(1, 0.5), 0.5, 0.5, 0, 0, 0);
+  b.arcTo(_p(0.5, 0), 0.5, 0.5, 0, 0, 0);
+  return b;
+};
+
 const makeRect = (x: number, y: number, w: number, h: number) => {
   const b = new PathListBuilder();
   b.moveTo(_p(x, y));
@@ -68,7 +80,7 @@ export const TEST_CASES = {
   }),
   RectOverRectWithHole: () => ({
     p1: makeRect(180, 5, 100, 400),
-    p2: makeRect(50, 50, 350, 300).append(makeCircle(210, 200, 125))
+    p2: makeRect(50, 50, 350, 300).append(makeCircleHole(210, 200, 125))
   }),
   CircleOverTwoRects: () => ({
     p1: makeCircle(200, 200, 185),

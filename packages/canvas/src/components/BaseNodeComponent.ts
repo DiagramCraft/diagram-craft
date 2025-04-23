@@ -463,7 +463,7 @@ export class BaseNodeComponent<
 
     const boundary = builder.getPaths();
 
-    const color = boundary.all().some(p => builder.isPathIsClockwise(p)) ? 'red' : 'green';
+    const color = boundary.all().some(p => p.isClockwise()) ? 'red' : 'green';
 
     children.push(
       svg.marker(
