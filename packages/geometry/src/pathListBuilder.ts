@@ -163,6 +163,12 @@ export class PathList {
     return intersections.length % 2 !== 0;
   }
 
+  isInHole(p: Point): boolean {
+    const line = new Path(p, [['L', Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER]]);
+    const intersections = this.all().flatMap(p => p.intersections(line));
+    return intersections.length > 1 && intersections.length % 2 === 0;
+  }
+
   isOn(p: Point): boolean {
     for (const path of this.paths) {
       if (path.isOn(p)) return true;
@@ -327,24 +333,12 @@ export class PathListBuilder {
   getPaths() {
     const paths = this.generatePaths();
     for (const p of paths) {
-      if (!this.isPathIsClockwise(p)) {
+      if (!p.isClockwise()) {
         //console.warn('Path is not clockwise', sum, new Error().stack);
       }
     }
 
     return new PathList(paths);
-  }
-
-  isPathIsClockwise(p: Path) {
-    const segments = p.segments;
-    let sum = 0;
-    for (let i = 0; i < segments.length; i++) {
-      const s = segments[i];
-      const next = segments[(i + 1) % segments.length];
-      sum += (next.start.x - s.start.x) * (-next.start.y - s.start.y);
-    }
-
-    return sum < 0;
   }
 
   private newSegment() {

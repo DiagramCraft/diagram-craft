@@ -67,12 +67,12 @@ export const applyBooleanOperation = (
     case 'A union B':
       if (!isCrossing) {
         if (aContainedInB) return [b];
-        else if (bContainedInA) return [b];
+        else if (bContainedInA) return [a];
         else return [a, b];
       }
 
       classifyClipVertices(vertices, [a, b], [false, false]);
-      return [clipVertices(vertices)];
+      return [makeHoles(clipVertices(vertices), a, b)];
     case 'A not B':
       if (!isCrossing) {
         if (aContainedInB) return [];
@@ -181,6 +181,41 @@ const sortIntoVertexList = (
   }
 
   return dest;
+};
+
+const makeHoles = (pathList: PathList, a: PathList, b: PathList) => {
+  const dest: Path[] = [];
+  for (const path of pathList.all()) {
+    // Find a point inside of this path not inside any of the other paths
+    let pointInside: Point | undefined;
+    for (const segment of path.segments) {
+      const normal = Vector.tangentToNormal(segment.tangent(0.5));
+      const midpoint = segment.point(0.5);
+
+      // TODO: This is an incomplete solution to the problem - need to check
+      //       intersections with other paths etc
+      const p1 = Point.add(midpoint, Vector.scale(normal, 0.1));
+      const p2 = Point.add(midpoint, Vector.scale(normal, -0.1));
+
+      if (path.isInside(p1)) pointInside = p1;
+      if (path.isInside(p2)) pointInside = p2;
+
+      if (pointInside) break;
+    }
+
+    assert.present(pointInside);
+
+    const isOutsideA = !a.isInside(pointInside) || a.isInHole(pointInside);
+    const isOutsideB = !b.isInside(pointInside) || b.isInHole(pointInside);
+
+    if (isOutsideA && isOutsideB && path.isClockwise()) {
+      dest.push(path.reverse());
+    } else {
+      dest.push(path);
+    }
+  }
+
+  return new PathList(dest);
 };
 
 // NOTE: At this point, the vertices are part of a linked list
