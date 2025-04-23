@@ -6,6 +6,7 @@ import { Path } from './path';
 import { Vector } from './vector';
 import { MultiMap } from '@diagram-craft/utils/multimap';
 import { isSame } from '@diagram-craft/utils/math';
+import { Line } from './line';
 
 type VertexType = 'in->out' | 'out->in';
 
@@ -183,25 +184,52 @@ const sortIntoVertexList = (
   return dest;
 };
 
+/**
+ * Finds the closest intersection point between a line segment and a list of paths.
+ * Finds all intersections between start and end and returns the one closest to start.
+ */
+const findClosestIntersection = (start: Point, end: Point, pathList: PathList) => {
+  return pathList
+    .intersections(new Path(start, [['L', end.x, end.y]]))
+    .filter(i => !Point.isEqual(i, start))
+    .sort((a, b) => Point.distance(a, start) - Point.distance(b, start))?.[0];
+};
+
+/**
+ * Find a point inside this path, not inside any of the other paths. This is done
+ * by forming a ray from the midpoint of each segment, in the direction of the normal
+ * as well as in the opposite direction. A point inside can be found by finding the
+ * closest intersection and picking a point on the line between the intersection and
+ * the midpoint of the segment.
+ */
+const findPointInside = (path: Path, pathList: PathList) => {
+  // Representing the length of a ray into the infinite distance
+  // This is safe as the normal has length 1 - hence the ray will never overflow
+  const RAY_LENGTH = Number.MAX_SAFE_INTEGER;
+
+  // Looping through all segments but returning as soon as we find a point inside
+  for (const segment of path.segments) {
+    const normal = Vector.tangentToNormal(segment.tangent(0.5));
+    const midpoint = segment.point(0.5);
+
+    const c1 = findClosestIntersection(midpoint, Vector.scale(normal, RAY_LENGTH), pathList);
+    if (c1) {
+      const p1 = Line.midpoint(Line.of(midpoint, c1));
+      if (path.isInside(p1)) return p1;
+    }
+
+    const c2 = findClosestIntersection(midpoint, Vector.scale(normal, -RAY_LENGTH), pathList);
+    if (c2) {
+      const p2 = Line.midpoint(Line.of(midpoint, c2));
+      if (path.isInside(p2)) return p2;
+    }
+  }
+};
+
 const makeHoles = (pathList: PathList, a: PathList, b: PathList) => {
   const dest: Path[] = [];
   for (const path of pathList.all()) {
-    // Find a point inside of this path not inside any of the other paths
-    let pointInside: Point | undefined;
-    for (const segment of path.segments) {
-      const normal = Vector.tangentToNormal(segment.tangent(0.5));
-      const midpoint = segment.point(0.5);
-
-      // TODO: This is an incomplete solution to the problem - need to check
-      //       intersections with other paths etc
-      const p1 = Point.add(midpoint, Vector.scale(normal, 0.1));
-      const p2 = Point.add(midpoint, Vector.scale(normal, -0.1));
-
-      if (path.isInside(p1)) pointInside = p1;
-      if (path.isInside(p2)) pointInside = p2;
-
-      if (pointInside) break;
-    }
+    const pointInside = findPointInside(path, pathList);
 
     assert.present(pointInside);
 

@@ -175,6 +175,12 @@ export class PathList {
     }
     return false;
   }
+
+  intersections(p: Path): Point[] {
+    return this.all()
+      .flatMap(path => path.intersections(p))
+      .map(i => i.point);
+  }
 }
 
 type PathBuilderTransform = (p: Point) => Point;
