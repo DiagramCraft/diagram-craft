@@ -322,6 +322,15 @@ export class PathListBuilder {
     return this;
   }
 
+  reverse() {
+    return PathListBuilder.fromString(
+      this.getPaths()
+        .all()
+        .map(path => path.reverse().asSvgPath())
+        .join(' ')
+    );
+  }
+
   setRotation(rotation: number, centerOfRotation: Point) {
     this.rotation = {
       amount: rotation,
