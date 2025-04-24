@@ -38,6 +38,10 @@ export const CircleOverTwoRects: Story = {
   args: TEST_CASES.CircleOverTwoRects()
 };
 
-export const CircleOverlappingCircle: Story = {
-  args: TEST_CASES.CircleOverlappingCircle()
+export const CircleOverCircle: Story = {
+  args: TEST_CASES.CircleOverCircle()
+};
+
+export const ComplexShapes: Story = {
+  args: TEST_CASES.ComplexShapes()
 };

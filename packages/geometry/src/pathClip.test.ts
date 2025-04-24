@@ -3,9 +3,12 @@ import { applyBooleanOperation } from './pathClip';
 import { PathList, PathListBuilder } from './pathListBuilder';
 import { TEST_CASES } from './pathClip.testCases';
 
-const makePaths = (props: { p1: PathListBuilder; p2: PathListBuilder }): [PathList, PathList] => {
-  const cp1 = props.p1.getPaths();
-  const cp2 = props.p2.getPaths();
+const makePaths = (props: {
+  p1: PathListBuilder | PathList;
+  p2: PathListBuilder | PathList;
+}): [PathList, PathList] => {
+  const cp1 = props.p1 instanceof PathList ? props.p1 : props.p1.getPaths();
+  const cp2 = props.p2 instanceof PathList ? props.p2 : props.p2.getPaths();
 
   return [cp1, cp2];
 };
@@ -156,7 +159,7 @@ describe('pathClip', () => {
 
       it('B not A', () => {
         expect(applyBooleanOperation(p1, p2, 'B not A').map(p => p.asSvgPath())).toStrictEqual([
-          'M 50,50 L 400,50 L 400,350 L 50,350 L 50,50 M 210,75 C 140.96,75,85,130.96,85,200 C 85,269.04,140.96,325,210,325 C 279.04,325,335,269.04,335,200 C 335,130.96,279.04,75,210,75'
+          'M 50,50 L 50,350 L 400,350 L 400,50 L 50,50 M 210,75 A 125,125,0,0,1,335,200 A 125,125,0,0,1,210,325 A 125,125,0,0,1,85,200 A 125,125,0,0,1,210,75'
         ]);
       });
 
@@ -170,13 +173,13 @@ describe('pathClip', () => {
 
       it('A xor B', () => {
         expect(applyBooleanOperation(p1, p2, 'A xor B').map(p => p.asSvgPath())).toStrictEqual([
-          'M 50,50 L 400,50 L 400,350 L 50,350 L 50,50 M 210,75 C 140.96,75,85,130.96,85,200 C 85,269.04,140.96,325,210,325 C 279.04,325,335,269.04,335,200 C 335,130.96,279.04,75,210,75'
+          'M 50,50 L 50,350 L 400,350 L 400,50 L 50,50 M 210,75 A 125,125,0,0,1,335,200 A 125,125,0,0,1,210,325 A 125,125,0,0,1,85,200 A 125,125,0,0,1,210,75'
         ]);
       });
 
       it('A divide B', () => {
         expect(applyBooleanOperation(p1, p2, 'A divide B').map(p => p.asSvgPath())).toStrictEqual([
-          'M 50,50 L 400,50 L 400,350 L 50,350 L 50,50 M 210,75 C 140.96,75,85,130.96,85,200 C 85,269.04,140.96,325,210,325 C 279.04,325,335,269.04,335,200 C 335,130.96,279.04,75,210,75',
+          'M 50,50 L 50,350 L 400,350 L 400,50 L 50,50 M 210,75 A 125,125,0,0,1,335,200 A 125,125,0,0,1,210,325 A 125,125,0,0,1,85,200 A 125,125,0,0,1,210,75',
           'M 210,75 A 125,125,0,0,1,335,200 A 125,125,0,0,1,210,325 A 125,125,0,0,1,85,200 A 125,125,0,0,1,210,75'
         ]);
       });
@@ -194,7 +197,7 @@ describe('pathClip', () => {
 
     it('A not B', () => {
       expect(applyBooleanOperation(p1, p2, 'A not B').map(p => p.asSvgPath())).toStrictEqual([
-        'M 50,50 L 400,50 L 400,350 L 50,350 L 50,50 M 210,75 C 140.96,75,85,130.96,85,200 C 85,269.04,140.96,325,210,325 C 279.04,325,335,269.04,335,200 C 335,130.96,279.04,75,210,75'
+        'M 50,50 L 50,350 L 400,350 L 400,50 L 50,50 M 210,75 A 125,125,0,0,1,335,200 A 125,125,0,0,1,210,325 A 125,125,0,0,1,85,200 A 125,125,0,0,1,210,75'
       ]);
     });
 
@@ -212,13 +215,13 @@ describe('pathClip', () => {
 
     it('A xor B', () => {
       expect(applyBooleanOperation(p1, p2, 'A xor B').map(p => p.asSvgPath())).toStrictEqual([
-        'M 50,50 L 400,50 L 400,350 L 50,350 L 50,50 M 210,75 C 140.96,75,85,130.96,85,200 C 85,269.04,140.96,325,210,325 C 279.04,325,335,269.04,335,200 C 335,130.96,279.04,75,210,75'
+        'M 50,50 L 50,350 L 400,350 L 400,50 L 50,50 M 210,75 A 125,125,0,0,1,335,200 A 125,125,0,0,1,210,325 A 125,125,0,0,1,85,200 A 125,125,0,0,1,210,75'
       ]);
     });
 
     it('A divide B', () => {
       expect(applyBooleanOperation(p1, p2, 'A divide B').map(p => p.asSvgPath())).toStrictEqual([
-        'M 50,50 L 400,50 L 400,350 L 50,350 L 50,50 M 210,75 C 140.96,75,85,130.96,85,200 C 85,269.04,140.96,325,210,325 C 279.04,325,335,269.04,335,200 C 335,130.96,279.04,75,210,75',
+        'M 50,50 L 50,350 L 400,350 L 400,50 L 50,50 M 210,75 A 125,125,0,0,1,335,200 A 125,125,0,0,1,210,325 A 125,125,0,0,1,85,200 A 125,125,0,0,1,210,75',
         'M 210,75 A 125,125,0,0,1,335,200 A 125,125,0,0,1,210,325 A 125,125,0,0,1,85,200 A 125,125,0,0,1,210,75'
       ]);
     });
