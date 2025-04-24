@@ -85,8 +85,7 @@ jobs:
 
       - name: UI Test Boolean Ops
         run: npx playwright test
-        with:
-          working-directory: ./packages/test-ui-boolean-ops
+        working-directory: ./packages/test-ui-boolean-ops
 
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
