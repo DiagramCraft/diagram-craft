@@ -40,7 +40,14 @@ export default defineConfig({
       name: 'screenshots',
       use: { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 1024 } }
     }
-  ]
+  ],
+
+  ...(process.env.CI
+    ? {
+        command: 'cd ../main && pnpm run storybook',
+        url: 'http://localhost:6006'
+      }
+    : {})
 
   /* Run your local dev server before starting the tests */
   // webServer: {
