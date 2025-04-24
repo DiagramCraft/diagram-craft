@@ -44,8 +44,10 @@ export default defineConfig({
 
   ...(process.env.CI
     ? {
-        command: 'cd ../main && pnpm run storybook',
-        url: 'http://localhost:6006'
+        webServer: {
+          command: 'cd ../main && pnpm run storybook',
+          url: 'http://localhost:6006'
+        }
       }
     : {})
 
