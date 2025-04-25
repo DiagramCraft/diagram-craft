@@ -3,9 +3,12 @@ import { applyBooleanOperation } from './pathClip';
 import { PathList, PathListBuilder } from './pathListBuilder';
 import { TEST_CASES } from './pathClip.testCases';
 
-const makePaths = (props: { p1: PathListBuilder; p2: PathListBuilder }): [PathList, PathList] => {
-  const cp1 = props.p1.getPaths();
-  const cp2 = props.p2.getPaths();
+const makePaths = (props: {
+  p1: PathListBuilder | PathList;
+  p2: PathListBuilder | PathList;
+}): [PathList, PathList] => {
+  const cp1 = props.p1 instanceof PathList ? props.p1 : props.p1.getPaths();
+  const cp2 = props.p2 instanceof PathList ? props.p2 : props.p2.getPaths();
 
   return [cp1, cp2];
 };

@@ -8,14 +8,18 @@ import {
 import { Point } from '@diagram-craft/geometry/point';
 import { Path } from '@diagram-craft/geometry/path';
 
-export const BooleanTest = (props: { p1: PathListBuilder; p2: PathListBuilder }) => {
-  const p1 = props.p1;
-  const p2 = props.p2;
+export const BooleanTest = (props: {
+  p1: PathListBuilder | PathList;
+  p2: PathListBuilder | PathList;
+  hideText?: boolean;
+}) => {
+  const p1 = props.p1 instanceof PathList ? props.p1 : props.p1.getPaths();
+  const p2 = props.p2 instanceof PathList ? props.p2 : props.p2.getPaths();
 
-  const bounds = Box.boundingBox([p1.getPaths().bounds(), p2.getPaths().bounds()]);
+  const bounds = Box.boundingBox([p1.bounds(), p2.bounds()]);
 
-  const cp1 = p1.getPaths();
-  const cp2 = p2.getPaths();
+  const cp1 = p1;
+  const cp2 = p2;
 
   const [subject, clip] = getClipVertices(cp1, cp2);
 
@@ -76,11 +80,27 @@ export const BooleanTest = (props: { p1: PathListBuilder; p2: PathListBuilder })
       viewBox={'-100 -120 600 620'}
       style={{ border: '1px solid black' }}
     >
+      <defs>
+        <marker
+          id="arrow"
+          viewBox="0 0 10 10"
+          refX="5"
+          refY="5"
+          markerWidth="8"
+          markerHeight="8"
+          orient="auto-start-reverse"
+        >
+          <path d="M 10 0 L 0 5 L 10 10 z" />
+        </marker>
+      </defs>
+
       {/* Main shape */}
       <g>
-        <text x={0} y={-80} width={200} textAnchor={'middle'}>
-          A = blue, B = green
-        </text>
+        {!props.hideText && (
+          <text x={0} y={-80} width={200} textAnchor={'middle'}>
+            A = blue, B = green
+          </text>
+        )}
 
         <rect x={-70} y={-70} width={140} height={140} fill={'rgba(0, 0, 0, 0.025)'} />
         <g transform={'translate(-60, -60)'}>
@@ -93,9 +113,11 @@ export const BooleanTest = (props: { p1: PathListBuilder; p2: PathListBuilder })
 
       {/* Clipped path */}
       <g transform={'translate(200, 0)'}>
-        <text x={0} y={-80} width={200} textAnchor={'middle'}>
-          Clipped paths A
-        </text>
+        {!props.hideText && (
+          <text x={0} y={-80} width={200} textAnchor={'middle'}>
+            Clipped paths A
+          </text>
+        )}
 
         <rect x={-70} y={-70} width={140} height={140} fill={'rgba(0, 0, 0, 0.025)'} />
         <g transform={'translate(-60, -60)'}>
@@ -105,6 +127,7 @@ export const BooleanTest = (props: { p1: PathListBuilder; p2: PathListBuilder })
               stroke={'rgb(220, 220, 220)'}
               fill={'rgba(195, 195, 195, 0.25)'}
               strokeWidth={1 / scale}
+              markerStart={'url(#arrow)'}
             />
             <path
               d={s2}
@@ -177,9 +200,11 @@ export const BooleanTest = (props: { p1: PathListBuilder; p2: PathListBuilder })
 
       {/* Clipped path */}
       <g transform={'translate(400, 0)'}>
-        <text x={0} y={-80} width={200} textAnchor={'middle'}>
-          Clipped paths B
-        </text>
+        {!props.hideText && (
+          <text x={0} y={-80} width={200} textAnchor={'middle'}>
+            Clipped paths B
+          </text>
+        )}
 
         <rect x={-70} y={-70} width={140} height={140} fill={'rgba(0, 0, 0, 0.025)'} />
         <g transform={'translate(-60, -60)'}>
@@ -195,6 +220,7 @@ export const BooleanTest = (props: { p1: PathListBuilder; p2: PathListBuilder })
               stroke={'rgb(220, 220, 220)'}
               fill={'rgba(195, 195, 195, 0.25)'}
               strokeWidth={1 / scale}
+              markerStart={'url(#arrow)'}
             />
 
             {clip
@@ -260,9 +286,11 @@ export const BooleanTest = (props: { p1: PathListBuilder; p2: PathListBuilder })
       </g>
 
       <g transform={'translate(0, 200)'}>
-        <text x={0} y={-80} width={200} textAnchor={'middle'}>
-          A union B
-        </text>
+        {!props.hideText && (
+          <text x={0} y={-80} width={200} textAnchor={'middle'}>
+            A union B
+          </text>
+        )}
 
         <rect x={-70} y={-70} width={140} height={140} fill={'rgba(0, 0, 0, 0.025)'} />
         <g transform={'translate(-60, -60)'}>
@@ -287,6 +315,7 @@ export const BooleanTest = (props: { p1: PathListBuilder; p2: PathListBuilder })
                 stroke={'red'}
                 fill={'rgba(255, 0, 0, 0.25)'}
                 strokeWidth={1 / scale}
+                markerStart={'url(#arrow)'}
               />
             ))}
 
@@ -302,9 +331,11 @@ export const BooleanTest = (props: { p1: PathListBuilder; p2: PathListBuilder })
       </g>
 
       <g transform={'translate(200, 200)'}>
-        <text x={0} y={-80} width={200} textAnchor={'middle'}>
-          A not B
-        </text>
+        {!props.hideText && (
+          <text x={0} y={-80} width={200} textAnchor={'middle'}>
+            A not B
+          </text>
+        )}
 
         <rect x={-70} y={-70} width={140} height={140} fill={'rgba(0, 0, 0, 0.025)'} />
         <g transform={'translate(-60, -60)'}>
@@ -329,6 +360,7 @@ export const BooleanTest = (props: { p1: PathListBuilder; p2: PathListBuilder })
                 stroke={'blue'}
                 fill={'rgba(0, 0, 255, 0.25)'}
                 strokeWidth={1 / scale}
+                markerStart={'url(#arrow)'}
               />
             ))}
 
@@ -344,9 +376,11 @@ export const BooleanTest = (props: { p1: PathListBuilder; p2: PathListBuilder })
       </g>
 
       <g transform={'translate(400, 200)'}>
-        <text x={0} y={-80} width={200} textAnchor={'middle'}>
-          B not A
-        </text>
+        {!props.hideText && (
+          <text x={0} y={-80} width={200} textAnchor={'middle'}>
+            B not A
+          </text>
+        )}
 
         <rect x={-70} y={-70} width={140} height={140} fill={'rgba(0, 0, 0, 0.025)'} />
         <g transform={'translate(-60, -60)'}>
@@ -371,6 +405,7 @@ export const BooleanTest = (props: { p1: PathListBuilder; p2: PathListBuilder })
                 stroke={'green'}
                 fill={'rgba(0, 255, 0, 0.25)'}
                 strokeWidth={1 / scale}
+                markerStart={'url(#arrow)'}
               />
             ))}
 
@@ -386,9 +421,11 @@ export const BooleanTest = (props: { p1: PathListBuilder; p2: PathListBuilder })
       </g>
 
       <g transform={'translate(0, 400)'}>
-        <text x={0} y={-80} width={200} textAnchor={'middle'}>
-          A intersection B
-        </text>
+        {!props.hideText && (
+          <text x={0} y={-80} width={200} textAnchor={'middle'}>
+            A intersection B
+          </text>
+        )}
 
         <rect x={-70} y={-70} width={140} height={140} fill={'rgba(0, 0, 0, 0.025)'} />
         <g transform={'translate(-60, -60)'}>
@@ -413,6 +450,7 @@ export const BooleanTest = (props: { p1: PathListBuilder; p2: PathListBuilder })
                 stroke={'red'}
                 fill={'rgba(255, 0, 0, 0.25)'}
                 strokeWidth={1 / scale}
+                markerStart={'url(#arrow)'}
               />
             ))}
 
@@ -430,9 +468,11 @@ export const BooleanTest = (props: { p1: PathListBuilder; p2: PathListBuilder })
       </g>
 
       <g transform={'translate(200, 400)'}>
-        <text x={0} y={-80} width={200} textAnchor={'middle'}>
-          A XOR B
-        </text>
+        {!props.hideText && (
+          <text x={0} y={-80} width={200} textAnchor={'middle'}>
+            A XOR B
+          </text>
+        )}
 
         <rect x={-70} y={-70} width={140} height={140} fill={'rgba(0, 0, 0, 0.025)'} />
         <g transform={'translate(-60, -60)'}>
@@ -465,6 +505,7 @@ export const BooleanTest = (props: { p1: PathListBuilder; p2: PathListBuilder })
                         : 'rgba(255, 0, 0, 0.25)'
                   }
                   strokeWidth={1 / scale}
+                  markerStart={'url(#arrow)'}
                 />
               );
             })}
@@ -481,9 +522,11 @@ export const BooleanTest = (props: { p1: PathListBuilder; p2: PathListBuilder })
       </g>
 
       <g transform={'translate(400, 400)'}>
-        <text x={0} y={-80} width={200} textAnchor={'middle'}>
-          A divide B
-        </text>
+        {!props.hideText && (
+          <text x={0} y={-80} width={200} textAnchor={'middle'}>
+            A divide B
+          </text>
+        )}
 
         <rect x={-70} y={-70} width={140} height={140} fill={'rgba(0, 0, 0, 0.025)'} />
         <g transform={'translate(-60, -60)'}>
@@ -516,6 +559,7 @@ export const BooleanTest = (props: { p1: PathListBuilder; p2: PathListBuilder })
                         : 'rgba(255, 0, 0, 0.25)'
                   }
                   strokeWidth={1 / scale}
+                  markerStart={'url(#arrow)'}
                 />
               );
             })}

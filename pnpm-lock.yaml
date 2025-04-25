@@ -364,15 +364,6 @@ importers:
         specifier: workspace:^
         version: link:../utils
 
-  packages/playwright:
-    devDependencies:
-      '@playwright/test':
-        specifier: ^1.44.1
-        version: 1.44.1
-      '@types/node':
-        specifier: ^20.14.2
-        version: 20.14.2
-
   packages/query: {}
 
   packages/server-main:
@@ -380,6 +371,24 @@ importers:
       h3:
         specifier: ^1.12.0
         version: 1.12.0
+
+  packages/test-ui-boolean-ops:
+    devDependencies:
+      '@playwright/test':
+        specifier: ^1.52.0
+        version: 1.52.0
+      '@types/node':
+        specifier: ^20.14.2
+        version: 20.14.2
+
+  packages/test-ui-diagrams:
+    devDependencies:
+      '@playwright/test':
+        specifier: ^1.52.0
+        version: 1.52.0
+      '@types/node':
+        specifier: ^20.14.2
+        version: 20.14.2
 
   packages/utils: {}
 
@@ -784,9 +793,9 @@ packages:
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
     engines: {node: '>=14'}
 
-  '@playwright/test@1.44.1':
-    resolution: {integrity: sha512-1hZ4TNvD5z9VuhNJ/walIjvMVvYkZKf71axoF/uiAqpntQJXpG64dlXhoDXE3OczPuTuvjf/M5KWFg5VAVUS3Q==}
-    engines: {node: '>=16'}
+  '@playwright/test@1.52.0':
+    resolution: {integrity: sha512-uh6W7sb55hl7D6vsAeA+V2p5JnlAqzhqFyF0VcJkKZXkgnFcVG9PziERRHQfPLfNGx1C292a4JqbWzhR8L4R1g==}
+    engines: {node: '>=18'}
     hasBin: true
 
   '@radix-ui/colors@3.0.0':
@@ -2866,14 +2875,14 @@ packages:
     resolution: {integrity: sha512-M7BAV6Rlcy5u+m6oPhAPFgJTzAioX/6B0DxyvDlo9l8+T3nLKbrczg2WLUyzd45L8RqfUMyGPzekbMvX2Ldkwg==}
     engines: {node: '>=12'}
 
-  playwright-core@1.44.1:
-    resolution: {integrity: sha512-wh0JWtYTrhv1+OSsLPgFzGzt67Y7BE/ZS3jEqgGBlp2ppp1ZDj8c+9IARNW4dwf1poq5MgHreEM2KV/GuR4cFA==}
-    engines: {node: '>=16'}
+  playwright-core@1.52.0:
+    resolution: {integrity: sha512-l2osTgLXSMeuLZOML9qYODUQoPPnUsKsb5/P6LJ2e6uPKXUdPK5WYhN4z03G+YNbWmGDY4YENauNu4ZKczreHg==}
+    engines: {node: '>=18'}
     hasBin: true
 
-  playwright@1.44.1:
-    resolution: {integrity: sha512-qr/0UJ5CFAtloI3avF95Y0L1xQo6r3LQArLIg/z/PoGJ6xa+EwzrwO5lpNr/09STxdHuUoP2mvuELJS+hLdtgg==}
-    engines: {node: '>=16'}
+  playwright@1.52.0:
+    resolution: {integrity: sha512-JAwMNMBlxJ2oD1kce4KPtMkDeKGHQstdpFPcPH3maElAXon/QZeTvtsfXmTMRyO9TslfoYOXkSsvao2nE1ilTw==}
+    engines: {node: '>=18'}
     hasBin: true
 
   polished@4.3.1:
@@ -3793,9 +3802,9 @@ snapshots:
   '@pkgjs/parseargs@0.11.0':
     optional: true
 
-  '@playwright/test@1.44.1':
+  '@playwright/test@1.52.0':
     dependencies:
-      playwright: 1.44.1
+      playwright: 1.52.0
 
   '@radix-ui/colors@3.0.0': {}
 
@@ -5923,11 +5932,11 @@ snapshots:
 
   picomatch@4.0.2: {}
 
-  playwright-core@1.44.1: {}
+  playwright-core@1.52.0: {}
 
-  playwright@1.44.1:
+  playwright@1.52.0:
     dependencies:
-      playwright-core: 1.44.1
+      playwright-core: 1.52.0
     optionalDependencies:
       fsevents: 2.3.2
 

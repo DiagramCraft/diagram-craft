@@ -1,5 +1,5 @@
 {
-  "name": "playwright",
+  "name": "test-ui-diagrams",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -7,7 +7,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@playwright/test": "^1.44.1",
+    "@playwright/test": "^1.52.0",
     "@types/node": "^20.14.2"
   }
 }

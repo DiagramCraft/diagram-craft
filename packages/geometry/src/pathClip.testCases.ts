@@ -1,5 +1,6 @@
 import { PathListBuilder, unitCoordinateSystem } from './pathListBuilder';
 import { _p } from './point';
+import { applyBooleanOperation } from './pathClip';
 
 const makeCircle = (cx: number, cy: number, r: number) => {
   const b = new PathListBuilder(
@@ -10,18 +11,6 @@ const makeCircle = (cx: number, cy: number, r: number) => {
   b.arcTo(_p(0.5, 1), 0.5, 0.5, 0, 0, 1);
   b.arcTo(_p(0, 0.5), 0.5, 0.5, 0, 0, 1);
   b.arcTo(_p(0.5, 0), 0.5, 0.5, 0, 0, 1);
-  return b;
-};
-
-const makeCircleHole = (cx: number, cy: number, r: number) => {
-  const b = new PathListBuilder(
-    unitCoordinateSystem({ x: cx - r, y: cy - r, w: 2 * r, h: 2 * r, r: 0 })
-  );
-  b.moveTo(_p(0.5, 0));
-  b.arcTo(_p(0, 0.5), 0.5, 0.5, 0, 0, 0);
-  b.arcTo(_p(0.5, 1), 0.5, 0.5, 0, 0, 0);
-  b.arcTo(_p(1, 0.5), 0.5, 0.5, 0, 0, 0);
-  b.arcTo(_p(0.5, 0), 0.5, 0.5, 0, 0, 0);
   return b;
 };
 
@@ -80,14 +69,27 @@ export const TEST_CASES = {
   }),
   RectOverRectWithHole: () => ({
     p1: makeRect(180, 5, 100, 400),
-    p2: makeRect(50, 50, 350, 300).append(makeCircleHole(210, 200, 125))
+    p2: makeRect(50, 50, 350, 300).append(makeCircle(210, 200, 125).reverse())
   }),
   CircleOverTwoRects: () => ({
     p1: makeCircle(200, 200, 185),
     p2: makeRect(50, 50, 100, 400).append(makeRect(350, 5, 100, 400))
   }),
-  CircleOverlappingCircle: () => ({
+  CircleOverCircle: () => ({
     p1: makeCircle(210, 110, 100),
     p2: makeCircle(355, 240, 125)
-  })
+  }),
+  ComplexShapes: () => {
+    const holeyRectangle = makeRect(50, 50, 350, 300).append(makeCircle(210, 200, 125).reverse());
+    const rectangle = makeRect(180, 5, 100, 400);
+    const allParts = applyBooleanOperation(
+      rectangle.getPaths(),
+      holeyRectangle.getPaths(),
+      'A union B'
+    );
+    return {
+      p1: makeCircle(210, 110, 20),
+      p2: allParts[0]
+    };
+  }
 };
