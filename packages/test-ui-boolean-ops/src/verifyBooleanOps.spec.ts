@@ -1,7 +1,9 @@
 import { expect, Page, test } from '@playwright/test';
 
 const storybookScreenshotCheck = async (page: Page, groupId: string, testId: string) => {
-  await page.goto(`/iframe.html?globals=&id=geometry-path-${groupId}--${testId}&viewMode=story`);
+  await page.goto(
+    `/iframe.html?globals=&args=hideText%3A!true&id=geometry-path-${groupId}--${testId}&viewMode=story`
+  );
   await page.waitForSelector('svg');
   expect(await page.screenshot()).toMatchSnapshot();
 };

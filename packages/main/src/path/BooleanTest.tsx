@@ -11,6 +11,7 @@ import { Path } from '@diagram-craft/geometry/path';
 export const BooleanTest = (props: {
   p1: PathListBuilder | PathList;
   p2: PathListBuilder | PathList;
+  hideText: boolean;
 }) => {
   const p1 = props.p1 instanceof PathList ? props.p1 : props.p1.getPaths();
   const p2 = props.p2 instanceof PathList ? props.p2 : props.p2.getPaths();
@@ -95,9 +96,11 @@ export const BooleanTest = (props: {
 
       {/* Main shape */}
       <g>
-        <text x={0} y={-80} width={200} textAnchor={'middle'}>
-          A = blue, B = green
-        </text>
+        {!props.hideText && (
+          <text x={0} y={-80} width={200} textAnchor={'middle'}>
+            A = blue, B = green
+          </text>
+        )}
 
         <rect x={-70} y={-70} width={140} height={140} fill={'rgba(0, 0, 0, 0.025)'} />
         <g transform={'translate(-60, -60)'}>
@@ -110,9 +113,11 @@ export const BooleanTest = (props: {
 
       {/* Clipped path */}
       <g transform={'translate(200, 0)'}>
-        <text x={0} y={-80} width={200} textAnchor={'middle'}>
-          Clipped paths A
-        </text>
+        {!props.hideText && (
+          <text x={0} y={-80} width={200} textAnchor={'middle'}>
+            Clipped paths A
+          </text>
+        )}
 
         <rect x={-70} y={-70} width={140} height={140} fill={'rgba(0, 0, 0, 0.025)'} />
         <g transform={'translate(-60, -60)'}>
@@ -195,9 +200,11 @@ export const BooleanTest = (props: {
 
       {/* Clipped path */}
       <g transform={'translate(400, 0)'}>
-        <text x={0} y={-80} width={200} textAnchor={'middle'}>
-          Clipped paths B
-        </text>
+        {!props.hideText && (
+          <text x={0} y={-80} width={200} textAnchor={'middle'}>
+            Clipped paths B
+          </text>
+        )}
 
         <rect x={-70} y={-70} width={140} height={140} fill={'rgba(0, 0, 0, 0.025)'} />
         <g transform={'translate(-60, -60)'}>
@@ -279,9 +286,11 @@ export const BooleanTest = (props: {
       </g>
 
       <g transform={'translate(0, 200)'}>
-        <text x={0} y={-80} width={200} textAnchor={'middle'}>
-          A union B
-        </text>
+        {!props.hideText && (
+          <text x={0} y={-80} width={200} textAnchor={'middle'}>
+            A union B
+          </text>
+        )}
 
         <rect x={-70} y={-70} width={140} height={140} fill={'rgba(0, 0, 0, 0.025)'} />
         <g transform={'translate(-60, -60)'}>
@@ -322,9 +331,11 @@ export const BooleanTest = (props: {
       </g>
 
       <g transform={'translate(200, 200)'}>
-        <text x={0} y={-80} width={200} textAnchor={'middle'}>
-          A not B
-        </text>
+        {!props.hideText && (
+          <text x={0} y={-80} width={200} textAnchor={'middle'}>
+            A not B
+          </text>
+        )}
 
         <rect x={-70} y={-70} width={140} height={140} fill={'rgba(0, 0, 0, 0.025)'} />
         <g transform={'translate(-60, -60)'}>
@@ -365,9 +376,11 @@ export const BooleanTest = (props: {
       </g>
 
       <g transform={'translate(400, 200)'}>
-        <text x={0} y={-80} width={200} textAnchor={'middle'}>
-          B not A
-        </text>
+        {!props.hideText && (
+          <text x={0} y={-80} width={200} textAnchor={'middle'}>
+            B not A
+          </text>
+        )}
 
         <rect x={-70} y={-70} width={140} height={140} fill={'rgba(0, 0, 0, 0.025)'} />
         <g transform={'translate(-60, -60)'}>
@@ -408,9 +421,11 @@ export const BooleanTest = (props: {
       </g>
 
       <g transform={'translate(0, 400)'}>
-        <text x={0} y={-80} width={200} textAnchor={'middle'}>
-          A intersection B
-        </text>
+        {!props.hideText && (
+          <text x={0} y={-80} width={200} textAnchor={'middle'}>
+            A intersection B
+          </text>
+        )}
 
         <rect x={-70} y={-70} width={140} height={140} fill={'rgba(0, 0, 0, 0.025)'} />
         <g transform={'translate(-60, -60)'}>
@@ -453,9 +468,11 @@ export const BooleanTest = (props: {
       </g>
 
       <g transform={'translate(200, 400)'}>
-        <text x={0} y={-80} width={200} textAnchor={'middle'}>
-          A XOR B
-        </text>
+        {!props.hideText && (
+          <text x={0} y={-80} width={200} textAnchor={'middle'}>
+            A XOR B
+          </text>
+        )}
 
         <rect x={-70} y={-70} width={140} height={140} fill={'rgba(0, 0, 0, 0.025)'} />
         <g transform={'translate(-60, -60)'}>
@@ -505,9 +522,11 @@ export const BooleanTest = (props: {
       </g>
 
       <g transform={'translate(400, 400)'}>
-        <text x={0} y={-80} width={200} textAnchor={'middle'}>
-          A divide B
-        </text>
+        {!props.hideText && (
+          <text x={0} y={-80} width={200} textAnchor={'middle'}>
+            A divide B
+          </text>
+        )}
 
         <rect x={-70} y={-70} width={140} height={140} fill={'rgba(0, 0, 0, 0.025)'} />
         <g transform={'translate(-60, -60)'}>
