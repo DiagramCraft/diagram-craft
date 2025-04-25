@@ -30,8 +30,12 @@ export default defineConfig({
     trace: 'on-first-retry'
   },
 
+  snapshotPathTemplate: '{testDir}/{testFilePath}-snapshots/{arg}{ext}',
+
   expect: {
-    toHaveScreenshot: { maxDiffPixels: 200 }
+    toHaveScreenshot: {
+      maxDiffPixels: 200
+    }
   },
 
   /* Configure projects for major browsers */
