@@ -28,4 +28,4 @@ runs:
 
     - name: Debug
       shell: bash
-      run: ls -la ~
+      run: ls -la ~/.cache
