@@ -11,7 +11,7 @@ import { Path } from '@diagram-craft/geometry/path';
 export const BooleanTest = (props: {
   p1: PathListBuilder | PathList;
   p2: PathListBuilder | PathList;
-  hideText: boolean;
+  hideText?: boolean;
 }) => {
   const p1 = props.p1 instanceof PathList ? props.p1 : props.p1.getPaths();
   const p2 = props.p2 instanceof PathList ? props.p2 : props.p2.getPaths();
