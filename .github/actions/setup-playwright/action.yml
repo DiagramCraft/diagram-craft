@@ -25,7 +25,3 @@ runs:
       working-directory: ${{ inputs.working-directory }}
       if: steps.playwright-cache.outputs.cache-hit != 'true'
       run: pnpm playwright install --with-deps chromium
-
-    - name: Debug
-      shell: bash
-      run: ls -la ~/.cache
