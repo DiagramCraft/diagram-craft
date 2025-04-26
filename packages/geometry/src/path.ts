@@ -125,22 +125,6 @@ export class Path {
     ).segments;
   }
 
-  clockwise() {
-    if (this.isClockwise()) {
-      return this;
-    } else {
-      return this.reverse();
-    }
-  }
-
-  antiClockwise() {
-    if (this.isClockwise()) {
-      return this.reverse();
-    } else {
-      return this;
-    }
-  }
-
   reverse() {
     const end = this.end;
 
