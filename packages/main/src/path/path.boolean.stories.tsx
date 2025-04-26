@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
-import { TEST_CASES } from '@diagram-craft/geometry/pathClip.testCases';
+import { TEST_CASES } from '@diagram-craft/geometry/pathClip.fixtures';
 import { Scale, Translation } from '@diagram-craft/geometry/transform';
 import { _p } from '@diagram-craft/geometry/point';
 import { BooleanTest } from './BooleanTest';

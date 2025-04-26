@@ -1,4 +1,4 @@
-import { PathListBuilder, unitCoordinateSystem } from './pathListBuilder';
+import { PathList, PathListBuilder, unitCoordinateSystem } from './pathListBuilder';
 import { _p } from './point';
 import { applyBooleanOperation } from './pathClip';
 
@@ -90,6 +90,28 @@ export const TEST_CASES = {
     return {
       p1: makeCircle(210, 110, 20),
       p2: allParts[0]
+    };
+  },
+  ComplexShapes2: () => {
+    const rectangles = makeRect(50, 5, 100, 400).append(makeRect(350, 5, 100, 400));
+
+    const circle = makeCircle(200, 200, 185);
+
+    const a = new PathList(
+      applyBooleanOperation(rectangles.getPaths(), circle.getPaths(), 'A union B').flatMap(p =>
+        p.all()
+      )
+    );
+    const b = new PathList(
+      applyBooleanOperation(rectangles.getPaths(), circle.getPaths(), 'A intersection B').flatMap(
+        p => p.all()
+      )
+    );
+    return {
+      p2: a,
+      p1: b
+      //p1: rectangles,
+      //p2: circle
     };
   }
 };

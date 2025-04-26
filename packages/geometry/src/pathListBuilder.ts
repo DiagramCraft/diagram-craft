@@ -13,6 +13,7 @@ import { PathUtils } from './pathUtils';
 import { LengthOffsetOnPath, TimeOffsetOnSegment } from './pathPosition';
 import { LocalCoordinateSystem } from './lcs';
 import { parseSvgPath } from './svgPathUtils';
+import { MultiMap } from '@diagram-craft/utils/multimap';
 
 /**
  * Represents a raw cubic Bézier curve segment in an SVG path.
@@ -91,7 +92,7 @@ export const inverseUnitCoordinateSystem = (b: Box) => {
 };
 
 export class PathList {
-  constructor(private readonly paths: Path[]) {}
+  constructor(private paths: Path[]) {}
 
   singularPath() {
     assert.true(this.paths.length === 1, `Expected a single path, ${this.paths.length} found`);
@@ -112,6 +113,57 @@ export class PathList {
 
   segments() {
     return this.paths.flatMap(p => p.segments);
+  }
+
+  normalize() {
+    // First we remove all self-intersections
+
+    // Secondly, we need to order all paths in a tree structure based on which contains which
+    const containedWithin = new MultiMap<number, number>();
+    for (let a = 0; a < this.paths.length; a++) {
+      for (let b = 0; b < this.paths.length; b++) {
+        if (a === b) continue;
+        const pa = this.paths[a];
+        const pb = this.paths[b];
+        if (pa.segments.map(s => s.start).every(p => pb.isInside(p))) {
+          containedWithin.add(a, b);
+        }
+      }
+    }
+
+    const dest: Path[] = [];
+
+    let maxLoop = 100;
+    let state = true;
+    const queue = [...this.paths.map((_, i) => i)];
+    while (queue.length > 0) {
+      const removed: number[] = [];
+      for (const i of queue) {
+        const p = this.paths[i];
+        if (!containedWithin.has(i)) {
+          removed.push(i);
+
+          if (p.isClockwise() && state) dest.push(p.reverse());
+          else if (!p.isClockwise() && !state) dest.push(p.reverse());
+          else {
+            dest.push(p);
+          }
+        }
+      }
+
+      removed.forEach(j => queue.splice(queue.indexOf(j), 1));
+      removed.forEach(r => queue.forEach(q => containedWithin.remove(q, r)));
+
+      state = !state;
+
+      if (maxLoop-- === 0) {
+        VERIFY_NOT_REACHED('Max loop reached');
+      }
+    }
+
+    this.paths = dest;
+
+    return this;
   }
 
   scale(targetBounds: Box, referenceBounds?: Box) {
