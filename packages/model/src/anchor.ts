@@ -3,11 +3,11 @@ import { DiagramNode } from './diagramNode';
 import { Box } from '@diagram-craft/geometry/box';
 import { Range } from '@diagram-craft/geometry/range';
 import { Line } from '@diagram-craft/geometry/line';
-import { PathList } from '@diagram-craft/geometry/pathListBuilder';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { Path } from '@diagram-craft/geometry/path';
 import { PointOnPath } from '@diagram-craft/geometry/pathPosition';
 import { round } from '@diagram-craft/utils/math';
+import { PathList } from '@diagram-craft/geometry/pathList';
 
 export type Anchor = {
   id: string;

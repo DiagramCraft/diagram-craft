@@ -1,12 +1,5 @@
 import { Point } from './point';
-import {
-  CubicSegment,
-  LineSegment,
-  makeCurveSegment,
-  PathSegment,
-  QuadSegment,
-  SegmentList
-} from './pathSegment';
+import { CubicSegment, LineSegment, PathSegment, QuadSegment } from './pathSegment';
 import {
   LengthOffsetOnPath,
   LengthOffsetOnSegment,
@@ -21,65 +14,151 @@ import { assert, VERIFY_NOT_REACHED, VerifyNotReached } from '@diagram-craft/uti
 import { roundHighPrecision } from '@diagram-craft/utils/math';
 import { Vector } from './vector';
 import { Line } from './line';
+import { Lazy } from '@diagram-craft/utils/lazy';
 
 export type Projection = { t: number; distance: number; point: Point };
 
-const makeSegmentList = (start: Point, path: ReadonlyArray<RawSegment>) => {
-  const dest: Array<PathSegment> = [];
+class SegmentList {
+  constructor(public readonly segments: PathSegment[]) {}
 
-  let end = start;
+  static make(start: Point, path: ReadonlyArray<RawSegment>) {
+    const dest: Array<PathSegment> = [];
 
-  for (const seg of path) {
-    const command = seg[0];
+    let end = start;
 
-    let s: Array<PathSegment> = [];
-    switch (command) {
-      case 'L':
-        s = [new LineSegment(end, { x: seg[1], y: seg[2] })];
-        break;
-      case 'C': {
-        const [, p1x, p1y, p2x, p2y, ex, ey] = seg;
-        s = [new CubicSegment(end, { x: p1x, y: p1y }, { x: p2x, y: p2y }, { x: ex, y: ey })];
-        break;
-      }
-      case 'Q':
-        s = [new QuadSegment(end, { x: seg[1], y: seg[2] }, { x: seg[3], y: seg[4] })];
-        break;
-      case 'T':
-        s = [makeCurveSegment(end, { x: seg[1], y: seg[2] }, dest.at(-1)! as QuadSegment)];
-        break;
-      case 'A': {
-        const [, rx, ry, angle, larc, sweep, x2, y2] = seg;
-        const cubicSegments = BezierUtils.fromArc(end.x, end.y, rx, ry, angle, larc, sweep, x2, y2);
+    for (const seg of path) {
+      const command = seg[0];
 
-        s = [];
-        for (const [, p1x, p1y, p2x, p2y, ex, ey] of cubicSegments) {
-          s.push(new CubicSegment(end, { x: p1x, y: p1y }, { x: p2x, y: p2y }, { x: ex, y: ey }));
-          end = { x: ex, y: ey };
+      switch (command) {
+        case 'L':
+          dest.push(new LineSegment(end, { x: seg[1], y: seg[2] }));
+          break;
+        case 'C': {
+          const [, p1x, p1y, p2x, p2y, ex, ey] = seg;
+          dest.push(
+            new CubicSegment(end, { x: p1x, y: p1y }, { x: p2x, y: p2y }, { x: ex, y: ey })
+          );
+          break;
         }
-        break;
+        case 'Q':
+          dest.push(new QuadSegment(end, { x: seg[1], y: seg[2] }, { x: seg[3], y: seg[4] }));
+          break;
+        case 'T': {
+          const cp = (dest.at(-1) as QuadSegment).p2!;
+          const cp2 = Point.add(end, Point.subtract(end, cp));
+          dest.push(new QuadSegment(end, cp2, { x: seg[1], y: seg[2] }));
+          break;
+        }
+        case 'A': {
+          const [, rx, ry, angle, larc, sweep, x2, y2] = seg;
+          const cubicSegments = BezierUtils.fromArc(
+            end.x,
+            end.y,
+            rx,
+            ry,
+            angle,
+            larc,
+            sweep,
+            x2,
+            y2
+          );
+
+          for (const [, p1x, p1y, p2x, p2y, ex, ey] of cubicSegments) {
+            dest.push(
+              new CubicSegment(end, { x: p1x, y: p1y }, { x: p2x, y: p2y }, { x: ex, y: ey })
+            );
+            end = { x: ex, y: ey };
+          }
+          break;
+        }
+
+        default:
+          throw new VerifyNotReached();
       }
 
-      default:
-        throw new VerifyNotReached();
+      end = dest.at(-1)!.end;
     }
 
-    dest.push(...s);
-    end = s.at(-1)!.end;
+    return new SegmentList(dest);
   }
 
-  return new SegmentList(dest);
-};
+  length() {
+    return this.segments.reduce((acc, cur) => acc + cur.length(), 0);
+  }
+
+  pointAt(t: LengthOffsetOnPath) {
+    // Find the segment that contains the point
+    let currentD = t.pathD;
+    let segmentIndex = 0;
+    let segment = this.segments[segmentIndex];
+    while (currentD > segment.length()) {
+      currentD -= segment.length();
+      segment = this.segments[++segmentIndex];
+    }
+
+    // TODO: This is a bit incorrect, we should probably use tAtLength here
+    return segment.point(currentD / segment.length());
+  }
+
+  tangentAt(t: LengthOffsetOnPath) {
+    // Find the segment that contains the point
+    let currentD = t.pathD;
+    let segmentIndex = 0;
+    let segment = this.segments[segmentIndex];
+    while (currentD > segment.length()) {
+      currentD -= segment.length();
+      segment = this.segments[++segmentIndex];
+    }
+
+    // TODO: This is a bit incorrect, we should probably use tAtLength here
+    return segment.tangent(currentD / segment.length());
+  }
+
+  projectPoint(point: Point): Projection & { segmentIndex: number; globalL: number } {
+    let bestSegment = -1;
+    let bestProject: Projection | undefined;
+    let bestDistance = Number.MAX_VALUE;
+
+    const segments = this.segments;
+    for (let i = 0; i < segments.length; i++) {
+      const s = segments[i];
+      const projection = s.projectPoint(point);
+      if (projection.distance < bestDistance) {
+        bestProject = projection;
+        bestDistance = projection.distance;
+        bestSegment = i;
+      }
+    }
+
+    if (!bestProject) {
+      return { segmentIndex: 0, t: 0, globalL: 0, distance: 0, point };
+    }
+
+    const l = this.segments.slice(0, bestSegment).reduce((acc, cur) => acc + cur.length(), 0);
+    return {
+      segmentIndex: bestSegment,
+      t: bestProject!.t,
+
+      // TODO: Should we really return this back here - as it's a bit expensive to calculate
+      globalL: l + this.segments[bestSegment].lengthAtT(bestProject!.t),
+      distance: bestProject!.distance,
+      point: bestProject!.point
+    };
+  }
+}
 
 export class Path {
-  #path: RawSegment[] = [];
-  #segmentList: SegmentList | undefined;
-
+  readonly #path: RawSegment[] = [];
+  readonly #segmentList;
   readonly #start: Point;
 
-  constructor(start: Point, path: RawSegment[]) {
+  constructor(start: Point, path: RawSegment[], segmentList?: SegmentList) {
     this.#path = path;
     this.#start = start;
+    this.#segmentList = new Lazy<SegmentList>(
+      () => SegmentList.make(this.start, this.#path),
+      segmentList
+    );
   }
 
   static join(...paths: Path[]) {
@@ -90,18 +169,21 @@ export class Path {
     return new Path(paths[0].start, dest);
   }
 
-  // Note, we create the parsed segments lazily - as the path is created as edges are rerouted,
-  //       but the actual segments are only needed when we want to do something with the path
+  static from(p: Path, fn: (segments: ReadonlyArray<PathSegment>) => PathSegment[]) {
+    const segmentList = new SegmentList(fn(p.segmentList.segments));
+    const path = segmentList.segments.flatMap(e => e.raw());
+    return new Path(p.start, path, segmentList);
+  }
+
   private get segmentList() {
-    if (this.#segmentList) return this.#segmentList;
-    this.#segmentList = makeSegmentList(this.#start, this.#path);
-    return this.#segmentList;
+    return this.#segmentList.get();
   }
 
   clone() {
     return new Path(
       this.start,
-      this.#path.slice().map(e => [...e])
+      this.#path.slice().map(e => [...e]),
+      this.segmentList
     );
   }
 
@@ -113,30 +195,53 @@ export class Path {
     return this.segmentList.segments.at(-1)!.end;
   }
 
-  get path() {
-    return this.#path;
+  scale(fromBounds: Box, toBounds: Box) {
+    assert.true(fromBounds.r === toBounds.r); // Rotation is not supported
+
+    const trX = (x: number) => ((x - fromBounds.x) / fromBounds.w) * toBounds.w + toBounds.x;
+    const trY = (y: number) => ((y - fromBounds.y) / fromBounds.h) * toBounds.h + toBounds.y;
+
+    const dest: RawSegment[] = [];
+
+    for (const el of this.#path) {
+      switch (el[0]) {
+        case 'L':
+          dest.push(['L', trX(el[1]), trY(el[2])]);
+          break;
+        case 'C':
+          dest.push(['C', trX(el[1]), trY(el[2]), trX(el[3]), trY(el[4]), trX(el[5]), trY(el[6])]);
+          break;
+        case 'Q':
+          dest.push(['Q', trX(el[1]), trY(el[2]), trX(el[3]), trY(el[4])]);
+          break;
+        case 'T':
+          dest.push(['T', trX(el[1]), trY(el[2])]);
+          break;
+        case 'A': {
+          const rx = (el[1] / Math.abs(fromBounds.w)) * Math.abs(toBounds.w);
+          const ry = (el[2] / Math.abs(fromBounds.h)) * Math.abs(toBounds.h);
+          dest.push(['A', rx, ry, el[3], el[4], el[5], trX(el[6]), trY(el[7])]);
+          break;
+        }
+      }
+    }
+
+    return new Path({ x: trX(this.start.x), y: trY(this.start.y) }, dest);
   }
 
-  get segmentCount() {
-    return this.#segmentList ? this.#segmentList.segments.length : this.#path.length;
+  get numberOfSegments() {
+    return this.#segmentList.hasValue() ? this.#segmentList.get().length() : this.#path.length;
   }
 
   get segments(): ReadonlyArray<PathSegment> {
     return this.segmentList.segments;
   }
 
-  get normalizedSegments(): ReadonlyArray<PathSegment> {
-    return makeSegmentList(
-      this.#start,
-      this.segments.flatMap(e => e.raw())
-    ).segments;
-  }
-
   reverse() {
     const end = this.end;
 
     const newSegmentList: PathSegment[] = [];
-    const segments = makeSegmentList(this.#start, this.#path).segments;
+    const segments = SegmentList.make(this.#start, this.#path).segments;
     for (let i = segments.length - 1; i >= 0; i--) {
       newSegmentList.push(segments[i].reverse());
     }
@@ -148,7 +253,7 @@ export class Path {
   }
 
   isInside(p: Point) {
-    const line = new Path(p, [['L', Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER]]);
+    const line = new Path(p, [['L', Number.MAX_SAFE_INTEGER / 17, Number.MAX_SAFE_INTEGER / 53]]);
     const intersections = this.intersections(line);
     return intersections.length % 2 !== 0;
   }
@@ -156,11 +261,6 @@ export class Path {
   isOn(p: Point) {
     const pp = this.projectPoint(p);
     return Point.isEqual(pp.point, p, 0.001) && pp.segmentT >= 0 && pp.segmentT <= 1;
-  }
-
-  processSegments(fn: (segments: ReadonlyArray<PathSegment>) => PathSegment[]) {
-    this.#segmentList = new SegmentList(fn(this.segmentList.segments));
-    this.#path = this.#segmentList.segments.flatMap(e => e.raw());
   }
 
   length() {
@@ -374,10 +474,6 @@ export class Path {
     return Box.boundingBox(boxes);
   }
 
-  hash() {
-    return this.asSvgPath();
-  }
-
   clean() {
     // Remove any repeated segments
     const dest: RawSegment[] = [this.#path[0]];
@@ -389,19 +485,7 @@ export class Path {
       dest.push(current);
     }
 
-    this.#path = dest;
-    this.#segmentList = undefined;
-  }
-
-  pop() {
-    const last = this.#path.pop();
-    this.#segmentList = undefined;
-    return last;
-  }
-
-  add(segment: RawSegment) {
-    this.#path.push(segment);
-    this.#segmentList = undefined;
+    return new Path(this.#start, dest);
   }
 
   isClockwise() {

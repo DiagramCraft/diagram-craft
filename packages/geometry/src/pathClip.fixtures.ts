@@ -1,6 +1,7 @@
-import { PathList, PathListBuilder, unitCoordinateSystem } from './pathListBuilder';
+import { PathListBuilder, unitCoordinateSystem } from './pathListBuilder';
 import { _p } from './point';
 import { applyBooleanOperation } from './pathClip';
+import { PathList } from './pathList';
 
 const makeCircle = (cx: number, cy: number, r: number) => {
   const b = new PathListBuilder(

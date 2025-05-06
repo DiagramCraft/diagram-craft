@@ -3,7 +3,6 @@ import { Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
 import { Vector } from '@diagram-craft/geometry/vector';
 import {
-  PathList,
   inverseUnitCoordinateSystem,
   PathListBuilder
 } from '@diagram-craft/geometry/pathListBuilder';
@@ -11,6 +10,7 @@ import { CubicSegment, LineSegment, PathSegment } from '@diagram-craft/geometry/
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { assert, VERIFY_NOT_REACHED, VerifyNotReached } from '@diagram-craft/utils/assert';
+import { PathList } from '@diagram-craft/geometry/pathList';
 
 export type EditableSegment = {
   type: 'cubic' | 'line' | 'move';

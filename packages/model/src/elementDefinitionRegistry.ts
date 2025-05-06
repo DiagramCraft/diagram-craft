@@ -2,7 +2,6 @@ import { DiagramNode, NodeTexts } from './diagramNode';
 import { assert } from '@diagram-craft/utils/assert';
 import { DiagramElement } from './diagramElement';
 import { DiagramEdge } from './diagramEdge';
-import { PathList } from '@diagram-craft/geometry/pathListBuilder';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from './unitOfWork';
@@ -16,6 +15,7 @@ import { deserializeDiagramElements } from './serialization/deserialize';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { stencilLoaderRegistry } from '@diagram-craft/canvas-app/loaders';
 import { Property } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
+import { PathList } from '@diagram-craft/geometry/pathList';
 
 export type NodeCapability =
   | 'children'

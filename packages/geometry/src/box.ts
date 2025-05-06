@@ -193,29 +193,4 @@ export const Box = {
   fromOffset: (b: Box, offset: Point) => {
     return { x: b.x + offset.x * b.w, y: b.y + offset.y * b.h };
   }
-
-  /*
-  withRotation: (b: Box, r: number) => ({ ...b, size: { ...b.size }, rotation: r })
-
-
-  fromDomRect: (rect: DOMRect): Box => {
-    return {
-      pos: { x: rect.x, y: rect.y },
-      size: { w: rect.width, h: rect.height },
-      rotation: 0
-    };
-  },
-
-  fromElement: (el: Element): Box => {
-    const rect = el.getBoundingClientRect();
-    return {
-      pos: { x: rect.x, y: rect.y },
-      size: { w: rect.width, h: rect.height },
-      rotation: 0
-    };
-  },
-
-  asDomRect: (b: Box): DOMRect => {
-    return new DOMRect(b.pos.x, b.pos.y, b.size.w, b.size.h);
-  },*/
 };

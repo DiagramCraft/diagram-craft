@@ -1,9 +1,5 @@
 import { BaseNodeComponent } from '../components/BaseNodeComponent';
-import {
-  PathList,
-  PathListBuilder,
-  PathBuilderHelper
-} from '@diagram-craft/geometry/pathListBuilder';
+import { PathListBuilder, PathBuilderHelper } from '@diagram-craft/geometry/pathListBuilder';
 import { Box } from '@diagram-craft/geometry/box';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { Point } from '@diagram-craft/geometry/point';
@@ -18,6 +14,7 @@ import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { round } from '@diagram-craft/utils/math';
 import { Anchor, AnchorStrategy, BoundaryDirection } from '@diagram-craft/model/anchor';
 import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
+import { PathList } from '@diagram-craft/geometry/pathList';
 
 type NodeShapeConstructor<T extends ShapeNodeDefinition> = {
   new (shapeNodeDefinition: T): BaseNodeComponent<T>;

@@ -1,4 +1,4 @@
-import { PathList, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
+import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { Box } from '@diagram-craft/geometry/box';
 import {
   applyBooleanOperation,
@@ -7,6 +7,7 @@ import {
 } from '@diagram-craft/geometry/pathClip';
 import { Point } from '@diagram-craft/geometry/point';
 import { Path } from '@diagram-craft/geometry/path';
+import { PathList } from '@diagram-craft/geometry/pathList';
 
 export const BooleanTest = (props: {
   p1: PathListBuilder | PathList;

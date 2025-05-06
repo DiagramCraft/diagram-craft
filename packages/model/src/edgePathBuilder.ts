@@ -164,8 +164,8 @@ const buildOrthogonalEdgePath = (
   const best =
     endResult.find(r => r.endDirection === preferredEndDirection)?.path ??
     endResult.toSorted((a, b) => {
-      const c1 = a.path.getPaths().all()[0]?.segmentCount ?? 100;
-      const c2 = b.path.getPaths().all()[0]?.segmentCount ?? 100;
+      const c1 = a.path.getPaths().all()[0]?.numberOfSegments ?? 100;
+      const c2 = b.path.getPaths().all()[0]?.numberOfSegments ?? 100;
       return c1 - c2;
     })[0].path;
 
@@ -233,21 +233,18 @@ export const buildEdgePath = (
   switch (edge.renderProps.type) {
     case 'orthogonal': {
       const r = buildOrthogonalEdgePath(edge, preferedStartDirection, preferedEndDirection);
-      if (rounding > 0) r.processSegments(applyRounding(rounding));
-      return r;
+      return rounding > 0 ? Path.from(r, applyRounding(rounding)) : r;
     }
     case 'curved': {
-      const r = buildOrthogonalEdgePath(edge, preferedStartDirection, preferedEndDirection);
-      r.clean();
-      r.processSegments(convertToCurves);
-      return r;
+      const r = buildOrthogonalEdgePath(edge, preferedStartDirection, preferedEndDirection).clean();
+      return Path.from(r, convertToCurves);
     }
     case 'bezier':
       return buildBezierEdgePath(edge);
 
     default: {
-      const r = buildStraightEdgePath(edge);
-      if (rounding > 0 && r.segments.length > 1) r.processSegments(applyRounding(rounding));
+      let r = buildStraightEdgePath(edge);
+      if (rounding > 0 && r.segments.length > 1) r = Path.from(r, applyRounding(rounding));
       assert.true(r.segments.length > 0, 'Straight edge path must have at least one segment');
       return r;
     }
