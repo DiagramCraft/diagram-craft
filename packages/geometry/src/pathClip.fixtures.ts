@@ -110,8 +110,18 @@ export const TEST_CASES = {
     return {
       p2: a,
       p1: b
-      //p1: rectangles,
-      //p2: circle
+    };
+  },
+  TriangleInsideRectangle: () => {
+    const b = new PathListBuilder();
+    b.moveTo(_p(100, 400));
+    b.lineTo(_p(400, 400));
+    b.lineTo(_p(250, 250));
+    b.lineTo(_p(100, 400));
+
+    return {
+      p1: b,
+      p2: makeRect(100, 100, 300, 300)
     };
   }
 };

@@ -46,6 +46,10 @@ export const ComplexShapes: Story = {
   args: TEST_CASES.ComplexShapes()
 };
 
-export const ComplexShapes2: Story = {
+/*export const ComplexShapes2: Story = {
   args: TEST_CASES.ComplexShapes2()
+};*/
+
+export const TriangleInsideRectangle: Story = {
+  args: TEST_CASES.TriangleInsideRectangle()
 };

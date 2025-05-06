@@ -98,6 +98,13 @@ export class Path {
     return this.#segmentList;
   }
 
+  clone() {
+    return new Path(
+      this.start,
+      this.#path.slice().map(e => [...e])
+    );
+  }
+
   get start() {
     return this.#start;
   }
@@ -148,7 +155,7 @@ export class Path {
 
   isOn(p: Point) {
     const pp = this.projectPoint(p);
-    return Point.isEqual(pp.point, p, 0.001);
+    return Point.isEqual(pp.point, p, 0.001) && pp.segmentT >= 0 && pp.segmentT <= 1;
   }
 
   processSegments(fn: (segments: ReadonlyArray<PathSegment>) => PathSegment[]) {

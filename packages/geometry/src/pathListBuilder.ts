@@ -166,6 +166,14 @@ export class PathList {
     return this;
   }
 
+  clone() {
+    const dest: Path[] = [];
+    for (const p of this.paths) {
+      dest.push(p.clone());
+    }
+    return new PathList(dest);
+  }
+
   scale(targetBounds: Box, referenceBounds?: Box) {
     const bounds = referenceBounds ?? this.bounds();
 
@@ -210,13 +218,15 @@ export class PathList {
   }
 
   isInside(p: Point): boolean {
-    const line = new Path(p, [['L', Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER]]);
+    // TODO: Check multiple rays - or make it more "unique" - or check that intersection is not on endpoints
+    const line = new Path(p, [['L', Number.MAX_SAFE_INTEGER / 17, Number.MAX_SAFE_INTEGER / 25]]);
     const intersections = this.all().flatMap(p => p.intersections(line));
     return intersections.length % 2 !== 0;
   }
 
   isInHole(p: Point): boolean {
-    const line = new Path(p, [['L', Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER]]);
+    // TODO: Check multiple rays - or make it more "unique" - or check that intersection is not on endpoints
+    const line = new Path(p, [['L', Number.MAX_SAFE_INTEGER / 17, Number.MAX_SAFE_INTEGER / 25]]);
     const intersections = this.all().flatMap(p => p.intersections(line));
     return intersections.length > 1 && intersections.length % 2 === 0;
   }

@@ -120,7 +120,9 @@ export const applyBooleanOperation = (
     }
   };
 
-  return doApplyOperation(operation, a, b).map(a => a.normalize());
+  return doApplyOperation(operation, a, b)
+    .map(a => a.normalize())
+    .map(a => a.clone());
 };
 
 const clipSegments = (vertices: Vertex[]) => {
@@ -187,6 +189,45 @@ const sortIntoVertexList = (
   return dest;
 };
 
+const linkVertices = (subjectVertices: VertexList[], clipVertices: VertexList[]) => {
+  for (const subjectVertexList of subjectVertices) {
+    for (const subject of subjectVertexList) {
+      subject.intersect = false;
+      subject.neighbor = undefined;
+    }
+  }
+  for (const clipVertexList of clipVertices) {
+    for (const clip of clipVertexList) {
+      clip.intersect = false;
+      clip.neighbor = undefined;
+    }
+  }
+
+  for (const subjectVertexList of subjectVertices) {
+    for (const clipVertexList of clipVertices) {
+      for (let i = 0; i < subjectVertexList.length; i++) {
+        for (let j = 0; j < clipVertexList.length; j++) {
+          const subject = subjectVertexList[i];
+          const clip = clipVertexList[j];
+
+          if (subject.intersect || clip.intersect) continue;
+
+          if (Point.isEqual(subject.point, clip.point)) {
+            // @ts-ignore
+            subject.intersect = true;
+            // @ts-ignore
+            subject.neighbor = clip;
+            // @ts-ignore
+            clip.intersect = true;
+            // @ts-ignore
+            clip.neighbor = subject;
+          }
+        }
+      }
+    }
+  }
+};
+
 // NOTE: At this point, the vertices are part of a linked list
 const removeDuplicatePoints = (vertices: Vertex[]) => {
   const vertexSet = new Set<Vertex>(vertices);
@@ -196,50 +237,15 @@ const removeDuplicatePoints = (vertices: Vertex[]) => {
     if (!vertexSet.has(current)) continue;
 
     const next = vertices[(i + 1) % vertices.length];
-    const prev = vertices[(i + vertices.length - 1) % vertices.length];
 
-    if (prev.intersect && isSame(prev.alpha, 1)) {
-      prev.prev.next = current;
-      current.prev = prev.prev;
-
-      vertexSet.delete(prev);
-
-      current.intersect = true;
-      current.alpha = 0;
-      current.neighbor = prev.neighbor;
-      current.neighbor.neighbor = current;
-    }
-
-    if (
-      Point.isEqual(next.point, current.point) &&
+    if (current.intersect && (isSame(current.alpha, 0) || isSame(current.alpha, 1))) {
+      vertexSet.delete(current);
+    } else if (
       next.intersect &&
-      isSame(next.alpha, current.alpha) &&
-      !isSame(next.alpha, 0)
+      Point.isEqual(next.point, current.point) &&
+      isSame(next.alpha, current.alpha)
     ) {
-      next.next.prev = current;
-      current.next = next.next;
-
       vertexSet.delete(next);
-
-      next.neighbor.neighbor = current;
-    }
-
-    if (next.intersect && isSame(next.alpha, 0)) {
-      next.next.prev = current;
-      current.next = next.next;
-
-      vertexSet.delete(next);
-
-      current.intersect = true;
-      current.alpha = 0;
-      current.neighbor = next.neighbor;
-      current.neighbor.neighbor = current;
-    }
-
-    if (current.neighbor) {
-      assert.true(current.neighbor.neighbor === current);
-      assert.true(current.intersect);
-      assert.true(current.neighbor.intersect);
     }
   }
 
@@ -247,14 +253,7 @@ const removeDuplicatePoints = (vertices: Vertex[]) => {
   const dest = vertices.filter(v => vertexSet.has(v));
   vertices.splice(0, vertices.length, ...dest);
 
-  DEBUG: {
-    for (const v of vertices) {
-      if (v.intersect) {
-        assert.true(v.neighbor.neighbor === v);
-        assert.true(v.neighbor.intersect);
-      }
-    }
-  }
+  makeLinkedList(vertices);
 };
 
 // @ts-ignore
@@ -425,8 +424,7 @@ export const getClipVertices = (cp1: PathList, cp2: PathList): [VertexList[], Ve
     for (const p2 of cp2.all()) {
       for (const thisSegment of p1.segments) {
         for (const otherSegment of p2.segments) {
-          const intersections = thisSegment.intersectionsWith(otherSegment);
-          if (!intersections) continue;
+          const intersections = thisSegment.intersectionsWith(otherSegment) ?? [];
 
           for (const intersection of intersections) {
             const i1: Vertex = {
@@ -469,12 +467,16 @@ export const getClipVertices = (cp1: PathList, cp2: PathList): [VertexList[], Ve
   clipVertices.forEach(vertexList => makeLinkedList(vertexList));
 
   // This is just for debugging purposes
-  subjectVertices.forEach(vertexList => vertexList.forEach((e, i) => (e.label = 's_' + i)));
-  clipVertices.forEach(vertexList => vertexList.forEach((e, i) => (e.label = 'c_' + i)));
+  subjectVertices.forEach((vertexList, j) =>
+    vertexList.forEach((e, i) => (e.label = `s_${j}_${i}`))
+  );
+  clipVertices.forEach((vertexList, j) => vertexList.forEach((e, i) => (e.label = `c_${j}_${i}`)));
 
   // Remove duplicate points'
   subjectVertices.forEach(vertexList => removeDuplicatePoints(vertexList));
   clipVertices.forEach(vertexList => removeDuplicatePoints(vertexList));
+
+  linkVertices(subjectVertices, clipVertices);
 
   DEBUG: {
     assertConsistency(subjectVertices, clipVertices);
@@ -515,6 +517,7 @@ export const classifyClipVertices = (
   paths: [PathList, PathList],
   type: [boolean, boolean]
 ) => {
+  const crossings: Point[] = [];
   const doClassifyClipVertices = (pVertexList: Array<VertexList>, start: boolean, q: PathList) => {
     for (let i = 0; i < pVertexList.length; i += 1) {
       const pVertices = pVertexList[i];
@@ -570,6 +573,8 @@ export const classifyClipVertices = (
             }
           }
 
+          crossings.push(intersection.point);
+
           // Pi->entry_exit = status
           intersection.type = status ? 'in->out' : 'out->in';
 
@@ -583,6 +588,8 @@ export const classifyClipVertices = (
   // for both polygons P do
   doClassifyClipVertices(vertices[0], type[0], paths[1]);
   doClassifyClipVertices(vertices[1], type[1], paths[0]);
+
+  return crossings;
 };
 
 /*
