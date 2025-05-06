@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { TEST_CASES } from '@diagram-craft/geometry/pathClip.testCases';
+import { TEST_CASES } from '@diagram-craft/geometry/pathClip.fixtures';
 import { BooleanTest } from './BooleanTest';
 
 const meta = {
@@ -44,4 +44,12 @@ export const CircleOverCircle: Story = {
 
 export const ComplexShapes: Story = {
   args: TEST_CASES.ComplexShapes()
+};
+
+/*export const ComplexShapes2: Story = {
+  args: TEST_CASES.ComplexShapes2()
+};*/
+
+export const TriangleInsideRectangle: Story = {
+  args: TEST_CASES.TriangleInsideRectangle()
 };

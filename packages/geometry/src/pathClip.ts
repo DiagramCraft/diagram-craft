@@ -6,7 +6,6 @@ import { Path } from './path';
 import { Vector } from './vector';
 import { MultiMap } from '@diagram-craft/utils/multimap';
 import { isSame } from '@diagram-craft/utils/math';
-import { Line } from './line';
 
 type VertexType = 'in->out' | 'out->in';
 
@@ -49,75 +48,81 @@ export const applyBooleanOperation = (
   b: PathList,
   operation: BooleanOperation
 ): Array<PathList> => {
-  const vertices = getClipVertices(a, b);
+  const doApplyOperation = (operation: BooleanOperation, a: PathList, b: PathList) => {
+    const vertices = getClipVertices(a, b);
 
-  // We need to classify vertices to determine if each intersection is also a crossing
-  classifyClipVertices(vertices, [a, b], [false, false]);
+    // We need to classify vertices to determine if each intersection is also a crossing
+    classifyClipVertices(vertices, [a, b], [false, false]);
 
-  const isCrossing =
-    vertices[0][0].filter(v => v.intersect).length > 0 &&
-    vertices[1][0].filter(v => v.intersect).length > 0;
+    const isCrossing =
+      vertices[0][0].filter(v => v.intersect).length > 0 &&
+      vertices[1][0].filter(v => v.intersect).length > 0;
 
-  // Note: this assumes there's only one path in each compound path
-  const aContainedInB =
-    !isCrossing && vertices[0][0].every(v => b.isInside(v.point) || b.isOn(v.point));
-  const bContainedInA =
-    !isCrossing && vertices[1][0].every(v => a.isInside(v.point) || a.isOn(v.point));
+    // TODO: this assumes there's only one path in each compound path
+    const aContainedInB =
+      !isCrossing && vertices[0][0].every(v => b.isInside(v.point) || b.isOn(v.point));
+    const bContainedInA =
+      !isCrossing && vertices[1][0].every(v => a.isInside(v.point) || a.isOn(v.point));
 
-  switch (operation) {
-    case 'A union B':
-      if (!isCrossing) {
-        if (aContainedInB) return [b];
-        else if (bContainedInA) return [a];
-        else return [a, b];
+    switch (operation) {
+      case 'A union B':
+        if (!isCrossing) {
+          if (aContainedInB) return [b];
+          else if (bContainedInA) return [a];
+          else return [a, b];
+        }
+
+        classifyClipVertices(vertices, [a, b], [false, false]);
+        return [clipVertices(vertices)];
+      case 'A not B':
+        if (!isCrossing) {
+          if (aContainedInB) return [];
+          else if (bContainedInA) {
+            return [new PathList([...a.all(), ...b.all()])];
+          } else return [a];
+        }
+
+        classifyClipVertices(vertices, [a, b], [false, true]);
+        return [clipVertices(vertices)];
+      case 'B not A':
+        if (!isCrossing) {
+          if (bContainedInA) return [];
+          else if (aContainedInB) {
+            return [new PathList([...b.all(), ...a.all()])];
+          } else return [b];
+        }
+
+        classifyClipVertices(vertices, [a, b], [true, false]);
+        return [clipVertices(vertices)];
+      case 'A intersection B': {
+        if (!isCrossing) {
+          if (aContainedInB) return [a];
+          else if (bContainedInA) return [b];
+          else return [];
+        }
+
+        classifyClipVertices(vertices, [a, b], [true, true]);
+
+        const intersection = clipVertices(vertices);
+        return intersection.segments().length > 0 ? [intersection] : [];
       }
-
-      classifyClipVertices(vertices, [a, b], [false, false]);
-      return [makeHoles(clipVertices(vertices), a, b)];
-    case 'A not B':
-      if (!isCrossing) {
-        if (aContainedInB) return [];
-        else if (bContainedInA) {
-          return [new PathList([...a.all(), ...b.all().map(e => e.reverse())])];
-        } else return [a];
+      case 'A xor B': {
+        const cp1 = applyBooleanOperation(a, b, 'A not B');
+        const cp2 = applyBooleanOperation(a, b, 'B not A');
+        return [...cp1, ...cp2];
       }
-
-      classifyClipVertices(vertices, [a, b], [false, true]);
-      return [clipVertices(vertices)];
-    case 'B not A':
-      if (!isCrossing) {
-        if (bContainedInA) return [];
-        else if (aContainedInB) {
-          return [new PathList([...b.all(), ...a.all().map(e => e.reverse())])];
-        } else return [b];
+      case 'A divide B': {
+        return [
+          ...applyBooleanOperation(a, b, 'A xor B'),
+          ...applyBooleanOperation(a, b, 'A intersection B')
+        ];
       }
-
-      classifyClipVertices(vertices, [a, b], [true, false]);
-      return [clipVertices(vertices)];
-    case 'A intersection B': {
-      if (!isCrossing) {
-        if (aContainedInB) return [a];
-        else if (bContainedInA) return [b];
-        else return [];
-      }
-
-      classifyClipVertices(vertices, [a, b], [true, true]);
-
-      const intersection = clipVertices(vertices);
-      return intersection.segments().length > 0 ? [intersection] : [];
     }
-    case 'A xor B': {
-      const cp1 = applyBooleanOperation(a, b, 'A not B');
-      const cp2 = applyBooleanOperation(a, b, 'B not A');
-      return [...cp1, ...cp2];
-    }
-    case 'A divide B': {
-      return [
-        ...applyBooleanOperation(a, b, 'A xor B'),
-        ...applyBooleanOperation(a, b, 'A intersection B')
-      ];
-    }
-  }
+  };
+
+  return doApplyOperation(operation, a, b)
+    .map(a => a.normalize())
+    .map(a => a.clone());
 };
 
 const clipSegments = (vertices: Vertex[]) => {
@@ -184,66 +189,43 @@ const sortIntoVertexList = (
   return dest;
 };
 
-/**
- * Finds the closest intersection point between a line segment and a list of paths.
- * Finds all intersections between start and end and returns the one closest to start.
- */
-const findClosestIntersection = (start: Point, end: Point, pathList: PathList) => {
-  return pathList
-    .intersections(new Path(start, [['L', end.x, end.y]]))
-    .filter(i => !Point.isEqual(i, start))
-    .sort((a, b) => Point.distance(a, start) - Point.distance(b, start))?.[0];
-};
-
-/**
- * Find a point inside this path, not inside any of the other paths. This is done
- * by forming a ray from the midpoint of each segment, in the direction of the normal
- * as well as in the opposite direction. A point inside can be found by finding the
- * closest intersection and picking a point on the line between the intersection and
- * the midpoint of the segment.
- */
-const findPointInside = (path: Path, pathList: PathList) => {
-  // Representing the length of a ray into the infinite distance
-  // This is safe as the normal has length 1 - hence the ray will never overflow
-  const RAY_LENGTH = Number.MAX_SAFE_INTEGER;
-
-  // Looping through all segments but returning as soon as we find a point inside
-  for (const segment of path.segments) {
-    const normal = Vector.tangentToNormal(segment.tangent(0.5));
-    const midpoint = segment.point(0.5);
-
-    const c1 = findClosestIntersection(midpoint, Vector.scale(normal, RAY_LENGTH), pathList);
-    if (c1) {
-      const p1 = Line.midpoint(Line.of(midpoint, c1));
-      if (path.isInside(p1)) return p1;
-    }
-
-    const c2 = findClosestIntersection(midpoint, Vector.scale(normal, -RAY_LENGTH), pathList);
-    if (c2) {
-      const p2 = Line.midpoint(Line.of(midpoint, c2));
-      if (path.isInside(p2)) return p2;
+const linkVertices = (subjectVertices: VertexList[], clipVertices: VertexList[]) => {
+  for (const subjectVertexList of subjectVertices) {
+    for (const subject of subjectVertexList) {
+      subject.intersect = false;
+      subject.neighbor = undefined;
     }
   }
-};
-
-const makeHoles = (pathList: PathList, a: PathList, b: PathList) => {
-  const dest: Path[] = [];
-  for (const path of pathList.all()) {
-    const pointInside = findPointInside(path, pathList);
-
-    assert.present(pointInside);
-
-    const isOutsideA = !a.isInside(pointInside) || a.isInHole(pointInside);
-    const isOutsideB = !b.isInside(pointInside) || b.isInHole(pointInside);
-
-    if (isOutsideA && isOutsideB && path.isClockwise()) {
-      dest.push(path.reverse());
-    } else {
-      dest.push(path);
+  for (const clipVertexList of clipVertices) {
+    for (const clip of clipVertexList) {
+      clip.intersect = false;
+      clip.neighbor = undefined;
     }
   }
 
-  return new PathList(dest);
+  for (const subjectVertexList of subjectVertices) {
+    for (const clipVertexList of clipVertices) {
+      for (let i = 0; i < subjectVertexList.length; i++) {
+        for (let j = 0; j < clipVertexList.length; j++) {
+          const subject = subjectVertexList[i];
+          const clip = clipVertexList[j];
+
+          if (subject.intersect || clip.intersect) continue;
+
+          if (Point.isEqual(subject.point, clip.point)) {
+            // @ts-ignore
+            subject.intersect = true;
+            // @ts-ignore
+            subject.neighbor = clip;
+            // @ts-ignore
+            clip.intersect = true;
+            // @ts-ignore
+            clip.neighbor = subject;
+          }
+        }
+      }
+    }
+  }
 };
 
 // NOTE: At this point, the vertices are part of a linked list
@@ -255,50 +237,15 @@ const removeDuplicatePoints = (vertices: Vertex[]) => {
     if (!vertexSet.has(current)) continue;
 
     const next = vertices[(i + 1) % vertices.length];
-    const prev = vertices[(i + vertices.length - 1) % vertices.length];
 
-    if (prev.intersect && isSame(prev.alpha, 1)) {
-      prev.prev.next = current;
-      current.prev = prev.prev;
-
-      vertexSet.delete(prev);
-
-      current.intersect = true;
-      current.alpha = 0;
-      current.neighbor = prev.neighbor;
-      current.neighbor.neighbor = current;
-    }
-
-    if (
-      Point.isEqual(next.point, current.point) &&
+    if (current.intersect && (isSame(current.alpha, 0) || isSame(current.alpha, 1))) {
+      vertexSet.delete(current);
+    } else if (
       next.intersect &&
-      isSame(next.alpha, current.alpha) &&
-      !isSame(next.alpha, 0)
+      Point.isEqual(next.point, current.point) &&
+      isSame(next.alpha, current.alpha)
     ) {
-      next.next.prev = current;
-      current.next = next.next;
-
       vertexSet.delete(next);
-
-      next.neighbor.neighbor = current;
-    }
-
-    if (next.intersect && isSame(next.alpha, 0)) {
-      next.next.prev = current;
-      current.next = next.next;
-
-      vertexSet.delete(next);
-
-      current.intersect = true;
-      current.alpha = 0;
-      current.neighbor = next.neighbor;
-      current.neighbor.neighbor = current;
-    }
-
-    if (current.neighbor) {
-      assert.true(current.neighbor.neighbor === current);
-      assert.true(current.intersect);
-      assert.true(current.neighbor.intersect);
     }
   }
 
@@ -306,14 +253,7 @@ const removeDuplicatePoints = (vertices: Vertex[]) => {
   const dest = vertices.filter(v => vertexSet.has(v));
   vertices.splice(0, vertices.length, ...dest);
 
-  DEBUG: {
-    for (const v of vertices) {
-      if (v.intersect) {
-        assert.true(v.neighbor.neighbor === v);
-        assert.true(v.neighbor.intersect);
-      }
-    }
-  }
+  makeLinkedList(vertices);
 };
 
 // @ts-ignore
@@ -484,8 +424,7 @@ export const getClipVertices = (cp1: PathList, cp2: PathList): [VertexList[], Ve
     for (const p2 of cp2.all()) {
       for (const thisSegment of p1.segments) {
         for (const otherSegment of p2.segments) {
-          const intersections = thisSegment.intersectionsWith(otherSegment);
-          if (!intersections) continue;
+          const intersections = thisSegment.intersectionsWith(otherSegment) ?? [];
 
           for (const intersection of intersections) {
             const i1: Vertex = {
@@ -528,12 +467,16 @@ export const getClipVertices = (cp1: PathList, cp2: PathList): [VertexList[], Ve
   clipVertices.forEach(vertexList => makeLinkedList(vertexList));
 
   // This is just for debugging purposes
-  subjectVertices.forEach(vertexList => vertexList.forEach((e, i) => (e.label = 's_' + i)));
-  clipVertices.forEach(vertexList => vertexList.forEach((e, i) => (e.label = 'c_' + i)));
+  subjectVertices.forEach((vertexList, j) =>
+    vertexList.forEach((e, i) => (e.label = `s_${j}_${i}`))
+  );
+  clipVertices.forEach((vertexList, j) => vertexList.forEach((e, i) => (e.label = `c_${j}_${i}`)));
 
   // Remove duplicate points'
   subjectVertices.forEach(vertexList => removeDuplicatePoints(vertexList));
   clipVertices.forEach(vertexList => removeDuplicatePoints(vertexList));
+
+  linkVertices(subjectVertices, clipVertices);
 
   DEBUG: {
     assertConsistency(subjectVertices, clipVertices);
@@ -574,6 +517,7 @@ export const classifyClipVertices = (
   paths: [PathList, PathList],
   type: [boolean, boolean]
 ) => {
+  const crossings: Point[] = [];
   const doClassifyClipVertices = (pVertexList: Array<VertexList>, start: boolean, q: PathList) => {
     for (let i = 0; i < pVertexList.length; i += 1) {
       const pVertices = pVertexList[i];
@@ -629,6 +573,8 @@ export const classifyClipVertices = (
             }
           }
 
+          crossings.push(intersection.point);
+
           // Pi->entry_exit = status
           intersection.type = status ? 'in->out' : 'out->in';
 
@@ -642,6 +588,8 @@ export const classifyClipVertices = (
   // for both polygons P do
   doClassifyClipVertices(vertices[0], type[0], paths[1]);
   doClassifyClipVertices(vertices[1], type[1], paths[0]);
+
+  return crossings;
 };
 
 /*
