@@ -145,9 +145,18 @@ export class PenTool extends AbstractTool {
   private updateNode() {
     assert.present(this.builder);
 
+    const b = this.builder.bounds();
     const path = this.builder
-      .setTransform(TransformFactory.fromTo(this.builder.bounds(), UNIT_BOUNDS))
-      .getPaths()
+      .getPaths(
+        TransformFactory.fromTo(
+          {
+            ...b,
+            w: Math.max(0.1, b.w),
+            h: Math.max(0.1, b.h)
+          },
+          UNIT_BOUNDS
+        )
+      )
       .singularPath();
 
     const uow = new UnitOfWork(this.diagram);

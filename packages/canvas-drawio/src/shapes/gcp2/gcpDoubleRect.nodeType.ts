@@ -24,7 +24,8 @@ export class GCPDoubleRectNodeDefinition extends ShapeNodeDefinition {
   getBoundingPathBuilder(def: DiagramNode) {
     const { offsetW, offsetH } = getNotch(def);
 
-    return new PathListBuilder(unitCoordinateSystem(def.bounds))
+    return new PathListBuilder()
+      .setTransform(unitCoordinateSystem(def.bounds))
       .moveTo(_p(0, 0))
       .lineTo(_p(1 - offsetW, 0))
       .lineTo(_p(1 - offsetW, offsetH))
@@ -44,7 +45,8 @@ export class GCPDoubleRectNodeDefinition extends ShapeNodeDefinition {
       const { offsetW, offsetH } = getNotch(props.node);
 
       // Draw additional shape details
-      const pathBuilder = new PathListBuilder(unitCoordinateSystem(bounds))
+      const pathBuilder = new PathListBuilder()
+        .setTransform(unitCoordinateSystem(bounds))
         .moveTo(_p(offsetW, 1 - offsetH))
         .lineTo(_p(1 - offsetW, 1 - offsetH))
         .lineTo(_p(1 - offsetW, offsetH));

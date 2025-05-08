@@ -116,7 +116,7 @@ export class UmlModuleNodeDefinition extends ShapeNodeDefinition {
     const height = JettyHeight.get(node.renderProps.custom.umlModule);
     const hw = width / 2;
 
-    const pb = new PathListBuilder(translateCoordinateSystem(node.bounds));
+    const pb = new PathListBuilder().setTransform(translateCoordinateSystem(node.bounds));
     pb.moveTo(_p(hw, 0))
       .lineTo(_p(node.bounds.w, 0))
       .lineTo(_p(node.bounds.w, node.bounds.h))

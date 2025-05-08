@@ -66,7 +66,8 @@ export class ProcessNodeDefinition extends ShapeNodeDefinition {
       const sizePct = props.nodeProps.custom.process.size / 100;
 
       // Draw additional shape details
-      const pathBuilder = new PathListBuilder(unitCoordinateSystem(bounds))
+      const pathBuilder = new PathListBuilder()
+        .setTransform(unitCoordinateSystem(bounds))
         .line(_p(sizePct, 0), _p(sizePct, 1))
         .line(_p(1 - sizePct, 0), _p(1 - sizePct, 1));
 

@@ -163,9 +163,10 @@ export class EditablePath {
 
   private getPath(type: 'as-stored' | 'as-displayed') {
     const bounds = this.node.bounds;
-    const pb = new PathListBuilder(
-      type === 'as-displayed' ? p => p : inverseUnitCoordinateSystem(bounds)
-    );
+    const pb = new PathListBuilder();
+    if (type === 'as-stored') {
+      pb.setTransform(inverseUnitCoordinateSystem(bounds));
+    }
 
     pb.moveTo(this.waypoints[0].point);
 

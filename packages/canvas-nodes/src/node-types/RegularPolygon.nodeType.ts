@@ -34,7 +34,7 @@ export class RegularPolygonNodeDefinition extends ShapeNodeDefinition {
     const start = -Math.PI / 2;
     const dTheta = (2 * Math.PI) / sides;
 
-    const pathBuilder = new PathListBuilder(unitCoordinateSystem(def.bounds));
+    const pathBuilder = new PathListBuilder().setTransform(unitCoordinateSystem(def.bounds));
     pathBuilder.moveTo(_p(0.5, 0));
 
     for (let i = 0; i < sides; i++) {
