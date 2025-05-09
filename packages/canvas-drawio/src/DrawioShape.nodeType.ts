@@ -24,6 +24,7 @@ import { DrawioStencil } from './drawioStencilLoader';
 import { NodeDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { Metrics } from '@diagram-craft/utils/metrics';
 import { xNum } from '@diagram-craft/utils/xml';
+import { TransformFactory } from '@diagram-craft/geometry/transform';
 
 declare global {
   interface CustomNodeProps {
@@ -270,9 +271,8 @@ export class DrawioShapeNodeDefinition extends ShapeNodeDefinition {
 
     if (compiledShape.boundingPath === '') return new PathListBuilder();
 
-    return PathListBuilder.fromString(
-      compiledShape.boundingPath,
-      makeShapeTransform(compiledShape.size, def.bounds)
+    return PathListBuilder.fromString(compiledShape.boundingPath).withTransform(
+      TransformFactory.fromTo(Box.from(compiledShape.size), def.bounds)
     );
   }
 

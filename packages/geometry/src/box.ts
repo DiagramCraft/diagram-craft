@@ -36,6 +36,10 @@ export const Box = {
     }
   },
 
+  from: ({ w, h }: { w: number; h: number }): Box => {
+    return { w, h, x: 0, y: 0, r: 0 };
+  },
+
   fromCorners: (a: Point, b: Point): Box => {
     return {
       x: Math.min(a.x, b.x),

@@ -1,7 +1,12 @@
 import { Point } from './point';
 import { Box } from './box';
 import { Path } from './path';
-import { precondition, VERIFY_NOT_REACHED, VerifyNotReached } from '@diagram-craft/utils/assert';
+import {
+  assert,
+  precondition,
+  VERIFY_NOT_REACHED,
+  VerifyNotReached
+} from '@diagram-craft/utils/assert';
 import { Transform, TransformFactory, Translation } from './transform';
 import { parseSvgPath } from './svgPathUtils';
 import { PathList } from './pathList';
@@ -101,8 +106,8 @@ export class PathListBuilder {
 
   constructor(private readonly transform: PathBuilderTransform = p => p) {}
 
-  static fromString(path: string, transform: PathBuilderTransform = p => p) {
-    const d = new PathListBuilder(transform);
+  static fromString(path: string) {
+    const d = new PathListBuilder();
 
     parseSvgPath(path).forEach(p => {
       const [t, ...params] = p;
@@ -241,7 +246,13 @@ export class PathListBuilder {
     );
   }
 
+  withTransform(transform: Transform[]) {
+    return this.setTransform(transform);
+  }
+
+  // TODO: Remove this
   setTransform(transform: Transform[]) {
+    assert.true(!this.transformList || this.transformList.length === 0);
     this.transformList = transform;
     this.pathCache.clear();
     return this;

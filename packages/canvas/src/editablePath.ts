@@ -206,7 +206,7 @@ export class EditablePath {
     return pb.getPaths();
   }
 
-  private resizePathToUnitLCS(): { path: PathList; bounds: Box } {
+  private resizePathToUnitCoordinateSystem(): { path: PathList; bounds: Box } {
     const rot = this.node.bounds.r;
 
     const nodePath = new GenericPathNodeDefinition().getBoundingPathBuilder(this.node).getPaths();
@@ -226,10 +226,9 @@ export class EditablePath {
     const diff = Point.subtract(startPointAfter, startPointBefore);
 
     return {
-      path: PathListBuilder.fromString(rawPath.asSvgPath(), p => ({
-        x: p.x * (1 / rawBounds.w) - rawBounds.x,
-        y: p.y * (1 / rawBounds.h) - rawBounds.y
-      })).getPaths(),
+      path: PathListBuilder.fromString(rawPath.asSvgPath()).getPaths(
+        inverseUnitCoordinateSystem(rawBounds)
+      ),
       bounds: {
         ...nodePathBounds,
         x: nodePathBounds.x - diff.x,
@@ -248,7 +247,7 @@ export class EditablePath {
 
     // As this reads the genericPath.path, we have to first set the path provisionally -
     // ... see code above
-    const { path, bounds } = this.resizePathToUnitLCS();
+    const { path, bounds } = this.resizePathToUnitCoordinateSystem();
     this.node.updateCustomProps('genericPath', p => (p.path = path.asSvgPath()), uow);
     this.node.setBounds(bounds, uow);
   }
