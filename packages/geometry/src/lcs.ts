@@ -10,8 +10,8 @@ const isPoint = (c: Box | Point): c is Point => 'x' in c;
 export class LocalCoordinateSystem {
   static UNITY = new LocalCoordinateSystem({ x: 0, y: 0, w: 1, h: 1, r: 0 });
 
-  private toGlobalTransforms: Transform[];
-  private toLocalTransforms: Transform[];
+  toGlobalTransforms: Transform[];
+  toLocalTransforms: Transform[];
 
   static fromBox(box: Box) {
     if (Point.isEqual(Point.ORIGIN, box) && box.r === 0 && box.w === 1 && box.h === 1)

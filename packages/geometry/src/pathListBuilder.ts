@@ -87,8 +87,6 @@ export const inverseUnitCoordinateSystem = (b: Box) => {
   return TransformFactory.fromTo(b, { x: 0, y: 0, w: 1, h: 1, r: 0 });
 };
 
-type PathBuilderTransform = (p: Point) => Point;
-
 type RawPath = {
   start: Point | undefined;
   instructions: RawSegment[];
@@ -104,7 +102,7 @@ export class PathListBuilder {
 
   private transformList: Transform[] | undefined = undefined;
 
-  constructor(private readonly transform: PathBuilderTransform = p => p) {}
+  constructor() {}
 
   static fromString(path: string) {
     const d = new PathListBuilder();
@@ -151,13 +149,12 @@ export class PathListBuilder {
 
   moveTo(p: Point) {
     if (this.active.start) this.newSegment();
-    this.active.start = this.transform(p);
+    this.active.start = p;
     return this;
   }
 
   lineTo(p: Point) {
-    const tp = this.transform(p);
-    this.active.instructions.push(['L', tp.x, tp.y]);
+    this.active.instructions.push(['L', p.x, p.y]);
     return this;
   }
 
@@ -181,43 +178,31 @@ export class PathListBuilder {
     large_arc_flag: 0 | 1 = 0,
     sweep_flag: 0 | 1 = 0
   ) {
-    const tp = this.transform(p);
-
-    const g = this.transform(Point.of(rx, ry));
-    const o = this.transform(Point.ORIGIN);
-    const tr = Point.subtract(g, o);
-
     this.active.instructions.push([
       'A',
-      Math.abs(tr.x),
-      Math.abs(tr.y),
+      Math.abs(rx),
+      Math.abs(ry),
       angle,
       large_arc_flag,
       sweep_flag,
-      tp.x,
-      tp.y
+      p.x,
+      p.y
     ]);
     return this;
   }
 
   curveTo(p: Point) {
-    const tp = this.transform(p);
-    this.active.instructions.push(['T', tp.x, tp.y]);
+    this.active.instructions.push(['T', p.x, p.y]);
     return this;
   }
 
   quadTo(p: Point, p1: Point) {
-    const tp = this.transform(p);
-    const tp1 = this.transform(p1);
-    this.active.instructions.push(['Q', tp1.x, tp1.y, tp.x, tp.y]);
+    this.active.instructions.push(['Q', p1.x, p1.y, p.x, p.y]);
     return this;
   }
 
   cubicTo(p: Point, p1: Point, p2: Point) {
-    const tp = this.transform(p);
-    const tp1 = this.transform(p1);
-    const tp2 = this.transform(p2);
-    this.active.instructions.push(['C', tp1.x, tp1.y, tp2.x, tp2.y, tp.x, tp.y]);
+    this.active.instructions.push(['C', p1.x, p1.y, p2.x, p2.y, p.x, p.y]);
     return this;
   }
 
@@ -336,18 +321,12 @@ export class PathListBuilder {
             ...this.transformPoint({ x: s[1], y: s[2] }, transforms)
           ] satisfies RawCurveSegment;
         case 'A': {
-          const origin = this.transformPoint(Point.ORIGIN, transforms);
-          const radiiX = this.transformPoint({ x: s[1], y: 0 }, transforms);
-          const radiiY = this.transformPoint({ x: 0, y: s[2] }, transforms);
+          const g = this.transformPoint(Point.of(s[1], s[2]), transforms);
+          const o = this.transformPoint(Point.ORIGIN, transforms);
+          const tr = Point.subtract(Point.ofTuple(g), Point.ofTuple(o));
 
-          const rdx = Point.distance(
-            { x: origin[0], y: origin[1] },
-            { x: radiiX[0], y: radiiX[1] }
-          );
-          const rdy = Point.distance(
-            { x: origin[0], y: origin[1] },
-            { x: radiiY[0], y: radiiY[1] }
-          );
+          const rdx = Math.abs(tr.x);
+          const rdy = Math.abs(tr.y);
 
           return [
             'A',

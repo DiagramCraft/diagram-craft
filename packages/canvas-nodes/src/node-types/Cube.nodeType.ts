@@ -78,7 +78,7 @@ export class CubeNodeDefinition extends ShapeNodeDefinition {
       );
 
       // Inner box
-      const inner = new PathListBuilder(p => lcs.toGlobal(p));
+      const inner = new PathListBuilder().withTransform(lcs.toGlobalTransforms);
       inner.moveTo(Point.of(0, sizePct));
       inner.lineTo(Point.of(1 - sizePct, sizePct));
       inner.lineTo(Point.of(1 - sizePct, 1));
@@ -87,7 +87,7 @@ export class CubeNodeDefinition extends ShapeNodeDefinition {
       shapeBuilder.path(inner.getPaths().all());
 
       // Top
-      const top = new PathListBuilder(p => lcs.toGlobal(p));
+      const top = new PathListBuilder().withTransform(lcs.toGlobalTransforms);
       top.moveTo(Point.of(sizePct, 0));
       top.lineTo(Point.of(1, 0));
       top.lineTo(Point.of(1 - sizePct, sizePct));
@@ -118,7 +118,7 @@ export class CubeNodeDefinition extends ShapeNodeDefinition {
     const sizePct = def.renderProps.custom.cube.size / Math.min(def.bounds.w, def.bounds.h);
 
     const lcs = new LocalCoordinateSystem(Box.withoutRotation(def.bounds), [0, 1], [0, 1], false);
-    const pathBuilder = new PathListBuilder(p => lcs.toGlobal(p));
+    const pathBuilder = new PathListBuilder().withTransform(lcs.toGlobalTransforms);
 
     pathBuilder.moveTo(Point.of(0, sizePct));
     pathBuilder.lineTo(Point.of(sizePct, 0));
