@@ -1,7 +1,7 @@
 import { BaseNodeComponent } from '../components/BaseNodeComponent';
 import { PathListBuilder, PathBuilderHelper } from '@diagram-craft/geometry/pathListBuilder';
 import { Box } from '@diagram-craft/geometry/box';
-import { Transform } from '@diagram-craft/geometry/transform';
+import { Transform, TransformFactory } from '@diagram-craft/geometry/transform';
 import { Point } from '@diagram-craft/geometry/point';
 import {
   CustomPropertyDefinition,
@@ -129,7 +129,7 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
 
     const pb = this.getBoundingPathBuilder(node);
     if (round(bnd.r) !== 0) {
-      pb.setRotation(bnd.r, Box.center(bnd));
+      pb.addTransform(TransformFactory.rotateAround(bnd.r, Box.center(bnd)));
     }
     return pb.getPaths();
   }

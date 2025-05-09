@@ -1,7 +1,6 @@
 import { Point } from './point';
 import { Box } from './box';
 import { Path } from './path';
-import { Angle } from './angle';
 import { precondition, VERIFY_NOT_REACHED, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { Transform, TransformFactory, Translation } from './transform';
 import { parseSvgPath } from './svgPathUtils';
@@ -99,10 +98,6 @@ export class PathListBuilder {
   });
 
   private transformList: Transform[] | undefined = undefined;
-  private rotation = {
-    amount: 0,
-    center: Point.ORIGIN
-  };
 
   constructor(private readonly transform: PathBuilderTransform = p => p) {}
 
@@ -246,27 +241,30 @@ export class PathListBuilder {
     );
   }
 
-  setRotation(rotation: number, centerOfRotation: Point) {
-    this.rotation = {
-      amount: rotation,
-      center: centerOfRotation
-    };
-    this.pathCache.clear();
-  }
-
   setTransform(transform: Transform[]) {
     this.transformList = transform;
     this.pathCache.clear();
     return this;
   }
 
+  addTransform(transform: Transform | Transform[]) {
+    this.transformList ??= [];
+    if (Array.isArray(transform)) {
+      this.transformList.push(...transform);
+    } else {
+      this.transformList.push(transform);
+    }
+    this.pathCache.clear();
+    return this;
+  }
+
   getPaths(transforms?: Transform[]) {
     const paths = transforms ? this._getPaths(transforms) : this.pathCache.get();
-    for (const p of paths) {
+    /*for (const p of paths) {
       if (!p.isClockwise()) {
         //console.warn('Path is not clockwise', sum, new Error().stack);
       }
-    }
+    }*/
 
     return new PathList(paths);
   }
@@ -285,12 +283,7 @@ export class PathListBuilder {
         start: Transform.point(segment.start ?? Point.ORIGIN, ...transforms)
       };
 
-      const rotated = {
-        start: this.applyPointRotationArray(transformed.start),
-        instructions: this.applyPathRotation(transformed.instructions)
-      };
-
-      dest.push(new Path(Point.ofTuple(rotated.start), rotated.instructions));
+      dest.push(new Path(transformed.start, transformed.instructions));
     }
 
     return dest;
@@ -300,7 +293,7 @@ export class PathListBuilder {
     this.rawPaths.push({ start: undefined, instructions: [] });
   }
 
-  private applyTransform(p: Point, transforms: Transform[]) {
+  private transformPoint(p: Point, transforms: Transform[]) {
     const { x, y } = Transform.point(p, ...transforms);
     return [x, y] as const;
   }
@@ -311,30 +304,30 @@ export class PathListBuilder {
         case 'L':
           return [
             'L',
-            ...this.applyTransform({ x: s[1], y: s[2] }, transforms)
+            ...this.transformPoint({ x: s[1], y: s[2] }, transforms)
           ] satisfies RawLineSegment;
         case 'C':
           return [
             'C',
-            ...this.applyTransform({ x: s[1], y: s[2] }, transforms),
-            ...this.applyTransform({ x: s[3], y: s[4] }, transforms),
-            ...this.applyTransform({ x: s[5], y: s[6] }, transforms)
+            ...this.transformPoint({ x: s[1], y: s[2] }, transforms),
+            ...this.transformPoint({ x: s[3], y: s[4] }, transforms),
+            ...this.transformPoint({ x: s[5], y: s[6] }, transforms)
           ] satisfies RawCubicSegment;
         case 'Q':
           return [
             'Q',
-            ...this.applyTransform({ x: s[1], y: s[2] }, transforms),
-            ...this.applyTransform({ x: s[3], y: s[4] }, transforms)
+            ...this.transformPoint({ x: s[1], y: s[2] }, transforms),
+            ...this.transformPoint({ x: s[3], y: s[4] }, transforms)
           ] satisfies RawQuadSegment;
         case 'T':
           return [
             'T',
-            ...this.applyTransform({ x: s[1], y: s[2] }, transforms)
+            ...this.transformPoint({ x: s[1], y: s[2] }, transforms)
           ] satisfies RawCurveSegment;
         case 'A': {
-          const origin = this.applyTransform(Point.ORIGIN, transforms);
-          const radiiX = this.applyTransform({ x: s[1], y: 0 }, transforms);
-          const radiiY = this.applyTransform({ x: 0, y: s[2] }, transforms);
+          const origin = this.transformPoint(Point.ORIGIN, transforms);
+          const radiiX = this.transformPoint({ x: s[1], y: 0 }, transforms);
+          const radiiY = this.transformPoint({ x: 0, y: s[2] }, transforms);
 
           const rdx = Point.distance(
             { x: origin[0], y: origin[1] },
@@ -352,58 +345,9 @@ export class PathListBuilder {
             s[3],
             s[4],
             s[5],
-            ...this.applyTransform({ x: s[6], y: s[7] }, transforms)
+            ...this.transformPoint({ x: s[6], y: s[7] }, transforms)
           ] satisfies RawArcSegment;
         }
-        default:
-          VERIFY_NOT_REACHED('Unknown path segment');
-      }
-    });
-  }
-
-  private applyPointRotationArray(point: Point): [number, number] {
-    const np = Point.rotateAround(point, this.rotation.amount, this.rotation.center);
-    return [np.x, np.y];
-  }
-
-  private applyPathRotation(path: RawSegment[]) {
-    if (this.rotation.amount === 0) return path;
-    return path.map(s => {
-      switch (s[0]) {
-        case 'L':
-          return [
-            'L',
-            ...this.applyPointRotationArray({ x: s[1], y: s[2] })
-          ] satisfies RawLineSegment;
-        case 'C':
-          return [
-            'C',
-            ...this.applyPointRotationArray({ x: s[1], y: s[2] }),
-            ...this.applyPointRotationArray({ x: s[3], y: s[4] }),
-            ...this.applyPointRotationArray({ x: s[5], y: s[6] })
-          ] satisfies RawCubicSegment;
-        case 'Q':
-          return [
-            'Q',
-            ...this.applyPointRotationArray({ x: s[1], y: s[2] }),
-            ...this.applyPointRotationArray({ x: s[3], y: s[4] })
-          ] satisfies RawQuadSegment;
-        case 'T':
-          return [
-            'T',
-            ...this.applyPointRotationArray({ x: s[1], y: s[2] })
-          ] satisfies RawCurveSegment;
-        case 'A':
-          // TODO: Probably need to change the rotation parameter as well
-          return [
-            'A',
-            s[1],
-            s[2],
-            s[3] + Angle.toDeg(this.rotation.amount),
-            s[4],
-            s[5],
-            ...this.applyPointRotationArray({ x: s[6], y: s[7] })
-          ] satisfies RawArcSegment;
         default:
           VERIFY_NOT_REACHED('Unknown path segment');
       }

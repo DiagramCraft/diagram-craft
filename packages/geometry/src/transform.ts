@@ -188,5 +188,13 @@ export const TransformFactory = {
     transforms.push(translateBack);
 
     return transforms;
+  },
+
+  rotateAround: (angle: number, centerOfRotation: Point) => {
+    return [
+      new Translation({ x: -centerOfRotation.x, y: -centerOfRotation.y }),
+      new Rotation(angle),
+      new Translation({ x: centerOfRotation.x, y: centerOfRotation.y })
+    ];
   }
 };
