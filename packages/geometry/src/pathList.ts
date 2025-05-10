@@ -2,14 +2,20 @@ import { Path } from './path';
 import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { Box } from './box';
 import { MultiMap } from '@diagram-craft/utils/multimap';
-import { Transform, TransformFactory } from './transform';
+import { Transform } from './transform';
 import { Point } from './point';
 import { LengthOffsetOnPath, TimeOffsetOnSegment } from './pathPosition';
+
+type ProjectedPointOnPathList = {
+  offset: TimeOffsetOnSegment & LengthOffsetOnPath;
+  point: Point;
+  pathIdx: number;
+};
 
 export class PathList {
   constructor(private paths: Path[]) {}
 
-  singularPath() {
+  singular() {
     assert.true(this.paths.length === 1, `Expected a single path, ${this.paths.length} found`);
     return this.paths[0];
   }
@@ -82,34 +88,18 @@ export class PathList {
   }
 
   clone() {
-    const dest: Path[] = [];
-    for (const p of this.paths) {
-      dest.push(p.clone());
-    }
-    return new PathList(dest);
+    return new PathList(this.paths.map(path => path.clone()));
   }
 
-  scale(targetBounds: Box, referenceBounds?: Box) {
-    const bounds = referenceBounds ?? this.bounds();
-
-    const t = TransformFactory.fromTo(bounds, targetBounds);
-
-    const dest: Path[] = [];
-    for (const p of this.paths) {
-      const source = p.bounds();
-      const target = Transform.box(source, ...t);
-      dest.push(p.scale(source, target));
-    }
-
-    return new PathList(dest);
+  transform(transformList: Transform[]) {
+    return new PathList(this.paths.map(p => p.transform(transformList)));
   }
 
-  projectPoint(p: Point): { pathIdx: number; offset: TimeOffsetOnSegment & LengthOffsetOnPath } {
-    let best:
-      | { point: Point; pathIdx: number; offset: TimeOffsetOnSegment & LengthOffsetOnPath }
-      | undefined = undefined;
+  projectPoint(p: Point): ProjectedPointOnPathList {
+    let best: ProjectedPointOnPathList | undefined = undefined;
     for (let idx = 0; idx < this.paths.length; idx++) {
       const path = this.paths[idx];
+
       const bp = path.projectPoint(p);
       if (best === undefined || Point.distance(p, bp.point) < Point.distance(p, best.point)) {
         best = {
@@ -121,15 +111,6 @@ export class PathList {
     }
 
     return best!;
-  }
-
-  split(p: { pathIdx: number; offset: TimeOffsetOnSegment }): [PathList, PathList] {
-    const [before, after] = this.paths[p.pathIdx].split(p.offset);
-
-    return [
-      new PathList([...this.paths.slice(0, p.pathIdx), before]),
-      new PathList([after, ...this.paths.slice(p.pathIdx + 1)])
-    ];
   }
 
   isInside(p: Point): boolean {
@@ -147,15 +128,10 @@ export class PathList {
   }
 
   isOn(p: Point): boolean {
-    for (const path of this.paths) {
-      if (path.isOn(p)) return true;
-    }
-    return false;
+    return this.paths.some(path => path.isOn(p));
   }
 
   intersections(p: Path): Point[] {
-    return this.all()
-      .flatMap(path => path.intersections(p))
-      .map(i => i.point);
+    return this.paths.flatMap(path => path.intersections(p)).map(i => i.point);
   }
 }

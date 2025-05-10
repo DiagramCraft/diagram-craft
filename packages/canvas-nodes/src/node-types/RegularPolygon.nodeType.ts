@@ -71,7 +71,7 @@ class RegularPolygonComponent extends BaseNodeComponent {
     shapeBuilder.boundaryPath(boundary.all());
     shapeBuilder.text(this);
 
-    const path = boundary.singularPath();
+    const path = boundary.singular();
 
     shapeBuilder.controlPoint(path.segments[1].start, ({ x, y }, uow) => {
       const angle =

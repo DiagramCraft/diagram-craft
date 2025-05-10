@@ -231,7 +231,7 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
 class TableComponent extends BaseNodeComponent {
   buildShape(props: BaseShapeBuildShapeProps, builder: ShapeBuilder) {
     const boundary = this.def.getBoundingPathBuilder(props.node).getPaths();
-    const path = boundary.singularPath();
+    const path = boundary.singular();
     const svgPath = path.asSvgPath();
 
     builder.noBoundaryNeeded();

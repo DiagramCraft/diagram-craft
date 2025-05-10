@@ -104,7 +104,7 @@ export class FreehandTool extends AbstractTool {
         })
       )
       .getPaths()
-      .singularPath()
+      .singular()
       .asSvgPath();
 
     const node = new DiagramNode(

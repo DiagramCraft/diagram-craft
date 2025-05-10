@@ -157,7 +157,7 @@ export class PenTool extends AbstractTool {
           UNIT_BOUNDS
         )
       )
-      .singularPath();
+      .singular();
 
     const uow = new UnitOfWork(this.diagram);
     this.node!.updateCustomProps('genericPath', p => (p.path = path.asSvgPath()), uow);

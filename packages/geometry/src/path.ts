@@ -7,7 +7,7 @@ import {
   TimeOffsetOnSegment,
   WithSegment
 } from './pathPosition';
-import { RawSegment } from './pathListBuilder';
+import { PathListBuilder, RawSegment } from './pathListBuilder';
 import { BezierUtils } from './bezier';
 import { Box } from './box';
 import { assert, VERIFY_NOT_REACHED, VerifyNotReached } from '@diagram-craft/utils/assert';
@@ -15,6 +15,7 @@ import { roundHighPrecision } from '@diagram-craft/utils/math';
 import { Vector } from './vector';
 import { Line } from './line';
 import { Lazy } from '@diagram-craft/utils/lazy';
+import { Transform } from './transform';
 
 export type Projection = { t: number; distance: number; point: Point };
 
@@ -195,38 +196,9 @@ export class Path {
     return this.segmentList.segments.at(-1)!.end;
   }
 
-  scale(fromBounds: Box, toBounds: Box) {
-    assert.true(fromBounds.r === toBounds.r); // Rotation is not supported
-
-    const trX = (x: number) => ((x - fromBounds.x) / fromBounds.w) * toBounds.w + toBounds.x;
-    const trY = (y: number) => ((y - fromBounds.y) / fromBounds.h) * toBounds.h + toBounds.y;
-
-    const dest: RawSegment[] = [];
-
-    for (const el of this.#path) {
-      switch (el[0]) {
-        case 'L':
-          dest.push(['L', trX(el[1]), trY(el[2])]);
-          break;
-        case 'C':
-          dest.push(['C', trX(el[1]), trY(el[2]), trX(el[3]), trY(el[4]), trX(el[5]), trY(el[6])]);
-          break;
-        case 'Q':
-          dest.push(['Q', trX(el[1]), trY(el[2]), trX(el[3]), trY(el[4])]);
-          break;
-        case 'T':
-          dest.push(['T', trX(el[1]), trY(el[2])]);
-          break;
-        case 'A': {
-          const rx = (el[1] / Math.abs(fromBounds.w)) * Math.abs(toBounds.w);
-          const ry = (el[2] / Math.abs(fromBounds.h)) * Math.abs(toBounds.h);
-          dest.push(['A', rx, ry, el[3], el[4], el[5], trX(el[6]), trY(el[7])]);
-          break;
-        }
-      }
-    }
-
-    return new Path({ x: trX(this.start.x), y: trY(this.start.y) }, dest);
+  transform(t: Array<Transform>) {
+    const pl = PathListBuilder.fromSegments(this.start, this.#path).withTransform(t);
+    return pl.getPaths().singular();
   }
 
   get numberOfSegments() {

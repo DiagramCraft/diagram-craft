@@ -211,7 +211,7 @@ export class SwimlaneNodeDefinition extends ShapeNodeDefinition {
 class SwimlaneComponent extends BaseNodeComponent {
   buildShape(props: BaseShapeBuildShapeProps, builder: ShapeBuilder) {
     const boundary = this.def.getBoundingPathBuilder(props.node).getPaths();
-    const path = boundary.singularPath();
+    const path = boundary.singular();
     const svgPath = path.asSvgPath();
 
     const nodeProps = props.nodeProps;

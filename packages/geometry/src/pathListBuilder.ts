@@ -102,6 +102,15 @@ export class PathListBuilder {
 
   private transformList: Transform[] | undefined = undefined;
 
+  static fromSegments(start: Point, instructions: RawSegment[]) {
+    const d = new PathListBuilder();
+    d.moveTo(start);
+    for (const instruction of instructions) {
+      d.appendInstruction(instruction);
+    }
+    return d;
+  }
+
   static fromString(path: string) {
     const d = new PathListBuilder();
 

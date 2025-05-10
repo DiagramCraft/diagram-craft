@@ -150,15 +150,25 @@ export class EditablePath {
     );
   }
 
-  split(p: Point): number {
-    const path = this.getPath('as-displayed');
-    const [pre, post] = path.split(path.projectPoint(p));
+  addWaypoint(p: Point): number {
+    const pathList = this.getPath('as-displayed');
 
-    const all = [...pre.segments(), ...post.segments()];
+    const pp = pathList.projectPoint(p);
 
-    this.buildFromPath(all);
+    const paths = pathList.all();
 
-    return pre.segments().length;
+    const pathToSplit = paths[pp.pathIdx];
+    const splitPath = pathToSplit.split(pp.offset);
+
+    const pre = [...paths.slice(0, pp.pathIdx).flatMap(p => p.segments), ...splitPath[0].segments];
+    const after = [
+      ...splitPath[1].segments,
+      ...paths.slice(pp.pathIdx + 1).flatMap(p => p.segments)
+    ];
+
+    this.buildFromPath([...pre, ...after]);
+
+    return pre.length;
   }
 
   private getPath(type: 'as-stored' | 'as-displayed') {

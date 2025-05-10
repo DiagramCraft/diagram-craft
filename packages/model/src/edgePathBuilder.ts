@@ -174,7 +174,7 @@ const buildOrthogonalEdgePath = (
   assert.true(best.pathCount === 1);
   best.active.instructions.forEach(i => path.appendInstruction(i));
 
-  return path.getPaths().singularPath();
+  return path.getPaths().singular();
 };
 
 const buildBezierEdgePath = (edge: DiagramEdge) => {
@@ -212,7 +212,7 @@ const buildBezierEdgePath = (edge: DiagramEdge) => {
     path.quadTo(edge.end.position, Point.add(controlPoints.at(-1)!.cp2, last.point));
   }
 
-  return path.getPaths().singularPath();
+  return path.getPaths().singular();
 };
 
 const buildStraightEdgePath = (edge: DiagramEdge) => {
@@ -224,7 +224,7 @@ const buildStraightEdgePath = (edge: DiagramEdge) => {
   });
   path.lineTo(edge.end.position);
 
-  return path.getPaths().singularPath();
+  return path.getPaths().singular();
 };
 
 export const buildEdgePath = (

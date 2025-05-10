@@ -419,7 +419,7 @@ export class ContainerComponent extends BaseNodeComponent {
   buildShape(props: BaseShapeBuildShapeProps, builder: ShapeBuilder) {
     const paths = new ContainerNodeDefinition().getBoundingPathBuilder(props.node).getPaths();
 
-    const path = paths.singularPath();
+    const path = paths.singular();
     const svgPath = path.asSvgPath();
 
     builder.noBoundaryNeeded();

@@ -107,7 +107,7 @@ describe('PathListBuilder', () => {
       const scaledPath = PathListBuilder.fromString(`M 0 0 L 10 10 L 20 20`)
         .setTransform(TransformFactory.fromTo(fromBounds, toBounds))
         .getPaths()
-        .singularPath();
+        .singular();
 
       expect(scaledPath.start).toEqual({ x: 0, y: 0 });
       expect(scaledPath.segments).toEqual([
@@ -122,7 +122,7 @@ describe('PathListBuilder', () => {
       const scaledPath = PathListBuilder.fromString(`M 0 0 L 10 10 L 20 20`)
         .setTransform(TransformFactory.fromTo(fromBounds, toBounds))
         .getPaths()
-        .singularPath();
+        .singular();
 
       expect(scaledPath.start).toEqual({ x: 0, y: 0 });
       expect(scaledPath.segments).toEqual([
@@ -138,7 +138,7 @@ describe('PathListBuilder', () => {
       const scaledPath = PathListBuilder.fromString(`M 5 5 L 15 15 L 25 25`)
         .setTransform(TransformFactory.fromTo(fromBounds, toBounds))
         .getPaths()
-        .singularPath();
+        .singular();
 
       expect(scaledPath.start).toEqual({ x: 10, y: 10 });
       expect(scaledPath.segments).toEqual([
@@ -154,7 +154,7 @@ describe('PathListBuilder', () => {
       const scaledPath = PathListBuilder.fromString(`M 0 0 C 5 5 10 10 20 20`)
         .setTransform(TransformFactory.fromTo(fromBounds, toBounds))
         .getPaths()
-        .singularPath();
+        .singular();
 
       expect(scaledPath.start).toEqual({ x: 0, y: 0 });
       expect(scaledPath.segments).toEqual([
@@ -169,7 +169,7 @@ describe('PathListBuilder', () => {
       const scaledPath = PathListBuilder.fromString(`M 0 0 Q 10 10 20 20`)
         .setTransform(TransformFactory.fromTo(fromBounds, toBounds))
         .getPaths()
-        .singularPath();
+        .singular();
 
       expect(scaledPath.start).toEqual({ x: 0, y: 0 });
       expect(scaledPath.segments[0]).toBeInstanceOf(QuadSegment);
@@ -185,7 +185,7 @@ describe('PathListBuilder', () => {
       const scaledPath = PathListBuilder.fromString(`M 0 0 Q 10 10 20 20 T 30 30`)
         .setTransform(TransformFactory.fromTo(fromBounds, toBounds))
         .getPaths()
-        .singularPath();
+        .singular();
 
       expect(scaledPath.start).toEqual({ x: 0, y: 0 });
       expect(scaledPath.segments[0]).toBeInstanceOf(QuadSegment);
@@ -200,7 +200,7 @@ describe('PathListBuilder', () => {
       const scaledPath = PathListBuilder.fromString(`M 0 0 A 10 10 0 0 1 20 20`)
         .setTransform(TransformFactory.fromTo(fromBounds, toBounds))
         .getPaths()
-        .singularPath();
+        .singular();
 
       expect(scaledPath.start).toEqual({ x: 0, y: 0 });
       // Arc segments are converted to cubic segments internally
@@ -216,7 +216,7 @@ describe('PathListBuilder', () => {
       const scaledPath = PathListBuilder.fromString(`M 10 10 L 20 20`)
         .setTransform(TransformFactory.fromTo(fromBounds, toBounds))
         .getPaths()
-        .singularPath();
+        .singular();
 
       expect(scaledPath.start).toEqual({ x: 5, y: 5 });
       expect(scaledPath.segments[0].start).toEqual({ x: 5, y: 5 });
@@ -230,7 +230,7 @@ describe('PathListBuilder', () => {
       const scaledPath = PathListBuilder.fromString(`M 0 0 L 10 10`)
         .setTransform(TransformFactory.fromTo(fromBounds, toBounds))
         .getPaths()
-        .singularPath();
+        .singular();
 
       expect(scaledPath.start).toEqual({ x: 0, y: 0 });
       expect(scaledPath.segments[0].start).toEqual({ x: 0, y: 0 });

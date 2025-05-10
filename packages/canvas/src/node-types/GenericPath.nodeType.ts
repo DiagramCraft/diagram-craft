@@ -67,7 +67,7 @@ class GenericPathComponent extends BaseNodeComponent {
         editablePath.commitToNode(uow);
         commitWithUndo(uow, 'Convert to line');
       } else {
-        const idx = editablePath.split(editablePath.toLocalCoordinate(dp));
+        const idx = editablePath.addWaypoint(editablePath.toLocalCoordinate(dp));
 
         const uow = new UnitOfWork(props.node.diagram, true);
         editablePath.commitToNode(uow);
