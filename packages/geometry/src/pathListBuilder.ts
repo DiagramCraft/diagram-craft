@@ -102,8 +102,6 @@ export class PathListBuilder {
 
   private transformList: Transform[] | undefined = undefined;
 
-  constructor() {}
-
   static fromString(path: string) {
     const d = new PathListBuilder();
 
@@ -127,7 +125,7 @@ export class PathListBuilder {
     return d;
   }
 
-  private get active(): RawPath {
+  get active(): RawPath {
     return this.rawPaths.at(-1)!;
   }
 
@@ -137,10 +135,6 @@ export class PathListBuilder {
 
   get activeInstructionCount() {
     return this.active.instructions.length;
-  }
-
-  pop() {
-    this.active.instructions.pop();
   }
 
   bounds() {
@@ -206,13 +200,12 @@ export class PathListBuilder {
     return this;
   }
 
-  // TODO: Is there a way to not have to need this method
-  //       ... it's a bit weird that it just appends the instructions without
-  //       checking that the start corresponds to the end of the previous path
-  appendInstructions(path: PathListBuilder) {
-    for (const p of path.active.instructions) {
-      this.active.instructions.push(p);
-    }
+  appendInstruction(instruction: RawSegment) {
+    this.active.instructions.push(instruction);
+  }
+
+  popInstruction() {
+    this.active.instructions.pop();
   }
 
   append(path: PathListBuilder) {
@@ -323,19 +316,17 @@ export class PathListBuilder {
         case 'A': {
           const g = this.transformPoint(Point.of(s[1], s[2]), transforms);
           const o = this.transformPoint(Point.ORIGIN, transforms);
-          const tr = Point.subtract(Point.ofTuple(g), Point.ofTuple(o));
-
-          const rdx = Math.abs(tr.x);
-          const rdy = Math.abs(tr.y);
+          const radii = Point.subtract(Point.ofTuple(g), Point.ofTuple(o));
+          const target = this.transformPoint({ x: s[6], y: s[7] }, transforms);
 
           return [
             'A',
-            rdx,
-            rdy,
+            Math.abs(radii.x),
+            Math.abs(radii.y),
             s[3],
             s[4],
             s[5],
-            ...this.transformPoint({ x: s[6], y: s[7] }, transforms)
+            ...target
           ] satisfies RawArcSegment;
         }
         default:

@@ -149,7 +149,9 @@ const buildOrthogonalEdgePath = (
     availableDirections = result[0].availableDirections;
     preferredDirections = result[0].preferredDirection;
 
-    path.appendInstructions(result[0].path);
+    const p = result[0].path;
+    assert.true(p.pathCount === 1);
+    p.active.instructions.forEach(i => path.appendInstruction(i));
 
     prevPosition = mp;
   });
@@ -169,7 +171,8 @@ const buildOrthogonalEdgePath = (
       return c1 - c2;
     })[0].path;
 
-  path.appendInstructions(best);
+  assert.true(best.pathCount === 1);
+  best.active.instructions.forEach(i => path.appendInstruction(i));
 
   return path.getPaths().singularPath();
 };

@@ -167,7 +167,7 @@ export class PenTool extends AbstractTool {
 
   private popTempPoints() {
     assert.present(this.builder);
-    while (this.builder.activeInstructionCount > this.numberOfPoints) this.builder.pop();
+    while (this.builder.activeInstructionCount > this.numberOfPoints) this.builder.popInstruction();
   }
 
   private resetState() {
