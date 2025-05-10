@@ -2,15 +2,15 @@ import { AbstractTool } from '@diagram-craft/canvas/tool';
 import { Context } from '@diagram-craft/canvas/context';
 import { DragDopManager, Modifiers } from '@diagram-craft/canvas/dragDropManager';
 import { Point } from '@diagram-craft/geometry/point';
-import { PathUtils } from '@diagram-craft/geometry/pathUtils';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { newid } from '@diagram-craft/utils/id';
-import { Path } from '@diagram-craft/geometry/path';
 import { assert } from '@diagram-craft/utils/assert';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
+import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
+import { TransformFactory } from '@diagram-craft/geometry/transform';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -25,8 +25,9 @@ const UNIT_BOUNDS = { x: 0, y: 0, w: 1, h: 1, r: 0 };
 
 export class PenTool extends AbstractTool {
   private node: DiagramNode | undefined;
-  private path: Path | undefined;
+  private builder: PathListBuilder | undefined;
   private numberOfPoints: number = 0;
+  private start: Point | undefined;
 
   constructor(
     diagram: Diagram,
@@ -60,7 +61,10 @@ export class PenTool extends AbstractTool {
         {}
       );
 
-      this.path = new Path(this.node.bounds, []);
+      this.builder = new PathListBuilder();
+
+      this.start = this.node.bounds;
+      this.builder.moveTo(this.node.bounds);
 
       const uow = new UnitOfWork(this.diagram);
 
@@ -76,11 +80,11 @@ export class PenTool extends AbstractTool {
   private addPoint(diagramPoint: Point) {
     // TODO: Minor, but ideally we should check with the last point
     //       instead of the starting point
-    if (Point.isEqual(this.path!.start, diagramPoint)) return;
+    if (Point.isEqual(this.start!, diagramPoint)) return;
 
-    assert.present(this.path);
-    this.path.add(['L', diagramPoint.x, diagramPoint.y]);
-    this.path.add(['L', this.path.start.x, this.path.start.y]);
+    assert.present(this.builder);
+    this.builder.lineTo(diagramPoint);
+    this.builder.close();
 
     this.updateNode();
   }
@@ -107,8 +111,8 @@ export class PenTool extends AbstractTool {
 
       this.popTempPoints();
 
-      assert.present(this.path);
-      this.path.add(['L', this.path.start.x, this.path.start.y]);
+      assert.present(this.builder);
+      this.builder.close();
 
       this.updateNode();
 
@@ -139,25 +143,37 @@ export class PenTool extends AbstractTool {
   onMouseUp(_point: Readonly<{ x: number; y: number }>): void {}
 
   private updateNode() {
-    assert.present(this.path);
-    const bounds = this.path.bounds();
+    assert.present(this.builder);
 
-    const scaledPath = PathUtils.scalePath(this.path, bounds, UNIT_BOUNDS);
+    const b = this.builder.bounds();
+    const path = this.builder
+      .getPaths(
+        TransformFactory.fromTo(
+          {
+            ...b,
+            w: Math.max(0.1, b.w),
+            h: Math.max(0.1, b.h)
+          },
+          UNIT_BOUNDS
+        )
+      )
+      .singular();
 
     const uow = new UnitOfWork(this.diagram);
-    this.node!.updateCustomProps('genericPath', p => (p.path = scaledPath.asSvgPath()), uow);
-    this.node!.setBounds(bounds, uow);
+    this.node!.updateCustomProps('genericPath', p => (p.path = path.asSvgPath()), uow);
+    this.node!.setBounds(this.builder.bounds(), uow);
     uow.commit();
   }
 
   private popTempPoints() {
-    assert.present(this.path);
-    while (this.path.segmentCount > this.numberOfPoints) this.path.pop();
+    assert.present(this.builder);
+    while (this.builder.activeInstructionCount > this.numberOfPoints) this.builder.popInstruction();
   }
 
   private resetState() {
     this.node = undefined;
-    this.path = undefined;
+    this.builder = undefined;
+    this.start = undefined;
     this.numberOfPoints = 0;
   }
 }

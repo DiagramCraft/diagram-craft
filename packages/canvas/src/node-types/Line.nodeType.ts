@@ -10,7 +10,8 @@ export class LineNodeDefinition extends ShapeNodeDefinition {
   }
 
   getBoundingPathBuilder(node: DiagramNode) {
-    return new PathListBuilder(unitCoordinateSystem(node.bounds))
+    return new PathListBuilder()
+      .withTransform(unitCoordinateSystem(node.bounds))
       .moveTo(_p(0, 0.5))
       .lineTo(_p(1, 0.5));
   }

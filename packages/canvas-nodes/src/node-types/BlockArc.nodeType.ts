@@ -157,7 +157,8 @@ export class BlockArcNodeDefinition extends ShapeNodeDefinition {
     const da = Math.abs(endAngle - startAngle);
     const largeArcFlag = da <= Math.PI || da >= 2 * Math.PI ? 0 : 1;
 
-    return new PathListBuilder(unitCoordinateSystem(node.bounds))
+    return new PathListBuilder()
+      .withTransform(unitCoordinateSystem(node.bounds))
       .moveTo(start)
       .lineTo(startInner)
       .arcTo(endInner, r, r, 0, largeArcFlag)

@@ -149,7 +149,9 @@ const buildOrthogonalEdgePath = (
     availableDirections = result[0].availableDirections;
     preferredDirections = result[0].preferredDirection;
 
-    path.appendInstructions(result[0].path);
+    const p = result[0].path;
+    assert.true(p.pathCount === 1);
+    p.active.instructions.forEach(i => path.appendInstruction(i));
 
     prevPosition = mp;
   });
@@ -164,14 +166,15 @@ const buildOrthogonalEdgePath = (
   const best =
     endResult.find(r => r.endDirection === preferredEndDirection)?.path ??
     endResult.toSorted((a, b) => {
-      const c1 = a.path.getPaths().all()[0]?.segmentCount ?? 100;
-      const c2 = b.path.getPaths().all()[0]?.segmentCount ?? 100;
+      const c1 = a.path.getPaths().all()[0]?.numberOfSegments ?? 100;
+      const c2 = b.path.getPaths().all()[0]?.numberOfSegments ?? 100;
       return c1 - c2;
     })[0].path;
 
-  path.appendInstructions(best);
+  assert.true(best.pathCount === 1);
+  best.active.instructions.forEach(i => path.appendInstruction(i));
 
-  return path.getPaths().singularPath();
+  return path.getPaths().singular();
 };
 
 const buildBezierEdgePath = (edge: DiagramEdge) => {
@@ -209,7 +212,7 @@ const buildBezierEdgePath = (edge: DiagramEdge) => {
     path.quadTo(edge.end.position, Point.add(controlPoints.at(-1)!.cp2, last.point));
   }
 
-  return path.getPaths().singularPath();
+  return path.getPaths().singular();
 };
 
 const buildStraightEdgePath = (edge: DiagramEdge) => {
@@ -221,7 +224,7 @@ const buildStraightEdgePath = (edge: DiagramEdge) => {
   });
   path.lineTo(edge.end.position);
 
-  return path.getPaths().singularPath();
+  return path.getPaths().singular();
 };
 
 export const buildEdgePath = (
@@ -233,21 +236,18 @@ export const buildEdgePath = (
   switch (edge.renderProps.type) {
     case 'orthogonal': {
       const r = buildOrthogonalEdgePath(edge, preferedStartDirection, preferedEndDirection);
-      if (rounding > 0) r.processSegments(applyRounding(rounding));
-      return r;
+      return rounding > 0 ? Path.from(r, applyRounding(rounding)) : r;
     }
     case 'curved': {
-      const r = buildOrthogonalEdgePath(edge, preferedStartDirection, preferedEndDirection);
-      r.clean();
-      r.processSegments(convertToCurves);
-      return r;
+      const r = buildOrthogonalEdgePath(edge, preferedStartDirection, preferedEndDirection).clean();
+      return Path.from(r, convertToCurves);
     }
     case 'bezier':
       return buildBezierEdgePath(edge);
 
     default: {
-      const r = buildStraightEdgePath(edge);
-      if (rounding > 0 && r.segments.length > 1) r.processSegments(applyRounding(rounding));
+      let r = buildStraightEdgePath(edge);
+      if (rounding > 0 && r.segments.length > 1) r = Path.from(r, applyRounding(rounding));
       assert.true(r.segments.length > 0, 'Straight edge path must have at least one segment');
       return r;
     }

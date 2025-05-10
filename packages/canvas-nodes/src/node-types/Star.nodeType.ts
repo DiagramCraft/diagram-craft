@@ -37,8 +37,9 @@ export class StarNodeDefinition extends ShapeNodeDefinition {
     const start = -Math.PI / 2;
     const dTheta = (2 * Math.PI) / sides;
 
-    const pathBuilder = new PathListBuilder(unitCoordinateSystem(def.bounds));
-    pathBuilder.moveTo(Point.of(0.5, 0));
+    const pathBuilder = new PathListBuilder()
+      .withTransform(unitCoordinateSystem(def.bounds))
+      .moveTo(Point.of(0.5, 0));
 
     for (let i = 0; i < sides; i++) {
       const angle = start + (i + 1) * dTheta;
@@ -90,7 +91,7 @@ class StarComponent extends BaseNodeComponent {
     shapeBuilder.boundaryPath(boundary.all());
     shapeBuilder.text(this);
 
-    const path = boundary.singularPath();
+    const path = boundary.singular();
 
     shapeBuilder.controlPoint(path.segments[1].start, ({ x, y }, uow) => {
       const distance = Point.distance({ x, y }, Box.center(props.node.bounds));

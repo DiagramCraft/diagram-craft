@@ -192,7 +192,7 @@ export class ArrowNodeDefinition extends ShapeNodeDefinition {
       _p(1 - arrowOffset, 0)
     ];
 
-    const pathBuilder = new PathListBuilder(unitCoordinateSystem(def.bounds));
+    const pathBuilder = new PathListBuilder().withTransform(unitCoordinateSystem(def.bounds));
     points.forEach((point, index) => {
       const rotatedPoint = this.rotate(point);
       if (index === 0) {

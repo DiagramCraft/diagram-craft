@@ -67,7 +67,8 @@ export class RoundedRectNodeDefinition extends ShapeNodeDefinition {
     const xr = radius / node.bounds.w;
     const yr = radius / node.bounds.h;
 
-    return new PathListBuilder(unitCoordinateSystem(node.bounds))
+    return new PathListBuilder()
+      .withTransform(unitCoordinateSystem(node.bounds))
       .moveTo(_p(xr, 0))
       .lineTo(_p(1 - xr, 0))
       .arcTo(_p(1, yr), xr, yr, 0, 0, 1)

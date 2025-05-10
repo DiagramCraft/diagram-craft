@@ -87,7 +87,8 @@ export class StepNodeDefinition extends ShapeNodeDefinition {
   getBoundingPathBuilder(def: DiagramNode) {
     const sizePct = def.renderProps.custom.step.size / def.bounds.w;
 
-    return new PathListBuilder(unitCoordinateSystem(def.bounds))
+    return new PathListBuilder()
+      .withTransform(unitCoordinateSystem(def.bounds))
       .moveTo(_p(0, 0))
       .lineTo(_p(1 - sizePct, 0))
       .lineTo(_p(1, 0.5))

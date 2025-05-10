@@ -4,7 +4,6 @@ import { Line } from './line';
 import { CubicBezier } from './bezier';
 import { RawSegment } from './pathListBuilder';
 import { Projection } from './path';
-import { LengthOffsetOnPath } from './pathPosition';
 import { Box } from './box';
 import { round } from '@diagram-craft/utils/math';
 
@@ -197,87 +196,3 @@ export class QuadSegment extends CubicSegment {
     this.quadP1 = p1;
   }
 }
-
-// TODO: Can we move this into Path directly
-export class SegmentList {
-  constructor(public readonly segments: PathSegment[]) {}
-
-  length() {
-    return this.segments.reduce((acc, cur) => acc + cur.length(), 0);
-  }
-
-  // TODO: This is incorrect
-  point(t: number) {
-    const totalLength = this.length();
-    return this.pointAt({ pathD: t * totalLength });
-  }
-
-  pointAt(t: LengthOffsetOnPath) {
-    // Find the segment that contains the point
-    let currentD = t.pathD;
-    let segmentIndex = 0;
-    let segment = this.segments[segmentIndex];
-    while (currentD > segment.length()) {
-      currentD -= segment.length();
-      segment = this.segments[++segmentIndex];
-    }
-
-    // TODO: This is a bit incorrect, we should probably use tAtLength here
-    return segment.point(currentD / segment.length());
-  }
-
-  tangentAt(t: LengthOffsetOnPath) {
-    // Find the segment that contains the point
-    let currentD = t.pathD;
-    let segmentIndex = 0;
-    let segment = this.segments[segmentIndex];
-    while (currentD > segment.length()) {
-      currentD -= segment.length();
-      segment = this.segments[++segmentIndex];
-    }
-
-    // TODO: This is a bit incorrect, we should probably use tAtLength here
-    return segment.tangent(currentD / segment.length());
-  }
-
-  projectPoint(point: Point): Projection & { segmentIndex: number; globalL: number } {
-    let bestSegment = -1;
-    let bestProject: Projection | undefined;
-    let bestDistance = Number.MAX_VALUE;
-
-    const segments = this.segments;
-    for (let i = 0; i < segments.length; i++) {
-      const s = segments[i];
-      const projection = s.projectPoint(point);
-      if (projection.distance < bestDistance) {
-        bestProject = projection;
-        bestDistance = projection.distance;
-        bestSegment = i;
-      }
-    }
-
-    if (!bestProject) {
-      return { segmentIndex: 0, t: 0, globalL: 0, distance: 0, point };
-    }
-
-    const l = this.segments.slice(0, bestSegment).reduce((acc, cur) => acc + cur.length(), 0);
-    return {
-      segmentIndex: bestSegment,
-      t: bestProject!.t,
-
-      // TODO: Should we really return this back here - as it's a bit expensive to calculate
-      globalL: l + this.segments[bestSegment].lengthAtT(bestProject!.t),
-      distance: bestProject!.distance,
-      point: bestProject!.point
-    };
-  }
-}
-
-export const makeCurveSegment = (start: Point, end: Point, previous: QuadSegment): CubicSegment => {
-  const p = start;
-
-  const cp = previous.p2!;
-  const cp2 = Point.add(p, Point.subtract(p, cp));
-
-  return new QuadSegment(start, cp2, end);
-};

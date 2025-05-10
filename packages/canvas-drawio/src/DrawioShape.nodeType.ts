@@ -1,6 +1,6 @@
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { PathListBuilder, PathBuilderHelper } from '@diagram-craft/geometry/pathListBuilder';
+import { PathBuilderHelper, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { Point } from '@diagram-craft/geometry/point';
 import {
   BaseNodeComponent,
@@ -24,6 +24,7 @@ import { DrawioStencil } from './drawioStencilLoader';
 import { NodeDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { Metrics } from '@diagram-craft/utils/metrics';
 import { xNum } from '@diagram-craft/utils/xml';
+import { TransformFactory } from '@diagram-craft/geometry/transform';
 
 declare global {
   interface CustomNodeProps {
@@ -36,20 +37,6 @@ declare global {
 registerCustomNodeDefaults('drawio', {
   shape: ''
 });
-
-const makeShapeTransform =
-  (source: Extent, target: Box) => (p: Point, _type?: 'point' | 'distance') => {
-    if (_type === 'distance') {
-      return {
-        x: (p.x / source.w) * target.w,
-        y: (p.y / source.h) * target.h
-      };
-    }
-    return {
-      x: target.x + (p.x / source.w) * target.w,
-      y: target.y + (p.y / source.h) * target.h
-    };
-  };
 
 const isShapeElement = ($el: Element) =>
   $el.nodeName === 'rect' ||
@@ -270,9 +257,8 @@ export class DrawioShapeNodeDefinition extends ShapeNodeDefinition {
 
     if (compiledShape.boundingPath === '') return new PathListBuilder();
 
-    return PathListBuilder.fromString(
-      compiledShape.boundingPath,
-      makeShapeTransform(compiledShape.size, def.bounds)
+    return PathListBuilder.fromString(compiledShape.boundingPath).withTransform(
+      TransformFactory.fromTo(Box.from(compiledShape.size), Box.withoutRotation(def.bounds))
     );
   }
 
@@ -511,7 +497,9 @@ class DrawioShapeComponent extends BaseNodeComponent {
       } else if (isShapeElement($el)) {
         if (!backgroundDrawn) drawBackground();
 
-        const pathBuilder = new PathListBuilder(makeShapeTransform({ w, h }, props.node.bounds));
+        const pathBuilder = new PathListBuilder().withTransform(
+          TransformFactory.fromTo(Box.from({ w, h }), Box.withoutRotation(props.node.bounds))
+        );
         parseShapeElement($el, pathBuilder);
 
         if (pathBuilder.getPaths().all().length === 0) continue;

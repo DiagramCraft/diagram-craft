@@ -37,7 +37,7 @@ const StarIndicator = (bounds: Box, indicator: DeepRequired<Indicator>) => {
   const start = -Math.PI / 2;
   const dTheta = (2 * Math.PI) / sides;
 
-  const pathBuilder = new PathListBuilder(
+  const pathBuilder = new PathListBuilder().withTransform(
     unitCoordinateSystem({
       ...bounds,
       x: 0,
@@ -61,7 +61,7 @@ const StarIndicator = (bounds: Box, indicator: DeepRequired<Indicator>) => {
 };
 
 const ActorIndicator = (bounds: Box, indicator: DeepRequired<Indicator>) => {
-  const b = new PathListBuilder(
+  const b = new PathListBuilder().withTransform(
     unitCoordinateSystem({
       ...bounds,
       x: 0,
@@ -86,7 +86,7 @@ const ActorIndicator = (bounds: Box, indicator: DeepRequired<Indicator>) => {
 };
 
 const LockIndicator = (bounds: Box, indicator: DeepRequired<Indicator>) => {
-  const b = new PathListBuilder(
+  const b = new PathListBuilder().withTransform(
     unitCoordinateSystem({
       ...bounds,
       x: 0,
@@ -115,7 +115,7 @@ const LockIndicator = (bounds: Box, indicator: DeepRequired<Indicator>) => {
 };
 
 const CommentIndicator = (bounds: Box, indicator: DeepRequired<Indicator>, fillColor: string) => {
-  const b = new PathListBuilder(
+  const b = new PathListBuilder().withTransform(
     unitCoordinateSystem({
       ...bounds,
       x: 0,
@@ -144,7 +144,7 @@ const CommentIndicator = (bounds: Box, indicator: DeepRequired<Indicator>, fillC
 };
 
 const NoteIndicator = (bounds: Box, indicator: DeepRequired<Indicator>, fillColor: string) => {
-  const b = new PathListBuilder(
+  const b = new PathListBuilder().withTransform(
     unitCoordinateSystem({
       ...bounds,
       x: 0,

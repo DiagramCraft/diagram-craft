@@ -47,7 +47,8 @@ export class ParallelogramNodeDefinition extends ShapeNodeDefinition {
     const slant = node.renderProps.custom.parallelogram.slant;
     const slantPct = slant / node.bounds.w;
 
-    return new PathListBuilder(unitCoordinateSystem(node.bounds))
+    return new PathListBuilder()
+      .withTransform(unitCoordinateSystem(node.bounds))
       .moveTo(_p(slantPct, 0))
       .lineTo(_p(1, 0))
       .lineTo(_p(1 - slantPct, 1))

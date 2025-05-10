@@ -34,7 +34,7 @@ export class Folder extends SimpleShapeNodeDefinition {
 
    */
   getBoundingPathBuilder(node: DiagramNode) {
-    const pb = new PathListBuilder(translateCoordinateSystem(node.bounds));
+    const pb = new PathListBuilder().withTransform(translateCoordinateSystem(node.bounds));
     pb.moveTo(_p(0, 0))
       .lineTo(_p(TAB_WIDTH, 0))
       .lineTo(_p(TAB_WIDTH, TAB_HEIGHT))

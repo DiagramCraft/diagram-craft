@@ -34,7 +34,7 @@ export class CloudNodeDefinition extends ShapeNodeDefinition {
       boundsCache(() => pathBuilder.getPaths().bounds()),
       Box.withoutRotation(def.bounds)
     );
-    pathBuilder.setTransform(t);
+    pathBuilder.withTransform(t);
 
     return pathBuilder;
   }

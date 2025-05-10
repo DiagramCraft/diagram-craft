@@ -3,7 +3,6 @@ import { Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
 import { Vector } from '@diagram-craft/geometry/vector';
 import {
-  PathList,
   inverseUnitCoordinateSystem,
   PathListBuilder
 } from '@diagram-craft/geometry/pathListBuilder';
@@ -11,6 +10,7 @@ import { CubicSegment, LineSegment, PathSegment } from '@diagram-craft/geometry/
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { assert, VERIFY_NOT_REACHED, VerifyNotReached } from '@diagram-craft/utils/assert';
+import { PathList } from '@diagram-craft/geometry/pathList';
 
 export type EditableSegment = {
   type: 'cubic' | 'line' | 'move';
@@ -150,22 +150,33 @@ export class EditablePath {
     );
   }
 
-  split(p: Point): number {
-    const path = this.getPath('as-displayed');
-    const [pre, post] = path.split(path.projectPoint(p));
+  addWaypoint(p: Point): number {
+    const pathList = this.getPath('as-displayed');
 
-    const all = [...pre.segments(), ...post.segments()];
+    const pp = pathList.projectPoint(p);
 
-    this.buildFromPath(all);
+    const paths = pathList.all();
 
-    return pre.segments().length;
+    const pathToSplit = paths[pp.pathIdx];
+    const splitPath = pathToSplit.split(pp.offset);
+
+    const pre = [...paths.slice(0, pp.pathIdx).flatMap(p => p.segments), ...splitPath[0].segments];
+    const after = [
+      ...splitPath[1].segments,
+      ...paths.slice(pp.pathIdx + 1).flatMap(p => p.segments)
+    ];
+
+    this.buildFromPath([...pre, ...after]);
+
+    return pre.length;
   }
 
   private getPath(type: 'as-stored' | 'as-displayed') {
     const bounds = this.node.bounds;
-    const pb = new PathListBuilder(
-      type === 'as-displayed' ? p => p : inverseUnitCoordinateSystem(bounds)
-    );
+    const pb = new PathListBuilder();
+    if (type === 'as-stored') {
+      pb.withTransform(inverseUnitCoordinateSystem(bounds));
+    }
 
     pb.moveTo(this.waypoints[0].point);
 
@@ -205,7 +216,7 @@ export class EditablePath {
     return pb.getPaths();
   }
 
-  private resizePathToUnitLCS(): { path: PathList; bounds: Box } {
+  private resizePathToUnitCoordinateSystem(): { path: PathList; bounds: Box } {
     const rot = this.node.bounds.r;
 
     const nodePath = new GenericPathNodeDefinition().getBoundingPathBuilder(this.node).getPaths();
@@ -225,10 +236,9 @@ export class EditablePath {
     const diff = Point.subtract(startPointAfter, startPointBefore);
 
     return {
-      path: PathListBuilder.fromString(rawPath.asSvgPath(), p => ({
-        x: p.x * (1 / rawBounds.w) - rawBounds.x,
-        y: p.y * (1 / rawBounds.h) - rawBounds.y
-      })).getPaths(),
+      path: PathListBuilder.fromString(rawPath.asSvgPath()).getPaths(
+        inverseUnitCoordinateSystem(rawBounds)
+      ),
       bounds: {
         ...nodePathBounds,
         x: nodePathBounds.x - diff.x,
@@ -247,7 +257,7 @@ export class EditablePath {
 
     // As this reads the genericPath.path, we have to first set the path provisionally -
     // ... see code above
-    const { path, bounds } = this.resizePathToUnitLCS();
+    const { path, bounds } = this.resizePathToUnitCoordinateSystem();
     this.node.updateCustomProps('genericPath', p => (p.path = path.asSvgPath()), uow);
     this.node.setBounds(bounds, uow);
   }

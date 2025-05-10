@@ -2,6 +2,7 @@ import { Vector } from './vector';
 import { Point } from './point';
 import { Box } from './box';
 import { round } from '@diagram-craft/utils/math';
+import { assert } from '@diagram-craft/utils/assert';
 
 export interface Transform {
   apply(b: Box): Box;
@@ -155,7 +156,11 @@ export class Shear implements Transform {
 }
 
 export const TransformFactory = {
+  // TODO: Compile transformation as needed
   fromTo: (before: Box, after: Box): Transform[] => {
+    assert.true(before.w > 0, `${before.w} <= 0`);
+    assert.true(before.h > 0, `${before.h} <= 0`);
+
     const scaleX = after.w / before.w;
     const scaleY = after.h / before.h;
 
@@ -183,5 +188,13 @@ export const TransformFactory = {
     transforms.push(translateBack);
 
     return transforms;
+  },
+
+  rotateAround: (angle: number, centerOfRotation: Point) => {
+    return [
+      new Translation({ x: -centerOfRotation.x, y: -centerOfRotation.y }),
+      new Rotation(angle),
+      new Translation({ x: centerOfRotation.x, y: centerOfRotation.y })
+    ];
   }
 };

@@ -1,19 +1,16 @@
 import { Point } from './point';
 import { Box } from './box';
 import { Path } from './path';
-import { Angle } from './angle';
 import {
   assert,
   precondition,
   VERIFY_NOT_REACHED,
   VerifyNotReached
 } from '@diagram-craft/utils/assert';
-import { Transform, TransformFactory } from './transform';
-import { PathUtils } from './pathUtils';
-import { LengthOffsetOnPath, TimeOffsetOnSegment } from './pathPosition';
-import { LocalCoordinateSystem } from './lcs';
+import { Transform, TransformFactory, Translation } from './transform';
 import { parseSvgPath } from './svgPathUtils';
-import { MultiMap } from '@diagram-craft/utils/multimap';
+import { PathList } from './pathList';
+import { Lazy } from '@diagram-craft/utils/lazy';
 
 /**
  * Represents a raw cubic Bézier curve segment in an SVG path.
@@ -23,8 +20,8 @@ import { MultiMap } from '@diagram-craft/utils/multimap';
  * @property {number} 2 - The y-coordinate of the first control point.
  * @property {number} 3 - The x-coordinate of the second control point.
  * @property {number} 4 - The y-coordinate of the second control point.
- * @property {number} 5 - The x-coordinate of the end point of the curve.
- * @property {number} 6 - The y-coordinate of the end point of the curve.
+ * @property {number} 5 - The x-coordinate of the curve endpoint.
+ * @property {number} 6 - The y-coordinate of the curve endpoint.
  */
 export type RawCubicSegment = ['C', number, number, number, number, number, number];
 
@@ -32,8 +29,8 @@ export type RawCubicSegment = ['C', number, number, number, number, number, numb
  * Represents a raw line segment in an SVG path.
  *
  * @property {'L'} 0 - The command character for a line segment.
- * @property {number} 1 - The x-coordinate of the end point of the line.
- * @property {number} 2 - The y-coordinate of the end point of the line.
+ * @property {number} 1 - The x-coordinate of the line endpoint.
+ * @property {number} 2 - The y-coordinate of the line endpoint.
  */
 type RawLineSegment = ['L', number, number];
 
@@ -46,8 +43,8 @@ type RawLineSegment = ['L', number, number];
  * @property {number} 3 - The rotation angle in degrees for the ellipse's x-axis.
  * @property {0 | 1} 4 - The large-arc-flag, which determines if the arc should be greater than or less than 180 degrees.
  * @property {0 | 1} 5 - The sweep-flag, which determines if the arc should be drawn in a "positive-angle" direction or a "negative-angle" direction.
- * @property {number} 6 - The x-coordinate of the end point of the arc.
- * @property {number} 7 - The y-coordinate of the end point of the arc.
+ * @property {number} 6 - The x-coordinate of the arc endpoint.
+ * @property {number} 7 - The y-coordinate of the arc endpoint.
  */
 type RawArcSegment = ['A', number, number, number, 0 | 1, 0 | 1, number, number];
 
@@ -55,8 +52,8 @@ type RawArcSegment = ['A', number, number, number, 0 | 1, 0 | 1, number, number]
  * Represents a raw curve segment in an SVG path.
  *
  * @property {'T'} 0 - The command character for a smooth quadratic Bézier curve segment.
- * @property {number} 1 - The x-coordinate of the end point of the curve.
- * @property {number} 2 - The y-coordinate of the end point of the curve.
+ * @property {number} 1 - The x-coordinate of the curve endpoint.
+ * @property {number} 2 - The y-coordinate of the curve endpoint.
  */
 type RawCurveSegment = ['T', number, number];
 
@@ -66,8 +63,8 @@ type RawCurveSegment = ['T', number, number];
  * @property {'Q'} 0 - The command character for a quadratic Bézier curve segment.
  * @property {number} 1 - The x-coordinate of the control point.
  * @property {number} 2 - The y-coordinate of the control point.
- * @property {number} 3 - The x-coordinate of the end point of the curve.
- * @property {number} 4 - The y-coordinate of the end point of the curve.
+ * @property {number} 3 - The x-coordinate of the curve endpoint
+ * @property {number} 4 - The y-coordinate of the curve endpoint.
  */
 type RawQuadSegment = ['Q', number, number, number, number];
 
@@ -79,198 +76,44 @@ export type RawSegment =
   | RawQuadSegment;
 
 export const translateCoordinateSystem = (b: Box) => {
-  return (p: Point) => Point.add(p, b);
+  return [new Translation(b)];
 };
 
 export const unitCoordinateSystem = (b: Box) => {
-  const lcs = new LocalCoordinateSystem(Box.withoutRotation(b), [0, 1], [0, 1], false);
-  return (p: Point) => lcs.toGlobal(p);
+  return TransformFactory.fromTo({ x: 0, y: 0, w: 1, h: 1, r: 0 }, Box.withoutRotation(b));
 };
 
 export const inverseUnitCoordinateSystem = (b: Box) => {
-  return (p: Point) => ({ x: (p.x - b.x) / b.w, y: (p.y - b.y) / b.h });
+  return TransformFactory.fromTo(b, { x: 0, y: 0, w: 1, h: 1, r: 0 });
 };
 
-export class PathList {
-  constructor(private paths: Path[]) {}
-
-  singularPath() {
-    assert.true(this.paths.length === 1, `Expected a single path, ${this.paths.length} found`);
-    return this.paths[0];
-  }
-
-  all() {
-    return this.paths;
-  }
-
-  bounds() {
-    return Box.boundingBox(this.paths.map(p => p.bounds()));
-  }
-
-  asSvgPath() {
-    return this.paths.map(p => p.asSvgPath()).join(' ');
-  }
-
-  segments() {
-    return this.paths.flatMap(p => p.segments);
-  }
-
-  normalize() {
-    // First we remove all self-intersections
-
-    // Secondly, we need to order all paths in a tree structure based on which contains which
-    const containedWithin = new MultiMap<number, number>();
-    for (let a = 0; a < this.paths.length; a++) {
-      for (let b = 0; b < this.paths.length; b++) {
-        if (a === b) continue;
-        const pa = this.paths[a];
-        const pb = this.paths[b];
-        if (pa.segments.map(s => s.start).every(p => pb.isInside(p))) {
-          containedWithin.add(a, b);
-        }
-      }
-    }
-
-    const dest: Path[] = [];
-
-    let maxLoop = 100;
-    let state = true;
-    const queue = [...this.paths.map((_, i) => i)];
-    while (queue.length > 0) {
-      const removed: number[] = [];
-      for (const i of queue) {
-        const p = this.paths[i];
-        if (!containedWithin.has(i)) {
-          removed.push(i);
-
-          if (p.isClockwise() && state) dest.push(p.reverse());
-          else if (!p.isClockwise() && !state) dest.push(p.reverse());
-          else {
-            dest.push(p);
-          }
-        }
-      }
-
-      removed.forEach(j => queue.splice(queue.indexOf(j), 1));
-      removed.forEach(r => queue.forEach(q => containedWithin.remove(q, r)));
-
-      state = !state;
-
-      if (maxLoop-- === 0) {
-        VERIFY_NOT_REACHED('Max loop reached');
-      }
-    }
-
-    this.paths = dest;
-
-    return this;
-  }
-
-  clone() {
-    const dest: Path[] = [];
-    for (const p of this.paths) {
-      dest.push(p.clone());
-    }
-    return new PathList(dest);
-  }
-
-  scale(targetBounds: Box, referenceBounds?: Box) {
-    const bounds = referenceBounds ?? this.bounds();
-
-    const t = TransformFactory.fromTo(bounds, targetBounds);
-
-    const dest: Path[] = [];
-    for (const p of this.paths) {
-      const source = p.bounds();
-      const target = Transform.box(source, ...t);
-      dest.push(PathUtils.scalePath(p, source, target));
-    }
-
-    return new PathList(dest);
-  }
-
-  projectPoint(p: Point): { pathIdx: number; offset: TimeOffsetOnSegment & LengthOffsetOnPath } {
-    let best:
-      | { point: Point; pathIdx: number; offset: TimeOffsetOnSegment & LengthOffsetOnPath }
-      | undefined = undefined;
-    for (let idx = 0; idx < this.paths.length; idx++) {
-      const path = this.paths[idx];
-      const bp = path.projectPoint(p);
-      if (best === undefined || Point.distance(p, bp.point) < Point.distance(p, best.point)) {
-        best = {
-          point: bp.point,
-          pathIdx: idx,
-          offset: bp
-        };
-      }
-    }
-
-    return best!;
-  }
-
-  split(p: { pathIdx: number; offset: TimeOffsetOnSegment }): [PathList, PathList] {
-    const [before, after] = this.paths[p.pathIdx].split(p.offset);
-
-    return [
-      new PathList([...this.paths.slice(0, p.pathIdx), before]),
-      new PathList([after, ...this.paths.slice(p.pathIdx + 1)])
-    ];
-  }
-
-  isInside(p: Point): boolean {
-    // TODO: Check multiple rays - or make it more "unique" - or check that intersection is not on endpoints
-    const line = new Path(p, [['L', Number.MAX_SAFE_INTEGER / 17, Number.MAX_SAFE_INTEGER / 25]]);
-    const intersections = this.all().flatMap(p => p.intersections(line));
-    return intersections.length % 2 !== 0;
-  }
-
-  isInHole(p: Point): boolean {
-    // TODO: Check multiple rays - or make it more "unique" - or check that intersection is not on endpoints
-    const line = new Path(p, [['L', Number.MAX_SAFE_INTEGER / 17, Number.MAX_SAFE_INTEGER / 25]]);
-    const intersections = this.all().flatMap(p => p.intersections(line));
-    return intersections.length > 1 && intersections.length % 2 === 0;
-  }
-
-  isOn(p: Point): boolean {
-    for (const path of this.paths) {
-      if (path.isOn(p)) return true;
-    }
-    return false;
-  }
-
-  intersections(p: Path): Point[] {
-    return this.all()
-      .flatMap(path => path.intersections(p))
-      .map(i => i.point);
-  }
-}
-
-type PathBuilderTransform = (p: Point) => Point;
-
-/**
- * This represents a path part with a starting point and a number
- * of instructions
- */
-type Part = {
+type RawPath = {
   start: Point | undefined;
   instructions: RawSegment[];
 };
 
 export class PathListBuilder {
-  private parts: Part[] = [{ start: undefined, instructions: [] }];
+  private readonly rawPaths: RawPath[] = [{ start: undefined, instructions: [] }];
+  private readonly pathCache = new Lazy<Path[]>(() => {
+    if (!this.active.start) return new Lazy.NoCache([]);
+
+    return this._getPaths(this.transformList ?? []);
+  });
 
   private transformList: Transform[] | undefined = undefined;
-  private rotation = {
-    amount: 0,
-    center: Point.ORIGIN
-  };
 
-  private pathCache: Path[] | undefined = undefined;
+  static fromSegments(start: Point, instructions: RawSegment[]) {
+    const d = new PathListBuilder();
+    d.moveTo(start);
+    for (const instruction of instructions) {
+      d.appendInstruction(instruction);
+    }
+    return d;
+  }
 
-  constructor(private readonly transform: PathBuilderTransform = p => p) {}
-
-  static fromString(path: string, transform: PathBuilderTransform = p => p) {
-    const d = new PathListBuilder(transform);
+  static fromString(path: string, transforms?: Transform[]) {
+    const d = new PathListBuilder();
+    if (transforms) d.withTransform(transforms);
 
     parseSvgPath(path).forEach(p => {
       const [t, ...params] = p;
@@ -286,25 +129,36 @@ export class PathListBuilder {
       else if (t === 'T') d.curveTo({ x: pn[0], y: pn[1] });
       else if (t === 'A')
         d.arcTo({ x: pn[5], y: pn[6] }, pn[0], pn[1], pn[2], pn[3] as 0 | 1, pn[4] as 0 | 1);
-      else throw new VerifyNotReached(`command ${t} not supported`);
+      else throw new VerifyNotReached(`command ${t} not supported: ${path}`);
     });
 
     return d;
   }
 
-  private get active(): Part {
-    return this.parts.at(-1)!;
+  get active(): RawPath {
+    return this.rawPaths.at(-1)!;
+  }
+
+  get pathCount() {
+    return this.rawPaths.length;
+  }
+
+  get activeInstructionCount() {
+    return this.active.instructions.length;
+  }
+
+  bounds() {
+    return Box.boundingBox(this.pathCache.get().map(p => p.bounds()));
   }
 
   moveTo(p: Point) {
     if (this.active.start) this.newSegment();
-    this.active.start = this.transform(p);
+    this.active.start = p;
     return this;
   }
 
   lineTo(p: Point) {
-    const tp = this.transform(p);
-    this.active.instructions.push(['L', tp.x, tp.y]);
+    this.active.instructions.push(['L', p.x, p.y]);
     return this;
   }
 
@@ -328,58 +182,45 @@ export class PathListBuilder {
     large_arc_flag: 0 | 1 = 0,
     sweep_flag: 0 | 1 = 0
   ) {
-    const tp = this.transform(p);
-
-    const g = this.transform(Point.of(rx, ry));
-    const o = this.transform(Point.ORIGIN);
-    const tr = Point.subtract(g, o);
-
     this.active.instructions.push([
       'A',
-      Math.abs(tr.x),
-      Math.abs(tr.y),
+      Math.abs(rx),
+      Math.abs(ry),
       angle,
       large_arc_flag,
       sweep_flag,
-      tp.x,
-      tp.y
+      p.x,
+      p.y
     ]);
     return this;
   }
 
   curveTo(p: Point) {
-    const tp = this.transform(p);
-    this.active.instructions.push(['T', tp.x, tp.y]);
+    this.active.instructions.push(['T', p.x, p.y]);
     return this;
   }
 
   quadTo(p: Point, p1: Point) {
-    const tp = this.transform(p);
-    const tp1 = this.transform(p1);
-    this.active.instructions.push(['Q', tp1.x, tp1.y, tp.x, tp.y]);
+    this.active.instructions.push(['Q', p1.x, p1.y, p.x, p.y]);
     return this;
   }
 
   cubicTo(p: Point, p1: Point, p2: Point) {
-    const tp = this.transform(p);
-    const tp1 = this.transform(p1);
-    const tp2 = this.transform(p2);
-    this.active.instructions.push(['C', tp1.x, tp1.y, tp2.x, tp2.y, tp.x, tp.y]);
+    this.active.instructions.push(['C', p1.x, p1.y, p2.x, p2.y, p.x, p.y]);
     return this;
   }
 
-  // TODO: Is there a way to not have to need this method
-  //       ... it's a bit weird that it just appends the instructions without
-  //       checking that the start corresponds to the end of the previous path
-  appendInstructions(path: PathListBuilder) {
-    for (const p of path.active.instructions) {
-      this.active.instructions.push(p);
-    }
+  appendInstruction(instruction: RawSegment) {
+    this.active.instructions.push(instruction);
+  }
+
+  popInstruction() {
+    this.active.instructions.pop();
   }
 
   append(path: PathListBuilder) {
-    for (const p of path.parts) {
-      this.parts.push(p);
+    for (const p of path.rawPaths) {
+      this.rawPaths.push(p);
     }
     return this;
   }
@@ -393,155 +234,116 @@ export class PathListBuilder {
     );
   }
 
-  setRotation(rotation: number, centerOfRotation: Point) {
-    this.rotation = {
-      amount: rotation,
-      center: centerOfRotation
-    };
-    this.clearCache();
-  }
-
-  setTransform(transform: Transform[]) {
+  withTransform(transform: Transform[]) {
+    assert.true(!this.transformList || this.transformList.length === 0);
     this.transformList = transform;
-    this.clearCache();
+    this.pathCache.clear();
     return this;
   }
 
-  getPaths() {
-    const paths = this.generatePaths();
-    for (const p of paths) {
+  addTransform(transform: Transform | Transform[]) {
+    this.transformList ??= [];
+    if (Array.isArray(transform)) {
+      this.transformList.push(...transform);
+    } else {
+      this.transformList.push(transform);
+    }
+    this.pathCache.clear();
+    return this;
+  }
+
+  getPaths(transforms?: Transform[]) {
+    const paths = transforms ? this._getPaths(transforms) : this.pathCache.get();
+    /*for (const p of paths) {
       if (!p.isClockwise()) {
         //console.warn('Path is not clockwise', sum, new Error().stack);
       }
-    }
+    }*/
 
     return new PathList(paths);
   }
 
-  private newSegment() {
-    this.parts.push({ start: undefined, instructions: [] });
-  }
-
-  private clearCache() {
-    this.pathCache = undefined;
-  }
-
-  private generatePaths() {
-    if (this.pathCache) return this.pathCache;
-    if (!this.active.start) return [];
-
-    this.pathCache = [];
-    for (const segment of this.parts) {
+  private _getPaths(transforms: Transform[]): Path[] {
+    const dest: Path[] = [];
+    for (const segment of this.rawPaths) {
       if (segment.instructions.length === 0) continue;
       if (!segment.start) continue;
 
       const transformed = {
-        instructions: this.transformList
-          ? this.applyTransforms(segment.instructions)
-          : segment.instructions,
-        start: Transform.point(segment.start ?? Point.ORIGIN, ...(this.transformList ?? []))
+        instructions:
+          transforms.length > 0
+            ? this.applyTransforms(segment.instructions, transforms)
+            : segment.instructions,
+        start: Transform.point(segment.start ?? Point.ORIGIN, ...transforms)
       };
 
-      const rotated = {
-        start: this.applyPointRotationArray(transformed.start),
-        instructions: this.applyPathRotation(transformed.instructions)
-      };
-
-      this.pathCache.push(new Path(Point.ofTuple(rotated.start), rotated.instructions));
+      dest.push(new Path(transformed.start, transformed.instructions));
     }
 
-    return this.pathCache;
+    return dest;
   }
 
-  private applyTransform(p: Point) {
-    const { x, y } = Transform.point(p, ...this.transformList!);
+  private newSegment() {
+    this.rawPaths.push({ start: undefined, instructions: [] });
+  }
+
+  private transformPoint(p: Point, transforms: Transform[]) {
+    const { x, y } = Transform.point(p, ...transforms);
     return [x, y] as const;
   }
 
-  private applyTransforms(path: RawSegment[]) {
-    return path.map(s => {
-      switch (s[0]) {
-        case 'L':
-          return ['L', ...this.applyTransform({ x: s[1], y: s[2] })] satisfies RawLineSegment;
-        case 'C':
-          return [
-            'C',
-            ...this.applyTransform({ x: s[1], y: s[2] }),
-            ...this.applyTransform({ x: s[3], y: s[4] }),
-            ...this.applyTransform({ x: s[5], y: s[6] })
-          ] satisfies RawCubicSegment;
-        case 'Q':
-          return [
-            'Q',
-            ...this.applyTransform({ x: s[1], y: s[2] }),
-            ...this.applyTransform({ x: s[3], y: s[4] })
-          ] satisfies RawQuadSegment;
-        case 'T':
-          return ['T', ...this.applyTransform({ x: s[1], y: s[2] })] satisfies RawCurveSegment;
-        case 'A':
-          // TODO: Probably need to change the radiuses here as well
-          return [
-            'A',
-            s[1],
-            s[2],
-            s[3],
-            s[4],
-            s[5],
-            ...this.applyTransform({ x: s[6], y: s[7] })
-          ] satisfies RawArcSegment;
-        default:
-          VERIFY_NOT_REACHED('Unknown path segment');
-      }
-    });
-  }
-
-  private applyPointRotationArray(point: Point): [number, number] {
-    const np = Point.rotateAround(point, this.rotation.amount, this.rotation.center);
-    return [np.x, np.y];
-  }
-
-  private applyPathRotation(path: RawSegment[]) {
-    if (this.rotation.amount === 0) return path;
+  private applyTransforms(path: RawSegment[], transforms: Transform[]) {
     return path.map(s => {
       switch (s[0]) {
         case 'L':
           return [
             'L',
-            ...this.applyPointRotationArray({ x: s[1], y: s[2] })
+            ...this.transformPoint({ x: s[1], y: s[2] }, transforms)
           ] satisfies RawLineSegment;
         case 'C':
           return [
             'C',
-            ...this.applyPointRotationArray({ x: s[1], y: s[2] }),
-            ...this.applyPointRotationArray({ x: s[3], y: s[4] }),
-            ...this.applyPointRotationArray({ x: s[5], y: s[6] })
+            ...this.transformPoint({ x: s[1], y: s[2] }, transforms),
+            ...this.transformPoint({ x: s[3], y: s[4] }, transforms),
+            ...this.transformPoint({ x: s[5], y: s[6] }, transforms)
           ] satisfies RawCubicSegment;
         case 'Q':
           return [
             'Q',
-            ...this.applyPointRotationArray({ x: s[1], y: s[2] }),
-            ...this.applyPointRotationArray({ x: s[3], y: s[4] })
+            ...this.transformPoint({ x: s[1], y: s[2] }, transforms),
+            ...this.transformPoint({ x: s[3], y: s[4] }, transforms)
           ] satisfies RawQuadSegment;
         case 'T':
           return [
             'T',
-            ...this.applyPointRotationArray({ x: s[1], y: s[2] })
+            ...this.transformPoint({ x: s[1], y: s[2] }, transforms)
           ] satisfies RawCurveSegment;
-        case 'A':
-          // TODO: Probably need to change the rotation parameter as well
+        case 'A': {
+          const g = this.transformPoint(Point.of(s[1], s[2]), transforms);
+          const o = this.transformPoint(Point.ORIGIN, transforms);
+          const radii = Point.subtract(Point.ofTuple(g), Point.ofTuple(o));
+          const target = this.transformPoint({ x: s[6], y: s[7] }, transforms);
+
           return [
             'A',
-            s[1],
-            s[2],
-            s[3] + Angle.toDeg(this.rotation.amount),
+            Math.abs(radii.x),
+            Math.abs(radii.y),
+            s[3],
             s[4],
             s[5],
-            ...this.applyPointRotationArray({ x: s[6], y: s[7] })
+            ...target
           ] satisfies RawArcSegment;
+        }
         default:
           VERIFY_NOT_REACHED('Unknown path segment');
       }
     });
+  }
+
+  toString() {
+    return this.rawPaths
+      .map(r => `M ${r.start!.x} ${r.start!.y} ${r.instructions.join(' ')}`)
+      .join(', ');
   }
 }
 

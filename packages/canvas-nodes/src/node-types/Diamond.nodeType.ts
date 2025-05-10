@@ -14,7 +14,7 @@ export class DiamondNodeDefinition extends ShapeNodeDefinition {
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const pathBuilder = new PathListBuilder(unitCoordinateSystem(def.bounds));
+    const pathBuilder = new PathListBuilder().withTransform(unitCoordinateSystem(def.bounds));
     pathBuilder.moveTo(Point.of(0.5, 0));
     pathBuilder.lineTo(Point.of(1, 0.5));
     pathBuilder.lineTo(Point.of(0.5, 1));

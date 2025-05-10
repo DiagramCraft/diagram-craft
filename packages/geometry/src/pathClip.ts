@@ -1,4 +1,3 @@
-import { PathList } from './pathListBuilder';
 import { Point } from './point';
 import { PathSegment } from './pathSegment';
 import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
@@ -6,6 +5,7 @@ import { Path } from './path';
 import { Vector } from './vector';
 import { MultiMap } from '@diagram-craft/utils/multimap';
 import { isSame } from '@diagram-craft/utils/math';
+import { PathList } from './pathList';
 
 type VertexType = 'in->out' | 'out->in';
 

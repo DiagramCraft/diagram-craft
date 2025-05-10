@@ -34,7 +34,7 @@ export class RegularPolygonNodeDefinition extends ShapeNodeDefinition {
     const start = -Math.PI / 2;
     const dTheta = (2 * Math.PI) / sides;
 
-    const pathBuilder = new PathListBuilder(unitCoordinateSystem(def.bounds));
+    const pathBuilder = new PathListBuilder().withTransform(unitCoordinateSystem(def.bounds));
     pathBuilder.moveTo(_p(0.5, 0));
 
     for (let i = 0; i < sides; i++) {
@@ -71,7 +71,7 @@ class RegularPolygonComponent extends BaseNodeComponent {
     shapeBuilder.boundaryPath(boundary.all());
     shapeBuilder.text(this);
 
-    const path = boundary.singularPath();
+    const path = boundary.singular();
 
     shapeBuilder.controlPoint(path.segments[1].start, ({ x, y }, uow) => {
       const angle =

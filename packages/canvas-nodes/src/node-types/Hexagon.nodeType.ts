@@ -78,7 +78,8 @@ export class HexagonNodeDefinition extends ShapeNodeDefinition {
     const x1 = sizePct;
     const x2 = 1 - sizePct;
 
-    return new PathListBuilder(unitCoordinateSystem(def.bounds))
+    return new PathListBuilder()
+      .withTransform(unitCoordinateSystem(def.bounds))
       .moveTo(_p(x1, 0))
       .lineTo(_p(x2, 0))
       .lineTo(_p(1, 0.5))

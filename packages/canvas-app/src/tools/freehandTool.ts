@@ -93,18 +93,18 @@ export class FreehandTool extends AbstractTool {
     const bbox = this.path!.getBBox();
 
     // TODO: This removes all T commands and converts them to C
-    const path = PathListBuilder.fromString(
-      pathData.join(' '),
-      inverseUnitCoordinateSystem({
-        x: bbox.x,
-        y: bbox.y,
-        w: bbox.width,
-        h: bbox.height,
-        r: 0
-      })
-    )
+    const path = PathListBuilder.fromString(pathData.join(' '))
+      .withTransform(
+        inverseUnitCoordinateSystem({
+          x: bbox.x,
+          y: bbox.y,
+          w: bbox.width,
+          h: bbox.height,
+          r: 0
+        })
+      )
       .getPaths()
-      .singularPath()
+      .singular()
       .asSvgPath();
 
     const node = new DiagramNode(

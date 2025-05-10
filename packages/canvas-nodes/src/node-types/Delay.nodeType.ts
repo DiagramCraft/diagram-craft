@@ -17,7 +17,8 @@ export class DelayNodeDefinition extends ShapeNodeDefinition {
     const xr = (0.5 * node.bounds.h) / node.bounds.w;
     const yr = 0.5;
 
-    return new PathListBuilder(unitCoordinateSystem(node.bounds))
+    return new PathListBuilder()
+      .withTransform(unitCoordinateSystem(node.bounds))
       .moveTo(_p(0, 0))
       .lineTo(_p(1 - xr, 0))
       .arcTo(_p(1, yr), xr, yr, 0, 0, 1)
