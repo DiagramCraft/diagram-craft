@@ -67,7 +67,7 @@ export class ProcessNodeDefinition extends ShapeNodeDefinition {
 
       // Draw additional shape details
       const pathBuilder = new PathListBuilder()
-        .setTransform(unitCoordinateSystem(bounds))
+        .withTransform(unitCoordinateSystem(bounds))
         .line(_p(sizePct, 0), _p(sizePct, 1))
         .line(_p(1 - sizePct, 0), _p(1 - sizePct, 1));
 

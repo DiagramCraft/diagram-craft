@@ -94,7 +94,7 @@ export class FreehandTool extends AbstractTool {
 
     // TODO: This removes all T commands and converts them to C
     const path = PathListBuilder.fromString(pathData.join(' '))
-      .setTransform(
+      .withTransform(
         inverseUnitCoordinateSystem({
           x: bbox.x,
           y: bbox.y,

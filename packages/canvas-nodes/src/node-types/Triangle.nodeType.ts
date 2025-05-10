@@ -32,7 +32,7 @@ export class TriangleNodeDefinition extends ShapeNodeDefinition {
   }
 
   getBoundingPathBuilder(node: DiagramNode) {
-    const pathBuilder = new PathListBuilder().setTransform(unitCoordinateSystem(node.bounds));
+    const pathBuilder = new PathListBuilder().withTransform(unitCoordinateSystem(node.bounds));
 
     switch (node.renderProps.custom.triangle.direction) {
       case 'east':

@@ -25,7 +25,7 @@ export class CircleNodeDefinition extends ShapeNodeDefinition {
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const b = new PathListBuilder().setTransform(unitCoordinateSystem(def.bounds));
+    const b = new PathListBuilder().withTransform(unitCoordinateSystem(def.bounds));
     b.moveTo(_p(0.5, 0));
     b.arcTo(_p(1, 0.5), 0.5, 0.5, 0, 0, 1);
     b.arcTo(_p(0.5, 1), 0.5, 0.5, 0, 0, 1);

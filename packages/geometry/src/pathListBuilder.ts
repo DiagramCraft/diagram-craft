@@ -111,8 +111,9 @@ export class PathListBuilder {
     return d;
   }
 
-  static fromString(path: string) {
+  static fromString(path: string, transforms?: Transform[]) {
     const d = new PathListBuilder();
+    if (transforms) d.withTransform(transforms);
 
     parseSvgPath(path).forEach(p => {
       const [t, ...params] = p;
@@ -234,11 +235,6 @@ export class PathListBuilder {
   }
 
   withTransform(transform: Transform[]) {
-    return this.setTransform(transform);
-  }
-
-  // TODO: Remove this
-  setTransform(transform: Transform[]) {
     assert.true(!this.transformList || this.transformList.length === 0);
     this.transformList = transform;
     this.pathCache.clear();

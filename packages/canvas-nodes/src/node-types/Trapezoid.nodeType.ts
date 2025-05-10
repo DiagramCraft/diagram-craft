@@ -74,7 +74,7 @@ export class TrapezoidNodeDefinition extends ShapeNodeDefinition {
     const slantRightPct = slantRight / node.bounds.w;
 
     return new PathListBuilder()
-      .setTransform(unitCoordinateSystem(node.bounds))
+      .withTransform(unitCoordinateSystem(node.bounds))
       .moveTo(_p(slantLeftPct, 0))
       .lineTo(_p(1 - slantRightPct, 0))
       .lineTo(_p(1, 1))

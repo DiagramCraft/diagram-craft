@@ -99,13 +99,13 @@ describe('PathListBuilder', () => {
     });
   });
 
-  describe('setTransform', () => {
+  describe('withTransform', () => {
     it('scales a path correctly with uniform scaling factors', () => {
       const fromBounds: Box = { x: 0, y: 0, w: 10, h: 10, r: 0 };
       const toBounds: Box = { x: 0, y: 0, w: 20, h: 20, r: 0 };
 
       const scaledPath = PathListBuilder.fromString(`M 0 0 L 10 10 L 20 20`)
-        .setTransform(TransformFactory.fromTo(fromBounds, toBounds))
+        .withTransform(TransformFactory.fromTo(fromBounds, toBounds))
         .getPaths()
         .singular();
 
@@ -120,7 +120,7 @@ describe('PathListBuilder', () => {
       const toBounds: Box = { x: 0, y: 0, w: 20, h: 30, r: 0 };
 
       const scaledPath = PathListBuilder.fromString(`M 0 0 L 10 10 L 20 20`)
-        .setTransform(TransformFactory.fromTo(fromBounds, toBounds))
+        .withTransform(TransformFactory.fromTo(fromBounds, toBounds))
         .getPaths()
         .singular();
 
@@ -136,7 +136,7 @@ describe('PathListBuilder', () => {
       const toBounds: Box = { x: 10, y: 10, w: 20, h: 20, r: 0 };
 
       const scaledPath = PathListBuilder.fromString(`M 5 5 L 15 15 L 25 25`)
-        .setTransform(TransformFactory.fromTo(fromBounds, toBounds))
+        .withTransform(TransformFactory.fromTo(fromBounds, toBounds))
         .getPaths()
         .singular();
 
@@ -152,7 +152,7 @@ describe('PathListBuilder', () => {
       const toBounds: Box = { x: 0, y: 0, w: 40, h: 40, r: 0 };
 
       const scaledPath = PathListBuilder.fromString(`M 0 0 C 5 5 10 10 20 20`)
-        .setTransform(TransformFactory.fromTo(fromBounds, toBounds))
+        .withTransform(TransformFactory.fromTo(fromBounds, toBounds))
         .getPaths()
         .singular();
 
@@ -167,7 +167,7 @@ describe('PathListBuilder', () => {
       const toBounds: Box = { x: 0, y: 0, w: 40, h: 40, r: 0 };
 
       const scaledPath = PathListBuilder.fromString(`M 0 0 Q 10 10 20 20`)
-        .setTransform(TransformFactory.fromTo(fromBounds, toBounds))
+        .withTransform(TransformFactory.fromTo(fromBounds, toBounds))
         .getPaths()
         .singular();
 
@@ -183,7 +183,7 @@ describe('PathListBuilder', () => {
       const toBounds: Box = { x: 0, y: 0, w: 60, h: 60, r: 0 };
 
       const scaledPath = PathListBuilder.fromString(`M 0 0 Q 10 10 20 20 T 30 30`)
-        .setTransform(TransformFactory.fromTo(fromBounds, toBounds))
+        .withTransform(TransformFactory.fromTo(fromBounds, toBounds))
         .getPaths()
         .singular();
 
@@ -198,7 +198,7 @@ describe('PathListBuilder', () => {
       const toBounds: Box = { x: 0, y: 0, w: 40, h: 40, r: 0 };
 
       const scaledPath = PathListBuilder.fromString(`M 0 0 A 10 10 0 0 1 20 20`)
-        .setTransform(TransformFactory.fromTo(fromBounds, toBounds))
+        .withTransform(TransformFactory.fromTo(fromBounds, toBounds))
         .getPaths()
         .singular();
 
@@ -214,7 +214,7 @@ describe('PathListBuilder', () => {
       const toBounds: Box = { x: 5, y: 5, w: 0, h: 0, r: 0 };
 
       const scaledPath = PathListBuilder.fromString(`M 10 10 L 20 20`)
-        .setTransform(TransformFactory.fromTo(fromBounds, toBounds))
+        .withTransform(TransformFactory.fromTo(fromBounds, toBounds))
         .getPaths()
         .singular();
 
@@ -228,7 +228,7 @@ describe('PathListBuilder', () => {
       const toBounds: Box = { x: 0, y: 0, w: -10, h: -10, r: 0 };
 
       const scaledPath = PathListBuilder.fromString(`M 0 0 L 10 10`)
-        .setTransform(TransformFactory.fromTo(fromBounds, toBounds))
+        .withTransform(TransformFactory.fromTo(fromBounds, toBounds))
         .getPaths()
         .singular();
 

@@ -158,7 +158,7 @@ export class BlockArcNodeDefinition extends ShapeNodeDefinition {
     const largeArcFlag = da <= Math.PI || da >= 2 * Math.PI ? 0 : 1;
 
     return new PathListBuilder()
-      .setTransform(unitCoordinateSystem(node.bounds))
+      .withTransform(unitCoordinateSystem(node.bounds))
       .moveTo(start)
       .lineTo(startInner)
       .arcTo(endInner, r, r, 0, largeArcFlag)

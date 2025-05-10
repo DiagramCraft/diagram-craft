@@ -27,7 +27,7 @@ export class DocumentNodeDefinition extends ShapeNodeDefinition {
     const k = 1.5;
 
     return new PathListBuilder()
-      .setTransform(unitCoordinateSystem(node.bounds))
+      .withTransform(unitCoordinateSystem(node.bounds))
       .moveTo(_p(0, 0))
       .lineTo(_p(1, 0))
       .lineTo(_p(1, 1 - size / 2))

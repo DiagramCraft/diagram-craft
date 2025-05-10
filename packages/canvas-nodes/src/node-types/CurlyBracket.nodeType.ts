@@ -90,7 +90,7 @@ export class CurlyBracketNodeDefinition extends ShapeNodeDefinition {
     const bar = sizePct;
 
     return new PathListBuilder()
-      .setTransform(unitCoordinateSystem(node.bounds))
+      .withTransform(unitCoordinateSystem(node.bounds))
       .moveTo(_p(1, 1))
       .lineTo(_p(bar + rx, 1))
       .arcTo(_p(bar, 1 - ry), rx, ry, 0, 0, 1)

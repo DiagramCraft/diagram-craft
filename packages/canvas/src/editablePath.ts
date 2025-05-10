@@ -175,7 +175,7 @@ export class EditablePath {
     const bounds = this.node.bounds;
     const pb = new PathListBuilder();
     if (type === 'as-stored') {
-      pb.setTransform(inverseUnitCoordinateSystem(bounds));
+      pb.withTransform(inverseUnitCoordinateSystem(bounds));
     }
 
     pb.moveTo(this.waypoints[0].point);
