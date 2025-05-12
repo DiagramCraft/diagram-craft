@@ -7,7 +7,7 @@ import {
   VERIFY_NOT_REACHED,
   VerifyNotReached
 } from '@diagram-craft/utils/assert';
-import { Transform, TransformFactory, Translation } from './transform';
+import { Transform, TransformFactory } from './transform';
 import { parseSvgPath } from './svgPathUtils';
 import { PathList } from './pathList';
 import { Lazy } from '@diagram-craft/utils/lazy';
@@ -75,17 +75,22 @@ export type RawSegment =
   | RawCurveSegment
   | RawQuadSegment;
 
-export const translateCoordinateSystem = (b: Box) => {
-  return [new Translation(b)];
-};
+/**
+ * A function that creates a transformation from a unit local coordinate system
+ * to a specified box's coordinate system, disregarding rotation.
+ */
+export const fromUnitLCS = (b: Box) =>
+  TransformFactory.fromTo({ x: 0, y: 0, w: 1, h: 1, r: 0 }, Box.withoutRotation(b));
 
-export const unitCoordinateSystem = (b: Box) => {
-  return TransformFactory.fromTo({ x: 0, y: 0, w: 1, h: 1, r: 0 }, Box.withoutRotation(b));
-};
-
-export const inverseUnitCoordinateSystem = (b: Box) => {
-  return TransformFactory.fromTo(b, { x: 0, y: 0, w: 1, h: 1, r: 0 });
-};
+/**
+ * Converts a given box to a unit bounding box in local coordinate space (LCS).
+ *
+ * This function takes a box object, defined with specific dimensions and position,
+ * and transforms it into a unit box with normalized dimensions and position.
+ * The resulting unit box has dimensions `w: 1, h: 1`, is positioned at `x: 0, y: 0`,
+ * and has a rotation of `r: 0` in local coordinate space.
+ */
+export const toUnitLCS = (b: Box) => TransformFactory.fromTo(b, { x: 0, y: 0, w: 1, h: 1, r: 0 });
 
 type RawPath = {
   start: Point | undefined;
@@ -102,6 +107,17 @@ export class PathListBuilder {
 
   private transformList: Transform[] | undefined = undefined;
 
+  static fromPathList(pathList: PathList) {
+    return this.fromString(pathList.asSvgPath());
+  }
+
+  static fromPath(path: Path) {
+    return this.fromSegments(
+      path.start,
+      path.segments.flatMap(s => s.raw())
+    );
+  }
+
   static fromSegments(start: Point, instructions: RawSegment[]) {
     const d = new PathListBuilder();
     d.moveTo(start);
@@ -111,25 +127,35 @@ export class PathListBuilder {
     return d;
   }
 
-  static fromString(path: string, transforms?: Transform[]) {
+  static fromString(path: string) {
     const d = new PathListBuilder();
-    if (transforms) d.withTransform(transforms);
 
     parseSvgPath(path).forEach(p => {
       const [t, ...params] = p;
       const pn = params.map(p => parseFloat(p));
 
-      // TODO: Support relative instructions
-      //       Support z
-      if (t === 'M') d.moveTo({ x: pn[0], y: pn[1] });
-      else if (t === 'L') d.lineTo({ x: pn[0], y: pn[1] });
-      else if (t === 'C')
-        d.cubicTo({ x: pn[4], y: pn[5] }, { x: pn[0], y: pn[1] }, { x: pn[2], y: pn[3] });
-      else if (t === 'Q') d.quadTo({ x: pn[2], y: pn[3] }, { x: pn[0], y: pn[1] });
-      else if (t === 'T') d.curveTo({ x: pn[0], y: pn[1] });
-      else if (t === 'A')
-        d.arcTo({ x: pn[5], y: pn[6] }, pn[0], pn[1], pn[2], pn[3] as 0 | 1, pn[4] as 0 | 1);
-      else throw new VerifyNotReached(`command ${t} not supported: ${path}`);
+      switch (t) {
+        case 'M':
+          d.moveTo({ x: pn[0], y: pn[1] });
+          break;
+        case 'L':
+          d.lineTo({ x: pn[0], y: pn[1] });
+          break;
+        case 'C':
+          d.cubicTo({ x: pn[4], y: pn[5] }, { x: pn[0], y: pn[1] }, { x: pn[2], y: pn[3] });
+          break;
+        case 'Q':
+          d.quadTo({ x: pn[2], y: pn[3] }, { x: pn[0], y: pn[1] });
+          break;
+        case 'T':
+          d.curveTo({ x: pn[0], y: pn[1] });
+          break;
+        case 'A':
+          d.arcTo({ x: pn[5], y: pn[6] }, pn[0], pn[1], pn[2], pn[3] as 0 | 1, pn[4] as 0 | 1);
+          break;
+        default:
+          throw new VerifyNotReached(`command ${t} not supported: ${path}`);
+      }
     });
 
     return d;
@@ -158,6 +184,7 @@ export class PathListBuilder {
   }
 
   lineTo(p: Point) {
+    precondition.is.present(this.active.start);
     this.active.instructions.push(['L', p.x, p.y]);
     return this;
   }
@@ -182,6 +209,7 @@ export class PathListBuilder {
     large_arc_flag: 0 | 1 = 0,
     sweep_flag: 0 | 1 = 0
   ) {
+    precondition.is.present(this.active.start);
     this.active.instructions.push([
       'A',
       Math.abs(rx),
@@ -196,16 +224,19 @@ export class PathListBuilder {
   }
 
   curveTo(p: Point) {
+    precondition.is.present(this.active.start);
     this.active.instructions.push(['T', p.x, p.y]);
     return this;
   }
 
   quadTo(p: Point, p1: Point) {
+    precondition.is.present(this.active.start);
     this.active.instructions.push(['Q', p1.x, p1.y, p.x, p.y]);
     return this;
   }
 
   cubicTo(p: Point, p1: Point, p2: Point) {
+    precondition.is.present(this.active.start);
     this.active.instructions.push(['C', p1.x, p1.y, p2.x, p2.y, p.x, p.y]);
     return this;
   }

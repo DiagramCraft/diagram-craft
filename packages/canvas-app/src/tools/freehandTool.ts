@@ -1,10 +1,7 @@
 import { AbstractTool } from '@diagram-craft/canvas/tool';
 import { DragDopManager, Modifiers } from '@diagram-craft/canvas/dragDropManager';
 import { Point } from '@diagram-craft/geometry/point';
-import {
-  inverseUnitCoordinateSystem,
-  PathListBuilder
-} from '@diagram-craft/geometry/pathListBuilder';
+import { toUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -95,7 +92,7 @@ export class FreehandTool extends AbstractTool {
     // TODO: This removes all T commands and converts them to C
     const path = PathListBuilder.fromString(pathData.join(' '))
       .withTransform(
-        inverseUnitCoordinateSystem({
+        toUnitLCS({
           x: bbox.x,
           y: bbox.y,
           w: bbox.width,

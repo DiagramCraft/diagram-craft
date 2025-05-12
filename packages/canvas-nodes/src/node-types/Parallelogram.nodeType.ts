@@ -4,7 +4,7 @@ import {
   BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
-import { PathListBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathListBuilder';
+import { PathListBuilder, fromUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
 import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
@@ -48,7 +48,7 @@ export class ParallelogramNodeDefinition extends ShapeNodeDefinition {
     const slantPct = slant / node.bounds.w;
 
     return new PathListBuilder()
-      .withTransform(unitCoordinateSystem(node.bounds))
+      .withTransform(fromUnitLCS(node.bounds))
       .moveTo(_p(slantPct, 0))
       .lineTo(_p(1, 0))
       .lineTo(_p(1 - slantPct, 1))
