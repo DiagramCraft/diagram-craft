@@ -455,8 +455,8 @@ export class CubicBezier {
       //       a cubic bezier is bounded by it's control points
       //       Since calculating a tight bounding box is quite expensive, it's beneficial
       //       to first check the simple and coarse bounding box
-      Box.intersects(this.coarseBbox(), other.coarseBbox()) &&
-      Box.intersects(this.bbox(), other.bbox())
+      Box.intersects(this.coarseBbox(), other.coarseBbox()) //&&
+      //Box.intersects(this.bbox(), other.bbox())
     );
   }
 

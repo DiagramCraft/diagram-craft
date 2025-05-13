@@ -74,5 +74,9 @@ export const Line = {
     if (c2 <= c1) return l.to;
     const b = c1 / c2;
     return Point.add(l.from, Vector.scale(v, b));
+  },
+
+  isOn(p: Point, l: Line) {
+    return Point.isEqual(p, Line.projectPoint(l, p));
   }
 };
