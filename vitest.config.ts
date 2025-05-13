@@ -2,6 +2,7 @@
 import { defineConfig } from 'vitest/config';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import yaml from '@rollup/plugin-yaml';
+import codspeedPlugin from '@codspeed/vitest-plugin';
 
 export default defineConfig({
   // @ts-ignore

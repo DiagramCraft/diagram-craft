@@ -3,6 +3,7 @@ import { defineConfig, UserConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import * as path from 'node:path';
 import yaml from '@rollup/plugin-yaml';
+
 // https://vitejs.dev/config/
 const userConfig: UserConfig = {
   plugins: [react(), yaml()],
