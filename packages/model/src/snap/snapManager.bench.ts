@@ -1,4 +1,4 @@
-import { bench } from 'vitest';
+import { bench, describe } from 'vitest';
 
 import { Random } from '@diagram-craft/utils/random';
 import { DocumentBuilder } from '../diagram';
@@ -40,11 +40,13 @@ UnitOfWork.execute(d, uow => {
   }
 });
 
-const snapManager = d.createSnapManager();
-bench(
-  'snapManager',
-  () => {
-    snapManager!.snapMove(randomBox());
-  },
-  opts
-);
+describe('snapManager', () => {
+  const snapManager = d.createSnapManager();
+  bench(
+    'snapManager',
+    () => {
+      snapManager!.snapMove(randomBox());
+    },
+    opts
+  );
+});

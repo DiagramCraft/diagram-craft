@@ -2,10 +2,11 @@
 import { defineConfig } from 'vitest/config';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import yaml from '@rollup/plugin-yaml';
+import codspeedPlugin from '@codspeed/vitest-plugin';
 
 export default defineConfig({
   // @ts-ignore
-  plugins: [tsconfigPaths(), yaml()],
+  plugins: [tsconfigPaths(), yaml(), codspeedPlugin()],
   test: {
     exclude: ['**/*.spec.ts', '**/node_modules/**', '**/dist/**'],
     fakeTimers: {
