@@ -180,12 +180,14 @@ export class PathListBuilder {
   moveTo(p: Point) {
     if (this.active.start) this.newSegment();
     this.active.start = p;
+    this.pathCache.clear();
     return this;
   }
 
   lineTo(p: Point) {
     precondition.is.present(this.active.start);
     this.active.instructions.push(['L', p.x, p.y]);
+    this.pathCache.clear();
     return this;
   }
 
@@ -198,6 +200,7 @@ export class PathListBuilder {
   close() {
     precondition.is.present(this.active.start);
     this.active.instructions.push(['L', this.active.start.x, this.active.start.y]);
+    this.pathCache.clear();
     return this;
   }
 
@@ -220,39 +223,46 @@ export class PathListBuilder {
       p.x,
       p.y
     ]);
+    this.pathCache.clear();
     return this;
   }
 
   curveTo(p: Point) {
     precondition.is.present(this.active.start);
     this.active.instructions.push(['T', p.x, p.y]);
+    this.pathCache.clear();
     return this;
   }
 
   quadTo(p: Point, p1: Point) {
     precondition.is.present(this.active.start);
     this.active.instructions.push(['Q', p1.x, p1.y, p.x, p.y]);
+    this.pathCache.clear();
     return this;
   }
 
   cubicTo(p: Point, p1: Point, p2: Point) {
     precondition.is.present(this.active.start);
     this.active.instructions.push(['C', p1.x, p1.y, p2.x, p2.y, p.x, p.y]);
+    this.pathCache.clear();
     return this;
   }
 
   appendInstruction(instruction: RawSegment) {
     this.active.instructions.push(instruction);
+    this.pathCache.clear();
   }
 
   popInstruction() {
     this.active.instructions.pop();
+    this.pathCache.clear();
   }
 
   append(path: PathListBuilder) {
     for (const p of path.rawPaths) {
       this.rawPaths.push(p);
     }
+    this.pathCache.clear();
     return this;
   }
 

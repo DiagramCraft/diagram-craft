@@ -11,6 +11,7 @@ import { assert } from '@diagram-craft/utils/assert';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
 import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
+import { isSame } from '@diagram-craft/utils/math';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -109,27 +110,32 @@ export class PenTool extends AbstractTool {
         return;
       }
 
-      this.popTempPoints();
-
-      assert.present(this.builder);
-      this.builder.close();
-
-      this.updateNode();
-
-      assertRegularLayer(this.diagram.activeLayer);
-      this.diagram.undoManager.add(
-        new ElementAddUndoableAction(
-          [this.node],
-          this.diagram,
-          this.diagram.activeLayer,
-          'Add path'
-        )
-      );
-
+      this.closeObject();
       this.resetTool();
     }
 
     this.resetState();
+  }
+
+  onToolChange(): void {
+    if (this.node) {
+      this.closeObject();
+    }
+    this.resetState();
+  }
+
+  private closeObject() {
+    this.popTempPoints();
+
+    assert.present(this.builder);
+    this.builder.close();
+
+    this.updateNode();
+
+    assertRegularLayer(this.diagram.activeLayer);
+    this.diagram.undoManager.add(
+      new ElementAddUndoableAction([this.node!], this.diagram, this.diagram.activeLayer, 'Add path')
+    );
   }
 
   onMouseOver(id: string, point: Point, target: EventTarget) {
@@ -151,8 +157,8 @@ export class PenTool extends AbstractTool {
         TransformFactory.fromTo(
           {
             ...b,
-            w: Math.max(0.1, b.w),
-            h: Math.max(0.1, b.h)
+            w: isSame(b.w, 0) ? 0.1 : b.w,
+            h: isSame(b.h, 0) ? 0.1 : b.h
           },
           UNIT_BOUNDS
         )
@@ -167,7 +173,9 @@ export class PenTool extends AbstractTool {
 
   private popTempPoints() {
     assert.present(this.builder);
-    while (this.builder.activeInstructionCount > this.numberOfPoints) this.builder.popInstruction();
+    while (this.builder.activeInstructionCount > this.numberOfPoints) {
+      this.builder.popInstruction();
+    }
   }
 
   private resetState() {

@@ -25,6 +25,8 @@ export interface Tool {
 
   onKeyDown(e: KeyboardEvent): void;
   onKeyUp(e: KeyboardEvent): void;
+
+  onToolChange(): void;
 }
 
 export type ToolConstructor = {
@@ -71,6 +73,10 @@ export abstract class AbstractTool implements Tool {
   }
 
   onKeyUp(_e: KeyboardEvent): void {
+    // Do nothing
+  }
+
+  onToolChange(): void {
     // Do nothing
   }
 }
