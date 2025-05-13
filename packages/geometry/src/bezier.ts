@@ -478,10 +478,10 @@ export class CubicBezier {
   }
 
   intersectsLine(line: Line) {
-    const min_x = line.from.x < line.to.x ? line.from.x : line.to.x;
-    const max_x = line.from.x > line.to.x ? line.from.x : line.from.x;
-    const min_y = line.from.y < line.to.y ? line.from.y : line.to.y;
-    const max_y = line.from.y > line.to.y ? line.from.y : line.to.y;
+    const min_x = Math.min(line.from.x, line.to.x);
+    const max_x = Math.max(line.from.x, line.to.x);
+    const min_y = Math.min(line.from.y, line.to.y);
+    const max_y = Math.max(line.from.y, line.to.y);
 
     const lineBbox = { x: min_x, y: min_y, w: max_x - min_x, h: max_y - min_y, r: 0 };
     if (!Box.intersects(this.coarseBbox(), lineBbox)) {
