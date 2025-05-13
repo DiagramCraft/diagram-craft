@@ -4,7 +4,7 @@ import { Box } from './box';
 import { Line } from './line';
 import { Vector } from './vector';
 import { Angle } from './angle';
-import { round } from '@diagram-craft/utils/math';
+import { isSame, round } from '@diagram-craft/utils/math';
 import { smallestIndex } from '@diagram-craft/utils/array';
 
 const PI = Math.PI;
@@ -46,7 +46,7 @@ const sgn = (a: number) => (a >= 0 ? 1 : -1);
 
 // Based on https://gist.github.com/weepy/6009631
 const cubicRoots = (a: number, b: number, c: number, d: number) => {
-  if (round(a) === 0) return quadraticRoots(b, c, d);
+  if (isSame(a, 0)) return quadraticRoots(b, c, d);
 
   const bq = b / a;
   const cq = c / a;
