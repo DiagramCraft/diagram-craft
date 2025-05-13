@@ -4,7 +4,7 @@ import { Box } from './box';
 import { Line } from './line';
 import { Vector } from './vector';
 import { Angle } from './angle';
-import { isSame, round } from '@diagram-craft/utils/math';
+import { isSame } from '@diagram-craft/utils/math';
 import { smallestIndex } from '@diagram-craft/utils/array';
 
 const PI = Math.PI;
