@@ -268,6 +268,7 @@ export class Path {
 
     for (let idx = 0; idx < segments.length; idx++) {
       const segment = segments[idx];
+
       for (let oIdx = 0; oIdx < other.segments.length; oIdx++) {
         const otherSegment = other.segments[oIdx];
 
