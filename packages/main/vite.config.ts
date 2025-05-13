@@ -3,10 +3,9 @@ import { defineConfig, UserConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import * as path from 'node:path';
 import yaml from '@rollup/plugin-yaml';
-import codspeedPlugin from '@codspeed/vitest-plugin';
 // https://vitejs.dev/config/
 const userConfig: UserConfig = {
-  plugins: [react(), yaml(), codspeedPlugin()],
+  plugins: [react(), yaml()],
   test: {
     fakeTimers: {
       toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'queueMicrotask']
