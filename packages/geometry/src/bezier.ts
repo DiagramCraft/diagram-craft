@@ -451,12 +451,12 @@ export class CubicBezier {
 
   bboxIntersects(other: CubicBezier) {
     return (
-      // Note, not entirely sure this is 100% correct, but as far as I can understand
-      //       a cubic bezier is bounded by it's control points
+      // Note, not entirely sure if this is 100% correct, but as far as I can understand,
+      //       a cubic bezier is bounded by its control points
       //       Since calculating a tight bounding box is quite expensive, it's beneficial
       //       to first check the simple and coarse bounding box
-      Box.intersects(this.coarseBbox(), other.coarseBbox()) &&
-      Box.intersects(this.bbox(), other.bbox())
+      Box.intersects(this.coarseBbox(), other.coarseBbox()) //&&
+      //Box.intersects(this.bbox(), other.bbox())
     );
   }
 
