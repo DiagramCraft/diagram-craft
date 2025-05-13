@@ -4,13 +4,15 @@ import { Box } from './box';
 import { Line } from './line';
 import { Vector } from './vector';
 import { Angle } from './angle';
-import { round } from '@diagram-craft/utils/math';
+import { isSame } from '@diagram-craft/utils/math';
 import { smallestIndex } from '@diagram-craft/utils/array';
 
 const PI = Math.PI;
 const PI_2 = Math.PI * 2;
 const PI_4 = Math.PI * 4;
 const RADIANS_120 = (PI * 120) / 180;
+
+const EPSILON = 0.001;
 
 const rotate = (x: number, y: number, rad: number): Point => {
   const cosr = Math.cos(rad);
@@ -44,7 +46,7 @@ const sgn = (a: number) => (a >= 0 ? 1 : -1);
 
 // Based on https://gist.github.com/weepy/6009631
 const cubicRoots = (a: number, b: number, c: number, d: number) => {
-  if (round(a) === 0) return quadraticRoots(b, c, d);
+  if (isSame(a, 0)) return quadraticRoots(b, c, d);
 
   const bq = b / a;
   const cq = c / a;
@@ -451,8 +453,8 @@ export class CubicBezier {
 
   bboxIntersects(other: CubicBezier) {
     return (
-      // Note, not entirely sure this is 100% correct, but as far as I can understand
-      //       a cubic bezier is bounded by it's control points
+      // Note, not entirely sure if this is 100% correct, but as far as I can understand,
+      //       a cubic bezier is bounded by its control points.
       //       Since calculating a tight bounding box is quite expensive, it's beneficial
       //       to first check the simple and coarse bounding box
       Box.intersects(this.coarseBbox(), other.coarseBbox()) &&
@@ -467,11 +469,11 @@ export class CubicBezier {
     if (results.length <= 1) return results;
 
     const d: Point[] = [];
-    for (let i = 0; i < results.length; i++) {
-      if (d.find(e => Point.squareDistance(e, results[i]) < 2)) {
+    for (const item of results) {
+      if (d.find(e => Point.squareDistance(e, item) < 2)) {
         continue;
       }
-      d.push(results[i]);
+      d.push(item);
     }
 
     return d.length === 0 ? undefined : d;
@@ -511,8 +513,6 @@ export class CubicBezier {
       vx * Cx + vy * Cy,
       vx * Dx + vy * Dy - d
     );
-
-    const EPSILON = 0.001;
 
     const res = [];
     for (const t of roots) {

@@ -265,12 +265,16 @@ export class Path {
     const dest: Array<WithSegment<PointOnPath> & { otherSegment: number }> = [];
 
     const segments = this.segments;
+
     for (let idx = 0; idx < segments.length; idx++) {
       const segment = segments[idx];
+
       for (let oIdx = 0; oIdx < other.segments.length; oIdx++) {
         const otherSegment = other.segments[oIdx];
+
         const intersections = segment.intersectionsWith(otherSegment, extend);
         if (!intersections) continue;
+
         dest.push(
           ...intersections.map(i => ({
             point: i,

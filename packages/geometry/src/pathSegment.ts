@@ -152,12 +152,8 @@ export class CubicSegment extends CubicBezier implements PathSegment {
       // TODO: Ideally we should integrate this into the bezier algorithm
       if (!intersections || intersections.length === 0) {
         // Check for intersections with endpoints
-        if (Line.length(Line.of(this.start, Line.projectPoint(line, this.start))) < 0.0001) {
-          return [this.start];
-        }
-        if (Line.length(Line.of(this.end, Line.projectPoint(line, this.end))) < 0.0001) {
-          return [this.end];
-        }
+        if (Line.isOn(this.start, line)) return [this.start];
+        if (Line.isOn(this.end, line)) return [this.end];
       } else {
         return intersections;
       }
