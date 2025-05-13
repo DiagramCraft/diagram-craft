@@ -49,7 +49,7 @@ describe('bezier', () => {
   );
 
   bench(
-    ':intersection-bezier',
+    'intersection-bezier',
     () => {
       const b = new CubicBezier(
         randomPoint(dimension),
