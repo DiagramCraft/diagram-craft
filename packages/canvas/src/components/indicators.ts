@@ -3,7 +3,7 @@ import { Indicator } from '@diagram-craft/model/diagramProps';
 import { Box } from '@diagram-craft/geometry/box';
 import { VNode } from '../component/vdom';
 import * as svg from '../component/vdom-svg';
-import { PathListBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathListBuilder';
+import { PathListBuilder, fromUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
 import { _p, Point } from '@diagram-craft/geometry/point';
 import { Vector } from '@diagram-craft/geometry/vector';
 
@@ -38,7 +38,7 @@ const StarIndicator = (bounds: Box, indicator: DeepRequired<Indicator>) => {
   const dTheta = (2 * Math.PI) / sides;
 
   const pathBuilder = new PathListBuilder().withTransform(
-    unitCoordinateSystem({
+    fromUnitLCS({
       ...bounds,
       x: 0,
       y: 0
@@ -62,7 +62,7 @@ const StarIndicator = (bounds: Box, indicator: DeepRequired<Indicator>) => {
 
 const ActorIndicator = (bounds: Box, indicator: DeepRequired<Indicator>) => {
   const b = new PathListBuilder().withTransform(
-    unitCoordinateSystem({
+    fromUnitLCS({
       ...bounds,
       x: 0,
       y: 0
@@ -87,7 +87,7 @@ const ActorIndicator = (bounds: Box, indicator: DeepRequired<Indicator>) => {
 
 const LockIndicator = (bounds: Box, indicator: DeepRequired<Indicator>) => {
   const b = new PathListBuilder().withTransform(
-    unitCoordinateSystem({
+    fromUnitLCS({
       ...bounds,
       x: 0,
       y: 0
@@ -116,7 +116,7 @@ const LockIndicator = (bounds: Box, indicator: DeepRequired<Indicator>) => {
 
 const CommentIndicator = (bounds: Box, indicator: DeepRequired<Indicator>, fillColor: string) => {
   const b = new PathListBuilder().withTransform(
-    unitCoordinateSystem({
+    fromUnitLCS({
       ...bounds,
       x: 0,
       y: 0
@@ -145,7 +145,7 @@ const CommentIndicator = (bounds: Box, indicator: DeepRequired<Indicator>, fillC
 
 const NoteIndicator = (bounds: Box, indicator: DeepRequired<Indicator>, fillColor: string) => {
   const b = new PathListBuilder().withTransform(
-    unitCoordinateSystem({
+    fromUnitLCS({
       ...bounds,
       x: 0,
       y: 0

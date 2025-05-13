@@ -59,10 +59,12 @@ const addSegment = (
         case 'n':
         case 's': {
           const full = new PathListBuilder();
+          full.moveTo({ x: 0, y: 0 });
           full.lineTo({ x: px, y });
           full.lineTo({ x, y });
 
           const half = new PathListBuilder();
+          half.moveTo({ x: 0, y: 0 });
           half.lineTo({ x: px, y: py + (y - py) / 2 });
           half.lineTo({ x, y: py + (y - py) / 2 });
           half.lineTo({ x, y });
@@ -72,10 +74,12 @@ const addSegment = (
         case 'e':
         case 'w': {
           const full = new PathListBuilder();
+          full.moveTo({ x: 0, y: 0 });
           full.lineTo({ x, y: py });
           full.lineTo({ x, y });
 
           const half = new PathListBuilder();
+          half.moveTo({ x: 0, y: 0 });
           half.lineTo({ x: px + (x - px) / 2, y: py });
           half.lineTo({ x: px + (x - px) / 2, y });
           half.lineTo({ x, y });

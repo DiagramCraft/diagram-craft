@@ -26,7 +26,7 @@ import { Anchor } from './anchor';
 import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
 import { getAdjustments } from './diagramLayerRuleTypes';
-import { inverseUnitCoordinateSystem } from '@diagram-craft/geometry/pathListBuilder';
+import { toUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;
@@ -490,7 +490,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
     const paths = this.getDefinition().getBoundingPath(this);
 
-    const scaledPath = paths.transform(inverseUnitCoordinateSystem(this.bounds));
+    const scaledPath = paths.transform(toUnitLCS(this.bounds));
 
     this.#nodeType = 'generic-path';
     this.updateProps(p => {

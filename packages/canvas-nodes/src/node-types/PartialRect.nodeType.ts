@@ -1,4 +1,4 @@
-import { PathListBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathListBuilder';
+import { PathListBuilder, fromUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
 import { _p } from '@diagram-craft/geometry/point';
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 import {
@@ -53,7 +53,7 @@ class PartialRectComponent extends BaseNodeComponent {
     if (props.node.renderProps.custom.partialRect.north) {
       shapeBuilder.path(
         new PathListBuilder()
-          .withTransform(unitCoordinateSystem(node.bounds))
+          .withTransform(fromUnitLCS(node.bounds))
           .moveTo(_p(0, 0))
           .lineTo(_p(1, 0))
           .getPaths()
@@ -65,7 +65,7 @@ class PartialRectComponent extends BaseNodeComponent {
     if (props.node.renderProps.custom.partialRect.south) {
       shapeBuilder.path(
         new PathListBuilder()
-          .withTransform(unitCoordinateSystem(node.bounds))
+          .withTransform(fromUnitLCS(node.bounds))
           .moveTo(_p(0, 1))
           .lineTo(_p(1, 1))
           .getPaths()
@@ -77,7 +77,7 @@ class PartialRectComponent extends BaseNodeComponent {
     if (props.node.renderProps.custom.partialRect.east) {
       shapeBuilder.path(
         new PathListBuilder()
-          .withTransform(unitCoordinateSystem(node.bounds))
+          .withTransform(fromUnitLCS(node.bounds))
           .moveTo(_p(1, 0))
           .lineTo(_p(1, 1))
           .getPaths()
@@ -89,7 +89,7 @@ class PartialRectComponent extends BaseNodeComponent {
     if (props.node.renderProps.custom.partialRect.west) {
       shapeBuilder.path(
         new PathListBuilder()
-          .withTransform(unitCoordinateSystem(node.bounds))
+          .withTransform(fromUnitLCS(node.bounds))
           .moveTo(_p(0, 0))
           .lineTo(_p(0, 1))
           .getPaths()

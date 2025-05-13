@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { PathListBuilder } from './pathListBuilder';
+import { PathListBuilder, fromUnitLCS, toUnitLCS } from './pathListBuilder';
 import { Box } from './box';
 import { CubicSegment, LineSegment, QuadSegment } from './pathSegment';
-import { TransformFactory } from './transform';
+import { Transform, TransformFactory } from './transform';
 
 describe('PathListBuilder', () => {
   describe('.active', () => {
@@ -236,5 +236,76 @@ describe('PathListBuilder', () => {
       expect(scaledPath.segments[0].start).toEqual({ x: 0, y: 0 });
       expect(scaledPath.segments[0].end).toEqual({ x: -10, y: -10 });
     });
+  });
+});
+
+describe('fromUnitLCS', () => {
+  it('transforms from unit coordinate system to box', () => {
+    const box: Box = { x: 10, y: 20, w: 30, h: 40, r: 0 };
+    const transforms = fromUnitLCS(box);
+
+    // Test transforming a point from unit coordinates to box coordinates
+    const unitPoint = { x: 0.5, y: 0.5 };
+    const boxPoint = Transform.point(unitPoint, ...transforms);
+
+    // The point (0.5, 0.5) in unit coordinates should map to the center of the box
+    expect(boxPoint.x).toBeCloseTo(25);
+    expect(boxPoint.y).toBeCloseTo(40);
+
+    // Test transforming corners
+    const topLeft = Transform.point({ x: 0, y: 0 }, ...transforms);
+    const bottomRight = Transform.point({ x: 1, y: 1 }, ...transforms);
+
+    expect(topLeft.x).toBeCloseTo(10);
+    expect(topLeft.y).toBeCloseTo(20);
+    expect(bottomRight.x).toBeCloseTo(40);
+    expect(bottomRight.y).toBeCloseTo(60);
+  });
+
+  it('transforms correctly with rotation', () => {
+    const box: Box = { x: 10, y: 20, w: 30, h: 40, r: 90 };
+    const transforms = fromUnitLCS(box);
+    const unitCenter = { x: 0.5, y: 0.5 };
+    const boxCenter = Transform.point(unitCenter, ...transforms);
+
+    // The center should remain at the center regardless of rotation
+    expect(boxCenter.x).toBeCloseTo(25);
+    expect(boxCenter.y).toBeCloseTo(40);
+  });
+});
+
+describe('toUnitLCS', () => {
+  it('transforms from box to unit coordinate system', () => {
+    const box: Box = { x: 10, y: 20, w: 30, h: 40, r: 0 };
+    const transforms = toUnitLCS(box);
+
+    // Test transforming a point from box coordinates to unit coordinates
+    const boxPoint = { x: 25, y: 40 };
+    const unitPoint = Transform.point(boxPoint, ...transforms);
+
+    // The center of the box should map to (0.5, 0.5) in unit coordinates
+    expect(unitPoint.x).toBeCloseTo(0.5);
+    expect(unitPoint.y).toBeCloseTo(0.5);
+
+    // Test transforming corners
+    const topLeft = Transform.point({ x: 10, y: 20 }, ...transforms);
+    const bottomRight = Transform.point({ x: 40, y: 60 }, ...transforms);
+
+    expect(topLeft.x).toBeCloseTo(0);
+    expect(topLeft.y).toBeCloseTo(0);
+    expect(bottomRight.x).toBeCloseTo(1);
+    expect(bottomRight.y).toBeCloseTo(1);
+  });
+
+  it('transforms correctly with rotation', () => {
+    const box: Box = { x: 10, y: 20, w: 30, h: 40, r: 90 };
+    const transforms = toUnitLCS(box);
+
+    // The center of the box should map to (0.5, 0.5) in unit coordinates
+    const boxCenter = { x: 25, y: 40 };
+    const unitCenter = Transform.point(boxCenter, ...transforms);
+
+    expect(unitCenter.x).toBeCloseTo(0.5);
+    expect(unitCenter.y).toBeCloseTo(0.5);
   });
 });

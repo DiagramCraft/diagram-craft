@@ -127,61 +127,31 @@ export class Rotation implements Transform {
   }
 }
 
-export class Shear implements Transform {
-  constructor(
-    private readonly amount: number,
-    private readonly axis: 'x' | 'y'
-  ) {}
-
-  apply(b: Box): Box;
-  apply(b: Point): Point;
-  apply(b: Box | Point): Box | Point {
-    if ('w' in b) {
-      return {
-        ...b,
-        w: this.axis === 'x' ? b.w + b.h * this.amount : b.w,
-        h: this.axis === 'y' ? b.h + b.w * this.amount : b.h
-      };
-    } else {
-      return {
-        x: this.axis === 'x' ? b.x + b.y * this.amount : b.x,
-        y: this.axis === 'y' ? b.y + b.x * this.amount : b.y
-      };
-    }
-  }
-
-  invert(): Transform {
-    return new Shear(-this.amount, this.axis);
-  }
-}
-
 export const TransformFactory = {
   // TODO: Compile transformation as needed
   fromTo: (before: Box, after: Box): Transform[] => {
-    assert.true(before.w > 0, `${before.w} <= 0`);
-    assert.true(before.h > 0, `${before.h} <= 0`);
+    if (Box.isEqual(before, after)) return [];
+
+    assert.true(before.w > 0 && before.h > 0);
 
     const scaleX = after.w / before.w;
     const scaleY = after.h / before.h;
 
-    const rot = after.r - before.r;
-
     const toOrigin = Translation.toOrigin(before, 'center');
     const translateBack = Translation.toOrigin(after, 'center').invert();
 
-    const transforms: Transform[] = [];
-    transforms.push(toOrigin);
+    const transforms: Transform[] = [toOrigin];
 
     if (scaleX !== 1 || scaleY !== 1) {
       // If both scale and rotation, we need to reset the rotation first
-      if (after.r !== 0 || before.r !== 0) {
-        transforms.push(Rotation.reset(before));
-        transforms.push(new Scale(scaleX, scaleY));
-        transforms.push(new Rotation(after.r));
-      } else {
-        transforms.push(new Scale(scaleX, scaleY));
-      }
+      const hasRotation = after.r !== 0 || before.r !== 0;
+      if (hasRotation) transforms.push(Rotation.reset(before));
+
+      transforms.push(new Scale(scaleX, scaleY));
+
+      if (hasRotation) transforms.push(new Rotation(after.r));
     } else {
+      const rot = after.r - before.r;
       if (rot !== 0) transforms.push(new Rotation(rot));
     }
 

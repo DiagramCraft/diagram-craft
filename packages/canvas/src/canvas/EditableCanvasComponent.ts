@@ -72,8 +72,8 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
 
   private hoverElement = new Observable<string | undefined>(undefined);
 
-  // TODO: Remove this
   setTool(tool: Tool | undefined) {
+    this.tool?.onToolChange?.();
     this.tool = tool;
     this.redraw();
   }

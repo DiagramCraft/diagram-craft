@@ -2,10 +2,7 @@ import { GenericPathNodeDefinition } from './node-types/GenericPath.nodeType';
 import { Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
 import { Vector } from '@diagram-craft/geometry/vector';
-import {
-  inverseUnitCoordinateSystem,
-  PathListBuilder
-} from '@diagram-craft/geometry/pathListBuilder';
+import { toUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { CubicSegment, LineSegment, PathSegment } from '@diagram-craft/geometry/pathSegment';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -175,7 +172,7 @@ export class EditablePath {
     const bounds = this.node.bounds;
     const pb = new PathListBuilder();
     if (type === 'as-stored') {
-      pb.withTransform(inverseUnitCoordinateSystem(bounds));
+      pb.withTransform(toUnitLCS(bounds));
     }
 
     pb.moveTo(this.waypoints[0].point);
@@ -236,9 +233,7 @@ export class EditablePath {
     const diff = Point.subtract(startPointAfter, startPointBefore);
 
     return {
-      path: PathListBuilder.fromString(rawPath.asSvgPath()).getPaths(
-        inverseUnitCoordinateSystem(rawBounds)
-      ),
+      path: PathListBuilder.fromPathList(rawPath).getPaths(toUnitLCS(rawBounds)),
       bounds: {
         ...nodePathBounds,
         x: nodePathBounds.x - diff.x,
