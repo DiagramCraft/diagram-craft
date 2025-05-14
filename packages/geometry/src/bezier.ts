@@ -476,7 +476,7 @@ export class CubicBezier {
       d.push(item);
     }
 
-    return d.length === 0 ? undefined : d;
+    return d.length === 0 ? [] : d;
   }
 
   intersectsLine(line: Line) {

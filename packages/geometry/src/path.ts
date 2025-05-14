@@ -273,11 +273,11 @@ export class Path {
         const otherSegment = other.segments[oIdx];
 
         const intersections = segment.intersectionsWith(otherSegment, extend);
-        if (!intersections) continue;
+        if (intersections.length === 0) continue;
 
         dest.push(
           ...intersections.map(i => ({
-            point: i,
+            point: i.point,
             segment: idx,
             otherSegment: oIdx
           }))
