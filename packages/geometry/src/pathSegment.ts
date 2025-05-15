@@ -71,6 +71,9 @@ export class LineSegment implements PathSegment {
 
   intersectionsWith(other: PathSegment): Intersection[] {
     if (other instanceof LineSegment) {
+      const o = Line.overlap(Line.of(this.start, this.end), Line.of(other.start, other.end));
+      if (o) return [{ type: 'overlap', point: Line.midpoint(o), start: o.from, end: o.to }];
+
       const p = Line.intersection(Line.of(this.start, this.end), Line.of(other.start, other.end));
       if (p) return [{ type: 'intersection', point: p }];
       return [];
