@@ -36,8 +36,12 @@ export const smallest = <T>(
  */
 export const smallestIndex = <T>(a: ReadonlyArray<T>) => {
   let lowest = 0;
+  let lowestVal = a[0];
   for (let i = 1; i < a.length; i++) {
-    if (a[i] < a[lowest]) lowest = i;
+    if (a[i] < lowestVal) {
+      lowest = i;
+      lowestVal = a[i];
+    }
   }
   return lowest;
 };

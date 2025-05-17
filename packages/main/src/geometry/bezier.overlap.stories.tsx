@@ -26,9 +26,12 @@ const BezierTest = () => {
     points.push(b.point(t));
   }
 
-  console.log(point);
-
   const pp = b.projectPoint(point);
+
+  const [c1] = b.split(Math.max(0, pp.t + 0.2));
+  const [, c2] = b.split(Math.min(1, pp.t - 0.2));
+
+  const overlap = c1.overlap(c2, 1);
 
   return (
     <svg
@@ -53,6 +56,15 @@ const BezierTest = () => {
         fill={'none'}
         stroke={'gray'}
       />
+
+      <path
+        d={`M ${overlap?.start.x} ${overlap?.start.y} C ${overlap?.cp1.x} ${overlap?.cp1.y}, ${overlap?.cp2.x} ${overlap?.cp2.y}, ${overlap?.end.x} ${overlap?.end.y}`}
+        fill={'none'}
+        stroke={'blue'}
+        strokeOpacity={0.25}
+        strokeWidth={5}
+      />
+
       <circle
         cx={start.x}
         cy={start.y}
@@ -112,7 +124,7 @@ const BezierTest = () => {
 };
 
 const meta = {
-  title: 'Geometry/Bezier/projectPoint',
+  title: 'Geometry/Bezier/overlap',
   component: BezierTest,
   parameters: {
     layout: 'centered'
