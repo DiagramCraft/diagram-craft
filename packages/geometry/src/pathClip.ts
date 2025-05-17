@@ -428,9 +428,9 @@ export const getClipVertices = (cp1: PathList, cp2: PathList): [VertexList[], Ve
 
           for (const intersection of intersections) {
             const i1: Vertex = {
-              point: intersection,
+              point: intersection.point,
               segment: thisSegment,
-              alpha: thisSegment.projectPoint(intersection).t,
+              alpha: thisSegment.projectPoint(intersection.point).t,
               intersect: true,
               prev: SENTINEL_VERTEX,
               next: SENTINEL_VERTEX,
@@ -438,9 +438,9 @@ export const getClipVertices = (cp1: PathList, cp2: PathList): [VertexList[], Ve
             };
 
             const i2: Vertex = {
-              point: intersection,
+              point: intersection.point,
               segment: otherSegment,
-              alpha: otherSegment.projectPoint(intersection).t,
+              alpha: otherSegment.projectPoint(intersection.point).t,
               intersect: true,
               prev: SENTINEL_VERTEX,
               next: SENTINEL_VERTEX,

@@ -4,8 +4,9 @@ import { Box } from './box';
 import { Line } from './line';
 import { Vector } from './vector';
 import { Angle } from './angle';
-import { isSame } from '@diagram-craft/utils/math';
+import { clamp, isSame } from '@diagram-craft/utils/math';
 import { smallestIndex } from '@diagram-craft/utils/array';
+import { assert } from '@diagram-craft/utils/assert';
 
 const PI = Math.PI;
 const PI_2 = Math.PI * 2;
@@ -269,6 +270,8 @@ const recurseIntersection = (c1: CubicBezier, c2: CubicBezier, threshold: number
   return d;*/
 };
 
+type Projection = { distance: number; t: number; point: Point };
+
 export class CubicBezier {
   #dp1: Point;
   #dp2: Point;
@@ -303,8 +306,8 @@ export class CubicBezier {
   sample(n = 100, start = 0, end = 1): ReadonlyArray<Point> {
     const d = end - start;
     const points: Array<Point> = [];
-    for (let i = 0; i <= n; i++) {
-      points.push(this.point(start + (d * i) / n));
+    for (let i = 0; i <= n - 1; i++) {
+      points.push(this.point(start + (d * i) / (n - 1)));
     }
     return points;
   }
@@ -462,6 +465,68 @@ export class CubicBezier {
     );
   }
 
+  isOn(p: Point, threshold = 0.1) {
+    const pp = this.projectPoint(p, 0.0001);
+    return pp.distance < threshold;
+  }
+
+  overlap(other: CubicBezier, threshold = 0.1) {
+    // Calculate the cubic bezier, if it exists, that overlaps both this
+    // and the other cubic bezier.
+    // If it exists, return the cubic bezier.
+    // If it doesn't exist, return undefined.
+    if (!this.bboxIntersects(other)) return undefined;
+
+    let start = undefined;
+    let startT = undefined;
+
+    const p1 = this.projectPoint(other.start);
+    if (p1.distance < threshold) {
+      start = other.start;
+      startT = p1.t;
+    } else if (other.projectPoint(this.start).distance < threshold) {
+      start = this.start;
+      startT = 0;
+    }
+
+    if (!start) return undefined;
+
+    let end = undefined;
+    let endT = undefined;
+
+    const p2 = this.projectPoint(other.end);
+    if (p2.distance < threshold) {
+      end = other.end;
+      endT = p2.t;
+    } else if (other.projectPoint(this.end).distance < threshold) {
+      end = this.end;
+      endT = 1;
+    }
+
+    if (!end) return undefined;
+
+    assert.present(startT);
+    assert.present(endT);
+
+    // Zero length curves are assumed to be non-overlapping
+    if (isSame(startT, endT)) return undefined;
+
+    // Need to check a few more points to verify the two curves
+    // actually coincide. Given that these curves are quadratic, it
+    // should be enough to check 3 points
+    const numberOfPointsToCheck = 3;
+    for (let i = 0; i < numberOfPointsToCheck; i++) {
+      const tToCheck = startT + (endT - startT) * ((i + 1) / numberOfPointsToCheck);
+      const p = this.point(tToCheck);
+      if (!other.isOn(p)) return undefined;
+    }
+
+    // At this point, the two curves coincide, and it's only
+    // a matter of splitting the curves at the right points
+    const [b] = this.split(endT);
+    return b.split(startT / endT)[1];
+  }
+
   intersectsBezier(other: CubicBezier, threshold = 0.1) {
     if (!this.bboxIntersects(other)) return [];
 
@@ -476,7 +541,7 @@ export class CubicBezier {
       d.push(item);
     }
 
-    return d.length === 0 ? undefined : d;
+    return d.length === 0 ? [] : d;
   }
 
   intersectsLine(line: Line) {
@@ -533,31 +598,30 @@ export class CubicBezier {
     return res.length === 0 ? undefined : res;
   }
 
-  projectPoint(p: Point): { distance: number; t: number; point: Point } {
-    const samples = this.sample(25);
-    let smallestIdx = smallestIndex(samples.map(s => Point.squareDistance(p, s)));
+  projectPoint(p: Point, precision = 0.001): Projection {
+    // Note: micro-benchmarking suggests this is a good starting point
+    const numberOfSamples = 10;
+
+    let smallestIdx = smallestIndex(
+      this.sample(numberOfSamples).map(s => Point.squareDistance(p, s))
+    );
 
     let maxIter = 100;
 
     let v: number;
-    let t1 = Math.max(0, smallestIdx - 1) / samples.length;
-    let t2 = Math.min(samples.length - 1, smallestIdx + 1) / samples.length;
-    while ((v = t2 - t1) > 0.001 && --maxIter > 0) {
-      const subsamples = [
-        this.point(t1),
-        this.point(t1 + 0.25 * v),
-        this.point(t1 + 0.5 * v),
-        this.point(t1 + 0.75 * v),
-        this.point(t2)
-      ];
+    let t1 = clamp((smallestIdx - 2) / numberOfSamples, 0, 1);
+    let t2 = clamp((smallestIdx + 2) / numberOfSamples, 0, 1);
 
-      smallestIdx = smallestIndex(subsamples.map(s => Point.squareDistance(p, s)));
+    while ((v = t2 - t1) > precision && --maxIter > 0) {
+      const ts = [t1, t1 + 0.25 * v, t1 + 0.5 * v, t1 + 0.75 * v, t2];
 
-      t1 = t1 + (v * Math.max(0, smallestIdx - 1)) / subsamples.length;
-      t2 = t1 + (v * Math.min(subsamples.length - 1, smallestIdx + 1)) / subsamples.length;
+      smallestIdx = smallestIndex(ts.map(t => Point.squareDistance(p, this.point(t))));
+
+      t1 = ts[Math.max(0, smallestIdx - 1)];
+      t2 = ts[Math.min(4, smallestIdx + 1)];
     }
 
-    const pp = this.point(t1);
+    const pp = this.point(clamp(t1, 0, 1));
     return { distance: Point.distance(pp, p), t: t1, point: pp };
   }
 

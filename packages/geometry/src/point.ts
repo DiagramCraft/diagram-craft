@@ -41,7 +41,9 @@ export const Point = {
   },
 
   squareDistance(posA: Point, posB: Point) {
-    return Math.pow(posA.x - posB.x, 2) + Math.pow(posA.y - posB.y, 2);
+    const dx = posA.x - posB.x;
+    const dy = posA.y - posB.y;
+    return dx * dx + dy * dy;
   },
 
   distance: (posA: Point, posB: Point) => {

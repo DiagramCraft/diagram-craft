@@ -1,3 +1,4 @@
+/* eslint-disable */
 /// <reference types="vitest" />
 import { defineConfig } from 'vitest/config';
 import tsconfigPaths from 'vite-tsconfig-paths';
@@ -6,7 +7,7 @@ import codspeedPlugin from '@codspeed/vitest-plugin';
 
 export default defineConfig({
   // @ts-ignore
-  plugins: [tsconfigPaths(), yaml(), codspeedPlugin()],
+  plugins: [tsconfigPaths(), yaml(), ...(!!process.env.CI ? [codspeedPlugin()] : [])],
   test: {
     exclude: ['**/*.spec.ts', '**/node_modules/**', '**/dist/**'],
     fakeTimers: {
