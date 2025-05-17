@@ -14,10 +14,14 @@ export interface Intersection {
   end?: Point;
 }
 
+type IntersectionOpts = {
+  includeOverlaps?: boolean;
+};
+
 export interface PathSegment {
   length(): number;
   point(t: number): Point;
-  intersectionsWith(other: PathSegment, extend?: boolean): Intersection[];
+  intersectionsWith(other: PathSegment, opts?: IntersectionOpts): Intersection[];
   projectPoint(point: Point): Projection;
   raw(): RawSegment[];
   split(t: number): [PathSegment, PathSegment];
@@ -69,16 +73,18 @@ export class LineSegment implements PathSegment {
     };
   }
 
-  intersectionsWith(other: PathSegment): Intersection[] {
+  intersectionsWith(other: PathSegment, opts: IntersectionOpts): Intersection[] {
     if (other instanceof LineSegment) {
-      const o = Line.overlap(Line.of(this.start, this.end), Line.of(other.start, other.end));
-      if (o) return [{ type: 'overlap', point: Line.midpoint(o), start: o.from, end: o.to }];
+      if (opts?.includeOverlaps) {
+        const o = Line.overlap(Line.of(this.start, this.end), Line.of(other.start, other.end));
+        if (o) return [{ type: 'overlap', point: Line.midpoint(o), start: o.from, end: o.to }];
+      }
 
       const p = Line.intersection(Line.of(this.start, this.end), Line.of(other.start, other.end));
       if (p) return [{ type: 'intersection', point: p }];
       return [];
     } else {
-      return other.intersectionsWith(this);
+      return other.intersectionsWith(this, opts);
     }
   }
 
@@ -155,7 +161,7 @@ export class CubicSegment extends CubicBezier implements PathSegment {
     ];
   }
 
-  intersectionsWith(other: PathSegment): Intersection[] {
+  intersectionsWith(other: PathSegment, opts: IntersectionOpts): Intersection[] {
     if (other instanceof LineSegment) {
       const line = Line.of(other.start, other.end);
       const intersections = super.intersectsLine(line);
@@ -168,7 +174,21 @@ export class CubicSegment extends CubicBezier implements PathSegment {
         return intersections.map(i => ({ type: 'intersection', point: i }));
       }
     } else if (other instanceof CubicSegment) {
-      return super.intersectsBezier(other).map(i => ({ type: 'intersection', point: i }));
+      const intersections: Intersection[] = super
+        .intersectsBezier(other)
+        .map(i => ({ type: 'intersection', point: i }));
+      if (opts?.includeOverlaps) {
+        const overlap = super.overlap(other);
+        if (overlap) {
+          intersections.push({
+            type: 'overlap',
+            start: overlap.start,
+            end: overlap.end,
+            point: overlap.point(0.5)
+          });
+        }
+      }
+      return intersections;
     } else {
       return other.intersectionsWith(this);
     }

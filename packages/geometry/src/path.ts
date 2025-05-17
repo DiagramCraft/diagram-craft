@@ -258,10 +258,7 @@ export class Path {
     };
   }
 
-  intersections(
-    other: Path,
-    extend = false
-  ): ReadonlyArray<WithSegment<PointOnPath> & { otherSegment: number }> {
+  intersections(other: Path): ReadonlyArray<WithSegment<PointOnPath> & { otherSegment: number }> {
     const dest: Array<WithSegment<PointOnPath> & { otherSegment: number }> = [];
 
     const segments = this.segments;
@@ -272,7 +269,7 @@ export class Path {
       for (let oIdx = 0; oIdx < other.segments.length; oIdx++) {
         const otherSegment = other.segments[oIdx];
 
-        const intersections = segment.intersectionsWith(otherSegment, extend);
+        const intersections = segment.intersectionsWith(otherSegment);
         if (intersections.length === 0) continue;
 
         dest.push(
