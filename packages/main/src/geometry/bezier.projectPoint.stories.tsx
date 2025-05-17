@@ -26,8 +26,6 @@ const BezierTest = () => {
     points.push(b.point(t));
   }
 
-  console.log(point);
-
   const pp = b.projectPoint(point);
 
   return (
