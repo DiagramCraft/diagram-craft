@@ -105,7 +105,9 @@ class StarComponent extends BaseNodeComponent {
 
     shapeBuilder.controlPoint(path.segments[2].start, ({ x, y }, uow) => {
       const angle =
-        Math.PI / 2 + Vector.angle(Point.subtract({ x, y }, Box.center(props.node.bounds)));
+        Math.PI / 2 +
+        Vector.angle(Point.subtract({ x, y }, Box.center(props.node.bounds))) -
+        props.node.bounds.r;
       const numberOfSides = Math.min(100, Math.max(4, Math.ceil((Math.PI * 2) / angle)));
 
       props.node.updateCustomProps('star', props => (props.numberOfSides = numberOfSides), uow);
