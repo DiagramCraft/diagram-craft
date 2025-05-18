@@ -12,6 +12,7 @@
   "dependencies": {
     "@diagram-craft/geometry": "workspace:^",
     "@diagram-craft/utils": "workspace:^",
+    "y-websocket": "^3.0.0",
     "yjs": "^13.6.27"
   }
 }

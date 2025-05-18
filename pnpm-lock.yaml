@@ -366,6 +366,9 @@ importers:
       '@diagram-craft/utils':
         specifier: workspace:^
         version: link:../utils
+      y-websocket:
+        specifier: ^3.0.0
+        version: 3.0.0(yjs@13.6.27)
       yjs:
         specifier: ^13.6.27
         version: 13.6.27
@@ -3573,6 +3576,18 @@ packages:
       utf-8-validate:
         optional: true
 
+  y-protocols@1.0.6:
+    resolution: {integrity: sha512-vHRF2L6iT3rwj1jub/K5tYcTT/mEYDUppgNPXwp8fmLpui9f7Yeq3OEtTLVF012j39QnV+KEQpNqoN7CWU7Y9Q==}
+    engines: {node: '>=16.0.0', npm: '>=8.0.0'}
+    peerDependencies:
+      yjs: ^13.0.0
+
+  y-websocket@3.0.0:
+    resolution: {integrity: sha512-mUHy7AzkOZ834T/7piqtlA8Yk6AchqKqcrCXjKW8J1w2lPtRDjz8W5/CvXz9higKAHgKRKqpI3T33YkRFLkPtg==}
+    engines: {node: '>=16.0.0', npm: '>=8.0.0'}
+    peerDependencies:
+      yjs: ^13.5.6
+
   yallist@3.1.1:
     resolution: {integrity: sha512-a4UGQaWPH59mOXUYnAG2ewncQS4i4F43Tv3JoAM+s2VDAmS9NsK8GpDMLrCHPksFT7h3K6TOoUNn2pb7RoXx4g==}
 
@@ -6751,6 +6766,17 @@ snapshots:
       strip-ansi: 7.1.0
 
   ws@8.18.0: {}
+
+  y-protocols@1.0.6(yjs@13.6.27):
+    dependencies:
+      lib0: 0.2.108
+      yjs: 13.6.27
+
+  y-websocket@3.0.0(yjs@13.6.27):
+    dependencies:
+      lib0: 0.2.108
+      y-protocols: 1.0.6(yjs@13.6.27)
+      yjs: 13.6.27
 
   yallist@3.1.1: {}
 
