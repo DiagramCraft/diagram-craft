@@ -5,12 +5,14 @@ import {
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { PathListBuilder, fromUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
-import { _p } from '@diagram-craft/geometry/point';
+import { _p, Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { Anchor } from '@diagram-craft/model/anchor';
+import { Box } from '@diagram-craft/geometry/box';
+import { round } from '@diagram-craft/utils/math';
 
 declare global {
   interface CustomNodeProps {
@@ -89,15 +91,17 @@ export class RoundedRectComponent extends BaseNodeComponent {
     shapeBuilder.text(this);
 
     const radius = props.nodeProps.custom.roundedRect?.radius ?? 10;
-    shapeBuilder.controlPoint(
-      _p(props.node.bounds.x + radius, props.node.bounds.y),
-      ({ x }, uow) => {
-        const distance = Math.max(0, x - props.node.bounds.x);
-        if (distance < props.node.bounds.w / 2 && distance < props.node.bounds.h / 2) {
-          props.node.updateCustomProps('roundedRect', props => (props.radius = distance), uow);
-        }
-        return `Radius: ${props.node.renderProps.custom.roundedRect!.radius}px`;
+    shapeBuilder.controlPoint(_p(props.node.bounds.x + radius, props.node.bounds.y), (p, uow) => {
+      const rotatedCorner = Point.rotateAround(
+        props.node.bounds,
+        props.node.bounds.r,
+        Box.center(props.node.bounds)
+      );
+      const distance = Math.max(0, p.x - rotatedCorner.x);
+      if (distance < props.node.bounds.w / 2 && distance < props.node.bounds.h / 2) {
+        props.node.updateCustomProps('roundedRect', props => (props.radius = distance), uow);
       }
-    );
+      return `Radius: ${round(props.node.renderProps.custom.roundedRect!.radius)}px`;
+    });
   }
 }
