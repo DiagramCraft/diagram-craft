@@ -38,7 +38,7 @@ export const ElementShadowPanelForm = ({
             <ColorPicker
               {...props}
               palette={$cfg.palette.primary}
-              customPalette={$d.document.customPalette.colors}
+              customPalette={$d.document.customPalette}
               onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
             />
           )}

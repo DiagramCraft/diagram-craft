@@ -16,7 +16,9 @@ class ModelState extends EventEmitter<ModelStateEvents> {
   }
 
   set activeDocument(document: DiagramDocument) {
+    this.#activeDocument?.deactivate();
     this.#activeDocument = document;
+    this.#activeDocument?.activate();
     this.emit('activeDocumentChange', { document: document });
   }
 

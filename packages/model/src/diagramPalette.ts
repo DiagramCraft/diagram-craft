@@ -1,11 +1,25 @@
+import * as Y from 'yjs';
+
+const DEFAULT_COLOR = '#000000';
+
 export class DiagramPalette {
-  constructor(private readonly palette: string[]) {}
+  constructor(private readonly palette: Y.Map<string>) {
+    if (this.palette.size === 0) {
+      for (let i = 0; i < 14; i++) {
+        this.palette.set(i.toString(), DEFAULT_COLOR);
+      }
+    }
+  }
 
   get colors() {
-    return this.palette;
+    const dest: string[] = [];
+    for (let i = 0; i < 14; i++) {
+      dest.push(this.palette.get(i.toString()) ?? DEFAULT_COLOR);
+    }
+    return dest;
   }
 
   setColor(idx: number, color: string) {
-    this.palette[idx] = color;
+    this.palette.set(idx.toString(), color);
   }
 }

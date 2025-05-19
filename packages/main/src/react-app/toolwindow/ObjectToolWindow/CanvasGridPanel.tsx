@@ -41,7 +41,7 @@ export const CanvasGridPanel = (props: Props) => {
             palette={$cfg.palette.primary}
             value={color.val ?? 'transparent'}
             onChange={color.set}
-            customPalette={$d.document.customPalette.colors}
+            customPalette={$d.document.customPalette}
             onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
           />
           <NumberInput
@@ -75,7 +75,7 @@ export const CanvasGridPanel = (props: Props) => {
             palette={$cfg.palette.primary}
             value={majorColor.val ?? 'transparent'}
             onChange={majorColor.set}
-            customPalette={$d.document.customPalette.colors}
+            customPalette={$d.document.customPalette}
             onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
           />
           <NumberInput
