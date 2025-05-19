@@ -51,7 +51,7 @@ export const IndicatorForm = (props: IndicatorFormProps) => {
               {...props}
               disabled={$p.isReadOnly}
               palette={$cfg.palette.primary}
-              customPalette={diagram.document.customPalette.colors}
+              customPalette={diagram.document.customPalette}
               onChangeCustomPalette={(idx, v) => diagram.document.customPalette.setColor(idx, v)}
             />
           )}

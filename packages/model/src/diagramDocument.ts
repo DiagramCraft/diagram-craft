@@ -3,7 +3,6 @@ import { DiagramStyles } from './diagramStyles';
 import { Diagram, diagramIterator, DiagramIteratorOpts } from './diagram';
 import { AttachmentConsumer, AttachmentManager } from './attachment';
 import { EventEmitter } from '@diagram-craft/utils/event';
-import { range } from '@diagram-craft/utils/array';
 import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinitionRegistry';
 import { precondition } from '@diagram-craft/utils/assert';
 import { isNode } from './diagramElement';
@@ -15,6 +14,8 @@ import { Generators } from '@diagram-craft/utils/generator';
 import { SerializedElement } from './serialization/types';
 import { DiagramDocumentData } from './diagramDocumentData';
 import { Json } from '@diagram-craft/utils/types';
+import * as Y from 'yjs';
+import { COLLABORATION_BACKEND_CONFIG } from './collaboration/backend';
 
 export type DocumentEvents = {
   diagramchanged: { after: Diagram };
@@ -30,8 +31,10 @@ export type DataTemplate = {
 };
 
 export class DiagramDocument extends EventEmitter<DocumentEvents> implements AttachmentConsumer {
+  doc = new Y.Doc();
+
   attachments = new AttachmentManager(this);
-  customPalette = new DiagramPalette(range(0, 14).map(() => '#000000'));
+  customPalette = new DiagramPalette(this.doc.getMap('customPalette'));
   styles = new DiagramStyles(this);
 
   // TODO: To be loaded from file
@@ -61,6 +64,15 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
   ) {
     super();
     this.data = new DiagramDocumentData(this);
+  }
+
+  activate() {
+    if (!this.url) return;
+    COLLABORATION_BACKEND_CONFIG.backend.connect(this.url, this.doc);
+  }
+
+  deactivate() {
+    COLLABORATION_BACKEND_CONFIG.backend.disconnect();
   }
 
   get topLevelDiagrams() {

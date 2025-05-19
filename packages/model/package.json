@@ -10,7 +10,10 @@
   "keywords": [],
   "author": "Magnus Johansson",
   "dependencies": {
+    "@diagram-craft/geometry": "workspace:^",
     "@diagram-craft/utils": "workspace:^",
-    "@diagram-craft/geometry": "workspace:^"
+    "y-protocols": "^1.0.6",
+    "y-websocket": "^3.0.0",
+    "yjs": "^13.6.27"
   }
 }

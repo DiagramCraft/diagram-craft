@@ -73,7 +73,7 @@ const ImageTint = (props: { tint: Property<string>; tintStrength: Property<numbe
                 {...props}
                 palette={$cfg.palette.primary}
                 canClearColor={true}
-                customPalette={$d.document.customPalette.colors}
+                customPalette={$d.document.customPalette}
                 onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
               />
             )}
@@ -181,7 +181,7 @@ export const FillPanelForm = ({
                 <ColorPicker
                   {...props}
                   palette={$cfg.palette.primary}
-                  customPalette={$d.document.customPalette.colors}
+                  customPalette={$d.document.customPalette}
                   onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
                 />
               )}
@@ -196,7 +196,7 @@ export const FillPanelForm = ({
                     <ColorPicker
                       {...props}
                       palette={$cfg.palette.primary}
-                      customPalette={$d.document.customPalette.colors}
+                      customPalette={$d.document.customPalette}
                       onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
                     />
                   )}
@@ -280,7 +280,7 @@ export const FillPanelForm = ({
                 <ColorPicker
                   {...props}
                   palette={$cfg.palette.primary}
-                  customPalette={$d.document.customPalette.colors}
+                  customPalette={$d.document.customPalette}
                   onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
                 />
               )}
@@ -292,7 +292,7 @@ export const FillPanelForm = ({
                 <ColorPicker
                   {...props}
                   palette={$cfg.palette.primary}
-                  customPalette={$d.document.customPalette.colors}
+                  customPalette={$d.document.customPalette}
                   onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
                 />
               )}

@@ -3,19 +3,24 @@ import React, { useCallback, useRef } from 'react';
 import { range } from '@diagram-craft/utils/array';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { extractMouseEvents } from '@diagram-craft/app-components/utils';
+import { DiagramPalette } from '@diagram-craft/model/diagramPalette';
 
 const transpose = (matrix: string[][]) =>
   Object.keys(matrix[0]).map(colNumber =>
     matrix.map(rowNumber => rowNumber[colNumber as unknown as number])
   );
 
-const EditableColorWell = (props: { color: string; onChange: (s: string) => void }) => {
+const EditableColorWell = (props: {
+  color: string;
+  onSet: (s: string) => void;
+  onChange: (s: string) => void;
+}) => {
   const [color, setColor] = React.useState(props.color);
   return (
     <div className={'cmp-color-grid__editable'} style={{ backgroundColor: color }}>
       <button
         onClick={() => {
-          props.onChange(color);
+          props.onSet(color);
         }}
       ></button>
       <input
@@ -26,9 +31,11 @@ const EditableColorWell = (props: { color: string; onChange: (s: string) => void
         }}
         onInput={v => {
           setColor(v.currentTarget.value);
+          props.onChange(color);
         }}
         onChange={v => {
           setColor(v.currentTarget.value);
+          props.onChange(color);
         }}
       />
       <TbDots />
@@ -57,6 +64,8 @@ export const ColorPicker = (props: Props) => {
     },
     [props]
   );
+
+  const customPalette = props.customPalette.colors;
 
   return (
     <div className={'cmp-color-picker'}>
@@ -144,9 +153,11 @@ export const ColorPicker = (props: Props) => {
             {range(0, 14).map(i => (
               <EditableColorWell
                 key={i}
-                color={props.customPalette[i]}
-                onChange={c => {
+                color={customPalette[i]}
+                onSet={c => {
                   setColor(c);
+                }}
+                onChange={c => {
                   props.onChangeCustomPalette(i, c);
                 }}
               />
@@ -162,7 +173,7 @@ type Props = {
   palette: string[][];
   isIndeterminate?: boolean;
   state?: 'set' | 'unset' | 'overridden';
-  customPalette: string[];
+  customPalette: DiagramPalette;
   value: string;
   onChange: (s: string | undefined) => void;
   onChangeCustomPalette: (idx: number, s: string) => void;
