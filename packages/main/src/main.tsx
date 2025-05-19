@@ -15,6 +15,12 @@ import { fileLoaderRegistry, stencilLoaderRegistry } from '@diagram-craft/canvas
 import { DiagramRef } from './App';
 import { Autosave } from './Autosave';
 import { UserState } from './UserState';
+import {
+  COLLABORATION_BACKEND_CONFIG,
+  YJSWebSocketCollaborationBackend
+} from '@diagram-craft/model/collaboration/backend';
+
+COLLABORATION_BACKEND_CONFIG.backend = new YJSWebSocketCollaborationBackend('ws://localhost:1234');
 
 stencilLoaderRegistry.drawioManual = () =>
   import('@diagram-craft/canvas-drawio/drawioLoaders').then(m => m.stencilLoaderDrawioManual);

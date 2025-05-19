@@ -40,6 +40,8 @@ export class NoOpCollaborationBackend implements CollaborationBackend {
   disconnect() {}
 }
 
-export const COLLABORATION_BACKEND_CONFIG = {
-  backend: new YJSWebSocketCollaborationBackend('ws://localhost:1234')
+export const COLLABORATION_BACKEND_CONFIG: {
+  backend: CollaborationBackend;
+} = {
+  backend: new NoOpCollaborationBackend()
 };
