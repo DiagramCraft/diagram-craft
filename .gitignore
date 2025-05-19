@@ -12,6 +12,8 @@ dist
 dist-ssr
 *.local
 
+.env
+
 # Local links
 packages/main/public/diagrams
 packages/main/public/img

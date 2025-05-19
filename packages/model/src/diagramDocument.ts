@@ -14,8 +14,8 @@ import { Generators } from '@diagram-craft/utils/generator';
 import { SerializedElement } from './serialization/types';
 import { DiagramDocumentData } from './diagramDocumentData';
 import { Json } from '@diagram-craft/utils/types';
-import * as Y from 'yjs';
-import { COLLABORATION_BACKEND_CONFIG } from './collaboration/backend';
+import { CRDT } from './collaboration/crdt';
+import { CollaborationConfig } from './collaboration/collaborationConfig';
 
 export type DocumentEvents = {
   diagramchanged: { after: Diagram };
@@ -31,7 +31,7 @@ export type DataTemplate = {
 };
 
 export class DiagramDocument extends EventEmitter<DocumentEvents> implements AttachmentConsumer {
-  doc = new Y.Doc();
+  doc = new CRDT.Root();
 
   attachments = new AttachmentManager(this);
   customPalette = new DiagramPalette(this.doc.getMap('customPalette'));
@@ -68,11 +68,11 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
 
   activate() {
     if (!this.url) return;
-    COLLABORATION_BACKEND_CONFIG.backend.connect(this.url, this.doc);
+    CollaborationConfig.Backend.connect(this.url, this.doc);
   }
 
   deactivate() {
-    COLLABORATION_BACKEND_CONFIG.backend.disconnect();
+    CollaborationConfig.Backend.disconnect();
   }
 
   get topLevelDiagrams() {
