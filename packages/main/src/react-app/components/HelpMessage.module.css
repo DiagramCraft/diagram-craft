@@ -1,9 +1,9 @@
 .cmp-help {
   opacity: 0;
   position: absolute;
-  left: calc(16rem + 2rem + 3rem);
+  left: calc(var(--left-indent) + 5.5rem);
   bottom: 3rem;
-  right: calc(16rem + 2rem + 3rem);
+  right: calc(var(--right-indent) + 5.5rem);
   box-shadow: var(--popover-shadow);
 
   color: var(--primary-fg);
