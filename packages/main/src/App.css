@@ -337,6 +337,12 @@ input[type="checkbox"][data-field-state='overridden'] {
   }
 }
 
+@media (max-width: 1000px) {
+  ._extra-tools {
+    display: none !important;
+  }
+}
+
 #toolbar {
   grid-area: toolbar;
   display: flex;

@@ -1,0 +1,23 @@
+.cmp-dirty-indicator {
+  font-size: 13px;
+  color: var(--red-10);
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+
+  > button {
+    padding: 1px 5px;
+  }
+
+  .cmp-dirty-indicator__text {
+    display: inline;
+  }
+}
+
+@media (max-width: 1000px) {
+  .cmp-dirty-indicator {
+    .cmp-dirty-indicator__text {
+      display: none;
+    }
+  }
+}
