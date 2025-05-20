@@ -10,7 +10,7 @@ export const ActionToggleButton = (props: Props) => {
   const application = useApplication();
   const actionMap = application.actions;
   const redraw = useRedraw();
-  useEventListener(actionMap[props.action]!, 'actionChanged', redraw);
+  useEventListener(actionMap[props.action]!, 'actionChanged', () => queueMicrotask(redraw));
 
   return (
     <Toolbar.ToggleGroup type={'single'}>

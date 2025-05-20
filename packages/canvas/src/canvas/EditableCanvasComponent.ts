@@ -28,6 +28,8 @@ import {
   createUpdateOnViewboxChangeEffect,
   createZoomPanOnMouseEventEffect
 } from './InteractiveCanvasComponent';
+import { CollaborationConfig } from '@diagram-craft/model/collaboration/collaborationConfig';
+import { AwarenessCursorComponent } from '../components/AwarenessCursorComponent';
 
 const removeSuffix = (s: string) => {
   return s.replace(/---.+$/, '');
@@ -295,6 +297,8 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
                     y: e.y - b.top
                   });
                 }
+
+                CollaborationConfig.Backend.awareness?.updateCursor(this.point);
               },
               contextmenu: event => {
                 const bounds = this.svgRef!.getBoundingClientRect();
@@ -365,7 +369,9 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
                   ...canvasState,
                   hoverElement: this.hoverElement
                 })
-              : svg.g({})
+              : svg.g({}),
+
+            this.subComponent($cmp(AwarenessCursorComponent), { ...canvasState })
           ]
         )
       ]

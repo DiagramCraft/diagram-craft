@@ -21,6 +21,10 @@ export const div = (attrs: Attr<DivAttributes>, children?: VNodeChildParam[]) =>
   return h('div', attrs, ...(children ?? []));
 };
 
+export const span = (attrs: Attr<DivAttributes>, children?: VNodeChildParam[]) => {
+  return h('span', attrs, ...(children ?? []));
+};
+
 type TextareaAttributes = ElementAttributes;
 
 export const textarea = (attrs: Attr<TextareaAttributes>, children?: VNodeChildParam[]) => {

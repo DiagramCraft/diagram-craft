@@ -4,6 +4,9 @@ import { assert } from '@diagram-craft/utils/assert';
 import { YJSRoot } from './yjsCrdt';
 import { CollaborationBackend } from '../backend';
 import { YJSAwareness } from './yjsAwareness';
+import { Random } from '@diagram-craft/utils/random';
+
+const random = new Random(new Date().getTime());
 
 export class YJSWebSocketCollaborationBackend implements CollaborationBackend {
   private wsProvider: WebsocketProvider | undefined = undefined;
@@ -22,7 +25,8 @@ export class YJSWebSocketCollaborationBackend implements CollaborationBackend {
 
     // TODO: This should be removed
     this.awareness?.updateUser({
-      name: navigator.userAgent.includes('Edg') ? 'Edge' : 'Chrome'
+      name: navigator.userAgent.includes('Edg') ? 'Edge' : 'Chrome',
+      color: random.pick(['red', 'green', 'blue', 'orange'])
     });
   }
 
@@ -30,6 +34,6 @@ export class YJSWebSocketCollaborationBackend implements CollaborationBackend {
     const p = this.wsProvider;
     setTimeout(() => {
       p?.disconnect();
-    }, 1000);
+    }, 10);
   }
 }

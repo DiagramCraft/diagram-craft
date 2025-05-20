@@ -1,26 +1,50 @@
 import * as awarenessProtocol from 'y-protocols/awareness.js';
-import { unique } from '@diagram-craft/utils/array';
-import { Awareness, UserState } from '../awareness';
+import { Awareness, AwarenessEvents, CursorState, UserState } from '../awareness';
+import { EventEmitter } from '@diagram-craft/utils/event';
 
-export class YJSAwareness implements Awareness {
+export class YJSAwareness extends EventEmitter<AwarenessEvents> implements Awareness {
   private backend: awarenessProtocol.Awareness | undefined = undefined;
 
   private userState: UserState | undefined = undefined;
+  private userStates: Array<UserState> = [];
+  private cursorStates: Array<UserState & CursorState> = [];
 
-  constructor() {}
+  constructor() {
+    super();
+  }
 
   setBackend(backend: awarenessProtocol.Awareness) {
+    this.backend?.destroy();
+
     this.backend = backend;
 
     if (this.userState) this.backend.setLocalStateField('user', this.userState);
 
     this.backend.on('change', () => {
-      // Whenever somebody updates their awareness information,
-      // we log all awareness information from all users.
-      console.log(
-        unique(Array.from(this.backend!.getStates().values()).map(s => s.user.name)).join(', ')
+      super.emit('changeUser', {});
+      super.emit('changeCursor', {});
+
+      this.userStates = Array.from(this.backend!.getStates().values()).map(s => s.user);
+      this.cursorStates = Array.from(
+        this.backend!.getStates()
+          .entries()
+          .filter(e => e[0] !== this.backend!.clientID)
+          .map(s => ({ ...s[1].cursor, ...s[1].user }))
+          .filter(k => !!k)
       );
     });
+  }
+
+  getUserStates() {
+    return this.userStates;
+  }
+
+  getCursorStates(): Array<UserState & CursorState> {
+    return this.cursorStates;
+  }
+
+  updateCursor(state: CursorState) {
+    this.backend!.setLocalStateField('cursor', state);
   }
 
   updateUser(state: UserState) {

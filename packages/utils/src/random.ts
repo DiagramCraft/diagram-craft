@@ -13,6 +13,10 @@ export class Random {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   }
 
+  pick<T>(arr: T[]): T {
+    return arr[Math.floor(this.next() * arr.length)];
+  }
+
   nextFloat() {
     return this.next();
   }

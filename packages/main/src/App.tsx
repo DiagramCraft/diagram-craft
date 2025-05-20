@@ -65,6 +65,7 @@ import { ExternalDataLinkDialog } from './react-app/components/ExternalDataLinkD
 import { Preview } from './react-app/Preview';
 import { ShapeSelectDialog } from './react-app/ShapeSelectDialog';
 import { ZoomTool } from '@diagram-craft/canvas-app/tools/zoomTool';
+import { AwarenessToolbar } from './react-app/AwarenessToolbar';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -339,6 +340,7 @@ export const App = (props: {
           <div id="menu">
             <MainMenu />
             <MainToolbar dirty={dirty} />
+            <AwarenessToolbar />
             <AuxToolbar />
           </div>
 

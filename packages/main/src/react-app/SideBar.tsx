@@ -15,6 +15,14 @@ type SideBarPage = {
   children: React.ReactNode;
 };
 
+export const SideBarBottomToolbar = (props: { children: React.ReactNode }) => {
+  return (
+    <div className={'cmp-sidebar-bottom-toolbar'}>
+      <Toolbar.Root direction={'vertical'}>{props.children}</Toolbar.Root>
+    </div>
+  );
+};
+
 export const SideBar = (props: Props) => {
   const propName = props.side === 'left' ? 'panelLeft' : 'panelRight';
 
@@ -90,6 +98,7 @@ export const SideBar = (props: Props) => {
       >
         {props.children[selected]}
       </div>
+      {props.bottom}
     </>
   );
 };
@@ -97,4 +106,5 @@ export const SideBar = (props: Props) => {
 type Props = {
   side: 'left' | 'right';
   children: React.ReactNode[];
+  bottom?: React.ReactNode;
 };
