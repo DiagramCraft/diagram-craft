@@ -1,0 +1,29 @@
+.cmp-awareness-toolbar {
+  padding: 4px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  .cmp-awareness-toolbar__user {
+    background: #cccccc;
+    height: 20px;
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    position: relative;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 10px;
+
+    margin-left: -15px;
+
+    color: var(--avatar-color);
+    border: 1px solid var(--avatar-color);
+
+    &:nth-child(1) {
+      margin-left: 0;
+    }
+  }
+}

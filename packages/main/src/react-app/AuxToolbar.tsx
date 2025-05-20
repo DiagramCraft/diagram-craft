@@ -1,6 +1,5 @@
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
-import { ActionToggleButton } from './toolbar/ActionToggleButton';
-import { TbEye, TbHelpSquare, TbZoomIn, TbZoomInArea, TbZoomOut, TbZoomScan } from 'react-icons/tb';
+import { TbEye, TbZoomIn, TbZoomInArea, TbZoomOut, TbZoomScan } from 'react-icons/tb';
 import { useApplication } from '../application';
 
 export const AuxToolbar = () => {
@@ -8,10 +7,6 @@ export const AuxToolbar = () => {
   return (
     <div className={'_extra-tools'}>
       <Toolbar.Root>
-        <ActionToggleButton action={'TOGGLE_HELP'}>
-          <TbHelpSquare size={'17.5px'} />
-        </ActionToggleButton>
-
         <Toolbar.Button onClick={() => application.actions['PREVIEW']?.execute()}>
           <TbEye size={'17.5px'} />
         </Toolbar.Button>

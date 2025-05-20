@@ -276,8 +276,8 @@ input[type="checkbox"][data-field-state='overridden'] {
   grid-area: menu;
   background: var(--primary-bg);
   display: grid;
-  grid-template-areas: "menu tools extra-tools";
-  grid-template-columns: 80px 20fr 1fr;
+  grid-template-areas: "menu tools awareness extra-tools";
+  grid-template-columns: 80px 20fr 1fr 1fr;
 
   > ._menu-button {
     position: relative;
@@ -334,6 +334,9 @@ input[type="checkbox"][data-field-state='overridden'] {
     gap: 0.25rem;
     justify-self: end;
     padding-right: 1rem;
+  }
+  > #awareness {
+    grid-area: awareness;
   }
 }
 
@@ -419,6 +422,17 @@ input[type="checkbox"][data-field-state='overridden'] {
   overflow: auto;
   &::-webkit-scrollbar {
     display: none;
+  }
+}
+
+#right + .cmp-sidebar-bottom-toolbar {
+  position: absolute;
+  right: 0;
+  bottom: 5px;
+  width: 39px;
+  display: flex;
+  > div {
+    padding-bottom: 3px !important;
   }
 }
 

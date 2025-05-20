@@ -1,8 +1,14 @@
 import { RefObject, useEffect } from 'react';
-import { EventEmitter, EventKey, EventMap, EventReceiver } from '@diagram-craft/utils/event';
+import {
+  Emitter,
+  EventEmitter,
+  EventKey,
+  EventMap,
+  EventReceiver
+} from '@diagram-craft/utils/event';
 
 export const useEventListener = <T extends EventMap, K extends EventKey<T> = EventKey<T>>(
-  target: EventEmitter<T>,
+  target: EventEmitter<T> | Emitter<T>,
   eventName: K,
   handler: EventReceiver<T[K]>
 ) => {
