@@ -381,7 +381,11 @@ export const loadStencilsFromYaml = (stencils: any) => {
       const { diagram: dest, layer } = DocumentBuilder.empty(
         newid(),
         stencil.name,
-        new DiagramDocument(diagram.document.nodeDefinitions, diagram.document.edgeDefinitions)
+        new DiagramDocument(
+          diagram.document.nodeDefinitions,
+          diagram.document.edgeDefinitions,
+          true
+        )
       );
 
       const node = deserializeDiagramElements(

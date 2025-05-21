@@ -301,26 +301,35 @@ export class DiagramStyles {
   #activeTextStylesheet = DefaultStyles.text.default;
 
   constructor(
-    root: CRDTRoot,
-    private readonly document: DiagramDocument
+    private readonly root: CRDTRoot,
+    private readonly document: DiagramDocument,
+    addDefaultStyles: boolean
   ) {
     this.#textStyles = root.getMap('styles.text');
     this.#nodeStyles = root.getMap('styles.node');
     this.#edgeStyles = root.getMap('styles.edge');
 
-    if (this.#textStyles.size === 0) {
-      Object.entries(DEFAULT_TEXT_STYLES).forEach(([id, s]) => {
-        this.#textStyles.set(id, Stylesheet.from('node', id, s.name, s.props).crdt);
-      });
-    }
-    if (this.#nodeStyles.size === 0) {
-      Object.entries(DEFAULT_NODE_STYLES).forEach(([id, s]) => {
-        this.#nodeStyles.set(id, Stylesheet.from('node', id, s.name, s.props).crdt);
-      });
-    }
-    if (this.#edgeStyles.size === 0) {
-      Object.entries(DEFAULT_EDGE_STYLES).forEach(([id, s]) => {
-        this.#edgeStyles.set(id, Stylesheet.from('edge', id, s.name, s.props).crdt);
+    const hasNoTextStyles = this.#textStyles.size === 0;
+    const hasNoNodeStyles = this.#nodeStyles.size === 0;
+    const hasNoEdgeStyles = this.#edgeStyles.size === 0;
+
+    if (addDefaultStyles && (hasNoTextStyles || hasNoNodeStyles || hasNoEdgeStyles)) {
+      root.transact(() => {
+        if (hasNoTextStyles) {
+          Object.entries(DEFAULT_TEXT_STYLES).forEach(([id, s]) => {
+            this.#textStyles.set(id, Stylesheet.from('node', id, s.name, s.props).crdt);
+          });
+        }
+        if (hasNoNodeStyles) {
+          Object.entries(DEFAULT_NODE_STYLES).forEach(([id, s]) => {
+            this.#nodeStyles.set(id, Stylesheet.from('node', id, s.name, s.props).crdt);
+          });
+        }
+        if (hasNoEdgeStyles) {
+          Object.entries(DEFAULT_EDGE_STYLES).forEach(([id, s]) => {
+            this.#edgeStyles.set(id, Stylesheet.from('edge', id, s.name, s.props).crdt);
+          });
+        }
       });
     }
   }
@@ -393,43 +402,45 @@ export class DiagramStyles {
       return;
     }
 
-    if (stylesheet.type === 'node') {
-      this.activeNodeStylesheet = stylesheet;
-    } else if (stylesheet.type === 'text') {
-      this.activeTextStylesheet = stylesheet;
-    } else {
-      this.activeEdgeStylesheet = stylesheet;
-    }
+    this.root.transact(() => {
+      if (stylesheet.type === 'node') {
+        this.activeNodeStylesheet = stylesheet;
+      } else if (stylesheet.type === 'text') {
+        this.activeTextStylesheet = stylesheet;
+      } else {
+        this.activeEdgeStylesheet = stylesheet;
+      }
 
-    if (resetLocalProps) {
-      el.updateProps((props: NodeProps & EdgeProps) => {
-        const shapeToClear = stylesheet.getPropsFromElement(el);
+      if (resetLocalProps) {
+        el.updateProps((props: NodeProps & EdgeProps) => {
+          const shapeToClear = stylesheet.getPropsFromElement(el);
 
-        // For custom properties, we keep all custom properties that are
-        // not part of the stylesheet
-        if ('custom' in shapeToClear) {
-          delete shapeToClear.custom;
+          // For custom properties, we keep all custom properties that are
+          // not part of the stylesheet
+          if ('custom' in shapeToClear) {
+            delete shapeToClear.custom;
 
-          if ('custom' in stylesheet.props) {
-            for (const key of Object.keys(stylesheet.props.custom!)) {
-              if (shapeToClear.custom !== undefined && key in shapeToClear.custom) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                delete (shapeToClear.custom! as any)[key];
+            if ('custom' in stylesheet.props) {
+              for (const key of Object.keys(stylesheet.props.custom!)) {
+                if (shapeToClear.custom !== undefined && key in shapeToClear.custom) {
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  delete (shapeToClear.custom! as any)[key];
+                }
               }
             }
           }
-        }
 
-        deepClear(shapeToClear, props);
-      }, uow);
-    }
-    el.updateMetadata(meta => {
-      if (stylesheet.type !== 'text') {
-        meta.style = style;
-      } else {
-        meta.textStyle = style;
+          deepClear(shapeToClear, props);
+        }, uow);
       }
-    }, uow);
+      el.updateMetadata(meta => {
+        if (stylesheet.type !== 'text') {
+          meta.style = style;
+        } else {
+          meta.textStyle = style;
+        }
+      }, uow);
+    });
   }
 
   deleteStylesheet(id: string, uow: UnitOfWork) {
@@ -443,40 +454,44 @@ export class DiagramStyles {
       return;
     }
 
-    this.clearStylesheet(id, uow);
+    this.root.transact(() => {
+      this.clearStylesheet(id, uow);
 
-    if (stylesheet.type === 'node') {
-      this.#nodeStyles.delete(id);
-    } else if (stylesheet.type === 'text') {
-      this.#textStyles.delete(id);
-    } else {
-      this.#edgeStyles.delete(id);
-    }
+      if (stylesheet.type === 'node') {
+        this.#nodeStyles.delete(id);
+      } else if (stylesheet.type === 'text') {
+        this.#textStyles.delete(id);
+      } else {
+        this.#edgeStyles.delete(id);
+      }
 
-    // TODO: This can fail in case we delete the last stylesheet
-    if (stylesheet.type === 'node') {
-      this.activeNodeStylesheet = this.getNodeStyle(Array.from(this.#nodeStyles.keys())[0])!;
-    } else if (stylesheet.type === 'text') {
-      this.activeTextStylesheet = this.getTextStyle(Array.from(this.#textStyles.keys())[0])!;
-    } else {
-      this.activeEdgeStylesheet = this.getEdgeStyle(Array.from(this.#edgeStyles.keys())[0])!;
-    }
+      // TODO: This can fail in case we delete the last stylesheet
+      if (stylesheet.type === 'node') {
+        this.activeNodeStylesheet = this.getNodeStyle(Array.from(this.#nodeStyles.keys())[0])!;
+      } else if (stylesheet.type === 'text') {
+        this.activeTextStylesheet = this.getTextStyle(Array.from(this.#textStyles.keys())[0])!;
+      } else {
+        this.activeEdgeStylesheet = this.getEdgeStyle(Array.from(this.#edgeStyles.keys())[0])!;
+      }
+    });
   }
 
   modifyStylesheet(stylesheet: Stylesheet<StylesheetType>, uow: UnitOfWork) {
-    for (const diagram of this.document.diagramIterator({ nest: true })) {
-      for (const el of diagram.allElements()) {
-        if (isNode(el)) {
-          if (el.metadata.style === stylesheet.id || el.metadata.textStyle === stylesheet.id) {
-            this.setStylesheet(el, stylesheet.id, uow, false);
-          }
-        } else {
-          if (el.metadata.style === stylesheet.id) {
-            this.setStylesheet(el, stylesheet.id, uow, false);
+    this.root.transact(() => {
+      for (const diagram of this.document.diagramIterator({ nest: true })) {
+        for (const el of diagram.allElements()) {
+          if (isNode(el)) {
+            if (el.metadata.style === stylesheet.id || el.metadata.textStyle === stylesheet.id) {
+              this.setStylesheet(el, stylesheet.id, uow, false);
+            }
+          } else {
+            if (el.metadata.style === stylesheet.id) {
+              this.setStylesheet(el, stylesheet.id, uow, false);
+            }
           }
         }
       }
-    }
+    });
   }
 
   clearStylesheet(id: string, uow: UnitOfWork) {
@@ -488,19 +503,21 @@ export class DiagramStyles {
     const stylesheet = this.get(id);
     if (!stylesheet) return;
 
-    for (const diagram of this.document.diagramIterator({ nest: true })) {
-      for (const el of diagram.allElements()) {
-        if (isNode(el)) {
-          if (el.metadata.style === id || el.metadata.textStyle === id) {
-            this.clearStylesheetFromElement(el, stylesheet, uow);
-          }
-        } else {
-          if (el.metadata.style === id) {
-            this.clearStylesheetFromElement(el, stylesheet, uow);
+    this.root.transact(() => {
+      for (const diagram of this.document.diagramIterator({ nest: true })) {
+        for (const el of diagram.allElements()) {
+          if (isNode(el)) {
+            if (el.metadata.style === id || el.metadata.textStyle === id) {
+              this.clearStylesheetFromElement(el, stylesheet, uow);
+            }
+          } else {
+            if (el.metadata.style === id) {
+              this.clearStylesheetFromElement(el, stylesheet, uow);
+            }
           }
         }
       }
-    }
+    });
   }
 
   private isDefaultStyle(id: string) {
@@ -529,16 +546,18 @@ export class DiagramStyles {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   addStylesheet(id: string, stylesheet: Stylesheet<any>, _uow?: UnitOfWork) {
-    if (stylesheet.type === 'node') {
-      this.#nodeStyles.set(id, stylesheet.crdt);
-      this.activeNodeStylesheet = stylesheet;
-    } else if (stylesheet.type === 'text') {
-      this.#textStyles.set(id, stylesheet.crdt);
-      this.activeTextStylesheet = stylesheet;
-    } else {
-      this.#edgeStyles.set(id, stylesheet.crdt);
-      this.activeEdgeStylesheet = stylesheet;
-    }
+    this.root.transact(() => {
+      if (stylesheet.type === 'node') {
+        this.#nodeStyles.set(id, stylesheet.crdt);
+        this.activeNodeStylesheet = stylesheet;
+      } else if (stylesheet.type === 'text') {
+        this.#textStyles.set(id, stylesheet.crdt);
+        this.activeTextStylesheet = stylesheet;
+      } else {
+        this.#edgeStyles.set(id, stylesheet.crdt);
+        this.activeEdgeStylesheet = stylesheet;
+      }
+    });
   }
 }
 

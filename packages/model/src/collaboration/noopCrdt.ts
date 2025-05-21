@@ -93,4 +93,8 @@ export class NoOpCRDTRoot implements CRDTRoot {
     }
     return l;
   }
+
+  transact(callback: () => void) {
+    callback();
+  }
 }

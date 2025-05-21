@@ -83,7 +83,11 @@ export const NodeTypePopup = (props: Props) => {
       const { diagram: dest, layer } = DocumentBuilder.empty(
         n.id,
         n.name ?? n.id,
-        new DiagramDocument(diagram.document.nodeDefinitions, diagram.document.edgeDefinitions)
+        new DiagramDocument(
+          diagram.document.nodeDefinitions,
+          diagram.document.edgeDefinitions,
+          true
+        )
       );
 
       const node = n.node(dest);

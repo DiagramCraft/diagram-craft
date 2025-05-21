@@ -1,13 +1,21 @@
-import { CRDTMap } from './collaboration/crdt';
+import { CRDTMap, CRDTRoot } from './collaboration/crdt';
 
 const DEFAULT_COLOR = '#000000';
 
 export class DiagramPalette {
-  constructor(private readonly palette: CRDTMap<string>) {
-    if (this.palette.size === 0) {
-      for (let i = 0; i < 14; i++) {
-        this.palette.set(i.toString(), DEFAULT_COLOR);
-      }
+  private palette: CRDTMap<string>;
+  constructor(
+    private readonly doc: CRDTRoot,
+    count: number
+  ) {
+    this.palette = doc.getMap('customPalette');
+
+    if (this.palette.size === 0 && count > 0) {
+      this.doc.transact(() => {
+        for (let i = 0; i < count; i++) {
+          this.setColor(i, DEFAULT_COLOR);
+        }
+      });
     }
   }
 
@@ -21,5 +29,14 @@ export class DiagramPalette {
 
   setColor(idx: number, color: string) {
     this.palette.set(idx.toString(), color);
+  }
+
+  setColors(color: readonly string[]) {
+    if (color.length === 0) return;
+    this.doc.transact(() => {
+      for (let i = 0; i < color.length; i++) {
+        this.setColor(i, color[i]);
+      }
+    });
   }
 }

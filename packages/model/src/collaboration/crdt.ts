@@ -6,6 +6,8 @@ export interface CRDTRoot {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getList(name: string): CRDTList<any>;
+
+  transact(callback: () => void): void;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
