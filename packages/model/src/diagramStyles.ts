@@ -20,17 +20,15 @@ type TypeMap = {
   text: TextStyleProps;
 };
 
-const StylesheetProps = {
-  id: new CRDTProperty<string>('id'),
-  name: new CRDTProperty<string>('name'),
-  props: new CRDTProperty('props')
-};
-
 export class Stylesheet<T extends StylesheetType, P = TypeMap[T]>
   implements UOWTrackable<StylesheetSnapshot>, CRDTBacked
 {
   type: T;
   #obj: CRDTMap;
+
+  private _id = new CRDTProperty<string>('id');
+  private _name = new CRDTProperty<string>('name');
+  private _props = new CRDTProperty('props');
 
   constructor(type: T, obj: CRDTMap) {
     this.type = type;
@@ -43,12 +41,11 @@ export class Stylesheet<T extends StylesheetType, P = TypeMap[T]>
     name: string,
     props: Partial<P>
   ): Stylesheet<T> {
-    const m = new CRDT.Map();
-    StylesheetProps.id.set(m, id);
-    StylesheetProps.name.set(m, name);
-    StylesheetProps.props.set(m, props);
-
-    return new Stylesheet(type, m);
+    const s = new Stylesheet(type, new CRDT.Map());
+    s._id.set(s.#obj, id);
+    s._name.set(s.#obj, name);
+    s._props.set(s.#obj, props);
+    return s;
   }
 
   get crdt() {
@@ -56,28 +53,28 @@ export class Stylesheet<T extends StylesheetType, P = TypeMap[T]>
   }
 
   get id(): string {
-    return StylesheetProps.id.get(this.#obj);
+    return this._id.get(this.#obj);
   }
 
   get props(): Partial<P> {
-    return StylesheetProps.props.get(this.#obj);
+    return this._props.get(this.#obj);
   }
 
   setProps(props: Partial<P>, uow: UnitOfWork): void {
     uow.snapshot(this);
 
-    StylesheetProps.props.set(this.#obj, this.cleanProps(props));
+    this._props.set(this.#obj, this.cleanProps(props));
 
     uow.updateElement(this);
   }
 
   get name() {
-    return StylesheetProps.name.get(this.#obj);
+    return this._name.get(this.#obj);
   }
 
   setName(name: string, uow: UnitOfWork) {
     uow.snapshot(this);
-    StylesheetProps.name.set(this.#obj, name);
+    this._name.set(this.#obj, name);
     uow.updateElement(this);
   }
 
@@ -87,7 +84,7 @@ export class Stylesheet<T extends StylesheetType, P = TypeMap[T]>
 
   restore(snapshot: StylesheetSnapshot, uow: UnitOfWork): void {
     this.setName(snapshot.name, uow);
-    StylesheetProps.props.set(this.#obj, snapshot.props);
+    this._props.set(this.#obj, snapshot.props);
     uow.updateElement(this);
   }
 
@@ -96,7 +93,7 @@ export class Stylesheet<T extends StylesheetType, P = TypeMap[T]>
       _snapshotType: 'stylesheet',
       id: this.id,
       name: this.name,
-      props: deepClone(StylesheetProps.props.get(this.#obj)),
+      props: deepClone(this._props.get(this.#obj)),
       type: this.type
     };
   }
