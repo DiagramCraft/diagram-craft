@@ -194,12 +194,10 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   }
 
   private getPropsSources() {
-    const styleProps = this.diagram.document.styles.nodeStyles.find(
-      s => s.id === this._metadata.style
-    )?.props;
+    const styleProps = this.diagram.document.styles.getNodeStyle(this._metadata.style)?.props;
 
-    const textStyleProps = this.diagram.document.styles.textStyles.find(
-      s => s.id === this._metadata.textStyle
+    const textStyleProps = this.diagram.document.styles.getTextStyle(
+      this._metadata.textStyle
     )?.props;
 
     const parentProps: Partial<NodeProps & EdgeProps> = deepClone(
@@ -214,15 +212,14 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       .map(([, v]) => v.elementStyle)
       .filter(e => !!e)
       .at(-1);
-    const ruleStyleProps =
-      this.diagram.document.styles.nodeStyles.find(s => s.id === ruleElementStyle)?.props ?? {};
+    const ruleStyleProps = this.diagram.document.styles.getNodeStyle(ruleElementStyle)?.props ?? {};
 
     const ruleTextStyle = adjustments
       .map(([, v]) => v.textStyle)
       .filter(e => !!e)
       .at(-1);
     const ruleTextStyleProps =
-      this.diagram.document.styles.textStyles.find(s => s.id === ruleTextStyle)?.props ?? {};
+      this.diagram.document.styles.getTextStyle(ruleTextStyle)?.props ?? {};
 
     return {
       parentProps,

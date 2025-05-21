@@ -6,6 +6,7 @@ import { Diagram } from './diagram';
 import { common, deepClear, deepClone, deepMerge, isObj } from '@diagram-craft/utils/object';
 import { assert } from '@diagram-craft/utils/assert';
 import { Defaults, DefaultStyles, edgeDefaults, nodeDefaults } from './diagramDefaults';
+import { CRDT, CRDTBacked, CRDTMap, CRDTProperty, CRDTRoot } from './collaboration/crdt';
 
 export type StylesheetType = 'node' | 'edge' | 'text';
 
@@ -19,40 +20,64 @@ type TypeMap = {
   text: TextStyleProps;
 };
 
-export class Stylesheet<T extends StylesheetType, P = TypeMap[T]>
-  implements UOWTrackable<StylesheetSnapshot>
-{
-  id: string;
-  #name: string;
-  #props: Partial<P>;
-  type: T;
+const StylesheetProps = {
+  id: new CRDTProperty<string>('id'),
+  name: new CRDTProperty<string>('name'),
+  props: new CRDTProperty('props')
+};
 
-  constructor(type: T, id: string, name: string, props: Partial<P>) {
-    this.id = id;
-    this.#name = name;
-    this.#props = props;
+export class Stylesheet<T extends StylesheetType, P = TypeMap[T]>
+  implements UOWTrackable<StylesheetSnapshot>, CRDTBacked
+{
+  type: T;
+  #obj: CRDTMap;
+
+  constructor(type: T, obj: CRDTMap) {
     this.type = type;
+    this.#obj = obj;
+  }
+
+  static from<T extends StylesheetType, P = TypeMap[T]>(
+    type: T,
+    id: string,
+    name: string,
+    props: Partial<P>
+  ): Stylesheet<T> {
+    const m = new CRDT.Map();
+    StylesheetProps.id.set(m, id);
+    StylesheetProps.name.set(m, name);
+    StylesheetProps.props.set(m, props);
+
+    return new Stylesheet(type, m);
+  }
+
+  get crdt() {
+    return this.#obj;
+  }
+
+  get id(): string {
+    return StylesheetProps.id.get(this.#obj);
   }
 
   get props(): Partial<P> {
-    return this.#props;
+    return StylesheetProps.props.get(this.#obj);
   }
 
   setProps(props: Partial<P>, uow: UnitOfWork): void {
     uow.snapshot(this);
 
-    this.#props = this.cleanProps(props);
+    StylesheetProps.props.set(this.#obj, this.cleanProps(props));
 
     uow.updateElement(this);
   }
 
   get name() {
-    return this.#name;
+    return StylesheetProps.name.get(this.#obj);
   }
 
   setName(name: string, uow: UnitOfWork) {
     uow.snapshot(this);
-    this.#name = name;
+    StylesheetProps.name.set(this.#obj, name);
     uow.updateElement(this);
   }
 
@@ -62,8 +87,7 @@ export class Stylesheet<T extends StylesheetType, P = TypeMap[T]>
 
   restore(snapshot: StylesheetSnapshot, uow: UnitOfWork): void {
     this.setName(snapshot.name, uow);
-    // eslint-disable-next-line
-    this.#props = snapshot.props as any;
+    StylesheetProps.props.set(this.#obj, snapshot.props);
     uow.updateElement(this);
   }
 
@@ -72,7 +96,7 @@ export class Stylesheet<T extends StylesheetType, P = TypeMap[T]>
       _snapshotType: 'stylesheet',
       id: this.id,
       name: this.name,
-      props: deepClone(this.#props),
+      props: deepClone(StylesheetProps.props.get(this.#obj)),
       type: this.type
     };
   }
@@ -102,61 +126,81 @@ export class Stylesheet<T extends StylesheetType, P = TypeMap[T]>
   }
 }
 
-const DEFAULT_NODE_STYLES: Stylesheet<'node'>[] = [
-  new Stylesheet('node', DefaultStyles.node.default, 'Default', {
-    fill: {
-      color: 'var(--canvas-bg2)'
+const DEFAULT_NODE_STYLES: Record<string, Omit<StylesheetSnapshot, 'id' | '_snapshotType'>> = {
+  [DefaultStyles.node.default]: {
+    name: 'Default',
+    props: {
+      fill: {
+        color: 'var(--canvas-bg2)'
+      },
+      stroke: {
+        color: 'var(--canvas-fg)'
+      }
     },
-    stroke: {
-      color: 'var(--canvas-fg)'
-    }
-  }),
+    type: 'node'
+  },
 
-  new Stylesheet('node', DefaultStyles.node.text, 'Text', {
-    fill: {
-      enabled: false
-    },
-    stroke: {
-      enabled: false
+  [DefaultStyles.node.text]: {
+    type: 'node',
+    name: 'Text',
+    props: {
+      fill: {
+        enabled: false
+      },
+      stroke: {
+        enabled: false
+      }
     }
-  })
-];
+  }
+};
 
-const DEFAULT_TEXT_STYLES: Stylesheet<'text'>[] = [
-  new Stylesheet('text', DefaultStyles.text.default, 'Default', {
-    text: {
-      color: 'var(--canvas-fg)',
-      fontSize: 10,
-      font: 'sans-serif',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0
+const DEFAULT_TEXT_STYLES: Record<string, Omit<StylesheetSnapshot, 'id' | '_snapshotType'>> = {
+  [DefaultStyles.text.default]: {
+    type: 'text',
+    name: 'Default',
+    props: {
+      text: {
+        color: 'var(--canvas-fg)',
+        fontSize: 10,
+        font: 'sans-serif',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0
+      }
     }
-  }),
-  new Stylesheet('text', 'h1', 'H1', {
-    text: {
-      color: 'var(--canvas-fg)',
-      fontSize: 20,
-      bold: true,
-      font: 'sans-serif',
-      align: 'left',
-      top: 6,
-      left: 6,
-      right: 6,
-      bottom: 6
+  },
+  h1: {
+    type: 'text',
+    name: 'H1',
+    props: {
+      text: {
+        color: 'var(--canvas-fg)',
+        fontSize: 20,
+        bold: true,
+        font: 'sans-serif',
+        align: 'left',
+        top: 6,
+        left: 6,
+        right: 6,
+        bottom: 6
+      }
     }
-  })
-];
+  }
+};
 
-const DEFAULT_EDGE_STYLES: Stylesheet<'edge'>[] = [
-  new Stylesheet('edge', DefaultStyles.edge.default, 'Default', {
-    stroke: {
-      color: 'var(--canvas-fg)'
-    },
-    type: 'straight'
-  })
-];
+const DEFAULT_EDGE_STYLES: Record<string, Omit<StylesheetSnapshot, 'id' | '_snapshotType'>> = {
+  [DefaultStyles.edge.default]: {
+    type: 'edge',
+    name: 'Default',
+    props: {
+      stroke: {
+        color: 'var(--canvas-fg)'
+      },
+      type: 'straight'
+    }
+  }
+};
 
 export const getCommonProps = <T extends Record<string, unknown>>(arr: Array<T>): Partial<T> => {
   let e: T = arr[0];
@@ -248,43 +292,99 @@ export const isSelectionDirty = ($d: Diagram, isText: boolean) => {
 };
 
 export class DiagramStyles {
-  constructor(private readonly document: DiagramDocument) {}
+  #textStyles: CRDTMap<CRDTMap>;
+  #nodeStyles: CRDTMap<CRDTMap>;
+  #edgeStyles: CRDTMap<CRDTMap>;
 
-  textStyles: Stylesheet<'text'>[] = DEFAULT_TEXT_STYLES;
-  nodeStyles: Stylesheet<'node'>[] = DEFAULT_NODE_STYLES;
-  edgeStyles: Stylesheet<'edge'>[] = DEFAULT_EDGE_STYLES;
+  #activeNodeStylesheet = DefaultStyles.node.default;
+  #activeEdgeStylesheet = DefaultStyles.edge.default;
+  #activeTextStylesheet = DefaultStyles.text.default;
 
-  #activeNodeStylesheet = DEFAULT_NODE_STYLES[0];
-  #activeEdgeStylesheet = DEFAULT_EDGE_STYLES[0];
-  #activeTextStylesheet = DEFAULT_TEXT_STYLES[0];
+  constructor(
+    root: CRDTRoot,
+    private readonly document: DiagramDocument
+  ) {
+    this.#textStyles = root.getMap('styles.text');
+    this.#nodeStyles = root.getMap('styles.node');
+    this.#edgeStyles = root.getMap('styles.edge');
+
+    if (this.#textStyles.size === 0) {
+      Object.entries(DEFAULT_TEXT_STYLES).forEach(([id, s]) => {
+        this.#textStyles.set(id, Stylesheet.from('node', id, s.name, s.props).crdt);
+      });
+    }
+    if (this.#nodeStyles.size === 0) {
+      Object.entries(DEFAULT_NODE_STYLES).forEach(([id, s]) => {
+        this.#nodeStyles.set(id, Stylesheet.from('node', id, s.name, s.props).crdt);
+      });
+    }
+    if (this.#edgeStyles.size === 0) {
+      Object.entries(DEFAULT_EDGE_STYLES).forEach(([id, s]) => {
+        this.#edgeStyles.set(id, Stylesheet.from('edge', id, s.name, s.props).crdt);
+      });
+    }
+  }
+
+  get nodeStyles(): Stylesheet<'node'>[] {
+    return Array.from(this.#nodeStyles.values()).map(s => new Stylesheet<'node'>('node', s));
+  }
+
+  get edgeStyles(): Stylesheet<'edge'>[] {
+    return Array.from(this.#edgeStyles.values()).map(s => new Stylesheet<'edge'>('edge', s));
+  }
+
+  get textStyles(): Stylesheet<'text'>[] {
+    return Array.from(this.#textStyles.values()).map(s => new Stylesheet<'text'>('text', s));
+  }
 
   get activeNodeStylesheet() {
-    return this.#activeNodeStylesheet;
+    return new Stylesheet('node', this.#nodeStyles.get(this.#activeNodeStylesheet)!);
   }
 
   set activeNodeStylesheet(style: Stylesheet<'node'>) {
     if (style.id === DefaultStyles.node.text) return;
-    this.#activeNodeStylesheet = style;
+    this.#activeNodeStylesheet = style.id;
   }
 
   get activeEdgeStylesheet() {
-    return this.#activeEdgeStylesheet;
+    return new Stylesheet('edge', this.#edgeStyles.get(this.#activeEdgeStylesheet)!);
   }
 
   set activeEdgeStylesheet(style: Stylesheet<'edge'>) {
-    this.#activeEdgeStylesheet = style;
+    this.#activeEdgeStylesheet = style.id;
   }
 
   get activeTextStylesheet() {
-    return this.#activeTextStylesheet;
+    return new Stylesheet('text', this.#textStyles.get(this.#activeTextStylesheet)!);
   }
 
   set activeTextStylesheet(style: Stylesheet<'text'>) {
-    this.#activeTextStylesheet = style;
+    this.#activeTextStylesheet = style.id;
   }
 
   get(id: string): Stylesheet<'edge'> | Stylesheet<'node'> | Stylesheet<'text'> | undefined {
-    return [...this.nodeStyles, ...this.edgeStyles, ...this.textStyles].find(s => s.id === id);
+    return this.getEdgeStyle(id) ?? this.getNodeStyle(id) ?? this.getTextStyle(id);
+  }
+
+  getEdgeStyle(id: string | undefined): Stylesheet<'edge'> | undefined {
+    if (id === undefined) return undefined;
+    const crdt = this.#edgeStyles.get(id);
+    if (!crdt) return undefined;
+    return new Stylesheet<'edge'>('edge', crdt);
+  }
+
+  getNodeStyle(id: string | undefined): Stylesheet<'node'> | undefined {
+    if (id === undefined) return undefined;
+    const crdt = this.#nodeStyles.get(id);
+    if (!crdt) return undefined;
+    return new Stylesheet<'node'>('node', crdt);
+  }
+
+  getTextStyle(id: string | undefined): Stylesheet<'text'> | undefined {
+    if (id === undefined) return undefined;
+    const crdt = this.#textStyles.get(id);
+    if (!crdt) return undefined;
+    return new Stylesheet<'text'>('text', crdt);
   }
 
   setStylesheet(el: DiagramElement, style: string, uow: UnitOfWork, resetLocalProps: boolean) {
@@ -343,22 +443,23 @@ export class DiagramStyles {
       return;
     }
 
-    if (stylesheet.type === 'node') {
-      this.activeNodeStylesheet = this.nodeStyles.filter(s => s !== stylesheet)[0];
-    } else if (stylesheet.type === 'text') {
-      this.activeTextStylesheet = this.textStyles.filter(s => s !== stylesheet)[0];
-    } else {
-      this.activeEdgeStylesheet = this.edgeStyles.filter(s => s !== stylesheet)[0];
-    }
-
     this.clearStylesheet(id, uow);
 
     if (stylesheet.type === 'node') {
-      this.nodeStyles = this.nodeStyles.filter(s => s.id !== id);
+      this.#nodeStyles.delete(id);
     } else if (stylesheet.type === 'text') {
-      this.textStyles = this.textStyles.filter(s => s.id !== id);
+      this.#textStyles.delete(id);
     } else {
-      this.edgeStyles = this.edgeStyles.filter(s => s.id !== id);
+      this.#edgeStyles.delete(id);
+    }
+
+    // TODO: This can fail in case we delete the last stylesheet
+    if (stylesheet.type === 'node') {
+      this.activeNodeStylesheet = this.getNodeStyle(Array.from(this.#nodeStyles.keys())[0])!;
+    } else if (stylesheet.type === 'text') {
+      this.activeTextStylesheet = this.getTextStyle(Array.from(this.#textStyles.keys())[0])!;
+    } else {
+      this.activeEdgeStylesheet = this.getEdgeStyle(Array.from(this.#edgeStyles.keys())[0])!;
     }
   }
 
@@ -427,18 +528,15 @@ export class DiagramStyles {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  addStylesheet(stylesheet: Stylesheet<any>, _uow?: UnitOfWork) {
+  addStylesheet(id: string, stylesheet: Stylesheet<any>, _uow?: UnitOfWork) {
     if (stylesheet.type === 'node') {
-      this.nodeStyles = this.nodeStyles.filter(s => s.id !== stylesheet.id);
-      this.nodeStyles.push(stylesheet);
+      this.#nodeStyles.set(id, stylesheet.crdt);
       this.activeNodeStylesheet = stylesheet;
     } else if (stylesheet.type === 'text') {
-      this.textStyles = this.textStyles.filter(s => s.id !== stylesheet.id);
-      this.textStyles.push(stylesheet);
+      this.#textStyles.set(id, stylesheet.crdt);
       this.activeTextStylesheet = stylesheet;
     } else {
-      this.edgeStyles = this.edgeStyles.filter(s => s.id !== stylesheet.id);
-      this.edgeStyles.push(stylesheet);
+      this.#edgeStyles.set(id, stylesheet.crdt);
       this.activeEdgeStylesheet = stylesheet;
     }
   }
@@ -453,7 +551,7 @@ export class DeleteStylesheetUndoableAction implements UndoableAction {
   ) {}
 
   undo(uow: UnitOfWork) {
-    this.diagram.document.styles.addStylesheet(this.stylesheet, uow);
+    this.diagram.document.styles.addStylesheet(this.stylesheet.id, this.stylesheet, uow);
   }
 
   redo(uow: UnitOfWork) {
@@ -474,6 +572,6 @@ export class AddStylesheetUndoableAction implements UndoableAction {
   }
 
   redo(uow: UnitOfWork) {
-    this.diagram.document.styles.addStylesheet(this.stylesheet, uow);
+    this.diagram.document.styles.addStylesheet(this.stylesheet.id, this.stylesheet, uow);
   }
 }

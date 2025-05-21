@@ -55,12 +55,20 @@ class NoOpCRDTList<T> implements CRDTList<T> {
     return this.backing[index];
   }
 
-  insert(index: number, value: Array<T>): void {
+  insert(index: number, value: T[]): void {
     this.backing.splice(index, 0, ...value);
+  }
+
+  push(value: T[]): void {
+    this.backing.push(...value);
   }
 
   delete(index: number): void {
     this.backing.splice(index, 1);
+  }
+
+  toArray(): T[] {
+    return this.backing;
   }
 }
 

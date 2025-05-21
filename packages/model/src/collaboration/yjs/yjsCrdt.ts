@@ -18,3 +18,6 @@ export class YJSRoot implements CRDTRoot {
     return this.doc.getArray(name);
   }
 }
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export class YJSMap extends Y.Map<any> {}

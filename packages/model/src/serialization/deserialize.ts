@@ -185,10 +185,10 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
 
   if (document.styles) {
     for (const edgeStyle of document.styles.edgeStyles) {
-      doc.styles.addStylesheet(deserializeStylesheet(edgeStyle));
+      doc.styles.addStylesheet(edgeStyle.id, deserializeStylesheet(edgeStyle));
     }
     for (const nodeStyle of document.styles.nodeStyles) {
-      doc.styles.addStylesheet(deserializeStylesheet(nodeStyle));
+      doc.styles.addStylesheet(nodeStyle.id, deserializeStylesheet(nodeStyle));
     }
   }
 
@@ -224,7 +224,7 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
 };
 
 const deserializeStylesheet = (s: SerializedStylesheet) => {
-  return new Stylesheet(s.type, s.id, s.name, s.props);
+  return Stylesheet.from(s.type, s.id, s.name, s.props);
 };
 
 const deserializeDiagrams = <T extends Diagram>(

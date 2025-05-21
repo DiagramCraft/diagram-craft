@@ -140,9 +140,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   }
 
   private getPropsSources() {
-    const styleProps = this.diagram.document.styles.edgeStyles.find(
-      s => s.id === this._metadata.style
-    )?.props;
+    const styleProps = this.diagram.document.styles.getEdgeStyle(this._metadata.style)?.props;
 
     const adjustments = getAdjustments(this._activeDiagram, this.id);
     const ruleProps = adjustments.map(([k, v]) => [k, v.props]);
@@ -151,9 +149,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       .map(([, v]) => v.elementStyle)
       .filter(e => !!e)
       .at(-1);
-    const ruleStyleProps = this.diagram.document.styles.edgeStyles.find(
-      s => s.id === ruleElementStyle
-    )?.props;
+    const ruleStyleProps = this.diagram.document.styles.getEdgeStyle(ruleElementStyle)?.props;
 
     return { styleProps, ruleProps: ruleProps as [string, EdgeProps][], ruleStyleProps };
   }

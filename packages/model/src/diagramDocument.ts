@@ -35,7 +35,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
 
   attachments = new AttachmentManager(this);
   customPalette = new DiagramPalette(this.doc.getMap('customPalette'));
-  styles = new DiagramStyles(this);
+  styles = new DiagramStyles(this.doc, this);
 
   // TODO: To be loaded from file
   props: DocumentProps = {
