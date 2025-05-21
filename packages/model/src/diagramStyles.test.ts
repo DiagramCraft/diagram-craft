@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it } from 'vitest';
 import { Stylesheet } from './diagramStyles';
 import { StylesheetSnapshot, UnitOfWork } from './unitOfWork';
@@ -25,6 +26,7 @@ describe('Stylesheet', () => {
       const id = '123';
       const name = 'Test stylesheet';
       const initialProps = { color: 'blue' };
+
       const newProps = { color: 'red' } as any;
 
       const stylesheet = Stylesheet.from(type, id, name, initialProps);
