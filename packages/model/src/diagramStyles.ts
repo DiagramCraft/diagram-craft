@@ -100,7 +100,8 @@ export class Stylesheet<T extends StylesheetType, P = TypeMap[T]>
   implements UOWTrackable<StylesheetSnapshot>, CRDTBacked
 {
   type: T;
-  #obj: CRDTMap;
+
+  private readonly obj: CRDTMap;
 
   private _id = new CRDTProperty<string>('id');
   private _name = new CRDTProperty<string>('name');
@@ -108,7 +109,7 @@ export class Stylesheet<T extends StylesheetType, P = TypeMap[T]>
 
   constructor(type: T, obj: CRDTMap) {
     this.type = type;
-    this.#obj = obj;
+    this.obj = obj;
   }
 
   static from<T extends StylesheetType, P = TypeMap[T]>(
@@ -118,39 +119,39 @@ export class Stylesheet<T extends StylesheetType, P = TypeMap[T]>
     props: Partial<P>
   ): Stylesheet<T> {
     const s = new Stylesheet(type, new CRDT.Map());
-    s._id.set(s.#obj, id);
-    s._name.set(s.#obj, name);
-    s._props.set(s.#obj, props);
+    s._id.set(s.obj, id);
+    s._name.set(s.obj, name);
+    s._props.set(s.obj, props);
     return s;
   }
 
   get crdt() {
-    return this.#obj;
+    return this.obj;
   }
 
   get id(): string {
-    return this._id.get(this.#obj);
+    return this._id.get(this.obj);
   }
 
   get props(): Partial<P> {
-    return this._props.get(this.#obj);
+    return this._props.get(this.obj);
   }
 
   setProps(props: Partial<P>, uow: UnitOfWork): void {
     uow.snapshot(this);
 
-    this._props.set(this.#obj, this.cleanProps(props));
+    this._props.set(this.obj, this.cleanProps(props));
 
     uow.updateElement(this);
   }
 
   get name() {
-    return this._name.get(this.#obj);
+    return this._name.get(this.obj);
   }
 
   setName(name: string, uow: UnitOfWork) {
     uow.snapshot(this);
-    this._name.set(this.#obj, name);
+    this._name.set(this.obj, name);
     uow.updateElement(this);
   }
 
@@ -160,7 +161,7 @@ export class Stylesheet<T extends StylesheetType, P = TypeMap[T]>
 
   restore(snapshot: StylesheetSnapshot, uow: UnitOfWork): void {
     this.setName(snapshot.name, uow);
-    this._props.set(this.#obj, snapshot.props);
+    this._props.set(this.obj, snapshot.props);
     uow.updateElement(this);
   }
 
@@ -169,7 +170,7 @@ export class Stylesheet<T extends StylesheetType, P = TypeMap[T]>
       _snapshotType: 'stylesheet',
       id: this.id,
       name: this.name,
-      props: deepClone(this._props.get(this.#obj)),
+      props: deepClone(this._props.get(this.obj)),
       type: this.type
     };
   }
@@ -200,6 +201,7 @@ export class Stylesheet<T extends StylesheetType, P = TypeMap[T]>
 }
 
 export const getCommonProps = <T extends Record<string, unknown>>(arr: Array<T>): Partial<T> => {
+  if (arr.length === 0) return {};
   let e: T = arr[0];
   for (let i = 1; i < arr.length; i++) {
     e = common(e, arr[i]) as T;
