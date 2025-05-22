@@ -1,5 +1,6 @@
 import { DiagramDocument } from './diagramDocument';
 import { hash64 } from '@diagram-craft/utils/hash';
+import { CRDTMap, CRDTRoot } from './collaboration/crdt';
 
 export const blobToDataURL = (blob: Blob): Promise<string> =>
   new Promise<string>((resolve, reject) => {
@@ -17,10 +18,10 @@ export class Attachment {
 
   #url: string;
 
-  constructor(hash: string, content: Blob) {
+  constructor(hash: string, content: Blob, inUse = true) {
     this.hash = hash;
     this.content = content;
-    this.inUse = true;
+    this.inUse = inUse;
 
     this.#url = URL.createObjectURL(
       new Blob([this.content], {
@@ -41,49 +42,69 @@ export class Attachment {
   async getDataUrl() {
     return blobToDataURL(this.content);
   }
-
-  /*detach() {
-    URL.revokeObjectURL(this.#url);
-  }*/
 }
 
 export interface AttachmentConsumer {
   getAttachmentsInUse(): Array<string>;
 }
 
+type AttachmentData = {
+  hash: string;
+  content: Uint8Array;
+  contentType: string;
+  inUse?: boolean;
+};
+
 export class AttachmentManager {
-  // TODO: Maybe we can make this a weak hashmap?
-  #attachments: Map<string, Attachment> = new Map();
+  #attachments: CRDTMap<AttachmentData>;
   #consumers: Array<AttachmentConsumer> = [];
 
-  public constructor(diagramDocument: DiagramDocument) {
+  public constructor(
+    private readonly root: CRDTRoot,
+    diagramDocument: DiagramDocument
+  ) {
     this.#consumers.push(diagramDocument);
+    this.#attachments = root.getMap('attachmentManager');
   }
 
   async addAttachment(content: Blob): Promise<Attachment> {
     const att = await Attachment.create(content);
 
     if (this.#attachments.has(att.hash)) {
-      return this.#attachments.get(att.hash)!;
+      return this.getAttachment(att.hash);
     }
 
-    this.#attachments.set(att.hash, att);
+    this.#attachments.set(att.hash, {
+      hash: att.hash,
+      inUse: att.inUse,
+      contentType: content.type,
+      content: await att.content.bytes()
+    });
+
     return att;
   }
 
-  get attachments() {
-    return this.#attachments.entries();
+  get attachments(): Array<[string, Attachment]> {
+    return Array.from(this.#attachments.entries()).map(([hash, ad]) => [
+      hash,
+      new Attachment(ad.hash, new Blob([ad.content], { type: ad.contentType }))
+    ]);
   }
 
   getAttachment(hash: string) {
-    return this.#attachments.get(hash);
+    const ad = this.#attachments.get(hash)!;
+    return new Attachment(ad.hash, new Blob([ad.content], { type: ad.contentType }), ad.inUse);
   }
 
   pruneAttachments() {
     const used = new Set([...this.#consumers.flatMap(c => c.getAttachmentsInUse())]);
 
-    for (const hash of this.#attachments.keys()) {
-      this.#attachments.get(hash)!.inUse = used.has(hash);
-    }
+    this.root.transact(() => {
+      for (const hash of this.#attachments.keys()) {
+        const d = this.#attachments.get(hash);
+        d!.inUse = used.has(hash);
+        this.#attachments.set(hash, d!);
+      }
+    });
   }
 }
