@@ -71,14 +71,14 @@ export class AttachmentManager {
     const att = await Attachment.create(content);
 
     if (this.#attachments.has(att.hash)) {
-      return this.getAttachment(att.hash);
+      return this.getAttachment(att.hash)!;
     }
 
     this.#attachments.set(att.hash, {
       hash: att.hash,
       inUse: att.inUse,
       contentType: content.type,
-      content: await att.content.bytes()
+      content: new Uint8Array(await att.content.arrayBuffer())
     });
 
     return att;
@@ -92,7 +92,8 @@ export class AttachmentManager {
   }
 
   getAttachment(hash: string) {
-    const ad = this.#attachments.get(hash)!;
+    const ad = this.#attachments.get(hash);
+    if (!ad) return undefined;
     return new Attachment(ad.hash, new Blob([ad.content], { type: ad.contentType }), ad.inUse);
   }
 

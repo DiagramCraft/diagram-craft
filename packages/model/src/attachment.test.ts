@@ -76,7 +76,7 @@ describe('AttachmentManager', () => {
     const manager = new AttachmentManager(new NoOpCRDTRoot(), TestModel.newDocument());
     const attachment = await manager.addAttachment(createBlob('retrieve attachment'));
 
-    const retrievedAttachment = manager.getAttachment(attachment.hash);
+    const retrievedAttachment = manager.getAttachment(attachment.hash)!;
 
     expect(await retrievedAttachment.content.text()).toBe('retrieve attachment');
   });
