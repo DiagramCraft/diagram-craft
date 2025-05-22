@@ -22,26 +22,6 @@ export const getAncestorWithClass = (el: HTMLElement, className: string) => {
 };
 
 /**
- * Get the closest ancestor of a given HTML element that matches a specific tag name.
-
- * @param el - The starting element from which to begin the search.
- * @param tagName - The tag name to match in the ancestors.
- * @returns The matching ancestor element if found, undefined if not found
- */
-export const getAncestorWithTagName = (el: HTMLElement, tagName: string) => {
-  if (!el) return undefined;
-
-  let targetElement: HTMLElement | null = el;
-  while (targetElement) {
-    if (targetElement.tagName.toLowerCase() === tagName.toLowerCase()) {
-      return targetElement;
-    }
-    targetElement = targetElement.parentElement;
-  }
-  return undefined;
-};
-
-/**
  * Sets the position of a given HTML element.
  *
  * @param el - The element to position.

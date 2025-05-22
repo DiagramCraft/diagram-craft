@@ -9,6 +9,7 @@ export default defineConfig({
   // @ts-ignore
   plugins: [tsconfigPaths(), yaml(), ...(!!process.env.CI ? [codspeedPlugin()] : [])],
   test: {
+    environment: 'node',
     exclude: ['**/*.spec.ts', '**/node_modules/**', '**/dist/**'],
     fakeTimers: {
       toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'queueMicrotask']
