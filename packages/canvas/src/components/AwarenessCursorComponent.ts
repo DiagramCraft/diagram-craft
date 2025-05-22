@@ -31,6 +31,7 @@ export class AwarenessCursorComponent extends Component<CanvasState> {
     return svg.g(
       {},
       ...(CollaborationConfig.Backend.awareness?.getCursorStates() ?? []).map(c => {
+        if (isNaN(c.x) || isNaN(c.y)) return svg.g({});
         return svg.g(
           {
             transform: `translate(${c.x}, ${c.y})`

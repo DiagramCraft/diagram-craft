@@ -28,13 +28,19 @@ export const AppLoader = (props: Props) => {
 
   useEffect(() => {
     if (props.diagram) {
-      Promise.all([
-        Autosave.load(props.documentFactory, props.diagramFactory, true),
-        loadFileFromUrl(props.diagram.url, props.documentFactory, props.diagramFactory)
-      ]).then(([autosaved, defDiagram]) => {
-        setDoc(autosaved?.document ?? defDiagram);
-        (autosaved?.document ?? defDiagram).url = props.diagram?.url;
-        if (autosaved) setUrl(autosaved.url);
+      Autosave.load(props.documentFactory, props.diagramFactory, true).then(autosaved => {
+        if (autosaved?.document) {
+          setDoc(autosaved?.document);
+          autosaved.document!.url = props.diagram?.url;
+          setUrl(autosaved.url);
+        } else {
+          loadFileFromUrl(props.diagram!.url, props.documentFactory, props.diagramFactory).then(
+            defDiagram => {
+              setDoc(defDiagram);
+              defDiagram!.url = props.diagram?.url;
+            }
+          );
+        }
       });
     } else {
       // TODO: This is duplicated in fileNewAction.ts

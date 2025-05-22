@@ -34,8 +34,8 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
   doc = new CRDT.Root();
 
   attachments = new AttachmentManager(this);
-  customPalette = new DiagramPalette(this.doc.getMap('customPalette'));
-  styles = new DiagramStyles(this);
+  styles: DiagramStyles;
+  customPalette: DiagramPalette;
 
   // TODO: To be loaded from file
   props: DocumentProps = {
@@ -60,10 +60,17 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
 
   constructor(
     public readonly nodeDefinitions: NodeDefinitionRegistry,
-    public readonly edgeDefinitions: EdgeDefinitionRegistry
+    public readonly edgeDefinitions: EdgeDefinitionRegistry,
+    isStencil?: boolean
   ) {
     super();
     this.data = new DiagramDocumentData(this);
+    this.customPalette = new DiagramPalette(this.doc, isStencil ? 0 : 14);
+    this.styles = new DiagramStyles(this.doc, this, !isStencil);
+  }
+
+  transact(callback: () => void) {
+    this.doc.transact(callback);
   }
 
   activate() {

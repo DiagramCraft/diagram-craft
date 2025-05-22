@@ -176,27 +176,26 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
   const diagrams = document.diagrams;
 
   const doc = documentFactory();
+  doc.transact(() => {
+    if (document.customPalette) {
+      doc.customPalette.setColors(document.customPalette);
+    }
 
-  if (document.customPalette) {
-    for (let i = 0; i < document.customPalette.length; i++) {
-      doc.customPalette.setColor(i, document.customPalette[i]);
+    if (document.styles) {
+      for (const edgeStyle of document.styles.edgeStyles) {
+        doc.styles.addStylesheet(edgeStyle.id, deserializeStylesheet(edgeStyle));
+      }
+      for (const nodeStyle of document.styles.nodeStyles) {
+        doc.styles.addStylesheet(nodeStyle.id, deserializeStylesheet(nodeStyle));
+      }
     }
-  }
 
-  if (document.styles) {
-    for (const edgeStyle of document.styles.edgeStyles) {
-      doc.styles.addStylesheet(deserializeStylesheet(edgeStyle));
+    if (document.schemas) {
+      for (const schema of document.schemas) {
+        doc.data.schemas.add(schema);
+      }
     }
-    for (const nodeStyle of document.styles.nodeStyles) {
-      doc.styles.addStylesheet(deserializeStylesheet(nodeStyle));
-    }
-  }
-
-  if (document.schemas) {
-    for (const schema of document.schemas) {
-      doc.data.schemas.add(schema);
-    }
-  }
+  });
 
   const dest = deserializeDiagrams(doc, diagrams, diagramFactory);
   dest.forEach(d => doc.addDiagram(d));
@@ -224,7 +223,7 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
 };
 
 const deserializeStylesheet = (s: SerializedStylesheet) => {
-  return new Stylesheet(s.type, s.id, s.name, s.props);
+  return Stylesheet.from(s.type, s.id, s.name, s.props);
 };
 
 const deserializeDiagrams = <T extends Diagram>(
