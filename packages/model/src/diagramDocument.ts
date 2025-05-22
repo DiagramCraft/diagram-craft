@@ -33,7 +33,7 @@ export type DataTemplate = {
 export class DiagramDocument extends EventEmitter<DocumentEvents> implements AttachmentConsumer {
   doc = new CRDT.Root();
 
-  attachments = new AttachmentManager(this);
+  attachments: AttachmentManager;
   styles: DiagramStyles;
   customPalette: DiagramPalette;
 
@@ -67,6 +67,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     this.data = new DiagramDocumentData(this);
     this.customPalette = new DiagramPalette(this.doc, isStencil ? 0 : 14);
     this.styles = new DiagramStyles(this.doc, this, !isStencil);
+    this.attachments = new AttachmentManager(this.doc, this);
   }
 
   transact(callback: () => void) {
