@@ -30,8 +30,8 @@ describe('AttachmentManager', () => {
 
     const attachment = await manager1.addAttachment(createBlob('retrieve attachment'));
 
-    const retrievedAttachment1 = manager1.getAttachment(attachment.hash);
-    const retrievedAttachment2 = manager2.getAttachment(attachment.hash);
+    const retrievedAttachment1 = manager1.getAttachment(attachment.hash)!;
+    const retrievedAttachment2 = manager2.getAttachment(attachment.hash)!;
 
     expect(await retrievedAttachment1.content.text()).toBe('retrieve attachment');
     expect(await retrievedAttachment2.content.text()).toBe('retrieve attachment');
