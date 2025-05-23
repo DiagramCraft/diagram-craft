@@ -11,6 +11,7 @@ import { DiagramNode } from '../diagramNode';
 import { DiagramEdge, ResolvedLabelNode } from '../diagramEdge';
 import { FreeEndpoint } from '../endpoint';
 import { newid } from '@diagram-craft/utils/id';
+import { CRDTRoot } from '../collaboration/crdt';
 
 export class TestModel {
   static newDiagram() {
@@ -25,8 +26,8 @@ export class TestModel {
     return diagram;
   }
 
-  static newDocument() {
-    return new DiagramDocument(defaultNodeRegistry(), defaultEdgeRegistry());
+  static newDocument(root?: CRDTRoot) {
+    return new DiagramDocument(defaultNodeRegistry(), defaultEdgeRegistry(), false, root);
   }
 }
 

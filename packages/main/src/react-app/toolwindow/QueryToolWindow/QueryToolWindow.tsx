@@ -83,13 +83,7 @@ export const QueryToolWindow = () => {
 
     res = parseAndQuery(q, [input]);
 
-    diagram.document.props.query ??= {};
-    diagram.document.props.query.history ??= [];
-
-    diagram.document.props.query.history.unshift(['active-layer', queryString]);
-    diagram.document.props.query.history = diagram.document.props.query.history.filter((e, idx) => {
-      return idx === 0 || e[0] !== 'active-layer' || e[1] !== queryString;
-    });
+    diagram.document.props.query.addHistory(['active-layer', queryString]);
   } catch (e) {
     error = e;
   }
@@ -158,9 +152,7 @@ export const QueryToolWindow = () => {
                     <DropdownMenu.Item
                       className="cmp-context-menu__item"
                       onClick={() => {
-                        diagram.document.props.query ??= {};
-                        diagram.document.props.query.saved ??= [];
-                        diagram.document.props.query.saved.push([source!, ref.current!.value]);
+                        diagram.document.props.query.addSaved([source!, ref.current!.value]);
                       }}
                     >
                       Save

@@ -49,13 +49,6 @@ export interface Indicator {
 }
 
 declare global {
-  interface DocumentProps {
-    query?: {
-      history?: [string, string][];
-      saved?: [string, string][];
-    };
-  }
-
   interface DiagramProps {
     background?: NodeProps['fill'];
     grid?: {
