@@ -1,7 +1,7 @@
-import { YJSMap, YJSRoot } from './yjsCrdt';
+import { YJSList, YJSMap, YJSRoot } from './yjsCrdt';
 import * as Y from 'yjs';
 import { CollaborationConfig } from '../collaborationConfig';
-import { NoOpCRDTMap } from '../noopCrdt';
+import { NoOpCRDTList, NoOpCRDTMap, NoOpCRDTRoot } from '../noopCrdt';
 import { afterEach, beforeEach } from 'vitest';
 
 export const createSyncedYJSCRDTs = () => {
@@ -20,9 +20,13 @@ export const createSyncedYJSCRDTs = () => {
 
 export const setupYJS = () => {
   beforeEach(() => {
+    CollaborationConfig.CRDTRoot = YJSRoot;
     CollaborationConfig.CRDTMap = YJSMap;
+    CollaborationConfig.CRDTList = YJSList;
   });
   afterEach(() => {
+    CollaborationConfig.CRDTRoot = NoOpCRDTRoot;
     CollaborationConfig.CRDTMap = NoOpCRDTMap;
+    CollaborationConfig.CRDTList = NoOpCRDTList;
   });
 };

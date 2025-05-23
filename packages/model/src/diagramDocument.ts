@@ -16,6 +16,7 @@ import { DiagramDocumentData } from './diagramDocumentData';
 import { Json } from '@diagram-craft/utils/types';
 import { CRDT } from './collaboration/crdt';
 import { CollaborationConfig } from './collaboration/collaborationConfig';
+import { DocumentProps } from './documentProps';
 
 export type DocumentEvents = {
   diagramchanged: { after: Diagram };
@@ -37,20 +38,12 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
   styles: DiagramStyles;
   customPalette: DiagramPalette;
 
-  // TODO: To be loaded from file
-  props: DocumentProps = {
-    query: {
-      saved: [
-        ['active-layer', '.elements[]'],
-        ['active-layer', '.elements[] | select(.edges | length > 0)']
-      ]
-    }
-  };
+  props: DocumentProps;
 
   #diagrams: Diagram[] = [];
 
-  // This allows any extra, application specific, data to be stored transparently
-  // By design, changing the extra data field the document is not to be
+  // This allows any extra, application-specific, data to be stored transparently
+  // By design; changing the extra data field, the document is not to be
   // considered dirty. This must be handled manually
   extra: Record<string, Json> = {};
 
@@ -68,6 +61,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     this.customPalette = new DiagramPalette(this.doc, isStencil ? 0 : 14);
     this.styles = new DiagramStyles(this.doc, this, !isStencil);
     this.attachments = new AttachmentManager(this.doc, this);
+    this.props = new DocumentProps(this.doc, this);
   }
 
   transact(callback: () => void) {

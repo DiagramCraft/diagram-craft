@@ -44,7 +44,7 @@ export class NoOpCRDTMap<T> implements CRDTMap<T> {
   }
 }
 
-class NoOpCRDTList<T> implements CRDTList<T> {
+export class NoOpCRDTList<T> implements CRDTList<T> {
   private backing: T[] = [];
 
   get length() {

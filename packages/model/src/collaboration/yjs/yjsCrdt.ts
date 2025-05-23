@@ -25,3 +25,6 @@ export class YJSRoot implements CRDTRoot {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export class YJSMap extends Y.Map<any> {}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export class YJSList extends Y.Array<any> {}

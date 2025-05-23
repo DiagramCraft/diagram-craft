@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { DiagramPalette } from '../../diagramPalette';
-import { createSyncedYJSCRDTs } from './yjsTest';
+import { createSyncedYJSCRDTs, setupYJS } from './yjsTest';
 
 describe('YJS DiagramPalette', () => {
+  setupYJS();
+
   describe('setColor', () => {
     it('should set the color of the specified index', () => {
       const { doc1, doc2 } = createSyncedYJSCRDTs();

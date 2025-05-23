@@ -24,7 +24,8 @@ export interface CRDTMap<T = any> {
   values(): IterableIterator<T>;
 }
 
-export interface CRDTList<T> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface CRDTList<T = any> {
   length: number;
   get(index: number): T;
   insert(index: number, value: Array<T>): void;
@@ -58,5 +59,9 @@ export const CRDT = new (class {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   get Map(): new (...args: any[]) => CRDTMap {
     return CollaborationConfig.CRDTMap;
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  get List(): new (...args: any[]) => CRDTList {
+    return CollaborationConfig.CRDTList;
   }
 })();
