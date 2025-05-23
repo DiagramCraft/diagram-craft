@@ -1,21 +1,20 @@
-import { CRDT, CRDTMap, CRDTProperty, CRDTRoot } from './collaboration/crdt';
+import { CRDT, CRDTList, CRDTMap, CRDTProperty, CRDTRoot } from './collaboration/crdt';
 import { DiagramDocument } from './diagramDocument';
 
 class Query {
   private readonly obj: CRDTMap;
 
-  private _history = new CRDTProperty('history');
-  private _saved = new CRDTProperty('saved');
+  private _history = new CRDTProperty<CRDTList<[string, string]>>('history');
+  private _saved = new CRDTProperty<CRDTList<[string, string]>>('saved');
 
   constructor(
     parent: CRDTMap,
     private readonly document: DiagramDocument
   ) {
-    this.obj = new CRDT.Map();
-    parent.set('query', this.obj);
+    this.obj = CRDT.getMap(parent, 'query');
 
-    this._history.set(this.obj, new CRDT.List());
-    this._saved.set(this.obj, new CRDT.List());
+    this._history.initialize(this.obj, new CRDT.List());
+    this._saved.initialize(this.obj, new CRDT.List());
 
     const history = this._history.get(this.obj);
     if (history.length === 0) {
@@ -27,18 +26,18 @@ class Query {
   }
 
   get history() {
-    return this._history.get(this.obj).toArray() as Array<[string, string]>;
+    return this._history.get(this.obj).toArray();
   }
 
   addHistory(entry: [string, string]) {
     this.document.transact(() => {
       const history = this._history.get(this.obj);
-      history.insert(0, entry);
+      history.insert(0, [entry]);
 
       for (let i = 1; i < history.length; i++) {
         const [k, v] = history.get(i);
         if (k === entry[0] && v === entry[1]) {
-          history.remove(i);
+          history.delete(i);
           i--;
         }
       }
@@ -46,11 +45,11 @@ class Query {
   }
 
   get saved() {
-    return this._saved.get(this.obj).toArray() as Array<[string, string]>;
+    return this._saved.get(this.obj).toArray();
   }
 
   addSaved(entry: [string, string]) {
-    this._saved.get(this.obj).push(entry);
+    this._saved.get(this.obj).push([entry]);
   }
 }
 

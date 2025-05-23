@@ -14,7 +14,7 @@ import { Generators } from '@diagram-craft/utils/generator';
 import { SerializedElement } from './serialization/types';
 import { DiagramDocumentData } from './diagramDocumentData';
 import { Json } from '@diagram-craft/utils/types';
-import { CRDT } from './collaboration/crdt';
+import { CRDT, CRDTRoot } from './collaboration/crdt';
 import { CollaborationConfig } from './collaboration/collaborationConfig';
 import { DocumentProps } from './documentProps';
 
@@ -32,7 +32,7 @@ export type DataTemplate = {
 };
 
 export class DiagramDocument extends EventEmitter<DocumentEvents> implements AttachmentConsumer {
-  doc = new CRDT.Root();
+  readonly root: CRDTRoot;
 
   attachments: AttachmentManager;
   styles: DiagramStyles;
@@ -54,23 +54,25 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
   constructor(
     public readonly nodeDefinitions: NodeDefinitionRegistry,
     public readonly edgeDefinitions: EdgeDefinitionRegistry,
-    isStencil?: boolean
+    isStencil?: boolean,
+    readonly crdtRoot?: CRDTRoot
   ) {
     super();
+    this.root = crdtRoot ?? new CRDT.Root();
     this.data = new DiagramDocumentData(this);
-    this.customPalette = new DiagramPalette(this.doc, isStencil ? 0 : 14);
-    this.styles = new DiagramStyles(this.doc, this, !isStencil);
-    this.attachments = new AttachmentManager(this.doc, this);
-    this.props = new DocumentProps(this.doc, this);
+    this.customPalette = new DiagramPalette(this.root, isStencil ? 0 : 14);
+    this.styles = new DiagramStyles(this.root, this, !isStencil);
+    this.attachments = new AttachmentManager(this.root, this);
+    this.props = new DocumentProps(this.root, this);
   }
 
   transact(callback: () => void) {
-    this.doc.transact(callback);
+    this.root.transact(callback);
   }
 
   activate() {
     if (!this.url) return;
-    CollaborationConfig.Backend.connect(this.url, this.doc);
+    CollaborationConfig.Backend.connect(this.url, this.root);
   }
 
   deactivate() {

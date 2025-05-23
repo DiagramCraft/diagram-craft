@@ -49,6 +49,12 @@ export class CRDTProperty<T = any> {
   set(target: CRDTMap, value: T) {
     target.set(this.name, value);
   }
+
+  initialize(target: CRDTMap, value: T) {
+    if (!target.has(this.name)) {
+      target.set(this.name, value);
+    }
+  }
 }
 
 export const CRDT = new (class {
@@ -63,5 +69,14 @@ export const CRDT = new (class {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   get List(): new (...args: any[]) => CRDTList {
     return CollaborationConfig.CRDTList;
+  }
+
+  getMap(m: CRDTMap, name: string) {
+    let r = m.get(name);
+    if (!r) {
+      r = new CRDT.Map();
+      m.set(name, r);
+    }
+    return r as CRDTMap;
   }
 })();
