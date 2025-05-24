@@ -45,7 +45,8 @@ export class NoOpCRDTMap<T> implements CRDTMap<T> {
   }
 }
 
-export class NoOpCRDTList<T> extends EventEmitter<CRDTListEvents> implements CRDTList<T> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export class NoOpCRDTList<T = any> extends EventEmitter<CRDTListEvents> implements CRDTList<T> {
   private backing: T[] = [];
 
   get length() {

@@ -14,9 +14,10 @@ import { Generators } from '@diagram-craft/utils/generator';
 import { SerializedElement } from './serialization/types';
 import { DiagramDocumentData } from './diagramDocumentData';
 import { Json } from '@diagram-craft/utils/types';
-import { CRDT, CRDTMappedList, CRDTRoot } from './collaboration/crdt';
+import { CRDT, CRDTRoot } from './collaboration/crdt';
 import { CollaborationConfig } from './collaboration/collaborationConfig';
 import { DocumentProps } from './documentProps';
+import { CRDTMappedList } from './collaboration/crdtMappedList';
 
 export type DocumentEvents = {
   diagramchanged: { after: Diagram };
