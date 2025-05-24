@@ -1,4 +1,5 @@
-import { CRDTList, CRDTMap, CRDTRoot } from './crdt';
+import { CRDTList, CRDTListEvents, CRDTMap, CRDTRoot } from './crdt';
+import { EventEmitter } from '@diagram-craft/utils/event';
 
 export class NoOpCRDTMap<T> implements CRDTMap<T> {
   private backing = new Map<string, T>();
@@ -44,7 +45,8 @@ export class NoOpCRDTMap<T> implements CRDTMap<T> {
   }
 }
 
-export class NoOpCRDTList<T> implements CRDTList<T> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export class NoOpCRDTList<T = any> extends EventEmitter<CRDTListEvents> implements CRDTList<T> {
   private backing: T[] = [];
 
   get length() {
@@ -57,14 +59,17 @@ export class NoOpCRDTList<T> implements CRDTList<T> {
 
   insert(index: number, value: T[]): void {
     this.backing.splice(index, 0, ...value);
+    this.emit('localInsert', { index, value });
   }
 
   push(value: T[]): void {
     this.backing.push(...value);
+    this.emit('localInsert', { index: this.backing.length - 1, value });
   }
 
   delete(index: number): void {
     this.backing.splice(index, 1);
+    this.emit('localDelete', { index, count: 1 });
   }
 
   toArray(): T[] {

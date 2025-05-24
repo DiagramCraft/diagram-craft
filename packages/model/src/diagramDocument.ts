@@ -4,7 +4,7 @@ import { Diagram, diagramIterator, DiagramIteratorOpts } from './diagram';
 import { AttachmentConsumer, AttachmentManager } from './attachment';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinitionRegistry';
-import { precondition } from '@diagram-craft/utils/assert';
+import { NOT_IMPLEMENTED_YET, precondition } from '@diagram-craft/utils/assert';
 import { isNode } from './diagramElement';
 import { UnitOfWork } from './unitOfWork';
 import { DataProviderRegistry } from './dataProvider';
@@ -17,6 +17,7 @@ import { Json } from '@diagram-craft/utils/types';
 import { CRDT, CRDTRoot } from './collaboration/crdt';
 import { CollaborationConfig } from './collaboration/collaborationConfig';
 import { DocumentProps } from './documentProps';
+import { CRDTMappedList } from './collaboration/crdtMappedList';
 
 export type DocumentEvents = {
   diagramchanged: { after: Diagram };
@@ -40,7 +41,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
 
   props: DocumentProps;
 
-  #diagrams: Diagram[] = [];
+  #diagrams: CRDTMappedList<Diagram>;
 
   // This allows any extra, application-specific, data to be stored transparently
   // By design; changing the extra data field, the document is not to be
@@ -58,12 +59,21 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     readonly crdtRoot?: CRDTRoot
   ) {
     super();
+
     this.root = crdtRoot ?? new CRDT.Root();
     this.data = new DiagramDocumentData(this);
     this.customPalette = new DiagramPalette(this.root, isStencil ? 0 : 14);
     this.styles = new DiagramStyles(this.root, this, !isStencil);
     this.attachments = new AttachmentManager(this.root, this);
     this.props = new DocumentProps(this.root, this);
+
+    this.#diagrams = new CRDTMappedList<Diagram, string>(
+      this.root.getList('diagrams'),
+      _e => {
+        throw NOT_IMPLEMENTED_YET();
+      },
+      e => e.id
+    );
   }
 
   transact(callback: () => void) {
@@ -80,7 +90,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
   }
 
   get topLevelDiagrams() {
-    return this.#diagrams;
+    return this.#diagrams.entries;
   }
 
   get definitions() {
@@ -91,7 +101,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
   }
 
   *diagramIterator(opts: DiagramIteratorOpts = {}) {
-    yield* diagramIterator(this.#diagrams, opts);
+    yield* diagramIterator(this.#diagrams.entries, opts);
   }
 
   getById(id: string) {
@@ -107,7 +117,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
   getDiagramPath(diagram: Diagram, startAt?: Diagram): Diagram[] {
     const dest: Diagram[] = [];
 
-    for (const d of startAt ? startAt.diagrams : this.#diagrams) {
+    for (const d of startAt ? startAt.diagrams : this.#diagrams.entries) {
       if (d === diagram) {
         dest.push(d);
       } else {
@@ -128,7 +138,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     if (parent) {
       (parent.diagrams as Diagram[]).push(diagram);
     } else {
-      this.#diagrams.push(diagram);
+      this.#diagrams.add(diagram);
     }
 
     diagram.document = this;
@@ -140,10 +150,15 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
 
     const diagrams = path.length === 1 ? this.#diagrams : (path.at(-2)!.diagrams as Diagram[]);
 
-    const idx = diagrams.indexOf(diagram);
-    if (idx !== -1) {
-      diagrams.splice(idx, 1);
+    if (diagrams instanceof CRDTMappedList) {
+      diagrams.remove(diagram);
       this.emit('diagramremoved', { node: diagram });
+    } else {
+      const idx = diagrams.indexOf(diagram);
+      if (idx !== -1) {
+        diagrams.splice(idx, 1);
+        this.emit('diagramremoved', { node: diagram });
+      }
     }
   }
 
@@ -153,7 +168,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
 
   toJSON() {
     return {
-      diagrams: this.#diagrams,
+      diagrams: this.#diagrams.toJSON(),
       styles: this.styles,
       props: this.props,
       customPalette: this.customPalette

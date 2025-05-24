@@ -1,4 +1,5 @@
 import { CollaborationConfig } from './collaborationConfig';
+import { Emitter } from '@diagram-craft/utils/event';
 
 export interface CRDTRoot {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -25,7 +26,15 @@ export interface CRDTMap<T = any> {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface CRDTList<T = any> {
+export type CRDTListEvents<T = any> = {
+  localInsert: { index: number; value: Array<T> };
+  localDelete: { index: number; count: number };
+  remoteInsert: { index: number; value: Array<T> };
+  remoteDelete: { index: number; count: number };
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface CRDTList<T = any> extends Emitter<CRDTListEvents<T>> {
   length: number;
   get(index: number): T;
   insert(index: number, value: Array<T>): void;
