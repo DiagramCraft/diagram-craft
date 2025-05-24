@@ -44,6 +44,16 @@ class Query {
     });
   }
 
+  setHistory(entries: ReadonlyArray<[string, string]>) {
+    const list = this._history.get(this.obj);
+    while (list.length > 0) {
+      list.delete(0);
+    }
+    for (const e of entries) {
+      this.addHistory(e);
+    }
+  }
+
   get saved() {
     return this._saved.get(this.obj).toArray();
   }
@@ -51,12 +61,61 @@ class Query {
   addSaved(entry: [string, string]) {
     this._saved.get(this.obj).push([entry]);
   }
+
+  setSaved(entries: ReadonlyArray<[string, string]>) {
+    const list = this._saved.get(this.obj);
+    while (list.length > 0) {
+      list.delete(0);
+    }
+    for (const e of entries) {
+      this.addSaved(e);
+    }
+  }
 }
 
+const MAX_LENGTH = 30;
+
+class RecentStencils {
+  #stencils: CRDTList<string>;
+
+  constructor(parent: CRDTMap) {
+    this.#stencils = CRDT.getList(parent, 'stencils');
+  }
+
+  register(id: string) {
+    if (!this.#stencils.toArray().includes(id)) {
+      this.#stencils.insert(0, [id]);
+    }
+    while (this.#stencils.length > MAX_LENGTH) {
+      this.#stencils.delete(this.stencils.length - 1);
+    }
+  }
+
+  set(stencils: readonly string[]) {
+    while (this.#stencils.length > 0) {
+      this.#stencils.delete(0);
+    }
+    for (const s of stencils) {
+      this.register(s);
+    }
+  }
+
+  get stencils() {
+    return this.#stencils.toArray();
+  }
+}
+
+/**
+ * The DocumentProps allows extra application data to be stored
+ * By design; changing the extra data field, the document is not to be
+ * considered dirty. This must be handled manually
+ */
 export class DocumentProps {
   readonly query: Query;
+  readonly recentStencils: RecentStencils;
 
   constructor(root: CRDTRoot, document: DiagramDocument) {
     this.query = new Query(root.getMap('documentProps'), document);
+    this.recentStencils = new RecentStencils(root.getMap('documentProps'));
   }
 }

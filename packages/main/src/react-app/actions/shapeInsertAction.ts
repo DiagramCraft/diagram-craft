@@ -5,7 +5,6 @@ import { assignNewBounds, assignNewIds } from '@diagram-craft/model/helpers/clon
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
 import { assert } from '@diagram-craft/utils/assert';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
-import { registerStencilUse } from '@diagram-craft/canvas-app/recentStencils';
 
 export const shapeInsertActions = (application: Application) => ({
   SHAPE_INSERT: new ShapeInsertAction(application)
@@ -66,7 +65,7 @@ class ShapeInsertAction extends AbstractAction<undefined, Application> {
 
         commitWithUndo(uow, 'Add element');
 
-        registerStencilUse(stencil.id, diagram.document);
+        diagram.document.props.recentStencils.register(stencil.id);
 
         diagram.selectionState.toggle(node);
       },

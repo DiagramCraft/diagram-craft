@@ -11,6 +11,46 @@ describe('DocumentProps', () => {
   });
 });
 
+describe('RecentStencils', () => {
+  it('should initialize with an empty list', () => {
+    const documentProps = new DocumentProps(new NoOpCRDTRoot(), TestModel.newDocument());
+    const recentStencils = documentProps.recentStencils;
+
+    expect(recentStencils.stencils).toEqual([]);
+  });
+
+  it('should register a new stencil', () => {
+    const documentProps = new DocumentProps(new NoOpCRDTRoot(), TestModel.newDocument());
+    const recentStencils = documentProps.recentStencils;
+
+    const stencilId = 'stencil-1';
+    recentStencils.register(stencilId);
+
+    expect(recentStencils.stencils).toEqual([stencilId]);
+  });
+
+  it('should not register duplicate stencils', () => {
+    const documentProps = new DocumentProps(new NoOpCRDTRoot(), TestModel.newDocument());
+    const recentStencils = documentProps.recentStencils;
+
+    const stencilId = 'stencil-1';
+    recentStencils.register(stencilId);
+    recentStencils.register(stencilId);
+
+    expect(recentStencils.stencils).toEqual([stencilId]);
+  });
+
+  it('should initialize stencils using set method', () => {
+    const documentProps = new DocumentProps(new NoOpCRDTRoot(), TestModel.newDocument());
+    const recentStencils = documentProps.recentStencils;
+
+    const initialStencils = ['s-3', 's-2', 's-1'];
+    recentStencils.set(initialStencils);
+
+    expect(recentStencils.stencils).toEqual(initialStencils.toReversed());
+  });
+});
+
 describe('Query', () => {
   it('should initialize history with default values', () => {
     const documentProps = new DocumentProps(new NoOpCRDTRoot(), TestModel.newDocument());
@@ -57,5 +97,31 @@ describe('Query', () => {
     query.addSaved(newEntry);
 
     expect(query.saved[0]).toEqual(newEntry);
+  });
+
+  it('should set saved queries with new array', () => {
+    const documentProps = new DocumentProps(new NoOpCRDTRoot(), TestModel.newDocument());
+    const query = documentProps.query;
+
+    const savedQueries: [string, string][] = [
+      ['layer-1', '.elements[]'],
+      ['layer-2', '.elements[] | select(.type=="node")']
+    ];
+    query.setSaved(savedQueries);
+
+    expect(query.saved).toEqual(savedQueries);
+  });
+
+  it('should set history with new array', () => {
+    const documentProps = new DocumentProps(new NoOpCRDTRoot(), TestModel.newDocument());
+    const query = documentProps.query;
+
+    const historyQueries: [string, string][] = [
+      ['layer-1', '.elements[]'],
+      ['layer-2', '.elements[] | select(.type=="node")']
+    ];
+    query.setHistory(historyQueries);
+
+    expect(query.history).toEqual(historyQueries.toReversed());
   });
 });
