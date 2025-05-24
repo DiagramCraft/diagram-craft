@@ -32,8 +32,8 @@ export class TestModel {
 }
 
 export class TestDiagramBuilder extends Diagram {
-  constructor(document: DiagramDocument) {
-    super('1', '1', document);
+  constructor(document: DiagramDocument, id = '1') {
+    super(id, '1', document);
   }
 
   newLayer(id?: string) {
