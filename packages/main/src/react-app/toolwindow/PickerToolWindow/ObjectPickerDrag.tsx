@@ -18,7 +18,6 @@ import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 import { deepClone } from '@diagram-craft/utils/object';
 import { clamp } from '@diagram-craft/utils/math';
 import { insert } from '@diagram-craft/canvas/component/vdom';
-import { registerStencilUse } from '@diagram-craft/canvas-app/recentStencils';
 import { StaticCanvasComponent } from '@diagram-craft/canvas/canvas/StaticCanvasComponent';
 
 enum State {
@@ -82,7 +81,7 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
     });
 
     if (this.stencilId) {
-      registerStencilUse(this.stencilId, this.diagram.document);
+      this.diagram.document.props.recentStencils.register(this.stencilId);
     }
   }
 

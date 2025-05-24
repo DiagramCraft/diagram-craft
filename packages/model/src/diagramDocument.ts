@@ -13,7 +13,6 @@ import { UrlDataProvider, UrlDataProviderId } from './dataProviderUrl';
 import { Generators } from '@diagram-craft/utils/generator';
 import { SerializedElement } from './serialization/types';
 import { DiagramDocumentData } from './diagramDocumentData';
-import { Json } from '@diagram-craft/utils/types';
 import { CRDT, CRDTRoot } from './collaboration/crdt';
 import { CollaborationConfig } from './collaboration/collaborationConfig';
 import { DocumentProps } from './documentProps';
@@ -42,11 +41,6 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
   props: DocumentProps;
 
   #diagrams: CRDTMappedList<Diagram>;
-
-  // This allows any extra, application-specific, data to be stored transparently
-  // By design; changing the extra data field, the document is not to be
-  // considered dirty. This must be handled manually
-  extra: Record<string, Json> = {};
 
   url: string | undefined;
 

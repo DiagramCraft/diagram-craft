@@ -88,4 +88,13 @@ export const CRDT = new (class {
     }
     return r as CRDTMap;
   }
+
+  getList(m: CRDTMap, name: string) {
+    let r = m.get(name);
+    if (!r) {
+      r = new CRDT.List();
+      m.set(name, r);
+    }
+    return r as CRDTList;
+  }
 })();

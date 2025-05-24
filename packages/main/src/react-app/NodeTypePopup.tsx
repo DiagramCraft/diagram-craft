@@ -13,7 +13,6 @@ import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { assignNewBounds, assignNewIds } from '@diagram-craft/model/helpers/cloneHelper';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { useDiagram } from '../application';
-import { registerStencilUse } from '@diagram-craft/canvas-app/recentStencils';
 
 export const NodeTypePopup = (props: Props) => {
   const diagram = useDiagram();
@@ -54,7 +53,7 @@ export const NodeTypePopup = (props: Props) => {
         ])
       );
 
-      registerStencilUse(registration.id, diagram.document);
+      diagram.document.props.recentStencils.register(registration.id);
 
       props.onClose();
     },

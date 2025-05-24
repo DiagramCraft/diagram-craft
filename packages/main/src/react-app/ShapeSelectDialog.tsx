@@ -1,6 +1,5 @@
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
-import { getRecentStencils } from '@diagram-craft/canvas-app/recentStencils';
 import { useDiagram, useDocument } from '../application';
 import { PickerCanvas } from './PickerCanvas';
 import { Diagram } from '@diagram-craft/model/diagram';
@@ -72,7 +71,7 @@ export const ShapeSelectDialog = (props: Props) => {
 
   if (!props.open) return <div></div>;
 
-  const recentStencils = getRecentStencils(document);
+  const recentStencils = document.props.recentStencils.stencils;
   return (
     <Dialog
       open={props.open}
