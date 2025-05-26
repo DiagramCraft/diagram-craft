@@ -46,9 +46,7 @@ class Query {
 
   setHistory(entries: ReadonlyArray<[string, string]>) {
     const list = this._history.get(this.obj);
-    while (list.length > 0) {
-      list.delete(0);
-    }
+    list.clear();
     for (const e of entries) {
       this.addHistory(e);
     }
@@ -64,9 +62,7 @@ class Query {
 
   setSaved(entries: ReadonlyArray<[string, string]>) {
     const list = this._saved.get(this.obj);
-    while (list.length > 0) {
-      list.delete(0);
-    }
+    list.clear();
     for (const e of entries) {
       this.addSaved(e);
     }
@@ -92,9 +88,7 @@ class RecentStencils {
   }
 
   set(stencils: readonly string[]) {
-    while (this.#stencils.length > 0) {
-      this.#stencils.delete(0);
-    }
+    this.#stencils.clear();
     for (const s of stencils) {
       this.register(s);
     }

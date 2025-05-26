@@ -2,11 +2,8 @@ import { CollaborationConfig } from './collaborationConfig';
 import { Emitter } from '@diagram-craft/utils/event';
 
 export interface CRDTRoot {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getMap(name: string): CRDTMap<any>;
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getList(name: string): CRDTList<any>;
+  getMap(name: string): CRDTMap;
+  getList(name: string): CRDTList;
 
   transact(callback: () => void): void;
 }
@@ -19,10 +16,9 @@ export interface CRDTMap<T = any> {
   delete(key: string): void;
   clear(): void;
   has(key: string): boolean;
-  forEach(callback: (value: T, key: string, map: CRDTMap<T>) => void): void;
-  entries(): IterableIterator<[string, T]>;
-  keys(): IterableIterator<string>;
-  values(): IterableIterator<T>;
+  entries(): Iterable<[string, T]>;
+  keys(): Iterable<string>;
+  values(): Iterable<T>;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -36,6 +32,7 @@ export type CRDTListEvents<T = any> = {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface CRDTList<T = any> extends Emitter<CRDTListEvents<T>> {
   length: number;
+  clear(): void;
   get(index: number): T;
   insert(index: number, value: Array<T>): void;
   push(value: Array<T>): void;
@@ -67,16 +64,13 @@ export class CRDTProperty<T = any> {
 }
 
 export const CRDT = new (class {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  get Root(): new (...args: any[]) => CRDTRoot {
+  get Root(): new (...args: unknown[]) => CRDTRoot {
     return CollaborationConfig.CRDTRoot;
   }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  get Map(): new (...args: any[]) => CRDTMap {
+  get Map(): new (...args: unknown[]) => CRDTMap {
     return CollaborationConfig.CRDTMap;
   }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  get List(): new (...args: any[]) => CRDTList {
+  get List(): new (...args: unknown[]) => CRDTList {
     return CollaborationConfig.CRDTList;
   }
 

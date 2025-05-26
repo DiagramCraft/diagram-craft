@@ -72,6 +72,12 @@ export class NoOpCRDTList<T = any> extends EventEmitter<CRDTListEvents> implemen
     this.emit('localDelete', { index, count: 1 });
   }
 
+  clear() {
+    while (this.backing.length > 0) {
+      this.delete(0);
+    }
+  }
+
   toArray(): T[] {
     return this.backing;
   }
