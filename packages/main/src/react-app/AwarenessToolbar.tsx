@@ -17,7 +17,7 @@ export const AwarenessToolbar = () => {
   return (
     <div id="awareness" className={styles.cmpAwarenessToolbar}>
       {CollaborationConfig.Backend.awareness!.getUserStates()
-        .filter(user => !seenUsers.has(user.name))
+        .filter(user => !!user && !!user.name && !seenUsers.has(user.name))
         .map(user => {
           seenUsers.add(user.name);
           return user;

@@ -4,7 +4,7 @@ import { assert } from '@diagram-craft/utils/assert';
 const DEFAULT_COLOR = '#000000';
 
 export class DiagramPalette {
-  private palette: CRDTMap<string>;
+  private readonly palette: CRDTMap<string>;
 
   private _count = new CRDTProperty<number>('count');
 

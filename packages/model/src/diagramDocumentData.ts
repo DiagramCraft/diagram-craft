@@ -5,6 +5,7 @@ import { DiagramDocumentDataTemplates } from './diagramDocumentDataTemplates';
 import { UnitOfWork } from './unitOfWork';
 import { deepEquals } from '@diagram-craft/utils/object';
 import { EventEmitter } from '@diagram-craft/utils/event';
+import { CRDTRoot } from './collaboration/crdt';
 
 const makeDataListener =
   (document: DiagramDocument, mode: 'update' | 'delete') => (data: { data: Data[] }) => {
@@ -74,23 +75,24 @@ const DEFAULT_SCHEMA: DataSchema[] = [
 ];
 
 export class DiagramDocumentData extends EventEmitter<{ change: void }> {
-  #document: DiagramDocument;
+  readonly #document: DiagramDocument;
 
   #provider: DataProvider | undefined;
-  #schemas: DiagramDocumentDataSchemas;
-  #templates: DiagramDocumentDataTemplates;
+  readonly #schemas: DiagramDocumentDataSchemas;
+  readonly #templates: DiagramDocumentDataTemplates;
 
-  #updateDataListener: (data: { data: Data[] }) => void;
-  #deleteDataListener: (data: { data: Data[] }) => void;
-  #deleteSchemaListener: (s: DataSchema) => void;
-  #updateSchemaListener: (s: DataSchema) => void;
+  readonly #updateDataListener: (data: { data: Data[] }) => void;
+  readonly #deleteDataListener: (data: { data: Data[] }) => void;
+  readonly #deleteSchemaListener: (s: DataSchema) => void;
+  readonly #updateSchemaListener: (s: DataSchema) => void;
 
-  constructor(document: DiagramDocument) {
+  constructor(root: CRDTRoot, document: DiagramDocument) {
     super();
+
     this.#document = document;
 
     this.#schemas = new DiagramDocumentDataSchemas(this.#document, DEFAULT_SCHEMA);
-    this.#templates = new DiagramDocumentDataTemplates();
+    this.#templates = new DiagramDocumentDataTemplates(root.getMap('documentData'));
 
     this.#updateDataListener = makeDataListener(document, 'update');
     this.#deleteDataListener = makeDataListener(document, 'delete');
