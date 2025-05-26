@@ -4,7 +4,7 @@ import { Diagram, diagramIterator, DiagramIteratorOpts } from './diagram';
 import { AttachmentConsumer, AttachmentManager } from './attachment';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinitionRegistry';
-import { NOT_IMPLEMENTED_YET, precondition } from '@diagram-craft/utils/assert';
+import { precondition } from '@diagram-craft/utils/assert';
 import { isNode } from './diagramElement';
 import { UnitOfWork } from './unitOfWork';
 import { DataProviderRegistry } from './dataProvider';
@@ -13,7 +13,7 @@ import { UrlDataProvider, UrlDataProviderId } from './dataProviderUrl';
 import { Generators } from '@diagram-craft/utils/generator';
 import { SerializedElement } from './serialization/types';
 import { DiagramDocumentData } from './diagramDocumentData';
-import { CRDT, CRDTRoot } from './collaboration/crdt';
+import { CRDT, CRDTMap, CRDTRoot } from './collaboration/crdt';
 import { CollaborationConfig } from './collaboration/collaborationConfig';
 import { DocumentProps } from './documentProps';
 import { CRDTMappedList } from './collaboration/crdtMappedList';
@@ -34,17 +34,15 @@ export type DataTemplate = {
 export class DiagramDocument extends EventEmitter<DocumentEvents> implements AttachmentConsumer {
   readonly root: CRDTRoot;
 
-  attachments: AttachmentManager;
-  styles: DiagramStyles;
-  customPalette: DiagramPalette;
-
-  props: DocumentProps;
-
-  #diagrams: CRDTMappedList<Diagram>;
-
-  url: string | undefined;
-
+  readonly attachments: AttachmentManager;
+  readonly styles: DiagramStyles;
+  readonly customPalette: DiagramPalette;
+  readonly props: DocumentProps;
+  readonly #diagrams: CRDTMappedList<Diagram>;
   readonly data: DiagramDocumentData;
+
+  // Transient properties
+  url: string | undefined;
 
   constructor(
     public readonly nodeDefinitions: NodeDefinitionRegistry,
@@ -55,18 +53,16 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     super();
 
     this.root = crdtRoot ?? new CRDT.Root();
-    this.data = new DiagramDocumentData(this);
+    this.data = new DiagramDocumentData(this.root, this);
     this.customPalette = new DiagramPalette(this.root, isStencil ? 0 : 14);
     this.styles = new DiagramStyles(this.root, this, !isStencil);
     this.attachments = new AttachmentManager(this.root, this);
     this.props = new DocumentProps(this.root, this);
 
-    this.#diagrams = new CRDTMappedList<Diagram, string>(
+    this.#diagrams = new CRDTMappedList<Diagram, CRDTMap>(
       this.root.getList('diagrams'),
-      _e => {
-        throw NOT_IMPLEMENTED_YET();
-      },
-      e => e.id
+      root => Diagram.fromCRDT(root, this),
+      diagram => diagram.crdt
     );
   }
 

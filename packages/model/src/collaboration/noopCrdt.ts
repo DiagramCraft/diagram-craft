@@ -1,7 +1,7 @@
-import { CRDTList, CRDTListEvents, CRDTMap, CRDTRoot } from './crdt';
+import { CRDTList, CRDTListEvents, CRDTMap, CRDTMapEvents, CRDTRoot } from './crdt';
 import { EventEmitter } from '@diagram-craft/utils/event';
 
-export class NoOpCRDTMap<T> implements CRDTMap<T> {
+export class NoOpCRDTMap<T> extends EventEmitter<CRDTMapEvents> implements CRDTMap<T> {
   private backing = new Map<string, T>();
 
   get size() {
@@ -13,23 +13,25 @@ export class NoOpCRDTMap<T> implements CRDTMap<T> {
   }
 
   set(key: string, value: T): void {
+    const isNew = this.backing.has(key);
     this.backing.set(key, value);
+
+    this.emit(isNew ? 'localInsert' : 'localUpdate', { key, value });
   }
 
   delete(key: string): void {
     this.backing.delete(key);
+    this.emit('localDelete');
   }
 
   clear(): void {
+    const map = { ...this.backing };
     this.backing.clear();
+    Object.entries(map).forEach(([k, v]) => this.emit('localDelete', { key: k, value: v }));
   }
 
   has(key: string): boolean {
     return this.backing.has(key);
-  }
-
-  forEach(callback: (value: T, key: string, map: CRDTMap<T>) => void): void {
-    this.backing.forEach(callback);
   }
 
   entries(): IterableIterator<[string, T]> {

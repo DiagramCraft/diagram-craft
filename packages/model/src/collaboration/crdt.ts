@@ -9,7 +9,18 @@ export interface CRDTRoot {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface CRDTMap<T = any> {
+export type CRDTMapEvents<T = any> = {
+  localInsert: { key: string; value: T };
+  localDelete: { key: string; value: T };
+  localUpdate: { key: string; value: T };
+
+  remoteInsert: { key: string; value: T };
+  remoteDelete: { key: string; value: T };
+  remoteUpdate: { key: string; value: T };
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface CRDTMap<T = any> extends Emitter<CRDTMapEvents<T>> {
   size: number;
   get(key: string): T | undefined;
   set(key: string, value: T): void;
@@ -25,6 +36,7 @@ export interface CRDTMap<T = any> {
 export type CRDTListEvents<T = any> = {
   localInsert: { index: number; value: Array<T> };
   localDelete: { index: number; count: number };
+
   remoteInsert: { index: number; value: Array<T> };
   remoteDelete: { index: number; count: number };
 };
@@ -88,6 +100,8 @@ export const CRDT = new (class {
     if (!r) {
       r = new CRDT.List();
       m.set(name, r);
+    } else if (!(r instanceof CRDT.List)) {
+      throw new Error('Invalid list');
     }
     return r as CRDTList;
   }

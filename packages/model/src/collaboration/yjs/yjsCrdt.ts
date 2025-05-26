@@ -1,4 +1,4 @@
-import { CRDTList, CRDTListEvents, CRDTMap, CRDTRoot } from '../crdt';
+import { CRDTList, CRDTListEvents, CRDTMap, CRDTMapEvents, CRDTRoot } from '../crdt';
 import * as Y from 'yjs';
 import { EventEmitter, EventKey, EventReceiver } from '@diagram-craft/utils/event';
 import { mapIterator } from '@diagram-craft/utils/iterator';
@@ -48,10 +48,33 @@ export class YJSRoot implements CRDTRoot {
 }
 
 export class YJSMap<T> implements CRDTMap<T> {
+  private emitter = new EventEmitter<CRDTMapEvents>();
   delegate: Y.Map<T>;
 
   constructor(delegate?: Y.Map<T>) {
     this.delegate = delegate ?? new Y.Map();
+
+    this.delegate.observe(e => {
+      const local = e.transaction.local;
+      e.changes.keys.forEach((change, key) => {
+        if (change.action === 'add') {
+          this.emitter.emit(local ? 'localInsert' : 'remoteInsert', {
+            key,
+            value: wrap(this.delegate.get(key))
+          });
+        } else if (change.action === 'update') {
+          this.emitter.emit(local ? 'localUpdate' : 'remoteUpdate', {
+            key,
+            value: wrap(this.delegate.get(key))
+          });
+        } else if (change.action === 'delete') {
+          this.emitter.emit(local ? 'localDelete' : 'remoteDelete', {
+            key,
+            value: wrap(change.oldValue)
+          });
+        }
+      });
+    });
   }
 
   clear() {
@@ -100,6 +123,14 @@ export class YJSMap<T> implements CRDTMap<T> {
       }
     };
   }
+
+  on<K extends EventKey<CRDTMapEvents>>(eventName: K, fn: EventReceiver<CRDTMapEvents[K]>) {
+    this.emitter.on(eventName, fn);
+  }
+
+  off<K extends EventKey<CRDTMapEvents>>(eventName: K, fn: EventReceiver<CRDTMapEvents[K]>) {
+    this.emitter.off(eventName, fn);
+  }
 }
 
 export class YJSList<T> implements CRDTList<T> {
@@ -110,6 +141,7 @@ export class YJSList<T> implements CRDTList<T> {
     this.delegate = delegate ?? new Y.Array();
     this.delegate.observe(e => {
       let idx = 0;
+
       for (const delta of e.changes.delta) {
         if (delta.delete !== undefined) {
           this.emitter.emit(e.transaction.local ? 'localDelete' : 'remoteDelete', {
