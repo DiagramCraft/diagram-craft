@@ -13,7 +13,7 @@ export class NoOpCRDTMap<T> extends EventEmitter<CRDTMapEvents> implements CRDTM
   }
 
   set(key: string, value: T): void {
-    const isNew = this.backing.has(key);
+    const isNew = !this.backing.has(key);
     this.backing.set(key, value);
 
     this.emit(isNew ? 'localInsert' : 'localUpdate', { key, value });

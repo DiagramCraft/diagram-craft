@@ -4,6 +4,7 @@ import { UndoableAction } from './undoManager';
 import { Diagram } from './diagram';
 import { deepClone } from '@diagram-craft/utils/object';
 import { EventEmitter } from '@diagram-craft/utils/event';
+import { CRDT, CRDTMap } from './collaboration/crdt';
 
 type DataSchemaField = {
   id: string;
@@ -18,58 +19,63 @@ export type DataSchema = {
   fields: DataSchemaField[];
 };
 
-export class DiagramDocumentDataSchemas extends EventEmitter<{
+type DiagramDocumentDataSchemasEvents = {
   update: { schema: DataSchema };
   add: { schema: DataSchema };
   remove: { schema: DataSchema };
-}> {
-  #schemas: DataSchema[] = [];
+};
+
+export class DiagramDocumentDataSchemas extends EventEmitter<DiagramDocumentDataSchemasEvents> {
+  readonly #schemas: CRDTMap<DataSchema>;
 
   constructor(
+    root: CRDTMap,
     private readonly document: DiagramDocument,
     schemas?: DataSchema[]
   ) {
     super();
-    this.#schemas = schemas ?? [];
+
+    this.#schemas = CRDT.getMap(root, 'schemas');
+
+    this.#schemas.on('remoteUpdate', p => this.emit('update', { schema: p.value }));
+    this.#schemas.on('remoteDelete', p => this.emit('remove', { schema: p.value }));
+    this.#schemas.on('remoteInsert', p => this.emit('add', { schema: p.value }));
+
+    if (schemas) {
+      this.replaceBy(schemas);
+    }
   }
 
   get all() {
-    return this.#schemas;
+    return Array.from(this.#schemas.values());
   }
 
   get(id: string) {
-    return (
-      this.#schemas.find(s => s.id === id) ?? { id: '', name: '', source: 'document', fields: [] }
-    );
+    return this.#schemas.get(id) ?? { id: '', name: '', source: 'document', fields: [] };
   }
 
   has(id: string) {
-    return this.#schemas.find(s => s.id === id);
+    return this.#schemas.has(id);
   }
 
   add(schema: DataSchema) {
-    if (this.#schemas.find(s => s.id === schema.id)) {
+    const isNew = !this.#schemas.has(schema.id);
+    if (!isNew) {
       this.update(schema);
       this.emit('update', { schema });
     } else {
-      this.#schemas.push(schema);
+      this.#schemas.set(schema.id, schema);
       this.emit('add', { schema });
     }
   }
 
-  /**
-   * @deprecated Avoid using as it doesn't clear usage of schema in existing elements.
-   *             Please use removeAndClearUsage instead
-   * @param schema
-   */
-  remove(schema: DataSchema) {
-    const idx = this.#schemas.indexOf(schema);
-    if (idx !== -1) {
-      this.#schemas.splice(idx, 1);
-      this.emit('remove', { schema });
-    }
+  private remove(schema: DataSchema) {
+    if (!this.#schemas.has(schema.id)) return;
+    this.#schemas.delete(schema.id);
+    this.emit('remove', { schema });
   }
 
+  // TODO: Add unit tests
   removeAndClearUsage(schema: DataSchema, uow: UnitOfWork) {
     this.remove(schema);
 
@@ -90,7 +96,16 @@ export class DiagramDocumentDataSchemas extends EventEmitter<{
     const dest = this.get(schema.id);
     dest.name = schema.name;
     dest.fields = schema.fields;
+    this.#schemas.set(dest.id, schema);
     this.emit('update', { schema });
+  }
+
+  replaceBy(schemas: DataSchema[]) {
+    this.#schemas.clear();
+    for (const template of schemas) {
+      this.#schemas.set(template.id, template);
+    }
+    // TODO: Should we emit events here?
   }
 }
 

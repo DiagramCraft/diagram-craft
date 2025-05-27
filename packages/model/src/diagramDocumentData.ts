@@ -91,8 +91,9 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
 
     this.#document = document;
 
-    this.#schemas = new DiagramDocumentDataSchemas(this.#document, DEFAULT_SCHEMA);
-    this.#templates = new DiagramDocumentDataTemplates(root.getMap('documentData'));
+    const parent = root.getMap('documentData');
+    this.#schemas = new DiagramDocumentDataSchemas(parent, this.#document, DEFAULT_SCHEMA);
+    this.#templates = new DiagramDocumentDataTemplates(parent);
 
     this.#updateDataListener = makeDataListener(document, 'update');
     this.#deleteDataListener = makeDataListener(document, 'delete');
