@@ -1,11 +1,11 @@
-import { Data, DataProvider } from './dataProvider';
+import { Data, DataProvider, DataProviderRegistry } from './dataProvider';
 import { DataSchema, DiagramDocumentDataSchemas } from './diagramDocumentDataSchemas';
 import { DiagramDocument } from './diagramDocument';
 import { DiagramDocumentDataTemplates } from './diagramDocumentDataTemplates';
 import { UnitOfWork } from './unitOfWork';
 import { deepEquals } from '@diagram-craft/utils/object';
 import { EventEmitter } from '@diagram-craft/utils/event';
-import { CRDTRoot } from './collaboration/crdt';
+import { CRDTMap, CRDTMapEvents, CRDTRoot } from './collaboration/crdt';
 
 const makeDataListener =
   (document: DiagramDocument, mode: 'update' | 'delete') => (data: { data: Data[] }) => {
@@ -74,12 +74,14 @@ const DEFAULT_SCHEMA: DataSchema[] = [
   }
 ];
 
-export class DiagramDocumentData extends EventEmitter<{ change: void }> {
-  readonly #document: DiagramDocument;
+const PROVIDER = 'provider';
 
-  #provider: DataProvider | undefined;
+export class DiagramDocumentData extends EventEmitter<{ change: void }> {
+  readonly #crdt: CRDTMap;
   readonly #schemas: DiagramDocumentDataSchemas;
   readonly #templates: DiagramDocumentDataTemplates;
+
+  #provider: DataProvider | undefined;
 
   readonly #updateDataListener: (data: { data: Data[] }) => void;
   readonly #deleteDataListener: (data: { data: Data[] }) => void;
@@ -89,11 +91,9 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
   constructor(root: CRDTRoot, document: DiagramDocument) {
     super();
 
-    this.#document = document;
-
-    const parent = root.getMap('documentData');
-    this.#schemas = new DiagramDocumentDataSchemas(parent, this.#document, DEFAULT_SCHEMA);
-    this.#templates = new DiagramDocumentDataTemplates(parent);
+    this.#crdt = root.getMap('documentData');
+    this.#schemas = new DiagramDocumentDataSchemas(this.#crdt, document, DEFAULT_SCHEMA);
+    this.#templates = new DiagramDocumentDataTemplates(this.#crdt);
 
     this.#updateDataListener = makeDataListener(document, 'update');
     this.#deleteDataListener = makeDataListener(document, 'delete');
@@ -106,13 +106,26 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
     this.#templates.on('add', () => this.emit('change'));
     this.#templates.on('remove', () => this.emit('change'));
     this.#templates.on('update', () => this.emit('change'));
+
+    const updateProvider = (e: CRDTMapEvents['remoteUpdate'] | CRDTMapEvents['remoteInsert']) => {
+      if (e.key !== PROVIDER) return;
+      if (e.value.length === 0) {
+        this.setProviderInternal(undefined);
+      } else {
+        const { id, data } = JSON.parse(e.value);
+        this.setProviderInternal(DataProviderRegistry.providers.get(id)!(data));
+      }
+    };
+
+    this.#crdt.on('remoteUpdate', updateProvider);
+    this.#crdt.on('remoteInsert', updateProvider);
   }
 
   get provider() {
     return this.#provider;
   }
 
-  setProvider(dataProvider: DataProvider | undefined, initial = false) {
+  private setProviderInternal(dataProvider: DataProvider | undefined, initial = false) {
     this.#provider?.off?.('addData', this.#updateDataListener);
     this.#provider?.off?.('updateData', this.#updateDataListener);
     this.#provider?.off?.('deleteData', this.#deleteDataListener);
@@ -130,6 +143,19 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
       this.#provider.on('addSchema', this.#updateSchemaListener);
       this.#provider.on('updateSchema', this.#updateSchemaListener);
       this.#provider.on('deleteSchema', this.#deleteSchemaListener);
+    }
+  }
+
+  setProvider(dataProvider: DataProvider | undefined, initial = false) {
+    this.setProviderInternal(dataProvider, initial);
+
+    if (this.#provider) {
+      this.#crdt.set(
+        PROVIDER,
+        JSON.stringify({ id: this.#provider!.id, data: this.#provider!.serialize() })
+      );
+    } else {
+      this.#crdt.set(PROVIDER, '');
     }
   }
 
