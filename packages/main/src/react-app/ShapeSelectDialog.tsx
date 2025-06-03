@@ -23,7 +23,7 @@ const getDiagram = (props: {
     return NODE_CACHE.get(props.stencil.id)!;
   }
 
-  const { diagram, node } = Diagram.createForNode(
+  const { diagram, node } = Diagram.createThumbnailDiagramForNode(
     d => props.stencil.node(d),
     props.document.definitions
   );

@@ -27,32 +27,35 @@ export const AppLoader = (props: Props) => {
   }, [props.stencils, doc]);
 
   useEffect(() => {
-    if (props.diagram) {
-      Autosave.load(props.documentFactory, props.diagramFactory, true).then(autosaved => {
-        if (autosaved?.document) {
-          setDoc(autosaved?.document);
-          autosaved.document!.url = props.diagram?.url;
-          setUrl(autosaved.url);
-        } else {
-          loadFileFromUrl(props.diagram!.url, props.documentFactory, props.diagramFactory).then(
-            defDiagram => {
-              setDoc(defDiagram);
-              defDiagram!.url = props.diagram?.url;
-            }
-          );
-        }
-      });
-    } else {
-      // TODO: This is duplicated in fileNewAction.ts
-      const doc = props.documentFactory();
-      const diagram = new Diagram(newid(), 'Untitled', doc);
-      diagram.layers.add(
-        new RegularLayer(newid(), 'Default', [], diagram),
-        UnitOfWork.immediate(diagram)
-      );
-      doc.addDiagram(diagram);
-      setDoc(doc);
-    }
+    const fn = async () => {
+      if (props.diagram) {
+        Autosave.load(props.documentFactory, props.diagramFactory, true).then(autosaved => {
+          if (autosaved?.document) {
+            setDoc(autosaved?.document);
+            autosaved.document!.url = props.diagram?.url;
+            setUrl(autosaved.url);
+          } else {
+            loadFileFromUrl(props.diagram!.url, props.documentFactory, props.diagramFactory).then(
+              defDiagram => {
+                setDoc(defDiagram);
+                defDiagram!.url = props.diagram?.url;
+              }
+            );
+          }
+        });
+      } else {
+        // TODO: This is duplicated in fileNewAction.ts
+        const doc = await props.documentFactory(undefined);
+        const diagram = new Diagram(newid(), 'Untitled', doc);
+        diagram.layers.add(
+          new RegularLayer(newid(), 'Default', [], diagram),
+          UnitOfWork.immediate(diagram)
+        );
+        doc.addDiagram(diagram);
+        setDoc(doc);
+      }
+    };
+    fn();
   }, [props.diagramFactory, props.documentFactory]);
 
   if (doc && doc.topLevelDiagrams.length === 0) {

@@ -26,7 +26,8 @@ export const Autosave = {
       const document = await deserializeDiagramDocument(
         parsed.diagram,
         documentFactory,
-        diagramFactory
+        diagramFactory,
+        parsed.url
       );
 
       await document.load();

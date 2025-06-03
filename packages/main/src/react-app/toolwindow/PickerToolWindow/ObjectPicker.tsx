@@ -17,7 +17,7 @@ const makeDiagramNode = (mainDiagram: Diagram, n: Stencil) => {
     return NODE_CACHE.get(cacheKey)!;
   }
 
-  const { node: stencilNode, diagram: stencilDiagram } = Diagram.createForNode(
+  const { node: stencilNode, diagram: stencilDiagram } = Diagram.createThumbnailDiagramForNode(
     d => n.node(d),
     mainDiagram.document.definitions
   );
@@ -27,7 +27,7 @@ const makeDiagramNode = (mainDiagram: Diagram, n: Stencil) => {
   };
   stencilDiagram.viewBox.offset = { x: -5, y: -5 };
 
-  const { node: canvasNode, diagram: canvasDiagram } = Diagram.createForNode(
+  const { node: canvasNode, diagram: canvasDiagram } = Diagram.createThumbnailDiagramForNode(
     d => n.canvasNode(d),
     mainDiagram.document.definitions
   );

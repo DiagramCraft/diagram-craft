@@ -361,14 +361,14 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     return this.layers.getAttachmentsInUse();
   }
 
-  public static createForNode(
+  public static createThumbnailDiagramForNode(
     factory: (diagram: Diagram, layer: Layer) => DiagramNode,
     definitions: Definitions
   ) {
     const dest = new Diagram(
       newid(),
       newid(),
-      new DiagramDocument(definitions.nodeDefinitions, definitions.edgeDefinitions)
+      new DiagramDocument(definitions.nodeDefinitions, definitions.edgeDefinitions, true)
     );
 
     const uow = UnitOfWork.immediate(dest);

@@ -165,17 +165,18 @@ export const deserializeDiagramElements = (
     .filter(e => e.parent === undefined);
 };
 
-export type DocumentFactory = () => DiagramDocument;
+export type DocumentFactory = (url: string | undefined) => Promise<DiagramDocument>;
 export type DiagramFactory<T extends Diagram> = (d: SerializedDiagram, doc: DiagramDocument) => T;
 
 export const deserializeDiagramDocument = async <T extends Diagram>(
   document: SerializedDiagramDocument,
   documentFactory: DocumentFactory,
-  diagramFactory: DiagramFactory<T>
+  diagramFactory: DiagramFactory<T>,
+  url: string | undefined
 ): Promise<DiagramDocument> => {
   const diagrams = document.diagrams;
 
-  const doc = documentFactory();
+  const doc = await documentFactory(url);
   doc.transact(() => {
     if (document.customPalette) {
       doc.customPalette.setColors(document.customPalette);

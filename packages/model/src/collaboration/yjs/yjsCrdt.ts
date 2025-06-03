@@ -47,9 +47,10 @@ export class YJSRoot implements CRDTRoot {
   }
 }
 
-export class YJSMap<T> implements CRDTMap<T> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export class YJSMap<T = any> implements CRDTMap<T> {
   private emitter = new EventEmitter<CRDTMapEvents>();
-  delegate: Y.Map<T>;
+  readonly delegate: Y.Map<T>;
 
   constructor(delegate?: Y.Map<T>) {
     this.delegate = delegate ?? new Y.Map();
@@ -60,12 +61,12 @@ export class YJSMap<T> implements CRDTMap<T> {
         if (change.action === 'add') {
           this.emitter.emit(local ? 'localInsert' : 'remoteInsert', {
             key,
-            value: wrap(this.delegate.get(key))
+            value: this.get(key)
           });
         } else if (change.action === 'update') {
           this.emitter.emit(local ? 'localUpdate' : 'remoteUpdate', {
             key,
-            value: wrap(this.delegate.get(key))
+            value: this.get(key)
           });
         } else if (change.action === 'delete') {
           this.emitter.emit(local ? 'localDelete' : 'remoteDelete', {
@@ -181,7 +182,7 @@ export class YJSList<T> implements CRDTList<T> {
   }
 
   push(value: T[]): void {
-    this.delegate.push(unwrap(value));
+    this.delegate.push(value.map(unwrap));
   }
 
   delete(index: number): void {

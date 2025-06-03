@@ -1288,12 +1288,13 @@ async function decode(data: string) {
 
 export const drawioReader = async (
   contents: string,
+  url: string,
   documentFactory: DocumentFactory,
   _diagramFactory: DiagramFactory<Diagram>
 ): Promise<DiagramDocument> => {
   const start = new Date().getTime();
 
-  const doc = documentFactory();
+  const doc = await documentFactory(url);
 
   const parser = new DOMParser();
   const $doc = parser.parseFromString(contents, 'application/xml');

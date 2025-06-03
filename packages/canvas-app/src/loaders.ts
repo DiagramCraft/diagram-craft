@@ -20,6 +20,7 @@ export const stencilLoaderRegistry: Partial<{
 export type FileLoader = (
   // TODO: Need to extend with blob
   content: string,
+  url: string,
   documentFactory: DocumentFactory,
   diagramFactory: DiagramFactory<Diagram>
 ) => Promise<DiagramDocument>;
@@ -44,7 +45,7 @@ export const loadFileFromUrl = async (
   const document = await fileLoader().then(loader =>
     fetch(url)
       .then(r => r.text())
-      .then(c => loader(c, documentFactory, diagramFactory))
+      .then(c => loader(c, url, documentFactory, diagramFactory))
   );
   document.url = url;
 

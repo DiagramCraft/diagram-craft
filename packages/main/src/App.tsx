@@ -182,9 +182,9 @@ export const App = (props: {
 
       userState.current.addRecentFile(url);
     },
-    newDocument: () => {
+    newDocument: async () => {
       // TODO: This is partially duplicated in AppLoader.ts
-      const doc = props.documentFactory();
+      const doc = await props.documentFactory(undefined);
       const diagram = new Diagram(newid(), 'Untitled', doc);
       diagram.layers.add(
         new RegularLayer(newid(), 'Default', [], diagram),
