@@ -16,8 +16,8 @@ describe('DiagramDocumentDataTemplates', () => {
   it('should initialize with given templates', () => {
     const { doc1, doc2 } = createSyncedYJSCRDTs();
 
-    const instance1 = new DiagramDocumentDataTemplates(doc1.getMap('tpl'), templates);
-    const instance2 = new DiagramDocumentDataTemplates(doc2.getMap('tpl'), templates);
+    const instance1 = new DiagramDocumentDataTemplates(doc1, templates);
+    const instance2 = new DiagramDocumentDataTemplates(doc2, templates);
 
     expect(instance1.all()).toEqual(templates);
     expect(instance2.all()).toEqual(templates);
@@ -26,8 +26,8 @@ describe('DiagramDocumentDataTemplates', () => {
   it('should allow adding a new template', () => {
     const { doc1, doc2 } = createSyncedYJSCRDTs();
 
-    const instance1 = new DiagramDocumentDataTemplates(doc1.getMap('tpl'), templates);
-    const instance2 = new DiagramDocumentDataTemplates(doc2.getMap('tpl'), templates);
+    const instance1 = new DiagramDocumentDataTemplates(doc1, templates);
+    const instance2 = new DiagramDocumentDataTemplates(doc2, templates);
 
     const newTemplate: DataTemplate = {
       id: '3',
@@ -52,8 +52,8 @@ describe('DiagramDocumentDataTemplates', () => {
   it('should allow removing a template by object', () => {
     const { doc1, doc2 } = createSyncedYJSCRDTs();
 
-    const instance1 = new DiagramDocumentDataTemplates(doc1.getMap('tpl'), templates);
-    const instance2 = new DiagramDocumentDataTemplates(doc2.getMap('tpl'), templates);
+    const instance1 = new DiagramDocumentDataTemplates(doc1, templates);
+    const instance2 = new DiagramDocumentDataTemplates(doc2, templates);
 
     const removeListener1 = vi.fn();
     instance1.on('remove', removeListener1);
@@ -73,8 +73,8 @@ describe('DiagramDocumentDataTemplates', () => {
   it('should allow removing a template by id', () => {
     const { doc1, doc2 } = createSyncedYJSCRDTs();
 
-    const instance1 = new DiagramDocumentDataTemplates(doc1.getMap('tpl'), templates);
-    const instance2 = new DiagramDocumentDataTemplates(doc2.getMap('tpl'), templates);
+    const instance1 = new DiagramDocumentDataTemplates(doc1, templates);
+    const instance2 = new DiagramDocumentDataTemplates(doc2, templates);
 
     const removeListener1 = vi.fn();
     instance1.on('remove', removeListener1);
@@ -93,8 +93,8 @@ describe('DiagramDocumentDataTemplates', () => {
   it('should allow updating an existing template', () => {
     const { doc1, doc2 } = createSyncedYJSCRDTs();
 
-    const instance1 = new DiagramDocumentDataTemplates(doc1.getMap('tpl'), templates);
-    const instance2 = new DiagramDocumentDataTemplates(doc2.getMap('tpl'), templates);
+    const instance1 = new DiagramDocumentDataTemplates(doc1, templates);
+    const instance2 = new DiagramDocumentDataTemplates(doc2, templates);
 
     const updatedTemplate = { ...templates[0], name: 'Updated Template 1' };
 
@@ -115,8 +115,8 @@ describe('DiagramDocumentDataTemplates', () => {
   it('should replace all templates', () => {
     const { doc1, doc2 } = createSyncedYJSCRDTs();
 
-    const instance1 = new DiagramDocumentDataTemplates(doc1.getMap('tpl'), templates);
-    const instance2 = new DiagramDocumentDataTemplates(doc2.getMap('tpl'), templates);
+    const instance1 = new DiagramDocumentDataTemplates(doc1, templates);
+    const instance2 = new DiagramDocumentDataTemplates(doc2, templates);
 
     const newTemplates = [
       { id: '3', schemaId: 'schema3', name: 'Template 3', template: {} },

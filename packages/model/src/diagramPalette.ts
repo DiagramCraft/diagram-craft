@@ -5,6 +5,7 @@ const DEFAULT_COLOR = '#000000';
 
 export class DiagramPalette {
   private readonly palette: CRDTMap<string>;
+  private readonly paletteCount: CRDTMap<number>;
 
   private _count = new CRDTProperty<number>('count');
 
@@ -13,7 +14,8 @@ export class DiagramPalette {
     count: number
   ) {
     this.palette = doc.getMap('customPalette');
-    this._count.set(this.palette, count);
+    this.paletteCount = doc.getMap('customPalette.count');
+    this._count.set(this.paletteCount, count);
 
     if (this.palette.size === 0 && count > 0) {
       this.doc.transact(() => {
@@ -25,13 +27,13 @@ export class DiagramPalette {
   }
 
   private get count() {
-    return this._count.get(this.palette) ?? 0;
+    return this._count.get(this.paletteCount) ?? 0;
   }
 
   get colors() {
     const dest: string[] = [];
     for (let i = 0; i < this.count; i++) {
-      dest.push(this.palette.get(i.toString()) ?? DEFAULT_COLOR);
+      dest.push((this.palette.get(i.toString()) as string) ?? DEFAULT_COLOR);
     }
     return dest;
   }
@@ -43,7 +45,7 @@ export class DiagramPalette {
 
   setColors(color: readonly string[]) {
     this.palette.clear();
-    this._count.set(this.palette, color.length);
+    this._count.set(this.paletteCount, color.length);
 
     if (color.length === 0) return;
 

@@ -1,8 +1,17 @@
-import { CRDTList, CRDTListEvents, CRDTMap, CRDTMapEvents, CRDTRoot } from './crdt';
+import {
+  CRDTCompatibleValue,
+  CRDTList,
+  CRDTListEvents,
+  CRDTMap,
+  CRDTMapEvents,
+  CRDTRoot
+} from './crdt';
 import { EventEmitter } from '@diagram-craft/utils/event';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export class NoOpCRDTMap<T = any> extends EventEmitter<CRDTMapEvents> implements CRDTMap<T> {
+export class NoOpCRDTMap<T extends CRDTCompatibleValue<T>>
+  extends EventEmitter<CRDTMapEvents<T>>
+  implements CRDTMap<T>
+{
   private backing = new Map<string, T>();
 
   get size() {
@@ -26,7 +35,7 @@ export class NoOpCRDTMap<T = any> extends EventEmitter<CRDTMapEvents> implements
   }
 
   clear(): void {
-    const map = { ...this.backing };
+    const map: Map<string, T> = { ...this.backing };
     this.backing.clear();
     Object.entries(map).forEach(([k, v]) => this.emit('localDelete', { key: k, value: v }));
   }
@@ -48,8 +57,10 @@ export class NoOpCRDTMap<T = any> extends EventEmitter<CRDTMapEvents> implements
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export class NoOpCRDTList<T = any> extends EventEmitter<CRDTListEvents> implements CRDTList<T> {
+export class NoOpCRDTList<T extends CRDTCompatibleValue<T>>
+  extends EventEmitter<CRDTListEvents<T>>
+  implements CRDTList<T>
+{
   private backing: T[] = [];
 
   get length() {
@@ -87,25 +98,27 @@ export class NoOpCRDTList<T = any> extends EventEmitter<CRDTListEvents> implemen
 }
 
 export class NoOpCRDTRoot implements CRDTRoot {
-  private map: Map<string, CRDTMap<unknown>> = new Map();
-  private list: Map<string, CRDTList<unknown>> = new Map();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private map: Map<string, any> = new Map();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private list: Map<string, any> = new Map();
 
-  getMap(name: string): CRDTMap<unknown> {
+  getMap<T extends CRDTCompatibleValue<T>>(name: string): CRDTMap<T> {
     let m = this.map.get(name);
     if (!m) {
-      m = new NoOpCRDTMap<unknown>();
+      m = new NoOpCRDTMap();
       this.map.set(name, m);
     }
-    return m;
+    return m as CRDTMap<T>;
   }
 
-  getList(name: string): CRDTList<unknown> {
+  getList<T extends CRDTCompatibleValue<T>>(name: string): CRDTList<T> {
     let l = this.list.get(name);
     if (!l) {
-      l = new NoOpCRDTList<unknown>();
+      l = new NoOpCRDTList();
       this.list.set(name, l);
     }
-    return l;
+    return l as CRDTList<T>;
   }
 
   transact(callback: () => void) {

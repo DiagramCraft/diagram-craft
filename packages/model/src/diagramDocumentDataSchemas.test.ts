@@ -5,7 +5,7 @@ import { TestModel } from './test-support/builder';
 
 describe('DiagramDocumentDataSchemas', () => {
   test('should initialize with empty schemas if no initial schemas provided', () => {
-    const diagramSchemas = new DiagramDocumentDataSchemas(new CRDT.Map(), TestModel.newDocument());
+    const diagramSchemas = new DiagramDocumentDataSchemas(new CRDT.Root(), TestModel.newDocument());
     expect(diagramSchemas.all).toEqual([]);
   });
 
@@ -14,7 +14,7 @@ describe('DiagramDocumentDataSchemas', () => {
       { id: '1', name: 'test', source: 'document', fields: [] }
     ];
     const diagramSchemas = new DiagramDocumentDataSchemas(
-      new CRDT.Map(),
+      new CRDT.Root(),
       TestModel.newDocument(),
       initialSchemas
     );
@@ -23,14 +23,14 @@ describe('DiagramDocumentDataSchemas', () => {
   });
 
   test('should return default empty schema when get() is called with unknown id', () => {
-    const diagramSchemas = new DiagramDocumentDataSchemas(new CRDT.Map(), TestModel.newDocument());
+    const diagramSchemas = new DiagramDocumentDataSchemas(new CRDT.Root(), TestModel.newDocument());
     const schema = diagramSchemas.get('unknown-id');
 
     expect(schema).toEqual({ id: '', name: '', source: 'document', fields: [] });
   });
 
   test('should add new schema and emit event', () => {
-    const diagramSchemas = new DiagramDocumentDataSchemas(new CRDT.Map(), TestModel.newDocument());
+    const diagramSchemas = new DiagramDocumentDataSchemas(new CRDT.Root(), TestModel.newDocument());
     const newSchema: DataSchema = { id: '1', name: 'NewSchema', source: 'document', fields: [] };
 
     const addListener = vi.fn();
@@ -55,7 +55,7 @@ describe('DiagramDocumentDataSchemas', () => {
       fields: [{ id: 'test', name: 'name', type: 'text' }]
     };
 
-    const diagramSchemas = new DiagramDocumentDataSchemas(new CRDT.Map(), TestModel.newDocument());
+    const diagramSchemas = new DiagramDocumentDataSchemas(new CRDT.Root(), TestModel.newDocument());
     diagramSchemas.add(existingSchema);
 
     const updateListener = vi.fn();
@@ -82,7 +82,7 @@ describe('DiagramDocumentDataSchemas', () => {
       fields: []
     };
 
-    const diagramSchemas = new DiagramDocumentDataSchemas(new CRDT.Map(), TestModel.newDocument());
+    const diagramSchemas = new DiagramDocumentDataSchemas(new CRDT.Root(), TestModel.newDocument());
     diagramSchemas.add(schemaToUpdate);
 
     const updateListener = vi.fn();
@@ -100,7 +100,7 @@ describe('DiagramDocumentDataSchemas', () => {
       { id: '2', name: 'Schema2', source: 'document', fields: [] }
     ];
 
-    const diagramSchemas = new DiagramDocumentDataSchemas(new CRDT.Map(), TestModel.newDocument());
+    const diagramSchemas = new DiagramDocumentDataSchemas(new CRDT.Root(), TestModel.newDocument());
 
     diagramSchemas.replaceBy(newSchemas);
 

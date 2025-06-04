@@ -1,7 +1,7 @@
 import { DataTemplate } from './diagramDocument';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { assert } from '@diagram-craft/utils/assert';
-import { CRDT, CRDTMap } from './collaboration/crdt';
+import { CRDTMap, CRDTRoot } from './collaboration/crdt';
 
 export class DiagramDocumentDataTemplates extends EventEmitter<{
   update: { template: DataTemplate };
@@ -10,9 +10,9 @@ export class DiagramDocumentDataTemplates extends EventEmitter<{
 }> {
   readonly #templates: CRDTMap<DataTemplate>;
 
-  constructor(root: CRDTMap, templates?: DataTemplate[]) {
+  constructor(root: CRDTRoot, templates?: DataTemplate[]) {
     super();
-    this.#templates = CRDT.getMap(root, 'templates');
+    this.#templates = root.getMap<DataTemplate>('templates');
 
     this.#templates.on('remoteInsert', p => this.emit('add', { template: p.value }));
     this.#templates.on('remoteUpdate', p => this.emit('update', { template: p.value }));

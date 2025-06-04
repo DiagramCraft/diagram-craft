@@ -1,15 +1,38 @@
 import { CollaborationConfig } from './collaborationConfig';
 import { Emitter } from '@diagram-craft/utils/event';
 
+type CRDTCompatiblePrimitive = string | number | boolean | null | undefined | Uint8Array;
+
+type CRDTValue =
+  | CRDTCompatiblePrimitive
+  | CRDTValue[]
+  | {
+      [key: string]: CRDTValue;
+    };
+
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+type NotAssignableToCRDT = bigint | symbol | Function;
+
+type CRDTCompatibleObject<T> = CRDTCompatiblePrimitive | unknown extends T
+  ? never
+  : {
+      [P in keyof T]: T[P] extends CRDTValue
+        ? T[P]
+        : T[P] extends NotAssignableToCRDT
+          ? never
+          : CRDTCompatibleObject<T[P]>;
+    };
+
+export type CRDTCompatibleValue<T> = CRDTCompatiblePrimitive | CRDTCompatibleObject<T>;
+
 export interface CRDTRoot {
-  getMap(name: string): CRDTMap;
-  getList(name: string): CRDTList;
+  getMap<T extends CRDTCompatibleObject<T>>(name: string): CRDTMap<T>;
+  getList<T extends CRDTCompatibleObject<T>>(name: string): CRDTList<T>;
 
   transact(callback: () => void): void;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type CRDTMapEvents<T = any> = {
+export type CRDTMapEvents<T extends CRDTCompatibleValue<T>> = {
   localInsert: { key: string; value: T };
   localDelete: { key: string; value: T };
   localUpdate: { key: string; value: T };
@@ -19,8 +42,7 @@ export type CRDTMapEvents<T = any> = {
   remoteUpdate: { key: string; value: T };
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface CRDTMap<T = any> extends Emitter<CRDTMapEvents<T>> {
+export interface CRDTMap<T extends CRDTCompatibleValue<T>> extends Emitter<CRDTMapEvents<T>> {
   size: number;
   get(key: string): T | undefined;
   set(key: string, value: T): void;
@@ -32,8 +54,7 @@ export interface CRDTMap<T = any> extends Emitter<CRDTMapEvents<T>> {
   values(): Iterable<T>;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type CRDTListEvents<T = any> = {
+export type CRDTListEvents<T> = {
   localInsert: { index: number; value: Array<T> };
   localDelete: { index: number; count: number };
 
@@ -41,8 +62,7 @@ export type CRDTListEvents<T = any> = {
   remoteDelete: { index: number; count: number };
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface CRDTList<T = any> extends Emitter<CRDTListEvents<T>> {
+export interface CRDTList<T extends CRDTCompatibleValue<T>> extends Emitter<CRDTListEvents<T>> {
   length: number;
   clear(): void;
   get(index: number): T;
@@ -52,23 +72,18 @@ export interface CRDTList<T = any> extends Emitter<CRDTListEvents<T>> {
   toArray(): Array<T>;
 }
 
-export interface CRDTBacked {
-  crdt: CRDTMap;
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export class CRDTProperty<T = any> {
+export class CRDTProperty<T extends CRDTCompatibleValue<T> = string> {
   constructor(private name: string) {}
 
-  get(target: CRDTMap): T {
+  get(target: CRDTMap<T>): T {
     return target.get(this.name) as T;
   }
 
-  set(target: CRDTMap, value: T) {
+  set(target: CRDTMap<T>, value: T) {
     target.set(this.name, value);
   }
 
-  initialize(target: CRDTMap, value: T) {
+  initialize(target: CRDTMap<T>, value: T) {
     if (!target.has(this.name)) {
       target.set(this.name, value);
     }
@@ -78,31 +93,5 @@ export class CRDTProperty<T = any> {
 export const CRDT = new (class {
   get Root(): new (...args: unknown[]) => CRDTRoot {
     return CollaborationConfig.CRDTRoot;
-  }
-  get Map(): new (...args: unknown[]) => CRDTMap {
-    return CollaborationConfig.CRDTMap;
-  }
-  get List(): new (...args: unknown[]) => CRDTList {
-    return CollaborationConfig.CRDTList;
-  }
-
-  getMap(m: CRDTMap, name: string) {
-    let r = m.get(name);
-    if (!r) {
-      r = new CRDT.Map();
-      m.set(name, r);
-    }
-    return r as CRDTMap;
-  }
-
-  getList(m: CRDTMap, name: string) {
-    let r = m.get(name);
-    if (!r) {
-      r = new CRDT.List();
-      m.set(name, r);
-    } else if (!(r instanceof CRDT.List)) {
-      throw new Error('Invalid list');
-    }
-    return r as CRDTList;
   }
 })();

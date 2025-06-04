@@ -233,7 +233,7 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
 };
 
 const deserializeStylesheet = (s: SerializedStylesheet) => {
-  return Stylesheet.from(s.type, s.id, s.name, s.props);
+  return new Stylesheet(s.type, s);
 };
 
 const deserializeDiagrams = <T extends Diagram>(

@@ -9,8 +9,8 @@ describe('YJS DiagramDocumentDataSchemas', () => {
   test('should initialize with empty schemas if no initial schemas provided', () => {
     const { doc1, doc2 } = createSyncedYJSCRDTs();
 
-    const instance1 = new DiagramDocumentDataSchemas(doc1.getMap('tpl'), TestModel.newDocument());
-    const instance2 = new DiagramDocumentDataSchemas(doc2.getMap('tpl'), TestModel.newDocument());
+    const instance1 = new DiagramDocumentDataSchemas(doc1, TestModel.newDocument());
+    const instance2 = new DiagramDocumentDataSchemas(doc2, TestModel.newDocument());
 
     expect(instance1.all).toEqual([]);
     expect(instance2.all).toEqual([]);
@@ -23,12 +23,8 @@ describe('YJS DiagramDocumentDataSchemas', () => {
       { id: '1', name: 'test', source: 'document', fields: [] }
     ];
 
-    const instance1 = new DiagramDocumentDataSchemas(
-      doc1.getMap('tpl'),
-      TestModel.newDocument(),
-      initialSchemas
-    );
-    const instance2 = new DiagramDocumentDataSchemas(doc2.getMap('tpl'), TestModel.newDocument());
+    const instance1 = new DiagramDocumentDataSchemas(doc1, TestModel.newDocument(), initialSchemas);
+    const instance2 = new DiagramDocumentDataSchemas(doc2, TestModel.newDocument());
 
     expect(instance1.all).toEqual(initialSchemas);
     expect(instance2.all).toEqual(initialSchemas);
@@ -37,8 +33,8 @@ describe('YJS DiagramDocumentDataSchemas', () => {
   test('should add new schema and emit event', () => {
     const { doc1, doc2 } = createSyncedYJSCRDTs();
 
-    const instance1 = new DiagramDocumentDataSchemas(doc1.getMap('tpl'), TestModel.newDocument());
-    const instance2 = new DiagramDocumentDataSchemas(doc2.getMap('tpl'), TestModel.newDocument());
+    const instance1 = new DiagramDocumentDataSchemas(doc1, TestModel.newDocument());
+    const instance2 = new DiagramDocumentDataSchemas(doc2, TestModel.newDocument());
 
     const newSchema: DataSchema = { id: '1', name: 'NewSchema', source: 'document', fields: [] };
 
@@ -67,8 +63,8 @@ describe('YJS DiagramDocumentDataSchemas', () => {
 
     const { doc1, doc2 } = createSyncedYJSCRDTs();
 
-    const instance1 = new DiagramDocumentDataSchemas(doc1.getMap('tpl'), TestModel.newDocument());
-    const instance2 = new DiagramDocumentDataSchemas(doc2.getMap('tpl'), TestModel.newDocument());
+    const instance1 = new DiagramDocumentDataSchemas(doc1, TestModel.newDocument());
+    const instance2 = new DiagramDocumentDataSchemas(doc2, TestModel.newDocument());
 
     instance1.add(schemaToUpdate);
 

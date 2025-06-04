@@ -64,7 +64,7 @@ export class AttachmentManager {
     diagramDocument: DiagramDocument
   ) {
     this.#consumers.push(diagramDocument);
-    this.#attachments = root.getMap('attachmentManager');
+    this.#attachments = root.getMap<AttachmentData>('attachmentManager');
   }
 
   async addAttachment(content: Blob): Promise<Attachment> {

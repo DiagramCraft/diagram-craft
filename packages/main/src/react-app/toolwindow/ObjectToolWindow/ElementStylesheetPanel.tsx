@@ -166,16 +166,18 @@ export const ElementStylesheetPanel = (props: Props) => {
                             const commonProps = getCommonProps(
                               $d.selectionState.elements.map(e => e.editProps)
                             ) as NodeProps & EdgeProps;
-                            const s = Stylesheet.from(
+                            const s = new Stylesheet(
                               isText
                                 ? 'text'
                                 : isNode($d.selectionState.elements[0])
                                   ? 'node'
                                   : 'edge',
-                              id,
-                              v,
                               {
-                                ...(isText ? { text: commonProps.text } : commonProps)
+                                id,
+                                name: v,
+                                props: {
+                                  ...(isText ? { text: commonProps.text } : commonProps)
+                                }
                               }
                             );
                             const uow = new UnitOfWork($d, true);
@@ -262,6 +264,7 @@ export const ElementStylesheetPanel = (props: Props) => {
                             const uow = new UnitOfWork($d, true);
                             const stylesheet = $d.document.styles.get($s.val)!;
                             stylesheet.setName(v, uow);
+                            $d.document.styles.modifyStylesheet(stylesheet, uow);
                             commitWithUndo(uow, 'Rename style');
                           }
                         )
@@ -290,6 +293,7 @@ export const ElementStylesheetPanel = (props: Props) => {
             const stylesheet = $d.document.styles.get(style!.id);
             if (stylesheet) {
               stylesheet.setProps(e, uow);
+              $d.document.styles.modifyStylesheet(stylesheet, uow);
               commitWithUndo(uow, 'Modify style');
             } else {
               uow.abort();
