@@ -31,14 +31,8 @@ fileLoaderRegistry['.drawio'] = () =>
   import('@diagram-craft/canvas-drawio/drawioLoaders').then(m => m.fileLoaderDrawio);
 
 fileLoaderRegistry['.json'] =
-  async () => (content, url, progressCallback, documentFactory, diagramFactory) =>
-    deserializeDiagramDocument(
-      JSON.parse(content),
-      documentFactory,
-      diagramFactory,
-      url,
-      progressCallback
-    );
+  async () => (content, url, progress, documentFactory, diagramFactory) =>
+    deserializeDiagramDocument(JSON.parse(content), documentFactory, diagramFactory, url, progress);
 
 const stencilRegistry: StencilRegistryConfig = [
   {

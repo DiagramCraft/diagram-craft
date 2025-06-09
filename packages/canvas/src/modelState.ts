@@ -19,15 +19,11 @@ class ModelState extends EventEmitter<ModelStateEvents> {
   setActiveDocument(document: DiagramDocument, callback: ProgressCallback) {
     if (this.#activeDocument === document) return;
 
-    if (this.#activeDocument?.url === document.url) {
-      this.#activeDocument = document;
-      this.emit('activeDocumentChange', { document: document });
-      return;
-    }
+    const isUrlChange = this.#activeDocument?.url !== document.url;
 
-    this.#activeDocument?.deactivate(callback);
+    if (isUrlChange) this.#activeDocument?.deactivate(callback);
     this.#activeDocument = document;
-    this.#activeDocument?.activate(callback);
+    if (isUrlChange) this.#activeDocument?.activate(callback);
     this.emit('activeDocumentChange', { document: document });
   }
 

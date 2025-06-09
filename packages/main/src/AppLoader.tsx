@@ -19,14 +19,7 @@ export const AppLoader = (props: Props) => {
 
   const [progress, setProgress] = useState<Progress | undefined>(undefined);
   const progressCallback = useCallback<ProgressCallback>(
-    (status, opts) => {
-      queueMicrotask(() => {
-        setProgress({
-          status,
-          ...opts
-        });
-      });
-    },
+    (status, opts) => queueMicrotask(() => setProgress({ status, ...opts })),
     [setProgress]
   );
 

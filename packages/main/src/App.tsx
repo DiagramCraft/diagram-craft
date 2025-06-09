@@ -94,17 +94,13 @@ export type DiagramRef = {
   url: string;
 };
 
-const updateApplicationModel = (
-  $d: Diagram,
-  application: Application,
-  callback: ProgressCallback
-) => {
-  application.model.setActiveDocument($d.document, callback);
-  application.model.activeDiagram = $d;
-  if (!application.ready) {
-    application.actions = makeActionMap(defaultAppActions)(application);
+const updateApplicationModel = ($d: Diagram, app: Application, callback: ProgressCallback) => {
+  app.model.setActiveDocument($d.document, callback);
+  app.model.activeDiagram = $d;
+  if (!app.ready) {
+    app.actions = makeActionMap(defaultAppActions)(app);
   }
-  application.ready = true;
+  app.ready = true;
 };
 
 export const App = (props: {
@@ -122,11 +118,7 @@ export const App = (props: {
 
   const [progress, setProgress] = useState<Progress | undefined>(undefined);
   const progressCallback = useCallback<ProgressCallback>(
-    (status, opts) => {
-      queueMicrotask(() => {
-        setProgress({ status, ...opts });
-      });
-    },
+    (status, opts) => queueMicrotask(() => setProgress({ status, ...opts })),
     [setProgress]
   );
 

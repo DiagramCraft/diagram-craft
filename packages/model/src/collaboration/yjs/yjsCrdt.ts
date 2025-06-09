@@ -69,12 +69,12 @@ export class YJSMap<T extends CRDTCompatibleValue<T>> implements CRDTMap<T> {
         if (change.action === 'add') {
           this.emitter.emit(local ? 'localInsert' : 'remoteInsert', {
             key,
-            value: this.get(key)
+            value: wrap(this.get(key))
           });
         } else if (change.action === 'update') {
           this.emitter.emit(local ? 'localUpdate' : 'remoteUpdate', {
             key,
-            value: this.get(key)
+            value: wrap(this.get(key))
           });
         } else if (change.action === 'delete') {
           this.emitter.emit(local ? 'localDelete' : 'remoteDelete', {

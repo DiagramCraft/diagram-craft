@@ -86,12 +86,8 @@ describe('YJS DiagramStyles', () => {
       const styles1 = new DiagramStyles(doc1, TestModel.newDocument(), true);
       const styles2 = new DiagramStyles(doc2, TestModel.newDocument(), true);
 
-      const customNodeStyle = new Stylesheet('node', {
-        id: 'custom-node',
-        name: 'Custom Node',
-        props: {}
-      });
-      styles1.addStylesheet('custom-node', customNodeStyle);
+      const customNodeStyle = new Stylesheet('node', { id: 'custom', name: 'Custom', props: {} });
+      styles1.addStylesheet('custom', customNodeStyle);
 
       styles1.activeNodeStylesheet = customNodeStyle;
 
@@ -128,12 +124,8 @@ describe('YJS DiagramStyles', () => {
       const styles1 = new DiagramStyles(doc1, TestModel.newDocument(), true);
       const styles2 = new DiagramStyles(doc2, TestModel.newDocument(), true);
 
-      const customTextStyle = new Stylesheet('text', {
-        id: 'custom-text',
-        name: 'Custom Text',
-        props: {}
-      });
-      styles1.addStylesheet('custom-text', customTextStyle);
+      const customTextStyle = new Stylesheet('text', { id: 'custom', name: 'Custom', props: {} });
+      styles1.addStylesheet('custom', customTextStyle);
 
       styles1.activeTextStylesheet = customTextStyle;
 
@@ -149,12 +141,8 @@ describe('YJS DiagramStyles', () => {
       const styles1 = new DiagramStyles(doc1, TestModel.newDocument(), true);
       const styles2 = new DiagramStyles(doc2, TestModel.newDocument(), true);
 
-      const customTextStyle = new Stylesheet('text', {
-        id: 'custom-text',
-        name: 'Custom Text',
-        props: {}
-      });
-      styles1.addStylesheet('custom-text', customTextStyle);
+      const customTextStyle = new Stylesheet('text', { id: 'custom', name: 'Custom', props: {} });
+      styles1.addStylesheet('custom', customTextStyle);
 
       expect(styles1.textStyles.length).toBe(3);
       expect(styles2.textStyles.length).toBe(3);
@@ -168,11 +156,7 @@ describe('YJS DiagramStyles', () => {
       const styles1 = new DiagramStyles(doc1, TestModel.newDocument(), true);
       const styles2 = new DiagramStyles(doc2, TestModel.newDocument(), true);
 
-      const customTextStyle = new Stylesheet('text', {
-        id: 'custom-text',
-        name: 'Custom Text',
-        props: {}
-      });
+      const customTextStyle = new Stylesheet('text', { id: 'custom', name: 'Custom', props: {} });
       styles1.addStylesheet('custom-text', customTextStyle);
 
       expect(styles1.textStyles.length).toBe(3);

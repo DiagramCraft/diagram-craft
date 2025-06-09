@@ -24,7 +24,7 @@ export const AwarenessToolbar = () => {
         })
         .map((user, idx) => (
           <div
-            key={user.name + '-' + idx}
+            key={`${user.name}-${idx}`}
             className={styles.cmpAwarenessToolbarUser}
             style={{ '--avatar-color': user.color } as React.CSSProperties}
           >
