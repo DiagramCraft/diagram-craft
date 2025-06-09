@@ -42,30 +42,29 @@ export const AppLoader = (props: Props) => {
   }, [props.stencils, doc]);
 
   useEffect(() => {
-    const fn = async () => {
-      if (props.diagram) {
-        Autosave.load(progressCallback, props.documentFactory, props.diagramFactory, true).then(
-          autosaved => {
-            if (autosaved?.document) {
-              setDoc(autosaved?.document);
-              autosaved.document!.url = props.diagram?.url;
-              setUrl(autosaved.url);
-            } else {
-              loadFileFromUrl(
-                props.diagram!.url,
-                progressCallback,
-                props.documentFactory,
-                props.diagramFactory
-              ).then(defDiagram => {
-                setDoc(defDiagram);
-                defDiagram!.url = props.diagram?.url;
-              });
-            }
+    if (props.diagram) {
+      Autosave.load(progressCallback, props.documentFactory, props.diagramFactory, true).then(
+        autosaved => {
+          if (autosaved?.document) {
+            setDoc(autosaved?.document);
+            autosaved.document!.url = props.diagram?.url;
+            setUrl(autosaved.url);
+          } else {
+            loadFileFromUrl(
+              props.diagram!.url,
+              progressCallback,
+              props.documentFactory,
+              props.diagramFactory
+            ).then(defDiagram => {
+              setDoc(defDiagram);
+              defDiagram!.url = props.diagram?.url;
+            });
           }
-        );
-      } else {
+        }
+      );
+    } else {
+      props.documentFactory(undefined, progressCallback).then(doc => {
         // TODO: This is duplicated in fileNewAction.ts
-        const doc = await props.documentFactory(undefined, progressCallback);
         const diagram = new Diagram(newid(), 'Untitled', doc);
         diagram.layers.add(
           new RegularLayer(newid(), 'Default', [], diagram),
@@ -73,9 +72,8 @@ export const AppLoader = (props: Props) => {
         );
         doc.addDiagram(diagram);
         setDoc(doc);
-      }
-    };
-    fn();
+      });
+    }
   }, [props.diagramFactory, props.documentFactory]);
 
   useEffect(() => {
