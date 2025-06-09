@@ -122,22 +122,24 @@ export class Stylesheet<T extends StylesheetType, P = TypeMap[T]>
     return this.#props;
   }
 
-  // TODO: Should we call invalidate and then modifyStylesheet
-  setProps(props: Partial<P>, uow: UnitOfWork): void {
+  setProps(props: Partial<P>, manager: DiagramStyles, uow: UnitOfWork): void {
     uow.snapshot(this);
     this.#props = this.cleanProps(props) as P;
     uow.updateElement(this);
+
+    manager.modifyStylesheet(this as Stylesheet<StylesheetType>);
   }
 
   get name() {
     return this.#name;
   }
 
-  // TODO: Should we call invalidate and then modifyStylesheet
-  setName(name: string, uow: UnitOfWork) {
+  setName(name: string, manager: DiagramStyles, uow: UnitOfWork) {
     uow.snapshot(this);
     this.#name = name;
     uow.updateElement(this);
+
+    manager.modifyStylesheet(this as Stylesheet<StylesheetType>);
   }
 
   invalidate(_uow: UnitOfWork): void {
@@ -145,7 +147,7 @@ export class Stylesheet<T extends StylesheetType, P = TypeMap[T]>
   }
 
   restore(snapshot: StylesheetSnapshot, uow: UnitOfWork): void {
-    this.setName(snapshot.name, uow);
+    this.#name = snapshot.name;
     this.#props = snapshot.props as P;
     uow.updateElement(this);
   }
@@ -463,7 +465,18 @@ export class DiagramStyles {
     });
   }
 
-  modifyStylesheet(stylesheet: Stylesheet<StylesheetType>, uow: UnitOfWork) {
+  modifyStylesheet(stylesheet: Stylesheet<StylesheetType>) {
+    if (stylesheet.type === 'node') {
+      this.#nodeStyles.set(stylesheet.id, stylesheet.snapshot());
+    } else if (stylesheet.type === 'text') {
+      this.#textStyles.set(stylesheet.id, stylesheet.snapshot());
+    } else {
+      this.#edgeStyles.set(stylesheet.id, stylesheet.snapshot());
+    }
+  }
+
+  /* TODO: Unclear if this was ever needed
+  oldModifyStylesheet(stylesheet: Stylesheet<StylesheetType>, uow: UnitOfWork) {
     this.root.transact(() => {
       for (const diagram of this.document.diagramIterator({ nest: true })) {
         for (const el of diagram.allElements()) {
@@ -480,6 +493,7 @@ export class DiagramStyles {
       }
     });
   }
+   */
 
   clearStylesheet(id: string, uow: UnitOfWork) {
     // Cannot delete the default stylesheet

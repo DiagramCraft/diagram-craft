@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it } from 'vitest';
 import { createSyncedYJSCRDTs, setupYJS } from './yjsTest';
 import { DiagramStyles, Stylesheet } from '../../diagramStyles';
@@ -30,18 +31,28 @@ describe('YJS Stylesheet', () => {
     });
   });
 
-  /*
   describe('setProps', () => {
     it('should set new props', () => {
       const { doc1, doc2 } = createSyncedYJSCRDTs();
 
-      const stylesheet = new Stylesheet('node', doc1.getMap('test') as StylesheetSnapshot);
-      const other = new Stylesheet('node', doc2.getMap('test') as StylesheetSnapshot);
+      const type = 'node';
+      const id = '123';
+      const name = 'Test stylesheet';
+      const props = { fill: { color: 'blue' } };
 
-      const newProps = { color: 'red' } as any;
-      stylesheet.setProps(newProps, UnitOfWork.immediate(null!));
+      const stylesheet = new Stylesheet(type, { id, name, props });
 
-      expect(other.props).toEqual(newProps);
+      const styles1 = new DiagramStyles(doc1, TestModel.newDocument(), true);
+      styles1.addStylesheet(id, stylesheet);
+
+      const styles2 = new DiagramStyles(doc2, TestModel.newDocument(), true);
+
+      expect(styles2.getNodeStyle('123')!.props!.fill!.color).toEqual('blue');
+
+      const newProps = { fill: { color: 'red' } };
+      stylesheet.setProps(newProps, styles1, UnitOfWork.immediate(null!));
+
+      expect(styles2.getNodeStyle('123')!.props!.fill!.color).toEqual('red');
     });
   });
 
@@ -49,14 +60,25 @@ describe('YJS Stylesheet', () => {
     it('should set a new name', () => {
       const { doc1, doc2 } = createSyncedYJSCRDTs();
 
-      const stylesheet = new Stylesheet('node', doc1.getMap('test'));
-      const other = new Stylesheet('node', doc2.getMap('test'));
+      const type = 'node';
+      const id = '123';
+      const name = 'Test stylesheet';
+      const props = { fill: { color: 'blue' } };
 
-      stylesheet.setName('New Name', UnitOfWork.immediate(null!));
+      const stylesheet = new Stylesheet(type, { id, name, props });
 
-      expect(other.name).toBe('New Name');
+      const styles1 = new DiagramStyles(doc1, TestModel.newDocument(), true);
+      styles1.addStylesheet(id, stylesheet);
+
+      const styles2 = new DiagramStyles(doc2, TestModel.newDocument(), true);
+
+      expect(styles2.getNodeStyle('123')!.name).toBe(name);
+
+      stylesheet.setName('New Name', styles1, UnitOfWork.immediate(null!));
+
+      expect(styles2.getNodeStyle('123')!.name).toBe('New Name');
     });
-  });*/
+  });
 });
 
 describe('YJS DiagramStyles', () => {

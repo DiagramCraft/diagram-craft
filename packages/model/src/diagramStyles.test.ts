@@ -32,9 +32,11 @@ describe('Stylesheet', () => {
 
       const newProps = { fill: { color: 'red' } };
 
+      const styles = new DiagramStyles(new NoOpCRDTRoot(), TestModel.newDocument(), true);
       const stylesheet = new Stylesheet(type, { id, name, props: initialProps });
+      styles.addStylesheet(id, stylesheet);
 
-      stylesheet.setProps(newProps, UnitOfWork.immediate(null!));
+      stylesheet.setProps(newProps, styles, UnitOfWork.immediate(null!));
 
       expect(stylesheet.props).toEqual(newProps);
     });
@@ -48,9 +50,11 @@ describe('Stylesheet', () => {
       const newName = 'New Name';
       const props = { fill: { color: 'blue' } };
 
+      const styles = new DiagramStyles(new NoOpCRDTRoot(), TestModel.newDocument(), true);
       const stylesheet = new Stylesheet(type, { id, name, props });
+      styles.addStylesheet(id, stylesheet);
 
-      stylesheet.setName(newName, UnitOfWork.immediate(null!));
+      stylesheet.setName(newName, styles, UnitOfWork.immediate(null!));
 
       expect(stylesheet.name).toBe(newName);
     });
