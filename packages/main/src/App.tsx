@@ -1,5 +1,5 @@
 import './App.css';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { CanvasContextMenu } from './react-app/context-menu-dispatcher/CanvasContextMenu';
 import { ContextMenuDispatcher } from './react-app/context-menu-dispatcher/ContextMenuDispatcher';
@@ -66,6 +66,8 @@ import { Preview } from './react-app/Preview';
 import { ShapeSelectDialog } from './react-app/ShapeSelectDialog';
 import { ZoomTool } from '@diagram-craft/canvas-app/tools/zoomTool';
 import { AwarenessToolbar } from './react-app/AwarenessToolbar';
+import { Progress, ProgressCallback } from '@diagram-craft/model/types';
+import { FullScreenProgress } from './react-app/components/FullScreenProgress';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -92,8 +94,12 @@ export type DiagramRef = {
   url: string;
 };
 
-const updateApplicationModel = ($d: Diagram, application: Application) => {
-  application.model.activeDocument = $d.document;
+const updateApplicationModel = (
+  $d: Diagram,
+  application: Application,
+  callback: ProgressCallback
+) => {
+  application.model.setActiveDocument($d.document, callback);
   application.model.activeDiagram = $d;
   if (!application.ready) {
     application.actions = makeActionMap(defaultAppActions)(application);
@@ -113,6 +119,16 @@ export const App = (props: {
 
   const userState = useRef(new UserState());
   const application = useRef(new Application(userState.current));
+
+  const [progress, setProgress] = useState<Progress | undefined>(undefined);
+  const progressCallback = useCallback<ProgressCallback>(
+    (status, opts) => {
+      queueMicrotask(() => {
+        setProgress({ status, ...opts });
+      });
+    },
+    [setProgress]
+  );
 
   useEventListener(application.current.model, 'activeDiagramChange', redraw);
   useEventListener(application.current.model, 'activeDocumentChange', redraw);
@@ -170,12 +186,18 @@ export const App = (props: {
   };
   application.current.ui = uiActions;
   application.current.help = help;
+
   application.current.file = {
     loadDocument: async (url: string) => {
-      const doc = await loadFileFromUrl(url, props.documentFactory, props.diagramFactory);
+      const doc = await loadFileFromUrl(
+        url,
+        progressCallback,
+        props.documentFactory,
+        props.diagramFactory
+      );
       doc.url = url;
 
-      updateApplicationModel(doc.topLevelDiagrams[0], application.current);
+      updateApplicationModel(doc.topLevelDiagrams[0], application.current, progressCallback);
 
       Autosave.clear();
       setDirty(false);
@@ -184,7 +206,7 @@ export const App = (props: {
     },
     newDocument: async () => {
       // TODO: This is partially duplicated in AppLoader.ts
-      const doc = await props.documentFactory(undefined);
+      const doc = await props.documentFactory(undefined, progressCallback);
       const diagram = new Diagram(newid(), 'Untitled', doc);
       diagram.layers.add(
         new RegularLayer(newid(), 'Default', [], diagram),
@@ -192,7 +214,7 @@ export const App = (props: {
       );
       doc.addDiagram(diagram);
 
-      updateApplicationModel(diagram, application.current);
+      updateApplicationModel(diagram, application.current, progressCallback);
 
       Autosave.clear();
       setDirty(false);
@@ -204,7 +226,7 @@ export const App = (props: {
   };
 
   useOnChange(props.doc, () => {
-    updateApplicationModel(props.doc.topLevelDiagrams[0], application.current);
+    updateApplicationModel(props.doc.topLevelDiagrams[0], application.current, progressCallback);
   });
 
   const [dirty, setDirty] = useState(Autosave.exists());
@@ -254,6 +276,14 @@ export const App = (props: {
 
   return (
     <ApplicationContext.Provider value={{ application: application.current }}>
+      {progress === undefined ||
+        (progress?.status !== 'complete' && (
+          <FullScreenProgress
+            message={progress?.message ?? ''}
+            isError={progress?.status === 'error'}
+          />
+        ))}
+
       <ConfigurationContext.Provider
         value={{
           palette: {

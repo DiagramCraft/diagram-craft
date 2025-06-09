@@ -16,7 +16,7 @@ import { clipPath } from '@diagram-craft/model/edgeUtils';
 import { assertHAlign, assertVAlign } from '@diagram-craft/model/diagramProps';
 import { ARROW_SHAPES } from '@diagram-craft/canvas/arrowShapes';
 import { Angle } from '@diagram-craft/geometry/angle';
-import { Waypoint } from '@diagram-craft/model/types';
+import { ProgressCallback, Waypoint } from '@diagram-craft/model/types';
 import { Line } from '@diagram-craft/geometry/line';
 import { newid } from '@diagram-craft/utils/id';
 import {
@@ -1289,12 +1289,13 @@ async function decode(data: string) {
 export const drawioReader = async (
   contents: string,
   url: string,
+  progressCallback: ProgressCallback,
   documentFactory: DocumentFactory,
   _diagramFactory: DiagramFactory<Diagram>
 ): Promise<DiagramDocument> => {
   const start = new Date().getTime();
 
-  const doc = await documentFactory(url);
+  const doc = await documentFactory(url, progressCallback);
 
   const parser = new DOMParser();
   const $doc = parser.parseFromString(contents, 'application/xml');

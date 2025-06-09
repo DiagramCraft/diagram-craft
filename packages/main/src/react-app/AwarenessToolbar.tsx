@@ -22,9 +22,9 @@ export const AwarenessToolbar = () => {
           seenUsers.add(user.name);
           return user;
         })
-        .map(user => (
+        .map((user, idx) => (
           <div
-            key={user.name}
+            key={user.name + '-' + idx}
             className={styles.cmpAwarenessToolbarUser}
             style={{ '--avatar-color': user.color } as React.CSSProperties}
           >

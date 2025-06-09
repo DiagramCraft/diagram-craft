@@ -19,6 +19,7 @@ import { UserState } from './UserState';
 import { CRDT } from '@diagram-craft/model/collaboration/crdt';
 import { CollaborationConfig } from '@diagram-craft/model/collaboration/collaborationConfig';
 import React from 'react';
+import { ProgressCallback } from '@diagram-craft/model/types';
 
 stencilLoaderRegistry.drawioManual = () =>
   import('@diagram-craft/canvas-drawio/drawioLoaders').then(m => m.stencilLoaderDrawioManual);
@@ -29,8 +30,15 @@ stencilLoaderRegistry.drawioXml = () =>
 fileLoaderRegistry['.drawio'] = () =>
   import('@diagram-craft/canvas-drawio/drawioLoaders').then(m => m.fileLoaderDrawio);
 
-fileLoaderRegistry['.json'] = async () => (content, url, documentFactory, diagramFactory) =>
-  deserializeDiagramDocument(JSON.parse(content), documentFactory, diagramFactory, url);
+fileLoaderRegistry['.json'] =
+  async () => (content, url, progressCallback, documentFactory, diagramFactory) =>
+    deserializeDiagramDocument(
+      JSON.parse(content),
+      documentFactory,
+      diagramFactory,
+      url,
+      progressCallback
+    );
 
 const stencilRegistry: StencilRegistryConfig = [
   {
@@ -148,10 +156,10 @@ const diagramFactory = (d: SerializedDiagram, doc: DiagramDocument) => {
   return new Diagram(d.id, d.name, doc);
 };
 
-const documentFactory = async (url: string | undefined) => {
+const documentFactory = async (url: string | undefined, statusCallback: ProgressCallback) => {
   const root = new CRDT.Root();
   if (url) {
-    await CollaborationConfig.Backend.connect(url, root);
+    await CollaborationConfig.Backend.connect(url, root, statusCallback);
   }
   return new DiagramDocument(nodeRegistry, edgeRegistry, false, root);
 };

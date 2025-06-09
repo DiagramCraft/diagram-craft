@@ -95,8 +95,7 @@ export class YJSMap<T extends CRDTCompatibleValue<T>> implements CRDTMap<T> {
   }
 
   get(key: string) {
-    const v = this.delegate.get(key);
-    return wrap(v);
+    return wrap(this.delegate.get(key));
   }
 
   has(key: string) {
@@ -189,8 +188,8 @@ export class YJSList<T extends CRDTCompatibleValue<T>> implements CRDTList<T> {
     this.delegate.insert(index, value.map(unwrap));
   }
 
-  push(value: T[]): void {
-    this.delegate.push(value.map(unwrap));
+  push(value: T): void {
+    this.delegate.push([unwrap(value)]);
   }
 
   delete(index: number): void {

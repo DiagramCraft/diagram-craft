@@ -3,6 +3,7 @@ import { DiagramFactory, DocumentFactory } from '@diagram-craft/model/serializat
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { assert } from '@diagram-craft/utils/assert';
 import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
+import { ProgressCallback } from '@diagram-craft/model/types';
 
 declare global {
   interface StencilLoaderOpts {}
@@ -21,6 +22,7 @@ export type FileLoader = (
   // TODO: Need to extend with blob
   content: string,
   url: string,
+  fileLoaderStatusCallback: ProgressCallback,
   documentFactory: DocumentFactory,
   diagramFactory: DiagramFactory<Diagram>
 ) => Promise<DiagramDocument>;
@@ -36,6 +38,7 @@ export const getFileLoaderForUrl = (url: string) => {
 
 export const loadFileFromUrl = async (
   url: string,
+  progressCallback: ProgressCallback,
   documentFactory: DocumentFactory,
   diagramFactory: DiagramFactory<Diagram>
 ) => {
@@ -45,7 +48,7 @@ export const loadFileFromUrl = async (
   const document = await fileLoader().then(loader =>
     fetch(url)
       .then(r => r.text())
-      .then(c => loader(c, url, documentFactory, diagramFactory))
+      .then(c => loader(c, url, progressCallback, documentFactory, diagramFactory))
   );
   document.url = url;
 

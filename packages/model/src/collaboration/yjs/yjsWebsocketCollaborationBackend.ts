@@ -5,24 +5,30 @@ import { YJSRoot } from './yjsCrdt';
 import { CollaborationBackend } from '../backend';
 import { YJSAwareness } from './yjsAwareness';
 import { Random } from '@diagram-craft/utils/random';
+import { ProgressCallback } from '../../types';
 
 const random = new Random(new Date().getTime());
 
 export class YJSWebSocketCollaborationBackend implements CollaborationBackend {
   private wsProvider: WebsocketProvider | undefined = undefined;
 
+  isMultiUser = true;
+
   isConnected = false;
   readonly awareness: YJSAwareness = new YJSAwareness();
 
+  #state: 'disconnected' | 'connecting' | 'connected' | 'synced' = 'disconnected';
+
   constructor(private readonly endpoint: string) {}
 
-  async connect(url: string, root: CRDTRoot) {
-    if (this.isConnected) return;
+  async connect(url: string, root: CRDTRoot, callback: ProgressCallback) {
+    if (this.isConnected && this.#state !== 'disconnected') return;
     assert.true(root instanceof YJSRoot);
 
     const doc = (root as YJSRoot).yDoc;
 
     this.wsProvider = new WebsocketProvider(this.endpoint, url, doc);
+    this.#state = 'connecting';
     this.wsProvider.on('sync', () => {
       console.log('Sync');
     });
@@ -39,11 +45,24 @@ export class YJSWebSocketCollaborationBackend implements CollaborationBackend {
     });
 
     return new Promise<void>((resolve, reject) => {
+      callback('pending', { message: 'Connecting', completion: 0 });
+      this.wsProvider!.on('sync', sync => {
+        if (sync && this.#state === 'connected') {
+          this.#state = 'synced';
+          callback('complete', { message: 'Connected', completion: 100 });
+
+          resolve();
+        }
+      });
       this.wsProvider!.on('status', e => {
         if (e.status === 'connected') {
           this.isConnected = true;
-          resolve();
+          this.#state = 'connected';
+          callback('pending', { message: 'Syncing', completion: 50 });
         } else if (e.status === 'disconnected') {
+          this.#state = 'disconnected';
+          callback('error', { message: 'Connection failed' });
+
           reject(new Error('Disconnected'));
         }
       });
@@ -52,9 +71,7 @@ export class YJSWebSocketCollaborationBackend implements CollaborationBackend {
 
   disconnect() {
     const p = this.wsProvider;
-    setTimeout(() => {
-      p?.disconnect();
-      this.isConnected = false;
-    }, 10);
+    p?.disconnect();
+    this.isConnected = false;
   }
 }

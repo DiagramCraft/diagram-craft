@@ -16,7 +16,7 @@ import {
   SerializedStylesheet
 } from './types';
 import { Endpoint } from '../endpoint';
-import { Waypoint } from '../types';
+import { ProgressCallback, Waypoint } from '../types';
 import { Stylesheet } from '../diagramStyles';
 import { DefaultStyles } from '../diagramDefaults';
 import { ReferenceLayer } from '../diagramLayerReference';
@@ -165,18 +165,23 @@ export const deserializeDiagramElements = (
     .filter(e => e.parent === undefined);
 };
 
-export type DocumentFactory = (url: string | undefined) => Promise<DiagramDocument>;
+export type DocumentFactory = (
+  url: string | undefined,
+  callback: ProgressCallback
+) => Promise<DiagramDocument>;
+
 export type DiagramFactory<T extends Diagram> = (d: SerializedDiagram, doc: DiagramDocument) => T;
 
 export const deserializeDiagramDocument = async <T extends Diagram>(
   document: SerializedDiagramDocument,
   documentFactory: DocumentFactory,
   diagramFactory: DiagramFactory<T>,
-  url: string | undefined
+  url: string | undefined,
+  callback: ProgressCallback
 ): Promise<DiagramDocument> => {
   const diagrams = document.diagrams;
 
-  const doc = await documentFactory(url);
+  const doc = await documentFactory(url, callback);
   doc.transact(() => {
     if (document.customPalette) {
       doc.customPalette.setColors(document.customPalette);

@@ -76,9 +76,9 @@ export class NoOpCRDTList<T extends CRDTCompatibleValue<T>>
     this.emit('localInsert', { index, value });
   }
 
-  push(value: T[]): void {
-    this.backing.push(...value);
-    this.emit('localInsert', { index: this.backing.length - 1, value });
+  push(value: T): void {
+    this.backing.push(value);
+    this.emit('localInsert', { index: this.backing.length - 1, value: [value] });
   }
 
   delete(index: number): void {

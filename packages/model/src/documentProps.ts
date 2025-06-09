@@ -13,10 +13,8 @@ class Query {
     this._saved = root.getList('query.saved');
 
     if (this._history.length === 0) {
-      this._history.push([
-        ['active-layer', '.elements[]'],
-        ['active-layer', '.elements[] | select(.edges | length > 0)']
-      ]);
+      this._history.push(['active-layer', '.elements[]']);
+      this._history.push(['active-layer', '.elements[] | select(.edges | length > 0)']);
     }
   }
 
@@ -50,7 +48,7 @@ class Query {
   }
 
   addSaved(entry: [string, string]) {
-    this._saved.push([entry]);
+    this._saved.push(entry);
   }
 
   setSaved(entries: ReadonlyArray<[string, string]>) {

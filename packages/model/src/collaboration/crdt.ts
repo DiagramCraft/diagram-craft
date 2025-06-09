@@ -1,7 +1,19 @@
 import { CollaborationConfig } from './collaborationConfig';
 import { Emitter } from '@diagram-craft/utils/event';
 
-type CRDTCompatiblePrimitive = string | number | boolean | null | undefined | Uint8Array;
+type CRDTCompatiblePrimitive =
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | Uint8Array
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  | CRDTMap<any>
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  | CRDTList<any>;
 
 type CRDTValue =
   | CRDTCompatiblePrimitive
@@ -67,7 +79,7 @@ export interface CRDTList<T extends CRDTCompatibleValue<T>> extends Emitter<CRDT
   clear(): void;
   get(index: number): T;
   insert(index: number, value: Array<T>): void;
-  push(value: Array<T>): void;
+  push(value: T): void;
   delete(index: number): void;
   toArray(): Array<T>;
 }

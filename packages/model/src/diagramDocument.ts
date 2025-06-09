@@ -16,6 +16,7 @@ import { DiagramDocumentData } from './diagramDocumentData';
 import { CRDT, CRDTRoot } from './collaboration/crdt';
 import { CollaborationConfig } from './collaboration/collaborationConfig';
 import { DocumentProps } from './documentProps';
+import { ProgressCallback } from './types';
 
 export type DocumentEvents = {
   diagramchanged: { after: Diagram };
@@ -63,13 +64,13 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     this.root.transact(callback);
   }
 
-  activate() {
+  activate(callback: ProgressCallback) {
     if (!this.url) return;
-    CollaborationConfig.Backend.connect(this.url, this.root);
+    CollaborationConfig.Backend.connect(this.url, this.root, callback);
   }
 
-  deactivate() {
-    CollaborationConfig.Backend.disconnect();
+  deactivate(callback: ProgressCallback) {
+    CollaborationConfig.Backend.disconnect(callback);
   }
 
   get topLevelDiagrams() {
