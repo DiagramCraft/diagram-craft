@@ -475,8 +475,7 @@ export class DiagramStyles {
     }
   }
 
-  /* TODO: Unclear if this was ever needed
-  oldModifyStylesheet(stylesheet: Stylesheet<StylesheetType>, uow: UnitOfWork) {
+  reapplyStylesheet(stylesheet: Stylesheet<StylesheetType>, uow: UnitOfWork) {
     this.root.transact(() => {
       for (const diagram of this.document.diagramIterator({ nest: true })) {
         for (const el of diagram.allElements()) {
@@ -493,7 +492,6 @@ export class DiagramStyles {
       }
     });
   }
-   */
 
   clearStylesheet(id: string, uow: UnitOfWork) {
     // Cannot delete the default stylesheet

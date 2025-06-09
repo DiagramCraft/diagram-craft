@@ -147,6 +147,7 @@ export const ElementStylesheetPanel = (props: Props) => {
                           $d.document.styles,
                           uow
                         );
+                        $d.document.styles.reapplyStylesheet(stylesheet, uow);
                       }
                       commitWithUndo(uow, 'Redefine style');
                     }}
