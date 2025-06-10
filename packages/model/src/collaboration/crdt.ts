@@ -1,50 +1,28 @@
 import { CollaborationConfig } from './collaborationConfig';
 import { Emitter } from '@diagram-craft/utils/event';
 
-type CRDTCompatiblePrimitive =
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type CRDTCompatibleObject = CRDTMap<any> | CRDTList<any> | CRDTCompatibleInnerObject;
+
+type CRDTCompatibleInnerObject =
   | string
   | number
   | boolean
   | null
   | undefined
   | Uint8Array
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  | CRDTMap<any>
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  | CRDTList<any>;
-
-type CRDTValue =
-  | CRDTCompatiblePrimitive
-  | CRDTValue[]
-  | {
-      [key: string]: CRDTValue;
-    };
-
-// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-type NotAssignableToCRDT = bigint | symbol | Function;
-
-export type CRDTCompatibleObject<T> = CRDTCompatiblePrimitive | unknown extends T
-  ? never
-  : {
-      [P in keyof T]: T[P] extends CRDTValue
-        ? T[P]
-        : T[P] extends NotAssignableToCRDT
-          ? never
-          : CRDTCompatibleObject<T[P]>;
-    };
-
-export type CRDTCompatibleValue<T = unknown> = CRDTCompatiblePrimitive | CRDTCompatibleObject<T>;
+  | Array<CRDTCompatibleInnerObject>
+  | ReadonlyArray<CRDTCompatibleObject>
+  | { [key: string]: Pick<CRDTCompatibleInnerObject, keyof CRDTCompatibleInnerObject> };
 
 export interface CRDTRoot {
-  getMap<T extends { [key: string]: CRDTCompatibleValue<T[string]> }>(name: string): CRDTMap<T>;
-  getList<T extends CRDTCompatibleObject<T>>(name: string): CRDTList<T>;
+  getMap<T extends { [key: string]: CRDTCompatibleObject }>(name: string): CRDTMap<T>;
+  getList<T extends CRDTCompatibleObject>(name: string): CRDTList<T>;
 
   transact(callback: () => void): void;
 }
 
-export type CRDTMapEvents<T extends CRDTCompatibleValue<T>> = {
+export type CRDTMapEvents<T extends CRDTCompatibleObject> = {
   localInsert: { key: string; value: T };
   localDelete: { key: string; value: T };
   localUpdate: { key: string; value: T };
@@ -54,7 +32,7 @@ export type CRDTMapEvents<T extends CRDTCompatibleValue<T>> = {
   remoteUpdate: { key: string; value: T };
 };
 
-export interface CRDTMap<T extends { [key: string]: CRDTCompatibleValue<T[string]> }>
+export interface CRDTMap<T extends { [key: string]: CRDTCompatibleObject }>
   extends Emitter<CRDTMapEvents<T[string]>> {
   size: number;
   get<K extends keyof T & string>(key: K): T[K] | undefined;
@@ -75,7 +53,7 @@ export type CRDTListEvents<T> = {
   remoteDelete: { index: number; count: number };
 };
 
-export interface CRDTList<T extends CRDTCompatibleValue<T>> extends Emitter<CRDTListEvents<T>> {
+export interface CRDTList<T extends CRDTCompatibleObject> extends Emitter<CRDTListEvents<T>> {
   length: number;
   clear(): void;
   get(index: number): T;

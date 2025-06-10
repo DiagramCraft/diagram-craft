@@ -1,5 +1,5 @@
 import {
-  CRDTCompatibleValue,
+  CRDTCompatibleObject,
   CRDTList,
   CRDTListEvents,
   CRDTMap,
@@ -14,10 +14,10 @@ import { mapIterator } from '@diagram-craft/utils/iterator';
 const wrap = (e: any) => {
   if (e instanceof Y.Array) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return new YJSList<CRDTCompatibleValue<any>>(e as any);
+    return new YJSList<CRDTCompatibleObject>(e as any);
   } else if (e instanceof Y.Map) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return new YJSMap<Record<string, CRDTCompatibleValue>>(e as any);
+    return new YJSMap<Record<string, CRDTCompatibleObject>>(e as any);
   } else {
     return e;
   }
@@ -43,11 +43,11 @@ export class YJSRoot implements CRDTRoot {
     return this.doc;
   }
 
-  getMap<T extends { [key: string]: CRDTCompatibleValue<T[string]> }>(name: string): CRDTMap<T> {
+  getMap<T extends { [key: string]: CRDTCompatibleObject }>(name: string): CRDTMap<T> {
     return new YJSMap<T>(this.doc.getMap(name));
   }
 
-  getList<T extends CRDTCompatibleValue<T>>(name: string): CRDTList<T> {
+  getList<T extends CRDTCompatibleObject>(name: string): CRDTList<T> {
     return new YJSList<T>(this.doc.getArray(name));
   }
 
@@ -56,9 +56,7 @@ export class YJSRoot implements CRDTRoot {
   }
 }
 
-export class YJSMap<T extends { [key: string]: CRDTCompatibleValue<T[string]> }>
-  implements CRDTMap<T>
-{
+export class YJSMap<T extends { [key: string]: CRDTCompatibleObject }> implements CRDTMap<T> {
   private emitter = new EventEmitter<CRDTMapEvents<T[string]>>();
   readonly delegate: Y.Map<T>;
 
@@ -149,7 +147,7 @@ export class YJSMap<T extends { [key: string]: CRDTCompatibleValue<T[string]> }>
   }
 }
 
-export class YJSList<T extends CRDTCompatibleValue<T>> implements CRDTList<T> {
+export class YJSList<T extends CRDTCompatibleObject> implements CRDTList<T> {
   private emitter = new EventEmitter<CRDTListEvents<T>>();
   delegate: Y.Array<T>;
 

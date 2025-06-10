@@ -1,5 +1,5 @@
 import {
-  CRDTCompatibleValue,
+  CRDTCompatibleObject,
   CRDTList,
   CRDTListEvents,
   CRDTMap,
@@ -8,7 +8,7 @@ import {
 } from './crdt';
 import { EventEmitter } from '@diagram-craft/utils/event';
 
-export class NoOpCRDTMap<T extends { [key: string]: CRDTCompatibleValue<T[string]> }>
+export class NoOpCRDTMap<T extends { [key: string]: CRDTCompatibleObject }>
   extends EventEmitter<CRDTMapEvents<T[string]>>
   implements CRDTMap<T>
 {
@@ -57,7 +57,7 @@ export class NoOpCRDTMap<T extends { [key: string]: CRDTCompatibleValue<T[string
   }
 }
 
-export class NoOpCRDTList<T extends CRDTCompatibleValue<T>>
+export class NoOpCRDTList<T extends CRDTCompatibleObject>
   extends EventEmitter<CRDTListEvents<T>>
   implements CRDTList<T>
 {
@@ -103,7 +103,7 @@ export class NoOpCRDTRoot implements CRDTRoot {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private list: Map<string, any> = new Map();
 
-  getMap<T extends { [key: string]: CRDTCompatibleValue<T[string]> }>(name: string): CRDTMap<T> {
+  getMap<T extends { [key: string]: CRDTCompatibleObject }>(name: string): CRDTMap<T> {
     let m = this.map.get(name);
     if (!m) {
       m = new NoOpCRDTMap();
@@ -112,7 +112,7 @@ export class NoOpCRDTRoot implements CRDTRoot {
     return m as CRDTMap<T>;
   }
 
-  getList<T extends CRDTCompatibleValue<T>>(name: string): CRDTList<T> {
+  getList<T extends CRDTCompatibleObject>(name: string): CRDTList<T> {
     let l = this.list.get(name);
     if (!l) {
       l = new NoOpCRDTList();
