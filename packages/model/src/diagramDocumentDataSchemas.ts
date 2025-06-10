@@ -26,7 +26,7 @@ type DiagramDocumentDataSchemasEvents = {
 };
 
 export class DiagramDocumentDataSchemas extends EventEmitter<DiagramDocumentDataSchemasEvents> {
-  readonly #schemas: CRDTMap<DataSchema>;
+  readonly #schemas: CRDTMap<Record<string, DataSchema>>;
 
   constructor(
     root: CRDTRoot,

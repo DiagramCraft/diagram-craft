@@ -17,7 +17,7 @@ const wrap = (e: any) => {
     return new YJSList<CRDTCompatibleValue<any>>(e as any);
   } else if (e instanceof Y.Map) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return new YJSMap<CRDTCompatibleValue<any>>(e as any);
+    return new YJSMap<Record<string, CRDTCompatibleValue>>(e as any);
   } else {
     return e;
   }
@@ -43,7 +43,7 @@ export class YJSRoot implements CRDTRoot {
     return this.doc;
   }
 
-  getMap<T extends CRDTCompatibleValue<T>>(name: string): CRDTMap<T> {
+  getMap<T extends { [key: string]: CRDTCompatibleValue<T[string]> }>(name: string): CRDTMap<T> {
     return new YJSMap<T>(this.doc.getMap(name));
   }
 
@@ -56,8 +56,10 @@ export class YJSRoot implements CRDTRoot {
   }
 }
 
-export class YJSMap<T extends CRDTCompatibleValue<T>> implements CRDTMap<T> {
-  private emitter = new EventEmitter<CRDTMapEvents<T>>();
+export class YJSMap<T extends { [key: string]: CRDTCompatibleValue<T[string]> }>
+  implements CRDTMap<T>
+{
+  private emitter = new EventEmitter<CRDTMapEvents<T[string]>>();
   readonly delegate: Y.Map<T>;
 
   constructor(delegate?: Y.Map<T>) {
@@ -90,19 +92,19 @@ export class YJSMap<T extends CRDTCompatibleValue<T>> implements CRDTMap<T> {
     this.delegate.clear();
   }
 
-  delete(key: string) {
+  delete<K extends keyof T & string>(key: K) {
     this.delegate.delete(key);
   }
 
-  get(key: string) {
+  get<K extends keyof T & string>(key: K) {
     return wrap(this.delegate.get(key));
   }
 
-  has(key: string) {
+  has<K extends keyof T & string>(key: K) {
     return this.delegate.has(key);
   }
 
-  set(key: string, value: T) {
+  set<K extends keyof T & string>(key: K, value: T[K]) {
     this.delegate.set(key, unwrap(value));
   }
 
@@ -110,13 +112,13 @@ export class YJSMap<T extends CRDTCompatibleValue<T>> implements CRDTMap<T> {
     return this.delegate.size;
   }
 
-  entries() {
+  entries(): Iterable<[string, T[string]]> {
     const delegate = this.delegate;
     return {
       [Symbol.iterator]() {
         return mapIterator<[string, T], [string, T]>(delegate.entries(), ([k, v]) => [k, wrap(v)]);
       }
-    };
+    } as Iterable<[string, T[string]]>;
   }
 
   keys() {
@@ -129,14 +131,20 @@ export class YJSMap<T extends CRDTCompatibleValue<T>> implements CRDTMap<T> {
       [Symbol.iterator]() {
         return mapIterator<T, T>(delegate.values(), wrap);
       }
-    };
+    } as Iterable<T[string]>;
   }
 
-  on<K extends EventKey<CRDTMapEvents<T>>>(eventName: K, fn: EventReceiver<CRDTMapEvents<T>[K]>) {
+  on<K extends EventKey<CRDTMapEvents<T[string]>>>(
+    eventName: K,
+    fn: EventReceiver<CRDTMapEvents<T[string]>[K]>
+  ) {
     this.emitter.on(eventName, fn);
   }
 
-  off<K extends EventKey<CRDTMapEvents<T>>>(eventName: K, fn: EventReceiver<CRDTMapEvents<T>[K]>) {
+  off<K extends EventKey<CRDTMapEvents<T[string]>>>(
+    eventName: K,
+    fn: EventReceiver<CRDTMapEvents<T[string]>[K]>
+  ) {
     this.emitter.off(eventName, fn);
   }
 }

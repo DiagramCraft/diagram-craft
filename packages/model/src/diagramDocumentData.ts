@@ -77,7 +77,7 @@ const DEFAULT_SCHEMA: DataSchema[] = [
 const PROVIDER = 'provider';
 
 export class DiagramDocumentData extends EventEmitter<{ change: void }> {
-  readonly #crdt: CRDTMap<string>;
+  readonly #crdt: CRDTMap<Record<string, string>>;
   readonly #schemas: DiagramDocumentDataSchemas;
   readonly #templates: DiagramDocumentDataTemplates;
 

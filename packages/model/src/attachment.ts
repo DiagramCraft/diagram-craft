@@ -56,7 +56,7 @@ type AttachmentData = {
 };
 
 export class AttachmentManager {
-  #attachments: CRDTMap<AttachmentData>;
+  #attachments: CRDTMap<Record<string, AttachmentData>>;
   #consumers: Array<AttachmentConsumer> = [];
 
   public constructor(
@@ -64,7 +64,7 @@ export class AttachmentManager {
     diagramDocument: DiagramDocument
   ) {
     this.#consumers.push(diagramDocument);
-    this.#attachments = root.getMap<AttachmentData>('attachmentManager');
+    this.#attachments = root.getMap('attachmentManager');
   }
 
   async addAttachment(content: Blob): Promise<Attachment> {

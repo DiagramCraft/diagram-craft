@@ -1,21 +1,22 @@
-import { CRDTMap, CRDTProperty, CRDTRoot } from './collaboration/crdt';
+import { CRDTMap, CRDTRoot } from './collaboration/crdt';
 import { assert } from '@diagram-craft/utils/assert';
+import { NumberString, numberToString } from '@diagram-craft/utils/number';
 
 const DEFAULT_COLOR = '#000000';
 
-export class DiagramPalette {
-  private readonly palette: CRDTMap<string>;
-  private readonly paletteCount: CRDTMap<number>;
+type PaletteType = {
+  [key: NumberString]: string;
+  count: number;
+};
 
-  private _count = new CRDTProperty<number>('count');
+export class DiagramPalette {
+  private readonly palette: CRDTMap<PaletteType>;
 
   constructor(
     private readonly doc: CRDTRoot,
     count: number
   ) {
-    this.palette = doc.getMap('customPalette');
-    this.paletteCount = doc.getMap('customPalette.count');
-    this._count.set(this.paletteCount, count);
+    this.palette = doc.getMap<PaletteType>('customPalette');
 
     if (this.palette.size === 0 && count > 0) {
       this.doc.transact(() => {
@@ -27,25 +28,26 @@ export class DiagramPalette {
   }
 
   private get count() {
-    return this._count.get(this.paletteCount) ?? 0;
+    return this.palette.get('count') ?? 0;
   }
 
   get colors() {
     const dest: string[] = [];
     for (let i = 0; i < this.count; i++) {
-      dest.push((this.palette.get(i.toString()) as string) ?? DEFAULT_COLOR);
+      dest.push((this.palette.get(numberToString(i)) as string) ?? DEFAULT_COLOR);
     }
     return dest;
   }
 
   setColor(idx: number, color: string) {
     assert.true(idx <= this.count);
-    this.palette.set(idx.toString(), color);
+    this.palette.set(numberToString(idx), color);
+    this.palette.set('count', Math.max(this.count, idx + 1));
   }
 
   setColors(color: readonly string[]) {
     this.palette.clear();
-    this._count.set(this.paletteCount, color.length);
+    this.palette.set('count', color.length);
 
     if (color.length === 0) return;
 

@@ -25,7 +25,7 @@ type CRDTValue =
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 type NotAssignableToCRDT = bigint | symbol | Function;
 
-type CRDTCompatibleObject<T> = CRDTCompatiblePrimitive | unknown extends T
+export type CRDTCompatibleObject<T> = CRDTCompatiblePrimitive | unknown extends T
   ? never
   : {
       [P in keyof T]: T[P] extends CRDTValue
@@ -35,10 +35,10 @@ type CRDTCompatibleObject<T> = CRDTCompatiblePrimitive | unknown extends T
           : CRDTCompatibleObject<T[P]>;
     };
 
-export type CRDTCompatibleValue<T> = CRDTCompatiblePrimitive | CRDTCompatibleObject<T>;
+export type CRDTCompatibleValue<T = unknown> = CRDTCompatiblePrimitive | CRDTCompatibleObject<T>;
 
 export interface CRDTRoot {
-  getMap<T extends CRDTCompatibleObject<T>>(name: string): CRDTMap<T>;
+  getMap<T extends { [key: string]: CRDTCompatibleValue<T[string]> }>(name: string): CRDTMap<T>;
   getList<T extends CRDTCompatibleObject<T>>(name: string): CRDTList<T>;
 
   transact(callback: () => void): void;
@@ -54,16 +54,17 @@ export type CRDTMapEvents<T extends CRDTCompatibleValue<T>> = {
   remoteUpdate: { key: string; value: T };
 };
 
-export interface CRDTMap<T extends CRDTCompatibleValue<T>> extends Emitter<CRDTMapEvents<T>> {
+export interface CRDTMap<T extends { [key: string]: CRDTCompatibleValue<T[string]> }>
+  extends Emitter<CRDTMapEvents<T[string]>> {
   size: number;
-  get(key: string): T | undefined;
-  set(key: string, value: T): void;
-  delete(key: string): void;
+  get<K extends keyof T & string>(key: K): T[K] | undefined;
+  set<K extends keyof T & string>(key: K, value: T[K]): void;
+  delete<K extends keyof T & string>(K: K): void;
   clear(): void;
-  has(key: string): boolean;
-  entries(): Iterable<[string, T]>;
+  has<K extends keyof T & string>(key: K): boolean;
+  entries(): Iterable<[string, T[string]]>;
   keys(): Iterable<string>;
-  values(): Iterable<T>;
+  values(): Iterable<T[string]>;
 }
 
 export type CRDTListEvents<T> = {
@@ -82,24 +83,6 @@ export interface CRDTList<T extends CRDTCompatibleValue<T>> extends Emitter<CRDT
   push(value: T): void;
   delete(index: number): void;
   toArray(): Array<T>;
-}
-
-export class CRDTProperty<T extends CRDTCompatibleValue<T> = string> {
-  constructor(private name: string) {}
-
-  get(target: CRDTMap<T>): T {
-    return target.get(this.name) as T;
-  }
-
-  set(target: CRDTMap<T>, value: T) {
-    target.set(this.name, value);
-  }
-
-  initialize(target: CRDTMap<T>, value: T) {
-    if (!target.has(this.name)) {
-      target.set(this.name, value);
-    }
-  }
 }
 
 export const CRDT = new (class {

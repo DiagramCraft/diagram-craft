@@ -8,43 +8,43 @@ import {
 } from './crdt';
 import { EventEmitter } from '@diagram-craft/utils/event';
 
-export class NoOpCRDTMap<T extends CRDTCompatibleValue<T>>
-  extends EventEmitter<CRDTMapEvents<T>>
+export class NoOpCRDTMap<T extends { [key: string]: CRDTCompatibleValue<T[string]> }>
+  extends EventEmitter<CRDTMapEvents<T[string]>>
   implements CRDTMap<T>
 {
-  private backing = new Map<string, T>();
+  private backing = new Map<string, T[string]>();
 
   get size() {
     return this.backing.size;
   }
 
-  get(key: string): T | undefined {
-    return this.backing.get(key);
+  get<K extends keyof T & string>(key: K): T[K] | undefined {
+    return this.backing.get(key) as T[K] | undefined;
   }
 
-  set(key: string, value: T): void {
+  set<K extends keyof T & string>(key: K, value: T[K]): void {
     const isNew = !this.backing.has(key);
     this.backing.set(key, value);
 
     this.emit(isNew ? 'localInsert' : 'localUpdate', { key, value });
   }
 
-  delete(key: string): void {
+  delete<K extends keyof T & string>(key: K): void {
     this.backing.delete(key);
     this.emit('localDelete');
   }
 
   clear(): void {
-    const map: Map<string, T> = { ...this.backing };
+    const map: Map<string, T[string]> = { ...this.backing };
     this.backing.clear();
     Object.entries(map).forEach(([k, v]) => this.emit('localDelete', { key: k, value: v }));
   }
 
-  has(key: string): boolean {
+  has<K extends keyof T & string>(key: K): boolean {
     return this.backing.has(key);
   }
 
-  entries(): IterableIterator<[string, T]> {
+  entries(): IterableIterator<[string, T[string]]> {
     return this.backing.entries();
   }
 
@@ -52,7 +52,7 @@ export class NoOpCRDTMap<T extends CRDTCompatibleValue<T>>
     return this.backing.keys();
   }
 
-  values(): IterableIterator<T> {
+  values(): IterableIterator<T[string]> {
     return this.backing.values();
   }
 }
@@ -103,7 +103,7 @@ export class NoOpCRDTRoot implements CRDTRoot {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private list: Map<string, any> = new Map();
 
-  getMap<T extends CRDTCompatibleValue<T>>(name: string): CRDTMap<T> {
+  getMap<T extends { [key: string]: CRDTCompatibleValue<T[string]> }>(name: string): CRDTMap<T> {
     let m = this.map.get(name);
     if (!m) {
       m = new NoOpCRDTMap();

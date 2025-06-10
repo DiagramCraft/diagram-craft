@@ -8,11 +8,11 @@ export class DiagramDocumentDataTemplates extends EventEmitter<{
   add: { template: DataTemplate };
   remove: { template: DataTemplate };
 }> {
-  readonly #templates: CRDTMap<DataTemplate>;
+  readonly #templates: CRDTMap<Record<string, DataTemplate>>;
 
   constructor(root: CRDTRoot, templates?: DataTemplate[]) {
     super();
-    this.#templates = root.getMap<DataTemplate>('templates');
+    this.#templates = root.getMap('templates');
 
     this.#templates.on('remoteInsert', p => this.emit('add', { template: p.value }));
     this.#templates.on('remoteUpdate', p => this.emit('update', { template: p.value }));

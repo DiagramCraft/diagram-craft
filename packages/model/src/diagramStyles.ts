@@ -203,9 +203,9 @@ export const isSelectionDirty = ($d: Diagram, isText: boolean) => {
 };
 
 export class DiagramStyles {
-  #textStyles: CRDTMap<StylesheetSnapshot>;
-  #nodeStyles: CRDTMap<StylesheetSnapshot>;
-  #edgeStyles: CRDTMap<StylesheetSnapshot>;
+  #textStyles: CRDTMap<Record<string, StylesheetSnapshot>>;
+  #nodeStyles: CRDTMap<Record<string, StylesheetSnapshot>>;
+  #edgeStyles: CRDTMap<Record<string, StylesheetSnapshot>>;
 
   #activeNodeStylesheet = DefaultStyles.node.default;
   #activeEdgeStylesheet = DefaultStyles.edge.default;

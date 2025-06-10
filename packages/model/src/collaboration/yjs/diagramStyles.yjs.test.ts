@@ -17,11 +17,11 @@ describe('YJS Stylesheet', () => {
       const props = { fill: { color: 'blue' } };
 
       const stylesheet = new Stylesheet(type, { id, name, props });
-      doc1.getMap<StylesheetSnapshot>('test').set('test', stylesheet.snapshot());
+      doc1.getMap<Record<string, StylesheetSnapshot>>('test').set('test', stylesheet.snapshot());
 
       const other = new Stylesheet(
         type,
-        doc2.getMap<StylesheetSnapshot>('test').get('test') as StylesheetSnapshot
+        doc2.getMap<Record<string, StylesheetSnapshot>>('test').get('test') as StylesheetSnapshot
       );
       expect(other.id).toBe(id);
       expect(other.name).toBe(name);
