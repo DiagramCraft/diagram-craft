@@ -4,8 +4,8 @@ export const parseNum = (str: string | undefined | null, def = 0) => {
   return isNaN(n) ? def : n;
 };
 
-export type NumberString = `${number}`;
+export type NumericalString = `${number}`;
 
-export const numberToString = (n: number): NumberString => {
-  return n.toString() as NumberString;
+export const numberToString = (n: number): NumericalString => {
+  return n.toString() as NumericalString;
 };

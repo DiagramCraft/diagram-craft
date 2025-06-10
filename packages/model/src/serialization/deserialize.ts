@@ -232,9 +232,7 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
   }
 };
 
-const deserializeStylesheet = (s: SerializedStylesheet) => {
-  return new Stylesheet(s.type, s);
-};
+const deserializeStylesheet = (s: SerializedStylesheet) => new Stylesheet(s.type, s);
 
 const deserializeDiagrams = <T extends Diagram>(
   doc: DiagramDocument,

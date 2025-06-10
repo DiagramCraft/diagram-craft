@@ -1,11 +1,11 @@
 import { CRDTMap, CRDTRoot } from './collaboration/crdt';
 import { assert } from '@diagram-craft/utils/assert';
-import { NumberString, numberToString } from '@diagram-craft/utils/number';
+import { NumericalString, numberToString } from '@diagram-craft/utils/number';
 
 const DEFAULT_COLOR = '#000000';
 
 type PaletteType = {
-  [key: NumberString]: string;
+  [key: NumericalString]: string;
   count: number;
 };
 

@@ -1,4 +1,3 @@
-import { DiagramFactory } from '@diagram-craft/model/serialization/deserialize';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { assertRegularLayer, Layer, RegularLayer } from '@diagram-craft/model/diagramLayer';
@@ -1286,11 +1285,7 @@ async function decode(data: string) {
   return decodeURIComponent(new TextDecoder().decode(concatenated));
 }
 
-export const drawioReader = async (
-  contents: string,
-  doc: DiagramDocument,
-  _diagramFactory: DiagramFactory<Diagram>
-): Promise<void> => {
+export const drawioReader = async (contents: string, doc: DiagramDocument): Promise<void> => {
   const start = new Date().getTime();
 
   const parser = new DOMParser();

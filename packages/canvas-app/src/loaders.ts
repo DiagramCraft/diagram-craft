@@ -40,16 +40,14 @@ export const loadFileFromUrl = async (
   documentFactory: DocumentFactory,
   diagramFactory: DiagramFactory<Diagram>
 ) => {
-  const fileLoaderFactory = getFileLoaderForUrl(url);
-  assert.present(fileLoaderFactory, `File loader for ${url} not found`);
-
-  const fileLoader = await fileLoaderFactory();
   const content = await fetch(url).then(r => r.text());
 
+  const fileLoaderFactory = getFileLoaderForUrl(url);
+  assert.present(fileLoaderFactory, `File loader for ${url} not found`);
+  const fileLoader = await fileLoaderFactory();
+
   const doc = await documentFactory(url, progressCallback);
-
   await fileLoader(content, doc, diagramFactory);
-
   await doc.load();
 
   return doc;
