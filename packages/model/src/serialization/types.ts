@@ -9,7 +9,7 @@ import { Canvas } from '../diagram';
 import { AdjustmentRule } from '../diagramLayerRuleTypes';
 import { DataTemplate } from '../diagramDocument';
 
-interface Reference {
+export interface Reference {
   id: string;
 }
 

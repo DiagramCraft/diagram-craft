@@ -27,6 +27,7 @@ import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/p
 import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
 import { getAdjustments } from './diagramLayerRuleTypes';
 import { toUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
+import { Reference } from './serialization/types';
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;
@@ -471,7 +472,9 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       uow
     );
     this.edges.clear();
-    for (const [k, v] of Object.entries(snapshot.edges ?? {})) {
+    for (const [k, v] of Object.entries(
+      (snapshot.edges ?? {}) as Record<string, ReadonlyArray<Reference>>
+    )) {
       this.edges.set(k, [
         ...(this.edges.get(k) ?? []),
         ...v.map(e => this.diagram.edgeLookup.get(e.id)!)

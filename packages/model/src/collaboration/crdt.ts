@@ -89,4 +89,9 @@ export const CRDT = new (class {
   get Root(): new (...args: unknown[]) => CRDTRoot {
     return CollaborationConfig.CRDTRoot;
   }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  get Map(): new (...args: unknown[]) => CRDTMap<any> {
+    return CollaborationConfig.CRDTMap;
+  }
 })();
