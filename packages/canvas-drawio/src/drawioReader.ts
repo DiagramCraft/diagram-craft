@@ -1,4 +1,4 @@
-import { DiagramFactory, DocumentFactory } from '@diagram-craft/model/serialization/deserialize';
+import { DiagramFactory } from '@diagram-craft/model/serialization/deserialize';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { assertRegularLayer, Layer, RegularLayer } from '@diagram-craft/model/diagramLayer';
@@ -16,7 +16,7 @@ import { clipPath } from '@diagram-craft/model/edgeUtils';
 import { assertHAlign, assertVAlign } from '@diagram-craft/model/diagramProps';
 import { ARROW_SHAPES } from '@diagram-craft/canvas/arrowShapes';
 import { Angle } from '@diagram-craft/geometry/angle';
-import { ProgressCallback, Waypoint } from '@diagram-craft/model/types';
+import { Waypoint } from '@diagram-craft/model/types';
 import { Line } from '@diagram-craft/geometry/line';
 import { newid } from '@diagram-craft/utils/id';
 import {
@@ -1288,14 +1288,10 @@ async function decode(data: string) {
 
 export const drawioReader = async (
   contents: string,
-  url: string,
-  progressCallback: ProgressCallback,
-  documentFactory: DocumentFactory,
+  doc: DiagramDocument,
   _diagramFactory: DiagramFactory<Diagram>
-): Promise<DiagramDocument> => {
+): Promise<void> => {
   const start = new Date().getTime();
-
-  const doc = await documentFactory(url, progressCallback);
 
   const parser = new DOMParser();
   const $doc = parser.parseFromString(contents, 'application/xml');
@@ -1351,6 +1347,4 @@ export const drawioReader = async (
   }
 
   console.log(`Duration: ${new Date().getTime() - start}`);
-
-  return doc;
 };

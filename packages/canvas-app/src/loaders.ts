@@ -21,11 +21,9 @@ export const stencilLoaderRegistry: Partial<{
 export type FileLoader = (
   // TODO: Need to extend with blob
   content: string,
-  url: string,
-  fileLoaderStatusCallback: ProgressCallback,
-  documentFactory: DocumentFactory,
+  doc: DiagramDocument,
   diagramFactory: DiagramFactory<Diagram>
-) => Promise<DiagramDocument>;
+) => Promise<void>;
 
 export const fileLoaderRegistry: Record<string, () => Promise<FileLoader>> = {};
 
@@ -42,17 +40,17 @@ export const loadFileFromUrl = async (
   documentFactory: DocumentFactory,
   diagramFactory: DiagramFactory<Diagram>
 ) => {
-  const fileLoader = getFileLoaderForUrl(url);
-  assert.present(fileLoader, `File loader for ${url} not found`);
+  const fileLoaderFactory = getFileLoaderForUrl(url);
+  assert.present(fileLoaderFactory, `File loader for ${url} not found`);
 
-  const document = await fileLoader().then(loader =>
-    fetch(url)
-      .then(r => r.text())
-      .then(c => loader(c, url, progressCallback, documentFactory, diagramFactory))
-  );
-  document.url = url;
+  const fileLoader = await fileLoaderFactory();
+  const content = await fetch(url).then(r => r.text());
 
-  await document.load();
+  const doc = await documentFactory(url, progressCallback);
 
-  return document;
+  await fileLoader(content, doc, diagramFactory);
+
+  await doc.load();
+
+  return doc;
 };

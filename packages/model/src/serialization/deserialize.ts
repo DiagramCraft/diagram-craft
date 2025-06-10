@@ -174,14 +174,11 @@ export type DiagramFactory<T extends Diagram> = (d: SerializedDiagram, doc: Diag
 
 export const deserializeDiagramDocument = async <T extends Diagram>(
   document: SerializedDiagramDocument,
-  documentFactory: DocumentFactory,
-  diagramFactory: DiagramFactory<T>,
-  url: string | undefined,
-  callback: ProgressCallback
-): Promise<DiagramDocument> => {
+  doc: DiagramDocument,
+  diagramFactory: DiagramFactory<T>
+): Promise<void> => {
   const diagrams = document.diagrams;
 
-  const doc = await documentFactory(url, callback);
   doc.transact(() => {
     if (document.customPalette) {
       doc.customPalette.setColors(document.customPalette);
@@ -233,8 +230,6 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
   if (document.props?.stencils) {
     doc.props.recentStencils.set(document.props?.stencils);
   }
-
-  return doc;
 };
 
 const deserializeStylesheet = (s: SerializedStylesheet) => {

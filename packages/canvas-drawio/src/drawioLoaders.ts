@@ -39,12 +39,6 @@ export const stencilLoaderDrawioXml: StencilLoader<'drawioXml'> = async (nodeDef
   stencilRegistry.activate(name);
 };
 
-export const fileLoaderDrawio: FileLoader = async (
-  content,
-  url,
-  progressCallback,
-  documentFactory,
-  diagramFactory
-) => {
-  return await drawioReader(content, url, progressCallback, documentFactory, diagramFactory);
+export const fileLoaderDrawio: FileLoader = async (content, doc, diagramFactory) => {
+  await drawioReader(content, doc, diagramFactory);
 };

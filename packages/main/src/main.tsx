@@ -30,9 +30,8 @@ stencilLoaderRegistry.drawioXml = () =>
 fileLoaderRegistry['.drawio'] = () =>
   import('@diagram-craft/canvas-drawio/drawioLoaders').then(m => m.fileLoaderDrawio);
 
-fileLoaderRegistry['.json'] =
-  async () => (content, url, progress, documentFactory, diagramFactory) =>
-    deserializeDiagramDocument(JSON.parse(content), documentFactory, diagramFactory, url, progress);
+fileLoaderRegistry['.json'] = async () => (content, doc, diagramFactory) =>
+  deserializeDiagramDocument(JSON.parse(content), doc, diagramFactory);
 
 const stencilRegistry: StencilRegistryConfig = [
   {
@@ -155,7 +154,9 @@ const documentFactory = async (url: string | undefined, statusCallback: Progress
   if (url) {
     await CollaborationConfig.Backend.connect(url, root, statusCallback);
   }
-  return new DiagramDocument(nodeRegistry, edgeRegistry, false, root);
+  const doc = new DiagramDocument(nodeRegistry, edgeRegistry, false, root);
+  if (url) doc.url = url;
+  return doc;
 };
 
 const diagrams: Array<DiagramRef> = [];
