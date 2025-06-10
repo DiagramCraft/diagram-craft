@@ -475,6 +475,7 @@ export class DiagramStyles {
     }
   }
 
+  // TODO: Is this really needed? It seems it will have no additional effect
   reapplyStylesheet(stylesheet: Stylesheet<StylesheetType>, uow: UnitOfWork) {
     this.root.transact(() => {
       for (const diagram of this.document.diagramIterator({ nest: true })) {
