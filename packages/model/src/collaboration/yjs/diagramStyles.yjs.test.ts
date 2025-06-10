@@ -1,9 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it } from 'vitest';
 import { createSyncedYJSCRDTs, setupYJS } from './yjsTest';
 import { DiagramStyles, Stylesheet } from '../../diagramStyles';
-import { CRDTMap } from '../crdt';
-import { UnitOfWork } from '../../unitOfWork';
+import { StylesheetSnapshot, UnitOfWork } from '../../unitOfWork';
 import { TestModel } from '../../test-support/builder';
 
 describe('YJS Stylesheet', () => {
@@ -16,12 +14,15 @@ describe('YJS Stylesheet', () => {
       const type = 'node';
       const id = '123';
       const name = 'Test stylesheet';
-      const props = { color: 'blue' };
+      const props = { fill: { color: 'blue' } };
 
-      const stylesheet = Stylesheet.from(type, id, name, props);
-      doc1.getMap('test').set('test', stylesheet.crdt);
+      const stylesheet = new Stylesheet(type, { id, name, props });
+      doc1.getMap<Record<string, StylesheetSnapshot>>('test').set('test', stylesheet.snapshot());
 
-      const other = new Stylesheet(type, doc2.getMap('test').get('test') as CRDTMap);
+      const other = new Stylesheet(
+        type,
+        doc2.getMap<Record<string, StylesheetSnapshot>>('test').get('test') as StylesheetSnapshot
+      );
       expect(other.id).toBe(id);
       expect(other.name).toBe(name);
       expect(other.props).toEqual(props);
@@ -33,13 +34,24 @@ describe('YJS Stylesheet', () => {
     it('should set new props', () => {
       const { doc1, doc2 } = createSyncedYJSCRDTs();
 
-      const stylesheet = new Stylesheet('node', doc1.getMap('test'));
-      const other = new Stylesheet('node', doc2.getMap('test'));
+      const type = 'node';
+      const id = '123';
+      const name = 'Test stylesheet';
+      const props = { fill: { color: 'blue' } };
 
-      const newProps = { color: 'red' } as any;
-      stylesheet.setProps(newProps, UnitOfWork.immediate(null!));
+      const stylesheet = new Stylesheet(type, { id, name, props });
 
-      expect(other.props).toEqual(newProps);
+      const styles1 = new DiagramStyles(doc1, TestModel.newDocument(), true);
+      styles1.addStylesheet(id, stylesheet);
+
+      const styles2 = new DiagramStyles(doc2, TestModel.newDocument(), true);
+
+      expect(styles2.getNodeStyle('123')!.props!.fill!.color).toEqual('blue');
+
+      const newProps = { fill: { color: 'red' } };
+      stylesheet.setProps(newProps, styles1, UnitOfWork.immediate(null!));
+
+      expect(styles2.getNodeStyle('123')!.props!.fill!.color).toEqual('red');
     });
   });
 
@@ -47,12 +59,23 @@ describe('YJS Stylesheet', () => {
     it('should set a new name', () => {
       const { doc1, doc2 } = createSyncedYJSCRDTs();
 
-      const stylesheet = new Stylesheet('node', doc1.getMap('test'));
-      const other = new Stylesheet('node', doc2.getMap('test'));
+      const type = 'node';
+      const id = '123';
+      const name = 'Test stylesheet';
+      const props = { fill: { color: 'blue' } };
 
-      stylesheet.setName('New Name', UnitOfWork.immediate(null!));
+      const stylesheet = new Stylesheet(type, { id, name, props });
 
-      expect(other.name).toBe('New Name');
+      const styles1 = new DiagramStyles(doc1, TestModel.newDocument(), true);
+      styles1.addStylesheet(id, stylesheet);
+
+      const styles2 = new DiagramStyles(doc2, TestModel.newDocument(), true);
+
+      expect(styles2.getNodeStyle('123')!.name).toBe(name);
+
+      stylesheet.setName('New Name', styles1, UnitOfWork.immediate(null!));
+
+      expect(styles2.getNodeStyle('123')!.name).toBe('New Name');
     });
   });
 });
@@ -84,8 +107,8 @@ describe('YJS DiagramStyles', () => {
       const styles1 = new DiagramStyles(doc1, TestModel.newDocument(), true);
       const styles2 = new DiagramStyles(doc2, TestModel.newDocument(), true);
 
-      const customNodeStyle = Stylesheet.from('node', 'custom-node', 'Custom Node', {});
-      styles1.addStylesheet('custom-node', customNodeStyle);
+      const customNodeStyle = new Stylesheet('node', { id: 'custom', name: 'Custom', props: {} });
+      styles1.addStylesheet('custom', customNodeStyle);
 
       styles1.activeNodeStylesheet = customNodeStyle;
 
@@ -101,7 +124,11 @@ describe('YJS DiagramStyles', () => {
       const styles1 = new DiagramStyles(doc1, TestModel.newDocument(), true);
       const styles2 = new DiagramStyles(doc2, TestModel.newDocument(), true);
 
-      const customEdgeStyle = Stylesheet.from('edge', 'custom-edge', 'Custom Edge', {});
+      const customEdgeStyle = new Stylesheet('edge', {
+        id: 'custom-edge',
+        name: 'Custom Edge',
+        props: {}
+      });
       styles1.addStylesheet('custom-edge', customEdgeStyle);
 
       styles1.activeEdgeStylesheet = customEdgeStyle;
@@ -118,8 +145,8 @@ describe('YJS DiagramStyles', () => {
       const styles1 = new DiagramStyles(doc1, TestModel.newDocument(), true);
       const styles2 = new DiagramStyles(doc2, TestModel.newDocument(), true);
 
-      const customTextStyle = Stylesheet.from('text', 'custom-text', 'Custom Text', {});
-      styles1.addStylesheet('custom-text', customTextStyle);
+      const customTextStyle = new Stylesheet('text', { id: 'custom', name: 'Custom', props: {} });
+      styles1.addStylesheet('custom', customTextStyle);
 
       styles1.activeTextStylesheet = customTextStyle;
 
@@ -135,8 +162,8 @@ describe('YJS DiagramStyles', () => {
       const styles1 = new DiagramStyles(doc1, TestModel.newDocument(), true);
       const styles2 = new DiagramStyles(doc2, TestModel.newDocument(), true);
 
-      const customTextStyle = Stylesheet.from('text', 'custom-text', 'Custom Text', {});
-      styles1.addStylesheet('custom-text', customTextStyle);
+      const customTextStyle = new Stylesheet('text', { id: 'custom', name: 'Custom', props: {} });
+      styles1.addStylesheet('custom', customTextStyle);
 
       expect(styles1.textStyles.length).toBe(3);
       expect(styles2.textStyles.length).toBe(3);
@@ -150,7 +177,7 @@ describe('YJS DiagramStyles', () => {
       const styles1 = new DiagramStyles(doc1, TestModel.newDocument(), true);
       const styles2 = new DiagramStyles(doc2, TestModel.newDocument(), true);
 
-      const customTextStyle = Stylesheet.from('text', 'custom-text', 'Custom Text', {});
+      const customTextStyle = new Stylesheet('text', { id: 'custom', name: 'Custom', props: {} });
       styles1.addStylesheet('custom-text', customTextStyle);
 
       expect(styles1.textStyles.length).toBe(3);

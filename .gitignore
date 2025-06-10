@@ -40,4 +40,6 @@ node_modules/
 /packages/playwright/playwright/.cache/
 /packages/playwright/src/local-tests/
 
+/playground
+
 coverage/

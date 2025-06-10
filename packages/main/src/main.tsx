@@ -1,6 +1,5 @@
 import './initial-loader';
 
-import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { AppLoader, StencilRegistryConfig } from './AppLoader';
 import './index.css';
@@ -17,6 +16,10 @@ import { fileLoaderRegistry, stencilLoaderRegistry } from '@diagram-craft/canvas
 import { DiagramRef } from './App';
 import { Autosave } from './Autosave';
 import { UserState } from './UserState';
+import { CRDT } from '@diagram-craft/model/collaboration/crdt';
+import { CollaborationConfig } from '@diagram-craft/model/collaboration/collaborationConfig';
+import React from 'react';
+import { ProgressCallback } from '@diagram-craft/model/types';
 
 stencilLoaderRegistry.drawioManual = () =>
   import('@diagram-craft/canvas-drawio/drawioLoaders').then(m => m.stencilLoaderDrawioManual);
@@ -27,8 +30,8 @@ stencilLoaderRegistry.drawioXml = () =>
 fileLoaderRegistry['.drawio'] = () =>
   import('@diagram-craft/canvas-drawio/drawioLoaders').then(m => m.fileLoaderDrawio);
 
-fileLoaderRegistry['.json'] = async () => (content, documentFactory, diagramFactory) =>
-  deserializeDiagramDocument(JSON.parse(content), documentFactory, diagramFactory);
+fileLoaderRegistry['.json'] = async () => (content, doc, diagramFactory) =>
+  deserializeDiagramDocument(JSON.parse(content), doc, diagramFactory);
 
 const stencilRegistry: StencilRegistryConfig = [
   {
@@ -146,8 +149,14 @@ const diagramFactory = (d: SerializedDiagram, doc: DiagramDocument) => {
   return new Diagram(d.id, d.name, doc);
 };
 
-const documentFactory = () => {
-  return new DiagramDocument(nodeRegistry, edgeRegistry);
+const documentFactory = async (url: string | undefined, statusCallback: ProgressCallback) => {
+  const root = new CRDT.Root();
+  if (url) {
+    await CollaborationConfig.Backend.connect(url, root, statusCallback);
+  }
+  const doc = new DiagramDocument(nodeRegistry, edgeRegistry, false, root);
+  if (url) doc.url = url;
+  return doc;
 };
 
 const diagrams: Array<DiagramRef> = [];

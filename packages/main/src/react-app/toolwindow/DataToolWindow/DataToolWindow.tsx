@@ -58,7 +58,7 @@ const makeTemplateNode = (
   }
 
   const tpl = deepClone(template.template);
-  const { node, diagram } = Diagram.createForNode(
+  const { node, diagram } = Diagram.createThumbnailDiagramForNode(
     (diagram, layer) => deserializeDiagramElements([tpl], diagram, layer)[0] as DiagramNode,
     definitions
   );
@@ -82,7 +82,7 @@ const makeTemplateNode = (
 };
 
 const makeDefaultNode = (item: Data, schema: DataSchema, definitions: Definitions): DiagramNode => {
-  return Diagram.createForNode(
+  return Diagram.createThumbnailDiagramForNode(
     (diagram, layer) =>
       new DiagramNode(
         newid(),

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { DiagramFactory, DocumentFactory } from '@diagram-craft/model/serialization/deserialize';
 import { Diagram } from '@diagram-craft/model/diagram';
@@ -10,10 +10,18 @@ import { Autosave } from './Autosave';
 import { newid } from '@diagram-craft/utils/id';
 import { RegularLayer } from '@diagram-craft/model/diagramLayer';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { Progress, ProgressCallback } from '@diagram-craft/model/types';
 
 export const AppLoader = (props: Props) => {
   const [doc, setDoc] = useState<DiagramDocument | undefined>(undefined);
   const [url, setUrl] = useState<string | undefined>(props.diagram?.url);
+  const [loaded, setLoaded] = useState<boolean>(false);
+
+  const [progress, setProgress] = useState<Progress | undefined>(undefined);
+  const progressCallback = useCallback<ProgressCallback>(
+    (status, opts) => queueMicrotask(() => setProgress({ status, ...opts })),
+    [setProgress]
+  );
 
   useEffect(() => {
     if (!doc) return;
@@ -28,47 +36,80 @@ export const AppLoader = (props: Props) => {
 
   useEffect(() => {
     if (props.diagram) {
-      Autosave.load(props.documentFactory, props.diagramFactory, true).then(autosaved => {
-        if (autosaved?.document) {
-          setDoc(autosaved?.document);
-          autosaved.document!.url = props.diagram?.url;
-          setUrl(autosaved.url);
-        } else {
-          loadFileFromUrl(props.diagram!.url, props.documentFactory, props.diagramFactory).then(
-            defDiagram => {
+      Autosave.load(progressCallback, props.documentFactory, props.diagramFactory, true).then(
+        autosaved => {
+          if (autosaved?.document) {
+            setDoc(autosaved?.document);
+            autosaved.document!.url = props.diagram?.url;
+            setUrl(autosaved.url);
+          } else {
+            loadFileFromUrl(
+              props.diagram!.url,
+              progressCallback,
+              props.documentFactory,
+              props.diagramFactory
+            ).then(defDiagram => {
               setDoc(defDiagram);
               defDiagram!.url = props.diagram?.url;
-            }
-          );
+            });
+          }
         }
-      });
-    } else {
-      // TODO: This is duplicated in fileNewAction.ts
-      const doc = props.documentFactory();
-      const diagram = new Diagram(newid(), 'Untitled', doc);
-      diagram.layers.add(
-        new RegularLayer(newid(), 'Default', [], diagram),
-        UnitOfWork.immediate(diagram)
       );
-      doc.addDiagram(diagram);
-      setDoc(doc);
+    } else {
+      props.documentFactory(undefined, progressCallback).then(doc => {
+        // TODO: This is duplicated in fileNewAction.ts
+        const diagram = new Diagram(newid(), 'Untitled', doc);
+        diagram.layers.add(
+          new RegularLayer(newid(), 'Default', [], diagram),
+          UnitOfWork.immediate(diagram)
+        );
+        doc.addDiagram(diagram);
+        setDoc(doc);
+      });
     }
   }, [props.diagramFactory, props.documentFactory]);
+
+  useEffect(() => {
+    if (doc && progress?.status === 'complete') {
+      setLoaded(true);
+    }
+  }, [doc, progress]);
 
   if (doc && doc.topLevelDiagrams.length === 0) {
     console.error('Doc contains no diagrams');
     return null;
   }
 
-  if (!doc) return null;
-
   return (
-    <App
-      doc={doc}
-      url={url}
-      documentFactory={props.documentFactory}
-      diagramFactory={props.diagramFactory}
-    />
+    <div>
+      {!loaded && progress?.status !== 'complete' && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'black'
+          }}
+        >
+          {progress?.status.toUpperCase()}: {progress?.message}
+        </div>
+      )}
+      {loaded && (
+        <App
+          doc={doc!}
+          url={url}
+          documentFactory={props.documentFactory}
+          diagramFactory={props.diagramFactory}
+        />
+      )}
+    </div>
   );
 };
 

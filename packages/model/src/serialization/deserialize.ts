@@ -16,7 +16,7 @@ import {
   SerializedStylesheet
 } from './types';
 import { Endpoint } from '../endpoint';
-import { Waypoint } from '../types';
+import { ProgressCallback, Waypoint } from '../types';
 import { Stylesheet } from '../diagramStyles';
 import { DefaultStyles } from '../diagramDefaults';
 import { ReferenceLayer } from '../diagramLayerReference';
@@ -165,17 +165,20 @@ export const deserializeDiagramElements = (
     .filter(e => e.parent === undefined);
 };
 
-export type DocumentFactory = () => DiagramDocument;
+export type DocumentFactory = (
+  url: string | undefined,
+  callback: ProgressCallback
+) => Promise<DiagramDocument>;
+
 export type DiagramFactory<T extends Diagram> = (d: SerializedDiagram, doc: DiagramDocument) => T;
 
 export const deserializeDiagramDocument = async <T extends Diagram>(
   document: SerializedDiagramDocument,
-  documentFactory: DocumentFactory,
+  doc: DiagramDocument,
   diagramFactory: DiagramFactory<T>
-): Promise<DiagramDocument> => {
+): Promise<void> => {
   const diagrams = document.diagrams;
 
-  const doc = documentFactory();
   doc.transact(() => {
     if (document.customPalette) {
       doc.customPalette.setColors(document.customPalette);
@@ -227,13 +230,9 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
   if (document.props?.stencils) {
     doc.props.recentStencils.set(document.props?.stencils);
   }
-
-  return doc;
 };
 
-const deserializeStylesheet = (s: SerializedStylesheet) => {
-  return Stylesheet.from(s.type, s.id, s.name, s.props);
-};
+const deserializeStylesheet = (s: SerializedStylesheet) => new Stylesheet(s.type, s);
 
 const deserializeDiagrams = <T extends Diagram>(
   doc: DiagramDocument,

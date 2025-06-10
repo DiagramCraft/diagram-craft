@@ -16,7 +16,6 @@ import { assert } from '@diagram-craft/utils/assert';
 import { AttachmentConsumer } from './attachment';
 import { newid } from '@diagram-craft/utils/id';
 import { Definitions } from './elementDefinitionRegistry';
-import { CRDT, CRDTBacked, CRDTMap } from './collaboration/crdt';
 
 export type DiagramIteratorOpts = {
   nest?: boolean;
@@ -73,9 +72,7 @@ export const DocumentBuilder = {
   }
 };
 
-export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentConsumer, CRDTBacked {
-  readonly crdt;
-
+export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentConsumer {
   #canvas: Canvas = { x: 0, y: 0, w: 640, h: 640 };
   #document: DiagramDocument | undefined;
 
@@ -99,19 +96,12 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
   readonly uid = newid();
 
-  static fromCRDT(map: CRDTMap, document: DiagramDocument) {
-    return new Diagram(map.get('id'), map.get('name'), document, map);
-  }
-
   constructor(
     readonly id: string,
     public name: string,
-    document: DiagramDocument,
-    root?: CRDTMap
+    document: DiagramDocument
   ) {
     super();
-
-    this.crdt = root ?? new CRDT.Map();
 
     this.#document = document;
 
@@ -361,14 +351,14 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     return this.layers.getAttachmentsInUse();
   }
 
-  public static createForNode(
+  public static createThumbnailDiagramForNode(
     factory: (diagram: Diagram, layer: Layer) => DiagramNode,
     definitions: Definitions
   ) {
     const dest = new Diagram(
       newid(),
       newid(),
-      new DiagramDocument(definitions.nodeDefinitions, definitions.edgeDefinitions)
+      new DiagramDocument(definitions.nodeDefinitions, definitions.edgeDefinitions, true)
     );
 
     const uow = UnitOfWork.immediate(dest);

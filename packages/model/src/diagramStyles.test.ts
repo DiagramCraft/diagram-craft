@@ -12,9 +12,9 @@ describe('Stylesheet', () => {
       const type = 'node';
       const id = '123';
       const name = 'Test stylesheet';
-      const props = { color: 'blue' };
+      const props: NodeProps = { fill: { color: 'blue' } };
 
-      const stylesheet = Stylesheet.from(type, id, name, props);
+      const stylesheet = new Stylesheet(type, { id, name, props });
 
       expect(stylesheet.id).toBe(id);
       expect(stylesheet.name).toBe(name);
@@ -28,13 +28,15 @@ describe('Stylesheet', () => {
       const type = 'node';
       const id = '123';
       const name = 'Test stylesheet';
-      const initialProps = { color: 'blue' };
+      const initialProps = { fill: { color: 'blue' } };
 
-      const newProps = { color: 'red' } as any;
+      const newProps = { fill: { color: 'red' } };
 
-      const stylesheet = Stylesheet.from(type, id, name, initialProps);
+      const styles = new DiagramStyles(new NoOpCRDTRoot(), TestModel.newDocument(), true);
+      const stylesheet = new Stylesheet(type, { id, name, props: initialProps });
+      styles.addStylesheet(id, stylesheet);
 
-      stylesheet.setProps(newProps, UnitOfWork.immediate(null!));
+      stylesheet.setProps(newProps, styles, UnitOfWork.immediate(null!));
 
       expect(stylesheet.props).toEqual(newProps);
     });
@@ -46,11 +48,13 @@ describe('Stylesheet', () => {
       const id = '123';
       const name = 'Old Name';
       const newName = 'New Name';
-      const props = { color: 'blue' };
+      const props = { fill: { color: 'blue' } };
 
-      const stylesheet = Stylesheet.from(type, id, name, props);
+      const styles = new DiagramStyles(new NoOpCRDTRoot(), TestModel.newDocument(), true);
+      const stylesheet = new Stylesheet(type, { id, name, props });
+      styles.addStylesheet(id, stylesheet);
 
-      stylesheet.setName(newName, UnitOfWork.immediate(null!));
+      stylesheet.setName(newName, styles, UnitOfWork.immediate(null!));
 
       expect(stylesheet.name).toBe(newName);
     });
@@ -61,16 +65,16 @@ describe('Stylesheet', () => {
       const type = 'node';
       const id = '123';
       const name = 'Snapshot Test';
-      const props = { color: 'blue' };
+      const props = { fill: { color: 'blue' } };
 
-      const stylesheet = Stylesheet.from(type, id, name, props);
+      const stylesheet = new Stylesheet(type, { id, name, props });
       const snapshot = stylesheet.snapshot();
 
       expect(snapshot).toEqual({
         _snapshotType: 'stylesheet',
         id,
         name,
-        props: { color: 'blue' },
+        props: { fill: { color: 'blue' } },
         type
       });
     });
@@ -81,21 +85,21 @@ describe('Stylesheet', () => {
       const type = 'node';
       const id = '123';
       const name = 'Initial Name';
-      const props = { color: 'blue' };
+      const props = { fill: { color: 'blue' } };
       const snapshot = {
         _snapshotType: 'stylesheet',
         id,
         name: 'Restored Name',
-        props: { color: 'red' },
+        props: { fill: { color: 'red' } },
         type
       } satisfies StylesheetSnapshot;
 
-      const stylesheet = Stylesheet.from(type, id, name, props);
+      const stylesheet = new Stylesheet(type, { id, name, props });
 
       stylesheet.restore(snapshot, UnitOfWork.immediate(null!));
 
       expect(stylesheet.name).toBe('Restored Name');
-      expect(stylesheet.props).toEqual({ color: 'red' });
+      expect(stylesheet.props).toEqual({ fill: { color: 'red' } });
     });
   });
 });
@@ -191,7 +195,11 @@ describe('DiagramStyles', () => {
 
     it('should set the active node stylesheet', () => {
       const styles = new DiagramStyles(root, document, true);
-      const customNodeStyle = Stylesheet.from('node', 'custom-node', 'Custom Node', {});
+      const customNodeStyle = new Stylesheet('node', {
+        id: 'custom-node',
+        name: 'Custom Node',
+        props: {}
+      });
       styles.addStylesheet('custom-node', customNodeStyle);
 
       styles.activeNodeStylesheet = customNodeStyle;
@@ -209,7 +217,11 @@ describe('DiagramStyles', () => {
 
     it('should set the active edge stylesheet', () => {
       const styles = new DiagramStyles(root, document, true);
-      const customEdgeStyle = Stylesheet.from('edge', 'custom-edge', 'Custom Edge', {});
+      const customEdgeStyle = new Stylesheet('edge', {
+        id: 'custom-edge',
+        name: 'Custom Edge',
+        props: {}
+      });
       styles.addStylesheet('custom-edge', customEdgeStyle);
 
       styles.activeEdgeStylesheet = customEdgeStyle;
@@ -227,7 +239,11 @@ describe('DiagramStyles', () => {
 
     it('should set the active text stylesheet', () => {
       const styles = new DiagramStyles(root, document, true);
-      const customTextStyle = Stylesheet.from('text', 'custom-text', 'Custom Text', {});
+      const customTextStyle = new Stylesheet('text', {
+        id: 'custom-text',
+        name: 'Custom Text',
+        props: {}
+      });
       styles.addStylesheet('custom-text', customTextStyle);
 
       styles.activeTextStylesheet = customTextStyle;
@@ -306,7 +322,11 @@ describe('DiagramStyles', () => {
     it('should add a new node stylesheet', () => {
       const styles = new DiagramStyles(root, document, true);
 
-      const customNodeStyle = Stylesheet.from('node', 'custom-node', 'Custom Node', {});
+      const customNodeStyle = new Stylesheet('node', {
+        id: 'custom-node',
+        name: 'Custom Node',
+        props: {}
+      });
       styles.addStylesheet('custom-node', customNodeStyle);
 
       const retrievedStyle = styles.getNodeStyle('custom-node');
@@ -319,7 +339,11 @@ describe('DiagramStyles', () => {
     it('should add a new edge stylesheet', () => {
       const styles = new DiagramStyles(root, document, true);
 
-      const customEdgeStyle = Stylesheet.from('edge', 'custom-edge', 'Custom Edge', {});
+      const customEdgeStyle = new Stylesheet('edge', {
+        id: 'custom-edge',
+        name: 'Custom Edge',
+        props: {}
+      });
       styles.addStylesheet('custom-edge', customEdgeStyle);
 
       const retrievedStyle = styles.getEdgeStyle('custom-edge');
@@ -332,7 +356,11 @@ describe('DiagramStyles', () => {
     it('should add a new text stylesheet', () => {
       const styles = new DiagramStyles(root, document, true);
 
-      const customTextStyle = Stylesheet.from('text', 'custom-text', 'Custom Text', {});
+      const customTextStyle = new Stylesheet('text', {
+        id: 'custom-text',
+        name: 'Custom Text',
+        props: {}
+      });
       styles.addStylesheet('custom-text', customTextStyle);
 
       const retrievedStyle = styles.getTextStyle('custom-text');
@@ -345,7 +373,11 @@ describe('DiagramStyles', () => {
     it('should set the active stylesheet when adding a new stylesheet', () => {
       const styles = new DiagramStyles(root, document, true);
 
-      const customNodeStyle = Stylesheet.from('node', 'custom-node', 'Custom Node', {});
+      const customNodeStyle = new Stylesheet('node', {
+        id: 'custom-node',
+        name: 'Custom Node',
+        props: {}
+      });
       styles.addStylesheet('custom-node', customNodeStyle);
 
       expect(styles.activeNodeStylesheet.id).toBe('custom-node');
@@ -357,7 +389,11 @@ describe('DiagramStyles', () => {
       const styles = new DiagramStyles(root, document, true);
 
       // First add a custom stylesheet
-      const customNodeStyle = Stylesheet.from('node', 'custom-node', 'Custom Node', {});
+      const customNodeStyle = new Stylesheet('node', {
+        id: 'custom-node',
+        name: 'Custom Node',
+        props: {}
+      });
       styles.addStylesheet('custom-node', customNodeStyle);
 
       // Verify it was added
@@ -390,8 +426,16 @@ describe('DiagramStyles', () => {
       const styles = new DiagramStyles(root, document, true);
 
       // Add two custom stylesheets
-      const customNodeStyle1 = Stylesheet.from('node', 'custom-node-1', 'Custom Node 1', {});
-      const customNodeStyle2 = Stylesheet.from('node', 'custom-node-2', 'Custom Node 2', {});
+      const customNodeStyle1 = new Stylesheet('node', {
+        id: 'custom-node-1',
+        name: 'Custom Node 1',
+        props: {}
+      });
+      const customNodeStyle2 = new Stylesheet('node', {
+        id: 'custom-node-2',
+        name: 'Custom Node 2',
+        props: {}
+      });
       styles.addStylesheet('custom-node-1', customNodeStyle1);
       styles.addStylesheet('custom-node-2', customNodeStyle2);
 
@@ -460,7 +504,11 @@ describe('DiagramStyles', () => {
       const defaultNodeStyleId = styles.nodeStyles[0].id;
 
       // Add a custom node stylesheet
-      const customNodeStyle = Stylesheet.from('node', 'custom-node', 'Custom Node', {});
+      const customNodeStyle = new Stylesheet('node', {
+        id: 'custom-node',
+        name: 'Custom Node',
+        props: {}
+      });
       styles.addStylesheet('custom-node', customNodeStyle);
 
       // Set the default node stylesheet on the element

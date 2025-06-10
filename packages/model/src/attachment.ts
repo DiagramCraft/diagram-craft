@@ -56,7 +56,7 @@ type AttachmentData = {
 };
 
 export class AttachmentManager {
-  #attachments: CRDTMap<AttachmentData>;
+  #attachments: CRDTMap<Record<string, AttachmentData>>;
   #consumers: Array<AttachmentConsumer> = [];
 
   public constructor(

@@ -40,7 +40,7 @@ export type DiagramEdgeSnapshot = SerializedEdge & {
 export type StylesheetSnapshot = {
   id: string;
   name: string;
-  props: Record<string, unknown>;
+  props: NodeProps | EdgeProps;
   type: StylesheetType;
   _snapshotType: 'stylesheet';
 };

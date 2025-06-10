@@ -13,10 +13,10 @@ import { UrlDataProvider, UrlDataProviderId } from './dataProviderUrl';
 import { Generators } from '@diagram-craft/utils/generator';
 import { SerializedElement } from './serialization/types';
 import { DiagramDocumentData } from './diagramDocumentData';
-import { CRDT, CRDTMap, CRDTRoot } from './collaboration/crdt';
+import { CRDT, CRDTRoot } from './collaboration/crdt';
 import { CollaborationConfig } from './collaboration/collaborationConfig';
 import { DocumentProps } from './documentProps';
-import { CRDTMappedList } from './collaboration/crdtMappedList';
+import { ProgressCallback } from './types';
 
 export type DocumentEvents = {
   diagramchanged: { after: Diagram };
@@ -38,7 +38,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
   readonly styles: DiagramStyles;
   readonly customPalette: DiagramPalette;
   readonly props: DocumentProps;
-  readonly #diagrams: CRDTMappedList<Diagram>;
+  readonly #diagrams: Array<Diagram> = [];
   readonly data: DiagramDocumentData;
 
   // Transient properties
@@ -58,29 +58,23 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     this.styles = new DiagramStyles(this.root, this, !isStencil);
     this.attachments = new AttachmentManager(this.root, this);
     this.props = new DocumentProps(this.root, this);
-
-    this.#diagrams = new CRDTMappedList<Diagram, CRDTMap>(
-      this.root.getList('diagrams'),
-      root => Diagram.fromCRDT(root, this),
-      diagram => diagram.crdt
-    );
   }
 
   transact(callback: () => void) {
     this.root.transact(callback);
   }
 
-  activate() {
+  activate(callback: ProgressCallback) {
     if (!this.url) return;
-    CollaborationConfig.Backend.connect(this.url, this.root);
+    CollaborationConfig.Backend.connect(this.url, this.root, callback);
   }
 
-  deactivate() {
-    CollaborationConfig.Backend.disconnect();
+  deactivate(callback: ProgressCallback) {
+    CollaborationConfig.Backend.disconnect(callback);
   }
 
   get topLevelDiagrams() {
-    return this.#diagrams.entries;
+    return this.#diagrams;
   }
 
   get definitions() {
@@ -91,7 +85,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
   }
 
   *diagramIterator(opts: DiagramIteratorOpts = {}) {
-    yield* diagramIterator(this.#diagrams.entries, opts);
+    yield* diagramIterator(this.#diagrams, opts);
   }
 
   getById(id: string) {
@@ -107,7 +101,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
   getDiagramPath(diagram: Diagram, startAt?: Diagram): Diagram[] {
     const dest: Diagram[] = [];
 
-    for (const d of startAt ? startAt.diagrams : this.#diagrams.entries) {
+    for (const d of startAt ? startAt.diagrams : this.#diagrams) {
       if (d === diagram) {
         dest.push(d);
       } else {
@@ -128,7 +122,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     if (parent) {
       (parent.diagrams as Diagram[]).push(diagram);
     } else {
-      this.#diagrams.add(diagram);
+      this.#diagrams.push(diagram);
     }
 
     diagram.document = this;
@@ -140,15 +134,10 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
 
     const diagrams = path.length === 1 ? this.#diagrams : (path.at(-2)!.diagrams as Diagram[]);
 
-    if (diagrams instanceof CRDTMappedList) {
-      diagrams.remove(diagram);
+    const idx = diagrams.indexOf(diagram);
+    if (idx !== -1) {
+      diagrams.splice(idx, 1);
       this.emit('diagramremoved', { node: diagram });
-    } else {
-      const idx = diagrams.indexOf(diagram);
-      if (idx !== -1) {
-        diagrams.splice(idx, 1);
-        this.emit('diagramremoved', { node: diagram });
-      }
     }
   }
 
@@ -158,7 +147,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
 
   toJSON() {
     return {
-      diagrams: this.#diagrams.toJSON(),
+      diagrams: this.#diagrams,
       styles: this.styles,
       props: this.props,
       customPalette: this.customPalette

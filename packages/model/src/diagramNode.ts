@@ -471,7 +471,8 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       uow
     );
     this.edges.clear();
-    for (const [k, v] of Object.entries(snapshot.edges ?? {})) {
+    const edges = snapshot.edges ?? {};
+    for (const [k, v] of Object.entries(edges)) {
       this.edges.set(k, [
         ...(this.edges.get(k) ?? []),
         ...v.map(e => this.diagram.edgeLookup.get(e.id)!)

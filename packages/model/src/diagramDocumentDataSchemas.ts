@@ -4,7 +4,7 @@ import { UndoableAction } from './undoManager';
 import { Diagram } from './diagram';
 import { deepClone } from '@diagram-craft/utils/object';
 import { EventEmitter } from '@diagram-craft/utils/event';
-import { CRDT, CRDTMap } from './collaboration/crdt';
+import { CRDTMap, CRDTRoot } from './collaboration/crdt';
 
 type DataSchemaField = {
   id: string;
@@ -26,16 +26,16 @@ type DiagramDocumentDataSchemasEvents = {
 };
 
 export class DiagramDocumentDataSchemas extends EventEmitter<DiagramDocumentDataSchemasEvents> {
-  readonly #schemas: CRDTMap<DataSchema>;
+  readonly #schemas: CRDTMap<Record<string, DataSchema>>;
 
   constructor(
-    root: CRDTMap,
+    root: CRDTRoot,
     private readonly document: DiagramDocument,
     schemas?: DataSchema[]
   ) {
     super();
 
-    this.#schemas = CRDT.getMap(root, 'schemas');
+    this.#schemas = root.getMap('schemas');
 
     this.#schemas.on('remoteUpdate', p => this.emit('update', { schema: p.value }));
     this.#schemas.on('remoteDelete', p => this.emit('remove', { schema: p.value }));

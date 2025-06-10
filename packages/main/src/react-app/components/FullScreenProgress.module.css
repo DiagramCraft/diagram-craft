@@ -1,0 +1,24 @@
+.cmp-fullscreen-progress {
+  position: absolute;
+  inset: 0;
+  z-index: 1000;
+  background: transparent;
+
+  > div {
+    display: none;
+    position: absolute;
+    inset: 0;
+    align-items: center;
+    justify-content: center;
+    color: black;
+  }
+}
+
+.cmp-fullscreen-progress__visible {
+  backdrop-filter: blur(5px);
+  background: rgba(150, 150, 150, 0.8);
+
+  > div {
+    display: flex;
+  }
+}

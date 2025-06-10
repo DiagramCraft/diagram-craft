@@ -6,6 +6,7 @@ import {
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { serializeDiagramDocument } from '@diagram-craft/model/serialization/serialize';
+import { ProgressCallback } from '@diagram-craft/model/types';
 
 const KEY = 'autosave';
 
@@ -13,6 +14,7 @@ let needsSave: { url: string | undefined; doc: DiagramDocument } | undefined = u
 
 export const Autosave = {
   load: async (
+    progressCallback: ProgressCallback,
     documentFactory: DocumentFactory,
     diagramFactory: DiagramFactory<Diagram>,
     failSilently = false
@@ -23,12 +25,8 @@ export const Autosave = {
 
       const parsed = JSON.parse(item);
 
-      const document = await deserializeDiagramDocument(
-        parsed.diagram,
-        documentFactory,
-        diagramFactory
-      );
-
+      const document = await documentFactory(parsed.url, progressCallback);
+      await deserializeDiagramDocument(parsed.diagram, document, diagramFactory);
       await document.load();
 
       return {

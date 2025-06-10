@@ -77,7 +77,7 @@ const DEFAULT_SCHEMA: DataSchema[] = [
 const PROVIDER = 'provider';
 
 export class DiagramDocumentData extends EventEmitter<{ change: void }> {
-  readonly #crdt: CRDTMap;
+  readonly #crdt: CRDTMap<Record<string, string>>;
   readonly #schemas: DiagramDocumentDataSchemas;
   readonly #templates: DiagramDocumentDataTemplates;
 
@@ -92,8 +92,8 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
     super();
 
     this.#crdt = root.getMap('documentData');
-    this.#schemas = new DiagramDocumentDataSchemas(this.#crdt, document, DEFAULT_SCHEMA);
-    this.#templates = new DiagramDocumentDataTemplates(this.#crdt);
+    this.#schemas = new DiagramDocumentDataSchemas(root, document, DEFAULT_SCHEMA);
+    this.#templates = new DiagramDocumentDataTemplates(root);
 
     this.#updateDataListener = makeDataListener(document, 'update');
     this.#deleteDataListener = makeDataListener(document, 'delete');
@@ -107,7 +107,9 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
     this.#templates.on('remove', () => this.emit('change'));
     this.#templates.on('update', () => this.emit('change'));
 
-    const updateProvider = (e: CRDTMapEvents['remoteUpdate'] | CRDTMapEvents['remoteInsert']) => {
+    const updateProvider = (
+      e: CRDTMapEvents<string>['remoteUpdate'] | CRDTMapEvents<string>['remoteInsert']
+    ) => {
       if (e.key !== PROVIDER) return;
       if (e.value.length === 0) {
         this.setProviderInternal(undefined);
