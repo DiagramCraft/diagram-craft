@@ -1,5 +1,6 @@
 import { CRDT, CRDTCompatibleObject, CRDTMap } from './crdt';
 import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+import { CRDTMapper } from './mappedCRDT';
 
 export type MappedCRDTOrderedMapMapType<T extends Record<string, CRDTCompatibleObject>> = Record<
   string,
@@ -14,8 +15,7 @@ export class MappedCRDTOrderedMap<
 
   constructor(
     private readonly crdt: CRDTMap<MappedCRDTOrderedMapMapType<C>>,
-    readonly fromCRDT: (e: CRDTMap<C>) => T,
-    private readonly toCRDT: (e: T) => CRDTMap<C>,
+    private readonly mapper: CRDTMapper<T, C>,
     allowUpdates = false
   ) {
     crdt.on('remoteUpdate', e => {
@@ -24,7 +24,7 @@ export class MappedCRDTOrderedMap<
 
         this.#entries = Array.from(crdt.entries())
           .toSorted(([, v1], [, v2]) => v1.get('index')! - v2.get('index')!)
-          .map(([k, v]) => [k, e.key !== k ? entryMap[k] : fromCRDT(v.get('value')!)]);
+          .map(([k, v]) => [k, e.key !== k ? entryMap[k] : mapper.fromCRDT(v.get('value')!)]);
       } else {
         // Note: Updates are handled by the T entry itself to avoid having to
         //       reconstruct the object from the underlying CRDT
@@ -42,7 +42,7 @@ export class MappedCRDTOrderedMap<
 
       this.#entries = Array.from(crdt.entries())
         .toSorted(([, v1], [, v2]) => v1.get('index')! - v2.get('index')!)
-        .map(([k, v]) => [k, entryMap[k] ?? fromCRDT(v.get('value')!)]);
+        .map(([k, v]) => [k, entryMap[k] ?? mapper.fromCRDT(v.get('value')!)]);
     });
   }
 
@@ -61,7 +61,7 @@ export class MappedCRDTOrderedMap<
 
     const entry = new CRDT.Map();
     entry.set('index', this.#entries.length);
-    entry.set('value', this.toCRDT(t));
+    entry.set('value', this.mapper.toCRDT(t));
     this.crdt.set(key, entry);
   }
 

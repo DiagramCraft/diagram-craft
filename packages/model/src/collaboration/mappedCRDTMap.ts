@@ -1,5 +1,6 @@
 import { CRDTCompatibleObject, CRDTMap } from './crdt';
 import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+import { CRDTMapper } from './mappedCRDT';
 
 export type MappedCRDTMapMapType<T extends Record<string, CRDTCompatibleObject>> = Record<
   string,
@@ -14,13 +15,12 @@ export class MappedCRDTMap<
 
   constructor(
     private readonly crdt: CRDTMap<MappedCRDTMapMapType<C>>,
-    readonly fromCRDT: (e: CRDTMap<C>) => T,
-    private readonly toCRDT: (e: T) => CRDTMap<C>,
+    private readonly mapper: CRDTMapper<T, C>,
     allowUpdates = false
   ) {
     crdt.on('remoteUpdate', e => {
       if (allowUpdates) {
-        this.#map.set(e.key, fromCRDT(e.value));
+        this.#map.set(e.key, mapper.fromCRDT(e.value));
       } else {
         // Note: Updates are handled by the T entry itself to avoid having to
         //       reconstruct the object from the underlying CRDT
@@ -31,7 +31,7 @@ export class MappedCRDTMap<
       this.#map.delete(e.key);
     });
     crdt.on('remoteInsert', e => {
-      this.#map.set(e.key, fromCRDT(e.value));
+      this.#map.set(e.key, mapper.fromCRDT(e.value));
     });
   }
 
@@ -50,7 +50,7 @@ export class MappedCRDTMap<
 
   set(key: string, t: T) {
     this.#map.set(key, t);
-    this.crdt.set(key, this.toCRDT(t));
+    this.crdt.set(key, this.mapper.toCRDT(t));
   }
 
   remove(key: string) {

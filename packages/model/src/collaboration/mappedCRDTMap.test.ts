@@ -3,14 +3,17 @@ import { describe, expect, it } from 'vitest';
 import { NoOpCRDTMap } from './noopCrdt';
 import { CRDT, CRDTMap } from './crdt';
 import { MappedCRDTMap } from './mappedCRDTMap';
+import { CRDTMapper } from './mappedCRDT';
 
-const fromCRDT = (e: CRDTMap<CRDTType>): number => {
-  return e.get('value')! * 2;
-};
-const toCRDT = (e: number): CRDTMap<CRDTType> => {
-  const map = new CRDT.Map();
-  map.set('value', e / 2);
-  return map;
+const mapper: CRDTMapper<number, CRDTType> = {
+  fromCRDT(e: CRDTMap<CRDTType>): number {
+    return e.get('value')! * 2;
+  },
+  toCRDT(e: number): CRDTMap<CRDTType> {
+    const map = new CRDT.Map();
+    map.set('value', e / 2);
+    return map;
+  }
 };
 
 type CRDTType = { value: number };
@@ -18,14 +21,14 @@ type CRDTType = { value: number };
 describe('MappedCRDTMap', () => {
   it('should correctly initialize entries from the fromCRDT function', () => {
     const mockList = new NoOpCRDTMap<any>();
-    const mappedList = new MappedCRDTMap<number, CRDTType>(mockList, fromCRDT, toCRDT);
+    const mappedList = new MappedCRDTMap<number, CRDTType>(mockList, mapper);
 
     expect(Array.from(mappedList.entries)).toEqual([]);
   });
 
   it('should remove items correctly', () => {
     const mockList = new NoOpCRDTMap<any>();
-    const mappedList = new MappedCRDTMap<number, CRDTType>(mockList, fromCRDT, toCRDT);
+    const mappedList = new MappedCRDTMap<number, CRDTType>(mockList, mapper);
 
     mappedList.add('a', 4);
     const removed = mappedList.remove('a');
@@ -36,7 +39,7 @@ describe('MappedCRDTMap', () => {
 
   it('should correctly serialize to JSON', () => {
     const mockList = new NoOpCRDTMap<any>();
-    const mappedList = new MappedCRDTMap<number, CRDTType>(mockList, fromCRDT, toCRDT);
+    const mappedList = new MappedCRDTMap<number, CRDTType>(mockList, mapper);
 
     mappedList.add('a', 4);
     mappedList.add('b', 5);

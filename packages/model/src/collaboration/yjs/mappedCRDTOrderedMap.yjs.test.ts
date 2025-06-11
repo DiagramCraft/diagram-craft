@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { createSyncedYJSCRDTs, setupYJS } from './yjsTest';
 import { MappedCRDTOrderedMap, MappedCRDTOrderedMapMapType } from '../mappedCRDTOrderedMap';
 import { CRDT, CRDTMap } from '../crdt';
+import { CRDTMapper } from '../mappedCRDT';
 
 class TestClass {
   constructor(public crdt: CRDTMap<CRDTType>) {}
@@ -22,21 +23,25 @@ class TestClass {
   }
 }
 
-const fromCRDTTestClass = (e: CRDTMap<CRDTType>): TestClass => {
-  return new TestClass(e);
+const testClassMapper: CRDTMapper<TestClass, CRDTType> = {
+  fromCRDT(e: CRDTMap<CRDTType>): TestClass {
+    return new TestClass(e);
+  },
+
+  toCRDT(e: TestClass): CRDTMap<CRDTType> {
+    return e.crdt;
+  }
 };
 
-const toCRDTTestClass = (e: TestClass): CRDTMap<CRDTType> => {
-  return e.crdt;
-};
-
-const fromCRDT = (e: CRDTMap<CRDTType>): number => {
-  return e.get('value')! * 2;
-};
-const toCRDT = (e: number): CRDTMap<CRDTType> => {
-  const map = new CRDT.Map();
-  map.set('value', e / 2);
-  return map;
+const mapper: CRDTMapper<number, CRDTType> = {
+  fromCRDT(e: CRDTMap<CRDTType>): number {
+    return e.get('value')! * 2;
+  },
+  toCRDT(e: number): CRDTMap<CRDTType> {
+    const map = new CRDT.Map();
+    map.set('value', e / 2);
+    return map;
+  }
 };
 
 type CRDTType = { value: number };
@@ -50,8 +55,8 @@ describe('YJS MappedCRDTOrderedMap', () => {
     const list1 = doc1.getMap<any>('list');
     const list2 = doc2.getMap<any>('list');
 
-    const mapped1 = new MappedCRDTOrderedMap<number, CRDTType>(list1, fromCRDT, toCRDT);
-    const mapped2 = new MappedCRDTOrderedMap<number, CRDTType>(list2, fromCRDT, toCRDT);
+    const mapped1 = new MappedCRDTOrderedMap<number, CRDTType>(list1, mapper);
+    const mapped2 = new MappedCRDTOrderedMap<number, CRDTType>(list2, mapper);
 
     expect(mapped1.entries).toEqual([]);
     expect(mapped2.entries).toEqual([]);
@@ -63,8 +68,8 @@ describe('YJS MappedCRDTOrderedMap', () => {
     const list1 = doc1.getMap<any>('list');
     const list2 = doc2.getMap<any>('list');
 
-    const mapped1 = new MappedCRDTOrderedMap<number, CRDTType>(list1, fromCRDT, toCRDT);
-    const mapped2 = new MappedCRDTOrderedMap<number, CRDTType>(list2, fromCRDT, toCRDT);
+    const mapped1 = new MappedCRDTOrderedMap<number, CRDTType>(list1, mapper);
+    const mapped2 = new MappedCRDTOrderedMap<number, CRDTType>(list2, mapper);
 
     mapped1.add('k', 4);
 
@@ -83,8 +88,8 @@ describe('YJS MappedCRDTOrderedMap', () => {
     const list1 = doc1.getMap<any>('list');
     const list2 = doc2.getMap<any>('list');
 
-    const mapped1 = new MappedCRDTOrderedMap<number, CRDTType>(list1, fromCRDT, toCRDT);
-    const mapped2 = new MappedCRDTOrderedMap<number, CRDTType>(list2, fromCRDT, toCRDT);
+    const mapped1 = new MappedCRDTOrderedMap<number, CRDTType>(list1, mapper);
+    const mapped2 = new MappedCRDTOrderedMap<number, CRDTType>(list2, mapper);
 
     mapped1.add('k', 4);
 
@@ -98,16 +103,8 @@ describe('YJS MappedCRDTOrderedMap', () => {
     const list1 = doc1.getMap<MappedCRDTOrderedMapMapType<CRDTType>>('list');
     const list2 = doc2.getMap<MappedCRDTOrderedMapMapType<CRDTType>>('list');
 
-    const mapped1 = new MappedCRDTOrderedMap<TestClass, CRDTType>(
-      list1,
-      fromCRDTTestClass,
-      toCRDTTestClass
-    );
-    const mapped2 = new MappedCRDTOrderedMap<TestClass, CRDTType>(
-      list2,
-      fromCRDTTestClass,
-      toCRDTTestClass
-    );
+    const mapped1 = new MappedCRDTOrderedMap<TestClass, CRDTType>(list1, testClassMapper);
+    const mapped2 = new MappedCRDTOrderedMap<TestClass, CRDTType>(list2, testClassMapper);
 
     const t = TestClass.fromValue(4);
     mapped1.add('k', t);
