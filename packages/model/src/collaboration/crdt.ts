@@ -13,6 +13,10 @@ type CRDTCompatibleInnerObject =
   | Uint8Array
   | Array<CRDTCompatibleInnerObject>
   | ReadonlyArray<CRDTCompatibleObject>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  | CRDTMap<any>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  | CRDTList<any>
   | { [key: string]: Pick<CRDTCompatibleInnerObject, keyof CRDTCompatibleInnerObject> };
 
 export interface CRDTRoot {
