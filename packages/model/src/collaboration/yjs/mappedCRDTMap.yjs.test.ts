@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it } from 'vitest';
 import { createSyncedYJSCRDTs, setupYJS } from './yjsTest';
-import { MappedCRDTOrderedMap, MappedCRDTOrderedMapMapType } from '../mappedCRDTOrderedMap';
+import { MappedCRDTMap, MappedCRDTMapMapType } from '../mappedCRDTMap';
 import { CRDT, CRDTMap } from '../crdt';
 
 class TestClass {
@@ -41,7 +41,7 @@ const toCRDT = (e: number): CRDTMap<CRDTType> => {
 
 type CRDTType = { value: number };
 
-describe('YJS MappedCRDTOrderedMap', () => {
+describe('YJS MappedCRDTMap', () => {
   setupYJS();
 
   it('should correctly initialize entries from the fromCRDT function', () => {
@@ -50,11 +50,11 @@ describe('YJS MappedCRDTOrderedMap', () => {
     const list1 = doc1.getMap<any>('list');
     const list2 = doc2.getMap<any>('list');
 
-    const mapped1 = new MappedCRDTOrderedMap<number, CRDTType>(list1, fromCRDT, toCRDT);
-    const mapped2 = new MappedCRDTOrderedMap<number, CRDTType>(list2, fromCRDT, toCRDT);
+    const mapped1 = new MappedCRDTMap<number, CRDTType>(list1, fromCRDT, toCRDT);
+    const mapped2 = new MappedCRDTMap<number, CRDTType>(list2, fromCRDT, toCRDT);
 
-    expect(mapped1.entries).toEqual([]);
-    expect(mapped2.entries).toEqual([]);
+    expect(Array.from(mapped1.entries)).toEqual([]);
+    expect(Array.from(mapped2.entries)).toEqual([]);
   });
 
   it('should remove items correctly', () => {
@@ -63,17 +63,17 @@ describe('YJS MappedCRDTOrderedMap', () => {
     const list1 = doc1.getMap<any>('list');
     const list2 = doc2.getMap<any>('list');
 
-    const mapped1 = new MappedCRDTOrderedMap<number, CRDTType>(list1, fromCRDT, toCRDT);
-    const mapped2 = new MappedCRDTOrderedMap<number, CRDTType>(list2, fromCRDT, toCRDT);
+    const mapped1 = new MappedCRDTMap<number, CRDTType>(list1, fromCRDT, toCRDT);
+    const mapped2 = new MappedCRDTMap<number, CRDTType>(list2, fromCRDT, toCRDT);
 
     mapped1.add('k', 4);
 
     const removed = mapped1.remove('k');
     expect(removed).toBe(true);
 
-    expect(mapped1.entries).toEqual([]);
+    expect(Array.from(mapped1.entries)).toEqual([]);
     expect(Array.from(list1.entries())).toEqual([]);
-    expect(mapped2.entries).toEqual([]);
+    expect(Array.from(mapped2.entries)).toEqual([]);
     expect(Array.from(list2.entries())).toEqual([]);
   });
 
@@ -83,27 +83,27 @@ describe('YJS MappedCRDTOrderedMap', () => {
     const list1 = doc1.getMap<any>('list');
     const list2 = doc2.getMap<any>('list');
 
-    const mapped1 = new MappedCRDTOrderedMap<number, CRDTType>(list1, fromCRDT, toCRDT);
-    const mapped2 = new MappedCRDTOrderedMap<number, CRDTType>(list2, fromCRDT, toCRDT);
+    const mapped1 = new MappedCRDTMap<number, CRDTType>(list1, fromCRDT, toCRDT);
+    const mapped2 = new MappedCRDTMap<number, CRDTType>(list2, fromCRDT, toCRDT);
 
     mapped1.add('k', 4);
 
-    expect(mapped1.entries).toEqual([['k', 4]]);
-    expect(mapped2.entries).toEqual([['k', 4]]);
+    expect(Array.from(mapped1.entries)).toEqual([['k', 4]]);
+    expect(Array.from(mapped2.entries)).toEqual([['k', 4]]);
   });
 
   it('should update wrapped items correctly', () => {
     const { doc1, doc2 } = createSyncedYJSCRDTs();
 
-    const list1 = doc1.getMap<MappedCRDTOrderedMapMapType<CRDTType>>('list');
-    const list2 = doc2.getMap<MappedCRDTOrderedMapMapType<CRDTType>>('list');
+    const list1 = doc1.getMap<MappedCRDTMapMapType<CRDTType>>('list');
+    const list2 = doc2.getMap<MappedCRDTMapMapType<CRDTType>>('list');
 
-    const mapped1 = new MappedCRDTOrderedMap<TestClass, CRDTType>(
+    const mapped1 = new MappedCRDTMap<TestClass, CRDTType>(
       list1,
       fromCRDTTestClass,
       toCRDTTestClass
     );
-    const mapped2 = new MappedCRDTOrderedMap<TestClass, CRDTType>(
+    const mapped2 = new MappedCRDTMap<TestClass, CRDTType>(
       list2,
       fromCRDTTestClass,
       toCRDTTestClass
@@ -112,12 +112,12 @@ describe('YJS MappedCRDTOrderedMap', () => {
     const t = TestClass.fromValue(4);
     mapped1.add('k', t);
 
-    expect(mapped1.entries.map(([, v]) => v.value)).toEqual([4]);
-    expect(mapped2.entries.map(([, v]) => v.value)).toEqual([4]);
+    expect(Array.from(mapped1.entries.map(([, v]) => v.value))).toEqual([4]);
+    expect(Array.from(mapped2.entries.map(([, v]) => v.value))).toEqual([4]);
 
     t.value = 10;
 
-    expect(mapped1.entries.map(([, v]) => v.value)).toEqual([10]);
-    expect(mapped2.entries.map(([, v]) => v.value)).toEqual([10]);
+    expect(Array.from(mapped1.entries.map(([, v]) => v.value))).toEqual([10]);
+    expect(Array.from(mapped2.entries.map(([, v]) => v.value))).toEqual([10]);
   });
 });
