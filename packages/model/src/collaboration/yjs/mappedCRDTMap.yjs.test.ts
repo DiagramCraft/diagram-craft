@@ -109,12 +109,12 @@ describe('YJS MappedCRDTMap', () => {
     const t = TestClass.fromValue(4);
     mapped1.add('k', t);
 
-    expect(Array.from(mapped1.entries.map(([, v]) => v.value))).toEqual([4]);
-    expect(Array.from(mapped2.entries.map(([, v]) => v.value))).toEqual([4]);
+    expect(Array.from(mapped1.entries).map(([, v]) => v.value)).toEqual([4]);
+    expect(Array.from(mapped2.entries).map(([, v]) => v.value)).toEqual([4]);
 
     t.value = 10;
 
-    expect(Array.from(mapped1.entries.map(([, v]) => v.value))).toEqual([10]);
-    expect(Array.from(mapped2.entries.map(([, v]) => v.value))).toEqual([10]);
+    expect(Array.from(mapped1.entries).map(([, v]) => v.value)).toEqual([10]);
+    expect(Array.from(mapped2.entries).map(([, v]) => v.value)).toEqual([10]);
   });
 });
