@@ -16,10 +16,10 @@ describe('YJS Stylesheet', () => {
       const name = 'Test stylesheet';
       const props = { fill: { color: 'blue' } };
 
-      const stylesheet = new Stylesheet(type, { id, name, props });
+      const stylesheet = Stylesheet.fromSnapshot(type, { id, name, props });
       doc1.getMap<Record<string, StylesheetSnapshot>>('test').set('test', stylesheet.snapshot());
 
-      const other = new Stylesheet(
+      const other = Stylesheet.fromSnapshot(
         type,
         doc2.getMap<Record<string, StylesheetSnapshot>>('test').get('test') as StylesheetSnapshot
       );
@@ -39,7 +39,7 @@ describe('YJS Stylesheet', () => {
       const name = 'Test stylesheet';
       const props = { fill: { color: 'blue' } };
 
-      const stylesheet = new Stylesheet(type, { id, name, props });
+      const stylesheet = Stylesheet.fromSnapshot(type, { id, name, props });
 
       const styles1 = new DiagramStyles(doc1, TestModel.newDocument(), true);
       styles1.addStylesheet(id, stylesheet);
@@ -64,7 +64,7 @@ describe('YJS Stylesheet', () => {
       const name = 'Test stylesheet';
       const props = { fill: { color: 'blue' } };
 
-      const stylesheet = new Stylesheet(type, { id, name, props });
+      const stylesheet = Stylesheet.fromSnapshot(type, { id, name, props });
 
       const styles1 = new DiagramStyles(doc1, TestModel.newDocument(), true);
       styles1.addStylesheet(id, stylesheet);
@@ -107,7 +107,11 @@ describe('YJS DiagramStyles', () => {
       const styles1 = new DiagramStyles(doc1, TestModel.newDocument(), true);
       const styles2 = new DiagramStyles(doc2, TestModel.newDocument(), true);
 
-      const customNodeStyle = new Stylesheet('node', { id: 'custom', name: 'Custom', props: {} });
+      const customNodeStyle = Stylesheet.fromSnapshot('node', {
+        id: 'custom',
+        name: 'Custom',
+        props: {}
+      });
       styles1.addStylesheet('custom', customNodeStyle);
 
       styles1.activeNodeStylesheet = customNodeStyle;
@@ -124,7 +128,7 @@ describe('YJS DiagramStyles', () => {
       const styles1 = new DiagramStyles(doc1, TestModel.newDocument(), true);
       const styles2 = new DiagramStyles(doc2, TestModel.newDocument(), true);
 
-      const customEdgeStyle = new Stylesheet('edge', {
+      const customEdgeStyle = Stylesheet.fromSnapshot('edge', {
         id: 'custom-edge',
         name: 'Custom Edge',
         props: {}
@@ -145,7 +149,11 @@ describe('YJS DiagramStyles', () => {
       const styles1 = new DiagramStyles(doc1, TestModel.newDocument(), true);
       const styles2 = new DiagramStyles(doc2, TestModel.newDocument(), true);
 
-      const customTextStyle = new Stylesheet('text', { id: 'custom', name: 'Custom', props: {} });
+      const customTextStyle = Stylesheet.fromSnapshot('text', {
+        id: 'custom',
+        name: 'Custom',
+        props: {}
+      });
       styles1.addStylesheet('custom', customTextStyle);
 
       styles1.activeTextStylesheet = customTextStyle;
@@ -162,7 +170,11 @@ describe('YJS DiagramStyles', () => {
       const styles1 = new DiagramStyles(doc1, TestModel.newDocument(), true);
       const styles2 = new DiagramStyles(doc2, TestModel.newDocument(), true);
 
-      const customTextStyle = new Stylesheet('text', { id: 'custom', name: 'Custom', props: {} });
+      const customTextStyle = Stylesheet.fromSnapshot('text', {
+        id: 'custom',
+        name: 'Custom',
+        props: {}
+      });
       styles1.addStylesheet('custom', customTextStyle);
 
       expect(styles1.textStyles.length).toBe(3);
@@ -177,7 +189,11 @@ describe('YJS DiagramStyles', () => {
       const styles1 = new DiagramStyles(doc1, TestModel.newDocument(), true);
       const styles2 = new DiagramStyles(doc2, TestModel.newDocument(), true);
 
-      const customTextStyle = new Stylesheet('text', { id: 'custom', name: 'Custom', props: {} });
+      const customTextStyle = Stylesheet.fromSnapshot('text', {
+        id: 'custom',
+        name: 'Custom',
+        props: {}
+      });
       styles1.addStylesheet('custom-text', customTextStyle);
 
       expect(styles1.textStyles.length).toBe(3);

@@ -17,7 +17,7 @@ class TestClass {
   }
 
   static fromValue(value: number) {
-    const map = new CRDT.Map();
+    const map = CRDT.makeMap<CRDTType>();
     map.set('value', value);
     return new TestClass(map);
   }
@@ -38,7 +38,7 @@ const mapper: CRDTMapper<number, CRDTType> = {
     return e.get('value')! * 2;
   },
   toCRDT(e: number): CRDTMap<CRDTType> {
-    const map = new CRDT.Map();
+    const map = CRDT.makeMap<CRDTType>();
     map.set('value', e / 2);
     return map;
   }
