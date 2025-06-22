@@ -6,7 +6,7 @@ class Query {
   private _saved: CRDTList<[string, string]>;
 
   constructor(
-    root: CRDTRoot,
+    private readonly root: CRDTRoot,
     private readonly document: DiagramDocument
   ) {
     this._history = root.getList('query.history');
@@ -37,10 +37,12 @@ class Query {
   }
 
   setHistory(entries: ReadonlyArray<[string, string]>) {
-    this._history.clear();
-    for (const e of entries) {
-      this.addHistory(e);
-    }
+    this.root.transact(() => {
+      this._history.clear();
+      for (const e of entries) {
+        this.addHistory(e);
+      }
+    });
   }
 
   get saved() {

@@ -50,7 +50,24 @@ export class YJSRoot implements CRDTRoot {
 
   readonly factory = new YJSFactory();
 
-  constructor() {}
+  constructor() {
+    /*let count = 0;
+    this.doc.on('beforeTransaction', t => {
+      if (t.local) {
+        console.log('beforeTransaction', ++count);
+        console.log(new Error().stack);
+      }
+    });
+    this.doc.on('afterTransaction', t => {
+      if (t.local) {
+        console.log('afterTransaction');
+        for (const [k, v] of t.changed) {
+          console.log(k, v);
+          Y.logType(k);
+        }
+      }
+    });*/
+  }
 
   get yDoc() {
     return this.doc;
