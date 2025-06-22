@@ -1,4 +1,4 @@
-import { CRDT, CRDTCompatibleObject, CRDTMap } from './crdt';
+import { CRDTCompatibleObject, CRDTMap } from './crdt';
 import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { CRDTMapper } from './mappedCRDT';
 
@@ -65,7 +65,7 @@ export class MappedCRDTOrderedMap<
 
     this.#entries.push([key, t]);
 
-    const entry = CRDT.makeMap<WrapperType>();
+    const entry = this.crdt.factory.makeMap<WrapperType>();
     entry.set('index', this.#entries.length);
     entry.set('value', this.mapper.toCRDT(t));
     this.crdt.set(key, entry);

@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { NoOpCRDTMap } from './noopCrdt';
 import { MappedCRDTOrderedMap } from './mappedCRDTOrderedMap';
-import { CRDT, CRDTMap } from './crdt';
+import { CRDTMap } from './crdt';
 import { CRDTMapper } from './mappedCRDT';
 
 const mapper: CRDTMapper<number, CRDTType> = {
@@ -10,7 +10,7 @@ const mapper: CRDTMapper<number, CRDTType> = {
     return e.get('value')! * 2;
   },
   toCRDT(e: number): CRDTMap<CRDTType> {
-    const map = CRDT.makeMap<CRDTType>();
+    const map = new NoOpCRDTMap<CRDTType>();
     map.set('value', e / 2);
     return map;
   }

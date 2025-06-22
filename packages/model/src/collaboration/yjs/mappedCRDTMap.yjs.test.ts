@@ -2,8 +2,9 @@
 import { describe, expect, it } from 'vitest';
 import { createSyncedYJSCRDTs, setupYJS } from './yjsTest';
 import { MappedCRDTMap, MappedCRDTMapMapType } from '../mappedCRDTMap';
-import { CRDT, CRDTMap } from '../crdt';
+import { CRDTMap } from '../crdt';
 import { CRDTMapper } from '../mappedCRDT';
+import { YJSMap } from './yjsCrdt';
 
 class TestClass {
   constructor(public crdt: CRDTMap<CRDTType>) {}
@@ -17,7 +18,7 @@ class TestClass {
   }
 
   static fromValue(value: number) {
-    const map = CRDT.makeMap<CRDTType>();
+    const map = new YJSMap<CRDTType>();
     map.set('value', value);
     return new TestClass(map);
   }
@@ -38,7 +39,7 @@ const mapper: CRDTMapper<number, CRDTType> = {
     return e.get('value')! * 2;
   },
   toCRDT(e: number): CRDTMap<CRDTType> {
-    const map = CRDT.makeMap<CRDTType>();
+    const map = new YJSMap<CRDTType>();
     map.set('value', e / 2);
     return map;
   }

@@ -1,5 +1,6 @@
 import {
   CRDTCompatibleObject,
+  CRDTFactory,
   CRDTList,
   CRDTListEvents,
   CRDTMap,
@@ -8,11 +9,23 @@ import {
 } from './crdt';
 import { EventEmitter } from '@diagram-craft/utils/event';
 
+export class NoOpCRDTFactory implements CRDTFactory {
+  makeMap<T extends Record<string, CRDTCompatibleObject>>(): CRDTMap<T> {
+    return new NoOpCRDTMap();
+  }
+
+  makeList<T extends CRDTCompatibleObject>(): CRDTList<T> {
+    return new NoOpCRDTList();
+  }
+}
+
 export class NoOpCRDTMap<T extends { [key: string]: CRDTCompatibleObject }>
   extends EventEmitter<CRDTMapEvents<T[string]>>
   implements CRDTMap<T>
 {
   private backing = new Map<string, T[string]>();
+
+  readonly factory = new NoOpCRDTFactory();
 
   get size() {
     return this.backing.size;
@@ -63,6 +76,8 @@ export class NoOpCRDTList<T extends CRDTCompatibleObject>
 {
   private backing: T[] = [];
 
+  readonly factory = new NoOpCRDTFactory();
+
   get length() {
     return this.backing.length;
   }
@@ -102,6 +117,8 @@ export class NoOpCRDTRoot implements CRDTRoot {
   private map: Map<string, any> = new Map();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private list: Map<string, any> = new Map();
+
+  readonly factory = new NoOpCRDTFactory();
 
   getMap<T extends { [key: string]: CRDTCompatibleObject }>(name: string): CRDTMap<T> {
     let m = this.map.get(name);

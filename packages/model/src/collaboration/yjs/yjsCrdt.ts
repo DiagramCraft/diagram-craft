@@ -1,5 +1,6 @@
 import {
   CRDTCompatibleObject,
+  CRDTFactory,
   CRDTList,
   CRDTListEvents,
   CRDTMap,
@@ -34,8 +35,20 @@ const unwrap = (e: any) => {
   }
 };
 
+export class YJSFactory implements CRDTFactory {
+  makeMap<T extends Record<string, CRDTCompatibleObject>>(): CRDTMap<T> {
+    return new YJSMap<T>();
+  }
+
+  makeList<T extends CRDTCompatibleObject>(): CRDTList<T> {
+    return new YJSList<T>();
+  }
+}
+
 export class YJSRoot implements CRDTRoot {
   private readonly doc = new Y.Doc();
+
+  readonly factory = new YJSFactory();
 
   constructor() {}
 
@@ -61,6 +74,8 @@ export class YJSMap<T extends { [key: string]: CRDTCompatibleObject }> implement
   private initial: Map<string, T[string]> | undefined;
 
   readonly delegate: Y.Map<T>;
+
+  readonly factory = new YJSFactory();
 
   constructor(delegate?: Y.Map<T>) {
     // This means the map is disconnected, and thus we temporarily keep values
@@ -165,6 +180,8 @@ export class YJSMap<T extends { [key: string]: CRDTCompatibleObject }> implement
 export class YJSList<T extends CRDTCompatibleObject> implements CRDTList<T> {
   private emitter = new EventEmitter<CRDTListEvents<T>>();
   delegate: Y.Array<T>;
+
+  readonly factory = new YJSFactory();
 
   constructor(delegate?: Y.Array<T>) {
     this.delegate = delegate ?? new Y.Array();
