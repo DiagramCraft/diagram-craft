@@ -24,7 +24,14 @@ declare global {
   interface AdditionalCRDTCompatibleInnerObjects {}
 }
 
+export interface CRDTFactory {
+  makeMap<T extends Record<string, CRDTCompatibleObject>>(): CRDTMap<T>;
+  makeList<T extends CRDTCompatibleObject>(): CRDTList<T>;
+}
+
 export interface CRDTRoot {
+  readonly factory: CRDTFactory;
+
   getMap<T extends { [key: string]: CRDTCompatibleObject }>(name: string): CRDTMap<T>;
   getList<T extends CRDTCompatibleObject>(name: string): CRDTList<T>;
 
@@ -43,6 +50,8 @@ export type CRDTMapEvents<T extends CRDTCompatibleObject> = {
 
 export interface CRDTMap<T extends { [key: string]: CRDTCompatibleObject }>
   extends Emitter<CRDTMapEvents<T[string]>> {
+  readonly factory: CRDTFactory;
+
   size: number;
   get<K extends keyof T & string>(key: K): T[K] | undefined;
   set<K extends keyof T & string>(key: K, value: T[K]): void;
@@ -63,6 +72,8 @@ export type CRDTListEvents<T> = {
 };
 
 export interface CRDTList<T extends CRDTCompatibleObject> extends Emitter<CRDTListEvents<T>> {
+  readonly factory: CRDTFactory;
+
   length: number;
   clear(): void;
   get(index: number): T;
@@ -75,9 +86,5 @@ export interface CRDTList<T extends CRDTCompatibleObject> extends Emitter<CRDTLi
 export const CRDT = new (class {
   makeRoot(): CRDTRoot {
     return new CollaborationConfig.CRDTRoot();
-  }
-
-  makeMap<T extends Record<string, CRDTCompatibleObject>>(): CRDTMap<T> {
-    return new CollaborationConfig.CRDTMap();
   }
 })();

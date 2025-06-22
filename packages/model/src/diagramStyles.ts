@@ -6,7 +6,7 @@ import { Diagram } from './diagram';
 import { common, deepClear, deepClone, deepMerge, isObj } from '@diagram-craft/utils/object';
 import { assert } from '@diagram-craft/utils/assert';
 import { Defaults, DefaultStyles, edgeDefaults, nodeDefaults } from './diagramDefaults';
-import { CRDT, CRDTMap, CRDTRoot } from './collaboration/crdt';
+import { CRDTFactory, CRDTMap, CRDTRoot } from './collaboration/crdt';
 import { DEFAULT_EDGE_STYLES, DEFAULT_NODE_STYLES, DEFAULT_TEXT_STYLES } from './defaults';
 import { MappedCRDTMap } from './collaboration/mappedCRDTMap';
 import { CRDTMapper } from './collaboration/mappedCRDT';
@@ -34,9 +34,10 @@ export class Stylesheet<T extends StylesheetType, P = TypeMap[T]>
 
   static fromSnapshot<T extends StylesheetType>(
     type: T,
-    snapshot: Omit<StylesheetSnapshot, '_snapshotType' | 'type'>
+    snapshot: Omit<StylesheetSnapshot, '_snapshotType' | 'type'>,
+    factory: CRDTFactory
   ) {
-    const m = CRDT.makeMap<StylesheetSnapshot>();
+    const m = factory.makeMap<StylesheetSnapshot>();
     m.set('_snapshotType', 'stylesheet');
     m.set('id', snapshot.id);
     m.set('name', snapshot.name);
@@ -232,33 +233,33 @@ export class DiagramStyles {
   #activeTextStylesheet = DefaultStyles.text.default;
 
   constructor(
-    private readonly root: CRDTRoot,
+    readonly crdt: CRDTRoot,
     private readonly document: DiagramDocument,
     addDefaultStyles: boolean
   ) {
-    this.#textStyles = new MappedCRDTMap(root.getMap('styles.text'), mapper);
-    this.#nodeStyles = new MappedCRDTMap(root.getMap('styles.node'), mapper);
-    this.#edgeStyles = new MappedCRDTMap(root.getMap('styles.edge'), mapper);
+    this.#textStyles = new MappedCRDTMap(crdt.getMap('styles.text'), mapper, true);
+    this.#nodeStyles = new MappedCRDTMap(crdt.getMap('styles.node'), mapper, true);
+    this.#edgeStyles = new MappedCRDTMap(crdt.getMap('styles.edge'), mapper, true);
 
     const hasNoTextStyles = this.#textStyles.size === 0;
     const hasNoNodeStyles = this.#nodeStyles.size === 0;
     const hasNoEdgeStyles = this.#edgeStyles.size === 0;
 
     if (addDefaultStyles && (hasNoTextStyles || hasNoNodeStyles || hasNoEdgeStyles)) {
-      root.transact(() => {
+      crdt.transact(() => {
         if (hasNoTextStyles) {
           Object.entries(DEFAULT_TEXT_STYLES).forEach(([id, s]) => {
-            this.#textStyles.set(id, Stylesheet.fromSnapshot('text', { id, ...s }));
+            this.#textStyles.set(id, Stylesheet.fromSnapshot('text', { id, ...s }, crdt.factory));
           });
         }
         if (hasNoNodeStyles) {
           Object.entries(DEFAULT_NODE_STYLES).forEach(([id, s]) => {
-            this.#nodeStyles.set(id, Stylesheet.fromSnapshot('node', { id, ...s }));
+            this.#nodeStyles.set(id, Stylesheet.fromSnapshot('node', { id, ...s }, crdt.factory));
           });
         }
         if (hasNoEdgeStyles) {
           Object.entries(DEFAULT_EDGE_STYLES).forEach(([id, s]) => {
-            this.#edgeStyles.set(id, Stylesheet.fromSnapshot('edge', { id, ...s }));
+            this.#edgeStyles.set(id, Stylesheet.fromSnapshot('edge', { id, ...s }, crdt.factory));
           });
         }
       });
@@ -327,7 +328,7 @@ export class DiagramStyles {
       return;
     }
 
-    this.root.transact(() => {
+    this.crdt.transact(() => {
       if (stylesheet.type === 'node') {
         this.activeNodeStylesheet = stylesheet;
       } else if (stylesheet.type === 'text') {
@@ -379,7 +380,7 @@ export class DiagramStyles {
       return;
     }
 
-    this.root.transact(() => {
+    this.crdt.transact(() => {
       this.clearStylesheet(id, uow);
 
       if (stylesheet.type === 'node') {
@@ -403,7 +404,7 @@ export class DiagramStyles {
 
   // TODO: Is this really needed? It seems it will have no additional effect
   reapplyStylesheet(stylesheet: Stylesheet<StylesheetType>, uow: UnitOfWork) {
-    this.root.transact(() => {
+    this.crdt.transact(() => {
       for (const diagram of this.document.diagramIterator({ nest: true })) {
         for (const el of diagram.allElements()) {
           if (isNode(el)) {
@@ -429,7 +430,7 @@ export class DiagramStyles {
     const stylesheet = this.get(id);
     if (!stylesheet) return;
 
-    this.root.transact(() => {
+    this.crdt.transact(() => {
       for (const diagram of this.document.diagramIterator({ nest: true })) {
         for (const el of diagram.allElements()) {
           if (isNode(el)) {
@@ -472,7 +473,7 @@ export class DiagramStyles {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   addStylesheet(id: string, stylesheet: Stylesheet<any>, _uow?: UnitOfWork) {
-    this.root.transact(() => {
+    this.crdt.transact(() => {
       if (stylesheet.type === 'node') {
         this.#nodeStyles.set(id, stylesheet);
         this.activeNodeStylesheet = stylesheet;

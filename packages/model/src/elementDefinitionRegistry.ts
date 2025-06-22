@@ -16,6 +16,7 @@ import { EventEmitter } from '@diagram-craft/utils/event';
 import { stencilLoaderRegistry } from '@diagram-craft/canvas-app/loaders';
 import { Property } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
 import { PathList } from '@diagram-craft/geometry/pathList';
+import { NoOpCRDTRoot } from './collaboration/noopCrdt';
 
 export type NodeCapability =
   | 'children'
@@ -384,7 +385,8 @@ export const loadStencilsFromYaml = (stencils: any) => {
         new DiagramDocument(
           diagram.document.nodeDefinitions,
           diagram.document.edgeDefinitions,
-          true
+          true,
+          new NoOpCRDTRoot()
         )
       );
 

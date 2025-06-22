@@ -2,7 +2,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { DiagramStyles, getCommonProps, Stylesheet } from './diagramStyles';
 import { StylesheetSnapshot, UnitOfWork } from './unitOfWork';
-import { NoOpCRDTRoot } from './collaboration/noopCrdt';
+import { NoOpCRDTFactory, NoOpCRDTRoot } from './collaboration/noopCrdt';
 import { DiagramDocument } from './diagramDocument';
 import { TestModel } from './test-support/builder';
 
@@ -14,7 +14,7 @@ describe('Stylesheet', () => {
       const name = 'Test stylesheet';
       const props: NodeProps = { fill: { color: 'blue' } };
 
-      const stylesheet = Stylesheet.fromSnapshot(type, { id, name, props });
+      const stylesheet = Stylesheet.fromSnapshot(type, { id, name, props }, new NoOpCRDTFactory());
 
       expect(stylesheet.id).toBe(id);
       expect(stylesheet.name).toBe(name);
@@ -33,7 +33,11 @@ describe('Stylesheet', () => {
       const newProps = { fill: { color: 'red' } };
 
       const styles = new DiagramStyles(new NoOpCRDTRoot(), TestModel.newDocument(), true);
-      const stylesheet = Stylesheet.fromSnapshot(type, { id, name, props: initialProps });
+      const stylesheet = Stylesheet.fromSnapshot(
+        type,
+        { id, name, props: initialProps },
+        styles.crdt.factory
+      );
       styles.addStylesheet(id, stylesheet);
 
       stylesheet.setProps(newProps, styles, UnitOfWork.immediate(null!));
@@ -51,7 +55,7 @@ describe('Stylesheet', () => {
       const props = { fill: { color: 'blue' } };
 
       const styles = new DiagramStyles(new NoOpCRDTRoot(), TestModel.newDocument(), true);
-      const stylesheet = Stylesheet.fromSnapshot(type, { id, name, props });
+      const stylesheet = Stylesheet.fromSnapshot(type, { id, name, props }, styles.crdt.factory);
       styles.addStylesheet(id, stylesheet);
 
       stylesheet.setName(newName, styles, UnitOfWork.immediate(null!));
@@ -67,7 +71,7 @@ describe('Stylesheet', () => {
       const name = 'Snapshot Test';
       const props = { fill: { color: 'blue' } };
 
-      const stylesheet = Stylesheet.fromSnapshot(type, { id, name, props });
+      const stylesheet = Stylesheet.fromSnapshot(type, { id, name, props }, new NoOpCRDTFactory());
       const snapshot = stylesheet.snapshot();
 
       expect(snapshot).toEqual({
@@ -94,7 +98,7 @@ describe('Stylesheet', () => {
         type
       } satisfies StylesheetSnapshot;
 
-      const stylesheet = Stylesheet.fromSnapshot(type, { id, name, props });
+      const stylesheet = Stylesheet.fromSnapshot(type, { id, name, props }, new NoOpCRDTFactory());
 
       stylesheet.restore(snapshot, UnitOfWork.immediate(null!));
 
@@ -195,11 +199,15 @@ describe('DiagramStyles', () => {
 
     it('should set the active node stylesheet', () => {
       const styles = new DiagramStyles(root, document, true);
-      const customNodeStyle = Stylesheet.fromSnapshot('node', {
-        id: 'custom-node',
-        name: 'Custom Node',
-        props: {}
-      });
+      const customNodeStyle = Stylesheet.fromSnapshot(
+        'node',
+        {
+          id: 'custom-node',
+          name: 'Custom Node',
+          props: {}
+        },
+        styles.crdt.factory
+      );
       styles.addStylesheet('custom-node', customNodeStyle);
 
       styles.activeNodeStylesheet = customNodeStyle;
@@ -217,11 +225,15 @@ describe('DiagramStyles', () => {
 
     it('should set the active edge stylesheet', () => {
       const styles = new DiagramStyles(root, document, true);
-      const customEdgeStyle = Stylesheet.fromSnapshot('edge', {
-        id: 'custom-edge',
-        name: 'Custom Edge',
-        props: {}
-      });
+      const customEdgeStyle = Stylesheet.fromSnapshot(
+        'edge',
+        {
+          id: 'custom-edge',
+          name: 'Custom Edge',
+          props: {}
+        },
+        styles.crdt.factory
+      );
       styles.addStylesheet('custom-edge', customEdgeStyle);
 
       styles.activeEdgeStylesheet = customEdgeStyle;
@@ -239,11 +251,15 @@ describe('DiagramStyles', () => {
 
     it('should set the active text stylesheet', () => {
       const styles = new DiagramStyles(root, document, true);
-      const customTextStyle = Stylesheet.fromSnapshot('text', {
-        id: 'custom-text',
-        name: 'Custom Text',
-        props: {}
-      });
+      const customTextStyle = Stylesheet.fromSnapshot(
+        'text',
+        {
+          id: 'custom-text',
+          name: 'Custom Text',
+          props: {}
+        },
+        styles.crdt.factory
+      );
       styles.addStylesheet('custom-text', customTextStyle);
 
       styles.activeTextStylesheet = customTextStyle;
@@ -322,11 +338,15 @@ describe('DiagramStyles', () => {
     it('should add a new node stylesheet', () => {
       const styles = new DiagramStyles(root, document, true);
 
-      const customNodeStyle = Stylesheet.fromSnapshot('node', {
-        id: 'custom-node',
-        name: 'Custom Node',
-        props: {}
-      });
+      const customNodeStyle = Stylesheet.fromSnapshot(
+        'node',
+        {
+          id: 'custom-node',
+          name: 'Custom Node',
+          props: {}
+        },
+        styles.crdt.factory
+      );
       styles.addStylesheet('custom-node', customNodeStyle);
 
       const retrievedStyle = styles.getNodeStyle('custom-node');
@@ -339,11 +359,15 @@ describe('DiagramStyles', () => {
     it('should add a new edge stylesheet', () => {
       const styles = new DiagramStyles(root, document, true);
 
-      const customEdgeStyle = Stylesheet.fromSnapshot('edge', {
-        id: 'custom-edge',
-        name: 'Custom Edge',
-        props: {}
-      });
+      const customEdgeStyle = Stylesheet.fromSnapshot(
+        'edge',
+        {
+          id: 'custom-edge',
+          name: 'Custom Edge',
+          props: {}
+        },
+        styles.crdt.factory
+      );
       styles.addStylesheet('custom-edge', customEdgeStyle);
 
       const retrievedStyle = styles.getEdgeStyle('custom-edge');
@@ -356,11 +380,15 @@ describe('DiagramStyles', () => {
     it('should add a new text stylesheet', () => {
       const styles = new DiagramStyles(root, document, true);
 
-      const customTextStyle = Stylesheet.fromSnapshot('text', {
-        id: 'custom-text',
-        name: 'Custom Text',
-        props: {}
-      });
+      const customTextStyle = Stylesheet.fromSnapshot(
+        'text',
+        {
+          id: 'custom-text',
+          name: 'Custom Text',
+          props: {}
+        },
+        styles.crdt.factory
+      );
       styles.addStylesheet('custom-text', customTextStyle);
 
       const retrievedStyle = styles.getTextStyle('custom-text');
@@ -373,11 +401,15 @@ describe('DiagramStyles', () => {
     it('should set the active stylesheet when adding a new stylesheet', () => {
       const styles = new DiagramStyles(root, document, true);
 
-      const customNodeStyle = Stylesheet.fromSnapshot('node', {
-        id: 'custom-node',
-        name: 'Custom Node',
-        props: {}
-      });
+      const customNodeStyle = Stylesheet.fromSnapshot(
+        'node',
+        {
+          id: 'custom-node',
+          name: 'Custom Node',
+          props: {}
+        },
+        styles.crdt.factory
+      );
       styles.addStylesheet('custom-node', customNodeStyle);
 
       expect(styles.activeNodeStylesheet.id).toBe('custom-node');
@@ -389,11 +421,15 @@ describe('DiagramStyles', () => {
       const styles = new DiagramStyles(root, document, true);
 
       // First add a custom stylesheet
-      const customNodeStyle = Stylesheet.fromSnapshot('node', {
-        id: 'custom-node',
-        name: 'Custom Node',
-        props: {}
-      });
+      const customNodeStyle = Stylesheet.fromSnapshot(
+        'node',
+        {
+          id: 'custom-node',
+          name: 'Custom Node',
+          props: {}
+        },
+        styles.crdt.factory
+      );
       styles.addStylesheet('custom-node', customNodeStyle);
 
       // Verify it was added
@@ -426,16 +462,24 @@ describe('DiagramStyles', () => {
       const styles = new DiagramStyles(root, document, true);
 
       // Add two custom stylesheets
-      const customNodeStyle1 = Stylesheet.fromSnapshot('node', {
-        id: 'custom-node-1',
-        name: 'Custom Node 1',
-        props: {}
-      });
-      const customNodeStyle2 = Stylesheet.fromSnapshot('node', {
-        id: 'custom-node-2',
-        name: 'Custom Node 2',
-        props: {}
-      });
+      const customNodeStyle1 = Stylesheet.fromSnapshot(
+        'node',
+        {
+          id: 'custom-node-1',
+          name: 'Custom Node 1',
+          props: {}
+        },
+        styles.crdt.factory
+      );
+      const customNodeStyle2 = Stylesheet.fromSnapshot(
+        'node',
+        {
+          id: 'custom-node-2',
+          name: 'Custom Node 2',
+          props: {}
+        },
+        styles.crdt.factory
+      );
       styles.addStylesheet('custom-node-1', customNodeStyle1);
       styles.addStylesheet('custom-node-2', customNodeStyle2);
 
@@ -504,11 +548,15 @@ describe('DiagramStyles', () => {
       const defaultNodeStyleId = styles.nodeStyles[0].id;
 
       // Add a custom node stylesheet
-      const customNodeStyle = Stylesheet.fromSnapshot('node', {
-        id: 'custom-node',
-        name: 'Custom Node',
-        props: {}
-      });
+      const customNodeStyle = Stylesheet.fromSnapshot(
+        'node',
+        {
+          id: 'custom-node',
+          name: 'Custom Node',
+          props: {}
+        },
+        styles.crdt.factory
+      );
       styles.addStylesheet('custom-node', customNodeStyle);
 
       // Set the default node stylesheet on the element

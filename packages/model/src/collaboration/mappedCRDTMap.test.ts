@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it } from 'vitest';
 import { NoOpCRDTMap } from './noopCrdt';
-import { CRDT, CRDTMap } from './crdt';
+import { CRDTMap } from './crdt';
 import { MappedCRDTMap } from './mappedCRDTMap';
 import { CRDTMapper } from './mappedCRDT';
 
@@ -10,7 +10,7 @@ const mapper: CRDTMapper<number, CRDTType> = {
     return e.get('value')! * 2;
   },
   toCRDT(e: number): CRDTMap<CRDTType> {
-    const map = CRDT.makeMap<CRDTType>();
+    const map = new NoOpCRDTMap<CRDTType>();
     map.set('value', e / 2);
     return map;
   }

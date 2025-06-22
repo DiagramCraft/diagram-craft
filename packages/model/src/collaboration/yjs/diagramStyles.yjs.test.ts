@@ -3,6 +3,7 @@ import { createSyncedYJSCRDTs, setupYJS } from './yjsTest';
 import { DiagramStyles, Stylesheet } from '../../diagramStyles';
 import { StylesheetSnapshot, UnitOfWork } from '../../unitOfWork';
 import { TestModel } from '../../test-support/builder';
+import { YJSFactory } from './yjsCrdt';
 
 describe('YJS Stylesheet', () => {
   setupYJS();
@@ -16,12 +17,13 @@ describe('YJS Stylesheet', () => {
       const name = 'Test stylesheet';
       const props = { fill: { color: 'blue' } };
 
-      const stylesheet = Stylesheet.fromSnapshot(type, { id, name, props });
+      const stylesheet = Stylesheet.fromSnapshot(type, { id, name, props }, new YJSFactory());
       doc1.getMap<Record<string, StylesheetSnapshot>>('test').set('test', stylesheet.snapshot());
 
       const other = Stylesheet.fromSnapshot(
         type,
-        doc2.getMap<Record<string, StylesheetSnapshot>>('test').get('test') as StylesheetSnapshot
+        doc2.getMap<Record<string, StylesheetSnapshot>>('test').get('test') as StylesheetSnapshot,
+        new YJSFactory()
       );
       expect(other.id).toBe(id);
       expect(other.name).toBe(name);
@@ -39,9 +41,8 @@ describe('YJS Stylesheet', () => {
       const name = 'Test stylesheet';
       const props = { fill: { color: 'blue' } };
 
-      const stylesheet = Stylesheet.fromSnapshot(type, { id, name, props });
-
       const styles1 = new DiagramStyles(doc1, TestModel.newDocument(), true);
+      const stylesheet = Stylesheet.fromSnapshot(type, { id, name, props }, styles1.crdt.factory);
       styles1.addStylesheet(id, stylesheet);
 
       const styles2 = new DiagramStyles(doc2, TestModel.newDocument(), true);
@@ -64,9 +65,10 @@ describe('YJS Stylesheet', () => {
       const name = 'Test stylesheet';
       const props = { fill: { color: 'blue' } };
 
-      const stylesheet = Stylesheet.fromSnapshot(type, { id, name, props });
-
       const styles1 = new DiagramStyles(doc1, TestModel.newDocument(), true);
+
+      const stylesheet = Stylesheet.fromSnapshot(type, { id, name, props }, styles1.crdt.factory);
+
       styles1.addStylesheet(id, stylesheet);
 
       const styles2 = new DiagramStyles(doc2, TestModel.newDocument(), true);
@@ -107,11 +109,15 @@ describe('YJS DiagramStyles', () => {
       const styles1 = new DiagramStyles(doc1, TestModel.newDocument(), true);
       const styles2 = new DiagramStyles(doc2, TestModel.newDocument(), true);
 
-      const customNodeStyle = Stylesheet.fromSnapshot('node', {
-        id: 'custom',
-        name: 'Custom',
-        props: {}
-      });
+      const customNodeStyle = Stylesheet.fromSnapshot(
+        'node',
+        {
+          id: 'custom',
+          name: 'Custom',
+          props: {}
+        },
+        styles1.crdt.factory
+      );
       styles1.addStylesheet('custom', customNodeStyle);
 
       styles1.activeNodeStylesheet = customNodeStyle;
@@ -128,11 +134,15 @@ describe('YJS DiagramStyles', () => {
       const styles1 = new DiagramStyles(doc1, TestModel.newDocument(), true);
       const styles2 = new DiagramStyles(doc2, TestModel.newDocument(), true);
 
-      const customEdgeStyle = Stylesheet.fromSnapshot('edge', {
-        id: 'custom-edge',
-        name: 'Custom Edge',
-        props: {}
-      });
+      const customEdgeStyle = Stylesheet.fromSnapshot(
+        'edge',
+        {
+          id: 'custom-edge',
+          name: 'Custom Edge',
+          props: {}
+        },
+        styles1.crdt.factory
+      );
       styles1.addStylesheet('custom-edge', customEdgeStyle);
 
       styles1.activeEdgeStylesheet = customEdgeStyle;
@@ -149,11 +159,15 @@ describe('YJS DiagramStyles', () => {
       const styles1 = new DiagramStyles(doc1, TestModel.newDocument(), true);
       const styles2 = new DiagramStyles(doc2, TestModel.newDocument(), true);
 
-      const customTextStyle = Stylesheet.fromSnapshot('text', {
-        id: 'custom',
-        name: 'Custom',
-        props: {}
-      });
+      const customTextStyle = Stylesheet.fromSnapshot(
+        'text',
+        {
+          id: 'custom',
+          name: 'Custom',
+          props: {}
+        },
+        styles1.crdt.factory
+      );
       styles1.addStylesheet('custom', customTextStyle);
 
       styles1.activeTextStylesheet = customTextStyle;
@@ -170,11 +184,15 @@ describe('YJS DiagramStyles', () => {
       const styles1 = new DiagramStyles(doc1, TestModel.newDocument(), true);
       const styles2 = new DiagramStyles(doc2, TestModel.newDocument(), true);
 
-      const customTextStyle = Stylesheet.fromSnapshot('text', {
-        id: 'custom',
-        name: 'Custom',
-        props: {}
-      });
+      const customTextStyle = Stylesheet.fromSnapshot(
+        'text',
+        {
+          id: 'custom',
+          name: 'Custom',
+          props: {}
+        },
+        styles1.crdt.factory
+      );
       styles1.addStylesheet('custom', customTextStyle);
 
       expect(styles1.textStyles.length).toBe(3);
@@ -189,11 +207,15 @@ describe('YJS DiagramStyles', () => {
       const styles1 = new DiagramStyles(doc1, TestModel.newDocument(), true);
       const styles2 = new DiagramStyles(doc2, TestModel.newDocument(), true);
 
-      const customTextStyle = Stylesheet.fromSnapshot('text', {
-        id: 'custom',
-        name: 'Custom',
-        props: {}
-      });
+      const customTextStyle = Stylesheet.fromSnapshot(
+        'text',
+        {
+          id: 'custom',
+          name: 'Custom',
+          props: {}
+        },
+        styles1.crdt.factory
+      );
       styles1.addStylesheet('custom-text', customTextStyle);
 
       expect(styles1.textStyles.length).toBe(3);

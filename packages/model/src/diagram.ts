@@ -16,6 +16,7 @@ import { assert } from '@diagram-craft/utils/assert';
 import { AttachmentConsumer } from './attachment';
 import { newid } from '@diagram-craft/utils/id';
 import { Definitions } from './elementDefinitionRegistry';
+import { NoOpCRDTRoot } from './collaboration/noopCrdt';
 
 export type DiagramIteratorOpts = {
   nest?: boolean;
@@ -358,7 +359,12 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     const dest = new Diagram(
       newid(),
       newid(),
-      new DiagramDocument(definitions.nodeDefinitions, definitions.edgeDefinitions, true)
+      new DiagramDocument(
+        definitions.nodeDefinitions,
+        definitions.edgeDefinitions,
+        true,
+        new NoOpCRDTRoot()
+      )
     );
 
     const uow = UnitOfWork.immediate(dest);

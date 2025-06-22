@@ -17,7 +17,7 @@ import {
 } from './types';
 import { Endpoint } from '../endpoint';
 import { ProgressCallback, Waypoint } from '../types';
-import { Stylesheet } from '../diagramStyles';
+import { DiagramStyles, Stylesheet } from '../diagramStyles';
 import { DefaultStyles } from '../diagramDefaults';
 import { ReferenceLayer } from '../diagramLayerReference';
 import { RuleLayer } from '../diagramLayerRule';
@@ -186,10 +186,10 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
 
     if (document.styles) {
       for (const edgeStyle of document.styles.edgeStyles) {
-        doc.styles.addStylesheet(edgeStyle.id, deserializeStylesheet(edgeStyle));
+        doc.styles.addStylesheet(edgeStyle.id, deserializeStylesheet(edgeStyle, doc.styles));
       }
       for (const nodeStyle of document.styles.nodeStyles) {
-        doc.styles.addStylesheet(nodeStyle.id, deserializeStylesheet(nodeStyle));
+        doc.styles.addStylesheet(nodeStyle.id, deserializeStylesheet(nodeStyle, doc.styles));
       }
     }
 
@@ -232,7 +232,8 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
   }
 };
 
-const deserializeStylesheet = (s: SerializedStylesheet) => Stylesheet.fromSnapshot(s.type, s);
+const deserializeStylesheet = (s: SerializedStylesheet, styles: DiagramStyles) =>
+  Stylesheet.fromSnapshot(s.type, s, styles.crdt.factory);
 
 const deserializeDiagrams = <T extends Diagram>(
   doc: DiagramDocument,

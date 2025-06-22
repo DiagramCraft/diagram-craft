@@ -13,6 +13,7 @@ import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { assignNewBounds, assignNewIds } from '@diagram-craft/model/helpers/cloneHelper';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { useDiagram } from '../application';
+import { NoOpCRDTRoot } from '@diagram-craft/model/collaboration/noopCrdt';
 
 export const NodeTypePopup = (props: Props) => {
   const diagram = useDiagram();
@@ -85,7 +86,8 @@ export const NodeTypePopup = (props: Props) => {
         new DiagramDocument(
           diagram.document.nodeDefinitions,
           diagram.document.edgeDefinitions,
-          true
+          true,
+          new NoOpCRDTRoot()
         )
       );
 

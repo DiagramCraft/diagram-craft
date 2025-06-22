@@ -182,7 +182,8 @@ export const ElementStylesheetPanel = (props: Props) => {
                                 props: {
                                   ...(isText ? { text: commonProps.text } : commonProps)
                                 }
-                              }
+                              },
+                              $d.document.styles.crdt.factory
                             );
                             const uow = new UnitOfWork($d, true);
 
