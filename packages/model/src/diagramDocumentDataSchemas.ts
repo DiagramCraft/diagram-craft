@@ -29,7 +29,7 @@ export class DiagramDocumentDataSchemas extends EventEmitter<DiagramDocumentData
   readonly #schemas: CRDTMap<Record<string, DataSchema>>;
 
   constructor(
-    root: CRDTRoot,
+    private readonly root: CRDTRoot,
     private readonly document: DiagramDocument,
     schemas?: DataSchema[]
   ) {
@@ -101,11 +101,13 @@ export class DiagramDocumentDataSchemas extends EventEmitter<DiagramDocumentData
   }
 
   replaceBy(schemas: DataSchema[]) {
-    this.#schemas.clear();
-    for (const template of schemas) {
-      this.#schemas.set(template.id, template);
-    }
-    // TODO: Should we emit events here?
+    this.root.transact(() => {
+      this.#schemas.clear();
+      for (const template of schemas) {
+        this.#schemas.set(template.id, template);
+      }
+      // TODO: Should we emit events here?
+    });
   }
 }
 

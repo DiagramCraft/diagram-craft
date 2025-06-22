@@ -198,37 +198,37 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
         doc.data.schemas.add(schema);
       }
     }
-  });
 
-  const dest = deserializeDiagrams(doc, diagrams, diagramFactory);
-  dest.forEach(d => doc.addDiagram(d));
+    const dest = deserializeDiagrams(doc, diagrams, diagramFactory);
+    dest.forEach(d => doc.addDiagram(d));
+
+    if (document.data?.providerId) {
+      const provider = DataProviderRegistry.get(document.data.providerId);
+      if (provider) {
+        doc.data.setProvider(provider(document.data.data!), true);
+      } else {
+        console.warn(`Provider ${document.data.providerId} not found`);
+      }
+    }
+
+    doc.data.templates.replaceBy(document.data?.templates ?? []);
+
+    if (document.props?.query?.saved) {
+      doc.props.query.setSaved(document.props.query.saved);
+    }
+    if (document.props?.query?.history) {
+      doc.props.query.setHistory(document.props.query.history);
+    }
+    if (document.props?.stencils) {
+      doc.props.recentStencils.set(document.props?.stencils);
+    }
+  });
 
   if (document.attachments) {
     for (const val of Object.values(document.attachments)) {
       const buf = Uint8Array.from(atob(val), c => c.charCodeAt(0));
       await doc.attachments.addAttachment(new Blob([buf]));
     }
-  }
-
-  if (document.data?.providerId) {
-    const provider = DataProviderRegistry.get(document.data.providerId);
-    if (provider) {
-      doc.data.setProvider(provider(document.data.data!), true);
-    } else {
-      console.warn(`Provider ${document.data.providerId} not found`);
-    }
-  }
-
-  doc.data.templates.replaceBy(document.data?.templates ?? []);
-
-  if (document.props?.query?.saved) {
-    doc.props.query.setSaved(document.props.query.saved);
-  }
-  if (document.props?.query?.history) {
-    doc.props.query.setHistory(document.props.query.history);
-  }
-  if (document.props?.stencils) {
-    doc.props.recentStencils.set(document.props?.stencils);
   }
 };
 
