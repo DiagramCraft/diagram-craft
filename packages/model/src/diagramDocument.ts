@@ -52,7 +52,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
   ) {
     super();
 
-    this.root = crdtRoot ?? new CRDT.Root();
+    this.root = crdtRoot ?? CRDT.makeRoot();
     this.data = new DiagramDocumentData(this.root, this);
     this.customPalette = new DiagramPalette(this.root, isStencil ? 0 : 14);
     this.styles = new DiagramStyles(this.root, this, !isStencil);

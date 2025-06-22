@@ -150,7 +150,7 @@ const diagramFactory = (d: SerializedDiagram, doc: DiagramDocument) => {
 };
 
 const documentFactory = async (url: string | undefined, statusCallback: ProgressCallback) => {
-  const root = new CRDT.Root();
+  const root = CRDT.makeRoot();
   if (url) {
     await CollaborationConfig.Backend.connect(url, root, statusCallback);
   }

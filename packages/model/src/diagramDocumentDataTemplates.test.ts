@@ -12,12 +12,12 @@ const templates: DataTemplate[] = [
 
 describe('DiagramDocumentDataTemplates', () => {
   it('should initialize with given templates', () => {
-    const instance = new DiagramDocumentDataTemplates(new CRDT.Root(), templates);
+    const instance = new DiagramDocumentDataTemplates(CRDT.makeRoot(), templates);
     expect(instance.all()).toEqual(templates);
   });
 
   it('should allow adding a new template', () => {
-    const instance = new DiagramDocumentDataTemplates(new CRDT.Root(), templates);
+    const instance = new DiagramDocumentDataTemplates(CRDT.makeRoot(), templates);
     const newTemplate: DataTemplate = {
       id: '3',
       schemaId: 'schema3',
@@ -34,7 +34,7 @@ describe('DiagramDocumentDataTemplates', () => {
   });
 
   it('should allow removing a template by object', () => {
-    const instance = new DiagramDocumentDataTemplates(new CRDT.Root(), templates);
+    const instance = new DiagramDocumentDataTemplates(CRDT.makeRoot(), templates);
 
     const removeListener = vi.fn();
     instance.on('remove', removeListener);
@@ -47,7 +47,7 @@ describe('DiagramDocumentDataTemplates', () => {
   });
 
   it('should allow removing a template by id', () => {
-    const instance = new DiagramDocumentDataTemplates(new CRDT.Root(), templates);
+    const instance = new DiagramDocumentDataTemplates(CRDT.makeRoot(), templates);
 
     const removeListener = vi.fn();
     instance.on('remove', removeListener);
@@ -59,7 +59,7 @@ describe('DiagramDocumentDataTemplates', () => {
   });
 
   it('should allow updating an existing template', () => {
-    const instance = new DiagramDocumentDataTemplates(new CRDT.Root(), templates);
+    const instance = new DiagramDocumentDataTemplates(CRDT.makeRoot(), templates);
     const updatedTemplate = { ...templates[0], name: 'Updated Template 1' };
 
     const updateListener = vi.fn();
@@ -72,21 +72,21 @@ describe('DiagramDocumentDataTemplates', () => {
   });
 
   it('should retrieve a template by ID', () => {
-    const instance = new DiagramDocumentDataTemplates(new CRDT.Root(), templates);
+    const instance = new DiagramDocumentDataTemplates(CRDT.makeRoot(), templates);
     const template = instance.byId('1');
 
     expect(template).toEqual(templates[0]);
   });
 
   it('should retrieve templates by schema ID', () => {
-    const instance = new DiagramDocumentDataTemplates(new CRDT.Root(), templates);
+    const instance = new DiagramDocumentDataTemplates(CRDT.makeRoot(), templates);
     const res = instance.bySchema('schema1');
 
     expect(res).toEqual([templates[0]]);
   });
 
   it('should replace all templates', () => {
-    const instance = new DiagramDocumentDataTemplates(new CRDT.Root(), templates);
+    const instance = new DiagramDocumentDataTemplates(CRDT.makeRoot(), templates);
 
     const newTemplates = [
       { id: '3', schemaId: 'schema3', name: 'Template 3', template: {} },

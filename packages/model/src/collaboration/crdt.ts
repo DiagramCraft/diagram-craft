@@ -73,8 +73,8 @@ export interface CRDTList<T extends CRDTCompatibleObject> extends Emitter<CRDTLi
 }
 
 export const CRDT = new (class {
-  get Root(): new (...args: unknown[]) => CRDTRoot {
-    return CollaborationConfig.CRDTRoot;
+  makeRoot(): CRDTRoot {
+    return new CollaborationConfig.CRDTRoot();
   }
 
   makeMap<T extends Record<string, CRDTCompatibleObject>>(): CRDTMap<T> {
