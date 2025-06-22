@@ -13,11 +13,11 @@ import { mapIterator } from '@diagram-craft/utils/iterator';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const wrap = (e: any) => {
   if (e instanceof Y.Array) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return new YJSList<CRDTCompatibleObject>(e as any);
+    return new YJSList<CRDTCompatibleObject>(e as Y.Array<CRDTCompatibleObject>);
   } else if (e instanceof Y.Map) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return new YJSMap<Record<string, CRDTCompatibleObject>>(e as any);
+    return new YJSMap<Record<string, CRDTCompatibleObject>>(
+      e as Y.Map<Record<string, CRDTCompatibleObject>>
+    );
   } else {
     return e;
   }
@@ -58,12 +58,20 @@ export class YJSRoot implements CRDTRoot {
 
 export class YJSMap<T extends { [key: string]: CRDTCompatibleObject }> implements CRDTMap<T> {
   private emitter = new EventEmitter<CRDTMapEvents<T[string]>>();
+  private initial: Map<string, T[string]> | undefined;
+
   readonly delegate: Y.Map<T>;
 
   constructor(delegate?: Y.Map<T>) {
+    // This means the map is disconnected, and thus we temporarily keep values
+    // in a separate storage (this.initial) in addition to the YJS Map
+    if (!delegate) this.initial = new Map<string, T[string]>();
+
     this.delegate = delegate ?? new Y.Map();
 
     this.delegate.observe(e => {
+      this.initial = undefined;
+
       const local = e.transaction.local;
       e.changes.keys.forEach((change, key) => {
         if (change.action === 'add') {
@@ -87,30 +95,35 @@ export class YJSMap<T extends { [key: string]: CRDTCompatibleObject }> implement
   }
 
   clear() {
+    this.initial?.clear();
     this.delegate.clear();
   }
 
   delete<K extends keyof T & string>(key: K) {
+    this.initial?.delete(key);
     this.delegate.delete(key);
   }
 
   get<K extends keyof T & string>(key: K) {
-    return wrap(this.delegate.get(key));
+    return this.initial?.get(key) ?? wrap(this.delegate.get(key));
   }
 
   has<K extends keyof T & string>(key: K) {
-    return this.delegate.has(key);
+    return this.initial?.has(key) ?? this.delegate.has(key);
   }
 
   set<K extends keyof T & string>(key: K, value: T[K]) {
+    this.initial?.set(key, value);
     this.delegate.set(key, unwrap(value));
   }
 
   get size() {
-    return this.delegate.size;
+    return this.initial?.size ?? this.delegate.size;
   }
 
   entries(): Iterable<[string, T[string]]> {
+    if (this.initial) return this.initial!.entries();
+
     const delegate = this.delegate;
     return {
       [Symbol.iterator]() {
@@ -120,10 +133,12 @@ export class YJSMap<T extends { [key: string]: CRDTCompatibleObject }> implement
   }
 
   keys() {
-    return this.delegate.keys();
+    return this.initial?.keys() ?? this.delegate.keys();
   }
 
   values() {
+    if (this.initial) return this.initial.values();
+
     const delegate = this.delegate;
     return {
       [Symbol.iterator]() {

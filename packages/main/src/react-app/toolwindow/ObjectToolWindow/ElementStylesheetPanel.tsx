@@ -170,7 +170,7 @@ export const ElementStylesheetPanel = (props: Props) => {
                             const commonProps = getCommonProps(
                               $d.selectionState.elements.map(e => e.editProps)
                             ) as NodeProps & EdgeProps;
-                            const s = new Stylesheet(
+                            const s = Stylesheet.fromSnapshot(
                               isText
                                 ? 'text'
                                 : isNode($d.selectionState.elements[0])

@@ -17,7 +17,12 @@ type CRDTCompatibleInnerObject =
   | CRDTMap<any>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   | CRDTList<any>
+  | AdditionalCRDTCompatibleInnerObjects[keyof AdditionalCRDTCompatibleInnerObjects]
   | { [key: string]: Pick<CRDTCompatibleInnerObject, keyof CRDTCompatibleInnerObject> };
+
+declare global {
+  interface AdditionalCRDTCompatibleInnerObjects {}
+}
 
 export interface CRDTRoot {
   getMap<T extends { [key: string]: CRDTCompatibleObject }>(name: string): CRDTMap<T>;
@@ -68,12 +73,11 @@ export interface CRDTList<T extends CRDTCompatibleObject> extends Emitter<CRDTLi
 }
 
 export const CRDT = new (class {
-  get Root(): new (...args: unknown[]) => CRDTRoot {
-    return CollaborationConfig.CRDTRoot;
+  makeRoot(): CRDTRoot {
+    return new CollaborationConfig.CRDTRoot();
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  get Map(): new (...args: unknown[]) => CRDTMap<any> {
-    return CollaborationConfig.CRDTMap;
+  makeMap<T extends Record<string, CRDTCompatibleObject>>(): CRDTMap<T> {
+    return new CollaborationConfig.CRDTMap();
   }
 })();

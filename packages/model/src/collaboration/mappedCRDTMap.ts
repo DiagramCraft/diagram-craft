@@ -33,6 +33,10 @@ export class MappedCRDTMap<
     crdt.on('remoteInsert', e => {
       this.#map.set(e.key, mapper.fromCRDT(e.value));
     });
+
+    for (const [k, v] of crdt.entries()) {
+      this.#map.set(k, mapper.fromCRDT(v));
+    }
   }
 
   get entries() {
@@ -41,6 +45,18 @@ export class MappedCRDTMap<
 
   get values() {
     return this.#map.values();
+  }
+
+  get keys() {
+    return this.#map.keys();
+  }
+
+  get size() {
+    return this.#map.size;
+  }
+
+  get(key: string) {
+    return this.#map.get(key);
   }
 
   add(key: string, t: T) {

@@ -2,9 +2,15 @@ import { CRDT, CRDTCompatibleObject, CRDTMap } from './crdt';
 import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { CRDTMapper } from './mappedCRDT';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type WrapperType<T extends Record<string, CRDTCompatibleObject> = any> = {
+  value: CRDTMap<T>;
+  index: number;
+};
+
 export type MappedCRDTOrderedMapMapType<T extends Record<string, CRDTCompatibleObject>> = Record<
   string,
-  CRDTMap<{ value: CRDTMap<T>; index: number }>
+  CRDTMap<WrapperType<T>>
 >;
 
 export class MappedCRDTOrderedMap<
@@ -59,7 +65,7 @@ export class MappedCRDTOrderedMap<
 
     this.#entries.push([key, t]);
 
-    const entry = new CRDT.Map();
+    const entry = CRDT.makeMap<WrapperType>();
     entry.set('index', this.#entries.length);
     entry.set('value', this.mapper.toCRDT(t));
     this.crdt.set(key, entry);
