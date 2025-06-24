@@ -100,6 +100,10 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   mustCalculateIntersections = true;
 
   readonly props: DiagramProps = {};
+  readonly viewBox = new Viewbox(this.#canvas);
+  readonly nodeLookup = new Map<string, DiagramNode>();
+  readonly edgeLookup = new Map<string, DiagramEdge>();
+  readonly selectionState = new SelectionState(this);
   readonly layers = new LayerManager(this, []);
   readonly snapManagerConfig = new SnapManagerConfig([
     'grid',
@@ -108,21 +112,14 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     'distance',
     'size'
   ]);
+  readonly undoManager = new UndoManager(this);
 
-  // Transient fields
   readonly uid = newid();
+
   readonly crdt: CRDTMap<DiagramCRDT>;
 
-  // Shared fields
   readonly #name: CRDTProperty<DiagramCRDT, 'name'>;
   readonly #id: CRDTProperty<DiagramCRDT, 'id'>;
-
-  // Unshared fields
-  readonly undoManager = new UndoManager(this);
-  readonly viewBox = new Viewbox(this.#canvas);
-  readonly nodeLookup = new Map<string, DiagramNode>();
-  readonly edgeLookup = new Map<string, DiagramEdge>();
-  readonly selectionState = new SelectionState(this);
 
   constructor(id: string, name: string, document: DiagramDocument, crdt?: CRDTMap<DiagramCRDT>) {
     super();
