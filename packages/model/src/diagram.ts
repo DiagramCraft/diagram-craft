@@ -98,6 +98,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
   readonly uid = newid();
   readonly crdt: CRDTMap<DiagramCRDT>;
+  mustCalculateIntersections = true;
 
   // Shared properties
   readonly #name: CRDTProperty<DiagramCRDT, 'name'>;
@@ -132,6 +133,28 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     this.crdt.set('name', name);
 
     this.#document = document;
+
+    // TODO: We should be able to remove this
+    const toggleMustCalculateIntersections = () => {
+      const old = this.mustCalculateIntersections;
+      this.mustCalculateIntersections = this.visibleElements().some(
+        e => isEdge(e) && e.renderProps.lineHops.type !== 'none'
+      );
+      // Only trigger invalidation in case the value has changed to true
+      if (this.mustCalculateIntersections && this.mustCalculateIntersections !== old) {
+        const uow = new UnitOfWork(this);
+        if (this.activeLayer instanceof RegularLayer) {
+          this.activeLayer.elements
+            .filter(e => isEdge(e))
+            .forEach(e => (e as DiagramEdge).invalidate(uow));
+        }
+        uow.commit();
+      }
+    };
+    this.on('elementChange', toggleMustCalculateIntersections);
+    this.on('elementAdd', toggleMustCalculateIntersections);
+    this.on('elementRemove', toggleMustCalculateIntersections);
+    toggleMustCalculateIntersections();
 
     const metadataUpdate = () => {
       this.emit('change', { diagram: this });
@@ -174,6 +197,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     this.undoManager = other.undoManager;
     // @ts-ignore
     this.diagrams = other.diagrams;
+    this.mustCalculateIntersections = other.mustCalculateIntersections;
   }
 
   emit<K extends EventKey<DiagramEvents>>(eventName: K, params?: DiagramEvents[K]) {
