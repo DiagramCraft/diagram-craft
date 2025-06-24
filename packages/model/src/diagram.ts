@@ -16,7 +16,9 @@ import { assert } from '@diagram-craft/utils/assert';
 import { AttachmentConsumer } from './attachment';
 import { newid } from '@diagram-craft/utils/id';
 import { Definitions } from './elementDefinitionRegistry';
-import { NoOpCRDTRoot } from './collaboration/noopCrdt';
+import { NoOpCRDTMap, NoOpCRDTRoot } from './collaboration/noopCrdt';
+import { CRDTMapper } from './collaboration/mappedCRDT';
+import { CRDT, CRDTMap, CRDTProperty } from './collaboration/crdt';
 
 export type DiagramIteratorOpts = {
   nest?: boolean;
@@ -73,6 +75,23 @@ export const DocumentBuilder = {
   }
 };
 
+export type DiagramCRDT = {
+  id: string;
+  name: string;
+};
+
+export const makeDiagramMapper = (doc: DiagramDocument): CRDTMapper<Diagram, DiagramCRDT> => {
+  return {
+    fromCRDT(e: CRDTMap<DiagramCRDT>): Diagram {
+      return new Diagram(e.get('id')!, e.get('name')!, doc, e);
+    },
+
+    toCRDT(e: Diagram): CRDTMap<DiagramCRDT> {
+      return e.crdt;
+    }
+  };
+};
+
 export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentConsumer {
   #canvas: Canvas = { x: 0, y: 0, w: 640, h: 640 };
   #document: DiagramDocument | undefined;
@@ -81,10 +100,6 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   mustCalculateIntersections = true;
 
   readonly props: DiagramProps = {};
-  readonly viewBox = new Viewbox(this.#canvas);
-  readonly nodeLookup = new Map<string, DiagramNode>();
-  readonly edgeLookup = new Map<string, DiagramEdge>();
-  readonly selectionState = new SelectionState(this);
   readonly layers = new LayerManager(this, []);
   readonly snapManagerConfig = new SnapManagerConfig([
     'grid',
@@ -93,16 +108,28 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     'distance',
     'size'
   ]);
-  readonly undoManager = new UndoManager(this);
 
+  // Transient fields
   readonly uid = newid();
+  readonly crdt: CRDTMap<DiagramCRDT>;
 
-  constructor(
-    readonly id: string,
-    public name: string,
-    document: DiagramDocument
-  ) {
+  // Shared fields
+  readonly #name: CRDTProperty<DiagramCRDT, 'name'>;
+  readonly #id: CRDTProperty<DiagramCRDT, 'id'>;
+
+  // Unshared fields
+  readonly undoManager = new UndoManager(this);
+  readonly viewBox = new Viewbox(this.#canvas);
+  readonly nodeLookup = new Map<string, DiagramNode>();
+  readonly edgeLookup = new Map<string, DiagramEdge>();
+  readonly selectionState = new SelectionState(this);
+
+  constructor(id: string, name: string, document: DiagramDocument, crdt?: CRDTMap<DiagramCRDT>) {
     super();
+
+    this.crdt = crdt ?? document.root.factory.makeMap();
+    this.crdt.set('id', id);
+    this.crdt.set('name', name);
 
     this.#document = document;
 
@@ -127,6 +154,49 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     this.on('elementAdd', toggleMustCalculateIntersections);
     this.on('elementRemove', toggleMustCalculateIntersections);
     toggleMustCalculateIntersections();
+
+    const metadataUpdate = () => {
+      this.emit('change', { diagram: this });
+      this.document.emit('diagramchanged', { after: this });
+    };
+
+    this.#name = CRDT.makeProp('name', this.crdt, metadataUpdate);
+    this.#id = CRDT.makeProp('id', this.crdt, metadataUpdate);
+  }
+
+  get id() {
+    return this.#id.get()!;
+  }
+
+  get name() {
+    return this.#name.get()!;
+  }
+
+  set name(n: string) {
+    this.#name.set(n);
+  }
+
+  // TODO: This should be removed
+  merge(other: Diagram) {
+    // @ts-ignore
+    this.props = other.props;
+    // @ts-ignore
+    this.viewBox = other.viewBox;
+    // @ts-ignore
+    this.nodeLookup = other.nodeLookup;
+    // @ts-ignore
+    this.edgeLookup = other.edgeLookup;
+    // @ts-ignore
+    this.selectionState = other.selectionState;
+    // @ts-ignore
+    this.layers = other.layers;
+    // @ts-ignore
+    this.snapManagerConfig = other.snapManagerConfig;
+    // @ts-ignore
+    this.undoManager = other.undoManager;
+
+    this.diagrams = other.diagrams;
+    this.mustCalculateIntersections = other.mustCalculateIntersections;
   }
 
   emit<K extends EventKey<DiagramEvents>>(eventName: K, params?: DiagramEvents[K]) {
@@ -364,7 +434,8 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
         definitions.edgeDefinitions,
         true,
         new NoOpCRDTRoot()
-      )
+      ),
+      new NoOpCRDTMap<DiagramCRDT>()
     );
 
     const uow = UnitOfWork.immediate(dest);

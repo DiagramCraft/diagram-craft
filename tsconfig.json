@@ -43,6 +43,6 @@
       "@diagram-craft/playwright/*": ["./packages/playwright/src/*"]
     }
   },
-  "exclude": ["node_modules", "dist", "**/vite.config.ts"],
+  "exclude": ["node_modules", "dist", "**/vite.config.ts", "**/playground"],
   "references": [{ "path": "./tsconfig.node.json"}]
 }

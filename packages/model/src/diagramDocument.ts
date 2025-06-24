@@ -1,10 +1,15 @@
 import { DiagramPalette } from './diagramPalette';
 import { DiagramStyles } from './diagramStyles';
-import { Diagram, diagramIterator, DiagramIteratorOpts } from './diagram';
+import {
+  Diagram,
+  DiagramCRDT,
+  diagramIterator,
+  DiagramIteratorOpts,
+  makeDiagramMapper
+} from './diagram';
 import { AttachmentConsumer, AttachmentManager } from './attachment';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinitionRegistry';
-import { precondition } from '@diagram-craft/utils/assert';
 import { isNode } from './diagramElement';
 import { UnitOfWork } from './unitOfWork';
 import { DataProviderRegistry } from './dataProvider';
@@ -17,6 +22,7 @@ import { CRDT, CRDTRoot } from './collaboration/crdt';
 import { CollaborationConfig } from './collaboration/collaborationConfig';
 import { DocumentProps } from './documentProps';
 import { ProgressCallback } from './types';
+import { MappedCRDTOrderedMap } from './collaboration/mappedCRDTOrderedMap';
 
 export type DocumentEvents = {
   diagramchanged: { after: Diagram };
@@ -38,7 +44,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
   readonly styles: DiagramStyles;
   readonly customPalette: DiagramPalette;
   readonly props: DocumentProps;
-  readonly #diagrams: Array<Diagram> = [];
+  readonly #diagrams: MappedCRDTOrderedMap<Diagram, DiagramCRDT>;
   readonly data: DiagramDocumentData;
 
   // Transient properties
@@ -48,7 +54,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     public readonly nodeDefinitions: NodeDefinitionRegistry,
     public readonly edgeDefinitions: EdgeDefinitionRegistry,
     isStencil?: boolean,
-    readonly crdtRoot?: CRDTRoot
+    crdtRoot?: CRDTRoot
   ) {
     super();
 
@@ -58,6 +64,12 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     this.styles = new DiagramStyles(this.root, this, !isStencil);
     this.attachments = new AttachmentManager(this.root, this);
     this.props = new DocumentProps(this.root, this);
+
+    this.#diagrams = new MappedCRDTOrderedMap(
+      this.root.getMap('diagrams'),
+      makeDiagramMapper(this),
+      true
+    );
   }
 
   transact(callback: () => void) {
@@ -74,7 +86,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
   }
 
   get topLevelDiagrams() {
-    return this.#diagrams;
+    return this.#diagrams.values;
   }
 
   get definitions() {
@@ -85,7 +97,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
   }
 
   *diagramIterator(opts: DiagramIteratorOpts = {}) {
-    yield* diagramIterator(this.#diagrams, opts);
+    yield* diagramIterator(this.#diagrams.values, opts);
   }
 
   getById(id: string) {
@@ -101,7 +113,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
   getDiagramPath(diagram: Diagram, startAt?: Diagram): Diagram[] {
     const dest: Diagram[] = [];
 
-    for (const d of startAt ? startAt.diagrams : this.#diagrams) {
+    for (const d of startAt ? startAt.diagrams : this.#diagrams.values) {
       if (d === diagram) {
         dest.push(d);
       } else {
@@ -117,12 +129,19 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
   }
 
   addDiagram(diagram: Diagram, parent?: Diagram) {
-    precondition.is.false(!!this.getById(diagram.id));
+    // TODO: Re-enable this
+    //    precondition.is.false(!!this.getById(diagram.id));
 
     if (parent) {
       (parent.diagrams as Diagram[]).push(diagram);
     } else {
-      this.#diagrams.push(diagram);
+      // TODO: This should be removed
+      const existing = this.#diagrams.get(diagram.id);
+      if (existing) {
+        existing.merge(diagram);
+      } else {
+        this.#diagrams.add(diagram.id, diagram);
+      }
     }
 
     diagram.document = this;
@@ -132,12 +151,16 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
   removeDiagram(diagram: Diagram) {
     const path = this.getDiagramPath(diagram);
 
-    const diagrams = path.length === 1 ? this.#diagrams : (path.at(-2)!.diagrams as Diagram[]);
+    if (path.length === 1) {
+      this.#diagrams.remove(diagram.id);
+    } else {
+      const diagrams = path.at(-2)!.diagrams as Diagram[];
 
-    const idx = diagrams.indexOf(diagram);
-    if (idx !== -1) {
-      diagrams.splice(idx, 1);
-      this.emit('diagramremoved', { node: diagram });
+      const idx = diagrams.indexOf(diagram);
+      if (idx !== -1) {
+        diagrams.splice(idx, 1);
+        this.emit('diagramremoved', { node: diagram });
+      }
     }
   }
 
@@ -147,7 +170,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
 
   toJSON() {
     return {
-      diagrams: this.#diagrams,
+      diagrams: this.#diagrams.values,
       styles: this.styles,
       props: this.props,
       customPalette: this.customPalette

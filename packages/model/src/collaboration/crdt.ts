@@ -83,8 +83,38 @@ export interface CRDTList<T extends CRDTCompatibleObject> extends Emitter<CRDTLi
   toArray(): Array<T>;
 }
 
+export type CRDTProperty<
+  T extends { [key: string]: CRDTCompatibleObject },
+  N extends keyof T & string
+> = {
+  get: () => T[N] | undefined;
+  set: (v: T[N]) => void;
+};
+
 export const CRDT = new (class {
   makeRoot(): CRDTRoot {
     return new CollaborationConfig.CRDTRoot();
+  }
+
+  makeProp<T extends { [key: string]: CRDTCompatibleObject }, N extends keyof T & string>(
+    name: N,
+    crdt: CRDTMap<T>,
+    onChange: () => void = () => {}
+  ): CRDTProperty<T, N> {
+    crdt.on('localUpdate', p => {
+      if (p.key === name) {
+        onChange();
+      }
+    });
+    crdt.on('remoteUpdate', p => {
+      if (p.key === name) {
+        onChange();
+      }
+    });
+
+    return {
+      get: () => crdt.get(name),
+      set: (v: T[keyof T & string]) => crdt.set(name, v)
+    };
   }
 })();
