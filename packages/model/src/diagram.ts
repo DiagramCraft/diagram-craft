@@ -93,18 +93,23 @@ export const makeDiagramMapper = (doc: DiagramDocument): CRDTMapper<Diagram, Dia
 };
 
 export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentConsumer {
-  #canvas: Canvas = { x: 0, y: 0, w: 640, h: 640 };
+  // Transient properties
   #document: DiagramDocument | undefined;
 
-  diagrams: ReadonlyArray<Diagram> = [];
-  mustCalculateIntersections = true;
+  readonly uid = newid();
+  readonly crdt: CRDTMap<DiagramCRDT>;
 
+  // Shared properties
+  readonly #name: CRDTProperty<DiagramCRDT, 'name'>;
+  readonly #id: CRDTProperty<DiagramCRDT, 'id'>;
+  #canvas: Canvas = { x: 0, y: 0, w: 640, h: 640 };
+
+  readonly layers: LayerManager;
   readonly props: DiagramProps = {};
-  readonly viewBox = new Viewbox(this.#canvas);
-  readonly nodeLookup = new Map<string, DiagramNode>();
-  readonly edgeLookup = new Map<string, DiagramEdge>();
+  diagrams: ReadonlyArray<Diagram> = [];
+
+  // Unshared properties
   readonly selectionState = new SelectionState(this);
-  readonly layers = new LayerManager(this, []);
   readonly snapManagerConfig = new SnapManagerConfig([
     'grid',
     'node',
@@ -112,45 +117,21 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     'distance',
     'size'
   ]);
+  readonly viewBox = new Viewbox(this.#canvas);
+  readonly nodeLookup = new Map<string, DiagramNode>();
+  readonly edgeLookup = new Map<string, DiagramEdge>();
   readonly undoManager = new UndoManager(this);
-
-  readonly uid = newid();
-
-  readonly crdt: CRDTMap<DiagramCRDT>;
-
-  readonly #name: CRDTProperty<DiagramCRDT, 'name'>;
-  readonly #id: CRDTProperty<DiagramCRDT, 'id'>;
 
   constructor(id: string, name: string, document: DiagramDocument, crdt?: CRDTMap<DiagramCRDT>) {
     super();
+
+    this.layers = new LayerManager(this, []);
 
     this.crdt = crdt ?? document.root.factory.makeMap();
     this.crdt.set('id', id);
     this.crdt.set('name', name);
 
     this.#document = document;
-
-    // TODO: We should be able to remove this
-    const toggleMustCalculateIntersections = () => {
-      const old = this.mustCalculateIntersections;
-      this.mustCalculateIntersections = this.visibleElements().some(
-        e => isEdge(e) && e.renderProps.lineHops.type !== 'none'
-      );
-      // Only trigger invalidation in case the value has changed to true
-      if (this.mustCalculateIntersections && this.mustCalculateIntersections !== old) {
-        const uow = new UnitOfWork(this);
-        if (this.activeLayer instanceof RegularLayer) {
-          this.activeLayer.elements
-            .filter(e => isEdge(e))
-            .forEach(e => (e as DiagramEdge).invalidate(uow));
-        }
-        uow.commit();
-      }
-    };
-    this.on('elementChange', toggleMustCalculateIntersections);
-    this.on('elementAdd', toggleMustCalculateIntersections);
-    this.on('elementRemove', toggleMustCalculateIntersections);
-    toggleMustCalculateIntersections();
 
     const metadataUpdate = () => {
       this.emit('change', { diagram: this });
@@ -191,9 +172,8 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     this.snapManagerConfig = other.snapManagerConfig;
     // @ts-ignore
     this.undoManager = other.undoManager;
-
+    // @ts-ignore
     this.diagrams = other.diagrams;
-    this.mustCalculateIntersections = other.mustCalculateIntersections;
   }
 
   emit<K extends EventKey<DiagramEvents>>(eventName: K, params?: DiagramEvents[K]) {

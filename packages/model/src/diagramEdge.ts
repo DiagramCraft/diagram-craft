@@ -848,19 +848,21 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   }
 
   private recalculateIntersections(uow: UnitOfWork, propagate = false) {
-    if (!this.diagram.mustCalculateIntersections) return;
-
     let currentEdgeHasBeenSeen = false;
     const path = this.path();
     const intersections: Intersection[] = [];
     for (const edge of this.diagram.visibleElements()) {
+      if (!isEdge(edge)) continue;
+
       uow.snapshot(edge);
 
       if (edge === this) {
         currentEdgeHasBeenSeen = true;
         continue;
       }
-      if (!isEdge(edge)) continue;
+
+      // TODO: There's opportunity to optimize this by using the bounding box, but
+      //       this requires the bounds() method to be more accurate
 
       const otherPath = edge.path();
       const intersectionsWithOther = path.intersections(otherPath);
