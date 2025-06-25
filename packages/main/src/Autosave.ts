@@ -7,6 +7,7 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { serializeDiagramDocument } from '@diagram-craft/model/serialization/serialize';
 import { ProgressCallback } from '@diagram-craft/model/types';
+import { CollaborationConfig } from '@diagram-craft/model/collaboration/collaborationConfig';
 
 const KEY = 'autosave';
 
@@ -19,6 +20,8 @@ export const Autosave = {
     diagramFactory: DiagramFactory<Diagram>,
     failSilently = false
   ) => {
+    if (!CollaborationConfig.idNoOp) return undefined;
+
     try {
       const item = localStorage.getItem(KEY);
       if (!item) return undefined;
@@ -46,6 +49,8 @@ export const Autosave = {
   exists: () => !!localStorage.getItem(KEY),
 
   save: async (url: string | undefined, doc: DiagramDocument) => {
+    if (!CollaborationConfig.idNoOp) return undefined;
+
     localStorage.setItem(
       KEY,
       JSON.stringify({

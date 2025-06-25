@@ -18,7 +18,6 @@ import { Autosave } from './Autosave';
 import { UserState } from './UserState';
 import { CRDT } from '@diagram-craft/model/collaboration/crdt';
 import { CollaborationConfig } from '@diagram-craft/model/collaboration/collaborationConfig';
-import React from 'react';
 import { ProgressCallback } from '@diagram-craft/model/types';
 
 stencilLoaderRegistry.drawioManual = () =>
@@ -173,13 +172,11 @@ if (location.hash !== '') {
 }
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <AppLoader
-      stencils={stencilRegistry}
-      diagram={diagrams[0]}
-      diagramFactory={diagramFactory}
-      documentFactory={documentFactory}
-      nodeRegistry={nodeRegistry}
-    />
-  </React.StrictMode>
+  <AppLoader
+    stencils={stencilRegistry}
+    diagram={diagrams[0]}
+    diagramFactory={diagramFactory}
+    documentFactory={documentFactory}
+    nodeRegistry={nodeRegistry}
+  />
 );

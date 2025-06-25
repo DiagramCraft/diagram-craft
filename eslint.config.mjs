@@ -18,7 +18,7 @@ export default tseslint.config(
     }
   },*/
   {
-    ignores: ['**/dist', '**/eslintrc.cjs', '**/*.js', '**/.storybook', '**/.*']
+    ignores: ['**/dist', '**/eslintrc.cjs', '**/*.js', '**/.storybook', '**/.*', '**/playground']
   },
   {
     rules: {

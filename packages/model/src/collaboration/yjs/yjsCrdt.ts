@@ -137,7 +137,8 @@ export class YJSMap<T extends { [key: string]: CRDTCompatibleObject }> implement
   }
 
   get<K extends keyof T & string>(key: K) {
-    return this.initial?.get(key) ?? wrap(this.delegate.get(key));
+    if (this.initial) return this.initial.get(key);
+    return wrap(this.delegate.get(key));
   }
 
   has<K extends keyof T & string>(key: K) {
