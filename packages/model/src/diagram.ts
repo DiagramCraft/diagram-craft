@@ -78,6 +78,10 @@ export const DocumentBuilder = {
 export type DiagramCRDT = {
   id: string;
   name: string;
+  canvasW: number;
+  canvasH: number;
+  canvasX: number;
+  canvasY: number;
 };
 
 export const makeDiagramMapper = (doc: DiagramDocument): CRDTMapper<Diagram, DiagramCRDT> => {
@@ -92,6 +96,13 @@ export const makeDiagramMapper = (doc: DiagramDocument): CRDTMapper<Diagram, Dia
   };
 };
 
+const DEFAULT_CANVAS = {
+  w: 640,
+  h: 640,
+  x: 0,
+  y: 0
+};
+
 export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentConsumer {
   // Transient properties
   #document: DiagramDocument | undefined;
@@ -103,7 +114,6 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   // Shared properties
   readonly #name: CRDTProperty<DiagramCRDT, 'name'>;
   readonly #id: CRDTProperty<DiagramCRDT, 'id'>;
-  #canvas: Canvas = { x: 0, y: 0, w: 640, h: 640 };
 
   readonly layers: LayerManager;
   readonly props: DiagramProps = {};
@@ -118,7 +128,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     'distance',
     'size'
   ]);
-  readonly viewBox = new Viewbox(this.#canvas);
+  readonly viewBox: Viewbox;
   readonly nodeLookup = new Map<string, DiagramNode>();
   readonly edgeLookup = new Map<string, DiagramEdge>();
   readonly undoManager = new UndoManager(this);
@@ -126,13 +136,14 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   constructor(id: string, name: string, document: DiagramDocument, crdt?: CRDTMap<DiagramCRDT>) {
     super();
 
-    this.layers = new LayerManager(this, []);
-
     this.crdt = crdt ?? document.root.factory.makeMap();
     this.crdt.set('id', id);
     this.crdt.set('name', name);
 
     this.#document = document;
+
+    this.layers = new LayerManager(this, []);
+    this.viewBox = new Viewbox(this.canvas);
 
     // TODO: We should be able to remove this
     const toggleMustCalculateIntersections = () => {
@@ -179,6 +190,8 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
   // TODO: This should be removed
   merge(other: Diagram) {
+    // @ts-ignore
+    this.uid = other.uid;
     // @ts-ignore
     this.props = other.props;
     // @ts-ignore
@@ -280,11 +293,21 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   }
 
   get canvas() {
-    return this.#canvas;
+    return {
+      w: this.crdt.get('canvasW') ?? DEFAULT_CANVAS.w,
+      h: this.crdt.get('canvasH') ?? DEFAULT_CANVAS.h,
+      x: this.crdt.get('canvasX') ?? DEFAULT_CANVAS.x,
+      y: this.crdt.get('canvasY') ?? DEFAULT_CANVAS.y
+    };
   }
 
   set canvas(b: Canvas) {
-    this.#canvas = b;
+    this.document.transact(() => {
+      this.crdt.set('canvasX', b.x);
+      this.crdt.set('canvasY', b.y);
+      this.crdt.set('canvasW', b.w);
+      this.crdt.set('canvasH', b.h);
+    });
     this.update();
   }
 

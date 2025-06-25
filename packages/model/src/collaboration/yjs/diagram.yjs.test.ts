@@ -27,4 +27,23 @@ describe('YJS Diagram', () => {
       expect(d2.name).toBe('new-test-name');
     });
   });
+
+  describe('canvas', () => {
+    it('should update the canvas property correctly', () => {
+      const { doc1: c1, doc2: c2 } = createSyncedYJSCRDTs();
+
+      const doc1 = TestModel.newDocument(c1);
+      const doc2 = TestModel.newDocument(c2);
+
+      const d1 = new Diagram('test-id', 'test-name', doc1);
+      doc1.addDiagram(d1);
+
+      const d2 = doc2.topLevelDiagrams[0];
+
+      const newCanvas = { w: 105, h: 100, x: 25, y: 20 };
+      d1.canvas = { ...newCanvas };
+      expect(d1.canvas).toEqual(newCanvas);
+      expect(d2.canvas).toEqual(newCanvas);
+    });
+  });
 });

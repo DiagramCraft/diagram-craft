@@ -79,6 +79,17 @@ export class MappedCRDTOrderedMap<
     this.crdt.set(key, entry);
   }
 
+  set(key: string, t: T) {
+    this.crdt.delete(key);
+
+    const entry = this.crdt.factory.makeMap<WrapperType>();
+    entry.set('index', this.#entries.length);
+    entry.set('value', this.mapper.toCRDT(t));
+    this.crdt.set(key, entry);
+
+    this.#entries = this.#entries.map(e => (e[0] === key ? [key, t] : e));
+  }
+
   remove(key: string) {
     const idx = this.#entries.findIndex(e => e[0] === key);
     if (idx >= 0) {
