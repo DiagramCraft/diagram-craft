@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { CollaborationConfig } from './collaborationConfig';
 import { Emitter } from '@diagram-craft/utils/event';
 import { DeepReadonly, EmptyObject } from '@diagram-craft/utils/types';
@@ -182,10 +181,13 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
             }
           } else {
             if (isPrimitive(value)) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               this.map.set(fullPath, value as any);
             } else {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const setNestedValue = (nestedValue: any, currentPath: string) => {
                 if (isPrimitive(nestedValue)) {
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   this.map.set(currentPath, nestedValue as any);
                 } else if (nestedValue !== null && typeof nestedValue === 'object') {
                   for (const key in nestedValue) {
