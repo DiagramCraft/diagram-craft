@@ -8,6 +8,53 @@ import {
   CRDTRoot
 } from './crdt';
 import { EventEmitter } from '@diagram-craft/utils/event';
+import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type NoOpCRDTTypes = NoOpCRDTMap<any> | NoOpCRDTList<any>;
+
+type Transaction = {
+  id: string;
+  objects: Set<NoOpCRDTTypes>;
+};
+
+let transaction: Transaction | undefined;
+
+const emitTransactionEvents = (obj: NoOpCRDTTypes) => {
+  if (obj instanceof NoOpCRDTMap) {
+    obj.emit('localTransaction', {});
+  } else if (obj instanceof NoOpCRDTList) {
+    obj.emit('localTransaction', {});
+  } else {
+    VERIFY_NOT_REACHED();
+  }
+};
+
+const registerTransactionObject = (obj: NoOpCRDTTypes) => {
+  if (transaction) {
+    transaction.objects.add(obj);
+  } else {
+    // If there's no active transaction, we create an implicit transaction
+    emitTransactionEvents(obj);
+  }
+};
+
+const transact = (callback: () => void) => {
+  if (transaction) return callback();
+
+  transaction = {
+    id: 'noop',
+    objects: new Set()
+  };
+  try {
+    callback();
+  } finally {
+    for (const obj of transaction.objects) {
+      emitTransactionEvents(obj);
+    }
+    transaction = undefined;
+  }
+};
 
 export class NoOpCRDTFactory implements CRDTFactory {
   makeMap<T extends Record<string, CRDTCompatibleObject>>(): CRDTMap<T> {
@@ -40,17 +87,20 @@ export class NoOpCRDTMap<T extends { [key: string]: CRDTCompatibleObject }>
     this.backing.set(key, value);
 
     this.emit(isNew ? 'localInsert' : 'localUpdate', { key, value });
+    registerTransactionObject(this);
   }
 
   delete<K extends keyof T & string>(key: K): void {
     this.backing.delete(key);
     this.emit('localDelete');
+    registerTransactionObject(this);
   }
 
   clear(): void {
     const map: Map<string, T[string]> = { ...this.backing };
     this.backing.clear();
     Object.entries(map).forEach(([k, v]) => this.emit('localDelete', { key: k, value: v }));
+    registerTransactionObject(this);
   }
 
   has<K extends keyof T & string>(key: K): boolean {
@@ -67,6 +117,10 @@ export class NoOpCRDTMap<T extends { [key: string]: CRDTCompatibleObject }>
 
   values(): IterableIterator<T[string]> {
     return this.backing.values();
+  }
+
+  transact(callback: () => void) {
+    return transact(callback);
   }
 }
 
@@ -89,26 +143,34 @@ export class NoOpCRDTList<T extends CRDTCompatibleObject>
   insert(index: number, value: T[]): void {
     this.backing.splice(index, 0, ...value);
     this.emit('localInsert', { index, value });
+    registerTransactionObject(this);
   }
 
   push(value: T): void {
     this.backing.push(value);
     this.emit('localInsert', { index: this.backing.length - 1, value: [value] });
+    registerTransactionObject(this);
   }
 
   delete(index: number): void {
     this.backing.splice(index, 1);
     this.emit('localDelete', { index, count: 1 });
+    registerTransactionObject(this);
   }
 
   clear() {
     while (this.backing.length > 0) {
       this.delete(0);
     }
+    registerTransactionObject(this);
   }
 
   toArray(): T[] {
     return this.backing;
+  }
+
+  transact(callback: () => void) {
+    return transact(callback);
   }
 }
 
@@ -139,6 +201,6 @@ export class NoOpCRDTRoot implements CRDTRoot {
   }
 
   transact(callback: () => void) {
-    callback();
+    return transact(callback);
   }
 }

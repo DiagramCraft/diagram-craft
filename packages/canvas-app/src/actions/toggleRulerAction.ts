@@ -22,8 +22,10 @@ export class ToggleRulerAction extends AbstractToggleAction {
   }
 
   execute(): void {
-    this.context.model.activeDiagram.props.ruler ??= {};
-    this.context.model.activeDiagram.props.ruler.enabled = !this.state;
-    this.context.model.activeDiagram.update();
+    this.context.model.activeDiagram.updateProps(p => {
+      p.ruler ??= {};
+      p.ruler.enabled = !this.state;
+      return p;
+    });
   }
 }

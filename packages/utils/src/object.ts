@@ -281,3 +281,25 @@ export const unfoldObject = (
   }
   return dest;
 };
+
+/**
+ * Checks if a value is a primitive type (null, undefined, string, number, boolean) or a Uint8Array.
+ *
+ * @param value - The value to check.
+ * @returns `true` if the value is a primitive type or Uint8Array, `false` otherwise.
+ *
+ * @example
+ *  isPrimitive('hello'); // returns true
+ *  isPrimitive(42); // returns true
+ *  isPrimitive({}); // returns false
+ */
+export const isPrimitive = (value: unknown) => {
+  return (
+    value === null ||
+    value === undefined ||
+    typeof value === 'string' ||
+    typeof value === 'number' ||
+    typeof value === 'boolean' ||
+    value instanceof Uint8Array
+  );
+};

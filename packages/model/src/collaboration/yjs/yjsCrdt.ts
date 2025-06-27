@@ -105,6 +105,8 @@ export class YJSMap<T extends { [key: string]: CRDTCompatibleObject }> implement
       this.initial = undefined;
 
       const local = e.transaction.local;
+      this.emitter.emit(local ? 'localTransaction' : 'remoteTransaction', {});
+
       e.changes.keys.forEach((change, key) => {
         if (change.action === 'add') {
           this.emitter.emit(local ? 'localInsert' : 'remoteInsert', {
@@ -124,6 +126,10 @@ export class YJSMap<T extends { [key: string]: CRDTCompatibleObject }> implement
         }
       });
     });
+  }
+
+  transact(callback: () => void) {
+    this.delegate.doc!.transact(callback);
   }
 
   clear() {
@@ -206,16 +212,19 @@ export class YJSList<T extends CRDTCompatibleObject> implements CRDTList<T> {
     this.delegate.observe(e => {
       let idx = 0;
 
+      const local = e.transaction.local;
+      this.emitter.emit(local ? 'localTransaction' : 'remoteTransaction', {});
+
       for (const delta of e.changes.delta) {
         if (delta.delete !== undefined) {
-          this.emitter.emit(e.transaction.local ? 'localDelete' : 'remoteDelete', {
+          this.emitter.emit(local ? 'localDelete' : 'remoteDelete', {
             index: idx,
             count: delta.delete
           });
         } else if (delta.retain !== undefined) {
           idx += delta.retain;
         } else if (delta.insert !== undefined) {
-          this.emitter.emit(e.transaction.local ? 'localInsert' : 'remoteInsert', {
+          this.emitter.emit(local ? 'localInsert' : 'remoteInsert', {
             index: idx,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             value: (delta.insert as any[]).map(wrap)
@@ -224,6 +233,10 @@ export class YJSList<T extends CRDTCompatibleObject> implements CRDTList<T> {
         }
       }
     });
+  }
+
+  transact(callback: () => void) {
+    this.delegate.doc!.transact(callback);
   }
 
   clear() {

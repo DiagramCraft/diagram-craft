@@ -19,6 +19,7 @@ import { Definitions } from './elementDefinitionRegistry';
 import { NoOpCRDTMap, NoOpCRDTRoot } from './collaboration/noopCrdt';
 import { CRDTMapper } from './collaboration/mappedCRDT';
 import { CRDT, CRDTMap, CRDTProperty } from './collaboration/crdt';
+import { DeepReadonly } from '@diagram-craft/utils/types';
 
 export type DiagramIteratorOpts = {
   nest?: boolean;
@@ -116,7 +117,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   readonly #id: CRDTProperty<DiagramCRDT, 'id'>;
 
   readonly layers: LayerManager;
-  readonly props: DiagramProps = {};
+  readonly props: DeepReadonly<DiagramProps> = {};
   diagrams: ReadonlyArray<Diagram> = [];
 
   // Unshared properties
@@ -186,6 +187,11 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
   set name(n: string) {
     this.#name.set(n);
+  }
+
+  updateProps(callback: (props: DiagramProps) => void) {
+    callback(this.props);
+    this.update();
   }
 
   // TODO: This should be removed
