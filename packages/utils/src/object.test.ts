@@ -1,4 +1,12 @@
-import { common, deepClear, deepEquals, deepIsEmpty, deepMerge, unfoldObject } from './object';
+import {
+  common,
+  deepClear,
+  deepEquals,
+  deepIsEmpty,
+  deepMerge,
+  isPrimitive,
+  unfoldObject
+} from './object';
 import { describe, expect, test } from 'vitest';
 import { UNSAFE } from './testUtils';
 
@@ -250,6 +258,47 @@ describe('deepClear function', () => {
     const target = { a: 1, b: 2 };
     deepClear(source, target);
     expect(target).toEqual({});
+  });
+});
+
+describe('isPrimitive function', () => {
+  test('should return true for null', () => {
+    expect(isPrimitive(null)).toBe(true);
+  });
+
+  test('should return true for undefined', () => {
+    expect(isPrimitive(undefined)).toBe(true);
+  });
+
+  test('should return true for strings', () => {
+    expect(isPrimitive('hello')).toBe(true);
+    expect(isPrimitive('')).toBe(true);
+  });
+
+  test('should return true for numbers', () => {
+    expect(isPrimitive(42)).toBe(true);
+    expect(isPrimitive(0)).toBe(true);
+  });
+
+  test('should return true for booleans', () => {
+    expect(isPrimitive(true)).toBe(true);
+    expect(isPrimitive(false)).toBe(true);
+  });
+
+  test('should return true for Uint8Array', () => {
+    expect(isPrimitive(new Uint8Array())).toBe(true);
+  });
+
+  test('should return false for objects', () => {
+    expect(isPrimitive({})).toBe(false);
+  });
+
+  test('should return false for arrays', () => {
+    expect(isPrimitive([])).toBe(false);
+  });
+
+  test('should return false for functions', () => {
+    expect(isPrimitive(() => {})).toBe(false);
   });
 });
 

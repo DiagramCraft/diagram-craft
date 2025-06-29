@@ -46,4 +46,42 @@ describe('YJS Diagram', () => {
       expect(d2.canvas).toEqual(newCanvas);
     });
   });
+
+  describe('props', () => {
+    it('should update the props correctly', () => {
+      const { doc1: c1, doc2: c2 } = createSyncedYJSCRDTs();
+
+      const doc1 = TestModel.newDocument(c1);
+      const doc2 = TestModel.newDocument(c2);
+
+      const d1 = new Diagram('test-id', 'test-name', doc1);
+      doc1.addDiagram(d1);
+
+      const d2 = doc2.topLevelDiagrams[0];
+
+      // Initial props should be empty
+      expect(d1.props).toEqual({});
+      expect(d2.props).toEqual({});
+
+      // Update props on d1
+      d1.updateProps(props => {
+        props.grid ??= {};
+        props.grid.enabled = false;
+      });
+
+      // Both d1 and d2 should have the updated props
+      expect(d1.props).toEqual({ grid: { enabled: false } });
+      expect(d2.props).toEqual({ grid: { enabled: false } });
+
+      // Update props on d2
+      d2.updateProps(props => {
+        props.grid ??= {};
+        props.grid.enabled = true;
+      });
+
+      // Both d1 and d2 should have both properties
+      expect(d1.props).toEqual({ grid: { enabled: true } });
+      expect(d2.props).toEqual({ grid: { enabled: true } });
+    });
+  });
 });

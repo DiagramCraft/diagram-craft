@@ -55,6 +55,35 @@ describe('Diagram', () => {
     });
   });
 
+  describe('props', () => {
+    it('should initialize with empty props', () => {
+      const doc = TestModel.newDocument();
+      const diagram = new Diagram('test-id', 'test-name', doc, new NoOpCRDTMap<DiagramCRDT>());
+      expect(diagram.props).toEqual({});
+    });
+
+    it('should update props correctly', () => {
+      const doc = TestModel.newDocument();
+      const diagram = new Diagram('test-id', 'test-name', doc, new NoOpCRDTMap<DiagramCRDT>());
+
+      diagram.updateProps(props => {
+        props.grid ??= {};
+        props.grid.enabled = false;
+      });
+
+      expect(diagram.props).toEqual({ grid: { enabled: false } });
+
+      diagram.updateProps(props => {
+        props.grid ??= {};
+        props.grid.enabled = true;
+      });
+
+      expect(diagram.props).toEqual({
+        grid: { enabled: true }
+      });
+    });
+  });
+
   describe('canvas', () => {
     it('should initialize correctly', () => {
       const doc = TestModel.newDocument();
