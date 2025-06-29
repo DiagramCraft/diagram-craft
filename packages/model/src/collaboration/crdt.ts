@@ -59,8 +59,9 @@ export interface CRDTMap<T extends { [key: string]: CRDTCompatibleObject }>
   readonly factory: CRDTFactory;
 
   size: number;
+  // TODO: Maybe add a factory parameter in here
   get<K extends keyof T & string>(key: K): T[K] | undefined;
-  set<K extends keyof T & string>(key: K, value: T[K]): void;
+  set<K extends keyof T & string>(key: K, value: undefined | T[K]): void;
   delete<K extends keyof T & string>(K: K): void;
   clear(): void;
   has<K extends keyof T & string>(key: K): boolean;
@@ -159,6 +160,8 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
           if (Array.isArray(value)) return VERIFY_NOT_REACHED();
 
           if (value === undefined) {
+            if (this.map.has(fullPath)) return createProxy(fullPath);
+
             const first = Array.from(map.keys()).find(k => k.startsWith(fullPath + '.'));
             return first ? createProxy(fullPath) : undefined;
           } else if (isPrimitive(value)) {
@@ -167,6 +170,7 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
 
           return createProxy(fullPath);
         },
+
         set: (_target, prop, value) => {
           if (typeof prop !== 'string') return VERIFY_NOT_REACHED();
 
@@ -183,6 +187,8 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
             if (isPrimitive(value)) {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               this.map.set(fullPath, value as any);
+            } else if (value instanceof Object && Object.keys(value).length === 0) {
+              this.map.set(fullPath, undefined);
             } else {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const setNestedValue = (nestedValue: any, currentPath: string) => {

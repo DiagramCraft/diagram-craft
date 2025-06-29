@@ -18,8 +18,7 @@ import { newid } from '@diagram-craft/utils/id';
 import { Definitions } from './elementDefinitionRegistry';
 import { NoOpCRDTMap, NoOpCRDTRoot } from './collaboration/noopCrdt';
 import { CRDTMapper } from './collaboration/mappedCRDT';
-import { CRDT, CRDTMap, CRDTProperty } from './collaboration/crdt';
-import { DeepReadonly } from '@diagram-craft/utils/types';
+import { CRDT, CRDTMap, CRDTObject, CRDTProperty, Flatten } from './collaboration/crdt';
 
 export type DiagramIteratorOpts = {
   nest?: boolean;
@@ -83,6 +82,7 @@ export type DiagramCRDT = {
   canvasH: number;
   canvasX: number;
   canvasY: number;
+  props: CRDTMap<Flatten<DiagramProps>>;
 };
 
 export const makeDiagramMapper = (doc: DiagramDocument): CRDTMapper<Diagram, DiagramCRDT> => {
@@ -115,9 +115,9 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   // Shared properties
   readonly #name: CRDTProperty<DiagramCRDT, 'name'>;
   readonly #id: CRDTProperty<DiagramCRDT, 'id'>;
+  readonly #props: CRDTObject<DiagramProps>;
 
   readonly layers: LayerManager;
-  readonly props: DeepReadonly<DiagramProps> = {};
   diagrams: ReadonlyArray<Diagram> = [];
 
   // Unshared properties
@@ -140,6 +140,14 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     this.crdt = crdt ?? document.root.factory.makeMap();
     this.crdt.set('id', id);
     this.crdt.set('name', name);
+
+    let propsMap = this.crdt.get('props');
+    if (!propsMap) {
+      propsMap = document.root.factory.makeMap<Flatten<DiagramProps>>();
+      this.crdt.set('props', propsMap);
+    }
+
+    this.#props = new CRDTObject<DiagramProps>(propsMap, () => this.update());
 
     this.#document = document;
 
@@ -189,17 +197,18 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     this.#name.set(n);
   }
 
+  get props() {
+    return this.#props.get();
+  }
+
   updateProps(callback: (props: DiagramProps) => void) {
-    callback(this.props);
-    this.update();
+    this.#props.update(callback);
   }
 
   // TODO: This should be removed
   merge(other: Diagram) {
     // @ts-ignore
     this.uid = other.uid;
-    // @ts-ignore
-    this.props = other.props;
     // @ts-ignore
     this.viewBox = other.viewBox;
     // @ts-ignore
