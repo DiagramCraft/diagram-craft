@@ -59,8 +59,7 @@ export interface CRDTMap<T extends { [key: string]: CRDTCompatibleObject }>
   readonly factory: CRDTFactory;
 
   size: number;
-  // TODO: Maybe add a factory parameter in here
-  get<K extends keyof T & string>(key: K): T[K] | undefined;
+  get<K extends keyof T & string>(key: K, factory?: () => T[K]): T[K] | undefined;
   set<K extends keyof T & string>(key: K, value: undefined | T[K]): void;
   delete<K extends keyof T & string>(K: K): void;
   clear(): void;

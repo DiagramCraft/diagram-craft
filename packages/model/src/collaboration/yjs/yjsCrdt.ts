@@ -142,8 +142,17 @@ export class YJSMap<T extends { [key: string]: CRDTCompatibleObject }> implement
     this.delegate.delete(key);
   }
 
-  get<K extends keyof T & string>(key: K) {
-    if (this.initial) return this.initial.get(key);
+  get<K extends keyof T & string>(key: K, factory?: () => T[K]) {
+    if (this.initial) {
+      if (!this.initial.has(key) && factory !== undefined) {
+        this.set(key, factory());
+      }
+      return this.initial.get(key) ?? undefined;
+    }
+
+    if (!this.delegate.has(key) && factory !== undefined) {
+      this.set(key, factory?.());
+    }
     return wrap(this.delegate.get(key));
   }
 

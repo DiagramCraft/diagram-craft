@@ -31,14 +31,12 @@ export function* diagramIterator(
   opts: DiagramIteratorOpts
 ): Generator<Diagram> {
   for (const d of arr) {
-    if (!opts.filter || opts.filter(d)) {
-      yield d;
-      if (opts.earlyExit) return;
-    }
+    if (opts.filter && !opts.filter(d)) continue;
+    if (d.parent && !opts.nest) continue;
 
-    if (opts.nest && d.diagrams) {
-      yield* diagramIterator(d.diagrams, opts);
-    }
+    yield d;
+
+    if (opts.earlyExit) return;
   }
 }
 
@@ -77,6 +75,7 @@ export const DocumentBuilder = {
 
 export type DiagramCRDT = {
   id: string;
+  parent: string | undefined;
   name: string;
   canvasW: number;
   canvasH: number;
@@ -115,10 +114,10 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   // Shared properties
   readonly #name: CRDTProperty<DiagramCRDT, 'name'>;
   readonly #id: CRDTProperty<DiagramCRDT, 'id'>;
+  readonly #parent: CRDTProperty<DiagramCRDT, 'parent'>;
   readonly #props: CRDTObject<DiagramProps>;
 
   readonly layers: LayerManager;
-  diagrams: ReadonlyArray<Diagram> = [];
 
   // Unshared properties
   readonly selectionState = new SelectionState(this);
@@ -141,11 +140,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     this.crdt.set('id', id);
     this.crdt.set('name', name);
 
-    let propsMap = this.crdt.get('props');
-    if (!propsMap) {
-      propsMap = document.root.factory.makeMap<Flatten<DiagramProps>>();
-      this.crdt.set('props', propsMap);
-    }
+    const propsMap = this.crdt.get('props', () => document.root.factory.makeMap())!;
 
     this.#props = new CRDTObject<DiagramProps>(propsMap, () => this.update());
 
@@ -183,6 +178,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
     this.#name = CRDT.makeProp('name', this.crdt, metadataUpdate);
     this.#id = CRDT.makeProp('id', this.crdt, metadataUpdate);
+    this.#parent = CRDT.makeProp('parent', this.crdt, metadataUpdate);
   }
 
   get id() {
@@ -199,6 +195,18 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
   get props() {
     return this.#props.get();
+  }
+
+  get parent() {
+    return this.#parent.get();
+  }
+
+  set _parent(p: string | undefined) {
+    this.#parent.set(p);
+  }
+
+  get diagrams(): Diagram[] {
+    return [...this.#document!.diagramIterator({ nest: true })].filter(d => d.parent === this.id);
   }
 
   updateProps(callback: (props: DiagramProps) => void) {
@@ -223,8 +231,9 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     this.snapManagerConfig = other.snapManagerConfig;
     // @ts-ignore
     this.undoManager = other.undoManager;
-    // @ts-ignore
-    this.diagrams = other.diagrams;
+
+    this._parent ??= other.parent;
+
     this.mustCalculateIntersections = other.mustCalculateIntersections;
   }
 
@@ -448,7 +457,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
   toJSON() {
     return {
-      diagrams: this.diagrams,
+      parent: this.parent,
       props: this.props,
       selectionState: this.selectionState,
       id: this.id,

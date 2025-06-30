@@ -294,7 +294,9 @@ const deserializeDiagrams = <T extends Diagram>(
     dest.push(newDiagram);
     uow.commit();
 
-    newDiagram.diagrams = deserializeDiagrams(doc, $d.diagrams, diagramFactory);
+    deserializeDiagrams(doc, $d.diagrams, diagramFactory).forEach(d =>
+      doc.addDiagram(d, newDiagram)
+    );
   }
 
   return dest;
