@@ -78,7 +78,10 @@ export class NoOpCRDTMap<T extends { [key: string]: CRDTCompatibleObject }>
     return this.backing.size;
   }
 
-  get<K extends keyof T & string>(key: K): T[K] | undefined {
+  get<K extends keyof T & string>(key: K, factory?: () => T[K]): T[K] | undefined {
+    if (!this.backing.has(key) && factory !== undefined) {
+      this.set(key, factory());
+    }
     return this.backing.get(key) as T[K] | undefined;
   }
 

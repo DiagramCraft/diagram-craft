@@ -45,7 +45,6 @@ describe('Diagram', () => {
       const json = diagram.toJSON();
 
       expect(json).toEqual({
-        diagrams: diagram.diagrams,
         props: diagram.props,
         selectionState: diagram.selectionState,
         id: diagram.id,

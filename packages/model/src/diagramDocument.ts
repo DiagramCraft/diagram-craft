@@ -25,9 +25,9 @@ import { ProgressCallback } from './types';
 import { MappedCRDTOrderedMap } from './collaboration/mappedCRDTOrderedMap';
 
 export type DocumentEvents = {
-  diagramchanged: { after: Diagram };
-  diagramadded: { node: Diagram };
-  diagramremoved: { node: Diagram };
+  diagramchanged: { diagram: Diagram };
+  diagramadded: { diagram: Diagram };
+  diagramremoved: { diagram: Diagram };
 };
 
 export type DataTemplate = {
@@ -86,7 +86,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
   }
 
   get topLevelDiagrams() {
-    return this.#diagrams.values;
+    return this.#diagrams.values.filter(d => !d.parent);
   }
 
   get definitions() {
@@ -113,7 +113,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
   getDiagramPath(diagram: Diagram, startAt?: Diagram): Diagram[] {
     const dest: Diagram[] = [];
 
-    for (const d of startAt ? startAt.diagrams : this.#diagrams.values) {
+    for (const d of startAt ? startAt.diagrams : this.topLevelDiagrams) {
       if (d === diagram) {
         dest.push(d);
       } else {
@@ -132,40 +132,27 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     // TODO: Re-enable this
     //    precondition.is.false(!!this.getById(diagram.id));
 
-    if (parent) {
-      (parent.diagrams as Diagram[]).push(diagram);
+    diagram._parent = parent?.id;
+
+    // TODO: This should be removed
+    const existing = this.#diagrams.get(diagram.id);
+    if (existing) {
+      existing.merge(diagram);
     } else {
-      // TODO: This should be removed
-      const existing = this.#diagrams.get(diagram.id);
-      if (existing) {
-        existing.merge(diagram);
-      } else {
-        this.#diagrams.add(diagram.id, diagram);
-      }
+      this.#diagrams.add(diagram.id, diagram);
     }
 
     diagram.document = this;
-    this.emit('diagramadded', { node: diagram });
+    this.emit('diagramadded', { diagram: diagram });
   }
 
   removeDiagram(diagram: Diagram) {
-    const path = this.getDiagramPath(diagram);
-
-    if (path.length === 1) {
-      this.#diagrams.remove(diagram.id);
-    } else {
-      const diagrams = path.at(-2)!.diagrams as Diagram[];
-
-      const idx = diagrams.indexOf(diagram);
-      if (idx !== -1) {
-        diagrams.splice(idx, 1);
-        this.emit('diagramremoved', { node: diagram });
-      }
-    }
+    this.#diagrams.remove(diagram.id);
+    this.emit('diagramremoved', { diagram: diagram });
   }
 
   changeDiagram(diagram: Diagram) {
-    this.emit('diagramchanged', { after: diagram });
+    this.emit('diagramchanged', { diagram: diagram });
   }
 
   toJSON() {
