@@ -2,6 +2,9 @@ import { Tree } from '@diagram-craft/app-components/Tree';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
+import { useDocument } from '../../../application';
+import { useRedraw } from '../../hooks/useRedraw';
+import { useEventListener } from '../../hooks/useEventListener';
 
 const DiagramLabel = (props: { diagram: Diagram } & Pick<Props, 'onValueChange'>) => {
   return (
@@ -41,6 +44,12 @@ const DiagramTreeNode = (props: { diagram: Diagram } & Pick<Props, 'value' | 'on
 };
 
 export const DocumentToolWindow = (props: Props) => {
+  const document = useDocument();
+  const redraw = useRedraw();
+  useEventListener(document, 'diagramchanged', redraw);
+  useEventListener(document, 'diagramadded', redraw);
+  useEventListener(document, 'diagramremoved', redraw);
+
   return (
     <Accordion.Root disabled={true} type="multiple" defaultValue={['document']}>
       <Accordion.Item value="document">
