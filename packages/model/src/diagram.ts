@@ -173,7 +173,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
     const metadataUpdate = () => {
       this.emit('change', { diagram: this });
-      this.document.emit('diagramchanged', { after: this });
+      this.document.emit('diagramchanged', { diagram: this });
     };
 
     this.#name = CRDT.makeProp('name', this.crdt, metadataUpdate);

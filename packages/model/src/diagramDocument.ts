@@ -24,11 +24,10 @@ import { DocumentProps } from './documentProps';
 import { ProgressCallback } from './types';
 import { MappedCRDTOrderedMap } from './collaboration/mappedCRDTOrderedMap';
 
-// TODO: Change the event parameter name
 export type DocumentEvents = {
-  diagramchanged: { after: Diagram };
-  diagramadded: { node: Diagram };
-  diagramremoved: { node: Diagram };
+  diagramchanged: { diagram: Diagram };
+  diagramadded: { diagram: Diagram };
+  diagramremoved: { diagram: Diagram };
 };
 
 export type DataTemplate = {
@@ -144,16 +143,16 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     }
 
     diagram.document = this;
-    this.emit('diagramadded', { node: diagram });
+    this.emit('diagramadded', { diagram: diagram });
   }
 
   removeDiagram(diagram: Diagram) {
     this.#diagrams.remove(diagram.id);
-    this.emit('diagramremoved', { node: diagram });
+    this.emit('diagramremoved', { diagram: diagram });
   }
 
   changeDiagram(diagram: Diagram) {
-    this.emit('diagramchanged', { after: diagram });
+    this.emit('diagramchanged', { diagram: diagram });
   }
 
   toJSON() {
