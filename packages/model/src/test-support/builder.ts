@@ -14,15 +14,18 @@ import { newid } from '@diagram-craft/utils/id';
 import { CRDTRoot } from '../collaboration/crdt';
 
 export class TestModel {
-  static newDiagram() {
-    const document = new DiagramDocument(defaultNodeRegistry(), defaultEdgeRegistry());
-    return new TestDiagramBuilder(document);
+  static newDiagram(root?: CRDTRoot) {
+    const document = new DiagramDocument(defaultNodeRegistry(), defaultEdgeRegistry(), false, root);
+    const db = new TestDiagramBuilder(document);
+    document.addDiagram(db);
+    return db;
   }
 
-  static newDiagramWithLayer() {
-    const document = new DiagramDocument(defaultNodeRegistry(), defaultEdgeRegistry());
+  static newDiagramWithLayer(root?: CRDTRoot) {
+    const document = new DiagramDocument(defaultNodeRegistry(), defaultEdgeRegistry(), false, root);
     const diagram = new TestDiagramBuilder(document);
     diagram.newLayer();
+    document.addDiagram(diagram);
     return diagram;
   }
 

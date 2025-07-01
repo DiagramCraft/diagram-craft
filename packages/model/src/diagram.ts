@@ -1,7 +1,13 @@
 import { Viewbox } from './viewBox';
 import { DiagramNode } from './diagramNode';
 import { DiagramEdge } from './diagramEdge';
-import { assertRegularLayer, Layer, LayerManager, RegularLayer } from './diagramLayer';
+import {
+  assertRegularLayer,
+  Layer,
+  LayerManager,
+  LayerManagerCRDT,
+  RegularLayer
+} from './diagramLayer';
 import { SelectionState } from './selectionState';
 import { UndoManager } from './undoManager';
 import { SnapManager } from './snap/snapManager';
@@ -82,6 +88,7 @@ export type DiagramCRDT = {
   canvasX: number;
   canvasY: number;
   props: CRDTMap<Flatten<DiagramProps>>;
+  layers: CRDTMap<LayerManagerCRDT>;
 };
 
 export const makeDiagramMapper = (doc: DiagramDocument): CRDTMapper<Diagram, DiagramCRDT> => {
@@ -146,7 +153,11 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
     this.#document = document;
 
-    this.layers = new LayerManager(this, []);
+    this.layers = new LayerManager(
+      this,
+      [],
+      this.crdt.get('layers', () => document.root.factory.makeMap())!
+    );
     this.viewBox = new Viewbox(this.canvas);
 
     // TODO: We should be able to remove this
@@ -227,6 +238,9 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     this.selectionState = other.selectionState;
     // @ts-ignore
     this.layers = other.layers;
+    // @ts-ignore
+    other.layers.diagram = this;
+
     // @ts-ignore
     this.snapManagerConfig = other.snapManagerConfig;
     // @ts-ignore
