@@ -7,6 +7,7 @@ import { AttachmentConsumer } from './attachment';
 import { RuleLayer } from './diagramLayerRule';
 import { assert } from '@diagram-craft/utils/assert';
 import { ReferenceLayer } from './diagramLayerReference';
+import { CRDTMap } from './collaboration/crdt';
 
 export type LayerType = 'regular' | 'rule' | 'reference';
 export type StackPosition = { element: DiagramElement; idx: number };
@@ -134,21 +135,33 @@ export abstract class Layer<T extends RegularLayer | RuleLayer = RegularLayer | 
   }
 }
 
+export type LayerManagerCRDT = {
+  // TODO: Should we move visibility to be a property of the layer instead
+  visibleLayers: CRDTMap<Record<string, boolean>>;
+  layers: CRDTMap<LayerSnapshot>;
+};
+
 export class LayerManager implements UOWTrackable<LayersSnapshot>, AttachmentConsumer {
   id = 'layers';
+
+  // Shared properties
   #layers: Array<Layer> = [];
+  #visibleLayers: CRDTMap<Record<string, boolean>>;
+
+  // Unshared properties
   #activeLayer: Layer;
-  #visibleLayers = new Set<string>();
 
   constructor(
     readonly diagram: Diagram,
-    layers: Array<Layer>
+    layers: Array<Layer>,
+    crdt: CRDTMap<LayerManagerCRDT>
   ) {
     this.#layers = layers;
     this.#activeLayer = layers[0];
 
+    this.#visibleLayers = crdt.get('visibleLayers', () => diagram.document.root.factory.makeMap())!;
     this.#layers.forEach(layer => {
-      this.#visibleLayers.add(layer.id);
+      this.#visibleLayers.set(layer.id, true);
     });
 
     this.diagram.selectionState.on('add', () => {
@@ -185,7 +198,7 @@ export class LayerManager implements UOWTrackable<LayersSnapshot>, AttachmentCon
   }
 
   get visible(): ReadonlyArray<Layer> {
-    return this.#layers.filter(layer => this.#visibleLayers.has(layer.id));
+    return this.#layers.filter(layer => this.#visibleLayers.get(layer.id) === true);
   }
 
   move(
@@ -210,7 +223,8 @@ export class LayerManager implements UOWTrackable<LayersSnapshot>, AttachmentCon
   toggleVisibility(layer: Layer) {
     this.#visibleLayers.has(layer.id)
       ? this.#visibleLayers.delete(layer.id)
-      : this.#visibleLayers.add(layer.id);
+      : this.#visibleLayers.set(layer.id, true);
+
     this.diagram.emit('change', { diagram: this.diagram });
   }
 
@@ -231,7 +245,7 @@ export class LayerManager implements UOWTrackable<LayersSnapshot>, AttachmentCon
   add(layer: Layer, uow: UnitOfWork) {
     uow.snapshot(this);
     this.#layers.push(layer);
-    this.#visibleLayers.add(layer.id);
+    this.#visibleLayers.set(layer.id, true);
     this.#activeLayer = layer;
     uow.updateElement(this);
   }
@@ -266,7 +280,7 @@ export class LayerManager implements UOWTrackable<LayersSnapshot>, AttachmentCon
     return {
       layers: this.#layers,
       activeLayers: this.#activeLayer,
-      visibleLayers: this.#visibleLayers
+      visibleLayers: this.#visibleLayers.values()
     };
   }
 
