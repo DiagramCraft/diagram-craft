@@ -36,6 +36,8 @@ export interface CRDTFactory {
 export interface CRDTRoot {
   readonly factory: CRDTFactory;
 
+  clear(): void;
+
   getMap<T extends { [key: string]: CRDTCompatibleObject }>(name: string): CRDTMap<T>;
   getList<T extends CRDTCompatibleObject>(name: string): CRDTList<T>;
 

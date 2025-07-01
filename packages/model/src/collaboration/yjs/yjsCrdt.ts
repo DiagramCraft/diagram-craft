@@ -75,6 +75,10 @@ export class YJSRoot implements CRDTRoot {
     return this.doc;
   }
 
+  clear() {
+    this.data.clear();
+  }
+
   getMap<T extends { [key: string]: CRDTCompatibleObject }>(name: string): CRDTMap<T> {
     if (!this.data.has(name)) {
       this.data.set(name, new Y.Map<Record<string, CRDTCompatibleObject>>());
