@@ -153,6 +153,11 @@ const documentFactory = async (url: string | undefined, statusCallback: Progress
   if (url) {
     await CollaborationConfig.Backend.connect(url, root, statusCallback);
   }
+
+  if (location.search.includes('crdtClear=true')) {
+    root.clear();
+  }
+
   const doc = new DiagramDocument(nodeRegistry, edgeRegistry, false, root);
   if (url) doc.url = url;
   return doc;

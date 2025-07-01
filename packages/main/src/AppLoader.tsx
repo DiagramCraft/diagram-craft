@@ -36,25 +36,32 @@ export const AppLoader = (props: Props) => {
 
   useEffect(() => {
     if (props.diagram) {
-      Autosave.load(progressCallback, props.documentFactory, props.diagramFactory, true).then(
-        autosaved => {
-          if (autosaved?.document) {
-            setDoc(autosaved?.document);
-            autosaved.document!.url = props.diagram?.url;
-            setUrl(autosaved.url);
-          } else {
-            loadFileFromUrl(
-              props.diagram!.url,
-              progressCallback,
-              props.documentFactory,
-              props.diagramFactory
-            ).then(defDiagram => {
-              setDoc(defDiagram);
-              defDiagram!.url = props.diagram?.url;
-            });
+      if (location.search.includes('crdtLoadFromServer=true')) {
+        props.documentFactory(props.diagram!.url, progressCallback).then(v => {
+          setDoc(v);
+          setUrl(props.diagram?.url);
+        });
+      } else {
+        Autosave.load(progressCallback, props.documentFactory, props.diagramFactory, true).then(
+          autosaved => {
+            if (autosaved?.document) {
+              setDoc(autosaved?.document);
+              autosaved.document!.url = props.diagram?.url;
+              setUrl(autosaved.url);
+            } else {
+              loadFileFromUrl(
+                props.diagram!.url,
+                progressCallback,
+                props.documentFactory,
+                props.diagramFactory
+              ).then(defDiagram => {
+                setDoc(defDiagram);
+                defDiagram!.url = props.diagram?.url;
+              });
+            }
           }
-        }
-      );
+        );
+      }
     } else {
       props.documentFactory(undefined, progressCallback).then(doc => {
         // TODO: This is duplicated in fileNewAction.ts

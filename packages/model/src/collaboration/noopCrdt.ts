@@ -203,6 +203,11 @@ export class NoOpCRDTRoot implements CRDTRoot {
     return l as CRDTList<T>;
   }
 
+  clear() {
+    this.map.clear();
+    this.list.clear();
+  }
+
   transact(callback: () => void) {
     return transact(callback);
   }
