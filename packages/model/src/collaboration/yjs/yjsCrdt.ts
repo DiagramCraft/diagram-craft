@@ -49,8 +49,10 @@ export class YJSRoot implements CRDTRoot {
   private readonly doc = new Y.Doc();
 
   readonly factory = new YJSFactory();
+  private data: Y.Map<unknown>;
 
   constructor() {
+    this.data = this.doc.getMap('data');
     /*let count = 0;
     this.doc.on('beforeTransaction', t => {
       if (t.local) {
@@ -74,11 +76,19 @@ export class YJSRoot implements CRDTRoot {
   }
 
   getMap<T extends { [key: string]: CRDTCompatibleObject }>(name: string): CRDTMap<T> {
-    return new YJSMap<T>(this.doc.getMap(name));
+    if (!this.data.has(name)) {
+      this.data.set(name, new Y.Map<Record<string, CRDTCompatibleObject>>());
+    }
+
+    return wrap(this.data.get(name)) as CRDTMap<T>;
   }
 
   getList<T extends CRDTCompatibleObject>(name: string): CRDTList<T> {
-    return new YJSList<T>(this.doc.getArray(name));
+    if (!this.data.has(name)) {
+      this.data.set(name, new Y.Array<CRDTCompatibleObject>());
+    }
+
+    return wrap(this.data.get(name)) as CRDTList<T>;
   }
 
   transact(callback: () => void) {
