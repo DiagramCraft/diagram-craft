@@ -13,7 +13,7 @@ import {
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { applyBooleanOperation, BooleanOperation } from '@diagram-craft/geometry/pathClip';
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
-import { RegularLayer } from '@diagram-craft/model/diagramLayer';
+import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { newid } from '@diagram-craft/utils/id';
 import { ActionCriteria } from '@diagram-craft/canvas/action';

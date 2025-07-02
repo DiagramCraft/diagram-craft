@@ -4,7 +4,7 @@ import { precondition } from '@diagram-craft/utils/assert';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { newid } from '@diagram-craft/utils/id';
 import { makeUndoableAction } from '@diagram-craft/model/undoManager';
-import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { Point } from '@diagram-craft/geometry/point';
 import { ResolvedLabelNode } from '@diagram-craft/model/diagramEdge';
 

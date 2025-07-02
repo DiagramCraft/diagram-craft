@@ -1,5 +1,5 @@
 import { Diagram } from '@diagram-craft/model/diagram';
-import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 
 export const canvasDropHandler = ($d: Diagram) => {
   return (_e: DragEvent) => {

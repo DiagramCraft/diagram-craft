@@ -1,5 +1,6 @@
 import { LayerSnapshot, UnitOfWork } from './unitOfWork';
-import { Layer, RegularLayer } from './diagramLayer';
+import { Layer } from './diagramLayer';
+import type { LayerCRDT } from './diagramLayer';
 import { Diagram } from './diagram';
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { parseAndQuery } from '@diagram-craft/query/query';
@@ -11,6 +12,8 @@ import {
   AdjustmentRuleClause,
   DEFAULT_ADJUSTMENT_RULE
 } from './diagramLayerRuleTypes';
+import { CRDTMap } from './collaboration/crdt';
+import { RegularLayer } from './diagramLayerRegular';
 
 type Result = Map<string, Adjustment>;
 
@@ -52,12 +55,23 @@ export const validProps = (_type: 'edge' | 'node'): Prop[] => {
   ];
 };
 
+export function isResolvableToRuleLayer(l: Layer): l is Layer<RuleLayer> {
+  if (l.resolve()?.type !== 'rule') return false;
+  return true;
+}
+
 export class RuleLayer extends Layer<RuleLayer> {
   #rules: Array<AdjustmentRule> = [];
   #cache = new Map<string, unknown>();
 
-  constructor(id: string, name: string, diagram: Diagram, rules: Readonly<Array<AdjustmentRule>>) {
-    super(id, name, diagram, 'rule');
+  constructor(
+    id: string,
+    name: string,
+    diagram: Diagram,
+    rules: Readonly<Array<AdjustmentRule>>,
+    crdt?: CRDTMap<LayerCRDT>
+  ) {
+    super(id, name, diagram, 'rule', crdt);
     // @ts-ignore
     this.#rules = rules;
 

@@ -8,7 +8,7 @@ import { loadFileFromUrl, stencilLoaderRegistry } from '@diagram-craft/canvas-ap
 import { assert } from '@diagram-craft/utils/assert';
 import { Autosave } from './Autosave';
 import { newid } from '@diagram-craft/utils/id';
-import { RegularLayer } from '@diagram-craft/model/diagramLayer';
+import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Progress, ProgressCallback } from '@diagram-craft/model/types';
 

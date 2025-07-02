@@ -5,7 +5,7 @@ import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
 import { Diagram, DocumentBuilder } from '@diagram-craft/model/diagram';
-import { assertRegularLayer, RegularLayer } from '@diagram-craft/model/diagramLayer';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
 import { SnapshotUndoableAction } from '@diagram-craft/model/diagramUndoActions';
@@ -14,6 +14,7 @@ import { assignNewBounds, assignNewIds } from '@diagram-craft/model/helpers/clon
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { useDiagram } from '../application';
 import { NoOpCRDTRoot } from '@diagram-craft/model/collaboration/noopCrdt';
+import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 
 export const NodeTypePopup = (props: Props) => {
   const diagram = useDiagram();

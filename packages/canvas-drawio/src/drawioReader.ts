@@ -1,6 +1,6 @@
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
-import { assertRegularLayer, Layer, RegularLayer } from '@diagram-craft/model/diagramLayer';
+import { Layer } from '@diagram-craft/model/diagramLayer';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramNode, NodeTexts } from '@diagram-craft/model/diagramNode';
 import { Box } from '@diagram-craft/geometry/box';
@@ -75,6 +75,7 @@ import { coalesce } from '@diagram-craft/utils/strings';
 import { nodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { xIterElements, xNum } from '@diagram-craft/utils/xml';
 import { parseNum } from '@diagram-craft/utils/number';
+import { assertRegularLayer, RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 
 const drawioBuiltinShapes: Partial<Record<string, string>> = {
   actor:

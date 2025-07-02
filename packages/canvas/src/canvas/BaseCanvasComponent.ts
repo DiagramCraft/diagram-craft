@@ -6,7 +6,7 @@ import {
   isInComponent
 } from '@diagram-craft/canvas/component/component';
 import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
-import { isResolvableToRegularLayer, Layer, RegularLayer } from '@diagram-craft/model/diagramLayer';
+import { Layer } from '@diagram-craft/model/diagramLayer';
 import { Diagram, DiagramEvents } from '@diagram-craft/model/diagram';
 import { Point } from '@diagram-craft/geometry/point';
 import { Modifiers } from '@diagram-craft/canvas/dragDropManager';
@@ -20,6 +20,7 @@ import { Browser } from '@diagram-craft/canvas/browser';
 import * as html from '../component/vdom-html';
 import { rawHTML, VNode } from '../component/vdom';
 import styles from './canvas.css?inline';
+import { isResolvableToRegularLayer, RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 
 export type BaseCanvasProps = {
   id: string;

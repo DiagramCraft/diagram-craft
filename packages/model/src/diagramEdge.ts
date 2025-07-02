@@ -9,7 +9,7 @@ import { Transform } from '@diagram-craft/geometry/transform';
 import { DiagramElement, isEdge, isNode } from './diagramElement';
 import { DiagramEdgeSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
 import { Diagram } from './diagram';
-import { Layer, RegularLayer } from './diagramLayer';
+import { Layer } from './diagramLayer';
 import {
   AnchorEndpoint,
   ConnectedEndpoint,
@@ -31,6 +31,7 @@ import { assert } from '@diagram-craft/utils/assert';
 import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
 import { getAdjustments } from './diagramLayerRuleTypes';
+import { RegularLayer } from './diagramLayerRegular';
 
 const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
   endpoint instanceof ConnectedEndpoint;

@@ -1,8 +1,9 @@
 import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSelectionAction';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
-import { assertRegularLayer, RegularLayer } from '@diagram-craft/model/diagramLayer';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
+import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 
 declare global {
   interface ActionMap extends ReturnType<typeof selectionRestackActions> {}

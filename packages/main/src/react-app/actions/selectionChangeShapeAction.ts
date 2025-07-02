@@ -5,7 +5,7 @@ import {
   MultipleType
 } from '@diagram-craft/canvas-app/actions/abstractSelectionAction';
 import { assert } from '@diagram-craft/utils/assert';
-import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { deepClone, objectKeys } from '@diagram-craft/utils/object';

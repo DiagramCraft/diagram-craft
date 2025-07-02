@@ -40,7 +40,7 @@ import { FreehandTool } from '@diagram-craft/canvas-app/tools/freehandTool';
 import { PanTool } from '@diagram-craft/canvas-app/tools/panTool';
 import { FileDialog } from './react-app/FileDialog';
 import { newid } from '@diagram-craft/utils/id';
-import { RegularLayer } from '@diagram-craft/model/diagramLayer';
+import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ContextMenuTarget, DialogCommand, Help, UIActions } from '@diagram-craft/canvas/context';
 import { ImageInsertDialog } from './react-app/ImageInsertDialog';

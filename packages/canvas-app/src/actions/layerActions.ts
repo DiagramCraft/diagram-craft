@@ -12,7 +12,7 @@ import {
   ElementDeleteUndoableAction,
   SnapshotUndoableAction
 } from '@diagram-craft/model/diagramUndoActions';
-import { Layer, LayerType, RegularLayer } from '@diagram-craft/model/diagramLayer';
+import { Layer, LayerType } from '@diagram-craft/model/diagramLayer';
 import { assert, precondition } from '@diagram-craft/utils/assert';
 import { newid } from '@diagram-craft/utils/id';
 import { ReferenceLayer } from '@diagram-craft/model/diagramLayerReference';
@@ -20,6 +20,7 @@ import { Application } from '../application';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { ReferenceLayerDialogCommand, StringInputDialogCommand } from '../dialogs';
 import { RuleLayer } from '@diagram-craft/model/diagramLayerRule';
+import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 
 export const layerActions = (application: Application) => ({
   LAYER_DELETE_LAYER: new LayerDeleteAction(application),

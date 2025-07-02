@@ -22,7 +22,6 @@ import styles from './canvas.css?inline';
 import { PanTool } from '@diagram-craft/canvas-app/tools/panTool';
 import { Context } from '../context';
 import { unique } from '@diagram-craft/utils/array';
-import { isResolvableToRegularLayer } from '@diagram-craft/model/diagramLayer';
 import { BaseCanvasComponent, BaseCanvasProps } from './BaseCanvasComponent';
 import {
   createUpdateOnViewboxChangeEffect,
@@ -30,6 +29,7 @@ import {
 } from './InteractiveCanvasComponent';
 import { CollaborationConfig } from '@diagram-craft/model/collaboration/collaborationConfig';
 import { AwarenessCursorComponent } from '../components/AwarenessCursorComponent';
+import { isResolvableToRegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 
 const removeSuffix = (s: string) => {
   return s.replace(/---.+$/, '');

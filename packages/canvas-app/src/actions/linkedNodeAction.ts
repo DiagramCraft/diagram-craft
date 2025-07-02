@@ -14,7 +14,7 @@ import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSelectionAction';
 import { Angle } from '@diagram-craft/geometry/angle';
-import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { ActionContext } from '@diagram-craft/canvas/action';
 
 const OFFSET = 100;
