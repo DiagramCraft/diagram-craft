@@ -95,6 +95,8 @@ export interface CRDTList<T extends CRDTCompatibleObject> extends Emitter<CRDTLi
   toArray(): Array<T>;
 
   transact(callback: () => void): void;
+
+  // TODO: Ability to iterate
 }
 
 export type CRDTProperty<

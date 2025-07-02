@@ -1,6 +1,6 @@
 import { LayerSnapshot, UnitOfWork } from './unitOfWork';
-import { Layer } from './diagramLayer';
 import type { LayerCRDT } from './diagramLayer';
+import { Layer } from './diagramLayer';
 import { Diagram } from './diagram';
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { parseAndQuery } from '@diagram-craft/query/query';
@@ -12,7 +12,7 @@ import {
   AdjustmentRuleClause,
   DEFAULT_ADJUSTMENT_RULE
 } from './diagramLayerRuleTypes';
-import { CRDTMap } from './collaboration/crdt';
+import { CRDTList, CRDTMap } from './collaboration/crdt';
 import { RegularLayer } from './diagramLayerRegular';
 
 type Result = Map<string, Adjustment>;
@@ -61,7 +61,7 @@ export function isResolvableToRuleLayer(l: Layer): l is Layer<RuleLayer> {
 }
 
 export class RuleLayer extends Layer<RuleLayer> {
-  #rules: Array<AdjustmentRule> = [];
+  #rules: CRDTList<AdjustmentRule>;
   #cache = new Map<string, unknown>();
 
   constructor(
@@ -72,8 +72,11 @@ export class RuleLayer extends Layer<RuleLayer> {
     crdt?: CRDTMap<LayerCRDT>
   ) {
     super(id, name, diagram, 'rule', crdt);
-    // @ts-ignore
-    this.#rules = rules;
+
+    this.#rules = this.crdt.get('rules', () => diagram.document.root.factory.makeList())!;
+    for (const rule of rules) {
+      this.#rules.push(rule);
+    }
 
     this.diagram.on('change', () => this.#cache.clear());
     this.diagram.on('elementChange', () => this.#cache.clear());
@@ -93,7 +96,7 @@ export class RuleLayer extends Layer<RuleLayer> {
     if (this.#cache.has('result')) return this.#cache.get('result') as Result;
 
     const res: Result = new Map<string, Adjustment>();
-    for (const rule of this.#rules) {
+    for (const rule of this.#rules.toArray()) {
       const interim = this.runRule(rule);
       for (const k of interim.keys()) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -107,7 +110,7 @@ export class RuleLayer extends Layer<RuleLayer> {
   }
 
   byId(id: string): AdjustmentRule | undefined {
-    return this.#rules.find(r => r.id === id);
+    return this.#rules.toArray().find(r => r.id === id);
   }
 
   runRule(rule: AdjustmentRule): Result {
@@ -205,7 +208,7 @@ export class RuleLayer extends Layer<RuleLayer> {
   }
 
   get rules() {
-    return this.#rules;
+    return this.#rules.toArray();
   }
 
   addRule(rule: AdjustmentRule, uow: UnitOfWork) {
@@ -216,10 +219,12 @@ export class RuleLayer extends Layer<RuleLayer> {
 
   removeRule(rule: AdjustmentRule, uow: UnitOfWork) {
     uow.snapshot(this);
-    this.#rules = this.#rules.filter(r => r !== rule);
+    const idx = this.#rules.toArray().findIndex(r => r.id === rule.id);
+    this.#rules.delete(idx);
     uow.updateElement(this);
   }
 
+  /*
   moveRule(
     rule: AdjustmentRule,
     uow: UnitOfWork,
@@ -237,22 +242,31 @@ export class RuleLayer extends Layer<RuleLayer> {
     this.#rules.splice(refIndex + (ref.position === 'after' ? 1 : 0), 0, rule);
     uow.updateElement(this);
   }
+   */
 
   replaceRule(existing: AdjustmentRule, newRule: AdjustmentRule, uow: UnitOfWork) {
     uow.snapshot(this);
-    this.#rules = this.#rules.map(r => (r.id !== existing.id ? r : newRule));
+
+    const idx = this.#rules.toArray().findIndex(r => r.id === existing.id);
+    this.#rules.delete(idx);
+    this.#rules.insert(idx, [newRule]);
+
     uow.updateElement(this);
   }
 
   snapshot(): LayerSnapshot {
     return {
-      ...super.snapshot(),
-      rules: deepClone(this.rules)
+      ...super.snapshot()
     };
   }
 
   restore(snapshot: LayerSnapshot, uow: UnitOfWork) {
     super.restore(snapshot, uow);
-    this.#rules = deepClone(snapshot.rules ?? []);
+    this.#rules.clear();
+    this.#rules.transact(() => {
+      for (const rule of snapshot.rules ?? []) {
+        this.#rules.push(rule);
+      }
+    });
   }
 }

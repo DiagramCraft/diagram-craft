@@ -5,8 +5,9 @@ import { AttachmentConsumer } from './attachment';
 import type { RuleLayer } from './diagramLayerRule';
 import { assert } from '@diagram-craft/utils/assert';
 import type { ReferenceLayer } from './diagramLayerReference';
-import { CRDT, CRDTMap, CRDTProperty } from './collaboration/crdt';
+import { CRDT, CRDTList, CRDTMap, CRDTProperty } from './collaboration/crdt';
 import type { RegularLayer } from './diagramLayerRegular';
+import { AdjustmentRule } from './diagramLayerRuleTypes';
 
 export type LayerType = 'regular' | 'rule' | 'reference';
 export type StackPosition = { element: DiagramElement; idx: number };
@@ -147,6 +148,13 @@ export type LayerCRDT = {
   name: string;
   type: LayerType;
 
+  // Reference layer
   referenceLayerId: string;
   referenceDiagramId: string;
+
+  // Regular layer
+  // elements: CRDTMap<MappedCRDTOrderedMapMapType<DiagramElementCRDT>>
+
+  // Rule layer
+  rules: CRDTList<AdjustmentRule>;
 };
