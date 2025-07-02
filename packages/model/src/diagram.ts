@@ -1,13 +1,7 @@
 import { Viewbox } from './viewBox';
 import { DiagramNode } from './diagramNode';
 import { DiagramEdge } from './diagramEdge';
-import {
-  assertRegularLayer,
-  Layer,
-  LayerManager,
-  LayerManagerCRDT,
-  RegularLayer
-} from './diagramLayer';
+import { assertRegularLayer } from './diagramLayerRegular';
 import { SelectionState } from './selectionState';
 import { UndoManager } from './undoManager';
 import { SnapManager } from './snap/snapManager';
@@ -25,6 +19,9 @@ import { Definitions } from './elementDefinitionRegistry';
 import { NoOpCRDTMap, NoOpCRDTRoot } from './collaboration/noopCrdt';
 import { CRDTMapper } from './collaboration/mappedCRDT';
 import { CRDT, CRDTMap, CRDTObject, CRDTProperty, Flatten } from './collaboration/crdt';
+import { LayerManager, LayerManagerCRDT } from './diagramLayerManager';
+import { RegularLayer } from './diagramLayerRegular';
+import { Layer } from './diagramLayer';
 
 export type DiagramIteratorOpts = {
   nest?: boolean;
@@ -155,7 +152,6 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
     this.layers = new LayerManager(
       this,
-      [],
       this.crdt.get('layers', () => document.root.factory.makeMap())!
     );
     this.viewBox = new Viewbox(this.canvas);

@@ -1,26 +1,16 @@
-import { DiagramElement, isNode } from './diagramElement';
-import { LayerSnapshot, LayersSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
-import { DiagramEdge } from './diagramEdge';
+import { DiagramElement } from './diagramElement';
+import { LayerSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
 import { Diagram } from './diagram';
-import { groupBy } from '@diagram-craft/utils/array';
 import { AttachmentConsumer } from './attachment';
-import { RuleLayer } from './diagramLayerRule';
+import type { RuleLayer } from './diagramLayerRule';
 import { assert } from '@diagram-craft/utils/assert';
-import { ReferenceLayer } from './diagramLayerReference';
-import { CRDTMap } from './collaboration/crdt';
+import type { ReferenceLayer } from './diagramLayerReference';
+import { CRDT, CRDTList, CRDTMap, CRDTProperty } from './collaboration/crdt';
+import type { RegularLayer } from './diagramLayerRegular';
+import { AdjustmentRule } from './diagramLayerRuleTypes';
 
 export type LayerType = 'regular' | 'rule' | 'reference';
 export type StackPosition = { element: DiagramElement; idx: number };
-
-export function isResolvableToRegularLayer(l: Layer): l is Layer<RegularLayer> {
-  if (l.resolve()?.type !== 'regular') return false;
-  return true;
-}
-
-export function isResolvableToRuleLayer(l: Layer): l is Layer<RuleLayer> {
-  if (l.resolve()?.type !== 'rule') return false;
-  return true;
-}
 
 export function isReferenceLayer(l: Layer): l is ReferenceLayer {
   return l.type === 'reference';
@@ -30,33 +20,51 @@ export abstract class Layer<T extends RegularLayer | RuleLayer = RegularLayer | 
   implements UOWTrackable<LayerSnapshot>, AttachmentConsumer
 {
   #locked = false;
-  #name: string;
+  #id: CRDTProperty<LayerCRDT, 'id'>;
+  #name: CRDTProperty<LayerCRDT, 'name'>;
   protected _type: LayerType = 'regular';
 
   readonly diagram: Diagram;
 
+  readonly crdt: CRDTMap<LayerCRDT>;
+
   protected constructor(
-    public readonly id: string,
+    id: string,
     name: string,
     diagram: Diagram,
-    type?: LayerType
+    type?: LayerType,
+    crdt?: CRDTMap<LayerCRDT>
   ) {
-    this.#name = name;
-    this.diagram = diagram;
+    this.crdt = crdt ?? diagram.document.root.factory.makeMap();
+    this.crdt.set('id', id);
+    this.crdt.set('name', name);
+
     this._type = type ?? 'regular';
+    this.crdt.set('type', this._type);
+
+    this.#name = CRDT.makeProp('name', this.crdt, () => {
+      this.diagram.emit('change', { diagram: this.diagram });
+    });
+    this.#id = CRDT.makeProp('id', this.crdt);
+
+    this.diagram = diagram;
   }
 
   get type() {
     return this._type;
   }
 
+  get id() {
+    return this.#id.get()!;
+  }
+
   get name() {
-    return this.#name;
+    return this.#name.get()!;
   }
 
   setName(name: string, uow: UnitOfWork) {
     uow.snapshot(this);
-    this.#name = name;
+    this.#name.set(name);
     uow.updateElement(this);
   }
 
@@ -135,306 +143,18 @@ export abstract class Layer<T extends RegularLayer | RuleLayer = RegularLayer | 
   }
 }
 
-export type LayerManagerCRDT = {
-  // TODO: Should we move visibility to be a property of the layer instead
-  visibleLayers: CRDTMap<Record<string, boolean>>;
-  layers: CRDTMap<LayerSnapshot>;
+export type LayerCRDT = {
+  id: string;
+  name: string;
+  type: LayerType;
+
+  // Reference layer
+  referenceLayerId: string;
+  referenceDiagramId: string;
+
+  // Regular layer
+  // elements: CRDTMap<MappedCRDTOrderedMapMapType<DiagramElementCRDT>>
+
+  // Rule layer
+  rules: CRDTList<AdjustmentRule>;
 };
-
-export class LayerManager implements UOWTrackable<LayersSnapshot>, AttachmentConsumer {
-  id = 'layers';
-
-  // Shared properties
-  #layers: Array<Layer> = [];
-  #visibleLayers: CRDTMap<Record<string, boolean>>;
-
-  // Unshared properties
-  #activeLayer: Layer;
-
-  constructor(
-    readonly diagram: Diagram,
-    layers: Array<Layer>,
-    crdt: CRDTMap<LayerManagerCRDT>
-  ) {
-    this.#layers = layers;
-    this.#activeLayer = layers[0];
-
-    this.#visibleLayers = crdt.get('visibleLayers', () => diagram.document.root.factory.makeMap())!;
-    this.#layers.forEach(layer => {
-      this.#visibleLayers.set(layer.id, true);
-    });
-
-    this.diagram.selectionState.on('add', () => {
-      const firstRegularLayer = this.diagram.selectionState.elements
-        .map(e => e.layer)
-        .filter(e => e.type === 'regular')[0];
-      if (!this.diagram.selectionState.isEmpty() && !!firstRegularLayer) {
-        this.active = firstRegularLayer;
-      }
-    });
-    this.diagram.selectionState.on('remove', () => {
-      const firstRegularLayer = this.diagram.selectionState.elements
-        .map(e => e.layer)
-        .filter(e => e.type === 'regular')[0];
-      if (!this.diagram.selectionState.isEmpty() && !!firstRegularLayer) {
-        this.active = firstRegularLayer;
-      }
-    });
-  }
-
-  isAbove(a: DiagramElement, b: DiagramElement) {
-    const l1 = this.#layers.indexOf(a.layer);
-    const l2 = this.#layers.indexOf(b.layer);
-
-    if (l1 === l2 && a.layer instanceof RegularLayer && b.layer instanceof RegularLayer) {
-      return a.layer.elements.indexOf(a) > b.layer.elements.indexOf(b);
-    }
-
-    return l1 > l2;
-  }
-
-  get all(): ReadonlyArray<Layer> {
-    return this.#layers;
-  }
-
-  get visible(): ReadonlyArray<Layer> {
-    return this.#layers.filter(layer => this.#visibleLayers.get(layer.id) === true);
-  }
-
-  move(
-    layers: ReadonlyArray<Layer>,
-    uow: UnitOfWork,
-    ref: { layer: Layer; relation: 'above' | 'below' }
-  ) {
-    uow.snapshot(this);
-
-    const idx = this.#layers.indexOf(ref.layer);
-    const newIdx = ref.relation === 'below' ? idx : idx + 1;
-
-    for (const layer of layers) {
-      const oldIdx = this.#layers.indexOf(layer);
-      this.#layers.splice(oldIdx, 1);
-      this.#layers.splice(newIdx, 0, layer);
-    }
-
-    uow.updateElement(this);
-  }
-
-  toggleVisibility(layer: Layer) {
-    this.#visibleLayers.has(layer.id)
-      ? this.#visibleLayers.delete(layer.id)
-      : this.#visibleLayers.set(layer.id, true);
-
-    this.diagram.emit('change', { diagram: this.diagram });
-  }
-
-  set active(layer: Layer) {
-    if (this.#activeLayer === layer) return;
-    this.#activeLayer = layer;
-    this.diagram.emit('change', { diagram: this.diagram });
-  }
-
-  get active() {
-    return this.#activeLayer;
-  }
-
-  byId(id: string) {
-    return this.#layers.find(l => l.id === id);
-  }
-
-  add(layer: Layer, uow: UnitOfWork) {
-    uow.snapshot(this);
-    this.#layers.push(layer);
-    this.#visibleLayers.set(layer.id, true);
-    this.#activeLayer = layer;
-    uow.updateElement(this);
-  }
-
-  remove(layer: Layer, uow: UnitOfWork) {
-    uow.snapshot(this);
-    this.#layers = this.#layers.filter(l => l !== layer);
-    this.#visibleLayers.delete(layer.id);
-    if (this.diagram.selectionState.nodes.some(e => e.layer === layer)) {
-      this.diagram.selectionState.clear();
-    }
-    uow.updateElement(this);
-  }
-
-  invalidate(_uow: UnitOfWork) {
-    // Nothing for now...
-  }
-
-  snapshot(): LayersSnapshot {
-    return {
-      _snapshotType: 'layers',
-      layers: this.all.map(l => l.id)
-    };
-  }
-
-  restore(snapshot: LayersSnapshot, uow: UnitOfWork) {
-    this.#layers = snapshot.layers.map(id => this.diagram.layers.byId(id)!);
-    uow.updateElement(this);
-  }
-
-  toJSON() {
-    return {
-      layers: this.#layers,
-      activeLayers: this.#activeLayer,
-      visibleLayers: this.#visibleLayers.values()
-    };
-  }
-
-  // TODO: Doesn't this always return an empty array?
-  getAttachmentsInUse() {
-    return this.#layers.flatMap(e => e.getAttachmentsInUse());
-  }
-}
-
-export function assertRegularLayer(l: Layer): asserts l is RegularLayer {
-  if (l.type !== 'regular') {
-    throw new Error('Layer is not a regular layer');
-  }
-}
-
-export function isRegularLayer(l: Layer): l is RegularLayer {
-  return l.type === 'regular';
-}
-
-export class RegularLayer extends Layer<RegularLayer> {
-  #elements: Array<DiagramElement> = [];
-
-  constructor(id: string, name: string, elements: ReadonlyArray<DiagramElement>, diagram: Diagram) {
-    super(id, name, diagram, 'regular');
-
-    const uow = new UnitOfWork(diagram);
-    elements.forEach(e => this.addElement(e, uow));
-    uow.abort();
-  }
-
-  get elements(): ReadonlyArray<DiagramElement> {
-    return this.#elements;
-  }
-
-  resolve() {
-    return this;
-  }
-
-  // TODO: Add some tests for the stack operations
-  stackModify(elements: ReadonlyArray<DiagramElement>, positionDelta: number, uow: UnitOfWork) {
-    uow.snapshot(this);
-
-    const byParent = groupBy(elements, e => e.parent);
-
-    const snapshot = new Map<DiagramElement | undefined, StackPosition[]>();
-    const newPositions = new Map<DiagramElement | undefined, StackPosition[]>();
-
-    for (const [parent, elements] of byParent) {
-      const existing = parent?.children ?? this.elements;
-
-      const oldStackPositions = existing.map((e, i) => ({ element: e, idx: i }));
-      snapshot.set(parent, oldStackPositions);
-
-      const newStackPositions = existing.map((e, i) => ({ element: e, idx: i }));
-      for (const p of newStackPositions) {
-        if (!elements.includes(p.element)) continue;
-        p.idx += positionDelta;
-      }
-      newPositions.set(parent, newStackPositions);
-    }
-
-    this.stackSet(newPositions, uow);
-
-    return snapshot;
-  }
-
-  stackSet(newPositions: Map<DiagramElement | undefined, StackPosition[]>, uow: UnitOfWork) {
-    uow.snapshot(this);
-
-    for (const [parent, positions] of newPositions) {
-      positions.sort((a, b) => a.idx - b.idx);
-      if (parent) {
-        parent.setChildren(
-          positions.map(e => e.element),
-          uow
-        );
-      } else {
-        this.#elements = positions.map(e => e.element);
-      }
-    }
-
-    uow.updateElement(this);
-  }
-
-  addElement(element: DiagramElement, uow: UnitOfWork) {
-    uow.snapshot(this);
-
-    if (!element.parent && !this.#elements.includes(element)) this.#elements.push(element);
-    this.processElementForAdd(element);
-    uow.addElement(element);
-    uow.updateElement(this);
-  }
-
-  removeElement(element: DiagramElement, uow: UnitOfWork) {
-    uow.snapshot(this);
-
-    this.#elements = this.elements.filter(e => e !== element);
-    element.detach(uow);
-    uow.removeElement(element);
-    uow.updateElement(this);
-  }
-
-  setElements(elements: ReadonlyArray<DiagramElement>, uow: UnitOfWork) {
-    uow.snapshot(this);
-
-    const added = elements.filter(e => !this.#elements.includes(e));
-    const removed = this.#elements.filter(e => !elements.includes(e));
-    this.#elements = elements as Array<DiagramElement>;
-    for (const e of added) {
-      this.processElementForAdd(e);
-      uow.addElement(e);
-    }
-    for (const e of removed) {
-      uow.removeElement(e);
-    }
-
-    uow.updateElement(this);
-  }
-
-  private processElementForAdd(e: DiagramElement) {
-    e._setLayer(this, this.diagram);
-    if (isNode(e)) {
-      this.diagram.nodeLookup.set(e.id, e);
-      for (const child of e.children) {
-        this.processElementForAdd(child);
-      }
-    } else {
-      this.diagram.edgeLookup.set(e.id, e as DiagramEdge);
-    }
-  }
-
-  restore(snapshot: LayerSnapshot, uow: UnitOfWork) {
-    super.restore(snapshot, uow);
-    this.setElements(
-      snapshot.elements.map(id => this.diagram.lookup(id)!),
-      uow
-    );
-  }
-
-  toJSON() {
-    return {
-      ...super.toJSON(),
-      elements: this.elements
-    };
-  }
-
-  snapshot(): LayerSnapshot {
-    return {
-      ...super.snapshot(),
-      elements: this.elements.map(e => e.id)
-    };
-  }
-
-  getAttachmentsInUse() {
-    return this.elements.flatMap(e => e.getAttachmentsInUse());
-  }
-}

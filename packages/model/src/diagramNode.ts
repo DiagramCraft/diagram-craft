@@ -5,7 +5,7 @@ import { DiagramElement, isEdge, isNode } from './diagramElement';
 import { DiagramNodeSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
 import { DiagramEdge, ResolvedLabelNode } from './diagramEdge';
 import { Diagram } from './diagram';
-import { Layer, RegularLayer } from './diagramLayer';
+import { Layer } from './diagramLayer';
 import { DefaultStyles, nodeDefaults } from './diagramDefaults';
 import {
   AnchorEndpoint,
@@ -27,6 +27,7 @@ import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/p
 import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
 import { getAdjustments } from './diagramLayerRuleTypes';
 import { toUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
+import { RegularLayer } from './diagramLayerRegular';
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;

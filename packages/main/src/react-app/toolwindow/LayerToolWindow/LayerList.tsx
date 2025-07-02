@@ -21,7 +21,7 @@ import { useEventListener } from '../../hooks/useEventListener';
 import { useDraggable, useDropTarget } from '../../hooks/dragAndDropHooks';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { LayerContextMenu } from './LayerContextMenu';
-import { Layer, RegularLayer } from '@diagram-craft/model/diagramLayer';
+import { Layer } from '@diagram-craft/model/diagramLayer';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
@@ -34,6 +34,7 @@ import { addHighlight, removeHighlight } from '@diagram-craft/canvas/highlight';
 import { AdjustmentRule } from '@diagram-craft/model/diagramLayerRuleTypes';
 import { RuleContextMenu } from './RuleContextMenu';
 import { useApplication, useDiagram } from '../../../application';
+import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 
 const ELEMENT_INSTANCES = 'application/x-diagram-craft-element-instances';
 const LAYER_INSTANCES = 'application/x-diagram-craft-layer-instances';

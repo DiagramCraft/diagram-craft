@@ -226,13 +226,22 @@ export class YJSMap<T extends { [key: string]: CRDTCompatibleObject }> implement
 
 export class YJSList<T extends CRDTCompatibleObject> implements CRDTList<T> {
   private emitter = new EventEmitter<CRDTListEvents<T>>();
+  private initial: T[] | undefined;
+
   delegate: Y.Array<T>;
 
   readonly factory = new YJSFactory();
 
   constructor(delegate?: Y.Array<T>) {
+    // This means the array is disconnected, and thus we temporarily keep values
+    // in a separate storage (this.initial) in addition to the YJS List
+    if (!delegate) this.initial = [];
+
     this.delegate = delegate ?? new Y.Array();
+
     this.delegate.observe(e => {
+      this.initial = undefined;
+
       let idx = 0;
 
       const local = e.transaction.local;
@@ -263,33 +272,49 @@ export class YJSList<T extends CRDTCompatibleObject> implements CRDTList<T> {
   }
 
   clear() {
+    if (this.initial) {
+      this.initial.length = 0;
+    }
     while (this.delegate.length > 0) {
       this.delegate.delete(0);
     }
   }
 
   get length() {
-    return this.delegate.length;
+    return this.initial ? this.initial.length : this.delegate.length;
   }
 
   get(index: number): T {
+    if (this.initial) {
+      return this.initial[index];
+    }
     return wrap(this.delegate.get(index));
   }
 
   insert(index: number, value: T[]): void {
+    if (this.initial) {
+      this.initial.splice(index, 0, ...value);
+      return;
+    }
     this.delegate.insert(index, value.map(unwrap));
   }
 
   push(value: T): void {
+    if (this.initial) {
+      this.initial.push(value);
+    }
     this.delegate.push([unwrap(value)]);
   }
 
   delete(index: number): void {
+    if (this.initial) {
+      this.initial.splice(index, 1);
+    }
     this.delegate.delete(index);
   }
 
   toArray(): T[] {
-    return this.delegate.toArray().map(wrap);
+    return this.initial ? this.initial : this.delegate.toArray().map(wrap);
   }
 
   on<K extends EventKey<CRDTListEvents<T>>>(eventName: K, fn: EventReceiver<CRDTListEvents<T>[K]>) {

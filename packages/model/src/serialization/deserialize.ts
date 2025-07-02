@@ -2,7 +2,7 @@ import { Diagram } from '../diagram';
 import { DiagramNode } from '../diagramNode';
 import { DiagramEdge } from '../diagramEdge';
 import { UnitOfWork } from '../unitOfWork';
-import { Layer, RegularLayer } from '../diagramLayer';
+import { Layer } from '../diagramLayer';
 import { isSerializedEndpointAnchor, isSerializedEndpointConnected } from './serialize';
 import { DiagramDocument } from '../diagramDocument';
 import { VerifyNotReached } from '@diagram-craft/utils/assert';
@@ -22,6 +22,7 @@ import { DefaultStyles } from '../diagramDefaults';
 import { ReferenceLayer } from '../diagramLayerReference';
 import { RuleLayer } from '../diagramLayerRule';
 import { DataProviderRegistry } from '../dataProvider';
+import { RegularLayer } from '../diagramLayerRegular';
 
 const unfoldGroup = (node: SerializedElement) => {
   const recurse = (

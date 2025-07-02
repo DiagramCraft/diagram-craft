@@ -1,6 +1,6 @@
 import { Diagram } from '../diagram';
 import { DiagramDocument } from '../diagramDocument';
-import { Layer, RegularLayer } from '../diagramLayer';
+import { Layer } from '../diagramLayer';
 import { DiagramElement, isEdge, isNode } from '../diagramElement';
 import {
   SerializedAnchorEndpoint,
@@ -21,6 +21,7 @@ import { DiagramStyles } from '../diagramStyles';
 import { DiagramDocumentDataSchemas } from '../diagramDocumentDataSchemas';
 import { ReferenceLayer } from '../diagramLayerReference';
 import { RuleLayer } from '../diagramLayerRule';
+import { RegularLayer } from '../diagramLayerRegular';
 
 export const isSerializedEndpointAnchor = (
   endpoint: SerializedEndpoint

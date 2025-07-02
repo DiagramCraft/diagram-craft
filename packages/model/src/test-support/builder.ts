@@ -5,7 +5,7 @@ import {
 } from '@diagram-craft/canvas-app/defaultRegistry';
 import { Diagram } from '../diagram';
 import { UnitOfWork } from '../unitOfWork';
-import { RegularLayer } from '../diagramLayer';
+import { RegularLayer } from '../diagramLayerRegular';
 import { Box } from '@diagram-craft/geometry/box';
 import { DiagramNode } from '../diagramNode';
 import { DiagramEdge, ResolvedLabelNode } from '../diagramEdge';

@@ -8,7 +8,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { newid } from '@diagram-craft/utils/id';
 import { assert } from '@diagram-craft/utils/assert';
-import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { isSame } from '@diagram-craft/utils/math';

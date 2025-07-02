@@ -10,7 +10,7 @@ import { precondition } from '@diagram-craft/utils/assert';
 import { isSerializedEndpointFree } from '@diagram-craft/model/serialization/serialize';
 import { deserializeDiagramElements } from '@diagram-craft/model/serialization/deserialize';
 import { ELEMENTS_CONTENT_TYPE } from './clipboard';
-import { RegularLayer } from '@diagram-craft/model/diagramLayer';
+import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { BaseActionArgs } from '@diagram-craft/canvas/action';
 
 /* This contains paste handlers which are the code that is executed once

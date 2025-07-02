@@ -15,7 +15,7 @@ import { ObjectPickerDrag } from '../PickerToolWindow/ObjectPickerDrag';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { newid } from '@diagram-craft/utils/id';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { isRegularLayer } from '@diagram-craft/model/diagramLayer';
+import { isRegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { assert } from '@diagram-craft/utils/assert';
 import { DataProviderSettingsDialog } from './DataProviderSettingsDialog';

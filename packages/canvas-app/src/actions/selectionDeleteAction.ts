@@ -1,7 +1,7 @@
 import { AbstractSelectionAction } from './abstractSelectionAction';
 import { ElementDeleteUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { isNode } from '@diagram-craft/model/diagramElement';
-import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 
 declare global {

@@ -68,6 +68,20 @@ export class MappedCRDTOrderedMap<
     return this.#entries.find(e => e[0] === key)?.[1];
   }
 
+  setIndex(key: string, toIndex: number) {
+    for (const [k, v] of this.crdt.entries()) {
+      if (k === key) {
+        v.set('index', toIndex);
+      } else if (v.get('index')! >= toIndex) {
+        v.set('index', v.get('index')! + 1);
+      }
+    }
+  }
+
+  getIndex(key: string) {
+    return this.crdt.get(key)?.get('index') ?? -1;
+  }
+
   add(key: string, t: T) {
     assert.false(this.crdt.has(key));
 
@@ -79,7 +93,7 @@ export class MappedCRDTOrderedMap<
     this.crdt.set(key, entry);
   }
 
-  set(key: string, t: T) {
+  update(key: string, t: T) {
     this.crdt.delete(key);
 
     const entry = this.crdt.factory.makeMap<WrapperType>();

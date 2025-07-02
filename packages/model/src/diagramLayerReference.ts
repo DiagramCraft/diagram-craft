@@ -1,7 +1,10 @@
-import { Layer, RegularLayer } from './diagramLayer';
+import { Layer } from './diagramLayer';
+import type { LayerCRDT } from './diagramLayer';
 import { Diagram } from './diagram';
 import { LayerSnapshot, UnitOfWork } from './unitOfWork';
 import { RuleLayer } from './diagramLayerRule';
+import { CRDTMap } from './collaboration/crdt';
+import { RegularLayer } from './diagramLayerRegular';
 
 type LayerReference = {
   layerId: string;
@@ -17,8 +20,14 @@ export class ReferenceLayer<
 > extends Layer<T> {
   #reference: LayerReference;
 
-  constructor(id: string, name: string, diagram: Diagram, reference: LayerReference) {
-    super(id, name, diagram, 'reference');
+  constructor(
+    id: string,
+    name: string,
+    diagram: Diagram,
+    reference: LayerReference,
+    crdt?: CRDTMap<LayerCRDT>
+  ) {
+    super(id, name, diagram, 'reference', crdt);
     this.#reference = reference;
   }
 

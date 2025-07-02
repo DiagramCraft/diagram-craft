@@ -6,13 +6,14 @@ import {
   BaseActionArgs
 } from '@diagram-craft/canvas/action';
 import { UndoableAction } from '@diagram-craft/model/undoManager';
-import { assertRegularLayer, RegularLayer } from '@diagram-craft/model/diagramLayer';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { serializeDiagramElement } from '@diagram-craft/model/serialization/serialize';
 import { Clipboard, ELEMENTS_CONTENT_TYPE } from '../clipboard';
 import { PASTE_HANDLERS, PasteHandler } from '../clipboardPasteHandlers';
+import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 
 declare global {
   interface ActionMap extends ReturnType<typeof clipboardActions> {}

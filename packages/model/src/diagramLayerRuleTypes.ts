@@ -1,5 +1,5 @@
 import { Diagram } from './diagram';
-import { isResolvableToRuleLayer } from './diagramLayer';
+import { isResolvableToRuleLayer } from './diagramLayerRule';
 
 export type AdjustmentRule = {
   id: string;

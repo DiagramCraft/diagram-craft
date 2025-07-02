@@ -8,7 +8,7 @@ import {
   defaultNodeRegistry
 } from '@diagram-craft/canvas-app/defaultRegistry';
 import { UnitOfWork } from '../unitOfWork';
-import { RegularLayer } from '../diagramLayer';
+import { RegularLayer } from '../diagramLayerRegular';
 import { DiagramNode } from '../diagramNode';
 
 const r = new Random(123456);

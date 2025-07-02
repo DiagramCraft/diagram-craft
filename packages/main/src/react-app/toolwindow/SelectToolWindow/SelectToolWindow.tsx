@@ -6,7 +6,7 @@ import { isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import { shorten } from '@diagram-craft/utils/strings';
 import { Tree } from '@diagram-craft/app-components/Tree';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
-import { RegularLayer } from '@diagram-craft/model/diagramLayer';
+import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 
 export const SelectToolWindow = (props: Props) => {
   const redraw = useRedraw();

@@ -9,13 +9,14 @@ import { ElementInterface } from './types';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { Box } from '@diagram-craft/geometry/box';
 import { UnitOfWork } from './unitOfWork';
-import { Layer, RegularLayer } from './diagramLayer';
+import { Layer } from './diagramLayer';
 import { Diagram } from './diagram';
 import { AttachmentConsumer } from './attachment';
 import { FlatObject } from '@diagram-craft/utils/types';
 import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
 import { PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { assert } from '@diagram-craft/utils/assert';
+import { RegularLayer } from './diagramLayerRegular';
 
 // eslint-disable-next-line
 type Snapshot = any;

@@ -3,7 +3,7 @@ import { BaseCanvasComponent } from './BaseCanvasComponent';
 import * as html from '../component/vdom-html';
 import * as svg from '../component/vdom-svg';
 import { rawHTML } from '../component/vdom';
-import { isResolvableToRegularLayer } from '@diagram-craft/model/diagramLayer';
+import { isResolvableToRegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import styles from './canvas.css?inline';
 
 export type StaticCanvasProps = Omit<InteractiveCanvasProps, 'viewbox'> & { viewbox?: string };
