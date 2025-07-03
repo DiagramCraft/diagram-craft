@@ -17,6 +17,7 @@ import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToo
 import { PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { assert } from '@diagram-craft/utils/assert';
 import type { RegularLayer } from './diagramLayerRegular';
+import { CRDT, type CRDTMap, type CRDTProperty } from './collaboration/crdt';
 
 // eslint-disable-next-line
 type Snapshot = any;
@@ -24,31 +25,60 @@ type Snapshot = any;
 export type ElementPropsForEditing = EdgePropsForEditing | NodePropsForEditing;
 export type ElementPropsForRendering = EdgePropsForRendering | NodePropsForRendering;
 
+type DiagramElementCRDT = {
+  id: string;
+  type: string;
+  highlights: CRDTMap<Record<string, boolean>>;
+  metadata: ElementMetadata;
+};
+
 export abstract class DiagramElement implements ElementInterface, AttachmentConsumer {
-  readonly type: string;
-  readonly id: string;
   readonly trackableType = 'element';
 
-  protected _children: ReadonlyArray<DiagramElement> = [];
+  // Transient properties
+  readonly crdt: CRDTMap<DiagramElementCRDT>;
+
   protected _diagram: Diagram;
 
   // TODO: Is this always a RegularLayer
   protected _layer: Layer;
   protected _activeDiagram: Diagram;
-  protected _metadata: ElementMetadata = {};
   protected _parent?: DiagramElement;
-  protected _highlights: ReadonlyArray<string> = [];
 
   protected _cache: Map<string, unknown> | undefined = undefined;
 
-  protected constructor(type: string, id: string, layer: Layer, metadata: ElementMetadata) {
-    this.type = type;
-    this.id = id;
+  // Shared properties
+  readonly #metadata: CRDTProperty<DiagramElementCRDT, 'metadata'>;
+  protected readonly _highlights: CRDTMap<Record<string, boolean>>;
+  protected _children: ReadonlyArray<DiagramElement> = [];
+
+  protected constructor(
+    type: string,
+    id: string,
+    layer: Layer,
+    metadata: ElementMetadata,
+    crdt?: CRDTMap<DiagramElementCRDT>
+  ) {
     this._diagram = layer.diagram;
     this._layer = layer;
     this._activeDiagram = this._diagram;
 
-    this._metadata = metadata ?? {};
+    this.crdt = crdt ?? this._diagram.document.root.factory.makeMap();
+    this.crdt.set('id', id);
+    this.crdt.set('type', type);
+
+    this._highlights = this.crdt.get('highlights', () =>
+      this._diagram.document.root.factory.makeMap()
+    )!;
+
+    this.#metadata = CRDT.makeProp('metadata', this.crdt, type => {
+      if (type !== 'remote') return;
+
+      this.invalidate(UnitOfWork.immediate(this._diagram));
+      this._diagram.emit('elementChange', { element: this });
+      this._cache?.clear();
+    });
+    this.#metadata.set(metadata ?? {});
   }
 
   abstract getAttachmentsInUse(): Array<string>;
@@ -79,6 +109,14 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
 
   abstract snapshot(): Snapshot;
   abstract restore(snapshot: Snapshot, uow: UnitOfWork): void;
+
+  get id() {
+    return this.crdt.get('id')!;
+  }
+
+  get type() {
+    return this.crdt.get('type')!;
+  }
 
   /* Flags *************************************************************************************************** */
 
@@ -119,12 +157,15 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
   /* Highlights ********************************************************************************************** */
 
   set highlights(highlights: ReadonlyArray<string>) {
-    this._highlights = highlights;
+    this._highlights.clear();
+    highlights.forEach(h => this._highlights.set(h, true));
     this.diagram.emitAsync('elementHighlighted', { element: this });
   }
 
   get highlights() {
-    return this._highlights;
+    return Array.from(this._highlights.entries())
+      .filter(([, v]) => !!v)
+      .map(([k]) => k);
   }
 
   /* Parent ************************************************************************************************** */
@@ -140,12 +181,18 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
   /* Metadata ************************************************************************************************ */
 
   get metadata() {
-    return this._metadata;
+    return this.#metadata.get() ?? {};
+  }
+
+  protected forceUpdateMetadata(metadata: ElementMetadata) {
+    this.#metadata.set(metadata);
   }
 
   updateMetadata(callback: (props: ElementMetadata) => void, uow: UnitOfWork) {
     uow.snapshot(this);
-    callback(this._metadata);
+    const metadata = this.#metadata.get()!;
+    callback(metadata);
+    this.#metadata.set(metadata);
     uow.updateElement(this);
     this._cache?.clear();
   }
