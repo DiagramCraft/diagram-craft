@@ -233,16 +233,16 @@ export const CRDT = new (class {
   makeProp<T extends { [key: string]: CRDTCompatibleObject }, N extends keyof T & string>(
     name: N,
     crdt: CRDTMap<T>,
-    onChange: () => void = () => {}
+    onChange: (type: 'local' | 'remote') => void = () => {}
   ): CRDTProperty<T, N> {
     crdt.on('localUpdate', p => {
       if (p.key === name) {
-        onChange();
+        onChange('local');
       }
     });
     crdt.on('remoteUpdate', p => {
       if (p.key === name) {
-        onChange();
+        onChange('remote');
       }
     });
 

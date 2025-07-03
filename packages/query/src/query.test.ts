@@ -811,9 +811,7 @@ describe('complex use-cases', () => {
     //console.dir(parse('{ k: [ $a, $b ] }', false), { depth: 10 });
     //console.dir(parse('{(.user): .titles}', false), { depth: 20 });
     //console.log(parseAndQuery('["a", "b"] | .[]', [undefined]));
-
-    console.dir(OObjects.parseString('{ $a, $b }'), { depth: 10 });
-
+    //console.dir(OObjects.parseString('{ $a, $b }'), { depth: 10 });
     /*
     expect(OObjects.parseString('"lorem"').val).toEqual('lorem');
   });

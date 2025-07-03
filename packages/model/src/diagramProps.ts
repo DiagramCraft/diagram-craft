@@ -75,7 +75,8 @@ declare global {
     enabled?: boolean;
   }
 
-  interface ElementMetadata {
+  // TODO: Move from global namespace
+  type ElementMetadata = {
     name?: string;
     style?: string;
     textStyle?: string;
@@ -83,7 +84,7 @@ declare global {
       data?: Array<ElementDataEntry>;
       customData?: FlatObject;
     };
-  }
+  };
 
   interface CustomNodeProps {}
   interface CustomEdgeProps {}
