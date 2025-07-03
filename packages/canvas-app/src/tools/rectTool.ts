@@ -53,7 +53,6 @@ export class RectTool extends AbstractTool {
         h: 5,
         r: 0
       },
-      this.diagram,
       this.diagram.activeLayer,
       {},
       {

@@ -20,7 +20,6 @@ export const NodeCustomPropertiesEditor: Editor = props => {
     newid(),
     type === '' ? 'rect' : type,
     { x: 0, y: 0, w: 1000, h: 1000, r: 0 },
-    $d,
     $d.activeLayer,
     deepClone($p),
     {}

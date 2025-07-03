@@ -24,7 +24,6 @@ export const EdgeCustomPropertiesEditor: Editor = props => {
     deepClone($p),
     {},
     [],
-    $d,
     $d.activeLayer
   );
 

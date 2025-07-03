@@ -51,7 +51,7 @@ class TableInsertAction extends AbstractAction<undefined, Application> {
 
         const elements: DiagramElement[] = [];
 
-        const table = new DiagramNode(newid(), 'table', bounds, $d, $d.activeLayer, {}, {});
+        const table = new DiagramNode(newid(), 'table', bounds, $d.activeLayer, {}, {});
         elements.push(table);
 
         for (let r = 0; r < height; r++) {
@@ -59,7 +59,6 @@ class TableInsertAction extends AbstractAction<undefined, Application> {
             newid(),
             'tableRow',
             { w: bounds.w, h: rowHeight, x: 0, y: r * rowHeight, r: 0 },
-            $d,
             $d.activeLayer,
             {},
             {}
@@ -72,7 +71,6 @@ class TableInsertAction extends AbstractAction<undefined, Application> {
               newid(),
               'text',
               { w: colWidth, h: rowHeight, x: c * colWidth, y: 0, r: 0 },
-              $d,
               $d.activeLayer,
               {
                 fill: {

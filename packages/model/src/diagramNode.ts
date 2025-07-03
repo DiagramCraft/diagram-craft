@@ -4,7 +4,6 @@ import { Transform } from '@diagram-craft/geometry/transform';
 import { DiagramElement, isEdge, isNode } from './diagramElement';
 import { DiagramNodeSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
 import { DiagramEdge, ResolvedLabelNode } from './diagramEdge';
-import { Diagram } from './diagram';
 import { Layer } from './diagramLayer';
 import { DefaultStyles, nodeDefaults } from './diagramDefaults';
 import {
@@ -58,14 +57,13 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     id: string,
     nodeType: 'group' | string,
     bounds: Box,
-    diagram: Diagram,
     layer: Layer,
     props: NodePropsForEditing,
     metadata: ElementMetadata,
     text: NodeTexts = { text: '' },
     anchorCache?: ReadonlyArray<Anchor>
   ) {
-    super('node', id, diagram, layer, metadata);
+    super('node', id, layer, metadata);
     this.#bounds = bounds;
     this.#nodeType = nodeType;
     this.#text = text;
@@ -84,7 +82,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     //       events etc - so important that everything is set up before
     //       that to avoid flashing of incorrect formatting/style
     if (!this.#anchors) {
-      this.invalidateAnchors(UnitOfWork.immediate(diagram));
+      this.invalidateAnchors(UnitOfWork.immediate(this.layer.diagram));
     }
   }
 
@@ -516,7 +514,6 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       id ?? newid(),
       this.nodeType,
       deepClone(this.bounds),
-      this.diagram,
       this.layer,
       deepClone(this.#props) as NodeProps,
       deepClone(this.metadata) as ElementMetadata,

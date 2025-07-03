@@ -90,7 +90,6 @@ export class EdgeTool extends AbstractTool {
         style: this.diagram.document.styles.activeEdgeStylesheet.id
       },
       [],
-      this.diagram,
       this.diagram.activeLayer
     );
 

@@ -8,7 +8,6 @@ import { CubicSegment, LineSegment } from '@diagram-craft/geometry/pathSegment';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { DiagramElement, isEdge, isNode } from './diagramElement';
 import { DiagramEdgeSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
-import { Diagram } from './diagram';
 import { Layer } from './diagramLayer';
 import {
   AnchorEndpoint,
@@ -74,10 +73,9 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     props: EdgePropsForEditing,
     metadata: ElementMetadata,
     midpoints: ReadonlyArray<Waypoint>,
-    diagram: Diagram,
     layer: Layer
   ) {
-    super('edge', id, diagram, layer, metadata);
+    super('edge', id, layer, metadata);
     this.#start = start;
     this.#end = end;
     this.#props = props as EdgeProps;
@@ -675,7 +673,6 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       deepClone(this.#props) as EdgeProps,
       deepClone(this.metadata) as ElementMetadata,
       deepClone(this.waypoints) as Array<Waypoint>,
-      this.diagram,
       this.layer
     );
 

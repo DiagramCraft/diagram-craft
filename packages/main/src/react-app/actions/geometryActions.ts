@@ -108,7 +108,6 @@ class SelectionBooleanOperation extends AbstractSelectionAction<Application> {
         newid(),
         'generic-path',
         nodeBounds,
-        diagram,
         diagram.activeLayer as RegularLayer,
         {
           ...nodes[0].storedProps,

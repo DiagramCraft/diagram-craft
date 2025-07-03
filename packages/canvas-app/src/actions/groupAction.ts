@@ -64,7 +64,6 @@ class UndoableGroupAction implements UndoableAction {
       newid(),
       'group',
       Box.boundingBox(this.#elements.map(e => e.bounds)),
-      this.diagram,
       this.diagram.activeLayer,
       {},
       {}

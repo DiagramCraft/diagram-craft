@@ -50,7 +50,6 @@ export class EdgeTextAddAction extends AbstractAction<EdgeTextAddActionArg> {
       newid(),
       'text',
       { ...projection.point, r: 0, w: 100, h: 0 },
-      this.context.model.activeDiagram,
       this.context.model.activeDiagram.activeLayer,
       {
         text: { align: 'center' },

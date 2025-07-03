@@ -56,7 +56,6 @@ export class PenTool extends AbstractTool {
         newid(),
         'generic-path',
         { x: diagramPoint.x, y: diagramPoint.y, w: 10, h: 10, r: 0 },
-        this.diagram,
         this.diagram.activeLayer,
         { custom: { genericPath: { path: `M ${initialPath.x},${initialPath.y}` } } },
         {}

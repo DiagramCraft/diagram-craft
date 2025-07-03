@@ -37,7 +37,6 @@ export class AnchorHandleDrag extends Drag {
         style: diagram.document.styles.activeEdgeStylesheet.id
       },
       [],
-      diagram,
       diagram.activeLayer
     );
 

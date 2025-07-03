@@ -79,7 +79,6 @@ export const deserializeDiagramElements = (
         c.id,
         c.nodeType,
         c.bounds,
-        diagram,
         layer,
         c.props,
         {
@@ -112,7 +111,6 @@ export const deserializeDiagramElements = (
           ...e.metadata
         },
         (e.waypoints ?? []) as Array<Waypoint>,
-        diagram,
         layer
       );
 

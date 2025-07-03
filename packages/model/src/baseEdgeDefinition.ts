@@ -58,7 +58,6 @@ export class BaseEdgeDefinition implements EdgeDefinition {
       deepClone(edge.editProps) as EdgeProps,
       deepClone(edge.metadata) as ElementMetadata,
       [],
-      edge.diagram,
       edge.layer
     );
     assertRegularLayer(edge.layer);

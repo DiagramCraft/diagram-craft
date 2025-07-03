@@ -41,7 +41,6 @@ const writeArrow = (
       h: 20,
       r: 0
     },
-    diagram,
     layer,
     {
       text: {
@@ -79,7 +78,6 @@ const writeArrow = (
         },
         {},
         [],
-        diagram,
         layer
       );
       layer.addElement(edge, UnitOfWork.immediate(diagram));
@@ -97,7 +95,6 @@ const writeArrow = (
         h: 30,
         r: 0
       },
-      diagram,
       layer,
       {
         anchors: {
@@ -129,7 +126,6 @@ const writeArrow = (
       },
       {},
       [],
-      diagram,
       layer
     );
     layer.addElement(edge, UnitOfWork.immediate(diagram));
@@ -273,7 +269,6 @@ const SHAPES_DEFS = [
           },
           {},
           [],
-          n.diagram,
           n.layer
         );
         n.layer.addElement(e, UnitOfWork.immediate(n.diagram));
@@ -295,7 +290,6 @@ const SHAPES_DEFS = [
           },
           {},
           [],
-          n.diagram,
           n.layer
         );
         n.layer.addElement(e, UnitOfWork.immediate(n.diagram));
@@ -378,7 +372,6 @@ const writeShape = (
       h: 20,
       r: 0
     },
-    diagram,
     layer,
     {
       text: {
@@ -419,7 +412,6 @@ const writeShape = (
         h: 20,
         r: 0
       },
-      diagram,
       layer,
       {
         text: {

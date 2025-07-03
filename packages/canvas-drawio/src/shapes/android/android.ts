@@ -43,7 +43,6 @@ export const parseAndroidShapes = async (
   metadata: ElementMetadata,
   texts: NodeTexts,
   style: StyleManager,
-  diagram: Diagram,
   layer: Layer
 ): Promise<DiagramNode> => {
   const $c = (props.custom ??= {});
@@ -73,7 +72,7 @@ export const parseAndroidShapes = async (
     }
   }
 
-  return new DiagramNode(id, style.str('shape')!, bounds, diagram, layer, props, metadata, texts);
+  return new DiagramNode(id, style.str('shape')!, bounds, layer, props, metadata, texts);
 };
 
 export const registerAndroidShapes = async (

@@ -48,26 +48,28 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
     type: string,
     id: string,
     // TODO: Do we need to pass diagram, or can we use layer.diagram?
-    diagram: Diagram,
+    //    diagram: Diagram,
     layer: Layer,
     metadata: ElementMetadata,
     crdt?: CRDTMap<DiagramElementCRDT>
   ) {
-    this.crdt = crdt ?? diagram.document.root.factory.makeMap();
+    this._diagram = layer.diagram;
+    this._layer = layer;
+    this._activeDiagram = this._diagram;
+
+    this.crdt = crdt ?? this._diagram.document.root.factory.makeMap();
     this.crdt.set('id', id);
     this.crdt.set('type', type);
 
-    this._highlights = this.crdt.get('highlights', () => diagram.document.root.factory.makeMap())!;
-
-    this._diagram = diagram;
-    this._layer = layer;
-    this._activeDiagram = diagram;
+    this._highlights = this.crdt.get('highlights', () =>
+      this._diagram.document.root.factory.makeMap()
+    )!;
 
     this.#metadata = CRDT.makeProp('metadata', this.crdt, type => {
       if (type !== 'remote') return;
 
-      this.invalidate(UnitOfWork.immediate(diagram));
-      diagram.emit('elementChange', { element: this });
+      this.invalidate(UnitOfWork.immediate(this._diagram));
+      this._diagram.emit('elementChange', { element: this });
       this._cache?.clear();
     });
     this.#metadata.set(metadata ?? {});

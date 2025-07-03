@@ -83,12 +83,11 @@ const makeTemplateNode = (
 
 const makeDefaultNode = (item: Data, schema: DataSchema, definitions: Definitions): DiagramNode => {
   return Diagram.createThumbnailDiagramForNode(
-    (diagram, layer) =>
+    (_diagram, layer) =>
       new DiagramNode(
         newid(),
         'rect',
         { w: 100, h: 100, y: 0, x: 0, r: 0 },
-        diagram,
         layer,
         {},
         {

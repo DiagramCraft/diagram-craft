@@ -55,7 +55,6 @@ class ImageInsertAction extends AbstractAction<undefined, Application> {
             h: height,
             r: 0
           },
-          this.context.model.activeDiagram,
           this.context.model.activeDiagram.activeLayer,
           {
             fill: {

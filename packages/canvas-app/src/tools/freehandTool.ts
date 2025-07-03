@@ -108,7 +108,6 @@ export class FreehandTool extends AbstractTool {
       newid(),
       'generic-path',
       { x: bbox.x, y: bbox.y, w: bbox.width, h: bbox.height, r: 0 },
-      this.diagram,
       this.diagram.activeLayer,
       { custom: { genericPath: { path: path } }, fill: { enabled: false } },
       {}

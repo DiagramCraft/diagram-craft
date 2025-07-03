@@ -253,7 +253,6 @@ export const makeStencilNode =
         { x: 0, y: 0, w: $d.canvas.w, h: $d.canvas.h, r: 0 },
         opts?.aspectRatio ?? 1
       ),
-      $d,
       $d.activeLayer,
       opts?.props?.(t) ?? {},
       opts?.metadata ?? {},

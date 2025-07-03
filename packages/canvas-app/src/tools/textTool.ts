@@ -53,7 +53,6 @@ export class TextTool extends AbstractTool {
         h: 0,
         r: 0
       },
-      this.diagram,
       this.diagram.activeLayer,
       // TODO: This is partially duplicated in defaultRegistry.ts
       //       - perhaps make static member of Text.nodeType.ts

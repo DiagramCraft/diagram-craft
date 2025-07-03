@@ -78,7 +78,6 @@ class ImagePasteHandler extends PasteHandler {
         newid(),
         'rect',
         { x: point!.x, y: point!.y, w: img.width, h: img.height, r: 0 },
-        diagram,
         diagram.activeLayer,
         {
           fill: {
@@ -112,7 +111,6 @@ class TextPasteHandler extends PasteHandler {
         newid(),
         'text',
         { x: point!.x, y: point!.y, w: 200, h: 20, r: 0 },
-        diagram,
         diagram.activeLayer,
         {
           stroke: {

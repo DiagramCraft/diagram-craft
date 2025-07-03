@@ -8,7 +8,6 @@ import {
 import { UmlModuleNodeDefinition } from './umlModule';
 import { Box } from '@diagram-craft/geometry/box';
 import { shapeParsers } from '../../drawioReader';
-import { Diagram } from '@diagram-craft/model/diagram';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { DiagramNode, NodeTexts } from '@diagram-craft/model/diagramNode';
 import { deepMerge } from '@diagram-craft/utils/object';
@@ -32,7 +31,6 @@ export const parseUMLShapes = async (
   metadata: ElementMetadata,
   texts: NodeTexts,
   style: StyleManager,
-  diagram: Diagram,
   layer: Layer
 ) => {
   props.custom ??= {};
@@ -41,14 +39,14 @@ export const parseUMLShapes = async (
       jettyWidth: style.num('jettyWidth', 20),
       jettyHeight: style.num('jettyHeight', 10)
     };
-    return new DiagramNode(id, 'module', bounds, diagram, layer, props, {});
+    return new DiagramNode(id, 'module', bounds, layer, props, {});
   } else if (style.str('shape') === 'umlLifeline') {
     props.custom.umlLifeline = {
       participant: style.str('participant')
     };
   }
 
-  return new DiagramNode(id, style.str('shape')!, bounds, diagram, layer, props, metadata, texts);
+  return new DiagramNode(id, style.str('shape')!, bounds, layer, props, metadata, texts);
 };
 
 export const registerUMLShapes = async (r: NodeDefinitionRegistry) => {
