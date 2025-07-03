@@ -1,8 +1,8 @@
 import { DiagramElement } from './diagramElement';
-import { Diagram } from './diagram';
+import type { Diagram } from './diagram';
 import { CRDTMap } from './collaboration/crdt';
 import { LayersSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
-import { Layer, LayerCRDT } from './diagramLayer';
+import type { Layer, LayerCRDT } from './diagramLayer';
 import { CRDTMapper } from './collaboration/mappedCRDT';
 import { RuleLayer } from './diagramLayerRule';
 import { ReferenceLayer } from './diagramLayerReference';
@@ -56,6 +56,7 @@ export const makeLayerMapper = (diagram: Diagram): CRDTMapper<Layer, LayerCRDT> 
 
 export class LayerManager implements UOWTrackable<LayersSnapshot>, AttachmentConsumer {
   readonly id = 'layers';
+  readonly trackableType = 'layerManager';
 
   // Shared properties
   readonly #layers: MappedCRDTOrderedMap<Layer, LayerCRDT>;

@@ -1,4 +1,4 @@
-import { DeepPartial } from './types';
+import { DeepPartial, type DeepReadonly, type DeepWriteable } from './types';
 
 // eslint-disable-next-line
 type Props = Record<string, any>;
@@ -303,3 +303,5 @@ export const isPrimitive = (value: unknown) => {
     value instanceof Uint8Array
   );
 };
+
+export const cloneAsWriteable: <T>(o: DeepReadonly<T>) => DeepWriteable<T> = deepClone;

@@ -1,5 +1,5 @@
 import { CRDTList, CRDTRoot } from './collaboration/crdt';
-import { DiagramDocument } from './diagramDocument';
+import type { DiagramDocument } from './diagramDocument';
 
 class Query {
   private _history: CRDTList<[string, string]>;

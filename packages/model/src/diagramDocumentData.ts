@@ -1,6 +1,6 @@
 import { Data, DataProvider, DataProviderRegistry } from './dataProvider';
 import { DataSchema, DiagramDocumentDataSchemas } from './diagramDocumentDataSchemas';
-import { DiagramDocument } from './diagramDocument';
+import type { DiagramDocument } from './diagramDocument';
 import { DiagramDocumentDataTemplates } from './diagramDocumentDataTemplates';
 import { UnitOfWork } from './unitOfWork';
 import { deepEquals } from '@diagram-craft/utils/object';

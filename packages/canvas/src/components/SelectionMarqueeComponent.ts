@@ -1,7 +1,7 @@
 import { Component, createEffect } from '../component/component';
 import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
-import { CanvasState } from '../canvas/EditableCanvasComponent';
+import type { CanvasState } from '../canvas/EditableCanvasComponent';
 
 export class SelectionMarqueeComponent extends Component<CanvasState> {
   render(props: CanvasState) {

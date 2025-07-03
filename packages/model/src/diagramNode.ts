@@ -3,8 +3,8 @@ import { Box } from '@diagram-craft/geometry/box';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { DiagramElement, isEdge, isNode } from './diagramElement';
 import { DiagramNodeSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
-import { DiagramEdge, ResolvedLabelNode } from './diagramEdge';
-import { Diagram } from './diagram';
+import type { DiagramEdge, ResolvedLabelNode } from './diagramEdge';
+import type { Diagram } from './diagram';
 import { Layer } from './diagramLayer';
 import { DefaultStyles, nodeDefaults } from './diagramDefaults';
 import {
@@ -28,6 +28,7 @@ import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToo
 import { getAdjustments } from './diagramLayerRuleTypes';
 import { toUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
 import { RegularLayer } from './diagramLayerRegular';
+import { transformPathList } from '@diagram-craft/geometry/pathListUtils';
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;
@@ -489,7 +490,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
     const paths = this.getDefinition().getBoundingPath(this);
 
-    const scaledPath = paths.transform(toUnitLCS(this.bounds));
+    const scaledPath = transformPathList(paths, toUnitLCS(this.bounds));
 
     this.#nodeType = 'generic-path';
     this.updateProps(p => {

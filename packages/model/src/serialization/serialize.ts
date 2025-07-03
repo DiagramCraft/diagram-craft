@@ -3,15 +3,11 @@ import { DiagramDocument } from '../diagramDocument';
 import { Layer } from '../diagramLayer';
 import { DiagramElement, isEdge, isNode } from '../diagramElement';
 import {
-  SerializedAnchorEndpoint,
   SerializedDiagram,
   SerializedDiagramDocument,
   SerializedElement,
-  SerializedEndpoint,
-  SerializedFreeEndpoint,
   SerializedLayer,
   SerializedNode,
-  SerializedPointInNodeEndpoint,
   SerializedStyles
 } from './types';
 import { NotImplementedYet, VerifyNotReached } from '@diagram-craft/utils/assert';
@@ -22,18 +18,6 @@ import { DiagramDocumentDataSchemas } from '../diagramDocumentDataSchemas';
 import { ReferenceLayer } from '../diagramLayerReference';
 import { RuleLayer } from '../diagramLayerRule';
 import { RegularLayer } from '../diagramLayerRegular';
-
-export const isSerializedEndpointAnchor = (
-  endpoint: SerializedEndpoint
-): endpoint is SerializedAnchorEndpoint => 'node' in endpoint && 'anchor' in endpoint;
-
-export const isSerializedEndpointConnected = (
-  endpoint: SerializedEndpoint
-): endpoint is SerializedPointInNodeEndpoint => 'node' in endpoint && !('anchor' in endpoint);
-
-export const isSerializedEndpointFree = (
-  endpoint: SerializedEndpoint
-): endpoint is SerializedFreeEndpoint => !('node' in endpoint);
 
 export const serializeDiagramDocument = async (
   document: DiagramDocument

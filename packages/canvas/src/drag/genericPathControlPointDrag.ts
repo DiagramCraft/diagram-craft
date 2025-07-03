@@ -1,4 +1,4 @@
-import { EditablePath } from '../editablePath';
+import type { EditablePath } from '../editablePath';
 import { Drag, DragEvents } from '../dragDropManager';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';

@@ -1,5 +1,5 @@
-import { DiagramEdge, EdgePropsForEditing, EdgePropsForRendering } from './diagramEdge';
-import {
+import type { DiagramEdge, EdgePropsForEditing, EdgePropsForRendering } from './diagramEdge';
+import type {
   DiagramNode,
   DuplicationContext,
   NodePropsForEditing,
@@ -10,13 +10,13 @@ import { Transform } from '@diagram-craft/geometry/transform';
 import { Box } from '@diagram-craft/geometry/box';
 import { UnitOfWork } from './unitOfWork';
 import { Layer } from './diagramLayer';
-import { Diagram } from './diagram';
+import type { Diagram } from './diagram';
 import { AttachmentConsumer } from './attachment';
 import { FlatObject } from '@diagram-craft/utils/types';
 import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
 import { PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { assert } from '@diagram-craft/utils/assert';
-import { RegularLayer } from './diagramLayerRegular';
+import type { RegularLayer } from './diagramLayerRegular';
 
 // eslint-disable-next-line
 type Snapshot = any;
@@ -27,6 +27,7 @@ export type ElementPropsForRendering = EdgePropsForRendering | NodePropsForRende
 export abstract class DiagramElement implements ElementInterface, AttachmentConsumer {
   readonly type: string;
   readonly id: string;
+  readonly trackableType = 'element';
 
   protected _children: ReadonlyArray<DiagramElement> = [];
   protected _diagram: Diagram;

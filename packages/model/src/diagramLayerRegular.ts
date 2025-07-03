@@ -1,10 +1,10 @@
 import { Layer, LayerCRDT, StackPosition } from './diagramLayer';
 import { DiagramElement, isNode } from './diagramElement';
-import { Diagram } from './diagram';
+import type { Diagram } from './diagram';
 import { CRDTMap } from './collaboration/crdt';
 import { LayerSnapshot, UnitOfWork } from './unitOfWork';
 import { groupBy } from '@diagram-craft/utils/array';
-import { DiagramEdge } from './diagramEdge';
+import type { DiagramEdge } from './diagramEdge';
 
 export class RegularLayer extends Layer<RegularLayer> {
   #elements: Array<DiagramElement> = [];

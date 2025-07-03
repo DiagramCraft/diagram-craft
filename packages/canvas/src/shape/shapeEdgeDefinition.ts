@@ -1,5 +1,5 @@
 import { BaseEdgeDefinition } from '@diagram-craft/model/baseEdgeDefinition';
-import { BaseEdgeComponent } from '../components/BaseEdgeComponent';
+import type { BaseEdgeComponent } from '../components/BaseEdgeComponent';
 
 type EdgeShapeConstructor<T extends ShapeEdgeDefinition = ShapeEdgeDefinition> = {
   new (shapeEdgeDefinition: T): BaseEdgeComponent;

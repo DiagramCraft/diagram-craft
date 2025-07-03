@@ -6,7 +6,7 @@ import { DiagramElement, isEdge, isNode } from './diagramElement';
 import { Box } from '@diagram-craft/geometry/box';
 import { Line } from '@diagram-craft/geometry/line';
 import { Marquee } from './marquee';
-import { Diagram } from './diagram';
+import type { Diagram } from './diagram';
 import { debounceMicrotask } from '@diagram-craft/utils/debounce';
 
 const EMPTY_BOX: Box = {

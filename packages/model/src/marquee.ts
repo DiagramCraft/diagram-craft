@@ -1,5 +1,5 @@
 import { DiagramElement } from './diagramElement';
-import { SelectionState } from './selectionState';
+import type { SelectionState } from './selectionState';
 import { Box } from '@diagram-craft/geometry/box';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { precondition } from '@diagram-craft/utils/assert';

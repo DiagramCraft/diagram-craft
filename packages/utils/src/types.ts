@@ -1,5 +1,3 @@
-import { deepClone } from './object';
-
 export type Writeable<T> = { -readonly [k in keyof T]: T[k] };
 
 export type DeepWriteable<T> = { -readonly [P in keyof T]: DeepWriteable<T[P]> };
@@ -9,8 +7,6 @@ export type DeepReadonly<T> = { +readonly [P in keyof T]: DeepReadonly<T[P]> };
 export type DeepRequired<T> = { [P in keyof T]-?: DeepRequired<T[P]> };
 
 export type DeepPartial<T> = { [P in keyof T]?: DeepPartial<T[P]> };
-
-export const cloneAsWriteable: <T>(o: DeepReadonly<T>) => DeepWriteable<T> = deepClone;
 
 export const makeWriteable = <T>(o: DeepReadonly<T>): DeepWriteable<T> => o as DeepWriteable<T>;
 

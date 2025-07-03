@@ -19,6 +19,7 @@ import { deepClone } from '@diagram-craft/utils/object';
 import { clamp } from '@diagram-craft/utils/math';
 import { insert } from '@diagram-craft/canvas/component/vdom';
 import { StaticCanvasComponent } from '@diagram-craft/canvas/canvas/StaticCanvasComponent';
+import { createThumbnailDiagramForNode } from '@diagram-craft/model/diagramThumbnail';
 
 enum State {
   INSIDE,
@@ -147,7 +148,7 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
 
     const scale = clamp(this.diagram.viewBox.zoomLevel, 0.3, 3);
 
-    const { diagram: dest } = Diagram.createThumbnailDiagramForNode(
+    const { diagram: dest } = createThumbnailDiagramForNode(
       () => this.source.duplicate(),
       this.diagram.document.definitions
     );

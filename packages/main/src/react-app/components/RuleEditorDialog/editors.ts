@@ -1,11 +1,8 @@
 import { EditorRegistry } from '@diagram-craft/canvas-app/PropsEditor';
 import { ReactElement } from 'react';
-import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
-import { Property } from '../../toolwindow/ObjectToolWindow/types';
 import { NodeFillEditor } from './NodeFillEditor';
 import { NodeStrokeEditor } from './NodeStrokeEditor';
 import { ElementShadowEditor } from './ElementShadowEditor';
-import { DeepReadonly } from '@diagram-craft/utils/types';
 import { NodeEffectsEditor } from './NodeEffectsEditor';
 import { NodeTextEditor } from './NodeTextEditor';
 import { NodeAdvancedPropertiesEditor } from './NodeAdvancedPropertiesEditor';
@@ -13,7 +10,6 @@ import { NodeCustomPropertiesEditor } from './NodeCustomPropertiesEditor';
 import { EdgeCustomPropertiesEditor } from './EdgeCustomPropertiesEditor';
 import { EdgeEffectsEditor } from './EdgeEffectsEditor';
 import { EdgeLineEditor } from './EdgeLineEditor';
-import { Defaults } from '@diagram-craft/model/diagramDefaults';
 import { NamedIndicatorEditor } from './NamedIndicatorEditor';
 import { NodeActionPropertiesEditor } from './NodeActionPropertiesEditor';
 
@@ -106,24 +102,3 @@ export const EDGE_EDITORS: EditorRegistry<Editor> = {
     })
   }
 };
-
-export function makeProperty<
-  TObj,
-  K extends PropPath<TObj | DeepReadonly<TObj>> = PropPath<TObj | DeepReadonly<TObj>>,
-  V extends PropPathValue<TObj | DeepReadonly<TObj>, K> = PropPathValue<
-    TObj | DeepReadonly<TObj>,
-    K
-  >
->(obj: TObj, propertyPath: K, defaults: Defaults<TObj>, onChange: (v: V) => void): Property<V> {
-  const accessor = new DynamicAccessor<TObj | DeepReadonly<TObj>>();
-  const isSet = accessor.get(obj, propertyPath) !== undefined;
-  return {
-    val: (accessor.get(obj, propertyPath) as V) ?? (defaults.getRaw(propertyPath) as V),
-    set: (v: V) => {
-      accessor.set(obj, propertyPath, v);
-      onChange(v);
-    },
-    hasMultipleValues: false,
-    isSet: isSet
-  } as Property<V>;
-}

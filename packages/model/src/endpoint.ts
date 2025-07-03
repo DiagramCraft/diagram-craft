@@ -1,12 +1,12 @@
-import {
+import type {
   SerializedAnchorEndpoint,
   SerializedEndpoint,
   SerializedPointInNodeEndpoint
 } from './serialization/types';
-import { DiagramNode } from './diagramNode';
+import type { DiagramNode } from './diagramNode';
 import { Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
-import { isSerializedEndpointConnected, isSerializedEndpointFree } from './serialization/serialize';
+import { isSerializedEndpointConnected, isSerializedEndpointFree } from './serialization/utils';
 
 export interface Endpoint {
   readonly position: Point;

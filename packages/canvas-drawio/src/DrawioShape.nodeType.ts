@@ -10,7 +10,7 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { Box } from '@diagram-craft/geometry/box';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { deepClone } from '@diagram-craft/utils/object';
-import { cloneAsWriteable } from '@diagram-craft/utils/types';
+import { cloneAsWriteable } from '@diagram-craft/utils/object';
 import { Anchor } from '@diagram-craft/model/anchor';
 import {
   assertHAlign,

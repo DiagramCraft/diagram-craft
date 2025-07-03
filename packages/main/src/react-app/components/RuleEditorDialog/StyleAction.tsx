@@ -2,7 +2,7 @@ import { Select } from '@diagram-craft/app-components/Select';
 import { PropsEditor } from '@diagram-craft/canvas-app/PropsEditor';
 import { VerifyNotReached } from '@diagram-craft/utils/assert';
 import { EDGE_EDITORS, EditorTypes, NODE_EDITORS } from './editors';
-import { EditableAdjustmentRuleAction } from './RuleEditorDialog';
+import type { EditableAdjustmentRuleAction } from './RuleEditorDialog';
 
 export const StyleAction = (props: Props) => {
   if (props.action.type !== 'set-props') throw new VerifyNotReached();

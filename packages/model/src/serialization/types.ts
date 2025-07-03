@@ -1,13 +1,13 @@
-import { EdgeInterface, NodeInterface } from '../types';
+import type { EdgeInterface, NodeInterface } from '../types';
 import { Point } from '@diagram-craft/geometry/point';
-import { EdgePropsForEditing } from '../diagramEdge';
-import { NodePropsForEditing, NodeTexts } from '../diagramNode';
-import { OffsetType } from '../endpoint';
-import { StylesheetSnapshot } from '../unitOfWork';
-import { DataSchema } from '../diagramDocumentDataSchemas';
-import { Canvas } from '../diagram';
-import { AdjustmentRule } from '../diagramLayerRuleTypes';
-import { DataTemplate } from '../diagramDocument';
+import type { EdgePropsForEditing } from '../diagramEdge';
+import type { NodePropsForEditing, NodeTexts } from '../diagramNode';
+import type { OffsetType } from '../endpoint';
+import type { StylesheetSnapshot } from '../unitOfWork';
+import type { DataSchema } from '../diagramDocumentDataSchemas';
+import type { Canvas } from '../diagram';
+import type { AdjustmentRule } from '../diagramLayerRuleTypes';
+import type { DataTemplate } from '../diagramDocument';
 
 export interface Reference {
   id: string;

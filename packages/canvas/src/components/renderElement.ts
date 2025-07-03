@@ -1,11 +1,11 @@
 import { DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import { Context, OnDoubleClick, OnMouseDown } from '../context';
 import { VNode } from '../component/vdom';
-import { NodeComponentProps } from './BaseNodeComponent';
+import type { NodeComponentProps } from './BaseNodeComponent';
 import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
 import { ShapeEdgeDefinition } from '../shape/shapeEdgeDefinition';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
-import { EdgeComponentProps } from './BaseEdgeComponent';
+import type { EdgeComponentProps } from './BaseEdgeComponent';
 import { Component } from '../component/component';
 
 export const renderElement = (

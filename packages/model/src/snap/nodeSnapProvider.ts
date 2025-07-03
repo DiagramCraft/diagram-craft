@@ -1,5 +1,5 @@
-import { Diagram } from '../diagram';
-import { EligibleNodePredicate, MatchingMagnetPair, SnapProvider } from './snapManager';
+import type { Diagram } from '../diagram';
+import type { EligibleNodePredicate, MatchingMagnetPair, SnapProvider } from './snapManager';
 import { Guide } from '../selectionState';
 import { Magnet, MagnetOfType } from './magnet';
 import { isNode } from '../diagramElement';

@@ -1,7 +1,7 @@
 import { Component } from '../component/component';
 import * as svg from '../component/vdom-svg';
 import { toInlineCSS, VNode } from '../component/vdom';
-import { CanvasState } from '../canvas/EditableCanvasComponent';
+import type { CanvasState } from '../canvas/EditableCanvasComponent';
 
 const DEFAULT_MAJOR_COLOR = '#e7e5e4';
 const DEFAULT_MINOR_COLOR = '#f5f5f4';

@@ -1,9 +1,10 @@
-import { Editor, makeProperty } from './editors';
+import type { Editor } from './editors';
 import { IndicatorForm } from '../../toolwindow/ObjectIndicatorToolWindow/IndicatorForm';
 import { nodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { useState } from 'react';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { makeProperty } from './utils';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const path = (id: string, rest: string): any => `indicators.${id}.${rest}`;

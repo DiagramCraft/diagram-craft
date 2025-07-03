@@ -1,8 +1,7 @@
-import { GenericPathNodeDefinition } from './node-types/GenericPath.nodeType';
 import { Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
 import { Vector } from '@diagram-craft/geometry/vector';
-import { toUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
+import { fromUnitLCS, PathListBuilder, toUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
 import { CubicSegment, LineSegment, PathSegment } from '@diagram-craft/geometry/pathSegment';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -216,7 +215,9 @@ export class EditablePath {
   private resizePathToUnitCoordinateSystem(): { path: PathList; bounds: Box } {
     const rot = this.node.bounds.r;
 
-    const nodePath = new GenericPathNodeDefinition().getBoundingPathBuilder(this.node).getPaths();
+    const nodePath = PathListBuilder.fromString(this.node.renderProps.custom.genericPath.path)
+      .withTransform(fromUnitLCS(this.node.bounds))
+      .getPaths();
     const nodePathBounds = nodePath.bounds();
 
     // Raw path and raw bounds represent the path in the original unit coordinate system,

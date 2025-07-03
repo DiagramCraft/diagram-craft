@@ -3,7 +3,7 @@ import { DiagramNode } from '../diagramNode';
 import { DiagramEdge } from '../diagramEdge';
 import { UnitOfWork } from '../unitOfWork';
 import { Layer } from '../diagramLayer';
-import { isSerializedEndpointAnchor, isSerializedEndpointConnected } from './serialize';
+import { isSerializedEndpointAnchor, isSerializedEndpointConnected } from './utils';
 import { DiagramDocument } from '../diagramDocument';
 import { VerifyNotReached } from '@diagram-craft/utils/assert';
 import {

@@ -18,6 +18,7 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { newid } from '@diagram-craft/utils/id';
 import { ActionCriteria } from '@diagram-craft/canvas/action';
 import { toUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
+import { transformPathList } from '@diagram-craft/geometry/pathListUtils';
 
 declare global {
   interface ActionMap extends ReturnType<typeof geometryActions> {}
@@ -102,7 +103,7 @@ class SelectionBooleanOperation extends AbstractSelectionAction<Application> {
     const newNodes = paths.map(p => {
       const nodeBounds = p.bounds();
 
-      const scaledPath = p.transform(toUnitLCS(nodeBounds));
+      const scaledPath = transformPathList(p, toUnitLCS(nodeBounds));
 
       return new DiagramNode(
         newid(),

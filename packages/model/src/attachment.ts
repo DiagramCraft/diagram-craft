@@ -1,4 +1,4 @@
-import { DiagramDocument } from './diagramDocument';
+import type { DiagramDocument } from './diagramDocument';
 import { hash64 } from '@diagram-craft/utils/hash';
 import { CRDTMap, CRDTRoot } from './collaboration/crdt';
 

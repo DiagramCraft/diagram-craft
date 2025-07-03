@@ -1,8 +1,9 @@
 import { nodeDefaults } from '@diagram-craft/model/diagramDefaults';
-import { Editor, makeProperty } from './editors';
+import type { Editor } from './editors';
 import { NodeTextPanelForm } from '../../toolwindow/ObjectToolWindow/NodeTextPanel';
 import { useConfiguration } from '../../context/ConfigurationContext';
 import { useDiagram } from '../../../application';
+import { makeProperty } from './utils';
 
 export const NodeTextEditor: Editor = props => {
   const $p = props.props as NodeProps;

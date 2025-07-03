@@ -1,4 +1,4 @@
-import { DiagramEdge } from './diagramEdge';
+import type { DiagramEdge } from './diagramEdge';
 import { ControlPoints, Waypoint } from './types';
 import { Direction } from '@diagram-craft/geometry/direction';
 import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
