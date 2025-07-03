@@ -6,7 +6,7 @@ import {
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UmlModuleNodeDefinition } from './umlModule';
 import { Box } from '@diagram-craft/geometry/box';
-import { shapeParsers } from '../../drawioReader';
+import { shapeParsers } from '../../drawioShapeParsers';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { DiagramNode, NodeTexts } from '@diagram-craft/model/diagramNode';
