@@ -28,6 +28,7 @@ import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToo
 import { getAdjustments } from './diagramLayerRuleTypes';
 import { toUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
 import { RegularLayer } from './diagramLayerRegular';
+import { transformPathList } from '@diagram-craft/geometry/pathListUtils';
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;
@@ -489,7 +490,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
     const paths = this.getDefinition().getBoundingPath(this);
 
-    const scaledPath = paths.transform(toUnitLCS(this.bounds));
+    const scaledPath = transformPathList(paths, toUnitLCS(this.bounds));
 
     this.#nodeType = 'generic-path';
     this.updateProps(p => {

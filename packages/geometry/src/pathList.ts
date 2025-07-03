@@ -2,7 +2,6 @@ import { Path } from './path';
 import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { Box } from './box';
 import { MultiMap } from '@diagram-craft/utils/multimap';
-import { Transform } from './transform';
 import { Point } from './point';
 import { LengthOffsetOnPath, TimeOffsetOnSegment } from './pathPosition';
 
@@ -89,10 +88,6 @@ export class PathList {
 
   clone() {
     return new PathList(this.paths.map(path => path.clone()));
-  }
-
-  transform(transformList: Transform[]) {
-    return new PathList(this.paths.map(p => p.transform(transformList)));
   }
 
   projectPoint(p: Point): ProjectedPointOnPathList {
