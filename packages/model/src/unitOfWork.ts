@@ -5,8 +5,6 @@ import { Stylesheet, StylesheetType } from './diagramStyles';
 import { Layer, LayerType } from './diagramLayer';
 import { Diagram, DiagramEvents } from './diagram';
 import { EventKey } from '@diagram-craft/utils/event';
-import { DiagramNode } from './diagramNode';
-import { DiagramEdge } from './diagramEdge';
 import { AdjustmentRule } from './diagramLayerRuleTypes';
 import { LayerManager } from './diagramLayerManager';
 
@@ -272,13 +270,13 @@ export class UnitOfWork {
 
     this.diagram.emit('uowCommit', {
       removed: [...this.#elementsToRemove.values()].filter(
-        e => e instanceof DiagramNode || e instanceof DiagramEdge
+        e => e instanceof DiagramElement
       ) as DiagramElement[],
       updated: [...this.#elementsToUpdate.values()].filter(
-        e => e instanceof DiagramNode || e instanceof DiagramEdge
+        e => e instanceof DiagramElement
       ) as DiagramElement[],
       added: [...this.#elementsToAdd.values()].filter(
-        e => e instanceof DiagramNode || e instanceof DiagramEdge
+        e => e instanceof DiagramElement
       ) as DiagramElement[]
     });
 
