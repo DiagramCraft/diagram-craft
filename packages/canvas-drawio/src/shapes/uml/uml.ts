@@ -1,5 +1,4 @@
 import {
-  loadStencilsFromYaml,
   MakeStencilNodeOptsProps,
   NodeDefinitionRegistry,
   registerStencil,
@@ -24,6 +23,7 @@ import { UmlFrame } from './umlFrame.nodeType';
 import { ProvidedRequiredInterface } from './providedRequiredInterface.nodeType';
 import { RequiredInterface } from './requiredInterface.nodeType';
 import { StyleManager } from '../../styleManager';
+import { loadStencilsFromYaml } from '@diagram-craft/model/elementDefinitionLoader';
 
 export const parseUMLShapes = async (
   id: string,

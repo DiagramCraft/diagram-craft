@@ -1,15 +1,15 @@
-import { LayerSnapshot, UnitOfWork } from './unitOfWork';
+import type { LayerSnapshot, UnitOfWork } from './unitOfWork';
 import type { LayerCRDT } from './diagramLayer';
 import { Layer } from './diagramLayer';
-import { Diagram } from './diagram';
+import type { Diagram } from './diagram';
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { parseAndQuery } from '@diagram-craft/query/query';
 import { assert, notImplemented } from '@diagram-craft/utils/assert';
 import { nodeDefaults } from './diagramDefaults';
 import {
-  Adjustment,
-  AdjustmentRule,
-  AdjustmentRuleClause,
+  type Adjustment,
+  type AdjustmentRule,
+  type AdjustmentRuleClause,
   DEFAULT_ADJUSTMENT_RULE
 } from './diagramLayerRuleTypes';
 import { CRDTList, CRDTMap } from './collaboration/crdt';
@@ -54,11 +54,6 @@ export const validProps = (_type: 'edge' | 'node'): Prop[] => {
     }
   ];
 };
-
-export function isResolvableToRuleLayer(l: Layer): l is Layer<RuleLayer> {
-  if (l.resolve()?.type !== 'rule') return false;
-  return true;
-}
 
 export class RuleLayer extends Layer<RuleLayer> {
   #rules: CRDTList<AdjustmentRule>;

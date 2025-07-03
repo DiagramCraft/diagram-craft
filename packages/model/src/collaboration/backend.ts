@@ -1,5 +1,5 @@
 import { Awareness, NoOpAwareness } from './awareness';
-import { CRDTRoot } from './crdt';
+import type { CRDTRoot } from './crdt';
 import { ProgressCallback } from '../types';
 
 export interface CollaborationBackend {

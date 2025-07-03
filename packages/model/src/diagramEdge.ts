@@ -1,4 +1,4 @@
-import { DiagramNode, DuplicationContext } from './diagramNode';
+import type { DiagramNode, DuplicationContext } from './diagramNode';
 import { LabelNode, Waypoint } from './types';
 import { Point } from '@diagram-craft/geometry/point';
 import { Vector } from '@diagram-craft/geometry/vector';
@@ -8,7 +8,7 @@ import { CubicSegment, LineSegment } from '@diagram-craft/geometry/pathSegment';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { DiagramElement, isEdge, isNode } from './diagramElement';
 import { DiagramEdgeSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
-import { Diagram } from './diagram';
+import type { Diagram } from './diagram';
 import { Layer } from './diagramLayer';
 import {
   AnchorEndpoint,

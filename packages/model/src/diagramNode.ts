@@ -3,8 +3,8 @@ import { Box } from '@diagram-craft/geometry/box';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { DiagramElement, isEdge, isNode } from './diagramElement';
 import { DiagramNodeSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
-import { DiagramEdge, ResolvedLabelNode } from './diagramEdge';
-import { Diagram } from './diagram';
+import type { DiagramEdge, ResolvedLabelNode } from './diagramEdge';
+import type { Diagram } from './diagram';
 import { Layer } from './diagramLayer';
 import { DefaultStyles, nodeDefaults } from './diagramDefaults';
 import {

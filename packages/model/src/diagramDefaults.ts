@@ -1,8 +1,8 @@
 import { DeepPartial, DeepRequired, makeWriteable } from '@diagram-craft/utils/types';
 import { deepMerge, isObj, unfoldObject } from '@diagram-craft/utils/object';
-import { NodePropsForRendering } from './diagramNode';
-import { EdgePropsForRendering } from './diagramEdge';
-import { ElementPropsForRendering } from './diagramElement';
+import type { NodePropsForRendering } from './diagramNode';
+import type { EdgePropsForRendering } from './diagramEdge';
+import type { ElementPropsForRendering } from './diagramElement';
 import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { assert } from '@diagram-craft/utils/assert';
 

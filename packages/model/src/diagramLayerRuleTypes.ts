@@ -1,5 +1,6 @@
-import { Diagram } from './diagram';
-import { isResolvableToRuleLayer } from './diagramLayerRule';
+import type { Diagram } from './diagram';
+import { Layer } from './diagramLayer';
+import type { RuleLayer } from './diagramLayerRule';
 
 export type AdjustmentRule = {
   id: string;
@@ -8,6 +9,11 @@ export type AdjustmentRule = {
   clauses: AdjustmentRuleClause[];
   actions: AdjustmentRuleAction[];
 };
+
+function isResolvableToRuleLayer(l: Layer): l is Layer<RuleLayer> {
+  if (l.resolve()?.type !== 'rule') return false;
+  return true;
+}
 
 export type AdjustmentRuleClause = { id: string } & (
   | {

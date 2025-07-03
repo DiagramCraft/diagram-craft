@@ -1,6 +1,6 @@
-import { MatchingMagnetPair, SnapProvider } from './snapManager';
-import { Guide } from '../selectionState';
-import { Diagram } from '../diagram';
+import type { MatchingMagnetPair, SnapProvider } from './snapManager';
+import type { Guide } from '../selectionState';
+import type { Diagram } from '../diagram';
 import { MagnetOfType } from './magnet';
 import { Box } from '@diagram-craft/geometry/box';
 import { Line } from '@diagram-craft/geometry/line';
