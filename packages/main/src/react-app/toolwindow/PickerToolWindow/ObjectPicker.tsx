@@ -7,6 +7,7 @@ import { useMemo, useState } from 'react';
 import { useApplication, useDiagram } from '../../../application';
 import { DRAG_DROP_MANAGER } from '@diagram-craft/canvas/dragDropManager';
 import { ObjectPickerDrag } from './ObjectPickerDrag';
+import { createThumbnailDiagramForNode } from '@diagram-craft/model/diagramThumbnail';
 
 const NODE_CACHE = new Map<string, [Stencil, Diagram, DiagramNode, DiagramNode]>();
 
@@ -17,7 +18,7 @@ const makeDiagramNode = (mainDiagram: Diagram, n: Stencil) => {
     return NODE_CACHE.get(cacheKey)!;
   }
 
-  const { node: stencilNode, diagram: stencilDiagram } = Diagram.createThumbnailDiagramForNode(
+  const { node: stencilNode, diagram: stencilDiagram } = createThumbnailDiagramForNode(
     d => n.node(d),
     mainDiagram.document.definitions
   );
@@ -27,7 +28,7 @@ const makeDiagramNode = (mainDiagram: Diagram, n: Stencil) => {
   };
   stencilDiagram.viewBox.offset = { x: -5, y: -5 };
 
-  const { node: canvasNode, diagram: canvasDiagram } = Diagram.createThumbnailDiagramForNode(
+  const { node: canvasNode, diagram: canvasDiagram } = createThumbnailDiagramForNode(
     d => n.canvasNode(d),
     mainDiagram.document.definitions
   );

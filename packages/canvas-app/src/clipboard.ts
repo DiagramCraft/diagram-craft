@@ -1,6 +1,5 @@
 import { Browser } from '@diagram-craft/canvas/browser';
-
-export const ELEMENTS_CONTENT_TYPE = 'application/x-diagram-craft-selection';
+import { ELEMENTS_CONTENT_TYPE } from './clipboardConstants';
 
 type ClipboardItem = {
   type: string;

@@ -86,11 +86,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     if (end instanceof ConnectedEndpoint)
       end.node._addEdge(end instanceof AnchorEndpoint ? end.anchorId : undefined, this);
 
-    const m = this.metadata;
-    if (!m.style) {
-      m.style = DefaultStyles.edge.default;
-      this.forceUpdateMetadata(m);
-    }
+    this._metadata.style ??= DefaultStyles.edge.default;
   }
 
   getDefinition(): EdgeDefinition {
@@ -115,7 +111,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       dest.push({
         val: accessor.get(styleProps, path) as PropPathValue<EdgeProps, T>,
         type: 'style',
-        id: this.metadata.style
+        id: this._metadata.style
       });
     }
 
@@ -143,7 +139,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   }
 
   private getPropsSources() {
-    const styleProps = this.diagram.document.styles.getEdgeStyle(this.metadata.style)?.props;
+    const styleProps = this.diagram.document.styles.getEdgeStyle(this._metadata.style)?.props;
 
     const adjustments = getAdjustments(this._activeDiagram, this.id);
     const ruleProps = adjustments.map(([k, v]) => [k, v.props]);
@@ -251,7 +247,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   get dataForTemplate() {
     return deepMerge(
       {
-        name: this.metadata.name
+        name: this._metadata.name
       },
       this.metadata.data?.customData ?? {},
       ...(this.metadata.data?.data?.map(d => d.data) ?? [])
@@ -264,8 +260,8 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       return this.#labelNodes[0].node.name;
     }
 
-    if (!isEmptyString(this.metadata.name)) {
-      this.cache.set('name', this.metadata.name!);
+    if (!isEmptyString(this._metadata.name)) {
+      this.cache.set('name', this._metadata.name!);
       return this.cache.get('name') as string;
     }
 
@@ -631,7 +627,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       id: this.id,
       type: 'edge',
       props: deepClone(this.#props),
-      metadata: deepClone(this.metadata),
+      metadata: deepClone(this._metadata),
       start: this.start.serialize(),
       end: this.end.serialize(),
       waypoints: deepClone(this.waypoints),
@@ -647,7 +643,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   // TODO: Add assertions for lookups
   restore(snapshot: DiagramEdgeSnapshot, uow: UnitOfWork) {
     this.#props = snapshot.props as EdgeProps;
-    this._highlights.clear();
+    this._highlights = [];
     this.#start = Endpoint.deserialize(snapshot.start, this.diagram.nodeLookup);
     this.#end = Endpoint.deserialize(snapshot.end, this.diagram.nodeLookup);
     this.#waypoints = (snapshot.waypoints ?? []) as Array<Waypoint>;
@@ -671,7 +667,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       this.start,
       this.end,
       deepClone(this.#props) as EdgeProps,
-      deepClone(this.metadata) as ElementMetadata,
+      deepClone(this._metadata) as ElementMetadata,
       deepClone(this.waypoints) as Array<Waypoint>,
       this.layer
     );

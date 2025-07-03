@@ -1,12 +1,12 @@
-import { DiagramElement } from './diagramElement';
+import type { DiagramElement } from './diagramElement';
 import { assert } from '@diagram-craft/utils/assert';
 import { SerializedEdge, SerializedNode } from './serialization/types';
-import { Stylesheet, StylesheetType } from './diagramStyles';
-import { Layer, LayerType } from './diagramLayer';
-import { Diagram, DiagramEvents } from './diagram';
+import type { Stylesheet, StylesheetType } from './diagramStyles';
+import type { Layer, LayerType } from './diagramLayer';
+import type { Diagram, DiagramEvents } from './diagram';
 import { EventKey } from '@diagram-craft/utils/event';
-import { AdjustmentRule } from './diagramLayerRuleTypes';
-import { LayerManager } from './diagramLayerManager';
+import type { AdjustmentRule } from './diagramLayerRuleTypes';
+import type { LayerManager } from './diagramLayerManager';
 
 type ActionCallback = () => void;
 
@@ -252,13 +252,13 @@ export class UnitOfWork {
     this.#elementsToAdd.forEach(e => e.invalidate(this));
 
     const handle = (s: EventKey<DiagramEvents>) => (e: Trackable) => {
-      if (e instanceof Layer || e instanceof LayerManager) {
+      if (e.trackableType === 'layer' || e.trackableType === 'layerManager') {
         this.#shouldUpdateDiagram = true;
-      } else if (e instanceof Stylesheet) {
+      } else if (e.trackableType === 'stylesheet') {
         this.#shouldUpdateDiagram = true;
       } else {
         //if (e.type === 'node' && (e as DiagramNode).isLabelNode()) return;
-        this.diagram.emit(s, { element: e, silent });
+        this.diagram.emit(s, { element: e as DiagramElement, silent });
       }
     };
 
@@ -270,13 +270,13 @@ export class UnitOfWork {
 
     this.diagram.emit('uowCommit', {
       removed: [...this.#elementsToRemove.values()].filter(
-        e => e instanceof DiagramElement
+        e => e.trackableType === 'element'
       ) as DiagramElement[],
       updated: [...this.#elementsToUpdate.values()].filter(
-        e => e instanceof DiagramElement
+        e => e.trackableType === 'element'
       ) as DiagramElement[],
       added: [...this.#elementsToAdd.values()].filter(
-        e => e instanceof DiagramElement
+        e => e.trackableType === 'element'
       ) as DiagramElement[]
     });
 

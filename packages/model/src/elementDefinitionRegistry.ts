@@ -1,22 +1,19 @@
 import { DiagramNode, NodeTexts } from './diagramNode';
 import { assert } from '@diagram-craft/utils/assert';
-import { DiagramElement } from './diagramElement';
-import { DiagramEdge } from './diagramEdge';
+import type { DiagramElement } from './diagramElement';
+import type { DiagramEdge } from './diagramEdge';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from './unitOfWork';
 import { Anchor } from './anchor';
 import { Box } from '@diagram-craft/geometry/box';
-import { Diagram, DocumentBuilder } from './diagram';
+import type { Diagram } from './diagram';
 import { newid } from '@diagram-craft/utils/id';
 import { unique } from '@diagram-craft/utils/array';
-import { DiagramDocument } from './diagramDocument';
-import { deserializeDiagramElements } from './serialization/deserialize';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { stencilLoaderRegistry } from '@diagram-craft/canvas-app/loaders';
 import { Property } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
 import { PathList } from '@diagram-craft/geometry/pathList';
-import { NoOpCRDTRoot } from './collaboration/noopCrdt';
 
 export type NodeCapability =
   | 'children'
@@ -372,40 +369,3 @@ export class StencilRegistry extends EventEmitter<StencilEvents> {
     return results;
   }
 }
-
-// eslint-disable-next-line
-export const loadStencilsFromYaml = (stencils: any) => {
-  const dest: Array<Stencil> = [];
-  for (const stencil of stencils.stencils) {
-    const mkNode = (diagram: Diagram) => {
-      const { diagram: dest, layer } = DocumentBuilder.empty(
-        newid(),
-        stencil.name,
-        new DiagramDocument(
-          diagram.document.nodeDefinitions,
-          diagram.document.edgeDefinitions,
-          true,
-          new NoOpCRDTRoot()
-        )
-      );
-
-      const node = deserializeDiagramElements(
-        [stencil.node],
-        dest,
-        dest.activeLayer,
-        {},
-        {}
-      )[0] as DiagramNode;
-      layer.addElement(node, UnitOfWork.immediate(diagram));
-
-      return node;
-    };
-    dest.push({
-      id: stencil.id,
-      name: stencil.name,
-      node: mkNode,
-      canvasNode: mkNode
-    });
-  }
-  return dest;
-};

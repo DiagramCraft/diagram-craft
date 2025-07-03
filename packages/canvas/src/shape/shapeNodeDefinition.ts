@@ -1,4 +1,4 @@
-import { BaseNodeComponent } from '../components/BaseNodeComponent';
+import type { BaseNodeComponent } from '../components/BaseNodeComponent';
 import { PathListBuilder, PathBuilderHelper } from '@diagram-craft/geometry/pathListBuilder';
 import { Box } from '@diagram-craft/geometry/box';
 import { Transform, TransformFactory } from '@diagram-craft/geometry/transform';

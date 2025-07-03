@@ -1,5 +1,4 @@
 import {
-  loadStencilsFromYaml,
   MakeStencilNodeOptsProps,
   NodeDefinitionRegistry,
   registerStencil,
@@ -7,7 +6,7 @@ import {
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UmlModuleNodeDefinition } from './umlModule';
 import { Box } from '@diagram-craft/geometry/box';
-import { shapeParsers } from '../../drawioReader';
+import { shapeParsers } from '../../drawioShapeParsers';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { DiagramNode, NodeTexts } from '@diagram-craft/model/diagramNode';
 import { deepMerge } from '@diagram-craft/utils/object';
@@ -23,6 +22,7 @@ import { UmlFrame } from './umlFrame.nodeType';
 import { ProvidedRequiredInterface } from './providedRequiredInterface.nodeType';
 import { RequiredInterface } from './requiredInterface.nodeType';
 import { StyleManager } from '../../styleManager';
+import { loadStencilsFromYaml } from '@diagram-craft/model/elementDefinitionLoader';
 
 export const parseUMLShapes = async (
   id: string,

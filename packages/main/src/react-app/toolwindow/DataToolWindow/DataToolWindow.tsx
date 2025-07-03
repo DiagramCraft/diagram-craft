@@ -12,7 +12,6 @@ import { useRedraw } from '../../hooks/useRedraw';
 import { TbChevronDown, TbChevronRight, TbRefresh, TbSettings } from 'react-icons/tb';
 import { DRAG_DROP_MANAGER } from '@diagram-craft/canvas/dragDropManager';
 import { ObjectPickerDrag } from '../PickerToolWindow/ObjectPickerDrag';
-import { Diagram } from '@diagram-craft/model/diagram';
 import { newid } from '@diagram-craft/utils/id';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { isRegularLayer } from '@diagram-craft/model/diagramLayerRegular';
@@ -30,6 +29,7 @@ import * as ContextMenu from '@radix-ui/react-context-menu';
 import { ActionContextMenuItem } from '../../components/ActionContextMenuItem';
 import { useEventListener } from '../../hooks/useEventListener';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { createThumbnailDiagramForNode } from '@diagram-craft/model/diagramThumbnail';
 
 const NODE_CACHE = new Map<string, DiagramNode>();
 
@@ -58,7 +58,7 @@ const makeTemplateNode = (
   }
 
   const tpl = deepClone(template.template);
-  const { node, diagram } = Diagram.createThumbnailDiagramForNode(
+  const { node, diagram } = createThumbnailDiagramForNode(
     (diagram, layer) => deserializeDiagramElements([tpl], diagram, layer)[0] as DiagramNode,
     definitions
   );
@@ -82,7 +82,7 @@ const makeTemplateNode = (
 };
 
 const makeDefaultNode = (item: Data, schema: DataSchema, definitions: Definitions): DiagramNode => {
-  return Diagram.createThumbnailDiagramForNode(
+  return createThumbnailDiagramForNode(
     (_diagram, layer) =>
       new DiagramNode(
         newid(),

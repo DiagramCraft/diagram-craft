@@ -1,6 +1,6 @@
 import { Layer } from './diagramLayer';
 import type { LayerCRDT } from './diagramLayer';
-import { Diagram } from './diagram';
+import type { Diagram } from './diagram';
 import { LayerSnapshot, UnitOfWork } from './unitOfWork';
 import { RuleLayer } from './diagramLayerRule';
 import { CRDTMap } from './collaboration/crdt';

@@ -1,7 +1,7 @@
 import { Box } from '@diagram-craft/geometry/box';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { DiagramNode, NodeTexts } from '@diagram-craft/model/diagramNode';
-import { WorkQueue } from './drawioReader';
+import type { WorkQueue } from './drawioReader';
 import { Angle } from '@diagram-craft/geometry/angle';
 import { dataURItoBlob } from './blobUtils';
 import { assertHAlign, assertVAlign, HAlign } from '@diagram-craft/model/diagramProps';

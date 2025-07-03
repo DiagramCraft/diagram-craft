@@ -1,4 +1,4 @@
-import { DataTemplate } from './diagramDocument';
+import type { DataTemplate } from './diagramDocument';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { assert } from '@diagram-craft/utils/assert';
 import { CRDTMap, CRDTRoot } from './collaboration/crdt';

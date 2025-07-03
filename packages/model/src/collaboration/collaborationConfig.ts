@@ -1,5 +1,5 @@
 import { CollaborationBackend, NoOpCollaborationBackend } from './backend';
-import { CRDTMap, CRDTRoot } from './crdt';
+import type { CRDTMap, CRDTRoot } from './crdt';
 import { NoOpCRDTMap, NoOpCRDTRoot } from './noopCrdt';
 
 export const CollaborationConfig: {

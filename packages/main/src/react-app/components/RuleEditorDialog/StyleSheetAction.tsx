@@ -1,7 +1,7 @@
 import { Select } from '@diagram-craft/app-components/Select';
 import { VerifyNotReached } from '@diagram-craft/utils/assert';
 import { EditorTypes } from './editors';
-import { EditableAdjustmentRuleAction } from './RuleEditorDialog';
+import type { EditableAdjustmentRuleAction } from './RuleEditorDialog';
 import { useDiagram } from '../../../application';
 
 export const StyleSheetAction = (props: Props) => {

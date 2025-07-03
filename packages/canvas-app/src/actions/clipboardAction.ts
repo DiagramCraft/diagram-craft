@@ -5,15 +5,16 @@ import {
   ActionCriteria,
   BaseActionArgs
 } from '@diagram-craft/canvas/action';
-import { UndoableAction } from '@diagram-craft/model/undoManager';
-import { assertRegularLayer } from '@diagram-craft/model/diagramLayerRegular';
-import { DiagramElement } from '@diagram-craft/model/diagramElement';
-import { Diagram } from '@diagram-craft/model/diagram';
+import { assertRegularLayer, RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { serializeDiagramElement } from '@diagram-craft/model/serialization/serialize';
-import { Clipboard, ELEMENTS_CONTENT_TYPE } from '../clipboard';
-import { PASTE_HANDLERS, PasteHandler } from '../clipboardPasteHandlers';
-import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
+import { Clipboard } from '../clipboard';
+import {
+  ElementsPasteHandler,
+  ImagePasteHandler,
+  TextPasteHandler
+} from '../clipboardPasteHandlers';
+import { ELEMENTS_CONTENT_TYPE } from '../clipboardConstants';
 
 declare global {
   interface ActionMap extends ReturnType<typeof clipboardActions> {}
@@ -27,34 +28,12 @@ export const clipboardActions = (context: ActionContext) => ({
 
 const CLIPBOARD = Clipboard.get();
 
-export class PasteUndoableAction implements UndoableAction {
-  description = 'Paste';
-
-  constructor(
-    private readonly elements: DiagramElement[],
-    private readonly diagram: Diagram,
-    private readonly layer: RegularLayer
-  ) {}
-
-  undo(uow: UnitOfWork) {
-    this.elements.forEach(e => {
-      assertRegularLayer(e.layer);
-      e.layer.removeElement(e, uow);
-    });
-
-    this.diagram.selectionState.setElements(
-      this.diagram.selectionState.elements.filter(e => !this.elements.includes(e))
-    );
-
-    PasteHandler.clearPastePoint();
-  }
-
-  redo(uow: UnitOfWork) {
-    this.elements.forEach(e => {
-      this.layer.addElement(e, uow);
-    });
-  }
-}
+const PASTE_HANDLERS = {
+  'image/png': new ImagePasteHandler(),
+  'image/jpeg': new ImagePasteHandler(),
+  'text/plain': new TextPasteHandler(),
+  [ELEMENTS_CONTENT_TYPE]: new ElementsPasteHandler()
+};
 
 export class ClipboardPasteAction extends AbstractAction<BaseActionArgs> {
   layer: RegularLayer | undefined;

@@ -7,7 +7,7 @@ import {
   TimeOffsetOnSegment,
   WithSegment
 } from './pathPosition';
-import { PathListBuilder, RawSegment } from './pathListBuilder';
+import type { RawSegment } from './pathListBuilder';
 import { BezierUtils } from './bezier';
 import { Box } from './box';
 import { assert, VERIFY_NOT_REACHED, VerifyNotReached } from '@diagram-craft/utils/assert';
@@ -15,7 +15,6 @@ import { roundHighPrecision } from '@diagram-craft/utils/math';
 import { Vector } from './vector';
 import { Line } from './line';
 import { Lazy } from '@diagram-craft/utils/lazy';
-import { Transform } from './transform';
 
 export type Projection = { t: number; distance: number; point: Point };
 
@@ -196,10 +195,16 @@ export class Path {
     return this.segmentList.segments.at(-1)!.end;
   }
 
-  transform(t: Array<Transform>) {
-    const pl = PathListBuilder.fromSegments(this.start, this.#path).withTransform(t);
-    return pl.getPaths().singular();
+  get raw() {
+    return this.#path;
   }
+
+  /*transform(t: Array<Transform>) {
+    return PathListBuilder.fromSegments(this.start, this.#path)
+      .withTransform(t)
+      .getPaths()
+      .singular();
+  }*/
 
   get numberOfSegments() {
     return this.#segmentList.hasValue() ? this.#segmentList.get().length() : this.#path.length;

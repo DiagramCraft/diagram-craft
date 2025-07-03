@@ -1,7 +1,7 @@
-import { DiagramDocument } from './diagramDocument';
+import type { DiagramDocument } from './diagramDocument';
 import { UnitOfWork } from './unitOfWork';
-import { UndoableAction } from './undoManager';
-import { Diagram } from './diagram';
+import type { UndoableAction } from './undoManager';
+import type { Diagram } from './diagram';
 import { deepClone } from '@diagram-craft/utils/object';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { CRDTMap, CRDTRoot } from './collaboration/crdt';

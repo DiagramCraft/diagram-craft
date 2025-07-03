@@ -1,20 +1,22 @@
-import { EdgePropsForEditing, EdgePropsForRendering } from './diagramEdge';
-import { DuplicationContext, NodePropsForEditing, NodePropsForRendering } from './diagramNode';
-import type { DiagramNode } from './diagramNode';
-import type { DiagramEdge } from './diagramEdge';
+import type { DiagramEdge, EdgePropsForEditing, EdgePropsForRendering } from './diagramEdge';
+import type {
+  DiagramNode,
+  DuplicationContext,
+  NodePropsForEditing,
+  NodePropsForRendering
+} from './diagramNode';
 import { ElementInterface } from './types';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { Box } from '@diagram-craft/geometry/box';
 import { UnitOfWork } from './unitOfWork';
 import { Layer } from './diagramLayer';
-import { Diagram } from './diagram';
+import type { Diagram } from './diagram';
 import { AttachmentConsumer } from './attachment';
 import { FlatObject } from '@diagram-craft/utils/types';
 import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
 import { PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { assert } from '@diagram-craft/utils/assert';
-import { RegularLayer } from './diagramLayerRegular';
-import { CRDT, CRDTMap, CRDTProperty } from './collaboration/crdt';
+import type { RegularLayer } from './diagramLayerRegular';
 
 // eslint-disable-next-line
 type Snapshot = any;
@@ -22,57 +24,31 @@ type Snapshot = any;
 export type ElementPropsForEditing = EdgePropsForEditing | NodePropsForEditing;
 export type ElementPropsForRendering = EdgePropsForRendering | NodePropsForRendering;
 
-type DiagramElementCRDT = {
-  id: string;
-  type: string;
-  highlights: CRDTMap<Record<string, boolean>>;
-  metadata: ElementMetadata;
-};
-
 export abstract class DiagramElement implements ElementInterface, AttachmentConsumer {
-  // Transient properties
-  readonly crdt: CRDTMap<DiagramElementCRDT>;
-  protected _cache: Map<string, unknown> | undefined = undefined;
-  protected _layer: Layer;
-  protected _diagram: Diagram;
-  protected _activeDiagram: Diagram;
-  // TODO: Is this always a RegularLayer
-  protected _parent?: DiagramElement;
+  readonly type: string;
+  readonly id: string;
+  readonly trackableType = 'element';
 
-  // Shared properties
-  readonly #metadata: CRDTProperty<DiagramElementCRDT, 'metadata'>;
-  protected readonly _highlights: CRDTMap<Record<string, boolean>>;
   protected _children: ReadonlyArray<DiagramElement> = [];
+  protected _diagram: Diagram;
 
-  protected constructor(
-    type: string,
-    id: string,
-    // TODO: Do we need to pass diagram, or can we use layer.diagram?
-    //    diagram: Diagram,
-    layer: Layer,
-    metadata: ElementMetadata,
-    crdt?: CRDTMap<DiagramElementCRDT>
-  ) {
+  // TODO: Is this always a RegularLayer
+  protected _layer: Layer;
+  protected _activeDiagram: Diagram;
+  protected _metadata: ElementMetadata = {};
+  protected _parent?: DiagramElement;
+  protected _highlights: ReadonlyArray<string> = [];
+
+  protected _cache: Map<string, unknown> | undefined = undefined;
+
+  protected constructor(type: string, id: string, layer: Layer, metadata: ElementMetadata) {
+    this.type = type;
+    this.id = id;
     this._diagram = layer.diagram;
     this._layer = layer;
     this._activeDiagram = this._diagram;
 
-    this.crdt = crdt ?? this._diagram.document.root.factory.makeMap();
-    this.crdt.set('id', id);
-    this.crdt.set('type', type);
-
-    this._highlights = this.crdt.get('highlights', () =>
-      this._diagram.document.root.factory.makeMap()
-    )!;
-
-    this.#metadata = CRDT.makeProp('metadata', this.crdt, type => {
-      if (type !== 'remote') return;
-
-      this.invalidate(UnitOfWork.immediate(this._diagram));
-      this._diagram.emit('elementChange', { element: this });
-      this._cache?.clear();
-    });
-    this.#metadata.set(metadata ?? {});
+    this._metadata = metadata ?? {};
   }
 
   abstract getAttachmentsInUse(): Array<string>;
@@ -103,14 +79,6 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
 
   abstract snapshot(): Snapshot;
   abstract restore(snapshot: Snapshot, uow: UnitOfWork): void;
-
-  get id() {
-    return this.crdt.get('id')!;
-  }
-
-  get type() {
-    return this.crdt.get('type')!;
-  }
 
   /* Flags *************************************************************************************************** */
 
@@ -151,16 +119,12 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
   /* Highlights ********************************************************************************************** */
 
   set highlights(highlights: ReadonlyArray<string>) {
-    this._highlights.clear();
-    highlights.forEach(h => this._highlights.set(h, true));
-
+    this._highlights = highlights;
     this.diagram.emitAsync('elementHighlighted', { element: this });
   }
 
   get highlights() {
-    return Array.from(this._highlights.entries())
-      .filter(([, v]) => !!v)
-      .map(([k]) => k);
+    return this._highlights;
   }
 
   /* Parent ************************************************************************************************** */
@@ -176,18 +140,12 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
   /* Metadata ************************************************************************************************ */
 
   get metadata() {
-    return this.#metadata.get() ?? {};
-  }
-
-  protected forceUpdateMetadata(metadata: ElementMetadata) {
-    this.#metadata.set(metadata);
+    return this._metadata;
   }
 
   updateMetadata(callback: (props: ElementMetadata) => void, uow: UnitOfWork) {
     uow.snapshot(this);
-    const metadata = this.#metadata.get()!;
-    callback(metadata);
-    this.#metadata.set(metadata);
+    callback(this._metadata);
     uow.updateElement(this);
     this._cache?.clear();
   }

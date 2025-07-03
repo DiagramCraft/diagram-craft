@@ -9,6 +9,7 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { useRef, useState } from 'react';
 import { Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
+import { createThumbnailDiagramForNode } from '@diagram-craft/model/diagramThumbnail';
 
 const SIZE = 35;
 
@@ -23,7 +24,7 @@ const getDiagram = (props: {
     return NODE_CACHE.get(props.stencil.id)!;
   }
 
-  const { diagram, node } = Diagram.createThumbnailDiagramForNode(
+  const { diagram, node } = createThumbnailDiagramForNode(
     d => props.stencil.node(d),
     props.document.definitions
   );

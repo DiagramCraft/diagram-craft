@@ -1,5 +1,5 @@
 import { Point } from './point';
-import { Path } from './path';
+import type { Path } from './path';
 
 export type WithSegment<T> = {
   segment: number;

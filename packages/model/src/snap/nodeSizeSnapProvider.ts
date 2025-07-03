@@ -1,7 +1,7 @@
-import { EligibleNodePredicate, MatchingMagnetPair, SnapProvider } from './snapManager';
+import type { EligibleNodePredicate, MatchingMagnetPair, SnapProvider } from './snapManager';
 import { Guide } from '../selectionState';
 import { MagnetOfType } from './magnet';
-import { Diagram } from '../diagram';
+import type { Diagram } from '../diagram';
 import { AbstractNodeSnapProvider } from './abstractNodeSnapProvider';
 import { Direction } from '@diagram-craft/geometry/direction';
 import { Box } from '@diagram-craft/geometry/box';

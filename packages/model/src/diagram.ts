@@ -8,15 +8,13 @@ import { SnapManager } from './snap/snapManager';
 import { SnapManagerConfig } from './snap/snapManagerConfig';
 import { UnitOfWork } from './unitOfWork';
 import { DiagramElement, isEdge, isNode } from './diagramElement';
-import { DiagramDocument } from './diagramDocument';
+import type { DiagramDocument } from './diagramDocument';
 import { Box } from '@diagram-craft/geometry/box';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { EventEmitter, EventKey } from '@diagram-craft/utils/event';
 import { assert } from '@diagram-craft/utils/assert';
 import { AttachmentConsumer } from './attachment';
 import { newid } from '@diagram-craft/utils/id';
-import { Definitions } from './elementDefinitionRegistry';
-import { NoOpCRDTMap, NoOpCRDTRoot } from './collaboration/noopCrdt';
 import { CRDTMapper } from './collaboration/mappedCRDT';
 import { CRDT, CRDTMap, CRDTObject, CRDTProperty, Flatten } from './collaboration/crdt';
 import { LayerManager, LayerManagerCRDT } from './diagramLayerManager';
@@ -478,36 +476,5 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
   getAttachmentsInUse() {
     return this.layers.getAttachmentsInUse();
-  }
-
-  public static createThumbnailDiagramForNode(
-    factory: (diagram: Diagram, layer: Layer) => DiagramNode,
-    definitions: Definitions
-  ) {
-    const dest = new Diagram(
-      newid(),
-      newid(),
-      new DiagramDocument(
-        definitions.nodeDefinitions,
-        definitions.edgeDefinitions,
-        true,
-        new NoOpCRDTRoot()
-      ),
-      new NoOpCRDTMap<DiagramCRDT>()
-    );
-
-    const uow = UnitOfWork.immediate(dest);
-
-    const layer = new RegularLayer(newid(), newid(), [], dest);
-    dest.layers.add(layer, uow);
-
-    const node = factory(dest, layer);
-    layer.addElement(node, uow);
-
-    return {
-      diagram: dest,
-      layer: layer,
-      node: node
-    };
   }
 }

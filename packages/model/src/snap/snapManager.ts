@@ -1,4 +1,4 @@
-import { Diagram } from '../diagram';
+import type { Diagram } from '../diagram';
 import { CanvasSnapProvider } from './canvasSnapProvider';
 import { NodeSnapProvider } from './nodeSnapProvider';
 import { NodeDistanceSnapProvider } from './nodeDistanceSnapProvider';

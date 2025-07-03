@@ -1,8 +1,8 @@
 import { DiagramElement, isEdge, isNode } from './diagramElement';
-import { UndoableAction } from './undoManager';
+import type { UndoableAction } from './undoManager';
 import { StylesheetSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
-import { DiagramDocument } from './diagramDocument';
-import { Diagram } from './diagram';
+import type { DiagramDocument } from './diagramDocument';
+import type { Diagram } from './diagram';
 import { common, deepClear, deepClone, deepMerge, isObj } from '@diagram-craft/utils/object';
 import { assert } from '@diagram-craft/utils/assert';
 import { Defaults, DefaultStyles, edgeDefaults, nodeDefaults } from './diagramDefaults';
@@ -27,6 +27,8 @@ export class Stylesheet<T extends StylesheetType, P = TypeMap[T]>
   implements UOWTrackable<StylesheetSnapshot>
 {
   type: T;
+
+  readonly trackableType = 'stylesheet';
 
   constructor(readonly crdt: CRDTMap<StylesheetSnapshot>) {
     this.type = crdt.get('type') as T;

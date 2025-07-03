@@ -1,5 +1,5 @@
 import { UnitOfWork } from './unitOfWork';
-import { Diagram } from './diagram';
+import type { Diagram } from './diagram';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 

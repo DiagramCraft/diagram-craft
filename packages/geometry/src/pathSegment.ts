@@ -2,8 +2,8 @@ import { Point } from './point';
 import { Vector } from './vector';
 import { Line } from './line';
 import { CubicBezier } from './bezier';
-import { RawSegment } from './pathListBuilder';
-import { Projection } from './path';
+import type { RawSegment } from './pathListBuilder';
+import type { Projection } from './path';
 import { Box } from './box';
 import { round } from '@diagram-craft/utils/math';
 

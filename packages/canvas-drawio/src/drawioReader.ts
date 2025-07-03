@@ -19,30 +19,12 @@ import { Waypoint } from '@diagram-craft/model/types';
 import { Line } from '@diagram-craft/geometry/line';
 import { newid } from '@diagram-craft/utils/id';
 import {
-  parseArrow,
-  parseBlockArc,
-  parseCloud,
-  parseCube,
-  parseCurlyBracket,
-  parseCylinder,
-  parseDelay,
   parseDiamond,
-  parseDocument,
   parseEllipse,
-  parseHexagon,
   parseImage,
   parseLine,
-  parseParallelogram,
-  parsePartialRect,
-  parseProcess,
-  parseRect,
-  parseRhombus,
   parseRoundedRect,
-  parseStep,
   parseSwimlane,
-  parseTable,
-  parseTableRow,
-  parseTransparent,
   parseTriangle
 } from './shapes';
 import { registerAzureShapes } from './shapes/azure';
@@ -76,6 +58,7 @@ import { nodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { xIterElements, xNum } from '@diagram-craft/utils/xml';
 import { parseNum } from '@diagram-craft/utils/number';
 import { assertRegularLayer, RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
+import { getParser, shapeParsers } from './drawioShapeParsers';
 
 const drawioBuiltinShapes: Partial<Record<string, string>> = {
   actor:
@@ -105,36 +88,6 @@ export type ShapeParser = (
   layer: Layer,
   queue: WorkQueue
 ) => Promise<DiagramNode>;
-
-export const shapeParsers: Record<string, ShapeParser> = {
-  'hexagon': parseHexagon,
-  'step': parseStep,
-  'cloud': parseCloud,
-  'rect': parseRect,
-  'transparent': parseTransparent,
-  'partialRectangle': parsePartialRect,
-  'delay': parseDelay,
-  'rhombus': parseRhombus,
-  'parallelogram': parseParallelogram,
-  'cylinder': parseCylinder,
-  'cylinder3': parseCylinder,
-  'process': parseProcess,
-  'curlyBracket': parseCurlyBracket,
-  'mxgraph.basic.partConcEllipse': parseBlockArc,
-  'triangle': parseTriangle,
-  'mxgraph.arrows2.arrow': parseArrow,
-  'image': parseImage,
-  'cube': parseCube,
-  'line': parseLine,
-  'ellipse': parseEllipse,
-  'table': parseTable,
-  'tableRow': parseTableRow,
-  'document': parseDocument
-};
-
-const getParser = (shape: string | undefined): ShapeParser | undefined =>
-  shapeParsers[shape as keyof ShapeParser] ??
-  shapeParsers[shape?.split('.').slice(0, -1).join('.') as keyof ShapeParser];
 
 type Loader = (
   registry: NodeDefinitionRegistry,

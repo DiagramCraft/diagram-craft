@@ -11,7 +11,6 @@ import { GenericPathNodeDefinition } from '@diagram-craft/canvas/node-types/Gene
 import { GroupNodeDefinition } from '@diagram-craft/canvas/node-types/Group.nodeType';
 import {
   EdgeDefinitionRegistry,
-  loadStencilsFromYaml,
   NodeDefinitionRegistry,
   registerStencil,
   StencilPackage
@@ -38,6 +37,7 @@ import stencils from './defaultStencils.yaml';
 import { TableRowNodeDefinition } from '@diagram-craft/canvas/node-types/TableRow.nodeType';
 import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 import { DocumentNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Document.nodeType';
+import { loadStencilsFromYaml } from '@diagram-craft/model/elementDefinitionLoader';
 
 export const defaultNodeRegistry = () => {
   const reg = new NodeDefinitionRegistry();
