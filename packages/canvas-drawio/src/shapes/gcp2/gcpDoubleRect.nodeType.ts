@@ -7,7 +7,7 @@ import {
   BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
-import { cloneAsWriteable } from '@diagram-craft/utils/types';
+import { cloneAsWriteable } from '@diagram-craft/utils/object';
 
 const NOTCH = 8;
 
