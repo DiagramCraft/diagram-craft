@@ -2,7 +2,7 @@ import { DRAG_DROP_MANAGER, State } from '../dragDropManager';
 import { Component, createEffect } from '../component/component';
 import * as html from '../component/vdom-html';
 import { text } from '../component/vdom';
-import { CanvasState } from '../canvas/EditableCanvasComponent';
+import type { CanvasState } from '../canvas/EditableCanvasComponent';
 import { deepEquals } from '@diagram-craft/utils/object';
 import { hasElements } from '@diagram-craft/utils/array';
 
