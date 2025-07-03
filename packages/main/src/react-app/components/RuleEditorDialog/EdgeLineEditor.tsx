@@ -1,8 +1,9 @@
 import { edgeDefaults } from '@diagram-craft/model/diagramDefaults';
-import { Editor, makeProperty } from './editors';
+import type { Editor } from './editors';
 import { EdgeLinePanelForm } from '../../toolwindow/ObjectToolWindow/EdgeLinePanel';
 import { useConfiguration } from '../../context/ConfigurationContext';
 import { useDiagram } from '../../../application';
+import { makeProperty } from './utils';
 
 export const EdgeLineEditor: Editor = props => {
   const $d = useDiagram();

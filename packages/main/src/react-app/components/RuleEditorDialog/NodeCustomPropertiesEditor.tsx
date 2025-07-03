@@ -1,4 +1,4 @@
-import { Editor } from './editors';
+import type { Editor } from './editors';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { newid } from '@diagram-craft/utils/id';
 import { deepClone } from '@diagram-craft/utils/object';

@@ -1,8 +1,9 @@
 import { useConfiguration } from '../../context/ConfigurationContext';
 import { elementDefaults } from '@diagram-craft/model/diagramDefaults';
-import { Editor, makeProperty } from './editors';
+import type { Editor } from './editors';
 import { ElementShadowPanelForm } from '../../toolwindow/ObjectToolWindow/ElementShadowPanel';
 import { useDiagram } from '../../../application';
+import { makeProperty } from './utils';
 
 export const ElementShadowEditor: Editor = props => {
   const $p = props.props;
