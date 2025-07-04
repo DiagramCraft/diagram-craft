@@ -10,8 +10,8 @@ import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoAction
 import { Direction } from '@diagram-craft/geometry/direction';
 import { createLinkedNode } from '@diagram-craft/canvas-app/actions/linkedNodeAction';
 import { Context } from '../context';
-import { assertRegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 export class AnchorHandleDrag extends Drag {
   edge: DiagramEdge;

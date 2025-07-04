@@ -57,8 +57,9 @@ import { coalesce } from '@diagram-craft/utils/strings';
 import { nodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { xIterElements, xNum } from '@diagram-craft/utils/xml';
 import { parseNum } from '@diagram-craft/utils/number';
-import { assertRegularLayer, RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
+import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { getParser, shapeParsers } from './drawioShapeParsers';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 const drawioBuiltinShapes: Partial<Record<string, string>> = {
   actor:

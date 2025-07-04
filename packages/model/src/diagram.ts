@@ -1,7 +1,6 @@
 import { Viewbox } from './viewBox';
 import { DiagramNode } from './diagramNode';
 import { DiagramEdge } from './diagramEdge';
-import { assertRegularLayer } from './diagramLayerRegular';
 import { SelectionState } from './selectionState';
 import { UndoManager } from './undoManager';
 import { SnapManager } from './snap/snapManager';
@@ -20,6 +19,7 @@ import { CRDT, CRDTMap, CRDTObject, CRDTProperty, Flatten } from './collaboratio
 import { LayerManager, LayerManagerCRDT } from './diagramLayerManager';
 import { RegularLayer } from './diagramLayerRegular';
 import { Layer } from './diagramLayer';
+import { assertRegularLayer } from './diagramLayerUtils';
 
 export type DiagramIteratorOpts = {
   nest?: boolean;

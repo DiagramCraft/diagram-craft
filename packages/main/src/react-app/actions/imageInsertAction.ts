@@ -3,9 +3,9 @@ import { Attachment } from '@diagram-craft/model/attachment';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { newid } from '@diagram-craft/utils/id';
-import { assertRegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { Application } from '../../application';
 import { ImageInsertDialog } from '../ImageInsertDialog';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 export const imageInsertActions = (application: Application) => ({
   IMAGE_INSERT: new ImageInsertAction(application)

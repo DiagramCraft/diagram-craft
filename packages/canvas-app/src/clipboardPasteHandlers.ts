@@ -7,12 +7,13 @@ import { SerializedElement } from '@diagram-craft/model/serialization/types';
 import { Box } from '@diagram-craft/geometry/box';
 import { precondition } from '@diagram-craft/utils/assert';
 import { deserializeDiagramElements } from '@diagram-craft/model/serialization/deserialize';
-import { assertRegularLayer, RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
+import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { BaseActionArgs } from '@diagram-craft/canvas/action';
 import { isSerializedEndpointFree } from '@diagram-craft/model/serialization/utils';
 import { UndoableAction } from '@diagram-craft/model/undoManager';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 /* This contains paste handlers which are the code that is executed once
  * an item is pasted. Depending on the type of item pasted (image, node, etc)

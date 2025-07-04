@@ -1,6 +1,5 @@
 import { PickerCanvas } from '../../PickerCanvas';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { isRegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { useMemo, useState } from 'react';
@@ -8,6 +7,7 @@ import { useApplication, useDiagram } from '../../../application';
 import { DRAG_DROP_MANAGER } from '@diagram-craft/canvas/dragDropManager';
 import { ObjectPickerDrag } from './ObjectPickerDrag';
 import { createThumbnailDiagramForNode } from '@diagram-craft/model/diagramThumbnail';
+import { isRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 const NODE_CACHE = new Map<string, [Stencil, Diagram, DiagramNode, DiagramNode]>();
 

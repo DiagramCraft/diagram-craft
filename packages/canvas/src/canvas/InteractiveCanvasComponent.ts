@@ -4,12 +4,12 @@ import { Point } from '@diagram-craft/geometry/point';
 import { Modifiers } from '../dragDropManager';
 import { rawHTML } from '../component/vdom';
 import styles from './canvas.css?inline';
-import { isResolvableToRegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { BaseCanvasComponent, BaseCanvasProps } from './BaseCanvasComponent';
 import { createEffect } from '../component/component';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
 import { Viewbox, ViewboxEvents } from '@diagram-craft/model/viewBox';
 import { Diagram } from '@diagram-craft/model/diagram';
+import { isResolvableToRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 export const createUpdateOnViewboxChangeEffect = (
   svgRef: () => SVGSVGElement | null,

@@ -6,7 +6,6 @@ import { Context } from '@diagram-craft/canvas/context';
 import { Point } from '@diagram-craft/geometry/point';
 import { DRAG_DROP_MANAGER, DragEvents } from '@diagram-craft/canvas/dragDropManager';
 import { getAncestorWithClass, setPosition } from '@diagram-craft/utils/dom';
-import { assertRegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
 import { deserializeDiagramElements } from '@diagram-craft/model/serialization/deserialize';
@@ -20,6 +19,7 @@ import { clamp } from '@diagram-craft/utils/math';
 import { insert } from '@diagram-craft/canvas/component/vdom';
 import { StaticCanvasComponent } from '@diagram-craft/canvas/canvas/StaticCanvasComponent';
 import { createThumbnailDiagramForNode } from '@diagram-craft/model/diagramThumbnail';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 enum State {
   INSIDE,

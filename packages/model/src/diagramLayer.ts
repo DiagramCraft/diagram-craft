@@ -1,4 +1,4 @@
-import type { DiagramElement } from './diagramElement';
+import type { DiagramElement, DiagramElementCRDT } from './diagramElement';
 import type { LayerSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
 import type { Diagram } from './diagram';
 import { AttachmentConsumer } from './attachment';
@@ -8,6 +8,7 @@ import type { ReferenceLayer } from './diagramLayerReference';
 import { CRDT, CRDTList, CRDTMap, CRDTProperty } from './collaboration/crdt';
 import type { RegularLayer } from './diagramLayerRegular';
 import type { AdjustmentRule } from './diagramLayerRuleTypes';
+import type { MappedCRDTOrderedMapMapType } from './collaboration/mappedCRDTOrderedMap';
 
 export type LayerType = 'regular' | 'rule' | 'reference';
 export type StackPosition = { element: DiagramElement; idx: number };
@@ -154,7 +155,7 @@ export type LayerCRDT = {
   referenceDiagramId: string;
 
   // Regular layer
-  // elements: CRDTMap<MappedCRDTOrderedMapMapType<DiagramElementCRDT>>
+  elements: CRDTMap<MappedCRDTOrderedMapMapType<DiagramElementCRDT>>;
 
   // Rule layer
   rules: CRDTList<AdjustmentRule>;

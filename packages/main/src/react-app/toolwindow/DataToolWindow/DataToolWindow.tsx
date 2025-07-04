@@ -14,7 +14,6 @@ import { DRAG_DROP_MANAGER } from '@diagram-craft/canvas/dragDropManager';
 import { ObjectPickerDrag } from '../PickerToolWindow/ObjectPickerDrag';
 import { newid } from '@diagram-craft/utils/id';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { isRegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { assert } from '@diagram-craft/utils/assert';
 import { DataProviderSettingsDialog } from './DataProviderSettingsDialog';
@@ -30,6 +29,7 @@ import { ActionContextMenuItem } from '../../components/ActionContextMenuItem';
 import { useEventListener } from '../../hooks/useEventListener';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { createThumbnailDiagramForNode } from '@diagram-craft/model/diagramThumbnail';
+import { isRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 const NODE_CACHE = new Map<string, DiagramNode>();
 

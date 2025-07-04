@@ -68,6 +68,17 @@ export class MappedCRDTOrderedMap<
     return this.#entries.find(e => e[0] === key)?.[1];
   }
 
+  has(key: string) {
+    return this.crdt.has(key);
+  }
+
+  set(elements: Array<[string, T]>) {
+    this.crdt.clear();
+    for (const [key, value] of elements) {
+      this.add(key, value);
+    }
+  }
+
   setIndex(key: string, toIndex: number) {
     for (const [k, v] of this.crdt.entries()) {
       if (k === key) {

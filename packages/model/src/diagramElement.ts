@@ -25,7 +25,7 @@ type Snapshot = any;
 export type ElementPropsForEditing = EdgePropsForEditing | NodePropsForEditing;
 export type ElementPropsForRendering = EdgePropsForRendering | NodePropsForRendering;
 
-type DiagramElementCRDT = {
+export type DiagramElementCRDT = {
   id: string;
   type: string;
   highlights: CRDTMap<Record<string, boolean>>;

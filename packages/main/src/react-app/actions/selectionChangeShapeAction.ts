@@ -5,12 +5,12 @@ import {
   MultipleType
 } from '@diagram-craft/canvas-app/actions/abstractSelectionAction';
 import { assert } from '@diagram-craft/utils/assert';
-import { assertRegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { deepClone, objectKeys } from '@diagram-craft/utils/object';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 declare global {
   interface ActionMap extends ReturnType<typeof selectionChangeShapeActions> {}

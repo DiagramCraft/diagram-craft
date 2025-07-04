@@ -26,7 +26,7 @@ import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/p
 import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
 import { getAdjustments } from './diagramLayerRuleTypes';
 import { toUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
-import { RegularLayer } from './diagramLayerRegular';
+import type { RegularLayer } from './diagramLayerRegular';
 import { transformPathList } from '@diagram-craft/geometry/pathListUtils';
 
 export type DuplicationContext = {
@@ -660,7 +660,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     }
 
     // Note, need to check if the element is still in the layer to avoid infinite recursion
-    assert.true(this.layer instanceof RegularLayer);
+    assert.true(this.layer.type === 'regular');
     if ((this.layer as RegularLayer).elements.includes(this)) {
       (this.layer as RegularLayer).removeElement(this, uow);
     }

@@ -1,13 +1,55 @@
 import { Layer, LayerCRDT, StackPosition } from './diagramLayer';
-import { DiagramElement, isNode } from './diagramElement';
+import { DiagramElement, type DiagramElementCRDT, isNode } from './diagramElement';
 import type { Diagram } from './diagram';
 import { CRDTMap } from './collaboration/crdt';
 import { LayerSnapshot, UnitOfWork } from './unitOfWork';
 import { groupBy } from '@diagram-craft/utils/array';
-import type { DiagramEdge } from './diagramEdge';
+import { DiagramEdge } from './diagramEdge';
+import { MappedCRDTOrderedMap } from './collaboration/mappedCRDTOrderedMap';
+import { CRDTMapper } from './collaboration/mappedCRDT';
+import { DiagramNode } from './diagramNode';
+import { FreeEndpoint } from './endpoint';
+
+const makeElementMapper = (layer: Layer): CRDTMapper<DiagramElement, DiagramElementCRDT> => {
+  return {
+    fromCRDT(e: CRDTMap<DiagramElementCRDT>): DiagramElement {
+      const type = e.get('type')!;
+      const id = e.get('id')!;
+
+      if (type === 'node') {
+        return new DiagramNode(
+          id,
+          'test',
+          { w: 10, h: 10, x: 0, y: 0, r: 0 },
+          layer,
+          {},
+          {},
+          { text: '' },
+          []
+        );
+      } else {
+        return new DiagramEdge(
+          id,
+          new FreeEndpoint({ x: 0, y: 0 }),
+          new FreeEndpoint({ x: 0, y: 0 }),
+          {},
+          {},
+          [],
+          layer
+        );
+      }
+
+      throw new Error(`Unknown layer type: ${type}`);
+    },
+
+    toCRDT(e: DiagramElement): CRDTMap<DiagramElementCRDT> {
+      return e.crdt;
+    }
+  };
+};
 
 export class RegularLayer extends Layer<RegularLayer> {
-  #elements: Array<DiagramElement> = [];
+  #elements: MappedCRDTOrderedMap<DiagramElement, DiagramElementCRDT>;
 
   constructor(
     id: string,
@@ -18,13 +60,19 @@ export class RegularLayer extends Layer<RegularLayer> {
   ) {
     super(id, name, diagram, 'regular', crdt);
 
+    this.#elements = new MappedCRDTOrderedMap<DiagramElement, DiagramElementCRDT>(
+      this.crdt.get('elements', () => diagram.document.root.factory.makeMap())!,
+      makeElementMapper(this),
+      true
+    );
+
     const uow = new UnitOfWork(diagram);
     elements.forEach(e => this.addElement(e, uow));
     uow.abort();
   }
 
   get elements(): ReadonlyArray<DiagramElement> {
-    return this.#elements;
+    return this.#elements.values;
   }
 
   resolve() {
@@ -70,7 +118,9 @@ export class RegularLayer extends Layer<RegularLayer> {
           uow
         );
       } else {
-        this.#elements = positions.map(e => e.element);
+        for (const p of positions) {
+          this.#elements.setIndex(p.element.id, p.idx);
+        }
       }
     }
 
@@ -80,7 +130,7 @@ export class RegularLayer extends Layer<RegularLayer> {
   addElement(element: DiagramElement, uow: UnitOfWork) {
     uow.snapshot(this);
 
-    if (!element.parent && !this.#elements.includes(element)) this.#elements.push(element);
+    if (!element.parent && !this.#elements.has(element.id)) this.#elements.add(element.id, element);
     this.processElementForAdd(element);
     uow.addElement(element);
     uow.updateElement(this);
@@ -89,7 +139,7 @@ export class RegularLayer extends Layer<RegularLayer> {
   removeElement(element: DiagramElement, uow: UnitOfWork) {
     uow.snapshot(this);
 
-    this.#elements = this.elements.filter(e => e !== element);
+    this.#elements.remove(element.id);
     element.detach(uow);
     uow.removeElement(element);
     uow.updateElement(this);
@@ -98,9 +148,10 @@ export class RegularLayer extends Layer<RegularLayer> {
   setElements(elements: ReadonlyArray<DiagramElement>, uow: UnitOfWork) {
     uow.snapshot(this);
 
-    const added = elements.filter(e => !this.#elements.includes(e));
-    const removed = this.#elements.filter(e => !elements.includes(e));
-    this.#elements = elements as Array<DiagramElement>;
+    const added = elements.filter(e => !this.#elements.has(e.id));
+    const removed = this.#elements.values.filter(e => !elements.includes(e));
+
+    this.#elements.set(elements.map(e => [e.id, e]));
     for (const e of added) {
       this.processElementForAdd(e);
       uow.addElement(e);
@@ -149,19 +200,4 @@ export class RegularLayer extends Layer<RegularLayer> {
   getAttachmentsInUse() {
     return this.elements.flatMap(e => e.getAttachmentsInUse());
   }
-}
-
-export function assertRegularLayer(l: Layer): asserts l is RegularLayer {
-  if (l.type !== 'regular') {
-    throw new Error('Layer is not a regular layer');
-  }
-}
-
-export function isRegularLayer(l: Layer): l is RegularLayer {
-  return l.type === 'regular';
-}
-
-export function isResolvableToRegularLayer(l: Layer): l is Layer<RegularLayer> {
-  if (l.resolve()?.type !== 'regular') return false;
-  return true;
 }

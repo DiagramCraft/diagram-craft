@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { Diagram, DiagramCRDT } from './diagram';
 import { TestModel } from './test-support/builder';
 import { NoOpCRDTMap } from './collaboration/noopCrdt';
-import { assertRegularLayer } from './diagramLayerRegular';
 import { newid } from '@diagram-craft/utils/id';
 import { UnitOfWork } from './unitOfWork';
 import { DiagramNode } from './diagramNode';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { RegularLayer } from './diagramLayerRegular';
+import { assertRegularLayer } from './diagramLayerUtils';
 
 const bounds = {
   x: 0,

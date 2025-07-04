@@ -4,9 +4,9 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { newid } from '@diagram-craft/utils/id';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
-import { assertRegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { Application } from '../../application';
 import { TableInsertDialog } from '../TableInsertDialog';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 export const tableInsertActions = (application: Application) => ({
   TABLE_INSERT: new TableInsertAction(application)

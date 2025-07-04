@@ -20,8 +20,8 @@ import { excludeLabelNodes, includeAll, SelectionState } from '@diagram-craft/mo
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { largest } from '@diagram-craft/utils/array';
 import { Context } from '../context';
-import { assertRegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 const getId = (e: DiagramElement) => (isNode(e) ? `node-${e.id}` : `edge-${e.id}`);
 

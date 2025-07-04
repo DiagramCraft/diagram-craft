@@ -1,8 +1,8 @@
 import { AbstractSelectionAction } from './abstractSelectionAction';
 import { ElementDeleteUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { isNode } from '@diagram-craft/model/diagramElement';
-import { assertRegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 declare global {
   interface ActionMap extends ReturnType<typeof selectionDeleteActions> {}

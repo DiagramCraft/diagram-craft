@@ -30,7 +30,8 @@ import { assert } from '@diagram-craft/utils/assert';
 import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
 import { getAdjustments } from './diagramLayerRuleTypes';
-import { RegularLayer } from './diagramLayerRegular';
+import { type RegularLayer } from './diagramLayerRegular';
+import { assertRegularLayer } from './diagramLayerUtils';
 
 const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
   endpoint instanceof ConnectedEndpoint;
@@ -443,7 +444,8 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
 
     this.#labelNodes?.forEach(ln => {
       const layer = ln.node.layer;
-      if (layer instanceof RegularLayer) {
+      if (layer.type === 'regular') {
+        assertRegularLayer(layer);
         const inLayerElements = layer.elements.find(e => e === ln.node);
         if (inLayerElements) {
           layer.removeElement(ln.node, uow);
@@ -521,7 +523,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       // Check that no children are elements of the layer
       for (const c of this._children) {
         assert.false(
-          c.layer instanceof RegularLayer && !!c.layer.elements.find(e => e === c),
+          c.layer.type === 'regular' && !!(c.layer as RegularLayer).elements.find(e => e === c),
           "Label node doesn't match children - element"
         );
       }
@@ -843,7 +845,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     this.diagram.edgeLookup.delete(this.id);
 
     // Note, need to check if the element is still in the layer to avoid infinite recursion
-    assert.true(this.layer instanceof RegularLayer);
+    assert.true(this.layer.type === 'regular');
     if ((this.layer as RegularLayer).elements.includes(this)) {
       (this.layer as RegularLayer).removeElement(this, uow);
     }
