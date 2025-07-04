@@ -105,7 +105,7 @@ class SelectionBooleanOperation extends AbstractSelectionAction<Application> {
 
       const scaledPath = transformPathList(p, toUnitLCS(nodeBounds));
 
-      return new DiagramNode(
+      return DiagramNode.create(
         newid(),
         'generic-path',
         nodeBounds,

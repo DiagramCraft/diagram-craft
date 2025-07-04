@@ -44,7 +44,7 @@ export class TextTool extends AbstractTool {
 
   onMouseDown(_id: string, point: Point, _modifiers: Modifiers) {
     this.startPoint = this.diagram.viewBox.toDiagramPoint(point);
-    this.node = new DiagramNode(
+    this.node = DiagramNode.create(
       newid(),
       'text',
       {

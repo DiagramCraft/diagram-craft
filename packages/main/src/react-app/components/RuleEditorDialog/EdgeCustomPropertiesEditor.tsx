@@ -17,7 +17,7 @@ export const EdgeCustomPropertiesEditor: Editor = props => {
 
   const [type, setType] = useState('');
 
-  const edge = new DiagramEdge(
+  const edge = DiagramEdge.create(
     newid(),
     new FreeEndpoint({ x: 0, y: 0 }),
     new FreeEndpoint({ x: 100, y: 100 }),

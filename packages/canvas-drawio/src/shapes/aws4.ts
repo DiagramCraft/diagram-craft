@@ -72,7 +72,15 @@ export const parseAWS4Shapes = async (
       }
     ];
 
-    return new DiagramNode(id, 'mxgraph.aws4.resourceIcon', bounds, layer, props, metadata, texts);
+    return DiagramNode.create(
+      id,
+      'mxgraph.aws4.resourceIcon',
+      bounds,
+      layer,
+      props,
+      metadata,
+      texts
+    );
   } else if (
     style.str('shape') === 'mxgraph.aws4.group' ||
     style.str('shape') === 'mxgraph.aws4.groupCenter'
@@ -95,10 +103,10 @@ export const parseAWS4Shapes = async (
       }
     ];
 
-    return new DiagramNode(id, style.str('shape')!, bounds, layer, props, metadata, texts);
+    return DiagramNode.create(id, style.str('shape')!, bounds, layer, props, metadata, texts);
   }
 
-  return new DiagramNode(id, style.str('shape')!, bounds, layer, props, metadata);
+  return DiagramNode.create(id, style.str('shape')!, bounds, layer, props, metadata);
 };
 
 export const registerAWS4Shapes = async (

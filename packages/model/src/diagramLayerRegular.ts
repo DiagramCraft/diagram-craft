@@ -17,7 +17,7 @@ const makeElementMapper = (layer: Layer): CRDTMapper<DiagramElement, DiagramElem
       const id = e.get('id')!;
 
       if (type === 'node') {
-        return new DiagramNode(
+        return DiagramNode.create(
           id,
           'test',
           { w: 10, h: 10, x: 0, y: 0, r: 0 },
@@ -28,7 +28,7 @@ const makeElementMapper = (layer: Layer): CRDTMapper<DiagramElement, DiagramElem
           []
         );
       } else {
-        return new DiagramEdge(
+        return DiagramEdge.create(
           id,
           new FreeEndpoint({ x: 0, y: 0 }),
           new FreeEndpoint({ x: 0, y: 0 }),

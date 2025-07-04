@@ -44,7 +44,7 @@ class ImageInsertAction extends AbstractAction<undefined, Application> {
         const { width, height } = img;
         img.close();
 
-        const e = new DiagramNode(
+        const e = DiagramNode.create(
           newid(),
           'rect',
           {

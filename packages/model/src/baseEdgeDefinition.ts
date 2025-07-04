@@ -51,7 +51,7 @@ export class BaseEdgeDefinition implements EdgeDefinition {
     const anchor = 'c';
 
     // TODO: This requires some work to support dropping on multi-segment edges
-    const newEdge = new DiagramEdge(
+    const newEdge = DiagramEdge.create(
       newid(),
       new AnchorEndpoint(element, anchor),
       edge.end,

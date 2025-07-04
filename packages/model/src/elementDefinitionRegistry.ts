@@ -243,7 +243,7 @@ export const makeStencilNode =
   ($d: Diagram) => {
     const typeId = isNodeDefinition(type) ? type.type : type;
 
-    const n = new DiagramNode(
+    const n = DiagramNode.create(
       newid(),
       typeId,
       Box.applyAspectRatio(

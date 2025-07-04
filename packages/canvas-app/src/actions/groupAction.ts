@@ -60,7 +60,7 @@ class UndoableGroupAction implements UndoableAction {
       e.layer.removeElement(e, uow);
     });
 
-    this.#group = new DiagramNode(
+    this.#group = DiagramNode.create(
       newid(),
       'group',
       Box.boundingBox(this.#elements.map(e => e.bounds)),

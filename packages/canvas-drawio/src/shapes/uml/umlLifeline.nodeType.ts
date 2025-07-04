@@ -76,7 +76,7 @@ export class UmlLifeline extends SimpleShapeNodeDefinition {
 
     const participantProps = deepClone(props.nodeProps) as DeepWriteable<NodePropsForRendering>;
 
-    const node = new DiagramNode(
+    const node = DiagramNode.create(
       `${props.node.id}---participant`,
       shape.type,
       {

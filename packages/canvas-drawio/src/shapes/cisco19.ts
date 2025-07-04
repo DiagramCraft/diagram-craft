@@ -35,7 +35,7 @@ export const parseCisco19Shapes = async (
 ): Promise<DiagramNode> => {
   if (style.str('shape') === 'mxgraph.cisco19.rect') {
     props.fill!.color = '#005073';
-    return new DiagramNode(
+    return DiagramNode.create(
       id,
       'mxgraph.cisco19.' + style.str('prIcon'),
       bounds,
@@ -45,7 +45,7 @@ export const parseCisco19Shapes = async (
     );
   }
 
-  return new DiagramNode(id, style.str('shape')!, bounds, layer, props, metadata, texts);
+  return DiagramNode.create(id, style.str('shape')!, bounds, layer, props, metadata, texts);
 };
 
 export const registerCisco19Shapes = async (

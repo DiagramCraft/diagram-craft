@@ -39,14 +39,14 @@ export const parseUMLShapes = async (
       jettyWidth: style.num('jettyWidth', 20),
       jettyHeight: style.num('jettyHeight', 10)
     };
-    return new DiagramNode(id, 'module', bounds, layer, props, {});
+    return DiagramNode.create(id, 'module', bounds, layer, props, {});
   } else if (style.str('shape') === 'umlLifeline') {
     props.custom.umlLifeline = {
       participant: style.str('participant')
     };
   }
 
-  return new DiagramNode(id, style.str('shape')!, bounds, layer, props, metadata, texts);
+  return DiagramNode.create(id, style.str('shape')!, bounds, layer, props, metadata, texts);
 };
 
 export const registerUMLShapes = async (r: NodeDefinitionRegistry) => {

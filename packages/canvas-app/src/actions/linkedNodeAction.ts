@@ -122,7 +122,7 @@ export const createLinkedNode = (
     additionalStyles.arrow = { end: { type: 'SQUARE_STICK_ARROW' } };
   }
 
-  const edge = new DiagramEdge(
+  const edge = DiagramEdge.create(
     newid(),
     new AnchorEndpoint(node, sourceAnchorId),
     new AnchorEndpoint(newNode, shortest.id),

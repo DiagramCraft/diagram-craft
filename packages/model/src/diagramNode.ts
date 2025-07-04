@@ -56,6 +56,31 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
   constructor(
     id: string,
+    layer: Layer,
+    // TODO: Remove metadata as a parameter
+    metadata: ElementMetadata,
+    anchorCache?: ReadonlyArray<Anchor>
+  ) {
+    super('node', id, layer, metadata);
+
+    this.#anchors ??= anchorCache;
+
+    // TODO: Fix this
+    this.#nodeType = 'rect';
+    this.#bounds = { x: 0, y: 0, w: 10, h: 10, r: 0 };
+
+    // Note: It is important that this comes last, as it might trigger
+    //       events etc - so important that everything is set up before
+    //       that to avoid flashing of incorrect formatting/style
+    if (!this.#anchors) {
+      this.invalidateAnchors(UnitOfWork.immediate(this.diagram));
+    }
+  }
+
+  /* Factory ************************************************************************************************* */
+
+  static create(
+    id: string,
     nodeType: 'group' | string,
     bounds: Box,
     layer: Layer,
@@ -64,27 +89,33 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     text: NodeTexts = { text: '' },
     anchorCache?: ReadonlyArray<Anchor>
   ) {
-    super('node', id, layer, metadata);
-    this.#bounds = bounds;
-    this.#nodeType = nodeType;
-    this.#text = text;
+    const node = new DiagramNode(id, layer, metadata, anchorCache);
 
-    this.#props = (props ?? {}) as NodeProps;
-    this.#anchors = anchorCache;
+    this.initializeNode(node, nodeType, bounds, props, text);
 
-    const m = this.metadata;
+    return node;
+  }
+
+  protected static initializeNode(
+    node: DiagramNode,
+    nodeType: 'group' | string,
+    bounds: Box,
+    props: NodePropsForEditing,
+    text: NodeTexts = { text: '' }
+  ) {
+    node.#bounds = bounds;
+    node.#nodeType = nodeType;
+    node.#text = text;
+
+    node.#props = (props ?? {}) as NodeProps;
+
+    const m = node.metadata;
     if (!m.style || !m.textStyle) {
-      m.style = this.nodeType === 'text' ? DefaultStyles.node.text : DefaultStyles.node.default;
+      m.style = node.nodeType === 'text' ? DefaultStyles.node.text : DefaultStyles.node.default;
       m.textStyle = DefaultStyles.text.default;
-      this.forceUpdateMetadata(m);
+      node.forceUpdateMetadata(m);
     }
-
-    // Note: It is important that this comes last, as it might trigger
-    //       events etc - so important that everything is set up before
-    //       that to avoid flashing of incorrect formatting/style
-    if (!this.#anchors) {
-      this.invalidateAnchors(UnitOfWork.immediate(this.diagram));
-    }
+    node._cache?.clear();
   }
 
   getDefinition() {
@@ -511,7 +542,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       return context.targetElementsInGroup.get(this.id) as DiagramNode;
     }
 
-    const node = new DiagramNode(
+    const node = DiagramNode.create(
       id ?? newid(),
       this.nodeType,
       deepClone(this.bounds),

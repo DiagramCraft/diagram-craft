@@ -76,7 +76,7 @@ export class ImagePasteHandler extends PasteHandler {
     const img = await createImageBitmap(att.content);
 
     const newElements = [
-      new DiagramNode(
+      DiagramNode.create(
         newid(),
         'rect',
         { x: point!.x, y: point!.y, w: img.width, h: img.height, r: 0 },
@@ -109,7 +109,7 @@ export class TextPasteHandler extends PasteHandler {
 
     const text = await content.text();
     const newElements = [
-      new DiagramNode(
+      DiagramNode.create(
         newid(),
         'text',
         { x: point!.x, y: point!.y, w: 200, h: 20, r: 0 },

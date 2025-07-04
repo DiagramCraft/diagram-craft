@@ -67,7 +67,16 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   #end: Endpoint;
   #labelNodes?: ReadonlyArray<ResolvedLabelNode>;
 
-  constructor(
+  constructor(id: string, layer: Layer, metadata: ElementMetadata) {
+    super('edge', id, layer, metadata);
+
+    this.#start = new FreeEndpoint({ x: 0, y: 0 });
+    this.#end = new FreeEndpoint({ x: 0, y: 0 });
+  }
+
+  /* Factory ************************************************************************************************* */
+
+  static create(
     id: string,
     start: Endpoint,
     end: Endpoint,
@@ -76,22 +85,25 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     midpoints: ReadonlyArray<Waypoint>,
     layer: Layer
   ) {
-    super('edge', id, layer, metadata);
-    this.#start = start;
-    this.#end = end;
-    this.#props = props as EdgeProps;
-    this.#waypoints = midpoints;
+    const edge = new DiagramEdge(id, layer, metadata);
+
+    edge.#start = start;
+    edge.#end = end;
+    edge.#props = props as EdgeProps;
+    edge.#waypoints = midpoints;
 
     if (start instanceof ConnectedEndpoint)
-      start.node._addEdge(start instanceof AnchorEndpoint ? start.anchorId : undefined, this);
+      start.node._addEdge(start instanceof AnchorEndpoint ? start.anchorId : undefined, edge);
     if (end instanceof ConnectedEndpoint)
-      end.node._addEdge(end instanceof AnchorEndpoint ? end.anchorId : undefined, this);
+      end.node._addEdge(end instanceof AnchorEndpoint ? end.anchorId : undefined, edge);
 
-    const m = this.metadata;
+    const m = edge.metadata;
     if (!m.style) {
       m.style = DefaultStyles.edge.default;
-      this.forceUpdateMetadata(m);
+      edge.forceUpdateMetadata(m);
     }
+
+    return edge;
   }
 
   getDefinition(): EdgeDefinition {
@@ -668,7 +680,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   duplicate(ctx?: DuplicationContext, id?: string | undefined) {
     const uow = new UnitOfWork(this.diagram);
 
-    const edge = new DiagramEdge(
+    const edge = DiagramEdge.create(
       id ?? newid(),
       this.start,
       this.end,

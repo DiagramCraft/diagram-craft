@@ -28,7 +28,7 @@ export class AnchorHandleDrag extends Drag {
     const diagram = this.node.diagram;
     assertRegularLayer(diagram.activeLayer);
 
-    this.edge = new DiagramEdge(
+    this.edge = DiagramEdge.create(
       newid(),
       new AnchorEndpoint(this.node, this.anchorId),
       new FreeEndpoint(diagram.viewBox.toDiagramPoint(this.point)),

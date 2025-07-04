@@ -310,7 +310,7 @@ const createLabelNode = (
   bgColor: string,
   uow: UnitOfWork
 ) => {
-  const textNode = new DiagramNode(
+  const textNode = DiagramNode.create(
     id,
     'text',
     edge.bounds,
@@ -771,7 +771,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
       if (stencil) {
         props.custom ??= {};
         props.custom.drawio = { shape: btoa(await decode(stencil)) };
-        nodes.push(new DiagramNode(id, 'drawio', bounds, layer, props, metadata, texts));
+        nodes.push(DiagramNode.create(id, 'drawio', bounds, layer, props, metadata, texts));
       } else if (style.styleName == 'text') {
         // TODO: We should be able to move these two to the global style parsing/conversion
         if (style.str('strokeColor', 'none') === 'none') {
@@ -783,7 +783,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         }
 
         nodes.push(
-          new DiagramNode(
+          DiagramNode.create(
             id,
             'rect',
             bounds,
@@ -905,7 +905,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           }
         }
 
-        const edge = new DiagramEdge(
+        const edge = DiagramEdge.create(
           id,
           source,
           target,
@@ -954,7 +954,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           node = await parseSwimlane(id, bounds, props, metadata, texts, style, layer);
           nodes.push(node);
         } else {
-          node = new DiagramNode(id, 'group', bounds, layer, props, metadata, texts);
+          node = DiagramNode.create(id, 'group', bounds, layer, props, metadata, texts);
           nodes.push(node);
 
           if (
@@ -980,7 +980,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
               const loader = getLoader(style.shape);
               if (!loader) {
                 console.warn(`No loader found for ${style.shape}`);
-                nodes.push(new DiagramNode(id, 'rect', bounds, layer, props, metadata, texts));
+                nodes.push(DiagramNode.create(id, 'rect', bounds, layer, props, metadata, texts));
                 continue;
               }
 
@@ -992,7 +992,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
               if (parser) {
                 bgNode = await parser(newid(), bounds, props, metadata, texts, style, layer, queue);
               } else {
-                bgNode = new DiagramNode(
+                bgNode = DiagramNode.create(
                   newid(),
                   style.shape!,
                   bounds,
@@ -1004,7 +1004,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
               }
             } else {
               if (style.is('rounded')) {
-                bgNode = new DiagramNode(
+                bgNode = DiagramNode.create(
                   newid(),
                   'rounded-rect',
                   { ...bounds },
@@ -1021,7 +1021,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
                   texts
                 );
               } else {
-                bgNode = new DiagramNode(
+                bgNode = DiagramNode.create(
                   newid(),
                   'rect',
                   { ...bounds },
@@ -1051,7 +1051,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         const loader = getLoader(style.shape);
         if (!loader) {
           console.warn(`No loader found for ${style.shape}`);
-          nodes.push(new DiagramNode(id, 'rect', bounds, layer, props, metadata, texts));
+          nodes.push(DiagramNode.create(id, 'rect', bounds, layer, props, metadata, texts));
           continue;
         }
 
@@ -1098,7 +1098,9 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         if (parser) {
           nodes.push(await parser(id, newBounds, props, metadata, texts, style, layer, queue));
         } else {
-          nodes.push(new DiagramNode(id, style.shape!, newBounds, layer, props, metadata, texts));
+          nodes.push(
+            DiagramNode.create(id, style.shape!, newBounds, layer, props, metadata, texts)
+          );
         }
       } else if (style.styleName === 'ellipse') {
         nodes.push(await parseEllipse(id, bounds, props, metadata, texts, style, layer));
@@ -1108,7 +1110,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         if (style.is('rounded')) {
           nodes.push(await parseRoundedRect(id, bounds, props, metadata, texts, style, layer));
         } else {
-          nodes.push(new DiagramNode(id, 'rect', bounds, layer, props, metadata, texts));
+          nodes.push(DiagramNode.create(id, 'rect', bounds, layer, props, metadata, texts));
         }
       }
 

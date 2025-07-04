@@ -16,15 +16,17 @@ export const registerC4Shapes = async (r: NodeDefinitionRegistry) => {
           nodeType: 'rounded-rect',
           bounds: { x: 0, y: 0, w: 1, h: 1, r: 0 },
           offset: { x: 0, y: 60, w: 0, h: -60 },
-          props: (p): NodeProps => ({
-            ...(p as NodeProps),
-            custom: {
-              roundedRect: {
-                radius: 40
-              }
-            },
-            text: {}
-          }),
+          props: (p): NodeProps => {
+            return {
+              ...(p as NodeProps),
+              custom: {
+                roundedRect: {
+                  radius: 40
+                }
+              },
+              text: {}
+            };
+          },
           text: p => ({
             id: '1',
             text: p.text!

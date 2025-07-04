@@ -76,7 +76,7 @@ export class EdgeTool extends AbstractTool {
 
     undoManager.setMark();
 
-    this.edge = new DiagramEdge(
+    this.edge = DiagramEdge.create(
       newid(),
       this.currentAnchor
         ? new AnchorEndpoint(

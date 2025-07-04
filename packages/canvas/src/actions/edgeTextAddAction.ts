@@ -46,7 +46,7 @@ export class EdgeTextAddAction extends AbstractAction<EdgeTextAddActionArg> {
     const path = edge.path();
     const projection = path.projectPoint(context.point);
 
-    const textNode = new DiagramNode(
+    const textNode = DiagramNode.create(
       newid(),
       'text',
       { ...projection.point, r: 0, w: 100, h: 0 },

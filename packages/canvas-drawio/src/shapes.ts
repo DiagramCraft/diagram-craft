@@ -25,7 +25,7 @@ const makeShape = (
   ) => {
     props.custom ??= {};
     setProps(style, props as NodeProps & { custom: CustomNodeProps });
-    return new DiagramNode(id, type, bounds, layer, props, metadata, texts);
+    return DiagramNode.create(id, type, bounds, layer, props, metadata, texts);
   };
 };
 
@@ -61,7 +61,7 @@ export const parseRect = async (
 ) => {
   if (style.is('rounded'))
     return parseRoundedRect(id, bounds, props, metadata, texts, style, layer);
-  return new DiagramNode(id, 'rect', bounds, layer, props, metadata, texts);
+  return DiagramNode.create(id, 'rect', bounds, layer, props, metadata, texts);
 };
 
 export const parseCube = makeShape('cube');
@@ -182,7 +182,7 @@ export const parseArrow = async (
   props.custom.arrow.y = style.num('dy', 0.2) * 50;
   props.custom.arrow.x = style.num('dx', 20);
 
-  return new DiagramNode(id, type, bounds, layer, props, metadata, texts);
+  return DiagramNode.create(id, type, bounds, layer, props, metadata, texts);
 };
 
 export const parseImage = async (
@@ -265,7 +265,7 @@ export const parseImage = async (
   assertVAlign(valign);
   props.custom.drawioImage.imageValign = valign;
 
-  const node = new DiagramNode(id, 'drawioImage', bounds, layer, props, metadata, texts);
+  const node = DiagramNode.create(id, 'drawioImage', bounds, layer, props, metadata, texts);
 
   // Determine image size
   queue.add(() => {
@@ -312,5 +312,5 @@ export const parseRoundedRect = async (
       ? Math.min(bounds.w / 2, bounds.h / 2, style.num('arcSize', 10) / 2)
       : (style.num('arcSize', 10) * Math.min(bounds.w, bounds.h)) / 100
   };
-  return new DiagramNode(id, 'rounded-rect', bounds, layer, props, metadata, texts);
+  return DiagramNode.create(id, 'rounded-rect', bounds, layer, props, metadata, texts);
 };

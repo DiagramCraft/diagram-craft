@@ -75,7 +75,7 @@ export const deserializeDiagramElements = (
         }
       }
 
-      nodeLookup[c.id] = new DiagramNode(
+      nodeLookup[c.id] = DiagramNode.create(
         c.id,
         c.nodeType,
         c.bounds,
@@ -101,7 +101,7 @@ export const deserializeDiagramElements = (
       const startEndpoint = deserializeEndpoint(start, nodeLookup);
       const endEndpoint = deserializeEndpoint(end, nodeLookup);
 
-      const edge = new DiagramEdge(
+      const edge = DiagramEdge.create(
         e.id,
         startEndpoint,
         endEndpoint,
