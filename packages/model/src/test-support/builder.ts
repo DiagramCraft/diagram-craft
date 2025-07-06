@@ -105,8 +105,8 @@ export class TestLayerBuilder extends RegularLayer {
 
 export class TestDiagramNodeBuilder extends DiagramNode {
   constructor(id: string, type: string, bounds: Box, diagram: Diagram) {
-    super(id, diagram.activeLayer, {});
-    DiagramNode.initializeNode(this, type, bounds, {});
+    super(id, diagram.activeLayer);
+    DiagramNode.initializeNode(this, type, bounds, {}, {});
   }
 
   asLabelNode(): ResolvedLabelNode {

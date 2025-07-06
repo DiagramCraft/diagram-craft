@@ -67,8 +67,8 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   #end: Endpoint;
   #labelNodes?: ReadonlyArray<ResolvedLabelNode>;
 
-  constructor(id: string, layer: Layer, metadata: ElementMetadata) {
-    super('edge', id, layer, metadata);
+  constructor(id: string, layer: Layer) {
+    super('edge', id, layer);
 
     this.#start = new FreeEndpoint({ x: 0, y: 0 });
     this.#end = new FreeEndpoint({ x: 0, y: 0 });
@@ -85,12 +85,14 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     midpoints: ReadonlyArray<Waypoint>,
     layer: Layer
   ) {
-    const edge = new DiagramEdge(id, layer, metadata);
+    const edge = new DiagramEdge(id, layer);
 
     edge.#start = start;
     edge.#end = end;
     edge.#props = props as EdgeProps;
     edge.#waypoints = midpoints;
+
+    edge._metadata.set(metadata ?? {});
 
     if (start instanceof ConnectedEndpoint)
       start.node._addEdge(start instanceof AnchorEndpoint ? start.anchorId : undefined, edge);

@@ -48,7 +48,7 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
   protected _cache: Map<string, unknown> | undefined = undefined;
 
   // Shared properties
-  readonly #metadata: CRDTProperty<DiagramElementCRDT, 'metadata'>;
+  protected readonly _metadata: CRDTProperty<DiagramElementCRDT, 'metadata'>;
   protected readonly _highlights: CRDTMap<Record<string, boolean>>;
   protected _children: ReadonlyArray<DiagramElement> = [];
 
@@ -56,7 +56,6 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
     type: string,
     id: string,
     layer: Layer,
-    metadata: ElementMetadata,
     crdt?: CRDTMap<DiagramElementCRDT>
   ) {
     this._diagram = layer.diagram;
@@ -71,14 +70,13 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
       this._diagram.document.root.factory.makeMap()
     )!;
 
-    this.#metadata = CRDT.makeProp('metadata', this.crdt, type => {
+    this._metadata = CRDT.makeProp('metadata', this.crdt, type => {
       if (type !== 'remote') return;
 
       this.invalidate(UnitOfWork.immediate(this._diagram));
       this._diagram.emit('elementChange', { element: this });
       this._cache?.clear();
     });
-    this.#metadata.set(metadata ?? {});
   }
 
   abstract getAttachmentsInUse(): Array<string>;
@@ -181,18 +179,18 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
   /* Metadata ************************************************************************************************ */
 
   get metadata() {
-    return this.#metadata.get() ?? {};
+    return this._metadata.get() ?? {};
   }
 
   protected forceUpdateMetadata(metadata: ElementMetadata) {
-    this.#metadata.set(metadata);
+    this._metadata.set(metadata);
   }
 
   updateMetadata(callback: (props: ElementMetadata) => void, uow: UnitOfWork) {
     uow.snapshot(this);
-    const metadata = this.#metadata.get()!;
+    const metadata = this._metadata.get()!;
     callback(metadata);
-    this.#metadata.set(metadata);
+    this._metadata.set(metadata);
     uow.updateElement(this);
     this._cache?.clear();
   }

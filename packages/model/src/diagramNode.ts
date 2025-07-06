@@ -54,14 +54,8 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   #bounds: Box;
   #anchors?: ReadonlyArray<Anchor>;
 
-  constructor(
-    id: string,
-    layer: Layer,
-    // TODO: Remove metadata as a parameter
-    metadata: ElementMetadata,
-    anchorCache?: ReadonlyArray<Anchor>
-  ) {
-    super('node', id, layer, metadata);
+  constructor(id: string, layer: Layer, anchorCache?: ReadonlyArray<Anchor>) {
+    super('node', id, layer);
 
     this.#anchors ??= anchorCache;
 
@@ -89,9 +83,9 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     text: NodeTexts = { text: '' },
     anchorCache?: ReadonlyArray<Anchor>
   ) {
-    const node = new DiagramNode(id, layer, metadata, anchorCache);
+    const node = new DiagramNode(id, layer, anchorCache);
 
-    this.initializeNode(node, nodeType, bounds, props, text);
+    this.initializeNode(node, nodeType, bounds, props, metadata, text);
 
     return node;
   }
@@ -101,6 +95,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     nodeType: 'group' | string,
     bounds: Box,
     props: NodePropsForEditing,
+    metadata: ElementMetadata,
     text: NodeTexts = { text: '' }
   ) {
     node.#bounds = bounds;
@@ -108,6 +103,8 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     node.#text = text;
 
     node.#props = (props ?? {}) as NodeProps;
+
+    node._metadata.set(metadata ?? {});
 
     const m = node.metadata;
     if (!m.style || !m.textStyle) {
