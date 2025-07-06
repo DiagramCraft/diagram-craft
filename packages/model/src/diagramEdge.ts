@@ -30,7 +30,7 @@ import { assert } from '@diagram-craft/utils/assert';
 import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
 import { getAdjustments } from './diagramLayerRuleTypes';
-import { type RegularLayer } from './diagramLayerRegular';
+import type { RegularLayer } from './diagramLayerRegular';
 import { assertRegularLayer } from './diagramLayerUtils';
 
 const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
