@@ -74,6 +74,21 @@ export class NoOpCRDTMap<T extends { [key: string]: CRDTCompatibleObject }>
 
   readonly factory = new NoOpCRDTFactory();
 
+  clone() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const dest = new NoOpCRDTMap<any>();
+    for (const [key, value] of this.entries()) {
+      if (value instanceof NoOpCRDTMap) {
+        dest.set(key, value.clone());
+      } else if (value instanceof NoOpCRDTList) {
+        dest.set(key, value.clone());
+      } else {
+        dest.set(key, value);
+      }
+    }
+    return dest;
+  }
+
   get size() {
     return this.backing.size;
   }
@@ -141,6 +156,22 @@ export class NoOpCRDTList<T extends CRDTCompatibleObject>
 
   get(index: number): T {
     return this.backing[index];
+  }
+
+  clone() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const dest = new NoOpCRDTList<any>();
+    for (let i = 0; i < this.length; i++) {
+      const value = this.get(i);
+      if (value instanceof NoOpCRDTMap) {
+        dest.push(value.clone());
+      } else if (value instanceof NoOpCRDTList) {
+        dest.push(value.clone());
+      } else {
+        dest.push(value);
+      }
+    }
+    return dest;
   }
 
   insert(index: number, value: T[]): void {

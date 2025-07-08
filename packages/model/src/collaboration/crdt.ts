@@ -70,6 +70,8 @@ export interface CRDTMap<T extends { [key: string]: CRDTCompatibleObject }>
   keys(): Iterable<string>;
   values(): Iterable<T[string]>;
 
+  clone(): CRDTMap<T>;
+
   transact(callback: () => void): void;
 }
 
@@ -95,6 +97,8 @@ export interface CRDTList<T extends CRDTCompatibleObject> extends Emitter<CRDTLi
   toArray(): Array<T>;
 
   transact(callback: () => void): void;
+
+  clone(): CRDTList<T>;
 
   // TODO: Ability to iterate
 }

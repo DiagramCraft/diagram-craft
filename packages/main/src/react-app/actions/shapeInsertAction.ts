@@ -1,10 +1,11 @@
 import { AbstractAction, ActionCriteria } from '@diagram-craft/canvas/action';
 import { Application } from '../../application';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { assignNewBounds, assignNewIds } from '@diagram-craft/model/helpers/cloneHelper';
+import { assignNewBounds, cloneElements } from '@diagram-craft/model/helpers/cloneHelper';
 import { assert } from '@diagram-craft/utils/assert';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import { deserializeDiagramElements } from '@diagram-craft/model/serialization/deserialize';
 
 export const shapeInsertActions = (application: Application) => ({
   SHAPE_INSERT: new ShapeInsertAction(application)
@@ -43,8 +44,11 @@ class ShapeInsertAction extends AbstractAction<undefined, Application> {
 
         const uow = new UnitOfWork(diagram, true);
 
-        const node = stencil.node(diagram);
-        assignNewIds([node]);
+        const source = cloneElements([stencil.node(diagram)]);
+
+        // TODO: Do we need to pass uow here
+        const node = deserializeDiagramElements(source, diagram, diagram.activeLayer, {}, {})[0];
+
         assignNewBounds(
           [node],
           {

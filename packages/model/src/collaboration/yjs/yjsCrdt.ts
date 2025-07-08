@@ -142,6 +142,21 @@ export class YJSMap<T extends { [key: string]: CRDTCompatibleObject }> implement
     });
   }
 
+  clone() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const dest = new YJSMap<any>();
+    for (const [key, value] of this.entries()) {
+      if (value instanceof YJSMap) {
+        dest.set(key, value.clone());
+      } else if (value instanceof YJSList) {
+        dest.set(key, value.clone());
+      } else {
+        dest.set(key, value);
+      }
+    }
+    return dest;
+  }
+
   transact(callback: () => void) {
     this.delegate.doc!.transact(callback);
   }
@@ -265,6 +280,22 @@ export class YJSList<T extends CRDTCompatibleObject> implements CRDTList<T> {
         }
       }
     });
+  }
+
+  clone() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const dest = new YJSList<any>();
+    for (let i = 0; i < this.length; i++) {
+      const value = this.get(i);
+      if (value instanceof YJSMap) {
+        dest.push(value.clone());
+      } else if (value instanceof YJSList) {
+        dest.push(value.clone());
+      } else {
+        dest.push(value);
+      }
+    }
+    return dest;
   }
 
   transact(callback: () => void) {

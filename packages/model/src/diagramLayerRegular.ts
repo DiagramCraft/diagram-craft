@@ -139,7 +139,9 @@ export class RegularLayer extends Layer<RegularLayer> {
   removeElement(element: DiagramElement, uow: UnitOfWork) {
     uow.snapshot(this);
 
+    element.detachCRDT();
     this.#elements.remove(element.id);
+
     element.detach(uow);
     uow.removeElement(element);
     uow.updateElement(this);

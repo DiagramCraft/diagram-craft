@@ -36,7 +36,7 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
   readonly trackableType = 'element';
 
   // Transient properties
-  readonly crdt: CRDTMap<DiagramElementCRDT>;
+  protected _crdt: CRDTMap<DiagramElementCRDT>;
 
   protected _diagram: Diagram;
 
@@ -62,15 +62,15 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
     this._layer = layer;
     this._activeDiagram = this._diagram;
 
-    this.crdt = crdt ?? this._diagram.document.root.factory.makeMap();
-    this.crdt.set('id', id);
-    this.crdt.set('type', type);
+    this._crdt = crdt ?? this._diagram.document.root.factory.makeMap();
+    this._crdt.set('id', id);
+    this._crdt.set('type', type);
 
-    this._highlights = this.crdt.get('highlights', () =>
+    this._highlights = this._crdt.get('highlights', () =>
       this._diagram.document.root.factory.makeMap()
     )!;
 
-    this._metadata = CRDT.makeProp('metadata', this.crdt, type => {
+    this._metadata = CRDT.makeProp('metadata', this._crdt, type => {
       if (type !== 'remote') return;
 
       this.invalidate(UnitOfWork.immediate(this._diagram));
@@ -108,12 +108,20 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
   abstract snapshot(): Snapshot;
   abstract restore(snapshot: Snapshot, uow: UnitOfWork): void;
 
+  detachCRDT() {
+    this._crdt = this._crdt.clone();
+  }
+
+  get crdt() {
+    return this._crdt;
+  }
+
   get id() {
-    return this.crdt.get('id')!;
+    return this._crdt.get('id')!;
   }
 
   get type() {
-    return this.crdt.get('type')!;
+    return this._crdt.get('type')!;
   }
 
   /* Flags *************************************************************************************************** */
