@@ -15,7 +15,6 @@ import { useDiagram } from '../application';
 import { NoOpCRDTRoot } from '@diagram-craft/model/collaboration/noopCrdt';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
-import { deserializeDiagramElements } from '@diagram-craft/model/serialization/deserialize';
 import type { DiagramNode } from '@diagram-craft/model/diagramNode';
 
 export const NodeTypePopup = (props: Props) => {
@@ -30,15 +29,11 @@ export const NodeTypePopup = (props: Props) => {
 
       const uow = new UnitOfWork(diagram, true);
 
-      const source = cloneElements([registration.node(diagram)]);
-
-      // TODO: Do we need to pass uow here
-      const node = deserializeDiagramElements(
-        source,
-        diagram,
+      assertRegularLayer(diagram.activeLayer);
+      const node = cloneElements(
+        [registration.node(diagram)],
         diagram.activeLayer,
-        {},
-        {}
+        uow
       )[0] as DiagramNode;
 
       assignNewBounds([node], nodePosition, { x: 1, y: 1 }, uow);

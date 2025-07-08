@@ -6,6 +6,8 @@ import { UnitOfWork } from '../unitOfWork';
 import { serializeDiagramElement } from '../serialization/serialize';
 import { deepClone } from '@diagram-craft/utils/object';
 import type { SerializedEdge, SerializedNode } from '../serialization/types';
+import type { RegularLayer } from '../diagramLayerRegular';
+import { deserializeDiagramElements } from '../serialization/deserialize';
 
 // TODO: Ensure linking between edges and nodes works
 //       See ElementsPasteHandler
@@ -19,14 +21,18 @@ const assignNewIdsToSerializedElements = (e: SerializedNode | SerializedEdge) =>
   }
 };
 
-export const cloneElements = (elements: readonly DiagramElement[]) => {
+export const cloneElements = (
+  elements: readonly DiagramElement[],
+  targetLayer: RegularLayer,
+  uow: UnitOfWork
+) => {
   const source = elements.map(e => deepClone(serializeDiagramElement(e)));
 
   for (const e of source) {
     assignNewIdsToSerializedElements(e);
   }
 
-  return source;
+  return deserializeDiagramElements(source, targetLayer.diagram, targetLayer, {}, {}, uow);
 };
 
 export const assignNewBounds = (

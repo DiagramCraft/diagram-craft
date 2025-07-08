@@ -8,7 +8,6 @@ import { DRAG_DROP_MANAGER, DragEvents } from '@diagram-craft/canvas/dragDropMan
 import { getAncestorWithClass, setPosition } from '@diagram-craft/utils/dom';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
-import { deserializeDiagramElements } from '@diagram-craft/model/serialization/deserialize';
 import { assignNewBounds, cloneElements } from '@diagram-craft/model/helpers/cloneHelper';
 import { Box } from '@diagram-craft/geometry/box';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -191,8 +190,11 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
     const activeLayer = this.diagram.activeLayer;
     assertRegularLayer(activeLayer);
 
-    const sourceEls = cloneElements(sourceLayer.elements);
-    this.#elements = deserializeDiagramElements(sourceEls, this.diagram, activeLayer, {}, {});
+    this.#elements = cloneElements(
+      sourceLayer.elements,
+      activeLayer,
+      UnitOfWork.immediate(this.diagram)
+    );
 
     const bounds = Box.boundingBox(this.#elements.map(e => e.bounds));
 
