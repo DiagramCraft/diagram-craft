@@ -74,6 +74,7 @@ export class MappedCRDTOrderedMap<
 
   set(elements: Array<[string, T]>) {
     this.crdt.clear();
+    this.#entries = [];
     for (const [key, value] of elements) {
       this.add(key, value);
     }

@@ -1,13 +1,36 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createSyncedYJSCRDTs, setupYJS } from './yjsTest';
 import { TestModel } from '../../test-support/builder';
 import { RegularLayer } from '../../diagramLayerRegular';
 import { Diagram } from '../../diagram';
 import { UnitOfWork } from '../../unitOfWork';
 import { DiagramNode } from '../../diagramNode';
+import { Backends } from './collaborationTestUtils';
 
-describe('YJS RegularLayer', () => {
-  setupYJS();
+describe.for(Backends.all())('RegularLayer [%s]', ([_, root1, _root2, before, after]) => {
+  beforeEach(() => before());
+  afterEach(() => after());
+
+  describe('setElements', () => {
+    it('should be possible to set elements that are already added', () => {
+      const d1 = TestModel.newDiagramWithLayer(root1);
+
+      const layer1 = d1.layers.all[0] as RegularLayer;
+
+      const element = new DiagramNode('id1', layer1);
+      layer1.addElement(element, UnitOfWork.immediate(d1));
+      expect(layer1.elements).toHaveLength(1);
+
+      layer1.setElements([element], UnitOfWork.immediate(d1));
+      expect(layer1.elements).toHaveLength(1);
+
+      layer1.setElements([], UnitOfWork.immediate(d1));
+      expect(layer1.elements).toHaveLength(0);
+
+      layer1.setElements([element], UnitOfWork.immediate(d1));
+      expect(layer1.elements).toHaveLength(1);
+    });
+  });
 
   describe('addElement', () => {
     it('should add element', () => {
@@ -54,4 +77,8 @@ describe('YJS RegularLayer', () => {
       // TODO: Add expects for doc2
     });
   });
+});
+
+describe('YJS RegularLayer', () => {
+  setupYJS();
 });
