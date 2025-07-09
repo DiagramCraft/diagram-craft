@@ -6,7 +6,7 @@ import { Box } from '@diagram-craft/geometry/box';
 import { PointOnPath, TimeOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
 import { CubicSegment, LineSegment } from '@diagram-craft/geometry/pathSegment';
 import { Transform } from '@diagram-craft/geometry/transform';
-import { DiagramElement, isEdge, isNode } from './diagramElement';
+import { DiagramElement, type DiagramElementCRDT, isEdge, isNode } from './diagramElement';
 import { DiagramEdgeSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
 import { Layer } from './diagramLayer';
 import {
@@ -32,6 +32,8 @@ import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToo
 import { getAdjustments } from './diagramLayerRuleTypes';
 import type { RegularLayer } from './diagramLayerRegular';
 import { assertRegularLayer } from './diagramLayerUtils';
+import type { SerializedEndpoint } from './serialization/types';
+import { CRDT, type CRDTMap, type CRDTProperty } from './collaboration/crdt';
 
 const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
   endpoint instanceof ConnectedEndpoint;
@@ -57,18 +59,33 @@ const intersectionListIsSame = (a: Intersection[], b: Intersection[]) => {
 export type EdgePropsForEditing = DeepReadonly<EdgeProps>;
 export type EdgePropsForRendering = DeepReadonly<DeepRequired<EdgeProps>>;
 
-export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramEdgeSnapshot> {
-  #props: EdgeProps = {};
+export type DiagramEdgeCRDT = DiagramElementCRDT & {
+  start: SerializedEndpoint;
+  end: SerializedEndpoint;
+  props: EdgePropsForEditing;
+  labelNodes?: ReadonlyArray<ResolvedLabelNode>;
+  waypoints: ReadonlyArray<Waypoint>;
+};
 
+export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramEdgeSnapshot> {
+  // Transient properties
   #intersections: Intersection[] = [];
-  #waypoints: ReadonlyArray<Waypoint> = [];
+
+  // Shared properties
+  readonly #waypoints: CRDTProperty<DiagramEdgeCRDT, 'waypoints'>;
 
   #start: Endpoint;
   #end: Endpoint;
   #labelNodes?: ReadonlyArray<ResolvedLabelNode>;
 
+  #props: EdgeProps = {};
+
   constructor(id: string, layer: Layer) {
     super('edge', id, layer);
+
+    this.#waypoints = CRDT.makeProp('waypoints', this._crdt as CRDTMap<DiagramEdgeCRDT>, type => {
+      if (type === 'remote') this.diagram.emit('elementChange', { element: this });
+    });
 
     this.#start = new FreeEndpoint({ x: 0, y: 0 });
     this.#end = new FreeEndpoint({ x: 0, y: 0 });
@@ -90,7 +107,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     edge.#start = start;
     edge.#end = end;
     edge.#props = props as EdgeProps;
-    edge.#waypoints = midpoints;
+    edge.#waypoints.set(midpoints);
 
     edge._metadata.set(metadata ?? {});
 
@@ -555,7 +572,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   /* Waypoints ********************************************************************************************** */
 
   get waypoints(): ReadonlyArray<Waypoint> {
-    return this.#waypoints;
+    return this.#waypoints.get() ?? [];
   }
 
   addWaypoint(waypoint: Waypoint, uow: UnitOfWork) {
@@ -589,7 +606,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
         });
       }
 
-      this.#waypoints = newWaypoints;
+      this.#waypoints.set(newWaypoints);
 
       uow.updateElement(this);
 
@@ -603,19 +620,19 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       });
 
       const newWaypoint = { ...waypoint, pathD: projection.pathD };
-      this.#waypoints = [...wpDistances, newWaypoint].sort(
-        (a, b) => a.pathD - b.pathD
-      ) as Array<Waypoint>;
+      this.#waypoints.set(
+        [...wpDistances, newWaypoint].sort((a, b) => a.pathD - b.pathD) as Array<Waypoint>
+      );
 
       uow.updateElement(this);
 
-      return this.#waypoints.indexOf(newWaypoint);
+      return this.waypoints.indexOf(newWaypoint);
     }
   }
 
   removeWaypoint(waypoint: Waypoint, uow: UnitOfWork) {
     uow.snapshot(this);
-    this.#waypoints = this.#waypoints.filter(w => w !== waypoint);
+    this.#waypoints.set(this.waypoints.filter(w => w !== waypoint));
     uow.updateElement(this);
   }
 
@@ -628,7 +645,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
 
   updateWaypoint(idx: number, waypoint: Waypoint, uow: UnitOfWork) {
     uow.snapshot(this);
-    this.#waypoints = this.waypoints.map((w, i) => (i === idx ? waypoint : w));
+    this.#waypoints.set(this.waypoints.map((w, i) => (i === idx ? waypoint : w)));
     uow.updateElement(this);
   }
 
@@ -666,7 +683,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     this._highlights.clear();
     this.#start = Endpoint.deserialize(snapshot.start, this.diagram.nodeLookup);
     this.#end = Endpoint.deserialize(snapshot.end, this.diagram.nodeLookup);
-    this.#waypoints = (snapshot.waypoints ?? []) as Array<Waypoint>;
+    this.#waypoints.set((snapshot.waypoints ?? []) as Array<Waypoint>);
 
     this.#labelNodes = snapshot.labelNodes?.map(ln => ({
       ...ln,
@@ -780,28 +797,30 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
 
     this.setBounds(Transform.box(this.bounds, ...transforms), uow);
 
-    this.#waypoints = this.waypoints.map(w => {
-      const absoluteControlPoints = Object.values(w.controlPoints ?? {}).map(cp =>
-        Point.add(w.point, cp)
-      );
-      const transformedControlPoints = absoluteControlPoints.map(cp =>
-        Transform.point(cp, ...transforms)
-      );
-      const transformedPoint = Transform.point(w.point, ...transforms);
-      const relativeControlPoints = transformedControlPoints.map(cp =>
-        Point.subtract(cp, transformedPoint)
-      );
+    this.#waypoints.set(
+      this.waypoints.map(w => {
+        const absoluteControlPoints = Object.values(w.controlPoints ?? {}).map(cp =>
+          Point.add(w.point, cp)
+        );
+        const transformedControlPoints = absoluteControlPoints.map(cp =>
+          Transform.point(cp, ...transforms)
+        );
+        const transformedPoint = Transform.point(w.point, ...transforms);
+        const relativeControlPoints = transformedControlPoints.map(cp =>
+          Point.subtract(cp, transformedPoint)
+        );
 
-      return {
-        point: transformedPoint,
-        controlPoints: w.controlPoints
-          ? {
-              cp1: relativeControlPoints[0],
-              cp2: relativeControlPoints[1]
-            }
-          : undefined
-      };
-    });
+        return {
+          point: transformedPoint,
+          controlPoints: w.controlPoints
+            ? {
+                cp1: relativeControlPoints[0],
+                cp2: relativeControlPoints[1]
+              }
+            : undefined
+        };
+      })
+    );
 
     uow.updateElement(this);
   }
