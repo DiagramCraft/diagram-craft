@@ -78,7 +78,3 @@ describe.for(Backends.all())('RegularLayer [%s]', ([_, root1, _root2, before, af
     });
   });
 });
-
-describe('YJS RegularLayer', () => {
-  setupYJS();
-});
