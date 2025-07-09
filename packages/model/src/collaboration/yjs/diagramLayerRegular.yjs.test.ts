@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { createSyncedYJSCRDTs, setupYJS } from './yjsTest';
+import { createSyncedYJSCRDTs } from './yjsTest';
 import { TestModel } from '../../test-support/builder';
 import { RegularLayer } from '../../diagramLayerRegular';
 import { Diagram } from '../../diagram';
