@@ -43,7 +43,7 @@ const makeElementMapper = (layer: Layer): CRDTMapper<DiagramElement, DiagramElem
     },
 
     toCRDT(e: DiagramElement): CRDTMap<DiagramElementCRDT> {
-      return e.crdt;
+      return e.crdt.get();
     }
   };
 };

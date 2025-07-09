@@ -1,9 +1,10 @@
 import { CollaborationConfig } from './collaborationConfig';
-import { Emitter } from '@diagram-craft/utils/event';
+import { Emitter, type EventReceiver } from '@diagram-craft/utils/event';
 import { DeepReadonly, EmptyObject } from '@diagram-craft/utils/types';
-import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { isPrimitive } from '@diagram-craft/utils/object';
 import { unique } from '@diagram-craft/utils/array';
+import type { WatchableValue } from '@diagram-craft/utils/watchableValue';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type CRDTCompatibleObject = CRDTMap<any> | CRDTList<any> | CRDTCompatibleInnerObject;
@@ -236,23 +237,38 @@ export const CRDT = new (class {
 
   makeProp<T extends { [key: string]: CRDTCompatibleObject }, N extends keyof T & string>(
     name: N,
-    crdt: CRDTMap<T>,
+    crdt: WatchableValue<CRDTMap<T>>,
     onChange: (type: 'local' | 'remote') => void = () => {}
   ): CRDTProperty<T, N> {
-    crdt.on('localUpdate', p => {
-      if (p.key === name) {
-        onChange('local');
-      }
-    });
-    crdt.on('remoteUpdate', p => {
-      if (p.key === name) {
-        onChange('remote');
-      }
+    let oldCrdt = crdt.get();
+
+    const localUpdate: EventReceiver<CRDTMapEvents<T[string]>['localUpdate']> = p => {
+      if (p.key !== name) return;
+      onChange('local');
+    };
+    const remoteUpdate: EventReceiver<CRDTMapEvents<T[string]>['remoteUpdate']> = p => {
+      if (p.key !== name) return;
+      onChange('local');
+    };
+
+    crdt.get().on('localUpdate', localUpdate);
+    crdt.get().on('remoteUpdate', remoteUpdate);
+
+    crdt.on('change', () => {
+      assert.present(oldCrdt);
+
+      oldCrdt.off('localUpdate', localUpdate);
+      oldCrdt.off('remoteUpdate', remoteUpdate);
+
+      crdt.get().on('localUpdate', localUpdate);
+      crdt.get().on('remoteUpdate', remoteUpdate);
+
+      oldCrdt = crdt.get();
     });
 
     return {
-      get: () => crdt.get(name),
-      set: (v: T[keyof T & string]) => crdt.set(name, v)
+      get: () => crdt.get().get(name),
+      set: (v: T[keyof T & string]) => crdt.get().set(name, v)
     };
   }
 })();

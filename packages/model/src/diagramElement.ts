@@ -18,6 +18,7 @@ import { PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { assert } from '@diagram-craft/utils/assert';
 import type { RegularLayer } from './diagramLayerRegular';
 import { CRDT, type CRDTMap, type CRDTProperty } from './collaboration/crdt';
+import { WatchableValue } from '@diagram-craft/utils/watchableValue';
 
 // eslint-disable-next-line
 type Snapshot = any;
@@ -36,7 +37,7 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
   readonly trackableType = 'element';
 
   // Transient properties
-  protected _crdt: CRDTMap<DiagramElementCRDT>;
+  protected readonly _crdt: WatchableValue<CRDTMap<DiagramElementCRDT>>;
 
   protected _diagram: Diagram;
 
@@ -62,13 +63,14 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
     this._layer = layer;
     this._activeDiagram = this._diagram;
 
-    this._crdt = crdt ?? this._diagram.document.root.factory.makeMap();
-    this._crdt.set('id', id);
-    this._crdt.set('type', type);
+    this._crdt = new WatchableValue(crdt ?? this._diagram.document.root.factory.makeMap());
+    this._crdt.get().set('id', id);
+    this._crdt.get().set('type', type);
 
-    this._highlights = this._crdt.get('highlights', () =>
-      this._diagram.document.root.factory.makeMap()
-    )!;
+    // TODO: Cover to CRDT.makeProp
+    this._highlights = this._crdt
+      .get()
+      .get('highlights', () => this._diagram.document.root.factory.makeMap())!;
 
     this._metadata = CRDT.makeProp('metadata', this._crdt, type => {
       if (type !== 'remote') return;
@@ -109,7 +111,7 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
   abstract restore(snapshot: Snapshot, uow: UnitOfWork): void;
 
   detachCRDT() {
-    this._crdt = this._crdt.clone();
+    this._crdt.set(this._crdt.get().clone());
   }
 
   get crdt() {
@@ -117,11 +119,11 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
   }
 
   get id() {
-    return this._crdt.get('id')!;
+    return this._crdt.get().get('id')!;
   }
 
   get type() {
-    return this._crdt.get('type')!;
+    return this._crdt.get().get('type')!;
   }
 
   /* Flags *************************************************************************************************** */

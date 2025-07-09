@@ -20,6 +20,7 @@ import { LayerManager, LayerManagerCRDT } from './diagramLayerManager';
 import { RegularLayer } from './diagramLayerRegular';
 import { Layer } from './diagramLayer';
 import { assertRegularLayer } from './diagramLayerUtils';
+import { WatchableValue } from '@diagram-craft/utils/watchableValue';
 
 export type DiagramIteratorOpts = {
   nest?: boolean;
@@ -181,9 +182,10 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
       this.document.emit('diagramchanged', { diagram: this });
     };
 
-    this.#name = CRDT.makeProp('name', this.crdt, metadataUpdate);
-    this.#id = CRDT.makeProp('id', this.crdt, metadataUpdate);
-    this.#parent = CRDT.makeProp('parent', this.crdt, metadataUpdate);
+    const crdtWatchableValue = new WatchableValue(this.crdt);
+    this.#name = CRDT.makeProp('name', crdtWatchableValue, metadataUpdate);
+    this.#id = CRDT.makeProp('id', crdtWatchableValue, metadataUpdate);
+    this.#parent = CRDT.makeProp('parent', crdtWatchableValue, metadataUpdate);
   }
 
   get id() {

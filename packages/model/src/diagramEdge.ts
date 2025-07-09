@@ -34,6 +34,7 @@ import type { RegularLayer } from './diagramLayerRegular';
 import { assertRegularLayer } from './diagramLayerUtils';
 import type { SerializedEndpoint } from './serialization/types';
 import { CRDT, type CRDTMap, type CRDTProperty } from './collaboration/crdt';
+import { WatchableValue } from '@diagram-craft/utils/watchableValue';
 
 const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
   endpoint instanceof ConnectedEndpoint;
@@ -83,9 +84,13 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   constructor(id: string, layer: Layer) {
     super('edge', id, layer);
 
-    this.#waypoints = CRDT.makeProp('waypoints', this._crdt as CRDTMap<DiagramEdgeCRDT>, type => {
-      if (type === 'remote') this.diagram.emit('elementChange', { element: this });
-    });
+    this.#waypoints = CRDT.makeProp(
+      'waypoints',
+      this._crdt as unknown as WatchableValue<CRDTMap<DiagramEdgeCRDT>>,
+      type => {
+        if (type === 'remote') this.diagram.emit('elementChange', { element: this });
+      }
+    );
 
     this.#start = new FreeEndpoint({ x: 0, y: 0 });
     this.#end = new FreeEndpoint({ x: 0, y: 0 });

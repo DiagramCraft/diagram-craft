@@ -9,6 +9,7 @@ import { CRDT, CRDTList, CRDTMap, CRDTProperty } from './collaboration/crdt';
 import type { RegularLayer } from './diagramLayerRegular';
 import type { AdjustmentRule } from './diagramLayerRuleTypes';
 import type { MappedCRDTOrderedMapMapType } from './collaboration/mappedCRDTOrderedMap';
+import { WatchableValue } from '@diagram-craft/utils/watchableValue';
 
 export type LayerType = 'regular' | 'rule' | 'reference';
 export type StackPosition = { element: DiagramElement; idx: number };
@@ -44,10 +45,10 @@ export abstract class Layer<T extends RegularLayer | RuleLayer = RegularLayer | 
     this._type = type ?? 'regular';
     this.crdt.set('type', this._type);
 
-    this.#name = CRDT.makeProp('name', this.crdt, () => {
+    this.#name = CRDT.makeProp('name', new WatchableValue(this.crdt), () => {
       this.diagram.emit('change', { diagram: this.diagram });
     });
-    this.#id = CRDT.makeProp('id', this.crdt);
+    this.#id = CRDT.makeProp('id', new WatchableValue(this.crdt));
 
     this.diagram = diagram;
   }
