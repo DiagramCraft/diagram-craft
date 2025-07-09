@@ -19,7 +19,7 @@ describe('CRDT', () => {
     it('should call onChange when value is updated locally', () => {
       const map = new WatchableValue<CRDTMap<TestType>>(new NoOpCRDTMap<TestType>());
       const onChange = vi.fn();
-      const prop = CRDT.makeProp('value', map, onChange);
+      const prop = CRDT.makeProp('value', map, { onChange });
       prop.set('test');
 
       prop.set('new value');

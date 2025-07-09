@@ -109,6 +109,7 @@ export type CRDTProperty<
   N extends keyof T & string
 > = {
   get: () => T[N] | undefined;
+  getNonNull: () => T[N];
   set: (v: T[N]) => void;
 };
 
@@ -238,17 +239,22 @@ export const CRDT = new (class {
   makeProp<T extends { [key: string]: CRDTCompatibleObject }, N extends keyof T & string>(
     name: N,
     crdt: WatchableValue<CRDTMap<T>>,
-    onChange: (type: 'local' | 'remote') => void = () => {}
+    props: {
+      onChange?: (type: 'local' | 'remote') => void;
+      factory?: () => T[N];
+    } = {}
   ): CRDTProperty<T, N> {
+    props.onChange ??= () => {};
+
     let oldCrdt = crdt.get();
 
     const localUpdate: EventReceiver<CRDTMapEvents<T[string]>['localUpdate']> = p => {
       if (p.key !== name) return;
-      onChange('local');
+      props.onChange!('local');
     };
     const remoteUpdate: EventReceiver<CRDTMapEvents<T[string]>['remoteUpdate']> = p => {
       if (p.key !== name) return;
-      onChange('local');
+      props.onChange!('local');
     };
 
     crdt.get().on('localUpdate', localUpdate);
@@ -267,7 +273,12 @@ export const CRDT = new (class {
     });
 
     return {
-      get: () => crdt.get().get(name),
+      get: () => crdt.get().get(name, props.factory),
+      getNonNull: () => {
+        const v = crdt.get().get(name, props.factory);
+        assert.present(v);
+        return v;
+      },
       set: (v: T[keyof T & string]) => crdt.get().set(name, v)
     };
   }

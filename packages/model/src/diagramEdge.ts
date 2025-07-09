@@ -87,8 +87,10 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     this.#waypoints = CRDT.makeProp(
       'waypoints',
       this._crdt as unknown as WatchableValue<CRDTMap<DiagramEdgeCRDT>>,
-      type => {
-        if (type === 'remote') this.diagram.emit('elementChange', { element: this });
+      {
+        onChange: type => {
+          if (type === 'remote') this.diagram.emit('elementChange', { element: this });
+        }
       }
     );
 
@@ -685,7 +687,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   // TODO: Add assertions for lookups
   restore(snapshot: DiagramEdgeSnapshot, uow: UnitOfWork) {
     this.#props = snapshot.props as EdgeProps;
-    this._highlights.clear();
+    this._highlights.get()!.clear();
     this.#start = Endpoint.deserialize(snapshot.start, this.diagram.nodeLookup);
     this.#end = Endpoint.deserialize(snapshot.end, this.diagram.nodeLookup);
     this.#waypoints.set((snapshot.waypoints ?? []) as Array<Waypoint>);

@@ -50,7 +50,7 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
 
   // Shared properties
   protected readonly _metadata: CRDTProperty<DiagramElementCRDT, 'metadata'>;
-  protected readonly _highlights: CRDTMap<Record<string, boolean>>;
+  protected readonly _highlights: CRDTProperty<DiagramElementCRDT, 'highlights'>;
   protected _children: ReadonlyArray<DiagramElement> = [];
 
   protected constructor(
@@ -67,17 +67,18 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
     this._crdt.get().set('id', id);
     this._crdt.get().set('type', type);
 
-    // TODO: Cover to CRDT.makeProp
-    this._highlights = this._crdt
-      .get()
-      .get('highlights', () => this._diagram.document.root.factory.makeMap())!;
+    this._highlights = CRDT.makeProp('highlights', this._crdt, {
+      factory: () => this._diagram.document.root.factory.makeMap()
+    });
 
-    this._metadata = CRDT.makeProp('metadata', this._crdt, type => {
-      if (type !== 'remote') return;
+    this._metadata = CRDT.makeProp('metadata', this._crdt, {
+      onChange: type => {
+        if (type !== 'remote') return;
 
-      this.invalidate(UnitOfWork.immediate(this._diagram));
-      this._diagram.emit('elementChange', { element: this });
-      this._cache?.clear();
+        this.invalidate(UnitOfWork.immediate(this._diagram));
+        this._diagram.emit('elementChange', { element: this });
+        this._cache?.clear();
+      }
     });
   }
 
@@ -165,13 +166,13 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
   /* Highlights ********************************************************************************************** */
 
   set highlights(highlights: ReadonlyArray<string>) {
-    this._highlights.clear();
-    highlights.forEach(h => this._highlights.set(h, true));
+    this._highlights.getNonNull().clear();
+    highlights.forEach(h => this._highlights.get()!.set(h, true));
     this.diagram.emitAsync('elementHighlighted', { element: this });
   }
 
   get highlights() {
-    return Array.from(this._highlights.entries())
+    return Array.from(this._highlights.getNonNull().entries())
       .filter(([, v]) => !!v)
       .map(([k]) => k);
   }

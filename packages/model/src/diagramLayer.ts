@@ -45,8 +45,10 @@ export abstract class Layer<T extends RegularLayer | RuleLayer = RegularLayer | 
     this._type = type ?? 'regular';
     this.crdt.set('type', this._type);
 
-    this.#name = CRDT.makeProp('name', new WatchableValue(this.crdt), () => {
-      this.diagram.emit('change', { diagram: this.diagram });
+    this.#name = CRDT.makeProp('name', new WatchableValue(this.crdt), {
+      onChange: () => {
+        this.diagram.emit('change', { diagram: this.diagram });
+      }
     });
     this.#id = CRDT.makeProp('id', new WatchableValue(this.crdt));
 

@@ -183,9 +183,9 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     };
 
     const crdtWatchableValue = new WatchableValue(this.crdt);
-    this.#name = CRDT.makeProp('name', crdtWatchableValue, metadataUpdate);
-    this.#id = CRDT.makeProp('id', crdtWatchableValue, metadataUpdate);
-    this.#parent = CRDT.makeProp('parent', crdtWatchableValue, metadataUpdate);
+    this.#name = CRDT.makeProp('name', crdtWatchableValue, { onChange: metadataUpdate });
+    this.#id = CRDT.makeProp('id', crdtWatchableValue, { onChange: metadataUpdate });
+    this.#parent = CRDT.makeProp('parent', crdtWatchableValue, { onChange: metadataUpdate });
   }
 
   get id() {
