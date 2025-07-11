@@ -77,8 +77,8 @@ describe('DiagramEdge', () => {
   });
 
   describe('labelNodes', () => {
-    it('should return undefined when no label nodes are set', () => {
-      expect(edge.labelNodes).toBeUndefined();
+    it('should return empty array when no label nodes are set', () => {
+      expect(edge.labelNodes).toEqual([]);
     });
 
     it('should return correct label nodes after setting them', () => {

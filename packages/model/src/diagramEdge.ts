@@ -35,6 +35,11 @@ import { assertRegularLayer } from './diagramLayerUtils';
 import type { SerializedEndpoint } from './serialization/types';
 import { CRDT, type CRDTMap, type CRDTProperty } from './collaboration/crdt';
 import { WatchableValue } from '@diagram-craft/utils/watchableValue';
+import {
+  MappedCRDTOrderedMap,
+  type MappedCRDTOrderedMapMapType
+} from './collaboration/mappedCRDTOrderedMap';
+import { CRDTMapper } from './collaboration/mappedCRDT';
 
 const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
   endpoint instanceof ConnectedEndpoint;
@@ -60,12 +65,31 @@ const intersectionListIsSame = (a: Intersection[], b: Intersection[]) => {
 export type EdgePropsForEditing = DeepReadonly<EdgeProps>;
 export type EdgePropsForRendering = DeepReadonly<DeepRequired<EdgeProps>>;
 
+type LabelNodeCRDTEntry = { node: LabelNode };
+
 export type DiagramEdgeCRDT = DiagramElementCRDT & {
   start: SerializedEndpoint;
   end: SerializedEndpoint;
   props: EdgePropsForEditing;
-  labelNodes?: ReadonlyArray<ResolvedLabelNode>;
+  labelNodes: CRDTMap<MappedCRDTOrderedMapMapType<LabelNodeCRDTEntry>>;
   waypoints: ReadonlyArray<Waypoint>;
+};
+
+const makeLabelNodeMapper = (
+  edge: DiagramEdge
+): CRDTMapper<ResolvedLabelNode, LabelNodeCRDTEntry> => {
+  return {
+    fromCRDT(e: CRDTMap<LabelNodeCRDTEntry>): ResolvedLabelNode {
+      const node = e.get('node')!;
+      return { ...node, node: edge.diagram.nodeLookup.get(node.id)! };
+    },
+
+    toCRDT(e: ResolvedLabelNode): CRDTMap<LabelNodeCRDTEntry> {
+      const m = edge.crdt.get().factory.makeMap<LabelNodeCRDTEntry>();
+      m.set('node', { id: e.id, offset: e.offset, type: e.type, timeOffset: e.timeOffset });
+      return m;
+    }
+  };
 };
 
 export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramEdgeSnapshot> {
@@ -74,10 +98,10 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
 
   // Shared properties
   readonly #waypoints: CRDTProperty<DiagramEdgeCRDT, 'waypoints'>;
+  readonly #labelNodes: MappedCRDTOrderedMap<ResolvedLabelNode, LabelNodeCRDTEntry>;
 
   #start: Endpoint;
   #end: Endpoint;
-  #labelNodes?: ReadonlyArray<ResolvedLabelNode>;
 
   #props: EdgeProps = {};
 
@@ -92,6 +116,14 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
           if (type === 'remote') this.diagram.emit('elementChange', { element: this });
         }
       }
+    );
+
+    this.#labelNodes = new MappedCRDTOrderedMap<ResolvedLabelNode, LabelNodeCRDTEntry>(
+      (this._crdt.get() as CRDTMap<DiagramEdgeCRDT>).get('labelNodes', () =>
+        layer.diagram.document.root.factory.makeMap()
+      )!,
+      makeLabelNodeMapper(this),
+      true
     );
 
     this.#start = new FreeEndpoint({ x: 0, y: 0 });
@@ -299,8 +331,8 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
 
   get name() {
     // First we use any label nodes
-    if (this.#labelNodes && this.#labelNodes.length > 0) {
-      return this.#labelNodes[0].node.name;
+    if (this.#labelNodes && this.#labelNodes.size > 0) {
+      return this.#labelNodes.values[0].node.name;
     }
 
     if (!isEmptyString(this.metadata.name)) {
@@ -422,7 +454,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   /* Label Nodes ******************************************************************************************** */
 
   get labelNodes() {
-    return this.#labelNodes;
+    return this.#labelNodes.values;
   }
 
   removeChild(child: DiagramElement, uow: UnitOfWork) {
@@ -451,7 +483,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
 
     // Find all children with corresponding label node
     const existingLabelNodes =
-      this.#labelNodes?.filter(ln => this._children.find(c => c.id === ln.node.id)) ?? [];
+      this.#labelNodes?.values.filter(ln => this._children.find(c => c.id === ln.node.id)) ?? [];
 
     const newLabelNodes: ResolvedLabelNode[] = [];
     for (const c of this._children) {
@@ -471,7 +503,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       }
     }
 
-    this.#labelNodes = [...existingLabelNodes, ...newLabelNodes];
+    this.#labelNodes.set([...existingLabelNodes, ...newLabelNodes].map(n => [n.id, n]));
     uow.updateElement(this);
 
     this.labelNodeConsistencyInvariant();
@@ -480,7 +512,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   private syncChildrenBasedOnLabelNodes(uow: UnitOfWork) {
     uow.snapshot(this);
 
-    this.#labelNodes?.forEach(ln => {
+    this.#labelNodes?.values.forEach(ln => {
       const layer = ln.node.layer;
       if (layer.type === 'regular') {
         assertRegularLayer(layer);
@@ -509,7 +541,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     });
 
     for (const c of this._children) {
-      if (!this.#labelNodes?.find(ln => ln.node === c)) {
+      if (!this.#labelNodes?.values.find(ln => ln.node === c)) {
         this.removeChild(c, uow);
       }
     }
@@ -520,7 +552,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   }
 
   setLabelNodes(labelNodes: ReadonlyArray<ResolvedLabelNode> | undefined, uow: UnitOfWork) {
-    this.#labelNodes = labelNodes;
+    this.#labelNodes.set(labelNodes?.map(n => [n.id, n]) ?? []);
 
     this.syncChildrenBasedOnLabelNodes(uow);
   }
@@ -546,15 +578,15 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     DEBUG: {
       // Check that labelNodes and children have the same length
       assert.true(
-        this.#labelNodes?.length === this._children.length,
-        `Label nodes don't match children - different length; ${this._children.length} != ${this.#labelNodes?.length}`
+        this.#labelNodes?.size === this._children.length,
+        `Label nodes don't match children - different length; ${this._children.length} != ${this.#labelNodes?.size}`
       );
 
       // Check that labelNodes and children have the same nodes
-      for (const ln of this.#labelNodes ?? []) {
+      for (const ln of this.#labelNodes.values ?? []) {
         assert.true(
           !!this._children.find(c => c.id === ln.node.id),
-          `Label node doesn't match children - different ids; ${this._children.map(c => c.id).join(', ')} != ${this.#labelNodes?.map(ln => ln.node.id).join(', ')}`
+          `Label node doesn't match children - different ids; ${this._children.map(c => c.id).join(', ')} != ${this.#labelNodes?.values.map(ln => ln.node.id).join(', ')}`
         );
       }
 
@@ -692,10 +724,15 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     this.#end = Endpoint.deserialize(snapshot.end, this.diagram.nodeLookup);
     this.#waypoints.set((snapshot.waypoints ?? []) as Array<Waypoint>);
 
-    this.#labelNodes = snapshot.labelNodes?.map(ln => ({
-      ...ln,
-      node: this.diagram.nodeLookup.get(ln.id)!
-    }));
+    this.#labelNodes.set(
+      snapshot.labelNodes?.map(ln => [
+        ln.id,
+        {
+          ...ln,
+          node: this.diagram.nodeLookup.get(ln.id)!
+        }
+      ]) ?? []
+    );
 
     this.syncChildrenBasedOnLabelNodes(uow);
 

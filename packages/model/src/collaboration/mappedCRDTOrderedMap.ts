@@ -64,6 +64,10 @@ export class MappedCRDTOrderedMap<
     return this.#entries.map(e => e[1]);
   }
 
+  get size() {
+    return this.#entries.length;
+  }
+
   get(key: string) {
     return this.#entries.find(e => e[0] === key)?.[1];
   }
