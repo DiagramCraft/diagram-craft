@@ -247,6 +247,7 @@ export const CRDT = new (class {
     props.onChange ??= () => {};
 
     let oldCrdt = crdt.get();
+    oldCrdt.get(name, props.factory);
 
     const localUpdate: EventReceiver<CRDTMapEvents<T[string]>['localUpdate']> = p => {
       if (p.key !== name) return;
@@ -270,6 +271,7 @@ export const CRDT = new (class {
       crdt.get().on('remoteUpdate', remoteUpdate);
 
       oldCrdt = crdt.get();
+      oldCrdt.get(name, props.factory);
     });
 
     return {

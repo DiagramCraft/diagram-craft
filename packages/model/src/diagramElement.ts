@@ -80,6 +80,8 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
         this._cache?.clear();
       }
     });
+
+    //console.log(id, !!this._metadata.get(), !!this._highlights.get());
   }
 
   abstract getAttachmentsInUse(): Array<string>;
