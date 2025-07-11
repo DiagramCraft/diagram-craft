@@ -33,13 +33,14 @@ import { getAdjustments } from './diagramLayerRuleTypes';
 import type { RegularLayer } from './diagramLayerRegular';
 import { assertRegularLayer } from './diagramLayerUtils';
 import type { SerializedEndpoint } from './serialization/types';
-import { CRDT, type CRDTMap, type CRDTProperty } from './collaboration/crdt';
+import { type CRDTMap } from './collaboration/crdt';
 import { WatchableValue } from '@diagram-craft/utils/watchableValue';
 import {
   MappedCRDTOrderedMap,
   type MappedCRDTOrderedMapMapType
-} from './collaboration/mappedCRDTOrderedMap';
-import { CRDTMapper } from './collaboration/mappedCRDT';
+} from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
+import { CRDTMapper } from './collaboration/datatypes/mapped/mappedCrdt';
+import { CRDTProp } from './collaboration/datatypes/crdtProp';
 
 const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
   endpoint instanceof ConnectedEndpoint;
@@ -97,7 +98,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   #intersections: Intersection[] = [];
 
   // Shared properties
-  readonly #waypoints: CRDTProperty<DiagramEdgeCRDT, 'waypoints'>;
+  readonly #waypoints: CRDTProp<DiagramEdgeCRDT, 'waypoints'>;
   readonly #labelNodes: MappedCRDTOrderedMap<ResolvedLabelNode, LabelNodeCRDTEntry>;
 
   #start: Endpoint;
@@ -108,9 +109,9 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   constructor(id: string, layer: Layer) {
     super('edge', id, layer);
 
-    this.#waypoints = CRDT.makeProp(
-      'waypoints',
+    this.#waypoints = new CRDTProp(
       this._crdt as unknown as WatchableValue<CRDTMap<DiagramEdgeCRDT>>,
+      'waypoints',
       {
         onChange: type => {
           if (type === 'remote') this.diagram.emit('elementChange', { element: this });

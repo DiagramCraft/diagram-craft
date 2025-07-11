@@ -5,11 +5,12 @@ import { AttachmentConsumer } from './attachment';
 import type { RuleLayer } from './diagramLayerRule';
 import { assert } from '@diagram-craft/utils/assert';
 import type { ReferenceLayer } from './diagramLayerReference';
-import { CRDT, CRDTList, CRDTMap, CRDTProperty } from './collaboration/crdt';
+import { CRDTList, CRDTMap } from './collaboration/crdt';
 import type { RegularLayer } from './diagramLayerRegular';
 import type { AdjustmentRule } from './diagramLayerRuleTypes';
-import type { MappedCRDTOrderedMapMapType } from './collaboration/mappedCRDTOrderedMap';
+import type { MappedCRDTOrderedMapMapType } from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import { WatchableValue } from '@diagram-craft/utils/watchableValue';
+import { CRDTProp } from './collaboration/datatypes/crdtProp';
 
 export type LayerType = 'regular' | 'rule' | 'reference';
 export type StackPosition = { element: DiagramElement; idx: number };
@@ -22,8 +23,8 @@ export abstract class Layer<T extends RegularLayer | RuleLayer = RegularLayer | 
   implements UOWTrackable<LayerSnapshot>, AttachmentConsumer
 {
   #locked = false;
-  #id: CRDTProperty<LayerCRDT, 'id'>;
-  #name: CRDTProperty<LayerCRDT, 'name'>;
+  #id: CRDTProp<LayerCRDT, 'id'>;
+  #name: CRDTProp<LayerCRDT, 'name'>;
   protected _type: LayerType = 'regular';
 
   readonly diagram: Diagram;
@@ -45,12 +46,12 @@ export abstract class Layer<T extends RegularLayer | RuleLayer = RegularLayer | 
     this._type = type ?? 'regular';
     this.crdt.set('type', this._type);
 
-    this.#name = CRDT.makeProp('name', new WatchableValue(this.crdt), {
+    this.#name = new CRDTProp(new WatchableValue(this.crdt), 'name', {
       onChange: () => {
         this.diagram.emit('change', { diagram: this.diagram });
       }
     });
-    this.#id = CRDT.makeProp('id', new WatchableValue(this.crdt));
+    this.#id = new CRDTProp(new WatchableValue(this.crdt), 'id');
 
     this.diagram = diagram;
   }

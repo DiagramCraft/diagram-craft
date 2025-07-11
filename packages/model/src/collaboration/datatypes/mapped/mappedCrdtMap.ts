@@ -1,6 +1,6 @@
-import { CRDTCompatibleObject, CRDTMap } from './crdt';
 import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
-import { CRDTMapper } from './mappedCRDT';
+import { CRDTMapper } from './mappedCrdt';
+import type { CRDTCompatibleObject, CRDTMap } from '../../crdt';
 
 export type MappedCRDTMapMapType<T extends Record<string, CRDTCompatibleObject>> = Record<
   string,

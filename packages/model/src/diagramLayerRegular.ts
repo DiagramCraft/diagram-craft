@@ -5,8 +5,8 @@ import { CRDTMap } from './collaboration/crdt';
 import { LayerSnapshot, UnitOfWork } from './unitOfWork';
 import { groupBy } from '@diagram-craft/utils/array';
 import { DiagramEdge } from './diagramEdge';
-import { MappedCRDTOrderedMap } from './collaboration/mappedCRDTOrderedMap';
-import { CRDTMapper } from './collaboration/mappedCRDT';
+import { MappedCRDTOrderedMap } from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
+import { CRDTMapper } from './collaboration/datatypes/mapped/mappedCrdt';
 import { DiagramNode } from './diagramNode';
 import { FreeEndpoint } from './endpoint';
 

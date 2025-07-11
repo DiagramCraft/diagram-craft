@@ -17,8 +17,9 @@ import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToo
 import { PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { assert } from '@diagram-craft/utils/assert';
 import type { RegularLayer } from './diagramLayerRegular';
-import { CRDT, type CRDTMap, type CRDTProperty } from './collaboration/crdt';
+import { type CRDTMap } from './collaboration/crdt';
 import { WatchableValue } from '@diagram-craft/utils/watchableValue';
+import { CRDTProp } from './collaboration/datatypes/crdtProp';
 
 // eslint-disable-next-line
 type Snapshot = any;
@@ -49,8 +50,8 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
   protected _cache: Map<string, unknown> | undefined = undefined;
 
   // Shared properties
-  protected readonly _metadata: CRDTProperty<DiagramElementCRDT, 'metadata'>;
-  protected readonly _highlights: CRDTProperty<DiagramElementCRDT, 'highlights'>;
+  protected readonly _metadata: CRDTProp<DiagramElementCRDT, 'metadata'>;
+  protected readonly _highlights: CRDTProp<DiagramElementCRDT, 'highlights'>;
   protected _children: ReadonlyArray<DiagramElement> = [];
 
   protected constructor(
@@ -67,11 +68,11 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
     this._crdt.get().set('id', id);
     this._crdt.get().set('type', type);
 
-    this._highlights = CRDT.makeProp('highlights', this._crdt, {
+    this._highlights = new CRDTProp(this._crdt, 'highlights', {
       factory: () => this._diagram.document.root.factory.makeMap()
     });
 
-    this._metadata = CRDT.makeProp('metadata', this._crdt, {
+    this._metadata = new CRDTProp(this._crdt, 'metadata', {
       onChange: type => {
         if (type !== 'remote') return;
 

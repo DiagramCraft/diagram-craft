@@ -22,7 +22,7 @@ import { CRDT, CRDTRoot } from './collaboration/crdt';
 import { CollaborationConfig } from './collaboration/collaborationConfig';
 import { DocumentProps } from './documentProps';
 import { ProgressCallback } from './types';
-import { MappedCRDTOrderedMap } from './collaboration/mappedCRDTOrderedMap';
+import { MappedCRDTOrderedMap } from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 
 export type DocumentEvents = {
   diagramchanged: { diagram: Diagram };

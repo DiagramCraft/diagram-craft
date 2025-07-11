@@ -1,4 +1,4 @@
-import { CRDTCompatibleObject, CRDTMap } from './crdt';
+import { CRDTCompatibleObject, CRDTMap } from '../../crdt';
 
 export type CRDTMapper<
   T,

@@ -14,13 +14,15 @@ import { EventEmitter, EventKey } from '@diagram-craft/utils/event';
 import { assert } from '@diagram-craft/utils/assert';
 import { AttachmentConsumer } from './attachment';
 import { newid } from '@diagram-craft/utils/id';
-import { CRDTMapper } from './collaboration/mappedCRDT';
-import { CRDT, CRDTMap, CRDTObject, CRDTProperty, Flatten } from './collaboration/crdt';
+import { CRDTMapper } from './collaboration/datatypes/mapped/mappedCrdt';
+import { CRDTMap, Flatten } from './collaboration/crdt';
 import { LayerManager, LayerManagerCRDT } from './diagramLayerManager';
 import { RegularLayer } from './diagramLayerRegular';
 import { Layer } from './diagramLayer';
 import { assertRegularLayer } from './diagramLayerUtils';
 import { WatchableValue } from '@diagram-craft/utils/watchableValue';
+import { CRDTProp } from './collaboration/datatypes/crdtProp';
+import { CRDTObject } from './collaboration/datatypes/crdtObject';
 
 export type DiagramIteratorOpts = {
   nest?: boolean;
@@ -115,9 +117,9 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   mustCalculateIntersections = true;
 
   // Shared properties
-  readonly #name: CRDTProperty<DiagramCRDT, 'name'>;
-  readonly #id: CRDTProperty<DiagramCRDT, 'id'>;
-  readonly #parent: CRDTProperty<DiagramCRDT, 'parent'>;
+  readonly #name: CRDTProp<DiagramCRDT, 'name'>;
+  readonly #id: CRDTProp<DiagramCRDT, 'id'>;
+  readonly #parent: CRDTProp<DiagramCRDT, 'parent'>;
   readonly #props: CRDTObject<DiagramProps>;
 
   readonly layers: LayerManager;
@@ -183,9 +185,9 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     };
 
     const crdtWatchableValue = new WatchableValue(this.crdt);
-    this.#name = CRDT.makeProp('name', crdtWatchableValue, { onChange: metadataUpdate });
-    this.#id = CRDT.makeProp('id', crdtWatchableValue, { onChange: metadataUpdate });
-    this.#parent = CRDT.makeProp('parent', crdtWatchableValue, { onChange: metadataUpdate });
+    this.#name = new CRDTProp(crdtWatchableValue, 'name', { onChange: metadataUpdate });
+    this.#id = new CRDTProp(crdtWatchableValue, 'id', { onChange: metadataUpdate });
+    this.#parent = new CRDTProp(crdtWatchableValue, 'parent', { onChange: metadataUpdate });
   }
 
   get id() {

@@ -1,6 +1,6 @@
-import { CRDTCompatibleObject, CRDTMap } from './crdt';
 import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
-import { CRDTMapper } from './mappedCRDT';
+import { CRDTMapper } from './mappedCrdt';
+import type { CRDTCompatibleObject, CRDTMap } from '../../crdt';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type WrapperType<T extends Record<string, CRDTCompatibleObject> = any> = {
