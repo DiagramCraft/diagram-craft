@@ -1,18 +1,23 @@
-import type { CRDTCompatibleObject, CRDTMap, CRDTMapEvents } from '../crdt';
+import type { CRDTCompatibleObject, CRDTMap, CRDTMapEvents } from '../../crdt';
 import type { WatchableValue } from '@diagram-craft/utils/watchableValue';
 import type { EventReceiver } from '@diagram-craft/utils/event';
 import { assert } from '@diagram-craft/utils/assert';
+import type { SimpleCRDTMapper } from './mappedCrdt';
 
-export class CRDTProp<
-  T extends { [key: string]: CRDTCompatibleObject },
-  N extends keyof T & string
+export class MappedCRDTProp<
+  T,
+  C extends { [key: string]: CRDTCompatibleObject },
+  N extends keyof C & string
 > {
+  #value: T | undefined;
+
   constructor(
-    private readonly crdt: WatchableValue<CRDTMap<T>>,
+    private readonly crdt: WatchableValue<CRDTMap<C>>,
     private readonly name: N,
-    private readonly props: {
+    private readonly mapper: SimpleCRDTMapper<T, C[N]>,
+    props: {
       onChange?: (type: 'local' | 'remote') => void;
-      factory?: () => T[N];
+      factory?: () => C[N];
     } = {}
   ) {
     props.onChange ??= () => {};
@@ -20,13 +25,14 @@ export class CRDTProp<
     let oldCrdt = crdt.get();
     oldCrdt.get(name, props.factory);
 
-    const localUpdate: EventReceiver<CRDTMapEvents<T[string]>['localUpdate']> = p => {
+    const localUpdate: EventReceiver<CRDTMapEvents<C[string]>['localUpdate']> = p => {
       if (p.key !== name) return;
       props.onChange!('local');
     };
-    const remoteUpdate: EventReceiver<CRDTMapEvents<T[string]>['remoteUpdate']> = p => {
+    const remoteUpdate: EventReceiver<CRDTMapEvents<C[string]>['remoteUpdate']> = p => {
       if (p.key !== name) return;
       props.onChange!('remote');
+      this.#value = this.mapper.fromCRDT(p.value as C[N]);
     };
 
     crdt.get().on('localUpdate', localUpdate);
@@ -47,16 +53,17 @@ export class CRDTProp<
   }
 
   get() {
-    return this.crdt.get().get(this.name, this.props.factory);
+    return this.#value;
   }
 
   getNonNull() {
-    const v = this.crdt.get().get(this.name, this.props.factory);
+    const v = this.get();
     assert.present(v);
     return v;
   }
 
-  set(v: T[keyof T & string]) {
-    this.crdt.get().set(this.name, v);
+  set(v: T) {
+    this.#value = v;
+    this.crdt.get().set(this.name, this.mapper.toCRDT(v));
   }
 }

@@ -1,5 +1,5 @@
 import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
-import { CRDTMapper } from './mappedCrdt';
+import { type SimpleCRDTMapper } from './mappedCrdt';
 import type { CRDTCompatibleObject, CRDTMap } from '../../crdt';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -21,7 +21,7 @@ export class MappedCRDTOrderedMap<
 
   constructor(
     private readonly crdt: CRDTMap<MappedCRDTOrderedMapMapType<C>>,
-    private readonly mapper: CRDTMapper<T, C>,
+    private readonly mapper: SimpleCRDTMapper<T, CRDTMap<C>>,
     allowUpdates = false
   ) {
     const setFromCRDT = () => {

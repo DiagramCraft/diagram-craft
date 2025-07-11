@@ -1,5 +1,5 @@
 import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
-import { CRDTMapper } from './mappedCrdt';
+import { type SimpleCRDTMapper } from './mappedCrdt';
 import type { CRDTCompatibleObject, CRDTMap } from '../../crdt';
 
 export type MappedCRDTMapMapType<T extends Record<string, CRDTCompatibleObject>> = Record<
@@ -15,7 +15,7 @@ export class MappedCRDTMap<
 
   constructor(
     private readonly crdt: CRDTMap<MappedCRDTMapMapType<C>>,
-    private readonly mapper: CRDTMapper<T, C>,
+    private readonly mapper: SimpleCRDTMapper<T, CRDTMap<C>>,
     allowUpdates = false
   ) {
     crdt.on('remoteUpdate', e => {
