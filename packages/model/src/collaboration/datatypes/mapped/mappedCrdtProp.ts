@@ -5,9 +5,9 @@ import { assert } from '@diagram-craft/utils/assert';
 import type { SimpleCRDTMapper } from './mappedCrdt';
 
 export class MappedCRDTProp<
-  T,
   C extends { [key: string]: CRDTCompatibleObject },
-  N extends keyof C & string
+  N extends keyof C & string,
+  T
 > {
   #value: T | undefined;
 
@@ -52,11 +52,11 @@ export class MappedCRDTProp<
     });
   }
 
-  get() {
+  get(): Readonly<T | undefined> {
     return this.#value;
   }
 
-  getNonNull() {
+  getNonNull(): Readonly<T> {
     const v = this.get();
     assert.present(v);
     return v;
@@ -64,6 +64,6 @@ export class MappedCRDTProp<
 
   set(v: T) {
     this.#value = v;
-    this.crdt.get().set(this.name, this.mapper.toCRDT(v));
+    this.crdt.get().set(this.name, this.mapper.toCRDT(v) as C[N]);
   }
 }

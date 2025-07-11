@@ -32,15 +32,16 @@ import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToo
 import { getAdjustments } from './diagramLayerRuleTypes';
 import type { RegularLayer } from './diagramLayerRegular';
 import { assertRegularLayer } from './diagramLayerUtils';
-import type { SerializedEndpoint } from './serialization/types';
+import type { Reference } from './serialization/types';
 import { type CRDTMap } from './collaboration/crdt';
 import { WatchableValue } from '@diagram-craft/utils/watchableValue';
 import {
   MappedCRDTOrderedMap,
   type MappedCRDTOrderedMapMapType
 } from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
-import { CRDTMapper } from './collaboration/datatypes/mapped/mappedCrdt';
+import { CRDTMapper, type SimpleCRDTMapper } from './collaboration/datatypes/mapped/mappedCrdt';
 import { CRDTProp } from './collaboration/datatypes/crdtProp';
+import { MappedCRDTProp } from './collaboration/datatypes/mapped/mappedCrdtProp';
 
 const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
   endpoint instanceof ConnectedEndpoint;
@@ -66,11 +67,17 @@ const intersectionListIsSame = (a: Intersection[], b: Intersection[]) => {
 export type EdgePropsForEditing = DeepReadonly<EdgeProps>;
 export type EdgePropsForRendering = DeepReadonly<DeepRequired<EdgeProps>>;
 
+declare global {
+  interface AdditionalCRDTCompatibleInnerObjects {
+    reference: Reference;
+  }
+}
+
 type LabelNodeCRDTEntry = { node: LabelNode };
 
 export type DiagramEdgeCRDT = DiagramElementCRDT & {
-  start: SerializedEndpoint;
-  end: SerializedEndpoint;
+  start: string;
+  end: string;
   props: EdgePropsForEditing;
   labelNodes: CRDTMap<MappedCRDTOrderedMapMapType<LabelNodeCRDTEntry>>;
   waypoints: ReadonlyArray<Waypoint>;
@@ -93,6 +100,18 @@ const makeLabelNodeMapper = (
   };
 };
 
+const makeEndpointMapper = (edge: DiagramEdge): SimpleCRDTMapper<Endpoint, string> => {
+  return {
+    fromCRDT(e: string): Endpoint {
+      return Endpoint.deserialize(JSON.parse(e), edge.diagram.nodeLookup);
+    },
+
+    toCRDT(e: Endpoint): string {
+      return JSON.stringify(e.serialize());
+    }
+  };
+};
+
 export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramEdgeSnapshot> {
   // Transient properties
   #intersections: Intersection[] = [];
@@ -100,9 +119,8 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   // Shared properties
   readonly #waypoints: CRDTProp<DiagramEdgeCRDT, 'waypoints'>;
   readonly #labelNodes: MappedCRDTOrderedMap<ResolvedLabelNode, LabelNodeCRDTEntry>;
-
-  #start: Endpoint;
-  #end: Endpoint;
+  readonly #start: MappedCRDTProp<DiagramEdgeCRDT, 'start', Endpoint>;
+  readonly #end: MappedCRDTProp<DiagramEdgeCRDT, 'end', Endpoint>;
 
   #props: EdgeProps = {};
 
@@ -127,8 +145,23 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       true
     );
 
-    this.#start = new FreeEndpoint({ x: 0, y: 0 });
-    this.#end = new FreeEndpoint({ x: 0, y: 0 });
+    this.#start = new MappedCRDTProp<DiagramEdgeCRDT, 'start', Endpoint>(
+      this._crdt as unknown as WatchableValue<CRDTMap<DiagramEdgeCRDT>>,
+      'start',
+      makeEndpointMapper(this)
+    );
+    if (this.#start.get() === undefined) {
+      this.#start.set(new FreeEndpoint({ x: 0, y: 0 }));
+    }
+
+    this.#end = new MappedCRDTProp<DiagramEdgeCRDT, 'end', Endpoint>(
+      this._crdt as unknown as WatchableValue<CRDTMap<DiagramEdgeCRDT>>,
+      'end',
+      makeEndpointMapper(this)
+    );
+    if (this.#end.get() === undefined) {
+      this.#end.set(new FreeEndpoint({ x: 0, y: 0 }));
+    }
   }
 
   /* Factory ************************************************************************************************* */
@@ -144,8 +177,8 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   ) {
     const edge = new DiagramEdge(id, layer);
 
-    edge.#start = start;
-    edge.#end = end;
+    edge.#start.set(start);
+    edge.#end.set(end);
     edge.#props = props as EdgeProps;
     edge.#waypoints.set(midpoints);
 
@@ -364,7 +397,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   //       Maybe we should include the extent of labels as well as the curve itself - i.e
   //       all points
   get bounds() {
-    return Box.fromCorners(this.#start.position, this.#end.position);
+    return Box.fromCorners(this.#start.getNonNull().position, this.#end.getNonNull().position);
   }
 
   setBounds(b: Box, uow: UnitOfWork) {
@@ -373,17 +406,21 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     const delta = Point.subtract(b, this.bounds);
 
     if (!isConnected(this.start)) {
-      this.#start = new FreeEndpoint({
-        x: this.#start.position.x + delta.x,
-        y: this.#start.position.y + delta.y
-      });
+      this.#start.set(
+        new FreeEndpoint({
+          x: this.start.position.x + delta.x,
+          y: this.start.position.y + delta.y
+        })
+      );
       uow.updateElement(this);
     }
     if (!isConnected(this.end)) {
-      this.#end = new FreeEndpoint({
-        x: this.#end.position.x + delta.x,
-        y: this.#end.position.y + delta.y
-      });
+      this.#end.set(
+        new FreeEndpoint({
+          x: this.end.position.x + delta.x,
+          y: this.end.position.y + delta.y
+        })
+      );
       uow.updateElement(this);
     }
   }
@@ -393,14 +430,14 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   setStart(start: Endpoint, uow: UnitOfWork) {
     uow.snapshot(this);
 
-    if (isConnected(this.#start)) {
-      uow.snapshot(this.#start.node);
+    if (isConnected(this.start)) {
+      uow.snapshot(this.start.node);
 
-      this.#start.node._removeEdge(
-        this.#start instanceof AnchorEndpoint ? this.#start.anchorId : undefined,
+      this.start.node._removeEdge(
+        this.start instanceof AnchorEndpoint ? this.start.anchorId : undefined,
         this
       );
-      uow.updateElement(this.#start.node);
+      uow.updateElement(this.start.node);
     }
 
     if (isConnected(start)) {
@@ -410,26 +447,26 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       uow.updateElement(start.node);
     }
 
-    this.#start = start;
+    this.#start.set(start);
 
     uow.updateElement(this);
   }
 
   get start() {
-    return this.#start;
+    return this.#start.getNonNull();
   }
 
   setEnd(end: Endpoint, uow: UnitOfWork) {
     uow.snapshot(this);
 
-    if (isConnected(this.#end)) {
-      uow.snapshot(this.#end.node);
+    if (isConnected(this.end)) {
+      uow.snapshot(this.end.node);
 
-      this.#end.node._removeEdge(
-        this.#end instanceof AnchorEndpoint ? this.#end.anchorId : undefined,
+      this.end.node._removeEdge(
+        this.end instanceof AnchorEndpoint ? this.end.anchorId : undefined,
         this
       );
-      uow.updateElement(this.#end.node);
+      uow.updateElement(this.end.node);
     }
 
     if (isConnected(end)) {
@@ -439,13 +476,13 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       uow.updateElement(end.node);
     }
 
-    this.#end = end;
+    this.#end.set(end);
 
     uow.updateElement(this);
   }
 
   get end() {
-    return this.#end;
+    return this.#end.getNonNull();
   }
 
   isConnected() {
@@ -721,8 +758,8 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   restore(snapshot: DiagramEdgeSnapshot, uow: UnitOfWork) {
     this.#props = snapshot.props as EdgeProps;
     this._highlights.get()!.clear();
-    this.#start = Endpoint.deserialize(snapshot.start, this.diagram.nodeLookup);
-    this.#end = Endpoint.deserialize(snapshot.end, this.diagram.nodeLookup);
+    this.#start.set(Endpoint.deserialize(snapshot.start, this.diagram.nodeLookup));
+    this.#end.set(Endpoint.deserialize(snapshot.end, this.diagram.nodeLookup));
     this.#waypoints.set((snapshot.waypoints ?? []) as Array<Waypoint>);
 
     this.#labelNodes.set(
@@ -877,11 +914,11 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   flip(uow: UnitOfWork) {
     uow.snapshot(this);
 
-    const start = this.#start;
-    const end = this.#end;
+    const start = this.#start.getNonNull();
+    const end = this.#end.getNonNull();
 
     // Need to "zero" the end so that the setters logic should work correctly
-    this.#end = new FreeEndpoint(Point.ORIGIN);
+    this.#end.set(new FreeEndpoint(Point.ORIGIN));
 
     this.setStart(end, uow);
     this.setEnd(start, uow);
