@@ -158,7 +158,11 @@ export class YJSMap<T extends { [key: string]: CRDTCompatibleObject }> implement
   }
 
   transact(callback: () => void) {
-    this.delegate.doc!.transact(callback);
+    if (!this.delegate.doc) {
+      callback();
+    } else {
+      this.delegate.doc!.transact(callback);
+    }
   }
 
   clear() {
@@ -299,7 +303,11 @@ export class YJSList<T extends CRDTCompatibleObject> implements CRDTList<T> {
   }
 
   transact(callback: () => void) {
-    this.delegate.doc!.transact(callback);
+    if (!this.delegate.doc) {
+      callback();
+    } else {
+      this.delegate.doc!.transact(callback);
+    }
   }
 
   clear() {

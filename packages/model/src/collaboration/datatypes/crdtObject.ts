@@ -100,4 +100,12 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
   update(callback: (obj: T) => void) {
     this.map.transact(() => callback(this.#proxy));
   }
+
+  set(obj: T) {
+    this.map.transact(() => {
+      for (const key in obj) {
+        this.#proxy[key] = obj[key];
+      }
+    });
+  }
 }

@@ -33,7 +33,7 @@ import { getAdjustments } from './diagramLayerRuleTypes';
 import type { RegularLayer } from './diagramLayerRegular';
 import { assertRegularLayer } from './diagramLayerUtils';
 import type { Reference } from './serialization/types';
-import { type CRDTMap } from './collaboration/crdt';
+import { type CRDTMap, type Flatten } from './collaboration/crdt';
 import { WatchableValue } from '@diagram-craft/utils/watchableValue';
 import {
   MappedCRDTOrderedMap,
@@ -42,6 +42,7 @@ import {
 import { CRDTMapper, type SimpleCRDTMapper } from './collaboration/datatypes/mapped/mappedCrdt';
 import { CRDTProp } from './collaboration/datatypes/crdtProp';
 import { MappedCRDTProp } from './collaboration/datatypes/mapped/mappedCrdtProp';
+import { CRDTObject } from './collaboration/datatypes/crdtObject';
 
 const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
   endpoint instanceof ConnectedEndpoint;
@@ -78,7 +79,7 @@ type LabelNodeCRDTEntry = { node: LabelNode };
 export type DiagramEdgeCRDT = DiagramElementCRDT & {
   start: string;
   end: string;
-  props: EdgePropsForEditing;
+  props: CRDTMap<Flatten<EdgePropsForEditing>>;
   labelNodes: CRDTMap<MappedCRDTOrderedMapMapType<LabelNodeCRDTEntry>>;
   waypoints: ReadonlyArray<Waypoint>;
 };
@@ -100,6 +101,7 @@ const makeLabelNodeMapper = (
   };
 };
 
+// TODO: Can we get rid of the JSON parsing here
 const makeEndpointMapper = (edge: DiagramEdge): SimpleCRDTMapper<Endpoint, string> => {
   return {
     fromCRDT(e: string): Endpoint {
@@ -121,8 +123,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   readonly #labelNodes: MappedCRDTOrderedMap<ResolvedLabelNode, LabelNodeCRDTEntry>;
   readonly #start: MappedCRDTProp<DiagramEdgeCRDT, 'start', Endpoint>;
   readonly #end: MappedCRDTProp<DiagramEdgeCRDT, 'end', Endpoint>;
-
-  #props: EdgeProps = {};
+  readonly #props: CRDTObject<EdgeProps>;
 
   constructor(id: string, layer: Layer) {
     super('edge', id, layer);
@@ -162,6 +163,14 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     if (this.#end.get() === undefined) {
       this.#end.set(new FreeEndpoint({ x: 0, y: 0 }));
     }
+
+    const propsMap = (this.crdt.get() as CRDTMap<DiagramEdgeCRDT>).get('props', () =>
+      layer.crdt.factory.makeMap()
+    )!;
+    this.#props = new CRDTObject<EdgeProps>(propsMap, () => {
+      this.diagram.emit('elementChange', { element: this });
+      this._cache?.clear();
+    });
   }
 
   /* Factory ************************************************************************************************* */
@@ -179,7 +188,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
 
     edge.#start.set(start);
     edge.#end.set(end);
-    edge.#props = props as EdgeProps;
+    edge.#props.set(props as EdgeProps);
     edge.#waypoints.set(midpoints);
 
     edge._metadata.set(metadata ?? {});
@@ -232,7 +241,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     }
 
     dest.push({
-      val: accessor.get(this.#props, path) as PropPathValue<EdgeProps, T>,
+      val: accessor.get(this.#props.get(), path) as PropPathValue<EdgeProps, T>,
       type: 'stored'
     });
 
@@ -274,7 +283,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       {},
       styleProps ?? {},
       ruleStyleProps ?? {},
-      this.#props
+      this.#props.get()
     ) as DeepRequired<EdgeProps>;
 
     const propsForRendering = edgeDefaults.applyDefaults(
@@ -291,7 +300,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   }
 
   get storedProps() {
-    return this.#props;
+    return this.#props.get();
   }
 
   get editProps(): EdgePropsForEditing {
@@ -307,15 +316,21 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   updateProps(callback: (props: EdgeProps) => void, uow: UnitOfWork) {
     uow.snapshot(this);
 
-    const oldType = this.#props.type;
-    callback(this.#props);
+    const oldType = this.#props.get().type;
+    this.#props.update(callback);
 
-    if (this.#props.type === 'bezier' && oldType !== 'bezier') {
+    if (this.#props.get().type === 'bezier' && oldType !== 'bezier') {
       for (let i = 0; i < this.waypoints.length; i++) {
         const wp = this.waypoints[i];
         if (!wp.controlPoints) {
-          // TODO: Fix this
-          (wp as DeepWriteable<Waypoint>).controlPoints = this.inferControlPoints(i);
+          this.updateWaypoint(
+            i,
+            {
+              ...wp,
+              controlPoints: this.inferControlPoints(i)
+            },
+            uow
+          );
         }
       }
     }
@@ -658,7 +673,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     const path = this.path();
     const projection = path.projectPoint(waypoint.point);
 
-    if (this.#props.type === 'bezier' && !waypoint.controlPoints) {
+    if (this.#props.get().type === 'bezier' && !waypoint.controlPoints) {
       const offset = PointOnPath.toTimeOffset({ point: waypoint.point }, path);
       const [p1, p2] = path.split(offset);
 
@@ -740,7 +755,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       _snapshotType: 'edge',
       id: this.id,
       type: 'edge',
-      props: deepClone(this.#props),
+      props: deepClone(this.#props.get()),
       metadata: deepClone(this.metadata),
       start: this.start.serialize(),
       end: this.end.serialize(),
@@ -756,7 +771,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
 
   // TODO: Add assertions for lookups
   restore(snapshot: DiagramEdgeSnapshot, uow: UnitOfWork) {
-    this.#props = snapshot.props as EdgeProps;
+    this.#props.set(snapshot.props as EdgeProps);
     this._highlights.get()!.clear();
     this.#start.set(Endpoint.deserialize(snapshot.start, this.diagram.nodeLookup));
     this.#end.set(Endpoint.deserialize(snapshot.end, this.diagram.nodeLookup));
@@ -824,8 +839,11 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     const endDirection = this._getNormalDirection(this.end);
 
     let rounding = 0;
-    if (this.#props.stroke?.lineJoin === undefined || this.#props.stroke.lineJoin === 'round') {
-      rounding = this.#props.routing?.rounding ?? 0;
+    if (
+      this.#props.get().stroke?.lineJoin === undefined ||
+      this.#props.get().stroke?.lineJoin === 'round'
+    ) {
+      rounding = this.#props.get().routing?.rounding ?? 0;
     }
 
     return buildEdgePath(
