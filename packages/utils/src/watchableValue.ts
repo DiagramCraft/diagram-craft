@@ -37,4 +37,22 @@ export class WatchableValue<T> extends EventEmitter<{
       this.emit('change', { newValue: value });
     }
   }
+
+  /**
+   * Creates a new instance of `WatchableValue` based on the provided function and array of `WatchableValue` arguments. The resulting value updates whenever any of the input `WatchableValue` instances change.
+   *
+   * @param {function(K): T} fn - A function that computes a new value based on the array of `WatchableValue` instances.
+   * @param {K} arg - An array of `WatchableValue` instances that the result depends on.
+   * @return {WatchableValue<T>} A new `WatchableValue` instance that tracks the computed result of the function.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  static from<T, K extends Array<WatchableValue<any>>>(fn: (arg: K) => T, arg: K) {
+    const v = new WatchableValue(fn(arg));
+
+    for (const wv of arg) {
+      wv.on('change', () => v.set(fn(arg)));
+    }
+
+    return v;
+  }
 }

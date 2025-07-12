@@ -128,15 +128,13 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   constructor(id: string, layer: Layer) {
     super('edge', id, layer);
 
-    this.#waypoints = new CRDTProp(
-      this._crdt as unknown as WatchableValue<CRDTMap<DiagramEdgeCRDT>>,
-      'waypoints',
-      {
-        onChange: type => {
-          if (type === 'remote') this.diagram.emit('elementChange', { element: this });
-        }
+    const crdt = this._crdt as unknown as WatchableValue<CRDTMap<DiagramEdgeCRDT>>;
+
+    this.#waypoints = new CRDTProp(crdt, 'waypoints', {
+      onChange: type => {
+        if (type === 'remote') this.diagram.emit('elementChange', { element: this });
       }
-    );
+    });
 
     this.#labelNodes = new MappedCRDTOrderedMap<ResolvedLabelNode, LabelNodeCRDTEntry>(
       (this._crdt.get() as CRDTMap<DiagramEdgeCRDT>).get('labelNodes', () =>
@@ -147,7 +145,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     );
 
     this.#start = new MappedCRDTProp<DiagramEdgeCRDT, 'start', Endpoint>(
-      this._crdt as unknown as WatchableValue<CRDTMap<DiagramEdgeCRDT>>,
+      crdt,
       'start',
       makeEndpointMapper(this)
     );
@@ -156,7 +154,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     }
 
     this.#end = new MappedCRDTProp<DiagramEdgeCRDT, 'end', Endpoint>(
-      this._crdt as unknown as WatchableValue<CRDTMap<DiagramEdgeCRDT>>,
+      crdt,
       'end',
       makeEndpointMapper(this)
     );
@@ -164,12 +162,11 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       this.#end.set(new FreeEndpoint({ x: 0, y: 0 }));
     }
 
-    const getPropsMap = () =>
-      (this.crdt.get() as CRDTMap<DiagramEdgeCRDT>).get('props', () =>
-        layer.crdt.factory.makeMap()
-      )!;
-    const propsMap = new WatchableValue(getPropsMap());
-    this.crdt.on('change', () => propsMap.set(getPropsMap()));
+    const propsMap = WatchableValue.from(
+      ([parent]) => parent.get().get('props', () => layer.crdt.factory.makeMap())!,
+      [crdt] as const
+    );
+
     this.#props = new CRDTObject<EdgeProps>(propsMap, () => {
       this.diagram.emit('elementChange', { element: this });
       this._cache?.clear();
