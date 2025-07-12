@@ -1,7 +1,7 @@
 import { LabelNode } from './types';
 import { Box } from '@diagram-craft/geometry/box';
 import { Transform } from '@diagram-craft/geometry/transform';
-import { DiagramElement, isEdge, isNode } from './diagramElement';
+import { DiagramElement, type DiagramElementCRDT, isEdge, isNode } from './diagramElement';
 import { DiagramNodeSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
 import type { DiagramEdge, ResolvedLabelNode } from './diagramEdge';
 import { Layer } from './diagramLayer';
@@ -28,6 +28,9 @@ import { getAdjustments } from './diagramLayerRuleTypes';
 import { toUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
 import type { RegularLayer } from './diagramLayerRegular';
 import { transformPathList } from '@diagram-craft/geometry/pathListUtils';
+import type { WatchableValue } from '@diagram-craft/utils/watchableValue';
+import type { CRDTMap } from './collaboration/crdt';
+import { CRDTProp } from './collaboration/datatypes/crdtProp';
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;
@@ -38,13 +41,18 @@ export type NodePropsForEditing = DeepReadonly<NodeProps>;
 
 export type NodeTexts = { text: string } & Record<string, string>;
 
+export type DiagramNodeCRDT = DiagramElementCRDT & {
+  nodeType: string;
+};
+
 export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramNodeSnapshot> {
   readonly edges: Map<string | undefined, DiagramEdge[]> = new Map<
     string | undefined,
     DiagramEdge[]
   >();
 
-  #nodeType: 'group' | string;
+  // Shared properties
+  readonly #nodeType: CRDTProp<DiagramNodeCRDT, 'nodeType'>;
 
   #props: NodeProps = {};
   #text: NodeTexts = {
@@ -57,10 +65,27 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   constructor(id: string, layer: Layer, anchorCache?: ReadonlyArray<Anchor>) {
     super('node', id, layer);
 
+    const crdt = this._crdt as unknown as WatchableValue<CRDTMap<DiagramNodeCRDT>>;
+
+    this.#nodeType = new CRDTProp<DiagramNodeCRDT, 'nodeType'>(crdt, 'nodeType', {
+      onChange: type => {
+        if (type === 'remote') {
+          this._children = [];
+          this.diagram.emit('elementChange', { element: this });
+
+          this._cache?.clear();
+
+          const uow = new UnitOfWork(this.diagram, true, true);
+          this.invalidateAnchors(uow);
+          this.getDefinition().onPropUpdate(this, uow);
+        }
+      }
+    });
+    this.#nodeType.init('rect');
+
     this.#anchors ??= anchorCache;
 
     // TODO: Fix this
-    this.#nodeType = 'rect';
     this.#bounds = { x: 0, y: 0, w: 10, h: 10, r: 0 };
 
     // Note: It is important that this comes last, as it might trigger
@@ -99,7 +124,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     text: NodeTexts = { text: '' }
   ) {
     node.#bounds = bounds;
-    node.#nodeType = nodeType;
+    node.#nodeType.set(nodeType);
     node.#text = text;
 
     node.#props = (props ?? {}) as NodeProps;
@@ -116,16 +141,16 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   }
 
   getDefinition() {
-    return this.diagram.document.nodeDefinitions.get(this.#nodeType);
+    return this.diagram.document.nodeDefinitions.get(this.nodeType);
   }
 
   get nodeType() {
-    return this.#nodeType;
+    return this.#nodeType.get()!;
   }
 
   changeNodeType(nodeType: string, uow: UnitOfWork) {
     uow.snapshot(this);
-    this.#nodeType = nodeType;
+    this.#nodeType.set(nodeType);
     this._children = [];
     uow.updateElement(this);
 
@@ -488,7 +513,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     this.setBounds(snapshot.bounds, uow);
     this.#props = snapshot.props as NodeProps;
     this._highlights.getNonNull().clear();
-    this.#nodeType = snapshot.nodeType;
+    this.#nodeType.set(snapshot.nodeType);
     this.#text = snapshot.texts;
     this.forceUpdateMetadata(snapshot.metadata);
 
@@ -520,7 +545,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
     const scaledPath = transformPathList(paths, toUnitLCS(this.bounds));
 
-    this.#nodeType = 'generic-path';
+    this.#nodeType.set('generic-path');
     this.updateProps(p => {
       p.custom ??= {};
       p.custom.genericPath = {};

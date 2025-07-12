@@ -59,4 +59,10 @@ export class CRDTProp<
   set(v: T[keyof T & string]) {
     this.crdt.get().set(this.name, v);
   }
+
+  init(v: T[keyof T & string]) {
+    if (!this.crdt.get().has(this.name)) {
+      this.crdt.get().set(this.name, v);
+    }
+  }
 }
