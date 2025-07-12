@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
-import { Flatten } from '../crdt';
+import { type CRDTMap, Flatten } from '../crdt';
 import { NoOpCRDTMap } from '../noopCrdt';
 import { CRDTObject } from './crdtObject';
+import { WatchableValue } from '@diagram-craft/utils/watchableValue';
 
 type TestObject = { name?: string; age?: number; address?: { street: string; city: string } };
 type FlatTestObject = Flatten<TestObject>;
@@ -11,7 +12,10 @@ describe('CRDTObject', () => {
     const map = new NoOpCRDTMap<FlatTestObject>();
     const onChange = vi.fn();
 
-    const obj = new CRDTObject<TestObject>(map, onChange);
+    const obj = new CRDTObject<TestObject>(
+      new WatchableValue<CRDTMap<FlatTestObject>>(map),
+      onChange
+    );
 
     // Verify proxy initialization
     expect(obj.get()).toEqual({});
@@ -45,7 +49,10 @@ describe('CRDTObject', () => {
     const map = new NoOpCRDTMap<FlatTestObject>();
     const onChange = vi.fn();
 
-    const obj = new CRDTObject<TestObject>(map, onChange);
+    const obj = new CRDTObject<TestObject>(
+      new WatchableValue<CRDTMap<FlatTestObject>>(map),
+      onChange
+    );
 
     // Set values on map including nested object
     map.set('name', 'Jane');
@@ -65,7 +72,10 @@ describe('CRDTObject', () => {
     const map = new NoOpCRDTMap<FlatTestObject>();
     const onChange = vi.fn();
 
-    const obj = new CRDTObject<TestObject>(map, onChange);
+    const obj = new CRDTObject<TestObject>(
+      new WatchableValue<CRDTMap<FlatTestObject>>(map),
+      onChange
+    );
 
     // Use update to modify data including nested object
     obj.update(p => {
@@ -89,7 +99,10 @@ describe('CRDTObject', () => {
     const map = new NoOpCRDTMap<FlatTestObject>();
     const onChange = vi.fn();
 
-    const obj = new CRDTObject<TestObject>(map, onChange);
+    const obj = new CRDTObject<TestObject>(
+      new WatchableValue<CRDTMap<FlatTestObject>>(map),
+      onChange
+    );
 
     // Initially set some values including nested object
     obj.update(p => {

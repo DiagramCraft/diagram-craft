@@ -164,9 +164,12 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       this.#end.set(new FreeEndpoint({ x: 0, y: 0 }));
     }
 
-    const propsMap = (this.crdt.get() as CRDTMap<DiagramEdgeCRDT>).get('props', () =>
-      layer.crdt.factory.makeMap()
-    )!;
+    const getPropsMap = () =>
+      (this.crdt.get() as CRDTMap<DiagramEdgeCRDT>).get('props', () =>
+        layer.crdt.factory.makeMap()
+      )!;
+    const propsMap = new WatchableValue(getPropsMap());
+    this.crdt.on('change', () => propsMap.set(getPropsMap()));
     this.#props = new CRDTObject<EdgeProps>(propsMap, () => {
       this.diagram.emit('elementChange', { element: this });
       this._cache?.clear();
