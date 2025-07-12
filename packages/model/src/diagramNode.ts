@@ -43,6 +43,7 @@ export type NodeTexts = { text: string } & Record<string, string>;
 
 export type DiagramNodeCRDT = DiagramElementCRDT & {
   nodeType: string;
+  bounds: Box;
 };
 
 export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramNodeSnapshot> {
@@ -53,13 +54,13 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
   // Shared properties
   readonly #nodeType: CRDTProp<DiagramNodeCRDT, 'nodeType'>;
+  readonly #bounds: CRDTProp<DiagramNodeCRDT, 'bounds'>;
 
   #props: NodeProps = {};
   #text: NodeTexts = {
     text: ''
   };
 
-  #bounds: Box;
   #anchors?: ReadonlyArray<Anchor>;
 
   constructor(id: string, layer: Layer, anchorCache?: ReadonlyArray<Anchor>) {
@@ -85,8 +86,14 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
     this.#anchors ??= anchorCache;
 
-    // TODO: Fix this
-    this.#bounds = { x: 0, y: 0, w: 10, h: 10, r: 0 };
+    this.#bounds = new CRDTProp<DiagramNodeCRDT, 'bounds'>(crdt, 'bounds', {
+      onChange: type => {
+        if (type === 'remote') {
+          this.diagram.emit('elementChange', { element: this });
+        }
+      }
+    });
+    this.#bounds.init({ x: 0, y: 0, w: 10, h: 10, r: 0 });
 
     // Note: It is important that this comes last, as it might trigger
     //       events etc - so important that everything is set up before
@@ -123,7 +130,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     metadata: ElementMetadata,
     text: NodeTexts = { text: '' }
   ) {
-    node.#bounds = bounds;
+    node.#bounds.set(bounds);
     node.#nodeType.set(nodeType);
     node.#text = text;
 
@@ -448,13 +455,13 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   /* Bounds ************************************************************************************************* */
 
   get bounds(): Box {
-    return this.#bounds;
+    return this.#bounds.get()!;
   }
 
   setBounds(bounds: Box, uow: UnitOfWork) {
     uow.snapshot(this);
     const oldBounds = this.bounds;
-    this.#bounds = bounds;
+    this.#bounds.set(bounds);
     if (!Box.isEqual(oldBounds, this.bounds)) uow.updateElement(this);
   }
 
