@@ -28,10 +28,11 @@ import { getAdjustments } from './diagramLayerRuleTypes';
 import { toUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
 import type { RegularLayer } from './diagramLayerRegular';
 import { transformPathList } from '@diagram-craft/geometry/pathListUtils';
-import type { WatchableValue } from '@diagram-craft/utils/watchableValue';
-import type { CRDTMap } from './collaboration/crdt';
+import { WatchableValue } from '@diagram-craft/utils/watchableValue';
+import type { CRDTMap, Flatten } from './collaboration/crdt';
 import { CRDTProp } from './collaboration/datatypes/crdtProp';
 import { MappedCRDTProp } from './collaboration/datatypes/mapped/mappedCrdtProp';
+import { CRDTObject } from './collaboration/datatypes/crdtObject';
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;
@@ -45,6 +46,7 @@ export type NodeTexts = { text: string } & Record<string, string>;
 export type DiagramNodeCRDT = DiagramElementCRDT & {
   nodeType: string;
   bounds: Box;
+  text: CRDTMap<Flatten<NodeTexts>>;
 };
 
 export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramNodeSnapshot> {
@@ -55,12 +57,12 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
   // Shared properties
   readonly #nodeType: CRDTProp<DiagramNodeCRDT, 'nodeType'>;
+
+  // Note, we use MappedCRDTProp here for performance reasons
   readonly #bounds: MappedCRDTProp<DiagramNodeCRDT, 'bounds', Box>;
+  readonly #text: CRDTObject<NodeTexts>;
 
   #props: NodeProps = {};
-  #text: NodeTexts = {
-    text: ''
-  };
 
   #anchors?: ReadonlyArray<Anchor>;
 
@@ -84,6 +86,18 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       }
     });
     this.#nodeType.init('rect');
+
+    const textMap = WatchableValue.from(
+      ([parent]) => parent.get().get('text', () => layer.crdt.factory.makeMap())!,
+      [crdt] as const
+    );
+    this.#text = new CRDTObject<NodeTexts>(textMap, type => {
+      if (type === 'remote') {
+        this.diagram.emit('elementChange', { element: this });
+        this._cache?.clear();
+      }
+    });
+    this.#text.init({ text: '' });
 
     this.#anchors ??= anchorCache;
 
@@ -141,7 +155,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   ) {
     node.#bounds.set(bounds);
     node.#nodeType.set(nodeType);
-    node.#text = text;
+    node.#text.set(text);
 
     node.#props = (props ?? {}) as NodeProps;
 
@@ -178,18 +192,21 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   /* Text **************************************************************************************************** */
 
   getText(id = 'text') {
-    return this.#text[id === '1' ? 'text' : id];
+    return this.#text.get()[id === '1' ? 'text' : id];
   }
 
   setText(text: string, uow: UnitOfWork, id = 'text') {
     uow.snapshot(this);
-    this.#text[id === '1' ? 'text' : id] = text;
+    this.#text.set({
+      ...this.#text.get(),
+      [id === '1' ? 'text' : id]: text
+    });
     uow.updateElement(this);
     this._cache?.clear();
   }
 
   get texts() {
-    return this.#text;
+    return this.#text.get();
   }
 
   /* Props *************************************************************************************************** */
@@ -520,7 +537,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       edges: Object.fromEntries(
         [...this.edges.entries()].map(([k, v]) => [k, v.map(e => ({ id: e.id }))])
       ),
-      texts: deepClone(this.#text)
+      texts: this.#text.getClone()
     };
   }
 
@@ -530,7 +547,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     this.#props = snapshot.props as NodeProps;
     this._highlights.getNonNull().clear();
     this.#nodeType.set(snapshot.nodeType);
-    this.#text = snapshot.texts;
+    this.#text.set(snapshot.texts);
     this.forceUpdateMetadata(snapshot.metadata);
 
     this.setChildren(
@@ -587,7 +604,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       this.layer,
       deepClone(this.#props) as NodeProps,
       deepClone(this.metadata) as ElementMetadata,
-      deepClone(this.#text) as NodeTexts,
+      this.#text.getClone() as NodeTexts,
       this.#anchors
     );
 

@@ -10,20 +10,20 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
 
   constructor(
     readonly crdt: WatchableValue<CRDTMap<Flatten<T>>>,
-    readonly onChange: () => void
+    readonly onChange: (type: 'local' | 'remote') => void
   ) {
     let oldCrdt = crdt.get();
 
-    oldCrdt.on('remoteTransaction', onChange);
-    oldCrdt.on('localTransaction', onChange);
+    oldCrdt.on('remoteTransaction', () => onChange('remote'));
+    oldCrdt.on('localTransaction', () => onChange('local'));
 
     crdt.on('change', () => {
-      oldCrdt.off('remoteTransaction', onChange);
-      oldCrdt.off('localTransaction', onChange);
+      oldCrdt.off('remoteTransaction', () => onChange('remote'));
+      oldCrdt.off('localTransaction', () => onChange('local'));
 
       oldCrdt = crdt.get();
-      oldCrdt.on('remoteTransaction', onChange);
-      oldCrdt.on('localTransaction', onChange);
+      oldCrdt.on('remoteTransaction', () => onChange('remote'));
+      oldCrdt.on('localTransaction', () => onChange('local'));
     });
 
     const createProxy = (path = ''): T => {
@@ -150,5 +150,11 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
         this.#proxy[key] = obj[key];
       }
     });
+  }
+
+  init(obj: T) {
+    if (Array.from(this.crdt.get().keys()).length === 0) {
+      this.set(obj);
+    }
   }
 }
