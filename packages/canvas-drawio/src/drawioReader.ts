@@ -905,6 +905,10 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           }
         }
 
+        if (style.is('orthogonal')) {
+          edgeProps.type = 'orthogonal';
+        }
+
         const edge = DiagramEdge.create(
           id,
           source,
@@ -917,10 +921,6 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         );
         nodes.push(edge);
         parents.set(id, edge);
-
-        if (style.is('orthogonal')) {
-          edgeProps.type = 'orthogonal';
-        }
 
         // Post-pone attaching the edge to the source and target nodes until all
         // nodes have been processed
