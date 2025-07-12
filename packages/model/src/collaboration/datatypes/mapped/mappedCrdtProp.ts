@@ -66,4 +66,11 @@ export class MappedCRDTProp<
     this.#value = v;
     this.crdt.get().set(this.name, this.mapper.toCRDT(v) as C[N]);
   }
+
+  init(v: T) {
+    if (!this.crdt.get().has(this.name)) {
+      this.#value = v;
+      this.crdt.get().set(this.name, this.mapper.toCRDT(v) as C[N]);
+    }
+  }
 }

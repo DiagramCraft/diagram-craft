@@ -31,6 +31,7 @@ import { transformPathList } from '@diagram-craft/geometry/pathListUtils';
 import type { WatchableValue } from '@diagram-craft/utils/watchableValue';
 import type { CRDTMap } from './collaboration/crdt';
 import { CRDTProp } from './collaboration/datatypes/crdtProp';
+import { MappedCRDTProp } from './collaboration/datatypes/mapped/mappedCrdtProp';
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;
@@ -54,7 +55,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
   // Shared properties
   readonly #nodeType: CRDTProp<DiagramNodeCRDT, 'nodeType'>;
-  readonly #bounds: CRDTProp<DiagramNodeCRDT, 'bounds'>;
+  readonly #bounds: MappedCRDTProp<DiagramNodeCRDT, 'bounds', Box>;
 
   #props: NodeProps = {};
   #text: NodeTexts = {
@@ -86,13 +87,21 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
     this.#anchors ??= anchorCache;
 
-    this.#bounds = new CRDTProp<DiagramNodeCRDT, 'bounds'>(crdt, 'bounds', {
-      onChange: type => {
-        if (type === 'remote') {
-          this.diagram.emit('elementChange', { element: this });
+    this.#bounds = new MappedCRDTProp<DiagramNodeCRDT, 'bounds', Box>(
+      crdt,
+      'bounds',
+      {
+        toCRDT: (b: Box) => b,
+        fromCRDT: (b: Box) => b
+      },
+      {
+        onChange: type => {
+          if (type === 'remote') {
+            this.diagram.emit('elementChange', { element: this });
+          }
         }
       }
-    });
+    );
     this.#bounds.init({ x: 0, y: 0, w: 10, h: 10, r: 0 });
 
     // Note: It is important that this comes last, as it might trigger
