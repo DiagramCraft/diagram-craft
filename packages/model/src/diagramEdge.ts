@@ -755,7 +755,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       _snapshotType: 'edge',
       id: this.id,
       type: 'edge',
-      props: deepClone(this.#props.get()),
+      props: this.#props.getClone(),
       metadata: deepClone(this.metadata),
       start: this.start.serialize(),
       end: this.end.serialize(),

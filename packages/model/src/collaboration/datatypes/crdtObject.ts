@@ -113,6 +113,33 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
     return this.#proxy;
   }
 
+  getClone(): DeepReadonly<T> {
+    const result: Record<string, unknown> = {};
+    const map = this.crdt.get();
+
+    for (const [path, value] of map.entries()) {
+      const parts = path.split('.');
+      let current = result;
+
+      for (let i = 0; i < parts.length - 1; i++) {
+        const part = parts[i];
+        if (!(part in current)) {
+          current[part] = {};
+        }
+        current = current[part] as Record<string, unknown>;
+      }
+
+      const lastPart = parts[parts.length - 1];
+      if (value !== undefined) {
+        current[lastPart] = value;
+      } else if (!(lastPart in current)) {
+        current[lastPart] = {};
+      }
+    }
+
+    return result as DeepReadonly<T>;
+  }
+
   update(callback: (obj: T) => void) {
     this.crdt.get().transact(() => callback(this.#proxy));
   }

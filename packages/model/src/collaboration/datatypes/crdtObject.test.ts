@@ -126,4 +126,57 @@ describe('CRDTObject', () => {
     expect(map.get('address.city')).toBeUndefined();
     expect(map.get('age')).toBe(35);
   });
+
+  describe('CRDTObject - getClone', () => {
+    it('should return an identical deep copy of the object', () => {
+      const map = new NoOpCRDTMap<FlatTestObject>();
+      const obj = new CRDTObject<TestObject>(
+        new WatchableValue<CRDTMap<FlatTestObject>>(map),
+        vi.fn()
+      );
+
+      // Populate map with values
+      map.set('name', 'John');
+      map.set('age', 30);
+      map.set('address.street', '123 Main St');
+      map.set('address.city', 'Springfield');
+
+      const clone = obj.getClone();
+
+      // Verify the cloned object matches the current state
+      expect(clone).toEqual({
+        name: 'John',
+        age: 30,
+        address: {
+          street: '123 Main St',
+          city: 'Springfield'
+        }
+      });
+    });
+
+    it('should ensure nested structures are cloned independently', () => {
+      const map = new NoOpCRDTMap<FlatTestObject>();
+      const obj = new CRDTObject<TestObject>(
+        new WatchableValue<CRDTMap<FlatTestObject>>(map),
+        vi.fn()
+      );
+
+      map.set('address.street', '456 Oak Ave');
+      map.set('address.city', 'Denver');
+
+      const clone = obj.getClone();
+
+      // Verify structure is accurate
+      expect(clone.address).toEqual({
+        street: '456 Oak Ave',
+        city: 'Denver'
+      });
+
+      // Check deep independence
+      // @ts-ignore
+      clone.address!.street = 'Modified St';
+      expect(clone.address!.street).toBe('Modified St');
+      expect(obj.get().address?.street).toBe('456 Oak Ave');
+    });
+  });
 });
