@@ -1,5 +1,5 @@
 import { unique } from '@diagram-craft/utils/array';
-import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { isPrimitive } from '@diagram-craft/utils/object';
 import { DeepReadonly } from '@diagram-craft/utils/types';
 import type { CRDTCompatibleObject, CRDTMap, Flatten } from '../crdt';
@@ -26,8 +26,8 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
       oldCrdt.on('localTransaction', () => onChange('local'));
     });
 
-    const createProxy = (path = ''): T => {
-      return new Proxy<T>({} as unknown as T, {
+    const createProxy = (target = {}, path = ''): T => {
+      return new Proxy<T>(target as unknown as T, {
         ownKeys(_target: T): ArrayLike<string | symbol> {
           return unique(
             Array.from(crdt.get().keys())
@@ -42,27 +42,54 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
         },
 
         get: (_target, prop) => {
-          if (prop === Symbol.iterator) return undefined;
-          if (prop === Symbol.toStringTag) return undefined;
+          const isValidTarget = _target === undefined || Array.isArray(_target);
+
+          if (prop === Symbol.iterator) {
+            if (!isValidTarget) return undefined;
+            // @ts-ignore
+            return _target[Symbol.iterator] ?? undefined;
+          }
+          if (prop === Symbol.toStringTag) {
+            if (!isValidTarget) return undefined;
+            // @ts-ignore
+            return _target[Symbol.toStringTag] ?? undefined;
+          }
           if (typeof prop !== 'string') return VERIFY_NOT_REACHED();
+
+          // @ts-ignore
+          if (_target[prop] !== undefined) return _target[prop];
 
           const map = this.crdt.get();
 
           const fullPath = path ? `${path}.${prop}` : prop;
           const value = map.get(fullPath);
 
-          if (Array.isArray(value)) return VERIFY_NOT_REACHED();
-
           if (value === undefined) {
-            if (map.has(fullPath)) return createProxy(fullPath);
+            if (map.has(fullPath)) return createProxy({}, fullPath);
 
-            const first = Array.from(crdt.get().keys()).find(k => k.startsWith(fullPath + '.'));
-            return first ? createProxy(fullPath) : undefined;
+            const keys = Array.from(crdt.get().keys()).filter(k => k.startsWith(fullPath + '.'));
+            if (keys.length === 0) {
+              return undefined;
+            } else if (
+              keys.every(k => !isNaN(Number(k.substring(fullPath.length + 1).split('.')[0])))
+            ) {
+              const numericKeys = keys.map(k =>
+                Number(k.substring(fullPath.length + 1).split('.')[0])
+              );
+              return createProxy(
+                unique(numericKeys.sort((a, b) => a - b)).map(key =>
+                  createProxy({}, `${fullPath}.${key}`)
+                ),
+                fullPath
+              );
+            } else {
+              return createProxy({}, fullPath);
+            }
           } else if (isPrimitive(value)) {
             return value;
           }
 
-          return createProxy(fullPath);
+          return createProxy({}, fullPath);
         },
 
         set: (_target, prop, value) => {
@@ -119,13 +146,26 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
 
     for (const [path, value] of map.entries()) {
       const parts = path.split('.');
-      let current = result;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let current: any = result;
 
       for (let i = 0; i < parts.length - 1; i++) {
         const part = parts[i];
+
         if (!(part in current)) {
-          current[part] = {};
+          // If the next part is a number, create an array, otherwise create an object
+          const nextPart = i + 1 < parts.length ? parts[i + 1] : '';
+          const nextIsArrayIndex = !isNaN(Number(nextPart));
+
+          const isArrayIndex = !isNaN(Number(part));
+          if (isArrayIndex && !Array.isArray(current)) {
+            assert.true(Object.keys(current).length === 0);
+            current = [];
+          }
+
+          current[part] = nextIsArrayIndex ? [] : {};
         }
+
         current = current[part] as Record<string, unknown>;
       }
 
@@ -133,6 +173,13 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
       if (value !== undefined) {
         current[lastPart] = value;
       } else if (!(lastPart in current)) {
+        // Check if this is part of an array
+        const isArrayIndex = !isNaN(Number(lastPart));
+        if (isArrayIndex && !Array.isArray(current)) {
+          assert.true(Object.keys(current).length === 0);
+          current = [];
+        }
+
         current[lastPart] = {};
       }
     }

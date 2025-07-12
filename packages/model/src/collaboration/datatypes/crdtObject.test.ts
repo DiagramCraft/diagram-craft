@@ -4,7 +4,12 @@ import { NoOpCRDTMap } from '../noopCrdt';
 import { CRDTObject } from './crdtObject';
 import { WatchableValue } from '@diagram-craft/utils/watchableValue';
 
-type TestObject = { name?: string; age?: number; address?: { street: string; city: string } };
+type TestObject = {
+  name?: string;
+  age?: number;
+  address?: { street: string; city: string };
+  people?: Array<{ firstName: string; lastName: string; hobbies?: string[] }>;
+};
 type FlatTestObject = Flatten<TestObject>;
 
 describe('CRDTObject', () => {
@@ -127,7 +132,105 @@ describe('CRDTObject', () => {
     expect(map.get('age')).toBe(35);
   });
 
-  describe('CRDTObject - getClone', () => {
+  it('should support arrays in the object structure', () => {
+    const map = new NoOpCRDTMap<FlatTestObject>();
+    const obj = new CRDTObject<TestObject>(
+      new WatchableValue<CRDTMap<FlatTestObject>>(map),
+      vi.fn()
+    );
+
+    // Set array values using dot notation
+    map.set('people.0.firstName', 'John');
+    map.set('people.0.lastName', 'Doe');
+    map.set('people.1.firstName', 'Jane');
+    map.set('people.1.lastName', 'Smith');
+
+    // Verify array access through proxy
+    const proxy = obj.get();
+    expect(proxy.people?.[0].firstName).toBe('John');
+    expect(proxy.people?.[0].lastName).toBe('Doe');
+    expect(proxy.people?.[1].firstName).toBe('Jane');
+    expect(proxy.people?.[1].lastName).toBe('Smith');
+
+    // Verify array structure in clone
+    const clone = obj.getClone();
+    expect(Array.isArray(clone.people)).toBe(true);
+    expect(clone.people?.length).toBe(2);
+    expect(clone.people).toEqual([
+      { firstName: 'John', lastName: 'Doe' },
+      { firstName: 'Jane', lastName: 'Smith' }
+    ]);
+  });
+
+  it('should support updating arrays using the update method', () => {
+    const map = new NoOpCRDTMap<FlatTestObject>();
+    const obj = new CRDTObject<TestObject>(
+      new WatchableValue<CRDTMap<FlatTestObject>>(map),
+      vi.fn()
+    );
+
+    // Update with array data
+    obj.update(p => {
+      p.people = [
+        { firstName: 'Alice', lastName: 'Johnson' },
+        { firstName: 'Bob', lastName: 'Williams' }
+      ];
+    });
+
+    // Verify people is an array
+    expect(Array.isArray(obj.get().people)).toBe(true);
+
+    // Verify the map contains the correct flattened structure
+    expect(map.get('people.0.firstName')).toBe('Alice');
+    expect(map.get('people.0.lastName')).toBe('Johnson');
+    expect(map.get('people.1.firstName')).toBe('Bob');
+    expect(map.get('people.1.lastName')).toBe('Williams');
+
+    // Verify iteration works
+    let count = 0;
+    for (const p of obj.get().people!) {
+      expect(p).toBeDefined();
+      count++;
+    }
+    expect(count).toBe(2);
+
+    // Verify the clone reconstructs the array correctly
+    const clone = obj.getClone();
+    expect(Array.isArray(clone.people)).toBe(true);
+    expect(clone.people?.length).toBe(2);
+  });
+
+  it('should handle array modifications correctly', () => {
+    const map = new NoOpCRDTMap<FlatTestObject>();
+    const obj = new CRDTObject<TestObject>(
+      new WatchableValue<CRDTMap<FlatTestObject>>(map),
+      vi.fn()
+    );
+
+    // Initialize with array data
+    obj.update(p => {
+      p.people = [
+        { firstName: 'Alice', lastName: 'Johnson' },
+        { firstName: 'Bob', lastName: 'Williams' }
+      ];
+    });
+
+    // Modify array elements
+    obj.update(p => {
+      if (p.people) {
+        p.people[0].firstName = 'Alicia';
+        p.people[1] = { firstName: 'Robert', lastName: 'Wilson' };
+      }
+    });
+
+    // Verify modifications
+    const clone = obj.getClone();
+    expect(clone.people?.[0].firstName).toBe('Alicia');
+    expect(clone.people?.[1].firstName).toBe('Robert');
+    expect(clone.people?.[1].lastName).toBe('Wilson');
+  });
+
+  describe('getClone', () => {
     it('should return an identical deep copy of the object', () => {
       const map = new NoOpCRDTMap<FlatTestObject>();
       const obj = new CRDTObject<TestObject>(

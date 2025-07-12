@@ -147,7 +147,9 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
     const propsMap = this.crdt.get('props', () => document.root.factory.makeMap())!;
 
-    this.#props = new CRDTObject<DiagramProps>(new WatchableValue(propsMap), () => this.update());
+    this.#props = new CRDTObject<DiagramProps>(new WatchableValue(propsMap), type => {
+      if (type === 'remote') this.update();
+    });
 
     this.#document = document;
 
@@ -220,6 +222,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
   updateProps(callback: (props: DiagramProps) => void) {
     this.#props.update(callback);
+    this.update();
   }
 
   // TODO: This should be removed

@@ -305,6 +305,10 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     return this.#props.get();
   }
 
+  get storedPropsCloned() {
+    return this.#props.getClone();
+  }
+
   get editProps(): EdgePropsForEditing {
     return (this.cache.get('props.forEditing') ??
       this.populatePropsCache().forEditing) as EdgePropsForEditing;

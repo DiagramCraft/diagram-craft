@@ -47,6 +47,7 @@ export type DiagramNodeCRDT = DiagramElementCRDT & {
   nodeType: string;
   bounds: Box;
   text: CRDTMap<Flatten<NodeTexts>>;
+  props: CRDTMap<Flatten<NodeProps>>;
 };
 
 export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramNodeSnapshot> {
@@ -61,8 +62,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   // Note, we use MappedCRDTProp here for performance reasons
   readonly #bounds: MappedCRDTProp<DiagramNodeCRDT, 'bounds', Box>;
   readonly #text: CRDTObject<NodeTexts>;
-
-  #props: NodeProps = {};
+  readonly #props: CRDTObject<NodeProps>;
 
   #anchors?: ReadonlyArray<Anchor>;
 
@@ -98,6 +98,17 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       }
     });
     this.#text.init({ text: '' });
+
+    const propsMap = WatchableValue.from(
+      ([parent]) => parent.get().get('props', () => layer.crdt.factory.makeMap())!,
+      [crdt] as const
+    );
+    this.#props = new CRDTObject<NodeProps>(propsMap, type => {
+      if (type === 'remote') {
+        this.diagram.emit('elementChange', { element: this });
+        this._cache?.clear();
+      }
+    });
 
     this.#anchors ??= anchorCache;
 
@@ -157,7 +168,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     node.#nodeType.set(nodeType);
     node.#text.set(text);
 
-    node.#props = (props ?? {}) as NodeProps;
+    node.#props.set((props ?? {}) as NodeProps);
 
     node._metadata.set(metadata ?? {});
 
@@ -266,7 +277,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     });
 
     dest.push({
-      val: accessor.get(this.#props, path) as PropPathValue<NodeProps, T>,
+      val: accessor.get(this.#props.get()! as NodeProps, path) as PropPathValue<NodeProps, T>,
       type: 'stored'
     });
 
@@ -345,7 +356,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       ruleStyleProps,
       ruleTextStyleProps,
       parentProps,
-      this.#props
+      this.#props.get() as NodeProps
     ) as DeepRequired<NodeProps>;
 
     const propsForRendering = nodeDefaults.applyDefaults(
@@ -368,7 +379,11 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   }
 
   get storedProps() {
-    return this.#props;
+    return this.#props.get() as NodeProps;
+  }
+
+  get storedPropsCloned() {
+    return this.#props.getClone() as NodeProps;
   }
 
   get editProps(): NodePropsForEditing {
@@ -383,7 +398,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
   updateProps(callback: (props: NodeProps) => void, uow: UnitOfWork) {
     uow.snapshot(this);
-    callback(this.#props);
+    this.#props.update(callback);
     uow.updateElement(this);
 
     this._cache?.clear();
@@ -531,7 +546,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       type: 'node',
       nodeType: this.nodeType,
       bounds: deepClone(this.bounds),
-      props: deepClone(this.#props),
+      props: this.#props.getClone(),
       metadata: deepClone(this.metadata),
       children: this.children.map(c => c.id),
       edges: Object.fromEntries(
@@ -544,7 +559,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   // TODO: Add assertions for lookups
   restore(snapshot: DiagramNodeSnapshot, uow: UnitOfWork) {
     this.setBounds(snapshot.bounds, uow);
-    this.#props = snapshot.props as NodeProps;
+    this.#props.set(snapshot.props as NodeProps);
     this._highlights.getNonNull().clear();
     this.#nodeType.set(snapshot.nodeType);
     this.#text.set(snapshot.texts);
