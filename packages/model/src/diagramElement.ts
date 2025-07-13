@@ -82,7 +82,6 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
       ([parent]) => parent.get().get('metadata', () => layer.crdt.factory.makeMap())!,
       [this._crdt] as const
     );
-    console.log(metadataMap.get());
 
     this._metadata = new CRDTObject<ElementMetadata>(metadataMap, type => {
       if (type !== 'remote') return;
