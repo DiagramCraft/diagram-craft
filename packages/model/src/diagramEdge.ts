@@ -125,12 +125,12 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   readonly #end: MappedCRDTProp<DiagramEdgeCRDT, 'end', Endpoint>;
   readonly #props: CRDTObject<EdgeProps>;
 
-  constructor(id: string, layer: Layer) {
-    super('edge', id, layer);
+  constructor(id: string, layer: Layer, crdt?: CRDTMap<DiagramElementCRDT>) {
+    super('edge', id, layer, crdt);
 
-    const crdt = this._crdt as unknown as WatchableValue<CRDTMap<DiagramEdgeCRDT>>;
+    const edgeCrdt = this._crdt as unknown as WatchableValue<CRDTMap<DiagramEdgeCRDT>>;
 
-    this.#waypoints = new CRDTProp(crdt, 'waypoints', {
+    this.#waypoints = new CRDTProp(edgeCrdt, 'waypoints', {
       onChange: type => {
         if (type === 'remote') this.diagram.emit('elementChange', { element: this });
       }
@@ -145,7 +145,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     );
 
     this.#start = new MappedCRDTProp<DiagramEdgeCRDT, 'start', Endpoint>(
-      crdt,
+      edgeCrdt,
       'start',
       makeEndpointMapper(this)
     );
@@ -154,7 +154,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     }
 
     this.#end = new MappedCRDTProp<DiagramEdgeCRDT, 'end', Endpoint>(
-      crdt,
+      edgeCrdt,
       'end',
       makeEndpointMapper(this)
     );
@@ -164,7 +164,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
 
     const propsMap = WatchableValue.from(
       ([parent]) => parent.get().get('props', () => layer.crdt.factory.makeMap())!,
-      [crdt] as const
+      [edgeCrdt] as const
     );
 
     this.#props = new CRDTObject<EdgeProps>(propsMap, type => {

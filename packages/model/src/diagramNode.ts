@@ -88,18 +88,23 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   readonly #props: CRDTObject<NodeProps>;
   readonly #anchors: CRDTProp<DiagramNodeCRDT, 'anchors'>;
 
-  constructor(id: string, layer: Layer, anchorCache?: ReadonlyArray<Anchor>) {
-    super('node', id, layer);
+  constructor(
+    id: string,
+    layer: Layer,
+    anchorCache?: ReadonlyArray<Anchor>,
+    crdt?: CRDTMap<DiagramElementCRDT>
+  ) {
+    super('node', id, layer, crdt);
 
-    const crdt = this._crdt as unknown as WatchableValue<CRDTMap<DiagramNodeCRDT>>;
+    const nodeCrdt = this._crdt as unknown as WatchableValue<CRDTMap<DiagramNodeCRDT>>;
 
     this.#edges = new MappedCRDTOrderedMap(
-      crdt.get().get('edges', () => layer.crdt.factory.makeMap())!,
+      nodeCrdt.get().get('edges', () => layer.crdt.factory.makeMap())!,
       makeEdgesMapper(this),
       true
     );
 
-    this.#nodeType = new CRDTProp<DiagramNodeCRDT, 'nodeType'>(crdt, 'nodeType', {
+    this.#nodeType = new CRDTProp<DiagramNodeCRDT, 'nodeType'>(nodeCrdt, 'nodeType', {
       onChange: type => {
         if (type === 'remote') {
           this._children = [];
@@ -117,7 +122,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
     const textMap = WatchableValue.from(
       ([parent]) => parent.get().get('text', () => layer.crdt.factory.makeMap())!,
-      [crdt] as const
+      [nodeCrdt] as const
     );
     this.#text = new CRDTObject<NodeTexts>(textMap, type => {
       if (type === 'remote') {
@@ -129,7 +134,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
     const propsMap = WatchableValue.from(
       ([parent]) => parent.get().get('props', () => layer.crdt.factory.makeMap())!,
-      [crdt] as const
+      [nodeCrdt] as const
     );
     this.#props = new CRDTObject<NodeProps>(propsMap, type => {
       if (type === 'remote') {
@@ -138,7 +143,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       }
     });
 
-    this.#anchors = new CRDTProp<DiagramNodeCRDT, 'anchors'>(crdt, 'anchors', {
+    this.#anchors = new CRDTProp<DiagramNodeCRDT, 'anchors'>(nodeCrdt, 'anchors', {
       onChange: type => {
         if (type === 'remote') {
           this.diagram.emit('elementChange', { element: this });
@@ -148,7 +153,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     if (anchorCache) this.#anchors.init(anchorCache);
 
     this.#bounds = new MappedCRDTProp<DiagramNodeCRDT, 'bounds', Box>(
-      crdt,
+      nodeCrdt,
       'bounds',
       {
         toCRDT: (b: Box) => b,
@@ -167,7 +172,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     // Note: It is important that this comes last, as it might trigger
     //       events etc - so important that everything is set up before
     //       that to avoid flashing of incorrect formatting/style
-    if (this.#anchors.get() === undefined) {
+    if (this.#anchors.get() === undefined && this.diagram.layers) {
       this.invalidateAnchors(UnitOfWork.immediate(this.diagram));
     }
   }

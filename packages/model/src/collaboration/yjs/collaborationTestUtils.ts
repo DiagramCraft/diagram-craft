@@ -4,25 +4,42 @@ import { NoOpCRDTMap, NoOpCRDTRoot } from '../noopCrdt';
 import { CollaborationConfig } from '../collaborationConfig';
 import { YJSMap, YJSRoot } from './yjsCrdt';
 
+export type Backend = {
+  syncedDocs: () => [CRDTRoot, CRDTRoot | undefined];
+  beforeEach: () => void;
+  afterEach: () => void;
+};
+
 export const Backends = {
-  all: (): Array<[string, CRDTRoot, CRDTRoot, () => void, () => void]> => {
-    const yjs = createSyncedYJSCRDTs();
-    const noopDoc = new NoOpCRDTRoot();
+  all: (): Array<[string, Backend]> => {
     return [
       [
         'yjs',
-        yjs.doc1,
-        yjs.doc2,
-        () => {
-          CollaborationConfig.CRDTRoot = YJSRoot;
-          CollaborationConfig.CRDTMap = YJSMap;
-        },
-        () => {
-          CollaborationConfig.CRDTRoot = NoOpCRDTRoot;
-          CollaborationConfig.CRDTMap = NoOpCRDTMap;
+        {
+          syncedDocs: () => {
+            const yjs = createSyncedYJSCRDTs();
+            return [yjs.doc1, yjs.doc2];
+          },
+          beforeEach: () => {
+            CollaborationConfig.CRDTRoot = YJSRoot;
+            CollaborationConfig.CRDTMap = YJSMap;
+          },
+          afterEach: () => {
+            CollaborationConfig.CRDTRoot = NoOpCRDTRoot;
+            CollaborationConfig.CRDTMap = NoOpCRDTMap;
+          }
         }
       ],
-      ['noop', noopDoc, noopDoc, () => {}, () => {}]
+      [
+        'noop',
+        {
+          syncedDocs: () => {
+            return [new NoOpCRDTRoot(), undefined];
+          },
+          beforeEach: () => {},
+          afterEach: () => {}
+        }
+      ]
     ];
   }
 };

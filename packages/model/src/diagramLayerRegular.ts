@@ -8,41 +8,21 @@ import { DiagramEdge } from './diagramEdge';
 import { MappedCRDTOrderedMap } from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import { CRDTMapper } from './collaboration/datatypes/mapped/mappedCrdt';
 import { DiagramNode } from './diagramNode';
-import { FreeEndpoint } from './endpoint';
 
 const makeElementMapper = (layer: Layer): CRDTMapper<DiagramElement, DiagramElementCRDT> => {
   return {
-    fromCRDT(e: CRDTMap<DiagramElementCRDT>): DiagramElement {
+    fromCRDT(e: CRDTMap<DiagramElementCRDT>) {
       const type = e.get('type')!;
       const id = e.get('id')!;
 
       if (type === 'node') {
-        return DiagramNode.create(
-          id,
-          'test',
-          { w: 10, h: 10, x: 0, y: 0, r: 0 },
-          layer,
-          {},
-          {},
-          { text: '' },
-          []
-        );
+        return new DiagramNode(id, layer, undefined, e);
       } else {
-        return DiagramEdge.create(
-          id,
-          new FreeEndpoint({ x: 0, y: 0 }),
-          new FreeEndpoint({ x: 0, y: 0 }),
-          {},
-          {},
-          [],
-          layer
-        );
+        return new DiagramEdge(id, layer, e);
       }
-
-      throw new Error(`Unknown layer type: ${type}`);
     },
 
-    toCRDT(e: DiagramElement): CRDTMap<DiagramElementCRDT> {
+    toCRDT(e: DiagramElement) {
       return e.crdt.get();
     }
   };
