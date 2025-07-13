@@ -48,6 +48,7 @@ export type DiagramNodeCRDT = DiagramElementCRDT & {
   bounds: Box;
   text: CRDTMap<Flatten<NodeTexts>>;
   props: CRDTMap<Flatten<NodeProps>>;
+  anchors: ReadonlyArray<Anchor> | undefined;
 };
 
 export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramNodeSnapshot> {
@@ -63,8 +64,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   readonly #bounds: MappedCRDTProp<DiagramNodeCRDT, 'bounds', Box>;
   readonly #text: CRDTObject<NodeTexts>;
   readonly #props: CRDTObject<NodeProps>;
-
-  #anchors?: ReadonlyArray<Anchor>;
+  readonly #anchors: CRDTProp<DiagramNodeCRDT, 'anchors'>;
 
   constructor(id: string, layer: Layer, anchorCache?: ReadonlyArray<Anchor>) {
     super('node', id, layer);
@@ -110,7 +110,14 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       }
     });
 
-    this.#anchors ??= anchorCache;
+    this.#anchors = new CRDTProp<DiagramNodeCRDT, 'anchors'>(crdt, 'anchors', {
+      onChange: type => {
+        if (type === 'remote') {
+          this.diagram.emit('elementChange', { element: this });
+        }
+      }
+    });
+    if (anchorCache) this.#anchors.init(anchorCache);
 
     this.#bounds = new MappedCRDTProp<DiagramNodeCRDT, 'bounds', Box>(
       crdt,
@@ -510,13 +517,13 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
   get anchors(): ReadonlyArray<Anchor> {
     // TODO: Can this be handled using cache
-    if (this.#anchors === undefined) {
+    if (this.#anchors.get() === undefined) {
       UnitOfWork.execute(this.diagram, uow => {
         this.invalidateAnchors(uow);
       });
     }
 
-    return this.#anchors ?? [];
+    return this.#anchors.get() ?? [];
   }
 
   getAnchor(anchor: string) {
@@ -620,7 +627,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       deepClone(this.#props) as NodeProps,
       deepClone(this.metadata) as ElementMetadata,
       this.#text.getClone() as NodeTexts,
-      this.#anchors
+      deepClone(this.#anchors.get())
     );
 
     context.targetElementsInGroup.set(this.id, node);
@@ -885,7 +892,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
   invalidateAnchors(uow: UnitOfWork) {
     const def = this.diagram.document.nodeDefinitions.get(this.nodeType);
-    this.#anchors = def.getAnchors(this);
+    this.#anchors.set(def.getAnchors(this));
 
     uow.updateElement(this);
   }
