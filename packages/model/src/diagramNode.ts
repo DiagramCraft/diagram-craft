@@ -668,8 +668,8 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       this.nodeType,
       deepClone(this.bounds),
       this.layer,
-      deepClone(this.#props) as NodeProps,
-      deepClone(this.metadata) as ElementMetadata,
+      this.#props.getClone() as NodeProps,
+      this._metadata.getClone() as ElementMetadata,
       this.#text.getClone() as NodeTexts,
       deepClone(this.#anchors.get())
     );

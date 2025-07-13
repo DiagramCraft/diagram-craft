@@ -142,7 +142,11 @@ export class MappedCRDTOrderedMap<
     entry.set('value', this.mapper.toCRDT(t));
     this.crdt.set(key, entry);
 
-    this.#entries = this.#entries.map(e => (e[0] === key ? [key, t] : e));
+    if (this.#entries.find(e => e[0] === key)) {
+      this.#entries = this.#entries.map(e => (e[0] === key ? [key, t] : e));
+    } else {
+      this.#entries.push([key, t]);
+    }
   }
 
   remove(key: string) {
