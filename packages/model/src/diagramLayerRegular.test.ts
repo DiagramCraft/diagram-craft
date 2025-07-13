@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestModel } from './test-support/builder';
 import { RegularLayer } from './diagramLayerRegular';
 import { DiagramNode } from './diagramNode';
@@ -66,16 +66,24 @@ describe.for(Backends.all())('RegularLayer [%s]', ([_name, backend]) => {
       const d1 = new Diagram('test-id', 'test-name', doc1);
       doc1.addDiagram(d1);
 
+      const elementAdd1 = vi.fn();
+      d1.on('elementAdd', elementAdd1);
+
+      const elementAdd2 = vi.fn();
+      if (doc2) doc2.topLevelDiagrams[0].on('elementAdd', elementAdd2);
+
       const layer1 = new RegularLayer('layer1', 'layer1', [], d1);
       d1.layers.add(layer1, UnitOfWork.immediate(d1));
 
       const layerDoc2 = doc2 ? doc2.topLevelDiagrams[0].layers.all[0] : undefined;
 
       const element = new DiagramNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => layer1.addElement(element, uow));
       expect(layer1.elements.length).toEqual(1);
+      expect(elementAdd1).toBeCalledTimes(1);
       if (doc2) {
         expect((layerDoc2 as RegularLayer).elements.length).toEqual(1);
+        expect(elementAdd2).toBeCalledTimes(1);
       }
 
       layer1.removeElement(element, UnitOfWork.immediate(d1));
@@ -84,10 +92,12 @@ describe.for(Backends.all())('RegularLayer [%s]', ([_name, backend]) => {
         expect((layerDoc2 as RegularLayer).elements.length).toEqual(0);
       }
 
-      layer1.addElement(element, UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => layer1.addElement(element, uow));
       expect(layer1.elements.length).toEqual(1);
+      expect(elementAdd1).toBeCalledTimes(2);
       if (doc2) {
         expect((layerDoc2 as RegularLayer).elements.length).toEqual(1);
+        expect(elementAdd2).toBeCalledTimes(2);
       }
     });
   });

@@ -72,7 +72,7 @@ export class LayerManager implements UOWTrackable<LayersSnapshot>, AttachmentCon
     this.#layers = new MappedCRDTOrderedMap(
       crdt.get('layers', () => diagram.document.root.factory.makeMap())!,
       makeLayerMapper(diagram),
-      true
+      { allowUpdates: true }
     );
 
     this.#activeLayer = undefined;

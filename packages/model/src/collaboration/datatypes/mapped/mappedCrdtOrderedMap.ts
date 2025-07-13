@@ -22,19 +22,34 @@ export class MappedCRDTOrderedMap<
   constructor(
     private readonly crdt: CRDTMap<MappedCRDTOrderedMapMapType<C>>,
     private readonly mapper: SimpleCRDTMapper<T, CRDTMap<C>>,
-    allowUpdates = false
+    props?: {
+      allowUpdates?: boolean;
+      onAdd?: (type: 'local' | 'remote', e: T) => void;
+      onRemove?: (type: 'local' | 'remote', e: T) => void;
+      onChange?: (type: 'local' | 'remote', e: T) => void;
+    }
   ) {
-    const setFromCRDT = () => {
+    const setFromCRDT = (e?: { key: string; value: CRDTMap<WrapperType<C>> }) => {
       const entryMap = Object.fromEntries(this.#entries);
 
       this.#entries = Array.from(this.crdt.entries())
         .toSorted(([, v1], [, v2]) => v1.get('index')! - v2.get('index')!)
         .map(([k, v]) => [k, entryMap[k] ?? this.mapper.fromCRDT(v.get('value')!)]);
+
+      const idx = this.#entries.findIndex(entry => entry[0] === e?.key);
+      if (idx >= 0) {
+        props?.onAdd?.('remote', this.#entries[idx][1]);
+      }
     };
 
     crdt.on('remoteUpdate', e => {
-      if (allowUpdates) {
+      if (props?.allowUpdates) {
         const entryMap = Object.fromEntries(this.#entries);
+
+        const idx = this.#entries.findIndex(entry => entry[0] === e.key);
+        if (idx >= 0) {
+          props?.onChange?.('remote', this.#entries[idx][1]);
+        }
 
         this.#entries = Array.from(crdt.entries())
           .toSorted(([, v1], [, v2]) => v1.get('index')! - v2.get('index')!)
@@ -48,10 +63,11 @@ export class MappedCRDTOrderedMap<
     crdt.on('remoteDelete', e => {
       const idx = this.#entries.findIndex(entry => entry[0] === e.key);
       if (idx >= 0) {
+        props?.onRemove?.('remote', this.#entries[idx][1]);
         this.#entries.splice(idx, 1);
       }
     });
-    crdt.on('remoteInsert', () => setFromCRDT());
+    crdt.on('remoteInsert', e => setFromCRDT(e));
 
     setFromCRDT();
   }

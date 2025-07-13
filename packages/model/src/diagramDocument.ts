@@ -68,7 +68,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     this.#diagrams = new MappedCRDTOrderedMap(
       this.root.getMap('diagrams'),
       makeDiagramMapper(this),
-      true
+      { allowUpdates: true }
     );
   }
 

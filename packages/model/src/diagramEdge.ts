@@ -141,7 +141,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
         layer.diagram.document.root.factory.makeMap()
       )!,
       makeLabelNodeMapper(this),
-      true
+      { allowUpdates: true }
     );
 
     this.#start = new MappedCRDTProp<DiagramEdgeCRDT, 'start', Endpoint>(

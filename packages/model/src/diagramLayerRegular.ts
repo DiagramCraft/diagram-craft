@@ -43,7 +43,12 @@ export class RegularLayer extends Layer<RegularLayer> {
     this.#elements = new MappedCRDTOrderedMap<DiagramElement, DiagramElementCRDT>(
       this.crdt.get('elements', () => diagram.document.root.factory.makeMap())!,
       makeElementMapper(this),
-      true
+      {
+        allowUpdates: true,
+        onAdd: (t, e) => t === 'remote' && diagram.emit('elementAdd', { element: e }),
+        onChange: (t, e) => t === 'remote' && diagram.emit('elementChange', { element: e }),
+        onRemove: (t, e) => t === 'remote' && diagram.emit('elementRemove', { element: e })
+      }
     );
 
     const uow = new UnitOfWork(diagram);

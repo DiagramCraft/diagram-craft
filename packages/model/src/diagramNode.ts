@@ -101,7 +101,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     this.#edges = new MappedCRDTOrderedMap(
       nodeCrdt.get().get('edges', () => layer.crdt.factory.makeMap())!,
       makeEdgesMapper(this),
-      true
+      { allowUpdates: true }
     );
 
     this.#nodeType = new CRDTProp<DiagramNodeCRDT, 'nodeType'>(nodeCrdt, 'nodeType', {
@@ -228,7 +228,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     this.#edges = new MappedCRDTOrderedMap(
       crdt.get().get('edges', () => this.layer.crdt.factory.makeMap())!,
       makeEdgesMapper(this),
-      true
+      { allowUpdates: true }
     );
   }
 
