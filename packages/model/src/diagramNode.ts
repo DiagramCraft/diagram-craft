@@ -139,7 +139,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     // Note: It is important that this comes last, as it might trigger
     //       events etc - so important that everything is set up before
     //       that to avoid flashing of incorrect formatting/style
-    if (!this.#anchors) {
+    if (this.#anchors.get() === undefined) {
       this.invalidateAnchors(UnitOfWork.immediate(this.diagram));
     }
   }
