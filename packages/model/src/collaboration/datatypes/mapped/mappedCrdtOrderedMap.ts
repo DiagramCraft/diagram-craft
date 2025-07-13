@@ -56,6 +56,10 @@ export class MappedCRDTOrderedMap<
     setFromCRDT();
   }
 
+  get keys() {
+    return this.#entries.map(e => e[0]);
+  }
+
   get entries() {
     return this.#entries;
   }
@@ -66,6 +70,11 @@ export class MappedCRDTOrderedMap<
 
   get size() {
     return this.#entries.length;
+  }
+
+  clear() {
+    this.crdt.clear();
+    this.#entries = [];
   }
 
   get(key: string) {
