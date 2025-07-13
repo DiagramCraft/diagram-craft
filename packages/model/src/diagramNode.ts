@@ -598,7 +598,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       nodeType: this.nodeType,
       bounds: deepClone(this.bounds),
       props: this.#props.getClone(),
-      metadata: deepClone(this.metadata),
+      metadata: this._metadata.getClone() as ElementMetadata,
       children: this.children.map(c => c.id),
       edges: Object.fromEntries(
         Array.from(this.#edges.entries).map(([k, v]) => [k, v.map(e => ({ id: e.id }))])
@@ -611,7 +611,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   restore(snapshot: DiagramNodeSnapshot, uow: UnitOfWork) {
     this.setBounds(snapshot.bounds, uow);
     this.#props.set(snapshot.props as NodeProps);
-    this._highlights.getNonNull().clear();
+    this._highlights.set([]);
     this.#nodeType.set(snapshot.nodeType);
     this.#text.set(snapshot.texts);
     this.forceUpdateMetadata(snapshot.metadata);

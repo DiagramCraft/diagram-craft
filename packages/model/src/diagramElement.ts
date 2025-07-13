@@ -17,9 +17,10 @@ import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToo
 import { PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { assert } from '@diagram-craft/utils/assert';
 import type { RegularLayer } from './diagramLayerRegular';
-import { type CRDTMap } from './collaboration/crdt';
+import { type CRDTMap, type Flatten } from './collaboration/crdt';
 import { WatchableValue } from '@diagram-craft/utils/watchableValue';
 import { CRDTProp } from './collaboration/datatypes/crdtProp';
+import { CRDTObject } from './collaboration/datatypes/crdtObject';
 
 // eslint-disable-next-line
 type Snapshot = any;
@@ -30,8 +31,8 @@ export type ElementPropsForRendering = EdgePropsForRendering | NodePropsForRende
 export type DiagramElementCRDT = {
   id: string;
   type: string;
-  highlights: CRDTMap<Record<string, boolean>>;
-  metadata: ElementMetadata;
+  highlights: Array<string>;
+  metadata: CRDTMap<Flatten<ElementMetadata>>;
 };
 
 export abstract class DiagramElement implements ElementInterface, AttachmentConsumer {
@@ -50,7 +51,7 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
   protected _cache: Map<string, unknown> | undefined = undefined;
 
   // Shared properties
-  protected readonly _metadata: CRDTProp<DiagramElementCRDT, 'metadata'>;
+  protected readonly _metadata: CRDTObject<ElementMetadata>;
   protected readonly _highlights: CRDTProp<DiagramElementCRDT, 'highlights'>;
   protected _children: ReadonlyArray<DiagramElement> = [];
 
@@ -69,20 +70,27 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
     this._crdt.get().set('type', type);
 
     this._highlights = new CRDTProp(this._crdt, 'highlights', {
-      factory: () => this._diagram.document.root.factory.makeMap()
-    });
-
-    this._metadata = new CRDTProp(this._crdt, 'metadata', {
+      factory: () => [],
       onChange: type => {
         if (type !== 'remote') return;
 
-        this.invalidate(UnitOfWork.immediate(this._diagram));
-        this._diagram.emit('elementChange', { element: this });
-        this._cache?.clear();
+        this._diagram.emitAsync('elementHighlighted', { element: this });
       }
     });
 
-    //console.log(id, !!this._metadata.get(), !!this._highlights.get());
+    const metadataMap = WatchableValue.from(
+      ([parent]) => parent.get().get('metadata', () => layer.crdt.factory.makeMap())!,
+      [this._crdt] as const
+    );
+    console.log(metadataMap.get());
+
+    this._metadata = new CRDTObject<ElementMetadata>(metadataMap, type => {
+      if (type !== 'remote') return;
+
+      this.invalidate(UnitOfWork.immediate(this._diagram));
+      this._diagram.emit('elementChange', { element: this });
+      this._cache?.clear();
+    });
   }
 
   abstract getAttachmentsInUse(): Array<string>;
@@ -169,15 +177,12 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
   /* Highlights ********************************************************************************************** */
 
   set highlights(highlights: ReadonlyArray<string>) {
-    this._highlights.getNonNull().clear();
-    highlights.forEach(h => this._highlights.get()!.set(h, true));
+    this._highlights.set(highlights as Array<string>);
     this.diagram.emitAsync('elementHighlighted', { element: this });
   }
 
   get highlights() {
-    return Array.from(this._highlights.getNonNull().entries())
-      .filter(([, v]) => !!v)
-      .map(([k]) => k);
+    return this._highlights.get() ?? [];
   }
 
   /* Parent ************************************************************************************************** */
@@ -193,7 +198,7 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
   /* Metadata ************************************************************************************************ */
 
   get metadata() {
-    return this._metadata.get() ?? {};
+    return (this._metadata.get() ?? {}) as ElementMetadata;
   }
 
   protected forceUpdateMetadata(metadata: ElementMetadata) {
@@ -202,7 +207,7 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
 
   updateMetadata(callback: (props: ElementMetadata) => void, uow: UnitOfWork) {
     uow.snapshot(this);
-    const metadata = this._metadata.get()!;
+    const metadata = this._metadata.getClone()! as ElementMetadata;
     callback(metadata);
     this._metadata.set(metadata);
     uow.updateElement(this);
