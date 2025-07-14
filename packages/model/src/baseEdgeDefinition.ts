@@ -82,7 +82,7 @@ export class BaseEdgeDefinition implements EdgeDefinition {
     edge.addLabelNode(
       {
         id: element.id,
-        node: element,
+        node: () => element,
         offset: Point.ORIGIN,
         timeOffset: LengthOffsetOnPath.toTimeOffsetOnPath(projection, path).pathT,
         type: 'horizontal'

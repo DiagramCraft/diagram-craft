@@ -26,6 +26,7 @@ import {
   type MappedCRDTOrderedMapMapType
 } from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import { makeElementMapper } from './diagramElementMapper';
+import { MappedCRDTProp } from './collaboration/datatypes/mapped/mappedCrdtProp';
 
 // eslint-disable-next-line
 type Snapshot = any;
@@ -39,6 +40,7 @@ export type DiagramElementCRDT = {
   highlights: Array<string>;
   metadata: CRDTMap<Flatten<ElementMetadata>>;
   children: CRDTMap<MappedCRDTOrderedMapMapType<DiagramElementCRDT>>;
+  parentId: string;
 };
 
 export abstract class DiagramElement implements ElementInterface, AttachmentConsumer {
@@ -52,7 +54,6 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
   // TODO: Is this always a RegularLayer
   protected _layer: Layer;
   protected _activeDiagram: Diagram;
-  protected _parent?: DiagramElement;
 
   protected _cache: Map<string, unknown> | undefined = undefined;
 
@@ -60,6 +61,11 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
   protected readonly _metadata: CRDTObject<ElementMetadata>;
   protected readonly _highlights: CRDTProp<DiagramElementCRDT, 'highlights'>;
   protected readonly _children: MappedCRDTOrderedMap<DiagramElement, DiagramElementCRDT>;
+  protected readonly _parent: MappedCRDTProp<
+    DiagramElementCRDT,
+    'parentId',
+    DiagramElement | undefined
+  >;
 
   protected constructor(
     type: string,
@@ -82,6 +88,7 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
         allowUpdates: true,
         onAdd: (t, e) => {
           if (t === 'remote') {
+            this._diagram.register(e);
             this._diagram.emit('elementChange', { element: e });
             this._diagram.emit('elementChange', { element: this });
           }
@@ -109,6 +116,16 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
         this._diagram.emitAsync('elementHighlighted', { element: this });
       }
     });
+
+    this._parent = new MappedCRDTProp<DiagramElementCRDT, 'parentId', DiagramElement | undefined>(
+      this._crdt,
+      'parentId',
+      {
+        toCRDT: parent => parent?.id ?? '',
+        fromCRDT: v => (v !== '' ? this._diagram.lookup(v) : undefined)
+      }
+    );
+    this._parent.init(undefined);
 
     const metadataMap = WatchableValue.from(
       ([parent]) => parent.get().get('metadata', () => layer.crdt.factory.makeMap())!,
@@ -221,11 +238,11 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
   /* Parent ************************************************************************************************** */
 
   get parent() {
-    return this._parent;
+    return this._parent.get();
   }
 
   _setParent(parent: DiagramElement | undefined) {
-    this._parent = parent;
+    this._parent.set(parent);
   }
 
   /* Metadata ************************************************************************************************ */

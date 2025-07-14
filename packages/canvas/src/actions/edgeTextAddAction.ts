@@ -66,7 +66,7 @@ export class EdgeTextAddAction extends AbstractAction<EdgeTextAddActionArg> {
       timeOffset: LengthOffsetOnPath.toTimeOffsetOnPath(projection, path).pathT,
       offset: { x: 0, y: 0 },
       id: textNode.id,
-      node: textNode,
+      node: () => textNode,
       type: 'horizontal'
     };
 

@@ -52,11 +52,11 @@ export class MappedCRDTProp<
     });
   }
 
-  get(): Readonly<T | undefined> {
+  get(): T | undefined {
     return this.#value;
   }
 
-  getNonNull(): Readonly<T> {
+  getNonNull(): T {
     const v = this.get();
     assert.present(v);
     return v;

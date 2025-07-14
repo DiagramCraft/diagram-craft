@@ -111,7 +111,7 @@ export class TestDiagramNodeBuilder extends DiagramNode {
 
   asLabelNode(): ResolvedLabelNode {
     return {
-      node: this,
+      node: () => this,
       type: 'perpendicular',
       offset: { x: 0, y: 0 },
       timeOffset: 0,

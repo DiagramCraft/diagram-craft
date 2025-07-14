@@ -6,7 +6,11 @@ import { LayerSnapshot, UnitOfWork } from './unitOfWork';
 import { groupBy } from '@diagram-craft/utils/array';
 import { DiagramEdge } from './diagramEdge';
 import { MappedCRDTOrderedMap } from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
-import { makeElementMapper } from './diagramElementMapper';
+import { makeElementMapper, registerElementFactory } from './diagramElementMapper';
+import { DiagramNode } from './diagramNode';
+
+registerElementFactory('node', (id, layer, crdt) => new DiagramNode(id, layer, undefined, crdt));
+registerElementFactory('edge', (id, layer, crdt) => new DiagramEdge(id, layer, crdt));
 
 export class RegularLayer extends Layer<RegularLayer> {
   #elements: MappedCRDTOrderedMap<DiagramElement, DiagramElementCRDT>;

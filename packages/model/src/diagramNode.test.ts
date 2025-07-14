@@ -59,7 +59,7 @@ describe('DiagramNode', () => {
       const labelNode = node.asLabelNode();
       edge.setLabelNodes([labelNode], uow);
 
-      expect(node.labelNode()!.node).toEqual(node);
+      expect(node.labelNode()!.node()).toEqual(node);
     });
   });
 

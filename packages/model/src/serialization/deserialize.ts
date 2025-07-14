@@ -152,7 +152,7 @@ export const deserializeDiagramElements = (
       const edge = edgeLookup[n.id];
       if (n.labelNodes && n.labelNodes.length > 0) {
         edge.setLabelNodes(
-          n.labelNodes.map(ln => ({ ...ln, node: nodeLookup[ln.id] })),
+          n.labelNodes.map(ln => ({ ...ln, node: () => nodeLookup[ln.id] })),
           uow
         );
       }

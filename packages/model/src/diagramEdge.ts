@@ -43,15 +43,12 @@ import { CRDTMapper, type SimpleCRDTMapper } from './collaboration/datatypes/map
 import { CRDTProp } from './collaboration/datatypes/crdtProp';
 import { MappedCRDTProp } from './collaboration/datatypes/mapped/mappedCrdtProp';
 import { CRDTObject } from './collaboration/datatypes/crdtObject';
-import { registerElementFactory } from './diagramElementMapper';
-
-registerElementFactory('edge', (id, layer, crdt) => new DiagramEdge(id, layer, crdt));
 
 const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
   endpoint instanceof ConnectedEndpoint;
 
 export type ResolvedLabelNode = LabelNode & {
-  node: DiagramNode;
+  node: () => DiagramNode;
 };
 
 export type Intersection = {
@@ -93,19 +90,25 @@ const makeLabelNodeMapper = (
   return {
     fromCRDT(e: CRDTMap<LabelNodeCRDTEntry>): ResolvedLabelNode {
       const node = e.get('node')!;
-      const relatedNode = edge.diagram.nodeLookup.get(node.nodeId)!;
-      if (!relatedNode)
-        console.warn(
-          `Edge ${edge.id} references node ${node.nodeId} which does not exist in the diagram, ${[...edge.diagram.nodeLookup.keys()]}`
-        );
-      return { ...node, node: relatedNode };
+      return {
+        ...node,
+        node: () => {
+          const relatedNode = edge.diagram.nodeLookup.get(node.nodeId)!;
+          if (!relatedNode) {
+            assert.fail(
+              `Edge ${edge.id} references node ${node.nodeId} which does not exist in the diagram, ${[...edge.diagram.nodeLookup.keys()]}`
+            );
+          }
+          return relatedNode!;
+        }
+      };
     },
 
     toCRDT(e: ResolvedLabelNode): CRDTMap<LabelNodeCRDTEntry> {
       const m = edge.crdt.get().factory.makeMap<LabelNodeCRDTEntry>();
       m.set('node', {
         id: e.id,
-        nodeId: e.node.id,
+        nodeId: e.node().id,
         offset: e.offset,
         type: e.type,
         timeOffset: e.timeOffset
@@ -401,7 +404,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   get name() {
     // First we use any label nodes
     if (this.#labelNodes && this.#labelNodes.size > 0) {
-      return this.#labelNodes.values[0].node.name;
+      return this.#labelNodes.values[0].node().name;
     }
 
     if (!isEmptyString(this.metadata.name)) {
@@ -556,16 +559,16 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
 
     // Find all children with corresponding label node
     const existingLabelNodes =
-      this.#labelNodes?.values.filter(ln => this.children.find(c => c.id === ln.node.id)) ?? [];
+      this.#labelNodes?.values.filter(ln => this.children.find(c => c.id === ln.node().id)) ?? [];
 
     const newLabelNodes: ResolvedLabelNode[] = [];
     for (const c of this.children) {
       assert.node(c);
 
-      if (!existingLabelNodes.find(ln => ln.node === c)) {
+      if (!existingLabelNodes.find(ln => ln.node() === c)) {
         newLabelNodes.push({
           id: c.id,
-          node: c,
+          node: () => c,
           type: 'perpendicular',
           offset: {
             x: 0,
@@ -586,38 +589,35 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     uow.snapshot(this);
 
     this.#labelNodes?.values.forEach(ln => {
-      const layer = ln.node.layer;
+      const layer = ln.node().layer;
       if (layer.type === 'regular') {
         assertRegularLayer(layer);
-        const inLayerElements = layer.elements.find(e => e === ln.node);
+        const inLayerElements = layer.elements.find(e => e === ln.node());
         if (inLayerElements) {
-          console.log('remove', ln.node.id);
-          layer.removeElement(ln.node, uow);
+          layer.removeElement(ln.node(), uow);
         }
 
-        if (!this.children.find(c => c.id === ln.node.id)) {
-          console.log('addChild', ln.node.id);
-          super.addChild(ln.node, uow);
+        if (!this.children.find(c => c.id === ln.node().id)) {
+          super.addChild(ln.node(), uow);
         }
 
-        assert.true(ln.node.parent === this);
+        assert.true(ln.node().parent === this);
 
         const inDiagram =
-          layer.diagram.nodeLookup.has(ln.node.id) || layer.diagram.edgeLookup.has(ln.node.id);
+          layer.diagram.nodeLookup.has(ln.node().id) || layer.diagram.edgeLookup.has(ln.node().id);
         if (!inDiagram) {
-          console.log('add', ln.node.id);
-          layer.addElement(ln.node, uow);
+          layer.addElement(ln.node(), uow);
         }
       } else {
         assert.fail('Label nodes should be part of regular layer');
       }
 
-      uow.snapshot(ln.node);
-      uow.updateElement(ln.node);
+      uow.snapshot(ln.node());
+      uow.updateElement(ln.node());
     });
 
     for (const c of this.children) {
-      if (!this.#labelNodes?.values.find(ln => ln.node === c)) {
+      if (!this.#labelNodes?.values.find(ln => ln.node() === c)) {
         this.removeChild(c, uow);
       }
     }
@@ -661,8 +661,8 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       // Check that labelNodes and children have the same nodes
       for (const ln of this.#labelNodes.values ?? []) {
         assert.true(
-          !!this.children.find(c => c.id === ln.node.id),
-          `Label node doesn't match children - different ids; ${this.children.map(c => c.id).join(', ')} != ${this.#labelNodes?.values.map(ln => ln.node.id).join(', ')}`
+          !!this.children.find(c => c.id === ln.node().id),
+          `Label node doesn't match children - different ids; ${this.children.map(c => c.id).join(', ')} != ${this.#labelNodes?.values.map(ln => ln.node().id).join(', ')}`
         );
       }
 
@@ -805,7 +805,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
         ln.id,
         {
           ...ln,
-          node: this.diagram.nodeLookup.get(ln.id)!
+          node: () => this.diagram.nodeLookup.get(ln.id)!
         }
       ]) ?? []
     );
@@ -836,10 +836,10 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     for (let i = 0; i < (edge.labelNodes ?? []).length; i++) {
       const l = (edge.labelNodes ?? [])[i];
 
-      const newNode = l.node.duplicate(ctx, id ? `${id}-${i}` : undefined);
+      const newNode = l.node().duplicate(ctx, id ? `${id}-${i}` : undefined);
       newLabelNodes.push({
         ...l,
-        node: newNode
+        node: () => newNode
       });
     }
     edge.setLabelNodes(newLabelNodes, uow);
@@ -994,7 +994,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     // All label nodes must be detached
     if (this.labelNodes) {
       for (const l of this.labelNodes) {
-        l.node.detach(uow);
+        l.node().detach(uow);
       }
     }
 
@@ -1053,9 +1053,10 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     for (const labelNode of this.labelNodes) {
       const pathD = TimeOffsetOnPath.toLengthOffsetOnPath({ pathT: labelNode.timeOffset }, path);
       const attachmentPoint = path.pointAt(pathD);
+      const labelNodeNode = labelNode.node();
 
       let newReferencePoint = Point.add(attachmentPoint, labelNode.offset);
-      let newRotation = labelNode.node.bounds.r;
+      let newRotation = labelNodeNode.bounds.r;
       if (isParallel(labelNode.type) || isPerpendicular(labelNode.type)) {
         const tangent = path.tangentAt(pathD);
 
@@ -1081,36 +1082,36 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       }
 
       const referenceOffsetFromMidpoint = Point.of(0, 0);
-      if (labelNode.node.renderProps.text.align === 'left') {
-        referenceOffsetFromMidpoint.x = labelNode.node.bounds.w / 2;
-      } else if (labelNode.node.renderProps.text.align === 'right') {
-        referenceOffsetFromMidpoint.x = -labelNode.node.bounds.w / 2;
+      if (labelNodeNode.renderProps.text.align === 'left') {
+        referenceOffsetFromMidpoint.x = labelNodeNode.bounds.w / 2;
+      } else if (labelNodeNode.renderProps.text.align === 'right') {
+        referenceOffsetFromMidpoint.x = -labelNodeNode.bounds.w / 2;
       }
 
-      if (labelNode.node.renderProps.text.valign === 'top') {
-        referenceOffsetFromMidpoint.y = labelNode.node.bounds.h / 2 + 6;
-      } else if (labelNode.node.renderProps.text.valign === 'bottom') {
-        referenceOffsetFromMidpoint.y = -labelNode.node.bounds.h / 2 - 1;
+      if (labelNodeNode.renderProps.text.valign === 'top') {
+        referenceOffsetFromMidpoint.y = labelNodeNode.bounds.h / 2 + 6;
+      } else if (labelNodeNode.renderProps.text.valign === 'bottom') {
+        referenceOffsetFromMidpoint.y = -labelNodeNode.bounds.h / 2 - 1;
       }
 
       // Note, using rounding here to avoid infinite recursion
       newReferencePoint = Point.add(newReferencePoint, referenceOffsetFromMidpoint);
       const currentReferencePoint = Point.add(
-        Box.center(labelNode.node.bounds),
+        Box.center(labelNodeNode.bounds),
         referenceOffsetFromMidpoint
       );
       const hasChanged =
         isDifferent(newReferencePoint.x, currentReferencePoint.x) ||
         isDifferent(newReferencePoint.y, currentReferencePoint.y) ||
-        isDifferent(newRotation, labelNode.node.bounds.r);
+        isDifferent(newRotation, labelNodeNode.bounds.r);
 
       if (hasChanged) {
-        labelNode.node.setBounds(
+        labelNodeNode.setBounds(
           {
-            ...labelNode.node.bounds,
+            ...labelNodeNode.bounds,
             r: newRotation,
-            x: newReferencePoint.x - labelNode.node.bounds.w / 2,
-            y: newReferencePoint.y - labelNode.node.bounds.h / 2
+            x: newReferencePoint.x - labelNodeNode.bounds.w / 2,
+            y: newReferencePoint.y - labelNodeNode.bounds.h / 2
           },
           uow
         );

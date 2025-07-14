@@ -2,6 +2,7 @@ import { Layer } from './diagramLayer';
 import type { DiagramElement, DiagramElementCRDT } from './diagramElement';
 import { CRDTMap } from './collaboration/crdt';
 import type { CRDTMapper } from './collaboration/datatypes/mapped/mappedCrdt';
+import { assert } from '@diagram-craft/utils/assert';
 
 /* Note: the use of FACTORIES and registerElementFactory seems somewhat convoluted,
  * but it's there to resolve circular dependencies */
@@ -22,6 +23,7 @@ export const makeElementMapper = (
 ): CRDTMapper<DiagramElement, DiagramElementCRDT> => ({
   fromCRDT: (e: CRDTMap<DiagramElementCRDT>) => {
     const type = e.get('type')!;
+    if (!FACTORIES[type]) assert.fail(`Unknown element type: ${type}`);
     return FACTORIES[type](e.get('id')!, layer, e);
   },
 

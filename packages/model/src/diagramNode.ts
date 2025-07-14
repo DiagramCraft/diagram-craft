@@ -38,9 +38,6 @@ import {
   type MappedCRDTOrderedMapMapType
 } from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import { CRDTMapper } from './collaboration/datatypes/mapped/mappedCrdt';
-import { registerElementFactory } from './diagramElementMapper';
-
-registerElementFactory('node', (id, layer, crdt) => new DiagramNode(id, layer, undefined, crdt));
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;
@@ -224,7 +221,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     node._cache?.clear();
   }
 
-  detachCRDT(callback: () => void) {
+  detachCRDT(callback: () => void = () => {}) {
     super.detachCRDT(callback);
 
     const crdt = this._crdt as unknown as WatchableValue<CRDTMap<DiagramNodeCRDT>>;
@@ -354,8 +351,10 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     )?.props;
 
     const parentProps: Partial<NodeProps & EdgeProps> = deepClone(
-      // @ts-expect-error this.#parent.editProps cannot be properly typed
-      this._parent && this.#props.inheritStyle ? makeWriteable(this._parent.editProps) : {}
+      this._parent.get() && this.#props.get().inheritStyle
+        ? // @ts-expect-error this.#parent.editProps cannot be properly typed
+          makeWriteable(this._parent.get().editProps)
+        : {}
     );
 
     const adjustments = getAdjustments(this._activeDiagram, this.id);
@@ -904,7 +903,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     const edge = this.labelEdge();
     assert.present(edge);
     assert.present(edge.labelNodes);
-    return edge.labelNodes.find(n => n.node === this);
+    return edge.labelNodes.find(n => n.node() === this);
   }
 
   labelEdge(): DiagramEdge | undefined {
@@ -924,13 +923,13 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     const replacement: ResolvedLabelNode = {
       ...this.labelNode()!,
       ...labelNode,
-      node: this
+      node: () => this
     };
 
     const edge = this.labelEdge();
     assert.present(edge);
     edge.setLabelNodes(
-      edge.labelNodes!.map((n: ResolvedLabelNode) => (n.node === this ? replacement : n)),
+      edge.labelNodes!.map((n: ResolvedLabelNode) => (n.node() === this ? replacement : n)),
       uow
     );
 
