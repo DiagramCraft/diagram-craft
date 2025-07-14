@@ -589,31 +589,32 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     uow.snapshot(this);
 
     this.#labelNodes?.values.forEach(ln => {
-      const layer = ln.node().layer;
+      const node = ln.node();
+      const layer = node.layer;
       if (layer.type === 'regular') {
         assertRegularLayer(layer);
-        const inLayerElements = layer.elements.find(e => e === ln.node());
+        const inLayerElements = layer.elements.find(e => e === node);
         if (inLayerElements) {
-          layer.removeElement(ln.node(), uow);
+          layer.removeElement(node, uow);
         }
 
-        if (!this.children.find(c => c.id === ln.node().id)) {
-          super.addChild(ln.node(), uow);
+        if (!this.children.find(c => c.id === node.id)) {
+          super.addChild(node, uow);
         }
 
-        assert.true(ln.node().parent === this);
+        assert.true(node.parent === this);
 
         const inDiagram =
-          layer.diagram.nodeLookup.has(ln.node().id) || layer.diagram.edgeLookup.has(ln.node().id);
+          layer.diagram.nodeLookup.has(node.id) || layer.diagram.edgeLookup.has(node.id);
         if (!inDiagram) {
-          layer.addElement(ln.node(), uow);
+          layer.addElement(node, uow);
         }
       } else {
         assert.fail('Label nodes should be part of regular layer');
       }
 
-      uow.snapshot(ln.node());
-      uow.updateElement(ln.node());
+      uow.snapshot(node);
+      uow.updateElement(node);
     });
 
     for (const c of this.children) {

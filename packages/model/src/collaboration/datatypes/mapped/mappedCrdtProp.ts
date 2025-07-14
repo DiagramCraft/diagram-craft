@@ -31,8 +31,8 @@ export class MappedCRDTProp<
     };
     const remoteUpdate: EventReceiver<CRDTMapEvents<C[string]>['remoteUpdate']> = p => {
       if (p.key !== name) return;
-      props.onChange!('remote');
       this.#value = this.mapper.fromCRDT(p.value as C[N]);
+      props.onChange!('remote');
     };
 
     crdt.get().on('localUpdate', localUpdate);

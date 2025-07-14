@@ -23,8 +23,16 @@ export const makeElementMapper = (
 ): CRDTMapper<DiagramElement, DiagramElementCRDT> => ({
   fromCRDT: (e: CRDTMap<DiagramElementCRDT>) => {
     const type = e.get('type')!;
+    const id = e.get('id')!;
+
+    const existing = layer.diagram.lookup(id);
+    if (existing) {
+      existing.crdt.set(e);
+      return existing;
+    }
+
     if (!FACTORIES[type]) assert.fail(`Unknown element type: ${type}`);
-    return FACTORIES[type](e.get('id')!, layer, e);
+    return FACTORIES[type](id, layer, e);
   },
 
   toCRDT: (e: DiagramElement) => e.crdt.get()

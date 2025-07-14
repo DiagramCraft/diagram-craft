@@ -4,7 +4,6 @@ import { AnchorEndpoint } from './endpoint';
 import { TestDiagramBuilder, TestLayerBuilder, TestModel } from './test-support/builder';
 import { Backends } from './collaboration/yjs/collaborationTestUtils';
 import type { DiagramDocument } from './diagramDocument';
-import { RegularLayer } from './diagramLayerRegular';
 import { DiagramNode } from './diagramNode';
 import { DiagramEdge } from './diagramEdge';
 import type { Diagram } from './diagram';
@@ -14,8 +13,8 @@ describe.for(Backends.all())('DiagramEdge [%s]', ([_name, backend]) => {
   let layer1: TestLayerBuilder;
   let uow: UnitOfWork;
   let edge1: DiagramEdge;
-  let edge1_2: DiagramEdge | undefined;
 
+  let edge1_2: DiagramEdge | undefined;
   let doc2: DiagramDocument | undefined;
   let diagram2: Diagram | undefined;
 
@@ -30,11 +29,10 @@ describe.for(Backends.all())('DiagramEdge [%s]', ([_name, backend]) => {
     doc2 = root2 ? TestModel.newDocument(root2) : undefined;
 
     uow = UnitOfWork.immediate(diagram1);
-    edge1 = layer1.createEdge();
-    layer1.addElement(edge1, uow);
+    edge1 = layer1.addEdge();
 
     diagram2 = doc2?.topLevelDiagrams?.[0];
-    edge1_2 = (diagram2?.layers?.all?.[0] as RegularLayer)?.elements[0] as DiagramEdge;
+    edge1_2 = diagram2?.lookup(edge1.id) as DiagramEdge | undefined;
   });
   afterEach(backend.afterEach);
 
