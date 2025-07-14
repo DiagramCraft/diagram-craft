@@ -21,6 +21,11 @@ import { type CRDTMap, type Flatten } from './collaboration/crdt';
 import { WatchableValue } from '@diagram-craft/utils/watchableValue';
 import { CRDTProp } from './collaboration/datatypes/crdtProp';
 import { CRDTObject } from './collaboration/datatypes/crdtObject';
+import {
+  MappedCRDTOrderedMap,
+  type MappedCRDTOrderedMapMapType
+} from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
+import { makeElementMapper } from './diagramElementMapper';
 
 // eslint-disable-next-line
 type Snapshot = any;
@@ -33,6 +38,7 @@ export type DiagramElementCRDT = {
   type: string;
   highlights: Array<string>;
   metadata: CRDTMap<Flatten<ElementMetadata>>;
+  children: CRDTMap<MappedCRDTOrderedMapMapType<DiagramElementCRDT>>;
 };
 
 export abstract class DiagramElement implements ElementInterface, AttachmentConsumer {
@@ -53,7 +59,7 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
   // Shared properties
   protected readonly _metadata: CRDTObject<ElementMetadata>;
   protected readonly _highlights: CRDTProp<DiagramElementCRDT, 'highlights'>;
-  protected _children: ReadonlyArray<DiagramElement> = [];
+  protected readonly _children: MappedCRDTOrderedMap<DiagramElement, DiagramElementCRDT>;
 
   protected constructor(
     type: string,
@@ -68,6 +74,32 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
     this._crdt = new WatchableValue(crdt ?? this._diagram.document.root.factory.makeMap());
     this._crdt.get().set('id', id);
     this._crdt.get().set('type', type);
+
+    this._children = new MappedCRDTOrderedMap<DiagramElement, DiagramElementCRDT>(
+      this._crdt.get().get('children', () => this._diagram.document.root.factory.makeMap())!,
+      makeElementMapper(this.layer),
+      {
+        allowUpdates: true,
+        onAdd: (t, e) => {
+          if (t === 'remote') {
+            this._diagram.emit('elementChange', { element: e });
+            this._diagram.emit('elementChange', { element: this });
+          }
+        },
+        onChange: (t, e) => {
+          if (t === 'remote') {
+            this._diagram.emit('elementChange', { element: e });
+            this._diagram.emit('elementChange', { element: this });
+          }
+        },
+        onRemove: (t, e) => {
+          if (t === 'remote') {
+            this._diagram.emit('elementRemove', { element: e });
+            this._diagram.emit('elementChange', { element: this });
+          }
+        }
+      }
+    );
 
     this._highlights = new CRDTProp(this._crdt, 'highlights', {
       factory: () => [],
@@ -121,8 +153,10 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
   abstract snapshot(): Snapshot;
   abstract restore(snapshot: Snapshot, uow: UnitOfWork): void;
 
-  detachCRDT() {
-    this._crdt.set(this._crdt.get().clone());
+  detachCRDT(callback: () => void) {
+    const clone = this._crdt.get().clone();
+    callback();
+    this._crdt.set(clone);
   }
 
   get crdt() {
@@ -225,16 +259,18 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
   /* Children ************************************************************************************************ */
 
   get children() {
-    return this._children;
+    return this._children.values;
   }
 
   setChildren(children: ReadonlyArray<DiagramElement>, uow: UnitOfWork) {
     uow.snapshot(this);
 
-    const oldChildren = this._children;
+    const oldChildren = this._children.values;
 
-    this._children = children;
-    this._children.forEach(c => {
+    children.forEach(c => c.detachCRDT(() => {}));
+    this._children.set(children.map(e => [e.id, e]));
+
+    this._children.values.forEach(c => {
       uow.snapshot(c);
       c._setParent(this);
       this.diagram.register(c);
@@ -248,7 +284,7 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
         c._setParent(undefined);
       });
 
-    this._children.forEach(c => {
+    this._children.values.forEach(c => {
       uow.updateElement(c);
     });
     uow.updateElement(this);
@@ -260,7 +296,7 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
     relation?: { ref: DiagramElement; type: 'after' | 'before' }
   ) {
     assert.true(child.diagram === this.diagram);
-    assert.false(this.children.includes(child));
+    assert.false(this._children.has(child.id));
 
     uow.snapshot(this);
     uow.snapshot(child);
@@ -269,14 +305,23 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
 
     if (relation) {
       const children = this._children;
-      const index = children.indexOf(relation.ref);
+      const index = children.getIndex(relation.ref.id);
       if (relation.type === 'after') {
-        this._children = [...children.slice(0, index + 1), child, ...children.slice(index + 1)];
+        this._children.set(
+          [...children.values.slice(0, index + 1), child, ...children.values.slice(index + 1)].map(
+            e => [e.id, e]
+          )
+        );
       } else {
-        this._children = [...children.slice(0, index), child, ...children.slice(index)];
+        this._children.set(
+          [...children.values.slice(0, index), child, ...children.values.slice(index)].map(e => [
+            e.id,
+            e
+          ])
+        );
       }
     } else {
-      this._children = [...this._children, child];
+      this._children.add(child.id, child);
     }
     child._setParent(this);
 
@@ -287,12 +332,12 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
   }
 
   removeChild(child: DiagramElement, uow: UnitOfWork) {
-    assert.true(this.children.includes(child));
+    assert.true(this._children.has(child.id));
 
     uow.snapshot(this);
     uow.snapshot(child);
 
-    this._children = this.children.filter(c => c !== child);
+    this._children.remove(child.id);
     child._setParent(undefined);
 
     // TODO: We should clear nodeLookup and edgeLookup here

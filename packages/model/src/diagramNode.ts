@@ -38,6 +38,9 @@ import {
   type MappedCRDTOrderedMapMapType
 } from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import { CRDTMapper } from './collaboration/datatypes/mapped/mappedCrdt';
+import { registerElementFactory } from './diagramElementMapper';
+
+registerElementFactory('node', (id, layer, crdt) => new DiagramNode(id, layer, undefined, crdt));
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;
@@ -70,7 +73,7 @@ const makeEdgesMapper = (
       const m = node.crdt.get().factory.makeMap<{ edges: Array<string> }>();
       m.set(
         'edges',
-        e.map(edge => edge.id)
+        e.filter(k => !!k).map(edge => edge.id)
       );
       return m;
     }
@@ -107,7 +110,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     this.#nodeType = new CRDTProp<DiagramNodeCRDT, 'nodeType'>(nodeCrdt, 'nodeType', {
       onChange: type => {
         if (type === 'remote') {
-          this._children = [];
+          this._children.clear();
           this.diagram.emit('elementChange', { element: this });
 
           this._cache?.clear();
@@ -221,8 +224,8 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     node._cache?.clear();
   }
 
-  detachCRDT() {
-    super.detachCRDT();
+  detachCRDT(callback: () => void) {
+    super.detachCRDT(callback);
 
     const crdt = this._crdt as unknown as WatchableValue<CRDTMap<DiagramNodeCRDT>>;
     this.#edges = new MappedCRDTOrderedMap(
@@ -243,7 +246,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   changeNodeType(nodeType: string, uow: UnitOfWork) {
     uow.snapshot(this);
     this.#nodeType.set(nodeType);
-    this._children = [];
+    this._children.clear();
     uow.updateElement(this);
 
     this._cache?.clear();
@@ -417,7 +420,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     this.cache.set('props.forEditing', propsForEditing);
     this.cache.set('props.forRendering', propsForRendering);
 
-    for (const child of this._children) {
+    for (const child of this.children) {
       if (isNode(child)) {
         child.populatePropsCache();
       }

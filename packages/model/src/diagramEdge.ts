@@ -43,6 +43,9 @@ import { CRDTMapper, type SimpleCRDTMapper } from './collaboration/datatypes/map
 import { CRDTProp } from './collaboration/datatypes/crdtProp';
 import { MappedCRDTProp } from './collaboration/datatypes/mapped/mappedCrdtProp';
 import { CRDTObject } from './collaboration/datatypes/crdtObject';
+import { registerElementFactory } from './diagramElementMapper';
+
+registerElementFactory('edge', (id, layer, crdt) => new DiagramEdge(id, layer, crdt));
 
 const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
   endpoint instanceof ConnectedEndpoint;
@@ -74,7 +77,7 @@ declare global {
   }
 }
 
-type LabelNodeCRDTEntry = { node: LabelNode };
+type LabelNodeCRDTEntry = { node: LabelNode & { nodeId: string } };
 
 export type DiagramEdgeCRDT = DiagramElementCRDT & {
   start: string;
@@ -90,12 +93,23 @@ const makeLabelNodeMapper = (
   return {
     fromCRDT(e: CRDTMap<LabelNodeCRDTEntry>): ResolvedLabelNode {
       const node = e.get('node')!;
-      return { ...node, node: edge.diagram.nodeLookup.get(node.id)! };
+      const relatedNode = edge.diagram.nodeLookup.get(node.nodeId)!;
+      if (!relatedNode)
+        console.warn(
+          `Edge ${edge.id} references node ${node.nodeId} which does not exist in the diagram, ${[...edge.diagram.nodeLookup.keys()]}`
+        );
+      return { ...node, node: relatedNode };
     },
 
     toCRDT(e: ResolvedLabelNode): CRDTMap<LabelNodeCRDTEntry> {
       const m = edge.crdt.get().factory.makeMap<LabelNodeCRDTEntry>();
-      m.set('node', { id: e.id, offset: e.offset, type: e.type, timeOffset: e.timeOffset });
+      m.set('node', {
+        id: e.id,
+        nodeId: e.node.id,
+        offset: e.offset,
+        type: e.type,
+        timeOffset: e.timeOffset
+      });
       return m;
     }
   };
@@ -542,10 +556,10 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
 
     // Find all children with corresponding label node
     const existingLabelNodes =
-      this.#labelNodes?.values.filter(ln => this._children.find(c => c.id === ln.node.id)) ?? [];
+      this.#labelNodes?.values.filter(ln => this.children.find(c => c.id === ln.node.id)) ?? [];
 
     const newLabelNodes: ResolvedLabelNode[] = [];
-    for (const c of this._children) {
+    for (const c of this.children) {
       assert.node(c);
 
       if (!existingLabelNodes.find(ln => ln.node === c)) {
@@ -577,10 +591,12 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
         assertRegularLayer(layer);
         const inLayerElements = layer.elements.find(e => e === ln.node);
         if (inLayerElements) {
+          console.log('remove', ln.node.id);
           layer.removeElement(ln.node, uow);
         }
 
-        if (!this._children.find(c => c.id === ln.node.id)) {
+        if (!this.children.find(c => c.id === ln.node.id)) {
+          console.log('addChild', ln.node.id);
           super.addChild(ln.node, uow);
         }
 
@@ -589,6 +605,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
         const inDiagram =
           layer.diagram.nodeLookup.has(ln.node.id) || layer.diagram.edgeLookup.has(ln.node.id);
         if (!inDiagram) {
+          console.log('add', ln.node.id);
           layer.addElement(ln.node, uow);
         }
       } else {
@@ -599,7 +616,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       uow.updateElement(ln.node);
     });
 
-    for (const c of this._children) {
+    for (const c of this.children) {
       if (!this.#labelNodes?.values.find(ln => ln.node === c)) {
         this.removeChild(c, uow);
       }
@@ -637,20 +654,20 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     DEBUG: {
       // Check that labelNodes and children have the same length
       assert.true(
-        this.#labelNodes?.size === this._children.length,
-        `Label nodes don't match children - different length; ${this._children.length} != ${this.#labelNodes?.size}`
+        this.#labelNodes?.size === this.children.length,
+        `Label nodes don't match children - different length; ${this.children.length} != ${this.#labelNodes?.size}`
       );
 
       // Check that labelNodes and children have the same nodes
       for (const ln of this.#labelNodes.values ?? []) {
         assert.true(
-          !!this._children.find(c => c.id === ln.node.id),
-          `Label node doesn't match children - different ids; ${this._children.map(c => c.id).join(', ')} != ${this.#labelNodes?.values.map(ln => ln.node.id).join(', ')}`
+          !!this.children.find(c => c.id === ln.node.id),
+          `Label node doesn't match children - different ids; ${this.children.map(c => c.id).join(', ')} != ${this.#labelNodes?.values.map(ln => ln.node.id).join(', ')}`
         );
       }
 
       // Check that no children are elements of the layer
-      for (const c of this._children) {
+      for (const c of this.children) {
         assert.false(
           c.layer.type === 'regular' && !!(c.layer as RegularLayer).elements.find(e => e === c),
           "Label node doesn't match children - element"
@@ -658,7 +675,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       }
 
       // Check that all children are part of the element mapping of the diagram
-      for (const c of this._children) {
+      for (const c of this.children) {
         assert.true(
           c.diagram.nodeLookup.has(c.id) || c.diagram.edgeLookup.has(c.id),
           "Label node doesn't match children - diagram"

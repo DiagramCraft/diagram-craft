@@ -21,13 +21,13 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
 
       const d1 = TestModel.newDiagramWithLayer(root1);
       const layer1 = d1.layers.all[0] as RegularLayer;
-      const layer1_doc2 = doc2?.topLevelDiagrams[0].layers.all[0] as RegularLayer;
+      const layer1_2 = doc2?.topLevelDiagrams[0].layers.all[0] as RegularLayer;
 
       const element = new DiagramNode('id1', layer1);
       layer1.addElement(element, UnitOfWork.immediate(d1));
 
       expect(element.id).toBe('id1');
-      if (doc2) expect(layer1_doc2!.elements[0].id).toBe('id1');
+      if (doc2) expect(layer1_2!.elements[0].id).toBe('id1');
     });
   });
 
@@ -39,13 +39,13 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
 
       const d1 = TestModel.newDiagramWithLayer(root1);
       const layer1 = d1.layers.all[0] as RegularLayer;
-      const layer1_doc2 = doc2?.topLevelDiagrams[0].layers.all[0] as RegularLayer;
+      const layer1_2 = doc2?.topLevelDiagrams[0].layers.all[0] as RegularLayer;
 
       const element = new DiagramNode('id1', layer1);
       layer1.addElement(element, UnitOfWork.immediate(d1));
 
       expect(element.type).toBe('node');
-      if (doc2) expect(layer1_doc2!.elements[0].type).toBe('node');
+      if (doc2) expect(layer1_2!.elements[0].type).toBe('node');
     });
   });
 
@@ -57,18 +57,18 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
 
       const d1 = TestModel.newDiagramWithLayer(root1);
       const layer1 = d1.layers.all[0] as RegularLayer;
-      const layer1_doc2 = doc2?.topLevelDiagrams[0].layers.all[0] as RegularLayer;
+      const layer1_2 = doc2?.topLevelDiagrams[0].layers.all[0] as RegularLayer;
 
       const element = new DiagramNode('id1', layer1);
       layer1.addElement(element, UnitOfWork.immediate(d1));
 
       element.highlights = ['h1', 'h2'];
       expect(element.highlights).toStrictEqual(['h1', 'h2']);
-      if (doc2) expect(layer1_doc2!.elements[0].highlights).toStrictEqual(['h1', 'h2']);
+      if (doc2) expect(layer1_2!.elements[0].highlights).toStrictEqual(['h1', 'h2']);
 
       element.highlights = ['h3'];
       expect(element.highlights).toStrictEqual(['h3']);
-      if (doc2) expect(layer1_doc2!.elements[0].highlights).toStrictEqual(['h3']);
+      if (doc2) expect(layer1_2!.elements[0].highlights).toStrictEqual(['h3']);
     });
 
     it('should emit elementHighlighted event', async () => {
@@ -104,7 +104,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
 
       const d1 = TestModel.newDiagramWithLayer(root1);
       const layer1 = d1.layers.all[0] as RegularLayer;
-      const layer1_doc2 = doc2?.topLevelDiagrams[0].layers.all[0] as RegularLayer;
+      const layer1_2 = doc2?.topLevelDiagrams[0].layers.all[0] as RegularLayer;
 
       const element = new DiagramNode('id1', layer1);
       layer1.addElement(element, UnitOfWork.immediate(d1));
@@ -112,7 +112,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       element.updateMetadata(m => (m.style = 'lorem'), UnitOfWork.immediate(d1));
 
       expect(element.metadata.style).toBe('lorem');
-      if (doc2) expect(layer1_doc2!.elements[0].metadata.style).toStrictEqual('lorem');
+      if (doc2) expect(layer1_2!.elements[0].metadata.style).toStrictEqual('lorem');
     });
 
     it('should emit elementChanged event', async () => {

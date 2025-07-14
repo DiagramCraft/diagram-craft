@@ -6,27 +6,7 @@ import { LayerSnapshot, UnitOfWork } from './unitOfWork';
 import { groupBy } from '@diagram-craft/utils/array';
 import { DiagramEdge } from './diagramEdge';
 import { MappedCRDTOrderedMap } from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
-import { CRDTMapper } from './collaboration/datatypes/mapped/mappedCrdt';
-import { DiagramNode } from './diagramNode';
-
-const makeElementMapper = (layer: Layer): CRDTMapper<DiagramElement, DiagramElementCRDT> => {
-  return {
-    fromCRDT(e: CRDTMap<DiagramElementCRDT>) {
-      const type = e.get('type')!;
-      const id = e.get('id')!;
-
-      if (type === 'node') {
-        return new DiagramNode(id, layer, undefined, e);
-      } else {
-        return new DiagramEdge(id, layer, e);
-      }
-    },
-
-    toCRDT(e: DiagramElement) {
-      return e.crdt.get();
-    }
-  };
-};
+import { makeElementMapper } from './diagramElementMapper';
 
 export class RegularLayer extends Layer<RegularLayer> {
   #elements: MappedCRDTOrderedMap<DiagramElement, DiagramElementCRDT>;
@@ -45,7 +25,12 @@ export class RegularLayer extends Layer<RegularLayer> {
       makeElementMapper(this),
       {
         allowUpdates: true,
-        onAdd: (t, e) => t === 'remote' && diagram.emit('elementAdd', { element: e }),
+        onAdd: (t, e) => {
+          if (t === 'remote') {
+            diagram.emit('elementAdd', { element: e });
+            this.processElementForAdd(e);
+          }
+        },
         onChange: (t, e) => t === 'remote' && diagram.emit('elementChange', { element: e }),
         onRemove: (t, e) => t === 'remote' && diagram.emit('elementRemove', { element: e })
       }
@@ -124,8 +109,9 @@ export class RegularLayer extends Layer<RegularLayer> {
   removeElement(element: DiagramElement, uow: UnitOfWork) {
     uow.snapshot(this);
 
-    element.detachCRDT();
-    this.#elements.remove(element.id);
+    element.detachCRDT(() => {
+      this.#elements.remove(element.id);
+    });
 
     element.detach(uow);
     uow.removeElement(element);
@@ -138,7 +124,7 @@ export class RegularLayer extends Layer<RegularLayer> {
     const added = elements.filter(e => !this.#elements.has(e.id));
     const removed = this.#elements.values.filter(e => !elements.includes(e));
 
-    elements.forEach(e => e.detachCRDT());
+    elements.forEach(e => e.detachCRDT(() => {}));
 
     this.#elements.set(elements.map(e => [e.id, e]));
     for (const e of added) {
