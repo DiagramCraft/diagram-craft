@@ -259,6 +259,10 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
     return (this._metadata.get() ?? {}) as ElementMetadata;
   }
 
+  get metadataCloned() {
+    return this._metadata.getClone() as ElementMetadata;
+  }
+
   protected forceUpdateMetadata(metadata: ElementMetadata) {
     this._metadata.set(metadata);
   }

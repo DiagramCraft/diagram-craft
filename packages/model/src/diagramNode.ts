@@ -271,6 +271,10 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     return this.#text.get();
   }
 
+  get textsCloned() {
+    return this.#text.getClone();
+  }
+
   /* Props *************************************************************************************************** */
 
   getPropsInfo<T extends PropPath<NodeProps>>(path: T): PropertyInfo<PropPathValue<NodeProps, T>> {
