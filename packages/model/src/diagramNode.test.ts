@@ -6,7 +6,7 @@ import {
   TestLayerBuilder,
   TestModel
 } from './test-support/builder';
-import { Backends } from './collaboration/yjs/collaborationTestUtils';
+import { type Backend, Backends } from './collaboration/yjs/collaborationTestUtils';
 import type { DiagramNode } from './diagramNode';
 import type { DiagramDocument } from './diagramDocument';
 import type { Diagram } from './diagram';
@@ -23,6 +23,8 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
 
   const resetUow = () => (uow = UnitOfWork.immediate(diagram1));
 
+  let elementChange: ReturnType<Backend['createFns']>;
+
   beforeEach(() => {
     backend.beforeEach();
 
@@ -38,6 +40,10 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
     node1_2 = diagram2?.lookup(node1.id) as DiagramNode | undefined;
 
     uow = UnitOfWork.immediate(diagram1);
+
+    elementChange = backend.createFns();
+    diagram1.on('elementChange', elementChange[0]);
+    if (diagram2) diagram2.on('elementChange', elementChange[1]);
   });
   afterEach(backend.afterEach);
 
@@ -155,9 +161,6 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
     it('should set the parent of the child correctly', () => {
       // **** Setup
       const child = layer1.createNode();
-      const elementChange = backend.createFns();
-      diagram1.on('elementChange', elementChange[0]);
-      if (diagram2) diagram2.on('elementChange', elementChange[1]);
 
       // **** Act
       UnitOfWork.execute(diagram1, uow => node1.addChild(child, uow));
@@ -214,10 +217,6 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       const child = layer1.createNode();
       node1.addChild(child, uow);
 
-      const elementChange = backend.createFns();
-      diagram1.on('elementChange', elementChange[0]);
-      if (diagram2) diagram2.on('elementChange', elementChange[1]);
-
       const elementRemove = backend.createFns();
       diagram1.on('elementRemove', elementRemove[0]);
       if (diagram2) diagram2.on('elementRemove', elementRemove[1]);
@@ -257,10 +256,6 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       // **** Setup
       const child1 = layer1.createNode();
       const child2 = layer1.createNode();
-
-      const elementChange = backend.createFns();
-      diagram1.on('elementChange', elementChange[0]);
-      if (diagram2) diagram2.on('elementChange', elementChange[1]);
 
       // **** Act
       UnitOfWork.execute(diagram1, uow => node1.setChildren([child1, child2], uow));

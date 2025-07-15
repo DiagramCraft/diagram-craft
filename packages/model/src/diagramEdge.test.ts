@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { UnitOfWork } from './unitOfWork';
 import { AnchorEndpoint, FreeEndpoint } from './endpoint';
 import { TestDiagramBuilder, TestLayerBuilder, TestModel } from './test-support/builder';
-import { Backends } from './collaboration/yjs/collaborationTestUtils';
+import { type Backend, Backends } from './collaboration/yjs/collaborationTestUtils';
 import type { DiagramDocument } from './diagramDocument';
 import { DiagramEdge } from './diagramEdge';
 import type { Diagram } from './diagram';
@@ -16,6 +16,8 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
   let edge1_2: DiagramEdge | undefined;
   let doc2: DiagramDocument | undefined;
   let diagram2: Diagram | undefined;
+
+  let elementChange: ReturnType<Backend['createFns']>;
 
   beforeEach(() => {
     backend.beforeEach();
@@ -32,6 +34,10 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
 
     diagram2 = doc2?.topLevelDiagrams?.[0];
     edge1_2 = diagram2?.lookup(edge1.id) as DiagramEdge | undefined;
+
+    elementChange = backend.createFns();
+    diagram1.on('elementChange', elementChange[0]);
+    if (diagram2) diagram2.on('elementChange', elementChange[1]);
   });
   afterEach(backend.afterEach);
 
@@ -39,11 +45,6 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
 
   describe('name', () => {
     it('should return the name from the first label node if label nodes exist', () => {
-      // **** Setup
-      const elementChange = backend.createFns();
-      diagram1.on('elementChange', elementChange[0]);
-      if (diagram2) diagram2.on('elementChange', elementChange[1]);
-
       // **** Act
       const node = layer1.addNode();
       UnitOfWork.execute(diagram1, uow => node.setText('LabelNodeName', uow));
@@ -70,11 +71,6 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
     });
 
     it('should return the metadata name if no label nodes and metadata name is set', () => {
-      // **** Setup
-      const elementChange = backend.createFns();
-      diagram1.on('elementChange', elementChange[0]);
-      if (diagram2) diagram2.on('elementChange', elementChange[1]);
-
       // **** Act
       UnitOfWork.execute(diagram1, uow =>
         edge1.updateMetadata(props => {
@@ -93,11 +89,6 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
     });
 
     it('should return the concatenated names of connected nodes if no label nodes or metadata name', () => {
-      // **** Setup
-      const elementChange = backend.createFns();
-      diagram1.on('elementChange', elementChange[0]);
-      if (diagram2) diagram2.on('elementChange', elementChange[1]);
-
       const start = layer1.addNode();
       start.setText('StartNode', uow);
 
@@ -127,10 +118,6 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
   describe('bounds', () => {
     it('should return a box defined by the start and end positions', () => {
       // **** Setup
-      const elementChange = backend.createFns();
-      diagram1.on('elementChange', elementChange[0]);
-      if (diagram2) diagram2.on('elementChange', elementChange[1]);
-
       const startNode = layer1.addNode();
       startNode.setBounds({ x: 10, y: 20, w: 10, h: 10, r: 0 }, uow);
 
@@ -153,10 +140,6 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
 
     it('should trigger an elementChange event', () => {
       // **** Setup
-      const elementChange = backend.createFns();
-      diagram1.on('elementChange', elementChange[0]);
-      if (diagram2) diagram2.on('elementChange', elementChange[1]);
-
       edge1.setStart(new FreeEndpoint({ x: 0, y: 0 }), uow);
       edge1.setEnd(new FreeEndpoint({ x: 10, y: 10 }), uow);
 
@@ -189,10 +172,6 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       // **** Setup
       const labelNode = layer1.addNode().asLabelNode();
 
-      const elementChange = backend.createFns();
-      diagram1.on('elementChange', elementChange[0]);
-      if (diagram2) diagram2.on('elementChange', elementChange[1]);
-
       // **** Act
       UnitOfWork.execute(diagram1, uow => edge1.setLabelNodes([labelNode], uow));
 
@@ -210,11 +189,6 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
 
   describe('addChild', () => {
     it('should set the parent of the child correctly', () => {
-      // **** Setup
-      const elementChange = backend.createFns();
-      diagram1.on('elementChange', elementChange[0]);
-      if (diagram2) diagram2.on('elementChange', elementChange[1]);
-
       // **** Act
       const child = layer1.createNode();
       UnitOfWork.execute(diagram1, uow => edge1.addChild(child, uow));
@@ -304,10 +278,6 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
   describe('removeChild', () => {
     it('should remove the child from the children array', () => {
       // **** Setup
-      const elementChange = backend.createFns();
-      diagram1.on('elementChange', elementChange[0]);
-      if (diagram2) diagram2.on('elementChange', elementChange[1]);
-
       const elementRemove = backend.createFns();
       diagram1.on('elementRemove', elementRemove[0]);
       if (diagram2) diagram2.on('elementRemove', elementRemove[1]);
@@ -368,10 +338,6 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
   describe('setChildren', () => {
     it('should set the children correctly', () => {
       // **** Setup
-      const elementChange = backend.createFns();
-      diagram1.on('elementChange', elementChange[0]);
-      if (diagram2) diagram2.on('elementChange', elementChange[1]);
-
       const child1 = layer1.createNode();
       const child2 = layer1.createNode();
 
@@ -414,10 +380,6 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
     it('should set the label nodes correctly', () => {
       // **** Setup
       const labelNode = layer1.createNode().asLabelNode();
-
-      const elementChange = backend.createFns();
-      diagram1.on('elementChange', elementChange[0]);
-      if (diagram2) diagram2.on('elementChange', elementChange[1]);
 
       // **** Act
       UnitOfWork.execute(diagram1, uow => edge1.setLabelNodes([labelNode], uow));
@@ -482,9 +444,6 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
     it('should add the label node to the label nodes array', () => {
       // **** Setup
       const labelNode = layer1.createNode().asLabelNode();
-      const elementChange = backend.createFns();
-      diagram1.on('elementChange', elementChange[0]);
-      if (diagram2) diagram2.on('elementChange', elementChange[1]);
 
       // **** Act
       UnitOfWork.execute(diagram1, uow => edge1.addLabelNode(labelNode, uow));
