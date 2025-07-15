@@ -1,5 +1,13 @@
 import { describe, expect, test } from 'vitest';
-import { assert, is } from './assert';
+import {
+  assert,
+  invariant,
+  is,
+  NOT_IMPLEMENTED_YET,
+  notImplemented,
+  postcondition,
+  VERIFY_NOT_REACHED
+} from './assert';
 
 describe('assert', () => {
   describe('assert', () => {
@@ -193,6 +201,40 @@ describe('assert', () => {
       } catch (e) {
         // Ignore
       }
+    });
+  });
+
+  describe('postcondition', () => {
+    test('postcondition.fail', () => {
+      expect(() => postcondition.is.fail()).toThrowError();
+    });
+  });
+
+  describe('invariant', () => {
+    test('invariant.fail', () => {
+      expect(() => invariant.is.fail()).toThrowError();
+    });
+  });
+
+  describe('notImplemented', () => {
+    test('notImplemented.fail', () => {
+      expect(() => notImplemented.fail()).toThrowError();
+    });
+  });
+
+  describe('NOT_IMPLEMENTED_YET', () => {
+    test('should throw an error', () => {
+      expect(() => {
+        NOT_IMPLEMENTED_YET();
+      }).toThrowError('Not implemented yet');
+    });
+  });
+
+  describe('VERIFY_NOT_REACHED', () => {
+    test('should throw an error', () => {
+      expect(() => {
+        VERIFY_NOT_REACHED();
+      }).toThrowError('Should not be reached ');
     });
   });
 
