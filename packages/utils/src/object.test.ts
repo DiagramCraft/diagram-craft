@@ -1,14 +1,47 @@
 import {
+  cloneAsWriteable,
   common,
   deepClear,
+  deepClone,
   deepEquals,
   deepIsEmpty,
   deepMerge,
+  isObj,
   isPrimitive,
+  objectKeys,
+  resilientDeepClone,
+  shallowEquals,
   unfoldObject
 } from './object';
 import { describe, expect, test } from 'vitest';
 import { UNSAFE } from './testUtils';
+
+describe('isObj function', () => {
+  test('should return true for objects', () => {
+    expect(isObj({})).toBe(true);
+    expect(isObj({ a: 1 })).toBe(true);
+    expect(isObj(new Object())).toBe(true);
+  });
+
+  test('should return false for arrays', () => {
+    expect(isObj([])).toBe(false);
+    expect(isObj([1, 2, 3])).toBe(false);
+  });
+
+  test('should handle primitives correctly', () => {
+    // Note: In JavaScript, typeof null === 'object', so isObj returns true for null
+    expect(isObj(null)).toBe(true);
+    expect(isObj(undefined)).toBe(false);
+    expect(isObj(42)).toBe(false);
+    expect(isObj('string')).toBe(false);
+    expect(isObj(true)).toBe(false);
+  });
+
+  test('should return false for functions', () => {
+    expect(isObj(() => {})).toBe(false);
+    expect(isObj(function () {})).toBe(false);
+  });
+});
 
 describe('common function', () => {
   test('should return an object with common properties', () => {
@@ -85,7 +118,7 @@ describe('unfoldObject function', () => {
   });
 });
 
-describe('deepmerge', () => {
+describe('deepMerge', () => {
   test('should merge objects', () => {
     const a = { a: 1, b: 2 };
     const b = { a: 2, c: 3 };
@@ -103,45 +136,206 @@ describe('deepmerge', () => {
     const b = { a: 3 };
     expect(deepMerge(a, b)).toEqual({ a: 3, b: 2 });
   });
+
+  test('should handle null values in source', () => {
+    const a = { a: 1, b: 2 };
+    const b = { a: null, c: 3 };
+
+    // @ts-expect-error
+    expect(deepMerge(a, b)).toEqual({ a: 1, b: 2, c: 3 });
+  });
+
+  test('should handle undefined values in source', () => {
+    const a = { a: 1, b: 2 };
+    const b = { a: undefined, c: 3 };
+    expect(deepMerge(a, b)).toEqual({ a: 1, b: 2, c: 3 });
+  });
+
+  test('should handle multiple sources', () => {
+    const a = { a: 1, b: 2 };
+    const b = { a: 2, c: 3 };
+    const c = { d: 4 };
+
+    // @ts-expect-error
+    expect(deepMerge(a, b, c)).toEqual({ a: 2, b: 2, c: 3, d: 4 });
+  });
+
+  test('should handle non-object sources', () => {
+    const a = { a: 1, b: 2 };
+    const b = 'not an object' as unknown as UNSAFE<typeof a>;
+    expect(deepMerge(a, b)).toEqual({ a: 1, b: 2 });
+  });
+
+  test('should handle non-object target', () => {
+    const a = 'not an object' as unknown as Record<string, unknown>;
+    const b = { a: 1, b: 2 };
+    expect(deepMerge(a, b)).toBe(a);
+  });
+
+  test('should handle deeply nested objects', () => {
+    const a = { a: 1, b: { c: { d: 2 } } };
+    const b = { a: 2, b: { c: { e: 3 } } } as unknown as UNSAFE<typeof a>;
+    expect(deepMerge(a, b)).toEqual({ a: 2, b: { c: { d: 2, e: 3 } } });
+  });
+
+  test('should initialize nested objects if they do not exist in target', () => {
+    const a = { a: 1 };
+    const b = { b: { c: 2 } } as unknown as UNSAFE<typeof a>;
+    expect(deepMerge(a, b)).toEqual({ a: 1, b: { c: 2 } });
+  });
 });
 
-/*
 describe('deepClone function', () => {
   test('should return null when the target is null', () => {
     const result = deepClone(null);
-    expect(result).to.equal(null);
+    expect(result).toBe(null);
   });
 
   test('should return a new date object with the same time when the target is a date object', () => {
     const date = new Date();
     const result = deepClone(date);
-    expect(result).to.not.equal(date);
-    expect(result.getTime()).to.equal(date.getTime());
+    expect(result).not.toBe(date);
+    expect(result.getTime()).toBe(date.getTime());
   });
 
   test('should return a new array with the same elements when the target is an array', () => {
     const array = [1, 2, 3];
     const result = deepClone(array);
-    expect(result).to.not.equal(array);
-    expect(result).to.deep.equal(array);
+    expect(result).not.toBe(array);
+    expect(result).toEqual(array);
   });
 
   test('should return a new object with the same properties when the target is an object', () => {
     const object = { a: 1, b: 2 };
     const result = deepClone(object);
-    expect(result).to.not.equal(object);
-    expect(result).to.deep.equal(object);
+    expect(result).not.toBe(object);
+    expect(result).toEqual(object);
   });
 
   test('should handle nested objects and arrays', () => {
     const complex = { a: [1, 2, { b: 3 }] };
     const result = deepClone(complex);
-    expect(result).to.not.equal(complex);
-    expect(result.a).to.not.equal(complex.a);
-    expect(result.a[2]).to.not.equal(complex.a[2]);
-    expect(result).to.deep.equal(complex);
+    expect(result).not.toBe(complex);
+    expect(result.a).not.toBe(complex.a);
+    expect(result.a[2]).not.toBe(complex.a[2]);
+    expect(result).toEqual(complex);
   });
-});*/
+});
+
+describe('resilientDeepClone function', () => {
+  test('should return null when the target is null', () => {
+    const result = resilientDeepClone(null);
+    expect(result).toBe(null);
+  });
+
+  test('should return a new date object with the same time when the target is a date object', () => {
+    const date = new Date();
+    const result = resilientDeepClone(date);
+    expect(result).not.toBe(date);
+    expect(result.getTime()).toBe(date.getTime());
+  });
+
+  test('should return a new array with the same elements when the target is an array', () => {
+    const array = [1, 2, 3];
+    const result = resilientDeepClone(array);
+    expect(result).not.toBe(array);
+    expect(result).toEqual(array);
+  });
+
+  test('should return a new object with the same properties when the target is an object', () => {
+    const object = { a: 1, b: 2 };
+    const result = resilientDeepClone(object);
+    expect(result).not.toBe(object);
+    expect(result).toEqual(object);
+  });
+
+  test('should handle nested objects and arrays', () => {
+    const complex = { a: [1, 2, { b: 3 }] };
+    const result = resilientDeepClone(complex);
+    expect(result).not.toBe(complex);
+    expect(result.a).not.toBe(complex.a);
+    expect(result.a[2]).not.toBe(complex.a[2]);
+    expect(result).toEqual(complex);
+  });
+
+  test('should handle primitive values', () => {
+    expect(resilientDeepClone(42)).toBe(42);
+    expect(resilientDeepClone('string')).toBe('string');
+    expect(resilientDeepClone(true)).toBe(true);
+    expect(resilientDeepClone(undefined)).toBe(undefined);
+  });
+
+  // Note: resilientDeepClone does not handle circular references
+  // If circular reference handling is needed, a more complex implementation would be required
+  test('should handle complex nested structures', () => {
+    const complex = {
+      a: 1,
+      b: {
+        c: [1, 2, 3],
+        d: {
+          e: 'string',
+          f: true
+        }
+      }
+    };
+    const result = resilientDeepClone(complex);
+    expect(result).toEqual(complex);
+    expect(result).not.toBe(complex);
+    expect(result.b).not.toBe(complex.b);
+    expect(result.b.c).not.toBe(complex.b.c);
+    expect(result.b.d).not.toBe(complex.b.d);
+  });
+});
+
+describe('shallowEquals function', () => {
+  test('should return true for identical primitive values', () => {
+    expect(shallowEquals(1, 1)).toBe(true);
+    expect(shallowEquals('a', 'a')).toBe(true);
+    expect(shallowEquals(true, true)).toBe(true);
+  });
+
+  test('should return false for different primitive values', () => {
+    expect(shallowEquals(1, 2)).toBe(false);
+    expect(shallowEquals('a', 'b')).toBe(false);
+    expect(shallowEquals(true, false)).toBe(false);
+  });
+
+  test('should return true for identical objects at the top level', () => {
+    const obj1 = { a: 1, b: 2 };
+    const obj2 = { a: 1, b: 2 };
+    expect(shallowEquals(obj1, obj2)).toBe(true);
+  });
+
+  test('should return false for different objects at the top level', () => {
+    const obj1 = { a: 1, b: 2 };
+    const obj2 = { a: 2, b: 2 };
+    expect(shallowEquals(obj1, obj2)).toBe(false);
+  });
+
+  test('should return false for objects with different number of keys', () => {
+    const obj1 = { a: 1, b: 2 };
+    const obj2 = { a: 1 };
+    expect(shallowEquals(obj1, obj2)).toBe(false);
+  });
+
+  test('should not deeply compare nested objects', () => {
+    const obj1 = { a: 1, b: { c: 2 } };
+    const obj2 = { a: 1, b: { c: 3 } };
+    // The nested objects are different, but shallowEquals only checks references
+    expect(shallowEquals(obj1, obj2)).toBe(false);
+  });
+
+  test('should return true for same object reference', () => {
+    const obj = { a: 1 };
+    expect(shallowEquals(obj, obj)).toBe(true);
+  });
+
+  test('should handle null and undefined', () => {
+    expect(shallowEquals(null, null)).toBe(true);
+    expect(shallowEquals(undefined, undefined)).toBe(true);
+    expect(shallowEquals(null, undefined)).toBe(false);
+  });
+});
 
 describe('deepEquals function', () => {
   test('should return true for identical primitive values', () => {
@@ -302,6 +496,32 @@ describe('isPrimitive function', () => {
   });
 });
 
+describe('objectKeys function', () => {
+  test('should return an array of keys for a simple object', () => {
+    const obj = { a: 1, b: 2, c: 3 };
+    const keys = objectKeys(obj);
+    expect(keys).toEqual(['a', 'b', 'c']);
+  });
+
+  test('should return an empty array for an empty object', () => {
+    const obj = {};
+    const keys = objectKeys(obj);
+    expect(keys).toEqual([]);
+  });
+
+  test('should return keys for an object with mixed value types', () => {
+    const obj = { a: 1, b: 'string', c: true, d: null, e: undefined, f: {} };
+    const keys = objectKeys(obj);
+    expect(keys).toEqual(['a', 'b', 'c', 'd', 'e', 'f']);
+  });
+
+  test('should return keys for an object with nested objects', () => {
+    const obj = { a: 1, b: { c: 2 } };
+    const keys = objectKeys(obj);
+    expect(keys).toEqual(['a', 'b']);
+  });
+});
+
 describe('deepIsEmpty function', () => {
   test('should return true for null or undefined', () => {
     expect(deepIsEmpty(null)).toBe(true);
@@ -331,5 +551,43 @@ describe('deepIsEmpty function', () => {
   test('should return false for nested objects with non-empty primitive values', () => {
     const obj = { a: { b: 1 } };
     expect(deepIsEmpty(obj)).toBe(false);
+  });
+});
+
+describe('cloneAsWriteable function', () => {
+  test('should clone a readonly object as writeable', () => {
+    const readonlyObj = { a: 1, b: 2 } as const;
+    const writeableObj = cloneAsWriteable(readonlyObj);
+
+    // Type check: This would cause a TypeScript error if writeableObj was readonly
+    // writeableObj.a = 3;
+
+    // Instead, we'll check that the values are the same
+    expect(writeableObj).toEqual(readonlyObj);
+    expect(writeableObj).not.toBe(readonlyObj);
+  });
+
+  test('should handle nested readonly objects', () => {
+    const readonlyObj = { a: 1, b: { c: 2 } } as const;
+    const writeableObj = cloneAsWriteable(readonlyObj);
+
+    expect(writeableObj).toEqual(readonlyObj);
+    expect(writeableObj).not.toBe(readonlyObj);
+    expect(writeableObj.b).not.toBe(readonlyObj.b);
+  });
+
+  test('should handle readonly arrays', () => {
+    const readonlyArray = [1, 2, 3] as const;
+    const writeableArray = cloneAsWriteable(readonlyArray);
+
+    expect(writeableArray).toEqual(readonlyArray);
+    expect(writeableArray).not.toBe(readonlyArray);
+  });
+
+  test('should handle null and undefined', () => {
+    // @ts-expect-error
+    expect(cloneAsWriteable(null)).toBe(null);
+    // @ts-expect-error
+    expect(cloneAsWriteable(undefined)).toBe(undefined);
   });
 });

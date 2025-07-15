@@ -73,7 +73,7 @@ const makeAssertions = (error: (m: string) => never): AssertType & AssertTypeExt
     if (!is.true(arg)) error(msg ?? 'must be true');
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  false: (arg: any, msg?: string): asserts arg is true => {
+  false: (arg: any, msg?: string): asserts arg is false => {
     if (!is.false(arg)) error(msg ?? 'must be false');
   },
   fail: (msg?: string) => {
