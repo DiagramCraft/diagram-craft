@@ -20,7 +20,8 @@ import { Browser } from '@diagram-craft/canvas/browser';
 import * as html from '../component/vdom-html';
 import { rawHTML, VNode } from '../component/vdom';
 import styles from './canvas.css?inline';
-import { isResolvableToRegularLayer, RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
+import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
+import { isResolvableToRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 export type BaseCanvasProps = {
   id: string;

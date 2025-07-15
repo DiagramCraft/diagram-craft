@@ -1,10 +1,9 @@
 import { LabelNode } from './types';
 import { Box } from '@diagram-craft/geometry/box';
 import { Transform } from '@diagram-craft/geometry/transform';
-import { DiagramElement, isEdge, isNode } from './diagramElement';
+import { DiagramElement, type DiagramElementCRDT, isEdge, isNode } from './diagramElement';
 import { DiagramNodeSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
 import type { DiagramEdge, ResolvedLabelNode } from './diagramEdge';
-import type { Diagram } from './diagram';
 import { Layer } from './diagramLayer';
 import { DefaultStyles, nodeDefaults } from './diagramDefaults';
 import {
@@ -27,8 +26,18 @@ import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/p
 import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
 import { getAdjustments } from './diagramLayerRuleTypes';
 import { toUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
-import { RegularLayer } from './diagramLayerRegular';
+import type { RegularLayer } from './diagramLayerRegular';
 import { transformPathList } from '@diagram-craft/geometry/pathListUtils';
+import { WatchableValue } from '@diagram-craft/utils/watchableValue';
+import type { CRDTMap, Flatten } from './collaboration/crdt';
+import { CRDTProp } from './collaboration/datatypes/crdtProp';
+import { MappedCRDTProp } from './collaboration/datatypes/mapped/mappedCrdtProp';
+import { CRDTObject } from './collaboration/datatypes/crdtObject';
+import {
+  MappedCRDTOrderedMap,
+  type MappedCRDTOrderedMapMapType
+} from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
+import { CRDTMapper } from './collaboration/datatypes/mapped/mappedCrdt';
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;
@@ -39,66 +48,202 @@ export type NodePropsForEditing = DeepReadonly<NodeProps>;
 
 export type NodeTexts = { text: string } & Record<string, string>;
 
-export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramNodeSnapshot> {
-  readonly edges: Map<string | undefined, DiagramEdge[]> = new Map<
-    string | undefined,
-    DiagramEdge[]
-  >();
+export type DiagramNodeCRDT = DiagramElementCRDT & {
+  nodeType: string;
+  bounds: Box;
+  text: CRDTMap<Flatten<NodeTexts>>;
+  props: CRDTMap<Flatten<NodeProps>>;
+  anchors: ReadonlyArray<Anchor> | undefined;
+  edges: CRDTMap<MappedCRDTOrderedMapMapType<{ edges: Array<string> }>>;
+};
 
-  #nodeType: 'group' | string;
+const makeEdgesMapper = (
+  node: DiagramNode
+): CRDTMapper<DiagramEdge[], { edges: Array<string> }> => {
+  return {
+    fromCRDT(e: CRDTMap<{ edges: Array<string> }>) {
+      const edgeIds = e.get('edges')!;
+      return edgeIds.map(id => node.diagram.edgeLookup.get(id) as DiagramEdge);
+    },
 
-  #props: NodeProps = {};
-  #text: NodeTexts = {
-    text: ''
+    toCRDT(e: DiagramEdge[]): CRDTMap<{ edges: Array<string> }> {
+      const m = node.crdt.get().factory.makeMap<{ edges: Array<string> }>();
+      m.set(
+        'edges',
+        e.filter(k => !!k).map(edge => edge.id)
+      );
+      return m;
+    }
   };
+};
 
-  #bounds: Box;
-  #anchors?: ReadonlyArray<Anchor>;
+export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramNodeSnapshot> {
+  // Shared properties
+  readonly #nodeType: CRDTProp<DiagramNodeCRDT, 'nodeType'>;
+  #edges: MappedCRDTOrderedMap<DiagramEdge[], { edges: Array<string> }>;
+
+  // Note, we use MappedCRDTProp here for performance reasons
+  readonly #bounds: MappedCRDTProp<DiagramNodeCRDT, 'bounds', Box>;
+  readonly #text: CRDTObject<NodeTexts>;
+  readonly #props: CRDTObject<NodeProps>;
+  readonly #anchors: CRDTProp<DiagramNodeCRDT, 'anchors'>;
 
   constructor(
     id: string,
+    layer: Layer,
+    anchorCache?: ReadonlyArray<Anchor>,
+    crdt?: CRDTMap<DiagramElementCRDT>
+  ) {
+    super('node', id, layer, crdt);
+
+    const nodeCrdt = this._crdt as unknown as WatchableValue<CRDTMap<DiagramNodeCRDT>>;
+
+    this.#edges = new MappedCRDTOrderedMap(
+      nodeCrdt.get().get('edges', () => layer.crdt.factory.makeMap())!,
+      makeEdgesMapper(this),
+      { allowUpdates: true }
+    );
+
+    this.#nodeType = new CRDTProp<DiagramNodeCRDT, 'nodeType'>(nodeCrdt, 'nodeType', {
+      onChange: type => {
+        if (type === 'remote') {
+          this._children.clear();
+          this.diagram.emit('elementChange', { element: this });
+
+          this._cache?.clear();
+
+          const uow = new UnitOfWork(this.diagram, true, true);
+          this.invalidateAnchors(uow);
+          this.getDefinition().onPropUpdate(this, uow);
+        }
+      }
+    });
+    this.#nodeType.init('rect');
+
+    const textMap = WatchableValue.from(
+      ([parent]) => parent.get().get('text', () => layer.crdt.factory.makeMap())!,
+      [nodeCrdt] as const
+    );
+    this.#text = new CRDTObject<NodeTexts>(textMap, type => {
+      if (type === 'remote') {
+        this.diagram.emit('elementChange', { element: this });
+        this._cache?.clear();
+      }
+    });
+    this.#text.init({ text: '' });
+
+    const propsMap = WatchableValue.from(
+      ([parent]) => parent.get().get('props', () => layer.crdt.factory.makeMap())!,
+      [nodeCrdt] as const
+    );
+    this.#props = new CRDTObject<NodeProps>(propsMap, type => {
+      if (type === 'remote') {
+        this.diagram.emit('elementChange', { element: this });
+        this._cache?.clear();
+      }
+    });
+
+    this.#anchors = new CRDTProp<DiagramNodeCRDT, 'anchors'>(nodeCrdt, 'anchors', {
+      onChange: type => {
+        if (type === 'remote') {
+          this.diagram.emit('elementChange', { element: this });
+        }
+      }
+    });
+    if (anchorCache) this.#anchors.init(anchorCache);
+
+    this.#bounds = new MappedCRDTProp<DiagramNodeCRDT, 'bounds', Box>(
+      nodeCrdt,
+      'bounds',
+      {
+        toCRDT: (b: Box) => b,
+        fromCRDT: (b: Box) => b
+      },
+      {
+        onChange: type => {
+          if (type === 'remote') {
+            this.diagram.emit('elementChange', { element: this });
+          }
+        }
+      }
+    );
+    this.#bounds.init({ x: 0, y: 0, w: 10, h: 10, r: 0 });
+
+    // Note: It is important that this comes last, as it might trigger
+    //       events etc - so important that everything is set up before
+    //       that to avoid flashing of incorrect formatting/style
+    if (this.#anchors.get() === undefined && this.diagram.layers) {
+      this.invalidateAnchors(UnitOfWork.immediate(this.diagram));
+    }
+  }
+
+  /* Factory ************************************************************************************************* */
+
+  static create(
+    id: string,
     nodeType: 'group' | string,
     bounds: Box,
-    diagram: Diagram,
     layer: Layer,
     props: NodePropsForEditing,
     metadata: ElementMetadata,
     text: NodeTexts = { text: '' },
     anchorCache?: ReadonlyArray<Anchor>
   ) {
-    super('node', id, diagram, layer, metadata);
-    this.#bounds = bounds;
-    this.#nodeType = nodeType;
-    this.#text = text;
+    const node = new DiagramNode(id, layer, anchorCache);
 
-    this.#props = (props ?? {}) as NodeProps;
-    this.#anchors = anchorCache;
+    this.initializeNode(node, nodeType, bounds, props, metadata, text);
 
-    this._metadata.style ??=
-      this.nodeType === 'text' ? DefaultStyles.node.text : DefaultStyles.node.default;
+    return node;
+  }
 
-    this._metadata.textStyle ??= DefaultStyles.text.default;
+  protected static initializeNode(
+    node: DiagramNode,
+    nodeType: 'group' | string,
+    bounds: Box,
+    props: NodePropsForEditing,
+    metadata: ElementMetadata,
+    text: NodeTexts = { text: '' }
+  ) {
+    node.#bounds.set(bounds);
+    node.#nodeType.set(nodeType);
+    node.#text.set(text);
 
-    // Note: It is important that this comes last, as it might trigger
-    //       events etc - so important that everything is set up before
-    //       that to avoid flashing of incorrect formatting/style
-    if (!this.#anchors) {
-      this.invalidateAnchors(UnitOfWork.immediate(diagram));
+    node.#props.set((props ?? {}) as NodeProps);
+
+    node._metadata.set(metadata ?? {});
+
+    const m = node.metadata;
+    if (!m.style || !m.textStyle) {
+      m.style = node.nodeType === 'text' ? DefaultStyles.node.text : DefaultStyles.node.default;
+      m.textStyle = DefaultStyles.text.default;
+      node.forceUpdateMetadata(m);
     }
+    node._cache?.clear();
+  }
+
+  detachCRDT(callback: () => void = () => {}) {
+    super.detachCRDT(callback);
+
+    const crdt = this._crdt as unknown as WatchableValue<CRDTMap<DiagramNodeCRDT>>;
+    this.#edges = new MappedCRDTOrderedMap(
+      crdt.get().get('edges', () => this.layer.crdt.factory.makeMap())!,
+      makeEdgesMapper(this),
+      { allowUpdates: true }
+    );
   }
 
   getDefinition() {
-    return this.diagram.document.nodeDefinitions.get(this.#nodeType);
+    return this.diagram.document.nodeDefinitions.get(this.nodeType);
   }
 
   get nodeType() {
-    return this.#nodeType;
+    return this.#nodeType.get()!;
   }
 
   changeNodeType(nodeType: string, uow: UnitOfWork) {
     uow.snapshot(this);
-    this.#nodeType = nodeType;
-    this._children = [];
+    this.#nodeType.set(nodeType);
+    this._children.clear();
     uow.updateElement(this);
 
     this._cache?.clear();
@@ -109,18 +254,25 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   /* Text **************************************************************************************************** */
 
   getText(id = 'text') {
-    return this.#text[id === '1' ? 'text' : id];
+    return this.#text.get()[id === '1' ? 'text' : id];
   }
 
   setText(text: string, uow: UnitOfWork, id = 'text') {
     uow.snapshot(this);
-    this.#text[id === '1' ? 'text' : id] = text;
+    this.#text.set({
+      ...this.#text.get(),
+      [id === '1' ? 'text' : id]: text
+    });
     uow.updateElement(this);
     this._cache?.clear();
   }
 
   get texts() {
-    return this.#text;
+    return this.#text.get();
+  }
+
+  get textsCloned() {
+    return this.#text.getClone();
   }
 
   /* Props *************************************************************************************************** */
@@ -148,7 +300,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       dest.push({
         val: accessor.get(styleProps, path) as PropPathValue<NodeProps, T>,
         type: 'style',
-        id: this._metadata.style
+        id: this.metadata.style
       });
     }
 
@@ -156,7 +308,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       dest.push({
         val: accessor.get(textStyleProps, path) as PropPathValue<NodeProps, T>,
         type: 'textStyle',
-        id: this._metadata.textStyle
+        id: this.metadata.textStyle
       });
     }
 
@@ -180,7 +332,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     });
 
     dest.push({
-      val: accessor.get(this.#props, path) as PropPathValue<NodeProps, T>,
+      val: accessor.get(this.#props.get()! as NodeProps, path) as PropPathValue<NodeProps, T>,
       type: 'stored'
     });
 
@@ -196,15 +348,17 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   }
 
   private getPropsSources() {
-    const styleProps = this.diagram.document.styles.getNodeStyle(this._metadata.style)?.props;
+    const styleProps = this.diagram.document.styles.getNodeStyle(this.metadata.style)?.props;
 
     const textStyleProps = this.diagram.document.styles.getTextStyle(
-      this._metadata.textStyle
+      this.metadata.textStyle
     )?.props;
 
     const parentProps: Partial<NodeProps & EdgeProps> = deepClone(
-      // @ts-expect-error this.#parent.editProps cannot be properly typed
-      this._parent && this.#props.inheritStyle ? makeWriteable(this._parent.editProps) : {}
+      this._parent.get() && this.#props.get().inheritStyle
+        ? // @ts-expect-error this.#parent.editProps cannot be properly typed
+          makeWriteable(this._parent.get().editProps)
+        : {}
     );
 
     const adjustments = getAdjustments(this._activeDiagram, this.id);
@@ -259,7 +413,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       ruleStyleProps,
       ruleTextStyleProps,
       parentProps,
-      this.#props
+      this.#props.get() as NodeProps
     ) as DeepRequired<NodeProps>;
 
     const propsForRendering = nodeDefaults.applyDefaults(
@@ -269,7 +423,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     this.cache.set('props.forEditing', propsForEditing);
     this.cache.set('props.forRendering', propsForRendering);
 
-    for (const child of this._children) {
+    for (const child of this.children) {
       if (isNode(child)) {
         child.populatePropsCache();
       }
@@ -282,7 +436,11 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   }
 
   get storedProps() {
-    return this.#props;
+    return this.#props.get() as NodeProps;
+  }
+
+  get storedPropsCloned() {
+    return this.#props.getClone() as NodeProps;
   }
 
   get editProps(): NodePropsForEditing {
@@ -297,7 +455,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
   updateProps(callback: (props: NodeProps) => void, uow: UnitOfWork) {
     uow.snapshot(this);
-    callback(this.#props);
+    this.#props.update(callback);
     uow.updateElement(this);
 
     this._cache?.clear();
@@ -324,7 +482,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
     return deepMerge(
       {
-        name: this._metadata.name
+        name: this.metadata.name
       },
       this.metadata.data?.customData ?? {},
       ...(this.metadata.data?.data?.map(d => d.data) ?? [])
@@ -334,8 +492,8 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   get name() {
     if (this._cache?.has('name')) return this._cache.get('name') as string;
 
-    if (!isEmptyString(this._metadata.name)) {
-      this.cache.set('name', this._metadata.name!);
+    if (!isEmptyString(this.metadata.name)) {
+      this.cache.set('name', this.metadata.name!);
       return this.cache.get('name') as string;
     }
 
@@ -395,13 +553,13 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   /* Bounds ************************************************************************************************* */
 
   get bounds(): Box {
-    return this.#bounds;
+    return this.#bounds.get()!;
   }
 
   setBounds(bounds: Box, uow: UnitOfWork) {
     uow.snapshot(this);
     const oldBounds = this.bounds;
-    this.#bounds = bounds;
+    this.#bounds.set(bounds);
     if (!Box.isEqual(oldBounds, this.bounds)) uow.updateElement(this);
   }
 
@@ -409,13 +567,13 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
   get anchors(): ReadonlyArray<Anchor> {
     // TODO: Can this be handled using cache
-    if (this.#anchors === undefined) {
+    if (this.#anchors.get() === undefined) {
       UnitOfWork.execute(this.diagram, uow => {
         this.invalidateAnchors(uow);
       });
     }
 
-    return this.#anchors ?? [];
+    return this.#anchors.get() ?? [];
   }
 
   getAnchor(anchor: string) {
@@ -433,7 +591,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       bounds: this.bounds,
       props: this.#props,
       children: this.children,
-      edges: this.edges
+      edges: Array.from(this.#edges.entries)
     };
   }
 
@@ -445,24 +603,24 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       type: 'node',
       nodeType: this.nodeType,
       bounds: deepClone(this.bounds),
-      props: deepClone(this.#props),
-      metadata: deepClone(this._metadata),
+      props: this.#props.getClone(),
+      metadata: this._metadata.getClone() as ElementMetadata,
       children: this.children.map(c => c.id),
       edges: Object.fromEntries(
-        [...this.edges.entries()].map(([k, v]) => [k, v.map(e => ({ id: e.id }))])
+        Array.from(this.#edges.entries).map(([k, v]) => [k, v.map(e => ({ id: e.id }))])
       ),
-      texts: deepClone(this.#text)
+      texts: this.#text.getClone()
     };
   }
 
   // TODO: Add assertions for lookups
   restore(snapshot: DiagramNodeSnapshot, uow: UnitOfWork) {
     this.setBounds(snapshot.bounds, uow);
-    this.#props = snapshot.props as NodeProps;
-    this._highlights = [];
-    this.#nodeType = snapshot.nodeType;
-    this.#text = snapshot.texts;
-    this._metadata = snapshot.metadata;
+    this.#props.set(snapshot.props as NodeProps);
+    this._highlights.set([]);
+    this.#nodeType.set(snapshot.nodeType);
+    this.#text.set(snapshot.texts);
+    this.forceUpdateMetadata(snapshot.metadata);
 
     this.setChildren(
       snapshot.children.map(c => {
@@ -472,11 +630,11 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       }),
       uow
     );
-    this.edges.clear();
+    this.#edges.clear();
     const edges = snapshot.edges ?? {};
     for (const [k, v] of Object.entries(edges)) {
-      this.edges.set(k, [
-        ...(this.edges.get(k) ?? []),
+      this.#edges.add(k, [
+        ...(this.#edges.get(k) ?? []),
         ...v.map(e => this.diagram.edgeLookup.get(e.id)!)
       ]);
     }
@@ -492,7 +650,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
     const scaledPath = transformPathList(paths, toUnitLCS(this.bounds));
 
-    this.#nodeType = 'generic-path';
+    this.#nodeType.set('generic-path');
     this.updateProps(p => {
       p.custom ??= {};
       p.custom.genericPath = {};
@@ -511,16 +669,15 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       return context.targetElementsInGroup.get(this.id) as DiagramNode;
     }
 
-    const node = new DiagramNode(
+    const node = DiagramNode.create(
       id ?? newid(),
       this.nodeType,
       deepClone(this.bounds),
-      this.diagram,
       this.layer,
-      deepClone(this.#props) as NodeProps,
-      deepClone(this._metadata) as ElementMetadata,
-      deepClone(this.#text) as NodeTexts,
-      this.#anchors
+      this.#props.getClone() as NodeProps,
+      this._metadata.getClone() as ElementMetadata,
+      this.#text.getClone() as NodeTexts,
+      deepClone(this.#anchors.get())
     );
 
     context.targetElementsInGroup.set(this.id, node);
@@ -641,8 +798,8 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     this.diagram.nodeLookup.delete(this.id);
 
     // "Detach" any edges that connects to this node
-    for (const anchor of this.edges.keys()) {
-      for (const edge of this.edges.get(anchor) ?? []) {
+    for (const anchor of this.#edges.keys) {
+      for (const edge of this.#edges.get(anchor) ?? []) {
         let isChanged = false;
         if (edge.start instanceof ConnectedEndpoint && edge.start.node === this) {
           edge.setStart(new FreeEndpoint(edge.start.position), uow);
@@ -661,7 +818,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     }
 
     // Note, need to check if the element is still in the layer to avoid infinite recursion
-    assert.true(this.layer instanceof RegularLayer);
+    assert.true(this.layer.type === 'regular');
     if ((this.layer as RegularLayer).elements.includes(this)) {
       (this.layer as RegularLayer).removeElement(this, uow);
     }
@@ -712,11 +869,11 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   }
 
   _removeEdge(anchor: string | undefined, edge: DiagramEdge) {
-    this.edges.set(anchor, this.edges.get(anchor)?.filter(e => e !== edge) ?? []);
+    this.#edges.update(anchor ?? '', this.#edges.get(anchor ?? '')?.filter(e => e !== edge) ?? []);
   }
 
   _addEdge(anchor: string | undefined, edge: DiagramEdge) {
-    this.edges.set(anchor, [...(this.edges.get(anchor) ?? []), edge]);
+    this.#edges.update(anchor ?? '', [...(this.#edges.get(anchor ?? '') ?? []), edge]);
   }
 
   _getAnchorPosition(anchor: string) {
@@ -736,7 +893,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
   listEdges(): DiagramEdge[] {
     return [
-      ...[...this.edges.values()].flatMap(e => e),
+      ...Array.from(this.#edges.values).flatMap(e => e),
       ...this.children.flatMap(c => (isNode(c) ? c.listEdges() : []))
     ];
   }
@@ -750,7 +907,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     const edge = this.labelEdge();
     assert.present(edge);
     assert.present(edge.labelNodes);
-    return edge.labelNodes.find(n => n.node === this);
+    return edge.labelNodes.find(n => n.node() === this);
   }
 
   labelEdge(): DiagramEdge | undefined {
@@ -770,13 +927,13 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     const replacement: ResolvedLabelNode = {
       ...this.labelNode()!,
       ...labelNode,
-      node: this
+      node: () => this
     };
 
     const edge = this.labelEdge();
     assert.present(edge);
     edge.setLabelNodes(
-      edge.labelNodes!.map((n: ResolvedLabelNode) => (n.node === this ? replacement : n)),
+      edge.labelNodes!.map((n: ResolvedLabelNode) => (n.node() === this ? replacement : n)),
       uow
     );
 
@@ -785,7 +942,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
   invalidateAnchors(uow: UnitOfWork) {
     const def = this.diagram.document.nodeDefinitions.get(this.nodeType);
-    this.#anchors = def.getAnchors(this);
+    this.#anchors.set(def.getAnchors(this));
 
     uow.updateElement(this);
   }

@@ -54,7 +54,8 @@ export const deserializeDiagramElements = (
   diagram: Diagram,
   layer: Layer,
   nodeLookup?: Record<string, DiagramNode>,
-  edgeLookup?: Record<string, DiagramEdge>
+  edgeLookup?: Record<string, DiagramEdge>,
+  uow?: UnitOfWork
 ) => {
   nodeLookup ??= {};
   edgeLookup ??= {};
@@ -75,11 +76,10 @@ export const deserializeDiagramElements = (
         }
       }
 
-      nodeLookup[c.id] = new DiagramNode(
+      nodeLookup[c.id] = DiagramNode.create(
         c.id,
         c.nodeType,
         c.bounds,
-        diagram,
         layer,
         c.props,
         {
@@ -102,7 +102,7 @@ export const deserializeDiagramElements = (
       const startEndpoint = deserializeEndpoint(start, nodeLookup);
       const endEndpoint = deserializeEndpoint(end, nodeLookup);
 
-      const edge = new DiagramEdge(
+      const edge = DiagramEdge.create(
         e.id,
         startEndpoint,
         endEndpoint,
@@ -112,24 +112,23 @@ export const deserializeDiagramElements = (
           ...e.metadata
         },
         (e.waypoints ?? []) as Array<Waypoint>,
-        diagram,
         layer
       );
 
       if (isSerializedEndpointAnchor(start)) {
         const startNode = nodeLookup[start.node.id];
-        startNode.edges.set(start.anchor, [...(startNode.edges.get(start.anchor) ?? []), edge]);
+        startNode._addEdge(start.anchor, edge);
       } else if (isSerializedEndpointConnected(start)) {
         const startNode = nodeLookup[start.node.id];
-        startNode.edges.set(undefined, [...(startNode.edges.get(undefined) ?? []), edge]);
+        startNode._addEdge(undefined, edge);
       }
 
       if (isSerializedEndpointAnchor(end)) {
         const endNode = nodeLookup[end.node.id];
-        endNode.edges.set(end.anchor, [...(endNode.edges.get(end.anchor) ?? []), edge]);
+        endNode._addEdge(end.anchor, edge);
       } else if (isSerializedEndpointConnected(end)) {
         const endNode = nodeLookup[end.node.id];
-        endNode.edges.set(undefined, [...(endNode.edges.get(undefined) ?? []), edge]);
+        endNode._addEdge(undefined, edge);
       }
 
       edgeLookup[e.id] = edge;
@@ -137,7 +136,7 @@ export const deserializeDiagramElements = (
   }
 
   // Pass 3: resolve relations
-  const uow = new UnitOfWork(diagram, false, true);
+  uow ??= new UnitOfWork(diagram, false, true);
   for (const n of diagramElements) {
     for (const c of unfoldGroup(n)) {
       const el = c.type === 'node' ? nodeLookup[c.id] : edgeLookup[c.id];
@@ -153,7 +152,7 @@ export const deserializeDiagramElements = (
       const edge = edgeLookup[n.id];
       if (n.labelNodes && n.labelNodes.length > 0) {
         edge.setLabelNodes(
-          n.labelNodes.map(ln => ({ ...ln, node: nodeLookup[ln.id] })),
+          n.labelNodes.map(ln => ({ ...ln, node: () => nodeLookup[ln.id] })),
           uow
         );
       }

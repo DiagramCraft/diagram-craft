@@ -5,16 +5,17 @@ import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
 import { Diagram, DocumentBuilder } from '@diagram-craft/model/diagram';
-import { assertRegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
 import { SnapshotUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
-import { assignNewBounds, assignNewIds } from '@diagram-craft/model/helpers/cloneHelper';
+import { assignNewBounds, cloneElements } from '@diagram-craft/model/helpers/cloneHelper';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { useDiagram } from '../application';
 import { NoOpCRDTRoot } from '@diagram-craft/model/collaboration/noopCrdt';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import type { DiagramNode } from '@diagram-craft/model/diagramNode';
 
 export const NodeTypePopup = (props: Props) => {
   const diagram = useDiagram();
@@ -28,8 +29,13 @@ export const NodeTypePopup = (props: Props) => {
 
       const uow = new UnitOfWork(diagram, true);
 
-      const node = registration.node(diagram);
-      assignNewIds([node]);
+      assertRegularLayer(diagram.activeLayer);
+      const node = cloneElements(
+        [registration.node(diagram)],
+        diagram.activeLayer,
+        uow
+      )[0] as DiagramNode;
+
       assignNewBounds([node], nodePosition, { x: 1, y: 1 }, uow);
       node.updateMetadata(meta => {
         meta.style = diagram.document.styles.activeNodeStylesheet.id;

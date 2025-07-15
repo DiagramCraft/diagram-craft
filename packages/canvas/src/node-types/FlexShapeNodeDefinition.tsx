@@ -146,11 +146,10 @@ export class FlexShapeNodeDefinition<
         }
 
         // Create a dummy node
-        const node = new DiagramNode(
+        const node = DiagramNode.create(
           `${props.node.id}-${cmpDef?.id ?? cmp.id}`,
           cmpNodeType,
           adjustedBounds,
-          props.node.diagram,
           props.node.layer,
           cmpProps,
           {}

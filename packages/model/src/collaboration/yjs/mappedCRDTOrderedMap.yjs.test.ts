@@ -1,10 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it } from 'vitest';
 import { createSyncedYJSCRDTs, setupYJS } from './yjsTest';
-import { MappedCRDTOrderedMap, MappedCRDTOrderedMapMapType } from '../mappedCRDTOrderedMap';
 import { CRDTMap } from '../crdt';
-import { CRDTMapper } from '../mappedCRDT';
 import { YJSMap } from './yjsCrdt';
+import {
+  MappedCRDTOrderedMap,
+  type MappedCRDTOrderedMapMapType
+} from '../datatypes/mapped/mappedCrdtOrderedMap';
+import type { CRDTMapper } from '../datatypes/mapped/mappedCrdt';
 
 class TestClass {
   constructor(public crdt: CRDTMap<CRDTType>) {}

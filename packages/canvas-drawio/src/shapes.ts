@@ -1,5 +1,4 @@
 import { Box } from '@diagram-craft/geometry/box';
-import { Diagram } from '@diagram-craft/model/diagram';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { DiagramNode, NodeTexts } from '@diagram-craft/model/diagramNode';
 import type { WorkQueue } from './drawioReader';
@@ -22,12 +21,11 @@ const makeShape = (
     metadata: ElementMetadata,
     texts: NodeTexts,
     style: StyleManager,
-    diagram: Diagram,
     layer: Layer
   ) => {
     props.custom ??= {};
     setProps(style, props as NodeProps & { custom: CustomNodeProps });
-    return new DiagramNode(id, type, bounds, diagram, layer, props, metadata, texts);
+    return DiagramNode.create(id, type, bounds, layer, props, metadata, texts);
   };
 };
 
@@ -59,12 +57,11 @@ export const parseRect = async (
   metadata: ElementMetadata,
   texts: NodeTexts,
   style: StyleManager,
-  diagram: Diagram,
   layer: Layer
 ) => {
   if (style.is('rounded'))
-    return parseRoundedRect(id, bounds, props, metadata, texts, style, diagram, layer);
-  return new DiagramNode(id, 'rect', bounds, diagram, layer, props, metadata, texts);
+    return parseRoundedRect(id, bounds, props, metadata, texts, style, layer);
+  return DiagramNode.create(id, 'rect', bounds, layer, props, metadata, texts);
 };
 
 export const parseCube = makeShape('cube');
@@ -170,7 +167,6 @@ export const parseArrow = async (
   metadata: ElementMetadata,
   texts: NodeTexts,
   style: StyleManager,
-  diagram: Diagram,
   layer: Layer
 ) => {
   let type = 'arrow-right';
@@ -186,7 +182,7 @@ export const parseArrow = async (
   props.custom.arrow.y = style.num('dy', 0.2) * 50;
   props.custom.arrow.x = style.num('dx', 20);
 
-  return new DiagramNode(id, type, bounds, diagram, layer, props, metadata, texts);
+  return DiagramNode.create(id, type, bounds, layer, props, metadata, texts);
 };
 
 export const parseImage = async (
@@ -196,10 +192,10 @@ export const parseImage = async (
   metadata: ElementMetadata,
   texts: NodeTexts,
   style: StyleManager,
-  diagram: Diagram,
   layer: Layer,
   queue: WorkQueue
 ) => {
+  const diagram = layer.diagram;
   const image = style.str('image') ?? '';
 
   props.fill!.type = 'image';
@@ -269,7 +265,7 @@ export const parseImage = async (
   assertVAlign(valign);
   props.custom.drawioImage.imageValign = valign;
 
-  const node = new DiagramNode(id, 'drawioImage', bounds, diagram, layer, props, metadata, texts);
+  const node = DiagramNode.create(id, 'drawioImage', bounds, layer, props, metadata, texts);
 
   // Determine image size
   queue.add(() => {
@@ -308,7 +304,6 @@ export const parseRoundedRect = async (
   metadata: ElementMetadata,
   texts: NodeTexts,
   style: StyleManager,
-  diagram: Diagram,
   layer: Layer
 ) => {
   props.custom ??= {};
@@ -317,5 +312,5 @@ export const parseRoundedRect = async (
       ? Math.min(bounds.w / 2, bounds.h / 2, style.num('arcSize', 10) / 2)
       : (style.num('arcSize', 10) * Math.min(bounds.w, bounds.h)) / 100
   };
-  return new DiagramNode(id, 'rounded-rect', bounds, diagram, layer, props, metadata, texts);
+  return DiagramNode.create(id, 'rounded-rect', bounds, layer, props, metadata, texts);
 };

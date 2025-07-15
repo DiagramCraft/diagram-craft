@@ -8,8 +8,8 @@ import { assert } from '@diagram-craft/utils/assert';
 import { Defaults, DefaultStyles, edgeDefaults, nodeDefaults } from './diagramDefaults';
 import { CRDTFactory, CRDTMap, CRDTRoot } from './collaboration/crdt';
 import { DEFAULT_EDGE_STYLES, DEFAULT_NODE_STYLES, DEFAULT_TEXT_STYLES } from './defaults';
-import { MappedCRDTMap } from './collaboration/mappedCRDTMap';
-import { CRDTMapper } from './collaboration/mappedCRDT';
+import { MappedCRDTMap } from './collaboration/datatypes/mapped/mappedCrdtMap';
+import { CRDTMapper } from './collaboration/datatypes/mapped/mappedCrdt';
 
 export type StylesheetType = 'node' | 'edge' | 'text';
 

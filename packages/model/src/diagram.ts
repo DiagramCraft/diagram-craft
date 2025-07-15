@@ -1,7 +1,6 @@
 import { Viewbox } from './viewBox';
 import { DiagramNode } from './diagramNode';
 import { DiagramEdge } from './diagramEdge';
-import { assertRegularLayer } from './diagramLayerRegular';
 import { SelectionState } from './selectionState';
 import { UndoManager } from './undoManager';
 import { SnapManager } from './snap/snapManager';
@@ -15,11 +14,15 @@ import { EventEmitter, EventKey } from '@diagram-craft/utils/event';
 import { assert } from '@diagram-craft/utils/assert';
 import { AttachmentConsumer } from './attachment';
 import { newid } from '@diagram-craft/utils/id';
-import { CRDTMapper } from './collaboration/mappedCRDT';
-import { CRDT, CRDTMap, CRDTObject, CRDTProperty, Flatten } from './collaboration/crdt';
+import { CRDTMapper } from './collaboration/datatypes/mapped/mappedCrdt';
+import { CRDTMap, Flatten } from './collaboration/crdt';
 import { LayerManager, LayerManagerCRDT } from './diagramLayerManager';
 import { RegularLayer } from './diagramLayerRegular';
 import { Layer } from './diagramLayer';
+import { assertRegularLayer } from './diagramLayerUtils';
+import { WatchableValue } from '@diagram-craft/utils/watchableValue';
+import { CRDTProp } from './collaboration/datatypes/crdtProp';
+import { CRDTObject } from './collaboration/datatypes/crdtObject';
 
 export type DiagramIteratorOpts = {
   nest?: boolean;
@@ -114,9 +117,9 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   mustCalculateIntersections = true;
 
   // Shared properties
-  readonly #name: CRDTProperty<DiagramCRDT, 'name'>;
-  readonly #id: CRDTProperty<DiagramCRDT, 'id'>;
-  readonly #parent: CRDTProperty<DiagramCRDT, 'parent'>;
+  readonly #name: CRDTProp<DiagramCRDT, 'name'>;
+  readonly #id: CRDTProp<DiagramCRDT, 'id'>;
+  readonly #parent: CRDTProp<DiagramCRDT, 'parent'>;
   readonly #props: CRDTObject<DiagramProps>;
 
   readonly layers: LayerManager;
@@ -144,7 +147,9 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
     const propsMap = this.crdt.get('props', () => document.root.factory.makeMap())!;
 
-    this.#props = new CRDTObject<DiagramProps>(propsMap, () => this.update());
+    this.#props = new CRDTObject<DiagramProps>(new WatchableValue(propsMap), type => {
+      if (type === 'remote') this.update();
+    });
 
     this.#document = document;
 
@@ -181,9 +186,10 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
       this.document.emit('diagramchanged', { diagram: this });
     };
 
-    this.#name = CRDT.makeProp('name', this.crdt, metadataUpdate);
-    this.#id = CRDT.makeProp('id', this.crdt, metadataUpdate);
-    this.#parent = CRDT.makeProp('parent', this.crdt, metadataUpdate);
+    const crdtWatchableValue = new WatchableValue(this.crdt);
+    this.#name = new CRDTProp(crdtWatchableValue, 'name', { onChange: metadataUpdate });
+    this.#id = new CRDTProp(crdtWatchableValue, 'id', { onChange: metadataUpdate });
+    this.#parent = new CRDTProp(crdtWatchableValue, 'parent', { onChange: metadataUpdate });
   }
 
   get id() {
@@ -216,6 +222,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
   updateProps(callback: (props: DiagramProps) => void) {
     this.#props.update(callback);
+    this.update();
   }
 
   // TODO: This should be removed

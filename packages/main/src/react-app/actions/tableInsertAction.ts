@@ -4,9 +4,9 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { newid } from '@diagram-craft/utils/id';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
-import { assertRegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { Application } from '../../application';
 import { TableInsertDialog } from '../TableInsertDialog';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 export const tableInsertActions = (application: Application) => ({
   TABLE_INSERT: new TableInsertAction(application)
@@ -51,15 +51,14 @@ class TableInsertAction extends AbstractAction<undefined, Application> {
 
         const elements: DiagramElement[] = [];
 
-        const table = new DiagramNode(newid(), 'table', bounds, $d, $d.activeLayer, {}, {});
+        const table = DiagramNode.create(newid(), 'table', bounds, $d.activeLayer, {}, {});
         elements.push(table);
 
         for (let r = 0; r < height; r++) {
-          const row = new DiagramNode(
+          const row = DiagramNode.create(
             newid(),
             'tableRow',
             { w: bounds.w, h: rowHeight, x: 0, y: r * rowHeight, r: 0 },
-            $d,
             $d.activeLayer,
             {},
             {}
@@ -68,11 +67,10 @@ class TableInsertAction extends AbstractAction<undefined, Application> {
           elements.push(row);
 
           for (let c = 0; c < width; c++) {
-            const cell = new DiagramNode(
+            const cell = DiagramNode.create(
               newid(),
               'text',
               { w: colWidth, h: rowHeight, x: c * colWidth, y: 0, r: 0 },
-              $d,
               $d.activeLayer,
               {
                 fill: {

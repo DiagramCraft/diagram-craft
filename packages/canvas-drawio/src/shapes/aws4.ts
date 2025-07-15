@@ -7,7 +7,6 @@ import {
 import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { Box } from '@diagram-craft/geometry/box';
 import type { ShapeParser } from '../drawioReader';
-import { Diagram } from '@diagram-craft/model/diagram';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { DiagramNode, NodeTexts } from '@diagram-craft/model/diagramNode';
 import { Extent } from '@diagram-craft/geometry/extent';
@@ -38,7 +37,6 @@ export const parseAWS4Shapes = async (
   metadata: ElementMetadata,
   texts: NodeTexts,
   style: StyleManager,
-  diagram: Diagram,
   layer: Layer
 ): Promise<DiagramNode> => {
   const fg = props.stroke?.color;
@@ -74,11 +72,10 @@ export const parseAWS4Shapes = async (
       }
     ];
 
-    return new DiagramNode(
+    return DiagramNode.create(
       id,
       'mxgraph.aws4.resourceIcon',
       bounds,
-      diagram,
       layer,
       props,
       metadata,
@@ -106,10 +103,10 @@ export const parseAWS4Shapes = async (
       }
     ];
 
-    return new DiagramNode(id, style.str('shape')!, bounds, diagram, layer, props, metadata, texts);
+    return DiagramNode.create(id, style.str('shape')!, bounds, layer, props, metadata, texts);
   }
 
-  return new DiagramNode(id, style.str('shape')!, bounds, diagram, layer, props, metadata);
+  return DiagramNode.create(id, style.str('shape')!, bounds, layer, props, metadata);
 };
 
 export const registerAWS4Shapes = async (

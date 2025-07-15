@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { Diagram, DiagramCRDT } from './diagram';
 import { TestModel } from './test-support/builder';
 import { NoOpCRDTMap } from './collaboration/noopCrdt';
-import { assertRegularLayer } from './diagramLayerRegular';
 import { newid } from '@diagram-craft/utils/id';
 import { UnitOfWork } from './unitOfWork';
 import { DiagramNode } from './diagramNode';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { RegularLayer } from './diagramLayerRegular';
+import { assertRegularLayer } from './diagramLayerUtils';
 
 const bounds = {
   x: 0,
@@ -111,8 +111,8 @@ describe('Diagram', () => {
       diagram.layers.add(layer2, new UnitOfWork(diagram));
 
       const uow = new UnitOfWork(diagram);
-      const node1 = new DiagramNode('1', 'rect', bounds, diagram, layer1, {}, {});
-      const node2 = new DiagramNode('2', 'rect', bounds, diagram, layer2, {}, {});
+      const node1 = DiagramNode.create('1', 'rect', bounds, layer1, {}, {});
+      const node2 = DiagramNode.create('2', 'rect', bounds, layer2, {}, {});
       layer1.addElement(node1, uow);
       layer2.addElement(node2, uow);
       uow.commit();
@@ -135,10 +135,10 @@ describe('Diagram', () => {
       const layer = diagram.activeLayer;
       assertRegularLayer(layer);
 
-      const node1 = new DiagramNode('1', 'rect', bounds, diagram, layer, {}, {});
+      const node1 = DiagramNode.create('1', 'rect', bounds, layer, {}, {});
       layer.addElement(node1, uow);
 
-      const node2 = new DiagramNode(
+      const node2 = DiagramNode.create(
         '2',
         'rect',
         {
@@ -148,7 +148,6 @@ describe('Diagram', () => {
           h: 100,
           r: 0
         },
-        diagram,
         layer,
         {},
         {}

@@ -5,7 +5,7 @@ import {
   ActionCriteria,
   BaseActionArgs
 } from '@diagram-craft/canvas/action';
-import { assertRegularLayer, RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
+import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { serializeDiagramElement } from '@diagram-craft/model/serialization/serialize';
 import { Clipboard } from '../clipboard';
@@ -15,6 +15,7 @@ import {
   TextPasteHandler
 } from '../clipboardPasteHandlers';
 import { ELEMENTS_CONTENT_TYPE } from '../clipboardConstants';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 declare global {
   interface ActionMap extends ReturnType<typeof clipboardActions> {}

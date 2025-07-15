@@ -57,8 +57,6 @@ export interface UOWTrackable<T extends Snapshot> {
   invalidate(uow: UnitOfWork): void;
   snapshot(): T;
   restore(snapshot: T, uow: UnitOfWork): void;
-
-  readonly trackableType: 'element' | 'layer' | 'layerManager' | 'stylesheet';
 }
 
 // eslint-disable-next-line

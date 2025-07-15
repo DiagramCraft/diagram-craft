@@ -135,9 +135,9 @@ export const serializeDiagramElement = (element: DiagramElement): SerializedElem
       bounds: node.bounds,
       anchors: node.anchors,
       children: node.children.map(serializeDiagramElement) as SerializedNode[],
-      props: node.storedProps,
-      metadata: node.metadata,
-      texts: node.texts
+      props: node.storedPropsCloned,
+      metadata: node.metadataCloned,
+      texts: node.textsCloned
     };
   } else if (isEdge(element)) {
     const edge = element;
@@ -153,8 +153,8 @@ export const serializeDiagramElement = (element: DiagramElement): SerializedElem
         timeOffset: e.timeOffset
       })),
       waypoints: edge.waypoints,
-      props: edge.storedProps,
-      metadata: edge.metadata,
+      props: edge.storedPropsCloned,
+      metadata: edge.metadataCloned,
       children: edge.children.map(serializeDiagramElement) as SerializedNode[]
     };
   } else {

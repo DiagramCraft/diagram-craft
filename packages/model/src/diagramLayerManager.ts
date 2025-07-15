@@ -3,14 +3,14 @@ import type { Diagram } from './diagram';
 import { CRDTMap } from './collaboration/crdt';
 import { LayersSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
 import type { Layer, LayerCRDT } from './diagramLayer';
-import { CRDTMapper } from './collaboration/mappedCRDT';
+import { CRDTMapper } from './collaboration/datatypes/mapped/mappedCrdt';
 import { RuleLayer } from './diagramLayerRule';
 import { ReferenceLayer } from './diagramLayerReference';
 import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import {
   MappedCRDTOrderedMap,
   MappedCRDTOrderedMapMapType
-} from './collaboration/mappedCRDTOrderedMap';
+} from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import { AttachmentConsumer } from './attachment';
 import { RegularLayer } from './diagramLayerRegular';
 
@@ -72,7 +72,7 @@ export class LayerManager implements UOWTrackable<LayersSnapshot>, AttachmentCon
     this.#layers = new MappedCRDTOrderedMap(
       crdt.get('layers', () => diagram.document.root.factory.makeMap())!,
       makeLayerMapper(diagram),
-      true
+      { allowUpdates: true }
     );
 
     this.#activeLayer = undefined;

@@ -4,7 +4,6 @@ import {
   defaultNodeRegistry
 } from '@diagram-craft/canvas-app/defaultRegistry';
 import { Diagram, DocumentBuilder } from '@diagram-craft/model/diagram';
-import { assertRegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { serializeDiagramDocument } from '@diagram-craft/model/serialization/serialize';
 import * as fs from 'node:fs';
@@ -21,6 +20,7 @@ import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRe
 import { Scale } from '@diagram-craft/geometry/transform';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 const SIZES = [50, 80, 100, 120, 150];
 const WIDTHS = [1, 2, 3, 4, 5];
@@ -31,7 +31,7 @@ const writeArrow = (
   layer: RegularLayer,
   diagram: Diagram
 ) => {
-  const n = new DiagramNode(
+  const n = DiagramNode.create(
     newid(),
     'text',
     {
@@ -41,7 +41,6 @@ const writeArrow = (
       h: 20,
       r: 0
     },
-    diagram,
     layer,
     {
       text: {
@@ -59,7 +58,7 @@ const writeArrow = (
   y += 30;
   for (let w = 0; w < WIDTHS.length; w++) {
     for (let s = 0; s < SIZES.length; s++) {
-      const edge = new DiagramEdge(
+      const edge = DiagramEdge.create(
         newid(),
         new FreeEndpoint({ x: 10 + w * 110, y: y + s * 30 }),
         new FreeEndpoint({ x: 80 + w * 110, y: y + s * 30 }),
@@ -79,7 +78,6 @@ const writeArrow = (
         },
         {},
         [],
-        diagram,
         layer
       );
       layer.addElement(edge, UnitOfWork.immediate(diagram));
@@ -87,7 +85,7 @@ const writeArrow = (
   }
 
   for (let s = 0; s < SIZES.length; s++) {
-    const n = new DiagramNode(
+    const n = DiagramNode.create(
       newid(),
       'rect',
       {
@@ -97,7 +95,6 @@ const writeArrow = (
         h: 30,
         r: 0
       },
-      diagram,
       layer,
       {
         anchors: {
@@ -109,7 +106,7 @@ const writeArrow = (
     );
     layer.addElement(n, UnitOfWork.immediate(diagram));
 
-    const edge = new DiagramEdge(
+    const edge = DiagramEdge.create(
       newid(),
       new FreeEndpoint({ x: 10 + 600, y: y + s * 30 }),
       new AnchorEndpoint(n, 'c'),
@@ -129,7 +126,6 @@ const writeArrow = (
       },
       {},
       [],
-      diagram,
       layer
     );
     layer.addElement(edge, UnitOfWork.immediate(diagram));
@@ -259,7 +255,7 @@ const SHAPES_DEFS = [
       if (a.type === 'point') {
         const start = n._getAnchorPosition(a.id);
         const dest = Point.add(start, Vector.fromPolar((a.normal ?? 0) + rotation, 20));
-        const e = new DiagramEdge(
+        const e = DiagramEdge.create(
           newid(),
           new AnchorEndpoint(n, a.id),
           new FreeEndpoint(dest),
@@ -273,7 +269,6 @@ const SHAPES_DEFS = [
           },
           {},
           [],
-          n.diagram,
           n.layer
         );
         n.layer.addElement(e, UnitOfWork.immediate(n.diagram));
@@ -281,7 +276,7 @@ const SHAPES_DEFS = [
         const offset = Vector.scale(Vector.from(a.start, a.end!), 0.5);
         const start = n._getPositionInBounds(Point.add(a.start, offset));
         const dest = Point.add(start, Vector.fromPolar((a.normal ?? 0) + rotation, 20));
-        const e = new DiagramEdge(
+        const e = DiagramEdge.create(
           newid(),
           new AnchorEndpoint(n, a.id, offset),
           new FreeEndpoint(dest),
@@ -295,7 +290,6 @@ const SHAPES_DEFS = [
           },
           {},
           [],
-          n.diagram,
           n.layer
         );
         n.layer.addElement(e, UnitOfWork.immediate(n.diagram));
@@ -368,7 +362,7 @@ const writeShape = (
   diagram: Diagram,
   { xDiff, yDiff, startX, dimensions, shapesPerLine }: ShapeOpts
 ): { x: number; y: number } => {
-  const n = new DiagramNode(
+  const n = DiagramNode.create(
     newid(),
     'text',
     {
@@ -378,7 +372,6 @@ const writeShape = (
       h: 20,
       r: 0
     },
-    diagram,
     layer,
     {
       text: {
@@ -409,7 +402,7 @@ const writeShape = (
     n.invalidateAnchors(uow);
     layer.addElement(n, uow);
 
-    const label = new DiagramNode(
+    const label = DiagramNode.create(
       `${shape}-${i}-label`,
       'text',
       {
@@ -419,7 +412,6 @@ const writeShape = (
         h: 20,
         r: 0
       },
-      diagram,
       layer,
       {
         text: {

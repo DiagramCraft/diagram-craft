@@ -23,8 +23,8 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { Context } from '@diagram-craft/canvas/context';
-import { assertRegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { assert } from '@diagram-craft/utils/assert';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -76,7 +76,7 @@ export class EdgeTool extends AbstractTool {
 
     undoManager.setMark();
 
-    this.edge = new DiagramEdge(
+    this.edge = DiagramEdge.create(
       newid(),
       this.currentAnchor
         ? new AnchorEndpoint(
@@ -90,7 +90,6 @@ export class EdgeTool extends AbstractTool {
         style: this.diagram.document.styles.activeEdgeStylesheet.id
       },
       [],
-      this.diagram,
       this.diagram.activeLayer
     );
 

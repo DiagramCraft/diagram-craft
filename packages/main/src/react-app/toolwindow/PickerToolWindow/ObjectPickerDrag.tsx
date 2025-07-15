@@ -6,20 +6,17 @@ import { Context } from '@diagram-craft/canvas/context';
 import { Point } from '@diagram-craft/geometry/point';
 import { DRAG_DROP_MANAGER, DragEvents } from '@diagram-craft/canvas/dragDropManager';
 import { getAncestorWithClass, setPosition } from '@diagram-craft/utils/dom';
-import { assertRegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
-import { deserializeDiagramElements } from '@diagram-craft/model/serialization/deserialize';
-import { serializeDiagramElement } from '@diagram-craft/model/serialization/serialize';
-import { assignNewBounds, assignNewIds } from '@diagram-craft/model/helpers/cloneHelper';
+import { assignNewBounds, cloneElements } from '@diagram-craft/model/helpers/cloneHelper';
 import { Box } from '@diagram-craft/geometry/box';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
-import { deepClone } from '@diagram-craft/utils/object';
 import { clamp } from '@diagram-craft/utils/math';
 import { insert } from '@diagram-craft/canvas/component/vdom';
 import { StaticCanvasComponent } from '@diagram-craft/canvas/canvas/StaticCanvasComponent';
 import { createThumbnailDiagramForNode } from '@diagram-craft/model/diagramThumbnail';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 enum State {
   INSIDE,
@@ -193,10 +190,11 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
     const activeLayer = this.diagram.activeLayer;
     assertRegularLayer(activeLayer);
 
-    const sourceEls = sourceLayer.elements.map(e => deepClone(serializeDiagramElement(e)));
-    this.#elements = deserializeDiagramElements(sourceEls, this.diagram, activeLayer, {}, {});
-
-    assignNewIds(this.#elements);
+    this.#elements = cloneElements(
+      sourceLayer.elements,
+      activeLayer,
+      UnitOfWork.immediate(this.diagram)
+    );
 
     const bounds = Box.boundingBox(this.#elements.map(e => e.bounds));
 
@@ -211,6 +209,7 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
 
     const uow = UnitOfWork.immediate(this.diagram);
     this.#elements.forEach(e => {
+      activeLayer.addElement(e, UnitOfWork.immediate(this.diagram));
       if (isNode(e)) {
         e.updateMetadata(meta => {
           if (meta.style === DefaultStyles.node.default) {

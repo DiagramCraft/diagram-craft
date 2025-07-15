@@ -14,7 +14,7 @@ import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { ResizeDrag } from '@diagram-craft/canvas/drag/resizeDrag';
-import { assertRegularLayer } from '@diagram-craft/model/diagramLayerRegular';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -44,7 +44,7 @@ export class TextTool extends AbstractTool {
 
   onMouseDown(_id: string, point: Point, _modifiers: Modifiers) {
     this.startPoint = this.diagram.viewBox.toDiagramPoint(point);
-    this.node = new DiagramNode(
+    this.node = DiagramNode.create(
       newid(),
       'text',
       {
@@ -53,7 +53,6 @@ export class TextTool extends AbstractTool {
         h: 0,
         r: 0
       },
-      this.diagram,
       this.diagram.activeLayer,
       // TODO: This is partially duplicated in defaultRegistry.ts
       //       - perhaps make static member of Text.nodeType.ts

@@ -7,7 +7,7 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { newid } from '@diagram-craft/utils/id';
 import { Context } from '@diagram-craft/canvas/context';
-import { assertRegularLayer } from '@diagram-craft/model/diagramLayerRegular';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -104,11 +104,10 @@ export class FreehandTool extends AbstractTool {
       .singular()
       .asSvgPath();
 
-    const node = new DiagramNode(
+    const node = DiagramNode.create(
       newid(),
       'generic-path',
       { x: bbox.x, y: bbox.y, w: bbox.width, h: bbox.height, r: 0 },
-      this.diagram,
       this.diagram.activeLayer,
       { custom: { genericPath: { path: path } }, fill: { enabled: false } },
       {}

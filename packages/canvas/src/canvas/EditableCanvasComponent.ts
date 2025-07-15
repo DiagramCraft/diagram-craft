@@ -29,7 +29,7 @@ import {
 } from './InteractiveCanvasComponent';
 import { CollaborationConfig } from '@diagram-craft/model/collaboration/collaborationConfig';
 import { AwarenessCursorComponent } from '../components/AwarenessCursorComponent';
-import { isResolvableToRegularLayer } from '@diagram-craft/model/diagramLayerRegular';
+import { isResolvableToRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 const removeSuffix = (s: string) => {
   return s.replace(/---.+$/, '');

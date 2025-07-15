@@ -7,7 +7,6 @@ import {
 import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { Box } from '@diagram-craft/geometry/box';
 import type { ShapeParser } from '../../drawioReader';
-import { Diagram } from '@diagram-craft/model/diagram';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { DiagramNode, NodeTexts } from '@diagram-craft/model/diagramNode';
 import { DrawioShapeNodeDefinition } from '../../DrawioShape.nodeType';
@@ -43,7 +42,6 @@ export const parseAndroidShapes = async (
   metadata: ElementMetadata,
   texts: NodeTexts,
   style: StyleManager,
-  diagram: Diagram,
   layer: Layer
 ): Promise<DiagramNode> => {
   const $c = (props.custom ??= {});
@@ -73,7 +71,7 @@ export const parseAndroidShapes = async (
     }
   }
 
-  return new DiagramNode(id, style.str('shape')!, bounds, diagram, layer, props, metadata, texts);
+  return DiagramNode.create(id, style.str('shape')!, bounds, layer, props, metadata, texts);
 };
 
 export const registerAndroidShapes = async (

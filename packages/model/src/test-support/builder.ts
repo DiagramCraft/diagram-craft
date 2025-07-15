@@ -91,14 +91,13 @@ export class TestLayerBuilder extends RegularLayer {
   }
 
   createEdge(id?: string) {
-    return new DiagramEdge(
+    return DiagramEdge.create(
       id ?? newid(),
       new FreeEndpoint({ x: 0, y: 0 }),
       new FreeEndpoint({ x: 100, y: 100 }),
       {},
       {},
       [],
-      this.diagram,
       this
     );
   }
@@ -106,12 +105,13 @@ export class TestLayerBuilder extends RegularLayer {
 
 export class TestDiagramNodeBuilder extends DiagramNode {
   constructor(id: string, type: string, bounds: Box, diagram: Diagram) {
-    super(id, type, bounds, diagram, diagram.activeLayer, {}, {});
+    super(id, diagram.activeLayer);
+    DiagramNode.initializeNode(this, type, bounds, {}, {});
   }
 
   asLabelNode(): ResolvedLabelNode {
     return {
-      node: this,
+      node: () => this,
       type: 'perpendicular',
       offset: { x: 0, y: 0 },
       timeOffset: 0,

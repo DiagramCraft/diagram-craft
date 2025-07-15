@@ -31,7 +31,9 @@ export class LabelAttachmentPointDrag extends Drag {
       this.labelNode.type === 'independent'
         ? Point.subtract(this.labelNode!.offset, delta)
         : this.labelNode.offset;
-    this.labelNode.node.updateLabelNode({ timeOffset: timeOffset.pathT, offset: offset }, this.uow);
+    this.labelNode
+      .node()
+      .updateLabelNode({ timeOffset: timeOffset.pathT, offset: offset }, this.uow);
 
     this.uow.notify();
   }

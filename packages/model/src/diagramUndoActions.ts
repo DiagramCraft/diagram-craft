@@ -3,9 +3,9 @@ import { assert } from '@diagram-craft/utils/assert';
 import { ElementsSnapshot, UnitOfWork } from './unitOfWork';
 import { UndoableAction } from './undoManager';
 import { Diagram } from './diagram';
-import { assertRegularLayer } from './diagramLayerRegular';
-import { hasSameElements } from '@diagram-craft/utils/array';
 import { RegularLayer } from './diagramLayerRegular';
+import { assertRegularLayer } from './diagramLayerUtils';
+import { hasSameElements } from '@diagram-craft/utils/array';
 
 export const commitWithUndo = (uow: UnitOfWork, description: string) => {
   const snapshots = uow.commit();

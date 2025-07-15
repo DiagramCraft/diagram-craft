@@ -3,8 +3,8 @@ import { Translation } from '@diagram-craft/geometry/transform';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
-import { assertRegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 declare global {
   interface ActionMap extends ReturnType<typeof duplicateActions> {}

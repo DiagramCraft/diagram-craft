@@ -4,9 +4,9 @@ import { precondition } from '@diagram-craft/utils/assert';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { newid } from '@diagram-craft/utils/id';
 import { makeUndoableAction } from '@diagram-craft/model/undoManager';
-import { assertRegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { Point } from '@diagram-craft/geometry/point';
 import { ResolvedLabelNode } from '@diagram-craft/model/diagramEdge';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 declare global {
   interface ActionMap extends ReturnType<typeof edgeTextAddActions> {}
@@ -46,11 +46,10 @@ export class EdgeTextAddAction extends AbstractAction<EdgeTextAddActionArg> {
     const path = edge.path();
     const projection = path.projectPoint(context.point);
 
-    const textNode = new DiagramNode(
+    const textNode = DiagramNode.create(
       newid(),
       'text',
       { ...projection.point, r: 0, w: 100, h: 0 },
-      this.context.model.activeDiagram,
       this.context.model.activeDiagram.activeLayer,
       {
         text: { align: 'center' },
@@ -67,7 +66,7 @@ export class EdgeTextAddAction extends AbstractAction<EdgeTextAddActionArg> {
       timeOffset: LengthOffsetOnPath.toTimeOffsetOnPath(projection, path).pathT,
       offset: { x: 0, y: 0 },
       id: textNode.id,
-      node: textNode,
+      node: () => textNode,
       type: 'horizontal'
     };
 

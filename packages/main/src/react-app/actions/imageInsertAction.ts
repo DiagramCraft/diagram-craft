@@ -3,9 +3,9 @@ import { Attachment } from '@diagram-craft/model/attachment';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { newid } from '@diagram-craft/utils/id';
-import { assertRegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { Application } from '../../application';
 import { ImageInsertDialog } from '../ImageInsertDialog';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 export const imageInsertActions = (application: Application) => ({
   IMAGE_INSERT: new ImageInsertAction(application)
@@ -44,7 +44,7 @@ class ImageInsertAction extends AbstractAction<undefined, Application> {
         const { width, height } = img;
         img.close();
 
-        const e = new DiagramNode(
+        const e = DiagramNode.create(
           newid(),
           'rect',
           {
@@ -55,7 +55,6 @@ class ImageInsertAction extends AbstractAction<undefined, Application> {
             h: height,
             r: 0
           },
-          this.context.model.activeDiagram,
           this.context.model.activeDiagram.activeLayer,
           {
             fill: {

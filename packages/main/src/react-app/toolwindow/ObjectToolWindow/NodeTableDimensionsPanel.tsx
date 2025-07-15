@@ -6,8 +6,8 @@ import { useTable } from '../../hooks/useTable';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
-import { assertRegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { useDiagram } from '../../../application';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 export const NodeTableDimensionsPanel = (props: Props) => {
   const diagram = useDiagram();

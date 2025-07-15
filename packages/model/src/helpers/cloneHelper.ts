@@ -3,17 +3,39 @@ import { newid } from '@diagram-craft/utils/id';
 import { Box } from '@diagram-craft/geometry/box';
 import { Point, Scale } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from '../unitOfWork';
-import { Writeable } from '@diagram-craft/utils/types';
+import { serializeDiagramElement } from '../serialization/serialize';
+import { deepClone } from '@diagram-craft/utils/object';
+import type { SerializedEdge, SerializedNode } from '../serialization/types';
+import type { RegularLayer } from '../diagramLayerRegular';
+import { deserializeDiagramElements } from '../serialization/deserialize';
 
 // TODO: Ensure linking between edges and nodes works
 //       See ElementsPasteHandler
-export const assignNewIds = (elements: readonly DiagramElement[]) => {
-  for (const e of elements) {
-    (e as Writeable<DiagramElement>).id = newid();
-    if (isNode(e)) {
-      assignNewIds(e.children);
+const assignNewIdsToSerializedElements = (e: SerializedNode | SerializedEdge) => {
+  e.id = newid();
+  if (e.type === 'node') {
+    const n = e as SerializedNode;
+    for (const c of n?.children ?? []) {
+      assignNewIdsToSerializedElements(c);
     }
   }
+};
+
+export const cloneElements = (
+  elements: readonly DiagramElement[],
+  targetLayer: RegularLayer,
+  uow: UnitOfWork
+) => {
+  const source = elements.map(e => {
+    console.log(serializeDiagramElement(e));
+    return deepClone(serializeDiagramElement(e));
+  });
+
+  for (const e of source) {
+    assignNewIdsToSerializedElements(e);
+  }
+
+  return deserializeDiagramElements(source, targetLayer.diagram, targetLayer, {}, {}, uow);
 };
 
 export const assignNewBounds = (
