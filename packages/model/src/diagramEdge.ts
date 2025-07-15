@@ -164,7 +164,12 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     this.#start = new MappedCRDTProp<DiagramEdgeCRDT, 'start', Endpoint>(
       edgeCrdt,
       'start',
-      makeEndpointMapper(this)
+      makeEndpointMapper(this),
+      {
+        onChange: type => {
+          if (type === 'remote') layer.diagram.emit('elementChange', { element: this });
+        }
+      }
     );
     if (this.#start.get() === undefined) {
       this.#start.set(new FreeEndpoint({ x: 0, y: 0 }));
@@ -173,7 +178,12 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     this.#end = new MappedCRDTProp<DiagramEdgeCRDT, 'end', Endpoint>(
       edgeCrdt,
       'end',
-      makeEndpointMapper(this)
+      makeEndpointMapper(this),
+      {
+        onChange: type => {
+          if (type === 'remote') layer.diagram.emit('elementChange', { element: this });
+        }
+      }
     );
     if (this.#end.get() === undefined) {
       this.#end.set(new FreeEndpoint({ x: 0, y: 0 }));

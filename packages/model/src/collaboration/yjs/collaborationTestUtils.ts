@@ -3,11 +3,13 @@ import { createSyncedYJSCRDTs } from './yjsTest';
 import { NoOpCRDTMap, NoOpCRDTRoot } from '../noopCrdt';
 import { CollaborationConfig } from '../collaborationConfig';
 import { YJSMap, YJSRoot } from './yjsCrdt';
+import { vi } from 'vitest';
 
 export type Backend = {
   syncedDocs: () => [CRDTRoot, CRDTRoot | undefined];
   beforeEach: () => void;
   afterEach: () => void;
+  createFns: () => [ReturnType<typeof vi.fn>, ReturnType<typeof vi.fn>];
 };
 
 export const Backends = {
@@ -27,6 +29,9 @@ export const Backends = {
           afterEach: () => {
             CollaborationConfig.CRDTRoot = NoOpCRDTRoot;
             CollaborationConfig.CRDTMap = NoOpCRDTMap;
+          },
+          createFns: () => {
+            return [vi.fn(), vi.fn()];
           }
         }
       ],
@@ -37,7 +42,10 @@ export const Backends = {
             return [new NoOpCRDTRoot(), undefined];
           },
           beforeEach: () => {},
-          afterEach: () => {}
+          afterEach: () => {},
+          createFns: () => {
+            return [vi.fn(), vi.fn()];
+          }
         }
       ]
     ];
