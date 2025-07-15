@@ -11,7 +11,7 @@ import type { DiagramNode } from './diagramNode';
 import type { DiagramDocument } from './diagramDocument';
 import type { Diagram } from './diagram';
 
-describe.for(Backends.all())('DiagramNode [%s]', ([_name, backend]) => {
+describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
   let diagram1: TestDiagramBuilder;
   let layer1: TestLayerBuilder;
   let uow: UnitOfWork;
@@ -153,11 +153,22 @@ describe.for(Backends.all())('DiagramNode [%s]', ([_name, backend]) => {
 
   describe('addChild', () => {
     it('should set the parent of the child correctly', () => {
+      // **** Setup
       const child = layer1.createNode();
-      node1.addChild(child, uow);
+      const elementChange = backend.createFns();
+      diagram1.on('elementChange', elementChange[0]);
+      if (diagram2) diagram2.on('elementChange', elementChange[1]);
 
+      // **** Act
+      UnitOfWork.execute(diagram1, uow => node1.addChild(child, uow));
+
+      // **** Verify
       expect(child.parent).toBe(node1);
-      if (doc2) expect(diagram2!.lookup(child.id)!.parent).toBe(node1_2);
+      expect(elementChange[0]).toHaveBeenCalledTimes(2);
+      if (doc2) {
+        expect(diagram2!.lookup(child.id)!.parent).toBe(node1_2);
+        expect(elementChange[1]).toHaveBeenCalledTimes(2);
+      }
     });
 
     it('should append the child to the children array if no relation is provided', () => {
@@ -199,11 +210,30 @@ describe.for(Backends.all())('DiagramNode [%s]', ([_name, backend]) => {
 
   describe('removeChild', () => {
     it('should remove the child from the children array', () => {
+      // **** Setup
       const child = layer1.createNode();
       node1.addChild(child, uow);
-      node1.removeChild(child, uow);
+
+      const elementChange = backend.createFns();
+      diagram1.on('elementChange', elementChange[0]);
+      if (diagram2) diagram2.on('elementChange', elementChange[1]);
+
+      const elementRemove = backend.createFns();
+      diagram1.on('elementRemove', elementRemove[0]);
+      if (diagram2) diagram2.on('elementRemove', elementRemove[1]);
+
+      // **** Act
+      UnitOfWork.execute(diagram1, uow => node1.removeChild(child, uow));
+
+      // **** Verify
       expect(node1.children.length).toBe(0);
-      if (doc2) expect(node1_2!.children.length).toBe(0);
+      expect(elementChange[0]).toHaveBeenCalledTimes(1);
+      expect(elementRemove[0]).toHaveBeenCalledTimes(1);
+      if (doc2) {
+        expect(node1_2!.children.length).toBe(0);
+        expect(elementChange[0]).toHaveBeenCalledTimes(1);
+        expect(elementRemove[0]).toHaveBeenCalledTimes(1);
+      }
     });
 
     it('should fail if the child is not present', () => {
@@ -224,11 +254,26 @@ describe.for(Backends.all())('DiagramNode [%s]', ([_name, backend]) => {
 
   describe('setChildren', () => {
     it('should set the children correctly', () => {
+      // **** Setup
       const child1 = layer1.createNode();
       const child2 = layer1.createNode();
-      node1.setChildren([child1, child2], uow);
+
+      const elementChange = backend.createFns();
+      diagram1.on('elementChange', elementChange[0]);
+      if (diagram2) diagram2.on('elementChange', elementChange[1]);
+
+      // **** Act
+      UnitOfWork.execute(diagram1, uow => node1.setChildren([child1, child2], uow));
+
+      // **** Verify
       expect(node1.children).toEqual([child1, child2]);
-      if (doc2) expect(node1_2!.children.map(c => c.id)).toEqual([child1.id, child2.id]);
+      expect(elementChange[0]).toHaveBeenCalledTimes(3);
+      if (doc2) {
+        expect(node1_2!.children.map(c => c.id)).toEqual([child1.id, child2.id]);
+
+        // TODO: Why 4 and not 3
+        expect(elementChange[1]).toHaveBeenCalledTimes(4);
+      }
     });
 
     it('should remove all children from the previous set', () => {
