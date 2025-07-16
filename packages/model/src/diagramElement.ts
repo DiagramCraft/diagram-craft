@@ -27,7 +27,6 @@ import {
 } from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import { makeElementMapper } from './diagramElementMapper';
 import { MappedCRDTProp } from './collaboration/datatypes/mapped/mappedCrdtProp';
-import { newid } from '@diagram-craft/utils/id';
 
 // eslint-disable-next-line
 type Snapshot = any;
@@ -45,8 +44,6 @@ export type DiagramElementCRDT = {
 };
 
 export abstract class DiagramElement implements ElementInterface, AttachmentConsumer {
-  uuid = newid();
-
   readonly trackableType = 'element';
 
   // Transient properties
@@ -178,7 +175,7 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
   abstract snapshot(): Snapshot;
   abstract restore(snapshot: Snapshot, uow: UnitOfWork): void;
 
-  detachCRDT(callback: () => void) {
+  detachCRDT(callback: () => void = () => {}) {
     const clone = this._crdt.get().clone();
     callback();
     this._crdt.set(clone);

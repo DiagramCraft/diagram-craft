@@ -77,6 +77,8 @@ const makeEdgesMapper = (
   };
 };
 
+const DEFAULT_BOUNDS = { x: 0, y: 0, w: 10, h: 10, r: 0 };
+
 export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramNodeSnapshot> {
   // Shared properties
   readonly #nodeType: CRDTProp<DiagramNodeCRDT, 'nodeType'>;
@@ -112,7 +114,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
           this._cache?.clear();
 
-          const uow = new UnitOfWork(this.diagram, true, true);
+          const uow = new UnitOfWork(this.diagram, false, true);
           this.invalidateAnchors(uow);
           this.getDefinition().onPropUpdate(this, uow);
         }
@@ -167,7 +169,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
         }
       }
     );
-    this.#bounds.init({ x: 0, y: 0, w: 10, h: 10, r: 0 });
+    this.#bounds.init(DEFAULT_BOUNDS);
 
     // Note: It is important that this comes last, as it might trigger
     //       events etc - so important that everything is set up before
@@ -553,7 +555,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   /* Bounds ************************************************************************************************* */
 
   get bounds(): Box {
-    return this.#bounds.get()!;
+    return this.#bounds.getNonNull();
   }
 
   setBounds(bounds: Box, uow: UnitOfWork) {

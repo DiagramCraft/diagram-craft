@@ -27,7 +27,6 @@ export const cloneElements = (
   uow: UnitOfWork
 ) => {
   const source = elements.map(e => {
-    console.log(serializeDiagramElement(e));
     return deepClone(serializeDiagramElement(e));
   });
 
