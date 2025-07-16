@@ -25,6 +25,10 @@ export class MappedCRDTProp<
     let oldCrdt = crdt.get();
     oldCrdt.get(name, props.factory);
 
+    if (this.crdt.get().has(this.name)) {
+      this.#value = this.mapper.fromCRDT(this.crdt.get().get(this.name) as C[N]);
+    }
+
     const localUpdate: EventReceiver<CRDTMapEvents<C[string]>['localUpdate']> = p => {
       if (p.key !== name) return;
       props.onChange!('local');

@@ -77,6 +77,8 @@ const makeEdgesMapper = (
   };
 };
 
+const DEFAULT_BOUNDS = { x: 0, y: 0, w: 10, h: 10, r: 0 };
+
 export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramNodeSnapshot> {
   // Shared properties
   readonly #nodeType: CRDTProp<DiagramNodeCRDT, 'nodeType'>;
@@ -112,7 +114,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
           this._cache?.clear();
 
-          const uow = new UnitOfWork(this.diagram, true, true);
+          const uow = new UnitOfWork(this.diagram, false, true);
           this.invalidateAnchors(uow);
           this.getDefinition().onPropUpdate(this, uow);
         }
@@ -162,12 +164,13 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       {
         onChange: type => {
           if (type === 'remote') {
+            console.log('remote set bounds', this.#bounds.get());
             this.diagram.emit('elementChange', { element: this });
           }
         }
       }
     );
-    this.#bounds.init({ x: 0, y: 0, w: 10, h: 10, r: 0 });
+    this.#bounds.init(DEFAULT_BOUNDS);
 
     // Note: It is important that this comes last, as it might trigger
     //       events etc - so important that everything is set up before
@@ -553,7 +556,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   /* Bounds ************************************************************************************************* */
 
   get bounds(): Box {
-    return this.#bounds.get()!;
+    return this.#bounds.getNonNull();
   }
 
   setBounds(bounds: Box, uow: UnitOfWork) {
@@ -577,7 +580,9 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   }
 
   getAnchor(anchor: string) {
-    return this.anchors.find(a => a.id === anchor) ?? this.anchors[0];
+    const res = this.anchors.find(a => a.id === anchor) ?? this.anchors[0];
+    assert.present(res);
+    return res;
   }
 
   /* Snapshot ************************************************************************************************ */

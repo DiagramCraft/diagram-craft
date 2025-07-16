@@ -86,7 +86,7 @@ export class AnchorEndpoint
 
   get position() {
     const bounds = this.node.bounds;
-    const ref = this.node!._getAnchorPosition(this.anchorId!);
+    const ref = this.node._getAnchorPosition(this.anchorId!);
 
     const v = { x: this.offset.x * bounds.w, y: this.offset.y * bounds.h };
     const rotatedOffset = Point.rotateAround(v, bounds.r, Point.ORIGIN);
