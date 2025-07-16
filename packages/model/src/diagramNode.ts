@@ -579,9 +579,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   }
 
   getAnchor(anchor: string) {
-    const res = this.anchors.find(a => a.id === anchor) ?? this.anchors[0];
-    assert.present(res);
-    return res;
+    return this.anchors.find(a => a.id === anchor) ?? this.anchors[0];
   }
 
   /* Snapshot ************************************************************************************************ */
