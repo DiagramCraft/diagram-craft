@@ -81,10 +81,10 @@ jobs:
         with:
           working-directory: ./packages/test-ui-boolean-ops
 
-#      - name: Start storybook
-#        run: pnpm run build-storybook && pnpm run storybook:start
-#        with:
-#          working-directory: ./packages/main
+      #      - name: Start storybook
+      #        run: pnpm run build-storybook && pnpm run storybook:start
+      #        with:
+      #          working-directory: ./packages/main
 
       - name: UI Test Boolean Ops
         run: npx playwright test --reporter=html
