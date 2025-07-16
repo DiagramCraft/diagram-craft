@@ -164,7 +164,6 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       {
         onChange: type => {
           if (type === 'remote') {
-            console.log('remote set bounds', this.#bounds.get());
             this.diagram.emit('elementChange', { element: this });
           }
         }

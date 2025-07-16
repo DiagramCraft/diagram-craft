@@ -132,16 +132,20 @@ export class RegularLayer extends Layer<RegularLayer> {
     const added = elements.filter(e => !this.#elements.has(e.id));
     const removed = this.#elements.values.filter(e => !elements.includes(e));
 
-    elements.forEach(e => e.detachCRDT(() => {}));
-
-    this.#elements.set(elements.map(e => [e.id, e]));
     for (const e of added) {
+      this.#elements.add(e.id, e);
       this.processElementForAdd(e);
       uow.addElement(e);
     }
+
     for (const e of removed) {
+      e.detachCRDT(() => {
+        this.#elements.remove(e.id);
+      });
       uow.removeElement(e);
     }
+
+    this.#elements.setOrder(elements.map(e => e.id));
 
     uow.updateElement(this);
   }
@@ -160,6 +164,7 @@ export class RegularLayer extends Layer<RegularLayer> {
 
   restore(snapshot: LayerSnapshot, uow: UnitOfWork) {
     super.restore(snapshot, uow);
+
     this.setElements(
       snapshot.elements.map(id => this.diagram.lookup(id)!),
       uow

@@ -163,4 +163,18 @@ export class MappedCRDTOrderedMap<
   toJSON() {
     return Object.fromEntries(this.#entries);
   }
+
+  // TODO: We could optimize the update events if we have a postTransaction
+  //       listener - in that case we can set the entries at the end of
+  //       the transaction, instead of doing for each element
+  setOrder(keys: string[]) {
+    this.crdt.transact(() => {
+      for (const [k, v] of this.crdt.entries()) {
+        const idx = keys.findIndex(key => key === k);
+        if (idx >= 0) {
+          if (v.get('index') !== idx) v.set('index', idx);
+        }
+      }
+    });
+  }
 }
