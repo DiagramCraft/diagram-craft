@@ -6,25 +6,55 @@ import { Extent } from './extent';
 import { DeepWriteable } from '@diagram-craft/utils/types';
 import { round } from '@diagram-craft/utils/math';
 
+/**
+ * Represents a rectangle with position, dimensions, and rotation
+ * A Box is a combination of a Point (x, y), an Extent (w, h), and a rotation (r)
+ */
 export type Box = Point & Extent & Readonly<{ r: number; _discriminator?: 'ro' }>;
 
+/**
+ * A writable version of Box that can be modified
+ */
 export type WritableBox = DeepWriteable<Omit<Box, '_discriminator'>> & { _discriminator: 'rw' };
 
+/**
+ * Utility functions for working with WritableBox objects
+ */
 export const WritableBox = {
+  /**
+   * Converts a WritableBox to a Box
+   * @param b The WritableBox to convert
+   * @returns A Box with the same properties
+   */
   asBox: (b: WritableBox): Box => {
     return { ...b, _discriminator: undefined };
   }
 };
 
 export const Box = {
+  /**
+   * Returns a copy of the box with rotation set to 0
+   */
   withoutRotation: (b: Box): Box => ({ ...b, r: 0 }),
 
+  /**
+   * Returns a unit box centered at origin with width and height of 2
+   */
   unit: () => ({ x: -1, y: -1, w: 2, h: 2, r: 0 }),
 
+  /**
+   * Converts a Box to a WritableBox
+   */
   asReadWrite: (b: Box): WritableBox => {
     return { ...b, _discriminator: 'rw' };
   },
 
+  /**
+   * Adjusts the box dimensions to match the given aspect ratio (width/height)
+   * @param b The box to adjust
+   * @param aspectRatio The target aspect ratio (width/height)
+   * @returns A new box with the adjusted dimensions
+   */
   applyAspectRatio: (b: Box, aspectRatio: number): Box => {
     if (aspectRatio === 1) return b;
     if (aspectRatio < 1) {
@@ -36,10 +66,21 @@ export const Box = {
     }
   },
 
+  /**
+   * Creates a box at origin (0,0) with the specified width and height
+   * @param param0 Object containing width and height
+   * @returns A new box
+   */
   from: ({ w, h }: { w: number; h: number }): Box => {
     return { w, h, x: 0, y: 0, r: 0 };
   },
 
+  /**
+   * Creates a box from two corner points
+   * @param a First corner point
+   * @param b Second corner point
+   * @returns A new box that encompasses both points
+   */
   fromCorners: (a: Point, b: Point): Box => {
     return {
       x: Math.min(a.x, b.x),
@@ -50,6 +91,11 @@ export const Box = {
     };
   },
 
+  /**
+   * Calculates the center point of a box
+   * @param b The box
+   * @returns The center point
+   */
   center: (b: Box) => {
     return {
       x: b.x + b.w / 2,
@@ -57,11 +103,28 @@ export const Box = {
     };
   },
 
+  /**
+   * Checks if two boxes are exactly equal
+   * @param a First box
+   * @param b Second box
+   * @returns True if boxes are equal, false otherwise
+   */
   isEqual: (a: Box, b: Box) => {
     return a.x === b.x && a.y === b.y && a.w === b.w && a.h === b.h && a.r === b.r;
   },
 
+  /**
+   * Calculates the bounding box that contains all the given boxes
+   * @param boxes Array of boxes to calculate the bounding box for
+   * @param forceAxisAligned If true, the resulting box will have rotation 0, 
+   *                         otherwise it will try to preserve rotation if all boxes have the same rotation
+   * @returns A new box that contains all the input boxes
+   */
   boundingBox: (boxes: Box[], forceAxisAligned = false): Box => {
+    if (boxes.length === 0) {
+      return { x: 0, y: 0, w: 0, h: 0, r: 0 };
+    }
+
     let minX = Number.MAX_SAFE_INTEGER;
     let minY = Number.MAX_SAFE_INTEGER;
     let maxX = Number.MIN_SAFE_INTEGER;
@@ -119,6 +182,13 @@ export const Box = {
     }
   },
 
+  /**
+   * Calculates the corners of a box
+   * @param box The box
+   * @param oppositeOnly If true, returns only the top-left and bottom-right corners,
+   *                     otherwise returns all four corners
+   * @returns Array of corner points, clockwise from top-left
+   */
   corners: (box: Box, oppositeOnly = false) => {
     const corners = oppositeOnly
       ? [
@@ -137,6 +207,12 @@ export const Box = {
     return corners.map(c => Point.rotateAround(c, box.r, Box.center(box)));
   },
 
+  /**
+   * Gets a line representing one of the edges of the box
+   * @param box The box
+   * @param dir The direction indicating which edge to get (n=top, e=right, s=bottom, w=left)
+   * @returns A line representing the specified edge
+   */
   line: (box: Box, dir: Direction) => {
     const corners = Box.corners(box);
     if (dir === 'n') return Line.of(corners[0], corners[1]);
@@ -145,10 +221,21 @@ export const Box = {
     return Line.of(corners[1], corners[2]);
   },
 
+  /**
+   * Converts a box to a polygon
+   * @param box The box to convert
+   * @returns A polygon with vertices at the corners of the box
+   */
   asPolygon: (box: Box): Polygon => {
     return { points: Box.corners(box) };
   },
 
+  /**
+   * Checks if a box contains a point or another box
+   * @param box The container box (can be undefined)
+   * @param c The point or box to check
+   * @returns True if the box contains the point or box, false otherwise
+   */
   contains: (box: Box | undefined, c: Box | Point): boolean => {
     if (!box) return false;
 
@@ -163,6 +250,12 @@ export const Box = {
     }
   },
 
+  /**
+   * Checks if two boxes intersect
+   * @param box First box
+   * @param otherBox Second box
+   * @returns True if the boxes intersect, false otherwise
+   */
   intersects: (box: Box, otherBox: Box) => {
     if (box.r === 0 && otherBox.r === 0) {
       return (
@@ -175,6 +268,11 @@ export const Box = {
     return Polygon.intersects(Box.asPolygon(box), Box.asPolygon(otherBox));
   },
 
+  /**
+   * Normalizes a box to ensure width and height are positive
+   * @param b The box to normalize
+   * @returns A new box with positive width and height
+   */
   normalize: (b: Box) => {
     return {
       x: Math.min(b.x, b.x + b.w),
@@ -185,6 +283,11 @@ export const Box = {
     };
   },
 
+  /**
+   * Creates a box from a line
+   * @param l The line
+   * @returns A box with the line's from point as the top-left corner and dimensions based on the line
+   */
   fromLine: (l: Line): Box => {
     return {
       ...l.from,
@@ -194,6 +297,12 @@ export const Box = {
     };
   },
 
+  /**
+   * Calculates a point within a box based on relative offset
+   * @param b The box
+   * @param offset The relative offset (0-1 for each dimension)
+   * @returns A point within the box
+   */
   fromOffset: (b: Box, offset: Point) => {
     return { x: b.x + offset.x * b.w, y: b.y + offset.y * b.h };
   }
