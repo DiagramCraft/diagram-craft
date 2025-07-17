@@ -27,6 +27,7 @@ export class MappedCRDTOrderedMap<
       onAdd?: (type: 'local' | 'remote', e: T) => void;
       onRemove?: (type: 'local' | 'remote', e: T) => void;
       onChange?: (type: 'local' | 'remote', e: T) => void;
+      onInit?: (e: T) => void;
     }
   ) {
     const setFromCRDT = (e?: { key: string; value: CRDTMap<WrapperType<C>> }) => {
@@ -70,6 +71,9 @@ export class MappedCRDTOrderedMap<
     crdt.on('remoteInsert', e => setFromCRDT(e));
 
     setFromCRDT();
+    for (const e of this.#entries) {
+      props?.onInit?.(e[1]);
+    }
   }
 
   get keys() {

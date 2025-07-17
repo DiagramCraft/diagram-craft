@@ -40,7 +40,11 @@ export class RegularLayer extends Layer<RegularLayer> {
             diagram.emit('elementChange', { element: e });
           }
         },
-        onRemove: (t, e) => t === 'remote' && diagram.emit('elementRemove', { element: e })
+        onRemove: (t, e) => t === 'remote' && diagram.emit('elementRemove', { element: e }),
+        onInit: e => {
+          diagram.emit('elementAdd', { element: e });
+          this.processElementForAdd(e);
+        }
       }
     );
 
