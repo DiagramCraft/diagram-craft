@@ -38,6 +38,7 @@ import {
   MappedCRDTMap,
   type MappedCRDTMapMapType
 } from './collaboration/datatypes/mapped/mappedCrdtMap';
+import { unique } from '@diagram-craft/utils/array';
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;
@@ -628,10 +629,9 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       }),
       uow
     );
-    this.#edges.clear();
     const edges = snapshot.edges ?? {};
     for (const [k, v] of Object.entries(edges)) {
-      this.#edges.add(k, [...(this.#edges.get(k) ?? []), ...v.map(e => e.id!)]);
+      this.#edges.set(k, unique([...(this.#edges.get(k) ?? []), ...v.map(e => e.id!)]));
     }
 
     uow.updateElement(this);
@@ -869,7 +869,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   }
 
   _addEdge(anchor: string | undefined, edge: DiagramEdge) {
-    this.#edges.set(anchor ?? '', [...(this.#edges.get(anchor ?? '') ?? []), edge.id]);
+    this.#edges.set(anchor ?? '', unique([...(this.#edges.get(anchor ?? '') ?? []), edge.id]));
   }
 
   _getAnchorPosition(anchor: string) {

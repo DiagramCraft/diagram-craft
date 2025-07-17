@@ -6,10 +6,18 @@ import {
   TestLayerBuilder,
   TestModel
 } from './test-support/builder';
-import { type Backend, Backends } from './collaboration/yjs/collaborationTestUtils';
+import {
+  type Backend,
+  Backends,
+  standardTestModel
+} from './collaboration/yjs/collaborationTestUtils';
 import type { DiagramNode } from './diagramNode';
 import type { DiagramDocument } from './diagramDocument';
 import type { Diagram } from './diagram';
+import { serializeDiagram } from './serialization/serialize';
+import { commitWithUndo } from './diagramUndoActions';
+import { AnchorEndpoint, FreeEndpoint } from './endpoint';
+import type { DiagramEdge } from './diagramEdge';
 
 describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
   let diagram1: TestDiagramBuilder;
@@ -17,7 +25,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
   let uow: UnitOfWork;
   let node1: TestDiagramNodeBuilder;
 
-  let node1_2: DiagramNode | undefined;
+  let node2: DiagramNode | undefined;
   let doc2: DiagramDocument | undefined;
   let diagram2: Diagram | undefined;
 
@@ -28,24 +36,132 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
   beforeEach(() => {
     backend.beforeEach();
 
-    const [root1, root2] = backend.syncedDocs();
+    const model = standardTestModel(backend);
+    diagram1 = model.diagram1;
+    layer1 = model.layer1;
+    diagram2 = model.diagram2;
+    doc2 = model.doc2;
+    elementChange = model.elementChange;
 
-    diagram1 = TestModel.newDiagram(root1);
-    doc2 = root2 ? TestModel.newDocument(root2) : undefined;
-
-    layer1 = diagram1.newLayer();
     node1 = layer1.addNode();
-
-    diagram2 = doc2?.topLevelDiagrams?.[0];
-    node1_2 = diagram2?.lookup(node1.id) as DiagramNode | undefined;
+    node2 = diagram2?.lookup(node1.id) as DiagramNode | undefined;
 
     uow = UnitOfWork.immediate(diagram1);
-
-    elementChange = backend.createFns();
-    diagram1.on('elementChange', elementChange[0]);
-    if (diagram2) diagram2.on('elementChange', elementChange[1]);
   });
   afterEach(backend.afterEach);
+
+  describe('bounds', () => {
+    it('simple node only - should set bounds correctly', () => {
+      // Act
+      UnitOfWork.execute(diagram1, uow =>
+        node1.setBounds({ w: 100, h: 100, x: 20, y: 20, r: 0 }, uow)
+      );
+
+      // Verify
+      expect(node1.bounds).toEqual({ w: 100, h: 100, x: 20, y: 20, r: 0 });
+      expect(elementChange[0]).toHaveBeenCalledTimes(1);
+      if (doc2) {
+        expect(node2?.bounds).toEqual({ w: 100, h: 100, x: 20, y: 20, r: 0 });
+        expect(elementChange[1]).toHaveBeenCalledTimes(1);
+      }
+    });
+
+    it('simple node only - should undo correctly', () => {
+      // Setup
+      const ref1 = serializeDiagram(diagram1);
+      const ref2 = doc2 ? serializeDiagram(diagram2!) : undefined;
+
+      const uow2 = new UnitOfWork(diagram1, true, false);
+      node1.setBounds({ w: 100, h: 100, x: 20, y: 20, r: 0 }, uow2);
+      commitWithUndo(uow2, 'Move');
+
+      // Act
+      diagram1.undoManager.undo();
+
+      // Verify
+      expect(serializeDiagram(diagram1)).toEqual(ref1);
+      if (doc2) expect(serializeDiagram(diagram2!)).toEqual(ref2);
+    });
+
+    it('connected node - should set bounds correctly', () => {
+      // Setup
+      const edge1 = layer1.addEdge();
+      edge1.setStart(new AnchorEndpoint(node1, 'c'), uow);
+      edge1.setEnd(new FreeEndpoint({ x: -100, y: -100 }), uow);
+
+      const edge2 = doc2 ? (diagram2!.edgeLookup.get(edge1.id)! as DiagramEdge) : undefined;
+
+      // Act
+      UnitOfWork.execute(diagram1, uow =>
+        node1.setBounds({ w: 100, h: 100, x: 20, y: 20, r: 0 }, uow)
+      );
+
+      // Verify
+      expect(node1.bounds).toEqual({ w: 100, h: 100, x: 20, y: 20, r: 0 });
+      expect(edge1.bounds).toEqual({ x: -100, y: -100, w: 170, h: 170, r: 0 });
+      expect(node1.listEdges()).toContain(edge1);
+      expect(edge1.start).toBeInstanceOf(AnchorEndpoint);
+      expect((edge1.start as AnchorEndpoint).node).toBe(node1);
+      expect(elementChange[0]).toHaveBeenCalledTimes(1);
+
+      if (doc2) {
+        expect(node2!.bounds).toEqual({ w: 100, h: 100, x: 20, y: 20, r: 0 });
+        expect(edge2!.bounds).toEqual({ x: -100, y: -100, w: 170, h: 170, r: 0 });
+        expect(node2!.listEdges()).toContain(edge2);
+        expect(edge2!.start).toBeInstanceOf(AnchorEndpoint);
+        expect((edge2!.start as AnchorEndpoint).node).toBe(node2);
+
+        // TODO: Why 3 and not 1
+        expect(elementChange[1]).toHaveBeenCalledTimes(3);
+      }
+    });
+
+    it('connected node - should undo correctly', () => {
+      // Setup
+      const edge1 = layer1.addEdge();
+      edge1.setStart(new AnchorEndpoint(node1, 'c'), uow);
+      edge1.setEnd(new FreeEndpoint({ x: -100, y: -100 }), uow);
+
+      const edge2 = doc2 ? (diagram2!.edgeLookup.get(edge1.id)! as DiagramEdge) : undefined;
+
+      const ref1 = serializeDiagram(diagram1);
+      const ref2 = doc2 ? serializeDiagram(diagram2!) : undefined;
+
+      const uow2 = new UnitOfWork(diagram1, true, false);
+      node1.setBounds({ w: 100, h: 100, x: 20, y: 20, r: 0 }, uow2);
+      commitWithUndo(uow2, 'Move');
+
+      // Act
+      diagram1.undoManager.undo();
+
+      // Verify
+      expect(serializeDiagram(diagram1)).toEqual(ref1);
+      expect(node1.listEdges()).toContain(edge1);
+      expect(edge1.start).toBeInstanceOf(AnchorEndpoint);
+      expect((edge1.start as AnchorEndpoint).node).toBe(node1);
+
+      if (doc2) {
+        expect(serializeDiagram(diagram2!)).toEqual(ref2);
+        expect(node2!.listEdges()).toContain(edge2);
+        expect(edge2!.start).toBeInstanceOf(AnchorEndpoint);
+        expect((edge2!.start as AnchorEndpoint).node).toBe(node2);
+      }
+
+      // Act
+      UnitOfWork.execute(diagram1, uow =>
+        node1.setBounds({ w: 100, h: 100, x: 20, y: 20, r: 0 }, uow)
+      );
+
+      // Verify
+      expect(node1.bounds).toEqual({ w: 100, h: 100, x: 20, y: 20, r: 0 });
+      expect(edge1.bounds).toEqual({ x: -100, y: -100, w: 170, h: 170, r: 0 });
+
+      if (doc2) {
+        expect(node2!.bounds).toEqual({ w: 100, h: 100, x: 20, y: 20, r: 0 });
+        expect(edge2!.bounds).toEqual({ x: -100, y: -100, w: 170, h: 170, r: 0 });
+      }
+    });
+  });
 
   describe('detachCRDT', () => {
     it('text is kept when detaching', () => {
@@ -74,7 +190,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       node1._setParent(edge);
 
       expect(node1.isLabelNode()).toBe(true);
-      if (doc2) expect(node1_2?.isLabelNode()).toBe(true);
+      if (doc2) expect(node2?.isLabelNode()).toBe(true);
     });
 
     it('should return false when the parent is not an edge', () => {
@@ -82,14 +198,14 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       node1._setParent(anotherNode);
 
       expect(node1.isLabelNode()).toBe(false);
-      if (doc2) expect(node1_2?.isLabelNode()).toBe(false);
+      if (doc2) expect(node2?.isLabelNode()).toBe(false);
     });
 
     it('should return false when there is no parent', () => {
       node1._setParent(undefined);
 
       expect(node1.isLabelNode()).toBe(false);
-      if (doc2) expect(node1_2?.isLabelNode()).toBe(false);
+      if (doc2) expect(node2?.isLabelNode()).toBe(false);
     });
   });
 
@@ -99,7 +215,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       node1._setParent(anotherNode);
 
       expect(node1.labelNode()).toBeUndefined();
-      if (doc2) expect(node1_2?.labelNode()).toBeUndefined();
+      if (doc2) expect(node2?.labelNode()).toBeUndefined();
     });
 
     it('should return the corresponding label node when the node is a label node', () => {
@@ -109,7 +225,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       edge.setLabelNodes([labelNode], uow);
 
       expect(node1.labelNode()!.node()).toEqual(node1);
-      if (doc2) expect(node1_2?.labelNode()!.node().id).toBe(node1.id);
+      if (doc2) expect(node2?.labelNode()!.node().id).toBe(node1.id);
     });
   });
 
@@ -119,7 +235,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       node1._setParent(anotherNode);
 
       expect(node1.labelEdge()).toBeUndefined();
-      if (doc2) expect(node1_2?.labelEdge()).toBeUndefined();
+      if (doc2) expect(node2?.labelEdge()).toBeUndefined();
     });
 
     it('should return the associated edge when the node is a label node', () => {
@@ -127,7 +243,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       node1._setParent(edge);
 
       expect(node1.labelEdge()).toBe(edge);
-      if (doc2) expect(node1_2?.labelEdge()?.id).toBe(edge.id);
+      if (doc2) expect(node2?.labelEdge()?.id).toBe(edge.id);
     });
   });
 
@@ -137,7 +253,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       node1.setText('', uow);
 
       expect(node1.name).toBe(`${node1.nodeType} / ${node1.id}`);
-      if (doc2) expect(node1_2?.name).toBe(`${node1.nodeType} / ${node1.id}`);
+      if (doc2) expect(node2?.name).toBe(`${node1.nodeType} / ${node1.id}`);
     });
 
     it('should return metadata name if set', () => {
@@ -145,7 +261,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       node1.updateMetadata(metadata => (metadata.name = customName), uow);
 
       expect(node1.name).toBe(customName);
-      if (doc2) expect(node1_2?.name).toBe(customName);
+      if (doc2) expect(node2?.name).toBe(customName);
     });
 
     it('should format name based on text template if text is available', () => {
@@ -153,7 +269,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       node1.updateMetadata(metadata => (metadata.data = { customData: { value: 'Node1' } }), uow);
 
       expect(node1.name).toBe('Hello, Node1!');
-      if (doc2) expect(node1_2?.name).toBe('Hello, Node1!');
+      if (doc2) expect(node2?.name).toBe('Hello, Node1!');
     });
   });
 
@@ -169,7 +285,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       expect(child.parent).toBe(node1);
       expect(elementChange[0]).toHaveBeenCalledTimes(2);
       if (doc2) {
-        expect(diagram2!.lookup(child.id)!.parent).toBe(node1_2);
+        expect(diagram2!.lookup(child.id)!.parent).toBe(node2);
         expect(elementChange[1]).toHaveBeenCalledTimes(2);
       }
     });
@@ -179,7 +295,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       node1.addChild(child, uow);
 
       expect(node1.children[node1.children.length - 1]).toBe(child);
-      if (doc2) expect(node1_2!.children[node1_2!.children.length - 1].id).toBe(child.id);
+      if (doc2) expect(node2!.children[node2!.children.length - 1].id).toBe(child.id);
     });
 
     it('should update both parent and child in UnitOfWork', () => {
@@ -229,7 +345,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       expect(elementChange[0]).toHaveBeenCalledTimes(1);
       expect(elementRemove[0]).toHaveBeenCalledTimes(1);
       if (doc2) {
-        expect(node1_2!.children.length).toBe(0);
+        expect(node2!.children.length).toBe(0);
         expect(elementChange[0]).toHaveBeenCalledTimes(1);
         expect(elementRemove[0]).toHaveBeenCalledTimes(1);
       }
@@ -264,7 +380,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       expect(node1.children).toEqual([child1, child2]);
       expect(elementChange[0]).toHaveBeenCalledTimes(3);
       if (doc2) {
-        expect(node1_2!.children.map(c => c.id)).toEqual([child1.id, child2.id]);
+        expect(node2!.children.map(c => c.id)).toEqual([child1.id, child2.id]);
 
         // TODO: Why 4 and not 3
         expect(elementChange[1]).toHaveBeenCalledTimes(4);
@@ -280,7 +396,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       resetUow();
       node1.setChildren([child1], uow);
       expect(node1.children).toEqual([child1]);
-      if (doc2) expect(node1_2!.children.map(c => c.id)).toEqual([child1.id]);
+      if (doc2) expect(node2!.children.map(c => c.id)).toEqual([child1.id]);
 
       expect(uow.contains(node1, 'update')).toBe(true);
       expect(uow.contains(child1, 'update')).toBe(true);
