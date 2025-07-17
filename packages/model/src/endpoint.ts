@@ -17,13 +17,24 @@ export interface Endpoint {
 const Maplike = {
   get<T, K extends string | number | symbol>(m: Record<K, T> | Map<K, T>, key: K): T | undefined {
     return m instanceof Map ? m.get(key) : m[key];
+  },
+  keys<T, K extends string | number | symbol>(m: Record<K, T> | Map<K, T>): Array<K> {
+    // @ts-ignore
+    return m instanceof Map ? Array.from(m.keys()) : Array.from(Object.keys(m));
   }
 };
 
 export abstract class ConnectedEndpoint<T extends SerializedEndpoint = SerializedEndpoint>
   implements Endpoint
 {
-  protected constructor(public readonly node: DiagramNode) {}
+  protected constructor(readonly nodeFn: DiagramNode | (() => DiagramNode)) {}
+
+  get node() {
+    if (this.nodeFn instanceof Function) {
+      return this.nodeFn();
+    }
+    return this.nodeFn;
+  }
 
   abstract isMidpoint(): boolean;
 
@@ -37,20 +48,25 @@ export type OffsetType = 'absolute' | 'relative';
 export const Endpoint = {
   deserialize: (
     endpoint: SerializedEndpoint,
-    nodeLookup: Record<string, DiagramNode> | Map<string, DiagramNode>
+    nodeLookup: Record<string, DiagramNode> | Map<string, DiagramNode>,
+    defer = false
   ): Endpoint => {
     if (isSerializedEndpointFree(endpoint)) {
       return new FreeEndpoint(endpoint.position);
     } else if (isSerializedEndpointConnected(endpoint)) {
       return new PointInNodeEndpoint(
-        Maplike.get(nodeLookup, endpoint.node.id)!,
+        defer
+          ? () => Maplike.get(nodeLookup, endpoint.node.id)!
+          : Maplike.get(nodeLookup, endpoint.node.id)!,
         endpoint.ref,
         endpoint.offset,
         endpoint.offsetType ?? 'absolute'
       );
     } else {
       return new AnchorEndpoint(
-        Maplike.get(nodeLookup, endpoint.node.id)!,
+        defer
+          ? () => Maplike.get(nodeLookup, endpoint.node.id)!
+          : Maplike.get(nodeLookup, endpoint.node.id)!,
         endpoint.anchor,
         endpoint.offset ?? Point.ORIGIN
       );
@@ -65,7 +81,7 @@ export class AnchorEndpoint
   isConnected = true;
 
   constructor(
-    node: DiagramNode,
+    node: DiagramNode | (() => DiagramNode),
     public readonly anchorId: string,
     public readonly offset: Point = Point.ORIGIN
   ) {
@@ -81,7 +97,7 @@ export class AnchorEndpoint
   }
 
   getAnchor() {
-    return this.node!.getAnchor(this.anchorId);
+    return this.node.getAnchor(this.anchorId);
   }
 
   get position() {
@@ -111,7 +127,7 @@ export class PointInNodeEndpoint
   isConnected = true;
 
   constructor(
-    node: DiagramNode,
+    node: DiagramNode | (() => DiagramNode),
     public readonly ref: Point | undefined,
     public readonly offset: Point,
     public readonly offsetType: OffsetType

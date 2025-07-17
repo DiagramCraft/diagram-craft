@@ -122,7 +122,7 @@ const makeLabelNodeMapper = (
 const makeEndpointMapper = (edge: DiagramEdge): SimpleCRDTMapper<Endpoint, string> => {
   return {
     fromCRDT(e: string): Endpoint {
-      return Endpoint.deserialize(JSON.parse(e), edge.diagram.nodeLookup);
+      return Endpoint.deserialize(JSON.parse(e), edge.diagram.nodeLookup, true);
     },
 
     toCRDT(e: Endpoint): string {
