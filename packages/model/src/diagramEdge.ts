@@ -167,7 +167,11 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       makeEndpointMapper(this),
       {
         onChange: type => {
-          if (type === 'remote') layer.diagram.emit('elementChange', { element: this });
+          if (type === 'remote') {
+            layer.diagram.emit('elementChange', { element: this });
+            // TODO: Need to find a better solution to this
+            layer.diagram.emit('uowCommit', { added: [], removed: [], updated: [this] });
+          }
         }
       }
     );
@@ -181,7 +185,11 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       makeEndpointMapper(this),
       {
         onChange: type => {
-          if (type === 'remote') layer.diagram.emit('elementChange', { element: this });
+          if (type === 'remote') {
+            layer.diagram.emit('elementChange', { element: this });
+            // TODO: Need to find a better solution to this
+            layer.diagram.emit('uowCommit', { added: [], removed: [], updated: [this] });
+          }
         }
       }
     );

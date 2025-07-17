@@ -33,11 +33,11 @@ import type { CRDTMap, Flatten } from './collaboration/crdt';
 import { CRDTProp } from './collaboration/datatypes/crdtProp';
 import { MappedCRDTProp } from './collaboration/datatypes/mapped/mappedCrdtProp';
 import { CRDTObject } from './collaboration/datatypes/crdtObject';
-import {
-  MappedCRDTOrderedMap,
-  type MappedCRDTOrderedMapMapType
-} from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import { CRDTMapper } from './collaboration/datatypes/mapped/mappedCrdt';
+import {
+  MappedCRDTMap,
+  type MappedCRDTMapMapType
+} from './collaboration/datatypes/mapped/mappedCrdtMap';
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;
@@ -54,24 +54,18 @@ export type DiagramNodeCRDT = DiagramElementCRDT & {
   text: CRDTMap<Flatten<NodeTexts>>;
   props: CRDTMap<Flatten<NodeProps>>;
   anchors: ReadonlyArray<Anchor> | undefined;
-  edges: CRDTMap<MappedCRDTOrderedMapMapType<{ edges: Array<string> }>>;
+  edges: CRDTMap<MappedCRDTMapMapType<{ edges: Array<string> }>>;
 };
 
-const makeEdgesMapper = (
-  node: DiagramNode
-): CRDTMapper<DiagramEdge[], { edges: Array<string> }> => {
+const makeEdgesMapper = (node: DiagramNode): CRDTMapper<string[], { edges: Array<string> }> => {
   return {
     fromCRDT(e: CRDTMap<{ edges: Array<string> }>) {
-      const edgeIds = e.get('edges')!;
-      return edgeIds.map(id => node.diagram.edgeLookup.get(id) as DiagramEdge);
+      return e.get('edges')!;
     },
 
-    toCRDT(e: DiagramEdge[]): CRDTMap<{ edges: Array<string> }> {
+    toCRDT(e: string[]): CRDTMap<{ edges: Array<string> }> {
       const m = node.crdt.get().factory.makeMap<{ edges: Array<string> }>();
-      m.set(
-        'edges',
-        e.filter(k => !!k).map(edge => edge.id)
-      );
+      m.set('edges', e);
       return m;
     }
   };
@@ -82,7 +76,7 @@ const DEFAULT_BOUNDS = { x: 0, y: 0, w: 10, h: 10, r: 0 };
 export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramNodeSnapshot> {
   // Shared properties
   readonly #nodeType: CRDTProp<DiagramNodeCRDT, 'nodeType'>;
-  #edges: MappedCRDTOrderedMap<DiagramEdge[], { edges: Array<string> }>;
+  #edges: MappedCRDTMap<string[], { edges: Array<string> }>;
 
   // Note, we use MappedCRDTProp here for performance reasons
   readonly #bounds: MappedCRDTProp<DiagramNodeCRDT, 'bounds', Box>;
@@ -100,10 +94,10 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
     const nodeCrdt = this._crdt as unknown as WatchableValue<CRDTMap<DiagramNodeCRDT>>;
 
-    this.#edges = new MappedCRDTOrderedMap(
+    this.#edges = new MappedCRDTMap(
       nodeCrdt.get().get('edges', () => layer.crdt.factory.makeMap())!,
       makeEdgesMapper(this),
-      { allowUpdates: true }
+      true
     );
 
     this.#nodeType = new CRDTProp<DiagramNodeCRDT, 'nodeType'>(nodeCrdt, 'nodeType', {
@@ -165,6 +159,8 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
         onChange: type => {
           if (type === 'remote') {
             this.diagram.emit('elementChange', { element: this });
+            // TODO: Need to find a better solution to this
+            this.diagram.emit('uowCommit', { added: [], removed: [], updated: [this] });
           }
         }
       }
@@ -227,10 +223,10 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     super.detachCRDT(callback);
 
     const crdt = this._crdt as unknown as WatchableValue<CRDTMap<DiagramNodeCRDT>>;
-    this.#edges = new MappedCRDTOrderedMap(
+    this.#edges = new MappedCRDTMap(
       crdt.get().get('edges', () => this.layer.crdt.factory.makeMap())!,
       makeEdgesMapper(this),
-      { allowUpdates: true }
+      true
     );
   }
 
@@ -609,7 +605,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       metadata: this._metadata.getClone() as ElementMetadata,
       children: this.children.map(c => c.id),
       edges: Object.fromEntries(
-        Array.from(this.#edges.entries).map(([k, v]) => [k, v.map(e => ({ id: e.id }))])
+        Array.from(this.#edges.entries).map(([k, v]) => [k, v.map(e => ({ id: e }))])
       ),
       texts: this.#text.getClone()
     };
@@ -635,10 +631,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     this.#edges.clear();
     const edges = snapshot.edges ?? {};
     for (const [k, v] of Object.entries(edges)) {
-      this.#edges.add(k, [
-        ...(this.#edges.get(k) ?? []),
-        ...v.map(e => this.diagram.edgeLookup.get(e.id)!)
-      ]);
+      this.#edges.add(k, [...(this.#edges.get(k) ?? []), ...v.map(e => e.id!)]);
     }
 
     uow.updateElement(this);
@@ -801,7 +794,8 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
     // "Detach" any edges that connects to this node
     for (const anchor of this.#edges.keys) {
-      for (const edge of this.#edges.get(anchor) ?? []) {
+      for (const id of this.#edges.get(anchor) ?? []) {
+        const edge = this.diagram.edgeLookup.get(id)!;
         let isChanged = false;
         if (edge.start instanceof ConnectedEndpoint && edge.start.node === this) {
           edge.setStart(new FreeEndpoint(edge.start.position), uow);
@@ -871,11 +865,11 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   }
 
   _removeEdge(anchor: string | undefined, edge: DiagramEdge) {
-    this.#edges.update(anchor ?? '', this.#edges.get(anchor ?? '')?.filter(e => e !== edge) ?? []);
+    this.#edges.set(anchor ?? '', this.#edges.get(anchor ?? '')?.filter(e => e !== edge.id) ?? []);
   }
 
   _addEdge(anchor: string | undefined, edge: DiagramEdge) {
-    this.#edges.update(anchor ?? '', [...(this.#edges.get(anchor ?? '') ?? []), edge]);
+    this.#edges.set(anchor ?? '', [...(this.#edges.get(anchor ?? '') ?? []), edge.id]);
   }
 
   _getAnchorPosition(anchor: string) {
@@ -895,7 +889,9 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
   listEdges(): DiagramEdge[] {
     return [
-      ...Array.from(this.#edges.values).flatMap(e => e),
+      ...Array.from(this.#edges.values)
+        .flatMap(e => e)
+        .map(e => this.diagram.edgeLookup.get(e)!),
       ...this.children.flatMap(c => (isNode(c) ? c.listEdges() : []))
     ];
   }
