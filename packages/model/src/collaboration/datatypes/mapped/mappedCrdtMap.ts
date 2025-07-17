@@ -39,6 +39,11 @@ export class MappedCRDTMap<
     }
   }
 
+  clear() {
+    this.crdt.clear();
+    this.#map.clear();
+  }
+
   get entries() {
     return this.#map.entries();
   }

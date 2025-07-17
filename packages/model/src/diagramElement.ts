@@ -104,7 +104,8 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
             this._diagram.emit('elementRemove', { element: e });
             this._diagram.emit('elementChange', { element: this });
           }
-        }
+        },
+        onInit: e => this._diagram.register(e)
       }
     );
 
