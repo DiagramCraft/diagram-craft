@@ -138,9 +138,7 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
       [this._crdt] as const
     );
 
-    this._metadata = new CRDTObject<ElementMetadata>(metadataMap, type => {
-      if (type !== 'remote') return;
-
+    this._metadata = new CRDTObject<ElementMetadata>(metadataMap, () => {
       this.invalidate(UnitOfWork.immediate(this._diagram));
       this._diagram.emit('elementChange', { element: this });
       this._cache?.clear();

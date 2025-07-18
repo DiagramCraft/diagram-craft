@@ -202,11 +202,9 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       [edgeCrdt] as const
     );
 
-    this.#props = new CRDTObject<EdgeProps>(propsMap, type => {
-      if (type === 'remote') {
-        this.diagram.emit('elementChange', { element: this });
-        this._cache?.clear();
-      }
+    this.#props = new CRDTObject<EdgeProps>(propsMap, () => {
+      this.diagram.emit('elementChange', { element: this });
+      this._cache?.clear();
     });
   }
 

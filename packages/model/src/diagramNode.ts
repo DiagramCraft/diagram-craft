@@ -121,11 +121,9 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       ([parent]) => parent.get().get('text', () => layer.crdt.factory.makeMap())!,
       [nodeCrdt] as const
     );
-    this.#text = new CRDTObject<NodeTexts>(textMap, type => {
-      if (type === 'remote') {
-        this.diagram.emit('elementChange', { element: this });
-        this._cache?.clear();
-      }
+    this.#text = new CRDTObject<NodeTexts>(textMap, () => {
+      this.diagram.emit('elementChange', { element: this });
+      this._cache?.clear();
     });
     this.#text.init({ text: '' });
 
@@ -133,11 +131,9 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       ([parent]) => parent.get().get('props', () => layer.crdt.factory.makeMap())!,
       [nodeCrdt] as const
     );
-    this.#props = new CRDTObject<NodeProps>(propsMap, type => {
-      if (type === 'remote') {
-        this.diagram.emit('elementChange', { element: this });
-        this._cache?.clear();
-      }
+    this.#props = new CRDTObject<NodeProps>(propsMap, () => {
+      this.diagram.emit('elementChange', { element: this });
+      this._cache?.clear();
     });
 
     this.#anchors = new CRDTProp<DiagramNodeCRDT, 'anchors'>(nodeCrdt, 'anchors', {
