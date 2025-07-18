@@ -102,17 +102,15 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     );
 
     this.#nodeType = new CRDTProp<DiagramNodeCRDT, 'nodeType'>(nodeCrdt, 'nodeType', {
-      onChange: type => {
-        if (type === 'remote') {
-          this._children.clear();
-          this.diagram.emit('elementChange', { element: this });
+      onChange: () => {
+        this._children.clear();
+        this.diagram.emit('elementChange', { element: this });
 
-          this._cache?.clear();
+        this._cache?.clear();
 
-          const uow = new UnitOfWork(this.diagram, false, true);
-          this.invalidateAnchors(uow);
-          this.getDefinition().onPropUpdate(this, uow);
-        }
+        const uow = new UnitOfWork(this.diagram, false, true);
+        this.invalidateAnchors(uow);
+        this.getDefinition().onPropUpdate(this, uow);
       }
     });
     this.#nodeType.init('rect');
@@ -137,10 +135,8 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     });
 
     this.#anchors = new CRDTProp<DiagramNodeCRDT, 'anchors'>(nodeCrdt, 'anchors', {
-      onChange: type => {
-        if (type === 'remote') {
-          this.diagram.emit('elementChange', { element: this });
-        }
+      onChange: () => {
+        this.diagram.emit('elementChange', { element: this });
       }
     });
     if (anchorCache) this.#anchors.init(anchorCache);

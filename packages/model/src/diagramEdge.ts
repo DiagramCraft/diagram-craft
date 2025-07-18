@@ -148,8 +148,8 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     const edgeCrdt = this._crdt as unknown as WatchableValue<CRDTMap<DiagramEdgeCRDT>>;
 
     this.#waypoints = new CRDTProp(edgeCrdt, 'waypoints', {
-      onChange: type => {
-        if (type === 'remote') this.diagram.emit('elementChange', { element: this });
+      onChange: () => {
+        this.diagram.emit('elementChange', { element: this });
       }
     });
 

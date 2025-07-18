@@ -202,6 +202,8 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
   set name(n: string) {
     this.#name.set(n);
+    this.emit('change', { diagram: this });
+    this.document.emit('diagramchanged', { diagram: this });
   }
 
   get props() {
@@ -214,6 +216,8 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
   set _parent(p: string | undefined) {
     this.#parent.set(p);
+    this.emit('change', { diagram: this });
+    this.document.emit('diagramchanged', { diagram: this });
   }
 
   get diagrams(): Diagram[] {

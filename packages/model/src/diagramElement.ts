@@ -111,9 +111,7 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
 
     this._highlights = new CRDTProp(this._crdt, 'highlights', {
       factory: () => [],
-      onChange: type => {
-        if (type !== 'remote') return;
-
+      onChange: () => {
         this._diagram.emitAsync('elementHighlighted', { element: this });
       }
     });
