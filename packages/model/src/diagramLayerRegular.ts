@@ -29,18 +29,14 @@ export class RegularLayer extends Layer<RegularLayer> {
       makeElementMapper(this),
       {
         allowUpdates: true,
-        onAdd: (t, e) => {
-          if (t === 'remote') {
-            diagram.emit('elementAdd', { element: e });
-            this.processElementForAdd(e);
-          }
+        onAdd: e => {
+          diagram.emit('elementAdd', { element: e });
+          this.processElementForAdd(e);
         },
-        onChange: (t, e) => {
-          if (t === 'remote') {
-            diagram.emit('elementChange', { element: e });
-          }
+        onChange: e => {
+          diagram.emit('elementChange', { element: e });
         },
-        onRemove: (t, e) => t === 'remote' && diagram.emit('elementRemove', { element: e }),
+        onRemove: e => diagram.emit('elementRemove', { element: e }),
         onInit: e => {
           diagram.emit('elementAdd', { element: e });
           this.processElementForAdd(e);

@@ -86,24 +86,18 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
       makeElementMapper(this.layer),
       {
         allowUpdates: true,
-        onAdd: (t, e) => {
-          if (t === 'remote') {
-            this._diagram.register(e);
-            this._diagram.emit('elementChange', { element: e });
-            this._diagram.emit('elementChange', { element: this });
-          }
+        onAdd: e => {
+          this._diagram.register(e);
+          this._diagram.emit('elementChange', { element: e });
+          this._diagram.emit('elementChange', { element: this });
         },
-        onChange: (t, e) => {
-          if (t === 'remote') {
-            this._diagram.emit('elementChange', { element: e });
-            this._diagram.emit('elementChange', { element: this });
-          }
+        onChange: e => {
+          this._diagram.emit('elementChange', { element: e });
+          this._diagram.emit('elementChange', { element: this });
         },
-        onRemove: (t, e) => {
-          if (t === 'remote') {
-            this._diagram.emit('elementRemove', { element: e });
-            this._diagram.emit('elementChange', { element: this });
-          }
+        onRemove: e => {
+          this._diagram.emit('elementRemove', { element: e });
+          this._diagram.emit('elementChange', { element: this });
         },
         onInit: e => this._diagram.register(e)
       }
