@@ -26,7 +26,7 @@ export class UrlDataProvider
   dataUrl: string | undefined = undefined;
   schemaUrl: string | undefined = undefined;
 
-  constructor(s?: string) {
+  constructor(s?: string, autoRefresh = true) {
     super();
 
     if (s) {
@@ -36,9 +36,11 @@ export class UrlDataProvider
       this.schemaUrl = d.schemaUrl;
       this.dataUrl = d.dataUrl;
 
-      this.refreshSchemas(false).then(() => {
-        this.refreshData(false);
-      });
+      if (autoRefresh) {
+        this.refreshSchemas(false).then(() => {
+          this.refreshData(false);
+        });
+      }
     } else {
       this.data = [];
       this.schemas = [];

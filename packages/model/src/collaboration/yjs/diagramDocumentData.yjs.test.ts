@@ -18,7 +18,8 @@ describe('DiagramDocumentData', () => {
       const dataUrl = 'https://google.com';
       const schemaUrl = 'https://yahoo.com';
       const provider = new UrlDataProvider(
-        `{ "dataUrl": "${dataUrl}", "schemaUrl": "${schemaUrl}" }`
+        `{ "dataUrl": "${dataUrl}", "schemaUrl": "${schemaUrl}" }`,
+        false
       );
       instance1.setProvider(provider);
 
