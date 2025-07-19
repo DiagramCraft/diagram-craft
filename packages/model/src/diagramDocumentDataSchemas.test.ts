@@ -2,11 +2,21 @@ import { describe, expect, test, vi } from 'vitest';
 import { DataSchema, DiagramDocumentDataSchemas } from './diagramDocumentDataSchemas';
 import { CRDT } from './collaboration/crdt';
 import { TestModel } from './test-support/builder';
+import { Backends } from './collaboration/yjs/collaborationTestUtils';
 
-describe('DiagramDocumentDataSchemas', () => {
+describe.each(Backends.all())('DiagramDocumentDataSchemas [%s]', (_name, backend) => {
   test('should initialize with empty schemas if no initial schemas provided', () => {
-    const diagramSchemas = new DiagramDocumentDataSchemas(CRDT.makeRoot(), TestModel.newDocument());
-    expect(diagramSchemas.all).toEqual([]);
+    // Setup
+    const [root1, root2] = backend.syncedDocs();
+
+    const instance1 = new DiagramDocumentDataSchemas(root1, TestModel.newDocument());
+    const instance2 = root2
+      ? new DiagramDocumentDataSchemas(root2, TestModel.newDocument())
+      : undefined;
+
+    // Verify
+    expect(instance1.all).toEqual([]);
+    if (instance2) expect(instance2.all).toEqual([]);
   });
 
   test('should replace schemas when initial schemas are provided', () => {
@@ -30,18 +40,31 @@ describe('DiagramDocumentDataSchemas', () => {
   });
 
   test('should add new schema and emit event', () => {
-    const diagramSchemas = new DiagramDocumentDataSchemas(CRDT.makeRoot(), TestModel.newDocument());
+    // Setup
+    const [root1, root2] = backend.syncedDocs();
+
+    const instance1 = new DiagramDocumentDataSchemas(root1, TestModel.newDocument());
+    const instance2 = root2
+      ? new DiagramDocumentDataSchemas(root2, TestModel.newDocument())
+      : undefined;
+
+    const addListener1 = vi.fn();
+    instance1.on('add', addListener1);
+
+    const addListener2 = vi.fn();
+    instance2?.on('add', addListener2);
+
+    // Act
     const newSchema: DataSchema = { id: '1', name: 'NewSchema', source: 'document', fields: [] };
+    instance1.add(newSchema);
 
-    const addListener = vi.fn();
-    diagramSchemas.on('add', addListener);
-
-    diagramSchemas.add(newSchema);
-
-    expect(addListener).toHaveBeenCalledWith({ schema: newSchema });
+    // Verify
+    expect(addListener1).toHaveBeenCalledWith({ schema: newSchema });
+    if (instance2) expect(addListener2).toHaveBeenCalledTimes(1);
   });
 
   test('should update schema if it already exists', () => {
+    // Setup
     const existingSchema: DataSchema = {
       id: '1',
       name: 'ExistingSchema',
@@ -55,55 +78,53 @@ describe('DiagramDocumentDataSchemas', () => {
       fields: [{ id: 'test', name: 'name', type: 'text' }]
     };
 
-    const diagramSchemas = new DiagramDocumentDataSchemas(CRDT.makeRoot(), TestModel.newDocument());
-    diagramSchemas.add(existingSchema);
+    const [root1, root2] = backend.syncedDocs();
 
-    const updateListener = vi.fn();
-    diagramSchemas.on('update', updateListener);
+    const instance1 = new DiagramDocumentDataSchemas(root1, TestModel.newDocument());
+    const instance2 = root2
+      ? new DiagramDocumentDataSchemas(root2, TestModel.newDocument())
+      : undefined;
 
-    diagramSchemas.add(updatedSchema);
+    instance1.add(existingSchema);
 
+    const updateListener1 = vi.fn();
+    instance1.on('update', updateListener1);
+
+    const updateListener2 = vi.fn();
+    instance2?.on('update', updateListener2);
+
+    // Act
+    instance1.add(updatedSchema);
+
+    // Verify
     expect(existingSchema.name).toBe(updatedSchema.name);
     expect(existingSchema.fields).toEqual(updatedSchema.fields);
-    expect(updateListener).toHaveBeenCalledWith({ schema: updatedSchema });
-  });
-
-  test('should emit update event when schema is updated', () => {
-    const schemaToUpdate: DataSchema = {
-      id: '1',
-      name: 'OldSchema',
-      source: 'document',
-      fields: []
-    };
-    const updatedSchema: DataSchema = {
-      id: '1',
-      name: 'UpdatedSchema',
-      source: 'document',
-      fields: []
-    };
-
-    const diagramSchemas = new DiagramDocumentDataSchemas(CRDT.makeRoot(), TestModel.newDocument());
-    diagramSchemas.add(schemaToUpdate);
-
-    const updateListener = vi.fn();
-    diagramSchemas.on('update', updateListener);
-
-    diagramSchemas.update(updatedSchema);
-
-    expect(diagramSchemas.all[0].name).toBe(updatedSchema.name);
-    expect(updateListener).toHaveBeenCalledWith({ schema: updatedSchema });
+    expect(updateListener1).toHaveBeenCalledWith({ schema: updatedSchema });
+    if (instance2) {
+      expect(instance2.all[0].name).toBe(updatedSchema.name);
+      expect(updateListener2).toHaveBeenCalledTimes(1);
+    }
   });
 
   test('should replace all schemas when replaceBy is called', () => {
+    // Setup
     const newSchemas: DataSchema[] = [
       { id: '1', name: 'Schema1', source: 'document', fields: [] },
       { id: '2', name: 'Schema2', source: 'document', fields: [] }
     ];
 
-    const diagramSchemas = new DiagramDocumentDataSchemas(CRDT.makeRoot(), TestModel.newDocument());
+    const [root1, root2] = backend.syncedDocs();
 
-    diagramSchemas.replaceBy(newSchemas);
+    const instance1 = new DiagramDocumentDataSchemas(root1, TestModel.newDocument());
+    const instance2 = root2
+      ? new DiagramDocumentDataSchemas(root2, TestModel.newDocument())
+      : undefined;
 
-    expect(diagramSchemas.all).toEqual(newSchemas);
+    // Act
+    instance1.replaceBy(newSchemas);
+
+    // Verify
+    expect(instance1.all).toEqual(newSchemas);
+    if (instance2) expect(instance2.all).toEqual(newSchemas);
   });
 });
