@@ -47,7 +47,7 @@ export abstract class Layer<T extends RegularLayer | RuleLayer = RegularLayer | 
     this.crdt.set('type', this._type);
 
     this.#name = new CRDTProp(new WatchableValue(this.crdt), 'name', {
-      onChange: () => {
+      onRemoteChange: () => {
         this.diagram.emit('change', { diagram: this.diagram });
       }
     });

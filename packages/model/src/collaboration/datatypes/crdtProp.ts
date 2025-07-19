@@ -11,18 +11,18 @@ export class CRDTProp<
     private readonly crdt: WatchableValue<CRDTMap<T>>,
     private readonly name: N,
     private readonly props: {
-      onChange?: () => void;
+      onRemoteChange?: () => void;
       factory?: () => T[N];
     } = {}
   ) {
-    props.onChange ??= () => {};
+    props.onRemoteChange ??= () => {};
 
     let oldCrdt = crdt.get();
     oldCrdt.get(name, props.factory);
 
     const remoteUpdate: EventReceiver<CRDTMapEvents<T[string]>['remoteUpdate']> = p => {
       if (p.key !== name) return;
-      props.onChange!();
+      props.onRemoteChange!();
     };
 
     crdt.get().on('remoteUpdate', remoteUpdate);
