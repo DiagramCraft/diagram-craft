@@ -17,7 +17,7 @@ import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToo
 import { PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { assert } from '@diagram-craft/utils/assert';
 import type { RegularLayer } from './diagramLayerRegular';
-import { type CRDTMap, type Flatten } from './collaboration/crdt';
+import type { CRDTMap, FlatCRDTMap } from './collaboration/crdt';
 import { WatchableValue } from '@diagram-craft/utils/watchableValue';
 import { CRDTProp } from './collaboration/datatypes/crdtProp';
 import { CRDTObject } from './collaboration/datatypes/crdtObject';
@@ -38,7 +38,7 @@ export type DiagramElementCRDT = {
   id: string;
   type: string;
   highlights: Array<string>;
-  metadata: CRDTMap<Flatten<ElementMetadata>>;
+  metadata: FlatCRDTMap;
   children: CRDTMap<MappedCRDTOrderedMapMapType<DiagramElementCRDT>>;
   parentId: string;
 };

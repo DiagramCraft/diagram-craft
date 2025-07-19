@@ -15,7 +15,7 @@ import { assert } from '@diagram-craft/utils/assert';
 import { AttachmentConsumer } from './attachment';
 import { newid } from '@diagram-craft/utils/id';
 import { CRDTMapper } from './collaboration/datatypes/mapped/mappedCrdt';
-import { CRDTMap, Flatten } from './collaboration/crdt';
+import { CRDTMap, type FlatCRDTMap } from './collaboration/crdt';
 import { LayerManager, LayerManagerCRDT } from './diagramLayerManager';
 import { RegularLayer } from './diagramLayerRegular';
 import { Layer } from './diagramLayer';
@@ -85,7 +85,7 @@ export type DiagramCRDT = {
   canvasH: number;
   canvasX: number;
   canvasY: number;
-  props: CRDTMap<Flatten<DiagramProps>>;
+  props: FlatCRDTMap;
   layers: CRDTMap<LayerManagerCRDT>;
 };
 

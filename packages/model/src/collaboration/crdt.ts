@@ -54,8 +54,11 @@ export type CRDTMapEvents<T extends CRDTCompatibleObject> = {
   remoteAfterTransaction: EmptyObject;
 };
 
-export interface CRDTMap<T extends { [key: string]: CRDTCompatibleObject }>
-  extends Emitter<CRDTMapEvents<T[string]>> {
+export type FlatCRDTMap = CRDTMap;
+
+export interface CRDTMap<
+  T extends { [key: string]: CRDTCompatibleObject } = Record<string, CRDTCompatibleObject>
+> extends Emitter<CRDTMapEvents<T[string]>> {
   readonly factory: CRDTFactory;
 
   size: number;
@@ -97,26 +100,6 @@ export interface CRDTList<T extends CRDTCompatibleObject> extends Emitter<CRDTLi
 
   // TODO: Ability to iterate
 }
-
-type NoObj<O> = O extends object ? never : O;
-
-type Entry = { key: string; value: unknown };
-
-type FlattenToEntries<O, P extends string = ''> = O extends object
-  ? {
-      [K in keyof O]: K extends string
-        ? P extends ''
-          ? FlattenToEntries<O[K], K> | { key: K; value: NoObj<O[K]> }
-          : FlattenToEntries<O[K], `${P}.${K}`> | { key: `${P}.${K}`; value: NoObj<O[K]> }
-        : never;
-    }[keyof O]
-  : never;
-
-type FromEntries<T extends Entry> = {
-  [E in T as E['value'] extends never ? never : E['key']]: E['value'];
-};
-
-export type Flatten<O> = FromEntries<FlattenToEntries<O>> & { [key: string]: CRDTCompatibleObject };
 
 export const CRDT = new (class {
   makeRoot(): CRDTRoot {

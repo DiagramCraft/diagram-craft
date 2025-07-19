@@ -2,14 +2,14 @@ import { unique } from '@diagram-craft/utils/array';
 import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { isPrimitive } from '@diagram-craft/utils/object';
 import { DeepReadonly } from '@diagram-craft/utils/types';
-import type { CRDTCompatibleObject, CRDTMap, Flatten } from '../crdt';
+import type { CRDTCompatibleObject, CRDTMap } from '../crdt';
 import type { WatchableValue } from '@diagram-craft/utils/watchableValue';
 
 export class CRDTObject<T extends CRDTCompatibleObject & object> {
   readonly #proxy: T;
 
   constructor(
-    readonly crdt: WatchableValue<CRDTMap<Flatten<T>>>,
+    readonly crdt: WatchableValue<CRDTMap>,
     readonly onRemoteChange: () => void
   ) {
     let oldCrdt = crdt.get();

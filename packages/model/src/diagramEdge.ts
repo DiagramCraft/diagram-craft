@@ -33,7 +33,7 @@ import { getAdjustments } from './diagramLayerRuleTypes';
 import type { RegularLayer } from './diagramLayerRegular';
 import { assertRegularLayer } from './diagramLayerUtils';
 import type { Reference } from './serialization/types';
-import { type CRDTMap, type Flatten } from './collaboration/crdt';
+import type { CRDTMap, FlatCRDTMap } from './collaboration/crdt';
 import { WatchableValue } from '@diagram-craft/utils/watchableValue';
 import {
   MappedCRDTOrderedMap,
@@ -79,7 +79,7 @@ type LabelNodeCRDTEntry = { node: LabelNode & { nodeId: string } };
 export type DiagramEdgeCRDT = DiagramElementCRDT & {
   start: string;
   end: string;
-  props: CRDTMap<Flatten<EdgePropsForEditing>>;
+  props: FlatCRDTMap;
   labelNodes: CRDTMap<MappedCRDTOrderedMapMapType<LabelNodeCRDTEntry>>;
   waypoints: ReadonlyArray<Waypoint>;
 };
