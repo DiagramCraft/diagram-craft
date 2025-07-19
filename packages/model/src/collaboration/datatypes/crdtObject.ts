@@ -14,13 +14,13 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
   ) {
     let oldCrdt = crdt.get();
 
-    oldCrdt.on('remoteTransaction', () => onRemoteChange());
+    oldCrdt.on('remoteBeforeTransaction', () => onRemoteChange());
 
     crdt.on('change', () => {
-      oldCrdt.off('remoteTransaction', () => onRemoteChange());
+      oldCrdt.off('remoteBeforeTransaction', () => onRemoteChange());
 
       oldCrdt = crdt.get();
-      oldCrdt.on('remoteTransaction', () => onRemoteChange());
+      oldCrdt.on('remoteBeforeTransaction', () => onRemoteChange());
     });
 
     const createProxy = (target = {}, path = ''): T => {

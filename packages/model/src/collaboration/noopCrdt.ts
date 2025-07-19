@@ -5,7 +5,8 @@ import type {
   CRDTListEvents,
   CRDTMap,
   CRDTMapEvents,
-  CRDTRoot
+  CRDTRoot,
+  CRDTRootEvents
 } from './crdt';
 import { EventEmitter } from '@diagram-craft/utils/event';
 
@@ -145,7 +146,7 @@ export class NoOpCRDTList<T extends CRDTCompatibleObject>
   }
 }
 
-export class NoOpCRDTRoot implements CRDTRoot {
+export class NoOpCRDTRoot extends EventEmitter<CRDTRootEvents> implements CRDTRoot {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private map: Map<string, any> = new Map();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

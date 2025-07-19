@@ -5,7 +5,8 @@ import {
   CRDTListEvents,
   CRDTMap,
   CRDTMapEvents,
-  CRDTRoot
+  CRDTRoot,
+  type CRDTRootEvents
 } from '../crdt';
 import * as Y from 'yjs';
 import { EventEmitter, EventKey, EventReceiver } from '@diagram-craft/utils/event';
@@ -45,14 +46,19 @@ export class YJSFactory implements CRDTFactory {
   }
 }
 
-export class YJSRoot implements CRDTRoot {
+export class YJSRoot extends EventEmitter<CRDTRootEvents> implements CRDTRoot {
   private readonly doc = new Y.Doc();
 
   readonly factory = new YJSFactory();
   private data: Y.Map<unknown>;
 
   constructor() {
+    super();
     this.data = this.doc.getMap('data');
+
+    this.doc.on('beforeTransaction', () => this.emit('remoteBeforeTransaction', {}));
+    this.doc.on('afterTransaction', () => this.emit('remoteAfterTransaction', {}));
+
     /*let count = 0;
     this.doc.on('beforeTransaction', t => {
       if (t.local) {
@@ -120,7 +126,7 @@ export class YJSMap<T extends { [key: string]: CRDTCompatibleObject }> implement
 
       this.initial = undefined;
 
-      this.emitter.emit('remoteTransaction', {});
+      this.emitter.emit('remoteBeforeTransaction', {});
 
       e.changes.keys.forEach((change, key) => {
         if (change.action === 'add') {
@@ -140,6 +146,8 @@ export class YJSMap<T extends { [key: string]: CRDTCompatibleObject }> implement
           });
         }
       });
+
+      this.emitter.emit('remoteAfterTransaction', {});
     });
   }
 
@@ -265,7 +273,7 @@ export class YJSList<T extends CRDTCompatibleObject> implements CRDTList<T> {
 
       let idx = 0;
 
-      if (!isLocal) this.emitter.emit('remoteTransaction', {});
+      if (!isLocal) this.emitter.emit('remoteBeforeTransaction', {});
 
       for (const delta of e.changes.delta) {
         if (delta.delete !== undefined) {
@@ -288,6 +296,8 @@ export class YJSList<T extends CRDTCompatibleObject> implements CRDTList<T> {
           idx += delta.insert.length;
         }
       }
+
+      if (!isLocal) this.emitter.emit('remoteAfterTransaction', {});
     });
   }
 
