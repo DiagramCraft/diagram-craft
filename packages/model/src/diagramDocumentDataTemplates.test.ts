@@ -4,20 +4,40 @@ import { describe, expect, it, vi } from 'vitest';
 import { DiagramDocumentDataTemplates } from './diagramDocumentDataTemplates';
 import { DataTemplate } from './diagramDocument';
 import { CRDT } from './collaboration/crdt';
+import { Backends } from './collaboration/yjs/collaborationTestUtils';
 
 const templates: DataTemplate[] = [
   { id: '1', schemaId: 'schema1', name: 'Template 1', template: {} as any },
   { id: '2', schemaId: 'schema2', name: 'Template 2', template: {} as any }
 ];
 
-describe('DiagramDocumentDataTemplates', () => {
+describe.each(Backends.all())('DiagramDocumentDataTemplates [%s]', (_name, backend) => {
   it('should initialize with given templates', () => {
-    const instance = new DiagramDocumentDataTemplates(CRDT.makeRoot(), templates);
-    expect(instance.all()).toEqual(templates);
+    // Setup
+    const [root1, root2] = backend.syncedDocs();
+
+    const instance1 = new DiagramDocumentDataTemplates(root1, templates);
+    const instance2 = root2 ? new DiagramDocumentDataTemplates(root2, templates) : undefined;
+
+    // Verify
+    expect(instance1.all()).toEqual(templates);
+    if (instance2) expect(instance2.all()).toEqual(templates);
   });
 
   it('should allow adding a new template', () => {
-    const instance = new DiagramDocumentDataTemplates(CRDT.makeRoot(), templates);
+    // Setup
+    const [root1, root2] = backend.syncedDocs();
+
+    const instance1 = new DiagramDocumentDataTemplates(root1, templates);
+    const instance2 = root2 ? new DiagramDocumentDataTemplates(root2, templates) : undefined;
+
+    const addListener1 = vi.fn();
+    instance1.on('add', addListener1);
+
+    const addListener2 = vi.fn();
+    instance2?.on('add', addListener2);
+
+    // Act
     const newTemplate: DataTemplate = {
       id: '3',
       schemaId: 'schema3',
@@ -25,50 +45,92 @@ describe('DiagramDocumentDataTemplates', () => {
       template: {} as any
     };
 
-    const addListener = vi.fn();
-    instance.on('add', addListener);
+    instance1.add(newTemplate);
 
-    instance.add(newTemplate);
-    expect(instance.all().at(-1)).toEqual(newTemplate);
-    expect(addListener).toHaveBeenCalledWith({ template: newTemplate });
+    // Verify
+    expect(instance1.all().at(-1)).toEqual(newTemplate);
+    expect(addListener1).toHaveBeenCalledWith({ template: newTemplate });
+    if (instance2) {
+      expect(instance2.all().at(-1)).toEqual(newTemplate);
+      expect(addListener2).toHaveBeenCalledWith({ template: newTemplate });
+    }
   });
 
   it('should allow removing a template by object', () => {
-    const instance = new DiagramDocumentDataTemplates(CRDT.makeRoot(), templates);
+    // Setup
+    const [root1, root2] = backend.syncedDocs();
 
-    const removeListener = vi.fn();
-    instance.on('remove', removeListener);
+    const instance1 = new DiagramDocumentDataTemplates(root1, templates);
+    const instance2 = root2 ? new DiagramDocumentDataTemplates(root2, templates) : undefined;
 
+    const removeListener1 = vi.fn();
+    instance1.on('remove', removeListener1);
+
+    const removeListener2 = vi.fn();
+    instance2?.on('remove', removeListener2);
+
+    // Act
     const templateToRemove = templates[0];
-    instance.remove(templateToRemove);
+    instance1.remove(templateToRemove);
 
-    expect(instance.all()).toEqual([templates[1]]);
-    expect(removeListener).toHaveBeenCalledWith({ template: templateToRemove });
+    // Verify
+    expect(instance1.all()).toEqual([templates[1]]);
+    expect(removeListener1).toHaveBeenCalledWith({ template: templateToRemove });
+    if (instance2) {
+      expect(instance2.all()).toEqual([templates[1]]);
+      expect(removeListener2).toHaveBeenCalledWith({ template: templateToRemove });
+    }
   });
 
   it('should allow removing a template by id', () => {
-    const instance = new DiagramDocumentDataTemplates(CRDT.makeRoot(), templates);
+    // Setup
+    const [root1, root2] = backend.syncedDocs();
 
-    const removeListener = vi.fn();
-    instance.on('remove', removeListener);
+    const instance1 = new DiagramDocumentDataTemplates(root1, templates);
+    const instance2 = root2 ? new DiagramDocumentDataTemplates(root2, templates) : undefined;
 
-    instance.remove('2');
+    const removeListener1 = vi.fn();
+    instance1.on('remove', removeListener1);
 
-    expect(instance.all()).toEqual([templates[0]]);
-    expect(removeListener).toHaveBeenCalledWith({ template: templates[1] });
+    const removeListener2 = vi.fn();
+    instance2?.on('remove', removeListener2);
+
+    // Act
+    instance1.remove('2');
+
+    // Verify
+    expect(instance1.all()).toEqual([templates[0]]);
+    expect(removeListener1).toHaveBeenCalledWith({ template: templates[1] });
+    if (instance2) {
+      expect(instance2.all()).toEqual([templates[0]]);
+      expect(removeListener2).toHaveBeenCalledWith({ template: templates[1] });
+    }
   });
 
   it('should allow updating an existing template', () => {
-    const instance = new DiagramDocumentDataTemplates(CRDT.makeRoot(), templates);
+    // Setup
+    const [root1, root2] = backend.syncedDocs();
+
+    const instance1 = new DiagramDocumentDataTemplates(root1, templates);
+    const instance2 = root2 ? new DiagramDocumentDataTemplates(root2, templates) : undefined;
+
+    const updateListener1 = vi.fn();
+    instance1.on('update', updateListener1);
+
+    const updateListener2 = vi.fn();
+    instance2?.on('update', updateListener2);
+
+    // Act
     const updatedTemplate = { ...templates[0], name: 'Updated Template 1' };
+    instance1.update(updatedTemplate);
 
-    const updateListener = vi.fn();
-    instance.on('update', updateListener);
-
-    instance.update(updatedTemplate);
-
-    expect(instance.all()).toEqual([updatedTemplate, templates[1]]);
-    expect(updateListener).toHaveBeenCalledWith({ template: updatedTemplate });
+    // Verify
+    expect(instance1.all()).toEqual([updatedTemplate, templates[1]]);
+    expect(updateListener1).toHaveBeenCalledWith({ template: updatedTemplate });
+    if (instance2) {
+      expect(instance2.all()).toEqual([updatedTemplate, templates[1]]);
+      expect(updateListener2).toHaveBeenCalledWith({ template: updatedTemplate });
+    }
   });
 
   it('should retrieve a template by ID', () => {
@@ -86,15 +148,21 @@ describe('DiagramDocumentDataTemplates', () => {
   });
 
   it('should replace all templates', () => {
-    const instance = new DiagramDocumentDataTemplates(CRDT.makeRoot(), templates);
+    // Setup
+    const [root1, root2] = backend.syncedDocs();
 
+    const instance1 = new DiagramDocumentDataTemplates(root1, templates);
+    const instance2 = root2 ? new DiagramDocumentDataTemplates(root2, templates) : undefined;
+
+    // Act
     const newTemplates = [
       { id: '3', schemaId: 'schema3', name: 'Template 3', template: {} },
       { id: '4', schemaId: 'schema4', name: 'Template 4', template: {} }
     ] as DataTemplate[];
+    instance1.replaceBy(newTemplates);
 
-    instance.replaceBy(newTemplates);
-
-    expect(instance.all()).toEqual(newTemplates);
+    // Verify
+    expect(instance1.all()).toEqual(newTemplates);
+    if (instance2) expect(instance2.all()).toEqual(newTemplates);
   });
 });
