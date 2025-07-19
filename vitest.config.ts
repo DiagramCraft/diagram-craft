@@ -13,7 +13,6 @@ export default defineConfig({
     exclude: ['**/*.spec.ts', '**/node_modules/**', '**/dist/**'],
     fakeTimers: {
       toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'queueMicrotask']
-    },
-    isolate: false
+    }
   }
 });
