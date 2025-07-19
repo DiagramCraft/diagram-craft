@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { DocumentProps } from './documentProps';
 import { NoOpCRDTRoot } from './collaboration/noopCrdt';
 import { TestModel } from './test-support/builder';
+import { Backends, standardTestModel } from './collaboration/yjs/collaborationTestUtils';
 
 describe('DocumentProps', () => {
   it('should initialize with a query object', () => {
@@ -11,7 +12,7 @@ describe('DocumentProps', () => {
   });
 });
 
-describe('RecentStencils', () => {
+describe.each(Backends.all())('RecentStencils [%s]', (_name, backend) => {
   it('should initialize with an empty list', () => {
     const documentProps = new DocumentProps(new NoOpCRDTRoot(), TestModel.newDocument());
     const recentStencils = documentProps.recentStencils;
@@ -20,13 +21,18 @@ describe('RecentStencils', () => {
   });
 
   it('should register a new stencil', () => {
-    const documentProps = new DocumentProps(new NoOpCRDTRoot(), TestModel.newDocument());
-    const recentStencils = documentProps.recentStencils;
+    // Setup
+    const { doc1, doc2 } = standardTestModel(backend);
 
+    // Act
     const stencilId = 'stencil-1';
-    recentStencils.register(stencilId);
+    doc1.props.recentStencils.register(stencilId);
 
-    expect(recentStencils.stencils).toEqual([stencilId]);
+    // Verify
+    expect(doc1.props.recentStencils.stencils).toEqual([stencilId]);
+    if (doc2) {
+      expect(doc2.props.recentStencils.stencils).toEqual([stencilId]);
+    }
   });
 
   it('should not register duplicate stencils', () => {
@@ -41,45 +47,67 @@ describe('RecentStencils', () => {
   });
 
   it('should initialize stencils using set method', () => {
-    const documentProps = new DocumentProps(new NoOpCRDTRoot(), TestModel.newDocument());
-    const recentStencils = documentProps.recentStencils;
+    // Setup
+    const { doc1, doc2 } = standardTestModel(backend);
 
+    // Act
     const initialStencils = ['s-3', 's-2', 's-1'];
-    recentStencils.set(initialStencils);
+    doc1.props.recentStencils.set(initialStencils);
 
-    expect(recentStencils.stencils).toEqual(initialStencils.toReversed());
+    // Verify
+    expect(doc1.props.recentStencils.stencils).toEqual(initialStencils.toReversed());
+    if (doc2) {
+      expect(doc2.props.recentStencils.stencils).toEqual(initialStencils.toReversed());
+    }
   });
 });
 
-describe('Query', () => {
+describe.each(Backends.all())('Query [%s]', (_name, backend) => {
   it('should initialize history with default values', () => {
-    const documentProps = new DocumentProps(new NoOpCRDTRoot(), TestModel.newDocument());
-    const query = documentProps.query;
+    // Setup
+    const { doc1, doc2 } = standardTestModel(backend);
 
-    expect(query.history).toEqual([
+    // Verify
+    expect(doc1.props.query.history).toEqual([
       ['active-layer', '.elements[]'],
       ['active-layer', '.elements[] | select(.edges | length > 0)']
     ]);
+    if (doc2) {
+      expect(doc2.props.query.history).toEqual([
+        ['active-layer', '.elements[]'],
+        ['active-layer', '.elements[] | select(.edges | length > 0)']
+      ]);
+    }
   });
 
   it('should add a new entry to history', () => {
-    const documentProps = new DocumentProps(new NoOpCRDTRoot(), TestModel.newDocument());
-    const query = documentProps.query;
+    // Setup
+    const { doc1, doc2 } = standardTestModel(backend);
 
+    // Act
     const newEntry: [string, string] = ['new-layer', '.elements[]'];
-    query.addHistory(newEntry);
+    doc1.props.query.addHistory(newEntry);
 
-    expect(query.history[0]).toEqual(newEntry);
+    // Verify
+    expect(doc1.props.query.history[0]).toEqual(newEntry);
+    if (doc2) {
+      expect(doc2.props.query.history[0]).toEqual(newEntry);
+    }
   });
 
   it('should remove duplicate entries in history', () => {
-    const documentProps = new DocumentProps(new NoOpCRDTRoot(), TestModel.newDocument());
-    const query = documentProps.query;
+    // Setup
+    const { doc1, doc2 } = standardTestModel(backend);
 
+    // Act
     const newEntry: [string, string] = ['active-layer', '.elements[]'];
-    query.addHistory(newEntry);
+    doc1.props.query.addHistory(newEntry);
 
-    expect(query.history.length).toBe(2);
+    // Verify
+    expect(doc1.props.query.history.length).toBe(2);
+    if (doc2) {
+      expect(doc2.props.query.history.length).toBe(2);
+    }
   });
 
   it('should initialize saved with an empty array', () => {
@@ -90,38 +118,53 @@ describe('Query', () => {
   });
 
   it('should add a new entry to saved', () => {
-    const documentProps = new DocumentProps(new NoOpCRDTRoot(), TestModel.newDocument());
-    const query = documentProps.query;
+    // Setup
+    const { doc1, doc2 } = standardTestModel(backend);
 
+    // Act
     const newEntry: [string, string] = ['saved-layer', '.elements[]'];
-    query.addSaved(newEntry);
+    doc1.props.query.addSaved(newEntry);
 
-    expect(query.saved[0]).toEqual(newEntry);
+    // Verify
+    expect(doc1.props.query.saved[0]).toEqual(newEntry);
+    if (doc2) {
+      expect(doc2.props.query.saved[0]).toEqual(newEntry);
+    }
   });
 
   it('should set saved queries with new array', () => {
-    const documentProps = new DocumentProps(new NoOpCRDTRoot(), TestModel.newDocument());
-    const query = documentProps.query;
+    // Setup
+    const { doc1, doc2 } = standardTestModel(backend);
 
+    // Act
     const savedQueries: [string, string][] = [
       ['layer-1', '.elements[]'],
       ['layer-2', '.elements[] | select(.type=="node")']
     ];
-    query.setSaved(savedQueries);
+    doc1.props.query.setSaved(savedQueries);
 
-    expect(query.saved).toEqual(savedQueries);
+    // Verify
+    expect(doc1.props.query.saved).toEqual(savedQueries);
+    if (doc2) {
+      expect(doc2.props.query.saved).toEqual(savedQueries);
+    }
   });
 
   it('should set history with new array', () => {
-    const documentProps = new DocumentProps(new NoOpCRDTRoot(), TestModel.newDocument());
-    const query = documentProps.query;
+    // Setup
+    const { doc1, doc2 } = standardTestModel(backend);
 
+    // Act
     const historyQueries: [string, string][] = [
       ['layer-1', '.elements[]'],
       ['layer-2', '.elements[] | select(.type=="node")']
     ];
-    query.setHistory(historyQueries);
+    doc1.props.query.setHistory(historyQueries);
 
-    expect(query.history).toEqual(historyQueries.toReversed());
+    // Verify
+    expect(doc1.props.query.history).toEqual(historyQueries.toReversed());
+    if (doc2) {
+      expect(doc2.props.query.history).toEqual(historyQueries.toReversed());
+    }
   });
 });
