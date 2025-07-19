@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { Diagram, DiagramCRDT } from './diagram';
+import { Diagram } from './diagram';
 import { TestModel } from './test-support/builder';
-import { NoOpCRDTMap } from './collaboration/noopCrdt';
 import { newid } from '@diagram-craft/utils/id';
 import { UnitOfWork } from './unitOfWork';
 import { DiagramNode } from './diagramNode';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { RegularLayer } from './diagramLayerRegular';
 import { assertRegularLayer } from './diagramLayerUtils';
+import { Backends, standardTestModel } from './collaboration/yjs/collaborationTestUtils';
 
 const bounds = {
   x: 0,
@@ -17,11 +17,11 @@ const bounds = {
   r: 0
 };
 
-describe('Diagram', () => {
+describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
   describe('constructor', () => {
     it('should initialize correctly using the constructor', () => {
       const doc = TestModel.newDocument();
-      const diagram = new Diagram('test-id', 'test-name', doc, new NoOpCRDTMap<DiagramCRDT>());
+      const diagram = new Diagram('test-id', 'test-name', doc);
       expect(diagram.id).toBe('test-id');
       expect(diagram.name).toBe('test-name');
       expect(diagram.document).toBe(doc);
@@ -30,19 +30,32 @@ describe('Diagram', () => {
 
   describe('name', () => {
     it('should update the name property correctly', () => {
-      const doc = TestModel.newDocument();
-      const diagram = new Diagram('test-id', 'test-name', doc, new NoOpCRDTMap<DiagramCRDT>());
-      expect(diagram.name).toBe('test-name');
+      // Setup
+      const { doc1, doc2 } = standardTestModel(backend);
 
-      diagram.name = 'new-test-name';
-      expect(diagram.name).toBe('new-test-name');
+      // Verify
+      expect(doc1.topLevelDiagrams.length).toBe(1);
+      expect(doc1.topLevelDiagrams[0].name).toBe('1');
+      if (doc2) {
+        expect(doc2.topLevelDiagrams.length).toBe(1);
+        expect(doc2.topLevelDiagrams[0].name).toBe('1');
+      }
+
+      // Act
+      doc1.topLevelDiagrams[0].name = 'new-test-name';
+
+      // Verify
+      expect(doc1.topLevelDiagrams[0].name).toBe('new-test-name');
+      if (doc2) {
+        expect(doc2.topLevelDiagrams[0].name).toBe('new-test-name');
+      }
     });
   });
 
   describe('toJSON', () => {
     it('should correctly serialize to JSON', () => {
       const doc = TestModel.newDocument();
-      const diagram = new Diagram('test-id', 'test-name', doc, new NoOpCRDTMap<DiagramCRDT>());
+      const diagram = new Diagram('test-id', 'test-name', doc);
       const json = diagram.toJSON();
 
       expect(json).toEqual({
@@ -57,46 +70,70 @@ describe('Diagram', () => {
 
   describe('props', () => {
     it('should initialize with empty props', () => {
-      const doc = TestModel.newDocument();
-      const diagram = new Diagram('test-id', 'test-name', doc, new NoOpCRDTMap<DiagramCRDT>());
-      expect(diagram.props).toEqual({});
+      // Setup
+      const { doc1, doc2 } = standardTestModel(backend);
+
+      // Verify
+      expect(doc1.topLevelDiagrams[0].props).toEqual({});
+      if (doc2) expect(doc2.topLevelDiagrams[0].props).toEqual({});
     });
 
     it('should update props correctly', () => {
-      const doc = TestModel.newDocument();
-      const diagram = new Diagram('test-id', 'test-name', doc, new NoOpCRDTMap<DiagramCRDT>());
+      // Setup
+      const { doc1, doc2 } = standardTestModel(backend);
 
+      const diagram = doc1.topLevelDiagrams[0];
+
+      // Act
       diagram.updateProps(props => {
         props.grid ??= {};
         props.grid.enabled = false;
       });
 
+      // Verify
       expect(diagram.props).toEqual({ grid: { enabled: false } });
+      if (doc2) {
+        expect(doc2.topLevelDiagrams[0].props).toEqual({ grid: { enabled: false } });
+      }
 
+      // Act
       diagram.updateProps(props => {
         props.grid ??= {};
         props.grid.enabled = true;
       });
 
+      // Verify
       expect(diagram.props).toEqual({
         grid: { enabled: true }
       });
+      if (doc2) {
+        expect(doc2.topLevelDiagrams[0].props).toEqual({
+          grid: { enabled: true }
+        });
+      }
     });
   });
 
   describe('canvas', () => {
     it('should initialize correctly', () => {
       const doc = TestModel.newDocument();
-      const diagram = new Diagram('test-id', 'test-name', doc, new NoOpCRDTMap<DiagramCRDT>());
+      const diagram = new Diagram('test-id', 'test-name', doc);
       expect(diagram.canvas).toBeDefined();
       expect(diagram.canvas).toEqual({ x: 0, y: 0, w: 640, h: 640 });
     });
 
     it('should update correctly', () => {
-      const doc = TestModel.newDocument();
-      const diagram = new Diagram('test-id', 'test-name', doc, new NoOpCRDTMap<DiagramCRDT>());
+      // Setup
+      const { doc1, doc2 } = standardTestModel(backend);
+
+      const diagram = doc1.topLevelDiagrams[0];
+
+      // Act
       diagram.canvas = { x: 100, y: 100, w: 100, h: 100 };
       expect(diagram.canvas).toEqual({ x: 100, y: 100, w: 100, h: 100 });
+      if (doc2) {
+        expect(doc2.topLevelDiagrams[0].canvas).toEqual({ x: 100, y: 100, w: 100, h: 100 });
+      }
     });
   });
 
