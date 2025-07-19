@@ -2,11 +2,13 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { DiagramStyles, getCommonProps, Stylesheet } from './diagramStyles';
 import { StylesheetSnapshot, UnitOfWork } from './unitOfWork';
-import { NoOpCRDTFactory, NoOpCRDTRoot } from './collaboration/noopCrdt';
+import { NoOpCRDTFactory } from './collaboration/noopCrdt';
 import { DiagramDocument } from './diagramDocument';
 import { TestModel } from './test-support/builder';
+import { Backends } from './collaboration/yjs/collaborationTestUtils';
+import type { CRDTRoot } from './collaboration/crdt';
 
-describe('Stylesheet', () => {
+describe.each(Backends.all())('Stylesheet [%s]', (_name, backend) => {
   describe('from', () => {
     it('should create a new Stylesheet instance with the from static method', () => {
       const type = 'node';
@@ -25,42 +27,60 @@ describe('Stylesheet', () => {
 
   describe('setProps', () => {
     it('should set new props', () => {
+      // Setup
+      const [root1, root2] = backend.syncedDocs();
+
       const type = 'node';
       const id = '123';
       const name = 'Test stylesheet';
       const initialProps = { fill: { color: 'blue' } };
 
-      const newProps = { fill: { color: 'red' } };
+      const styles1 = new DiagramStyles(root1, TestModel.newDocument(), true);
+      const styles2 = root2 ? new DiagramStyles(root2, TestModel.newDocument(), true) : undefined;
 
-      const styles = new DiagramStyles(new NoOpCRDTRoot(), TestModel.newDocument(), true);
       const stylesheet = Stylesheet.fromSnapshot(
         type,
         { id, name, props: initialProps },
-        styles.crdt.factory
+        styles1.crdt.factory
       );
-      styles.addStylesheet(id, stylesheet);
+      styles1.addStylesheet(id, stylesheet);
 
-      stylesheet.setProps(newProps, styles, UnitOfWork.immediate(null!));
+      // Act
+      const newProps = { fill: { color: 'red' } };
+      stylesheet.setProps(newProps, styles1, UnitOfWork.immediate(null!));
 
+      // Verify
       expect(stylesheet.props).toEqual(newProps);
+      if (styles2) {
+        expect(styles2.getNodeStyle('123')!.props!.fill!.color).toEqual('red');
+      }
     });
   });
 
   describe('setName', () => {
     it('should set a new name', () => {
+      // Setup
+      const [root1, root2] = backend.syncedDocs();
+
       const type = 'node';
       const id = '123';
       const name = 'Old Name';
       const newName = 'New Name';
       const props = { fill: { color: 'blue' } };
 
-      const styles = new DiagramStyles(new NoOpCRDTRoot(), TestModel.newDocument(), true);
-      const stylesheet = Stylesheet.fromSnapshot(type, { id, name, props }, styles.crdt.factory);
-      styles.addStylesheet(id, stylesheet);
+      const styles1 = new DiagramStyles(root1, TestModel.newDocument(), true);
+      const stylesheet = Stylesheet.fromSnapshot(type, { id, name, props }, styles1.crdt.factory);
+      styles1.addStylesheet(id, stylesheet);
 
-      stylesheet.setName(newName, styles, UnitOfWork.immediate(null!));
+      const styles2 = root2 ? new DiagramStyles(root2, TestModel.newDocument(), true) : undefined;
+
+      // Act
+      stylesheet.setName(newName, styles1, UnitOfWork.immediate(null!));
 
       expect(stylesheet.name).toBe(newName);
+      if (styles2) {
+        expect(styles2.getNodeStyle('123')!.name).toBe(newName);
+      }
     });
   });
 
@@ -137,21 +157,33 @@ describe('getCommonProps', () => {
   });
 });
 
-describe('DiagramStyles', () => {
-  let root: NoOpCRDTRoot;
+describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
+  let root: CRDTRoot;
   let document: DiagramDocument;
 
   beforeEach(() => {
-    root = new NoOpCRDTRoot();
+    root = backend.syncedDocs()[0];
     document = TestModel.newDocument();
   });
 
   describe('constructor', () => {
     it('should initialize with default styles when addDefaultStyles is true', () => {
-      const styles = new DiagramStyles(root, document, true);
-      expect(styles.nodeStyles.length).toBeGreaterThan(0);
-      expect(styles.edgeStyles.length).toBeGreaterThan(0);
-      expect(styles.textStyles.length).toBeGreaterThan(0);
+      // Setup
+      const [root1, root2] = backend.syncedDocs();
+
+      // Act
+      const styles1 = new DiagramStyles(root1, document, true);
+      const styles2 = root2 ? new DiagramStyles(root2, document, true) : undefined;
+
+      // Verify
+      expect(styles1.nodeStyles.length).toBeGreaterThan(0);
+      expect(styles1.edgeStyles.length).toBeGreaterThan(0);
+      expect(styles1.textStyles.length).toBeGreaterThan(0);
+      if (styles2) {
+        expect(styles2.nodeStyles.length).toBeGreaterThan(0);
+        expect(styles2.edgeStyles.length).toBeGreaterThan(0);
+        expect(styles2.textStyles.length).toBeGreaterThan(0);
+      }
     });
 
     it('should not add default styles when addDefaultStyles is false', () => {
@@ -190,6 +222,32 @@ describe('DiagramStyles', () => {
   });
 
   describe('activeNodeStylesheet', () => {
+    it('should not be synced', () => {
+      const [root1, root2] = backend.syncedDocs();
+
+      const styles1 = new DiagramStyles(root1, TestModel.newDocument(), true);
+
+      if (root2) {
+        const styles2 = new DiagramStyles(root2, TestModel.newDocument(), true);
+
+        const customNodeStyle = Stylesheet.fromSnapshot(
+          'node',
+          {
+            id: 'custom',
+            name: 'Custom',
+            props: {}
+          },
+          styles1.crdt.factory
+        );
+        styles1.addStylesheet('custom', customNodeStyle);
+
+        styles1.activeNodeStylesheet = customNodeStyle;
+
+        expect(styles1.activeNodeStylesheet.id).toBe(customNodeStyle.id);
+        expect(styles2.activeNodeStylesheet.id).toBe(styles2.nodeStyles[0].id);
+      }
+    });
+
     it('should return the active node stylesheet', () => {
       const styles = new DiagramStyles(root, document, true);
       const activeNodeStyle = styles.activeNodeStylesheet;
@@ -216,6 +274,31 @@ describe('DiagramStyles', () => {
   });
 
   describe('activeEdgeStylesheet', () => {
+    it('should not be synced', () => {
+      const [root1, root2] = backend.syncedDocs();
+
+      if (root2) {
+        const styles1 = new DiagramStyles(root1, TestModel.newDocument(), true);
+        const styles2 = new DiagramStyles(root2, TestModel.newDocument(), true);
+
+        const customEdgeStyle = Stylesheet.fromSnapshot(
+          'edge',
+          {
+            id: 'custom-edge',
+            name: 'Custom Edge',
+            props: {}
+          },
+          styles1.crdt.factory
+        );
+        styles1.addStylesheet('custom-edge', customEdgeStyle);
+
+        styles1.activeEdgeStylesheet = customEdgeStyle;
+
+        expect(styles1.activeEdgeStylesheet.id).toBe(customEdgeStyle.id);
+        expect(styles2.activeEdgeStylesheet.id).toBe(styles2.edgeStyles[0].id);
+      }
+    });
+
     it('should return the active edge stylesheet', () => {
       const styles = new DiagramStyles(root, document, true);
       const activeEdgeStyle = styles.activeEdgeStylesheet;
@@ -242,6 +325,31 @@ describe('DiagramStyles', () => {
   });
 
   describe('activeTextStylesheet', () => {
+    it('should not be synced', () => {
+      const [root1, root2] = backend.syncedDocs();
+
+      if (root2) {
+        const styles1 = new DiagramStyles(root1, TestModel.newDocument(), true);
+        const styles2 = new DiagramStyles(root2, TestModel.newDocument(), true);
+
+        const customTextStyle = Stylesheet.fromSnapshot(
+          'text',
+          {
+            id: 'custom',
+            name: 'Custom',
+            props: {}
+          },
+          styles1.crdt.factory
+        );
+        styles1.addStylesheet('custom', customTextStyle);
+
+        styles1.activeTextStylesheet = customTextStyle;
+
+        expect(styles1.activeTextStylesheet.id).toBe(customTextStyle.id);
+        expect(styles2.activeTextStylesheet.id).toBe(styles2.textStyles[0].id);
+      }
+    });
+
     it('should return the active text stylesheet', () => {
       const styles = new DiagramStyles(root, document, true);
       const activeTextStyle = styles.activeTextStylesheet;
@@ -336,8 +444,13 @@ describe('DiagramStyles', () => {
 
   describe('addStylesheet', () => {
     it('should add a new node stylesheet', () => {
-      const styles = new DiagramStyles(root, document, true);
+      // Setup
+      const [root1, root2] = backend.syncedDocs();
 
+      const styles1 = new DiagramStyles(root1, TestModel.newDocument(), true);
+      const styles2 = root2 ? new DiagramStyles(root2, TestModel.newDocument(), true) : undefined;
+
+      // Act
       const customNodeStyle = Stylesheet.fromSnapshot(
         'node',
         {
@@ -345,15 +458,23 @@ describe('DiagramStyles', () => {
           name: 'Custom Node',
           props: {}
         },
-        styles.crdt.factory
+        styles1.crdt.factory
       );
-      styles.addStylesheet('custom-node', customNodeStyle);
+      styles1.addStylesheet('custom-node', customNodeStyle);
 
-      const retrievedStyle = styles.getNodeStyle('custom-node');
+      // Verify
+      const retrievedStyle = styles1.getNodeStyle('custom-node');
       expect(retrievedStyle).toBeDefined();
       expect(retrievedStyle?.id).toBe('custom-node');
       expect(retrievedStyle?.name).toBe('Custom Node');
       expect(retrievedStyle?.type).toBe('node');
+      if (styles2) {
+        const retrievedStyle2 = styles2.getNodeStyle('custom-node');
+        expect(retrievedStyle2).toBeDefined();
+        expect(retrievedStyle2?.id).toBe('custom-node');
+        expect(retrievedStyle2?.name).toBe('Custom Node');
+        expect(retrievedStyle2?.type).toBe('node');
+      }
     });
 
     it('should add a new edge stylesheet', () => {
@@ -418,9 +539,12 @@ describe('DiagramStyles', () => {
 
   describe('deleteStylesheet', () => {
     it('should delete a custom stylesheet', () => {
-      const styles = new DiagramStyles(root, document, true);
+      // Setup
+      const [root1, root2] = backend.syncedDocs();
 
-      // First add a custom stylesheet
+      const styles1 = new DiagramStyles(root1, TestModel.newDocument(), true);
+      const styles2 = root2 ? new DiagramStyles(root2, TestModel.newDocument(), true) : undefined;
+
       const customNodeStyle = Stylesheet.fromSnapshot(
         'node',
         {
@@ -428,18 +552,18 @@ describe('DiagramStyles', () => {
           name: 'Custom Node',
           props: {}
         },
-        styles.crdt.factory
+        styles1.crdt.factory
       );
-      styles.addStylesheet('custom-node', customNodeStyle);
+      styles1.addStylesheet('custom-node', customNodeStyle);
 
-      // Verify it was added
-      expect(styles.getNodeStyle('custom-node')).toBeDefined();
+      // Act
+      styles1.deleteStylesheet('custom-node', UnitOfWork.immediate(document.topLevelDiagrams[0]));
 
-      // Delete it
-      styles.deleteStylesheet('custom-node', UnitOfWork.immediate(document.topLevelDiagrams[0]));
-
-      // Verify it was deleted
-      expect(styles.getNodeStyle('custom-node')).toBeUndefined();
+      // Verify
+      expect(styles1.getNodeStyle('custom-node')).toBeUndefined();
+      if (styles2) {
+        expect(styles2.getNodeStyle('custom-node')).toBeUndefined();
+      }
     });
 
     it('should not delete a default stylesheet', () => {
