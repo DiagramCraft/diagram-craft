@@ -79,6 +79,7 @@ describe('YJS RuleLayer', () => {
       expect(rules[0].id).toEqual('rule3');
       expect(rules[1].id).toEqual('rule2');
 
+      console.log(ruleLayer2.rules);
       expect(ruleLayer2.rules).toHaveLength(2);
       expect(ruleLayer2.rules[0].id).toEqual('rule3');
       expect(ruleLayer2.rules[1].id).toEqual('rule2');

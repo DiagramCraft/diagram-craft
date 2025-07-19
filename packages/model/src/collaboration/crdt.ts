@@ -42,11 +42,6 @@ export interface CRDTRoot {
 }
 
 export type CRDTMapEvents<T extends CRDTCompatibleObject> = {
-  localInsert: { key: string; value: T };
-  localDelete: { key: string; value: T };
-  localUpdate: { key: string; value: T };
-  localTransaction: EmptyObject;
-
   remoteInsert: { key: string; value: T };
   remoteDelete: { key: string; value: T };
   remoteUpdate: { key: string; value: T };
@@ -73,10 +68,6 @@ export interface CRDTMap<T extends { [key: string]: CRDTCompatibleObject }>
 }
 
 export type CRDTListEvents<T> = {
-  localInsert: { index: number; value: Array<T> };
-  localDelete: { index: number; count: number };
-  localTransaction: EmptyObject;
-
   remoteInsert: { index: number; value: Array<T> };
   remoteDelete: { index: number; count: number };
   remoteTransaction: EmptyObject;
