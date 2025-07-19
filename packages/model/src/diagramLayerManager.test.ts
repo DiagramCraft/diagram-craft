@@ -1,119 +1,177 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { beforeEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { RegularLayer } from './diagramLayerRegular';
-import { TestDiagramBuilder, TestLayerBuilder, TestModel } from './test-support/builder';
+import { TestLayerBuilder } from './test-support/builder';
 import { UnitOfWork } from './unitOfWork';
+import { Backends, standardTestModel } from './collaboration/yjs/collaborationTestUtils';
 
-describe('LayerManager', () => {
-  let diagram: TestDiagramBuilder;
-  let layer1: RegularLayer;
-  let layer2: RegularLayer;
-
-  beforeEach(() => {
-    diagram = TestModel.newDiagram();
-    layer1 = diagram.newLayer('layer1');
-    layer2 = diagram.newLayer('layer2');
-  });
-
+describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
   describe('all', () => {
     it('should return all layers in the correct order', () => {
-      const allLayers = diagram.layers.all;
+      // Setup
+      const { diagram1, layer1 } = standardTestModel(backend);
+      const layer2 = new RegularLayer('newLayer', 'newLayer', [], diagram1);
+      diagram1.layers.add(layer2, UnitOfWork.immediate(diagram1));
+
+      const allLayers = diagram1.layers.all;
       expect(allLayers).toEqual([layer1, layer2]);
     });
 
     it('should update the list of layers when a new layer is added', () => {
-      const newLayer = diagram.newLayer('layer3');
-      const allLayers = diagram.layers.all;
+      // Setup
+      const { diagram1, layer1 } = standardTestModel(backend);
+      const layer2 = new RegularLayer('layer2', 'layer2', [], diagram1);
+      diagram1.layers.add(layer2, UnitOfWork.immediate(diagram1));
+
+      // Act
+      const newLayer = new RegularLayer('newLayer', 'newLayer', [], diagram1);
+      diagram1.layers.add(newLayer, UnitOfWork.immediate(diagram1));
+
+      // Verify
+      const allLayers = diagram1.layers.all;
       expect(allLayers).toEqual([layer1, layer2, newLayer]);
     });
 
     it('should update the list of layers when a layer is removed', () => {
-      diagram.layers.remove(layer1, UnitOfWork.immediate(diagram));
-      const allLayers = diagram.layers.all;
-      expect(allLayers).toEqual([layer2]);
+      // Setup
+      const { diagram1, layer1 } = standardTestModel(backend);
+      const layer2 = new RegularLayer('newLayer', 'newLayer', [], diagram1);
+      diagram1.layers.add(layer2, UnitOfWork.immediate(diagram1));
+
+      // Act
+      diagram1.layers.remove(layer1, UnitOfWork.immediate(diagram1));
+
+      // Verify
+      expect(diagram1.layers.all).toEqual([layer2]);
     });
   });
 
   describe('byId', () => {
     it('should return the correct layer by its ID', () => {
-      const retrievedLayer = diagram.layers.byId(layer1.id);
+      // Setup
+      const { diagram1, layer1 } = standardTestModel(backend);
+
+      // Act
+      const retrievedLayer = diagram1.layers.byId(layer1.id);
+
+      // Verify
       expect(retrievedLayer).toBe(layer1);
     });
 
     it('should return undefined if no layer matches the provided ID', () => {
-      const nonExistentLayer = diagram.layers.byId('non-existent-id');
+      const { diagram1 } = standardTestModel(backend);
+      const nonExistentLayer = diagram1.layers.byId('non-existent-id');
       expect(nonExistentLayer).toBeUndefined();
     });
   });
 
   describe('visible', () => {
     it('should return all layers initially as visible', () => {
-      const visibleLayers = diagram.layers.visible;
+      // Setup
+      const { diagram1, layer1 } = standardTestModel(backend);
+      const layer2 = new RegularLayer('newLayer', 'newLayer', [], diagram1);
+      diagram1.layers.add(layer2, UnitOfWork.immediate(diagram1));
+
+      const visibleLayers = diagram1.layers.visible;
       expect(visibleLayers).toEqual([layer1, layer2]);
     });
 
     it('should return only visible layers after toggling visibility', () => {
-      diagram.layers.toggleVisibility(layer1 as any);
-      const visibleLayers = diagram.layers.visible;
-      expect(visibleLayers).toEqual([layer2]);
+      // Setup
+      const { diagram1, diagram2, layer1 } = standardTestModel(backend);
+      const layer2 = new RegularLayer('layer2', 'layer2', [], diagram1);
+      diagram1.layers.add(layer2, UnitOfWork.immediate(diagram1));
+
+      // Act
+      diagram1.layers.toggleVisibility(layer1);
+
+      // Expect
+      expect(diagram1.layers.visible).toEqual([layer2]);
+      if (diagram2) {
+        expect(diagram2.layers.visible.map(l => l.id)).toEqual([layer2.id]);
+      }
     });
 
     it('should include a layer back to visible when toggled again', () => {
-      diagram.layers.toggleVisibility(layer1 as any);
-      diagram.layers.toggleVisibility(layer1 as any);
-      const visibleLayers = diagram.layers.visible;
+      // Setup
+      const { diagram1, layer1 } = standardTestModel(backend);
+      const layer2 = new RegularLayer('newLayer', 'newLayer', [], diagram1);
+      diagram1.layers.add(layer2, UnitOfWork.immediate(diagram1));
+
+      diagram1.layers.toggleVisibility(layer1 as any);
+      diagram1.layers.toggleVisibility(layer1 as any);
+      const visibleLayers = diagram1.layers.visible;
       expect(visibleLayers).toEqual([layer1, layer2]);
     });
   });
 
   describe('add', () => {
     it('should add a new layer to the list of all layers', () => {
-      const newLayer = new RegularLayer('newLayer', 'newLayer', [], diagram);
-      const uow = UnitOfWork.immediate(diagram);
+      // Setup
+      const { diagram1, diagram2 } = standardTestModel(backend);
 
-      diagram.layers.add(newLayer, uow);
+      // Act
+      const newLayer = new RegularLayer('newLayer', 'newLayer', [], diagram1);
+      diagram1.layers.add(newLayer, UnitOfWork.immediate(diagram1));
 
-      const allLayers = diagram.layers.all;
-      expect(allLayers).toContain(newLayer);
+      // Verify
+      expect(diagram1.layers.all).toContain(newLayer);
+      if (diagram2) {
+        expect(diagram2.layers.all.map(l => l.id)).toContain(newLayer.id);
+      }
     });
 
     it('should mark the newly added layer as visible', () => {
-      const newLayer = new TestLayerBuilder('newLayer', diagram);
-      const uow = UnitOfWork.immediate(diagram);
+      // Setup
+      const { diagram1 } = standardTestModel(backend);
 
-      diagram.layers.add(newLayer, uow);
+      const newLayer = new TestLayerBuilder('newLayer', diagram1);
+      const uow = UnitOfWork.immediate(diagram1);
 
-      const visibleLayers = diagram.layers.visible;
+      diagram1.layers.add(newLayer, uow);
+
+      const visibleLayers = diagram1.layers.visible;
       expect(visibleLayers).toContain(newLayer);
     });
 
     it('should set the added layer as the active layer', () => {
-      const newLayer = new TestLayerBuilder('newLayer', diagram);
-      const uow = UnitOfWork.immediate(diagram);
+      // Setup
+      const { diagram1 } = standardTestModel(backend);
 
-      diagram.layers.add(newLayer, uow);
+      const newLayer = new TestLayerBuilder('newLayer', diagram1);
+      const uow = UnitOfWork.immediate(diagram1);
 
-      const activeLayer = diagram.layers.active;
+      diagram1.layers.add(newLayer, uow);
+
+      const activeLayer = diagram1.layers.active;
       expect(activeLayer).toBe(newLayer);
     });
   });
 
   describe('remove', () => {
     it('should remove a layer from the list of all layers', () => {
-      const uow = UnitOfWork.immediate(diagram);
+      // Setup
+      const { diagram1, diagram2, layer1 } = standardTestModel(backend);
 
-      diagram.layers.remove(layer1, uow);
+      // Act
+      diagram1.layers.remove(layer1, UnitOfWork.immediate(diagram1));
 
-      const allLayers = diagram.layers.all;
-      expect(allLayers).not.toContain(layer1);
+      // Verify
+      expect(diagram1.layers.all).not.toContain(layer1);
+      if (diagram2) {
+        expect(diagram2.layers.all.map(l => l.id)).not.toContain(layer1.id);
+      }
     });
 
     it('should remove a layer from the list of visible layers', () => {
-      const uow = UnitOfWork.immediate(diagram);
+      // Setup
+      const { diagram1, layer1 } = standardTestModel(backend);
 
-      diagram.layers.remove(layer1, uow);
+      const uow = UnitOfWork.immediate(diagram1);
 
-      const visibleLayers = diagram.layers.visible;
+      diagram1.layers.remove(layer1, uow);
+
+      const visibleLayers = diagram1.layers.visible;
       expect(visibleLayers).not.toContain(layer1);
     });
   });
