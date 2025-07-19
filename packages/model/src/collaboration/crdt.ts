@@ -30,7 +30,12 @@ export interface CRDTFactory {
   makeList<T extends CRDTCompatibleObject>(): CRDTList<T>;
 }
 
-export interface CRDTRoot {
+export type CRDTRootEvents = {
+  remoteBeforeTransaction: EmptyObject;
+  remoteAfterTransaction: EmptyObject;
+};
+
+export interface CRDTRoot extends Emitter<CRDTRootEvents> {
   readonly factory: CRDTFactory;
 
   clear(): void;
@@ -42,15 +47,11 @@ export interface CRDTRoot {
 }
 
 export type CRDTMapEvents<T extends CRDTCompatibleObject> = {
-  localInsert: { key: string; value: T };
-  localDelete: { key: string; value: T };
-  localUpdate: { key: string; value: T };
-  localTransaction: EmptyObject;
-
   remoteInsert: { key: string; value: T };
   remoteDelete: { key: string; value: T };
   remoteUpdate: { key: string; value: T };
-  remoteTransaction: EmptyObject;
+  remoteBeforeTransaction: EmptyObject;
+  remoteAfterTransaction: EmptyObject;
 };
 
 export interface CRDTMap<T extends { [key: string]: CRDTCompatibleObject }>
@@ -73,13 +74,10 @@ export interface CRDTMap<T extends { [key: string]: CRDTCompatibleObject }>
 }
 
 export type CRDTListEvents<T> = {
-  localInsert: { index: number; value: Array<T> };
-  localDelete: { index: number; count: number };
-  localTransaction: EmptyObject;
-
   remoteInsert: { index: number; value: Array<T> };
   remoteDelete: { index: number; count: number };
-  remoteTransaction: EmptyObject;
+  remoteBeforeTransaction: EmptyObject;
+  remoteAfterTransaction: EmptyObject;
 };
 
 export interface CRDTList<T extends CRDTCompatibleObject> extends Emitter<CRDTListEvents<T>> {

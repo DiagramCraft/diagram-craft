@@ -86,24 +86,18 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
       makeElementMapper(this.layer),
       {
         allowUpdates: true,
-        onAdd: (t, e) => {
-          if (t === 'remote') {
-            this._diagram.register(e);
-            this._diagram.emit('elementChange', { element: e });
-            this._diagram.emit('elementChange', { element: this });
-          }
+        onRemoteAdd: e => {
+          this._diagram.register(e);
+          this._diagram.emit('elementChange', { element: e });
+          this._diagram.emit('elementChange', { element: this });
         },
-        onChange: (t, e) => {
-          if (t === 'remote') {
-            this._diagram.emit('elementChange', { element: e });
-            this._diagram.emit('elementChange', { element: this });
-          }
+        onRemoteChange: e => {
+          this._diagram.emit('elementChange', { element: e });
+          this._diagram.emit('elementChange', { element: this });
         },
-        onRemove: (t, e) => {
-          if (t === 'remote') {
-            this._diagram.emit('elementRemove', { element: e });
-            this._diagram.emit('elementChange', { element: this });
-          }
+        onRemoteRemove: e => {
+          this._diagram.emit('elementRemove', { element: e });
+          this._diagram.emit('elementChange', { element: this });
         },
         onInit: e => this._diagram.register(e)
       }
@@ -111,9 +105,7 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
 
     this._highlights = new CRDTProp(this._crdt, 'highlights', {
       factory: () => [],
-      onChange: type => {
-        if (type !== 'remote') return;
-
+      onRemoteChange: () => {
         this._diagram.emitAsync('elementHighlighted', { element: this });
       }
     });
@@ -124,11 +116,6 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
       {
         toCRDT: parent => parent?.id ?? '',
         fromCRDT: v => (v !== '' ? this._diagram.lookup(v) : undefined)
-      },
-      {
-        onChange: type => {
-          if (type !== 'remote') return;
-        }
       }
     );
     this._parent.init(undefined);
@@ -138,9 +125,7 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
       [this._crdt] as const
     );
 
-    this._metadata = new CRDTObject<ElementMetadata>(metadataMap, type => {
-      if (type !== 'remote') return;
-
+    this._metadata = new CRDTObject<ElementMetadata>(metadataMap, () => {
       this.invalidate(UnitOfWork.immediate(this._diagram));
       this._diagram.emit('elementChange', { element: this });
       this._cache?.clear();

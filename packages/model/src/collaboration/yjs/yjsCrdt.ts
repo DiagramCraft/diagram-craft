@@ -5,7 +5,8 @@ import {
   CRDTListEvents,
   CRDTMap,
   CRDTMapEvents,
-  CRDTRoot
+  CRDTRoot,
+  type CRDTRootEvents
 } from '../crdt';
 import * as Y from 'yjs';
 import { EventEmitter, EventKey, EventReceiver } from '@diagram-craft/utils/event';
@@ -45,14 +46,19 @@ export class YJSFactory implements CRDTFactory {
   }
 }
 
-export class YJSRoot implements CRDTRoot {
+export class YJSRoot extends EventEmitter<CRDTRootEvents> implements CRDTRoot {
   private readonly doc = new Y.Doc();
 
   readonly factory = new YJSFactory();
   private data: Y.Map<unknown>;
 
   constructor() {
+    super();
     this.data = this.doc.getMap('data');
+
+    this.doc.on('beforeTransaction', () => this.emit('remoteBeforeTransaction', {}));
+    this.doc.on('afterTransaction', () => this.emit('remoteAfterTransaction', {}));
+
     /*let count = 0;
     this.doc.on('beforeTransaction', t => {
       if (t.local) {
@@ -116,29 +122,32 @@ export class YJSMap<T extends { [key: string]: CRDTCompatibleObject }> implement
     this.delegate = delegate ?? new Y.Map();
 
     this.delegate.observe(e => {
+      if (e.transaction.local) return;
+
       this.initial = undefined;
 
-      const local = e.transaction.local;
-      this.emitter.emit(local ? 'localTransaction' : 'remoteTransaction', {});
+      this.emitter.emit('remoteBeforeTransaction', {});
 
       e.changes.keys.forEach((change, key) => {
         if (change.action === 'add') {
-          this.emitter.emit(local ? 'localInsert' : 'remoteInsert', {
+          this.emitter.emit('remoteInsert', {
             key,
             value: wrap(this.get(key))
           });
         } else if (change.action === 'update') {
-          this.emitter.emit(local ? 'localUpdate' : 'remoteUpdate', {
+          this.emitter.emit('remoteUpdate', {
             key,
             value: wrap(this.get(key))
           });
         } else if (change.action === 'delete') {
-          this.emitter.emit(local ? 'localDelete' : 'remoteDelete', {
+          this.emitter.emit('remoteDelete', {
             key,
             value: wrap(change.oldValue)
           });
         }
       });
+
+      this.emitter.emit('remoteAfterTransaction', {});
     });
   }
 
@@ -259,30 +268,36 @@ export class YJSList<T extends CRDTCompatibleObject> implements CRDTList<T> {
     this.delegate = delegate ?? new Y.Array();
 
     this.delegate.observe(e => {
+      const isLocal = e.transaction.local;
       this.initial = undefined;
 
       let idx = 0;
 
-      const local = e.transaction.local;
-      this.emitter.emit(local ? 'localTransaction' : 'remoteTransaction', {});
+      if (!isLocal) this.emitter.emit('remoteBeforeTransaction', {});
 
       for (const delta of e.changes.delta) {
         if (delta.delete !== undefined) {
-          this.emitter.emit(local ? 'localDelete' : 'remoteDelete', {
-            index: idx,
-            count: delta.delete
-          });
+          if (!isLocal) {
+            this.emitter.emit('remoteDelete', {
+              index: idx,
+              count: delta.delete
+            });
+          }
         } else if (delta.retain !== undefined) {
           idx += delta.retain;
         } else if (delta.insert !== undefined) {
-          this.emitter.emit(local ? 'localInsert' : 'remoteInsert', {
-            index: idx,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            value: (delta.insert as any[]).map(wrap)
-          });
+          if (!isLocal) {
+            this.emitter.emit('remoteInsert', {
+              index: idx,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              value: (delta.insert as any[]).map(wrap)
+            });
+          }
           idx += delta.insert.length;
         }
       }
+
+      if (!isLocal) this.emitter.emit('remoteAfterTransaction', {});
     });
   }
 

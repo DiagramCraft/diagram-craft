@@ -147,8 +147,8 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
     const propsMap = this.crdt.get('props', () => document.root.factory.makeMap())!;
 
-    this.#props = new CRDTObject<DiagramProps>(new WatchableValue(propsMap), type => {
-      if (type === 'remote') this.update();
+    this.#props = new CRDTObject<DiagramProps>(new WatchableValue(propsMap), () => {
+      this.update();
     });
 
     this.#document = document;
@@ -187,9 +187,9 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     };
 
     const crdtWatchableValue = new WatchableValue(this.crdt);
-    this.#name = new CRDTProp(crdtWatchableValue, 'name', { onChange: metadataUpdate });
-    this.#id = new CRDTProp(crdtWatchableValue, 'id', { onChange: metadataUpdate });
-    this.#parent = new CRDTProp(crdtWatchableValue, 'parent', { onChange: metadataUpdate });
+    this.#name = new CRDTProp(crdtWatchableValue, 'name', { onRemoteChange: metadataUpdate });
+    this.#id = new CRDTProp(crdtWatchableValue, 'id', { onRemoteChange: metadataUpdate });
+    this.#parent = new CRDTProp(crdtWatchableValue, 'parent', { onRemoteChange: metadataUpdate });
   }
 
   get id() {
@@ -202,6 +202,8 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
   set name(n: string) {
     this.#name.set(n);
+    this.emit('change', { diagram: this });
+    this.document.emit('diagramchanged', { diagram: this });
   }
 
   get props() {
@@ -214,6 +216,8 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
   set _parent(p: string | undefined) {
     this.#parent.set(p);
+    this.emit('change', { diagram: this });
+    this.document.emit('diagramchanged', { diagram: this });
   }
 
   get diagrams(): Diagram[] {
