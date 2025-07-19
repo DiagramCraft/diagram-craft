@@ -24,9 +24,9 @@ export class MappedCRDTOrderedMap<
     private readonly mapper: SimpleCRDTMapper<T, CRDTMap<C>>,
     props?: {
       allowUpdates?: boolean;
-      onAdd?: (e: T) => void;
-      onRemove?: (e: T) => void;
-      onChange?: (e: T) => void;
+      onRemoteAdd?: (e: T) => void;
+      onRemoteRemove?: (e: T) => void;
+      onRemoteChange?: (e: T) => void;
       onInit?: (e: T) => void;
     }
   ) {
@@ -39,7 +39,7 @@ export class MappedCRDTOrderedMap<
 
       const idx = this.#entries.findIndex(entry => entry[0] === e?.key);
       if (idx >= 0) {
-        props?.onAdd?.(this.#entries[idx][1]);
+        props?.onRemoteAdd?.(this.#entries[idx][1]);
       }
     };
 
@@ -49,7 +49,7 @@ export class MappedCRDTOrderedMap<
 
         const idx = this.#entries.findIndex(entry => entry[0] === e.key);
         if (idx >= 0) {
-          props?.onChange?.(this.#entries[idx][1]);
+          props?.onRemoteChange?.(this.#entries[idx][1]);
         }
 
         this.#entries = Array.from(crdt.entries())
@@ -64,7 +64,7 @@ export class MappedCRDTOrderedMap<
     crdt.on('remoteDelete', e => {
       const idx = this.#entries.findIndex(entry => entry[0] === e.key);
       if (idx >= 0) {
-        props?.onRemove?.(this.#entries[idx][1]);
+        props?.onRemoteRemove?.(this.#entries[idx][1]);
         this.#entries.splice(idx, 1);
       }
     });

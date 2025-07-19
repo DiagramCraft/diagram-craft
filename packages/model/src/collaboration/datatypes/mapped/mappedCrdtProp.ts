@@ -16,11 +16,11 @@ export class MappedCRDTProp<
     private readonly name: N,
     private readonly mapper: SimpleCRDTMapper<T, C[N]>,
     props: {
-      onChange?: () => void;
+      onRemoteChange?: () => void;
       factory?: () => C[N];
     } = {}
   ) {
-    props.onChange ??= () => {};
+    props.onRemoteChange ??= () => {};
 
     let oldCrdt = crdt.get();
     oldCrdt.get(name, props.factory);
@@ -32,7 +32,7 @@ export class MappedCRDTProp<
     const remoteUpdate: EventReceiver<CRDTMapEvents<C[string]>['remoteUpdate']> = p => {
       if (p.key !== name) return;
       this.#value = this.mapper.fromCRDT(p.value as C[N]);
-      props.onChange!();
+      props.onRemoteChange!();
     };
 
     crdt.get().on('remoteUpdate', remoteUpdate);

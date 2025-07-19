@@ -149,7 +149,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
         fromCRDT: (b: Box) => b
       },
       {
-        onChange: () => {
+        onRemoteChange: () => {
           this.diagram.emit('elementChange', { element: this });
           // TODO: Need to find a better solution to this
           this.diagram.emit('uowCommit', { added: [], removed: [], updated: [this] });

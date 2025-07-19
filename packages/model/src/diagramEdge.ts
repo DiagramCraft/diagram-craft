@@ -166,7 +166,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       'start',
       makeEndpointMapper(this),
       {
-        onChange: () => {
+        onRemoteChange: () => {
           layer.diagram.emit('elementChange', { element: this });
           // TODO: Need to find a better solution to this
           layer.diagram.emit('uowCommit', { added: [], removed: [], updated: [this] });
@@ -182,7 +182,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       'end',
       makeEndpointMapper(this),
       {
-        onChange: () => {
+        onRemoteChange: () => {
           layer.diagram.emit('elementChange', { element: this });
           // TODO: Need to find a better solution to this
           layer.diagram.emit('uowCommit', { added: [], removed: [], updated: [this] });
