@@ -71,7 +71,6 @@ export class UrlDataProvider
   }
 
   async refreshData(force = true): Promise<void> {
-    console.log(new Error().stack);
     const oldDataMap = new Map();
     this.data.forEach(d => oldDataMap.set(d._uid, d));
 
