@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Attachment, AttachmentManager } from './attachment';
-import { NoOpCRDTRoot } from './collaboration/noopCrdt';
 import { TestModel } from './test-support/builder';
+import { Backends, standardTestModel } from './collaboration/yjs/collaborationTestUtils';
 
 const createBlob = (data: string, type: string = 'text/plain') => {
   return new Blob([data], { type });
@@ -42,43 +42,84 @@ describe('Attachment', () => {
   */
 });
 
-describe('AttachmentManager', () => {
+describe.each(Backends.all())('AttachmentManager [%s]', (_name, backend) => {
   it('should add a new attachment', async () => {
-    const manager = new AttachmentManager(new NoOpCRDTRoot(), TestModel.newDocument());
-    await manager.addAttachment(createBlob('new attachment'));
+    // Setup
+    const { root1, root2 } = standardTestModel(backend);
 
-    expect(manager.attachments.length).toBe(1);
-  });
+    const manager1 = new AttachmentManager(root1, TestModel.newDocument());
+    const manager2 = root2 ? new AttachmentManager(root2, TestModel.newDocument()) : undefined;
 
-  it('should return existing attachment if hash matches', async () => {
-    const manager = new AttachmentManager(new NoOpCRDTRoot(), TestModel.newDocument());
-    const blob = createBlob('existing attachment');
-    const attachment1 = await manager.addAttachment(blob);
-    const attachment2 = await manager.addAttachment(blob);
+    // Act
+    await manager1.addAttachment(createBlob('new attachment'));
 
-    expect(attachment1.hash).toBe(attachment2.hash);
-    expect(manager.attachments.length).toBe(1);
-  });
-
-  it('should return all attachments', async () => {
-    const manager = new AttachmentManager(new NoOpCRDTRoot(), TestModel.newDocument());
-    await manager.addAttachment(createBlob('attachment 1'));
-    await manager.addAttachment(createBlob('attachment 2'));
-
-    const attachments = manager.attachments;
-
-    expect(attachments.length).toBe(2);
-    expect(await attachments[0][1].content.text()).toBe('attachment 1');
-    expect(await attachments[1][1].content.text()).toBe('attachment 2');
+    // Verify
+    expect(manager1.attachments.length).toBe(1);
+    if (manager2) expect(manager2.attachments.length).toBe(1);
   });
 
   it('should retrieve an attachment by hash', async () => {
-    const manager = new AttachmentManager(new NoOpCRDTRoot(), TestModel.newDocument());
-    const attachment = await manager.addAttachment(createBlob('retrieve attachment'));
+    // Setup
+    const { root1, root2 } = standardTestModel(backend);
 
-    const retrievedAttachment = manager.getAttachment(attachment.hash)!;
+    const manager1 = new AttachmentManager(root1, TestModel.newDocument());
+    const manager2 = root2 ? new AttachmentManager(root2, TestModel.newDocument()) : undefined;
 
-    expect(await retrievedAttachment.content.text()).toBe('retrieve attachment');
+    // Act
+    const attachment = await manager1.addAttachment(createBlob('retrieve attachment'));
+
+    // Verify
+    expect(await manager1.getAttachment(attachment.hash)!.content.text()).toBe(
+      'retrieve attachment'
+    );
+    if (manager2)
+      expect(await manager2.getAttachment(attachment.hash)!.content.text()).toBe(
+        'retrieve attachment'
+      );
+  });
+
+  it('should return existing attachment if hash matches', async () => {
+    // Setup
+    const { root1, root2 } = standardTestModel(backend);
+
+    const manager1 = new AttachmentManager(root1, TestModel.newDocument());
+    const manager2 = root2 ? new AttachmentManager(root2, TestModel.newDocument()) : undefined;
+
+    const blob = createBlob('existing attachment');
+
+    // Act
+    const attachment1 = await manager1.addAttachment(blob);
+    const attachment2 = await manager1.addAttachment(blob);
+
+    // Verify
+    expect(attachment1.hash).toBe(attachment2.hash);
+    expect(manager1.attachments.length).toBe(1);
+    if (manager2) expect(manager2.attachments.length).toBe(1);
+  });
+
+  it('should return all attachments', async () => {
+    // Setup
+    const { root1, root2 } = standardTestModel(backend);
+
+    const manager1 = new AttachmentManager(root1, TestModel.newDocument());
+    const manager2 = root2 ? new AttachmentManager(root2, TestModel.newDocument()) : undefined;
+
+    // Act
+    await manager1.addAttachment(createBlob('attachment 1'));
+    await manager1.addAttachment(createBlob('attachment 2'));
+
+    // Verify
+    const attachments = manager1.attachments;
+    expect(attachments.length).toBe(2);
+    expect(await attachments[0][1].content.text()).toBe('attachment 1');
+    expect(await attachments[1][1].content.text()).toBe('attachment 2');
+
+    if (manager2) {
+      const attachments2 = manager2.attachments;
+      expect(attachments2.length).toBe(2);
+      expect(await attachments2[0][1].content.text()).toBe('attachment 1');
+      expect(await attachments2[1][1].content.text()).toBe('attachment 2');
+    }
   });
 
   // TODO: Enable this - doesn't work in GitHub Actions
