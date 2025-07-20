@@ -155,7 +155,6 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
   }
 
   removeDiagram(diagram: Diagram) {
-    diagram.detachCRDT();
     this.#diagrams.remove(diagram.id);
 
     this.emit('diagramRemoved', { diagram: diagram });

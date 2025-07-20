@@ -230,12 +230,6 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     return this._crdt.get();
   }
 
-  detachCRDT(callback: () => void = () => {}) {
-    const clone = this._crdt.get().clone();
-    callback();
-    this._crdt.set(clone);
-  }
-
   emit<K extends EventKey<DiagramEvents>>(eventName: K, params?: DiagramEvents[K]) {
     // This is triggered for instance when a rule layer toggles visibility
     if (eventName === 'change') {
