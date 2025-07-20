@@ -1,29 +1,22 @@
 import type { DiagramDocument } from './diagramDocument';
 import { hash64 } from '@diagram-craft/utils/hash';
 import { CRDTMap, CRDTRoot } from './collaboration/crdt';
-
-export const blobToDataURL = (blob: Blob): Promise<string> =>
-  new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = _e => resolve(reader.result as string);
-    reader.onerror = _e => reject(reader.error);
-    reader.onabort = _e => reject(new Error('Read aborted'));
-    reader.readAsDataURL(blob);
-  });
+import { blobToDataURL } from '@diagram-craft/utils/blobUtils';
 
 export class Attachment {
-  hash: string;
-  content: Blob;
-  inUse: boolean;
+  readonly hash: string;
+  readonly content: Blob;
+  readonly url: string;
 
-  #url: string;
+  // This is used only for pruning
+  inUse: boolean;
 
   constructor(hash: string, content: Blob, inUse = true) {
     this.hash = hash;
     this.content = content;
     this.inUse = inUse;
 
-    this.#url = URL.createObjectURL(
+    this.url = URL.createObjectURL(
       new Blob([this.content], {
         type: this.content.type
       })
@@ -35,10 +28,6 @@ export class Attachment {
     return new Attachment(hash, content);
   }
 
-  get url() {
-    return this.#url;
-  }
-
   async getDataUrl() {
     return blobToDataURL(this.content);
   }
@@ -48,7 +37,7 @@ export interface AttachmentConsumer {
   getAttachmentsInUse(): Array<string>;
 }
 
-type AttachmentData = {
+type AttachmentCRDT = {
   hash: string;
   content: Uint8Array;
   contentType: string;
@@ -56,7 +45,7 @@ type AttachmentData = {
 };
 
 export class AttachmentManager {
-  #attachments: CRDTMap<Record<string, AttachmentData>>;
+  #attachments: CRDTMap<Record<string, AttachmentCRDT>>;
   #consumers: Array<AttachmentConsumer> = [];
 
   public constructor(
@@ -68,20 +57,20 @@ export class AttachmentManager {
   }
 
   async addAttachment(content: Blob): Promise<Attachment> {
-    const att = await Attachment.create(content);
+    const attachment = await Attachment.create(content);
 
-    if (this.#attachments.has(att.hash)) {
-      return this.getAttachment(att.hash)!;
+    if (this.#attachments.has(attachment.hash)) {
+      return this.getAttachment(attachment.hash)!;
     }
 
-    this.#attachments.set(att.hash, {
-      hash: att.hash,
-      inUse: att.inUse,
+    this.#attachments.set(attachment.hash, {
+      hash: attachment.hash,
+      inUse: attachment.inUse,
       contentType: content.type,
-      content: new Uint8Array(await att.content.arrayBuffer())
+      content: new Uint8Array(await attachment.content.arrayBuffer())
     });
 
-    return att;
+    return attachment;
   }
 
   get attachments(): Array<[string, Attachment]> {
