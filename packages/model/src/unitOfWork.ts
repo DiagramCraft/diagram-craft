@@ -7,10 +7,25 @@ import type { Diagram, DiagramEvents } from './diagram';
 import { EventKey } from '@diagram-craft/utils/event';
 import type { AdjustmentRule } from './diagramLayerRuleTypes';
 import type { LayerManager } from './diagramLayerManager';
+import { newid } from '@diagram-craft/utils/id';
 
 type ActionCallback = () => void;
 
 type ChangeType = 'interactive' | 'non-interactive';
+
+const remoteUnitOfWorkRegistry = new Map<string, UnitOfWork>();
+
+export const getRemoteUnitOfWork = (diagram: Diagram) => {
+  let uow = remoteUnitOfWorkRegistry.get(diagram.id);
+  if (!uow) {
+    uow = new UnitOfWork(diagram, false, false, true);
+    remoteUnitOfWorkRegistry.set(diagram.id, uow);
+    uow.registerOnCommitCallback('remoteCleanup', undefined, () => {
+      remoteUnitOfWorkRegistry.delete(diagram.id);
+    });
+  }
+  return uow;
+};
 
 export type LayersSnapshot = {
   _snapshotType: 'layers';
@@ -117,6 +132,8 @@ const registry =
       };
 
 export class UnitOfWork {
+  uid = newid();
+
   #elementsToUpdate = new Map<string, Trackable>();
   #elementsToRemove = new Map<string, Trackable>();
   #elementsToAdd = new Map<string, Trackable>();
@@ -134,7 +151,8 @@ export class UnitOfWork {
   constructor(
     readonly diagram: Diagram,
     public trackChanges: boolean = false,
-    public isThrowaway: boolean = false
+    public isThrowaway: boolean = false,
+    public isRemote: boolean = false
   ) {
     registry.register(this, this.isThrowaway.toString() + ';' + new Error().stack, this);
   }
@@ -202,12 +220,12 @@ export class UnitOfWork {
    * Register a callback to be executed after the commit phase. It's coalesced
    * so that only one callback is executed per element/operation per commit phase.
    */
-  registerOnCommitCallback(name: string, element: Trackable, cb: ActionCallback) {
+  registerOnCommitCallback(name: string, element: Trackable | undefined, cb: ActionCallback) {
     if (this.isThrowaway) {
       return cb();
     }
 
-    const id = name + element.id;
+    const id = name + (element?.id ?? '');
     if (this.#onCommitCallbacks.has(id)) return;
 
     // Note, a Map retains insertion order, so this ensure actions are
@@ -247,9 +265,11 @@ export class UnitOfWork {
 
   private processEvents(silent = false) {
     // At this point, any elements have been added and or removed
-    this.#elementsToRemove.forEach(e => e.invalidate(this));
-    this.#elementsToUpdate.forEach(e => e.invalidate(this));
-    this.#elementsToAdd.forEach(e => e.invalidate(this));
+    if (!this.isRemote) {
+      this.#elementsToRemove.forEach(e => e.invalidate(this));
+      this.#elementsToUpdate.forEach(e => e.invalidate(this));
+      this.#elementsToAdd.forEach(e => e.invalidate(this));
+    }
 
     const handle = (s: EventKey<DiagramEvents>) => (e: Trackable) => {
       if (e.trackableType === 'layer' || e.trackableType === 'layerManager') {

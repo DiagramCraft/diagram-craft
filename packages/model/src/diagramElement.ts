@@ -8,7 +8,7 @@ import type {
 import { ElementInterface } from './types';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { Box } from '@diagram-craft/geometry/box';
-import { UnitOfWork } from './unitOfWork';
+import { getRemoteUnitOfWork, UnitOfWork } from './unitOfWork';
 import { Layer } from './diagramLayer';
 import type { Diagram } from './diagram';
 import { AttachmentConsumer } from './attachment';
@@ -88,16 +88,20 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
         allowUpdates: true,
         onRemoteAdd: e => {
           this._diagram.register(e);
-          this._diagram.emit('elementChange', { element: e });
-          this._diagram.emit('elementChange', { element: this });
+
+          const uow = getRemoteUnitOfWork(this._diagram);
+          uow.addElement(e);
+          uow.updateElement(this);
         },
         onRemoteChange: e => {
-          this._diagram.emit('elementChange', { element: e });
-          this._diagram.emit('elementChange', { element: this });
+          const uow = getRemoteUnitOfWork(this._diagram);
+          uow.updateElement(e);
+          uow.updateElement(this);
         },
         onRemoteRemove: e => {
-          this._diagram.emit('elementRemove', { element: e });
-          this._diagram.emit('elementChange', { element: this });
+          const uow = getRemoteUnitOfWork(this._diagram);
+          uow.removeElement(e);
+          uow.updateElement(this);
         },
         onInit: e => this._diagram.register(e)
       }
