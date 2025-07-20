@@ -2,7 +2,7 @@ import { LabelNode } from './types';
 import { Box } from '@diagram-craft/geometry/box';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { DiagramElement, type DiagramElementCRDT, isEdge, isNode } from './diagramElement';
-import { DiagramNodeSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
+import { DiagramNodeSnapshot, getRemoteUnitOfWork, UnitOfWork, UOWTrackable } from './unitOfWork';
 import type { DiagramEdge, ResolvedLabelNode } from './diagramEdge';
 import { Layer } from './diagramLayer';
 import { DefaultStyles, nodeDefaults } from './diagramDefaults';
@@ -104,7 +104,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     this.#nodeType = new CRDTProp<DiagramNodeCRDT, 'nodeType'>(nodeCrdt, 'nodeType', {
       onRemoteChange: () => {
         this._children.clear();
-        this.diagram.emit('elementChange', { element: this });
+        getRemoteUnitOfWork(this.diagram).updateElement(this);
 
         this._cache?.clear();
 
@@ -120,7 +120,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       [nodeCrdt] as const
     );
     this.#text = new CRDTObject<NodeTexts>(textMap, () => {
-      this.diagram.emit('elementChange', { element: this });
+      getRemoteUnitOfWork(this.diagram).updateElement(this);
       this._cache?.clear();
     });
     this.#text.init({ text: '' });
@@ -130,13 +130,13 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       [nodeCrdt] as const
     );
     this.#props = new CRDTObject<NodeProps>(propsMap, () => {
-      this.diagram.emit('elementChange', { element: this });
+      getRemoteUnitOfWork(this.diagram).updateElement(this);
       this._cache?.clear();
     });
 
     this.#anchors = new CRDTProp<DiagramNodeCRDT, 'anchors'>(nodeCrdt, 'anchors', {
       onRemoteChange: () => {
-        this.diagram.emit('elementChange', { element: this });
+        getRemoteUnitOfWork(this.diagram).updateElement(this);
       }
     });
     if (anchorCache) this.#anchors.init(anchorCache);
@@ -150,9 +150,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       },
       {
         onRemoteChange: () => {
-          this.diagram.emit('elementChange', { element: this });
-          // TODO: Need to find a better solution to this
-          this.diagram.emit('uowCommit', { added: [], removed: [], updated: [this] });
+          getRemoteUnitOfWork(this.diagram).updateElement(this);
         }
       }
     );

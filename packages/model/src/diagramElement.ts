@@ -88,12 +88,17 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
         allowUpdates: true,
         onRemoteAdd: e => {
           this._diagram.register(e);
-          this._diagram.emit('elementChange', { element: e });
-          this._diagram.emit('elementChange', { element: this });
+
+          const uow = getRemoteUnitOfWork(this._diagram);
+
+          // TODO: Shouldn't this be addElement
+          uow.updateElement(e);
+          uow.updateElement(this);
         },
         onRemoteChange: e => {
-          this._diagram.emit('elementChange', { element: e });
-          this._diagram.emit('elementChange', { element: this });
+          const uow = getRemoteUnitOfWork(this._diagram);
+          uow.updateElement(e);
+          uow.updateElement(this);
         },
         onRemoteRemove: e => {
           const uow = getRemoteUnitOfWork(this._diagram);

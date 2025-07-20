@@ -7,7 +7,7 @@ import { PointOnPath, TimeOffsetOnPath } from '@diagram-craft/geometry/pathPosit
 import { CubicSegment, LineSegment } from '@diagram-craft/geometry/pathSegment';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { DiagramElement, type DiagramElementCRDT, isEdge, isNode } from './diagramElement';
-import { DiagramEdgeSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
+import { DiagramEdgeSnapshot, getRemoteUnitOfWork, UnitOfWork, UOWTrackable } from './unitOfWork';
 import { Layer } from './diagramLayer';
 import {
   AnchorEndpoint,
@@ -149,7 +149,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
 
     this.#waypoints = new CRDTProp(edgeCrdt, 'waypoints', {
       onRemoteChange: () => {
-        this.diagram.emit('elementChange', { element: this });
+        getRemoteUnitOfWork(this.diagram).updateElement(this);
       }
     });
 
@@ -167,9 +167,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       makeEndpointMapper(this),
       {
         onRemoteChange: () => {
-          layer.diagram.emit('elementChange', { element: this });
-          // TODO: Need to find a better solution to this
-          layer.diagram.emit('uowCommit', { added: [], removed: [], updated: [this] });
+          getRemoteUnitOfWork(this.diagram).updateElement(this);
         }
       }
     );
@@ -183,9 +181,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       makeEndpointMapper(this),
       {
         onRemoteChange: () => {
-          layer.diagram.emit('elementChange', { element: this });
-          // TODO: Need to find a better solution to this
-          layer.diagram.emit('uowCommit', { added: [], removed: [], updated: [this] });
+          getRemoteUnitOfWork(this.diagram).updateElement(this);
         }
       }
     );
@@ -199,7 +195,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     );
 
     this.#props = new CRDTObject<EdgeProps>(propsMap, () => {
-      this.diagram.emit('elementChange', { element: this });
+      getRemoteUnitOfWork(this.diagram).updateElement(this);
       this._cache?.clear();
     });
   }
@@ -642,7 +638,6 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
 
   setLabelNodes(labelNodes: ReadonlyArray<ResolvedLabelNode> | undefined, uow: UnitOfWork) {
     this.#labelNodes.set(labelNodes?.map(n => [n.id, n]) ?? []);
-
     this.syncChildrenBasedOnLabelNodes(uow);
   }
 

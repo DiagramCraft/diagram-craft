@@ -246,10 +246,6 @@ export class UnitOfWork {
   commit(silent = false) {
     this.changeType = 'non-interactive';
 
-    /*    if (this.isRemote) {
-      console.log('commit', this.uid, this.#elementsToUpdate.size);
-    }*/
-
     // Note, onCommitCallbacks must run before elements events are emitted
     this.processOnCommitCallbacks();
     this.processEvents(silent);
@@ -269,9 +265,11 @@ export class UnitOfWork {
 
   private processEvents(silent = false) {
     // At this point, any elements have been added and or removed
-    this.#elementsToRemove.forEach(e => e.invalidate(this));
-    this.#elementsToUpdate.forEach(e => e.invalidate(this));
-    this.#elementsToAdd.forEach(e => e.invalidate(this));
+    if (!this.isRemote) {
+      this.#elementsToRemove.forEach(e => e.invalidate(this));
+      this.#elementsToUpdate.forEach(e => e.invalidate(this));
+      this.#elementsToAdd.forEach(e => e.invalidate(this));
+    }
 
     const handle = (s: EventKey<DiagramEvents>) => (e: Trackable) => {
       if (e.trackableType === 'layer' || e.trackableType === 'layerManager') {

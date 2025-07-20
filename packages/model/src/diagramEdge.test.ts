@@ -57,16 +57,20 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
         expect(elementChange[1]).toHaveBeenCalledTimes(1);
       }
 
+      // Setup
+      elementChange[0].mockReset();
+      elementChange[1].mockReset();
+
       // **** Act
       const labelNode = node.asLabelNode();
       UnitOfWork.execute(diagram1, uow => edge1.setLabelNodes([labelNode], uow));
 
       // **** Verify
       expect(edge1.name).toBe('LabelNodeName');
-      expect(elementChange[0]).toHaveBeenCalledTimes(3);
+      expect(elementChange[0]).toHaveBeenCalledTimes(2);
       if (doc2) {
         expect(edge1_2?.name).toBe('LabelNodeName');
-        expect(elementChange[1].mock.calls.length).toBeGreaterThan(3);
+        expect(elementChange[1]).toHaveBeenCalledTimes(3);
       }
     });
 
@@ -297,9 +301,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       expect(elementRemove[0]).toHaveBeenCalledTimes(1);
       if (doc2) {
         expect(edge1_2!.children.length).toBe(0);
-
-        // TODO: Why is this called 3 and not 1 time
-        expect(elementChange[1]).toHaveBeenCalledTimes(2);
+        expect(elementChange[1]).toHaveBeenCalledTimes(1);
         expect(elementRemove[1]).toHaveBeenCalledTimes(1);
       }
     });

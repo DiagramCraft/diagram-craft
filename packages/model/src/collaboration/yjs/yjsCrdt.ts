@@ -56,8 +56,12 @@ export class YJSRoot extends EventEmitter<CRDTRootEvents> implements CRDTRoot {
     super();
     this.data = this.doc.getMap('data');
 
-    this.doc.on('beforeTransaction', () => this.emit('remoteBeforeTransaction', {}));
-    this.doc.on('afterTransaction', () => this.emit('remoteAfterTransaction', {}));
+    this.doc.on('beforeTransaction', t => {
+      if (!t.local) this.emit('remoteBeforeTransaction', {});
+    });
+    this.doc.on('afterTransaction', t => {
+      if (!t.local) this.emit('remoteAfterTransaction', {});
+    });
 
     /*let count = 0;
     this.doc.on('beforeTransaction', t => {
