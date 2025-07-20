@@ -75,7 +75,7 @@ export const NodeActionPropertiesPanelForm = ({ type, url }: FormProps) => {
               property={url}
               render={props => (
                 <Select.Root {...props} value={coalesce(props.value, '')!} placeholder={'Select'}>
-                  <DiagramList level={0} list={document.topLevelDiagrams} />
+                  <DiagramList level={0} list={document.diagrams} />
                 </Select.Root>
               )}
             />

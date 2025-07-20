@@ -41,7 +41,7 @@ export class DiagramDocumentDataSchemas extends EventEmitter<DiagramDocumentData
     this.#schemas.on('remoteDelete', p => this.emit('remove', { schema: p.value }));
     this.#schemas.on('remoteInsert', p => this.emit('add', { schema: p.value }));
 
-    if (schemas) {
+    if (this.all.length === 0 && schemas) {
       this.replaceBy(schemas);
     }
   }
@@ -93,11 +93,13 @@ export class DiagramDocumentDataSchemas extends EventEmitter<DiagramDocumentData
   }
 
   update(schema: DataSchema) {
-    const dest = this.get(schema.id);
-    dest.name = schema.name;
-    dest.fields = schema.fields;
-    this.#schemas.set(dest.id, schema);
-    this.emit('update', { schema });
+    const clonedSchema = deepClone(schema);
+
+    const dest = this.get(clonedSchema.id);
+    dest.name = clonedSchema.name;
+    dest.fields = clonedSchema.fields;
+    this.#schemas.set(dest.id, clonedSchema);
+    this.emit('update', { schema: clonedSchema });
   }
 
   replaceBy(schemas: DataSchema[]) {
@@ -119,12 +121,12 @@ export class DeleteSchemaUndoableAction implements UndoableAction {
     private readonly schema: DataSchema
   ) {}
 
-  undo(uow: UnitOfWork) {
-    this.diagram.document.data.schemas.removeAndClearUsage(this.schema, uow);
+  undo() {
+    this.diagram.document.data.schemas.add(this.schema);
   }
 
-  redo() {
-    this.diagram.document.data.schemas.add(this.schema);
+  redo(uow: UnitOfWork) {
+    this.diagram.document.data.schemas.removeAndClearUsage(this.schema, uow);
   }
 }
 

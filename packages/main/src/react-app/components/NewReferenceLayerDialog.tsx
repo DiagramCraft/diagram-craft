@@ -20,7 +20,7 @@ export const ReferenceLayerDialog = (props: Props) => {
   });
 
   const onDiagramChange = (diagram: string | undefined) => {
-    setSelectedDiagram($d.document.getById(diagram!)!);
+    setSelectedDiagram($d.document.byId(diagram!)!);
     setSelectedLayer(null);
   };
 
@@ -71,7 +71,7 @@ export const ReferenceLayerDialog = (props: Props) => {
             onChange={onDiagramChange}
             placeholder={'Sheet'}
           >
-            {$d.document.topLevelDiagrams
+            {$d.document.diagrams
               .filter(d => d !== $d)
               .map(d => {
                 return (

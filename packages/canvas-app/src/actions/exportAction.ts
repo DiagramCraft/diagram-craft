@@ -1,7 +1,7 @@
 import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
 import { Box } from '@diagram-craft/geometry/box';
-import { blobToDataURL } from '@diagram-craft/model/attachment';
 import { isEdge } from '@diagram-craft/model/diagramElement';
+import { blobToDataURL } from '@diagram-craft/utils/blobUtils';
 
 export const exportActions = (context: ActionContext) => ({
   FILE_EXPORT_IMAGE: new ExportImageAction(context)

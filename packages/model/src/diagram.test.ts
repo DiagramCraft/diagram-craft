@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { Diagram } from './diagram';
+import { describe, expect, it, vi } from 'vitest';
+import { Diagram, DocumentBuilder } from './diagram';
 import { TestModel } from './test-support/builder';
 import { newid } from '@diagram-craft/utils/id';
 import { UnitOfWork } from './unitOfWork';
@@ -9,13 +9,7 @@ import { RegularLayer } from './diagramLayerRegular';
 import { assertRegularLayer } from './diagramLayerUtils';
 import { Backends, standardTestModel } from './collaboration/yjs/collaborationTestUtils';
 
-const bounds = {
-  x: 0,
-  y: 0,
-  w: 100,
-  h: 100,
-  r: 0
-};
+const testBounds = { x: 0, y: 0, w: 100, h: 100, r: 0 };
 
 describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
   describe('constructor', () => {
@@ -32,39 +26,26 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
     it('should update the name property correctly', () => {
       // Setup
       const { doc1, doc2 } = standardTestModel(backend);
+      const diagramChange = [vi.fn(), vi.fn()];
+      doc1.diagrams[0].on('change', diagramChange[0]);
+      doc2?.diagrams[0]?.on?.('change', diagramChange[1]);
 
-      // Verify
-      expect(doc1.topLevelDiagrams.length).toBe(1);
-      expect(doc1.topLevelDiagrams[0].name).toBe('1');
-      if (doc2) {
-        expect(doc2.topLevelDiagrams.length).toBe(1);
-        expect(doc2.topLevelDiagrams[0].name).toBe('1');
-      }
+      const documentDiagramChange = [vi.fn(), vi.fn()];
+      doc1.on('diagramChanged', documentDiagramChange[0]);
+      doc2?.on?.('diagramChanged', documentDiagramChange[1]);
 
       // Act
-      doc1.topLevelDiagrams[0].name = 'new-test-name';
+      doc1.diagrams[0].name = 'new';
 
       // Verify
-      expect(doc1.topLevelDiagrams[0].name).toBe('new-test-name');
+      expect(doc1.diagrams[0].name).toBe('new');
+      expect(diagramChange[0]).toHaveBeenCalledTimes(1);
+      expect(documentDiagramChange[0]).toHaveBeenCalledTimes(1);
       if (doc2) {
-        expect(doc2.topLevelDiagrams[0].name).toBe('new-test-name');
+        expect(doc2.diagrams[0].name).toBe('new');
+        expect(diagramChange[1]).toHaveBeenCalledTimes(1);
+        expect(documentDiagramChange[1]).toHaveBeenCalledTimes(1);
       }
-    });
-  });
-
-  describe('toJSON', () => {
-    it('should correctly serialize to JSON', () => {
-      const doc = TestModel.newDocument();
-      const diagram = new Diagram('test-id', 'test-name', doc);
-      const json = diagram.toJSON();
-
-      expect(json).toEqual({
-        props: diagram.props,
-        selectionState: diagram.selectionState,
-        id: diagram.id,
-        name: diagram.name,
-        layers: diagram.layers
-      });
     });
   });
 
@@ -74,15 +55,23 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       const { doc1, doc2 } = standardTestModel(backend);
 
       // Verify
-      expect(doc1.topLevelDiagrams[0].props).toEqual({});
-      if (doc2) expect(doc2.topLevelDiagrams[0].props).toEqual({});
+      expect(doc1.diagrams[0].props).toEqual({});
+      if (doc2) expect(doc2.diagrams[0].props).toEqual({});
     });
 
     it('should update props correctly', () => {
       // Setup
       const { doc1, doc2 } = standardTestModel(backend);
 
-      const diagram = doc1.topLevelDiagrams[0];
+      const diagramChange = [vi.fn(), vi.fn()];
+      doc1.diagrams[0].on('change', diagramChange[0]);
+      doc2?.diagrams[0]?.on?.('change', diagramChange[1]);
+
+      const documentDiagramChange = [vi.fn(), vi.fn()];
+      doc1.on('diagramChanged', documentDiagramChange[0]);
+      doc2?.on?.('diagramChanged', documentDiagramChange[1]);
+
+      const diagram = doc1.diagrams[0];
 
       // Act
       diagram.updateProps(props => {
@@ -92,8 +81,12 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
 
       // Verify
       expect(diagram.props).toEqual({ grid: { enabled: false } });
+      expect(diagramChange[0]).toHaveBeenCalledTimes(1);
+      expect(documentDiagramChange[0]).toHaveBeenCalledTimes(0);
       if (doc2) {
-        expect(doc2.topLevelDiagrams[0].props).toEqual({ grid: { enabled: false } });
+        expect(doc2.diagrams[0].props).toEqual({ grid: { enabled: false } });
+        expect(diagramChange[1]).toHaveBeenCalledTimes(1);
+        expect(documentDiagramChange[1]).toHaveBeenCalledTimes(0);
       }
 
       // Act
@@ -107,7 +100,7 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
         grid: { enabled: true }
       });
       if (doc2) {
-        expect(doc2.topLevelDiagrams[0].props).toEqual({
+        expect(doc2.diagrams[0].props).toEqual({
           grid: { enabled: true }
         });
       }
@@ -126,13 +119,26 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       // Setup
       const { doc1, doc2 } = standardTestModel(backend);
 
-      const diagram = doc1.topLevelDiagrams[0];
+      const diagramChange = [vi.fn(), vi.fn()];
+      doc1.diagrams[0].on('change', diagramChange[0]);
+      doc2?.diagrams[0]?.on?.('change', diagramChange[1]);
+
+      const documentDiagramChange = [vi.fn(), vi.fn()];
+      doc1.on('diagramChanged', documentDiagramChange[0]);
+      doc2?.on?.('diagramChanged', documentDiagramChange[1]);
 
       // Act
-      diagram.canvas = { x: 100, y: 100, w: 100, h: 100 };
-      expect(diagram.canvas).toEqual({ x: 100, y: 100, w: 100, h: 100 });
+      const diagram = doc1.diagrams[0];
+      diagram.canvas = { x: 100, y: 100, w: 110, h: 100 };
+
+      // Verify
+      expect(diagram.canvas).toEqual({ x: 100, y: 100, w: 110, h: 100 });
+      expect(diagramChange[0]).toHaveBeenCalledTimes(1);
+      expect(documentDiagramChange[0]).toHaveBeenCalledTimes(0);
       if (doc2) {
-        expect(doc2.topLevelDiagrams[0].canvas).toEqual({ x: 100, y: 100, w: 100, h: 100 });
+        expect(doc2.diagrams[0].canvas).toEqual({ x: 100, y: 100, w: 110, h: 100 });
+        expect(diagramChange[1]).toHaveBeenCalledTimes(1);
+        expect(documentDiagramChange[1]).toHaveBeenCalledTimes(0);
       }
     });
   });
@@ -148,8 +154,8 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       diagram.layers.add(layer2, new UnitOfWork(diagram));
 
       const uow = new UnitOfWork(diagram);
-      const node1 = DiagramNode.create('1', 'rect', bounds, layer1, {}, {});
-      const node2 = DiagramNode.create('2', 'rect', bounds, layer2, {}, {});
+      const node1 = DiagramNode.create('1', 'rect', testBounds, layer1, {}, {});
+      const node2 = DiagramNode.create('2', 'rect', testBounds, layer2, {}, {});
       layer1.addElement(node1, uow);
       layer2.addElement(node2, uow);
       uow.commit();
@@ -172,7 +178,7 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       const layer = diagram.activeLayer;
       assertRegularLayer(layer);
 
-      const node1 = DiagramNode.create('1', 'rect', bounds, layer, {}, {});
+      const node1 = DiagramNode.create('1', 'rect', testBounds, layer, {}, {});
       layer.addElement(node1, uow);
 
       const node2 = DiagramNode.create(
@@ -201,6 +207,29 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
 
       expect(node1.bounds).toStrictEqual({ x: 100, y: 0, w: 100, h: 100, r: Math.PI / 2 });
       expect(node2.bounds).toStrictEqual({ x: 0, y: 100, w: 100, h: 100, r: Math.PI / 2 });
+    });
+  });
+
+  describe('DocumentBuilder', () => {
+    describe('empty', () => {
+      it('should create a diagram with a default layer', () => {
+        // Setup
+        const id = 'test-id';
+        const name = 'test-name';
+        const doc = TestModel.newDocument();
+
+        // Act
+        const { diagram, layer } = DocumentBuilder.empty(id, name, doc);
+
+        // Verify
+        expect(diagram.id).toBe(id);
+        expect(diagram.name).toBe(name);
+        expect(diagram.document).toBe(doc);
+        expect(layer.id).toBe('default');
+        expect(layer.name).toBe('Default');
+        expect(diagram.layers.all.length).toBe(1);
+        expect(diagram.layers.all[0]).toBe(layer);
+      });
     });
   });
 });

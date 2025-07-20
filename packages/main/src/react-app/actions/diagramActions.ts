@@ -28,12 +28,12 @@ class DiagramAddAction extends AbstractAction<{ parentId?: string }, Application
     const undoManager = diagram.undoManager;
 
     const id = newid();
-    const parent = props.parentId ? document.getById(props.parentId) : undefined;
+    const parent = props.parentId ? document.byId(props.parentId) : undefined;
 
     undoManager.addAndExecute(
       makeUndoableAction('Add diagram', {
         redo: () => {
-          const peerDiagrams = parent ? parent.diagrams : document.topLevelDiagrams;
+          const peerDiagrams = parent ? parent.diagrams : document.diagrams;
 
           const { diagram: newDiagram } = DocumentBuilder.empty(
             id,
@@ -51,7 +51,7 @@ class DiagramAddAction extends AbstractAction<{ parentId?: string }, Application
           this.context.model.activeDiagram = newDiagram;
         },
         undo: () => {
-          const d = document.getById(id);
+          const d = document.byId(id);
           assert.present(d);
           document.removeDiagram(d);
         }
@@ -69,13 +69,13 @@ class DiagramRemoveAction extends AbstractAction<{ diagramId?: string }, Applica
     assert.present(props.diagramId);
 
     const document = this.context.model.activeDocument;
-    const diagram = document.getById(props.diagramId);
+    const diagram = document.byId(props.diagramId);
     assert.present(diagram);
 
     // TODO: This can be improved to choose the "closest" diagram
     const diagramToFallbackTo =
       this.context.model.activeDiagram === diagram
-        ? document.topLevelDiagrams[0]
+        ? document.diagrams[0]
         : this.context.model.activeDiagram;
 
     const undoManager = diagramToFallbackTo.undoManager;
@@ -116,7 +116,7 @@ class DiagramRenameAction extends AbstractAction<{ diagramId?: string }, Applica
     precondition.is.present(diagramId);
 
     const document = this.context.model.activeDocument;
-    const diagram = document.getById(diagramId);
+    const diagram = document.byId(diagramId);
     assert.present(diagram);
 
     const undoManager = this.context.model.activeDiagram.undoManager;

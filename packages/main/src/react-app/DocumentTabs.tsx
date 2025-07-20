@@ -46,10 +46,10 @@ const DiagramList = (props: {
 
 const DocumentsContextMenu = (props: DocumentsContextMenuProps) => {
   const application = useApplication();
-  const diagram = application.model.activeDocument.getById(props.rootId)!;
+  const diagram = application.model.activeDocument.byId(props.rootId)!;
 
   const change = (id: string) => {
-    application.model.activeDiagram = application.model.activeDocument.getById(id)!;
+    application.model.activeDiagram = application.model.activeDocument.byId(id)!;
   };
 
   return (
@@ -104,9 +104,9 @@ type DocumentsContextMenuProps = {
 export const DocumentTabs = (props: Props) => {
   const application = useApplication();
   const redraw = useRedraw();
-  useEventListener(props.document, 'diagramremoved', redraw);
-  useEventListener(props.document, 'diagramchanged', redraw);
-  useEventListener(props.document, 'diagramadded', redraw);
+  useEventListener(props.document, 'diagramRemoved', redraw);
+  useEventListener(props.document, 'diagramChanged', redraw);
+  useEventListener(props.document, 'diagramAdded', redraw);
 
   // The selection can be different from the active diagram as the selection
   // is the "root" of the activeDiagram
@@ -118,11 +118,11 @@ export const DocumentTabs = (props: Props) => {
       <Tabs.Root
         value={selection}
         onValueChange={d => {
-          application.model.activeDiagram = props.document.getById(d)!;
+          application.model.activeDiagram = props.document.byId(d)!;
         }}
       >
         <Tabs.List className="cmp-document-tabs__tabs" aria-label="Diagrams in document">
-          {props.document.topLevelDiagrams.map(d => (
+          {props.document.diagrams.map(d => (
             <Tabs.Trigger
               key={d.id}
               className="cmp-document-tabs__tab-trigger util-vcenter"

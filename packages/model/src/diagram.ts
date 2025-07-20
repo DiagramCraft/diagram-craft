@@ -81,23 +81,15 @@ export type DiagramCRDT = {
   id: string;
   parent: string | undefined;
   name: string;
-  canvasW: number;
-  canvasH: number;
-  canvasX: number;
-  canvasY: number;
+  canvas: Omit<Box, 'r'>;
   props: FlatCRDTMap;
   layers: CRDTMap<LayerManagerCRDT>;
 };
 
 export const makeDiagramMapper = (doc: DiagramDocument): CRDTMapper<Diagram, DiagramCRDT> => {
   return {
-    fromCRDT(e: CRDTMap<DiagramCRDT>): Diagram {
-      return new Diagram(e.get('id')!, e.get('name')!, doc, e);
-    },
-
-    toCRDT(e: Diagram): CRDTMap<DiagramCRDT> {
-      return e.crdt;
-    }
+    fromCRDT: (e: CRDTMap<DiagramCRDT>) => new Diagram(e.get('id')!, e.get('name')!, doc, e),
+    toCRDT: (e: Diagram) => e.crdt
   };
 };
 
@@ -113,13 +105,14 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   #document: DiagramDocument | undefined;
 
   readonly uid = newid();
-  readonly crdt: CRDTMap<DiagramCRDT>;
+  readonly _crdt: WatchableValue<CRDTMap<DiagramCRDT>>;
   mustCalculateIntersections = true;
 
   // Shared properties
   readonly #name: CRDTProp<DiagramCRDT, 'name'>;
   readonly #id: CRDTProp<DiagramCRDT, 'id'>;
   readonly #parent: CRDTProp<DiagramCRDT, 'parent'>;
+  readonly #canvas: CRDTProp<DiagramCRDT, 'canvas'>;
   readonly #props: CRDTObject<DiagramProps>;
 
   readonly layers: LayerManager;
@@ -141,22 +134,38 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   constructor(id: string, name: string, document: DiagramDocument, crdt?: CRDTMap<DiagramCRDT>) {
     super();
 
-    this.crdt = crdt ?? document.root.factory.makeMap();
-    this.crdt.set('id', id);
-    this.crdt.set('name', name);
-
-    const propsMap = this.crdt.get('props', () => document.root.factory.makeMap())!;
-
-    this.#props = new CRDTObject<DiagramProps>(new WatchableValue(propsMap), () => {
-      this.update();
-    });
+    // TODO: This WatchableValue is not fully used correctly
+    this._crdt = new WatchableValue(crdt ?? document.root.factory.makeMap());
 
     this.#document = document;
 
+    this.#name = new CRDTProp(this._crdt, 'name', {
+      onRemoteChange: () => this.emitDiagramChange('metadata'),
+      initialValue: name
+    });
+    this.#id = new CRDTProp(this._crdt, 'id', {
+      onRemoteChange: () => this.emitDiagramChange('metadata'),
+      initialValue: id,
+      cache: true
+    });
+    this.#parent = new CRDTProp(this._crdt, 'parent', {
+      onRemoteChange: () => this.emitDiagramChange('metadata')
+    });
+    this.#canvas = new CRDTProp(this._crdt, 'canvas', {
+      onRemoteChange: () => this.emitDiagramChange('content'),
+      initialValue: DEFAULT_CANVAS
+    });
+
+    this.#props = new CRDTObject<DiagramProps>(
+      new WatchableValue(this._crdt.get().get('props', () => document.root.factory.makeMap())!),
+      () => this.emitDiagramChange('content')
+    );
+
     this.layers = new LayerManager(
       this,
-      this.crdt.get('layers', () => document.root.factory.makeMap())!
+      this._crdt.get().get('layers', () => document.root.factory.makeMap())!
     );
+
     this.viewBox = new Viewbox(this.canvas);
 
     // TODO: We should be able to remove this
@@ -180,34 +189,28 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     this.on('elementAdd', toggleMustCalculateIntersections);
     this.on('elementRemove', toggleMustCalculateIntersections);
     toggleMustCalculateIntersections();
-
-    const metadataUpdate = () => {
-      this.emit('change', { diagram: this });
-      this.document.emit('diagramchanged', { diagram: this });
-    };
-
-    const crdtWatchableValue = new WatchableValue(this.crdt);
-    this.#name = new CRDTProp(crdtWatchableValue, 'name', { onRemoteChange: metadataUpdate });
-    this.#id = new CRDTProp(crdtWatchableValue, 'id', { onRemoteChange: metadataUpdate });
-    this.#parent = new CRDTProp(crdtWatchableValue, 'parent', { onRemoteChange: metadataUpdate });
   }
 
   get id() {
-    return this.#id.get()!;
+    return this.#id.getNonNull();
   }
 
   get name() {
-    return this.#name.get()!;
+    return this.#name.getNonNull();
   }
 
   set name(n: string) {
     this.#name.set(n);
-    this.emit('change', { diagram: this });
-    this.document.emit('diagramchanged', { diagram: this });
+    this.emitDiagramChange('metadata');
   }
 
   get props() {
     return this.#props.get();
+  }
+
+  updateProps(callback: (props: DiagramProps) => void) {
+    this.#props.update(callback);
+    this.emitDiagramChange('content');
   }
 
   get parent() {
@@ -216,70 +219,23 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
   set _parent(p: string | undefined) {
     this.#parent.set(p);
-    this.emit('change', { diagram: this });
-    this.document.emit('diagramchanged', { diagram: this });
+    this.emitDiagramChange('metadata');
   }
 
   get diagrams(): Diagram[] {
     return [...this.#document!.diagramIterator({ nest: true })].filter(d => d.parent === this.id);
   }
 
-  updateProps(callback: (props: DiagramProps) => void) {
-    this.#props.update(callback);
-    this.update();
-  }
-
-  // TODO: This should be removed
-  merge(other: Diagram) {
-    // @ts-ignore
-    this.uid = other.uid;
-    // @ts-ignore
-    this.viewBox = other.viewBox;
-    // @ts-ignore
-    this.nodeLookup = other.nodeLookup;
-    // @ts-ignore
-    this.edgeLookup = other.edgeLookup;
-    // @ts-ignore
-    this.selectionState = other.selectionState;
-    // @ts-ignore
-    this.layers = other.layers;
-    // @ts-ignore
-    other.layers.diagram = this;
-
-    // @ts-ignore
-    this.snapManagerConfig = other.snapManagerConfig;
-    // @ts-ignore
-    this.undoManager = other.undoManager;
-
-    this._parent ??= other.parent;
-
-    this.mustCalculateIntersections = other.mustCalculateIntersections;
+  get crdt() {
+    return this._crdt.get();
   }
 
   emit<K extends EventKey<DiagramEvents>>(eventName: K, params?: DiagramEvents[K]) {
     // This is triggered for instance when a rule layer toggles visibility
     if (eventName === 'change') {
-      for (const k of this.edgeLookup.values()) {
-        k.cache.clear();
-      }
-      for (const k of this.nodeLookup.values()) {
-        k.cache.clear();
-      }
-
-      // Need to handle all referenced layers separately as the edgeLookup and nodeLookup
-      // won't contain these elements
-      for (const l of this.layers.all) {
-        if (l.type === 'reference') {
-          const resolved = l.resolve();
-          if (resolved?.type === 'regular') {
-            for (const e of (resolved as RegularLayer).elements) {
-              if (e instanceof DiagramNode || e instanceof DiagramEdge) {
-                e.cache.clear();
-              }
-            }
-          }
-        }
-      }
+      this.edgeLookup.forEach(v => v.cache.clear());
+      this.nodeLookup.forEach(v => v.cache.clear());
+      this.layers.clearCache();
     }
     super.emit(eventName, params);
   }
@@ -288,7 +244,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     return this.layers.active;
   }
 
-  set document(d: DiagramDocument) {
+  set _document(d: DiagramDocument) {
     this.#document = d;
   }
 
@@ -336,22 +292,12 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   }
 
   get canvas() {
-    return {
-      w: this.crdt.get('canvasW') ?? DEFAULT_CANVAS.w,
-      h: this.crdt.get('canvasH') ?? DEFAULT_CANVAS.h,
-      x: this.crdt.get('canvasX') ?? DEFAULT_CANVAS.x,
-      y: this.crdt.get('canvasY') ?? DEFAULT_CANVAS.y
-    };
+    return this.#canvas.getNonNull();
   }
 
   set canvas(b: Canvas) {
-    this.document.transact(() => {
-      this.crdt.set('canvasX', b.x);
-      this.crdt.set('canvasY', b.y);
-      this.crdt.set('canvasW', b.w);
-      this.crdt.set('canvasH', b.h);
-    });
-    this.update();
+    this.#canvas.set(b);
+    this.emitDiagramChange('content');
   }
 
   // TODO: Check layer level events are emitted
@@ -452,6 +398,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     uow.updateDiagram();
   }
 
+  // TODO: No need for this to be in Diagram
   transformElements(
     elements: ReadonlyArray<DiagramElement>,
     transforms: ReadonlyArray<Transform>,
@@ -468,12 +415,8 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     }
   }
 
-  // TODO: Remove this
-  /** @deprecated */
-  update() {
-    this.emit('change', { diagram: this });
-  }
-
+  /*
+  TODO: Remove
   toJSON() {
     return {
       parent: this.parent,
@@ -484,8 +427,43 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
       layers: this.layers
     };
   }
+   */
 
   getAttachmentsInUse() {
     return this.layers.getAttachmentsInUse();
+  }
+
+  emitDiagramChange(type: 'content' | 'metadata') {
+    this.emit('change', { diagram: this });
+    if (type === 'metadata') {
+      this.document.emit('diagramChanged', { diagram: this });
+    }
+  }
+
+  // TODO: This should be removed
+  merge(other: Diagram) {
+    // @ts-ignore
+    this.uid = other.uid;
+    // @ts-ignore
+    this.viewBox = other.viewBox;
+    // @ts-ignore
+    this.nodeLookup = other.nodeLookup;
+    // @ts-ignore
+    this.edgeLookup = other.edgeLookup;
+    // @ts-ignore
+    this.selectionState = other.selectionState;
+    // @ts-ignore
+    this.layers = other.layers;
+    // @ts-ignore
+    other.layers.diagram = this;
+
+    // @ts-ignore
+    this.snapManagerConfig = other.snapManagerConfig;
+    // @ts-ignore
+    this.undoManager = other.undoManager;
+
+    this._parent ??= other.parent;
+
+    this.mustCalculateIntersections = other.mustCalculateIntersections;
   }
 }

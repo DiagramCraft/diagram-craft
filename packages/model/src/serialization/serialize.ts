@@ -23,7 +23,7 @@ export const serializeDiagramDocument = async (
   document: DiagramDocument
 ): Promise<SerializedDiagramDocument> => {
   return {
-    diagrams: document.topLevelDiagrams.map(serializeDiagram),
+    diagrams: document.diagrams.map(serializeDiagram),
     attachments: await serializeAttachments(document.attachments),
     customPalette: serializeCustomPalette(document.customPalette),
     styles: serializeStyles(document.styles),
@@ -38,7 +38,7 @@ export const serializeDiagramDocument = async (
     data: {
       providerId: document.data.provider?.id,
       data: document.data.provider?.serialize(),
-      templates: document.data.templates.all()
+      templates: document.data.templates.all
     }
   };
 };

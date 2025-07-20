@@ -44,7 +44,7 @@ export class MappedCRDTOrderedMap<
     };
 
     crdt.on('remoteUpdate', e => {
-      if (props?.allowUpdates) {
+      if (props?.allowUpdates || props?.allowUpdates === undefined) {
         const entryMap = Object.fromEntries(this.#entries);
 
         const idx = this.#entries.findIndex(entry => entry[0] === e.key);

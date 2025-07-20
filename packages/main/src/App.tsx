@@ -189,7 +189,7 @@ export const App = (props: {
       );
       doc.url = url;
 
-      updateApplicationModel(doc.topLevelDiagrams[0], application.current, progressCallback);
+      updateApplicationModel(doc.diagrams[0], application.current, progressCallback);
 
       Autosave.clear();
       setDirty(false);
@@ -218,7 +218,7 @@ export const App = (props: {
   };
 
   useOnChange(props.doc, () => {
-    updateApplicationModel(props.doc.topLevelDiagrams[0], application.current, progressCallback);
+    updateApplicationModel(props.doc.diagrams[0], application.current, progressCallback);
   });
 
   const [dirty, setDirty] = useState(Autosave.exists());
@@ -256,9 +256,9 @@ export const App = (props: {
   useEventListener($d, 'elementAdd', autosave);
   useEventListener($d, 'elementChange', autosave);
   useEventListener($d, 'elementRemove', autosave);
-  useEventListener(doc, 'diagramremoved', autosave);
-  useEventListener(doc, 'diagramadded', autosave);
-  useEventListener(doc, 'diagramchanged', autosave);
+  useEventListener(doc, 'diagramRemoved', autosave);
+  useEventListener(doc, 'diagramAdded', autosave);
+  useEventListener(doc, 'diagramChanged', autosave);
   useEventListener(doc.data, 'change', autosave);
 
   useEffect(() => bindDocumentDragAndDrop());
