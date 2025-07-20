@@ -90,9 +90,7 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
           this._diagram.register(e);
 
           const uow = getRemoteUnitOfWork(this._diagram);
-
-          // TODO: Shouldn't this be addElement
-          uow.updateElement(e);
+          uow.addElement(e);
           uow.updateElement(this);
         },
         onRemoteChange: e => {

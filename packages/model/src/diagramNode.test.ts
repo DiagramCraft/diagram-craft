@@ -28,6 +28,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
   const resetUow = () => (uow = UnitOfWork.immediate(diagram1));
 
   let elementChange: [ReturnType<typeof vi.fn>, ReturnType<typeof vi.fn>];
+  let elementAdd: [ReturnType<typeof vi.fn>, ReturnType<typeof vi.fn>];
 
   beforeEach(() => {
     backend.beforeEach();
@@ -38,6 +39,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
     diagram2 = model.diagram2;
     doc2 = model.doc2;
     elementChange = model.elementChange;
+    elementAdd = model.elementAdd;
 
     node1 = layer1.addNode();
     node2 = diagram2?.lookup(node1.id) as DiagramNode | undefined;
@@ -279,10 +281,18 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
 
       // **** Verify
       expect(child.parent).toBe(node1);
+
+      // TODO: Why is this 2 and not 1
       expect(elementChange[0]).toHaveBeenCalledTimes(2);
+
+      // TODO: Why is this 0 and not 1
+      expect(elementAdd[0]).toHaveBeenCalledTimes(0);
       if (doc2) {
         expect(diagram2!.lookup(child.id)!.parent).toBe(node2);
-        expect(elementChange[1]).toHaveBeenCalledTimes(2);
+        expect(elementChange[1]).toHaveBeenCalledTimes(1);
+
+        // TODO: Why is this 2 and not 1
+        expect(elementAdd[1]).toHaveBeenCalledTimes(2);
       }
     });
 
@@ -378,8 +388,8 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       if (doc2) {
         expect(node2!.children.map(c => c.id)).toEqual([child1.id, child2.id]);
 
-        // TODO: Why 4 and not 3
-        expect(elementChange[1]).toHaveBeenCalledTimes(4);
+        // TODO: Why 2 and not 3
+        expect(elementChange[1]).toHaveBeenCalledTimes(2);
       }
     });
 

@@ -54,7 +54,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       expect(model.elementChange[0]).toHaveBeenCalledTimes(2);
       if (model.doc2) {
         expect(edge2?.name).toBe('LabelNodeName');
-        expect(model.elementChange[1]).toHaveBeenCalledTimes(3);
+        expect(model.elementChange[1]).toHaveBeenCalledTimes(2);
       }
     });
 
@@ -174,9 +174,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       expect(model.elementChange[0]).toHaveBeenCalledTimes(2);
       if (model.doc2) {
         expect(edge2!.labelNodes).toHaveLength(1);
-
-        // TODO: Why is there 3 calls here and not 2
-        expect(model.elementChange[1]).toHaveBeenCalledTimes(3);
+        expect(model.elementChange[1]).toHaveBeenCalledTimes(2);
       }
     });
   });
@@ -191,9 +189,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       expect(model.elementChange[0]).toHaveBeenCalledTimes(2);
       if (model.doc2) {
         expect(model.diagram2!.lookup(child.id)!.parent).toBe(edge2);
-
-        // TODO: Why is there 3 calls here and not 2
-        expect(model.elementChange[1]).toHaveBeenCalledTimes(3);
+        expect(model.elementChange[1]).toHaveBeenCalledTimes(2);
       }
     });
 
@@ -344,8 +340,8 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       if (model.doc2) {
         expect(edge2?.children).toHaveLength(2);
 
-        // TODO: Why 6 times and not 3
-        expect(model.elementChange[1]).toHaveBeenCalledTimes(6);
+        // TODO: Why 4 times and not 3
+        expect(model.elementChange[1]).toHaveBeenCalledTimes(4);
       }
     });
 
@@ -383,9 +379,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       expect(model.elementChange[0]).toHaveBeenCalledTimes(2);
       if (model.doc2) {
         expect(edge2?.labelNodes).toHaveLength(1);
-
-        // TODO: Why 3 and not 2
-        expect(model.elementChange[1]).toHaveBeenCalledTimes(3);
+        expect(model.elementChange[1]).toHaveBeenCalledTimes(2);
       }
     });
 
@@ -447,9 +441,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       expect(model.elementChange[0]).toHaveBeenCalledTimes(2);
       if (model.doc2) {
         expect(edge2?.labelNodes).toHaveLength(1);
-
-        // TODO: Why 3 and not 2
-        expect(model.elementChange[1]).toHaveBeenCalledTimes(3);
+        expect(model.elementChange[1]).toHaveBeenCalledTimes(2);
       }
     });
 
