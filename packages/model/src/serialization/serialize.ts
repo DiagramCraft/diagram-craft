@@ -38,7 +38,7 @@ export const serializeDiagramDocument = async (
     data: {
       providerId: document.data.provider?.id,
       data: document.data.provider?.serialize(),
-      templates: document.data.templates.all()
+      templates: document.data.templates.all
     }
   };
 };

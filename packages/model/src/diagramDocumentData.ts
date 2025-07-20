@@ -74,14 +74,14 @@ const DEFAULT_SCHEMA: DataSchema[] = [
   }
 ];
 
-const PROVIDER = 'provider';
-
 export class DiagramDocumentData extends EventEmitter<{ change: void }> {
-  readonly #crdt: CRDTMap<Record<string, string>>;
+  // Shared properties
   readonly #schemas: DiagramDocumentDataSchemas;
   readonly #templates: DiagramDocumentDataTemplates;
 
+  // Transient properties
   #provider: DataProvider | undefined;
+  readonly #crdt: CRDTMap<Record<string, string>>;
 
   readonly #updateDataListener: (data: { data: Data[] }) => void;
   readonly #deleteDataListener: (data: { data: Data[] }) => void;
@@ -107,10 +107,8 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
     this.#templates.on('remove', () => this.emit('change'));
     this.#templates.on('update', () => this.emit('change'));
 
-    const updateProvider = (
-      e: CRDTMapEvents<string>['remoteUpdate'] | CRDTMapEvents<string>['remoteInsert']
-    ) => {
-      if (e.key !== PROVIDER) return;
+    const updateProvider = (e: CRDTMapEvents['remoteUpdate'] | CRDTMapEvents['remoteInsert']) => {
+      if (e.key !== 'provider') return;
       if (e.value.length === 0) {
         this.setProviderInternal(undefined);
       } else {
@@ -151,14 +149,12 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
   setProvider(dataProvider: DataProvider | undefined, initial = false) {
     this.setProviderInternal(dataProvider, initial);
 
-    if (this.#provider) {
-      this.#crdt.set(
-        PROVIDER,
-        JSON.stringify({ id: this.#provider!.id, data: this.#provider!.serialize() })
-      );
-    } else {
-      this.#crdt.set(PROVIDER, '');
-    }
+    this.#crdt.set(
+      'provider',
+      this.#provider
+        ? JSON.stringify({ id: this.#provider!.id, data: this.#provider!.serialize() })
+        : ''
+    );
   }
 
   get schemas() {

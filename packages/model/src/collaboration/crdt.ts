@@ -46,7 +46,8 @@ export interface CRDTRoot extends Emitter<CRDTRootEvents> {
   transact(callback: () => void): void;
 }
 
-export type CRDTMapEvents<T extends CRDTCompatibleObject> = {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type CRDTMapEvents<T extends CRDTCompatibleObject = any> = {
   remoteInsert: { key: string; value: T };
   remoteDelete: { key: string; value: T };
   remoteUpdate: { key: string; value: T };

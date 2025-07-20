@@ -2,6 +2,7 @@ import type { DataTemplate } from './diagramDocument';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { assert } from '@diagram-craft/utils/assert';
 import { CRDTMap, CRDTRoot } from './collaboration/crdt';
+import { deepClone } from '@diagram-craft/utils/object';
 
 export class DiagramDocumentDataTemplates extends EventEmitter<{
   update: { template: DataTemplate };
@@ -18,11 +19,13 @@ export class DiagramDocumentDataTemplates extends EventEmitter<{
     this.#templates.on('remoteUpdate', p => this.emit('update', { template: p.value }));
     this.#templates.on('remoteDelete', p => this.emit('remove', { template: p.value }));
 
-    if (templates) this.replaceBy(templates);
+    if (templates && this.all.length === 0) {
+      this.replaceBy(templates);
+    }
   }
 
   add(template: DataTemplate) {
-    this.#templates.set(template.id, template);
+    this.#templates.set(template.id, deepClone(template));
     this.emit('add', { template });
   }
 
@@ -35,11 +38,11 @@ export class DiagramDocumentDataTemplates extends EventEmitter<{
   }
 
   update(template: DataTemplate) {
-    this.#templates.set(template.id, template);
+    this.#templates.set(template.id, deepClone(template));
     this.emit('update', { template: template });
   }
 
-  all() {
+  get all() {
     return Array.from(this.#templates.values());
   }
 
@@ -48,7 +51,7 @@ export class DiagramDocumentDataTemplates extends EventEmitter<{
   }
 
   bySchema(schema: string) {
-    return this.all().filter(t => t.schemaId === schema);
+    return this.all.filter(t => t.schemaId === schema);
   }
 
   replaceBy(templates: DataTemplate[]) {
