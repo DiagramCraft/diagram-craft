@@ -8,6 +8,7 @@ import { TestDiagramBuilder, TestLayerBuilder, TestModel } from '../../test-supp
 import type { RegularLayer } from '../../diagramLayerRegular';
 import type { DiagramDocument } from '../../diagramDocument';
 import type { Diagram } from '../../diagram';
+import { UnitOfWork } from '../../unitOfWork';
 
 export type Backend = {
   syncedDocs: () => [CRDTRoot, CRDTRoot | undefined];
@@ -53,9 +54,7 @@ export const resetListeners = (listeners: Array<ReturnType<typeof vi.fn>>) => {
   listeners.forEach(l => l.mockReset());
 };
 
-export const standardTestModel = (
-  backend: Backend
-): {
+export type StandardTestModel = {
   root1: CRDTRoot;
   root2: CRDTRoot | undefined;
   diagram1: TestDiagramBuilder;
@@ -68,7 +67,9 @@ export const standardTestModel = (
   elementAdd: [ReturnType<typeof vi.fn>, ReturnType<typeof vi.fn>];
   elementRemove: [ReturnType<typeof vi.fn>, ReturnType<typeof vi.fn>];
   reset: () => void;
-} => {
+  uow: UnitOfWork;
+};
+export const standardTestModel = (backend: Backend): StandardTestModel => {
   const [root1, root2] = backend.syncedDocs();
 
   const diagram1 = TestModel.newDiagram(root1);
@@ -103,6 +104,7 @@ export const standardTestModel = (
     elementChange,
     elementAdd,
     elementRemove,
+    uow: UnitOfWork.immediate(diagram1),
     reset: () => {
       resetListeners(elementRemove);
       resetListeners(elementChange);
