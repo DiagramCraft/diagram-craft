@@ -13,6 +13,7 @@ export class CRDTProp<
     private readonly props: {
       onRemoteChange?: () => void;
       factory?: () => T[N];
+      initialValue?: T[N];
     } = {}
   ) {
     props.onRemoteChange ??= () => {};
@@ -37,6 +38,10 @@ export class CRDTProp<
       oldCrdt = crdt.get();
       oldCrdt.get(name, props.factory);
     });
+
+    if (!this.crdt.get().has(this.name) && props.initialValue !== undefined) {
+      this.crdt.get().set(this.name, props.initialValue);
+    }
   }
 
   get() {

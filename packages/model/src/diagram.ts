@@ -117,6 +117,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   readonly #name: CRDTProp<DiagramCRDT, 'name'>;
   readonly #id: CRDTProp<DiagramCRDT, 'id'>;
   readonly #parent: CRDTProp<DiagramCRDT, 'parent'>;
+  readonly #canvas: CRDTProp<DiagramCRDT, 'canvas'>;
   readonly #props: CRDTObject<DiagramProps>;
 
   readonly layers: LayerManager;
@@ -139,10 +140,25 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     super();
 
     this.crdt = crdt ?? document.root.factory.makeMap();
-    this.crdt.set('id', id);
-    this.crdt.set('name', name);
 
     this.#document = document;
+
+    const crdtWatchableValue = new WatchableValue(this.crdt);
+    this.#name = new CRDTProp(crdtWatchableValue, 'name', {
+      onRemoteChange: () => this.emitDiagramChange('metadata'),
+      initialValue: name
+    });
+    this.#id = new CRDTProp(crdtWatchableValue, 'id', {
+      onRemoteChange: () => this.emitDiagramChange('metadata'),
+      initialValue: id
+    });
+    this.#parent = new CRDTProp(crdtWatchableValue, 'parent', {
+      onRemoteChange: () => this.emitDiagramChange('metadata')
+    });
+    this.#canvas = new CRDTProp(crdtWatchableValue, 'canvas', {
+      onRemoteChange: () => this.emitDiagramChange('content'),
+      initialValue: DEFAULT_CANVAS
+    });
 
     this.#props = new CRDTObject<DiagramProps>(
       new WatchableValue(this.crdt.get('props', () => document.root.factory.makeMap())!),
@@ -153,6 +169,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
       this,
       this.crdt.get('layers', () => document.root.factory.makeMap())!
     );
+
     this.viewBox = new Viewbox(this.canvas);
 
     // TODO: We should be able to remove this
@@ -176,25 +193,14 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     this.on('elementAdd', toggleMustCalculateIntersections);
     this.on('elementRemove', toggleMustCalculateIntersections);
     toggleMustCalculateIntersections();
-
-    const crdtWatchableValue = new WatchableValue(this.crdt);
-    this.#name = new CRDTProp(crdtWatchableValue, 'name', {
-      onRemoteChange: () => this.emitDiagramChange('metadata')
-    });
-    this.#id = new CRDTProp(crdtWatchableValue, 'id', {
-      onRemoteChange: () => this.emitDiagramChange('metadata')
-    });
-    this.#parent = new CRDTProp(crdtWatchableValue, 'parent', {
-      onRemoteChange: () => this.emitDiagramChange('metadata')
-    });
   }
 
   get id() {
-    return this.#id.get()!;
+    return this.#id.getNonNull();
   }
 
   get name() {
-    return this.#name.get()!;
+    return this.#name.getNonNull();
   }
 
   set name(n: string) {
@@ -227,13 +233,8 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   emit<K extends EventKey<DiagramEvents>>(eventName: K, params?: DiagramEvents[K]) {
     // This is triggered for instance when a rule layer toggles visibility
     if (eventName === 'change') {
-      for (const k of this.edgeLookup.values()) {
-        k.cache.clear();
-      }
-      for (const k of this.nodeLookup.values()) {
-        k.cache.clear();
-      }
-
+      this.edgeLookup.forEach(v => v.cache.clear());
+      this.nodeLookup.forEach(v => v.cache.clear());
       this.layers.clearCache();
     }
     super.emit(eventName, params);
@@ -291,17 +292,11 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   }
 
   get canvas() {
-    const canvas = this.crdt.get('canvas');
-    return {
-      w: canvas?.w ?? DEFAULT_CANVAS.w,
-      h: canvas?.h ?? DEFAULT_CANVAS.h,
-      x: canvas?.x ?? DEFAULT_CANVAS.x,
-      y: canvas?.y ?? DEFAULT_CANVAS.y
-    };
+    return this.#canvas.getNonNull();
   }
 
   set canvas(b: Canvas) {
-    this.crdt.set('canvas', b);
+    this.#canvas.set(b);
     this.emitDiagramChange('content');
   }
 
