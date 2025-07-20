@@ -19,6 +19,7 @@ import { UserState } from './UserState';
 import { CRDT } from '@diagram-craft/model/collaboration/crdt';
 import { CollaborationConfig } from '@diagram-craft/model/collaboration/collaborationConfig';
 import { ProgressCallback } from '@diagram-craft/model/types';
+import { newid } from '@diagram-craft/utils/id';
 
 stencilLoaderRegistry.drawioManual = () =>
   import('@diagram-craft/canvas-drawio/drawioLoaders').then(m => m.stencilLoaderDrawioManual);
@@ -151,7 +152,12 @@ const diagramFactory = (d: SerializedDiagram, doc: DiagramDocument) => {
 const documentFactory = async (url: string | undefined, statusCallback: ProgressCallback) => {
   const root = CRDT.makeRoot();
   if (url) {
-    await CollaborationConfig.Backend.connect(url, root, statusCallback);
+    if (location.hash !== '') {
+      // TODO: This is a hack for the testing setup
+      await CollaborationConfig.Backend.connect(url + '__' + newid(), root, statusCallback);
+    } else {
+      await CollaborationConfig.Backend.connect(url, root, statusCallback);
+    }
   }
 
   if (location.search.includes('crdtClear=true')) {
