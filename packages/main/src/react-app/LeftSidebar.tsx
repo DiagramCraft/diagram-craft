@@ -37,7 +37,7 @@ export const LeftSidebar = () => {
           document={application.model.activeDocument}
           value={application.model.activeDiagram.id}
           onValueChange={v => {
-            application.model.activeDiagram = application.model.activeDocument.getById(v)!;
+            application.model.activeDiagram = application.model.activeDocument.byId(v)!;
             application.actions = makeActionMap(defaultAppActions)(application);
           }}
         />

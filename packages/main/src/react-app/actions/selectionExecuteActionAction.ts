@@ -61,7 +61,7 @@ export class SelectionExecuteAction extends AbstractSelectionAction<Application,
         return;
 
       case 'diagram': {
-        const newDiagram = document.getById(node.renderProps.action.url);
+        const newDiagram = document.byId(node.renderProps.action.url);
         if (newDiagram === undefined) return;
 
         this.context.model.activeDiagram = newDiagram;

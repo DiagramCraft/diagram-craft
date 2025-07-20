@@ -88,13 +88,8 @@ export type DiagramCRDT = {
 
 export const makeDiagramMapper = (doc: DiagramDocument): CRDTMapper<Diagram, DiagramCRDT> => {
   return {
-    fromCRDT(e: CRDTMap<DiagramCRDT>): Diagram {
-      return new Diagram(e.get('id')!, e.get('name')!, doc, e);
-    },
-
-    toCRDT(e: Diagram): CRDTMap<DiagramCRDT> {
-      return e.crdt;
-    }
+    fromCRDT: (e: CRDTMap<DiagramCRDT>) => new Diagram(e.get('id')!, e.get('name')!, doc, e),
+    toCRDT: (e: Diagram) => e.crdt
   };
 };
 
@@ -110,7 +105,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   #document: DiagramDocument | undefined;
 
   readonly uid = newid();
-  readonly crdt: CRDTMap<DiagramCRDT>;
+  readonly _crdt: WatchableValue<CRDTMap<DiagramCRDT>>;
   mustCalculateIntersections = true;
 
   // Shared properties
@@ -139,35 +134,36 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   constructor(id: string, name: string, document: DiagramDocument, crdt?: CRDTMap<DiagramCRDT>) {
     super();
 
-    this.crdt = crdt ?? document.root.factory.makeMap();
+    // TODO: This WatchableValue is not fully used correctly
+    this._crdt = new WatchableValue(crdt ?? document.root.factory.makeMap());
 
     this.#document = document;
 
-    const crdtWatchableValue = new WatchableValue(this.crdt);
-    this.#name = new CRDTProp(crdtWatchableValue, 'name', {
+    this.#name = new CRDTProp(this._crdt, 'name', {
       onRemoteChange: () => this.emitDiagramChange('metadata'),
       initialValue: name
     });
-    this.#id = new CRDTProp(crdtWatchableValue, 'id', {
+    this.#id = new CRDTProp(this._crdt, 'id', {
       onRemoteChange: () => this.emitDiagramChange('metadata'),
-      initialValue: id
+      initialValue: id,
+      cache: true
     });
-    this.#parent = new CRDTProp(crdtWatchableValue, 'parent', {
+    this.#parent = new CRDTProp(this._crdt, 'parent', {
       onRemoteChange: () => this.emitDiagramChange('metadata')
     });
-    this.#canvas = new CRDTProp(crdtWatchableValue, 'canvas', {
+    this.#canvas = new CRDTProp(this._crdt, 'canvas', {
       onRemoteChange: () => this.emitDiagramChange('content'),
       initialValue: DEFAULT_CANVAS
     });
 
     this.#props = new CRDTObject<DiagramProps>(
-      new WatchableValue(this.crdt.get('props', () => document.root.factory.makeMap())!),
+      new WatchableValue(this._crdt.get().get('props', () => document.root.factory.makeMap())!),
       () => this.emitDiagramChange('content')
     );
 
     this.layers = new LayerManager(
       this,
-      this.crdt.get('layers', () => document.root.factory.makeMap())!
+      this._crdt.get().get('layers', () => document.root.factory.makeMap())!
     );
 
     this.viewBox = new Viewbox(this.canvas);
@@ -228,6 +224,16 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
   get diagrams(): Diagram[] {
     return [...this.#document!.diagramIterator({ nest: true })].filter(d => d.parent === this.id);
+  }
+
+  get crdt() {
+    return this._crdt.get();
+  }
+
+  detachCRDT(callback: () => void = () => {}) {
+    const clone = this._crdt.get().clone();
+    callback();
+    this._crdt.set(clone);
   }
 
   emit<K extends EventKey<DiagramEvents>>(eventName: K, params?: DiagramEvents[K]) {
@@ -436,7 +442,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   emitDiagramChange(type: 'content' | 'metadata') {
     this.emit('change', { diagram: this });
     if (type === 'metadata') {
-      this.document.emit('diagramchanged', { diagram: this });
+      this.document.emit('diagramChanged', { diagram: this });
     }
   }
 

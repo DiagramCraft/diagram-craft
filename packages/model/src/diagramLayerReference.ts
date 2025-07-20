@@ -47,7 +47,7 @@ export class ReferenceLayer<
   // TODO: Do we need to cache this
   resolve(): T | undefined {
     const layer = this.diagram.document
-      .getById(this.reference.diagramId)
+      .byId(this.reference.diagramId)
       ?.layers.byId(this.reference.layerId);
     return layer as unknown as T;
   }

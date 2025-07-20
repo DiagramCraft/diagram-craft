@@ -46,9 +46,9 @@ const DiagramTreeNode = (props: { diagram: Diagram } & Pick<Props, 'value' | 'on
 export const DocumentToolWindow = (props: Props) => {
   const document = useDocument();
   const redraw = useRedraw();
-  useEventListener(document, 'diagramchanged', redraw);
-  useEventListener(document, 'diagramadded', redraw);
-  useEventListener(document, 'diagramremoved', redraw);
+  useEventListener(document, 'diagramChanged', redraw);
+  useEventListener(document, 'diagramAdded', redraw);
+  useEventListener(document, 'diagramRemoved', redraw);
 
   return (
     <Accordion.Root disabled={true} type="multiple" defaultValue={['document']}>
@@ -56,7 +56,7 @@ export const DocumentToolWindow = (props: Props) => {
         <Accordion.ItemHeader>Document structure</Accordion.ItemHeader>
         <Accordion.ItemContent>
           <Tree.Root>
-            {props.document.topLevelDiagrams.map(node => (
+            {props.document.diagrams.map(node => (
               <Tree.Node key={node.id} isOpen={true}>
                 <Tree.NodeLabel>
                   <DiagramLabel diagram={node} onValueChange={props.onValueChange} />

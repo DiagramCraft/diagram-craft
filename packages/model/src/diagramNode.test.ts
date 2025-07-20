@@ -153,7 +153,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
 
       expect(node.getText()).toBe('LabelNodeName');
       if (model.doc2) {
-        const n = model.doc2.topLevelDiagrams[0].lookup(node.id) as DiagramNode;
+        const n = model.doc2.diagrams[0].lookup(node.id) as DiagramNode;
         expect(n.getText()).toBe('LabelNodeName');
       }
 
@@ -161,7 +161,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
 
       expect(node.getText()).toBe('LabelNodeName');
       if (model.doc2) {
-        const n = model.doc2.topLevelDiagrams[0].lookup(node.id) as DiagramNode;
+        const n = model.doc2.diagrams[0].lookup(node.id) as DiagramNode;
         expect(n.getText()).toBe('LabelNodeName');
       }
     });

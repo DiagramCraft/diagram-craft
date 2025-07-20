@@ -21,7 +21,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
 
       const d1 = TestModel.newDiagramWithLayer(root1);
       const layer1 = d1.layers.all[0] as RegularLayer;
-      const layer1_2 = doc2?.topLevelDiagrams[0].layers.all[0] as RegularLayer;
+      const layer1_2 = doc2?.diagrams[0].layers.all[0] as RegularLayer;
 
       const element = new DiagramNode('id1', layer1);
       layer1.addElement(element, UnitOfWork.immediate(d1));
@@ -39,7 +39,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
 
       const d1 = TestModel.newDiagramWithLayer(root1);
       const layer1 = d1.layers.all[0] as RegularLayer;
-      const layer1_2 = doc2?.topLevelDiagrams[0].layers.all[0] as RegularLayer;
+      const layer1_2 = doc2?.diagrams[0].layers.all[0] as RegularLayer;
 
       const element = new DiagramNode('id1', layer1);
       layer1.addElement(element, UnitOfWork.immediate(d1));
@@ -57,7 +57,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
 
       const d1 = TestModel.newDiagramWithLayer(root1);
       const layer1 = d1.layers.all[0] as RegularLayer;
-      const layer1_2 = doc2?.topLevelDiagrams[0].layers.all[0] as RegularLayer;
+      const layer1_2 = doc2?.diagrams[0].layers.all[0] as RegularLayer;
 
       const element = new DiagramNode('id1', layer1);
       layer1.addElement(element, UnitOfWork.immediate(d1));
@@ -86,7 +86,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       layer1.addElement(element, UnitOfWork.immediate(d1));
 
       d1.on('elementHighlighted', highlightedEvent1);
-      doc2?.topLevelDiagrams[0].on('elementHighlighted', highlightedEvent2);
+      doc2?.diagrams[0].on('elementHighlighted', highlightedEvent2);
 
       element.highlights = ['h1', 'h2'];
       await sleep(20);
@@ -104,7 +104,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
 
       const d1 = TestModel.newDiagramWithLayer(root1);
       const layer1 = d1.layers.all[0] as RegularLayer;
-      const layer1_2 = doc2?.topLevelDiagrams[0].layers.all[0] as RegularLayer;
+      const layer1_2 = doc2?.diagrams[0].layers.all[0] as RegularLayer;
 
       const element = new DiagramNode('id1', layer1);
       layer1.addElement(element, UnitOfWork.immediate(d1));
@@ -130,7 +130,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       layer1.addElement(element, UnitOfWork.immediate(d1));
 
       d1.on('elementChange', changeEvent1);
-      doc2?.topLevelDiagrams[0].on('elementChange', changeEvent2);
+      doc2?.diagrams[0].on('elementChange', changeEvent2);
 
       UnitOfWork.execute(d1, uow => element.updateMetadata(m => (m.style = 'lorem'), uow));
 

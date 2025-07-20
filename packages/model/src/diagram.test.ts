@@ -27,22 +27,22 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       // Setup
       const { doc1, doc2 } = standardTestModel(backend);
       const diagramChange = [vi.fn(), vi.fn()];
-      doc1.topLevelDiagrams[0].on('change', diagramChange[0]);
-      doc2?.topLevelDiagrams[0]?.on?.('change', diagramChange[1]);
+      doc1.diagrams[0].on('change', diagramChange[0]);
+      doc2?.diagrams[0]?.on?.('change', diagramChange[1]);
 
       const documentDiagramChange = [vi.fn(), vi.fn()];
-      doc1.on('diagramchanged', documentDiagramChange[0]);
-      doc2?.on?.('diagramchanged', documentDiagramChange[1]);
+      doc1.on('diagramChanged', documentDiagramChange[0]);
+      doc2?.on?.('diagramChanged', documentDiagramChange[1]);
 
       // Act
-      doc1.topLevelDiagrams[0].name = 'new';
+      doc1.diagrams[0].name = 'new';
 
       // Verify
-      expect(doc1.topLevelDiagrams[0].name).toBe('new');
+      expect(doc1.diagrams[0].name).toBe('new');
       expect(diagramChange[0]).toHaveBeenCalledTimes(1);
       expect(documentDiagramChange[0]).toHaveBeenCalledTimes(1);
       if (doc2) {
-        expect(doc2.topLevelDiagrams[0].name).toBe('new');
+        expect(doc2.diagrams[0].name).toBe('new');
         expect(diagramChange[1]).toHaveBeenCalledTimes(1);
         expect(documentDiagramChange[1]).toHaveBeenCalledTimes(1);
       }
@@ -55,8 +55,8 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       const { doc1, doc2 } = standardTestModel(backend);
 
       // Verify
-      expect(doc1.topLevelDiagrams[0].props).toEqual({});
-      if (doc2) expect(doc2.topLevelDiagrams[0].props).toEqual({});
+      expect(doc1.diagrams[0].props).toEqual({});
+      if (doc2) expect(doc2.diagrams[0].props).toEqual({});
     });
 
     it('should update props correctly', () => {
@@ -64,14 +64,14 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       const { doc1, doc2 } = standardTestModel(backend);
 
       const diagramChange = [vi.fn(), vi.fn()];
-      doc1.topLevelDiagrams[0].on('change', diagramChange[0]);
-      doc2?.topLevelDiagrams[0]?.on?.('change', diagramChange[1]);
+      doc1.diagrams[0].on('change', diagramChange[0]);
+      doc2?.diagrams[0]?.on?.('change', diagramChange[1]);
 
       const documentDiagramChange = [vi.fn(), vi.fn()];
-      doc1.on('diagramchanged', documentDiagramChange[0]);
-      doc2?.on?.('diagramchanged', documentDiagramChange[1]);
+      doc1.on('diagramChanged', documentDiagramChange[0]);
+      doc2?.on?.('diagramChanged', documentDiagramChange[1]);
 
-      const diagram = doc1.topLevelDiagrams[0];
+      const diagram = doc1.diagrams[0];
 
       // Act
       diagram.updateProps(props => {
@@ -84,7 +84,7 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       expect(diagramChange[0]).toHaveBeenCalledTimes(1);
       expect(documentDiagramChange[0]).toHaveBeenCalledTimes(0);
       if (doc2) {
-        expect(doc2.topLevelDiagrams[0].props).toEqual({ grid: { enabled: false } });
+        expect(doc2.diagrams[0].props).toEqual({ grid: { enabled: false } });
         expect(diagramChange[1]).toHaveBeenCalledTimes(1);
         expect(documentDiagramChange[1]).toHaveBeenCalledTimes(0);
       }
@@ -100,7 +100,7 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
         grid: { enabled: true }
       });
       if (doc2) {
-        expect(doc2.topLevelDiagrams[0].props).toEqual({
+        expect(doc2.diagrams[0].props).toEqual({
           grid: { enabled: true }
         });
       }
@@ -120,15 +120,15 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       const { doc1, doc2 } = standardTestModel(backend);
 
       const diagramChange = [vi.fn(), vi.fn()];
-      doc1.topLevelDiagrams[0].on('change', diagramChange[0]);
-      doc2?.topLevelDiagrams[0]?.on?.('change', diagramChange[1]);
+      doc1.diagrams[0].on('change', diagramChange[0]);
+      doc2?.diagrams[0]?.on?.('change', diagramChange[1]);
 
       const documentDiagramChange = [vi.fn(), vi.fn()];
-      doc1.on('diagramchanged', documentDiagramChange[0]);
-      doc2?.on?.('diagramchanged', documentDiagramChange[1]);
+      doc1.on('diagramChanged', documentDiagramChange[0]);
+      doc2?.on?.('diagramChanged', documentDiagramChange[1]);
 
       // Act
-      const diagram = doc1.topLevelDiagrams[0];
+      const diagram = doc1.diagrams[0];
       diagram.canvas = { x: 100, y: 100, w: 110, h: 100 };
 
       // Verify
@@ -136,7 +136,7 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       expect(diagramChange[0]).toHaveBeenCalledTimes(1);
       expect(documentDiagramChange[0]).toHaveBeenCalledTimes(0);
       if (doc2) {
-        expect(doc2.topLevelDiagrams[0].canvas).toEqual({ x: 100, y: 100, w: 110, h: 100 });
+        expect(doc2.diagrams[0].canvas).toEqual({ x: 100, y: 100, w: 110, h: 100 });
         expect(diagramChange[1]).toHaveBeenCalledTimes(1);
         expect(documentDiagramChange[1]).toHaveBeenCalledTimes(0);
       }

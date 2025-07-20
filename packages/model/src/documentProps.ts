@@ -23,7 +23,7 @@ class Query {
   }
 
   addHistory(entry: [string, string]) {
-    this.document.transact(() => {
+    this.document.root.transact(() => {
       this._history.insert(0, [entry]);
 
       for (let i = 1; i < this._history.length; i++) {

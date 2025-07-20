@@ -77,7 +77,7 @@ export const standardTestModel = (backend: Backend): StandardTestModel => {
   const layer1 = diagram1.newLayer();
 
   const doc2 = root2 ? TestModel.newDocument(root2) : undefined;
-  const diagram2 = root2 ? doc2!.topLevelDiagrams[0]! : undefined;
+  const diagram2 = root2 ? doc2!.diagrams[0]! : undefined;
   const layer2 = root2 ? (diagram2!.layers.all[0] as RegularLayer) : undefined;
 
   const elementChange: [ReturnType<typeof vi.fn>, ReturnType<typeof vi.fn>] = [vi.fn(), vi.fn()];

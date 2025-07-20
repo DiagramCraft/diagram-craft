@@ -7,6 +7,8 @@ export class CRDTProp<
   T extends { [key: string]: CRDTCompatibleObject },
   N extends keyof T & string
 > {
+  #cachedValue: T[N] | undefined;
+
   constructor(
     private readonly crdt: WatchableValue<CRDTMap<T>>,
     private readonly name: N,
@@ -14,6 +16,7 @@ export class CRDTProp<
       onRemoteChange?: () => void;
       factory?: () => T[N];
       initialValue?: T[N];
+      cache?: boolean;
     } = {}
   ) {
     props.onRemoteChange ??= () => {};
@@ -42,25 +45,43 @@ export class CRDTProp<
     if (!this.crdt.get().has(this.name) && props.initialValue !== undefined) {
       this.crdt.get().set(this.name, props.initialValue);
     }
+
+    if (props.cache) {
+      this.#cachedValue = this.get();
+    }
   }
 
   get() {
-    return this.crdt.get().get(this.name, this.props.factory);
+    return (
+      (this.props.cache ? this.#cachedValue : undefined) ??
+      this.crdt.get().get(this.name, this.props.factory)
+    );
   }
 
   getNonNull() {
-    const v = this.crdt.get().get(this.name, this.props.factory);
-    assert.present(v);
+    const v =
+      (this.props.cache ? this.#cachedValue : undefined) ??
+      this.crdt.get().get(this.name, this.props.factory);
+    assert.present(
+      v,
+      `Can't get ${this.name}. cache=${this.props.cache}, cachedValue=${this.#cachedValue}`
+    );
     return v;
   }
 
-  set(v: T[keyof T & string]) {
+  set(v: T[N]) {
     this.crdt.get().set(this.name, v);
+    if (this.props.cache) {
+      this.#cachedValue = v;
+    }
   }
 
-  init(v: T[keyof T & string]) {
+  init(v: T[N]) {
     if (!this.crdt.get().has(this.name)) {
       this.crdt.get().set(this.name, v);
+      if (this.props.cache) {
+        this.#cachedValue = v;
+      }
     }
   }
 }

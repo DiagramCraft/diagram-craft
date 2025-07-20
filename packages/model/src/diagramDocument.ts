@@ -25,9 +25,9 @@ import { ProgressCallback } from './types';
 import { MappedCRDTOrderedMap } from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 
 export type DocumentEvents = {
-  diagramchanged: { diagram: Diagram };
-  diagramadded: { diagram: Diagram };
-  diagramremoved: { diagram: Diagram };
+  diagramChanged: { diagram: Diagram };
+  diagramAdded: { diagram: Diagram };
+  diagramRemoved: { diagram: Diagram };
 };
 
 export type DataTemplate = {
@@ -44,15 +44,17 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
   readonly styles: DiagramStyles;
   readonly customPalette: DiagramPalette;
   readonly props: DocumentProps;
-  readonly #diagrams: MappedCRDTOrderedMap<Diagram, DiagramCRDT>;
   readonly data: DiagramDocumentData;
+
+  // Shared properties
+  readonly #diagrams: MappedCRDTOrderedMap<Diagram, DiagramCRDT>;
 
   // Transient properties
   url: string | undefined;
 
   constructor(
-    public readonly nodeDefinitions: NodeDefinitionRegistry,
-    public readonly edgeDefinitions: EdgeDefinitionRegistry,
+    readonly nodeDefinitions: NodeDefinitionRegistry,
+    readonly edgeDefinitions: EdgeDefinitionRegistry,
     isStencil?: boolean,
     crdtRoot?: CRDTRoot
   ) {
@@ -69,7 +71,6 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
       this.root.getMap('diagrams'),
       makeDiagramMapper(this),
       {
-        allowUpdates: true,
         onRemoteAdd: e => {
           this.root.on('remoteAfterTransaction', () => getRemoteUnitOfWork(e).commit(), e.id);
         },
@@ -83,10 +84,6 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     );
   }
 
-  transact(callback: () => void) {
-    this.root.transact(callback);
-  }
-
   activate(callback: ProgressCallback) {
     if (!this.url) return;
     CollaborationConfig.Backend.connect(this.url, this.root, callback);
@@ -96,10 +93,6 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     CollaborationConfig.Backend.disconnect(callback);
   }
 
-  get topLevelDiagrams() {
-    return this.#diagrams.values.filter(d => !d.parent);
-  }
-
   get definitions() {
     return {
       nodeDefinitions: this.nodeDefinitions,
@@ -107,11 +100,15 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     };
   }
 
+  get diagrams() {
+    return this.#diagrams.values.filter(d => !d.parent);
+  }
+
   *diagramIterator(opts: DiagramIteratorOpts = {}) {
     yield* diagramIterator(this.#diagrams.values, opts);
   }
 
-  getById(id: string) {
+  byId(id: string) {
     return Generators.first(
       this.diagramIterator({
         nest: true,
@@ -124,7 +121,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
   getDiagramPath(diagram: Diagram, startAt?: Diagram): Diagram[] {
     const dest: Diagram[] = [];
 
-    for (const d of startAt ? startAt.diagrams : this.topLevelDiagrams) {
+    for (const d of startAt ? startAt.diagrams : this.diagrams) {
       if (d === diagram) {
         dest.push(d);
       } else {
@@ -144,6 +141,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     //    precondition.is.false(!!this.getById(diagram.id));
 
     diagram._parent = parent?.id;
+    diagram._document = this;
 
     // TODO: This should be removed
     const existing = this.#diagrams.get(diagram.id);
@@ -153,21 +151,22 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
       this.#diagrams.add(diagram.id, diagram);
     }
 
-    diagram._document = this;
-
-    this.emit('diagramadded', { diagram: diagram });
+    this.emit('diagramAdded', { diagram: diagram });
   }
 
   removeDiagram(diagram: Diagram) {
+    diagram.detachCRDT();
     this.#diagrams.remove(diagram.id);
 
-    this.emit('diagramremoved', { diagram: diagram });
+    this.emit('diagramRemoved', { diagram: diagram });
   }
 
   changeDiagram(diagram: Diagram) {
-    this.emit('diagramchanged', { diagram: diagram });
+    this.emit('diagramChanged', { diagram: diagram });
   }
 
+  /*
+  TODO: Delete this if not needed
   toJSON() {
     return {
       diagrams: this.#diagrams.values,
@@ -176,6 +175,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
       customPalette: this.customPalette
     };
   }
+   */
 
   getAttachmentsInUse() {
     return [...this.diagramIterator({ nest: true }).flatMap(e => e.getAttachmentsInUse())];

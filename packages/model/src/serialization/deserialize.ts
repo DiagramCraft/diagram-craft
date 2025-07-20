@@ -179,7 +179,7 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
 ): Promise<void> => {
   const diagrams = document.diagrams;
 
-  doc.transact(() => {
+  doc.root.transact(() => {
     if (document.customPalette) {
       doc.customPalette.setColors(document.customPalette);
     }

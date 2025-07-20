@@ -557,7 +557,7 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
       styles1.addStylesheet('custom-node', customNodeStyle);
 
       // Act
-      styles1.deleteStylesheet('custom-node', UnitOfWork.immediate(document.topLevelDiagrams[0]));
+      styles1.deleteStylesheet('custom-node', UnitOfWork.immediate(document.diagrams[0]));
 
       // Verify
       expect(styles1.getNodeStyle('custom-node')).toBeUndefined();
@@ -573,10 +573,7 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
       const defaultNodeStyleId = styles.nodeStyles[0].id;
 
       // Try to delete the default node stylesheet
-      styles.deleteStylesheet(
-        defaultNodeStyleId,
-        UnitOfWork.immediate(document.topLevelDiagrams[0])
-      );
+      styles.deleteStylesheet(defaultNodeStyleId, UnitOfWork.immediate(document.diagrams[0]));
 
       // Verify it was not deleted
       expect(styles.getNodeStyle(defaultNodeStyleId)).toBeDefined();
@@ -611,7 +608,7 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
       expect(styles.activeNodeStylesheet.id).toBe('custom-node-2');
 
       // Delete custom-node-2
-      styles.deleteStylesheet('custom-node-2', UnitOfWork.immediate(document.topLevelDiagrams[0]));
+      styles.deleteStylesheet('custom-node-2', UnitOfWork.immediate(document.diagrams[0]));
 
       // Verify active stylesheet is updated
       expect(styles.activeNodeStylesheet.id).not.toBe('custom-node-2');
@@ -633,7 +630,7 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
       styles.setStylesheet(
         element as any,
         defaultNodeStyleId,
-        UnitOfWork.immediate(document.topLevelDiagrams[0]),
+        UnitOfWork.immediate(document.diagrams[0]),
         true
       );
 
@@ -654,7 +651,7 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
       styles.setStylesheet(
         element as any,
         defaultTextStyleId,
-        UnitOfWork.immediate(document.topLevelDiagrams[0]),
+        UnitOfWork.immediate(document.diagrams[0]),
         true
       );
 
@@ -687,7 +684,7 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
       styles.setStylesheet(
         element as any,
         defaultNodeStyleId,
-        UnitOfWork.immediate(document.topLevelDiagrams[0]),
+        UnitOfWork.immediate(document.diagrams[0]),
         true
       );
 

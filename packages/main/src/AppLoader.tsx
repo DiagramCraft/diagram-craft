@@ -82,7 +82,7 @@ export const AppLoader = (props: Props) => {
     }
   }, [doc, progress]);
 
-  if (doc && doc.topLevelDiagrams.length === 0) {
+  if (doc && doc.diagrams.length === 0) {
     console.error('Doc contains no diagrams');
     return null;
   }
