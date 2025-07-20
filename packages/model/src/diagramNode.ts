@@ -149,9 +149,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
         fromCRDT: (b: Box) => b
       },
       {
-        onRemoteChange: () => {
-          getRemoteUnitOfWork(this.diagram).updateElement(this);
-        }
+        onRemoteChange: () => getRemoteUnitOfWork(this.diagram).updateElement(this)
       }
     );
     this.#bounds.init(DEFAULT_BOUNDS);
