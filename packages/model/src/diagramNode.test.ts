@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { UnitOfWork } from './unitOfWork';
 import {
   TestDiagramBuilder,
@@ -6,11 +6,7 @@ import {
   TestLayerBuilder,
   TestModel
 } from './test-support/builder';
-import {
-  type Backend,
-  Backends,
-  standardTestModel
-} from './collaboration/yjs/collaborationTestUtils';
+import { Backends, standardTestModel } from './collaboration/yjs/collaborationTestUtils';
 import type { DiagramNode } from './diagramNode';
 import type { DiagramDocument } from './diagramDocument';
 import type { Diagram } from './diagram';
@@ -31,7 +27,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
 
   const resetUow = () => (uow = UnitOfWork.immediate(diagram1));
 
-  let elementChange: ReturnType<Backend['createFns']>;
+  let elementChange: [ReturnType<typeof vi.fn>, ReturnType<typeof vi.fn>];
 
   beforeEach(() => {
     backend.beforeEach();
@@ -333,7 +329,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       const child = layer1.createNode();
       node1.addChild(child, uow);
 
-      const elementRemove = backend.createFns();
+      const elementRemove = [vi.fn(), vi.fn()];
       diagram1.on('elementRemove', elementRemove[0]);
       if (diagram2) diagram2.on('elementRemove', elementRemove[1]);
 

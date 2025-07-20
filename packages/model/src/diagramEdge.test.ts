@@ -1,8 +1,8 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { UnitOfWork } from './unitOfWork';
 import { AnchorEndpoint, FreeEndpoint } from './endpoint';
 import { TestDiagramBuilder, TestLayerBuilder, TestModel } from './test-support/builder';
-import { type Backend, Backends } from './collaboration/yjs/collaborationTestUtils';
+import { Backends, resetListeners } from './collaboration/yjs/collaborationTestUtils';
 import type { DiagramDocument } from './diagramDocument';
 import { DiagramEdge } from './diagramEdge';
 import type { Diagram } from './diagram';
@@ -17,7 +17,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
   let doc2: DiagramDocument | undefined;
   let diagram2: Diagram | undefined;
 
-  let elementChange: ReturnType<Backend['createFns']>;
+  let elementChange: [ReturnType<typeof vi.fn>, ReturnType<typeof vi.fn>];
 
   beforeEach(() => {
     backend.beforeEach();
@@ -35,7 +35,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
     diagram2 = doc2?.topLevelDiagrams?.[0];
     edge1_2 = diagram2?.lookup(edge1.id) as DiagramEdge | undefined;
 
-    elementChange = backend.createFns();
+    elementChange = [vi.fn(), vi.fn()];
     diagram1.on('elementChange', elementChange[0]);
     if (diagram2) diagram2.on('elementChange', elementChange[1]);
   });
@@ -58,8 +58,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       }
 
       // Setup
-      elementChange[0].mockReset();
-      elementChange[1].mockReset();
+      resetListeners(elementChange);
 
       // **** Act
       const labelNode = node.asLabelNode();
@@ -282,15 +281,14 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
   describe('removeChild', () => {
     it('should remove the child from the children array', () => {
       // **** Setup
-      const elementRemove = backend.createFns();
+      const elementRemove = [vi.fn(), vi.fn()];
       diagram1.on('elementRemove', elementRemove[0]);
       if (diagram2) diagram2.on('elementRemove', elementRemove[1]);
 
       const child = layer1.createNode();
       edge1.addChild(child, uow);
 
-      elementChange[0].mockReset();
-      elementChange[1].mockReset();
+      resetListeners(elementChange);
 
       // **** Act
       UnitOfWork.execute(diagram1, uow => edge1.removeChild(child, uow));
@@ -506,7 +504,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       const labelNode = layer1.createNode().asLabelNode();
       edge1.addLabelNode(labelNode, uow);
 
-      const elementChange = backend.createFns();
+      const elementChange = [vi.fn(), vi.fn()];
       diagram1.on('elementChange', elementChange[0]);
       if (diagram2) diagram2.on('elementChange', elementChange[1]);
 
