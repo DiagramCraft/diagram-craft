@@ -7,20 +7,21 @@ import type { Diagram, DiagramEvents } from './diagram';
 import { EventKey } from '@diagram-craft/utils/event';
 import type { AdjustmentRule } from './diagramLayerRuleTypes';
 import type { LayerManager } from './diagramLayerManager';
+import { newid } from '@diagram-craft/utils/id';
 
 type ActionCallback = () => void;
 
 type ChangeType = 'interactive' | 'non-interactive';
 
-const remoteUnitOfWorkRegistry = new Map<Diagram, UnitOfWork>();
+const remoteUnitOfWorkRegistry = new Map<string, UnitOfWork>();
 
 export const getRemoteUnitOfWork = (diagram: Diagram) => {
-  let uow = remoteUnitOfWorkRegistry.get(diagram);
+  let uow = remoteUnitOfWorkRegistry.get(diagram.id);
   if (!uow) {
-    uow = new UnitOfWork(diagram, false, false);
-    remoteUnitOfWorkRegistry.set(diagram, uow);
+    uow = new UnitOfWork(diagram, false, false, true);
+    remoteUnitOfWorkRegistry.set(diagram.id, uow);
     uow.registerOnCommitCallback('remoteCleanup', undefined, () => {
-      remoteUnitOfWorkRegistry.delete(diagram);
+      remoteUnitOfWorkRegistry.delete(diagram.id);
     });
   }
   return uow;
@@ -131,6 +132,8 @@ const registry =
       };
 
 export class UnitOfWork {
+  uid = newid();
+
   #elementsToUpdate = new Map<string, Trackable>();
   #elementsToRemove = new Map<string, Trackable>();
   #elementsToAdd = new Map<string, Trackable>();
@@ -148,7 +151,8 @@ export class UnitOfWork {
   constructor(
     readonly diagram: Diagram,
     public trackChanges: boolean = false,
-    public isThrowaway: boolean = false
+    public isThrowaway: boolean = false,
+    public isRemote: boolean = false
   ) {
     registry.register(this, this.isThrowaway.toString() + ';' + new Error().stack, this);
   }
@@ -241,6 +245,10 @@ export class UnitOfWork {
 
   commit(silent = false) {
     this.changeType = 'non-interactive';
+
+    /*    if (this.isRemote) {
+      console.log('commit', this.uid, this.#elementsToUpdate.size);
+    }*/
 
     // Note, onCommitCallbacks must run before elements events are emitted
     this.processOnCommitCallbacks();

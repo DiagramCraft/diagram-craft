@@ -285,6 +285,9 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       const child = layer1.createNode();
       edge1.addChild(child, uow);
 
+      elementChange[0].mockReset();
+      elementChange[1].mockReset();
+
       // **** Act
       UnitOfWork.execute(diagram1, uow => edge1.removeChild(child, uow));
 
@@ -296,7 +299,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
         expect(edge1_2!.children.length).toBe(0);
 
         // TODO: Why is this called 3 and not 1 time
-        expect(elementChange[1]).toHaveBeenCalledTimes(3);
+        expect(elementChange[1]).toHaveBeenCalledTimes(2);
         expect(elementRemove[1]).toHaveBeenCalledTimes(1);
       }
     });
