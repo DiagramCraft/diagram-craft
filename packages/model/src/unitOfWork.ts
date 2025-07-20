@@ -12,6 +12,20 @@ type ActionCallback = () => void;
 
 type ChangeType = 'interactive' | 'non-interactive';
 
+const remoteUnitOfWorkRegistry = new Map<Diagram, UnitOfWork>();
+
+export const getRemoteUnitOfWork = (diagram: Diagram) => {
+  let uow = remoteUnitOfWorkRegistry.get(diagram);
+  if (!uow) {
+    uow = new UnitOfWork(diagram, false, false);
+    remoteUnitOfWorkRegistry.set(diagram, uow);
+    uow.registerOnCommitCallback('remoteCleanup', undefined, () => {
+      remoteUnitOfWorkRegistry.delete(diagram);
+    });
+  }
+  return uow;
+};
+
 export type LayersSnapshot = {
   _snapshotType: 'layers';
   layers: string[];
@@ -202,12 +216,12 @@ export class UnitOfWork {
    * Register a callback to be executed after the commit phase. It's coalesced
    * so that only one callback is executed per element/operation per commit phase.
    */
-  registerOnCommitCallback(name: string, element: Trackable, cb: ActionCallback) {
+  registerOnCommitCallback(name: string, element: Trackable | undefined, cb: ActionCallback) {
     if (this.isThrowaway) {
       return cb();
     }
 
-    const id = name + element.id;
+    const id = name + (element?.id ?? '');
     if (this.#onCommitCallbacks.has(id)) return;
 
     // Note, a Map retains insertion order, so this ensure actions are
