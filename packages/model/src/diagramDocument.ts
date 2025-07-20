@@ -11,7 +11,7 @@ import { AttachmentConsumer, AttachmentManager } from './attachment';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinitionRegistry';
 import { isNode } from './diagramElement';
-import { UnitOfWork } from './unitOfWork';
+import { getRemoteUnitOfWork, UnitOfWork } from './unitOfWork';
 import { DataProviderRegistry } from './dataProvider';
 import { DefaultDataProvider, DefaultDataProviderId } from './dataProviderDefault';
 import { UrlDataProvider, UrlDataProviderId } from './dataProviderUrl';
@@ -143,11 +143,17 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     }
 
     diagram.document = this;
+
+    this.root.on('remoteAfterTransaction', () => getRemoteUnitOfWork(diagram).commit(), diagram.id);
+
     this.emit('diagramadded', { diagram: diagram });
   }
 
   removeDiagram(diagram: Diagram) {
     this.#diagrams.remove(diagram.id);
+
+    this.root.off('remoteAfterTransaction', diagram.id);
+
     this.emit('diagramremoved', { diagram: diagram });
   }
 
