@@ -13,6 +13,8 @@ import {
 } from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import { AttachmentConsumer } from './attachment';
 import { RegularLayer } from './diagramLayerRegular';
+import { DiagramNode } from './diagramNode';
+import { DiagramEdge } from './diagramEdge';
 
 export type LayerManagerCRDT = {
   // TODO: Should we move visibility to be a property of the layer instead
@@ -180,6 +182,23 @@ export class LayerManager implements UOWTrackable<LayersSnapshot>, AttachmentCon
 
   invalidate(_uow: UnitOfWork) {
     // Nothing for now...
+  }
+
+  clearCache() {
+    // Need to handle all referenced layers separately as the edgeLookup and nodeLookup
+    // won't contain these elements
+    for (const l of this.all) {
+      if (l.type === 'reference') {
+        const resolved = l.resolve();
+        if (resolved?.type === 'regular') {
+          for (const e of (resolved as RegularLayer).elements) {
+            if (e instanceof DiagramNode || e instanceof DiagramEdge) {
+              e.cache.clear();
+            }
+          }
+        }
+      }
+    }
   }
 
   snapshot(): LayersSnapshot {

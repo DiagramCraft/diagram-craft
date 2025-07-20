@@ -52,22 +52,6 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
     });
   });
 
-  describe('toJSON', () => {
-    it('should correctly serialize to JSON', () => {
-      const doc = TestModel.newDocument();
-      const diagram = new Diagram('test-id', 'test-name', doc);
-      const json = diagram.toJSON();
-
-      expect(json).toEqual({
-        props: diagram.props,
-        selectionState: diagram.selectionState,
-        id: diagram.id,
-        name: diagram.name,
-        layers: diagram.layers
-      });
-    });
-  });
-
   describe('props', () => {
     it('should initialize with empty props', () => {
       // Setup

@@ -38,7 +38,7 @@ export const useDiagramProperty: PropertyHook<Diagram, DiagramProps> = makePrope
           oldValue,
           newValue,
           `Change diagram ${path}`,
-          () => diagram.update()
+          () => diagram.emitDiagramChange('content')
         )
       );
     }

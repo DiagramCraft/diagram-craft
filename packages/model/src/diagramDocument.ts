@@ -153,7 +153,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
       this.#diagrams.add(diagram.id, diagram);
     }
 
-    diagram.document = this;
+    diagram._document = this;
 
     this.emit('diagramadded', { diagram: diagram });
   }
