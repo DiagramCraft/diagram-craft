@@ -54,7 +54,7 @@ export class EdgeControlPointDrag extends Drag {
       [ocIdx]: otherControlPoint
     } as ControlPoints;
 
-    this.edge.updateWaypoint(this.waypointIdx, { ...wp, controlPoints: controlPoints }, this.uow);
+    this.edge.replaceWaypoint(this.waypointIdx, { ...wp, controlPoints: controlPoints }, this.uow);
 
     this.uow.notify();
   }

@@ -11,12 +11,24 @@ import type {
 import { EventEmitter } from '@diagram-craft/utils/event';
 
 export class NoOpCRDTFactory implements CRDTFactory {
-  makeMap<T extends Record<string, CRDTCompatibleObject>>(): CRDTMap<T> {
-    return new NoOpCRDTMap();
+  makeMap<T extends Record<string, CRDTCompatibleObject>>(initial?: T): CRDTMap<T> {
+    const dest = new NoOpCRDTMap<T>();
+    if (initial) {
+      for (const [key, value] of Object.entries(initial)) {
+        dest.set(key, value as T[string]);
+      }
+    }
+    return dest;
   }
 
-  makeList<T extends CRDTCompatibleObject>(): CRDTList<T> {
-    return new NoOpCRDTList();
+  makeList<T extends CRDTCompatibleObject>(initial?: Array<T>): CRDTList<T> {
+    const list = new NoOpCRDTList<T>();
+    if (initial) {
+      for (const value of initial) {
+        list.push(value);
+      }
+    }
+    return list;
   }
 }
 

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { UnitOfWork } from './unitOfWork';
-import { AnchorEndpoint, FreeEndpoint } from './endpoint';
+import { AnchorEndpoint, FreeEndpoint, PointInNodeEndpoint } from './endpoint';
 import { TestModel } from './test-support/builder';
 import {
   Backends,
@@ -17,16 +17,154 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
 
   beforeEach(() => {
     backend.beforeEach();
-
     model = standardTestModel(backend);
-
     edge1 = model.layer1.addEdge();
-
     edge2 = model.diagram2?.lookup(edge1.id) as DiagramEdge | undefined;
   });
   afterEach(backend.afterEach);
 
   const resetUow = () => (model.uow = UnitOfWork.immediate(model.diagram1));
+
+  describe('start/end', () => {
+    it('should set start/end to FreeEndpoint', () => {
+      // **** Act
+      UnitOfWork.execute(model.diagram1, uow =>
+        edge1.setStart(new FreeEndpoint({ x: 0, y: 0 }), uow)
+      );
+      UnitOfWork.execute(model.diagram1, uow =>
+        edge1.setEnd(new FreeEndpoint({ x: 10, y: 10 }), uow)
+      );
+
+      // **** Verify
+      expect(edge1.start).toBeInstanceOf(FreeEndpoint);
+      expect(edge1.start.serialize()).toStrictEqual({ position: { x: 0, y: 0 } });
+      expect(edge1.end).toBeInstanceOf(FreeEndpoint);
+      expect(edge1.end.serialize()).toStrictEqual({ position: { x: 10, y: 10 } });
+      expect(model.elementChange[0]).toHaveBeenCalledTimes(2);
+      if (model.doc2) {
+        expect(edge2?.start).toBeInstanceOf(FreeEndpoint);
+        expect(edge2?.start.serialize()).toStrictEqual({ position: { x: 0, y: 0 } });
+        expect(edge2?.end).toBeInstanceOf(FreeEndpoint);
+        expect(edge2?.end.serialize()).toStrictEqual({ position: { x: 10, y: 10 } });
+        expect(model.elementChange[1]).toHaveBeenCalledTimes(2);
+      }
+    });
+
+    it('should set start/end to PointInNodeEndpoint', () => {
+      // ***** Setup
+      const node1 = model.layer1.addNode();
+      const node2 = model.layer1.addNode();
+      node2.setBounds({ x: 200, y: 200, w: 10, h: 10, r: 0 }, model.uow);
+
+      // **** Act
+      model.reset();
+      UnitOfWork.execute(model.diagram1, uow =>
+        edge1.setStart(
+          new PointInNodeEndpoint(node1, undefined, { x: 0.5, y: 0.5 }, 'relative'),
+          uow
+        )
+      );
+      UnitOfWork.execute(model.diagram1, uow =>
+        edge1.setEnd(
+          new PointInNodeEndpoint(node2, { x: 1, y: 1 }, { x: 10, y: 10 }, 'absolute'),
+          uow
+        )
+      );
+
+      // **** Verify
+      const expectedStart = {
+        node: {
+          id: node1.id
+        },
+        offset: { x: 0.5, y: 0.5 },
+        offsetType: 'relative',
+        position: { x: 5, y: 5 },
+        ref: undefined
+      };
+
+      const expectedEnd = {
+        node: {
+          id: node2.id
+        },
+        offset: { x: 10, y: 10 },
+        offsetType: 'absolute',
+        position: { x: 220, y: 220 },
+        ref: {
+          x: 1,
+          y: 1
+        }
+      };
+
+      expect(edge1.start).toBeInstanceOf(PointInNodeEndpoint);
+      expect(edge1.start.serialize()).toStrictEqual(expectedStart);
+      expect(edge1.end).toBeInstanceOf(PointInNodeEndpoint);
+      expect(edge1.end.serialize()).toStrictEqual(expectedEnd);
+      expect(edge1.isConnected()).toBe(true);
+      expect(edge1.isConnected()).toBe(true);
+      expect(model.elementChange[0]).toHaveBeenCalledTimes(4);
+      if (model.doc2) {
+        expect(edge2?.start).toBeInstanceOf(PointInNodeEndpoint);
+        expect(edge2?.start.serialize()).toStrictEqual(expectedStart);
+        expect(edge2?.end).toBeInstanceOf(PointInNodeEndpoint);
+        expect(edge2?.end.serialize()).toStrictEqual(expectedEnd);
+        expect(edge2?.isConnected()).toBe(true);
+        expect(edge2?.isConnected()).toBe(true);
+        expect(model.elementChange[1]).toHaveBeenCalledTimes(4);
+      }
+    });
+
+    it('should set start/end to AnchorEndpoint', () => {
+      // ***** Setup
+      const node1 = model.layer1.addNode();
+      const node2 = model.layer1.addNode();
+      node2.setBounds({ x: 200, y: 200, w: 10, h: 10, r: 0 }, model.uow);
+
+      // **** Act
+      model.reset();
+      UnitOfWork.execute(model.diagram1, uow =>
+        edge1.setStart(new AnchorEndpoint(node1, 'c'), uow)
+      );
+      UnitOfWork.execute(model.diagram1, uow =>
+        edge1.setEnd(new AnchorEndpoint(node2, 'c', { x: 0.25, y: 0.25 }), uow)
+      );
+
+      // **** Verify
+      const expectedStart = {
+        anchor: 'c',
+        node: {
+          id: node1.id
+        },
+        offset: { x: 0, y: 0 },
+        position: { x: 5, y: 5 }
+      };
+
+      const expectedEnd = {
+        anchor: 'c',
+        node: {
+          id: node2.id
+        },
+        offset: { x: 0.25, y: 0.25 },
+        position: { x: 207.5, y: 207.5 }
+      };
+
+      expect(edge1.start).toBeInstanceOf(AnchorEndpoint);
+      expect(edge1.start.serialize()).toStrictEqual(expectedStart);
+      expect(edge1.end).toBeInstanceOf(AnchorEndpoint);
+      expect(edge1.end.serialize()).toStrictEqual(expectedEnd);
+      expect(edge1.isConnected()).toBe(true);
+      expect(edge1.isConnected()).toBe(true);
+      expect(model.elementChange[0]).toHaveBeenCalledTimes(4);
+      if (model.doc2) {
+        expect(edge2?.start).toBeInstanceOf(AnchorEndpoint);
+        expect(edge2?.start.serialize()).toStrictEqual(expectedStart);
+        expect(edge2?.end).toBeInstanceOf(AnchorEndpoint);
+        expect(edge2?.end.serialize()).toStrictEqual(expectedEnd);
+        expect(edge2?.isConnected()).toBe(true);
+        expect(edge2?.isConnected()).toBe(true);
+        expect(model.elementChange[1]).toHaveBeenCalledTimes(4);
+      }
+    });
+  });
 
   describe('name', () => {
     it('should return the name from the first label node if label nodes exist', () => {
@@ -84,6 +222,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       end.setText('EndNode', model.uow);
 
       // **** Act
+      model.reset();
       UnitOfWork.execute(model.diagram1, uow =>
         edge1.setStart(new AnchorEndpoint(start, 'c'), uow)
       );
@@ -115,6 +254,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       endNode.setBounds({ x: 100, y: 200, w: 10, h: 10, r: 0 }, model.uow);
 
       // **** Act
+      model.reset();
       UnitOfWork.execute(model.diagram1, uow =>
         edge1.setStart(new AnchorEndpoint(startNode, 'c'), uow)
       );
@@ -512,6 +652,149 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       // **** Act
       // **** Verify
       expect(() => edge1.removeLabelNode(labelNode, model.uow)).toThrow();
+    });
+  });
+
+  describe('addWaypoint', () => {
+    it('should add waypoint to straight edge', () => {
+      // Act
+      model.reset();
+      UnitOfWork.execute(model.diagram1, uow => edge1.addWaypoint({ point: { x: 5, y: 5 } }, uow));
+
+      // Verify
+      expect(edge1.waypoints).toHaveLength(1);
+      expect(edge1.waypoints[0].point).toEqual({ x: 5, y: 5 });
+      expect(model.elementChange[0]).toHaveBeenCalledTimes(1);
+      if (edge2) {
+        expect(edge2.waypoints).toHaveLength(1);
+        expect(edge2.waypoints[0].point).toEqual({ x: 5, y: 5 });
+        expect(model.elementChange[1]).toHaveBeenCalledTimes(1);
+      }
+    });
+
+    it('should add waypoint to straight edge in an ordered way', () => {
+      // Act
+      edge1.addWaypoint({ point: { x: 75, y: 75 } }, model.uow);
+      edge1.addWaypoint({ point: { x: 5, y: 5 } }, model.uow);
+
+      // Verify
+      expect(edge1.waypoints).toHaveLength(2);
+      expect(edge1.waypoints[0].point).toEqual({ x: 5, y: 5 });
+      expect(edge1.waypoints[1].point).toEqual({ x: 75, y: 75 });
+      if (edge2) {
+        expect(edge2.waypoints).toHaveLength(2);
+        expect(edge2.waypoints[0].point).toEqual({ x: 5, y: 5 });
+        expect(edge2.waypoints[1].point).toEqual({ x: 75, y: 75 });
+      }
+    });
+  });
+
+  describe('removeWaypoint', () => {
+    it('should remove waypoint', () => {
+      // Setup
+      edge1.addWaypoint({ point: { x: 75, y: 75 } }, model.uow);
+      edge1.addWaypoint({ point: { x: 5, y: 5 } }, model.uow);
+
+      // Act
+      model.reset();
+      UnitOfWork.execute(model.diagram1, uow => edge1.removeWaypoint(edge1.waypoints[0], uow));
+
+      // Verify
+      expect(edge1.waypoints).toHaveLength(1);
+      expect(edge1.waypoints[0].point).toEqual({ x: 75, y: 75 });
+      expect(model.elementChange[0]).toHaveBeenCalledTimes(1);
+      if (edge2) {
+        expect(edge2.waypoints).toHaveLength(1);
+        expect(edge2.waypoints[0].point).toEqual({ x: 75, y: 75 });
+        expect(model.elementChange[1]).toHaveBeenCalledTimes(1);
+      }
+    });
+  });
+
+  describe('moveWaypoint', () => {
+    it('should move waypoint', () => {
+      // Setup
+      edge1.addWaypoint({ point: { x: 75, y: 75 } }, model.uow);
+      edge1.addWaypoint({ point: { x: 5, y: 5 } }, model.uow);
+
+      // Act
+      model.reset();
+      UnitOfWork.execute(model.diagram1, uow =>
+        edge1.moveWaypoint(edge1.waypoints[0], { x: 50, y: 50 }, uow)
+      );
+
+      // Verify
+      expect(edge1.waypoints[0].point).toEqual({ x: 50, y: 50 });
+      expect(model.elementChange[0]).toHaveBeenCalledTimes(1);
+      if (edge2) {
+        expect(edge2.waypoints[0].point).toEqual({ x: 50, y: 50 });
+        expect(model.elementChange[1]).toHaveBeenCalledTimes(1);
+      }
+    });
+  });
+
+  describe('replaceWaypoint', () => {
+    it('should replace waypoint', () => {
+      // Setup
+      edge1.addWaypoint({ point: { x: 75, y: 75 } }, model.uow);
+      edge1.addWaypoint({ point: { x: 5, y: 5 } }, model.uow);
+
+      // Act
+      model.reset();
+      UnitOfWork.execute(model.diagram1, uow =>
+        edge1.replaceWaypoint(1, { point: { x: 50, y: 50 } }, uow)
+      );
+
+      // Verify
+      expect(edge1.waypoints[1].point).toEqual({ x: 50, y: 50 });
+      expect(model.elementChange[0]).toHaveBeenCalledTimes(1);
+      if (edge2) {
+        expect(edge2.waypoints[1].point).toEqual({ x: 50, y: 50 });
+        expect(model.elementChange[1]).toHaveBeenCalledTimes(1);
+      }
+    });
+  });
+
+  describe('updateProps', () => {
+    it('should update simple props', () => {
+      // Act
+      UnitOfWork.execute(model.diagram1, uow =>
+        edge1.updateProps(p => {
+          p.stroke ??= {};
+          p.stroke.color = 'red';
+        }, uow)
+      );
+
+      // Verify
+      expect(edge1.storedProps.stroke!.color).toBe('red');
+      expect(model.elementChange[0]).toHaveBeenCalledTimes(1);
+      if (edge2) {
+        expect(edge2.storedProps.stroke!.color).toBe('red');
+        expect(model.elementChange[1]).toHaveBeenCalledTimes(1);
+      }
+    });
+  });
+
+  describe('updateCustomProps', () => {
+    it('should update custom props', () => {
+      // Act
+      UnitOfWork.execute(model.diagram1, uow =>
+        edge1.updateCustomProps(
+          'blockArrow',
+          p => {
+            p.width = 20;
+          },
+          uow
+        )
+      );
+
+      // Verify
+      expect(edge1.storedProps.custom!.blockArrow!.width).toBe(20);
+      expect(model.elementChange[0]).toHaveBeenCalledTimes(1);
+      if (edge2) {
+        expect(edge2.storedProps.custom!.blockArrow!.width).toBe(20);
+        expect(model.elementChange[1]).toHaveBeenCalledTimes(1);
+      }
     });
   });
 });

@@ -239,9 +239,15 @@ export class DiagramStyles {
     private readonly document: DiagramDocument,
     addDefaultStyles: boolean
   ) {
-    this.#textStyles = new MappedCRDTMap(crdt.getMap('styles.text'), mapper, true);
-    this.#nodeStyles = new MappedCRDTMap(crdt.getMap('styles.node'), mapper, true);
-    this.#edgeStyles = new MappedCRDTMap(crdt.getMap('styles.edge'), mapper, true);
+    this.#textStyles = new MappedCRDTMap(crdt.getMap('styles.text'), mapper, {
+      allowUpdates: true
+    });
+    this.#nodeStyles = new MappedCRDTMap(crdt.getMap('styles.node'), mapper, {
+      allowUpdates: true
+    });
+    this.#edgeStyles = new MappedCRDTMap(crdt.getMap('styles.edge'), mapper, {
+      allowUpdates: true
+    });
 
     const hasNoTextStyles = this.#textStyles.size === 0;
     const hasNoNodeStyles = this.#nodeStyles.size === 0;

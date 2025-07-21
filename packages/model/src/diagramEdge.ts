@@ -19,7 +19,7 @@ import {
 import { DefaultStyles, edgeDefaults } from './diagramDefaults';
 import { buildEdgePath } from './edgePathBuilder';
 import { isHorizontal, isParallel, isPerpendicular, isReadable, isVertical } from './labelNode';
-import { DeepReadonly, DeepRequired, DeepWriteable } from '@diagram-craft/utils/types';
+import { DeepReadonly, DeepRequired } from '@diagram-craft/utils/types';
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { newid } from '@diagram-craft/utils/id';
 import { isDifferent } from '@diagram-craft/utils/math';
@@ -32,7 +32,7 @@ import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToo
 import { getAdjustments } from './diagramLayerRuleTypes';
 import type { RegularLayer } from './diagramLayerRegular';
 import { assertRegularLayer } from './diagramLayerUtils';
-import type { Reference } from './serialization/types';
+import type { Reference, SerializedEndpoint } from './serialization/types';
 import type { CRDTMap, FlatCRDTMap } from './collaboration/crdt';
 import { WatchableValue } from '@diagram-craft/utils/watchableValue';
 import {
@@ -77,8 +77,8 @@ declare global {
 type LabelNodeCRDTEntry = { node: LabelNode & { nodeId: string } };
 
 export type DiagramEdgeCRDT = DiagramElementCRDT & {
-  start: string;
-  end: string;
+  start: SerializedEndpoint;
+  end: SerializedEndpoint;
   props: FlatCRDTMap;
   labelNodes: CRDTMap<MappedCRDTOrderedMapMapType<LabelNodeCRDTEntry>>;
   waypoints: ReadonlyArray<Waypoint>;
@@ -118,18 +118,10 @@ const makeLabelNodeMapper = (
   };
 };
 
-// TODO: Can we get rid of the JSON parsing here
-const makeEndpointMapper = (edge: DiagramEdge): SimpleCRDTMapper<Endpoint, string> => {
-  return {
-    fromCRDT(e: string): Endpoint {
-      return Endpoint.deserialize(JSON.parse(e), edge.diagram.nodeLookup, true);
-    },
-
-    toCRDT(e: Endpoint): string {
-      return JSON.stringify(e.serialize());
-    }
-  };
-};
+const makeEndpointMapper = (edge: DiagramEdge): SimpleCRDTMapper<Endpoint, SerializedEndpoint> => ({
+  fromCRDT: (e: SerializedEndpoint) => Endpoint.deserialize(e, edge.diagram.nodeLookup, true),
+  toCRDT: (e: Endpoint) => e.serialize()
+});
 
 export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramEdgeSnapshot> {
   // Transient properties
@@ -148,9 +140,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     const edgeCrdt = this._crdt as unknown as WatchableValue<CRDTMap<DiagramEdgeCRDT>>;
 
     this.#waypoints = new CRDTProp(edgeCrdt, 'waypoints', {
-      onRemoteChange: () => {
-        getRemoteUnitOfWork(this.diagram).updateElement(this);
-      }
+      onRemoteChange: () => getRemoteUnitOfWork(this.diagram).updateElement(this)
     });
 
     this.#labelNodes = new MappedCRDTOrderedMap<ResolvedLabelNode, LabelNodeCRDTEntry>(
@@ -166,9 +156,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       'start',
       makeEndpointMapper(this),
       {
-        onRemoteChange: () => {
-          getRemoteUnitOfWork(this.diagram).updateElement(this);
-        }
+        onRemoteChange: () => getRemoteUnitOfWork(this.diagram).updateElement(this)
       }
     );
     if (this.#start.get() === undefined) {
@@ -180,9 +168,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       'end',
       makeEndpointMapper(this),
       {
-        onRemoteChange: () => {
-          getRemoteUnitOfWork(this.diagram).updateElement(this);
-        }
+        onRemoteChange: () => getRemoteUnitOfWork(this.diagram).updateElement(this)
       }
     );
     if (this.#end.get() === undefined) {
@@ -354,7 +340,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       for (let i = 0; i < this.waypoints.length; i++) {
         const wp = this.waypoints[i];
         if (!wp.controlPoints) {
-          this.updateWaypoint(
+          this.replaceWaypoint(
             i,
             {
               ...wp,
@@ -761,17 +747,19 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
 
   moveWaypoint(waypoint: Waypoint, point: Point, uow: UnitOfWork) {
     uow.snapshot(this);
-    // TODO: Fix this
-    (waypoint as DeepWriteable<Waypoint>).point = point;
+    this.#waypoints.set(this.waypoints.map(w => (w === waypoint ? { ...w, point } : w)));
     uow.updateElement(this);
   }
 
-  updateWaypoint(idx: number, waypoint: Waypoint, uow: UnitOfWork) {
+  replaceWaypoint(idx: number, waypoint: Waypoint, uow: UnitOfWork) {
     uow.snapshot(this);
     this.#waypoints.set(this.waypoints.map((w, i) => (i === idx ? waypoint : w)));
     uow.updateElement(this);
   }
 
+  /* Midpoints *********************************************************************************************** */
+
+  // TODO: Can we move this to Path?
   get midpoints() {
     const path = this.path();
     return path.segments.map(s => {

@@ -26,8 +26,8 @@ declare global {
 }
 
 export interface CRDTFactory {
-  makeMap<T extends Record<string, CRDTCompatibleObject>>(): CRDTMap<T>;
-  makeList<T extends CRDTCompatibleObject>(): CRDTList<T>;
+  makeMap<T extends Record<string, CRDTCompatibleObject>>(initial?: T): CRDTMap<T>;
+  makeList<T extends CRDTCompatibleObject>(initial?: Array<T>): CRDTList<T>;
 }
 
 export type CRDTRootEvents = {

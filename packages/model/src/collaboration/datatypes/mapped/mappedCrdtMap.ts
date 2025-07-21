@@ -16,26 +16,38 @@ export class MappedCRDTMap<
   constructor(
     private readonly crdt: CRDTMap<MappedCRDTMapMapType<C>>,
     private readonly mapper: SimpleCRDTMapper<T, CRDTMap<C>>,
-    allowUpdates = false
+    props?: {
+      allowUpdates?: boolean;
+      onRemoteAdd?: (e: T) => void;
+      onRemoteRemove?: (e: T) => void;
+      onRemoteChange?: (e: T) => void;
+      onInit?: (e: T) => void;
+    }
   ) {
     crdt.on('remoteUpdate', e => {
-      if (allowUpdates) {
+      if (props?.allowUpdates) {
         this.#map.set(e.key, mapper.fromCRDT(e.value));
       } else {
         // Note: Updates are handled by the T entry itself to avoid having to
         //       reconstruct the object from the underlying CRDT
         VERIFY_NOT_REACHED();
       }
+      props?.onRemoteChange?.(this.#map.get(e.key)!);
     });
     crdt.on('remoteDelete', e => {
+      props?.onRemoteRemove?.(mapper.fromCRDT(e.value));
       this.#map.delete(e.key);
     });
     crdt.on('remoteInsert', e => {
       this.#map.set(e.key, mapper.fromCRDT(e.value));
+      props?.onRemoteAdd?.(this.#map.get(e.key)!);
     });
 
     for (const [k, v] of crdt.entries()) {
       this.#map.set(k, mapper.fromCRDT(v));
+    }
+    for (const e of this.#map.entries()) {
+      props?.onInit?.(e[1]);
     }
   }
 
