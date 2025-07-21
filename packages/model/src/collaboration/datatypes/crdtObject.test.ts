@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { type CRDTMap } from '../crdt';
 import { NoOpCRDTMap } from '../noopCrdt';
 import { CRDTObject } from './crdtObject';
-import { WatchableValue } from '@diagram-craft/utils/watchableValue';
+import { watch } from '@diagram-craft/utils/watchableValue';
 
 type TestObject = {
   name?: string;
@@ -16,7 +16,7 @@ describe('CRDTObject', () => {
     const map = new NoOpCRDTMap();
     const onChange = vi.fn();
 
-    const obj = new CRDTObject<TestObject>(new WatchableValue<CRDTMap>(map), onChange);
+    const obj = new CRDTObject<TestObject>(watch<CRDTMap>(map), onChange);
 
     // Set values on map including nested object
     map.set('name', 'Jane');
@@ -36,7 +36,7 @@ describe('CRDTObject', () => {
     const map = new NoOpCRDTMap();
     const onChange = vi.fn();
 
-    const obj = new CRDTObject<TestObject>(new WatchableValue<CRDTMap>(map), onChange);
+    const obj = new CRDTObject<TestObject>(watch<CRDTMap>(map), onChange);
 
     // Use update to modify data including nested object
     obj.update(p => {
@@ -60,7 +60,7 @@ describe('CRDTObject', () => {
     const map = new NoOpCRDTMap();
     const onChange = vi.fn();
 
-    const obj = new CRDTObject<TestObject>(new WatchableValue<CRDTMap>(map), onChange);
+    const obj = new CRDTObject<TestObject>(watch<CRDTMap>(map), onChange);
 
     // Initially set some values including nested object
     obj.update(p => {
@@ -87,7 +87,7 @@ describe('CRDTObject', () => {
 
   it('should support arrays in the object structure', () => {
     const map = new NoOpCRDTMap();
-    const obj = new CRDTObject<TestObject>(new WatchableValue<CRDTMap>(map), vi.fn());
+    const obj = new CRDTObject<TestObject>(watch<CRDTMap>(map), vi.fn());
 
     // Set array values using dot notation
     map.set('people.0.firstName', 'John');
@@ -114,7 +114,7 @@ describe('CRDTObject', () => {
 
   it('should support updating arrays using the update method', () => {
     const map = new NoOpCRDTMap();
-    const obj = new CRDTObject<TestObject>(new WatchableValue<CRDTMap>(map), vi.fn());
+    const obj = new CRDTObject<TestObject>(watch<CRDTMap>(map), vi.fn());
 
     // Update with array data
     obj.update(p => {
@@ -149,7 +149,7 @@ describe('CRDTObject', () => {
 
   it('should handle array modifications correctly', () => {
     const map = new NoOpCRDTMap();
-    const obj = new CRDTObject<TestObject>(new WatchableValue<CRDTMap>(map), vi.fn());
+    const obj = new CRDTObject<TestObject>(watch<CRDTMap>(map), vi.fn());
 
     // Initialize with array data
     obj.update(p => {
@@ -177,7 +177,7 @@ describe('CRDTObject', () => {
   describe('getClone', () => {
     it('should return an identical deep copy of the object', () => {
       const map = new NoOpCRDTMap();
-      const obj = new CRDTObject<TestObject>(new WatchableValue<CRDTMap>(map), vi.fn());
+      const obj = new CRDTObject<TestObject>(watch<CRDTMap>(map), vi.fn());
 
       // Populate map with values
       map.set('name', 'John');
@@ -200,7 +200,7 @@ describe('CRDTObject', () => {
 
     it('should ensure nested structures are cloned independently', () => {
       const map = new NoOpCRDTMap();
-      const obj = new CRDTObject<TestObject>(new WatchableValue<CRDTMap>(map), vi.fn());
+      const obj = new CRDTObject<TestObject>(watch<CRDTMap>(map), vi.fn());
 
       map.set('address.street', '456 Oak Ave');
       map.set('address.city', 'Denver');

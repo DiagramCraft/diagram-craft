@@ -4,7 +4,7 @@ import { MappedCRDTMap } from './mappedCrdtMap';
 import { CRDTMapper } from './mappedCrdt';
 import { NoOpCRDTMap } from '../../noopCrdt';
 import type { CRDTMap } from '../../crdt';
-import { WatchableValue } from '@diagram-craft/utils/watchableValue';
+import { watch } from '@diagram-craft/utils/watchableValue';
 
 const mapper: CRDTMapper<number, CRDTType> = {
   fromCRDT(e: CRDTMap<CRDTType>): number {
@@ -21,14 +21,14 @@ type CRDTType = { value: number };
 
 describe('MappedCRDTMap', () => {
   it('should correctly initialize entries from the fromCRDT function', () => {
-    const mockList = new WatchableValue<CRDTMap<any>>(new NoOpCRDTMap<any>());
+    const mockList = watch<CRDTMap<any>>(new NoOpCRDTMap<any>());
     const mappedList = new MappedCRDTMap<number, CRDTType>(mockList, mapper);
 
     expect(Array.from(mappedList.entries)).toEqual([]);
   });
 
   it('should remove items correctly', () => {
-    const mockList = new WatchableValue<CRDTMap<any>>(new NoOpCRDTMap<any>());
+    const mockList = watch<CRDTMap<any>>(new NoOpCRDTMap<any>());
     const mappedList = new MappedCRDTMap<number, CRDTType>(mockList, mapper);
 
     mappedList.add('a', 4);
@@ -39,7 +39,7 @@ describe('MappedCRDTMap', () => {
   });
 
   it('should correctly serialize to JSON', () => {
-    const mockList = new WatchableValue<CRDTMap<any>>(new NoOpCRDTMap<any>());
+    const mockList = watch<CRDTMap<any>>(new NoOpCRDTMap<any>());
     const mappedList = new MappedCRDTMap<number, CRDTType>(mockList, mapper);
 
     mappedList.add('a', 4);

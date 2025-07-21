@@ -8,7 +8,7 @@ import {
   type MappedCRDTOrderedMapMapType
 } from '../datatypes/mapped/mappedCrdtOrderedMap';
 import type { CRDTMapper } from '../datatypes/mapped/mappedCrdt';
-import { WatchableValue } from '@diagram-craft/utils/watchableValue';
+import { watch } from '@diagram-craft/utils/watchableValue';
 
 class TestClass {
   constructor(public crdt: CRDTMap<CRDTType>) {}
@@ -57,8 +57,8 @@ describe('YJS MappedCRDTOrderedMap', () => {
   it('should correctly initialize entries from the fromCRDT function', () => {
     const { doc1, doc2 } = createSyncedYJSCRDTs();
 
-    const list1 = new WatchableValue<CRDTMap<any>>(doc1.getMap<any>('list'));
-    const list2 = new WatchableValue<CRDTMap<any>>(doc2.getMap<any>('list'));
+    const list1 = watch<CRDTMap<any>>(doc1.getMap<any>('list'));
+    const list2 = watch<CRDTMap<any>>(doc2.getMap<any>('list'));
 
     const mapped1 = new MappedCRDTOrderedMap<number, CRDTType>(list1, mapper);
     const mapped2 = new MappedCRDTOrderedMap<number, CRDTType>(list2, mapper);
@@ -70,8 +70,8 @@ describe('YJS MappedCRDTOrderedMap', () => {
   it('should remove items correctly', () => {
     const { doc1, doc2 } = createSyncedYJSCRDTs();
 
-    const list1 = new WatchableValue<CRDTMap<any>>(doc1.getMap<any>('list'));
-    const list2 = new WatchableValue<CRDTMap<any>>(doc2.getMap<any>('list'));
+    const list1 = watch<CRDTMap<any>>(doc1.getMap<any>('list'));
+    const list2 = watch<CRDTMap<any>>(doc2.getMap<any>('list'));
 
     const mapped1 = new MappedCRDTOrderedMap<number, CRDTType>(list1, mapper);
     const mapped2 = new MappedCRDTOrderedMap<number, CRDTType>(list2, mapper);
@@ -90,8 +90,8 @@ describe('YJS MappedCRDTOrderedMap', () => {
   it('should add items correctly', () => {
     const { doc1, doc2 } = createSyncedYJSCRDTs();
 
-    const list1 = new WatchableValue<CRDTMap<any>>(doc1.getMap<any>('list'));
-    const list2 = new WatchableValue<CRDTMap<any>>(doc2.getMap<any>('list'));
+    const list1 = watch<CRDTMap<any>>(doc1.getMap<any>('list'));
+    const list2 = watch<CRDTMap<any>>(doc2.getMap<any>('list'));
 
     const mapped1 = new MappedCRDTOrderedMap<number, CRDTType>(list1, mapper);
     const mapped2 = new MappedCRDTOrderedMap<number, CRDTType>(list2, mapper);
@@ -105,12 +105,8 @@ describe('YJS MappedCRDTOrderedMap', () => {
   it('should update wrapped items correctly', () => {
     const { doc1, doc2 } = createSyncedYJSCRDTs();
 
-    const list1 = new WatchableValue<CRDTMap<any>>(
-      doc1.getMap<MappedCRDTOrderedMapMapType<CRDTType>>('list')
-    );
-    const list2 = new WatchableValue<CRDTMap<any>>(
-      doc2.getMap<MappedCRDTOrderedMapMapType<CRDTType>>('list')
-    );
+    const list1 = watch<CRDTMap<any>>(doc1.getMap<MappedCRDTOrderedMapMapType<CRDTType>>('list'));
+    const list2 = watch<CRDTMap<any>>(doc2.getMap<MappedCRDTOrderedMapMapType<CRDTType>>('list'));
 
     const mapped1 = new MappedCRDTOrderedMap<TestClass, CRDTType>(list1, testClassMapper);
     const mapped2 = new MappedCRDTOrderedMap<TestClass, CRDTType>(list2, testClassMapper);

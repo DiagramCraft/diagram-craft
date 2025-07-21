@@ -23,7 +23,7 @@ import { CollaborationConfig } from './collaboration/collaborationConfig';
 import { DocumentProps } from './documentProps';
 import { ProgressCallback } from './types';
 import { MappedCRDTOrderedMap } from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
-import { WatchableValue } from '@diagram-craft/utils/watchableValue';
+import { watch } from '@diagram-craft/utils/watchableValue';
 
 export type DocumentEvents = {
   diagramChanged: { diagram: Diagram };
@@ -69,7 +69,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     this.props = new DocumentProps(this.root, this);
 
     this.#diagrams = new MappedCRDTOrderedMap(
-      new WatchableValue(this.root.getMap('diagrams')),
+      watch(this.root.getMap('diagrams')),
       makeDiagramMapper(this),
       {
         onRemoteAdd: e => {

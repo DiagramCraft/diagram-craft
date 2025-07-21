@@ -56,3 +56,5 @@ export class WatchableValue<T> extends EventEmitter<{
     return v;
   }
 }
+
+export const watch = <T>(value: T) => new WatchableValue<T>(value);

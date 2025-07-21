@@ -15,7 +15,7 @@ import { AttachmentConsumer } from './attachment';
 import { RegularLayer } from './diagramLayerRegular';
 import { DiagramNode } from './diagramNode';
 import { DiagramEdge } from './diagramEdge';
-import { WatchableValue } from '@diagram-craft/utils/watchableValue';
+import { watch } from '@diagram-craft/utils/watchableValue';
 
 export type LayerManagerCRDT = {
   // TODO: Should we move visibility to be a property of the layer instead
@@ -73,7 +73,7 @@ export class LayerManager implements UOWTrackable<LayersSnapshot>, AttachmentCon
     protected readonly crdt: CRDTMap<LayerManagerCRDT>
   ) {
     this.#layers = new MappedCRDTOrderedMap(
-      new WatchableValue(crdt.get('layers', () => diagram.document.root.factory.makeMap())!),
+      watch(crdt.get('layers', () => diagram.document.root.factory.makeMap())!),
       makeLayerMapper(diagram),
       { allowUpdates: true }
     );

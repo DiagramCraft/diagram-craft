@@ -20,7 +20,7 @@ import { LayerManager, LayerManagerCRDT } from './diagramLayerManager';
 import { RegularLayer } from './diagramLayerRegular';
 import { Layer } from './diagramLayer';
 import { assertRegularLayer } from './diagramLayerUtils';
-import { WatchableValue } from '@diagram-craft/utils/watchableValue';
+import { watch, WatchableValue } from '@diagram-craft/utils/watchableValue';
 import { CRDTProp } from './collaboration/datatypes/crdtProp';
 import { CRDTObject } from './collaboration/datatypes/crdtObject';
 
@@ -135,7 +135,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     super();
 
     // TODO: This WatchableValue is not fully used correctly
-    this._crdt = new WatchableValue(crdt ?? document.root.factory.makeMap());
+    this._crdt = watch(crdt ?? document.root.factory.makeMap());
 
     this.#document = document;
 
@@ -157,7 +157,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     });
 
     this.#props = new CRDTObject<DiagramProps>(
-      new WatchableValue(this._crdt.get().get('props', () => document.root.factory.makeMap())!),
+      watch(this._crdt.get().get('props', () => document.root.factory.makeMap())!),
       () => this.emitDiagramChange('content')
     );
 

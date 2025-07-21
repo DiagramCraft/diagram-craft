@@ -8,7 +8,7 @@ import { DiagramEdge } from './diagramEdge';
 import { MappedCRDTOrderedMap } from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import { makeElementMapper, registerElementFactory } from './diagramElementMapper';
 import { DiagramNode } from './diagramNode';
-import { WatchableValue } from '@diagram-craft/utils/watchableValue';
+import { watch } from '@diagram-craft/utils/watchableValue';
 
 registerElementFactory('node', (id, layer, crdt) => new DiagramNode(id, layer, undefined, crdt));
 registerElementFactory('edge', (id, layer, crdt) => new DiagramEdge(id, layer, crdt));
@@ -26,7 +26,7 @@ export class RegularLayer extends Layer<RegularLayer> {
     super(id, name, diagram, 'regular', crdt);
 
     this.#elements = new MappedCRDTOrderedMap<DiagramElement, DiagramElementCRDT>(
-      new WatchableValue(this.crdt.get('elements', () => diagram.document.root.factory.makeMap())!),
+      watch(this.crdt.get('elements', () => diagram.document.root.factory.makeMap())!),
       makeElementMapper(this),
       {
         allowUpdates: true,

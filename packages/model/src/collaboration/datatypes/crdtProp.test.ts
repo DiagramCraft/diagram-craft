@@ -1,4 +1,4 @@
-import { WatchableValue } from '@diagram-craft/utils/watchableValue';
+import { watch } from '@diagram-craft/utils/watchableValue';
 import { CRDTMap } from '../crdt';
 import { NoOpCRDTMap } from '../noopCrdt';
 import { describe, expect, it } from 'vitest';
@@ -8,7 +8,7 @@ type TestType = { value: string };
 
 describe('CRDTProp', () => {
   it('should get and set values correctly', () => {
-    const map = new WatchableValue<CRDTMap<TestType>>(new NoOpCRDTMap<TestType>());
+    const map = watch<CRDTMap<TestType>>(new NoOpCRDTMap<TestType>());
     const prop = new CRDTProp(map, 'value');
 
     prop.set('test');

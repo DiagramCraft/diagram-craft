@@ -10,7 +10,7 @@ import { CRDTFactory, CRDTMap, CRDTRoot } from './collaboration/crdt';
 import { DEFAULT_EDGE_STYLES, DEFAULT_NODE_STYLES, DEFAULT_TEXT_STYLES } from './defaults';
 import { MappedCRDTMap } from './collaboration/datatypes/mapped/mappedCrdtMap';
 import { CRDTMapper } from './collaboration/datatypes/mapped/mappedCrdt';
-import { WatchableValue } from '@diagram-craft/utils/watchableValue';
+import { watch } from '@diagram-craft/utils/watchableValue';
 
 export type StylesheetType = 'node' | 'edge' | 'text';
 
@@ -240,13 +240,13 @@ export class DiagramStyles {
     private readonly document: DiagramDocument,
     addDefaultStyles: boolean
   ) {
-    this.#textStyles = new MappedCRDTMap(new WatchableValue(crdt.getMap('styles.text')), mapper, {
+    this.#textStyles = new MappedCRDTMap(watch(crdt.getMap('styles.text')), mapper, {
       allowUpdates: true
     });
-    this.#nodeStyles = new MappedCRDTMap(new WatchableValue(crdt.getMap('styles.node')), mapper, {
+    this.#nodeStyles = new MappedCRDTMap(watch(crdt.getMap('styles.node')), mapper, {
       allowUpdates: true
     });
-    this.#edgeStyles = new MappedCRDTMap(new WatchableValue(crdt.getMap('styles.edge')), mapper, {
+    this.#edgeStyles = new MappedCRDTMap(watch(crdt.getMap('styles.edge')), mapper, {
       allowUpdates: true
     });
 
