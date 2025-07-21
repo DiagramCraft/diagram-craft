@@ -60,15 +60,12 @@ export type DiagramNodeCRDT = DiagramElementCRDT & {
 
 const makeEdgesMapper = (node: DiagramNode): CRDTMapper<string[], { edges: Array<string> }> => {
   return {
-    fromCRDT(e: CRDTMap<{ edges: Array<string> }>) {
-      return e.get('edges')!;
-    },
+    fromCRDT: (e: CRDTMap<{ edges: Array<string> }>) => e.get('edges')!,
 
-    toCRDT(e: string[]): CRDTMap<{ edges: Array<string> }> {
-      const m = node.crdt.get().factory.makeMap<{ edges: Array<string> }>();
-      m.set('edges', e);
-      return m;
-    }
+    toCRDT: (e: string[]): CRDTMap<{ edges: Array<string> }> =>
+      node.crdt.get().factory.makeMap<{ edges: Array<string> }>({
+        edges: e
+      })
   };
 };
 
@@ -431,13 +428,15 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   }
 
   updateProps(callback: (props: NodeProps) => void, uow: UnitOfWork) {
-    uow.snapshot(this);
-    this.#props.update(callback);
-    uow.updateElement(this);
+    this.crdt.get().transact(() => {
+      uow.snapshot(this);
+      this.#props.update(callback);
+      uow.updateElement(this);
 
-    this._cache?.clear();
-    this.invalidateAnchors(uow);
-    this.getDefinition().onPropUpdate(this, uow);
+      this._cache?.clear();
+      this.invalidateAnchors(uow);
+      this.getDefinition().onPropUpdate(this, uow);
+    });
   }
 
   updateCustomProps<K extends keyof CustomNodeProps>(
@@ -559,6 +558,8 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
   /* Snapshot ************************************************************************************************ */
 
+  /*
+  TODO: Unclear if this is needed
   toJSON() {
     return {
       id: this.id,
@@ -571,6 +572,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       edges: Array.from(this.#edges.entries)
     };
   }
+   */
 
   snapshot(): DiagramNodeSnapshot {
     return {
@@ -923,12 +925,12 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     uow.updateElement(this);
   }
 
-  private getNestedElements(): DiagramElement[] {
-    return [this, ...this.children.flatMap(c => (isNode(c) ? c.getNestedElements() : c))];
-  }
-
   getAttachmentsInUse() {
     return [this.renderProps.fill?.image?.id, this.renderProps.fill?.pattern];
+  }
+
+  private getNestedElements(): DiagramElement[] {
+    return [this, ...this.children.flatMap(c => (isNode(c) ? c.getNestedElements() : c))];
   }
 
   private makeEdgesMap(nodeCrdt: WatchableValue<CRDTMap<DiagramNodeCRDT>>, layer: Layer) {

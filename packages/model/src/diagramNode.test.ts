@@ -396,4 +396,91 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       expect(model.uow.contains(child2, 'remove')).toBe(true);
     });
   });
+
+  describe('setText', () => {
+    it('should set text', () => {
+      // Act
+      UnitOfWork.execute(model.diagram1, uow => node1.setText('Hello', uow));
+
+      // Verify
+      expect(node1.getText()).toBe('Hello');
+      expect(model.elementChange[0]).toHaveBeenCalledTimes(1);
+      if (model.doc2) {
+        expect(node2!.getText()).toBe('Hello');
+        expect(model.elementChange[1]).toHaveBeenCalledTimes(1);
+      }
+    });
+
+    it('should set alternate text', () => {
+      // Act
+      UnitOfWork.execute(model.diagram1, uow => node1.setText('Hello', uow, 'alt'));
+
+      // Verify
+      expect(node1.getText('alt')).toBe('Hello');
+      expect(model.elementChange[0]).toHaveBeenCalledTimes(1);
+      if (model.doc2) {
+        expect(node2!.getText('alt')).toBe('Hello');
+        expect(model.elementChange[1]).toHaveBeenCalledTimes(1);
+      }
+    });
+  });
+
+  describe('updateProps', () => {
+    it('should set props correctly', () => {
+      // Act
+      UnitOfWork.execute(model.diagram1, uow =>
+        node1.updateProps(props => {
+          props.stroke ??= {};
+          props.stroke.color = 'red';
+        }, uow)
+      );
+
+      // Verify
+      expect(node1.storedProps.stroke!.color).toBe('red');
+      expect(model.elementChange[0]).toHaveBeenCalledTimes(1);
+      if (node2) {
+        expect(node2.storedProps.stroke!.color).toBe('red');
+        expect(model.elementChange[1]).toHaveBeenCalledTimes(1);
+      }
+    });
+  });
+
+  describe('updateCustomProps', () => {
+    it('should set custom props correctly', () => {
+      // Act
+      UnitOfWork.execute(model.diagram1, uow =>
+        node1.updateCustomProps(
+          'star',
+          props => {
+            props.numberOfSides = 20;
+          },
+          uow
+        )
+      );
+
+      // Verify
+      expect(node1.storedProps.custom!.star!.numberOfSides).toBe(20);
+      expect(model.elementChange[0]).toHaveBeenCalledTimes(1);
+      if (node2) {
+        expect(node2.storedProps.custom!.star!.numberOfSides).toBe(20);
+        expect(model.elementChange[1]).toHaveBeenCalledTimes(1);
+      }
+    });
+  });
+
+  describe('getAnchor', () => {
+    it('should return the correct anchors', () => {
+      const ref = {
+        clip: true,
+        id: 'c',
+        start: {
+          x: 0.5,
+          y: 0.5
+        },
+        type: 'center'
+      };
+      expect(node1.getAnchor('c')).toEqual(ref);
+      if (node2) expect(node2.getAnchor('c')).toEqual(ref);
+    });
+  });
 });

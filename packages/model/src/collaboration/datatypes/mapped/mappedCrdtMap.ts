@@ -21,6 +21,7 @@ export class MappedCRDTMap<
       onRemoteAdd?: (e: T) => void;
       onRemoteRemove?: (e: T) => void;
       onRemoteChange?: (e: T) => void;
+      onInit?: (e: T) => void;
     }
   ) {
     crdt.on('remoteUpdate', e => {
@@ -44,6 +45,9 @@ export class MappedCRDTMap<
 
     for (const [k, v] of crdt.entries()) {
       this.#map.set(k, mapper.fromCRDT(v));
+    }
+    for (const e of this.#map.entries()) {
+      props?.onInit?.(e[1]);
     }
   }
 
