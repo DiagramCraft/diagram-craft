@@ -754,4 +754,47 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       }
     });
   });
+
+  describe('updateProps', () => {
+    it('should update simple props', () => {
+      // Act
+      UnitOfWork.execute(model.diagram1, uow =>
+        edge1.updateProps(p => {
+          p.stroke ??= {};
+          p.stroke.color = 'red';
+        }, uow)
+      );
+
+      // Verify
+      expect(edge1.storedProps.stroke!.color).toBe('red');
+      expect(model.elementChange[0]).toHaveBeenCalledTimes(1);
+      if (edge2) {
+        expect(edge2.storedProps.stroke!.color).toBe('red');
+        expect(model.elementChange[1]).toHaveBeenCalledTimes(1);
+      }
+    });
+  });
+
+  describe('updateCustomProps', () => {
+    it('should update custom props', () => {
+      // Act
+      UnitOfWork.execute(model.diagram1, uow =>
+        edge1.updateCustomProps(
+          'blockArrow',
+          p => {
+            p.width = 20;
+          },
+          uow
+        )
+      );
+
+      // Verify
+      expect(edge1.storedProps.custom!.blockArrow!.width).toBe(20);
+      expect(model.elementChange[0]).toHaveBeenCalledTimes(1);
+      if (edge2) {
+        expect(edge2.storedProps.custom!.blockArrow!.width).toBe(20);
+        expect(model.elementChange[1]).toHaveBeenCalledTimes(1);
+      }
+    });
+  });
 });
