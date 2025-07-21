@@ -38,8 +38,8 @@ export class CRDTProp<
       this.#current.get(name, props.factory);
     });
 
-    if (!this.#current.has(this.name) && props.initialValue !== undefined) {
-      this.#current.set(this.name, props.initialValue);
+    if (props.initialValue !== undefined) {
+      this.init(props.initialValue);
     }
 
     if (props.cache) {
