@@ -73,6 +73,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
         : undefined;
 
       // Act
+      model.reset();
       UnitOfWork.execute(model.diagram1, uow =>
         node1.setBounds({ w: 100, h: 100, x: 20, y: 20, r: 0 }, uow)
       );
@@ -91,9 +92,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
         expect(node2!.listEdges()).toContain(edge2);
         expect(edge2!.start).toBeInstanceOf(AnchorEndpoint);
         expect((edge2!.start as AnchorEndpoint).node).toBe(node2);
-
-        // TODO: Why 3 and not 1
-        expect(model.elementChange[1]).toHaveBeenCalledTimes(3);
+        expect(model.elementChange[1]).toHaveBeenCalledTimes(1);
       }
     });
 

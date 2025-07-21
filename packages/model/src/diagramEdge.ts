@@ -32,7 +32,7 @@ import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToo
 import { getAdjustments } from './diagramLayerRuleTypes';
 import type { RegularLayer } from './diagramLayerRegular';
 import { assertRegularLayer } from './diagramLayerUtils';
-import type { Reference } from './serialization/types';
+import type { Reference, SerializedEndpoint } from './serialization/types';
 import type { CRDTMap, FlatCRDTMap } from './collaboration/crdt';
 import { WatchableValue } from '@diagram-craft/utils/watchableValue';
 import {
@@ -77,8 +77,8 @@ declare global {
 type LabelNodeCRDTEntry = { node: LabelNode & { nodeId: string } };
 
 export type DiagramEdgeCRDT = DiagramElementCRDT & {
-  start: string;
-  end: string;
+  start: SerializedEndpoint;
+  end: SerializedEndpoint;
   props: FlatCRDTMap;
   labelNodes: CRDTMap<MappedCRDTOrderedMapMapType<LabelNodeCRDTEntry>>;
   waypoints: ReadonlyArray<Waypoint>;
@@ -118,18 +118,10 @@ const makeLabelNodeMapper = (
   };
 };
 
-// TODO: Can we get rid of the JSON parsing here
-const makeEndpointMapper = (edge: DiagramEdge): SimpleCRDTMapper<Endpoint, string> => {
-  return {
-    fromCRDT(e: string): Endpoint {
-      return Endpoint.deserialize(JSON.parse(e), edge.diagram.nodeLookup, true);
-    },
-
-    toCRDT(e: Endpoint): string {
-      return JSON.stringify(e.serialize());
-    }
-  };
-};
+const makeEndpointMapper = (edge: DiagramEdge): SimpleCRDTMapper<Endpoint, SerializedEndpoint> => ({
+  fromCRDT: (e: SerializedEndpoint) => Endpoint.deserialize(e, edge.diagram.nodeLookup, true),
+  toCRDT: (e: Endpoint) => e.serialize()
+});
 
 export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramEdgeSnapshot> {
   // Transient properties
@@ -148,9 +140,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     const edgeCrdt = this._crdt as unknown as WatchableValue<CRDTMap<DiagramEdgeCRDT>>;
 
     this.#waypoints = new CRDTProp(edgeCrdt, 'waypoints', {
-      onRemoteChange: () => {
-        getRemoteUnitOfWork(this.diagram).updateElement(this);
-      }
+      onRemoteChange: () => getRemoteUnitOfWork(this.diagram).updateElement(this)
     });
 
     this.#labelNodes = new MappedCRDTOrderedMap<ResolvedLabelNode, LabelNodeCRDTEntry>(
@@ -166,9 +156,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       'start',
       makeEndpointMapper(this),
       {
-        onRemoteChange: () => {
-          getRemoteUnitOfWork(this.diagram).updateElement(this);
-        }
+        onRemoteChange: () => getRemoteUnitOfWork(this.diagram).updateElement(this)
       }
     );
     if (this.#start.get() === undefined) {
@@ -180,9 +168,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       'end',
       makeEndpointMapper(this),
       {
-        onRemoteChange: () => {
-          getRemoteUnitOfWork(this.diagram).updateElement(this);
-        }
+        onRemoteChange: () => getRemoteUnitOfWork(this.diagram).updateElement(this)
       }
     );
     if (this.#end.get() === undefined) {

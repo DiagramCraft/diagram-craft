@@ -95,11 +95,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
     const nodeCrdt = this._crdt as unknown as WatchableValue<CRDTMap<DiagramNodeCRDT>>;
 
-    this.#edges = new MappedCRDTMap(
-      nodeCrdt.get().get('edges', () => layer.crdt.factory.makeMap())!,
-      makeEdgesMapper(this),
-      true
-    );
+    this.#edges = this.makeEdgesMap(nodeCrdt, layer);
 
     this.#nodeType = new CRDTProp<DiagramNodeCRDT, 'nodeType'>(nodeCrdt, 'nodeType', {
       onRemoteChange: () => {
@@ -210,11 +206,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     super.detachCRDT(callback);
 
     const crdt = this._crdt as unknown as WatchableValue<CRDTMap<DiagramNodeCRDT>>;
-    this.#edges = new MappedCRDTMap(
-      crdt.get().get('edges', () => this.layer.crdt.factory.makeMap())!,
-      makeEdgesMapper(this),
-      true
-    );
+    this.#edges = this.makeEdgesMap(crdt, this.layer);
   }
 
   getDefinition() {
@@ -937,5 +929,18 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
   getAttachmentsInUse() {
     return [this.renderProps.fill?.image?.id, this.renderProps.fill?.pattern];
+  }
+
+  private makeEdgesMap(nodeCrdt: WatchableValue<CRDTMap<DiagramNodeCRDT>>, layer: Layer) {
+    return new MappedCRDTMap(
+      nodeCrdt.get().get('edges', () => layer.crdt.factory.makeMap())!,
+      makeEdgesMapper(this),
+      {
+        allowUpdates: true,
+        onRemoteChange: () => getRemoteUnitOfWork(this.diagram).updateElement(this),
+        onRemoteAdd: () => getRemoteUnitOfWork(this.diagram).updateElement(this),
+        onRemoteRemove: () => getRemoteUnitOfWork(this.diagram).updateElement(this)
+      }
+    );
   }
 }
