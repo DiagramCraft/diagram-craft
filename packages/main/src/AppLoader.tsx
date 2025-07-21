@@ -12,63 +12,56 @@ import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Progress, ProgressCallback } from '@diagram-craft/model/types';
 
+const isRequestForClear = () => location.search.includes('crdtClear=true');
+const isRequestToLoadFromServer = () => location.search.includes('crdtLoadFromServer=true');
+
 const loadInitialDocument = async (
   diagram: DiagramRef | undefined,
   documentFactory: DocumentFactory,
   diagramFactory: DiagramFactory<Diagram>,
-  progressCallback: ProgressCallback
+  progress: ProgressCallback
 ): Promise<{ doc?: DiagramDocument; url?: string }> => {
-  const root = await documentFactory.loadCRDT(diagram?.url, progressCallback);
-  if (location.search.includes('crdtClear=true')) {
+  const root = await documentFactory.loadCRDT(diagram?.url, progress);
+  if (isRequestForClear()) {
     console.log('Clear server state');
     root.clear();
   }
 
   if (diagram) {
-    if (root.hasData() || location.search.includes('crdtLoadFromServer=true')) {
+    if (root.hasData() || isRequestToLoadFromServer()) {
       console.log('Load from server');
-      return documentFactory.createDocument(root, diagram!.url, progressCallback).then(v => {
-        return { doc: v, url: diagram?.url };
-      });
+      const v = await documentFactory.createDocument(root, diagram!.url, progress);
+      return { doc: v, url: diagram?.url };
     } else {
-      return Autosave.load(root, progressCallback, documentFactory, diagramFactory, true).then(
-        autosaved => {
-          if (autosaved?.document) {
-            console.log('Load from auto save');
-            autosaved.document!.url = diagram?.url;
-            return { doc: autosaved.document, url: autosaved.url };
-          } else {
-            console.log('Load from url');
-            return loadFileFromUrl(
-              diagram!.url,
-              progressCallback,
-              documentFactory,
-              diagramFactory,
-              root
-            ).then(defDiagram => {
-              defDiagram!.url = diagram?.url;
-              return { doc: defDiagram };
-            });
-          }
-        }
-      );
+      const autosaved = await Autosave.load(root, progress, documentFactory, diagramFactory, true);
+      if (autosaved) {
+        console.log('Load from auto save');
+        autosaved.document!.url = diagram?.url;
+        return { doc: autosaved.document, url: diagram?.url };
+      } else {
+        console.log('Load from url');
+        const defDiagram = await loadFileFromUrl(
+          diagram!.url,
+          progress,
+          documentFactory,
+          diagramFactory,
+          root
+        );
+        defDiagram!.url = diagram?.url;
+        return { doc: defDiagram, url: diagram?.url };
+      }
     }
   } else {
-    return documentFactory
-      .createDocument(root, undefined, progressCallback)
-      .then(doc => {
-        // TODO: This is duplicated in fileNewAction.ts
-        const diagram = new Diagram(newid(), 'Untitled', doc);
-        diagram.layers.add(
-          new RegularLayer(newid(), 'Default', [], diagram),
-          UnitOfWork.immediate(diagram)
-        );
-        doc.addDiagram(diagram);
-        return doc;
-      })
-      .then(doc => {
-        return { doc };
-      });
+    const doc = await documentFactory.createDocument(root, undefined, progress);
+
+    const diagram = new Diagram(newid(), 'Untitled', doc);
+    diagram.layers.add(
+      new RegularLayer(newid(), 'Default', [], diagram),
+      UnitOfWork.immediate(diagram)
+    );
+    doc.addDiagram(diagram);
+
+    return { doc };
   }
 };
 
