@@ -144,9 +144,10 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     });
 
     this.#labelNodes = new MappedCRDTOrderedMap<ResolvedLabelNode, LabelNodeCRDTEntry>(
-      (this._crdt.get() as CRDTMap<DiagramEdgeCRDT>).get('labelNodes', () =>
-        layer.diagram.document.root.factory.makeMap()
-      )!,
+      WatchableValue.from(
+        ([m]) => m.get().get('labelNodes', () => layer.diagram.document.root.factory.makeMap())!,
+        [edgeCrdt]
+      ),
       makeLabelNodeMapper(this),
       { allowUpdates: true }
     );

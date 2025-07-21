@@ -1,30 +1,47 @@
 import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { type SimpleCRDTMapper } from './mappedCrdt';
-import type { CRDTCompatibleObject, CRDTMap } from '../../crdt';
+import type { CRDTCompatibleObject, CRDTMap, CRDTMapEvents } from '../../crdt';
+import type { WatchableValue } from '@diagram-craft/utils/watchableValue';
+import type { EventReceiver } from '@diagram-craft/utils/event';
 
 export type MappedCRDTMapMapType<T extends Record<string, CRDTCompatibleObject>> = Record<
   string,
   CRDTMap<T>
 >;
 
+type Props<T> = {
+  allowUpdates?: boolean;
+  onRemoteAdd?: (e: T) => void;
+  onRemoteRemove?: (e: T) => void;
+  onRemoteChange?: (e: T) => void;
+  onInit?: (e: T) => void;
+};
+
 export class MappedCRDTMap<
   T,
   C extends Record<string, CRDTCompatibleObject> = Record<string, string>
 > {
   #map: Map<string, T> = new Map<string, T>();
+  #current: CRDTMap<MappedCRDTMapMapType<C>>;
 
   constructor(
-    private readonly crdt: CRDTMap<MappedCRDTMapMapType<C>>,
+    crdt: WatchableValue<CRDTMap<MappedCRDTMapMapType<C>>>,
     private readonly mapper: SimpleCRDTMapper<T, CRDTMap<C>>,
-    props?: {
-      allowUpdates?: boolean;
-      onRemoteAdd?: (e: T) => void;
-      onRemoteRemove?: (e: T) => void;
-      onRemoteChange?: (e: T) => void;
-      onInit?: (e: T) => void;
-    }
+    props?: Props<T>
   ) {
-    crdt.on('remoteUpdate', e => {
+    this.#current = crdt.get();
+
+    const setFromCRDT = () => {
+      this.#map.clear();
+      for (const [k, v] of this.#current.entries()) {
+        this.#map.set(k, this.mapper.fromCRDT(v));
+      }
+      for (const e of this.#map.entries()) {
+        props?.onInit?.(e[1]);
+      }
+    };
+
+    const remoteUpdate: EventReceiver<CRDTMapEvents['remoteUpdate']> = e => {
       if (props?.allowUpdates) {
         this.#map.set(e.key, mapper.fromCRDT(e.value));
       } else {
@@ -33,26 +50,39 @@ export class MappedCRDTMap<
         VERIFY_NOT_REACHED();
       }
       props?.onRemoteChange?.(this.#map.get(e.key)!);
-    });
-    crdt.on('remoteDelete', e => {
+    };
+
+    const remoteDelete: EventReceiver<CRDTMapEvents['remoteDelete']> = e => {
       props?.onRemoteRemove?.(mapper.fromCRDT(e.value));
       this.#map.delete(e.key);
-    });
-    crdt.on('remoteInsert', e => {
+    };
+
+    const remoteInsert: EventReceiver<CRDTMapEvents['remoteDelete']> = e => {
       this.#map.set(e.key, mapper.fromCRDT(e.value));
       props?.onRemoteAdd?.(this.#map.get(e.key)!);
+    };
+
+    this.#current.on('remoteUpdate', remoteUpdate);
+    this.#current.on('remoteDelete', remoteDelete);
+    this.#current.on('remoteInsert', remoteInsert);
+
+    crdt.on('change', () => {
+      this.#current.off('remoteUpdate', remoteUpdate);
+      this.#current.off('remoteDelete', remoteDelete);
+      this.#current.off('remoteInsert', remoteInsert);
+
+      this.#current = crdt.get();
+      this.#current.on('remoteUpdate', remoteUpdate);
+      this.#current.on('remoteDelete', remoteDelete);
+      this.#current.on('remoteInsert', remoteInsert);
+      setFromCRDT();
     });
 
-    for (const [k, v] of crdt.entries()) {
-      this.#map.set(k, mapper.fromCRDT(v));
-    }
-    for (const e of this.#map.entries()) {
-      props?.onInit?.(e[1]);
-    }
+    setFromCRDT();
   }
 
   clear() {
-    this.crdt.clear();
+    this.#current.clear();
     this.#map.clear();
   }
 
@@ -77,17 +107,17 @@ export class MappedCRDTMap<
   }
 
   add(key: string, t: T) {
-    assert.false(this.crdt.has(key));
+    assert.false(this.#current.has(key));
     this.set(key, t);
   }
 
   set(key: string, t: T) {
     this.#map.set(key, t);
-    this.crdt.set(key, this.mapper.toCRDT(t));
+    this.#current.set(key, this.mapper.toCRDT(t));
   }
 
   remove(key: string) {
-    this.crdt.delete(key);
+    this.#current.delete(key);
     return this.#map.delete(key);
   }
 

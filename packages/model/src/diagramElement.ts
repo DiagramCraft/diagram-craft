@@ -82,7 +82,10 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
     this._crdt.get().set('type', type);
 
     this._children = new MappedCRDTOrderedMap<DiagramElement, DiagramElementCRDT>(
-      this._crdt.get().get('children', () => this._diagram.document.root.factory.makeMap())!,
+      WatchableValue.from(
+        ([m]) => m.get().get('children', () => layer.diagram.document.root.factory.makeMap())!,
+        [this._crdt]
+      ),
       makeElementMapper(this.layer),
       {
         allowUpdates: true,

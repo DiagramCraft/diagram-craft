@@ -1,6 +1,8 @@
 import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { type SimpleCRDTMapper } from './mappedCrdt';
-import type { CRDTCompatibleObject, CRDTMap } from '../../crdt';
+import type { CRDTCompatibleObject, CRDTMap, CRDTMapEvents } from '../../crdt';
+import type { WatchableValue } from '@diagram-craft/utils/watchableValue';
+import type { EventReceiver } from '@diagram-craft/utils/event';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type WrapperType<T extends Record<string, CRDTCompatibleObject> = any> = {
@@ -18,9 +20,10 @@ export class MappedCRDTOrderedMap<
   C extends Record<string, CRDTCompatibleObject> = Record<string, string>
 > {
   #entries: Array<[string, T]> = [];
+  #current: CRDTMap<MappedCRDTOrderedMapMapType<C>>;
 
   constructor(
-    private readonly crdt: CRDTMap<MappedCRDTOrderedMapMapType<C>>,
+    crdt: WatchableValue<CRDTMap<MappedCRDTOrderedMapMapType<C>>>,
     private readonly mapper: SimpleCRDTMapper<T, CRDTMap<C>>,
     props?: {
       allowUpdates?: boolean;
@@ -30,20 +33,26 @@ export class MappedCRDTOrderedMap<
       onInit?: (e: T) => void;
     }
   ) {
+    this.#current = crdt.get();
+
     const setFromCRDT = (e?: { key: string; value: CRDTMap<WrapperType<C>> }) => {
       const entryMap = Object.fromEntries(this.#entries);
 
-      this.#entries = Array.from(this.crdt.entries())
+      this.#entries = Array.from(this.#current.entries())
         .toSorted(([, v1], [, v2]) => v1.get('index')! - v2.get('index')!)
         .map(([k, v]) => [k, entryMap[k] ?? this.mapper.fromCRDT(v.get('value')!)]);
 
       const idx = this.#entries.findIndex(entry => entry[0] === e?.key);
       if (idx >= 0) {
         props?.onRemoteAdd?.(this.#entries[idx][1]);
+      } else if (!e) {
+        for (const e of this.#entries) {
+          props?.onInit?.(e[1]);
+        }
       }
     };
 
-    crdt.on('remoteUpdate', e => {
+    const remoteUpdate: EventReceiver<CRDTMapEvents['remoteUpdate']> = e => {
       if (props?.allowUpdates || props?.allowUpdates === undefined) {
         const entryMap = Object.fromEntries(this.#entries);
 
@@ -52,7 +61,7 @@ export class MappedCRDTOrderedMap<
           props?.onRemoteChange?.(this.#entries[idx][1]);
         }
 
-        this.#entries = Array.from(crdt.entries())
+        this.#entries = Array.from(crdt.get().entries())
           .toSorted(([, v1], [, v2]) => v1.get('index')! - v2.get('index')!)
           .map(([k, v]) => [k, e.key !== k ? entryMap[k] : mapper.fromCRDT(v.get('value')!)]);
       } else {
@@ -60,20 +69,32 @@ export class MappedCRDTOrderedMap<
         //       reconstruct the object from the underlying CRDT
         VERIFY_NOT_REACHED();
       }
-    });
-    crdt.on('remoteDelete', e => {
+    };
+    const remoteDelete: EventReceiver<CRDTMapEvents['remoteDelete']> = e => {
       const idx = this.#entries.findIndex(entry => entry[0] === e.key);
       if (idx >= 0) {
         props?.onRemoteRemove?.(this.#entries[idx][1]);
         this.#entries.splice(idx, 1);
       }
+    };
+    const remoteInsert: EventReceiver<CRDTMapEvents['remoteInsert']> = e => setFromCRDT(e);
+
+    this.#current.on('remoteUpdate', remoteUpdate);
+    this.#current.on('remoteDelete', remoteDelete);
+    this.#current.on('remoteInsert', remoteInsert);
+
+    crdt.on('change', () => {
+      this.#current.off('remoteUpdate', remoteUpdate);
+      this.#current.off('remoteDelete', remoteDelete);
+      this.#current.off('remoteInsert', remoteInsert);
+
+      this.#current = crdt.get();
+      this.#current.on('remoteUpdate', remoteUpdate);
+      this.#current.on('remoteDelete', remoteDelete);
+      this.#current.on('remoteInsert', remoteInsert);
     });
-    crdt.on('remoteInsert', e => setFromCRDT(e));
 
     setFromCRDT();
-    for (const e of this.#entries) {
-      props?.onInit?.(e[1]);
-    }
   }
 
   get keys() {
@@ -93,7 +114,7 @@ export class MappedCRDTOrderedMap<
   }
 
   clear() {
-    this.crdt.clear();
+    this.#current.clear();
     this.#entries = [];
   }
 
@@ -102,11 +123,11 @@ export class MappedCRDTOrderedMap<
   }
 
   has(key: string) {
-    return this.crdt.has(key);
+    return this.#current.has(key);
   }
 
   set(elements: Array<[string, T]>) {
-    this.crdt.clear();
+    this.#current.clear();
     this.#entries = [];
     for (const [key, value] of elements) {
       this.add(key, value);
@@ -114,7 +135,7 @@ export class MappedCRDTOrderedMap<
   }
 
   setIndex(key: string, toIndex: number) {
-    for (const [k, v] of this.crdt.entries()) {
+    for (const [k, v] of this.#current.entries()) {
       if (k === key) {
         v.set('index', toIndex);
       } else if (v.get('index')! >= toIndex) {
@@ -124,27 +145,27 @@ export class MappedCRDTOrderedMap<
   }
 
   getIndex(key: string) {
-    return this.crdt.get(key)?.get('index') ?? -1;
+    return this.#current.get(key)?.get('index') ?? -1;
   }
 
   add(key: string, t: T) {
-    assert.false(this.crdt.has(key));
+    assert.false(this.#current.has(key));
 
     this.#entries.push([key, t]);
 
-    const entry = this.crdt.factory.makeMap<WrapperType>();
+    const entry = this.#current.factory.makeMap<WrapperType>();
     entry.set('index', this.#entries.length);
     entry.set('value', this.mapper.toCRDT(t));
-    this.crdt.set(key, entry);
+    this.#current.set(key, entry);
   }
 
   update(key: string, t: T) {
-    this.crdt.delete(key);
+    this.#current.delete(key);
 
-    const entry = this.crdt.factory.makeMap<WrapperType>();
+    const entry = this.#current.factory.makeMap<WrapperType>();
     entry.set('index', this.#entries.length);
     entry.set('value', this.mapper.toCRDT(t));
-    this.crdt.set(key, entry);
+    this.#current.set(key, entry);
 
     if (this.#entries.find(e => e[0] === key)) {
       this.#entries = this.#entries.map(e => (e[0] === key ? [key, t] : e));
@@ -157,10 +178,10 @@ export class MappedCRDTOrderedMap<
     const idx = this.#entries.findIndex(e => e[0] === key);
     if (idx >= 0) {
       this.#entries.splice(idx, 1);
-      this.crdt.delete(key);
+      this.#current.delete(key);
       return true;
     }
-    this.crdt.delete(key);
+    this.#current.delete(key);
     return false;
   }
 
@@ -172,8 +193,8 @@ export class MappedCRDTOrderedMap<
   //       listener - in that case we can set the entries at the end of
   //       the transaction, instead of doing for each element
   setOrder(keys: string[]) {
-    this.crdt.transact(() => {
-      for (const [k, v] of this.crdt.entries()) {
+    this.#current.transact(() => {
+      for (const [k, v] of this.#current.entries()) {
         const idx = keys.findIndex(key => key === k);
         if (idx >= 0) {
           if (v.get('index') !== idx) v.set('index', idx);

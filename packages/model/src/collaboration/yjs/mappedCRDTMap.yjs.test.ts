@@ -5,6 +5,7 @@ import { createSyncedYJSCRDTs, setupYJS } from './yjsTest';
 import { YJSMap } from './yjsCrdt';
 import type { CRDTMapper } from '../datatypes/mapped/mappedCrdt';
 import type { CRDTMap } from '../crdt';
+import { WatchableValue } from '@diagram-craft/utils/watchableValue';
 
 class TestClass {
   constructor(public crdt: CRDTMap<CRDTType>) {}
@@ -53,8 +54,8 @@ describe('YJS MappedCRDTMap', () => {
   it('should correctly initialize entries from the fromCRDT function', () => {
     const { doc1, doc2 } = createSyncedYJSCRDTs();
 
-    const list1 = doc1.getMap<any>('list');
-    const list2 = doc2.getMap<any>('list');
+    const list1 = new WatchableValue<CRDTMap<any>>(doc1.getMap<any>('list'));
+    const list2 = new WatchableValue<CRDTMap<any>>(doc2.getMap<any>('list'));
 
     const mapped1 = new MappedCRDTMap<number, CRDTType>(list1, mapper);
     const mapped2 = new MappedCRDTMap<number, CRDTType>(list2, mapper);
@@ -66,8 +67,8 @@ describe('YJS MappedCRDTMap', () => {
   it('should remove items correctly', () => {
     const { doc1, doc2 } = createSyncedYJSCRDTs();
 
-    const list1 = doc1.getMap<any>('list');
-    const list2 = doc2.getMap<any>('list');
+    const list1 = new WatchableValue<CRDTMap<any>>(doc1.getMap<any>('list'));
+    const list2 = new WatchableValue<CRDTMap<any>>(doc2.getMap<any>('list'));
 
     const mapped1 = new MappedCRDTMap<number, CRDTType>(list1, mapper);
     const mapped2 = new MappedCRDTMap<number, CRDTType>(list2, mapper);
@@ -78,16 +79,16 @@ describe('YJS MappedCRDTMap', () => {
     expect(removed).toBe(true);
 
     expect(Array.from(mapped1.entries)).toEqual([]);
-    expect(Array.from(list1.entries())).toEqual([]);
+    expect(Array.from(list1.get().entries())).toEqual([]);
     expect(Array.from(mapped2.entries)).toEqual([]);
-    expect(Array.from(list2.entries())).toEqual([]);
+    expect(Array.from(list2.get().entries())).toEqual([]);
   });
 
   it('should add items correctly', () => {
     const { doc1, doc2 } = createSyncedYJSCRDTs();
 
-    const list1 = doc1.getMap<any>('list');
-    const list2 = doc2.getMap<any>('list');
+    const list1 = new WatchableValue<CRDTMap<any>>(doc1.getMap<any>('list'));
+    const list2 = new WatchableValue<CRDTMap<any>>(doc2.getMap<any>('list'));
 
     const mapped1 = new MappedCRDTMap<number, CRDTType>(list1, mapper);
     const mapped2 = new MappedCRDTMap<number, CRDTType>(list2, mapper);
@@ -101,8 +102,12 @@ describe('YJS MappedCRDTMap', () => {
   it('should update wrapped items correctly', () => {
     const { doc1, doc2 } = createSyncedYJSCRDTs();
 
-    const list1 = doc1.getMap<MappedCRDTMapMapType<CRDTType>>('list');
-    const list2 = doc2.getMap<MappedCRDTMapMapType<CRDTType>>('list');
+    const list1 = new WatchableValue<CRDTMap<any>>(
+      doc1.getMap<MappedCRDTMapMapType<CRDTType>>('list')
+    );
+    const list2 = new WatchableValue<CRDTMap<any>>(
+      doc2.getMap<MappedCRDTMapMapType<CRDTType>>('list')
+    );
 
     const mapped1 = new MappedCRDTMap<TestClass, CRDTType>(list1, testClassMapper);
     const mapped2 = new MappedCRDTMap<TestClass, CRDTType>(list2, testClassMapper);

@@ -8,9 +8,10 @@ export class CRDTProp<
   N extends keyof T & string
 > {
   #cachedValue: T[N] | undefined;
+  #current: CRDTMap<T>;
 
   constructor(
-    private readonly crdt: WatchableValue<CRDTMap<T>>,
+    crdt: WatchableValue<CRDTMap<T>>,
     private readonly name: N,
     private readonly props: {
       onRemoteChange?: () => void;
@@ -19,31 +20,26 @@ export class CRDTProp<
       cache?: boolean;
     } = {}
   ) {
-    props.onRemoteChange ??= () => {};
-
-    let oldCrdt = crdt.get();
-    oldCrdt.get(name, props.factory);
+    this.#current = crdt.get();
+    this.#current.get(name, props.factory);
 
     const remoteUpdate: EventReceiver<CRDTMapEvents<T[string]>['remoteUpdate']> = p => {
       if (p.key !== name) return;
       props.onRemoteChange!();
     };
 
-    crdt.get().on('remoteUpdate', remoteUpdate);
+    if (props.onRemoteChange) crdt.get().on('remoteUpdate', remoteUpdate);
 
     crdt.on('change', () => {
-      assert.present(oldCrdt);
+      if (props.onRemoteChange) this.#current.off('remoteUpdate', remoteUpdate);
 
-      oldCrdt.off('remoteUpdate', remoteUpdate);
-
-      crdt.get().on('remoteUpdate', remoteUpdate);
-
-      oldCrdt = crdt.get();
-      oldCrdt.get(name, props.factory);
+      this.#current = crdt.get();
+      if (props.onRemoteChange) this.#current.on('remoteUpdate', remoteUpdate);
+      this.#current.get(name, props.factory);
     });
 
-    if (!this.crdt.get().has(this.name) && props.initialValue !== undefined) {
-      this.crdt.get().set(this.name, props.initialValue);
+    if (!this.#current.has(this.name) && props.initialValue !== undefined) {
+      this.#current.set(this.name, props.initialValue);
     }
 
     if (props.cache) {
@@ -54,14 +50,14 @@ export class CRDTProp<
   get() {
     return (
       (this.props.cache ? this.#cachedValue : undefined) ??
-      this.crdt.get().get(this.name, this.props.factory)
+      this.#current.get(this.name, this.props.factory)
     );
   }
 
   getNonNull() {
     const v =
       (this.props.cache ? this.#cachedValue : undefined) ??
-      this.crdt.get().get(this.name, this.props.factory);
+      this.#current.get(this.name, this.props.factory);
     assert.present(
       v,
       `Can't get ${this.name}. cache=${this.props.cache}, cachedValue=${this.#cachedValue}`
@@ -70,15 +66,15 @@ export class CRDTProp<
   }
 
   set(v: T[N]) {
-    this.crdt.get().set(this.name, v);
+    this.#current.set(this.name, v);
     if (this.props.cache) {
       this.#cachedValue = v;
     }
   }
 
   init(v: T[N]) {
-    if (!this.crdt.get().has(this.name)) {
-      this.crdt.get().set(this.name, v);
+    if (!this.#current.has(this.name)) {
+      this.#current.set(this.name, v);
       if (this.props.cache) {
         this.#cachedValue = v;
       }

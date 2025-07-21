@@ -74,7 +74,7 @@ const DEFAULT_BOUNDS = { x: 0, y: 0, w: 10, h: 10, r: 0 };
 export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramNodeSnapshot> {
   // Shared properties
   readonly #nodeType: CRDTProp<DiagramNodeCRDT, 'nodeType'>;
-  #edges: MappedCRDTMap<string[], { edges: Array<string> }>;
+  readonly #edges: MappedCRDTMap<string[], { edges: Array<string> }>;
 
   // Note, we use MappedCRDTProp here for performance reasons
   readonly #bounds: MappedCRDTProp<DiagramNodeCRDT, 'bounds', Box>;
@@ -92,7 +92,19 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
     const nodeCrdt = this._crdt as unknown as WatchableValue<CRDTMap<DiagramNodeCRDT>>;
 
-    this.#edges = this.makeEdgesMap(nodeCrdt, layer);
+    this.#edges = new MappedCRDTMap(
+      WatchableValue.from(
+        ([m]) => m.get().get('edges', () => layer.diagram.document.root.factory.makeMap())!,
+        [nodeCrdt]
+      ),
+      makeEdgesMapper(this),
+      {
+        allowUpdates: true,
+        onRemoteChange: () => getRemoteUnitOfWork(this.diagram).updateElement(this),
+        onRemoteAdd: () => getRemoteUnitOfWork(this.diagram).updateElement(this),
+        onRemoteRemove: () => getRemoteUnitOfWork(this.diagram).updateElement(this)
+      }
+    );
 
     this.#nodeType = new CRDTProp<DiagramNodeCRDT, 'nodeType'>(nodeCrdt, 'nodeType', {
       onRemoteChange: () => {
@@ -197,13 +209,6 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       node.forceUpdateMetadata(m);
     }
     node._cache?.clear();
-  }
-
-  detachCRDT(callback: () => void = () => {}) {
-    super.detachCRDT(callback);
-
-    const crdt = this._crdt as unknown as WatchableValue<CRDTMap<DiagramNodeCRDT>>;
-    this.#edges = this.makeEdgesMap(crdt, this.layer);
   }
 
   getDefinition() {
@@ -931,18 +936,5 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
   private getNestedElements(): DiagramElement[] {
     return [this, ...this.children.flatMap(c => (isNode(c) ? c.getNestedElements() : c))];
-  }
-
-  private makeEdgesMap(nodeCrdt: WatchableValue<CRDTMap<DiagramNodeCRDT>>, layer: Layer) {
-    return new MappedCRDTMap(
-      nodeCrdt.get().get('edges', () => layer.crdt.factory.makeMap())!,
-      makeEdgesMapper(this),
-      {
-        allowUpdates: true,
-        onRemoteChange: () => getRemoteUnitOfWork(this.diagram).updateElement(this),
-        onRemoteAdd: () => getRemoteUnitOfWork(this.diagram).updateElement(this),
-        onRemoteRemove: () => getRemoteUnitOfWork(this.diagram).updateElement(this)
-      }
-    );
   }
 }
