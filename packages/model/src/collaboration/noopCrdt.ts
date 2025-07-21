@@ -154,6 +154,10 @@ export class NoOpCRDTRoot extends EventEmitter<CRDTRootEvents> implements CRDTRo
 
   readonly factory = new NoOpCRDTFactory();
 
+  hasData() {
+    return this.map.size > 0 || this.list.size > 0;
+  }
+
   getMap<T extends { [key: string]: CRDTCompatibleObject }>(name: string): CRDTMap<T> {
     let m = this.map.get(name);
     if (!m) {

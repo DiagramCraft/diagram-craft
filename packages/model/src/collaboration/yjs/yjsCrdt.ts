@@ -85,6 +85,10 @@ export class YJSRoot extends EventEmitter<CRDTRootEvents> implements CRDTRoot {
     return this.doc;
   }
 
+  hasData() {
+    return [...this.data.keys()].length > 0;
+  }
+
   clear() {
     this.data.clear();
   }
