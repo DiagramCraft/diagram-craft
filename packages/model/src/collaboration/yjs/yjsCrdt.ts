@@ -37,12 +37,24 @@ const unwrap = (e: any) => {
 };
 
 export class YJSFactory implements CRDTFactory {
-  makeMap<T extends Record<string, CRDTCompatibleObject>>(): CRDTMap<T> {
-    return new YJSMap<T>();
+  makeMap<T extends Record<string, CRDTCompatibleObject>>(initial?: T): CRDTMap<T> {
+    const dest = new YJSMap<T>();
+    if (initial) {
+      for (const [key, value] of Object.entries(initial)) {
+        dest.set(key, value as T[string]);
+      }
+    }
+    return dest;
   }
 
-  makeList<T extends CRDTCompatibleObject>(): CRDTList<T> {
-    return new YJSList<T>();
+  makeList<T extends CRDTCompatibleObject>(initial?: Array<T>): CRDTList<T> {
+    const list = new YJSList<T>();
+    if (initial) {
+      for (const value of initial) {
+        list.push(value);
+      }
+    }
+    return list;
   }
 }
 
