@@ -654,4 +654,104 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       expect(() => edge1.removeLabelNode(labelNode, model.uow)).toThrow();
     });
   });
+
+  describe('addWaypoint', () => {
+    it('should add waypoint to straight edge', () => {
+      // Act
+      model.reset();
+      UnitOfWork.execute(model.diagram1, uow => edge1.addWaypoint({ point: { x: 5, y: 5 } }, uow));
+
+      // Verify
+      expect(edge1.waypoints).toHaveLength(1);
+      expect(edge1.waypoints[0].point).toEqual({ x: 5, y: 5 });
+      expect(model.elementChange[0]).toHaveBeenCalledTimes(1);
+      if (edge2) {
+        expect(edge2.waypoints).toHaveLength(1);
+        expect(edge2.waypoints[0].point).toEqual({ x: 5, y: 5 });
+        expect(model.elementChange[1]).toHaveBeenCalledTimes(1);
+      }
+    });
+
+    it('should add waypoint to straight edge in an ordered way', () => {
+      // Act
+      edge1.addWaypoint({ point: { x: 75, y: 75 } }, model.uow);
+      edge1.addWaypoint({ point: { x: 5, y: 5 } }, model.uow);
+
+      // Verify
+      expect(edge1.waypoints).toHaveLength(2);
+      expect(edge1.waypoints[0].point).toEqual({ x: 5, y: 5 });
+      expect(edge1.waypoints[1].point).toEqual({ x: 75, y: 75 });
+      if (edge2) {
+        expect(edge2.waypoints).toHaveLength(2);
+        expect(edge2.waypoints[0].point).toEqual({ x: 5, y: 5 });
+        expect(edge2.waypoints[1].point).toEqual({ x: 75, y: 75 });
+      }
+    });
+  });
+
+  describe('removeWaypoint', () => {
+    it('should remove waypoint', () => {
+      // Setup
+      edge1.addWaypoint({ point: { x: 75, y: 75 } }, model.uow);
+      edge1.addWaypoint({ point: { x: 5, y: 5 } }, model.uow);
+
+      // Act
+      model.reset();
+      UnitOfWork.execute(model.diagram1, uow => edge1.removeWaypoint(edge1.waypoints[0], uow));
+
+      // Verify
+      expect(edge1.waypoints).toHaveLength(1);
+      expect(edge1.waypoints[0].point).toEqual({ x: 75, y: 75 });
+      expect(model.elementChange[0]).toHaveBeenCalledTimes(1);
+      if (edge2) {
+        expect(edge2.waypoints).toHaveLength(1);
+        expect(edge2.waypoints[0].point).toEqual({ x: 75, y: 75 });
+        expect(model.elementChange[1]).toHaveBeenCalledTimes(1);
+      }
+    });
+  });
+
+  describe('moveWaypoint', () => {
+    it('should move waypoint', () => {
+      // Setup
+      edge1.addWaypoint({ point: { x: 75, y: 75 } }, model.uow);
+      edge1.addWaypoint({ point: { x: 5, y: 5 } }, model.uow);
+
+      // Act
+      model.reset();
+      UnitOfWork.execute(model.diagram1, uow =>
+        edge1.moveWaypoint(edge1.waypoints[0], { x: 50, y: 50 }, uow)
+      );
+
+      // Verify
+      expect(edge1.waypoints[0].point).toEqual({ x: 50, y: 50 });
+      expect(model.elementChange[0]).toHaveBeenCalledTimes(1);
+      if (edge2) {
+        expect(edge2.waypoints[0].point).toEqual({ x: 50, y: 50 });
+        expect(model.elementChange[1]).toHaveBeenCalledTimes(1);
+      }
+    });
+  });
+
+  describe('replaceWaypoint', () => {
+    it('should replace waypoint', () => {
+      // Setup
+      edge1.addWaypoint({ point: { x: 75, y: 75 } }, model.uow);
+      edge1.addWaypoint({ point: { x: 5, y: 5 } }, model.uow);
+
+      // Act
+      model.reset();
+      UnitOfWork.execute(model.diagram1, uow =>
+        edge1.replaceWaypoint(1, { point: { x: 50, y: 50 } }, uow)
+      );
+
+      // Verify
+      expect(edge1.waypoints[1].point).toEqual({ x: 50, y: 50 });
+      expect(model.elementChange[0]).toHaveBeenCalledTimes(1);
+      if (edge2) {
+        expect(edge2.waypoints[1].point).toEqual({ x: 50, y: 50 });
+        expect(model.elementChange[1]).toHaveBeenCalledTimes(1);
+      }
+    });
+  });
 });

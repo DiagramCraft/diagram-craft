@@ -19,7 +19,7 @@ import {
 import { DefaultStyles, edgeDefaults } from './diagramDefaults';
 import { buildEdgePath } from './edgePathBuilder';
 import { isHorizontal, isParallel, isPerpendicular, isReadable, isVertical } from './labelNode';
-import { DeepReadonly, DeepRequired, DeepWriteable } from '@diagram-craft/utils/types';
+import { DeepReadonly, DeepRequired } from '@diagram-craft/utils/types';
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { newid } from '@diagram-craft/utils/id';
 import { isDifferent } from '@diagram-craft/utils/math';
@@ -340,7 +340,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       for (let i = 0; i < this.waypoints.length; i++) {
         const wp = this.waypoints[i];
         if (!wp.controlPoints) {
-          this.updateWaypoint(
+          this.replaceWaypoint(
             i,
             {
               ...wp,
@@ -747,17 +747,19 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
 
   moveWaypoint(waypoint: Waypoint, point: Point, uow: UnitOfWork) {
     uow.snapshot(this);
-    // TODO: Fix this
-    (waypoint as DeepWriteable<Waypoint>).point = point;
+    this.#waypoints.set(this.waypoints.map(w => (w === waypoint ? { ...w, point } : w)));
     uow.updateElement(this);
   }
 
-  updateWaypoint(idx: number, waypoint: Waypoint, uow: UnitOfWork) {
+  replaceWaypoint(idx: number, waypoint: Waypoint, uow: UnitOfWork) {
     uow.snapshot(this);
     this.#waypoints.set(this.waypoints.map((w, i) => (i === idx ? waypoint : w)));
     uow.updateElement(this);
   }
 
+  /* Midpoints *********************************************************************************************** */
+
+  // TODO: Can we move this to Path?
   get midpoints() {
     const path = this.path();
     return path.segments.map(s => {
