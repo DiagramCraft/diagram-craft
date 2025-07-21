@@ -8,6 +8,7 @@ import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { serializeDiagramDocument } from '@diagram-craft/model/serialization/serialize';
 import { ProgressCallback } from '@diagram-craft/model/types';
 import { CollaborationConfig } from '@diagram-craft/model/collaboration/collaborationConfig';
+import type { CRDTRoot } from '@diagram-craft/model/collaboration/crdt';
 
 const KEY = 'autosave';
 
@@ -15,6 +16,7 @@ let needsSave: { url: string | undefined; doc: DiagramDocument } | undefined = u
 
 export const Autosave = {
   load: async (
+    root: CRDTRoot,
     progressCallback: ProgressCallback,
     documentFactory: DocumentFactory,
     diagramFactory: DiagramFactory<Diagram>,
@@ -28,7 +30,7 @@ export const Autosave = {
 
       const parsed = JSON.parse(item);
 
-      const document = await documentFactory(parsed.url, progressCallback);
+      const document = await documentFactory.createDocument(root, parsed.url, progressCallback);
       await deserializeDiagramDocument(parsed.diagram, document, diagramFactory);
       await document.load();
 

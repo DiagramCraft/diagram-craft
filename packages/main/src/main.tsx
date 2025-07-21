@@ -3,7 +3,10 @@ import './initial-loader';
 import ReactDOM from 'react-dom/client';
 import { AppLoader, StencilRegistryConfig } from './AppLoader';
 import './index.css';
-import { deserializeDiagramDocument } from '@diagram-craft/model/serialization/deserialize';
+import {
+  deserializeDiagramDocument,
+  type DocumentFactory
+} from '@diagram-craft/model/serialization/deserialize';
 import { SerializedDiagram } from '@diagram-craft/model/serialization/types';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { Diagram } from '@diagram-craft/model/diagram';
@@ -16,9 +19,9 @@ import { fileLoaderRegistry, stencilLoaderRegistry } from '@diagram-craft/canvas
 import { DiagramRef } from './App';
 import { Autosave } from './Autosave';
 import { UserState } from './UserState';
-import { CRDT } from '@diagram-craft/model/collaboration/crdt';
-import { CollaborationConfig } from '@diagram-craft/model/collaboration/collaborationConfig';
+import { CRDT, type CRDTRoot } from '@diagram-craft/model/collaboration/crdt';
 import { ProgressCallback } from '@diagram-craft/model/types';
+import { CollaborationConfig } from '@diagram-craft/model/collaboration/collaborationConfig';
 import { newid } from '@diagram-craft/utils/id';
 
 stencilLoaderRegistry.drawioManual = () =>
@@ -149,24 +152,28 @@ const diagramFactory = (d: SerializedDiagram, doc: DiagramDocument) => {
   return new Diagram(d.id, d.name, doc);
 };
 
-const documentFactory = async (url: string | undefined, statusCallback: ProgressCallback) => {
-  const root = CRDT.makeRoot();
-  if (url) {
-    if (location.hash !== '') {
-      // TODO: This is a hack for the testing setup
-      await CollaborationConfig.Backend.connect(url + '__' + newid(), root, statusCallback);
-    } else {
-      await CollaborationConfig.Backend.connect(url, root, statusCallback);
+const documentFactory: DocumentFactory = {
+  loadCRDT: async (url: string | undefined, statusCallback: ProgressCallback) => {
+    const root = CRDT.makeRoot();
+    if (url) {
+      if (location.hash !== '') {
+        // TODO: This is a hack for the testing setup
+        await CollaborationConfig.Backend.connect(url + '__' + newid(), root, statusCallback);
+      } else {
+        await CollaborationConfig.Backend.connect(url, root, statusCallback);
+      }
     }
+    return root;
+  },
+  createDocument: async (
+    root: CRDTRoot,
+    url: string | undefined,
+    _statusCallback: ProgressCallback
+  ) => {
+    const doc = new DiagramDocument(nodeRegistry, edgeRegistry, false, root);
+    if (url) doc.url = url;
+    return doc;
   }
-
-  if (location.search.includes('crdtClear=true')) {
-    root.clear();
-  }
-
-  const doc = new DiagramDocument(nodeRegistry, edgeRegistry, false, root);
-  if (url) doc.url = url;
-  return doc;
 };
 
 const diagrams: Array<DiagramRef> = [];

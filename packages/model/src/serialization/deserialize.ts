@@ -23,6 +23,7 @@ import { ReferenceLayer } from '../diagramLayerReference';
 import { RuleLayer } from '../diagramLayerRule';
 import { DataProviderRegistry } from '../dataProvider';
 import { RegularLayer } from '../diagramLayerRegular';
+import type { CRDTRoot } from '../collaboration/crdt';
 
 const unfoldGroup = (node: SerializedElement) => {
   const recurse = (
@@ -165,10 +166,14 @@ export const deserializeDiagramElements = (
     .filter(e => e.parent === undefined);
 };
 
-export type DocumentFactory = (
-  url: string | undefined,
-  callback: ProgressCallback
-) => Promise<DiagramDocument>;
+export type DocumentFactory = {
+  loadCRDT: (url: string | undefined, callback: ProgressCallback) => Promise<CRDTRoot>;
+  createDocument: (
+    root: CRDTRoot,
+    url: string | undefined,
+    callback: ProgressCallback
+  ) => Promise<DiagramDocument>;
+};
 
 export type DiagramFactory<T extends Diagram> = (d: SerializedDiagram, doc: DiagramDocument) => T;
 

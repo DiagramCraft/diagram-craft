@@ -12,6 +12,66 @@ import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Progress, ProgressCallback } from '@diagram-craft/model/types';
 
+const loadInitialDocument = async (
+  diagram: DiagramRef | undefined,
+  documentFactory: DocumentFactory,
+  diagramFactory: DiagramFactory<Diagram>,
+  progressCallback: ProgressCallback
+): Promise<{ doc?: DiagramDocument; url?: string }> => {
+  const root = await documentFactory.loadCRDT(diagram?.url, progressCallback);
+  if (location.search.includes('crdtClear=true')) {
+    console.log('Clear server state');
+    root.clear();
+  }
+
+  if (diagram) {
+    if (root.hasData() || location.search.includes('crdtLoadFromServer=true')) {
+      console.log('Load from server');
+      return documentFactory.createDocument(root, diagram!.url, progressCallback).then(v => {
+        return { doc: v, url: diagram?.url };
+      });
+    } else {
+      return Autosave.load(root, progressCallback, documentFactory, diagramFactory, true).then(
+        autosaved => {
+          if (autosaved?.document) {
+            console.log('Load from auto save');
+            autosaved.document!.url = diagram?.url;
+            return { doc: autosaved.document, url: autosaved.url };
+          } else {
+            console.log('Load from url');
+            return loadFileFromUrl(
+              diagram!.url,
+              progressCallback,
+              documentFactory,
+              diagramFactory,
+              root
+            ).then(defDiagram => {
+              defDiagram!.url = diagram?.url;
+              return { doc: defDiagram };
+            });
+          }
+        }
+      );
+    }
+  } else {
+    return documentFactory
+      .createDocument(root, undefined, progressCallback)
+      .then(doc => {
+        // TODO: This is duplicated in fileNewAction.ts
+        const diagram = new Diagram(newid(), 'Untitled', doc);
+        diagram.layers.add(
+          new RegularLayer(newid(), 'Default', [], diagram),
+          UnitOfWork.immediate(diagram)
+        );
+        doc.addDiagram(diagram);
+        return doc;
+      })
+      .then(doc => {
+        return { doc };
+      });
+  }
+};
+
 export const AppLoader = (props: Props) => {
   const [doc, setDoc] = useState<DiagramDocument | undefined>(undefined);
   const [url, setUrl] = useState<string | undefined>(props.diagram?.url);
@@ -35,45 +95,15 @@ export const AppLoader = (props: Props) => {
   }, [props.stencils, doc]);
 
   useEffect(() => {
-    if (props.diagram) {
-      if (location.search.includes('crdtLoadFromServer=true')) {
-        props.documentFactory(props.diagram!.url, progressCallback).then(v => {
-          setDoc(v);
-          setUrl(props.diagram?.url);
-        });
-      } else {
-        Autosave.load(progressCallback, props.documentFactory, props.diagramFactory, true).then(
-          autosaved => {
-            if (autosaved?.document) {
-              setDoc(autosaved?.document);
-              autosaved.document!.url = props.diagram?.url;
-              setUrl(autosaved.url);
-            } else {
-              loadFileFromUrl(
-                props.diagram!.url,
-                progressCallback,
-                props.documentFactory,
-                props.diagramFactory
-              ).then(defDiagram => {
-                setDoc(defDiagram);
-                defDiagram!.url = props.diagram?.url;
-              });
-            }
-          }
-        );
-      }
-    } else {
-      props.documentFactory(undefined, progressCallback).then(doc => {
-        // TODO: This is duplicated in fileNewAction.ts
-        const diagram = new Diagram(newid(), 'Untitled', doc);
-        diagram.layers.add(
-          new RegularLayer(newid(), 'Default', [], diagram),
-          UnitOfWork.immediate(diagram)
-        );
-        doc.addDiagram(diagram);
-        setDoc(doc);
-      });
-    }
+    loadInitialDocument(
+      props.diagram,
+      props.documentFactory,
+      props.diagramFactory,
+      progressCallback
+    ).then(({ doc, url }) => {
+      if (doc) setDoc(doc);
+      if (url) setUrl(url);
+    });
   }, [props.diagramFactory, props.documentFactory]);
 
   useEffect(() => {

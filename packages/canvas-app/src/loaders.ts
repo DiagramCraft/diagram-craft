@@ -4,6 +4,7 @@ import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { assert } from '@diagram-craft/utils/assert';
 import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { ProgressCallback } from '@diagram-craft/model/types';
+import type { CRDTRoot } from '@diagram-craft/model/collaboration/crdt';
 
 declare global {
   interface StencilLoaderOpts {}
@@ -38,7 +39,8 @@ export const loadFileFromUrl = async (
   url: string,
   progressCallback: ProgressCallback,
   documentFactory: DocumentFactory,
-  diagramFactory: DiagramFactory<Diagram>
+  diagramFactory: DiagramFactory<Diagram>,
+  root?: CRDTRoot
 ) => {
   const content = await fetch(url).then(r => r.text());
 
@@ -46,7 +48,8 @@ export const loadFileFromUrl = async (
   assert.present(fileLoaderFactory, `File loader for ${url} not found`);
   const fileLoader = await fileLoaderFactory();
 
-  const doc = await documentFactory(url, progressCallback);
+  root ??= await documentFactory.loadCRDT(url, progressCallback);
+  const doc = await documentFactory.createDocument(root, url, progressCallback);
   await fileLoader(content, doc, diagramFactory);
   await doc.load();
 

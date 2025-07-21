@@ -198,7 +198,11 @@ export const App = (props: {
     },
     newDocument: async () => {
       // TODO: This is partially duplicated in AppLoader.ts
-      const doc = await props.documentFactory(undefined, progressCallback);
+      const doc = await props.documentFactory.createDocument(
+        await props.documentFactory.loadCRDT(undefined, progressCallback),
+        undefined,
+        progressCallback
+      );
       const diagram = new Diagram(newid(), 'Untitled', doc);
       diagram.layers.add(
         new RegularLayer(newid(), 'Default', [], diagram),
