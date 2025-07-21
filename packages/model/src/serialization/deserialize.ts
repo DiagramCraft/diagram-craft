@@ -16,14 +16,14 @@ import {
   SerializedStylesheet
 } from './types';
 import { Endpoint } from '../endpoint';
-import { ProgressCallback, Waypoint } from '../types';
+import { Waypoint } from '../types';
 import { DiagramStyles, Stylesheet } from '../diagramStyles';
 import { DefaultStyles } from '../diagramDefaults';
 import { ReferenceLayer } from '../diagramLayerReference';
 import { RuleLayer } from '../diagramLayerRule';
 import { DataProviderRegistry } from '../dataProvider';
 import { RegularLayer } from '../diagramLayerRegular';
-import type { CRDTRoot } from '../collaboration/crdt';
+import type { DiagramFactory } from '../factory';
 
 const unfoldGroup = (node: SerializedElement) => {
   const recurse = (
@@ -165,17 +165,6 @@ export const deserializeDiagramElements = (
     .map(n => (n.type === 'node' ? nodeLookup[n.id] : edgeLookup[n.id]))
     .filter(e => e.parent === undefined);
 };
-
-export type DocumentFactory = {
-  loadCRDT: (url: string | undefined, callback: ProgressCallback) => Promise<CRDTRoot>;
-  createDocument: (
-    root: CRDTRoot,
-    url: string | undefined,
-    callback: ProgressCallback
-  ) => Promise<DiagramDocument>;
-};
-
-export type DiagramFactory<T extends Diagram> = (d: SerializedDiagram, doc: DiagramDocument) => T;
 
 export const deserializeDiagramDocument = async <T extends Diagram>(
   document: SerializedDiagramDocument,

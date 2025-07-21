@@ -32,7 +32,6 @@ import { EditableCanvas } from '@diagram-craft/canvas-react/EditableCanvas';
 import { Autosave } from './Autosave';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { HelpMessage } from './react-app/components/HelpMessage';
-import { DiagramFactory, DocumentFactory } from '@diagram-craft/model/serialization/deserialize';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { loadFileFromUrl } from '@diagram-craft/canvas-app/loaders';
 import { ErrorBoundary } from './react-app/ErrorBoundary';
@@ -68,6 +67,7 @@ import { ZoomTool } from '@diagram-craft/canvas-app/tools/zoomTool';
 import { AwarenessToolbar } from './react-app/AwarenessToolbar';
 import { Progress, ProgressCallback } from '@diagram-craft/model/types';
 import { FullScreenProgress } from './react-app/components/FullScreenProgress';
+import type { DiagramFactory, DocumentFactory } from '@diagram-craft/model/factory';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -107,7 +107,7 @@ export const App = (props: {
   url?: string;
   doc: DiagramDocument;
   documentFactory: DocumentFactory;
-  diagramFactory: DiagramFactory<Diagram>;
+  diagramFactory: DiagramFactory;
 }) => {
   const redraw = useRedraw();
   const helpState = useRef(new HelpState());

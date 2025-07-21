@@ -1,14 +1,10 @@
-import {
-  deserializeDiagramDocument,
-  DiagramFactory,
-  DocumentFactory
-} from '@diagram-craft/model/serialization/deserialize';
-import { Diagram } from '@diagram-craft/model/diagram';
+import { deserializeDiagramDocument } from '@diagram-craft/model/serialization/deserialize';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { serializeDiagramDocument } from '@diagram-craft/model/serialization/serialize';
 import { ProgressCallback } from '@diagram-craft/model/types';
 import { CollaborationConfig } from '@diagram-craft/model/collaboration/collaborationConfig';
 import type { CRDTRoot } from '@diagram-craft/model/collaboration/crdt';
+import type { DiagramFactory, DocumentFactory } from '@diagram-craft/model/factory';
 
 const KEY = 'autosave';
 
@@ -19,7 +15,7 @@ export const Autosave = {
     root: CRDTRoot,
     progressCallback: ProgressCallback,
     documentFactory: DocumentFactory,
-    diagramFactory: DiagramFactory<Diagram>,
+    diagramFactory: DiagramFactory,
     failSilently = false
   ) => {
     if (!CollaborationConfig.idNoOp) return undefined;

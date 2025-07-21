@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
-import { DiagramFactory, DocumentFactory } from '@diagram-craft/model/serialization/deserialize';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { App, DiagramRef } from './App';
 import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
@@ -11,6 +10,7 @@ import { newid } from '@diagram-craft/utils/id';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Progress, ProgressCallback } from '@diagram-craft/model/types';
+import type { DiagramFactory, DocumentFactory } from '@diagram-craft/model/factory';
 
 const isRequestForClear = () => location.search.includes('crdtClear=true');
 const isRequestToLoadFromServer = () => location.search.includes('crdtLoadFromServer=true');
@@ -18,7 +18,7 @@ const isRequestToLoadFromServer = () => location.search.includes('crdtLoadFromSe
 const loadInitialDocument = async (
   diagram: DiagramRef | undefined,
   documentFactory: DocumentFactory,
-  diagramFactory: DiagramFactory<Diagram>,
+  diagramFactory: DiagramFactory,
   progress: ProgressCallback
 ): Promise<{ doc?: DiagramDocument; url?: string }> => {
   const root = await documentFactory.loadCRDT(diagram?.url, progress);
