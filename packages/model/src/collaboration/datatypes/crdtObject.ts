@@ -7,20 +7,21 @@ import type { WatchableValue } from '@diagram-craft/utils/watchableValue';
 
 export class CRDTObject<T extends CRDTCompatibleObject & object> {
   readonly #proxy: T;
+  #current: CRDTMap;
 
   constructor(
-    readonly crdt: WatchableValue<CRDTMap>,
+    crdt: WatchableValue<CRDTMap>,
     readonly onRemoteChange: () => void
   ) {
-    let oldCrdt = crdt.get();
+    this.#current = crdt.get();
 
-    oldCrdt.on('remoteBeforeTransaction', () => onRemoteChange());
+    this.#current.on('remoteAfterTransaction', () => onRemoteChange());
 
     crdt.on('change', () => {
-      oldCrdt.off('remoteBeforeTransaction', () => onRemoteChange());
+      this.#current.off('remoteAfterTransaction', () => onRemoteChange());
 
-      oldCrdt = crdt.get();
-      oldCrdt.on('remoteBeforeTransaction', () => onRemoteChange());
+      this.#current = crdt.get();
+      this.#current.on('remoteAfterTransaction', () => onRemoteChange());
     });
 
     const createProxy = (target = {}, path = ''): T => {
@@ -56,7 +57,7 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
           // @ts-ignore
           if (_target[prop] !== undefined) return _target[prop];
 
-          const map = this.crdt.get();
+          const map = this.#current;
 
           const fullPath = path ? `${path}.${prop}` : prop;
           const value = map.get(fullPath);
@@ -94,7 +95,7 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
 
           const fullPath = path ? `${path}.${prop}` : prop;
 
-          const map = this.crdt.get();
+          const map = this.#current;
 
           if (value === undefined) {
             map.delete(fullPath);
@@ -139,7 +140,7 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
 
   getClone(): DeepReadonly<T> {
     const result: Record<string, unknown> = {};
-    const map = this.crdt.get();
+    const map = this.#current;
 
     for (const [path, value] of map.entries()) {
       const parts = path.split('.');
@@ -185,11 +186,11 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
   }
 
   update(callback: (obj: T) => void) {
-    this.crdt.get().transact(() => callback(this.#proxy));
+    this.#current.transact(() => callback(this.#proxy));
   }
 
   set(obj: T) {
-    this.crdt.get().transact(() => {
+    this.#current.transact(() => {
       for (const key in obj) {
         this.#proxy[key] = obj[key];
       }
@@ -197,7 +198,7 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
   }
 
   init(obj: T) {
-    if (Array.from(this.crdt.get().keys()).length === 0) {
+    if (Array.from(this.#current.keys()).length === 0) {
       this.set(obj);
     }
   }

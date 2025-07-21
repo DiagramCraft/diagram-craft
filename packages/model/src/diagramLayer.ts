@@ -9,7 +9,7 @@ import { CRDTList, CRDTMap } from './collaboration/crdt';
 import type { RegularLayer } from './diagramLayerRegular';
 import type { AdjustmentRule } from './diagramLayerRuleTypes';
 import type { MappedCRDTOrderedMapMapType } from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
-import { WatchableValue } from '@diagram-craft/utils/watchableValue';
+import { watch } from '@diagram-craft/utils/watchableValue';
 import { CRDTProp } from './collaboration/datatypes/crdtProp';
 
 export type LayerType = 'regular' | 'rule' | 'reference';
@@ -46,12 +46,12 @@ export abstract class Layer<T extends RegularLayer | RuleLayer = RegularLayer | 
     this._type = type ?? 'regular';
     this.crdt.set('type', this._type);
 
-    this.#name = new CRDTProp(new WatchableValue(this.crdt), 'name', {
+    this.#name = new CRDTProp(watch(this.crdt), 'name', {
       onRemoteChange: () => {
         this.diagram.emit('change', { diagram: this.diagram });
       }
     });
-    this.#id = new CRDTProp(new WatchableValue(this.crdt), 'id');
+    this.#id = new CRDTProp(watch(this.crdt), 'id');
 
     this.diagram = diagram;
   }

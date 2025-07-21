@@ -1,5 +1,5 @@
 import type { CRDTRoot } from '../crdt';
-import { createSyncedYJSCRDTs } from './yjsTest';
+import { createSyncedYJSCRDTs } from './yjsTestUtils';
 import { NoOpCRDTMap, NoOpCRDTRoot } from '../noopCrdt';
 import { CollaborationConfig } from '../collaborationConfig';
 import { YJSMap, YJSRoot } from './yjsCrdt';

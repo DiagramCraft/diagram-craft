@@ -10,9 +10,10 @@ export class MappedCRDTProp<
   T
 > {
   #value: T | undefined;
+  #current: CRDTMap<C>;
 
   constructor(
-    private readonly crdt: WatchableValue<CRDTMap<C>>,
+    crdt: WatchableValue<CRDTMap<C>>,
     private readonly name: N,
     private readonly mapper: SimpleCRDTMapper<T, C[N]>,
     props: {
@@ -22,11 +23,11 @@ export class MappedCRDTProp<
   ) {
     props.onRemoteChange ??= () => {};
 
-    let oldCrdt = crdt.get();
-    oldCrdt.get(name, props.factory);
+    this.#current = crdt.get();
+    this.#current.get(name, props.factory);
 
-    if (this.crdt.get().has(this.name)) {
-      this.#value = this.mapper.fromCRDT(this.crdt.get().get(this.name) as C[N]);
+    if (this.#current.has(this.name)) {
+      this.#value = this.mapper.fromCRDT(this.#current.get(this.name) as C[N]);
     }
 
     const remoteUpdate: EventReceiver<CRDTMapEvents<C[string]>['remoteUpdate']> = p => {
@@ -35,17 +36,14 @@ export class MappedCRDTProp<
       props.onRemoteChange!();
     };
 
-    crdt.get().on('remoteUpdate', remoteUpdate);
+    this.#current.on('remoteUpdate', remoteUpdate);
 
     crdt.on('change', () => {
-      assert.present(oldCrdt);
+      this.#current.off('remoteUpdate', remoteUpdate);
 
-      oldCrdt.off('remoteUpdate', remoteUpdate);
-
-      crdt.get().on('remoteUpdate', remoteUpdate);
-
-      oldCrdt = crdt.get();
-      oldCrdt.get(name, props.factory);
+      this.#current = crdt.get();
+      this.#current.on('remoteUpdate', remoteUpdate);
+      this.#current.get(name, props.factory);
     });
   }
 
@@ -61,13 +59,13 @@ export class MappedCRDTProp<
 
   set(v: T) {
     this.#value = v;
-    this.crdt.get().set(this.name, this.mapper.toCRDT(v) as C[N]);
+    this.#current.set(this.name, this.mapper.toCRDT(v) as C[N]);
   }
 
   init(v: T) {
-    if (!this.crdt.get().has(this.name)) {
+    if (!this.#current.has(this.name)) {
       this.#value = v;
-      this.crdt.get().set(this.name, this.mapper.toCRDT(v) as C[N]);
+      this.#current.set(this.name, this.mapper.toCRDT(v) as C[N]);
     }
   }
 }

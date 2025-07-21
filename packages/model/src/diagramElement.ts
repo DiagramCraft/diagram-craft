@@ -18,7 +18,7 @@ import { PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { assert } from '@diagram-craft/utils/assert';
 import type { RegularLayer } from './diagramLayerRegular';
 import type { CRDTMap, FlatCRDTMap } from './collaboration/crdt';
-import { WatchableValue } from '@diagram-craft/utils/watchableValue';
+import { watch, WatchableValue } from '@diagram-craft/utils/watchableValue';
 import { CRDTProp } from './collaboration/datatypes/crdtProp';
 import { CRDTObject } from './collaboration/datatypes/crdtObject';
 import {
@@ -77,12 +77,15 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
     this._layer = layer;
     this._activeDiagram = this._diagram;
 
-    this._crdt = new WatchableValue(crdt ?? this._diagram.document.root.factory.makeMap());
+    this._crdt = watch(crdt ?? this._diagram.document.root.factory.makeMap());
     this._crdt.get().set('id', id);
     this._crdt.get().set('type', type);
 
     this._children = new MappedCRDTOrderedMap<DiagramElement, DiagramElementCRDT>(
-      this._crdt.get().get('children', () => this._diagram.document.root.factory.makeMap())!,
+      WatchableValue.from(
+        ([m]) => m.get().get('children', () => layer.diagram.document.root.factory.makeMap())!,
+        [this._crdt]
+      ),
       makeElementMapper(this.layer),
       {
         allowUpdates: true,
