@@ -4,9 +4,6 @@ import ReactDOM from 'react-dom/client';
 import { AppLoader, StencilRegistryConfig } from './AppLoader';
 import './index.css';
 import { deserializeDiagramDocument } from '@diagram-craft/model/serialization/deserialize';
-import { SerializedDiagram } from '@diagram-craft/model/serialization/types';
-import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
-import { Diagram } from '@diagram-craft/model/diagram';
 import {
   defaultEdgeRegistry,
   defaultNodeRegistry
@@ -16,10 +13,10 @@ import { fileLoaderRegistry, stencilLoaderRegistry } from '@diagram-craft/canvas
 import { DiagramRef } from './App';
 import { Autosave } from './Autosave';
 import { UserState } from './UserState';
-import { CRDT } from '@diagram-craft/model/collaboration/crdt';
-import { CollaborationConfig } from '@diagram-craft/model/collaboration/collaborationConfig';
-import { ProgressCallback } from '@diagram-craft/model/types';
-import { newid } from '@diagram-craft/utils/id';
+import {
+  makeDefaultDiagramFactory,
+  makeDefaultDocumentFactory
+} from '@diagram-craft/model/factory';
 
 stencilLoaderRegistry.drawioManual = () =>
   import('@diagram-craft/canvas-drawio/drawioLoaders').then(m => m.stencilLoaderDrawioManual);
@@ -145,29 +142,8 @@ registerDrawioBaseNodeTypes(nodeRegistry);
 
 const edgeRegistry = defaultEdgeRegistry();
 
-const diagramFactory = (d: SerializedDiagram, doc: DiagramDocument) => {
-  return new Diagram(d.id, d.name, doc);
-};
-
-const documentFactory = async (url: string | undefined, statusCallback: ProgressCallback) => {
-  const root = CRDT.makeRoot();
-  if (url) {
-    if (location.hash !== '') {
-      // TODO: This is a hack for the testing setup
-      await CollaborationConfig.Backend.connect(url + '__' + newid(), root, statusCallback);
-    } else {
-      await CollaborationConfig.Backend.connect(url, root, statusCallback);
-    }
-  }
-
-  if (location.search.includes('crdtClear=true')) {
-    root.clear();
-  }
-
-  const doc = new DiagramDocument(nodeRegistry, edgeRegistry, false, root);
-  if (url) doc.url = url;
-  return doc;
-};
+const diagramFactory = makeDefaultDiagramFactory();
+const documentFactory = makeDefaultDocumentFactory(nodeRegistry, edgeRegistry);
 
 const diagrams: Array<DiagramRef> = [];
 

@@ -1,9 +1,9 @@
-import { Diagram } from '@diagram-craft/model/diagram';
-import { DiagramFactory, DocumentFactory } from '@diagram-craft/model/serialization/deserialize';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { assert } from '@diagram-craft/utils/assert';
 import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { ProgressCallback } from '@diagram-craft/model/types';
+import type { CRDTRoot } from '@diagram-craft/model/collaboration/crdt';
+import type { DiagramFactory, DocumentFactory } from '@diagram-craft/model/factory';
 
 declare global {
   interface StencilLoaderOpts {}
@@ -22,7 +22,7 @@ export type FileLoader = (
   // TODO: Need to extend with blob
   content: string,
   doc: DiagramDocument,
-  diagramFactory: DiagramFactory<Diagram>
+  diagramFactory: DiagramFactory
 ) => Promise<void>;
 
 export const fileLoaderRegistry: Record<string, () => Promise<FileLoader>> = {};
@@ -38,7 +38,8 @@ export const loadFileFromUrl = async (
   url: string,
   progressCallback: ProgressCallback,
   documentFactory: DocumentFactory,
-  diagramFactory: DiagramFactory<Diagram>
+  diagramFactory: DiagramFactory,
+  root?: CRDTRoot
 ) => {
   const content = await fetch(url).then(r => r.text());
 
@@ -46,7 +47,8 @@ export const loadFileFromUrl = async (
   assert.present(fileLoaderFactory, `File loader for ${url} not found`);
   const fileLoader = await fileLoaderFactory();
 
-  const doc = await documentFactory(url, progressCallback);
+  root ??= await documentFactory.loadCRDT(url, progressCallback);
+  const doc = await documentFactory.createDocument(root, url, progressCallback);
   await fileLoader(content, doc, diagramFactory);
   await doc.load();
 

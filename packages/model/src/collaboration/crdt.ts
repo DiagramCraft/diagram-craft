@@ -39,6 +39,7 @@ export interface CRDTRoot extends Emitter<CRDTRootEvents> {
   readonly factory: CRDTFactory;
 
   clear(): void;
+  hasData(): boolean;
 
   getMap<T extends { [key: string]: CRDTCompatibleObject }>(name: string): CRDTMap<T>;
   getList<T extends CRDTCompatibleObject>(name: string): CRDTList<T>;
