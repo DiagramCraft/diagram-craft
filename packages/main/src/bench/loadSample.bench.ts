@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { bench } from 'vitest';
+import { bench, describe } from 'vitest';
 import {
   defaultEdgeRegistry,
   defaultNodeRegistry
@@ -26,86 +26,88 @@ const edgeRegistry = defaultEdgeRegistry();
 const diagramFactory = makeDefaultDiagramFactory();
 const documentFactory = makeDefaultDocumentFactory(nodeRegistry, edgeRegistry);
 
-bench(
-  'loadShapes',
-  async () => {
-    const root = await documentFactory.loadCRDT(undefined, () => {});
-    const document = await documentFactory.createDocument(root, undefined, () => {});
+describe('loadSample', () => {
+  bench(
+    'loadShapes',
+    async () => {
+      const root = await documentFactory.loadCRDT(undefined, () => {});
+      const document = await documentFactory.createDocument(root, undefined, () => {});
 
-    await deserializeDiagramDocument(shapes as any, document, diagramFactory);
-  },
-  {
-    ...opts,
-    setup: () => {
-      CollaborationConfig.CRDTRoot = NoOpCRDTRoot;
-      CollaborationConfig.CRDTMap = NoOpCRDTMap;
+      await deserializeDiagramDocument(shapes as any, document, diagramFactory);
     },
-    teardown: () => {
-      CollaborationConfig.CRDTRoot = origRoot;
-      CollaborationConfig.CRDTMap = origMap;
+    {
+      ...opts,
+      setup: () => {
+        CollaborationConfig.CRDTRoot = NoOpCRDTRoot;
+        CollaborationConfig.CRDTMap = NoOpCRDTMap;
+      },
+      teardown: () => {
+        CollaborationConfig.CRDTRoot = origRoot;
+        CollaborationConfig.CRDTMap = origMap;
+      }
     }
-  }
-);
+  );
 
-bench(
-  'loadShapes YJS',
-  async () => {
-    const root = await documentFactory.loadCRDT(undefined, () => {});
-    const document = await documentFactory.createDocument(root, undefined, () => {});
+  bench(
+    'loadShapes YJS',
+    async () => {
+      const root = await documentFactory.loadCRDT(undefined, () => {});
+      const document = await documentFactory.createDocument(root, undefined, () => {});
 
-    await deserializeDiagramDocument(shapes as any, document, diagramFactory);
-  },
-  {
-    ...opts,
-    setup: () => {
-      CollaborationConfig.CRDTRoot = YJSRoot;
-      CollaborationConfig.CRDTMap = YJSMap;
+      await deserializeDiagramDocument(shapes as any, document, diagramFactory);
     },
-    teardown: () => {
-      CollaborationConfig.CRDTRoot = origRoot;
-      CollaborationConfig.CRDTMap = origMap;
+    {
+      ...opts,
+      setup: () => {
+        CollaborationConfig.CRDTRoot = YJSRoot;
+        CollaborationConfig.CRDTMap = YJSMap;
+      },
+      teardown: () => {
+        CollaborationConfig.CRDTRoot = origRoot;
+        CollaborationConfig.CRDTMap = origMap;
+      }
     }
-  }
-);
+  );
 
-bench(
-  'loadArrows',
-  async () => {
-    const root = await documentFactory.loadCRDT(undefined, () => {});
-    const document = await documentFactory.createDocument(root, undefined, () => {});
+  bench(
+    'loadArrows',
+    async () => {
+      const root = await documentFactory.loadCRDT(undefined, () => {});
+      const document = await documentFactory.createDocument(root, undefined, () => {});
 
-    await deserializeDiagramDocument(arrows as any, document, diagramFactory);
-  },
-  {
-    ...opts,
-    setup: () => {
-      CollaborationConfig.CRDTRoot = NoOpCRDTRoot;
-      CollaborationConfig.CRDTMap = NoOpCRDTMap;
+      await deserializeDiagramDocument(arrows as any, document, diagramFactory);
     },
-    teardown: () => {
-      CollaborationConfig.CRDTRoot = origRoot;
-      CollaborationConfig.CRDTMap = origMap;
+    {
+      ...opts,
+      setup: () => {
+        CollaborationConfig.CRDTRoot = NoOpCRDTRoot;
+        CollaborationConfig.CRDTMap = NoOpCRDTMap;
+      },
+      teardown: () => {
+        CollaborationConfig.CRDTRoot = origRoot;
+        CollaborationConfig.CRDTMap = origMap;
+      }
     }
-  }
-);
+  );
 
-bench(
-  'loadArrows [YJS]',
-  async () => {
-    const root = await documentFactory.loadCRDT(undefined, () => {});
-    const document = await documentFactory.createDocument(root, undefined, () => {});
+  bench(
+    'loadArrows [YJS]',
+    async () => {
+      const root = await documentFactory.loadCRDT(undefined, () => {});
+      const document = await documentFactory.createDocument(root, undefined, () => {});
 
-    await deserializeDiagramDocument(arrows as any, document, diagramFactory);
-  },
-  {
-    ...opts,
-    setup: () => {
-      CollaborationConfig.CRDTRoot = YJSRoot;
-      CollaborationConfig.CRDTMap = YJSMap;
+      await deserializeDiagramDocument(arrows as any, document, diagramFactory);
     },
-    teardown: () => {
-      CollaborationConfig.CRDTRoot = origRoot;
-      CollaborationConfig.CRDTMap = origMap;
+    {
+      ...opts,
+      setup: () => {
+        CollaborationConfig.CRDTRoot = YJSRoot;
+        CollaborationConfig.CRDTMap = YJSMap;
+      },
+      teardown: () => {
+        CollaborationConfig.CRDTRoot = origRoot;
+        CollaborationConfig.CRDTMap = origMap;
+      }
     }
-  }
-);
+  );
+});
