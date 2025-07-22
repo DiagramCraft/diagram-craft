@@ -12,13 +12,7 @@ import { EventEmitter } from '@diagram-craft/utils/event';
 
 export class NoOpCRDTFactory implements CRDTFactory {
   makeMap<T extends Record<string, CRDTCompatibleObject>>(initial?: T): CRDTMap<T> {
-    const dest = new NoOpCRDTMap<T>();
-    if (initial) {
-      for (const [key, value] of Object.entries(initial)) {
-        dest.set(key, value as T[string]);
-      }
-    }
-    return dest;
+    return new NoOpCRDTMap<T>(initial);
   }
 
   makeList<T extends CRDTCompatibleObject>(initial?: Array<T>): CRDTList<T> {
@@ -32,13 +26,24 @@ export class NoOpCRDTFactory implements CRDTFactory {
   }
 }
 
+const FACTORY = new NoOpCRDTFactory();
+
 export class NoOpCRDTMap<T extends { [key: string]: CRDTCompatibleObject }>
   extends EventEmitter<CRDTMapEvents<T[string]>>
   implements CRDTMap<T>
 {
-  private backing = new Map<string, T[string]>();
+  private backing: Map<string, T[string]>;
 
-  readonly factory = new NoOpCRDTFactory();
+  readonly factory = FACTORY;
+
+  constructor(initial?: T) {
+    super();
+    if (initial) {
+      this.backing = new Map<string, T[string]>(Object.entries(initial) as [string, T[string]][]);
+    } else {
+      this.backing = new Map<string, T[string]>();
+    }
+  }
 
   clone() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -107,7 +112,7 @@ export class NoOpCRDTList<T extends CRDTCompatibleObject>
 {
   private backing: T[] = [];
 
-  readonly factory = new NoOpCRDTFactory();
+  readonly factory = FACTORY;
 
   get length() {
     return this.backing.length;
