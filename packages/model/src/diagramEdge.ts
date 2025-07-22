@@ -159,9 +159,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
         onRemoteChange: () => getRemoteUnitOfWork(this.diagram).updateElement(this)
       }
     );
-    if (this.#start.get() === undefined) {
-      this.#start.set(new FreeEndpoint({ x: 0, y: 0 }));
-    }
+    this.#start.init(new FreeEndpoint({ x: 0, y: 0 }));
 
     this.#end = new MappedCRDTProp<DiagramEdgeCRDT, 'end', Endpoint>(
       edgeCrdt,
@@ -171,9 +169,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
         onRemoteChange: () => getRemoteUnitOfWork(this.diagram).updateElement(this)
       }
     );
-    if (this.#end.get() === undefined) {
-      this.#end.set(new FreeEndpoint({ x: 0, y: 0 }));
-    }
+    this.#end.init(new FreeEndpoint({ x: 0, y: 0 }));
 
     const propsMap = WatchableValue.from(
       ([parent]) => parent.get().get('props', () => layer.crdt.factory.makeMap())!,
@@ -202,7 +198,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     edge.#start.set(start);
     edge.#end.set(end);
     edge.#props.set(props as EdgeProps);
-    edge.#waypoints.set(midpoints);
+    if (midpoints.length > 0) edge.#waypoints.set(midpoints);
 
     const m = metadata ?? {};
     m.style ??= DefaultStyles.edge.default;
