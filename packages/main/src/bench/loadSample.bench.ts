@@ -25,7 +25,7 @@ const edgeRegistry = defaultEdgeRegistry();
 const diagramFactory = makeDefaultDiagramFactory();
 const documentFactory = makeDefaultDocumentFactory(nodeRegistry, edgeRegistry);
 
-describe('loadSample', () => {
+describe.skip('loadSample', () => {
   bench(
     'loadShapes',
     async () => {
