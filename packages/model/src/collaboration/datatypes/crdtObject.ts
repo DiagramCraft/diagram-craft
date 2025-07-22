@@ -6,7 +6,7 @@ import type { CRDTCompatibleObject, CRDTMap } from '../crdt';
 import type { WatchableValue } from '@diagram-craft/utils/watchableValue';
 
 export class CRDTObject<T extends CRDTCompatibleObject & object> {
-  readonly #proxy: T;
+  #proxy: T | undefined;
   #current: CRDTMap;
 
   constructor(
@@ -14,20 +14,18 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
     readonly onRemoteChange: () => void
   ) {
     this.#current = crdt.get();
-
-    this.#current.on('remoteAfterTransaction', () => onRemoteChange());
+    this.#current.on('remoteAfterTransaction', onRemoteChange);
 
     crdt.on('change', () => {
-      this.#current.off('remoteAfterTransaction', () => onRemoteChange());
+      this.#current.off('remoteAfterTransaction', onRemoteChange);
 
       this.#current = crdt.get();
-      this.#current.on('remoteAfterTransaction', () => onRemoteChange());
+      this.#current.on('remoteAfterTransaction', onRemoteChange);
     });
-
-    this.#proxy = this.createProxy();
   }
 
   get(): DeepReadonly<T> {
+    this.#proxy ??= this.createProxy();
     return this.#proxy;
   }
 
@@ -79,13 +77,15 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
   }
 
   update(callback: (obj: T) => void) {
-    this.#current.transact(() => callback(this.#proxy));
+    this.#proxy ??= this.createProxy();
+    this.#current.transact(() => callback(this.#proxy!));
   }
 
   set(obj: T) {
+    this.#proxy ??= this.createProxy();
     this.#current.transact(() => {
       for (const key in obj) {
-        this.#proxy[key] = obj[key];
+        this.#proxy![key] = obj[key];
       }
     });
   }
