@@ -168,7 +168,14 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
     this.viewBox = new Viewbox(this.canvas);
 
-    const toggleHasEdgesWithLineHops = () => {
+    const toggleHasEdgesWithLineHops = (type: 'add' | 'remove' | 'change', e: DiagramElement) => {
+      if (!isEdge(e)) return;
+
+      const needsLineHops = e.renderProps.lineHops.type !== 'none';
+      if (type === 'add' && needsLineHops === this.hasEdgesWithLineHops) return;
+      if (type === 'remove' && !needsLineHops) return;
+      if (type === 'change' && needsLineHops === this.hasEdgesWithLineHops) return;
+
       const old = this.hasEdgesWithLineHops;
       this.hasEdgesWithLineHops = this.visibleElements().some(
         e => isEdge(e) && e.renderProps.lineHops.type !== 'none'
@@ -182,9 +189,9 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
         uow.commit();
       }
     };
-    this.on('elementChange', e => e.element.type === 'edge' && toggleHasEdgesWithLineHops());
-    this.on('elementAdd', e => e.element.type === 'edge' && toggleHasEdgesWithLineHops());
-    this.on('elementRemove', e => e.element.type === 'edge' && toggleHasEdgesWithLineHops());
+    this.on('elementChange', e => toggleHasEdgesWithLineHops('change', e.element));
+    this.on('elementAdd', e => toggleHasEdgesWithLineHops('add', e.element));
+    this.on('elementRemove', e => toggleHasEdgesWithLineHops('remove', e.element));
   }
 
   get id() {
