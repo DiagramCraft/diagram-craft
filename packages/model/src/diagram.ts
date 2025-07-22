@@ -169,6 +169,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     this.viewBox = new Viewbox(this.canvas);
 
     const toggleHasEdgesWithLineHops = (type: 'add' | 'remove' | 'change', e: DiagramElement) => {
+      if (type === 'add' && this.hasEdgesWithLineHops) return;
       if (!(e instanceof DiagramEdge)) return;
 
       const needsLineHops = e.renderProps.lineHops.type !== 'none';

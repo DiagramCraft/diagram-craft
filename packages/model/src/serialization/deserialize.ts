@@ -15,7 +15,6 @@ import {
   SerializedStylesheet
 } from './types';
 import { Endpoint } from '../endpoint';
-import { Waypoint } from '../types';
 import { DiagramStyles, Stylesheet } from '../diagramStyles';
 import { DefaultStyles } from '../diagramDefaults';
 import { ReferenceLayer } from '../diagramLayerReference';
@@ -114,7 +113,7 @@ export const deserializeDiagramElements = (
           style: 'default-edge',
           ...e.metadata
         },
-        (e.waypoints ?? []) as Array<Waypoint>,
+        e.waypoints ?? [],
         layer
       );
 
