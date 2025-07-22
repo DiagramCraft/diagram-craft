@@ -25,7 +25,7 @@ const edgeRegistry = defaultEdgeRegistry();
 const diagramFactory = makeDefaultDiagramFactory();
 const documentFactory = makeDefaultDocumentFactory(nodeRegistry, edgeRegistry);
 
-describe.skip('loadSample', () => {
+describe('loadSample', () => {
   bench(
     'loadShapes',
     async () => {
@@ -68,7 +68,7 @@ describe.skip('loadSample', () => {
     }
   );
 */
-  bench(
+  bench.skip(
     'loadArrows',
     async () => {
       const root = await documentFactory.loadCRDT(undefined, () => {});
