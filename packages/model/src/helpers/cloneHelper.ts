@@ -34,7 +34,14 @@ export const cloneElements = (
     assignNewIdsToSerializedElements(e);
   }
 
-  return deserializeDiagramElements(source, targetLayer.diagram, targetLayer, {}, {}, uow);
+  return deserializeDiagramElements(
+    source,
+    targetLayer.diagram,
+    targetLayer,
+    new Map(),
+    new Map(),
+    uow
+  );
 };
 
 export const assignNewBounds = (

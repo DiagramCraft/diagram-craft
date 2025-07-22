@@ -206,7 +206,7 @@ export class ElementsPasteHandler extends PasteHandler {
       }
     }
 
-    const newElements = deserializeDiagramElements(elements, diagram, layer, {}, {});
+    const newElements = deserializeDiagramElements(elements, diagram, layer);
 
     diagram.undoManager.addAndExecute(new PasteUndoableAction(newElements, diagram, layer, this));
     diagram.selectionState.setElements(newElements);
