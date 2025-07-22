@@ -106,7 +106,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
   readonly uid = newid();
   readonly _crdt: WatchableValue<CRDTMap<DiagramCRDT>>;
-  mustCalculateIntersections = true;
+  hasEdgesWithLineHops = true;
 
   // Shared properties
   readonly #name: CRDTProp<DiagramCRDT, 'name'>;
@@ -168,27 +168,24 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
     this.viewBox = new Viewbox(this.canvas);
 
-    // TODO: We should be able to remove this
-    const toggleMustCalculateIntersections = () => {
-      const old = this.mustCalculateIntersections;
-      this.mustCalculateIntersections = this.visibleElements().some(
+    const toggleHasEdgesWithLineHops = () => {
+      const old = this.hasEdgesWithLineHops;
+      this.hasEdgesWithLineHops = this.visibleElements().some(
         e => isEdge(e) && e.renderProps.lineHops.type !== 'none'
       );
       // Only trigger invalidation in case the value has changed to true
-      if (this.mustCalculateIntersections && this.mustCalculateIntersections !== old) {
+      if (this.hasEdgesWithLineHops && this.hasEdgesWithLineHops !== old) {
         const uow = new UnitOfWork(this);
         if (this.activeLayer instanceof RegularLayer) {
-          this.activeLayer.elements
-            .filter(e => isEdge(e))
-            .forEach(e => (e as DiagramEdge).invalidate(uow));
+          this.activeLayer.elements.filter(isEdge).forEach(e => e.invalidate(uow));
         }
         uow.commit();
       }
     };
-    this.on('elementChange', toggleMustCalculateIntersections);
-    this.on('elementAdd', toggleMustCalculateIntersections);
-    this.on('elementRemove', toggleMustCalculateIntersections);
-    toggleMustCalculateIntersections();
+    this.on('elementChange', e => e.element.type === 'edge' && toggleHasEdgesWithLineHops());
+    this.on('elementAdd', e => e.element.type === 'edge' && toggleHasEdgesWithLineHops());
+    this.on('elementRemove', e => e.element.type === 'edge' && toggleHasEdgesWithLineHops());
+    toggleHasEdgesWithLineHops();
   }
 
   get id() {
