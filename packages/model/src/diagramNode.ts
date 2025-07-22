@@ -4,7 +4,6 @@ import { Transform } from '@diagram-craft/geometry/transform';
 import { DiagramElement, type DiagramElementCRDT, isEdge, isNode } from './diagramElement';
 import { DiagramNodeSnapshot, getRemoteUnitOfWork, UnitOfWork, UOWTrackable } from './unitOfWork';
 import type { DiagramEdge, ResolvedLabelNode } from './diagramEdge';
-import { Layer } from './diagramLayer';
 import { DefaultStyles, nodeDefaults } from './diagramDefaults';
 import {
   AnchorEndpoint,
@@ -84,7 +83,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
   constructor(
     id: string,
-    layer: Layer,
+    layer: RegularLayer,
     anchorCache?: ReadonlyArray<Anchor>,
     crdt?: CRDTMap<DiagramElementCRDT>
   ) {
@@ -173,7 +172,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     id: string,
     nodeType: 'group' | string,
     bounds: Box,
-    layer: Layer,
+    layer: RegularLayer,
     props: NodePropsForEditing,
     metadata: ElementMetadata,
     text: NodeTexts = { text: '' },
@@ -200,14 +199,11 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
     node.#props.set((props ?? {}) as NodeProps);
 
-    node._metadata.set(metadata ?? {});
+    const m = metadata ?? {};
+    m.style ??= nodeType === 'text' ? DefaultStyles.node.text : DefaultStyles.node.default;
+    m.textStyle ??= DefaultStyles.text.default;
+    node._metadata.set(m);
 
-    const m = node.metadata;
-    if (!m.style || !m.textStyle) {
-      m.style = node.nodeType === 'text' ? DefaultStyles.node.text : DefaultStyles.node.default;
-      m.textStyle = DefaultStyles.text.default;
-      node.forceUpdateMetadata(m);
-    }
     node._cache?.clear();
   }
 

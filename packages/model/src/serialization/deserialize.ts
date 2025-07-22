@@ -2,8 +2,7 @@ import { Diagram } from '../diagram';
 import { DiagramNode } from '../diagramNode';
 import { DiagramEdge } from '../diagramEdge';
 import { UnitOfWork } from '../unitOfWork';
-import { Layer } from '../diagramLayer';
-import { isSerializedEndpointAnchor, isSerializedEndpointConnected } from './utils';
+import { isSerializedEndpointAnchor, isSerializedEndpointPointInNode } from './utils';
 import { DiagramDocument } from '../diagramDocument';
 import { VerifyNotReached } from '@diagram-craft/utils/assert';
 import {
@@ -16,7 +15,6 @@ import {
   SerializedStylesheet
 } from './types';
 import { Endpoint } from '../endpoint';
-import { Waypoint } from '../types';
 import { DiagramStyles, Stylesheet } from '../diagramStyles';
 import { DefaultStyles } from '../diagramDefaults';
 import { ReferenceLayer } from '../diagramLayerReference';
@@ -53,13 +51,13 @@ const deserializeEndpoint = (
 export const deserializeDiagramElements = (
   diagramElements: ReadonlyArray<SerializedElement>,
   diagram: Diagram,
-  layer: Layer,
-  nodeLookup?: Record<string, DiagramNode>,
-  edgeLookup?: Record<string, DiagramEdge>,
+  layer: RegularLayer,
+  nodeLookup?: Map<string, DiagramNode>,
+  edgeLookup?: Map<string, DiagramEdge>,
   uow?: UnitOfWork
 ) => {
-  nodeLookup ??= {};
-  edgeLookup ??= {};
+  nodeLookup ??= new Map();
+  edgeLookup ??= new Map();
 
   // Pass 1: create placeholders for all nodes
   for (const n of diagramElements) {
@@ -77,18 +75,21 @@ export const deserializeDiagramElements = (
         }
       }
 
-      nodeLookup[c.id] = DiagramNode.create(
+      nodeLookup.set(
         c.id,
-        c.nodeType,
-        c.bounds,
-        layer,
-        c.props,
-        {
-          style: c.nodeType === 'text' ? DefaultStyles.node.text : DefaultStyles.node.default,
-          ...c.metadata
-        },
-        c.texts,
-        c.anchors
+        DiagramNode.create(
+          c.id,
+          c.nodeType,
+          c.bounds,
+          layer,
+          c.props,
+          {
+            style: c.nodeType === 'text' ? DefaultStyles.node.text : DefaultStyles.node.default,
+            ...c.metadata
+          },
+          c.texts,
+          c.anchors
+        )
       );
     }
   }
@@ -112,27 +113,27 @@ export const deserializeDiagramElements = (
           style: 'default-edge',
           ...e.metadata
         },
-        (e.waypoints ?? []) as Array<Waypoint>,
+        e.waypoints ?? [],
         layer
       );
 
       if (isSerializedEndpointAnchor(start)) {
-        const startNode = nodeLookup[start.node.id];
+        const startNode = nodeLookup.get(start.node.id)!;
         startNode._addEdge(start.anchor, edge);
-      } else if (isSerializedEndpointConnected(start)) {
-        const startNode = nodeLookup[start.node.id];
+      } else if (isSerializedEndpointPointInNode(start)) {
+        const startNode = nodeLookup.get(start.node.id)!;
         startNode._addEdge(undefined, edge);
       }
 
       if (isSerializedEndpointAnchor(end)) {
-        const endNode = nodeLookup[end.node.id];
+        const endNode = nodeLookup.get(end.node.id)!;
         endNode._addEdge(end.anchor, edge);
-      } else if (isSerializedEndpointConnected(end)) {
-        const endNode = nodeLookup[end.node.id];
+      } else if (isSerializedEndpointPointInNode(end)) {
+        const endNode = nodeLookup.get(end.node.id)!;
         endNode._addEdge(undefined, edge);
       }
 
-      edgeLookup[e.id] = edge;
+      edgeLookup.set(e.id, edge);
     }
   }
 
@@ -140,20 +141,20 @@ export const deserializeDiagramElements = (
   uow ??= new UnitOfWork(diagram, false, true);
   for (const n of diagramElements) {
     for (const c of unfoldGroup(n)) {
-      const el = c.type === 'node' ? nodeLookup[c.id] : edgeLookup[c.id];
-      el.setChildren(c.children?.map(c2 => nodeLookup[c2.id]) ?? [], uow);
+      const el = c.type === 'node' ? nodeLookup.get(c.id)! : edgeLookup.get(c.id)!;
+      el.setChildren(c.children?.map(c2 => nodeLookup.get(c2.id)!) ?? [], uow);
 
       if (c.parent) {
-        const resolvedParent = nodeLookup[c.parent.id] ?? edgeLookup[c.parent.id];
+        const resolvedParent = nodeLookup.get(c.parent.id) ?? edgeLookup.get(c.parent.id);
         el._setParent(resolvedParent);
       }
     }
 
     if (n.type === 'edge') {
-      const edge = edgeLookup[n.id];
+      const edge = edgeLookup.get(n.id)!;
       if (n.labelNodes && n.labelNodes.length > 0) {
         edge.setLabelNodes(
-          n.labelNodes.map(ln => ({ ...ln, node: () => nodeLookup[ln.id] })),
+          n.labelNodes.map(ln => ({ ...ln, node: () => nodeLookup.get(ln.id)! })),
           uow
         );
       }
@@ -162,7 +163,7 @@ export const deserializeDiagramElements = (
 
   // Pass 4: gather all elements - only keep the top-level elements
   return diagramElements
-    .map(n => (n.type === 'node' ? nodeLookup[n.id] : edgeLookup[n.id]))
+    .map(n => (n.type === 'node' ? nodeLookup.get(n.id)! : edgeLookup.get(n.id)!))
     .filter(e => e.parent === undefined);
 };
 
@@ -236,8 +237,8 @@ const deserializeDiagrams = <T extends Diagram>(
 ) => {
   const dest: T[] = [];
   for (const $d of diagrams) {
-    const nodeLookup: Record<string, DiagramNode> = {};
-    const edgeLookup: Record<string, DiagramEdge> = {};
+    const nodeLookup: Map<string, DiagramNode> = new Map();
+    const edgeLookup: Map<string, DiagramEdge> = new Map();
 
     const newDiagram = diagramFactory($d, doc);
     newDiagram.canvas = $d.canvas;

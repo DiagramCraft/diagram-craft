@@ -44,6 +44,9 @@ class ImageInsertAction extends AbstractAction<undefined, Application> {
         const { width, height } = img;
         img.close();
 
+        const layer = this.context.model.activeDiagram.activeLayer;
+        assertRegularLayer(layer);
+
         const e = DiagramNode.create(
           newid(),
           'rect',
@@ -55,7 +58,7 @@ class ImageInsertAction extends AbstractAction<undefined, Application> {
             h: height,
             r: 0
           },
-          this.context.model.activeDiagram.activeLayer,
+          layer,
           {
             fill: {
               type: 'image',

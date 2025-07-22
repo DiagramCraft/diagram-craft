@@ -14,6 +14,7 @@ import { EventEmitter } from '@diagram-craft/utils/event';
 import { stencilLoaderRegistry } from '@diagram-craft/canvas-app/loaders';
 import { Property } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
 import { PathList } from '@diagram-craft/geometry/pathList';
+import { assertRegularLayer } from './diagramLayerUtils';
 
 export type NodeCapability =
   | 'children'
@@ -243,6 +244,9 @@ export const makeStencilNode =
   ($d: Diagram) => {
     const typeId = isNodeDefinition(type) ? type.type : type;
 
+    const layer = $d.activeLayer;
+    assertRegularLayer(layer);
+
     const n = DiagramNode.create(
       newid(),
       typeId,
@@ -250,7 +254,7 @@ export const makeStencilNode =
         { x: 0, y: 0, w: $d.canvas.w, h: $d.canvas.h, r: 0 },
         opts?.aspectRatio ?? 1
       ),
-      $d.activeLayer,
+      layer,
       opts?.props?.(t) ?? {},
       opts?.metadata ?? {},
       opts?.texts

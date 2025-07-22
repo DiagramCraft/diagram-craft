@@ -10,6 +10,7 @@ import { sortBy } from '@diagram-craft/utils/array';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { useDiagram } from '../../../application';
+import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 
 export const EdgeCustomPropertiesEditor: Editor = props => {
   const $p = props.props as EdgeProps;
@@ -24,7 +25,7 @@ export const EdgeCustomPropertiesEditor: Editor = props => {
     deepClone($p),
     {},
     [],
-    $d.activeLayer
+    new RegularLayer(newid(), '', [], $d)
   );
 
   const edgeTypesWithCustomProps: string[] = [];

@@ -1,14 +1,14 @@
-import { Layer } from './diagramLayer';
 import type { DiagramElement, DiagramElementCRDT } from './diagramElement';
 import { CRDTMap } from './collaboration/crdt';
 import type { CRDTMapper } from './collaboration/datatypes/mapped/mappedCrdt';
 import { assert } from '@diagram-craft/utils/assert';
+import type { RegularLayer } from './diagramLayerRegular';
 
 /* Note: the use of FACTORIES and registerElementFactory seems somewhat convoluted,
  * but it's there to resolve circular dependencies */
 type DiagramElementFactory = (
   id: string,
-  layer: Layer,
+  layer: RegularLayer,
   crdt: CRDTMap<DiagramElementCRDT>
 ) => DiagramElement;
 
@@ -19,7 +19,7 @@ export const registerElementFactory = (type: string, factory: DiagramElementFact
 };
 
 export const makeElementMapper = (
-  layer: Layer
+  layer: RegularLayer
 ): CRDTMapper<DiagramElement, DiagramElementCRDT> => ({
   fromCRDT: (e: CRDTMap<DiagramElementCRDT>) => {
     const type = e.get('type')!;

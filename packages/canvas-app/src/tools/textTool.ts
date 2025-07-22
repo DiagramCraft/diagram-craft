@@ -43,6 +43,9 @@ export class TextTool extends AbstractTool {
   }
 
   onMouseDown(_id: string, point: Point, _modifiers: Modifiers) {
+    const layer = this.diagram.activeLayer;
+    assertRegularLayer(layer);
+
     this.startPoint = this.diagram.viewBox.toDiagramPoint(point);
     this.node = DiagramNode.create(
       newid(),
@@ -53,7 +56,7 @@ export class TextTool extends AbstractTool {
         h: 0,
         r: 0
       },
-      this.diagram.activeLayer,
+      layer,
       // TODO: This is partially duplicated in defaultRegistry.ts
       //       - perhaps make static member of Text.nodeType.ts
       {

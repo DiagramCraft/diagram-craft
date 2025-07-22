@@ -8,17 +8,11 @@ import type {
   CRDTRoot,
   CRDTRootEvents
 } from './crdt';
-import { EventEmitter } from '@diagram-craft/utils/event';
+import { type Emitter, EventEmitter } from '@diagram-craft/utils/event';
 
 export class NoOpCRDTFactory implements CRDTFactory {
   makeMap<T extends Record<string, CRDTCompatibleObject>>(initial?: T): CRDTMap<T> {
-    const dest = new NoOpCRDTMap<T>();
-    if (initial) {
-      for (const [key, value] of Object.entries(initial)) {
-        dest.set(key, value as T[string]);
-      }
-    }
-    return dest;
+    return new NoOpCRDTMap<T>(initial);
   }
 
   makeList<T extends CRDTCompatibleObject>(initial?: Array<T>): CRDTList<T> {
@@ -32,13 +26,22 @@ export class NoOpCRDTFactory implements CRDTFactory {
   }
 }
 
-export class NoOpCRDTMap<T extends { [key: string]: CRDTCompatibleObject }>
-  extends EventEmitter<CRDTMapEvents<T[string]>>
-  implements CRDTMap<T>
-{
-  private backing = new Map<string, T[string]>();
+const FACTORY = new NoOpCRDTFactory();
 
-  readonly factory = new NoOpCRDTFactory();
+export class NoOpCRDTMap<T extends { [key: string]: CRDTCompatibleObject }>
+  implements CRDTMap<T>, Emitter<CRDTMapEvents<T[string]>>
+{
+  private backing: Map<string, T[string]>;
+
+  readonly factory = FACTORY;
+
+  constructor(initial?: T) {
+    if (initial) {
+      this.backing = new Map<string, T[string]>(Object.entries(initial) as [string, T[string]][]);
+    } else {
+      this.backing = new Map<string, T[string]>();
+    }
+  }
 
   clone() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -97,15 +100,17 @@ export class NoOpCRDTMap<T extends { [key: string]: CRDTCompatibleObject }>
   transact(callback: () => void) {
     return callback();
   }
+
+  on() {}
+  off() {}
 }
 
 export class NoOpCRDTList<T extends CRDTCompatibleObject>
-  extends EventEmitter<CRDTListEvents<T>>
-  implements CRDTList<T>
+  implements CRDTList<T>, Emitter<CRDTListEvents<T>>
 {
   private backing: T[] = [];
 
-  readonly factory = new NoOpCRDTFactory();
+  readonly factory = FACTORY;
 
   get length() {
     return this.backing.length;
@@ -156,6 +161,9 @@ export class NoOpCRDTList<T extends CRDTCompatibleObject>
   transact(callback: () => void) {
     return callback();
   }
+
+  on() {}
+  off() {}
 }
 
 export class NoOpCRDTRoot extends EventEmitter<CRDTRootEvents> implements CRDTRoot {

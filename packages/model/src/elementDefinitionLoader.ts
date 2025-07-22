@@ -23,13 +23,7 @@ export const loadStencilsFromYaml = (stencils: any) => {
         )
       );
 
-      const node = deserializeDiagramElements(
-        [stencil.node],
-        dest,
-        dest.activeLayer,
-        {},
-        {}
-      )[0] as DiagramNode;
+      const node = deserializeDiagramElements([stencil.node], dest, layer)[0] as DiagramNode;
       layer.addElement(node, UnitOfWork.immediate(diagram));
 
       return node;

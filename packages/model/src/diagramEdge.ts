@@ -8,7 +8,6 @@ import { CubicSegment, LineSegment } from '@diagram-craft/geometry/pathSegment';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { DiagramElement, type DiagramElementCRDT, isEdge, isNode } from './diagramElement';
 import { DiagramEdgeSnapshot, getRemoteUnitOfWork, UnitOfWork, UOWTrackable } from './unitOfWork';
-import { Layer } from './diagramLayer';
 import {
   AnchorEndpoint,
   ConnectedEndpoint,
@@ -134,13 +133,14 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   readonly #end: MappedCRDTProp<DiagramEdgeCRDT, 'end', Endpoint>;
   readonly #props: CRDTObject<EdgeProps>;
 
-  constructor(id: string, layer: Layer, crdt?: CRDTMap<DiagramElementCRDT>) {
+  constructor(id: string, layer: RegularLayer, crdt?: CRDTMap<DiagramElementCRDT>) {
     super('edge', id, layer, crdt);
 
     const edgeCrdt = this._crdt as unknown as WatchableValue<CRDTMap<DiagramEdgeCRDT>>;
 
     this.#waypoints = new CRDTProp(edgeCrdt, 'waypoints', {
-      onRemoteChange: () => getRemoteUnitOfWork(this.diagram).updateElement(this)
+      onRemoteChange: () => getRemoteUnitOfWork(this.diagram).updateElement(this),
+      initialValue: []
     });
 
     this.#labelNodes = new MappedCRDTOrderedMap<ResolvedLabelNode, LabelNodeCRDTEntry>(
@@ -160,9 +160,6 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
         onRemoteChange: () => getRemoteUnitOfWork(this.diagram).updateElement(this)
       }
     );
-    if (this.#start.get() === undefined) {
-      this.#start.set(new FreeEndpoint({ x: 0, y: 0 }));
-    }
 
     this.#end = new MappedCRDTProp<DiagramEdgeCRDT, 'end', Endpoint>(
       edgeCrdt,
@@ -172,9 +169,6 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
         onRemoteChange: () => getRemoteUnitOfWork(this.diagram).updateElement(this)
       }
     );
-    if (this.#end.get() === undefined) {
-      this.#end.set(new FreeEndpoint({ x: 0, y: 0 }));
-    }
 
     const propsMap = WatchableValue.from(
       ([parent]) => parent.get().get('props', () => layer.crdt.factory.makeMap())!,
@@ -196,27 +190,23 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     props: EdgePropsForEditing,
     metadata: ElementMetadata,
     midpoints: ReadonlyArray<Waypoint>,
-    layer: Layer
+    layer: RegularLayer
   ) {
     const edge = new DiagramEdge(id, layer);
 
     edge.#start.set(start);
     edge.#end.set(end);
     edge.#props.set(props as EdgeProps);
-    edge.#waypoints.set(midpoints);
+    if (midpoints.length > 0) edge.#waypoints.set(midpoints);
 
-    edge._metadata.set(metadata ?? {});
+    const m = metadata ?? {};
+    m.style ??= DefaultStyles.edge.default;
+    edge._metadata.set(m);
 
     if (start instanceof ConnectedEndpoint)
       start.node._addEdge(start instanceof AnchorEndpoint ? start.anchorId : undefined, edge);
     if (end instanceof ConnectedEndpoint)
       end.node._addEdge(end instanceof AnchorEndpoint ? end.anchorId : undefined, edge);
-
-    const m = edge.metadata;
-    if (!m.style) {
-      m.style = DefaultStyles.edge.default;
-      edge.forceUpdateMetadata(m);
-    }
 
     return edge;
   }

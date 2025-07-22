@@ -6,7 +6,7 @@ import type {
 import type { DiagramNode } from './diagramNode';
 import { Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
-import { isSerializedEndpointConnected, isSerializedEndpointFree } from './serialization/utils';
+import { isSerializedEndpointPointInNode, isSerializedEndpointFree } from './serialization/utils';
 
 export interface Endpoint {
   readonly position: Point;
@@ -53,7 +53,7 @@ export const Endpoint = {
   ): Endpoint => {
     if (isSerializedEndpointFree(endpoint)) {
       return new FreeEndpoint(endpoint.position);
-    } else if (isSerializedEndpointConnected(endpoint)) {
+    } else if (isSerializedEndpointPointInNode(endpoint)) {
       return new PointInNodeEndpoint(
         defer
           ? () => Maplike.get(nodeLookup, endpoint.node.id)!

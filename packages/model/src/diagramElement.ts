@@ -9,7 +9,6 @@ import { ElementInterface } from './types';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { Box } from '@diagram-craft/geometry/box';
 import { getRemoteUnitOfWork, UnitOfWork } from './unitOfWork';
-import { Layer } from './diagramLayer';
 import type { Diagram } from './diagram';
 import { AttachmentConsumer } from './attachment';
 import { FlatObject } from '@diagram-craft/utils/types';
@@ -50,9 +49,7 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
   protected readonly _crdt: WatchableValue<CRDTMap<DiagramElementCRDT>>;
 
   protected _diagram: Diagram;
-
-  // TODO: Is this always a RegularLayer
-  protected _layer: Layer;
+  protected _layer: RegularLayer;
   protected _activeDiagram: Diagram;
 
   protected _cache: Map<string, unknown> | undefined = undefined;
@@ -68,22 +65,22 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
   >;
 
   protected constructor(
-    type: string,
-    id: string,
-    layer: Layer,
+    public readonly type: string,
+    public readonly id: string,
+    layer: RegularLayer,
     crdt?: CRDTMap<DiagramElementCRDT>
   ) {
     this._diagram = layer.diagram;
     this._layer = layer;
     this._activeDiagram = this._diagram;
 
-    this._crdt = watch(crdt ?? this._diagram.document.root.factory.makeMap());
+    this._crdt = watch(crdt ?? layer.crdt.factory.makeMap());
     this._crdt.get().set('id', id);
     this._crdt.get().set('type', type);
 
     this._children = new MappedCRDTOrderedMap<DiagramElement, DiagramElementCRDT>(
       WatchableValue.from(
-        ([m]) => m.get().get('children', () => layer.diagram.document.root.factory.makeMap())!,
+        ([m]) => m.get().get('children', () => layer.crdt.factory.makeMap())!,
         [this._crdt]
       ),
       makeElementMapper(this.layer),
@@ -112,9 +109,7 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
 
     this._highlights = new CRDTProp(this._crdt, 'highlights', {
       factory: () => [],
-      onRemoteChange: () => {
-        this._diagram.emitAsync('elementHighlighted', { element: this });
-      }
+      onRemoteChange: () => this._diagram.emitAsync('elementHighlighted', { element: this })
     });
 
     this._parent = new MappedCRDTProp<DiagramElementCRDT, 'parentId', DiagramElement | undefined>(
@@ -176,14 +171,6 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
 
   get crdt() {
     return this._crdt;
-  }
-
-  get id() {
-    return this._crdt.get().get('id')!;
-  }
-
-  get type() {
-    return this._crdt.get().get('type')!;
   }
 
   /* Flags *************************************************************************************************** */

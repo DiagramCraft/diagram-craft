@@ -9,6 +9,7 @@ import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinition
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { sortBy } from '@diagram-craft/utils/array';
 import { useDiagram } from '../../../application';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 export const NodeCustomPropertiesEditor: Editor = props => {
   const $p = props.props as NodeProps;
@@ -16,11 +17,14 @@ export const NodeCustomPropertiesEditor: Editor = props => {
 
   const [type, setType] = useState('');
 
+  const layer = $d.activeLayer;
+  assertRegularLayer(layer);
+
   const node = DiagramNode.create(
     newid(),
     type === '' ? 'rect' : type,
     { x: 0, y: 0, w: 1000, h: 1000, r: 0 },
-    $d.activeLayer,
+    layer,
     deepClone($p),
     {}
   );

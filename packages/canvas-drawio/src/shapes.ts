@@ -1,5 +1,4 @@
 import { Box } from '@diagram-craft/geometry/box';
-import { Layer } from '@diagram-craft/model/diagramLayer';
 import { DiagramNode, NodeTexts } from '@diagram-craft/model/diagramNode';
 import type { WorkQueue } from './drawioReader';
 import { Angle } from '@diagram-craft/geometry/angle';
@@ -9,6 +8,7 @@ import { FullDirection } from '@diagram-craft/geometry/direction';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { StyleManager } from './styleManager';
 import { parseNum } from '@diagram-craft/utils/number';
+import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 
 const makeShape = (
   type: string,
@@ -21,7 +21,7 @@ const makeShape = (
     metadata: ElementMetadata,
     texts: NodeTexts,
     style: StyleManager,
-    layer: Layer
+    layer: RegularLayer
   ) => {
     props.custom ??= {};
     setProps(style, props as NodeProps & { custom: CustomNodeProps });
@@ -57,7 +57,7 @@ export const parseRect = async (
   metadata: ElementMetadata,
   texts: NodeTexts,
   style: StyleManager,
-  layer: Layer
+  layer: RegularLayer
 ) => {
   if (style.is('rounded'))
     return parseRoundedRect(id, bounds, props, metadata, texts, style, layer);
@@ -167,7 +167,7 @@ export const parseArrow = async (
   metadata: ElementMetadata,
   texts: NodeTexts,
   style: StyleManager,
-  layer: Layer
+  layer: RegularLayer
 ) => {
   let type = 'arrow-right';
   if (style.str('direction') === 'north') {
@@ -192,7 +192,7 @@ export const parseImage = async (
   metadata: ElementMetadata,
   texts: NodeTexts,
   style: StyleManager,
-  layer: Layer,
+  layer: RegularLayer,
   queue: WorkQueue
 ) => {
   const diagram = layer.diagram;
@@ -304,7 +304,7 @@ export const parseRoundedRect = async (
   metadata: ElementMetadata,
   texts: NodeTexts,
   style: StyleManager,
-  layer: Layer
+  layer: RegularLayer
 ) => {
   props.custom ??= {};
   props.custom.roundedRect = {

@@ -16,9 +16,8 @@ export class EventEmitter<T extends EventMap> implements Emitter<T> {
   } = {};
 
   on<K extends EventKey<T>>(eventName: K, fn: EventReceiver<T[K]>, id?: string) {
-    this.listeners[eventName] = (this.listeners[eventName] ?? []).concat([
-      [id ?? newid(), fn, debounceMicrotask(fn)]
-    ]);
+    this.listeners[eventName] ??= [];
+    this.listeners[eventName].push([id ?? newid(), fn, debounceMicrotask(fn)]);
   }
 
   off<K extends EventKey<T>>(eventName: K, fnOrId: EventReceiver<T[K]> | string) {
