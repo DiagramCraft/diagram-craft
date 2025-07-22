@@ -48,6 +48,9 @@ export class PenTool extends AbstractTool {
   }
 
   onMouseDown(_id: string, point: Readonly<{ x: number; y: number }>, _modifiers: Modifiers): void {
+    const layer = this.diagram.activeLayer;
+    assertRegularLayer(layer);
+
     const diagramPoint = this.diagram.viewBox.toDiagramPoint(point);
     if (!this.node) {
       const initialPath = { x: 0, y: 0 };
@@ -56,7 +59,7 @@ export class PenTool extends AbstractTool {
         newid(),
         'generic-path',
         { x: diagramPoint.x, y: diagramPoint.y, w: 10, h: 10, r: 0 },
-        this.diagram.activeLayer,
+        layer,
         { custom: { genericPath: { path: `M ${initialPath.x},${initialPath.y}` } } },
         {}
       );

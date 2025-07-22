@@ -86,7 +86,7 @@ export type ShapeParser = (
   metadata: ElementMetadata,
   texts: NodeTexts,
   style: StyleManager,
-  layer: Layer,
+  layer: RegularLayer,
   queue: WorkQueue
 ) => Promise<DiagramNode>;
 

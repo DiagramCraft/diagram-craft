@@ -32,7 +32,8 @@ class TableInsertAction extends AbstractAction<undefined, Application> {
   execute(): void {
     const $d = this.context.model.activeDiagram;
 
-    assertRegularLayer($d.activeLayer);
+    const layer = $d.activeLayer;
+    assertRegularLayer(layer);
 
     this.context.ui.showDialog(
       TableInsertDialog.create(async props => {
@@ -51,7 +52,7 @@ class TableInsertAction extends AbstractAction<undefined, Application> {
 
         const elements: DiagramElement[] = [];
 
-        const table = DiagramNode.create(newid(), 'table', bounds, $d.activeLayer, {}, {});
+        const table = DiagramNode.create(newid(), 'table', bounds, layer, {}, {});
         elements.push(table);
 
         for (let r = 0; r < height; r++) {
@@ -59,7 +60,7 @@ class TableInsertAction extends AbstractAction<undefined, Application> {
             newid(),
             'tableRow',
             { w: bounds.w, h: rowHeight, x: 0, y: r * rowHeight, r: 0 },
-            $d.activeLayer,
+            layer,
             {},
             {}
           );
@@ -71,7 +72,7 @@ class TableInsertAction extends AbstractAction<undefined, Application> {
               newid(),
               'text',
               { w: colWidth, h: rowHeight, x: c * colWidth, y: 0, r: 0 },
-              $d.activeLayer,
+              layer,
               {
                 fill: {
                   enabled: true

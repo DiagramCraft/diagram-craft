@@ -7,13 +7,13 @@ import {
 import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { Box } from '@diagram-craft/geometry/box';
 import type { ShapeParser } from '../drawioReader';
-import { Layer } from '@diagram-craft/model/diagramLayer';
 import { DiagramNode, NodeTexts } from '@diagram-craft/model/diagramNode';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { FlexShapeNodeDefinition } from '@diagram-craft/canvas/node-types/FlexShapeNodeDefinition';
 import { RectNodeDefinition } from '@diagram-craft/canvas/node-types/Rect.nodeType';
 import { DrawioShapeNodeDefinition } from '../DrawioShape.nodeType';
 import { StyleManager } from '../styleManager';
+import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 
 const stencilDimensions = new Map<string, Extent>();
 
@@ -37,7 +37,7 @@ export const parseAWS4Shapes = async (
   metadata: ElementMetadata,
   texts: NodeTexts,
   style: StyleManager,
-  layer: Layer
+  layer: RegularLayer
 ): Promise<DiagramNode> => {
   const fg = props.stroke?.color;
 

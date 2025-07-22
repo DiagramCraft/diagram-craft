@@ -60,11 +60,14 @@ class UndoableGroupAction implements UndoableAction {
       e.layer.removeElement(e, uow);
     });
 
+    const layer = this.diagram.activeLayer;
+    assertRegularLayer(layer);
+
     this.#group = DiagramNode.create(
       newid(),
       'group',
       Box.boundingBox(this.#elements.map(e => e.bounds)),
-      this.diagram.activeLayer,
+      layer,
       {},
       {}
     );

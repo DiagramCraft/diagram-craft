@@ -7,7 +7,6 @@ import {
 import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { Box } from '@diagram-craft/geometry/box';
 import type { ShapeParser } from '../../drawioReader';
-import { Layer } from '@diagram-craft/model/diagramLayer';
 import { DiagramNode, NodeTexts } from '@diagram-craft/model/diagramNode';
 import { DrawioShapeNodeDefinition } from '../../DrawioShape.nodeType';
 import { Spinner2NodeDefinition } from './spinner2.nodeType';
@@ -22,6 +21,7 @@ import { AndroidScrollbars2NodeDefinition } from './androidScrollbars2.nodeType'
 import { AndroidCheckboxNodeDefinition } from './androidCheckbox.nodeType';
 import { AndroidIndeterminateSpinner } from './androidIndeterminateSpinner.nodeType';
 import { StyleManager } from '../../styleManager';
+import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 
 const registerStencil = (
   registry: NodeDefinitionRegistry,
@@ -42,7 +42,7 @@ export const parseAndroidShapes = async (
   metadata: ElementMetadata,
   texts: NodeTexts,
   style: StyleManager,
-  layer: Layer
+  layer: RegularLayer
 ): Promise<DiagramNode> => {
   const $c = (props.custom ??= {});
   if (style.str('shape') === 'mxgraph.android.progressBar') {

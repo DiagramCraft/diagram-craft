@@ -8,7 +8,6 @@ import { CubicSegment, LineSegment } from '@diagram-craft/geometry/pathSegment';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { DiagramElement, type DiagramElementCRDT, isEdge, isNode } from './diagramElement';
 import { DiagramEdgeSnapshot, getRemoteUnitOfWork, UnitOfWork, UOWTrackable } from './unitOfWork';
-import { Layer } from './diagramLayer';
 import {
   AnchorEndpoint,
   ConnectedEndpoint,
@@ -134,7 +133,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   readonly #end: MappedCRDTProp<DiagramEdgeCRDT, 'end', Endpoint>;
   readonly #props: CRDTObject<EdgeProps>;
 
-  constructor(id: string, layer: Layer, crdt?: CRDTMap<DiagramElementCRDT>) {
+  constructor(id: string, layer: RegularLayer, crdt?: CRDTMap<DiagramElementCRDT>) {
     super('edge', id, layer, crdt);
 
     const edgeCrdt = this._crdt as unknown as WatchableValue<CRDTMap<DiagramEdgeCRDT>>;
@@ -196,7 +195,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     props: EdgePropsForEditing,
     metadata: ElementMetadata,
     midpoints: ReadonlyArray<Waypoint>,
-    layer: Layer
+    layer: RegularLayer
   ) {
     const edge = new DiagramEdge(id, layer);
 

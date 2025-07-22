@@ -26,7 +26,7 @@ export const loadStencilsFromYaml = (stencils: any) => {
       const node = deserializeDiagramElements(
         [stencil.node],
         dest,
-        dest.activeLayer,
+        layer,
         {},
         {}
       )[0] as DiagramNode;
