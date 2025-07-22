@@ -1005,7 +1005,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   }
 
   private recalculateIntersections(uow: UnitOfWork, propagate = false) {
-    if (!this.diagram.mustCalculateIntersections) return;
+    if (!this.diagram.hasEdgesWithLineHops) return;
 
     let currentEdgeHasBeenSeen = false;
     const path = this.path();
