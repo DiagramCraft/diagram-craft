@@ -172,7 +172,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
       if (!isEdge(e)) return;
 
       const needsLineHops = e.renderProps.lineHops.type !== 'none';
-      if (type === 'add' && needsLineHops === this.hasEdgesWithLineHops) return;
+      if (type === 'add' && (!needsLineHops || this.hasEdgesWithLineHops)) return;
       if (type === 'remove' && !needsLineHops) return;
       if (type === 'change' && needsLineHops === this.hasEdgesWithLineHops) return;
 
@@ -182,10 +182,10 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
       );
       // Only trigger invalidation in case the value has changed to true
       if (this.hasEdgesWithLineHops && this.hasEdgesWithLineHops !== old) {
+        if (!(this.activeLayer instanceof RegularLayer)) return;
+
         const uow = new UnitOfWork(this);
-        if (this.activeLayer instanceof RegularLayer) {
-          this.activeLayer.elements.filter(isEdge).forEach(e => e.invalidate(uow));
-        }
+        this.activeLayer.elements.filter(isEdge).forEach(e => e.invalidate(uow));
         uow.commit();
       }
     };
