@@ -18,7 +18,7 @@ import { YJSMap, YJSRoot } from '@diagram-craft/model/collaboration/yjs/yjsCrdt'
 const origRoot = CollaborationConfig.CRDTRoot;
 const origMap = CollaborationConfig.CRDTMap;
 
-const opts = { time: 5000 };
+const opts = { time: 2000 };
 
 const nodeRegistry = defaultNodeRegistry();
 const edgeRegistry = defaultEdgeRegistry();
