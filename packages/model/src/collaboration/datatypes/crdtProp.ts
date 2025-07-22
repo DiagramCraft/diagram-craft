@@ -23,18 +23,20 @@ export class CRDTProp<
     this.#current = crdt.get();
     this.#current.get(name, props.factory);
 
-    const remoteUpdate: EventReceiver<CRDTMapEvents<T[string]>['remoteUpdate']> = p => {
-      if (p.key !== name) return;
-      props.onRemoteChange!();
-    };
+    const remoteUpdate = props.onRemoteChange
+      ? ((p => {
+          if (p.key !== name) return;
+          props.onRemoteChange!();
+        }) as EventReceiver<CRDTMapEvents['remoteUpdate']>)
+      : undefined;
 
-    if (props.onRemoteChange) crdt.get().on('remoteUpdate', remoteUpdate);
+    if (remoteUpdate) crdt.get().on('remoteUpdate', remoteUpdate);
 
     crdt.on('change', () => {
-      if (props.onRemoteChange) this.#current.off('remoteUpdate', remoteUpdate);
+      if (remoteUpdate) this.#current.off('remoteUpdate', remoteUpdate);
 
       this.#current = crdt.get();
-      if (props.onRemoteChange) this.#current.on('remoteUpdate', remoteUpdate);
+      if (remoteUpdate) this.#current.on('remoteUpdate', remoteUpdate);
       this.#current.get(name, props.factory);
     });
 
