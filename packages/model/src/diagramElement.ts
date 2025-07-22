@@ -64,12 +64,9 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
     DiagramElement | undefined
   >;
 
-  readonly #type: CRDTProp<DiagramElementCRDT, 'type'>;
-  readonly #id: CRDTProp<DiagramElementCRDT, 'id'>;
-
   protected constructor(
-    type: string,
-    id: string,
+    public readonly type: string,
+    public readonly id: string,
     layer: RegularLayer,
     crdt?: CRDTMap<DiagramElementCRDT>
   ) {
@@ -78,9 +75,8 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
     this._activeDiagram = this._diagram;
 
     this._crdt = watch(crdt ?? this._diagram.document.root.factory.makeMap());
-
-    this.#type = new CRDTProp(this._crdt, 'type', { cache: true, initialValue: type });
-    this.#id = new CRDTProp(this._crdt, 'id', { cache: true, initialValue: id });
+    this._crdt.get().set('id', id);
+    this._crdt.get().set('type', type);
 
     this._children = new MappedCRDTOrderedMap<DiagramElement, DiagramElementCRDT>(
       WatchableValue.from(
@@ -177,14 +173,6 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
 
   get crdt() {
     return this._crdt;
-  }
-
-  get id() {
-    return this.#id.getNonNull();
-  }
-
-  get type() {
-    return this.#type.getNonNull();
   }
 
   /* Flags *************************************************************************************************** */
