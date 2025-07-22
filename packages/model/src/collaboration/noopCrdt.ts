@@ -8,7 +8,7 @@ import type {
   CRDTRoot,
   CRDTRootEvents
 } from './crdt';
-import { EventEmitter } from '@diagram-craft/utils/event';
+import { type Emitter, EventEmitter } from '@diagram-craft/utils/event';
 
 export class NoOpCRDTFactory implements CRDTFactory {
   makeMap<T extends Record<string, CRDTCompatibleObject>>(initial?: T): CRDTMap<T> {
@@ -29,15 +29,13 @@ export class NoOpCRDTFactory implements CRDTFactory {
 const FACTORY = new NoOpCRDTFactory();
 
 export class NoOpCRDTMap<T extends { [key: string]: CRDTCompatibleObject }>
-  extends EventEmitter<CRDTMapEvents<T[string]>>
-  implements CRDTMap<T>
+  implements CRDTMap<T>, Emitter<CRDTMapEvents<T[string]>>
 {
   private backing: Map<string, T[string]>;
 
   readonly factory = FACTORY;
 
   constructor(initial?: T) {
-    super();
     if (initial) {
       this.backing = new Map<string, T[string]>(Object.entries(initial) as [string, T[string]][]);
     } else {
@@ -104,11 +102,11 @@ export class NoOpCRDTMap<T extends { [key: string]: CRDTCompatibleObject }>
   }
 
   on() {}
+  off() {}
 }
 
 export class NoOpCRDTList<T extends CRDTCompatibleObject>
-  extends EventEmitter<CRDTListEvents<T>>
-  implements CRDTList<T>
+  implements CRDTList<T>, Emitter<CRDTListEvents<T>>
 {
   private backing: T[] = [];
 
@@ -165,6 +163,7 @@ export class NoOpCRDTList<T extends CRDTCompatibleObject>
   }
 
   on() {}
+  off() {}
 }
 
 export class NoOpCRDTRoot extends EventEmitter<CRDTRootEvents> implements CRDTRoot {
