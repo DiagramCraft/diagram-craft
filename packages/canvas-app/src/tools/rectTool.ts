@@ -43,6 +43,9 @@ export class RectTool extends AbstractTool {
   }
 
   onMouseDown(_id: string, point: Point, _modifiers: Modifiers) {
+    const layer = this.diagram.activeLayer;
+    assertRegularLayer(layer);
+
     this.startPoint = this.diagram.viewBox.toDiagramPoint(point);
     this.node = DiagramNode.create(
       newid(),
@@ -53,7 +56,7 @@ export class RectTool extends AbstractTool {
         h: 5,
         r: 0
       },
-      this.diagram.activeLayer,
+      layer,
       {},
       {
         style: DefaultStyles.node.default

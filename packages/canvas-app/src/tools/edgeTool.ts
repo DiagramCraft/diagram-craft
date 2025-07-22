@@ -76,6 +76,9 @@ export class EdgeTool extends AbstractTool {
 
     undoManager.setMark();
 
+    const layer = this.diagram.activeLayer;
+    assertRegularLayer(layer);
+
     this.edge = DiagramEdge.create(
       newid(),
       this.currentAnchor
@@ -90,7 +93,7 @@ export class EdgeTool extends AbstractTool {
         style: this.diagram.document.styles.activeEdgeStylesheet.id
       },
       [],
-      this.diagram.activeLayer
+      layer
     );
 
     assertRegularLayer(this.diagram.activeLayer);

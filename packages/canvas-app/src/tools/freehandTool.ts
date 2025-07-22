@@ -89,6 +89,9 @@ export class FreehandTool extends AbstractTool {
 
     const bbox = this.path!.getBBox();
 
+    const layer = this.diagram.activeLayer;
+    assertRegularLayer(layer);
+
     // TODO: This removes all T commands and converts them to C
     const path = PathListBuilder.fromString(pathData.join(' '))
       .withTransform(
@@ -108,7 +111,7 @@ export class FreehandTool extends AbstractTool {
       newid(),
       'generic-path',
       { x: bbox.x, y: bbox.y, w: bbox.width, h: bbox.height, r: 0 },
-      this.diagram.activeLayer,
+      layer,
       { custom: { genericPath: { path: path } }, fill: { enabled: false } },
       {}
     );

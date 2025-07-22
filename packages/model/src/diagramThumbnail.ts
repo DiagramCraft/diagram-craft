@@ -1,4 +1,3 @@
-import { Layer } from './diagramLayer';
 import { DiagramNode } from './diagramNode';
 import { Definitions } from './elementDefinitionRegistry';
 import { newid } from '@diagram-craft/utils/id';
@@ -9,7 +8,7 @@ import { RegularLayer } from './diagramLayerRegular';
 import { Diagram, type DiagramCRDT } from './diagram';
 
 export const createThumbnailDiagramForNode = (
-  factory: (diagram: Diagram, layer: Layer) => DiagramNode,
+  factory: (diagram: Diagram, layer: RegularLayer) => DiagramNode,
   definitions: Definitions
 ) => {
   const dest = new Diagram(

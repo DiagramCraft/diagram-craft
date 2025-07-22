@@ -34,7 +34,7 @@ const { diagram: d } = DocumentBuilder.empty(
 UnitOfWork.execute(d, uow => {
   for (let i = 0; i < 1000; i++) {
     (d.activeLayer as RegularLayer).addElement(
-      DiagramNode.create(i.toString(), 'rect', randomBox(), d.activeLayer, {}, {}),
+      DiagramNode.create(i.toString(), 'rect', randomBox(), d.activeLayer as RegularLayer, {}, {}),
       uow
     );
   }

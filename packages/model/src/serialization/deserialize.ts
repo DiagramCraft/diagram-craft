@@ -2,7 +2,6 @@ import { Diagram } from '../diagram';
 import { DiagramNode } from '../diagramNode';
 import { DiagramEdge } from '../diagramEdge';
 import { UnitOfWork } from '../unitOfWork';
-import { Layer } from '../diagramLayer';
 import { isSerializedEndpointAnchor, isSerializedEndpointConnected } from './utils';
 import { DiagramDocument } from '../diagramDocument';
 import { VerifyNotReached } from '@diagram-craft/utils/assert';
@@ -53,7 +52,7 @@ const deserializeEndpoint = (
 export const deserializeDiagramElements = (
   diagramElements: ReadonlyArray<SerializedElement>,
   diagram: Diagram,
-  layer: Layer,
+  layer: RegularLayer,
   nodeLookup?: Record<string, DiagramNode>,
   edgeLookup?: Record<string, DiagramEdge>,
   uow?: UnitOfWork

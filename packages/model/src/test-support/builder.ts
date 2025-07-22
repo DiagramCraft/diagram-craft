@@ -12,6 +12,7 @@ import { DiagramEdge, ResolvedLabelNode } from '../diagramEdge';
 import { FreeEndpoint } from '../endpoint';
 import { newid } from '@diagram-craft/utils/id';
 import { CRDTRoot } from '../collaboration/crdt';
+import { assertRegularLayer } from '../diagramLayerUtils';
 
 export class TestModel {
   static newDiagram(root?: CRDTRoot) {
@@ -105,7 +106,8 @@ export class TestLayerBuilder extends RegularLayer {
 
 export class TestDiagramNodeBuilder extends DiagramNode {
   constructor(id: string, type: string, bounds: Box, diagram: Diagram) {
-    super(id, diagram.activeLayer);
+    super(id, diagram.activeLayer as RegularLayer);
+    assertRegularLayer(this.layer);
     DiagramNode.initializeNode(this, type, bounds, {}, {});
   }
 

@@ -9,7 +9,6 @@ import { ElementInterface } from './types';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { Box } from '@diagram-craft/geometry/box';
 import { getRemoteUnitOfWork, UnitOfWork } from './unitOfWork';
-import { Layer } from './diagramLayer';
 import type { Diagram } from './diagram';
 import { AttachmentConsumer } from './attachment';
 import { FlatObject } from '@diagram-craft/utils/types';
@@ -50,9 +49,7 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
   protected readonly _crdt: WatchableValue<CRDTMap<DiagramElementCRDT>>;
 
   protected _diagram: Diagram;
-
-  // TODO: Is this always a RegularLayer
-  protected _layer: Layer;
+  protected _layer: RegularLayer;
   protected _activeDiagram: Diagram;
 
   protected _cache: Map<string, unknown> | undefined = undefined;
@@ -70,7 +67,7 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
   protected constructor(
     type: string,
     id: string,
-    layer: Layer,
+    layer: RegularLayer,
     crdt?: CRDTMap<DiagramElementCRDT>
   ) {
     this._diagram = layer.diagram;

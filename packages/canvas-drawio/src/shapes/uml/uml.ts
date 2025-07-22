@@ -7,7 +7,6 @@ import {
 import { UmlModuleNodeDefinition } from './umlModule';
 import { Box } from '@diagram-craft/geometry/box';
 import { shapeParsers } from '../../drawioShapeParsers';
-import { Layer } from '@diagram-craft/model/diagramLayer';
 import { DiagramNode, NodeTexts } from '@diagram-craft/model/diagramNode';
 import { deepMerge } from '@diagram-craft/utils/object';
 import stencils from './uml.yaml';
@@ -23,6 +22,7 @@ import { ProvidedRequiredInterface } from './providedRequiredInterface.nodeType'
 import { RequiredInterface } from './requiredInterface.nodeType';
 import { StyleManager } from '../../styleManager';
 import { loadStencilsFromYaml } from '@diagram-craft/model/elementDefinitionLoader';
+import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 
 export const parseUMLShapes = async (
   id: string,
@@ -31,7 +31,7 @@ export const parseUMLShapes = async (
   metadata: ElementMetadata,
   texts: NodeTexts,
   style: StyleManager,
-  layer: Layer
+  layer: RegularLayer
 ) => {
   props.custom ??= {};
   if (style.str('shape') === 'module' || style.str('shape') === 'component') {
