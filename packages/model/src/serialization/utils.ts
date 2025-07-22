@@ -7,11 +7,11 @@ import type {
 
 export const isSerializedEndpointAnchor = (
   endpoint: SerializedEndpoint
-): endpoint is SerializedAnchorEndpoint => 'node' in endpoint && 'anchor' in endpoint;
+): endpoint is SerializedAnchorEndpoint => 'anchor' in endpoint;
 
-export const isSerializedEndpointConnected = (
+export const isSerializedEndpointPointInNode = (
   endpoint: SerializedEndpoint
-): endpoint is SerializedPointInNodeEndpoint => 'node' in endpoint && !('anchor' in endpoint);
+): endpoint is SerializedPointInNodeEndpoint => !('anchor' in endpoint) && 'node' in endpoint;
 
 export const isSerializedEndpointFree = (
   endpoint: SerializedEndpoint

@@ -2,7 +2,7 @@ import { Diagram } from '../diagram';
 import { DiagramNode } from '../diagramNode';
 import { DiagramEdge } from '../diagramEdge';
 import { UnitOfWork } from '../unitOfWork';
-import { isSerializedEndpointAnchor, isSerializedEndpointConnected } from './utils';
+import { isSerializedEndpointAnchor, isSerializedEndpointPointInNode } from './utils';
 import { DiagramDocument } from '../diagramDocument';
 import { VerifyNotReached } from '@diagram-craft/utils/assert';
 import {
@@ -118,7 +118,7 @@ export const deserializeDiagramElements = (
       if (isSerializedEndpointAnchor(start)) {
         const startNode = nodeLookup[start.node.id];
         startNode._addEdge(start.anchor, edge);
-      } else if (isSerializedEndpointConnected(start)) {
+      } else if (isSerializedEndpointPointInNode(start)) {
         const startNode = nodeLookup[start.node.id];
         startNode._addEdge(undefined, edge);
       }
@@ -126,7 +126,7 @@ export const deserializeDiagramElements = (
       if (isSerializedEndpointAnchor(end)) {
         const endNode = nodeLookup[end.node.id];
         endNode._addEdge(end.anchor, edge);
-      } else if (isSerializedEndpointConnected(end)) {
+      } else if (isSerializedEndpointPointInNode(end)) {
         const endNode = nodeLookup[end.node.id];
         endNode._addEdge(undefined, edge);
       }
