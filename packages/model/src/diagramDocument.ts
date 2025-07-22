@@ -24,6 +24,7 @@ import { DocumentProps } from './documentProps';
 import { ProgressCallback } from './types';
 import { MappedCRDTOrderedMap } from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import { watch } from '@diagram-craft/utils/watchableValue';
+import { precondition } from '@diagram-craft/utils/assert';
 
 export type DocumentEvents = {
   diagramChanged: { diagram: Diagram };
@@ -138,19 +139,18 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
   }
 
   addDiagram(diagram: Diagram, parent?: Diagram) {
-    // TODO: Re-enable this
-    //    precondition.is.false(!!this.getById(diagram.id));
+    precondition.is.false(!!this.byId(diagram.id));
 
     diagram._parent = parent?.id;
     diagram._document = this;
 
     // TODO: This should be removed
-    const existing = this.#diagrams.get(diagram.id);
-    if (existing) {
-      //existing.merge(diagram);
-    } else {
-      this.#diagrams.add(diagram.id, diagram);
-    }
+    //const existing = this.#diagrams.get(diagram.id);
+    //if (existing) {
+    //existing.merge(diagram);
+    //} else {
+    this.#diagrams.add(diagram.id, diagram);
+    //}
 
     this.emit('diagramAdded', { diagram: diagram });
   }
