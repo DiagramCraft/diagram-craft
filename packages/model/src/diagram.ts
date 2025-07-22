@@ -106,7 +106,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
   readonly uid = newid();
   readonly _crdt: WatchableValue<CRDTMap<DiagramCRDT>>;
-  hasEdgesWithLineHops = true;
+  hasEdgesWithLineHops = false;
 
   // Shared properties
   readonly #name: CRDTProp<DiagramCRDT, 'name'>;
@@ -185,7 +185,6 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     this.on('elementChange', e => e.element.type === 'edge' && toggleHasEdgesWithLineHops());
     this.on('elementAdd', e => e.element.type === 'edge' && toggleHasEdgesWithLineHops());
     this.on('elementRemove', e => e.element.type === 'edge' && toggleHasEdgesWithLineHops());
-    toggleHasEdgesWithLineHops();
   }
 
   get id() {
