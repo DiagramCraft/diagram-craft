@@ -21,7 +21,7 @@ export class CRDTProp<
     } = {}
   ) {
     this.#current = crdt.get();
-    this.#current.get(name, props.factory);
+    if (props.factory) this.#current.get(name, props.factory);
 
     const remoteUpdate = props.onRemoteChange
       ? ((p => {
@@ -50,16 +50,11 @@ export class CRDTProp<
   }
 
   get() {
-    return (
-      (this.props.cache ? this.#cachedValue : undefined) ??
-      this.#current.get(this.name, this.props.factory)
-    );
+    return this.#cachedValue ?? this.#current.get(this.name, this.props.factory);
   }
 
   getNonNull() {
-    const v =
-      (this.props.cache ? this.#cachedValue : undefined) ??
-      this.#current.get(this.name, this.props.factory);
+    const v = this.#cachedValue ?? this.#current.get(this.name, this.props.factory);
     assert.present(
       v,
       `Can't get ${this.name}. cache=${this.props.cache}, cachedValue=${this.#cachedValue}`

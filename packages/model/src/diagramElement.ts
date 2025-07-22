@@ -74,13 +74,13 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
     this._layer = layer;
     this._activeDiagram = this._diagram;
 
-    this._crdt = watch(crdt ?? this._diagram.document.root.factory.makeMap());
+    this._crdt = watch(crdt ?? layer.crdt.factory.makeMap());
     this._crdt.get().set('id', id);
     this._crdt.get().set('type', type);
 
     this._children = new MappedCRDTOrderedMap<DiagramElement, DiagramElementCRDT>(
       WatchableValue.from(
-        ([m]) => m.get().get('children', () => layer.diagram.document.root.factory.makeMap())!,
+        ([m]) => m.get().get('children', () => layer.crdt.factory.makeMap())!,
         [this._crdt]
       ),
       makeElementMapper(this.layer),
@@ -109,9 +109,7 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
 
     this._highlights = new CRDTProp(this._crdt, 'highlights', {
       factory: () => [],
-      onRemoteChange: () => {
-        this._diagram.emitAsync('elementHighlighted', { element: this });
-      }
+      onRemoteChange: () => this._diagram.emitAsync('elementHighlighted', { element: this })
     });
 
     this._parent = new MappedCRDTProp<DiagramElementCRDT, 'parentId', DiagramElement | undefined>(
