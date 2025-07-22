@@ -440,6 +440,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     }
   }
 
+  /*
   // TODO: This should be removed
   merge(other: Diagram) {
     // @ts-ignore
@@ -465,5 +466,5 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     this._parent ??= other.parent;
 
     this.mustCalculateIntersections = other.mustCalculateIntersections;
-  }
+  }*/
 }

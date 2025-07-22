@@ -147,7 +147,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     // TODO: This should be removed
     const existing = this.#diagrams.get(diagram.id);
     if (existing) {
-      existing.merge(diagram);
+      //existing.merge(diagram);
     } else {
       this.#diagrams.add(diagram.id, diagram);
     }

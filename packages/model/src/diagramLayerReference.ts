@@ -57,12 +57,15 @@ export class ReferenceLayer<
     this.#reference = snapshot.reference;
   }
 
+  /*
+  TODO: Is this really needed
   toJSON() {
     return {
       ...super.toJSON(),
       reference: this.reference
     };
   }
+   */
 
   snapshot(): RegularLayerSnapshot {
     return {
