@@ -13,7 +13,6 @@ import shapes from '../../public/sample/shapes.json';
 import arrows from '../../public/sample/arrows.json';
 import { CollaborationConfig } from '@diagram-craft/model/collaboration/collaborationConfig';
 import { NoOpCRDTMap, NoOpCRDTRoot } from '@diagram-craft/model/collaboration/noopCrdt';
-import { YJSMap, YJSRoot } from '@diagram-craft/model/collaboration/yjs/yjsCrdt';
 
 const origRoot = CollaborationConfig.CRDTRoot;
 const origMap = CollaborationConfig.CRDTMap;
@@ -47,7 +46,7 @@ describe('loadSample', () => {
       }
     }
   );
-
+  /*
   bench(
     'loadShapes YJS',
     async () => {
@@ -68,7 +67,7 @@ describe('loadSample', () => {
       }
     }
   );
-
+*/
   bench(
     'loadArrows',
     async () => {
@@ -89,8 +88,7 @@ describe('loadSample', () => {
       }
     }
   );
-
-  bench(
+  /*bench(
     'loadArrows [YJS]',
     async () => {
       const root = await documentFactory.loadCRDT(undefined, () => {});
@@ -109,5 +107,5 @@ describe('loadSample', () => {
         CollaborationConfig.CRDTMap = origMap;
       }
     }
-  );
+  );*/
 });
