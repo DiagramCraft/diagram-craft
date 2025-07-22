@@ -204,18 +204,14 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     edge.#props.set(props as EdgeProps);
     edge.#waypoints.set(midpoints);
 
-    edge._metadata.set(metadata ?? {});
+    const m = metadata ?? {};
+    m.style ??= DefaultStyles.edge.default;
+    edge._metadata.set(m);
 
     if (start instanceof ConnectedEndpoint)
       start.node._addEdge(start instanceof AnchorEndpoint ? start.anchorId : undefined, edge);
     if (end instanceof ConnectedEndpoint)
       end.node._addEdge(end instanceof AnchorEndpoint ? end.anchorId : undefined, edge);
-
-    const m = edge.metadata;
-    if (!m.style) {
-      m.style = DefaultStyles.edge.default;
-      edge.forceUpdateMetadata(m);
-    }
 
     return edge;
   }

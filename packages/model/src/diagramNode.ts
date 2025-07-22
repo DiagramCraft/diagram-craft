@@ -199,14 +199,11 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
     node.#props.set((props ?? {}) as NodeProps);
 
-    node._metadata.set(metadata ?? {});
+    const m = metadata ?? {};
+    m.style ??= nodeType === 'text' ? DefaultStyles.node.text : DefaultStyles.node.default;
+    m.textStyle ??= DefaultStyles.text.default;
+    node._metadata.set(m);
 
-    const m = node.metadata;
-    if (!m.style || !m.textStyle) {
-      m.style = node.nodeType === 'text' ? DefaultStyles.node.text : DefaultStyles.node.default;
-      m.textStyle = DefaultStyles.text.default;
-      node.forceUpdateMetadata(m);
-    }
     node._cache?.clear();
   }
 
