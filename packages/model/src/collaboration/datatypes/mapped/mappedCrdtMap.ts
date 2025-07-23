@@ -1,5 +1,5 @@
-import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
-import { type SimpleCRDTMapper } from './mappedCrdt';
+import { assert } from '@diagram-craft/utils/assert';
+import { type CRDTMapper } from './types';
 import type { CRDTCompatibleObject, CRDTMap, CRDTMapEvents } from '../../crdt';
 import type { WatchableValue } from '@diagram-craft/utils/watchableValue';
 import type { EventReceiver } from '@diagram-craft/utils/event';
@@ -10,7 +10,6 @@ export type MappedCRDTMapMapType<T extends Record<string, CRDTCompatibleObject>>
 >;
 
 type Props<T> = {
-  allowUpdates?: boolean;
   onRemoteAdd?: (e: T) => void;
   onRemoteRemove?: (e: T) => void;
   onRemoteChange?: (e: T) => void;
@@ -26,7 +25,7 @@ export class MappedCRDTMap<
 
   constructor(
     crdt: WatchableValue<CRDTMap<MappedCRDTMapMapType<C>>>,
-    private readonly mapper: SimpleCRDTMapper<T, CRDTMap<C>>,
+    private readonly mapper: CRDTMapper<T, CRDTMap<C>>,
     props?: Props<T>
   ) {
     this.#current = crdt.get();
@@ -42,13 +41,7 @@ export class MappedCRDTMap<
     };
 
     const remoteUpdate: EventReceiver<CRDTMapEvents['remoteUpdate']> = e => {
-      if (props?.allowUpdates) {
-        this.#map.set(e.key, mapper.fromCRDT(e.value));
-      } else {
-        // Note: Updates are handled by the T entry itself to avoid having to
-        //       reconstruct the object from the underlying CRDT
-        VERIFY_NOT_REACHED();
-      }
+      this.#map.set(e.key, mapper.fromCRDT(e.value));
       props?.onRemoteChange?.(this.#map.get(e.key)!);
     };
 

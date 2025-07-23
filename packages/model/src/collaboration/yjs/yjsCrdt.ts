@@ -37,7 +37,7 @@ const unwrap = (e: any) => {
 };
 
 export class YJSFactory implements CRDTFactory {
-  makeMap<T extends Record<string, CRDTCompatibleObject>>(initial?: T): CRDTMap<T> {
+  makeMap<T extends Record<string, CRDTCompatibleObject>>(initial?: T): YJSMap<T> {
     const dest = new YJSMap<T>();
     if (initial) {
       for (const [key, value] of Object.entries(initial)) {
@@ -47,7 +47,7 @@ export class YJSFactory implements CRDTFactory {
     return dest;
   }
 
-  makeList<T extends CRDTCompatibleObject>(initial?: Array<T>): CRDTList<T> {
+  makeList<T extends CRDTCompatibleObject>(initial?: Array<T>): YJSList<T> {
     const list = new YJSList<T>();
     if (initial) {
       for (const value of initial) {
@@ -105,20 +105,20 @@ export class YJSRoot extends EventEmitter<CRDTRootEvents> implements CRDTRoot {
     this.data.clear();
   }
 
-  getMap<T extends { [key: string]: CRDTCompatibleObject }>(name: string): CRDTMap<T> {
+  getMap<T extends { [key: string]: CRDTCompatibleObject }>(name: string): YJSMap<T> {
     if (!this.data.has(name)) {
       this.data.set(name, new Y.Map<Record<string, CRDTCompatibleObject>>());
     }
 
-    return wrap(this.data.get(name)) as CRDTMap<T>;
+    return wrap(this.data.get(name)) as YJSMap<T>;
   }
 
-  getList<T extends CRDTCompatibleObject>(name: string): CRDTList<T> {
+  getList<T extends CRDTCompatibleObject>(name: string): YJSList<T> {
     if (!this.data.has(name)) {
       this.data.set(name, new Y.Array<CRDTCompatibleObject>());
     }
 
-    return wrap(this.data.get(name)) as CRDTList<T>;
+    return wrap(this.data.get(name)) as YJSList<T>;
   }
 
   transact(callback: () => void) {
@@ -213,7 +213,7 @@ export class YJSMap<T extends { [key: string]: CRDTCompatibleObject }> implement
     }
 
     if (!this.delegate.has(key) && factory !== undefined) {
-      this.set(key, factory?.());
+      this.set(key, factory());
     }
     return wrap(this.delegate.get(key));
   }

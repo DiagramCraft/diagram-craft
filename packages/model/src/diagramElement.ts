@@ -85,7 +85,6 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
       ),
       makeElementMapper(this.layer),
       {
-        allowUpdates: true,
         onRemoteAdd: e => {
           this._diagram.register(e);
 

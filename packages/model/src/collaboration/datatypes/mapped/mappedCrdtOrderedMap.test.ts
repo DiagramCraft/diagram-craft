@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { watch } from '@diagram-craft/utils/watchableValue';
 import { Backends } from '../../yjs/collaborationTestUtils';
 import type { CRDTFactory, CRDTMap } from '../../crdt';
-import type { CRDTMapper } from './mappedCrdt';
+import type { CRDTMapper } from './types';
 import { MappedCRDTOrderedMap, type MappedCRDTOrderedMapMapType } from './mappedCrdtOrderedMap';
 
 class TestClass {
@@ -26,12 +26,12 @@ class TestClass {
   }
 }
 
-const testClassMapper: CRDTMapper<TestClass, CRDTType> = {
+const testClassMapper: CRDTMapper<TestClass, CRDTMap<CRDTType>> = {
   fromCRDT: (e: CRDTMap<CRDTType>) => new TestClass(e),
   toCRDT: (e: TestClass) => e.crdt
 };
 
-const makeMapper: (factory: CRDTFactory) => CRDTMapper<number, CRDTType> = factory => ({
+const makeMapper: (factory: CRDTFactory) => CRDTMapper<number, CRDTMap<CRDTType>> = factory => ({
   fromCRDT: (e: CRDTMap<CRDTType>) => e.get('value')! * 2,
   toCRDT: (e: number) =>
     factory.makeMap<CRDTType>({
@@ -96,6 +96,27 @@ describe.each(Backends.all())('MappedCRDTOrderedMap [%s]', (_name, backend) => {
 
     expect(mapped1.entries).toEqual([['k', 4]]);
     if (mapped2) expect(mapped2.entries).toEqual([['k', 4]]);
+  });
+
+  it('should update items correctly', () => {
+    const [doc1, doc2] = backend.syncedDocs();
+
+    const list1 = watch(doc1.getMap<any>('list'));
+    const list2 = doc2 ? watch(doc2.getMap<any>('list')) : undefined;
+
+    const mapped1 = new MappedCRDTOrderedMap<number, CRDTType>(list1, makeMapper(doc1.factory));
+    const mapped2 = list2
+      ? new MappedCRDTOrderedMap<number, CRDTType>(list2, makeMapper(doc1.factory))
+      : undefined;
+
+    mapped1.add('k', 4);
+
+    // Act
+    mapped1.update('k', 5);
+
+    // Verify
+    expect(mapped1.entries).toEqual([['k', 5]]);
+    if (mapped2) expect(mapped2.entries).toEqual([['k', 5]]);
   });
 
   it('should update wrapped items correctly', () => {

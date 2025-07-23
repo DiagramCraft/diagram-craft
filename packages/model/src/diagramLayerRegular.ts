@@ -29,7 +29,6 @@ export class RegularLayer extends Layer<RegularLayer> {
       watch(this.crdt.get('elements', () => diagram.document.root.factory.makeMap())!),
       makeElementMapper(this),
       {
-        allowUpdates: true,
         onRemoteAdd: e => {
           diagram.emit('elementAdd', { element: e });
           this.processElementForAdd(e);

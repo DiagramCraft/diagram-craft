@@ -38,7 +38,7 @@ import {
   MappedCRDTOrderedMap,
   type MappedCRDTOrderedMapMapType
 } from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
-import { CRDTMapper, type SimpleCRDTMapper } from './collaboration/datatypes/mapped/mappedCrdt';
+import { type CRDTMapper } from './collaboration/datatypes/mapped/types';
 import { CRDTProp } from './collaboration/datatypes/crdtProp';
 import { MappedCRDTProp } from './collaboration/datatypes/mapped/mappedCrdtProp';
 import { CRDTObject } from './collaboration/datatypes/crdtObject';
@@ -85,7 +85,7 @@ export type DiagramEdgeCRDT = DiagramElementCRDT & {
 
 const makeLabelNodeMapper = (
   edge: DiagramEdge
-): CRDTMapper<ResolvedLabelNode, LabelNodeCRDTEntry> => {
+): CRDTMapper<ResolvedLabelNode, CRDTMap<LabelNodeCRDTEntry>> => {
   return {
     fromCRDT(e: CRDTMap<LabelNodeCRDTEntry>): ResolvedLabelNode {
       const node = e.get('node')!;
@@ -117,7 +117,7 @@ const makeLabelNodeMapper = (
   };
 };
 
-const makeEndpointMapper = (edge: DiagramEdge): SimpleCRDTMapper<Endpoint, SerializedEndpoint> => ({
+const makeEndpointMapper = (edge: DiagramEdge): CRDTMapper<Endpoint, SerializedEndpoint> => ({
   fromCRDT: (e: SerializedEndpoint) => Endpoint.deserialize(e, edge.diagram.nodeLookup, true),
   toCRDT: (e: Endpoint) => e.serialize()
 });
@@ -148,8 +148,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
         ([m]) => m.get().get('labelNodes', () => layer.diagram.document.root.factory.makeMap())!,
         [edgeCrdt]
       ),
-      makeLabelNodeMapper(this),
-      { allowUpdates: true }
+      makeLabelNodeMapper(this)
     );
 
     this.#start = new MappedCRDTProp<DiagramEdgeCRDT, 'start', Endpoint>(

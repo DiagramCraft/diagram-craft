@@ -1,5 +1,5 @@
-import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
-import { type SimpleCRDTMapper } from './mappedCrdt';
+import { assert } from '@diagram-craft/utils/assert';
+import { type CRDTMapper } from './types';
 import type { CRDTCompatibleObject, CRDTMap, CRDTMapEvents } from '../../crdt';
 import type { WatchableValue } from '@diagram-craft/utils/watchableValue';
 import type { EventReceiver } from '@diagram-craft/utils/event';
@@ -24,9 +24,8 @@ export class MappedCRDTOrderedMap<
 
   constructor(
     crdt: WatchableValue<CRDTMap<MappedCRDTOrderedMapMapType<C>>>,
-    private readonly mapper: SimpleCRDTMapper<T, CRDTMap<C>>,
+    private readonly mapper: CRDTMapper<T, CRDTMap<C>>,
     props?: {
-      allowUpdates?: boolean;
       onRemoteAdd?: (e: T) => void;
       onRemoteRemove?: (e: T) => void;
       onRemoteChange?: (e: T) => void;
@@ -35,41 +34,15 @@ export class MappedCRDTOrderedMap<
   ) {
     this.#current = crdt.get();
 
-    const setFromCRDT = (e?: { key: string; value: CRDTMap<WrapperType<C>> }) => {
-      const entryMap = Object.fromEntries(this.#entries);
-
-      this.#entries = Array.from(this.#current.entries())
-        .toSorted(([, v1], [, v2]) => v1.get('index')! - v2.get('index')!)
-        .map(([k, v]) => [k, entryMap[k] ?? this.mapper.fromCRDT(v.get('value')!)]);
-
-      const idx = this.#entries.findIndex(entry => entry[0] === e?.key);
-      if (idx >= 0) {
-        props?.onRemoteAdd?.(this.#entries[idx][1]);
-      } else if (!e) {
-        for (const e of this.#entries) {
-          props?.onInit?.(e[1]);
-        }
-      }
-    };
-
     const remoteUpdate: EventReceiver<CRDTMapEvents['remoteUpdate']> = e => {
-      if (props?.allowUpdates || props?.allowUpdates === undefined) {
-        const entryMap = Object.fromEntries(this.#entries);
-
-        const idx = this.#entries.findIndex(entry => entry[0] === e.key);
-        if (idx >= 0) {
-          props?.onRemoteChange?.(this.#entries[idx][1]);
-        }
-
-        this.#entries = Array.from(crdt.get().entries())
-          .toSorted(([, v1], [, v2]) => v1.get('index')! - v2.get('index')!)
-          .map(([k, v]) => [k, e.key !== k ? entryMap[k] : mapper.fromCRDT(v.get('value')!)]);
-      } else {
-        // Note: Updates are handled by the T entry itself to avoid having to
-        //       reconstruct the object from the underlying CRDT
-        VERIFY_NOT_REACHED();
+      const idx = this.#entries.findIndex(entry => entry[0] === e.key);
+      if (idx >= 0) {
+        props?.onRemoteChange?.(this.#entries[idx][1]);
       }
+
+      this.populateFromCRDT(e);
     };
+
     const remoteDelete: EventReceiver<CRDTMapEvents['remoteDelete']> = e => {
       const idx = this.#entries.findIndex(entry => entry[0] === e.key);
       if (idx >= 0) {
@@ -77,7 +50,14 @@ export class MappedCRDTOrderedMap<
         this.#entries.splice(idx, 1);
       }
     };
-    const remoteInsert: EventReceiver<CRDTMapEvents['remoteInsert']> = e => setFromCRDT(e);
+
+    const remoteInsert: EventReceiver<CRDTMapEvents['remoteInsert']> = e => {
+      this.populateFromCRDT(e);
+      const idx = this.#entries.findIndex(entry => entry[0] === e.key);
+      if (idx >= 0) {
+        props?.onRemoteAdd?.(this.#entries[idx][1]);
+      }
+    };
 
     this.#current.on('remoteUpdate', remoteUpdate);
     this.#current.on('remoteDelete', remoteDelete);
@@ -94,7 +74,10 @@ export class MappedCRDTOrderedMap<
       this.#current.on('remoteInsert', remoteInsert);
     });
 
-    setFromCRDT();
+    this.populateFromCRDT();
+    for (const e of this.#entries) {
+      props?.onInit?.(e[1]);
+    }
   }
 
   get keys() {
@@ -160,7 +143,8 @@ export class MappedCRDTOrderedMap<
   }
 
   update(key: string, t: T) {
-    this.#current.delete(key);
+    // TODO: Was this ever needed
+    //    this.#current.delete(key);
 
     const entry = this.#current.factory.makeMap<WrapperType>();
     entry.set('index', this.#entries.length);
@@ -201,5 +185,16 @@ export class MappedCRDTOrderedMap<
         }
       }
     });
+  }
+
+  private populateFromCRDT(e?: { key: string; value: CRDTMap<WrapperType<C>> }) {
+    const entryMap = Object.fromEntries(this.#entries);
+
+    this.#entries = Array.from(this.#current.entries())
+      .toSorted(([, v1], [, v2]) => v1.get('index')! - v2.get('index')!)
+      .map(([k, v]) => {
+        if (e && e.key === k) return [k, this.mapper.fromCRDT(v.get('value')!)];
+        else return [k, entryMap[k] ?? this.mapper.fromCRDT(v.get('value')!)];
+      });
   }
 }

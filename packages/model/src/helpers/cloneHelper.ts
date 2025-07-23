@@ -11,7 +11,7 @@ import { deserializeDiagramElements } from '../serialization/deserialize';
 
 // TODO: Ensure linking between edges and nodes works
 //       See ElementsPasteHandler
-const assignNewIdsToSerializedElements = (e: SerializedNode | SerializedEdge) => {
+export const assignNewIdsToSerializedElements = (e: SerializedNode | SerializedEdge) => {
   e.id = newid();
   if (e.type === 'node') {
     const n = e as SerializedNode;
