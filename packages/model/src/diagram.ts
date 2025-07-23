@@ -14,7 +14,7 @@ import { EventEmitter, EventKey } from '@diagram-craft/utils/event';
 import { assert } from '@diagram-craft/utils/assert';
 import { AttachmentConsumer } from './attachment';
 import { newid } from '@diagram-craft/utils/id';
-import { CRDTMapper } from './collaboration/datatypes/mapped/mappedCrdt';
+import { type CRDTMapper } from './collaboration/datatypes/mapped/types';
 import { CRDTMap, type FlatCRDTMap } from './collaboration/crdt';
 import { LayerManager, LayerManagerCRDT } from './diagramLayerManager';
 import { RegularLayer } from './diagramLayerRegular';
@@ -86,7 +86,9 @@ export type DiagramCRDT = {
   layers: CRDTMap<LayerManagerCRDT>;
 };
 
-export const makeDiagramMapper = (doc: DiagramDocument): CRDTMapper<Diagram, DiagramCRDT> => {
+export const makeDiagramMapper = (
+  doc: DiagramDocument
+): CRDTMapper<Diagram, CRDTMap<DiagramCRDT>> => {
   return {
     fromCRDT: (e: CRDTMap<DiagramCRDT>) => new Diagram(e.get('id')!, e.get('name')!, doc, e),
     toCRDT: (e: Diagram) => e.crdt

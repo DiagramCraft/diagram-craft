@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { watch } from '@diagram-craft/utils/watchableValue';
 import { Backends } from '../../yjs/collaborationTestUtils';
 import { type CRDTFactory, type CRDTMap } from '../../crdt';
-import type { CRDTMapper } from './mappedCrdt';
+import type { CRDTMapper } from './types';
 import { MappedCRDTMap, type MappedCRDTMapMapType } from './mappedCrdtMap';
 
 class TestClass {
@@ -26,12 +26,12 @@ class TestClass {
   }
 }
 
-const testClassMapper: CRDTMapper<TestClass, CRDTType> = {
+const testClassMapper: CRDTMapper<TestClass, CRDTMap<CRDTType>> = {
   fromCRDT: (e: CRDTMap<CRDTType>) => new TestClass(e),
   toCRDT: (e: TestClass) => e.crdt
 };
 
-const makeMapper: (factory: CRDTFactory) => CRDTMapper<number, CRDTType> = factory => ({
+const makeMapper: (factory: CRDTFactory) => CRDTMapper<number, CRDTMap<CRDTType>> = factory => ({
   fromCRDT: (e: CRDTMap<CRDTType>) => e.get('value')! * 2,
   toCRDT: (e: number) =>
     factory.makeMap<CRDTType>({

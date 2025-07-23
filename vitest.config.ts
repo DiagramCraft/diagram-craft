@@ -13,6 +13,13 @@ export default defineConfig({
     exclude: ['**/*.spec.ts', '**/node_modules/**', '**/dist/**'],
     fakeTimers: {
       toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'queueMicrotask']
+    },
+    css: false,
+    pool: 'threads',
+    poolOptions: {
+      threads: {
+        useAtomics: true
+      }
     }
   }
 });

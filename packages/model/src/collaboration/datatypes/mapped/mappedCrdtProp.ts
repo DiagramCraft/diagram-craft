@@ -2,7 +2,7 @@ import type { CRDTCompatibleObject, CRDTMap, CRDTMapEvents } from '../../crdt';
 import type { WatchableValue } from '@diagram-craft/utils/watchableValue';
 import type { EventReceiver } from '@diagram-craft/utils/event';
 import { assert } from '@diagram-craft/utils/assert';
-import type { SimpleCRDTMapper } from './mappedCrdt';
+import type { CRDTMapper } from './types';
 
 export class MappedCRDTProp<
   C extends { [key: string]: CRDTCompatibleObject },
@@ -15,7 +15,7 @@ export class MappedCRDTProp<
   constructor(
     crdt: WatchableValue<CRDTMap<C>>,
     private readonly name: N,
-    private readonly mapper: SimpleCRDTMapper<T, C[N]>,
+    private readonly mapper: CRDTMapper<T, C[N]>,
     props: {
       onRemoteChange?: () => void;
       factory?: () => C[N];

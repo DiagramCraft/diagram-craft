@@ -1,6 +1,6 @@
 import type { DiagramElement, DiagramElementCRDT } from './diagramElement';
 import { CRDTMap } from './collaboration/crdt';
-import type { CRDTMapper } from './collaboration/datatypes/mapped/mappedCrdt';
+import type { CRDTMapper } from './collaboration/datatypes/mapped/types';
 import { assert } from '@diagram-craft/utils/assert';
 import type { RegularLayer } from './diagramLayerRegular';
 
@@ -20,7 +20,7 @@ export const registerElementFactory = (type: string, factory: DiagramElementFact
 
 export const makeElementMapper = (
   layer: RegularLayer
-): CRDTMapper<DiagramElement, DiagramElementCRDT> => ({
+): CRDTMapper<DiagramElement, CRDTMap<DiagramElementCRDT>> => ({
   fromCRDT: (e: CRDTMap<DiagramElementCRDT>) => {
     const type = e.get('type')!;
     const id = e.get('id')!;

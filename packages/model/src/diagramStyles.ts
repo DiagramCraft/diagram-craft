@@ -9,7 +9,7 @@ import { Defaults, DefaultStyles, edgeDefaults, nodeDefaults } from './diagramDe
 import { CRDTFactory, CRDTMap, CRDTRoot } from './collaboration/crdt';
 import { DEFAULT_EDGE_STYLES, DEFAULT_NODE_STYLES, DEFAULT_TEXT_STYLES } from './defaults';
 import { MappedCRDTMap } from './collaboration/datatypes/mapped/mappedCrdtMap';
-import { CRDTMapper } from './collaboration/datatypes/mapped/mappedCrdt';
+import { type CRDTMapper } from './collaboration/datatypes/mapped/types';
 import { watch } from '@diagram-craft/utils/watchableValue';
 
 export type StylesheetType = 'node' | 'edge' | 'text';
@@ -216,7 +216,7 @@ declare global {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const mapper: CRDTMapper<Stylesheet<any>, StylesheetSnapshot> = {
+const mapper: CRDTMapper<Stylesheet<any>, CRDTMap<StylesheetSnapshot>> = {
   fromCRDT<T extends StylesheetType>(e: CRDTMap<StylesheetSnapshot>): Stylesheet<T> {
     return new Stylesheet<T>(e);
   },
@@ -240,15 +240,9 @@ export class DiagramStyles {
     private readonly document: DiagramDocument,
     addDefaultStyles: boolean
   ) {
-    this.#textStyles = new MappedCRDTMap(watch(crdt.getMap('styles.text')), mapper, {
-      allowUpdates: true
-    });
-    this.#nodeStyles = new MappedCRDTMap(watch(crdt.getMap('styles.node')), mapper, {
-      allowUpdates: true
-    });
-    this.#edgeStyles = new MappedCRDTMap(watch(crdt.getMap('styles.edge')), mapper, {
-      allowUpdates: true
-    });
+    this.#textStyles = new MappedCRDTMap(watch(crdt.getMap('styles.text')), mapper);
+    this.#nodeStyles = new MappedCRDTMap(watch(crdt.getMap('styles.node')), mapper);
+    this.#edgeStyles = new MappedCRDTMap(watch(crdt.getMap('styles.edge')), mapper);
 
     const hasNoTextStyles = this.#textStyles.size === 0;
     const hasNoNodeStyles = this.#nodeStyles.size === 0;

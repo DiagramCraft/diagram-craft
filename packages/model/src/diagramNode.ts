@@ -32,7 +32,7 @@ import type { CRDTMap, FlatCRDTMap } from './collaboration/crdt';
 import { CRDTProp } from './collaboration/datatypes/crdtProp';
 import { MappedCRDTProp } from './collaboration/datatypes/mapped/mappedCrdtProp';
 import { CRDTObject } from './collaboration/datatypes/crdtObject';
-import { CRDTMapper } from './collaboration/datatypes/mapped/mappedCrdt';
+import { type CRDTMapper } from './collaboration/datatypes/mapped/types';
 import {
   MappedCRDTMap,
   type MappedCRDTMapMapType
@@ -57,7 +57,9 @@ export type DiagramNodeCRDT = DiagramElementCRDT & {
   edges: CRDTMap<MappedCRDTMapMapType<{ edges: Array<string> }>>;
 };
 
-const makeEdgesMapper = (node: DiagramNode): CRDTMapper<string[], { edges: Array<string> }> => {
+const makeEdgesMapper = (
+  node: DiagramNode
+): CRDTMapper<string[], CRDTMap<{ edges: Array<string> }>> => {
   return {
     fromCRDT: (e: CRDTMap<{ edges: Array<string> }>) => e.get('edges')!,
 
@@ -98,7 +100,6 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       ),
       makeEdgesMapper(this),
       {
-        allowUpdates: true,
         onRemoteChange: () => getRemoteUnitOfWork(this.diagram).updateElement(this),
         onRemoteAdd: () => getRemoteUnitOfWork(this.diagram).updateElement(this),
         onRemoteRemove: () => getRemoteUnitOfWork(this.diagram).updateElement(this)
