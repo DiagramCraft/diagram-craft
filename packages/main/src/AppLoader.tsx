@@ -25,7 +25,6 @@ const loadInitialDocument = async (
     forceClearServerState?: boolean;
   }
 ): Promise<{ doc?: DiagramDocument; url?: string }> => {
-  console.log('loadInitialDocument', diagram?.url);
   const root = await documentFactory.loadCRDT(diagram?.url, progress);
   if (opts?.forceClearServerState || isRequestForClear()) {
     console.log('Clear server state');
