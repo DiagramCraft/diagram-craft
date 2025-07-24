@@ -88,7 +88,11 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
 
   activate(callback: ProgressCallback) {
     if (!this.url) return;
+
     CollaborationConfig.Backend.connect(this.url, this.root, callback);
+
+    // TODO: Move this to the caller
+    window.onbeforeunload = () => this.deactivate(() => {});
   }
 
   deactivate(callback: ProgressCallback) {
