@@ -24,10 +24,13 @@ export class YJSAwareness extends EventEmitter<AwarenessEvents> implements Aware
       super.emit('changeUser', {});
       super.emit('changeCursor', {});
 
-      this.userStates = Array.from(this.backend!.getStates().values()).map(s => s.user);
+      this.userStates = Array.from(this.backend!.getStates().values())
+        .filter(s => !!s)
+        .map(s => s.user);
       this.cursorStates = Array.from(
         this.backend!.getStates()
           .entries()
+          // Hide ourselves
           .filter(e => e[0] !== this.backend!.clientID)
           .map(s => ({ ...s[1].cursor, ...s[1].user }))
           .filter(k => !!k)

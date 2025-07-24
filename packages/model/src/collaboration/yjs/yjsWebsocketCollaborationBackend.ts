@@ -39,8 +39,12 @@ export class YJSWebSocketCollaborationBackend implements CollaborationBackend {
     this.awareness.setBackend(this.wsProvider.awareness);
 
     // TODO: This should be removed
+    const name =
+      (navigator.userAgent.includes('Edg') ? 'Edge' : 'Chrome') +
+      ' ' +
+      Math.floor(random.nextRange(0, 1000));
     this.awareness?.updateUser({
-      name: navigator.userAgent.includes('Edg') ? 'Edge' : 'Chrome',
+      name,
       color: random.pick(['red', 'green', 'blue', 'orange'])
     });
 

@@ -33,6 +33,7 @@ export interface CRDTFactory {
 export type CRDTRootEvents = {
   remoteBeforeTransaction: EmptyObject;
   remoteAfterTransaction: EmptyObject;
+  remoteClear: EmptyObject;
 };
 
 export interface CRDTRoot extends Emitter<CRDTRootEvents> {

@@ -25,11 +25,13 @@ import { ProgressCallback } from './types';
 import { MappedCRDTOrderedMap } from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import { watch } from '@diagram-craft/utils/watchableValue';
 import { precondition } from '@diagram-craft/utils/assert';
+import type { EmptyObject } from '@diagram-craft/utils/types';
 
 export type DocumentEvents = {
   diagramChanged: { diagram: Diagram };
   diagramAdded: { diagram: Diagram };
   diagramRemoved: { diagram: Diagram };
+  cleared: EmptyObject;
 };
 
 export type DataTemplate = {
@@ -73,22 +75,24 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
       watch(this.root.getMap('diagrams')),
       makeDiagramMapper(this),
       {
-        onRemoteAdd: e => {
-          this.root.on('remoteAfterTransaction', () => getRemoteUnitOfWork(e).commit(), e.id);
-        },
-        onRemoteRemove: e => {
-          this.root.off('remoteAfterTransaction', e.id);
-        },
-        onInit: e => {
-          this.root.on('remoteAfterTransaction', () => getRemoteUnitOfWork(e).commit(), e.id);
-        }
+        onRemoteAdd: e =>
+          this.root.on('remoteAfterTransaction', () => getRemoteUnitOfWork(e).commit(), e.id),
+        onRemoteRemove: e => this.root.off('remoteAfterTransaction', e.id),
+        onInit: e =>
+          this.root.on('remoteAfterTransaction', () => getRemoteUnitOfWork(e).commit(), e.id)
       }
     );
+
+    this.root.on('remoteClear', () => this.emit('cleared'));
   }
 
   activate(callback: ProgressCallback) {
     if (!this.url) return;
+
     CollaborationConfig.Backend.connect(this.url, this.root, callback);
+
+    // TODO: Move this to the caller
+    window.onbeforeunload = () => this.deactivate(() => {});
   }
 
   deactivate(callback: ProgressCallback) {
@@ -152,11 +156,15 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     this.#diagrams.add(diagram.id, diagram);
     //}
 
+    this.root.on('remoteAfterTransaction', () => getRemoteUnitOfWork(diagram).commit(), diagram.id);
+
     this.emit('diagramAdded', { diagram: diagram });
   }
 
   removeDiagram(diagram: Diagram) {
     this.#diagrams.remove(diagram.id);
+
+    this.root.off('remoteAfterTransaction', diagram.id);
 
     this.emit('diagramRemoved', { diagram: diagram });
   }
