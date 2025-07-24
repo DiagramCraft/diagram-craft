@@ -156,11 +156,15 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     this.#diagrams.add(diagram.id, diagram);
     //}
 
+    this.root.on('remoteAfterTransaction', () => getRemoteUnitOfWork(diagram).commit(), diagram.id);
+
     this.emit('diagramAdded', { diagram: diagram });
   }
 
   removeDiagram(diagram: Diagram) {
     this.#diagrams.remove(diagram.id);
+
+    this.root.off('remoteAfterTransaction', diagram.id);
 
     this.emit('diagramRemoved', { diagram: diagram });
   }

@@ -2,7 +2,7 @@ import { Layer, LayerCRDT, StackPosition } from './diagramLayer';
 import { DiagramElement, type DiagramElementCRDT, isNode } from './diagramElement';
 import type { Diagram } from './diagram';
 import { CRDTMap } from './collaboration/crdt';
-import { LayerSnapshot, UnitOfWork } from './unitOfWork';
+import { getRemoteUnitOfWork, LayerSnapshot, UnitOfWork } from './unitOfWork';
 import { groupBy } from '@diagram-craft/utils/array';
 import { DiagramEdge } from './diagramEdge';
 import { MappedCRDTOrderedMap } from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
@@ -30,13 +30,18 @@ export class RegularLayer extends Layer<RegularLayer> {
       makeElementMapper(this),
       {
         onRemoteAdd: e => {
-          diagram.emit('elementAdd', { element: e });
+          const uow = getRemoteUnitOfWork(diagram);
+          uow.addElement(e);
           this.processElementForAdd(e);
         },
         onRemoteChange: e => {
-          diagram.emit('elementChange', { element: e });
+          const uow = getRemoteUnitOfWork(diagram);
+          uow.updateElement(e);
         },
-        onRemoteRemove: e => diagram.emit('elementRemove', { element: e }),
+        onRemoteRemove: e => {
+          const uow = getRemoteUnitOfWork(diagram);
+          uow.removeElement(e);
+        },
         onInit: e => {
           diagram.emit('elementAdd', { element: e });
           this.processElementForAdd(e);
