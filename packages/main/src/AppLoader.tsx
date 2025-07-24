@@ -19,16 +19,21 @@ const loadInitialDocument = async (
   diagram: DiagramRef | undefined,
   documentFactory: DocumentFactory,
   diagramFactory: DiagramFactory,
-  progress: ProgressCallback
+  progress: ProgressCallback,
+  opts?: {
+    forceLoadFromServer?: boolean;
+    forceClearServerState?: boolean;
+  }
 ): Promise<{ doc?: DiagramDocument; url?: string }> => {
+  console.log('loadInitialDocument', diagram?.url);
   const root = await documentFactory.loadCRDT(diagram?.url, progress);
-  if (isRequestForClear()) {
+  if (opts?.forceClearServerState || isRequestForClear()) {
     console.log('Clear server state');
     root.clear();
   }
 
   if (diagram) {
-    if (root.hasData() || isRequestToLoadFromServer()) {
+    if (opts?.forceLoadFromServer || root.hasData() || isRequestToLoadFromServer()) {
       console.log('Load from server');
       const v = await documentFactory.createDocument(root, diagram!.url, progress);
       return { doc: v, url: diagram?.url };
@@ -76,6 +81,15 @@ export const AppLoader = (props: Props) => {
     [setProgress]
   );
 
+  const load = (ref?: DiagramRef) => {
+    loadInitialDocument(ref, props.documentFactory, props.diagramFactory, progressCallback).then(
+      ({ doc, url }) => {
+        if (doc) setDoc(doc);
+        if (url) setUrl(url);
+      }
+    );
+  };
+
   useEffect(() => {
     if (!doc) return;
     for (const def of props.stencils) {
@@ -88,15 +102,7 @@ export const AppLoader = (props: Props) => {
   }, [props.stencils, doc]);
 
   useEffect(() => {
-    loadInitialDocument(
-      props.diagram,
-      props.documentFactory,
-      props.diagramFactory,
-      progressCallback
-    ).then(({ doc, url }) => {
-      if (doc) setDoc(doc);
-      if (url) setUrl(url);
-    });
+    load(props.diagram);
   }, [props.diagramFactory, props.documentFactory]);
 
   useEffect(() => {
@@ -104,6 +110,28 @@ export const AppLoader = (props: Props) => {
       setLoaded(true);
     }
   }, [doc, progress]);
+
+  useEffect(() => {
+    if (!doc) return;
+    if (!url) return;
+
+    doc.on(
+      'cleared',
+      () => {
+        console.log('Reloading from server');
+
+        // Reset
+        setDoc(undefined);
+        setLoaded(false);
+        setProgress(undefined);
+
+        doc.deactivate(() => {});
+        load({ url: url! });
+      },
+      'doc-cleared'
+    );
+    return () => doc.off('cleared', 'doc-cleared');
+  }, [doc]);
 
   if (doc && doc.diagrams.length === 0) {
     console.error('Doc contains no diagrams');

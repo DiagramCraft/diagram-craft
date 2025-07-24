@@ -25,11 +25,13 @@ import { ProgressCallback } from './types';
 import { MappedCRDTOrderedMap } from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import { watch } from '@diagram-craft/utils/watchableValue';
 import { precondition } from '@diagram-craft/utils/assert';
+import type { EmptyObject } from '@diagram-craft/utils/types';
 
 export type DocumentEvents = {
   diagramChanged: { diagram: Diagram };
   diagramAdded: { diagram: Diagram };
   diagramRemoved: { diagram: Diagram };
+  cleared: EmptyObject;
 };
 
 export type DataTemplate = {
@@ -73,17 +75,15 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
       watch(this.root.getMap('diagrams')),
       makeDiagramMapper(this),
       {
-        onRemoteAdd: e => {
-          this.root.on('remoteAfterTransaction', () => getRemoteUnitOfWork(e).commit(), e.id);
-        },
-        onRemoteRemove: e => {
-          this.root.off('remoteAfterTransaction', e.id);
-        },
-        onInit: e => {
-          this.root.on('remoteAfterTransaction', () => getRemoteUnitOfWork(e).commit(), e.id);
-        }
+        onRemoteAdd: e =>
+          this.root.on('remoteAfterTransaction', () => getRemoteUnitOfWork(e).commit(), e.id),
+        onRemoteRemove: e => this.root.off('remoteAfterTransaction', e.id),
+        onInit: e =>
+          this.root.on('remoteAfterTransaction', () => getRemoteUnitOfWork(e).commit(), e.id)
       }
     );
+
+    this.root.on('remoteClear', () => this.emit('cleared'));
   }
 
   activate(callback: ProgressCallback) {
