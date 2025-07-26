@@ -13,6 +13,7 @@ import { Progress, ProgressCallback } from '@diagram-craft/model/types';
 import type { DiagramFactory, DocumentFactory } from '@diagram-craft/model/factory';
 import type { AwarenessUserState } from '@diagram-craft/model/collaboration/awareness';
 import { UserState } from './UserState';
+import type { StencilRegistryConfig } from './appConfig';
 
 const isRequestForClear = () => location.search.includes('crdtClear=true');
 const isRequestToLoadFromServer = () => location.search.includes('crdtLoadFromServer=true');
@@ -178,18 +179,10 @@ export const AppLoader = (props: Props) => {
   );
 };
 
-type StencilRegistryConfigEntry<K extends keyof StencilLoaderOpts> = {
-  type: K;
-  shapes?: RegExp;
-  opts: StencilLoaderOpts[K];
-};
-
-export type StencilRegistryConfig = Array<StencilRegistryConfigEntry<keyof StencilLoaderOpts>>;
-
 type Props = {
   stencils: StencilRegistryConfig;
   diagram?: DiagramRef;
-  diagramFactory: DiagramFactory<Diagram>;
+  diagramFactory: DiagramFactory;
   documentFactory: DocumentFactory;
 
   nodeRegistry: NodeDefinitionRegistry;
