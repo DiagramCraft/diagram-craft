@@ -8,7 +8,7 @@ import {
 } from './diagramDocumentDataSchemas';
 import { CRDT } from './collaboration/crdt';
 import { TestModel } from './test-support/builder';
-import { Backends, standardTestModel } from './collaboration/yjs/collaborationTestUtils';
+import { Backends, standardTestModel } from './collaboration/collaborationTestUtils';
 
 describe.each(Backends.all())('DiagramDocumentDataSchemas [%s]', (_name, backend) => {
   describe('constructor', () => {

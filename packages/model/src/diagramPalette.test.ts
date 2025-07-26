@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DiagramPalette } from './diagramPalette';
-import { Backends } from './collaboration/yjs/collaborationTestUtils';
+import { Backends } from './collaboration/collaborationTestUtils';
 
 const DEFAULT_COLOR = '#000000';
 

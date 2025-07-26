@@ -1,13 +1,13 @@
 import * as awarenessProtocol from 'y-protocols/awareness.js';
-import { Awareness, AwarenessEvents, CursorState, UserState } from '../awareness';
+import { Awareness, AwarenessEvents, AwarenessCursorState, AwarenessUserState } from '../awareness';
 import { EventEmitter } from '@diagram-craft/utils/event';
 
 export class YJSAwareness extends EventEmitter<AwarenessEvents> implements Awareness {
   private backend: awarenessProtocol.Awareness | undefined = undefined;
 
-  private userState: UserState | undefined = undefined;
-  private userStates: Array<UserState> = [];
-  private cursorStates: Array<UserState & CursorState> = [];
+  private userState: AwarenessUserState | undefined = undefined;
+  private userStates: Array<AwarenessUserState> = [];
+  private cursorStates: Array<AwarenessUserState & AwarenessCursorState> = [];
 
   constructor() {
     super();
@@ -42,15 +42,15 @@ export class YJSAwareness extends EventEmitter<AwarenessEvents> implements Aware
     return this.userStates;
   }
 
-  getCursorStates(): Array<UserState & CursorState> {
+  getCursorStates(): Array<AwarenessUserState & AwarenessCursorState> {
     return this.cursorStates;
   }
 
-  updateCursor(state: CursorState) {
+  updateCursor(state: AwarenessCursorState) {
     this.backend!.setLocalStateField('cursor', state);
   }
 
-  updateUser(state: UserState) {
+  updateUser(state: AwarenessUserState) {
     this.userState = state;
     this.backend!.setLocalStateField('user', state);
   }

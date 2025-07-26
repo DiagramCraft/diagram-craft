@@ -7,7 +7,7 @@ import {
   resetListeners,
   standardTestModel,
   type StandardTestModel
-} from './collaboration/yjs/collaborationTestUtils';
+} from './collaboration/collaborationTestUtils';
 import { DiagramEdge } from './diagramEdge';
 
 describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {

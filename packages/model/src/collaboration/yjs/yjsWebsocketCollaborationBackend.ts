@@ -4,10 +4,8 @@ import { assert } from '@diagram-craft/utils/assert';
 import { YJSRoot } from './yjsCrdt';
 import { CollaborationBackend } from '../backend';
 import { YJSAwareness } from './yjsAwareness';
-import { Random } from '@diagram-craft/utils/random';
 import { ProgressCallback } from '../../types';
-
-const random = new Random(new Date().getTime());
+import type { AwarenessUserState } from '../awareness';
 
 export class YJSWebSocketCollaborationBackend implements CollaborationBackend {
   private wsProvider: WebsocketProvider | undefined = undefined;
@@ -21,7 +19,12 @@ export class YJSWebSocketCollaborationBackend implements CollaborationBackend {
 
   constructor(private readonly endpoint: string) {}
 
-  async connect(url: string, root: CRDTRoot, callback: ProgressCallback) {
+  async connect(
+    url: string,
+    root: CRDTRoot,
+    userState: AwarenessUserState,
+    callback: ProgressCallback
+  ) {
     if (this.isConnected && this.#state !== 'disconnected') return;
     assert.true(root instanceof YJSRoot);
 
@@ -37,16 +40,7 @@ export class YJSWebSocketCollaborationBackend implements CollaborationBackend {
     });
 
     this.awareness.setBackend(this.wsProvider.awareness);
-
-    // TODO: This should be removed
-    const name =
-      (navigator.userAgent.includes('Edg') ? 'Edge' : 'Chrome') +
-      ' ' +
-      Math.floor(random.nextRange(0, 1000));
-    this.awareness?.updateUser({
-      name,
-      color: random.pick(['red', 'green', 'blue', 'orange'])
-    });
+    this.awareness?.updateUser(userState);
 
     return new Promise<void>((resolve, reject) => {
       callback('pending', { message: 'Connecting', completion: 0 });

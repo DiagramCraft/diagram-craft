@@ -3,7 +3,7 @@ import { DiagramDocumentData } from './diagramDocumentData';
 import { NoOpCRDTRoot } from './collaboration/noopCrdt';
 import { TestModel } from './test-support/builder';
 import { DefaultDataProvider } from './dataProviderDefault';
-import { Backends, standardTestModel } from './collaboration/yjs/collaborationTestUtils';
+import { Backends, standardTestModel } from './collaboration/collaborationTestUtils';
 import { UrlDataProvider } from './dataProviderUrl';
 
 describe.each(Backends.all())('DiagramDocumentData [%s]', (_name, backend) => {

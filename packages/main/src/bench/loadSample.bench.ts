@@ -29,7 +29,7 @@ describe('loadSample', () => {
   bench(
     'loadShapes',
     async () => {
-      const root = await documentFactory.loadCRDT(undefined, () => {});
+      const root = await documentFactory.loadCRDT(undefined, {} as any, () => {});
       const document = await documentFactory.createDocument(root, undefined, () => {});
 
       await deserializeDiagramDocument(shapes as any, document, diagramFactory);
@@ -71,7 +71,7 @@ describe('loadSample', () => {
   bench.skip(
     'loadArrows',
     async () => {
-      const root = await documentFactory.loadCRDT(undefined, () => {});
+      const root = await documentFactory.loadCRDT(undefined, {} as any, () => {});
       const document = await documentFactory.createDocument(root, undefined, () => {});
 
       await deserializeDiagramDocument(arrows as any, document, diagramFactory);

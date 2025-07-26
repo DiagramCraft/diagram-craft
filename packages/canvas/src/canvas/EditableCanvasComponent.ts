@@ -298,7 +298,10 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
                   });
                 }
 
-                CollaborationConfig.Backend.awareness?.updateCursor(this.point);
+                CollaborationConfig.Backend.awareness?.updateCursor({
+                  ...this.point,
+                  activeDiagramId: diagram.id
+                });
               },
               contextmenu: event => {
                 const bounds = this.svgRef!.getBoundingClientRect();

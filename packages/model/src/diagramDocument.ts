@@ -26,6 +26,7 @@ import { MappedCRDTOrderedMap } from './collaboration/datatypes/mapped/mappedCrd
 import { watch } from '@diagram-craft/utils/watchableValue';
 import { precondition } from '@diagram-craft/utils/assert';
 import type { EmptyObject } from '@diagram-craft/utils/types';
+import type { AwarenessUserState } from './collaboration/awareness';
 
 export type DocumentEvents = {
   diagramChanged: { diagram: Diagram };
@@ -86,10 +87,10 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     this.root.on('remoteClear', () => this.emit('cleared'));
   }
 
-  activate(callback: ProgressCallback) {
+  activate(userState: AwarenessUserState, callback: ProgressCallback) {
     if (!this.url) return;
 
-    CollaborationConfig.Backend.connect(this.url, this.root, callback);
+    CollaborationConfig.Backend.connect(this.url, this.root, userState, callback);
 
     // TODO: Move this to the caller
     window.onbeforeunload = () => this.deactivate(() => {});

@@ -95,7 +95,7 @@ export type DiagramRef = {
 };
 
 const updateApplicationModel = ($d: Diagram, app: Application, callback: ProgressCallback) => {
-  app.model.setActiveDocument($d.document, callback);
+  app.model.setActiveDocument($d.document, app.userState.awarenessState, callback);
   app.model.activeDiagram = $d;
   if (!app.ready) {
     app.actions = makeActionMap(defaultAppActions)(app);
@@ -183,6 +183,7 @@ export const App = (props: {
     loadDocument: async (url: string) => {
       const doc = await loadFileFromUrl(
         url,
+        UserState.get().awarenessState,
         progressCallback,
         props.documentFactory,
         props.diagramFactory
@@ -199,7 +200,11 @@ export const App = (props: {
     newDocument: async () => {
       // TODO: This is partially duplicated in AppLoader.ts
       const doc = await props.documentFactory.createDocument(
-        await props.documentFactory.loadCRDT(undefined, progressCallback),
+        await props.documentFactory.loadCRDT(
+          undefined,
+          UserState.get().awarenessState,
+          progressCallback
+        ),
         undefined,
         progressCallback
       );

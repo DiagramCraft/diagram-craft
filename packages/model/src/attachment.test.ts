@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Attachment, AttachmentManager } from './attachment';
 import { TestModel } from './test-support/builder';
-import { Backends, standardTestModel } from './collaboration/yjs/collaborationTestUtils';
+import { Backends, standardTestModel } from './collaboration/collaborationTestUtils';
 
 const createBlob = (data: string, type: string = 'text/plain') => {
   return new Blob([data], { type });
