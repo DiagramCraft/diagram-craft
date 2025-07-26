@@ -1,14 +1,14 @@
-import type { CRDTRoot } from '../crdt';
-import { createSyncedYJSCRDTs } from './yjsTestUtils';
-import { NoOpCRDTMap, NoOpCRDTRoot } from '../noopCrdt';
-import { CollaborationConfig } from '../collaborationConfig';
-import { YJSMap, YJSRoot } from './yjsCrdt';
 import { vi } from 'vitest';
-import { TestDiagramBuilder, TestLayerBuilder, TestModel } from '../../test-support/builder';
-import type { RegularLayer } from '../../diagramLayerRegular';
-import type { DiagramDocument } from '../../diagramDocument';
-import type { Diagram } from '../../diagram';
-import { UnitOfWork } from '../../unitOfWork';
+import { type TestDiagramBuilder, TestLayerBuilder, TestModel } from '../test-support/builder';
+import type { DiagramDocument } from '../diagramDocument';
+import type { Diagram } from '../diagram';
+import type { RegularLayer } from '../diagramLayerRegular';
+import { UnitOfWork } from '../unitOfWork';
+import { createSyncedYJSCRDTs } from './yjs/yjsTestUtils';
+import { CollaborationConfig } from './collaborationConfig';
+import { YJSMap, YJSRoot } from './yjs/yjsCrdt';
+import type { CRDTRoot } from './crdt';
+import { NoOpCRDTMap, NoOpCRDTRoot } from './noopCrdt';
 
 export type Backend = {
   syncedDocs: () => [CRDTRoot, CRDTRoot | undefined];

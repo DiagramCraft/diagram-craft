@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { DocumentProps } from './documentProps';
 import { NoOpCRDTRoot } from './collaboration/noopCrdt';
 import { TestModel } from './test-support/builder';
-import { Backends, standardTestModel } from './collaboration/yjs/collaborationTestUtils';
+import { Backends, standardTestModel } from './collaboration/collaborationTestUtils';
 
 describe('DocumentProps', () => {
   it('should initialize with a query object', () => {

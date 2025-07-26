@@ -3,7 +3,7 @@ import { TestDiagramBuilder, TestLayerBuilder, TestModel } from './test-support/
 import { FreeEndpoint } from './endpoint';
 import { UnitOfWork } from './unitOfWork';
 import { BaseEdgeDefinition } from './baseEdgeDefinition';
-import { Backends } from './collaboration/yjs/collaborationTestUtils';
+import { Backends } from './collaboration/collaborationTestUtils';
 import { RegularLayer } from './diagramLayerRegular';
 import { SnapshotUndoableAction } from './diagramUndoActions';
 import type { DiagramEdge } from './diagramEdge';

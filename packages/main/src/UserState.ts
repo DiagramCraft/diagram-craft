@@ -1,4 +1,5 @@
 import { EventEmitter } from '@diagram-craft/utils/event';
+import { Random } from '@diagram-craft/utils/random';
 
 type UserStateEvents = {
   change: { after: UserState };
@@ -7,6 +8,8 @@ type UserStateEvents = {
 const DEFAULT_STENCILS = [{ id: 'basic-shapes', isOpen: true }];
 
 const MAX_RECENT_FILES = 10;
+
+const random = new Random(new Date().getTime());
 
 export class UserState extends EventEmitter<UserStateEvents> {
   #panelLeft?: number;
@@ -39,6 +42,17 @@ export class UserState extends EventEmitter<UserStateEvents> {
       0,
       MAX_RECENT_FILES
     );
+  }
+
+  // TODO: Proper implementation
+  get awarenessState() {
+    return {
+      name:
+        (navigator.userAgent.includes('Edg') ? 'Edge' : 'Chrome') +
+        ' ' +
+        Math.floor(random.nextRange(0, 1000)),
+      color: random.pick(['red', 'green', 'blue', 'orange'])
+    };
   }
 
   set recentFiles(recentFiles: Array<string>) {

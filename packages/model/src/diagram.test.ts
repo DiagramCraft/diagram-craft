@@ -7,7 +7,7 @@ import { DiagramNode } from './diagramNode';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { RegularLayer } from './diagramLayerRegular';
 import { assertRegularLayer } from './diagramLayerUtils';
-import { Backends, standardTestModel } from './collaboration/yjs/collaborationTestUtils';
+import { Backends, standardTestModel } from './collaboration/collaborationTestUtils';
 
 const testBounds = { x: 0, y: 0, w: 100, h: 100, r: 0 };
 

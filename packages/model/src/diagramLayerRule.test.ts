@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { RuleLayer } from './diagramLayerRule';
 import { UnitOfWork } from './unitOfWork';
-import { Backends, standardTestModel } from './collaboration/yjs/collaborationTestUtils';
+import { Backends, standardTestModel } from './collaboration/collaborationTestUtils';
 
 describe.each(Backends.all())('RuleLayer [%s]', (_name, backend) => {
   describe('rules', () => {

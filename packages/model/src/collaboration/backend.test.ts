@@ -16,7 +16,7 @@ describe('NoOpCollaborationBackend', () => {
   it('connect method should immediately invoke the callback with "complete" status', async () => {
     const backend = new NoOpCollaborationBackend();
     const callback = vi.fn();
-    await backend.connect('test-url', {} as any, callback);
+    await backend.connect('test-url', {} as any, {} as any, callback);
     expect(callback).toHaveBeenCalledWith('complete', {});
     expect(callback).toHaveBeenCalledTimes(1);
   });

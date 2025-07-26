@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it } from 'vitest';
 import { watch } from '@diagram-craft/utils/watchableValue';
-import { Backends } from '../../yjs/collaborationTestUtils';
 import type { CRDTFactory, CRDTMap } from '../../crdt';
 import type { CRDTMapper } from './types';
 import { MappedCRDTOrderedMap, type MappedCRDTOrderedMapMapType } from './mappedCrdtOrderedMap';
+import { Backends } from '../../collaborationTestUtils';
 
 class TestClass {
   constructor(public crdt: CRDTMap<CRDTType>) {}

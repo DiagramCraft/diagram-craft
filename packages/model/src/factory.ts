@@ -6,9 +6,14 @@ import { SerializedDiagram } from './serialization/types';
 import { CollaborationConfig } from './collaboration/collaborationConfig';
 import { newid } from '@diagram-craft/utils/id';
 import { EdgeDefinitionRegistry, type NodeDefinitionRegistry } from './elementDefinitionRegistry';
+import type { AwarenessUserState } from './collaboration/awareness';
 
 export type DocumentFactory = {
-  loadCRDT: (url: string | undefined, callback: ProgressCallback) => Promise<CRDTRoot>;
+  loadCRDT: (
+    url: string | undefined,
+    userState: AwarenessUserState,
+    callback: ProgressCallback
+  ) => Promise<CRDTRoot>;
   createDocument: (
     root: CRDTRoot,
     url: string | undefined,
@@ -30,14 +35,23 @@ export const makeDefaultDocumentFactory = (
   edgeRegistry: EdgeDefinitionRegistry
 ): DocumentFactory => {
   return {
-    loadCRDT: async (url: string | undefined, statusCallback: ProgressCallback) => {
+    loadCRDT: async (
+      url: string | undefined,
+      userState: AwarenessUserState,
+      statusCallback: ProgressCallback
+    ) => {
       const root = CRDT.makeRoot();
       if (url) {
         if (location.hash !== '') {
           // TODO: This is a hack for the testing setup
-          await CollaborationConfig.Backend.connect(url + '__' + newid(), root, statusCallback);
+          await CollaborationConfig.Backend.connect(
+            url + '__' + newid(),
+            root,
+            userState,
+            statusCallback
+          );
         } else {
-          await CollaborationConfig.Backend.connect(url, root, statusCallback);
+          await CollaborationConfig.Backend.connect(url, root, userState, statusCallback);
         }
       }
       return root;

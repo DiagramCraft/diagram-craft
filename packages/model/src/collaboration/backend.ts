@@ -1,9 +1,14 @@
-import { Awareness, NoOpAwareness } from './awareness';
+import { Awareness, NoOpAwareness, type AwarenessUserState } from './awareness';
 import type { CRDTRoot } from './crdt';
 import { ProgressCallback } from '../types';
 
 export interface CollaborationBackend {
-  connect: (url: string, doc: CRDTRoot, callback: ProgressCallback) => Promise<void>;
+  connect: (
+    url: string,
+    doc: CRDTRoot,
+    userState: AwarenessUserState,
+    callback: ProgressCallback
+  ) => Promise<void>;
   disconnect: (callback: ProgressCallback) => void;
   awareness: Awareness | undefined;
   isMultiUser: boolean;
@@ -14,7 +19,12 @@ export class NoOpCollaborationBackend implements CollaborationBackend {
 
   isMultiUser = false;
 
-  async connect(_url: string, _doc: CRDTRoot, callback: ProgressCallback) {
+  async connect(
+    _url: string,
+    _doc: CRDTRoot,
+    _userState: AwarenessUserState,
+    callback: ProgressCallback
+  ) {
     callback('complete', {});
   }
   disconnect(callback: ProgressCallback) {

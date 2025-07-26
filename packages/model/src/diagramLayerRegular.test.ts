@@ -4,7 +4,7 @@ import { RegularLayer } from './diagramLayerRegular';
 import { DiagramNode } from './diagramNode';
 import { UnitOfWork } from './unitOfWork';
 import { Diagram } from './diagram';
-import { Backends } from './collaboration/yjs/collaborationTestUtils';
+import { Backends } from './collaboration/collaborationTestUtils';
 
 describe.for(Backends.all())('RegularLayer [%s]', ([_name, backend]) => {
   beforeEach(backend.beforeEach);

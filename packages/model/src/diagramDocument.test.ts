@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { TestDiagramBuilder, TestModel } from './test-support/builder';
-import { Backends } from './collaboration/yjs/collaborationTestUtils';
+import { Backends } from './collaboration/collaborationTestUtils';
 
 describe.each(Backends.all())('DiagramDocument [%s]', (_name, backend) => {
   describe('addDiagram', () => {

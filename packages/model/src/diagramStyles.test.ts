@@ -5,8 +5,8 @@ import { StylesheetSnapshot, UnitOfWork } from './unitOfWork';
 import { NoOpCRDTFactory } from './collaboration/noopCrdt';
 import { DiagramDocument } from './diagramDocument';
 import { TestModel } from './test-support/builder';
-import { Backends } from './collaboration/yjs/collaborationTestUtils';
 import type { CRDTRoot } from './collaboration/crdt';
+import { Backends } from './collaboration/collaborationTestUtils';
 
 describe.each(Backends.all())('Stylesheet [%s]', (_name, backend) => {
   describe('from', () => {

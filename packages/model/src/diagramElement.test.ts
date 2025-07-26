@@ -3,7 +3,7 @@ import { TestModel } from './test-support/builder';
 import { RegularLayer } from './diagramLayerRegular';
 import { DiagramNode } from './diagramNode';
 import { UnitOfWork } from './unitOfWork';
-import { Backends } from './collaboration/yjs/collaborationTestUtils';
+import { Backends } from './collaboration/collaborationTestUtils';
 
 function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));

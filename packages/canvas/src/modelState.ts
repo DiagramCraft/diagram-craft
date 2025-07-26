@@ -2,6 +2,7 @@ import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { ProgressCallback } from '@diagram-craft/model/types';
+import type { AwarenessUserState } from '@diagram-craft/model/collaboration/awareness';
 
 export type ModelStateEvents = {
   activeDocumentChange: { document: DiagramDocument };
@@ -16,14 +17,18 @@ class ModelState extends EventEmitter<ModelStateEvents> {
     return this.#activeDocument!;
   }
 
-  setActiveDocument(document: DiagramDocument, callback: ProgressCallback) {
+  setActiveDocument(
+    document: DiagramDocument,
+    userState: AwarenessUserState,
+    callback: ProgressCallback
+  ) {
     if (this.#activeDocument === document) return;
 
     const isUrlChange = this.#activeDocument?.url !== document.url;
 
     if (isUrlChange) this.#activeDocument?.deactivate(callback);
     this.#activeDocument = document;
-    if (isUrlChange) this.#activeDocument?.activate(callback);
+    if (isUrlChange) this.#activeDocument?.activate(userState, callback);
     this.emit('activeDocumentChange', { document: document });
   }
 

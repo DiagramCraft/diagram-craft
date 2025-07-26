@@ -11,12 +11,15 @@ import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Progress, ProgressCallback } from '@diagram-craft/model/types';
 import type { DiagramFactory, DocumentFactory } from '@diagram-craft/model/factory';
+import type { AwarenessUserState } from '@diagram-craft/model/collaboration/awareness';
+import { UserState } from './UserState';
 
 const isRequestForClear = () => location.search.includes('crdtClear=true');
 const isRequestToLoadFromServer = () => location.search.includes('crdtLoadFromServer=true');
 
 const loadInitialDocument = async (
   diagram: DiagramRef | undefined,
+  userState: AwarenessUserState,
   documentFactory: DocumentFactory,
   diagramFactory: DiagramFactory,
   progress: ProgressCallback,
@@ -25,7 +28,7 @@ const loadInitialDocument = async (
     forceClearServerState?: boolean;
   }
 ): Promise<{ doc?: DiagramDocument; url?: string }> => {
-  const root = await documentFactory.loadCRDT(diagram?.url, progress);
+  const root = await documentFactory.loadCRDT(diagram?.url, userState, progress);
   if (opts?.forceClearServerState || isRequestForClear()) {
     console.log('Clear server state');
     root.clear();
@@ -46,6 +49,7 @@ const loadInitialDocument = async (
         console.log('Load from url');
         const defDiagram = await loadFileFromUrl(
           diagram!.url,
+          userState,
           progress,
           documentFactory,
           diagramFactory,
@@ -81,12 +85,16 @@ export const AppLoader = (props: Props) => {
   );
 
   const load = (ref?: DiagramRef) => {
-    loadInitialDocument(ref, props.documentFactory, props.diagramFactory, progressCallback).then(
-      ({ doc, url }) => {
-        if (doc) setDoc(doc);
-        if (url) setUrl(url);
-      }
-    );
+    loadInitialDocument(
+      ref,
+      UserState.get().awarenessState,
+      props.documentFactory,
+      props.diagramFactory,
+      progressCallback
+    ).then(({ doc, url }) => {
+      if (doc) setDoc(doc);
+      if (url) setUrl(url);
+    });
   };
 
   useEffect(() => {
