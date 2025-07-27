@@ -13,9 +13,7 @@ import { Progress, ProgressCallback } from '@diagram-craft/model/types';
 import type { DiagramFactory, DocumentFactory } from '@diagram-craft/model/factory';
 import type { AwarenessUserState } from '@diagram-craft/model/collaboration/awareness';
 import { UserState } from './UserState';
-
-const isRequestForClear = () => location.search.includes('crdtClear=true');
-const isRequestToLoadFromServer = () => location.search.includes('crdtLoadFromServer=true');
+import { AppConfig, type StencilRegistryConfig } from './appConfig';
 
 const loadInitialDocument = async (
   diagram: DiagramRef | undefined,
@@ -29,13 +27,17 @@ const loadInitialDocument = async (
   }
 ): Promise<{ doc?: DiagramDocument; url?: string }> => {
   const root = await documentFactory.loadCRDT(diagram?.url, userState, progress);
-  if (opts?.forceClearServerState || isRequestForClear()) {
+  if (opts?.forceClearServerState || AppConfig.get().collaboration.forceClearServerState()) {
     console.log('Clear server state');
     root.clear();
   }
 
   if (diagram) {
-    if (opts?.forceLoadFromServer || root.hasData() || isRequestToLoadFromServer()) {
+    if (
+      opts?.forceLoadFromServer ||
+      root.hasData() ||
+      AppConfig.get().collaboration.forceLoadFromServer()
+    ) {
       console.log('Load from server');
       const v = await documentFactory.createDocument(root, diagram!.url, progress);
       return { doc: v, url: diagram?.url };
@@ -178,18 +180,10 @@ export const AppLoader = (props: Props) => {
   );
 };
 
-type StencilRegistryConfigEntry<K extends keyof StencilLoaderOpts> = {
-  type: K;
-  shapes?: RegExp;
-  opts: StencilLoaderOpts[K];
-};
-
-export type StencilRegistryConfig = Array<StencilRegistryConfigEntry<keyof StencilLoaderOpts>>;
-
 type Props = {
   stencils: StencilRegistryConfig;
   diagram?: DiagramRef;
-  diagramFactory: DiagramFactory<Diagram>;
+  diagramFactory: DiagramFactory;
   documentFactory: DocumentFactory;
 
   nodeRegistry: NodeDefinitionRegistry;

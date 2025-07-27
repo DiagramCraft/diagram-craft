@@ -28,6 +28,7 @@
     //"noUncheckedIndexedAccess": true,
 
     "paths": {
+      "@diagram-craft/config": ["./packages/main/app.config.ts"],
       "@diagram-craft/main/*": ["./packages/main/src/*"],
       "@diagram-craft/app-components/*": ["./packages/app-components/src/*"],
       "@diagram-craft/query/*": ["./packages/query/src/*"],
