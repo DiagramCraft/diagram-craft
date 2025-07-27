@@ -3,6 +3,7 @@ import { useRedraw } from './hooks/useRedraw';
 import { useCallback, useEffect, useRef } from 'react';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
 import { useDiagram } from '../application';
+import { UserState } from '../UserState';
 
 type Tick = {
   pos: number;
@@ -52,8 +53,10 @@ export const Ruler = ({ orientation }: Props) => {
   useEventListener(diagram.viewBox, 'viewbox', () => queueMicrotask(() => redraw()));
   useEventListener(diagram.selectionState, 'change', updateSelection);
 
+  const userState = UserState.get();
+
   useEffect(() => {
-    if (diagram.props.ruler?.enabled === false) return;
+    if (!userState.showRulers) return;
 
     const handler = (e: SVGSVGElementEventMap['mousemove']) => {
       cursor.current = EventHelper.pointWithRespectTo(e, svgRef.current!)[
@@ -66,9 +69,9 @@ export const Ruler = ({ orientation }: Props) => {
     return () => {
       document!.removeEventListener('mousemove', handler);
     };
-  }, [diagram.props.ruler?.enabled, orientation, viewbox, updateCursorLine]);
+  }, [userState.showRulers, orientation, viewbox, updateCursorLine]);
 
-  if (diagram.props.ruler?.enabled === false) return null;
+  if (!userState.showRulers) return null;
 
   const ticks: Tick[] = [];
 

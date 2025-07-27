@@ -1,6 +1,7 @@
 import { useRedraw } from './hooks/useRedraw';
 import { useDiagram } from '../application';
 import { useEventListener } from './hooks/useEventListener';
+import { UserState } from '../UserState';
 
 export const CanvasOutline = () => {
   const $d = useDiagram();
@@ -13,9 +14,6 @@ export const CanvasOutline = () => {
   }
 
   return (
-    <div
-      className={'cmp-canvas-marker'}
-      data-ruler-enabled={$d.props.ruler?.enabled !== false}
-    ></div>
+    <div className={'cmp-canvas-marker'} data-ruler-enabled={UserState.get().showRulers}></div>
   );
 };

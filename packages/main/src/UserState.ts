@@ -13,6 +13,7 @@ export class UserState extends EventEmitter<UserStateEvents> {
   #panelLeft?: number;
   #panelRight?: number;
   #showHelp: boolean = true;
+  #showRulers: boolean = true;
   #stencils: Array<{ id: string; isOpen?: boolean }> = DEFAULT_STENCILS;
   #recentFiles: Array<string>;
 
@@ -92,6 +93,15 @@ export class UserState extends EventEmitter<UserStateEvents> {
 
   setStencils(stencils: Array<{ id: string; isOpen?: boolean }>) {
     this.#stencils = stencils;
+    this.triggerChange();
+  }
+
+  get showRulers() {
+    return this.#showRulers;
+  }
+
+  set showRulers(showRulers: boolean) {
+    this.#showRulers = showRulers;
     this.triggerChange();
   }
 

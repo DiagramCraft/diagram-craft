@@ -10,7 +10,6 @@ import { toggleMagnetTypeActions } from './actions/toggleMagnetTypeAction';
 import { distributeActions } from './actions/distributeAction';
 import { waypointAddActions } from './actions/waypointAddAction';
 import { waypointDeleteActions } from '@diagram-craft/canvas/actions/waypointDeleteAction';
-import { toggleRulerActions } from './actions/toggleRulerAction';
 import { textActions } from './actions/textActions';
 import { edgeFlipActions } from './actions/edgeFlipAction';
 import { duplicateActions } from './actions/duplicateAction';
@@ -45,7 +44,6 @@ export const defaultCanvasActions: ActionMapFactory<Application> = application =
   ...distributeActions(application),
   ...waypointAddActions(application),
   ...waypointDeleteActions(application),
-  ...toggleRulerActions(application),
   ...textActions(application),
   ...edgeFlipActions(application),
   ...duplicateActions(application),
