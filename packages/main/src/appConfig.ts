@@ -1,42 +1,38 @@
 import { fileLoaderRegistry, type stencilLoaderRegistry } from '@diagram-craft/canvas-app/loaders';
-import type { EmptyObject } from '@diagram-craft/utils/types';
-
-type CollaborationConfig<B extends keyof CollaborationBackendConfig> = {
-  backend?: B;
-  forceLoadFromServer?: () => boolean;
-  forceClearServerState?: () => boolean;
-  config?: CollaborationBackendConfig[B];
-};
+import { assert } from '@diagram-craft/utils/assert';
 
 export type AppConfig = {
-  state?: {
-    store?: boolean;
-    key?: () => string;
+  state: {
+    store: boolean;
+    key: () => string;
   };
-  awareness?: {
-    name?: () => string;
-    color?: () => string;
-    avatar?: () => string;
+  awareness: {
+    name: () => string;
+    color: () => string;
+    avatar: () => string | undefined;
   };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  collaboration?: CollaborationConfig<any>;
-  stencils?: {
-    loaders?: typeof stencilLoaderRegistry;
-    registry?: StencilRegistryConfig;
+  collaboration: {
+    forceLoadFromServer: () => boolean;
+    forceClearServerState: () => boolean;
+  } & (
+    | {
+        backend: 'noop';
+      }
+    | {
+        backend: 'yjs';
+        config: {
+          url: string;
+        };
+      }
+  );
+  stencils: {
+    loaders: typeof stencilLoaderRegistry;
+    registry: StencilRegistryConfig;
   };
-  file?: {
-    loaders?: typeof fileLoaderRegistry;
+  file: {
+    loaders: typeof fileLoaderRegistry;
   };
 };
-
-declare global {
-  interface CollaborationBackendConfig {
-    noop: EmptyObject;
-    yjs: {
-      url: string;
-    };
-  }
-}
 
 type StencilRegistryConfigEntry<K extends keyof StencilLoaderOpts> = {
   type: K;
@@ -46,10 +42,11 @@ type StencilRegistryConfigEntry<K extends keyof StencilLoaderOpts> = {
 
 export type StencilRegistryConfig = Array<StencilRegistryConfigEntry<keyof StencilLoaderOpts>>;
 
-let CONFIG_IN_USE: AppConfig = {};
+let CONFIG_IN_USE: AppConfig | undefined = undefined;
 
 export const AppConfig = {
   get(): AppConfig {
+    assert.present(CONFIG_IN_USE);
     return CONFIG_IN_USE;
   },
   set(config: AppConfig) {

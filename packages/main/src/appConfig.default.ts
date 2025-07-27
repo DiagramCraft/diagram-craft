@@ -132,11 +132,12 @@ export const defaultAppConfig: AppConfig = {
       (navigator.userAgent.includes('Edg') ? 'Edge' : 'Chrome') +
       ' ' +
       Math.floor(random.nextRange(0, 1000)),
-    color: () => random.pick(['red', 'green', 'blue', 'orange'])
+    color: () => random.pick(['red', 'green', 'blue', 'orange']),
+    avatar: () => undefined
   },
   collaboration: {
-    forceClearServerState: () => location.search.includes('crdtClear=true'),
-    forceLoadFromServer: () => location.search.includes('crdtLoadFromServer=true'),
+    forceClearServerState: () => false,
+    forceLoadFromServer: () => false,
     backend: import.meta.env.VITE_CRDT_BACKEND === 'yjs-websocket' ? 'yjs' : 'noop',
     config: {
       url: import.meta.env.VITE_CRDT_BACKEND_YJS_URL
