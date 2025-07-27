@@ -60,9 +60,6 @@ declare global {
       type?: GridType;
       majorType?: GridType;
     };
-    ruler?: {
-      enabled?: boolean;
-    };
   }
 
   interface ElementDataEntry {

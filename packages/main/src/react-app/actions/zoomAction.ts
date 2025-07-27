@@ -1,4 +1,5 @@
 import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
+import { UserState } from '../../UserState';
 
 declare global {
   interface ActionMap extends ReturnType<typeof zoomActions> {}
@@ -46,8 +47,7 @@ class ZoomFitAction extends AbstractAction<{ rulerWidth?: number }> {
       };
     }
 
-    const rulerWidth =
-      (this.context.model.activeDiagram.props.ruler?.enabled ?? true) ? (props.rulerWidth ?? 0) : 0;
+    const rulerWidth = UserState.get().showRulers ? (props.rulerWidth ?? 0) : 0;
 
     diagram.viewBox.offset = {
       x: diagram.canvas.x + (diagram.canvas.w - diagram.viewBox.dimensions.w) / 2 - rulerWidth / 2,

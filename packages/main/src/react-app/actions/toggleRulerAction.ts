@@ -1,4 +1,5 @@
 import { AbstractToggleAction, ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
+import { UserState } from '../../UserState';
 
 declare global {
   interface ActionMap extends ReturnType<typeof toggleRulerActions> {}
@@ -9,23 +10,26 @@ export const toggleRulerActions = (context: ActionContext) => ({
 });
 
 export class ToggleRulerAction extends AbstractToggleAction {
+  private userState: UserState | undefined;
+
   constructor(context: ActionContext) {
     super(context);
+    this.userState = UserState.get();
   }
 
-  getStateCriteria(context: ActionContext) {
+  getStateCriteria() {
     return ActionCriteria.EventTriggered(
-      context.model.activeDiagram,
+      this.userState!,
       'change',
-      () => context.model.activeDiagram.props.ruler?.enabled ?? true
+      () => this.userState?.showRulers ?? true
     );
   }
 
   execute(): void {
     this.context.model.activeDiagram.updateProps(p => {
-      p.ruler ??= {};
-      p.ruler.enabled = !this.state;
+      this.userState!.showRulers = !this.state;
       return p;
     });
+    this.state = !this.state;
   }
 }

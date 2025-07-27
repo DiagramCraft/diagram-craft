@@ -18,6 +18,7 @@ import { selectionChangeShapeActions } from './actions/selectionChangeShapeActio
 import { selectionExecuteActionActions } from './actions/selectionExecuteActionAction';
 import { diagramActions } from './actions/diagramActions';
 import { geometryActions } from './actions/geometryActions';
+import { toggleRulerActions } from './actions/toggleRulerAction';
 
 export const defaultAppActions: ActionMapFactory<Application> = application => ({
   ...toolActions(application),
@@ -37,7 +38,8 @@ export const defaultAppActions: ActionMapFactory<Application> = application => (
   ...selectionChangeShapeActions(application),
   ...selectionExecuteActionActions(application),
   ...diagramActions(application),
-  ...geometryActions(application)
+  ...geometryActions(application),
+  ...toggleRulerActions(application)
 });
 
 export const defaultMacAppKeymap: KeyMap = {
