@@ -353,6 +353,11 @@ input[type="checkbox"][data-field-state='overridden'] {
   border-top: 1px solid var(--primary-border);
   border-bottom: 1px solid var(--primary-border);
   padding-left: 0.5rem;
+
+  & > div > span {
+    display: inline;
+    margin-top: -2px;
+  }
 }
 
 #tabs {
