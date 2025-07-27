@@ -9,8 +9,6 @@ import { AppConfig } from './appConfig';
 const config = defineAppConfig(defaultAppConfig);
 AppConfig.set(config);
 
-console.log('Config', config);
-
 // Initialize collaboration
 if (config.collaboration?.backend === 'yjs') {
   CollaborationConfig.idNoOp = false;
