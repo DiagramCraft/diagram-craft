@@ -1,5 +1,12 @@
 import { Point } from './point';
-import { CubicSegment, LineSegment, PathSegment, QuadSegment } from './pathSegment';
+import {
+  CubicSegment,
+  type Intersection,
+  type IntersectionOpts,
+  LineSegment,
+  PathSegment,
+  QuadSegment
+} from './pathSegment';
 import {
   LengthOffsetOnPath,
   LengthOffsetOnSegment,
@@ -263,8 +270,16 @@ export class Path {
     };
   }
 
-  intersections(other: Path): ReadonlyArray<WithSegment<PointOnPath> & { otherSegment: number }> {
-    const dest: Array<WithSegment<PointOnPath> & { otherSegment: number }> = [];
+  intersections(
+    other: Path,
+    opts?: IntersectionOpts
+  ): ReadonlyArray<
+    WithSegment<PointOnPath> &
+      Intersection & {
+        otherSegment: number;
+      }
+  > {
+    const dest: Array<WithSegment<PointOnPath> & Intersection & { otherSegment: number }> = [];
 
     const segments = this.segments;
 
@@ -274,14 +289,17 @@ export class Path {
       for (let oIdx = 0; oIdx < other.segments.length; oIdx++) {
         const otherSegment = other.segments[oIdx];
 
-        const intersections = segment.intersectionsWith(otherSegment);
+        const intersections = segment.intersectionsWith(otherSegment, opts);
         if (intersections.length === 0) continue;
 
         dest.push(
           ...intersections.map(i => ({
             point: i.point,
             segment: idx,
-            otherSegment: oIdx
+            otherSegment: oIdx,
+            start: i.start,
+            end: i.end,
+            type: i.type
           }))
         );
       }

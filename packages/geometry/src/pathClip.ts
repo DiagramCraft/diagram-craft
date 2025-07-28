@@ -7,8 +7,9 @@ import { MultiMap } from '@diagram-craft/utils/multimap';
 import { isSame } from '@diagram-craft/utils/math';
 import { PathList } from './pathList';
 
-type VertexType = 'in->out' | 'out->in';
+type IntersectionClassification = 'in->out' | 'out->in';
 
+type IntersectionType = 'intersection' | 'overlap';
 type Vertex = {
   label?: string;
   point: Point;
@@ -18,8 +19,13 @@ type Vertex = {
   prev: Vertex;
   next: Vertex;
 } & (
-  | { intersect: true; neighbor: Vertex; type?: VertexType }
-  | { intersect: false; neighbor?: never; type?: VertexType }
+  | {
+      intersect: true;
+      intersectionType: IntersectionType;
+      neighbor: Vertex;
+      classification?: IntersectionClassification;
+    }
+  | { intersect: false; neighbor?: never; classification?: IntersectionClassification }
 );
 
 type VertexList = Vertex[];
@@ -50,6 +56,12 @@ export const applyBooleanOperation = (
 ): Array<PathList> => {
   const doApplyOperation = (operation: BooleanOperation, a: PathList, b: PathList) => {
     const vertices = getClipVertices(a, b);
+
+    if (operation === 'A xor B') {
+      console.log(vertices[0][0].map(e => JSON.stringify([e.point, e.intersect])));
+      console.log(vertices[1][0].map(e => JSON.stringify([e.point, e.intersect])));
+      console.log(a, b);
+    }
 
     // We need to classify vertices to determine if each intersection is also a crossing
     classifyClipVertices(vertices, [a, b], [false, false]);
@@ -424,34 +436,42 @@ export const getClipVertices = (cp1: PathList, cp2: PathList): [VertexList[], Ve
     for (const p2 of cp2.all()) {
       for (const thisSegment of p1.segments) {
         for (const otherSegment of p2.segments) {
-          const intersections = thisSegment.intersectionsWith(otherSegment) ?? [];
+          const intersections =
+            thisSegment.intersectionsWith(otherSegment, { includeOverlaps: true }) ?? [];
 
           for (const intersection of intersections) {
-            const i1: Vertex = {
-              point: intersection.point,
-              segment: thisSegment,
-              alpha: thisSegment.projectPoint(intersection.point).t,
-              intersect: true,
-              prev: SENTINEL_VERTEX,
-              next: SENTINEL_VERTEX,
-              neighbor: SENTINEL_VERTEX
-            };
+            const vertices: Array<[IntersectionType, Point]> = [
+              ['intersection', intersection.point]
+            ];
+            for (const [type, point] of vertices) {
+              const i1: Vertex = {
+                point: point,
+                intersectionType: type,
+                segment: thisSegment,
+                alpha: thisSegment.projectPoint(point).t,
+                intersect: true,
+                prev: SENTINEL_VERTEX,
+                next: SENTINEL_VERTEX,
+                neighbor: SENTINEL_VERTEX
+              };
 
-            const i2: Vertex = {
-              point: intersection.point,
-              segment: otherSegment,
-              alpha: otherSegment.projectPoint(intersection.point).t,
-              intersect: true,
-              prev: SENTINEL_VERTEX,
-              next: SENTINEL_VERTEX,
-              neighbor: SENTINEL_VERTEX
-            };
+              const i2: Vertex = {
+                point: point,
+                intersectionType: type,
+                segment: otherSegment,
+                alpha: otherSegment.projectPoint(point).t,
+                intersect: true,
+                prev: SENTINEL_VERTEX,
+                next: SENTINEL_VERTEX,
+                neighbor: SENTINEL_VERTEX
+              };
 
-            i1.neighbor = i2;
-            i2.neighbor = i1;
+              i1.neighbor = i2;
+              i2.neighbor = i1;
 
-            intersectionVertices.add(thisSegment, i1);
-            intersectionVertices.add(otherSegment, i2);
+              intersectionVertices.add(thisSegment, i1);
+              intersectionVertices.add(otherSegment, i2);
+            }
           }
         }
       }
@@ -576,7 +596,7 @@ export const classifyClipVertices = (
           crossings.push(intersection.point);
 
           // Pi->entry_exit = status
-          intersection.type = status ? 'in->out' : 'out->in';
+          intersection.classification = status ? 'in->out' : 'out->in';
 
           // toggle status
           status = !status;
@@ -644,7 +664,7 @@ export const clipVertices = (p: [Array<VertexList>, Array<VertexList>]) => {
     do {
       markAsProcessed(current);
 
-      if (current.type === 'in->out') {
+      if (current.classification === 'in->out') {
         // repeat
         //   ...
         // until current->intersect
@@ -658,7 +678,7 @@ export const clipVertices = (p: [Array<VertexList>, Array<VertexList>]) => {
           currentContour.push(current);
         } while (--maxLoop > 0);
         assert.true(maxLoop > 0);
-      } else if (current.type === 'out->in') {
+      } else if (current.classification === 'out->in') {
         // repeat
         //   ...
         // until current->intersect

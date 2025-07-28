@@ -14,7 +14,7 @@ export interface Intersection {
   end?: Point;
 }
 
-type IntersectionOpts = {
+export type IntersectionOpts = {
   includeOverlaps?: boolean;
 };
 

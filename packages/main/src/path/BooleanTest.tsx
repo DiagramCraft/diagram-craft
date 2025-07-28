@@ -160,7 +160,7 @@ export const BooleanTest = (props: {
                   cx={s.point.x}
                   cy={s.point.y}
                   r={2 / scale}
-                  fill={s.intersect ? (s.type === 'in->out' ? 'green' : 'red') : 'gray'}
+                  fill={s.intersect ? (s.classification === 'in->out' ? 'green' : 'red') : 'gray'}
                 />
               ))}
 
@@ -247,7 +247,7 @@ export const BooleanTest = (props: {
                   cx={s.point.x}
                   cy={s.point.y}
                   r={2 / scale}
-                  fill={s.intersect ? (s.type === 'in->out' ? 'green' : 'red') : 'gray'}
+                  fill={s.intersect ? (s.classification === 'in->out' ? 'green' : 'red') : 'gray'}
                 />
               ))}
 
