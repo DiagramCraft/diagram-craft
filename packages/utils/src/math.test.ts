@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { clamp, isDifferent, isSame, round } from './math';
+import { clamp, isDifferent, isSame, mod, round } from './math';
 
 describe('round', () => {
   test('rounds a number to 2 decimal places', () => {
@@ -91,5 +91,32 @@ describe('isDifferent', () => {
   test('returns false when numbers are exactly equal', () => {
     const result = isDifferent(10, 10);
     expect(result).toBe(false);
+  });
+});
+
+describe('mod', () => {
+  test('returns the correct modulo for positive numbers', () => {
+    expect(mod(5, 2)).toBe(1);
+    expect(mod(10, 3)).toBe(1);
+    expect(mod(7, 7)).toBe(0);
+  });
+
+  test('returns the correct modulo for negative numbers', () => {
+    expect(mod(-5, 2)).toBe(1);
+    expect(mod(-10, 3)).toBe(2);
+    expect(mod(-7, 7)).toBe(0);
+  });
+
+  test('handles edge cases correctly', () => {
+    // Zero as dividend
+    expect(mod(0, 5)).toBe(0);
+    
+    // Large numbers
+    expect(mod(1000000, 7)).toBe(1);
+    expect(mod(-1000000, 7)).toBe(6);
+    
+    // Decimal modulo
+    expect(mod(5.5, 2)).toBe(1.5);
+    expect(mod(-5.5, 2)).toBe(0.5);
   });
 });

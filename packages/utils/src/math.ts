@@ -79,3 +79,24 @@ export const isSame = (a: number, b: number, epsilon = 0.01) => {
 export const isDifferent = (a: number, b: number, epsilon = 0.01) => {
   return !isSame(a, b, epsilon);
 };
+
+/**
+ * Returns the modulo of a number that works correctly with negative numbers.
+ * JavaScript's % operator returns a negative remainder when the dividend is negative.
+ * This function always returns a positive remainder.
+ *
+ * @param n - The dividend (number to be divided).
+ * @param modulo - The divisor (number to divide by).
+ * @returns The positive remainder after division.
+ *
+ * @example
+ * // returns 1
+ * mod(5, 2);
+ *
+ * @example
+ * // returns 1
+ * mod(-5, 2);
+ */
+export const mod = (n: number, modulo: number) => {
+  return ((n % modulo) + modulo) % modulo;
+};
