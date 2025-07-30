@@ -5,14 +5,19 @@ let debug = false;
  * that the debug state is reset to false after execution.
  *
  * @param fn - The function to be executed with the debug state.
- * @param [state=true] - The state to set for debugging. Defaults to true.
+ * @param [opts] - Optional configuration object.
+ * @param [opts.enabled=true] - The state to set for debugging. Defaults to true.
+ * @param [opts.logLabel] - Optional label for debug logging. If provided and debug is enabled, 
+ *                          logs messages at the start and end of function execution.
  * @returns The result of the executed function.
  */
-export const withDebug = <T>(fn: () => T, state = true): T => {
-  debug = state;
+export const withDebug = <T>(fn: () => T, opts?: { enabled?: boolean; logLabel?: string }): T => {
+  debug = opts && opts.enabled !== undefined ? opts.enabled : true;
+  if (opts?.logLabel && debug) console.log(`--> DEBUG ${opts.logLabel}`);
   try {
     return fn();
   } finally {
+    if (opts?.logLabel && debug) console.log(`<-- DEBUG ${opts.logLabel}`);
     debug = false;
   }
 };
