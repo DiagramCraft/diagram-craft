@@ -495,4 +495,16 @@ export class Path {
 
     return sum < 0;
   }
+
+  // TODO: This is a somewhat simplistic way to calculate if a Path has area or not
+  //       It just checks for pairwise segments to see if they are each others reverse
+  hasArea() {
+    if (this.segments.length % 2 === 1) return true;
+    for (let i = 0; i < this.segments.length; i += 2) {
+      const s1 = this.segments[i];
+      const s2 = this.segments[i + 1];
+      if (!s1.equals(s2.reverse())) return true;
+    }
+    return false;
+  }
 }

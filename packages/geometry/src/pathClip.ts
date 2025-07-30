@@ -239,8 +239,17 @@ const linkVertices = (subjectVertices: VertexList[], clipVertices: VertexList[])
           const subject = subjectVertexList[i];
           const clip = clipVertexList[j];
 
-          if (subject.intersect || clip.intersect) continue;
-          if (subject.alpha === 1 || clip.alpha === 1) continue;
+          // If the alpha is 1, it means this vertex is on segment, in this
+          // case there's always a corresponding vertex with alpha 0 - and we keep
+          // the later. In case this is of type overlap, we keep both alpha=1 and alpha=0
+          if (subject.alpha === 1 || clip.alpha === 1) {
+            if (subject.intersectionType !== 'overlap' || clip.intersectionType !== 'overlap') {
+              continue;
+            }
+          }
+
+          // We only match vertex with the same intersection type
+          if (subject.intersectionType !== clip.intersectionType) continue;
 
           if (Point.isEqual(subject.point, clip.point)) {
             // @ts-ignore
@@ -396,6 +405,11 @@ const assertConsistency = (subjectVertices: VertexList[], clipVertices: VertexLi
       if (current.neighbor) {
         assert.true(current === current.neighbor.neighbor);
         assert.true(set.has(current.neighbor));
+
+        assert.true(
+          current.intersectionType === current.neighbor.intersectionType,
+          `${current.intersectionType} != ${current.neighbor.intersectionType}`
+        );
       }
     }
   };
@@ -584,7 +598,19 @@ export const classifyClipVertices = (
   const doClassifyClipVertices = (pVertexList: Array<VertexList>, start: boolean, q: PathList) => {
     for (let i = 0; i < pVertexList.length; i += 1) {
       const pVertices = pVertexList[i];
-      const p0 = pVertices[0].point;
+
+      // Need to find a point that is either inside or outside - as a starting point
+      let p0;
+      let j0 = 0;
+      while (j0 < pVertices.length) {
+        const p = pVertices[j0];
+        if (!q.isOn(p.point)) {
+          p0 = p.point;
+          break;
+        }
+        j0++;
+      }
+      assert.present(p0);
 
       /*
         if P0 inside other polygon
@@ -597,12 +623,15 @@ export const classifyClipVertices = (
       if (start) status = !status;
 
       // for each vertex Pi of polygon do
-      for (let j = 0; j < pVertices.length; j++) {
+      // TODO: Is there a better way to write this loop
+      for (let J = j0; J === j0 || mod(J, pVertices.length) !== mod(j0, pVertices.length); J++) {
+        const j = mod(J, pVertices.length);
         const intersection = pVertices[j];
 
         // if Pi->intersect then
         if (intersection.intersect) {
-          if (intersection.segment.length() === 0) {
+          // TODO: Why is this check really needed
+          if (intersection.segment.length() === 0 && intersection.intersectionType !== 'overlap') {
             // @ts-ignore
             intersection.intersect = false;
             intersection.neighbor.intersect = false;
@@ -633,7 +662,7 @@ export const classifyClipVertices = (
             arr.sort((a, b) => a.angle - b.angle);
 
             if (
-              j > 0 &&
+              intersection.intersectionType !== 'overlap' &&
               (arr[0].label === arr[1].label ||
                 arr[1].label === arr[2].label ||
                 arr[2].label === arr[3].label)
@@ -758,14 +787,18 @@ export const clipVertices = (p: [Array<VertexList>, Array<VertexList>]) => {
     assert.true(maxOuterLoop > 0);
   }
 
-  return new PathList(
-    arrangeSegments(dest).map(arr => {
-      return new Path(
-        arr[0].start,
-        arr.flatMap(s => s.raw())
-      );
-    })
+  const ret = new PathList(
+    arrangeSegments(dest)
+      .map(arr => {
+        return new Path(
+          arr[0].start,
+          arr.flatMap(s => s.raw())
+        );
+      })
+      .filter(p => p.hasArea())
   );
+
+  return ret;
 };
 
 export const _test = {
