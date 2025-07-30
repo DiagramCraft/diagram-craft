@@ -301,7 +301,6 @@ const removeDuplicatePoints = (vertices: Vertex[]) => {
 };
 
 // @ts-ignore
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const dumpVertexList = (
   vertices: Vertex[],
   options: {
