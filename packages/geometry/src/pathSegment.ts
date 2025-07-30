@@ -14,7 +14,7 @@ export interface Intersection {
   end?: Point;
 }
 
-type IntersectionOpts = {
+export type IntersectionOpts = {
   includeOverlaps?: boolean;
 };
 
@@ -30,6 +30,7 @@ export interface PathSegment {
   tangent(t: number): Vector;
   bounds(): Box;
   reverse(): PathSegment;
+  equals(pathSegment: PathSegment): boolean;
 
   start: Point;
   end: Point;
@@ -56,6 +57,14 @@ export class LineSegment implements PathSegment {
 
   lengthAtT(t: number): number {
     return this.length() * t;
+  }
+
+  equals(pathSegment: PathSegment): boolean {
+    return (
+      pathSegment instanceof LineSegment &&
+      Point.isEqual(pathSegment.start, this.start) &&
+      Point.isEqual(pathSegment.end, this.end)
+    );
   }
 
   projectPoint(point: Point): Projection {
@@ -141,6 +150,16 @@ export class CubicSegment extends CubicBezier implements PathSegment {
       new CubicSegment(b[0].start, b[0].cp1, b[0].cp2, b[0].end),
       new CubicSegment(b[1].start, b[1].cp1, b[1].cp2, b[1].end)
     ];
+  }
+
+  equals(pathSegment: PathSegment): boolean {
+    return (
+      pathSegment instanceof CubicSegment &&
+      Point.isEqual(pathSegment.start, this.start) &&
+      Point.isEqual(pathSegment.end, this.end) &&
+      Point.isEqual(pathSegment.p1, this.p1) &&
+      Point.isEqual(pathSegment.p2, this.p2)
+    );
   }
 
   bounds() {

@@ -1,5 +1,12 @@
 import { Point } from './point';
-import { CubicSegment, LineSegment, PathSegment, QuadSegment } from './pathSegment';
+import {
+  CubicSegment,
+  type Intersection,
+  type IntersectionOpts,
+  LineSegment,
+  PathSegment,
+  QuadSegment
+} from './pathSegment';
 import {
   LengthOffsetOnPath,
   LengthOffsetOnSegment,
@@ -263,8 +270,16 @@ export class Path {
     };
   }
 
-  intersections(other: Path): ReadonlyArray<WithSegment<PointOnPath> & { otherSegment: number }> {
-    const dest: Array<WithSegment<PointOnPath> & { otherSegment: number }> = [];
+  intersections(
+    other: Path,
+    opts?: IntersectionOpts
+  ): ReadonlyArray<
+    WithSegment<PointOnPath> &
+      Intersection & {
+        otherSegment: number;
+      }
+  > {
+    const dest: Array<WithSegment<PointOnPath> & Intersection & { otherSegment: number }> = [];
 
     const segments = this.segments;
 
@@ -274,14 +289,17 @@ export class Path {
       for (let oIdx = 0; oIdx < other.segments.length; oIdx++) {
         const otherSegment = other.segments[oIdx];
 
-        const intersections = segment.intersectionsWith(otherSegment);
+        const intersections = segment.intersectionsWith(otherSegment, opts);
         if (intersections.length === 0) continue;
 
         dest.push(
           ...intersections.map(i => ({
             point: i.point,
             segment: idx,
-            otherSegment: oIdx
+            otherSegment: oIdx,
+            start: i.start,
+            end: i.end,
+            type: i.type
           }))
         );
       }
@@ -476,5 +494,17 @@ export class Path {
     }
 
     return sum < 0;
+  }
+
+  // TODO: This is a somewhat simplistic way to calculate if a Path has area or not
+  //       It just checks for pairwise segments to see if they are each others reverse
+  hasArea() {
+    if (this.segments.length % 2 === 1) return true;
+    for (let i = 0; i < this.segments.length; i += 2) {
+      const s1 = this.segments[i];
+      const s2 = this.segments[i + 1];
+      if (!s1.equals(s2.reverse())) return true;
+    }
+    return false;
   }
 }

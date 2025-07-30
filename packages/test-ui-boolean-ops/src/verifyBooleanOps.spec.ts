@@ -58,4 +58,8 @@ test.describe('VectorBoolean', () => {
   test('Complex Shapes', async ({ page }) => {
     await storybookScreenshotCheck(page, 'vectorboolean', 'complex-shapes');
   });
+
+  test('Triangle Inside Rectangle', async ({ page }) => {
+    await storybookScreenshotCheck(page, 'vectorboolean', 'triangle-inside-rectangle');
+  });
 });
