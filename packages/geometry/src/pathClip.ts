@@ -623,9 +623,9 @@ export const classifyClipVertices = (
       if (start) status = !status;
 
       // for each vertex Pi of polygon do
-      // TODO: Is there a better way to write this loop
-      for (let J = j0; J === j0 || mod(J, pVertices.length) !== mod(j0, pVertices.length); J++) {
-        const j = mod(J, pVertices.length);
+      // ... starting at j0
+      for (let J = 0; J < pVertices.length; J++) {
+        const j = (J + j0) % pVertices.length;
         const intersection = pVertices[j];
 
         // if Pi->intersect then
