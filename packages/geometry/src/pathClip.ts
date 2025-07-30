@@ -1,16 +1,17 @@
 import { Point } from './point';
-import { PathSegment } from './pathSegment';
+import { LineSegment, PathSegment } from './pathSegment';
 import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { Path } from './path';
 import { Vector } from './vector';
 import { MultiMap } from '@diagram-craft/utils/multimap';
-import { isSame } from '@diagram-craft/utils/math';
+import { mod } from '@diagram-craft/utils/math';
 import { PathList } from './pathList';
 
 type IntersectionClassification = 'in->out' | 'out->in';
 
 type IntersectionType = 'intersection' | 'overlap';
-type Vertex = {
+
+export type Vertex = {
   label?: string;
   point: Point;
   segment: PathSegment;
@@ -25,7 +26,12 @@ type Vertex = {
       neighbor: Vertex;
       classification?: IntersectionClassification;
     }
-  | { intersect: false; neighbor?: never; classification?: IntersectionClassification }
+  | {
+      intersect: false;
+      intersectionType?: IntersectionType;
+      neighbor?: never;
+      classification?: IntersectionClassification;
+    }
 );
 
 type VertexList = Vertex[];
@@ -56,12 +62,6 @@ export const applyBooleanOperation = (
 ): Array<PathList> => {
   const doApplyOperation = (operation: BooleanOperation, a: PathList, b: PathList) => {
     const vertices = getClipVertices(a, b);
-
-    if (operation === 'A xor B') {
-      console.log(vertices[0][0].map(e => JSON.stringify([e.point, e.intersect])));
-      console.log(vertices[1][0].map(e => JSON.stringify([e.point, e.intersect])));
-      console.log(a, b);
-    }
 
     // We need to classify vertices to determine if each intersection is also a crossing
     classifyClipVertices(vertices, [a, b], [false, false]);
@@ -140,25 +140,42 @@ export const applyBooleanOperation = (
 const clipSegments = (vertices: Vertex[]) => {
   for (let i = 0; i < vertices.length; i++) {
     const current = vertices[i];
-    if (current.intersect && current.alpha !== 0) continue;
 
     const clips: Vertex[] = [];
     for (let j = i + 1; j < vertices.length; j++) {
-      if (!vertices[j].intersect || vertices[j].alpha === 0) break;
+      if (vertices[j].segment !== vertices[i].segment) break;
+      DEBUG: {
+        if (clips.length > 0) {
+          assert.true(
+            clips[clips.length - 1].alpha < vertices[j].alpha,
+            'Alpha must be in ascending order'
+          );
+        }
+      }
       clips.push(vertices[j]);
     }
 
     if (clips.length === 0) continue;
+
+    i += clips.length;
     clips.reverse();
 
     let remaining = current.segment;
 
     let r = 1;
     for (const c of clips) {
-      const [a, b] = remaining.split(c.alpha / r);
-      r = c.alpha;
-      remaining = a;
-      c.segment = b;
+      if (c.intersect && c.alpha === 0) {
+        remaining = new LineSegment(remaining.end, remaining.end);
+        c.segment = remaining;
+      } else if (c.alpha === 1) {
+        remaining = c.segment;
+        c.segment = new LineSegment(c.point, c.point);
+      } else {
+        const [a, b] = remaining.split(c.alpha / r);
+        r = c.alpha;
+        remaining = a;
+        c.segment = b;
+      }
     }
 
     current.segment = remaining;
@@ -223,6 +240,7 @@ const linkVertices = (subjectVertices: VertexList[], clipVertices: VertexList[])
           const clip = clipVertexList[j];
 
           if (subject.intersect || clip.intersect) continue;
+          if (subject.alpha === 1 || clip.alpha === 1) continue;
 
           if (Point.isEqual(subject.point, clip.point)) {
             // @ts-ignore
@@ -248,17 +266,31 @@ const removeDuplicatePoints = (vertices: Vertex[]) => {
     const current = vertices[i];
     if (!vertexSet.has(current)) continue;
 
-    const next = vertices[(i + 1) % vertices.length];
+    let maxLoop = 10000;
+    let offset = 1;
+    do {
+      const next = vertices[mod(i + offset++, vertices.length)];
+      if (current.segment !== next.segment) break;
+      if (next === current) break;
+      if (!Point.isEqual(current.point, next.point)) break;
 
-    if (current.intersect && (isSame(current.alpha, 0) || isSame(current.alpha, 1))) {
-      vertexSet.delete(current);
-    } else if (
-      next.intersect &&
-      Point.isEqual(next.point, current.point) &&
-      isSame(next.alpha, current.alpha)
-    ) {
-      vertexSet.delete(next);
-    }
+      if (current.intersect && !next.intersect) {
+        vertexSet.delete(next);
+      } else if (!current.intersect && next.intersect) {
+        vertexSet.delete(current);
+      } else if (current.intersect && next.intersect) {
+        // Check intersection types
+        if (current.intersectionType === next.intersectionType) {
+          vertexSet.delete(next);
+        } else if (current.intersectionType === 'overlap') {
+          vertexSet.delete(next);
+        } else {
+          vertexSet.delete(current);
+        }
+      } else {
+        vertexSet.delete(next);
+      }
+    } while (--maxLoop > 0);
   }
 
   // Remove all elements from vertices that are not part of vertexSet
@@ -270,7 +302,7 @@ const removeDuplicatePoints = (vertices: Vertex[]) => {
 
 // @ts-ignore
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const dumpVertexList = (
+export const dumpVertexList = (
   vertices: Vertex[],
   options: {
     alpha?: boolean;
@@ -323,7 +355,7 @@ const arrangeSegments = (dest: VertexList[]) => {
         VERIFY_NOT_REACHED();
       }
     }
-    paths.push(currentPath);
+    paths.push(currentPath.filter(s => s.length() > 0));
   }
   return paths;
 };
@@ -440,9 +472,13 @@ export const getClipVertices = (cp1: PathList, cp2: PathList): [VertexList[], Ve
             thisSegment.intersectionsWith(otherSegment, { includeOverlaps: true }) ?? [];
 
           for (const intersection of intersections) {
-            const vertices: Array<[IntersectionType, Point]> = [
-              ['intersection', intersection.point]
-            ];
+            const vertices: Array<[IntersectionType, Point]> =
+              intersection.type === 'intersection'
+                ? [['intersection', intersection.point]]
+                : [
+                    ['overlap', intersection.start!],
+                    ['overlap', intersection.end!]
+                  ];
             for (const [type, point] of vertices) {
               const i1: Vertex = {
                 point: point,
@@ -513,6 +549,14 @@ export const getClipVertices = (cp1: PathList, cp2: PathList): [VertexList[], Ve
   return [subjectVertices, clipVertices];
 };
 
+const findValidPreviousVertex = (v: Vertex) => {
+  let prev = v.prev;
+  if (prev.segment.length() === 0) {
+    prev = prev.prev;
+  }
+  return prev;
+};
+
 const isDegeneracy = (v: Vertex) =>
   v.intersect &&
   (v.alpha === 0 || v.alpha === 1 || v.neighbor.alpha === 0 || v.neighbor.alpha === 1);
@@ -559,16 +603,25 @@ export const classifyClipVertices = (
 
         // if Pi->intersect then
         if (intersection.intersect) {
+          if (intersection.segment.length() === 0) {
+            // @ts-ignore
+            intersection.intersect = false;
+            intersection.neighbor.intersect = false;
+            continue;
+          }
+
           if (isDegeneracy(intersection)) {
             const ot1 = Vector.angle(
-              Vector.from(intersection.point, intersection.neighbor.prev.point)
+              Vector.from(intersection.point, findValidPreviousVertex(intersection.neighbor).point)
             );
 
             const ot2 = Vector.angle(
               Vector.from(intersection.point, intersection.neighbor.next.point)
             );
 
-            const t1 = Vector.angle(Vector.from(intersection.point, intersection.prev.point));
+            const t1 = Vector.angle(
+              Vector.from(intersection.point, findValidPreviousVertex(intersection).point)
+            );
 
             const t2 = Vector.angle(Vector.from(intersection.point, intersection.next.point));
 
@@ -714,4 +767,8 @@ export const clipVertices = (p: [Array<VertexList>, Array<VertexList>]) => {
       );
     })
   );
+};
+
+export const _test = {
+  removeDuplicatePoints: removeDuplicatePoints
 };
