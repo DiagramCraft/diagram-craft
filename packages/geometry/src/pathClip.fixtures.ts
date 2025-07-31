@@ -1,4 +1,4 @@
-import { PathListBuilder, fromUnitLCS } from './pathListBuilder';
+import { fromUnitLCS, PathListBuilder } from './pathListBuilder';
 import { _p } from './point';
 import { applyBooleanOperation } from './pathClip';
 import { PathList } from './pathList';
@@ -61,6 +61,14 @@ export const TEST_CASES = {
   _CircleInRectangleInverted: () => ({
     p2: makeCircle(210, 200, 125),
     p1: makeRect(50, 50, 350, 300)
+  }),
+  _RightTriangleOverRectangle: () => ({
+    p2: new PathListBuilder()
+      .moveTo(_p(100, 0))
+      .lineTo(_p(100, 100))
+      .lineTo(_p(0, 100))
+      .lineTo(_p(100, 0)),
+    p1: makeRect(0, 0, 100, 100)
   }),
   RectangleInCircle: () => ({
     p1: makeRect(150, 150, 150, 150),

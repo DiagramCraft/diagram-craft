@@ -43,3 +43,7 @@ export const NonIntersecting: Story = {
 export const CircleInRectangleInverted: Story = {
   args: TEST_CASES._CircleInRectangleInverted()
 };
+
+export const RightTriangleOverRectangle: Story = {
+  args: TEST_CASES._RightTriangleOverRectangle()
+};
