@@ -6,10 +6,14 @@ import { Vector } from './vector';
 import { MultiMap } from '@diagram-craft/utils/multimap';
 import { mod } from '@diagram-craft/utils/math';
 import { PathList } from './pathList';
+import { Random } from '@diagram-craft/utils/random';
+import { range } from '@diagram-craft/utils/array';
 
 type IntersectionClassification = 'in->out' | 'out->in';
 
 type IntersectionType = 'intersection' | 'overlap';
+
+type VertexType = 'vertex' | 'overlap' | 'intersection' | 'transient';
 
 export type Vertex = {
   label?: string;
@@ -19,6 +23,9 @@ export type Vertex = {
 
   prev: Vertex;
   next: Vertex;
+
+  type?: VertexType;
+  otherOverlap?: Vertex;
 } & (
   | {
       intersect: true;
@@ -242,16 +249,24 @@ const linkVertices = (subjectVertices: VertexList[], clipVertices: VertexList[])
           // If the alpha is 1, it means this vertex is on segment, in this
           // case there's always a corresponding vertex with alpha 0 - and we keep
           // the later. In case this is of type overlap, we keep both alpha=1 and alpha=0
-          if (subject.alpha === 1 || clip.alpha === 1) {
-            if (subject.intersectionType !== 'overlap' || clip.intersectionType !== 'overlap') {
-              continue;
-            }
-          }
+          if (subject.alpha === 1 && subject.intersectionType !== 'overlap') continue;
+          if (clip.alpha === 1 && clip.intersectionType !== 'overlap') continue;
 
           // We only match vertex with the same intersection type
           if (subject.intersectionType !== clip.intersectionType) continue;
 
+          // In case we are looking at an overlap, make sure both subject and clip overlap
+          // is the same
+          // TODO: Maybe we are better off assigning each overlap an unique id
+          if (subject.intersectionType === 'overlap') {
+            if (!Point.isEqual(subject.otherOverlap!.point, clip.otherOverlap!.point)) continue;
+          }
+
           if (Point.isEqual(subject.point, clip.point)) {
+            // Make sure any previous linkage is cleared
+            if (subject.neighbor) subject.neighbor.neighbor = undefined;
+            if (clip.neighbor) clip.neighbor.neighbor = undefined;
+
             // @ts-ignore
             subject.intersect = true;
             // @ts-ignore
@@ -485,41 +500,95 @@ export const getClipVertices = (cp1: PathList, cp2: PathList): [VertexList[], Ve
             thisSegment.intersectionsWith(otherSegment, { includeOverlaps: true }) ?? [];
 
           for (const intersection of intersections) {
-            const vertices: Array<[IntersectionType, Point]> =
-              intersection.type === 'intersection'
-                ? [['intersection', intersection.point]]
-                : [
-                    ['overlap', intersection.start!],
-                    ['overlap', intersection.end!]
-                  ];
-            for (const [type, point] of vertices) {
-              const i1: Vertex = {
-                point: point,
-                intersectionType: type,
+            if (intersection.type === 'intersection') {
+              const t1: Vertex = {
+                point: intersection.point,
+                intersectionType: 'intersection',
                 segment: thisSegment,
-                alpha: thisSegment.projectPoint(point).t,
+                alpha: thisSegment.projectPoint(intersection.point).t,
                 intersect: true,
                 prev: SENTINEL_VERTEX,
                 next: SENTINEL_VERTEX,
                 neighbor: SENTINEL_VERTEX
               };
 
-              const i2: Vertex = {
-                point: point,
-                intersectionType: type,
+              const o1: Vertex = {
+                point: intersection.point,
+                intersectionType: 'intersection',
                 segment: otherSegment,
-                alpha: otherSegment.projectPoint(point).t,
+                alpha: otherSegment.projectPoint(intersection.point).t,
                 intersect: true,
                 prev: SENTINEL_VERTEX,
                 next: SENTINEL_VERTEX,
                 neighbor: SENTINEL_VERTEX
               };
 
-              i1.neighbor = i2;
-              i2.neighbor = i1;
+              t1.neighbor = o1;
+              o1.neighbor = t1;
 
-              intersectionVertices.add(thisSegment, i1);
-              intersectionVertices.add(otherSegment, i2);
+              intersectionVertices.add(thisSegment, t1);
+              intersectionVertices.add(otherSegment, o1);
+            } else if (intersection.type === 'overlap') {
+              const t1: Vertex = {
+                point: intersection.start!,
+                intersectionType: 'overlap',
+                segment: thisSegment,
+                alpha: thisSegment.projectPoint(intersection.start!).t,
+                intersect: true,
+                prev: SENTINEL_VERTEX,
+                next: SENTINEL_VERTEX,
+                neighbor: SENTINEL_VERTEX
+              };
+
+              const o1: Vertex = {
+                point: intersection.start!,
+                intersectionType: 'overlap',
+                segment: otherSegment,
+                alpha: otherSegment.projectPoint(intersection.start!).t,
+                intersect: true,
+                prev: SENTINEL_VERTEX,
+                next: SENTINEL_VERTEX,
+                neighbor: SENTINEL_VERTEX
+              };
+
+              t1.neighbor = o1;
+              o1.neighbor = t1;
+
+              intersectionVertices.add(thisSegment, t1);
+              intersectionVertices.add(otherSegment, o1);
+
+              const t2: Vertex = {
+                point: intersection.end!,
+                intersectionType: 'overlap',
+                segment: thisSegment,
+                alpha: thisSegment.projectPoint(intersection.end!).t,
+                intersect: true,
+                prev: SENTINEL_VERTEX,
+                next: SENTINEL_VERTEX,
+                neighbor: SENTINEL_VERTEX
+              };
+
+              const o2: Vertex = {
+                point: intersection.end!,
+                intersectionType: 'overlap',
+                segment: otherSegment,
+                alpha: otherSegment.projectPoint(intersection.end!).t,
+                intersect: true,
+                prev: SENTINEL_VERTEX,
+                next: SENTINEL_VERTEX,
+                neighbor: SENTINEL_VERTEX
+              };
+
+              t2.neighbor = o2;
+              o2.neighbor = t2;
+
+              intersectionVertices.add(thisSegment, t2);
+              intersectionVertices.add(otherSegment, o2);
+
+              t2.otherOverlap = t1;
+              t1.otherOverlap = t2;
+              o2.otherOverlap = o1;
+              o1.otherOverlap = o2;
             }
           }
         }
@@ -563,6 +632,7 @@ export const getClipVertices = (cp1: PathList, cp2: PathList): [VertexList[], Ve
 };
 
 const findValidPreviousVertex = (v: Vertex) => {
+  assert.present(v);
   let prev = v.prev;
   if (prev.segment.length() === 0) {
     prev = prev.prev;
@@ -573,6 +643,54 @@ const findValidPreviousVertex = (v: Vertex) => {
 const isDegeneracy = (v: Vertex) =>
   v.intersect &&
   (v.alpha === 0 || v.alpha === 1 || v.neighbor.alpha === 0 || v.neighbor.alpha === 1);
+
+// Need to find a point that is either inside or outside - as a starting point
+const findStartingPositionNotOnPath = (
+  pVertices: Vertex[],
+  path: PathList
+): [Vertex | undefined, number] => {
+  let p0: Vertex | undefined;
+  let j0 = 0;
+
+  // First look at all existing vertices
+  while (j0 < pVertices.length) {
+    const p = pVertices[j0];
+    if (!path.isOn(p.point)) {
+      p0 = p;
+      break;
+    }
+    j0++;
+  }
+
+  // If none is suitable, we need to try to add a new vertex on one of the segments
+  const random = new Random(1234);
+  if (!p0) {
+    for (let j = 0; j < pVertices.length; j++) {
+      const offsets = [0.5, 0.25, 0.75, ...range(1, 10).map(() => random.nextRange(0, 1))];
+      for (const o of offsets) {
+        const current = pVertices[j];
+        const p = current.segment.point(o);
+        if (!path.isOn(p)) {
+          const newVertex: Vertex = {
+            point: p,
+            segment: new LineSegment(p, p),
+            next: current.next,
+            prev: current,
+            alpha: 0,
+            intersect: false,
+            type: 'transient'
+          };
+          current.next = newVertex;
+          pVertices.splice(j + 1, 0, newVertex);
+
+          return [newVertex, j + 1];
+        }
+      }
+    }
+  }
+
+  return [p0, j0];
+};
 
 /*
   for both polygons P do
@@ -599,18 +717,9 @@ export const classifyClipVertices = (
     for (let i = 0; i < pVertexList.length; i += 1) {
       const pVertices = pVertexList[i];
 
-      // Need to find a point that is either inside or outside - as a starting point
-      let p0;
-      let j0 = 0;
-      while (j0 < pVertices.length) {
-        const p = pVertices[j0];
-        if (!q.isOn(p.point)) {
-          p0 = p.point;
-          break;
-        }
-        j0++;
-      }
-      assert.present(p0);
+      const [v0, j0] = findStartingPositionNotOnPath(pVertices, q);
+      assert.present(v0);
+      const p0 = v0.point;
 
       /*
         if P0 inside other polygon
@@ -639,6 +748,9 @@ export const classifyClipVertices = (
           }
 
           if (isDegeneracy(intersection)) {
+            if (!intersection.neighbor) {
+              console.log(intersection);
+            }
             const ot1 = Vector.angle(
               Vector.from(intersection.point, findValidPreviousVertex(intersection.neighbor).point)
             );
@@ -787,9 +899,11 @@ export const clipVertices = (p: [Array<VertexList>, Array<VertexList>]) => {
     assert.true(maxOuterLoop > 0);
   }
 
-  const ret = new PathList(
+  return new PathList(
     arrangeSegments(dest)
       .map(arr => {
+        // TODO: Handle this better
+        if (arr.length === 0) return new Path({ x: 0, y: 0 }, []);
         return new Path(
           arr[0].start,
           arr.flatMap(s => s.raw())
@@ -797,8 +911,6 @@ export const clipVertices = (p: [Array<VertexList>, Array<VertexList>]) => {
       })
       .filter(p => p.hasArea())
   );
-
-  return ret;
 };
 
 export const _test = {

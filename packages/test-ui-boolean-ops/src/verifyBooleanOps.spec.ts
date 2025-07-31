@@ -28,6 +28,9 @@ test.describe('Boolean', () => {
   test('Circle In Rectangle Inverted', async ({ page }) => {
     await storybookScreenshotCheck(page, 'boolean', 'circle-in-rectangle-inverted');
   });
+  test('Right Triangle Over Rectangle', async ({ page }) => {
+    await storybookScreenshotCheck(page, 'boolean', 'right-triangle-over-rectangle');
+  });
 });
 
 test.describe('VectorBoolean', () => {
