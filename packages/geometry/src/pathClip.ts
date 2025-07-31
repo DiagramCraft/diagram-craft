@@ -8,6 +8,7 @@ import { mod } from '@diagram-craft/utils/math';
 import { PathList } from './pathList';
 import { Random } from '@diagram-craft/utils/random';
 import { range } from '@diagram-craft/utils/array';
+import { newid } from '@diagram-craft/utils/id';
 
 type IntersectionClassification = 'in->out' | 'out->in';
 
@@ -29,6 +30,7 @@ type BaseVertex = {
   next: Vertex;
 };
 
+// TODO: Remove this one
 type BaseIntersectionVertex = BaseVertex & {
   alpha: number;
   classification: IntersectionClassification;
@@ -39,12 +41,14 @@ type BaseIntersectionVertex = BaseVertex & {
 type OverlapVertex = BaseVertex &
   BaseIntersectionVertex & {
     type: 'overlap';
-    otherOverlap: Vertex;
+    overlapId: string;
+    neighbor: OverlapVertex;
   };
 
 type IntersectionVertex = BaseVertex &
   BaseIntersectionVertex & {
     type: 'intersection';
+    neighbor: IntersectionVertex;
   };
 
 type BasicVertex = BaseVertex & {
@@ -58,6 +62,16 @@ type TransientVertex = BaseVertex & {
 export type Vertex = OverlapVertex | IntersectionVertex | BasicVertex | TransientVertex;
 
 type VertexList = Vertex[];
+
+const isOverlap = (v: Vertex): v is OverlapVertex => v.type === 'overlap';
+const isIntersection = (v: Vertex): v is IntersectionVertex => v.type === 'intersection';
+
+const clearNeighbor = (v: Vertex) => {
+  if (v.neighbor) {
+    v.neighbor.neighbor = undefined;
+    v.neighbor = undefined;
+  }
+};
 
 // @ts-expect-error placeholder value to handle partial construction
 const SENTINEL_VERTEX: Vertex = {
@@ -86,6 +100,24 @@ const makeVertex = (v: Omit<Vertex, 'prev' | 'next'> & { prev?: Vertex; next?: V
   return ret;
 };
 
+const makeIntersectionVertex = (
+  v: Omit<IntersectionVertex, 'prev' | 'next' | 'type' | 'classification' | 'neighbor'>
+) => {
+  return makeVertex({
+    type: 'intersection',
+    ...v
+  }) as IntersectionVertex;
+};
+
+const makeOverlapVertex = (
+  v: Omit<OverlapVertex, 'prev' | 'next' | 'type' | 'classification' | 'neighbor' | 'otherOverlap'>
+) => {
+  return makeVertex({
+    type: 'overlap',
+    ...v
+  }) as OverlapVertex;
+};
+
 const verifyVertex = (_v: Vertex) => {};
 
 /*
@@ -104,8 +136,8 @@ export const applyBooleanOperation = (
     classifyClipVertices(vertices, [a, b], [false, false]);
 
     const isCrossing =
-      vertices[0][0].filter(v => v.type === 'intersection' || v.type === 'overlap').length > 0 &&
-      vertices[1][0].filter(v => v.type === 'intersection' || v.type === 'overlap').length > 0;
+      vertices[0][0].filter(v => isIntersection(v) || isOverlap(v)).length > 0 &&
+      vertices[1][0].filter(v => isIntersection(v) || isOverlap(v)).length > 0;
 
     // TODO: this assumes there's only one path in each compound path
     const aContainedInB =
@@ -178,18 +210,21 @@ const clipSegments = (vertices: Vertex[]) => {
   for (let i = 0; i < vertices.length; i++) {
     const current = vertices[i];
 
-    const clips: Vertex[] = [];
+    const clips: Array<OverlapVertex | IntersectionVertex> = [];
     for (let j = i + 1; j < vertices.length; j++) {
       if (vertices[j].segment !== vertices[i].segment) break;
       DEBUG: {
+        assert.true(isOverlap(vertices[j]) || isIntersection(vertices[j]));
+
         if (clips.length > 0) {
           assert.true(
-            clips[clips.length - 1].alpha! < vertices[j].alpha!,
+            clips[clips.length - 1].alpha <
+              (vertices[j] as OverlapVertex | IntersectionVertex).alpha!,
             'Alpha must be in ascending order'
           );
         }
       }
-      clips.push(vertices[j]);
+      clips.push(vertices[j] as OverlapVertex | IntersectionVertex);
     }
 
     if (clips.length === 0) continue;
@@ -201,15 +236,15 @@ const clipSegments = (vertices: Vertex[]) => {
 
     let r = 1;
     for (const c of clips) {
-      if (c.intersect && c.alpha === 0) {
+      if (c.alpha === 0) {
         remaining = new LineSegment(remaining.end, remaining.end);
         c.segment = remaining;
       } else if (c.alpha === 1) {
         remaining = c.segment;
         c.segment = new LineSegment(c.point, c.point);
       } else {
-        const [a, b] = remaining.split(c.alpha! / r);
-        r = c.alpha!;
+        const [a, b] = remaining.split(c.alpha / r);
+        r = c.alpha;
         remaining = a;
         c.segment = b;
       }
@@ -221,14 +256,14 @@ const clipSegments = (vertices: Vertex[]) => {
 
 const makeLinkedList = (vertices: Vertex[]) => {
   for (let i = 0; i < vertices.length; i++) {
-    vertices[i].next = vertices[(i + 1) % vertices.length];
-    vertices[i].prev = vertices[i === 0 ? vertices.length - 1 : i - 1];
+    vertices[i].next = vertices[mod(i + 1, vertices.length)];
+    vertices[i].prev = vertices[mod(i - 1, vertices.length)];
   }
 };
 
 const sortIntoVertexList = (
   pathList: PathList,
-  intersectionVertices: MultiMap<PathSegment, Vertex>
+  intersectionVertices: MultiMap<PathSegment, IntersectionVertex | OverlapVertex>
 ) => {
   const dest: VertexList[] = [];
   for (const path of pathList.all()) {
@@ -243,9 +278,7 @@ const sortIntoVertexList = (
         makeVertex({
           type: 'vertex',
           point: segment.start,
-          segment: segment,
-          alpha: 0,
-          intersect: false
+          segment: segment
         })
       );
 
@@ -280,29 +313,22 @@ const linkVertices = (subjectVertices: VertexList[], clipVertices: VertexList[])
           // If the alpha is 1, it means this vertex is on segment, in this
           // case there's always a corresponding vertex with alpha 0 - and we keep
           // the later. In case this is of type overlap, we keep both alpha=1 and alpha=0
-          if (subject.alpha === 1 && subject.type !== 'overlap') continue;
-          if (clip.alpha === 1 && clip.type !== 'overlap') continue;
+          if (subject.alpha === 1 && !isOverlap(subject)) continue;
+          if (clip.alpha === 1 && !isOverlap(clip)) continue;
 
           // We only match vertex with the same intersection type
           if (subject.type !== clip.type) continue;
 
           // In case we are looking at an overlap, make sure both subject and clip overlap
           // is the same
-          // TODO: Maybe we are better off assigning each overlap an unique id
-          if (subject.type === 'overlap') {
-            if (
-              !Point.isEqual(
-                subject.otherOverlap!.point,
-                (clip as OverlapVertex).otherOverlap!.point
-              )
-            )
-              continue;
+          if (isOverlap(subject) && isOverlap(clip)) {
+            if (subject.overlapId !== clip.overlapId) continue;
           }
 
           if (Point.isEqual(subject.point, clip.point)) {
             // Make sure any previous linkage is cleared
-            if (subject.neighbor) subject.neighbor.neighbor = undefined;
-            if (clip.neighbor) clip.neighbor.neighbor = undefined;
+            clearNeighbor(subject);
+            clearNeighbor(clip);
 
             // @ts-ignore
             subject.intersect = true;
@@ -312,6 +338,9 @@ const linkVertices = (subjectVertices: VertexList[], clipVertices: VertexList[])
             clip.intersect = true;
             // @ts-ignore
             clip.neighbor = subject;
+
+            verifyVertex(subject);
+            verifyVertex(clip);
           }
         }
       }
@@ -527,7 +556,7 @@ const assertPathSegmentsAreConnected = (
   end for
  */
 export const getClipVertices = (cp1: PathList, cp2: PathList): [VertexList[], VertexList[]] => {
-  const intersectionVertices = new MultiMap<PathSegment, Vertex>();
+  const intersectionVertices = new MultiMap<PathSegment, IntersectionVertex | OverlapVertex>();
 
   for (const p1 of cp1.all()) {
     for (const p2 of cp2.all()) {
@@ -538,16 +567,14 @@ export const getClipVertices = (cp1: PathList, cp2: PathList): [VertexList[], Ve
 
           for (const intersection of intersections) {
             if (intersection.type === 'intersection') {
-              const t1 = makeVertex({
-                type: 'intersection',
+              const t1 = makeIntersectionVertex({
                 point: intersection.point,
                 segment: thisSegment,
                 alpha: thisSegment.projectPoint(intersection.point).t,
                 intersect: true
               });
 
-              const o1 = makeVertex({
-                type: 'intersection',
+              const o1 = makeIntersectionVertex({
                 point: intersection.point,
                 segment: otherSegment,
                 alpha: otherSegment.projectPoint(intersection.point).t,
@@ -560,20 +587,22 @@ export const getClipVertices = (cp1: PathList, cp2: PathList): [VertexList[], Ve
               intersectionVertices.add(thisSegment, t1);
               intersectionVertices.add(otherSegment, o1);
             } else if (intersection.type === 'overlap') {
-              const t1 = makeVertex({
-                type: 'overlap',
+              const overlapId = newid();
+
+              const t1 = makeOverlapVertex({
                 point: intersection.start!,
                 segment: thisSegment,
                 alpha: thisSegment.projectPoint(intersection.start!).t,
-                intersect: true
+                intersect: true,
+                overlapId
               });
 
-              const o1 = makeVertex({
-                type: 'overlap',
+              const o1 = makeOverlapVertex({
                 point: intersection.start!,
                 segment: otherSegment,
                 alpha: otherSegment.projectPoint(intersection.start!).t,
-                intersect: true
+                intersect: true,
+                overlapId
               });
 
               t1.neighbor = o1;
@@ -582,20 +611,20 @@ export const getClipVertices = (cp1: PathList, cp2: PathList): [VertexList[], Ve
               intersectionVertices.add(thisSegment, t1);
               intersectionVertices.add(otherSegment, o1);
 
-              const t2 = makeVertex({
-                type: 'overlap',
+              const t2 = makeOverlapVertex({
                 point: intersection.end!,
                 segment: thisSegment,
                 alpha: thisSegment.projectPoint(intersection.end!).t,
-                intersect: true
+                intersect: true,
+                overlapId
               });
 
-              const o2 = makeVertex({
-                type: 'overlap',
+              const o2 = makeOverlapVertex({
                 point: intersection.end!,
                 segment: otherSegment,
                 alpha: otherSegment.projectPoint(intersection.end!).t,
-                intersect: true
+                intersect: true,
+                overlapId
               });
 
               t2.neighbor = o2;
@@ -603,11 +632,6 @@ export const getClipVertices = (cp1: PathList, cp2: PathList): [VertexList[], Ve
 
               intersectionVertices.add(thisSegment, t2);
               intersectionVertices.add(otherSegment, o2);
-
-              (t2 as OverlapVertex).otherOverlap = t1;
-              (t1 as OverlapVertex).otherOverlap = t2;
-              (o2 as OverlapVertex).otherOverlap = o1;
-              (o1 as OverlapVertex).otherOverlap = o2;
             }
           }
         }
