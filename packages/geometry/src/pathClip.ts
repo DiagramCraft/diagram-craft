@@ -68,9 +68,20 @@ const isIntersection = (v: Vertex): v is IntersectionVertex => v.type === 'inter
 
 const clearNeighbor = (v: Vertex) => {
   if (v.neighbor) {
+    v.intersect = false;
+    v.neighbor.intersect = false;
+
     v.neighbor.neighbor = undefined;
     v.neighbor = undefined;
   }
+};
+
+const addNeighbor = (
+  v: IntersectionVertex | OverlapVertex,
+  neighbor: IntersectionVertex | OverlapVertex
+) => {
+  v.neighbor = neighbor;
+  neighbor.neighbor = v;
 };
 
 // @ts-expect-error placeholder value to handle partial construction
@@ -95,16 +106,20 @@ const makeVertex = (v: Omit<Vertex, 'prev' | 'next'> & { prev?: Vertex; next?: V
     next: SENTINEL_VERTEX,
     ...v
   };
-  verifyVertex(ret);
+  verifyVertex(ret, true);
 
   return ret;
 };
 
 const makeIntersectionVertex = (
-  v: Omit<IntersectionVertex, 'prev' | 'next' | 'type' | 'classification' | 'neighbor'>
+  v: Omit<
+    IntersectionVertex,
+    'prev' | 'next' | 'type' | 'classification' | 'neighbor' | 'intersect'
+  >
 ) => {
   return makeVertex({
     type: 'intersection',
+    intersect: true,
     ...v
   }) as IntersectionVertex;
 };
@@ -118,7 +133,13 @@ const makeOverlapVertex = (
   }) as OverlapVertex;
 };
 
-const verifyVertex = (_v: Vertex) => {};
+const verifyVertex = (v: Vertex, initial = false) => {
+  if (!initial) {
+    if (v.intersect) {
+      assert.present(v.neighbor);
+    }
+  }
+};
 
 /*
  * This implementation is based on https://www.inf.usi.ch/hormann/papers/Greiner.1998.ECO.pdf
@@ -325,6 +346,8 @@ const linkVertices = (subjectVertices: VertexList[], clipVertices: VertexList[])
             if (subject.overlapId !== clip.overlapId) continue;
           }
 
+          if (subject.neighbor === clip && clip.neighbor === subject) continue;
+
           if (Point.isEqual(subject.point, clip.point)) {
             // Make sure any previous linkage is cleared
             clearNeighbor(subject);
@@ -449,6 +472,11 @@ const arrangeSegments = (dest: VertexList[]) => {
   return paths;
 };
 
+const assertVertices = (subjectVertices: VertexList[], clipVertices: VertexList[]) => {
+  subjectVertices.forEach(vertexList => vertexList.forEach(v => verifyVertex(v)));
+  clipVertices.forEach(vertexList => vertexList.forEach(v => verifyVertex(v)));
+};
+
 const assertConsistency = (subjectVertices: VertexList[], clipVertices: VertexList[]) => {
   // 1. Assert that each vertex only exists once
 
@@ -485,7 +513,10 @@ const assertConsistency = (subjectVertices: VertexList[], clipVertices: VertexLi
 
       if (current.neighbor) {
         assert.true(current === current.neighbor.neighbor);
-        assert.true(set.has(current.neighbor));
+        assert.true(
+          set.has(current.neighbor),
+          `${current.label} : ${current.neighbor.label} not in set ${[...set.keys()].map(e => e.label)}`
+        );
 
         assert.true(
           current.type === current.neighbor.type,
@@ -567,22 +598,27 @@ export const getClipVertices = (cp1: PathList, cp2: PathList): [VertexList[], Ve
 
           for (const intersection of intersections) {
             if (intersection.type === 'intersection') {
+              const ta1 = thisSegment.projectPoint(intersection.point).t;
+              const oa1 = otherSegment.projectPoint(intersection.point).t;
+
+              // In case we have an intersection at alpha=1, it means that the next line
+              // will also have an intersection at alpha=0 - to not keep duplicates,
+              // we only keep the ones for alpha=0
+              //if (ta1 === 1 || oa1 === 1) continue;
+
               const t1 = makeIntersectionVertex({
                 point: intersection.point,
                 segment: thisSegment,
-                alpha: thisSegment.projectPoint(intersection.point).t,
-                intersect: true
+                alpha: ta1
               });
 
               const o1 = makeIntersectionVertex({
                 point: intersection.point,
                 segment: otherSegment,
-                alpha: otherSegment.projectPoint(intersection.point).t,
-                intersect: true
+                alpha: oa1
               });
 
-              t1.neighbor = o1;
-              o1.neighbor = t1;
+              addNeighbor(t1, o1);
 
               intersectionVertices.add(thisSegment, t1);
               intersectionVertices.add(otherSegment, o1);
@@ -605,8 +641,7 @@ export const getClipVertices = (cp1: PathList, cp2: PathList): [VertexList[], Ve
                 overlapId
               });
 
-              t1.neighbor = o1;
-              o1.neighbor = t1;
+              addNeighbor(t1, o1);
 
               intersectionVertices.add(thisSegment, t1);
               intersectionVertices.add(otherSegment, o1);
@@ -627,8 +662,7 @@ export const getClipVertices = (cp1: PathList, cp2: PathList): [VertexList[], Ve
                 overlapId
               });
 
-              t2.neighbor = o2;
-              o2.neighbor = t2;
+              addNeighbor(t2, o2);
 
               intersectionVertices.add(thisSegment, t2);
               intersectionVertices.add(otherSegment, o2);
@@ -643,6 +677,10 @@ export const getClipVertices = (cp1: PathList, cp2: PathList): [VertexList[], Ve
   const subjectVertices = sortIntoVertexList(cp1, intersectionVertices);
   const clipVertices = sortIntoVertexList(cp2, intersectionVertices);
 
+  DEBUG: {
+    assertVertices(subjectVertices, clipVertices);
+  }
+
   // Fix linked list
   subjectVertices.forEach(vertexList => makeLinkedList(vertexList));
   clipVertices.forEach(vertexList => makeLinkedList(vertexList));
@@ -653,13 +691,18 @@ export const getClipVertices = (cp1: PathList, cp2: PathList): [VertexList[], Ve
   );
   clipVertices.forEach((vertexList, j) => vertexList.forEach((e, i) => (e.label = `c_${j}_${i}`)));
 
-  // Remove duplicate points'
+  // Remove duplicate points
   subjectVertices.forEach(vertexList => removeDuplicatePoints(vertexList));
   clipVertices.forEach(vertexList => removeDuplicatePoints(vertexList));
+
+  DEBUG: {
+    assertVertices(subjectVertices, clipVertices);
+  }
 
   linkVertices(subjectVertices, clipVertices);
 
   DEBUG: {
+    assertVertices(subjectVertices, clipVertices);
     assertConsistency(subjectVertices, clipVertices);
   }
 
@@ -668,6 +711,7 @@ export const getClipVertices = (cp1: PathList, cp2: PathList): [VertexList[], Ve
   clipVertices.forEach(vertexList => clipSegments(vertexList));
 
   DEBUG: {
+    assertVertices(subjectVertices, clipVertices);
     assertPathSegmentsAreConnected(subjectVertices, clipVertices);
   }
 
@@ -683,9 +727,15 @@ const findValidPreviousVertex = (v: Vertex) => {
   return prev;
 };
 
-const isDegeneracy = (v: Vertex) =>
-  v.intersect &&
-  (v.alpha === 0 || v.alpha === 1 || v.neighbor!.alpha === 0 || v.neighbor!.alpha === 1);
+const isDegeneracy = (v: Vertex) => {
+  if (v.intersect && !v.neighbor) {
+    console.log(v);
+  }
+  return (
+    v.intersect &&
+    (v.alpha === 0 || v.alpha === 1 || v.neighbor!.alpha === 0 || v.neighbor!.alpha === 1)
+  );
+};
 
 // Need to find a point that is either inside or outside - as a starting point
 const findStartingPositionNotOnPath = (
