@@ -13,22 +13,49 @@ type IntersectionClassification = 'in->out' | 'out->in';
 
 type VertexType = 'vertex' | 'overlap' | 'intersection' | 'transient';
 
-export type Vertex = {
+type BaseVertex = {
   type: VertexType;
   point: Point;
   segment: PathSegment;
 
   label?: string;
+
+  intersect?: boolean;
   alpha?: number;
+  neighbor?: Vertex;
+  classification?: IntersectionClassification;
 
   prev: Vertex;
   next: Vertex;
-
-  otherOverlap?: Vertex;
-  intersect?: boolean;
-  neighbor?: Vertex;
-  classification?: IntersectionClassification;
 };
+
+type BaseIntersectionVertex = BaseVertex & {
+  alpha: number;
+  classification: IntersectionClassification;
+  neighbor: Vertex;
+  intersect: true;
+};
+
+type OverlapVertex = BaseVertex &
+  BaseIntersectionVertex & {
+    type: 'overlap';
+    otherOverlap: Vertex;
+  };
+
+type IntersectionVertex = BaseVertex &
+  BaseIntersectionVertex & {
+    type: 'intersection';
+  };
+
+type BasicVertex = BaseVertex & {
+  type: 'vertex';
+};
+
+type TransientVertex = BaseVertex & {
+  type: 'transient';
+};
+
+export type Vertex = OverlapVertex | IntersectionVertex | BasicVertex | TransientVertex;
 
 type VertexList = Vertex[];
 
@@ -48,12 +75,14 @@ export type BooleanOperation =
   | 'A divide B';
 
 const makeVertex = (v: Omit<Vertex, 'prev' | 'next'> & { prev?: Vertex; next?: Vertex }) => {
-  const ret = {
+  // @ts-ignore
+  const ret: Vertex = {
     prev: SENTINEL_VERTEX,
     next: SENTINEL_VERTEX,
     ...v
   };
   verifyVertex(ret);
+
   return ret;
 };
 
@@ -75,8 +104,8 @@ export const applyBooleanOperation = (
     classifyClipVertices(vertices, [a, b], [false, false]);
 
     const isCrossing =
-      vertices[0][0].filter(v => v.intersect).length > 0 &&
-      vertices[1][0].filter(v => v.intersect).length > 0;
+      vertices[0][0].filter(v => v.type === 'intersection' || v.type === 'overlap').length > 0 &&
+      vertices[1][0].filter(v => v.type === 'intersection' || v.type === 'overlap').length > 0;
 
     // TODO: this assumes there's only one path in each compound path
     const aContainedInB =
@@ -261,7 +290,13 @@ const linkVertices = (subjectVertices: VertexList[], clipVertices: VertexList[])
           // is the same
           // TODO: Maybe we are better off assigning each overlap an unique id
           if (subject.type === 'overlap') {
-            if (!Point.isEqual(subject.otherOverlap!.point, clip.otherOverlap!.point)) continue;
+            if (
+              !Point.isEqual(
+                subject.otherOverlap!.point,
+                (clip as OverlapVertex).otherOverlap!.point
+              )
+            )
+              continue;
           }
 
           if (Point.isEqual(subject.point, clip.point)) {
@@ -569,10 +604,10 @@ export const getClipVertices = (cp1: PathList, cp2: PathList): [VertexList[], Ve
               intersectionVertices.add(thisSegment, t2);
               intersectionVertices.add(otherSegment, o2);
 
-              t2.otherOverlap = t1;
-              t1.otherOverlap = t2;
-              o2.otherOverlap = o1;
-              o1.otherOverlap = o2;
+              (t2 as OverlapVertex).otherOverlap = t1;
+              (t1 as OverlapVertex).otherOverlap = t2;
+              (o2 as OverlapVertex).otherOverlap = o1;
+              (o1 as OverlapVertex).otherOverlap = o2;
             }
           }
         }
