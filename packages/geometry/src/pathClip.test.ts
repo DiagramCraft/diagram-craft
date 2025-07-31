@@ -272,14 +272,14 @@ describe('removeDuplicatePoints', () => {
       {
         label: 'a',
         intersect: true,
-        intersectionType: 'intersection',
+        type: 'intersection',
         alpha: 0.5,
         point: _p(10, 10)
       } as Vertex,
       {
         label: 'b',
         intersect: true,
-        intersectionType: 'overlap',
+        type: 'overlap',
         alpha: 0.5,
         point: _p(10, 10)
       } as Vertex,
