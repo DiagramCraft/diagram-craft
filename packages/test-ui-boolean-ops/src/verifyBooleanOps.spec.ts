@@ -46,6 +46,10 @@ test.describe('VectorBoolean', () => {
     await storybookScreenshotCheck(page, 'vectorboolean', 'rectangle-in-circle');
   });
 
+  test('Circle On Rectangle', async ({ page }) => {
+    await storybookScreenshotCheck(page, 'vectorboolean', 'circle-on-rectangle');
+  });
+
   test('Rect Over Rect With Hole', async ({ page }) => {
     await storybookScreenshotCheck(page, 'vectorboolean', 'rect-over-rect-with-hole');
   });

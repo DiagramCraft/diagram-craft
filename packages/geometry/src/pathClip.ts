@@ -4,7 +4,7 @@ import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { Path } from './path';
 import { Vector } from './vector';
 import { MultiMap } from '@diagram-craft/utils/multimap';
-import { mod } from '@diagram-craft/utils/math';
+import { isSame, mod } from '@diagram-craft/utils/math';
 import { PathList } from './pathList';
 import { Random } from '@diagram-craft/utils/random';
 import { range } from '@diagram-craft/utils/array';
@@ -157,8 +157,8 @@ export const applyBooleanOperation = (
     classifyClipVertices(vertices, [a, b], [false, false]);
 
     const isCrossing =
-      vertices[0][0].filter(v => isIntersection(v) || isOverlap(v)).length > 0 &&
-      vertices[1][0].filter(v => isIntersection(v) || isOverlap(v)).length > 0;
+      vertices[0][0].filter(v => (isIntersection(v) || isOverlap(v)) && v.intersect).length > 0 &&
+      vertices[1][0].filter(v => (isIntersection(v) || isOverlap(v)) && v.intersect).length > 0;
 
     // TODO: this assumes there's only one path in each compound path
     const aContainedInB =
@@ -728,12 +728,12 @@ const findValidPreviousVertex = (v: Vertex) => {
 };
 
 const isDegeneracy = (v: Vertex) => {
-  if (v.intersect && !v.neighbor) {
-    console.log(v);
-  }
   return (
     v.intersect &&
-    (v.alpha === 0 || v.alpha === 1 || v.neighbor!.alpha === 0 || v.neighbor!.alpha === 1)
+    (isSame(v.alpha!, 0) ||
+      isSame(v.alpha!, 1) ||
+      isSame(v.neighbor!.alpha!, 0) ||
+      isSame(v.neighbor!.alpha!, 1))
   );
 };
 
