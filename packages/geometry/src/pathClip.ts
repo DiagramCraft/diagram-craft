@@ -22,8 +22,6 @@ type BaseVertex = {
   label?: string;
 
   alpha?: number;
-  neighbor?: Vertex;
-  //classification?: IntersectionClassification;
 
   prev: Vertex;
   next: Vertex;
@@ -403,6 +401,7 @@ export const dumpVertexList = (
   console.log(l4.join('     '));
 };
 
+// TODO: This seems a bit complicated - can it be simplified
 const arrangeSegments = (dest: VertexList[]) => {
   const paths: PathSegment[][] = [];
 
@@ -411,11 +410,11 @@ const arrangeSegments = (dest: VertexList[]) => {
     for (let i = 0; i < contour.length - 1; i++) {
       const current = contour[i];
       const next = contour[i + 1];
-      if (current.next === next || current.next === next.neighbor) {
+      if (current.next === next || current.next === (next as IntersectionVertex).neighbor) {
         currentPath.push(current.segment);
       } else if (current.prev === next) {
         currentPath.push(next.segment.reverse());
-      } else if (current.prev === next.neighbor) {
+      } else if (isIntersection(next) && current.prev === next.neighbor) {
         currentPath.push(next.neighbor.segment.reverse());
       } else {
         VERIFY_NOT_REACHED();
@@ -465,7 +464,7 @@ const assertConsistency = (subjectVertices: VertexList[], clipVertices: VertexLi
       assert.true(current.prev.next === current);
       assert.true(current.next.prev === current);
 
-      if (current.neighbor) {
+      if (isIntersection(current)) {
         assert.true(current === current.neighbor.neighbor);
         assert.true(
           set.has(current.neighbor),
@@ -868,7 +867,7 @@ export const clipVertices = (p: [Array<VertexList>, Array<VertexList>]) => {
 
   const markAsProcessed = (current: Vertex) => {
     unprocessedIntersectingPoints = unprocessedIntersectingPoints.filter(
-      v => v !== current && v !== current.neighbor
+      v => v !== current && (!isIntersection(current) || v !== current.neighbor)
     );
   };
 
