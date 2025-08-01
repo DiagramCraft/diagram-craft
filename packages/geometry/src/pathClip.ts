@@ -7,7 +7,7 @@ import { MultiMap } from '@diagram-craft/utils/multimap';
 import { isSame, mod } from '@diagram-craft/utils/math';
 import { PathList } from './pathList';
 import { Random } from '@diagram-craft/utils/random';
-import { range } from '@diagram-craft/utils/array';
+import { range, sortBy } from '@diagram-craft/utils/array';
 import { newid } from '@diagram-craft/utils/id';
 
 interface BaseVertex {
@@ -82,7 +82,7 @@ const makeOverlapVertex = (
   >
 ) => makeVertex({ type: 'overlap', ...v }) as OverlapVertex;
 
-const clearNeighbor = (v: IntersectionVertex) => {
+const convertToSimpleVertex = (v: IntersectionVertex) => {
   if (v.neighbor) {
     const n = v.neighbor;
 
@@ -430,7 +430,7 @@ const sortIntoVertexList = (
     for (const v of candidateVertices) {
       if (toDelete.has(v)) {
         if (isIntersection(v)) {
-          clearNeighbor(v);
+          convertToSimpleVertex(v);
         }
       } else {
         vertices.push(v);
@@ -473,21 +473,13 @@ const assignLabels = (prefix: string, vertices: VertexList[]) => {
   );
 };
 
-const findValidPreviousVertex = (v: Vertex) => {
-  assert.present(v);
-  let prev = v.prev;
-  if (prev.segment.length() === 0) {
-    prev = prev.prev;
-  }
-  return prev;
-};
-
 const isDegeneracy = (v: IntersectionVertex) => {
   return (
-    isSame(v.alpha!, 0) ||
-    isSame(v.alpha!, 1) ||
-    isSame(v.neighbor!.alpha!, 0) ||
-    isSame(v.neighbor!.alpha!, 1)
+    isCrossing(v) &&
+    (isSame(v.alpha!, 0) ||
+      isSame(v.alpha!, 1) ||
+      isSame(v.neighbor!.alpha!, 0) ||
+      isSame(v.neighbor!.alpha!, 1))
   );
 };
 
@@ -509,16 +501,18 @@ const findStartingPositionNotOnPath = (
     j0++;
   }
 
-  // If none is suitable, we need to try to add a new vertex on one of the segments
+  // If there's no suitable vertex to start with, we need to try to add a new
+  // vertex on one of the existing segments
   if (!p0) {
     const random = new Random();
     for (let j = 0; j < pVertices.length; j++) {
+      // We prefer a couple of fixed offset, and then try 10 random offsets
       const offsets = [0.5, 0.25, 0.75, ...range(1, 10).map(() => random.nextRange(0, 1))];
       for (const o of offsets) {
         const current = pVertices[j];
         const p = current.segment.point(o);
         if (!path.isOn(p)) {
-          const newVertex: Vertex = makeVertex({
+          const newVertex = makeVertex({
             point: p,
             segment: new LineSegment(p, p),
             next: current.next,
@@ -585,46 +579,25 @@ export const classifyClipVertices = (
         // if Pi->intersect then
         if (isIntersection(intersection)) {
           if (isDegeneracy(intersection)) {
-            if (!intersection.neighbor) {
-              console.log(intersection);
-            }
-            const ot1 = Vector.angle(
-              Vector.from(intersection.point, findValidPreviousVertex(intersection.neighbor!).point)
-            );
+            const p = intersection.point;
 
-            const ot2 = Vector.angle(
-              Vector.from(intersection.point, intersection.neighbor!.next.point)
-            );
+            const ot1 = Vector.angle(Vector.from(p, intersection.neighbor.prev.point));
+            const ot2 = Vector.angle(Vector.from(p, intersection.neighbor.next.point));
+            const t1 = Vector.angle(Vector.from(p, intersection.prev.point));
+            const t2 = Vector.angle(Vector.from(p, intersection.next.point));
 
-            const t1 = Vector.angle(
-              Vector.from(intersection.point, findValidPreviousVertex(intersection).point)
-            );
+            const arr = sortBy(
+              [
+                { label: 'o', angle: ot1 },
+                { label: 'o', angle: ot2 },
+                { label: 't', angle: t1 },
+                { label: 't', angle: t2 }
+              ],
+              e => e.angle
+            ).map(e => e.label);
 
-            const t2 = Vector.angle(Vector.from(intersection.point, intersection.next.point));
-
-            const arr = [
-              { label: 'o', angle: ot1 },
-              { label: 'o', angle: ot2 },
-              { label: 't', angle: t1 },
-              { label: 't', angle: t2 }
-            ];
-            arr.sort((a, b) => a.angle - b.angle);
-
-            if (
-              intersection.type !== 'overlap' &&
-              (arr[0].label === arr[1].label ||
-                arr[1].label === arr[2].label ||
-                arr[2].label === arr[3].label)
-            ) {
-              // @ts-ignore
-              intersection.type = 'simple';
-              // @ts-ignore
-              intersection.intersect = false;
-              // @ts-ignore
-              intersection.neighbor!.type = 'simple';
-              // @ts-ignore
-              intersection.neighbor!.intersect = false;
-
+            if (arr[0] === arr[1] || arr[1] === arr[2] || arr[2] === arr[3]) {
+              convertToSimpleVertex(intersection);
               continue;
             }
           }
