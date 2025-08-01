@@ -86,7 +86,7 @@ const makeOverlapVertex = (
   v: Omit<OverlapVertex, 'prev' | 'next' | 'type' | 'classification' | 'neighbor'>
 ) => makeVertex({ type: 'overlap', ...v }) as OverlapVertex;
 
-const changeVertexType = (v: IntersectionVertex, type: BaseVertex['type']) => {
+const changeVertexType = (v: Vertex, type: BaseVertex['type']) => {
   interface VertexSuperSet
     extends Pick<BaseVertex, 'type'>,
       Partial<Pick<BaseIntersectionVertex, 'neighbor'>>,
@@ -104,11 +104,11 @@ const changeVertexType = (v: IntersectionVertex, type: BaseVertex['type']) => {
     if (type === 'simple') {
       vertex.type = 'simple';
       vertex.neighbor = undefined;
-      //v.alpha = undefined;
+      vertex.alpha = undefined;
 
       neighbor.type = 'simple';
       neighbor.neighbor = undefined;
-      //n.alpha = undefined;
+      neighbor.alpha = undefined;
 
       assertVertexIsCorrect(v);
       assertVertexIsCorrect(n);
@@ -319,8 +319,7 @@ export const getClipVertices = (cp1: PathList, cp2: PathList): [VertexList[], Ve
   }
 
   // Sort into the target vertex lists
-  const subjectVertices = sortIntoVertexList(cp1, intersectionVertices);
-  const clipVertices = sortIntoVertexList(cp2, intersectionVertices);
+  const [subjectVertices, clipVertices] = sortIntoVertexList([cp1, cp2], intersectionVertices);
 
   // Fix linked list
   subjectVertices.forEach(vertexList => makeLinkedList(vertexList));
@@ -400,67 +399,72 @@ const makeLinkedList = (vertices: VertexList) => {
 };
 
 const sortIntoVertexList = (
-  pathList: PathList,
-  intersectionVertices: MultiMap<PathSegment, CrossingVertex | OverlapVertex>
+  pathLists: PathList[],
+  intersectionVertices: MultiMap<PathSegment, IntersectionVertex>
 ) => {
-  const dest: VertexList[] = [];
-  for (const path of pathList.all()) {
-    // At this point, there are a number of issues to resolve. We have
-    // more vertices than needed, in particular
-    //
-    // 1. For each original vertex on a segment of the other shape, there
-    //    is one additional intersection vertices, one with alpha=0
-    //
-    // 2. For some overlap there are additional vertices at each end, can be
-    //    either regular or intersections. Also the end of the overlap has
-    //    the same segment as the beginning of the overlap
+  // At this point, there are a number of issues to resolve. We have
+  // more vertices than needed, in particular
+  //
+  // 1. For each original vertex on a segment of the other shape, there
+  //    is one additional intersection vertices, one with alpha=0
+  //
+  // 2. For some overlap there are additional vertices at each end, can be
+  //    either regular or intersections. Also the end of the overlap has
+  //    the same segment as the beginning of the overlap
 
-    const candidateVertices: VertexList = [];
+  const ret: Array<VertexList[]> = [];
 
-    for (const segment of path.segments) {
-      const intersectionsOnSegment = intersectionVertices.get(segment) ?? [];
-      intersectionsOnSegment.sort((a, b) => a.alpha! - b.alpha!);
+  console.log('------');
+  // For issue 1, we need to determine all segments that have elements with alpha=0
+  // ahead of time, as we change the vertices during execution
+  const segmentsWithZeroAlpha = new Set(
+    intersectionVertices
+      .entries()
+      .filter(([_k, v]) => v.find(v => isSame(v.alpha!, 0)) !== undefined)
+      .map(([k]) => k)
+  );
+  for (const pathList of pathLists) {
+    const dest: VertexList[] = [];
+    for (const path of pathList.all()) {
+      const candidateVertices: VertexList = [];
 
-      // Issue 1
-      // In case there's an intersection that starts at the same position, we
-      // omit the original vertex, and add the intersection instead
-      if (!intersectionsOnSegment.find(v => v.alpha === 0)) {
-        candidateVertices.push(
-          makeVertex({ type: 'simple', point: segment.start, segment: segment })
-        );
-      }
+      for (const segment of path.segments) {
+        const intersectionsOnSegment = intersectionVertices.get(segment) ?? [];
+        console.log(intersectionsOnSegment.filter(i => !isIntersection(i)));
+        intersectionsOnSegment.sort((a, b) => a.alpha! - b.alpha!);
 
-      candidateVertices.push(...intersectionsOnSegment);
-    }
-
-    // Issue 2
-    // Remove any intersections that have the same point as the overlap
-    const vertices: VertexList = [];
-    const toDelete = new Set<Vertex>();
-    for (let i = 0; i < candidateVertices.length; i++) {
-      const current = candidateVertices[i];
-      const next = candidateVertices[(i + 1) % candidateVertices.length];
-
-      if (Point.isEqual(current.point, next.point) && isOverlap(current) && !isOverlap(next)) {
-        toDelete.add(next);
-        current.segment = next.segment;
-        i++;
-      }
-    }
-
-    for (const v of candidateVertices) {
-      if (toDelete.has(v)) {
-        if (isIntersection(v)) {
-          changeVertexType(v, 'simple');
+        // Issue 1
+        // In case there's an intersection that starts at the same position, we
+        // omit the original vertex, and add the intersection instead
+        if (!segmentsWithZeroAlpha.has(segment)) {
+          candidateVertices.push(
+            makeVertex({ type: 'simple', point: segment.start, segment: segment })
+          );
         }
-      } else {
-        vertices.push(v);
-      }
-    }
-    dest.push(vertices);
-  }
 
-  return dest;
+        candidateVertices.push(...intersectionsOnSegment);
+      }
+
+      // Issue 2
+      // Remove any intersections that have the same point as the overlap
+      const toDelete = new Set<Vertex>();
+      for (let i = 0; i < candidateVertices.length; i++) {
+        const current = candidateVertices[i];
+        const next = candidateVertices[(i + 1) % candidateVertices.length];
+
+        if (Point.isEqual(current.point, next.point) && isOverlap(current) && !isOverlap(next)) {
+          toDelete.add(next);
+          current.segment = next.segment;
+          i++;
+        }
+      }
+
+      dest.push([...candidateVertices.filter(v => !toDelete.has(v))]);
+    }
+
+    ret.push(dest);
+  }
+  return ret;
 };
 
 // TODO: This seems a bit complicated - can it be simplified
