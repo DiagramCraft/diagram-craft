@@ -1,9 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { _test, applyBooleanOperation, type Vertex } from './pathClip';
+import { applyBooleanOperation } from './pathClip';
 import { PathListBuilder } from './pathListBuilder';
 import { TEST_CASES } from './pathClip.fixtures';
 import { PathList } from './pathList';
-import { _p } from './point';
 
 const makePaths = (props: {
   p1: PathListBuilder | PathList;
@@ -228,74 +227,5 @@ describe('pathClip', () => {
         'M 210,75 A 125,125,0,0,1,335,200 A 125,125,0,0,1,210,325 A 125,125,0,0,1,85,200 A 125,125,0,0,1,210,75'
       ]);
     });
-  });
-});
-
-describe('removeDuplicatePoints', () => {
-  it('should remove duplicate points', () => {
-    // Setup
-    const vertices: Vertex[] = [
-      { label: 'a', intersect: true, alpha: 0.5, point: _p(10, 10) } as Vertex,
-      { label: 'b', intersect: true, alpha: 0.5, point: _p(10, 10) } as Vertex,
-      { label: 'c', intersect: true, alpha: 0.5, point: _p(20, 20) } as Vertex
-    ];
-
-    // Act
-    _test.removeDuplicatePoints(vertices);
-
-    // Verify
-    expect(vertices).toHaveLength(2);
-    expect(vertices[0].label).toBe('a');
-    expect(vertices[1].label).toBe('c');
-  });
-
-  it('should keep intersection points', () => {
-    // Setup
-    const vertices: Vertex[] = [
-      { label: 'a', alpha: 0.5, point: _p(10, 10) } as Vertex,
-      { label: 'b', intersect: true, alpha: 0.5, point: _p(10, 10) } as Vertex,
-      { label: 'c', intersect: true, alpha: 0.5, point: _p(20, 20) } as Vertex
-    ];
-
-    // Act
-    _test.removeDuplicatePoints(vertices);
-
-    // Verify
-    expect(vertices).toHaveLength(2);
-    expect(vertices[0].label).toBe('b');
-    expect(vertices[1].label).toBe('c');
-  });
-
-  it('should keep overlap points over intersection points', () => {
-    // Setup
-    const vertices: Vertex[] = [
-      {
-        label: 'a',
-        intersect: true,
-        type: 'intersection',
-        alpha: 0.5,
-        point: _p(10, 10)
-      } as Vertex,
-      {
-        label: 'b',
-        intersect: true,
-        type: 'overlap',
-        alpha: 0.5,
-        point: _p(10, 10)
-      } as Vertex,
-      { label: 'c', intersect: true, alpha: 0.5, point: _p(20, 20) } as Vertex
-    ];
-
-    // Act
-    _test.removeDuplicatePoints(vertices);
-
-    // Verify
-    expect(vertices).toHaveLength(2);
-    expect(vertices[0].label).toBe('b');
-    expect(vertices[1].label).toBe('c');
-  });
-
-  it('test', () => {
-    //const vertices: Vertex[] =
   });
 });
