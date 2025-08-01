@@ -45,7 +45,7 @@ export class PathList {
         if (a === b) continue;
         const pa = this.paths[a];
         const pb = this.paths[b];
-        if (pa.segments.map(s => s.start).every(p => pb.isInside(p))) {
+        if (pa.segments.map(s => s.start).every(p => pb.isInside(p) || pb.isOn(p))) {
           containedWithin.add(a, b);
         }
       }

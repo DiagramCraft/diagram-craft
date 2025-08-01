@@ -1,8 +1,8 @@
 export class Random {
   #state: number;
 
-  constructor(seed: number) {
-    this.#state = seed + 0x6d2b79f5;
+  constructor(seed?: number) {
+    this.#state = (seed !== undefined ? seed : new Date().getTime()) + 0x6d2b79f5;
   }
 
   // See https://stackoverflow.com/questions/521295/seeding-the-random-number-generator-in-javascript

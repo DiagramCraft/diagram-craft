@@ -55,4 +55,12 @@ export class MultiMap<K, V> {
   has(k: K) {
     return this.get(k).length > 0;
   }
+
+  keys() {
+    return this.delegate.keys();
+  }
+
+  entries() {
+    return this.delegate.entries();
+  }
 }
