@@ -3,7 +3,9 @@ import { Box } from '@diagram-craft/geometry/box';
 import {
   applyBooleanOperation,
   classifyClipVertices,
-  getClipVertices
+  getClipVertices,
+  isCrossing,
+  isOverlap
 } from '@diagram-craft/geometry/pathClip';
 import { Point } from '@diagram-craft/geometry/point';
 import { Path } from '@diagram-craft/geometry/path';
@@ -160,7 +162,13 @@ export const BooleanTest = (props: {
                   cx={s.point.x}
                   cy={s.point.y}
                   r={2 / scale}
-                  fill={s.intersect ? (s.classification === 'in->out' ? 'green' : 'red') : 'gray'}
+                  fill={
+                    isCrossing(s) || isOverlap(s)
+                      ? s.classification === 'in->out'
+                        ? 'green'
+                        : 'red'
+                      : 'gray'
+                  }
                 />
               ))}
 
@@ -247,7 +255,13 @@ export const BooleanTest = (props: {
                   cx={s.point.x}
                   cy={s.point.y}
                   r={2 / scale}
-                  fill={s.intersect ? (s.classification === 'in->out' ? 'green' : 'red') : 'gray'}
+                  fill={
+                    isCrossing(s) || isOverlap(s)
+                      ? s.classification === 'in->out'
+                        ? 'green'
+                        : 'red'
+                      : 'gray'
+                  }
                 />
               ))}
 
