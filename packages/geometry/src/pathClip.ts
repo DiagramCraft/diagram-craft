@@ -120,6 +120,13 @@ const changeVertexType = (v: Vertex, type: BaseVertex['type']) => {
       assertVertexIsCorrect(v);
       assertVertexIsCorrect(n);
       return;
+    } else if (isDegeneracy(v) && type === 'crossing') {
+      vertex.type = 'crossing';
+      neighbor.type = 'crossing';
+
+      assertVertexIsCorrect(v);
+      assertVertexIsCorrect(n);
+      return;
     }
   }
 
@@ -265,7 +272,12 @@ export const getClipVertices = (cp1: PathList, cp2: PathList): [VertexList[], Ve
 
               makeNeighbors(t1, o1);
 
-              if (isDegeneracyLegacy(t1)) {
+              if (
+                isSame(t1.alpha!, 0) ||
+                isSame(t1.alpha!, 1) ||
+                isSame(t1.neighbor!.alpha!, 0) ||
+                isSame(t1.neighbor!.alpha!, 1)
+              ) {
                 changeVertexType(t1, 'degeneracy');
               }
 
@@ -329,7 +341,6 @@ export const getClipVertices = (cp1: PathList, cp2: PathList): [VertexList[], Ve
   assignLabels('c', clipVertices);
 
   DEBUG: {
-    assertVerticesAreCorrect(subjectVertices, clipVertices);
     assertConsistency(subjectVertices, clipVertices);
   }
 
@@ -338,11 +349,45 @@ export const getClipVertices = (cp1: PathList, cp2: PathList): [VertexList[], Ve
   clipVertices.forEach(vertexList => clipSegments(vertexList));
 
   DEBUG: {
-    assertVerticesAreCorrect(subjectVertices, clipVertices);
+    assertPathSegmentsAreConnected(subjectVertices, clipVertices);
+  }
+
+  // Clip segments
+  subjectVertices.forEach(vertexList => classifyDegeneracies(vertexList));
+  clipVertices.forEach(vertexList => classifyDegeneracies(vertexList));
+
+  DEBUG: {
     assertPathSegmentsAreConnected(subjectVertices, clipVertices);
   }
 
   return [subjectVertices, clipVertices];
+};
+
+const classifyDegeneracies = (vertexList: VertexList) => {
+  for (const vertex of vertexList.filter(isDegeneracy)) {
+    const p = vertex.point;
+
+    const ot1 = Vector.angle(Vector.from(p, vertex.neighbor.prev.point));
+    const ot2 = Vector.angle(Vector.from(p, vertex.neighbor.next.point));
+    const t1 = Vector.angle(Vector.from(p, vertex.prev.point));
+    const t2 = Vector.angle(Vector.from(p, vertex.next.point));
+
+    const arr = sortBy(
+      [
+        { label: 'o', angle: ot1 },
+        { label: 'o', angle: ot2 },
+        { label: 't', angle: t1 },
+        { label: 't', angle: t2 }
+      ],
+      e => e.angle
+    ).map(e => e.label);
+
+    if (arr[0] === arr[1] || arr[1] === arr[2] || arr[2] === arr[3]) {
+      changeVertexType(vertex, 'simple');
+    } else {
+      changeVertexType(vertex, 'crossing');
+    }
+  }
 };
 
 const clipSegments = (vertices: VertexList) => {
@@ -414,7 +459,6 @@ const sortIntoVertexList = (
 
   const ret: Array<VertexList[]> = [];
 
-  console.log('------');
   // For issue 1, we need to determine all segments that have elements with alpha=0
   // ahead of time, as we change the vertices during execution
   const segmentsWithZeroAlpha = new Set(
@@ -430,7 +474,6 @@ const sortIntoVertexList = (
 
       for (const segment of path.segments) {
         const intersectionsOnSegment = intersectionVertices.get(segment) ?? [];
-        console.log(intersectionsOnSegment.filter(i => !isIntersection(i)));
         intersectionsOnSegment.sort((a, b) => a.alpha! - b.alpha!);
 
         // Issue 1
@@ -495,16 +538,6 @@ const arrangeSegments = (dest: VertexList[]) => {
 const assignLabels = (prefix: string, vertices: VertexList[]) => {
   vertices.forEach((vertexList, j) =>
     vertexList.forEach((e, i) => (e.label = `${prefix}_${j}_${i}`))
-  );
-};
-
-const isDegeneracyLegacy = (v: IntersectionVertex) => {
-  return (
-    (isCrossing(v) || isDegeneracy(v)) &&
-    (isSame(v.alpha!, 0) ||
-      isSame(v.alpha!, 1) ||
-      isSame(v.neighbor!.alpha!, 0) ||
-      isSame(v.neighbor!.alpha!, 1))
   );
 };
 
@@ -603,30 +636,6 @@ export const classifyClipVertices = (
 
         // if Pi->intersect then
         if (isIntersection(intersection)) {
-          if (isDegeneracy(intersection)) {
-            const p = intersection.point;
-
-            const ot1 = Vector.angle(Vector.from(p, intersection.neighbor.prev.point));
-            const ot2 = Vector.angle(Vector.from(p, intersection.neighbor.next.point));
-            const t1 = Vector.angle(Vector.from(p, intersection.prev.point));
-            const t2 = Vector.angle(Vector.from(p, intersection.next.point));
-
-            const arr = sortBy(
-              [
-                { label: 'o', angle: ot1 },
-                { label: 'o', angle: ot2 },
-                { label: 't', angle: t1 },
-                { label: 't', angle: t2 }
-              ],
-              e => e.angle
-            ).map(e => e.label);
-
-            if (arr[0] === arr[1] || arr[1] === arr[2] || arr[2] === arr[3]) {
-              changeVertexType(intersection, 'simple');
-              continue;
-            }
-          }
-
           crossings.push(intersection.point);
 
           // Pi->entry_exit = status
@@ -768,6 +777,8 @@ const assertVerticesAreCorrect = (subjectVertices: VertexList[], clipVertices: V
 };
 
 const assertConsistency = (subjectVertices: VertexList[], clipVertices: VertexList[]) => {
+  assertVerticesAreCorrect(subjectVertices, clipVertices);
+
   // 1. Assert that each vertex only exists once
 
   const subjectVerticesSet = new Set<Vertex>();
@@ -829,6 +840,8 @@ const assertPathSegmentsAreConnected = (
   subjectVertices: VertexList[],
   clipVertices: VertexList[]
 ) => {
+  assertVerticesAreCorrect(subjectVertices, clipVertices);
+
   for (const vertexList of subjectVertices) {
     for (let i = 0; i < vertexList.length; i++) {
       const current = vertexList[i];
