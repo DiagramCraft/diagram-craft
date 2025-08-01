@@ -1,6 +1,6 @@
 import { Point } from './point';
 import { LineSegment, PathSegment } from './pathSegment';
-import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+import { assert, NOT_IMPLEMENTED_YET, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { Path } from './path';
 import { Vector } from './vector';
 import { MultiMap } from '@diagram-craft/utils/multimap';
@@ -11,7 +11,7 @@ import { range, sortBy } from '@diagram-craft/utils/array';
 import { newid } from '@diagram-craft/utils/id';
 
 interface BaseVertex {
-  type: 'simple' | 'overlap' | 'crossing' | 'transient';
+  type: 'simple' | 'overlap' | 'crossing' | 'transient' | 'degeneracy';
   point: Point;
   segment: PathSegment;
   label?: string;
@@ -36,6 +36,11 @@ interface CrossingVertex extends BaseIntersectionVertex {
   neighbor: CrossingVertex;
 }
 
+interface DegeneracyVertex extends BaseIntersectionVertex {
+  type: 'degeneracy';
+  neighbor: DegeneracyVertex;
+}
+
 interface SimpleVertex extends BaseVertex {
   type: 'simple';
 }
@@ -44,13 +49,15 @@ interface TransientVertex extends BaseVertex {
   type: 'transient';
 }
 
-export type IntersectionVertex = OverlapVertex | CrossingVertex;
-export type Vertex = IntersectionVertex | SimpleVertex | TransientVertex;
+type IntersectionVertex = OverlapVertex | CrossingVertex | DegeneracyVertex;
+type Vertex = IntersectionVertex | SimpleVertex | TransientVertex;
 
-export const isOverlap = (v: Vertex): v is OverlapVertex => v.type === 'overlap';
-export const isCrossing = (v: Vertex): v is CrossingVertex => v.type === 'crossing';
-export const isIntersection = (v: Vertex): v is IntersectionVertex => isOverlap(v) || isCrossing(v);
-export function assertIntersection(v: Vertex): asserts v is IntersectionVertex {
+const isDegeneracy = (v: Vertex): v is DegeneracyVertex => v.type === 'degeneracy';
+const isOverlap = (v: Vertex): v is OverlapVertex => v.type === 'overlap';
+const isCrossing = (v: Vertex): v is CrossingVertex => v.type === 'crossing';
+export const isIntersection = (v: Vertex): v is IntersectionVertex =>
+  isOverlap(v) || isCrossing(v) || isDegeneracy(v);
+function assertIntersection(v: Vertex): asserts v is IntersectionVertex {
   assert.true(isIntersection(v));
 }
 
@@ -64,7 +71,7 @@ export type BooleanOperation =
   | 'A xor B'
   | 'A divide B';
 
-const makeVertex = (v: Omit<Vertex, 'prev' | 'next'> & { prev?: Vertex; next?: Vertex }) => {
+const makeVertex = (v: Omit<Vertex, 'prev' | 'next'> & Partial<Pick<Vertex, 'prev' | 'next'>>) => {
   // @ts-ignore
   const ret: Vertex = { ...v };
   assertVertexIsCorrect(ret, true);
@@ -72,41 +79,51 @@ const makeVertex = (v: Omit<Vertex, 'prev' | 'next'> & { prev?: Vertex; next?: V
 };
 
 const makeCrossingVertex = (
-  v: Omit<CrossingVertex, 'prev' | 'next' | 'type' | 'classification' | 'neighbor' | 'intersect'>
+  v: Omit<CrossingVertex, 'prev' | 'next' | 'type' | 'classification' | 'neighbor'>
 ) => makeVertex({ type: 'crossing', ...v }) as CrossingVertex;
 
 const makeOverlapVertex = (
-  v: Omit<
-    OverlapVertex,
-    'prev' | 'next' | 'type' | 'classification' | 'neighbor' | 'otherOverlap' | 'intersect'
-  >
+  v: Omit<OverlapVertex, 'prev' | 'next' | 'type' | 'classification' | 'neighbor'>
 ) => makeVertex({ type: 'overlap', ...v }) as OverlapVertex;
 
-const convertToSimpleVertex = (v: IntersectionVertex) => {
-  if (v.neighbor) {
+const changeVertexType = (v: IntersectionVertex, type: BaseVertex['type']) => {
+  interface VertexSuperSet
+    extends Pick<BaseVertex, 'type'>,
+      Partial<Pick<BaseIntersectionVertex, 'neighbor'>>,
+      Partial<Omit<CrossingVertex, 'type' | 'neighbor'>>,
+      Partial<Omit<OverlapVertex, 'type' | 'neighbor'>>,
+      Partial<Omit<DegeneracyVertex, 'type' | 'neighbor'>>,
+      Partial<Omit<TransientVertex, 'type'>>,
+      Partial<Omit<SimpleVertex, 'type'>> {}
+
+  const vertex = v as VertexSuperSet;
+  if (isIntersection(v)) {
     const n = v.neighbor;
+    const neighbor = v.neighbor as VertexSuperSet;
 
-    // @ts-ignore
-    v.type = 'simple';
-    // @ts-ignore
-    v.intersect = false;
-    // @ts-ignore
-    v.neighbor = undefined;
-    // @ts-ignore
-    //v.alpha = undefined;
+    if (type === 'simple') {
+      vertex.type = 'simple';
+      vertex.neighbor = undefined;
+      //v.alpha = undefined;
 
-    // @ts-ignore
-    n.type = 'simple';
-    // @ts-ignore
-    n.intersect = false;
-    // @ts-ignore
-    n.neighbor = undefined;
-    // @ts-ignore
-    //n.alpha = undefined;
+      neighbor.type = 'simple';
+      neighbor.neighbor = undefined;
+      //n.alpha = undefined;
 
-    assertVertexIsCorrect(v);
-    assertVertexIsCorrect(n);
+      assertVertexIsCorrect(v);
+      assertVertexIsCorrect(n);
+      return;
+    } else if (isCrossing(v) && type === 'degeneracy') {
+      vertex.type = 'degeneracy';
+      neighbor.type = 'degeneracy';
+
+      assertVertexIsCorrect(v);
+      assertVertexIsCorrect(n);
+      return;
+    }
   }
+
+  NOT_IMPLEMENTED_YET();
 };
 
 const makeNeighbors = (v: IntersectionVertex, neighbor: IntersectionVertex) => {
@@ -247,6 +264,10 @@ export const getClipVertices = (cp1: PathList, cp2: PathList): [VertexList[], Ve
               });
 
               makeNeighbors(t1, o1);
+
+              if (isDegeneracyLegacy(t1)) {
+                changeVertexType(t1, 'degeneracy');
+              }
 
               intersectionVertices.add(thisSegment, t1);
               intersectionVertices.add(otherSegment, o1);
@@ -430,7 +451,7 @@ const sortIntoVertexList = (
     for (const v of candidateVertices) {
       if (toDelete.has(v)) {
         if (isIntersection(v)) {
-          convertToSimpleVertex(v);
+          changeVertexType(v, 'simple');
         }
       } else {
         vertices.push(v);
@@ -473,9 +494,9 @@ const assignLabels = (prefix: string, vertices: VertexList[]) => {
   );
 };
 
-const isDegeneracy = (v: IntersectionVertex) => {
+const isDegeneracyLegacy = (v: IntersectionVertex) => {
   return (
-    isCrossing(v) &&
+    (isCrossing(v) || isDegeneracy(v)) &&
     (isSame(v.alpha!, 0) ||
       isSame(v.alpha!, 1) ||
       isSame(v.neighbor!.alpha!, 0) ||
@@ -597,7 +618,7 @@ export const classifyClipVertices = (
             ).map(e => e.label);
 
             if (arr[0] === arr[1] || arr[1] === arr[2] || arr[2] === arr[3]) {
-              convertToSimpleVertex(intersection);
+              changeVertexType(intersection, 'simple');
               continue;
             }
           }

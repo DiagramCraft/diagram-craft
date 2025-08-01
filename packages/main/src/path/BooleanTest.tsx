@@ -4,8 +4,7 @@ import {
   applyBooleanOperation,
   classifyClipVertices,
   getClipVertices,
-  isCrossing,
-  isOverlap
+  isIntersection
 } from '@diagram-craft/geometry/pathClip';
 import { Point } from '@diagram-craft/geometry/point';
 import { Path } from '@diagram-craft/geometry/path';
@@ -163,11 +162,7 @@ export const BooleanTest = (props: {
                   cy={s.point.y}
                   r={2 / scale}
                   fill={
-                    isCrossing(s) || isOverlap(s)
-                      ? s.classification === 'in->out'
-                        ? 'green'
-                        : 'red'
-                      : 'gray'
+                    isIntersection(s) ? (s.classification === 'in->out' ? 'green' : 'red') : 'gray'
                   }
                 />
               ))}
@@ -256,11 +251,7 @@ export const BooleanTest = (props: {
                   cy={s.point.y}
                   r={2 / scale}
                   fill={
-                    isCrossing(s) || isOverlap(s)
-                      ? s.classification === 'in->out'
-                        ? 'green'
-                        : 'red'
-                      : 'gray'
+                    isIntersection(s) ? (s.classification === 'in->out' ? 'green' : 'red') : 'gray'
                   }
                 />
               ))}
