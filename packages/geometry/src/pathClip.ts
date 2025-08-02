@@ -261,7 +261,6 @@ export const getClipVertices = (cp1: PathList, cp2: PathList): [VertexList[], Ve
               // In case we have an intersection at alpha=1, it means that the next line
               // will also have an intersection at alpha=0 - to not keep duplicates,
               // we only keep the ones for alpha=0
-              // TODO: Can we do this in the sort step instead?
               if (isSame(ta1, 1) || isSame(oa1, 1)) continue;
 
               const t1 = makeCrossingVertex({
@@ -451,19 +450,11 @@ const makeLinkedList = (vertices: VertexList) => {
 };
 
 const sortIntoVertexList = (
-  pathLists: PathList[],
+  pathLists: [PathList, PathList],
   intersectionVertices: MultiMap<PathSegment, IntersectionVertex>
-) => {
-  const deletedVertics = new Set<Vertex>();
+): [VertexList[], VertexList[]] => {
+  let result: Array<VertexList[]> = [];
 
-  const ret: Array<VertexList[]> = [];
-
-  const segmentsWithZeroAlpha = new Set(
-    intersectionVertices
-      .entries()
-      .filter(([_k, v]) => v.find(v => isSame(v.alpha!, 0)) !== undefined)
-      .map(([k]) => k)
-  );
   // First, sort all vertices into one set of vertices,
   // both simple and intersection vertices
   for (const pathList of pathLists) {
@@ -474,134 +465,103 @@ const sortIntoVertexList = (
       for (const segment of path.segments) {
         const intersections = intersectionVertices.get(segment) ?? [];
         intersections.sort((a, b) => a.alpha! - b.alpha!);
-        if (!segmentsWithZeroAlpha.has(segment)) {
-          vertices.push(makeVertex({ type: 'simple', point: segment.start, segment: segment }));
-        }
+        vertices.push(makeVertex({ type: 'simple', point: segment.start, segment: segment }));
         vertices.push(...intersections);
       }
 
       pathListVertices.push(vertices);
     }
 
-    ret.push(pathListVertices);
+    result.push(pathListVertices);
   }
 
   // Secondly, we process all vertices to check for redundant vertices
-  for (const pathListVertices of ret) {
-    for (const vertices of pathListVertices) {
-      for (let i = 0; i < vertices.length; i++) {
-        const first = vertices[i];
-        const second = vertices[(i + 1) % vertices.length];
+  // We iterate over the pairs of vertices until no more vertices have been deleted
+  const deleted = new Set<Vertex>();
+  do {
+    deleted.clear();
 
-        if (!Point.isEqual(first.point, second.point)) continue;
+    for (const pathListVertices of result) {
+      for (const vertices of pathListVertices) {
+        for (let i = 0; i < vertices.length; i++) {
+          const first = vertices[i];
+          const second = vertices[(i + 1) % vertices.length];
 
-        const typeSpec = `${first.type}-${second.type}`;
-        switch (typeSpec) {
-          case 'overlap-simple':
-          case 'overlap-crossing':
-          case 'overlap-degeneracy':
-            deletedVertics.add(second);
-            first.segment = second.segment;
-            i++;
-            break;
+          if (!Point.isEqual(first.point, second.point)) continue;
 
-          case 'overlap-overlap':
-            first.segment = new LineSegment(first.point, first.point);
-            break;
+          const typeSpec = `${first.type}-${second.type}`;
+          switch (typeSpec) {
+            case 'overlap-simple':
+            case 'overlap-crossing':
+            case 'overlap-degeneracy':
+              deleted.add(second);
 
-          case 'crossing-degeneracy':
-          case 'crossing-simple':
-            deletedVertics.add(second);
-            i++;
-            break;
+              // This means we are at the end of an overlap - we want to keep the overlap node,
+              // but make sure it's segment is correct - so we copy from the following node and
+              // delete it
+              first.segment = second.segment;
+              i++;
+              break;
 
-          case 'simple-overlap':
-          case 'simple-crossing':
-          case 'simple-degeneracy':
-            deletedVertics.add(first);
-            break;
+            case 'overlap-overlap':
+              // Note: this is a special case in which we keep both the end of the first overlap
+              // as well as the beginning of the next - and keep a zero length segment
+              // in between. If not, we will not have four (two per shape) for each overlap - and
+              // the polygon-walk algorithm will fail
+              first.segment = new LineSegment(first.point, first.point);
+              break;
 
-          default:
-            console.log(typeSpec);
-            VERIFY_NOT_REACHED();
+            case 'crossing-degeneracy':
+            case 'crossing-simple':
+              deleted.add(second);
+              i++;
+              break;
+
+            case 'crossing-overlap':
+              deleted.add(first);
+              break;
+
+            case 'degeneracy-simple':
+            case 'degeneracy-overlap':
+            case 'degeneracy-degeneracy': {
+              if (isSame((first as DegeneracyVertex).alpha, 1)) {
+                deleted.add(second);
+                i++;
+              } else {
+                deleted.add(first);
+              }
+              break;
+            }
+
+            case 'simple-overlap':
+            case 'simple-crossing':
+            case 'simple-degeneracy':
+              deleted.add(first);
+              break;
+
+            default:
+              VERIFY_NOT_REACHED(`Invalid type spec: ${typeSpec}`);
+          }
         }
       }
     }
+
+    // Finally remove all deleted vertices
+    result = result.map(pathListVertices => {
+      return pathListVertices.map(vertices =>
+        vertices.filter(v => {
+          return !deleted.has(v) && !(isIntersection(v) && deleted.has(v.neighbor!));
+        })
+      );
+    });
+  } while (deleted.size > 0);
+
+  function assertTwoElements<T>(arg: T[]): asserts arg is [T, T] {
+    assert.true(arg.length === 2, 'Expected two elements');
   }
 
-  // Finally remove all deleted vertices
-  const r = ret.map(pathListVertices => {
-    return pathListVertices.map(vertices =>
-      vertices.filter(v => {
-        return !deletedVertics.has(v) && !(isIntersection(v) && deletedVertics.has(v.neighbor!));
-      })
-    );
-  });
-  /*
-
-  // At this point, there are a number of issues to resolve. We have
-  // more vertices than needed, in particular
-  //
-  // 1. For each original vertex on a segment of the other shape, there
-  //    is one additional intersection vertices, one with alpha=0
-  //
-  // 2. For some overlap there are additional vertices at each end, can be
-  //    either regular or intersections. Also the end of the overlap has
-  //    the same segment as the beginning of the overlap
-
-  const ret: Array<VertexList[]> = [];
-
-  // For issue 1, we need to determine all segments that have elements with alpha=0
-  // ahead of time, as we change the vertices during execution
-  const segmentsWithZeroAlpha = new Set(
-    intersectionVertices
-      .entries()
-      .filter(([_k, v]) => v.find(v => isSame(v.alpha!, 0)) !== undefined)
-      .map(([k]) => k)
-  );
-  for (const pathList of pathLists) {
-    const dest: VertexList[] = [];
-    for (const path of pathList.all()) {
-      const candidateVertices: VertexList = [];
-
-      for (const segment of path.segments) {
-        const intersectionsOnSegment = intersectionVertices.get(segment) ?? [];
-        intersectionsOnSegment.sort((a, b) => a.alpha! - b.alpha!);
-
-        // Issue 1
-        // In case there's an intersection that starts at the same position, we
-        // omit the original vertex, and add the intersection instead
-        if (!segmentsWithZeroAlpha.has(segment)) {
-          candidateVertices.push(
-            makeVertex({ type: 'simple', point: segment.start, segment: segment })
-          );
-        }
-
-        candidateVertices.push(...intersectionsOnSegment);
-      }
-
-      // Issue 2
-      // Remove any intersections that have the same point as the overlap
-      const toDelete = new Set<Vertex>();
-      for (let i = 0; i < candidateVertices.length; i++) {
-        const current = candidateVertices[i];
-        const next = candidateVertices[(i + 1) % candidateVertices.length];
-
-        if (Point.isEqual(current.point, next.point) && isOverlap(current) && !isOverlap(next)) {
-          toDelete.add(next);
-          current.segment = next.segment;
-          i++;
-        }
-      }
-
-      dest.push([...candidateVertices.filter(v => !toDelete.has(v))]);
-    }
-
-    ret.push(dest);
-  }
-
-  const r = ret;
-*/
+  const r = result;
+  assertTwoElements(r);
   return r;
 };
 
