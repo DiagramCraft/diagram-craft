@@ -513,6 +513,8 @@ const classifyDegeneracies = (vertexList: VertexList) => {
       e => e.angle
     ).map(e => e.label);
 
+    // Check if any two consecutive angles belong to the same polygon (either 'o' or 't')
+    // This indicates a simple intersection rather than a crossing
     if (arr[0] === arr[1] || arr[1] === arr[2] || arr[2] === arr[3]) {
       changeVertexType(vertex, 'simple');
     } else {
@@ -534,7 +536,7 @@ const splitSegments = (vertices: VertexList) => {
 
       DEBUG: {
         if (clips.length > 0) {
-          assert.true(clips[clips.length - 1].alpha < c.alpha!, 'Alpha must be in ascending order');
+          assert.true(clips[clips.length - 1].alpha < c.alpha, 'Alpha must be in ascending order');
         }
       }
       clips.push(c);
@@ -542,7 +544,7 @@ const splitSegments = (vertices: VertexList) => {
 
     if (clips.length === 0) continue;
 
-    i += clips.length;
+    i += clips.length - 1;
     clips.reverse();
 
     let remaining = current.segment;
@@ -556,6 +558,8 @@ const splitSegments = (vertices: VertexList) => {
         remaining = c.segment;
         c.segment = new LineSegment(c.point, c.point);
       } else {
+        // TODO: Not sure this logic is correct in all situations
+        //       We should add tests
         const [a, b] = remaining.split(c.alpha / r);
         r = c.alpha;
         remaining = a;
@@ -582,7 +586,7 @@ const sortIntoVertexList = (
       const vertices: VertexList = [];
       for (const segment of path.segments) {
         const intersections = intersectionVertices.get(segment) ?? [];
-        intersections.sort((a, b) => a.alpha! - b.alpha!);
+        intersections.sort((a, b) => a.alpha - b.alpha);
         vertices.push(makeVertex({ type: 'simple', point: segment.start, segment: segment }));
         vertices.push(...intersections);
       }
@@ -765,15 +769,6 @@ const findStartingPositionNotOnPath = (
   return [p0, j0];
 };
 
-const assertVerticesAreCorrect = (
-  subjectVertices: VertexList[],
-  clipVertices: VertexList[],
-  state: VertexState = 'post-clip'
-) => {
-  subjectVertices.forEach(vertexList => vertexList.forEach(v => assertVertexIsCorrect(v, state)));
-  clipVertices.forEach(vertexList => vertexList.forEach(v => assertVertexIsCorrect(v, state)));
-};
-
 /* UTILITY FUNCTIONS ********************************************************************** */
 
 function assertTwoElements<T>(arg: T[]): asserts arg is [T, T] {
@@ -861,6 +856,15 @@ const makeNeighbors = (v: IntersectionVertex, neighbor: IntersectionVertex) => {
 const epsilon = (scale: number) => Math.max(0.1, scale * 0.01);
 
 /* INVARIANTS AND ASSERTIONS ************************************************************** */
+
+const assertVerticesAreCorrect = (
+  subjectVertices: VertexList[],
+  clipVertices: VertexList[],
+  state: VertexState = 'post-clip'
+) => {
+  subjectVertices.forEach(vertexList => vertexList.forEach(v => assertVertexIsCorrect(v, state)));
+  clipVertices.forEach(vertexList => vertexList.forEach(v => assertVertexIsCorrect(v, state)));
+};
 
 const assertConsistency = (subjectVertices: VertexList[], clipVertices: VertexList[]) => {
   // 1. Assert that each vertex only exists once
