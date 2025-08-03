@@ -89,78 +89,79 @@ export const applyBooleanOperation = (
   clip: PathList,
   operation: BooleanOperation
 ): Array<PathList> => {
-  const doApplyOperation = (operation: BooleanOperation, a: PathList, b: PathList) => {
-    const vertices = getClipVertices(a, b);
+  const doApplyOperation = (operation: BooleanOperation) => {
+    const vertices = getClipVertices(subject, clip);
 
     // We need to classify vertices to determine if each intersection is also a crossing
-    classifyClipVertices(vertices, [a, b], [false, false]);
+    classifyClipVertices(vertices, [subject, clip], [false, false]);
 
     const hasCrossings =
       vertices[0].flat().filter(v => isIntersection(v)).length > 0 &&
       vertices[1].flat().filter(v => isIntersection(v)).length > 0;
 
     const aContainedInB =
-      !hasCrossings && vertices[0].flat().every(v => b.isInside(v.point) || b.isOn(v.point));
+      !hasCrossings && vertices[0].flat().every(v => clip.isInside(v.point) || clip.isOn(v.point));
     const bContainedInA =
-      !hasCrossings && vertices[1].flat().every(v => a.isInside(v.point) || a.isOn(v.point));
+      !hasCrossings &&
+      vertices[1].flat().every(v => subject.isInside(v.point) || subject.isOn(v.point));
 
     switch (operation) {
       case 'A union B':
         if (!hasCrossings) {
-          if (aContainedInB) return [b];
-          else if (bContainedInA) return [a];
-          else return [a, b];
+          if (aContainedInB) return [clip];
+          else if (bContainedInA) return [subject];
+          else return [subject, clip];
         }
 
-        classifyClipVertices(vertices, [a, b], [false, false]);
+        classifyClipVertices(vertices, [subject, clip], [false, false]);
         return [clipVertices(vertices)];
       case 'A not B':
         if (!hasCrossings) {
           if (aContainedInB) return [];
           else if (bContainedInA) {
-            return [new PathList([...a.all(), ...b.all()])];
-          } else return [a];
+            return [new PathList([...subject.all(), ...clip.all()])];
+          } else return [subject];
         }
 
-        classifyClipVertices(vertices, [a, b], [false, true]);
+        classifyClipVertices(vertices, [subject, clip], [false, true]);
         return [clipVertices(vertices)];
       case 'B not A':
         if (!hasCrossings) {
           if (bContainedInA) return [];
           else if (aContainedInB) {
-            return [new PathList([...b.all(), ...a.all()])];
-          } else return [b];
+            return [new PathList([...clip.all(), ...subject.all()])];
+          } else return [clip];
         }
 
-        classifyClipVertices(vertices, [a, b], [true, false]);
+        classifyClipVertices(vertices, [subject, clip], [true, false]);
         return [clipVertices(vertices)];
       case 'A intersection B': {
         if (!hasCrossings) {
-          if (aContainedInB) return [a];
-          else if (bContainedInA) return [b];
+          if (aContainedInB) return [subject];
+          else if (bContainedInA) return [clip];
           else return [];
         }
 
-        classifyClipVertices(vertices, [a, b], [true, true]);
+        classifyClipVertices(vertices, [subject, clip], [true, true]);
 
         const intersection = clipVertices(vertices);
         return intersection.segments().length > 0 ? [intersection] : [];
       }
       case 'A xor B': {
-        const cp1 = applyBooleanOperation(a, b, 'A not B');
-        const cp2 = applyBooleanOperation(a, b, 'B not A');
+        const cp1 = applyBooleanOperation(subject, clip, 'A not B');
+        const cp2 = applyBooleanOperation(subject, clip, 'B not A');
         return [...cp1, ...cp2];
       }
       case 'A divide B': {
         return [
-          ...applyBooleanOperation(a, b, 'A xor B'),
-          ...applyBooleanOperation(a, b, 'A intersection B')
+          ...applyBooleanOperation(subject, clip, 'A xor B'),
+          ...applyBooleanOperation(subject, clip, 'A intersection B')
         ];
       }
     }
   };
 
-  return doApplyOperation(operation, subject, clip)
+  return doApplyOperation(operation)
     .map(a => a.normalize())
     .map(a => a.clone());
 };
