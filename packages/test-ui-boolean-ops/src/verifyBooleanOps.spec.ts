@@ -66,7 +66,19 @@ test.describe('VectorBoolean', () => {
     await storybookScreenshotCheck(page, 'vectorboolean', 'complex-shapes');
   });
 
+  test('Complex Shapes 2', async ({ page }) => {
+    await storybookScreenshotCheck(page, 'vectorboolean', 'complex-shapes-2');
+  });
+
   test('Triangle Inside Rectangle', async ({ page }) => {
     await storybookScreenshotCheck(page, 'vectorboolean', 'triangle-inside-rectangle');
+  });
+
+  test('Diamond Overlapping Rectangle', async ({ page }) => {
+    await storybookScreenshotCheck(page, 'vectorboolean', 'diamond-overlapping-rectangle');
+  });
+
+  test('Diamond Inside Rectangle', async ({ page }) => {
+    await storybookScreenshotCheck(page, 'vectorboolean', 'diamond-inside-rectangle');
   });
 });

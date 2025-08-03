@@ -134,5 +134,31 @@ export const TEST_CASES = {
       p1: b,
       p2: makeRect(100, 100, 300, 300)
     };
+  },
+  DiamondOverlappingRectangle: () => {
+    const b = makeRect(50, 50, 200, 200);
+    const a = new PathListBuilder();
+    a.moveTo(_p(50, 250));
+    a.lineTo(_p(150, 400));
+    a.lineTo(_p(250, 250));
+    a.lineTo(_p(150, 100));
+    a.lineTo(_p(50, 250));
+    return {
+      p1: b,
+      p2: a
+    };
+  },
+  DiamondInsideRectangle: () => {
+    const b = makeRect(100, 100, 300, 300);
+    const a = new PathListBuilder();
+    a.moveTo(_p(100, 250));
+    a.lineTo(_p(250, 400));
+    a.lineTo(_p(400, 250));
+    a.lineTo(_p(250, 100));
+    a.lineTo(_p(100, 250));
+    return {
+      p1: a,
+      p2: b
+    };
   }
 };

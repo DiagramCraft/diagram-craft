@@ -99,11 +99,10 @@ export const applyBooleanOperation = (
       vertices[0].flat().filter(v => isIntersection(v)).length > 0 &&
       vertices[1].flat().filter(v => isIntersection(v)).length > 0;
 
-    // TODO: this assumes there's only one path in each compound path
     const aContainedInB =
-      !hasCrossings && vertices[0][0].every(v => b.isInside(v.point) || b.isOn(v.point));
+      !hasCrossings && vertices[0].flat().every(v => b.isInside(v.point) || b.isOn(v.point));
     const bContainedInA =
-      !hasCrossings && vertices[1][0].every(v => a.isInside(v.point) || a.isOn(v.point));
+      !hasCrossings && vertices[1].flat().every(v => a.isInside(v.point) || a.isOn(v.point));
 
     switch (operation) {
       case 'A union B':
@@ -228,6 +227,14 @@ export const getClipVertices = (
               intersectionVertices.add(thisSegment, t1);
               intersectionVertices.add(otherSegment, o1);
             } else if (intersection.type === 'overlap') {
+              // TODO: Perhaps move this into Path.overlap
+              if (
+                Point.distance(intersection.start!, intersection.end!) <
+                epsilon(thisSegment.length())
+              ) {
+                continue;
+              }
+
               const overlapId = newid();
 
               const t1 = makeOverlapVertex({
