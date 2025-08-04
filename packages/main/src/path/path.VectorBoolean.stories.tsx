@@ -65,3 +65,7 @@ export const DiamondInsideRectangle: Story = {
 export const NonOverlappingContours: Story = {
   args: TEST_CASES.NonOverlappingContours()
 };
+
+export const MoreNonOverlappingContours: Story = {
+  args: TEST_CASES.MoreNonOverlappingContours()
+};

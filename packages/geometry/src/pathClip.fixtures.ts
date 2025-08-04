@@ -165,5 +165,14 @@ export const TEST_CASES = {
       p1: a,
       p2: b
     };
+  },
+  MoreNonOverlappingContours: () => {
+    const a = makeRect(100, 200, 200, 200).append(makeRect(175, 70, 50, 50));
+
+    const b = makeCircle(200, 300, 85).append(makeCircle(200, 95, 85));
+    return {
+      p1: a,
+      p2: b
+    };
   }
 };

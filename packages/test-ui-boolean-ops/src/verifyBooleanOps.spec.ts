@@ -85,4 +85,8 @@ test.describe('VectorBoolean', () => {
   test('Non Overlapping Contours', async ({ page }) => {
     await storybookScreenshotCheck(page, 'vectorboolean', 'non-overlapping-contours');
   });
+
+  test('More Non Overlapping Contours', async ({ page }) => {
+    await storybookScreenshotCheck(page, 'vectorboolean', 'more-non-overlapping-contours');
+  });
 });
