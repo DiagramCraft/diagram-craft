@@ -7,7 +7,7 @@ import { MultiMap } from '@diagram-craft/utils/multimap';
 import { isSame, mod } from '@diagram-craft/utils/math';
 import { PathList } from './pathList';
 import { Random } from '@diagram-craft/utils/random';
-import { range, sortBy } from '@diagram-craft/utils/array';
+import { range, sortBy, unique } from '@diagram-craft/utils/array';
 import { newid } from '@diagram-craft/utils/id';
 
 /* CORE TYPES ***************************************************************************** */
@@ -95,63 +95,83 @@ export const applyBooleanOperation = (
   const doApplyOperation = (operation: BooleanOperation) => {
     const vertices = getClipVertices(subject, clip);
 
-    // We need to classify vertices to determine if each intersection is also a crossing
-    classifyClipVertices(vertices, [false, false]);
-
-    const hasCrossings =
-      vertices[0].flatMap(e => e.vertices).filter(v => isIntersection(v)).length > 0 &&
-      vertices[1].flatMap(e => e.vertices).filter(v => isIntersection(v)).length > 0;
-
-    const aContainedInB =
-      !hasCrossings &&
-      vertices[0].flatMap(e => e.vertices).every(v => clip.isInside(v.point) || clip.isOn(v.point));
-    const bContainedInA =
-      !hasCrossings &&
-      vertices[1]
-        .flatMap(e => e.vertices)
-        .every(v => subject.isInside(v.point) || subject.isOn(v.point));
+    const relations = calculateSubShapeRelations(vertices[0], vertices[1]);
+    const groups = groupSubShapes(relations);
 
     switch (operation) {
-      case 'A union B':
-        if (!hasCrossings) {
-          if (aContainedInB) return [clip];
-          else if (bContainedInA) return [subject];
-          else return [subject, clip];
+      case 'A union B': {
+        const dest: Path[] = [];
+
+        for (const shape of groups.nonCrossing) {
+          if (!isShapeInsideOtherShape(shape, relations)) dest.push(shape.path);
         }
 
-        classifyClipVertices(vertices, [false, false]);
-        return [clipVertices(vertices)];
-      case 'A not B':
-        if (!hasCrossings) {
-          if (aContainedInB) return [];
-          else if (bContainedInA) {
-            return [new PathList([...subject.all(), ...clip.all()])];
-          } else return [subject];
+        for (const group of groups.crossing) {
+          classifyClipVertices(group, [false, false]);
+          dest.push(...clipVertices(group).all());
+        }
+        return [new PathList(dest)];
+      }
+      case 'A not B': {
+        const dest: PathList[] = [];
+
+        const nonCrossingRelations = relations.filter(e => !e.crossing);
+        for (const subshape of vertices[0]) {
+          if (nonCrossingRelations.some(e => e.subject === subshape && e.subjectInClip)) continue;
+
+          const clipsInside = nonCrossingRelations.filter(
+            e => e.subject === subshape && e.clipInSubject
+          );
+          if (clipsInside.length > 0) {
+            dest.push(new PathList([subshape.path, ...clipsInside.map(e => e.clip.path)]));
+          } else if (!relations.some(e => e.subject === subshape && e.crossing)) {
+            dest.push(new PathList([subshape.path]));
+          }
         }
 
-        classifyClipVertices(vertices, [false, true]);
-        return [clipVertices(vertices)];
-      case 'B not A':
-        if (!hasCrossings) {
-          if (bContainedInA) return [];
-          else if (aContainedInB) {
-            return [new PathList([...clip.all(), ...subject.all()])];
-          } else return [clip];
+        const destPath: Array<Path> = [];
+        for (const group of groups.crossing) {
+          classifyClipVertices(group, [false, true]);
+          destPath.push(...clipVertices(group).all());
+        }
+        return [...dest, ...(destPath.length > 0 ? [new PathList(destPath)] : [])];
+      }
+      case 'B not A': {
+        const dest: PathList[] = [];
+
+        const nonCrossingRelations = relations.filter(e => !e.crossing);
+        for (const subshape of vertices[1]) {
+          if (nonCrossingRelations.some(e => e.clip === subshape && e.clipInSubject)) continue;
+
+          const subjectsInside = nonCrossingRelations.filter(
+            e => e.clip === subshape && e.subjectInClip
+          );
+          if (subjectsInside.length > 0) {
+            dest.push(new PathList([subshape.path, ...subjectsInside.map(e => e.subject.path)]));
+          } else if (!relations.some(e => e.clip === subshape && e.crossing)) {
+            dest.push(new PathList([subshape.path]));
+          }
         }
 
-        classifyClipVertices(vertices, [true, false]);
-        return [clipVertices(vertices)];
+        const destPath: Array<Path> = [];
+        for (const group of groups.crossing) {
+          classifyClipVertices(group, [true, false]);
+          destPath.push(...clipVertices(group).all());
+        }
+        return [...dest, ...(destPath.length > 0 ? [new PathList(destPath)] : [])];
+      }
       case 'A intersection B': {
-        if (!hasCrossings) {
-          if (aContainedInB) return [subject];
-          else if (bContainedInA) return [clip];
-          else return [];
+        const dest: Path[] = [];
+
+        for (const shape of groups.nonCrossing) {
+          if (isShapeInsideOtherShape(shape, relations)) dest.push(shape.path);
         }
 
-        classifyClipVertices(vertices, [true, true]);
-
-        const intersection = clipVertices(vertices);
-        return intersection.segments().length > 0 ? [intersection] : [];
+        for (const group of groups.crossing) {
+          classifyClipVertices(group, [true, true]);
+          dest.push(...clipVertices(group).all());
+        }
+        return dest.flatMap(e => e.segments).length > 0 ? [new PathList(dest)] : [];
       }
       case 'A xor B': {
         const cp1 = applyBooleanOperation(subject, clip, 'A not B');
@@ -510,6 +530,81 @@ const clipVertices = (shapes: [Array<VertexList>, Array<VertexList>]) => {
 };
 
 /* SUPPORTING THE CORE ALGORITHM ********************************************************** */
+
+type SubShapeRelation = {
+  subject: VertexList;
+  clip: VertexList;
+  subjectInClip: boolean;
+  clipInSubject: boolean;
+  crossing: boolean;
+};
+
+const calculateSubShapeRelations = (subjectLists: VertexList[], clipLists: VertexList[]) => {
+  const entries: SubShapeRelation[] = [];
+
+  for (const subject of subjectLists) {
+    for (const clip of clipLists) {
+      entries.push({
+        subject,
+        clip,
+        subjectInClip: subject.vertices.every(
+          v => clip.path.isInside(v.point) || clip.path.isOn(v.point)
+        ),
+        clipInSubject: clip.vertices.every(
+          v => subject.path.isInside(v.point) || subject.path.isOn(v.point)
+        ),
+        crossing: subject.vertices.some(
+          v => isIntersection(v) && clip.vertices.includes(v.neighbor)
+        )
+      });
+    }
+  }
+
+  return entries;
+};
+
+const groupSubShapes = (entries: SubShapeRelation[]) => {
+  const crossingShapes: Array<[VertexList[], VertexList[]]> = [];
+  let remainingCrossings = entries.filter(a => a.crossing);
+  while (remainingCrossings.length > 0) {
+    const unprocessedCrossings: SubShapeRelation[] = [];
+    const subjects = new Set<VertexList>();
+    const clips = new Set<VertexList>();
+
+    const first = remainingCrossings.shift()!;
+    subjects.add(first.subject);
+    clips.add(first.clip);
+
+    for (let i = 0; i < remainingCrossings.length; i++) {
+      const relation = remainingCrossings[i];
+      if (subjects.has(relation.subject) || clips.has(relation.clip)) {
+        subjects.add(relation.subject);
+        clips.add(relation.clip);
+      } else {
+        unprocessedCrossings.push(relation);
+      }
+    }
+
+    crossingShapes.push([[...subjects], [...clips]]);
+    remainingCrossings = unprocessedCrossings;
+  }
+
+  const crossingShapesSet = new Set(crossingShapes.flat(2));
+  const nonCrossingShapes = unique(entries.flatMap(e => [e.subject, e.clip])).filter(
+    v => !crossingShapesSet.has(v)
+  );
+
+  return {
+    crossing: crossingShapes,
+    nonCrossing: nonCrossingShapes
+  };
+};
+
+const isShapeInsideOtherShape = (shape: VertexList, entries: SubShapeRelation[]) => {
+  return entries.some(
+    e => (e.subject === shape && e.subjectInClip) || (e.clip === shape && e.clipInSubject)
+  );
+};
 
 const classifyDegeneracies = (vertexList: VertexList) => {
   for (const vertex of vertexList.vertices.filter(isDegeneracy)) {

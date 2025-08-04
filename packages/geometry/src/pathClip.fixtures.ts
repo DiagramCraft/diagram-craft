@@ -17,6 +17,18 @@ const makeCircle = (cx: number, cy: number, r: number) => {
   return b;
 };
 
+const makeCircleNoTransform = (cx: number, cy: number, r: number) => {
+  const b = new PathListBuilder();
+  //unitCoordinateSystem({ x: cx - r, y: cy - r, w: 2 * r, h: 2 * r, r: 0 })
+  //);
+  b.moveTo(_p(cx, cy - r));
+  b.arcTo(_p(cx + r, cy), r, r, 0, 0, 1);
+  b.arcTo(_p(cx, cy + r), r, r, 0, 0, 1);
+  b.arcTo(_p(cx - r, cy), r, r, 0, 0, 1);
+  b.arcTo(_p(cx, cy - r), r, r, 0, 0, 1);
+  return b;
+};
+
 const makeRect = (x: number, y: number, w: number, h: number) => {
   const b = new PathListBuilder();
   b.moveTo(_p(x, y));
@@ -156,6 +168,15 @@ export const TEST_CASES = {
     a.lineTo(_p(400, 250));
     a.lineTo(_p(250, 100));
     a.lineTo(_p(100, 250));
+    return {
+      p1: a,
+      p2: b
+    };
+  },
+  NonOverlappingContours: () => {
+    const a = makeRect(100, 200, 200, 200);
+
+    const b = makeCircleNoTransform(200, 300, 85).append(makeCircleNoTransform(200, 95, 85));
     return {
       p1: a,
       p2: b
