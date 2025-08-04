@@ -1,26 +1,10 @@
-import { fromUnitLCS, PathListBuilder } from './pathListBuilder';
+import { PathListBuilder } from './pathListBuilder';
 import { _p } from './point';
 import { applyBooleanOperation } from './pathClip';
 import { PathList } from './pathList';
 
 const makeCircle = (cx: number, cy: number, r: number) => {
-  const b = new PathListBuilder().withTransform(
-    fromUnitLCS({ x: cx - r, y: cy - r, w: 2 * r, h: 2 * r, r: 0 })
-  );
-  //unitCoordinateSystem({ x: cx - r, y: cy - r, w: 2 * r, h: 2 * r, r: 0 })
-  //);
-  b.moveTo(_p(0.5, 0));
-  b.arcTo(_p(1, 0.5), 0.5, 0.5, 0, 0, 1);
-  b.arcTo(_p(0.5, 1), 0.5, 0.5, 0, 0, 1);
-  b.arcTo(_p(0, 0.5), 0.5, 0.5, 0, 0, 1);
-  b.arcTo(_p(0.5, 0), 0.5, 0.5, 0, 0, 1);
-  return b;
-};
-
-const makeCircleNoTransform = (cx: number, cy: number, r: number) => {
   const b = new PathListBuilder();
-  //unitCoordinateSystem({ x: cx - r, y: cy - r, w: 2 * r, h: 2 * r, r: 0 })
-  //);
   b.moveTo(_p(cx, cy - r));
   b.arcTo(_p(cx + r, cy), r, r, 0, 0, 1);
   b.arcTo(_p(cx, cy + r), r, r, 0, 0, 1);
@@ -176,7 +160,7 @@ export const TEST_CASES = {
   NonOverlappingContours: () => {
     const a = makeRect(100, 200, 200, 200);
 
-    const b = makeCircleNoTransform(200, 300, 85).append(makeCircleNoTransform(200, 95, 85));
+    const b = makeCircle(200, 300, 85).append(makeCircle(200, 95, 85));
     return {
       p1: a,
       p2: b
