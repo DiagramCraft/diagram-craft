@@ -81,4 +81,8 @@ test.describe('VectorBoolean', () => {
   test('Diamond Inside Rectangle', async ({ page }) => {
     await storybookScreenshotCheck(page, 'vectorboolean', 'diamond-inside-rectangle');
   });
+
+  test('Non Overlapping Contours', async ({ page }) => {
+    await storybookScreenshotCheck(page, 'vectorboolean', 'non-overlapping-contours');
+  });
 });
