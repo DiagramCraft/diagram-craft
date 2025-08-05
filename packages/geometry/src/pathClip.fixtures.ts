@@ -174,5 +174,13 @@ export const TEST_CASES = {
       p1: a,
       p2: b
     };
+  },
+  ConcentricContours: () => {
+    const a = makeRect(50, 50, 350, 300).append(makeCircle(210, 200, 125));
+    const b = makeCircle(210, 200, 140);
+    return {
+      p1: a,
+      p2: b
+    };
   }
 };
