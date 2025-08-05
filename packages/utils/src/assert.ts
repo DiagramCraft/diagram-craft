@@ -95,3 +95,21 @@ export const precondition: { is: AssertType & AssertTypeExtensions } = { is: ass
 export const postcondition: { is: AssertType & AssertTypeExtensions } = { is: assert };
 
 export const invariant: { is: AssertType & AssertTypeExtensions } = { is: assert };
+
+/**
+ * Ensures that the provided argument is defined and not undefined.
+ *
+ * If the argument is undefined, an exception is thrown. Otherwise, the function
+ * returns the argument as is. This function is useful for enforcing type safety
+ * by guaranteeing the existence of a value at runtime.
+ *
+ * @param {T | undefined} arg - The value to check for existence.
+ * @throws {VerifyNotReached} Throws an error if the argument is undefined.
+ * @returns {T} The provided argument, guaranteed to be defined.
+ */
+export const mustExist = <T>(arg: T | undefined): T => {
+  if (is.notPresent(arg)) {
+    throw new VerifyNotReached();
+  }
+  return arg;
+};
