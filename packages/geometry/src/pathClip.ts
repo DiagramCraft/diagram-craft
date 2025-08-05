@@ -14,7 +14,7 @@ import { PathList } from './pathList';
 import { Random } from '@diagram-craft/utils/random';
 import { range, sortBy } from '@diagram-craft/utils/array';
 import { newid } from '@diagram-craft/utils/id';
-import { constructPathTree } from './pathUtils';
+import { constructPathTree, type Hierarchy } from './pathUtils';
 
 /* CORE TYPES ***************************************************************************** */
 
@@ -78,6 +78,7 @@ function assertIntersection(v: Vertex): asserts v is IntersectionVertex {
 type VertexList = {
   path: Path;
   vertices: Vertex[];
+  type: Hierarchy['type'];
 };
 
 export type BooleanOperation =
@@ -99,16 +100,19 @@ export const applyBooleanOperation = (
   operation: BooleanOperation
 ): Array<PathList> => {
   const doApplyOperation = (operation: BooleanOperation) => {
-    const vertices = getClipVertices(subject, clip);
+    const subjectTree = constructPathTree(subject.all());
+    const clipTree = constructPathTree(clip.all());
+
+    const vertices = getClipVertices(subject, clip, subjectTree, clipTree);
 
     const relations = calculateSubShapeRelations(vertices[0], vertices[1]);
     const groups = groupSubShapes(relations);
 
     switch (operation) {
       case 'A union B': {
-        const dest: PathList[] = [];
+        const destPath: Array<Path> = [];
 
-        const disjointResult = processDisjointPathsHierarchy(subject, clip, groups, type =>
+        const disjointResult = processDisjointPathsHierarchy(groups, subjectTree, clipTree, type =>
           [
             'clip-hole/subject-outline',
             'subject-hole/clip-outline',
@@ -120,19 +124,18 @@ export const applyBooleanOperation = (
             'ROOT/subject-outline'
           ].includes(type)
         );
-        if (disjointResult.length > 0) dest.push(new PathList(disjointResult));
+        if (disjointResult.length > 0) destPath.push(...disjointResult);
 
-        const destPath: Array<Path> = [];
         for (const group of groups.crossing) {
-          classifyClipVertices(group, [false, false]);
+          classifyClipVertices(group, [subject, clip], [false, false]);
           destPath.push(...clipVertices(group).all());
         }
-        return [...dest, ...(destPath.length > 0 ? [new PathList(destPath)] : [])];
+        return destPath.length > 0 ? [new PathList(destPath)] : [];
       }
       case 'A not B': {
-        const dest: PathList[] = [];
+        const destPath: Array<Path> = [];
 
-        const disjointResult = processDisjointPathsHierarchy(subject, clip, groups, type =>
+        const disjointResult = processDisjointPathsHierarchy(groups, subjectTree, clipTree, type =>
           [
             'ROOT/subject-outline',
             'subject-outline/clip-outline',
@@ -141,19 +144,18 @@ export const applyBooleanOperation = (
             'clip-hole/subject-outline'
           ].includes(type)
         );
-        if (disjointResult.length > 0) dest.push(new PathList(disjointResult));
+        if (disjointResult.length > 0) destPath.push(...disjointResult);
 
-        const destPath: Array<Path> = [];
         for (const group of groups.crossing) {
-          classifyClipVertices(group, [false, true]);
+          classifyClipVertices(group, [subject, clip], [false, true]);
           destPath.push(...clipVertices(group).all());
         }
-        return [...dest, ...(destPath.length > 0 ? [new PathList(destPath)] : [])];
+        return destPath.length > 0 ? [new PathList(destPath)] : [];
       }
       case 'B not A': {
-        const dest: PathList[] = [];
+        const destPath: Array<Path> = [];
 
-        const disjointResult = processDisjointPathsHierarchy(subject, clip, groups, type =>
+        const disjointResult = processDisjointPathsHierarchy(groups, subjectTree, clipTree, type =>
           [
             'ROOT/clip-outline',
             'clip-outline/subject-outline',
@@ -162,19 +164,18 @@ export const applyBooleanOperation = (
             'subject-hole/clip-outline'
           ].includes(type)
         );
-        if (disjointResult.length > 0) dest.push(new PathList(disjointResult));
+        if (disjointResult.length > 0) destPath.push(...disjointResult);
 
-        const destPath: Array<Path> = [];
         for (const group of groups.crossing) {
-          classifyClipVertices(group, [true, false]);
+          classifyClipVertices(group, [subject, clip], [true, false]);
           destPath.push(...clipVertices(group).all());
         }
-        return [...dest, ...(destPath.length > 0 ? [new PathList(destPath)] : [])];
+        return destPath.length > 0 ? [new PathList(destPath)] : [];
       }
       case 'A intersection B': {
         const dest: PathList[] = [];
 
-        const disjointResult = processDisjointPathsHierarchy(subject, clip, groups, type =>
+        const disjointResult = processDisjointPathsHierarchy(groups, subjectTree, clipTree, type =>
           [
             'clip-outline/subject-outline',
             'clip-outline/subject-hole',
@@ -186,7 +187,7 @@ export const applyBooleanOperation = (
 
         const destPath: Array<Path> = [];
         for (const group of groups.crossing) {
-          classifyClipVertices(group, [true, true]);
+          classifyClipVertices(group, [subject, clip], [true, true]);
           destPath.push(...clipVertices(group).all());
         }
         return [
@@ -230,7 +231,9 @@ export const applyBooleanOperation = (
  */
 export const getClipVertices = (
   subject: PathList,
-  clip: PathList
+  clip: PathList,
+  subjectTree: Map<Path, Hierarchy>,
+  clipTree: Map<Path, Hierarchy>
 ): [VertexList[], VertexList[]] => {
   const intersectionVertices = new MultiMap<PathSegment, CrossingVertex | OverlapVertex>();
 
@@ -333,7 +336,7 @@ export const getClipVertices = (
 
   // Sort into the target vertex lists
   const [subjectVertices, clipVertices] = removeRedundantVertices(
-    sortIntoVertexList([subject, clip], intersectionVertices)
+    sortIntoVertexList([subject, clip], [subjectTree, clipTree], intersectionVertices)
   );
 
   // Fix linked list
@@ -384,6 +387,7 @@ export const getClipVertices = (
  */
 export const classifyClipVertices = (
   shapes: [Array<VertexList>, Array<VertexList>],
+  fullShape: [PathList, PathList],
   type: [boolean, boolean]
 ) => {
   const crossings: Point[] = [];
@@ -393,7 +397,8 @@ export const classifyClipVertices = (
     otherShape: PathList
   ) => {
     for (let i = 0; i < currentShape.length; i += 1) {
-      const vertices = currentShape[i].vertices;
+      const shape = currentShape[i];
+      const vertices = shape.vertices;
 
       const [v0, j0] = findStartingPositionNotOnPath(vertices, otherShape);
       assert.present(v0);
@@ -430,8 +435,8 @@ export const classifyClipVertices = (
   };
 
   // for both polygons P do
-  doClassifyClipVertices(shapes[0], type[0], new PathList(shapes[1].map(e => e.path)));
-  doClassifyClipVertices(shapes[1], type[1], new PathList(shapes[0].map(e => e.path)));
+  doClassifyClipVertices(shapes[0], type[0], fullShape[1]); //new PathList(shapes[1].map(e => e.path)));
+  doClassifyClipVertices(shapes[1], type[1], fullShape[0]); // new PathList(shapes[0].map(e => e.path)));
 
   return crossings;
 };
@@ -555,9 +560,9 @@ const clipVertices = (shapes: [Array<VertexList>, Array<VertexList>]) => {
 /* SUPPORTING THE CORE ALGORITHM ********************************************************** */
 
 const processDisjointPathsHierarchy = (
-  subject: PathList,
-  clip: PathList,
   groups: ReturnType<typeof groupSubShapes>,
+  subjectTree: Map<Path, Hierarchy>,
+  clipTree: Map<Path, Hierarchy>,
   includePath: (type: string) => boolean
 ) => {
   const disjointHierarchy = Array.from(
@@ -566,9 +571,6 @@ const processDisjointPathsHierarchy = (
 
   const paths: Array<Path> = [];
   if (disjointHierarchy.length === 0) return paths;
-
-  const subjectTree = constructPathTree(subject.all());
-  const clipTree = constructPathTree(clip.all());
 
   const typeString = (p: Path) =>
     subjectTree.has(p) ? `subject-${subjectTree.get(p)?.type}` : `clip-${clipTree.get(p)?.type}`;
@@ -746,13 +748,15 @@ const splitSegments = (vertexList: VertexList) => {
 
 const sortIntoVertexList = (
   shapes: [PathList, PathList],
+  tree: [Map<Path, Hierarchy>, Map<Path, Hierarchy>],
   intersectionVertices: MultiMap<PathSegment, IntersectionVertex>
 ): [VertexList[], VertexList[]] => {
   const result: Array<VertexList[]> = [];
 
   // First, sort all vertices into one set of vertices,
   // both simple and intersection vertices
-  for (const shape of shapes) {
+  for (let i = 0; i < shapes.length; i++) {
+    const shape = shapes[i];
     const interimResult: VertexList[] = [];
 
     for (const path of shape.all()) {
@@ -764,7 +768,11 @@ const sortIntoVertexList = (
         vertices.push(...intersections);
       }
 
-      interimResult.push({ path, vertices });
+      interimResult.push({
+        path,
+        vertices,
+        type: mustExist(tree[i].get(path)).type
+      });
     }
 
     result.push(interimResult);
@@ -854,6 +862,7 @@ const removeRedundantVertices = (
     // Finally remove all deleted vertices
     results = results.map(res =>
       res.map(e => ({
+        type: e.type,
         path: e.path,
         vertices: e.vertices.filter(
           v => !deleted.has(v) && !(isIntersection(v) && deleted.has(v.neighbor!))

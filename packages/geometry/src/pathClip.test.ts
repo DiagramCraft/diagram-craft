@@ -108,7 +108,7 @@ describe('pathClip', () => {
 
       it('A union B', () => {
         expect(applyBooleanOperation(p1, p2, 'A union B').map(p => p.asSvgPath())).toStrictEqual([
-          'M 20,20 L 50,20 L 50,50 L 20,50 L 20,20 M 70,70 L 110,70 L 110,110 L 70,110 L 70,70'
+          'M 70,70 L 110,70 L 110,110 L 70,110 L 70,70 M 20,20 L 50,20 L 50,50 L 20,50 L 20,20'
         ]);
       });
 

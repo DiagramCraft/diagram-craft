@@ -9,6 +9,7 @@ import {
 import { Point } from '@diagram-craft/geometry/point';
 import { Path } from '@diagram-craft/geometry/path';
 import { PathList } from '@diagram-craft/geometry/pathList';
+import { constructPathTree } from '@diagram-craft/geometry/pathUtils';
 
 export const BooleanTest = (props: {
   p1: PathListBuilder | PathList;
@@ -23,9 +24,11 @@ export const BooleanTest = (props: {
   const cp1 = p1;
   const cp2 = p2;
 
-  const [subject, clip] = getClipVertices(cp1, cp2);
+  const subjectTree = constructPathTree(cp1.all());
+  const clipTree = constructPathTree(cp2.all());
+  const [subject, clip] = getClipVertices(cp1, cp2, subjectTree, clipTree);
 
-  classifyClipVertices([subject, clip], [false, false]);
+  classifyClipVertices([subject, clip], [cp1, cp2], [false, false]);
 
   const s1 = cp1.asSvgPath();
   const s2 = cp2.asSvgPath();

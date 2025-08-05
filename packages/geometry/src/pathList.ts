@@ -12,6 +12,15 @@ type ProjectedPointOnPathList = {
   pathIdx: number;
 };
 
+const FAR_DISTANCE = 1000000;
+
+const RAY_OFFSETS: [number, number][] = [
+  [17, 25],
+  [-13, 19],
+  [-7, -11],
+  [11, -17]
+];
+
 export class PathList {
   constructor(private paths: Path[]) {}
 
@@ -93,17 +102,21 @@ export class PathList {
   }
 
   isInside(p: Point): boolean {
-    // TODO: Check multiple rays - or make it more "unique" - or check that intersection is not on endpoints
-    const line = new Path(p, [['L', Number.MAX_SAFE_INTEGER / 17, Number.MAX_SAFE_INTEGER / 25]]);
-    const intersections = this.all().flatMap(p => p.intersections(line));
-    return intersections.length % 2 !== 0;
+    for (const [dx, dy] of RAY_OFFSETS) {
+      const line = new Path(p, [['L', dx * FAR_DISTANCE, dy * FAR_DISTANCE]]);
+      const intersections = this.all().flatMap(p => p.intersections(line));
+      if (intersections.length % 2 === 0) return false;
+    }
+    return true;
   }
 
   isInHole(p: Point): boolean {
-    // TODO: Check multiple rays - or make it more "unique" - or check that intersection is not on endpoints
-    const line = new Path(p, [['L', Number.MAX_SAFE_INTEGER / 17, Number.MAX_SAFE_INTEGER / 25]]);
-    const intersections = this.all().flatMap(p => p.intersections(line));
-    return intersections.length > 1 && intersections.length % 2 === 0;
+    for (const [dx, dy] of RAY_OFFSETS) {
+      const line = new Path(p, [['L', dx * FAR_DISTANCE, dy * FAR_DISTANCE]]);
+      const intersections = this.all().flatMap(p => p.intersections(line));
+      if (intersections.length === 0 || intersections.length % 2 !== 0) return false;
+    }
+    return true;
   }
 
   isOn(p: Point): boolean {

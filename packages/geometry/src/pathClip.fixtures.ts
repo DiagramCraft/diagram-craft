@@ -195,5 +195,18 @@ export const TEST_CASES = {
       p1: a,
       p2: b
     };
+  },
+  CircleOverlappingHole: () => {
+    const a = PathListBuilder.fromPathList(
+      makeRect(50, 50, 350, 300)
+        .append(makeCircle(210, 200, 125))
+        .getPaths()
+        .normalize()
+    );
+    const b = makeCircle(180, 180, 125);
+    return {
+      p1: a,
+      p2: b
+    };
   }
 };

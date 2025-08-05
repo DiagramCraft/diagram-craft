@@ -97,4 +97,8 @@ test.describe('VectorBoolean', () => {
   test('More Concentric Contours', async ({ page }) => {
     await storybookScreenshotCheck(page, 'vectorboolean', 'more-concentric-contours');
   });
+
+  test('Circle Overlapping Hole', async ({ page }) => {
+    await storybookScreenshotCheck(page, 'vectorboolean', 'circle-overlapping-hole');
+  });
 });
