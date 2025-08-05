@@ -226,5 +226,26 @@ export const TEST_CASES = {
       p1: a,
       p2: b
     };
+  },
+  CurveOverlappingRect: () => {
+    const top = 65.0 + 160.0 / 3.0;
+    const a = new PathListBuilder()
+      .moveTo(_p(40, top))
+      .lineTo(_p(410, top))
+      .lineTo(_p(410, 50))
+      .lineTo(_p(40, 50))
+      .lineTo(_p(40, top));
+
+    const b = new PathListBuilder()
+      .moveTo(_p(335, 203))
+      .cubicTo(_p(335, 200), _p(335, 202), _p(335, 201))
+      .cubicTo(_p(270, 90), _p(335, 153), _p(309, 111))
+      .cubicTo(_p(240, 145), _p(252, 102), _p(240, 122))
+      .cubicTo(_p(305, 210), _p(240, 181), _p(269, 210))
+      .cubicTo(_p(335, 203), _p(316, 210), _p(326, 207));
+    return {
+      p1: a,
+      p2: b
+    };
   }
 };

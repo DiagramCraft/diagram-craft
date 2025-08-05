@@ -105,4 +105,8 @@ test.describe('VectorBoolean', () => {
   test('Rect With Hole Over Rect With Hole', async ({ page }) => {
     await storybookScreenshotCheck(page, 'vectorboolean', 'rect-with-hole-over-rect-with-hole');
   });
+
+  test('Curve Overlapping Rect', async ({ page }) => {
+    await storybookScreenshotCheck(page, 'vectorboolean', 'curve-overlapping-rect');
+  });
 });

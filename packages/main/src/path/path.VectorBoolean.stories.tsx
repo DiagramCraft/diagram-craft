@@ -85,3 +85,7 @@ export const CircleOverlappingHole: Story = {
 export const RectWithHoleOverRectWithHole: Story = {
   args: TEST_CASES.RectWithHoleOverRectWithHole()
 };
+
+export const CurveOverlappingRect: Story = {
+  args: TEST_CASES.CurveOverlappingRect()
+};
