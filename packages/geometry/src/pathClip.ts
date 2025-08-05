@@ -280,14 +280,6 @@ export const getClipVertices = (
               intersectionVertices.add(thisSegment, t1);
               intersectionVertices.add(otherSegment, o1);
             } else if (intersection.type === 'overlap') {
-              // TODO: Perhaps move this into Path.overlap
-              if (
-                Point.distance(intersection.start!, intersection.end!) <
-                epsilon(thisSegment.length())
-              ) {
-                continue;
-              }
-
               const overlapId = newid();
 
               const t1 = makeOverlapVertex({
@@ -1039,7 +1031,7 @@ const makeNeighbors = (v: IntersectionVertex, neighbor: IntersectionVertex) => {
   neighbor.neighbor = v;
 };
 
-const epsilon = (scale: number) => Math.max(0.1, scale * 0.1);
+const epsilon = (scale: number, base = 0.01) => Math.max(0.1, scale * base);
 
 /* INVARIANTS AND ASSERTIONS ************************************************************** */
 
@@ -1121,7 +1113,7 @@ const assertPathSegmentsAreConnected = (subject: VertexList[], clip: VertexList[
         const current = vertices[i];
         const next = vertices[(i + 1) % vertices.length];
         assert.true(
-          Point.isEqual(current.segment.end, next.point, epsilon(current.segment.length()))
+          Point.isEqual(current.segment.end, next.point, epsilon(current.segment.length(), 0.1))
         );
       }
     }
