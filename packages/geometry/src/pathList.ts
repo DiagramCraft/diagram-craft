@@ -4,7 +4,7 @@ import { Box } from './box';
 import { Point } from './point';
 import { LengthOffsetOnPath, TimeOffsetOnSegment } from './pathPosition';
 import { isDebug } from '@diagram-craft/utils/debug';
-import { classifyPathsAsHolesAndOutlines } from './pathListUtils';
+import { classifyPathsAsHolesAndOutlines } from './pathUtils';
 
 type ProjectedPointOnPathList = {
   offset: TimeOffsetOnSegment & LengthOffsetOnPath;
