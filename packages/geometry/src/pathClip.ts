@@ -1,6 +1,11 @@
 import { Point } from './point';
 import { LineSegment, PathSegment } from './pathSegment';
-import { assert, NOT_IMPLEMENTED_YET, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+import {
+  assert,
+  mustExist,
+  NOT_IMPLEMENTED_YET,
+  VERIFY_NOT_REACHED
+} from '@diagram-craft/utils/assert';
 import { Path } from './path';
 import { Vector } from './vector';
 import { MultiMap } from '@diagram-craft/utils/multimap';
@@ -9,6 +14,7 @@ import { PathList } from './pathList';
 import { Random } from '@diagram-craft/utils/random';
 import { range, sortBy } from '@diagram-craft/utils/array';
 import { newid } from '@diagram-craft/utils/id';
+import { constructPathTree, type Hierarchy } from './pathUtils';
 
 /* CORE TYPES ***************************************************************************** */
 
@@ -69,7 +75,11 @@ function assertIntersection(v: Vertex): asserts v is IntersectionVertex {
   assert.true(isIntersection(v));
 }
 
-type VertexList = Vertex[];
+type VertexList = {
+  path: Path;
+  vertices: Vertex[];
+  type: Hierarchy['type'];
+};
 
 export type BooleanOperation =
   | 'A union B'
@@ -89,79 +99,119 @@ export const applyBooleanOperation = (
   clip: PathList,
   operation: BooleanOperation
 ): Array<PathList> => {
-  const doApplyOperation = (operation: BooleanOperation, a: PathList, b: PathList) => {
-    const vertices = getClipVertices(a, b);
+  const doApplyOperation = (operation: BooleanOperation) => {
+    const subjectTree = constructPathTree(subject.all());
+    const clipTree = constructPathTree(clip.all());
 
-    // We need to classify vertices to determine if each intersection is also a crossing
-    classifyClipVertices(vertices, [a, b], [false, false]);
+    const vertices = getClipVertices(subject, clip, subjectTree, clipTree);
 
-    const hasCrossings =
-      vertices[0].flat().filter(v => isIntersection(v)).length > 0 &&
-      vertices[1].flat().filter(v => isIntersection(v)).length > 0;
-
-    // TODO: this assumes there's only one path in each compound path
-    const aContainedInB =
-      !hasCrossings && vertices[0][0].every(v => b.isInside(v.point) || b.isOn(v.point));
-    const bContainedInA =
-      !hasCrossings && vertices[1][0].every(v => a.isInside(v.point) || a.isOn(v.point));
+    const relations = calculateSubShapeRelations(vertices[0], vertices[1]);
+    const groups = groupSubShapes(relations);
 
     switch (operation) {
-      case 'A union B':
-        if (!hasCrossings) {
-          if (aContainedInB) return [b];
-          else if (bContainedInA) return [a];
-          else return [a, b];
-        }
+      case 'A union B': {
+        const destPath: Array<Path> = [];
 
-        classifyClipVertices(vertices, [a, b], [false, false]);
-        return [clipVertices(vertices)];
-      case 'A not B':
-        if (!hasCrossings) {
-          if (aContainedInB) return [];
-          else if (bContainedInA) {
-            return [new PathList([...a.all(), ...b.all()])];
-          } else return [a];
-        }
+        const disjointResult = processDisjointPathsHierarchy(groups, subjectTree, clipTree, type =>
+          [
+            'clip-hole/subject-outline',
+            'subject-hole/clip-outline',
+            'clip-outline/subject-hole',
+            'clip-outline/clip-hole',
+            'subject-outline/clip-hole',
+            'subject-outline/subject-hole',
+            'ROOT/clip-outline',
+            'ROOT/subject-outline'
+          ].includes(type)
+        );
+        if (disjointResult.length > 0) destPath.push(...disjointResult);
 
-        classifyClipVertices(vertices, [a, b], [false, true]);
-        return [clipVertices(vertices)];
-      case 'B not A':
-        if (!hasCrossings) {
-          if (bContainedInA) return [];
-          else if (aContainedInB) {
-            return [new PathList([...b.all(), ...a.all()])];
-          } else return [b];
+        for (const group of groups.crossing) {
+          classifyClipVertices(group, [subject, clip], [false, false]);
+          destPath.push(...clipVertices(group).all());
         }
+        return destPath.length > 0 ? [new PathList(destPath)] : [];
+      }
+      case 'A not B': {
+        const destPath: Array<Path> = [];
 
-        classifyClipVertices(vertices, [a, b], [true, false]);
-        return [clipVertices(vertices)];
+        const disjointResult = processDisjointPathsHierarchy(groups, subjectTree, clipTree, type =>
+          [
+            'ROOT/subject-outline',
+            'subject-outline/clip-outline',
+            'subject-outline/clip-hole',
+            'subject-outline/subject-hole',
+            'clip-hole/subject-outline'
+          ].includes(type)
+        );
+        if (disjointResult.length > 0) destPath.push(...disjointResult);
+
+        for (const group of groups.crossing) {
+          classifyClipVertices(group, [subject, clip], [false, true]);
+          destPath.push(...clipVertices(group).all());
+        }
+        return destPath.length > 0 ? [new PathList(destPath)] : [];
+      }
+      case 'B not A': {
+        const destPath: Array<Path> = [];
+
+        const disjointResult = processDisjointPathsHierarchy(groups, subjectTree, clipTree, type =>
+          [
+            'ROOT/clip-outline',
+            'clip-outline/subject-outline',
+            'clip-outline/subject-hole',
+            'clip-outline/clip-hole',
+            'subject-hole/clip-outline'
+          ].includes(type)
+        );
+        if (disjointResult.length > 0) destPath.push(...disjointResult);
+
+        for (const group of groups.crossing) {
+          classifyClipVertices(group, [subject, clip], [true, false]);
+          destPath.push(...clipVertices(group).all());
+        }
+        return destPath.length > 0 ? [new PathList(destPath)] : [];
+      }
       case 'A intersection B': {
-        if (!hasCrossings) {
-          if (aContainedInB) return [a];
-          else if (bContainedInA) return [b];
-          else return [];
+        const dest: PathList[] = [];
+
+        const disjointResult = processDisjointPathsHierarchy(groups, subjectTree, clipTree, type =>
+          [
+            'clip-outline/subject-outline',
+            'clip-outline/subject-hole',
+            'subject-outline/clip-outline',
+            'subject-outline/clip-hole'
+          ].includes(type)
+        );
+        if (disjointResult.length > 0) dest.push(new PathList(disjointResult));
+
+        const destPath: Array<Path> = [];
+        for (const group of groups.crossing) {
+          classifyClipVertices(group, [subject, clip], [true, true]);
+          destPath.push(...clipVertices(group).all());
         }
-
-        classifyClipVertices(vertices, [a, b], [true, true]);
-
-        const intersection = clipVertices(vertices);
-        return intersection.segments().length > 0 ? [intersection] : [];
+        return [
+          ...dest,
+          ...(destPath.length > 0 && destPath.flatMap(e => e.segments).length > 0
+            ? [new PathList(destPath)]
+            : [])
+        ];
       }
       case 'A xor B': {
-        const cp1 = applyBooleanOperation(a, b, 'A not B');
-        const cp2 = applyBooleanOperation(a, b, 'B not A');
+        const cp1 = applyBooleanOperation(subject, clip, 'A not B');
+        const cp2 = applyBooleanOperation(subject, clip, 'B not A');
         return [...cp1, ...cp2];
       }
       case 'A divide B': {
         return [
-          ...applyBooleanOperation(a, b, 'A xor B'),
-          ...applyBooleanOperation(a, b, 'A intersection B')
+          ...applyBooleanOperation(subject, clip, 'A xor B'),
+          ...applyBooleanOperation(subject, clip, 'A intersection B')
         ];
       }
     }
   };
 
-  return doApplyOperation(operation, subject, clip)
+  return doApplyOperation(operation)
     .map(a => a.normalize())
     .map(a => a.clone());
 };
@@ -181,7 +231,9 @@ export const applyBooleanOperation = (
  */
 export const getClipVertices = (
   subject: PathList,
-  clip: PathList
+  clip: PathList,
+  subjectTree: Map<Path, Hierarchy>,
+  clipTree: Map<Path, Hierarchy>
 ): [VertexList[], VertexList[]] => {
   const intersectionVertices = new MultiMap<PathSegment, CrossingVertex | OverlapVertex>();
 
@@ -228,6 +280,14 @@ export const getClipVertices = (
               intersectionVertices.add(thisSegment, t1);
               intersectionVertices.add(otherSegment, o1);
             } else if (intersection.type === 'overlap') {
+              // TODO: Perhaps move this into Path.overlap
+              if (
+                Point.distance(intersection.start!, intersection.end!) <
+                epsilon(thisSegment.length())
+              ) {
+                continue;
+              }
+
               const overlapId = newid();
 
               const t1 = makeOverlapVertex({
@@ -276,12 +336,12 @@ export const getClipVertices = (
 
   // Sort into the target vertex lists
   const [subjectVertices, clipVertices] = removeRedundantVertices(
-    sortIntoVertexList([subject, clip], intersectionVertices)
+    sortIntoVertexList([subject, clip], [subjectTree, clipTree], intersectionVertices)
   );
 
   // Fix linked list
-  subjectVertices.forEach(vertexList => makeLinkedList(vertexList));
-  clipVertices.forEach(vertexList => makeLinkedList(vertexList));
+  subjectVertices.forEach(makeLinkedList);
+  clipVertices.forEach(makeLinkedList);
 
   assignLabels('s', subjectVertices);
   assignLabels('c', clipVertices);
@@ -292,19 +352,19 @@ export const getClipVertices = (
   }
 
   // Clip segments
-  subjectVertices.forEach(vertexList => splitSegments(vertexList));
-  clipVertices.forEach(vertexList => splitSegments(vertexList));
+  subjectVertices.forEach(splitSegments);
+  clipVertices.forEach(splitSegments);
 
   DEBUG: {
     assertPathSegmentsAreConnected(subjectVertices, clipVertices);
   }
 
   // Clip segments
-  subjectVertices.forEach(vertexList => classifyDegeneracies(vertexList));
-  clipVertices.forEach(vertexList => classifyDegeneracies(vertexList));
+  subjectVertices.forEach(classifyDegeneracies);
+  clipVertices.forEach(classifyDegeneracies);
 
   DEBUG: {
-    assertPathSegmentsAreConnected(subjectVertices, clipVertices);
+    //  assertPathSegmentsAreConnected(subjectVertices, clipVertices);
   }
 
   return [subjectVertices, clipVertices];
@@ -326,16 +386,21 @@ export const getClipVertices = (
   end for
  */
 export const classifyClipVertices = (
-  vertices: [Array<VertexList>, Array<VertexList>],
-  paths: [PathList, PathList],
+  shapes: [Array<VertexList>, Array<VertexList>],
+  fullShape: [PathList, PathList],
   type: [boolean, boolean]
 ) => {
   const crossings: Point[] = [];
-  const doClassifyClipVertices = (pVertexList: Array<VertexList>, start: boolean, q: PathList) => {
-    for (let i = 0; i < pVertexList.length; i += 1) {
-      const pVertices = pVertexList[i];
+  const doClassifyClipVertices = (
+    currentShape: Array<VertexList>,
+    start: boolean,
+    otherShape: PathList
+  ) => {
+    for (let i = 0; i < currentShape.length; i += 1) {
+      const shape = currentShape[i];
+      const vertices = shape.vertices;
 
-      const [v0, j0] = findStartingPositionNotOnPath(pVertices, q);
+      const [v0, j0] = findStartingPositionNotOnPath(vertices, otherShape);
       assert.present(v0);
       const p0 = v0.point;
 
@@ -346,14 +411,14 @@ export const classifyClipVertices = (
           status = entry
         end if
       */
-      let status = q.isInside(p0);
+      let status = otherShape.isInside(p0);
       if (start) status = !status;
 
       // for each vertex Pi of polygon do
       // ... starting at j0
-      for (let J = 0; J < pVertices.length; J++) {
-        const j = (J + j0) % pVertices.length;
-        const intersection = pVertices[j];
+      for (let J = 0; J < vertices.length; J++) {
+        const j = (J + j0) % vertices.length;
+        const intersection = vertices[j];
 
         // if Pi->intersect then
         if (isIntersection(intersection)) {
@@ -370,8 +435,8 @@ export const classifyClipVertices = (
   };
 
   // for both polygons P do
-  doClassifyClipVertices(vertices[0], type[0], paths[1]);
-  doClassifyClipVertices(vertices[1], type[1], paths[0]);
+  doClassifyClipVertices(shapes[0], type[0], fullShape[1]); //new PathList(shapes[1].map(e => e.path)));
+  doClassifyClipVertices(shapes[1], type[1], fullShape[0]); // new PathList(shapes[0].map(e => e.path)));
 
   return crossings;
 };
@@ -397,12 +462,12 @@ export const classifyClipVertices = (
     until PolygonClosed
   end while
  */
-const clipVertices = (p: [Array<VertexList>, Array<VertexList>]) => {
-  const [subject] = p;
+const clipVertices = (shapes: [Array<VertexList>, Array<VertexList>]) => {
+  const [subject] = shapes;
 
-  let unprocessedIntersectingPoints = subject.flatMap(e => e).filter(isIntersection);
+  let unprocessedIntersectingPoints = subject.flatMap(e => e.vertices).filter(isIntersection);
 
-  const dest: VertexList[] = [];
+  const dest: Array<Vertex[]> = [];
 
   const markAsProcessed = (current: Vertex) => {
     unprocessedIntersectingPoints = unprocessedIntersectingPoints.filter(
@@ -415,7 +480,7 @@ const clipVertices = (p: [Array<VertexList>, Array<VertexList>]) => {
     let current = unprocessedIntersectingPoints[0];
 
     // newPolygon
-    const currentContour: VertexList = [];
+    const currentContour: Array<Vertex> = [];
     dest.push(currentContour);
 
     // newVertex(current)
@@ -494,8 +559,117 @@ const clipVertices = (p: [Array<VertexList>, Array<VertexList>]) => {
 
 /* SUPPORTING THE CORE ALGORITHM ********************************************************** */
 
+const processDisjointPathsHierarchy = (
+  groups: ReturnType<typeof groupSubShapes>,
+  subjectTree: Map<Path, Hierarchy>,
+  clipTree: Map<Path, Hierarchy>,
+  includePath: (type: string) => boolean
+) => {
+  const disjointHierarchy = Array.from(
+    constructPathTree(Array.from(groups.nonCrossing).map(e => e.path)).entries()
+  ).reverse();
+
+  const paths: Array<Path> = [];
+  if (disjointHierarchy.length === 0) return paths;
+
+  const typeString = (p: Path) =>
+    subjectTree.has(p) ? `subject-${subjectTree.get(p)?.type}` : `clip-${clipTree.get(p)?.type}`;
+
+  for (const [path, hierarchy] of disjointHierarchy) {
+    if (hierarchy.depth !== 0) continue;
+
+    if (includePath(`ROOT/${typeString(path)}`)) {
+      paths.push(path);
+    }
+  }
+
+  let depth = disjointHierarchy[0][1].depth;
+  while (depth >= 1) {
+    for (const [path, hierarchy] of disjointHierarchy) {
+      if (hierarchy.depth !== depth) continue;
+
+      const parent = mustExist(hierarchy.parent);
+      if (includePath(`${typeString(parent)}/${typeString(path)}`)) {
+        paths.push(path);
+      }
+    }
+    depth--;
+  }
+
+  return paths;
+};
+
+type SubShapeRelation = {
+  subject: VertexList;
+  clip: VertexList;
+  subjectInClip: boolean;
+  clipInSubject: boolean;
+  crossing: boolean;
+};
+
+const calculateSubShapeRelations = (subjectLists: VertexList[], clipLists: VertexList[]) => {
+  const entries: SubShapeRelation[] = [];
+
+  for (const subject of subjectLists) {
+    for (const clip of clipLists) {
+      entries.push({
+        subject,
+        clip,
+        subjectInClip: subject.vertices.every(
+          v => clip.path.isInside(v.point) || clip.path.isOn(v.point)
+        ),
+        clipInSubject: clip.vertices.every(
+          v => subject.path.isInside(v.point) || subject.path.isOn(v.point)
+        ),
+        crossing: subject.vertices.some(
+          v => isIntersection(v) && clip.vertices.includes(v.neighbor)
+        )
+      });
+    }
+  }
+
+  return entries;
+};
+
+const groupSubShapes = (entries: SubShapeRelation[]) => {
+  const crossingShapes: Array<[VertexList[], VertexList[]]> = [];
+  let remainingCrossings = entries.filter(a => a.crossing);
+  while (remainingCrossings.length > 0) {
+    const unprocessedCrossings: SubShapeRelation[] = [];
+    const subjects = new Set<VertexList>();
+    const clips = new Set<VertexList>();
+
+    const first = remainingCrossings.shift()!;
+    subjects.add(first.subject);
+    clips.add(first.clip);
+
+    for (let i = 0; i < remainingCrossings.length; i++) {
+      const relation = remainingCrossings[i];
+      if (subjects.has(relation.subject) || clips.has(relation.clip)) {
+        subjects.add(relation.subject);
+        clips.add(relation.clip);
+      } else {
+        unprocessedCrossings.push(relation);
+      }
+    }
+
+    crossingShapes.push([[...subjects], [...clips]]);
+    remainingCrossings = unprocessedCrossings;
+  }
+
+  const crossingShapesSet = new Set(crossingShapes.flat(2));
+  const nonCrossingShapes = new Set(
+    entries.flatMap(e => [e.subject, e.clip]).filter(v => !crossingShapesSet.has(v))
+  );
+
+  return {
+    crossing: crossingShapes,
+    nonCrossing: nonCrossingShapes
+  };
+};
+
 const classifyDegeneracies = (vertexList: VertexList) => {
-  for (const vertex of vertexList.filter(isDegeneracy)) {
+  for (const vertex of vertexList.vertices.filter(isDegeneracy)) {
     const p = vertex.point;
 
     const ot1 = Vector.angle(Vector.from(p, vertex.neighbor.prev.point));
@@ -523,7 +697,8 @@ const classifyDegeneracies = (vertexList: VertexList) => {
   }
 };
 
-const splitSegments = (vertices: VertexList) => {
+const splitSegments = (vertexList: VertexList) => {
+  const vertices = vertexList.vertices;
   for (let i = 0; i < vertices.length; i++) {
     const current = vertices[i];
 
@@ -572,18 +747,20 @@ const splitSegments = (vertices: VertexList) => {
 };
 
 const sortIntoVertexList = (
-  pathLists: [PathList, PathList],
+  shapes: [PathList, PathList],
+  tree: [Map<Path, Hierarchy>, Map<Path, Hierarchy>],
   intersectionVertices: MultiMap<PathSegment, IntersectionVertex>
 ): [VertexList[], VertexList[]] => {
   const result: Array<VertexList[]> = [];
 
   // First, sort all vertices into one set of vertices,
   // both simple and intersection vertices
-  for (const pathList of pathLists) {
-    const pathListVertices: VertexList[] = [];
+  for (let i = 0; i < shapes.length; i++) {
+    const shape = shapes[i];
+    const interimResult: VertexList[] = [];
 
-    for (const path of pathList.all()) {
-      const vertices: VertexList = [];
+    for (const path of shape.all()) {
+      const vertices: Array<Vertex> = [];
       for (const segment of path.segments) {
         const intersections = intersectionVertices.get(segment) ?? [];
         intersections.sort((a, b) => a.alpha - b.alpha);
@@ -591,10 +768,14 @@ const sortIntoVertexList = (
         vertices.push(...intersections);
       }
 
-      pathListVertices.push(vertices);
+      interimResult.push({
+        path,
+        vertices,
+        type: mustExist(tree[i].get(path)).type
+      });
     }
 
-    result.push(pathListVertices);
+    result.push(interimResult);
   }
 
   assertTwoElements(result);
@@ -602,9 +783,9 @@ const sortIntoVertexList = (
 };
 
 const removeRedundantVertices = (
-  pathLists: [VertexList[], VertexList[]]
+  shapes: [VertexList[], VertexList[]]
 ): [VertexList[], VertexList[]] => {
-  let result: Array<VertexList[]> = pathLists;
+  let results: Array<VertexList[]> = shapes;
 
   // Process all vertices to check for redundant vertices
   // We iterate over the pairs of vertices until no more vertices have been deleted
@@ -612,8 +793,9 @@ const removeRedundantVertices = (
   do {
     deleted.clear();
 
-    for (const pathListVertices of result) {
-      for (const vertices of pathListVertices) {
+    for (const res of results) {
+      for (const entry of res) {
+        const vertices = entry.vertices;
         for (let i = 0; i < vertices.length; i++) {
           const first = vertices[i];
           const second = vertices[(i + 1) % vertices.length];
@@ -678,20 +860,24 @@ const removeRedundantVertices = (
     }
 
     // Finally remove all deleted vertices
-    result = result.map(pathListVertices =>
-      pathListVertices.map(vertices =>
-        vertices.filter(v => !deleted.has(v) && !(isIntersection(v) && deleted.has(v.neighbor!)))
-      )
+    results = results.map(res =>
+      res.map(e => ({
+        type: e.type,
+        path: e.path,
+        vertices: e.vertices.filter(
+          v => !deleted.has(v) && !(isIntersection(v) && deleted.has(v.neighbor!))
+        )
+      }))
     );
   } while (deleted.size > 0);
 
-  const r = result;
+  const r = results;
   assertTwoElements(r);
   return r;
 };
 
 // TODO: This seems a bit complicated - can it be simplified
-const arrangeSegments = (dest: VertexList[]) => {
+const arrangeSegments = (dest: Array<Vertex[]>) => {
   const paths: PathSegment[][] = [];
 
   for (const contour of dest) {
@@ -715,15 +901,15 @@ const arrangeSegments = (dest: VertexList[]) => {
 };
 
 // This is just for debugging purposes
-const assignLabels = (prefix: string, vertices: VertexList[]) => {
-  vertices.forEach((vertexList, j) =>
-    vertexList.forEach((e, i) => (e.label = `${prefix}_${j}_${i}`))
+const assignLabels = (prefix: string, shapes: VertexList[]) => {
+  shapes.forEach((vertexList, j) =>
+    vertexList.vertices.forEach((e, i) => (e.label = `${prefix}_${j}_${i}`))
   );
 };
 
 // Need to find a point that is either inside or outside - as a starting point
 const findStartingPositionNotOnPath = (
-  pVertices: VertexList,
+  pVertices: Vertex[],
   path: PathList
 ): [Vertex | undefined, number] => {
   let p0: Vertex | undefined;
@@ -841,10 +1027,10 @@ const changeVertexType = (
   NOT_IMPLEMENTED_YET();
 };
 
-const makeLinkedList = (vertices: VertexList) => {
-  for (let i = 0; i < vertices.length; i++) {
-    vertices[i].next = vertices[mod(i + 1, vertices.length)];
-    vertices[i].prev = vertices[mod(i - 1, vertices.length)];
+const makeLinkedList = (vertexList: VertexList) => {
+  for (let i = 0; i < vertexList.vertices.length; i++) {
+    vertexList.vertices[i].next = vertexList.vertices[mod(i + 1, vertexList.vertices.length)];
+    vertexList.vertices[i].prev = vertexList.vertices[mod(i - 1, vertexList.vertices.length)];
   }
 };
 
@@ -853,33 +1039,33 @@ const makeNeighbors = (v: IntersectionVertex, neighbor: IntersectionVertex) => {
   neighbor.neighbor = v;
 };
 
-const epsilon = (scale: number) => Math.max(0.1, scale * 0.01);
+const epsilon = (scale: number) => Math.max(0.1, scale * 0.1);
 
 /* INVARIANTS AND ASSERTIONS ************************************************************** */
 
 const assertVerticesAreCorrect = (
-  subjectVertices: VertexList[],
-  clipVertices: VertexList[],
+  subject: VertexList[],
+  clip: VertexList[],
   state: VertexState = 'post-clip'
 ) => {
-  subjectVertices.forEach(vertexList => vertexList.forEach(v => assertVertexIsCorrect(v, state)));
-  clipVertices.forEach(vertexList => vertexList.forEach(v => assertVertexIsCorrect(v, state)));
+  subject.forEach(vl => vl.vertices.forEach(v => assertVertexIsCorrect(v, state)));
+  clip.forEach(vl => vl.vertices.forEach(v => assertVertexIsCorrect(v, state)));
 };
 
-const assertConsistency = (subjectVertices: VertexList[], clipVertices: VertexList[]) => {
+const assertConsistency = (subject: VertexList[], clip: VertexList[]) => {
   // 1. Assert that each vertex only exists once
 
   const subjectVerticesSet = new Set<Vertex>();
-  for (const vertexList of subjectVertices) {
-    for (const vertex of vertexList) {
+  for (const vertexList of subject) {
+    for (const vertex of vertexList.vertices) {
       assert.false(subjectVerticesSet.has(vertex));
       subjectVerticesSet.add(vertex);
     }
   }
 
   const clipVerticesSet = new Set<Vertex>();
-  for (const vertexList of clipVertices) {
-    for (const vertex of vertexList) {
+  for (const vertexList of clip) {
+    for (const vertex of vertexList.vertices) {
       assert.false(clipVerticesSet.has(vertex));
       clipVerticesSet.add(vertex);
     }
@@ -888,11 +1074,12 @@ const assertConsistency = (subjectVertices: VertexList[], clipVertices: VertexLi
   // 2. Assert the linked list and neighbors
 
   const verifyLinkedListAndNeighbor = (vertexList: VertexList, set: Set<Vertex>) => {
-    for (let i = 0; i < vertexList.length; i++) {
-      const current = vertexList[i];
+    for (let i = 0; i < vertexList.vertices.length; i++) {
+      const current = vertexList.vertices[i];
 
-      const next = vertexList[(i + 1) % vertexList.length];
-      const prev = vertexList[(i + vertexList.length - 1) % vertexList.length];
+      const next = vertexList.vertices[(i + 1) % vertexList.vertices.length];
+      const prev =
+        vertexList.vertices[(i + vertexList.vertices.length - 1) % vertexList.vertices.length];
 
       assert.true(current.next === next);
       assert.true(current.prev === prev);
@@ -915,26 +1102,24 @@ const assertConsistency = (subjectVertices: VertexList[], clipVertices: VertexLi
     }
   };
 
-  for (const vertexList of subjectVertices) {
+  for (const vertexList of subject) {
     verifyLinkedListAndNeighbor(vertexList, clipVerticesSet);
   }
 
-  for (const vertexList of clipVertices) {
+  for (const vertexList of clip) {
     verifyLinkedListAndNeighbor(vertexList, subjectVerticesSet);
   }
 };
 
-const assertPathSegmentsAreConnected = (
-  subjectVertices: VertexList[],
-  clipVertices: VertexList[]
-) => {
-  assertVerticesAreCorrect(subjectVertices, clipVertices);
+const assertPathSegmentsAreConnected = (subject: VertexList[], clip: VertexList[]) => {
+  assertVerticesAreCorrect(subject, clip);
 
-  for (const list of [subjectVertices, clipVertices]) {
+  for (const list of [subject, clip]) {
     for (const vertexList of list) {
-      for (let i = 0; i < vertexList.length; i++) {
-        const current = vertexList[i];
-        const next = vertexList[(i + 1) % vertexList.length];
+      const vertices = vertexList.vertices;
+      for (let i = 0; i < vertices.length; i++) {
+        const current = vertices[i];
+        const next = vertices[(i + 1) % vertices.length];
         assert.true(
           Point.isEqual(current.segment.end, next.point, epsilon(current.segment.length()))
         );

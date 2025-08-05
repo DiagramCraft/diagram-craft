@@ -46,10 +46,46 @@ export const ComplexShapes: Story = {
   args: TEST_CASES.ComplexShapes()
 };
 
-/*export const ComplexShapes2: Story = {
+export const ComplexShapes2: Story = {
   args: TEST_CASES.ComplexShapes2()
-};*/
+};
 
 export const TriangleInsideRectangle: Story = {
   args: TEST_CASES.TriangleInsideRectangle()
+};
+
+export const DiamondOverlappingRectangle: Story = {
+  args: TEST_CASES.DiamondOverlappingRectangle()
+};
+
+export const DiamondInsideRectangle: Story = {
+  args: TEST_CASES.DiamondInsideRectangle()
+};
+
+export const NonOverlappingContours: Story = {
+  args: TEST_CASES.NonOverlappingContours()
+};
+
+export const MoreNonOverlappingContours: Story = {
+  args: TEST_CASES.MoreNonOverlappingContours()
+};
+
+export const ConcentricContours: Story = {
+  args: TEST_CASES.ConcentricContours()
+};
+
+export const MoreConcentricContours: Story = {
+  args: TEST_CASES.MoreConcentricContours()
+};
+
+export const CircleOverlappingHole: Story = {
+  args: TEST_CASES.CircleOverlappingHole()
+};
+
+export const RectWithHoleOverRectWithHole: Story = {
+  args: TEST_CASES.RectWithHoleOverRectWithHole()
+};
+
+export const CurveOverlappingRect: Story = {
+  args: TEST_CASES.CurveOverlappingRect()
 };

@@ -243,8 +243,13 @@ export class Path {
   }
 
   isOn(p: Point) {
+    const epsilon = 0.0001;
     const pp = this.projectPoint(p);
-    return Point.isEqual(pp.point, p, 0.001) && pp.segmentT >= 0 && pp.segmentT <= 1;
+    return (
+      Point.isEqual(pp.point, p, epsilon) &&
+      pp.segmentT >= 0 - epsilon &&
+      pp.segmentT <= 1 + epsilon
+    );
   }
 
   length() {

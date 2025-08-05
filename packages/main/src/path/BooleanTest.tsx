@@ -9,6 +9,7 @@ import {
 import { Point } from '@diagram-craft/geometry/point';
 import { Path } from '@diagram-craft/geometry/path';
 import { PathList } from '@diagram-craft/geometry/pathList';
+import { constructPathTree } from '@diagram-craft/geometry/pathUtils';
 
 export const BooleanTest = (props: {
   p1: PathListBuilder | PathList;
@@ -23,7 +24,9 @@ export const BooleanTest = (props: {
   const cp1 = p1;
   const cp2 = p2;
 
-  const [subject, clip] = getClipVertices(cp1, cp2);
+  const subjectTree = constructPathTree(cp1.all());
+  const clipTree = constructPathTree(cp2.all());
+  const [subject, clip] = getClipVertices(cp1, cp2, subjectTree, clipTree);
 
   classifyClipVertices([subject, clip], [cp1, cp2], [false, false]);
 
@@ -47,7 +50,7 @@ export const BooleanTest = (props: {
         seg.segments.every(
           s =>
             subject
-              .flatMap(e => e)
+              .flatMap(e => e.vertices)
               .some(v => Point.isEqual(v.point, s.start) || Point.isEqual(v.point, s.end)) ||
             cp1.isInside(s.start)
         )
@@ -58,7 +61,7 @@ export const BooleanTest = (props: {
         seg.segments.every(
           s =>
             clip
-              .flatMap(e => e)
+              .flatMap(e => e.vertices)
               .some(v => Point.isEqual(v.point, s.start) || Point.isEqual(v.point, s.end)) ||
             cp2.isInside(s.start)
         )
@@ -139,7 +142,7 @@ export const BooleanTest = (props: {
             />
 
             {subject
-              .flatMap(e => e)
+              .flatMap(e => e.vertices)
               .map((s, idx) => {
                 const p = new Path(s.segment.start, s.segment.raw());
                 return (
@@ -154,7 +157,7 @@ export const BooleanTest = (props: {
               })}
 
             {subject
-              .flatMap(e => e)
+              .flatMap(e => e.vertices)
               .map((s, idx) => (
                 <circle
                   key={idx}
@@ -168,16 +171,16 @@ export const BooleanTest = (props: {
               ))}
 
             <circle
-              cx={subject.flatMap(e => e)[0].point.x}
-              cy={subject.flatMap(e => e)[0].point.y}
+              cx={subject.flatMap(e => e.vertices)[0].point.x}
+              cy={subject.flatMap(e => e.vertices)[0].point.y}
               r={5 / scale}
               strokeWidth={1 / scale}
               stroke={'red'}
               fill={'none'}
             />
             <circle
-              cx={subject.flatMap(e => e)[1].point.x}
-              cy={subject.flatMap(e => e)[1].point.y}
+              cx={subject.flatMap(e => e.vertices)[1].point.x}
+              cy={subject.flatMap(e => e.vertices)[1].point.y}
               r={5 / scale}
               stroke={'green'}
               strokeWidth={1 / scale}
@@ -185,7 +188,7 @@ export const BooleanTest = (props: {
             />
 
             {subject
-              .flatMap(e => e)
+              .flatMap(e => e.vertices)
               .map((s, idx) => {
                 const p = new Path(s.segment.start, s.segment.raw());
                 return (
@@ -228,7 +231,7 @@ export const BooleanTest = (props: {
             />
 
             {clip
-              .flatMap(e => e)
+              .flatMap(e => e.vertices)
               .map((s, idx) => {
                 const p = new Path(s.segment.start, s.segment.raw());
                 return (
@@ -243,7 +246,7 @@ export const BooleanTest = (props: {
               })}
 
             {clip
-              .flatMap(e => e)
+              .flatMap(e => e.vertices)
               .map((s, idx) => (
                 <circle
                   key={idx}
@@ -257,16 +260,16 @@ export const BooleanTest = (props: {
               ))}
 
             <circle
-              cx={clip.flatMap(e => e)[0].point.x}
-              cy={clip.flatMap(e => e)[0].point.y}
+              cx={clip.flatMap(e => e.vertices)[0].point.x}
+              cy={clip.flatMap(e => e.vertices)[0].point.y}
               r={5 / scale}
               stroke={'red'}
               strokeWidth={1 / scale}
               fill={'none'}
             />
             <circle
-              cx={clip.flatMap(e => e)[1].point.x}
-              cy={clip.flatMap(e => e)[1].point.y}
+              cx={clip.flatMap(e => e.vertices)[1].point.x}
+              cy={clip.flatMap(e => e.vertices)[1].point.y}
               r={5 / scale}
               stroke={'green'}
               strokeWidth={1 / scale}
@@ -274,7 +277,7 @@ export const BooleanTest = (props: {
             />
 
             {clip
-              .flatMap(e => e)
+              .flatMap(e => e.vertices)
               .map((s, idx) => {
                 const p = new Path(s.segment.start, s.segment.raw());
                 return (

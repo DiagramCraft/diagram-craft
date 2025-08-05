@@ -66,7 +66,47 @@ test.describe('VectorBoolean', () => {
     await storybookScreenshotCheck(page, 'vectorboolean', 'complex-shapes');
   });
 
+  test('Complex Shapes 2', async ({ page }) => {
+    await storybookScreenshotCheck(page, 'vectorboolean', 'complex-shapes-2');
+  });
+
   test('Triangle Inside Rectangle', async ({ page }) => {
     await storybookScreenshotCheck(page, 'vectorboolean', 'triangle-inside-rectangle');
+  });
+
+  test('Diamond Overlapping Rectangle', async ({ page }) => {
+    await storybookScreenshotCheck(page, 'vectorboolean', 'diamond-overlapping-rectangle');
+  });
+
+  test('Diamond Inside Rectangle', async ({ page }) => {
+    await storybookScreenshotCheck(page, 'vectorboolean', 'diamond-inside-rectangle');
+  });
+
+  test('Non Overlapping Contours', async ({ page }) => {
+    await storybookScreenshotCheck(page, 'vectorboolean', 'non-overlapping-contours');
+  });
+
+  test('More Non Overlapping Contours', async ({ page }) => {
+    await storybookScreenshotCheck(page, 'vectorboolean', 'more-non-overlapping-contours');
+  });
+
+  test('Concentric Contours', async ({ page }) => {
+    await storybookScreenshotCheck(page, 'vectorboolean', 'concentric-contours');
+  });
+
+  test('More Concentric Contours', async ({ page }) => {
+    await storybookScreenshotCheck(page, 'vectorboolean', 'more-concentric-contours');
+  });
+
+  test('Circle Overlapping Hole', async ({ page }) => {
+    await storybookScreenshotCheck(page, 'vectorboolean', 'circle-overlapping-hole');
+  });
+
+  test('Rect With Hole Over Rect With Hole', async ({ page }) => {
+    await storybookScreenshotCheck(page, 'vectorboolean', 'rect-with-hole-over-rect-with-hole');
+  });
+
+  test('Curve Overlapping Rect', async ({ page }) => {
+    await storybookScreenshotCheck(page, 'vectorboolean', 'curve-overlapping-rect');
   });
 });

@@ -1,19 +1,15 @@
-import { fromUnitLCS, PathListBuilder } from './pathListBuilder';
+import { PathListBuilder } from './pathListBuilder';
 import { _p } from './point';
 import { applyBooleanOperation } from './pathClip';
 import { PathList } from './pathList';
 
 const makeCircle = (cx: number, cy: number, r: number) => {
-  const b = new PathListBuilder().withTransform(
-    fromUnitLCS({ x: cx - r, y: cy - r, w: 2 * r, h: 2 * r, r: 0 })
-  );
-  //unitCoordinateSystem({ x: cx - r, y: cy - r, w: 2 * r, h: 2 * r, r: 0 })
-  //);
-  b.moveTo(_p(0.5, 0));
-  b.arcTo(_p(1, 0.5), 0.5, 0.5, 0, 0, 1);
-  b.arcTo(_p(0.5, 1), 0.5, 0.5, 0, 0, 1);
-  b.arcTo(_p(0, 0.5), 0.5, 0.5, 0, 0, 1);
-  b.arcTo(_p(0.5, 0), 0.5, 0.5, 0, 0, 1);
+  const b = new PathListBuilder();
+  b.moveTo(_p(cx, cy - r));
+  b.arcTo(_p(cx + r, cy), r, r, 0, 0, 1);
+  b.arcTo(_p(cx, cy + r), r, r, 0, 0, 1);
+  b.arcTo(_p(cx - r, cy), r, r, 0, 0, 1);
+  b.arcTo(_p(cx, cy - r), r, r, 0, 0, 1);
   return b;
 };
 
@@ -133,6 +129,123 @@ export const TEST_CASES = {
     return {
       p1: b,
       p2: makeRect(100, 100, 300, 300)
+    };
+  },
+  DiamondOverlappingRectangle: () => {
+    const b = makeRect(50, 50, 200, 200);
+    const a = new PathListBuilder();
+    a.moveTo(_p(50, 250));
+    a.lineTo(_p(150, 400));
+    a.lineTo(_p(250, 250));
+    a.lineTo(_p(150, 100));
+    a.lineTo(_p(50, 250));
+    return {
+      p1: b,
+      p2: a
+    };
+  },
+  DiamondInsideRectangle: () => {
+    const b = makeRect(100, 100, 300, 300);
+    const a = new PathListBuilder();
+    a.moveTo(_p(100, 250));
+    a.lineTo(_p(250, 400));
+    a.lineTo(_p(400, 250));
+    a.lineTo(_p(250, 100));
+    a.lineTo(_p(100, 250));
+    return {
+      p1: a,
+      p2: b
+    };
+  },
+  NonOverlappingContours: () => {
+    const a = makeRect(100, 200, 200, 200);
+
+    const b = makeCircle(200, 300, 85).append(makeCircle(200, 95, 85));
+    return {
+      p1: a,
+      p2: b
+    };
+  },
+  MoreNonOverlappingContours: () => {
+    const a = makeRect(100, 200, 200, 200).append(makeRect(175, 70, 50, 50));
+
+    const b = makeCircle(200, 300, 85).append(makeCircle(200, 95, 85));
+    return {
+      p1: a,
+      p2: b
+    };
+  },
+  ConcentricContours: () => {
+    const a = makeRect(50, 50, 350, 300).append(makeCircle(210, 200, 125));
+    const b = makeCircle(210, 200, 140);
+    return {
+      p1: a,
+      p2: b
+    };
+  },
+  MoreConcentricContours: () => {
+    const a = PathListBuilder.fromPathList(
+      makeRect(50, 50, 350, 300)
+        .append(makeCircle(210, 200, 125))
+        .getPaths()
+        .normalize()
+    );
+    const b = makeCircle(210, 200, 70);
+    return {
+      p1: a,
+      p2: b
+    };
+  },
+  CircleOverlappingHole: () => {
+    const a = PathListBuilder.fromPathList(
+      makeRect(50, 50, 350, 300)
+        .append(makeCircle(210, 200, 125))
+        .getPaths()
+        .normalize()
+    );
+    const b = makeCircle(180, 180, 125);
+    return {
+      p1: a,
+      p2: b
+    };
+  },
+  RectWithHoleOverRectWithHole: () => {
+    const a = PathListBuilder.fromPathList(
+      makeRect(50, 50, 350, 300)
+        .append(makeCircle(210, 200, 125))
+        .getPaths()
+        .normalize()
+    );
+    const b = PathListBuilder.fromPathList(
+      makeRect(225, 65, 160, 160)
+        .append(makeCircle(305, 145, 60))
+        .getPaths()
+        .normalize()
+    );
+    return {
+      p1: a,
+      p2: b
+    };
+  },
+  CurveOverlappingRect: () => {
+    const top = 65.0 + 160.0 / 3.0;
+    const a = new PathListBuilder()
+      .moveTo(_p(40, top))
+      .lineTo(_p(410, top))
+      .lineTo(_p(410, 50))
+      .lineTo(_p(40, 50))
+      .lineTo(_p(40, top));
+
+    const b = new PathListBuilder()
+      .moveTo(_p(335, 203))
+      .cubicTo(_p(335, 200), _p(335, 202), _p(335, 201))
+      .cubicTo(_p(270, 90), _p(335, 153), _p(309, 111))
+      .cubicTo(_p(240, 145), _p(252, 102), _p(240, 122))
+      .cubicTo(_p(305, 210), _p(240, 181), _p(269, 210))
+      .cubicTo(_p(335, 203), _p(316, 210), _p(326, 207));
+    return {
+      p1: a,
+      p2: b
     };
   }
 };

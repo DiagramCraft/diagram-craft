@@ -1,15 +1,25 @@
 import { Path } from './path';
-import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+import { assert } from '@diagram-craft/utils/assert';
 import { Box } from './box';
-import { MultiMap } from '@diagram-craft/utils/multimap';
 import { Point } from './point';
 import { LengthOffsetOnPath, TimeOffsetOnSegment } from './pathPosition';
+import { isDebug } from '@diagram-craft/utils/debug';
+import { constructPathTree } from './pathUtils';
 
 type ProjectedPointOnPathList = {
   offset: TimeOffsetOnSegment & LengthOffsetOnPath;
   point: Point;
   pathIdx: number;
 };
+
+const FAR_DISTANCE = 1000000;
+
+const RAY_OFFSETS: [number, number][] = [
+  [17, 25],
+  [-13, 19],
+  [-7, -11],
+  [11, -17]
+];
 
 export class PathList {
   constructor(private paths: Path[]) {}
@@ -38,47 +48,30 @@ export class PathList {
   normalize() {
     // TODO: First we remove all self-intersections
 
-    // Secondly, we need to order all paths in a tree structure based on which contains which
-    const containedWithin = new MultiMap<number, number>();
-    for (let a = 0; a < this.paths.length; a++) {
-      for (let b = 0; b < this.paths.length; b++) {
-        if (a === b) continue;
-        const pa = this.paths[a];
-        const pb = this.paths[b];
-        if (pa.segments.map(s => s.start).every(p => pb.isInside(p) || pb.isOn(p))) {
-          containedWithin.add(a, b);
-        }
-      }
-    }
+    const classification = constructPathTree(this.paths);
 
     const dest: Path[] = [];
 
-    let maxLoop = 100;
-    let state = true;
-    const queue = [...this.paths.map((_, i) => i)];
-    while (queue.length > 0) {
-      const removed: number[] = [];
-      for (const i of queue) {
-        const p = this.paths[i];
-        if (!containedWithin.has(i)) {
-          removed.push(i);
+    for (let depth = 0; depth < this.paths.length; depth++) {
+      let found = false;
+
+      for (const p of this.paths) {
+        const c = classification.get(p);
+        if (isDebug()) console.log('found', c);
+        if (c && c.depth === depth) {
+          const state = c?.type === 'outline';
 
           if (p.isClockwise() && state) dest.push(p.reverse());
           else if (!p.isClockwise() && !state) dest.push(p.reverse());
           else {
             dest.push(p);
           }
+
+          found = true;
         }
       }
 
-      removed.forEach(j => queue.splice(queue.indexOf(j), 1));
-      removed.forEach(r => queue.forEach(q => containedWithin.remove(q, r)));
-
-      state = !state;
-
-      if (maxLoop-- === 0) {
-        VERIFY_NOT_REACHED('Max loop reached');
-      }
+      if (!found) break;
     }
 
     this.paths = dest;
@@ -109,17 +102,21 @@ export class PathList {
   }
 
   isInside(p: Point): boolean {
-    // TODO: Check multiple rays - or make it more "unique" - or check that intersection is not on endpoints
-    const line = new Path(p, [['L', Number.MAX_SAFE_INTEGER / 17, Number.MAX_SAFE_INTEGER / 25]]);
-    const intersections = this.all().flatMap(p => p.intersections(line));
-    return intersections.length % 2 !== 0;
+    for (const [dx, dy] of RAY_OFFSETS) {
+      const line = new Path(p, [['L', dx * FAR_DISTANCE, dy * FAR_DISTANCE]]);
+      const intersections = this.all().flatMap(p => p.intersections(line));
+      if (intersections.length % 2 === 0) return false;
+    }
+    return true;
   }
 
   isInHole(p: Point): boolean {
-    // TODO: Check multiple rays - or make it more "unique" - or check that intersection is not on endpoints
-    const line = new Path(p, [['L', Number.MAX_SAFE_INTEGER / 17, Number.MAX_SAFE_INTEGER / 25]]);
-    const intersections = this.all().flatMap(p => p.intersections(line));
-    return intersections.length > 1 && intersections.length % 2 === 0;
+    for (const [dx, dy] of RAY_OFFSETS) {
+      const line = new Path(p, [['L', dx * FAR_DISTANCE, dy * FAR_DISTANCE]]);
+      const intersections = this.all().flatMap(p => p.intersections(line));
+      if (intersections.length === 0 || intersections.length % 2 !== 0) return false;
+    }
+    return true;
   }
 
   isOn(p: Point): boolean {
