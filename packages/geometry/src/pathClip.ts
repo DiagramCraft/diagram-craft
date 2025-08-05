@@ -1,14 +1,20 @@
 import { Point } from './point';
 import { LineSegment, PathSegment } from './pathSegment';
-import { assert, NOT_IMPLEMENTED_YET, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+import {
+  assert,
+  mustExist,
+  NOT_IMPLEMENTED_YET,
+  VERIFY_NOT_REACHED
+} from '@diagram-craft/utils/assert';
 import { Path } from './path';
 import { Vector } from './vector';
 import { MultiMap } from '@diagram-craft/utils/multimap';
 import { isSame, mod } from '@diagram-craft/utils/math';
 import { PathList } from './pathList';
 import { Random } from '@diagram-craft/utils/random';
-import { range, sortBy, unique } from '@diagram-craft/utils/array';
+import { range, sortBy } from '@diagram-craft/utils/array';
 import { newid } from '@diagram-craft/utils/id';
+import { constructPathTree } from './pathUtils';
 
 /* CORE TYPES ***************************************************************************** */
 
@@ -115,19 +121,16 @@ export const applyBooleanOperation = (
       case 'A not B': {
         const dest: PathList[] = [];
 
-        const nonCrossingRelations = relations.filter(e => !e.crossing);
-        for (const subshape of vertices[0]) {
-          if (nonCrossingRelations.some(e => e.subject === subshape && e.subjectInClip)) continue;
-
-          const clipsInside = nonCrossingRelations.filter(
-            e => e.subject === subshape && e.clipInSubject
-          );
-          if (clipsInside.length > 0) {
-            dest.push(new PathList([subshape.path, ...clipsInside.map(e => e.clip.path)]));
-          } else if (!relations.some(e => e.subject === subshape && e.crossing)) {
-            dest.push(new PathList([subshape.path]));
-          }
-        }
+        const disjointResult = processDisjointPathsHierarchy(subject, clip, groups, type =>
+          [
+            'ROOT/subject-outline',
+            'ROOT/subject-hole',
+            'subject-outline/clip-outline',
+            'subject-outline/clip-hole',
+            'subject-outline/subject-hole'
+          ].includes(type)
+        );
+        if (disjointResult.length > 0) dest.push(new PathList(disjointResult));
 
         const destPath: Array<Path> = [];
         for (const group of groups.crossing) {
@@ -139,19 +142,16 @@ export const applyBooleanOperation = (
       case 'B not A': {
         const dest: PathList[] = [];
 
-        const nonCrossingRelations = relations.filter(e => !e.crossing);
-        for (const subshape of vertices[1]) {
-          if (nonCrossingRelations.some(e => e.clip === subshape && e.clipInSubject)) continue;
-
-          const subjectsInside = nonCrossingRelations.filter(
-            e => e.clip === subshape && e.subjectInClip
-          );
-          if (subjectsInside.length > 0) {
-            dest.push(new PathList([subshape.path, ...subjectsInside.map(e => e.subject.path)]));
-          } else if (!relations.some(e => e.clip === subshape && e.crossing)) {
-            dest.push(new PathList([subshape.path]));
-          }
-        }
+        const disjointResult = processDisjointPathsHierarchy(subject, clip, groups, type =>
+          [
+            'ROOT/clip-outline',
+            'ROOT/clip-hole',
+            'clip-outline/subject-outline',
+            'clip-outline/subject-hole',
+            'clip-outline/clip-hole'
+          ].includes(type)
+        );
+        if (disjointResult.length > 0) dest.push(new PathList(disjointResult));
 
         const destPath: Array<Path> = [];
         for (const group of groups.crossing) {
@@ -531,6 +531,49 @@ const clipVertices = (shapes: [Array<VertexList>, Array<VertexList>]) => {
 
 /* SUPPORTING THE CORE ALGORITHM ********************************************************** */
 
+const processDisjointPathsHierarchy = (
+  subject: PathList,
+  clip: PathList,
+  groups: ReturnType<typeof groupSubShapes>,
+  includePath: (type: string) => boolean
+) => {
+  const disjointHierarchy = Array.from(
+    constructPathTree(Array.from(groups.nonCrossing).map(e => e.path)).entries()
+  ).reverse();
+
+  const paths: Array<Path> = [];
+  if (disjointHierarchy.length === 0) return paths;
+
+  const subjectTree = constructPathTree(subject.all());
+  const clipTree = constructPathTree(clip.all());
+
+  const typeString = (p: Path) =>
+    subjectTree.has(p) ? `subject-${subjectTree.get(p)?.type}` : `clip-${clipTree.get(p)?.type}`;
+
+  for (const [path, hierarchy] of disjointHierarchy) {
+    if (hierarchy.depth !== 0) continue;
+
+    if (includePath(`ROOT/${typeString(path)}`)) {
+      paths.push(path);
+    }
+  }
+
+  let depth = disjointHierarchy[0][1].depth;
+  while (depth >= 1) {
+    for (const [path, hierarchy] of disjointHierarchy) {
+      if (hierarchy.depth !== depth) continue;
+
+      const parent = mustExist(hierarchy.parent);
+      if (includePath(`${typeString(parent)}/${typeString(path)}`)) {
+        paths.push(path);
+      }
+    }
+    depth--;
+  }
+
+  return paths;
+};
+
 type SubShapeRelation = {
   subject: VertexList;
   clip: VertexList;
@@ -590,8 +633,8 @@ const groupSubShapes = (entries: SubShapeRelation[]) => {
   }
 
   const crossingShapesSet = new Set(crossingShapes.flat(2));
-  const nonCrossingShapes = unique(entries.flatMap(e => [e.subject, e.clip])).filter(
-    v => !crossingShapesSet.has(v)
+  const nonCrossingShapes = new Set(
+    entries.flatMap(e => [e.subject, e.clip]).filter(v => !crossingShapesSet.has(v))
   );
 
   return {

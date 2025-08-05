@@ -1,54 +1,60 @@
 import type { Path } from './path';
 import { MultiMap } from '@diagram-craft/utils/multimap';
-import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 
-type Classification = {
+type Type = 'outline' | 'hole';
+
+export type Hierarchy = {
   depth: number;
-  type: 'outline' | 'hole';
+  type: Type;
+  parent: Path | undefined;
 };
 
-export const classifyPathsAsHolesAndOutlines = (paths: Path[]) => {
-  const containedWithin = new MultiMap<number, number>();
-  for (let a = 0; a < paths.length; a++) {
-    for (let b = 0; b < paths.length; b++) {
-      if (a === b) continue;
-      const pa = paths[a];
-      const pb = paths[b];
-      if (pa.segments.map(s => s.start).every(p => pb.isInside(p) || pb.isOn(p))) {
-        containedWithin.add(a, b);
+const hasSamePath = (existing: number[], path: number[]) => {
+  if (existing.length !== path.length) return false;
+  for (let i = 0; i < existing.length; i++) {
+    if (existing[i] !== path[i]) return false;
+  }
+  return true;
+};
+
+export const constructPathTree = (paths: Path[]) => {
+  const childToParents = new MultiMap<number, number>();
+  for (let child = 0; child < paths.length; child++) {
+    for (let parent = 0; parent < paths.length; parent++) {
+      if (child === parent) continue;
+
+      if (
+        paths[child].segments
+          .map(s => s.start)
+          .every(p => paths[parent].isInside(p) || paths[parent].isOn(p))
+      ) {
+        childToParents.add(child, parent);
       }
     }
   }
 
-  const dest = new Map<Path, Classification>();
+  const dest = new Map<Path, Hierarchy>();
 
-  let type: Classification = { type: 'outline', depth: 0 };
+  const classifyChildren = (path: number[], depth: number, type: Type) => {
+    const parent = path.length === 0 ? undefined : paths[path.at(-1)!];
+    const sortedPath = path.toSorted();
 
-  let maxLoop = 100;
-  const queue = [...paths.map((_, i) => i)];
-  while (queue.length > 0) {
-    const removed: number[] = [];
-    for (const i of queue) {
-      const p = paths[i];
-      if (!containedWithin.has(i)) {
-        removed.push(i);
+    const children: number[] = [];
+    for (let childIdx = 0; childIdx < paths.length; childIdx++) {
+      const sortedParents = childToParents.get(childIdx).toSorted();
 
-        dest.set(p, type);
+      if (hasSamePath(sortedParents, sortedPath)) {
+        dest.set(paths[childIdx], { depth, type, parent });
+        children.push(childIdx);
       }
     }
 
-    removed.forEach(j => queue.splice(queue.indexOf(j), 1));
-    removed.forEach(r => queue.forEach(q => containedWithin.remove(q, r)));
-
-    type =
-      type.type === 'outline'
-        ? { type: 'hole', depth: type.depth + 1 }
-        : { type: 'outline', depth: type.depth + 1 };
-
-    if (maxLoop-- === 0) {
-      VERIFY_NOT_REACHED('Max loop reached');
+    for (const c of children) {
+      classifyChildren([...path, c], depth + 1, type === 'outline' ? 'hole' : 'outline');
     }
-  }
+  };
+
+  classifyChildren([], 0, 'outline');
 
   return dest;
 };

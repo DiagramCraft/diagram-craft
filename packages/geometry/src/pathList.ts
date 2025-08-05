@@ -4,7 +4,7 @@ import { Box } from './box';
 import { Point } from './point';
 import { LengthOffsetOnPath, TimeOffsetOnSegment } from './pathPosition';
 import { isDebug } from '@diagram-craft/utils/debug';
-import { classifyPathsAsHolesAndOutlines } from './pathUtils';
+import { constructPathTree } from './pathUtils';
 
 type ProjectedPointOnPathList = {
   offset: TimeOffsetOnSegment & LengthOffsetOnPath;
@@ -39,7 +39,7 @@ export class PathList {
   normalize() {
     // TODO: First we remove all self-intersections
 
-    const classification = classifyPathsAsHolesAndOutlines(this.paths);
+    const classification = constructPathTree(this.paths);
 
     const dest: Path[] = [];
 
