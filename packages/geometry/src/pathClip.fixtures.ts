@@ -23,8 +23,15 @@ const makeRect = (x: number, y: number, w: number, h: number) => {
   return b;
 };
 
-export const TEST_CASES = {
-  _OnEdge: () => ({
+/**
+ * These fixtures are all taken and ported from https://github.com/lrtitze/Swift-VectorBoolean
+ *
+ * The algorithm, however, is implemented indepedently and based directly on
+ * the original paper https://www.inf.usi.ch/hormann/papers/Greiner.1998.ECO.pdf
+ */
+
+export const EXTRA_TEST_CASES = {
+  OnEdge: () => ({
     p1: makeRect(0, 0, 100, 100),
     p2: new PathListBuilder()
       .moveTo(_p(-30, 10))
@@ -33,7 +40,7 @@ export const TEST_CASES = {
       .lineTo(_p(0, 80))
       .lineTo(_p(-30, 10))
   }),
-  _OnEdge2: () => ({
+  OnEdge2: () => ({
     p1: makeRect(0, 0, 100, 100),
     p2: new PathListBuilder()
       .moveTo(_p(10, -10))
@@ -42,10 +49,25 @@ export const TEST_CASES = {
       .lineTo(_p(0, 80))
       .lineTo(_p(10, -10))
   }),
-  _NonIntersecting: () => ({
+  NonIntersecting: () => ({
     p1: makeRect(20, 20, 30, 30),
     p2: makeRect(70, 70, 40, 40)
   }),
+  CircleInRectangleInverted: () => ({
+    p2: makeCircle(210, 200, 125),
+    p1: makeRect(50, 50, 350, 300)
+  }),
+  RightTriangleOverRectangle: () => ({
+    p2: new PathListBuilder()
+      .moveTo(_p(100, 0))
+      .lineTo(_p(100, 100))
+      .lineTo(_p(0, 100))
+      .lineTo(_p(100, 0)),
+    p1: makeRect(0, 0, 100, 100)
+  })
+};
+
+export const VECTOR_BOOLEAN_TEST_CASES = {
   CircleOverlappingRectangle: () => ({
     p1: makeRect(50, 50, 300, 200),
     p2: makeCircle(355, 240, 125)
@@ -53,18 +75,6 @@ export const TEST_CASES = {
   CircleInRectangle: () => ({
     p1: makeCircle(210, 200, 125),
     p2: makeRect(50, 50, 350, 300)
-  }),
-  _CircleInRectangleInverted: () => ({
-    p2: makeCircle(210, 200, 125),
-    p1: makeRect(50, 50, 350, 300)
-  }),
-  _RightTriangleOverRectangle: () => ({
-    p2: new PathListBuilder()
-      .moveTo(_p(100, 0))
-      .lineTo(_p(100, 100))
-      .lineTo(_p(0, 100))
-      .lineTo(_p(100, 0)),
-    p1: makeRect(0, 0, 100, 100)
   }),
   RectangleInCircle: () => ({
     p1: makeRect(150, 150, 150, 150),
@@ -246,6 +256,24 @@ export const TEST_CASES = {
     return {
       p1: a,
       p2: b
+    };
+  }
+};
+
+export const VECTOR_BOOLEAN_DEBUG_TEST_CASES = {
+  Debug: () => {
+    const p1 = new PathList(
+      applyBooleanOperation(
+        makeRect(50, 50, 250, 200).getPaths(),
+        makeCircle(275, 275, 125).getPaths(),
+        'A union B'
+      ).flatMap(p => p.all())
+    );
+
+    const p2 = makeCircle(210, 110, 20);
+    return {
+      p1,
+      p2
     };
   }
 };

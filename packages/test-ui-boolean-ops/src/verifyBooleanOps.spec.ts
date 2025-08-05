@@ -110,3 +110,9 @@ test.describe('VectorBoolean', () => {
     await storybookScreenshotCheck(page, 'vectorboolean', 'curve-overlapping-rect');
   });
 });
+
+test.describe('VectorBooleanDebug', () => {
+  test('Debug', async ({ page }) => {
+    await storybookScreenshotCheck(page, 'vectorbooleandebug', 'debug');
+  });
+});
