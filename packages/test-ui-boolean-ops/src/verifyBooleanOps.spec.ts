@@ -93,4 +93,8 @@ test.describe('VectorBoolean', () => {
   test('Concentric Contours', async ({ page }) => {
     await storybookScreenshotCheck(page, 'vectorboolean', 'concentric-contours');
   });
+
+  test('More Concentric Contours', async ({ page }) => {
+    await storybookScreenshotCheck(page, 'vectorboolean', 'more-concentric-contours');
+  });
 });

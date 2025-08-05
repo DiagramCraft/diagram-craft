@@ -106,17 +106,28 @@ export const applyBooleanOperation = (
 
     switch (operation) {
       case 'A union B': {
-        const dest: Path[] = [];
+        const dest: PathList[] = [];
 
-        for (const shape of groups.nonCrossing) {
-          if (!isShapeInsideOtherShape(shape, relations)) dest.push(shape.path);
-        }
+        const disjointResult = processDisjointPathsHierarchy(subject, clip, groups, type =>
+          [
+            'clip-hole/subject-outline',
+            'subject-hole/clip-outline',
+            'clip-outline/subject-hole',
+            'clip-outline/clip-hole',
+            'subject-outline/clip-hole',
+            'subject-outline/subject-hole',
+            'ROOT/clip-outline',
+            'ROOT/subject-outline'
+          ].includes(type)
+        );
+        if (disjointResult.length > 0) dest.push(new PathList(disjointResult));
 
+        const destPath: Array<Path> = [];
         for (const group of groups.crossing) {
           classifyClipVertices(group, [false, false]);
-          dest.push(...clipVertices(group).all());
+          destPath.push(...clipVertices(group).all());
         }
-        return [new PathList(dest)];
+        return [...dest, ...(destPath.length > 0 ? [new PathList(destPath)] : [])];
       }
       case 'A not B': {
         const dest: PathList[] = [];
@@ -124,10 +135,10 @@ export const applyBooleanOperation = (
         const disjointResult = processDisjointPathsHierarchy(subject, clip, groups, type =>
           [
             'ROOT/subject-outline',
-            'ROOT/subject-hole',
             'subject-outline/clip-outline',
             'subject-outline/clip-hole',
-            'subject-outline/subject-hole'
+            'subject-outline/subject-hole',
+            'clip-hole/subject-outline'
           ].includes(type)
         );
         if (disjointResult.length > 0) dest.push(new PathList(disjointResult));
@@ -145,10 +156,10 @@ export const applyBooleanOperation = (
         const disjointResult = processDisjointPathsHierarchy(subject, clip, groups, type =>
           [
             'ROOT/clip-outline',
-            'ROOT/clip-hole',
             'clip-outline/subject-outline',
             'clip-outline/subject-hole',
-            'clip-outline/clip-hole'
+            'clip-outline/clip-hole',
+            'subject-hole/clip-outline'
           ].includes(type)
         );
         if (disjointResult.length > 0) dest.push(new PathList(disjointResult));
@@ -161,17 +172,29 @@ export const applyBooleanOperation = (
         return [...dest, ...(destPath.length > 0 ? [new PathList(destPath)] : [])];
       }
       case 'A intersection B': {
-        const dest: Path[] = [];
+        const dest: PathList[] = [];
 
-        for (const shape of groups.nonCrossing) {
-          if (isShapeInsideOtherShape(shape, relations)) dest.push(shape.path);
-        }
+        const disjointResult = processDisjointPathsHierarchy(subject, clip, groups, type =>
+          [
+            'clip-outline/subject-outline',
+            'clip-outline/subject-hole',
+            'subject-outline/clip-outline',
+            'subject-outline/clip-hole'
+          ].includes(type)
+        );
+        if (disjointResult.length > 0) dest.push(new PathList(disjointResult));
 
+        const destPath: Array<Path> = [];
         for (const group of groups.crossing) {
           classifyClipVertices(group, [true, true]);
-          dest.push(...clipVertices(group).all());
+          destPath.push(...clipVertices(group).all());
         }
-        return dest.flatMap(e => e.segments).length > 0 ? [new PathList(dest)] : [];
+        return [
+          ...dest,
+          ...(destPath.length > 0 && destPath.flatMap(e => e.segments).length > 0
+            ? [new PathList(destPath)]
+            : [])
+        ];
       }
       case 'A xor B': {
         const cp1 = applyBooleanOperation(subject, clip, 'A not B');
@@ -641,12 +664,6 @@ const groupSubShapes = (entries: SubShapeRelation[]) => {
     crossing: crossingShapes,
     nonCrossing: nonCrossingShapes
   };
-};
-
-const isShapeInsideOtherShape = (shape: VertexList, entries: SubShapeRelation[]) => {
-  return entries.some(
-    e => (e.subject === shape && e.subjectInClip) || (e.clip === shape && e.clipInSubject)
-  );
 };
 
 const classifyDegeneracies = (vertexList: VertexList) => {

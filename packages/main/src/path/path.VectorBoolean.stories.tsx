@@ -73,3 +73,7 @@ export const MoreNonOverlappingContours: Story = {
 export const ConcentricContours: Story = {
   args: TEST_CASES.ConcentricContours()
 };
+
+export const MoreConcentricContours: Story = {
+  args: TEST_CASES.MoreConcentricContours()
+};

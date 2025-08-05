@@ -182,5 +182,18 @@ export const TEST_CASES = {
       p1: a,
       p2: b
     };
+  },
+  MoreConcentricContours: () => {
+    const a = PathListBuilder.fromPathList(
+      makeRect(50, 50, 350, 300)
+        .append(makeCircle(210, 200, 125))
+        .getPaths()
+        .normalize()
+    );
+    const b = makeCircle(210, 200, 70);
+    return {
+      p1: a,
+      p2: b
+    };
   }
 };
