@@ -81,3 +81,7 @@ export const MoreConcentricContours: Story = {
 export const CircleOverlappingHole: Story = {
   args: TEST_CASES.CircleOverlappingHole()
 };
+
+export const RectWithHoleOverRectWithHole: Story = {
+  args: TEST_CASES.RectWithHoleOverRectWithHole()
+};

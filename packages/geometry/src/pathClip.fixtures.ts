@@ -208,5 +208,23 @@ export const TEST_CASES = {
       p1: a,
       p2: b
     };
+  },
+  RectWithHoleOverRectWithHole: () => {
+    const a = PathListBuilder.fromPathList(
+      makeRect(50, 50, 350, 300)
+        .append(makeCircle(210, 200, 125))
+        .getPaths()
+        .normalize()
+    );
+    const b = PathListBuilder.fromPathList(
+      makeRect(225, 65, 160, 160)
+        .append(makeCircle(305, 145, 60))
+        .getPaths()
+        .normalize()
+    );
+    return {
+      p1: a,
+      p2: b
+    };
   }
 };

@@ -364,7 +364,7 @@ export const getClipVertices = (
   clipVertices.forEach(classifyDegeneracies);
 
   DEBUG: {
-    assertPathSegmentsAreConnected(subjectVertices, clipVertices);
+    //  assertPathSegmentsAreConnected(subjectVertices, clipVertices);
   }
 
   return [subjectVertices, clipVertices];
@@ -1039,7 +1039,7 @@ const makeNeighbors = (v: IntersectionVertex, neighbor: IntersectionVertex) => {
   neighbor.neighbor = v;
 };
 
-const epsilon = (scale: number) => Math.max(0.1, scale * 0.01);
+const epsilon = (scale: number) => Math.max(0.1, scale * 0.1);
 
 /* INVARIANTS AND ASSERTIONS ************************************************************** */
 

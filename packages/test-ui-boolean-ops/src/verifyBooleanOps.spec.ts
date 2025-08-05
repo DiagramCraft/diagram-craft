@@ -101,4 +101,8 @@ test.describe('VectorBoolean', () => {
   test('Circle Overlapping Hole', async ({ page }) => {
     await storybookScreenshotCheck(page, 'vectorboolean', 'circle-overlapping-hole');
   });
+
+  test('Rect With Hole Over Rect With Hole', async ({ page }) => {
+    await storybookScreenshotCheck(page, 'vectorboolean', 'rect-with-hole-over-rect-with-hole');
+  });
 });
