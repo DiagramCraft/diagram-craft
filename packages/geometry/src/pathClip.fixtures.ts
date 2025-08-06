@@ -298,5 +298,16 @@ export const VECTOR_BOOLEAN_DEBUG_TEST_CASES = {
     );
 
     return { p1, p2 };
+  },
+  Debug002: () => {
+    const p1 = makeCircle(210, 110, 20);
+    const p2 = new PathList(
+      applyBooleanOperation(
+        makeRect(50, 50, 250, 200).getPaths(),
+        makeCircle(210, 200, 125).getPaths(),
+        'A xor B'
+      ).flatMap(p => p.all())
+    );
+    return { p1, p2 };
   }
 };
