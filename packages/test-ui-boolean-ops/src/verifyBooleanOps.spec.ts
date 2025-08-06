@@ -115,4 +115,7 @@ test.describe('VectorBooleanDebug', () => {
   test('Debug', async ({ page }) => {
     await storybookScreenshotCheck(page, 'vectorbooleandebug', 'debug');
   });
+  test('Debug Quad Curve', async ({ page }) => {
+    await storybookScreenshotCheck(page, 'vectorbooleandebug', 'debug-quad-curve');
+  });
 });

@@ -17,3 +17,7 @@ type Story = StoryObj<typeof meta>;
 export const Debug: Story = {
   args: VECTOR_BOOLEAN_DEBUG_TEST_CASES.Debug()
 };
+
+export const DebugQuadCurve: Story = {
+  args: VECTOR_BOOLEAN_DEBUG_TEST_CASES.DebugQuadCurve()
+};

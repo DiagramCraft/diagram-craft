@@ -275,5 +275,16 @@ export const VECTOR_BOOLEAN_DEBUG_TEST_CASES = {
       p1,
       p2
     };
+  },
+  DebugQuadCurve: () => {
+    const p1 = makeCircle(130, 125, 20);
+    const p2 = new PathListBuilder()
+      .moveTo(_p(50, 50))
+      .lineTo(_p(50, 100))
+      .quadTo(_p(150, 100), _p(100, 150))
+      .lineTo(_p(150, 50))
+      .lineTo(_p(50, 50));
+
+    return { p1, p2 };
   }
 };
