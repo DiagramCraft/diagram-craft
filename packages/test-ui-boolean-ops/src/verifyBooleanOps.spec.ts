@@ -127,4 +127,8 @@ test.describe('VectorBooleanDebug', () => {
   test('Debug 002', async ({ page }) => {
     await storybookScreenshotCheck(page, 'vectorbooleandebug', 'debug-002');
   });
+
+  test('Debug 003', async ({ page }) => {
+    await storybookScreenshotCheck(page, 'vectorbooleandebug', 'debug-003');
+  });
 });

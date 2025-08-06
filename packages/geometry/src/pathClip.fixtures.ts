@@ -309,5 +309,16 @@ export const VECTOR_BOOLEAN_DEBUG_TEST_CASES = {
       ).flatMap(p => p.all())
     );
     return { p1, p2 };
+  },
+  Debug003: () => {
+    const p1 = new PathListBuilder()
+      .moveTo(_p(250, 250))
+      .cubicTo(_p(0, 0), _p(250, 111.928802), _p(138.071198, 0))
+      .lineTo(_p(250, 250));
+    const p2 = new PathListBuilder()
+      .moveTo(_p(0, 250))
+      .cubicTo(_p(250, 0), _p(138.071198, 250), _p(250, 138.071198))
+      .lineTo(_p(0, 250));
+    return { p1, p2 };
   }
 };

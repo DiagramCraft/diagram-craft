@@ -29,3 +29,7 @@ export const Debug001: Story = {
 export const Debug002: Story = {
   args: VECTOR_BOOLEAN_DEBUG_TEST_CASES.Debug002()
 };
+
+export const Debug003: Story = {
+  args: VECTOR_BOOLEAN_DEBUG_TEST_CASES.Debug003()
+};
