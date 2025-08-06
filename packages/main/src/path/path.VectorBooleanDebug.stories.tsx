@@ -21,3 +21,7 @@ export const Debug: Story = {
 export const DebugQuadCurve: Story = {
   args: VECTOR_BOOLEAN_DEBUG_TEST_CASES.DebugQuadCurve()
 };
+
+export const Debug001: Story = {
+  args: VECTOR_BOOLEAN_DEBUG_TEST_CASES.Debug001()
+};

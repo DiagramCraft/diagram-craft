@@ -115,7 +115,12 @@ test.describe('VectorBooleanDebug', () => {
   test('Debug', async ({ page }) => {
     await storybookScreenshotCheck(page, 'vectorbooleandebug', 'debug');
   });
+
   test('Debug Quad Curve', async ({ page }) => {
     await storybookScreenshotCheck(page, 'vectorbooleandebug', 'debug-quad-curve');
+  });
+
+  test('Debug 001', async ({ page }) => {
+    await storybookScreenshotCheck(page, 'vectorbooleandebug', 'debug-001');
   });
 });
