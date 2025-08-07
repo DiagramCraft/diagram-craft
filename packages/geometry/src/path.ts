@@ -242,8 +242,7 @@ export class Path {
     return intersections.length % 2 !== 0;
   }
 
-  isOn(p: Point) {
-    const epsilon = 0.0001;
+  isOn(p: Point, epsilon = 0.0001) {
     const pp = this.projectPoint(p);
     return (
       Point.isEqual(pp.point, p, epsilon) &&

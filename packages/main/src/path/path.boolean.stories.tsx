@@ -47,3 +47,7 @@ export const CircleInRectangleInverted: Story = {
 export const RightTriangleOverRectangle: Story = {
   args: EXTRA_TEST_CASES.RightTriangleOverRectangle()
 };
+
+export const ComplexShapesFoundation: Story = {
+  args: EXTRA_TEST_CASES.ComplexShapesFoundation()
+};

@@ -5,7 +5,7 @@ import { CubicBezier } from './bezier';
 import type { RawSegment } from './pathListBuilder';
 import type { Projection } from './path';
 import { Box } from './box';
-import { round } from '@diagram-craft/utils/math';
+import { clamp, round } from '@diagram-craft/utils/math';
 
 export interface Intersection {
   point: Point;
@@ -71,7 +71,7 @@ export class LineSegment implements PathSegment {
     const px = this.end.x - this.start.x;
     const py = this.end.y - this.start.y;
     const d = px * px + py * py;
-    const t = ((point.x - this.start.x) * px + (point.y - this.start.y) * py) / d;
+    const t = clamp(((point.x - this.start.x) * px + (point.y - this.start.y) * py) / d, 0, 1);
 
     const projection = { x: this.start.x + t * px, y: this.start.y + t * py };
 

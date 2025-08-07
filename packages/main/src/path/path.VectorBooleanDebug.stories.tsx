@@ -33,3 +33,7 @@ export const Debug002: Story = {
 export const Debug003: Story = {
   args: VECTOR_BOOLEAN_DEBUG_TEST_CASES.Debug003()
 };
+
+export const RectangleSharingEdgeWithRectangle: Story = {
+  args: VECTOR_BOOLEAN_DEBUG_TEST_CASES.RectangleSharingEdgeWithRectangle()
+};

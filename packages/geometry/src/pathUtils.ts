@@ -17,7 +17,7 @@ const hasSamePath = (existing: number[], path: number[]) => {
   return true;
 };
 
-export const constructPathTree = (paths: Path[]) => {
+export const constructPathTree = (paths: Path[], epsilon = 0.1) => {
   const childToParents = new MultiMap<number, number>();
   for (let child = 0; child < paths.length; child++) {
     for (let parent = 0; parent < paths.length; parent++) {
@@ -26,7 +26,7 @@ export const constructPathTree = (paths: Path[]) => {
       if (
         paths[child].segments
           .map(s => s.start)
-          .every(p => paths[parent].isInside(p) || paths[parent].isOn(p))
+          .every(p => paths[parent].isInside(p) || paths[parent].isOn(p, epsilon))
       ) {
         childToParents.add(child, parent);
       }

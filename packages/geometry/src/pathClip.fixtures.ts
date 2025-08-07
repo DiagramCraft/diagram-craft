@@ -64,7 +64,14 @@ export const EXTRA_TEST_CASES = {
       .lineTo(_p(0, 100))
       .lineTo(_p(100, 0)),
     p1: makeRect(0, 0, 100, 100)
-  })
+  }),
+  ComplexShapesFoundation: () => {
+    const rectangles = makeRect(50, 5, 100, 400).append(makeRect(350, 5, 100, 400));
+
+    const circle = makeCircle(200, 200, 185);
+
+    return { p1: rectangles, p2: circle };
+  }
 };
 
 export const VECTOR_BOOLEAN_TEST_CASES = {
@@ -281,7 +288,8 @@ export const VECTOR_BOOLEAN_DEBUG_TEST_CASES = {
     const p2 = new PathListBuilder()
       .moveTo(_p(50, 50))
       .lineTo(_p(50, 100))
-      .quadTo(_p(150, 100), _p(100, 150))
+      // TODO: Change to quad curve
+      .cubicTo(_p(150, 100), _p(100, 150), _p(100, 150))
       .lineTo(_p(150, 50))
       .lineTo(_p(50, 50));
 
@@ -319,6 +327,11 @@ export const VECTOR_BOOLEAN_DEBUG_TEST_CASES = {
       .moveTo(_p(0, 250))
       .cubicTo(_p(250, 0), _p(138.071198, 250), _p(250, 138.071198))
       .lineTo(_p(0, 250));
+    return { p1, p2 };
+  },
+  RectangleSharingEdgeWithRectangle: () => {
+    const p1 = makeRect(40, 10, 120, 80);
+    const p2 = makeRect(10, 10, 100, 130);
     return { p1, p2 };
   }
 };

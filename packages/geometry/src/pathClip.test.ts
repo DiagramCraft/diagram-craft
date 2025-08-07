@@ -33,19 +33,19 @@ describe('pathClip', () => {
 
       it('B not A', () => {
         expect(applyBooleanOperation(p1, p2, 'B not A').map(p => p.asSvgPath())).toStrictEqual([
-          'M 50,0 L 0,0 L 0,80 L -30,10 L 20,-20 L 50,0'
+          'M -30,10 L 20,-20 L 50,0 L 0,0 L 0,80 L -30,10'
         ]);
       });
 
       it('A intersection B', () => {
         const result = applyBooleanOperation(p1, p2, 'A intersection B').map(p => p.asSvgPath());
-        expect(result).toStrictEqual(['M 50,0 L 80,20 L 0,80 L 0,0 L 50,0']);
+        expect(result).toStrictEqual(['M 0,80 L 0,0 L 50,0 L 80,20 L 0,80']);
       });
 
       it('A xor B', () => {
         expect(applyBooleanOperation(p1, p2, 'A xor B').map(p => p.asSvgPath())).toStrictEqual([
           'M 50,0 L 100,0 L 100,100 L 0,100 L 0,80 L 80,20 L 50,0',
-          'M 50,0 L 0,0 L 0,80 L -30,10 L 20,-20 L 50,0'
+          'M -30,10 L 20,-20 L 50,0 L 0,0 L 0,80 L -30,10'
         ]);
       });
 
@@ -53,8 +53,8 @@ describe('pathClip', () => {
         const result = applyBooleanOperation(p1, p2, 'A divide B').map(p => p.asSvgPath());
         expect(result).toStrictEqual([
           'M 50,0 L 100,0 L 100,100 L 0,100 L 0,80 L 80,20 L 50,0',
-          'M 50,0 L 0,0 L 0,80 L -30,10 L 20,-20 L 50,0',
-          'M 50,0 L 80,20 L 0,80 L 0,0 L 50,0'
+          'M -30,10 L 20,-20 L 50,0 L 0,0 L 0,80 L -30,10',
+          'M 0,80 L 0,0 L 50,0 L 80,20 L 0,80'
         ]);
       });
     });
@@ -64,20 +64,20 @@ describe('pathClip', () => {
 
       it('A union B', () => {
         expect(applyBooleanOperation(p1, p2, 'A union B').map(p => p.asSvgPath())).toStrictEqual([
-          'M 8.8889,0 L 10,-10 L 40,-20 L 60,0 L 100,0 L 100,100 L 0,100 L 0,80 L 0,0 L 8.8889,0'
+          'M 0,0 L 8.8889,0 L 10,-10 L 40,-20 L 60,0 L 100,0 L 100,100 L 0,100 L 0,80 L 0,0'
         ]);
       });
 
       it('A not B', () => {
         const result = applyBooleanOperation(p1, p2, 'A not B').map(p => p.asSvgPath());
         expect(result).toStrictEqual([
-          'M 8.8889,0 L 0,80 L 80,20 L 60,0 L 100,0 L 100,100 L 0,100 L 0,80 L 0,0 L 8.8889,0'
+          'M 0,0 L 8.8889,0 L 0,80 L 80,20 L 60,0 L 100,0 L 100,100 L 0,100 L 0,80 L 0,0'
         ]);
       });
 
       it('B not A', () => {
         const result = applyBooleanOperation(p1, p2, 'B not A').map(p => p.asSvgPath());
-        expect(result).toStrictEqual(['M 8.8889,0 L 10,-10 L 40,-20 L 60,0 L 8.8889,0']);
+        expect(result).toStrictEqual(['M 10,-10 L 40,-20 L 60,0 L 8.8889,0 L 10,-10']);
       });
 
       it('A intersection B', () => {
@@ -88,16 +88,16 @@ describe('pathClip', () => {
       it('A xor B', () => {
         const result = applyBooleanOperation(p1, p2, 'A xor B').map(p => p.asSvgPath());
         expect(result).toStrictEqual([
-          'M 8.8889,0 L 0,80 L 80,20 L 60,0 L 100,0 L 100,100 L 0,100 L 0,80 L 0,0 L 8.8889,0',
-          'M 8.8889,0 L 10,-10 L 40,-20 L 60,0 L 8.8889,0'
+          'M 0,0 L 8.8889,0 L 0,80 L 80,20 L 60,0 L 100,0 L 100,100 L 0,100 L 0,80 L 0,0',
+          'M 10,-10 L 40,-20 L 60,0 L 8.8889,0 L 10,-10'
         ]);
       });
 
       it('A divide B', () => {
         const result = applyBooleanOperation(p1, p2, 'A divide B').map(p => p.asSvgPath());
         expect(result).toStrictEqual([
-          'M 8.8889,0 L 0,80 L 80,20 L 60,0 L 100,0 L 100,100 L 0,100 L 0,80 L 0,0 L 8.8889,0',
-          'M 8.8889,0 L 10,-10 L 40,-20 L 60,0 L 8.8889,0',
+          'M 0,0 L 8.8889,0 L 0,80 L 80,20 L 60,0 L 100,0 L 100,100 L 0,100 L 0,80 L 0,0',
+          'M 10,-10 L 40,-20 L 60,0 L 8.8889,0 L 10,-10',
           'M 8.8889,0 L 60,0 L 80,20 L 0,80 L 8.8889,0'
         ]);
       });

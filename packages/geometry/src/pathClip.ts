@@ -34,7 +34,7 @@ interface BaseVertex {
 interface BaseIntersectionVertex extends BaseVertex {
   alpha: number;
   neighbor: Vertex;
-  classification?: 'in->out' | 'out->in';
+  classification?: 'exit' | 'entry' | 'continue';
 }
 
 interface OverlapVertex extends BaseIntersectionVertex {
@@ -55,10 +55,12 @@ interface DegeneracyVertex extends BaseIntersectionVertex {
 
 interface SimpleVertex extends BaseVertex {
   type: 'simple';
+  containment: 'inside' | 'outside' | 'undetermined';
 }
 
 interface TransientVertex extends BaseVertex {
   type: 'transient';
+  containment: 'inside' | 'outside' | 'undetermined';
 }
 
 type IntersectionVertex = OverlapVertex | CrossingVertex | DegeneracyVertex;
@@ -69,6 +71,8 @@ type VertexState = 'initial' | 'pre-clip' | 'post-clip';
 const isDegeneracy = (v: Vertex): v is DegeneracyVertex => v.type === 'degeneracy';
 const isOverlap = (v: Vertex): v is OverlapVertex => v.type === 'overlap';
 const isCrossing = (v: Vertex): v is CrossingVertex => v.type === 'crossing';
+const isSimple = (v: Vertex): v is SimpleVertex => v.type === 'simple';
+const isTransient = (v: Vertex): v is TransientVertex => v.type === 'transient';
 export const isIntersection = (v: Vertex): v is IntersectionVertex =>
   isOverlap(v) || isCrossing(v) || isDegeneracy(v);
 function assertIntersection(v: Vertex): asserts v is IntersectionVertex {
@@ -95,11 +99,14 @@ export type BooleanOperation =
  * This implementation is based on https://www.inf.usi.ch/hormann/papers/Greiner.1998.ECO.pdf
  */
 export const applyBooleanOperation = (
-  subject: PathList,
-  clip: PathList,
+  pSubject: PathList,
+  pClip: PathList,
   operation: BooleanOperation
 ): Array<PathList> => {
   const doApplyOperation = (operation: BooleanOperation) => {
+    const subject = pSubject.normalize();
+    const clip = pClip.normalize();
+
     const subjectTree = constructPathTree(subject.all());
     const clipTree = constructPathTree(clip.all());
 
@@ -127,8 +134,8 @@ export const applyBooleanOperation = (
         if (disjointResult.length > 0) destPath.push(...disjointResult);
 
         for (const group of groups.crossing) {
-          classifyClipVertices(group, [subject, clip], [false, false]);
-          destPath.push(...clipVertices(group).all());
+          classifyClipVertices(group, [subject, clip]);
+          destPath.push(...clipUnion(group).all());
         }
         return destPath.length > 0 ? [new PathList(destPath)] : [];
       }
@@ -147,8 +154,8 @@ export const applyBooleanOperation = (
         if (disjointResult.length > 0) destPath.push(...disjointResult);
 
         for (const group of groups.crossing) {
-          classifyClipVertices(group, [subject, clip], [false, true]);
-          destPath.push(...clipVertices(group).all());
+          classifyClipVertices(group, [subject, clip]);
+          destPath.push(...clipDifference(group).all());
         }
         return destPath.length > 0 ? [new PathList(destPath)] : [];
       }
@@ -167,8 +174,8 @@ export const applyBooleanOperation = (
         if (disjointResult.length > 0) destPath.push(...disjointResult);
 
         for (const group of groups.crossing) {
-          classifyClipVertices(group, [subject, clip], [true, false]);
-          destPath.push(...clipVertices(group).all());
+          classifyClipVertices([group[1], group[0]], [clip, subject]);
+          destPath.push(...clipDifference([group[1], group[0]]).all());
         }
         return destPath.length > 0 ? [new PathList(destPath)] : [];
       }
@@ -187,8 +194,8 @@ export const applyBooleanOperation = (
 
         const destPath: Array<Path> = [];
         for (const group of groups.crossing) {
-          classifyClipVertices(group, [subject, clip], [true, true]);
-          destPath.push(...clipVertices(group).all());
+          classifyClipVertices(group, [subject, clip]);
+          destPath.push(...clipIntersection(group).all());
         }
         return [
           ...dest,
@@ -356,7 +363,7 @@ export const getClipVertices = (
   clipVertices.forEach(classifyDegeneracies);
 
   DEBUG: {
-    //  assertPathSegmentsAreConnected(subjectVertices, clipVertices);
+    assertPathSegmentsAreConnected(subjectVertices, clipVertices);
   }
 
   return [subjectVertices, clipVertices];
@@ -379,15 +386,12 @@ export const getClipVertices = (
  */
 export const classifyClipVertices = (
   shapes: [Array<VertexList>, Array<VertexList>],
-  fullShape: [PathList, PathList],
-  type: [boolean, boolean]
+  fullShape: [PathList, PathList]
 ) => {
   const crossings: Point[] = [];
-  const doClassifyClipVertices = (
-    currentShape: Array<VertexList>,
-    start: boolean,
-    otherShape: PathList
-  ) => {
+  const doClassifyClipVertices = (currentShape: Array<VertexList>, otherShape: PathList) => {
+    const atEnd: Array<() => void> = [];
+
     for (let i = 0; i < currentShape.length; i += 1) {
       const shape = currentShape[i];
       const vertices = shape.vertices;
@@ -404,149 +408,216 @@ export const classifyClipVertices = (
         end if
       */
       let status = otherShape.isInside(p0);
-      if (start) status = !status;
 
       // for each vertex Pi of polygon do
       // ... starting at j0
       for (let J = 0; J < vertices.length; J++) {
         const j = (J + j0) % vertices.length;
-        const intersection = vertices[j];
+        const v = vertices[j];
 
         // if Pi->intersect then
-        if (isIntersection(intersection)) {
-          crossings.push(intersection.point);
+        if (isIntersection(v)) {
+          crossings.push(v.point);
 
           // Pi->entry_exit = status
-          intersection.classification = status ? 'in->out' : 'out->in';
+          v.classification = status ? 'exit' : 'entry';
+
+          // Need special handling of overlaps. For the first point in the overlap,
+          // we classify based on the previous vertex.
+          // For the second point in the overlap, we classify based on the next vertex.
+          if (isOverlap(v)) {
+            const isStart = isOverlap(v.next) && v.overlapId === v.next.overlapId;
+            const isEnd = isOverlap(v.prev) && v.overlapId === v.prev.overlapId;
+
+            if (isStart) {
+              if (isCrossing(v.prev)) {
+                v.classification = toggle(v.prev.classification, ['exit', 'entry']);
+              } else if (isOverlap(v.prev)) {
+                v.classification = 'continue';
+              } else if (isSimple(v.prev) || isTransient(v.prev)) {
+                v.classification = v.prev.containment === 'outside' ? 'entry' : 'exit';
+              } else {
+                VERIFY_NOT_REACHED();
+              }
+            } else if (isEnd) {
+              if (isCrossing(v.next)) {
+                atEnd.push(() => (v.classification = (v.next as CrossingVertex).classification));
+              } else if (isOverlap(v.next)) {
+                v.classification = 'continue';
+              } else if (isSimple(v.next) || isTransient(v.next)) {
+                v.classification = v.next.containment === 'outside' ? 'exit' : 'entry';
+              } else {
+                VERIFY_NOT_REACHED();
+              }
+            } else {
+              VERIFY_NOT_REACHED();
+            }
+          }
 
           // toggle status
           status = !status;
         }
       }
     }
+
+    atEnd.forEach(f => f());
   };
 
   // for both polygons P do
-  doClassifyClipVertices(shapes[0], type[0], fullShape[1]); //new PathList(shapes[1].map(e => e.path)));
-  doClassifyClipVertices(shapes[1], type[1], fullShape[0]); // new PathList(shapes[0].map(e => e.path)));
+  doClassifyClipVertices(shapes[0], fullShape[1]);
+  doClassifyClipVertices(shapes[1], fullShape[0]);
 
   return crossings;
 };
 
-/*
-  while unprocessed intersecting points in subject polygon
-    current = first unprocessed intersecting point of subject polygon
-    newPolygon
-    newVertex(current)
-    repeat
-      if current->entry
-        repeat
-          current = current->next
-          newVertex(current)
-        until current->intersect
-      else
-        repeat
-          current = current->prev
-          newVertex(current)
-        until current->intersect
-      end if
-      current = current->neighbor
-    until PolygonClosed
-  end while
- */
-const clipVertices = (shapes: [Array<VertexList>, Array<VertexList>]) => {
-  const [subject] = shapes;
+const CLIP_MAX_INNER_LOOP = 100;
+const CLIP_MAX_OUTER_LOOP = 100;
 
-  let unprocessedIntersectingPoints = subject.flatMap(e => e.vertices).filter(isIntersection);
-
+const clipIntersection = (shapes: [Array<VertexList>, Array<VertexList>]) => {
   const dest: Array<Vertex[]> = [];
 
-  const markAsProcessed = (current: Vertex) => {
-    unprocessedIntersectingPoints = unprocessedIntersectingPoints.filter(
-      v => v !== current && (!isIntersection(current) || v !== current.neighbor)
-    );
-  };
+  let includedVertices = shapes[0]
+    .flatMap(e => e.vertices)
+    .filter(v => isIntersection(v) && v.classification === 'entry')
+    .map(v => ({ shape: 'subject', vertex: v }));
 
-  // while unprocessed intersecting points in subject polygon
-  while (unprocessedIntersectingPoints.length > 0) {
-    let current = unprocessedIntersectingPoints[0];
+  while (includedVertices.length > 0) {
+    // Choose a vertex
+    const start = includedVertices.shift()!;
+    let shape = start.shape;
+    let v = start.vertex;
 
-    // newPolygon
-    const currentContour: Array<Vertex> = [];
-    dest.push(currentContour);
+    const contour: Array<Vertex> = [];
+    let outerMaxLoop = CLIP_MAX_OUTER_LOOP;
+    buildContour: do {
+      assert.true(outerMaxLoop-- > 0);
 
-    // newVertex(current)
-    currentContour.push(current);
+      // Follow the contour until we hit the first intersection
+      let innerMaxLoop = CLIP_MAX_INNER_LOOP;
+      while (!(isIntersection(v) && v.classification === 'exit')) {
+        assert.true(innerMaxLoop-- > 0);
 
-    // repeat
-    //   ...
-    // until PolygonClosed
-    let maxOuterLoop = 1000;
-    do {
-      markAsProcessed(current);
-
-      if (current.classification === 'in->out') {
-        // repeat
-        //   ...
-        // until current->intersect
-        let inner: Vertex = current;
-        let maxLoop = 1000;
-        do {
-          // current = current->next
-          inner = inner.next;
-          if (isIntersection(inner)) {
-            current = inner;
-            break;
-          }
-
-          // newVertex(current)
-          currentContour.push(inner);
-        } while (--maxLoop > 0);
-        assert.true(maxLoop > 0);
-      } else if (current.classification === 'out->in') {
-        // repeat
-        //   ...
-        // until current->intersect
-        let inner: Vertex = current;
-        let maxLoop = 1000;
-        do {
-          // current = current->prev
-          inner = inner.prev;
-          if (isIntersection(inner)) {
-            current = inner;
-            break;
-          }
-
-          // newVertex(current)
-          currentContour.push(inner);
-        } while (--maxLoop > 0);
-        assert.true(maxLoop > 0);
-      } else {
-        VERIFY_NOT_REACHED();
+        contour.push(v);
+        v = v.next;
+        if (Point.isEqual(v.point, start.vertex.point)) break buildContour;
       }
 
-      assert.present(current.neighbor);
+      // Shift to the other path
+      v = v.neighbor;
+      shape = toggle(shape, ['subject', 'clip']);
 
-      current = current.neighbor;
-      currentContour.push(current);
+      contour.push(v);
+      v = v.next;
+    } while (!Point.isEqual(v.point, start.vertex.point));
 
-      markAsProcessed(current);
-    } while (dest.at(-1)![0] !== current && --maxOuterLoop > 0);
-    assert.true(maxOuterLoop > 0);
+    contour.push(v);
+    dest.push(contour);
+    includedVertices = includedVertices.filter(v => !contour.includes(v.vertex));
   }
 
-  return new PathList(
-    arrangeSegments(dest)
-      .map(arr => {
-        // TODO: Handle this better
-        if (arr.length === 0) return new Path({ x: 0, y: 0 }, []);
-        return new Path(
-          arr[0].start,
-          arr.flatMap(s => s.raw())
-        );
-      })
-      .filter(p => p.hasArea())
-  );
+  return new PathList(arrangeSegments(dest));
+};
+
+const clipDifference = (shapes: [Array<VertexList>, Array<VertexList>]) => {
+  const dest: Array<Vertex[]> = [];
+
+  let includedVertices = shapes[0]
+    .flatMap(e => e.vertices)
+    .filter(
+      v =>
+        (isSimple(v) && v.containment === 'outside') ||
+        (isCrossing(v) && v.classification === 'exit')
+    )
+    .map(v => ({ shape: 'subject', vertex: v }));
+
+  while (includedVertices.length > 0) {
+    // Choose a vertex
+    const start = includedVertices.shift()!;
+    let shape = start.shape;
+    let v = start.vertex;
+
+    const contour: Array<Vertex> = [];
+    let outerMaxLoop = CLIP_MAX_OUTER_LOOP;
+    buildContour: do {
+      assert.true(outerMaxLoop-- > 0);
+
+      // Follow the contour until we hit the first intersection
+      let innerMaxLoop = CLIP_MAX_INNER_LOOP;
+      while (!(isIntersection(v) && v.classification === 'entry')) {
+        assert.true(innerMaxLoop-- > 0);
+
+        contour.push(v);
+        v = shape === 'subject' ? v.next : v.prev;
+        if (Point.isEqual(v.point, start.vertex.point)) break buildContour;
+      }
+
+      // Shift to the other path
+      v = v.neighbor;
+      shape = toggle(shape, ['subject', 'clip']);
+
+      contour.push(v);
+      v = shape === 'subject' ? v.next : v.prev;
+    } while (!Point.isEqual(v.point, start.vertex.point));
+
+    contour.push(v);
+    dest.push(contour);
+    includedVertices = includedVertices.filter(v => !contour.includes(v.vertex));
+  }
+
+  return new PathList(arrangeSegments(dest));
+};
+
+const clipUnion = (shapes: [Array<VertexList>, Array<VertexList>], nested = false): PathList => {
+  const dest: Array<Vertex[]> = [];
+
+  let includedVertices = shapes[0]
+    .flatMap(e => e.vertices)
+    .filter(
+      v =>
+        (isSimple(v) && v.containment === 'outside') ||
+        (isCrossing(v) && v.classification === 'exit')
+    )
+    .map(v => ({ shape: 'subject', vertex: v }));
+
+  if (includedVertices.length === 0 && !nested) {
+    return clipUnion([shapes[1], shapes[0]], true);
+  }
+
+  while (includedVertices.length > 0) {
+    // Choose a vertex
+    const start = includedVertices.shift()!;
+    let shape = start.shape;
+    let v = start.vertex;
+
+    const contour: Array<Vertex> = [];
+    let outerMaxLoop = CLIP_MAX_OUTER_LOOP;
+    buildContour: do {
+      assert.true(outerMaxLoop-- > 0);
+
+      // Follow the contour until we hit the first intersection
+      let innerMaxLoop = CLIP_MAX_INNER_LOOP;
+      while (!(isIntersection(v) && v.classification === 'entry')) {
+        assert.true(innerMaxLoop-- > 0);
+
+        contour.push(v);
+        v = v.next;
+        if (Point.isEqual(v.point, start.vertex.point)) break buildContour;
+      }
+
+      // Shift to the other path
+      v = v.neighbor;
+      shape = toggle(shape, ['subject', 'clip']);
+
+      contour.push(v);
+      v = v.next;
+    } while (!Point.isEqual(v.point, start.vertex.point));
+
+    contour.push(v);
+    dest.push(contour);
+    includedVertices = includedVertices.filter(v => !contour.includes(v.vertex));
+  }
+
+  return new PathList(arrangeSegments(dest));
 };
 
 /* SUPPORTING THE CORE ALGORITHM ********************************************************** */
@@ -558,7 +629,10 @@ const processDisjointPathsHierarchy = (
   includePath: (type: string) => boolean
 ) => {
   const disjointHierarchy = Array.from(
-    constructPathTree(Array.from(groups.nonCrossing).map(e => e.path)).entries()
+    constructPathTree(
+      Array.from(groups.nonCrossing).map(e => e.path),
+      1
+    ).entries()
   ).reverse();
 
   const paths: Array<Path> = [];
@@ -604,15 +678,17 @@ const calculateSubShapeRelations = (subjectLists: VertexList[], clipLists: Verte
 
   for (const subject of subjectLists) {
     for (const clip of clipLists) {
+      const subjectInClip = subject.vertices.every(
+        v => clip.path.isInside(v.point) || clip.path.isOn(v.point, 1)
+      );
+      const clipInSubject = clip.vertices.every(
+        v => subject.path.isInside(v.point) || subject.path.isOn(v.point, 1)
+      );
       entries.push({
         subject,
         clip,
-        subjectInClip: subject.vertices.every(
-          v => clip.path.isInside(v.point) || clip.path.isOn(v.point)
-        ),
-        clipInSubject: clip.vertices.every(
-          v => subject.path.isInside(v.point) || subject.path.isOn(v.point)
-        ),
+        subjectInClip,
+        clipInSubject,
         crossing: subject.vertices.some(
           v => isIntersection(v) && clip.vertices.includes(v.neighbor)
         )
@@ -748,6 +824,7 @@ const sortIntoVertexList = (
   // First, sort all vertices into one set of vertices,
   // both simple and intersection vertices
   for (let i = 0; i < shapes.length; i++) {
+    const otherShape = i === 0 ? shapes[1] : shapes[0];
     const shape = shapes[i];
     const interimResult: VertexList[] = [];
 
@@ -756,7 +833,16 @@ const sortIntoVertexList = (
       for (const segment of path.segments) {
         const intersections = intersectionVertices.get(segment) ?? [];
         intersections.sort((a, b) => a.alpha - b.alpha);
-        vertices.push(makeVertex({ type: 'simple', point: segment.start, segment: segment }));
+        vertices.push(
+          makeSimpleVertex({
+            point: segment.start,
+            segment: segment,
+
+            // TODO: This can be optimized to use the containment of the last
+            //       vertex, in case there are no new intersections in between
+            containment: otherShape.isInside(segment.start) ? 'inside' : 'outside'
+          })
+        );
         vertices.push(...intersections);
       }
 
@@ -889,7 +975,16 @@ const arrangeSegments = (dest: Array<Vertex[]>) => {
     }
     paths.push(currentPath.filter(s => s.length() > 0));
   }
-  return paths;
+  return paths
+    .map(arr => {
+      // TODO: Handle this better
+      if (arr.length === 0) return new Path({ x: 0, y: 0 }, []);
+      return new Path(
+        arr[0].start,
+        arr.flatMap(s => s.raw())
+      );
+    })
+    .filter(p => p.hasArea());
 };
 
 // This is just for debugging purposes
@@ -928,13 +1023,13 @@ const findStartingPositionNotOnPath = (
         const current = pVertices[j];
         const p = current.segment.point(o);
         if (!path.isOn(p)) {
-          const newVertex = makeVertex({
+          const newVertex = makeTransientVertex({
             point: p,
             segment: new LineSegment(p, p),
-            next: current.next,
-            prev: current,
-            type: 'transient'
+            containment: path.isInside(p) ? 'inside' : 'outside'
           });
+          newVertex.prev = current;
+          newVertex.next = current.next;
           current.next = newVertex;
           pVertices.splice(j + 1, 0, newVertex);
 
@@ -948,6 +1043,14 @@ const findStartingPositionNotOnPath = (
 };
 
 /* UTILITY FUNCTIONS ********************************************************************** */
+
+const toggle = <T>(value: T, values: T[]): T => {
+  if (!values.includes(value)) return value;
+
+  const other = values.filter(v => v !== value);
+  if (other.length === 0) return value;
+  return other[0];
+};
 
 function assertTwoElements<T>(arg: T[]): asserts arg is [T, T] {
   assert.true(arg.length === 2, 'Expected two elements');
@@ -967,6 +1070,14 @@ const makeCrossingVertex = (
 const makeOverlapVertex = (
   v: Omit<OverlapVertex, 'prev' | 'next' | 'type' | 'classification' | 'neighbor'>
 ) => makeVertex({ type: 'overlap', ...v }) as OverlapVertex;
+
+const makeSimpleVertex = (
+  v: Omit<SimpleVertex, 'prev' | 'next' | 'type' | 'classification' | 'neighbor'>
+) => makeVertex({ type: 'simple', ...v }) as SimpleVertex;
+
+const makeTransientVertex = (
+  v: Omit<SimpleVertex, 'prev' | 'next' | 'type' | 'classification' | 'neighbor'>
+) => makeVertex({ type: 'transient', ...v }) as TransientVertex;
 
 const changeVertexType = (
   v: Vertex,
@@ -991,10 +1102,12 @@ const changeVertexType = (
       vertex.type = 'simple';
       vertex.neighbor = undefined;
       vertex.alpha = undefined;
+      vertex.containment = 'undetermined';
 
       neighbor.type = 'simple';
       neighbor.neighbor = undefined;
       neighbor.alpha = undefined;
+      neighbor.containment = 'undetermined';
 
       assertVertexIsCorrect(v, state);
       assertVertexIsCorrect(n, state);

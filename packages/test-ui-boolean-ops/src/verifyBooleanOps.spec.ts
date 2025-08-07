@@ -131,4 +131,12 @@ test.describe('VectorBooleanDebug', () => {
   test('Debug 003', async ({ page }) => {
     await storybookScreenshotCheck(page, 'vectorbooleandebug', 'debug-003');
   });
+
+  test('Rectangle Sharing Edge With Rectangle', async ({ page }) => {
+    await storybookScreenshotCheck(
+      page,
+      'vectorbooleandebug',
+      'rectangle-sharing-edge-with-rectangle'
+    );
+  });
 });
