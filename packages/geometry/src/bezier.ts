@@ -84,6 +84,8 @@ const cubicRoots = (a: number, b: number, c: number, d: number) => {
 
 // Basically an implementation of https://en.wikipedia.org/wiki/Quadratic_formula
 const quadraticRoots = (a: number, b: number, c: number) => {
+  if (isSame(a, 0)) return [-c / b];
+
   const d = b * b - 4 * a * c;
   if (d < 0) {
     return [];

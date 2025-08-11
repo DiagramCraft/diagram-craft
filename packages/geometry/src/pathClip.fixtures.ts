@@ -23,8 +23,15 @@ const makeRect = (x: number, y: number, w: number, h: number) => {
   return b;
 };
 
-export const TEST_CASES = {
-  _OnEdge: () => ({
+/**
+ * These fixtures are all taken and ported from https://github.com/lrtitze/Swift-VectorBoolean
+ *
+ * The algorithm, however, is implemented indepedently and based directly on
+ * the original paper https://www.inf.usi.ch/hormann/papers/Greiner.1998.ECO.pdf
+ */
+
+export const EXTRA_TEST_CASES = {
+  OnEdge: () => ({
     p1: makeRect(0, 0, 100, 100),
     p2: new PathListBuilder()
       .moveTo(_p(-30, 10))
@@ -33,7 +40,7 @@ export const TEST_CASES = {
       .lineTo(_p(0, 80))
       .lineTo(_p(-30, 10))
   }),
-  _OnEdge2: () => ({
+  OnEdge2: () => ({
     p1: makeRect(0, 0, 100, 100),
     p2: new PathListBuilder()
       .moveTo(_p(10, -10))
@@ -42,10 +49,32 @@ export const TEST_CASES = {
       .lineTo(_p(0, 80))
       .lineTo(_p(10, -10))
   }),
-  _NonIntersecting: () => ({
+  NonIntersecting: () => ({
     p1: makeRect(20, 20, 30, 30),
     p2: makeRect(70, 70, 40, 40)
   }),
+  CircleInRectangleInverted: () => ({
+    p2: makeCircle(210, 200, 125),
+    p1: makeRect(50, 50, 350, 300)
+  }),
+  RightTriangleOverRectangle: () => ({
+    p2: new PathListBuilder()
+      .moveTo(_p(100, 0))
+      .lineTo(_p(100, 100))
+      .lineTo(_p(0, 100))
+      .lineTo(_p(100, 0)),
+    p1: makeRect(0, 0, 100, 100)
+  }),
+  ComplexShapesFoundation: () => {
+    const rectangles = makeRect(50, 5, 100, 400).append(makeRect(350, 5, 100, 400));
+
+    const circle = makeCircle(200, 200, 185);
+
+    return { p1: rectangles, p2: circle };
+  }
+};
+
+export const VECTOR_BOOLEAN_TEST_CASES = {
   CircleOverlappingRectangle: () => ({
     p1: makeRect(50, 50, 300, 200),
     p2: makeCircle(355, 240, 125)
@@ -53,18 +82,6 @@ export const TEST_CASES = {
   CircleInRectangle: () => ({
     p1: makeCircle(210, 200, 125),
     p2: makeRect(50, 50, 350, 300)
-  }),
-  _CircleInRectangleInverted: () => ({
-    p2: makeCircle(210, 200, 125),
-    p1: makeRect(50, 50, 350, 300)
-  }),
-  _RightTriangleOverRectangle: () => ({
-    p2: new PathListBuilder()
-      .moveTo(_p(100, 0))
-      .lineTo(_p(100, 100))
-      .lineTo(_p(0, 100))
-      .lineTo(_p(100, 0)),
-    p1: makeRect(0, 0, 100, 100)
   }),
   RectangleInCircle: () => ({
     p1: makeRect(150, 150, 150, 150),
@@ -247,5 +264,84 @@ export const TEST_CASES = {
       p1: a,
       p2: b
     };
+  }
+};
+
+export const VECTOR_BOOLEAN_DEBUG_TEST_CASES = {
+  Debug: () => {
+    const p1 = new PathList(
+      applyBooleanOperation(
+        makeRect(50, 50, 250, 200).getPaths(),
+        makeCircle(275, 275, 125).getPaths(),
+        'A union B'
+      ).flatMap(p => p.all())
+    );
+
+    const p2 = makeCircle(210, 110, 20);
+    return {
+      p1,
+      p2
+    };
+  },
+  DebugQuadCurve: () => {
+    const p1 = makeCircle(130, 125, 20);
+    const p2 = new PathListBuilder()
+      .moveTo(_p(50, 50))
+      .lineTo(_p(50, 100))
+      // TODO: Change to quad curve
+      .cubicTo(_p(150, 100), _p(100, 150), _p(100, 150))
+      .lineTo(_p(150, 50))
+      .lineTo(_p(50, 50));
+
+    return { p1, p2 };
+  },
+  Debug001: () => {
+    const p1 = makeCircle(210, 110, 20);
+    const p2 = new PathList(
+      applyBooleanOperation(
+        makeRect(50, 50, 250, 200).getPaths(),
+        makeRect(150, 150, 250, 250).getPaths(),
+        'A union B'
+      ).flatMap(p => p.all())
+    );
+
+    return { p1, p2 };
+  },
+  Debug002: () => {
+    const p1 = makeCircle(210, 110, 20);
+    const p2 = new PathList(
+      applyBooleanOperation(
+        makeRect(50, 50, 250, 200).getPaths(),
+        makeCircle(210, 200, 125).getPaths(),
+        'A xor B'
+      ).flatMap(p => p.all())
+    );
+    return { p1, p2 };
+  },
+  Debug003: () => {
+    const p1 = new PathListBuilder()
+      .moveTo(_p(250, 250))
+      .cubicTo(_p(0, 0), _p(250, 111.928802), _p(138.071198, 0))
+      .lineTo(_p(250, 250));
+    const p2 = new PathListBuilder()
+      .moveTo(_p(0, 250))
+      .cubicTo(_p(250, 0), _p(138.071198, 250), _p(250, 138.071198))
+      .lineTo(_p(0, 250));
+    return { p1, p2 };
+  },
+  RectangleSharingEdgeWithRectangle: () => {
+    const p1 = makeRect(40, 10, 120, 80);
+    const p2 = makeRect(10, 10, 100, 130);
+    return { p1, p2 };
+  },
+  RectangleOverlappingRectangle: () => {
+    const p1 = makeRect(230, 115, 250, 250);
+    const p2 = makeRect(50, 50, 300, 200);
+    return { p1, p2 };
+  },
+  TinyRectangleOverlappingRectangle: () => {
+    const p1 = makeRect(48, 48, 25, 25);
+    const p2 = makeRect(50, 50, 30, 30);
+    return { p1, p2 };
   }
 };

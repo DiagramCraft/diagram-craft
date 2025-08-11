@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { TEST_CASES } from '@diagram-craft/geometry/pathClip.fixtures';
+import { VECTOR_BOOLEAN_TEST_CASES } from '@diagram-craft/geometry/pathClip.fixtures';
 import { BooleanTest } from './BooleanTest';
 
 const meta = {
@@ -15,77 +15,77 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const CircleOverlappingRectangle: Story = {
-  args: TEST_CASES.CircleOverlappingRectangle()
+  args: VECTOR_BOOLEAN_TEST_CASES.CircleOverlappingRectangle()
 };
 
 export const CircleInRectangle: Story = {
-  args: TEST_CASES.CircleInRectangle()
+  args: VECTOR_BOOLEAN_TEST_CASES.CircleInRectangle()
 };
 
 export const RectangleInCircle: Story = {
-  args: TEST_CASES.RectangleInCircle()
+  args: VECTOR_BOOLEAN_TEST_CASES.RectangleInCircle()
 };
 
 export const CircleOnRectangle: Story = {
-  args: TEST_CASES.CircleOnRectangle()
+  args: VECTOR_BOOLEAN_TEST_CASES.CircleOnRectangle()
 };
 
 export const RectOverRectWithHole: Story = {
-  args: TEST_CASES.RectOverRectWithHole()
+  args: VECTOR_BOOLEAN_TEST_CASES.RectOverRectWithHole()
 };
 
 export const CircleOverTwoRects: Story = {
-  args: TEST_CASES.CircleOverTwoRects()
+  args: VECTOR_BOOLEAN_TEST_CASES.CircleOverTwoRects()
 };
 
 export const CircleOverCircle: Story = {
-  args: TEST_CASES.CircleOverCircle()
+  args: VECTOR_BOOLEAN_TEST_CASES.CircleOverCircle()
 };
 
 export const ComplexShapes: Story = {
-  args: TEST_CASES.ComplexShapes()
+  args: VECTOR_BOOLEAN_TEST_CASES.ComplexShapes()
 };
 
 export const ComplexShapes2: Story = {
-  args: TEST_CASES.ComplexShapes2()
+  args: VECTOR_BOOLEAN_TEST_CASES.ComplexShapes2()
 };
 
 export const TriangleInsideRectangle: Story = {
-  args: TEST_CASES.TriangleInsideRectangle()
+  args: VECTOR_BOOLEAN_TEST_CASES.TriangleInsideRectangle()
 };
 
 export const DiamondOverlappingRectangle: Story = {
-  args: TEST_CASES.DiamondOverlappingRectangle()
+  args: VECTOR_BOOLEAN_TEST_CASES.DiamondOverlappingRectangle()
 };
 
 export const DiamondInsideRectangle: Story = {
-  args: TEST_CASES.DiamondInsideRectangle()
+  args: VECTOR_BOOLEAN_TEST_CASES.DiamondInsideRectangle()
 };
 
 export const NonOverlappingContours: Story = {
-  args: TEST_CASES.NonOverlappingContours()
+  args: VECTOR_BOOLEAN_TEST_CASES.NonOverlappingContours()
 };
 
 export const MoreNonOverlappingContours: Story = {
-  args: TEST_CASES.MoreNonOverlappingContours()
+  args: VECTOR_BOOLEAN_TEST_CASES.MoreNonOverlappingContours()
 };
 
 export const ConcentricContours: Story = {
-  args: TEST_CASES.ConcentricContours()
+  args: VECTOR_BOOLEAN_TEST_CASES.ConcentricContours()
 };
 
 export const MoreConcentricContours: Story = {
-  args: TEST_CASES.MoreConcentricContours()
+  args: VECTOR_BOOLEAN_TEST_CASES.MoreConcentricContours()
 };
 
 export const CircleOverlappingHole: Story = {
-  args: TEST_CASES.CircleOverlappingHole()
+  args: VECTOR_BOOLEAN_TEST_CASES.CircleOverlappingHole()
 };
 
 export const RectWithHoleOverRectWithHole: Story = {
-  args: TEST_CASES.RectWithHoleOverRectWithHole()
+  args: VECTOR_BOOLEAN_TEST_CASES.RectWithHoleOverRectWithHole()
 };
 
 export const CurveOverlappingRect: Story = {
-  args: TEST_CASES.CurveOverlappingRect()
+  args: VECTOR_BOOLEAN_TEST_CASES.CurveOverlappingRect()
 };

@@ -28,7 +28,7 @@ export const BooleanTest = (props: {
   const clipTree = constructPathTree(cp2.all());
   const [subject, clip] = getClipVertices(cp1, cp2, subjectTree, clipTree);
 
-  classifyClipVertices([subject, clip], [cp1, cp2], [false, false]);
+  classifyClipVertices([subject, clip], [cp1, cp2]);
 
   const s1 = cp1.asSvgPath();
   const s2 = cp2.asSvgPath();
@@ -43,7 +43,43 @@ export const BooleanTest = (props: {
   const scale = Math.min(120 / bounds.w, 120 / bounds.h);
   const svgTransform = `scale(${scale}, ${scale}) translate(${-bounds.x}, ${-bounds.y}) `;
 
-  const classifyPath = (p: PathList) => {
+  const classifyPath = (p: PathList, _debug = false) => {
+    const verticesSharedWithSubject = new Set(
+      p
+        .all()
+        .flatMap(seg => seg.segments)
+        .flatMap(p => [p.start])
+        .filter(v => cp1.isInside(v) || cp1.isOn(v, 1))
+        .map(p => `${Math.round(p.x)},${Math.round(p.y)}`)
+    );
+    const verticesSharedWithClip = new Set(
+      p
+        .all()
+        .flatMap(seg => seg.segments)
+        .flatMap(p => [p.start])
+        .filter(v => cp2.isInside(v) || cp2.isOn(v, 1))
+        .map(p => `${Math.round(p.x)},${Math.round(p.y)}`)
+    );
+
+    const onlySubject = verticesSharedWithSubject.difference(verticesSharedWithClip);
+    const onlyClip = verticesSharedWithClip.difference(verticesSharedWithSubject);
+
+    if (verticesSharedWithSubject.size === 0 && verticesSharedWithClip.size === 0) {
+      return 'both';
+    } else if (verticesSharedWithSubject.size === 0) {
+      return 'clip';
+    } else if (verticesSharedWithClip.size === 0) {
+      return 'subject';
+    } else if (onlySubject.size === 0 && onlyClip.size === 0) {
+      return 'both';
+    } else if (onlySubject.size === 0) {
+      return 'clip';
+    } else if (onlyClip.size === 0) {
+      return 'subject';
+    } else {
+      return 'both';
+    }
+
     const sharedWithSubject = p
       .all()
       .every(seg =>
@@ -165,27 +201,10 @@ export const BooleanTest = (props: {
                   cy={s.point.y}
                   r={2 / scale}
                   fill={
-                    isIntersection(s) ? (s.classification === 'in->out' ? 'green' : 'red') : 'gray'
+                    isIntersection(s) ? (s.classification === 'exit' ? 'green' : 'red') : 'gray'
                   }
                 />
               ))}
-
-            <circle
-              cx={subject.flatMap(e => e.vertices)[0].point.x}
-              cy={subject.flatMap(e => e.vertices)[0].point.y}
-              r={5 / scale}
-              strokeWidth={1 / scale}
-              stroke={'red'}
-              fill={'none'}
-            />
-            <circle
-              cx={subject.flatMap(e => e.vertices)[1].point.x}
-              cy={subject.flatMap(e => e.vertices)[1].point.y}
-              r={5 / scale}
-              stroke={'green'}
-              strokeWidth={1 / scale}
-              fill={'none'}
-            />
 
             {subject
               .flatMap(e => e.vertices)
@@ -254,27 +273,10 @@ export const BooleanTest = (props: {
                   cy={s.point.y}
                   r={2 / scale}
                   fill={
-                    isIntersection(s) ? (s.classification === 'in->out' ? 'green' : 'red') : 'gray'
+                    isIntersection(s) ? (s.classification === 'exit' ? 'green' : 'red') : 'gray'
                   }
                 />
               ))}
-
-            <circle
-              cx={clip.flatMap(e => e.vertices)[0].point.x}
-              cy={clip.flatMap(e => e.vertices)[0].point.y}
-              r={5 / scale}
-              stroke={'red'}
-              strokeWidth={1 / scale}
-              fill={'none'}
-            />
-            <circle
-              cx={clip.flatMap(e => e.vertices)[1].point.x}
-              cy={clip.flatMap(e => e.vertices)[1].point.y}
-              r={5 / scale}
-              stroke={'green'}
-              strokeWidth={1 / scale}
-              fill={'none'}
-            />
 
             {clip
               .flatMap(e => e.vertices)
@@ -500,7 +502,7 @@ export const BooleanTest = (props: {
             />
 
             {aXorB.map((p, idx) => {
-              const k = classifyPath(p);
+              const k = classifyPath(p, true);
               return (
                 <path
                   key={idx}

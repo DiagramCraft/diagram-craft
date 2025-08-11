@@ -110,3 +110,45 @@ test.describe('VectorBoolean', () => {
     await storybookScreenshotCheck(page, 'vectorboolean', 'curve-overlapping-rect');
   });
 });
+
+test.describe('VectorBooleanDebug', () => {
+  test('Debug', async ({ page }) => {
+    await storybookScreenshotCheck(page, 'vectorbooleandebug', 'debug');
+  });
+
+  test('Debug Quad Curve', async ({ page }) => {
+    await storybookScreenshotCheck(page, 'vectorbooleandebug', 'debug-quad-curve');
+  });
+
+  test('Debug 001', async ({ page }) => {
+    await storybookScreenshotCheck(page, 'vectorbooleandebug', 'debug-001');
+  });
+
+  test('Debug 002', async ({ page }) => {
+    await storybookScreenshotCheck(page, 'vectorbooleandebug', 'debug-002');
+  });
+
+  test('Debug 003', async ({ page }) => {
+    await storybookScreenshotCheck(page, 'vectorbooleandebug', 'debug-003');
+  });
+
+  test('Rectangle Sharing Edge With Rectangle', async ({ page }) => {
+    await storybookScreenshotCheck(
+      page,
+      'vectorbooleandebug',
+      'rectangle-sharing-edge-with-rectangle'
+    );
+  });
+
+  test('Rectangle Overlapping Rectangle', async ({ page }) => {
+    await storybookScreenshotCheck(page, 'vectorbooleandebug', 'rectangle-overlapping-rectangle');
+  });
+
+  test('Tiny Rectangle Overlapping Rectangle', async ({ page }) => {
+    await storybookScreenshotCheck(
+      page,
+      'vectorbooleandebug',
+      'tiny-rectangle-overlapping-rectangle'
+    );
+  });
+});

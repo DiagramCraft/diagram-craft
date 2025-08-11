@@ -17,9 +17,10 @@ export type LengthOffsetOnPath = { pathD: number };
 export const PointOnPath = {
   toTimeOffset: <T extends PointOnPath>(
     p: T,
-    path: Path
+    path: Path,
+    limitToUnitT: boolean = true
   ): TimeOffsetOnSegment & LengthOffsetOnPath & T => {
-    const projection = path.projectPoint(p.point);
+    const projection = path.projectPoint(p.point, limitToUnitT);
     return {
       ...p,
       segment: projection.segment,

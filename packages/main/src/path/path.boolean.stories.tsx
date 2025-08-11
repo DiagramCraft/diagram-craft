@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
-import { TEST_CASES } from '@diagram-craft/geometry/pathClip.fixtures';
+import { EXTRA_TEST_CASES } from '@diagram-craft/geometry/pathClip.fixtures';
 import { Scale, Translation } from '@diagram-craft/geometry/transform';
 import { _p } from '@diagram-craft/geometry/point';
 import { BooleanTest } from './BooleanTest';
@@ -29,21 +29,25 @@ export const Primary: Story = {
 };
 
 export const OnEdge: Story = {
-  args: TEST_CASES._OnEdge()
+  args: EXTRA_TEST_CASES.OnEdge()
 };
 
 export const OnEdge2: Story = {
-  args: TEST_CASES._OnEdge2()
+  args: EXTRA_TEST_CASES.OnEdge2()
 };
 
 export const NonIntersecting: Story = {
-  args: TEST_CASES._NonIntersecting()
+  args: EXTRA_TEST_CASES.NonIntersecting()
 };
 
 export const CircleInRectangleInverted: Story = {
-  args: TEST_CASES._CircleInRectangleInverted()
+  args: EXTRA_TEST_CASES.CircleInRectangleInverted()
 };
 
 export const RightTriangleOverRectangle: Story = {
-  args: TEST_CASES._RightTriangleOverRectangle()
+  args: EXTRA_TEST_CASES.RightTriangleOverRectangle()
+};
+
+export const ComplexShapesFoundation: Story = {
+  args: EXTRA_TEST_CASES.ComplexShapesFoundation()
 };

@@ -3,7 +3,6 @@ import { assert } from '@diagram-craft/utils/assert';
 import { Box } from './box';
 import { Point } from './point';
 import { LengthOffsetOnPath, TimeOffsetOnSegment } from './pathPosition';
-import { isDebug } from '@diagram-craft/utils/debug';
 import { constructPathTree } from './pathUtils';
 
 type ProjectedPointOnPathList = {
@@ -48,7 +47,7 @@ export class PathList {
   normalize() {
     // TODO: First we remove all self-intersections
 
-    const classification = constructPathTree(this.paths);
+    const classification = constructPathTree(this.paths, 1);
 
     const dest: Path[] = [];
 
@@ -57,7 +56,6 @@ export class PathList {
 
       for (const p of this.paths) {
         const c = classification.get(p);
-        if (isDebug()) console.log('found', c);
         if (c && c.depth === depth) {
           const state = c?.type === 'outline';
 
@@ -119,8 +117,8 @@ export class PathList {
     return true;
   }
 
-  isOn(p: Point): boolean {
-    return this.paths.some(path => path.isOn(p));
+  isOn(p: Point, epsilon = 0.0001): boolean {
+    return this.paths.some(path => path.isOn(p, epsilon));
   }
 
   intersections(p: Path): Point[] {
