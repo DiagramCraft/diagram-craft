@@ -26,7 +26,7 @@ const adjustForArrow = (
   if (!pointOnPath) return undefined;
 
   if (arrow) {
-    const baseTOS = PointOnPath.toTimeOffset(pointOnPath, path);
+    const baseTOS = PointOnPath.toTimeOffset(pointOnPath, path, false);
     const arrowL1 = TimeOffsetOnSegment.toLengthOffsetOnSegment(baseTOS, path);
     arrowL1.segmentD += (arrow.shortenBy ?? 0) * adjust;
 

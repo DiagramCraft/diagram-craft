@@ -121,7 +121,7 @@ class SegmentList {
     return segment.tangent(currentD / segment.length());
   }
 
-  projectPoint(point: Point): Projection & { segmentIndex: number; globalL: number } {
+  projectPoint(point: Point, limit = true): Projection & { segmentIndex: number; globalL: number } {
     let bestSegment = -1;
     let bestProject: Projection | undefined;
     let bestDistance = Number.MAX_VALUE;
@@ -129,7 +129,7 @@ class SegmentList {
     const segments = this.segments;
     for (let i = 0; i < segments.length; i++) {
       const s = segments[i];
-      const projection = s.projectPoint(point);
+      const projection = s.projectPoint(point, limit);
       if (projection.distance < bestDistance) {
         bestProject = projection;
         bestDistance = projection.distance;
@@ -263,8 +263,8 @@ export class Path {
     return this.segmentList.tangentAt(t);
   }
 
-  projectPoint(point: Point): PointOnPath & LengthOffsetOnPath & TimeOffsetOnSegment {
-    const projection = this.segmentList.projectPoint(point);
+  projectPoint(point: Point, limit = true): PointOnPath & LengthOffsetOnPath & TimeOffsetOnSegment {
+    const projection = this.segmentList.projectPoint(point, limit);
 
     return {
       pathD: projection.globalL,

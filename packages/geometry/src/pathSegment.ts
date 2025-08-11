@@ -22,7 +22,7 @@ export interface PathSegment {
   length(): number;
   point(t: number): Point;
   intersectionsWith(other: PathSegment, opts?: IntersectionOpts): Intersection[];
-  projectPoint(point: Point): Projection;
+  projectPoint(point: Point, limit: boolean): Projection;
   raw(): RawSegment[];
   split(t: number): [PathSegment, PathSegment];
   tAtLength(length: number): number;
@@ -67,11 +67,12 @@ export class LineSegment implements PathSegment {
     );
   }
 
-  projectPoint(point: Point): Projection {
+  projectPoint(point: Point, limit = true): Projection {
     const px = this.end.x - this.start.x;
     const py = this.end.y - this.start.y;
     const d = px * px + py * py;
-    const t = clamp(((point.x - this.start.x) * px + (point.y - this.start.y) * py) / d, 0, 1);
+    const tRaw = ((point.x - this.start.x) * px + (point.y - this.start.y) * py) / d;
+    const t = limit ? clamp(tRaw, 0, 1) : tRaw;
 
     const projection = { x: this.start.x + t * px, y: this.start.y + t * py };
 
@@ -123,14 +124,16 @@ export class LineSegment implements PathSegment {
   }
 }
 
-export class CubicSegment extends CubicBezier implements PathSegment {
+export class CubicSegment implements PathSegment {
+  private readonly bezier: CubicBezier;
+
   constructor(
     public readonly start: Point,
     public readonly p1: Point,
     public readonly p2: Point,
     public readonly end: Point
   ) {
-    super(start, p1, p2, end);
+    this.bezier = new CubicBezier(start, p1, p2, end);
   }
 
   static fromLine(s: LineSegment) {
@@ -142,12 +145,36 @@ export class CubicSegment extends CubicBezier implements PathSegment {
     );
   }
 
+  length(): number {
+    return this.bezier.length();
+  }
+
+  point(t: number) {
+    return this.bezier.point(t);
+  }
+
+  projectPoint(point: Point, _limit = true): Projection {
+    return this.bezier.projectPoint(point);
+  }
+
+  tAtLength(length: number): number {
+    return this.bezier.tAtLength(length);
+  }
+
+  lengthAtT(t: number): number {
+    return this.bezier.lengthAtT(t);
+  }
+
+  tangent(t: number) {
+    return this.bezier.tangent(t);
+  }
+
   reverse() {
     return new CubicSegment(this.end, this.p2, this.p1, this.start);
   }
 
   split(t: number): [CubicSegment, CubicSegment] {
-    const b = super.split(t);
+    const b = this.bezier.split(t);
     return [
       new CubicSegment(b[0].start, b[0].cp1, b[0].cp2, b[0].end),
       new CubicSegment(b[1].start, b[1].cp1, b[1].cp2, b[1].end)
@@ -165,7 +192,7 @@ export class CubicSegment extends CubicBezier implements PathSegment {
   }
 
   bounds() {
-    return this.bbox();
+    return this.bezier.bbox();
   }
 
   raw(): RawSegment[] {
@@ -185,7 +212,7 @@ export class CubicSegment extends CubicBezier implements PathSegment {
   intersectionsWith(other: PathSegment, opts: IntersectionOpts): Intersection[] {
     if (other instanceof LineSegment) {
       const line = Line.of(other.start, other.end);
-      const intersections = super.intersectsLine(line);
+      const intersections = this.bezier.intersectsLine(line);
       // TODO: Ideally we should integrate this into the bezier algorithm
       if (!intersections || intersections.length === 0) {
         // Check for intersections with endpoints
@@ -195,11 +222,11 @@ export class CubicSegment extends CubicBezier implements PathSegment {
         return intersections.map(i => ({ type: 'intersection', point: i }));
       }
     } else if (other instanceof CubicSegment) {
-      const intersections: Intersection[] = super
-        .intersectsBezier(other)
+      const intersections: Intersection[] = this.bezier
+        .intersectsBezier(other.bezier)
         .map(i => ({ type: 'intersection', point: i }));
       if (opts?.includeOverlaps) {
-        const overlap = super.overlap(other);
+        const overlap = this.bezier.overlap(other.bezier);
         if (overlap) {
           intersections.push({
             type: 'overlap',
