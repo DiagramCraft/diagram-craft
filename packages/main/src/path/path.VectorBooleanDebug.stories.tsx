@@ -37,3 +37,7 @@ export const Debug003: Story = {
 export const RectangleSharingEdgeWithRectangle: Story = {
   args: VECTOR_BOOLEAN_DEBUG_TEST_CASES.RectangleSharingEdgeWithRectangle()
 };
+
+export const RectangleOverlappingRectangle: Story = {
+  args: VECTOR_BOOLEAN_DEBUG_TEST_CASES.RectangleOverlappingRectangle()
+};

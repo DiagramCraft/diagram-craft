@@ -139,4 +139,8 @@ test.describe('VectorBooleanDebug', () => {
       'rectangle-sharing-edge-with-rectangle'
     );
   });
+
+  test('Rectangle Overlapping Rectangle', async ({ page }) => {
+    await storybookScreenshotCheck(page, 'vectorbooleandebug', 'rectangle-overlapping-rectangle');
+  });
 });
