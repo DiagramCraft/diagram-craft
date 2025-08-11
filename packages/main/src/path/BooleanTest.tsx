@@ -206,23 +206,6 @@ export const BooleanTest = (props: {
                 />
               ))}
 
-            <circle
-              cx={subject.flatMap(e => e.vertices)[0].point.x}
-              cy={subject.flatMap(e => e.vertices)[0].point.y}
-              r={5 / scale}
-              strokeWidth={1 / scale}
-              stroke={'red'}
-              fill={'none'}
-            />
-            <circle
-              cx={subject.flatMap(e => e.vertices)[1].point.x}
-              cy={subject.flatMap(e => e.vertices)[1].point.y}
-              r={5 / scale}
-              stroke={'green'}
-              strokeWidth={1 / scale}
-              fill={'none'}
-            />
-
             {subject
               .flatMap(e => e.vertices)
               .map((s, idx) => {
@@ -294,23 +277,6 @@ export const BooleanTest = (props: {
                   }
                 />
               ))}
-
-            <circle
-              cx={clip.flatMap(e => e.vertices)[0].point.x}
-              cy={clip.flatMap(e => e.vertices)[0].point.y}
-              r={5 / scale}
-              stroke={'red'}
-              strokeWidth={1 / scale}
-              fill={'none'}
-            />
-            <circle
-              cx={clip.flatMap(e => e.vertices)[1].point.x}
-              cy={clip.flatMap(e => e.vertices)[1].point.y}
-              r={5 / scale}
-              stroke={'green'}
-              strokeWidth={1 / scale}
-              fill={'none'}
-            />
 
             {clip
               .flatMap(e => e.vertices)
