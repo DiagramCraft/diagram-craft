@@ -28,7 +28,7 @@ export const BooleanTest = (props: {
   const clipTree = constructPathTree(cp2.all());
   const [subject, clip] = getClipVertices(cp1, cp2, subjectTree, clipTree);
 
-  classifyClipVertices([subject, clip], [cp1, cp2], [false, false]);
+  classifyClipVertices([subject, clip], [cp1, cp2]);
 
   const s1 = cp1.asSvgPath();
   const s2 = cp2.asSvgPath();
@@ -201,7 +201,7 @@ export const BooleanTest = (props: {
                   cy={s.point.y}
                   r={2 / scale}
                   fill={
-                    isIntersection(s) ? (s.classification === 'in->out' ? 'green' : 'red') : 'gray'
+                    isIntersection(s) ? (s.classification === 'exit' ? 'green' : 'red') : 'gray'
                   }
                 />
               ))}
@@ -290,7 +290,7 @@ export const BooleanTest = (props: {
                   cy={s.point.y}
                   r={2 / scale}
                   fill={
-                    isIntersection(s) ? (s.classification === 'in->out' ? 'green' : 'red') : 'gray'
+                    isIntersection(s) ? (s.classification === 'exit' ? 'green' : 'red') : 'gray'
                   }
                 />
               ))}
