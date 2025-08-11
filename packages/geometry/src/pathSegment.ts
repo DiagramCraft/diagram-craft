@@ -22,7 +22,7 @@ export interface PathSegment {
   length(): number;
   point(t: number): Point;
   intersectionsWith(other: PathSegment, opts?: IntersectionOpts): Intersection[];
-  projectPoint(point: Point, limit: boolean): Projection;
+  projectPoint(point: Point, limit?: boolean): Projection;
   raw(): RawSegment[];
   split(t: number): [PathSegment, PathSegment];
   tAtLength(length: number): number;
