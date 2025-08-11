@@ -143,4 +143,12 @@ test.describe('VectorBooleanDebug', () => {
   test('Rectangle Overlapping Rectangle', async ({ page }) => {
     await storybookScreenshotCheck(page, 'vectorbooleandebug', 'rectangle-overlapping-rectangle');
   });
+
+  test('Tiny Rectangle Overlapping Rectangle', async ({ page }) => {
+    await storybookScreenshotCheck(
+      page,
+      'vectorbooleandebug',
+      'tiny-rectangle-overlapping-rectangle'
+    );
+  });
 });

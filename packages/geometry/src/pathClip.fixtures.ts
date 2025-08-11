@@ -338,5 +338,10 @@ export const VECTOR_BOOLEAN_DEBUG_TEST_CASES = {
     const p1 = makeRect(230, 115, 250, 250);
     const p2 = makeRect(50, 50, 300, 200);
     return { p1, p2 };
+  },
+  TinyRectangleOverlappingRectangle: () => {
+    const p1 = makeRect(48, 48, 25, 25);
+    const p2 = makeRect(50, 50, 30, 30);
+    return { p1, p2 };
   }
 };

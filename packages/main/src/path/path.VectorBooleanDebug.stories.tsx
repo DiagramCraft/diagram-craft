@@ -41,3 +41,7 @@ export const RectangleSharingEdgeWithRectangle: Story = {
 export const RectangleOverlappingRectangle: Story = {
   args: VECTOR_BOOLEAN_DEBUG_TEST_CASES.RectangleOverlappingRectangle()
 };
+
+export const TinyRectangleOverlappingRectangle: Story = {
+  args: VECTOR_BOOLEAN_DEBUG_TEST_CASES.TinyRectangleOverlappingRectangle()
+};
