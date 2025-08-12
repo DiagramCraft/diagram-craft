@@ -3,7 +3,7 @@ import { assert } from '@diagram-craft/utils/assert';
 import { Box } from './box';
 import { Point } from './point';
 import { LengthOffsetOnPath, TimeOffsetOnSegment } from './pathPosition';
-import { constructPathTree } from './pathUtils';
+import { constructPathTree, type Hierarchy } from './pathUtils';
 
 type ProjectedPointOnPathList = {
   offset: TimeOffsetOnSegment & LengthOffsetOnPath;
@@ -125,3 +125,29 @@ export class PathList {
     return this.paths.flatMap(path => path.intersections(p)).map(i => i.point);
   }
 }
+
+export const splitDisjointsPathList = (pathList: PathList): Array<PathList> => {
+  const makePathList = (parent: Path, classification: Map<Path, Hierarchy>, dest: Path[]) => {
+    dest.push(parent);
+    for (const [path, hierarchy] of classification.entries()) {
+      if (hierarchy.parent !== parent) continue;
+      makePathList(path, classification, dest);
+    }
+  };
+
+  const dest: PathList[] = [];
+
+  const p = pathList.normalize();
+
+  const classification = constructPathTree(p.all(), 1);
+
+  for (const [path, hierarchy] of classification.entries()) {
+    if (hierarchy.depth > 0) continue;
+
+    const destPathList: Path[] = [];
+    makePathList(path, classification, destPathList);
+    dest.push(new PathList(destPathList).normalize().clone());
+  }
+
+  return dest;
+};
