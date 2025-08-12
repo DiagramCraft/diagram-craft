@@ -18,7 +18,6 @@ import { assert } from '@diagram-craft/utils/assert';
 import type { RegularLayer } from './diagramLayerRegular';
 import type { CRDTMap, FlatCRDTMap } from './collaboration/crdt';
 import { watch, WatchableValue } from '@diagram-craft/utils/watchableValue';
-import { CRDTProp } from './collaboration/datatypes/crdtProp';
 import { CRDTObject } from './collaboration/datatypes/crdtObject';
 import {
   MappedCRDTOrderedMap,
@@ -56,7 +55,6 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
 
   // Shared properties
   protected readonly _metadata: CRDTObject<ElementMetadata>;
-  protected readonly _highlights: CRDTProp<DiagramElementCRDT, 'highlights'>;
   protected readonly _children: MappedCRDTOrderedMap<DiagramElement, DiagramElementCRDT>;
   protected readonly _parent: MappedCRDTProp<
     DiagramElementCRDT,
@@ -105,11 +103,6 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
         onInit: e => this._diagram.register(e)
       }
     );
-
-    this._highlights = new CRDTProp(this._crdt, 'highlights', {
-      factory: () => [],
-      onRemoteChange: () => this._diagram.emitAsync('elementHighlighted', { element: this })
-    });
 
     this._parent = new MappedCRDTProp<DiagramElementCRDT, 'parentId', DiagramElement | undefined>(
       this._crdt,
@@ -206,17 +199,6 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
       this.cache.clear();
     }
     this._activeDiagram = diagram;
-  }
-
-  /* Highlights ********************************************************************************************** */
-
-  set highlights(highlights: ReadonlyArray<string>) {
-    this._highlights.set(highlights as Array<string>);
-    this.diagram.emitAsync('elementHighlighted', { element: this });
-  }
-
-  get highlights() {
-    return this._highlights.get() ?? [];
   }
 
   /* Parent ************************************************************************************************** */

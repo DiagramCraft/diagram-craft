@@ -598,7 +598,6 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   restore(snapshot: DiagramNodeSnapshot, uow: UnitOfWork) {
     this.setBounds(snapshot.bounds, uow);
     this.#props.set(snapshot.props as NodeProps);
-    this._highlights.set([]);
     this.#nodeType.set(snapshot.nodeType);
     this.#text.set(snapshot.texts);
     this.forceUpdateMetadata(snapshot.metadata);
