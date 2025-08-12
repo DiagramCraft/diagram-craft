@@ -1,11 +1,6 @@
 import { Point } from './point';
 import { LineSegment, PathSegment } from './pathSegment';
-import {
-  assert,
-  mustExist,
-  NOT_IMPLEMENTED_YET,
-  VERIFY_NOT_REACHED
-} from '@diagram-craft/utils/assert';
+import { assert, mustExist, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { Path } from './path';
 import { Vector } from './vector';
 import { MultiMap } from '@diagram-craft/utils/multimap';
@@ -1124,7 +1119,7 @@ const changeVertexType = (
     }
   }
 
-  NOT_IMPLEMENTED_YET();
+  VERIFY_NOT_REACHED();
 };
 
 const makeLinkedList = (vertexList: VertexList) => {
@@ -1250,9 +1245,9 @@ const assertVertexIsCorrect = (v: Vertex, state: VertexState = 'post-clip') => {
   }
 };
 
-// @ts-ignore
-const printVertex = (v: Vertex) => {
-  console.log(
-    `${v.type} (${v.point.x}, ${v.point.y}): (${v.segment.start.x}, ${v.segment.start.y}) -> (${v.segment.end.x}, ${v.segment.end.y})`
-  );
+export const _test = {
+  makeNeighbors,
+  makeCrossingVertex,
+  makeLinkedList,
+  epsilon
 };
