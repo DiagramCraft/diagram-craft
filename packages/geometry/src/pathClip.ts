@@ -10,7 +10,7 @@ import { Path } from './path';
 import { Vector } from './vector';
 import { MultiMap } from '@diagram-craft/utils/multimap';
 import { isSame, mod } from '@diagram-craft/utils/math';
-import { PathList } from './pathList';
+import { PathList, splitDisjointsPathList } from './pathList';
 import { Random } from '@diagram-craft/utils/random';
 import { range, sortBy } from '@diagram-craft/utils/array';
 import { newid } from '@diagram-craft/utils/id';
@@ -73,7 +73,7 @@ const isOverlap = (v: Vertex): v is OverlapVertex => v.type === 'overlap';
 const isCrossing = (v: Vertex): v is CrossingVertex => v.type === 'crossing';
 const isSimple = (v: Vertex): v is SimpleVertex => v.type === 'simple';
 const isTransient = (v: Vertex): v is TransientVertex => v.type === 'transient';
-export const isIntersection = (v: Vertex): v is IntersectionVertex =>
+const isIntersection = (v: Vertex): v is IntersectionVertex =>
   isOverlap(v) || isCrossing(v) || isDegeneracy(v);
 function assertIntersection(v: Vertex): asserts v is IntersectionVertex {
   assert.true(isIntersection(v));
@@ -97,130 +97,125 @@ export type BooleanOperation =
 
 /*
  * This implementation is based on https://www.inf.usi.ch/hormann/papers/Greiner.1998.ECO.pdf
+ * as well as https://www.cs.sjtu.edu.cn/~yaobin/papers/tr_EBCAP.pdf
  */
 export const applyBooleanOperation = (
   pSubject: PathList,
   pClip: PathList,
   operation: BooleanOperation
 ): Array<PathList> => {
-  const doApplyOperation = (operation: BooleanOperation) => {
-    const subject = pSubject.normalize();
-    const clip = pClip.normalize();
+  const subject = pSubject.normalize();
+  const clip = pClip.normalize();
 
-    const subjectTree = constructPathTree(subject.all());
-    const clipTree = constructPathTree(clip.all());
+  const subjectTree = constructPathTree(subject.all());
+  const clipTree = constructPathTree(clip.all());
 
-    const vertices = getClipVertices(subject, clip, subjectTree, clipTree);
+  const vertices = getClipVertices(subject, clip, subjectTree, clipTree);
 
-    const relations = calculateSubShapeRelations(vertices[0], vertices[1]);
-    const groups = groupSubShapes(relations);
+  const relations = calculateSubShapeRelations(vertices[0], vertices[1]);
+  const groups = groupSubShapes(relations);
 
-    switch (operation) {
-      case 'A union B': {
-        const destPath: Array<Path> = [];
+  switch (operation) {
+    case 'A union B': {
+      const destPath: Array<Path> = [];
 
-        const disjointResult = processDisjointPathsHierarchy(groups, subjectTree, clipTree, type =>
-          [
-            'clip-hole/subject-outline',
-            'subject-hole/clip-outline',
-            'clip-outline/subject-hole',
-            'clip-outline/clip-hole',
-            'subject-outline/clip-hole',
-            'subject-outline/subject-hole',
-            'ROOT/clip-outline',
-            'ROOT/subject-outline'
-          ].includes(type)
-        );
-        if (disjointResult.length > 0) destPath.push(...disjointResult);
+      const disjointResult = processDisjointPathsHierarchy(groups, subjectTree, clipTree, type =>
+        [
+          'clip-hole/subject-outline',
+          'subject-hole/clip-outline',
+          'clip-outline/subject-hole',
+          'clip-outline/clip-hole',
+          'subject-outline/clip-hole',
+          'subject-outline/subject-hole',
+          'ROOT/clip-outline',
+          'ROOT/subject-outline'
+        ].includes(type)
+      );
+      if (disjointResult.length > 0) destPath.push(...disjointResult);
 
-        for (const group of groups.crossing) {
-          classifyClipVertices(group, [subject, clip]);
-          destPath.push(...clipUnion(group).all());
-        }
-        return destPath.length > 0 ? [new PathList(destPath)] : [];
+      for (const group of groups.crossing) {
+        classifyClipVertices(group, [subject, clip]);
+        destPath.push(...clipUnion(group).all());
       }
-      case 'A not B': {
-        const destPath: Array<Path> = [];
-
-        const disjointResult = processDisjointPathsHierarchy(groups, subjectTree, clipTree, type =>
-          [
-            'ROOT/subject-outline',
-            'subject-outline/clip-outline',
-            'subject-outline/clip-hole',
-            'subject-outline/subject-hole',
-            'clip-hole/subject-outline'
-          ].includes(type)
-        );
-        if (disjointResult.length > 0) destPath.push(...disjointResult);
-
-        for (const group of groups.crossing) {
-          classifyClipVertices(group, [subject, clip]);
-          destPath.push(...clipDifference(group).all());
-        }
-        return destPath.length > 0 ? [new PathList(destPath)] : [];
-      }
-      case 'B not A': {
-        const destPath: Array<Path> = [];
-
-        const disjointResult = processDisjointPathsHierarchy(groups, subjectTree, clipTree, type =>
-          [
-            'ROOT/clip-outline',
-            'clip-outline/subject-outline',
-            'clip-outline/subject-hole',
-            'clip-outline/clip-hole',
-            'subject-hole/clip-outline'
-          ].includes(type)
-        );
-        if (disjointResult.length > 0) destPath.push(...disjointResult);
-
-        for (const group of groups.crossing) {
-          classifyClipVertices([group[1], group[0]], [clip, subject]);
-          destPath.push(...clipDifference([group[1], group[0]]).all());
-        }
-        return destPath.length > 0 ? [new PathList(destPath)] : [];
-      }
-      case 'A intersection B': {
-        const dest: PathList[] = [];
-
-        const disjointResult = processDisjointPathsHierarchy(groups, subjectTree, clipTree, type =>
-          [
-            'clip-outline/subject-outline',
-            'clip-outline/subject-hole',
-            'subject-outline/clip-outline',
-            'subject-outline/clip-hole'
-          ].includes(type)
-        );
-        if (disjointResult.length > 0) dest.push(new PathList(disjointResult));
-
-        const destPath: Array<Path> = [];
-        for (const group of groups.crossing) {
-          classifyClipVertices(group, [subject, clip]);
-          destPath.push(...clipIntersection(group).all());
-        }
-        return [
-          ...dest,
-          ...(destPath.length > 0 && destPath.flatMap(e => e.segments).length > 0
-            ? [new PathList(destPath)]
-            : [])
-        ];
-      }
-      case 'A xor B': {
-        const cp1 = applyBooleanOperation(subject, clip, 'A not B');
-        const cp2 = applyBooleanOperation(subject, clip, 'B not A');
-        return [...cp1, ...cp2];
-      }
-      case 'A divide B': {
-        return [
-          ...applyBooleanOperation(subject, clip, 'A xor B'),
-          ...applyBooleanOperation(subject, clip, 'A intersection B')
-        ];
-      }
+      return destPath.length > 0 ? [new PathList(destPath).normalize().clone()] : [];
     }
-  };
+    case 'A not B': {
+      const destPath: Array<Path> = [];
 
-  return doApplyOperation(operation)
-    .map(a => a.normalize())
-    .map(a => a.clone());
+      const disjointResult = processDisjointPathsHierarchy(groups, subjectTree, clipTree, type =>
+        [
+          'ROOT/subject-outline',
+          'subject-outline/clip-outline',
+          'subject-outline/clip-hole',
+          'subject-outline/subject-hole',
+          'clip-hole/subject-outline'
+        ].includes(type)
+      );
+      if (disjointResult.length > 0) destPath.push(...disjointResult);
+
+      for (const group of groups.crossing) {
+        classifyClipVertices(group, [subject, clip]);
+        destPath.push(...clipDifference(group).all());
+      }
+      return destPath.length > 0 ? splitDisjointsPathList(new PathList(destPath)) : [];
+    }
+    case 'B not A': {
+      const destPath: Array<Path> = [];
+
+      const disjointResult = processDisjointPathsHierarchy(groups, subjectTree, clipTree, type =>
+        [
+          'ROOT/clip-outline',
+          'clip-outline/subject-outline',
+          'clip-outline/subject-hole',
+          'clip-outline/clip-hole',
+          'subject-hole/clip-outline'
+        ].includes(type)
+      );
+      if (disjointResult.length > 0) destPath.push(...disjointResult);
+
+      for (const group of groups.crossing) {
+        classifyClipVertices([group[1], group[0]], [clip, subject]);
+        destPath.push(...clipDifference([group[1], group[0]]).all());
+      }
+      return destPath.length > 0 ? splitDisjointsPathList(new PathList(destPath)) : [];
+    }
+    case 'A intersection B': {
+      const dest: PathList[] = [];
+
+      const disjointResult = processDisjointPathsHierarchy(groups, subjectTree, clipTree, type =>
+        [
+          'clip-outline/subject-outline',
+          'clip-outline/subject-hole',
+          'subject-outline/clip-outline',
+          'subject-outline/clip-hole'
+        ].includes(type)
+      );
+      if (disjointResult.length > 0) dest.push(new PathList(disjointResult));
+
+      const destPath: Array<Path> = [];
+      for (const group of groups.crossing) {
+        classifyClipVertices(group, [subject, clip]);
+        destPath.push(...clipIntersection(group).all());
+      }
+      return [
+        ...dest,
+        ...(destPath.length > 0 && destPath.flatMap(e => e.segments).length > 0
+          ? splitDisjointsPathList(new PathList(destPath))
+          : [])
+      ];
+    }
+    case 'A xor B': {
+      const cp1 = applyBooleanOperation(subject, clip, 'A not B');
+      const cp2 = applyBooleanOperation(subject, clip, 'B not A');
+      return [...cp1, ...cp2].map(p => p.normalize().clone());
+    }
+    case 'A divide B': {
+      return [
+        ...applyBooleanOperation(subject, clip, 'A xor B'),
+        ...applyBooleanOperation(subject, clip, 'A intersection B')
+      ].map(p => p.normalize().clone());
+    }
+  }
 };
 
 /*
