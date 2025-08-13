@@ -14,8 +14,7 @@ import { makeReflection } from '../effects/reflection';
 import { makeBlur } from '../effects/blur';
 import { makeOpacity } from '../effects/opacity';
 import { Context, OnDoubleClick, OnMouseDown } from '../context';
-import { getHighlights, getHighlightValue, hasHighlight, Highlights } from '../highlight';
-import { Zoom } from './zoom';
+import { getHighlights } from '../highlight';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Indicator } from '@diagram-craft/model/diagramProps';
 import { DeepRequired } from '@diagram-craft/utils/types';
@@ -135,7 +134,6 @@ export class BaseNodeComponent<
 
     const isSelected = $d.selectionState.elements.includes(props.element);
     const isSingleSelected = isSelected && $d.selectionState.elements.length === 1;
-    const isEdgeConnect = hasHighlight(props.element, Highlights.NODE__EDGE_CONNECT);
     const children: VNode[] = [];
 
     const style: Partial<CSSStyleDeclaration> = {};
@@ -249,48 +247,11 @@ export class BaseNodeComponent<
       children.push(...shapeVNodes);
     }
 
-    const z = new Zoom($d.viewBox.zoomLevel);
-
     /* Handle indicators */
     for (const indicator of Object.values(nodeProps.indicators)) {
       if (!indicator.enabled) continue;
 
       children.push(this.buildIndicator(props, indicator));
-    }
-
-    /* Add anchors ******************************************************************* */
-
-    if (isEdgeConnect) {
-      children.push(
-        svg.g(
-          {},
-          ...props.element.anchors.map(anchor => {
-            if (anchor.type === 'edge') {
-              return svg.line({
-                class: 'svg-node__anchor',
-                x1: props.element.bounds.x + anchor.start.x * props.element.bounds.w,
-                y1: props.element.bounds.y + anchor.start.y * props.element.bounds.h,
-                x2: props.element.bounds.x + anchor.end!.x * props.element.bounds.w,
-                y2: props.element.bounds.y + anchor.end!.y * props.element.bounds.h,
-                style: `
-                  stroke-width: ${z.str(2, 2)} !important; 
-                  pointer-events: none; 
-                  fill: ${getHighlightValue(props.element, Highlights.NODE__ACTIVE_ANCHOR) === anchor.id ? 'var(--accent-9)' : 'transparent'};
-                `
-              });
-            } else {
-              return svg.circle({
-                class: 'svg-node__anchor',
-                cx: props.element.bounds.x + anchor.start.x * props.element.bounds.w,
-                cy: props.element.bounds.y + anchor.start.y * props.element.bounds.h,
-                r: z.str(4, 2),
-                // TODO: Change this to be a class instead of a fixed color
-                style: `pointer-events: none; fill: ${getHighlightValue(props.element, Highlights.NODE__ACTIVE_ANCHOR) === anchor.id ? 'var(--accent-9)' : 'var(--accent-3)'};`
-              });
-            }
-          })
-        )
-      );
     }
 
     if (props.element.renderProps.debug.boundingPath === true) {

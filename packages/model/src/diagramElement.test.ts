@@ -5,10 +5,6 @@ import { DiagramNode } from './diagramNode';
 import { UnitOfWork } from './unitOfWork';
 import { Backends } from './collaboration/collaborationTestUtils';
 
-function sleep(ms: number) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
 describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
   beforeEach(backend.beforeEach);
   afterEach(backend.afterEach);
@@ -49,7 +45,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
     });
   });
 
-  describe('setHighlights', () => {
+  /*  describe('setHighlights', () => {
     it('should set highlights', () => {
       const [root1, root2] = backend.syncedDocs();
 
@@ -94,7 +90,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       expect(highlightedEvent1).toBeCalledTimes(1);
       if (doc2) expect(highlightedEvent2).toBeCalledTimes(1);
     });
-  });
+  });*/
 
   describe('updateMetadata', () => {
     it('should update metadata', () => {

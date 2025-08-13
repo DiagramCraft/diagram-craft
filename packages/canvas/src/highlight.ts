@@ -8,8 +8,7 @@ export const Highlights = {
   NODE__TOOL_CONVERT: 'node__tool-convert'
 };
 
-// TODO: Maybe we can change DiagramElement.highlights to be a Set
-//       However, we need a set that can trigger events
+const HIGHLIGHT_STORE = new WeakMap<DiagramElement, Highlight>();
 
 const DELIMITER = '---';
 
@@ -18,6 +17,11 @@ const getHighlight = (highlight: string, arg?: string) =>
 
 class Highlight {
   constructor(public highlights: string[]) {}
+
+  static get(element: DiagramElement) {
+    if (!HIGHLIGHT_STORE.has(element)) HIGHLIGHT_STORE.set(element, new Highlight([]));
+    return HIGHLIGHT_STORE.get(element)!;
+  }
 
   remove(highlight: string, arg?: string) {
     if (arg) {
@@ -47,9 +51,8 @@ class Highlight {
 }
 
 export const addHighlight = (element: DiagramElement, highlight: string, arg?: string) => {
-  const h = new Highlight([...element.highlights]);
-  h.add(highlight, arg);
-  element.highlights = h.highlights;
+  Highlight.get(element).add(highlight, arg);
+  element.diagram.emitAsync('elementHighlighted', { element });
 };
 
 export const removeHighlight = (
@@ -59,9 +62,8 @@ export const removeHighlight = (
 ) => {
   if (!element) return;
 
-  const h = new Highlight([...element.highlights]);
-  h.remove(highlight, arg);
-  element.highlights = h.highlights;
+  Highlight.get(element).remove(highlight, arg);
+  element.diagram.emitAsync('elementHighlighted', { element });
 };
 
 export const hasHighlight = (
@@ -70,19 +72,19 @@ export const hasHighlight = (
   arg?: string
 ) => {
   if (!element) return false;
+  if (!HIGHLIGHT_STORE.has(element)) return false;
 
-  const h = new Highlight([...element.highlights]);
-  return h.has(highlight, arg);
+  return Highlight.get(element).has(highlight, arg);
 };
 
 export const getHighlights = (element: DiagramElement | undefined) => {
   if (!element) return [];
-  return element.highlights;
+
+  return Highlight.get(element).highlights;
 };
 
 export const getHighlightValue = (element: DiagramElement | undefined, highlight: string) => {
   if (!element) return [];
 
-  const h = new Highlight([...element.highlights]);
-  return h.getArg(highlight);
+  return Highlight.get(element)!.getArg(highlight);
 };
