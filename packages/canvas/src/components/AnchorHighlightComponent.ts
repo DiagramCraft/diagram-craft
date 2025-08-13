@@ -1,4 +1,4 @@
-import { CanvasState } from '../canvas/EditableCanvasComponent';
+import type { CanvasState } from '../canvas/EditableCanvasComponent';
 import { Component, createEffect } from '../component/component';
 import * as svg from '../component/vdom-svg';
 import { getHighlightValue, hasHighlight, Highlights } from '../highlight';
