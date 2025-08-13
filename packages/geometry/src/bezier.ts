@@ -158,8 +158,8 @@ export const BezierUtils = {
 
       f1 = x1 < cx ? PI - f1 : f1;
       f2 = x2 < cx ? PI - f2 : f2;
-      f1 < 0 && (f1 = PI * 2 + f1);
-      f2 < 0 && (f2 = PI * 2 + f2);
+      if (f1 < 0) f1 = PI * 2 + f1;
+      if (f2 < 0) f2 = PI * 2 + f2;
 
       if (sweep_flag && f1 > f2) {
         f1 -= PI * 2;

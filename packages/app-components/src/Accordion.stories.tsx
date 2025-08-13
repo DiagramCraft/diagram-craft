@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Meta, StoryObj } from '@storybook/react';
 import { themeDecorator } from '../.storybook/common';
 import { Accordion } from './Accordion';
@@ -21,7 +20,7 @@ type Story = StoryObj<typeof meta>;
 const render = function Component(args: Story['args']) {
   const [, setArgs] = useArgs();
 
-  // @ts-ignore
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onValueChange = (value: any) => {
     args.onValueChange?.(value);
     setArgs({ value: value });

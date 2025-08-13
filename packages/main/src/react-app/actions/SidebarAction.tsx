@@ -17,7 +17,7 @@ export const sidebarActions = (context: ActionContext) => ({
 });
 
 export class SidebarAction extends AbstractToggleAction {
-  private userState: UserState;
+  private readonly userState: UserState;
 
   constructor(
     private readonly side: 'left' | 'right',

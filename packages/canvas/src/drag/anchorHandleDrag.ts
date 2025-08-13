@@ -10,7 +10,6 @@ import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoAction
 import { Direction } from '@diagram-craft/geometry/direction';
 import { createLinkedNode } from '@diagram-craft/canvas-app/actions/linkedNodeAction';
 import { Context } from '../context';
-import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 export class AnchorHandleDrag extends Drag {
@@ -65,9 +64,7 @@ export class AnchorHandleDrag extends Drag {
       // Undo work to drag new edge
       this.delegate.cancel();
       UnitOfWork.execute(this.node.diagram, uow => {
-        if (this.edge.layer instanceof RegularLayer) {
-          this.edge.layer.removeElement(this.edge, uow);
-        }
+        this.edge.layer.removeElement(this.edge, uow);
         this.edge.detach(uow);
       });
       diagram.selectionState.setElements([]);

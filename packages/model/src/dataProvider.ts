@@ -60,7 +60,7 @@ export const DataProviderRegistry = {
 };
 
 export class DataProviderQuery {
-  private query: string;
+  private readonly query: string;
 
   constructor(s: string) {
     this.query = s;

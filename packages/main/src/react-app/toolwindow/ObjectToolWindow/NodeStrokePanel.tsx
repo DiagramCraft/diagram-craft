@@ -157,7 +157,6 @@ export const NodeStrokePanel = (props: Props) => {
         diagram={$d}
         config={$cfg}
         strokeWidth={strokeWidth}
-        /* @ts-ignore */
         pattern={pattern}
         strokeSize={strokeSize}
         strokeColor={strokeColor}

@@ -13,7 +13,6 @@ import { AnchorEndpoint } from './endpoint';
 import { newid } from '@diagram-craft/utils/id';
 import { deepClone } from '@diagram-craft/utils/object';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
-import { RegularLayer } from './diagramLayerRegular';
 import { assertRegularLayer } from './diagramLayerUtils';
 
 export class BaseEdgeDefinition implements EdgeDefinition {
@@ -36,7 +35,6 @@ export class BaseEdgeDefinition implements EdgeDefinition {
     uow: UnitOfWork,
     operation: string
   ) {
-    if (!(edge.layer instanceof RegularLayer)) return;
     if (elements.length !== 1 || !isNode(elements[0])) return;
 
     if (operation === 'split') {

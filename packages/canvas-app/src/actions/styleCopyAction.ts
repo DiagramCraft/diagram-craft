@@ -48,7 +48,6 @@ export class StylePasteAction extends AbstractSelectionAction {
             // @ts-ignore
             p[k] = deepMerge({}, p[k], currentNodeStyle[k]);
           }
-          console.log(p);
         }, uow);
       } else if (isEdge(e)) {
         e.updateProps(p => {

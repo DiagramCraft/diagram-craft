@@ -7,6 +7,7 @@ import type { DiagramNode } from './diagramNode';
 import { Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
 import { isSerializedEndpointPointInNode, isSerializedEndpointFree } from './serialization/utils';
+import { getTypedKeys } from '@diagram-craft/utils/object';
 
 export interface Endpoint {
   readonly position: Point;
@@ -19,8 +20,7 @@ const Maplike = {
     return m instanceof Map ? m.get(key) : m[key];
   },
   keys<T, K extends string | number | symbol>(m: Record<K, T> | Map<K, T>): Array<K> {
-    // @ts-ignore
-    return m instanceof Map ? Array.from(m.keys()) : Array.from(Object.keys(m));
+    return m instanceof Map ? Array.from(m.keys()) : getTypedKeys(m);
   }
 };
 

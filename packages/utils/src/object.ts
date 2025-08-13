@@ -46,7 +46,10 @@ export const common = <T extends Record<string, unknown>>(a: T, b: T): DeepParti
   return result;
 };
 
-export const deepMerge = <T extends Props>(target: Partial<T>, ...sources: Partial<T>[]): T => {
+export const deepMerge = <T extends Props>(
+  target: Partial<T>,
+  ...sources: Array<Partial<T> | undefined>
+): T => {
   // eslint-disable-next-line
   const result: any = target;
 
@@ -54,6 +57,7 @@ export const deepMerge = <T extends Props>(target: Partial<T>, ...sources: Parti
 
   for (const elm of sources) {
     if (!isObject(elm)) continue;
+    if (elm === undefined) continue;
 
     for (const key of Object.keys(elm)) {
       if (elm[key] === null) continue;
@@ -153,13 +157,12 @@ export const deepEquals = <T>(a: T, b: T): boolean => {
 
   if (a === null || b === null || typeof a !== 'object' || typeof b !== 'object') return a === b;
 
-  const keysA = Object.keys(a);
-  const keysB = Object.keys(b);
+  const keysA = getTypedKeys(a);
+  const keysB = getTypedKeys(b);
 
   if (keysA.length !== keysB.length) return false;
 
   for (const key of keysA) {
-    // @ts-ignore
     if (!Object.prototype.hasOwnProperty.call(b, key) || !deepEquals(a[key], b[key])) return false;
   }
 
@@ -192,13 +195,12 @@ export const shallowEquals = <T>(a: T, b: T): boolean => {
 
   if (a === null || b === null || typeof a !== 'object' || typeof b !== 'object') return a === b;
 
-  const keysA = Object.keys(a);
-  const keysB = Object.keys(b);
+  const keysA = getTypedKeys(a);
+  const keysB = getTypedKeys(b);
 
   if (keysA.length !== keysB.length) return false;
 
   for (const key of keysA) {
-    // @ts-ignore
     if (!Object.prototype.hasOwnProperty.call(b, key) || a[key] !== b[key]) return false;
   }
 
@@ -248,17 +250,6 @@ export const deepIsEmpty = (obj: any | undefined | null) => {
 };
 
 /**
- * Retrieves the keys of the given object as an array of strings or symbols, properly typed as keys of the object.
- *
- * @template T - The type of the object.
- * @param {T} obj - The object whose keys are to be retrieved.
- * @returns {Array<keyof T>} An array containing the keys of the object, typed as the keys of the input object.
- */
-export const objectKeys = <T extends Props>(obj: T): Array<keyof T> => {
-  return Object.keys(obj) as Array<keyof T>;
-};
-
-/**
  * Recursively unfolds a nested object into a flat key-value mapping where
  * keys represent the path to the original nested property.
  *
@@ -305,3 +296,17 @@ export const isPrimitive = (value: unknown) => {
 };
 
 export const cloneAsWriteable: <T>(o: DeepReadonly<T>) => DeepWriteable<T> = deepClone;
+
+/**
+ * A utility function that acts as a type-safe wrapper around `Object.keys`.
+ * Returns an array of keys from the provided object with type-checking, ensuring
+ * the keys are strictly typed based on the given object's shape.
+ *
+ * This ensures that the returned keys are constrained to the actual keys
+ * of the object and provides more accurate typings for TypeScript usage.
+ *
+ * @typeParam T - The object type from which keys will be retrieved.
+ * @param obj - The object whose keys are to be retrieved.
+ * @returns An array containing the keys of the given object, typed as keys of T.
+ */
+export const getTypedKeys = Object.keys as <T extends object>(obj: T) => Array<keyof T>;

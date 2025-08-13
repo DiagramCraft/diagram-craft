@@ -126,7 +126,6 @@ export class FreehandTool extends AbstractTool {
     this.isDrawing = false;
   }
 
-  // @ts-ignore
   private douglasPeucker(points: Point[], tolerance: number): Point[] {
     if (points.length === 2) return [points[0], points[1]];
     let dmax = 0;

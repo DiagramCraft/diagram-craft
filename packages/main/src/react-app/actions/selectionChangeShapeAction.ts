@@ -7,7 +7,7 @@ import {
 import { assert } from '@diagram-craft/utils/assert';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
-import { deepClone, objectKeys } from '@diagram-craft/utils/object';
+import { deepClone, getTypedKeys } from '@diagram-craft/utils/object';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
@@ -50,10 +50,10 @@ export class SelectionChangeShapeAction extends AbstractSelectionAction<Applicat
               e.changeNodeType(node.nodeType, uow);
 
               e.updateProps(props => {
-                for (const k of objectKeys(props)) {
+                for (const k of getTypedKeys(props)) {
                   delete props[k];
                 }
-                for (const k of objectKeys(node.storedProps)) {
+                for (const k of getTypedKeys(node.storedProps)) {
                   // @ts-ignore
                   props[k] = deepClone(node.storedProps[k]);
                 }

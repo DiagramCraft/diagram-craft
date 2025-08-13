@@ -10,7 +10,7 @@ export const toggleRulerActions = (context: ActionContext) => ({
 });
 
 export class ToggleRulerAction extends AbstractToggleAction {
-  private userState: UserState | undefined;
+  private readonly userState: UserState | undefined;
 
   constructor(context: ActionContext) {
     super(context);

@@ -1047,7 +1047,8 @@ function assertTwoElements<T>(arg: T[]): asserts arg is [T, T] {
 }
 
 const makeVertex = (v: Omit<Vertex, 'prev' | 'next'> & Partial<Pick<Vertex, 'prev' | 'next'>>) => {
-  // @ts-ignore
+  // @ts-expect-error - we are not using all properties of the vertex, and we
+  //                    know that prev and next are set at a later stage
   const ret: Vertex = { ...v };
   assertVertexIsCorrect(ret, 'initial');
   return ret;

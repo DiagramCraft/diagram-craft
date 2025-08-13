@@ -6,12 +6,12 @@ import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { Context } from '../context';
 
 export class NodeDrag extends Drag {
-  private startTime: number;
+  private readonly startTime: number;
+  private readonly uow: UnitOfWork;
+  private readonly initialPositions: Point[];
+
   private lastPoint: Point | undefined;
   private startPoint: Point | undefined;
-  private uow: UnitOfWork;
-
-  private initialPositions: Point[];
 
   constructor(
     private readonly editablePath: EditablePath,

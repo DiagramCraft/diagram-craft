@@ -401,7 +401,10 @@ const attachLabelNode = (
   );
 };
 
-const POSITIONS: Record<string, Record<string, string>> = {
+const POSITIONS: Record<
+  string,
+  Record<string, 'nw' | 'w' | 'sw' | 'n' | 'c' | 's' | 'ne' | 'e' | 'se' | undefined>
+> = {
   left: {
     top: 'nw',
     middle: 'w',
@@ -443,7 +446,6 @@ const getNodeProps = (style: StyleManager, isEdge: boolean) => {
       align: align,
       valign: valign,
 
-      // @ts-ignore
       position:
         POSITIONS[style.str('labelPosition', 'center')][
           style.str('verticalLabelPosition', 'middle')
@@ -909,16 +911,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           edgeProps.type = 'orthogonal';
         }
 
-        const edge = DiagramEdge.create(
-          id,
-          source,
-          target,
-          // @ts-ignore
-          props,
-          metadata,
-          waypoints,
-          layer
-        );
+        const edge = DiagramEdge.create(id, source, target, edgeProps, metadata, waypoints, layer);
         nodes.push(edge);
         parents.set(id, edge);
 

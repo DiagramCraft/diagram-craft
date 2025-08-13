@@ -364,7 +364,6 @@ const _edgeDefaults: Omit<EdgePropsForRendering, 'custom' | 'shape' | 'indicator
 };
 
 const _mergedEdgeDefaults = makeWriteable(
-  // @ts-ignore
   deepMerge<EdgePropsForRendering>({}, _nodeDefaults, _edgeDefaults)
 );
 
@@ -393,10 +392,8 @@ export function registerCustomNodeDefaults<K extends keyof CustomNodeProps>(
   k: K,
   v: DeepRequired<CustomNodeProps[K]>
 ) {
-  // @ts-ignore
-  nodeDefaults.add(`custom.${k}`, v);
+  nodeDefaults.add(`custom.${k}`, v as PropPathValue<NodeProps, `custom.${K}`>);
 
-  // @ts-ignore
   return (d?: CustomNodeProps[K]) => deepMerge({}, v, d ?? undefined);
 }
 
@@ -404,9 +401,7 @@ export function registerCustomEdgeDefaults<K extends keyof CustomEdgeProps>(
   k: K,
   v: DeepRequired<CustomEdgeProps[K]>
 ) {
-  // @ts-ignore
-  edgeDefaults.add(`custom.${k}`, v);
+  edgeDefaults.add(`custom.${k}`, v as PropPathValue<EdgeProps, `custom.${K}`>);
 
-  // @ts-ignore
   return (d?: CustomEdgeProps[K]) => deepMerge({}, v, d ?? {});
 }
