@@ -72,6 +72,7 @@ export const hasHighlight = (
   arg?: string
 ) => {
   if (!element) return false;
+  if (!HIGHLIGHT_STORE.has(element)) return false;
 
   return Highlight.get(element).has(highlight, arg);
 };

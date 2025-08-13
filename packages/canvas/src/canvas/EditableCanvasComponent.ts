@@ -30,6 +30,7 @@ import {
 import { CollaborationConfig } from '@diagram-craft/model/collaboration/collaborationConfig';
 import { AwarenessCursorComponent } from '../components/AwarenessCursorComponent';
 import { isResolvableToRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import { AnchorHighlightComponent } from '../components/AnchorHighlightComponent';
 
 const removeSuffix = (s: string) => {
   return s.replace(/---.+$/, '');
@@ -364,6 +365,8 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
             this.tool.type === 'move'
               ? this.subComponent($cmp(SelectionComponent), { ...canvasState })
               : svg.g({}),
+
+            this.subComponent($cmp(AnchorHighlightComponent), { ...canvasState }),
 
             this.subComponent($cmp(SelectionMarqueeComponent), { ...canvasState }),
 
