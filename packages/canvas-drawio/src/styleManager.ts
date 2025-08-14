@@ -106,6 +106,7 @@ type NumKey =
   | 'jettyWidth'
   | 'indicatorWidth'
   | 'indicatorHeight'
+  | 'perimeterSpacing'
   | 'sourcePerimeterSpacing'
   | 'targetPerimeterSpacing';
 
