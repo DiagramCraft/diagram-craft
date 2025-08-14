@@ -11,6 +11,7 @@ import { Point } from '@diagram-craft/geometry/point';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { Diagram } from './diagram';
 import { VERIFY_NOT_REACHED, VerifyNotReached } from '@diagram-craft/utils/assert';
+import type { DiagramNode } from './diagramNode';
 
 type ArrowShape = {
   height: number;
@@ -34,6 +35,26 @@ const adjustForArrow = (
   } else {
     return PointOnPath.toTimeOffset(pointOnPath, path);
   }
+};
+
+const adjustForPerimeterSpacing = (
+  type: 'start' | 'end',
+  pointOnPath: PointOnPath | undefined,
+  path: Path,
+  edge: DiagramEdge,
+  node: DiagramNode
+): PointOnPath | undefined => {
+  if (!pointOnPath) return undefined;
+
+  let spacing = type === 'start' ? edge.renderProps.spacing.start : edge.renderProps.spacing.end;
+  if (spacing === 0) spacing = node.renderProps.routing.spacing;
+  if (spacing === 0) return pointOnPath;
+
+  const baseTOS = PointOnPath.toTimeOffset(pointOnPath, path);
+  if (type === 'start') baseTOS.pathD += spacing;
+  else baseTOS.pathD -= spacing;
+
+  return { point: path.pointAt(baseTOS) };
 };
 
 const intersectWithNode = (
@@ -74,13 +95,25 @@ export const clipPath = (
 
   const start =
     edge.start instanceof ConnectedEndpoint
-      ? intersectWithNode(edge.start, edge.start.position, path, diagram)
+      ? adjustForPerimeterSpacing(
+          'start',
+          intersectWithNode(edge.start, edge.start.position, path, diagram),
+          path,
+          edge,
+          edge.start.node
+        )
       : { point: path.start };
   const startOffset = adjustForArrow(start, startArrow, path, 1);
 
   const end =
     edge.end instanceof ConnectedEndpoint
-      ? intersectWithNode(edge.end, edge.end.position, path, diagram)
+      ? adjustForPerimeterSpacing(
+          'end',
+          intersectWithNode(edge.end, edge.end.position, path, diagram),
+          path,
+          edge,
+          edge.end.node
+        )
       : { point: path.end };
   const endOffset = adjustForArrow(end, endArrow, path, -1);
 

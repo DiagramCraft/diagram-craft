@@ -181,6 +181,10 @@ declare global {
       type?: 'none' | 'below-line' | 'above-arc' | 'below-arc' | 'below-hide';
       size?: number;
     };
+    spacing?: {
+      start?: number;
+      end?: number;
+    };
 
     custom?: CustomEdgeProps;
   }
@@ -243,6 +247,10 @@ declare global {
       type: 'none' | 'shape-defaults' | 'north-south' | 'east-west' | 'directions' | 'per-edge';
       perEdgeCount?: number;
       directionsCount?: number;
+    };
+
+    routing?: {
+      spacing?: number;
     };
 
     custom?: CustomNodeProps;

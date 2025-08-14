@@ -330,6 +330,10 @@ const _nodeDefaults: Omit<NodePropsForRendering, 'name' | 'custom' | 'indicators
     type: 'shape-defaults',
     perEdgeCount: 1,
     directionsCount: 4
+  },
+
+  routing: {
+    spacing: 0
   }
 };
 
@@ -360,11 +364,15 @@ const _edgeDefaults: Omit<EdgePropsForRendering, 'custom' | 'shape' | 'indicator
     opacity: 1,
     rounding: false,
     roundingAmount: 20
+  },
+  spacing: {
+    start: 0,
+    end: 0
   }
 };
 
 const _mergedEdgeDefaults = makeWriteable(
-  deepMerge<EdgePropsForRendering>({}, _nodeDefaults, _edgeDefaults)
+  deepMerge<EdgePropsForRendering>({}, { ..._nodeDefaults, routing: undefined }, _edgeDefaults)
 );
 
 export const nodeDefaults = new Defaults<NodeProps>(_nodeDefaults);
