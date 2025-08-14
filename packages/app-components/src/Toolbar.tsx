@@ -67,11 +67,17 @@ const ToggleGroup = (props: ToggleGroupProps) => {
   );
 };
 
-type ToggleGroupProps = {
-  type: 'single' | 'multiple';
-  children: React.ReactNode;
-  value?: string | string[];
-};
+type ToggleGroupProps =
+  | {
+      type: 'single';
+      value?: string;
+      children: React.ReactNode;
+    }
+  | {
+      type: 'multiple';
+      value?: string[];
+      children: React.ReactNode;
+    };
 
 const Separator = (props: SeparatorProps) => {
   return <RadixToolbar.Separator {...props} className={styles.cmpToolbarSeparator} />;

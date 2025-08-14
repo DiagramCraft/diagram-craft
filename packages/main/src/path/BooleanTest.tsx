@@ -5,7 +5,6 @@ import {
   classifyClipVertices,
   getClipVertices
 } from '@diagram-craft/geometry/pathClip';
-import { Point } from '@diagram-craft/geometry/point';
 import { Path } from '@diagram-craft/geometry/path';
 import { PathList } from '@diagram-craft/geometry/pathList';
 import { constructPathTree } from '@diagram-craft/geometry/pathUtils';
@@ -75,39 +74,6 @@ export const BooleanTest = (props: {
       return 'clip';
     } else if (onlyClip.size === 0) {
       return 'subject';
-    } else {
-      return 'both';
-    }
-
-    const sharedWithSubject = p
-      .all()
-      .every(seg =>
-        seg.segments.every(
-          s =>
-            subject
-              .flatMap(e => e.vertices)
-              .some(v => Point.isEqual(v.point, s.start) || Point.isEqual(v.point, s.end)) ||
-            cp1.isInside(s.start)
-        )
-      );
-    const sharesWithClip = p
-      .all()
-      .every(seg =>
-        seg.segments.every(
-          s =>
-            clip
-              .flatMap(e => e.vertices)
-              .some(v => Point.isEqual(v.point, s.start) || Point.isEqual(v.point, s.end)) ||
-            cp2.isInside(s.start)
-        )
-      );
-
-    if (sharedWithSubject && sharesWithClip) {
-      return 'both';
-    } else if (sharedWithSubject) {
-      return 'subject';
-    } else if (sharesWithClip) {
-      return 'clip';
     } else {
       return 'both';
     }

@@ -168,7 +168,7 @@ export class StyleManager {
   shape: string | undefined;
   styles: Style;
 
-  private styleKey: string;
+  private readonly styleKey: string;
 
   constructor(styleString: string, isGroup?: boolean) {
     this.styles = this.parseStyle(styleString);

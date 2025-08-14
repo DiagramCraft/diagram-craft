@@ -155,14 +155,7 @@ const DataProviderResponse = (props: {
                       : makeDefaultNode(item, schema, document.definitions);
 
                   DRAG_DROP_MANAGER.initiate(
-                    new ObjectPickerDrag(
-                      // @ts-expect-error
-                      ev,
-                      node,
-                      diagram,
-                      undefined,
-                      app
-                    )
+                    new ObjectPickerDrag(ev.nativeEvent, node, diagram, undefined, app)
                   );
                 }}
               >
@@ -212,8 +205,7 @@ const DataProviderResponse = (props: {
 
                                       DRAG_DROP_MANAGER.initiate(
                                         new ObjectPickerDrag(
-                                          // @ts-expect-error
-                                          ev,
+                                          ev.nativeEvent,
                                           n,
                                           diagram,
                                           undefined,

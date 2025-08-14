@@ -103,7 +103,7 @@ export class LayerManager implements UOWTrackable<LayersSnapshot>, AttachmentCon
     const l1 = this.#layers.values.indexOf(a.layer);
     const l2 = this.#layers.values.indexOf(b.layer);
 
-    if (l1 === l2 && a.layer instanceof RegularLayer && b.layer instanceof RegularLayer) {
+    if (l1 === l2) {
       return a.layer.elements.indexOf(a) > b.layer.elements.indexOf(b);
     }
 
@@ -137,9 +137,11 @@ export class LayerManager implements UOWTrackable<LayersSnapshot>, AttachmentCon
   }
 
   toggleVisibility(layer: Layer) {
-    this.#visibleLayers.has(layer.id)
-      ? this.#visibleLayers.delete(layer.id)
-      : this.#visibleLayers.set(layer.id, true);
+    if (this.#visibleLayers.has(layer.id)) {
+      this.#visibleLayers.delete(layer.id);
+    } else {
+      this.#visibleLayers.set(layer.id, true);
+    }
 
     this.diagram.emit('change', { diagram: this.diagram });
   }

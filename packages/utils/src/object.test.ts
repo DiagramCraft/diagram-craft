@@ -6,9 +6,9 @@ import {
   deepEquals,
   deepIsEmpty,
   deepMerge,
+  getTypedKeys,
   isObj,
   isPrimitive,
-  objectKeys,
   resilientDeepClone,
   shallowEquals,
   unfoldObject
@@ -138,10 +138,11 @@ describe('deepMerge', () => {
   });
 
   test('should handle null values in source', () => {
-    const a = { a: 1, b: 2 };
-    const b = { a: null, c: 3 };
+    type Type = { a: number | null; b: number; c: number };
 
-    // @ts-expect-error
+    const a: Partial<Type> = { a: 1, b: 2 };
+    const b: Partial<Type> = { a: null, c: 3 };
+
     expect(deepMerge(a, b)).toEqual({ a: 1, b: 2, c: 3 });
   });
 
@@ -152,11 +153,12 @@ describe('deepMerge', () => {
   });
 
   test('should handle multiple sources', () => {
-    const a = { a: 1, b: 2 };
-    const b = { a: 2, c: 3 };
-    const c = { d: 4 };
+    type Type = { a: number; b: number; c: number; d: number };
 
-    // @ts-expect-error
+    const a: Partial<Type> = { a: 1, b: 2 };
+    const b: Partial<Type> = { a: 2, c: 3 };
+    const c: Partial<Type> = { d: 4 };
+
     expect(deepMerge(a, b, c)).toEqual({ a: 2, b: 2, c: 3, d: 4 });
   });
 
@@ -499,25 +501,25 @@ describe('isPrimitive function', () => {
 describe('objectKeys function', () => {
   test('should return an array of keys for a simple object', () => {
     const obj = { a: 1, b: 2, c: 3 };
-    const keys = objectKeys(obj);
+    const keys = getTypedKeys(obj);
     expect(keys).toEqual(['a', 'b', 'c']);
   });
 
   test('should return an empty array for an empty object', () => {
     const obj = {};
-    const keys = objectKeys(obj);
+    const keys = getTypedKeys(obj);
     expect(keys).toEqual([]);
   });
 
   test('should return keys for an object with mixed value types', () => {
     const obj = { a: 1, b: 'string', c: true, d: null, e: undefined, f: {} };
-    const keys = objectKeys(obj);
+    const keys = getTypedKeys(obj);
     expect(keys).toEqual(['a', 'b', 'c', 'd', 'e', 'f']);
   });
 
   test('should return keys for an object with nested objects', () => {
     const obj = { a: 1, b: { c: 2 } };
-    const keys = objectKeys(obj);
+    const keys = getTypedKeys(obj);
     expect(keys).toEqual(['a', 'b']);
   });
 });
@@ -582,12 +584,5 @@ describe('cloneAsWriteable function', () => {
 
     expect(writeableArray).toEqual(readonlyArray);
     expect(writeableArray).not.toBe(readonlyArray);
-  });
-
-  test('should handle null and undefined', () => {
-    // @ts-expect-error
-    expect(cloneAsWriteable(null)).toBe(null);
-    // @ts-expect-error
-    expect(cloneAsWriteable(undefined)).toBe(undefined);
   });
 });

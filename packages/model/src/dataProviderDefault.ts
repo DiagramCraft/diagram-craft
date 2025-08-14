@@ -19,7 +19,7 @@ export class DefaultDataProvider
   id = DefaultDataProviderId;
 
   schemas: DataSchema[];
-  private data: DataWithSchema[] = [];
+  private readonly data: DataWithSchema[] = [];
 
   constructor(s: string) {
     super();

@@ -20,7 +20,6 @@ import { excludeLabelNodes, includeAll, SelectionState } from '@diagram-craft/mo
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { largest } from '@diagram-craft/utils/array';
 import { Context } from '../context';
-import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 const getId = (e: DiagramElement) => (isNode(e) ? `node-${e.id}` : `edge-${e.id}`);
@@ -53,7 +52,7 @@ export abstract class AbstractMoveDrag extends Drag {
   protected dragStarted = false;
   protected readonly uow: UnitOfWork;
 
-  constructor(
+  protected constructor(
     protected readonly diagram: Diagram,
     protected readonly offset: Point,
     protected modifiers: Modifiers,
@@ -385,9 +384,7 @@ export class MoveDrag extends AbstractMoveDrag {
     selection.guides = [];
 
     elementsToRemove.forEach(e => {
-      if (e.layer instanceof RegularLayer) {
-        e.layer.removeElement(e, this.uow);
-      }
+      e.layer.removeElement(e, this.uow);
     });
 
     // Reset the original selection back to the position of the now

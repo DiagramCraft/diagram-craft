@@ -115,21 +115,19 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
 
       get: (_target, prop) => {
         const isValidTarget = _target === undefined || Array.isArray(_target);
+        const propKey = prop as keyof typeof _target;
 
         if (prop === Symbol.iterator) {
           if (!isValidTarget) return undefined;
-          // @ts-ignore
           return _target[Symbol.iterator] ?? undefined;
         }
         if (prop === Symbol.toStringTag) {
           if (!isValidTarget) return undefined;
-          // @ts-ignore
-          return _target[Symbol.toStringTag] ?? undefined;
+          return _target[propKey] ?? undefined;
         }
         if (typeof prop !== 'string') return VERIFY_NOT_REACHED();
 
-        // @ts-ignore
-        if (_target[prop] !== undefined) return _target[prop];
+        if (_target[propKey] !== undefined) return _target[propKey];
 
         const map = this.#current;
 

@@ -14,7 +14,6 @@ export const NamedIndicatorEditor: Editor = props => {
   const $p = props.props as NodeProps;
 
   const onChange = () => {
-    console.log('change', $p);
     props.onChange();
   };
 

@@ -30,7 +30,7 @@ type PropertyInfoEntry<V> = {
 
 export abstract class MultiProperty<T> implements Property<T> {
   // eslint-disable-next-line
-  constructor(protected readonly props: Array<Property<any>>) {}
+  protected constructor(protected readonly props: Array<Property<any>>) {}
 
   abstract get val(): T;
   abstract set(val: T | undefined): void;

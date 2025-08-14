@@ -50,9 +50,7 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
       onMouseOver={e => onMouseOver(e)}
       onMouseLeave={onMouseOut}
       style={{}}
-      /* TODO: This is a bit of a hack to not interfere with onMouseDown used in CanvasComponent */
-      // @ts-ignore
-      onPointerDown={props.onMouseDown ?? (() => {})}
+      onPointerDown={e => props.onMouseDown?.(e.nativeEvent) ?? (() => {})}
     >
       {hover && props.showHover && (
         <Portal.Root>

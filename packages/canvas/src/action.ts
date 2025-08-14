@@ -126,7 +126,7 @@ export abstract class AbstractToggleAction<T = undefined, C extends ActionContex
   private stateCriteria: Array<ActionCriteria> = [];
   protected state: boolean = false;
 
-  constructor(context: C) {
+  protected constructor(context: C) {
     super(context);
     this.context = context;
 

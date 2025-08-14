@@ -895,7 +895,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       // TODO: We need to check this is going in the right direction (i.e. outwards)
       //       probably need to pick up some code from ShapeNodeDefinition.getAnchors
 
-      return Direction.fromVector({ x: -tangent.y, y: tangent.x });
+      return Direction.fromVector(Vector.tangentToNormal(tangent));
     }
     return undefined;
   }

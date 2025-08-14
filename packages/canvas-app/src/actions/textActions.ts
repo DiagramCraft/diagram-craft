@@ -44,8 +44,6 @@ export class TextAction extends AbstractToggleAction {
       ActionCriteria.EventTriggered($d.selectionState, 'remove', callback),
       ActionCriteria.EventTriggered($d.undoManager, 'execute', callback)
     ];
-
-    return super.getStateCriteria(context);
   }
 
   getCriteria(context: ActionContext) {
