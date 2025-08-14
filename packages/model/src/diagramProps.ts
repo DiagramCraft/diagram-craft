@@ -249,6 +249,10 @@ declare global {
       directionsCount?: number;
     };
 
+    routing?: {
+      spacing?: number;
+    };
+
     custom?: CustomNodeProps;
   }
 }

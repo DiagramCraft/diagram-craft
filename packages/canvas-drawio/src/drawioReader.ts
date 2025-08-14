@@ -463,6 +463,11 @@ const getNodeProps = (style: StyleManager, isEdge: boolean) => {
     inheritStyle: false
   };
 
+  if (style.num('perimeterSpacing', 0) !== 0) {
+    props.routing ??= {};
+    props.routing.spacing = style.num('perimeterSpacing', 0);
+  }
+
   if (props.text!.color === '#') props.text!.color = 'black';
 
   const fontStyle = parseNum(style.str('fontStyle'), 0);

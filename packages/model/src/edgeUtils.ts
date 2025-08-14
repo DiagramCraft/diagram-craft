@@ -11,6 +11,7 @@ import { Point } from '@diagram-craft/geometry/point';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { Diagram } from './diagram';
 import { VERIFY_NOT_REACHED, VerifyNotReached } from '@diagram-craft/utils/assert';
+import type { DiagramNode } from './diagramNode';
 
 type ArrowShape = {
   height: number;
@@ -40,11 +41,13 @@ const adjustForPerimeterSpacing = (
   type: 'start' | 'end',
   pointOnPath: PointOnPath | undefined,
   path: Path,
-  edge: DiagramEdge
+  edge: DiagramEdge,
+  node: DiagramNode
 ): PointOnPath | undefined => {
   if (!pointOnPath) return undefined;
 
-  const spacing = type === 'start' ? edge.renderProps.spacing.start : edge.renderProps.spacing.end;
+  let spacing = type === 'start' ? edge.renderProps.spacing.start : edge.renderProps.spacing.end;
+  if (spacing === 0) spacing = node.renderProps.routing.spacing;
   if (spacing === 0) return pointOnPath;
 
   const baseTOS = PointOnPath.toTimeOffset(pointOnPath, path);
@@ -96,7 +99,8 @@ export const clipPath = (
           'start',
           intersectWithNode(edge.start, edge.start.position, path, diagram),
           path,
-          edge
+          edge,
+          edge.start.node
         )
       : { point: path.start };
   const startOffset = adjustForArrow(start, startArrow, path, 1);
@@ -107,7 +111,8 @@ export const clipPath = (
           'end',
           intersectWithNode(edge.end, edge.end.position, path, diagram),
           path,
-          edge
+          edge,
+          edge.end.node
         )
       : { point: path.end };
   const endOffset = adjustForArrow(end, endArrow, path, -1);
