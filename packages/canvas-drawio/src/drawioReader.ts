@@ -862,6 +862,16 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           }
         }
 
+        if (style.num('sourcePerimeterSpacing', 0) !== 0) {
+          edgeProps.spacing ??= {};
+          edgeProps.spacing.start = style.num('sourcePerimeterSpacing', 0);
+        }
+
+        if (style.num('targetPerimeterSpacing', 0) !== 0) {
+          edgeProps.spacing ??= {};
+          edgeProps.spacing.end = style.num('targetPerimeterSpacing', 0);
+        }
+
         if (style.shape === 'flexArrow') {
           edgeProps.shape = 'BlockArrow';
           edgeProps.custom ??= {};

@@ -105,7 +105,9 @@ type NumKey =
   | 'jettyHeight'
   | 'jettyWidth'
   | 'indicatorWidth'
-  | 'indicatorHeight';
+  | 'indicatorHeight'
+  | 'sourcePerimeterSpacing'
+  | 'targetPerimeterSpacing';
 
 type AllKeys = StringKey | BooleanKey | NumKey;
 

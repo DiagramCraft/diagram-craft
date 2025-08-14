@@ -360,6 +360,10 @@ const _edgeDefaults: Omit<EdgePropsForRendering, 'custom' | 'shape' | 'indicator
     opacity: 1,
     rounding: false,
     roundingAmount: 20
+  },
+  spacing: {
+    start: 0,
+    end: 0
   }
 };
 
