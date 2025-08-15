@@ -43,21 +43,6 @@ describe('Graph utilities', () => {
       expect(result!.edges.map(e => e.id)).toEqual(['AC']);
     });
 
-    test('handles unweighted edges (default weight 1)', () => {
-      // Setup
-      const graph = { vertices: new Map(), edges: new Map() };
-      graph.vertices.set('A', { id: 'A' });
-      graph.vertices.set('B', { id: 'B' });
-      graph.edges.set('AB', { id: 'AB', from: 'A', to: 'B' });
-
-      // Act
-      const result = findShortestPath(graph, 'A', 'B');
-
-      // Verify
-      expect(result).toBeDefined();
-      expect(result!.distance).toBe(1);
-    });
-
     test('returns undefined for non-existent start vertex', () => {
       // Setup
       const graph = { vertices: new Map(), edges: new Map() };
@@ -269,6 +254,40 @@ describe('Graph utilities', () => {
       expect(result).toBeDefined();
       expect(result!.distance).toBe(1);
       expect(result!.path.map(v => v.id)).toEqual(['A', 'B']);
+    });
+
+    test('ignores disabled edges when finding path', () => {
+      // Setup - Direct path is disabled, forcing use of longer path
+      const graph = { vertices: new Map(), edges: new Map() };
+      graph.vertices.set('A', { id: 'A' });
+      graph.vertices.set('B', { id: 'B' });
+      graph.vertices.set('C', { id: 'C' });
+      graph.edges.set('AC', { id: 'AC', from: 'A', to: 'C', weight: 1, disabled: true });
+      graph.edges.set('AB', { id: 'AB', from: 'A', to: 'B', weight: 2 });
+      graph.edges.set('BC', { id: 'BC', from: 'B', to: 'C', weight: 2 });
+
+      // Act
+      const result = findShortestPath(graph, 'A', 'C');
+
+      // Verify - Should use A->B->C path since A->C is disabled
+      expect(result).toBeDefined();
+      expect(result!.distance).toBe(4);
+      expect(result!.path.map(v => v.id)).toEqual(['A', 'B', 'C']);
+      expect(result!.edges.map(e => e.id)).toEqual(['AB', 'BC']);
+    });
+
+    test('returns undefined when only path uses disabled edges', () => {
+      // Setup - Only connection between A and B is disabled
+      const graph = { vertices: new Map(), edges: new Map() };
+      graph.vertices.set('A', { id: 'A' });
+      graph.vertices.set('B', { id: 'B' });
+      graph.edges.set('AB', { id: 'AB', from: 'A', to: 'B', weight: 1, disabled: true });
+
+      // Act
+      const result = findShortestPath(graph, 'A', 'B');
+
+      // Verify
+      expect(result).toBeUndefined();
     });
   });
 });
