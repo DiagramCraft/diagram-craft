@@ -122,16 +122,6 @@ class AugmentedGraph extends SimpleGraph<
     return edges;
   }
 
-  private modifyWeights(newWeights: Map<string, number>) {
-    const oldWeights = new Map<string, number>();
-    for (const [id, weight] of newWeights) {
-      const edge = this._edges.get(id)!;
-      oldWeights.set(id, weight);
-      edge.weight = weight;
-    }
-    return () => this.modifyWeights(oldWeights);
-  }
-
   withStartAndEnd(
     start: {
       id: string;
@@ -591,7 +581,9 @@ const buildOrthogonalEdgePathVersion2 = (
     }
   }
 
-  return path.getPaths().singular().simplify();
+  const paths = path.getPaths();
+  if (paths.all().length === 0) return undefined;
+  return paths.singular().simplify();
 };
 
 const buildOrthogonalEdgePathVersion1 = (
@@ -667,14 +659,16 @@ export const buildOrthogonalEdgePath = (
     (startNode && startNode.renderProps.routing.constraint !== 'none') ||
     (endNode && endNode.renderProps.routing.constraint !== 'none')
   ) {
-    return buildOrthogonalEdgePathVersion2(
-      edge,
-      startNode && startNode.renderProps.routing.constraint !== 'none'
-        ? startNode.renderProps.routing.constraint
-        : preferredStartDirection,
-      endNode && endNode.renderProps.routing.constraint !== 'none'
-        ? endNode.renderProps.routing.constraint
-        : preferredEndDirection
+    return (
+      buildOrthogonalEdgePathVersion2(
+        edge,
+        startNode && startNode.renderProps.routing.constraint !== 'none'
+          ? startNode.renderProps.routing.constraint
+          : preferredStartDirection,
+        endNode && endNode.renderProps.routing.constraint !== 'none'
+          ? endNode.renderProps.routing.constraint
+          : preferredEndDirection
+      ) ?? buildOrthogonalEdgePathVersion1(edge, preferredStartDirection, preferredEndDirection)
     );
   } else {
     return buildOrthogonalEdgePathVersion1(edge, preferredStartDirection, preferredEndDirection);

@@ -123,7 +123,7 @@ const OrthogonalRoutingTest = (props: { start: any; end: any; numberOfWayPoints:
         );
       })}
 
-      <path d={path.asSvgPath()} stroke={'black'} strokeWidth={3} fill={'none'} />
+      <path d={path!.asSvgPath()} stroke={'black'} strokeWidth={3} fill={'none'} />
     </svg>
   );
 };
