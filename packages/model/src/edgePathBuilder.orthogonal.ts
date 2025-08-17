@@ -2,7 +2,6 @@ import { _p, Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
 import { type Edge, findShortestPathAStar, SimpleGraph } from '@diagram-craft/utils/graph';
 import { Direction } from '@diagram-craft/geometry/direction';
-import { MultiMap } from '@diagram-craft/utils/multimap';
 import type { DiagramEdge } from './diagramEdge';
 import { ConnectedEndpoint } from './endpoint';
 import { unique } from '@diagram-craft/utils/array';
@@ -42,24 +41,6 @@ const readjustConnectionPoint = (p: Point, wp: Point, startBounds: Box) => {
 
 class OrthogonalGraph extends SimpleGraph<Point, [Direction, string]> {
   private reset: (() => void) | undefined = undefined;
-  private adjacencyList:
-    | MultiMap<string, { vertexId: string; edge: Edge<[Direction, string]> }>
-    | undefined = undefined;
-
-  private getAdjancencyList() {
-    if (this.adjacencyList) return this.adjacencyList;
-
-    // Build adjacency list for efficient lookup
-    this.adjacencyList = new MultiMap<
-      string,
-      { vertexId: string; edge: Edge<[Direction, string]> }
-    >();
-    for (const edge of this.edges()) {
-      this.adjacencyList.add(edge.from, { vertexId: edge.to, edge });
-    }
-
-    return this.adjacencyList;
-  }
 
   private edgesCrossing(bounds: Box) {
     const edges: Edge<[Direction, string]>[] = [];
@@ -95,12 +76,12 @@ class OrthogonalGraph extends SimpleGraph<Point, [Direction, string]> {
 
     const oldWeights = new Map<string, number>();
 
-    for (const adj of this.getAdjancencyList().get(start.id)!) {
+    for (const adj of this.adjacencyList().get(start.id)!) {
       oldWeights.set(adj.edge.id, adj.edge.weight);
       adj.edge.weight += start.directionPenalties[adj.edge.data[0]] ?? 0;
     }
 
-    for (const adj of this.getAdjancencyList().get(end.id)!) {
+    for (const adj of this.adjacencyList().get(end.id)!) {
       const edge = this.getEdge(`${adj.vertexId}-${end.id}`)!;
       oldWeights.set(edge.id, edge.weight);
       edge.weight += end.directionPenalties[Direction.opposite(edge.data[0])] ?? 0;
@@ -247,15 +228,23 @@ const constructGraph = (edge: DiagramEdge, start: Point, end: Point) => {
   const graph = new OrthogonalGraph();
 
   const addEdge = (r1: number, c1: number, r2: number, c2: number, d: Direction) => {
-    if (r1 < 0 || r1 >= grid.length) return;
-    if (r2 < 0 || r2 >= grid.length) return;
-    if (c1 < 0 || c1 >= grid[0].length) return;
-    if (c2 < 0 || c2 >= grid[0].length) return;
+    if (
+      r1 < 0 ||
+      r2 < 0 ||
+      c1 < 0 ||
+      c2 < 0 ||
+      r1 >= grid.length ||
+      r2 >= grid.length ||
+      c1 >= grid[0].length ||
+      c2 >= grid[0].length
+    ) {
+      return;
+    }
 
     const a = Point.toString(grid[r1][c1]);
     const b = Point.toString(grid[r2][c2]);
 
-    const weight = Point.manhattanDistance(graph.getVertex(a)!.data, graph.getVertex(b)!.data);
+    const weight = Point.manhattanDistance(grid[r1][c1], grid[r2][c2]);
 
     const isHorizontal = d === 'e' || d === 'w';
     const type = isHorizontal ? ys.get(grid[r1][c1].y)! : xs.get(grid[r1][c1].x)!;
@@ -280,11 +269,7 @@ const constructGraph = (edge: DiagramEdge, start: Point, end: Point) => {
     for (let c = 0; c < grid[r].length; c++) {
       const vertexId = Point.toString(grid[r][c]);
       graph.addVertex({ id: vertexId, data: grid[r][c] });
-    }
-  }
 
-  for (let r = 0; r < grid.length; r++) {
-    for (let c = 0; c < grid[r].length; c++) {
       addEdge(r, c, r + 1, c, 's');
       addEdge(r, c, r, c + 1, 'e');
     }

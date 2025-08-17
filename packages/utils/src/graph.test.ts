@@ -1,10 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import {
-  type EdgePenaltyFunction,
-  findShortestPathAStar,
-  type HeuristicFunction,
-  SimpleGraph
-} from './graph';
+import { findShortestPathAStar, type HeuristicFunction, SimpleGraph } from './graph';
 
 describe('Graph utilities', () => {
   describe('findShortestPathAStar', () => {

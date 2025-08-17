@@ -30,6 +30,14 @@ export interface Graph<V = unknown, E = unknown, VK = string, EK = string> {
 
   /** Get an iterable of all edges */
   edges(): Iterable<Edge<E, EK, VK>>;
+
+  adjacencyList(): MultiMap<
+    VK,
+    {
+      vertexId: VK;
+      edge: Edge<E, EK, VK>;
+    }
+  >;
 }
 
 /** A simple implementation of the Graph interface using Maps */
@@ -38,7 +46,20 @@ export class SimpleGraph<V = unknown, E = unknown, VK = string, EK = string>
 {
   protected _vertices = new Map<VK, Vertex<V, VK>>();
   protected _edges = new Map<EK, Edge<E, EK, VK>>();
+  protected _adjacencyList: MultiMap<VK, { vertexId: VK; edge: Edge<E, EK, VK> }> | undefined =
+    undefined;
 
+  adjacencyList(): MultiMap<VK, { vertexId: VK; edge: Edge<E, EK, VK> }> {
+    if (this._adjacencyList) return this._adjacencyList;
+
+    // Build adjacency list for efficient lookup
+    this._adjacencyList = new MultiMap<VK, { vertexId: VK; edge: Edge<E, EK, VK> }>();
+    for (const edge of this.edges()) {
+      this._adjacencyList.add(edge.from, { vertexId: edge.to, edge });
+    }
+
+    return this._adjacencyList;
+  }
   getVertex(id: VK): Vertex<V, VK> | undefined {
     return this._vertices.get(id);
   }
@@ -134,10 +155,7 @@ export const findShortestPathAStar = <V = unknown, E = unknown, VK = string, EK 
   }
 
   // Build adjacency list for efficient lookup
-  const adjacencyList = new MultiMap<VK, { vertexId: VK; edge: Edge<E, EK, VK> }>();
-  for (const edge of graph.edges()) {
-    adjacencyList.add(edge.from, { vertexId: edge.to, edge });
-  }
+  const adjacencyList = graph.adjacencyList();
 
   // gScore: cost of cheapest path from start to vertex
   const gScore = new Map<VK, number>();
@@ -147,16 +165,18 @@ export const findShortestPathAStar = <V = unknown, E = unknown, VK = string, EK 
   const visited = new Set<VK>();
   const queue = new PriorityQueue<VK>();
 
-  // Initialize scores
-  for (const vertex of graph.vertices()) {
-    gScore.set(vertex.id, vertex.id === startId ? 0 : Infinity);
-    fScore.set(
-      vertex.id,
-      vertex.id === startId ? heuristicFunction(startVertex, endVertex, graph) : Infinity
-    );
-  }
+  // Lazy score accessor - only initialize when needed
+  const getGScore = (id: VK): number => {
+    const existing = gScore.get(id);
+    return existing !== undefined ? existing : Infinity;
+  };
 
-  queue.enqueue(startId, fScore.get(startId)!);
+  // Initialize only the start vertex scores
+  const startHeuristic = heuristicFunction(startVertex, endVertex, graph);
+  gScore.set(startId, 0);
+  fScore.set(startId, startHeuristic);
+
+  queue.enqueue(startId, startHeuristic);
 
   while (!queue.isEmpty()) {
     const currentId = queue.dequeue()!;
@@ -166,7 +186,7 @@ export const findShortestPathAStar = <V = unknown, E = unknown, VK = string, EK 
 
     if (currentId === endId) break;
 
-    const currentGScore = gScore.get(currentId)!;
+    const currentGScore = getGScore(currentId);
     const neighbors = (adjacencyList.get(currentId) ?? []).filter(n => n.edge.disabled !== true);
 
     for (const { vertexId: neighborId, edge } of neighbors) {
@@ -182,7 +202,7 @@ export const findShortestPathAStar = <V = unknown, E = unknown, VK = string, EK 
       }
 
       const tentativeGScore = currentGScore + edgeWeight;
-      const currentNeighborGScore = gScore.get(neighborId)!;
+      const currentNeighborGScore = getGScore(neighborId);
 
       if (tentativeGScore < currentNeighborGScore) {
         // This path to neighbor is better than any previous one
@@ -218,7 +238,7 @@ export const findShortestPathAStar = <V = unknown, E = unknown, VK = string, EK 
   // Add start vertex
   path.unshift(startVertex);
 
-  const finalDistance = gScore.get(endId)!;
+  const finalDistance = getGScore(endId);
   if (finalDistance === Infinity) return undefined; // No path found
 
   return {
