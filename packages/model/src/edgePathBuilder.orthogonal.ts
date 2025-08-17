@@ -130,6 +130,11 @@ export type EdgeType =
   | 'waypoint-mid'
   | 'bounds'
   | 'outer-bounds';
+
+const isPointInBounds = (p: Point, bounds: Box | undefined) => {
+  return bounds && !Point.isEqual(p, Box.center(bounds)) && Box.contains(bounds, p);
+};
+
 const constructGraph = (edge: DiagramEdge, start: Point, end: Point) => {
   const startNode = edge.start instanceof ConnectedEndpoint ? edge.start.node : undefined;
   const endNode = edge.end instanceof ConnectedEndpoint ? edge.end.node : undefined;
@@ -250,7 +255,7 @@ const constructGraph = (edge: DiagramEdge, start: Point, end: Point) => {
     const a = Point.toString(grid[r1][c1]);
     const b = Point.toString(grid[r2][c2]);
 
-    const weight = Point.distance(graph.getVertex(a)!.data, graph.getVertex(b)!.data);
+    const weight = Point.manhattanDistance(graph.getVertex(a)!.data, graph.getVertex(b)!.data);
 
     const isHorizontal = d === 'e' || d === 'w';
     const type = isHorizontal ? ys.get(grid[r1][c1].y)! : xs.get(grid[r1][c1].x)!;
@@ -280,16 +285,10 @@ const constructGraph = (edge: DiagramEdge, start: Point, end: Point) => {
 
   for (let r = 0; r < grid.length; r++) {
     for (let c = 0; c < grid[r].length; c++) {
-      addEdge(r, c, r - 1, c, 'n');
-      addEdge(r, c, r, c - 1, 'w');
       addEdge(r, c, r + 1, c, 's');
       addEdge(r, c, r, c + 1, 'e');
     }
   }
-
-  const isPointInBounds = (p: Point, bounds: Box | undefined) => {
-    return bounds && !Point.isEqual(p, Box.center(bounds)) && Box.contains(bounds, p);
-  };
 
   const firstValid = (r: number, c: number, rd: number, cd: number) => {
     let cr = r;
@@ -314,7 +313,10 @@ const constructGraph = (edge: DiagramEdge, start: Point, end: Point) => {
   for (let r = 0; r < grid.length; r++) {
     for (let c = 0; c < grid[r].length; c++) {
       if (isPointInBounds(grid[r][c], startBounds) || isPointInBounds(grid[r][c], endBounds)) {
-        verticesToRemove.add(Point.toString(grid[r][c]));
+        const vid = Point.toString(grid[r][c]);
+        if (verticesToRemove.has(vid)) continue;
+
+        verticesToRemove.add(vid);
 
         addEdge(firstValid(r, c, 1, 0).r, c, r - 1, c, 'n');
         addEdge(r, firstValid(r, c, 0, 1).c, r, c - 1, 'w');
