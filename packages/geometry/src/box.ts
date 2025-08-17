@@ -317,16 +317,40 @@ export const Box = {
     return { x: b.x + offset.x * b.w, y: b.y + offset.y * b.h };
   },
 
-  orthogonalDistance: (box: Box, point: Point): { x?: number; y?: number } => {
-    const corners = Box.corners(box);
-    const minX = Math.min(...corners.map(c => c.x));
-    const maxX = Math.max(...corners.map(c => c.x));
-    const minY = Math.min(...corners.map(c => c.y));
-    const maxY = Math.max(...corners.map(c => c.y));
+  /**
+   * Calculates the midpoint between two boxes based on their closest edges
+   * @param box1 First box
+   * @param box2 Second box
+   * @returns Point representing the midpoint between the closest edges of the boxes
+   */
+  midpoint: (box1: Box, box2: Box): Point => {
+    const corners1 = Box.corners(box1);
+    const corners2 = Box.corners(box2);
 
-    const dx = point.x < minX ? point.x - minX : point.x > maxX ? point.x - maxX : undefined;
-    const dy = point.y < minY ? point.y - minY : point.y > maxY ? point.y - maxY : undefined;
+    const min1X = Math.min(...corners1.map(c => c.x));
+    const max1X = Math.max(...corners1.map(c => c.x));
+    const min1Y = Math.min(...corners1.map(c => c.y));
+    const max1Y = Math.max(...corners1.map(c => c.y));
 
-    return { x: dx, y: dy };
+    const min2X = Math.min(...corners2.map(c => c.x));
+    const max2X = Math.max(...corners2.map(c => c.x));
+    const min2Y = Math.min(...corners2.map(c => c.y));
+    const max2Y = Math.max(...corners2.map(c => c.y));
+
+    const x =
+      max1X < min2X
+        ? (max1X + min2X) / 2
+        : min1X > max2X
+          ? (min1X + max2X) / 2
+          : (max1X + max1X) / 2;
+
+    const y =
+      max1Y < min2Y
+        ? (max1Y + min2Y) / 2
+        : min1Y > max2Y
+          ? (min1Y + max2Y) / 2
+          : (max1Y + max1Y) / 2;
+
+    return { x, y };
   }
 };

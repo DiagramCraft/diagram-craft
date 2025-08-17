@@ -3,7 +3,7 @@ import { TestModel } from '@diagram-craft/model/test-support/builder';
 import { PointInNodeEndpoint } from '@diagram-craft/model/endpoint';
 import { _p, Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { _test } from '@diagram-craft/model/edgePathBuilder.orthogonal';
+import { _test, type EdgeType } from '@diagram-craft/model/edgePathBuilder.orthogonal';
 import { Box } from '@diagram-craft/geometry/box';
 import React, { useState } from 'react';
 
@@ -16,6 +16,15 @@ const OrthogonalRoutingTest = (props: { start: any; end: any; numberOfWayPoints:
 
   const [node1Bounds, setNode1Bounds] = useState({ x: 100, y: 100, w: 100, h: 50, r: 0 });
   const [node2Bounds, setNode2Bounds] = useState({ x: 160, y: 400, w: 60, h: 80, r: 0 });
+
+  const colors: Record<EdgeType, string> = {
+    'midpoint': 'black',
+    'waypoint-mid': 'black',
+    'waypoint': 'green',
+    'start-end': 'green',
+    'bounds': 'red',
+    'outer-bounds': 'red'
+  };
 
   const diagram = TestModel.newDiagram();
   const layer = diagram.newLayer();
@@ -103,7 +112,7 @@ const OrthogonalRoutingTest = (props: { start: any; end: any; numberOfWayPoints:
             y1={s.data.y}
             x2={t.data.x}
             y2={t.data.y}
-            stroke={'gray'}
+            stroke={colors[e.data[1]]}
           />
         );
       })}
