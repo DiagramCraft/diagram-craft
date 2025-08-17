@@ -40,7 +40,8 @@ type StringKey =
   | 'whiteSpace'
   | 'indicatorShape'
   | 'indicatorColor'
-  | 'indicatorDirection';
+  | 'indicatorDirection'
+  | 'portConstraint';
 
 type BooleanKey =
   | 'rounded'

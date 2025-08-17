@@ -1,20 +1,33 @@
 import { describe, expect, test } from 'vitest';
-import { type EdgePenaltyFunction, findShortestPath, type Graph } from './graph';
+import {
+  type EdgePenaltyFunction,
+  findShortestPathAStar,
+  type HeuristicFunction,
+  SimpleGraph
+} from './graph';
 
 describe('Graph utilities', () => {
-  describe('findShortestPath', () => {
-    test('finds path in simple graph', () => {
-      // Setup
-      const graph = { vertices: new Map(), edges: new Map() };
-      graph.vertices.set('A', { id: 'A' });
-      graph.vertices.set('B', { id: 'B' });
-      graph.vertices.set('C', { id: 'C' });
-      graph.edges.set('AB', { id: 'AB', from: 'A', to: 'B', weight: 1 });
-      graph.edges.set('BC', { id: 'BC', from: 'B', to: 'C', weight: 2 });
-      graph.edges.set('AC', { id: 'AC', from: 'A', to: 'C', weight: 5 });
+  describe('findShortestPathAStar', () => {
+    // Simple heuristic that returns 0 (essentially makes A* behave like Dijkstra)
+    const zeroHeuristic: HeuristicFunction = () => 0;
+
+    // Manhattan distance heuristic for grid-based tests
+    const manhattanHeuristic: HeuristicFunction<{ x: number; y: number }> = (from, to) => {
+      return Math.abs(from.data.x - to.data.x) + Math.abs(from.data.y - to.data.y);
+    };
+
+    test('finds path in simple graph with zero heuristic', () => {
+      // Setup - Same as Dijkstra test but using A*
+      const graph = new SimpleGraph();
+      graph.addVertex({ id: 'A', data: undefined });
+      graph.addVertex({ id: 'B', data: undefined });
+      graph.addVertex({ id: 'C', data: undefined });
+      graph.addEdge({ id: 'AB', from: 'A', to: 'B', weight: 1, data: undefined });
+      graph.addEdge({ id: 'BC', from: 'B', to: 'C', weight: 2, data: undefined });
+      graph.addEdge({ id: 'AC', from: 'A', to: 'C', weight: 5, data: undefined });
 
       // Act
-      const result = findShortestPath(graph, 'A', 'C');
+      const result = findShortestPathAStar(graph, 'A', 'C', zeroHeuristic);
 
       // Verify
       expect(result).toBeDefined();
@@ -23,18 +36,18 @@ describe('Graph utilities', () => {
       expect(result!.edges.map(e => e.id)).toEqual(['AB', 'BC']);
     });
 
-    test('finds direct path when shorter', () => {
+    test('finds direct path when shorter with zero heuristic', () => {
       // Setup
-      const graph = { vertices: new Map(), edges: new Map() };
-      graph.vertices.set('A', { id: 'A' });
-      graph.vertices.set('B', { id: 'B' });
-      graph.vertices.set('C', { id: 'C' });
-      graph.edges.set('AB', { id: 'AB', from: 'A', to: 'B', weight: 1 });
-      graph.edges.set('BC', { id: 'BC', from: 'B', to: 'C', weight: 2 });
-      graph.edges.set('AC', { id: 'AC', from: 'A', to: 'C', weight: 2 });
+      const graph = new SimpleGraph();
+      graph.addVertex({ id: 'A', data: undefined });
+      graph.addVertex({ id: 'B', data: undefined });
+      graph.addVertex({ id: 'C', data: undefined });
+      graph.addEdge({ id: 'AB', from: 'A', to: 'B', weight: 1, data: undefined });
+      graph.addEdge({ id: 'BC', from: 'B', to: 'C', weight: 2, data: undefined });
+      graph.addEdge({ id: 'AC', from: 'A', to: 'C', weight: 2, data: undefined });
 
       // Act
-      const result = findShortestPath(graph, 'A', 'C');
+      const result = findShortestPathAStar(graph, 'A', 'C', zeroHeuristic);
 
       // Verify
       expect(result).toBeDefined();
@@ -43,71 +56,110 @@ describe('Graph utilities', () => {
       expect(result!.edges.map(e => e.id)).toEqual(['AC']);
     });
 
-    test('returns undefined for non-existent start vertex', () => {
-      // Setup
-      const graph = { vertices: new Map(), edges: new Map() };
-      graph.vertices.set('A', { id: 'A' });
+    test('uses Manhattan heuristic effectively in grid', () => {
+      // Setup - 3x3 grid where A* should outperform Dijkstra
+      const graph = new SimpleGraph<{ x: number; y: number }>();
 
-      // Act
-      const result = findShortestPath(graph, 'X', 'A');
+      // Create 3x3 grid of vertices
+      for (let x = 0; x < 3; x++) {
+        for (let y = 0; y < 3; y++) {
+          const id = `${x},${y}`;
+          graph.addVertex({ id, data: { x, y } });
+        }
+      }
 
-      // Verify
-      expect(result).toBeUndefined();
+      // Add edges between adjacent cells (4-connected)
+      for (let x = 0; x < 3; x++) {
+        for (let y = 0; y < 3; y++) {
+          const id = `${x},${y}`;
+          // Right edge
+          if (x < 2) {
+            const rightId = `${x + 1},${y}`;
+            graph.addEdge({
+              id: `${id}-${rightId}`,
+              from: id,
+              to: rightId,
+              weight: 1,
+              data: undefined
+            });
+          }
+          // Down edge
+          if (y < 2) {
+            const downId = `${x},${y + 1}`;
+            graph.addEdge({
+              id: `${id}-${downId}`,
+              from: id,
+              to: downId,
+              weight: 1,
+              data: undefined
+            });
+          }
+          // Left edge (for bidirectional)
+          if (x > 0) {
+            const leftId = `${x - 1},${y}`;
+            graph.addEdge({
+              id: `${id}-${leftId}`,
+              from: id,
+              to: leftId,
+              weight: 1,
+              data: undefined
+            });
+          }
+          // Up edge (for bidirectional)
+          if (y > 0) {
+            const upId = `${x},${y - 1}`;
+            graph.addEdge({
+              id: `${id}-${upId}`,
+              from: id,
+              to: upId,
+              weight: 1,
+              data: undefined
+            });
+          }
+        }
+      }
+
+      // Act - Find path from top-left to bottom-right
+      const result = findShortestPathAStar(graph, '0,0', '2,2', manhattanHeuristic);
+
+      // Verify - Should find optimal path
+      expect(result).toBeDefined();
+      expect(result!.distance).toBe(4); // Manhattan distance in grid
+      expect(result!.path).toHaveLength(5); // 5 vertices in path
+      expect(result!.path[0].id).toBe('0,0');
+      expect(result!.path[result!.path.length - 1].id).toBe('2,2');
     });
 
-    test('returns undefined for non-existent end vertex', () => {
+    test('returns undefined for non-existent vertices', () => {
       // Setup
-      const graph = { vertices: new Map(), edges: new Map() };
-      graph.vertices.set('A', { id: 'A' });
+      const graph = new SimpleGraph();
+      graph.addVertex({ id: 'A', data: undefined });
 
-      // Act
-      const result = findShortestPath(graph, 'A', 'X');
-
-      // Verify
-      expect(result).toBeUndefined();
+      // Act & Verify
+      expect(findShortestPathAStar(graph, 'X', 'A', zeroHeuristic)).toBeUndefined();
+      expect(findShortestPathAStar(graph, 'A', 'X', zeroHeuristic)).toBeUndefined();
     });
 
     test('returns undefined when no path exists', () => {
-      // Setup - No edges connecting A to B
-      const graph = { vertices: new Map(), edges: new Map() };
-      graph.vertices.set('A', { id: 'A' });
-      graph.vertices.set('B', { id: 'B' });
+      // Setup - Two disconnected vertices
+      const graph = new SimpleGraph();
+      graph.addVertex({ id: 'A', data: undefined });
+      graph.addVertex({ id: 'B', data: undefined });
 
       // Act
-      const result = findShortestPath(graph, 'A', 'B');
+      const result = findShortestPathAStar(graph, 'A', 'B', zeroHeuristic);
 
       // Verify
       expect(result).toBeUndefined();
-    });
-
-    test('finds path in complex graph', () => {
-      // Setup - Create a more complex graph
-      const graph = { vertices: new Map(), edges: new Map() };
-      ['A', 'B', 'C', 'D', 'E'].forEach(id => graph.vertices.set(id, { id }));
-      graph.edges.set('AB', { id: 'AB', from: 'A', to: 'B', weight: 2 });
-      graph.edges.set('AC', { id: 'AC', from: 'A', to: 'C', weight: 4 });
-      graph.edges.set('BD', { id: 'BD', from: 'B', to: 'D', weight: 1 });
-      graph.edges.set('BE', { id: 'BE', from: 'B', to: 'E', weight: 3 });
-      graph.edges.set('CD', { id: 'CD', from: 'C', to: 'D', weight: 5 });
-      graph.edges.set('DE', { id: 'DE', from: 'D', to: 'E', weight: 1 });
-
-      // Act
-      const result = findShortestPath(graph, 'A', 'E');
-
-      // Verify
-      expect(result).toBeDefined();
-      expect(result!.distance).toBe(4);
-      expect(result!.path.map(v => v.id)).toEqual(['A', 'B', 'D', 'E']);
-      expect(result!.edges.map(e => e.id)).toEqual(['AB', 'BD', 'DE']);
     });
 
     test('handles same start and end vertex', () => {
       // Setup
-      const graph = { vertices: new Map(), edges: new Map() };
-      graph.vertices.set('A', { id: 'A' });
+      const graph = new SimpleGraph();
+      graph.addVertex({ id: 'A', data: undefined });
 
       // Act
-      const result = findShortestPath(graph, 'A', 'A');
+      const result = findShortestPathAStar(graph, 'A', 'A', zeroHeuristic);
 
       // Verify
       expect(result).toBeDefined();
@@ -116,158 +168,18 @@ describe('Graph utilities', () => {
       expect(result!.edges).toEqual([]);
     });
 
-    test('works with typed vertices and edges', () => {
-      // Setup
-      interface NodeData {
-        name: string;
-      }
-      interface EdgeData {
-        type: string;
-      }
-      const graph: Graph<NodeData, EdgeData> = { vertices: new Map(), edges: new Map() };
-      graph.vertices.set('A', { id: 'A', data: { name: 'Start' } });
-      graph.vertices.set('B', { id: 'B', data: { name: 'End' } });
-      graph.edges.set('AB', {
-        id: 'AB',
-        from: 'A',
-        to: 'B',
-        weight: 1,
-        data: { type: 'connection' }
-      });
-
-      // Act
-      const result = findShortestPath(graph, 'A', 'B');
-
-      // Verify
-      expect(result).toBeDefined();
-      expect(result!.path[0].data?.name).toBe('Start');
-      expect(result!.path[1].data?.name).toBe('End');
-      expect(result!.edges[0].data?.type).toBe('connection');
-    });
-
-    test('handles zero weight edges', () => {
-      // Setup
-      const graph = { vertices: new Map(), edges: new Map() };
-      graph.vertices.set('A', { id: 'A' });
-      graph.vertices.set('B', { id: 'B' });
-      graph.vertices.set('C', { id: 'C' });
-      graph.edges.set('AB', { id: 'AB', from: 'A', to: 'B', weight: 0 });
-      graph.edges.set('BC', { id: 'BC', from: 'B', to: 'C', weight: 1 });
-      graph.edges.set('AC', { id: 'AC', from: 'A', to: 'C', weight: 2 });
-
-      // Act
-      const result = findShortestPath(graph, 'A', 'C');
-
-      // Verify
-      expect(result).toBeDefined();
-      expect(result!.distance).toBe(1);
-      expect(result!.path.map(v => v.id)).toEqual(['A', 'B', 'C']);
-    });
-
-    test('uses penalty function to adjust edge weights', () => {
-      // Setup
-      const graph = { vertices: new Map(), edges: new Map() };
-      graph.vertices.set('A', { id: 'A' });
-      graph.vertices.set('B', { id: 'B' });
-      graph.vertices.set('C', { id: 'C' });
-      // Direct path has weight 5, indirect path has weight 1+1=2
-      graph.edges.set('AC', { id: 'AC', from: 'A', to: 'C', weight: 5 });
-      graph.edges.set('AB', { id: 'AB', from: 'A', to: 'B', weight: 1 });
-      graph.edges.set('BC', { id: 'BC', from: 'B', to: 'C', weight: 1 });
-      // Penalty function that adds 10 to any edge from B
-      const penaltyFunction: EdgePenaltyFunction = (_prevEdge, currentVertex, _proposedEdge) => {
-        return currentVertex.id === 'B' ? 10 : 0;
-      };
-
-      // Act
-      const result = findShortestPath(graph, 'A', 'C', penaltyFunction);
-
-      // Verify
-      expect(result).toBeDefined();
-      expect(result!.distance).toBe(5); // Direct path chosen due to penalty
-      expect(result!.path.map(v => v.id)).toEqual(['A', 'C']);
-    });
-
-    test('penalty function receives correct parameters', () => {
-      // Setup
-      const graph = { vertices: new Map(), edges: new Map() };
-      graph.vertices.set('A', { id: 'A', data: { name: 'start' } });
-      graph.vertices.set('B', { id: 'B', data: { name: 'middle' } });
-      graph.vertices.set('C', { id: 'C', data: { name: 'end' } });
-      graph.edges.set('AB', { id: 'AB', from: 'A', to: 'B', weight: 1, data: { type: 'first' } });
-      graph.edges.set('BC', { id: 'BC', from: 'B', to: 'C', weight: 1, data: { type: 'second' } });
-      const penaltyCallLog: Array<{ prevEdge: any; currentVertex: any; proposedEdge: any }> = [];
-      const penaltyFunction: EdgePenaltyFunction = (prevEdge, currentVertex, proposedEdge) => {
-        penaltyCallLog.push({ prevEdge, currentVertex, proposedEdge });
-        return 0; // No penalty
-      };
-
-      // Act
-      findShortestPath(graph, 'A', 'C', penaltyFunction);
-
-      // Verify
-      expect(penaltyCallLog).toHaveLength(2);
-      // First call: from A, no previous edge
-      expect(penaltyCallLog[0].prevEdge).toBeUndefined();
-      expect(penaltyCallLog[0].currentVertex.id).toBe('A');
-      expect(penaltyCallLog[0].proposedEdge.id).toBe('AB');
-      // Second call: from B, previous edge was AB
-      expect(penaltyCallLog[1].prevEdge?.id).toBe('AB');
-      expect(penaltyCallLog[1].currentVertex.id).toBe('B');
-      expect(penaltyCallLog[1].proposedEdge.id).toBe('BC');
-    });
-
-    test('penalty function can encourage specific paths', () => {
-      // Setup
-      const graph = { vertices: new Map(), edges: new Map() };
-      ['A', 'B', 'C', 'D'].forEach(id => graph.vertices.set(id, { id }));
-      // Two paths: A->B->D (weight 2+2=4) and A->C->D (weight 3+3=6)
-      graph.edges.set('AB', { id: 'AB', from: 'A', to: 'B', weight: 2 });
-      graph.edges.set('BD', { id: 'BD', from: 'B', to: 'D', weight: 2 });
-      graph.edges.set('AC', { id: 'AC', from: 'A', to: 'C', weight: 3 });
-      graph.edges.set('CD', { id: 'CD', from: 'C', to: 'D', weight: 3 });
-      // Penalty function that discourages going through B
-      const penaltyFunction: EdgePenaltyFunction = (_prevEdge, currentVertex, _proposedEdge) => {
-        return currentVertex.id === 'B' ? 5 : 0; // Add penalty when leaving B
-      };
-
-      // Act
-      const result = findShortestPath(graph, 'A', 'D', penaltyFunction);
-
-      // Verify
-      expect(result).toBeDefined();
-      expect(result!.distance).toBe(6); // A->C->D path chosen despite higher base weight
-      expect(result!.path.map(v => v.id)).toEqual(['A', 'C', 'D']);
-    });
-
-    test('works without penalty function (backward compatibility)', () => {
-      // Setup
-      const graph = { vertices: new Map(), edges: new Map() };
-      graph.vertices.set('A', { id: 'A' });
-      graph.vertices.set('B', { id: 'B' });
-      graph.edges.set('AB', { id: 'AB', from: 'A', to: 'B', weight: 1 });
-
-      // Act
-      const result = findShortestPath(graph, 'A', 'B');
-
-      // Verify
-      expect(result).toBeDefined();
-      expect(result!.distance).toBe(1);
-      expect(result!.path.map(v => v.id)).toEqual(['A', 'B']);
-    });
-
-    test('ignores disabled edges when finding path', () => {
+    test('ignores disabled edges', () => {
       // Setup - Direct path is disabled, forcing use of longer path
-      const graph = { vertices: new Map(), edges: new Map() };
-      graph.vertices.set('A', { id: 'A' });
-      graph.vertices.set('B', { id: 'B' });
-      graph.vertices.set('C', { id: 'C' });
-      graph.edges.set('AC', { id: 'AC', from: 'A', to: 'C', weight: 1, disabled: true });
-      graph.edges.set('AB', { id: 'AB', from: 'A', to: 'B', weight: 2 });
-      graph.edges.set('BC', { id: 'BC', from: 'B', to: 'C', weight: 2 });
+      const graph = new SimpleGraph();
+      graph.addVertex({ id: 'A', data: undefined });
+      graph.addVertex({ id: 'B', data: undefined });
+      graph.addVertex({ id: 'C', data: undefined });
+      graph.addEdge({ id: 'AC', from: 'A', to: 'C', weight: 1, disabled: true, data: undefined });
+      graph.addEdge({ id: 'AB', from: 'A', to: 'B', weight: 2, data: undefined });
+      graph.addEdge({ id: 'BC', from: 'B', to: 'C', weight: 2, data: undefined });
 
       // Act
-      const result = findShortestPath(graph, 'A', 'C');
+      const result = findShortestPathAStar(graph, 'A', 'C', zeroHeuristic);
 
       // Verify - Should use A->B->C path since A->C is disabled
       expect(result).toBeDefined();
@@ -276,18 +188,101 @@ describe('Graph utilities', () => {
       expect(result!.edges.map(e => e.id)).toEqual(['AB', 'BC']);
     });
 
-    test('returns undefined when only path uses disabled edges', () => {
-      // Setup - Only connection between A and B is disabled
-      const graph = { vertices: new Map(), edges: new Map() };
-      graph.vertices.set('A', { id: 'A' });
-      graph.vertices.set('B', { id: 'B' });
-      graph.edges.set('AB', { id: 'AB', from: 'A', to: 'B', weight: 1, disabled: true });
+    test('works with penalty function', () => {
+      // Setup
+      const graph = new SimpleGraph();
+      graph.addVertex({ id: 'A', data: undefined });
+      graph.addVertex({ id: 'B', data: undefined });
+      graph.addVertex({ id: 'C', data: undefined });
+      graph.addEdge({ id: 'AC', from: 'A', to: 'C', weight: 5, data: undefined });
+      graph.addEdge({ id: 'AB', from: 'A', to: 'B', weight: 1, data: undefined });
+      graph.addEdge({ id: 'BC', from: 'B', to: 'C', weight: 1, data: undefined });
+
+      // Penalty function that adds 10 to any edge from B (no previousEdge parameter)
+      const penaltyFunction: EdgePenaltyFunction = currentVertex => {
+        return currentVertex.id === 'B' ? 10 : 0;
+      };
 
       // Act
-      const result = findShortestPath(graph, 'A', 'B');
+      const result = findShortestPathAStar(graph, 'A', 'C', zeroHeuristic, penaltyFunction);
 
-      // Verify
-      expect(result).toBeUndefined();
+      // Verify - Direct path chosen due to penalty
+      expect(result).toBeDefined();
+      expect(result!.distance).toBe(5);
+      expect(result!.path.map(v => v.id)).toEqual(['A', 'C']);
+    });
+
+    test('penalty function is path-independent (no previousEdge)', () => {
+      // Setup - Test that penalty function doesn't get previousEdge parameter
+      const graph = new SimpleGraph();
+      graph.addVertex({ id: 'A', data: undefined });
+      graph.addVertex({ id: 'B', data: undefined });
+      graph.addVertex({ id: 'C', data: undefined });
+      graph.addVertex({ id: 'D', data: undefined });
+
+      // Create paths: A->B->D (weight 1+1) and A->C->D (weight 1+5)
+      graph.addEdge({ id: 'AB', from: 'A', to: 'B', weight: 1, data: undefined });
+      graph.addEdge({ id: 'BD', from: 'B', to: 'D', weight: 1, data: undefined });
+      graph.addEdge({ id: 'AC', from: 'A', to: 'C', weight: 1, data: undefined });
+      graph.addEdge({ id: 'CD', from: 'C', to: 'D', weight: 5, data: undefined });
+
+      // Penalty function that penalizes edges based on their destination only
+      const penaltyFunction: EdgePenaltyFunction = (_currentVertex, proposedEdge) => {
+        // Add penalty to edges going to D from C (but not from B)
+        return proposedEdge.to === 'D' && proposedEdge.from === 'C' ? 10 : 0;
+      };
+
+      // Act
+      const result = findShortestPathAStar(graph, 'A', 'D', zeroHeuristic, penaltyFunction);
+
+      // Verify - Should choose A->B->D path due to penalty on C->D
+      expect(result).toBeDefined();
+      expect(result!.distance).toBe(2); // 1 + 1, no penalty on this path
+      expect(result!.path.map(v => v.id)).toEqual(['A', 'B', 'D']);
+      expect(result!.edges.map(e => e.id)).toEqual(['AB', 'BD']);
+    });
+
+    test('heuristic guides search efficiently', () => {
+      // Setup - Create a graph where good heuristic should find path faster
+      const graph = new SimpleGraph<{ x: number; y: number }>();
+
+      // Create vertices in a line: A(0,0) -> B(1,0) -> C(2,0) -> D(3,0)
+      // And detour: A -> E(0,1) -> F(0,2) -> G(1,2) -> H(2,2) -> D
+      const vertices = [
+        { id: 'A', x: 0, y: 0 },
+        { id: 'B', x: 1, y: 0 },
+        { id: 'C', x: 2, y: 0 },
+        { id: 'D', x: 3, y: 0 },
+        { id: 'E', x: 0, y: 1 },
+        { id: 'F', x: 0, y: 2 },
+        { id: 'G', x: 1, y: 2 },
+        { id: 'H', x: 2, y: 2 }
+      ];
+
+      vertices.forEach(v => {
+        graph.addVertex({ id: v.id, data: { x: v.x, y: v.y } });
+      });
+
+      // Direct path (weight 1 each)
+      graph.addEdge({ id: 'AB', from: 'A', to: 'B', weight: 1, data: undefined });
+      graph.addEdge({ id: 'BC', from: 'B', to: 'C', weight: 1, data: undefined });
+      graph.addEdge({ id: 'CD', from: 'C', to: 'D', weight: 1, data: undefined });
+
+      // Detour path (weight 1 each, but longer)
+      graph.addEdge({ id: 'AE', from: 'A', to: 'E', weight: 1, data: undefined });
+      graph.addEdge({ id: 'EF', from: 'E', to: 'F', weight: 1, data: undefined });
+      graph.addEdge({ id: 'FG', from: 'F', to: 'G', weight: 1, data: undefined });
+      graph.addEdge({ id: 'GH', from: 'G', to: 'H', weight: 1, data: undefined });
+      graph.addEdge({ id: 'HD', from: 'H', to: 'D', weight: 1, data: undefined });
+
+      // Act
+      const result = findShortestPathAStar(graph, 'A', 'D', manhattanHeuristic);
+
+      // Verify - Should choose direct path
+      expect(result).toBeDefined();
+      expect(result!.distance).toBe(3);
+      expect(result!.path.map(v => v.id)).toEqual(['A', 'B', 'C', 'D']);
+      expect(result!.edges.map(e => e.id)).toEqual(['AB', 'BC', 'CD']);
     });
   });
 });

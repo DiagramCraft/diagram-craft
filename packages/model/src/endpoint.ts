@@ -4,7 +4,7 @@ import type {
   SerializedPointInNodeEndpoint
 } from './serialization/types';
 import type { DiagramNode } from './diagramNode';
-import { Point } from '@diagram-craft/geometry/point';
+import { _p, Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
 import { isSerializedEndpointPointInNode, isSerializedEndpointFree } from './serialization/utils';
 import { getTypedKeys } from '@diagram-craft/utils/object';
@@ -139,6 +139,19 @@ export class PointInNodeEndpoint
     const p = this.ref;
     if (!p) return false;
     return p.x === 0.5 && p.y === 0.5 && this.offset.x === 0 && this.offset.y === 0;
+  }
+
+  isCorner() {
+    const p = this.ref;
+    if (!p) return false;
+
+    const r = Point.add(this.ref, this.offset);
+    return (
+      Point.isEqual(r, _p(0, 0)) ||
+      Point.isEqual(r, _p(1, 0)) ||
+      Point.isEqual(r, _p(0, 1)) ||
+      Point.isEqual(r, _p(1, 1))
+    );
   }
 
   get position() {

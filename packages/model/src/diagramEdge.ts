@@ -881,15 +881,39 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
         return Direction.fromAngle(endpoint.getAnchor().normal! + endpoint.node.bounds.r, true);
       }
 
-      if (endpoint instanceof PointInNodeEndpoint) return undefined;
+      const startNode = endpoint.node;
+      const boundingPath = startNode.getDefinition().getBoundingPath(startNode);
+      const paths = boundingPath.all();
+
+      if (endpoint instanceof PointInNodeEndpoint && (endpoint.isMidpoint() || endpoint.isCorner()))
+        return undefined;
+
+      // TODO: If we keep this we should check if we are at the midpoint,
+      //       in which case closest boundary point is arbitrary
+      /*if (endpoint instanceof PointInNodeEndpoint) {
+        const line = new Path(endpoint.position, [
+          ['L', otherEndpoint.position.x, otherEndpoint.position.y]
+        ]);
+
+        // we calculate the intersection of the boundary with the shortest path,
+        // and use the normal of that intersection
+        const intersections = paths.flatMap(p => p.intersections(line));
+        const intersection = intersections[0];
+
+        if (intersection) {
+          const t = boundingPath.projectPoint(intersection.point);
+
+          const tangent = paths[t.pathIdx].tangentAt(t.offset);
+          return Direction.fromVector(Vector.tangentToNormal(tangent));
+        }
+
+        return undefined;
+      }*/
 
       // ... else, we calculate the normal assuming the closest point to the
       // endpoint on the boundary path
-      const startNode = endpoint.node;
-      const boundingPath = startNode.getDefinition().getBoundingPath(startNode);
       const t = boundingPath.projectPoint(endpoint.position);
 
-      const paths = boundingPath.all();
       const tangent = paths[t.pathIdx].tangentAt(t.offset);
 
       // TODO: We need to check this is going in the right direction (i.e. outwards)

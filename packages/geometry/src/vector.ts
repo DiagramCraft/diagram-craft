@@ -1,4 +1,5 @@
 import type { Point } from './point';
+import { isSame } from '@diagram-craft/utils/math';
 
 export type Vector = Point;
 
@@ -34,6 +35,12 @@ export const Vector = {
   },
   dotProduct(v1: Vector, v2: Vector) {
     return v1.x * v2.x + v1.y * v2.y;
+  },
+  isHorizontal(v: Vector) {
+    return isSame(v.y, 0);
+  },
+  isVertical(v: Vector) {
+    return isSame(v.x, 0);
   }
 };
 

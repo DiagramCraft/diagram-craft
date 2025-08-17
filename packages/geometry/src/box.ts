@@ -116,7 +116,7 @@ export const Box = {
   /**
    * Calculates the bounding box that contains all the given boxes
    * @param boxes Array of boxes to calculate the bounding box for
-   * @param forceAxisAligned If true, the resulting box will have rotation 0, 
+   * @param forceAxisAligned If true, the resulting box will have rotation 0,
    *                         otherwise it will try to preserve rotation if all boxes have the same rotation
    * @returns A new box that contains all the input boxes
    */
@@ -250,6 +250,16 @@ export const Box = {
     }
   },
 
+  grow: (box: Box, amount: number): Box => {
+    return {
+      x: box.x - amount,
+      y: box.y - amount,
+      w: box.w + amount * 2,
+      h: box.h + amount * 2,
+      r: box.r
+    };
+  },
+
   /**
    * Checks if two boxes intersect
    * @param box First box
@@ -305,5 +315,18 @@ export const Box = {
    */
   fromOffset: (b: Box, offset: Point) => {
     return { x: b.x + offset.x * b.w, y: b.y + offset.y * b.h };
+  },
+
+  orthogonalDistance: (box: Box, point: Point): { x?: number; y?: number } => {
+    const corners = Box.corners(box);
+    const minX = Math.min(...corners.map(c => c.x));
+    const maxX = Math.max(...corners.map(c => c.x));
+    const minY = Math.min(...corners.map(c => c.y));
+    const maxY = Math.max(...corners.map(c => c.y));
+
+    const dx = point.x < minX ? point.x - minX : point.x > maxX ? point.x - maxX : undefined;
+    const dy = point.y < minY ? point.y - minY : point.y > maxY ? point.y - maxY : undefined;
+
+    return { x: dx, y: dy };
   }
 };

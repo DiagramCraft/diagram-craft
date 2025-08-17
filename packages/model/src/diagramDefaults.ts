@@ -333,7 +333,8 @@ const _nodeDefaults: Omit<NodePropsForRendering, 'name' | 'custom' | 'indicators
   },
 
   routing: {
-    spacing: 0
+    spacing: 0,
+    constraint: 'none'
   }
 };
 

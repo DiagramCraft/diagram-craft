@@ -18,7 +18,7 @@ import type { RawSegment } from './pathListBuilder';
 import { BezierUtils } from './bezier';
 import { Box } from './box';
 import { assert, VERIFY_NOT_REACHED, VerifyNotReached } from '@diagram-craft/utils/assert';
-import { roundHighPrecision } from '@diagram-craft/utils/math';
+import { isSame, roundHighPrecision } from '@diagram-craft/utils/math';
 import { Vector } from './vector';
 import { Line } from './line';
 import { Lazy } from '@diagram-craft/utils/lazy';
@@ -510,5 +510,57 @@ export class Path {
       if (!s1.equals(s2.reverse())) return true;
     }
     return false;
+  }
+
+  simplify() {
+    const simplifiedSegments: PathSegment[] = [];
+
+    for (let i = 0; i < this.segments.length; i++) {
+      const currentSegment = this.segments[i];
+
+      if (!(currentSegment instanceof LineSegment)) {
+        simplifiedSegments.push(currentSegment);
+        continue;
+      }
+
+      const currentLine = Line.of(currentSegment.start, currentSegment.end);
+      const consecutiveLines = [currentSegment];
+
+      // Check for subsequent line segments in the same direction
+      while (i + 1 < this.segments.length) {
+        const nextSegment = this.segments[i + 1];
+
+        if (!(nextSegment instanceof LineSegment)) break;
+
+        const nextLine = Line.of(nextSegment.start, nextSegment.end);
+
+        // Check if lines are in the same direction by comparing normalized direction vectors
+        const currentDirection = Vector.normalize(Vector.from(currentLine.from, currentLine.to));
+        const nextDirection = Vector.normalize(Vector.from(nextLine.from, nextLine.to));
+
+        if (
+          isSame(currentDirection.x, nextDirection.x) &&
+          isSame(currentDirection.y, nextDirection.y)
+        ) {
+          consecutiveLines.push(nextSegment);
+          i++;
+        } else {
+          break;
+        }
+      }
+
+      // If we found consecutive line segments in the same direction, merge them
+      if (consecutiveLines.length > 1) {
+        const mergedSegment = new LineSegment(
+          consecutiveLines[0].start,
+          consecutiveLines[consecutiveLines.length - 1].end
+        );
+        simplifiedSegments.push(mergedSegment);
+      } else {
+        simplifiedSegments.push(currentSegment);
+      }
+    }
+
+    return Path.from(this, () => simplifiedSegments);
   }
 }
