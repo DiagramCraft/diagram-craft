@@ -8,77 +8,79 @@ export interface Vertex<T = unknown, K = string> {
 }
 
 /** An edge connecting two vertices with optional weight and typed data */
-export interface Edge<T = unknown, K = string> {
+export interface Edge<T = unknown, K = string, VK = string> {
   id: K;
-  from: K;
-  to: K;
+  from: VK;
+  to: VK;
   weight: number;
   data: T;
   disabled?: boolean;
 }
 
 /** A graph containing vertices and edges with method-based access */
-export interface Graph<V = unknown, E = unknown, K = string> {
+export interface Graph<V = unknown, E = unknown, VK = string, EK = string> {
   /** Get a vertex by its ID */
-  getVertex(id: K): Vertex<V, K> | undefined;
+  getVertex(id: VK): Vertex<V, VK> | undefined;
 
   /** Get an edge by its ID */
-  getEdge(id: K): Edge<E, K> | undefined;
+  getEdge(id: EK): Edge<E, EK, VK> | undefined;
 
   /** Get an iterable of all vertices */
-  vertices(): Iterable<Vertex<V, K>>;
+  vertices(): Iterable<Vertex<V, VK>>;
 
   /** Get an iterable of all edges */
-  edges(): Iterable<Edge<E, K>>;
+  edges(): Iterable<Edge<E, EK, VK>>;
 }
 
 /** A simple implementation of the Graph interface using Maps */
-export class SimpleGraph<V = unknown, E = unknown, K = string> implements Graph<V, E, K> {
-  protected _vertices = new Map<K, Vertex<V, K>>();
-  protected _edges = new Map<K, Edge<E, K>>();
+export class SimpleGraph<V = unknown, E = unknown, VK = string, EK = string>
+  implements Graph<V, E, VK, EK>
+{
+  protected _vertices = new Map<VK, Vertex<V, VK>>();
+  protected _edges = new Map<EK, Edge<E, EK, VK>>();
 
-  getVertex(id: K): Vertex<V, K> | undefined {
+  getVertex(id: VK): Vertex<V, VK> | undefined {
     return this._vertices.get(id);
   }
 
-  getEdge(id: K): Edge<E, K> | undefined {
+  getEdge(id: EK): Edge<E, EK, VK> | undefined {
     return this._edges.get(id);
   }
 
-  vertices(): Iterable<Vertex<V, K>> {
+  vertices(): Iterable<Vertex<V, VK>> {
     return this._vertices.values();
   }
 
-  edges(): Iterable<Edge<E, K>> {
+  edges(): Iterable<Edge<E, EK, VK>> {
     return this._edges.values();
   }
 
   /** Add a vertex to the graph */
-  addVertex(vertex: Vertex<V, K>): Vertex<V, K> {
+  addVertex(vertex: Vertex<V, VK>): Vertex<V, VK> {
     this._vertices.set(vertex.id, vertex);
     return vertex;
   }
 
   /** Add an edge to the graph */
-  addEdge(edge: Edge<E, K>): Edge<E, K> {
+  addEdge(edge: Edge<E, EK, VK>): Edge<E, EK, VK> {
     this._edges.set(edge.id, edge);
     return edge;
   }
 
-  removeEdge(edge: K): boolean {
+  removeEdge(edge: EK): boolean {
     return this._edges.delete(edge);
   }
 
-  removeVertex(vertex: K): boolean {
+  removeVertex(vertex: VK): boolean {
     return this._vertices.delete(vertex);
   }
 }
 
 /** Result of shortest path calculation */
-export interface ShortestPathResult<V = unknown, E = unknown, K = string> {
-  path: Vertex<V, K>[];
+export interface ShortestPathResult<V = unknown, E = unknown, VK = string, EK = string> {
+  path: Vertex<V, VK>[];
   distance: number;
-  edges: Edge<E, K>[];
+  edges: Edge<E, EK, VK>[];
 }
 
 /**
@@ -88,10 +90,10 @@ export interface ShortestPathResult<V = unknown, E = unknown, K = string> {
  * @param graph The graph being searched
  * @returns Additional penalty to add to the edge weight
  */
-export type EdgePenaltyFunction<V = unknown, E = unknown, K = string> = (
-  currentVertex: Vertex<V, K>,
-  proposedEdge: Edge<E, K>,
-  graph: Graph<V, E, K>
+export type EdgePenaltyFunction<V = unknown, E = unknown, VK = string, EK = string> = (
+  currentVertex: Vertex<V, VK>,
+  proposedEdge: Edge<E, EK, VK>,
+  graph: Graph<V, E, VK, EK>
 ) => number | undefined;
 
 /**
@@ -101,10 +103,10 @@ export type EdgePenaltyFunction<V = unknown, E = unknown, K = string> = (
  * @param graph The graph being searched
  * @returns Estimated distance from fromVertex to toVertex (must be admissible)
  */
-export type HeuristicFunction<V = unknown, E = unknown, K = string> = (
-  fromVertex: Vertex<V, K>,
-  toVertex: Vertex<V, K>,
-  graph: Graph<V, E, K>
+export type HeuristicFunction<V = unknown, E = unknown, VK = string, EK = string> = (
+  fromVertex: Vertex<V, VK>,
+  toVertex: Vertex<V, VK>,
+  graph: Graph<V, E, VK, EK>
 ) => number;
 
 /**
@@ -116,13 +118,13 @@ export type HeuristicFunction<V = unknown, E = unknown, K = string> = (
  * @param penaltyFunction Optional function to add path-independent penalties to edge weights
  * @returns Shortest path result or undefined if no path exists
  */
-export const findShortestPathAStar = <V = unknown, E = unknown, K = string>(
-  graph: Graph<V, E, K>,
-  startId: K,
-  endId: K,
-  heuristicFunction: HeuristicFunction<V, E, K>,
-  penaltyFunction?: EdgePenaltyFunction<V, E, K>
-): ShortestPathResult<V, E, K> | undefined => {
+export const findShortestPathAStar = <V = unknown, E = unknown, VK = string, EK = string>(
+  graph: Graph<V, E, VK, EK>,
+  startId: VK,
+  endId: VK,
+  heuristicFunction: HeuristicFunction<V, E, VK, EK>,
+  penaltyFunction?: EdgePenaltyFunction<V, E, VK, EK>
+): ShortestPathResult<V, E, VK, EK> | undefined => {
   const startVertex = graph.getVertex(startId);
   const endVertex = graph.getVertex(endId);
 
@@ -131,12 +133,12 @@ export const findShortestPathAStar = <V = unknown, E = unknown, K = string>(
   }
 
   // gScore: cost of cheapest path from start to vertex
-  const gScore = new Map<K, number>();
+  const gScore = new Map<VK, number>();
   // fScore: gScore + heuristic estimate to goal
-  const fScore = new Map<K, number>();
-  const previous = new Map<K, { vertex: Vertex<V, K>; edge: Edge<E, K> }>();
-  const visited = new Set<K>();
-  const queue = new PriorityQueue<K>();
+  const fScore = new Map<VK, number>();
+  const previous = new Map<VK, { vertex: Vertex<V, VK>; edge: Edge<E, EK, VK> }>();
+  const visited = new Set<VK>();
+  const queue = new PriorityQueue<VK>();
 
   // Initialize scores
   for (const vertex of graph.vertices()) {
@@ -150,7 +152,7 @@ export const findShortestPathAStar = <V = unknown, E = unknown, K = string>(
   queue.enqueue(startId, fScore.get(startId)!);
 
   // Build adjacency list for efficient lookup
-  const adjacencyList = new MultiMap<K, { vertexId: K; edge: Edge<E, K> }>();
+  const adjacencyList = new MultiMap<VK, { vertexId: VK; edge: Edge<E, EK, VK> }>();
   for (const edge of graph.edges()) {
     adjacencyList.add(edge.from, { vertexId: edge.to, edge });
   }
@@ -196,8 +198,8 @@ export const findShortestPathAStar = <V = unknown, E = unknown, K = string>(
   }
 
   // Reconstruct path
-  const path: Vertex<V, K>[] = [];
-  const pathEdges: Edge<E, K>[] = [];
+  const path: Vertex<V, VK>[] = [];
+  const pathEdges: Edge<E, EK, VK>[] = [];
   let currentId = endId;
 
   while (currentId !== startId) {
