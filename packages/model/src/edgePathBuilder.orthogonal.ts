@@ -681,5 +681,6 @@ export const buildOrthogonalEdgePath = (
 
 export const _test = {
   constructGraph,
+  buildOrthogonalEdgePathVersion1,
   buildOrthogonalEdgePathVersion2
 };
