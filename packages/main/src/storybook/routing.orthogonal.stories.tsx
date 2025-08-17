@@ -3,7 +3,7 @@ import { TestModel } from '@diagram-craft/model/test-support/builder';
 import { PointInNodeEndpoint } from '@diagram-craft/model/endpoint';
 import { _p, Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { _test } from '@diagram-craft/model/edgePathBuilder';
+import { _test } from '@diagram-craft/model/edgePathBuilder.orthogonal';
 import { Box } from '@diagram-craft/geometry/box';
 import React, { useState } from 'react';
 
