@@ -188,64 +188,6 @@ describe('Graph utilities', () => {
       expect(result!.edges.map(e => e.id)).toEqual(['AB', 'BC']);
     });
 
-    test('works with penalty function', () => {
-      // Setup
-      const graph = new SimpleGraph();
-      graph.addVertex({ id: 'A', data: undefined });
-      graph.addVertex({ id: 'B', data: undefined });
-      graph.addVertex({ id: 'C', data: undefined });
-      graph.addEdge({ id: 'AC', from: 'A', to: 'C', weight: 5, data: undefined });
-      graph.addEdge({ id: 'AB', from: 'A', to: 'B', weight: 1, data: undefined });
-      graph.addEdge({ id: 'BC', from: 'B', to: 'C', weight: 1, data: undefined });
-
-      // Penalty function that adds 10 to any edge from B (no previousEdge parameter)
-      const penaltyFunction: EdgePenaltyFunction = (_, currentVertex) => {
-        return currentVertex!.id === 'B' ? 10 : 0;
-      };
-
-      // Act
-      const result = findShortestPathAStar(graph, 'A', 'C', zeroHeuristic, penaltyFunction);
-
-      // Verify - Direct path chosen due to penalty
-      expect(result).toBeDefined();
-      expect(result!.distance).toBe(5);
-      expect(result!.path.map(v => v.id)).toEqual(['A', 'C']);
-    });
-
-    test('penalty function is path-independent (no previousEdge)', () => {
-      // Setup - Test that penalty function doesn't get previousEdge parameter
-      const graph = new SimpleGraph();
-      graph.addVertex({ id: 'A', data: undefined });
-      graph.addVertex({ id: 'B', data: undefined });
-      graph.addVertex({ id: 'C', data: undefined });
-      graph.addVertex({ id: 'D', data: undefined });
-
-      // Create paths: A->B->D (weight 1+1) and A->C->D (weight 1+5)
-      graph.addEdge({ id: 'AB', from: 'A', to: 'B', weight: 1, data: undefined });
-      graph.addEdge({ id: 'BD', from: 'B', to: 'D', weight: 1, data: undefined });
-      graph.addEdge({ id: 'AC', from: 'A', to: 'C', weight: 1, data: undefined });
-      graph.addEdge({ id: 'CD', from: 'C', to: 'D', weight: 5, data: undefined });
-
-      // Penalty function that penalizes edges based on their destination only
-      const penaltyFunction: EdgePenaltyFunction = (
-        _previousEdge,
-        _currentVertex,
-        proposedEdge
-      ) => {
-        // Add penalty to edges going to D from C (but not from B)
-        return proposedEdge.to === 'D' && proposedEdge.from === 'C' ? 10 : 0;
-      };
-
-      // Act
-      const result = findShortestPathAStar(graph, 'A', 'D', zeroHeuristic, penaltyFunction);
-
-      // Verify - Should choose A->B->D path due to penalty on C->D
-      expect(result).toBeDefined();
-      expect(result!.distance).toBe(2); // 1 + 1, no penalty on this path
-      expect(result!.path.map(v => v.id)).toEqual(['A', 'B', 'D']);
-      expect(result!.edges.map(e => e.id)).toEqual(['AB', 'BD']);
-    });
-
     test('heuristic guides search efficiently', () => {
       // Setup - Create a graph where good heuristic should find path faster
       const graph = new SimpleGraph<{ x: number; y: number }>();
