@@ -88,7 +88,7 @@ export interface ShortestPathResult<V = unknown, E = unknown, VK = string, EK = 
  * @param currentVertex The vertex we're currently at
  * @param proposedEdge The edge we're considering taking
  * @param graph The graph being searched
- * @returns Additional penalty to add to the edge weight
+ * @returns Multiplicative penalty to add to the edge weight
  */
 export type EdgePenaltyFunction<V = unknown, E = unknown, VK = string, EK = string> = (
   previousEdge: Edge<E, EK, VK> | undefined,
@@ -177,8 +177,8 @@ export const findShortestPathAStar = <V = unknown, E = unknown, VK = string, EK 
 
       let edgeWeight = edge.weight;
       if (penaltyFunction) {
-        edgeWeight +=
-          penaltyFunction(previous.get(currentId)?.edge, currentVertex, edge, graph) ?? 0;
+        edgeWeight *=
+          penaltyFunction(previous.get(currentId)?.edge, currentVertex, edge, graph) ?? 1;
       }
 
       const tentativeGScore = currentGScore + edgeWeight;
