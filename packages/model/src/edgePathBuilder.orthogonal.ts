@@ -584,9 +584,11 @@ const buildOrthogonalEdgePathVersion2 = (
     }
   );
 
-  for (const e of shortestPath!.path) {
-    if (e.data![1] === undefined) continue;
-    path.lineTo(e.data![1]);
+  if (shortestPath) {
+    for (const e of shortestPath!.path) {
+      if (e.data![1] === undefined) continue;
+      path.lineTo(e.data![1]);
+    }
   }
 
   return path.getPaths().singular().simplify();
