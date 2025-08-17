@@ -91,6 +91,7 @@ export interface ShortestPathResult<V = unknown, E = unknown, VK = string, EK = 
  * @returns Additional penalty to add to the edge weight
  */
 export type EdgePenaltyFunction<V = unknown, E = unknown, VK = string, EK = string> = (
+  previousEdge: Edge<E, EK, VK> | undefined,
   currentVertex: Vertex<V, VK>,
   proposedEdge: Edge<E, EK, VK>,
   graph: Graph<V, E, VK, EK>
@@ -132,6 +133,12 @@ export const findShortestPathAStar = <V = unknown, E = unknown, VK = string, EK 
     return undefined;
   }
 
+  // Build adjacency list for efficient lookup
+  const adjacencyList = new MultiMap<VK, { vertexId: VK; edge: Edge<E, EK, VK> }>();
+  for (const edge of graph.edges()) {
+    adjacencyList.add(edge.from, { vertexId: edge.to, edge });
+  }
+
   // gScore: cost of cheapest path from start to vertex
   const gScore = new Map<VK, number>();
   // fScore: gScore + heuristic estimate to goal
@@ -150,12 +157,6 @@ export const findShortestPathAStar = <V = unknown, E = unknown, VK = string, EK 
   }
 
   queue.enqueue(startId, fScore.get(startId)!);
-
-  // Build adjacency list for efficient lookup
-  const adjacencyList = new MultiMap<VK, { vertexId: VK; edge: Edge<E, EK, VK> }>();
-  for (const edge of graph.edges()) {
-    adjacencyList.add(edge.from, { vertexId: edge.to, edge });
-  }
 
   while (!queue.isEmpty()) {
     const currentId = queue.dequeue()!;
@@ -176,8 +177,8 @@ export const findShortestPathAStar = <V = unknown, E = unknown, VK = string, EK 
 
       let edgeWeight = edge.weight;
       if (penaltyFunction) {
-        const penalty = penaltyFunction(currentVertex, edge, graph) ?? 0;
-        edgeWeight += penalty;
+        edgeWeight +=
+          penaltyFunction(previous.get(currentId)?.edge, currentVertex, edge, graph) ?? 0;
       }
 
       const tentativeGScore = currentGScore + edgeWeight;

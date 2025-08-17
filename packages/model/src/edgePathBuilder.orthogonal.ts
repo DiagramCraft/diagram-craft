@@ -1,11 +1,6 @@
 import { _p, Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
-import {
-  type Edge,
-  findShortestPathAStar,
-  type Graph,
-  SimpleGraph
-} from '@diagram-craft/utils/graph';
+import { type Edge, findShortestPathAStar, SimpleGraph } from '@diagram-craft/utils/graph';
 import { Direction } from '@diagram-craft/geometry/direction';
 import { MultiMap } from '@diagram-craft/utils/multimap';
 import type { DiagramEdge } from './diagramEdge';
@@ -45,64 +40,25 @@ const readjustConnectionPoint = (p: Point, wp: Point, startBounds: Box) => {
   return p;
 };
 
-class AugmentedGraph extends SimpleGraph<
-  [Point | undefined, Point | undefined],
-  [Direction, string]
-> {
+class OrthogonalGraph extends SimpleGraph<Point, [Direction, string]> {
   private reset: (() => void) | undefined = undefined;
-  private adjacencyList: MultiMap<string, { vertexId: string; edge: Edge<[Direction, string]> }>;
+  private adjacencyList:
+    | MultiMap<string, { vertexId: string; edge: Edge<[Direction, string]> }>
+    | undefined = undefined;
 
-  constructor(graph: Graph<Point, [Direction, string]>) {
-    super();
+  private getAdjancencyList() {
+    if (this.adjacencyList) return this.adjacencyList;
 
     // Build adjacency list for efficient lookup
     this.adjacencyList = new MultiMap<
       string,
       { vertexId: string; edge: Edge<[Direction, string]> }
     >();
-    for (const edge of graph.edges()) {
+    for (const edge of this.edges()) {
       this.adjacencyList.add(edge.from, { vertexId: edge.to, edge });
     }
 
-    // Expand graph
-    for (const v of graph.vertices()) {
-      for (const adj of this.adjacencyList.get(v.id)!) {
-        const from = graph.getVertex(adj.vertexId)!;
-
-        const vertexId = this.vertexKey(from.data, v.data);
-        this.addVertex({
-          id: vertexId,
-          data: [from.data, v.data]
-        });
-
-        for (const adj2 of this.adjacencyList.get(v.id)!) {
-          const to = graph.getVertex(adj2.vertexId)!;
-          if (to === from) continue;
-
-          const toVertexId = this.vertexKey(v.data, to.data);
-          const edgeId = this.edgeKey(vertexId, toVertexId);
-
-          this.addEdge({
-            id: edgeId,
-            from: vertexId,
-            to: toVertexId,
-            data: [Direction.opposite(adj.edge.data[0]), adj2.edge.data[1]],
-            weight:
-              Direction.opposite(adj.edge.data[0]) === adj2.edge.data[0]
-                ? adj2.edge.weight
-                : adj2.edge.weight + 20
-          });
-        }
-      }
-    }
-  }
-
-  private vertexKey(from: Point, current: Point) {
-    return `${Point.toString(from)}-${Point.toString(current)}`;
-  }
-
-  private edgeKey(from: string, to: string) {
-    return `${from}--${to}`;
+    return this.adjacencyList;
   }
 
   private edgesCrossing(bounds: Box) {
@@ -111,9 +67,9 @@ class AugmentedGraph extends SimpleGraph<
     for (const edge of this.edges()) {
       const start = this.getVertex(edge.from);
       const end = this.getVertex(edge.to);
-      if (!start || !end || start.data[1] === undefined || end.data[1] === undefined) continue;
+      if (!start || !end || !start.data || !end.data) continue;
 
-      const b = Box.fromCorners(start.data[1], end.data[1]);
+      const b = Box.fromCorners(start.data, end.data);
       if (Box.intersects(bounds, b)) {
         edges.push(edge);
       }
@@ -137,36 +93,17 @@ class AugmentedGraph extends SimpleGraph<
   ) {
     this.reset?.();
 
-    const addedVertices = new Set<string>();
-    const addedEdges = new Set<string>();
-    for (const vid of this.adjacencyList.keys()) {
-      if (vid === start.id) {
-        addedVertices.add(this.addVertex({ id: start.id, data: [undefined, undefined] }).id);
-        for (const adj2 of this.adjacencyList.get(vid)!) {
-          addedEdges.add(
-            this.addEdge({
-              id: this.edgeKey(start.id, adj2.vertexId),
-              from: start.id,
-              to: `${start.id}-${adj2.vertexId}`,
-              data: adj2.edge.data,
-              weight: adj2.edge.weight + (start.directionPenalties[adj2.edge.data[0]] ?? 0)
-            }).id
-          );
-        }
-      } else if (vid === end.id) {
-        addedVertices.add(this.addVertex({ id: end.id, data: [undefined, undefined] }).id);
-        for (const adj2 of this.adjacencyList.get(vid)!) {
-          addedEdges.add(
-            this.addEdge({
-              id: this.edgeKey(adj2.vertexId, end.id) + '--extra',
-              from: `${adj2.vertexId}-${end.id}`,
-              to: end.id,
-              data: adj2.edge.data,
-              weight: adj2.edge.weight + (end.directionPenalties[adj2.edge.data[0]] ?? 0)
-            }).id
-          );
-        }
-      }
+    const oldWeights = new Map<string, number>();
+
+    for (const adj of this.getAdjancencyList().get(start.id)!) {
+      oldWeights.set(adj.edge.id, adj.edge.weight);
+      adj.edge.weight += start.directionPenalties[adj.edge.data[0]] ?? 0;
+    }
+
+    for (const adj of this.getAdjancencyList().get(end.id)!) {
+      const edge = this.getEdge(`${adj.vertexId}-${end.id}`)!;
+      oldWeights.set(edge.id, edge.weight);
+      edge.weight += end.directionPenalties[Direction.opposite(edge.data[0])] ?? 0;
     }
 
     const disabledEdges = prohibitedBounds?.flatMap(b => this.edgesCrossing(b));
@@ -174,9 +111,10 @@ class AugmentedGraph extends SimpleGraph<
 
     this.reset = () => {
       disabledEdges?.forEach(e => (e.disabled = false));
-
-      addedEdges.forEach(e => this._edges.delete(e));
-      addedVertices.forEach(e => this._vertices.delete(e));
+      oldWeights.forEach((w, e) => {
+        const edge = this.getEdge(e);
+        if (edge) edge.weight = w;
+      });
 
       this.reset = undefined;
     };
@@ -230,8 +168,7 @@ const constructGraph = (edge: DiagramEdge, start: Point, end: Point) => {
 
     if (i === 0) {
       if (startNode) {
-        const bounds = startNode.bounds;
-        const midpoint = Box.midpoint(bounds, Box.fromCorners(wp.point, wp.point));
+        const midpoint = Box.midpoint(startNode.bounds, Box.fromCorners(wp.point, wp.point));
         addForPoint(midpoint, 'waypoint-mid');
       } else {
         addForPoint(Point.midpoint(start, wp.point), 'waypoint-mid');
@@ -240,8 +177,7 @@ const constructGraph = (edge: DiagramEdge, start: Point, end: Point) => {
 
     if (i === edge.waypoints.length - 1) {
       if (endNode) {
-        const bounds = endNode.bounds;
-        const midpoint = Box.midpoint(bounds, Box.fromCorners(wp.point, wp.point));
+        const midpoint = Box.midpoint(endNode.bounds, Box.fromCorners(wp.point, wp.point));
         addForPoint(midpoint, 'waypoint-mid');
       } else {
         addForPoint(Point.midpoint(end, wp.point), 'waypoint-mid');
@@ -272,8 +208,25 @@ const constructGraph = (edge: DiagramEdge, start: Point, end: Point) => {
   addForPoint(end, 'start-end');
 
   // Sort and remove duplicate lines
-  const finalYs = [...ys.keys()].sort((a, b) => a - b);
-  const finalXs = [...xs.keys()].sort((a, b) => a - b);
+  const TOO_CLOSE = 10;
+  const finalYs = [...ys.keys()]
+    .sort((a, b) => a - b)
+    .filter(
+      (v, i, a) =>
+        i === 0 ||
+        Math.abs(v - a[i - 1]) > TOO_CLOSE ||
+        ys.get(v) === 'start-end' ||
+        ys.get(v) === 'waypoint'
+    );
+  const finalXs = [...xs.keys()]
+    .sort((a, b) => a - b)
+    .filter(
+      (v, i, a) =>
+        i === 0 ||
+        Math.abs(v - a[i - 1]) > TOO_CLOSE ||
+        xs.get(v) === 'start-end' ||
+        xs.get(v) === 'waypoint'
+    );
 
   // Calculate intersections
   const grid: Array<Array<Point>> = [];
@@ -286,7 +239,7 @@ const constructGraph = (edge: DiagramEdge, start: Point, end: Point) => {
   }
 
   // Build graph
-  const graph = new SimpleGraph<Point, [Direction, EdgeType]>();
+  const graph = new OrthogonalGraph();
 
   const addEdge = (r1: number, c1: number, r2: number, c2: number, d: Direction) => {
     if (r1 < 0 || r1 >= grid.length) return;
@@ -376,9 +329,9 @@ const constructGraph = (edge: DiagramEdge, start: Point, end: Point) => {
     .forEach(e => graph.removeEdge(e.id));
 
   for (const e of graph.edges()) {
-    if (e.data[1] === 'start-end' || e.data[1] === 'waypoint') e.weight *= 1;
-    if (e.data[1] === 'midpoint' || e.data[1] === 'waypoint-mid') e.weight *= 0.8;
-    if (e.data[1] === 'outer-bounds') e.weight *= 1.1;
+    if (e.data[1] === 'start-end' || e.data[1] === 'waypoint') e.weight *= 0.95;
+    if (e.data[1] === 'midpoint' || e.data[1] === 'waypoint-mid') e.weight *= 0.95;
+    if (e.data[1] === 'outer-bounds') e.weight *= 1.05;
   }
 
   return graph;
@@ -472,8 +425,7 @@ const buildOrthogonalEdgePathVersion2 = (
   const start = edge.start.position;
   const end = edge.end.position;
 
-  const baseGraph = constructGraph(edge, start, end);
-  const graph = new AugmentedGraph(baseGraph);
+  const graph = constructGraph(edge, start, end);
 
   const visitedPoints = new Set<string>();
 
@@ -519,17 +471,18 @@ const buildOrthogonalEdgePathVersion2 = (
       ),
       startId,
       endOfSegmentId,
-      (_, current) => Point.squareDistance(current.data[1] ?? wp.point, wp.point),
-      (_currentVertex, proposedEdge) => {
+      (_, current) => Point.manhattanDistance(current.data ?? wp.point, wp.point) * 0.95,
+      (previousEdge, _currentVertex, proposedEdge) => {
         // Avoid path crossing itself
-        if (visitedPoints.has(proposedEdge.to.split('-')[1])) return 1000000;
+        if (visitedPoints.has(proposedEdge.to)) return 1000000;
+        if (previousEdge && previousEdge.data[0] !== proposedEdge.data[0]) return 10;
       }
     );
     for (const e of shortestPathToWaypoint!.path) {
-      if (e.data![1] === undefined) continue;
-      path.lineTo(e.data[1]!);
+      if (e.data! === undefined) continue;
+      path.lineTo(e.data!);
     }
-    shortestPathToWaypoint?.path.forEach(e => visitedPoints.add(e.id.split('-')[1]));
+    shortestPathToWaypoint?.path.forEach(e => visitedPoints.add(e.id));
 
     lastEdge = shortestPathToWaypoint?.edges?.at(-1);
     startId = endOfSegmentId;
@@ -565,19 +518,18 @@ const buildOrthogonalEdgePathVersion2 = (
     ),
     startId,
     endId,
-    (_, current) => Point.squareDistance(current.data[1] ?? end, end),
-    (_currentVertex, proposedEdge) => {
+    (_, current) => Point.manhattanDistance(current.data ?? end, end) * 0.95,
+    (previousEdge, _currentVertex, proposedEdge) => {
       // Avoid path crossing itself
-      if (visitedPoints.has(proposedEdge.to.split('-')[1])) {
-        return 1000000;
-      }
+      if (visitedPoints.has(proposedEdge.to)) return 1000000;
+      if (previousEdge && previousEdge.data[0] !== proposedEdge.data[0]) return 10;
     }
   );
 
   if (shortestPath) {
     for (const e of shortestPath!.path) {
-      if (e.data![1] === undefined) continue;
-      path.lineTo(e.data![1]);
+      if (e.data! === undefined) continue;
+      path.lineTo(e.data!);
     }
   }
 

@@ -46,6 +46,10 @@ export const Point = {
     return dx * dx + dy * dy;
   },
 
+  manhattanDistance: (posA: Point, posB: Point) => {
+    return Math.abs(posA.x - posB.x) + Math.abs(posA.y - posB.y);
+  },
+
   distance: (posA: Point, posB: Point) => {
     return Math.sqrt(Point.squareDistance(posA, posB));
   },

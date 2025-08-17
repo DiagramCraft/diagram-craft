@@ -6,6 +6,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { _test, type EdgeType } from '@diagram-craft/model/edgePathBuilder.orthogonal';
 import { Box } from '@diagram-craft/geometry/box';
 import React, { useState } from 'react';
+import { Direction } from '@diagram-craft/geometry/direction';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -52,7 +53,7 @@ const OrthogonalRoutingTest = (props: { start: any; end: any; numberOfWayPoints:
 
   const path = _test.buildOrthogonalEdgePathVersion2(
     edge,
-    props.start !== 'none' ? props.start : undefined,
+    props.start !== 'none' ? Direction.opposite(props.start) : undefined,
     props.end !== 'none' ? props.end : undefined
   );
 
@@ -112,7 +113,7 @@ const OrthogonalRoutingTest = (props: { start: any; end: any; numberOfWayPoints:
             y1={s.data.y}
             x2={t.data.x}
             y2={t.data.y}
-            stroke={colors[e.data[1]]}
+            stroke={colors[e.data[1] as EdgeType]}
           />
         );
       })}
