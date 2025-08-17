@@ -199,8 +199,8 @@ describe('Graph utilities', () => {
       graph.addEdge({ id: 'BC', from: 'B', to: 'C', weight: 1, data: undefined });
 
       // Penalty function that adds 10 to any edge from B (no previousEdge parameter)
-      const penaltyFunction: EdgePenaltyFunction = currentVertex => {
-        return currentVertex.id === 'B' ? 10 : 0;
+      const penaltyFunction: EdgePenaltyFunction = (_, currentVertex) => {
+        return currentVertex!.id === 'B' ? 10 : 0;
       };
 
       // Act
@@ -227,7 +227,11 @@ describe('Graph utilities', () => {
       graph.addEdge({ id: 'CD', from: 'C', to: 'D', weight: 5, data: undefined });
 
       // Penalty function that penalizes edges based on their destination only
-      const penaltyFunction: EdgePenaltyFunction = (_currentVertex, proposedEdge) => {
+      const penaltyFunction: EdgePenaltyFunction = (
+        _previousEdge,
+        _currentVertex,
+        proposedEdge
+      ) => {
         // Add penalty to edges going to D from C (but not from B)
         return proposedEdge.to === 'D' && proposedEdge.from === 'C' ? 10 : 0;
       };

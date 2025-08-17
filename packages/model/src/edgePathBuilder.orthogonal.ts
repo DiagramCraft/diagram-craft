@@ -477,7 +477,7 @@ const buildOrthogonalEdgePathVersion2 = (
       (previousEdge, _currentVertex, proposedEdge) => {
         // Avoid path crossing itself
         if (visitedPoints.has(proposedEdge.to)) return 1000000;
-        if (previousEdge && previousEdge.data[0] !== proposedEdge.data[0]) return 10;
+        if (previousEdge && previousEdge.data[0] !== proposedEdge.data[0]) return 0;
       }
     );
     for (const e of shortestPathToWaypoint!.path) {
@@ -520,11 +520,11 @@ const buildOrthogonalEdgePathVersion2 = (
     ),
     startId,
     endId,
-    (_, current) => Point.manhattanDistance(current.data ?? end, end) * 0.95,
+    (_, current) => Point.manhattanDistance(current.data ?? end, end) * 0.9,
     (previousEdge, _currentVertex, proposedEdge) => {
       // Avoid path crossing itself
       if (visitedPoints.has(proposedEdge.to)) return 1000000;
-      if (previousEdge && previousEdge.data[0] !== proposedEdge.data[0]) return 10;
+      if (previousEdge && previousEdge.data[0] !== proposedEdge.data[0]) return 0;
     }
   );
 
