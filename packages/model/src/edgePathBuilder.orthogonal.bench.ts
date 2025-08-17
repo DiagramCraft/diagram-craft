@@ -1,4 +1,4 @@
-import { beforeAll, bench, describe } from 'vitest';
+import { bench, describe } from 'vitest';
 
 import { Random } from '@diagram-craft/utils/random';
 import type { DiagramEdge } from './diagramEdge';
@@ -24,32 +24,30 @@ const randomBounds = () => {
   return Box.fromCorners(p, Point.add(p, randomPoint(100)));
 };
 
+const edges: Array<DiagramEdge> = [];
+const diagram = TestModel.newDiagram();
+const layer = diagram.newLayer();
+for (let i = 0; i < 100; i++) {
+  const node1 = layer.addNode('1', 'rect', {
+    bounds: randomBounds()
+  });
+  const node2 = layer.addNode('2', 'rect', {
+    bounds: randomBounds()
+  });
+  const edge = layer.addEdge();
+  edges.push(edge);
+  edge.setStart(
+    new PointInNodeEndpoint(node1, _p(0.5, 0.5), _p(0, 0), 'absolute'),
+    UnitOfWork.immediate(diagram)
+  );
+  edge.setEnd(
+    new PointInNodeEndpoint(node2, _p(0.5, 0.5), _p(0, 0), 'absolute'),
+    UnitOfWork.immediate(diagram)
+  );
+}
+
 describe('orthogonal routing', () => {
   describe('no waypoints', () => {
-    const edges: Array<DiagramEdge> = [];
-    beforeAll(() => {
-      const diagram = TestModel.newDiagram();
-      const layer = diagram.newLayer();
-      for (let i = 0; i < 100; i++) {
-        const node1 = layer.addNode('1', 'rect', {
-          bounds: randomBounds()
-        });
-        const node2 = layer.addNode('2', 'rect', {
-          bounds: randomBounds()
-        });
-        const edge = layer.addEdge();
-        edges.push(edge);
-        edge.setStart(
-          new PointInNodeEndpoint(node1, _p(0.5, 0.5), _p(0, 0), 'absolute'),
-          UnitOfWork.immediate(diagram)
-        );
-        edge.setEnd(
-          new PointInNodeEndpoint(node2, _p(0.5, 0.5), _p(0, 0), 'absolute'),
-          UnitOfWork.immediate(diagram)
-        );
-      }
-    });
-
     bench(
       'version1',
       () => {
