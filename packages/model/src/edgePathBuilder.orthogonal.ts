@@ -30,7 +30,7 @@ const Weights = {
   turnPenalty: () => 1.1,
   selfCrossingPenalty: () => 1000000,
   edgeType: {
-    primary: (v: number) => v * 0.99,
+    primary: (v: number) => v * 0.9,
     secondary: (v: number) => v * 0.9,
     tertiary: (v: number) => v * 1.01
   }
@@ -558,6 +558,9 @@ class PathfindingSegmentProvider implements SegmentProvider {
           return Weights.selfCrossingPenalty();
         }
         if (previousEdge && previousEdge.data[0] !== proposedEdge.data[0]) {
+          if (proposedEdge.data[1] === 'start-end' || proposedEdge.data[1] === 'waypoint')
+            return 0.9;
+          if (proposedEdge.data[1] === 'midpoint') return 1;
           return Weights.turnPenalty();
         }
       }
