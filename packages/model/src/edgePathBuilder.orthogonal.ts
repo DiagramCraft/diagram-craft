@@ -9,11 +9,10 @@ import {
 } from '@diagram-craft/utils/graph';
 import { Direction } from '@diagram-craft/geometry/direction';
 import type { DiagramEdge } from './diagramEdge';
-import { ConnectedEndpoint } from './endpoint';
+import { ConnectedEndpoint, type Endpoint } from './endpoint';
 import { unique } from '@diagram-craft/utils/array';
 import { roundHighPrecision } from '@diagram-craft/utils/math';
 import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
-import { Waypoint } from './types';
 import { assert } from '@diagram-craft/utils/assert';
 import type { DiagramNode } from './diagramNode';
 
@@ -47,19 +46,19 @@ interface SegmentProvider {
     start: {
       point: Point;
       availableDirections: ReadonlyArray<Direction>;
-      preferredDirection: ReadonlyArray<Direction>;
+      preferredDirections: ReadonlyArray<Direction>;
     },
     end: {
       point: Point;
       availableDirections: ReadonlyArray<Direction>;
-      preferredDirection: ReadonlyArray<Direction>;
+      preferredDirections: ReadonlyArray<Direction>;
     },
     visitedPoints: Set<string>
   ): SegmentResult[];
 }
 
 type SegmentResult = {
-  path: PathListBuilder;
+  points: Point[];
   startDirection: Direction;
   endDirection: Direction;
   availableDirections: ReadonlyArray<Direction>;
@@ -72,7 +71,7 @@ type SegmentResult = {
  *
  * This function adjusts the connection point to the closest point on the bounding box
  */
-const readjustConnectionPoint = (p: Point, wp: Point, startBounds: Box) => {
+const readjustConnection = (p: Point, wp: Point, startBounds: Box) => {
   if (wp.x >= startBounds.x && wp.x <= startBounds.x + startBounds.w) {
     p = {
       x: wp.x,
@@ -167,12 +166,12 @@ class FastSegmentProvider implements SegmentProvider {
     start: {
       point: Point;
       availableDirections: ReadonlyArray<Direction>;
-      preferredDirection: ReadonlyArray<Direction>;
+      preferredDirections: ReadonlyArray<Direction>;
     },
     end: {
       point: Point;
       availableDirections: ReadonlyArray<Direction>;
-      preferredDirection: ReadonlyArray<Direction>;
+      preferredDirections: ReadonlyArray<Direction>;
     }
   ): SegmentResult[] {
     const { x: px, y: py } = start.point;
@@ -185,17 +184,17 @@ class FastSegmentProvider implements SegmentProvider {
       return d === 'w' && x < px;
     };
     const dirInOrder = unique([
-      ...start.preferredDirection.filter(isAvailable),
+      ...start.preferredDirections.filter(isAvailable),
       ...start.availableDirections.filter(isAvailable),
       ...start.availableDirections
     ]);
 
     return dirInOrder
       .flatMap(direction => {
-        const makeEntry = (p: PathListBuilder, endDirection: Direction): SegmentResult => ({
+        const makeEntry = (points: Point[], endDirection: Direction): SegmentResult => ({
           startDirection: direction,
           endDirection,
-          path: p,
+          points,
           availableDirections: [],
           preferredDirection: []
         });
@@ -203,33 +202,43 @@ class FastSegmentProvider implements SegmentProvider {
         switch (direction) {
           case 'n':
           case 's': {
-            const full = new PathListBuilder();
-            full.moveTo({ x: 0, y: 0 });
-            full.lineTo({ x: px, y });
-            full.lineTo({ x, y });
-
-            const half = new PathListBuilder();
-            half.moveTo({ x: 0, y: 0 });
-            half.lineTo({ x: px, y: py + (y - py) / 2 });
-            half.lineTo({ x, y: py + (y - py) / 2 });
-            half.lineTo({ x, y });
-
-            return [makeEntry(full, x < px ? 'w' : 'e'), makeEntry(half, y < py ? 'n' : 's')];
+            return [
+              makeEntry(
+                [
+                  { x: px, y },
+                  { x, y }
+                ],
+                x < px ? 'w' : 'e'
+              ),
+              makeEntry(
+                [
+                  { x: px, y: py + (y - py) / 2 },
+                  { x, y: py + (y - py) / 2 },
+                  { x, y }
+                ],
+                y < py ? 'n' : 's'
+              )
+            ];
           }
           case 'e':
           case 'w': {
-            const full = new PathListBuilder();
-            full.moveTo({ x: 0, y: 0 });
-            full.lineTo({ x, y: py });
-            full.lineTo({ x, y });
-
-            const half = new PathListBuilder();
-            half.moveTo({ x: 0, y: 0 });
-            half.lineTo({ x: px + (x - px) / 2, y: py });
-            half.lineTo({ x: px + (x - px) / 2, y });
-            half.lineTo({ x, y });
-
-            return [makeEntry(full, y < py ? 'n' : 's'), makeEntry(half, x < px ? 'w' : 'e')];
+            return [
+              makeEntry(
+                [
+                  { x, y: py },
+                  { x, y }
+                ],
+                y < py ? 'n' : 's'
+              ),
+              makeEntry(
+                [
+                  { x: px + (x - px) / 2, y: py },
+                  { x: px + (x - px) / 2, y },
+                  { x, y }
+                ],
+                x < px ? 'w' : 'e'
+              )
+            ];
           }
         }
       })
@@ -262,10 +271,6 @@ class PathfindingSegmentProvider implements SegmentProvider {
   }
 
   constructGraph(start: Point, end: Point) {
-    const startNode =
-      this.edge.start instanceof ConnectedEndpoint ? this.edge.start.node : undefined;
-    const endNode = this.edge.end instanceof ConnectedEndpoint ? this.edge.end.node : undefined;
-
     const ys = new Map<number, EdgeType>();
     const xs = new Map<number, EdgeType>();
 
@@ -291,22 +296,22 @@ class PathfindingSegmentProvider implements SegmentProvider {
 
     // Outer bounds
     const bounds: Box[] = [];
-    if (startNode) bounds.push(startNode.bounds);
-    if (endNode) bounds.push(endNode.bounds);
+    if (this.startNode) bounds.push(this.startNode.bounds);
+    if (this.endNode) bounds.push(this.endNode.bounds);
     this.edge.waypoints.forEach(wp => bounds.push(Box.fromCorners(wp.point, wp.point)));
     addForBox(Box.grow(Box.boundingBox(bounds), 20), 'outer-bounds');
 
     // Add for bounds
-    addForBox(startNode ? Box.grow(startNode.bounds, 10) : undefined, 'bounds');
-    addForBox(endNode ? Box.grow(endNode.bounds, 10) : undefined, 'bounds');
+    addForBox(this.startNode ? Box.grow(this.startNode.bounds, 10) : undefined, 'bounds');
+    addForBox(this.endNode ? Box.grow(this.endNode.bounds, 10) : undefined, 'bounds');
 
     // Add for midpoints valid waypoints
     for (let i = 0; i < this.edge.waypoints.length; i++) {
       const wp = this.edge.waypoints[i];
 
       if (i === 0) {
-        if (startNode) {
-          const midpoint = Box.midpoint(startNode.bounds, Box.fromCorners(wp.point, wp.point));
+        if (this.startNode) {
+          const midpoint = Box.midpoint(this.startNode.bounds, Box.fromCorners(wp.point, wp.point));
           addForPoint(midpoint, 'waypoint-mid');
         } else {
           addForPoint(Point.midpoint(start, wp.point), 'waypoint-mid');
@@ -314,8 +319,8 @@ class PathfindingSegmentProvider implements SegmentProvider {
       }
 
       if (i === this.edge.waypoints.length - 1) {
-        if (endNode) {
-          const midpoint = Box.midpoint(endNode.bounds, Box.fromCorners(wp.point, wp.point));
+        if (this.endNode) {
+          const midpoint = Box.midpoint(this.endNode.bounds, Box.fromCorners(wp.point, wp.point));
           addForPoint(midpoint, 'waypoint-mid');
         } else {
           addForPoint(Point.midpoint(end, wp.point), 'waypoint-mid');
@@ -330,8 +335,8 @@ class PathfindingSegmentProvider implements SegmentProvider {
 
     // Add for midpoint
     const midpoint = Box.midpoint(
-      startNode ? startNode.bounds : Box.fromCorners(start, start),
-      endNode ? endNode.bounds : Box.fromCorners(end, end)
+      this.startNode ? this.startNode.bounds : Box.fromCorners(start, start),
+      this.endNode ? this.endNode.bounds : Box.fromCorners(end, end)
     );
     addForPoint(midpoint, 'midpoint');
 
@@ -443,8 +448,8 @@ class PathfindingSegmentProvider implements SegmentProvider {
       return { r: cr, c: cc };
     };
 
-    const startBounds = startNode?.bounds;
-    const endBounds = endNode?.bounds;
+    const startBounds = this.startNode?.bounds;
+    const endBounds = this.endNode?.bounds;
 
     const verticesToRemove = new Set<string>();
     for (let r = 0; r < grid.length; r++) {
@@ -487,12 +492,12 @@ class PathfindingSegmentProvider implements SegmentProvider {
     start: {
       point: Point;
       availableDirections: ReadonlyArray<Direction>;
-      preferredDirection: ReadonlyArray<Direction>;
+      preferredDirections: ReadonlyArray<Direction>;
     },
     end: {
       point: Point;
       availableDirections: ReadonlyArray<Direction>;
-      preferredDirection: ReadonlyArray<Direction>;
+      preferredDirections: ReadonlyArray<Direction>;
     },
     visitedPoints: Set<string>
   ): SegmentResult[] {
@@ -504,7 +509,7 @@ class PathfindingSegmentProvider implements SegmentProvider {
 
     const startPenalty = directionPenalty();
     start.availableDirections.forEach(d => (startPenalty[d] = 1000));
-    start.preferredDirection.forEach(d => (startPenalty[d] = 0));
+    start.preferredDirections.forEach(d => (startPenalty[d] = 0));
 
     startPenalty['s'] = Weights.direction.s(startPenalty['s']);
     startPenalty['n'] = Weights.direction.n(startPenalty['n']);
@@ -513,7 +518,7 @@ class PathfindingSegmentProvider implements SegmentProvider {
 
     const endPenalty = directionPenalty();
     end.availableDirections.forEach(d => (endPenalty[d] = 1000));
-    end.preferredDirection.forEach(d => (endPenalty[d] = 0));
+    end.preferredDirections.forEach(d => (endPenalty[d] = 0));
 
     endPenalty['s'] = Weights.direction.s(endPenalty['s']);
     endPenalty['n'] = Weights.direction.n(endPenalty['n']);
@@ -558,18 +563,17 @@ class PathfindingSegmentProvider implements SegmentProvider {
       }
     );
 
-    const path = new PathListBuilder();
-    path.moveTo({ x: 0, y: 0 });
+    const points: Point[] = [];
     for (const e of shortestPathToWaypoint!.path) {
       if (e.data! === undefined) continue;
-      path.lineTo(e.data!);
+      points.push(e.data!);
     }
 
     const firstEdge = shortestPathToWaypoint!.edges!.at(0)!;
     const lastEdge = shortestPathToWaypoint!.edges!.at(-1)!;
     return [
       {
-        path,
+        points,
         availableDirections: Direction.all().filter(d => d !== lastEdge.data[0]),
         preferredDirection: [Direction.opposite(lastEdge.data[0])],
         startDirection: firstEdge.data[0],
@@ -586,6 +590,11 @@ const directionPenalty = (): Record<Direction, number> => ({
   w: Weights.baseDirectionPenalty
 });
 
+function whenConnected(e: Endpoint | undefined): ConnectedEndpoint | undefined {
+  if (e instanceof ConnectedEndpoint) return e;
+  return undefined;
+}
+
 export const buildOrthogonalEdgePath = (
   edge: DiagramEdge,
   preferredStartDirectionP: Direction | undefined,
@@ -593,45 +602,34 @@ export const buildOrthogonalEdgePath = (
   isStartForcedP?: boolean,
   isEndForcedP?: boolean
 ) => {
-  const startNode = edge.start instanceof ConnectedEndpoint ? edge.start.node : undefined;
-  const endNode = edge.end instanceof ConnectedEndpoint ? edge.end.node : undefined;
+  const startNode = whenConnected(edge.start)?.node;
+  const endNode = whenConnected(edge.end)?.node;
 
-  const preferredStartDirection =
-    startNode && startNode.renderProps.routing.constraint !== 'none'
-      ? startNode.renderProps.routing.constraint
-      : preferredStartDirectionP;
-  const preferredEndDirection =
-    endNode && endNode.renderProps.routing.constraint !== 'none'
-      ? endNode.renderProps.routing.constraint
-      : preferredEndDirectionP;
-  const isStartForced =
-    (isStartForcedP || (startNode && startNode.renderProps.routing.constraint !== 'none')) ?? false;
-  const isEndForced =
-    (isEndForcedP || (endNode && endNode.renderProps.routing.constraint !== 'none')) ?? false;
+  const startRC = startNode?.renderProps.routing.constraint;
+  const endRC = endNode?.renderProps.routing.constraint;
 
-  let sm = edge.start.position;
-  let em = edge.end.position;
+  const hasStartRC = startRC !== undefined && startRC !== 'none';
+  const hasEndRC = endRC !== undefined && endRC !== 'none';
 
-  if (
-    !isStartForced &&
-    edge.start instanceof ConnectedEndpoint &&
-    edge.start.isMidpoint() &&
-    edge.waypoints.length > 0
-  ) {
-    sm = readjustConnectionPoint(sm, edge.waypoints[0].point, edge.start.node.bounds);
+  const preferredStartDirection = hasStartRC ? startRC : preferredStartDirectionP;
+  const preferredEndDirection = hasEndRC ? endRC : preferredEndDirectionP;
+
+  const isStartForced = (isStartForcedP || hasStartRC) ?? false;
+  const isEndForced = (isEndForcedP || hasEndRC) ?? false;
+
+  let startPoint = edge.start.position;
+  let endPoint = edge.end.position;
+
+  if (!isStartForced && whenConnected(edge.start)?.isMidpoint() && edge.waypoints.length > 0) {
+    startPoint = readjustConnection(startPoint, edge.waypoints[0].point, startNode!.bounds);
   }
 
-  if (
-    !isEndForced &&
-    edge.end instanceof ConnectedEndpoint &&
-    edge.end.isMidpoint() &&
-    edge.waypoints.length > 0
-  ) {
-    em = readjustConnectionPoint(em, edge.waypoints.at(-1)!.point, edge.end.node.bounds);
+  if (!isEndForced && whenConnected(edge.end)?.isMidpoint() && edge.waypoints.length > 0) {
+    endPoint = readjustConnection(endPoint, edge.waypoints.at(-1)!.point, endNode!.bounds);
   }
 
   const path = new PathListBuilder();
-  path.moveTo(sm);
+  path.moveTo(startPoint);
 
   const visitedPoints = new Set<string>();
 
@@ -639,12 +637,8 @@ export const buildOrthogonalEdgePath = (
   const pathFindingSegmentProvider = new PathfindingSegmentProvider(edge);
 
   const getProvider = (segIndex: number, segCount: number): SegmentProvider => {
-    if (isStartForced && segIndex === 0) {
-      return pathFindingSegmentProvider;
-    }
-    if (isEndForced && ((segIndex === 0 && segCount === 1) || segIndex === segCount - 1)) {
-      return pathFindingSegmentProvider;
-    }
+    if (isStartForced && segIndex === 0) return pathFindingSegmentProvider;
+    if (isEndForced && segIndex === segCount - 1) return pathFindingSegmentProvider;
     return fastSegmentProvider;
   };
 
@@ -652,17 +646,17 @@ export const buildOrthogonalEdgePath = (
   let preferredDirections: ReadonlyArray<Direction> = preferredStartDirection
     ? [preferredStartDirection]
     : [];
-  let prevPosition: Waypoint = { point: sm };
+  let prevPosition = startPoint;
   edge.waypoints.forEach((mp, idx) => {
     const result = getProvider(idx, edge.waypoints.length + 1).addSegment(
       {
-        point: prevPosition.point,
-        preferredDirection: preferredDirections,
-        availableDirections: availableDirections
+        point: prevPosition,
+        preferredDirections,
+        availableDirections
       },
       {
         point: mp.point,
-        preferredDirection: [],
+        preferredDirections: [],
         availableDirections: Direction.all()
       },
       visitedPoints
@@ -671,45 +665,37 @@ export const buildOrthogonalEdgePath = (
     availableDirections = result[0].availableDirections;
     preferredDirections = result[0].preferredDirection;
 
-    const p = result[0].path;
-    assert.true(p.pathCount === 1);
-    p.active.instructions.forEach(i => path.appendInstruction(i));
+    result[0].points.forEach(p => {
+      path.lineTo(p);
+      visitedPoints.add(Point.toString(p));
+    });
 
-    p.getPaths()
-      .all()
-      .flatMap(p => p.segments)
-      .flatMap(s => [s.start, s.end])
-      .forEach(p => {
-        visitedPoints.add(Point.toString(p));
-      });
-
-    prevPosition = mp;
+    prevPosition = mp.point;
   });
 
   const endResult = getProvider(edge.waypoints.length, edge.waypoints.length + 1).addSegment(
     {
-      point: prevPosition.point,
-      preferredDirection: preferredDirections,
-      availableDirections: availableDirections
+      point: prevPosition,
+      preferredDirections,
+      availableDirections
     },
     {
-      point: em,
-      preferredDirection: preferredEndDirection ? [preferredEndDirection] : [],
+      point: endPoint,
+      preferredDirections: preferredEndDirection ? [preferredEndDirection] : [],
       availableDirections: Direction.all()
     },
     visitedPoints
   );
 
   const best =
-    endResult.find(r => r.endDirection === preferredEndDirection)?.path ??
+    endResult.find(r => r.endDirection === preferredEndDirection) ??
     endResult.toSorted((a, b) => {
-      const c1 = a.path.getPaths().all()[0]?.numberOfSegments ?? 100;
-      const c2 = b.path.getPaths().all()[0]?.numberOfSegments ?? 100;
+      const c1 = a.points.length ?? 100;
+      const c2 = b.points.length ?? 100;
       return c1 - c2;
-    })[0].path;
+    })[0];
 
-  assert.true(best.pathCount === 1);
-  best.active.instructions.forEach(i => path.appendInstruction(i));
+  best.points.forEach(p => path.lineTo(p));
 
   return path.getPaths().singular();
 };
