@@ -27,11 +27,11 @@ const Weights = {
   continuePath: {
     continue: () => 0
   },
-  turnPenalty: () => 1.03,
+  turnPenalty: () => 1.3,
   selfCrossingPenalty: () => 1000000,
   edgeType: {
     primary: (v: number) => v * 0.99,
-    secondary: (v: number) => v * 0.9,
+    secondary: (v: number) => v * 0.99,
     tertiary: (v: number) => v * 1.01
   }
 };
@@ -574,8 +574,10 @@ class PathfindingSegmentProvider implements SegmentProvider {
     return [
       {
         points,
-        availableDirections: Direction.all().filter(d => d !== lastEdge.data[0]),
-        preferredDirection: [Direction.opposite(lastEdge.data[0])],
+        availableDirections: Direction.all().filter(
+          d => d !== Direction.opposite(lastEdge.data[0])
+        ),
+        preferredDirection: [lastEdge.data[0]],
         startDirection: firstEdge.data[0],
         endDirection: lastEdge.data[0]
       }
