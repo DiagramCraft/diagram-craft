@@ -27,11 +27,11 @@ const Weights = {
   continuePath: {
     continue: () => 0
   },
-  turnPenalty: () => 1.3,
+  turnPenalty: () => 1.1,
   selfCrossingPenalty: () => 1000000,
   edgeType: {
     primary: (v: number) => v * 0.99,
-    secondary: (v: number) => v * 0.99,
+    secondary: (v: number) => v * 0.9,
     tertiary: (v: number) => v * 1.01
   }
 };
