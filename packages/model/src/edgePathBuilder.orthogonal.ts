@@ -1,11 +1,17 @@
 import { _p, Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
-import { type Edge, findShortestPathAStar, SimpleGraph } from '@diagram-craft/utils/graph';
+import {
+  type Edge,
+  findShortestPathAStar,
+  type HeuristicFunction,
+  SimpleGraph,
+  type Vertex
+} from '@diagram-craft/utils/graph';
 import { Direction } from '@diagram-craft/geometry/direction';
 import type { DiagramEdge } from './diagramEdge';
 import { ConnectedEndpoint } from './endpoint';
 import { unique } from '@diagram-craft/utils/array';
-import { round } from '@diagram-craft/utils/math';
+import { roundHighPrecision } from '@diagram-craft/utils/math';
 import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { Waypoint } from './types';
 import { assert } from '@diagram-craft/utils/assert';
@@ -17,6 +23,32 @@ type Result = {
   availableDirections: ReadonlyArray<Direction>;
   preferredDirection: ReadonlyArray<Direction>;
 };
+
+const Weights = {
+  direction: {
+    s: (v: number) => v,
+    n: (v: number) => v + 5,
+    e: (v: number) => v + 10,
+    w: (v: number) => v + 15
+  },
+  baseDirectionPenalty: 2000,
+  continuePath: {
+    continue: () => 0,
+    goBack: () => 20000
+  },
+  turnPenalty: () => 1.03,
+  selfCrossingPenalty: () => 1000000,
+  edgeType: {
+    primary: (v: number) => v * 0.99,
+    secondary: (v: number) => v * 0.9,
+    tertiary: (v: number) => v * 1.01
+  }
+};
+
+const makeHeuristic =
+  (end: Point): HeuristicFunction<Point, [Direction, string]> =>
+  (_from: Vertex<Point>, to: Vertex<Point>) =>
+    Point.manhattanDistance(to.data ?? end, end) * 0.8;
 
 /*
  * In case an edge is connected to the central point of a node, orthogonal routed edges
@@ -87,7 +119,9 @@ class OrthogonalGraph extends SimpleGraph<Point, [Direction, string]> {
       edge.weight += end.directionPenalties[Direction.opposite(edge.data[0])] ?? 0;
     }
 
-    const disabledEdges = prohibitedBounds?.flatMap(b => this.edgesCrossing(b));
+    const disabledEdges = prohibitedBounds
+      ?.flatMap(b => this.edgesCrossing(b))
+      .filter(e => e.data[1] !== 'start-end' && e.data[1] !== 'waypoint');
     disabledEdges?.forEach(e => (e.disabled = true));
 
     this.reset = () => {
@@ -113,7 +147,7 @@ export type EdgeType =
   | 'outer-bounds';
 
 const isPointInBounds = (p: Point, bounds: Box | undefined) => {
-  return bounds && !Point.isEqual(p, Box.center(bounds)) && Box.contains(bounds, p);
+  return bounds && Box.contains(bounds, p);
 };
 
 const constructGraph = (edge: DiagramEdge, start: Point, end: Point) => {
@@ -124,16 +158,20 @@ const constructGraph = (edge: DiagramEdge, start: Point, end: Point) => {
   const xs = new Map<number, EdgeType>();
 
   const addForPoint = (p: Point, type: EdgeType) => {
-    ys.set(round(p.y), type);
-    xs.set(round(p.x), type);
+    ys.set(roundHighPrecision(p.y), type);
+    xs.set(roundHighPrecision(p.x), type);
   };
   const addForBox = (b: Box | undefined, type: EdgeType) => {
     if (!b) return;
-    ys.set(round(b.y), type);
-    ys.set(round(b.y + b.h), type);
-    xs.set(round(b.x), type);
-    xs.set(round(b.x + b.w), type);
+    ys.set(roundHighPrecision(b.y), type);
+    ys.set(roundHighPrecision(b.y + b.h), type);
+    xs.set(roundHighPrecision(b.x), type);
+    xs.set(roundHighPrecision(b.x + b.w), type);
   };
+
+  const mustKeepPoints = new Set<string>([...edge.waypoints].map(w => Point.toString(w.point)));
+  mustKeepPoints.add(Point.toString(start));
+  mustKeepPoints.add(Point.toString(end));
 
   // We add grid lines in reverse order of priority
 
@@ -284,8 +322,8 @@ const constructGraph = (edge: DiagramEdge, start: Point, end: Point) => {
       if (cr < 0 || cr >= grid.length) return { r: -1, c: -1 };
       if (cc < 0 || cc >= grid[0].length) return { r: -1, c: -1 };
     } while (
-      isPointInBounds(grid[cr][cc], startBounds) ||
-      isPointInBounds(grid[cr][cc], endBounds)
+      (isPointInBounds(grid[cr][cc], startBounds) || isPointInBounds(grid[cr][cc], endBounds)) &&
+      !mustKeepPoints.has(Point.toString(grid[cr][cc]))
     );
 
     return { r: cr, c: cc };
@@ -297,7 +335,10 @@ const constructGraph = (edge: DiagramEdge, start: Point, end: Point) => {
   const verticesToRemove = new Set<string>();
   for (let r = 0; r < grid.length; r++) {
     for (let c = 0; c < grid[r].length; c++) {
-      if (isPointInBounds(grid[r][c], startBounds) || isPointInBounds(grid[r][c], endBounds)) {
+      if (
+        (isPointInBounds(grid[r][c], startBounds) || isPointInBounds(grid[r][c], endBounds)) &&
+        !mustKeepPoints.has(Point.toString(grid[r][c]))
+      ) {
         const vid = Point.toString(grid[r][c]);
         if (verticesToRemove.has(vid)) continue;
 
@@ -316,9 +357,13 @@ const constructGraph = (edge: DiagramEdge, start: Point, end: Point) => {
     .forEach(e => graph.removeEdge(e.id));
 
   for (const e of graph.edges()) {
-    if (e.data[1] === 'start-end' || e.data[1] === 'waypoint') e.weight *= 0.9;
-    if (e.data[1] === 'midpoint' || e.data[1] === 'waypoint-mid') e.weight *= 0.9;
-    if (e.data[1] === 'outer-bounds') e.weight *= 1.05;
+    if (e.data[1] === 'start-end' || e.data[1] === 'waypoint') {
+      e.weight = Weights.edgeType.primary(e.weight);
+    } else if (e.data[1] === 'midpoint' || e.data[1] === 'waypoint-mid') {
+      e.weight = Weights.edgeType.secondary(e.weight);
+    } else if (e.data[1] === 'bounds' || e.data[1] === 'outer-bounds') {
+      e.weight = Weights.edgeType.tertiary(e.weight);
+    }
   }
 
   return graph;
@@ -398,9 +443,14 @@ const addSegment = (
     });
 };
 
-const directionPenalty = (): Record<Direction, number> => ({ n: 2000, s: 2000, e: 2000, w: 2000 });
+const directionPenalty = (): Record<Direction, number> => ({
+  n: Weights.baseDirectionPenalty,
+  s: Weights.baseDirectionPenalty,
+  e: Weights.baseDirectionPenalty,
+  w: Weights.baseDirectionPenalty
+});
 
-const buildOrthogonalEdgePathVersion2 = (
+const buildOrthogonalEdgePathUsingAStar = (
   edge: DiagramEdge,
   preferredStartDirectionRaw: Direction | undefined,
   preferredEndDirection: Direction | undefined
@@ -422,22 +472,34 @@ const buildOrthogonalEdgePathVersion2 = (
   let startId = Point.toString(start);
   const endId = Point.toString(end);
 
+  assert.present(graph.getVertex(startId), `start vertex ${startId} not found`);
+  assert.present(graph.getVertex(endId), `end vertex ${endId} not found`);
+
   const path = new PathListBuilder();
   path.moveTo(start);
 
   let lastEdge: Edge<[Direction, string]> | undefined = undefined;
   for (let i = 0; i < edge.waypoints.length; i++) {
     const wp = edge.waypoints[i];
+
     const endOfSegmentId = Point.toString(wp.point);
+    assert.present(
+      graph.getVertex(Point.toString(wp.point)),
+      `waypoint vertex ${wp.point} not found`
+    );
 
     const startPenalty = directionPenalty();
     if (lastEdge) {
       // Ensure we will not go back from where we came from
-      startPenalty[lastEdge.data![0]] = 20000;
-      startPenalty[Direction.opposite(lastEdge.data![0])] = 0;
+      startPenalty[lastEdge.data![0]] = Weights.continuePath.goBack();
+      startPenalty[Direction.opposite(lastEdge.data![0])] = Weights.continuePath.continue();
     } else {
       if (preferredStartDirection) startPenalty[preferredStartDirection] = 0;
     }
+    startPenalty['s'] = Weights.direction.s(startPenalty['s']);
+    startPenalty['n'] = Weights.direction.n(startPenalty['n']);
+    startPenalty['w'] = Weights.direction.w(startPenalty['w']);
+    startPenalty['e'] = Weights.direction.e(startPenalty['e']);
 
     const prohibitedBounds: Box[] = [];
     if (i > 0 && startNode) prohibitedBounds.push(startNode.bounds);
@@ -458,16 +520,31 @@ const buildOrthogonalEdgePathVersion2 = (
       ),
       startId,
       endOfSegmentId,
-      (_, current) => Point.manhattanDistance(current.data ?? wp.point, wp.point) * 0.9,
+      makeHeuristic(wp.point),
       (previousEdge, _currentVertex, proposedEdge) => {
         // Avoid path crossing itself
-        if (visitedPoints.has(proposedEdge.to)) return 1000000;
-        if (previousEdge && previousEdge.data[0] !== proposedEdge.data[0]) return 1.03;
+        if (visitedPoints.has(proposedEdge.to)) {
+          return Weights.selfCrossingPenalty();
+        }
+        if (previousEdge && previousEdge.data[0] !== proposedEdge.data[0]) {
+          return Weights.turnPenalty();
+        }
       }
     );
-    for (const e of shortestPathToWaypoint!.path) {
-      if (e.data! === undefined) continue;
-      path.lineTo(e.data!);
+    if (shortestPathToWaypoint) {
+      for (const e of shortestPathToWaypoint!.path) {
+        if (e.data! === undefined) continue;
+        path.lineTo(e.data!);
+      }
+    } else {
+      console.log(
+        'failed to find path to waypoint',
+        i,
+        startId,
+        graph.getVertex(startId)?.data,
+        wp.point,
+        edge.id
+      );
     }
     shortestPathToWaypoint?.path.forEach(e => visitedPoints.add(e.id));
 
@@ -480,11 +557,16 @@ const buildOrthogonalEdgePathVersion2 = (
 
   const startPenalty = directionPenalty();
   if (lastEdge) {
-    startPenalty[lastEdge.data![0]] = 20000;
-    startPenalty[Direction.opposite(lastEdge.data![0])] = 0;
+    startPenalty[lastEdge.data![0]] = Weights.continuePath.goBack();
+    startPenalty[Direction.opposite(lastEdge.data![0])] = Weights.continuePath.continue();
   } else {
     if (preferredStartDirection) startPenalty[preferredStartDirection] = 0;
   }
+
+  startPenalty['s'] = Weights.direction.s(startPenalty['s']);
+  startPenalty['n'] = Weights.direction.n(startPenalty['n']);
+  startPenalty['w'] = Weights.direction.w(startPenalty['w']);
+  startPenalty['e'] = Weights.direction.e(startPenalty['e']);
 
   const endPenalty = directionPenalty();
   if (preferredEndDirection) endPenalty[preferredEndDirection] = 0;
@@ -505,11 +587,15 @@ const buildOrthogonalEdgePathVersion2 = (
     ),
     startId,
     endId,
-    (_, current) => Point.manhattanDistance(current.data ?? end, end) * 0.9,
+    makeHeuristic(end),
     (previousEdge, _currentVertex, proposedEdge) => {
-      // Avoid path crossing itself
-      if (visitedPoints.has(proposedEdge.to)) return 1000000;
-      if (previousEdge && previousEdge.data[0] !== proposedEdge.data[0]) return 1.03;
+      if (visitedPoints.has(proposedEdge.to)) {
+        return Weights.selfCrossingPenalty();
+      }
+
+      if (previousEdge && previousEdge.data[0] !== proposedEdge.data[0]) {
+        return Weights.turnPenalty();
+      }
     }
   );
 
@@ -525,7 +611,7 @@ const buildOrthogonalEdgePathVersion2 = (
   return paths.singular().simplify();
 };
 
-const buildOrthogonalEdgePathVersion1 = (
+const buildOrthogonalEdgePathFast = (
   edge: DiagramEdge,
   preferredStartDirection: Direction | undefined,
   preferredEndDirection: Direction | undefined
@@ -599,7 +685,7 @@ export const buildOrthogonalEdgePath = (
     (endNode && endNode.renderProps.routing.constraint !== 'none')
   ) {
     return (
-      buildOrthogonalEdgePathVersion2(
+      buildOrthogonalEdgePathUsingAStar(
         edge,
         startNode && startNode.renderProps.routing.constraint !== 'none'
           ? startNode.renderProps.routing.constraint
@@ -607,15 +693,18 @@ export const buildOrthogonalEdgePath = (
         endNode && endNode.renderProps.routing.constraint !== 'none'
           ? endNode.renderProps.routing.constraint
           : preferredEndDirection
-      ) ?? buildOrthogonalEdgePathVersion1(edge, preferredStartDirection, preferredEndDirection)
+      ) ?? buildOrthogonalEdgePathFast(edge, preferredStartDirection, preferredEndDirection)
     );
   } else {
-    return buildOrthogonalEdgePathVersion1(edge, preferredStartDirection, preferredEndDirection);
+    return (
+      //buildOrthogonalEdgePathUsingAStar(edge, preferredStartDirection, preferredEndDirection) ??
+      buildOrthogonalEdgePathFast(edge, preferredStartDirection, preferredEndDirection)
+    );
   }
 };
 
 export const _test = {
   constructGraph,
-  buildOrthogonalEdgePathVersion1,
-  buildOrthogonalEdgePathVersion2
+  buildOrthogonalEdgePathVersion1: buildOrthogonalEdgePathFast,
+  buildOrthogonalEdgePathVersion2: buildOrthogonalEdgePathUsingAStar
 };

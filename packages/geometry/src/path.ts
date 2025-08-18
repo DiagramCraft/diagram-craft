@@ -514,12 +514,18 @@ export class Path {
 
   simplify() {
     const simplifiedSegments: PathSegment[] = [];
+    if (this.segments.length <= 1) return this;
 
     for (let i = 0; i < this.segments.length; i++) {
       const currentSegment = this.segments[i];
 
       if (!(currentSegment instanceof LineSegment)) {
         simplifiedSegments.push(currentSegment);
+        continue;
+      }
+
+      // Skip zero-length line segments (where start and end points are the same)
+      if (Point.isEqual(currentSegment.start, currentSegment.end)) {
         continue;
       }
 
@@ -531,6 +537,12 @@ export class Path {
         const nextSegment = this.segments[i + 1];
 
         if (!(nextSegment instanceof LineSegment)) break;
+
+        // Skip zero-length segments in the consecutive check as well
+        if (Point.isEqual(nextSegment.start, nextSegment.end)) {
+          i++; // Skip this zero-length segment
+          continue;
+        }
 
         const nextLine = Line.of(nextSegment.start, nextSegment.end);
 
@@ -555,7 +567,10 @@ export class Path {
           consecutiveLines[0].start,
           consecutiveLines[consecutiveLines.length - 1].end
         );
-        simplifiedSegments.push(mergedSegment);
+        // Double-check that the merged segment is not zero-length
+        if (!Point.isEqual(mergedSegment.start, mergedSegment.end)) {
+          simplifiedSegments.push(mergedSegment);
+        }
       } else {
         simplifiedSegments.push(currentSegment);
       }
