@@ -29,7 +29,7 @@ export abstract class ConnectedEndpoint<T extends SerializedEndpoint = Serialize
 {
   protected constructor(readonly nodeFn: DiagramNode | (() => DiagramNode)) {}
 
-  get node() {
+  get node(): DiagramNode {
     if (this.nodeFn instanceof Function) {
       return this.nodeFn();
     }

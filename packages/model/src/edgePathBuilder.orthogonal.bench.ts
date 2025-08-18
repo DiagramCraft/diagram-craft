@@ -49,19 +49,10 @@ for (let i = 0; i < 100; i++) {
 describe('orthogonal routing', () => {
   describe('no waypoints', () => {
     bench(
-      'version1',
+      'no directions',
       () => {
         for (const edge of edges) {
-          _test.buildOrthogonalEdgePathVersion1(edge, undefined, undefined);
-        }
-      },
-      opts
-    );
-    bench(
-      'version2',
-      () => {
-        for (const edge of edges) {
-          _test.buildOrthogonalEdgePathVersion2(edge, undefined, undefined);
+          _test.buildOrthogonalEdgePath(edge, undefined, undefined);
         }
       },
       opts
