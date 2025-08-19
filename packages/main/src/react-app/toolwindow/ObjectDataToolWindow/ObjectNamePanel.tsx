@@ -20,25 +20,29 @@ export const ObjectNamePanel = ({ mode }: ObjectNamePanelProps) => {
 
   // Custom hook logic for managing element tags
   const selectedTags = unique($d.selectionState.elements.flatMap(e => [...e.tags]));
-  const isIndeterminate = $d.selectionState.elements.length > 1 && 
-    $d.selectionState.elements.some(e => 
-      $d.selectionState.elements.some(other => 
-        JSON.stringify([...e.tags].sort()) !== JSON.stringify([...other.tags].sort())
+  const isIndeterminate =
+    $d.selectionState.elements.length > 1 &&
+    $d.selectionState.elements.some(e =>
+      $d.selectionState.elements.some(
+        other => JSON.stringify([...e.tags].sort()) !== JSON.stringify([...other.tags].sort())
       )
     );
 
   const availableTags = [...$d.document.tags.tags];
 
-  const handleTagsChange = useCallback((newTags: string[]) => {
-    const uow = new UnitOfWork($d, true);
-    
-    $d.selectionState.elements.forEach(element => {
-      element.setTags(newTags, uow);
-    });
-    
-    commitWithUndo(uow, 'Update element tags');
-    redraw();
-  }, [$d, redraw]);
+  const handleTagsChange = useCallback(
+    (newTags: string[]) => {
+      const uow = new UnitOfWork($d, true);
+
+      $d.selectionState.elements.forEach(element => {
+        element.setTags(newTags, uow);
+      });
+
+      commitWithUndo(uow, 'Update element tags');
+      redraw();
+    },
+    [$d, redraw]
+  );
 
   return (
     <ToolWindowPanel mode={mode} id="basic" title="Name">

@@ -1,18 +1,42 @@
-import React, { ChangeEvent, KeyboardEvent, useRef, useState } from 'react';
+import React, { ChangeEvent, KeyboardEvent, useRef, useState, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { propsUtils } from '@diagram-craft/utils/propsUtils';
 import { extractDataAttributes } from './utils';
 import styles from './TagInput.module.css';
 import { Button } from './Button';
 import { TbX } from 'react-icons/tb';
+import { usePortal } from './PortalContext';
 
 export const TagInput = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
   const [inputValue, setInputValue] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedSuggestion, setSelectedSuggestion] = useState(-1);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
   const inputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const portal = usePortal();
 
   // Combine external ref with internal ref
   React.useImperativeHandle(ref, () => inputRef.current!);
+
+  // Update dropdown position based on input container position
+  const updateDropdownPosition = () => {
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      setDropdownPosition({
+        top: rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX,
+        width: rect.width
+      });
+    }
+  };
+
+  // Update position when suggestions are shown
+  useLayoutEffect(() => {
+    if (showSuggestions) {
+      updateDropdownPosition();
+    }
+  }, [showSuggestions]);
 
   // Filter available tags based on input and exclude already selected tags
   const filteredSuggestions = props.availableTags
@@ -115,7 +139,7 @@ export const TagInput = React.forwardRef<HTMLInputElement, Props>((props, ref) =
         data-field-state={props.isIndeterminate ? 'indeterminate' : props.state}
         style={props.style ?? {}}
       >
-        <div className={styles.cmpTagInputContainer}>
+        <div className={styles.cmpTagInputContainer} ref={containerRef}>
           <div className={styles.cmpTagInputTags}>
             {!props.isIndeterminate &&
               props.selectedTags.map((tag, index) => (
@@ -152,24 +176,39 @@ export const TagInput = React.forwardRef<HTMLInputElement, Props>((props, ref) =
               onBlur={handleInputBlur}
             />
           </div>
-
-          {!props.isIndeterminate && showSuggestions && filteredSuggestions.length > 0 && (
-            <div className={styles.cmpTagInputSuggestions}>
-              {filteredSuggestions.map((tag, index) => (
-                <div
-                  key={tag}
-                  className={styles.cmpTagInputSuggestion}
-                  data-selected={index === selectedSuggestion}
-                  onMouseDown={() => handleSuggestionClick(tag)}
-                  onMouseEnter={() => setSelectedSuggestion(index)}
-                >
-                  {tag}
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       </div>
+
+      {/* Portal-based suggestions dropdown */}
+      {!props.isIndeterminate &&
+        showSuggestions &&
+        filteredSuggestions.length > 0 &&
+        portal &&
+        createPortal(
+          <div
+            className={styles.cmpTagInputSuggestions}
+            style={{
+              position: 'absolute',
+              top: dropdownPosition.top,
+              left: dropdownPosition.left,
+              width: dropdownPosition.width,
+              zIndex: 1000
+            }}
+          >
+            {filteredSuggestions.map((tag, index) => (
+              <div
+                key={tag}
+                className={styles.cmpTagInputSuggestion}
+                data-selected={index === selectedSuggestion}
+                onMouseDown={() => handleSuggestionClick(tag)}
+                onMouseEnter={() => setSelectedSuggestion(index)}
+              >
+                {tag}
+              </div>
+            ))}
+          </div>,
+          portal
+        )}
     </>
   );
 });
