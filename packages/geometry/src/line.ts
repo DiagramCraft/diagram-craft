@@ -1,7 +1,7 @@
 import { Point } from './point';
 import { Range } from './range';
 import { Vector } from './vector';
-import { isSame, round } from '@diagram-craft/utils/math';
+import { isSame } from '@diagram-craft/utils/math';
 
 export type Line = Readonly<{
   from: Point;
@@ -40,7 +40,11 @@ export const Line = {
   },
 
   isHorizontal: (line: Line) => {
-    return round(line.from.y) === round(line.to.y);
+    return isSame(line.from.y, line.to.y);
+  },
+
+  isVertical: (line: Line) => {
+    return isSame(line.from.x, line.to.x);
   },
 
   intersection: (l1: Line, l2: Line, extend = false) => {

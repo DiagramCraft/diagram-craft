@@ -251,6 +251,7 @@ declare global {
 
     routing?: {
       spacing?: number;
+      constraint?: 'none' | Direction;
     };
 
     custom?: CustomNodeProps;

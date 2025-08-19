@@ -116,7 +116,7 @@ export const Box = {
   /**
    * Calculates the bounding box that contains all the given boxes
    * @param boxes Array of boxes to calculate the bounding box for
-   * @param forceAxisAligned If true, the resulting box will have rotation 0, 
+   * @param forceAxisAligned If true, the resulting box will have rotation 0,
    *                         otherwise it will try to preserve rotation if all boxes have the same rotation
    * @returns A new box that contains all the input boxes
    */
@@ -250,6 +250,16 @@ export const Box = {
     }
   },
 
+  grow: (box: Box, amount: number): Box => {
+    return {
+      x: box.x - amount,
+      y: box.y - amount,
+      w: box.w + amount * 2,
+      h: box.h + amount * 2,
+      r: box.r
+    };
+  },
+
   /**
    * Checks if two boxes intersect
    * @param box First box
@@ -305,5 +315,42 @@ export const Box = {
    */
   fromOffset: (b: Box, offset: Point) => {
     return { x: b.x + offset.x * b.w, y: b.y + offset.y * b.h };
+  },
+
+  /**
+   * Calculates the midpoint between two boxes based on their closest edges
+   * @param box1 First box
+   * @param box2 Second box
+   * @returns Point representing the midpoint between the closest edges of the boxes
+   */
+  midpoint: (box1: Box, box2: Box): Point => {
+    const corners1 = Box.corners(box1);
+    const corners2 = Box.corners(box2);
+
+    const min1X = Math.min(...corners1.map(c => c.x));
+    const max1X = Math.max(...corners1.map(c => c.x));
+    const min1Y = Math.min(...corners1.map(c => c.y));
+    const max1Y = Math.max(...corners1.map(c => c.y));
+
+    const min2X = Math.min(...corners2.map(c => c.x));
+    const max2X = Math.max(...corners2.map(c => c.x));
+    const min2Y = Math.min(...corners2.map(c => c.y));
+    const max2Y = Math.max(...corners2.map(c => c.y));
+
+    const x =
+      max1X < min2X
+        ? (max1X + min2X) / 2
+        : min1X > max2X
+          ? (min1X + max2X) / 2
+          : (max1X + max1X) / 2;
+
+    const y =
+      max1Y < min2Y
+        ? (max1Y + min2Y) / 2
+        : min1Y > max2Y
+          ? (min1Y + max2Y) / 2
+          : (max1Y + max1Y) / 2;
+
+    return { x, y };
   }
 };

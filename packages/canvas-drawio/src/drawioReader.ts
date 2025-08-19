@@ -468,6 +468,14 @@ const getNodeProps = (style: StyleManager, isEdge: boolean) => {
     props.routing.spacing = style.num('perimeterSpacing', 0);
   }
 
+  if (style.str('portConstraint') !== undefined) {
+    props.routing ??= {};
+    if (style.str('portConstraint') === 'north') props.routing.constraint = 'n';
+    if (style.str('portConstraint') === 'south') props.routing.constraint = 's';
+    if (style.str('portConstraint') === 'east') props.routing.constraint = 'e';
+    if (style.str('portConstraint') === 'west') props.routing.constraint = 'w';
+  }
+
   if (props.text!.color === '#') props.text!.color = 'black';
 
   const fontStyle = parseNum(style.str('fontStyle'), 0);
@@ -924,6 +932,8 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
               }
             });
           } else {
+            // Some times the waypoints are duplicated, so we need to filter them out
+            if (i > 0 && Point.isEqual(wps[i], wps[i - 1])) continue;
             waypoints.push({ point: wps[i] });
           }
         }
