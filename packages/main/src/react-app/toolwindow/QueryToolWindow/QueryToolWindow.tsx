@@ -17,26 +17,24 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { useDiagram } from '../../../application';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 
-const createReplacer = () => {
-  return (key: string, value: unknown) => {
-    // Skip private properties (starting with _)
-    if (key.startsWith('_')) {
-      return undefined;
-    }
+const replacer = (key: string, value: unknown) => {
+  // Skip private properties (starting with _)
+  if (key.startsWith('_')) {
+    return undefined;
+  }
 
-    // Handle known circular references
-    if (key === 'parent') return value ? '...' : undefined;
+  // Handle known circular references
+  if (key === 'parent') return value ? '...' : undefined;
 
-    // Handle Map objects
-    if (value instanceof Map) {
-      return {
-        __type: 'Map',
-        ...Object.fromEntries(value.entries())
-      };
-    }
+  // Handle Map objects
+  if (value instanceof Map) {
+    return {
+      __type: 'Map',
+      ...Object.fromEntries(value.entries())
+    };
+  }
 
-    return value;
-  };
+  return value;
 };
 
 // TODO: Maybe add max-depth to the JSON conversion
@@ -99,7 +97,7 @@ export const QueryToolWindow = () => {
   }
 
   const exportToFile = () => {
-    const data = new Blob([JSON.stringify(res, createReplacer(), '  ')], {
+    const data = new Blob([JSON.stringify(res, replacer, '  ')], {
       type: 'application/json'
     });
     if (downloadLink !== '') window.URL.revokeObjectURL(downloadLink);
@@ -279,11 +277,7 @@ export const QueryToolWindow = () => {
                         type={'icon-only'}
                         onClick={ev => {
                           navigator.clipboard.writeText(
-                            JSON.stringify(
-                              e,
-                              createReplacer(),
-                              expanded.includes(idx) ? 2 : undefined
-                            )
+                            JSON.stringify(e, replacer, expanded.includes(idx) ? 2 : undefined)
                           );
                           ev.preventDefault();
                           ev.stopPropagation();
@@ -294,7 +288,7 @@ export const QueryToolWindow = () => {
                     </div>
                   )}
                   <pre key={idx}>
-                    {JSON.stringify(e, createReplacer(), expanded.includes(idx) ? 2 : undefined)}
+                    {JSON.stringify(e, replacer, expanded.includes(idx) ? 2 : undefined)}
                   </pre>
                 </div>
               ))}
