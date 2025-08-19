@@ -888,28 +888,6 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       if (endpoint instanceof PointInNodeEndpoint && (endpoint.isMidpoint() || endpoint.isCorner()))
         return undefined;
 
-      // TODO: If we keep this we should check if we are at the midpoint,
-      //       in which case closest boundary point is arbitrary
-      /*if (endpoint instanceof PointInNodeEndpoint) {
-        const line = new Path(endpoint.position, [
-          ['L', otherEndpoint.position.x, otherEndpoint.position.y]
-        ]);
-
-        // we calculate the intersection of the boundary with the shortest path,
-        // and use the normal of that intersection
-        const intersections = paths.flatMap(p => p.intersections(line));
-        const intersection = intersections[0];
-
-        if (intersection) {
-          const t = boundingPath.projectPoint(intersection.point);
-
-          const tangent = paths[t.pathIdx].tangentAt(t.offset);
-          return Direction.fromVector(Vector.tangentToNormal(tangent));
-        }
-
-        return undefined;
-      }*/
-
       // ... else, we calculate the normal assuming the closest point to the
       // endpoint on the boundary path
       const t = boundingPath.projectPoint(endpoint.position);
