@@ -18,15 +18,23 @@ import { useDiagram } from '../../../application';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 
 const replacer = (key: string, value: unknown) => {
+  // Skip private properties (starting with _)
+  if (key.startsWith('_')) {
+    return undefined;
+  }
+
+  // Handle known circular references
   if (key === 'parent') return value ? '...' : undefined;
+
+  // Handle Map objects
   if (value instanceof Map) {
     return {
       __type: 'Map',
       ...Object.fromEntries(value.entries())
     };
-  } else {
-    return value;
   }
+
+  return value;
 };
 
 // TODO: Maybe add max-depth to the JSON conversion
