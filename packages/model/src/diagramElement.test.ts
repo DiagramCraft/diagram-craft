@@ -134,4 +134,191 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       if (doc2) expect(changeEvent2).toBeCalledTimes(1);
     });
   });
+
+  describe('tags', () => {
+    it('should initialize with empty tags', () => {
+      const [root1, root2] = backend.syncedDocs();
+
+      const doc2 = root2 ? TestModel.newDocument(root2) : undefined;
+
+      const d1 = TestModel.newDiagramWithLayer(root1);
+      const layer1 = d1.layers.all[0] as RegularLayer;
+      const layer1_2 = doc2?.diagrams[0].layers.all[0] as RegularLayer;
+
+      const element = new DiagramNode('id1', layer1);
+      layer1.addElement(element, UnitOfWork.immediate(d1));
+
+      expect(element.tags).toEqual([]);
+      if (doc2) expect(layer1_2!.elements[0].tags).toEqual([]);
+    });
+
+    it('should get the current tags', () => {
+      const [root1, root2] = backend.syncedDocs();
+
+      const doc2 = root2 ? TestModel.newDocument(root2) : undefined;
+
+      const d1 = TestModel.newDiagramWithLayer(root1);
+      const layer1 = d1.layers.all[0] as RegularLayer;
+      const layer1_2 = doc2?.diagrams[0].layers.all[0] as RegularLayer;
+
+      const element = new DiagramNode('id1', layer1);
+      layer1.addElement(element, UnitOfWork.immediate(d1));
+
+      element.setTags(['important', 'draft'], UnitOfWork.immediate(d1));
+
+      expect(element.tags).toEqual(['important', 'draft']);
+      if (doc2) expect(layer1_2!.elements[0].tags).toEqual(['important', 'draft']);
+    });
+  });
+
+  describe('setTags', () => {
+    it('should set tags on element', () => {
+      const [root1, root2] = backend.syncedDocs();
+
+      const doc2 = root2 ? TestModel.newDocument(root2) : undefined;
+
+      const d1 = TestModel.newDiagramWithLayer(root1);
+      const layer1 = d1.layers.all[0] as RegularLayer;
+      const layer1_2 = doc2?.diagrams[0].layers.all[0] as RegularLayer;
+
+      const element = new DiagramNode('id1', layer1);
+      layer1.addElement(element, UnitOfWork.immediate(d1));
+
+      element.setTags(['tag1', 'tag2'], UnitOfWork.immediate(d1));
+
+      expect(element.tags).toEqual(['tag1', 'tag2']);
+      if (doc2) expect(layer1_2!.elements[0].tags).toEqual(['tag1', 'tag2']);
+    });
+
+    it('should replace existing tags', () => {
+      const [root1, root2] = backend.syncedDocs();
+
+      const doc2 = root2 ? TestModel.newDocument(root2) : undefined;
+
+      const d1 = TestModel.newDiagramWithLayer(root1);
+      const layer1 = d1.layers.all[0] as RegularLayer;
+      const layer1_2 = doc2?.diagrams[0].layers.all[0] as RegularLayer;
+
+      const element = new DiagramNode('id1', layer1);
+      layer1.addElement(element, UnitOfWork.immediate(d1));
+
+      element.setTags(['old1', 'old2'], UnitOfWork.immediate(d1));
+      element.setTags(['new1', 'new2'], UnitOfWork.immediate(d1));
+
+      expect(element.tags).toEqual(['new1', 'new2']);
+      expect(element.tags).not.toContain('old1');
+      expect(element.tags).not.toContain('old2');
+      
+      if (doc2) {
+        expect(layer1_2!.elements[0].tags).toEqual(['new1', 'new2']);
+        expect(layer1_2!.elements[0].tags).not.toContain('old1');
+        expect(layer1_2!.elements[0].tags).not.toContain('old2');
+      }
+    });
+
+    it('should trim whitespace from tags', () => {
+      const [root1] = backend.syncedDocs();
+
+      const d1 = TestModel.newDiagramWithLayer(root1);
+      const layer1 = d1.layers.all[0] as RegularLayer;
+
+      const element = new DiagramNode('id1', layer1);
+      layer1.addElement(element, UnitOfWork.immediate(d1));
+
+      element.setTags(['  tag1  ', '\ttag2\n', 'tag3'], UnitOfWork.immediate(d1));
+
+      expect(element.tags).toEqual(['tag1', 'tag2', 'tag3']);
+    });
+
+    it('should filter out empty or whitespace-only tags', () => {
+      const [root1] = backend.syncedDocs();
+
+      const d1 = TestModel.newDiagramWithLayer(root1);
+      const layer1 = d1.layers.all[0] as RegularLayer;
+
+      const element = new DiagramNode('id1', layer1);
+      layer1.addElement(element, UnitOfWork.immediate(d1));
+
+      element.setTags(['tag1', '', '   ', 'tag2', '\t\n'], UnitOfWork.immediate(d1));
+
+      expect(element.tags).toEqual(['tag1', 'tag2']);
+    });
+
+    it('should remove duplicates from tags', () => {
+      const [root1] = backend.syncedDocs();
+
+      const d1 = TestModel.newDiagramWithLayer(root1);
+      const layer1 = d1.layers.all[0] as RegularLayer;
+
+      const element = new DiagramNode('id1', layer1);
+      layer1.addElement(element, UnitOfWork.immediate(d1));
+
+      element.setTags(['tag1', 'tag2', 'tag1', 'tag3'], UnitOfWork.immediate(d1));
+
+      expect(element.tags).toEqual(['tag1', 'tag2', 'tag3']);
+    });
+
+    it('should add element tags to document tags collection', () => {
+      const [root1, root2] = backend.syncedDocs();
+
+      const doc2 = root2 ? TestModel.newDocument(root2) : undefined;
+
+      const d1 = TestModel.newDiagramWithLayer(root1);
+      const layer1 = d1.layers.all[0] as RegularLayer;
+
+      const element = new DiagramNode('id1', layer1);
+      layer1.addElement(element, UnitOfWork.immediate(d1));
+
+      element.setTags(['element-tag1', 'element-tag2'], UnitOfWork.immediate(d1));
+
+      expect(d1.document.tags.has('element-tag1')).toBe(true);
+      expect(d1.document.tags.has('element-tag2')).toBe(true);
+      expect(d1.document.tags.tags).toContain('element-tag1');
+      expect(d1.document.tags.tags).toContain('element-tag2');
+
+      if (doc2) {
+        expect(doc2.diagrams[0].document.tags.has('element-tag1')).toBe(true);
+        expect(doc2.diagrams[0].document.tags.has('element-tag2')).toBe(true);
+        expect(doc2.diagrams[0].document.tags.tags).toContain('element-tag1');
+        expect(doc2.diagrams[0].document.tags.tags).toContain('element-tag2');
+      }
+    });
+
+    it('should update cache when tags are changed', () => {
+      const [root1] = backend.syncedDocs();
+
+      const d1 = TestModel.newDiagramWithLayer(root1);
+      const layer1 = d1.layers.all[0] as RegularLayer;
+
+      const element = new DiagramNode('id1', layer1);
+      layer1.addElement(element, UnitOfWork.immediate(d1));
+
+      // Put something in cache
+      element.cache.set('test-key', 'test-value');
+      expect(element.cache.get('test-key')).toBe('test-value');
+
+      // Setting tags should clear the cache
+      element.setTags(['test-tag'], UnitOfWork.immediate(d1));
+
+      expect(element.cache.get('test-key')).toBeUndefined();
+    });
+
+    it('should handle setting empty tags array', () => {
+      const [root1] = backend.syncedDocs();
+
+      const d1 = TestModel.newDiagramWithLayer(root1);
+      const layer1 = d1.layers.all[0] as RegularLayer;
+
+      const element = new DiagramNode('id1', layer1);
+      layer1.addElement(element, UnitOfWork.immediate(d1));
+
+      // First set some tags
+      element.setTags(['tag1', 'tag2'], UnitOfWork.immediate(d1));
+      expect(element.tags).toEqual(['tag1', 'tag2']);
+
+      // Then clear them
+      element.setTags([], UnitOfWork.immediate(d1));
+      expect(element.tags).toEqual([]);
+    });
+  });
 });
