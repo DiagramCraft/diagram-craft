@@ -8,6 +8,7 @@ import { assert } from '@diagram-craft/utils/assert';
 
 export const DiagramDefaultsPrivate = {
   isSameAsDefaults(props: Record<string, unknown>, defaults: Record<string, unknown>): boolean {
+    if (props !== undefined && defaults === undefined) return false;
     for (const key of Object.keys(props)) {
       if (isObj(props[key])) {
         // In case we add props that are not part of the defaults object, this
