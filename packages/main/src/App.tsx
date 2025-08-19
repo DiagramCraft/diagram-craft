@@ -68,6 +68,7 @@ import { AwarenessToolbar } from './react-app/AwarenessToolbar';
 import { Progress, ProgressCallback } from '@diagram-craft/model/types';
 import { FullScreenProgress } from './react-app/components/FullScreenProgress';
 import type { DiagramFactory, DocumentFactory } from '@diagram-craft/model/factory';
+import { PortalContextProvider } from '@diagram-craft/app-components/PortalContext';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -276,7 +277,8 @@ export const App = (props: {
   application.current.keyMap = keyMap;
 
   return (
-    <ApplicationContext.Provider value={{ application: application.current }}>
+    <PortalContextProvider>
+      <ApplicationContext.Provider value={{ application: application.current }}>
       {progress === undefined ||
         (progress?.status !== 'complete' && (
           <FullScreenProgress
@@ -453,5 +455,6 @@ export const App = (props: {
         {preview && <Preview onClose={() => setPreview(false)} />}
       </ConfigurationContext.Provider>
     </ApplicationContext.Provider>
+    </PortalContextProvider>
   );
 };
