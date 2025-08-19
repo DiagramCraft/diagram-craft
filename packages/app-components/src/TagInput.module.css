@@ -3,11 +3,14 @@
   background-color: var(--cmp-bg);
   color: var(--cmp-fg);
   border: 1px solid var(--cmp-border);
-  height: 25px;
-  padding: 1px 0 0 3px;
+  min-height: 25px;
+  padding: 1px 0 1px 3px;
   line-height: 1;
   box-sizing: border-box;
   position: relative;
+  container-type: inline-size;
+  min-width: 150px;
+  width: 100%;
 
   &:focus-within,
   &:has(*[data-focus="true"]) {
@@ -28,11 +31,11 @@
 .cmp-tag-input__tags {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 1px;
+  align-items: flex-start;
+  gap: 2px;
   padding: 1px;
-  height: 21px;
-  overflow: hidden;
+  min-height: 21px;
+  min-width: 0;
 }
 
 .cmp-tag-input__tag {
@@ -46,6 +49,8 @@
   line-height: 1;
   height: 19px;
   max-width: 120px;
+  flex: 0 0 auto;
+  margin-bottom: 1px;
 }
 
 .cmp-tag-input:has(.cmp-tag-input__input:disabled) .cmp-tag-input__tag {
@@ -84,10 +89,11 @@
   color: var(--primary-fg);
   font-size: 11px;
   padding: 1px 2px;
-  flex: 1;
-  min-width: 80px;
+  flex: 1 1 60px;
+  min-width: 60px;
   outline: none;
   height: 19px;
+  margin-bottom: 1px;
 
   &:disabled {
     color: var(--cmp-disabled-fg);
@@ -134,12 +140,32 @@
 }
 
 /* Responsive behavior for smaller containers */
-@container (max-width: 200px) {
+@container (max-width: 300px) {
   .cmp-tag-input__tag {
     max-width: 80px;
   }
   
   .cmp-tag-input__input {
-    min-width: 60px;
+    min-width: 50px;
+  }
+}
+
+@container (max-width: 200px) {
+  .cmp-tag-input__tag {
+    max-width: 60px;
+  }
+  
+  .cmp-tag-input__input {
+    min-width: 40px;
+  }
+}
+
+@container (max-width: 150px) {
+  .cmp-tag-input__tag {
+    max-width: 40px;
+  }
+  
+  .cmp-tag-input__input {
+    min-width: 30px;
   }
 }
