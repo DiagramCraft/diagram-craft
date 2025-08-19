@@ -1,0 +1,60 @@
+import { Canvas, Meta, ArgTypes } from '@storybook/blocks';
+import * as TagInputStories from './TagInput.stories';
+
+<Meta of={TagInputStories} />
+
+# TagInput
+
+A flexible tag input component that allows users to select from predefined tags via autocomplete and create new tags on the fly. Selected tags can be easily removed with a click.
+
+## Features
+
+- **Autocomplete**: Shows suggestions based on available tags as you type
+- **Keyboard navigation**: Use arrow keys to navigate suggestions, Enter to select, Escape to close
+- **Tag removal**: Click the X button on any tag to remove it
+- **Custom tags**: Create new tags by typing and pressing Enter, even if not in suggestions
+- **Backspace removal**: Press backspace when input is empty to remove the last tag
+- **Responsive**: Adapts to container size with appropriate tag width limits
+
+## Usage
+
+<Canvas of={TagInputStories.Primary} />
+
+## Examples
+
+### With Pre-selected Tags
+
+<Canvas of={TagInputStories.WithPreselectedTags} />
+
+### Disabled State
+
+<Canvas of={TagInputStories.Disabled} />
+
+### Field States
+
+The component supports different visual states:
+
+<Canvas of={TagInputStories.WithSetState} />
+<Canvas of={TagInputStories.WithUnsetState} />
+<Canvas of={TagInputStories.WithOverriddenState} />
+<Canvas of={TagInputStories.Indeterminate} />
+
+## Keyboard Shortcuts
+
+- **Enter**: Add the current input as a tag, or select the highlighted suggestion
+- **Arrow Down/Up**: Navigate through suggestions
+- **Escape**: Close suggestions dropdown
+- **Backspace**: When input is empty, remove the last tag
+
+## Props
+
+<ArgTypes of={TagInputStories} />
+
+## Styling
+
+The TagInput component uses CSS modules and follows the same design system as other components. It supports:
+
+- CSS custom properties for theming
+- Field states (set, unset, overridden, indeterminate)
+- Focus and disabled states
+- Responsive container queries for smaller layouts
