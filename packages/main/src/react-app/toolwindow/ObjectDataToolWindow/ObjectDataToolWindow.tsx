@@ -15,7 +15,6 @@ import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { newid } from '@diagram-craft/utils/id';
 import { unique } from '@diagram-craft/utils/array';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
-import { useElementMetadata } from '../../hooks/useProperty';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { Button } from '@diagram-craft/app-components/Button';
@@ -24,6 +23,7 @@ import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
+import { ObjectNamePanel } from './ObjectNamePanel';
 
 const makeTemplate = (): DataSchema => {
   return {
@@ -54,7 +54,6 @@ export const ObjectDataToolWindow = () => {
   useEventListener($d, 'change', redraw);
   useEventListener($d, 'uowCommit', redraw);
 
-  const name = useElementMetadata($d, 'name', '');
 
   const changeCallback = useCallback(
     (
@@ -206,17 +205,7 @@ export const ObjectDataToolWindow = () => {
     <>
       <Accordion.Root type="multiple" defaultValue={['data', 'basic']}>
         {$d.selectionState.elements.length === 1 && (
-          <Accordion.Item value="basic">
-            <Accordion.ItemHeader>Name</Accordion.ItemHeader>
-            <Accordion.ItemContent>
-              <div className={'cmp-labeled-table'}>
-                <div className={'cmp-labeled-table__label util-a-top-center'}>Name:</div>
-                <div className={'cmp-labeled-table__value'}>
-                  <TextInput value={name.val} onChange={v => name.set(v)} />
-                </div>
-              </div>
-            </Accordion.ItemContent>
-          </Accordion.Item>
+          <ObjectNamePanel mode="accordion" />
         )}
         <Accordion.Item value="data">
           <Accordion.ItemHeader>
