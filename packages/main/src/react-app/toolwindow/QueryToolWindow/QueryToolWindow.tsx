@@ -97,9 +97,7 @@ export const QueryToolWindow = () => {
   }
 
   const exportToFile = () => {
-    const data = new Blob([JSON.stringify(res, replacer, '  ')], {
-      type: 'application/json'
-    });
+    const data = new Blob([JSON.stringify(res, replacer, '  ')], { type: 'application/json' });
     if (downloadLink !== '') window.URL.revokeObjectURL(downloadLink);
     const link = window.URL.createObjectURL(data);
     setDownloadLink(link);
