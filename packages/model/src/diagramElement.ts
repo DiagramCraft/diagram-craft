@@ -36,6 +36,7 @@ export type DiagramElementCRDT = {
   id: string;
   type: string;
   highlights: Array<string>;
+  tags: Array<string>;
   metadata: FlatCRDTMap;
   children: CRDTMap<MappedCRDTOrderedMapMapType<DiagramElementCRDT>>;
   parentId: string;
@@ -75,6 +76,11 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
     this._crdt = watch(crdt ?? layer.crdt.factory.makeMap());
     this._crdt.get().set('id', id);
     this._crdt.get().set('type', type);
+    
+    // Initialize tags if not already set
+    if (!this._crdt.get().has('tags')) {
+      this._crdt.get().set('tags', []);
+    }
 
     this._children = new MappedCRDTOrderedMap<DiagramElement, DiagramElementCRDT>(
       WatchableValue.from(
@@ -230,6 +236,26 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
     const metadata = this._metadata.getClone()! as ElementMetadata;
     callback(metadata);
     this._metadata.set(metadata);
+    uow.updateElement(this);
+    this._cache?.clear();
+  }
+
+  /* Tags ******************************************************************************************************** */
+
+  get tags(): readonly string[] {
+    return this._crdt.get().get('tags') ?? [];
+  }
+
+  setTags(tags: Array<string>, uow: UnitOfWork) {
+    uow.snapshot(this);
+    const uniqueTags = Array.from(new Set(tags.map(t => t.trim()).filter(t => t)));
+    this._crdt.get().set('tags', uniqueTags);
+    
+    // Add all element tags to the document tags collection
+    uniqueTags.forEach(tag => {
+      this.diagram.document.tags.add(tag);
+    });
+    
     uow.updateElement(this);
     this._cache?.clear();
   }
