@@ -21,6 +21,8 @@ import { HideAction } from './HideAction';
 import { RuleEditorDialogProps } from '@diagram-craft/canvas-app/dialogs';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { TagInput } from '@diagram-craft/app-components/TagInput';
+import { useDiagram } from '../../../application';
 
 export type EditableAdjustmentRuleAction = Partial<AdjustmentRuleAction> & { kind?: string };
 export type EditableAdjustmentRuleClause = Partial<AdjustmentRuleClause>;
@@ -52,6 +54,8 @@ const normalizeRuleActions = (
 };
 
 const ClauseList = (props: ClauseListProps) => {
+  const diagram = useDiagram();
+
   return (
     <>
       {props.clauses.map((c, idx) => {
@@ -70,6 +74,7 @@ const ClauseList = (props: ClauseListProps) => {
             >
               <Select.Item value={'query'}>Query</Select.Item>
               <Select.Item value={'props'}>Property</Select.Item>
+              <Select.Item value={'tags'}>Tags</Select.Item>
               {!props.indent && <Select.Item value={'any'}>Any</Select.Item>}
             </Select.Root>
             {c.type === 'query' && (
@@ -137,7 +142,22 @@ const ClauseList = (props: ClauseListProps) => {
                 />
               </div>
             )}
-            {c.type !== 'query' && c.type !== 'any' && c.type !== 'props' && <div></div>}
+            {c.type === 'tags' && (
+              <TagInput
+                selectedTags={c.tags || []}
+                availableTags={[...diagram.document.tags.tags]}
+                onTagsChange={newTags => {
+                  const newClauses = [...props.clauses];
+                  // @ts-ignore
+                  newClauses[idx].tags = newTags;
+                  props.onChange(newClauses);
+                }}
+                placeholder="Select tags..."
+              />
+            )}
+            {c.type !== 'query' && c.type !== 'any' && c.type !== 'props' && c.type !== 'tags' && (
+              <div></div>
+            )}
 
             <Button
               type={'icon-only'}
