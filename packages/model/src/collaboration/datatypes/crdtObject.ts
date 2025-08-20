@@ -101,12 +101,20 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
     const that = this;
     return new Proxy<T>(target as unknown as T, {
       ownKeys(_target: T): ArrayLike<string | symbol> {
-        return unique(
+        const keys = unique(
           Array.from(that.#current.keys())
             .filter(k => path === '' || k.startsWith(path + '.'))
             .map(k => (path === '' ? k : k.substring(path.length + 1)))
             .map(k => k.split('.')[0])
         );
+        
+        // If this is an array-like object (all keys are numeric), include 'length'
+        const isArrayLike = keys.length > 0 && keys.every(k => !isNaN(Number(k)));
+        if (isArrayLike && !keys.includes('length')) {
+          keys.push('length');
+        }
+        
+        return keys;
       },
 
       getOwnPropertyDescriptor(_target, _prop) {
@@ -128,6 +136,20 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
         if (typeof prop !== 'string') return VERIFY_NOT_REACHED();
 
         if (_target[propKey] !== undefined) return _target[propKey];
+
+        // Handle 'length' property for array-like objects
+        if (prop === 'length') {
+          const keys = Array.from(this.#current.keys())
+            .filter(k => path === '' || k.startsWith(path + '.'))
+            .map(k => (path === '' ? k : k.substring(path.length + 1)))
+            .map(k => k.split('.')[0])
+            .filter(k => !isNaN(Number(k)));
+          
+          if (keys.length > 0) {
+            return Math.max(...keys.map(k => Number(k))) + 1;
+          }
+          return 0;
+        }
 
         const map = this.#current;
 
