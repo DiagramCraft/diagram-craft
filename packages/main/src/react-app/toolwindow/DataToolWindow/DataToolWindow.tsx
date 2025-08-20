@@ -117,6 +117,8 @@ const DataProviderResponse = (props: {
     props.dataProvider?.schemas?.find(s => s.id === props.selectedSchema) ??
     props.dataProvider?.schemas?.[0];
 
+  if (!schema) return <div>Loading...</div>;
+
   const data =
     props.search.trim() !== ''
       ? props.dataProvider.queryData(schema, props.search)

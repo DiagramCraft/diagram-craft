@@ -2,7 +2,15 @@ import { Tree } from '@diagram-craft/app-components/Tree';
 import { round } from '@diagram-craft/utils/math';
 
 export const ObjectTreeNode = (props: Props) => {
-  return Object.keys(props.obj).map(key => {
+  let keys: string[];
+  try {
+    keys = Object.keys(props.obj);
+  } catch (error) {
+    // Handle proxy objects with incomplete ownKeys trap
+    keys = [];
+  }
+  
+  return keys.map(key => {
     const v = props.obj[key];
     if (v === null || v === undefined) {
       return (

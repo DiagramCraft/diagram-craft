@@ -54,7 +54,6 @@ export const ObjectDataToolWindow = () => {
   useEventListener($d, 'change', redraw);
   useEventListener($d, 'uowCommit', redraw);
 
-
   const changeCallback = useCallback(
     (
       type: 'data' | 'custom',
@@ -74,6 +73,7 @@ export const ObjectDataToolWindow = () => {
               s = { schema, type: 'schema', data: {} };
               p.data.data.push(s);
             }
+            s.data ??= {};
             s.data[id] = (ev.target! as HTMLInputElement).value;
           }, uow);
         });
@@ -204,9 +204,7 @@ export const ObjectDataToolWindow = () => {
   return (
     <>
       <Accordion.Root type="multiple" defaultValue={['data', 'basic']}>
-        {$d.selectionState.elements.length === 1 && (
-          <ObjectNamePanel mode="accordion" />
-        )}
+        {$d.selectionState.elements.length === 1 && <ObjectNamePanel mode="accordion" />}
         <Accordion.Item value="data">
           <Accordion.ItemHeader>
             Data
@@ -377,7 +375,7 @@ export const ObjectDataToolWindow = () => {
                           const v = unique(
                             $d.selectionState.elements.map(e => {
                               return e.metadata.data?.data?.find(d => d.schema === schemaName)
-                                ?.data[f.id];
+                                ?.data?.[f.id];
                             })
                           );
 
