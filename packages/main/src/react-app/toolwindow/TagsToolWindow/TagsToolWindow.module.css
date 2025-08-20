@@ -1,0 +1,41 @@
+.tagsWindow {
+  display: flex;
+  flex-direction: column;
+}
+
+.tagsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.tagItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.5rem;
+  background-color: var(--cmp-bg);
+  border: 1px solid var(--cmp-border);
+  border-radius: var(--cmp-radius);
+  font-size: 13px;
+}
+
+.tagIcon {
+  color: var(--cmp-muted-fg);
+  flex-shrink: 0;
+}
+
+.tagText {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tagsEmpty {
+  color: var(--cmp-muted-fg);
+  font-style: italic;
+  text-align: center;
+  padding: 1rem;
+  font-size: 13px;
+}

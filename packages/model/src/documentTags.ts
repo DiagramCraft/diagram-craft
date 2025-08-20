@@ -1,12 +1,19 @@
 import { CRDTRoot, CRDTMap } from './collaboration/crdt';
+import { EventEmitter } from '@diagram-craft/utils/event';
+import type { EmptyObject } from '@diagram-craft/utils/types';
+
+export type DocumentTagsEvents = {
+  update: EmptyObject;
+};
 
 /**
  * Manages a set of tags for the document using CRDT for collaboration
  */
-export class DocumentTags {
+export class DocumentTags extends EventEmitter<DocumentTagsEvents> {
   #tags: CRDTMap<Record<string, boolean>>;
 
   constructor(root: CRDTRoot) {
+    super();
     this.#tags = root.getMap('tags');
   }
 
@@ -18,11 +25,13 @@ export class DocumentTags {
     const trimmedTag = tag.trim();
     if (trimmedTag) {
       this.#tags.set(trimmedTag, true);
+      this.emit('update', {});
     }
   }
 
   remove(tag: string): void {
     this.#tags.delete(tag);
+    this.emit('update', {});
   }
 
   set(tags: readonly string[]): void {
@@ -39,6 +48,8 @@ export class DocumentTags {
     for (const tag of newTags) {
       this.#tags.set(tag, true);
     }
+
+    this.emit('update', {});
   }
 
   has(tag: string): boolean {
@@ -47,5 +58,6 @@ export class DocumentTags {
 
   clear(): void {
     this.#tags.clear();
+    this.emit('update', {});
   }
 }

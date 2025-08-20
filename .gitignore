@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+.claude
+.junie
+CLAUDE.md
+**/test-results
+
 .env
 
 # Local links
