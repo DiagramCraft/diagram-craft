@@ -30,6 +30,10 @@ export type AdjustmentRuleClause = { id: string } & (
       relation: 'eq' | 'neq' | 'gt' | 'lt' | 'contains' | 'matches' | 'set';
       value: string;
     }
+  | {
+      type: 'tags';
+      tags: string[];
+    }
 );
 
 export type AdjustmentRuleAction = { id: string } & (

@@ -145,7 +145,10 @@ export class RuleLayer extends Layer<RuleLayer> {
     const results: Set<string>[] = [];
     for (const clause of clauses) {
       notImplemented.true(
-        clause.type === 'query' || clause.type === 'any' || clause.type === 'props',
+        clause.type === 'query' ||
+          clause.type === 'any' ||
+          clause.type === 'props' ||
+          clause.type === 'tags',
         'Not implemented yet'
       );
       if (clause.type === 'query') {
@@ -192,6 +195,22 @@ export class RuleLayer extends Layer<RuleLayer> {
                 case 'set':
                   if (value) result.add(element.id);
                   break;
+              }
+            }
+          }
+        }
+        results.push(result);
+      } else if (clause.type === 'tags') {
+        const result = new Set<string>();
+        for (const layer of this.diagram.layers.visible) {
+          if (layer instanceof RegularLayer) {
+            for (const element of (layer as RegularLayer).elements) {
+              // Check if element has tags property and if any of its tags match the rule tags
+              const elementTags = element.tags ?? [];
+              const hasMatchingTag = clause.tags.some(ruleTag => elementTags.includes(ruleTag));
+
+              if (hasMatchingTag) {
+                result.add(element.id);
               }
             }
           }
