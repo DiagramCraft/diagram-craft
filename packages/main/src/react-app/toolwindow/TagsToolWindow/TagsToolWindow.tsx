@@ -10,6 +10,11 @@ export const TagsToolWindow = () => {
   const redraw = useRedraw();
 
   useEventListener(document.tags, 'update', redraw);
+  useEventListener(document.tags, 'selectionUpdate', redraw);
+
+  const handleTagClick = (tag: string) => {
+    document.tags.toggleTagSelection(tag);
+  };
 
   return (
     <Accordion.Root disabled={true} type="multiple" defaultValue={['tags']}>
@@ -21,12 +26,19 @@ export const TagsToolWindow = () => {
               {document.tags.tags.length === 0 ? (
                 <div className={styles.tagsEmpty}>No tags</div>
               ) : (
-                document.tags.tags.map((tag) => (
-                  <div key={tag} className={styles.tagItem}>
-                    <TbTag className={styles.tagIcon} />
-                    <span className={styles.tagText}>{tag}</span>
-                  </div>
-                ))
+                document.tags.tags.map((tag) => {
+                  const isSelected = document.tags.isTagSelected(tag);
+                  return (
+                    <div 
+                      key={tag} 
+                      className={`${styles.tagItem} ${isSelected ? styles.tagItemSelected : ''}`}
+                      onClick={() => handleTagClick(tag)}
+                    >
+                      <TbTag className={styles.tagIcon} />
+                      <span className={styles.tagText}>{tag}</span>
+                    </div>
+                  );
+                })
               )}
             </div>
           </div>
