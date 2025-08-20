@@ -174,6 +174,17 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
       };
     }, [diagram]);
 
+    // Subscribe to tag selection updates
+    createEffect(() => {
+      const tagSelectionCb = () => {
+        this.redraw();
+      };
+      diagram.document.tags.on('selectionUpdate', tagSelectionCb);
+      return () => {
+        diagram.document.tags.off('selectionUpdate', tagSelectionCb);
+      };
+    }, [diagram]);
+
     // Need to redraw each selected element on zoom or pan
     // as some of the control nodes will change dimensions
     createEffect(() => {

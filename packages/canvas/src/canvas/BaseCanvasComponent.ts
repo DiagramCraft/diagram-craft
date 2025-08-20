@@ -89,7 +89,20 @@ export abstract class BaseCanvasComponent<
     onMouseDown: ((id: string, coord: Point, modifiers: Modifiers) => void) | undefined,
     onEdgeDoubleClick: ((id: string, coord: Point) => void) | undefined
   ) {
-    return layer.resolveForced().elements.map(e => {
+    const selectedTags = $d.document.tags.selectedTags;
+    const allElements = layer.resolveForced().elements;
+
+    // Filter elements based on selected tags
+    const elementsToRender =
+      selectedTags.length === 0
+        ? allElements
+        : allElements.filter(element => {
+            // Show elements that have at least one of the selected tags
+            const elementTags = element.tags || [];
+            return elementTags.some(tag => selectedTags.includes(tag));
+          });
+
+    return elementsToRender.map(e => {
       assert.present(this.currentProps);
 
       const id = e.id;
