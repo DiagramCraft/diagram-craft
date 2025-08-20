@@ -6,7 +6,8 @@ import {
   TbHistory,
   TbPentagonPlus,
   TbSearch,
-  TbStack
+  TbStack,
+  TbTag
 } from 'react-icons/tb';
 import { PickerToolWindow } from './toolwindow/PickerToolWindow/PickerToolWindow';
 import { LayerToolWindow } from './toolwindow/LayerToolWindow/LayerToolWindow';
@@ -18,6 +19,7 @@ import { makeActionMap } from '@diagram-craft/canvas/keyMap';
 import { defaultAppActions } from './appActionMap';
 import { useApplication } from '../application';
 import { DataToolWindow } from './toolwindow/DataToolWindow/DataToolWindow';
+import { TagsToolWindow } from './toolwindow/TagsToolWindow/TagsToolWindow';
 
 export const LeftSidebar = () => {
   const application = useApplication();
@@ -50,6 +52,9 @@ export const LeftSidebar = () => {
       </SideBarPage>
       <SideBarPage icon={TbDatabaseSearch}>
         <DataToolWindow />
+      </SideBarPage>
+      <SideBarPage icon={TbTag}>
+        <TagsToolWindow />
       </SideBarPage>
     </SideBar>
   );

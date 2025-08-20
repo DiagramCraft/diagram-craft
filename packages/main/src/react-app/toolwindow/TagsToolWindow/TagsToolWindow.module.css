@@ -1,0 +1,62 @@
+.tagsWindow {
+  display: flex;
+  flex-direction: column;
+}
+
+.tagsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.tagItem {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.4rem;
+  background-color: var(--cmp-bg);
+  border: 1px solid var(--cmp-border);
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  width: fit-content;
+  white-space: nowrap;
+}
+
+.tagItem:hover {
+  background-color: var(--cmp-hover-bg);
+}
+
+.tagItemSelected {
+  background-color: var(--highlight-bg);
+  color: var(--highlight-fg);
+}
+
+.tagItemSelected:hover {
+  background-color: var(--highlight-bg);
+  color: var(--highlight-fg);
+}
+
+.tagIcon {
+  color: var(--cmp-muted-fg);
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+}
+
+.tagItemSelected .tagIcon {
+  color: inherit;
+}
+
+.tagText {
+  font-weight: 500;
+}
+
+.tagsEmpty {
+  color: var(--cmp-muted-fg);
+  font-style: italic;
+  text-align: center;
+  padding: 1rem;
+  font-size: 13px;
+}
