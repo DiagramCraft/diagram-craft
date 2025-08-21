@@ -12,8 +12,69 @@ import {
 import * as path from 'node:path';
 import * as fs from 'node:fs';
 import { readFile } from 'node:fs/promises';
+import { FileSystemDataStore } from './dataStore';
+import { createDataRoutes } from './dataRoutes';
 
 const OK = { status: 'ok' };
+
+// Parse CLI arguments
+const parseArgs = () => {
+  const args = process.argv.slice(2);
+  const config: {
+    dataDir?: string;
+    bootstrapData?: string;
+    bootstrapSchemas?: string;
+  } = {};
+
+  for (let i = 0; i < args.length; i++) {
+    switch (args[i]) {
+      case '--data-dir':
+        config.dataDir = args[++i];
+        break;
+      case '--bootstrap-data':
+        config.bootstrapData = args[++i];
+        break;
+      case '--bootstrap-schemas':
+        config.bootstrapSchemas = args[++i];
+        break;
+      case '--help':
+        console.log(`
+Usage: node main.js [OPTIONS]
+
+Options:
+  --data-dir <path>           Directory to store data files (default: ./data)
+  --bootstrap-data <path>     JSON file to bootstrap initial data from
+  --bootstrap-schemas <path>  JSON file to bootstrap initial schemas from
+  --help                      Show this help message
+
+Example:
+  node main.js --data-dir ./storage --bootstrap-data ./init-data.json --bootstrap-schemas ./init-schemas.json
+        `);
+        process.exit(0);
+        break;
+    }
+  }
+
+  return config;
+};
+
+// Initialize data store
+const config = parseArgs();
+const dataDir = config.dataDir || './data';
+const dataStore = new FileSystemDataStore(dataDir);
+
+// Bootstrap data if files are provided
+if (config.bootstrapData && config.bootstrapSchemas) {
+  try {
+    dataStore.bootstrapFromFiles(config.bootstrapData, config.bootstrapSchemas);
+    console.log('Successfully bootstrapped data and schemas');
+  } catch (error) {
+    console.error('Failed to bootstrap data:', error);
+    process.exit(1);
+  }
+} else if (config.bootstrapData || config.bootstrapSchemas) {
+  console.warn('Both --bootstrap-data and --bootstrap-schemas must be provided for bootstrapping');
+}
 
 export const app = createApp();
 app.use(
@@ -32,6 +93,11 @@ app.use(
 );
 
 const router = createRouter();
+
+// Add data API routes
+const dataRouter = createDataRoutes(dataStore);
+app.use(dataRouter);
+
 app.use(router);
 
 const ROOT = '../main/public';
