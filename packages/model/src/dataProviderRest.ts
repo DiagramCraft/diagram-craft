@@ -12,6 +12,8 @@ export class RESTDataProvider extends BaseHTTPDataProvider implements MutableDat
 
   baseUrl: string | undefined = undefined;
 
+  private readonly fetchTimeout: number = 10000; // 10 seconds default timeout
+
   constructor(s?: string, autoRefresh = true) {
     super(false);
 
@@ -20,6 +22,7 @@ export class RESTDataProvider extends BaseHTTPDataProvider implements MutableDat
       this.schemas = d.schemas ?? [];
       this.data = d.data ?? [];
       this.baseUrl = d.baseUrl;
+      this.fetchTimeout = d.fetchTimeout ?? 10000;
 
       if (autoRefresh && d.baseUrl) {
         this.initializeWithAutoRefresh();
@@ -27,6 +30,20 @@ export class RESTDataProvider extends BaseHTTPDataProvider implements MutableDat
     } else {
       this.data = [];
       this.schemas = [];
+    }
+  }
+
+  private async fetchWithTimeout(url: string, options?: RequestInit): Promise<Response> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.fetchTimeout);
+
+    try {
+      return await fetch(url, {
+        ...options,
+        signal: controller.signal
+      });
+    } finally {
+      clearTimeout(timeoutId);
     }
   }
 
@@ -45,7 +62,7 @@ export class RESTDataProvider extends BaseHTTPDataProvider implements MutableDat
 
     const dataWithSchema: DataWithSchema = { ...data, _schemaId: schema.id };
 
-    const response = await fetch(`${this.baseUrl}/data`, {
+    const res = await this.fetchWithTimeout(`${this.baseUrl}/data`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -53,11 +70,11 @@ export class RESTDataProvider extends BaseHTTPDataProvider implements MutableDat
       body: JSON.stringify(dataWithSchema)
     });
 
-    if (!response.ok) {
-      throw new Error(`Failed to add data: ${response.statusText}`);
+    if (!res.ok) {
+      throw new Error(`Failed to add data: ${res.statusText}`);
     }
 
-    const createdData = await response.json();
+    const createdData = await res.json();
     this.data.push(createdData);
     this.emit('addData', { data: [createdData] });
   }
@@ -67,7 +84,7 @@ export class RESTDataProvider extends BaseHTTPDataProvider implements MutableDat
 
     const dataWithSchema: DataWithSchema = { ...data, _schemaId: schema.id };
 
-    const response = await fetch(`${this.baseUrl}/data/${data._uid}`, {
+    const res = await this.fetchWithTimeout(`${this.baseUrl}/data/${data._uid}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json'
@@ -75,11 +92,11 @@ export class RESTDataProvider extends BaseHTTPDataProvider implements MutableDat
       body: JSON.stringify(dataWithSchema)
     });
 
-    if (!response.ok) {
-      throw new Error(`Failed to update data: ${response.statusText}`);
+    if (!res.ok) {
+      throw new Error(`Failed to update data: ${res.statusText}`);
     }
 
-    const updatedData = await response.json();
+    const updatedData = await res.json();
     const index = this.data.findIndex(d => d._uid === data._uid);
     if (index !== -1) {
       this.data[index] = updatedData;
@@ -90,12 +107,12 @@ export class RESTDataProvider extends BaseHTTPDataProvider implements MutableDat
   async deleteData(_schema: DataSchema, data: Data): Promise<void> {
     assert.present(this.baseUrl);
 
-    const response = await fetch(`${this.baseUrl}/data/${data._uid}`, {
+    const res = await this.fetchWithTimeout(`${this.baseUrl}/data/${data._uid}`, {
       method: 'DELETE'
     });
 
-    if (!response.ok) {
-      throw new Error(`Failed to delete data: ${response.statusText}`);
+    if (!res.ok) {
+      throw new Error(`Failed to delete data: ${res.statusText}`);
     }
 
     const index = this.data.findIndex(d => d._uid === data._uid);
@@ -109,13 +126,14 @@ export class RESTDataProvider extends BaseHTTPDataProvider implements MutableDat
     return JSON.stringify({
       schemas: this.schemas,
       data: this.data,
-      baseUrl: this.baseUrl
+      baseUrl: this.baseUrl,
+      fetchTimeout: this.fetchTimeout
     });
   }
 
   protected async fetchData(force = true): Promise<DataWithSchema[]> {
     assert.present(this.baseUrl);
-    const res = await fetch(`${this.baseUrl}/data`, {
+    const res = await this.fetchWithTimeout(`${this.baseUrl}/data`, {
       method: 'GET',
       cache: force ? 'no-cache' : 'default'
     });
@@ -129,7 +147,7 @@ export class RESTDataProvider extends BaseHTTPDataProvider implements MutableDat
 
   protected async fetchSchemas(force = true): Promise<DataSchema[]> {
     assert.present(this.baseUrl);
-    const res = await fetch(`${this.baseUrl}/schemas`, {
+    const res = await this.fetchWithTimeout(`${this.baseUrl}/schemas`, {
       method: 'GET',
       cache: force ? 'no-cache' : 'default'
     });

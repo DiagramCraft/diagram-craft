@@ -40,15 +40,9 @@ describe('RESTDataProvider', () => {
       const method = options?.method || 'GET';
 
       if (url === `${baseUrl}/data` && method === 'GET') {
-        return Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve([testData, testData2])
-        });
+        return Promise.resolve({ ok: true, json: () => Promise.resolve([testData, testData2]) });
       } else if (url === `${baseUrl}/schemas` && method === 'GET') {
-        return Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve([testSchema])
-        });
+        return Promise.resolve({ ok: true, json: () => Promise.resolve([testSchema]) });
       } else if (url === `${baseUrl}/data` && method === 'POST') {
         const body = JSON.parse(options?.body as string);
         return Promise.resolve({
@@ -62,10 +56,7 @@ describe('RESTDataProvider', () => {
           json: () => Promise.resolve(body)
         });
       } else if (url.startsWith(`${baseUrl}/data/`) && method === 'DELETE') {
-        return Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve({})
-        });
+        return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
       }
       return Promise.reject(new Error(`Unexpected URL: ${url} ${method}`));
     });
@@ -85,7 +76,7 @@ describe('RESTDataProvider', () => {
         baseUrl
       }),
       false
-    ); // Disable auto-refresh
+    );
   };
 
   const createProviderWithSchemaAndData = () => {
@@ -96,7 +87,7 @@ describe('RESTDataProvider', () => {
         baseUrl
       }),
       false
-    ); // Disable auto-refresh
+    );
   };
 
   describe('constructor', () => {
@@ -216,13 +207,16 @@ describe('RESTDataProvider', () => {
       await provider.addData(testSchema, newData);
 
       // Assert
-      expect(global.fetch).toHaveBeenCalledWith(`${baseUrl}/data`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ ...newData, _schemaId: testSchema.id })
-      });
+      expect(global.fetch).toHaveBeenCalledWith(
+        `${baseUrl}/data`,
+        expect.objectContaining({
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ ...newData, _schemaId: testSchema.id })
+        })
+      );
 
       // Check event was emitted
       expect(addDataSpy).toHaveBeenCalledWith({
@@ -283,13 +277,16 @@ describe('RESTDataProvider', () => {
       await provider.updateData(testSchema, updatedData);
 
       // Assert
-      expect(global.fetch).toHaveBeenCalledWith(`${baseUrl}/data/${testData._uid}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ ...updatedData, _schemaId: testSchema.id })
-      });
+      expect(global.fetch).toHaveBeenCalledWith(
+        `${baseUrl}/data/${testData._uid}`,
+        expect.objectContaining({
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ ...updatedData, _schemaId: testSchema.id })
+        })
+      );
 
       // Check event was emitted
       expect(updateDataSpy).toHaveBeenCalledWith({
@@ -344,9 +341,12 @@ describe('RESTDataProvider', () => {
       await provider.deleteData(testSchema, testData);
 
       // Assert
-      expect(global.fetch).toHaveBeenCalledWith(`${baseUrl}/data/${testData._uid}`, {
-        method: 'DELETE'
-      });
+      expect(global.fetch).toHaveBeenCalledWith(
+        `${baseUrl}/data/${testData._uid}`,
+        expect.objectContaining({
+          method: 'DELETE'
+        })
+      );
 
       // Check event was emitted
       expect(deleteDataSpy).toHaveBeenCalledWith({ data: [testData] });
@@ -391,10 +391,13 @@ describe('RESTDataProvider', () => {
       await provider.refreshData();
 
       // Assert
-      expect(global.fetch).toHaveBeenCalledWith(`${baseUrl}/data`, {
-        method: 'GET',
-        cache: 'no-cache'
-      });
+      expect(global.fetch).toHaveBeenCalledWith(
+        `${baseUrl}/data`,
+        expect.objectContaining({
+          method: 'GET',
+          cache: 'no-cache'
+        })
+      );
       expect(provider.getById([testData._uid, testData2._uid])).toHaveLength(2);
       expect(addDataSpy).toHaveBeenCalledWith({ data: [testData, testData2] });
       expect(updateDataSpy).toHaveBeenCalledWith({ data: [] });
@@ -408,10 +411,13 @@ describe('RESTDataProvider', () => {
       await provider.refreshData(false);
 
       // Assert
-      expect(global.fetch).toHaveBeenCalledWith(`${baseUrl}/data`, {
-        method: 'GET',
-        cache: 'default'
-      });
+      expect(global.fetch).toHaveBeenCalledWith(
+        `${baseUrl}/data`,
+        expect.objectContaining({
+          method: 'GET',
+          cache: 'default'
+        })
+      );
     });
 
     it('should throw error when fetch fails', async () => {
@@ -444,10 +450,13 @@ describe('RESTDataProvider', () => {
       await provider.refreshSchemas();
 
       // Assert
-      expect(global.fetch).toHaveBeenCalledWith(`${baseUrl}/schemas`, {
-        method: 'GET',
-        cache: 'no-cache'
-      });
+      expect(global.fetch).toHaveBeenCalledWith(
+        `${baseUrl}/schemas`,
+        expect.objectContaining({
+          method: 'GET',
+          cache: 'no-cache'
+        })
+      );
       expect(provider.schemas).toEqual([testSchema]);
       expect(addSchemaSpy).toHaveBeenCalledWith(testSchema);
       expect(updateSchemaSpy).not.toHaveBeenCalled();
@@ -461,10 +470,13 @@ describe('RESTDataProvider', () => {
       await provider.refreshSchemas(false);
 
       // Assert
-      expect(global.fetch).toHaveBeenCalledWith(`${baseUrl}/schemas`, {
-        method: 'GET',
-        cache: 'default'
-      });
+      expect(global.fetch).toHaveBeenCalledWith(
+        `${baseUrl}/schemas`,
+        expect.objectContaining({
+          method: 'GET',
+          cache: 'default'
+        })
+      );
     });
 
     it('should throw error when fetch fails', async () => {

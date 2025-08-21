@@ -1,6 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { DataSchema, DataWithSchema } from './types';
+import { newid } from '@diagram-craft/utils/id';
 
 export class FileSystemDataStore {
   private dataFile: string;
@@ -11,12 +12,12 @@ export class FileSystemDataStore {
   constructor(dataDir: string) {
     this.dataFile = path.join(dataDir, 'data.json');
     this.schemasFile = path.join(dataDir, 'schemas.json');
-    
+
     // Ensure data directory exists
     if (!fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true });
     }
-    
+
     this.loadData();
   }
 
@@ -72,7 +73,7 @@ export class FileSystemDataStore {
   addData(data: DataWithSchema): DataWithSchema {
     // Generate a new UID if not provided or if it already exists
     if (!data._uid || this.data.some(item => item._uid === data._uid)) {
-      data._uid = this.generateUID();
+      data._uid = newid();
     }
 
     this.data.push(data);
@@ -158,7 +159,6 @@ export class FileSystemDataStore {
         console.log(`Bootstrapped data from: ${dataFilePath}`);
       }
     } catch (error) {
-      console.error('Failed to bootstrap data:', error);
       throw new Error(`Failed to bootstrap data from ${dataFilePath}`);
     }
 
@@ -170,13 +170,7 @@ export class FileSystemDataStore {
         console.log(`Bootstrapped schemas from: ${schemasFilePath}`);
       }
     } catch (error) {
-      console.error('Failed to bootstrap schemas:', error);
       throw new Error(`Failed to bootstrap schemas from ${schemasFilePath}`);
     }
-  }
-
-  private generateUID(): string {
-    // Generate a simple UID based on timestamp and random number
-    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
 }

@@ -1,4 +1,4 @@
-import { createApp, createRouter, defineEventHandler, handleCors } from 'h3';
+import { createApp, defineEventHandler, handleCors } from 'h3';
 import { FileSystemDataStore } from './dataStore';
 import { createDataRoutes } from './dataRoutes';
 import { createFilesystemRoutes } from './filesystemRoutes';
@@ -51,8 +51,8 @@ Example:
 
 // Initialize data store and filesystem root
 const config = parseArgs();
-const dataDir = config.dataDir || './data';
-const fsRoot = config.fsRoot || '../main/public';
+const dataDir = config.dataDir ?? './data';
+const fsRoot = config.fsRoot ?? '../main/public';
 const dataStore = new FileSystemDataStore(dataDir);
 
 // Bootstrap data if files are provided
@@ -84,14 +84,8 @@ app.use(
   })
 );
 
-const router = createRouter();
-
 // Add data API routes
-const dataRouter = createDataRoutes(dataStore);
-app.use(dataRouter);
+app.use(createDataRoutes(dataStore));
 
 // Add filesystem API routes
-const filesystemRouter = createFilesystemRoutes(fsRoot);
-app.use(filesystemRouter);
-
-app.use(router);
+app.use(createFilesystemRoutes(fsRoot));

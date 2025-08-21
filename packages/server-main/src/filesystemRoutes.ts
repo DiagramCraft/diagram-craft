@@ -11,7 +11,12 @@ import * as path from 'node:path';
 import * as fs from 'node:fs';
 import { readFile } from 'node:fs/promises';
 
+// Constants
 const OK = { status: 'ok' };
+const MAX_REQUEST_SIZE = 500 * 1024 * 1024;
+const ALLOWED_CONTENT_TYPES = ['application/json', 'text/plain', 'application/octet-stream'];
+const API_FS_PATH = '/api/fs';
+const API_FS_WILDCARD = '/api/fs/**';
 
 export function createFilesystemRoutes(rootPath: string) {
   const router = createRouter();
@@ -26,7 +31,8 @@ export function createFilesystemRoutes(rootPath: string) {
   };
 
   const getFullPath = (relPath: string) => {
-    if (relPath !== '' && (!/^[a-z0-9\\./]+$/.test(relPath) || relPath.includes('..'))) {
+    // More restrictive path validation: only allow alphanumeric, dots, slashes, hyphens, underscores
+    if (relPath !== '' && (!/^[a-zA-Z0-9._/-]+$/.test(relPath) || relPath.includes('..'))) {
       throw badRequest('Invalid path');
     }
 
@@ -89,6 +95,22 @@ export function createFilesystemRoutes(rootPath: string) {
       }
     }
 
+    // Validate content type for file uploads
+    const contentType = event.node.req.headers['content-type'];
+    if (contentType && !ALLOWED_CONTENT_TYPES.some(allowed => contentType.startsWith(allowed))) {
+      throw badRequest('Unsupported content type');
+    }
+
+    // Check content length to prevent large uploads
+    const contentLength = parseInt(event.node.req.headers['content-length'] ?? '0');
+    if (contentLength > MAX_REQUEST_SIZE) {
+      throw createError({
+        status: 413,
+        statusMessage: 'Payload Too Large',
+        data: { message: `Request size exceeds limit of ${MAX_REQUEST_SIZE} bytes` }
+      });
+    }
+
     const body = await readRawBody(event, false);
 
     if (body === undefined) {
@@ -119,16 +141,16 @@ export function createFilesystemRoutes(rootPath: string) {
 
   // Add filesystem API routes
   router.get(
-    '/api/fs',
+    API_FS_PATH,
     defineEventHandler(event => get('', event))
   );
   router.get(
-    '/api/fs/**',
+    API_FS_WILDCARD,
     defineEventHandler(event => get(event.context.params!._, event))
   );
 
   router.put(
-    '/api/fs/**',
+    API_FS_WILDCARD,
     defineEventHandler(event => put(event.context.params!._, event))
   );
 
