@@ -46,12 +46,12 @@ export class DefaultDataProvider
     return this.data.filter(data => data._schemaId === schema.id && q.matches(data));
   }
 
-  addData(schema: DataSchema, data: Data) {
+  async addData(schema: DataSchema, data: Data): Promise<void> {
     this.data.push({ ...data, _schemaId: schema.id });
     this.emit('addData', { data: [data] });
   }
 
-  deleteData(schema: DataSchema, data: Data) {
+  async deleteData(schema: DataSchema, data: Data): Promise<void> {
     const idx = this.data.findIndex(d => d._schemaId === schema.id && d._uid == data._uid);
     if (idx < 0) return;
     this.data.splice(idx, 1);
@@ -59,7 +59,7 @@ export class DefaultDataProvider
     this.emit('deleteData', { data: [data] });
   }
 
-  updateData(schema: DataSchema, data: Data) {
+  async updateData(schema: DataSchema, data: Data): Promise<void> {
     const idx = this.data.findIndex(d => d._schemaId === schema.id && d._uid == data._uid);
     if (idx < 0) return;
     this.data.splice(idx, 1);

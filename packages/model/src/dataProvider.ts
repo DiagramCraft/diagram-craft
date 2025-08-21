@@ -34,9 +34,9 @@ export interface DataProvider extends SchemaProvider, Emitter<DataProviderEventM
 }
 
 export interface MutableDataProvider extends DataProvider {
-  addData(schema: DataSchema, data: Data): void;
-  deleteData(schema: DataSchema, data: Data): void;
-  updateData(schema: DataSchema, data: Data): void;
+  addData(schema: DataSchema, data: Data): Promise<void>;
+  deleteData(schema: DataSchema, data: Data): Promise<void>;
+  updateData(schema: DataSchema, data: Data): Promise<void>;
 }
 
 export interface RefreshableDataProvider extends DataProvider {
