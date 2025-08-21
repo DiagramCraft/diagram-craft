@@ -11,6 +11,7 @@ type EditItemDialogProps = {
   onClose: () => void;
   dataProvider: DataProvider | undefined;
   selectedSchema: string | undefined;
+  editItem?: Data; // If provided, we're editing this item instead of creating new
 };
 
 export const EditItemDialog = (props: EditItemDialogProps) => {
@@ -32,7 +33,8 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
   const handleOpen = () => {
     const initialData: Record<string, string> = {};
     schema.fields.forEach(field => {
-      initialData[field.id] = '';
+      // If editing an existing item, populate with existing data
+      initialData[field.id] = props.editItem ? (props.editItem[field.id] ?? '') : '';
     });
     setFormData(initialData);
     setSubmitError(undefined);
@@ -40,7 +42,10 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
 
   // Handle form submission
   const handleSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (!('addData' in dataProvider)) return;
+    const isEditing = !!props.editItem;
+    const requiredMethod = isEditing ? 'updateData' : 'addData';
+    
+    if (!(requiredMethod in dataProvider)) return;
 
     setSubmitError(undefined);
 
@@ -53,19 +58,24 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
     }
 
     try {
-      const newData: Data = {
+      const itemData: Data = {
         ...formData,
-        _uid: newid()
+        _uid: isEditing ? props.editItem!._uid : newid()
       };
 
-      await (dataProvider as MutableDataProvider).addData(schema, newData);
+      if (isEditing) {
+        await (dataProvider as MutableDataProvider).updateData(schema, itemData);
+      } else {
+        await (dataProvider as MutableDataProvider).addData(schema, itemData);
+      }
 
       // Only close dialog and reset form on success
       props.onClose();
       setFormData({});
     } catch (error) {
+      const action = isEditing ? 'update' : 'add';
       setSubmitError(
-        `Failed to add item: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to ${action} item: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
       e.preventDefault(); // Prevent dialog from closing
       // Don't close dialog on error - let user see the error and try again
@@ -84,9 +94,11 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
     handleOpen();
   }
 
+  const isEditing = !!props.editItem;
+
   return (
     <Dialog
-      title="Add Item"
+      title={isEditing ? "Edit Item" : "Add Item"}
       open={props.open}
       onClose={handleCancel}
       buttons={[
@@ -97,7 +109,7 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
         },
         {
           type: 'default',
-          label: 'Add',
+          label: isEditing ? 'Update' : 'Add',
           onClick: handleSubmit
         }
       ]}
