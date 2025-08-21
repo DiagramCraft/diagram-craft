@@ -30,6 +30,12 @@ A standalone REST API server that provides data and schema endpoints for the RES
 - `PUT /api/schemas/:id` - Update schema
 - `DELETE /api/schemas/:id` - Delete schema
 
+### Filesystem Endpoints
+
+- `GET /api/fs` - List files in root directory
+- `GET /api/fs/**` - Get file content or list directory
+- `PUT /api/fs/**` - Create directory or write file
+
 ## Usage
 
 ### Start the server
@@ -39,10 +45,10 @@ cd packages/server-main
 pnpm dev
 ```
 
-### Start with custom data directory
+### Start with custom directories
 
 ```bash
-node src/main.ts --data-dir ./my-data
+node src/main.ts --data-dir ./my-data --fs-root ./public-files
 ```
 
 ### Bootstrap with initial data
@@ -50,6 +56,7 @@ node src/main.ts --data-dir ./my-data
 ```bash
 node src/main.ts \
   --data-dir ./storage \
+  --fs-root ./public \
   --bootstrap-data ../main/public/data/dataset1/data.json \
   --bootstrap-schemas ../main/public/data/dataset1/schemas.json
 ```
@@ -57,6 +64,7 @@ node src/main.ts \
 ### CLI Options
 
 - `--data-dir <path>` - Directory to store data files (default: `./data`)
+- `--fs-root <path>` - Root directory for filesystem API (default: `../main/public`)
 - `--bootstrap-data <path>` - JSON file to bootstrap initial data from
 - `--bootstrap-schemas <path>` - JSON file to bootstrap initial schemas from
 - `--help` - Show help message
