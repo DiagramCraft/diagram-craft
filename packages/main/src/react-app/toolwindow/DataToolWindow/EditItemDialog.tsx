@@ -135,7 +135,7 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
                 value={formData[field.id] ?? ''}
                 onChange={v => setFormData(prev => ({ ...prev, [field.id]: v ?? '' }))}
                 style={{
-                  minHeight: '80px'
+                  minHeight: '5rem'
                 }}
               />
             ) : (
