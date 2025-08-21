@@ -9,7 +9,7 @@ import {
 } from '@diagram-craft/model/dataProvider';
 import { useEffect, useState } from 'react';
 import { useRedraw } from '../../hooks/useRedraw';
-import { TbChevronDown, TbChevronRight, TbRefresh, TbSettings } from 'react-icons/tb';
+import { TbChevronDown, TbChevronRight, TbPlus, TbRefresh, TbSettings } from 'react-icons/tb';
 import { DRAG_DROP_MANAGER } from '@diagram-craft/canvas/dragDropManager';
 import { ObjectPickerDrag } from '../PickerToolWindow/ObjectPickerDrag';
 import { newid } from '@diagram-craft/utils/id';
@@ -17,6 +17,7 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { assert } from '@diagram-craft/utils/assert';
 import { DataProviderSettingsDialog } from './DataProviderSettingsDialog';
+import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { Button } from '@diagram-craft/app-components/Button';
 import { PickerCanvas } from '../../PickerCanvas';
 import { DataTemplate } from '@diagram-craft/model/diagramDocument';
@@ -299,6 +300,7 @@ export const DataToolWindow = () => {
   const redraw = useRedraw();
   const $diagram = useDiagram();
   const [providerSettingsWindow, setProviderSettingsWindow] = useState<boolean>(false);
+  const [addItemDialog, setAddItemDialog] = useState<boolean>(false);
   const document = $diagram.document;
   const [search, setSearch] = useState<string>('');
 
@@ -395,7 +397,19 @@ export const DataToolWindow = () => {
         </Accordion.Item>
         {dataProvider !== undefined && (
           <Accordion.Item value="response">
-            <Accordion.ItemHeader>Items</Accordion.ItemHeader>
+            <Accordion.ItemHeader>
+              Items
+              <Accordion.ItemHeaderButtons>
+                {('addData' in dataProvider) && (
+                  <a
+                    className={'cmp-button cmp-button--icon-only'}
+                    onClick={() => setAddItemDialog(true)}
+                  >
+                    <TbPlus />
+                  </a>
+                )}
+              </Accordion.ItemHeaderButtons>
+            </Accordion.ItemHeader>
             <Accordion.ItemContent>
               <DataProviderResponse
                 dataProvider={dataProvider}
@@ -410,6 +424,28 @@ export const DataToolWindow = () => {
         onClose={() => setProviderSettingsWindow(false)}
         open={providerSettingsWindow}
       />
+      <Dialog
+        title="Add Item"
+        open={addItemDialog}
+        onClose={() => setAddItemDialog(false)}
+        buttons={[
+          {
+            type: 'default',
+            label: 'Cancel',
+            onClick: () => setAddItemDialog(false)
+          },
+          {
+            type: 'default',
+            label: 'Add',
+            onClick: () => {
+              // TODO: Implement add functionality
+              setAddItemDialog(false);
+            }
+          }
+        ]}
+      >
+        <div>Add item dialog content will be implemented here.</div>
+      </Dialog>
     </>
   );
 };
