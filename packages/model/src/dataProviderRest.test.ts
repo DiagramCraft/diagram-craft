@@ -33,12 +33,12 @@ describe('RESTDataProvider', () => {
 
   // Mock fetch API
   const originalFetch = global.fetch;
-  
+
   beforeEach(() => {
     // Mock fetch to return test data
     global.fetch = vi.fn().mockImplementation((url: string, options?: RequestInit) => {
       const method = options?.method || 'GET';
-      
+
       if (url === `${baseUrl}/data` && method === 'GET') {
         return Promise.resolve({
           ok: true,
@@ -78,19 +78,25 @@ describe('RESTDataProvider', () => {
   });
 
   const createEmptyProvider = () => {
-    return new RESTDataProvider(JSON.stringify({
-      schemas: [],
-      data: [],
-      baseUrl
-    }), false); // Disable auto-refresh
+    return new RESTDataProvider(
+      JSON.stringify({
+        schemas: [],
+        data: [],
+        baseUrl
+      }),
+      false
+    ); // Disable auto-refresh
   };
 
   const createProviderWithSchemaAndData = () => {
-    return new RESTDataProvider(JSON.stringify({
-      schemas: [testSchema],
-      data: [testData, testData2],
-      baseUrl
-    }), false); // Disable auto-refresh
+    return new RESTDataProvider(
+      JSON.stringify({
+        schemas: [testSchema],
+        data: [testData, testData2],
+        baseUrl
+      }),
+      false
+    ); // Disable auto-refresh
   };
 
   describe('constructor', () => {
@@ -120,26 +126,29 @@ describe('RESTDataProvider', () => {
       // Mock refreshSchemas and refreshData
       const refreshSchemasSpy = vi.spyOn(RESTDataProvider.prototype, 'refreshSchemas');
       const refreshDataSpy = vi.spyOn(RESTDataProvider.prototype, 'refreshData');
-      
+
       // Create provider with autoRefresh = true
-      new RESTDataProvider(JSON.stringify({
-        schemas: [],
-        data: [],
-        baseUrl
-      }), true);
-      
+      new RESTDataProvider(
+        JSON.stringify({
+          schemas: [],
+          data: [],
+          baseUrl
+        }),
+        true
+      );
+
       // Wait for promises to resolve
       await new Promise(resolve => setTimeout(resolve, 0));
-      
+
       // Verify refreshSchemas was called
       expect(refreshSchemasSpy).toHaveBeenCalledWith(false);
-      
+
       // Wait for refreshSchemas promise to resolve
       await new Promise(resolve => setTimeout(resolve, 0));
-      
+
       // Verify refreshData was called
       expect(refreshDataSpy).toHaveBeenCalledWith(false);
-      
+
       // Restore original methods
       refreshSchemasSpy.mockRestore();
       refreshDataSpy.mockRestore();
@@ -192,20 +201,20 @@ describe('RESTDataProvider', () => {
   describe('addData', () => {
     it('should make POST request to create new data', async () => {
       const provider = createProviderWithSchemaAndData();
-      
+
       // Set up event listener
       const addDataSpy = vi.fn();
       provider.on('addData', addDataSpy);
-      
+
       const newData: Data = {
         _uid: 'temp-id',
         name: 'New Item',
         value: 'New Value'
       };
-      
+
       // Act
       await provider.addData(testSchema, newData);
-      
+
       // Assert
       expect(global.fetch).toHaveBeenCalledWith(`${baseUrl}/data`, {
         method: 'POST',
@@ -214,42 +223,43 @@ describe('RESTDataProvider', () => {
         },
         body: JSON.stringify({ ...newData, _schemaId: testSchema.id })
       });
-      
+
       // Check event was emitted
-      expect(addDataSpy).toHaveBeenCalledWith({ 
-        data: [{ ...newData, _schemaId: testSchema.id, _uid: 'new-id' }] 
+      expect(addDataSpy).toHaveBeenCalledWith({
+        data: [{ ...newData, _schemaId: testSchema.id, _uid: 'new-id' }]
       });
     });
 
     it('should throw error when POST request fails', async () => {
       const provider = createProviderWithSchemaAndData();
-      
+
       // Mock fetch to return error
       global.fetch = vi.fn().mockResolvedValue({
         ok: false,
         statusText: 'Bad Request'
       });
-      
+
       const newData: Data = {
         _uid: 'temp-id',
         name: 'New Item',
         value: 'New Value'
       };
-      
+
       // Act & Assert
-      await expect(provider.addData(testSchema, newData))
-        .rejects.toThrow('Failed to add data: Bad Request');
+      await expect(provider.addData(testSchema, newData)).rejects.toThrow(
+        'Failed to add data: Bad Request'
+      );
     });
 
     it('should throw error when baseUrl is not set', async () => {
       const provider = new RESTDataProvider(undefined, false);
-      
+
       const newData: Data = {
         _uid: 'temp-id',
         name: 'New Item',
         value: 'New Value'
       };
-      
+
       // Act & Assert
       await expect(provider.addData(testSchema, newData)).rejects.toThrow();
     });
@@ -258,20 +268,20 @@ describe('RESTDataProvider', () => {
   describe('updateData', () => {
     it('should make PUT request to update existing data', async () => {
       const provider = createProviderWithSchemaAndData();
-      
+
       // Set up event listener
       const updateDataSpy = vi.fn();
       provider.on('updateData', updateDataSpy);
-      
+
       const updatedData: Data = {
         _uid: testData._uid,
         name: 'Updated Name',
         value: 'Updated Value'
       };
-      
+
       // Act
       await provider.updateData(testSchema, updatedData);
-      
+
       // Assert
       expect(global.fetch).toHaveBeenCalledWith(`${baseUrl}/data/${testData._uid}`, {
         method: 'PUT',
@@ -280,42 +290,43 @@ describe('RESTDataProvider', () => {
         },
         body: JSON.stringify({ ...updatedData, _schemaId: testSchema.id })
       });
-      
+
       // Check event was emitted
-      expect(updateDataSpy).toHaveBeenCalledWith({ 
-        data: [{ ...updatedData, _schemaId: testSchema.id }] 
+      expect(updateDataSpy).toHaveBeenCalledWith({
+        data: [{ ...updatedData, _schemaId: testSchema.id }]
       });
     });
 
     it('should throw error when PUT request fails', async () => {
       const provider = createProviderWithSchemaAndData();
-      
+
       // Mock fetch to return error
       global.fetch = vi.fn().mockResolvedValue({
         ok: false,
         statusText: 'Not Found'
       });
-      
+
       const updatedData: Data = {
         _uid: testData._uid,
         name: 'Updated Name',
         value: 'Updated Value'
       };
-      
+
       // Act & Assert
-      await expect(provider.updateData(testSchema, updatedData))
-        .rejects.toThrow('Failed to update data: Not Found');
+      await expect(provider.updateData(testSchema, updatedData)).rejects.toThrow(
+        'Failed to update data: Not Found'
+      );
     });
 
     it('should throw error when baseUrl is not set', async () => {
       const provider = new RESTDataProvider(undefined, false);
-      
+
       const updatedData: Data = {
         _uid: testData._uid,
         name: 'Updated Name',
         value: 'Updated Value'
       };
-      
+
       // Act & Assert
       await expect(provider.updateData(testSchema, updatedData)).rejects.toThrow();
     });
@@ -324,40 +335,41 @@ describe('RESTDataProvider', () => {
   describe('deleteData', () => {
     it('should make DELETE request to remove data', async () => {
       const provider = createProviderWithSchemaAndData();
-      
+
       // Set up event listener
       const deleteDataSpy = vi.fn();
       provider.on('deleteData', deleteDataSpy);
-      
+
       // Act
       await provider.deleteData(testSchema, testData);
-      
+
       // Assert
       expect(global.fetch).toHaveBeenCalledWith(`${baseUrl}/data/${testData._uid}`, {
         method: 'DELETE'
       });
-      
+
       // Check event was emitted
       expect(deleteDataSpy).toHaveBeenCalledWith({ data: [testData] });
     });
 
     it('should throw error when DELETE request fails', async () => {
       const provider = createProviderWithSchemaAndData();
-      
+
       // Mock fetch to return error
       global.fetch = vi.fn().mockResolvedValue({
         ok: false,
         statusText: 'Not Found'
       });
-      
+
       // Act & Assert
-      await expect(provider.deleteData(testSchema, testData))
-        .rejects.toThrow('Failed to delete data: Not Found');
+      await expect(provider.deleteData(testSchema, testData)).rejects.toThrow(
+        'Failed to delete data: Not Found'
+      );
     });
 
     it('should throw error when baseUrl is not set', async () => {
       const provider = new RESTDataProvider(undefined, false);
-      
+
       // Act & Assert
       await expect(provider.deleteData(testSchema, testData)).rejects.toThrow();
     });
@@ -366,7 +378,7 @@ describe('RESTDataProvider', () => {
   describe('refreshData', () => {
     it('should fetch new data and update internal state', async () => {
       const provider = createEmptyProvider();
-      
+
       // Set up event listeners
       const updateDataSpy = vi.fn();
       const addDataSpy = vi.fn();
@@ -374,14 +386,14 @@ describe('RESTDataProvider', () => {
       provider.on('updateData', updateDataSpy);
       provider.on('addData', addDataSpy);
       provider.on('deleteData', deleteDataSpy);
-      
+
       // Act
       await provider.refreshData();
-      
+
       // Assert
-      expect(global.fetch).toHaveBeenCalledWith(`${baseUrl}/data`, { 
+      expect(global.fetch).toHaveBeenCalledWith(`${baseUrl}/data`, {
         method: 'GET',
-        cache: 'no-cache' 
+        cache: 'no-cache'
       });
       expect(provider.getById([testData._uid, testData2._uid])).toHaveLength(2);
       expect(addDataSpy).toHaveBeenCalledWith({ data: [testData, testData2] });
@@ -391,26 +403,26 @@ describe('RESTDataProvider', () => {
 
     it('should use cache when force is false', async () => {
       const provider = createEmptyProvider();
-      
+
       // Act
       await provider.refreshData(false);
-      
+
       // Assert
-      expect(global.fetch).toHaveBeenCalledWith(`${baseUrl}/data`, { 
+      expect(global.fetch).toHaveBeenCalledWith(`${baseUrl}/data`, {
         method: 'GET',
-        cache: 'default' 
+        cache: 'default'
       });
     });
 
     it('should throw error when fetch fails', async () => {
       const provider = createEmptyProvider();
-      
+
       // Mock fetch to return error
       global.fetch = vi.fn().mockResolvedValue({
         ok: false,
         statusText: 'Server Error'
       });
-      
+
       // Act & Assert
       await expect(provider.refreshData()).rejects.toThrow('Failed to fetch data: Server Error');
     });
@@ -419,7 +431,7 @@ describe('RESTDataProvider', () => {
   describe('refreshSchemas', () => {
     it('should fetch new schemas and update internal state', async () => {
       const provider = createEmptyProvider();
-      
+
       // Set up event listeners
       const updateSchemaSpy = vi.fn();
       const addSchemaSpy = vi.fn();
@@ -427,14 +439,14 @@ describe('RESTDataProvider', () => {
       provider.on('updateSchema', updateSchemaSpy);
       provider.on('addSchema', addSchemaSpy);
       provider.on('deleteSchema', deleteSchemaSpy);
-      
+
       // Act
       await provider.refreshSchemas();
-      
+
       // Assert
-      expect(global.fetch).toHaveBeenCalledWith(`${baseUrl}/schemas`, { 
+      expect(global.fetch).toHaveBeenCalledWith(`${baseUrl}/schemas`, {
         method: 'GET',
-        cache: 'no-cache' 
+        cache: 'no-cache'
       });
       expect(provider.schemas).toEqual([testSchema]);
       expect(addSchemaSpy).toHaveBeenCalledWith(testSchema);
@@ -444,39 +456,41 @@ describe('RESTDataProvider', () => {
 
     it('should use cache when force is false', async () => {
       const provider = createEmptyProvider();
-      
+
       // Act
       await provider.refreshSchemas(false);
-      
+
       // Assert
-      expect(global.fetch).toHaveBeenCalledWith(`${baseUrl}/schemas`, { 
+      expect(global.fetch).toHaveBeenCalledWith(`${baseUrl}/schemas`, {
         method: 'GET',
-        cache: 'default' 
+        cache: 'default'
       });
     });
 
     it('should throw error when fetch fails', async () => {
       const provider = createEmptyProvider();
-      
+
       // Mock fetch to return error
       global.fetch = vi.fn().mockResolvedValue({
         ok: false,
         statusText: 'Server Error'
       });
-      
+
       // Act & Assert
-      await expect(provider.refreshSchemas()).rejects.toThrow('Failed to fetch schemas: Server Error');
+      await expect(provider.refreshSchemas()).rejects.toThrow(
+        'Failed to fetch schemas: Server Error'
+      );
     });
   });
 
   describe('serialize', () => {
     it('should serialize data, schemas, and baseUrl to JSON string', () => {
       const provider = createProviderWithSchemaAndData();
-      
+
       // Act
       const serialized = provider.serialize();
       const parsed = JSON.parse(serialized);
-      
+
       // Assert
       expect(parsed).toHaveProperty('schemas');
       expect(parsed).toHaveProperty('data');
@@ -489,10 +503,10 @@ describe('RESTDataProvider', () => {
   describe('verifySettings', () => {
     it('should return undefined when fetch succeeds', async () => {
       const provider = createProviderWithSchemaAndData();
-      
+
       // Act
       const result = await provider.verifySettings();
-      
+
       // Assert
       expect(result).toBeUndefined();
       expect(global.fetch).toHaveBeenCalledTimes(2);
@@ -500,13 +514,13 @@ describe('RESTDataProvider', () => {
 
     it('should return error message when fetch fails', async () => {
       const provider = createProviderWithSchemaAndData();
-      
+
       // Mock fetch to throw error
       global.fetch = vi.fn().mockRejectedValue(new Error('Network error'));
-      
+
       // Act
       const result = await provider.verifySettings();
-      
+
       // Assert
       expect(result).toContain('Error fetching data');
       expect(result).toContain('Network error');
@@ -516,14 +530,14 @@ describe('RESTDataProvider', () => {
   describe('fetchData and fetchSchemas', () => {
     it('should throw an error when baseUrl is not set for fetchData', async () => {
       const provider = new RESTDataProvider(undefined, false);
-      
+
       // Act & Assert
       await expect(provider.refreshData()).rejects.toThrow();
     });
 
     it('should throw an error when baseUrl is not set for fetchSchemas', async () => {
       const provider = new RESTDataProvider(undefined, false);
-      
+
       // Act & Assert
       await expect(provider.refreshSchemas()).rejects.toThrow();
     });
@@ -532,37 +546,48 @@ describe('RESTDataProvider', () => {
   describe('CRUD operations integration', () => {
     it('should handle a complete CRUD workflow', async () => {
       const provider = createEmptyProvider();
-      
+
       // Create
       const newData: Data = {
         _uid: 'temp-id',
         name: 'Integration Test Item',
         value: 'Test Value'
       };
-      
+
       await provider.addData(testSchema, newData);
-      
+
       // The mock returns a new ID
-      const createdData = provider.getData(testSchema).find(d => d.name === 'Integration Test Item');
+      const createdData = provider
+        .getData(testSchema)
+        .find(d => d.name === 'Integration Test Item');
       expect(createdData).toBeDefined();
       expect(createdData?._uid).toBe('new-id');
-      
+
       // Update
       const updatedData: Data = {
         _uid: 'new-id',
         name: 'Updated Integration Test Item',
         value: 'Updated Test Value'
       };
-      
+
       await provider.updateData(testSchema, updatedData);
-      
+
       // Delete
       await provider.deleteData(testSchema, updatedData);
-      
+
       // Verify all operations called fetch correctly
-      expect(global.fetch).toHaveBeenCalledWith(`${baseUrl}/data`, expect.objectContaining({ method: 'POST' }));
-      expect(global.fetch).toHaveBeenCalledWith(`${baseUrl}/data/new-id`, expect.objectContaining({ method: 'PUT' }));
-      expect(global.fetch).toHaveBeenCalledWith(`${baseUrl}/data/new-id`, expect.objectContaining({ method: 'DELETE' }));
+      expect(global.fetch).toHaveBeenCalledWith(
+        `${baseUrl}/data`,
+        expect.objectContaining({ method: 'POST' })
+      );
+      expect(global.fetch).toHaveBeenCalledWith(
+        `${baseUrl}/data/new-id`,
+        expect.objectContaining({ method: 'PUT' })
+      );
+      expect(global.fetch).toHaveBeenCalledWith(
+        `${baseUrl}/data/new-id`,
+        expect.objectContaining({ method: 'DELETE' })
+      );
     });
   });
 });

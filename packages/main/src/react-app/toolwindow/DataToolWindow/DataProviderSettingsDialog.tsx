@@ -6,6 +6,7 @@ import {
   DefaultDataProvider,
   DefaultDataProviderId
 } from '@diagram-craft/model/dataProviderDefault';
+import { RESTDataProvider, RestDataProviderId } from '@diagram-craft/model/dataProviderRest';
 import { Select } from '@diagram-craft/app-components/Select';
 import { useState } from 'react';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
@@ -46,6 +47,26 @@ const UrlDataProviderSettings = (props: ProviderSettingsProps<UrlDataProvider>) 
 
 const DefaultDataProviderSettings = (_props: ProviderSettingsProps<DefaultDataProvider>) => {
   return <div className={'util-vstack'}>No settings needed.</div>;
+};
+
+const RESTDataProviderSettings = (props: ProviderSettingsProps<RESTDataProvider>) => {
+  const [baseUrl, setBaseUrl] = useState<string>(props.provider.baseUrl || '');
+  return (
+    <div className={'util-vstack'}>
+      <div className={'util-vstack'} style={{ gap: '0.2rem' }}>
+        <label>{'Base URL'}:</label>
+        <TextInput
+          type="text"
+          value={baseUrl}
+          placeholder="Base URL"
+          onChange={v => {
+            setBaseUrl(v ?? '');
+            props.provider.baseUrl = v || undefined;
+          }}
+        />
+      </div>
+    </div>
+  );
 };
 
 export function DataProviderSettingsDialog(props: { onClose: () => void; open: boolean }) {
@@ -112,6 +133,7 @@ export function DataProviderSettingsDialog(props: { onClose: () => void; open: b
             <Select.Item value={'none'}>None</Select.Item>
             <Select.Item value={DefaultDataProviderId}>Document</Select.Item>
             <Select.Item value={UrlDataProviderId}>URL</Select.Item>
+            <Select.Item value={RestDataProviderId}>REST API</Select.Item>
           </Select.Root>
         </div>
 
@@ -120,6 +142,7 @@ export function DataProviderSettingsDialog(props: { onClose: () => void; open: b
         {provider instanceof DefaultDataProvider && (
           <DefaultDataProviderSettings provider={provider} />
         )}
+        {provider instanceof RESTDataProvider && <RESTDataProviderSettings provider={provider} />}
       </div>
     </Dialog>
   );

@@ -1,9 +1,4 @@
-import {
-  createApp,
-  createRouter,
-  defineEventHandler,
-  handleCors
-} from 'h3';
+import { createApp, createRouter, defineEventHandler, handleCors } from 'h3';
 import { FileSystemDataStore } from './dataStore';
 import { createDataRoutes } from './dataRoutes';
 import { createFilesystemRoutes } from './filesystemRoutes';

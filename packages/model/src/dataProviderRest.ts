@@ -21,7 +21,7 @@ export class RESTDataProvider extends BaseHTTPDataProvider implements MutableDat
       this.data = d.data ?? [];
       this.baseUrl = d.baseUrl;
 
-      if (autoRefresh) {
+      if (autoRefresh && d.baseUrl) {
         this.initializeWithAutoRefresh();
       }
     } else {
@@ -31,6 +31,7 @@ export class RESTDataProvider extends BaseHTTPDataProvider implements MutableDat
   }
 
   async verifySettings(): Promise<string | undefined> {
+    if (!this.baseUrl) return 'Base URL required.';
     try {
       await this.fetchSchemas(true);
       await this.fetchData(true);
@@ -82,7 +83,6 @@ export class RESTDataProvider extends BaseHTTPDataProvider implements MutableDat
     const index = this.data.findIndex(d => d._uid === data._uid);
     if (index !== -1) {
       this.data[index] = updatedData;
-      1;
       this.emit('updateData', { data: [updatedData] });
     }
   }
