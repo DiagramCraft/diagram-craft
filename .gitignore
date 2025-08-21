@@ -51,3 +51,5 @@ coverage/
 
 **/storybook-static
 **/local-tests
+
+packages/server-main/data

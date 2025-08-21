@@ -15,6 +15,7 @@ import { getRemoteUnitOfWork, UnitOfWork } from './unitOfWork';
 import { DataProviderRegistry } from './dataProvider';
 import { DefaultDataProvider, DefaultDataProviderId } from './dataProviderDefault';
 import { UrlDataProvider, UrlDataProviderId } from './dataProviderUrl';
+import { RESTDataProvider, RestDataProviderId } from './dataProviderRest';
 import { Generators } from '@diagram-craft/utils/generator';
 import { SerializedElement } from './serialization/types';
 import { DiagramDocumentData } from './diagramDocumentData';
@@ -223,3 +224,4 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
  */
 DataProviderRegistry.register(DefaultDataProviderId, (s: string) => new DefaultDataProvider(s));
 DataProviderRegistry.register(UrlDataProviderId, (s: string) => new UrlDataProvider(s));
+DataProviderRegistry.register(RestDataProviderId, (s: string) => new RESTDataProvider(s));

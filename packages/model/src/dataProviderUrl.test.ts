@@ -254,11 +254,8 @@ describe('UrlDataProvider', () => {
       expect(updateDataSpy).toHaveBeenCalledWith({ data: [updatedData] });
       expect(addDataSpy).toHaveBeenCalledWith({ data: [newData] });
       
-      // NOTE: There's a bug in the refreshData method where newDataIds is populated from the old data
-      // before it's updated, which means no items will be identified as deleted.
-      // In a real implementation, we would expect deleteDataSpy to be called with { data: [testData2] },
-      // but due to the bug, it's called with an empty array.
-      expect(deleteDataSpy).toHaveBeenCalledWith({ data: [] });
+      // The base class implementation correctly detects deleted items
+      expect(deleteDataSpy).toHaveBeenCalledWith({ data: [testData2] });
     });
 
     it('should use cache when force is false', async () => {
@@ -333,7 +330,7 @@ describe('UrlDataProvider', () => {
       expect(provider.schemas).toEqual([updatedSchema]);
       
       // Check events were emitted correctly
-      expect(updateSchemaSpy).toHaveBeenCalledWith(testSchema);
+      expect(updateSchemaSpy).toHaveBeenCalledWith(updatedSchema);
       expect(addSchemaSpy).not.toHaveBeenCalled();
       expect(deleteSchemaSpy).not.toHaveBeenCalled();
     });
@@ -358,7 +355,7 @@ describe('UrlDataProvider', () => {
       const parsed = JSON.parse(serialized);
       
       // Assert
-      expect(parsed).toHaveProperty('schema');
+      expect(parsed).toHaveProperty('schemas');
       expect(parsed).toHaveProperty('data');
       expect(parsed).toHaveProperty('dataUrl');
       expect(parsed).toHaveProperty('schemaUrl');
