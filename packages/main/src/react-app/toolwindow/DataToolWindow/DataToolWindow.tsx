@@ -7,17 +7,18 @@ import {
   RefreshableDataProvider,
   RefreshableSchemaProvider
 } from '@diagram-craft/model/dataProvider';
-import { useEffect, useState } from 'react';
+import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
+import { useEffect, useState, useMemo } from 'react';
 import { useRedraw } from '../../hooks/useRedraw';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { newid } from '@diagram-craft/utils/id';
 import { TbChevronDown, TbChevronRight, TbPlus, TbRefresh, TbSettings } from 'react-icons/tb';
 import { DRAG_DROP_MANAGER } from '@diagram-craft/canvas/dragDropManager';
 import { ObjectPickerDrag } from '../PickerToolWindow/ObjectPickerDrag';
-import { newid } from '@diagram-craft/utils/id';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { assert } from '@diagram-craft/utils/assert';
 import { DataProviderSettingsDialog } from './DataProviderSettingsDialog';
-import { Dialog } from '@diagram-craft/app-components/Dialog';
+import { EditItemDialog } from './EditItemDialog';
 import { Button } from '@diagram-craft/app-components/Button';
 import { PickerCanvas } from '../../PickerCanvas';
 import { DataTemplate } from '@diagram-craft/model/diagramDocument';
@@ -28,7 +29,6 @@ import { Definitions } from '@diagram-craft/model/elementDefinitionRegistry';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { ActionContextMenuItem } from '../../components/ActionContextMenuItem';
 import { useEventListener } from '../../hooks/useEventListener';
-import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { createThumbnailDiagramForNode } from '@diagram-craft/model/diagramThumbnail';
 import { isRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
@@ -113,17 +113,35 @@ const DataProviderResponse = (props: {
   const diagram = useDiagram();
   const document = diagram.document;
   const [expanded, setExpanded] = useState<string[]>([]);
+  const [dataVersion, setDataVersion] = useState<number>(0);
 
   const schema =
     props.dataProvider?.schemas?.find(s => s.id === props.selectedSchema) ??
     props.dataProvider?.schemas?.[0];
 
+  useEffect(() => {
+    if (!props.dataProvider) return;
+
+    const handleDataChange = () => setDataVersion(prev => prev + 1);
+
+    props.dataProvider.on('addData', handleDataChange);
+    props.dataProvider.on('updateData', handleDataChange);
+    props.dataProvider.on('deleteData', handleDataChange);
+
+    return () => {
+      props.dataProvider.off('addData', handleDataChange);
+      props.dataProvider.off('updateData', handleDataChange);
+      props.dataProvider.off('deleteData', handleDataChange);
+    };
+  }, [props.dataProvider]);
+
   if (!schema) return <div>Loading...</div>;
 
-  const data =
-    props.search.trim() !== ''
+  const data = useMemo(() => {
+    return props.search.trim() !== ''
       ? props.dataProvider.queryData(schema, props.search)
       : props.dataProvider.getData(schema);
+  }, [props.dataProvider, schema, props.search, dataVersion]);
 
   return (
     <div className={'cmp-query-response'}>
@@ -400,7 +418,7 @@ export const DataToolWindow = () => {
             <Accordion.ItemHeader>
               Items
               <Accordion.ItemHeaderButtons>
-                {('addData' in dataProvider) && (
+                {'addData' in dataProvider && (
                   <a
                     className={'cmp-button cmp-button--icon-only'}
                     onClick={() => setAddItemDialog(true)}
@@ -424,28 +442,12 @@ export const DataToolWindow = () => {
         onClose={() => setProviderSettingsWindow(false)}
         open={providerSettingsWindow}
       />
-      <Dialog
-        title="Add Item"
+      <EditItemDialog
         open={addItemDialog}
         onClose={() => setAddItemDialog(false)}
-        buttons={[
-          {
-            type: 'default',
-            label: 'Cancel',
-            onClick: () => setAddItemDialog(false)
-          },
-          {
-            type: 'default',
-            label: 'Add',
-            onClick: () => {
-              // TODO: Implement add functionality
-              setAddItemDialog(false);
-            }
-          }
-        ]}
-      >
-        <div>Add item dialog content will be implemented here.</div>
-      </Dialog>
+        dataProvider={dataProvider}
+        selectedSchema={selectedSchema}
+      />
     </>
   );
 };

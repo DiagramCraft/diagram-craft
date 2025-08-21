@@ -1,7 +1,10 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { DataSchema, DataWithSchema } from './types';
-import { newid } from '@diagram-craft/utils/id';
+
+const newid = () => {
+  return Math.random().toString(36).substring(2, 9);
+};
 
 export class FileSystemDataStore {
   private dataFile: string;
