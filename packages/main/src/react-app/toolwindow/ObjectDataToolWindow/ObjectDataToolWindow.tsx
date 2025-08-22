@@ -1,4 +1,4 @@
-import React, { ChangeEvent, useCallback } from 'react';
+import React, { ChangeEvent, useCallback, useState } from 'react';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
 import { TbDots, TbLink, TbLinkOff, TbPencil, TbTrash } from 'react-icons/tb';
@@ -24,6 +24,8 @@ import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { ObjectNamePanel } from './ObjectNamePanel';
+import { EditItemDialog } from '../DataToolWindow/EditItemDialog';
+import type { Data } from '@diagram-craft/model/dataProvider';
 
 const makeTemplate = (): DataSchema => {
   return {
@@ -49,6 +51,11 @@ export const ObjectDataToolWindow = () => {
   const $d = useDiagram();
   const redraw = useRedraw();
   const application = useApplication();
+  const [editItemDialog, setEditItemDialog] = useState<{
+    open: boolean;
+    item?: Data;
+    schema?: string;
+  }>({ open: false });
 
   useEventListener($d.selectionState, 'change', redraw);
   useEventListener($d, 'change', redraw);
@@ -136,7 +143,7 @@ export const ObjectDataToolWindow = () => {
           e.updateMetadata(p => {
             p.data!.data!.find(s => s.schema === schema)!.enabled = false;
           }, uow);
-          commitWithUndo(uow, 'Add schema to selection');
+          commitWithUndo(uow, 'Remove schema from selection');
         }
       });
     },
@@ -150,10 +157,9 @@ export const ObjectDataToolWindow = () => {
         if (entry?.enabled) {
           const uow = new UnitOfWork($d, true);
           e.updateMetadata(p => {
-            p.data!.data ??= [];
-            p.data!.data = p.data!.data!.filter(s => s.schema !== schema);
+            p.data!.data!.find(s => s.schema === schema)!.enabled = false;
           }, uow);
-          commitWithUndo(uow, 'Add schema to selection');
+          commitWithUndo(uow, 'Remove data from selection');
         }
       });
     },
@@ -167,6 +173,28 @@ export const ObjectDataToolWindow = () => {
       });
     },
     [$d]
+  );
+
+  const editExternalData = useCallback(
+    (schema: string) => {
+      // Get the external data item for editing
+      const element = $d.selectionState.elements[0];
+      const externalData = element?.metadata.data?.data?.find(
+        d => d.schema === schema && d.type === 'external'
+      );
+      if (externalData?.external?.uid && $d.document.data.provider) {
+        const dataProvider = $d.document.data.provider;
+        const items = dataProvider.getById([externalData.external.uid]);
+        if (items.length > 0) {
+          setEditItemDialog({
+            open: true,
+            item: items[0],
+            schema: schema
+          });
+        }
+      }
+    },
+    [$d, setEditItemDialog]
   );
 
   const saveSchema = useCallback((s: DataSchema) => {
@@ -343,8 +371,17 @@ export const ObjectDataToolWindow = () => {
                     <Accordion.ItemHeader>
                       {schema.name} {isExternal ? '(external)' : ''}
                       <Accordion.ItemHeaderButtons>
+                        {isExternal && (
+                          <a
+                            className={'cmp-button cmp-button--icon-only'}
+                            onClick={() => editExternalData(schema.id)}
+                          >
+                            <TbPencil />
+                          </a>
+                        )}
                         <a
                           className={'cmp-button cmp-button--icon-only'}
+                          style={{ marginLeft: isExternal ? '0.5rem' : '0' }}
                           onClick={() => removeDataFromSelection(schema.id)}
                         >
                           <TbTrash />
@@ -444,6 +481,13 @@ export const ObjectDataToolWindow = () => {
           </Accordion.ItemContent>
         </Accordion.Item>
       </Accordion.Root>
+      <EditItemDialog
+        open={editItemDialog.open}
+        onClose={() => setEditItemDialog({ open: false })}
+        dataProvider={$d.document.data.provider}
+        selectedSchema={editItemDialog.schema}
+        editItem={editItemDialog.item}
+      />
     </>
   );
 };
