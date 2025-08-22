@@ -417,8 +417,7 @@ export const ObjectDataToolWindow = () => {
                         {schema.fields.map(f => {
                           const v = unique(
                             $d.selectionState.elements.map(e => {
-                              return e.metadata.data?.data?.find(d => d.schema === schemaName)
-                                ?.data?.[f.id];
+                              return findEntryBySchema(e, schemaName)?.data?.[f.id];
                             })
                           );
 
