@@ -1,4 +1,4 @@
-import React, { ChangeEvent, useCallback } from 'react';
+import React, { ChangeEvent, useCallback, useState } from 'react';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
 import { TbDots, TbLink, TbLinkOff, TbPencil, TbTrash } from 'react-icons/tb';
@@ -14,7 +14,7 @@ import { commitWithUndo, SnapshotUndoableAction } from '@diagram-craft/model/dia
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { newid } from '@diagram-craft/utils/id';
 import { unique } from '@diagram-craft/utils/array';
-import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { Button } from '@diagram-craft/app-components/Button';
@@ -24,6 +24,9 @@ import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { ObjectNamePanel } from './ObjectNamePanel';
+import { EditItemDialog } from '../DataToolWindow/EditItemDialog';
+import type { Data } from '@diagram-craft/model/dataProvider';
+import type { DiagramElement } from '@diagram-craft/model/diagramElement';
 
 const makeTemplate = (): DataSchema => {
   return {
@@ -45,10 +48,19 @@ const makeTemplate = (): DataSchema => {
   };
 };
 
+const findEntryBySchema = (e: DiagramElement, schema: string) => {
+  return e.metadata.data?.data?.find(s => s.schema === schema);
+};
+
 export const ObjectDataToolWindow = () => {
   const $d = useDiagram();
   const redraw = useRedraw();
   const application = useApplication();
+  const [editItemDialog, setEditItemDialog] = useState<{
+    open: boolean;
+    item?: Data;
+    schema?: string;
+  }>({ open: false });
 
   useEventListener($d.selectionState, 'change', redraw);
   useEventListener($d, 'change', redraw);
@@ -106,9 +118,9 @@ export const ObjectDataToolWindow = () => {
   const addSchemaToSelection = useCallback(
     (schema: string) => {
       $d.selectionState.elements.forEach(e => {
-        const entry = e.metadata.data?.data?.find(s => s.schema === schema);
+        const entry = findEntryBySchema(e, schema);
+        const uow = new UnitOfWork($d, true);
         if (!entry) {
-          const uow = new UnitOfWork($d, true);
           e.updateMetadata(p => {
             p.data ??= {};
             p.data.data ??= [];
@@ -116,7 +128,6 @@ export const ObjectDataToolWindow = () => {
           }, uow);
           commitWithUndo(uow, 'Add schema to selection');
         } else if (!entry.enabled) {
-          const uow = new UnitOfWork($d, true);
           e.updateMetadata(p => {
             p.data!.data!.find(s => s.schema === schema)!.enabled = true;
           }, uow);
@@ -130,13 +141,13 @@ export const ObjectDataToolWindow = () => {
   const removeSchemaFromSelection = useCallback(
     (schema: string) => {
       $d.selectionState.elements.forEach(e => {
-        const entry = e.metadata.data?.data?.find(s => s.schema === schema);
+        const entry = findEntryBySchema(e, schema);
         if (entry?.enabled) {
           const uow = new UnitOfWork($d, true);
           e.updateMetadata(p => {
             p.data!.data!.find(s => s.schema === schema)!.enabled = false;
           }, uow);
-          commitWithUndo(uow, 'Add schema to selection');
+          commitWithUndo(uow, 'Remove schema from selection');
         }
       });
     },
@@ -146,14 +157,13 @@ export const ObjectDataToolWindow = () => {
   const removeDataFromSelection = useCallback(
     (schema: string) => {
       $d.selectionState.elements.forEach(e => {
-        const entry = e.metadata.data?.data?.find(s => s.schema === schema);
+        const entry = findEntryBySchema(e, schema);
         if (entry?.enabled) {
           const uow = new UnitOfWork($d, true);
           e.updateMetadata(p => {
-            p.data!.data ??= [];
-            p.data!.data = p.data!.data!.filter(s => s.schema !== schema);
+            p.data!.data!.find(s => s.schema === schema)!.enabled = false;
           }, uow);
-          commitWithUndo(uow, 'Add schema to selection');
+          commitWithUndo(uow, 'Remove data from selection');
         }
       });
     },
@@ -167,6 +177,30 @@ export const ObjectDataToolWindow = () => {
       });
     },
     [$d]
+  );
+
+  const editExternalData = useCallback(
+    (schema: string) => {
+      const dataProvider = $d.document.data.provider;
+      assert.present(dataProvider);
+
+      // Get the external data item for editing
+      const e = $d.selectionState.elements[0];
+      const externalData = findEntryBySchema(e, schema);
+      assert.true(externalData?.type === 'external');
+
+      if (externalData?.enabled) {
+        const items = dataProvider.getById([externalData.external!.uid]);
+        assert.arrayWithExactlyOneElement(items);
+
+        setEditItemDialog({
+          open: true,
+          item: items[0],
+          schema: schema
+        });
+      }
+    },
+    [$d, setEditItemDialog]
   );
 
   const saveSchema = useCallback((s: DataSchema) => {
@@ -343,8 +377,17 @@ export const ObjectDataToolWindow = () => {
                     <Accordion.ItemHeader>
                       {schema.name} {isExternal ? '(external)' : ''}
                       <Accordion.ItemHeaderButtons>
+                        {isExternal && (
+                          <a
+                            className={'cmp-button cmp-button--icon-only'}
+                            onClick={() => editExternalData(schema.id)}
+                          >
+                            <TbPencil />
+                          </a>
+                        )}
                         <a
                           className={'cmp-button cmp-button--icon-only'}
+                          style={{ marginLeft: isExternal ? '0.5rem' : '0' }}
                           onClick={() => removeDataFromSelection(schema.id)}
                         >
                           <TbTrash />
@@ -374,8 +417,7 @@ export const ObjectDataToolWindow = () => {
                         {schema.fields.map(f => {
                           const v = unique(
                             $d.selectionState.elements.map(e => {
-                              return e.metadata.data?.data?.find(d => d.schema === schemaName)
-                                ?.data?.[f.id];
+                              return findEntryBySchema(e, schemaName)?.data?.[f.id];
                             })
                           );
 
@@ -444,6 +486,13 @@ export const ObjectDataToolWindow = () => {
           </Accordion.ItemContent>
         </Accordion.Item>
       </Accordion.Root>
+      <EditItemDialog
+        open={editItemDialog.open}
+        onClose={() => setEditItemDialog({ open: false })}
+        dataProvider={$d.document.data.provider}
+        selectedSchema={editItemDialog.schema}
+        editItem={editItemDialog.item}
+      />
     </>
   );
 };

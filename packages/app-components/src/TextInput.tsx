@@ -36,7 +36,7 @@ export const TextInput = React.forwardRef<HTMLInputElement, Props>((props, ref) 
           hasFocus.current = true;
         }}
         onBlur={() => {
-          hasFocus.current = true;
+          hasFocus.current = false;
         }}
         onChange={ev => {
           const p = ev.target.value;
