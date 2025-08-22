@@ -9,7 +9,7 @@ import {
   RefreshableSchemaProvider
 } from '@diagram-craft/model/dataProvider';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRedraw } from '../../hooks/useRedraw';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { newid } from '@diagram-craft/utils/id';
@@ -19,7 +19,6 @@ import { ObjectPickerDrag } from '../PickerToolWindow/ObjectPickerDrag';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { assert } from '@diagram-craft/utils/assert';
 import { DataProviderSettingsDialog } from './DataProviderSettingsDialog';
-import { EditItemDialog } from './EditItemDialog';
 import { Button } from '@diagram-craft/app-components/Button';
 import { PickerCanvas } from '../../PickerCanvas';
 import { DataTemplate } from '@diagram-craft/model/diagramDocument';
@@ -33,6 +32,7 @@ import { useEventListener } from '../../hooks/useEventListener';
 import { createThumbnailDiagramForNode } from '@diagram-craft/model/diagramThumbnail';
 import { isRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
+import { EditItemDialog } from '../../components/EditItemDialog';
 
 const NODE_CACHE = new Map<string, DiagramNode>();
 
