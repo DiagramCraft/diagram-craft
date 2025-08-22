@@ -290,6 +290,7 @@ export const ObjectDataToolWindow = () => {
                             className={'cmp-button cmp-button--icon-only'}
                             onClick={() => clearExternalLinkage(schema.id)}
                             title="Unlink external data"
+                            style={{ color: 'var(--highlight-fg)' }}
                           >
                             <TbLinkOff />
                           </a>
