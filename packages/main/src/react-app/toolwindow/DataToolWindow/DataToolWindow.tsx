@@ -14,7 +14,15 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRedraw } from '../../hooks/useRedraw';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { newid } from '@diagram-craft/utils/id';
-import { TbChevronDown, TbChevronRight, TbPlus, TbRefresh, TbSettings, TbEdit, TbTrash } from 'react-icons/tb';
+import {
+  TbChevronDown,
+  TbChevronRight,
+  TbPlus,
+  TbRefresh,
+  TbSettings,
+  TbPencil,
+  TbTrash
+} from 'react-icons/tb';
 import { DRAG_DROP_MANAGER } from '@diagram-craft/canvas/dragDropManager';
 import { ObjectPickerDrag } from '../PickerToolWindow/ObjectPickerDrag';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
@@ -315,10 +323,13 @@ const DataProviderQueryView = (props: {
   onDeleteSchema: (schema: DataSchema) => void;
 }) => {
   const [search, setSearch] = useState<string>('');
-  
+
   const selectedSchemaObject = props.dataProvider.schemas?.find(s => s.id === props.selectedSchema);
-  const isMutableSchemaProvider = 'addSchema' in props.dataProvider && 'updateSchema' in props.dataProvider && 'deleteSchema' in props.dataProvider;
-  
+  const isMutableSchemaProvider =
+    'addSchema' in props.dataProvider &&
+    'updateSchema' in props.dataProvider &&
+    'deleteSchema' in props.dataProvider;
+
   return (
     <div style={{ width: '100%' }} className={'util-vstack'}>
       <div className={'util-hstack'}>
@@ -338,16 +349,16 @@ const DataProviderQueryView = (props: {
             </Button>
             {selectedSchemaObject && (
               <>
-                <Button 
-                  type="icon-only" 
-                  onClick={() => props.onEditSchema(selectedSchemaObject)} 
+                <Button
+                  type="icon-only"
+                  onClick={() => props.onEditSchema(selectedSchemaObject)}
                   title="Edit schema"
                 >
-                  <TbEdit />
+                  <TbPencil />
                 </Button>
-                <Button 
-                  type="icon-only" 
-                  onClick={() => props.onDeleteSchema(selectedSchemaObject)} 
+                <Button
+                  type="icon-only"
+                  onClick={() => props.onDeleteSchema(selectedSchemaObject)}
                   title="Delete schema"
                 >
                   <TbTrash />
@@ -456,14 +467,16 @@ export const DataToolWindow = () => {
   };
 
   // Helper function to check if provider supports schema mutations
-  const isMutableSchemaProvider = (provider: DataProvider): provider is DataProvider & MutableSchemaProvider => {
+  const isMutableSchemaProvider = (
+    provider: DataProvider
+  ): provider is DataProvider & MutableSchemaProvider => {
     return 'addSchema' in provider && 'updateSchema' in provider && 'deleteSchema' in provider;
   };
 
   // Handle schema operations
   const handleAddSchema = async (schema: DataSchema) => {
     if (!dataProvider || !isMutableSchemaProvider(dataProvider)) return;
-    
+
     try {
       await dataProvider.addSchema(schema);
       setAddSchemaDialog(false);
@@ -476,7 +489,7 @@ export const DataToolWindow = () => {
 
   const handleUpdateSchema = async (schema: DataSchema) => {
     if (!dataProvider || !isMutableSchemaProvider(dataProvider)) return;
-    
+
     try {
       await dataProvider.updateSchema(schema);
       setEditSchemaDialog({ open: false });
