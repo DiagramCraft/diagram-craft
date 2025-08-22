@@ -43,6 +43,7 @@ export const ObjectDataToolWindow = () => {
     open: boolean;
     schema?: DataSchema;
   }>({ open: false });
+  const [editMode, setEditMode] = useState(false);
 
   useEventListener($d.selectionState, 'change', redraw);
   useEventListener($d, 'change', redraw);
@@ -219,6 +220,13 @@ export const ObjectDataToolWindow = () => {
               >
                 <TbPlus />
               </a>
+              <a
+                className={'cmp-button cmp-button--icon-only'}
+                style={{ color: editMode ? 'var(--highlight-fg)' : undefined }}
+                onClick={() => setEditMode(v => !v)}
+              >
+                <TbPencil />
+              </a>
             </Accordion.ItemHeaderButtons>
           </Accordion.ItemHeader>
           <Accordion.ItemContent>
@@ -233,44 +241,48 @@ export const ObjectDataToolWindow = () => {
                 });
                 const isExternalSchema = schema.source === 'external';
 
+                if (!editMode && !isSchemaEnabled) return null;
                 return (
                   <Accordion.Item key={schema.id} value={schema.id}>
                     <Accordion.ItemHeader>
                       <div className={'util-hstack'} style={{ gap: '0.5rem' }}>
-                        <input
-                          className="cmp-accordion__enabled"
-                          type={'checkbox'}
-                          checked={isSchemaEnabled}
-                          onChange={e => {
-                            const isChecked = e.target.checked;
-                            const accordionItem = e.target.closest(
-                              '.cmp-accordion__item'
-                            ) as HTMLElement;
-                            const accordionContent = accordionItem?.querySelector(
-                              '.cmp-accordion__content'
-                            ) as HTMLElement;
-                            const accordionHeader = accordionItem?.querySelector(
-                              '.cmp-accordion__header'
-                            ) as HTMLElement;
+                        {editMode && (
+                          <input
+                            className="cmp-accordion__enabled"
+                            type={'checkbox'}
+                            checked={isSchemaEnabled}
+                            onChange={e => {
+                              const isChecked = e.target.checked;
+                              const accordionItem = e.target.closest(
+                                '.cmp-accordion__item'
+                              ) as HTMLElement;
+                              const accordionContent = accordionItem?.querySelector(
+                                '.cmp-accordion__content'
+                              ) as HTMLElement;
+                              const accordionHeader = accordionItem?.querySelector(
+                                '.cmp-accordion__header'
+                              ) as HTMLElement;
 
-                            if (accordionItem) {
-                              if (isChecked) {
-                                accordionItem.dataset.state = 'open';
-                                accordionContent.dataset.state = 'open';
-                                accordionHeader.dataset.state = 'open';
-                                addSchemaToSelection(schema.id);
-                              } else {
-                                accordionItem.dataset.state = 'closed';
-                                accordionContent.dataset.state = 'closed';
-                                accordionHeader.dataset.state = 'closed';
-                                removeSchemaFromSelection(schema.id);
+                              if (accordionItem) {
+                                if (isChecked) {
+                                  accordionItem.dataset.state = 'open';
+                                  accordionContent.dataset.state = 'open';
+                                  accordionHeader.dataset.state = 'open';
+                                  addSchemaToSelection(schema.id);
+                                } else {
+                                  accordionItem.dataset.state = 'closed';
+                                  accordionContent.dataset.state = 'closed';
+                                  accordionHeader.dataset.state = 'closed';
+                                  removeSchemaFromSelection(schema.id);
+                                }
                               }
-                            }
-                          }}
-                          onClick={e => {
-                            e.stopPropagation();
-                          }}
-                        />
+                            }}
+                            onClick={e => {
+                              e.stopPropagation();
+                            }}
+                          />
+                        )}
+
                         <span>
                           {schema.name} {isExternal ? '(external)' : ''}
                         </span>
