@@ -2,7 +2,7 @@ import React, { ChangeEvent, useCallback, useState } from 'react';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
 import { TbDots, TbLink, TbLinkOff, TbPencil, TbTrash } from 'react-icons/tb';
-import { JSONDialog } from '../../components/JSONDialog';
+import { EditSchemaDialog } from '../../components/EditSchemaDialog';
 import {
   AddSchemaUndoableAction,
   DataSchema,
@@ -12,7 +12,6 @@ import {
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo, SnapshotUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
-import { newid } from '@diagram-craft/utils/id';
 import { unique } from '@diagram-craft/utils/array';
 import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
@@ -24,29 +23,9 @@ import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { ObjectNamePanel } from './ObjectNamePanel';
-import { EditItemDialog } from '../DataToolWindow/EditItemDialog';
 import type { Data } from '@diagram-craft/model/dataProvider';
 import type { DiagramElement } from '@diagram-craft/model/diagramElement';
-
-const makeTemplate = (): DataSchema => {
-  return {
-    id: newid(),
-    name: 'New schema',
-    source: 'document',
-    fields: [
-      {
-        id: 'field1',
-        name: 'Field 1',
-        type: 'text'
-      },
-      {
-        id: 'field2',
-        name: 'Field 2',
-        type: 'longtext'
-      }
-    ]
-  };
-};
+import { EditItemDialog } from '../../components/EditItemDialog';
 
 const findEntryBySchema = (e: DiagramElement, schema: string) => {
   return e.metadata.data?.data?.find(s => s.schema === schema);
@@ -60,6 +39,11 @@ export const ObjectDataToolWindow = () => {
     open: boolean;
     item?: Data;
     schema?: string;
+  }>({ open: false });
+
+  const [editSchemaDialog, setEditSchemaDialog] = useState<{
+    open: boolean;
+    schema?: DataSchema;
   }>({ open: false });
 
   useEventListener($d.selectionState, 'change', redraw);
@@ -276,16 +260,7 @@ export const ObjectDataToolWindow = () => {
                             <div className={'cmp-schema-selector__schema-actions'}>
                               <button
                                 onClick={() => {
-                                  application.ui.showDialog(
-                                    JSONDialog.create(
-                                      {
-                                        title: 'Modify schema',
-                                        label: 'Schema',
-                                        data: s
-                                      },
-                                      saveSchema
-                                    )
-                                  );
+                                  setEditSchemaDialog({ open: true, schema: s });
                                 }}
                               >
                                 <TbPencil />
@@ -335,16 +310,7 @@ export const ObjectDataToolWindow = () => {
                       <Button
                         type={'secondary'}
                         onClick={() => {
-                          application.ui.showDialog(
-                            JSONDialog.create(
-                              {
-                                title: 'New schema',
-                                label: 'Schema',
-                                data: makeTemplate()
-                              },
-                              saveSchema
-                            )
-                          );
+                          setEditSchemaDialog({ open: true, schema: undefined });
                         }}
                       >
                         Add Schema
@@ -492,6 +458,16 @@ export const ObjectDataToolWindow = () => {
         dataProvider={$d.document.data.provider}
         selectedSchema={editItemDialog.schema}
         editItem={editItemDialog.item}
+      />
+      <EditSchemaDialog
+        title={editSchemaDialog.schema ? 'Edit Schema' : 'New Schema'}
+        open={editSchemaDialog.open}
+        schema={editSchemaDialog.schema}
+        onOk={schema => {
+          saveSchema(schema);
+          setEditSchemaDialog({ open: false });
+        }}
+        onCancel={() => setEditSchemaDialog({ open: false })}
       />
     </>
   );
