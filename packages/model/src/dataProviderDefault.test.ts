@@ -199,27 +199,27 @@ describe('DefaultDataProvider', () => {
   });
 
   describe('updateSchema', () => {
-    it('should update schema', () => {
+    it('should update schema', async () => {
       const provider = createProviderWithSchemaAndData();
 
       // Create updated schema
       const updatedSchema = { ...testSchema, name: 'Updated Schema Name' };
 
       // Act
-      provider.updateSchema(updatedSchema);
+      await provider.updateSchema(updatedSchema);
 
       // Assert
       expect(provider.schemas[0].name).toBe('Updated Schema Name');
     });
 
-    it('should do nothing if schema does not exist', () => {
+    it('should do nothing if schema does not exist', async () => {
       const provider = createEmptyProvider();
 
       // Create a schema that doesn't exist in the provider
       const nonExistentSchema = { ...testSchema, id: 'non-existent-schema' };
 
       // Act
-      provider.updateSchema(nonExistentSchema);
+      await provider.updateSchema(nonExistentSchema);
 
       // Assert
       expect(provider.schemas).toHaveLength(0);
@@ -227,21 +227,21 @@ describe('DefaultDataProvider', () => {
   });
 
   describe('deleteSchema', () => {
-    it('should delete schema', () => {
+    it('should delete schema', async () => {
       const provider = createProviderWithSchemaAndData();
 
       // Act
-      provider.deleteSchema(testSchema);
+      await provider.deleteSchema(testSchema);
 
       // Assert
       expect(provider.schemas).toHaveLength(0);
     });
 
-    it('should do nothing if schema does not exist', () => {
+    it('should do nothing if schema does not exist', async () => {
       const provider = createEmptyProvider();
 
       // Act
-      provider.deleteSchema(testSchema);
+      await provider.deleteSchema(testSchema);
 
       // Assert
       expect(provider.schemas).toHaveLength(0);
