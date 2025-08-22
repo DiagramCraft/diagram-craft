@@ -1,5 +1,5 @@
 import { BaseHTTPDataProvider } from './dataProviderBaseHttp';
-import { Data, MutableDataProvider } from './dataProvider';
+import { Data, MutableDataProvider, MutableSchemaProvider } from './dataProvider';
 import { DataSchema } from './diagramDocumentDataSchemas';
 import { assert } from '@diagram-craft/utils/assert';
 
@@ -7,7 +7,7 @@ type DataWithSchema = Data & { _schemaId: string };
 
 export const RestDataProviderId = 'restDataProvider';
 
-export class RESTDataProvider extends BaseHTTPDataProvider implements MutableDataProvider {
+export class RESTDataProvider extends BaseHTTPDataProvider implements MutableDataProvider, MutableSchemaProvider {
   id = RestDataProviderId;
 
   baseUrl: string | undefined = undefined;
@@ -120,6 +120,67 @@ export class RESTDataProvider extends BaseHTTPDataProvider implements MutableDat
       this.data.splice(index, 1);
       this.emit('deleteData', { data: [data] });
     }
+  }
+
+  async addSchema(schema: DataSchema): Promise<void> {
+    assert.present(this.baseUrl);
+
+    const res = await this.fetchWithTimeout(`${this.baseUrl}/schemas`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(schema)
+    });
+
+    if (!res.ok) {
+      throw new Error(`Failed to add schema: ${res.statusText}`);
+    }
+
+    const createdSchema = await res.json();
+    this.schemas.push(createdSchema);
+    this.emit('addSchema', createdSchema);
+  }
+
+  async updateSchema(schema: DataSchema): Promise<void> {
+    assert.present(this.baseUrl);
+
+    const index = this.schemas.findIndex(s => s.id === schema.id);
+    if (index === -1) return; // Schema doesn't exist, do nothing
+
+    const res = await this.fetchWithTimeout(`${this.baseUrl}/schemas/${schema.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(schema)
+    });
+
+    if (!res.ok) {
+      throw new Error(`Failed to update schema: ${res.statusText}`);
+    }
+
+    const updatedSchema = await res.json();
+    this.schemas[index] = updatedSchema;
+    this.emit('updateSchema', updatedSchema);
+  }
+
+  async deleteSchema(schema: DataSchema): Promise<void> {
+    assert.present(this.baseUrl);
+
+    const index = this.schemas.findIndex(s => s.id === schema.id);
+    if (index === -1) return; // Schema doesn't exist, do nothing
+
+    const res = await this.fetchWithTimeout(`${this.baseUrl}/schemas/${schema.id}`, {
+      method: 'DELETE'
+    });
+
+    if (!res.ok) {
+      throw new Error(`Failed to delete schema: ${res.statusText}`);
+    }
+
+    this.schemas.splice(index, 1);
+    this.emit('deleteSchema', schema);
   }
 
   serialize(): string {

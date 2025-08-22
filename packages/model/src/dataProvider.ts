@@ -6,8 +6,9 @@ export interface SchemaProvider {
 }
 
 export interface MutableSchemaProvider extends SchemaProvider {
-  updateSchema(schema: DataSchema): void;
-  deleteSchema(schema: DataSchema): void;
+  addSchema(schema: DataSchema): Promise<void>;
+  updateSchema(schema: DataSchema): Promise<void>;
+  deleteSchema(schema: DataSchema): Promise<void>;
 }
 
 export type Data = Record<string, string> & { _uid: string };

@@ -57,6 +57,20 @@ describe('RESTDataProvider', () => {
         });
       } else if (url.startsWith(`${baseUrl}/data/`) && method === 'DELETE') {
         return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
+      } else if (url === `${baseUrl}/schemas` && method === 'POST') {
+        const body = JSON.parse(options?.body as string);
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ ...body })
+        });
+      } else if (url.startsWith(`${baseUrl}/schemas/`) && method === 'PUT') {
+        const body = JSON.parse(options?.body as string);
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(body)
+        });
+      } else if (url.startsWith(`${baseUrl}/schemas/`) && method === 'DELETE') {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
       }
       return Promise.reject(new Error(`Unexpected URL: ${url} ${method}`));
     });
@@ -600,6 +614,203 @@ describe('RESTDataProvider', () => {
         `${baseUrl}/data/new-id`,
         expect.objectContaining({ method: 'DELETE' })
       );
+    });
+  });
+
+  describe('addSchema', () => {
+    it('should make POST request to add schema and emit events', async () => {
+      const provider = createEmptyProvider();
+      
+      const newSchema: DataSchema = {
+        id: 'new-schema',
+        name: 'New Schema',
+        source: 'external',
+        fields: [
+          { id: 'title', name: 'Title', type: 'text' }
+        ]
+      };
+
+      // Set up event listener
+      const addSchemaSpy = vi.fn();
+      provider.on('addSchema', addSchemaSpy);
+
+      // Act
+      await provider.addSchema(newSchema);
+
+      // Assert
+      expect(global.fetch).toHaveBeenCalledWith(
+        `${baseUrl}/schemas`,
+        expect.objectContaining({
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(newSchema)
+        })
+      );
+      
+      expect(provider.schemas.find(s => s.id === newSchema.id)).toBeDefined();
+      expect(addSchemaSpy).toHaveBeenCalledWith(newSchema);
+    });
+
+    it('should throw error when POST request fails', async () => {
+      const provider = createEmptyProvider();
+
+      // Mock fetch to return error
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        statusText: 'Server Error'
+      });
+
+      const newSchema: DataSchema = {
+        id: 'new-schema',
+        name: 'New Schema',
+        source: 'external',
+        fields: [{ id: 'title', name: 'Title', type: 'text' }]
+      };
+
+      // Act & Assert
+      await expect(provider.addSchema(newSchema)).rejects.toThrow(
+        'Failed to add schema: Server Error'
+      );
+      
+      // Schema should not be added on failure
+      expect(provider.schemas).not.toContain(newSchema);
+    });
+  });
+
+  describe('updateSchema', () => {
+    it('should make PUT request to update schema and emit events', async () => {
+      const provider = createProviderWithSchemaAndData();
+      
+      const updatedSchema: DataSchema = {
+        ...testSchema,
+        name: 'Updated Schema Name'
+      };
+
+      // Set up event listener
+      const updateSchemaSpy = vi.fn();
+      provider.on('updateSchema', updateSchemaSpy);
+
+      // Act
+      await provider.updateSchema(updatedSchema);
+
+      // Assert
+      expect(global.fetch).toHaveBeenCalledWith(
+        `${baseUrl}/schemas/${testSchema.id}`,
+        expect.objectContaining({
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(updatedSchema)
+        })
+      );
+      
+      expect(provider.schemas[0].name).toBe('Updated Schema Name');
+      expect(updateSchemaSpy).toHaveBeenCalledWith(updatedSchema);
+    });
+
+    it('should throw error when PUT request fails', async () => {
+      const provider = createProviderWithSchemaAndData();
+
+      // Mock fetch to return error
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        statusText: 'Server Error'
+      });
+
+      const originalName = testSchema.name;
+      const updatedSchema: DataSchema = {
+        ...testSchema,
+        name: 'Updated Schema Name'
+      };
+
+      // Act & Assert
+      await expect(provider.updateSchema(updatedSchema)).rejects.toThrow(
+        'Failed to update schema: Server Error'
+      );
+      
+      // Schema should remain unchanged on failure
+      expect(provider.schemas[0].name).toBe(originalName);
+    });
+
+    it('should do nothing when schema does not exist', async () => {
+      const provider = createEmptyProvider();
+      
+      const nonExistentSchema: DataSchema = {
+        id: 'non-existent',
+        name: 'Non Existent',
+        source: 'external',
+        fields: []
+      };
+
+      // Act
+      await provider.updateSchema(nonExistentSchema);
+
+      // Assert - nothing should happen
+      expect(provider.schemas).toHaveLength(0);
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('deleteSchema', () => {
+    it('should make DELETE request to remove schema and emit events', async () => {
+      const provider = createProviderWithSchemaAndData();
+
+      // Set up event listener
+      const deleteSchemaSpy = vi.fn();
+      provider.on('deleteSchema', deleteSchemaSpy);
+
+      // Act
+      await provider.deleteSchema(testSchema);
+
+      // Assert
+      expect(global.fetch).toHaveBeenCalledWith(
+        `${baseUrl}/schemas/${testSchema.id}`,
+        expect.objectContaining({
+          method: 'DELETE'
+        })
+      );
+      
+      expect(provider.schemas).not.toContain(testSchema);
+      expect(deleteSchemaSpy).toHaveBeenCalledWith(testSchema);
+    });
+
+    it('should throw error when DELETE request fails', async () => {
+      const provider = createProviderWithSchemaAndData();
+
+      // Mock fetch to return error
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        statusText: 'Server Error'
+      });
+
+      // Act & Assert
+      await expect(provider.deleteSchema(testSchema)).rejects.toThrow(
+        'Failed to delete schema: Server Error'
+      );
+      
+      // Schema should remain in the list on failure
+      expect(provider.schemas.find(s => s.id === testSchema.id)).toBeDefined();
+    });
+
+    it('should do nothing when schema does not exist', async () => {
+      const provider = createEmptyProvider();
+      
+      const nonExistentSchema: DataSchema = {
+        id: 'non-existent',
+        name: 'Non Existent',
+        source: 'external',
+        fields: []
+      };
+
+      // Act
+      await provider.deleteSchema(nonExistentSchema);
+
+      // Assert - nothing should happen
+      expect(provider.schemas).toHaveLength(0);
+      expect(global.fetch).not.toHaveBeenCalled();
     });
   });
 });

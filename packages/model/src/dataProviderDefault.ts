@@ -68,17 +68,24 @@ export class DefaultDataProvider
     this.emit('updateData', { data: [data] });
   }
 
-  updateSchema(schema: DataSchema) {
+  async addSchema(schema: DataSchema): Promise<void> {
+    this.schemas.push(schema);
+    this.emit('addSchema', schema);
+  }
+
+  async updateSchema(schema: DataSchema): Promise<void> {
     const idx = this.schemas.findIndex(s => s.id === schema.id);
     if (idx < 0) return;
     this.schemas[idx] = schema;
+    this.emit('updateSchema', schema);
   }
 
-  deleteSchema(schema: DataSchema) {
+  async deleteSchema(schema: DataSchema): Promise<void> {
     const idx = this.schemas.findIndex(s => s.id === schema.id);
     if (idx < 0) return;
 
     this.schemas.splice(idx, 1);
+    this.emit('deleteSchema', schema);
   }
 
   serialize(): string {
