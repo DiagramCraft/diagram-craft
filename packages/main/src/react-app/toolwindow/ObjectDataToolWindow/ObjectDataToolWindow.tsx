@@ -14,7 +14,7 @@ import { commitWithUndo, SnapshotUndoableAction } from '@diagram-craft/model/dia
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { newid } from '@diagram-craft/utils/id';
 import { unique } from '@diagram-craft/utils/array';
-import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { Button } from '@diagram-craft/app-components/Button';
@@ -26,6 +26,7 @@ import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { ObjectNamePanel } from './ObjectNamePanel';
 import { EditItemDialog } from '../DataToolWindow/EditItemDialog';
 import type { Data } from '@diagram-craft/model/dataProvider';
+import type { DiagramElement } from '@diagram-craft/model/diagramElement';
 
 const makeTemplate = (): DataSchema => {
   return {
@@ -45,6 +46,10 @@ const makeTemplate = (): DataSchema => {
       }
     ]
   };
+};
+
+const findEntryBySchema = (e: DiagramElement, schema: string) => {
+  return e.metadata.data?.data?.find(s => s.schema === schema);
 };
 
 export const ObjectDataToolWindow = () => {
@@ -113,9 +118,9 @@ export const ObjectDataToolWindow = () => {
   const addSchemaToSelection = useCallback(
     (schema: string) => {
       $d.selectionState.elements.forEach(e => {
-        const entry = e.metadata.data?.data?.find(s => s.schema === schema);
+        const entry = findEntryBySchema(e, schema);
+        const uow = new UnitOfWork($d, true);
         if (!entry) {
-          const uow = new UnitOfWork($d, true);
           e.updateMetadata(p => {
             p.data ??= {};
             p.data.data ??= [];
@@ -123,7 +128,6 @@ export const ObjectDataToolWindow = () => {
           }, uow);
           commitWithUndo(uow, 'Add schema to selection');
         } else if (!entry.enabled) {
-          const uow = new UnitOfWork($d, true);
           e.updateMetadata(p => {
             p.data!.data!.find(s => s.schema === schema)!.enabled = true;
           }, uow);
@@ -137,7 +141,7 @@ export const ObjectDataToolWindow = () => {
   const removeSchemaFromSelection = useCallback(
     (schema: string) => {
       $d.selectionState.elements.forEach(e => {
-        const entry = e.metadata.data?.data?.find(s => s.schema === schema);
+        const entry = findEntryBySchema(e, schema);
         if (entry?.enabled) {
           const uow = new UnitOfWork($d, true);
           e.updateMetadata(p => {
@@ -153,7 +157,7 @@ export const ObjectDataToolWindow = () => {
   const removeDataFromSelection = useCallback(
     (schema: string) => {
       $d.selectionState.elements.forEach(e => {
-        const entry = e.metadata.data?.data?.find(s => s.schema === schema);
+        const entry = findEntryBySchema(e, schema);
         if (entry?.enabled) {
           const uow = new UnitOfWork($d, true);
           e.updateMetadata(p => {
@@ -177,21 +181,23 @@ export const ObjectDataToolWindow = () => {
 
   const editExternalData = useCallback(
     (schema: string) => {
+      const dataProvider = $d.document.data.provider;
+      assert.present(dataProvider);
+
       // Get the external data item for editing
-      const element = $d.selectionState.elements[0];
-      const externalData = element?.metadata.data?.data?.find(
-        d => d.schema === schema && d.type === 'external'
-      );
-      if (externalData?.external?.uid && $d.document.data.provider) {
-        const dataProvider = $d.document.data.provider;
-        const items = dataProvider.getById([externalData.external.uid]);
-        if (items.length > 0) {
-          setEditItemDialog({
-            open: true,
-            item: items[0],
-            schema: schema
-          });
-        }
+      const e = $d.selectionState.elements[0];
+      const externalData = findEntryBySchema(e, schema);
+      assert.true(externalData?.type === 'external');
+
+      if (externalData?.enabled) {
+        const items = dataProvider.getById([externalData.external!.uid]);
+        assert.arrayWithExactlyOneElement(items);
+
+        setEditItemDialog({
+          open: true,
+          item: items[0],
+          schema: schema
+        });
       }
     },
     [$d, setEditItemDialog]
