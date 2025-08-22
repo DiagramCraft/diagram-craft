@@ -173,11 +173,9 @@ export const ObjectDataToolWindow = () => {
   const saveSchema = useCallback((s: DataSchema) => {
     const schemas = $d.document.data.schemas;
     const isNew = schemas.get(s.id).id === '';
-    if (isNew) {
-      $d.undoManager.addAndExecute(new AddSchemaUndoableAction($d, s));
-    } else {
-      $d.undoManager.addAndExecute(new ModifySchemaUndoableAction($d, s));
-    }
+    $d.undoManager.addAndExecute(
+      isNew ? new AddSchemaUndoableAction($d, s) : new ModifySchemaUndoableAction($d, s)
+    );
     redraw();
   }, []);
 
@@ -213,9 +211,7 @@ export const ObjectDataToolWindow = () => {
             <Accordion.ItemHeaderButtons>
               <a
                 className={'cmp-button cmp-button--icon-only'}
-                onClick={() => {
-                  setEditSchemaDialog({ open: true, schema: undefined });
-                }}
+                onClick={() => setEditSchemaDialog({ open: true, schema: undefined })}
                 title="Add new schema"
               >
                 <TbPlus />
@@ -234,11 +230,9 @@ export const ObjectDataToolWindow = () => {
               {/* Show all schemas, but conditionally render content */}
               {$d.document.data.schemas.all.map(schema => {
                 const isSchemaEnabled = enabledSchemas.includes(schema.id);
-                const isExternal = $d.selectionState.elements.some(e => {
-                  return (
-                    e.metadata.data?.data?.find(d => d.schema === schema.id)?.type === 'external'
-                  );
-                });
+                const isExternal = $d.selectionState.elements.some(
+                  e => e.metadata.data?.data?.find(d => d.schema === schema.id)?.type === 'external'
+                );
                 const isExternalSchema = schema.source === 'external';
 
                 if (!editMode && !isSchemaEnabled) return null;
@@ -277,9 +271,7 @@ export const ObjectDataToolWindow = () => {
                                 }
                               }
                             }}
-                            onClick={e => {
-                              e.stopPropagation();
-                            }}
+                            onClick={e => e.stopPropagation()}
                           />
                         )}
 
@@ -330,9 +322,9 @@ export const ObjectDataToolWindow = () => {
                               <DropdownMenu.Content className="cmp-context-menu" sideOffset={2}>
                                 <DropdownMenu.Item
                                   className="cmp-context-menu__item"
-                                  onClick={() => {
-                                    setEditSchemaDialog({ open: true, schema: schema });
-                                  }}
+                                  onClick={() =>
+                                    setEditSchemaDialog({ open: true, schema: schema })
+                                  }
                                 >
                                   Edit Schema
                                 </DropdownMenu.Item>
@@ -382,9 +374,9 @@ export const ObjectDataToolWindow = () => {
                       <div className={'cmp-labeled-table'}>
                         {schema.fields.map(f => {
                           const v = unique(
-                            $d.selectionState.elements.map(e => {
-                              return findEntryBySchema(e, schema.id)?.data?.[f.id];
-                            })
+                            $d.selectionState.elements.map(
+                              e => findEntryBySchema(e, schema.id)?.data?.[f.id]
+                            )
                           );
 
                           return (
@@ -425,9 +417,9 @@ export const ObjectDataToolWindow = () => {
                     <div className={'cmp-labeled-table'}>
                       {customDataKeys.map(k => {
                         const v = unique(
-                          $d.selectionState.elements.map(e => {
-                            return e.metadata.data?.customData?.[k]?.toString();
-                          })
+                          $d.selectionState.elements.map(e =>
+                            e.metadata.data?.customData?.[k]?.toString()
+                          )
                         );
 
                         return (
