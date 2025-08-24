@@ -1,4 +1,4 @@
-import { parseAndQuery } from '@diagram-craft/query/query';
+import { parseAndQuery } from 'ejq';
 import { useRef, useState } from 'react';
 import {
   TbArrowDownRight,

@@ -3,7 +3,7 @@ import type { LayerCRDT } from './diagramLayer';
 import { Layer } from './diagramLayer';
 import type { Diagram } from './diagram';
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
-import { parseAndQuery } from '@diagram-craft/query/query';
+import { parseAndQuery } from 'ejq';
 import { assert, notImplemented } from '@diagram-craft/utils/assert';
 import { nodeDefaults } from './diagramDefaults';
 import {
