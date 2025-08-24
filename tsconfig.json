@@ -31,7 +31,7 @@
       "@diagram-craft/config": ["./packages/main/app.config.ts"],
       "@diagram-craft/main/*": ["./packages/main/src/*"],
       "@diagram-craft/app-components/*": ["./packages/app-components/src/*"],
-      "ejq/*": ["./submodules/ejq/lib/*"],
+      "ejq": ["./submodules/ejq/lib/index.ts"],
       "@diagram-craft/utils/*": ["./packages/utils/src/*"],
       "@diagram-craft/geometry/*": ["./packages/geometry/src/*"],
       "@diagram-craft/model/*": ["./packages/model/src/*"],
