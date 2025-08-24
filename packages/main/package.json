@@ -23,7 +23,7 @@
     "@diagram-craft/canvas-react": "workspace:^",
     "@diagram-craft/geometry": "workspace:^",
     "@diagram-craft/model": "workspace:^",
-    "@diagram-craft/query": "workspace:^",
+    "ejq": "workspace:^",
     "@diagram-craft/app-components": "workspace:^",
     "@diagram-craft/utils": "workspace:^",
     "@diagram-craft/canvas-drawio": "workspace:^",

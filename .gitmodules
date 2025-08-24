@@ -1,0 +1,3 @@
+[submodule "submodules/ejq"]
+	path = submodules/ejq
+	url = git@github.com:DiagramCraft/ejq.git
