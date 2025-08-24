@@ -12,7 +12,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          submodules: 'true '
+          submodules: 'true'
 
       - uses: pnpm/action-setup@v4
         name: Install pnpm
@@ -37,7 +37,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: 'true '
+          submodules: 'true'
 
       - uses: pnpm/action-setup@v4
         name: Install pnpm
@@ -65,7 +65,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: 'true '
+          submodules: 'true'
 
       - uses: pnpm/action-setup@v4
         name: Install pnpm
@@ -109,7 +109,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: 'true '
+          submodules: 'true'
 
       - uses: pnpm/action-setup@v4
         name: Install pnpm
