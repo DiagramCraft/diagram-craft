@@ -1,16 +1,195 @@
+import { useRef } from 'react';
+import { TbPlus, TbSeparatorHorizontal, TbSeparatorVertical, TbTrash } from 'react-icons/tb';
 import { ToolWindowPanel } from '../ToolWindowPanel';
+import { useDiagram } from '../../../application';
+import { useEventListener } from '../../hooks/useEventListener';
+import { useRedraw } from '../../hooks/useRedraw';
+import { ColorPicker } from '../../components/ColorPicker';
+import { NumberInput } from '@diagram-craft/app-components/NumberInput';
+import { Button } from '@diagram-craft/app-components/Button';
+import { useConfiguration } from '../../context/ConfigurationContext';
+import { Guide } from '@diagram-craft/model/types';
+
+const DEFAULT_GUIDE_COLOR = '#3b82f6';
+const SECTION_LABEL_COLOR = '#666';
+
+interface GuideRowProps {
+  guide: Guide;
+}
+
+const GuideRow = (props: GuideRowProps) => {
+  const { guide } = props;
+  const diagram = useDiagram();
+  const $cfg = useConfiguration();
+
+  return (
+    <div
+      key={guide.id}
+      className="util-vcenter util-hstack"
+      style={{ gap: '4px', padding: '2px 2px' }}
+    >
+      <Button
+        type={'secondary'}
+        onClick={() =>
+          diagram.updateGuide(guide.id, {
+            type: guide.type === 'horizontal' ? 'vertical' : 'horizontal'
+          })
+        }
+        title={`Change to ${guide.type === 'horizontal' ? 'vertical' : 'horizontal'} guide`}
+      >
+        {guide.type === 'horizontal' ? <TbSeparatorHorizontal /> : <TbSeparatorVertical />}
+      </Button>
+      <NumberInput
+        style={{ width: '60px' }}
+        value={guide.position}
+        onChange={n => diagram.updateGuide(guide.id, { position: n ?? 0 })}
+        validUnits={['px']}
+        defaultUnit={'px'}
+      />
+      <ColorPicker
+        palette={$cfg.palette.primary}
+        value={guide.color ?? DEFAULT_GUIDE_COLOR}
+        onChange={color => diagram.updateGuide(guide.id, { color: color ?? DEFAULT_GUIDE_COLOR })}
+        customPalette={diagram.document.customPalette}
+        onChangeCustomPalette={(idx, v) => diagram.document.customPalette.setColor(idx, v)}
+      />
+      <div style={{ marginLeft: 'auto' }}>
+        <Button type="icon-only" onClick={() => diagram.removeGuide(guide.id)} title="Remove guide">
+          <TbTrash />
+        </Button>
+      </div>
+    </div>
+  );
+};
 
 export const CanvasGuidesPanel = (props: Props) => {
+  const diagram = useDiagram();
+  const redraw = useRedraw();
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  useEventListener(diagram, 'change', redraw);
+
+  const addGuide = () => {
+    const existingGuides = [...diagram.guides];
+
+    if (existingGuides.length === 0) {
+      // First guide: vertical at center of canvas
+      const centerX = diagram.canvas.x + diagram.canvas.w / 2;
+      diagram.addGuide({
+        type: 'vertical',
+        position: centerX,
+        color: DEFAULT_GUIDE_COLOR
+      });
+    } else {
+      // Use the last guide as reference
+      const lastGuide = existingGuides[existingGuides.length - 1];
+      diagram.addGuide({
+        type: lastGuide.type,
+        position: lastGuide.position + 100,
+        color: lastGuide.color ?? DEFAULT_GUIDE_COLOR
+      });
+    }
+
+    // Scroll to bottom after adding
+    setTimeout(() => {
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+      }
+    }, 0);
+  };
+
+  const sortedGuides = [...diagram.guides].sort((a, b) => {
+    // Sort by type first (horizontal, then vertical), then by position
+    if (a.type !== b.type) {
+      return a.type === 'horizontal' ? -1 : 1;
+    }
+    return a.position - b.position;
+  });
+
+  const horizontalGuides = sortedGuides.filter(g => g.type === 'horizontal');
+  const verticalGuides = sortedGuides.filter(g => g.type === 'vertical');
+
+  const renderGuide = (guide: Guide) => <GuideRow key={guide.id} guide={guide} />;
+
   return (
-    <ToolWindowPanel
-      mode={props.mode ?? 'accordion'}
-      title={'Guides'}
-      id={'guides'}
-    >
-      <div className={'cmp-labeled-table'}>
-        <div className={'cmp-labeled-table__label'}>Coming Soon</div>
-        <div className={'cmp-labeled-table__value'}>
-          <div>Guide configuration will be implemented here.</div>
+    <ToolWindowPanel mode={props.mode ?? 'accordion'} title={'Guides'} id={'guides'}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', position: 'relative' }}>
+        {/* Guides List */}
+        {diagram.guides.length > 0 && (
+          <div
+            ref={scrollContainerRef}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '4px',
+              maxHeight: '25vh',
+              overflowY: 'auto',
+              paddingRight: '10px'
+            }}
+          >
+            {horizontalGuides.length > 0 && (
+              <>
+                <div
+                  style={{
+                    fontSize: '0.85em',
+                    fontWeight: '600',
+                    color: SECTION_LABEL_COLOR,
+                    marginTop: '2px',
+                    marginBottom: '4px'
+                  }}
+                >
+                  Horizontal
+                </div>
+                {horizontalGuides.map(renderGuide)}
+              </>
+            )}
+
+            {verticalGuides.length > 0 && (
+              <>
+                <div
+                  style={{
+                    fontSize: '0.85em',
+                    fontWeight: '600',
+                    color: SECTION_LABEL_COLOR,
+                    marginTop: horizontalGuides.length > 0 ? '12px' : '2px',
+                    marginBottom: '4px'
+                  }}
+                >
+                  Vertical
+                </div>
+                {verticalGuides.map(renderGuide)}
+              </>
+            )}
+          </div>
+        )}
+
+        {diagram.guides.length === 0 && (
+          <div
+            style={{
+              color: SECTION_LABEL_COLOR,
+              fontSize: '0.9em',
+              textAlign: 'left',
+              padding: '2px 0'
+            }}
+          >
+            Click the Add button below to add your first guide.
+          </div>
+        )}
+
+        <div style={{ display: 'flex', justifyContent: 'flex-start', marginTop: '8px' }}>
+          <Button
+            type="primary"
+            onClick={addGuide}
+            title={
+              diagram.guides.length === 0
+                ? 'Add first guide (vertical at canvas center)'
+                : `Add ${diagram.guides[diagram.guides.length - 1]?.type || 'vertical'} guide`
+            }
+            style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
+          >
+            <TbPlus />
+            <span>Add</span>
+          </Button>
         </div>
       </div>
     </ToolWindowPanel>
