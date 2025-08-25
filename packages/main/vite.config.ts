@@ -19,7 +19,9 @@ export default defineConfig(({ command, mode, isSsrBuild, isPreview }) => {
       rollupOptions: {
         output: {
           manualChunks: id => {
-            if (id.includes('node_modules')) {
+            if (id.includes('embeddable-jq')) {
+              return 'embeddable-jq';
+            } else if (id.includes('node_modules')) {
               return 'vendor';
             } else if (id.includes('canvas-nodes/')) {
               return 'shapes';
@@ -27,8 +29,6 @@ export default defineConfig(({ command, mode, isSsrBuild, isPreview }) => {
               return 'drawio';
             } else if (id.includes('sample/')) {
               return 'sample-data';
-            } else if (id.includes('ejq')) {
-              return 'ejq';
             }
           }
         }
@@ -44,7 +44,6 @@ export default defineConfig(({ command, mode, isSsrBuild, isPreview }) => {
     resolve: {
       alias: {
         '@diagram-craft/config': path.join(__dirname, env.APP_CONFIG ?? 'app.config.ts'),
-        'ejq': path.join(__dirname, '../../submodules/ejq/lib'),
         '@diagram-craft/canvas': path.join(__dirname, '../../packages/canvas/src'),
         '@diagram-craft/canvas-app': path.join(__dirname, '../../packages/canvas-app/src'),
         '@diagram-craft/canvas-drawio': path.join(__dirname, '../../packages/canvas-drawio/src'),

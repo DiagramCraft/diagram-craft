@@ -311,9 +311,9 @@ importers:
       '@radix-ui/react-tooltip':
         specifier: ^1.1.4
         version: 1.2.7(@types/react-dom@18.3.7(@types/react@18.3.23))(@types/react@18.3.23)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      ejq:
-        specifier: workspace:^
-        version: link:../../submodules/ejq
+      embeddable-jq:
+        specifier: ^1.0.0
+        version: 1.0.0
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -372,9 +372,9 @@ importers:
       '@diagram-craft/utils':
         specifier: workspace:^
         version: link:../utils
-      ejq:
-        specifier: workspace:^
-        version: link:../../submodules/ejq
+      embeddable-jq:
+        specifier: ^1.0.0
+        version: 1.0.0
       y-protocols:
         specifier: ^1.0.6
         version: 1.0.6(yjs@13.6.27)
@@ -2474,6 +2474,9 @@ packages:
 
   electron-to-chromium@1.5.172:
     resolution: {integrity: sha512-fnKW9dGgmBfsebbYognQSv0CGGLFH1a5iV9EDYTBwmAQn+whbzHbLFlC+3XbHc8xaNtpO0etm8LOcRXs1qMRkQ==}
+
+  embeddable-jq@1.0.0:
+    resolution: {integrity: sha512-Bj8vmS69oOjbK/Je89sUU4FDdsjKf6coR6D5d00/UzrJueaiAzP03d0JgG6LF2HG7dayku2DCmOKtYfxK7eITg==}
 
   emoji-regex@10.4.0:
     resolution: {integrity: sha512-EC+0oUMY1Rqm4O6LLrgjtYDvcVYTy7chDnM4Q7030tP4Kwj3u/pR6gP9ygnp2CJMK5Gq+9Q2oqmrFJAz01DXjw==}
@@ -6513,6 +6516,8 @@ snapshots:
   effect@3.5.7: {}
 
   electron-to-chromium@1.5.172: {}
+
+  embeddable-jq@1.0.0: {}
 
   emoji-regex@10.4.0: {}
 
