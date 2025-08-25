@@ -210,6 +210,109 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
     });
   });
 
+  describe('guides', () => {
+    it('should initialize with empty guides', () => {
+      // Setup
+      const { doc1, doc2 } = standardTestModel(backend);
+
+      // Verify
+      expect(doc1.diagrams[0].guides).toEqual([]);
+      if (doc2) expect(doc2.diagrams[0].guides).toEqual([]);
+    });
+
+    it('should add guides correctly', () => {
+      // Setup
+      const { doc1, doc2 } = standardTestModel(backend);
+
+      const diagramChange = [vi.fn(), vi.fn()];
+      doc1.diagrams[0].on('change', diagramChange[0]);
+      doc2?.diagrams[0]?.on?.('change', diagramChange[1]);
+
+      const diagram = doc1.diagrams[0];
+
+      // Act - add horizontal guide
+      const hGuide = diagram.addGuide({ type: 'horizontal', position: 100, color: 'red' });
+
+      // Verify
+      expect(hGuide.type).toBe('horizontal');
+      expect(hGuide.position).toBe(100);
+      expect(hGuide.color).toBe('red');
+      expect(diagram.guides).toHaveLength(1);
+      expect(diagram.guides[0]).toEqual(hGuide);
+      expect(diagramChange[0]).toHaveBeenCalledTimes(1);
+
+      if (doc2) {
+        expect(doc2.diagrams[0].guides).toHaveLength(1);
+        expect(doc2.diagrams[0].guides[0]).toEqual(hGuide);
+        expect(diagramChange[1]).toHaveBeenCalledTimes(1);
+      }
+
+      // Act - add vertical guide
+      const vGuide = diagram.addGuide({ type: 'vertical', position: 200 });
+
+      // Verify
+      expect(vGuide.type).toBe('vertical');
+      expect(vGuide.position).toBe(200);
+      expect(vGuide.color).toBeUndefined();
+      expect(diagram.guides).toHaveLength(2);
+
+      if (doc2) {
+        expect(doc2.diagrams[0].guides).toHaveLength(2);
+      }
+    });
+
+    it('should remove guides correctly', () => {
+      // Setup
+      const { doc1, doc2 } = standardTestModel(backend);
+      const diagram = doc1.diagrams[0];
+      const guide = diagram.addGuide({ type: 'horizontal', position: 100, color: 'blue' });
+
+      const diagramChange = [vi.fn(), vi.fn()];
+      doc1.diagrams[0].on('change', diagramChange[0]);
+      doc2?.diagrams[0]?.on?.('change', diagramChange[1]);
+
+      // Act
+      diagram.removeGuide(guide.id);
+
+      // Verify
+      expect(diagram.guides).toHaveLength(0);
+      expect(diagramChange[0]).toHaveBeenCalledTimes(1);
+
+      if (doc2) {
+        expect(doc2.diagrams[0].guides).toHaveLength(0);
+        expect(diagramChange[1]).toHaveBeenCalledTimes(1);
+      }
+    });
+
+    it('should update guides correctly', () => {
+      // Setup
+      const { doc1, doc2 } = standardTestModel(backend);
+      const diagram = doc1.diagrams[0];
+      const guide = diagram.addGuide({ type: 'vertical', position: 150 });
+
+      const diagramChange = [vi.fn(), vi.fn()];
+      doc1.diagrams[0].on('change', diagramChange[0]);
+      doc2?.diagrams[0]?.on?.('change', diagramChange[1]);
+
+      // Act
+      diagram.updateGuide(guide.id, { position: 300, color: 'green' });
+
+      // Verify
+      const updatedGuide = diagram.guides.find(g => g.id === guide.id);
+      expect(updatedGuide?.position).toBe(300);
+      expect(updatedGuide?.color).toBe('green');
+      expect(updatedGuide?.type).toBe('vertical'); // Should remain unchanged
+      expect(diagramChange[0]).toHaveBeenCalledTimes(1);
+
+      if (doc2) {
+        const remoteGuide = doc2.diagrams[0].guides.find(g => g.id === guide.id);
+        expect(remoteGuide?.position).toBe(300);
+        expect(remoteGuide?.color).toBe('green');
+        expect(diagramChange[1]).toHaveBeenCalledTimes(1);
+      }
+    });
+  });
+
   describe('DocumentBuilder', () => {
     describe('empty', () => {
       it('should create a diagram with a default layer', () => {

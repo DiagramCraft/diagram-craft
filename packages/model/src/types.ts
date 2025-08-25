@@ -60,3 +60,12 @@ export type ControlPoints = Readonly<{
   cp1: Point;
   cp2: Point;
 }>;
+
+export type GuideType = 'horizontal' | 'vertical';
+
+export interface Guide {
+  id: string;
+  type: GuideType;
+  position: number;
+  color?: string;
+}
