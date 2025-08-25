@@ -1,6 +1,7 @@
 import { SelectionComponent } from '../components/SelectionComponent';
 import { SelectionMarqueeComponent } from '../components/SelectionMarqueeComponent';
 import { GridComponent } from '../components/GridComponent';
+import { CanvasGuidesComponent } from '../components/CanvasGuidesComponent';
 import { Actions, findAndExecuteAction } from '../keyMap';
 import { DocumentBoundsComponent } from '../components/DocumentBoundsComponent';
 import { DRAG_DROP_MANAGER, Modifiers } from '../dragDropManager';
@@ -364,6 +365,8 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
             this.subComponent($cmp(DocumentBoundsComponent), { ...canvasState }),
 
             this.subComponent($cmp(GridComponent), { ...canvasState }),
+
+            this.subComponent($cmp(CanvasGuidesComponent), { ...canvasState }),
 
             svg.g(
               {},
