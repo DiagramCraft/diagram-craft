@@ -1,4 +1,4 @@
-import { parseAndQuery } from 'ejq';
+import { parseAndQuery } from 'embeddable-jq';
 import { useRef, useState } from 'react';
 import {
   TbArrowDownRight,
