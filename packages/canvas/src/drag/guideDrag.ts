@@ -3,15 +3,15 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { DEFAULT_GUIDE_COLOR, Guide, GuideType } from '@diagram-craft/model/types';
 import { round } from '@diagram-craft/utils/math';
 import { CreateGuideUndoableAction, MoveGuideUndoableAction } from '@diagram-craft/model/guides';
-import { Point } from '@diagram-craft/geometry/point';
 import { SnapManager } from '@diagram-craft/model/snap/snapManager';
 import { SnapManagerConfig } from '@diagram-craft/model/snap/snapManagerConfig';
 import { assert } from '@diagram-craft/utils/assert';
 import { Line } from '@diagram-craft/geometry/line';
+import { Range } from '@diagram-craft/geometry/range';
 
 const isFreeDrag = (m: Modifiers) => m.altKey;
 
-const LINE_LENGTH = 10000;
+const LINE_RANGE = Range.of(-10000, 10000);
 
 abstract class BaseGuideDrag extends Drag {
   protected readonly snapManager: SnapManager;
@@ -23,7 +23,7 @@ abstract class BaseGuideDrag extends Drag {
     snapConfig.enabled = this.diagram.snapManagerConfig.enabled;
     snapConfig.threshold = this.diagram.snapManagerConfig.threshold;
 
-    this.snapManager = new SnapManager(this.diagram, () => true, snapConfig);
+    this.snapManager = new SnapManager(this.diagram, id => !diagram.lookup(id)?.parent, snapConfig);
   }
 
   protected snapGuidePosition(
@@ -31,17 +31,16 @@ abstract class BaseGuideDrag extends Drag {
     guideType: GuideType,
     modifiers: Modifiers
   ): number {
-    if (isFreeDrag(modifiers)) {
-      return round(rawPosition);
-    }
+    if (isFreeDrag(modifiers)) return round(rawPosition);
 
-    const line =
-      guideType === 'horizontal'
-        ? Line.of(Point.of(-LINE_LENGTH, rawPosition), Point.of(LINE_LENGTH, rawPosition))
-        : Line.of(Point.of(rawPosition, -LINE_LENGTH), Point.of(rawPosition, LINE_LENGTH));
+    const isHorizontal = guideType === 'horizontal';
+
+    const line = isHorizontal
+      ? Line.horizontal(rawPosition, LINE_RANGE)
+      : Line.vertical(rawPosition, LINE_RANGE);
 
     const snapResult = this.snapManager.snapOrthoLinearLine(line);
-    return guideType === 'horizontal' ? snapResult.adjusted.from.y : snapResult.adjusted.from.x;
+    return isHorizontal ? snapResult.adjusted.from.y : snapResult.adjusted.from.x;
   }
 }
 
