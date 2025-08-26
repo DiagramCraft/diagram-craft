@@ -86,7 +86,7 @@ export class NodeSnapProvider implements SnapProvider<'node'> {
     return [...dest.h.map(e => e[0]), ...dest.v.map(e => e[0])];
   }
 
-  makeHighlight(box: Box, match: MatchingMagnetPair<'node'>, _axis: Axis): Highlight {
+  highlight(box: Box, match: MatchingMagnetPair<'node'>, _axis: Axis): Highlight {
     const mBox = match.matching.node.bounds;
     return {
       line: Line.isHorizontal(match.matching.line)
@@ -97,11 +97,7 @@ export class NodeSnapProvider implements SnapProvider<'node'> {
     };
   }
 
-  moveMagnet(magnet: MagnetOfType<'node'>, delta: Point): void {
-    magnet.line = Line.move(magnet.line, delta);
-  }
-
-  consolidateHighlights(guides: Highlight[]): Highlight[] {
+  filterHighlights(guides: Highlight[]): Highlight[] {
     return guides;
   }
 }

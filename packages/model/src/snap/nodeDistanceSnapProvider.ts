@@ -120,11 +120,7 @@ export class NodeDistanceSnapProvider
     return magnets;
   }
 
-  makeHighlight(
-    box: Box,
-    match: MatchingMagnetPair<'distance'>,
-    axis: Axis
-  ): Highlight | undefined {
+  highlight(box: Box, match: MatchingMagnetPair<'distance'>, axis: Axis): Highlight | undefined {
     const m = match.matching;
 
     const tp = Line.midpoint(match.self.line);
@@ -168,17 +164,7 @@ export class NodeDistanceSnapProvider
     };
   }
 
-  moveMagnet(magnet: MagnetOfType<'distance'>, delta: Point): void {
-    magnet.line = Line.move(magnet.line, delta);
-    magnet.distancePairs.forEach(dp => {
-      dp.pointA = Point.add(dp.pointA, delta);
-      dp.pointB = Point.add(dp.pointB, delta);
-      dp.rangeA = Range.add(dp.rangeA, delta[Axis.toXY(magnet.axis)]);
-      dp.rangeB = Range.add(dp.rangeB, delta[Axis.toXY(magnet.axis)]);
-    });
-  }
-
-  consolidateHighlights(guides: Highlight[]): Highlight[] {
+  filterHighlights(guides: Highlight[]): Highlight[] {
     return guides;
   }
 }

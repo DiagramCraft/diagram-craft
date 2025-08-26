@@ -47,7 +47,7 @@ export class GridSnapProvider implements SnapProvider<'grid'> {
     return magnets;
   }
 
-  makeHighlight(box: Box, match: MatchingMagnetPair<'grid'>, _axis: Axis): Highlight {
+  highlight(box: Box, match: MatchingMagnetPair<'grid'>, _axis: Axis): Highlight {
     return {
       line: Line.isHorizontal(match.matching.line)
         ? Line.of(
@@ -63,11 +63,7 @@ export class GridSnapProvider implements SnapProvider<'grid'> {
     };
   }
 
-  moveMagnet(magnet: MagnetOfType<'grid'>, delta: Point): void {
-    magnet.line = Line.move(magnet.line, delta);
-  }
-
-  consolidateHighlights(guides: Highlight[]): Highlight[] {
+  filterHighlights(guides: Highlight[]): Highlight[] {
     assert.true(guides.every(g => g.selfMagnet.type === 'source'));
     let result = [...guides] as Array<Highlight & { selfMagnet: MagnetOfType<'source'> }>;
 

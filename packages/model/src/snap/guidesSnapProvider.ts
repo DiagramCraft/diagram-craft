@@ -5,7 +5,6 @@ import { MagnetOfType } from './magnet';
 import { Box } from '@diagram-craft/geometry/box';
 import { Line } from '@diagram-craft/geometry/line';
 import { Axis } from '@diagram-craft/geometry/axis';
-import { Point } from '@diagram-craft/geometry/point';
 
 export class GuidesSnapProvider implements SnapProvider<'guide'> {
   constructor(private readonly diagram: Diagram) {}
@@ -33,19 +32,11 @@ export class GuidesSnapProvider implements SnapProvider<'guide'> {
     return magnets;
   }
 
-  makeHighlight(
-    _box: Box,
-    _match: MatchingMagnetPair<'guide'>,
-    _axis: Axis
-  ): Highlight | undefined {
+  highlight(_box: Box, _match: MatchingMagnetPair<'guide'>, _axis: Axis): Highlight | undefined {
     return undefined;
   }
 
-  moveMagnet(magnet: MagnetOfType<'guide'>, delta: Point): void {
-    magnet.line = Line.move(magnet.line, delta);
-  }
-
-  consolidateHighlights(guides: Highlight[]): Highlight[] {
+  filterHighlights(guides: Highlight[]): Highlight[] {
     return guides;
   }
 }

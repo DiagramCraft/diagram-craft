@@ -169,5 +169,22 @@ export const Magnet = {
     });
 
     return magnets;
+  },
+
+  move: (magnet: Magnet, delta: Point) => {
+    switch (magnet.type) {
+      case 'distance':
+        magnet.line = Line.move(magnet.line, delta);
+        magnet.distancePairs.forEach(dp => {
+          dp.pointA = Point.add(dp.pointA, delta);
+          dp.pointB = Point.add(dp.pointB, delta);
+          dp.rangeA = Range.add(dp.rangeA, delta[Axis.toXY(magnet.axis)]);
+          dp.rangeB = Range.add(dp.rangeB, delta[Axis.toXY(magnet.axis)]);
+        });
+        break;
+      default:
+        magnet.line = Line.move(magnet.line, delta);
+        break;
+    }
   }
 };

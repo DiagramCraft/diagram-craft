@@ -85,7 +85,7 @@ export class NodeSizeSnapProvider extends AbstractNodeSnapProvider implements Sn
     return magnets;
   }
 
-  makeHighlight(box: Box, match: MatchingMagnetPair<'size'>, _axis: Axis): Highlight {
+  highlight(box: Box, match: MatchingMagnetPair<'size'>, _axis: Axis): Highlight {
     if (match.matching.axis === 'h') {
       match.matching.distancePairs.push({
         distance: match.matching.size,
@@ -119,11 +119,7 @@ export class NodeSizeSnapProvider extends AbstractNodeSnapProvider implements Sn
     };
   }
 
-  moveMagnet(magnet: MagnetOfType<'size'>, delta: Point): void {
-    magnet.line = Line.move(magnet.line, delta);
-  }
-
-  consolidateHighlights(highlights: Highlight[]): Highlight[] {
+  filterHighlights(highlights: Highlight[]): Highlight[] {
     return highlights;
   }
 }

@@ -5,7 +5,6 @@ import type { MagnetOfType } from './magnet';
 import { Box } from '@diagram-craft/geometry/box';
 import { Line } from '@diagram-craft/geometry/line';
 import { Axis } from '@diagram-craft/geometry/axis';
-import { Point } from '@diagram-craft/geometry/point';
 
 export class CanvasSnapProvider implements SnapProvider<'canvas'> {
   constructor(private readonly diagram: Diagram) {}
@@ -26,7 +25,7 @@ export class CanvasSnapProvider implements SnapProvider<'canvas'> {
     ];
   }
 
-  makeHighlight(_box: Box, match: MatchingMagnetPair<'canvas'>, _axis: Axis): Highlight {
+  highlight(_box: Box, match: MatchingMagnetPair<'canvas'>, _axis: Axis): Highlight {
     return {
       line: match.matching.line,
       matchingMagnet: match.matching,
@@ -34,11 +33,7 @@ export class CanvasSnapProvider implements SnapProvider<'canvas'> {
     };
   }
 
-  moveMagnet(magnet: MagnetOfType<'canvas'>, delta: Point): void {
-    magnet.line = Line.move(magnet.line, delta);
-  }
-
-  consolidateHighlights(guides: Highlight[]): Highlight[] {
+  filterHighlights(guides: Highlight[]): Highlight[] {
     return guides;
   }
 }
