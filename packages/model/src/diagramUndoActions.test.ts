@@ -32,7 +32,7 @@ describe('ElementAddUndoableAction', () => {
     action.undo(UnitOfWork.immediate(diagram));
     expect(diagram.lookup('node1')).toBeUndefined();
 
-    action.redo(UnitOfWork.immediate(diagram));
+    action.redo();
 
     expect(diagram.lookup('node1')).toBe(node);
     expect(layer.elements).toHaveLength(1);
@@ -101,7 +101,7 @@ describe('ElementAddUndoableAction', () => {
     expect(diagram.lookup('edge1')).toBeUndefined();
 
     // Test redo - edge should be restored with connections
-    action.redo(UnitOfWork.immediate(diagram));
+    action.redo();
     expect(diagram.lookup('edge1')).toBe(edge);
     expect((edge.start as AnchorEndpoint).node).toBe(node1);
     expect((edge.end as AnchorEndpoint).node).toBe(node2);

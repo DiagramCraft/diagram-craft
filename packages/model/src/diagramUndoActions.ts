@@ -115,30 +115,32 @@ export class ElementAddUndoableAction implements UndoableAction {
 
   undo(uow: UnitOfWork) {
     uow.trackChanges = true;
-    this.snapshot = uow.commit();
 
     this.elements.forEach(node => {
       uow.snapshot(node);
       assertRegularLayer(node.layer);
       node.layer.removeElement(node, uow);
     });
+    this.snapshot = uow.commit();
 
     this.diagram.selectionState.setElements(
       this.diagram.selectionState.elements.filter(e => !this.elements.includes(e))
     );
   }
 
-  redo(uow: UnitOfWork) {
-    this.elements.forEach(node => {
-      if (isNode(node)) {
-        node.invalidateAnchors(uow);
-      }
-      this.layer.addElement(node, uow);
-    });
+  redo() {
+    UnitOfWork.execute(this.diagram, uow => {
+      this.elements.forEach(node => {
+        if (isNode(node)) {
+          node.invalidateAnchors(uow);
+        }
+        this.layer.addElement(node, uow);
+      });
 
-    if (this.snapshot) {
-      restoreSnapshots(this.snapshot, this.diagram, uow);
-    }
+      if (this.snapshot) {
+        restoreSnapshots(this.snapshot, this.diagram, uow);
+      }
+    });
   }
 }
 
