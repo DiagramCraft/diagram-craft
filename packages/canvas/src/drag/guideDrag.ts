@@ -4,7 +4,6 @@ import { DEFAULT_GUIDE_COLOR, Guide, GuideType } from '@diagram-craft/model/type
 import { round } from '@diagram-craft/utils/math';
 import { CreateGuideUndoableAction, MoveGuideUndoableAction } from '@diagram-craft/model/guides';
 import { SnapManager } from '@diagram-craft/model/snap/snapManager';
-import { SnapManagerConfig } from '@diagram-craft/model/snap/snapManagerConfig';
 import { assert } from '@diagram-craft/utils/assert';
 import { Line } from '@diagram-craft/geometry/line';
 import { Range } from '@diagram-craft/geometry/range';
@@ -22,11 +21,11 @@ abstract class BaseGuideDrag extends Drag {
   ) {
     super();
 
-    const snapConfig = new SnapManagerConfig(['grid', 'node']);
-    snapConfig.enabled = this.diagram.snapManagerConfig.enabled;
-    snapConfig.threshold = this.diagram.snapManagerConfig.threshold;
-
-    this.snapManager = new SnapManager(this.diagram, id => !diagram.lookup(id)?.parent, snapConfig);
+    this.snapManager = new SnapManager(
+      this.diagram,
+      id => !diagram.lookup(id)?.parent,
+      diagram.snapManagerConfig
+    );
   }
 
   protected snapGuidePosition(rawPosition: number, modifiers: Modifiers): number {
