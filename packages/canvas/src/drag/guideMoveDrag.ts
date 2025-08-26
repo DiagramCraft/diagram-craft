@@ -5,7 +5,7 @@ import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { Guide } from '@diagram-craft/model/types';
 import { round } from '@diagram-craft/utils/math';
 
-export class GuideDrag extends Drag {
+export class GuideMoveDrag extends Drag {
   private readonly originalPosition: number;
 
   constructor(

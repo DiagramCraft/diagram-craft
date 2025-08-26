@@ -69,3 +69,5 @@ export interface Guide {
   position: number;
   color?: string;
 }
+
+export const DEFAULT_GUIDE_COLOR = 'var(--accent-9)';

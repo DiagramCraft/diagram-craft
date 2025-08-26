@@ -2,10 +2,9 @@ import { Component, createEffect } from '../component/component';
 import * as svg from '../component/vdom-svg';
 import { toInlineCSS } from '../component/vdom';
 import type { CanvasState } from '../canvas/EditableCanvasComponent';
-import { GuideDrag } from '../drag/guideDrag';
+import { GuideMoveDrag } from '../drag/guideMoveDrag';
 import { DRAG_DROP_MANAGER } from '../dragDropManager';
-
-const DEFAULT_GUIDE_COLOR = 'var(--accent-9)';
+import { DEFAULT_GUIDE_COLOR } from '@diagram-craft/model/types';
 
 export class CanvasGuidesComponent extends Component<CanvasState> {
   render(props: CanvasState) {
@@ -62,7 +61,7 @@ export class CanvasGuidesComponent extends Component<CanvasState> {
             mousedown: (e: MouseEvent) => {
               if (e.button !== 0) return;
 
-              DRAG_DROP_MANAGER.initiate(new GuideDrag(diagram, guide));
+              DRAG_DROP_MANAGER.initiate(new GuideMoveDrag(diagram, guide));
               e.preventDefault();
               e.stopPropagation();
             }
@@ -82,7 +81,7 @@ export class CanvasGuidesComponent extends Component<CanvasState> {
             mousedown: (e: MouseEvent) => {
               if (e.button !== 0) return;
 
-              DRAG_DROP_MANAGER.initiate(new GuideDrag(diagram, guide));
+              DRAG_DROP_MANAGER.initiate(new GuideMoveDrag(diagram, guide));
               e.preventDefault();
               e.stopPropagation();
             }
