@@ -58,6 +58,7 @@ export const deserializeDiagramElements = (
 ) => {
   nodeLookup ??= new Map();
   edgeLookup ??= new Map();
+  uow ??= new UnitOfWork(diagram, false, true);
 
   // Pass 1: create placeholders for all nodes
   for (const n of diagramElements) {
@@ -75,22 +76,21 @@ export const deserializeDiagramElements = (
         }
       }
 
-      nodeLookup.set(
+      const node = DiagramNode.create(
         c.id,
-        DiagramNode.create(
-          c.id,
-          c.nodeType,
-          c.bounds,
-          layer,
-          c.props,
-          {
-            style: c.nodeType === 'text' ? DefaultStyles.node.text : DefaultStyles.node.default,
-            ...c.metadata
-          },
-          c.texts,
-          c.anchors
-        )
+        c.nodeType,
+        c.bounds,
+        layer,
+        c.props,
+        {
+          style: c.nodeType === 'text' ? DefaultStyles.node.text : DefaultStyles.node.default,
+          ...c.metadata
+        },
+        c.texts,
+        c.anchors
       );
+      node.setTags(c.tags ?? [], uow);
+      nodeLookup.set(c.id, node);
     }
   }
 
@@ -116,6 +116,7 @@ export const deserializeDiagramElements = (
         e.waypoints ?? [],
         layer
       );
+      edge.setTags(e.tags ?? [], uow);
 
       if (isSerializedEndpointAnchor(start)) {
         const startNode = nodeLookup.get(start.node.id)!;
@@ -138,7 +139,6 @@ export const deserializeDiagramElements = (
   }
 
   // Pass 3: resolve relations
-  uow ??= new UnitOfWork(diagram, false, true);
   for (const n of diagramElements) {
     for (const c of unfoldGroup(n)) {
       const el = c.type === 'node' ? nodeLookup.get(c.id)! : edgeLookup.get(c.id)!;
@@ -196,6 +196,17 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
 
     const dest = deserializeDiagrams(doc, diagrams, diagramFactory);
     dest.forEach(d => doc.addDiagram(d));
+
+    // Populate document tags from all element tags
+    const tags = new Set<string>();
+    for (const diagram of doc.diagramIterator({ nest: true })) {
+      for (const el of diagram.allElements()) {
+        el.tags.forEach(t => tags.add(t));
+      }
+    }
+    if (tags.size > 0) {
+      doc.tags.set(Array.from(tags));
+    }
 
     if (document.data?.providerId) {
       const provider = DataProviderRegistry.get(document.data.providerId);

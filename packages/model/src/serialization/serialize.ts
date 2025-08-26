@@ -138,7 +138,8 @@ export const serializeDiagramElement = (element: DiagramElement): SerializedElem
       children: node.children.map(serializeDiagramElement) as SerializedNode[],
       props: node.storedPropsCloned,
       metadata: node.metadataCloned,
-      texts: node.textsCloned
+      texts: node.textsCloned,
+      tags: node.tags.length > 0 ? node.tags : undefined
     };
   } else if (isEdge(element)) {
     const edge = element;
@@ -156,7 +157,8 @@ export const serializeDiagramElement = (element: DiagramElement): SerializedElem
       waypoints: edge.waypoints,
       props: edge.storedPropsCloned,
       metadata: edge.metadataCloned,
-      children: edge.children.map(serializeDiagramElement) as SerializedNode[]
+      children: edge.children.map(serializeDiagramElement) as SerializedNode[],
+      tags: edge.tags.length > 0 ? edge.tags : undefined
     };
   } else {
     throw new VerifyNotReached();
