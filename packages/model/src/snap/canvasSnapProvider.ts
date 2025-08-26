@@ -1,5 +1,5 @@
 import type { MatchingMagnetPair, SnapProvider } from './snapManager';
-import type { Guide } from '../selectionState';
+import type { Highlight } from '../selectionState';
 import type { Diagram } from '../diagram';
 import type { MagnetOfType } from './magnet';
 import { Box } from '@diagram-craft/geometry/box';
@@ -26,7 +26,7 @@ export class CanvasSnapProvider implements SnapProvider<'canvas'> {
     ];
   }
 
-  makeGuide(_box: Box, match: MatchingMagnetPair<'canvas'>, _axis: Axis): Guide {
+  makeHighlight(_box: Box, match: MatchingMagnetPair<'canvas'>, _axis: Axis): Highlight {
     return {
       line: match.matching.line,
       matchingMagnet: match.matching,
@@ -38,7 +38,7 @@ export class CanvasSnapProvider implements SnapProvider<'canvas'> {
     magnet.line = Line.move(magnet.line, delta);
   }
 
-  consolidate(guides: Guide[]): Guide[] {
+  consolidateHighlights(guides: Highlight[]): Highlight[] {
     return guides;
   }
 }

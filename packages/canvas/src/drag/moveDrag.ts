@@ -129,12 +129,12 @@ export abstract class AbstractMoveDrag extends Drag {
     }
 
     if (isFreeDrag(modifiers)) {
-      selection.guides = [];
+      selection.highlights = [];
     } else {
       const snapManager = this.diagram.createSnapManager();
 
       const result = snapManager.snapMove(WritableBox.asBox(newBounds), snapDirections);
-      selection.guides = result.guides;
+      selection.highlights = result.highlights;
 
       newBounds.x = result.adjusted.x;
       newBounds.y = result.adjusted.y;
@@ -166,7 +166,7 @@ export abstract class AbstractMoveDrag extends Drag {
 
     const selection = this.diagram.selectionState;
     selection.setDragging(false);
-    selection.guides = [];
+    selection.highlights = [];
 
     this.clearHighlight();
     enablePointerEvents(selection.elements);
@@ -361,7 +361,7 @@ export class MoveDrag extends AbstractMoveDrag {
 
     enablePointerEvents(selection.elements);
 
-    selection.guides = [];
+    selection.highlights = [];
     selection.setElements(newElements, false);
 
     this.uow.notify();
@@ -381,7 +381,7 @@ export class MoveDrag extends AbstractMoveDrag {
     const posititions = elementsToRemove.map(e => e.bounds);
 
     selection.setElements(selection.source.elementIds.map(e => this.diagram.lookup(e)!));
-    selection.guides = [];
+    selection.highlights = [];
 
     elementsToRemove.forEach(e => {
       e.layer.removeElement(e, this.uow);

@@ -1,5 +1,5 @@
 import type { EligibleNodePredicate, MatchingMagnetPair, SnapProvider } from './snapManager';
-import { Guide } from '../selectionState';
+import { Highlight } from '../selectionState';
 import type { Diagram } from '../diagram';
 import { DistancePairWithRange, MagnetOfType } from './magnet';
 import { AbstractNodeSnapProvider } from './abstractNodeSnapProvider';
@@ -120,7 +120,11 @@ export class NodeDistanceSnapProvider
     return magnets;
   }
 
-  makeGuide(box: Box, match: MatchingMagnetPair<'distance'>, axis: Axis): Guide | undefined {
+  makeHighlight(
+    box: Box,
+    match: MatchingMagnetPair<'distance'>,
+    axis: Axis
+  ): Highlight | undefined {
     const m = match.matching;
 
     const tp = Line.midpoint(match.self.line);
@@ -174,7 +178,7 @@ export class NodeDistanceSnapProvider
     });
   }
 
-  consolidate(guides: Guide[]): Guide[] {
+  consolidateHighlights(guides: Highlight[]): Highlight[] {
     return guides;
   }
 }

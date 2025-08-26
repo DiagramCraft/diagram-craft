@@ -113,40 +113,40 @@
   }
 
 
-  .svg-guide__line {
+  .svg-highlight__line {
     stroke-width: calc(1 * var(--zoom));
   }
-  .svg-guide__extension {
+  .svg-highlight__extension {
     stroke-width: calc(1 * var(--zoom));
     stroke-dasharray: calc(5 * var(--zoom)) calc(5 * var(--zoom));
   }
-  .svg-guide__color--node {
+  .svg-highlight__color--node {
     stroke: var(--accent-7);
   }
-  .svg-guide__color--distance {
+  .svg-highlight__color--distance {
     stroke: var(--accent-7);
   }
-  .svg-guide__color--size {
+  .svg-highlight__color--size {
     stroke: var(--accent-7);
   }
-  .svg-guide__color--canvas {
+  .svg-highlight__color--canvas {
     stroke: var(--accent-7);
   }
-  .svg-guide__color--source {
+  .svg-highlight__color--source {
     stroke: var(--accent-7);
   }
-  .svg-guide__color--grid {
+  .svg-highlight__color--grid {
     stroke: var(--accent-7);
   }
-  .svg-guide__distance-line {
+  .svg-highlight__distance-line {
     stroke: var(--accent-7);
     fill: var(--accent-7);
     stroke-width: calc(1 * var(--zoom));
   }
-  .svg-guide__distance-label-bg {
+  .svg-highlight__distance-label-bg {
     fill: white;
   }
-  .svg-guide__distance-label {
+  .svg-highlight__distance-label {
     fill: var(--accent-8);
     font-size: calc(10px * var(--zoom));
     dominant-baseline: middle;

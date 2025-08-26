@@ -101,7 +101,7 @@ export const ElementTransformPanel = (props: Props) => {
 
     UnitOfWork.execute(diagram, uow => {
       diagram.selectionState.elements[0].setBounds(WritableBox.asBox(newBounds), uow);
-      diagram.selectionState.guides = [];
+      diagram.selectionState.highlights = [];
     });
   };
 

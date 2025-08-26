@@ -49,7 +49,7 @@ export class SelectionComponent extends Component<CanvasState> {
     return svg.g(
       {},
       !isOnlyEdges &&
-        this.subComponent($cmp(GuidesComponent), { diagram, guides: selection.guides }),
+        this.subComponent($cmp(GuidesComponent), { diagram, highlights: selection.highlights }),
       svg.g(
         { class: 'svg-selection' },
         !isOnlyEdges &&

@@ -1,5 +1,5 @@
 import type { EligibleNodePredicate, MatchingMagnetPair, SnapProvider } from './snapManager';
-import { Guide } from '../selectionState';
+import { Highlight } from '../selectionState';
 import { MagnetOfType } from './magnet';
 import type { Diagram } from '../diagram';
 import { AbstractNodeSnapProvider } from './abstractNodeSnapProvider';
@@ -85,7 +85,7 @@ export class NodeSizeSnapProvider extends AbstractNodeSnapProvider implements Sn
     return magnets;
   }
 
-  makeGuide(box: Box, match: MatchingMagnetPair<'size'>, _axis: Axis): Guide {
+  makeHighlight(box: Box, match: MatchingMagnetPair<'size'>, _axis: Axis): Highlight {
     if (match.matching.axis === 'h') {
       match.matching.distancePairs.push({
         distance: match.matching.size,
@@ -123,7 +123,7 @@ export class NodeSizeSnapProvider extends AbstractNodeSnapProvider implements Sn
     magnet.line = Line.move(magnet.line, delta);
   }
 
-  consolidate(guides: Guide[]): Guide[] {
-    return guides;
+  consolidateHighlights(highlights: Highlight[]): Highlight[] {
+    return highlights;
   }
 }

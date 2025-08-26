@@ -1,5 +1,5 @@
 import type { MatchingMagnetPair, SnapProvider } from './snapManager';
-import type { Guide } from '../selectionState';
+import type { Highlight } from '../selectionState';
 import type { Diagram } from '../diagram';
 import { MagnetOfType } from './magnet';
 import { Box } from '@diagram-craft/geometry/box';
@@ -47,7 +47,7 @@ export class GridSnapProvider implements SnapProvider<'grid'> {
     return magnets;
   }
 
-  makeGuide(box: Box, match: MatchingMagnetPair<'grid'>, _axis: Axis): Guide {
+  makeHighlight(box: Box, match: MatchingMagnetPair<'grid'>, _axis: Axis): Highlight {
     return {
       line: Line.isHorizontal(match.matching.line)
         ? Line.of(
@@ -67,9 +67,9 @@ export class GridSnapProvider implements SnapProvider<'grid'> {
     magnet.line = Line.move(magnet.line, delta);
   }
 
-  consolidate(guides: Guide[]): Guide[] {
+  consolidateHighlights(guides: Highlight[]): Highlight[] {
     assert.true(guides.every(g => g.selfMagnet.type === 'source'));
-    let result = [...guides] as Array<Guide & { selfMagnet: MagnetOfType<'source'> }>;
+    let result = [...guides] as Array<Highlight & { selfMagnet: MagnetOfType<'source'> }>;
 
     if (result.find(c => c.selfMagnet.subtype === 'center' && c.selfMagnet.axis === 'h')) {
       result = result.filter(

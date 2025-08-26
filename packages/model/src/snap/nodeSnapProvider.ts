@@ -1,6 +1,6 @@
 import type { Diagram } from '../diagram';
 import type { EligibleNodePredicate, MatchingMagnetPair, SnapProvider } from './snapManager';
-import { Guide } from '../selectionState';
+import { Highlight } from '../selectionState';
 import { Magnet, MagnetOfType } from './magnet';
 import { isNode } from '../diagramElement';
 import { Box } from '@diagram-craft/geometry/box';
@@ -86,7 +86,7 @@ export class NodeSnapProvider implements SnapProvider<'node'> {
     return [...dest.h.map(e => e[0]), ...dest.v.map(e => e[0])];
   }
 
-  makeGuide(box: Box, match: MatchingMagnetPair<'node'>, _axis: Axis): Guide {
+  makeHighlight(box: Box, match: MatchingMagnetPair<'node'>, _axis: Axis): Highlight {
     const mBox = match.matching.node.bounds;
     return {
       line: Line.isHorizontal(match.matching.line)
@@ -101,7 +101,7 @@ export class NodeSnapProvider implements SnapProvider<'node'> {
     magnet.line = Line.move(magnet.line, delta);
   }
 
-  consolidate(guides: Guide[]): Guide[] {
+  consolidateHighlights(guides: Highlight[]): Highlight[] {
     return guides;
   }
 }

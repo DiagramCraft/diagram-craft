@@ -20,7 +20,7 @@ export class RotateDrag extends Drag {
 
   onDrag(event: DragEvents.DragStart) {
     const selection = this.diagram.selectionState;
-    selection.guides = [];
+    selection.highlights = [];
 
     const snapManager = this.diagram.createSnapManager();
 
