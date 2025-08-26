@@ -781,8 +781,8 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   // TODO: Add assertions for lookups
   restore(snapshot: DiagramEdgeSnapshot, uow: UnitOfWork) {
     this.#props.set(snapshot.props as EdgeProps);
-    this.#start.set(Endpoint.deserialize(snapshot.start, this.diagram.nodeLookup));
-    this.#end.set(Endpoint.deserialize(snapshot.end, this.diagram.nodeLookup));
+    this.setStart(Endpoint.deserialize(snapshot.start, this.diagram.nodeLookup), uow);
+    this.setEnd(Endpoint.deserialize(snapshot.end, this.diagram.nodeLookup), uow);
     this.#waypoints.set((snapshot.waypoints ?? []) as Array<Waypoint>);
 
     this.#labelNodes.set(

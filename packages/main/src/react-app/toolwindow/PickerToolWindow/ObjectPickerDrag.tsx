@@ -227,7 +227,7 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
       }
     });
 
-    new ElementAddUndoableAction(this.#elements, this.diagram, activeLayer).redo();
+    new ElementAddUndoableAction(this.#elements, this.diagram, activeLayer).redo(uow);
 
     this.diagram.selectionState.clear();
     this.diagram.selectionState.setElements(this.#elements);

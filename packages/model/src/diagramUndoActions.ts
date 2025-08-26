@@ -14,7 +14,7 @@ export const commitWithUndo = (uow: UnitOfWork, description: string) => {
 
 const restoreSnapshots = (e: ElementsSnapshot, diagram: Diagram, uow: UnitOfWork) => {
   for (const [id, snapshot] of e.snapshots) {
-    // Addition must be handled differently ... and explictly before this
+    // Addition must be handled differently ... and explicitly before this
     assert.present(snapshot);
 
     if (snapshot._snapshotType === 'layer') {
@@ -30,10 +30,8 @@ const restoreSnapshots = (e: ElementsSnapshot, diagram: Diagram, uow: UnitOfWork
         stylesheet.restore(snapshot, uow);
       }
     } else {
-      const node = diagram.lookup(id);
-      if (node) {
-        node.restore(snapshot!, uow);
-      }
+      const el = diagram.lookup(id);
+      if (el) el.restore(snapshot!, uow);
     }
   }
 };
@@ -106,6 +104,8 @@ export class SnapshotUndoableAction implements UndoableAction {
 }
 
 export class ElementAddUndoableAction implements UndoableAction {
+  private snapshot: ElementsSnapshot | undefined;
+
   constructor(
     private readonly elements: ReadonlyArray<DiagramElement>,
     private readonly diagram: Diagram,
@@ -113,27 +113,32 @@ export class ElementAddUndoableAction implements UndoableAction {
     public readonly description: string = 'Add node'
   ) {}
 
-  undo() {
-    UnitOfWork.execute(this.diagram, uow => {
-      this.elements.forEach(node => {
-        assertRegularLayer(node.layer);
-        node.layer.removeElement(node, uow);
-      });
+  undo(uow: UnitOfWork) {
+    uow.trackChanges = true;
+    this.snapshot = uow.commit();
+
+    this.elements.forEach(node => {
+      uow.snapshot(node);
+      assertRegularLayer(node.layer);
+      node.layer.removeElement(node, uow);
     });
+
     this.diagram.selectionState.setElements(
       this.diagram.selectionState.elements.filter(e => !this.elements.includes(e))
     );
   }
 
-  redo() {
-    UnitOfWork.execute(this.diagram, uow => {
-      this.elements.forEach(node => {
-        if (isNode(node)) {
-          node.invalidateAnchors(uow);
-        }
-        this.layer.addElement(node, uow);
-      });
+  redo(uow: UnitOfWork) {
+    this.elements.forEach(node => {
+      if (isNode(node)) {
+        node.invalidateAnchors(uow);
+      }
+      this.layer.addElement(node, uow);
     });
+
+    if (this.snapshot) {
+      restoreSnapshots(this.snapshot, this.diagram, uow);
+    }
   }
 }
 
