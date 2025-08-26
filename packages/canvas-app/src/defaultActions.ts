@@ -25,6 +25,7 @@ import { exportActions } from './actions/exportAction';
 import { styleCopyActions } from './actions/styleCopyAction';
 import { ruleLayerActions } from './actions/ruleLayerActions';
 import { Application } from './application';
+import { createNavigateNodeActions } from './actions/navigateNodeAction';
 
 export const defaultCanvasActions: ActionMapFactory<Application> = application => ({
   ...edgeTextAddActions(application),
@@ -38,6 +39,7 @@ export const defaultCanvasActions: ActionMapFactory<Application> = application =
   ...selectionMoveActions(application),
   ...selectionResizeActions(application),
   ...createLinkedNodeActions(application),
+  ...createNavigateNodeActions(application),
   ...selectionRestackActions(application),
   ...alignActions(application),
   ...toggleMagnetTypeActions(application),
@@ -94,6 +96,15 @@ export const defaultMacKeymap: KeyMap = {
   'A-C-S-ArrowDown': 'CREATE_LINKED_NODE_KEEP_S',
   'A-C-S-ArrowLeft': 'CREATE_LINKED_NODE_KEEP_W',
   'A-C-S-ArrowRight': 'CREATE_LINKED_NODE_KEEP_E',
+
+  'C-M-ArrowUp': 'NAVIGATE_NODE_N',
+  'C-M-ArrowDown': 'NAVIGATE_NODE_S',
+  'C-M-ArrowLeft': 'NAVIGATE_NODE_W',
+  'C-M-ArrowRight': 'NAVIGATE_NODE_E',
+  'C-M-S-ArrowUp': 'NAVIGATE_NODE_EXTEND_N',
+  'C-M-S-ArrowDown': 'NAVIGATE_NODE_EXTEND_S',
+  'C-M-S-ArrowLeft': 'NAVIGATE_NODE_EXTEND_W',
+  'C-M-S-ArrowRight': 'NAVIGATE_NODE_EXTEND_E',
 
   'M-S-KeyC': 'STYLE_COPY',
   'M-S-KeyV': 'STYLE_PASTE'
