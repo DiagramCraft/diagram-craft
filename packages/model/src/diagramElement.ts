@@ -76,7 +76,7 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
     this._crdt = watch(crdt ?? layer.crdt.factory.makeMap());
     this._crdt.get().set('id', id);
     this._crdt.get().set('type', type);
-    
+
     // Initialize tags if not already set
     if (!this._crdt.get().has('tags')) {
       this._crdt.get().set('tags', []);
@@ -246,16 +246,16 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
     return this._crdt.get().get('tags') ?? [];
   }
 
-  setTags(tags: Array<string>, uow: UnitOfWork) {
+  setTags(tags: ReadonlyArray<string>, uow: UnitOfWork) {
     uow.snapshot(this);
     const uniqueTags = Array.from(new Set(tags.map(t => t.trim()).filter(t => t)));
     this._crdt.get().set('tags', uniqueTags);
-    
+
     // Add all element tags to the document tags collection
     uniqueTags.forEach(tag => {
       this.diagram.document.tags.add(tag);
     });
-    
+
     uow.updateElement(this);
     this._cache?.clear();
   }

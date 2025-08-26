@@ -77,6 +77,7 @@ export interface SerializedNode extends NodeInterface {
   props: NodePropsForEditing;
   metadata: ElementMetadata;
   texts: NodeTexts;
+  tags?: ReadonlyArray<string>;
 }
 
 export type SerializedPointInNodeEndpoint = {
@@ -105,6 +106,7 @@ export interface SerializedEdge extends EdgeInterface {
   props: EdgePropsForEditing;
   metadata: ElementMetadata;
   children?: ReadonlyArray<SerializedElement>;
+  tags?: ReadonlyArray<string>;
 }
 
 export type SerializedElement = SerializedNode | SerializedEdge;
