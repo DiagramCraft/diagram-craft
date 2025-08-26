@@ -29,7 +29,7 @@ export type DistancePairWithRange = DistancePair & {
 export type Magnet = BaseMagnet &
   (
     | {
-        type: 'canvas' | 'grid';
+        type: 'canvas' | 'grid' | 'guides';
       }
     | { type: 'source'; subtype?: string }
     | {

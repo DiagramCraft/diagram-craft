@@ -4,6 +4,7 @@ import { NodeSnapProvider } from './nodeSnapProvider';
 import { NodeDistanceSnapProvider } from './nodeDistanceSnapProvider';
 import { GridSnapProvider } from './gridSnapProvider';
 import { NodeSizeSnapProvider } from './nodeSizeSnapProvider';
+import { GuidesSnapProvider } from './guidesSnapProvider';
 import { Guide } from '../selectionState';
 import { Magnet, MagnetOfType, MagnetType } from './magnet';
 import { Axis } from '@diagram-craft/geometry/axis';
@@ -64,6 +65,7 @@ class SnapProviders {
   constructor(diagram: Diagram, eligibleNodePredicate: EligibleNodePredicate) {
     this.#providers = {
       grid: new GridSnapProvider(diagram),
+      guides: new GuidesSnapProvider(diagram),
       source: new SourceSnapProvider(),
       node: new NodeSnapProvider(diagram, eligibleNodePredicate),
       distance: new NodeDistanceSnapProvider(diagram, eligibleNodePredicate),
