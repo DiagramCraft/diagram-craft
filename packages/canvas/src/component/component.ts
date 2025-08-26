@@ -1,6 +1,6 @@
 import { apply, DOMElement, insert, VNode, VNodeData } from './vdom';
 import { shallowEquals } from '@diagram-craft/utils/object';
-import { EventEmitter } from '@diagram-craft/utils/event';
+import { EventEmitter, type EventKey, type EventMap } from '@diagram-craft/utils/event';
 
 type Callback = () => void | (() => void);
 
@@ -168,6 +168,18 @@ export abstract class Component<P = Record<string, never>> {
 
     this.element = newElement;
     this.currentProps = props;
+  }
+
+  protected redrawOn<T extends EventMap>(
+    emitter: EventEmitter<T>,
+    event: EventKey<T>,
+    isAsync = false
+  ) {
+    createEffect(() => {
+      const cb = isAsync ? () => setTimeout(() => this.redraw(), 0) : () => this.redraw();
+      emitter.on(event, cb);
+      return () => emitter.off(event, cb);
+    }, []);
   }
 
   redraw() {

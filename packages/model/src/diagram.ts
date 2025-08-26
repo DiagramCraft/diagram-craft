@@ -23,7 +23,7 @@ import { assertRegularLayer } from './diagramLayerUtils';
 import { watch, WatchableValue } from '@diagram-craft/utils/watchableValue';
 import { CRDTProp } from './collaboration/datatypes/crdtProp';
 import { CRDTObject } from './collaboration/datatypes/crdtObject';
-import { Guide, GuideType } from './types';
+import { Guide } from './types';
 
 export type DiagramIteratorOpts = {
   nest?: boolean;
@@ -450,12 +450,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   }
 
   addGuide(guide: Omit<Guide, 'id'> & { id?: string }): Guide {
-    const fullGuide: Guide = {
-      type: guide.type as GuideType,
-      position: guide.position as number,
-      color: guide.color as string | undefined,
-      id: guide.id ?? newid()
-    };
+    const fullGuide: Guide = { id: guide.id ?? newid(), ...guide };
     this.#guides.set(fullGuide.id, fullGuide);
     this.emitDiagramChange('content');
     return fullGuide;
@@ -468,10 +463,10 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
   updateGuide(id: string, updates: Partial<Omit<Guide, 'id'>>) {
     const existing = this.#guides.get(id);
-    if (existing) {
-      this.#guides.set(id, { ...existing, ...updates });
-      this.emitDiagramChange('content');
-    }
+    assert.present(existing);
+
+    this.#guides.set(id, { ...existing, ...updates });
+    this.emitDiagramChange('content');
   }
 
   emitDiagramChange(type: 'content' | 'metadata') {

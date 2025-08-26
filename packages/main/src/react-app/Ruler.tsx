@@ -1,6 +1,6 @@
 import { useEventListener } from './hooks/useEventListener';
 import { useRedraw } from './hooks/useRedraw';
-import { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
 import { useDiagram } from '../application';
 import { UserState } from '../UserState';
@@ -55,8 +55,7 @@ export const Ruler = ({ orientation }: Props) => {
     (e: React.MouseEvent) => {
       if (e.button !== 0) return;
 
-      const guideType = orientation === 'horizontal' ? 'horizontal' : 'vertical';
-      DRAG_DROP_MANAGER.initiate(new GuideCreateDrag(diagram, guideType));
+      DRAG_DROP_MANAGER.initiate(new GuideCreateDrag(diagram, orientation));
 
       e.preventDefault();
       e.stopPropagation();

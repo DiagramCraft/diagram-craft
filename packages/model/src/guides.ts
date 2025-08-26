@@ -8,17 +8,13 @@ export class CreateGuideUndoableAction implements UndoableAction {
   constructor(
     private readonly diagram: Diagram,
     private readonly guide: Guide
-  ) {
-    console.log('create', this.guide);
-  }
+  ) {}
 
   undo() {
-    console.log('undo', this.guide);
     this.diagram.removeGuide(this.guide.id);
   }
 
   redo() {
-    console.log('redo', this.guide);
     this.diagram.addGuide(this.guide);
   }
 }

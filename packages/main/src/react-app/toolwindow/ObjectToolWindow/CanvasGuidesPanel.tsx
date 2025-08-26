@@ -8,7 +8,7 @@ import { ColorPicker } from '../../components/ColorPicker';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { Button } from '@diagram-craft/app-components/Button';
 import { useConfiguration } from '../../context/ConfigurationContext';
-import { Guide } from '@diagram-craft/model/types';
+import { DEFAULT_GUIDE_COLOR, Guide } from '@diagram-craft/model/types';
 import {
   CreateGuideUndoableAction,
   DeleteGuideUndoableAction,
@@ -16,8 +16,7 @@ import {
   MoveGuideUndoableAction
 } from '@diagram-craft/model/guides';
 
-const DEFAULT_GUIDE_COLOR = '#3b82f6';
-const SECTION_LABEL_COLOR = '#666';
+const SECTION_LABEL_COLOR = 'var(--tertiary-fg)';
 
 interface GuideRowProps {
   guide: Guide;
@@ -75,7 +74,6 @@ const GuideRow = (props: GuideRowProps) => {
         style={{ width: '60px' }}
         value={guide.position}
         onChange={handlePositionChange}
-        validUnits={['px']}
         defaultUnit={'px'}
       />
       <ColorPicker
@@ -137,17 +135,12 @@ export const CanvasGuidesPanel = (props: Props) => {
   };
 
   const sortedGuides = [...diagram.guides].sort((a, b) => {
-    // Sort by type first (horizontal, then vertical), then by position
-    if (a.type !== b.type) {
-      return a.type === 'horizontal' ? -1 : 1;
-    }
+    if (a.type !== b.type) return a.type === 'horizontal' ? -1 : 1;
     return a.position - b.position;
   });
 
   const horizontalGuides = sortedGuides.filter(g => g.type === 'horizontal');
   const verticalGuides = sortedGuides.filter(g => g.type === 'vertical');
-
-  const renderGuide = (guide: Guide) => <GuideRow key={guide.id} guide={guide} />;
 
   return (
     <ToolWindowPanel mode={props.mode ?? 'accordion'} title={'Guides'} id={'guides'}>
@@ -170,7 +163,6 @@ export const CanvasGuidesPanel = (props: Props) => {
                 <div
                   style={{
                     fontSize: '0.85em',
-                    fontWeight: '600',
                     color: SECTION_LABEL_COLOR,
                     marginTop: '2px',
                     marginBottom: '4px'
@@ -178,7 +170,10 @@ export const CanvasGuidesPanel = (props: Props) => {
                 >
                   Horizontal
                 </div>
-                {horizontalGuides.map(renderGuide)}
+
+                {horizontalGuides.map((guide: Guide) => (
+                  <GuideRow key={guide.id} guide={guide} />
+                ))}
               </>
             )}
 
@@ -187,7 +182,6 @@ export const CanvasGuidesPanel = (props: Props) => {
                 <div
                   style={{
                     fontSize: '0.85em',
-                    fontWeight: '600',
                     color: SECTION_LABEL_COLOR,
                     marginTop: horizontalGuides.length > 0 ? '12px' : '2px',
                     marginBottom: '4px'
@@ -195,7 +189,10 @@ export const CanvasGuidesPanel = (props: Props) => {
                 >
                   Vertical
                 </div>
-                {verticalGuides.map(renderGuide)}
+
+                {verticalGuides.map((guide: Guide) => (
+                  <GuideRow key={guide.id} guide={guide} />
+                ))}
               </>
             )}
           </div>
@@ -214,15 +211,11 @@ export const CanvasGuidesPanel = (props: Props) => {
           </div>
         )}
 
-        <div style={{ display: 'flex', justifyContent: 'flex-start', marginTop: '8px' }}>
+        <div style={{ marginTop: '8px' }}>
           <Button
             type="primary"
             onClick={addGuide}
-            title={
-              diagram.guides.length === 0
-                ? 'Add first guide (vertical at canvas center)'
-                : `Add ${diagram.guides[diagram.guides.length - 1]?.type || 'vertical'} guide`
-            }
+            title={'Add Guide'}
             style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
           >
             <TbPlus />
