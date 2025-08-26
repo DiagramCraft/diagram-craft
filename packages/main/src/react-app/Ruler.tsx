@@ -1,9 +1,11 @@
 import { useEventListener } from './hooks/useEventListener';
 import { useRedraw } from './hooks/useRedraw';
-import { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
 import { useDiagram } from '../application';
 import { UserState } from '../UserState';
+import { DRAG_DROP_MANAGER } from '@diagram-craft/canvas/dragDropManager';
+import { GuideCreateDrag } from '@diagram-craft/canvas/drag/guideDrag';
 
 type Tick = {
   pos: number;
@@ -49,6 +51,18 @@ export const Ruler = ({ orientation }: Props) => {
     selRect.style.visibility = diagram.selectionState.isEmpty() ? 'hidden' : 'visible';
   }, [diagram.selectionState, orientation, toScreenX, toScreenY, viewbox.zoomLevel]);
 
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (e.button !== 0) return;
+
+      DRAG_DROP_MANAGER.initiate(new GuideCreateDrag(diagram, orientation));
+
+      e.preventDefault();
+      e.stopPropagation();
+    },
+    [diagram, orientation]
+  );
+
   useEventListener(diagram, 'change', () => queueMicrotask(() => redraw()));
   useEventListener(diagram.viewBox, 'viewbox', () => queueMicrotask(() => redraw()));
   useEventListener(diagram.selectionState, 'change', updateSelection);
@@ -84,7 +98,7 @@ export const Ruler = ({ orientation }: Props) => {
 
     return (
       <div id={'ruler-h'} className={'cmp-ruler'}>
-        <svg preserveAspectRatio={'none'} ref={svgRef}>
+        <svg preserveAspectRatio={'none'} ref={svgRef} onMouseDown={handleMouseDown}>
           {ticks.map((tick, idx) => (
             <line
               key={tick.lbl}
@@ -118,7 +132,7 @@ export const Ruler = ({ orientation }: Props) => {
 
     return (
       <div id={'ruler-v'} className={'cmp-ruler'}>
-        <svg preserveAspectRatio={'none'} ref={svgRef}>
+        <svg preserveAspectRatio={'none'} ref={svgRef} onMouseDown={handleMouseDown}>
           {ticks.map((tick, idx) => (
             <line
               key={tick.lbl}

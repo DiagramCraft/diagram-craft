@@ -23,6 +23,7 @@ import { assertRegularLayer } from './diagramLayerUtils';
 import { watch, WatchableValue } from '@diagram-craft/utils/watchableValue';
 import { CRDTProp } from './collaboration/datatypes/crdtProp';
 import { CRDTObject } from './collaboration/datatypes/crdtObject';
+import { Guide } from './types';
 
 export type DiagramIteratorOpts = {
   nest?: boolean;
@@ -84,6 +85,7 @@ export type DiagramCRDT = {
   canvas: Omit<Box, 'r'>;
   props: FlatCRDTMap;
   layers: CRDTMap<LayerManagerCRDT>;
+  guides: CRDTMap<Record<string, Guide>>;
 };
 
 export const makeDiagramMapper = (
@@ -116,6 +118,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   readonly #parent: CRDTProp<DiagramCRDT, 'parent'>;
   readonly #canvas: CRDTProp<DiagramCRDT, 'canvas'>;
   readonly #props: CRDTObject<DiagramProps>;
+  readonly #guides: CRDTMap<Record<string, Guide>>;
 
   readonly layers: LayerManager;
 
@@ -123,6 +126,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   readonly selectionState = new SelectionState(this);
   readonly snapManagerConfig = new SnapManagerConfig([
     'grid',
+    'guide',
     'node',
     'canvas',
     'distance',
@@ -167,6 +171,9 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
       this,
       this._crdt.get().get('layers', () => document.root.factory.makeMap())!
     );
+
+    this.#guides = this._crdt.get().get('guides', () => document.root.factory.makeMap())!;
+    this.#guides.on('remoteAfterTransaction', () => this.emitDiagramChange('content'));
 
     this.viewBox = new Viewbox(this.canvas);
 
@@ -437,6 +444,30 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
   getAttachmentsInUse() {
     return this.layers.getAttachmentsInUse();
+  }
+
+  get guides(): ReadonlyArray<Guide> {
+    return Array.from(this.#guides.values()) as Guide[];
+  }
+
+  addGuide(guide: Omit<Guide, 'id'> & { id?: string }): Guide {
+    const fullGuide: Guide = { id: guide.id ?? newid(), ...guide };
+    this.#guides.set(fullGuide.id, fullGuide);
+    this.emitDiagramChange('content');
+    return fullGuide;
+  }
+
+  removeGuide(id: string) {
+    this.#guides.delete(id);
+    this.emitDiagramChange('content');
+  }
+
+  updateGuide(id: string, updates: Partial<Omit<Guide, 'id'>>) {
+    const existing = this.#guides.get(id);
+    assert.present(existing);
+
+    this.#guides.set(id, { ...existing, ...updates });
+    this.emitDiagramChange('content');
   }
 
   emitDiagramChange(type: 'content' | 'metadata') {

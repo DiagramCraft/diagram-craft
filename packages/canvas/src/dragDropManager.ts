@@ -143,7 +143,10 @@ export class DragDopManager extends EventEmitter<{
     this.drag.on('stateChange', ({ state }) => {
       this.emit('dragStateChange', { drag: this.drag!, state });
     });
-    this.drag.on('dragEnd', onEndCallback);
+    this.drag.on('dragEnd', () => {
+      onEndCallback();
+      this.drag = undefined;
+    });
   }
 
   isDragging() {

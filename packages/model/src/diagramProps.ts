@@ -60,6 +60,9 @@ declare global {
       type?: GridType;
       majorType?: GridType;
     };
+    guides?: {
+      enabled?: boolean;
+    };
   }
 
   interface ElementDataEntry {

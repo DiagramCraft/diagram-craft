@@ -286,6 +286,13 @@ const deserializeDiagrams = <T extends Diagram>(
       newDiagram.viewBox.zoom($d.zoom.zoom);
       newDiagram.viewBox.pan({ x: $d.zoom.x, y: $d.zoom.y });
     }
+
+    if ($d.guides && $d.guides.length > 0) {
+      for (const guide of $d.guides) {
+        newDiagram.addGuide(guide);
+      }
+    }
+
     dest.push(newDiagram);
     uow.commit();
 

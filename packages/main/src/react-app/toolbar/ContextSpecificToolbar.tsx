@@ -14,6 +14,7 @@ import { ElementShadowToolbarButton } from '../toolwindow/ObjectToolWindow/Eleme
 import { ElementCustomPropertiesToolbarButton } from '../toolwindow/ObjectToolWindow/ElementCustomPropertiesToolbarButton';
 import { CanvasGridToolbarButton } from '../toolwindow/ObjectToolWindow/CanvasGridToolbarButton';
 import { CanvasSnapToolbarButton } from '../toolwindow/ObjectToolWindow/CanvasSnapToolbarButton';
+import { CanvasGuidesToolbarButton } from '../toolwindow/ObjectToolWindow/CanvasGuidesToolbarButton';
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
 import { ElementStylesheetToolbarButton } from '../toolwindow/ObjectToolWindow/ElementStylesheetToolbarButton';
 import { useDiagram } from '../../application';
@@ -147,6 +148,8 @@ export const ContextSpecificToolbar = () => {
       )*/}
 
       <CanvasGridToolbarButton />
+
+      <CanvasGuidesToolbarButton />
 
       <CanvasSnapToolbarButton />
 
