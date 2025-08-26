@@ -19,7 +19,7 @@ describe('GuidesSnapProvider', () => {
 
     // Verify
     expect(magnets).toHaveLength(2);
-    expect(magnets[0].type).toBe('guides');
+    expect(magnets[0].type).toBe('guide');
     expect(magnets[0].axis).toBe(Axis.h);
     expect(magnets[0].line.from.y).toBe(100);
     expect(magnets[1].line.from.y).toBe(200);
@@ -40,7 +40,7 @@ describe('GuidesSnapProvider', () => {
 
     // Verify
     expect(magnets).toHaveLength(2);
-    expect(magnets[0].type).toBe('guides');
+    expect(magnets[0].type).toBe('guide');
     expect(magnets[0].axis).toBe(Axis.v);
     expect(magnets[0].line.from.x).toBe(150);
     expect(magnets[1].line.from.x).toBe(300);

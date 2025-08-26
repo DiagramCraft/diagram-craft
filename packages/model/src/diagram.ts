@@ -126,7 +126,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   readonly selectionState = new SelectionState(this);
   readonly snapManagerConfig = new SnapManagerConfig([
     'grid',
-    'guides',
+    'guide',
     'node',
     'canvas',
     'distance',

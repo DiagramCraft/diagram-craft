@@ -65,7 +65,7 @@ class SnapProviders {
   constructor(diagram: Diagram, eligibleNodePredicate: EligibleNodePredicate) {
     this.#providers = {
       grid: new GridSnapProvider(diagram),
-      guides: new GuidesSnapProvider(diagram),
+      guide: new GuidesSnapProvider(diagram),
       source: new SourceSnapProvider(),
       node: new NodeSnapProvider(diagram, eligibleNodePredicate),
       distance: new NodeDistanceSnapProvider(diagram, eligibleNodePredicate),
