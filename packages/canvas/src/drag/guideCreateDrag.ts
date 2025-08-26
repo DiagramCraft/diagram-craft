@@ -1,10 +1,9 @@
 import { Drag, DragEvents } from '../dragDropManager';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { DEFAULT_GUIDE_COLOR, Guide, GuideType } from '@diagram-craft/model/types';
 import { round } from '@diagram-craft/utils/math';
 import { newid } from '@diagram-craft/utils/id';
+import { CreateGuideUndoableAction } from '@diagram-craft/model/guides';
 
 export class GuideCreateDrag extends Drag {
   private guide: Guide | undefined;
@@ -61,10 +60,12 @@ export class GuideCreateDrag extends Drag {
 
   onDragEnd(_event: DragEvents.DragEnd): void {
     if (this.guide) {
-      // Commit the guide creation with undo support
-      const uow = new UnitOfWork(this.diagram, true);
-      // The guide is already created, just commit it for undo
-      commitWithUndo(uow, `Create ${this.guideType} guide`);
+      this.diagram.undoManager.add(
+        new CreateGuideUndoableAction(
+          this.diagram,
+          this.diagram.guides.find(g => g.id === this.guide!.id)!
+        )
+      );
     }
 
     this.emit('dragEnd');

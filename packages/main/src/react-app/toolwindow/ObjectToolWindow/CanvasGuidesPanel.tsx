@@ -9,6 +9,12 @@ import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { Button } from '@diagram-craft/app-components/Button';
 import { useConfiguration } from '../../context/ConfigurationContext';
 import { Guide } from '@diagram-craft/model/types';
+import {
+  CreateGuideUndoableAction,
+  DeleteGuideUndoableAction,
+  EditGuideUndoableAction,
+  MoveGuideUndoableAction
+} from '@diagram-craft/model/guides';
 
 const DEFAULT_GUIDE_COLOR = '#3b82f6';
 const SECTION_LABEL_COLOR = '#666';
@@ -22,6 +28,36 @@ const GuideRow = (props: GuideRowProps) => {
   const diagram = useDiagram();
   const $cfg = useConfiguration();
 
+  const handleTypeToggle = () => {
+    const newType = guide.type === 'horizontal' ? 'vertical' : 'horizontal';
+
+    diagram.undoManager.addAndExecute(
+      new EditGuideUndoableAction(diagram, guide, { type: guide.type }, { type: newType })
+    );
+  };
+
+  const handlePositionChange = (n: number | undefined) => {
+    const newPosition = n ?? 0;
+    if (newPosition === guide.position) return;
+
+    diagram.undoManager.addAndExecute(
+      new MoveGuideUndoableAction(diagram, guide, guide.position, newPosition)
+    );
+  };
+
+  const handleColorChange = (color: string | undefined) => {
+    const newColor = color ?? DEFAULT_GUIDE_COLOR;
+    if (newColor === guide.color) return;
+
+    diagram.undoManager.addAndExecute(
+      new EditGuideUndoableAction(diagram, guide, { color: guide.color }, { color: newColor })
+    );
+  };
+
+  const handleRemove = () => {
+    diagram.undoManager.addAndExecute(new DeleteGuideUndoableAction(diagram, guide));
+  };
+
   return (
     <div
       key={guide.id}
@@ -30,11 +66,7 @@ const GuideRow = (props: GuideRowProps) => {
     >
       <Button
         type={'secondary'}
-        onClick={() =>
-          diagram.updateGuide(guide.id, {
-            type: guide.type === 'horizontal' ? 'vertical' : 'horizontal'
-          })
-        }
+        onClick={handleTypeToggle}
         title={`Change to ${guide.type === 'horizontal' ? 'vertical' : 'horizontal'} guide`}
       >
         {guide.type === 'horizontal' ? <TbSeparatorHorizontal /> : <TbSeparatorVertical />}
@@ -42,19 +74,19 @@ const GuideRow = (props: GuideRowProps) => {
       <NumberInput
         style={{ width: '60px' }}
         value={guide.position}
-        onChange={n => diagram.updateGuide(guide.id, { position: n ?? 0 })}
+        onChange={handlePositionChange}
         validUnits={['px']}
         defaultUnit={'px'}
       />
       <ColorPicker
         palette={$cfg.palette.primary}
         value={guide.color ?? DEFAULT_GUIDE_COLOR}
-        onChange={color => diagram.updateGuide(guide.id, { color: color ?? DEFAULT_GUIDE_COLOR })}
+        onChange={handleColorChange}
         customPalette={diagram.document.customPalette}
         onChangeCustomPalette={(idx, v) => diagram.document.customPalette.setColor(idx, v)}
       />
       <div style={{ marginLeft: 'auto' }}>
-        <Button type="icon-only" onClick={() => diagram.removeGuide(guide.id)} title="Remove guide">
+        <Button type="icon-only" onClick={handleRemove} title="Remove guide">
           <TbTrash />
         </Button>
       </div>
@@ -71,11 +103,12 @@ export const CanvasGuidesPanel = (props: Props) => {
 
   const addGuide = () => {
     const existingGuides = [...diagram.guides];
+    let newGuide;
 
     if (existingGuides.length === 0) {
       // First guide: vertical at center of canvas
       const centerX = diagram.canvas.x + diagram.canvas.w / 2;
-      diagram.addGuide({
+      newGuide = diagram.addGuide({
         type: 'vertical',
         position: centerX,
         color: DEFAULT_GUIDE_COLOR
@@ -83,11 +116,16 @@ export const CanvasGuidesPanel = (props: Props) => {
     } else {
       // Use the last guide as reference
       const lastGuide = existingGuides[existingGuides.length - 1];
-      diagram.addGuide({
+      newGuide = diagram.addGuide({
         type: lastGuide.type,
         position: lastGuide.position + 100,
         color: lastGuide.color ?? DEFAULT_GUIDE_COLOR
       });
+    }
+
+    // Add to undo history
+    if (newGuide) {
+      diagram.undoManager.add(new CreateGuideUndoableAction(diagram, newGuide));
     }
 
     // Scroll to bottom after adding

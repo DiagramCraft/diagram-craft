@@ -1,9 +1,8 @@
 import { Drag, DragEvents } from '../dragDropManager';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { Guide } from '@diagram-craft/model/types';
 import { round } from '@diagram-craft/utils/math';
+import { MoveGuideUndoableAction } from '@diagram-craft/model/guides';
 
 export class GuideMoveDrag extends Drag {
   private readonly originalPosition: number;
@@ -38,9 +37,14 @@ export class GuideMoveDrag extends Drag {
     // Commit the final position change with undo support
     const currentGuide = this.diagram.guides.find(g => g.id === this.guide.id);
     if (currentGuide && currentGuide.position !== this.originalPosition) {
-      const uow = new UnitOfWork(this.diagram, true);
-      this.diagram.updateGuide(this.guide.id, { position: currentGuide.position });
-      commitWithUndo(uow, 'Move guide');
+      this.diagram.undoManager.addAndExecute(
+        new MoveGuideUndoableAction(
+          this.diagram,
+          this.guide,
+          this.originalPosition,
+          currentGuide.position
+        )
+      );
     }
 
     this.emit('dragEnd');
