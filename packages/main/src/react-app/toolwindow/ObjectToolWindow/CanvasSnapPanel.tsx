@@ -25,6 +25,9 @@ export const CanvasSnapPanel = (props: Props) => {
             <ActionCheckbox action={'TOGGLE_MAGNET_TYPE_GRID'}>Snap to grid</ActionCheckbox>
           </div>
           <div className={'util-vcenter util-vgap util-font-body'}>
+            <ActionCheckbox action={'TOGGLE_MAGNET_TYPE_GUIDES'}>Snap to guides</ActionCheckbox>
+          </div>
+          <div className={'util-vcenter util-vgap util-font-body'}>
             <ActionCheckbox action={'TOGGLE_MAGNET_TYPE_NODE'}>
               Snap to object bounds
             </ActionCheckbox>

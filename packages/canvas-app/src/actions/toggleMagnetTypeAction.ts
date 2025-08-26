@@ -8,6 +8,7 @@ declare global {
 export const toggleMagnetTypeActions = (context: ActionContext) => ({
   TOGGLE_MAGNET_TYPE_SIZE: new ToggleMagnetTypeAction('size', context),
   TOGGLE_MAGNET_TYPE_GRID: new ToggleMagnetTypeAction('grid', context),
+  TOGGLE_MAGNET_TYPE_GUIDES: new ToggleMagnetTypeAction('guides', context),
   TOGGLE_MAGNET_TYPE_CANVAS: new ToggleMagnetTypeAction('canvas', context),
   TOGGLE_MAGNET_TYPE_NODE: new ToggleMagnetTypeAction('node', context),
   TOGGLE_MAGNET_TYPE_DISTANCE: new ToggleMagnetTypeAction('distance', context)
