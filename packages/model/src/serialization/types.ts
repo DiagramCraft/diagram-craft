@@ -1,4 +1,4 @@
-import type { EdgeInterface, NodeInterface } from '../types';
+import type { EdgeInterface, NodeInterface, Guide } from '../types';
 import { Point } from '@diagram-craft/geometry/point';
 import type { EdgePropsForEditing } from '../diagramEdge';
 import type { NodePropsForEditing, NodeTexts } from '../diagramNode';
@@ -35,6 +35,7 @@ export type SerializedDiagram = {
   layers: ReadonlyArray<SerializedLayer>;
   activeLayerId?: string;
   diagrams: ReadonlyArray<SerializedDiagram>;
+  guides?: ReadonlyArray<Guide>;
   zoom?: {
     x: number;
     y: number;
