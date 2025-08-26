@@ -2,6 +2,7 @@ import { Point } from './point';
 import { Range } from './range';
 import { Vector } from './vector';
 import { isSame } from '@diagram-craft/utils/math';
+import { Axis } from './axis';
 
 export type Line = Readonly<{
   from: Point;
@@ -45,6 +46,10 @@ export const Line = {
 
   isVertical: (line: Line) => {
     return isSame(line.from.x, line.to.x);
+  },
+
+  orthogonalDistance: (line1: Line, line2: Line, axis: Axis) => {
+    return line1.from[Axis.toXY(axis)] - line2.from[Axis.toXY(axis)];
   },
 
   intersection: (l1: Line, l2: Line, extend = false) => {

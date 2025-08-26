@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { Line } from './line';
 import { Point } from './point';
+import { Axis } from './axis';
 
 describe('Line', () => {
   test('extend', () => {
@@ -68,6 +69,28 @@ describe('Line', () => {
     test('returns zero for line of zero length', () => {
       const line = Line.of({ x: 0, y: 0 }, { x: 0, y: 0 });
       expect(Line.length(line)).toBe(0);
+    });
+  });
+
+  describe('orthogonalDistance', () => {
+    test('should calculate horizontal distance for vertical lines', () => {
+      // Two vertical lines at x=10 and x=20
+      const line1 = Line.of({ x: 10, y: 0 }, { x: 10, y: 100 });
+      const line2 = Line.of({ x: 20, y: 50 }, { x: 20, y: 150 });
+
+      // Distance along X-axis (orthogonal to vertical lines)
+      expect(Line.orthogonalDistance(line1, line2, Axis.h)).toBe(-10); // 10 - 20 = -10
+      expect(Line.orthogonalDistance(line2, line1, Axis.h)).toBe(10); // 20 - 10 = 10
+    });
+
+    test('should calculate vertical distance for horizontal lines', () => {
+      // Two horizontal lines at y=5 and y=15
+      const line1 = Line.of({ x: 0, y: 5 }, { x: 100, y: 5 });
+      const line2 = Line.of({ x: 50, y: 15 }, { x: 150, y: 15 });
+
+      // Distance along Y-axis (orthogonal to horizontal lines)
+      expect(Line.orthogonalDistance(line1, line2, Axis.v)).toBe(-10); // 5 - 15 = -10
+      expect(Line.orthogonalDistance(line2, line1, Axis.v)).toBe(10); // 15 - 5 = 10
     });
   });
 

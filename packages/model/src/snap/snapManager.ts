@@ -130,13 +130,6 @@ class SnapProviders {
 }
 
 /**
- * Calculate the distance between two lines along the orthogonal axis
- * Used to determine how far apart parallel lines are
- */
-const orthogonalLineDistance = (line1: Line, line2: Line, oAxis: Axis) =>
-  line1.from[Axis.toXY(oAxis)] - line2.from[Axis.toXY(oAxis)];
-
-/**
  * Check if two magnets have overlapping ranges along their axis
  * Two magnets can only snap if their lines overlap when projected onto their shared axis
  * @returns Range intersection or undefined if no overlap
@@ -466,7 +459,7 @@ export class SnapManager {
           .filter(e => e.distance >= 0)
 
           // and remove anything that is close post snapping
-          .filter(e => Math.abs(orthogonalLineDistance(e.matching.line, e.self.line, oAxis)) < 1),
+          .filter(e => Math.abs(Line.orthogonalDistance(e.matching.line, e.self.line, oAxis)) < 1),
         (a, b) =>
           enabledSnapProviders.indexOf(a.matching.type) -
           enabledSnapProviders.indexOf(b.matching.type)
