@@ -16,7 +16,10 @@ const LINE_RANGE = Range.of(-10000, 10000);
 abstract class BaseGuideDrag extends Drag {
   protected readonly snapManager: SnapManager;
 
-  protected constructor(protected diagram: Diagram) {
+  protected constructor(
+    protected diagram: Diagram,
+    protected guideType: GuideType
+  ) {
     super();
 
     const snapConfig = new SnapManagerConfig(['grid', 'node']);
@@ -26,14 +29,10 @@ abstract class BaseGuideDrag extends Drag {
     this.snapManager = new SnapManager(this.diagram, id => !diagram.lookup(id)?.parent, snapConfig);
   }
 
-  protected snapGuidePosition(
-    rawPosition: number,
-    guideType: GuideType,
-    modifiers: Modifiers
-  ): number {
+  protected snapGuidePosition(rawPosition: number, modifiers: Modifiers): number {
     if (isFreeDrag(modifiers)) return round(rawPosition);
 
-    const isHorizontal = guideType === 'horizontal';
+    const isHorizontal = this.guideType === 'horizontal';
 
     const line = isHorizontal
       ? Line.horizontal(rawPosition, LINE_RANGE)
@@ -51,18 +50,16 @@ export class GuideMoveDrag extends BaseGuideDrag {
     diagram: Diagram,
     private guide: Guide
   ) {
-    super(diagram);
+    super(diagram, guide.type);
     this.originalPosition = guide.position;
   }
 
   onDrag(event: DragEvents.DragStart): void {
-    const rawPosition = this.guide.type === 'horizontal' ? event.offset.y : event.offset.x;
-    const snappedPosition = this.snapGuidePosition(rawPosition, this.guide.type, event.modifiers);
+    const rawPosition = this.guideType === 'horizontal' ? event.offset.y : event.offset.x;
+    const snappedPosition = this.snapGuidePosition(rawPosition, event.modifiers);
 
     this.diagram.updateGuide(this.guide.id, { position: round(snappedPosition) });
-    this.setState({
-      label: `${this.guide.type} guide: ${round(snappedPosition)}px`
-    });
+    this.setState({ label: `${this.guide.type} guide: ${round(snappedPosition)}px` });
   }
 
   onDragEnd(_event: DragEvents.DragEnd): void {
@@ -88,11 +85,8 @@ export class GuideCreateDrag extends BaseGuideDrag {
   private guide: Guide | undefined;
   private readonly mainSvg: SVGSVGElement;
 
-  constructor(
-    diagram: Diagram,
-    private guideType: GuideType
-  ) {
-    super(diagram);
+  constructor(diagram: Diagram, guideType: GuideType) {
+    super(diagram, guideType);
 
     this.mainSvg = document.querySelector('svg.canvas.editable-canvas') as SVGSVGElement;
     assert.present(this.mainSvg);
@@ -104,7 +98,7 @@ export class GuideCreateDrag extends BaseGuideDrag {
     const diagramPoint = this.diagram.viewBox.toDiagramPoint(canvasPoint);
 
     const rawPosition = this.guideType === 'horizontal' ? diagramPoint.y : diagramPoint.x;
-    const snappedPosition = this.snapGuidePosition(rawPosition, this.guideType, event.modifiers);
+    const snappedPosition = this.snapGuidePosition(rawPosition, event.modifiers);
 
     if (!this.guide) {
       this.guide = this.diagram.addGuide({
