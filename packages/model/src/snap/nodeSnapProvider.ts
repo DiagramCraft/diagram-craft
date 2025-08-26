@@ -45,7 +45,7 @@ export class NodeSnapProvider implements SnapProvider<'node'> {
       if (!isNode(node)) continue;
       if (node.isLabelNode()) continue;
       if (!this.eligibleNodePredicate(node.id)) continue;
-      for (const other of Magnet.forNode(node.bounds)) {
+      for (const other of Magnet.sourceMagnetsForNode(node)) {
         // TODO: We should be able to filter out even more here
         //       by considering the direction of the magnet line
         if (

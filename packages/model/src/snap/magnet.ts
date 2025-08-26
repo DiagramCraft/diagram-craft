@@ -77,7 +77,6 @@ export type Magnet = BaseMagnet &
         /** The node this magnet belongs to */
         node: DiagramNode;
         /** Distance pairs for size calculations */
-        // TODO: We should make these ReadonlyArray<>
         distancePairs: Array<DistancePair>;
       }
     | {
@@ -90,7 +89,6 @@ export type Magnet = BaseMagnet &
         /** Distance magnet for equal-distance snapping */
         type: 'distance';
         /** Distance pairs with range information */
-        // TODO: We should make these ReadonlyArray<>
         distancePairs: Array<DistancePairWithRange>;
       }
   );
@@ -105,12 +103,16 @@ export type MagnetOfType<T extends MagnetType> = Magnet & { type: T };
  * Utility functions for working with magnets
  */
 export const Magnet = {
+  sourceMagnetsForNode: (node: DiagramNode): ReadonlyArray<Magnet> => {
+    return Magnet.forNode(node.bounds);
+  },
+
   /**
    * Generate magnets for a box (typically a node)
    * Creates magnets for:
    * - Horizontal and vertical center lines (always)
    * - Top, bottom, left, right edges (only for non-rotated boxes)
-   * 
+   *
    * @param node - The box to generate magnets for
    * @param type - The magnet type to create (typically 'source')
    * @returns Array of magnets representing the box's snap points

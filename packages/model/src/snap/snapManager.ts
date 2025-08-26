@@ -320,9 +320,7 @@ export class SnapManager {
     const enabledSnapProviders: ReadonlyArray<MagnetType> = [...this.magnetTypes];
     const snapProviders = new SnapProviders(this.diagram, this.eligibleNodePredicate);
 
-    const selfMagnets = Magnet.forNode(b, 'source').filter(s =>
-      directions.includes(s.matchDirection!)
-    );
+    const selfMagnets = Magnet.forNode(b).filter(s => directions.includes(s.matchDirection!));
 
     const magnetsToMatchAgainst = snapProviders.getMagnets(enabledSnapProviders, b);
 
@@ -351,7 +349,7 @@ export class SnapManager {
     }
 
     // Readjust self magnets to the new position - post snapping
-    const newMagnets = Magnet.forNode(WritableBox.asBox(newBounds), 'source');
+    const newMagnets = Magnet.forNode(WritableBox.asBox(newBounds));
     selfMagnets.forEach(a => {
       a.line = newMagnets.find(b => b.matchDirection === a.matchDirection)!.line;
     });
@@ -384,7 +382,7 @@ export class SnapManager {
     const snapProviders = new SnapProviders(this.diagram, this.eligibleNodePredicate);
 
     const isAllDirections = directions.length === 4;
-    const magnets = Magnet.forNode(b, 'source').filter(
+    const magnets = Magnet.forNode(b).filter(
       s =>
         directions.includes(s.matchDirection!) ||
         (isAllDirections && s.matchDirection === undefined)
