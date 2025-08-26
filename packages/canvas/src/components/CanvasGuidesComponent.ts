@@ -2,7 +2,7 @@ import { Component } from '../component/component';
 import * as svg from '../component/vdom-svg';
 import { toInlineCSS } from '../component/vdom';
 import type { CanvasState } from '../canvas/EditableCanvasComponent';
-import { GuideMoveDrag } from '../drag/guideMoveDrag';
+import { GuideMoveDrag } from '../drag/guideDrag';
 import { DRAG_DROP_MANAGER } from '../dragDropManager';
 import { DEFAULT_GUIDE_COLOR } from '@diagram-craft/model/types';
 

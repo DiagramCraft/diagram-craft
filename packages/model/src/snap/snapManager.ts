@@ -13,7 +13,7 @@ import { Point } from '@diagram-craft/geometry/point';
 import { Line } from '@diagram-craft/geometry/line';
 import { Range } from '@diagram-craft/geometry/range';
 import { Direction } from '@diagram-craft/geometry/direction';
-import { VerifyNotReached } from '@diagram-craft/utils/assert';
+import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { groupBy, largest, smallest } from '@diagram-craft/utils/array';
 import { Angle } from '@diagram-craft/geometry/angle';
 import { SnapManagerConfig } from './snapManagerConfig';
@@ -145,6 +145,50 @@ export class SnapManager {
       magnets: [],
       adjusted: GridSnapProvider.snapPoint(p, this.diagram.props.grid?.size ?? 10)
     };
+  }
+
+  snapOrthoLinearLine(line: Line): SnapResult<Line> {
+    assert.true(Line.isHorizontal(line) || Line.isVertical(line));
+
+    if (!this.enabled) return { guides: [], magnets: [], adjusted: line };
+
+    if (this.magnetTypes.find(a => a === 'node')) {
+      const snapProviders = new SnapProviders(this.diagram, this.eligibleNodePredicate);
+      const magnets = snapProviders.get('node').getMagnets(Box.fromLine(line));
+
+      const matchingMagnets = this.matchMagnets(
+        [{ type: 'source', line, axis: Line.isHorizontal(line) ? Axis.h : Axis.v }],
+        magnets
+      );
+
+      if (matchingMagnets.length > 0) {
+        const [m] = matchingMagnets;
+        return {
+          guides: [],
+          magnets: [],
+          adjusted: Line.isHorizontal(line)
+            ? Line.horizontal(m.matching.line.from.y, Range.of(line.from.x, line.to.x))
+            : Line.vertical(m.matching.line.from.x, Range.of(line.from.y, line.to.y))
+        };
+      }
+    }
+
+    if (this.magnetTypes.find(a => a === 'grid')) {
+      const p = Line.isHorizontal(line) ? Point.of(0, line.from.y) : Point.of(line.from.x, 0);
+      const snappedPoint = GridSnapProvider.snapPoint(p, this.diagram.props.grid?.size ?? 10);
+
+      if (!Point.isEqual(p, snappedPoint)) {
+        return {
+          guides: [],
+          magnets: [],
+          adjusted: Line.isHorizontal(line)
+            ? Line.horizontal(snappedPoint.y, Range.of(line.from.x, line.to.x))
+            : Line.vertical(snappedPoint.x, Range.of(line.from.y, line.to.y))
+        };
+      }
+    }
+
+    return { guides: [], magnets: [], adjusted: line };
   }
 
   snapRotate(b: Box): SnapResult<Box> {

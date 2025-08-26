@@ -4,8 +4,8 @@ import React, { useCallback, useEffect, useRef } from 'react';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
 import { useDiagram } from '../application';
 import { UserState } from '../UserState';
-import { GuideCreateDrag } from '@diagram-craft/canvas/drag/guideCreateDrag';
 import { DRAG_DROP_MANAGER } from '@diagram-craft/canvas/dragDropManager';
+import { GuideCreateDrag } from '@diagram-craft/canvas/drag/guideDrag';
 
 type Tick = {
   pos: number;
