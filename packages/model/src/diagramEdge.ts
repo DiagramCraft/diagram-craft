@@ -985,6 +985,19 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       }
     }
 
+    if (isConnected(this.start)) {
+      this.start.node._removeEdge(
+        this.start instanceof AnchorEndpoint ? this.start.anchorId : undefined,
+        this
+      );
+    }
+    if (isConnected(this.end)) {
+      this.end.node._removeEdge(
+        this.end instanceof AnchorEndpoint ? this.end.anchorId : undefined,
+        this
+      );
+    }
+
     this.diagram.edgeLookup.delete(this.id);
 
     // Note, need to check if the element is still in the layer to avoid infinite recursion
