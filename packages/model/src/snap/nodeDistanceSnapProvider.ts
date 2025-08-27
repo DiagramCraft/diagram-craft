@@ -115,7 +115,7 @@ export class NodeDistanceSnapProvider
     for (const { dir, sign, oppositeDir } of Object.values(directions)) {
       // Sort nodes by distance from the box in the current direction
       // For north: sort by bottom edge (largest y first, closest to box)
-      // For south: sort by top edge (smallest y first, closest to box)  
+      // For south: sort by top edge (smallest y first, closest to box)
       // For west: sort by right edge (largest x first, closest to box)
       // For east: sort by left edge (smallest x first, closest to box)
       viableNodes[dir].sort(
@@ -131,6 +131,9 @@ export class NodeDistanceSnapProvider
     // Process each direction (north, south, east, west) to find distance patterns
     for (const { dir, axis, sign, oppositeDir, oppositeAxis } of Object.values(directions)) {
       const nodesInDirection = viableNodes[dir];
+
+      // This is a performance optimization to avoid creating too many magnets
+      if (magnets.length > 20) break;
 
       // Examine pairs of nodes to find distance patterns
       for (let i = 0; i < nodesInDirection.length - 1; i++) {
