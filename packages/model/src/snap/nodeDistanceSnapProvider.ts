@@ -48,14 +48,33 @@ const directions: Record<
  * - Calculates distances between node pairs that have overlapping ranges
  * - Creates magnetic lines where new elements can snap to maintain equal distances
  * - Only considers nodes that don't intersect with the element being moved
+ * - Uses range overlap detection to ensure meaningful distance relationships
  *
- * Example: If nodes A and B are horizontally aligned with 40px between them,
- * this provider creates magnets 40px to the left of A and 40px to the right of B.
+ * Distance measurement algorithm:
+ * 1. For each direction, sort nodes by proximity to the target element
+ * 2. Find pairs of nodes that have overlapping ranges on the alignment axis
+ * 3. Calculate the gap distance between node pairs
+ * 4. Create magnets at positions that would maintain this same distance
+ *
+ * Example scenarios:
+ * - Nodes A and B horizontally aligned with 40px gap → creates magnets 40px from A and B
+ * - Three nodes evenly spaced vertically → allows fourth node to maintain same spacing
+ * - Complex layouts with multiple distance patterns → creates magnets for all valid patterns
+ *
+ * The magnets are positioned along lines where the element can snap to maintain
+ * consistent spacing, making it easy to create evenly distributed layouts.
  */
 export class NodeDistanceSnapProvider
   extends AbstractNodeSnapProvider
   implements SnapProvider<'distance'>
 {
+  /**
+   * Creates a new distance-based snap provider
+   *
+   * @param diagram - The diagram containing nodes to analyze for distance patterns
+   * @param eligibleNodePredicate - Predicate function to filter which nodes are eligible for snapping.
+   *                                Typically excludes nodes that are currently being moved or selected.
+   */
   constructor(diagram: Diagram, eligibleNodePredicate: EligibleNodePredicate) {
     super(diagram, eligibleNodePredicate);
   }
@@ -87,13 +106,16 @@ export class NodeDistanceSnapProvider
     };
 
     // Get all eligible nodes categorized by direction relative to the box
+    // This filters out intersecting nodes and organizes remaining nodes by cardinal direction
     const viableNodes = this.getViableNodes(box);
 
-    // Sort nodes in each direction by proximity to the box
+    // Sort nodes in each direction by proximity to the box for optimal distance pattern detection
+    // The sorting ensures we examine the closest node pairs first, which typically represent
+    // the most relevant spacing patterns for the user
     for (const { dir, sign, oppositeDir } of Object.values(directions)) {
       // Sort nodes by distance from the box in the current direction
       // For north: sort by bottom edge (largest y first, closest to box)
-      // For south: sort by top edge (smallest y first, closest to box)
+      // For south: sort by top edge (smallest y first, closest to box)  
       // For west: sort by right edge (largest x first, closest to box)
       // For east: sort by left edge (smallest x first, closest to box)
       viableNodes[dir].sort(
@@ -115,11 +137,13 @@ export class NodeDistanceSnapProvider
         const first = nodesInDirection[i].bounds; // The closer node to the box
 
         // Collect distance measurements between the first node and all further nodes
+        // This creates potential distance patterns that other elements can snap to
         const distances: Array<DistancePairWithRange> = [];
         for (let j = i + 1; j < nodesInDirection.length; j++) {
           const node = nodesInDirection[j];
 
           // Calculate distance between the first node's far edge and the second node's near edge
+          // Example: for east direction, this is node2.left - node1.right
           const d =
             sign *
             (this.getEdgePosition(node.bounds, oppositeDir) - this.getEdgePosition(first, dir));
@@ -127,17 +151,21 @@ export class NodeDistanceSnapProvider
           // Skip if nodes are overlapping or touching (no meaningful distance)
           if (d <= 0) continue;
 
-          // Get the range each node occupies on the alignment axis
+          // Get the range each node occupies on the alignment axis (perpendicular to distance measurement)
+          // For horizontal distance (east/west), this is the vertical range (y to y+height)
+          // For vertical distance (north/south), this is the horizontal range (x to x+width)
           const rangeA = this.getRange(first, axis);
           const rangeB = this.getRange(node.bounds, axis);
 
           // Find where the ranges overlap on the alignment axis
+          // Only nodes with overlapping ranges can create meaningful distance relationships
           const intersection = Range.intersection(rangeA, rangeB);
 
           // Skip if nodes don't overlap on alignment axis (can't create meaningful distance magnet)
           if (!intersection) continue;
 
           // Use the midpoint of the overlapping range for positioning the distance magnet
+          // This ensures the magnet line is drawn where the alignment is most visually meaningful
           const mp = Range.midpoint(intersection);
 
           // Record the distance measurement with the points that define it
