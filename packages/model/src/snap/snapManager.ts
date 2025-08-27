@@ -13,7 +13,7 @@ import { Point } from '@diagram-craft/geometry/point';
 import { Line } from '@diagram-craft/geometry/line';
 import { Range } from '@diagram-craft/geometry/range';
 import { Direction } from '@diagram-craft/geometry/direction';
-import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
+import { assert, VERIFY_NOT_REACHED, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { groupBy, largest, smallest } from '@diagram-craft/utils/array';
 import { Angle } from '@diagram-craft/geometry/angle';
 import { SnapManagerConfig } from './snapManagerConfig';
@@ -192,13 +192,15 @@ export class SnapManager {
     sourceMagnets: ReadonlyArray<Magnet>,
     magnetsToMatchAgainst: ReadonlyArray<Magnet>
   ): ReadonlyArray<MatchingMagnetPair<MagnetType>> {
-    const dest: MatchingMagnetPair<MagnetType>[] = [];
+    const dest: Array<MatchingMagnetPair<MagnetType>> = [];
 
     for (const other of magnetsToMatchAgainst) {
       for (const self of sourceMagnets) {
         if (other.axis !== self.axis) continue;
         if (other.respectDirection && other.matchDirection !== self.matchDirection) continue;
-        if (!rangeOverlap(self, other)) continue;
+        /*if (!rangeOverlap(self, other)) {
+          VERIFY_NOT_REACHED();
+        }*/
 
         const distance = orthogonalDistance(self, other);
         if (Math.abs(distance) > this.threshold) continue;
