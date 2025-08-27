@@ -133,7 +133,7 @@ export class NodeDistanceSnapProvider
       const nodesInDirection = viableNodes[dir];
 
       // This is a performance optimization to avoid creating too many magnets
-      if (magnets.length > 20) break;
+      if (magnets.length > 50) break;
 
       // Examine pairs of nodes to find distance patterns
       for (let i = 0; i < nodesInDirection.length - 1; i++) {
