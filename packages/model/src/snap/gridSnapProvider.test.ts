@@ -37,6 +37,25 @@ describe('GridSnapProvider', () => {
   });
 
   describe('getMagnets', () => {
+    test('magnet axis', () => {
+      // Setup
+      const diagram = TestModel.newDiagram();
+      diagram.updateProps(p => {
+        p.grid = { size: 10, enabled: true };
+      });
+      const provider = new GridSnapProvider(diagram);
+      const box = { x: 15, y: 25, w: 20, h: 20, r: 0 };
+
+      const magnets = provider.getMagnets(box);
+      for (const m of magnets) {
+        if (Line.isHorizontal(m.line)) {
+          expect(m.axis).toBe('h');
+        } else {
+          expect(m.axis).toBe('v');
+        }
+      }
+    });
+
     test('should generate grid magnets around a simple box', () => {
       // Setup
       const diagram = TestModel.newDiagram();

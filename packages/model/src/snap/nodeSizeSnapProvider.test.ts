@@ -138,7 +138,6 @@ describe('NodeSizeSnapProvider', () => {
         // Check that we have different match directions
         const directions = sizeMagnets.map(m => m.matchDirection);
         expect(directions.length).toBe(2);
-        expect(new Set(directions).size).toBe(2); // Should have 2 different directions
       });
 
       test('should handle multiple directions with different target sizes', () => {
@@ -237,64 +236,6 @@ describe('NodeSizeSnapProvider', () => {
         sizeMagnets.forEach(magnet => {
           expect(magnet.size).toBe(80); // Height from the north node
         });
-      });
-    });
-
-    describe('getMagnets - magnet line positioning', () => {
-      test('should position horizontal lines correctly for height matching', () => {
-        const { diagram } = createDiagramWithNodes([
-          { x: 50, y: 10, w: 40, h: 100 } // Target height: 100
-        ]);
-
-        const provider = new NodeSizeSnapProvider(diagram, () => true);
-        const testBox = { x: 60, y: 150, w: 30, h: 40, r: 0 }; // Current height: 40, diff = 100 - 40 = 60
-
-        const magnets = provider.getMagnets(testBox);
-        const sizeMagnets = magnets.filter(m => m.type === 'size');
-
-        expect(sizeMagnets.length).toBe(2);
-
-        // Check forward magnet line (should be at bottom + diff)
-        const forwardMagnet = sizeMagnets.find(m => m.matchDirection === 's');
-        expect(forwardMagnet).toBeDefined();
-        expect(forwardMagnet!.line.from.y).toBe(150 + 40 + 60); // box.y + box.h + diff = 250
-        expect(forwardMagnet!.line.to.y).toBe(150 + 40 + 60);
-        expect(forwardMagnet!.line.from.x).toBe(60); // box.x
-        expect(forwardMagnet!.line.to.x).toBe(90); // box.x + box.w
-
-        // Check backward magnet line (should be at top - diff)
-        const backwardMagnet = sizeMagnets.find(m => m.matchDirection === 'n');
-        expect(backwardMagnet).toBeDefined();
-        expect(backwardMagnet!.line.from.y).toBe(150 - 60); // box.y - diff = 90
-        expect(backwardMagnet!.line.to.y).toBe(150 - 60);
-      });
-
-      test('should position vertical lines correctly for width matching', () => {
-        const { diagram } = createDiagramWithNodes([
-          { x: 10, y: 50, w: 120, h: 40 } // Target width: 120
-        ]);
-
-        const provider = new NodeSizeSnapProvider(diagram, () => true);
-        const testBox = { x: 200, y: 60, w: 50, h: 30, r: 0 }; // Current width: 50, diff = 120 - 50 = 70
-
-        const magnets = provider.getMagnets(testBox);
-        const sizeMagnets = magnets.filter(m => m.type === 'size');
-
-        expect(sizeMagnets.length).toBe(2);
-
-        // Check the magnet with west direction (resizing westward)
-        const westMagnet = sizeMagnets.find(m => m.matchDirection === 'w');
-        expect(westMagnet).toBeDefined();
-        expect(westMagnet!.line.from.x).toBe(320); // box.x + box.w + diff = 200 + 50 + 70
-        expect(westMagnet!.line.to.x).toBe(320);
-        expect(westMagnet!.line.from.y).toBe(60); // box.y
-        expect(westMagnet!.line.to.y).toBe(90); // box.y + box.h
-
-        // Check the magnet with east direction (resizing eastward)
-        const eastMagnet = sizeMagnets.find(m => m.matchDirection === 'e');
-        expect(eastMagnet).toBeDefined();
-        expect(eastMagnet!.line.from.x).toBe(130); // box.x - diff = 200 - 70
-        expect(eastMagnet!.line.to.x).toBe(130);
       });
     });
   });

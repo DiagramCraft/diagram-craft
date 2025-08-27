@@ -3,7 +3,6 @@ import { Highlight } from '../selectionState';
 import { MagnetOfType } from './magnet';
 import type { Diagram } from '../diagram';
 import { AbstractNodeSnapProvider } from './abstractNodeSnapProvider';
-import { Direction } from '@diagram-craft/geometry/direction';
 import { Box } from '@diagram-craft/geometry/box';
 import { Point } from '@diagram-craft/geometry/point';
 import { Extent } from '@diagram-craft/geometry/extent';
@@ -11,30 +10,6 @@ import { Axis } from '@diagram-craft/geometry/axis';
 import { Line } from '@diagram-craft/geometry/line';
 import { getTypedKeys } from '@diagram-craft/utils/object';
 import { smallest } from '@diagram-craft/utils/array';
-
-/**
- * Direction mappings for size snapping in the forward direction
- * Used when creating magnets that snap to the "forward" edge relative to a direction:
- * - 'n' (north) -> 's' (south): When resizing from north, snap to match southern edge positioning
- * - 's' (south) -> 'n' (north): When resizing from south, snap to match northern edge positioning
- * East and west directions are handled separately in the backward mapping
- */
-const forward: Partial<Record<Direction, Direction>> = {
-  n: 's',
-  s: 'n'
-};
-
-/**
- * Direction mappings for size snapping in the backward direction
- * Used when creating magnets that snap to the "backward" edge relative to a direction:
- * - 'w' (west) -> 'e' (east): When resizing from west, snap to match eastern edge positioning
- * - 'e' (east) -> 'w' (west): When resizing from east, snap to match western edge positioning
- * North and south directions are handled separately in the forward mapping
- */
-const backward: Partial<Record<Direction, Direction>> = {
-  w: 'e',
-  e: 'w'
-};
 
 /**
  * Snap provider for matching node dimensions during resize operations
@@ -121,8 +96,7 @@ export class NodeSizeSnapProvider extends AbstractNodeSnapProvider implements Sn
       magnets.push({
         type: 'size',
         axis,
-        matchDirection: forward[d] ?? d,
-        // TODO: Not sure respectDirection works properly
+        matchDirection: d,
         respectDirection: false,
         node: first,
         size: otherDimension,
@@ -140,8 +114,7 @@ export class NodeSizeSnapProvider extends AbstractNodeSnapProvider implements Sn
       magnets.push({
         type: 'size',
         axis,
-        matchDirection: backward[d] ?? d,
-        // TODO: Not sure respectDirection works properly
+        matchDirection: d,
         respectDirection: false,
         node: first,
         size: otherDimension,

@@ -185,9 +185,6 @@ export class SnapManager {
       for (const self of sourceMagnets) {
         if (other.axis !== self.axis) continue;
         if (other.respectDirection && other.matchDirection !== self.matchDirection) continue;
-        /*if (!rangeOverlap(self, other)) {
-          VERIFY_NOT_REACHED();
-        }*/
 
         const distance = orthogonalDistance(self, other);
         if (Math.abs(distance) > this.threshold) continue;
@@ -286,12 +283,11 @@ export class SnapManager {
    * Only the edges in the specified directions will be snapped
    * @param b - The box being resized
    * @param directions - Which edges are being moved (e.g. ['e', 's'] for bottom-right corner)
-   * TODO: We should be able to merge snapResize and snapMove
    */
   snapResize(b: Box, directions: ReadonlyArray<Direction>): SnapResult<Box> {
     if (!this.enabled) return { highlights: [], magnets: [], adjusted: b };
 
-    const enabledSnapProviders = [...this.magnetTypes];
+    const enabledSnapProviders = this.magnetTypes;
     const snapProviders = new SnapProviders(this.diagram, this.eligibleNodePredicate);
 
     const sourceMagnets = Magnet.forNode(b).filter(s => directions.includes(s.matchDirection!));
@@ -350,9 +346,7 @@ export class SnapManager {
   snapMove(b: Box, directions: ReadonlyArray<Direction> = ['n', 'w', 'e', 's']): SnapResult<Box> {
     if (!this.enabled) return { highlights: [], magnets: [], adjusted: b };
 
-    const enabledSnapProviders: ReadonlyArray<MagnetType> = this.magnetTypes.filter(
-      a => a !== 'size'
-    );
+    const enabledSnapProviders = this.magnetTypes.filter(a => a !== 'size');
     const snapProviders = new SnapProviders(this.diagram, this.eligibleNodePredicate);
 
     const isAllDirections = directions.length === 4;
@@ -424,7 +418,7 @@ export class SnapManager {
     const guides: Highlight[] = [];
     for (const self of selfMagnets) {
       const axis = self.axis;
-      const oAxis = Axis.orthogonal(axis);
+      const oppositeAxis = Axis.orthogonal(axis);
 
       const otherMagnetsForMagnet = matchingMagnets.filter(a => a.self === self);
       if (otherMagnetsForMagnet.length === 0) continue;
@@ -440,7 +434,9 @@ export class SnapManager {
           .filter(e => e.distance >= 0)
 
           // and remove anything that is close post snapping
-          .filter(e => Math.abs(Line.orthogonalDistance(e.matching.line, e.self.line, oAxis)) < 1),
+          .filter(
+            e => Math.abs(Line.orthogonalDistance(e.matching.line, e.self.line, oppositeAxis)) < 1
+          ),
         (a, b) =>
           enabledSnapProviders.indexOf(a.matching.type) -
           enabledSnapProviders.indexOf(b.matching.type)
@@ -469,8 +465,8 @@ export class SnapManager {
    * Filter highlights to only show those that align with the current box edges
    * Used to update highlights when an element's position changes during interaction
    */
-  reviseHighlights(guides: ReadonlyArray<Highlight>, b: Box): ReadonlyArray<Highlight> {
-    return guides.filter(g => {
+  reviseHighlights(highlights: ReadonlyArray<Highlight>, b: Box): ReadonlyArray<Highlight> {
+    return highlights.filter(g => {
       if (Line.isHorizontal(g.line)) {
         return g.line.from.y === b.y || g.line.from.y === b.y + b.h;
       } else {

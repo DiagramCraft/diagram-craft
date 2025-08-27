@@ -99,6 +99,23 @@ describe('NodeSnapProvider', () => {
         expect(horizontalMagnets.length).toBeGreaterThan(0);
         expect(verticalMagnets.length).toBeGreaterThan(0);
       });
+
+      test('magnet axis', () => {
+        const { diagram } = createDiagramWithNodes([{ x: 100, y: 100, w: 60, h: 40 }]);
+
+        const provider = new NodeSnapProvider(diagram, () => true);
+        const testBox = { x: 110, y: 110, w: 40, h: 20, r: 0 }; // Overlaps both axes
+
+        const magnets = provider.getMagnets(testBox);
+
+        for (const m of magnets) {
+          if (Line.isHorizontal(m.line)) {
+            expect(m.axis).toBe('h');
+          } else {
+            expect(m.axis).toBe('v');
+          }
+        }
+      });
     });
 
     describe('getMagnets - filtering behavior', () => {

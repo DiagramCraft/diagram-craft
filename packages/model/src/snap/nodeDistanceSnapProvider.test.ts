@@ -55,12 +55,18 @@ describe('NodeDistanceSnapProvider', () => {
       ]);
 
       const provider = new NodeDistanceSnapProvider(diagram, () => true);
-      
+
       // Test box positioned to the left, not intersecting with any nodes
       const testBox = { x: -30, y: 20, w: 20, h: 20, r: 0 }; // x: -30 to -10, no intersection
 
       const magnets = provider.getMagnets(testBox);
-
+      for (const m of magnets) {
+        if (Line.isHorizontal(m.line)) {
+          expect(m.axis).toBe('h');
+        } else {
+          expect(m.axis).toBe('v');
+        }
+      }
       // Should have distance magnets
       const distanceMagnets = magnets.filter(m => m.type === 'distance');
       expect(distanceMagnets.length).toBeGreaterThan(0);
@@ -96,7 +102,7 @@ describe('NodeDistanceSnapProvider', () => {
       // Create nodes with different gap patterns
       const { diagram } = createDiagramWithNodes([
         { x: 10, y: 20, w: 20, h: 20 }, // Node1: gap of 20px to Node2
-        { x: 50, y: 20, w: 20, h: 20 }, // Node2: gap of 30px to Node3  
+        { x: 50, y: 20, w: 20, h: 20 }, // Node2: gap of 30px to Node3
         { x: 100, y: 20, w: 20, h: 20 } // Node3
       ]);
 
@@ -105,10 +111,10 @@ describe('NodeDistanceSnapProvider', () => {
 
       const magnets = provider.getMagnets(testBox);
       const eastMagnets = magnets.filter(m => m.matchDirection === 'e');
-      
+
       // The algorithm may create fewer magnets due to deduplication logic
       expect(eastMagnets.length).toBeGreaterThan(0);
-      
+
       // Check that we have at least one distance pattern
       const distances = eastMagnets.map(m => m.distancePairs[0].distance);
       expect(distances.length).toBeGreaterThan(0);
@@ -124,12 +130,18 @@ describe('NodeDistanceSnapProvider', () => {
       ]);
 
       const provider = new NodeDistanceSnapProvider(diagram, () => true);
-      
+
       // Test box positioned above Node1, not intersecting
       const testBox = { x: 30, y: -35, w: 25, h: 15, r: 0 }; // y: -35 to -20, no intersection
 
       const magnets = provider.getMagnets(testBox);
-
+      for (const m of magnets) {
+        if (Line.isHorizontal(m.line)) {
+          expect(m.axis).toBe('h');
+        } else {
+          expect(m.axis).toBe('v');
+        }
+      }
       // Should have south-direction magnet (test box is north of nodes, creates south magnets)
       const southMagnets = magnets.filter(m => m.matchDirection === 's');
       expect(southMagnets.length).toBe(1);
@@ -169,7 +181,7 @@ describe('NodeDistanceSnapProvider', () => {
       ]);
 
       const provider = new NodeDistanceSnapProvider(diagram, () => true);
-      
+
       // Test box that overlaps with the first node
       const testBox = { x: 25, y: 20, w: 20, h: 20, r: 0 };
 
@@ -196,9 +208,7 @@ describe('NodeDistanceSnapProvider', () => {
     });
 
     test('should filter out rotated nodes', () => {
-      const { diagram, layer } = createDiagramWithNodes([
-        { x: 10, y: 30, w: 20, h: 20 }
-      ]);
+      const { diagram, layer } = createDiagramWithNodes([{ x: 10, y: 30, w: 20, h: 20 }]);
 
       // Add a rotated node
       layer.addNode('rotated', 'rect', {
@@ -215,9 +225,7 @@ describe('NodeDistanceSnapProvider', () => {
     });
 
     test('should filter out label nodes', () => {
-      const { diagram, layer } = createDiagramWithNodes([
-        { x: 10, y: 30, w: 20, h: 20 }
-      ]);
+      const { diagram, layer } = createDiagramWithNodes([{ x: 10, y: 30, w: 20, h: 20 }]);
 
       // Add a label node
       const labelNode = layer.addNode('label', 'rect', {
@@ -242,7 +250,7 @@ describe('NodeDistanceSnapProvider', () => {
       const { diagram } = createDiagramWithNodes([
         { x: 10, y: 20, w: 20, h: 15 }, // Pattern 1
         { x: 40, y: 20, w: 20, h: 15 }, // 20px gap
-        { x: 10, y: 40, w: 20, h: 15 }, // Pattern 2  
+        { x: 10, y: 40, w: 20, h: 15 }, // Pattern 2
         { x: 40, y: 40, w: 20, h: 15 } // Same 20px gap
       ]);
 
@@ -252,7 +260,7 @@ describe('NodeDistanceSnapProvider', () => {
       const magnets = provider.getMagnets(testBox);
 
       const eastMagnets = magnets.filter(m => m.matchDirection === 'e');
-      
+
       // Should only have one magnet at x = -10 (10 - 20), not duplicates
       const uniquePositions = new Set(eastMagnets.map(m => m.line.from.x));
       expect(uniquePositions.size).toBe(eastMagnets.length);
@@ -268,7 +276,7 @@ describe('NodeDistanceSnapProvider', () => {
       const testBox = { x: 0, y: 40, w: 15, h: 20, r: 0 };
 
       const magnets = provider.getMagnets(testBox);
-      
+
       // Horizontal distance magnets should have vertical axis
       magnets.forEach(magnet => {
         if (magnet.matchDirection === 'w' || magnet.matchDirection === 'e') {
@@ -288,7 +296,7 @@ describe('NodeDistanceSnapProvider', () => {
 
       const magnets = provider.getMagnets(testBox);
       const eastMagnet = magnets.find(m => m.matchDirection === 'e');
-      
+
       if (!eastMagnet) {
         // If no east magnet, the ranges may not overlap as expected for this configuration
         // This is acceptable behavior
@@ -418,7 +426,7 @@ describe('NodeDistanceSnapProvider', () => {
       const testBox = { x: 0, y: 50, w: 15, h: 20, r: 0 }; // No overlap with nodes
 
       const magnets = provider.getMagnets(testBox);
-      
+
       if (magnets.length > 0) {
         const distanceMagnet = magnets[0];
         const sourceMagnet = {
@@ -435,7 +443,7 @@ describe('NodeDistanceSnapProvider', () => {
 
         // Act - this should handle the no-intersection case gracefully
         const highlight = provider.highlight(testBox, matchingPair, Axis.v);
-        
+
         // Should return undefined when no valid intersection
         expect(highlight).toBeUndefined();
       }
@@ -454,7 +462,7 @@ describe('NodeDistanceSnapProvider', () => {
       const distanceMagnet = magnets.find(m => m.type === 'distance')!;
 
       const sourceMagnet = {
-        line: Line.horizontal(10, Range.of(30, 50)), // Test box center  
+        line: Line.horizontal(10, Range.of(30, 50)), // Test box center
         axis: Axis.h,
         type: 'source' as const
       };
@@ -529,9 +537,7 @@ describe('NodeDistanceSnapProvider', () => {
     });
 
     test('should handle single node', () => {
-      const { diagram } = createDiagramWithNodes([
-        { x: 50, y: 50, w: 30, h: 30 }
-      ]);
+      const { diagram } = createDiagramWithNodes([{ x: 50, y: 50, w: 30, h: 30 }]);
 
       const provider = new NodeDistanceSnapProvider(diagram, () => true);
       const testBox = { x: 0, y: 50, w: 20, h: 30, r: 0 };
@@ -571,7 +577,7 @@ describe('NodeDistanceSnapProvider', () => {
 
       // Should create magnets even for nodes at boundaries
       expect(magnets.length).toBeGreaterThan(0);
-      
+
       const eastMagnet = magnets.find(m => m.matchDirection === 'e');
       expect(eastMagnet).toBeDefined();
       expect(eastMagnet!.distancePairs[0].distance).toBe(30); // 50 - 20 = 30

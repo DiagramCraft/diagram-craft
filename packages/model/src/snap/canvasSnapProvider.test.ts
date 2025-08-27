@@ -84,4 +84,21 @@ describe('CanvasSnapProvider', () => {
     expect(highlight.matchingMagnet).toBe(canvasCenterMagnet);
     expect(highlight.selfMagnet).toBe(sourceMagnet);
   });
+
+  test('magnet axis', () => {
+    // Setup
+    const diagram = TestModel.newDiagram();
+    diagram.canvas = { x: 0, y: 0, w: 400, h: 300 };
+    const provider = new CanvasSnapProvider(diagram);
+    const box = { x: 50, y: 50, w: 100, h: 50, r: 0 };
+
+    const magnets = provider.getMagnets(box);
+    for (const m of magnets) {
+      if (Line.isHorizontal(m.line)) {
+        expect(m.axis).toBe('h');
+      } else {
+        expect(m.axis).toBe('v');
+      }
+    }
+  });
 });
