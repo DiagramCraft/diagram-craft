@@ -31,7 +31,6 @@ export abstract class AbstractNodeSnapProvider {
    *
    * @param b - The box to get the coordinate from
    * @param dir - The direction/edge to get the coordinate for
-   * @returns The coordinate value for the specified edge
    *
    * Direction mappings:
    * - 'n' (north): Top edge (y coordinate)
@@ -60,7 +59,6 @@ export abstract class AbstractNodeSnapProvider {
    *
    * @param b - The box to get the range from
    * @param axis - The axis to get the range along ('h' for horizontal, 'v' for vertical)
-   * @returns Range representing the box's extent along the axis
    *
    * Examples:
    * - Horizontal axis ('h'): Returns [x, x + width] representing left to right extent
@@ -68,9 +66,9 @@ export abstract class AbstractNodeSnapProvider {
    */
   protected getRange(b: Box, axis: Axis): Range {
     if (axis === 'h') {
-      return [b.x, b.x + b.w]; // Horizontal range: left edge to right edge
+      return [b.x, b.x + b.w];
     } else {
-      return [b.y, b.y + b.h]; // Vertical range: top edge to bottom edge
+      return [b.y, b.y + b.h];
     }
   }
 
@@ -123,17 +121,22 @@ export abstract class AbstractNodeSnapProvider {
         Range.overlaps(this.getRange(node.bounds, 'h'), boxHRange) || // Horizontal alignment potential
         Range.overlaps(this.getRange(node.bounds, 'v'), boxVRange) // Vertical alignment potential
       ) {
+        const nodeS = node.bounds.y + node.bounds.h;
+        const nodeE = node.bounds.x + node.bounds.w;
+        const boxS = box.y + box.h;
+        const boxE = box.x + box.w;
+
         // Categorize the node by its directional relationship to the target box
-        if (this.getEdgePosition(node.bounds, 's') < box.y) {
+        if (nodeS < box.y) {
           // Node's bottom edge is above the box's top edge → North
           result.n.push(node);
-        } else if (this.getEdgePosition(node.bounds, 'e') < box.x) {
+        } else if (nodeE < box.x) {
           // Node's right edge is left of the box's left edge → West
           result.w.push(node);
-        } else if (node.bounds.x > this.getEdgePosition(box, 'e')) {
+        } else if (node.bounds.x > boxE) {
           // Node's left edge is right of the box's right edge → East
           result.e.push(node);
-        } else if (node.bounds.y > this.getEdgePosition(box, 's')) {
+        } else if (node.bounds.y > boxS) {
           // Node's top edge is below the box's bottom edge → South
           result.s.push(node);
         } else {

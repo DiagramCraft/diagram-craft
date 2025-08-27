@@ -1,11 +1,10 @@
-import type { MatchingMagnetPair, SnapProvider } from './snapManager';
-import type { Highlight } from '../selectionState';
-import type { Diagram } from '../diagram';
-import type { MagnetOfType } from './magnet';
-import { Box } from '@diagram-craft/geometry/box';
-import { Line } from '@diagram-craft/geometry/line';
-import { Axis } from '@diagram-craft/geometry/axis';
-import { Range } from '@diagram-craft/geometry/range';
+import type {MatchingMagnetPair, SnapProvider} from './snapManager';
+import type {Highlight} from '../selectionState';
+import type {Diagram} from '../diagram';
+import type {MagnetOfType} from './magnet';
+import {Box} from '@diagram-craft/geometry/box';
+import {Line} from '@diagram-craft/geometry/line';
+import {Axis} from '@diagram-craft/geometry/axis';
 
 /**
  * Snap provider that provides canvas center line magnets for alignment
@@ -20,12 +19,12 @@ export class CanvasSnapProvider implements SnapProvider<'canvas'> {
     const { w, h } = this.diagram.canvas;
     return [
       {
-        line: Line.vertical(w / 2, Range.of(0, h)),
+        line: Line.vertical(w / 2, [0, h]),
         axis: Axis.v,
         type: 'canvas'
       },
       {
-        line: Line.horizontal(h / 2, Range.of(0, w)),
+        line: Line.horizontal(h / 2, [0, w]),
         axis: Axis.h,
         type: 'canvas'
       }

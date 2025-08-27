@@ -134,6 +134,11 @@ export class NodeSnapProvider extends AbstractNodeSnapProvider implements SnapPr
     if (dest.h.length > 1) dest.h = unique(dest.h.sort(compareFn), e => e.line.from.y);
     if (dest.v.length > 1) dest.v = unique(dest.v.sort(compareFn), e => e.line.from.x);
 
+    // TODO: At this point, it should be possible to further reduce the number of magnets
+    //       by removing magnets that are close to other magnets but further away from the source
+    //       This is probably only worth the computational resources in case the number of
+    //       magnets exceeds some given threshold
+
     // Return combined array of horizontal and vertical magnets
     return [...dest.h, ...dest.v];
   }

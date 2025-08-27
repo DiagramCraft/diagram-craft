@@ -14,9 +14,9 @@ import { Point } from '@diagram-craft/geometry/point';
  * Direction configuration for distance calculations
  * Maps each direction to its properties needed for distance-based snapping:
  * - dir: The direction itself (n/s/e/w)
- * - oDir: The opposite direction (used to find the far edge of elements)
+ * - oppositeDir: The opposite direction (used to find the far edge of elements)
  * - axis: The axis that elements align along for this direction (h for n/s, v for e/w)
- * - oAxis: The orthogonal axis (the axis along which distance is measured)
+ * - oppositeAxis: The orthogonal axis (the axis along which distance is measured)
  * - sign: Direction multiplier (-1 for n/w, 1 for s/e) for distance calculations
  */
 const directions: Record<
@@ -68,13 +68,6 @@ export class NodeDistanceSnapProvider
   extends AbstractNodeSnapProvider
   implements SnapProvider<'distance'>
 {
-  /**
-   * Creates a new distance-based snap provider
-   *
-   * @param diagram - The diagram containing nodes to analyze for distance patterns
-   * @param eligibleNodePredicate - Predicate function to filter which nodes are eligible for snapping.
-   *                                Typically excludes nodes that are currently being moved or selected.
-   */
   constructor(diagram: Diagram, eligibleNodePredicate: EligibleNodePredicate) {
     super(diagram, eligibleNodePredicate);
   }
@@ -132,12 +125,19 @@ export class NodeDistanceSnapProvider
     for (const { dir, axis, sign, oppositeDir, oppositeAxis } of Object.values(directions)) {
       const nodesInDirection = viableNodes[dir];
 
-      // This is a performance optimization to avoid creating too many magnets
-      if (magnets.length > 50) break;
+      // Needed to keep track of the number of magnets generate for each direction
+      const baseMagnetCount = magnets.length;
 
       // Examine pairs of nodes to find distance patterns
       for (let i = 0; i < nodesInDirection.length - 1; i++) {
         const first = nodesInDirection[i].bounds; // The closer node to the box
+
+        // This is a performance optimization to only look for a capped number
+        // of magnets in each direction
+        if (magnets.length - baseMagnetCount > 25) break;
+
+        const firstEdgePosition = this.getEdgePosition(first, dir);
+        const firstRange = this.getRange(first, axis);
 
         // Collect distance measurements between the first node and all further nodes
         // This creates potential distance patterns that other elements can snap to
@@ -145,11 +145,11 @@ export class NodeDistanceSnapProvider
         for (let j = i + 1; j < nodesInDirection.length; j++) {
           const node = nodesInDirection[j];
 
+          const nodeEdgePositionOppositeDir = this.getEdgePosition(node.bounds, oppositeDir);
+
           // Calculate distance between the first node's far edge and the second node's near edge
           // Example: for east direction, this is node2.left - node1.right
-          const d =
-            sign *
-            (this.getEdgePosition(node.bounds, oppositeDir) - this.getEdgePosition(first, dir));
+          const d = sign * (nodeEdgePositionOppositeDir - firstEdgePosition);
 
           // Skip if nodes are overlapping or touching (no meaningful distance)
           if (d <= 0) continue;
@@ -157,52 +157,50 @@ export class NodeDistanceSnapProvider
           // Get the range each node occupies on the alignment axis (perpendicular to distance measurement)
           // For horizontal distance (east/west), this is the vertical range (y to y+height)
           // For vertical distance (north/south), this is the horizontal range (x to x+width)
-          const rangeA = this.getRange(first, axis);
           const rangeB = this.getRange(node.bounds, axis);
 
           // Find where the ranges overlap on the alignment axis
           // Only nodes with overlapping ranges can create meaningful distance relationships
-          const intersection = Range.intersection(rangeA, rangeB);
+          const intersection = Range.intersection(firstRange, rangeB);
 
           // Skip if nodes don't overlap on alignment axis (can't create meaningful distance magnet)
           if (!intersection) continue;
 
           // Use the midpoint of the overlapping range for positioning the distance magnet
           // This ensures the magnet line is drawn where the alignment is most visually meaningful
-          const mp = Range.midpoint(intersection);
+          const intersectionMidpoint = Range.midpoint(intersection);
 
           // Record the distance measurement with the points that define it
           distances.push({
             distance: d,
             // Point A: edge of the first (closer) node
             pointA: {
-              x: axis === 'h' ? mp : this.getEdgePosition(first, dir),
-              y: axis === 'v' ? mp : this.getEdgePosition(first, dir)
+              x: axis === 'h' ? intersectionMidpoint : firstEdgePosition,
+              y: axis === 'v' ? intersectionMidpoint : firstEdgePosition
             },
             // Point B: edge of the second (farther) node
             pointB: {
-              x: axis === 'h' ? mp : this.getEdgePosition(node.bounds, oppositeDir),
-              y: axis === 'v' ? mp : this.getEdgePosition(node.bounds, oppositeDir)
+              x: axis === 'h' ? intersectionMidpoint : nodeEdgePositionOppositeDir,
+              y: axis === 'v' ? intersectionMidpoint : nodeEdgePositionOppositeDir
             },
-            rangeA,
+            rangeA: firstRange,
             rangeB
           });
         }
+
+        const firstPositionOppositeDir = this.getEdgePosition(first, oppositeDir);
 
         // Create distance magnets for each measured distance
         for (const dp of distances) {
           // Calculate where to place the magnet: same distance away from the first node
           // as the distance between the first and second node
-          const pos = this.getEdgePosition(first, oppositeDir) - sign * dp.distance;
+          const pos = firstPositionOppositeDir - sign * dp.distance;
 
           // Skip if we already have a magnet at this position
           if (magnetPositions[oppositeAxis].has(pos)) continue;
 
           // Find where the magnet line should span: intersection of first node's range and box's range
-          const intersection = Range.intersection(
-            this.getRange(first, axis),
-            this.getRange(box, axis)
-          )!;
+          const intersection = Range.intersection(firstRange, this.getRange(box, axis))!;
 
           // Create the distance magnet
           magnets.push({
@@ -211,8 +209,8 @@ export class NodeDistanceSnapProvider
               axis === 'v' ? Line.vertical(pos, intersection) : Line.horizontal(pos, intersection),
             axis,
             matchDirection: dir,
-            respectDirection: true, // Only match elements moving in the same direction
-            distancePairs: [dp] // Store the distance measurement this magnet represents
+            respectDirection: true,
+            distancePairs: [dp]
           });
 
           // Mark this position as used to prevent duplicate magnets

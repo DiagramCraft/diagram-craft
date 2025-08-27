@@ -8,6 +8,8 @@ import { Axis } from '@diagram-craft/geometry/axis';
 import { Point } from '@diagram-craft/geometry/point';
 import { Range } from '@diagram-craft/geometry/range';
 
+const DEFAULT_GRID_SIZE = 10;
+
 /**
  * Snap provider that creates grid line magnets for alignment
  *
@@ -21,7 +23,7 @@ export class GridSnapProvider implements SnapProvider<'grid'> {
   private readonly gridSize: number;
 
   constructor(diagram: Diagram) {
-    this.gridSize = diagram.props.grid?.size ?? 10;
+    this.gridSize = diagram.props.grid?.size ?? DEFAULT_GRID_SIZE;
   }
 
   /**

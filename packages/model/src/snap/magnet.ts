@@ -22,31 +22,6 @@ type BaseMagnet = {
 };
 
 /**
- * Represents a distance measurement between two points
- * Used for equal-distance snapping between nodes
- * TODO: This is a bit redundant as the distance will be the same for all pairs
- */
-export type DistancePair = {
-  /** The distance between the two points */
-  distance: number;
-  /** First point in the distance measurement */
-  pointA: Point;
-  /** Second point in the distance measurement */
-  pointB: Point;
-};
-
-/**
- * Distance pair with additional range information
- * Used for distance magnets that need to track the extent of elements
- */
-export type DistancePairWithRange = DistancePair & {
-  /** Range along the axis for the first element */
-  rangeA: Range;
-  /** Range along the axis for the second element */
-  rangeB: Range;
-};
-
-/**
  * Union type representing all possible magnet types
  * Each magnet type serves a different snapping purpose:
  * - canvas: Canvas boundaries
@@ -92,6 +67,30 @@ export type Magnet = BaseMagnet &
         distancePairs: Array<DistancePairWithRange>;
       }
   );
+
+/**
+ * Represents a distance measurement between two points
+ * Used for equal-distance snapping between nodes
+ */
+export type DistancePair = {
+  /** The distance between the two points */
+  distance: number;
+  /** First point in the distance measurement */
+  pointA: Point;
+  /** Second point in the distance measurement */
+  pointB: Point;
+};
+
+/**
+ * Distance pair with additional range information
+ * Used for distance magnets that need to track the extent of elements
+ */
+export type DistancePairWithRange = DistancePair & {
+  /** Range along the axis for the first element */
+  rangeA: Range;
+  /** Range along the axis for the second element */
+  rangeB: Range;
+};
 
 /** Union of all possible magnet type strings */
 export type MagnetType = Magnet['type'];
@@ -141,28 +140,28 @@ export const Magnet = {
     // Add edge magnets for non-rotated boxes
     magnets.push({
       // Top edge
-      line: Line.of({ x: node.x, y: node.y }, { x: node.x + node.w, y: node.y }),
+      line: Line.horizontal(node.y, [node.x, node.x + node.w]),
       axis: Axis.h,
       type,
       matchDirection: 'n'
     });
     magnets.push({
       // Bottom edge
-      line: Line.of({ x: node.x, y: node.y + node.h }, { x: node.x + node.w, y: node.y + node.h }),
+      line: Line.horizontal(node.y + node.h, [node.x, node.x + node.w]),
       axis: Axis.h,
       type,
       matchDirection: 's'
     });
     magnets.push({
       // Left edge
-      line: Line.of({ x: node.x, y: node.y }, { x: node.x, y: node.y + node.h }),
+      line: Line.vertical(node.x, [node.y, node.y + node.h]),
       axis: Axis.v,
       type,
       matchDirection: 'w'
     });
     magnets.push({
       // Right edge
-      line: Line.of({ x: node.x + node.w, y: node.y }, { x: node.x + node.w, y: node.y + node.h }),
+      line: Line.vertical(node.x + node.w, [node.y, node.y + node.h]),
       axis: Axis.v,
       type,
       matchDirection: 'e'
