@@ -6,6 +6,11 @@ import { Box } from '@diagram-craft/geometry/box';
 import { Line } from '@diagram-craft/geometry/line';
 import { Axis } from '@diagram-craft/geometry/axis';
 
+/**
+ * Snap provider that provides guides for alignment
+ * This provider creates magnets for horizontal and vertical guides
+ * defined in the diagram's guides array.
+ */
 export class GuidesSnapProvider implements SnapProvider<'guide'> {
   constructor(private readonly diagram: Diagram) {}
 
@@ -32,6 +37,9 @@ export class GuidesSnapProvider implements SnapProvider<'guide'> {
     return magnets;
   }
 
+  /**
+   * As the guides are already drawn, we don't need to highlight them'
+   */
   highlight(_box: Box, _match: MatchingMagnetPair<'guide'>, _axis: Axis): Highlight | undefined {
     return undefined;
   }
