@@ -13,7 +13,7 @@ import { Point } from '@diagram-craft/geometry/point';
 import { Line } from '@diagram-craft/geometry/line';
 import { Range } from '@diagram-craft/geometry/range';
 import { Direction } from '@diagram-craft/geometry/direction';
-import { assert, VERIFY_NOT_REACHED, VerifyNotReached } from '@diagram-craft/utils/assert';
+import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { groupBy, largest, smallest } from '@diagram-craft/utils/array';
 import { Angle } from '@diagram-craft/geometry/angle';
 import { SnapManagerConfig } from './snapManagerConfig';
@@ -122,19 +122,6 @@ class SnapProviders {
     return types.flatMap(t => this.get(t).getMagnets(b));
   }
 }
-
-/**
- * Check if two magnets have overlapping ranges along their axis
- * Two magnets can only snap if their lines overlap when projected onto their shared axis
- * @returns Range intersection or undefined if no overlap
- */
-const rangeOverlap = (a1: Magnet, a2: Magnet) => {
-  const axis = Axis.toXY(a1.axis);
-  return Range.intersection(
-    [a1.line.from[axis], a1.line.to[axis]],
-    [a2.line.from[axis], a2.line.to[axis]]
-  );
-};
 
 /**
  * Calculate the orthogonal distance between two magnets
