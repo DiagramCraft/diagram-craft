@@ -1,12 +1,16 @@
 import type { MatchingMagnetPair, SnapProvider } from './snapManager';
-import type { Guide } from '../selectionState';
+import type { Highlight } from '../selectionState';
 import type { Diagram } from '../diagram';
 import { MagnetOfType } from './magnet';
 import { Box } from '@diagram-craft/geometry/box';
 import { Line } from '@diagram-craft/geometry/line';
 import { Axis } from '@diagram-craft/geometry/axis';
-import { Point } from '@diagram-craft/geometry/point';
 
+/**
+ * Snap provider that provides guides for alignment
+ * This provider creates magnets for horizontal and vertical guides
+ * defined in the diagram's guides array.
+ */
 export class GuidesSnapProvider implements SnapProvider<'guide'> {
   constructor(private readonly diagram: Diagram) {}
 
@@ -33,15 +37,14 @@ export class GuidesSnapProvider implements SnapProvider<'guide'> {
     return magnets;
   }
 
-  makeGuide(_box: Box, _match: MatchingMagnetPair<'guide'>, _axis: Axis): Guide | undefined {
+  /**
+   * As the guides are already drawn, we don't need to highlight them'
+   */
+  highlight(_box: Box, _match: MatchingMagnetPair<'guide'>, _axis: Axis): Highlight | undefined {
     return undefined;
   }
 
-  moveMagnet(magnet: MagnetOfType<'guide'>, delta: Point): void {
-    magnet.line = Line.move(magnet.line, delta);
-  }
-
-  consolidate(guides: Guide[]): Guide[] {
+  filterHighlights(guides: Highlight[]): Highlight[] {
     return guides;
   }
 }

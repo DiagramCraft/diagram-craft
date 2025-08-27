@@ -23,7 +23,7 @@ type SelectionSource = {
   boundingBox: Box;
 };
 
-export type Guide = {
+export type Highlight = {
   line: Line;
   //label?: string;
   selfMagnet: Magnet;
@@ -64,7 +64,7 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
   readonly #marquee: Marquee;
 
   #bounds: Box;
-  #guides: ReadonlyArray<Guide> = [];
+  #highlights: ReadonlyArray<Highlight> = [];
   #elements: ReadonlyArray<DiagramElement> = [];
   #source: SelectionSource = {
     elementBoxes: [],
@@ -125,12 +125,12 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
     }
   }
 
-  get guides() {
-    return this.#guides;
+  get highlights() {
+    return this.#highlights;
   }
 
-  set guides(guides: ReadonlyArray<Guide>) {
-    this.#guides = guides;
+  set highlights(guides: ReadonlyArray<Highlight>) {
+    this.#highlights = guides;
     this.emitAsync('change', { selection: this });
   }
 
@@ -224,7 +224,7 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
 
   clear() {
     this.#marquee.clear();
-    this.#guides = [];
+    this.#highlights = [];
 
     this.setElements([]);
   }

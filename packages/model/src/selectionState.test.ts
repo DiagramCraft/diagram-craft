@@ -1,4 +1,4 @@
-import { Guide, SelectionState } from './selectionState';
+import { Highlight, SelectionState } from './selectionState';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { TestDiagramBuilder, TestModel, TestLayerBuilder } from './test-support/builder';
 
@@ -124,9 +124,9 @@ describe('SelectionState', () => {
     const changeCb = vi.fn();
     selectionState.on('change', changeCb);
 
-    const guides: Guide[] = [{} as unknown as Guide];
-    selectionState.guides = guides;
-    expect(selectionState.guides).toBe(guides);
+    const guides: Highlight[] = [{} as unknown as Highlight];
+    selectionState.highlights = guides;
+    expect(selectionState.highlights).toBe(guides);
 
     vi.advanceTimersByTime(1);
     expect(changeCb).toHaveBeenCalledTimes(1);

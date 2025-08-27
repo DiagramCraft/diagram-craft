@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { GuidesSnapProvider } from './guidesSnapProvider';
 import { TestModel } from '../test-support/builder';
 import { Axis } from '@diagram-craft/geometry/axis';
+import { Line } from '@diagram-craft/geometry/line';
 
 describe('GuidesSnapProvider', () => {
   test('should generate magnets for horizontal guides', () => {
@@ -44,6 +45,23 @@ describe('GuidesSnapProvider', () => {
     expect(magnets[0].axis).toBe(Axis.v);
     expect(magnets[0].line.from.x).toBe(150);
     expect(magnets[1].line.from.x).toBe(300);
+  });
+  test('magnet axis', () => {
+    // Setup
+    const diagram = TestModel.newDiagram();
+    diagram.addGuide({ type: 'horizontal', position: 100, color: '#ff0000' });
+    diagram.addGuide({ type: 'vertical', position: 150, color: '#00ff00' });
+    const provider = new GuidesSnapProvider(diagram);
+    const box = { x: 50, y: 50, w: 100, h: 50, r: 0 };
+
+    const magnets = provider.getMagnets(box);
+    for (const m of magnets) {
+      if (Line.isHorizontal(m.line)) {
+        expect(m.axis).toBe('h');
+      } else {
+        expect(m.axis).toBe('v');
+      }
+    }
   });
 
   test('should generate mixed horizontal and vertical magnets', () => {

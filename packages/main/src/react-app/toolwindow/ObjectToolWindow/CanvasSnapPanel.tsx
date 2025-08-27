@@ -38,12 +38,10 @@ export const CanvasSnapPanel = (props: Props) => {
             </ActionCheckbox>
           </div>
           <div className={'util-vcenter util-vgap util-font-body'}>
-            <ActionCheckbox action={'TOGGLE_MAGNET_TYPE_DISTANCE'}>
-              Snap to object size
-            </ActionCheckbox>
+            <ActionCheckbox action={'TOGGLE_MAGNET_TYPE_SIZE'}>Snap to object size</ActionCheckbox>
           </div>
           <div className={'util-vcenter util-vgap util-font-body'}>
-            <ActionCheckbox action={'TOGGLE_MAGNET_TYPE_SIZE'}>
+            <ActionCheckbox action={'TOGGLE_MAGNET_TYPE_DISTANCE'}>
               Snap to object distance
             </ActionCheckbox>
           </div>

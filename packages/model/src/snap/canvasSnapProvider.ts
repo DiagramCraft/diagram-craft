@@ -1,12 +1,17 @@
 import type { MatchingMagnetPair, SnapProvider } from './snapManager';
-import type { Guide } from '../selectionState';
+import type { Highlight } from '../selectionState';
 import type { Diagram } from '../diagram';
 import type { MagnetOfType } from './magnet';
 import { Box } from '@diagram-craft/geometry/box';
 import { Line } from '@diagram-craft/geometry/line';
 import { Axis } from '@diagram-craft/geometry/axis';
-import { Point } from '@diagram-craft/geometry/point';
 
+/**
+ * Snap provider that provides canvas center line magnets for alignment
+ *
+ * This provider creates two magnets representing the vertical and horizontal center lines
+ * of the entire canvas/diagram area.
+ */
 export class CanvasSnapProvider implements SnapProvider<'canvas'> {
   constructor(private readonly diagram: Diagram) {}
 
@@ -14,31 +19,29 @@ export class CanvasSnapProvider implements SnapProvider<'canvas'> {
     const { w, h } = this.diagram.canvas;
     return [
       {
-        line: Line.of({ x: w / 2, y: 0 }, { x: w / 2, y: h }),
+        line: Line.vertical(w / 2, [0, h]),
         axis: Axis.v,
         type: 'canvas'
       },
       {
-        line: Line.of({ x: 0, y: h / 2 }, { x: w, y: h / 2 }),
+        line: Line.horizontal(h / 2, [0, w]),
         axis: Axis.h,
         type: 'canvas'
       }
     ];
   }
 
-  makeGuide(_box: Box, match: MatchingMagnetPair<'canvas'>, _axis: Axis): Guide {
+  highlight(_box: Box, match: MatchingMagnetPair<'canvas'>, _axis: Axis): Highlight {
     return {
+      // Since the canvas magnets are the full height/width, we simply highlight
+      // by returning this magnet line as a whole
       line: match.matching.line,
       matchingMagnet: match.matching,
       selfMagnet: match.self
     };
   }
 
-  moveMagnet(magnet: MagnetOfType<'canvas'>, delta: Point): void {
-    magnet.line = Line.move(magnet.line, delta);
-  }
-
-  consolidate(guides: Guide[]): Guide[] {
-    return guides;
+  filterHighlights(highlights: Highlight[]): Highlight[] {
+    return highlights;
   }
 }

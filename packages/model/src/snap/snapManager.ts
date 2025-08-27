@@ -5,7 +5,7 @@ import { NodeDistanceSnapProvider } from './nodeDistanceSnapProvider';
 import { GridSnapProvider } from './gridSnapProvider';
 import { NodeSizeSnapProvider } from './nodeSizeSnapProvider';
 import { GuidesSnapProvider } from './guidesSnapProvider';
-import { Guide } from '../selectionState';
+import { Highlight } from '../selectionState';
 import { Magnet, MagnetOfType, MagnetType } from './magnet';
 import { Axis } from '@diagram-craft/geometry/axis';
 import { Box, WritableBox } from '@diagram-craft/geometry/box';
@@ -18,50 +18,88 @@ import { groupBy, largest, smallest } from '@diagram-craft/utils/array';
 import { Angle } from '@diagram-craft/geometry/angle';
 import { SnapManagerConfig } from './snapManagerConfig';
 
+/**
+ * Result of a snap operation containing visual highlights, adjusted position/geometry, and magnets
+ * @template T - The type being snapped (Point, Line, or Box)
+ */
 type SnapResult<T> = {
-  guides: ReadonlyArray<Guide>;
+  /** Visual highlights to show snap guides/lines to the user */
+  highlights: ReadonlyArray<Highlight>;
+  /** The adjusted position/geometry after snapping */
   adjusted: T;
+  /** All magnets involved in the snap operation */
   magnets: ReadonlyArray<Magnet>;
 };
 
+/**
+ * Represents a pair of magnets that can snap together
+ * @template T - The specific magnet type being matched
+ */
 export type MatchingMagnetPair<T extends MagnetType> = {
+  /** The magnet from the element being moved/resized */
   self: Magnet;
+  /** The target magnet that self snaps to */
   matching: MagnetOfType<T>;
+  /** Orthogonal distance between the magnets */
   distance: number;
 };
 
+/**
+ * Interface for providing snap targets of a specific magnet type
+ * Each snap provider handles one type of snapping (grid, nodes, guides, etc.)
+ * @template T - The specific magnet type this provider handles
+ */
 export interface SnapProvider<T extends MagnetType> {
+  /** Get all magnets of this type that could be snap targets for the given box */
   getMagnets(box: Box): ReadonlyArray<MagnetOfType<T>>;
-  makeGuide(box: Box, match: MatchingMagnetPair<T>, axis: Axis): Guide | undefined;
-  moveMagnet(magnet: MagnetOfType<T>, delta: Point): void;
-  consolidate(guides: Guide[]): Guide[];
+
+  /** Create a visual highlight/guide line for a successful snap match */
+  highlight(box: Box, match: MatchingMagnetPair<T>, axis: Axis): Highlight | undefined;
+
+  /** Combine multiple highlights into consolidated guide lines */
+  filterHighlights(guides: Highlight[]): Highlight[];
 }
 
+/**
+ * Special snap provider for 'source' magnets - magnets belonging to the element being moved
+ * This provider handles updating source magnet positions but doesn't provide snap targets
+ */
 class SourceSnapProvider implements SnapProvider<'source'> {
+  /** Source provider doesn't provide magnets - throws if called */
   getMagnets(_box: Box): ReadonlyArray<MagnetOfType<'source'>> {
     throw new VerifyNotReached();
   }
 
-  makeGuide(_box: Box, _match: MatchingMagnetPair<'source'>, _axis: Axis): Guide {
+  /** Source provider doesn't create highlights - throws if called */
+  highlight(_box: Box, _match: MatchingMagnetPair<'source'>, _axis: Axis): Highlight {
     throw new VerifyNotReached();
   }
 
-  moveMagnet(magnet: MagnetOfType<'source'>, delta: Point): void {
-    magnet.line = Line.move(magnet.line, delta);
-  }
-
-  consolidate(guides: Guide[]): Guide[] {
+  filterHighlights(guides: Highlight[]): Highlight[] {
     return guides;
   }
 }
 
+/**
+ * Predicate function to determine which nodes are eligible for snapping
+ * Used to exclude nodes being moved/resized from being snap targets for themselves
+ */
 export type EligibleNodePredicate = (nodeId: string) => boolean;
 
+/**
+ * Registry of all snap providers, indexed by magnet type
+ * Manages the different types of snapping available (grid, nodes, guides, etc.)
+ */
 class SnapProviders {
   readonly #providers: {
     [T in MagnetType]: SnapProvider<T>;
   };
 
+  /**
+   * Initialize all snap providers for a diagram
+   * @param diagram - The diagram containing elements to snap to
+   * @param eligibleNodePredicate - Function to filter which nodes can be snap targets
+   */
   constructor(diagram: Diagram, eligibleNodePredicate: EligibleNodePredicate) {
     this.#providers = {
       grid: new GridSnapProvider(diagram),
@@ -74,36 +112,51 @@ class SnapProviders {
     };
   }
 
+  /** Get the snap provider for a specific magnet type */
   get<T extends MagnetType>(type: T): SnapProvider<T> {
     return this.#providers[type];
   }
 
+  /** Get all magnets from the specified provider types for the given box */
   getMagnets(types: ReadonlyArray<MagnetType>, b: Box) {
     return types.flatMap(t => this.get(t).getMagnets(b));
   }
 }
 
-const orthogonalLineDistance = (line1: Line, line2: Line, oAxis: Axis) =>
-  line1.from[Axis.toXY(oAxis)] - line2.from[Axis.toXY(oAxis)];
-
-const rangeOverlap = (a1: Magnet, a2: Magnet) => {
-  const axis = Axis.toXY(a1.axis);
-  return Range.intersection(
-    [a1.line.from[axis], a1.line.to[axis]],
-    [a2.line.from[axis], a2.line.to[axis]]
-  );
-};
-
+/**
+ * Calculate the orthogonal distance between two magnets
+ * This is the actual snapping distance - how far to move to align the magnets
+ */
 const orthogonalDistance = (a1: Magnet, a2: Magnet) => {
   const axis = Axis.toXY(Axis.orthogonal(a1.axis));
   return a1.line.from[axis] - a2.line.from[axis];
 };
 
+/**
+ * Main class responsible for performing snap operations on diagram elements
+ *
+ * The SnapManager handles snapping of points, lines, and boxes to various targets:
+ * - Grid lines
+ * - Other nodes (edges, centers)
+ * - Guide lines
+ * - Canvas boundaries
+ * - Equal distances between nodes
+ * - Equal sizes between nodes
+ *
+ * It uses a magnet-based system where each element has magnetic lines that can
+ * attract to other magnetic lines within a threshold distance.
+ */
 export class SnapManager {
   private readonly magnetTypes: ReadonlyArray<MagnetType>;
   private readonly threshold: number;
   private readonly enabled: boolean;
 
+  /**
+   * Create a new SnapManager
+   * @param diagram - The diagram containing elements to snap to
+   * @param eligibleNodePredicate - Function to filter which nodes can be snap targets (defaults to all)
+   * @param config - Configuration specifying enabled magnet types, threshold, and enabled state
+   */
   constructor(
     private readonly diagram: Diagram,
     private readonly eligibleNodePredicate: EligibleNodePredicate = () => true,
@@ -114,17 +167,24 @@ export class SnapManager {
     this.enabled = config.enabled;
   }
 
+  /**
+   * Find all possible magnet pairs that can snap together
+   * Magnets can snap if they:
+   * - Are on the same axis (both horizontal or both vertical)
+   * - Have matching directions (if direction is respected)
+   * - Have overlapping ranges along their axis
+   * - Are within the snap threshold distance
+   */
   private matchMagnets(
-    selfMagnets: ReadonlyArray<Magnet>,
-    otherMagnets: ReadonlyArray<Magnet>
+    sourceMagnets: ReadonlyArray<Magnet>,
+    magnetsToMatchAgainst: ReadonlyArray<Magnet>
   ): ReadonlyArray<MatchingMagnetPair<MagnetType>> {
-    const dest: MatchingMagnetPair<MagnetType>[] = [];
+    const dest: Array<MatchingMagnetPair<MagnetType>> = [];
 
-    for (const other of otherMagnets) {
-      for (const self of selfMagnets) {
+    for (const other of magnetsToMatchAgainst) {
+      for (const self of sourceMagnets) {
         if (other.axis !== self.axis) continue;
         if (other.respectDirection && other.matchDirection !== self.matchDirection) continue;
-        if (!rangeOverlap(self, other)) continue;
 
         const distance = orthogonalDistance(self, other);
         if (Math.abs(distance) > this.threshold) continue;
@@ -136,23 +196,31 @@ export class SnapManager {
     return dest;
   }
 
+  /**
+   * Snap a point. Only snapping to grid
+   */
   snapPoint(p: Point): SnapResult<Point> {
-    if (!this.enabled) return { guides: [], magnets: [], adjusted: p };
-    if (!this.magnetTypes.find(a => a === 'grid')) return { guides: [], magnets: [], adjusted: p };
+    if (!this.enabled || !this.magnetTypes.includes('grid')) {
+      return { highlights: [], magnets: [], adjusted: p };
+    }
 
     return {
-      guides: [],
+      highlights: [],
       magnets: [],
       adjusted: GridSnapProvider.snapPoint(p, this.diagram.props.grid?.size ?? 10)
     };
   }
 
+  /**
+   * Snap a horizontal or vertical line to nodes or grid
+   * Used for drawing straight lines that should align with existing elements
+   */
   snapOrthoLinearLine(line: Line): SnapResult<Line> {
     assert.true(Line.isHorizontal(line) || Line.isVertical(line));
 
-    if (!this.enabled) return { guides: [], magnets: [], adjusted: line };
+    if (!this.enabled) return { highlights: [], magnets: [], adjusted: line };
 
-    if (this.magnetTypes.find(a => a === 'node')) {
+    if (this.magnetTypes.includes('node')) {
       const snapProviders = new SnapProviders(this.diagram, this.eligibleNodePredicate);
       const magnets = snapProviders.get('node').getMagnets(Box.fromLine(line));
 
@@ -164,7 +232,7 @@ export class SnapManager {
       if (matchingMagnets.length > 0) {
         const [m] = matchingMagnets;
         return {
-          guides: [],
+          highlights: [],
           magnets: [],
           adjusted: Line.isHorizontal(line)
             ? Line.horizontal(m.matching.line.from.y, Range.of(line.from.x, line.to.x))
@@ -173,13 +241,13 @@ export class SnapManager {
       }
     }
 
-    if (this.magnetTypes.find(a => a === 'grid')) {
+    if (this.magnetTypes.includes('grid')) {
       const p = Line.isHorizontal(line) ? Point.of(0, line.from.y) : Point.of(line.from.x, 0);
       const snappedPoint = GridSnapProvider.snapPoint(p, this.diagram.props.grid?.size ?? 10);
 
       if (!Point.isEqual(p, snappedPoint)) {
         return {
-          guides: [],
+          highlights: [],
           magnets: [],
           adjusted: Line.isHorizontal(line)
             ? Line.horizontal(snappedPoint.y, Range.of(line.from.x, line.to.x))
@@ -188,11 +256,15 @@ export class SnapManager {
       }
     }
 
-    return { guides: [], magnets: [], adjusted: line };
+    return { highlights: [], magnets: [], adjusted: line };
   }
 
+  /**
+   * Snap rotation angles to 5-degree increments
+   * Helps align rotated elements to common angles
+   */
   snapRotate(b: Box): SnapResult<Box> {
-    if (!this.enabled) return { guides: [], magnets: [], adjusted: b };
+    if (!this.enabled) return { highlights: [], magnets: [], adjusted: b };
 
     const newBounds = Box.asReadWrite(b);
 
@@ -203,23 +275,26 @@ export class SnapManager {
       newBounds.r = Angle.toRad(Math.round(Angle.toDeg(b.r) / roundTo) * roundTo);
     }
 
-    return { guides: [], magnets: [], adjusted: WritableBox.asBox(newBounds) };
+    return { highlights: [], magnets: [], adjusted: WritableBox.asBox(newBounds) };
   }
 
-  // TODO: We should be able to merge snapResize and snapMove
+  /**
+   * Snap element edges while resizing
+   * Only the edges in the specified directions will be snapped
+   * @param b - The box being resized
+   * @param directions - Which edges are being moved (e.g. ['e', 's'] for bottom-right corner)
+   */
   snapResize(b: Box, directions: ReadonlyArray<Direction>): SnapResult<Box> {
-    if (!this.enabled) return { guides: [], magnets: [], adjusted: b };
+    if (!this.enabled) return { highlights: [], magnets: [], adjusted: b };
 
-    const enabledSnapProviders: ReadonlyArray<MagnetType> = [...this.magnetTypes];
+    const enabledSnapProviders = this.magnetTypes;
     const snapProviders = new SnapProviders(this.diagram, this.eligibleNodePredicate);
 
-    const selfMagnets = Magnet.forNode(b, 'source').filter(s =>
-      directions.includes(s.matchDirection!)
-    );
+    const sourceMagnets = Magnet.forNode(b).filter(s => directions.includes(s.matchDirection!));
 
     const magnetsToMatchAgainst = snapProviders.getMagnets(enabledSnapProviders, b);
 
-    const matchingMagnets = this.matchMagnets(selfMagnets, magnetsToMatchAgainst);
+    const matchingMagnets = this.matchMagnets(sourceMagnets, magnetsToMatchAgainst);
 
     const newBounds = Box.asReadWrite(b);
 
@@ -244,34 +319,38 @@ export class SnapManager {
     }
 
     // Readjust self magnets to the new position - post snapping
-    const newMagnets = Magnet.forNode(WritableBox.asBox(newBounds), 'source');
-    selfMagnets.forEach(a => {
+    const newMagnets = Magnet.forNode(WritableBox.asBox(newBounds));
+    sourceMagnets.forEach(a => {
       a.line = newMagnets.find(b => b.matchDirection === a.matchDirection)!.line;
     });
 
     return {
-      guides: this.generateGuides(
+      highlights: this.generateHighlights(
         WritableBox.asBox(newBounds),
-        selfMagnets,
+        sourceMagnets,
         matchingMagnets,
         snapProviders,
         enabledSnapProviders
       ),
-      magnets: [...magnetsToMatchAgainst, ...selfMagnets],
+      magnets: [...magnetsToMatchAgainst, ...sourceMagnets],
       adjusted: WritableBox.asBox(newBounds)
     };
   }
 
+  /**
+   * Snap element while moving
+   * Can snap any edge of the element, with center snapping enabled for all-direction moves
+   * @param b - The box being moved
+   * @param directions - Which directions to consider for snapping (defaults to all)
+   */
   snapMove(b: Box, directions: ReadonlyArray<Direction> = ['n', 'w', 'e', 's']): SnapResult<Box> {
-    if (!this.enabled) return { guides: [], magnets: [], adjusted: b };
+    if (!this.enabled) return { highlights: [], magnets: [], adjusted: b };
 
-    const enabledSnapProviders: ReadonlyArray<MagnetType> = this.magnetTypes.filter(
-      a => a !== 'size'
-    );
+    const enabledSnapProviders = this.magnetTypes.filter(a => a !== 'size');
     const snapProviders = new SnapProviders(this.diagram, this.eligibleNodePredicate);
 
     const isAllDirections = directions.length === 4;
-    const magnets = Magnet.forNode(b, 'source').filter(
+    const magnets = Magnet.forNode(b).filter(
       s =>
         directions.includes(s.matchDirection!) ||
         (isAllDirections && s.matchDirection === undefined)
@@ -294,7 +373,7 @@ export class SnapManager {
 
       if (closest === undefined) continue;
 
-      newBounds[Axis.toXY(Axis.orthogonal(axis)) === 'x' ? 'x' : 'y'] -= orthogonalDistance(
+      newBounds[Axis.toXY(Axis.orthogonal(axis))] -= orthogonalDistance(
         closest.self,
         closest.matching
       );
@@ -302,11 +381,11 @@ export class SnapManager {
 
     // Readjust self magnets to the new position - post snapping
     for (const a of magnets) {
-      snapProviders.get(a.type).moveMagnet(a, Point.subtract(newBounds, b));
+      Magnet.move(a, Point.subtract(newBounds, b));
     }
 
     return {
-      guides: this.generateGuides(
+      highlights: this.generateHighlights(
         WritableBox.asBox(newBounds),
         magnets,
         matchingMagnets,
@@ -318,7 +397,16 @@ export class SnapManager {
     };
   }
 
-  private generateGuides(
+  /**
+   * Generate visual highlights for successful snap matches
+   * Creates highlights showing where elements have snapped to
+   * @param bounds - The final bounds after snapping
+   * @param selfMagnets - Magnets from the element being moved
+   * @param matchingMagnets - All successful magnet matches
+   * @param snapProviders - Provider registry for creating highlights
+   * @param enabledSnapProviders - Which provider types are enabled
+   */
+  private generateHighlights(
     bounds: Box,
     selfMagnets: ReadonlyArray<Magnet>,
     matchingMagnets: ReadonlyArray<MatchingMagnetPair<MagnetType>>,
@@ -327,10 +415,10 @@ export class SnapManager {
   ) {
     // Check for guides in all four directions for each matching magnet
     // ... also draw the guide to the matching magnet that is furthest away
-    const guides: Guide[] = [];
+    const guides: Highlight[] = [];
     for (const self of selfMagnets) {
       const axis = self.axis;
-      const oAxis = Axis.orthogonal(axis);
+      const oppositeAxis = Axis.orthogonal(axis);
 
       const otherMagnetsForMagnet = matchingMagnets.filter(a => a.self === self);
       if (otherMagnetsForMagnet.length === 0) continue;
@@ -346,7 +434,9 @@ export class SnapManager {
           .filter(e => e.distance >= 0)
 
           // and remove anything that is close post snapping
-          .filter(e => Math.abs(orthogonalLineDistance(e.matching.line, e.self.line, oAxis)) < 1),
+          .filter(
+            e => Math.abs(Line.orthogonalDistance(e.matching.line, e.self.line, oppositeAxis)) < 1
+          ),
         (a, b) =>
           enabledSnapProviders.indexOf(a.matching.type) -
           enabledSnapProviders.indexOf(b.matching.type)
@@ -354,25 +444,29 @@ export class SnapManager {
 
       if (!match) continue;
 
-      const guide = snapProviders.get(match.matching.type).makeGuide(bounds, match, axis);
+      const guide = snapProviders.get(match.matching.type).highlight(bounds, match, axis);
       if (guide) guides.push(guide);
     }
 
     // TODO: Remove guides that are too close to each other or redundant (e.g. center if both left and right)
 
     // Consolidate guides
-    const consolidatedGuides: Guide[] = [];
+    const consolidatedGuides: Highlight[] = [];
     const groupedGuides = groupBy(guides, g => g.matchingMagnet.type);
     for (const [type, guidesOfType] of groupedGuides) {
       const snapProvider = snapProviders.get(type);
-      consolidatedGuides.push(...snapProvider.consolidate(guidesOfType));
+      consolidatedGuides.push(...snapProvider.filterHighlights(guidesOfType));
     }
 
     return consolidatedGuides;
   }
 
-  reviseGuides(guides: ReadonlyArray<Guide>, b: Box): ReadonlyArray<Guide> {
-    return guides.filter(g => {
+  /**
+   * Filter highlights to only show those that align with the current box edges
+   * Used to update highlights when an element's position changes during interaction
+   */
+  reviseHighlights(highlights: ReadonlyArray<Highlight>, b: Box): ReadonlyArray<Highlight> {
+    return highlights.filter(g => {
       if (Line.isHorizontal(g.line)) {
         return g.line.from.y === b.y || g.line.from.y === b.y + b.h;
       } else {

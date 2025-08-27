@@ -90,7 +90,7 @@ export class EdgeEndpointMoveDrag extends Drag {
 
   onDrag({ offset, modifiers }: DragEvents.DragStart) {
     const selection = this.diagram.selectionState;
-    selection.guides = [];
+    selection.highlights = [];
 
     this.point = offset;
 
