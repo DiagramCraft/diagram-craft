@@ -16,17 +16,15 @@ import { assertRegularLayer } from '../diagramLayerUtils';
 
 export class TestModel {
   static newDiagram(root?: CRDTRoot) {
-    const document = new DiagramDocument(defaultNodeRegistry(), defaultEdgeRegistry(), false, root);
+    const document = TestModel.newDocument(root);
     const db = new TestDiagramBuilder(document);
     document.addDiagram(db);
     return db;
   }
 
   static newDiagramWithLayer(root?: CRDTRoot) {
-    const document = new DiagramDocument(defaultNodeRegistry(), defaultEdgeRegistry(), false, root);
-    const diagram = new TestDiagramBuilder(document);
+    const diagram = TestModel.newDiagram(root);
     const layer = diagram.newLayer();
-    document.addDiagram(diagram);
     return { diagram, layer };
   }
 
