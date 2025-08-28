@@ -68,7 +68,7 @@ export const CommentPopover = (props: CommentPopoverProps) => {
   return (
     <Popover.Root open={props.open} onOpenChange={props.onOpenChange}>
       <Popover.Trigger>{props.children}</Popover.Trigger>
-      <Popover.Content sideOffset={8}>
+      <Popover.Content sideOffset={1}>
         <div
           style={{
             display: 'flex',
