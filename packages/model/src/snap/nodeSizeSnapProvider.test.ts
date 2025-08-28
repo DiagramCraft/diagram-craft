@@ -12,7 +12,8 @@ const createDiagramWithNodes = (
   const layer = diagram.newLayer();
 
   nodePositions.forEach((pos, index) => {
-    layer.addNode(pos.id ?? `node${index + 1}`, 'rect', {
+    layer.addNode({
+      id: pos.id ?? `node${index + 1}`,
       bounds: {
         x: pos.x,
         y: pos.y,

@@ -22,15 +22,9 @@ describe('NavigateNodeAction', () => {
 
   test('should find closest node to the east', () => {
     // Setup: Create nodes in a horizontal line
-    layer.addNode('node1', 'rect', {
-      bounds: { x: 0, y: 50, w: 50, h: 50, r: 0 }
-    });
-    layer.addNode('node2', 'rect', {
-      bounds: { x: 100, y: 50, w: 50, h: 50, r: 0 }
-    });
-    layer.addNode('node3', 'rect', {
-      bounds: { x: 200, y: 50, w: 50, h: 50, r: 0 }
-    });
+    layer.addNode({ id: 'node1', bounds: { x: 0, y: 50, w: 50, h: 50, r: 0 } });
+    layer.addNode({ id: 'node2', bounds: { x: 100, y: 50, w: 50, h: 50, r: 0 } });
+    layer.addNode({ id: 'node3', bounds: { x: 200, y: 50, w: 50, h: 50, r: 0 } });
     diagram.selectionState.setElements([layer.elements[0]]);
 
     // Act: Execute the navigate east action
@@ -44,12 +38,8 @@ describe('NavigateNodeAction', () => {
 
   test('should extend selection when extendSelection is true', () => {
     // Setup: Create two nodes and select the first one
-    layer.addNode('node1', 'rect', {
-      bounds: { x: 0, y: 50, w: 50, h: 50, r: 0 }
-    });
-    layer.addNode('node2', 'rect', {
-      bounds: { x: 100, y: 50, w: 50, h: 50, r: 0 }
-    });
+    layer.addNode({ id: 'node1', bounds: { x: 0, y: 50, w: 50, h: 50, r: 0 } });
+    layer.addNode({ id: 'node2', bounds: { x: 100, y: 50, w: 50, h: 50, r: 0 } });
     diagram.selectionState.setElements([layer.elements[0]]);
 
     // Act: Execute the navigate east action with extend selection
@@ -64,10 +54,9 @@ describe('NavigateNodeAction', () => {
 
   test('should not find any node if none are in the right direction', () => {
     // Setup: Create nodes where the second node is to the west, not east
-    layer.addNode('node1', 'rect', {
-      bounds: { x: 0, y: 50, w: 50, h: 50, r: 0 }
-    });
-    layer.addNode('node2', 'rect', {
+    layer.addNode({ id: 'node1', bounds: { x: 0, y: 50, w: 50, h: 50, r: 0 } });
+    layer.addNode({
+      id: 'node2',
       bounds: { x: -100, y: 50, w: 50, h: 50, r: 0 } // To the west
     });
     diagram.selectionState.setElements([layer.elements[0]]);
@@ -83,15 +72,9 @@ describe('NavigateNodeAction', () => {
 
   test('should navigate from the most recently selected node when multiple are selected', () => {
     // Setup: Create three nodes and select node1 first, then add node2 to selection
-    layer.addNode('node1', 'rect', {
-      bounds: { x: 0, y: 50, w: 50, h: 50, r: 0 }
-    });
-    layer.addNode('node2', 'rect', {
-      bounds: { x: 100, y: 50, w: 50, h: 50, r: 0 }
-    });
-    layer.addNode('node3', 'rect', {
-      bounds: { x: 200, y: 50, w: 50, h: 50, r: 0 }
-    });
+    layer.addNode({ id: 'node1', bounds: { x: 0, y: 50, w: 50, h: 50, r: 0 } });
+    layer.addNode({ id: 'node2', bounds: { x: 100, y: 50, w: 50, h: 50, r: 0 } });
+    layer.addNode({ id: 'node3', bounds: { x: 200, y: 50, w: 50, h: 50, r: 0 } });
     diagram.selectionState.setElements([layer.elements[0]]);
     diagram.selectionState.toggle(layer.elements[1]);
 
@@ -110,15 +93,9 @@ describe('NavigateNodeAction', () => {
 
   test('should skip label nodes when navigating', () => {
     // Setup: Create regular node, label node, and another regular node in a line
-    layer.addNode('node1', 'rect', {
-      bounds: { x: 0, y: 50, w: 50, h: 50, r: 0 }
-    });
-    const labelNode = layer.addNode('labelNode', 'text', {
-      bounds: { x: 100, y: 50, w: 50, h: 50, r: 0 }
-    });
-    layer.addNode('node3', 'rect', {
-      bounds: { x: 200, y: 50, w: 50, h: 50, r: 0 }
-    });
+    layer.addNode({ id: 'node1', bounds: { x: 0, y: 50, w: 50, h: 50, r: 0 } });
+    const labelNode = layer.addNode({ bounds: { x: 100, y: 50, w: 50, h: 50, r: 0 } });
+    layer.addNode({ id: 'node3', bounds: { x: 200, y: 50, w: 50, h: 50, r: 0 } });
 
     // Mock the label node to return true for isLabelNode()
     const mockLabelNode = labelNode as any;

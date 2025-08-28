@@ -18,7 +18,8 @@ const createDiagramWithNodes = (
   const layer = diagram.newLayer();
 
   nodePositions.forEach((pos, index) => {
-    layer.addNode(pos.id ?? `node${index + 1}`, 'rect', {
+    layer.addNode({
+      id: pos.id ?? `node${index + 1}`,
       bounds: {
         x: pos.x,
         y: pos.y,
@@ -123,9 +124,7 @@ describe('NodeSnapProvider', () => {
         const { diagram, layer } = createDiagramWithNodes([{ x: 50, y: 50, w: 40, h: 30 }]);
 
         // Add another node and an edge
-        layer.addNode('node2', 'rect', {
-          bounds: { x: 200, y: 50, w: 40, h: 30, r: 0 }
-        });
+        layer.addNode({ bounds: { x: 200, y: 50, w: 40, h: 30, r: 0 } });
 
         // Add an edge (non-node element)
         layer.addEdge('edge1');
@@ -149,7 +148,8 @@ describe('NodeSnapProvider', () => {
         const { diagram, layer } = createDiagramWithNodes([{ x: 50, y: 50, w: 40, h: 30 }]);
 
         // Add a label node
-        const labelNode = layer.addNode('label', 'rect', {
+        const labelNode = layer.addNode({
+          id: 'label',
           bounds: { x: 150, y: 50, w: 40, h: 30, r: 0 }
         });
         // Mock isLabelNode to return true
@@ -309,9 +309,7 @@ describe('NodeSnapProvider', () => {
         const { diagram, layer } = createDiagramWithNodes([]);
 
         // Add a rotated node
-        layer.addNode('rotated', 'rect', {
-          bounds: { x: 100, y: 100, w: 60, h: 40, r: Math.PI / 4 }
-        });
+        layer.addNode({ bounds: { x: 100, y: 100, w: 60, h: 40, r: Math.PI / 4 } });
 
         const provider = new NodeSnapProvider(diagram, () => true);
         const testBox = { x: 110, y: 110, w: 40, h: 20, r: 0 };

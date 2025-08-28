@@ -18,7 +18,8 @@ const createDiagramWithNodes = (
   const layer = diagram.newLayer();
 
   nodePositions.forEach((pos, index) => {
-    layer.addNode(pos.id ?? `node${index + 1}`, 'rect', {
+    layer.addNode({
+      id: pos.id ?? `node${index + 1}`,
       bounds: {
         x: pos.x,
         y: pos.y,
@@ -211,9 +212,7 @@ describe('NodeDistanceSnapProvider', () => {
       const { diagram, layer } = createDiagramWithNodes([{ x: 10, y: 30, w: 20, h: 20 }]);
 
       // Add a rotated node
-      layer.addNode('rotated', 'rect', {
-        bounds: { x: 50, y: 30, w: 20, h: 20, r: Math.PI / 4 }
-      });
+      layer.addNode({ bounds: { x: 50, y: 30, w: 20, h: 20, r: Math.PI / 4 } });
 
       const provider = new NodeDistanceSnapProvider(diagram, () => true);
       const testBox = { x: 0, y: 30, w: 15, h: 20, r: 0 };
@@ -228,9 +227,7 @@ describe('NodeDistanceSnapProvider', () => {
       const { diagram, layer } = createDiagramWithNodes([{ x: 10, y: 30, w: 20, h: 20 }]);
 
       // Add a label node
-      const labelNode = layer.addNode('label', 'rect', {
-        bounds: { x: 50, y: 30, w: 20, h: 20, r: 0 }
-      });
+      const labelNode = layer.addNode({ bounds: { x: 50, y: 30, w: 20, h: 20, r: 0 } });
       // Mock isLabelNode to return true
       labelNode.isLabelNode = () => true;
 

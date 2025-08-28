@@ -45,33 +45,23 @@ export class TestDiagramBuilder extends Diagram {
   }
 }
 
+export type NodeCreateOptions = { id?: string; type?: string; bounds?: Box };
+
 export class TestLayerBuilder extends RegularLayer {
   constructor(id: string, diagram: Diagram) {
     super(id, id, [], diagram);
   }
 
-  addNode(
-    id?: string,
-    type?: string,
-    options?: {
-      bounds?: Box;
-    }
-  ) {
-    const node = this.createNode(id, type, options);
+  addNode(options?: NodeCreateOptions) {
+    const node = this.createNode(options);
     this.addElement(node, UnitOfWork.immediate(this.diagram));
     return node;
   }
 
-  createNode(
-    id?: string,
-    type?: string,
-    options?: {
-      bounds?: Box;
-    }
-  ) {
+  createNode(options?: NodeCreateOptions) {
     return new TestDiagramNodeBuilder(
-      id ?? newid(),
-      type ?? 'rect',
+      options?.id ?? newid(),
+      options?.type ?? 'rect',
       options?.bounds ?? {
         x: 0,
         y: 0,

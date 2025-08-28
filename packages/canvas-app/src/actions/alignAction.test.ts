@@ -25,15 +25,9 @@ describe('AlignActions', () => {
   beforeEach(() => {
     diagram = TestModel.newDiagram();
     layer = diagram.newLayer();
-    layer.addNode('1', 'rect', {
-      bounds: { x: 10, y: 10, w: 100, h: 100, r: 0 }
-    });
-    layer.addNode('2', 'rect', {
-      bounds: { x: 20, y: 20, w: 70, h: 150, r: 0 }
-    });
-    layer.addNode('3', 'rect', {
-      bounds: { x: 10, y: 5, w: 100, h: 60, r: 0 }
-    });
+    layer.addNode({ bounds: { x: 10, y: 10, w: 100, h: 100, r: 0 } });
+    layer.addNode({ bounds: { x: 20, y: 20, w: 70, h: 150, r: 0 } });
+    layer.addNode({ bounds: { x: 10, y: 5, w: 100, h: 60, r: 0 } });
   });
 
   describe('enabled', () => {
