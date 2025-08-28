@@ -17,6 +17,7 @@ import { CanvasSnapToolbarButton } from '../toolwindow/ObjectToolWindow/CanvasSn
 import { CanvasGuidesToolbarButton } from '../toolwindow/ObjectToolWindow/CanvasGuidesToolbarButton';
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
 import { ElementStylesheetToolbarButton } from '../toolwindow/ObjectToolWindow/ElementStylesheetToolbarButton';
+import { CommentToolbarButton } from './CommentToolbarButton';
 import { useDiagram } from '../../application';
 
 export const ContextSpecificToolbar = () => {
@@ -156,6 +157,10 @@ export const ContextSpecificToolbar = () => {
       <ActionToggleButton action={'TOGGLE_RULER'}>
         <TbRuler />
       </ActionToggleButton>
+
+      <Toolbar.Separator />
+
+      <CommentToolbarButton />
     </Toolbar.Root>
   );
 };
