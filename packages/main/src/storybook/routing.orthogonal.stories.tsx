@@ -28,12 +28,8 @@ const OrthogonalRoutingTest = (props: { start: any; end: any; numberOfWayPoints:
 
   const diagram = TestModel.newDiagram();
   const layer = diagram.newLayer();
-  const node1 = layer.addNode('1', 'rect', {
-    bounds: node1Bounds
-  });
-  const node2 = layer.addNode('2', 'rect', {
-    bounds: node2Bounds
-  });
+  const node1 = layer.addNode({ bounds: node1Bounds });
+  const node2 = layer.addNode({ bounds: node2Bounds });
   const edge = layer.addEdge();
   edge.setStart(
     new PointInNodeEndpoint(node1, _p(0.5, 0.5), _p(0, 0), 'absolute'),

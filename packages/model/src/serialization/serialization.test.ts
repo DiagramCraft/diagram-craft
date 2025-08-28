@@ -11,7 +11,7 @@ describe('serialization', () => {
       it('should serialize node with tags', () => {
         // Setup
         const diagram = TestModel.newDiagram();
-        const node = diagram.newLayer().addNode('test-node', 'rect');
+        const node = diagram.newLayer().addNode();
         const tags = ['tag1', 'tag2', 'important'];
         node.setTags(tags, UnitOfWork.immediate(diagram));
 
@@ -25,7 +25,7 @@ describe('serialization', () => {
       it('should serialize edge with tags', () => {
         // Setup
         const diagram = TestModel.newDiagram();
-        const edge = diagram.newLayer().addEdge('test-edge');
+        const edge = diagram.newLayer().addEdge();
         const tags = ['connection', 'flow', 'critical'];
         edge.setTags(tags, UnitOfWork.immediate(diagram));
 
@@ -39,7 +39,7 @@ describe('serialization', () => {
       it('should not serialize tags property when element has no tags', () => {
         // Setup
         const layer = TestModel.newDiagram().newLayer();
-        const node = layer.addNode('test-node', 'rect');
+        const node = layer.addNode();
 
         // Act
         const serialized = serializeDiagramElement(node);
@@ -51,7 +51,7 @@ describe('serialization', () => {
       it('should serialize empty tags as undefined', () => {
         // Setup
         const diagram = TestModel.newDiagram();
-        const node = diagram.newLayer().addNode('test-node', 'rect');
+        const node = diagram.newLayer().addNode();
         node.setTags([], UnitOfWork.immediate(diagram));
 
         // Act
@@ -71,11 +71,11 @@ describe('serialization', () => {
         const diagram = new TestDiagramBuilder(originalDoc);
         const layer = diagram.newLayer();
 
-        const node = layer.addNode('node-1', 'rect');
+        const node = layer.addNode({ id: 'node-1' });
         const nodeTags = ['ui', 'component', 'button'];
         node.setTags(nodeTags, UnitOfWork.immediate(diagram));
 
-        const edge = layer.addEdge('edge-1');
+        const edge = layer.addEdge({ id: 'edge-1' });
         const edgeTags = ['flow', 'data', 'critical'];
         edge.setTags(edgeTags, UnitOfWork.immediate(diagram));
 
@@ -109,18 +109,18 @@ describe('serialization', () => {
 
         const diagram1 = new TestDiagramBuilder(originalDoc, 'diagram1');
         const layer1 = diagram1.newLayer();
-        const node1 = layer1.addNode('node-1', 'rect');
+        const node1 = layer1.addNode();
         node1.setTags(['ui', 'button', 'primary'], UnitOfWork.immediate(diagram1));
 
-        const edge1 = layer1.addEdge('edge-1');
+        const edge1 = layer1.addEdge();
         edge1.setTags(['flow', 'data'], UnitOfWork.immediate(diagram1));
 
         const diagram2 = new TestDiagramBuilder(originalDoc, 'diagram2');
         const layer2 = diagram2.newLayer();
-        const node2 = layer2.addNode('node-2', 'rect');
+        const node2 = layer2.addNode();
         node2.setTags(['api', 'service', 'primary'], UnitOfWork.immediate(diagram2)); // 'primary' overlaps
 
-        const edge2 = layer2.addEdge('edge-2');
+        const edge2 = layer2.addEdge();
         edge2.setTags(['network', 'http'], UnitOfWork.immediate(diagram2));
 
         originalDoc.addDiagram(diagram1);
@@ -157,8 +157,8 @@ describe('serialization', () => {
         const diagram = new TestDiagramBuilder(originalDoc);
         const layer = diagram.newLayer();
 
-        layer.addNode('node-1', 'rect');
-        layer.addEdge('edge-1');
+        layer.addNode();
+        layer.addEdge();
         originalDoc.addDiagram(diagram);
 
         // Act
@@ -189,12 +189,12 @@ describe('serialization', () => {
 
         const parentDiagram = new TestDiagramBuilder(originalDoc, 'parent');
         const parentLayer = parentDiagram.newLayer();
-        const parentNode = parentLayer.addNode('parent-node', 'rect');
+        const parentNode = parentLayer.addNode();
         parentNode.setTags(['parent', 'container'], UnitOfWork.immediate(parentDiagram));
 
         const childDiagram = new TestDiagramBuilder(originalDoc, 'child');
         const childLayer = childDiagram.newLayer();
-        const childNode = childLayer.addNode('child-node', 'rect');
+        const childNode = childLayer.addNode();
         childNode.setTags(['child', 'detail'], UnitOfWork.immediate(childDiagram));
 
         originalDoc.addDiagram(parentDiagram);

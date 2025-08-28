@@ -619,7 +619,7 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
     it('should set a stylesheet on a diagram element', () => {
       const diagram = TestModel.newDiagram();
       const layer = diagram.newLayer('default');
-      const element = layer.addNode('node');
+      const element = layer.addNode();
 
       const styles = new DiagramStyles(root, diagram.document, true);
 
@@ -640,7 +640,7 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
     it('should set a text stylesheet on a node element', () => {
       const diagram = TestModel.newDiagram();
       const layer = diagram.newLayer('default');
-      const element = layer.addNode('node');
+      const element = layer.addNode();
 
       const styles = new DiagramStyles(root, diagram.document, true);
 
@@ -661,7 +661,7 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
     it('should update the active stylesheet based on the type', () => {
       const diagram = TestModel.newDiagram();
       const layer = diagram.newLayer('default');
-      const element = layer.addNode('node');
+      const element = layer.addNode();
 
       const styles = new DiagramStyles(root, diagram.document, true);
 

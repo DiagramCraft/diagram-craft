@@ -5,32 +5,11 @@ import { Axis } from '@diagram-craft/geometry/axis';
 import { Line } from '@diagram-craft/geometry/line';
 import type { MatchingMagnetPair } from './snapManager';
 
-const createDiagramWithNodes = (
-  nodePositions: Array<{ x: number; y: number; w: number; h: number; id?: string }>
-) => {
-  const diagram = TestModel.newDiagram();
-  const layer = diagram.newLayer();
-
-  nodePositions.forEach((pos, index) => {
-    layer.addNode(pos.id ?? `node${index + 1}`, 'rect', {
-      bounds: {
-        x: pos.x,
-        y: pos.y,
-        w: pos.w,
-        h: pos.h,
-        r: 0
-      }
-    });
-  });
-
-  return { diagram, layer };
-};
-
 describe('NodeSizeSnapProvider', () => {
   describe('getMagnets', () => {
     describe('getMagnets - basic functionality', () => {
       test('should return empty array when no nodes exist', () => {
-        const { diagram } = createDiagramWithNodes([]);
+        const { diagram } = TestModel.newDiagramWithLayer();
         const provider = new NodeSizeSnapProvider(diagram, () => true);
         const testBox = { x: 10, y: 10, w: 50, h: 30, r: 0 };
 
@@ -41,9 +20,11 @@ describe('NodeSizeSnapProvider', () => {
 
       test('should create size magnets for node with height to match', () => {
         // Create a node with different height than test box
-        const { diagram } = createDiagramWithNodes([
-          { x: 100, y: 20, w: 60, h: 80 } // Node with height 80, positioned to the north
-        ]);
+        const { diagram } = TestModel.newDiagramWithLayer({
+          nodes: [
+            { bounds: { x: 100, y: 20, w: 60, h: 80, r: 0 } } // Node with height 80, positioned to the north
+          ]
+        });
 
         const provider = new NodeSizeSnapProvider(diagram, () => true);
         const testBox = { x: 50, y: 120, w: 50, h: 30, r: 0 }; // Current height 30, should match to 80
@@ -67,9 +48,11 @@ describe('NodeSizeSnapProvider', () => {
 
       test('should create size magnets for node with width to match', () => {
         // Create a node with different width than test box
-        const { diagram } = createDiagramWithNodes([
-          { x: 20, y: 100, w: 120, h: 40 } // Node with width 120, positioned to the west
-        ]);
+        const { diagram } = TestModel.newDiagramWithLayer({
+          nodes: [
+            { bounds: { x: 20, y: 100, w: 120, h: 40, r: 0 } } // Node with width 120, positioned to the west
+          ]
+        });
 
         const provider = new NodeSizeSnapProvider(diagram, () => true);
         const testBox = { x: 200, y: 110, w: 50, h: 30, r: 0 }; // Current width 50, should match to 120
@@ -95,11 +78,13 @@ describe('NodeSizeSnapProvider', () => {
     describe('getMagnets - directional behavior', () => {
       test('should select closest node by center distance in each direction', () => {
         // Create multiple nodes in the same direction with different distances
-        const { diagram } = createDiagramWithNodes([
-          { x: 50, y: 10, w: 40, h: 100 }, // North direction, height 100
-          { x: 200, y: 10, w: 40, h: 150 }, // East direction, width 40
-          { x: 300, y: 10, w: 40, h: 200 } // East direction, width 40 (further)
-        ]);
+        const { diagram } = TestModel.newDiagramWithLayer({
+          nodes: [
+            { bounds: { x: 50, y: 10, w: 40, h: 100, r: 0 } }, // North direction, height 100
+            { bounds: { x: 200, y: 10, w: 40, h: 150, r: 0 } }, // East direction, width 40
+            { bounds: { x: 300, y: 10, w: 40, h: 200, r: 0 } } // East direction, width 40 (further)
+          ]
+        });
 
         const provider = new NodeSizeSnapProvider(diagram, () => true);
         const testBox = { x: 60, y: 200, w: 30, h: 50, r: 0 };
@@ -125,7 +110,9 @@ describe('NodeSizeSnapProvider', () => {
       });
 
       test('should create both forward and backward magnets', () => {
-        const { diagram } = createDiagramWithNodes([{ x: 20, y: 20, w: 60, h: 80 }]);
+        const { diagram } = TestModel.newDiagramWithLayer({
+          nodes: [{ bounds: { x: 20, y: 20, w: 60, h: 80, r: 0 } }]
+        });
 
         const provider = new NodeSizeSnapProvider(diagram, () => true);
         const testBox = { x: 30, y: 150, w: 40, h: 50, r: 0 };
@@ -142,12 +129,14 @@ describe('NodeSizeSnapProvider', () => {
 
       test('should handle multiple directions with different target sizes', () => {
         // Create nodes in different directions with different dimensions
-        const { diagram } = createDiagramWithNodes([
-          { x: 50, y: 10, w: 40, h: 100 }, // North: height 100
-          { x: 50, y: 200, w: 40, h: 120 }, // South: height 120
-          { x: 10, y: 110, w: 80, h: 30 }, // West: width 80
-          { x: 200, y: 110, w: 90, h: 30 } // East: width 90
-        ]);
+        const { diagram } = TestModel.newDiagramWithLayer({
+          nodes: [
+            { bounds: { x: 50, y: 10, w: 40, h: 100, r: 0 } }, // North: height 100
+            { bounds: { x: 50, y: 200, w: 40, h: 120, r: 0 } }, // South: height 120
+            { bounds: { x: 10, y: 110, w: 80, h: 30, r: 0 } }, // West: width 80
+            { bounds: { x: 200, y: 110, w: 90, h: 30, r: 0 } } // East: width 90
+          ]
+        });
 
         const provider = new NodeSizeSnapProvider(diagram, () => true);
         const testBox = { x: 60, y: 120, w: 50, h: 40, r: 0 };
@@ -178,10 +167,12 @@ describe('NodeSizeSnapProvider', () => {
 
     describe('getMagnets - filtering behavior', () => {
       test('should filter out intersecting nodes', () => {
-        const { diagram } = createDiagramWithNodes([
-          { x: 40, y: 40, w: 60, h: 80 }, // Intersects with test box
-          { x: 200, y: 40, w: 60, h: 100 } // Doesn't intersect
-        ]);
+        const { diagram } = TestModel.newDiagramWithLayer({
+          nodes: [
+            { bounds: { x: 40, y: 40, w: 60, h: 80, r: 0 } }, // Intersects with test box
+            { bounds: { x: 200, y: 40, w: 60, h: 100, r: 0 } } // Doesn't intersect
+          ]
+        });
 
         const provider = new NodeSizeSnapProvider(diagram, () => true);
         const testBox = { x: 50, y: 50, w: 40, h: 60, r: 0 }; // Overlaps with first node
@@ -200,10 +191,12 @@ describe('NodeSizeSnapProvider', () => {
       });
 
       test('should respect eligibleNodePredicate', () => {
-        const { diagram } = createDiagramWithNodes([
-          { x: 20, y: 20, w: 60, h: 80, id: 'excluded' },
-          { x: 200, y: 20, w: 60, h: 100, id: 'included' }
-        ]);
+        const { diagram } = TestModel.newDiagramWithLayer({
+          nodes: [
+            { bounds: { x: 20, y: 20, w: 60, h: 80, r: 0 }, id: 'excluded' },
+            { bounds: { x: 200, y: 20, w: 60, h: 100, r: 0 }, id: 'included' }
+          ]
+        });
 
         // Predicate that excludes the first node
         const provider = new NodeSizeSnapProvider(diagram, id => id !== 'excluded');
@@ -221,9 +214,11 @@ describe('NodeSizeSnapProvider', () => {
 
       test('should skip directions with no viable nodes', () => {
         // Create node only in one direction
-        const { diagram } = createDiagramWithNodes([
-          { x: 20, y: 20, w: 60, h: 80 } // Only north of test box
-        ]);
+        const { diagram } = TestModel.newDiagramWithLayer({
+          nodes: [
+            { bounds: { x: 20, y: 20, w: 60, h: 80, r: 0 } } // Only north of test box
+          ]
+        });
 
         const provider = new NodeSizeSnapProvider(diagram, () => true);
         const testBox = { x: 30, y: 150, w: 40, h: 50, r: 0 };
@@ -242,7 +237,9 @@ describe('NodeSizeSnapProvider', () => {
 
   describe('highlight', () => {
     test('should create highlight with distance pairs for height matching', () => {
-      const { diagram } = createDiagramWithNodes([{ x: 50, y: 20, w: 40, h: 80 }]);
+      const { diagram } = TestModel.newDiagramWithLayer({
+        nodes: [{ bounds: { x: 50, y: 20, w: 40, h: 80, r: 0 } }]
+      });
 
       const provider = new NodeSizeSnapProvider(diagram, () => true);
       const testBox = { x: 60, y: 150, w: 30, h: 50, r: 0 };
@@ -290,7 +287,9 @@ describe('NodeSizeSnapProvider', () => {
     });
 
     test('should create highlight with distance pairs for width matching', () => {
-      const { diagram } = createDiagramWithNodes([{ x: 20, y: 50, w: 100, h: 40 }]);
+      const { diagram } = TestModel.newDiagramWithLayer({
+        nodes: [{ bounds: { x: 20, y: 50, w: 100, h: 40, r: 0 } }]
+      });
 
       const provider = new NodeSizeSnapProvider(diagram, () => true);
       const testBox = { x: 200, y: 60, w: 60, h: 30, r: 0 };
@@ -331,7 +330,9 @@ describe('NodeSizeSnapProvider', () => {
     });
 
     test('should populate highlight with correct reference node measurements', () => {
-      const { diagram } = createDiagramWithNodes([{ x: 30, y: 10, w: 50, h: 90 }]);
+      const { diagram } = TestModel.newDiagramWithLayer({
+        nodes: [{ bounds: { x: 30, y: 10, w: 50, h: 90, r: 0 } }]
+      });
 
       const provider = new NodeSizeSnapProvider(diagram, () => true);
       const testBox = { x: 40, y: 150, w: 40, h: 60, r: 0 };

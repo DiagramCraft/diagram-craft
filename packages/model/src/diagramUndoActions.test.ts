@@ -1,14 +1,13 @@
 import { describe, expect, test } from 'vitest';
 import { ElementAddUndoableAction, ElementDeleteUndoableAction } from './diagramUndoActions';
-import { TestModel, TestLayerBuilder } from './test-support/builder';
+import { TestModel } from './test-support/builder';
 import { UnitOfWork } from './unitOfWork';
 import { AnchorEndpoint } from './endpoint';
 
 describe('ElementAddUndoableAction', () => {
   test('should undo node addition', () => {
-    const diagram = TestModel.newDiagramWithLayer();
-    const layer = diagram.layers.active as TestLayerBuilder;
-    const node = layer.createNode('node1', 'rect');
+    const { diagram, layer } = TestModel.newDiagramWithLayer();
+    const node = layer.createNode({ id: 'node1' });
 
     const action = new ElementAddUndoableAction([node], diagram, layer);
     layer.addElement(node, UnitOfWork.immediate(diagram));
@@ -22,9 +21,8 @@ describe('ElementAddUndoableAction', () => {
   });
 
   test('should redo node addition', () => {
-    const diagram = TestModel.newDiagramWithLayer();
-    const layer = diagram.layers.active as TestLayerBuilder;
-    const node = layer.createNode('node1', 'rect');
+    const { diagram, layer } = TestModel.newDiagramWithLayer();
+    const node = layer.createNode({ id: 'node1' });
 
     const action = new ElementAddUndoableAction([node], diagram, layer);
     layer.addElement(node, UnitOfWork.immediate(diagram));
@@ -39,9 +37,8 @@ describe('ElementAddUndoableAction', () => {
   });
 
   test('should undo edge addition', () => {
-    const diagram = TestModel.newDiagramWithLayer();
-    const layer = diagram.layers.active as TestLayerBuilder;
-    const edge = layer.createEdge('edge1');
+    const { diagram, layer } = TestModel.newDiagramWithLayer();
+    const edge = layer.createEdge({ id: 'edge1' });
 
     const action = new ElementAddUndoableAction([edge], diagram, layer);
     layer.addElement(edge, UnitOfWork.immediate(diagram));
@@ -55,11 +52,10 @@ describe('ElementAddUndoableAction', () => {
   });
 
   test('should undo multiple element addition', () => {
-    const diagram = TestModel.newDiagramWithLayer();
-    const layer = diagram.layers.active as TestLayerBuilder;
-    const node1 = layer.createNode('node1', 'rect');
-    const node2 = layer.createNode('node2', 'rect');
-    const edge = layer.createEdge('edge1');
+    const { diagram, layer } = TestModel.newDiagramWithLayer();
+    const node1 = layer.createNode({ id: 'node1' });
+    const node2 = layer.createNode({ id: 'node2' });
+    const edge = layer.createEdge({ id: 'edge1' });
 
     const action = new ElementAddUndoableAction([node1, node2, edge], diagram, layer);
     layer.addElement(node1, UnitOfWork.immediate(diagram));
@@ -77,12 +73,11 @@ describe('ElementAddUndoableAction', () => {
   });
 
   test('should handle edge-node connections correctly', () => {
-    const diagram = TestModel.newDiagramWithLayer();
-    const layer = diagram.layers.active as TestLayerBuilder;
+    const { diagram, layer } = TestModel.newDiagramWithLayer();
 
-    const node1 = layer.addNode('node1', 'rect');
-    const node2 = layer.addNode('node2', 'rect');
-    const edge = layer.createEdge('edge1');
+    const node1 = layer.addNode();
+    const node2 = layer.addNode();
+    const edge = layer.createEdge({ id: 'edge1' });
 
     // Connect edge to nodes
     const uow = UnitOfWork.immediate(diagram);
@@ -110,9 +105,8 @@ describe('ElementAddUndoableAction', () => {
 
 describe('ElementDeleteUndoableAction', () => {
   test('should undo node deletion', () => {
-    const diagram = TestModel.newDiagramWithLayer();
-    const layer = diagram.layers.active as TestLayerBuilder;
-    const node = layer.addNode('node1', 'rect');
+    const { diagram, layer } = TestModel.newDiagramWithLayer();
+    const node = layer.addNode({ id: 'node1' });
 
     const action = new ElementDeleteUndoableAction(diagram, layer, [node], false);
     action.redo(UnitOfWork.immediate(diagram));
@@ -127,9 +121,8 @@ describe('ElementDeleteUndoableAction', () => {
   });
 
   test('should undo edge deletion', () => {
-    const diagram = TestModel.newDiagramWithLayer();
-    const layer = diagram.layers.active as TestLayerBuilder;
-    const edge = layer.addEdge('edge1');
+    const { diagram, layer } = TestModel.newDiagramWithLayer();
+    const edge = layer.addEdge({ id: 'edge1' });
 
     const action = new ElementDeleteUndoableAction(diagram, layer, [edge], false);
     action.redo(UnitOfWork.immediate(diagram));
@@ -144,11 +137,10 @@ describe('ElementDeleteUndoableAction', () => {
   });
 
   test('should undo multiple element deletion', () => {
-    const diagram = TestModel.newDiagramWithLayer();
-    const layer = diagram.layers.active as TestLayerBuilder;
-    const node1 = layer.addNode('node1', 'rect');
-    const node2 = layer.addNode('node2', 'rect');
-    const edge = layer.addEdge('edge1');
+    const { diagram, layer } = TestModel.newDiagramWithLayer();
+    const node1 = layer.addNode({ id: 'node1' });
+    const node2 = layer.addNode({ id: 'node2' });
+    const edge = layer.addEdge({ id: 'edge1' });
 
     const action = new ElementDeleteUndoableAction(diagram, layer, [node1, node2, edge], false);
     action.redo(UnitOfWork.immediate(diagram));
@@ -164,12 +156,11 @@ describe('ElementDeleteUndoableAction', () => {
   });
 
   test('should restore node connections when edge is restored', () => {
-    const diagram = TestModel.newDiagramWithLayer();
-    const layer = diagram.layers.active as TestLayerBuilder;
+    const { diagram, layer } = TestModel.newDiagramWithLayer();
 
-    const node1 = layer.addNode('node1', 'rect');
-    const node2 = layer.addNode('node2', 'rect');
-    const edge = layer.addEdge('edge1');
+    const node1 = layer.addNode();
+    const node2 = layer.addNode();
+    const edge = layer.addEdge();
 
     // Connect edge to nodes
     const uow = UnitOfWork.immediate(diagram);
@@ -199,12 +190,11 @@ describe('ElementDeleteUndoableAction', () => {
   });
 
   test('should restore node connections when node is restored', () => {
-    const diagram = TestModel.newDiagramWithLayer();
-    const layer = diagram.layers.active as TestLayerBuilder;
+    const { diagram, layer } = TestModel.newDiagramWithLayer();
 
-    const node1 = layer.addNode('node1', 'rect');
-    const node2 = layer.addNode('node2', 'rect');
-    const edge = layer.addEdge('edge1');
+    const node1 = layer.addNode();
+    const node2 = layer.addNode();
+    const edge = layer.addEdge();
 
     // Connect edge to nodes
     const uow = UnitOfWork.immediate(diagram);
@@ -228,13 +218,12 @@ describe('ElementDeleteUndoableAction', () => {
   });
 
   test('should restore both nodes and connected edges', () => {
-    const diagram = TestModel.newDiagramWithLayer();
-    const layer = diagram.layers.active as TestLayerBuilder;
+    const { diagram, layer } = TestModel.newDiagramWithLayer();
 
-    const node1 = layer.addNode('node1', 'rect');
-    const node2 = layer.addNode('node2', 'rect');
-    const edge1 = layer.addEdge('edge1');
-    const edge2 = layer.addEdge('edge2');
+    const node1 = layer.addNode({ id: 'node1' });
+    const node2 = layer.addNode({ id: 'node2' });
+    const edge1 = layer.addEdge({ id: 'edge1' });
+    const edge2 = layer.addEdge({ id: 'edge2' });
 
     // Connect edges to nodes
     const uow = UnitOfWork.immediate(diagram);
@@ -275,9 +264,8 @@ describe('ElementDeleteUndoableAction', () => {
   });
 
   test('should handle selection restoration', () => {
-    const diagram = TestModel.newDiagramWithLayer();
-    const layer = diagram.layers.active as TestLayerBuilder;
-    const node = layer.addNode('node1', 'rect');
+    const { diagram, layer } = TestModel.newDiagramWithLayer();
+    const node = layer.addNode();
 
     diagram.selectionState.setElements([node]);
     expect(diagram.selectionState.elements).toContain(node);

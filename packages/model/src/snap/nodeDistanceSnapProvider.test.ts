@@ -1,41 +1,15 @@
 import { describe, expect, test } from 'vitest';
 import { NodeDistanceSnapProvider } from './nodeDistanceSnapProvider';
-import { TestModel } from '../test-support/builder';
 import { Axis } from '@diagram-craft/geometry/axis';
 import { Line } from '@diagram-craft/geometry/line';
 import { Range } from '@diagram-craft/geometry/range';
 import type { MatchingMagnetPair } from './snapManager';
-
-/**
- * Helper function to create a test diagram with nodes at specified positions
- * @param nodePositions Array of node specifications with position and dimensions
- * @returns Object containing the created diagram and layer
- */
-const createDiagramWithNodes = (
-  nodePositions: Array<{ x: number; y: number; w: number; h: number; id?: string }>
-) => {
-  const diagram = TestModel.newDiagram();
-  const layer = diagram.newLayer();
-
-  nodePositions.forEach((pos, index) => {
-    layer.addNode(pos.id ?? `node${index + 1}`, 'rect', {
-      bounds: {
-        x: pos.x,
-        y: pos.y,
-        w: pos.w,
-        h: pos.h,
-        r: 0
-      }
-    });
-  });
-
-  return { diagram, layer };
-};
+import { TestModel } from '../test-support/builder';
 
 describe('NodeDistanceSnapProvider', () => {
   describe('constructor', () => {
     test('should create provider with diagram and predicate', () => {
-      const { diagram } = createDiagramWithNodes([]);
+      const { diagram } = TestModel.newDiagramWithLayer();
       const provider = new NodeDistanceSnapProvider(diagram, () => true);
 
       expect(provider).toBeDefined();
@@ -49,10 +23,12 @@ describe('NodeDistanceSnapProvider', () => {
       // Node1: (10, 20, 30x20) -> right edge at x=40
       // Node2: (90, 20, 30x20) -> left edge at x=90
       // Gap: 90 - 40 = 50px
-      const { diagram } = createDiagramWithNodes([
-        { x: 10, y: 20, w: 30, h: 20 }, // Node1
-        { x: 90, y: 20, w: 30, h: 20 } // Node2
-      ]);
+      const { diagram } = TestModel.newDiagramWithLayer({
+        nodes: [
+          { bounds: { x: 10, y: 20, w: 30, h: 20, r: 0 } }, // Node1
+          { bounds: { x: 90, y: 20, w: 30, h: 20, r: 0 } } // Node2
+        ]
+      });
 
       const provider = new NodeDistanceSnapProvider(diagram, () => true);
 
@@ -84,10 +60,12 @@ describe('NodeDistanceSnapProvider', () => {
 
     test('should skip nodes without overlapping vertical ranges', () => {
       // Two nodes not vertically aligned - no horizontal distance magnets should be created
-      const { diagram } = createDiagramWithNodes([
-        { x: 10, y: 10, w: 20, h: 20 }, // y: 10-30
-        { x: 50, y: 50, w: 20, h: 20 } // y: 50-70 (no overlap)
-      ]);
+      const { diagram } = TestModel.newDiagramWithLayer({
+        nodes: [
+          { bounds: { x: 10, y: 10, w: 20, h: 20, r: 0 } }, // y: 10-30
+          { bounds: { x: 50, y: 50, w: 20, h: 20, r: 0 } } // y: 50-70 (no overlap)
+        ]
+      });
 
       const provider = new NodeDistanceSnapProvider(diagram, () => true);
       const testBox = { x: 0, y: 15, w: 15, h: 10, r: 0 }; // y: 15-25
@@ -100,11 +78,13 @@ describe('NodeDistanceSnapProvider', () => {
 
     test('should create multiple magnets for different distance patterns', () => {
       // Create nodes with different gap patterns
-      const { diagram } = createDiagramWithNodes([
-        { x: 10, y: 20, w: 20, h: 20 }, // Node1: gap of 20px to Node2
-        { x: 50, y: 20, w: 20, h: 20 }, // Node2: gap of 30px to Node3
-        { x: 100, y: 20, w: 20, h: 20 } // Node3
-      ]);
+      const { diagram } = TestModel.newDiagramWithLayer({
+        nodes: [
+          { bounds: { x: 10, y: 20, w: 20, h: 20, r: 0 } }, // Node1: gap of 20px to Node2
+          { bounds: { x: 50, y: 20, w: 20, h: 20, r: 0 } }, // Node2: gap of 30px to Node3
+          { bounds: { x: 100, y: 20, w: 20, h: 20, r: 0 } } // Node3
+        ]
+      });
 
       const provider = new NodeDistanceSnapProvider(diagram, () => true);
       const testBox = { x: 0, y: 20, w: 15, h: 20, r: 0 };
@@ -124,10 +104,12 @@ describe('NodeDistanceSnapProvider', () => {
   describe('getMagnets - vertical distance patterns', () => {
     test('should create distance magnets for vertically aligned nodes', () => {
       // Two nodes aligned vertically with a 40px gap
-      const { diagram } = createDiagramWithNodes([
-        { x: 30, y: 10, w: 25, h: 20 }, // Node1: bottom at y=30
-        { x: 30, y: 70, w: 25, h: 20 } // Node2: top at y=70, gap = 40
-      ]);
+      const { diagram } = TestModel.newDiagramWithLayer({
+        nodes: [
+          { bounds: { x: 30, y: 10, w: 25, h: 20, r: 0 } }, // Node1: bottom at y=30
+          { bounds: { x: 30, y: 70, w: 25, h: 20, r: 0 } } // Node2: top at y=70, gap = 40
+        ]
+      });
 
       const provider = new NodeDistanceSnapProvider(diagram, () => true);
 
@@ -154,10 +136,12 @@ describe('NodeDistanceSnapProvider', () => {
 
     test('should create south-direction magnet when test box is below nodes', () => {
       // Vertically aligned nodes with test box positioned below
-      const { diagram } = createDiagramWithNodes([
-        { x: 40, y: 20, w: 30, h: 25 }, // Node1: bottom at y=45
-        { x: 40, y: 80, w: 30, h: 25 } // Node2: top at y=80, gap = 35
-      ]);
+      const { diagram } = TestModel.newDiagramWithLayer({
+        nodes: [
+          { bounds: { x: 40, y: 20, w: 30, h: 25, r: 0 } }, // Node1: bottom at y=45
+          { bounds: { x: 40, y: 80, w: 30, h: 25, r: 0 } } // Node2: top at y=80, gap = 35
+        ]
+      });
 
       const provider = new NodeDistanceSnapProvider(diagram, () => true);
       const testBox = { x: 40, y: 120, w: 30, h: 20, r: 0 }; // Below both nodes
@@ -175,10 +159,12 @@ describe('NodeDistanceSnapProvider', () => {
 
   describe('getMagnets - filtering behavior', () => {
     test('should filter out nodes that intersect with test box', () => {
-      const { diagram } = createDiagramWithNodes([
-        { x: 10, y: 20, w: 20, h: 20 },
-        { x: 50, y: 20, w: 20, h: 20 }
-      ]);
+      const { diagram } = TestModel.newDiagramWithLayer({
+        nodes: [
+          { bounds: { x: 10, y: 20, w: 20, h: 20, r: 0 } },
+          { bounds: { x: 50, y: 20, w: 20, h: 20, r: 0 } }
+        ]
+      });
 
       const provider = new NodeDistanceSnapProvider(diagram, () => true);
 
@@ -192,10 +178,12 @@ describe('NodeDistanceSnapProvider', () => {
     });
 
     test('should respect eligibleNodePredicate', () => {
-      const { diagram } = createDiagramWithNodes([
-        { x: 10, y: 30, w: 20, h: 20, id: 'node1' },
-        { x: 50, y: 30, w: 20, h: 20, id: 'node2' }
-      ]);
+      const { diagram } = TestModel.newDiagramWithLayer({
+        nodes: [
+          { bounds: { x: 10, y: 30, w: 20, h: 20, r: 0 }, id: 'node1' },
+          { bounds: { x: 50, y: 30, w: 20, h: 20, r: 0 }, id: 'node2' }
+        ]
+      });
 
       // Predicate that excludes node2
       const provider = new NodeDistanceSnapProvider(diagram, id => id !== 'node2');
@@ -208,12 +196,12 @@ describe('NodeDistanceSnapProvider', () => {
     });
 
     test('should filter out rotated nodes', () => {
-      const { diagram, layer } = createDiagramWithNodes([{ x: 10, y: 30, w: 20, h: 20 }]);
+      const { diagram, layer } = TestModel.newDiagramWithLayer({
+        nodes: [{ bounds: { x: 10, y: 30, w: 20, h: 20, r: 0 } }]
+      });
 
       // Add a rotated node
-      layer.addNode('rotated', 'rect', {
-        bounds: { x: 50, y: 30, w: 20, h: 20, r: Math.PI / 4 }
-      });
+      layer.addNode({ bounds: { x: 50, y: 30, w: 20, h: 20, r: Math.PI / 4 } });
 
       const provider = new NodeDistanceSnapProvider(diagram, () => true);
       const testBox = { x: 0, y: 30, w: 15, h: 20, r: 0 };
@@ -225,12 +213,12 @@ describe('NodeDistanceSnapProvider', () => {
     });
 
     test('should filter out label nodes', () => {
-      const { diagram, layer } = createDiagramWithNodes([{ x: 10, y: 30, w: 20, h: 20 }]);
+      const { diagram, layer } = TestModel.newDiagramWithLayer({
+        nodes: [{ bounds: { x: 10, y: 30, w: 20, h: 20, r: 0 } }]
+      });
 
       // Add a label node
-      const labelNode = layer.addNode('label', 'rect', {
-        bounds: { x: 50, y: 30, w: 20, h: 20, r: 0 }
-      });
+      const labelNode = layer.addNode({ bounds: { x: 50, y: 30, w: 20, h: 20, r: 0 } });
       // Mock isLabelNode to return true
       labelNode.isLabelNode = () => true;
 
@@ -247,12 +235,14 @@ describe('NodeDistanceSnapProvider', () => {
   describe('getMagnets - magnet positioning and properties', () => {
     test('should avoid duplicate magnets at same position', () => {
       // Create scenario where multiple distance calculations might result in same position
-      const { diagram } = createDiagramWithNodes([
-        { x: 10, y: 20, w: 20, h: 15 }, // Pattern 1
-        { x: 40, y: 20, w: 20, h: 15 }, // 20px gap
-        { x: 10, y: 40, w: 20, h: 15 }, // Pattern 2
-        { x: 40, y: 40, w: 20, h: 15 } // Same 20px gap
-      ]);
+      const { diagram } = TestModel.newDiagramWithLayer({
+        nodes: [
+          { bounds: { x: 10, y: 20, w: 20, h: 15, r: 0 } }, // Pattern 1
+          { bounds: { x: 40, y: 20, w: 20, h: 15, r: 0 } }, // 20px gap
+          { bounds: { x: 10, y: 40, w: 20, h: 15, r: 0 } }, // Pattern 2
+          { bounds: { x: 40, y: 40, w: 20, h: 15, r: 0 } } // Same 20px gap
+        ]
+      });
 
       const provider = new NodeDistanceSnapProvider(diagram, () => true);
       const testBox = { x: 0, y: 25, w: 15, h: 20, r: 0 };
@@ -267,10 +257,12 @@ describe('NodeDistanceSnapProvider', () => {
     });
 
     test('should set correct axis for magnets', () => {
-      const { diagram } = createDiagramWithNodes([
-        { x: 20, y: 40, w: 20, h: 20 },
-        { x: 70, y: 40, w: 20, h: 20 }
-      ]);
+      const { diagram } = TestModel.newDiagramWithLayer({
+        nodes: [
+          { bounds: { x: 20, y: 40, w: 20, h: 20, r: 0 } },
+          { bounds: { x: 70, y: 40, w: 20, h: 20, r: 0 } }
+        ]
+      });
 
       const provider = new NodeDistanceSnapProvider(diagram, () => true);
       const testBox = { x: 0, y: 40, w: 15, h: 20, r: 0 };
@@ -286,10 +278,12 @@ describe('NodeDistanceSnapProvider', () => {
     });
 
     test('should create vertical magnet lines for horizontal distance patterns', () => {
-      const { diagram } = createDiagramWithNodes([
-        { x: 30, y: 100, w: 40, h: 60 }, // 30-70 x 100-160
-        { x: 110, y: 120, w: 40, h: 60 } // 110-150 x 120-180
-      ]);
+      const { diagram } = TestModel.newDiagramWithLayer({
+        nodes: [
+          { bounds: { x: 30, y: 100, w: 40, h: 60, r: 0 } }, // 30-70 x 100-160
+          { bounds: { x: 110, y: 120, w: 40, h: 60, r: 0 } } // 110-150 x 120-180
+        ]
+      });
 
       const provider = new NodeDistanceSnapProvider(diagram, () => true);
       const testBox = { x: 0, y: 110, w: 30, h: 40, r: 0 }; // 0-30 x 110-150
@@ -323,10 +317,12 @@ describe('NodeDistanceSnapProvider', () => {
   describe('getMagnets - distance pair accuracy', () => {
     test('should create accurate distance pairs with correct points', () => {
       // Precise test for distance pair point calculations
-      const { diagram } = createDiagramWithNodes([
-        { x: 100, y: 200, w: 50, h: 40 }, // Node1: 100-150 x 200-240
-        { x: 200, y: 200, w: 50, h: 40 } // Node2: 200-250 x 200-240, gap = 50px
-      ]);
+      const { diagram } = TestModel.newDiagramWithLayer({
+        nodes: [
+          { bounds: { x: 100, y: 200, w: 50, h: 40, r: 0 } }, // Node1: 100-150 x 200-240
+          { bounds: { x: 200, y: 200, w: 50, h: 40, r: 0 } } // Node2: 200-250 x 200-240, gap = 50px
+        ]
+      });
 
       const provider = new NodeDistanceSnapProvider(diagram, () => true);
       const testBox = { x: 0, y: 210, w: 30, h: 20, r: 0 }; // 0-30 x 210-230
@@ -358,10 +354,12 @@ describe('NodeDistanceSnapProvider', () => {
     });
 
     test('should skip overlapping nodes in distance calculations', () => {
-      const { diagram } = createDiagramWithNodes([
-        { x: 10, y: 20, w: 30, h: 20 }, // Node1: 10-40
-        { x: 35, y: 20, w: 30, h: 20 } // Node2: 35-65 (overlaps with Node1)
-      ]);
+      const { diagram } = TestModel.newDiagramWithLayer({
+        nodes: [
+          { bounds: { x: 10, y: 20, w: 30, h: 20, r: 0 } }, // Node1: 10-40
+          { bounds: { x: 35, y: 20, w: 30, h: 20, r: 0 } } // Node2: 35-65 (overlaps with Node1)
+        ]
+      });
 
       const provider = new NodeDistanceSnapProvider(diagram, () => true);
       const testBox = { x: 0, y: 20, w: 15, h: 20, r: 0 };
@@ -375,10 +373,12 @@ describe('NodeDistanceSnapProvider', () => {
 
   describe('highlight', () => {
     test('should create highlight with updated distance pairs', () => {
-      const { diagram } = createDiagramWithNodes([
-        { x: 20, y: 40, w: 20, h: 20 },
-        { x: 70, y: 40, w: 20, h: 20 }
-      ]);
+      const { diagram } = TestModel.newDiagramWithLayer({
+        nodes: [
+          { bounds: { x: 20, y: 40, w: 20, h: 20, r: 0 } },
+          { bounds: { x: 70, y: 40, w: 20, h: 20, r: 0 } }
+        ]
+      });
 
       const provider = new NodeDistanceSnapProvider(diagram, () => true);
       const testBox = { x: 0, y: 40, w: 15, h: 20, r: 0 };
@@ -417,10 +417,12 @@ describe('NodeDistanceSnapProvider', () => {
     });
 
     test('should return undefined when no valid intersection exists', () => {
-      const { diagram } = createDiagramWithNodes([
-        { x: 50, y: 100, w: 20, h: 20 },
-        { x: 100, y: 100, w: 20, h: 20 }
-      ]);
+      const { diagram } = TestModel.newDiagramWithLayer({
+        nodes: [
+          { bounds: { x: 50, y: 100, w: 20, h: 20, r: 0 } },
+          { bounds: { x: 100, y: 100, w: 20, h: 20, r: 0 } }
+        ]
+      });
 
       const provider = new NodeDistanceSnapProvider(diagram, () => true);
       const testBox = { x: 0, y: 50, w: 15, h: 20, r: 0 }; // No overlap with nodes
@@ -450,10 +452,12 @@ describe('NodeDistanceSnapProvider', () => {
     });
 
     test('should update distance pair points for visual alignment', () => {
-      const { diagram } = createDiagramWithNodes([
-        { x: 30, y: 25, w: 20, h: 30 }, // Vertical range: 25-55
-        { x: 30, y: 70, w: 20, h: 30 } // Vertical range: 70-100
-      ]);
+      const { diagram } = TestModel.newDiagramWithLayer({
+        nodes: [
+          { bounds: { x: 30, y: 25, w: 20, h: 30, r: 0 } }, // Vertical range: 25-55
+          { bounds: { x: 30, y: 70, w: 20, h: 30, r: 0 } } // Vertical range: 70-100
+        ]
+      });
 
       const provider = new NodeDistanceSnapProvider(diagram, () => true);
       const testBox = { x: 30, y: 0, w: 20, h: 20, r: 0 }; // Range: 0-20
@@ -501,7 +505,7 @@ describe('NodeDistanceSnapProvider', () => {
 
   describe('filterHighlights', () => {
     test('should return highlights without filtering', () => {
-      const { diagram } = createDiagramWithNodes([]);
+      const { diagram } = TestModel.newDiagramWithLayer();
       const provider = new NodeDistanceSnapProvider(diagram, () => true);
 
       const mockHighlights = [
@@ -527,7 +531,7 @@ describe('NodeDistanceSnapProvider', () => {
 
   describe('edge cases', () => {
     test('should handle empty diagram', () => {
-      const { diagram } = createDiagramWithNodes([]);
+      const { diagram } = TestModel.newDiagramWithLayer();
       const provider = new NodeDistanceSnapProvider(diagram, () => true);
       const testBox = { x: 0, y: 0, w: 10, h: 10, r: 0 };
 
@@ -537,7 +541,9 @@ describe('NodeDistanceSnapProvider', () => {
     });
 
     test('should handle single node', () => {
-      const { diagram } = createDiagramWithNodes([{ x: 50, y: 50, w: 30, h: 30 }]);
+      const { diagram } = TestModel.newDiagramWithLayer({
+        nodes: [{ bounds: { x: 50, y: 50, w: 30, h: 30, r: 0 } }]
+      });
 
       const provider = new NodeDistanceSnapProvider(diagram, () => true);
       const testBox = { x: 0, y: 50, w: 20, h: 30, r: 0 };
@@ -549,10 +555,12 @@ describe('NodeDistanceSnapProvider', () => {
     });
 
     test('should handle zero-sized test box', () => {
-      const { diagram } = createDiagramWithNodes([
-        { x: 20, y: 30, w: 25, h: 25 },
-        { x: 70, y: 30, w: 25, h: 25 }
-      ]);
+      const { diagram } = TestModel.newDiagramWithLayer({
+        nodes: [
+          { bounds: { x: 20, y: 30, w: 25, h: 25, r: 0 } },
+          { bounds: { x: 70, y: 30, w: 25, h: 25, r: 0 } }
+        ]
+      });
 
       const provider = new NodeDistanceSnapProvider(diagram, () => true);
       const testBox = { x: 0, y: 30, w: 0, h: 25, r: 0 }; // Zero width
@@ -565,10 +573,12 @@ describe('NodeDistanceSnapProvider', () => {
     });
 
     test('should handle nodes at diagram boundaries', () => {
-      const { diagram } = createDiagramWithNodes([
-        { x: 0, y: 0, w: 20, h: 20 },
-        { x: 50, y: 0, w: 20, h: 20 }
-      ]);
+      const { diagram } = TestModel.newDiagramWithLayer({
+        nodes: [
+          { bounds: { x: 0, y: 0, w: 20, h: 20, r: 0 } },
+          { bounds: { x: 50, y: 0, w: 20, h: 20, r: 0 } }
+        ]
+      });
 
       const provider = new NodeDistanceSnapProvider(diagram, () => true);
       const testBox = { x: -40, y: 0, w: 15, h: 20, r: 0 };

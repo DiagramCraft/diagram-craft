@@ -28,12 +28,8 @@ const edges: Array<DiagramEdge> = [];
 const diagram = TestModel.newDiagram();
 const layer = diagram.newLayer();
 for (let i = 0; i < 100; i++) {
-  const node1 = layer.addNode('1', 'rect', {
-    bounds: randomBounds()
-  });
-  const node2 = layer.addNode('2', 'rect', {
-    bounds: randomBounds()
-  });
+  const node1 = layer.addNode({ bounds: randomBounds() });
+  const node2 = layer.addNode({ bounds: randomBounds() });
   const edge = layer.addEdge();
   edges.push(edge);
   edge.setStart(

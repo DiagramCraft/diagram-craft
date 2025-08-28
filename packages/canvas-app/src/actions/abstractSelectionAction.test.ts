@@ -33,9 +33,9 @@ describe('abstractSelectionAction', () => {
   describe('isEnabled', () => {
     const diagram = TestModel.newDiagram();
     const layer = diagram.newLayer();
-    const el1 = layer.addNode('1', 'rect', {});
-    const el2 = layer.addNode('2', 'rect', {});
-    const edge1 = layer.addEdge('e1');
+    const el1 = layer.addNode();
+    const el2 = layer.addNode();
+    const edge1 = layer.addEdge();
 
     beforeEach(() => {
       diagram.selectionState.setElements([]);

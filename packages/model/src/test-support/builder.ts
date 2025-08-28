@@ -16,22 +16,25 @@ import { assertRegularLayer } from '../diagramLayerUtils';
 
 export class TestModel {
   static newDiagram(root?: CRDTRoot) {
-    const document = new DiagramDocument(defaultNodeRegistry(), defaultEdgeRegistry(), false, root);
+    const document = TestModel.newDocument(root);
     const db = new TestDiagramBuilder(document);
     document.addDiagram(db);
     return db;
   }
 
-  static newDiagramWithLayer(root?: CRDTRoot) {
-    const document = new DiagramDocument(defaultNodeRegistry(), defaultEdgeRegistry(), false, root);
-    const diagram = new TestDiagramBuilder(document);
-    diagram.newLayer();
-    document.addDiagram(diagram);
-    return diagram;
-  }
-
   static newDocument(root?: CRDTRoot) {
     return new DiagramDocument(defaultNodeRegistry(), defaultEdgeRegistry(), false, root);
+  }
+
+  static newDiagramWithLayer(opts?: { root?: CRDTRoot; nodes?: Array<NodeCreateOptions> }) {
+    const diagram = TestModel.newDiagram(opts?.root);
+    const layer = diagram.newLayer();
+
+    if (opts?.nodes) {
+      opts.nodes.forEach(node => layer.addNode(node));
+    }
+
+    return { diagram, layer };
   }
 }
 
@@ -47,33 +50,24 @@ export class TestDiagramBuilder extends Diagram {
   }
 }
 
+export type NodeCreateOptions = { id?: string; type?: string; bounds?: Box };
+export type EdgeCreateOptions = { id?: string };
+
 export class TestLayerBuilder extends RegularLayer {
   constructor(id: string, diagram: Diagram) {
     super(id, id, [], diagram);
   }
 
-  addNode(
-    id?: string,
-    type?: string,
-    options?: {
-      bounds?: Box;
-    }
-  ) {
-    const node = this.createNode(id, type, options);
+  addNode(options?: NodeCreateOptions) {
+    const node = this.createNode(options);
     this.addElement(node, UnitOfWork.immediate(this.diagram));
     return node;
   }
 
-  createNode(
-    id?: string,
-    type?: string,
-    options?: {
-      bounds?: Box;
-    }
-  ) {
+  createNode(options?: NodeCreateOptions) {
     return new TestDiagramNodeBuilder(
-      id ?? newid(),
-      type ?? 'rect',
+      options?.id ?? newid(),
+      options?.type ?? 'rect',
       options?.bounds ?? {
         x: 0,
         y: 0,
@@ -85,15 +79,15 @@ export class TestLayerBuilder extends RegularLayer {
     );
   }
 
-  addEdge(id?: string) {
-    const edge = this.createEdge(id);
+  addEdge(options?: EdgeCreateOptions) {
+    const edge = this.createEdge(options);
     this.addElement(edge, UnitOfWork.immediate(this.diagram));
     return edge;
   }
 
-  createEdge(id?: string) {
+  createEdge(options?: EdgeCreateOptions) {
     return DiagramEdge.create(
-      id ?? newid(),
+      options?.id ?? newid(),
       new FreeEndpoint({ x: 0, y: 0 }),
       new FreeEndpoint({ x: 100, y: 100 }),
       {},
