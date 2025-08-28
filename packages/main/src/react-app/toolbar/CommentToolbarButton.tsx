@@ -6,31 +6,33 @@ import { useEventListener } from '../hooks/useEventListener';
 import { SelectionType } from '@diagram-craft/model/selectionState';
 import { useDiagram } from '../../application';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
+import { CommentDialog } from './CommentDialog';
 
 /**
  * CommentToolbarButton provides a toolbar button for accessing comments functionality.
  * Designed for use in ContextSpecificToolbar.
- * 
+ *
  * Behavior:
  * - Shows when no selection (0 elements) or single element selection (1 element)
- * - Hides when multiple elements are selected  
+ * - Hides when multiple elements are selected
  * - Highlights (primary color) when there are unresolved comments:
  *   - For diagram comments when no selection
  *   - For element comments when single element is selected
  * - Uses default icon size to match other context toolbar buttons
- * - Clicking opens comment panel/dialog (TODO: implementation needed)
+ * - Clicking opens comment dialog for adding new comments
  */
 export const CommentToolbarButton = () => {
   const diagram = useDiagram();
   const [selectionType, setSelectionType] = useState<SelectionType | undefined>(undefined);
   const [selectedElement, setSelectedElement] = useState<DiagramElement | undefined>(undefined);
-  const [hasUnresolvedComments, setHasUnresolvedComments] = useState(false);
+  const [unresolvedCommentCount, setUnresolvedCommentCount] = useState(0);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   // Update selection state
   const updateSelection = useCallback(() => {
     const selection = diagram.selectionState.getSelectionType();
     setSelectionType(selection);
-    
+
     if (selection === 'single-node' || selection === 'single-edge') {
       const elements = [...diagram.selectionState.nodes, ...diagram.selectionState.edges];
       setSelectedElement(elements[0]);
@@ -39,27 +41,31 @@ export const CommentToolbarButton = () => {
     }
   }, [diagram]);
 
-  // Update unresolved comments state
+  // Update unresolved comments count
   const updateUnresolvedComments = useCallback(() => {
     try {
       const commentManager = diagram.document.commentManager;
-      
+
       if (selectedElement) {
-        // Check for unresolved comments on selected element
+        // Count unresolved comments on selected element
         const elementComments = commentManager.getCommentsForElement(selectedElement);
-        const hasUnresolved = elementComments.some(comment => comment.state === 'unresolved');
-        setHasUnresolvedComments(hasUnresolved);
+        const unresolvedCount = elementComments.filter(
+          comment => comment.state === 'unresolved'
+        ).length;
+        setUnresolvedCommentCount(unresolvedCount);
       } else if (selectionType === 'empty') {
-        // Check for unresolved comments on diagram
+        // Count unresolved comments on diagram
         const diagramComments = commentManager.getCommentsForDiagram(diagram);
-        const hasUnresolved = diagramComments.some(comment => comment.state === 'unresolved');
-        setHasUnresolvedComments(hasUnresolved);
+        const unresolvedCount = diagramComments.filter(
+          comment => comment.state === 'unresolved'
+        ).length;
+        setUnresolvedCommentCount(unresolvedCount);
       } else {
-        setHasUnresolvedComments(false);
+        setUnresolvedCommentCount(0);
       }
     } catch (error) {
       console.warn('Error updating comment state:', error);
-      setHasUnresolvedComments(false);
+      setUnresolvedCommentCount(0);
     }
   }, [diagram, selectedElement, selectionType]);
 
@@ -75,50 +81,62 @@ export const CommentToolbarButton = () => {
   useEffect(updateUnresolvedComments, [updateUnresolvedComments]);
 
   // Determine if button should be visible
-  const shouldShowButton = selectionType === 'empty' || 
-                          selectionType === 'single-node' || 
-                          selectionType === 'single-edge';
+  const shouldShowButton =
+    selectionType === 'empty' || selectionType === 'single-node' || selectionType === 'single-edge';
 
   const handleClick = () => {
-    // TODO: Implement comment panel/dialog opening logic
-    const commentManager = diagram.document.commentManager;
-    const context = selectedElement ? 'element' : 'diagram';
-    const comments = selectedElement 
-      ? commentManager.getCommentsForElement(selectedElement)
-      : commentManager.getCommentsForDiagram(diagram);
-    
-    console.log('Comment button clicked', { 
-      context,
-      selectionType, 
-      selectedElement: selectedElement?.id,
-      elementType: selectedElement?.type,
-      hasUnresolvedComments,
-      totalComments: comments.length,
-      unresolvedCount: comments.filter(c => c.state === 'unresolved').length
-    });
+    setIsDialogOpen(true);
+  };
+
+  const handleDialogClose = () => {
+    setIsDialogOpen(false);
   };
 
   if (!shouldShowButton) {
     return null;
   }
 
-  const tooltipMessage = selectedElement 
-    ? `Comments for ${selectedElement.type}` 
+  const tooltipMessage = selectedElement
+    ? `Comments for ${selectedElement.type}`
     : 'Comments for diagram';
 
   return (
-    <Tooltip message={tooltipMessage}>
-      <Toolbar.Button
-        onClick={handleClick}
-        data-state={hasUnresolvedComments ? 'highlighted' : 'normal'}
-        style={{
-          backgroundColor: hasUnresolvedComments ? 'var(--primary-bg)' : undefined,
-          color: hasUnresolvedComments ? 'var(--primary-fg)' : undefined,
-          borderColor: hasUnresolvedComments ? 'var(--primary-bg)' : undefined
-        }}
-      >
-        <TbMessageCircle />
-      </Toolbar.Button>
-    </Tooltip>
+    <>
+      <Tooltip message={tooltipMessage}>
+        <div style={{ position: 'relative', display: 'inline-block' }}>
+          <Toolbar.Button onClick={handleClick}>
+            <TbMessageCircle />
+          </Toolbar.Button>
+          {unresolvedCommentCount > 0 && (
+            <div
+              style={{
+                position: 'absolute',
+                top: '0px',
+                right: '0px',
+                backgroundColor: 'var(--highlight-reverse-bg)',
+                color: 'var(--highlight-reverse-fg)',
+                borderRadius: '50%',
+                width: '12px',
+                height: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '9px',
+                fontWeight: 'bold'
+              }}
+            >
+              {unresolvedCommentCount}
+            </div>
+          )}
+        </div>
+      </Tooltip>
+
+      <CommentDialog
+        open={isDialogOpen}
+        onClose={handleDialogClose}
+        diagram={diagram}
+        selectedElement={selectedElement}
+      />
+    </>
   );
 };
