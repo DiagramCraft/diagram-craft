@@ -6,7 +6,7 @@ import { useEventListener } from '../hooks/useEventListener';
 import { SelectionType } from '@diagram-craft/model/selectionState';
 import { useDiagram } from '../../application';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
-import { CommentDialog } from './CommentDialog';
+import { CommentPopover } from './CommentPopover';
 
 /**
  * CommentToolbarButton provides a toolbar button for accessing comments functionality.
@@ -26,7 +26,7 @@ export const CommentToolbarButton = () => {
   const [selectionType, setSelectionType] = useState<SelectionType | undefined>(undefined);
   const [selectedElement, setSelectedElement] = useState<DiagramElement | undefined>(undefined);
   const [unresolvedCommentCount, setUnresolvedCommentCount] = useState(0);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
   // Update selection state
   const updateSelection = useCallback(() => {
@@ -84,12 +84,8 @@ export const CommentToolbarButton = () => {
   const shouldShowButton =
     selectionType === 'empty' || selectionType === 'single-node' || selectionType === 'single-edge';
 
-  const handleClick = () => {
-    setIsDialogOpen(true);
-  };
-
-  const handleDialogClose = () => {
-    setIsDialogOpen(false);
+  const handlePopoverChange = (open: boolean) => {
+    setIsPopoverOpen(open);
   };
 
   if (!shouldShowButton) {
@@ -101,42 +97,40 @@ export const CommentToolbarButton = () => {
     : 'Comments for diagram';
 
   return (
-    <>
-      <Tooltip message={tooltipMessage}>
-        <div style={{ position: 'relative', display: 'inline-block' }}>
-          <Toolbar.Button onClick={handleClick}>
+    <CommentPopover
+      open={isPopoverOpen}
+      onOpenChange={handlePopoverChange}
+      diagram={diagram}
+      selectedElement={selectedElement}
+    >
+      <div style={{ position: 'relative', display: 'inline-block' }}>
+        <Tooltip message={tooltipMessage}>
+          <Toolbar.Button>
             <TbMessageCircle />
           </Toolbar.Button>
-          {unresolvedCommentCount > 0 && (
-            <div
-              style={{
-                position: 'absolute',
-                top: '0px',
-                right: '0px',
-                backgroundColor: 'var(--highlight-reverse-bg)',
-                color: 'var(--highlight-reverse-fg)',
-                borderRadius: '50%',
-                width: '12px',
-                height: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '9px',
-                fontWeight: 'bold'
-              }}
-            >
-              {unresolvedCommentCount}
-            </div>
-          )}
-        </div>
-      </Tooltip>
-
-      <CommentDialog
-        open={isDialogOpen}
-        onClose={handleDialogClose}
-        diagram={diagram}
-        selectedElement={selectedElement}
-      />
-    </>
+        </Tooltip>
+        {unresolvedCommentCount > 0 && (
+          <div
+            style={{
+              position: 'absolute',
+              top: '0px',
+              right: '0px',
+              backgroundColor: 'var(--highlight-reverse-bg)',
+              color: 'var(--highlight-reverse-fg)',
+              borderRadius: '50%',
+              width: '12px',
+              height: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '9px',
+              fontWeight: 'bold'
+            }}
+          >
+            {unresolvedCommentCount}
+          </div>
+        )}
+      </div>
+    </CommentPopover>
   );
 };
