@@ -7,6 +7,7 @@ import {
   DiagramIteratorOpts,
   makeDiagramMapper
 } from './diagram';
+import { CommentManager } from './comment';
 import { AttachmentConsumer, AttachmentManager } from './attachment';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinitionRegistry';
@@ -53,6 +54,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
   readonly props: DocumentProps;
   readonly data: DiagramDocumentData;
   readonly tags: DocumentTags;
+  readonly commentManager: CommentManager;
 
   // Shared properties
   readonly #diagrams: MappedCRDTOrderedMap<Diagram, DiagramCRDT>;
@@ -75,6 +77,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     this.attachments = new AttachmentManager(this.root, this);
     this.props = new DocumentProps(this.root, this);
     this.tags = new DocumentTags(this.root);
+    this.commentManager = new CommentManager(this, this.root);
 
     this.#diagrams = new MappedCRDTOrderedMap(
       watch(this.root.getMap('diagrams')),
