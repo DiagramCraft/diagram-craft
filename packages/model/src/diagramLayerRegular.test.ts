@@ -14,7 +14,7 @@ describe.for(Backends.all())('RegularLayer [%s]', ([_name, backend]) => {
     it('should be possible to set elements that are already added', () => {
       const [root1] = backend.syncedDocs();
 
-      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer(root1);
+      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
 
       const element = new DiagramNode('id1', layer1);
       layer1.addElement(element, UnitOfWork.immediate(d1));

@@ -15,7 +15,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
 
       const doc2 = root2 ? TestModel.newDocument(root2) : undefined;
 
-      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer(root1);
+      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
       const layer1_2 = doc2?.diagrams[0].layers.all[0] as RegularLayer;
 
       const element = new DiagramNode('id1', layer1);
@@ -32,7 +32,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
 
       const doc2 = root2 ? TestModel.newDocument(root2) : undefined;
 
-      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer(root1);
+      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
       const layer1_2 = doc2?.diagrams[0].layers.all[0] as RegularLayer;
 
       const element = new DiagramNode('id1', layer1);
@@ -96,7 +96,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
 
       const doc2 = root2 ? TestModel.newDocument(root2) : undefined;
 
-      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer(root1);
+      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
       const layer1_2 = doc2?.diagrams[0].layers.all[0] as RegularLayer;
 
       const element = new DiagramNode('id1', layer1);
@@ -113,7 +113,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
 
       const doc2 = root2 ? TestModel.newDocument(root2) : undefined;
 
-      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer(root1);
+      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
 
       const changeEvent1 = vi.fn();
       const changeEvent2 = vi.fn();
@@ -137,7 +137,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
 
       const doc2 = root2 ? TestModel.newDocument(root2) : undefined;
 
-      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer(root1);
+      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
       const layer1_2 = doc2?.diagrams[0].layers.all[0] as RegularLayer;
 
       const element = new DiagramNode('id1', layer1);
@@ -152,7 +152,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
 
       const doc2 = root2 ? TestModel.newDocument(root2) : undefined;
 
-      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer(root1);
+      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
       const layer1_2 = doc2?.diagrams[0].layers.all[0] as RegularLayer;
 
       const element = new DiagramNode('id1', layer1);
@@ -171,7 +171,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
 
       const doc2 = root2 ? TestModel.newDocument(root2) : undefined;
 
-      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer(root1);
+      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
       const layer1_2 = doc2?.diagrams[0].layers.all[0] as RegularLayer;
 
       const element = new DiagramNode('id1', layer1);
@@ -188,7 +188,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
 
       const doc2 = root2 ? TestModel.newDocument(root2) : undefined;
 
-      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer(root1);
+      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
       const layer1_2 = doc2?.diagrams[0].layers.all[0] as RegularLayer;
 
       const element = new DiagramNode('id1', layer1);
@@ -211,7 +211,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
     it('should trim whitespace from tags', () => {
       const [root1] = backend.syncedDocs();
 
-      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer(root1);
+      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
 
       const element = new DiagramNode('id1', layer1);
       layer1.addElement(element, UnitOfWork.immediate(d1));
@@ -224,7 +224,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
     it('should filter out empty or whitespace-only tags', () => {
       const [root1] = backend.syncedDocs();
 
-      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer(root1);
+      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
 
       const element = new DiagramNode('id1', layer1);
       layer1.addElement(element, UnitOfWork.immediate(d1));
@@ -237,7 +237,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
     it('should remove duplicates from tags', () => {
       const [root1] = backend.syncedDocs();
 
-      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer(root1);
+      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
 
       const element = new DiagramNode('id1', layer1);
       layer1.addElement(element, UnitOfWork.immediate(d1));
@@ -252,7 +252,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
 
       const doc2 = root2 ? TestModel.newDocument(root2) : undefined;
 
-      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer(root1);
+      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
 
       const element = new DiagramNode('id1', layer1);
       layer1.addElement(element, UnitOfWork.immediate(d1));
@@ -275,7 +275,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
     it('should update cache when tags are changed', () => {
       const [root1] = backend.syncedDocs();
 
-      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer(root1);
+      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
 
       const element = new DiagramNode('id1', layer1);
       layer1.addElement(element, UnitOfWork.immediate(d1));
@@ -293,7 +293,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
     it('should handle setting empty tags array', () => {
       const [root1] = backend.syncedDocs();
 
-      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer(root1);
+      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
 
       const element = new DiagramNode('id1', layer1);
       layer1.addElement(element, UnitOfWork.immediate(d1));

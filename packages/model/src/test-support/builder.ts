@@ -22,14 +22,19 @@ export class TestModel {
     return db;
   }
 
-  static newDiagramWithLayer(root?: CRDTRoot) {
-    const diagram = TestModel.newDiagram(root);
-    const layer = diagram.newLayer();
-    return { diagram, layer };
-  }
-
   static newDocument(root?: CRDTRoot) {
     return new DiagramDocument(defaultNodeRegistry(), defaultEdgeRegistry(), false, root);
+  }
+
+  static newDiagramWithLayer(opts?: { root?: CRDTRoot; nodes?: Array<NodeCreateOptions> }) {
+    const diagram = TestModel.newDiagram(opts?.root);
+    const layer = diagram.newLayer();
+
+    if (opts?.nodes) {
+      opts.nodes.forEach(node => layer.addNode(node));
+    }
+
+    return { diagram, layer };
   }
 }
 

@@ -1,43 +1,18 @@
 import { describe, expect, test } from 'vitest';
 import { NodeSnapProvider } from './nodeSnapProvider';
-import { TestModel } from '../test-support/builder';
 import { Axis } from '@diagram-craft/geometry/axis';
 import { Line } from '@diagram-craft/geometry/line';
 import { Range } from '@diagram-craft/geometry/range';
 import type { MatchingMagnetPair } from './snapManager';
-
-/**
- * Helper function to create a test diagram with nodes at specified positions
- * @param nodePositions Array of node specifications with position and dimensions
- * @returns Object containing the created diagram and layer
- */
-const createDiagramWithNodes = (
-  nodePositions: Array<{ x: number; y: number; w: number; h: number; id?: string }>
-) => {
-  const diagram = TestModel.newDiagram();
-  const layer = diagram.newLayer();
-
-  nodePositions.forEach((pos, index) => {
-    layer.addNode({
-      id: pos.id ?? `node${index + 1}`,
-      bounds: {
-        x: pos.x,
-        y: pos.y,
-        w: pos.w,
-        h: pos.h,
-        r: 0
-      }
-    });
-  });
-
-  return { diagram, layer };
-};
+import { TestModel } from '../test-support/builder';
 
 describe('NodeSnapProvider', () => {
   describe('getMagnets', () => {
     describe('getMagnets - basic functionality', () => {
       test('should create magnets for eligible nodes', () => {
-        const { diagram } = createDiagramWithNodes([{ x: 50, y: 50, w: 100, h: 80 }]);
+        const { diagram } = TestModel.newDiagramWithLayer({
+          nodes: [{ bounds: { x: 50, y: 50, w: 100, h: 80, r: 0 } }]
+        });
 
         const provider = new NodeSnapProvider(diagram, () => true);
         const testBox = { x: 0, y: 60, w: 30, h: 40, r: 0 }; // Overlaps vertically
@@ -55,7 +30,9 @@ describe('NodeSnapProvider', () => {
       });
 
       test('should extend horizontal magnet lines to full diagram width', () => {
-        const { diagram } = createDiagramWithNodes([{ x: 100, y: 200, w: 50, h: 40 }]);
+        const { diagram } = TestModel.newDiagramWithLayer({
+          nodes: [{ bounds: { x: 100, y: 200, w: 50, h: 40, r: 0 } }]
+        });
 
         const provider = new NodeSnapProvider(diagram, () => true);
         const testBox = { x: 50, y: 210, w: 30, h: 20, r: 0 };
@@ -71,7 +48,9 @@ describe('NodeSnapProvider', () => {
       });
 
       test('should extend vertical magnet lines to full diagram height', () => {
-        const { diagram } = createDiagramWithNodes([{ x: 100, y: 200, w: 50, h: 40 }]);
+        const { diagram } = TestModel.newDiagramWithLayer({
+          nodes: [{ bounds: { x: 100, y: 200, w: 50, h: 40, r: 0 } }]
+        });
 
         const provider = new NodeSnapProvider(diagram, () => true);
         const testBox = { x: 110, y: 50, w: 30, h: 20, r: 0 };
@@ -87,7 +66,9 @@ describe('NodeSnapProvider', () => {
       });
 
       test('should create both horizontal and vertical magnets', () => {
-        const { diagram } = createDiagramWithNodes([{ x: 100, y: 100, w: 60, h: 40 }]);
+        const { diagram } = TestModel.newDiagramWithLayer({
+          nodes: [{ bounds: { x: 100, y: 100, w: 60, h: 40, r: 0 } }]
+        });
 
         const provider = new NodeSnapProvider(diagram, () => true);
         const testBox = { x: 110, y: 110, w: 40, h: 20, r: 0 }; // Overlaps both axes
@@ -102,7 +83,9 @@ describe('NodeSnapProvider', () => {
       });
 
       test('magnet axis', () => {
-        const { diagram } = createDiagramWithNodes([{ x: 100, y: 100, w: 60, h: 40 }]);
+        const { diagram } = TestModel.newDiagramWithLayer({
+          nodes: [{ bounds: { x: 100, y: 100, w: 60, h: 40, r: 0 } }]
+        });
 
         const provider = new NodeSnapProvider(diagram, () => true);
         const testBox = { x: 110, y: 110, w: 40, h: 20, r: 0 }; // Overlaps both axes
@@ -121,7 +104,9 @@ describe('NodeSnapProvider', () => {
 
     describe('getMagnets - filtering behavior', () => {
       test('should filter out non-node elements', () => {
-        const { diagram, layer } = createDiagramWithNodes([{ x: 50, y: 50, w: 40, h: 30 }]);
+        const { diagram, layer } = TestModel.newDiagramWithLayer({
+          nodes: [{ bounds: { x: 50, y: 50, w: 40, h: 30, r: 0 } }]
+        });
 
         // Add another node and an edge
         layer.addNode({ bounds: { x: 200, y: 50, w: 40, h: 30, r: 0 } });
@@ -145,7 +130,9 @@ describe('NodeSnapProvider', () => {
       });
 
       test('should filter out label nodes', () => {
-        const { diagram, layer } = createDiagramWithNodes([{ x: 50, y: 50, w: 40, h: 30 }]);
+        const { diagram, layer } = TestModel.newDiagramWithLayer({
+          nodes: [{ bounds: { x: 50, y: 50, w: 40, h: 30, r: 0 } }]
+        });
 
         // Add a label node
         const labelNode = layer.addNode({
@@ -166,10 +153,12 @@ describe('NodeSnapProvider', () => {
       });
 
       test('should respect eligibleNodePredicate', () => {
-        const { diagram } = createDiagramWithNodes([
-          { x: 50, y: 50, w: 40, h: 30, id: 'node1' },
-          { x: 150, y: 50, w: 40, h: 30, id: 'node2' }
-        ]);
+        const { diagram } = TestModel.newDiagramWithLayer({
+          nodes: [
+            { bounds: { x: 50, y: 50, w: 40, h: 30, r: 0 }, id: 'node1' },
+            { bounds: { x: 150, y: 50, w: 40, h: 30, r: 0 }, id: 'node2' }
+          ]
+        });
 
         // Predicate that excludes node2
         const provider = new NodeSnapProvider(diagram, id => id !== 'node2');
@@ -187,10 +176,12 @@ describe('NodeSnapProvider', () => {
       });
 
       test('should filter out nodes without range overlap', () => {
-        const { diagram } = createDiagramWithNodes([
-          { x: 50, y: 50, w: 40, h: 30 }, // No overlap
-          { x: 150, y: 200, w: 40, h: 30 } // No overlap
-        ]);
+        const { diagram } = TestModel.newDiagramWithLayer({
+          nodes: [
+            { bounds: { x: 50, y: 50, w: 40, h: 30, r: 0 } }, // No overlap
+            { bounds: { x: 150, y: 200, w: 40, h: 30, r: 0 } } // No overlap
+          ]
+        });
 
         const provider = new NodeSnapProvider(diagram, () => true);
         const testBox = { x: 0, y: 100, w: 20, h: 20, r: 0 }; // No overlap with either node
@@ -202,9 +193,11 @@ describe('NodeSnapProvider', () => {
       });
 
       test('should include nodes with horizontal range overlap only', () => {
-        const { diagram } = createDiagramWithNodes([
-          { x: 50, y: 200, w: 40, h: 30 } // Horizontal overlap but not vertical
-        ]);
+        const { diagram } = TestModel.newDiagramWithLayer({
+          nodes: [
+            { bounds: { x: 50, y: 200, w: 40, h: 30, r: 0 } } // Horizontal overlap but not vertical
+          ]
+        });
 
         const provider = new NodeSnapProvider(diagram, () => true);
         const testBox = { x: 60, y: 50, w: 20, h: 20, r: 0 }; // Overlaps horizontally
@@ -216,9 +209,11 @@ describe('NodeSnapProvider', () => {
       });
 
       test('should include nodes with vertical range overlap only', () => {
-        const { diagram } = createDiagramWithNodes([
-          { x: 200, y: 50, w: 40, h: 30 } // Vertical overlap but not horizontal
-        ]);
+        const { diagram } = TestModel.newDiagramWithLayer({
+          nodes: [
+            { bounds: { x: 200, y: 50, w: 40, h: 30, r: 0 } } // Vertical overlap but not horizontal
+          ]
+        });
 
         const provider = new NodeSnapProvider(diagram, () => true);
         const testBox = { x: 50, y: 60, w: 20, h: 20, r: 0 }; // Overlaps vertically
@@ -232,7 +227,9 @@ describe('NodeSnapProvider', () => {
 
     describe('getMagnets - magnet properties', () => {
       test('should set correct axis for magnets', () => {
-        const { diagram } = createDiagramWithNodes([{ x: 100, y: 100, w: 60, h: 40 }]);
+        const { diagram } = TestModel.newDiagramWithLayer({
+          nodes: [{ bounds: { x: 100, y: 100, w: 60, h: 40, r: 0 } }]
+        });
 
         const provider = new NodeSnapProvider(diagram, () => true);
         const testBox = { x: 110, y: 110, w: 40, h: 20, r: 0 };
@@ -249,9 +246,9 @@ describe('NodeSnapProvider', () => {
       });
 
       test('should attach node reference to magnets', () => {
-        const { diagram } = createDiagramWithNodes([
-          { x: 100, y: 100, w: 60, h: 40, id: 'test-node' }
-        ]);
+        const { diagram } = TestModel.newDiagramWithLayer({
+          nodes: [{ bounds: { x: 100, y: 100, w: 60, h: 40, r: 0 }, id: 'test-node' }]
+        });
 
         const provider = new NodeSnapProvider(diagram, () => true);
         const testBox = { x: 110, y: 110, w: 40, h: 20, r: 0 };
@@ -265,10 +262,12 @@ describe('NodeSnapProvider', () => {
       });
 
       test('should sort magnets by distance and remove duplicates', () => {
-        const { diagram } = createDiagramWithNodes([
-          { x: 50, y: 100, w: 40, h: 30 }, // Closer to test box
-          { x: 200, y: 100, w: 40, h: 30 } // Further from test box
-        ]);
+        const { diagram } = TestModel.newDiagramWithLayer({
+          nodes: [
+            { bounds: { x: 50, y: 100, w: 40, h: 30, r: 0 } }, // Closer to test box
+            { bounds: { x: 200, y: 100, w: 40, h: 30, r: 0 } } // Further from test box
+          ]
+        });
 
         const provider = new NodeSnapProvider(diagram, () => true);
         const testBox = { x: 0, y: 110, w: 30, h: 20, r: 0 };
@@ -286,7 +285,9 @@ describe('NodeSnapProvider', () => {
 
     describe('getMagnets - magnet types', () => {
       test('should create magnets for node centers and edges', () => {
-        const { diagram } = createDiagramWithNodes([{ x: 100, y: 100, w: 60, h: 40 }]);
+        const { diagram } = TestModel.newDiagramWithLayer({
+          nodes: [{ bounds: { x: 100, y: 100, w: 60, h: 40, r: 0 } }]
+        });
 
         const provider = new NodeSnapProvider(diagram, () => true);
         const testBox = { x: 110, y: 110, w: 40, h: 20, r: 0 };
@@ -306,7 +307,7 @@ describe('NodeSnapProvider', () => {
       });
 
       test('should handle rotated nodes by only creating center magnets', () => {
-        const { diagram, layer } = createDiagramWithNodes([]);
+        const { diagram, layer } = TestModel.newDiagramWithLayer();
 
         // Add a rotated node
         layer.addNode({ bounds: { x: 100, y: 100, w: 60, h: 40, r: Math.PI / 4 } });
@@ -332,7 +333,9 @@ describe('NodeSnapProvider', () => {
 
   describe('highlight', () => {
     test('should create highlight for horizontal alignment', () => {
-      const { diagram } = createDiagramWithNodes([{ x: 100, y: 200, w: 50, h: 40 }]);
+      const { diagram } = TestModel.newDiagramWithLayer({
+        nodes: [{ bounds: { x: 100, y: 200, w: 50, h: 40, r: 0 } }]
+      });
 
       const provider = new NodeSnapProvider(diagram, () => true);
       const testBox = { x: 50, y: 210, w: 30, h: 20, r: 0 };
@@ -372,7 +375,9 @@ describe('NodeSnapProvider', () => {
     });
 
     test('should create highlight for vertical alignment', () => {
-      const { diagram } = createDiagramWithNodes([{ x: 100, y: 200, w: 50, h: 40 }]);
+      const { diagram } = TestModel.newDiagramWithLayer({
+        nodes: [{ bounds: { x: 100, y: 200, w: 50, h: 40, r: 0 } }]
+      });
 
       const provider = new NodeSnapProvider(diagram, () => true);
       const testBox = { x: 110, y: 50, w: 30, h: 20, r: 0 };
@@ -412,9 +417,9 @@ describe('NodeSnapProvider', () => {
     });
 
     test('should position highlight at correct coordinate', () => {
-      const { diagram } = createDiagramWithNodes([
-        { x: 100, y: 150, w: 50, h: 40 } // Horizontal center at y=170
-      ]);
+      const { diagram } = TestModel.newDiagramWithLayer({
+        nodes: [{ bounds: { x: 100, y: 150, w: 50, h: 40, r: 0 } }]
+      });
 
       const provider = new NodeSnapProvider(diagram, () => true);
       const testBox = { x: 50, y: 160, w: 30, h: 20, r: 0 }; // Horizontal center at y=170

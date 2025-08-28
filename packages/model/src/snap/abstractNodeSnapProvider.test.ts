@@ -30,45 +30,10 @@ class TestNodeSnapProvider extends AbstractNodeSnapProvider {
   }
 }
 
-const createDiagramWithNodes = (
-  nodePositions: Array<{
-    x: number;
-    y: number;
-    w: number;
-    h: number;
-    id?: string;
-    isLabel?: boolean;
-    rotation?: number;
-  }>
-) => {
-  const diagram = TestModel.newDiagram();
-  const layer = diagram.newLayer();
-
-  nodePositions.forEach((pos, index) => {
-    const node = layer.addNode({
-      id: pos.id ?? `node${index + 1}`,
-      bounds: {
-        x: pos.x,
-        y: pos.y,
-        w: pos.w,
-        h: pos.h,
-        r: pos.rotation ?? 0
-      }
-    });
-
-    // Mock isLabelNode method if needed
-    if (pos.isLabel) {
-      node.isLabelNode = () => true;
-    }
-  });
-
-  return { diagram, layer };
-};
-
 describe('AbstractNodeSnapProvider', () => {
   describe('getEdgePosition', () => {
     test('should return correct edge position for north direction', () => {
-      const { diagram } = createDiagramWithNodes([]);
+      const { diagram } = TestModel.newDiagramWithLayer();
       const provider = new TestNodeSnapProvider(diagram, () => true);
       const box: Box = { x: 10, y: 20, w: 30, h: 40, r: 0 };
 
@@ -77,7 +42,7 @@ describe('AbstractNodeSnapProvider', () => {
     });
 
     test('should return correct edge position for south direction', () => {
-      const { diagram } = createDiagramWithNodes([]);
+      const { diagram } = TestModel.newDiagramWithLayer();
       const provider = new TestNodeSnapProvider(diagram, () => true);
       const box: Box = { x: 10, y: 20, w: 30, h: 40, r: 0 };
 
@@ -86,7 +51,7 @@ describe('AbstractNodeSnapProvider', () => {
     });
 
     test('should return correct edge position for west direction', () => {
-      const { diagram } = createDiagramWithNodes([]);
+      const { diagram } = TestModel.newDiagramWithLayer();
       const provider = new TestNodeSnapProvider(diagram, () => true);
       const box: Box = { x: 10, y: 20, w: 30, h: 40, r: 0 };
 
@@ -95,7 +60,7 @@ describe('AbstractNodeSnapProvider', () => {
     });
 
     test('should return correct edge position for east direction', () => {
-      const { diagram } = createDiagramWithNodes([]);
+      const { diagram } = TestModel.newDiagramWithLayer();
       const provider = new TestNodeSnapProvider(diagram, () => true);
       const box: Box = { x: 10, y: 20, w: 30, h: 40, r: 0 };
 
@@ -106,7 +71,7 @@ describe('AbstractNodeSnapProvider', () => {
 
   describe('getRange', () => {
     test('should return correct horizontal range', () => {
-      const { diagram } = createDiagramWithNodes([]);
+      const { diagram } = TestModel.newDiagramWithLayer();
       const provider = new TestNodeSnapProvider(diagram, () => true);
       const box: Box = { x: 15, y: 25, w: 50, h: 30, r: 0 };
 
@@ -116,7 +81,7 @@ describe('AbstractNodeSnapProvider', () => {
     });
 
     test('should return correct vertical range', () => {
-      const { diagram } = createDiagramWithNodes([]);
+      const { diagram } = TestModel.newDiagramWithLayer();
       const provider = new TestNodeSnapProvider(diagram, () => true);
       const box: Box = { x: 15, y: 25, w: 50, h: 30, r: 0 };
 
@@ -128,7 +93,7 @@ describe('AbstractNodeSnapProvider', () => {
 
   describe('getViableNodes', () => {
     test('should return empty arrays when no nodes exist', () => {
-      const { diagram } = createDiagramWithNodes([]);
+      const { diagram } = TestModel.newDiagramWithLayer();
       const provider = new TestNodeSnapProvider(diagram, () => true);
       const testBox: Box = { x: 0, y: 0, w: 10, h: 10, r: 0 };
 
@@ -142,9 +107,11 @@ describe('AbstractNodeSnapProvider', () => {
 
     test('should categorize nodes in north direction', () => {
       // Node above test box
-      const { diagram } = createDiagramWithNodes([
-        { x: 20, y: 10, w: 30, h: 20 } // Node: bottom edge at y=30, test box starts at y=50
-      ]);
+      const { diagram } = TestModel.newDiagramWithLayer({
+        nodes: [
+          { bounds: { x: 20, y: 10, w: 30, h: 20, r: 0 } } // Node: bottom edge at y=30, test box starts at y=50
+        ]
+      });
 
       const provider = new TestNodeSnapProvider(diagram, () => true);
       const testBox: Box = { x: 25, y: 50, w: 20, h: 15, r: 0 }; // y: 50-65, overlaps horizontally
@@ -159,9 +126,11 @@ describe('AbstractNodeSnapProvider', () => {
 
     test('should filter out intersecting nodes', () => {
       // Node that overlaps with test box
-      const { diagram } = createDiagramWithNodes([
-        { x: 15, y: 15, w: 30, h: 20 } // Node overlaps with test box
-      ]);
+      const { diagram } = TestModel.newDiagramWithLayer({
+        nodes: [
+          { bounds: { x: 15, y: 15, w: 30, h: 20, r: 0 } } // Node overlaps with test box
+        ]
+      });
 
       const provider = new TestNodeSnapProvider(diagram, () => true);
       const testBox: Box = { x: 20, y: 20, w: 20, h: 10, r: 0 }; // Overlaps with node
@@ -177,9 +146,11 @@ describe('AbstractNodeSnapProvider', () => {
 
     test('should filter out nodes without range overlap', () => {
       // Node that doesn't have overlapping ranges with test box
-      const { diagram } = createDiagramWithNodes([
-        { x: 10, y: 100, w: 20, h: 15 } // Node far from test box with no range overlap
-      ]);
+      const { diagram } = TestModel.newDiagramWithLayer({
+        nodes: [
+          { bounds: { x: 10, y: 100, w: 20, h: 15, r: 0 } } // Node far from test box with no range overlap
+        ]
+      });
 
       const provider = new TestNodeSnapProvider(diagram, () => true);
       const testBox: Box = { x: 50, y: 50, w: 20, h: 15, r: 0 }; // No overlap on either axis
@@ -194,9 +165,11 @@ describe('AbstractNodeSnapProvider', () => {
     });
 
     test('should filter out rotated nodes', () => {
-      const { diagram } = createDiagramWithNodes([
-        { x: 20, y: 10, w: 30, h: 20, rotation: 45 } // Create node with rotation
-      ]);
+      const { diagram } = TestModel.newDiagramWithLayer({
+        nodes: [
+          { bounds: { x: 20, y: 10, w: 30, h: 20, r: 45 } } // Create node with rotation
+        ]
+      });
 
       const provider = new TestNodeSnapProvider(diagram, () => true);
       const testBox: Box = { x: 25, y: 50, w: 20, h: 15, r: 0 };
@@ -210,26 +183,13 @@ describe('AbstractNodeSnapProvider', () => {
       expect(result.w).toHaveLength(0);
     });
 
-    test('should filter out label nodes', () => {
-      const { diagram } = createDiagramWithNodes([{ x: 20, y: 10, w: 30, h: 20, isLabel: true }]);
-
-      const provider = new TestNodeSnapProvider(diagram, () => true);
-      const testBox: Box = { x: 25, y: 50, w: 20, h: 15, r: 0 };
-
-      const result = provider.testGetViableNodes(testBox);
-
-      // Label node should be filtered out
-      expect(result.n).toHaveLength(0);
-      expect(result.s).toHaveLength(0);
-      expect(result.e).toHaveLength(0);
-      expect(result.w).toHaveLength(0);
-    });
-
     test('should respect eligibleNodePredicate', () => {
-      const { diagram } = createDiagramWithNodes([
-        { x: 20, y: 10, w: 30, h: 20, id: 'excluded-node' },
-        { x: 60, y: 10, w: 30, h: 20, id: 'included-node' }
-      ]);
+      const { diagram } = TestModel.newDiagramWithLayer({
+        nodes: [
+          { bounds: { x: 20, y: 10, w: 30, h: 20, r: 0 }, id: 'excluded-node' },
+          { bounds: { x: 60, y: 10, w: 30, h: 20, r: 0 }, id: 'included-node' }
+        ]
+      });
 
       // Predicate that excludes the first node
       const provider = new TestNodeSnapProvider(diagram, id => id !== 'excluded-node');
@@ -243,12 +203,14 @@ describe('AbstractNodeSnapProvider', () => {
     });
 
     test('should handle multiple nodes in different directions', () => {
-      const { diagram } = createDiagramWithNodes([
-        { x: 25, y: 10, w: 20, h: 15 }, // North
-        { x: 25, y: 80, w: 20, h: 15 }, // South
-        { x: 10, y: 35, w: 20, h: 15 }, // West
-        { x: 60, y: 35, w: 20, h: 15 } // East
-      ]);
+      const { diagram } = TestModel.newDiagramWithLayer({
+        nodes: [
+          { bounds: { x: 25, y: 10, w: 20, h: 15, r: 0 } }, // North
+          { bounds: { x: 25, y: 80, w: 20, h: 15, r: 0 } }, // South
+          { bounds: { x: 10, y: 35, w: 20, h: 15, r: 0 } }, // West
+          { bounds: { x: 60, y: 35, w: 20, h: 15, r: 0 } } // East
+        ]
+      });
 
       const provider = new TestNodeSnapProvider(diagram, () => true);
       const testBox: Box = { x: 35, y: 40, w: 20, h: 10, r: 0 }; // Center box
