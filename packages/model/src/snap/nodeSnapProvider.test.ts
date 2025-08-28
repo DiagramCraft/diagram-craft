@@ -127,7 +127,7 @@ describe('NodeSnapProvider', () => {
         layer.addNode({ bounds: { x: 200, y: 50, w: 40, h: 30, r: 0 } });
 
         // Add an edge (non-node element)
-        layer.addEdge('edge1');
+        layer.addEdge();
 
         const provider = new NodeSnapProvider(diagram, () => true);
         const testBox = { x: 0, y: 50, w: 30, h: 30, r: 0 };

@@ -36,7 +36,7 @@ describe('baseEdgeDefinition', () => {
 
         node = layer1.addNode({ bounds: { x: 40, y: 40, w: 20, h: 20, r: 0 } });
 
-        edge = layer1.addEdge('edge');
+        edge = layer1.addEdge();
         edge.setStart(new FreeEndpoint({ x: 0, y: 0 }), uow);
         edge.setEnd(new FreeEndpoint({ x: 100, y: 100 }), uow);
 

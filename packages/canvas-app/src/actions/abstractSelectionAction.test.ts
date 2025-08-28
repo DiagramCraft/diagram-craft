@@ -35,7 +35,7 @@ describe('abstractSelectionAction', () => {
     const layer = diagram.newLayer();
     const el1 = layer.addNode();
     const el2 = layer.addNode();
-    const edge1 = layer.addEdge('e1');
+    const edge1 = layer.addEdge();
 
     beforeEach(() => {
       diagram.selectionState.setElements([]);

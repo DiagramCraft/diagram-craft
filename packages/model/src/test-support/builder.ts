@@ -46,6 +46,7 @@ export class TestDiagramBuilder extends Diagram {
 }
 
 export type NodeCreateOptions = { id?: string; type?: string; bounds?: Box };
+export type EdgeCreateOptions = { id?: string };
 
 export class TestLayerBuilder extends RegularLayer {
   constructor(id: string, diagram: Diagram) {
@@ -73,15 +74,15 @@ export class TestLayerBuilder extends RegularLayer {
     );
   }
 
-  addEdge(id?: string) {
-    const edge = this.createEdge(id);
+  addEdge(options?: EdgeCreateOptions) {
+    const edge = this.createEdge(options);
     this.addElement(edge, UnitOfWork.immediate(this.diagram));
     return edge;
   }
 
-  createEdge(id?: string) {
+  createEdge(options?: EdgeCreateOptions) {
     return DiagramEdge.create(
-      id ?? newid(),
+      options?.id ?? newid(),
       new FreeEndpoint({ x: 0, y: 0 }),
       new FreeEndpoint({ x: 100, y: 100 }),
       {},

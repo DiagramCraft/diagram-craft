@@ -38,7 +38,7 @@ describe('ElementAddUndoableAction', () => {
 
   test('should undo edge addition', () => {
     const { diagram, layer } = TestModel.newDiagramWithLayer();
-    const edge = layer.createEdge('edge1');
+    const edge = layer.createEdge({ id: 'edge1' });
 
     const action = new ElementAddUndoableAction([edge], diagram, layer);
     layer.addElement(edge, UnitOfWork.immediate(diagram));
@@ -55,7 +55,7 @@ describe('ElementAddUndoableAction', () => {
     const { diagram, layer } = TestModel.newDiagramWithLayer();
     const node1 = layer.createNode({ id: 'node1' });
     const node2 = layer.createNode({ id: 'node2' });
-    const edge = layer.createEdge('edge1');
+    const edge = layer.createEdge({ id: 'edge1' });
 
     const action = new ElementAddUndoableAction([node1, node2, edge], diagram, layer);
     layer.addElement(node1, UnitOfWork.immediate(diagram));
@@ -77,7 +77,7 @@ describe('ElementAddUndoableAction', () => {
 
     const node1 = layer.addNode();
     const node2 = layer.addNode();
-    const edge = layer.createEdge('edge1');
+    const edge = layer.createEdge({ id: 'edge1' });
 
     // Connect edge to nodes
     const uow = UnitOfWork.immediate(diagram);
@@ -122,7 +122,7 @@ describe('ElementDeleteUndoableAction', () => {
 
   test('should undo edge deletion', () => {
     const { diagram, layer } = TestModel.newDiagramWithLayer();
-    const edge = layer.addEdge('edge1');
+    const edge = layer.addEdge({ id: 'edge1' });
 
     const action = new ElementDeleteUndoableAction(diagram, layer, [edge], false);
     action.redo(UnitOfWork.immediate(diagram));
@@ -140,7 +140,7 @@ describe('ElementDeleteUndoableAction', () => {
     const { diagram, layer } = TestModel.newDiagramWithLayer();
     const node1 = layer.addNode({ id: 'node1' });
     const node2 = layer.addNode({ id: 'node2' });
-    const edge = layer.addEdge('edge1');
+    const edge = layer.addEdge({ id: 'edge1' });
 
     const action = new ElementDeleteUndoableAction(diagram, layer, [node1, node2, edge], false);
     action.redo(UnitOfWork.immediate(diagram));
@@ -160,7 +160,7 @@ describe('ElementDeleteUndoableAction', () => {
 
     const node1 = layer.addNode();
     const node2 = layer.addNode();
-    const edge = layer.addEdge('edge1');
+    const edge = layer.addEdge();
 
     // Connect edge to nodes
     const uow = UnitOfWork.immediate(diagram);
@@ -194,7 +194,7 @@ describe('ElementDeleteUndoableAction', () => {
 
     const node1 = layer.addNode();
     const node2 = layer.addNode();
-    const edge = layer.addEdge('edge1');
+    const edge = layer.addEdge();
 
     // Connect edge to nodes
     const uow = UnitOfWork.immediate(diagram);
@@ -222,8 +222,8 @@ describe('ElementDeleteUndoableAction', () => {
 
     const node1 = layer.addNode({ id: 'node1' });
     const node2 = layer.addNode({ id: 'node2' });
-    const edge1 = layer.addEdge('edge1');
-    const edge2 = layer.addEdge('edge2');
+    const edge1 = layer.addEdge({ id: 'edge1' });
+    const edge2 = layer.addEdge({ id: 'edge2' });
 
     // Connect edges to nodes
     const uow = UnitOfWork.immediate(diagram);

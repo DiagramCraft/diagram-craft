@@ -9,13 +9,12 @@ import {
 } from './highlight';
 import type { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { TestModel } from '@diagram-craft/model/test-support/builder';
-import { newid } from '@diagram-craft/utils/id';
 
 describe('highlight.ts', () => {
   let el: DiagramElement;
 
   beforeEach(() => {
-    el = TestModel.newDiagram().newLayer().addEdge(newid());
+    el = TestModel.newDiagram().newLayer().addEdge();
   });
 
   test('addHighlight without arg stores entry, hasHighlight true, and emits event', () => {
@@ -108,7 +107,7 @@ describe('highlight.ts', () => {
 
   test('highlights are isolated per element (WeakMap store)', () => {
     // Setup
-    const el2 = TestModel.newDiagram().newLayer().addEdge(newid());
+    const el2 = TestModel.newDiagram().newLayer().addEdge();
 
     // Act
     addHighlight(el, Highlights.NODE__TOOL_EDIT);

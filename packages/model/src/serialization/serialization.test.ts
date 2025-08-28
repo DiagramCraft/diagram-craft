@@ -25,7 +25,7 @@ describe('serialization', () => {
       it('should serialize edge with tags', () => {
         // Setup
         const diagram = TestModel.newDiagram();
-        const edge = diagram.newLayer().addEdge('test-edge');
+        const edge = diagram.newLayer().addEdge();
         const tags = ['connection', 'flow', 'critical'];
         edge.setTags(tags, UnitOfWork.immediate(diagram));
 
@@ -75,7 +75,7 @@ describe('serialization', () => {
         const nodeTags = ['ui', 'component', 'button'];
         node.setTags(nodeTags, UnitOfWork.immediate(diagram));
 
-        const edge = layer.addEdge('edge-1');
+        const edge = layer.addEdge({ id: 'edge-1' });
         const edgeTags = ['flow', 'data', 'critical'];
         edge.setTags(edgeTags, UnitOfWork.immediate(diagram));
 
@@ -112,7 +112,7 @@ describe('serialization', () => {
         const node1 = layer1.addNode();
         node1.setTags(['ui', 'button', 'primary'], UnitOfWork.immediate(diagram1));
 
-        const edge1 = layer1.addEdge('edge-1');
+        const edge1 = layer1.addEdge();
         edge1.setTags(['flow', 'data'], UnitOfWork.immediate(diagram1));
 
         const diagram2 = new TestDiagramBuilder(originalDoc, 'diagram2');
@@ -120,7 +120,7 @@ describe('serialization', () => {
         const node2 = layer2.addNode();
         node2.setTags(['api', 'service', 'primary'], UnitOfWork.immediate(diagram2)); // 'primary' overlaps
 
-        const edge2 = layer2.addEdge('edge-2');
+        const edge2 = layer2.addEdge();
         edge2.setTags(['network', 'http'], UnitOfWork.immediate(diagram2));
 
         originalDoc.addDiagram(diagram1);
@@ -158,7 +158,7 @@ describe('serialization', () => {
         const layer = diagram.newLayer();
 
         layer.addNode();
-        layer.addEdge('edge-1');
+        layer.addEdge();
         originalDoc.addDiagram(diagram);
 
         // Act
