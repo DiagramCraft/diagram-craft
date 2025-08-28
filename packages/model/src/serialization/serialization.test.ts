@@ -11,7 +11,7 @@ describe('serialization', () => {
       it('should serialize node with tags', () => {
         // Setup
         const diagram = TestModel.newDiagram();
-        const node = diagram.newLayer().addNode('test-node', 'rect');
+        const node = diagram.newLayer().addNode('test-node');
         const tags = ['tag1', 'tag2', 'important'];
         node.setTags(tags, UnitOfWork.immediate(diagram));
 
@@ -39,7 +39,7 @@ describe('serialization', () => {
       it('should not serialize tags property when element has no tags', () => {
         // Setup
         const layer = TestModel.newDiagram().newLayer();
-        const node = layer.addNode('test-node', 'rect');
+        const node = layer.addNode('test-node');
 
         // Act
         const serialized = serializeDiagramElement(node);
@@ -51,7 +51,7 @@ describe('serialization', () => {
       it('should serialize empty tags as undefined', () => {
         // Setup
         const diagram = TestModel.newDiagram();
-        const node = diagram.newLayer().addNode('test-node', 'rect');
+        const node = diagram.newLayer().addNode('test-node');
         node.setTags([], UnitOfWork.immediate(diagram));
 
         // Act
@@ -71,7 +71,7 @@ describe('serialization', () => {
         const diagram = new TestDiagramBuilder(originalDoc);
         const layer = diagram.newLayer();
 
-        const node = layer.addNode('node-1', 'rect');
+        const node = layer.addNode('node-1');
         const nodeTags = ['ui', 'component', 'button'];
         node.setTags(nodeTags, UnitOfWork.immediate(diagram));
 
@@ -109,7 +109,7 @@ describe('serialization', () => {
 
         const diagram1 = new TestDiagramBuilder(originalDoc, 'diagram1');
         const layer1 = diagram1.newLayer();
-        const node1 = layer1.addNode('node-1', 'rect');
+        const node1 = layer1.addNode('node-1');
         node1.setTags(['ui', 'button', 'primary'], UnitOfWork.immediate(diagram1));
 
         const edge1 = layer1.addEdge('edge-1');
@@ -117,7 +117,7 @@ describe('serialization', () => {
 
         const diagram2 = new TestDiagramBuilder(originalDoc, 'diagram2');
         const layer2 = diagram2.newLayer();
-        const node2 = layer2.addNode('node-2', 'rect');
+        const node2 = layer2.addNode('node-2');
         node2.setTags(['api', 'service', 'primary'], UnitOfWork.immediate(diagram2)); // 'primary' overlaps
 
         const edge2 = layer2.addEdge('edge-2');
@@ -157,7 +157,7 @@ describe('serialization', () => {
         const diagram = new TestDiagramBuilder(originalDoc);
         const layer = diagram.newLayer();
 
-        layer.addNode('node-1', 'rect');
+        layer.addNode('node-1');
         layer.addEdge('edge-1');
         originalDoc.addDiagram(diagram);
 
@@ -189,12 +189,12 @@ describe('serialization', () => {
 
         const parentDiagram = new TestDiagramBuilder(originalDoc, 'parent');
         const parentLayer = parentDiagram.newLayer();
-        const parentNode = parentLayer.addNode('parent-node', 'rect');
+        const parentNode = parentLayer.addNode('parent-node');
         parentNode.setTags(['parent', 'container'], UnitOfWork.immediate(parentDiagram));
 
         const childDiagram = new TestDiagramBuilder(originalDoc, 'child');
         const childLayer = childDiagram.newLayer();
-        const childNode = childLayer.addNode('child-node', 'rect');
+        const childNode = childLayer.addNode('child-node');
         childNode.setTags(['child', 'detail'], UnitOfWork.immediate(childDiagram));
 
         originalDoc.addDiagram(parentDiagram);
