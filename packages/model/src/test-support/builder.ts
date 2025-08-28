@@ -25,9 +25,9 @@ export class TestModel {
   static newDiagramWithLayer(root?: CRDTRoot) {
     const document = new DiagramDocument(defaultNodeRegistry(), defaultEdgeRegistry(), false, root);
     const diagram = new TestDiagramBuilder(document);
-    diagram.newLayer();
+    const layer = diagram.newLayer();
     document.addDiagram(diagram);
-    return diagram;
+    return { diagram, layer };
   }
 
   static newDocument(root?: CRDTRoot) {
