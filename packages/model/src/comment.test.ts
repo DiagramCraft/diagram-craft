@@ -137,16 +137,27 @@ describe.each(Backends.all())('Comment [%s]', (_name, backend) => {
 
     it('should emit commentAdded event when adding comment', () => {
       // Setup
-      const eventSpy = vi.fn();
-      commentManager.on('commentAdded', eventSpy);
+      const eventSpy1 = vi.fn();
+      const eventSpy2 = vi.fn();
+      commentManager.on('commentAdded', eventSpy1);
+      if (commentManager2) {
+        commentManager2.on('commentAdded', eventSpy2);
+      }
       const comment = new Comment(diagram, 'diagram', '1', 'Test comment', 'Author', new Date());
 
       // Act
       commentManager.addComment(comment);
 
       // Verify
-      expect(eventSpy).toHaveBeenCalledTimes(1);
-      expect(eventSpy).toHaveBeenCalledWith({ comment });
+      expect(eventSpy1).toHaveBeenCalledTimes(1);
+      expect(eventSpy1).toHaveBeenCalledWith({ comment });
+
+      // Verify replication event on target manager
+      if (commentManager2) {
+        expect(eventSpy2).toHaveBeenCalledTimes(1);
+        const replicatedComment = commentManager2.getComment('1');
+        expect(eventSpy2).toHaveBeenCalledWith({ comment: replicatedComment });
+      }
     });
 
     it('should return undefined for non-existent comment', () => {
@@ -195,8 +206,12 @@ describe.each(Backends.all())('Comment [%s]', (_name, backend) => {
 
     it('should emit commentUpdated event when updating comment', () => {
       // Setup
-      const eventSpy = vi.fn();
-      commentManager.on('commentUpdated', eventSpy);
+      const eventSpy1 = vi.fn();
+      const eventSpy2 = vi.fn();
+      commentManager.on('commentUpdated', eventSpy1);
+      if (commentManager2) {
+        commentManager2.on('commentUpdated', eventSpy2);
+      }
       const comment = new Comment(diagram, 'diagram', '1', 'Msg', 'Author', new Date());
       commentManager.addComment(comment);
 
@@ -205,8 +220,15 @@ describe.each(Backends.all())('Comment [%s]', (_name, backend) => {
       commentManager.updateComment(comment);
 
       // Verify
-      expect(eventSpy).toHaveBeenCalledTimes(1);
-      expect(eventSpy).toHaveBeenCalledWith({ comment });
+      expect(eventSpy1).toHaveBeenCalledTimes(1);
+      expect(eventSpy1).toHaveBeenCalledWith({ comment });
+
+      // Verify replication event on target manager
+      if (commentManager2) {
+        expect(eventSpy2).toHaveBeenCalledTimes(1);
+        const replicatedComment = commentManager2.getComment('1');
+        expect(eventSpy2).toHaveBeenCalledWith({ comment: replicatedComment });
+      }
     });
 
     it('should remove comment', () => {
@@ -225,8 +247,12 @@ describe.each(Backends.all())('Comment [%s]', (_name, backend) => {
 
     it('should emit commentRemoved event when removing comment', () => {
       // Setup
-      const eventSpy = vi.fn();
-      commentManager.on('commentRemoved', eventSpy);
+      const eventSpy1 = vi.fn();
+      const eventSpy2 = vi.fn();
+      commentManager.on('commentRemoved', eventSpy1);
+      if (commentManager2) {
+        commentManager2.on('commentRemoved', eventSpy2);
+      }
       const comment = new Comment(diagram, 'diagram', '1', 'Test comment', 'Author', new Date());
       commentManager.addComment(comment);
 
@@ -234,8 +260,14 @@ describe.each(Backends.all())('Comment [%s]', (_name, backend) => {
       commentManager.removeComment('1');
 
       // Verify
-      expect(eventSpy).toHaveBeenCalledTimes(1);
-      expect(eventSpy).toHaveBeenCalledWith({ commentId: '1' });
+      expect(eventSpy1).toHaveBeenCalledTimes(1);
+      expect(eventSpy1).toHaveBeenCalledWith({ commentId: '1' });
+
+      // Verify replication event on target manager
+      if (commentManager2) {
+        expect(eventSpy2).toHaveBeenCalledTimes(1);
+        expect(eventSpy2).toHaveBeenCalledWith({ commentId: '1' });
+      }
     });
 
     it('should add reply to comment', () => {
@@ -349,6 +381,90 @@ describe.each(Backends.all())('Comment [%s]', (_name, backend) => {
       expect(thread[0].id).toBe('root');
       expect(thread[1].id).toBe('reply-1');
       expect(thread[2].id).toBe('nested');
+    });
+
+    it('should emit commentAdded event when replying to comment', () => {
+      // Setup
+      const eventSpy1 = vi.fn();
+      const eventSpy2 = vi.fn();
+      commentManager.on('commentAdded', eventSpy1);
+      if (commentManager2) {
+        commentManager2.on('commentAdded', eventSpy2);
+      }
+
+      const rootComment = new Comment(diagram, 'diagram', '1', 'Root', 'Author', new Date());
+      const replyComment = new Comment(
+        diagram,
+        'diagram',
+        '2',
+        'Reply',
+        'Author',
+        new Date(),
+        'unresolved',
+        undefined,
+        '1'
+      );
+
+      commentManager.addComment(rootComment);
+      eventSpy1.mockClear();
+      if (eventSpy2) eventSpy2.mockClear();
+
+      // Act
+      commentManager.replyToComment(rootComment, replyComment);
+
+      // Verify local event
+      expect(eventSpy1).toHaveBeenCalledTimes(1);
+      expect(eventSpy1).toHaveBeenCalledWith({ comment: replyComment });
+
+      // Verify replication event on target manager
+      if (commentManager2) {
+        expect(eventSpy2).toHaveBeenCalledTimes(1);
+        const replicatedReply = commentManager2.getComment('2');
+        expect(eventSpy2).toHaveBeenCalledWith({ comment: replicatedReply });
+      }
+    });
+
+    it('should handle event emission during CRDT synchronization lifecycle', () => {
+      // Skip if no second CRDT instance
+      if (!commentManager2) return;
+
+      // Setup
+      const addEventSpy1 = vi.fn();
+      const addEventSpy2 = vi.fn();
+      const updateEventSpy1 = vi.fn();
+      const updateEventSpy2 = vi.fn();
+      const removeEventSpy1 = vi.fn();
+      const removeEventSpy2 = vi.fn();
+
+      commentManager.on('commentAdded', addEventSpy1);
+      commentManager.on('commentUpdated', updateEventSpy1);
+      commentManager.on('commentRemoved', removeEventSpy1);
+
+      commentManager2.on('commentAdded', addEventSpy2);
+      commentManager2.on('commentUpdated', updateEventSpy2);
+      commentManager2.on('commentRemoved', removeEventSpy2);
+
+      const comment = new Comment(diagram, 'diagram', 'lifecycle-test', 'Test', 'Author', new Date());
+
+      // Act & Verify - Add
+      commentManager.addComment(comment);
+      expect(addEventSpy1).toHaveBeenCalledTimes(1);
+      expect(addEventSpy2).toHaveBeenCalledTimes(1);
+
+      // Act & Verify - Update
+      comment.resolve();
+      commentManager.updateComment(comment);
+      expect(updateEventSpy1).toHaveBeenCalledTimes(1);
+      expect(updateEventSpy2).toHaveBeenCalledTimes(1);
+
+      // Act & Verify - Remove
+      commentManager.removeComment('lifecycle-test');
+      expect(removeEventSpy1).toHaveBeenCalledTimes(1);
+      expect(removeEventSpy2).toHaveBeenCalledTimes(1);
+
+      // Verify final state consistency
+      expect(commentManager.getComment('lifecycle-test')).toBeUndefined();
+      expect(commentManager2.getComment('lifecycle-test')).toBeUndefined();
     });
   });
 });
