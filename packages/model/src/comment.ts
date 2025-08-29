@@ -141,6 +141,12 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> {
     );
   }
 
+  getAllCommentsForDiagram(diagram: Diagram): Comment[] {
+    return this.getAllComments().filter(
+      comment => comment.diagram?.id === diagram.id && !comment.isStale()
+    );
+  }
+
   addComment(comment: Comment): void {
     const serialized = comment.serialize();
     this.commentsMap.set(comment.id, serialized);

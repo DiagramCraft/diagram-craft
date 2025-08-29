@@ -1,9 +1,10 @@
 import { SideBar, SideBarBottomToolbar, SideBarPage } from './SideBar';
-import { TbBadge, TbDatabaseEdit, TbHelpSquare, TbInfoCircle, TbPalette } from 'react-icons/tb';
+import { TbBadge, TbDatabaseEdit, TbHelpSquare, TbInfoCircle, TbMessageCircle, TbPalette } from 'react-icons/tb';
 import { ObjectToolWindow } from './toolwindow/ObjectToolWindow/ObjectToolWindow';
 import { ObjectInfoToolWindow } from './toolwindow/ObjectInfoToolWindow/ObjectInfoToolWindow';
 import { ObjectDataToolWindow } from './toolwindow/ObjectDataToolWindow/ObjectDataToolWindow';
 import { ObjectIndicatorToolWindow } from './toolwindow/ObjectIndicatorToolWindow/ObjectIndicatorToolWindow';
+import { CommentsToolWindow } from './toolwindow/CommentsToolWindow/CommentsToolWindow';
 import { ActionToggleButton } from './toolbar/ActionToggleButton';
 
 export const RightSidebar = () => {
@@ -29,6 +30,9 @@ export const RightSidebar = () => {
       </SideBarPage>
       <SideBarPage icon={TbBadge}>
         <ObjectIndicatorToolWindow />
+      </SideBarPage>
+      <SideBarPage icon={TbMessageCircle}>
+        <CommentsToolWindow />
       </SideBarPage>
     </SideBar>
   );
