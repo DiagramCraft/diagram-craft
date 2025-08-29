@@ -18,6 +18,7 @@ import { DiagramDocumentDataSchemas } from '../diagramDocumentDataSchemas';
 import { ReferenceLayer } from '../diagramLayerReference';
 import { RuleLayer } from '../diagramLayerRule';
 import { RegularLayer } from '../diagramLayerRegular';
+import { CommentManager, SerializedComment } from '../comment';
 
 export const serializeDiagramDocument = async (
   document: DiagramDocument
@@ -28,6 +29,7 @@ export const serializeDiagramDocument = async (
     customPalette: serializeCustomPalette(document.customPalette),
     styles: serializeStyles(document.styles),
     schemas: serializeSchemas(document.data.schemas),
+    comments: serializeComments(document.commentManager),
     props: {
       query: {
         history: document.props.query.history,
@@ -56,6 +58,10 @@ const serializeStyles = (styles: DiagramStyles): SerializedStyles => {
 
 const serializeSchemas = (schemas: DiagramDocumentDataSchemas) => {
   return schemas.all;
+};
+
+const serializeComments = (commentManager: CommentManager): SerializedComment[] => {
+  return commentManager.getAllComments().map(comment => comment.serialize());
 };
 
 const serializeAttachments = async (

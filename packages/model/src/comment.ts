@@ -78,7 +78,7 @@ export class Comment {
   }
 }
 
-type SerializedComment = {
+export type SerializedComment = {
   id: string;
   date: string;
   author: string;
