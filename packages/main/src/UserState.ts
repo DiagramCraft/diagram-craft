@@ -1,5 +1,6 @@
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { AppConfig } from './appConfig';
+import type { AwarenessUserState } from '@diagram-craft/model/collaboration/awareness';
 
 type UserStateEvents = {
   change: { after: UserState };
@@ -16,6 +17,8 @@ export class UserState extends EventEmitter<UserStateEvents> {
   #showRulers: boolean = true;
   #stencils: Array<{ id: string; isOpen?: boolean }> = DEFAULT_STENCILS;
   #recentFiles: Array<string>;
+
+  private awarenessStateCache: AwarenessUserState | undefined;
 
   private static instance: UserState | undefined;
 
@@ -45,10 +48,13 @@ export class UserState extends EventEmitter<UserStateEvents> {
 
   get awarenessState() {
     const config = AppConfig.get();
-    return {
-      name: config.awareness.name(),
-      color: config.awareness.color()
-    };
+    if (!this.awarenessStateCache) {
+      this.awarenessStateCache = {
+        name: config.awareness.name(),
+        color: config.awareness.color()
+      };
+    }
+    return this.awarenessStateCache!;
   }
 
   set recentFiles(recentFiles: Array<string>) {

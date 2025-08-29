@@ -1,0 +1,30 @@
+.comments-tool-window {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.comments-tool-window__no-comments {
+  text-align: center;
+  color: var(--secondary-fg);
+  padding: 0.25rem 0;
+}
+
+.comments-tool-window__group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.comments-tool-window__group-title {
+  font-weight: bold;
+  color: var(--secondary-fg);
+}
+
+.comments-tool-window__thread {
+  margin-bottom: 16px;
+}
+
+.comments-tool-window__nested-reply {
+  margin-top: 8px;
+}

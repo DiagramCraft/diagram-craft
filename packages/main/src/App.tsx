@@ -270,6 +270,9 @@ export const App = (props: {
   useEventListener(doc, 'diagramAdded', autosave);
   useEventListener(doc, 'diagramChanged', autosave);
   useEventListener(doc.data, 'change', autosave);
+  useEventListener(doc.commentManager, 'commentAdded', autosave);
+  useEventListener(doc.commentManager, 'commentUpdated', autosave);
+  useEventListener(doc.commentManager, 'commentRemoved', autosave);
 
   useEffect(() => bindDocumentDragAndDrop());
 

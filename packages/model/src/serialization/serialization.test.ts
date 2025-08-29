@@ -4,6 +4,7 @@ import { serializeDiagramDocument, serializeDiagramElement } from './serialize';
 import { deserializeDiagramDocument } from './deserialize';
 import { UnitOfWork } from '../unitOfWork';
 import type { RegularLayer } from '../diagramLayerRegular';
+import { Comment } from '../comment';
 
 describe('serialization', () => {
   describe('serializeDiagramElement', () => {
@@ -213,6 +214,109 @@ describe('serialization', () => {
         // Verify
         const expectedTags = ['child', 'container', 'detail', 'parent'];
         expect([...newDoc.tags.tags].sort()).toEqual(expectedTags);
+      });
+    });
+
+    describe('comments', () => {
+      it('should serialize and deserialize comments correctly', async () => {
+        // Setup
+        const originalDoc = TestModel.newDocument();
+        const diagram = new TestDiagramBuilder(originalDoc);
+        const layer = diagram.newLayer();
+        const node = layer.addNode();
+
+        // Add diagram comment
+        const diagramComment = new Comment(
+          diagram,
+          'diagram',
+          'comment-1',
+          'This is a diagram comment',
+          'author1',
+          new Date('2024-01-01T10:00:00Z')
+        );
+        originalDoc.commentManager.addComment(diagramComment);
+
+        // Add element comment
+        const elementComment = new Comment(
+          diagram,
+          'element',
+          'comment-2',
+          'This is an element comment',
+          'author2',
+          new Date('2024-01-01T11:00:00Z'),
+          'unresolved',
+          node
+        );
+        originalDoc.commentManager.addComment(elementComment);
+
+        // Add reply comment
+        const replyComment = new Comment(
+          diagram,
+          'element',
+          'comment-3',
+          'This is a reply',
+          'author3',
+          new Date('2024-01-01T12:00:00Z'),
+          'resolved',
+          node,
+          'comment-2'
+        );
+        originalDoc.commentManager.addComment(replyComment);
+
+        originalDoc.addDiagram(diagram);
+
+        // Act
+        const serialized = await serializeDiagramDocument(originalDoc);
+
+        const newDoc = TestModel.newDocument();
+        await deserializeDiagramDocument(
+          serialized,
+          newDoc,
+          (d, doc) => new TestDiagramBuilder(doc, d.id)
+        );
+
+        // Verify
+        const allComments = newDoc.commentManager.getAllComments();
+        expect(allComments).toHaveLength(3);
+
+        const diagramComments = newDoc.commentManager.getCommentsForDiagram(newDoc.diagrams[0]);
+        expect(diagramComments).toHaveLength(1);
+        expect(diagramComments[0].message).toBe('This is a diagram comment');
+        expect(diagramComments[0].author).toBe('author1');
+
+        const newNode = (newDoc.diagrams[0].layers.all[0] as RegularLayer).elements[0];
+        const elementComments = newDoc.commentManager.getCommentsForElement(newNode);
+        expect(elementComments).toHaveLength(2);
+
+        const originalElementComment = elementComments.find(c => c.id === 'comment-2');
+        expect(originalElementComment?.message).toBe('This is an element comment');
+        expect(originalElementComment?.state).toBe('unresolved');
+
+        const reply = elementComments.find(c => c.id === 'comment-3');
+        expect(reply?.message).toBe('This is a reply');
+        expect(reply?.parentId).toBe('comment-2');
+        expect(reply?.state).toBe('resolved');
+      });
+
+      it('should handle documents with no comments', async () => {
+        // Setup
+        const originalDoc = TestModel.newDocument();
+        const diagram = new TestDiagramBuilder(originalDoc);
+        diagram.newLayer().addNode();
+        originalDoc.addDiagram(diagram);
+
+        // Act
+        const serialized = await serializeDiagramDocument(originalDoc);
+
+        const newDoc = TestModel.newDocument();
+        await deserializeDiagramDocument(
+          serialized,
+          newDoc,
+          (d, doc) => new TestDiagramBuilder(doc, d.id)
+        );
+
+        // Verify
+        expect(newDoc.commentManager.getAllComments()).toHaveLength(0);
       });
     });
   });

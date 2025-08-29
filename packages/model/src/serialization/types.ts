@@ -8,6 +8,7 @@ import type { DataSchema } from '../diagramDocumentDataSchemas';
 import type { Canvas } from '../diagram';
 import type { AdjustmentRule } from '../diagramLayerRuleTypes';
 import type { DataTemplate } from '../diagramDocument';
+import type { SerializedComment } from '../comment';
 
 export interface Reference {
   id: string;
@@ -50,6 +51,7 @@ export interface SerializedDiagramDocument {
   customPalette: ReadonlyArray<string>;
   styles: SerializedStyles;
   schemas: ReadonlyArray<DataSchema>;
+  comments?: ReadonlyArray<SerializedComment>;
   props?: {
     stencils?: ReadonlyArray<string>;
     query?: {

@@ -5,7 +5,8 @@ export const Highlights = {
   NODE__ACTIVE_ANCHOR: 'node__active-anchor',
   NODE__DROP_TARGET: 'node__drop-target',
   NODE__TOOL_EDIT: 'node__tool-edit',
-  NODE__TOOL_CONVERT: 'node__tool-convert'
+  NODE__TOOL_CONVERT: 'node__tool-convert',
+  NODE__HIGHLIGHT: 'node__highlight'
 };
 
 const HIGHLIGHT_STORE = new WeakMap<DiagramElement, Highlight>();

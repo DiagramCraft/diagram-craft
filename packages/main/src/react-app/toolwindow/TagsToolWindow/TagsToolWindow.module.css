@@ -1,15 +1,15 @@
-.tagsWindow {
+.tags {
   display: flex;
   flex-direction: column;
 }
 
-.tagsList {
+.tags__list {
   display: flex;
   flex-wrap: wrap;
   gap: 0.25rem;
 }
 
-.tagItem {
+.tag {
   display: flex;
   align-items: center;
   gap: 0.25rem;
@@ -24,39 +24,37 @@
   white-space: nowrap;
 }
 
-.tagItem:hover {
+.tag:hover {
   background-color: var(--cmp-hover-bg);
 }
 
-.tagItemSelected {
+.tag--selected {
   background-color: var(--highlight-bg);
   color: var(--highlight-fg);
 }
 
-.tagItemSelected:hover {
+.tag--selected:hover {
   background-color: var(--highlight-bg);
   color: var(--highlight-fg);
 }
 
-.tagIcon {
-  color: var(--cmp-muted-fg);
+.tag__icon {
   flex-shrink: 0;
   width: 12px;
   height: 12px;
 }
 
-.tagItemSelected .tagIcon {
+.tag--selected .tag__icon {
   color: inherit;
 }
 
-.tagText {
+.tag__text {
   font-weight: 500;
 }
 
-.tagsEmpty {
-  color: var(--cmp-muted-fg);
-  font-style: italic;
+.tags__empty {
+  color: var(--secondary-fg);
   text-align: center;
-  padding: 1rem;
-  font-size: 13px;
+  padding: 0.25rem 0;
+  width: 100%;
 }

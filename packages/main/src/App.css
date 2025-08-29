@@ -13,7 +13,6 @@
 @import '@radix-ui/colors/crimson.css';
 @import '@radix-ui/colors/crimson-dark.css';
 
-
 @import '@radix-ui/colors/black-alpha.css';
 
 @import "./react-app/components/Components.css";
@@ -136,22 +135,23 @@
 
 .dark-theme #left,
 .dark-theme .cmp-node-type-popup,
-.dark-theme .cmp-shape-select-dialog
-{
+.dark-theme .cmp-shape-select-dialog {
   --canvas-fg: var(--slate-11);
   --canvas-bg: var(--slate-2);
   --canvas-bg2: var(--slate-3);
+
   .canvas {
     background-color: transparent;
   }
 }
+
 .light-theme #left,
 .light-theme .cmp-node-type-popup,
-.light-theme .cmp-shape-select-dialog
-{
+.light-theme .cmp-shape-select-dialog {
   --canvas-fg: var(--slate-11);
   --canvas-bg: var(--slate-4);
   --canvas-bg2: var(--slate-3);
+
   .canvas {
     background-color: transparent;
   }
@@ -168,11 +168,11 @@ body {
 }
 
 body.no-select * {
-  -webkit-touch-callout: none;  /* iOS Safari */
-  -webkit-user-select: none;    /* Safari */
-  -moz-user-select: none;       /* Firefox */
-  -ms-user-select: none;        /* Internet Explorer/Edge */
-  user-select: none;            /* Non-prefixed version */
+  -webkit-touch-callout: none; /* iOS Safari */
+  -webkit-user-select: none; /* Safari */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* Internet Explorer/Edge */
+  user-select: none; /* Non-prefixed version */
 }
 
 foreignObject {
@@ -235,16 +235,15 @@ input::-webkit-input-placeholder {
 
 div[data-field-state='set'],
 button[data-field-state='set'],
-input[type="checkbox"][data-field-state='set']
-{
+input[type="checkbox"][data-field-state='set'] {
   border: 1px solid var(--blue-7);
 }
+
 div[data-field-state='overridden'],
 button[data-field-state='overridden'],
 input[type="checkbox"][data-field-state='overridden'] {
   background: repeating-linear-gradient(-45deg, var(--slate-5), var(--slate-5) 5px, var(--cmp-bg) 5px, var(--cmp-bg) 10px);
 }
-
 
 
 /* App layout */
@@ -304,6 +303,7 @@ input[type="checkbox"][data-field-state='overridden'] {
     }
 
   }
+
   > ._tools {
     grid-area: tools;
     display: flex;
@@ -314,7 +314,7 @@ input[type="checkbox"][data-field-state='overridden'] {
       color: var(--highlight-fg);
     }
 
-    >[role="toolbar"] {
+    > [role="toolbar"] {
       width: auto;
     }
 
@@ -328,6 +328,7 @@ input[type="checkbox"][data-field-state='overridden'] {
       color: var(--primary-fg);
     }
   }
+
   > ._extra-tools {
     grid-area: extra-tools;
     display: flex;
@@ -335,6 +336,7 @@ input[type="checkbox"][data-field-state='overridden'] {
     justify-self: end;
     padding-right: 1rem;
   }
+
   > #awareness {
     grid-area: awareness;
   }
@@ -371,13 +373,13 @@ input[type="checkbox"][data-field-state='overridden'] {
 }
 
 
-
 #left-buttons {
   grid-area: left-buttons;
   background: var(--primary-bg);
   border-right: 1px solid var(--primary-border);
   border-top: 1px solid var(--primary-border);
   width: auto;
+
   .cmp-toolbar__button[data-state='on'] {
     background-color: var(--highlight-bg);
     color: var(--highlight-fg);
@@ -396,6 +398,7 @@ input[type="checkbox"][data-field-state='overridden'] {
   z-index: 10;
   display: none;
   overflow: auto;
+
   &::-webkit-scrollbar {
     display: none;
   }
@@ -407,6 +410,7 @@ input[type="checkbox"][data-field-state='overridden'] {
   border-left: 1px solid var(--primary-border);
   border-top: 1px solid var(--primary-border);
   width: auto;
+
   .cmp-toolbar__button[data-state='on'] {
     background-color: var(--highlight-bg);
     color: var(--highlight-fg);
@@ -425,6 +429,7 @@ input[type="checkbox"][data-field-state='overridden'] {
   z-index: 10;
   display: none;
   overflow: auto;
+
   &::-webkit-scrollbar {
     display: none;
   }
@@ -436,6 +441,7 @@ input[type="checkbox"][data-field-state='overridden'] {
   bottom: 5px;
   width: 39px;
   display: flex;
+
   > div {
     padding-bottom: 3px !important;
   }
@@ -469,6 +475,7 @@ input[type="checkbox"][data-field-state='overridden'] {
   left: var(--left-indent);
   bottom: 0;
   z-index: 2;
+
   &:after {
     content: '';
     position: absolute;
@@ -481,7 +488,6 @@ input[type="checkbox"][data-field-state='overridden'] {
 }
 
 
-
 /* Canvas stuff */
 
 /* To prevent flickering in Safari */
@@ -489,10 +495,6 @@ foreignObject {
   user-select: none;
   -webkit-user-select: none;
 }
-
-
-
-
 
 
 /* Specific / one-use components */
@@ -518,9 +520,11 @@ foreignObject {
     margin-top: 0.25rem;
     color: var(--secondary-fg);
   }
+
   .cmp-drag-label__prop {
     font-size: 10px;
   }
+
   .cmp-drag-label__modifiers {
     margin: 0.25rem -0.5rem 0 -0.5rem;
     padding: 0.25rem 0.5rem 0 0.5rem;
@@ -537,6 +541,7 @@ foreignObject {
 .cmp-ruler {
   background-color: var(--primary-bg);
   z-index: 1;
+
   & > svg {
     position: absolute;
     inset: 0;
@@ -553,18 +558,21 @@ foreignObject {
       text-anchor: middle;
       dominant-baseline: mathematical;
     }
+
     .svg-tick {
       stroke: var(--tertiary-fg);
       stroke-width: 1;
     }
+
     .svg-selection {
       stroke: var(--tertiary-fg);
       fill: rgba(0, 0, 0, 0.25);
       stroke-width: 1;
     }
+
     .svg-cursor {
-        stroke: var(--blue-11);
-        stroke-width: 1;
+      stroke: var(--blue-11);
+      stroke-width: 1;
     }
   }
 }
@@ -586,6 +594,7 @@ foreignObject {
   display: flex;
   flex-wrap: wrap;
   gap: 0.2rem;
+
   & svg {
     margin: 0.2rem;
     display: block;
@@ -593,6 +602,7 @@ foreignObject {
 
     * {
       vector-effect: non-scaling-stroke;
+
       path {
         vector-effect: non-scaling-stroke;
       }
@@ -645,6 +655,7 @@ foreignObject {
       z-index: 100;
     }
   }
+
   .cmp-tree__node[data-pendingdrop="after"] {
     &:before {
       content: '';
@@ -658,6 +669,7 @@ foreignObject {
       z-index: 100;
     }
   }
+
   .cmp-tree__node[data-pendingdrop="on"] {
     background-color: var(--secondary-bg);
   }
@@ -669,6 +681,7 @@ foreignObject {
       font-weight: bold;
     }
   }
+
   .cmp-layer-list__layer--selected, .cmp-layer-list__layer--selected + div > * {
     &:after {
       content: '';
@@ -824,9 +837,11 @@ foreignObject {
 
 .cmp-query-response {
   margin-top: -10px;
+
   pre {
     margin: 0;
   }
+
   .cmp-query-response__item {
     display: grid;
     grid-template-columns: 1rem 1fr;
@@ -841,6 +856,7 @@ foreignObject {
     margin-top: 0;
     max-height: 100px;
     overflow: hidden;
+
     &:hover {
       border-left: 2px solid var(--blue-11);
       background-color: var(--slate-3);
@@ -851,6 +867,7 @@ foreignObject {
       color: var(--blue-11);
     }
   }
+
   .cmp-query-response__item--expanded {
     position: relative;
     max-height: 1000px !important;
@@ -861,15 +878,18 @@ foreignObject {
   .cmp-schema-selector__schemas {
     margin-right: 2rem;
   }
+
   .cmp-schema-selector__schema {
     display: flex;
     gap: 0.5rem;
     align-items: center;
+
     .cmp-schema-selector__schema-actions {
       margin-left: auto;
       display: flex;
       gap: 0.25rem;
       color: var(--blue-10);
+
       > button {
         background: transparent;
         padding: 0;
@@ -878,11 +898,13 @@ foreignObject {
       }
     }
   }
+
   .cmp-schema-selector__buttons {
     display: flex;
     gap: 0.5rem;
     margin-top: 1rem;
     margin-right: 2rem;
+
     > button {
       margin-left: auto;
     }
@@ -923,44 +945,55 @@ body[data-dragmimetype='application/x-diagram-craft-element-instances'] *[data-d
   display: flex;
   align-items: center;
 }
+
 .util-hgap {
   gap: 0.25rem;
 }
+
 .util-vgap {
   gap: 0.25rem;
 }
+
 .util-font-body {
   font-size: 11px;
 }
+
 .util-vstack {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
+
 .util-hstack {
   display: flex;
   align-items: center;
   gap: 0.2rem;
 }
+
 .util-a-top {
   align-self: flex-start;
 }
+
 .util-a-top-center {
   align-self: flex-start;
   margin-top: 0.25rem;
 }
+
 .util-action {
   &:hover {
     color: var(--blue-11);
     cursor: pointer;
   }
 }
+
 .util-disable-nested-pointer-events * {
   pointer-events: none;
 }
+
 .util-square {
   aspect-ratio: 1/1;
 }
+
 .util-draggable {
   cursor: move;
 }
@@ -1057,19 +1090,28 @@ body[data-dragmimetype='application/x-diagram-craft-element-instances'] *[data-d
   /*stroke: orange !important;
   stroke-width: 3px !important;*/
 }
+
+.svg-node--highlight-node__highlight .svg-node__boundary {
+  stroke-width: 2px !important;
+  stroke: var(--highlight-fg) !important;
+}
+
 .svg-node--highlight-node__edge-connect---point .svg-node__boundary {
   stroke-width: 2px !important;
   stroke: var(--accent-7) !important;
   stroke-dasharray: 5 5;
 }
+
 .svg-node--highlight-node__edge-connect---anchor .svg-node__boundary {
   /*stroke-width: 3px !important;
   stroke: red !important;*/
 }
+
 .svg-node--highlight-node__edge-connect---anchor-edge .svg-node__boundary {
   /*stroke-width: 2px !important;
   stroke: var(--accent-8) !important;*/
 }
+
 .svg-node--highlight-node__edge-connect---edge .svg-node__boundary {
   stroke-width: 2px !important;
   stroke: var(--accent-9) !important;

@@ -35,7 +35,6 @@ export type ElementPropsForRendering = EdgePropsForRendering | NodePropsForRende
 export type DiagramElementCRDT = {
   id: string;
   type: string;
-  highlights: Array<string>;
   tags: Array<string>;
   metadata: FlatCRDTMap;
   children: CRDTMap<MappedCRDTOrderedMapMapType<DiagramElementCRDT>>;
