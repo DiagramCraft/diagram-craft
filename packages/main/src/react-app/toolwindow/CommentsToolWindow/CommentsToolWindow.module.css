@@ -1,0 +1,30 @@
+.commentsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.noComments {
+  text-align: center;
+  color: var(--secondary-fg);
+  padding: 0.25rem 0;
+}
+
+.groupContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.groupTitle {
+  font-weight: bold;
+  color: var(--secondary-fg);
+}
+
+.threadContainer {
+  margin-bottom: 16px;
+}
+
+.nestedReply {
+  margin-top: 8px;
+}

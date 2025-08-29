@@ -21,21 +21,21 @@ export const TagsToolWindow = () => {
       <Accordion.Item value="tags">
         <Accordion.ItemHeader>Document Tags</Accordion.ItemHeader>
         <Accordion.ItemContent>
-          <div className={styles.tagsWindow}>
-            <div className={styles.tagsList}>
+          <div className={styles.tags}>
+            <div className={styles.tags__list}>
               {document.tags.tags.length === 0 ? (
-                <div className={styles.tagsEmpty}>No tags</div>
+                <div className={styles.tags__empty}>No tags</div>
               ) : (
                 document.tags.tags.map((tag) => {
                   const isSelected = document.tags.isTagSelected(tag);
                   return (
                     <div 
                       key={tag} 
-                      className={`${styles.tagItem} ${isSelected ? styles.tagItemSelected : ''}`}
+                      className={`${styles.tag} ${isSelected ? styles['tag--selected'] : ''}`}
                       onClick={() => handleTagClick(tag)}
                     >
-                      <TbTag className={styles.tagIcon} />
-                      <span className={styles.tagText}>{tag}</span>
+                      <TbTag className={styles.tag__icon} />
+                      <span className={styles.tag__text}>{tag}</span>
                     </div>
                   );
                 })

@@ -7,6 +7,7 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Tooltip } from '@diagram-craft/app-components/Tooltip';
+import styles from './CommentItem.module.css';
 import { newid } from '@diagram-craft/utils/id';
 import { getElementNameFromComment } from './utils';
 import { addHighlight, Highlights, removeHighlight } from '@diagram-craft/canvas/highlight';
@@ -105,29 +106,20 @@ export const CommentItem = ({
 
   return (
     <div
-      style={{
-        border: `1px solid ${comment.state === 'unresolved' && !comment.isReply() ? 'var(--cmp-focus-border)' : 'var(--cmp-border)'}`,
-        borderRadius: '6px',
-        padding: '12px',
-        backgroundColor: comment.isReply() ? 'var(--primary-bg)' : 'var(--secondary-bg)',
-        position: 'relative'
-      }}
+      className={`${styles.comment} ${
+        comment.isReply()
+          ? styles['comment--reply']
+          : comment.state === 'unresolved'
+            ? styles['comment--unresolved']
+            : styles['comment--resolved']
+      }`}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div className={styles.comment__header}>
         <Tooltip message={comment.author}>
           <div
+            className={styles.comment__avatar}
             style={{
-              background: comment.userColor ?? '#336633',
-              height: '20px',
-              aspectRatio: '1 / 1',
-              borderRadius: '50%',
-              position: 'relative',
-              color: 'var(--primary-bg)',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              fontSize: '10px',
-              cursor: 'pointer'
+              background: comment.userColor ?? '#336633'
             }}
           >
             {comment.author
@@ -138,26 +130,14 @@ export const CommentItem = ({
               .toUpperCase()}
           </div>
         </Tooltip>
-        <div>
-          <div>{comment.author}</div>
-          <div>{formatDate(comment.date)}</div>
+        <div className={styles.comment__authorInfo}>
+          <div className={styles.comment__authorName}>{comment.author}</div>
+          <div className={styles.comment__date}>{formatDate(comment.date)}</div>
         </div>
-        <div style={{ marginLeft: 'auto' }}>
+        <div className={styles.comment__menu}>
           <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
-              <button
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  color: 'var(--tertiary-fg)',
-                  padding: '4px',
-                  borderRadius: '4px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
+              <button className={styles.comment__menuButton}>
                 <TbDots size={14} />
               </button>
             </DropdownMenu.Trigger>
@@ -200,15 +180,9 @@ export const CommentItem = ({
         </div>
       </div>
 
-      <div
-        style={{
-          lineHeight: '1.4',
-          wordBreak: 'break-word',
-          margin: '0.25rem 0'
-        }}
-      >
+      <div className={styles.comment__content}>
         {isEditing ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <div className={styles.comment__edit}>
             <TextArea
               value={editText}
               onChange={value => setEditText(value ?? '')}
@@ -216,7 +190,7 @@ export const CommentItem = ({
               style={{ width: '100%', resize: 'none' }}
               autoFocus
             />
-            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+            <div className={styles.comment__editButtons}>
               <Button type="secondary" onClick={handleCancelEdit}>
                 Cancel
               </Button>
@@ -240,12 +214,7 @@ export const CommentItem = ({
             }, 1000);
             return false;
           }}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-            marginBottom: '0.5rem'
-          }}
+          className={styles.comment__elementLink}
         >
           <TbLink />
           {getElementNameFromComment(comment)}
@@ -253,13 +222,13 @@ export const CommentItem = ({
       )}
 
       {canReply && (
-        <div style={{ display: 'flex', gap: '0.25rem' }}>
+        <div className={styles.comment__reply}>
           <TextArea
             value={replyText}
             onChange={value => setReplyText(value ?? '')}
             rows={1}
             placeholder="Reply to comment..."
-            style={{ width: '100%', resize: 'none' }}
+            className={styles.comment__replyTextarea}
             onFocus={e => {
               e.currentTarget.style.height = '40px';
             }}

@@ -14,6 +14,7 @@ import {
 } from './utils';
 import { CommentsSortMenu } from './CommentsSortMenu';
 import { CommentItem } from './CommentItem';
+import styles from './CommentsToolWindow.module.css';
 
 export const CommentsToolWindow = () => {
   const diagram = useDiagram();
@@ -100,35 +101,24 @@ export const CommentsToolWindow = () => {
           </Accordion.ItemHeaderButtons>
         </Accordion.ItemHeader>
         <Accordion.ItemContent>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <div className={styles.commentsContainer}>
             {commentThreads.length === 0 ? (
-              <div
-                style={{
-                  textAlign: 'center',
-                  color: 'var(--secondary-fg)',
-                  padding: '0.25rem 0'
-                }}
-              >
+              <div className={styles.noComments}>
                 No comments
               </div>
             ) : (
               groupedThreads.map(group => (
                 <div
                   key={group.key}
-                  style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}
+                  className={styles.groupContainer}
                 >
                   {group.title && (
-                    <div
-                      style={{
-                        fontWeight: 'bold',
-                        color: 'var(--secondary-fg)'
-                      }}
-                    >
+                    <div className={styles.groupTitle}>
                       {group.title}
                     </div>
                   )}
                   {group.threads.map(thread => (
-                    <div key={thread.root.id} style={{ marginBottom: '16px' }}>
+                    <div key={thread.root.id} className={styles.threadContainer}>
                       <CommentItem
                         comment={thread.root}
                         onResolve={handleResolveComment}
@@ -164,7 +154,7 @@ const NestedReplies = ({ replies, onResolve, formatDate }: NestedRepliesProps) =
     <>
       {replies.map(replyNode => (
         <div key={replyNode.comment.id}>
-          <div style={{ marginLeft: `${(replyNode.level - 1) * 20}px`, marginTop: '8px' }}>
+          <div className={styles.nestedReply} style={{ marginLeft: `${(replyNode.level - 1) * 20}px` }}>
             <CommentItem
               comment={replyNode.comment}
               onResolve={onResolve}
