@@ -6,7 +6,8 @@ import { Comment } from '@diagram-craft/model/comment';
 import React, { useCallback, useState } from 'react';
 import { TbCheck, TbLink, TbMessageReply } from 'react-icons/tb';
 import {
-  type CommentThread,
+  buildCommentThreads,
+  type CommentThreadNode,
   getElementNameFromComment,
   type GroupBy,
   groupThreadsByAuthor,
@@ -16,6 +17,7 @@ import {
 import { CommentsSortMenu } from './CommentsSortMenu';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { Button } from '@diagram-craft/app-components/Button';
+import { newid } from '@diagram-craft/utils/id';
 
 export const CommentsToolWindow = () => {
   const diagram = useDiagram();
@@ -50,7 +52,7 @@ export const CommentsToolWindow = () => {
   // Compute comment threads on every render (will be fast since there aren't many comments)
   const allComments = diagram.document.commentManager.getAllCommentsForDiagram(diagram);
 
-  // Sort comments
+  // Sort root comments, but preserve chronological order for replies within threads
   const sortedComments = [...allComments].sort((a, b) => {
     if (sortBy === 'date-asc') {
       return a.date.getTime() - b.date.getTime();
@@ -59,26 +61,17 @@ export const CommentsToolWindow = () => {
     }
   });
 
-  const commentThreads: CommentThread[] = [];
-  const processed = new Set<string>();
+  // Build nested comment threads
+  const commentThreads = buildCommentThreads(sortedComments);
 
-  // Find root comments (comments without parent)
-  const rootComments = sortedComments.filter(c => !c.isReply());
-
-  for (const rootComment of rootComments) {
-    if (processed.has(rootComment.id)) continue;
-
-    const thread = diagram.document.commentManager.getCommentThread(rootComment);
-    const replies = thread.slice(1); // Remove the root comment from replies
-
-    commentThreads.push({
-      root: rootComment,
-      replies: replies
-    });
-
-    // Mark all comments in this thread as processed
-    thread.forEach(c => processed.add(c.id));
-  }
+  // Sort threads by their root comment date
+  commentThreads.sort((a, b) => {
+    if (sortBy === 'date-asc') {
+      return a.root.date.getTime() - b.root.date.getTime();
+    } else {
+      return b.root.date.getTime() - a.root.date.getTime();
+    }
+  });
 
   // Group threads if needed
   const groupedThreads =
@@ -131,23 +124,20 @@ export const CommentsToolWindow = () => {
                     </div>
                   )}
                   {group.threads.map(thread => (
-                    <React.Fragment key={thread.root.id}>
+                    <div key={thread.root.id} style={{ marginBottom: '16px' }}>
                       <CommentItem
                         comment={thread.root}
                         onResolve={handleResolveComment}
                         formatDate={formatDate}
-                      />
-                      {thread.replies.map(reply => (
-                        <div key={reply.id} style={{ marginLeft: '20px', marginTop: '8px' }}>
-                          <CommentItem
-                            comment={reply}
-                            onResolve={handleResolveComment}
-                            formatDate={formatDate}
-                            isReply={true}
-                          />
-                        </div>
-                      ))}
-                    </React.Fragment>
+                        level={0}
+                      >
+                        <NestedReplies
+                          replies={thread.replies}
+                          onResolve={handleResolveComment}
+                          formatDate={formatDate}
+                        />
+                      </CommentItem>
+                    </div>
                   ))}
                 </div>
               ))
@@ -159,21 +149,75 @@ export const CommentsToolWindow = () => {
   );
 };
 
+type NestedRepliesProps = {
+  replies: CommentThreadNode[];
+  onResolve: (comment: Comment) => void;
+  formatDate: (date: Date) => string;
+};
+
+const NestedReplies = ({ replies, onResolve, formatDate }: NestedRepliesProps) => {
+  return (
+    <>
+      {replies.map(replyNode => (
+        <div key={replyNode.comment.id}>
+          <div style={{ marginLeft: `${(replyNode.level - 1) * 20}px`, marginTop: '8px' }}>
+            <CommentItem
+              comment={replyNode.comment}
+              onResolve={onResolve}
+              formatDate={formatDate}
+              level={replyNode.level}
+            />
+          </div>
+          <NestedReplies
+            replies={replyNode.replies}
+            onResolve={onResolve}
+            formatDate={formatDate}
+          />
+        </div>
+      ))}
+    </>
+  );
+};
+
 type CommentItemProps = {
   comment: Comment;
   onResolve: (comment: Comment) => void;
   formatDate: (date: Date) => string;
-  isReply?: boolean;
+  level: number;
+  children?: React.ReactNode;
 };
 
-const CommentItem = ({ comment, onResolve, formatDate, isReply }: CommentItemProps) => {
+const CommentItem = ({ comment, onResolve, formatDate, level, children }: CommentItemProps) => {
+  const diagram = useDiagram();
+  const [replyText, setReplyText] = useState<string>('');
+
+  const canReply = level < 2;
+
+  const handleReply = useCallback(() => {
+    if (replyText.trim() === '') return;
+
+    const newComment = new Comment(
+      diagram,
+      comment.type,
+      newid(),
+      replyText.trim(),
+      'User', // TODO: Get actual user name from application context
+      new Date(),
+      'unresolved',
+      comment.element,
+      comment.id
+    );
+
+    diagram.document.commentManager.addComment(newComment);
+    setReplyText('');
+  }, [diagram, comment, replyText]);
   return (
     <div
       style={{
-        border: `1px solid ${comment.state === 'unresolved' ? 'var(--cmp-focus-border)' : 'var(--cmp-border)'}`,
+        border: `1px solid ${comment.state === 'unresolved' && !comment.isReply() ? 'var(--cmp-focus-border)' : 'var(--cmp-border)'}`,
         borderRadius: '6px',
         padding: '12px',
-        backgroundColor: isReply ? 'var(--tertiary-bg)' : 'var(--secondary-bg)',
+        backgroundColor: comment.isReply() ? 'var(--primary-bg)' : 'var(--secondary-bg)',
         position: 'relative'
       }}
     >
@@ -203,16 +247,18 @@ const CommentItem = ({ comment, onResolve, formatDate, isReply }: CommentItemPro
           <div>{comment.author}</div>
           <div>{formatDate(comment.date)}</div>
         </div>
-        <div style={{ marginLeft: 'auto' }}>
-          <TbCheck
-            size={12}
-            style={{
-              color: comment.state === 'resolved' ? 'var(--highlight-fg)' : 'var(--tertiary-fg)',
-              cursor: 'pointer'
-            }}
-            onClick={() => onResolve(comment)}
-          />
-        </div>
+        {!comment.isReply() && (
+          <div style={{ marginLeft: 'auto' }}>
+            <TbCheck
+              size={12}
+              style={{
+                color: comment.state === 'resolved' ? 'var(--highlight-fg)' : 'var(--tertiary-fg)',
+                cursor: 'pointer'
+              }}
+              onClick={() => onResolve(comment)}
+            />
+          </div>
+        )}
       </div>
 
       <div
@@ -225,28 +271,49 @@ const CommentItem = ({ comment, onResolve, formatDate, isReply }: CommentItemPro
         {comment.message}
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '0.5rem' }}>
-        <TbLink />
-        {getElementNameFromComment(comment)}
-      </div>
+      {!comment.isReply() && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '0.5rem' }}>
+          <TbLink />
+          {getElementNameFromComment(comment)}
+        </div>
+      )}
 
-      {/* Ability to respond to comments */}
-      <div style={{ display: 'flex', gap: '0.25rem' }}>
-        <TextArea
-          value={''}
-          rows={1}
-          style={{ width: '100%', resize: 'none' }}
-          onFocus={e => {
-            e.currentTarget.style.height = '40px';
-          }}
-          onBlur={e => {
-            e.currentTarget.style.height = 'initial';
-          }}
-        />
-        <Button type={'secondary'}>
-          <TbMessageReply />
-        </Button>
-      </div>
+      {/* Ability to respond to comments - only show if replies are allowed */}
+      {canReply && (
+        <div style={{ display: 'flex', gap: '0.25rem' }}>
+          <TextArea
+            value={replyText}
+            onChange={value => setReplyText(value ?? '')}
+            rows={1}
+            placeholder="Reply to comment..."
+            style={{ width: '100%', resize: 'none' }}
+            onFocus={e => {
+              e.currentTarget.style.height = '40px';
+            }}
+            onBlur={e => {
+              if (replyText.trim() === '') {
+                e.currentTarget.style.height = 'initial';
+              }
+            }}
+            onKeyDown={e => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleReply();
+              }
+              if (e.key === 'Escape') {
+                setReplyText('');
+                e.currentTarget.style.height = 'initial';
+                e.currentTarget.blur();
+              }
+            }}
+          />
+          <Button type={'secondary'} onClick={handleReply} disabled={replyText.trim() === ''}>
+            <TbMessageReply />
+          </Button>
+        </div>
+      )}
+
+      {children}
     </div>
   );
 };
