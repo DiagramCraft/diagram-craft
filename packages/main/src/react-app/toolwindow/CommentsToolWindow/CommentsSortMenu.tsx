@@ -5,15 +5,19 @@ import type { GroupBy, SortBy } from './utils';
 type CommentsSortMenuProps = {
   sortBy: SortBy;
   groupBy: GroupBy;
+  hideResolved: boolean;
   onSortChange: (sortBy: SortBy) => void;
   onGroupChange: (groupBy: GroupBy) => void;
+  onHideResolvedChange: (hideResolved: boolean) => void;
 };
 
 export const CommentsSortMenu = ({
   sortBy,
   groupBy,
+  hideResolved,
   onSortChange,
-  onGroupChange
+  onGroupChange,
+  onHideResolvedChange
 }: CommentsSortMenuProps) => {
   return (
     <DropdownMenu.Root>
@@ -113,6 +117,19 @@ export const CommentsSortMenu = ({
               </DropdownMenu.SubContent>
             </DropdownMenu.Portal>
           </DropdownMenu.Sub>
+          <DropdownMenu.CheckboxItem
+            className="cmp-context-menu__item"
+            checked={hideResolved}
+            onCheckedChange={onHideResolvedChange}
+          >
+            <DropdownMenu.ItemIndicator
+              className="cmp-context-menu__item-indicator"
+              forceMount={true}
+            >
+              <TbCheck />
+            </DropdownMenu.ItemIndicator>
+            Hide Resolved
+          </DropdownMenu.CheckboxItem>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>

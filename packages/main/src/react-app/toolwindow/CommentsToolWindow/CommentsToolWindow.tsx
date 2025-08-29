@@ -25,6 +25,7 @@ export const CommentsToolWindow = () => {
   const redraw = useRedraw();
   const [sortBy, setSortBy] = useState<SortBy>('date-desc');
   const [groupBy, setGroupBy] = useState<GroupBy>('none');
+  const [hideResolved, setHideResolved] = useState<boolean>(false);
 
   useEventListener(diagram.document.commentManager, 'commentAdded', redraw);
   useEventListener(diagram.document.commentManager, 'commentUpdated', redraw);
@@ -52,9 +53,14 @@ export const CommentsToolWindow = () => {
 
   // Compute comment threads on every render (will be fast since there aren't many comments)
   const allComments = diagram.document.commentManager.getAllCommentsForDiagram(diagram);
+  
+  // Filter out resolved comments if hideResolved is true
+  const filteredComments = hideResolved 
+    ? allComments.filter(comment => comment.state === 'unresolved')
+    : allComments;
 
   // Sort root comments, but preserve chronological order for replies within threads
-  const sortedComments = [...allComments].sort((a, b) => {
+  const sortedComments = [...filteredComments].sort((a, b) => {
     if (sortBy === 'date-asc') {
       return a.date.getTime() - b.date.getTime();
     } else {
@@ -91,8 +97,10 @@ export const CommentsToolWindow = () => {
             <CommentsSortMenu
               sortBy={sortBy}
               groupBy={groupBy}
+              hideResolved={hideResolved}
               onSortChange={setSortBy}
               onGroupChange={setGroupBy}
+              onHideResolvedChange={setHideResolved}
             />
           </Accordion.ItemHeaderButtons>
         </Accordion.ItemHeader>
