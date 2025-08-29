@@ -11,11 +11,9 @@ import { ObjectToolWindow } from './toolwindow/ObjectToolWindow/ObjectToolWindow
 import { ObjectInfoToolWindow } from './toolwindow/ObjectInfoToolWindow/ObjectInfoToolWindow';
 import { ObjectDataToolWindow } from './toolwindow/ObjectDataToolWindow/ObjectDataToolWindow';
 import { ObjectIndicatorToolWindow } from './toolwindow/ObjectIndicatorToolWindow/ObjectIndicatorToolWindow';
-import {
-  CommentsToolWindow,
-  CommentsToolWindowBadge
-} from './toolwindow/CommentsToolWindow/CommentsToolWindow';
+import { CommentsToolWindow } from './toolwindow/CommentsToolWindow/CommentsToolWindow';
 import { ActionToggleButton } from './toolbar/ActionToggleButton';
+import { CommentsToolWindowBadge } from './toolwindow/CommentsToolWindow/CommentsToolWindowBadge';
 
 export const RightSidebar = () => {
   return (
