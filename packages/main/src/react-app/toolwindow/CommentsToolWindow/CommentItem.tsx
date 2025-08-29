@@ -6,6 +6,7 @@ import { UserState } from '../../../UserState';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { Button } from '@diagram-craft/app-components/Button';
+import { Tooltip } from '@diagram-craft/app-components/Tooltip';
 import { newid } from '@diagram-craft/utils/id';
 import { getElementNameFromComment } from './utils';
 import { addHighlight, Highlights, removeHighlight } from '@diagram-craft/canvas/highlight';
@@ -113,27 +114,30 @@ export const CommentItem = ({
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <div
-          style={{
-            background: comment.userColor ?? '#336633',
-            height: '20px',
-            aspectRatio: '1 / 1',
-            borderRadius: '50%',
-            position: 'relative',
-            color: 'var(--primary-bg)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            fontSize: '10px'
-          }}
-        >
-          {comment.author
-            .split(' ')
-            .map(e => e[0])
-            .slice(0, 2)
-            .join('')
-            .toUpperCase()}
-        </div>
+        <Tooltip message={comment.author}>
+          <div
+            style={{
+              background: comment.userColor ?? '#336633',
+              height: '20px',
+              aspectRatio: '1 / 1',
+              borderRadius: '50%',
+              position: 'relative',
+              color: 'var(--primary-bg)',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              fontSize: '10px',
+              cursor: 'pointer'
+            }}
+          >
+            {comment.author
+              .split(' ')
+              .map(e => e[0])
+              .slice(0, 2)
+              .join('')
+              .toUpperCase()}
+          </div>
+        </Tooltip>
         <div>
           <div>{comment.author}</div>
           <div>{formatDate(comment.date)}</div>
