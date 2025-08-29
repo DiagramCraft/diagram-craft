@@ -174,6 +174,13 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> {
 
   removeComment(commentId: string): void {
     if (this.commentsMap.has(commentId)) {
+      // First, recursively delete all replies
+      const repliesToDelete = this.getReplies({ id: commentId } as Comment);
+      for (const reply of repliesToDelete) {
+        this.removeComment(reply.id);
+      }
+      
+      // Then delete the comment itself
       this.commentsMap.delete(commentId);
       this.emit('commentRemoved', { commentId });
     }

@@ -1,7 +1,6 @@
 /* Generic Components */
 
 
-
 .cmp-color-picker {
   > button {
     display: flex;
@@ -16,9 +15,11 @@
     gap: 5px;
     background-color: var(--cmp-bg);
     color: var(--cmp-fg);
+
     &:hover {
       background-color: var(--cmp-hover-bg);
     }
+
     &:focus {
       outline: none;
       box-shadow: var(--cmp-focus-shadow);
@@ -49,9 +50,11 @@
     background-color: var(--cmp-bg);
     color: var(--cmp-fg);
     border: 1px solid var(--cmp-border);
+
     &:hover {
       background-color: var(--cmp-hover-bg);
     }
+
     &:focus {
       outline: none;
       box-shadow: var(--cmp-focus-shadow);
@@ -83,6 +86,7 @@
     font-size: 11px;
     margin-top: 0.5rem;
     margin-bottom: 0;
+
     &:first-child {
       margin-top: 0;
     }
@@ -132,6 +136,7 @@
       &::-webkit-color-swatch-wrapper {
         padding: 0;
       }
+
       &::-webkit-color-swatch {
         border: none;
       }
@@ -180,6 +185,7 @@
       color: var(--cmp-disabled-fg);
       pointer-events: none;
     }
+
     &[data-highlighted] {
       background-color: var(--highlight-reverse-bg);
       color: var(--highlight-reverse-fg);
@@ -193,6 +199,7 @@
       align-items: center;
       justify-content: center;
       color: var(--menu-keybinding);
+
       &[data-state='unchecked'] {
         color: var(--dimmed-fg);
       }
@@ -205,9 +212,11 @@
       padding-left: 20px;
       color: var(--blue-11);
     }
+
     &[data-highlighted] > .cmp-context-menu__right-slot {
       color: var(--blue-11);
     }
+
     &[data-disabled] .cmp-context-menu__right-slot {
       color: var(--slate-8);
     }
@@ -238,6 +247,16 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
+  }
+
+  .cmp-context-menu__item-icon {
+    position: absolute;
+    left: 0;
+    width: 25px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--menu-keybinding);
   }
 
   .cmp-context-menu__arrow {
@@ -284,7 +303,6 @@
 }
 
 
-
 .cmp-label {
   display: flex;
   align-items: center;
@@ -313,6 +331,7 @@
     grid-column: 1/3;
     margin-bottom: -2px;
   }
+
   .cmp-labeled-table__label {
     display: flex;
     align-items: center;
