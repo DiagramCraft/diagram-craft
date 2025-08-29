@@ -12,6 +12,7 @@ import { newid } from '@diagram-craft/utils/id';
 import { getElementNameFromComment } from './utils';
 import { addHighlight, Highlights, removeHighlight } from '@diagram-craft/canvas/highlight';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
+import { CommentDialog } from '../../toolbar/CommentDialog';
 
 export type CommentItemProps = {
   comment: Comment;
@@ -31,8 +32,7 @@ export const CommentItem = ({
   const application = useApplication();
   const diagram = useDiagram();
   const [replyText, setReplyText] = useState<string>('');
-  const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [editText, setEditText] = useState<string>(comment.message);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState<boolean>(false);
 
   const canReply = level < 2;
 
@@ -58,34 +58,12 @@ export const CommentItem = ({
   }, [diagram, comment, replyText]);
 
   const handleEdit = useCallback(() => {
-    setIsEditing(true);
-    setEditText(comment.message);
-  }, [comment.message]);
+    setIsEditDialogOpen(true);
+  }, []);
 
-  const handleSaveEdit = useCallback(() => {
-    if (editText.trim() === '') return;
-
-    const updatedComment = new Comment(
-      diagram,
-      comment.type,
-      comment.id,
-      editText.trim(),
-      comment.author,
-      comment.date,
-      comment.state,
-      comment.element,
-      comment.parentId,
-      comment.userColor
-    );
-
-    diagram.document.commentManager.updateComment(updatedComment);
-    setIsEditing(false);
-  }, [diagram, comment, editText]);
-
-  const handleCancelEdit = useCallback(() => {
-    setIsEditing(false);
-    setEditText(comment.message);
-  }, [comment.message]);
+  const handleEditDialogChange = useCallback((open: boolean) => {
+    setIsEditDialogOpen(open);
+  }, []);
 
   const handleDelete = useCallback(() => {
     application.ui.showDialog(
@@ -181,27 +159,7 @@ export const CommentItem = ({
       </div>
 
       <div className={styles.comment__content}>
-        {isEditing ? (
-          <div className={styles.comment__edit}>
-            <TextArea
-              value={editText}
-              onChange={value => setEditText(value ?? '')}
-              rows={2}
-              style={{ width: '100%', resize: 'none' }}
-              autoFocus
-            />
-            <div className={styles.comment__editButtons}>
-              <Button type="secondary" onClick={handleCancelEdit}>
-                Cancel
-              </Button>
-              <Button type="primary" onClick={handleSaveEdit} disabled={editText.trim() === ''}>
-                Save
-              </Button>
-            </div>
-          </div>
-        ) : (
-          comment.message
-        )}
+        {comment.message}
       </div>
 
       {!comment.isReply() && comment.type === 'element' && (
@@ -256,6 +214,13 @@ export const CommentItem = ({
       )}
 
       {children}
+      
+      <CommentDialog
+        open={isEditDialogOpen}
+        onOpenChange={handleEditDialogChange}
+        diagram={diagram}
+        commentToEdit={comment}
+      />
     </div>
   );
 };

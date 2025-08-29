@@ -6,7 +6,7 @@ import {useEventListener} from '../hooks/useEventListener';
 import {SelectionType} from '@diagram-craft/model/selectionState';
 import {useDiagram} from '../../application';
 import {DiagramElement} from '@diagram-craft/model/diagramElement';
-import {CommentPopover} from './CommentPopover';
+import {CommentDialog} from './CommentDialog';
 import {useRedraw} from '../hooks/useRedraw';
 
 /**
@@ -27,7 +27,7 @@ export const CommentToolbarButton = () => {
   const diagram = useDiagram();
   const [selectionType, setSelectionType] = useState<SelectionType | undefined>(undefined);
   const [selectedElement, setSelectedElement] = useState<DiagramElement | undefined>(undefined);
-  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   // Update selection state
   const updateSelection = useCallback(() => {
@@ -65,8 +65,8 @@ export const CommentToolbarButton = () => {
   const shouldShowButton =
     selectionType === 'empty' || selectionType === 'single-node' || selectionType === 'single-edge';
 
-  const handlePopoverChange = (open: boolean) => {
-    setIsPopoverOpen(open);
+  const handleDialogChange = (open: boolean) => {
+    setIsDialogOpen(open);
   };
 
   if (!shouldShowButton) {
@@ -78,15 +78,10 @@ export const CommentToolbarButton = () => {
     : 'Comments for diagram';
 
   return (
-    <CommentPopover
-      open={isPopoverOpen}
-      onOpenChange={handlePopoverChange}
-      diagram={diagram}
-      selectedElement={selectedElement}
-    >
+    <>
       <div style={{ position: 'relative', display: 'inline-block' }}>
         <Tooltip message={tooltipMessage}>
-          <Toolbar.Button>
+          <Toolbar.Button onClick={() => setIsDialogOpen(true)}>
             <TbMessageCircle />
           </Toolbar.Button>
         </Tooltip>
@@ -106,6 +101,13 @@ export const CommentToolbarButton = () => {
           ></div>
         )}
       </div>
-    </CommentPopover>
+      
+      <CommentDialog
+        open={isDialogOpen}
+        onOpenChange={handleDialogChange}
+        diagram={diagram}
+        selectedElement={selectedElement}
+      />
+    </>
   );
 };
