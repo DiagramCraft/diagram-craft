@@ -1,7 +1,7 @@
 import { useApplication, useDiagram } from '../../../application';
-import { Comment } from '@diagram-craft/model/comment';
+import { Comment, type CommentState } from '@diagram-craft/model/comment';
 import React, { useCallback, useState } from 'react';
-import { TbCheck, TbLink, TbMessageReply, TbEdit, TbTrash, TbDots } from 'react-icons/tb';
+import { TbCheck, TbDots, TbEdit, TbLink, TbMessageReply, TbTrash } from 'react-icons/tb';
 import { UserState } from '../../../UserState';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
@@ -21,6 +21,50 @@ export type CommentItemProps = {
   level: number;
   children?: React.ReactNode;
 };
+
+type CommentItemMenuProps = {
+  onEditComment: () => void;
+  onChangeState: () => void;
+  canChangeState: boolean;
+  state: CommentState;
+  onDeleteComment: () => void;
+};
+
+const CommentItemMenu = (props: CommentItemMenuProps) => (
+  <DropdownMenu.Root>
+    <DropdownMenu.Trigger asChild>
+      <button className={styles['comment__menu-button']}>
+        <TbDots size={14} />
+      </button>
+    </DropdownMenu.Trigger>
+    <DropdownMenu.Portal>
+      <DropdownMenu.Content className="cmp-context-menu" side="left">
+        <DropdownMenu.Item className="cmp-context-menu__item" onSelect={props.onEditComment}>
+          <DropdownMenu.ItemIndicator className="cmp-context-menu__item-icon" forceMount={true}>
+            <TbEdit size={14} />
+          </DropdownMenu.ItemIndicator>
+          Edit Comment
+        </DropdownMenu.Item>
+        <DropdownMenu.Item
+          className="cmp-context-menu__item"
+          onSelect={props.onChangeState}
+          disabled={!props.canChangeState}
+        >
+          <DropdownMenu.ItemIndicator className="cmp-context-menu__item-icon" forceMount={true}>
+            <TbCheck size={14} />
+          </DropdownMenu.ItemIndicator>
+          {props.state === 'resolved' ? 'Unresolve' : 'Resolve'}
+        </DropdownMenu.Item>
+        <DropdownMenu.Item className="cmp-context-menu__item" onSelect={props.onDeleteComment}>
+          <DropdownMenu.ItemIndicator className="cmp-context-menu__item-icon" forceMount={true}>
+            <TbTrash size={14} />
+          </DropdownMenu.ItemIndicator>
+          Delete Comment
+        </DropdownMenu.Item>
+      </DropdownMenu.Content>
+    </DropdownMenu.Portal>
+  </DropdownMenu.Root>
+);
 
 export const CommentItem = ({
   comment,
@@ -57,14 +101,6 @@ export const CommentItem = ({
     setReplyText('');
   }, [diagram, comment, replyText]);
 
-  const handleEdit = useCallback(() => {
-    setIsEditDialogOpen(true);
-  }, []);
-
-  const handleEditDialogChange = useCallback((open: boolean) => {
-    setIsEditDialogOpen(open);
-  }, []);
-
   const handleDelete = useCallback(() => {
     application.ui.showDialog(
       new MessageDialogCommand(
@@ -84,13 +120,7 @@ export const CommentItem = ({
 
   return (
     <div
-      className={`${styles.comment} ${
-        comment.isReply()
-          ? styles['comment--reply']
-          : comment.state === 'unresolved'
-            ? styles['comment--unresolved']
-            : styles['comment--resolved']
-      }`}
+      className={`${styles.comment} ${comment.isReply() ? styles['comment--reply'] : comment.state === 'unresolved' ? styles['comment--unresolved'] : styles['comment--resolved']}`}
     >
       <div className={styles.comment__header}>
         <Tooltip message={comment.author}>
@@ -108,59 +138,22 @@ export const CommentItem = ({
               .toUpperCase()}
           </div>
         </Tooltip>
-        <div className={styles.comment__authorInfo}>
-          <div className={styles.comment__authorName}>{comment.author}</div>
+        <div className={styles['comment__author-info']}>
+          <div className={styles['comment__author-name']}>{comment.author}</div>
           <div className={styles.comment__date}>{formatDate(comment.date)}</div>
         </div>
         <div className={styles.comment__menu}>
-          <DropdownMenu.Root>
-            <DropdownMenu.Trigger asChild>
-              <button className={styles.comment__menuButton}>
-                <TbDots size={14} />
-              </button>
-            </DropdownMenu.Trigger>
-            <DropdownMenu.Portal>
-              <DropdownMenu.Content className="cmp-context-menu" side="left">
-                <DropdownMenu.Item className="cmp-context-menu__item" onSelect={handleEdit}>
-                  <DropdownMenu.ItemIndicator
-                    className="cmp-context-menu__item-icon"
-                    forceMount={true}
-                  >
-                    <TbEdit size={14} />
-                  </DropdownMenu.ItemIndicator>
-                  Edit Comment
-                </DropdownMenu.Item>
-                <DropdownMenu.Item
-                  className="cmp-context-menu__item"
-                  onSelect={() => onResolve(comment)}
-                  disabled={comment.isReply()}
-                >
-                  <DropdownMenu.ItemIndicator
-                    className="cmp-context-menu__item-icon"
-                    forceMount={true}
-                  >
-                    <TbCheck size={14} />
-                  </DropdownMenu.ItemIndicator>
-                  {comment.state === 'resolved' ? 'Unresolve' : 'Resolve'}
-                </DropdownMenu.Item>
-                <DropdownMenu.Item className="cmp-context-menu__item" onSelect={handleDelete}>
-                  <DropdownMenu.ItemIndicator
-                    className="cmp-context-menu__item-icon"
-                    forceMount={true}
-                  >
-                    <TbTrash size={14} />
-                  </DropdownMenu.ItemIndicator>
-                  Delete Comment
-                </DropdownMenu.Item>
-              </DropdownMenu.Content>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Root>
+          <CommentItemMenu
+            onEditComment={() => setIsEditDialogOpen(true)}
+            onChangeState={() => onResolve(comment)}
+            canChangeState={!comment.isReply()}
+            state={comment.state}
+            onDeleteComment={handleDelete}
+          />
         </div>
       </div>
 
-      <div className={styles.comment__content}>
-        {comment.message}
-      </div>
+      <div className={styles.comment__content}>{comment.message}</div>
 
       {!comment.isReply() && comment.type === 'element' && (
         <a
@@ -172,7 +165,7 @@ export const CommentItem = ({
             }, 1000);
             return false;
           }}
-          className={styles.comment__elementLink}
+          className={styles['comment__element-link']}
         >
           <TbLink />
           {getElementNameFromComment(comment)}
@@ -186,10 +179,8 @@ export const CommentItem = ({
             onChange={value => setReplyText(value ?? '')}
             rows={1}
             placeholder="Reply to comment..."
-            className={styles.comment__replyTextarea}
-            onFocus={e => {
-              e.currentTarget.style.height = '40px';
-            }}
+            className={styles['comment__reply-textarea']}
+            onFocus={e => (e.currentTarget.style.height = '40px')}
             onBlur={e => {
               if (replyText.trim() === '') {
                 e.currentTarget.style.height = 'initial';
@@ -200,6 +191,7 @@ export const CommentItem = ({
                 e.preventDefault();
                 handleReply();
               }
+
               if (e.key === 'Escape') {
                 setReplyText('');
                 e.currentTarget.style.height = 'initial';
@@ -214,12 +206,12 @@ export const CommentItem = ({
       )}
 
       {children}
-      
+
       <CommentDialog
         open={isEditDialogOpen}
-        onOpenChange={handleEditDialogChange}
+        onOpenChange={setIsEditDialogOpen}
         diagram={diagram}
-        commentToEdit={comment}
+        comment={comment}
       />
     </div>
   );

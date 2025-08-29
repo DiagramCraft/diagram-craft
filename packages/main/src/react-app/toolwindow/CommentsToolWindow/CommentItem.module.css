@@ -38,10 +38,10 @@
   cursor: pointer;
 }
 
-.comment__authorInfo {
+.comment__author-info {
 }
 
-.comment__authorName {
+.comment__author-name {
 }
 
 .comment__date {
@@ -51,7 +51,7 @@
   margin-left: auto;
 }
 
-.comment__menuButton {
+.comment__menu-button {
   background: none;
   border: none;
   cursor: pointer;
@@ -75,13 +75,13 @@
   gap: 0.5rem;
 }
 
-.comment__editButtons {
+.comment__edit-buttons {
   display: flex;
   gap: 0.5rem;
   justify-content: flex-end;
 }
 
-.comment__elementLink {
+.comment__element-link {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -93,7 +93,7 @@
   gap: 0.25rem;
 }
 
-.comment__replyTextarea {
+.comment__reply-textarea {
   width: 100%;
   resize: none;
 }

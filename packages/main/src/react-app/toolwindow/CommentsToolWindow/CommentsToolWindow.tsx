@@ -101,24 +101,24 @@ export const CommentsToolWindow = () => {
           </Accordion.ItemHeaderButtons>
         </Accordion.ItemHeader>
         <Accordion.ItemContent>
-          <div className={styles.commentsContainer}>
+          <div className={styles['comments-tool-window']}>
             {commentThreads.length === 0 ? (
-              <div className={styles.noComments}>
+              <div className={styles['comments-tool-window__no-comments']}>
                 No comments
               </div>
             ) : (
               groupedThreads.map(group => (
                 <div
                   key={group.key}
-                  className={styles.groupContainer}
+                  className={styles['comments-tool-window__group']}
                 >
                   {group.title && (
-                    <div className={styles.groupTitle}>
+                    <div className={styles['comments-tool-window__group-title']}>
                       {group.title}
                     </div>
                   )}
                   {group.threads.map(thread => (
-                    <div key={thread.root.id} className={styles.threadContainer}>
+                    <div key={thread.root.id} className={styles['comments-tool-window__thread']}>
                       <CommentItem
                         comment={thread.root}
                         onResolve={handleResolveComment}
@@ -154,7 +154,7 @@ const NestedReplies = ({ replies, onResolve, formatDate }: NestedRepliesProps) =
     <>
       {replies.map(replyNode => (
         <div key={replyNode.comment.id}>
-          <div className={styles.nestedReply} style={{ marginLeft: `${(replyNode.level - 1) * 20}px` }}>
+          <div className={styles['comments-tool-window__nested-reply']} style={{ marginLeft: `${(replyNode.level - 1) * 20}px` }}>
             <CommentItem
               comment={replyNode.comment}
               onResolve={onResolve}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { Comment } from '@diagram-craft/model/comment';
@@ -12,7 +12,7 @@ type CommentDialogProps = {
   onOpenChange: (open: boolean) => void;
   diagram: Diagram;
   selectedElement?: DiagramElement;
-  commentToEdit?: Comment;
+  comment?: Comment;
   onCommentUpdated?: (comment: Comment) => void;
 };
 
@@ -21,15 +21,15 @@ export const CommentDialog = (props: CommentDialogProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | undefined>();
 
-  const isEditing = !!props.commentToEdit;
+  const isEditing = !!props.comment;
 
   useEffect(() => {
     if (props.open) {
-      setMessage(props.commentToEdit?.message ?? '');
+      setMessage(props.comment?.message ?? '');
       setSubmitError(undefined);
       setIsSubmitting(false);
     }
-  }, [props.open, props.commentToEdit]);
+  }, [props.open, props.comment]);
 
   const handleSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
     if (isSubmitting) {
@@ -46,22 +46,10 @@ export const CommentDialog = (props: CommentDialogProps) => {
     setSubmitError(undefined);
 
     try {
-      if (isEditing && props.commentToEdit) {
-        const updatedComment = new Comment(
-          props.diagram,
-          props.commentToEdit.type,
-          props.commentToEdit.id,
-          message.trim(),
-          props.commentToEdit.author,
-          props.commentToEdit.date,
-          props.commentToEdit.state,
-          props.commentToEdit.element,
-          props.commentToEdit.parentId,
-          props.commentToEdit.userColor
-        );
-
-        props.diagram.document.commentManager.updateComment(updatedComment);
-        props.onCommentUpdated?.(updatedComment);
+      if (isEditing && props.comment) {
+        props.comment.edit(message.trim());
+        props.diagram.document.commentManager.updateComment(props.comment);
+        props.onCommentUpdated?.(props.comment);
       } else {
         const userState = UserState.get().awarenessState;
         const comment = new Comment(
@@ -97,15 +85,11 @@ export const CommentDialog = (props: CommentDialogProps) => {
     props.onOpenChange(false);
   };
 
-  const handleClose = () => {
-    handleCancel();
-  };
-
   return (
     <Dialog
-      title={isEditing ? 'Edit Comment' : 'Add Comment'}
+      title={`${isEditing ? 'Edit' : 'Add'} Comment`}
       open={props.open}
-      onClose={handleClose}
+      onClose={handleCancel}
       buttons={[
         {
           label: 'Cancel',
@@ -113,41 +97,23 @@ export const CommentDialog = (props: CommentDialogProps) => {
           onClick: handleCancel
         },
         {
-          label: isSubmitting ? (isEditing ? 'Updating...' : 'Adding...') : (isEditing ? 'Update' : 'Add'),
+          label: isEditing ? 'Update' : 'Add',
           type: 'default',
           onClick: handleSubmit
         }
       ]}
     >
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '8px'
-        }}
-      >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
         <TextArea
           value={message}
           onChange={value => setMessage(value ?? '')}
           placeholder="Enter comment..."
           rows={4}
-          style={{
-            resize: 'none',
-            minHeight: '80px'
-          }}
+          style={{ resize: 'none', minHeight: '80px' }}
           autoFocus
         />
 
-        {submitError && (
-          <div
-            style={{
-              color: 'var(--destructive-fg)',
-              fontSize: '12px'
-            }}
-          >
-            {submitError}
-          </div>
-        )}
+        {submitError && <div style={{ color: 'var(--error-fg)' }}>{submitError}</div>}
       </div>
     </Dialog>
   );

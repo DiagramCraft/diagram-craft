@@ -5,17 +5,18 @@ import type { DiagramDocument } from './diagramDocument';
 import { assert } from '@diagram-craft/utils/assert';
 import { EventEmitter } from '@diagram-craft/utils/event';
 
-type CommentState = 'unresolved' | 'resolved';
+export type CommentState = 'unresolved' | 'resolved';
 
 export class Comment {
   private _state: CommentState;
   public staleSince: Date | undefined;
+  private _message: string;
 
   constructor(
     public readonly diagram: Diagram,
     public readonly type: 'element' | 'diagram',
     public readonly id: string,
-    public readonly message: string,
+    message: string,
     public readonly author: string,
     public readonly date: Date,
     state: CommentState = 'unresolved',
@@ -24,11 +25,22 @@ export class Comment {
     public readonly userColor?: string
   ) {
     this._state = state;
+    this._message = message;
+  }
+
+  get message(): string {
+    return this._message;
+  }
+
+  edit(message: string) {
+    this._message = message;
   }
 
   isStale() {
-    return this.type === 'element' &&
-      (this.element === undefined || !this.diagram.lookup(this.element.id));
+    return (
+      this.type === 'element' &&
+      (this.element === undefined || !this.diagram.lookup(this.element.id))
+    );
   }
 
   get state(): CommentState {
@@ -135,13 +147,15 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> {
 
   getCommentsForDiagram(diagram: Diagram): Comment[] {
     return this.getAllComments().filter(
-      comment => comment.type === 'diagram' && comment.diagram?.id === diagram.id && !comment.isStale()
+      comment =>
+        comment.type === 'diagram' && comment.diagram?.id === diagram.id && !comment.isStale()
     );
   }
 
   getCommentsForElement(element: DiagramElement): Comment[] {
     return this.getAllComments().filter(
-      comment => comment.type === 'element' && comment.element?.id === element.id && !comment.isStale()
+      comment =>
+        comment.type === 'element' && comment.element?.id === element.id && !comment.isStale()
     );
   }
 
@@ -179,7 +193,7 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> {
       for (const reply of repliesToDelete) {
         this.removeComment(reply.id);
       }
-      
+
       // Then delete the comment itself
       this.commentsMap.delete(commentId);
       this.emit('commentRemoved', { commentId });
