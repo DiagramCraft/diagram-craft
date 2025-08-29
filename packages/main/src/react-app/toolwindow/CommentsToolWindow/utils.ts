@@ -15,19 +15,17 @@ type Group = {
   threads: CommentThread[];
 };
 
-export const groupThreadsByElement = (
-  threads: CommentThread[],
-  getElementName: (comment: Comment) => string
-): Array<Group> => {
+export const groupThreadsByElement = (threads: CommentThread[]): Array<Group> => {
   const groups = new MultiMap<string, CommentThread>();
 
   for (const thread of threads) {
-    groups.add(thread.root.type, thread);
+    const key = thread.root.type === 'diagram' ? 'diagram' : getElementNameFromComment(thread.root);
+    groups.add(key, thread);
   }
 
   return Array.from(groups.entries()).map(([key, threads]) => ({
     key,
-    title: threads[0] ? getElementName(threads[0].root) : 'Unknown',
+    title: threads[0] ? getElementNameFromComment(threads[0].root) : 'Unknown',
     threads
   }));
 };
@@ -44,4 +42,10 @@ export const groupThreadsByAuthor = (threads: CommentThread[]): Array<Group> => 
     title: author,
     threads
   }));
+};
+
+export const getElementNameFromComment = (comment: Comment) => {
+  if (comment.type === 'diagram') return 'Diagram';
+  if (comment.element) return comment.element.name;
+  return 'Unknown Element';
 };

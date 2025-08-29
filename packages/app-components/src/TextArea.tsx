@@ -27,11 +27,13 @@ export const TextArea = React.forwardRef<HTMLTextAreaElement, Props>((props, ref
         {...propsUtils.filterDomProperties(props)}
         placeholder={props.isIndeterminate ? '···' : undefined}
         disabled={props.disabled}
-        onFocus={() => {
+        onFocus={e => {
           hasFocus.current = true;
+          props?.onFocus?.(e);
         }}
-        onBlur={() => {
+        onBlur={e => {
           hasFocus.current = true;
+          props?.onBlur?.(e);
         }}
         onChange={ev => {
           const p = ev.target.value;

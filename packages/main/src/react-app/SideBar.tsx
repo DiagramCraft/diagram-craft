@@ -74,9 +74,11 @@ export const SideBar = (props: Props) => {
             const element = c as ReactElement<SideBarPageProps>;
             const icon = element.props.icon;
             return (
-              <div style={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
+              <div
+                key={idx}
+                style={{ position: 'relative', display: 'flex', justifyContent: 'center' }}
+              >
                 <ToolWindowButton
-                  key={idx}
                   icon={icon}
                   isSelected={selected === idx}
                   onClick={() => {

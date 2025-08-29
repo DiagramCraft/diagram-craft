@@ -3,16 +3,19 @@ import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { Comment } from '@diagram-craft/model/comment';
-import { useCallback, useState } from 'react';
-import { TbCalendar, TbCheck, TbUser } from 'react-icons/tb';
+import React, { useCallback, useState } from 'react';
+import { TbCheck, TbLink, TbMessageReply } from 'react-icons/tb';
 import {
   type CommentThread,
+  getElementNameFromComment,
   type GroupBy,
   groupThreadsByAuthor,
   groupThreadsByElement,
   type SortBy
 } from './utils';
 import { CommentsSortMenu } from './CommentsSortMenu';
+import { TextArea } from '@diagram-craft/app-components/TextArea';
+import { Button } from '@diagram-craft/app-components/Button';
 
 export const CommentsToolWindow = () => {
   const diagram = useDiagram();
@@ -42,16 +45,6 @@ export const CommentsToolWindow = () => {
       ' ' +
       date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     );
-  };
-
-  const getElementName = (comment: Comment) => {
-    if (comment.type === 'diagram') return 'Diagram';
-    if (comment.element) {
-      return comment.element.type === 'node'
-        ? `Node ${comment.element.id.slice(0, 8)}`
-        : `Edge ${comment.element.id.slice(0, 8)}`;
-    }
-    return 'Unknown Element';
   };
 
   // Compute comment threads on every render (will be fast since there aren't many comments)
@@ -92,7 +85,7 @@ export const CommentsToolWindow = () => {
     groupBy === 'none'
       ? [{ key: 'all', title: '', threads: commentThreads }]
       : groupBy === 'element'
-        ? groupThreadsByElement(commentThreads, getElementName)
+        ? groupThreadsByElement(commentThreads)
         : groupThreadsByAuthor(commentThreads);
 
   return (
@@ -110,13 +103,12 @@ export const CommentsToolWindow = () => {
           </Accordion.ItemHeaderButtons>
         </Accordion.ItemHeader>
         <Accordion.ItemContent>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {commentThreads.length === 0 ? (
               <div
                 style={{
                   textAlign: 'center',
                   color: 'var(--secondary-fg)',
-                  fontSize: '14px',
                   padding: '20px 0'
                 }}
               >
@@ -124,28 +116,26 @@ export const CommentsToolWindow = () => {
               </div>
             ) : (
               groupedThreads.map(group => (
-                <div key={group.key}>
+                <div
+                  key={group.key}
+                  style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}
+                >
                   {group.title && (
                     <div
                       style={{
-                        fontSize: '12px',
                         fontWeight: 'bold',
-                        color: 'var(--secondary-fg)',
-                        marginBottom: '8px',
-                        padding: '4px 0',
-                        borderBottom: '1px solid var(--border-color)'
+                        color: 'var(--secondary-fg)'
                       }}
                     >
                       {group.title}
                     </div>
                   )}
                   {group.threads.map(thread => (
-                    <div key={thread.root.id} style={{ marginBottom: '16px' }}>
+                    <React.Fragment key={thread.root.id}>
                       <CommentItem
                         comment={thread.root}
                         onResolve={handleResolveComment}
                         formatDate={formatDate}
-                        getElementName={getElementName}
                       />
                       {thread.replies.map(reply => (
                         <div key={reply.id} style={{ marginLeft: '20px', marginTop: '8px' }}>
@@ -153,12 +143,11 @@ export const CommentsToolWindow = () => {
                             comment={reply}
                             onResolve={handleResolveComment}
                             formatDate={formatDate}
-                            getElementName={getElementName}
                             isReply={true}
                           />
                         </div>
                       ))}
-                    </div>
+                    </React.Fragment>
                   ))}
                 </div>
               ))
@@ -174,97 +163,89 @@ type CommentItemProps = {
   comment: Comment;
   onResolve: (comment: Comment) => void;
   formatDate: (date: Date) => string;
-  getElementName: (comment: Comment) => string;
   isReply?: boolean;
 };
 
-const CommentItem = ({
-  comment,
-  onResolve,
-  formatDate,
-  getElementName,
-  isReply
-}: CommentItemProps) => {
+const CommentItem = ({ comment, onResolve, formatDate, isReply }: CommentItemProps) => {
   return (
     <div
       style={{
-        border: '1px solid var(--border-color)',
+        border: `1px solid ${comment.state === 'unresolved' ? 'var(--cmp-focus-border)' : 'var(--cmp-border)'}`,
         borderRadius: '6px',
         padding: '12px',
-        backgroundColor: isReply ? 'var(--secondary-bg)' : 'var(--primary-bg)',
+        backgroundColor: isReply ? 'var(--tertiary-bg)' : 'var(--secondary-bg)',
         position: 'relative'
       }}
     >
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          marginBottom: '8px'
-        }}
-      >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              fontSize: '12px',
-              color: 'var(--secondary-fg)'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <TbUser size={12} />
-              <span>{comment.author}</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <TbCalendar size={12} />
-              <span>{formatDate(comment.date)}</span>
-            </div>
-            <div
-              style={{
-                fontSize: '10px',
-                backgroundColor:
-                  comment.type === 'diagram' ? 'var(--accent-bg)' : 'var(--warning-bg)',
-                color: comment.type === 'diagram' ? 'var(--accent-fg)' : 'var(--warning-fg)',
-                padding: '2px 6px',
-                borderRadius: '4px'
-              }}
-            >
-              {getElementName(comment)}
-            </div>
-          </div>
-        </div>
-        <button
-          onClick={() => onResolve(comment)}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div
           style={{
-            border: 'none',
-            background: 'none',
-            cursor: 'pointer',
-            padding: '4px',
-            borderRadius: '4px',
+            background: '#336633',
+            height: '20px',
+            aspectRatio: '1 / 1',
+            borderRadius: '50%',
+            position: 'relative',
+            color: 'var(--primary-bg)',
             display: 'flex',
+            justifyContent: 'center',
             alignItems: 'center',
-            gap: '4px',
-            fontSize: '11px',
-            color: comment.state === 'resolved' ? 'var(--success-fg)' : 'var(--secondary-fg)',
-            backgroundColor: comment.state === 'resolved' ? 'var(--success-bg)' : 'transparent'
+            fontSize: '10px'
           }}
-          title={comment.state === 'resolved' ? 'Mark as unresolved' : 'Mark as resolved'}
         >
-          <TbCheck size={12} />
-          {comment.state === 'resolved' ? 'Resolved' : 'Resolve'}
-        </button>
+          {comment.author
+            .split(' ')
+            .map(e => e[0])
+            .slice(0, 2)
+            .join('')
+            .toUpperCase()}
+        </div>
+        <div>
+          <div>{comment.author}</div>
+          <div>{formatDate(comment.date)}</div>
+        </div>
+        <div style={{ marginLeft: 'auto' }}>
+          <TbCheck
+            size={12}
+            style={{
+              color: comment.state === 'resolved' ? 'var(--highlight-fg)' : 'var(--tertiary-fg)',
+              cursor: 'pointer'
+            }}
+            onClick={() => onResolve(comment)}
+          />
+        </div>
       </div>
 
       <div
         style={{
-          fontSize: '14px',
           lineHeight: '1.4',
-          wordBreak: 'break-word'
+          wordBreak: 'break-word',
+          margin: '0.25rem 0'
         }}
       >
         {comment.message}
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '0.5rem' }}>
+        <TbLink />
+        {getElementNameFromComment(comment)}
+      </div>
+
+      {/* Ability to respond to comments */}
+      <div style={{ display: 'flex', gap: '0.25rem' }}>
+        <TextArea
+          value={''}
+          rows={1}
+          style={{ width: '100%', resize: 'none' }}
+          onFocus={e => {
+            e.currentTarget.style.height = '40px';
+          }}
+          onBlur={e => {
+            e.currentTarget.style.height = 'initial';
+          }}
+        />
+        <Button type={'secondary'}>
+          <TbMessageReply />
+        </Button>
       </div>
     </div>
   );
