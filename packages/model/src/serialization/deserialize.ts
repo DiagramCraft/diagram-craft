@@ -233,6 +233,14 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
     if (document.comments) {
       for (const serializedComment of document.comments) {
         const comment = Comment.deserialize(serializedComment, doc);
+
+        if (comment.isStale()) {
+          comment.staleSince ??= new Date();
+          if (comment.staleSince.getTime() < Date.now() - 1000 * 60 * 60 * 24 * 30) {
+            continue;
+          }
+        }
+
         doc.commentManager.addComment(comment);
       }
     }

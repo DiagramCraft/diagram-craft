@@ -9,6 +9,7 @@ type CommentState = 'unresolved' | 'resolved';
 
 export class Comment {
   private _state: CommentState;
+  public staleSince: Date | undefined;
 
   constructor(
     public readonly diagram: Diagram,
@@ -22,6 +23,11 @@ export class Comment {
     public readonly parentId?: string
   ) {
     this._state = state;
+  }
+
+  isStale() {
+    return this.type === 'element' &&
+      (this.element === undefined || !this.diagram.lookup(this.element.id));
   }
 
   get state(): CommentState {
@@ -60,9 +66,6 @@ export class Comment {
 
     const element =
       serialized.type === 'element' ? diagram.lookup(serialized.elementId!) : undefined;
-    if (serialized.type === 'element') {
-      assert.present(element);
-    }
 
     return new Comment(
       diagram,
@@ -128,13 +131,13 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> {
 
   getCommentsForDiagram(diagram: Diagram): Comment[] {
     return this.getAllComments().filter(
-      comment => comment.type === 'diagram' && comment.diagram?.id === diagram.id
+      comment => comment.type === 'diagram' && comment.diagram?.id === diagram.id && !comment.isStale()
     );
   }
 
   getCommentsForElement(element: DiagramElement): Comment[] {
     return this.getAllComments().filter(
-      comment => comment.type === 'element' && comment.element?.id === element.id
+      comment => comment.type === 'element' && comment.element?.id === element.id && !comment.isStale()
     );
   }
 
