@@ -5,6 +5,7 @@ import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { Comment } from '@diagram-craft/model/comment';
 import React, { useCallback, useState } from 'react';
 import { TbCheck, TbLink, TbMessageReply } from 'react-icons/tb';
+import { UserState } from '../../../UserState';
 import {
   buildCommentThreads,
   type CommentThreadNode,
@@ -196,16 +197,18 @@ const CommentItem = ({ comment, onResolve, formatDate, level, children }: Commen
   const handleReply = useCallback(() => {
     if (replyText.trim() === '') return;
 
+    const userState = UserState.get().awarenessState;
     const newComment = new Comment(
       diagram,
       comment.type,
       newid(),
       replyText.trim(),
-      'User', // TODO: Get actual user name from application context
+      userState.name,
       new Date(),
       'unresolved',
       comment.element,
-      comment.id
+      comment.id,
+      userState.color
     );
 
     diagram.document.commentManager.addComment(newComment);
@@ -224,7 +227,7 @@ const CommentItem = ({ comment, onResolve, formatDate, level, children }: Commen
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         <div
           style={{
-            background: '#336633',
+            background: comment.userColor ?? '#336633',
             height: '20px',
             aspectRatio: '1 / 1',
             borderRadius: '50%',

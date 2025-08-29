@@ -6,6 +6,7 @@ import { Comment } from '@diagram-craft/model/comment';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { newid } from '@diagram-craft/utils/id';
+import { UserState } from '../../UserState';
 
 type CommentPopoverProps = {
   open: boolean;
@@ -35,15 +36,18 @@ export const CommentPopover = (props: CommentPopoverProps) => {
     setSubmitError(undefined);
 
     try {
+      const userState = UserState.get().awarenessState;
       const comment = new Comment(
         props.diagram,
         props.selectedElement ? 'element' : 'diagram',
         newid(),
         message.trim(),
-        'Test',
+        userState.name,
         new Date(),
         'unresolved',
-        props.selectedElement
+        props.selectedElement,
+        undefined,
+        userState.color
       );
 
       props.diagram.document.commentManager.addComment(comment);

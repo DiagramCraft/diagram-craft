@@ -20,7 +20,8 @@ export class Comment {
     public readonly date: Date,
     state: CommentState = 'unresolved',
     public readonly element?: DiagramElement,
-    public readonly parentId?: string
+    public readonly parentId?: string,
+    public readonly userColor?: string
   ) {
     this._state = state;
   }
@@ -56,7 +57,8 @@ export class Comment {
       parentId: this.parentId,
       type: this.type,
       diagramId: this.diagram.id,
-      elementId: this.element?.id
+      elementId: this.element?.id,
+      userColor: this.userColor
     };
   }
 
@@ -76,7 +78,8 @@ export class Comment {
       new Date(serialized.date),
       serialized.state,
       element,
-      serialized.parentId
+      serialized.parentId,
+      serialized.userColor
     );
   }
 }
@@ -91,6 +94,7 @@ export type SerializedComment = {
   type: 'diagram' | 'element';
   diagramId: string;
   elementId?: string;
+  userColor?: string;
 };
 
 export type CommentManagerEvents = {
