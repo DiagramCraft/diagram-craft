@@ -21,21 +21,14 @@ export const CommentsToolWindowBadge = () => {
     <div
       style={{
         position: 'absolute',
-        top: '4px',
-        right: '4px',
+        top: '6px',
+        right: '6px',
         backgroundColor: 'var(--highlight-reverse-bg)',
-        color: 'var(--highlight-reverse-fg)',
         borderRadius: '50%',
-        width: '11px',
-        height: '11px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: '8px',
+        width: '8px',
+        height: '8px',
         border: '1px solid var(--primary-bg)'
       }}
-    >
-      {commentCount}
-    </div>
+    ></div>
   );
 };

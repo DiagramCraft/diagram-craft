@@ -1,12 +1,13 @@
-import { useCallback, useEffect, useState } from 'react';
-import { TbMessageCircle } from 'react-icons/tb';
-import { Toolbar } from '@diagram-craft/app-components/Toolbar';
-import { Tooltip } from '@diagram-craft/app-components/Tooltip';
-import { useEventListener } from '../hooks/useEventListener';
-import { SelectionType } from '@diagram-craft/model/selectionState';
-import { useDiagram } from '../../application';
-import { DiagramElement } from '@diagram-craft/model/diagramElement';
-import { CommentPopover } from './CommentPopover';
+import {useCallback, useEffect, useState} from 'react';
+import {TbMessageCircle} from 'react-icons/tb';
+import {Toolbar} from '@diagram-craft/app-components/Toolbar';
+import {Tooltip} from '@diagram-craft/app-components/Tooltip';
+import {useEventListener} from '../hooks/useEventListener';
+import {SelectionType} from '@diagram-craft/model/selectionState';
+import {useDiagram} from '../../application';
+import {DiagramElement} from '@diagram-craft/model/diagramElement';
+import {CommentPopover} from './CommentPopover';
+import {useRedraw} from '../hooks/useRedraw';
 
 /**
  * CommentToolbarButton provides a toolbar button for accessing comments functionality.
@@ -22,10 +23,10 @@ import { CommentPopover } from './CommentPopover';
  * - Clicking opens comment dialog for adding new comments
  */
 export const CommentToolbarButton = () => {
+  const redraw = useRedraw();
   const diagram = useDiagram();
   const [selectionType, setSelectionType] = useState<SelectionType | undefined>(undefined);
   const [selectedElement, setSelectedElement] = useState<DiagramElement | undefined>(undefined);
-  const [unresolvedCommentCount, setUnresolvedCommentCount] = useState(0);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
   // Update selection state
@@ -41,44 +42,24 @@ export const CommentToolbarButton = () => {
     }
   }, [diagram]);
 
-  // Update unresolved comments count
-  const updateUnresolvedComments = useCallback(() => {
-    try {
-      const commentManager = diagram.document.commentManager;
-
-      if (selectedElement) {
-        // Count unresolved comments on selected element
-        const elementComments = commentManager.getCommentsForElement(selectedElement);
-        const unresolvedCount = elementComments.filter(
-          comment => comment.state === 'unresolved'
-        ).length;
-        setUnresolvedCommentCount(unresolvedCount);
-      } else if (selectionType === 'empty') {
-        // Count unresolved comments on diagram
-        const diagramComments = commentManager.getCommentsForDiagram(diagram);
-        const unresolvedCount = diagramComments.filter(
-          comment => comment.state === 'unresolved'
-        ).length;
-        setUnresolvedCommentCount(unresolvedCount);
-      } else {
-        setUnresolvedCommentCount(0);
-      }
-    } catch (error) {
-      console.warn('Error updating comment state:', error);
-      setUnresolvedCommentCount(0);
-    }
-  }, [diagram, selectedElement, selectionType]);
-
   // Listen to selection changes
   useEventListener(diagram.selectionState, 'add', updateSelection);
   useEventListener(diagram.selectionState, 'remove', updateSelection);
   useEffect(updateSelection, [updateSelection]);
 
   // Listen to comment changes
-  useEventListener(diagram.document.commentManager, 'commentAdded', updateUnresolvedComments);
-  useEventListener(diagram.document.commentManager, 'commentUpdated', updateUnresolvedComments);
-  useEventListener(diagram.document.commentManager, 'commentRemoved', updateUnresolvedComments);
-  useEffect(updateUnresolvedComments, [updateUnresolvedComments]);
+  useEventListener(diagram.document.commentManager, 'commentAdded', redraw);
+  useEventListener(diagram.document.commentManager, 'commentUpdated', redraw);
+  useEventListener(diagram.document.commentManager, 'commentRemoved', redraw);
+
+  const commentCount = diagram.document.commentManager
+    .getAllCommentsForDiagram(diagram)
+    .filter(c => !c.isReply())
+    .filter(c => c.state !== 'resolved')
+    .filter(c => {
+      if (selectionType === 'empty') return c.type === 'diagram';
+      return c.element === selectedElement;
+    }).length;
 
   // Determine if button should be visible
   const shouldShowButton =
@@ -109,26 +90,20 @@ export const CommentToolbarButton = () => {
             <TbMessageCircle />
           </Toolbar.Button>
         </Tooltip>
-        {unresolvedCommentCount > 0 && (
+        {commentCount > 0 && (
           <div
             style={{
               position: 'absolute',
-              top: '-2px',
-              right: '-2px',
+              top: '-1px',
+              right: '-1px',
               backgroundColor: 'var(--highlight-reverse-bg)',
               color: 'var(--highlight-reverse-fg)',
               borderRadius: '50%',
-              width: '11px',
-              height: '11px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '8px',
+              width: '8px',
+              height: '8px',
               border: '1px solid var(--primary-bg)'
             }}
-          >
-            {unresolvedCommentCount}
-          </div>
+          ></div>
         )}
       </div>
     </CommentPopover>
