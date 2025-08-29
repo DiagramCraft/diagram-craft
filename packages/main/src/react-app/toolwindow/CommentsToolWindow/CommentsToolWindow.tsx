@@ -106,7 +106,7 @@ export const CommentsToolWindow = () => {
                 style={{
                   textAlign: 'center',
                   color: 'var(--secondary-fg)',
-                  padding: '20px 0'
+                  padding: '0.25rem 0'
                 }}
               >
                 No comments

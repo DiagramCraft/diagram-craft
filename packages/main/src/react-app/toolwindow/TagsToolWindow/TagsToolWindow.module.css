@@ -54,9 +54,8 @@
 }
 
 .tagsEmpty {
-  color: var(--cmp-muted-fg);
-  font-style: italic;
+  color: var(--secondary-fg);
   text-align: center;
-  padding: 1rem;
-  font-size: 13px;
+  padding: 0.25rem 0;
+  width: 100%;
 }
