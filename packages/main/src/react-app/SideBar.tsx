@@ -1,18 +1,19 @@
 import { ToolWindowButton } from './toolwindow/ToolWindowButton';
-import React, { useEffect, useState } from 'react';
+import React, { type ReactElement, useEffect, useState } from 'react';
 import { useEventListener } from './hooks/useEventListener';
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
 import { ErrorBoundary } from './ErrorBoundary';
 import { UserState } from '../UserState';
 import { IconType } from 'react-icons';
 
-export const SideBarPage = (props: SideBarPage) => {
+export const SideBarPage = (props: SideBarPageProps) => {
   return <ErrorBoundary>{props.children}</ErrorBoundary>;
 };
 
-type SideBarPage = {
+type SideBarPageProps = {
   icon: IconType;
   children: React.ReactNode;
+  extra?: React.ReactNode;
 };
 
 export const SideBarBottomToolbar = (props: { children: React.ReactNode }) => {
@@ -70,23 +71,26 @@ export const SideBar = (props: Props) => {
       <Toolbar.Root id={`${props.side}-buttons`} direction={'vertical'}>
         <Toolbar.ToggleGroup type={'single'}>
           {props.children.map((c, idx) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const icon = (c as any).props.icon;
+            const element = c as ReactElement<SideBarPageProps>;
+            const icon = element.props.icon;
             return (
-              <ToolWindowButton
-                key={idx}
-                icon={icon}
-                isSelected={selected === idx}
-                onClick={() => {
-                  if (selected === idx) {
-                    updateSelected(-1);
-                    return;
-                  }
-                  updateSelected(idx);
+              <div style={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
+                <ToolWindowButton
+                  key={idx}
+                  icon={icon}
+                  isSelected={selected === idx}
+                  onClick={() => {
+                    if (selected === idx) {
+                      updateSelected(-1);
+                      return;
+                    }
+                    updateSelected(idx);
 
-                  userState[propName] = idx;
-                }}
-              />
+                    userState[propName] = idx;
+                  }}
+                />
+                {element.props.extra && element.props.extra}
+              </div>
             );
           })}
         </Toolbar.ToggleGroup>

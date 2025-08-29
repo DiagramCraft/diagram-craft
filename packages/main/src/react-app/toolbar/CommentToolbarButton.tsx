@@ -113,18 +113,18 @@ export const CommentToolbarButton = () => {
           <div
             style={{
               position: 'absolute',
-              top: '0px',
-              right: '0px',
+              top: '-2px',
+              right: '-2px',
               backgroundColor: 'var(--highlight-reverse-bg)',
               color: 'var(--highlight-reverse-fg)',
               borderRadius: '50%',
-              width: '12px',
-              height: '12px',
+              width: '11px',
+              height: '11px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '9px',
-              fontWeight: 'bold'
+              fontSize: '8px',
+              border: '1px solid var(--primary-bg)'
             }}
           >
             {unresolvedCommentCount}
