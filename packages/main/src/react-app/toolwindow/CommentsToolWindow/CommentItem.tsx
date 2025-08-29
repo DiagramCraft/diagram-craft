@@ -1,4 +1,4 @@
-import { useDiagram } from '../../../application';
+import { useApplication, useDiagram } from '../../../application';
 import { Comment } from '@diagram-craft/model/comment';
 import React, { useCallback, useState } from 'react';
 import { TbCheck, TbLink, TbMessageReply, TbEdit, TbTrash, TbDots } from 'react-icons/tb';
@@ -9,6 +9,7 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { newid } from '@diagram-craft/utils/id';
 import { getElementNameFromComment } from './utils';
 import { addHighlight, Highlights, removeHighlight } from '@diagram-craft/canvas/highlight';
+import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 
 export type CommentItemProps = {
   comment: Comment;
@@ -25,6 +26,7 @@ export const CommentItem = ({
   level,
   children
 }: CommentItemProps) => {
+  const application = useApplication();
   const diagram = useDiagram();
   const [replyText, setReplyText] = useState<string>('');
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -84,7 +86,20 @@ export const CommentItem = ({
   }, [comment.message]);
 
   const handleDelete = useCallback(() => {
-    diagram.document.commentManager.removeComment(comment.id);
+    application.ui.showDialog(
+      new MessageDialogCommand(
+        {
+          title: 'Confirm delete',
+          message:
+            'Are you sure you want to delete this comment? This action cannot be undone. This will also delete all replies to this comment.',
+          okLabel: 'Yes',
+          cancelLabel: 'No'
+        },
+        () => {
+          diagram.document.commentManager.removeComment(comment.id);
+        }
+      )
+    );
   }, [diagram, comment.id]);
 
   return (
