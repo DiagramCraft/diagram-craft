@@ -8,6 +8,7 @@ import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { Button } from '@diagram-craft/app-components/Button';
 import { newid } from '@diagram-craft/utils/id';
 import { getElementNameFromComment } from './utils';
+import { addHighlight, Highlights, removeHighlight } from '@diagram-craft/canvas/highlight';
 
 export type CommentItemProps = {
   comment: Comment;
@@ -17,7 +18,13 @@ export type CommentItemProps = {
   children?: React.ReactNode;
 };
 
-export const CommentItem = ({ comment, onResolve, formatDate, level, children }: CommentItemProps) => {
+export const CommentItem = ({
+  comment,
+  onResolve,
+  formatDate,
+  level,
+  children
+}: CommentItemProps) => {
   const diagram = useDiagram();
   const [replyText, setReplyText] = useState<string>('');
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -204,11 +211,26 @@ export const CommentItem = ({ comment, onResolve, formatDate, level, children }:
         )}
       </div>
 
-      {!comment.isReply() && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '0.5rem' }}>
+      {!comment.isReply() && comment.type === 'element' && (
+        <a
+          href="#"
+          onClick={() => {
+            addHighlight(comment.element!, Highlights.NODE__HIGHLIGHT);
+            setTimeout(() => {
+              removeHighlight(comment.element!, Highlights.NODE__HIGHLIGHT);
+            }, 1000);
+            return false;
+          }}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            marginBottom: '0.5rem'
+          }}
+        >
           <TbLink />
           {getElementNameFromComment(comment)}
-        </div>
+        </a>
       )}
 
       {canReply && (

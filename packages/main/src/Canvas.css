@@ -2,22 +2,40 @@
   --zoom: 1;
   background: var(--canvas-bg);
 
-  &.tool-edge, &.tool-edge * { cursor: crosshair !important; }
-  &.tool-text, &.tool-text * { cursor: text !important; }
-  &.tool-freehand, &.tool-freehand * { cursor: crosshair !important; }
-  &.tool-pen, &.tool-pen * { cursor: default !important; }
-  &.tool-node, &.tool-node * { cursor: default !important; }
-  &.tool-pan, &.tool-pan * { cursor: move !important; }
+  &.tool-edge, &.tool-edge * {
+    cursor: crosshair !important;
+  }
+
+  &.tool-text, &.tool-text * {
+    cursor: text !important;
+  }
+
+  &.tool-freehand, &.tool-freehand * {
+    cursor: crosshair !important;
+  }
+
+  &.tool-pen, &.tool-pen * {
+    cursor: default !important;
+  }
+
+  &.tool-node, &.tool-node * {
+    cursor: default !important;
+  }
+
+  &.tool-pan, &.tool-pan * {
+    cursor: move !important;
+  }
 
   [contenteditable] {
     outline: 0 solid transparent;
     border-radius: 3px;
 
     &::selection, *::selection {
-      background: rgba(175,210,255,0.5);
+      background: rgba(175, 210, 255, 0.5);
     }
+
     &::-moz-selection, *::-moz-selection {
-      background: rgba(175,210,255,0.5);
+      background: rgba(175, 210, 255, 0.5);
     }
   }
 
@@ -62,12 +80,14 @@
     }
 
     /* This includes both rotation and resize handles */
+
     .svg-selection__handle {
       fill: white;
       /* Note, that cursor is set in the code */
     }
 
     /* This is mainly the endpoint of edges */
+
     .svg-selection__handle-edge {
       fill: white;
       cursor: move;
@@ -81,7 +101,8 @@
       stroke-width: calc(1 * var(--zoom));
       fill: none;
 
-      &:hover, &:active {}
+      &:hover, &:active {
+      }
 
       .svg-rotation-handle__backing {
         stroke: transparent;
@@ -100,6 +121,7 @@
       stroke: purple;
       cursor: move;
     }
+
     .svg-selection__label-node__line {
       stroke: purple;
       stroke-dasharray: calc(5 * var(--zoom)) calc(5 * var(--zoom));
@@ -116,36 +138,46 @@
   .svg-highlight__line {
     stroke-width: calc(1 * var(--zoom));
   }
+
   .svg-highlight__extension {
     stroke-width: calc(1 * var(--zoom));
     stroke-dasharray: calc(5 * var(--zoom)) calc(5 * var(--zoom));
   }
+
   .svg-highlight__color--node {
     stroke: var(--accent-7);
   }
+
   .svg-highlight__color--distance {
     stroke: var(--accent-7);
   }
+
   .svg-highlight__color--size {
     stroke: var(--accent-7);
   }
+
   .svg-highlight__color--canvas {
     stroke: var(--accent-7);
   }
+
   .svg-highlight__color--source {
     stroke: var(--accent-7);
   }
+
   .svg-highlight__color--grid {
     stroke: var(--accent-7);
   }
+
   .svg-highlight__distance-line {
     stroke: var(--accent-7);
     fill: var(--accent-7);
     stroke-width: calc(1 * var(--zoom));
   }
+
   .svg-highlight__distance-label-bg {
     fill: white;
   }
+
   .svg-highlight__distance-label {
     fill: var(--accent-8);
     font-size: calc(10px * var(--zoom));
@@ -158,6 +190,7 @@
     stroke: var(--accent-9);
     stroke-width: calc(1 * var(--zoom));
   }
+
   .svg-marquee__element {
     fill: transparent;
     stroke: var(--accent-9);
@@ -170,6 +203,7 @@
     stroke: var(--accent-9);
     cursor: move;
   }
+
   .svg-bezier-handle-line {
     stroke-width: calc(1 * var(--zoom));
     stroke: var(--accent-9);
@@ -192,6 +226,7 @@
   }
 
   /* This is for mixed foreignObject svg text situations */
+
   .svg-node__fo--with-text {
     &:has(*[contenteditable="true"]) {
       & > div {
@@ -199,9 +234,11 @@
       }
     }
   }
+
   .svg-node__fo--with-text:has(*[contenteditable="true"]) + text {
     fill: transparent !important;
     stroke: transparent !important;
+
     tspan {
       fill: transparent !important;
       stroke: transparent !important;
@@ -218,9 +255,18 @@
       cursor: unset;
       pointer-events: none;
     }
+
     .svg-node {
       cursor: unset;
       pointer-events: none;
+    }
+  }
+
+  .svg-edge--highlight-node__highlight {
+    .svg-edge {
+      stroke: var(--highlight-fg) !important;
+      stroke-width: calc(3 * var(--zoom)) !important;
+      stroke-dasharray: none !important;
     }
   }
 
@@ -231,6 +277,7 @@
       stroke-dasharray: none !important;
     }
   }
+
   .svg-shape-control-point {
     cursor: crosshair;
     fill: white;
@@ -255,6 +302,7 @@
       animation: search-match 0.25s ease-in-out infinite;
       stroke-dasharray: none !important;
     }
+
     .svg-node {
       animation: search-match 0.25s ease-in-out infinite;
       stroke-dasharray: none !important;
