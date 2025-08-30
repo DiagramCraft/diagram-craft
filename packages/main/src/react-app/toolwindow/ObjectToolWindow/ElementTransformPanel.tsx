@@ -3,6 +3,7 @@ import { TbAspectRatio, TbFlipHorizontal, TbFlipVertical } from 'react-icons/tb'
 import { Point } from '@diagram-craft/geometry/point';
 import { Box, WritableBox } from '@diagram-craft/geometry/box';
 import { Angle } from '@diagram-craft/geometry/angle';
+import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { $c } from '@diagram-craft/utils/classname';
 import { round } from '@diagram-craft/utils/math';
@@ -100,7 +101,9 @@ export const ElementTransformPanel = (props: Props) => {
     }
 
     UnitOfWork.execute(diagram, uow => {
-      diagram.selectionState.elements[0].setBounds(WritableBox.asBox(newBounds), uow);
+      const selectedElement = diagram.selectionState.elements[0];
+      const transforms = TransformFactory.fromTo(selectedElement.bounds, WritableBox.asBox(newBounds));
+      diagram.transformElements([selectedElement], transforms, uow);
       diagram.selectionState.highlights = [];
     });
   };
