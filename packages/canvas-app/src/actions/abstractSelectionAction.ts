@@ -26,7 +26,8 @@ export abstract class AbstractSelectionAction<
     context: C,
     protected readonly multipleType: MultipleType,
     protected readonly elementType: ElementType = 'both',
-    protected readonly layerTypes: LayerType[] | undefined = undefined
+    protected readonly layerTypes: LayerType[] | undefined = undefined,
+    protected readonly allowEmptySelection: boolean = false
   ) {
     super(context);
   }
@@ -35,7 +36,7 @@ export abstract class AbstractSelectionAction<
     const cb = () => {
       const $s = context.model.activeDiagram.selectionState;
       if ($s.isEmpty()) {
-        return false;
+        return this.allowEmptySelection;
       }
 
       if (
@@ -53,7 +54,7 @@ export abstract class AbstractSelectionAction<
             : $s.nodes;
 
       if (elements.length === 0) {
-        return false;
+        return this.allowEmptySelection;
       }
 
       if (this.multipleType === 'single-only' && elements.length > 1) {
