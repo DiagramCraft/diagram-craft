@@ -60,7 +60,7 @@ const serializeSchemas = (schemas: DiagramDocumentDataSchemas) => {
 };
 
 const serializeComments = (commentManager: CommentManager): SerializedComment[] => {
-  return commentManager.getAllComments().map(comment => comment.serialize());
+  return commentManager.getAll().map(comment => comment.serialize());
 };
 
 const serializeAttachments = async (

@@ -11,7 +11,7 @@ export const CommentsToolWindowBadge = () => {
   useEventListener(diagram.commentManager, 'commentRemoved', redraw);
 
   const commentCount = diagram.commentManager
-    .getAllCommentsForDiagram(diagram)
+    .getAll()
     .filter(c => !c.isReply())
     .filter(c => c.state !== 'resolved').length;
 

@@ -21,7 +21,7 @@ export const CommentToolbarButton = () => {
   const selElement = diagram.selectionState.elements?.[0];
 
   const commentCount = diagram.commentManager
-    .getAllCommentsForDiagram(diagram)
+    .getAll()
     .filter(c => !c.isReply())
     .filter(c => c.state !== 'resolved')
     .filter(c => (selType === 'empty' ? c.type === 'diagram' : c.element === selElement)).length;

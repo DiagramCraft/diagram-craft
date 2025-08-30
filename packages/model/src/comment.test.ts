@@ -174,7 +174,7 @@ describe.each(Backends.all())('Comment [%s]', (_name, backend) => {
       commentManager.addComment(comment1);
       commentManager.addComment(comment2);
 
-      const allComments = commentManager.getAllComments();
+      const allComments = commentManager.getAll();
       expect(allComments).toHaveLength(2);
       expect(allComments.map(c => c.id)).toContain('comment-1');
       expect(allComments.map(c => c.id)).toContain('comment-2');
@@ -184,7 +184,7 @@ describe.each(Backends.all())('Comment [%s]', (_name, backend) => {
       const comment = new Comment(diagram, 'diagram', '1', 'Diagram comment', 'Author', new Date());
 
       commentManager.addComment(comment);
-      const diagramComments = commentManager.getCommentsForDiagram(diagram);
+      const diagramComments = commentManager.getDiagramComments();
 
       expect(diagramComments).toHaveLength(1);
       expect(diagramComments[0].id).toBe('1');

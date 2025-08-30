@@ -48,7 +48,7 @@ export const CommentsToolWindow = () => {
   };
 
   // Compute comment threads on every render (will be fast since there aren't many comments)
-  const allComments = diagram.commentManager.getAllCommentsForDiagram(diagram);
+  const allComments = diagram.commentManager.getAll();
 
   // Filter out resolved comments if hideResolved is true
   const filteredComments = hideResolved

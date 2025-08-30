@@ -3,6 +3,7 @@ import { DiagramElement } from './diagramElement';
 import type { CRDTMap } from './collaboration/crdt';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { UnitOfWork } from './unitOfWork';
+import { precondition } from '@diagram-craft/utils/assert';
 
 export type CommentState = 'unresolved' | 'resolved';
 
@@ -118,17 +119,41 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> {
   ) {
     super();
     this.commentsMap.on('remoteDelete', p => {
+      const comment = this.getComment(p.key);
+
       this.emit('commentRemoved', { commentId: p.key });
+
+      if (comment && comment.element) {
+        const uow = new UnitOfWork(comment.element.diagram);
+        comment.element.commentsUpdated(uow);
+        uow.commit();
+      }
     });
     this.commentsMap.on('remoteInsert', p => {
-      this.emit('commentAdded', { comment: this.getComment(p.key)! });
+      const comment = this.getComment(p.key)!;
+
+      this.emit('commentAdded', { comment: comment });
+
+      if (comment.element) {
+        const uow = new UnitOfWork(comment.element.diagram);
+        comment.element.commentsUpdated(uow);
+        uow.commit();
+      }
     });
     this.commentsMap.on('remoteUpdate', p => {
+      const comment = this.getComment(p.key)!;
+
       this.emit('commentUpdated', { comment: this.getComment(p.key)! });
+
+      if (comment.element) {
+        const uow = new UnitOfWork(comment.element.diagram);
+        comment.element.commentsUpdated(uow);
+        uow.commit();
+      }
     });
   }
 
-  getAllComments(): Comment[] {
+  getAll(): Comment[] {
     const serializedComments: SerializedComment[] = [];
     for (const comment of this.commentsMap.values()) {
       serializedComments.push(comment);
@@ -138,27 +163,13 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> {
       .filter(c => c !== null) as Comment[];
   }
 
-  getCommentsForDiagram(diagram: Diagram): Comment[] {
-    return this.getAllComments().filter(
-      comment =>
-        comment.type === 'diagram' && comment.diagram?.id === diagram.id && !comment.isStale()
-    );
-  }
-
-  getCommentsForElement(element: DiagramElement): Comment[] {
-    return this.getAllComments().filter(
-      comment =>
-        comment.type === 'element' && comment.element?.id === element.id && !comment.isStale()
-    );
-  }
-
-  getAllCommentsForDiagram(diagram: Diagram): Comment[] {
-    return this.getAllComments().filter(
-      comment => comment.diagram?.id === diagram.id && !comment.isStale()
-    );
+  getDiagramComments(): Comment[] {
+    return this.getAll().filter(comment => comment.type === 'diagram' && !comment.isStale());
   }
 
   addComment(comment: Comment): void {
+    precondition.is.true(comment.diagram === this.diagram);
+
     const serialized = comment.serialize();
     this.commentsMap.set(comment.id, serialized);
     if (comment.element) {
@@ -170,6 +181,8 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> {
   }
 
   updateComment(comment: Comment): void {
+    precondition.is.true(comment.diagram === this.diagram);
+
     if (this.commentsMap.has(comment.id)) {
       const serialized = comment.serialize();
       this.commentsMap.set(comment.id, serialized);
@@ -190,26 +203,25 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> {
   }
 
   removeComment(commentId: string): void {
-    if (this.commentsMap.has(commentId)) {
-      // First, recursively delete all replies
-      const repliesToDelete = this.getReplies({ id: commentId } as Comment);
-      for (const reply of repliesToDelete) {
-        this.removeComment(reply.id);
-      }
+    const comment = this.getComment(commentId);
+    precondition.is.true(comment?.diagram === this.diagram);
 
-      const comment = this.getComment(commentId);
-
-      // Then delete the comment itself
-      this.commentsMap.delete(commentId);
-
-      if (comment?.element) {
-        const uow = new UnitOfWork(comment.element.diagram);
-        comment.element.commentsUpdated(uow);
-        uow.commit();
-      }
-
-      this.emit('commentRemoved', { commentId });
+    // First, recursively delete all replies
+    const repliesToDelete = this.getReplies({ id: commentId } as Comment);
+    for (const reply of repliesToDelete) {
+      this.removeComment(reply.id);
     }
+
+    // Then delete the comment itself
+    this.commentsMap.delete(commentId);
+
+    if (comment?.element) {
+      const uow = new UnitOfWork(comment.element.diagram);
+      comment.element.commentsUpdated(uow);
+      uow.commit();
+    }
+
+    this.emit('commentRemoved', { commentId });
   }
 
   getComment(commentId: string): Comment | undefined {
@@ -219,7 +231,7 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> {
   }
 
   getReplies(comment: Comment): Comment[] {
-    return this.getAllComments().filter(c => c.parentId === comment.id);
+    return this.getAll().filter(c => c.parentId === comment.id);
   }
 
   getCommentThread(comment: Comment): Comment[] {
