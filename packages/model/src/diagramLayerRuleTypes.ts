@@ -34,6 +34,10 @@ export type AdjustmentRuleClause = { id: string } & (
       type: 'tags';
       tags: string[];
     }
+  | {
+      type: 'comment';
+      state?: 'unresolved' | 'resolved';
+    }
 );
 
 export type AdjustmentRuleAction = { id: string } & (

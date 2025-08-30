@@ -148,7 +148,8 @@ export class RuleLayer extends Layer<RuleLayer> {
         clause.type === 'query' ||
           clause.type === 'any' ||
           clause.type === 'props' ||
-          clause.type === 'tags',
+          clause.type === 'tags' ||
+          clause.type === 'comment',
         'Not implemented yet'
       );
       if (clause.type === 'query') {
@@ -210,6 +211,35 @@ export class RuleLayer extends Layer<RuleLayer> {
               const hasMatchingTag = clause.tags.some(ruleTag => elementTags.includes(ruleTag));
 
               if (hasMatchingTag) {
+                result.add(element.id);
+              }
+            }
+          }
+        }
+        results.push(result);
+      } else if (clause.type === 'comment') {
+        const allComments = this.diagram.document.commentManager.getAllCommentsForDiagram(
+          this.diagram
+        );
+
+        const matchingElements = new Set<string>();
+        for (const comment of allComments) {
+          if (comment.type === 'element' && comment.element) {
+            if (
+              (clause.state === 'unresolved' && comment.state === 'unresolved') ||
+              (clause.state === 'resolved' && comment.state === 'resolved') ||
+              clause.state === undefined
+            ) {
+              matchingElements.add(comment.element.id);
+            }
+          }
+        }
+
+        const result = new Set<string>();
+        for (const layer of this.diagram.layers.visible) {
+          if (layer instanceof RegularLayer) {
+            for (const element of (layer as RegularLayer).elements) {
+              if (matchingElements.has(element.id)) {
                 result.add(element.id);
               }
             }

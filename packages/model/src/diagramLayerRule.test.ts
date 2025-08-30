@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { RuleLayer } from './diagramLayerRule';
 import { UnitOfWork } from './unitOfWork';
 import { Backends, standardTestModel } from './collaboration/collaborationTestUtils';
+import { Comment } from './comment';
+import { newid } from '@diagram-craft/utils/id';
+import { TestModel } from './test-support/builder';
 
 describe.each(Backends.all())('RuleLayer [%s]', (_name, backend) => {
   describe('rules', () => {
@@ -117,6 +120,191 @@ describe.each(Backends.all())('RuleLayer [%s]', (_name, backend) => {
         expect(rules[0].id).toEqual('rule3');
         expect(rules[1].id).toEqual('rule2');
       }
+    });
+  });
+
+  describe('comment clause evaluation', () => {
+    it('should match elements with any comments when no state specified', () => {
+      const { diagram, layer } = TestModel.newDiagramWithLayer({
+        root: backend.syncedDocs()[0],
+        nodes: [{ id: 'node-1', bounds: { x: 10, y: 10, w: 50, h: 50, r: 0 } }]
+      });
+      const ruleLayer = new RuleLayer('layer1', 'Test Layer', diagram, []);
+      diagram.layers.add(ruleLayer, UnitOfWork.immediate(diagram));
+
+      const element = layer.elements[0];
+
+      const comment = new Comment(
+        diagram,
+        'element',
+        newid(),
+        'Test comment',
+        'test-author',
+        new Date(),
+        'unresolved',
+        element
+      );
+      diagram.document.commentManager.addComment(comment);
+
+      const rule = {
+        id: 'comment-rule',
+        name: 'Comment Rule',
+        type: 'node' as const,
+        clauses: [{ id: 'clause1', type: 'comment' as const }],
+        actions: [{ id: 'action1', type: 'set-props' as const, props: {} }]
+      };
+
+      ruleLayer.addRule(rule, UnitOfWork.immediate(diagram));
+      const adjustments = ruleLayer.adjustments();
+
+      expect(adjustments.has(element.id)).toBe(true);
+    });
+
+    it('should match elements with unresolved comments when state is unresolved', () => {
+      const { diagram, layer } = TestModel.newDiagramWithLayer({
+        root: backend.syncedDocs()[0],
+        nodes: [{ id: 'node-1', bounds: { x: 10, y: 10, w: 50, h: 50, r: 0 } }]
+      });
+      const ruleLayer = new RuleLayer('layer1', 'Test Layer', diagram, []);
+      diagram.layers.add(ruleLayer, UnitOfWork.immediate(diagram));
+
+      const element = layer.elements[0];
+
+      const unresolvedComment = new Comment(
+        diagram,
+        'element',
+        newid(),
+        'Unresolved comment',
+        'test-author',
+        new Date(),
+        'unresolved',
+        element
+      );
+
+      const resolvedComment = new Comment(
+        diagram,
+        'element',
+        newid(),
+        'Resolved comment',
+        'test-author',
+        new Date(),
+        'resolved',
+        element
+      );
+
+      diagram.document.commentManager.addComment(unresolvedComment);
+      diagram.document.commentManager.addComment(resolvedComment);
+
+      const rule = {
+        id: 'unresolved-comment-rule',
+        name: 'Unresolved Comment Rule',
+        type: 'node' as const,
+        clauses: [{ id: 'clause1', type: 'comment' as const, state: 'unresolved' as const }],
+        actions: [{ id: 'action1', type: 'set-props' as const, props: {} }]
+      };
+
+      ruleLayer.addRule(rule, UnitOfWork.immediate(diagram));
+      const adjustments = ruleLayer.adjustments();
+
+      expect(adjustments.has(element.id)).toBe(true);
+    });
+
+    it('should match elements with resolved comments when state is resolved', () => {
+      const { diagram, layer } = TestModel.newDiagramWithLayer({
+        root: backend.syncedDocs()[0],
+        nodes: [{ id: 'node-1', bounds: { x: 10, y: 10, w: 50, h: 50, r: 0 } }]
+      });
+      const ruleLayer = new RuleLayer('layer1', 'Test Layer', diagram, []);
+      diagram.layers.add(ruleLayer, UnitOfWork.immediate(diagram));
+
+      const element = layer.elements[0];
+
+      const resolvedComment = new Comment(
+        diagram,
+        'element',
+        newid(),
+        'Resolved comment',
+        'test-author',
+        new Date(),
+        'resolved',
+        element
+      );
+
+      diagram.document.commentManager.addComment(resolvedComment);
+
+      const rule = {
+        id: 'resolved-comment-rule',
+        name: 'Resolved Comment Rule',
+        type: 'node' as const,
+        clauses: [{ id: 'clause1', type: 'comment' as const, state: 'resolved' as const }],
+        actions: [{ id: 'action1', type: 'set-props' as const, props: {} }]
+      };
+
+      ruleLayer.addRule(rule, UnitOfWork.immediate(diagram));
+      const adjustments = ruleLayer.adjustments();
+
+      expect(adjustments.has(element.id)).toBe(true);
+    });
+
+    it('should not match elements without comments', () => {
+      const { diagram, layer } = TestModel.newDiagramWithLayer({
+        root: backend.syncedDocs()[0],
+        nodes: [{ id: 'node-1', bounds: { x: 10, y: 10, w: 50, h: 50, r: 0 } }]
+      });
+      const ruleLayer = new RuleLayer('layer1', 'Test Layer', diagram, []);
+      diagram.layers.add(ruleLayer, UnitOfWork.immediate(diagram));
+
+      const element = layer.elements[0];
+
+      const rule = {
+        id: 'comment-rule',
+        name: 'Comment Rule',
+        type: 'node' as const,
+        clauses: [{ id: 'clause1', type: 'comment' as const }],
+        actions: [{ id: 'action1', type: 'set-props' as const, props: {} }]
+      };
+
+      ruleLayer.addRule(rule, UnitOfWork.immediate(diagram));
+      const adjustments = ruleLayer.adjustments();
+
+      expect(adjustments.has(element.id)).toBe(false);
+    });
+
+    it('should not match elements with only resolved comments when state is unresolved', () => {
+      const { diagram, layer } = TestModel.newDiagramWithLayer({
+        root: backend.syncedDocs()[0],
+        nodes: [{ id: 'node-1', bounds: { x: 10, y: 10, w: 50, h: 50, r: 0 } }]
+      });
+      const ruleLayer = new RuleLayer('layer1', 'Test Layer', diagram, []);
+      diagram.layers.add(ruleLayer, UnitOfWork.immediate(diagram));
+
+      const element = layer.elements[0];
+
+      const resolvedComment = new Comment(
+        diagram,
+        'element',
+        newid(),
+        'Resolved comment',
+        'test-author',
+        new Date(),
+        'resolved',
+        element
+      );
+
+      diagram.document.commentManager.addComment(resolvedComment);
+
+      const rule = {
+        id: 'unresolved-comment-rule',
+        name: 'Unresolved Comment Rule',
+        type: 'node' as const,
+        clauses: [{ id: 'clause1', type: 'comment' as const, state: 'unresolved' as const }],
+        actions: [{ id: 'action1', type: 'set-props' as const, props: {} }]
+      };
+
+      ruleLayer.addRule(rule, UnitOfWork.immediate(diagram));
+      const adjustments = ruleLayer.adjustments();
+
+      expect(adjustments.has(element.id)).toBe(false);
     });
   });
 });

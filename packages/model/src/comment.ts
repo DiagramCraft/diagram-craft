@@ -4,6 +4,7 @@ import type { CRDTMap, CRDTRoot } from './collaboration/crdt';
 import type { DiagramDocument } from './diagramDocument';
 import { assert } from '@diagram-craft/utils/assert';
 import { EventEmitter } from '@diagram-craft/utils/event';
+import { UnitOfWork } from './unitOfWork';
 
 export type CommentState = 'unresolved' | 'resolved';
 
@@ -168,6 +169,11 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> {
   addComment(comment: Comment): void {
     const serialized = comment.serialize();
     this.commentsMap.set(comment.id, serialized);
+    if (comment.element) {
+      const uow = new UnitOfWork(comment.element.diagram);
+      comment.element.commentsUpdated(uow);
+      uow.commit();
+    }
     this.emit('commentAdded', { comment });
   }
 
@@ -176,6 +182,11 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> {
       const serialized = comment.serialize();
       this.commentsMap.set(comment.id, serialized);
       this.emit('commentUpdated', { comment });
+      if (comment.element) {
+        const uow = new UnitOfWork(comment.element.diagram);
+        comment.element.commentsUpdated(uow);
+        uow.commit();
+      }
     }
   }
 
@@ -194,8 +205,17 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> {
         this.removeComment(reply.id);
       }
 
+      const comment = this.getComment(commentId);
+
       // Then delete the comment itself
       this.commentsMap.delete(commentId);
+
+      if (comment?.element) {
+        const uow = new UnitOfWork(comment.element.diagram);
+        comment.element.commentsUpdated(uow);
+        uow.commit();
+      }
+
       this.emit('commentRemoved', { commentId });
     }
   }
