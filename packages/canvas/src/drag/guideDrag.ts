@@ -83,17 +83,18 @@ export class GuideCreateDrag extends BaseGuideDrag {
 
   private guide: Guide | undefined;
   private readonly mainSvg: SVGSVGElement;
+  private rect: DOMRect;
 
   constructor(diagram: Diagram, guideType: GuideType) {
     super(diagram, guideType);
 
     this.mainSvg = document.querySelector('svg.canvas.editable-canvas') as SVGSVGElement;
     assert.present(this.mainSvg);
+    this.rect = this.mainSvg.getBoundingClientRect();
   }
 
   onDrag(event: DragEvents.DragStart): void {
-    const rect = this.mainSvg.getBoundingClientRect();
-    const canvasPoint = { x: event.offset.x - rect.left, y: event.offset.y - rect.top };
+    const canvasPoint = { x: event.offset.x - this.rect.left, y: event.offset.y - this.rect.top };
     const diagramPoint = this.diagram.viewBox.toDiagramPoint(canvasPoint);
 
     const rawPosition = this.guideType === 'horizontal' ? diagramPoint.y : diagramPoint.x;
