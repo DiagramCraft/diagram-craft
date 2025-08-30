@@ -3,6 +3,8 @@ import { Application } from '../../application';
 import { CommentDialog } from '../components/CommentDialog';
 import { Comment } from '@diagram-craft/model/comment';
 import { assert } from '@diagram-craft/utils/assert';
+import { newid } from '@diagram-craft/utils/id';
+import { UserState } from '../../UserState';
 
 export const commentActions = (application: Application) => ({
   COMMENT_ADD: new CommentAddAction(application),
@@ -30,7 +32,23 @@ class CommentAddAction extends AbstractAction<undefined, Application> {
           diagram,
           selectedElement
         },
-        () => {}
+        data => {
+          const userState = UserState.get().awarenessState;
+          const comment = new Comment(
+            diagram,
+            selectedElement ? 'element' : 'diagram',
+            newid(),
+            data.message,
+            userState.name,
+            new Date(),
+            'unresolved',
+            selectedElement,
+            undefined,
+            userState.color
+          );
+
+          diagram.document.commentManager.addComment(comment);
+        }
       )
     );
   }
@@ -42,17 +60,21 @@ class CommentEditAction extends AbstractAction<{ comment: Comment }, Application
   }
 
   execute(arg: Partial<{ comment: Comment }>): void {
-    assert.present(arg.comment);
+    const comment = arg.comment;
+    assert.present(comment);
     const diagram = this.context.model.activeDiagram;
 
     this.context.ui.showDialog(
       CommentDialog.create(
         {
           diagram,
-          selectedElement: arg.comment.element,
-          comment: arg.comment
+          selectedElement: comment.element,
+          comment: comment
         },
-        () => {}
+        data => {
+          comment.edit(data.message);
+          diagram.document.commentManager.updateComment(comment);
+        }
       )
     );
   }

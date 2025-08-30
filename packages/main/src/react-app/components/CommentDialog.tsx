@@ -1,19 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { Comment } from '@diagram-craft/model/comment';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { newid } from '@diagram-craft/utils/id';
-import { UserState } from '../../UserState';
 import { DialogCommand } from '@diagram-craft/canvas/context';
-import { EmptyObject } from '@diagram-craft/utils/types';
 
 type CommentDialogProps = {
   open: boolean;
   onOpenChange?: (open: boolean) => void;
   onCancel?: () => void;
-  onOk?: (data: EmptyObject) => void;
+  onOk?: (data: { message: string }) => void;
   diagram: Diagram;
   selectedElement?: DiagramElement;
   comment?: Comment;
@@ -50,30 +47,8 @@ export const CommentDialog = (props: CommentDialogProps) => {
     setSubmitError(undefined);
 
     try {
-      if (isEditing && props.comment) {
-        props.comment.edit(message.trim());
-        props.diagram.document.commentManager.updateComment(props.comment);
-        props.onCommentUpdated?.(props.comment);
-      } else {
-        const userState = UserState.get().awarenessState;
-        const comment = new Comment(
-          props.diagram,
-          props.selectedElement ? 'element' : 'diagram',
-          newid(),
-          message.trim(),
-          userState.name,
-          new Date(),
-          'unresolved',
-          props.selectedElement,
-          undefined,
-          userState.color
-        );
-
-        props.diagram.document.commentManager.addComment(comment);
-      }
-
+      props.onOk?.({ message: message.trim() });
       handleCancel();
-      props.onOk?.({});
     } catch (error) {
       setSubmitError(
         `Failed to ${isEditing ? 'update' : 'add'} comment: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -127,11 +102,11 @@ export const CommentDialog = (props: CommentDialogProps) => {
 
 CommentDialog.create = (
   props: { diagram: Diagram; selectedElement?: DiagramElement; comment?: Comment },
-  onOk: (data: EmptyObject) => void = () => {},
+  onOk: (data: { message: string }) => void = () => {},
   onCancel: () => void = () => {}
 ): DialogCommand<
   { diagram: Diagram; selectedElement?: DiagramElement; comment?: Comment },
-  EmptyObject
+  { message: string }
 > => {
   return {
     id: 'comment',
