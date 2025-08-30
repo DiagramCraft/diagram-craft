@@ -5,6 +5,12 @@ import { Comment } from '@diagram-craft/model/comment';
 import { assert } from '@diagram-craft/utils/assert';
 import { newid } from '@diagram-craft/utils/id';
 import { UserState } from '../../UserState';
+import {
+  AbstractSelectionAction,
+  ElementType,
+  MultipleType
+} from '@diagram-craft/canvas-app/actions/abstractSelectionAction';
+import type { DiagramElement } from '@diagram-craft/model/diagramElement';
 
 export const commentActions = (application: Application) => ({
   COMMENT_ADD: new CommentAddAction(application),
@@ -15,16 +21,23 @@ declare global {
   interface ActionMap extends ReturnType<typeof commentActions> {}
 }
 
-class CommentAddAction extends AbstractAction<undefined, Application> {
+class CommentAddAction extends AbstractSelectionAction<Application, { elementId: string }> {
   constructor(application: Application) {
-    super(application);
+    super(application, MultipleType.SingleOnly, ElementType.Both, undefined, true);
   }
 
-  execute(): void {
+  execute(arg: Partial<{ elementId: string }>): void {
     const diagram = this.context.model.activeDiagram;
-    const selectionState = diagram.selectionState;
-    const selectedElement =
-      selectionState.elements.length === 1 ? selectionState.elements[0] : undefined;
+
+    let selectedElement: DiagramElement | undefined;
+    if (arg.elementId) {
+      selectedElement = diagram.lookup(arg.elementId);
+    } else {
+      const selectionState = diagram.selectionState;
+      selectedElement =
+        selectionState.elements.length === 1 ? selectionState.elements[0] : undefined;
+    }
+    assert.present(selectedElement);
 
     this.context.ui.showDialog(
       CommentDialog.create(

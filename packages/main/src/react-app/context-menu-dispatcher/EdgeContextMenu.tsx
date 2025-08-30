@@ -1,5 +1,6 @@
 import { ActionContextMenuItem } from '../components/ActionContextMenuItem';
 import { ContextMenuTarget } from '@diagram-craft/canvas/context';
+import * as ContextMenu from '@radix-ui/react-context-menu';
 
 export const EdgeContextMenu = (props: Props) => {
   return (
@@ -24,6 +25,10 @@ export const EdgeContextMenu = (props: Props) => {
         Delete waypoint
       </ActionContextMenuItem>
       <ActionContextMenuItem action={'EDGE_FLIP'}>Flip edge</ActionContextMenuItem>
+      <ContextMenu.Separator className="cmp-context-menu__separator" />
+      <ActionContextMenuItem action={'COMMENT_ADD'} arg={{ elementId: props.target.id }}>
+        Add Comment
+      </ActionContextMenuItem>
     </>
   );
 };
