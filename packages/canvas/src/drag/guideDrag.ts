@@ -7,7 +7,6 @@ import { SnapManager } from '@diagram-craft/model/snap/snapManager';
 import { assert } from '@diagram-craft/utils/assert';
 import { Line } from '@diagram-craft/geometry/line';
 import { Range } from '@diagram-craft/geometry/range';
-import { rect } from '../component/vdom-svg';
 
 const isFreeDrag = (m: Modifiers) => m.altKey;
 
