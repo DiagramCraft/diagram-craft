@@ -26,12 +26,12 @@ class CommentAddAction extends AbstractSelectionAction<Application, { elementId:
     super(application, MultipleType.SingleOnly, ElementType.Both, undefined, true);
   }
 
-  execute(arg: Partial<{ elementId: string }>): void {
+  execute(arg?: Partial<{ elementId: string }>): void {
     const diagram = this.context.model.activeDiagram;
 
     let selectedElement: DiagramElement | undefined;
-    if (arg.elementId) {
-      selectedElement = diagram.lookup(arg.elementId);
+    if (arg?.elementId) {
+      selectedElement = diagram.lookup(arg?.elementId);
     } else {
       const selectionState = diagram.selectionState;
       selectedElement =
