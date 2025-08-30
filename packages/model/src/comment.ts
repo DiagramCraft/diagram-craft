@@ -1,4 +1,4 @@
-import { Diagram } from './diagram';
+import type { Diagram } from './diagram';
 import { DiagramElement } from './diagramElement';
 import type { CRDTMap } from './collaboration/crdt';
 import { EventEmitter } from '@diagram-craft/utils/event';
