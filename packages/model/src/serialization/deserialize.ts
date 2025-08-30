@@ -229,21 +229,6 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
     if (document.props?.stencils) {
       doc.props.recentStencils.set(document.props?.stencils);
     }
-
-    if (document.comments) {
-      for (const serializedComment of document.comments) {
-        const comment = Comment.deserialize(serializedComment, doc);
-
-        if (comment.isStale()) {
-          comment.staleSince ??= new Date();
-          if (comment.staleSince.getTime() < Date.now() - 1000 * 60 * 60 * 24 * 30) {
-            continue;
-          }
-        }
-
-        doc.commentManager.addComment(comment);
-      }
-    }
   });
 
   if (document.attachments) {
@@ -322,6 +307,21 @@ const deserializeDiagrams = <T extends Diagram>(
 
     dest.push(newDiagram);
     uow.commit();
+
+    if ($d.comments) {
+      for (const serializedComment of $d.comments) {
+        const comment = Comment.deserialize(serializedComment, newDiagram);
+
+        if (comment.isStale()) {
+          comment.staleSince ??= new Date();
+          if (comment.staleSince.getTime() < Date.now() - 1000 * 60 * 60 * 24 * 30) {
+            continue;
+          }
+        }
+
+        newDiagram.commentManager.addComment(comment);
+      }
+    }
 
     deserializeDiagrams(doc, $d.diagrams, diagramFactory).forEach(d =>
       doc.addDiagram(d, newDiagram)

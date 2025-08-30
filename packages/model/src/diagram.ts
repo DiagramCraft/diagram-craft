@@ -24,6 +24,7 @@ import { watch, WatchableValue } from '@diagram-craft/utils/watchableValue';
 import { CRDTProp } from './collaboration/datatypes/crdtProp';
 import { CRDTObject } from './collaboration/datatypes/crdtObject';
 import { Guide } from './types';
+import { CommentManager, type SerializedComment } from './comment';
 
 export type DiagramIteratorOpts = {
   nest?: boolean;
@@ -86,6 +87,7 @@ export type DiagramCRDT = {
   props: FlatCRDTMap;
   layers: CRDTMap<LayerManagerCRDT>;
   guides: CRDTMap<Record<string, Guide>>;
+  comments: CRDTMap<Record<string, SerializedComment>>;
 };
 
 export const makeDiagramMapper = (
@@ -136,6 +138,8 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   readonly nodeLookup = new Map<string, DiagramNode>();
   readonly edgeLookup = new Map<string, DiagramEdge>();
   readonly undoManager = new UndoManager(this);
+
+  readonly commentManager: CommentManager;
 
   constructor(id: string, name: string, document: DiagramDocument, crdt?: CRDTMap<DiagramCRDT>) {
     super();
@@ -202,6 +206,11 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     this.on('elementChange', e => toggleHasEdgesWithLineHops('change', e.element));
     this.on('elementAdd', e => toggleHasEdgesWithLineHops('add', e.element));
     this.on('elementRemove', e => toggleHasEdgesWithLineHops('remove', e.element));
+
+    this.commentManager = new CommentManager(
+      this,
+      this._crdt.get().get('comments', () => document.root.factory.makeMap())!
+    );
   }
 
   get id() {

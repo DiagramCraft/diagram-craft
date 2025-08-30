@@ -43,6 +43,7 @@ export type SerializedDiagram = {
     zoom: number;
   };
   canvas: Canvas;
+  comments?: ReadonlyArray<SerializedComment>;
 };
 
 export interface SerializedDiagramDocument {
@@ -51,7 +52,6 @@ export interface SerializedDiagramDocument {
   customPalette: ReadonlyArray<string>;
   styles: SerializedStyles;
   schemas: ReadonlyArray<DataSchema>;
-  comments?: ReadonlyArray<SerializedComment>;
   props?: {
     stencils?: ReadonlyArray<string>;
     query?: {

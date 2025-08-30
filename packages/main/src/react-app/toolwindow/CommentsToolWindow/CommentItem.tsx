@@ -95,7 +95,7 @@ export const CommentItem = ({
       userState.color
     );
 
-    diagram.document.commentManager.addComment(newComment);
+    diagram.commentManager.addComment(newComment);
     setReplyText('');
   }, [diagram, comment, replyText]);
 
@@ -110,7 +110,7 @@ export const CommentItem = ({
           cancelLabel: 'No'
         },
         () => {
-          diagram.document.commentManager.removeComment(comment.id);
+          diagram.commentManager.removeComment(comment.id);
         }
       )
     );

@@ -75,6 +75,7 @@ const ClauseList = (props: ClauseListProps) => {
               <Select.Item value={'query'}>Query</Select.Item>
               <Select.Item value={'props'}>Property</Select.Item>
               <Select.Item value={'tags'}>Tags</Select.Item>
+              <Select.Item value={'comment'}>Comment</Select.Item>
               {!props.indent && <Select.Item value={'any'}>Any</Select.Item>}
             </Select.Root>
             {c.type === 'query' && (
@@ -155,7 +156,23 @@ const ClauseList = (props: ClauseListProps) => {
                 placeholder="Select tags..."
               />
             )}
-            {c.type !== 'query' && c.type !== 'any' && c.type !== 'props' && c.type !== 'tags' && (
+            {c.type === 'comment' && (
+              <Select.Root
+                value={c.state ?? 'any'}
+                placeholder={'Any comment state'}
+                onChange={state => {
+                  const newClauses = [...props.clauses];
+                  // @ts-ignore
+                  newClauses[idx].state = state === 'any' ? undefined : state;
+                  props.onChange(newClauses);
+                }}
+              >
+                <Select.Item value={'any'}>Any</Select.Item>
+                <Select.Item value={'unresolved'}>Unresolved</Select.Item>
+                <Select.Item value={'resolved'}>Resolved</Select.Item>
+              </Select.Root>
+            )}
+            {c.type !== 'query' && c.type !== 'any' && c.type !== 'props' && c.type !== 'tags' && c.type !== 'comment' && (
               <div></div>
             )}
 

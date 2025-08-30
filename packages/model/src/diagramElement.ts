@@ -131,6 +131,12 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
     });
   }
 
+  commentsUpdated(uow: UnitOfWork) {
+    uow.updateElement(this);
+    this._diagram.emit('elementChange', { element: this });
+    this._cache?.clear();
+  }
+
   abstract getAttachmentsInUse(): Array<string>;
 
   abstract invalidate(uow: UnitOfWork): void;

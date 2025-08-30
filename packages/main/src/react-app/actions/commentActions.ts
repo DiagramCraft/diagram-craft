@@ -37,7 +37,6 @@ class CommentAddAction extends AbstractSelectionAction<Application, { elementId:
       selectedElement =
         selectionState.elements.length === 1 ? selectionState.elements[0] : undefined;
     }
-    assert.present(selectedElement);
 
     this.context.ui.showDialog(
       CommentDialog.create(
@@ -60,7 +59,7 @@ class CommentAddAction extends AbstractSelectionAction<Application, { elementId:
             userState.color
           );
 
-          diagram.document.commentManager.addComment(comment);
+          diagram.commentManager.addComment(comment);
         }
       )
     );
@@ -86,7 +85,7 @@ class CommentEditAction extends AbstractAction<{ comment: Comment }, Application
         },
         data => {
           comment.edit(data.message);
-          diagram.document.commentManager.updateComment(comment);
+          diagram.commentManager.updateComment(comment);
         }
       )
     );
