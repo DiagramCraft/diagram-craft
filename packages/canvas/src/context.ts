@@ -18,6 +18,9 @@ export interface UIActions {
 
   showNodeLinkPopup: (point: Point, sourceNodeId: string, edgeId: string) => void;
 
+  /**
+   * Show dialog using centralized dialog system. Dialogs must be registered in App.tsx.
+   */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   showDialog: (command: DialogCommand<any, any>) => void;
 }
@@ -36,11 +39,15 @@ export interface Context {
   actions: Partial<ActionMap>;
 }
 
+/**
+ * Dialog command for centralized dialog system. All dialogs are rendered in App.tsx.
+ * Pattern: Dialog components handle presentation, actions use onOk for business logic.
+ */
 export interface DialogCommand<P, D> {
-  id: string;
-  props: P;
-  onOk: (data: D) => void;
-  onCancel?: () => void;
+  id: string; // Must match dialog ID check in App.tsx (e.g., dialogState?.id === 'comment')
+  props: P; // Props passed to the dialog component
+  onOk: (data: D) => void; // Business logic callback - handle data processing here
+  onCancel?: () => void; // Optional cancel callback
 }
 
 type MessageDialogProps = {
