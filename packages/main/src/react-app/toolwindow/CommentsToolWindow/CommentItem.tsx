@@ -12,7 +12,6 @@ import { newid } from '@diagram-craft/utils/id';
 import { getElementNameFromComment } from './utils';
 import { addHighlight, Highlights, removeHighlight } from '@diagram-craft/canvas/highlight';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
-import { CommentDialog } from '../../toolbar/CommentDialog';
 
 export type CommentItemProps = {
   comment: Comment;
@@ -76,7 +75,6 @@ export const CommentItem = ({
   const application = useApplication();
   const diagram = useDiagram();
   const [replyText, setReplyText] = useState<string>('');
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState<boolean>(false);
 
   const canReply = level < 2;
 
@@ -144,7 +142,7 @@ export const CommentItem = ({
         </div>
         <div className={styles.comment__menu}>
           <CommentItemMenu
-            onEditComment={() => setIsEditDialogOpen(true)}
+            onEditComment={() => application.actions.COMMENT_EDIT!.execute({ comment })}
             onChangeState={() => onResolve(comment)}
             canChangeState={!comment.isReply()}
             state={comment.state}
@@ -206,13 +204,6 @@ export const CommentItem = ({
       )}
 
       {children}
-
-      <CommentDialog
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-        diagram={diagram}
-        comment={comment}
-      />
     </div>
   );
 };

@@ -6,10 +6,14 @@ import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { newid } from '@diagram-craft/utils/id';
 import { UserState } from '../../UserState';
+import { DialogCommand } from '@diagram-craft/canvas/context';
+import { EmptyObject } from '@diagram-craft/utils/types';
 
 type CommentDialogProps = {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
+  onOpenChange?: (open: boolean) => void;
+  onCancel?: () => void;
+  onOk?: (data: EmptyObject) => void;
   diagram: Diagram;
   selectedElement?: DiagramElement;
   comment?: Comment;
@@ -69,6 +73,7 @@ export const CommentDialog = (props: CommentDialogProps) => {
       }
 
       handleCancel();
+      props.onOk?.({});
     } catch (error) {
       setSubmitError(
         `Failed to ${isEditing ? 'update' : 'add'} comment: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -82,7 +87,8 @@ export const CommentDialog = (props: CommentDialogProps) => {
     setMessage('');
     setSubmitError(undefined);
     setIsSubmitting(false);
-    props.onOpenChange(false);
+    props.onCancel?.();
+    props.onOpenChange?.(false);
   };
 
   return (
@@ -117,4 +123,20 @@ export const CommentDialog = (props: CommentDialogProps) => {
       </div>
     </Dialog>
   );
+};
+
+CommentDialog.create = (
+  props: { diagram: Diagram; selectedElement?: DiagramElement; comment?: Comment },
+  onOk: (data: EmptyObject) => void = () => {},
+  onCancel: () => void = () => {}
+): DialogCommand<
+  { diagram: Diagram; selectedElement?: DiagramElement; comment?: Comment },
+  EmptyObject
+> => {
+  return {
+    id: 'comment',
+    props,
+    onOk,
+    onCancel
+  };
 };

@@ -65,6 +65,7 @@ import { Preview } from './react-app/Preview';
 import { ShapeSelectDialog } from './react-app/ShapeSelectDialog';
 import { ZoomTool } from '@diagram-craft/canvas-app/tools/zoomTool';
 import { AwarenessToolbar } from './react-app/AwarenessToolbar';
+import { CommentDialog } from './react-app/components/CommentDialog';
 import { Progress, ProgressCallback } from '@diagram-craft/model/types';
 import { FullScreenProgress } from './react-app/components/FullScreenProgress';
 import type { DiagramFactory, DocumentFactory } from '@diagram-craft/model/factory';
@@ -282,182 +283,190 @@ export const App = (props: {
   return (
     <PortalContextProvider>
       <ApplicationContext.Provider value={{ application: application.current }}>
-      {progress === undefined ||
-        (progress?.status !== 'complete' && (
-          <FullScreenProgress
-            message={progress?.message ?? ''}
-            isError={progress?.status === 'error'}
+        {progress === undefined ||
+          (progress?.status !== 'complete' && (
+            <FullScreenProgress
+              message={progress?.message ?? ''}
+              isError={progress?.status === 'error'}
+            />
+          ))}
+
+        <ConfigurationContext.Provider
+          value={{
+            palette: {
+              primary: defaultPalette
+            },
+            fonts: {
+              'Times': 'Times',
+              'Arial': 'Arial',
+              'Sans Serif': 'sans-serif',
+              'Helvetica': 'Helvetica',
+              'Verdana': 'Verdana',
+              'Courier': 'Courier',
+              'Comic Sans': 'Comic Sans MS',
+              'Impact': 'Impact',
+              'Tahoma': 'Tahoma',
+              'Trebuchet': 'Trebuchet MS',
+              'Georgia': 'Georgia'
+            }
+          }}
+        >
+          {/* Dialogs */}
+          <FileDialog
+            open={dialogState?.id === 'fileOpen'}
+            {...dialogState?.props}
+            onOk={dialogState?.onOk}
+            onCancel={dialogState?.onCancel}
           />
-        ))}
+          <ImageInsertDialog
+            open={dialogState?.id === 'imageInsert'}
+            {...dialogState?.props}
+            onOk={dialogState?.onOk}
+            onCancel={dialogState?.onCancel}
+          />
+          <TableInsertDialog
+            open={dialogState?.id === 'tableInsert'}
+            {...dialogState?.props}
+            onOk={dialogState?.onOk}
+            onCancel={dialogState?.onCancel}
+          />
+          <ReferenceLayerDialog
+            open={dialogState?.id === 'newReferenceLayer'}
+            {...dialogState?.props}
+            onOk={dialogState?.onOk}
+            onCancel={dialogState?.onCancel}
+          />
+          <StringInputDialog
+            open={dialogState?.id === 'stringInput'}
+            {...dialogState?.props}
+            onOk={dialogState?.onOk}
+            onCancel={dialogState?.onCancel}
+          />
+          <RuleEditorDialog
+            open={dialogState?.id === 'ruleEditor'}
+            {...dialogState?.props}
+            onOk={dialogState?.onOk}
+            onCancel={dialogState?.onCancel}
+          />
+          <MessageDialog
+            open={dialogState?.id === 'message'}
+            {...dialogState?.props}
+            onOk={dialogState?.onOk}
+            onCancel={dialogState?.onCancel}
+          />
+          <JSONDialog
+            open={dialogState?.id === 'json'}
+            {...dialogState?.props}
+            onOk={dialogState?.onOk}
+            onCancel={dialogState?.onCancel}
+          />
+          <ExternalDataLinkDialog
+            open={dialogState?.id === 'externalDataLink'}
+            {...dialogState?.props}
+            onOk={dialogState?.onOk}
+            onCancel={dialogState?.onCancel}
+          />
+          <ShapeSelectDialog
+            open={dialogState?.id === 'shapeSelect'}
+            {...dialogState?.props}
+            onOk={dialogState?.onOk}
+            onCancel={dialogState?.onCancel}
+          />
+          <CommentDialog
+            open={dialogState?.id === 'comment'}
+            {...dialogState?.props}
+            onOk={dialogState?.onOk}
+            onCancel={dialogState?.onCancel}
+          />
 
-      <ConfigurationContext.Provider
-        value={{
-          palette: {
-            primary: defaultPalette
-          },
-          fonts: {
-            'Times': 'Times',
-            'Arial': 'Arial',
-            'Sans Serif': 'sans-serif',
-            'Helvetica': 'Helvetica',
-            'Verdana': 'Verdana',
-            'Courier': 'Courier',
-            'Comic Sans': 'Comic Sans MS',
-            'Impact': 'Impact',
-            'Tahoma': 'Tahoma',
-            'Trebuchet': 'Trebuchet MS',
-            'Georgia': 'Georgia'
-          }
-        }}
-      >
-        {/* Dialogs */}
-        <FileDialog
-          open={dialogState?.id === 'fileOpen'}
-          {...dialogState?.props}
-          onOk={dialogState?.onOk}
-          onCancel={dialogState?.onCancel}
-        />
-        <ImageInsertDialog
-          open={dialogState?.id === 'imageInsert'}
-          {...dialogState?.props}
-          onOk={dialogState?.onOk}
-          onCancel={dialogState?.onCancel}
-        />
-        <TableInsertDialog
-          open={dialogState?.id === 'tableInsert'}
-          {...dialogState?.props}
-          onOk={dialogState?.onOk}
-          onCancel={dialogState?.onCancel}
-        />
-        <ReferenceLayerDialog
-          open={dialogState?.id === 'newReferenceLayer'}
-          {...dialogState?.props}
-          onOk={dialogState?.onOk}
-          onCancel={dialogState?.onCancel}
-        />
-        <StringInputDialog
-          open={dialogState?.id === 'stringInput'}
-          {...dialogState?.props}
-          onOk={dialogState?.onOk}
-          onCancel={dialogState?.onCancel}
-        />
-        <RuleEditorDialog
-          open={dialogState?.id === 'ruleEditor'}
-          {...dialogState?.props}
-          onOk={dialogState?.onOk}
-          onCancel={dialogState?.onCancel}
-        />
-        <MessageDialog
-          open={dialogState?.id === 'message'}
-          {...dialogState?.props}
-          onOk={dialogState?.onOk}
-          onCancel={dialogState?.onCancel}
-        />
-        <JSONDialog
-          open={dialogState?.id === 'json'}
-          {...dialogState?.props}
-          onOk={dialogState?.onOk}
-          onCancel={dialogState?.onCancel}
-        />
-        <ExternalDataLinkDialog
-          open={dialogState?.id === 'externalDataLink'}
-          {...dialogState?.props}
-          onOk={dialogState?.onOk}
-          onCancel={dialogState?.onCancel}
-        />
-        <ShapeSelectDialog
-          open={dialogState?.id === 'shapeSelect'}
-          {...dialogState?.props}
-          onOk={dialogState?.onOk}
-          onCancel={dialogState?.onCancel}
-        />
-
-        <div id="app" className={'dark-theme'}>
-          <div id="menu">
-            <MainMenu />
-            <MainToolbar dirty={dirty} />
-            <AwarenessToolbar />
-            <AuxToolbar />
-          </div>
-
-          <div id="window-area">
-            <div id="toolbar">
-              <ContextSpecificToolbar />
+          <div id="app" className={'dark-theme'}>
+            <div id="menu">
+              <MainMenu />
+              <MainToolbar dirty={dirty} />
+              <AwarenessToolbar />
+              <AuxToolbar />
             </div>
 
-            <LeftSidebar />
-            <RightSidebar />
+            <div id="window-area">
+              <div id="toolbar">
+                <ContextSpecificToolbar />
+              </div>
 
-            <div id="canvas-area" className={'light-theme'}>
-              <ErrorBoundary>
-                <ContextMenu.Root>
-                  <ContextMenu.Trigger asChild={true}>
-                    <EditableCanvas
-                      id={`diagram-${$d.id}`}
-                      ref={svgRef}
-                      diagram={$d}
-                      /* Note: this uid here to force redraw in case the diagram is reloaded */
-                      key={$d.uid}
-                      actionMap={actionMap}
-                      tools={tools}
-                      keyMap={keyMap}
-                      offset={
-                        (userState.current.panelLeft ?? -1) >= 0
-                          ? {
-                              x: 250, // Corresponding to left panel width
-                              y: 0
-                            }
-                          : Point.ORIGIN
-                      }
-                      onDrop={canvasDropHandler($d)}
-                      onDragOver={canvasDragOverHandler($d)}
-                      context={application.current}
-                    />
-                  </ContextMenu.Trigger>
-                  <ContextMenu.Portal>
-                    <ContextMenu.Content className="cmp-context-menu">
-                      <ContextMenuDispatcher
-                        state={contextMenuTarget}
-                        createContextMenu={state => {
-                          if (state.type === 'canvas') {
-                            return (
-                              <CanvasContextMenu target={state as ContextMenuTarget<'canvas'>} />
-                            );
-                          } else if (state.type === 'selection') {
-                            return <SelectionContextMenu />;
-                          } else {
-                            return <EdgeContextMenu target={state as ContextMenuTarget<'edge'>} />;
-                          }
-                        }}
+              <LeftSidebar />
+              <RightSidebar />
+
+              <div id="canvas-area" className={'light-theme'}>
+                <ErrorBoundary>
+                  <ContextMenu.Root>
+                    <ContextMenu.Trigger asChild={true}>
+                      <EditableCanvas
+                        id={`diagram-${$d.id}`}
+                        ref={svgRef}
+                        diagram={$d}
+                        /* Note: this uid here to force redraw in case the diagram is reloaded */
+                        key={$d.uid}
+                        actionMap={actionMap}
+                        tools={tools}
+                        keyMap={keyMap}
+                        offset={
+                          (userState.current.panelLeft ?? -1) >= 0
+                            ? {
+                                x: 250, // Corresponding to left panel width
+                                y: 0
+                              }
+                            : Point.ORIGIN
+                        }
+                        onDrop={canvasDropHandler($d)}
+                        onDragOver={canvasDragOverHandler($d)}
+                        context={application.current}
                       />
-                    </ContextMenu.Content>
-                  </ContextMenu.Portal>
-                </ContextMenu.Root>
-              </ErrorBoundary>
+                    </ContextMenu.Trigger>
+                    <ContextMenu.Portal>
+                      <ContextMenu.Content className="cmp-context-menu">
+                        <ContextMenuDispatcher
+                          state={contextMenuTarget}
+                          createContextMenu={state => {
+                            if (state.type === 'canvas') {
+                              return (
+                                <CanvasContextMenu target={state as ContextMenuTarget<'canvas'>} />
+                              );
+                            } else if (state.type === 'selection') {
+                              return <SelectionContextMenu />;
+                            } else {
+                              return (
+                                <EdgeContextMenu target={state as ContextMenuTarget<'edge'>} />
+                              );
+                            }
+                          }}
+                        />
+                      </ContextMenu.Content>
+                    </ContextMenu.Portal>
+                  </ContextMenu.Root>
+                </ErrorBoundary>
 
-              <Ruler orientation={'horizontal'} />
-              <Ruler orientation={'vertical'} />
-              <CanvasOutline />
+                <Ruler orientation={'horizontal'} />
+                <Ruler orientation={'vertical'} />
+                <CanvasOutline />
 
-              <NodeTypePopup
-                {...popoverState}
-                onClose={() => setPopoverState(NodeTypePopup.INITIAL_STATE)}
-              />
+                <NodeTypePopup
+                  {...popoverState}
+                  onClose={() => setPopoverState(NodeTypePopup.INITIAL_STATE)}
+                />
+              </div>
+
+              <div id="tabs">
+                <DocumentTabs document={doc} />
+
+                <LayerIndicator />
+              </div>
             </div>
 
-            <div id="tabs">
-              <DocumentTabs document={doc} />
-
-              <LayerIndicator />
-            </div>
+            <HelpMessage helpState={helpState.current} />
           </div>
 
-          <HelpMessage helpState={helpState.current} />
-        </div>
-
-        {preview && <Preview onClose={() => setPreview(false)} />}
-      </ConfigurationContext.Provider>
-    </ApplicationContext.Provider>
+          {preview && <Preview onClose={() => setPreview(false)} />}
+        </ConfigurationContext.Provider>
+      </ApplicationContext.Provider>
     </PortalContextProvider>
   );
 };
