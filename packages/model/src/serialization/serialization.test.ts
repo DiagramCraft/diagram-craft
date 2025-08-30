@@ -234,7 +234,7 @@ describe('serialization', () => {
           'author1',
           new Date('2024-01-01T10:00:00Z')
         );
-        originalDoc.commentManager.addComment(diagramComment);
+        diagram.commentManager.addComment(diagramComment);
 
         // Add element comment
         const elementComment = new Comment(
@@ -247,7 +247,7 @@ describe('serialization', () => {
           'unresolved',
           node
         );
-        originalDoc.commentManager.addComment(elementComment);
+        diagram.commentManager.addComment(elementComment);
 
         // Add reply comment
         const replyComment = new Comment(
@@ -261,7 +261,7 @@ describe('serialization', () => {
           node,
           'comment-2'
         );
-        originalDoc.commentManager.addComment(replyComment);
+        diagram.commentManager.addComment(replyComment);
 
         originalDoc.addDiagram(diagram);
 
@@ -276,16 +276,18 @@ describe('serialization', () => {
         );
 
         // Verify
-        const allComments = newDoc.commentManager.getAllComments();
+        const allComments = newDoc.diagrams[0].commentManager.getAllComments();
         expect(allComments).toHaveLength(3);
 
-        const diagramComments = newDoc.commentManager.getCommentsForDiagram(newDoc.diagrams[0]);
+        const diagramComments = newDoc.diagrams[0].commentManager.getCommentsForDiagram(
+          newDoc.diagrams[0]
+        );
         expect(diagramComments).toHaveLength(1);
         expect(diagramComments[0].message).toBe('This is a diagram comment');
         expect(diagramComments[0].author).toBe('author1');
 
         const newNode = (newDoc.diagrams[0].layers.all[0] as RegularLayer).elements[0];
-        const elementComments = newDoc.commentManager.getCommentsForElement(newNode);
+        const elementComments = newDoc.diagrams[0].commentManager.getCommentsForElement(newNode);
         expect(elementComments).toHaveLength(2);
 
         const originalElementComment = elementComments.find(c => c.id === 'comment-2');
@@ -316,7 +318,7 @@ describe('serialization', () => {
         );
 
         // Verify
-        expect(newDoc.commentManager.getAllComments()).toHaveLength(0);
+        expect(newDoc.diagrams[0].commentManager.getAllComments()).toHaveLength(0);
       });
     });
   });

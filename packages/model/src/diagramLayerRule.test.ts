@@ -144,7 +144,7 @@ describe.each(Backends.all())('RuleLayer [%s]', (_name, backend) => {
         'unresolved',
         element
       );
-      diagram.document.commentManager.addComment(comment);
+      diagram.commentManager.addComment(comment);
 
       const rule = {
         id: 'comment-rule',
@@ -192,8 +192,8 @@ describe.each(Backends.all())('RuleLayer [%s]', (_name, backend) => {
         element
       );
 
-      diagram.document.commentManager.addComment(unresolvedComment);
-      diagram.document.commentManager.addComment(resolvedComment);
+      diagram.commentManager.addComment(unresolvedComment);
+      diagram.commentManager.addComment(resolvedComment);
 
       const rule = {
         id: 'unresolved-comment-rule',
@@ -230,7 +230,7 @@ describe.each(Backends.all())('RuleLayer [%s]', (_name, backend) => {
         element
       );
 
-      diagram.document.commentManager.addComment(resolvedComment);
+      diagram.commentManager.addComment(resolvedComment);
 
       const rule = {
         id: 'resolved-comment-rule',
@@ -291,7 +291,7 @@ describe.each(Backends.all())('RuleLayer [%s]', (_name, backend) => {
         element
       );
 
-      diagram.document.commentManager.addComment(resolvedComment);
+      diagram.commentManager.addComment(resolvedComment);
 
       const rule = {
         id: 'unresolved-comment-rule',

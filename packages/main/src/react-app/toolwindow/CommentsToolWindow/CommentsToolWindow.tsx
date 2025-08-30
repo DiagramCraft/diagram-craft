@@ -23,9 +23,9 @@ export const CommentsToolWindow = () => {
   const [groupBy, setGroupBy] = useState<GroupBy>('none');
   const [hideResolved, setHideResolved] = useState<boolean>(false);
 
-  useEventListener(diagram.document.commentManager, 'commentAdded', redraw);
-  useEventListener(diagram.document.commentManager, 'commentUpdated', redraw);
-  useEventListener(diagram.document.commentManager, 'commentRemoved', redraw);
+  useEventListener(diagram.commentManager, 'commentAdded', redraw);
+  useEventListener(diagram.commentManager, 'commentUpdated', redraw);
+  useEventListener(diagram.commentManager, 'commentRemoved', redraw);
 
   const handleResolveComment = useCallback(
     (comment: Comment) => {
@@ -34,7 +34,7 @@ export const CommentsToolWindow = () => {
       } else {
         comment.resolve();
       }
-      diagram.document.commentManager.updateComment(comment);
+      diagram.commentManager.updateComment(comment);
     },
     [diagram]
   );
@@ -48,7 +48,7 @@ export const CommentsToolWindow = () => {
   };
 
   // Compute comment threads on every render (will be fast since there aren't many comments)
-  const allComments = diagram.document.commentManager.getAllCommentsForDiagram(diagram);
+  const allComments = diagram.commentManager.getAllCommentsForDiagram(diagram);
 
   // Filter out resolved comments if hideResolved is true
   const filteredComments = hideResolved
@@ -103,19 +103,12 @@ export const CommentsToolWindow = () => {
         <Accordion.ItemContent>
           <div className={styles['comments-tool-window']}>
             {commentThreads.length === 0 ? (
-              <div className={styles['comments-tool-window__no-comments']}>
-                No comments
-              </div>
+              <div className={styles['comments-tool-window__no-comments']}>No comments</div>
             ) : (
               groupedThreads.map(group => (
-                <div
-                  key={group.key}
-                  className={styles['comments-tool-window__group']}
-                >
+                <div key={group.key} className={styles['comments-tool-window__group']}>
                   {group.title && (
-                    <div className={styles['comments-tool-window__group-title']}>
-                      {group.title}
-                    </div>
+                    <div className={styles['comments-tool-window__group-title']}>{group.title}</div>
                   )}
                   {group.threads.map(thread => (
                     <div key={thread.root.id} className={styles['comments-tool-window__thread']}>
@@ -154,7 +147,10 @@ const NestedReplies = ({ replies, onResolve, formatDate }: NestedRepliesProps) =
     <>
       {replies.map(replyNode => (
         <div key={replyNode.comment.id}>
-          <div className={styles['comments-tool-window__nested-reply']} style={{ marginLeft: `${(replyNode.level - 1) * 20}px` }}>
+          <div
+            className={styles['comments-tool-window__nested-reply']}
+            style={{ marginLeft: `${(replyNode.level - 1) * 20}px` }}
+          >
             <CommentItem
               comment={replyNode.comment}
               onResolve={onResolve}

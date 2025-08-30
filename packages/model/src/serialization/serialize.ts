@@ -29,7 +29,6 @@ export const serializeDiagramDocument = async (
     customPalette: serializeCustomPalette(document.customPalette),
     styles: serializeStyles(document.styles),
     schemas: serializeSchemas(document.data.schemas),
-    comments: serializeComments(document.commentManager),
     props: {
       query: {
         history: document.props.query.history,
@@ -92,6 +91,7 @@ export const serializeDiagram = (diagram: Diagram): SerializedDiagram => {
     activeLayerId: diagram.activeLayer.id,
     diagrams: diagram.diagrams.map(d => serializeDiagram(d)),
     guides: diagram.guides.length > 0 ? diagram.guides : undefined,
+    comments: serializeComments(diagram.commentManager),
     zoom: {
       x: diagram.viewBox.offset.x,
       y: diagram.viewBox.offset.y,

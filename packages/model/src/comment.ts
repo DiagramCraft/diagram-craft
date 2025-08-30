@@ -1,8 +1,6 @@
 import { Diagram } from './diagram';
 import { DiagramElement } from './diagramElement';
-import type { CRDTMap, CRDTRoot } from './collaboration/crdt';
-import type { DiagramDocument } from './diagramDocument';
-import { assert } from '@diagram-craft/utils/assert';
+import type { CRDTMap } from './collaboration/crdt';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { UnitOfWork } from './unitOfWork';
 
@@ -75,10 +73,7 @@ export class Comment {
     };
   }
 
-  static deserialize(serialized: SerializedComment, document: DiagramDocument): Comment {
-    const diagram = document.byId(serialized.diagramId!);
-    assert.present(diagram);
-
+  static deserialize(serialized: SerializedComment, diagram: Diagram): Comment {
     const element =
       serialized.type === 'element' ? diagram.lookup(serialized.elementId!) : undefined;
 
@@ -117,14 +112,11 @@ export type CommentManagerEvents = {
 };
 
 export class CommentManager extends EventEmitter<CommentManagerEvents> {
-  private readonly commentsMap: CRDTMap<Record<string, SerializedComment>>;
-
   constructor(
-    private document: DiagramDocument,
-    root: CRDTRoot
+    private diagram: Diagram,
+    private commentsMap: CRDTMap<Record<string, SerializedComment>>
   ) {
     super();
-    this.commentsMap = root.getMap('comments');
     this.commentsMap.on('remoteDelete', p => {
       this.emit('commentRemoved', { commentId: p.key });
     });
@@ -142,7 +134,7 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> {
       serializedComments.push(comment);
     }
     return serializedComments
-      .map(sc => Comment.deserialize(sc, this.document))
+      .map(sc => Comment.deserialize(sc, this.diagram))
       .filter(c => c !== null) as Comment[];
   }
 
@@ -223,7 +215,7 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> {
   getComment(commentId: string): Comment | undefined {
     const serialized = this.commentsMap.get(commentId);
     if (!serialized) return undefined;
-    return Comment.deserialize(serialized, this.document);
+    return Comment.deserialize(serialized, this.diagram);
   }
 
   getReplies(comment: Comment): Comment[] {

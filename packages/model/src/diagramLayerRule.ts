@@ -218,9 +218,7 @@ export class RuleLayer extends Layer<RuleLayer> {
         }
         results.push(result);
       } else if (clause.type === 'comment') {
-        const allComments = this.diagram.document.commentManager.getAllCommentsForDiagram(
-          this.diagram
-        );
+        const allComments = this.diagram.commentManager.getAllCommentsForDiagram(this.diagram);
 
         const matchingElements = new Set<string>();
         for (const comment of allComments) {

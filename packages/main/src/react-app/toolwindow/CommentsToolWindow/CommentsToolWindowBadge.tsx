@@ -6,11 +6,11 @@ export const CommentsToolWindowBadge = () => {
   const diagram = useDiagram();
   const redraw = useRedraw();
 
-  useEventListener(diagram.document.commentManager, 'commentAdded', redraw);
-  useEventListener(diagram.document.commentManager, 'commentUpdated', redraw);
-  useEventListener(diagram.document.commentManager, 'commentRemoved', redraw);
+  useEventListener(diagram.commentManager, 'commentAdded', redraw);
+  useEventListener(diagram.commentManager, 'commentUpdated', redraw);
+  useEventListener(diagram.commentManager, 'commentRemoved', redraw);
 
-  const commentCount = diagram.document.commentManager
+  const commentCount = diagram.commentManager
     .getAllCommentsForDiagram(diagram)
     .filter(c => !c.isReply())
     .filter(c => c.state !== 'resolved').length;

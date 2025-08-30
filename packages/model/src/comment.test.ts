@@ -3,6 +3,8 @@ import { Comment, CommentManager } from './comment';
 import { TestModel } from './test-support/builder';
 import { DiagramNode } from './diagramNode';
 import { Backends, standardTestModel } from './collaboration/collaborationTestUtils';
+import type { DiagramDocument } from './diagramDocument';
+import type { Diagram } from './diagram';
 
 describe.each(Backends.all())('Comment [%s]', (_name, backend) => {
   beforeEach(() => {
@@ -90,7 +92,7 @@ describe.each(Backends.all())('Comment [%s]', (_name, backend) => {
         elementId: element.id
       };
 
-      const comment = Comment.deserialize(serialized, diagram.document);
+      const comment = Comment.deserialize(serialized, diagram);
 
       expect(comment).not.toBeNull();
       expect(comment!.type).toBe('element');
@@ -102,16 +104,16 @@ describe.each(Backends.all())('Comment [%s]', (_name, backend) => {
   describe('CommentManager', () => {
     let commentManager: CommentManager;
     let commentManager2: CommentManager | undefined;
-    let doc: any;
-    let diagram: any;
+    let doc: DiagramDocument;
+    let diagram: Diagram;
 
     beforeEach(() => {
       const { doc1, doc2 } = standardTestModel(backend);
       doc = doc1;
       diagram = doc.diagrams[0];
 
-      commentManager = doc.commentManager;
-      commentManager2 = doc2 ? doc2.commentManager : undefined;
+      commentManager = diagram.commentManager;
+      commentManager2 = doc2 ? doc2.diagrams[0].commentManager : undefined;
     });
 
     it('should add and retrieve comment', () => {
@@ -444,7 +446,14 @@ describe.each(Backends.all())('Comment [%s]', (_name, backend) => {
       commentManager2.on('commentUpdated', updateEventSpy2);
       commentManager2.on('commentRemoved', removeEventSpy2);
 
-      const comment = new Comment(diagram, 'diagram', 'lifecycle-test', 'Test', 'Author', new Date());
+      const comment = new Comment(
+        diagram,
+        'diagram',
+        'lifecycle-test',
+        'Test',
+        'Author',
+        new Date()
+      );
 
       // Act & Verify - Add
       commentManager.addComment(comment);
