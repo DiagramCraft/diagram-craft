@@ -3,152 +3,131 @@
   position: fixed;
   inset: 0;
   z-index: 1000;
-}
 
-.commandPalette__content {
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  box-shadow: 0 10px 38px -10px rgba(22, 23, 24, 0.35), 0 10px 20px -15px rgba(22, 23, 24, 0.2);
-  position: fixed;
-  top: 20%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 600px;
-  height: 400px;
-  z-index: 1001;
-  display: flex;
-  flex-direction: column;
+  .commandPalette__content {
+    background: var(--primary-bg);
+    border: 1px solid var(--primary-border);
+    border-radius: 8px;
+    box-shadow: var(--popover-shadow);
+    position: fixed;
+    top: 20%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    height: 400px;
+    z-index: 1001;
+    display: flex;
+    flex-direction: column;
 
+    &[data-has-query="false"] {
+      height: 80px;
 
-  &[data-has-query="false"] {
-    height: 80px;
+      .commandPalette__searchContainer {
+        border-bottom: none;
+      }
+    }
 
     .commandPalette__searchContainer {
-      border-bottom: none;
+      padding: 16px;
+      border-bottom: 1px solid var(--primary-border);
+      flex-shrink: 0;
+
+      .commandPalette__searchInput {
+        width: 100%;
+        padding: 12px;
+        font-size: 16px;
+        border: 1px solid var(--cmp-border);
+        border-radius: var(--cmp-radius);
+        background: var(--cmp-bg);
+        color: var(--cmp-fg);
+        outline: none;
+        box-sizing: border-box;
+
+        &:focus {
+          border-color: var(--cmp-focus-border);
+          box-shadow: var(--cmp-focus-shadow);
+        }
+      }
+    }
+
+    .commandPalette__commandList {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+      min-height: 0;
+
+      .commandPalette__commandItem {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.15s ease;
+
+        &:hover {
+          background: var(--cmp-hover-bg);
+        }
+
+        &.commandPalette__commandItem--selected {
+          background: var(--accent-9) !important;
+          color: white !important;
+
+          .commandPalette__commandLabel,
+          .commandPalette__commandDescription {
+            color: white !important;
+          }
+
+          &:hover {
+            background: var(--accent-9) !important;
+          }
+        }
+
+        &.commandPalette__commandItem--disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+
+          &:hover {
+            background: transparent;
+          }
+        }
+
+        .commandPalette__commandInfo {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+
+          .commandPalette__commandLabel {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--cmp-fg);
+          }
+
+          .commandPalette__commandDescription {
+            font-size: 12px;
+            color: var(--tertiary-fg);
+          }
+        }
+
+        .commandPalette__keyBinding {
+          font-size: 12px;
+          font-family: monospace;
+          background: var(--secondary-bg);
+          color: var(--menu-keybinding);
+          padding: 4px 8px;
+          border-radius: var(--cmp-radius);
+          border: 1px solid var(--cmp-border);
+        }
+      }
+
+      .commandPalette__noResults {
+        text-align: center;
+        color: var(--tertiary-fg);
+        font-style: italic;
+        padding: 24px;
+      }
     }
   }
 }
 
-.commandPalette__searchContainer {
-  padding: 16px;
-  border-bottom: 1px solid var(--color-border);
-  flex-shrink: 0;
-}
-
-.commandPalette__searchInput {
-  width: 100%;
-  padding: 12px;
-  font-size: 16px;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  background: var(--color-input-bg);
-  color: var(--color-text);
-  outline: none;
-  box-sizing: border-box;
-}
-
-.commandPalette__searchInput:focus {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px var(--color-primary-alpha);
-}
-
-.commandPalette__commandList {
-  flex: 1;
-  overflow-y: auto;
-  padding: 8px;
-  min-height: 0;
-}
-
-.commandPalette__commandItem {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-
-.commandPalette__commandItem:hover {
-  background: var(--color-bg-hover);
-}
-
-.commandPalette__commandItem--selected {
-  background: var(--color-primary);
-  color: white;
-}
-
-.commandPalette__commandItem--selected .commandPalette__commandLabel,
-.commandPalette__commandItem--selected .commandPalette__commandDescription {
-  color: white;
-}
-
-.commandPalette__commandItem--disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.commandPalette__commandItem--disabled:hover {
-  background: transparent;
-}
-
-.commandPalette__commandInfo {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.commandPalette__commandLabel {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--color-text);
-}
-
-.commandPalette__commandDescription {
-  font-size: 12px;
-  color: var(--color-text-muted);
-}
-
-.commandPalette__keyBinding {
-  font-size: 12px;
-  font-family: monospace;
-  background: var(--color-bg-secondary);
-  color: var(--color-text-muted);
-  padding: 4px 8px;
-  border-radius: 4px;
-  border: 1px solid var(--color-border);
-}
-
-.commandPalette__noResults {
-  text-align: center;
-  color: var(--color-text-muted);
-  font-style: italic;
-  padding: 24px;
-}
-
-/* Dark theme adjustments */
-:root {
-  --color-bg: #ffffff;
-  --color-bg-hover: #f5f5f5;
-  --color-bg-secondary: #f8f9fa;
-  --color-text: #1a1a1a;
-  --color-text-muted: #666666;
-  --color-border: #e1e4e8;
-  --color-primary: #0366d6;
-  --color-primary-alpha: rgba(3, 102, 214, 0.2);
-  --color-input-bg: #ffffff;
-}
-
-.dark-theme {
-  --color-bg: #1a1a1a;
-  --color-bg-hover: #2d2d2d;
-  --color-bg-secondary: #2a2a2a;
-  --color-text: #e1e4e8;
-  --color-text-muted: #8b949e;
-  --color-border: #30363d;
-  --color-primary: #58a6ff;
-  --color-primary-alpha: rgba(88, 166, 255, 0.2);
-  --color-input-bg: #21262d;
-}
