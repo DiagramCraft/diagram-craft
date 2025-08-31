@@ -19,6 +19,15 @@
   z-index: 1001;
   display: flex;
   flex-direction: column;
+
+
+  &[data-has-query="false"] {
+    height: 80px;
+
+    .commandPalette__searchContainer {
+      border-bottom: none;
+    }
+  }
 }
 
 .commandPalette__searchContainer {

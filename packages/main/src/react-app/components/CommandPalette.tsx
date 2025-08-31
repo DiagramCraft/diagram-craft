@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActionName,
   formatKeyBinding,
@@ -36,14 +36,19 @@ export const CommandPalette = ({ open, onClose }: CommandPaletteProps) => {
     for (const [actionId, action] of Object.entries(actionMap)) {
       if (!action) continue;
 
+      // Skip actions that are not available in command palette
+      if (action.availableInCommandPalette === false) continue;
+
       const keyBindings = findKeyBindingsForAction(actionId as ActionName, keyMap);
       const keyBinding = keyBindings.length > 0 ? formatKeyBinding(keyBindings[0]) : undefined;
 
-      // Generate a human-readable label from the action ID
-      const label = actionId
-        .split('_')
-        .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
-        .join(' ');
+      // Use description if available, otherwise generate label from action ID
+      const label =
+        action.description ??
+        actionId
+          .split('_')
+          .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+          .join(' ');
 
       result.push({
         id: actionId as ActionName,
@@ -134,23 +139,24 @@ export const CommandPalette = ({ open, onClose }: CommandPaletteProps) => {
   }, [searchText]);
 
   // Scroll selected item into view when selectedIndex changes
-  useEffect(() => {
-    scrollSelectedIntoView();
-  }, [selectedIndex, scrollSelectedIntoView]);
+  useEffect(scrollSelectedIntoView, [selectedIndex, scrollSelectedIntoView]);
 
   // Reset search when dialog opens
   useEffect(() => {
-    if (open) {
-      setSearchText('');
-      setSelectedIndex(0);
-    }
+    if (!open) return;
+    setSearchText('');
+    setSelectedIndex(0);
   }, [open]);
 
   if (!open) return null;
 
   return (
     <div className={styles.commandPalette} onClick={onClose}>
-      <div className={styles.commandPalette__content} onClick={e => e.stopPropagation()}>
+      <div
+        className={styles.commandPalette__content}
+        onClick={e => e.stopPropagation()}
+        data-has-query={searchText.trim() !== ''}
+      >
         <div className={styles.commandPalette__searchContainer}>
           <input
             className={styles.commandPalette__searchInput}
@@ -163,46 +169,44 @@ export const CommandPalette = ({ open, onClose }: CommandPaletteProps) => {
           />
         </div>
 
-        <div ref={commandListRef} className={styles.commandPalette__commandList}>
-          {filteredCommands.length === 0 ? (
-            <div className={styles.commandPalette__noResults}>
-              {searchText.trim() ? 'No commands found' : 'Start typing to search for commands...'}
-            </div>
-          ) : (
-            filteredCommands.map((command, index) => (
-              <div
-                key={command.id}
-                ref={el => commandItemRefs.current[index] = el}
-                className={`${styles.commandPalette__commandItem} ${
-                  index === selectedIndex ? styles['commandPalette__commandItem--selected'] : ''
-                } ${!command.isEnabled ? styles['commandPalette__commandItem--disabled'] : ''}`}
-                onClick={() => command.isEnabled && executeCommand(command.id)}
-                onMouseEnter={() => {
-                  if (!isKeyboardNavigation) {
-                    setSelectedIndex(index);
-                  }
-                }}
-                onMouseMove={() => {
-                  if (isKeyboardNavigation) {
-                    setIsKeyboardNavigation(false);
-                  }
-                }}
-              >
-                <div className={styles.commandPalette__commandInfo}>
-                  <div className={styles.commandPalette__commandLabel}>{command.label}</div>
-                  {command.description && (
+        {searchText.trim() !== '' && (
+          <div ref={commandListRef} className={styles.commandPalette__commandList}>
+            {filteredCommands.length === 0 ? (
+              <div className={styles.commandPalette__noResults}>No commands found</div>
+            ) : (
+              filteredCommands.map((command, index) => (
+                <div
+                  key={command.id}
+                  ref={el => (commandItemRefs.current[index] = el)}
+                  className={`${styles.commandPalette__commandItem} ${
+                    index === selectedIndex ? styles['commandPalette__commandItem--selected'] : ''
+                  } ${!command.isEnabled ? styles['commandPalette__commandItem--disabled'] : ''}`}
+                  onClick={() => command.isEnabled && executeCommand(command.id)}
+                  onMouseEnter={() => {
+                    if (!isKeyboardNavigation) {
+                      setSelectedIndex(index);
+                    }
+                  }}
+                  onMouseMove={() => {
+                    if (isKeyboardNavigation) {
+                      setIsKeyboardNavigation(false);
+                    }
+                  }}
+                >
+                  <div className={styles.commandPalette__commandInfo}>
+                    <div className={styles.commandPalette__commandLabel}>{command.label}</div>
                     <div className={styles.commandPalette__commandDescription}>
                       {command.description}
                     </div>
+                  </div>
+                  {command.keyBinding && (
+                    <div className={styles.commandPalette__keyBinding}>{command.keyBinding}</div>
                   )}
                 </div>
-                {command.keyBinding && (
-                  <div className={styles.commandPalette__keyBinding}>{command.keyBinding}</div>
-                )}
-              </div>
-            ))
-          )}
-        </div>
+              ))
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

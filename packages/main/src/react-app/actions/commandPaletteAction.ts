@@ -2,6 +2,8 @@ import { AbstractAction } from '@diagram-craft/canvas/action';
 import { Application } from '../../application';
 
 export class CommandPaletteAction extends AbstractAction<undefined, Application> {
+  availableInCommandPalette = false;
+
   execute() {
     this.context.ui.showDialog({
       id: 'commandPalette',
