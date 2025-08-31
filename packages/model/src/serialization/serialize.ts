@@ -19,11 +19,12 @@ import { ReferenceLayer } from '../diagramLayerReference';
 import { RuleLayer } from '../diagramLayerRule';
 import { RegularLayer } from '../diagramLayerRegular';
 import { CommentManager, SerializedComment } from '../comment';
+import { hash64 } from '@diagram-craft/utils/hash';
 
 export const serializeDiagramDocument = async (
   document: DiagramDocument
 ): Promise<SerializedDiagramDocument> => {
-  return {
+  const serialized = {
     diagrams: document.diagrams.map(serializeDiagram),
     attachments: await serializeAttachments(document.attachments),
     customPalette: serializeCustomPalette(document.customPalette),
@@ -41,6 +42,19 @@ export const serializeDiagramDocument = async (
       data: document.data.provider?.serialize(),
       templates: document.data.templates.all
     }
+  };
+
+  // Generate hash based on the serialized JSON (excluding any existing hash)
+  const jsonString = JSON.stringify(serialized);
+  const jsonBytes = new TextEncoder().encode(jsonString);
+  const hashValue = hash64(jsonBytes);
+  
+  // Set the hash on both the serialized data and the original document
+  document.hash = hashValue;
+  
+  return {
+    ...serialized,
+    hash: hashValue
   };
 };
 

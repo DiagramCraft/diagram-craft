@@ -175,6 +175,11 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
 ): Promise<void> => {
   const diagrams = document.diagrams;
 
+  // Read hash if present
+  if (document.hash) {
+    doc.hash = document.hash;
+  }
+
   doc.root.transact(() => {
     if (document.customPalette) {
       doc.customPalette.setColors(document.customPalette);
