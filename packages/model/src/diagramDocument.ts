@@ -59,6 +59,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
 
   // Transient properties
   url: string | undefined;
+  hash: string | undefined;
 
   constructor(
     readonly nodeDefinitions: NodeDefinitionRegistry,

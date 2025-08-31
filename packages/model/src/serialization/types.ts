@@ -64,6 +64,7 @@ export interface SerializedDiagramDocument {
     data?: string;
     templates: DataTemplate[];
   };
+  hash?: string;
 }
 
 export interface SerializedStyles {

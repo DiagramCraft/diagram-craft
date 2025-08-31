@@ -5,10 +5,17 @@ import { ProgressCallback } from '@diagram-craft/model/types';
 import { CollaborationConfig } from '@diagram-craft/model/collaboration/collaborationConfig';
 import type { CRDTRoot } from '@diagram-craft/model/collaboration/crdt';
 import type { DiagramFactory, DocumentFactory } from '@diagram-craft/model/factory';
+import type { SerializedDiagramDocument } from '@diagram-craft/model/serialization/types';
 
 const KEY = 'autosave';
 
-let needsSave: { url: string | undefined; doc: DiagramDocument } | undefined = undefined;
+let needsSave:
+  | {
+      url: string | undefined;
+      doc: DiagramDocument;
+      callback?: (d: SerializedDiagramDocument) => void;
+    }
+  | undefined = undefined;
 
 export const Autosave = {
   load: async (
@@ -46,27 +53,37 @@ export const Autosave = {
 
   exists: () => !!localStorage.getItem(KEY),
 
-  save: async (url: string | undefined, doc: DiagramDocument) => {
+  save: async (
+    url: string | undefined,
+    doc: DiagramDocument,
+    callback?: (d: SerializedDiagramDocument) => void
+  ) => {
     if (!CollaborationConfig.idNoOp) return undefined;
 
+    const diagram = await serializeDiagramDocument(doc);
+    if (callback) callback(diagram);
     localStorage.setItem(
       KEY,
       JSON.stringify({
         url,
-        diagram: await serializeDiagramDocument(doc)
+        diagram: diagram
       })
     );
   },
 
   // TODO: Handle multiple different URLs and docs
-  asyncSave: (url: string | undefined, doc: DiagramDocument) => {
-    needsSave = { url, doc };
+  asyncSave: (
+    url: string | undefined,
+    doc: DiagramDocument,
+    callback?: (d: SerializedDiagramDocument) => void
+  ) => {
+    needsSave = { url, doc, callback };
   }
 };
 
 setInterval(() => {
   if (needsSave) {
-    Autosave.save(needsSave.url, needsSave.doc);
+    Autosave.save(needsSave.url, needsSave.doc, needsSave.callback);
     needsSave = undefined;
   }
 }, 1000);

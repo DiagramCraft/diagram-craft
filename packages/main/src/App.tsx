@@ -197,6 +197,7 @@ export const App = (props: {
 
       Autosave.clear();
       setDirty(false);
+      setHash(doc.hash);
 
       userState.current.addRecentFile(url);
     },
@@ -222,10 +223,12 @@ export const App = (props: {
 
       Autosave.clear();
       setDirty(false);
+      setHash(doc.hash);
     },
     clearDirty: () => {
       Autosave.clear();
       setDirty(false);
+      setHash(application.current.model.activeDocument.hash);
     }
   };
 
@@ -234,6 +237,7 @@ export const App = (props: {
   });
 
   const [dirty, setDirty] = useState(Autosave.exists());
+  const [hash, setHash] = useState(application.current.model.activeDocument.hash);
   const [popoverState, setPopoverState] = useState<NodeTypePopupState>(NodeTypePopup.INITIAL_STATE);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [dialogState, setDialogState] = useState<DialogCommand<any, any> | undefined>(undefined);
@@ -260,7 +264,9 @@ export const App = (props: {
   const autosave = (event: any) => {
     if (event.silent) return;
 
-    Autosave.asyncSave(url, doc);
+    Autosave.asyncSave(url, doc, s => {
+      setDirty(s.hash !== hash);
+    });
     setDirty(true);
   };
 

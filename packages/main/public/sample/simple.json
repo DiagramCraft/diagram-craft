@@ -65,7 +65,94 @@
               },
               "metadata": {
                 "style": "default-edge"
-              }
+              },
+              "children": [
+                {
+                  "id": "t2",
+                  "type": "node",
+                  "nodeType": "text",
+                  "bounds": {
+                    "x": 296.9006456241033,
+                    "y": 227.93651362984218,
+                    "r": 0.18311081726248446,
+                    "h": 12,
+                    "w": 64
+                  },
+                  "anchors": [
+                    {
+                      "id": "c",
+                      "start": {
+                        "x": 0.5,
+                        "y": 0.5
+                      },
+                      "clip": true,
+                      "type": "center"
+                    },
+                    {
+                      "id": "500_0",
+                      "start": {
+                        "x": 0.5,
+                        "y": 0
+                      },
+                      "clip": false,
+                      "type": "point",
+                      "normal": 4.71238898038469,
+                      "isPrimary": true
+                    },
+                    {
+                      "id": "1000_500",
+                      "start": {
+                        "x": 1,
+                        "y": 0.5
+                      },
+                      "clip": false,
+                      "type": "point",
+                      "normal": -3.552713678800501e-15,
+                      "isPrimary": false
+                    },
+                    {
+                      "id": "500_1000",
+                      "start": {
+                        "x": 0.5,
+                        "y": 1
+                      },
+                      "clip": false,
+                      "type": "point",
+                      "normal": 1.5707963267948968,
+                      "isPrimary": true
+                    },
+                    {
+                      "id": "0_500",
+                      "start": {
+                        "x": 0,
+                        "y": 0.5
+                      },
+                      "clip": false,
+                      "type": "point",
+                      "normal": 3.1415926535897896,
+                      "isPrimary": false
+                    }
+                  ],
+                  "children": [],
+                  "props": {
+                    "labelForEdgeId": "e1",
+                    "text": {
+                      "align": "center"
+                    },
+                    "fill": {
+                      "enabled": true,
+                      "color": "#ffffff"
+                    }
+                  },
+                  "metadata": {
+                    "style": "default-text",
+                    "textStyle": "default-text-default"
+                  },
+                  "texts": {
+                    "text": "Hello world"
+                  }
+                }
+              ]
             },
             {
               "id": "e2",
@@ -87,7 +174,8 @@
               "props": {},
               "metadata": {
                 "style": "default-edge"
-              }
+              },
+              "children": []
             },
             {
               "id": "3",
@@ -237,91 +325,6 @@
               },
               "texts": {
                 "text": ""
-              }
-            },
-            {
-              "id": "t2",
-              "type": "node",
-              "nodeType": "text",
-              "bounds": {
-                "x": 296.9006456241033,
-                "y": 227.93651362984218,
-                "w": 64,
-                "h": 12,
-                "r": 0.18311081726248446
-              },
-              "anchors": [
-                {
-                  "id": "c",
-                  "start": {
-                    "x": 0.5,
-                    "y": 0.5
-                  },
-                  "clip": true,
-                  "type": "center"
-                },
-                {
-                  "id": "500_0",
-                  "start": {
-                    "x": 0.5,
-                    "y": 0
-                  },
-                  "clip": false,
-                  "type": "point",
-                  "normal": 4.71238898038469,
-                  "isPrimary": true
-                },
-                {
-                  "id": "1000_500",
-                  "start": {
-                    "x": 1,
-                    "y": 0.5
-                  },
-                  "clip": false,
-                  "type": "point",
-                  "normal": -3.552713678800501e-15,
-                  "isPrimary": false
-                },
-                {
-                  "id": "500_1000",
-                  "start": {
-                    "x": 0.5,
-                    "y": 1
-                  },
-                  "clip": false,
-                  "type": "point",
-                  "normal": 1.5707963267948968,
-                  "isPrimary": true
-                },
-                {
-                  "id": "0_500",
-                  "start": {
-                    "x": 0,
-                    "y": 0.5
-                  },
-                  "clip": false,
-                  "type": "point",
-                  "normal": 3.1415926535897896,
-                  "isPrimary": false
-                }
-              ],
-              "children": [],
-              "props": {
-                "labelForEdgeId": "e1",
-                "text": {
-                  "align": "center"
-                },
-                "fill": {
-                  "enabled": true,
-                  "color": "#ffffff"
-                }
-              },
-              "metadata": {
-                "style": "default-text",
-                "textStyle": "default-text-default"
-              },
-              "texts": {
-                "text": "Hello world"
               }
             },
             {
@@ -944,6 +947,7 @@
           ]
         }
       ],
+      "activeLayerId": "adjustment",
       "diagrams": [
         {
           "id": "doc1.1",
@@ -1100,7 +1104,9 @@
               ]
             }
           ],
+          "activeLayerId": "layer1",
           "diagrams": [],
+          "comments": [],
           "zoom": {
             "x": 0,
             "y": 0,
@@ -1114,6 +1120,7 @@
           }
         }
       ],
+      "comments": [],
       "zoom": {
         "x": -280,
         "y": -30,
@@ -1361,7 +1368,9 @@
           ]
         }
       ],
+      "activeLayerId": "layer2",
       "diagrams": [],
+      "comments": [],
       "zoom": {
         "x": -280,
         "y": -30,
@@ -1537,7 +1546,9 @@
           ]
         }
       ],
+      "activeLayerId": "layer1",
       "diagrams": [],
+      "comments": [],
       "zoom": {
         "x": -280,
         "y": -30,
@@ -1631,10 +1642,79 @@
           "type": "longtext"
         }
       ]
+    },
+    {
+      "id": "component",
+      "name": "Component",
+      "source": "external",
+      "fields": [
+        {
+          "id": "name",
+          "name": "Name",
+          "type": "text"
+        },
+        {
+          "id": "notes",
+          "name": "Notes",
+          "type": "longtext"
+        }
+      ]
+    },
+    {
+      "id": "entity",
+      "name": "Entity",
+      "source": "external",
+      "fields": [
+        {
+          "id": "name",
+          "name": "Name",
+          "type": "text"
+        },
+        {
+          "id": "notes",
+          "name": "Notes",
+          "type": "longtext"
+        }
+      ]
+    },
+    {
+      "id": "actor",
+      "name": "Actor",
+      "source": "external",
+      "fields": [
+        {
+          "id": "role",
+          "name": "Role",
+          "type": "text"
+        },
+        {
+          "id": "notes",
+          "name": "Notes",
+          "type": "longtext"
+        }
+      ]
     }
   ],
+  "props": {
+    "query": {
+      "history": [
+        [
+          "active-layer",
+          ".elements[] | select(.edges | length > 0)"
+        ],
+        [
+          "active-layer",
+          ".elements[]"
+        ]
+      ],
+      "saved": []
+    },
+    "stencils": []
+  },
   "data": {
     "providerId": "urlDataProvider",
-    "data": "{ \"schema\": [], \"data\": [], \"schemaUrl\": \"/data/dataset1/schemas.json\", \"dataUrl\": \"/data/dataset1/data.json\" }"
-  }
+    "data": "{\"schemas\":[{\"id\":\"component\",\"name\":\"Component\",\"source\":\"external\",\"fields\":[{\"id\":\"name\",\"name\":\"Name\",\"type\":\"text\"},{\"id\":\"notes\",\"name\":\"Notes\",\"type\":\"longtext\"}]},{\"id\":\"entity\",\"name\":\"Entity\",\"source\":\"external\",\"fields\":[{\"id\":\"name\",\"name\":\"Name\",\"type\":\"text\"},{\"id\":\"notes\",\"name\":\"Notes\",\"type\":\"longtext\"}]},{\"id\":\"actor\",\"name\":\"Actor\",\"source\":\"external\",\"fields\":[{\"id\":\"role\",\"name\":\"Role\",\"type\":\"text\"},{\"id\":\"notes\",\"name\":\"Notes\",\"type\":\"longtext\"}]}],\"data\":[{\"_schemaId\":\"component\",\"_uid\":\"1\",\"name\":\"Frontend\",\"description\":\"Web frontend\"},{\"_schemaId\":\"component\",\"_uid\":\"2\",\"name\":\"Backend\",\"description\":\"NodeJS backend\"},{\"_schemaId\":\"component\",\"_uid\":\"3\",\"name\":\"Database\",\"description\":\"Postgresql database\"},{\"_schemaId\":\"actor\",\"_uid\":\"4\",\"role\":\"Administrator\",\"description\":\"Administrator\"},{\"_schemaId\":\"actor\",\"_uid\":\"5\",\"role\":\"User\",\"description\":\"User\"}],\"dataUrl\":\"/data/dataset1/data.json\",\"schemaUrl\":\"/data/dataset1/schemas.json\"}",
+    "templates": []
+  },
+  "hash": "996b85ac53b358bc"
 }
