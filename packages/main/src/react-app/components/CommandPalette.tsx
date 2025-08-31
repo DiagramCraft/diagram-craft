@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActionName,
   formatKeyBinding,
@@ -24,6 +24,8 @@ export const CommandPalette = ({ open, onClose }: CommandPaletteProps) => {
   const application = useApplication();
   const [searchText, setSearchText] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const commandListRef = useRef<HTMLDivElement>(null);
+  const commandItemRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const commands = useMemo(() => {
     const actionMap = application.actions;
@@ -109,10 +111,28 @@ export const CommandPalette = ({ open, onClose }: CommandPaletteProps) => {
     [filteredCommands, selectedIndex, executeCommand, onClose]
   );
 
+  // Scroll selected item into view
+  const scrollSelectedIntoView = useCallback(() => {
+    const selectedElement = commandItemRefs.current[selectedIndex];
+    if (selectedElement && commandListRef.current) {
+      selectedElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'nearest'
+      });
+    }
+  }, [selectedIndex]);
+
   // Reset selected index when search changes
   useEffect(() => {
     setSelectedIndex(0);
+    commandItemRefs.current = [];
   }, [searchText]);
+
+  // Scroll selected item into view when selectedIndex changes
+  useEffect(() => {
+    scrollSelectedIntoView();
+  }, [selectedIndex, scrollSelectedIntoView]);
 
   // Reset search when dialog opens
   useEffect(() => {
@@ -139,7 +159,7 @@ export const CommandPalette = ({ open, onClose }: CommandPaletteProps) => {
           />
         </div>
 
-        <div className={styles.commandPalette__commandList}>
+        <div ref={commandListRef} className={styles.commandPalette__commandList}>
           {filteredCommands.length === 0 ? (
             <div className={styles.commandPalette__noResults}>
               {searchText.trim() ? 'No commands found' : 'Start typing to search for commands...'}
@@ -148,6 +168,7 @@ export const CommandPalette = ({ open, onClose }: CommandPaletteProps) => {
             filteredCommands.map((command, index) => (
               <div
                 key={command.id}
+                ref={el => commandItemRefs.current[index] = el}
                 className={`${styles.commandPalette__commandItem} ${
                   index === selectedIndex ? styles['commandPalette__commandItem--selected'] : ''
                 } ${!command.isEnabled ? styles['commandPalette__commandItem--disabled'] : ''}`}
