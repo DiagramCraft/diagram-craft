@@ -24,6 +24,7 @@ export const CommandPalette = ({ open, onClose }: CommandPaletteProps) => {
   const application = useApplication();
   const [searchText, setSearchText] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [isKeyboardNavigation, setIsKeyboardNavigation] = useState(false);
   const commandListRef = useRef<HTMLDivElement>(null);
   const commandItemRefs = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -90,10 +91,12 @@ export const CommandPalette = ({ open, onClose }: CommandPaletteProps) => {
       switch (e.key) {
         case 'ArrowDown':
           e.preventDefault();
+          setIsKeyboardNavigation(true);
           setSelectedIndex(prev => Math.min(prev + 1, filteredCommands.length - 1));
           break;
         case 'ArrowUp':
           e.preventDefault();
+          setIsKeyboardNavigation(true);
           setSelectedIndex(prev => Math.max(prev - 1, 0));
           break;
         case 'Enter':
@@ -126,6 +129,7 @@ export const CommandPalette = ({ open, onClose }: CommandPaletteProps) => {
   // Reset selected index when search changes
   useEffect(() => {
     setSelectedIndex(0);
+    setIsKeyboardNavigation(false);
     commandItemRefs.current = [];
   }, [searchText]);
 
@@ -173,7 +177,16 @@ export const CommandPalette = ({ open, onClose }: CommandPaletteProps) => {
                   index === selectedIndex ? styles['commandPalette__commandItem--selected'] : ''
                 } ${!command.isEnabled ? styles['commandPalette__commandItem--disabled'] : ''}`}
                 onClick={() => command.isEnabled && executeCommand(command.id)}
-                onMouseEnter={() => setSelectedIndex(index)}
+                onMouseEnter={() => {
+                  if (!isKeyboardNavigation) {
+                    setSelectedIndex(index);
+                  }
+                }}
+                onMouseMove={() => {
+                  if (isKeyboardNavigation) {
+                    setIsKeyboardNavigation(false);
+                  }
+                }}
               >
                 <div className={styles.commandPalette__commandInfo}>
                   <div className={styles.commandPalette__commandLabel}>{command.label}</div>

@@ -61,9 +61,18 @@
   transition: background-color 0.15s ease;
 }
 
-.commandPalette__commandItem:hover,
-.commandPalette__commandItem--selected {
+.commandPalette__commandItem:hover {
   background: var(--color-bg-hover);
+}
+
+.commandPalette__commandItem--selected {
+  background: var(--color-primary);
+  color: white;
+}
+
+.commandPalette__commandItem--selected .commandPalette__commandLabel,
+.commandPalette__commandItem--selected .commandPalette__commandDescription {
+  color: white;
 }
 
 .commandPalette__commandItem--disabled {
