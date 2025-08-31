@@ -66,6 +66,7 @@ import { ShapeSelectDialog } from './react-app/ShapeSelectDialog';
 import { ZoomTool } from '@diagram-craft/canvas-app/tools/zoomTool';
 import { AwarenessToolbar } from './react-app/AwarenessToolbar';
 import { CommentDialog } from './react-app/components/CommentDialog';
+import { CommandPalette } from './react-app/components/CommandPalette';
 import { Progress, ProgressCallback } from '@diagram-craft/model/types';
 import { FullScreenProgress } from './react-app/components/FullScreenProgress';
 import type { DiagramFactory, DocumentFactory } from '@diagram-craft/model/factory';
@@ -377,6 +378,10 @@ export const App = (props: {
             {...dialogState?.props}
             onOk={dialogState?.onOk}
             onCancel={dialogState?.onCancel}
+          />
+          <CommandPalette
+            open={dialogState?.id === 'commandPalette'}
+            onClose={() => setDialogState(undefined)}
           />
 
           <div id="app" className={'dark-theme'}>
