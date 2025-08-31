@@ -25,8 +25,10 @@ export const CommandPalette = ({ open, onClose }: CommandPaletteProps) => {
   const [searchText, setSearchText] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isKeyboardNavigation, setIsKeyboardNavigation] = useState(false);
+  const [hasMouseMoved, setHasMouseMoved] = useState(false);
   const commandListRef = useRef<HTMLDivElement>(null);
   const commandItemRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const lastMousePos = useRef<{ x: number; y: number } | null>(null);
 
   const commands = useMemo(() => {
     const actionMap = application.actions;
@@ -146,12 +148,32 @@ export const CommandPalette = ({ open, onClose }: CommandPaletteProps) => {
     if (!open) return;
     setSearchText('');
     setSelectedIndex(0);
+    setHasMouseMoved(false);
+    lastMousePos.current = null;
   }, [open]);
+
+  // Track actual mouse movement
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    const currentPos = { x: e.clientX, y: e.clientY };
+    
+    if (lastMousePos.current) {
+      const deltaX = Math.abs(currentPos.x - lastMousePos.current.x);
+      const deltaY = Math.abs(currentPos.y - lastMousePos.current.y);
+      
+      // Only consider it mouse movement if the mouse moved more than 2 pixels
+      if (deltaX > 2 || deltaY > 2) {
+        setHasMouseMoved(true);
+        setIsKeyboardNavigation(false);
+      }
+    }
+    
+    lastMousePos.current = currentPos;
+  }, []);
 
   if (!open) return null;
 
   return (
-    <div className={styles.commandPalette} onClick={onClose}>
+    <div className={styles.commandPalette} onClick={onClose} onMouseMove={handleMouseMove}>
       <div
         className={styles.commandPalette__content}
         onClick={e => e.stopPropagation()}
@@ -170,7 +192,12 @@ export const CommandPalette = ({ open, onClose }: CommandPaletteProps) => {
         </div>
 
         {searchText.trim() !== '' && (
-          <div ref={commandListRef} className={styles.commandPalette__commandList}>
+          <div 
+            ref={commandListRef} 
+            className={`${styles.commandPalette__commandList} ${
+              hasMouseMoved ? styles['commandPalette__commandList--mouseEnabled'] : ''
+            }`}
+          >
             {filteredCommands.length === 0 ? (
               <div className={styles.commandPalette__noResults}>No commands found</div>
             ) : (
@@ -183,15 +210,11 @@ export const CommandPalette = ({ open, onClose }: CommandPaletteProps) => {
                   } ${!command.isEnabled ? styles['commandPalette__commandItem--disabled'] : ''}`}
                   onClick={() => command.isEnabled && executeCommand(command.id)}
                   onMouseEnter={() => {
-                    if (!isKeyboardNavigation) {
+                    if (hasMouseMoved && !isKeyboardNavigation) {
                       setSelectedIndex(index);
                     }
                   }}
-                  onMouseMove={() => {
-                    if (isKeyboardNavigation) {
-                      setIsKeyboardNavigation(false);
-                    }
-                  }}
+                  onMouseMove={handleMouseMove}
                 >
                   <div className={styles.commandPalette__commandInfo}>
                     <div className={styles.commandPalette__commandLabel}>{command.label}</div>
