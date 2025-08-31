@@ -20,6 +20,7 @@ import { diagramActions } from './actions/diagramActions';
 import { geometryActions } from './actions/geometryActions';
 import { toggleRulerActions } from './actions/toggleRulerAction';
 import { commentActions } from './actions/commentActions';
+import { commandPaletteActions } from './actions/commandPaletteAction';
 
 export const defaultAppActions: ActionMapFactory<Application> = application => ({
   ...toolActions(application),
@@ -41,7 +42,8 @@ export const defaultAppActions: ActionMapFactory<Application> = application => (
   ...diagramActions(application),
   ...geometryActions(application),
   ...toggleRulerActions(application),
-  ...commentActions(application)
+  ...commentActions(application),
+  ...commandPaletteActions(application)
 });
 
 export const defaultMacAppKeymap: KeyMap = {
@@ -63,5 +65,6 @@ export const defaultMacAppKeymap: KeyMap = {
   'A-Digit8': 'SIDEBAR_DATA',
 
   'M-KeyS': 'FILE_SAVE',
-  'M-KeyN': 'FILE_NEW'
+  'M-KeyN': 'FILE_NEW',
+  'M-KeyK': 'COMMAND_PALETTE'
 };

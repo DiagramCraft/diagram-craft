@@ -32,6 +32,8 @@ export type ActionContext = {
 export interface Action<T = undefined> extends Emitter<ActionEvents> {
   execute: (arg: Partial<T>) => void;
   isEnabled: (arg: Partial<T> | T) => boolean;
+  description?: string;
+  availableInCommandPalette: boolean;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -77,6 +79,9 @@ export abstract class AbstractAction<T = undefined, C extends ActionContext = Ac
   private criteria: Array<ActionCriteria> = [];
   private enabled: boolean = true;
   protected context: C;
+  
+  description?: string = undefined;
+  availableInCommandPalette: boolean = true;
 
   constructor(context: C) {
     super();
