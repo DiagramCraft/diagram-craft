@@ -12,6 +12,7 @@ import { ToolWindowPanel } from '../ToolWindowPanel';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { ToggleButton } from '@diagram-craft/app-components/ToggleButton';
 import { useDiagram } from '../../../application';
+import { isNode } from '@diagram-craft/model/diagramElement';
 
 const origins: Record<string, Point> = {
   tl: { x: 0, y: 0 },
@@ -35,9 +36,34 @@ export const ElementTransformPanel = (props: Props) => {
   const flipV = useNodeProperty(diagram, 'geometry.flipV');
   const flipH = useNodeProperty(diagram, 'geometry.flipH');
 
+  const getRelativeCoordinates = () => {
+    if (!bounds) return { x: 0, y: 0 };
+
+    const selectedNode = diagram.selectionState.nodes[0];
+    const parent = selectedNode?.parent;
+
+    // If the node has a parent group, calculate relative coordinates
+    if (
+      parent &&
+      isNode(parent) &&
+      parent.nodeType === 'group' &&
+      diagram.selectionState.nodes.length === 1
+    ) {
+      return {
+        x: bounds.x - parent.bounds.x,
+        y: bounds.y - parent.bounds.y
+      };
+    }
+
+    // Otherwise, use absolute coordinates
+    return { x: bounds.x, y: bounds.y };
+  };
+
+  const relativeCoords = getRelativeCoordinates();
+
   const transformedBounds = {
-    x: (bounds?.x ?? 0) + (bounds?.w ?? 1) * origins[origin].x,
-    y: (bounds?.y ?? 0) + (bounds?.h ?? 1) * origins[origin].y,
+    x: relativeCoords.x + (bounds?.w ?? 1) * origins[origin].x,
+    y: relativeCoords.y + (bounds?.h ?? 1) * origins[origin].y,
     w: bounds?.w ?? 1,
     h: bounds?.h ?? 1,
     r: bounds?.r ?? 0
@@ -82,6 +108,14 @@ export const ElementTransformPanel = (props: Props) => {
     newBounds.x -= transformedBounds.w * origins[origin].x;
     newBounds.y -= transformedBounds.h * origins[origin].y;
 
+    // Convert relative coordinates back to absolute if the node has a parent group
+    const selectedNode = diagram.selectionState.nodes[0];
+    const parent = selectedNode?.parent;
+    if (parent && isNode(parent) && parent.nodeType === 'group') {
+      newBounds.x += parent.bounds.x;
+      newBounds.y += parent.bounds.y;
+    }
+
     if (newBounds.w !== transformedBounds.w) {
       const dw = newBounds.w - transformedBounds.w;
       newBounds.x -= dw * origins[origin].x;
@@ -102,7 +136,10 @@ export const ElementTransformPanel = (props: Props) => {
 
     UnitOfWork.execute(diagram, uow => {
       const selectedElement = diagram.selectionState.elements[0];
-      const transforms = TransformFactory.fromTo(selectedElement.bounds, WritableBox.asBox(newBounds));
+      const transforms = TransformFactory.fromTo(
+        selectedElement.bounds,
+        WritableBox.asBox(newBounds)
+      );
       diagram.transformElements([selectedElement], transforms, uow);
       diagram.selectionState.highlights = [];
     });
