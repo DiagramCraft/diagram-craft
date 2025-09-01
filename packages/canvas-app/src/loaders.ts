@@ -43,10 +43,9 @@ export const loadFileFromUrl = async (
   diagramFactory: DiagramFactory,
   opts?: {
     root?: CRDTRoot;
-    content?: string;
   }
 ) => {
-  const content = (opts?.content ?? (await fetch(url).then(r => r.text())))!;
+  const content = (await FileSystem.loadFromUrl(url))!;
 
   const fileLoaderFactory = getFileLoaderForUrl(url);
   assert.present(fileLoaderFactory, `File loader for ${url} not found`);
@@ -58,4 +57,8 @@ export const loadFileFromUrl = async (
   await doc.load();
 
   return doc;
+};
+
+export const FileSystem = {
+  loadFromUrl: async (url: string) => fetch(url).then(r => r.text())
 };

@@ -11,7 +11,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
 
   fileOpen: () => ipcRenderer.invoke('fileOpen'),
-  //  fileSave: (data: string) => ipcRenderer.invoke('filesave', data),
+  fileSave: (url: string, data: string) => ipcRenderer.invoke('fileSave', { url, data }),
+  fileSaveAs: (url: string | undefined, data: string) =>
+    ipcRenderer.invoke('fileSaveAs', { url, data }),
+  fileLoad: (url: string) => ipcRenderer.invoke('fileLoad', url),
 
   platform: process.platform,
 

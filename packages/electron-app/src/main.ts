@@ -1,5 +1,5 @@
-import { app, BrowserWindow, Menu, shell, ipcMain, dialog } from 'electron';
-import { readFileSync } from 'fs';
+import { app, BrowserWindow, dialog, ipcMain, Menu, shell } from 'electron';
+import { readFileSync, writeFileSync } from 'fs';
 import * as path from 'path';
 
 const isDev = process.argv.includes('--dev');
@@ -76,7 +76,7 @@ const createMenu = (): void => {
           label: 'Save As...',
           accelerator: 'CmdOrCtrl+Shift+S',
           click: () => {
-            mainWindow?.webContents.send('menu-action', 'save-as-diagram');
+            mainWindow?.webContents.send('menu-action', 'FILE_SAVE_AS');
           }
         },
         { type: 'separator' },
@@ -171,15 +171,49 @@ app.whenReady().then(() => {
     });
 
     if (!result.canceled && result.filePaths.length > 0) {
-      const filePath = result.filePaths[0];
-      try {
-        const content = readFileSync(filePath, 'utf-8');
-        return { url: filePath, content };
-      } catch (error) {
-        return undefined;
-      }
+      return { url: result.filePaths[0] };
     }
     return undefined;
+  });
+
+  ipcMain.handle('fileLoad', async (_event, url) => {
+    try {
+      const content = readFileSync(url, 'utf-8');
+      return { url: url, content };
+    } catch (error) {
+      console.log(error);
+      return undefined;
+    }
+  });
+
+  ipcMain.handle('fileSave', async (_event, _action, url, content) => {
+    try {
+      writeFileSync(url, content);
+      return url;
+    } catch (error) {
+      return undefined;
+    }
+  });
+
+  ipcMain.handle('fileSaveAs', async (_event, _action, url, content) => {
+    try {
+      const result = await dialog.showSaveDialog(mainWindow!, {
+        defaultPath: url
+        /*filters: [
+          { name: 'Diagram Files', extensions: ['dcd'] },
+          { name: 'All Files', extensions: ['*'] }
+        ]*/
+      });
+
+      if (!result.canceled && result.filePath) {
+        writeFileSync(result.filePath, content);
+        return result.filePath;
+      }
+
+      return undefined;
+    } catch (error) {
+      return undefined;
+    }
   });
 });
 
