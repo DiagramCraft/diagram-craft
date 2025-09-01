@@ -71,9 +71,5 @@ export const defaultMacAppKeymap: KeyMap = {
   // View Operations
   'M-Equal': 'ZOOM_IN',
   'M-Minus': 'ZOOM_OUT',
-  'M-Digit0': 'ZOOM_FIT',
-
-  // Help & UI
-  'M-Slash': 'TOGGLE_HELP',
-  'M-KeyR': 'TOGGLE_RULER'
+  'M-Digit0': 'ZOOM_FIT'
 };

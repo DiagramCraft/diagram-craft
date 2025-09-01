@@ -53,3 +53,5 @@ coverage/
 **/local-tests
 
 packages/server-main/data
+
+dist-electron

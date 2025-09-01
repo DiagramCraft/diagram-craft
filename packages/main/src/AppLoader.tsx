@@ -71,6 +71,8 @@ const loadInitialDocument = async (
     );
     doc.addDiagram(diagram);
 
+    progress('complete', {});
+
     return { doc };
   }
 };

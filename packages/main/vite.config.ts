@@ -9,6 +9,7 @@ export default defineConfig(({ command, mode, isSsrBuild, isPreview }) => {
 
   // https://vitejs.dev/config/
   const userConfig: UserConfig = {
+    base: './',
     plugins: [react(), yaml()],
     test: {
       fakeTimers: {

@@ -1,0 +1,55 @@
+{
+  "name": "@diagram-craft/electron-app",
+  "version": "1.0.0",
+  "description": "Electron application wrapper for Diagram Craft",
+  "main": "dist/main.js",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "dev": "npm-run-all --parallel dev:*",
+    "dev:tsc": "tsc --watch",
+    "dev:electron": "wait-on dist/main.js && electron dist/main.js --dev",
+    "start": "electron dist/main.js",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1",
+    "npm-run-all": "^4.1.5",
+    "rimraf": "^5.0.5",
+    "typescript": "^5.3.3",
+    "wait-on": "^7.2.0"
+  },
+  "build": {
+    "appId": "com.diagramcraft.app",
+    "productName": "Diagram Craft",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "dist/**/*",
+      "node_modules/**/*",
+      "!node_modules/**/test/**/*",
+      "!node_modules/**/*.map"
+    ],
+    "extraResources": [
+      {
+        "from": "../main/dist",
+        "to": "app",
+        "filter": ["**/*"]
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.graphics-design"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  }
+}
