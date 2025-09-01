@@ -16,6 +16,9 @@ type KeyCode =
   | `Key${Uppercase<string>}`
   | 'Space'
   | 'Backspace'
+  | 'Equal'
+  | 'Minus'
+  | 'Slash'
   | 'ArrowLeft'
   | 'ArrowRight'
   | 'ArrowUp'
