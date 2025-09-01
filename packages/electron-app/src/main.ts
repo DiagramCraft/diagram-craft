@@ -19,7 +19,13 @@ const createWindow = (): void => {
       preload: path.join(__dirname, 'preload.js'),
       webSecurity: true
     },
-    titleBarStyle: 'default', //process.platform === 'darwin' ? 'hiddenInset' : 'default',
+    titleBarStyle: 'default',
+    ...(process.platform === 'darwin'
+      ? {
+          titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
+          trafficLightPosition: { x: 10, y: 15 }
+        }
+      : {}),
     show: false
   });
 

@@ -63,6 +63,15 @@ export const ElectronIntegration = {
     };
 
     window.electronAPI?.setMenu(mainMenuStructure);
+
+    setTimeout(() => {
+      if (window.electronAPI?.platform === 'darwin') {
+        // @ts-ignore
+        document.getElementById('menu')!.style['app-region'] = 'drag';
+        // @ts-ignore
+        document.getElementsByClassName('_menu-button')[0]!.style.display = 'none';
+      }
+    }, 100);
   }
 };
 
