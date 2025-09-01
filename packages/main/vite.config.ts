@@ -24,10 +24,6 @@ export default defineConfig(({ command, mode, isSsrBuild, isPreview }) => {
               return 'embeddable-jq';
             } else if (id.includes('node_modules')) {
               return 'vendor';
-            } else if (id.includes('canvas-nodes/')) {
-              return 'shapes';
-            } else if (id.includes('canvas-drawio/')) {
-              return 'drawio';
             } else if (id.includes('sample/')) {
               return 'sample-data';
             }
