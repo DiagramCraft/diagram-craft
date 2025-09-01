@@ -1,8 +1,35 @@
 import type { Application } from './application';
-import { AbstractAction, ActionCriteria } from '@diagram-craft/canvas/action';
+import { AbstractAction, AbstractToggleAction, ActionCriteria } from '@diagram-craft/canvas/action';
 import { assert } from '@diagram-craft/utils/assert';
 import { serializeDiagramDocument } from '@diagram-craft/model/serialization/serialize';
 import { FileSystem } from '@diagram-craft/canvas-app/loaders';
+import { mainMenuStructure } from './react-app/mainMenuData';
+import type { MenuEntry } from '@diagram-craft/electron-client-api/electron-api';
+
+const updateState = (e: MenuEntry, app: Application, recurse: boolean = false) => {
+  const state = { enabled: true, checked: false };
+  const action = app.actions[e.action ?? ''];
+  if (action) {
+    state.enabled = action.isEnabled(app);
+    action.on('actionChanged', () => {
+      state.enabled = action.isEnabled(app);
+    });
+
+    if (action instanceof AbstractToggleAction) {
+      state.checked = action.getState({});
+      action.on('actionChanged', () => {
+        state.checked = action.getState({});
+      });
+    }
+    window.electronAPI!.setMenuEntryState(e.id, state);
+  }
+
+  if (recurse) {
+    for (const sub of e.submenu ?? []) {
+      updateState(sub, app, true);
+    }
+  }
+};
 
 export const ElectronIntegration = {
   bindActions: (app: Application) => {
@@ -21,6 +48,10 @@ export const ElectronIntegration = {
 
       action.execute({});
     });
+
+    for (const e of mainMenuStructure) {
+      updateState(e, app, true);
+    }
   },
   init: () => {
     if (!window.electronAPI) return;
@@ -30,6 +61,8 @@ export const ElectronIntegration = {
       if (!res) throw new Error();
       return res.content;
     };
+
+    window.electronAPI?.setMenu(mainMenuStructure);
   }
 };
 

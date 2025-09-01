@@ -34,6 +34,7 @@
       "@diagram-craft/utils/*": ["./packages/utils/src/*"],
       "@diagram-craft/geometry/*": ["./packages/geometry/src/*"],
       "@diagram-craft/model/*": ["./packages/model/src/*"],
+      "@diagram-craft/electron-client-api/*": ["./packages/electron-client-api/src/*"],
       "@diagram-craft/canvas/*": ["./packages/canvas/src/*"],
       "@diagram-craft/canvas-app/*": ["./packages/canvas-app/src/*"],
       "@diagram-craft/canvas-edges/*": ["./packages/canvas-edges/src/*"],

@@ -8,10 +8,22 @@ export type ElectronAPI = {
   fileSave: (url: string, data: string) => Promise<string | undefined>;
   fileSaveAs: (url: string | undefined, data: string) => Promise<string | undefined>;
   fileLoad: (url: string) => Promise<{ content: string } | undefined>;
+
+  setMenu: (items: MenuEntry[]) => void;
+  setMenuEntryState: (id: string, state: { enabled: boolean; value?: boolean }) => void;
 };
 
 declare global {
   interface Window {
     electronAPI?: ElectronAPI;
   }
+}
+
+export interface MenuEntry {
+  id: string;
+  label: string;
+  action?: string;
+  type?: 'action' | 'toggle' | 'separator' | 'submenu' | 'dynamic' | 'recent';
+  submenu?: MenuEntry[];
+  disabled?: boolean;
 }

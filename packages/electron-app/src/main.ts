@@ -1,6 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain, Menu, shell } from 'electron';
 import { readFileSync, writeFileSync } from 'fs';
 import * as path from 'path';
+import type { MenuEntry } from '@diagram-craft/electron-client-api/electron-api';
 
 const isDev = process.argv.includes('--dev');
 
@@ -46,81 +47,41 @@ const createWindow = (): void => {
   });
 };
 
-const createMenu = (): void => {
-  const template: Electron.MenuItemConstructorOptions[] = [
-    {
-      label: 'File',
-      submenu: [
-        {
-          label: 'New Diagram',
-          accelerator: 'CmdOrCtrl+N',
-          click: () => {
-            mainWindow?.webContents.send('menu-action', 'new-diagram');
-          }
-        },
-        {
-          label: 'Open...',
-          accelerator: 'CmdOrCtrl+O',
-          click: () => {
-            mainWindow?.webContents.send('menu-action', 'FILE_OPEN');
-          }
-        },
-        {
-          label: 'Save',
-          accelerator: 'CmdOrCtrl+S',
-          click: () => {
-            mainWindow?.webContents.send('menu-action', 'save-diagram');
-          }
-        },
-        {
-          label: 'Save As...',
-          accelerator: 'CmdOrCtrl+Shift+S',
-          click: () => {
-            mainWindow?.webContents.send('menu-action', 'FILE_SAVE_AS');
-          }
-        },
-        { type: 'separator' },
-        {
-          label: 'Export...',
-          click: () => {
-            mainWindow?.webContents.send('menu-action', 'export-diagram');
-          }
-        },
-        { type: 'separator' },
-        { role: 'quit' }
-      ]
-    },
-    {
-      label: 'Edit',
-      submenu: [
-        { role: 'undo' },
-        { role: 'redo' },
-        { type: 'separator' },
-        { role: 'cut' },
-        { role: 'copy' },
-        { role: 'paste' },
-        { role: 'selectAll' }
-      ]
-    },
-    {
-      label: 'View',
-      submenu: [
-        { role: 'reload' },
-        { role: 'forceReload' },
-        { role: 'toggleDevTools' },
-        { type: 'separator' },
-        { role: 'resetZoom' },
-        { role: 'zoomIn' },
-        { role: 'zoomOut' },
-        { type: 'separator' },
-        { role: 'togglefullscreen' }
-      ]
-    },
-    {
-      label: 'Window',
-      submenu: [{ role: 'minimize' }, { role: 'close' }]
-    }
-  ];
+const processMenuEntry = (entry: MenuEntry): Electron.MenuItemConstructorOptions => {
+  const e: Electron.MenuItemConstructorOptions = {
+    id: entry.id,
+    label: entry.label,
+    submenu: entry.submenu ? entry.submenu.map(processMenuEntry) : undefined
+  };
+
+  if (entry.type === 'action') {
+    e.click = () => {
+      mainWindow?.webContents.send('menu-action', entry.action);
+    };
+  } else if (entry.type === 'toggle') {
+    e.click = () => {
+      mainWindow?.webContents.send('menu-action', entry.action);
+    };
+    e.type = 'checkbox';
+  } else if (entry.type === 'separator') {
+    e.type = 'separator';
+  }
+
+  return e;
+};
+
+const createMenuFrom = (entries: MenuEntry[]): void => {
+  const template: Electron.MenuItemConstructorOptions[] = [];
+
+  for (const topLevel of entries) {
+    template.push(processMenuEntry(topLevel));
+  }
+
+  if (process.platform === 'win32') {
+    (template.find(e => e.id === 'file')!.submenu! as Electron.MenuItemConstructorOptions[]).push(
+      ...[{ type: 'separator' as const }, { role: 'quit' as const }]
+    );
+  }
 
   if (process.platform === 'darwin') {
     template.unshift({
@@ -138,13 +99,10 @@ const createMenu = (): void => {
       ]
     });
 
-    (template[4].submenu as Electron.MenuItemConstructorOptions[]).push(
-      { type: 'separator' },
-      {
-        label: 'Bring All to Front',
-        role: 'front'
-      }
-    );
+    template.push({
+      label: 'Window',
+      submenu: [{ role: 'minimize' }, { role: 'close' }]
+    });
   }
 
   const menu = Menu.buildFromTemplate(template);
@@ -152,8 +110,10 @@ const createMenu = (): void => {
 };
 
 app.whenReady().then(() => {
+  Menu.setApplicationMenu(null);
+
   createWindow();
-  createMenu();
+  //createMenu();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -213,6 +173,18 @@ app.whenReady().then(() => {
       return undefined;
     } catch (error) {
       return undefined;
+    }
+  });
+
+  ipcMain.handle('menu:set', async (_event, entries) => {
+    createMenuFrom(entries);
+  });
+
+  ipcMain.handle('menu:setState', async (_event, { id, enabled, checked }) => {
+    const menuItem = Menu.getApplicationMenu()?.getMenuItemById(id);
+    if (menuItem) {
+      menuItem.enabled = enabled;
+      menuItem.checked = checked;
     }
   });
 });

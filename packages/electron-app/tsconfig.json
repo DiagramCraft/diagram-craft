@@ -15,13 +15,13 @@
     "declaration": false,
     "sourceMap": true,
     "paths": {
-      "@diagram-craft/main/*": [
-        "../main/src/*"
+      "@diagram-craft/electron-client-api/*": [
+        "../electron-client-api/src/*"
       ]
     },
     "rootDirs": [
       "./src",
-      "../main/src/*"
+      "../electron-client-api/src/*"
     ]
   },
   "include": [
