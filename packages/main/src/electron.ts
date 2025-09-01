@@ -62,10 +62,12 @@ class ElectronFileOpenAction extends AbstractAction<unknown, Application> {
   }
 
   execute(): void {
-    console.log(window.electronAPI);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    window.electronAPI?.fileOpen()?.then(async (url: any) => {
-      console.log(url);
-    });
+    window.electronAPI
+      ?.fileOpen()
+      ?.then(async (result: { url: string; content: string } | undefined) => {
+        if (result) {
+          await this.context.file.loadDocument(result.url, result.content);
+        }
+      });
   }
 }

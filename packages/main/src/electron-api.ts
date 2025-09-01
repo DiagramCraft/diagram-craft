@@ -4,8 +4,7 @@ export type ElectronAPI = {
   removeAllListeners: (channel: string) => void;
   platform: string;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  fileOpen: () => Promise<any>;
+  fileOpen: () => Promise<{ url: string; content: string } | undefined>;
 };
 
 declare global {

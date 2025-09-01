@@ -30,7 +30,7 @@ export class Application extends BaseApplication<ApplicationUIActions> {
 }
 
 interface FileActions {
-  loadDocument: (url: string) => void;
+  loadDocument: (url: string, content?: string) => void;
   newDocument: () => void;
   clearDirty: () => void;
 }

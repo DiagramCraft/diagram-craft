@@ -189,13 +189,14 @@ export const App = (props: {
   application.current.help = help;
 
   application.current.file = {
-    loadDocument: async (url: string) => {
+    loadDocument: async (url: string, content?: string) => {
       const doc = await loadFileFromUrl(
         url,
         UserState.get().awarenessState,
         progressCallback,
         props.documentFactory,
-        props.diagramFactory
+        props.diagramFactory,
+        { content }
       );
       doc.url = url;
 

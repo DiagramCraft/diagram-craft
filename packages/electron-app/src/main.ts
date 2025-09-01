@@ -1,4 +1,5 @@
 import { app, BrowserWindow, Menu, shell, ipcMain, dialog } from 'electron';
+import { readFileSync } from 'fs';
 import * as path from 'path';
 
 const isDev = process.argv.includes('--dev');
@@ -61,7 +62,7 @@ const createMenu = (): void => {
           label: 'Open...',
           accelerator: 'CmdOrCtrl+O',
           click: () => {
-            mainWindow?.webContents.send('menu-action', 'open-diagram');
+            mainWindow?.webContents.send('menu-action', 'FILE_OPEN');
           }
         },
         {
@@ -160,8 +161,25 @@ app.whenReady().then(() => {
     }
   });
 
-  ipcMain.handle('fileOpen', (_event, _action) => {
-    dialog.showOpenDialog({});
+  ipcMain.handle('fileOpen', async (_event, _action) => {
+    const result = await dialog.showOpenDialog(mainWindow!, {
+      properties: ['openFile']
+      /*filters: [
+        { name: 'Diagram Files', extensions: ['dcd'] },
+        { name: 'All Files', extensions: ['*'] }
+      ]*/
+    });
+
+    if (!result.canceled && result.filePaths.length > 0) {
+      const filePath = result.filePaths[0];
+      try {
+        const content = readFileSync(filePath, 'utf-8');
+        return { url: filePath, content };
+      } catch (error) {
+        return undefined;
+      }
+    }
+    return undefined;
   });
 });
 
