@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, shell } from 'electron';
+import { app, BrowserWindow, Menu, shell, ipcMain, dialog } from 'electron';
 import * as path from 'path';
 
 const isDev = process.argv.includes('--dev');
@@ -23,7 +23,7 @@ const createWindow = (): void => {
 
   const webAppUrl = isDev
     ? 'http://localhost:5173'
-    : `file://${path.join(__dirname, '../../main/dist/index.html')}`;
+    : `file://${path.join(__dirname, '../../../../main/dist/index.html')}`;
 
   mainWindow.loadURL(webAppUrl);
 
@@ -158,6 +158,10 @@ app.whenReady().then(() => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
     }
+  });
+
+  ipcMain.handle('fileOpen', (_event, _action) => {
+    dialog.showOpenDialog({});
   });
 });
 

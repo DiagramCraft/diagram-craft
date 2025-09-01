@@ -235,6 +235,10 @@ importers:
         version: 18.3.7(@types/react@18.3.23)
 
   packages/electron-app:
+    dependencies:
+      '@diagram-craft/main':
+        specifier: workspace:^
+        version: link:../main
     devDependencies:
       electron:
         specifier: ^28.0.0

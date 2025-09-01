@@ -2,16 +2,27 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "CommonJS",
-    "lib": ["ES2020"],
+    "lib": [
+      "ES2020"
+    ],
     "outDir": "./dist",
-    "rootDir": "./src",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
+    "allowImportingTsExtensions": false,
     "resolveJsonModule": true,
     "declaration": false,
-    "sourceMap": true
+    "sourceMap": true,
+    "paths": {
+      "@diagram-craft/main/*": [
+        "../main/src/*"
+      ]
+    },
+    "rootDirs": [
+      "./src",
+      "../main/src/*"
+    ]
   },
   "include": [
     "src/**/*"

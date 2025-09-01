@@ -71,6 +71,7 @@ import { Progress, ProgressCallback } from '@diagram-craft/model/types';
 import { FullScreenProgress } from './react-app/components/FullScreenProgress';
 import type { DiagramFactory, DocumentFactory } from '@diagram-craft/model/factory';
 import { PortalContextProvider } from '@diagram-craft/app-components/PortalContext';
+import { ElectronIntegration } from './electron';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -102,6 +103,11 @@ const updateApplicationModel = ($d: Diagram, app: Application, callback: Progres
   app.model.activeDiagram = $d;
   if (!app.ready) {
     app.actions = makeActionMap(defaultAppActions)(app);
+    ELECTRON: {
+      if (window.electronAPI) {
+        ElectronIntegration.bindActions(app);
+      }
+    }
   }
   app.ready = true;
 };

@@ -3,7 +3,7 @@ import {
   ElementType,
   MultipleType
 } from '@diagram-craft/canvas-app/actions/abstractSelectionAction';
-import { Application } from '@diagram-craft/main/application';
+import { Application } from '../../application';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import {
   commitWithUndo,
