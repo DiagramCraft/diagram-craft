@@ -66,5 +66,14 @@ export const defaultMacAppKeymap: KeyMap = {
 
   'M-KeyS': 'FILE_SAVE',
   'M-KeyN': 'FILE_NEW',
-  'M-KeyK': 'COMMAND_PALETTE'
+  'M-KeyK': 'COMMAND_PALETTE',
+
+  // View Operations
+  'M-Equal': 'ZOOM_IN',
+  'M-Minus': 'ZOOM_OUT',
+  'M-Digit0': 'ZOOM_FIT',
+
+  // Help & UI
+  'M-Slash': 'TOGGLE_HELP',
+  'M-KeyR': 'TOGGLE_RULER'
 };

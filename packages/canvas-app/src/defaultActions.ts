@@ -107,5 +107,21 @@ export const defaultMacKeymap: KeyMap = {
   'C-M-S-ArrowRight': 'NAVIGATE_NODE_EXTEND_E',
 
   'M-S-KeyC': 'STYLE_COPY',
-  'M-S-KeyV': 'STYLE_PASTE'
+  'M-S-KeyV': 'STYLE_PASTE',
+
+  // Selection
+  'M-KeyA': 'SELECT_ALL',
+  'M-S-KeyA': 'SELECT_ALL_NODES',
+
+  // Alignment
+  'A-C-KeyL': 'ALIGN_LEFT',
+  'A-C-KeyR': 'ALIGN_RIGHT',
+  'A-C-KeyT': 'ALIGN_TOP',
+  'A-C-KeyB': 'ALIGN_BOTTOM',
+  'A-C-KeyC': 'ALIGN_CENTER_VERTICAL',
+  'A-C-KeyM': 'ALIGN_CENTER_HORIZONTAL',
+
+  // Distribution
+  'A-C-KeyH': 'DISTRIBUTE_HORIZONTAL',
+  'A-C-KeyV': 'DISTRIBUTE_VERTICAL'
 };
