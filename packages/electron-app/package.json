@@ -3,14 +3,14 @@
   "version": "1.0.0",
   "description": "Electron application wrapper for Diagram Craft",
   "author": "Magnus Johansson",
-  "main": "dist/electron-app/src/electron-main.js",
+  "main": "dist/electron-app/src/init.js",
   "private": true,
   "scripts": {
     "build": "tsc",
     "dev": "npm-run-all --parallel dev:*",
     "dev:tsc": "tsc --watch",
-    "dev:electron": "wait-on dist/electron-app/src/electron-main.js && electron dist/electron-app/src/electron-main.js --dev",
-    "start": "electron dist/electron-app/src/electron-main.js",
+    "dev:electron": "wait-on dist/electron-app/src/init.js && electron dist/electron-app/src/init.js --dev",
+    "start": "electron dist/electron-app/src/init.js",
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
     "clean": "rimraf dist"
