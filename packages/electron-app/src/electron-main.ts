@@ -92,6 +92,25 @@ const createWindow = (): void => {
   `);
 };
 
+const showAboutDialog = (): void => {
+  let iconPath: string;
+  
+  if (isPackaged) {
+    iconPath = path.join(process.resourcesPath, 'assets/icon.png');
+  } else {
+    iconPath = path.join(__dirname, '../../../assets/icon.png');
+  }
+
+  dialog.showMessageBox(mainWindow!, {
+    type: 'info',
+    title: 'About Diagram Craft',
+    message: 'Diagram Craft',
+    detail: `Version: ${app.getVersion()}\nAuthor: Magnus Johansson\n\nA powerful diagramming and visualization tool.`,
+    icon: iconPath,
+    buttons: ['OK']
+  });
+};
+
 const processMenuEntry = (
   entry: MenuEntry,
   keybindings: Record<string, string>
@@ -142,13 +161,38 @@ const createMenuFrom = (entries: MenuEntry[], keybindings: Record<string, string
     (template.find(e => e.id === 'file')!.submenu! as Electron.MenuItemConstructorOptions[]).push(
       ...[{ type: 'separator' as const }, { role: 'quit' as const }]
     );
+
+    template.push({
+      label: 'Help',
+      submenu: [
+        {
+          label: 'About Diagram Craft',
+          click: showAboutDialog
+        }
+      ]
+    });
+  }
+
+  if (process.platform === 'linux') {
+    template.push({
+      label: 'Help',
+      submenu: [
+        {
+          label: 'About Diagram Craft',
+          click: showAboutDialog
+        }
+      ]
+    });
   }
 
   if (process.platform === 'darwin') {
     template.unshift({
       label: app.getName(),
       submenu: [
-        { role: 'about' },
+        {
+          label: 'About Diagram Craft',
+          click: showAboutDialog
+        },
         { type: 'separator' },
         { role: 'services' },
         { type: 'separator' },
@@ -210,7 +254,6 @@ app.whenReady().then(() => {
 
     try {
       const content = readFileSync(url, 'utf-8');
-      log.debug('File loaded successfully:', url);
       return { url: url, content };
     } catch (error) {
       log.error('File load error:', error);
@@ -221,7 +264,6 @@ app.whenReady().then(() => {
   ipcMain.handle('fileSave', async (_event, _action, url, content) => {
     try {
       writeFileSync(url, content);
-      log.info('File saved successfully:', url);
       return url;
     } catch (error) {
       log.error('File save error:', error);
@@ -240,6 +282,7 @@ app.whenReady().then(() => {
       });
 
       if (!result.canceled && result.filePath) {
+        BrowserWindow.getFocusedWindow()?.setRepresentedFilename(result.filePath);
         writeFileSync(result.filePath, content);
         return result.filePath;
       }

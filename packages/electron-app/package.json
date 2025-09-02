@@ -36,6 +36,7 @@
     "icon": "assets/AppIcon.icns",
     "files": [
       "dist/**/*",
+      "assets/**/*",
       "node_modules/**/*",
       "!node_modules/**/test/**/*",
       "!node_modules/**/*.map"
