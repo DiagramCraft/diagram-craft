@@ -36,7 +36,7 @@ const createWindow = (): void => {
   mainWindow.loadURL(webAppUrl);
 
   if (isDev) {
-    mainWindow.webContents.openDevTools();
+    mainWindow.webContents.openDevTools({ mode: 'detach' });
   }
 
   mainWindow.once('ready-to-show', () => {
@@ -51,6 +51,29 @@ const createWindow = (): void => {
     shell.openExternal(url);
     return { action: 'deny' };
   });
+
+  /*mainWindow.setRepresentedFilename(
+    '/Users/magnusjohansson/Documents/Private/projects/diagram-craft/packages/main/public/sample/simple.json'
+  );
+  mainWindow.setDocumentEdited(true);*/
+
+  mainWindow.webContents.insertCSS(`
+    :root {
+      font-family: -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol' !important;
+    }
+  
+    #menu {
+      app-region: drag;
+      background: #373737 !important;
+      
+      button {
+        app-region: no-drag;
+      }
+    }
+    #main-menu {
+      display: none !important;
+    }
+  `);
 };
 
 const processMenuEntry = (entry: MenuEntry): Electron.MenuItemConstructorOptions => {
@@ -143,6 +166,9 @@ app.whenReady().then(() => {
   });
 
   ipcMain.handle('fileLoad', async (_event, url) => {
+    console.log(url);
+    BrowserWindow.getFocusedWindow()?.setRepresentedFilename(url);
+
     try {
       const content = readFileSync(url, 'utf-8');
       return { url: url, content };
