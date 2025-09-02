@@ -52,10 +52,6 @@ if (location.hash !== '') {
   }
 }
 
-window.electronAPI?.onMenuAction?.(action => {
-  console.log('menu action', action);
-});
-
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <AppLoader
     stencils={stencilRegistry}
