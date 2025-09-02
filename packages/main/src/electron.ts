@@ -68,6 +68,14 @@ export const ElectronIntegration = {
       action.execute({});
     });
 
+    // Handle recent file opens
+    window.electronAPI.removeAllListeners('recent-file-open');
+    window.electronAPI.onRecentFileOpen((filePath: string) => {
+      if (filePath) {
+        app.file.loadDocument(filePath);
+      }
+    });
+
     for (const e of mainMenuStructure) {
       updateState(e, app, true);
     }

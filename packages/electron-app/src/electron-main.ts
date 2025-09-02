@@ -145,6 +145,15 @@ const processMenuEntry = (
     e.type = 'checkbox';
   } else if (entry.type === 'separator') {
     e.type = 'separator';
+  } else if (entry.type === 'recent') {
+    // Use Electron's native recent documents
+    e.role = 'recentDocuments';
+    e.submenu = [
+      {
+        label: 'Clear Recent',
+        role: 'clearRecentDocuments'
+      }
+    ];
   }
 
   return e;
@@ -237,8 +246,10 @@ app.whenReady().then(() => {
     });
 
     if (!result.canceled && result.filePaths.length > 0) {
-      BrowserWindow.getFocusedWindow()?.setRepresentedFilename(result.filePaths[0]);
-      return { url: result.filePaths[0] };
+      const filePath = result.filePaths[0];
+      BrowserWindow.getFocusedWindow()?.setRepresentedFilename(filePath);
+      app.addRecentDocument(filePath);
+      return { url: filePath };
     }
     return undefined;
   });
@@ -283,6 +294,7 @@ app.whenReady().then(() => {
 
       if (!result.canceled && result.filePath) {
         BrowserWindow.getFocusedWindow()?.setRepresentedFilename(result.filePath);
+        app.addRecentDocument(result.filePath);
         writeFileSync(result.filePath, content);
         return result.filePath;
       }
@@ -308,4 +320,20 @@ app.whenReady().then(() => {
 
 app.on('window-all-closed', () => {
   app.quit();
+});
+
+// Handle recent document opening (macOS)
+app.on('open-file', (event, path) => {
+  event.preventDefault();
+  log.info('Opening recent file:', path);
+  
+  if (mainWindow && mainWindow.webContents) {
+    mainWindow.webContents.send('recent-file-open', path);
+  } else {
+    // If no window exists, create one and then open the file
+    createWindow();
+    mainWindow?.webContents.once('did-finish-load', () => {
+      mainWindow?.webContents.send('recent-file-open', path);
+    });
+  }
 });
