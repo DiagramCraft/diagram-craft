@@ -8,8 +8,8 @@
     "build": "tsc",
     "dev": "npm-run-all --parallel dev:*",
     "dev:tsc": "tsc --watch",
-    "dev:electron": "wait-on dist/electron-app/src/main.js && electron dist/electron-app/src/main.js --dev",
-    "start": "electron dist/electron-app/src/main.js",
+    "dev:electron": "wait-on dist/electron-app/src/electron-main.js && electron dist/electron-app/src/electron-main.js --dev",
+    "start": "electron dist/electron-app/src/electron-main.js",
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
     "clean": "rimraf dist"

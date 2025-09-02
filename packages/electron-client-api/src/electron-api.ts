@@ -9,7 +9,7 @@ export type ElectronAPI = {
   fileSaveAs: (url: string | undefined, data: string) => Promise<string | undefined>;
   fileLoad: (url: string) => Promise<{ content: string } | undefined>;
 
-  setMenu: (items: MenuEntry[]) => void;
+  setMenu: (items: MenuEntry[], keybindings: Record<string, string>) => void;
   setMenuEntryState: (id: string, state: { enabled: boolean; value?: boolean }) => void;
 };
 

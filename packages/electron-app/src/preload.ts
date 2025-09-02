@@ -16,9 +16,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('fileSaveAs', { url, data }),
   fileLoad: (url: string) => ipcRenderer.invoke('fileLoad', url),
 
-  setMenu: (items: MenuEntry[]) => ipcRenderer.invoke('menu:set', items),
+  setMenu: (items: MenuEntry[], keybindings: Record<string, string>) =>
+    ipcRenderer.invoke('menu:set', {
+      items,
+      keybindings
+    }),
   setMenuEntryState: (id: string, state: { enabled: boolean; checked?: boolean }) =>
-    ipcRenderer.invoke('menu:setState', { id, enabled: state.enabled, checked: state.checked }),
+    ipcRenderer.invoke('menu:setState', {
+      id,
+      enabled: state.enabled,
+      checked: state.checked
+    }),
 
   platform: process.platform,
 

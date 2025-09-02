@@ -76,11 +76,27 @@ const createWindow = (): void => {
   `);
 };
 
-const processMenuEntry = (entry: MenuEntry): Electron.MenuItemConstructorOptions => {
+const processMenuEntry = (
+  entry: MenuEntry,
+  keybindings: Record<string, string>
+): Electron.MenuItemConstructorOptions => {
+  const keybinding = keybindings[entry.id];
+
+  let accelerator: string | undefined;
+  if (keybinding) {
+    accelerator = keybinding
+      .replace('M-', 'CommandOrControl+')
+      .replace('A-', 'Alt+')
+      .replace('S-', 'Shift+')
+      .replace('C-', 'Control+')
+      .replace('Key', '');
+  }
+
   const e: Electron.MenuItemConstructorOptions = {
     id: entry.id,
     label: entry.label,
-    submenu: entry.submenu ? entry.submenu.map(processMenuEntry) : undefined
+    submenu: entry.submenu ? entry.submenu.map(k => processMenuEntry(k, keybindings)) : undefined,
+    accelerator
   };
 
   if (entry.type === 'action') {
@@ -99,11 +115,11 @@ const processMenuEntry = (entry: MenuEntry): Electron.MenuItemConstructorOptions
   return e;
 };
 
-const createMenuFrom = (entries: MenuEntry[]): void => {
+const createMenuFrom = (entries: MenuEntry[], keybindings: Record<string, string>): void => {
   const template: Electron.MenuItemConstructorOptions[] = [];
 
   for (const topLevel of entries) {
-    template.push(processMenuEntry(topLevel));
+    template.push(processMenuEntry(topLevel, keybindings));
   }
 
   if (process.platform === 'win32') {
@@ -208,8 +224,8 @@ app.whenReady().then(() => {
     }
   });
 
-  ipcMain.handle('menu:set', async (_event, entries) => {
-    createMenuFrom(entries);
+  ipcMain.handle('menu:set', async (_event, { items, keybindings }) => {
+    createMenuFrom(items, keybindings);
   });
 
   ipcMain.handle('menu:setState', async (_event, { id, enabled, checked }) => {
@@ -222,7 +238,5 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
+  app.quit();
 });

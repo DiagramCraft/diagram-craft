@@ -7,10 +7,11 @@ import { mainMenuStructure } from './react-app/mainMenuData';
 import type { MenuEntry } from '@diagram-craft/electron-client-api/electron-api';
 
 const updateState = (e: MenuEntry, app: Application, recurse: boolean = false) => {
-  const state = { enabled: true, checked: false };
+  const state = { enabled: true, checked: false, keybinding: '' };
   const action = app.actions[e.action ?? ''];
   if (action) {
     state.enabled = action.isEnabled(app);
+
     action.on('actionChanged', () => {
       state.enabled = action.isEnabled(app);
     });
@@ -31,9 +32,27 @@ const updateState = (e: MenuEntry, app: Application, recurse: boolean = false) =
   }
 };
 
+const getKeyBindings = (
+  app: Application,
+  mainMenuStructure: MenuEntry[],
+  dest: Record<string, string>
+) => {
+  for (const e of mainMenuStructure) {
+    const keybinding = Object.entries(app.keyMap).find(([_, v]) => v === e.action)?.[0] ?? '';
+    if (keybinding !== '') {
+      dest[e.id] = keybinding;
+    }
+    getKeyBindings(app, e.submenu ?? [], dest);
+  }
+};
 export const ElectronIntegration = {
   bindActions: (app: Application) => {
     if (!window.electronAPI) return;
+
+    const keybindings: Record<string, string> = {};
+    getKeyBindings(app, mainMenuStructure, keybindings);
+
+    window.electronAPI?.setMenu(mainMenuStructure, keybindings);
 
     app.actions.FILE_SAVE = new ElectronFileSaveAction(app);
     app.actions.FILE_SAVE_AS = new ElectronFileSaveAsAction(app);
@@ -61,8 +80,6 @@ export const ElectronIntegration = {
       if (!res) throw new Error();
       return res.content;
     };
-
-    window.electronAPI?.setMenu(mainMenuStructure);
   }
 };
 

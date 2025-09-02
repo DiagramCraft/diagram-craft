@@ -102,6 +102,8 @@ const updateApplicationModel = ($d: Diagram, app: Application, callback: Progres
   app.model.setActiveDocument($d.document, app.userState.awarenessState, callback);
   app.model.activeDiagram = $d;
   if (!app.ready) {
+    const keyMap = defaultMacAppKeymap;
+    app.keyMap = keyMap;
     app.actions = makeActionMap(defaultAppActions)(app);
     ELECTRON: {
       if (window.electronAPI) {
@@ -290,9 +292,6 @@ export const App = (props: {
 
   useEffect(() => bindDocumentDragAndDrop());
 
-  const keyMap = defaultMacAppKeymap;
-  application.current.keyMap = keyMap;
-
   return (
     <PortalContextProvider>
       <ApplicationContext.Provider value={{ application: application.current }}>
@@ -424,7 +423,7 @@ export const App = (props: {
                         key={$d.uid}
                         actionMap={actionMap}
                         tools={tools}
-                        keyMap={keyMap}
+                        keyMap={application.current.keyMap}
                         offset={
                           (userState.current.panelLeft ?? -1) >= 0
                             ? {

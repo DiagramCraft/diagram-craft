@@ -76,14 +76,18 @@ export class AttachmentManager {
   get attachments(): Array<[string, Attachment]> {
     return Array.from(this.#attachments.entries()).map(([hash, ad]) => [
       hash,
-      new Attachment(ad.hash, new Blob([ad.content], { type: ad.contentType }))
+      new Attachment(ad.hash, new Blob([new Uint8Array(ad.content)], { type: ad.contentType }))
     ]);
   }
 
   getAttachment(hash: string) {
     const ad = this.#attachments.get(hash);
     if (!ad) return undefined;
-    return new Attachment(ad.hash, new Blob([ad.content], { type: ad.contentType }), ad.inUse);
+    return new Attachment(
+      ad.hash,
+      new Blob([new Uint8Array(ad.content)], { type: ad.contentType }),
+      ad.inUse
+    );
   }
 
   pruneAttachments() {
