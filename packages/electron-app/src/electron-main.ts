@@ -5,6 +5,11 @@ import type { MenuEntry } from '@diagram-craft/electron-client-api/electron-api'
 
 const isDev = process.argv.includes('--dev');
 
+// More reliable way to detect if running from distributable
+const isPackaged = app.isPackaged;
+
+console.log('isPackaged', isPackaged);
+
 let mainWindow: BrowserWindow | null = null;
 
 const createWindow = (): void => {
@@ -16,8 +21,7 @@ const createWindow = (): void => {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: path.join(__dirname, 'preload.js'),
-      webSecurity: true
+      preload: path.join(__dirname, 'preload.js')
     },
     titleBarStyle: 'default',
     ...(process.platform === 'darwin'
@@ -29,15 +33,22 @@ const createWindow = (): void => {
     show: false
   });
 
-  const webAppUrl = isDev
-    ? 'http://localhost:5173'
-    : `file://${path.join(__dirname, '../../../../main/dist/index.html')}`;
+  let webAppUrl: string;
+
+  if (isDev) {
+    webAppUrl = 'http://localhost:5173';
+  } else if (isPackaged) {
+    webAppUrl = `file://${path.join(process.resourcesPath, 'main/dist/index.html')}`;
+  } else {
+    webAppUrl = `file://${path.join(__dirname, '../../../../main/dist/index.html')}`;
+  }
 
   mainWindow.loadURL(webAppUrl);
 
-  //if (isDev) {
-  mainWindow.webContents.openDevTools({ mode: 'detach' });
-  //}
+  // Only open dev tools in actual development mode, not in distributable
+  if (isDev && !isPackaged) {
+    mainWindow.webContents.openDevTools({ mode: 'detach' });
+  }
 
   mainWindow.once('ready-to-show', () => {
     mainWindow?.show();
@@ -183,14 +194,19 @@ app.whenReady().then(() => {
   });
 
   ipcMain.handle('fileLoad', async (_event, rawUrl) => {
-    // TODO: Fix this
-    const url = rawUrl.replace('$STENCIL_ROOT', '../main/dist');
+    let url: string;
+
+    if (isPackaged) {
+      url = rawUrl.replace('$STENCIL_ROOT', path.join(process.resourcesPath, 'main/dist'));
+    } else {
+      url = rawUrl.replace('$STENCIL_ROOT', path.join(__dirname, '../../../../main/dist'));
+    }
 
     try {
       const content = readFileSync(url, 'utf-8');
       return { url: url, content };
     } catch (error) {
-      console.log(error);
+      console.log('File load error:', error);
       return undefined;
     }
   });

@@ -2,7 +2,8 @@
   "name": "@diagram-craft/electron-app",
   "version": "1.0.0",
   "description": "Electron application wrapper for Diagram Craft",
-  "main": "dist/main.js",
+  "author": "Magnus Johansson",
+  "main": "dist/electron-app/src/electron-main.js",
   "private": true,
   "scripts": {
     "build": "tsc",
@@ -31,6 +32,7 @@
     "directories": {
       "output": "dist-electron"
     },
+    "icon": "assets/AppIcon.icns",
     "files": [
       "dist/**/*",
       "node_modules/**/*",
@@ -40,7 +42,7 @@
     "extraResources": [
       {
         "from": "../main/dist",
-        "to": "app",
+        "to": "main/dist",
         "filter": [
           "**/*"
         ]
