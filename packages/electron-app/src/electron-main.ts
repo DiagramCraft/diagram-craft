@@ -1,6 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain, Menu, shell } from 'electron';
 import { readFileSync, writeFileSync } from 'fs';
 import * as path from 'path';
+import log from 'electron-log/main';
 import type { MenuEntry } from '@diagram-craft/electron-client-api/electron-api';
 
 const isDev = process.argv.includes('--dev');
@@ -8,7 +9,11 @@ const isDev = process.argv.includes('--dev');
 // More reliable way to detect if running from distributable
 const isPackaged = app.isPackaged;
 
-console.log('isPackaged', isPackaged);
+// Configure logging
+log.transports.console.level = isDev ? 'debug' : 'info';
+log.transports.file.level = 'info';
+
+log.info('Diagram Craft starting...', { isDev, isPackaged });
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -166,6 +171,7 @@ const createMenuFrom = (entries: MenuEntry[], keybindings: Record<string, string
 };
 
 app.whenReady().then(() => {
+  log.info('Electron app is ready');
   Menu.setApplicationMenu(null);
 
   createWindow();
@@ -204,9 +210,10 @@ app.whenReady().then(() => {
 
     try {
       const content = readFileSync(url, 'utf-8');
+      log.debug('File loaded successfully:', url);
       return { url: url, content };
     } catch (error) {
-      console.log('File load error:', error);
+      log.error('File load error:', error);
       return undefined;
     }
   });
@@ -214,8 +221,10 @@ app.whenReady().then(() => {
   ipcMain.handle('fileSave', async (_event, _action, url, content) => {
     try {
       writeFileSync(url, content);
+      log.info('File saved successfully:', url);
       return url;
     } catch (error) {
+      log.error('File save error:', error);
       return undefined;
     }
   });

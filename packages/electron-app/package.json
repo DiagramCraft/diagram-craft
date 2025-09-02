@@ -16,7 +16,8 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@diagram-craft/electron-client-api": "workspace:^"
+    "@diagram-craft/electron-client-api": "workspace:^",
+    "electron-log": "^5.4.3"
   },
   "devDependencies": {
     "electron": "^37.4.0",
