@@ -1,5 +1,6 @@
 import { assert } from '@diagram-craft/utils/assert';
 import { xNum } from '@diagram-craft/utils/xml';
+import { FileSystem } from '@diagram-craft/canvas-app/loaders';
 
 export type DrawioStencil = {
   key: string;
@@ -24,8 +25,7 @@ export const loadDrawioStencils = async (
   foreground = 'black',
   background = 'white'
 ) => {
-  const res = await fetch(url);
-  const txt = await res.text();
+  const txt = await FileSystem.loadFromUrl(url);
 
   const parser = new DOMParser();
   const $doc = parser.parseFromString(txt, 'application/xml');

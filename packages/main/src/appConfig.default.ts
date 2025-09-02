@@ -26,7 +26,7 @@ export const defaultAppConfig: AppConfig = {
         type: 'drawioXml',
         opts: {
           name: 'GCP',
-          url: '/stencils/gcp2.xml',
+          url: '$STENCIL_ROOT/stencils/gcp2.xml',
           foreground: '#3b8df1',
           background: '#3b8df1'
         }
@@ -35,7 +35,7 @@ export const defaultAppConfig: AppConfig = {
         type: 'drawioXml',
         opts: {
           name: 'AWS',
-          url: '/stencils/aws3.xml',
+          url: '$STENCIL_ROOT/stencils/aws3.xml',
           foreground: '#ff9900',
           background: '#ff9900'
         }
@@ -44,7 +44,7 @@ export const defaultAppConfig: AppConfig = {
         type: 'drawioXml',
         opts: {
           name: 'Azure',
-          url: '/stencils/azure.xml',
+          url: '$STENCIL_ROOT/stencils/azure.xml',
           foreground: '#00abf0',
           background: '#00abf0'
         }
@@ -53,7 +53,7 @@ export const defaultAppConfig: AppConfig = {
         type: 'drawioXml',
         opts: {
           name: 'Fluid Power',
-          url: '/stencils/fluid_power.xml',
+          url: '$STENCIL_ROOT/stencils/fluid_power.xml',
           foreground: 'var(--canvas-fg)',
           background: 'var(--canvas-fg)'
         }
@@ -62,7 +62,7 @@ export const defaultAppConfig: AppConfig = {
         type: 'drawioXml',
         opts: {
           name: 'IBM',
-          url: '/stencils/ibm.xml',
+          url: '$STENCIL_ROOT/stencils/ibm.xml',
           foreground: 'var(--canvas-fg)',
           background: 'transparent'
         }
@@ -71,7 +71,7 @@ export const defaultAppConfig: AppConfig = {
         type: 'drawioXml',
         opts: {
           name: 'Web Logos',
-          url: '/stencils/weblogos.xml',
+          url: '$STENCIL_ROOT/stencils/weblogos.xml',
           foreground: 'blue',
           background: '#ffffff'
         }
@@ -80,7 +80,7 @@ export const defaultAppConfig: AppConfig = {
         type: 'drawioXml',
         opts: {
           name: 'Web Icons',
-          url: '/stencils/webicons.xml',
+          url: '$STENCIL_ROOT/stencils/webicons.xml',
           foreground: 'blue',
           background: '#000000'
         }
@@ -89,7 +89,7 @@ export const defaultAppConfig: AppConfig = {
         type: 'drawioXml',
         opts: {
           name: 'EIP',
-          url: '/stencils/eip.xml',
+          url: '$STENCIL_ROOT/stencils/eip.xml',
           foreground: 'black',
           background: '#c0f5a9'
         }
@@ -98,7 +98,7 @@ export const defaultAppConfig: AppConfig = {
         type: 'drawioXml',
         opts: {
           name: 'Arrows',
-          url: '/stencils/arrows.xml',
+          url: '$STENCIL_ROOT/stencils/arrows.xml',
           foreground: 'var(--canvas-fg)',
           background: 'var(--canvas-bg2)'
         }
@@ -107,7 +107,7 @@ export const defaultAppConfig: AppConfig = {
         type: 'drawioXml',
         opts: {
           name: 'Basic',
-          url: '/stencils/basic.xml',
+          url: '$STENCIL_ROOT/stencils/basic.xml',
           foreground: 'var(--canvas-fg)',
           background: 'var(--canvas-bg2)'
         }

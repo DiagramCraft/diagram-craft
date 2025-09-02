@@ -35,9 +35,9 @@ const createWindow = (): void => {
 
   mainWindow.loadURL(webAppUrl);
 
-  if (isDev) {
-    mainWindow.webContents.openDevTools({ mode: 'detach' });
-  }
+  //if (isDev) {
+  mainWindow.webContents.openDevTools({ mode: 'detach' });
+  //}
 
   mainWindow.once('ready-to-show', () => {
     mainWindow?.show();
@@ -176,14 +176,15 @@ app.whenReady().then(() => {
     });
 
     if (!result.canceled && result.filePaths.length > 0) {
+      BrowserWindow.getFocusedWindow()?.setRepresentedFilename(result.filePaths[0]);
       return { url: result.filePaths[0] };
     }
     return undefined;
   });
 
-  ipcMain.handle('fileLoad', async (_event, url) => {
-    console.log(url);
-    BrowserWindow.getFocusedWindow()?.setRepresentedFilename(url);
+  ipcMain.handle('fileLoad', async (_event, rawUrl) => {
+    // TODO: Fix this
+    const url = rawUrl.replace('$STENCIL_ROOT', '../main/dist');
 
     try {
       const content = readFileSync(url, 'utf-8');
