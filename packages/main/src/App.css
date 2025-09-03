@@ -626,6 +626,10 @@ foreignObject {
   }
 }
 
+.cmp-panel__headless--no-padding {
+  padding: 5px 0;
+}
+
 .cmp-layer-list {
   .cmp-tree__node {
     position: relative;

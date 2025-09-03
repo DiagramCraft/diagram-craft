@@ -169,7 +169,7 @@ export const ObjectToolWindow = () => {
         <>
           <Tabs.Content value={'canvas'}>
             <Accordion.Root type="multiple" defaultValue={['grid', 'canvas', 'snap']}>
-              <CanvasPanel />
+              <CanvasPanel mode={'headless'} />
             </Accordion.Root>
           </Tabs.Content>
 

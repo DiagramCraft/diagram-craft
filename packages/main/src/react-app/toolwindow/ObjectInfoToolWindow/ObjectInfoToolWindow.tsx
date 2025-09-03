@@ -46,7 +46,7 @@ export const ObjectInfoToolWindow = () => {
         </Tabs.Trigger>
       </Tabs.List>
       <Tabs.Content value={'object'}>
-        <div className={'cmp-panel__headless'}>
+        <div className={'cmp-panel__headless cmp-panel__headless--no-padding'}>
           {state === 'selection' && <SelectionInfoDetails obj={diagram.selectionState} />}
           {state === 'node' && <NodeInfoDetails obj={diagram.nodeLookup.get(nodeId!)!} />}
           {state === 'edge' && <EdgeInfoDetails obj={diagram.edgeLookup.get(edgeId!)!} />}
