@@ -41,18 +41,24 @@ export const loadFileFromUrl = async (
   progressCallback: ProgressCallback,
   documentFactory: DocumentFactory,
   diagramFactory: DiagramFactory,
-  root?: CRDTRoot
+  opts?: {
+    root?: CRDTRoot;
+  }
 ) => {
-  const content = await fetch(url).then(r => r.text());
+  const content = (await FileSystem.loadFromUrl(url))!;
 
   const fileLoaderFactory = getFileLoaderForUrl(url);
   assert.present(fileLoaderFactory, `File loader for ${url} not found`);
   const fileLoader = await fileLoaderFactory();
 
-  root ??= await documentFactory.loadCRDT(url, userState, progressCallback);
+  const root = opts?.root ?? (await documentFactory.loadCRDT(url, userState, progressCallback));
   const doc = await documentFactory.createDocument(root, url, progressCallback);
   await fileLoader(content, doc, diagramFactory);
   await doc.load();
 
   return doc;
+};
+
+export const FileSystem = {
+  loadFromUrl: async (url: string) => fetch(url.replace('$STENCIL_ROOT', '')).then(r => r.text())
 };

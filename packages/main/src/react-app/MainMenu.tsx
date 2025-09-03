@@ -3,118 +3,101 @@ import { TbChevronRight, TbMenu2 } from 'react-icons/tb';
 import { ActionDropdownMenuItem } from './components/ActionDropdownMenuItem';
 import { urlToName } from '@diagram-craft/utils/url';
 import { ToggleActionDropdownMenuItem } from './components/ToggleActionDropdownMenuItem';
-import { useApplication } from '../application';
+import { Application, useApplication } from '../application';
+import { mainMenuStructure } from './mainMenuData';
+import type { MenuEntry } from '@diagram-craft/electron-client-api/electron-api';
+import type { UserState } from '../UserState';
+
+const renderMenuItem = (
+  item: MenuEntry,
+  application: Application,
+  userState: UserState
+): JSX.Element => {
+  if (item.type === 'separator') {
+    return <DropdownMenu.Separator key={item.label} className="cmp-context-menu__separator" />;
+  }
+
+  if (item.type === 'submenu' || item.type === 'recent') {
+    let isDisabled = item.disabled ?? false;
+    let submenuItems = item.submenu ?? [];
+
+    if (item.type === 'recent') {
+      const recentFiles = userState.recentFiles.filter(
+        (url: string) => url !== application.model.activeDocument.url
+      );
+      isDisabled = recentFiles.length === 0;
+      submenuItems = recentFiles.map((url: string) => ({
+        id: url,
+        label: urlToName(url),
+        type: 'action' as const,
+        action: url
+      }));
+    }
+
+    return (
+      <DropdownMenu.Sub key={item.label}>
+        <DropdownMenu.SubTrigger className="cmp-context-menu__sub-trigger" disabled={isDisabled}>
+          {item.label}
+          <div className="cmp-context-menu__right-slot">
+            <TbChevronRight />
+          </div>
+        </DropdownMenu.SubTrigger>
+        <DropdownMenu.Portal>
+          <DropdownMenu.SubContent className="cmp-context-menu" sideOffset={2} alignOffset={-5}>
+            {submenuItems.map(subItem => {
+              if (item.label === 'Open Recent...') {
+                return (
+                  <DropdownMenu.Item
+                    key={subItem.action}
+                    className="cmp-context-menu__item"
+                    onSelect={() => application.file.loadDocument(subItem.action!)}
+                  >
+                    {subItem.label}
+                  </DropdownMenu.Item>
+                );
+              }
+              return renderMenuItem(subItem, application, userState);
+            })}
+          </DropdownMenu.SubContent>
+        </DropdownMenu.Portal>
+      </DropdownMenu.Sub>
+    );
+  }
+
+  if (item.type === 'toggle' && item.action) {
+    return (
+      <ToggleActionDropdownMenuItem key={item.label} action={item.action} arg={{}}>
+        {item.label}
+      </ToggleActionDropdownMenuItem>
+    );
+  }
+
+  if (item.action) {
+    return (
+      <ActionDropdownMenuItem key={item.label} action={item.action} arg={{}}>
+        {item.label}
+      </ActionDropdownMenuItem>
+    );
+  }
+
+  return <div key={item.label}>{item.label}</div>;
+};
 
 export const MainMenu = () => {
   const application = useApplication();
   const userState = application.userState;
+
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
-        <button className={'_menu-button'}>
+        <button className={'_menu-button'} id={'main-menu'}>
           <TbMenu2 size={'24px'} />
         </button>
       </DropdownMenu.Trigger>
 
       <DropdownMenu.Portal>
         <DropdownMenu.Content className="cmp-context-menu" sideOffset={2} align={'start'}>
-          <DropdownMenu.Sub>
-            <DropdownMenu.SubTrigger className="cmp-context-menu__sub-trigger">
-              File
-              <div className="cmp-context-menu__right-slot">
-                <TbChevronRight />
-              </div>
-            </DropdownMenu.SubTrigger>
-            <DropdownMenu.Portal>
-              <DropdownMenu.SubContent className="cmp-context-menu" sideOffset={2} alignOffset={-5}>
-                <ActionDropdownMenuItem action={'FILE_NEW'}>New</ActionDropdownMenuItem>
-                <ActionDropdownMenuItem action={'FILE_OPEN'}>Open...</ActionDropdownMenuItem>
-
-                <DropdownMenu.Sub>
-                  <DropdownMenu.SubTrigger
-                    className="cmp-context-menu__sub-trigger"
-                    disabled={
-                      userState.recentFiles.filter(
-                        url => url !== application.model.activeDocument.url
-                      ).length === 0
-                    }
-                  >
-                    Open Recent...
-                    <div className="cmp-context-menu__right-slot">
-                      <TbChevronRight />
-                    </div>
-                  </DropdownMenu.SubTrigger>
-                  <DropdownMenu.Portal>
-                    <DropdownMenu.SubContent
-                      className="cmp-context-menu"
-                      sideOffset={2}
-                      alignOffset={-5}
-                    >
-                      {userState.recentFiles
-                        .filter(url => url !== application.model.activeDocument.url)
-                        .map(url => (
-                          <DropdownMenu.Item
-                            key={url}
-                            className="cmp-context-menu__item"
-                            onSelect={() => application.file.loadDocument(url)}
-                          >
-                            {urlToName(url)}
-                          </DropdownMenu.Item>
-                        ))}
-                    </DropdownMenu.SubContent>
-                  </DropdownMenu.Portal>
-                </DropdownMenu.Sub>
-                <ActionDropdownMenuItem action={'FILE_SAVE'}>Save</ActionDropdownMenuItem>
-                <ActionDropdownMenuItem action={'FILE_SAVE'}>Save As...</ActionDropdownMenuItem>
-              </DropdownMenu.SubContent>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Sub>
-
-          <DropdownMenu.Sub>
-            <DropdownMenu.SubTrigger className="cmp-context-menu__sub-trigger">
-              Edit
-              <div className="cmp-context-menu__right-slot">
-                <TbChevronRight />
-              </div>
-            </DropdownMenu.SubTrigger>
-            <DropdownMenu.Portal>
-              <DropdownMenu.SubContent className="cmp-context-menu" sideOffset={2} alignOffset={-5}>
-                <ActionDropdownMenuItem action={'UNDO'}>Undo</ActionDropdownMenuItem>
-                <ActionDropdownMenuItem action={'REDO'}>Redo</ActionDropdownMenuItem>
-                <DropdownMenu.Separator className="cmp-context-menu__separator" />
-
-                <ActionDropdownMenuItem action={'CLIPBOARD_CUT'}>Cut</ActionDropdownMenuItem>
-                <ActionDropdownMenuItem action={'CLIPBOARD_COPY'}>Copy</ActionDropdownMenuItem>
-                <ActionDropdownMenuItem action={'DUPLICATE'}>Duplicate</ActionDropdownMenuItem>
-              </DropdownMenu.SubContent>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Sub>
-
-          <DropdownMenu.Sub>
-            <DropdownMenu.SubTrigger className="cmp-context-menu__sub-trigger">
-              View
-              <div className="cmp-context-menu__right-slot">
-                <TbChevronRight />
-              </div>
-            </DropdownMenu.SubTrigger>
-            <DropdownMenu.Portal>
-              <DropdownMenu.SubContent className="cmp-context-menu" sideOffset={2} alignOffset={-5}>
-                <ActionDropdownMenuItem action={'ZOOM_IN'}>Zoom In</ActionDropdownMenuItem>
-                <ActionDropdownMenuItem action={'ZOOM_OUT'}>Zoom Out</ActionDropdownMenuItem>
-                <DropdownMenu.Separator className="cmp-context-menu__separator" />
-                <ToggleActionDropdownMenuItem action={'TOGGLE_RULER'}>
-                  Ruler
-                </ToggleActionDropdownMenuItem>
-                <ToggleActionDropdownMenuItem action={'TOGGLE_HELP'}>
-                  Help
-                </ToggleActionDropdownMenuItem>
-                <ToggleActionDropdownMenuItem action={'TOGGLE_DARK_MODE'}>
-                  Dark Mode
-                </ToggleActionDropdownMenuItem>
-              </DropdownMenu.SubContent>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Sub>
-
+          {mainMenuStructure.map(item => renderMenuItem(item, application, userState))}
           <DropdownMenu.Arrow className="cmp-context-menu__arrow" />
         </DropdownMenu.Content>
       </DropdownMenu.Portal>

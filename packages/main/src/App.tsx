@@ -71,6 +71,7 @@ import { Progress, ProgressCallback } from '@diagram-craft/model/types';
 import { FullScreenProgress } from './react-app/components/FullScreenProgress';
 import type { DiagramFactory, DocumentFactory } from '@diagram-craft/model/factory';
 import { PortalContextProvider } from '@diagram-craft/app-components/PortalContext';
+import { ElectronIntegration } from './electron';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -101,7 +102,14 @@ const updateApplicationModel = ($d: Diagram, app: Application, callback: Progres
   app.model.setActiveDocument($d.document, app.userState.awarenessState, callback);
   app.model.activeDiagram = $d;
   if (!app.ready) {
+    const keyMap = defaultMacAppKeymap;
+    app.keyMap = keyMap;
     app.actions = makeActionMap(defaultAppActions)(app);
+    ELECTRON: {
+      if (window.electronAPI) {
+        ElectronIntegration.bindActions(app);
+      }
+    }
   }
   app.ready = true;
 };
@@ -284,9 +292,6 @@ export const App = (props: {
 
   useEffect(() => bindDocumentDragAndDrop());
 
-  const keyMap = defaultMacAppKeymap;
-  application.current.keyMap = keyMap;
-
   return (
     <PortalContextProvider>
       <ApplicationContext.Provider value={{ application: application.current }}>
@@ -418,7 +423,7 @@ export const App = (props: {
                         key={$d.uid}
                         actionMap={actionMap}
                         tools={tools}
-                        keyMap={keyMap}
+                        keyMap={application.current.keyMap}
                         offset={
                           (userState.current.panelLeft ?? -1) >= 0
                             ? {

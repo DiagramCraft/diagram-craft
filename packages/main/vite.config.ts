@@ -9,6 +9,7 @@ export default defineConfig(({ command, mode, isSsrBuild, isPreview }) => {
 
   // https://vitejs.dev/config/
   const userConfig: UserConfig = {
+    base: './',
     plugins: [react(), yaml()],
     test: {
       fakeTimers: {
@@ -23,10 +24,6 @@ export default defineConfig(({ command, mode, isSsrBuild, isPreview }) => {
               return 'embeddable-jq';
             } else if (id.includes('node_modules')) {
               return 'vendor';
-            } else if (id.includes('canvas-nodes/')) {
-              return 'shapes';
-            } else if (id.includes('canvas-drawio/')) {
-              return 'drawio';
             } else if (id.includes('sample/')) {
               return 'sample-data';
             }

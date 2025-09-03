@@ -55,7 +55,7 @@ const loadInitialDocument = async (
           progress,
           documentFactory,
           diagramFactory,
-          root
+          { root }
         );
         defDiagram!.url = diagram?.url;
         return { doc: defDiagram, url: diagram?.url };
@@ -70,6 +70,8 @@ const loadInitialDocument = async (
       UnitOfWork.immediate(diagram)
     );
     doc.addDiagram(diagram);
+
+    progress('complete', {});
 
     return { doc };
   }

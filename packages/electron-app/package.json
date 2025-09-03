@@ -1,0 +1,70 @@
+{
+  "name": "@diagram-craft/electron-app",
+  "version": "1.0.0",
+  "description": "Electron application wrapper for Diagram Craft",
+  "author": "Magnus Johansson",
+  "main": "dist/electron-app/src/init.js",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "dev": "npm-run-all --parallel dev:*",
+    "dev:tsc": "tsc --watch",
+    "dev:electron": "wait-on dist/electron-app/src/init.js && electron dist/electron-app/src/init.js --dev",
+    "start": "electron dist/electron-app/src/init.js",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@diagram-craft/electron-client-api": "workspace:^",
+    "electron-log": "^5.4.3"
+  },
+  "devDependencies": {
+    "electron": "^37.4.0",
+    "electron-builder": "^26.0.12",
+    "npm-run-all": "^4.1.5",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.9.2",
+    "wait-on": "^8.0.4"
+  },
+  "build": {
+    "appId": "com.diagramcraft.app",
+    "productName": "Diagram Craft",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "icon": "assets/AppIcon.icns",
+    "files": [
+      "dist/**/*",
+      "assets/**/*",
+      "node_modules/**/*",
+      "!node_modules/**/test/**/*",
+      "!node_modules/**/*.map"
+    ],
+    "extraResources": [
+      {
+        "from": "../main/dist",
+        "to": "main/dist",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "assets",
+        "to": "assets",
+        "filter": [
+          "**/*.css"
+        ]
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.graphics-design"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  }
+}

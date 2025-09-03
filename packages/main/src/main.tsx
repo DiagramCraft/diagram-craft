@@ -16,6 +16,13 @@ import {
   makeDefaultDocumentFactory
 } from '@diagram-craft/model/factory';
 import { AppConfig, type StencilRegistryConfig } from './appConfig';
+import { ElectronIntegration } from './electron';
+
+ELECTRON: {
+  if (window.electronAPI) {
+    ElectronIntegration.init();
+  }
+}
 
 const nodeRegistry = defaultNodeRegistry();
 const stencilRegistry: StencilRegistryConfig = AppConfig.get().stencils?.registry ?? [];
