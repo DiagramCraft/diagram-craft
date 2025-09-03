@@ -6,13 +6,10 @@ import type {
 } from '@diagram-craft/electron-client-api/electron-api';
 
 contextBridge.exposeInMainWorld('electronAPI', {
-  on: (channel: Channel, callback: (action: string) => void) => {
-    ipcRenderer.on(channel, (_event, action) => callback(action));
-  },
+  on: (channel: Channel, callback: (action: string) => void) =>
+    ipcRenderer.on(channel, (_event, action) => callback(action)),
 
-  removeAllListeners: (channel: Channel) => {
-    ipcRenderer.removeAllListeners(channel);
-  },
+  removeAllListeners: (channel: Channel) => ipcRenderer.removeAllListeners(channel),
 
   fileOpen: () => ipcRenderer.invoke('file:open'),
   fileSave: (url: string, data: string) => ipcRenderer.invoke('file:save', { url, data }),

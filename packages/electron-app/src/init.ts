@@ -70,7 +70,6 @@ app.whenReady().then(() => {
   Menu.setApplicationMenu(null);
 
   createWindow();
-  //createMenu();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
