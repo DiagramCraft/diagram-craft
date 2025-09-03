@@ -1,12 +1,12 @@
 import { app, BrowserWindow, dialog, ipcMain, Menu, shell } from 'electron';
 import { readFileSync, writeFileSync } from 'fs';
-import * as path from 'path';
 import log from 'electron-log/main';
 import { isDev, isPackaged } from './mode';
 import { initializeLogging } from './logging';
 import { resolveAsset, resolveFile } from './path';
 import * as fs from 'node:fs';
 import { createMenuFrom } from './menu';
+import * as path from 'node:path';
 
 initializeLogging();
 
@@ -44,7 +44,7 @@ const createWindow = (): void => {
   log.info('Loading web resources from:', webAppUrl);
   mainWindow.loadURL(webAppUrl);
 
-  if (isDev() && !isPackaged) {
+  if (isDev() && !isPackaged()) {
     mainWindow.webContents.openDevTools({ mode: 'detach' });
   }
 

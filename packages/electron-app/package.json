@@ -48,6 +48,13 @@
         "filter": [
           "**/*"
         ]
+      },
+      {
+        "from": "assets",
+        "to": "assets",
+        "filter": [
+          "**/*.css"
+        ]
       }
     ],
     "mac": {
