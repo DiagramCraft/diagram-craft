@@ -275,15 +275,14 @@ input[type="checkbox"][data-field-state='overridden'] {
   grid-area: menu;
   background: var(--primary-bg);
   display: grid;
-  grid-template-areas: "menu tools awareness extra-tools";
-  grid-template-columns: 80px 20fr 1fr 1fr;
+  grid-template-columns: 1fr auto 1fr;
 
-  > ._menu-button {
+  ._menu-button {
     position: relative;
-    grid-area: menu;
     display: flex;
     gap: 1rem;
     margin-left: 0.25rem;
+    margin-right: 1rem;
     width: 2rem;
     background-color: var(--primary-bg);
 
@@ -304,8 +303,16 @@ input[type="checkbox"][data-field-state='overridden'] {
 
   }
 
-  > ._tools {
-    grid-area: tools;
+  ._document {
+    margin-left: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    justify-self: center;
+    color: var(--primary-fg);
+  }
+
+  ._tools {
     display: flex;
     gap: 0.25rem;
 
@@ -317,28 +324,16 @@ input[type="checkbox"][data-field-state='overridden'] {
     > [role="toolbar"] {
       width: auto;
     }
-
-    > ._document {
-      margin-left: 0.25rem;
-      /*grid-area: document;*/
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      justify-self: center;
-      color: var(--primary-fg);
-    }
   }
 
-  > ._extra-tools {
-    grid-area: extra-tools;
+  ._extra-tools {
     display: flex;
     gap: 0.25rem;
     justify-self: end;
     padding-right: 1rem;
   }
 
-  > #awareness {
-    grid-area: awareness;
+  #awareness {
   }
 }
 

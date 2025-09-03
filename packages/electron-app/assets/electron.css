@@ -12,5 +12,11 @@
 }
 
 #main-menu {
-  display: none !important;
+  > * {
+    display: none !important;
+  }
+
+  background-color: transparent !important;
+  border: none !important;
+  min-width: 60px;
 }

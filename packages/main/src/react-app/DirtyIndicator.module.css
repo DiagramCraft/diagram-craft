@@ -1,12 +1,11 @@
 .cmp-dirty-indicator {
-  font-size: 13px;
-  color: var(--red-10);
+  color: var(--tertiary-fg);
   display: flex;
-  gap: 0.25rem;
   align-items: center;
 
   > button {
     padding: 1px 5px;
+    color: var(--tertiary-fg);
   }
 
   .cmp-dirty-indicator__text {
