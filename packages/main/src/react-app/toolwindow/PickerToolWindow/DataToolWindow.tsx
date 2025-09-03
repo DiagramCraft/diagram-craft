@@ -24,7 +24,7 @@ import {
   TbTrash
 } from 'react-icons/tb';
 import { DRAG_DROP_MANAGER } from '@diagram-craft/canvas/dragDropManager';
-import { ObjectPickerDrag } from '../PickerToolWindow/ObjectPickerDrag';
+import { ObjectPickerDrag } from './ObjectPickerDrag';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { assert } from '@diagram-craft/utils/assert';
 import { DataProviderSettingsDialog } from './DataProviderSettingsDialog';

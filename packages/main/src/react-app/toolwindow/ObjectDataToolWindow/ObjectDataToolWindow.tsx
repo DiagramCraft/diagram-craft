@@ -24,12 +24,15 @@ import { ObjectNamePanel } from './ObjectNamePanel';
 import type { Data } from '@diagram-craft/model/dataProvider';
 import type { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { EditItemDialog } from '../../components/EditItemDialog';
+import * as Tabs from '@radix-ui/react-tabs';
+import { $c } from '@diagram-craft/utils/classname';
 
 const findEntryBySchema = (e: DiagramElement, schema: string) => {
   return e.metadata.data?.data?.find(s => s.schema === schema);
 };
 
 export const ObjectDataToolWindow = () => {
+  const [tab, setTab] = useState<string>('name');
   const $d = useDiagram();
   const redraw = useRedraw();
   const application = useApplication();
@@ -192,258 +195,298 @@ export const ObjectDataToolWindow = () => {
 
   if ($d.selectionState.elements.length === 0) {
     return (
-      <Accordion.Root type="single" defaultValue={'data'}>
-        <Accordion.Item value="data">
-          <Accordion.ItemHeader>Data</Accordion.ItemHeader>
-          <Accordion.ItemContent>&nbsp;</Accordion.ItemContent>
-        </Accordion.Item>
-      </Accordion.Root>
+      <Tabs.Root className={'cmp-tool-tabs'} value={tab} onValueChange={e => setTab(e)}>
+        <Tabs.List className={$c('cmp-tool-tabs__tabs', { hidden: false })}>
+          <Tabs.Trigger
+            className="cmp-tool-tabs__tab-trigger util-vcenter"
+            value={'name'}
+            disabled={true}
+          >
+            Basic Info
+          </Tabs.Trigger>
+          <Tabs.Trigger
+            className="cmp-tool-tabs__tab-trigger util-vcenter"
+            value={'data'}
+            disabled={true}
+          >
+            Extended Data
+          </Tabs.Trigger>
+        </Tabs.List>
+      </Tabs.Root>
     );
   }
 
   return (
     <>
-      <Accordion.Root type="multiple" defaultValue={['data', 'basic', ...enabledSchemas]}>
-        {$d.selectionState.elements.length === 1 && <ObjectNamePanel mode="accordion" />}
-        <Accordion.Item value="data">
-          <Accordion.ItemHeader>
-            Data
-            <Accordion.ItemHeaderButtons>
-              <a
-                className={'cmp-button cmp-button--icon-only'}
-                onClick={() => setEditSchemaDialog({ open: true, schema: undefined })}
-                title="Add new schema"
-              >
-                <TbPlus />
-              </a>
-              <a
-                className={'cmp-button cmp-button--icon-only'}
-                style={{ color: editMode ? 'var(--highlight-fg)' : undefined }}
-                onClick={() => setEditMode(v => !v)}
-              >
-                <TbPencil />
-              </a>
-            </Accordion.ItemHeaderButtons>
-          </Accordion.ItemHeader>
-          <Accordion.ItemContent>
-            <Accordion.Root type={'multiple'} defaultValue={['_custom', ...enabledSchemas]}>
-              {/* Show all schemas, but conditionally render content */}
-              {$d.document.data.schemas.all.map(schema => {
-                const isSchemaEnabled = enabledSchemas.includes(schema.id);
-                const isExternal = $d.selectionState.elements.some(
-                  e => e.metadata.data?.data?.find(d => d.schema === schema.id)?.type === 'external'
-                );
-                const isExternalSchema = schema.source === 'external';
+      <Tabs.Root className={'cmp-tool-tabs'} value={tab} onValueChange={e => setTab(e)}>
+        <Tabs.List className={$c('cmp-tool-tabs__tabs', { hidden: false })}>
+          <Tabs.Trigger className="cmp-tool-tabs__tab-trigger util-vcenter" value={'name'}>
+            Basic Info
+          </Tabs.Trigger>
+          <Tabs.Trigger className="cmp-tool-tabs__tab-trigger util-vcenter" value={'data'}>
+            Extended Data
+          </Tabs.Trigger>
+        </Tabs.List>
 
-                if (!editMode && !isSchemaEnabled) return null;
-                return (
-                  <Accordion.Item key={schema.id} value={schema.id}>
-                    <Accordion.ItemHeader>
-                      <div className={'util-hstack'} style={{ gap: '0.5rem' }}>
-                        {editMode && (
-                          <input
-                            className="cmp-accordion__enabled"
-                            type={'checkbox'}
-                            checked={isSchemaEnabled}
-                            onChange={e => {
-                              const isChecked = e.target.checked;
-                              const accordionItem = e.target.closest(
-                                '.cmp-accordion__item'
-                              ) as HTMLElement;
-                              const accordionContent = accordionItem?.querySelector(
-                                '.cmp-accordion__content'
-                              ) as HTMLElement;
-                              const accordionHeader = accordionItem?.querySelector(
-                                '.cmp-accordion__header'
-                              ) as HTMLElement;
+        <Tabs.Content value={'name'}>
+          {$d.selectionState.elements.length === 1 && <ObjectNamePanel mode="headless" />}
+        </Tabs.Content>
 
-                              if (accordionItem) {
-                                if (isChecked) {
-                                  accordionItem.dataset.state = 'open';
-                                  accordionContent.dataset.state = 'open';
-                                  accordionHeader.dataset.state = 'open';
-                                  addSchemaToSelection(schema.id);
-                                } else {
-                                  accordionItem.dataset.state = 'closed';
-                                  accordionContent.dataset.state = 'closed';
-                                  accordionHeader.dataset.state = 'closed';
-                                  removeSchemaFromSelection(schema.id);
-                                }
-                              }
-                            }}
-                            onClick={e => e.stopPropagation()}
-                          />
-                        )}
+        <Tabs.Content value={'data'}>
+          <Accordion.Root type="multiple" defaultValue={['data', ...enabledSchemas]}>
+            <Accordion.Item value="data">
+              <Accordion.ItemHeader>
+                Data
+                <Accordion.ItemHeaderButtons>
+                  <a
+                    className={'cmp-button cmp-button--icon-only'}
+                    onClick={() => setEditSchemaDialog({ open: true, schema: undefined })}
+                    title="Add new schema"
+                  >
+                    <TbPlus />
+                  </a>
+                  <a
+                    className={'cmp-button cmp-button--icon-only'}
+                    style={{ color: editMode ? 'var(--highlight-fg)' : undefined }}
+                    onClick={() => setEditMode(v => !v)}
+                  >
+                    <TbPencil />
+                  </a>
+                </Accordion.ItemHeaderButtons>
+              </Accordion.ItemHeader>
+              <Accordion.ItemContent>
+                <Accordion.Root type={'multiple'} defaultValue={['_custom', ...enabledSchemas]}>
+                  {/* Show all schemas, but conditionally render content */}
+                  {$d.document.data.schemas.all.map(schema => {
+                    const isSchemaEnabled = enabledSchemas.includes(schema.id);
+                    const isExternal = $d.selectionState.elements.some(
+                      e =>
+                        e.metadata.data?.data?.find(d => d.schema === schema.id)?.type ===
+                        'external'
+                    );
+                    const isExternalSchema = schema.source === 'external';
 
-                        <span>
-                          {schema.name} {isExternal ? '(external)' : ''}
-                        </span>
-                      </div>
-                      <Accordion.ItemHeaderButtons>
-                        {isExternal && (
-                          <a
-                            className={'cmp-button cmp-button--icon-only'}
-                            onClick={() => editExternalData(schema.id)}
-                            title="Edit external data"
-                          >
-                            <TbPencil />
-                          </a>
-                        )}
-                        {isExternal && (
-                          <a
-                            className={'cmp-button cmp-button--icon-only'}
-                            onClick={() => clearExternalLinkage(schema.id)}
-                            title="Unlink external data"
-                            style={{ color: 'var(--highlight-fg)' }}
-                          >
-                            <TbLinkOff />
-                          </a>
-                        )}
-                        {!isExternal && isExternalSchema && (
-                          <a
-                            className={'cmp-button cmp-button--icon-only'}
-                            onClick={() => addExternalLinkage(schema)}
-                            title="Link to external data"
-                          >
-                            <TbLink />
-                          </a>
-                        )}
-                        {schema.source !== 'external' && (
-                          <DropdownMenu.Root>
-                            <DropdownMenu.Trigger asChild>
+                    if (!editMode && !isSchemaEnabled) return null;
+                    return (
+                      <Accordion.Item key={schema.id} value={schema.id}>
+                        <Accordion.ItemHeader>
+                          <div className={'util-hstack'} style={{ gap: '0.5rem' }}>
+                            {editMode && (
+                              <input
+                                className="cmp-accordion__enabled"
+                                type={'checkbox'}
+                                checked={isSchemaEnabled}
+                                onChange={e => {
+                                  const isChecked = e.target.checked;
+                                  const accordionItem = e.target.closest(
+                                    '.cmp-accordion__item'
+                                  ) as HTMLElement;
+                                  const accordionContent = accordionItem?.querySelector(
+                                    '.cmp-accordion__content'
+                                  ) as HTMLElement;
+                                  const accordionHeader = accordionItem?.querySelector(
+                                    '.cmp-accordion__header'
+                                  ) as HTMLElement;
+
+                                  if (accordionItem) {
+                                    if (isChecked) {
+                                      accordionItem.dataset.state = 'open';
+                                      accordionContent.dataset.state = 'open';
+                                      accordionHeader.dataset.state = 'open';
+                                      addSchemaToSelection(schema.id);
+                                    } else {
+                                      accordionItem.dataset.state = 'closed';
+                                      accordionContent.dataset.state = 'closed';
+                                      accordionHeader.dataset.state = 'closed';
+                                      removeSchemaFromSelection(schema.id);
+                                    }
+                                  }
+                                }}
+                                onClick={e => e.stopPropagation()}
+                              />
+                            )}
+
+                            <span>
+                              {schema.name} {isExternal ? '(external)' : ''}
+                            </span>
+                          </div>
+                          <Accordion.ItemHeaderButtons>
+                            {isExternal && (
                               <a
                                 className={'cmp-button cmp-button--icon-only'}
-                                title="Schema options"
+                                onClick={() => editExternalData(schema.id)}
+                                title="Edit external data"
                               >
-                                <TbDots />
+                                <TbPencil />
                               </a>
-                            </DropdownMenu.Trigger>
-                            <DropdownMenu.Portal>
-                              <DropdownMenu.Content className="cmp-context-menu" sideOffset={2}>
-                                <DropdownMenu.Item
-                                  className="cmp-context-menu__item"
-                                  onClick={() =>
-                                    setEditSchemaDialog({ open: true, schema: schema })
-                                  }
-                                >
-                                  Edit Schema
-                                </DropdownMenu.Item>
-                                <DropdownMenu.Item
-                                  className="cmp-context-menu__item"
-                                  onClick={() => {
-                                    application.ui.showDialog(
-                                      new MessageDialogCommand(
-                                        {
-                                          title: 'Confirm delete',
-                                          message: 'Are you sure you want to delete this schema?',
-                                          okLabel: 'Yes',
-                                          okType: 'danger',
-                                          cancelLabel: 'No'
-                                        },
-                                        () => {
-                                          const uow = new UnitOfWork($d, true);
-                                          const schemas = $d.document.data.schemas;
-                                          schemas.removeAndClearUsage(schema, uow);
+                            )}
+                            {isExternal && (
+                              <a
+                                className={'cmp-button cmp-button--icon-only'}
+                                onClick={() => clearExternalLinkage(schema.id)}
+                                title="Unlink external data"
+                                style={{ color: 'var(--highlight-fg)' }}
+                              >
+                                <TbLinkOff />
+                              </a>
+                            )}
+                            {!isExternal && isExternalSchema && (
+                              <a
+                                className={'cmp-button cmp-button--icon-only'}
+                                onClick={() => addExternalLinkage(schema)}
+                                title="Link to external data"
+                              >
+                                <TbLink />
+                              </a>
+                            )}
+                            {schema.source !== 'external' && (
+                              <DropdownMenu.Root>
+                                <DropdownMenu.Trigger asChild>
+                                  <a
+                                    className={'cmp-button cmp-button--icon-only'}
+                                    title="Schema options"
+                                  >
+                                    <TbDots />
+                                  </a>
+                                </DropdownMenu.Trigger>
+                                <DropdownMenu.Portal>
+                                  <DropdownMenu.Content className="cmp-context-menu" sideOffset={2}>
+                                    <DropdownMenu.Item
+                                      className="cmp-context-menu__item"
+                                      onClick={() =>
+                                        setEditSchemaDialog({ open: true, schema: schema })
+                                      }
+                                    >
+                                      Edit Schema
+                                    </DropdownMenu.Item>
+                                    <DropdownMenu.Item
+                                      className="cmp-context-menu__item"
+                                      onClick={() => {
+                                        application.ui.showDialog(
+                                          new MessageDialogCommand(
+                                            {
+                                              title: 'Confirm delete',
+                                              message:
+                                                'Are you sure you want to delete this schema?',
+                                              okLabel: 'Yes',
+                                              okType: 'danger',
+                                              cancelLabel: 'No'
+                                            },
+                                            () => {
+                                              const uow = new UnitOfWork($d, true);
+                                              const schemas = $d.document.data.schemas;
+                                              schemas.removeAndClearUsage(schema, uow);
 
-                                          const snapshots = uow.commit();
-                                          $d.undoManager.add(
-                                            new CompoundUndoableAction([
-                                              new DeleteSchemaUndoableAction(uow.diagram, schema),
-                                              new SnapshotUndoableAction(
-                                                'Delete schema',
-                                                uow.diagram,
-                                                snapshots
-                                              )
-                                            ])
-                                          );
-                                          redraw();
+                                              const snapshots = uow.commit();
+                                              $d.undoManager.add(
+                                                new CompoundUndoableAction([
+                                                  new DeleteSchemaUndoableAction(
+                                                    uow.diagram,
+                                                    schema
+                                                  ),
+                                                  new SnapshotUndoableAction(
+                                                    'Delete schema',
+                                                    uow.diagram,
+                                                    snapshots
+                                                  )
+                                                ])
+                                              );
+                                              redraw();
+                                            }
+                                          )
+                                        );
+                                      }}
+                                    >
+                                      Delete Schema
+                                    </DropdownMenu.Item>
+                                  </DropdownMenu.Content>
+                                </DropdownMenu.Portal>
+                              </DropdownMenu.Root>
+                            )}
+                          </Accordion.ItemHeaderButtons>
+                        </Accordion.ItemHeader>
+                        <Accordion.ItemContent forceMount={true}>
+                          <div className={'cmp-labeled-table'}>
+                            {schema.fields.map(f => {
+                              const v = unique(
+                                $d.selectionState.elements.map(
+                                  e => findEntryBySchema(e, schema.id)?.data?.[f.id]
+                                )
+                              );
+
+                              return (
+                                <React.Fragment key={f.id}>
+                                  <div className={'cmp-labeled-table__label util-a-top-center'}>
+                                    {f.name}:
+                                  </div>
+                                  <div className={'cmp-labeled-table__value'}>
+                                    {f.type === 'text' && (
+                                      <TextInput
+                                        value={v.length > 1 ? '***' : (v[0]?.toString() ?? '')}
+                                        disabled={isExternal}
+                                        onChange={(_, e) =>
+                                          changeCallback('data', schema.id, f.id, e)
                                         }
-                                      )
-                                    );
-                                  }}
-                                >
-                                  Delete Schema
-                                </DropdownMenu.Item>
-                              </DropdownMenu.Content>
-                            </DropdownMenu.Portal>
-                          </DropdownMenu.Root>
-                        )}
-                      </Accordion.ItemHeaderButtons>
-                    </Accordion.ItemHeader>
-                    <Accordion.ItemContent forceMount={true}>
-                      <div className={'cmp-labeled-table'}>
-                        {schema.fields.map(f => {
-                          const v = unique(
-                            $d.selectionState.elements.map(
-                              e => findEntryBySchema(e, schema.id)?.data?.[f.id]
-                            )
-                          );
+                                      />
+                                    )}
+                                    {f.type === 'longtext' && (
+                                      <TextArea
+                                        style={{ height: '40px' }}
+                                        value={v.length > 1 ? '***' : (v[0]?.toString() ?? '')}
+                                        disabled={isExternal}
+                                        onChange={(_, e) =>
+                                          changeCallback('data', schema.id, f.id, e)
+                                        }
+                                      />
+                                    )}
+                                  </div>
+                                </React.Fragment>
+                              );
+                            })}
+                          </div>
+                        </Accordion.ItemContent>
+                      </Accordion.Item>
+                    );
+                  })}
 
-                          return (
-                            <React.Fragment key={f.id}>
-                              <div className={'cmp-labeled-table__label util-a-top-center'}>
-                                {f.name}:
-                              </div>
-                              <div className={'cmp-labeled-table__value'}>
-                                {f.type === 'text' && (
-                                  <TextInput
-                                    value={v.length > 1 ? '***' : (v[0]?.toString() ?? '')}
-                                    disabled={isExternal}
-                                    onChange={(_, e) => changeCallback('data', schema.id, f.id, e)}
-                                  />
-                                )}
-                                {f.type === 'longtext' && (
+                  {customDataKeys.length > 0 && (
+                    <Accordion.Item value={'_custom'}>
+                      <Accordion.ItemHeader>Custom data</Accordion.ItemHeader>
+                      <Accordion.ItemContent>
+                        <div className={'cmp-labeled-table'}>
+                          {customDataKeys.map(k => {
+                            const v = unique(
+                              $d.selectionState.elements.map(e =>
+                                e.metadata.data?.customData?.[k]?.toString()
+                              )
+                            );
+
+                            return (
+                              <React.Fragment key={k}>
+                                <div className={'cmp-labeled-table__label util-a-top-center'}>
+                                  {k}:
+                                </div>
+                                <div className={'cmp-labeled-table__value'}>
                                   <TextArea
+                                    value={v[0] ?? ''}
+                                    isIndeterminate={v.length > 1}
                                     style={{ height: '40px' }}
-                                    value={v.length > 1 ? '***' : (v[0]?.toString() ?? '')}
-                                    disabled={isExternal}
-                                    onChange={(_, e) => changeCallback('data', schema.id, f.id, e)}
+                                    onChange={(_, e) => changeCallback('custom', '', k, e)}
                                   />
-                                )}
-                              </div>
-                            </React.Fragment>
-                          );
-                        })}
-                      </div>
-                    </Accordion.ItemContent>
-                  </Accordion.Item>
-                );
-              })}
-
-              {customDataKeys.length > 0 && (
-                <Accordion.Item value={'_custom'}>
-                  <Accordion.ItemHeader>Custom data</Accordion.ItemHeader>
-                  <Accordion.ItemContent>
-                    <div className={'cmp-labeled-table'}>
-                      {customDataKeys.map(k => {
-                        const v = unique(
-                          $d.selectionState.elements.map(e =>
-                            e.metadata.data?.customData?.[k]?.toString()
-                          )
-                        );
-
-                        return (
-                          <React.Fragment key={k}>
-                            <div className={'cmp-labeled-table__label util-a-top-center'}>{k}:</div>
-                            <div className={'cmp-labeled-table__value'}>
-                              <TextArea
-                                value={v[0] ?? ''}
-                                isIndeterminate={v.length > 1}
-                                style={{ height: '40px' }}
-                                onChange={(_, e) => changeCallback('custom', '', k, e)}
-                              />
-                            </div>
-                          </React.Fragment>
-                        );
-                      })}
-                    </div>
-                  </Accordion.ItemContent>
-                </Accordion.Item>
-              )}
-            </Accordion.Root>
-          </Accordion.ItemContent>
-        </Accordion.Item>
-      </Accordion.Root>
+                                </div>
+                              </React.Fragment>
+                            );
+                          })}
+                        </div>
+                      </Accordion.ItemContent>
+                    </Accordion.Item>
+                  )}
+                </Accordion.Root>
+              </Accordion.ItemContent>
+            </Accordion.Item>
+          </Accordion.Root>
+        </Tabs.Content>
+      </Tabs.Root>
       <EditItemDialog
         open={editItemDialog.open}
         onClose={() => setEditItemDialog({ open: false })}
