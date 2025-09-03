@@ -1,24 +1,24 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import type { ElectronAPI, MenuEntry } from '@diagram-craft/electron-client-api/electron-api';
+import type {
+  Channel,
+  ElectronAPI,
+  MenuEntry
+} from '@diagram-craft/electron-client-api/electron-api';
 
 contextBridge.exposeInMainWorld('electronAPI', {
-  onMenuAction: (callback: (action: string) => void) => {
-    ipcRenderer.on('menu-action', (_event, action) => callback(action));
+  on: (channel: Channel, callback: (action: string) => void) => {
+    ipcRenderer.on(channel, (_event, action) => callback(action));
   },
 
-  onRecentFileOpen: (callback: (filePath: string) => void) => {
-    ipcRenderer.on('recent-file-open', (_event, filePath) => callback(filePath));
-  },
-
-  removeAllListeners: (channel: string) => {
+  removeAllListeners: (channel: Channel) => {
     ipcRenderer.removeAllListeners(channel);
   },
 
-  fileOpen: () => ipcRenderer.invoke('fileOpen'),
-  fileSave: (url: string, data: string) => ipcRenderer.invoke('fileSave', { url, data }),
+  fileOpen: () => ipcRenderer.invoke('file:open'),
+  fileSave: (url: string, data: string) => ipcRenderer.invoke('file:save', { url, data }),
   fileSaveAs: (url: string | undefined, data: string) =>
-    ipcRenderer.invoke('fileSaveAs', { url, data }),
-  fileLoad: (url: string) => ipcRenderer.invoke('fileLoad', url),
+    ipcRenderer.invoke('file:saveAs', { url, data }),
+  fileLoad: (url: string) => ipcRenderer.invoke('file:load', url),
 
   setMenu: (items: MenuEntry[], keybindings: Record<string, string>) =>
     ipcRenderer.invoke('menu:set', {
