@@ -3,11 +3,12 @@ import { showAboutDialog } from '../about-dialog';
 import { convertKeybindingToAccelerator } from './keybinding';
 import { Channels, type IpcHandlers } from '../ipc';
 import { type MenuEntry } from '@diagram-craft/electron-client-api/electron-api';
+import { isLinux, isMac, isWindows } from '../utils/platform';
 
 export const menuHandlers: IpcHandlers = {
   register(mainWindow: BrowserWindow): void {
     ipcMain.handle('menu:set', async (_event, { items, keybindings }) => {
-      createMenuFrom(items, keybindings, mainWindow!);
+      createMenu(items, keybindings, mainWindow!);
     });
 
     ipcMain.handle('menu:setState', async (_event, { id, enabled, checked }) => {
@@ -20,66 +21,58 @@ export const menuHandlers: IpcHandlers = {
   }
 };
 
-const processMenuEntry = (
+const createMenuItem = (
   entry: MenuEntry,
   keybindings: Record<string, string>,
   mainWindow: BrowserWindow
 ): Electron.MenuItemConstructorOptions => {
   const keybinding = keybindings[entry.id];
-
   const accelerator = keybinding ? convertKeybindingToAccelerator(keybinding) : undefined;
 
-  const e: Electron.MenuItemConstructorOptions = {
+  const menuItem: Electron.MenuItemConstructorOptions = {
     id: entry.id,
     label: entry.label,
     submenu: entry.submenu
-      ? entry.submenu.map(k => processMenuEntry(k, keybindings, mainWindow))
+      ? entry.submenu.map(k => createMenuItem(k, keybindings, mainWindow))
       : undefined,
     accelerator
   };
 
-  if (entry.type === 'action') {
-    e.click = () => {
+  if (entry.type === 'action' || entry.type === 'toggle') {
+    menuItem.click = () => {
       mainWindow?.webContents.send(Channels.MenuAction, entry.action);
     };
-  } else if (entry.type === 'toggle') {
-    e.click = () => {
-      mainWindow?.webContents.send(Channels.MenuAction, entry.action);
-    };
-    e.type = 'checkbox';
-  } else if (entry.type === 'separator') {
-    e.type = 'separator';
-  } else if (entry.type === 'recent') {
-    // Use Electron's native recent documents
-    e.role = 'recentDocuments';
-    e.submenu = [
-      {
-        label: 'Clear Recent',
-        role: 'clearRecentDocuments'
-      }
-    ];
   }
 
-  return e;
+  if (entry.type === 'toggle') {
+    menuItem.type = 'checkbox';
+  } else if (entry.type === 'separator') {
+    menuItem.type = 'separator';
+  } else if (entry.type === 'recent') {
+    menuItem.role = 'recentDocuments';
+    menuItem.submenu = [{ label: 'Clear Recent', role: 'clearRecentDocuments' }];
+  }
+
+  return menuItem;
 };
 
-export const createMenuFrom = (
+export const createMenu = (
   entries: MenuEntry[],
   keybindings: Record<string, string>,
   mainWindow: BrowserWindow
 ): void => {
-  const template: Electron.MenuItemConstructorOptions[] = [];
+  const dest: Electron.MenuItemConstructorOptions[] = [];
 
   for (const topLevel of entries) {
-    template.push(processMenuEntry(topLevel, keybindings, mainWindow));
+    dest.push(createMenuItem(topLevel, keybindings, mainWindow));
   }
 
-  if (process.platform === 'win32') {
-    (template.find(e => e.id === 'file')!.submenu! as Electron.MenuItemConstructorOptions[]).push(
+  if (isWindows()) {
+    (dest.find(e => e.id === 'file')!.submenu! as Electron.MenuItemConstructorOptions[]).push(
       ...[{ type: 'separator' as const }, { role: 'quit' as const }]
     );
 
-    template.push({
+    dest.push({
       label: 'Help',
       submenu: [
         {
@@ -88,10 +81,8 @@ export const createMenuFrom = (
         }
       ]
     });
-  }
-
-  if (process.platform === 'linux') {
-    template.push({
+  } else if (isLinux()) {
+    dest.push({
       label: 'Help',
       submenu: [
         {
@@ -100,10 +91,8 @@ export const createMenuFrom = (
         }
       ]
     });
-  }
-
-  if (process.platform === 'darwin') {
-    template.unshift({
+  } else if (isMac()) {
+    dest.unshift({
       label: app.getName(),
       submenu: [
         {
@@ -121,12 +110,11 @@ export const createMenuFrom = (
       ]
     });
 
-    template.push({
+    dest.push({
       label: 'Window',
       submenu: [{ role: 'minimize' }, { role: 'close' }]
     });
   }
 
-  const menu = Menu.buildFromTemplate(template);
-  Menu.setApplicationMenu(menu);
+  Menu.setApplicationMenu(Menu.buildFromTemplate(dest));
 };

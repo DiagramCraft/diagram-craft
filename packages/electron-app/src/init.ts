@@ -34,13 +34,9 @@ const createWindow = (): void => {
     show: false
   });
 
-  let webAppUrl: string;
-
-  if (isDev()) {
-    webAppUrl = 'http://localhost:5173';
-  } else {
-    webAppUrl = `file://${resolveFile('$RESOURCE_ROOT/index.html')}`;
-  }
+  const webAppUrl = isDev()
+    ? 'http://localhost:5173'
+    : `file://${resolveFile('$RESOURCE_ROOT/index.html')}`;
 
   log.info('Loading web resources from:', webAppUrl);
   mainWindow.loadURL(webAppUrl);
@@ -67,8 +63,8 @@ const createWindow = (): void => {
 
 app.whenReady().then(() => {
   log.info('Electron app is ready');
-  Menu.setApplicationMenu(null);
 
+  Menu.setApplicationMenu(null);
   createWindow();
 
   app.on('activate', () => {

@@ -3,26 +3,27 @@ import log from 'electron-log/main';
 import { isPackaged } from './platform';
 
 export const resolveAsset = (p: string) => {
+  let resolved: string;
   if (isPackaged()) {
-    const res = path.join(process.resourcesPath, 'assets', p);
-    log.info('resolveAsset', p, res);
-    return res;
+    resolved = path.join(process.resourcesPath, 'assets', p);
   } else {
-    return path.join(__dirname, '../../../../assets', p);
+    resolved = path.join(__dirname, '../../../../assets', p);
   }
+  log.info('resolveAsset', p, resolved);
+  return resolved;
 };
 
 export const resolveFile = (p: string) => {
-  log.info('resolveFile', p);
+  let resolved: string;
   if (isPackaged()) {
-    const res = p
+    resolved = p
       .replace('$STENCIL_ROOT', path.join(process.resourcesPath, 'main/dist'))
       .replace('$RESOURCE_ROOT', path.join(process.resourcesPath, 'main/dist'));
-    log.info('resolveFile', p, res);
-    return res;
   } else {
-    return p
+    resolved = p
       .replace('$STENCIL_ROOT', path.join(__dirname, '../../../../../main/dist'))
       .replace('$RESOURCE_ROOT', path.join(__dirname, '../../../../../main/dist'));
   }
+  log.info('resolveFile', p, resolved);
+  return resolved;
 };

@@ -8,11 +8,11 @@ export const fileHandlers: IpcHandlers = {
   register(mainWindow: BrowserWindow): void {
     ipcMain.handle('file:open', async (_event, _action) => {
       const result = await dialog.showOpenDialog(mainWindow!, {
-        properties: ['openFile']
-        /*filters: [
+        properties: ['openFile'],
+        filters: [
           { name: 'Diagram Files', extensions: ['dcd'] },
           { name: 'All Files', extensions: ['*'] }
-        ]*/
+        ]
       });
 
       if (!result.canceled && result.filePaths.length > 0) {
@@ -49,11 +49,11 @@ export const fileHandlers: IpcHandlers = {
     ipcMain.handle('file:saveAs', async (_event, _action, url, content) => {
       try {
         const result = await dialog.showSaveDialog(mainWindow!, {
-          defaultPath: url
-          /*filters: [
+          defaultPath: url,
+          filters: [
             { name: 'Diagram Files', extensions: ['dcd'] },
             { name: 'All Files', extensions: ['*'] }
-          ]*/
+          ]
         });
 
         if (!result.canceled && result.filePath) {
