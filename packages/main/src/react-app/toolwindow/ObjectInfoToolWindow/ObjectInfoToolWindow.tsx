@@ -2,15 +2,17 @@ import { useCallback, useEffect, useState } from 'react';
 import { SelectionInfoDetails } from './SelectionInfoDetails';
 import { NodeInfoDetails } from './NodeInfoDetails';
 import { EdgeInfoDetails } from './EdgeInfoDetails';
-import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { useDiagram } from '../../../application';
 import { DiagramInfoDetails } from './DiagramInfoDetails';
+import { $c } from '@diagram-craft/utils/classname';
+import * as Tabs from '@radix-ui/react-tabs';
 
 export const ObjectInfoToolWindow = () => {
   const diagram = useDiagram();
   const [state, setState] = useState<'selection' | 'node' | 'edge' | undefined>(undefined);
   const [nodeId, setNodeId] = useState<string | undefined>(undefined);
   const [edgeId, setEdgeId] = useState<string | undefined>(undefined);
+  const [tab, setTab] = useState<string>('object');
 
   const callback = useCallback(() => {
     const selectionType = diagram.selectionState.getSelectionType();
@@ -37,16 +39,20 @@ export const ObjectInfoToolWindow = () => {
   }, [callback, diagram.selectionState]);
 
   return (
-    <Accordion.Root disabled={true} type="multiple" defaultValue={['metadata', 'props']}>
-      <Accordion.Item value="props">
-        <Accordion.ItemHeader>Properties</Accordion.ItemHeader>
-        <Accordion.ItemContent>
+    <Tabs.Root className={'cmp-tool-tabs'} value={tab} onValueChange={e => setTab(e)}>
+      <Tabs.List className={$c('cmp-tool-tabs__tabs', { hidden: false })}>
+        <Tabs.Trigger className="cmp-tool-tabs__tab-trigger util-vcenter" value={'object'}>
+          Selection Info
+        </Tabs.Trigger>
+      </Tabs.List>
+      <Tabs.Content value={'object'}>
+        <div className={'cmp-panel__headless'}>
           {state === 'selection' && <SelectionInfoDetails obj={diagram.selectionState} />}
           {state === 'node' && <NodeInfoDetails obj={diagram.nodeLookup.get(nodeId!)!} />}
           {state === 'edge' && <EdgeInfoDetails obj={diagram.edgeLookup.get(edgeId!)!} />}
           {state === undefined && <DiagramInfoDetails obj={diagram} />}
-        </Accordion.ItemContent>
-      </Accordion.Item>
-    </Accordion.Root>
+        </div>
+      </Tabs.Content>
+    </Tabs.Root>
   );
 };

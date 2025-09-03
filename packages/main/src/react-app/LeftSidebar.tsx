@@ -1,6 +1,5 @@
 import { SideBar, SideBarPage } from './SideBar';
 import {
-  TbCheck,
   TbDatabaseSearch,
   TbFile,
   TbHistory,
@@ -11,7 +10,6 @@ import {
 } from 'react-icons/tb';
 import { PickerToolWindow } from './toolwindow/PickerToolWindow/PickerToolWindow';
 import { LayerToolWindow } from './toolwindow/LayerToolWindow/LayerToolWindow';
-import { SelectToolWindow } from './toolwindow/SelectToolWindow/SelectToolWindow';
 import { DocumentToolWindow } from './toolwindow/DocumentToolWindow/DocumentToolWindow';
 import { HistoryToolWindow } from './toolwindow/HistoryToolWindow/HistoryToolWindow';
 import { QueryToolWindow } from './toolwindow/QueryToolWindow/QueryToolWindow';
@@ -30,9 +28,6 @@ export const LeftSidebar = () => {
       </SideBarPage>
       <SideBarPage icon={TbStack}>
         <LayerToolWindow />
-      </SideBarPage>
-      <SideBarPage icon={TbCheck}>
-        <SelectToolWindow diagram={application.model.activeDiagram} />
       </SideBarPage>
       <SideBarPage icon={TbFile}>
         <DocumentToolWindow
