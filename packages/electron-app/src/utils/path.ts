@@ -1,6 +1,6 @@
-import { isPackaged } from './mode';
 import * as path from 'path';
 import log from 'electron-log/main';
+import { isPackaged } from './platform';
 
 export const resolveAsset = (p: string) => {
   if (isPackaged()) {
@@ -8,7 +8,7 @@ export const resolveAsset = (p: string) => {
     log.info('resolveAsset', p, res);
     return res;
   } else {
-    return path.join(__dirname, '../../../assets', p);
+    return path.join(__dirname, '../../../../assets', p);
   }
 };
 
@@ -22,7 +22,7 @@ export const resolveFile = (p: string) => {
     return res;
   } else {
     return p
-      .replace('$STENCIL_ROOT', path.join(__dirname, '../../../../main/dist'))
-      .replace('$RESOURCE_ROOT', path.join(__dirname, '../../../../main/dist'));
+      .replace('$STENCIL_ROOT', path.join(__dirname, '../../../../../main/dist'))
+      .replace('$RESOURCE_ROOT', path.join(__dirname, '../../../../../main/dist'));
   }
 };

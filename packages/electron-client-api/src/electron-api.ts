@@ -1,8 +1,11 @@
+export type Channel = 'menu:action' | 'file:recentFileOpen';
+
 export type ElectronAPI = {
   isElectron: boolean;
-  onMenuAction: (callback: (action: string) => void) => void;
-  onRecentFileOpen: (callback: (filePath: string) => void) => void;
-  removeAllListeners: (channel: string) => void;
+
+  on: (channel: Channel, callback: (value: string) => void) => void;
+  removeAllListeners: (channel: Channel) => void;
+
   platform: string;
 
   fileOpen: () => Promise<{ url: string } | undefined>;

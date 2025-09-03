@@ -58,7 +58,8 @@ export const ElectronIntegration = {
     app.actions.FILE_SAVE_AS = new ElectronFileSaveAsAction(app);
     app.actions.FILE_OPEN = new ElectronFileOpenAction(app);
 
-    window.electronAPI.onMenuAction(actionId => {
+    window.electronAPI.removeAllListeners('menu:action');
+    window.electronAPI.on('menu:action', actionId => {
       const action = app.actions[actionId];
       if (!action) {
         console.warn(`Action ${actionId} not found`);
@@ -69,8 +70,8 @@ export const ElectronIntegration = {
     });
 
     // Handle recent file opens
-    window.electronAPI.removeAllListeners('recent-file-open');
-    window.electronAPI.onRecentFileOpen((filePath: string) => {
+    window.electronAPI.removeAllListeners('file:recentFileOpen');
+    window.electronAPI.on('file:recentFileOpen', (filePath: string) => {
       if (filePath) {
         app.file.loadDocument(filePath);
       }

@@ -1,6 +1,24 @@
-import { app, type BrowserWindow, Menu } from 'electron';
-import type { MenuEntry } from '@diagram-craft/electron-client-api/electron-api';
-import { showAboutDialog } from './about-dialog';
+import { app, type BrowserWindow, ipcMain, Menu } from 'electron';
+import { showAboutDialog } from '../about-dialog';
+import { convertKeybindingToAccelerator } from './keybinding';
+import { Channels, type IpcHandlers } from '../ipc';
+import { type MenuEntry } from '@diagram-craft/electron-client-api/electron-api';
+
+export const menuHandlers: IpcHandlers = {
+  register(mainWindow: BrowserWindow): void {
+    ipcMain.handle('menu:set', async (_event, { items, keybindings }) => {
+      createMenuFrom(items, keybindings, mainWindow!);
+    });
+
+    ipcMain.handle('menu:setState', async (_event, { id, enabled, checked }) => {
+      const menuItem = Menu.getApplicationMenu()?.getMenuItemById(id);
+      if (menuItem) {
+        menuItem.enabled = enabled;
+        menuItem.checked = checked;
+      }
+    });
+  }
+};
 
 const processMenuEntry = (
   entry: MenuEntry,
@@ -9,15 +27,7 @@ const processMenuEntry = (
 ): Electron.MenuItemConstructorOptions => {
   const keybinding = keybindings[entry.id];
 
-  let accelerator: string | undefined;
-  if (keybinding) {
-    accelerator = keybinding
-      .replace('M-', 'CommandOrControl+')
-      .replace('A-', 'Alt+')
-      .replace('S-', 'Shift+')
-      .replace('C-', 'Control+')
-      .replace('Key', '');
-  }
+  const accelerator = keybinding ? convertKeybindingToAccelerator(keybinding) : undefined;
 
   const e: Electron.MenuItemConstructorOptions = {
     id: entry.id,
@@ -30,11 +40,11 @@ const processMenuEntry = (
 
   if (entry.type === 'action') {
     e.click = () => {
-      mainWindow?.webContents.send('menu-action', entry.action);
+      mainWindow?.webContents.send(Channels.MenuAction, entry.action);
     };
   } else if (entry.type === 'toggle') {
     e.click = () => {
-      mainWindow?.webContents.send('menu-action', entry.action);
+      mainWindow?.webContents.send(Channels.MenuAction, entry.action);
     };
     e.type = 'checkbox';
   } else if (entry.type === 'separator') {

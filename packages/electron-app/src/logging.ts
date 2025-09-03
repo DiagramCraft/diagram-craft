@@ -1,5 +1,5 @@
 import log from 'electron-log/main';
-import { isDev, isPackaged } from './mode';
+import { isDev, isPackaged } from './utils/platform';
 
 export const initializeLogging = () => {
   // Configure logging
