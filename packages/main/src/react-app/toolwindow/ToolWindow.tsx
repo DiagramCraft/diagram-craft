@@ -1,9 +1,8 @@
 import React, { JSXElementConstructor, ReactElement, ReactNode, useEffect, useState } from 'react';
-import { $c } from '@diagram-craft/utils/classname';
-import * as Tabs from '@radix-ui/react-tabs';
 import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import styles from './ToolWindow.module.css';
 import { ErrorBoundary } from '../ErrorBoundary';
+import { Tabs } from '@diagram-craft/app-components/Tabs';
 
 type RootProps = { children: React.ReactNode | React.ReactNode[]; defaultTab?: string };
 
@@ -29,8 +28,8 @@ const Root = (props: RootProps) => {
   }, [props.children]);
 
   return (
-    <Tabs.Root className={'cmp-tool-tabs'} value={tab} onValueChange={e => setTab(e)}>
-      <Tabs.List className={$c('cmp-tool-tabs__tabs', { hidden: false })}>
+    <Tabs.Root value={tab} onValueChange={e => setTab(e)}>
+      <Tabs.List>
         {React.Children.map(props.children, child => {
           if (!child) return null;
           assert.present(child);
@@ -38,10 +37,7 @@ const Root = (props: RootProps) => {
           assert.true(child.type === Tab);
 
           return (
-            <Tabs.Trigger
-              className="cmp-tool-tabs__tab-trigger util-vcenter"
-              value={(child.props as TabProps).id}
-            >
+            <Tabs.Trigger value={(child.props as TabProps).id}>
               {(child.props as TabProps).title}
             </Tabs.Trigger>
           );

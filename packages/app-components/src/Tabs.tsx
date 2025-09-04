@@ -4,7 +4,12 @@ import React, { CSSProperties } from 'react';
 
 const Root = (props: RootProps) => {
   return (
-    <RadixTabs.Root className={styles.cmpTabs} defaultValue={props.defaultValue}>
+    <RadixTabs.Root
+      className={styles.cmpTabs}
+      value={props.value}
+      defaultValue={props.defaultValue}
+      onValueChange={props.onValueChange}
+    >
       {props.children}
     </RadixTabs.Root>
   );
@@ -12,7 +17,9 @@ const Root = (props: RootProps) => {
 
 type RootProps = {
   defaultValue?: string;
+  value?: string;
   children: React.ReactNode;
+  onValueChange?: (value: string) => void;
 };
 
 const List = (props: ListProps) => {
