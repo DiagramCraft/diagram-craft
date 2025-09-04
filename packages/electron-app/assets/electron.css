@@ -12,5 +12,32 @@
 }
 
 #main-menu {
-  display: none !important;
+  > * {
+    display: none !important;
+  }
+
+  background-color: transparent !important;
+  border: none !important;
+  min-width: 60px;
+}
+
+#menu {
+  .cmp-toolbar__button[data-state='on'] {
+    background-color: #4F4F4F !important;
+    color: #F3F3F3 !important;
+  }
+
+  .cmp-toolbar__button:hover, .cmp-toolbar__button:focus {
+    background-color: #4F4F4F !important;
+    color: #F3F3F3 !important;
+  }
+
+  .cmp-toolbar__button:focus, .cmp-toolbar__button[data-focus="true"] {
+    box-shadow: none !important;
+    color: #F3F3F3 !important;
+  }
+
+  .cmp-toolbar__separator {
+    background-color: #3F3F3F !important;
+  }
 }

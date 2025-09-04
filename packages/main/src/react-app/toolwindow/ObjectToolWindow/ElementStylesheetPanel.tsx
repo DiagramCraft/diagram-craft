@@ -85,7 +85,11 @@ export const ElementStylesheetPanel = (props: Props) => {
   return (
     <>
       <ToolWindowPanel
-        mode={(props.mode ?? $d.selectionState.isNodesOnly()) ? 'headless' : 'accordion'}
+        mode={
+          (props.mode ?? ($d.selectionState.isNodesOnly() || $d.selectionState.isEdgesOnly()))
+            ? 'headless'
+            : 'accordion'
+        }
         id="stylesheet"
         title={'Style'}
         hasCheckbox={false}

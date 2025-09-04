@@ -72,6 +72,7 @@ import { FullScreenProgress } from './react-app/components/FullScreenProgress';
 import type { DiagramFactory, DocumentFactory } from '@diagram-craft/model/factory';
 import { PortalContextProvider } from '@diagram-craft/app-components/PortalContext';
 import { ElectronIntegration } from './electron';
+import { DocumentName } from './react-app/DocumentName';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -397,10 +398,15 @@ export const App = (props: {
 
           <div id="app" className={'dark-theme'}>
             <div id="menu">
-              <MainMenu />
-              <MainToolbar dirty={dirty} />
-              <AwarenessToolbar />
-              <AuxToolbar />
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <MainMenu />
+                <MainToolbar />
+              </div>
+              <DocumentName dirty={dirty} />
+              <div style={{ display: 'flex', marginLeft: 'auto' }}>
+                <AwarenessToolbar />
+                <AuxToolbar />
+              </div>
             </div>
 
             <div id="window-area">

@@ -1,8 +1,10 @@
 import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
 import { TbCircleArrowRightFilled, TbCircleDotted } from 'react-icons/tb';
-import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { useDiagram } from '../../../application';
+import { $c } from '@diagram-craft/utils/classname';
+import * as Tabs from '@radix-ui/react-tabs';
+import { useState } from 'react';
 
 const formatTimestamp = (ts: Date | undefined) => {
   if (!ts) {
@@ -12,6 +14,7 @@ const formatTimestamp = (ts: Date | undefined) => {
 };
 
 export const HistoryToolWindow = () => {
+  const [tab, setTab] = useState<string>('undo');
   const diagram = useDiagram();
   const redraw = useRedraw();
   useEventListener(diagram.undoManager, 'change', redraw);
@@ -20,10 +23,17 @@ export const HistoryToolWindow = () => {
   const undoActions = diagram.undoManager.undoableActions.toReversed();
 
   return (
-    <Accordion.Root disabled={true} type="multiple" defaultValue={['history']}>
-      <Accordion.Item value="history">
-        <Accordion.ItemHeader>History</Accordion.ItemHeader>
-        <Accordion.ItemContent>
+    <Tabs.Root className={'cmp-tool-tabs'} value={tab} onValueChange={e => setTab(e)}>
+      <Tabs.List className={$c('cmp-tool-tabs__tabs', { hidden: false })}>
+        <Tabs.Trigger className="cmp-tool-tabs__tab-trigger util-vcenter" value={'undo'}>
+          Undo Stack
+        </Tabs.Trigger>
+        <Tabs.Trigger className="cmp-tool-tabs__tab-trigger util-vcenter" value={'history'}>
+          Document History
+        </Tabs.Trigger>
+      </Tabs.List>
+      <Tabs.Content value={'undo'}>
+        <div className={'cmp-panel__headless'} style={{ fontSize: '11px' }}>
           <div className={'util-vstack'}>
             {redoActions.map((a, idx) => (
               <div key={idx} className={'util-vcenter util-hgap'}>
@@ -43,8 +53,8 @@ export const HistoryToolWindow = () => {
               </div>
             ))}
           </div>
-        </Accordion.ItemContent>
-      </Accordion.Item>
-    </Accordion.Root>
+        </div>
+      </Tabs.Content>
+    </Tabs.Root>
   );
 };

@@ -13,12 +13,8 @@ import {
   TbTextSize
 } from 'react-icons/tb';
 import { ActionToolbarButton } from './toolbar/ActionToolbarButton';
-import { urlToName } from '@diagram-craft/utils/url';
-import { DirtyIndicator } from './DirtyIndicator';
-import { useApplication } from '../application';
 
-export const MainToolbar = ({ dirty }: { dirty: boolean }) => {
-  const application = useApplication();
+export const MainToolbar = () => {
   return (
     <div className={'_tools'}>
       <Toolbar.Root size={'large'}>
@@ -55,23 +51,6 @@ export const MainToolbar = ({ dirty }: { dirty: boolean }) => {
         </ActionToolbarButton>
         <Toolbar.Separator />
       </Toolbar.Root>
-
-      <div className={'_document'}>
-        {application.model.activeDocument.url
-          ? urlToName(application.model.activeDocument.url)
-          : 'Untitled'}
-
-        <DirtyIndicator
-          dirty={dirty}
-          onDirtyChange={
-            application.model.activeDocument.url
-              ? async () => {
-                  application.file.loadDocument(application.model.activeDocument.url!);
-                }
-              : undefined
-          }
-        />
-      </div>
     </div>
   );
 };

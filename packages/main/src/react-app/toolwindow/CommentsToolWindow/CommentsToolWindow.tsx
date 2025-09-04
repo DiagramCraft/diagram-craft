@@ -15,8 +15,11 @@ import {
 import { CommentsSortMenu } from './CommentsSortMenu';
 import { CommentItem } from './CommentItem';
 import styles from './CommentsToolWindow.module.css';
+import * as Tabs from '@radix-ui/react-tabs';
+import { $c } from '@diagram-craft/utils/classname';
 
 export const CommentsToolWindow = () => {
+  const [tab, setTab] = useState<string>('comments');
   const diagram = useDiagram();
   const redraw = useRedraw();
   const [sortBy, setSortBy] = useState<SortBy>('date-desc');
@@ -85,54 +88,68 @@ export const CommentsToolWindow = () => {
         : groupThreadsByAuthor(commentThreads);
 
   return (
-    <Accordion.Root disabled={false} type="multiple" defaultValue={['comments']}>
-      <Accordion.Item value="comments">
-        <Accordion.ItemHeader>
+    <Tabs.Root className={'cmp-tool-tabs'} value={tab} onValueChange={e => setTab(e)}>
+      <Tabs.List className={$c('cmp-tool-tabs__tabs', { hidden: false })}>
+        <Tabs.Trigger className="cmp-tool-tabs__tab-trigger util-vcenter" value={'comments'}>
           Comments
-          <Accordion.ItemHeaderButtons>
-            <CommentsSortMenu
-              sortBy={sortBy}
-              groupBy={groupBy}
-              hideResolved={hideResolved}
-              onSortChange={setSortBy}
-              onGroupChange={setGroupBy}
-              onHideResolvedChange={setHideResolved}
-            />
-          </Accordion.ItemHeaderButtons>
-        </Accordion.ItemHeader>
-        <Accordion.ItemContent>
-          <div className={styles['comments-tool-window']}>
-            {commentThreads.length === 0 ? (
-              <div className={styles['comments-tool-window__no-comments']}>No comments</div>
-            ) : (
-              groupedThreads.map(group => (
-                <div key={group.key} className={styles['comments-tool-window__group']}>
-                  {group.title && (
-                    <div className={styles['comments-tool-window__group-title']}>{group.title}</div>
-                  )}
-                  {group.threads.map(thread => (
-                    <div key={thread.root.id} className={styles['comments-tool-window__thread']}>
-                      <CommentItem
-                        comment={thread.root}
-                        onResolve={handleResolveComment}
-                        formatDate={formatDate}
-                        level={0}
-                      >
-                        <NestedReplies
-                          replies={thread.replies}
-                          onResolve={handleResolveComment}
-                          formatDate={formatDate}
-                        />
-                      </CommentItem>
+        </Tabs.Trigger>
+      </Tabs.List>
+      <Tabs.Content value={'comments'}>
+        <Accordion.Root disabled={false} type="multiple" defaultValue={['comments']}>
+          <Accordion.Item value="comments">
+            <Accordion.ItemHeader>
+              Comments
+              <Accordion.ItemHeaderButtons>
+                <CommentsSortMenu
+                  sortBy={sortBy}
+                  groupBy={groupBy}
+                  hideResolved={hideResolved}
+                  onSortChange={setSortBy}
+                  onGroupChange={setGroupBy}
+                  onHideResolvedChange={setHideResolved}
+                />
+              </Accordion.ItemHeaderButtons>
+            </Accordion.ItemHeader>
+            <Accordion.ItemContent>
+              <div className={styles['comments-tool-window']}>
+                {commentThreads.length === 0 ? (
+                  <div className={styles['comments-tool-window__no-comments']}>No comments</div>
+                ) : (
+                  groupedThreads.map(group => (
+                    <div key={group.key} className={styles['comments-tool-window__group']}>
+                      {group.title && (
+                        <div className={styles['comments-tool-window__group-title']}>
+                          {group.title}
+                        </div>
+                      )}
+                      {group.threads.map(thread => (
+                        <div
+                          key={thread.root.id}
+                          className={styles['comments-tool-window__thread']}
+                        >
+                          <CommentItem
+                            comment={thread.root}
+                            onResolve={handleResolveComment}
+                            formatDate={formatDate}
+                            level={0}
+                          >
+                            <NestedReplies
+                              replies={thread.replies}
+                              onResolve={handleResolveComment}
+                              formatDate={formatDate}
+                            />
+                          </CommentItem>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              ))
-            )}
-          </div>
-        </Accordion.ItemContent>
-      </Accordion.Item>
-    </Accordion.Root>
+                  ))
+                )}
+              </div>
+            </Accordion.ItemContent>
+          </Accordion.Item>
+        </Accordion.Root>
+      </Tabs.Content>
+    </Tabs.Root>
   );
 };
 

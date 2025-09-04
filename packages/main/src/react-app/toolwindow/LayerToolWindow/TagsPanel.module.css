@@ -1,6 +1,7 @@
 .tags {
   display: flex;
   flex-direction: column;
+  padding: 0.5rem 0.5rem 1rem 0.5rem;
 }
 
 .tags__list {
@@ -54,6 +55,7 @@
 
 .tags__empty {
   color: var(--secondary-fg);
+  font-size: 11px;
   text-align: center;
   padding: 0.25rem 0;
   width: 100%;

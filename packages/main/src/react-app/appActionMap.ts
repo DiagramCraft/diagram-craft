@@ -74,5 +74,5 @@ export const defaultMacAppKeymap: KeyMap = {
   'M-Digit0': 'ZOOM_FIT',
 
   'M-Slash': 'TOGGLE_HELP',
-  'M-KeyR': 'TOGGLE_RULER'
+  'M-S-KeyR': 'TOGGLE_RULER'
 };

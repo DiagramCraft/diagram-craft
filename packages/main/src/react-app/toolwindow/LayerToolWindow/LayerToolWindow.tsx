@@ -1,35 +1,42 @@
-import { useEffect } from 'react';
-import { useRedraw } from '../../hooks/useRedraw';
+import { useState } from 'react';
 import { LayerList } from './LayerList';
-import { Accordion } from '@diagram-craft/app-components/Accordion';
-import { useDiagram } from '../../../application';
+import { $c } from '@diagram-craft/utils/classname';
+import * as Tabs from '@radix-ui/react-tabs';
+import { TagsPanel } from './TagsPanel';
+import { DocumentPanel } from './DocumentPanel';
 
 export const LayerToolWindow = () => {
-  const diagram = useDiagram();
-  const redraw = useRedraw();
-
-  useEffect(() => {
-    const onChange = () => {
-      redraw();
-    };
-    diagram.on('change', onChange);
-    diagram.on('elementRemove', onChange);
-    diagram.on('elementAdd', onChange);
-    return () => {
-      diagram.off('change', onChange);
-      diagram.off('elementRemove', onChange);
-      diagram.off('elementAdd', onChange);
-    };
-  }, [diagram, redraw]);
+  const [tab, setTab] = useState<string>('layer');
 
   return (
-    <Accordion.Root disabled={true} type="single" defaultValue={'layers'}>
-      <Accordion.Item value="layers">
-        <Accordion.ItemHeader>Layers</Accordion.ItemHeader>
-        <Accordion.ItemContent>
+    <Tabs.Root className={'cmp-tool-tabs'} value={tab} onValueChange={e => setTab(e)}>
+      <Tabs.List className={$c('cmp-tool-tabs__tabs', { hidden: false })}>
+        <Tabs.Trigger className="cmp-tool-tabs__tab-trigger util-vcenter" value={'layer'}>
+          Layer
+        </Tabs.Trigger>
+        <Tabs.Trigger className="cmp-tool-tabs__tab-trigger util-vcenter" value={'document'}>
+          Document
+        </Tabs.Trigger>
+        <Tabs.Trigger className="cmp-tool-tabs__tab-trigger util-vcenter" value={'tags'}>
+          Tags
+        </Tabs.Trigger>
+      </Tabs.List>
+
+      <Tabs.Content value={'layer'}>
+        <div className={'cmp-panel__headless cmp-panel__headless--no-padding'}>
           <LayerList />
-        </Accordion.ItemContent>
-      </Accordion.Item>
-    </Accordion.Root>
+        </div>
+      </Tabs.Content>
+      <Tabs.Content value={'document'}>
+        <div className={'cmp-panel__headless cmp-panel__headless--no-padding'}>
+          <DocumentPanel />
+        </div>
+      </Tabs.Content>
+      <Tabs.Content value={'tags'}>
+        <div className={'cmp-panel__headless cmp-panel__headless--no-padding'}>
+          <TagsPanel />
+        </div>
+      </Tabs.Content>
+    </Tabs.Root>
   );
 };

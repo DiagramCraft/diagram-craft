@@ -7,7 +7,7 @@ export const DirtyIndicator = (props: Props) => {
 
   return (
     <div className={styles.cmpDirtyIndicator}>
-      <div className={styles.cmpDirtyIndicatorText}>Unsaved changes</div>
+      <div className={styles.cmpDirtyIndicatorText}>- Unsaved</div>
       {props.onDirtyChange && (
         <Button type={'icon-only'} onClick={() => props.onDirtyChange!()}>
           <TbTrash size={'14px'} />

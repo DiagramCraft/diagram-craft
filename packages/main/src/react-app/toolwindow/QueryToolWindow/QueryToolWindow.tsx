@@ -16,6 +16,8 @@ import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { Button } from '@diagram-craft/app-components/Button';
 import { useDiagram } from '../../../application';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
+import * as Tabs from '@radix-ui/react-tabs';
+import { $c } from '@diagram-craft/utils/classname';
 
 const replacer = (key: string, value: unknown) => {
   // Skip private properties (starting with _)
@@ -53,6 +55,7 @@ const getSource = (source: string, diagram: Diagram) => {
 };
 
 export const QueryToolWindow = () => {
+  const [tab, setTab] = useState<string>('advanced');
   const redraw = useRedraw();
   const diagram = useDiagram();
   const ref = useRef<HTMLTextAreaElement>(null);
@@ -106,193 +109,204 @@ export const QueryToolWindow = () => {
   };
 
   return (
-    <Accordion.Root type="multiple" defaultValue={['query', 'response']}>
-      <Accordion.Item value="query">
-        <Accordion.ItemHeader>Query</Accordion.ItemHeader>
-        <Accordion.ItemContent>
-          <div
-            style={{
-              marginBottom: '0.5rem',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}
-          >
-            <Select.Root onChange={setSource} value={source}>
-              <Select.Item value={'active-layer'}>Active Layer</Select.Item>
-              <Select.Item value={'active-diagram'}>Active Diagram</Select.Item>
-              <Select.Item value={'active-document'}>Active Document</Select.Item>
-              <Select.Item value={'selection'}>Selection</Select.Item>
-            </Select.Root>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <DropdownMenu.Root>
-                <DropdownMenu.Trigger asChild>
-                  <Button>
-                    <TbHistory />
-                  </Button>
-                </DropdownMenu.Trigger>
-                <DropdownMenu.Portal>
-                  <DropdownMenu.Content className="cmp-context-menu" sideOffset={5}>
-                    {(diagram.document.props.query?.history ?? []).map(h => (
+    <Tabs.Root className={'cmp-tool-tabs'} value={tab} onValueChange={e => setTab(e)}>
+      <Tabs.List className={$c('cmp-tool-tabs__tabs', { hidden: false })}>
+        <Tabs.Trigger className="cmp-tool-tabs__tab-trigger util-vcenter" value={'advanced'}>
+          Advanced
+        </Tabs.Trigger>
+      </Tabs.List>
+      <Tabs.Content value={'advanced'}>
+        <Accordion.Root type="multiple" defaultValue={['query', 'response']}>
+          <div className={'cmp-panel__headless'}>
+            <div
+              style={{
+                marginBottom: '0.5rem',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}
+            >
+              <Select.Root onChange={setSource} value={source}>
+                <Select.Item value={'active-layer'}>Active Layer</Select.Item>
+                <Select.Item value={'active-diagram'}>Active Diagram</Select.Item>
+                <Select.Item value={'active-document'}>Active Document</Select.Item>
+                <Select.Item value={'selection'}>Selection</Select.Item>
+              </Select.Root>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <DropdownMenu.Root>
+                  <DropdownMenu.Trigger asChild>
+                    <Button>
+                      <TbHistory />
+                    </Button>
+                  </DropdownMenu.Trigger>
+                  <DropdownMenu.Portal>
+                    <DropdownMenu.Content className="cmp-context-menu" sideOffset={5}>
+                      {(diagram.document.props.query?.history ?? []).map(h => (
+                        <DropdownMenu.Item
+                          key={h[1]}
+                          className="cmp-context-menu__item"
+                          onClick={() => {
+                            setSource(h[0]);
+                            ref.current!.value = h[1];
+                          }}
+                        >
+                          {h[1]}
+                        </DropdownMenu.Item>
+                      ))}
+                      <DropdownMenu.Arrow className="cmp-context-menu__arrow" />
+                    </DropdownMenu.Content>
+                  </DropdownMenu.Portal>
+                </DropdownMenu.Root>
+                <DropdownMenu.Root>
+                  <DropdownMenu.Trigger asChild>
+                    <Button>
+                      <TbFile />
+                    </Button>
+                  </DropdownMenu.Trigger>
+                  <DropdownMenu.Portal>
+                    <DropdownMenu.Content className="cmp-context-menu" sideOffset={5}>
                       <DropdownMenu.Item
-                        key={h[1]}
                         className="cmp-context-menu__item"
                         onClick={() => {
-                          setSource(h[0]);
-                          ref.current!.value = h[1];
+                          diagram.document.props.query.addSaved([source!, ref.current!.value]);
                         }}
                       >
-                        {h[1]}
+                        Save
                       </DropdownMenu.Item>
-                    ))}
-                    <DropdownMenu.Arrow className="cmp-context-menu__arrow" />
-                  </DropdownMenu.Content>
-                </DropdownMenu.Portal>
-              </DropdownMenu.Root>
-              <DropdownMenu.Root>
-                <DropdownMenu.Trigger asChild>
-                  <Button>
-                    <TbFile />
-                  </Button>
-                </DropdownMenu.Trigger>
-                <DropdownMenu.Portal>
-                  <DropdownMenu.Content className="cmp-context-menu" sideOffset={5}>
-                    <DropdownMenu.Item
-                      className="cmp-context-menu__item"
-                      onClick={() => {
-                        diagram.document.props.query.addSaved([source!, ref.current!.value]);
-                      }}
-                    >
-                      Save
-                    </DropdownMenu.Item>
-                    <DropdownMenu.Item
-                      className="cmp-context-menu__item"
-                      onClick={() => {
-                        // TODO: To be implemented
-                      }}
-                    >
-                      Manage
-                    </DropdownMenu.Item>
-                    <DropdownMenu.Separator className="cmp-context-menu__separator" />
-                    {(diagram.document.props.query?.saved ?? []).map(h => (
                       <DropdownMenu.Item
-                        key={h[1]}
                         className="cmp-context-menu__item"
                         onClick={() => {
-                          setSource(h[0]);
-                          ref.current!.value = h[1];
+                          // TODO: To be implemented
                         }}
                       >
-                        {h[1]}
+                        Manage
                       </DropdownMenu.Item>
-                    ))}
-                    <DropdownMenu.Arrow className="cmp-context-menu__arrow" />
-                  </DropdownMenu.Content>
-                </DropdownMenu.Portal>
-              </DropdownMenu.Root>
+                      <DropdownMenu.Separator className="cmp-context-menu__separator" />
+                      {(diagram.document.props.query?.saved ?? []).map(h => (
+                        <DropdownMenu.Item
+                          key={h[1]}
+                          className="cmp-context-menu__item"
+                          onClick={() => {
+                            setSource(h[0]);
+                            ref.current!.value = h[1];
+                          }}
+                        >
+                          {h[1]}
+                        </DropdownMenu.Item>
+                      ))}
+                      <DropdownMenu.Arrow className="cmp-context-menu__arrow" />
+                    </DropdownMenu.Content>
+                  </DropdownMenu.Portal>
+                </DropdownMenu.Root>
+              </div>
+            </div>
+
+            <TextArea ref={ref} value={queryString} style={{ minHeight: '100px' }} />
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'end',
+                marginTop: '0.5rem',
+                gap: '0.5rem'
+              }}
+            >
+              <Button
+                type={'secondary'}
+                onClick={() => {
+                  setExpanded([]);
+                }}
+              >
+                Save as...
+              </Button>
+              <Button
+                type={'secondary'}
+                onClick={() => {
+                  exportToFile();
+                }}
+              >
+                Export
+              </Button>
+              <a
+                style={{ display: 'none' }}
+                download={'export.json'}
+                href={downloadLink}
+                ref={downloadRef}
+              >
+                -
+              </a>
+              <Button
+                onClick={() => {
+                  if (ref.current?.value === queryString) {
+                    redraw();
+                  } else {
+                    setQueryIdx(0);
+                    setQueryInput({});
+                    setExpanded([]);
+                    setQueryString(ref.current?.value ?? '');
+                  }
+                }}
+              >
+                Run
+              </Button>
             </div>
           </div>
 
-          <TextArea ref={ref} value={queryString} style={{ minHeight: '100px' }} />
-          <div
-            style={{ display: 'flex', justifyContent: 'end', marginTop: '0.5rem', gap: '0.5rem' }}
-          >
-            <Button
-              type={'secondary'}
-              onClick={() => {
-                setExpanded([]);
-              }}
-            >
-              Save as...
-            </Button>
-            <Button
-              type={'secondary'}
-              onClick={() => {
-                exportToFile();
-              }}
-            >
-              Export
-            </Button>
-            <a
-              style={{ display: 'none' }}
-              download={'export.json'}
-              href={downloadLink}
-              ref={downloadRef}
-            >
-              -
-            </a>
-            <Button
-              onClick={() => {
-                if (ref.current?.value === queryString) {
-                  redraw();
-                } else {
-                  setQueryIdx(0);
-                  setQueryInput({});
-                  setExpanded([]);
-                  setQueryString(ref.current?.value ?? '');
-                }
-              }}
-            >
-              Run
-            </Button>
-          </div>
-        </Accordion.ItemContent>
-      </Accordion.Item>
-
-      <Accordion.Item value="response">
-        <Accordion.ItemHeader>Response</Accordion.ItemHeader>
-        <Accordion.ItemContent>
-          <div className={'cmp-query-response'}>
-            {!!error && <div className={'cmp-error'}>{error.toString()}</div>}
-            {res &&
-              res.map((e, idx) => (
-                <div
-                  key={idx}
-                  className={`cmp-query-response__item ${expanded.includes(idx) ? 'cmp-query-response__item--expanded' : ''}`}
-                  onClick={() => {
-                    if (expanded.includes(idx)) {
-                      setExpanded(expanded.filter(e => e !== idx));
-                    } else {
-                      setExpanded([...expanded, idx]);
-                    }
-                  }}
-                >
-                  {expanded.includes(idx) ? <TbChevronDown /> : <TbChevronRight />}
-                  {expanded.includes(idx) && (
+          <Accordion.Item value="response">
+            <Accordion.ItemHeader>Response</Accordion.ItemHeader>
+            <Accordion.ItemContent>
+              <div className={'cmp-query-response'}>
+                {!!error && <div className={'cmp-error'}>{error.toString()}</div>}
+                {res &&
+                  res.map((e, idx) => (
                     <div
-                      style={{
-                        position: 'absolute',
-                        right: '0.5rem',
-                        top: '0.125rem',
-                        display: 'flex',
-                        gap: '0.25rem'
+                      key={idx}
+                      className={`cmp-query-response__item ${expanded.includes(idx) ? 'cmp-query-response__item--expanded' : ''}`}
+                      onClick={() => {
+                        if (expanded.includes(idx)) {
+                          setExpanded(expanded.filter(e => e !== idx));
+                        } else {
+                          setExpanded([...expanded, idx]);
+                        }
                       }}
                     >
-                      <Button type={'icon-only'}>
-                        <TbArrowDownRight />
-                      </Button>
-                      <Button
-                        type={'icon-only'}
-                        onClick={ev => {
-                          navigator.clipboard.writeText(
-                            JSON.stringify(e, replacer, expanded.includes(idx) ? 2 : undefined)
-                          );
-                          ev.preventDefault();
-                          ev.stopPropagation();
-                        }}
-                      >
-                        <TbClipboardCopy />
-                      </Button>
+                      {expanded.includes(idx) ? <TbChevronDown /> : <TbChevronRight />}
+                      {expanded.includes(idx) && (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            right: '0.5rem',
+                            top: '0.125rem',
+                            display: 'flex',
+                            gap: '0.25rem'
+                          }}
+                        >
+                          <Button type={'icon-only'}>
+                            <TbArrowDownRight />
+                          </Button>
+                          <Button
+                            type={'icon-only'}
+                            onClick={ev => {
+                              navigator.clipboard.writeText(
+                                JSON.stringify(e, replacer, expanded.includes(idx) ? 2 : undefined)
+                              );
+                              ev.preventDefault();
+                              ev.stopPropagation();
+                            }}
+                          >
+                            <TbClipboardCopy />
+                          </Button>
+                        </div>
+                      )}
+                      <pre key={idx}>
+                        {JSON.stringify(e, replacer, expanded.includes(idx) ? 2 : undefined)}
+                      </pre>
                     </div>
-                  )}
-                  <pre key={idx}>
-                    {JSON.stringify(e, replacer, expanded.includes(idx) ? 2 : undefined)}
-                  </pre>
-                </div>
-              ))}
-          </div>
-        </Accordion.ItemContent>
-      </Accordion.Item>
-    </Accordion.Root>
+                  ))}
+              </div>
+            </Accordion.ItemContent>
+          </Accordion.Item>
+        </Accordion.Root>
+      </Tabs.Content>
+    </Tabs.Root>
   );
 };

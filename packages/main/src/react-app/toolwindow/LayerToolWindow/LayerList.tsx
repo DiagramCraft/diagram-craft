@@ -339,6 +339,11 @@ export const LayerList = () => {
       redraw();
     }
   });
+  useEventListener(diagram, 'elementRemove', ({ element }) => {
+    if (names[element.id] !== element.name) {
+      redraw();
+    }
+  });
   useEventListener(diagram.selectionState, 'add', redraw);
   useEventListener(diagram.selectionState, 'remove', redraw);
 
@@ -354,7 +359,6 @@ export const LayerList = () => {
       <Tree.Root
         ref={ref}
         className={'cmp-layer-list'}
-        style={{ gridTemplateColumns: '92% min-content min-content' }}
         data-dragmimetype={'application/x-diagram-craft-element-instances'}
       >
         {layers.map(l => (

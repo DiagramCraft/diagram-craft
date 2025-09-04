@@ -181,5 +181,5 @@ export const CanvasPanel = (props: Props) => {
 };
 
 type Props = {
-  mode?: 'accordion' | 'panel';
+  mode?: 'accordion' | 'panel' | 'headless';
 };

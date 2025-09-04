@@ -1,7 +1,7 @@
 import { nodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import type { Editor } from './editors';
-import { NodeActionPropertiesPanelForm } from '../../toolwindow/ObjectInfoToolWindow/NodeActionPropertiesPanel';
 import { makeProperty } from './utils';
+import { NodeActionPropertiesPanelForm } from '../../toolwindow/ObjectToolWindow/NodeActionPropertiesPanel';
 
 export const NodeActionPropertiesEditor: Editor = props => {
   const $p = props.props as NodeProps;
