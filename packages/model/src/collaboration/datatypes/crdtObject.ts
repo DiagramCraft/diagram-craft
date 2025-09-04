@@ -84,6 +84,19 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
   set(obj: T) {
     this.#proxy ??= this.createProxy();
     this.#current.transact(() => {
+      // First, find all top-level keys that exist in the CRDT but not in the new object
+      const existingTopLevelKeys = new Set(
+        Array.from(this.#current.keys()).map(k => k.split('.')[0])
+      );
+      const newKeys = new Set(Object.keys(obj));
+
+      // Delete keys that are missing from the new object
+      for (const key of existingTopLevelKeys.difference(newKeys)) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        this.#proxy![key as keyof T] = undefined as any;
+      }
+
+      // Then set the new values
       for (const key in obj) {
         this.#proxy![key] = obj[key];
       }
@@ -211,7 +224,7 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
                 map.delete(k);
               }
             }
-            
+
             // Then set the new nested values
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const setNestedValue = (nestedValue: any, currentPath: string) => {
