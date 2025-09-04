@@ -220,4 +220,106 @@ describe('CRDTObject', () => {
       expect(obj.get().address?.street).toBe('456 Oak Ave');
     });
   });
+
+  describe('set method with nested property deletion', () => {
+    it('should properly delete nested properties when using set method', () => {
+      const map = new NoOpCRDTMap();
+      const obj = new CRDTObject<TestObject>(watch<CRDTMap>(map), vi.fn());
+
+      // Initially set indicators with multiple properties
+      const initialIndicators = {
+        indicator1: { enabled: true, color: 'red' },
+        indicator2: { enabled: false, color: 'blue' },
+        indicator3: { enabled: true, color: 'green' }
+      };
+
+      obj.set(initialIndicators as TestObject);
+
+      // Verify all indicators are set
+      expect(map.get('indicator1.enabled')).toBe(true);
+      expect(map.get('indicator1.color')).toBe('red');
+      expect(map.get('indicator2.enabled')).toBe(false);
+      expect(map.get('indicator2.color')).toBe('blue');
+      expect(map.get('indicator3.enabled')).toBe(true);
+      expect(map.get('indicator3.color')).toBe('green');
+
+      // Now remove indicator2 by creating a copy and deleting it (simulating NamedIndicatorPanel behavior)
+      const newIndicators = { ...initialIndicators };
+      delete (newIndicators as any).indicator2;
+      obj.set(newIndicators as TestObject);
+
+      // Verify indicator2 is completely removed from the CRDT
+      expect(map.get('indicator1.enabled')).toBe(true);
+      expect(map.get('indicator1.color')).toBe('red');
+      expect(map.get('indicator2.enabled')).toBeUndefined();
+      expect(map.get('indicator2.color')).toBeUndefined();
+      expect(map.get('indicator3.enabled')).toBe(true);
+      expect(map.get('indicator3.color')).toBe('green');
+
+      // Verify the proxy object also reflects the deletion
+      const proxy = obj.get();
+      expect((proxy as any).indicator1).toBeDefined();
+      expect((proxy as any).indicator2).toBeUndefined();
+      expect((proxy as any).indicator3).toBeDefined();
+    });
+
+    it('should handle deletion of multiple nested properties at different levels', () => {
+      const map = new NoOpCRDTMap();
+      const obj = new CRDTObject<TestObject>(watch<CRDTMap>(map), vi.fn());
+
+      // Set up a complex nested structure
+      const initialData = {
+        user: {
+          profile: { name: 'John', age: 30 },
+          settings: { theme: 'dark', notifications: true }
+        },
+        indicators: {
+          warning: { enabled: true, count: 5 },
+          error: { enabled: false, count: 0 },
+          info: { enabled: true, count: 10 }
+        }
+      };
+
+      obj.set(initialData as TestObject);
+
+      // Verify initial structure
+      expect(map.get('user.profile.name')).toBe('John');
+      expect(map.get('user.settings.theme')).toBe('dark');
+      expect(map.get('indicators.warning.enabled')).toBe(true);
+      expect(map.get('indicators.error.count')).toBe(0);
+
+      // Modify by removing user.settings and indicators.error
+      const modifiedData = {
+        user: {
+          profile: { name: 'John', age: 30 }
+          // settings removed
+        },
+        indicators: {
+          warning: { enabled: true, count: 5 },
+          // error removed
+          info: { enabled: true, count: 10 }
+        }
+      };
+
+      obj.set(modifiedData as TestObject);
+
+      // Verify deletions occurred properly
+      expect(map.get('user.profile.name')).toBe('John');
+      expect(map.get('user.profile.age')).toBe(30);
+      expect(map.get('user.settings.theme')).toBeUndefined();
+      expect(map.get('user.settings.notifications')).toBeUndefined();
+      expect(map.get('indicators.warning.enabled')).toBe(true);
+      expect(map.get('indicators.error.enabled')).toBeUndefined();
+      expect(map.get('indicators.error.count')).toBeUndefined();
+      expect(map.get('indicators.info.enabled')).toBe(true);
+
+      // Verify structure in the proxy
+      const proxy = obj.get();
+      expect((proxy as any).user.profile.name).toBe('John');
+      expect((proxy as any).user.settings).toBeUndefined();
+      expect((proxy as any).indicators.warning).toBeDefined();
+      expect((proxy as any).indicators.error).toBeUndefined();
+      expect((proxy as any).indicators.info).toBeDefined();
+    });
+  });
 });

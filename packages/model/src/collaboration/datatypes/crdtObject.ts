@@ -84,6 +84,19 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
   set(obj: T) {
     this.#proxy ??= this.createProxy();
     this.#current.transact(() => {
+      // First, find all top-level keys that exist in the CRDT but not in the new object
+      const existingTopLevelKeys = new Set(
+        Array.from(this.#current.keys()).map(k => k.split('.')[0])
+      );
+      const newKeys = new Set(Object.keys(obj));
+
+      // Delete keys that are missing from the new object
+      for (const key of existingTopLevelKeys.difference(newKeys)) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        this.#proxy![key as keyof T] = undefined as any;
+      }
+
+      // Then set the new values
       for (const key in obj) {
         this.#proxy![key] = obj[key];
       }
@@ -107,13 +120,13 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
             .map(k => (path === '' ? k : k.substring(path.length + 1)))
             .map(k => k.split('.')[0])
         );
-        
+
         // If this is an array-like object (all keys are numeric), include 'length'
         const isArrayLike = keys.length > 0 && keys.every(k => !isNaN(Number(k)));
         if (isArrayLike && !keys.includes('length')) {
           keys.push('length');
         }
-        
+
         return keys;
       },
 
@@ -144,7 +157,7 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
             .map(k => (path === '' ? k : k.substring(path.length + 1)))
             .map(k => k.split('.')[0])
             .filter(k => !isNaN(Number(k)));
-          
+
           if (keys.length > 0) {
             return Math.max(...keys.map(k => Number(k))) + 1;
           }
@@ -205,6 +218,14 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
           } else if (value instanceof Object && Object.keys(value).length === 0) {
             map.set(fullPath, undefined);
           } else {
+            // First, remove all existing nested properties under this path
+            for (const k of Array.from(this.#current.keys())) {
+              if (k.startsWith(fullPath + '.')) {
+                map.delete(k);
+              }
+            }
+
+            // Then set the new nested values
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const setNestedValue = (nestedValue: any, currentPath: string) => {
               if (isPrimitive(nestedValue)) {
