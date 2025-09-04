@@ -191,7 +191,7 @@ export const ObjectToolWindow = () => {
       {tabs.includes('advanced') && (
         <ToolWindow.Tab id={'advanced'} title={'Advanced'}>
           <ToolWindow.TabContent>
-            <Accordion.Root type="multiple" defaultValue={['anchors', 'action-props', 'indicator']}>
+            <Accordion.Root type="multiple" defaultValue={['anchors', 'action-props']}>
               {type === 'node' && (
                 <>
                   <ElementAnchorsPanel />
