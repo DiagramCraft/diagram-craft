@@ -1,0 +1,16 @@
+.tabActions {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: var(--tab-height);
+  display: flex;
+  align-items: center;
+  padding-right: 0.5rem;
+  gap: 0.5rem;
+
+  color: var(--tertiary-fg);
+
+  > * {
+    color: var(--tertiary-fg);
+  }
+}
