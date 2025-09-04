@@ -14,8 +14,6 @@ import { LabelNodePanel } from './LabelNodePanel';
 import { NodeEffectsPanel } from './NodeEffectsPanel';
 import { ElementStylesheetPanel } from './ElementStylesheetPanel';
 import { EdgeEffectsPanel } from './EdgeEffectsPanel';
-import * as Tabs from '@radix-ui/react-tabs';
-import { $c } from '@diagram-craft/utils/classname';
 import { NodeTablePropertiesPanel } from './NodeTablePropertiesPanel';
 import { NodeTableStrokePanel } from './NodeTableStrokePanel';
 import { NodeTableDimensionsPanel } from './NodeTableDimensionsPanel';
@@ -30,6 +28,7 @@ import { NodeActionPropertiesPanel } from './NodeActionPropertiesPanel';
 import { NodeAdvancedPropertiesPanel } from './NodeAdvancedPropertiesPanel';
 import { DefaultIndicatorPanel } from './DefaultIndicatorPanel';
 import { NamedIndicatorPanel } from './NamedIndicatorPanel';
+import { ToolWindow } from '../ToolWindow';
 
 type Type = 'diagram' | 'mixed' | 'single-label-node' | 'node' | 'edge' | 'table' | 'table-cell';
 
@@ -50,13 +49,7 @@ export const ObjectToolWindow = () => {
   const redraw = useRedraw();
 
   const [type, setType] = useState<Type>('diagram');
-  const [tab, setTab] = useState<TabType>('style');
   const [edgeSupportsFill, setEdgeSupportsFill] = useState(false);
-
-  useEffect(() => {
-    if (TABS[type].includes(tab)) return;
-    setTab(TABS[type][0]);
-  }, [tab, type]);
 
   const callback = () => {
     if (
@@ -95,155 +88,128 @@ export const ObjectToolWindow = () => {
   const tabs = TABS[type];
 
   return (
-    <Tabs.Root className={'cmp-tool-tabs'} value={tab} onValueChange={e => setTab(e as TabType)}>
-      <Tabs.List className={$c('cmp-tool-tabs__tabs', { hidden: false })}>
-        {tabs.includes('canvas') && (
-          <Tabs.Trigger className="cmp-tool-tabs__tab-trigger util-vcenter" value={'canvas'}>
-            Canvas
-          </Tabs.Trigger>
-        )}
-        {tabs.includes('grid') && (
-          <Tabs.Trigger className="cmp-tool-tabs__tab-trigger util-vcenter" value={'grid'}>
-            Grid
-          </Tabs.Trigger>
-        )}
-        {tabs.includes('style') && (
-          <Tabs.Trigger className="cmp-tool-tabs__tab-trigger util-vcenter" value={'style'}>
-            Style
-          </Tabs.Trigger>
-        )}
-        {tabs.includes('table') && (
-          <Tabs.Trigger className="cmp-tool-tabs__tab-trigger util-vcenter" value={'table'}>
-            Style
-          </Tabs.Trigger>
-        )}
-        {tabs.includes('cell') && (
-          <Tabs.Trigger className="cmp-tool-tabs__tab-trigger util-vcenter" value={'cell'}>
-            Style
-          </Tabs.Trigger>
-        )}
-        {tabs.includes('text') && (
-          <Tabs.Trigger className="cmp-tool-tabs__tab-trigger util-vcenter" value={'text'}>
-            Text
-          </Tabs.Trigger>
-        )}
-        {tabs.includes('arrange') && (
-          <Tabs.Trigger className="cmp-tool-tabs__tab-trigger util-vcenter" value={'arrange'}>
-            Arrange
-          </Tabs.Trigger>
-        )}
-        {tabs.includes('advanced') && (
-          <>
-            <Tabs.Trigger className="cmp-tool-tabs__tab-trigger util-vcenter" value={'advanced'}>
-              Advanced
-            </Tabs.Trigger>
-          </>
-        )}
-      </Tabs.List>
-
-      {type === 'table' && (
-        <Tabs.Content value={'table'}>
-          <Accordion.Root type="multiple" defaultValue={['custom', 'dimensions', 'stroke']}>
-            <NodeTableToolbarPanel />
-            <ElementStylesheetPanel type={'node'} />
-
-            <NodeTablePropertiesPanel />
-            <NodeTableDimensionsPanel />
-            <NodeTableStrokePanel />
-          </Accordion.Root>
-        </Tabs.Content>
-      )}
-      {type === 'table-cell' && (
-        <Tabs.Content value={'cell'}>
-          <Accordion.Root type="multiple" defaultValue={['fill', 'dimensions']}>
-            <NodeTableToolbarPanel />
-            <ElementStylesheetPanel type={'node'} />
-
-            <NodeFillPanel />
-            <NodeTableCellDimensionsPanel />
-          </Accordion.Root>
-        </Tabs.Content>
-      )}
-
-      {type === 'diagram' && (
-        <>
-          <Tabs.Content value={'canvas'}>
-            <Accordion.Root type="multiple" defaultValue={['grid', 'canvas', 'snap']}>
+    <ToolWindow.Root defaultTab={'style'}>
+      {tabs.includes('canvas') && (
+        <ToolWindow.Tab id={'canvas'} title={'Canvas'}>
+          <ToolWindow.TabContent>
+            <Accordion.Root type="multiple" defaultValue={['canvas']}>
               <CanvasPanel mode={'headless'} />
             </Accordion.Root>
-          </Tabs.Content>
-
-          <Tabs.Content value={'grid'}>
-            <Accordion.Root type="multiple" defaultValue={['grid', 'canvas', 'snap']}>
+          </ToolWindow.TabContent>
+        </ToolWindow.Tab>
+      )}
+      {tabs.includes('grid') && (
+        <ToolWindow.Tab id={'grid'} title={'Grid'}>
+          <ToolWindow.TabContent>
+            <Accordion.Root type="multiple" defaultValue={['grid', 'snap']}>
               <CanvasGridPanel />
               <CanvasSnapPanel />
             </Accordion.Root>
-          </Tabs.Content>
-        </>
+          </ToolWindow.TabContent>
+        </ToolWindow.Tab>
       )}
+      {tabs.includes('style') && (
+        <ToolWindow.Tab id={'style'} title={'Style'}>
+          <ToolWindow.TabContent>
+            <Accordion.Root
+              type="multiple"
+              defaultValue={['stylesheet', 'fill', 'stroke', 'line', 'custom', 'label-node']}
+            >
+              {type === 'node' && <ElementStylesheetPanel type={'node'} />}
 
-      <Tabs.Content value={'arrange'}>
-        <Accordion.Root disabled={true} type="multiple" defaultValue={['transform']}>
-          <ElementTransformPanel />
-        </Accordion.Root>
-      </Tabs.Content>
+              {(type === 'node' || type === 'mixed' || type === 'single-label-node') && (
+                <>
+                  {type === 'single-label-node' && <LabelNodePanel />}
+                  <NodeFillPanel />
+                  <ElementShadowPanel />
+                  <NodeStrokePanel />
+                  <NodeEffectsPanel />
+                  <ElementCustomPropertiesPanel />
+                </>
+              )}
 
-      <Tabs.Content value={'text'}>
-        <Accordion.Root type="multiple" disabled={true} defaultValue={['text', 'label-node']}>
-          <ElementStylesheetPanel type={'text'} />
-          <NodeTextPanel />
-        </Accordion.Root>
-      </Tabs.Content>
+              {type === 'edge' && (
+                <>
+                  <ElementStylesheetPanel type={'edge'} />
+                  {edgeSupportsFill && <NodeFillPanel />}
+                  <EdgeLinePanel />
+                  <ElementShadowPanel />
+                  <EdgeEffectsPanel />
+                  <ElementCustomPropertiesPanel />
+                </>
+              )}
+            </Accordion.Root>
+          </ToolWindow.TabContent>
+        </ToolWindow.Tab>
+      )}
+      {tabs.includes('table') && (
+        <ToolWindow.Tab id={'table'} title={'Style'}>
+          <ToolWindow.TabContent>
+            <Accordion.Root type="multiple" defaultValue={['custom', 'dimensions', 'stroke']}>
+              <NodeTableToolbarPanel />
+              <ElementStylesheetPanel type={'node'} />
 
-      <Tabs.Content value={'style'}>
-        <Accordion.Root
-          type="multiple"
-          defaultValue={['stylesheet', 'fill', 'stroke', 'line', 'custom', 'label-node']}
-        >
-          {type === 'node' && <ElementStylesheetPanel type={'node'} />}
+              <NodeTablePropertiesPanel />
+              <NodeTableDimensionsPanel />
+              <NodeTableStrokePanel />
+            </Accordion.Root>
+          </ToolWindow.TabContent>
+        </ToolWindow.Tab>
+      )}
+      {tabs.includes('cell') && (
+        <ToolWindow.Tab id={'cell'} title={'Style'}>
+          <ToolWindow.TabContent>
+            <Accordion.Root type="multiple" defaultValue={['fill', 'dimensions']}>
+              <NodeTableToolbarPanel />
+              <ElementStylesheetPanel type={'node'} />
 
-          {(type === 'node' || type === 'mixed' || type === 'single-label-node') && (
-            <>
-              {type === 'single-label-node' && <LabelNodePanel />}
               <NodeFillPanel />
-              <ElementShadowPanel />
-              <NodeStrokePanel />
-              <NodeEffectsPanel />
-              <ElementCustomPropertiesPanel />
-            </>
-          )}
+              <NodeTableCellDimensionsPanel />
+            </Accordion.Root>
+          </ToolWindow.TabContent>
+        </ToolWindow.Tab>
+      )}
+      {tabs.includes('text') && (
+        <ToolWindow.Tab id={'text'} title={'Text'}>
+          <ToolWindow.TabContent>
+            <Accordion.Root type="multiple" disabled={true} defaultValue={['text', 'label-node']}>
+              <ElementStylesheetPanel type={'text'} />
+              <NodeTextPanel />
+            </Accordion.Root>
+          </ToolWindow.TabContent>
+        </ToolWindow.Tab>
+      )}
+      {tabs.includes('arrange') && (
+        <ToolWindow.Tab id={'arrange'} title={'Arrange'}>
+          <ToolWindow.TabContent>
+            <Accordion.Root disabled={true} type="multiple" defaultValue={['transform']}>
+              <ElementTransformPanel />
+            </Accordion.Root>
+          </ToolWindow.TabContent>
+        </ToolWindow.Tab>
+      )}
+      {tabs.includes('advanced') && (
+        <ToolWindow.Tab id={'advanced'} title={'Advanced'}>
+          <ToolWindow.TabContent>
+            <Accordion.Root type="multiple" defaultValue={['anchors', 'action-props', 'indicator']}>
+              {type === 'node' && (
+                <>
+                  <ElementAnchorsPanel />
+                  <NodeActionPropertiesPanel />
+                </>
+              )}
+              {diagram.selectionState.getSelectionType().includes('single-') && (
+                <>
+                  <DefaultIndicatorPanel />
+                  <NamedIndicatorPanel />
+                </>
+              )}
 
-          {type === 'edge' && (
-            <>
-              <ElementStylesheetPanel type={'edge'} />
-              {edgeSupportsFill && <NodeFillPanel />}
-              <EdgeLinePanel />
-              <ElementShadowPanel />
-              <EdgeEffectsPanel />
-              <ElementCustomPropertiesPanel />
-            </>
-          )}
-        </Accordion.Root>
-      </Tabs.Content>
-
-      <Tabs.Content value={'advanced'}>
-        <Accordion.Root type="multiple" defaultValue={['anchors', 'action-props', 'indicator']}>
-          {type === 'node' && (
-            <>
-              <ElementAnchorsPanel />
-              <NodeActionPropertiesPanel />
-            </>
-          )}
-          {diagram.selectionState.getSelectionType().includes('single-') && (
-            <>
-              <DefaultIndicatorPanel />
-              <NamedIndicatorPanel />
-            </>
-          )}
-
-          <NodeAdvancedPropertiesPanel />
-        </Accordion.Root>
-      </Tabs.Content>
-    </Tabs.Root>
+              <NodeAdvancedPropertiesPanel />
+            </Accordion.Root>
+          </ToolWindow.TabContent>
+        </ToolWindow.Tab>
+      )}
+    </ToolWindow.Root>
   );
 };

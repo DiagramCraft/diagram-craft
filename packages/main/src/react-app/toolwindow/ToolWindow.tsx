@@ -1,4 +1,4 @@
-import React, { JSXElementConstructor, ReactElement, ReactNode, useState } from 'react';
+import React, { JSXElementConstructor, ReactElement, ReactNode, useEffect, useState } from 'react';
 import { $c } from '@diagram-craft/utils/classname';
 import * as Tabs from '@radix-ui/react-tabs';
 import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
@@ -15,10 +15,24 @@ const isReactElement = (
 const Root = (props: RootProps) => {
   const [tab, setTab] = useState<string>(props.defaultTab ?? '');
 
+  useEffect(() => {
+    const ids: string[] = [];
+    React.Children.forEach(props.children, child => {
+      if (!child) return;
+      if (!isReactElement(child)) return;
+      assert.true(child.type === Tab);
+
+      ids.push((child.props as TabProps).id);
+    });
+
+    if (!ids.includes(tab)) setTab(ids[0]);
+  }, [props.children]);
+
   return (
     <Tabs.Root className={'cmp-tool-tabs'} value={tab} onValueChange={e => setTab(e)}>
       <Tabs.List className={$c('cmp-tool-tabs__tabs', { hidden: false })}>
         {React.Children.map(props.children, child => {
+          if (!child) return null;
           assert.present(child);
           if (!isReactElement(child)) throw VERIFY_NOT_REACHED('Invalid element');
           assert.true(child.type === Tab);

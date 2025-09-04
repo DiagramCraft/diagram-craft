@@ -4,7 +4,7 @@ import { useConfiguration } from '../../context/ConfigurationContext';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
 import { useDiagramProperty } from '../../hooks/useProperty';
-import { ToolWindowPanel } from '../ToolWindowPanel';
+import { ToolWindowPanel, type ToolWindowPanelMode } from '../ToolWindowPanel';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { useDiagram } from '../../../application';
 import { FillPanelForm } from './FillPanel';
@@ -181,5 +181,5 @@ export const CanvasPanel = (props: Props) => {
 };
 
 type Props = {
-  mode?: 'accordion' | 'panel' | 'headless';
+  mode?: ToolWindowPanelMode;
 };
