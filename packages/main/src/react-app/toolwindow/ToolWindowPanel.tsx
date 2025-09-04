@@ -64,8 +64,13 @@ export const ToolWindowPanel = (props: Props) => {
             )}
             <span>{props.title}</span>
           </div>
+          {props.headerButtons && (
+            <Accordion.ItemHeaderButtons>{props.headerButtons}</Accordion.ItemHeaderButtons>
+          )}
         </Accordion.ItemHeader>
-        <Accordion.ItemContent>{props.children}</Accordion.ItemContent>
+        <Accordion.ItemContent forceMount={props.forceMount}>
+          {props.children}
+        </Accordion.ItemContent>
       </Accordion.Item>
     );
   }
@@ -82,4 +87,8 @@ type Props = {
   hasCheckbox?: boolean;
   value?: boolean;
   onChange?: (value: boolean) => void;
+
+  headerButtons?: React.ReactNode;
+
+  forceMount?: boolean;
 };

@@ -10,7 +10,7 @@ import {
   RefreshableSchemaProvider
 } from '@diagram-craft/model/dataProvider';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRedraw } from '../../hooks/useRedraw';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { newid } from '@diagram-craft/utils/id';
@@ -21,10 +21,11 @@ import {
   TbRefresh,
   TbSettings,
   TbPencil,
-  TbTrash
+  TbTrash,
+  TbSearch
 } from 'react-icons/tb';
 import { DRAG_DROP_MANAGER } from '@diagram-craft/canvas/dragDropManager';
-import { ObjectPickerDrag } from './ObjectPickerDrag';
+import { ObjectPickerDrag } from './objectPickerDrag';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { assert } from '@diagram-craft/utils/assert';
 import { DataProviderSettingsDialog } from './DataProviderSettingsDialog';
@@ -43,6 +44,8 @@ import { isRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { EditItemDialog } from '../../components/EditItemDialog';
 import { EditSchemaDialog } from '../../components/EditSchemaDialog';
+import { ToolWindow } from '../ToolWindow';
+import { ToolWindowPanel } from '../ToolWindowPanel';
 
 const NODE_CACHE = new Map<string, DiagramNode>();
 
@@ -322,6 +325,7 @@ const DataProviderQueryView = (props: {
   onEditSchema: (schema: DataSchema) => void;
   onDeleteSchema: (schema: DataSchema) => void;
 }) => {
+  const ref = useRef<HTMLInputElement>(null);
   const [search, setSearch] = useState<string>('');
 
   const selectedSchemaObject = props.dataProvider.schemas?.find(s => s.id === props.selectedSchema);
@@ -370,22 +374,40 @@ const DataProviderQueryView = (props: {
       </div>
       <div className={'util-hstack'}>
         <TextInput
+          ref={ref}
           value={search}
+          style={{ flexGrow: 1 }}
           onChange={v => setSearch(v ?? '')}
           onKeyDown={ev => {
             if (ev.key === 'Enter') {
               props.onSearch(search);
+            } else if (ev.key === 'Escape') {
+              ev.currentTarget.value = '';
+              setSearch('');
+              props.onSearch('');
             }
+          }}
+          onClear={() => {
+            setSearch('');
+            props.onSearch('');
           }}
         />
 
-        <Button onClick={() => props.onSearch(search)}>Search</Button>
+        <Button
+          onClick={() => {
+            props.onSearch(search);
+            ref.current?.blur();
+          }}
+          type={'secondary'}
+        >
+          <TbSearch />
+        </Button>
       </div>
     </div>
   );
 };
 
-export const DataToolWindow = () => {
+export const ModelPickerTab = () => {
   const redraw = useRedraw();
   const $diagram = useDiagram();
   const application = useApplication();
@@ -527,91 +549,86 @@ export const DataToolWindow = () => {
   };
 
   return (
-    <>
+    <ToolWindow.TabContent>
+      <ToolWindow.TabActions>
+        <a
+          className={'cmp-button cmp-button--icon-only'}
+          aria-disabled={
+            !provider || (!('refreshData' in provider) && !('refreshSchemas' in provider))
+          }
+          onClick={async () => {
+            assert.present(provider);
+
+            if ('refreshData' in provider) {
+              await (provider as RefreshableDataProvider).refreshData();
+            }
+            if ('refreshSchemas' in provider) {
+              await (provider as RefreshableSchemaProvider).refreshSchemas();
+            }
+          }}
+        >
+          <TbRefresh />
+        </a>
+        <a
+          className={'cmp-button cmp-button--icon-only'}
+          onClick={() => setProviderSettingsWindow(true)}
+        >
+          <TbSettings />
+        </a>
+      </ToolWindow.TabActions>
+
       <Accordion.Root type="multiple" defaultValue={['query', 'response']}>
-        <Accordion.Item value="query">
-          <Accordion.ItemHeader>
-            Data Source
-            <Accordion.ItemHeaderButtons>
-              <a
-                className={'cmp-button cmp-button--icon-only'}
-                style={{ marginRight: '0.5rem' }}
-                aria-disabled={
-                  !provider || (!('refreshData' in provider) && !('refreshSchemas' in provider))
-                }
-                onClick={async () => {
-                  assert.present(provider);
+        <ToolWindowPanel id={'query'} title={'Data Source'} mode={'headless'}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}
+          >
+            {dataProvider === undefined && <div>No data provider configured</div>}
 
-                  if ('refreshData' in provider) {
-                    await (provider as RefreshableDataProvider).refreshData();
-                  }
-                  if ('refreshSchemas' in provider) {
-                    await (provider as RefreshableSchemaProvider).refreshSchemas();
-                  }
-                }}
-              >
-                <TbRefresh />
-              </a>
-              <a
-                className={'cmp-button cmp-button--icon-only'}
-                onClick={() => setProviderSettingsWindow(true)}
-              >
-                <TbSettings />
-              </a>
-            </Accordion.ItemHeaderButtons>
-          </Accordion.ItemHeader>
-          <Accordion.ItemContent>
-            <div
-              style={{
-                marginBottom: '0.5rem',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}
-            >
-              {dataProvider === undefined && <div>No data provider configured</div>}
-
-              {dataProvider !== undefined && (
-                <DataProviderQueryView
-                  onSearch={setSearch}
-                  dataProvider={dataProvider}
-                  selectedSchema={selectedSchema!}
-                  onChangeSchema={setSelectedSchema}
-                  onAddSchema={() => setAddSchemaDialog(true)}
-                  onEditSchema={schema => setEditSchemaDialog({ open: true, schema })}
-                  onDeleteSchema={handleDeleteSchema}
-                />
-              )}
-            </div>
-          </Accordion.ItemContent>
-        </Accordion.Item>
-        {dataProvider !== undefined && (
-          <Accordion.Item value="response">
-            <Accordion.ItemHeader>
-              Items
-              <Accordion.ItemHeaderButtons>
-                {'addData' in dataProvider && (
-                  <a
-                    className={'cmp-button cmp-button--icon-only'}
-                    onClick={() => setAddItemDialog(true)}
-                  >
-                    <TbPlus />
-                  </a>
-                )}
-              </Accordion.ItemHeaderButtons>
-            </Accordion.ItemHeader>
-            <Accordion.ItemContent>
-              <DataProviderResponse
+            {dataProvider !== undefined && (
+              <DataProviderQueryView
+                onSearch={setSearch}
                 dataProvider={dataProvider}
                 selectedSchema={selectedSchema!}
-                search={search}
-                onEditItem={item => setEditItemDialog({ open: true, item })}
-                onDeleteItem={handleDeleteItem}
+                onChangeSchema={setSelectedSchema}
+                onAddSchema={() => setAddSchemaDialog(true)}
+                onEditSchema={schema => setEditSchemaDialog({ open: true, schema })}
+                onDeleteSchema={handleDeleteSchema}
               />
-            </Accordion.ItemContent>
-          </Accordion.Item>
+            )}
+          </div>
+        </ToolWindowPanel>
+
+        {dataProvider !== undefined && (
+          <ToolWindowPanel
+            id={'response'}
+            title={'Data'}
+            mode={'accordion'}
+            headerButtons={
+              'addData' in dataProvider && (
+                <a
+                  className={'cmp-button cmp-button--icon-only'}
+                  onClick={() => setAddItemDialog(true)}
+                >
+                  <TbPlus />
+                </a>
+              )
+            }
+          >
+            <DataProviderResponse
+              dataProvider={dataProvider}
+              selectedSchema={selectedSchema!}
+              search={search}
+              onEditItem={item => setEditItemDialog({ open: true, item })}
+              onDeleteItem={handleDeleteItem}
+            />
+          </ToolWindowPanel>
         )}
       </Accordion.Root>
+
       <DataProviderSettingsDialog
         onClose={() => setProviderSettingsWindow(false)}
         open={providerSettingsWindow}
@@ -642,6 +659,6 @@ export const DataToolWindow = () => {
         onCancel={() => setEditSchemaDialog({ open: false })}
         schema={editSchemaDialog.schema}
       />
-    </>
+    </ToolWindow.TabContent>
   );
 };
