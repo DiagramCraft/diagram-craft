@@ -107,13 +107,13 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
             .map(k => (path === '' ? k : k.substring(path.length + 1)))
             .map(k => k.split('.')[0])
         );
-        
+
         // If this is an array-like object (all keys are numeric), include 'length'
         const isArrayLike = keys.length > 0 && keys.every(k => !isNaN(Number(k)));
         if (isArrayLike && !keys.includes('length')) {
           keys.push('length');
         }
-        
+
         return keys;
       },
 
@@ -144,7 +144,7 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
             .map(k => (path === '' ? k : k.substring(path.length + 1)))
             .map(k => k.split('.')[0])
             .filter(k => !isNaN(Number(k)));
-          
+
           if (keys.length > 0) {
             return Math.max(...keys.map(k => Number(k))) + 1;
           }
@@ -205,6 +205,14 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
           } else if (value instanceof Object && Object.keys(value).length === 0) {
             map.set(fullPath, undefined);
           } else {
+            // First, remove all existing nested properties under this path
+            for (const k of Array.from(this.#current.keys())) {
+              if (k.startsWith(fullPath + '.')) {
+                map.delete(k);
+              }
+            }
+            
+            // Then set the new nested values
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const setNestedValue = (nestedValue: any, currentPath: string) => {
               if (isPrimitive(nestedValue)) {
