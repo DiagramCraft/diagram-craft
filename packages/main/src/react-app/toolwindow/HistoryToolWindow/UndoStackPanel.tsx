@@ -20,7 +20,12 @@ export const UndoStackPanel = () => {
   const undoActions = diagram.undoManager.undoableActions.toReversed();
 
   return (
-    <ToolWindowPanel mode={'headless'} id={'undo-stack'} title={'Undo Stack'}>
+    <ToolWindowPanel
+      mode={'headless'}
+      id={'undo-stack'}
+      title={'Undo Stack'}
+      isEmpty={redoActions.length === 0 && undoActions.length === 0}
+    >
       <div className={'util-vstack'} style={{ fontSize: '11px' }}>
         {redoActions.map((a, idx) => (
           <div key={idx} className={'util-vcenter util-hgap'}>

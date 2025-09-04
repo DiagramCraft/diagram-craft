@@ -2,6 +2,8 @@
   display: flex;
   flex-direction: column;
   width: 100%;
+
+  --tab-height: 33.5px;
 }
 
 .cmp-tabs__list {
@@ -12,7 +14,7 @@
   line-height: 1;
   background-color: var(--primary-bg);
   border-bottom: 1px solid var(--primary-border);
-  height: 33.5px;
+  height: var(--tab-height);
 
   display: flex;
   gap: 5px;

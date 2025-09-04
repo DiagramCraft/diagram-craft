@@ -31,13 +31,18 @@ export const ToolWindowPanel = (props: Props) => {
   } else if (props.mode === 'headless') {
     return (
       <>
-        <div className={'cmp-panel__headless'}>{props.children}</div>
+        <div className={'cmp-panel__headless'} data-isempty={props.isEmpty}>
+          {props.children}
+        </div>
       </>
     );
   } else if (props.mode === 'headless-no-padding') {
     return (
       <>
-        <div className={'cmp-panel__headless cmp-panel__headless--no-padding'}>
+        <div
+          className={'cmp-panel__headless cmp-panel__headless--no-padding'}
+          data-isempty={props.isEmpty}
+        >
           {props.children}
         </div>
       </>
@@ -89,6 +94,7 @@ type Props = {
   onChange?: (value: boolean) => void;
 
   headerButtons?: React.ReactNode;
+  isEmpty?: boolean;
 
   forceMount?: boolean;
 };
