@@ -53,9 +53,10 @@ export class SelectionChangeShapeAction extends AbstractSelectionAction<Applicat
                 for (const k of getTypedKeys(props)) {
                   delete props[k];
                 }
-                for (const k of getTypedKeys(node.storedProps)) {
+                const storedProps = node.storedPropsCloned;
+                for (const k of getTypedKeys(storedProps)) {
                   // @ts-ignore
-                  props[k] = deepClone(node.storedProps[k]);
+                  props[k] = deepClone(storedProps[k]);
                 }
               }, uow);
 
