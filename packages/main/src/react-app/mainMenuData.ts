@@ -32,7 +32,7 @@ export const mainMenuStructure: MenuEntry[] = [
       {
         id: 'save-as',
         label: 'Save As...',
-        action: 'FILE_SAVE',
+        action: 'FILE_SAVE_AS',
         type: 'action'
       }
     ]
