@@ -36,6 +36,7 @@ export const DefaultIndicatorPanel = (props: { mode?: 'accordion' | 'panel' }) =
       onChange={() => {
         update('_default', 'enabled', !indicators.val['_default']?.enabled);
       }}
+      forceMount={true}
     >
       <IndicatorForm
         shape={shape}
