@@ -382,9 +382,16 @@ const DataProviderQueryView = (props: {
             if (ev.key === 'Enter') {
               props.onSearch(search);
             } else if (ev.key === 'Escape') {
-              ev.currentTarget.value = '';
+              ev.preventDefault();
+              ev.stopPropagation();
               setSearch('');
               props.onSearch('');
+              // Force the TextInput's internal state to clear
+              setTimeout(() => {
+                if (ref.current) {
+                  ref.current.value = '';
+                }
+              }, 0);
             }
           }}
           onClear={() => {

@@ -31,8 +31,15 @@ export const PickerSearchPanel = () => {
             if (e.key === 'Enter') {
               setSearch(e.currentTarget.value);
             } else if (e.key === 'Escape') {
-              e.currentTarget.value = '';
+              e.preventDefault();
+              e.stopPropagation();
               setSearch('');
+              // Force the TextInput's internal state to clear
+              setTimeout(() => {
+                if (ref.current) {
+                  ref.current.value = '';
+                }
+              }, 0);
             }
           }}
           onClear={() => {
