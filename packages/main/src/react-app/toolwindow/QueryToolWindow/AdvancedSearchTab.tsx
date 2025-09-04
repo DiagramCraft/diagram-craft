@@ -24,6 +24,8 @@ const replacer = (key: string, value: unknown) => {
     return undefined;
   }
 
+  if (key === 'trackableType') return undefined;
+
   // Handle known circular references
   if (key === 'parent') return value ? '...' : undefined;
 
