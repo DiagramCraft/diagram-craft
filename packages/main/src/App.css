@@ -307,6 +307,7 @@ input[type="checkbox"][data-field-state='overridden'] {
     margin-left: 0.25rem;
     display: flex;
     align-items: center;
+    font-size: 15px;
     gap: 0.25rem;
     justify-self: center;
     color: var(--primary-fg);
