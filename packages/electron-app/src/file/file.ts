@@ -36,9 +36,9 @@ export const fileHandlers: IpcHandlers = {
       }
     });
 
-    ipcMain.handle('file:save', async (_event, _action, url, content) => {
+    ipcMain.handle('file:save', async (_event, { url, data }) => {
       try {
-        writeFileSync(url, content);
+        writeFileSync(url, data);
         return url;
       } catch (error) {
         log.error('File save error:', error);
@@ -46,7 +46,7 @@ export const fileHandlers: IpcHandlers = {
       }
     });
 
-    ipcMain.handle('file:saveAs', async (_event, _action, url, content) => {
+    ipcMain.handle('file:saveAs', async (_event, { url, data }) => {
       try {
         const result = await dialog.showSaveDialog(mainWindow!, {
           defaultPath: url,
@@ -59,7 +59,7 @@ export const fileHandlers: IpcHandlers = {
         if (!result.canceled && result.filePath) {
           BrowserWindow.getFocusedWindow()?.setRepresentedFilename(result.filePath);
           app.addRecentDocument(result.filePath);
-          writeFileSync(result.filePath, content);
+          writeFileSync(result.filePath, data);
           return result.filePath;
         }
 
