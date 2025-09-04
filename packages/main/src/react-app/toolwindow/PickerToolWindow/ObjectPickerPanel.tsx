@@ -50,8 +50,9 @@ export const ObjectPickerPanel = (props: Props) => {
 
   const stencils = props.stencils;
   const diagrams = useMemo(() => {
+    if (!props.isOpen) return [];
     return stencils.map(n => makeDiagramNode(diagram, n));
-  }, [diagram, stencils]);
+  }, [diagram, stencils, props.isOpen]);
 
   useEffect(() => {
     if (props.isOpen) {
