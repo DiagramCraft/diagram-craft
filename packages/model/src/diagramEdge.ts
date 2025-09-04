@@ -1122,4 +1122,16 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   getAttachmentsInUse(): Array<string> {
     return [];
   }
+
+  // This is used for query purposes
+  toJSON() {
+    return {
+      id: this.id,
+      parent: this.parent,
+      type: 'edge',
+      bounds: this.bounds,
+      props: this.renderProps,
+      children: this.children
+    };
+  }
 }

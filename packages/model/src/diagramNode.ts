@@ -560,8 +560,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
   /* Snapshot ************************************************************************************************ */
 
-  /*
-  TODO: Unclear if this is needed
+  // This is used for query purposes
   toJSON() {
     return {
       id: this.id,
@@ -569,12 +568,11 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       type: 'node',
       nodeType: this.nodeType,
       bounds: this.bounds,
-      props: this.#props,
-      children: this.children,
-      edges: Array.from(this.#edges.entries)
+      edges: this.listEdges(),
+      props: this.renderProps,
+      children: this.children
     };
   }
-   */
 
   snapshot(): DiagramNodeSnapshot {
     return {
