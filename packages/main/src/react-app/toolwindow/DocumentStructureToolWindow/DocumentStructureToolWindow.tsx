@@ -1,30 +1,24 @@
-import { LayerList } from './LayerList';
+import { LayerListPanel } from './LayerListPanel';
 import { TagsPanel } from './TagsPanel';
 import { DocumentPanel } from './DocumentPanel';
 import { ToolWindow } from '../ToolWindow';
 
-export const LayerToolWindow = () => {
+export const DocumentStructureToolWindow = () => {
   return (
     <ToolWindow.Root defaultTab={'layer'}>
       <ToolWindow.Tab id={'layer'} title={'Layer'}>
         <ToolWindow.TabContent>
-          <div className={'cmp-panel__headless cmp-panel__headless--no-padding'}>
-            <LayerList />
-          </div>
+          <LayerListPanel />
         </ToolWindow.TabContent>
       </ToolWindow.Tab>
       <ToolWindow.Tab id={'document'} title={'Document'}>
         <ToolWindow.TabContent>
-          <div className={'cmp-panel__headless cmp-panel__headless--no-padding'}>
-            <DocumentPanel />
-          </div>
+          <DocumentPanel />
         </ToolWindow.TabContent>
       </ToolWindow.Tab>
       <ToolWindow.Tab id={'tags'} title={'Tags'}>
         <ToolWindow.TabContent>
-          <div className={'cmp-panel__headless cmp-panel__headless--no-padding'}>
-            <TagsPanel />
-          </div>
+          <TagsPanel />
         </ToolWindow.TabContent>
       </ToolWindow.Tab>
     </ToolWindow.Root>

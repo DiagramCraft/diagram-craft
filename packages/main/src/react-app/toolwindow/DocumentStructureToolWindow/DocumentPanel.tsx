@@ -5,6 +5,7 @@ import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
 import { makeActionMap } from '@diagram-craft/canvas/keyMap';
 import { defaultAppActions } from '../../appActionMap';
+import { ToolWindowPanel } from '../ToolWindowPanel';
 
 const DiagramLabel = (props: { diagram: Diagram; onValueChange: (v: string) => void }) => {
   return (
@@ -62,20 +63,22 @@ export const DocumentPanel = () => {
   };
 
   return (
-    <Tree.Root>
-      {document.diagrams.map(node => (
-        <Tree.Node key={node.id} isOpen={true} data-state={diagram.id === node.id ? 'on' : 'off'}>
-          <Tree.NodeLabel>
-            <DiagramLabel diagram={node} onValueChange={onValueChange} />
-          </Tree.NodeLabel>
-          <Tree.NodeCell>{diagram.id === node.id ? 'Active' : ''}</Tree.NodeCell>
-          {node.diagrams.length > 0 && (
-            <Tree.Children>
-              <DiagramTreeNode diagram={node} onValueChange={onValueChange} value={diagram.id} />
-            </Tree.Children>
-          )}
-        </Tree.Node>
-      ))}
-    </Tree.Root>
+    <ToolWindowPanel mode={'headless-no-padding'} id={'document'} title={'Document'}>
+      <Tree.Root>
+        {document.diagrams.map(node => (
+          <Tree.Node key={node.id} isOpen={true} data-state={diagram.id === node.id ? 'on' : 'off'}>
+            <Tree.NodeLabel>
+              <DiagramLabel diagram={node} onValueChange={onValueChange} />
+            </Tree.NodeLabel>
+            <Tree.NodeCell>{diagram.id === node.id ? 'Active' : ''}</Tree.NodeCell>
+            {node.diagrams.length > 0 && (
+              <Tree.Children>
+                <DiagramTreeNode diagram={node} onValueChange={onValueChange} value={diagram.id} />
+              </Tree.Children>
+            )}
+          </Tree.Node>
+        ))}
+      </Tree.Root>
+    </ToolWindowPanel>
   );
 };

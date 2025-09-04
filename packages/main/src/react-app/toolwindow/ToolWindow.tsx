@@ -3,6 +3,7 @@ import { $c } from '@diagram-craft/utils/classname';
 import * as Tabs from '@radix-ui/react-tabs';
 import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import styles from './ToolWindow.module.css';
+import { ErrorBoundary } from '../ErrorBoundary';
 
 type RootProps = { children: React.ReactNode | React.ReactNode[]; defaultTab?: string };
 
@@ -51,7 +52,7 @@ const Tab = (props: TabProps) => {
 type TabContentProps = { children: React.ReactNode };
 
 const TabContent = (props: TabContentProps) => {
-  return props.children;
+  return <ErrorBoundary>{props.children}</ErrorBoundary>;
 };
 
 type TabActions = {
@@ -59,11 +60,7 @@ type TabActions = {
 };
 
 const TabActions = (props: TabActions) => {
-  return (
-    <div className={styles.tabActions}>
-      {props.children}
-    </div>
-  );
+  return <div className={styles.tabActions}>{props.children}</div>;
 };
 
 export const ToolWindow = {

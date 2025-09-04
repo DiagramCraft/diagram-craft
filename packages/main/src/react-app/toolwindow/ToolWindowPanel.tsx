@@ -34,6 +34,14 @@ export const ToolWindowPanel = (props: Props) => {
         <div className={'cmp-panel__headless'}>{props.children}</div>
       </>
     );
+  } else if (props.mode === 'headless-no-padding') {
+    return (
+      <>
+        <div className={'cmp-panel__headless cmp-panel__headless--no-padding'}>
+          {props.children}
+        </div>
+      </>
+    );
   } else {
     return (
       <Accordion.Item value={props.id}>
@@ -63,8 +71,10 @@ export const ToolWindowPanel = (props: Props) => {
   }
 };
 
+export type ToolWindowPanelMode = 'accordion' | 'panel' | 'headless' | 'headless-no-padding';
+
 type Props = {
-  mode: 'accordion' | 'panel' | 'headless';
+  mode: ToolWindowPanelMode;
   children: React.ReactNode;
 
   id: string;
