@@ -265,45 +265,6 @@
   }
 }
 
-.cmp-tool-tabs {
-  --tab-height: 33.5px;
-
-  .cmp-tool-tabs__tabs {
-    font-family: inherit;
-    padding: 0;
-    font-size: 12px;
-    font-weight: bold;
-    line-height: 1;
-    background-color: var(--primary-bg);
-    border-bottom: 1px solid var(--primary-border);
-    height: var(--tab-height);
-
-    display: flex;
-    gap: 5px;
-    width: 100%;
-    position: relative;
-  }
-
-  .cmp-tool-tabs__tabs--hidden {
-    display: none;
-  }
-
-  .cmp-tool-tabs__tab-trigger {
-    padding: 7.75px 9px;
-    background: none;
-    color: var(--primary-fg);
-    font-size: 12px;
-    border-width: 0;
-    position: relative;
-    border-bottom: 2px solid transparent;
-
-    &[data-state="active"] {
-      border-bottom: 2px solid var(--blue-9);
-    }
-  }
-}
-
-
 .cmp-label {
   display: flex;
   align-items: center;
