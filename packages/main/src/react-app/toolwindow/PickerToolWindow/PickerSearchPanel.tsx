@@ -5,10 +5,10 @@ import { useRef, useState } from 'react';
 import { isEmptyString } from '@diagram-craft/utils/strings';
 import { useDocument } from '../../../application';
 import { Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
-import { ObjectPicker } from './ObjectPicker';
-import { PickerConfig } from './pickerConfig';
+import { ObjectPickerPanel } from './ObjectPickerPanel';
+import { ToolWindowPanel } from '../ToolWindowPanel';
 
-export const PickerSearch = () => {
+export const PickerSearchPanel = () => {
   const ref = useRef<HTMLInputElement>(null);
   const [search, setSearch] = useState('');
 
@@ -21,7 +21,7 @@ export const PickerSearch = () => {
   }
 
   return (
-    <div>
+    <ToolWindowPanel mode={'headless'} id={'search'} title={'Search'}>
       <div className={'util-hstack'}>
         <TextInput
           ref={ref}
@@ -30,6 +30,9 @@ export const PickerSearch = () => {
           onKeyDown={e => {
             if (e.key === 'Enter') {
               setSearch(e.currentTarget.value);
+            } else if (e.key === 'Escape') {
+              e.currentTarget.value = '';
+              setSearch('');
             }
           }}
           onClear={() => {
@@ -49,9 +52,15 @@ export const PickerSearch = () => {
 
       {!isEmptyString(search) && (
         <div className={'cmp-object-picker'} style={{ marginTop: '0.75rem' }}>
-          <ObjectPicker stencils={stencils} size={PickerConfig.size} />
+          <ObjectPickerPanel
+            stencils={stencils}
+            id={'search'}
+            title={'Search results'}
+            isOpen={true}
+            mode={'headless-no-padding'}
+          />
         </div>
       )}
-    </div>
+    </ToolWindowPanel>
   );
 };

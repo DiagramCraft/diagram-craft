@@ -9,6 +9,7 @@ import { TbFilterCog, TbPencil, TbPlus, TbTrash } from 'react-icons/tb';
 import { Tooltip } from '@diagram-craft/app-components/Tooltip';
 import { IndicatorForm } from './IndicatorForm';
 import { useElementProperty } from '../../hooks/useProperty';
+import { ToolWindowPanel } from '../ToolWindowPanel';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const path = (id: string, rest: string): any => `indicators.${id}.${rest}`;
@@ -155,116 +156,111 @@ export const NamedIndicatorPanel = (_props: { mode?: 'accordion' | 'panel' }) =>
   }
 
   return (
-    <Accordion.Item value="named">
-      <Accordion.ItemHeader>
-        Named Indicators
-        <Accordion.ItemHeaderButtons>
-          <a
-            onClick={() => {
-              add();
+    <ToolWindowPanel
+      id={'named'}
+      title={'Named Indicators'}
+      mode={_props.mode ?? 'accordion'}
+      headerButtons={
+        <a onClick={() => add()}>
+          <TbPlus />
+        </a>
+      }
+    >
+      {(indicatorKeys.length > 0 || ruleIndicatorKeys.length > 0) && (
+        <>
+          <Accordion.Root
+            type={'multiple'}
+            value={visible}
+            onValueChange={v => {
+              setVisible(v);
             }}
           >
-            <TbPlus />
-          </a>
-        </Accordion.ItemHeaderButtons>
-      </Accordion.ItemHeader>
-      <Accordion.ItemContent>
-        {(indicatorKeys.length > 0 || ruleIndicatorKeys.length > 0) && (
-          <>
-            <Accordion.Root
-              type={'multiple'}
-              value={visible}
-              onValueChange={v => {
-                setVisible(v);
-              }}
-            >
-              {[...Object.keys(indicators.val).filter(k => k !== '_default'), ...ruleIndicatorKeys]
-                .toSorted()
-                .map(k => {
-                  const isRuleAdded = ruleIndicatorKeys.includes(k);
-                  return (
-                    <Accordion.Item value={k} key={k}>
-                      <Accordion.ItemHeader>
-                        <div className={'util-hstack'} style={{ gap: '0.5rem' }}>
-                          <input
-                            className="cmp-accordion__enabled"
-                            type={'checkbox'}
-                            checked={
-                              indicators.val[k]?.enabled ??
-                              enabledRruleIndicatorKeys.includes(k) ??
-                              false
+            {[...Object.keys(indicators.val).filter(k => k !== '_default'), ...ruleIndicatorKeys]
+              .toSorted()
+              .map(k => {
+                const isRuleAdded = ruleIndicatorKeys.includes(k);
+                return (
+                  <Accordion.Item value={k} key={k}>
+                    <Accordion.ItemHeader>
+                      <div className={'util-hstack'} style={{ gap: '0.5rem' }}>
+                        <input
+                          className="cmp-accordion__enabled"
+                          type={'checkbox'}
+                          checked={
+                            indicators.val[k]?.enabled ??
+                            enabledRruleIndicatorKeys.includes(k) ??
+                            false
+                          }
+                          disabled={isRuleAdded}
+                          onChange={() => {
+                            update(k, 'enabled', !indicators.val[k]?.enabled);
+                          }}
+                          onClick={e => {
+                            if (
+                              indicators.val[k]?.enabled ||
+                              (e.target as HTMLElement).parentElement!.parentElement?.dataset[
+                                'state'
+                              ] === 'open'
+                            ) {
+                              e.stopPropagation();
                             }
-                            disabled={isRuleAdded}
-                            onChange={() => {
-                              update(k, 'enabled', !indicators.val[k]?.enabled);
-                            }}
-                            onClick={e => {
-                              if (
-                                indicators.val[k]?.enabled ||
-                                (e.target as HTMLElement).parentElement!.parentElement?.dataset[
-                                  'state'
-                                ] === 'open'
-                              ) {
-                                e.stopPropagation();
-                              }
-                            }}
-                          />
-
-                          <span>{k}</span>
-                        </div>
-
-                        {isRuleAdded && (
-                          <Accordion.ItemHeaderButtons>
-                            <Tooltip message={'Added by rule'}>
-                              <span>
-                                <TbFilterCog />
-                              </span>
-                            </Tooltip>
-                          </Accordion.ItemHeaderButtons>
-                        )}
-
-                        {!isRuleAdded && (
-                          <Accordion.ItemHeaderButtons>
-                            <Tooltip message={'Delete indicator'}>
-                              <a
-                                href={'#'}
-                                style={{ marginRight: '0.5rem' }}
-                                onClick={() => deleteIndicator(k)}
-                              >
-                                <TbTrash />
-                              </a>
-                            </Tooltip>
-                            <Tooltip message={'Rename indicator'}>
-                              <a href={'#'} onClick={() => rename(k)}>
-                                <TbPencil />
-                              </a>
-                            </Tooltip>
-                          </Accordion.ItemHeaderButtons>
-                        )}
-                      </Accordion.ItemHeader>
-                      <Accordion.ItemContent>
-                        <FormWrapper
-                          key={k}
-                          id={k}
-                          indicator={indicators.val[k]}
-                          isReadOnly={isRuleAdded}
-                          update={(p, v) => {
-                            update(k, p, v);
                           }}
                         />
-                      </Accordion.ItemContent>
-                    </Accordion.Item>
-                  );
-                })}
-            </Accordion.Root>
-            <br />
-          </>
-        )}
 
-        {indicatorKeys.length === 0 && ruleIndicatorKeys.length === 0 && (
-          <div>No named indicators</div>
-        )}
-      </Accordion.ItemContent>
-    </Accordion.Item>
+                        <span>{k}</span>
+                      </div>
+
+                      {isRuleAdded && (
+                        <Accordion.ItemHeaderButtons>
+                          <Tooltip message={'Added by rule'}>
+                            <span>
+                              <TbFilterCog />
+                            </span>
+                          </Tooltip>
+                        </Accordion.ItemHeaderButtons>
+                      )}
+
+                      {!isRuleAdded && (
+                        <Accordion.ItemHeaderButtons>
+                          <Tooltip message={'Delete indicator'}>
+                            <a
+                              href={'#'}
+                              style={{ marginRight: '0.5rem' }}
+                              onClick={() => deleteIndicator(k)}
+                            >
+                              <TbTrash />
+                            </a>
+                          </Tooltip>
+                          <Tooltip message={'Rename indicator'}>
+                            <a href={'#'} onClick={() => rename(k)}>
+                              <TbPencil />
+                            </a>
+                          </Tooltip>
+                        </Accordion.ItemHeaderButtons>
+                      )}
+                    </Accordion.ItemHeader>
+                    <Accordion.ItemContent>
+                      <FormWrapper
+                        key={k}
+                        id={k}
+                        indicator={indicators.val[k]}
+                        isReadOnly={isRuleAdded}
+                        update={(p, v) => {
+                          update(k, p, v);
+                        }}
+                      />
+                    </Accordion.ItemContent>
+                  </Accordion.Item>
+                );
+              })}
+          </Accordion.Root>
+          <br />
+        </>
+      )}
+
+      {indicatorKeys.length === 0 && ruleIndicatorKeys.length === 0 && (
+        <div>No named indicators</div>
+      )}
+    </ToolWindowPanel>
   );
 };

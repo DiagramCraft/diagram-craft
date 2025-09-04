@@ -35,6 +35,7 @@ import { AdjustmentRule } from '@diagram-craft/model/diagramLayerRuleTypes';
 import { RuleContextMenu } from './RuleContextMenu';
 import { useApplication, useDiagram } from '../../../application';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
+import { ToolWindowPanel } from '../ToolWindowPanel';
 
 const ELEMENT_INSTANCES = 'application/x-diagram-craft-element-instances';
 const LAYER_INSTANCES = 'application/x-diagram-craft-layer-instances';
@@ -321,7 +322,7 @@ const ElementEntry = (props: { element: DiagramElement }) => {
   );
 };
 
-export const LayerList = () => {
+export const LayerListPanel = () => {
   const redraw = useRedraw();
   const diagram = useDiagram();
   const layers = diagram.layers.all.toReversed();
@@ -355,7 +356,7 @@ export const LayerList = () => {
   });
 
   return (
-    <>
+    <ToolWindowPanel mode={'headless-no-padding'} id={'layer'} title={'Layer'}>
       <Tree.Root
         ref={ref}
         className={'cmp-layer-list'}
@@ -368,6 +369,6 @@ export const LayerList = () => {
       <LayerContextMenu>
         <div style={{ height: '100%' }}></div>
       </LayerContextMenu>
-    </>
+    </ToolWindowPanel>
   );
 };

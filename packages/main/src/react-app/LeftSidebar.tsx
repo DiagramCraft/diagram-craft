@@ -1,7 +1,7 @@
 import { SideBar, SideBarPage } from './SideBar';
 import { TbHistory, TbPentagonPlus, TbSearch, TbStack } from 'react-icons/tb';
 import { PickerToolWindow } from './toolwindow/PickerToolWindow/PickerToolWindow';
-import { LayerToolWindow } from './toolwindow/LayerToolWindow/LayerToolWindow';
+import { DocumentStructureToolWindow } from './toolwindow/DocumentStructureToolWindow/DocumentStructureToolWindow';
 import { HistoryToolWindow } from './toolwindow/HistoryToolWindow/HistoryToolWindow';
 import { QueryToolWindow } from './toolwindow/QueryToolWindow/QueryToolWindow';
 
@@ -12,7 +12,7 @@ export const LeftSidebar = () => {
         <PickerToolWindow />
       </SideBarPage>
       <SideBarPage icon={TbStack}>
-        <LayerToolWindow />
+        <DocumentStructureToolWindow />
       </SideBarPage>
       <SideBarPage icon={TbHistory}>
         <HistoryToolWindow />

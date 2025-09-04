@@ -266,6 +266,7 @@
 }
 
 .cmp-tool-tabs {
+  --tab-height: 33.5px;
 
   .cmp-tool-tabs__tabs {
     font-family: inherit;
@@ -275,7 +276,7 @@
     line-height: 1;
     background-color: var(--primary-bg);
     border-bottom: 1px solid var(--primary-border);
-    height: 33.5px;
+    height: var(--tab-height);
 
     display: flex;
     gap: 5px;

@@ -1,5 +1,5 @@
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { TbCheck, TbChevronRight, TbDots } from 'react-icons/tb';
+import { TbArrowsSort, TbCheck, TbChevronRight } from 'react-icons/tb';
 import type { GroupBy, SortBy } from './utils';
 
 type CommentsSortMenuProps = {
@@ -23,7 +23,7 @@ export const CommentsSortMenu = ({
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
         <a className={'cmp-button cmp-button--icon-only'}>
-          <TbDots />
+          <TbArrowsSort />
         </a>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>

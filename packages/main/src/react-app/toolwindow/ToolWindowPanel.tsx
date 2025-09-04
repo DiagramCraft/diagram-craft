@@ -31,7 +31,20 @@ export const ToolWindowPanel = (props: Props) => {
   } else if (props.mode === 'headless') {
     return (
       <>
-        <div className={'cmp-panel__headless'}>{props.children}</div>
+        <div className={'cmp-panel__headless'} data-isempty={props.isEmpty}>
+          {props.children}
+        </div>
+      </>
+    );
+  } else if (props.mode === 'headless-no-padding') {
+    return (
+      <>
+        <div
+          className={'cmp-panel__headless cmp-panel__headless--no-padding'}
+          data-isempty={props.isEmpty}
+        >
+          {props.children}
+        </div>
       </>
     );
   } else {
@@ -56,15 +69,22 @@ export const ToolWindowPanel = (props: Props) => {
             )}
             <span>{props.title}</span>
           </div>
+          {props.headerButtons && (
+            <Accordion.ItemHeaderButtons>{props.headerButtons}</Accordion.ItemHeaderButtons>
+          )}
         </Accordion.ItemHeader>
-        <Accordion.ItemContent>{props.children}</Accordion.ItemContent>
+        <Accordion.ItemContent forceMount={props.forceMount}>
+          {props.children}
+        </Accordion.ItemContent>
       </Accordion.Item>
     );
   }
 };
 
+export type ToolWindowPanelMode = 'accordion' | 'panel' | 'headless' | 'headless-no-padding';
+
 type Props = {
-  mode: 'accordion' | 'panel' | 'headless';
+  mode: ToolWindowPanelMode;
   children: React.ReactNode;
 
   id: string;
@@ -72,4 +92,9 @@ type Props = {
   hasCheckbox?: boolean;
   value?: boolean;
   onChange?: (value: boolean) => void;
+
+  headerButtons?: React.ReactNode;
+  isEmpty?: boolean;
+
+  forceMount?: boolean;
 };
