@@ -15,6 +15,15 @@ class FileNewAction extends AbstractAction<undefined, Application> {
   }
 
   execute(): void {
-    this.context.file.newDocument();
+    const svgElement = document.getElementById(
+      `diagram-${this.context.model.activeDiagram.id}`
+    ) as unknown as SVGSVGElement | undefined;
+    const availableWidth = svgElement ? svgElement.clientWidth - 60 : window.innerWidth - 60;
+    const availableHeight = svgElement ? svgElement.clientHeight - 60 : window.innerHeight - 60;
+
+    this.context.file.newDocument({
+      w: availableWidth,
+      h: availableHeight
+    });
   }
 }

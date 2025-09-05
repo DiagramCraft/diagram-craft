@@ -4,6 +4,7 @@ import { assert } from '@diagram-craft/utils/assert';
 import { KeyMap } from '@diagram-craft/canvas/keyMap';
 import { UIActions } from '@diagram-craft/canvas/context';
 import { UserState } from './UserState';
+import { Extent } from '@diagram-craft/geometry/extent';
 
 export interface ApplicationUIActions extends UIActions {
   showPreview: () => void;
@@ -31,7 +32,7 @@ export class Application extends BaseApplication<ApplicationUIActions> {
 
 interface FileActions {
   loadDocument: (url: string) => void;
-  newDocument: () => void;
+  newDocument: (size?: Extent) => void;
   clearDirty: () => void;
 }
 
