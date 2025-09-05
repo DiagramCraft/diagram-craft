@@ -2,6 +2,8 @@ import type { Diagram } from './diagram';
 import { parseAndQuery } from 'embeddable-jq';
 import { assert, notImplemented } from '@diagram-craft/utils/assert';
 import { RegularLayer } from './diagramLayerRegular';
+import { DiagramElement, isNode } from './diagramElement';
+import { isSubsequence } from '@diagram-craft/utils/strings';
 
 export type ElementSearchClause = { id: string } & (
   | {
@@ -135,5 +137,23 @@ export const searchByElementSearchClauses = (
       results.push(result);
     }
   }
+  return results;
+};
+
+export const searchByText = (elements: DiagramElement[], searchQuery: string): DiagramElement[] => {
+  if (!searchQuery.trim()) return [];
+
+  const results: DiagramElement[] = [];
+  const searchLower = searchQuery.toLowerCase();
+
+  elements.forEach(element => {
+    if (isNode(element)) {
+      const text = element.getText();
+      if (text && isSubsequence(searchLower, text.toLowerCase())) {
+        results.push(element);
+      }
+    }
+  });
+
   return results;
 };

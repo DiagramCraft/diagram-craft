@@ -54,3 +54,26 @@ export const padRight = (str: string, length: number, pad = ' ') => {
   }
   return str;
 };
+
+/**
+ * Checks if the query string is a subsequence of the target text.
+ * A subsequence is derived from another sequence by deleting some or no elements
+ * without changing the order of the remaining elements.
+ *
+ * @param query - The query string to search for as a subsequence
+ * @param text - The target text to search within
+ * @returns True if query is a subsequence of text, false otherwise
+ */
+export const isSubsequence = (query: string, text: string): boolean => {
+  let queryIndex = 0;
+  let textIndex = 0;
+
+  while (queryIndex < query.length && textIndex < text.length) {
+    if (query[queryIndex] === text[textIndex]) {
+      queryIndex++;
+    }
+    textIndex++;
+  }
+
+  return queryIndex === query.length;
+};
