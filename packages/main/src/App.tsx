@@ -211,7 +211,7 @@ export const App = (props: {
 
       userState.current.addRecentFile(url);
     },
-    newDocument: async (size?: Extent) => {
+    newDocument: async (size?: Extent, offset?: Point) => {
       // TODO: This is partially duplicated in AppLoader.ts
       const doc = await props.documentFactory.createDocument(
         await props.documentFactory.loadCRDT(
@@ -222,7 +222,7 @@ export const App = (props: {
         undefined,
         progressCallback
       );
-      const diagram = new Diagram(newid(), 'Untitled', doc, undefined, size);
+      const diagram = new Diagram(newid(), 'Untitled', doc, undefined, size, offset);
       diagram.layers.add(
         new RegularLayer(newid(), 'Default', [], diagram),
         UnitOfWork.immediate(diagram)

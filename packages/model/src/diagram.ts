@@ -26,6 +26,7 @@ import { CRDTProp } from './collaboration/datatypes/crdtProp';
 import { CRDTObject } from './collaboration/datatypes/crdtObject';
 import { Guide } from './types';
 import { CommentManager, type SerializedComment } from './comment';
+import type { Point } from '@diagram-craft/geometry/point';
 
 export type DiagramIteratorOpts = {
   nest?: boolean;
@@ -147,7 +148,8 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     name: string,
     document: DiagramDocument,
     crdt?: CRDTMap<DiagramCRDT>,
-    canvasSize?: Extent
+    canvasSize?: Extent,
+    canvasOffset?: Point
   ) {
     super();
 
@@ -197,10 +199,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
     this.viewBox = new Viewbox(this.canvas);
 
-    // Center the viewbox if a custom canvas size was provided
-    if (canvasSize) {
-      this.viewBox.offset = { x: -37, y: -37 };
-    }
+    if (canvasOffset) this.viewBox.offset = canvasOffset;
 
     const toggleHasEdgesWithLineHops = (type: 'add' | 'remove' | 'change', e: DiagramElement) => {
       if (type === 'add' && this.hasEdgesWithLineHops) return;
