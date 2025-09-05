@@ -131,7 +131,7 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
 
   set highlights(guides: ReadonlyArray<Highlight>) {
     this.#highlights = guides;
-    this.emitAsync('change', { selection: this });
+    this.emitAsyncWithDebounce('change', { selection: this });
   }
 
   get bounds(): Box {
@@ -214,7 +214,7 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
     });
     oldElements.forEach(e => {
       if (elements.includes(e)) return;
-      this.emitAsync('remove', { element: e });
+      this.emitAsyncWithDebounce('remove', { element: e });
     });
 
     this.recalculateBoundingBox();
@@ -261,7 +261,7 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
   recalculateBoundingBox() {
     if (this.#forcedRotation) return;
     this.#bounds = this.isEmpty() ? EMPTY_BOX : Box.boundingBox(this.#elements.map(e => e.bounds));
-    this.emitAsync('change', { selection: this });
+    this.emitAsyncWithDebounce('change', { selection: this });
   }
 
   toJSON() {
