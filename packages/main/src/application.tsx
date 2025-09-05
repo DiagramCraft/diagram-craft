@@ -4,6 +4,8 @@ import { assert } from '@diagram-craft/utils/assert';
 import { KeyMap } from '@diagram-craft/canvas/keyMap';
 import { UIActions } from '@diagram-craft/canvas/context';
 import { UserState } from './UserState';
+import { Extent } from '@diagram-craft/geometry/extent';
+import type { Point } from '@diagram-craft/geometry/point';
 
 export interface ApplicationUIActions extends UIActions {
   showPreview: () => void;
@@ -31,7 +33,7 @@ export class Application extends BaseApplication<ApplicationUIActions> {
 
 interface FileActions {
   loadDocument: (url: string) => void;
-  newDocument: () => void;
+  newDocument: (size?: Extent, offset?: Point) => void;
   clearDirty: () => void;
 }
 

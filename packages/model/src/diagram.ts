@@ -10,6 +10,7 @@ import { DiagramElement, isEdge, isNode } from './diagramElement';
 import type { DiagramDocument } from './diagramDocument';
 import { Box } from '@diagram-craft/geometry/box';
 import { Transform } from '@diagram-craft/geometry/transform';
+import { Extent } from '@diagram-craft/geometry/extent';
 import { EventEmitter, EventKey } from '@diagram-craft/utils/event';
 import { assert } from '@diagram-craft/utils/assert';
 import { AttachmentConsumer } from './attachment';
@@ -25,6 +26,7 @@ import { CRDTProp } from './collaboration/datatypes/crdtProp';
 import { CRDTObject } from './collaboration/datatypes/crdtObject';
 import { Guide } from './types';
 import { CommentManager, type SerializedComment } from './comment';
+import type { Point } from '@diagram-craft/geometry/point';
 
 export type DiagramIteratorOpts = {
   nest?: boolean;
@@ -141,7 +143,14 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
   readonly commentManager: CommentManager;
 
-  constructor(id: string, name: string, document: DiagramDocument, crdt?: CRDTMap<DiagramCRDT>) {
+  constructor(
+    id: string,
+    name: string,
+    document: DiagramDocument,
+    crdt?: CRDTMap<DiagramCRDT>,
+    canvasSize?: Extent,
+    canvasOffset?: Point
+  ) {
     super();
 
     // TODO: This WatchableValue is not fully used correctly
@@ -161,9 +170,18 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     this.#parent = new CRDTProp(this._crdt, 'parent', {
       onRemoteChange: () => this.emitDiagramChange('metadata')
     });
+    const initialCanvas = canvasSize
+      ? {
+          w: Math.max(DEFAULT_CANVAS.w, canvasSize.w),
+          h: Math.max(DEFAULT_CANVAS.h, canvasSize.h),
+          x: 0,
+          y: 0
+        }
+      : DEFAULT_CANVAS;
+
     this.#canvas = new CRDTProp(this._crdt, 'canvas', {
       onRemoteChange: () => this.emitDiagramChange('content'),
-      initialValue: DEFAULT_CANVAS
+      initialValue: initialCanvas
     });
 
     this.#props = new CRDTObject<DiagramProps>(
@@ -180,6 +198,8 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     this.#guides.on('remoteAfterTransaction', () => this.emitDiagramChange('content'));
 
     this.viewBox = new Viewbox(this.canvas);
+
+    if (canvasOffset) this.viewBox.offset = canvasOffset;
 
     const toggleHasEdgesWithLineHops = (type: 'add' | 'remove' | 'change', e: DiagramElement) => {
       if (type === 'add' && this.hasEdgesWithLineHops) return;

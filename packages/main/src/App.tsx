@@ -21,6 +21,7 @@ import {
   canvasDropHandler
 } from './react-app/toolwindow/PickerToolWindow/PickerToolWindow.handlers';
 import { Point } from '@diagram-craft/geometry/point';
+import { Extent } from '@diagram-craft/geometry/extent';
 import { ToolConstructor, ToolType } from '@diagram-craft/canvas/tool';
 import { MoveTool } from '@diagram-craft/canvas/tools/moveTool';
 import { TextTool } from '@diagram-craft/canvas-app/tools/textTool';
@@ -210,7 +211,7 @@ export const App = (props: {
 
       userState.current.addRecentFile(url);
     },
-    newDocument: async () => {
+    newDocument: async (size?: Extent, offset?: Point) => {
       // TODO: This is partially duplicated in AppLoader.ts
       const doc = await props.documentFactory.createDocument(
         await props.documentFactory.loadCRDT(
@@ -221,7 +222,7 @@ export const App = (props: {
         undefined,
         progressCallback
       );
-      const diagram = new Diagram(newid(), 'Untitled', doc);
+      const diagram = new Diagram(newid(), 'Untitled', doc, undefined, size, offset);
       diagram.layers.add(
         new RegularLayer(newid(), 'Default', [], diagram),
         UnitOfWork.immediate(diagram)
