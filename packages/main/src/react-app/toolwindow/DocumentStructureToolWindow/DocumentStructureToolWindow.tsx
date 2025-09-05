@@ -5,7 +5,7 @@ import { ToolWindow } from '../ToolWindow';
 
 export const DocumentStructureToolWindow = () => {
   return (
-    <ToolWindow.Root defaultTab={'layer'}>
+    <ToolWindow.Root id={'document-structure'} defaultTab={'layer'}>
       <ToolWindow.Tab id={'layer'} title={'Layer'}>
         <ToolWindow.TabContent>
           <LayerListPanel />

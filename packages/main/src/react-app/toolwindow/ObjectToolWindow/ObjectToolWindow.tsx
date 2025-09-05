@@ -88,7 +88,7 @@ export const ObjectToolWindow = () => {
   const tabs = TABS[type];
 
   return (
-    <ToolWindow.Root defaultTab={'style'}>
+    <ToolWindow.Root id={'object-tool'} defaultTab={'style'}>
       {tabs.includes('canvas') && (
         <ToolWindow.Tab id={'canvas'} title={'Canvas'}>
           <ToolWindow.TabContent>

@@ -3,8 +3,14 @@ import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import styles from './ToolWindow.module.css';
 import { ErrorBoundary } from '../ErrorBoundary';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
+import { UserState } from '../../UserState';
+import { useEventListener } from '../hooks/useEventListener';
 
-type RootProps = { children: React.ReactNode | React.ReactNode[]; defaultTab?: string };
+type RootProps = {
+  children: React.ReactNode | React.ReactNode[];
+  defaultTab?: string;
+  id: string;
+};
 
 const isReactElement = (
   element: ReactNode
@@ -12,7 +18,21 @@ const isReactElement = (
   element !== null && typeof element === 'object' && 'props' in element;
 
 const Root = (props: RootProps) => {
-  const [tab, setTab] = useState<string>(props.defaultTab ?? '');
+  const userState = UserState.get();
+  const savedTab = userState.getToolWindowTab(props.id);
+  const [tab, setTab] = useState<string>(savedTab ?? props.defaultTab ?? '');
+
+  const updateTab = (newTab: string) => {
+    setTab(newTab);
+    userState.setToolWindowTab(props.id, newTab);
+  };
+
+  useEventListener(userState, 'change', () => {
+    const currentSavedTab = userState.getToolWindowTab(props.id);
+    if (currentSavedTab && currentSavedTab !== tab) {
+      setTab(currentSavedTab);
+    }
+  });
 
   useEffect(() => {
     const ids: string[] = [];
@@ -24,11 +44,15 @@ const Root = (props: RootProps) => {
       ids.push((child.props as TabProps).id);
     });
 
-    if (!ids.includes(tab)) setTab(ids[0]);
-  }, [props.children]);
+    if (!ids.includes(tab)) {
+      const fallbackTab = ids[0];
+      setTab(fallbackTab);
+      userState.setToolWindowTab(props.id, fallbackTab);
+    }
+  }, [props.children, tab, props.id, userState]);
 
   return (
-    <Tabs.Root value={tab} onValueChange={e => setTab(e)}>
+    <Tabs.Root value={tab} onValueChange={updateTab}>
       <Tabs.List>
         {React.Children.map(props.children, child => {
           if (!child) return null;

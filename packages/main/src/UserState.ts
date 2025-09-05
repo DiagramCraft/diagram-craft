@@ -17,6 +17,7 @@ export class UserState extends EventEmitter<UserStateEvents> {
   #showRulers: boolean = true;
   #stencils: Array<{ id: string; isOpen?: boolean }> = DEFAULT_STENCILS;
   #recentFiles: Array<string>;
+  #toolWindowTabs: Record<string, string> = {};
 
   private awarenessStateCache: AwarenessUserState | undefined;
 
@@ -37,6 +38,7 @@ export class UserState extends EventEmitter<UserStateEvents> {
     this.#showHelp = state.showHelp;
     this.#stencils = state.stencils ?? DEFAULT_STENCILS;
     this.#recentFiles = state.recentFiles ?? [];
+    this.#toolWindowTabs = state.toolWindowTabs ?? {};
   }
 
   addRecentFile(file: string) {
@@ -111,6 +113,15 @@ export class UserState extends EventEmitter<UserStateEvents> {
     this.triggerChange();
   }
 
+  getToolWindowTab(windowId: string): string | undefined {
+    return this.#toolWindowTabs[windowId];
+  }
+
+  setToolWindowTab(windowId: string, tabId: string) {
+    this.#toolWindowTabs[windowId] = tabId;
+    this.triggerChange();
+  }
+
   private triggerChange() {
     localStorage.setItem(
       'diagram-craft.user-state',
@@ -119,7 +130,8 @@ export class UserState extends EventEmitter<UserStateEvents> {
         panelRight: this.#panelRight,
         showHelp: this.#showHelp,
         stencils: this.#stencils,
-        recentFiles: this.#recentFiles
+        recentFiles: this.#recentFiles,
+        toolWindowTabs: this.#toolWindowTabs
       })
     );
     this.emit('change', { after: this });
