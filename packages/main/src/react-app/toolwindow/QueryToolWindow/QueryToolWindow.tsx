@@ -1,4 +1,4 @@
-import { AdvancedSearchTab } from './AdvancedSearchTab';
+import { DJQLSearchTab } from './DJQLSearchTab';
 import { SearchTab } from './SearchTab';
 import { ToolWindow } from '../ToolWindow';
 
@@ -10,9 +10,9 @@ export const QueryToolWindow = () => {
           <SearchTab />
         </ToolWindow.TabContent>
       </ToolWindow.Tab>
-      <ToolWindow.Tab id={'advanced'} title={'Advanced'}>
+      <ToolWindow.Tab id={'advanced'} title={'DJQL'}>
         <ToolWindow.TabContent>
-          <AdvancedSearchTab />
+          <DJQLSearchTab />
         </ToolWindow.TabContent>
       </ToolWindow.Tab>
     </ToolWindow.Root>
