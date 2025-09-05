@@ -332,7 +332,7 @@ export class StencilRegistry extends EventEmitter<StencilEvents> {
       this.activeStencils.add(pkg.id);
     }
 
-    this.emitAsync('change', { stencilRegistry: this });
+    this.emitAsyncWithDebounce('change', { stencilRegistry: this });
   }
 
   getStencil(id: string) {
@@ -348,7 +348,7 @@ export class StencilRegistry extends EventEmitter<StencilEvents> {
   activate(id: string) {
     this.activeStencils.add(id);
 
-    this.emitAsync('change', { stencilRegistry: this });
+    this.emitAsyncWithDebounce('change', { stencilRegistry: this });
   }
 
   getActiveStencils() {

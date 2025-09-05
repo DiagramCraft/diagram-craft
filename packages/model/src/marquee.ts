@@ -19,7 +19,7 @@ export class Marquee extends EventEmitter<MarqueeEvents> {
 
   set bounds(bounds: Box | undefined) {
     this.#bounds = bounds;
-    this.emitAsync('change', { marquee: this });
+    this.emitAsyncWithDebounce('change', { marquee: this });
   }
 
   get bounds(): Box | undefined {

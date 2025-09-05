@@ -79,9 +79,9 @@ export abstract class BaseHTTPDataProvider
       }
     }
 
-    this.emitAsync('updateData', { data: updates });
-    this.emitAsync('addData', { data: adds });
-    this.emitAsync('deleteData', { data: deletes });
+    this.emitAsyncWithDebounce('updateData', { data: updates });
+    this.emitAsyncWithDebounce('addData', { data: adds });
+    this.emitAsyncWithDebounce('deleteData', { data: deletes });
   }
 
   async refreshSchemas(force = true): Promise<void> {

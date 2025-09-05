@@ -9,6 +9,7 @@ import {
   TbTableRow
 } from 'react-icons/tb';
 import styles from './SearchResultsPanel.module.css';
+import { addHighlight, Highlights, removeHighlight } from '@diagram-craft/canvas/highlight';
 
 type SearchResult = {
   element: DiagramElement;
@@ -61,6 +62,12 @@ export const SearchResultsPanel = ({
             key={r.element.id}
             className={styles.searchResult}
             onClick={() => onElementClick(r.element)}
+            onMouseEnter={() => {
+              addHighlight(r.element!, Highlights.NODE__HIGHLIGHT);
+            }}
+            onMouseLeave={() => {
+              removeHighlight(r.element!, Highlights.NODE__HIGHLIGHT);
+            }}
           >
             <div>
               <span className={styles.searchResultIcon}>{getElementIcon(r.element)}</span>
