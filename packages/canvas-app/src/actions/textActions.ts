@@ -72,7 +72,7 @@ export class TextAction extends AbstractToggleAction {
     node.updateProps(p => {
       p.text ??= {};
       p.text[this.prop] ??= false;
-      p.text[this.prop] = !p.text[this.prop];
+      p.text[this.prop] = !node.renderProps.text[this.prop];
     }, uow);
 
     commitWithUndo(uow, `Text: ${this.prop}`);

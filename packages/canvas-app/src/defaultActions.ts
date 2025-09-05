@@ -123,5 +123,10 @@ export const defaultMacKeymap: KeyMap = {
 
   // Distribution
   'A-C-KeyH': 'DISTRIBUTE_HORIZONTAL',
-  'A-C-KeyV': 'DISTRIBUTE_VERTICAL'
+  'A-C-KeyV': 'DISTRIBUTE_VERTICAL',
+
+  // Text
+  'M-KeyB': 'TEXT_BOLD',
+  'M-KeyI': 'TEXT_ITALIC',
+  'M-KeyU': 'TEXT_UNDERLINE'
 };
