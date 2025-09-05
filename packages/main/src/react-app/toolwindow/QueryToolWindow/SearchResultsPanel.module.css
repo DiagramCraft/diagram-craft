@@ -1,0 +1,33 @@
+.searchResultList {
+  margin-top: -5px;
+}
+
+.searchResult {
+  padding: 0.25rem 0;
+  cursor: pointer;
+  font-size: 11px;
+  margin-left: -10px;
+  margin-right: -10px;
+
+  &:hover {
+    color: var(--blue-11);
+    background-color: var(--blue-4);
+  }
+
+  > div {
+    padding-left: 10px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+}
+
+.searchResultIcon {
+  display: flex;
+  align-items: center;
+  font-size: 0.75rem;
+}
+
+.searchResultText {
+  flex-grow: 1;
+}

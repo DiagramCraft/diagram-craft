@@ -613,7 +613,7 @@ foreignObject {
 
 .cmp-panel__headless {
   background-color: var(--primary-bg);
-  padding: 10px;
+  padding: 2px 10px 10px 10px;
   color: var(--cmp-fg);
   border-bottom: 1px solid var(--primary-border);
   font-size: 11px;
