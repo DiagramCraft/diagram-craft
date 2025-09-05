@@ -314,17 +314,37 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
   createSnapManager() {
     const selection = this.selectionState.nodes;
+    const selectionIds = new Set(this.selectionState.elements.map(e => e.id));
 
     const firstParent = selection[0]?.parent;
     if (firstParent && selection.every(n => n.parent === firstParent)) {
-      const selectionIds = new Set(firstParent.children.map(c => c.id));
-      for (const n of selection) {
-        selectionIds.delete(n.id);
-      }
+      // When moving group members, they should snap to:
+      // 1. Other members of the same group
+      // 2. Direct members of any parent group
+      // 3. Direct members of the diagram itself (top-level elements)
 
-      return new SnapManager(this, id => selectionIds.has(id), this.snapManagerConfig);
+      const eligibleNodePredicate = (id: string) => {
+        if (selectionIds.has(id)) return false;
+
+        const element = this.lookup(id);
+        if (!element) return false;
+
+        // 1. Other members of the same group
+        if (element.parent === firstParent) return true;
+
+        // 2. Direct members of any parent group (traverse up the hierarchy)
+        let currentParent = firstParent.parent;
+        while (currentParent) {
+          if (element.parent === currentParent) return true;
+          currentParent = currentParent.parent;
+        }
+
+        // 3. Direct members of the diagram itself (top-level elements)
+        return !element.parent;
+      };
+
+      return new SnapManager(this, eligibleNodePredicate, this.snapManagerConfig);
     } else {
-      const selectionIds = new Set(this.selectionState.elements.map(e => e.id));
       return new SnapManager(
         this,
         id => !selectionIds.has(id) && !this.lookup(id)?.parent,
@@ -505,32 +525,4 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
       this.document.emit('diagramChanged', { diagram: this });
     }
   }
-
-  /*
-  // TODO: This should be removed
-  merge(other: Diagram) {
-    // @ts-ignore
-    this.uid = other.uid;
-    // @ts-ignore
-    this.viewBox = other.viewBox;
-    // @ts-ignore
-    this.nodeLookup = other.nodeLookup;
-    // @ts-ignore
-    this.edgeLookup = other.edgeLookup;
-    // @ts-ignore
-    this.selectionState = other.selectionState;
-    // @ts-ignore
-    this.layers = other.layers;
-    // @ts-ignore
-    other.layers.diagram = this;
-
-    // @ts-ignore
-    this.snapManagerConfig = other.snapManagerConfig;
-    // @ts-ignore
-    this.undoManager = other.undoManager;
-
-    this._parent ??= other.parent;
-
-    this.mustCalculateIntersections = other.mustCalculateIntersections;
-  }*/
 }

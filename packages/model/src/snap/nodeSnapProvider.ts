@@ -90,7 +90,7 @@ export class NodeSnapProvider extends AbstractNodeSnapProvider implements SnapPr
     const boxVRange = this.getRange(box, 'v');
 
     // Process all visible elements in the diagram
-    for (const node of this.diagram.visibleElements()) {
+    for (const node of this.diagram.allElements()) {
       // Apply filtering criteria - skip elements that don't meet requirements
       if (!isNode(node)) continue; // Must be a node (not edge, etc.)
       if (node.isLabelNode()) continue; // Skip label nodes (auto-positioned)

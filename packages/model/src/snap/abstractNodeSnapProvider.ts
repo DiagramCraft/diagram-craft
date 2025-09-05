@@ -106,7 +106,7 @@ export abstract class AbstractNodeSnapProvider {
     const result: Record<Direction, Array<DiagramNode>> = { n: [], w: [], e: [], s: [] };
 
     // Examine all visible elements in the diagram
-    for (const node of this.diagram.visibleElements()) {
+    for (const node of this.diagram.allElements()) {
       // Apply filtering criteria - skip nodes that don't meet requirements
       if (!isNode(node)) continue; // Must be a node (not edge, etc.)
       if (node.bounds.r !== 0) continue; // Must not be rotated
