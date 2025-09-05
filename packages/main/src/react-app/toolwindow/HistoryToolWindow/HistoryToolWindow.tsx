@@ -3,7 +3,7 @@ import { ToolWindow } from '../ToolWindow';
 
 export const HistoryToolWindow = () => {
   return (
-    <ToolWindow.Root defaultTab={'undo'}>
+    <ToolWindow.Root id={'history'} defaultTab={'undo'}>
       <ToolWindow.Tab id={'undo'} title={'Undo Stack'}>
         <ToolWindow.TabContent>
           <UndoStackPanel />

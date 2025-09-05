@@ -14,7 +14,7 @@ export const ObjectDataToolWindow = () => {
   useEventListener($d, 'uowCommit', redraw);
 
   return (
-    <ToolWindow.Root defaultTab={'name'}>
+    <ToolWindow.Root id={'object-data'} defaultTab={'name'}>
       <ToolWindow.Tab id={'name'} title={'Basic Info'}>
         <ToolWindow.TabContent>
           {$d.selectionState.elements.length === 1 && <ObjectNamePanel mode="headless" />}

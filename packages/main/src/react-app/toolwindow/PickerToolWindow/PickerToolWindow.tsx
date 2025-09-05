@@ -5,7 +5,7 @@ import { ShapesPickerTab } from './ShapesPickerTab';
 
 export const PickerToolWindow = () => {
   return (
-    <ToolWindow.Root defaultTab={'picker'}>
+    <ToolWindow.Root id={'picker'} defaultTab={'picker'}>
       <ToolWindow.Tab id={'picker'} title={'Shapes'}>
         <ShapesPickerTab />
       </ToolWindow.Tab>

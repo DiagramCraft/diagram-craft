@@ -4,7 +4,7 @@ import { ToolWindow } from '../ToolWindow';
 
 export const QueryToolWindow = () => {
   return (
-    <ToolWindow.Root defaultTab={'search'}>
+    <ToolWindow.Root id={'query'} defaultTab={'search'}>
       <ToolWindow.Tab id={'search'} title={'Search'}>
         <ToolWindow.TabContent>
           <SearchTab />

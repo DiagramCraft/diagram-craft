@@ -89,7 +89,7 @@ export const CommentsToolWindow = () => {
         : groupThreadsByAuthor(commentThreads);
 
   return (
-    <ToolWindow.Root defaultTab={'comments'}>
+    <ToolWindow.Root id={'comments'} defaultTab={'comments'}>
       <ToolWindow.Tab title={'Comments'} id={'comments'}>
         <ToolWindow.TabContent>
           <ToolWindow.TabActions>
