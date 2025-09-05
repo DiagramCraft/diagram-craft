@@ -1,4 +1,4 @@
-import { useDiagram } from '../../../application';
+import { useApplication, useDiagram } from '../../../application';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
 import { Comment } from '@diagram-craft/model/comment';
@@ -16,8 +16,11 @@ import { CommentItem } from './CommentItem';
 import styles from './CommentsToolWindow.module.css';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { ToolWindow } from '../ToolWindow';
+import { Button } from '@diagram-craft/app-components/Button';
+import { TbPlus } from 'react-icons/tb';
 
 export const CommentsToolWindow = () => {
+  const application = useApplication();
   const diagram = useDiagram();
   const redraw = useRedraw();
   const [sortBy, setSortBy] = useState<SortBy>('date-desc');
@@ -90,6 +93,9 @@ export const CommentsToolWindow = () => {
       <ToolWindow.Tab title={'Comments'} id={'comments'}>
         <ToolWindow.TabContent>
           <ToolWindow.TabActions>
+            <Button type={'icon-only'} onClick={() => application.actions.COMMENT_ADD!.execute()}>
+              <TbPlus />
+            </Button>
             <CommentsSortMenu
               sortBy={sortBy}
               groupBy={groupBy}
@@ -99,21 +105,7 @@ export const CommentsToolWindow = () => {
               onHideResolvedChange={setHideResolved}
             />
           </ToolWindow.TabActions>
-          <ToolWindowPanel
-            mode={'headless'}
-            id={'comments'}
-            title={'Comments'}
-            headerButtons={
-              <CommentsSortMenu
-                sortBy={sortBy}
-                groupBy={groupBy}
-                hideResolved={hideResolved}
-                onSortChange={setSortBy}
-                onGroupChange={setGroupBy}
-                onHideResolvedChange={setHideResolved}
-              />
-            }
-          >
+          <ToolWindowPanel mode={'headless'} id={'comments'} title={'Comments'}>
             <div className={styles['comments-tool-window']}>
               {commentThreads.length === 0 ? (
                 <div className={styles['comments-tool-window__no-comments']}>No comments</div>
