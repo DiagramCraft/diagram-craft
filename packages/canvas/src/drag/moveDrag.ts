@@ -75,7 +75,7 @@ export abstract class AbstractMoveDrag extends Drag {
     this.clearHighlight();
 
     // Need to filter any edges that are connected to the current selection
-    if (isEdge(hover) && selection.elements.some(e => isNode(e) && e.listEdges().includes(hover))) {
+    if (isEdge(hover) && selection.elements.some(e => isNode(e) && e.edges.includes(hover))) {
       this.#currentElement = undefined;
       return;
     }

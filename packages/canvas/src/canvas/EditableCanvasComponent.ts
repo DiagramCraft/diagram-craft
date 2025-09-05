@@ -412,7 +412,7 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
     for (const element of resolvedElements) {
       if (isNode(element)) {
         this.nodeRefs.get(element.id)?.redraw();
-        for (const edge of element.listEdges()) {
+        for (const edge of element.edges) {
           this.edgeRefs.get(edge.id)?.redraw();
         }
       } else {

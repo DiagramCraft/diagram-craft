@@ -81,7 +81,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       // Verify
       expect(node1.bounds).toEqual({ w: 100, h: 100, x: 20, y: 20, r: 0 });
       expect(edge1.bounds).toEqual({ x: -100, y: -100, w: 170, h: 170, r: 0 });
-      expect(node1.listEdges()).toContain(edge1);
+      expect(node1.edges).toContain(edge1);
       expect(edge1.start).toBeInstanceOf(AnchorEndpoint);
       expect((edge1.start as AnchorEndpoint).node).toBe(node1);
       expect(model.elementChange[0]).toHaveBeenCalledTimes(1);
@@ -89,7 +89,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       if (model.doc2) {
         expect(node2!.bounds).toEqual({ w: 100, h: 100, x: 20, y: 20, r: 0 });
         expect(edge2!.bounds).toEqual({ x: -100, y: -100, w: 170, h: 170, r: 0 });
-        expect(node2!.listEdges()).toContain(edge2);
+        expect(node2!.edges).toContain(edge2);
         expect(edge2!.start).toBeInstanceOf(AnchorEndpoint);
         expect((edge2!.start as AnchorEndpoint).node).toBe(node2);
         expect(model.elementChange[1]).toHaveBeenCalledTimes(1);
@@ -118,13 +118,13 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
 
       // Verify
       expect(serializeDiagram(model.diagram1)).toEqual(ref1);
-      expect(node1.listEdges()).toContain(edge1);
+      expect(node1.edges).toContain(edge1);
       expect(edge1.start).toBeInstanceOf(AnchorEndpoint);
       expect((edge1.start as AnchorEndpoint).node).toBe(node1);
 
       if (model.doc2) {
         expect(serializeDiagram(model.diagram2!)).toEqual(ref2);
-        expect(node2!.listEdges()).toContain(edge2);
+        expect(node2!.edges).toContain(edge2);
         expect(edge2!.start).toBeInstanceOf(AnchorEndpoint);
         expect((edge2!.start as AnchorEndpoint).node).toBe(node2);
       }

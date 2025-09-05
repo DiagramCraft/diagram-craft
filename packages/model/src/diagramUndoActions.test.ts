@@ -170,23 +170,23 @@ describe('ElementDeleteUndoableAction', () => {
     // Verify connections before deletion
     expect((edge.start as AnchorEndpoint).node).toBe(node1);
     expect((edge.end as AnchorEndpoint).node).toBe(node2);
-    expect(node1.listEdges()).toContain(edge);
-    expect(node2.listEdges()).toContain(edge);
+    expect(node1.edges).toContain(edge);
+    expect(node2.edges).toContain(edge);
 
     // Delete and restore edge
     const action = new ElementDeleteUndoableAction(diagram, layer, [edge], false);
     action.redo(UnitOfWork.immediate(diagram));
 
-    expect(node1.listEdges()).not.toContain(edge);
-    expect(node2.listEdges()).not.toContain(edge);
+    expect(node1.edges).not.toContain(edge);
+    expect(node2.edges).not.toContain(edge);
 
     action.undo(UnitOfWork.immediate(diagram));
 
     // Verify connections are restored
     expect((edge.start as AnchorEndpoint).node).toBe(node1);
     expect((edge.end as AnchorEndpoint).node).toBe(node2);
-    expect(node1.listEdges()).toContain(edge);
-    expect(node2.listEdges()).toContain(edge);
+    expect(node1.edges).toContain(edge);
+    expect(node2.edges).toContain(edge);
   });
 
   test('should restore node connections when node is restored', () => {
@@ -202,7 +202,7 @@ describe('ElementDeleteUndoableAction', () => {
     edge.setEnd(new AnchorEndpoint(node2, 'c'), uow);
 
     // Verify connections before deletion
-    expect(node1.listEdges()).toContain(edge);
+    expect(node1.edges).toContain(edge);
     expect((edge.start as AnchorEndpoint).node).toBe(node1);
 
     // Delete and restore node1
@@ -212,7 +212,7 @@ describe('ElementDeleteUndoableAction', () => {
     action.undo(UnitOfWork.immediate(diagram));
 
     // Verify node1 connection is restored
-    expect(node1.listEdges()).toContain(edge);
+    expect(node1.edges).toContain(edge);
     expect((edge.start as AnchorEndpoint).node).toBe(node1);
     expect((edge.end as AnchorEndpoint).node).toBe(node2);
   });
@@ -257,10 +257,10 @@ describe('ElementDeleteUndoableAction', () => {
     expect((edge1.end as AnchorEndpoint).node).toBe(node2);
     expect((edge2.start as AnchorEndpoint).node).toBe(node1);
     expect((edge2.end as AnchorEndpoint).node).toBe(node2);
-    expect(node1.listEdges()).toContain(edge1);
-    expect(node1.listEdges()).toContain(edge2);
-    expect(node2.listEdges()).toContain(edge1);
-    expect(node2.listEdges()).toContain(edge2);
+    expect(node1.edges).toContain(edge1);
+    expect(node1.edges).toContain(edge2);
+    expect(node2.edges).toContain(edge1);
+    expect(node2.edges).toContain(edge2);
   });
 
   test('should handle selection restoration', () => {
