@@ -17,6 +17,7 @@ import { useRef, useState } from 'react';
 import { parseAndQuery } from 'embeddable-jq';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { ToolWindowPanel } from '../ToolWindowPanel';
+import { addHighlight, Highlights, removeHighlight } from '@diagram-craft/canvas/highlight';
 
 const replacer = (key: string, value: unknown) => {
   // Skip private properties (starting with _)
@@ -252,11 +253,26 @@ export const AdvancedSearchTab = () => {
               <div
                 key={idx}
                 className={`cmp-query-response__item ${expanded.includes(idx) ? 'cmp-query-response__item--expanded' : ''}`}
+                style={{
+                  cursor: 'pointer'
+                }}
                 onClick={() => {
                   if (expanded.includes(idx)) {
                     setExpanded(expanded.filter(e => e !== idx));
                   } else {
                     setExpanded([...expanded, idx]);
+                  }
+                }}
+                onMouseEnter={() => {
+                  if (e.type && e.id) {
+                    const el = diagram.lookup(e.id);
+                    if (el) addHighlight(el, Highlights.NODE__HIGHLIGHT);
+                  }
+                }}
+                onMouseLeave={() => {
+                  if (e.type && e.id) {
+                    const el = diagram.lookup(e.id);
+                    if (el) removeHighlight(el, Highlights.NODE__HIGHLIGHT);
                   }
                 }}
               >

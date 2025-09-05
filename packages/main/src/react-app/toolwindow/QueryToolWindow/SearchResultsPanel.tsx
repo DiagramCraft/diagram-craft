@@ -63,10 +63,10 @@ export const SearchResultsPanel = ({
             className={styles.searchResult}
             onClick={() => onElementClick(r.element)}
             onMouseEnter={() => {
-              addHighlight(r.element!, Highlights.NODE__HIGHLIGHT);
+              addHighlight(r.element, Highlights.NODE__HIGHLIGHT);
             }}
             onMouseLeave={() => {
-              removeHighlight(r.element!, Highlights.NODE__HIGHLIGHT);
+              removeHighlight(r.element, Highlights.NODE__HIGHLIGHT);
             }}
           >
             <div>
