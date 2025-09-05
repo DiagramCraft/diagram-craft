@@ -12,10 +12,7 @@ import { EDGE_EDITORS, Editor, EditorTypes, NODE_EDITORS } from './editors';
 import { StyleAction } from './StyleAction';
 import { TreeSelect } from '@diagram-craft/app-components/TreeSelect';
 import { StyleSheetAction } from './StyleSheetAction';
-import {
-  AdjustmentRule,
-  AdjustmentRuleAction
-} from '@diagram-craft/model/diagramLayerRuleTypes';
+import { AdjustmentRule, AdjustmentRuleAction } from '@diagram-craft/model/diagramLayerRuleTypes';
 import { ElementSearchClause } from '@diagram-craft/model/diagramElementSearch';
 import { HideAction } from './HideAction';
 import { RuleEditorDialogProps } from '@diagram-craft/canvas-app/dialogs';
@@ -172,9 +169,11 @@ const ClauseList = (props: ClauseListProps) => {
                 <Select.Item value={'resolved'}>Resolved</Select.Item>
               </Select.Root>
             )}
-            {c.type !== 'query' && c.type !== 'any' && c.type !== 'props' && c.type !== 'tags' && c.type !== 'comment' && (
-              <div></div>
-            )}
+            {c.type !== 'query' &&
+              c.type !== 'any' &&
+              c.type !== 'props' &&
+              c.type !== 'tags' &&
+              c.type !== 'comment' && <div></div>}
 
             <Button
               type={'icon-only'}

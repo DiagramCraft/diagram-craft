@@ -73,20 +73,20 @@ export const searchByElementSearchClauses = (
                 if (value !== clause.value) result.add(element.id);
                 break;
               case 'gt':
-                if (value > clause.value) result.add(element.id);
+                if (value != null && value > clause.value) result.add(element.id);
                 break;
               case 'lt':
-                if (value < clause.value) result.add(element.id);
+                if (value != null && value < clause.value) result.add(element.id);
                 break;
               case 'contains':
-                if (value.includes(clause.value)) result.add(element.id);
+                if (value != null && typeof value === 'string' && value.includes(clause.value)) result.add(element.id);
                 break;
               case 'matches':
                 assert.present(re);
-                if (re.test(value)) result.add(element.id);
+                if (value != null && re.test(String(value))) result.add(element.id);
                 break;
               case 'set':
-                if (value) result.add(element.id);
+                if (value != null) result.add(element.id);
                 break;
             }
           }
