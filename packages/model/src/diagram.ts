@@ -197,6 +197,11 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
     this.viewBox = new Viewbox(this.canvas);
 
+    // Center the viewbox if a custom canvas size was provided
+    if (canvasSize) {
+      this.viewBox.offset = { x: -37, y: -37 };
+    }
+
     const toggleHasEdgesWithLineHops = (type: 'add' | 'remove' | 'change', e: DiagramElement) => {
       if (type === 'add' && this.hasEdgesWithLineHops) return;
       if (!(e instanceof DiagramEdge)) return;
