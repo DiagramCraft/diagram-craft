@@ -55,19 +55,19 @@ export const SearchResultsPanel = ({
         </div>
       )}
 
-      <div className={'cmp-search-results'}>
-        {results.map((result, idx) => (
+      <div className={styles.searchResultList}>
+        {results.map(r => (
           <div
-            key={`${result.element.id}-${idx}`}
+            key={r.element.id}
             className={styles.searchResult}
-            onClick={() => onElementClick(result.element)}
+            onClick={() => onElementClick(r.element)}
           >
-            <span className={styles.searchResultIcon}>
-              {getElementIcon(result.element)}
-            </span>
-            <span className={styles.searchResultText}>
-              {result.element.name || `${result.element.id.substring(0, 8)}...`}
-            </span>
+            <div>
+              <span className={styles.searchResultIcon}>{getElementIcon(r.element)}</span>
+              <span className={styles.searchResultText}>
+                {r.element.name || `${r.element.id.substring(0, 8)}...`}
+              </span>
+            </div>
           </div>
         ))}
       </div>

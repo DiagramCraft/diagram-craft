@@ -26,7 +26,7 @@ export const SearchPanel = ({
     <ToolWindowPanel mode={'headless'} id={'search-input'} title={'Search'}>
       <div>
         <div style={{ marginBottom: '0.25rem' }}>
-          <Select.Root onChange={value => onScopeChange(value ?? 'active-layer')} value={scope}>
+          <Select.Root onChange={value => onScopeChange(value ?? 'active-diagram')} value={scope}>
             <Select.Item value={'active-layer'}>Active Layer</Select.Item>
             <Select.Item value={'active-diagram'}>Active Diagram</Select.Item>
             <Select.Item value={'active-document'}>Active Document</Select.Item>

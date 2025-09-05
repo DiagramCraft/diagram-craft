@@ -23,7 +23,7 @@ const getElementsFromScope = (scope: string, diagram: Diagram): DiagramElement[]
         .filter((layer): layer is RegularLayer => layer.type === 'regular')
         .flatMap(layer => Array.from(layer.elements));
     case 'active-document':
-      return diagram.document.diagrams.flatMap(d => 
+      return diagram.document.diagrams.flatMap(d =>
         d.layers.all
           .filter((layer): layer is RegularLayer => layer.type === 'regular')
           .flatMap(layer => Array.from(layer.elements))
@@ -38,15 +38,15 @@ export const SearchTab = () => {
   const redraw = useRedraw();
   const [inputText, setInputText] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [scope, setScope] = useState<string>('active-layer');
-  
+  const [scope, setScope] = useState<string>('active-diagram');
+
   const searchElements = (): SearchResult[] => {
     if (!searchQuery.trim()) return [];
-    
+
     const results: SearchResult[] = [];
     const searchLower = searchQuery.toLowerCase();
     const elements = getElementsFromScope(scope, diagram);
-    
+
     elements.forEach(element => {
       if (isNode(element)) {
         const text = element.getText();
@@ -59,7 +59,7 @@ export const SearchTab = () => {
         }
       }
     });
-    
+
     return results;
   };
 
@@ -74,16 +74,16 @@ export const SearchTab = () => {
     // Select the element
     diagram.selectionState.clear();
     diagram.selectionState.setElements([element]);
-    
+
     // Focus on the element by centering it in the viewport if possible
     redraw();
   };
 
   return (
     <Accordion.Root type="multiple" defaultValue={['search-input', 'search-results']}>
-      <SearchPanel 
-        searchText={inputText} 
-        onSearchTextChange={(text) => {
+      <SearchPanel
+        searchText={inputText}
+        onSearchTextChange={text => {
           setInputText(text);
           // Only clear search results when text is completely cleared
           if (!text.trim()) {
@@ -94,7 +94,7 @@ export const SearchTab = () => {
         scope={scope}
         onScopeChange={setScope}
       />
-      <SearchResultsPanel 
+      <SearchResultsPanel
         results={results}
         searchText={searchQuery}
         onElementClick={handleElementClick}
