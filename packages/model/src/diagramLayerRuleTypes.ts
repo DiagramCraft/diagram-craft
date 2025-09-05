@@ -1,12 +1,13 @@
 import type { Diagram } from './diagram';
 import { Layer } from './diagramLayer';
 import type { RuleLayer } from './diagramLayerRule';
+import type { ElementSearchClause } from './diagramElementSearch';
 
 export type AdjustmentRule = {
   id: string;
   name: string;
   type: 'edge' | 'node';
-  clauses: AdjustmentRuleClause[];
+  clauses: ElementSearchClause[];
   actions: AdjustmentRuleAction[];
 };
 
@@ -15,30 +16,6 @@ function isResolvableToRuleLayer(l: Layer): l is Layer<RuleLayer> {
   return true;
 }
 
-export type AdjustmentRuleClause = { id: string } & (
-  | {
-      type: 'query';
-      query: string;
-    }
-  | {
-      type: 'any';
-      clauses: AdjustmentRuleClause[];
-    }
-  | {
-      type: 'props';
-      path: string;
-      relation: 'eq' | 'neq' | 'gt' | 'lt' | 'contains' | 'matches' | 'set';
-      value: string;
-    }
-  | {
-      type: 'tags';
-      tags: string[];
-    }
-  | {
-      type: 'comment';
-      state?: 'unresolved' | 'resolved';
-    }
-);
 
 export type AdjustmentRuleAction = { id: string } & (
   | {

@@ -11,14 +11,9 @@ import {
 import styles from './SearchResultsPanel.module.css';
 import { addHighlight, Highlights, removeHighlight } from '@diagram-craft/canvas/highlight';
 
-type SearchResult = {
-  element: DiagramElement;
-  text: string;
-  type: 'node' | 'edge';
-};
 
 type SearchResultsPanelProps = {
-  results: SearchResult[];
+  results: DiagramElement[];
   searchText: string;
   onElementClick: (element: DiagramElement) => void;
 };
@@ -57,22 +52,22 @@ export const SearchResultsPanel = ({
       )}
 
       <div className={styles.searchResultList}>
-        {results.map(r => (
+        {results.map(element => (
           <div
-            key={r.element.id}
+            key={element.id}
             className={styles.searchResult}
-            onClick={() => onElementClick(r.element)}
+            onClick={() => onElementClick(element)}
             onMouseEnter={() => {
-              addHighlight(r.element, Highlights.NODE__HIGHLIGHT);
+              addHighlight(element, Highlights.NODE__HIGHLIGHT);
             }}
             onMouseLeave={() => {
-              removeHighlight(r.element, Highlights.NODE__HIGHLIGHT);
+              removeHighlight(element, Highlights.NODE__HIGHLIGHT);
             }}
           >
             <div>
-              <span className={styles.searchResultIcon}>{getElementIcon(r.element)}</span>
+              <span className={styles.searchResultIcon}>{getElementIcon(element)}</span>
               <span className={styles.searchResultText}>
-                {r.element.name || `${r.element.id.substring(0, 8)}...`}
+                {element.name || `${element.id.substring(0, 8)}...`}
               </span>
             </div>
           </div>

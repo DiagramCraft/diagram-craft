@@ -56,7 +56,7 @@ const getSource = (source: string, diagram: Diagram) => {
   }
 };
 
-export const AdvancedSearchTab = () => {
+export const DJQLSearchTab = () => {
   const redraw = useRedraw();
   const diagram = useDiagram();
   const ref = useRef<HTMLTextAreaElement>(null);

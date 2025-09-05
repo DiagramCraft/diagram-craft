@@ -1,20 +1,17 @@
 import { useDiagram } from '../../../application';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useState } from 'react';
-import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
+import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
+import { searchByText } from '@diagram-craft/model/diagramElementSearch';
 import { SearchPanel } from './SearchPanel';
 import { SearchResultsPanel } from './SearchResultsPanel';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
 
-type SearchResult = {
-  element: DiagramElement;
-  text: string;
-  type: 'node' | 'edge';
-};
+type SearchScope = 'active-layer' | 'active-diagram' | 'active-document';
 
-const getElementsFromScope = (scope: string, diagram: Diagram): DiagramElement[] => {
+const getElementsFromScope = (scope: SearchScope, diagram: Diagram): DiagramElement[] => {
   switch (scope) {
     case 'active-layer':
       return Array.from((diagram.activeLayer as RegularLayer).elements);
@@ -38,32 +35,10 @@ export const SearchTab = () => {
   const redraw = useRedraw();
   const [inputText, setInputText] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [scope, setScope] = useState<string>('active-diagram');
+  const [scope, setScope] = useState<SearchScope>('active-diagram');
 
-  const searchElements = (): SearchResult[] => {
-    if (!searchQuery.trim()) return [];
-
-    const results: SearchResult[] = [];
-    const searchLower = searchQuery.toLowerCase();
-    const elements = getElementsFromScope(scope, diagram);
-
-    elements.forEach(element => {
-      if (isNode(element)) {
-        const text = element.getText();
-        if (text && text.toLowerCase().includes(searchLower)) {
-          results.push({
-            element,
-            text,
-            type: 'node'
-          });
-        }
-      }
-    });
-
-    return results;
-  };
-
-  const results = searchElements();
+  const elements = getElementsFromScope(scope, diagram);
+  const results: DiagramElement[] = searchByText(elements, searchQuery);
 
   const handleSearch = (text: string) => {
     setSearchQuery(text);
@@ -92,7 +67,7 @@ export const SearchTab = () => {
         }}
         onSearch={handleSearch}
         scope={scope}
-        onScopeChange={setScope}
+        onScopeChange={(value: string) => setScope(value as SearchScope)}
       />
       <SearchResultsPanel
         results={results}
