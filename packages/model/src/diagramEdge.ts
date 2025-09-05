@@ -1123,7 +1123,8 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     return [];
   }
 
-  // This is used for query purposes
+  /* Query Support ***************************************************************************************** */
+
   toJSON() {
     return {
       id: this.id,
@@ -1133,5 +1134,9 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       props: this.renderProps,
       children: this.children
     };
+  }
+
+  get props() {
+    return this.renderProps;
   }
 }

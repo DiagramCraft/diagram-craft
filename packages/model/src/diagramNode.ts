@@ -560,20 +560,6 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
   /* Snapshot ************************************************************************************************ */
 
-  // This is used for query purposes
-  toJSON() {
-    return {
-      id: this.id,
-      parent: this.parent,
-      type: 'node',
-      nodeType: this.nodeType,
-      bounds: this.bounds,
-      edges: this.listEdges(),
-      props: this.renderProps,
-      children: this.children
-    };
-  }
-
   snapshot(): DiagramNodeSnapshot {
     return {
       _snapshotType: 'node',
@@ -755,7 +741,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     }
 
     // Invalidate all attached edges
-    for (const edge of this.listEdges()) {
+    for (const edge of this.edges) {
       edge.invalidate(uow);
     }
 
@@ -866,12 +852,12 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     );
   }
 
-  listEdges(): DiagramEdge[] {
+  get edges(): DiagramEdge[] {
     return [
       ...Array.from(this.#edges.values)
         .flatMap(e => e)
         .map(e => this.diagram.edgeLookup.get(e)!),
-      ...this.children.flatMap(c => (isNode(c) ? c.listEdges() : []))
+      ...this.children.flatMap(c => (isNode(c) ? c.edges : []))
     ];
   }
 
@@ -930,5 +916,25 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
   private getNestedElements(): DiagramElement[] {
     return [this, ...this.children.flatMap(c => (isNode(c) ? c.getNestedElements() : c))];
+  }
+
+  /* Query Support ***************************************************************************************** */
+
+  // This is used for query purposes
+  toJSON() {
+    return {
+      id: this.id,
+      parent: this.parent,
+      type: 'node',
+      nodeType: this.nodeType,
+      bounds: this.bounds,
+      edges: this.edges,
+      props: this.renderProps,
+      children: this.children
+    };
+  }
+
+  get props() {
+    return this.renderProps;
   }
 }
