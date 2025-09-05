@@ -14,9 +14,9 @@ import { TreeSelect } from '@diagram-craft/app-components/TreeSelect';
 import { StyleSheetAction } from './StyleSheetAction';
 import {
   AdjustmentRule,
-  AdjustmentRuleAction,
-  AdjustmentRuleClause
+  AdjustmentRuleAction
 } from '@diagram-craft/model/diagramLayerRuleTypes';
+import { ElementSearchClause } from '@diagram-craft/model/diagramElementSearch';
 import { HideAction } from './HideAction';
 import { RuleEditorDialogProps } from '@diagram-craft/canvas-app/dialogs';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
@@ -25,7 +25,7 @@ import { TagInput } from '@diagram-craft/app-components/TagInput';
 import { useDiagram } from '../../../application';
 
 export type EditableAdjustmentRuleAction = Partial<AdjustmentRuleAction> & { kind?: string };
-export type EditableAdjustmentRuleClause = Partial<AdjustmentRuleClause>;
+export type EditableElementSearchClause = Partial<ElementSearchClause>;
 
 const normalizeRuleActions = (
   rule: AdjustmentRule | undefined,
@@ -202,7 +202,7 @@ const ClauseList = (props: ClauseListProps) => {
               <ClauseList
                 clauses={c.clauses ?? [{ id: newid() }]}
                 onChange={newClauses => {
-                  c.clauses = newClauses as AdjustmentRuleClause[];
+                  c.clauses = newClauses as ElementSearchClause[];
                   // Note: the clone here is to force rerender
                   props.onChange([...props.clauses]);
                 }}
@@ -218,8 +218,8 @@ const ClauseList = (props: ClauseListProps) => {
 };
 
 type ClauseListProps = {
-  clauses: EditableAdjustmentRuleClause[];
-  onChange: (newClauses: EditableAdjustmentRuleClause[]) => void;
+  clauses: EditableElementSearchClause[];
+  onChange: (newClauses: EditableElementSearchClause[]) => void;
   indent: boolean;
   type: 'edge' | 'node';
 };
@@ -230,7 +230,7 @@ export const RuleEditorDialog = (props: Props) => {
   const [actions, setActions] = useState<EditableAdjustmentRuleAction[]>(
     normalizeRuleActions(deepClone(props.rule), type === 'node' ? NODE_EDITORS : EDGE_EDITORS)
   );
-  const [clauses, setClauses] = useState<EditableAdjustmentRuleClause[]>(
+  const [clauses, setClauses] = useState<EditableElementSearchClause[]>(
     deepClone(props.rule)?.clauses ?? []
   );
 
@@ -288,7 +288,7 @@ export const RuleEditorDialog = (props: Props) => {
             rule!.clauses = clauses
               // TODO: Additional validations
               .filter(c => c.type !== undefined)
-              .map(c => c as AdjustmentRuleClause);
+              .map(c => c as ElementSearchClause);
             rule!.actions = actions
               // TODO: Additional validations
               .filter(a => a.type !== undefined)
