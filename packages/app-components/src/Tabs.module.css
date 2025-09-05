@@ -39,4 +39,8 @@
 .cmp-tabs__content {
   padding: 0.5rem 0;
   height: 12rem;
+
+  &:focus-visible {
+    outline: none;
+  }
 }
