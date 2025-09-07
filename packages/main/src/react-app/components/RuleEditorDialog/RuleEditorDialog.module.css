@@ -14,14 +14,9 @@
   margin: 0.5rem 0 0 0;
 }
 
-.ruleEditor__mainClauseGrid {
-  display: grid;
+.ruleEditor__clauseList {
   margin: 0.5rem -1rem 2rem -0.5rem;
   padding: 2px 0.5rem 0 0.5rem;
-  gap: 0.5rem;
-  grid-template-areas: "select select props buttons" "empty extra extra extra";
-  grid-template-columns: 1rem min-content 1fr max-content;
-  grid-template-rows: min-content max-content;
   scrollbar-gutter: stable;
   scrollbar-width: thin;
   scrollbar-color: var(--tertiary-fg) var(--primary-bg);
@@ -30,12 +25,20 @@
   overflow-y: auto;
 }
 
-.ruleEditor__subClauseGrid {
-  grid-area: extra;
+.ruleEditor__clause {
+  width: 100%;
   display: grid;
-  grid-template-areas: 'select props buttons';
-  grid-template-columns: max-content 1fr max-content;
   gap: 0.5rem;
+  grid-template-areas: "select select props buttons" "empty extra extra extra";
+  grid-template-columns: 1rem max-content 1fr max-content;
+  grid-template-rows: min-content max-content;
+}
+
+.ruleEditor__subClause {
+  grid-area: extra;
+  display: flex;
+  flex-direction: column;
+  gap: 0rem;
 }
 
 .ruleEditor__hiddenSection {
