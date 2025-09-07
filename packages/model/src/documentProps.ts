@@ -1,9 +1,20 @@
 import { CRDTList, CRDTRoot } from './collaboration/crdt';
 import type { DiagramDocument } from './diagramDocument';
 
+export type QueryType = 'advanced' | 'simple' | 'djql';
+
+type StoredType = [QueryType, string, string, string];
+
+export type QueryEntry = {
+  type: QueryType;
+  label: string;
+  scope: string;
+  value: string;
+};
+
 class Query {
-  private _history: CRDTList<[string, string]>;
-  private _saved: CRDTList<[string, string]>;
+  private _history: CRDTList<StoredType>;
+  private _saved: CRDTList<StoredType>;
 
   constructor(
     private readonly root: CRDTRoot,
@@ -13,22 +24,35 @@ class Query {
     this._saved = root.getList('query.saved');
 
     if (this._history.length === 0) {
-      this._history.push(['active-layer', '.elements[]']);
-      this._history.push(['active-layer', '.elements[] | select(.edges | length > 0)']);
+      this._history.push(['djql', '.elements[]', 'active-layer', '.elements[]']);
+      this._history.push([
+        'djql',
+        '.elements[] | select(.edges | length > 0)',
+        'active-layer',
+        '.elements[] | select(.edges | length > 0)'
+      ]);
     }
   }
 
-  get history() {
-    return this._history.toArray();
+  get history(): Array<QueryEntry> {
+    return this._history.toArray().map(e => {
+      return {
+        type: e[0],
+        label: e[1],
+        scope: e[2],
+        value: e[3]
+      };
+    });
   }
 
-  addHistory(entry: [string, string]) {
+  addHistory(type: QueryType, label: string, scope: string, value: string) {
+    const entry: StoredType = [type, label, scope, value];
     this.document.root.transact(() => {
       this._history.insert(0, [entry]);
 
       for (let i = 1; i < this._history.length; i++) {
-        const [k, v] = this._history.get(i);
-        if (k === entry[0] && v === entry[1]) {
+        const [a, b, c, d] = this._history.get(i);
+        if (a === entry[0] && b === entry[1] && c === entry[2] && d === entry[3]) {
           this._history.delete(i);
           i--;
         }
@@ -36,27 +60,34 @@ class Query {
     });
   }
 
-  setHistory(entries: ReadonlyArray<[string, string]>) {
+  setHistory(entries: ReadonlyArray<QueryEntry>) {
     this.root.transact(() => {
       this._history.clear();
       for (const e of entries) {
-        this.addHistory(e);
+        this.addHistory(e.type, e.label, e.scope, e.value);
       }
     });
   }
 
-  get saved() {
-    return this._saved.toArray();
+  get saved(): Array<QueryEntry> {
+    return this._saved.toArray().map(e => {
+      return {
+        type: e[0],
+        label: e[1],
+        scope: e[2],
+        value: e[3]
+      };
+    });
   }
 
-  addSaved(entry: [string, string]) {
-    this._saved.push(entry);
+  addSaved(type: QueryType, label: string, scope: string, value: string) {
+    this._saved.push([type, label, scope, value]);
   }
 
-  setSaved(entries: ReadonlyArray<[string, string]>) {
+  setSaved(entries: ReadonlyArray<QueryEntry>) {
     this._saved.clear();
     for (const e of entries) {
-      this.addSaved(e);
+      this.addSaved(e.type, e.label, e.scope, e.value);
     }
   }
 }

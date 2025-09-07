@@ -27,7 +27,7 @@ export const CommentsSortMenu = ({
         </a>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
-        <DropdownMenu.Content className="cmp-context-menu" side="left">
+        <DropdownMenu.Content className="cmp-context-menu" align={'end'}>
           <DropdownMenu.Sub>
             <DropdownMenu.SubTrigger className="cmp-context-menu__item">
               Sort by Date

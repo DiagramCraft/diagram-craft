@@ -6,6 +6,7 @@ import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import {
+  clausesToString,
   ElementSearchClause,
   searchByElementSearchClauses
 } from '@diagram-craft/model/diagramElementSearch';
@@ -21,6 +22,8 @@ import { TbPlus, TbSearch, TbTrash } from 'react-icons/tb';
 import { SearchResultsPanel } from './SearchResultsPanel';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
+import { ToolWindow } from '../ToolWindow';
+import { SearchToolMenu } from './SearchToolMenu';
 
 type SearchScope = 'active-layer' | 'active-diagram' | 'active-document';
 
@@ -233,6 +236,13 @@ export const AdvancedSearchTab = () => {
       const intersection = searchResults.reduce((p, c) => p.intersection(c), searchResults[0]);
       const matchedElements = elements.filter(e => intersection.has(e.id));
       setResults(matchedElements);
+
+      diagram.document.props.query.addHistory(
+        'advanced',
+        clausesToString(clauses as Array<ElementSearchClause>),
+        scope,
+        JSON.stringify(clauses)
+      );
     } catch (error) {
       console.error('Search error:', error);
       setResults([]);
@@ -249,53 +259,72 @@ export const AdvancedSearchTab = () => {
   };
 
   return (
-    <Accordion.Root type="multiple" defaultValue={['advanced-search-criteria', 'search-results']}>
-      <ToolWindowPanel mode="headless" id="advanced-search-criteria" title="Search Criteria">
-        <div className={styles.advancedSearch__container}>
-          <div className={styles.advancedSearch__header}>
-            <ToggleButtonGroup.Root
-              type="single"
-              value={type}
-              onChange={value => {
-                if (value) setType(value as 'edge' | 'node');
-              }}
-            >
-              <ToggleButtonGroup.Item value="node">Nodes</ToggleButtonGroup.Item>
-              <ToggleButtonGroup.Item value="edge">Edges</ToggleButtonGroup.Item>
-            </ToggleButtonGroup.Root>
+    <ToolWindow.TabContent>
+      <ToolWindow.TabActions>
+        <SearchToolMenu
+          type={'advanced'}
+          getQuery={() => JSON.stringify(clauses)}
+          getScope={() => scope}
+          getLabel={() => clausesToString(clauses as Array<ElementSearchClause>)}
+          onQuerySelect={(scope, query) => {
+            setScope(scope as SearchScope);
+            setClauses(JSON.parse(query) as EditableElementSearchClause[]);
+          }}
+        />
+      </ToolWindow.TabActions>
+      <Accordion.Root type="multiple" defaultValue={['advanced-search-criteria', 'search-results']}>
+        <ToolWindowPanel mode="headless" id="advanced-search-criteria" title="Search Criteria">
+          <div className={styles.advancedSearch__container}>
+            <div className={styles.advancedSearch__header}>
+              <ToggleButtonGroup.Root
+                type="single"
+                value={type}
+                onChange={value => {
+                  if (value) setType(value as 'edge' | 'node');
+                }}
+              >
+                <ToggleButtonGroup.Item value="node">Nodes</ToggleButtonGroup.Item>
+                <ToggleButtonGroup.Item value="edge">Edges</ToggleButtonGroup.Item>
+              </ToggleButtonGroup.Root>
 
-            <Select.Root
-              value={scope}
-              onChange={value => setScope((value ?? 'active-diagram') as SearchScope)}
-            >
-              <Select.Item value="active-layer">Active Layer</Select.Item>
-              <Select.Item value="active-diagram">Active Diagram</Select.Item>
-              <Select.Item value="active-document">Active Document</Select.Item>
-            </Select.Root>
-          </div>
-
-          <div className={styles.advancedSearch__criteria}>
-            <div className={styles.advancedSearch__searchGrid}>
-              <AdvancedSearchClauseList clauses={clauses} onChange={setClauses} subClauses={false} type={type} />
+              <Select.Root
+                value={scope}
+                onChange={value => setScope((value ?? 'active-diagram') as SearchScope)}
+              >
+                <Select.Item value="active-layer">Active Layer</Select.Item>
+                <Select.Item value="active-diagram">Active Diagram</Select.Item>
+                <Select.Item value="active-document">Active Document</Select.Item>
+              </Select.Root>
             </div>
+
+            <div className={styles.advancedSearch__criteria}>
+              <div className={styles.advancedSearch__searchGrid}>
+                <AdvancedSearchClauseList
+                  clauses={clauses}
+                  onChange={setClauses}
+                  subClauses={false}
+                  type={type}
+                />
+              </div>
+            </div>
+
+            <Button
+              type="primary"
+              onClick={executeSearch}
+              className={styles.advancedSearch__searchButton}
+            >
+              <TbSearch />
+              Search
+            </Button>
           </div>
+        </ToolWindowPanel>
 
-          <Button
-            type="primary"
-            onClick={executeSearch}
-className={styles.advancedSearch__searchButton}
-          >
-            <TbSearch />
-            Search
-          </Button>
-        </div>
-      </ToolWindowPanel>
-
-      <SearchResultsPanel
-        results={results}
-        searchText={`Found ${results.length} elements`}
-        onElementClick={handleElementClick}
-      />
-    </Accordion.Root>
+        <SearchResultsPanel
+          results={results}
+          searchText={`Found ${results.length} elements`}
+          onElementClick={handleElementClick}
+        />
+      </Accordion.Root>
+    </ToolWindow.TabContent>
   );
 };

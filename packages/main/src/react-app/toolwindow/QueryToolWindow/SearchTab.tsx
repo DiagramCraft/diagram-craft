@@ -8,6 +8,8 @@ import { searchByText } from '@diagram-craft/model/diagramElementSearch';
 import { SearchPanel } from './SearchPanel';
 import { SearchResultsPanel } from './SearchResultsPanel';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
+import { SearchToolMenu } from './SearchToolMenu';
+import { ToolWindow } from '../ToolWindow';
 
 type SearchScope = 'active-layer' | 'active-diagram' | 'active-document';
 
@@ -43,6 +45,7 @@ export const SearchTab = () => {
   const handleSearch = (text: string) => {
     setSearchQuery(text);
     setInputText(text);
+    diagram.document.props.query.addHistory('simple', text, scope, text);
   };
 
   const handleElementClick = (element: DiagramElement) => {
@@ -55,25 +58,41 @@ export const SearchTab = () => {
   };
 
   return (
-    <Accordion.Root type="multiple" defaultValue={['search-input', 'search-results']}>
-      <SearchPanel
-        searchText={inputText}
-        onSearchTextChange={text => {
-          setInputText(text);
-          // Only clear search results when text is completely cleared
-          if (!text.trim()) {
-            setSearchQuery('');
-          }
-        }}
-        onSearch={handleSearch}
-        scope={scope}
-        onScopeChange={(value: string) => setScope(value as SearchScope)}
-      />
-      <SearchResultsPanel
-        results={results}
-        searchText={searchQuery}
-        onElementClick={handleElementClick}
-      />
-    </Accordion.Root>
+    <ToolWindow.TabContent>
+      <ToolWindow.TabActions>
+        <SearchToolMenu
+          type={'simple'}
+          getLabel={() => searchQuery}
+          getQuery={() => searchQuery}
+          getScope={() => scope}
+          onQuerySelect={(scope, query) => {
+            setScope(scope as SearchScope);
+            setSearchQuery(query);
+            setInputText(query);
+          }}
+        />
+      </ToolWindow.TabActions>
+
+      <Accordion.Root type="multiple" defaultValue={['search-input', 'search-results']}>
+        <SearchPanel
+          searchText={inputText}
+          onSearchTextChange={text => {
+            setInputText(text);
+            // Only clear search results when text is completely cleared
+            if (!text.trim()) {
+              setSearchQuery('');
+            }
+          }}
+          onSearch={handleSearch}
+          scope={scope}
+          onScopeChange={(value: string) => setScope(value as SearchScope)}
+        />
+        <SearchResultsPanel
+          results={results}
+          searchText={searchQuery}
+          onElementClick={handleElementClick}
+        />
+      </Accordion.Root>
+    </ToolWindow.TabContent>
   );
 };

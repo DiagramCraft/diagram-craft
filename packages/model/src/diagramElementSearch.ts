@@ -30,6 +30,37 @@ export type ElementSearchClause = { id: string } & (
     }
 );
 
+export const clausesToString = (clauses: ElementSearchClause[]): string => {
+  const dest: string[] = [];
+
+  for (const clause of clauses) {
+    switch (clause.type) {
+      case 'query':
+        dest.push(clause.query);
+        break;
+      case 'any':
+        dest.push('ANY(' + clausesToString(clause.clauses) + ')');
+        break;
+      case 'props':
+        dest.push(clause.path + ' ' + clause.relation + ' ' + clause.value);
+
+        break;
+      case 'tags':
+        dest.push('tags' + ' ' + clause.tags.join(','));
+        break;
+      case 'comment':
+        if (clause.state) {
+          dest.push('comment ' + clause.state);
+        } else {
+          dest.push('comment any');
+        }
+        break;
+    }
+  }
+
+  return dest.join('; ');
+};
+
 export const searchByElementSearchClauses = (
   diagram: Diagram,
   clauses: ElementSearchClause[]
@@ -79,7 +110,8 @@ export const searchByElementSearchClauses = (
                 if (value != null && value < clause.value) result.add(element.id);
                 break;
               case 'contains':
-                if (value != null && typeof value === 'string' && value.includes(clause.value)) result.add(element.id);
+                if (value != null && typeof value === 'string' && value.includes(clause.value))
+                  result.add(element.id);
                 break;
               case 'matches':
                 assert.present(re);
