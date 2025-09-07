@@ -1,14 +1,6 @@
 import { Select } from '@diagram-craft/app-components/Select';
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { Button } from '@diagram-craft/app-components/Button';
-import {
-  TbArrowDownRight,
-  TbChevronDown,
-  TbChevronRight,
-  TbClipboardCopy,
-  TbFile,
-  TbHistory
-} from 'react-icons/tb';
+import { TbArrowDownRight, TbChevronDown, TbChevronRight, TbClipboardCopy } from 'react-icons/tb';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { useRedraw } from '../../hooks/useRedraw';
@@ -18,6 +10,8 @@ import { parseAndQuery } from 'embeddable-jq';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { addHighlight, Highlights, removeHighlight } from '@diagram-craft/canvas/highlight';
+import { ToolWindow } from '../ToolWindow';
+import { SearchToolMenu } from './SearchToolMenu';
 
 const replacer = (key: string, value: unknown) => {
   // Skip private properties (starting with _)
@@ -95,7 +89,12 @@ export const DJQLSearchTab = () => {
 
     res = parseAndQuery(q, [input]);
 
-    diagram.document.props.query.addHistory(['active-layer', queryString]);
+    diagram.document.props.query.addHistory(
+      'djql',
+      queryString,
+      source ?? 'active-layer',
+      queryString
+    );
   } catch (e) {
     error = e;
   }
@@ -110,207 +109,155 @@ export const DJQLSearchTab = () => {
   };
 
   return (
-    <Accordion.Root type="multiple" defaultValue={['query', 'response']}>
-      <ToolWindowPanel mode={'headless'} id={'query'} title={'Query'}>
-        <div
-          style={{
-            marginBottom: '0.5rem',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center'
+    <ToolWindow.TabContent>
+      <ToolWindow.TabActions>
+        <SearchToolMenu
+          type={'djql'}
+          onQuerySelect={(scope, query) => {
+            setSource(scope);
+            setQueryString(query);
+            ref.current!.value = query;
           }}
-        >
-          <Select.Root onChange={setSource} value={source}>
-            <Select.Item value={'active-layer'}>Active Layer</Select.Item>
-            <Select.Item value={'active-diagram'}>Active Diagram</Select.Item>
-            <Select.Item value={'active-document'}>Active Document</Select.Item>
-            <Select.Item value={'selection'}>Selection</Select.Item>
-          </Select.Root>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <DropdownMenu.Root>
-              <DropdownMenu.Trigger asChild>
-                <Button>
-                  <TbHistory />
-                </Button>
-              </DropdownMenu.Trigger>
-              <DropdownMenu.Portal>
-                <DropdownMenu.Content className="cmp-context-menu" sideOffset={5}>
-                  {(diagram.document.props.query?.history ?? []).map(h => (
-                    <DropdownMenu.Item
-                      key={h[1]}
-                      className="cmp-context-menu__item"
-                      onClick={() => {
-                        setSource(h[0]);
-                        ref.current!.value = h[1];
-                      }}
-                    >
-                      {h[1]}
-                    </DropdownMenu.Item>
-                  ))}
-                  <DropdownMenu.Arrow className="cmp-context-menu__arrow" />
-                </DropdownMenu.Content>
-              </DropdownMenu.Portal>
-            </DropdownMenu.Root>
-            <DropdownMenu.Root>
-              <DropdownMenu.Trigger asChild>
-                <Button>
-                  <TbFile />
-                </Button>
-              </DropdownMenu.Trigger>
-              <DropdownMenu.Portal>
-                <DropdownMenu.Content className="cmp-context-menu" sideOffset={5}>
-                  <DropdownMenu.Item
-                    className="cmp-context-menu__item"
-                    onClick={() => {
-                      diagram.document.props.query.addSaved([source!, ref.current!.value]);
-                    }}
-                  >
-                    Save
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Item
-                    className="cmp-context-menu__item"
-                    onClick={() => {
-                      // TODO: To be implemented
-                    }}
-                  >
-                    Manage
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Separator className="cmp-context-menu__separator" />
-                  {(diagram.document.props.query?.saved ?? []).map(h => (
-                    <DropdownMenu.Item
-                      key={h[1]}
-                      className="cmp-context-menu__item"
-                      onClick={() => {
-                        setSource(h[0]);
-                        ref.current!.value = h[1];
-                      }}
-                    >
-                      {h[1]}
-                    </DropdownMenu.Item>
-                  ))}
-                  <DropdownMenu.Arrow className="cmp-context-menu__arrow" />
-                </DropdownMenu.Content>
-              </DropdownMenu.Portal>
-            </DropdownMenu.Root>
+          getQuery={() => ref.current!.value}
+          getLabel={() => ref.current!.value}
+          getScope={() => source!}
+        />
+      </ToolWindow.TabActions>
+      <Accordion.Root type="multiple" defaultValue={['query', 'response']}>
+        <ToolWindowPanel mode={'headless'} id={'query'} title={'Query'}>
+          <div
+            style={{
+              marginBottom: '0.5rem',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}
+          >
+            <Select.Root onChange={setSource} value={source}>
+              <Select.Item value={'active-layer'}>Active Layer</Select.Item>
+              <Select.Item value={'active-diagram'}>Active Diagram</Select.Item>
+              <Select.Item value={'active-document'}>Active Document</Select.Item>
+              <Select.Item value={'selection'}>Selection</Select.Item>
+            </Select.Root>
           </div>
-        </div>
 
-        <TextArea ref={ref} value={queryString} style={{ minHeight: '100px' }} />
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'end',
-            marginTop: '0.5rem',
-            gap: '0.5rem'
-          }}
-        >
-          <Button
-            type={'secondary'}
-            onClick={() => {
-              setExpanded([]);
+          <TextArea ref={ref} value={queryString} style={{ minHeight: '100px' }} />
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'end',
+              marginTop: '0.5rem',
+              gap: '0.5rem'
             }}
           >
-            Save as...
-          </Button>
-          <Button
-            type={'secondary'}
-            onClick={() => {
-              exportToFile();
-            }}
-          >
-            Export
-          </Button>
-          <a
-            style={{ display: 'none' }}
-            download={'export.json'}
-            href={downloadLink}
-            ref={downloadRef}
-          >
-            -
-          </a>
-          <Button
-            onClick={() => {
-              if (ref.current?.value === queryString) {
-                redraw();
-              } else {
-                setQueryIdx(0);
-                setQueryInput({});
+            <Button
+              type={'secondary'}
+              onClick={() => {
                 setExpanded([]);
-                setQueryString(ref.current?.value ?? '');
-              }
-            }}
-          >
-            Run
-          </Button>
-        </div>
-      </ToolWindowPanel>
+              }}
+            >
+              Save as...
+            </Button>
+            <Button
+              type={'secondary'}
+              onClick={() => {
+                exportToFile();
+              }}
+            >
+              Export
+            </Button>
+            <a
+              style={{ display: 'none' }}
+              download={'export.json'}
+              href={downloadLink}
+              ref={downloadRef}
+            >
+              -
+            </a>
+            <Button
+              onClick={() => {
+                if (ref.current?.value === queryString) {
+                  redraw();
+                } else {
+                  setQueryIdx(0);
+                  setQueryInput({});
+                  setExpanded([]);
+                  setQueryString(ref.current?.value ?? '');
+                }
+              }}
+            >
+              Run
+            </Button>
+          </div>
+        </ToolWindowPanel>
 
-      <ToolWindowPanel mode={'accordion'} id={'response'} title={'Query Response'}>
-        <div className={'cmp-query-response'}>
-          {!!error && <div className={'cmp-error'}>{error.toString()}</div>}
-          {res &&
-            res.map((e, idx) => (
-              <div
-                key={idx}
-                className={`cmp-query-response__item ${expanded.includes(idx) ? 'cmp-query-response__item--expanded' : ''}`}
-                style={{
-                  cursor: 'pointer'
-                }}
-                onClick={() => {
-                  if (expanded.includes(idx)) {
-                    setExpanded(expanded.filter(e => e !== idx));
-                  } else {
-                    setExpanded([...expanded, idx]);
-                  }
-                }}
-                onMouseEnter={() => {
-                  if (e.type && e.id) {
-                    const el = diagram.lookup(e.id);
-                    if (el) addHighlight(el, Highlights.NODE__HIGHLIGHT);
-                  }
-                }}
-                onMouseLeave={() => {
-                  if (e.type && e.id) {
-                    const el = diagram.lookup(e.id);
-                    if (el) removeHighlight(el, Highlights.NODE__HIGHLIGHT);
-                  }
-                }}
-              >
-                {expanded.includes(idx) ? <TbChevronDown /> : <TbChevronRight />}
-                {expanded.includes(idx) && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      right: '0.5rem',
-                      top: '0.125rem',
-                      display: 'flex',
-                      gap: '0.25rem'
-                    }}
-                  >
-                    <Button type={'icon-only'}>
-                      <TbArrowDownRight />
-                    </Button>
-                    <Button
-                      type={'icon-only'}
-                      onClick={ev => {
-                        navigator.clipboard.writeText(
-                          JSON.stringify(e, replacer, expanded.includes(idx) ? 2 : undefined)
-                        );
-                        ev.preventDefault();
-                        ev.stopPropagation();
+        <ToolWindowPanel mode={'accordion'} id={'response'} title={'Query Response'}>
+          <div className={'cmp-query-response'}>
+            {!!error && <div className={'cmp-error'}>{error.toString()}</div>}
+            {res &&
+              res.map((e, idx) => (
+                <div
+                  key={idx}
+                  className={`cmp-query-response__item ${expanded.includes(idx) ? 'cmp-query-response__item--expanded' : ''}`}
+                  style={{
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => {
+                    if (expanded.includes(idx)) {
+                      setExpanded(expanded.filter(e => e !== idx));
+                    } else {
+                      setExpanded([...expanded, idx]);
+                    }
+                  }}
+                  onMouseEnter={() => {
+                    if (e.type && e.id) {
+                      const el = diagram.lookup(e.id);
+                      if (el) addHighlight(el, Highlights.NODE__HIGHLIGHT);
+                    }
+                  }}
+                  onMouseLeave={() => {
+                    if (e.type && e.id) {
+                      const el = diagram.lookup(e.id);
+                      if (el) removeHighlight(el, Highlights.NODE__HIGHLIGHT);
+                    }
+                  }}
+                >
+                  {expanded.includes(idx) ? <TbChevronDown /> : <TbChevronRight />}
+                  {expanded.includes(idx) && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        right: '0.5rem',
+                        top: '0.125rem',
+                        display: 'flex',
+                        gap: '0.25rem'
                       }}
                     >
-                      <TbClipboardCopy />
-                    </Button>
-                  </div>
-                )}
-                <pre key={idx}>
-                  {JSON.stringify(e, replacer, expanded.includes(idx) ? 2 : undefined)}
-                </pre>
-              </div>
-            ))}
-        </div>
-      </ToolWindowPanel>
-    </Accordion.Root>
+                      <Button type={'icon-only'}>
+                        <TbArrowDownRight />
+                      </Button>
+                      <Button
+                        type={'icon-only'}
+                        onClick={ev => {
+                          navigator.clipboard.writeText(
+                            JSON.stringify(e, replacer, expanded.includes(idx) ? 2 : undefined)
+                          );
+                          ev.preventDefault();
+                          ev.stopPropagation();
+                        }}
+                      >
+                        <TbClipboardCopy />
+                      </Button>
+                    </div>
+                  )}
+                  <pre key={idx}>
+                    {JSON.stringify(e, replacer, expanded.includes(idx) ? 2 : undefined)}
+                  </pre>
+                </div>
+              ))}
+          </div>
+        </ToolWindowPanel>
+      </Accordion.Root>
+    </ToolWindow.TabContent>
   );
 };

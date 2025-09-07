@@ -1700,10 +1700,12 @@
       "history": [
         [
           "active-layer",
+          "djql",
           ".elements[] | select(.edges | length > 0)"
         ],
         [
           "active-layer",
+          "djql",
           ".elements[]"
         ]
       ],

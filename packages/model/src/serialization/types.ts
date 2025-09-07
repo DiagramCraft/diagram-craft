@@ -1,4 +1,4 @@
-import type { EdgeInterface, NodeInterface, Guide } from '../types';
+import type { EdgeInterface, Guide, NodeInterface } from '../types';
 import { Point } from '@diagram-craft/geometry/point';
 import type { EdgePropsForEditing } from '../diagramEdge';
 import type { NodePropsForEditing, NodeTexts } from '../diagramNode';
@@ -9,6 +9,7 @@ import type { Canvas } from '../diagram';
 import type { AdjustmentRule } from '../diagramLayerRuleTypes';
 import type { DataTemplate } from '../diagramDocument';
 import type { SerializedComment } from '../comment';
+import type { QueryEntry } from '../documentProps';
 
 export interface Reference {
   id: string;
@@ -55,8 +56,8 @@ export interface SerializedDiagramDocument {
   props?: {
     stencils?: ReadonlyArray<string>;
     query?: {
-      history?: ReadonlyArray<[string, string]>;
-      saved?: ReadonlyArray<[string, string]>;
+      history?: ReadonlyArray<QueryEntry>;
+      saved?: ReadonlyArray<QueryEntry>;
     };
   };
   data?: {

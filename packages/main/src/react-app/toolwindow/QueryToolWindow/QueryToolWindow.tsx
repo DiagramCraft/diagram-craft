@@ -7,19 +7,13 @@ export const QueryToolWindow = () => {
   return (
     <ToolWindow.Root id={'query'} defaultTab={'search'}>
       <ToolWindow.Tab id={'search'} title={'Search'}>
-        <ToolWindow.TabContent>
-          <SearchTab />
-        </ToolWindow.TabContent>
+        <SearchTab />
       </ToolWindow.Tab>
       <ToolWindow.Tab id={'advanced-search'} title={'Advanced'}>
-        <ToolWindow.TabContent>
-          <AdvancedSearchTab />
-        </ToolWindow.TabContent>
+        <AdvancedSearchTab />
       </ToolWindow.Tab>
       <ToolWindow.Tab id={'djql'} title={'DJQL'}>
-        <ToolWindow.TabContent>
-          <DJQLSearchTab />
-        </ToolWindow.TabContent>
+        <DJQLSearchTab />
       </ToolWindow.Tab>
     </ToolWindow.Root>
   );

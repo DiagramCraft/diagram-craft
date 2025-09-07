@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DocumentProps } from './documentProps';
+import { DocumentProps, type QueryEntry } from './documentProps';
 import { NoOpCRDTRoot } from './collaboration/noopCrdt';
 import { TestModel } from './test-support/builder';
 import { Backends, standardTestModel } from './collaboration/collaborationTestUtils';
@@ -69,13 +69,33 @@ describe.each(Backends.all())('Query [%s]', (_name, backend) => {
 
     // Verify
     expect(doc1.props.query.history).toEqual([
-      ['active-layer', '.elements[]'],
-      ['active-layer', '.elements[] | select(.edges | length > 0)']
+      {
+        label: '.elements[]',
+        scope: 'active-layer',
+        type: 'djql',
+        value: '.elements[]'
+      },
+      {
+        label: '.elements[] | select(.edges | length > 0)',
+        scope: 'active-layer',
+        type: 'djql',
+        value: '.elements[] | select(.edges | length > 0)'
+      }
     ]);
     if (doc2) {
       expect(doc2.props.query.history).toEqual([
-        ['active-layer', '.elements[]'],
-        ['active-layer', '.elements[] | select(.edges | length > 0)']
+        {
+          label: '.elements[]',
+          scope: 'active-layer',
+          type: 'djql',
+          value: '.elements[]'
+        },
+        {
+          label: '.elements[] | select(.edges | length > 0)',
+          scope: 'active-layer',
+          type: 'djql',
+          value: '.elements[] | select(.edges | length > 0)'
+        }
       ]);
     }
   });
@@ -85,8 +105,13 @@ describe.each(Backends.all())('Query [%s]', (_name, backend) => {
     const { doc1, doc2 } = standardTestModel(backend);
 
     // Act
-    const newEntry: [string, string] = ['new-layer', '.elements[]'];
-    doc1.props.query.addHistory(newEntry);
+    const newEntry: QueryEntry = {
+      type: 'djql',
+      scope: 'new-layer',
+      label: '.elements[]',
+      value: '.elements[]'
+    };
+    doc1.props.query.addHistory(newEntry.type, newEntry.label, newEntry.scope, newEntry.value);
 
     // Verify
     expect(doc1.props.query.history[0]).toEqual(newEntry);
@@ -100,8 +125,13 @@ describe.each(Backends.all())('Query [%s]', (_name, backend) => {
     const { doc1, doc2 } = standardTestModel(backend);
 
     // Act
-    const newEntry: [string, string] = ['active-layer', '.elements[]'];
-    doc1.props.query.addHistory(newEntry);
+    const newEntry: QueryEntry = {
+      scope: 'active-layer',
+      type: 'djql',
+      label: '.elements[]',
+      value: '.elements[]'
+    };
+    doc1.props.query.addHistory(newEntry.type, newEntry.label, newEntry.scope, newEntry.value);
 
     // Verify
     expect(doc1.props.query.history.length).toBe(2);
@@ -122,8 +152,13 @@ describe.each(Backends.all())('Query [%s]', (_name, backend) => {
     const { doc1, doc2 } = standardTestModel(backend);
 
     // Act
-    const newEntry: [string, string] = ['saved-layer', '.elements[]'];
-    doc1.props.query.addSaved(newEntry);
+    const newEntry: QueryEntry = {
+      scope: 'saved-layer',
+      type: 'djql',
+      value: '.elements[]',
+      label: '.elements[]'
+    };
+    doc1.props.query.addSaved(newEntry.type, newEntry.label, newEntry.scope, newEntry.value);
 
     // Verify
     expect(doc1.props.query.saved[0]).toEqual(newEntry);
@@ -137,9 +172,9 @@ describe.each(Backends.all())('Query [%s]', (_name, backend) => {
     const { doc1, doc2 } = standardTestModel(backend);
 
     // Act
-    const savedQueries: [string, string][] = [
-      ['layer-1', '.elements[]'],
-      ['layer-2', '.elements[] | select(.type=="node")']
+    const savedQueries: QueryEntry[] = [
+      { scope: 'layer-1', type: 'djql', value: '.elements[]', label: 'a' },
+      { scope: 'layer-2', type: 'djql', value: '.elements[] | select(.type=="node")', label: 'b' }
     ];
     doc1.props.query.setSaved(savedQueries);
 
@@ -155,9 +190,9 @@ describe.each(Backends.all())('Query [%s]', (_name, backend) => {
     const { doc1, doc2 } = standardTestModel(backend);
 
     // Act
-    const historyQueries: [string, string][] = [
-      ['layer-1', '.elements[]'],
-      ['layer-2', '.elements[] | select(.type=="node")']
+    const historyQueries: QueryEntry[] = [
+      { scope: 'layer-1', type: 'djql', value: '.elements[]', label: 'a' },
+      { scope: 'layer-2', type: 'djql', value: '.elements[] | select(.type=="node")', label: 'b' }
     ];
     doc1.props.query.setHistory(historyQueries);
 
