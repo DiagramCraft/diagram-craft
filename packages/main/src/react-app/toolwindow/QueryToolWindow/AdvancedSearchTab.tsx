@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import styles from './AdvancedSearchTab.module.css';
 import { useDiagram } from '../../../application';
 import { useRedraw } from '../../hooks/useRedraw';
@@ -62,7 +62,7 @@ const AdvancedSearchClauseList = (props: ClauseListProps) => {
     <>
       {props.clauses.map((c, idx) => {
         return (
-          <React.Fragment key={c.id}>
+          <div key={c.id} className={styles.advancedSearchClause}>
             <div className={styles.advancedSearchClause__select}>
               <Select.Root
                 value={c.type ?? ''}
@@ -157,7 +157,7 @@ const AdvancedSearchClauseList = (props: ClauseListProps) => {
 
             <div className={styles.advancedSearchClause__props}>
               {c.type === 'any' && (
-                <div className={styles.advancedSearchClause__anyGrid}>
+                <div className={styles.advancedSearchClause__subClause}>
                   <AdvancedSearchClauseList
                     clauses={c.clauses ?? [{ id: newid() }]}
                     onChange={newClauses => {
@@ -196,7 +196,7 @@ const AdvancedSearchClauseList = (props: ClauseListProps) => {
             </div>
 
             <div className={styles.advancedSearchClause__indent}></div>
-          </React.Fragment>
+          </div>
         );
       })}
     </>
@@ -298,14 +298,12 @@ export const AdvancedSearchTab = () => {
             </div>
 
             <div className={styles.advancedSearch__criteria}>
-              <div className={styles.advancedSearch__searchGrid}>
-                <AdvancedSearchClauseList
-                  clauses={clauses}
-                  onChange={setClauses}
-                  subClauses={false}
-                  type={type}
-                />
-              </div>
+              <AdvancedSearchClauseList
+                clauses={clauses}
+                onChange={setClauses}
+                subClauses={false}
+                type={type}
+              />
             </div>
 
             <Button

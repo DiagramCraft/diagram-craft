@@ -16,7 +16,7 @@
   gap: 0.5rem;
 }
 
-.advancedSearch__searchGrid {
+.advancedSearchClause {
   display: grid;
   grid-template-areas: "select select buttons" "indent props props";
   grid-template-columns: min-content 1fr max-content;
@@ -44,12 +44,10 @@
   gap: 0.5rem;
 }
 
-.advancedSearchClause__anyGrid {
-  display: grid;
-  grid-template-areas: "select select buttons" "indent props props";
-  grid-template-columns: min-content 1fr max-content;
+.advancedSearchClause__subClause {
+  display: flex;
+  flex-direction: column;
   gap: 0.5rem;
-  align-items: center;
 }
 
 .advancedSearchClause__buttons {

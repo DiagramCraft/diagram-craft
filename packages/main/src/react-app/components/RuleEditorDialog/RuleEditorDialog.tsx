@@ -58,7 +58,7 @@ const ClauseList = (props: ClauseListProps) => {
     <>
       {props.clauses.map((c, idx) => {
         return (
-          <React.Fragment key={c.id}>
+          <div key={c.id} className={styles.ruleEditor__clause}>
             <div className={styles.ruleEditorClause__select}>
               <Select.Root
                 value={c.type ?? ''}
@@ -81,7 +81,7 @@ const ClauseList = (props: ClauseListProps) => {
             <div className={styles.ruleEditorClause__props}>
               {c.type === 'query' && (
                 <TextArea
-className={styles.ruleEditorClause__queryTextArea}
+                  className={styles.ruleEditorClause__queryTextArea}
                   value={c.query ?? ''}
                   onKeyDown={e => {
                     // TODO: Why is this needed?
@@ -199,7 +199,7 @@ className={styles.ruleEditorClause__queryTextArea}
             </div>
 
             {c.type === 'any' && (
-              <div className={styles.ruleEditor__subClauseGrid}>
+              <div className={styles.ruleEditor__subClause}>
                 <ClauseList
                   clauses={c.clauses ?? [{ id: newid() }]}
                   onChange={newClauses => {
@@ -212,7 +212,7 @@ className={styles.ruleEditorClause__queryTextArea}
                 />
               </div>
             )}
-          </React.Fragment>
+          </div>
         );
       })}
     </>
@@ -358,7 +358,7 @@ export const RuleEditorDialog = (props: Props) => {
         <div></div>
         <div></div>
 
-        <div className={styles.ruleEditor__mainClauseGrid}>
+        <div className={styles.ruleEditor__clauseList}>
           <ClauseList clauses={clauses} onChange={setClauses} subClauses={false} type={type} />
         </div>
 
