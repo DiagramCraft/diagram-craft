@@ -4,6 +4,14 @@ import type { QueryType } from '@diagram-craft/model/documentProps';
 import { useApplication, useDocument } from '../../../application';
 import { useCallback } from 'react';
 import { useRedraw } from '../../hooks/useRedraw';
+import { RuleEditorDialogCommand } from '@diagram-craft/canvas-app/dialogs';
+import { ElementSearchClause } from '@diagram-craft/model/diagramElementSearch';
+import { AdjustmentRule } from '@diagram-craft/model/diagramLayerRuleTypes';
+import { RuleLayer } from '@diagram-craft/model/diagramLayerRule';
+import { newid } from '@diagram-craft/utils/id';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
+import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 
 type SearchToolMenuProps = {
   type: QueryType;
@@ -40,6 +48,77 @@ export const SearchToolMenu = (props: SearchToolMenuProps) => {
       }
     });
   }, [props.getQuery]);
+
+  const createRuleClausesFromSearch = useCallback((): ElementSearchClause[] => {
+    const query = props.getQuery();
+
+    switch (props.type) {
+      case 'simple':
+        if (!query.trim()) return [];
+        return [
+          {
+            id: newid(),
+            type: 'props',
+            path: 'metadata.name',
+            relation: 'contains',
+            value: query
+          }
+        ];
+
+      case 'djql':
+        if (!query.trim()) return [];
+        return [
+          {
+            id: newid(),
+            type: 'query',
+            query: query
+          }
+        ];
+
+      case 'advanced':
+        try {
+          const parsedClauses = JSON.parse(query) as ElementSearchClause[];
+          return parsedClauses
+            .filter(c => c.type)
+            .map(c => ({
+              ...c,
+              id: c.id ?? newid()
+            }));
+        } catch {
+          return [];
+        }
+
+      default:
+        return VERIFY_NOT_REACHED();
+    }
+  }, [props.type, props.getQuery]);
+
+  const createRuleLayer = useCallback(() => {
+    const clauses = createRuleClausesFromSearch();
+
+    if (clauses.length === 0) {
+      return;
+    }
+
+    const rule: AdjustmentRule = {
+      id: newid(),
+      name: `Rule from ${props.getLabel()}`,
+      type: 'node',
+      clauses: clauses,
+      actions: []
+    };
+
+    application.ui.showDialog(
+      new RuleEditorDialogCommand({ rule: rule }, (editedRule: AdjustmentRule) => {
+        const diagram = application.model.activeDiagram;
+        const uow = new UnitOfWork(diagram, true);
+
+        const ruleLayer = new RuleLayer(newid(), editedRule.name, diagram, [editedRule]);
+        diagram.layers.add(ruleLayer, uow);
+        commitWithUndo(uow, 'Create rule layer');
+      })
+    );
+  }, [createRuleClausesFromSearch, props.getLabel, application]);
 
   return (
     <DropdownMenu.Root>
@@ -111,7 +190,7 @@ export const SearchToolMenu = (props: SearchToolMenuProps) => {
               Convert to DJQL
             </DropdownMenu.Item>
           )}
-          <DropdownMenu.Item className="cmp-context-menu__item">
+          <DropdownMenu.Item className="cmp-context-menu__item" onClick={createRuleLayer}>
             Create Rule Layer
           </DropdownMenu.Item>
         </DropdownMenu.Content>
