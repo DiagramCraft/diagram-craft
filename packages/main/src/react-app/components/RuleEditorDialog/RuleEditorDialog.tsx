@@ -59,7 +59,7 @@ const ClauseList = (props: ClauseListProps) => {
       {props.clauses.map((c, idx) => {
         return (
           <React.Fragment key={c.id}>
-            <div style={{ gridArea: 'select' }}>
+            <div className={styles.ruleEditorClause__select}>
               <Select.Root
                 value={c.type ?? ''}
                 placeholder={'Select Rule'}
@@ -78,10 +78,10 @@ const ClauseList = (props: ClauseListProps) => {
               </Select.Root>
             </div>
 
-            <div style={{ gridArea: 'props' }}>
+            <div className={styles.ruleEditorClause__props}>
               {c.type === 'query' && (
                 <TextArea
-                  style={{ minHeight: '3rem', resize: 'vertical' }}
+className={styles.ruleEditorClause__queryTextArea}
                   value={c.query ?? ''}
                   onKeyDown={e => {
                     // TODO: Why is this needed?
@@ -96,26 +96,12 @@ const ClauseList = (props: ClauseListProps) => {
                 />
               )}
               {c.type === 'any' && (
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    height: '100%'
-                  }}
-                >
-                  <div
-                    style={{
-                      alignSelf: 'center',
-                      width: '100%',
-                      height: '1px',
-                      borderTop: '1px solid var(--slate-4)'
-                    }}
-                  ></div>
+                <div className={styles.ruleEditorClause__anyContainer}>
+                  <div className={styles.ruleEditorClause__anyLine}></div>
                 </div>
               )}
               {c.type === 'props' && (
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <div className={styles.ruleEditorClause__propsRow}>
                   <TreeSelect.Root
                     value={c.path ?? ''}
                     onValueChange={v => {
@@ -188,7 +174,7 @@ const ClauseList = (props: ClauseListProps) => {
                 c.type !== 'comment' && <div></div>}
             </div>
 
-            <div style={{ gridArea: 'buttons' }}>
+            <div className={styles.ruleEditorClause__buttons}>
               <Button
                 type={'icon-only'}
                 onClick={() => {
@@ -213,7 +199,7 @@ const ClauseList = (props: ClauseListProps) => {
             </div>
 
             {c.type === 'any' && (
-              <div className={styles.ruleEditorSubClauseGrid}>
+              <div className={styles.ruleEditor__subClauseGrid}>
                 <ClauseList
                   clauses={c.clauses ?? [{ id: newid() }]}
                   onChange={newClauses => {
@@ -335,14 +321,7 @@ export const RuleEditorDialog = (props: Props) => {
       ]}
       title={'Rule Editor'}
     >
-      <div
-        style={{
-          display: 'grid',
-          gap: '0.5rem',
-          minWidth: '35rem',
-          gridTemplateColumns: '1fr max-content'
-        }}
-      >
+      <div className={styles.ruleEditor__container}>
         <div>
           <label>{'Name'}:</label>
           <TextInput ref={ref} value={rule?.name ?? ''} size={40} />
@@ -359,12 +338,12 @@ export const RuleEditorDialog = (props: Props) => {
               }}
             >
               <ToggleButtonGroup.Item value={'node'}>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <div className={styles.ruleEditor__typeButtonContainer}>
                   <TbPentagon /> Node
                 </div>
               </ToggleButtonGroup.Item>
               <ToggleButtonGroup.Item value={'edge'}>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <div className={styles.ruleEditor__typeButtonContainer}>
                   <TbLine /> Edge
                 </div>
               </ToggleButtonGroup.Item>
@@ -374,17 +353,17 @@ export const RuleEditorDialog = (props: Props) => {
       </div>
 
       <div>
-        <h4 style={{ margin: '0.5rem 0 0 0' }}>If</h4>
+        <h4 className={styles.ruleEditor__sectionTitle}>If</h4>
         <div></div>
         <div></div>
         <div></div>
 
-        <div className={styles.ruleEditorMainClauseGrid}>
+        <div className={styles.ruleEditor__mainClauseGrid}>
           <ClauseList clauses={clauses} onChange={setClauses} subClauses={false} type={type} />
         </div>
 
-        <div style={{ display: 'none' }}>
-          <h4 style={{ margin: '0.5rem 0 0 0' }}>Then</h4>
+        <div className={styles.ruleEditor__hiddenSection}>
+          <h4 className={styles.ruleEditor__sectionTitle}>Then</h4>
           <div></div>
           <div></div>
           <div></div>
