@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import styles from './AdvancedSearchTab.module.css';
 import { useDiagram } from '../../../application';
 import { useRedraw } from '../../hooks/useRedraw';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
@@ -11,13 +12,12 @@ import {
 import { validProps } from '@diagram-craft/model/diagramLayerRule';
 import { newid } from '@diagram-craft/utils/id';
 import { Select } from '@diagram-craft/app-components/Select';
-import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TagInput } from '@diagram-craft/app-components/TagInput';
 import { TreeSelect } from '@diagram-craft/app-components/TreeSelect';
 import { Button } from '@diagram-craft/app-components/Button';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
-import { TbPlus, TbTrash, TbSearch } from 'react-icons/tb';
+import { TbPlus, TbSearch, TbTrash } from 'react-icons/tb';
 import { SearchResultsPanel } from './SearchResultsPanel';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
@@ -29,8 +29,8 @@ type EditableElementSearchClause = Partial<ElementSearchClause>;
 type ClauseListProps = {
   clauses: EditableElementSearchClause[];
   onChange: (newClauses: EditableElementSearchClause[]) => void;
-  indent: boolean;
   type: 'edge' | 'node';
+  subClauses?: boolean;
 };
 
 const getElementsFromScope = (scope: SearchScope, diagram: Diagram): DiagramElement[] => {
@@ -52,7 +52,7 @@ const getElementsFromScope = (scope: SearchScope, diagram: Diagram): DiagramElem
   }
 };
 
-const ClauseList = (props: ClauseListProps) => {
+const AdvancedSearchClauseList = (props: ClauseListProps) => {
   const diagram = useDiagram();
 
   return (
@@ -60,155 +60,139 @@ const ClauseList = (props: ClauseListProps) => {
       {props.clauses.map((c, idx) => {
         return (
           <React.Fragment key={c.id}>
-            <Select.Root
-              value={c.type ?? ''}
-              placeholder={'Select Rule'}
-              style={props.indent ? { marginLeft: '1rem' } : {}}
-              onChange={t => {
-                const newClauses = [...props.clauses];
-                // @ts-ignore
-                newClauses[idx].type = t;
-                props.onChange(newClauses);
-              }}
-            >
-              <Select.Item value={'query'}>Query</Select.Item>
-              <Select.Item value={'props'}>Property</Select.Item>
-              <Select.Item value={'tags'}>Tags</Select.Item>
-              <Select.Item value={'comment'}>Comment</Select.Item>
-              {!props.indent && <Select.Item value={'any'}>Any</Select.Item>}
-            </Select.Root>
-
-            {c.type === 'query' && (
-              <TextArea
-                style={{ minHeight: '3rem', resize: 'vertical' }}
-                value={c.query ?? ''}
-                onKeyDown={e => e.stopPropagation()}
-                onChange={e => {
-                  const newClauses = [...props.clauses];
-                  // @ts-ignore
-                  newClauses[idx].query = e.target.value;
-                  props.onChange(newClauses);
-                }}
-              />
-            )}
-
-            {c.type === 'any' && (
-              <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                <div
-                  style={{
-                    width: '100%',
-                    height: '1px',
-                    borderTop: '1px solid var(--slate-4)'
-                  }}
-                ></div>
-              </div>
-            )}
-
-            {c.type === 'props' && (
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <TreeSelect.Root
-                  value={c.path ?? ''}
-                  onValueChange={v => {
-                    c.path = v;
-                    c.relation ??= 'eq';
-                    props.onChange([...props.clauses]);
-                  }}
-                  items={validProps(props.type)}
-                  placeholder={'Select property'}
-                />
-                <Select.Root
-                  value={c.relation ?? 'eq'}
-                  onChange={cond => {
-                    // @ts-ignore
-                    c.relation = cond;
-                    props.onChange([...props.clauses]);
-                  }}
-                >
-                  <Select.Item value={'eq'}>Is</Select.Item>
-                  <Select.Item value={'neq'}>Is Not</Select.Item>
-                  <Select.Item value={'contains'}>Contains</Select.Item>
-                  <Select.Item value={'matches'}>Matches</Select.Item>
-                  <Select.Item value={'gt'}>Greater Than</Select.Item>
-                  <Select.Item value={'lt'}>Less Than</Select.Item>
-                  <Select.Item value={'set'}>Is Set</Select.Item>
-                </Select.Root>
-                {c.relation !== 'set' && (
-                  <TextInput
-                    value={c.value ?? ''}
-                    onChange={v => {
-                      c.value = v;
-                      c.relation ??= 'eq';
-                      props.onChange([...props.clauses]);
-                    }}
-                  />
-                )}
-              </div>
-            )}
-
-            {c.type === 'tags' && (
-              <TagInput
-                selectedTags={c.tags || []}
-                availableTags={[...diagram.document.tags.tags]}
-                onTagsChange={newTags => {
-                  const newClauses = [...props.clauses];
-                  // @ts-ignore
-                  newClauses[idx].tags = newTags;
-                  props.onChange(newClauses);
-                }}
-                placeholder="Select tags..."
-              />
-            )}
-
-            {c.type === 'comment' && (
+            <div className={styles.advancedSearchClause__select}>
               <Select.Root
-                value={c.state ?? 'any'}
-                placeholder={'Any comment state'}
-                onChange={state => {
+                value={c.type ?? ''}
+                placeholder={'Select Rule'}
+                onChange={t => {
                   const newClauses = [...props.clauses];
                   // @ts-ignore
-                  newClauses[idx].state = state === 'any' ? undefined : state;
+                  newClauses[idx].type = t;
                   props.onChange(newClauses);
                 }}
               >
-                <Select.Item value={'any'}>Any</Select.Item>
-                <Select.Item value={'unresolved'}>Unresolved</Select.Item>
-                <Select.Item value={'resolved'}>Resolved</Select.Item>
+                <Select.Item value={'props'}>Property</Select.Item>
+                <Select.Item value={'tags'}>Tags</Select.Item>
+                <Select.Item value={'comment'}>Comment</Select.Item>
+                {!props.subClauses && <Select.Item value={'any'}>Any</Select.Item>}
               </Select.Root>
-            )}
+            </div>
 
-            {c.type === 'any' && (
-              <ClauseList
-                clauses={c.clauses ?? [{ id: newid() }]}
-                onChange={newClauses => {
-                  c.clauses = newClauses as ElementSearchClause[];
-                  props.onChange([...props.clauses]);
+            <div className={styles.advancedSearchClause__props}>
+              {c.type === 'props' && (
+                <div className={styles.advancedSearchClause__propsColumn}>
+                  <TreeSelect.Root
+                    value={c.path ?? ''}
+                    onValueChange={v => {
+                      c.path = v;
+                      c.relation ??= 'eq';
+                      props.onChange([...props.clauses]);
+                    }}
+                    items={validProps(props.type)}
+                    placeholder={'Select property'}
+                  />
+                  <Select.Root
+                    value={c.relation ?? 'eq'}
+                    onChange={cond => {
+                      // @ts-ignore
+                      c.relation = cond;
+                      props.onChange([...props.clauses]);
+                    }}
+                  >
+                    <Select.Item value={'eq'}>Is</Select.Item>
+                    <Select.Item value={'neq'}>Is Not</Select.Item>
+                    <Select.Item value={'contains'}>Contains</Select.Item>
+                    <Select.Item value={'matches'}>Matches</Select.Item>
+                    <Select.Item value={'gt'}>Greater Than</Select.Item>
+                    <Select.Item value={'lt'}>Less Than</Select.Item>
+                    <Select.Item value={'set'}>Is Set</Select.Item>
+                  </Select.Root>
+                  {c.relation !== 'set' && (
+                    <TextInput
+                      value={c.value ?? ''}
+                      onChange={v => {
+                        c.value = v;
+                        c.relation ??= 'eq';
+                        props.onChange([...props.clauses]);
+                      }}
+                    />
+                  )}
+                </div>
+              )}
+
+              {c.type === 'tags' && (
+                <TagInput
+                  selectedTags={c.tags || []}
+                  availableTags={[...diagram.document.tags.tags]}
+                  onTagsChange={newTags => {
+                    const newClauses = [...props.clauses];
+                    // @ts-ignore
+                    newClauses[idx].tags = newTags;
+                    props.onChange(newClauses);
+                  }}
+                  placeholder="Select tags..."
+                />
+              )}
+
+              {c.type === 'comment' && (
+                <Select.Root
+                  value={c.state ?? 'any'}
+                  placeholder={'Any comment state'}
+                  onChange={state => {
+                    const newClauses = [...props.clauses];
+                    // @ts-ignore
+                    newClauses[idx].state = state === 'any' ? undefined : state;
+                    props.onChange(newClauses);
+                  }}
+                >
+                  <Select.Item value={'any'}>Any</Select.Item>
+                  <Select.Item value={'unresolved'}>Unresolved</Select.Item>
+                  <Select.Item value={'resolved'}>Resolved</Select.Item>
+                </Select.Root>
+              )}
+            </div>
+
+            <div className={styles.advancedSearchClause__props}>
+              {c.type === 'any' && (
+                <div className={styles.advancedSearchClause__anyGrid}>
+                  <AdvancedSearchClauseList
+                    clauses={c.clauses ?? [{ id: newid() }]}
+                    onChange={newClauses => {
+                      c.clauses = newClauses as ElementSearchClause[];
+                      props.onChange([...props.clauses]);
+                    }}
+                    type={props.type}
+                    subClauses={true}
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className={styles.advancedSearchClause__buttons}>
+              <Button
+                type={'icon-only'}
+                onClick={() => {
+                  const newClauses = props.clauses.toSpliced(idx + 1, 0, {
+                    id: newid()
+                  });
+                  props.onChange(newClauses);
                 }}
-                indent={true}
-                type={props.type}
-              />
-            )}
+              >
+                <TbPlus />
+              </Button>
+              <Button
+                type={'icon-only'}
+                disabled={idx === 0 && props.clauses.length === 1}
+                onClick={() => {
+                  const newClauses = props.clauses.toSpliced(idx, 1);
+                  props.onChange(newClauses);
+                }}
+              >
+                <TbTrash />
+              </Button>
+            </div>
 
-            <Button
-              type={'icon-only'}
-              onClick={() => {
-                const newClauses = props.clauses.toSpliced(idx + 1, 0, {
-                  id: newid()
-                });
-                props.onChange(newClauses);
-              }}
-            >
-              <TbPlus />
-            </Button>
-            <Button
-              type={'icon-only'}
-              disabled={idx === 0 && props.clauses.length === 1}
-              onClick={() => {
-                const newClauses = props.clauses.toSpliced(idx, 1);
-                props.onChange(newClauses);
-              }}
-            >
-              <TbTrash />
-            </Button>
+            <div className={styles.advancedSearchClause__indent}></div>
           </React.Fragment>
         );
       })}
@@ -267,8 +251,8 @@ export const AdvancedSearchTab = () => {
   return (
     <Accordion.Root type="multiple" defaultValue={['advanced-search-criteria', 'search-results']}>
       <ToolWindowPanel mode="headless" id="advanced-search-criteria" title="Search Criteria">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+        <div className={styles.advancedSearch__container}>
+          <div className={styles.advancedSearch__header}>
             <ToggleButtonGroup.Root
               type="single"
               value={type}
@@ -290,23 +274,16 @@ export const AdvancedSearchTab = () => {
             </Select.Root>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr auto min-content min-content',
-                gap: '0.25rem',
-                alignItems: 'center'
-              }}
-            >
-              <ClauseList clauses={clauses} onChange={setClauses} indent={false} type={type} />
+          <div className={styles.advancedSearch__criteria}>
+            <div className={styles.advancedSearch__searchGrid}>
+              <AdvancedSearchClauseList clauses={clauses} onChange={setClauses} subClauses={false} type={type} />
             </div>
           </div>
 
           <Button
             type="primary"
             onClick={executeSearch}
-            style={{ alignSelf: 'flex-start', gap: '0.5rem', paddingRight: '0.75rem' }}
+className={styles.advancedSearch__searchButton}
           >
             <TbSearch />
             Search
