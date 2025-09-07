@@ -12,20 +12,18 @@ import { EDGE_EDITORS, Editor, EditorTypes, NODE_EDITORS } from './editors';
 import { StyleAction } from './StyleAction';
 import { TreeSelect } from '@diagram-craft/app-components/TreeSelect';
 import { StyleSheetAction } from './StyleSheetAction';
-import {
-  AdjustmentRule,
-  AdjustmentRuleAction,
-  AdjustmentRuleClause
-} from '@diagram-craft/model/diagramLayerRuleTypes';
+import { AdjustmentRule, AdjustmentRuleAction } from '@diagram-craft/model/diagramLayerRuleTypes';
+import { ElementSearchClause } from '@diagram-craft/model/diagramElementSearch';
 import { HideAction } from './HideAction';
 import { RuleEditorDialogProps } from '@diagram-craft/canvas-app/dialogs';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TagInput } from '@diagram-craft/app-components/TagInput';
 import { useDiagram } from '../../../application';
+import styles from './RuleEditorDialog.module.css';
 
 export type EditableAdjustmentRuleAction = Partial<AdjustmentRuleAction> & { kind?: string };
-export type EditableAdjustmentRuleClause = Partial<AdjustmentRuleClause>;
+export type EditableElementSearchClause = Partial<ElementSearchClause>;
 
 const normalizeRuleActions = (
   rule: AdjustmentRule | undefined,
@@ -61,154 +59,158 @@ const ClauseList = (props: ClauseListProps) => {
       {props.clauses.map((c, idx) => {
         return (
           <React.Fragment key={c.id}>
-            <Select.Root
-              value={c.type ?? ''}
-              placeholder={'Select Rule'}
-              style={props.indent ? { marginLeft: '1rem' } : {}}
-              onChange={t => {
-                const newClauses = [...props.clauses];
-                // @ts-ignore
-                newClauses[idx].type = t;
-                props.onChange(newClauses);
-              }}
-            >
-              <Select.Item value={'query'}>Query</Select.Item>
-              <Select.Item value={'props'}>Property</Select.Item>
-              <Select.Item value={'tags'}>Tags</Select.Item>
-              <Select.Item value={'comment'}>Comment</Select.Item>
-              {!props.indent && <Select.Item value={'any'}>Any</Select.Item>}
-            </Select.Root>
-            {c.type === 'query' && (
-              <TextArea
-                style={{ minHeight: '3rem', resize: 'vertical' }}
-                value={c.query ?? ''}
-                onKeyDown={e => {
-                  // TODO: Why is this needed?
-                  e.stopPropagation();
-                }}
-                onChange={e => {
-                  const newClauses = [...props.clauses];
-                  // @ts-ignore
-                  newClauses[idx].query = e.target.value;
-                  props.onChange(newClauses);
-                }}
-              />
-            )}
-            {c.type === 'any' && (
-              <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                <div
-                  style={{
-                    width: '100%',
-                    height: '1px',
-                    borderTop: '1px solid var(--slate-4)'
-                  }}
-                ></div>
-              </div>
-            )}
-            {c.type === 'props' && (
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <TreeSelect.Root
-                  value={c.path ?? ''}
-                  onValueChange={v => {
-                    c.path = v;
-                    c.relation ??= 'eq';
-                    props.onChange([...props.clauses]);
-                  }}
-                  items={validProps(props.type)}
-                  placeholder={'Select property'}
-                />
-                {/* TODO: Filter relations based on type */}
-                <Select.Root
-                  value={'eq'}
-                  onChange={cond => {
-                    // @ts-ignore
-                    c.relation = cond;
-                    props.onChange([...props.clauses]);
-                  }}
-                >
-                  <Select.Item value={'eq'}>Is</Select.Item>
-                  <Select.Item value={'neq'}>Is Not</Select.Item>
-                  <Select.Item value={'contains'}>Contains</Select.Item>
-                  <Select.Item value={'matches'}>Matches</Select.Item>
-                  <Select.Item value={'gt'}>Greater Than</Select.Item>
-                  <Select.Item value={'lt'}>Less Than</Select.Item>
-                </Select.Root>
-                <TextInput
-                  value={c.value ?? ''}
-                  onChange={v => {
-                    c.value = v;
-                    c.relation ??= 'eq';
-                    props.onChange([...props.clauses]);
-                  }}
-                />
-              </div>
-            )}
-            {c.type === 'tags' && (
-              <TagInput
-                selectedTags={c.tags || []}
-                availableTags={[...diagram.document.tags.tags]}
-                onTagsChange={newTags => {
-                  const newClauses = [...props.clauses];
-                  // @ts-ignore
-                  newClauses[idx].tags = newTags;
-                  props.onChange(newClauses);
-                }}
-                placeholder="Select tags..."
-              />
-            )}
-            {c.type === 'comment' && (
+            <div className={styles.ruleEditorClause__select}>
               <Select.Root
-                value={c.state ?? 'any'}
-                placeholder={'Any comment state'}
-                onChange={state => {
+                value={c.type ?? ''}
+                placeholder={'Select Rule'}
+                onChange={t => {
                   const newClauses = [...props.clauses];
                   // @ts-ignore
-                  newClauses[idx].state = state === 'any' ? undefined : state;
+                  newClauses[idx].type = t;
                   props.onChange(newClauses);
                 }}
               >
-                <Select.Item value={'any'}>Any</Select.Item>
-                <Select.Item value={'unresolved'}>Unresolved</Select.Item>
-                <Select.Item value={'resolved'}>Resolved</Select.Item>
+                <Select.Item value={'query'}>Query</Select.Item>
+                <Select.Item value={'props'}>Property</Select.Item>
+                <Select.Item value={'tags'}>Tags</Select.Item>
+                <Select.Item value={'comment'}>Comment</Select.Item>
+                {!props.subClauses && <Select.Item value={'any'}>Any</Select.Item>}
               </Select.Root>
-            )}
-            {c.type !== 'query' && c.type !== 'any' && c.type !== 'props' && c.type !== 'tags' && c.type !== 'comment' && (
-              <div></div>
-            )}
+            </div>
 
-            <Button
-              type={'icon-only'}
-              onClick={() => {
-                const newClauses = props.clauses.toSpliced(idx + 1, 0, {
-                  id: newid()
-                });
-                props.onChange(newClauses);
-              }}
-            >
-              <TbPlus />
-            </Button>
-            <Button
-              type={'icon-only'}
-              disabled={idx === 0 && props.clauses.length === 1}
-              onClick={() => {
-                const newClauses = props.clauses.toSpliced(idx, 1);
-                props.onChange(newClauses);
-              }}
-            >
-              <TbTrash />
-            </Button>
+            <div className={styles.ruleEditorClause__props}>
+              {c.type === 'query' && (
+                <TextArea
+className={styles.ruleEditorClause__queryTextArea}
+                  value={c.query ?? ''}
+                  onKeyDown={e => {
+                    // TODO: Why is this needed?
+                    e.stopPropagation();
+                  }}
+                  onChange={e => {
+                    const newClauses = [...props.clauses];
+                    // @ts-ignore
+                    newClauses[idx].query = e.target.value;
+                    props.onChange(newClauses);
+                  }}
+                />
+              )}
+              {c.type === 'any' && (
+                <div className={styles.ruleEditorClause__anyContainer}>
+                  <div className={styles.ruleEditorClause__anyLine}></div>
+                </div>
+              )}
+              {c.type === 'props' && (
+                <div className={styles.ruleEditorClause__propsRow}>
+                  <TreeSelect.Root
+                    value={c.path ?? ''}
+                    onValueChange={v => {
+                      c.path = v;
+                      c.relation ??= 'eq';
+                      props.onChange([...props.clauses]);
+                    }}
+                    items={validProps(props.type)}
+                    placeholder={'Select property'}
+                  />
+                  {/* TODO: Filter relations based on type */}
+                  <Select.Root
+                    value={'eq'}
+                    onChange={cond => {
+                      // @ts-ignore
+                      c.relation = cond;
+                      props.onChange([...props.clauses]);
+                    }}
+                  >
+                    <Select.Item value={'eq'}>Is</Select.Item>
+                    <Select.Item value={'neq'}>Is Not</Select.Item>
+                    <Select.Item value={'contains'}>Contains</Select.Item>
+                    <Select.Item value={'matches'}>Matches</Select.Item>
+                    <Select.Item value={'gt'}>Greater Than</Select.Item>
+                    <Select.Item value={'lt'}>Less Than</Select.Item>
+                  </Select.Root>
+                  <TextInput
+                    value={c.value ?? ''}
+                    onChange={v => {
+                      c.value = v;
+                      c.relation ??= 'eq';
+                      props.onChange([...props.clauses]);
+                    }}
+                  />
+                </div>
+              )}
+              {c.type === 'tags' && (
+                <TagInput
+                  selectedTags={c.tags || []}
+                  availableTags={[...diagram.document.tags.tags]}
+                  onTagsChange={newTags => {
+                    const newClauses = [...props.clauses];
+                    // @ts-ignore
+                    newClauses[idx].tags = newTags;
+                    props.onChange(newClauses);
+                  }}
+                  placeholder="Select tags..."
+                />
+              )}
+              {c.type === 'comment' && (
+                <Select.Root
+                  value={c.state ?? 'any'}
+                  placeholder={'Any comment state'}
+                  onChange={state => {
+                    const newClauses = [...props.clauses];
+                    // @ts-ignore
+                    newClauses[idx].state = state === 'any' ? undefined : state;
+                    props.onChange(newClauses);
+                  }}
+                >
+                  <Select.Item value={'any'}>Any</Select.Item>
+                  <Select.Item value={'unresolved'}>Unresolved</Select.Item>
+                  <Select.Item value={'resolved'}>Resolved</Select.Item>
+                </Select.Root>
+              )}
+              {c.type !== 'query' &&
+                c.type !== 'any' &&
+                c.type !== 'props' &&
+                c.type !== 'tags' &&
+                c.type !== 'comment' && <div></div>}
+            </div>
+
+            <div className={styles.ruleEditorClause__buttons}>
+              <Button
+                type={'icon-only'}
+                onClick={() => {
+                  const newClauses = props.clauses.toSpliced(idx + 1, 0, {
+                    id: newid()
+                  });
+                  props.onChange(newClauses);
+                }}
+              >
+                <TbPlus />
+              </Button>
+              <Button
+                type={'icon-only'}
+                disabled={idx === 0 && props.clauses.length === 1}
+                onClick={() => {
+                  const newClauses = props.clauses.toSpliced(idx, 1);
+                  props.onChange(newClauses);
+                }}
+              >
+                <TbTrash />
+              </Button>
+            </div>
 
             {c.type === 'any' && (
-              <ClauseList
-                clauses={c.clauses ?? [{ id: newid() }]}
-                onChange={newClauses => {
-                  c.clauses = newClauses as AdjustmentRuleClause[];
-                  // Note: the clone here is to force rerender
-                  props.onChange([...props.clauses]);
-                }}
-                indent={true}
-                type={props.type}
-              />
+              <div className={styles.ruleEditor__subClauseGrid}>
+                <ClauseList
+                  clauses={c.clauses ?? [{ id: newid() }]}
+                  onChange={newClauses => {
+                    c.clauses = newClauses as ElementSearchClause[];
+                    // Note: the clone here is to force rerender
+                    props.onChange([...props.clauses]);
+                  }}
+                  subClauses={true}
+                  type={props.type}
+                />
+              </div>
             )}
           </React.Fragment>
         );
@@ -218,9 +220,9 @@ const ClauseList = (props: ClauseListProps) => {
 };
 
 type ClauseListProps = {
-  clauses: EditableAdjustmentRuleClause[];
-  onChange: (newClauses: EditableAdjustmentRuleClause[]) => void;
-  indent: boolean;
+  clauses: EditableElementSearchClause[];
+  onChange: (newClauses: EditableElementSearchClause[]) => void;
+  subClauses: boolean;
   type: 'edge' | 'node';
 };
 
@@ -230,7 +232,7 @@ export const RuleEditorDialog = (props: Props) => {
   const [actions, setActions] = useState<EditableAdjustmentRuleAction[]>(
     normalizeRuleActions(deepClone(props.rule), type === 'node' ? NODE_EDITORS : EDGE_EDITORS)
   );
-  const [clauses, setClauses] = useState<EditableAdjustmentRuleClause[]>(
+  const [clauses, setClauses] = useState<EditableElementSearchClause[]>(
     deepClone(props.rule)?.clauses ?? []
   );
 
@@ -288,7 +290,7 @@ export const RuleEditorDialog = (props: Props) => {
             rule!.clauses = clauses
               // TODO: Additional validations
               .filter(c => c.type !== undefined)
-              .map(c => c as AdjustmentRuleClause);
+              .map(c => c as ElementSearchClause);
             rule!.actions = actions
               // TODO: Additional validations
               .filter(a => a.type !== undefined)
@@ -319,14 +321,7 @@ export const RuleEditorDialog = (props: Props) => {
       ]}
       title={'Rule Editor'}
     >
-      <div
-        style={{
-          display: 'grid',
-          gap: '0.5rem',
-          minWidth: '35rem',
-          gridTemplateColumns: '1fr max-content'
-        }}
-      >
+      <div className={styles.ruleEditor__container}>
         <div>
           <label>{'Name'}:</label>
           <TextInput ref={ref} value={rule?.name ?? ''} size={40} />
@@ -343,12 +338,12 @@ export const RuleEditorDialog = (props: Props) => {
               }}
             >
               <ToggleButtonGroup.Item value={'node'}>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <div className={styles.ruleEditor__typeButtonContainer}>
                   <TbPentagon /> Node
                 </div>
               </ToggleButtonGroup.Item>
               <ToggleButtonGroup.Item value={'edge'}>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <div className={styles.ruleEditor__typeButtonContainer}>
                   <TbLine /> Edge
                 </div>
               </ToggleButtonGroup.Item>
@@ -358,30 +353,17 @@ export const RuleEditorDialog = (props: Props) => {
       </div>
 
       <div>
-        <div
-          style={{
-            display: 'grid',
-            margin: '0.5rem -1rem 2rem -0.5rem',
-            padding: '0 0.5rem 0 0.5rem',
-            gap: '0.5rem',
-            gridTemplateColumns: '8rem 8fr min-content min-content',
-            gridAutoRows: 'min-content',
-            scrollbarGutter: 'stable',
-            scrollbarWidth: 'thin',
-            scrollbarColor: 'var(--tertiary-fg) var(--primary-bg)',
-            maxHeight: '20rem',
-            height: '20rem',
-            overflowY: 'auto'
-          }}
-        >
-          <h4 style={{ margin: '0.5rem 0 0 0' }}>If</h4>
-          <div></div>
-          <div></div>
-          <div></div>
+        <h4 className={styles.ruleEditor__sectionTitle}>If</h4>
+        <div></div>
+        <div></div>
+        <div></div>
 
-          <ClauseList clauses={clauses} onChange={setClauses} indent={false} type={type} />
+        <div className={styles.ruleEditor__mainClauseGrid}>
+          <ClauseList clauses={clauses} onChange={setClauses} subClauses={false} type={type} />
+        </div>
 
-          <h4 style={{ margin: '0.5rem 0 0 0' }}>Then</h4>
+        <div className={styles.ruleEditor__hiddenSection}>
+          <h4 className={styles.ruleEditor__sectionTitle}>Then</h4>
           <div></div>
           <div></div>
           <div></div>

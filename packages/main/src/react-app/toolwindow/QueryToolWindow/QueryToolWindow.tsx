@@ -1,5 +1,6 @@
-import { AdvancedSearchTab } from './AdvancedSearchTab';
+import { DJQLSearchTab } from './DJQLSearchTab';
 import { SearchTab } from './SearchTab';
+import { AdvancedSearchTab } from './AdvancedSearchTab';
 import { ToolWindow } from '../ToolWindow';
 
 export const QueryToolWindow = () => {
@@ -10,9 +11,14 @@ export const QueryToolWindow = () => {
           <SearchTab />
         </ToolWindow.TabContent>
       </ToolWindow.Tab>
-      <ToolWindow.Tab id={'advanced'} title={'Advanced'}>
+      <ToolWindow.Tab id={'advanced-search'} title={'Advanced'}>
         <ToolWindow.TabContent>
           <AdvancedSearchTab />
+        </ToolWindow.TabContent>
+      </ToolWindow.Tab>
+      <ToolWindow.Tab id={'djql'} title={'DJQL'}>
+        <ToolWindow.TabContent>
+          <DJQLSearchTab />
         </ToolWindow.TabContent>
       </ToolWindow.Tab>
     </ToolWindow.Root>

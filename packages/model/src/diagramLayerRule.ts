@@ -3,17 +3,15 @@ import type { LayerCRDT } from './diagramLayer';
 import { Layer } from './diagramLayer';
 import type { Diagram } from './diagram';
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
-import { parseAndQuery } from 'embeddable-jq';
-import { assert, notImplemented } from '@diagram-craft/utils/assert';
+import { notImplemented } from '@diagram-craft/utils/assert';
 import { nodeDefaults } from './diagramDefaults';
 import {
   type Adjustment,
   type AdjustmentRule,
-  type AdjustmentRuleClause,
   DEFAULT_ADJUSTMENT_RULE
 } from './diagramLayerRuleTypes';
+import { searchByElementSearchClauses } from './diagramElementSearch';
 import { CRDTList, CRDTMap } from './collaboration/crdt';
-import { RegularLayer } from './diagramLayerRegular';
 
 type Result = Map<string, Adjustment>;
 
@@ -111,7 +109,7 @@ export class RuleLayer extends Layer<RuleLayer> {
   runRule(rule: AdjustmentRule): Result {
     const res: Result = new Map<string, Adjustment>();
 
-    const results = this.evaluateClauses(rule.clauses);
+    const results = searchByElementSearchClauses(this.diagram, rule.clauses);
 
     const result = results.reduce((p, c) => p.intersection(c), results[0]);
     for (const k of result) {
@@ -139,114 +137,6 @@ export class RuleLayer extends Layer<RuleLayer> {
     }
 
     return res;
-  }
-
-  private evaluateClauses(clauses: AdjustmentRuleClause[]) {
-    const results: Set<string>[] = [];
-    for (const clause of clauses) {
-      notImplemented.true(
-        clause.type === 'query' ||
-          clause.type === 'any' ||
-          clause.type === 'props' ||
-          clause.type === 'tags' ||
-          clause.type === 'comment',
-        'Not implemented yet'
-      );
-      if (clause.type === 'query') {
-        const r = parseAndQuery(
-          clause.query,
-          this.diagram.layers.visible.flatMap(l => (l instanceof RegularLayer ? l.elements : []))
-        );
-        results.push(new Set(...(r as string[])));
-      } else if (clause.type === 'any') {
-        const anyResult = this.evaluateClauses(clause.clauses);
-        const result = anyResult.reduce((p, c) => p.union(c), anyResult[0]);
-        results.push(result);
-      } else if (clause.type === 'props') {
-        const re = clause.relation === 'matches' ? new RegExp(clause.value) : undefined;
-
-        const result = new Set<string>();
-        for (const layer of this.diagram.layers.visible) {
-          if (layer instanceof RegularLayer) {
-            for (const element of (layer as RegularLayer).elements) {
-              // @ts-ignore
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const value: any = clause.path.split('.').reduce((p, c) => p[c], element);
-
-              switch (clause.relation) {
-                case 'eq':
-                  if (value === clause.value) result.add(element.id);
-                  break;
-                case 'neq':
-                  if (value !== clause.value) result.add(element.id);
-                  break;
-                case 'gt':
-                  if (value > clause.value) result.add(element.id);
-                  break;
-                case 'lt':
-                  if (value < clause.value) result.add(element.id);
-                  break;
-                case 'contains':
-                  if (value.includes(clause.value)) result.add(element.id);
-                  break;
-                case 'matches':
-                  assert.present(re);
-                  if (re.test(value)) result.add(element.id);
-                  break;
-                case 'set':
-                  if (value) result.add(element.id);
-                  break;
-              }
-            }
-          }
-        }
-        results.push(result);
-      } else if (clause.type === 'tags') {
-        const result = new Set<string>();
-        for (const layer of this.diagram.layers.visible) {
-          if (layer instanceof RegularLayer) {
-            for (const element of (layer as RegularLayer).elements) {
-              // Check if element has tags property and if any of its tags match the rule tags
-              const elementTags = element.tags ?? [];
-              const hasMatchingTag = clause.tags.some(ruleTag => elementTags.includes(ruleTag));
-
-              if (hasMatchingTag) {
-                result.add(element.id);
-              }
-            }
-          }
-        }
-        results.push(result);
-      } else if (clause.type === 'comment') {
-        const allComments = this.diagram.commentManager.getAll();
-
-        const matchingElements = new Set<string>();
-        for (const comment of allComments) {
-          if (comment.type === 'element' && comment.element) {
-            if (
-              (clause.state === 'unresolved' && comment.state === 'unresolved') ||
-              (clause.state === 'resolved' && comment.state === 'resolved') ||
-              clause.state === undefined
-            ) {
-              matchingElements.add(comment.element.id);
-            }
-          }
-        }
-
-        const result = new Set<string>();
-        for (const layer of this.diagram.layers.visible) {
-          if (layer instanceof RegularLayer) {
-            for (const element of (layer as RegularLayer).elements) {
-              if (matchingElements.has(element.id)) {
-                result.add(element.id);
-              }
-            }
-          }
-        }
-        results.push(result);
-      }
-    }
-    return results;
   }
 
   get rules() {

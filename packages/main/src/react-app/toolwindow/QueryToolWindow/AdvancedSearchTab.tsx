@@ -1,316 +1,301 @@
-import { Select } from '@diagram-craft/app-components/Select';
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { Button } from '@diagram-craft/app-components/Button';
-import {
-  TbArrowDownRight,
-  TbChevronDown,
-  TbChevronRight,
-  TbClipboardCopy,
-  TbFile,
-  TbHistory
-} from 'react-icons/tb';
-import { TextArea } from '@diagram-craft/app-components/TextArea';
-import { Accordion } from '@diagram-craft/app-components/Accordion';
-import { useRedraw } from '../../hooks/useRedraw';
+import React, { useState } from 'react';
+import styles from './AdvancedSearchTab.module.css';
 import { useDiagram } from '../../../application';
-import { useRef, useState } from 'react';
-import { parseAndQuery } from 'embeddable-jq';
+import { useRedraw } from '../../hooks/useRedraw';
+import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { Diagram } from '@diagram-craft/model/diagram';
+import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
+import {
+  ElementSearchClause,
+  searchByElementSearchClauses
+} from '@diagram-craft/model/diagramElementSearch';
+import { validProps } from '@diagram-craft/model/diagramLayerRule';
+import { newid } from '@diagram-craft/utils/id';
+import { Select } from '@diagram-craft/app-components/Select';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { TagInput } from '@diagram-craft/app-components/TagInput';
+import { TreeSelect } from '@diagram-craft/app-components/TreeSelect';
+import { Button } from '@diagram-craft/app-components/Button';
+import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
+import { TbPlus, TbSearch, TbTrash } from 'react-icons/tb';
+import { SearchResultsPanel } from './SearchResultsPanel';
 import { ToolWindowPanel } from '../ToolWindowPanel';
-import { addHighlight, Highlights, removeHighlight } from '@diagram-craft/canvas/highlight';
+import { Accordion } from '@diagram-craft/app-components/Accordion';
 
-const replacer = (key: string, value: unknown) => {
-  // Skip private properties (starting with _)
-  if (key.startsWith('_')) {
-    return undefined;
-  }
+type SearchScope = 'active-layer' | 'active-diagram' | 'active-document';
 
-  if (key === 'trackableType') return undefined;
+type EditableElementSearchClause = Partial<ElementSearchClause>;
 
-  // Handle known circular references
-  if (key === 'parent') return value ? '...' : undefined;
-
-  // Handle Map objects
-  if (value instanceof Map) {
-    return {
-      __type: 'Map',
-      ...Object.fromEntries(value.entries())
-    };
-  }
-
-  return value;
+type ClauseListProps = {
+  clauses: EditableElementSearchClause[];
+  onChange: (newClauses: EditableElementSearchClause[]) => void;
+  type: 'edge' | 'node';
+  subClauses?: boolean;
 };
 
-// TODO: Maybe add max-depth to the JSON conversion
-
-const getSource = (source: string, diagram: Diagram) => {
-  switch (source) {
+const getElementsFromScope = (scope: SearchScope, diagram: Diagram): DiagramElement[] => {
+  switch (scope) {
     case 'active-layer':
-      return diagram.activeLayer;
+      return Array.from((diagram.activeLayer as RegularLayer).elements);
     case 'active-diagram':
-      return diagram;
+      return diagram.layers.all
+        .filter((layer): layer is RegularLayer => layer.type === 'regular')
+        .flatMap(layer => Array.from(layer.elements));
     case 'active-document':
-      return diagram.document;
-    case 'selection':
-      return diagram.selectionState;
+      return diagram.document.diagrams.flatMap(d =>
+        d.layers.all
+          .filter((layer): layer is RegularLayer => layer.type === 'regular')
+          .flatMap(layer => Array.from(layer.elements))
+      );
+    default:
+      return Array.from((diagram.activeLayer as RegularLayer).elements);
   }
+};
+
+const AdvancedSearchClauseList = (props: ClauseListProps) => {
+  const diagram = useDiagram();
+
+  return (
+    <>
+      {props.clauses.map((c, idx) => {
+        return (
+          <React.Fragment key={c.id}>
+            <div className={styles.advancedSearchClause__select}>
+              <Select.Root
+                value={c.type ?? ''}
+                placeholder={'Select Rule'}
+                onChange={t => {
+                  const newClauses = [...props.clauses];
+                  // @ts-ignore
+                  newClauses[idx].type = t;
+                  props.onChange(newClauses);
+                }}
+              >
+                <Select.Item value={'props'}>Property</Select.Item>
+                <Select.Item value={'tags'}>Tags</Select.Item>
+                <Select.Item value={'comment'}>Comment</Select.Item>
+                {!props.subClauses && <Select.Item value={'any'}>Any</Select.Item>}
+              </Select.Root>
+            </div>
+
+            <div className={styles.advancedSearchClause__props}>
+              {c.type === 'props' && (
+                <div className={styles.advancedSearchClause__propsColumn}>
+                  <TreeSelect.Root
+                    value={c.path ?? ''}
+                    onValueChange={v => {
+                      c.path = v;
+                      c.relation ??= 'eq';
+                      props.onChange([...props.clauses]);
+                    }}
+                    items={validProps(props.type)}
+                    placeholder={'Select property'}
+                  />
+                  <Select.Root
+                    value={c.relation ?? 'eq'}
+                    onChange={cond => {
+                      // @ts-ignore
+                      c.relation = cond;
+                      props.onChange([...props.clauses]);
+                    }}
+                  >
+                    <Select.Item value={'eq'}>Is</Select.Item>
+                    <Select.Item value={'neq'}>Is Not</Select.Item>
+                    <Select.Item value={'contains'}>Contains</Select.Item>
+                    <Select.Item value={'matches'}>Matches</Select.Item>
+                    <Select.Item value={'gt'}>Greater Than</Select.Item>
+                    <Select.Item value={'lt'}>Less Than</Select.Item>
+                    <Select.Item value={'set'}>Is Set</Select.Item>
+                  </Select.Root>
+                  {c.relation !== 'set' && (
+                    <TextInput
+                      value={c.value ?? ''}
+                      onChange={v => {
+                        c.value = v;
+                        c.relation ??= 'eq';
+                        props.onChange([...props.clauses]);
+                      }}
+                    />
+                  )}
+                </div>
+              )}
+
+              {c.type === 'tags' && (
+                <TagInput
+                  selectedTags={c.tags || []}
+                  availableTags={[...diagram.document.tags.tags]}
+                  onTagsChange={newTags => {
+                    const newClauses = [...props.clauses];
+                    // @ts-ignore
+                    newClauses[idx].tags = newTags;
+                    props.onChange(newClauses);
+                  }}
+                  placeholder="Select tags..."
+                />
+              )}
+
+              {c.type === 'comment' && (
+                <Select.Root
+                  value={c.state ?? 'any'}
+                  placeholder={'Any comment state'}
+                  onChange={state => {
+                    const newClauses = [...props.clauses];
+                    // @ts-ignore
+                    newClauses[idx].state = state === 'any' ? undefined : state;
+                    props.onChange(newClauses);
+                  }}
+                >
+                  <Select.Item value={'any'}>Any</Select.Item>
+                  <Select.Item value={'unresolved'}>Unresolved</Select.Item>
+                  <Select.Item value={'resolved'}>Resolved</Select.Item>
+                </Select.Root>
+              )}
+            </div>
+
+            <div className={styles.advancedSearchClause__props}>
+              {c.type === 'any' && (
+                <div className={styles.advancedSearchClause__anyGrid}>
+                  <AdvancedSearchClauseList
+                    clauses={c.clauses ?? [{ id: newid() }]}
+                    onChange={newClauses => {
+                      c.clauses = newClauses as ElementSearchClause[];
+                      props.onChange([...props.clauses]);
+                    }}
+                    type={props.type}
+                    subClauses={true}
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className={styles.advancedSearchClause__buttons}>
+              <Button
+                type={'icon-only'}
+                onClick={() => {
+                  const newClauses = props.clauses.toSpliced(idx + 1, 0, {
+                    id: newid()
+                  });
+                  props.onChange(newClauses);
+                }}
+              >
+                <TbPlus />
+              </Button>
+              <Button
+                type={'icon-only'}
+                disabled={idx === 0 && props.clauses.length === 1}
+                onClick={() => {
+                  const newClauses = props.clauses.toSpliced(idx, 1);
+                  props.onChange(newClauses);
+                }}
+              >
+                <TbTrash />
+              </Button>
+            </div>
+
+            <div className={styles.advancedSearchClause__indent}></div>
+          </React.Fragment>
+        );
+      })}
+    </>
+  );
 };
 
 export const AdvancedSearchTab = () => {
-  const redraw = useRedraw();
   const diagram = useDiagram();
-  const ref = useRef<HTMLTextAreaElement>(null);
-  const downloadRef = useRef<HTMLAnchorElement>(null);
-  const [queryString, setQueryString] = useState<string>('.elements[]');
-  const [expanded, setExpanded] = useState<number[]>([]);
-  const [source, setSource] = useState<string | undefined>('active-layer');
-  const [downloadLink, setDownloadLink] = useState('');
-  const [queryIdx, setQueryIdx] = useState(0);
-  const [queryInput, setQueryInput] = useState<unknown>({});
+  const redraw = useRedraw();
+  const [type, setType] = useState<'edge' | 'node'>('node');
+  const [scope, setScope] = useState<SearchScope>('active-diagram');
+  const [clauses, setClauses] = useState<EditableElementSearchClause[]>([{ id: newid() }]);
+  const [results, setResults] = useState<DiagramElement[]>([]);
 
-  const queries: { q: string; output: unknown }[] = [];
+  const executeSearch = () => {
+    const elements = getElementsFromScope(scope, diagram);
 
-  let qs = queryString;
-  while (true) {
-    const m = qs.match(/^(.*?)\|\s*?drilldown\(([^)]+)\)\s*?\|(.*)$/);
+    // Filter out incomplete clauses and convert to complete ElementSearchClause
+    const validClauses: ElementSearchClause[] = clauses
+      .filter(c => c.type) // Must have a type
+      .map(
+        c =>
+          ({
+            id: c.id || newid(),
+            type: c.type!,
+            ...c
+          }) as ElementSearchClause
+      );
 
-    if (!m) {
-      queries.push({ q: qs, output: undefined });
-      break;
+    if (validClauses.length === 0) {
+      setResults([]);
+      return;
     }
 
-    qs = m[3];
+    try {
+      const searchResults = searchByElementSearchClauses(diagram, validClauses);
+      const intersection = searchResults.reduce((p, c) => p.intersection(c), searchResults[0]);
+      const matchedElements = elements.filter(e => intersection.has(e.id));
+      setResults(matchedElements);
+    } catch (error) {
+      console.error('Search error:', error);
+      setResults([]);
+    }
+  };
 
-    queries.push({ q: m[1], output: m[2] });
-  }
+  const handleElementClick = (element: DiagramElement) => {
+    // Select the element
+    diagram.selectionState.clear();
+    diagram.selectionState.setElements([element]);
 
-  //console.log(queries);
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let res: any[] | undefined = undefined;
-  let error = undefined;
-  try {
-    const q = queries[queryIdx].q;
-    const input = queryIdx === 0 ? getSource(source!, diagram) : queryInput;
-
-    res = parseAndQuery(q, [input]);
-
-    diagram.document.props.query.addHistory(['active-layer', queryString]);
-  } catch (e) {
-    error = e;
-  }
-
-  const exportToFile = () => {
-    const data = new Blob([JSON.stringify(res, replacer, '  ')], { type: 'application/json' });
-    if (downloadLink !== '') window.URL.revokeObjectURL(downloadLink);
-    const link = window.URL.createObjectURL(data);
-    setDownloadLink(link);
-    downloadRef.current!.href = link;
-    downloadRef.current!.click();
+    // Focus on the element by centering it in the viewport if possible
+    redraw();
   };
 
   return (
-    <Accordion.Root type="multiple" defaultValue={['query', 'response']}>
-      <ToolWindowPanel mode={'headless'} id={'query'} title={'Query'}>
-        <div
-          style={{
-            marginBottom: '0.5rem',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center'
-          }}
-        >
-          <Select.Root onChange={setSource} value={source}>
-            <Select.Item value={'active-layer'}>Active Layer</Select.Item>
-            <Select.Item value={'active-diagram'}>Active Diagram</Select.Item>
-            <Select.Item value={'active-document'}>Active Document</Select.Item>
-            <Select.Item value={'selection'}>Selection</Select.Item>
-          </Select.Root>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <DropdownMenu.Root>
-              <DropdownMenu.Trigger asChild>
-                <Button>
-                  <TbHistory />
-                </Button>
-              </DropdownMenu.Trigger>
-              <DropdownMenu.Portal>
-                <DropdownMenu.Content className="cmp-context-menu" sideOffset={5}>
-                  {(diagram.document.props.query?.history ?? []).map(h => (
-                    <DropdownMenu.Item
-                      key={h[1]}
-                      className="cmp-context-menu__item"
-                      onClick={() => {
-                        setSource(h[0]);
-                        ref.current!.value = h[1];
-                      }}
-                    >
-                      {h[1]}
-                    </DropdownMenu.Item>
-                  ))}
-                  <DropdownMenu.Arrow className="cmp-context-menu__arrow" />
-                </DropdownMenu.Content>
-              </DropdownMenu.Portal>
-            </DropdownMenu.Root>
-            <DropdownMenu.Root>
-              <DropdownMenu.Trigger asChild>
-                <Button>
-                  <TbFile />
-                </Button>
-              </DropdownMenu.Trigger>
-              <DropdownMenu.Portal>
-                <DropdownMenu.Content className="cmp-context-menu" sideOffset={5}>
-                  <DropdownMenu.Item
-                    className="cmp-context-menu__item"
-                    onClick={() => {
-                      diagram.document.props.query.addSaved([source!, ref.current!.value]);
-                    }}
-                  >
-                    Save
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Item
-                    className="cmp-context-menu__item"
-                    onClick={() => {
-                      // TODO: To be implemented
-                    }}
-                  >
-                    Manage
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Separator className="cmp-context-menu__separator" />
-                  {(diagram.document.props.query?.saved ?? []).map(h => (
-                    <DropdownMenu.Item
-                      key={h[1]}
-                      className="cmp-context-menu__item"
-                      onClick={() => {
-                        setSource(h[0]);
-                        ref.current!.value = h[1];
-                      }}
-                    >
-                      {h[1]}
-                    </DropdownMenu.Item>
-                  ))}
-                  <DropdownMenu.Arrow className="cmp-context-menu__arrow" />
-                </DropdownMenu.Content>
-              </DropdownMenu.Portal>
-            </DropdownMenu.Root>
+    <Accordion.Root type="multiple" defaultValue={['advanced-search-criteria', 'search-results']}>
+      <ToolWindowPanel mode="headless" id="advanced-search-criteria" title="Search Criteria">
+        <div className={styles.advancedSearch__container}>
+          <div className={styles.advancedSearch__header}>
+            <ToggleButtonGroup.Root
+              type="single"
+              value={type}
+              onChange={value => {
+                if (value) setType(value as 'edge' | 'node');
+              }}
+            >
+              <ToggleButtonGroup.Item value="node">Nodes</ToggleButtonGroup.Item>
+              <ToggleButtonGroup.Item value="edge">Edges</ToggleButtonGroup.Item>
+            </ToggleButtonGroup.Root>
+
+            <Select.Root
+              value={scope}
+              onChange={value => setScope((value ?? 'active-diagram') as SearchScope)}
+            >
+              <Select.Item value="active-layer">Active Layer</Select.Item>
+              <Select.Item value="active-diagram">Active Diagram</Select.Item>
+              <Select.Item value="active-document">Active Document</Select.Item>
+            </Select.Root>
           </div>
-        </div>
 
-        <TextArea ref={ref} value={queryString} style={{ minHeight: '100px' }} />
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'end',
-            marginTop: '0.5rem',
-            gap: '0.5rem'
-          }}
-        >
+          <div className={styles.advancedSearch__criteria}>
+            <div className={styles.advancedSearch__searchGrid}>
+              <AdvancedSearchClauseList clauses={clauses} onChange={setClauses} subClauses={false} type={type} />
+            </div>
+          </div>
+
           <Button
-            type={'secondary'}
-            onClick={() => {
-              setExpanded([]);
-            }}
+            type="primary"
+            onClick={executeSearch}
+className={styles.advancedSearch__searchButton}
           >
-            Save as...
-          </Button>
-          <Button
-            type={'secondary'}
-            onClick={() => {
-              exportToFile();
-            }}
-          >
-            Export
-          </Button>
-          <a
-            style={{ display: 'none' }}
-            download={'export.json'}
-            href={downloadLink}
-            ref={downloadRef}
-          >
-            -
-          </a>
-          <Button
-            onClick={() => {
-              if (ref.current?.value === queryString) {
-                redraw();
-              } else {
-                setQueryIdx(0);
-                setQueryInput({});
-                setExpanded([]);
-                setQueryString(ref.current?.value ?? '');
-              }
-            }}
-          >
-            Run
+            <TbSearch />
+            Search
           </Button>
         </div>
       </ToolWindowPanel>
 
-      <ToolWindowPanel mode={'accordion'} id={'response'} title={'Query Response'}>
-        <div className={'cmp-query-response'}>
-          {!!error && <div className={'cmp-error'}>{error.toString()}</div>}
-          {res &&
-            res.map((e, idx) => (
-              <div
-                key={idx}
-                className={`cmp-query-response__item ${expanded.includes(idx) ? 'cmp-query-response__item--expanded' : ''}`}
-                style={{
-                  cursor: 'pointer'
-                }}
-                onClick={() => {
-                  if (expanded.includes(idx)) {
-                    setExpanded(expanded.filter(e => e !== idx));
-                  } else {
-                    setExpanded([...expanded, idx]);
-                  }
-                }}
-                onMouseEnter={() => {
-                  if (e.type && e.id) {
-                    const el = diagram.lookup(e.id);
-                    if (el) addHighlight(el, Highlights.NODE__HIGHLIGHT);
-                  }
-                }}
-                onMouseLeave={() => {
-                  if (e.type && e.id) {
-                    const el = diagram.lookup(e.id);
-                    if (el) removeHighlight(el, Highlights.NODE__HIGHLIGHT);
-                  }
-                }}
-              >
-                {expanded.includes(idx) ? <TbChevronDown /> : <TbChevronRight />}
-                {expanded.includes(idx) && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      right: '0.5rem',
-                      top: '0.125rem',
-                      display: 'flex',
-                      gap: '0.25rem'
-                    }}
-                  >
-                    <Button type={'icon-only'}>
-                      <TbArrowDownRight />
-                    </Button>
-                    <Button
-                      type={'icon-only'}
-                      onClick={ev => {
-                        navigator.clipboard.writeText(
-                          JSON.stringify(e, replacer, expanded.includes(idx) ? 2 : undefined)
-                        );
-                        ev.preventDefault();
-                        ev.stopPropagation();
-                      }}
-                    >
-                      <TbClipboardCopy />
-                    </Button>
-                  </div>
-                )}
-                <pre key={idx}>
-                  {JSON.stringify(e, replacer, expanded.includes(idx) ? 2 : undefined)}
-                </pre>
-              </div>
-            ))}
-        </div>
-      </ToolWindowPanel>
+      <SearchResultsPanel
+        results={results}
+        searchText={`Found ${results.length} elements`}
+        onElementClick={handleElementClick}
+      />
     </Accordion.Root>
   );
 };

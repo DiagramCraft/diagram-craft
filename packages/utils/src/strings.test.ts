@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { coalesce, isEmptyString, padRight, shorten } from './strings';
+import { coalesce, isEmptyString, isSubsequence, padRight, shorten } from './strings';
 
 describe('shorten', () => {
   test('should return the original string when it is shorter than the specified length', () => {
@@ -102,5 +102,46 @@ describe('isEmptyString', () => {
 
   test('should return false when the input is a non-empty string', () => {
     expect(isEmptyString('Hello')).toBe(false);
+  });
+});
+
+describe('isSubsequence', () => {
+  test('should return true when query is a subsequence of text', () => {
+    expect(isSubsequence('lrm', 'lorem')).toBe(true);
+    expect(isSubsequence('ipsm', 'ipsum')).toBe(true);
+    expect(isSubsequence('ace', 'abcde')).toBe(true);
+  });
+
+  test('should return false when query is not a subsequence of text', () => {
+    expect(isSubsequence('kalle', 'olle')).toBe(false);
+    expect(isSubsequence('xyz', 'abcde')).toBe(false);
+    expect(isSubsequence('cba', 'abc')).toBe(false);
+  });
+
+  test('should return true when query is empty', () => {
+    expect(isSubsequence('', 'any text')).toBe(true);
+    expect(isSubsequence('', '')).toBe(true);
+  });
+
+  test('should return false when text is empty but query is not', () => {
+    expect(isSubsequence('a', '')).toBe(false);
+    expect(isSubsequence('hello', '')).toBe(false);
+  });
+
+  test('should handle case sensitivity correctly', () => {
+    expect(isSubsequence('abc', 'ABC')).toBe(false);
+    expect(isSubsequence('ABC', 'abc')).toBe(false);
+    expect(isSubsequence('abc', 'abc')).toBe(true);
+  });
+
+  test('should handle identical strings', () => {
+    expect(isSubsequence('hello', 'hello')).toBe(true);
+    expect(isSubsequence('test', 'test')).toBe(true);
+  });
+
+  test('should handle special characters and numbers', () => {
+    expect(isSubsequence('13', '123456')).toBe(true);
+    expect(isSubsequence('a@c', 'a@b@c')).toBe(true);
+    expect(isSubsequence('!?', '!hello?')).toBe(true);
   });
 });
