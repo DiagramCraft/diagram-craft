@@ -98,19 +98,43 @@ export const searchByElementSearchClauses = (
 
             switch (clause.relation) {
               case 'eq':
-                if (value === clause.value) result.add(element.id);
+                if (typeof value === 'string' && typeof clause.value === 'string') {
+                  if (value.toLowerCase() === clause.value.toLowerCase()) result.add(element.id);
+                } else if (typeof value === 'boolean' && (clause.value === 'true' || clause.value === 'false')) {
+                  if (value.toString() === clause.value) result.add(element.id);
+                } else if (typeof value === 'number' && !isNaN(Number(clause.value))) {
+                  if (value === Number(clause.value)) result.add(element.id);
+                } else if (value === clause.value) {
+                  result.add(element.id);
+                }
                 break;
               case 'neq':
-                if (value !== clause.value) result.add(element.id);
+                if (typeof value === 'string' && typeof clause.value === 'string') {
+                  if (value.toLowerCase() !== clause.value.toLowerCase()) result.add(element.id);
+                } else if (typeof value === 'boolean' && (clause.value === 'true' || clause.value === 'false')) {
+                  if (value.toString() !== clause.value) result.add(element.id);
+                } else if (typeof value === 'number' && !isNaN(Number(clause.value))) {
+                  if (value !== Number(clause.value)) result.add(element.id);
+                } else if (value !== clause.value) {
+                  result.add(element.id);
+                }
                 break;
               case 'gt':
-                if (value != null && value > clause.value) result.add(element.id);
+                if (value != null && typeof value === 'number' && !isNaN(Number(clause.value))) {
+                  if (value > Number(clause.value)) result.add(element.id);
+                } else if (value != null && value > clause.value) {
+                  result.add(element.id);
+                }
                 break;
               case 'lt':
-                if (value != null && value < clause.value) result.add(element.id);
+                if (value != null && typeof value === 'number' && !isNaN(Number(clause.value))) {
+                  if (value < Number(clause.value)) result.add(element.id);
+                } else if (value != null && value < clause.value) {
+                  result.add(element.id);
+                }
                 break;
               case 'contains':
-                if (value != null && typeof value === 'string' && value.includes(clause.value))
+                if (value != null && typeof value === 'string' && value.toLowerCase().includes(clause.value.toLowerCase()))
                   result.add(element.id);
                 break;
               case 'matches':
@@ -131,7 +155,9 @@ export const searchByElementSearchClauses = (
         if (layer instanceof RegularLayer) {
           for (const element of (layer as RegularLayer).elements) {
             const elementTags = element.tags ?? [];
-            const hasMatchingTag = clause.tags.some(ruleTag => elementTags.includes(ruleTag));
+            const hasMatchingTag = clause.tags.some(ruleTag => 
+              elementTags.some(elementTag => elementTag.toLowerCase() === ruleTag.toLowerCase())
+            );
 
             if (hasMatchingTag) {
               result.add(element.id);
