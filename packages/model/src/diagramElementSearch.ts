@@ -100,6 +100,10 @@ export const searchByElementSearchClauses = (
               case 'eq':
                 if (typeof value === 'string' && typeof clause.value === 'string') {
                   if (value.toLowerCase() === clause.value.toLowerCase()) result.add(element.id);
+                } else if (typeof value === 'boolean' && (clause.value === 'true' || clause.value === 'false')) {
+                  if (value.toString() === clause.value) result.add(element.id);
+                } else if (typeof value === 'number' && !isNaN(Number(clause.value))) {
+                  if (value === Number(clause.value)) result.add(element.id);
                 } else if (value === clause.value) {
                   result.add(element.id);
                 }
@@ -107,15 +111,27 @@ export const searchByElementSearchClauses = (
               case 'neq':
                 if (typeof value === 'string' && typeof clause.value === 'string') {
                   if (value.toLowerCase() !== clause.value.toLowerCase()) result.add(element.id);
+                } else if (typeof value === 'boolean' && (clause.value === 'true' || clause.value === 'false')) {
+                  if (value.toString() !== clause.value) result.add(element.id);
+                } else if (typeof value === 'number' && !isNaN(Number(clause.value))) {
+                  if (value !== Number(clause.value)) result.add(element.id);
                 } else if (value !== clause.value) {
                   result.add(element.id);
                 }
                 break;
               case 'gt':
-                if (value != null && value > clause.value) result.add(element.id);
+                if (value != null && typeof value === 'number' && !isNaN(Number(clause.value))) {
+                  if (value > Number(clause.value)) result.add(element.id);
+                } else if (value != null && value > clause.value) {
+                  result.add(element.id);
+                }
                 break;
               case 'lt':
-                if (value != null && value < clause.value) result.add(element.id);
+                if (value != null && typeof value === 'number' && !isNaN(Number(clause.value))) {
+                  if (value < Number(clause.value)) result.add(element.id);
+                } else if (value != null && value < clause.value) {
+                  result.add(element.id);
+                }
                 break;
               case 'contains':
                 if (value != null && typeof value === 'string' && value.toLowerCase().includes(clause.value.toLowerCase()))
