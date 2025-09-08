@@ -1,4 +1,12 @@
-import React, { createContext, JSXElementConstructor, ReactElement, ReactNode, useContext, useEffect, useState } from 'react';
+import React, {
+  createContext,
+  JSXElementConstructor,
+  ReactElement,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState
+} from 'react';
 import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import styles from './ToolWindow.module.css';
 import { ErrorBoundary } from '../ErrorBoundary';
@@ -15,9 +23,7 @@ const ToolWindowContext = createContext<ToolWindowContextType | null>(null);
 
 export const useToolWindowControls = (): ToolWindowContextType => {
   const context = useContext(ToolWindowContext);
-  if (!context) {
-    throw new Error('useToolWindowControls must be used within a ToolWindow.Root');
-  }
+  assert.present(context);
   return context;
 };
 

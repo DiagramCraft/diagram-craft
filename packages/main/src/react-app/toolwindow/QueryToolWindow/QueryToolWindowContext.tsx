@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, ReactNode, useContext, useState } from 'react';
+import { assert } from '@diagram-craft/utils/assert';
 
 type QueryToolWindowContextType = {
   djqlQuery: string;
@@ -10,9 +11,7 @@ const QueryToolWindowContext = createContext<QueryToolWindowContextType | null>(
 
 export const useQueryToolWindowContext = (): QueryToolWindowContextType => {
   const context = useContext(QueryToolWindowContext);
-  if (!context) {
-    throw new Error('useQueryToolWindowContext must be used within a QueryToolWindowProvider');
-  }
+  assert.present(context);
   return context;
 };
 

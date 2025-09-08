@@ -125,7 +125,6 @@ export const SearchToolMenu = (props: SearchToolMenuProps) => {
     );
   }, [createRuleClausesFromSearch, props.getLabel, application]);
 
-
   const convertToDJQL = useCallback(() => {
     const query = props.getQuery();
     const scope = props.getScope();
@@ -140,19 +139,12 @@ export const SearchToolMenu = (props: SearchToolMenuProps) => {
         djqlQuery = convertAdvancedSearchToDJQL(query);
         break;
       default:
-        return;
+        return VERIFY_NOT_REACHED();
     }
 
-    // Add the converted query to history
     document.props.query.addHistory('djql', djqlQuery, scope, djqlQuery);
-
-    // Set the query in context so DJQL tab picks it up
     setDjqlQuery(djqlQuery, scope);
-
-    // Switch to DJQL tab
     switchTab('djql');
-
-    redraw();
   }, [props, document, setDjqlQuery, switchTab, redraw]);
 
   return (
