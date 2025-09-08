@@ -363,6 +363,10 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
     uow.updateElement(this);
     uow.removeElement(child);
   }
+
+  get comments() {
+    return this.diagram.commentManager.getAll().filter(c => c.element?.id === this.id);
+  }
 }
 
 export const getDiagramElementPath = (element: DiagramElement): DiagramElement[] => {

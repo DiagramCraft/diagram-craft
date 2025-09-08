@@ -20,6 +20,7 @@ const replacer = (key: string, value: unknown) => {
   }
 
   if (key === 'trackableType') return undefined;
+  if (key === 'diagram') return undefined;
 
   // Handle known circular references
   if (key === 'parent') return value ? '...' : undefined;
