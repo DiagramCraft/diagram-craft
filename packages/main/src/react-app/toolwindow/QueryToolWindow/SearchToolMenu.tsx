@@ -6,6 +6,7 @@ import { useCallback } from 'react';
 import { useRedraw } from '../../hooks/useRedraw';
 import { RuleEditorDialogCommand } from '@diagram-craft/canvas-app/dialogs';
 import { useToolWindowControls } from '../ToolWindow';
+import { useQueryToolWindowContext } from './QueryToolWindowContext';
 import { ElementSearchClause } from '@diagram-craft/model/diagramElementSearch';
 import { AdjustmentRule } from '@diagram-craft/model/diagramLayerRuleTypes';
 import { RuleLayer } from '@diagram-craft/model/diagramLayerRule';
@@ -27,6 +28,7 @@ export const SearchToolMenu = (props: SearchToolMenuProps) => {
   const redraw = useRedraw();
   const document = useDocument();
   const { switchTab } = useToolWindowControls();
+  const { setDjqlQuery } = useQueryToolWindowContext();
   const history = document.props.query.history.filter(h => h.type === props.type);
   const saved = document.props.query.saved.filter(r => r.type === props.type);
 
@@ -235,11 +237,14 @@ export const SearchToolMenu = (props: SearchToolMenuProps) => {
     // Add the converted query to history
     document.props.query.addHistory('djql', djqlQuery, scope, djqlQuery);
 
+    // Set the query in context so DJQL tab picks it up
+    setDjqlQuery(djqlQuery, scope);
+
     // Switch to DJQL tab
     switchTab('djql');
 
     redraw();
-  }, [props, convertSimpleSearchToDJQL, convertAdvancedSearchToDJQL, document, switchTab, redraw]);
+  }, [props, convertSimpleSearchToDJQL, convertAdvancedSearchToDJQL, document, setDjqlQuery, switchTab, redraw]);
 
   return (
     <DropdownMenu.Root>
