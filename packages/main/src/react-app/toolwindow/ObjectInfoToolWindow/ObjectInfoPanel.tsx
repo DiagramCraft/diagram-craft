@@ -5,6 +5,7 @@ import { NodeInfoDetails } from './NodeInfoDetails';
 import { EdgeInfoDetails } from './EdgeInfoDetails';
 import { DiagramInfoDetails } from './DiagramInfoDetails';
 import { ToolWindowPanel } from '../ToolWindowPanel';
+import styles from './ObjectInfoPanel.module.css';
 
 export const ObjectInfoPanel = () => {
   const diagram = useDiagram();
@@ -38,10 +39,12 @@ export const ObjectInfoPanel = () => {
 
   return (
     <ToolWindowPanel mode={'headless-no-padding'} id={'objectInfo'} title={'Object Info'}>
-      {state === 'selection' && <SelectionInfoDetails obj={diagram.selectionState} />}
-      {state === 'node' && <NodeInfoDetails obj={diagram.nodeLookup.get(nodeId!)!} />}
-      {state === 'edge' && <EdgeInfoDetails obj={diagram.edgeLookup.get(edgeId!)!} />}
-      {state === undefined && <DiagramInfoDetails obj={diagram} />}
+      <div className={styles.objectInfoToolWindow}>
+        {state === 'selection' && <SelectionInfoDetails obj={diagram.selectionState} />}
+        {state === 'node' && <NodeInfoDetails obj={diagram.nodeLookup.get(nodeId!)!} />}
+        {state === 'edge' && <EdgeInfoDetails obj={diagram.edgeLookup.get(edgeId!)!} />}
+        {state === undefined && <DiagramInfoDetails obj={diagram} />}
+      </div>
     </ToolWindowPanel>
   );
 };
