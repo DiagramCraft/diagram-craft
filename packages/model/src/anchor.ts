@@ -199,7 +199,7 @@ export const AnchorStrategy = {
           const lx = round((rp.x - node.bounds.x) / node.bounds.w);
           const ly = round((rp.y - node.bounds.y) / node.bounds.h);
 
-          let normal = Vector.angle(Vector.tangentToNormal(p.tangent(0.5))) - node.bounds.r;
+          let normal = Vector.angle(Vector.tangentToNormal(p.tangent(pct))) - node.bounds.r;
 
           if (direction === 'unknown') {
             // Make sure normal is "outwards" from the center of the node
@@ -221,6 +221,61 @@ export const AnchorStrategy = {
               p.length() / Math.max(node.bounds.w, node.bounds.h) > 0.25 && round(pct) === 0.5
           });
         }
+      }
+    }
+
+    return newAnchors;
+  },
+  getPathAnchors: (
+    node: DiagramNode,
+    paths: PathList,
+    numberPerPath = 1,
+    direction: BoundaryDirection = 'unknown'
+  ) => {
+    const newAnchors: Array<Anchor> = [];
+    newAnchors.push({ id: 'c', start: { x: 0.5, y: 0.5 }, clip: true, type: 'center' });
+
+    const d = 1 / (numberPerPath - 1);
+
+    // Get anchors per side
+    for (let i = 0; i < paths.all().length; i++) {
+      const path = paths.all()[i];
+      const length = path.length();
+      for (let n = 0; n < numberPerPath; n++) {
+        const pct = Math.min(0.999, n * d);
+        const { x, y } = path.pointAt({ pathD: pct * length });
+
+        // Need to rotate back to get anchors in the [0,1],[0,1] coordinate system
+        const rp = Point.rotateAround({ x, y }, -node.bounds.r, Box.center(node.bounds));
+
+        // Note: This is to Prevent NaN issues
+        if (node.bounds.h === 0 || node.bounds.w === 0) continue;
+
+        const lx = round((rp.x - node.bounds.x) / node.bounds.w);
+        const ly = round((rp.y - node.bounds.y) / node.bounds.h);
+
+        let normal =
+          Vector.angle(Vector.tangentToNormal(path.tangentAt({ pathD: pct * length }))) -
+          node.bounds.r;
+
+        if (direction === 'unknown') {
+          // Make sure normal is "outwards" from the center of the node
+          const tangent = Vector.from(Box.center(node.bounds), rp);
+          if (Vector.dotProduct(tangent, Vector.fromPolar(normal, 1)) < 0) {
+            normal += Math.PI;
+          }
+        } else if (direction === 'clockwise') {
+          normal += Math.PI;
+        }
+
+        newAnchors.push({
+          id: makeAnchorId({ x: lx, y: ly }),
+          start: { x: lx, y: ly },
+          clip: false,
+          type: 'point',
+          normal: normal,
+          isPrimary: true
+        });
       }
     }
 

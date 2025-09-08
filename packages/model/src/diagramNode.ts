@@ -615,6 +615,10 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       p.custom ??= {};
       p.custom.genericPath = {};
       p.custom.genericPath.path = scaledPath.asSvgPath();
+
+      p.anchors ??= { type: 'per-path' };
+      p.anchors.type = 'per-path';
+      p.anchors.perPathCount = 10;
     }, uow);
   }
 

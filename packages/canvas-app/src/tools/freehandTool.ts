@@ -112,7 +112,11 @@ export class FreehandTool extends AbstractTool {
       'generic-path',
       { x: bbox.x, y: bbox.y, w: bbox.width, h: bbox.height, r: 0 },
       layer,
-      { custom: { genericPath: { path: path } }, fill: { enabled: false } },
+      {
+        custom: { genericPath: { path: path } },
+        fill: { enabled: false },
+        anchors: { type: 'per-path', perPathCount: 10 }
+      },
       {}
     );
 
