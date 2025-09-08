@@ -5,6 +5,7 @@ import { serializeDiagramDocument } from '@diagram-craft/model/serialization/ser
 import { FileSystem } from '@diagram-craft/canvas-app/loaders';
 import { mainMenuStructure } from './react-app/mainMenuData';
 import type { MenuEntry } from '@diagram-craft/electron-client-api/electron-api';
+import { UserState } from './UserState';
 
 const updateState = (e: MenuEntry, app: Application, recurse: boolean = false) => {
   const state = { enabled: true, checked: false, keybinding: '' };
@@ -89,6 +90,11 @@ export const ElectronIntegration = {
       if (!res) throw new Error();
       return res.content;
     };
+
+    window.electronAPI.getUsername().then(r => {
+      if (!r) return;
+      UserState.get().awarenessState = { name: r, color: '#000000' };
+    });
   }
 };
 

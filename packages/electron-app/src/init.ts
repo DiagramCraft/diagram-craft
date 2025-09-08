@@ -8,6 +8,7 @@ import { menuHandlers } from './menu/menu';
 import * as path from 'node:path';
 import { Channels, registerIpcHandlers } from './ipc';
 import { fileHandlers } from './file/file';
+import { userHandlers } from './user/user';
 
 initializeLogging();
 
@@ -75,6 +76,7 @@ app.whenReady().then(() => {
 
   registerIpcHandlers(fileHandlers, mainWindow!);
   registerIpcHandlers(menuHandlers, mainWindow!);
+  registerIpcHandlers(userHandlers, mainWindow!);
 });
 
 app.on('window-all-closed', () => {
