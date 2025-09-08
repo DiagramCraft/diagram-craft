@@ -291,6 +291,7 @@ export const App = (props: {
   useEventListener($d.commentManager, 'commentAdded', autosave);
   useEventListener($d.commentManager, 'commentUpdated', autosave);
   useEventListener($d.commentManager, 'commentRemoved', autosave);
+  useEventListener(doc.props.query, 'change', autosave);
 
   useEffect(() => bindDocumentDragAndDrop());
 
