@@ -231,6 +231,7 @@ export const SearchToolMenu = (props: SearchToolMenuProps) => {
       <ManageSavedSearchesDialog
         open={isManageDialogOpen}
         onClose={() => setIsManageDialogOpen(false)}
+        initialSearchType={props.type}
       />
     </DropdownMenu.Root>
   );

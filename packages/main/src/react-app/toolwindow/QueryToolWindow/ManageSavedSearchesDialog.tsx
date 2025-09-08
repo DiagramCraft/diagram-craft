@@ -10,6 +10,7 @@ import { Button } from '@diagram-craft/app-components/Button';
 type ManageSavedSearchesDialogProps = {
   open: boolean;
   onClose: () => void;
+  initialSearchType?: QueryType;
 };
 
 const SavedSearchList = ({ type, title }: { type: QueryType; title: string }) => {
@@ -72,8 +73,21 @@ const SavedSearchList = ({ type, title }: { type: QueryType; title: string }) =>
   );
 };
 
+const getTabValueFromSearchType = (searchType?: QueryType): string => {
+  switch (searchType) {
+    case 'simple':
+      return 'text';
+    case 'advanced':
+      return 'advanced';
+    case 'djql':
+      return 'djql';
+    default:
+      return 'text';
+  }
+};
+
 export const ManageSavedSearchesDialog = (props: ManageSavedSearchesDialogProps) => {
-  const [activeTab, setActiveTab] = useState('text');
+  const [activeTab, setActiveTab] = useState(() => getTabValueFromSearchType(props.initialSearchType));
 
   return (
     <Dialog
