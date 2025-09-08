@@ -45,10 +45,6 @@ export class ResizeDrag extends Drag {
 
     const aspectRatio = localOriginal.w / localOriginal.h;
 
-    this.setState({
-      label: `w: ${localTarget.w.toFixed(0)}, h: ${localTarget.h.toFixed(0)}`
-    });
-
     const snapDirection: Direction[] = [];
     switch (this.type) {
       case 'e':
@@ -139,6 +135,10 @@ export class ResizeDrag extends Drag {
 
     newBounds.w = Math.max(0.1, newBounds.w);
     newBounds.h = Math.max(0.1, newBounds.h);
+
+    this.setState({
+      label: `w: ${newBounds.w.toFixed(0)}, h: ${newBounds.h.toFixed(0)}`
+    });
 
     this.diagram.transformElements(
       selection.filter(
