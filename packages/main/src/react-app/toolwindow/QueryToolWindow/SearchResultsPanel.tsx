@@ -6,17 +6,21 @@ import {
   TbBoxMultiple,
   TbTable,
   TbTextSize,
-  TbTableRow
+  TbTableRow,
+  TbGridDots
 } from 'react-icons/tb';
 import styles from './SearchResultsPanel.module.css';
 import { addHighlight, Highlights, removeHighlight } from '@diagram-craft/canvas/highlight';
-
+import { ElementPreview } from './ElementPreview';
+import { useState } from 'react';
 
 type SearchResultsPanelProps = {
   results: DiagramElement[];
   searchText: string;
   onElementClick: (element: DiagramElement) => void;
 };
+
+type ViewMode = 'text' | 'preview';
 
 const getElementIcon = (element: DiagramElement) => {
   if (isEdge(element)) {
@@ -43,36 +47,74 @@ export const SearchResultsPanel = ({
   searchText,
   onElementClick
 }: SearchResultsPanelProps) => {
+  const [viewMode, setViewMode] = useState<ViewMode>('text');
+
   return (
-    <ToolWindowPanel mode={'accordion'} id={'search-results'} title={'Search Results'}>
-      {results.length === 0 && (
+    <ToolWindowPanel
+      mode={'accordion'}
+      id={'search-results'}
+      title={'Search Results'}
+      headerButtons={
+        results.length > 0 ? (
+          <a
+            onClick={() => setViewMode(viewMode === 'text' ? 'preview' : 'text')}
+            style={{ color: viewMode === 'preview' ? 'var(--blue-10)' : 'var(--tertiary-fg' }}
+            title={viewMode === 'text' ? 'Switch to preview mode' : 'Switch to text mode'}
+          >
+            <TbGridDots size={12} />
+          </a>
+        ) : undefined
+      }
+    >
+      {(results.length === 0 || searchText.trim() === '') && (
         <div style={{ fontSize: '11px', color: '#666', marginBottom: '0.5rem' }}>
-          {searchText.trim() ? 'No results found' : 'Enter text to search'}
+          {results.length > 0
+            ? `${results.length} result${results.length !== 1 ? 's' : ''}`
+            : searchText.trim()
+              ? 'No results found'
+              : 'Enter text to search'}
         </div>
       )}
 
-      <div className={styles.searchResultList}>
-        {results.map(element => (
-          <div
-            key={element.id}
-            className={styles.searchResult}
-            onClick={() => onElementClick(element)}
-            onMouseEnter={() => {
-              addHighlight(element, Highlights.NODE__HIGHLIGHT);
-            }}
-            onMouseLeave={() => {
-              removeHighlight(element, Highlights.NODE__HIGHLIGHT);
-            }}
-          >
-            <div>
-              <span className={styles.searchResultIcon}>{getElementIcon(element)}</span>
-              <span className={styles.searchResultText}>
-                {element.name || `${element.id.substring(0, 8)}...`}
-              </span>
+      {viewMode === 'text' ? (
+        <div className={styles.searchResultList}>
+          {results.map(element => (
+            <div
+              key={element.id}
+              className={styles.searchResult}
+              onClick={() => onElementClick(element)}
+              onMouseEnter={() => {
+                addHighlight(element, Highlights.NODE__HIGHLIGHT);
+              }}
+              onMouseLeave={() => {
+                removeHighlight(element, Highlights.NODE__HIGHLIGHT);
+              }}
+            >
+              <div>
+                <span className={styles.searchResultIcon}>{getElementIcon(element)}</span>
+                <span className={styles.searchResultText}>
+                  {element.name || `${element.id.substring(0, 8)}...`}
+                </span>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <div className={styles.searchResultGrid + ' light-theme'}>
+          {results.map(element => (
+            <div
+              key={element.id}
+              className={styles.searchResultPreview}
+              onClick={() => onElementClick(element)}
+              onMouseEnter={() => addHighlight(element, Highlights.NODE__HIGHLIGHT)}
+              onMouseLeave={() => removeHighlight(element, Highlights.NODE__HIGHLIGHT)}
+              title={element.name || `Element ${element.id.substring(0, 8)}...`}
+            >
+              <ElementPreview element={element} size={32} />
+            </div>
+          ))}
+        </div>
+      )}
     </ToolWindowPanel>
   );
 };
