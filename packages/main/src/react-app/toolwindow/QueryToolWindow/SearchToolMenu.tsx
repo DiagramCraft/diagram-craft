@@ -8,6 +8,7 @@ import { RuleEditorDialogCommand } from '@diagram-craft/canvas-app/dialogs';
 import { useToolWindowControls } from '../ToolWindow';
 import { useQueryToolWindowContext } from './QueryToolWindowContext';
 import { ElementSearchClause } from '@diagram-craft/model/diagramElementSearch';
+import { convertSimpleSearchToDJQL, convertAdvancedSearchToDJQL } from './djqlConverter';
 import { AdjustmentRule } from '@diagram-craft/model/diagramLayerRuleTypes';
 import { RuleLayer } from '@diagram-craft/model/diagramLayerRule';
 import { newid } from '@diagram-craft/utils/id';
@@ -124,98 +125,6 @@ export const SearchToolMenu = (props: SearchToolMenuProps) => {
     );
   }, [createRuleClausesFromSearch, props.getLabel, application]);
 
-  const convertSimpleSearchToDJQL = useCallback((query: string): string => {
-    if (!query.trim()) return '.elements[]';
-
-    const escapedQuery = query.replace(/"/g, '\\"');
-    return `.elements[] | select(.type == "node") | select(.name | test("${escapedQuery}"; "i"))`;
-  }, []);
-
-  const convertAdvancedSearchToDJQL = useCallback((query: string): string => {
-    if (!query.trim()) return '.elements[]';
-
-    try {
-      const parsedClauses = JSON.parse(query) as ElementSearchClause[];
-      if (parsedClauses.length === 0) return '.elements[]';
-
-      const filters: string[] = [];
-
-      for (const clause of parsedClauses) {
-        switch (clause.type) {
-          case 'props':
-            if (clause.relation === 'set') {
-              filters.push(`select(.${clause.path} != null)`);
-            } else {
-              const value = clause.value;
-              const path = clause.path;
-
-              switch (clause.relation) {
-                case 'eq': {
-                  if (isNaN(Number(value))) {
-                    filters.push(`select(.${path} == "${value}")`);
-                  } else {
-                    filters.push(`select(.${path} == ${value})`);
-                  }
-                  break;
-                }
-                case 'neq': {
-                  if (isNaN(Number(value))) {
-                    filters.push(`select(.${path} != "${value}")`);
-                  } else {
-                    filters.push(`select(.${path} != ${value})`);
-                  }
-                  break;
-                }
-                case 'gt':
-                  filters.push(`select(.${path} > ${value})`);
-                  break;
-                case 'lt':
-                  filters.push(`select(.${path} < ${value})`);
-                  break;
-                case 'contains': {
-                  const escapedValue = value.replace(/"/g, '\\"');
-                  filters.push(`select(.${path} | test("${escapedValue}"; "i"))`);
-                  break;
-                }
-                case 'matches': {
-                  const escapedRegex = value.replace(/"/g, '\\"');
-                  filters.push(`select(.${path} | test("${escapedRegex}"))`);
-                  break;
-                }
-              }
-            }
-            break;
-
-          case 'tags':
-            if (clause.tags && clause.tags.length > 0) {
-              const tagsArray = JSON.stringify(clause.tags);
-              filters.push(`select(.tags | contains(${tagsArray}))`);
-            }
-            break;
-
-          case 'comment':
-            if (clause.state) {
-              filters.push(
-                `select(.comments[] | select(.state == "${clause.state}") | length > 0)`
-              );
-            } else {
-              filters.push(`select(.comments[] | length > 0)`);
-            }
-            break;
-
-          case 'any':
-            // For 'any' clauses, we would need recursive handling
-            // For now, just add a placeholder that matches all elements
-            filters.push('select(true)');
-            break;
-        }
-      }
-
-      return `.elements[] | ${filters.join(' | ')}`;
-    } catch {
-      return '.elements[]';
-    }
-  }, []);
 
   const convertToDJQL = useCallback(() => {
     const query = props.getQuery();
@@ -244,7 +153,7 @@ export const SearchToolMenu = (props: SearchToolMenuProps) => {
     switchTab('djql');
 
     redraw();
-  }, [props, convertSimpleSearchToDJQL, convertAdvancedSearchToDJQL, document, setDjqlQuery, switchTab, redraw]);
+  }, [props, document, setDjqlQuery, switchTab, redraw]);
 
   return (
     <DropdownMenu.Root>
