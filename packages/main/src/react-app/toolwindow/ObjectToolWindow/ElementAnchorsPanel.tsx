@@ -10,6 +10,7 @@ export const ElementAnchorsPanel = (props: Props) => {
   const diagram = useDiagram();
   const type = useNodeProperty(diagram, 'anchors.type');
   const perEdge = useNodeProperty(diagram, 'anchors.perEdgeCount');
+  const perPathCount = useNodeProperty(diagram, 'anchors.perPathCount');
   const directionsCount = useNodeProperty(diagram, 'anchors.directionsCount');
 
   const disabled =
@@ -34,8 +35,9 @@ export const ElementAnchorsPanel = (props: Props) => {
                 <Select.Item value={'shape-defaults'}>Default</Select.Item>
                 <Select.Item value={'north-south'}>North/South</Select.Item>
                 <Select.Item value={'east-west'}>East/West</Select.Item>
-                <Select.Item value={'directions'}>x number of anchors</Select.Item>
-                <Select.Item value={'per-edge'}>x number per edge</Select.Item>
+                <Select.Item value={'directions'}>x anchors (direction)</Select.Item>
+                <Select.Item value={'per-path'}>x anchors (length)</Select.Item>
+                <Select.Item value={'per-edge'}>x per edge</Select.Item>
               </Select.Root>
             )}
           />
@@ -49,14 +51,21 @@ export const ElementAnchorsPanel = (props: Props) => {
                 ? perEdge.val
                 : type.val === 'directions'
                   ? directionsCount.val
-                  : 0
+                  : type.val === 'per-path'
+                    ? perPathCount.val
+                    : 0
             }
-            disabled={disabled || (type.val !== 'per-edge' && type.val !== 'directions')}
+            disabled={
+              disabled ||
+              (type.val !== 'per-edge' && type.val !== 'directions' && type.val !== 'per-path')
+            }
             onChange={v => {
               if (type.val === 'per-edge') {
                 perEdge.set(v);
               } else if (type.val === 'directions') {
                 directionsCount.set(v);
+              } else if (type.val === 'per-path') {
+                perPathCount.set(v);
               }
             }}
           />

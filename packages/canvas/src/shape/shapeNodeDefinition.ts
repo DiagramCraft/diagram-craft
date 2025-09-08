@@ -97,6 +97,13 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
         node.renderProps.anchors.perEdgeCount,
         this.boundaryDirection()
       );
+    } else if (anchorStrategy === 'per-path') {
+      return AnchorStrategy.getPathAnchors(
+        node,
+        this.getBoundingPath(node),
+        node.renderProps.anchors.perPathCount,
+        this.boundaryDirection()
+      );
     } else if (anchorStrategy === 'none') {
       return [
         { id: 'c', start: Point.of(0.5, 0.5), clip: true, type: 'center' }

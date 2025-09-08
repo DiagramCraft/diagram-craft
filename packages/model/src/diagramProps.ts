@@ -247,7 +247,15 @@ declare global {
     };
 
     anchors?: {
-      type: 'none' | 'shape-defaults' | 'north-south' | 'east-west' | 'directions' | 'per-edge';
+      type:
+        | 'none'
+        | 'shape-defaults'
+        | 'north-south'
+        | 'east-west'
+        | 'directions'
+        | 'per-edge'
+        | 'per-path';
+      perPathCount?: number;
       perEdgeCount?: number;
       directionsCount?: number;
     };
