@@ -73,8 +73,6 @@ export namespace UIActions {
   export interface ContextMenus extends Extensions.ContextMenus {
     canvas: object;
     selection: object;
-    edge: { id: string };
-    node: { id: string };
   }
 }
 

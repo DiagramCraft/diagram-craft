@@ -39,10 +39,12 @@ export class MoveTool extends AbstractTool {
   }
 
   onMouseOver(id: string, point: Point, target: EventTarget) {
+    super.onMouseOver(id, point, target);
     this.drag.current()?.onDragEnter?.(new DragEvents.DragEnter(point, target, id));
   }
 
   onMouseOut(id: string, _point: Point, target: EventTarget) {
+    super.onMouseOut(id, _point, target);
     this.drag.current()?.onDragLeave?.(new DragEvents.DragLeave(target, id));
   }
 

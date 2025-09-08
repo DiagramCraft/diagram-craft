@@ -5,7 +5,7 @@ import { CanvasGuidesComponent } from '../components/CanvasGuidesComponent';
 import { Actions, findAndExecuteAction } from '../keyMap';
 import { DocumentBoundsComponent } from '../components/DocumentBoundsComponent';
 import { DRAG_DROP_MANAGER, Modifiers } from '../dragDropManager';
-import { BACKGROUND, Tool, ToolConstructor, ToolType } from '../tool';
+import { AbstractTool, BACKGROUND, Tool, ToolConstructor, ToolType } from '../tool';
 import { DragLabelComponent } from '../components/DragLabelComponent';
 import { AnchorHandlesComponent } from '@diagram-craft/canvas/components/AnchorHandlesComponent';
 import { $cmp, createEffect, Observable } from '../component/component';
@@ -32,6 +32,7 @@ import { CollaborationConfig } from '@diagram-craft/model/collaboration/collabor
 import { AwarenessCursorComponent } from '../components/AwarenessCursorComponent';
 import { isResolvableToRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { AnchorHighlightComponent } from '../components/AnchorHighlightComponent';
+import { MoveTool } from '../tools/moveTool';
 
 const removeSuffix = (s: string) => {
   return s.replace(/---.+$/, '');
@@ -336,12 +337,25 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
                     {}
                   );
                 } else {
-                  props.context.ui.showContextMenu(
-                    'canvas',
-                    diagram.viewBox.toDiagramPoint(point),
-                    event,
-                    {}
-                  );
+                  const id = (this.tool as AbstractTool).currentElement;
+                  const el = diagram.lookup(id ?? '');
+
+                  if (el && this.tool instanceof MoveTool) {
+                    diagram.selectionState.setElements([el]);
+                    props.context.ui.showContextMenu(
+                      'selection',
+                      diagram.viewBox.toDiagramPoint(point),
+                      event,
+                      {}
+                    );
+                  } else {
+                    props.context.ui.showContextMenu(
+                      'canvas',
+                      diagram.viewBox.toDiagramPoint(point),
+                      event,
+                      {}
+                    );
+                  }
                 }
 
                 props.onContextMenu?.(event);

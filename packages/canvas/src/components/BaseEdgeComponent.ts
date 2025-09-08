@@ -97,15 +97,6 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
       e.stopPropagation();
     };
 
-    const onContextMenu = (event: MouseEvent) => {
-      props.context.ui.showContextMenu(
-        'edge',
-        $d.viewBox.toDiagramPoint(EventHelper.point(event)),
-        event,
-        { id: props.element.id }
-      );
-    };
-
     const isSelected = $d.selectionState.elements.includes(props.element);
     const isSingleSelected = isSelected && $d.selectionState.elements.length === 1;
     const firstEdge = $d.selectionState.edges[0];
@@ -142,8 +133,7 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
 
                 DRAG_DROP_MANAGER.initiate(new EdgeWaypointDrag(props.element, idx, props.context));
                 e.stopPropagation();
-              },
-              contextmenu: onContextMenu
+              }
             }
           })
         );
@@ -208,8 +198,7 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
                 if (e.button !== 0) return;
                 DRAG_DROP_MANAGER.initiate(new EdgeWaypointDrag(props.element, idx, props.context));
                 e.stopPropagation();
-              },
-              contextmenu: onContextMenu
+              }
             }
           })
         );
@@ -264,8 +253,7 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
           ...(!props.isReadOnly && props.onMouseDown ? { mousedown: onMouseDown } : {}),
           ...(!props.isReadOnly && props.onDoubleClick
             ? { dblclick: e => props.onDoubleClick?.(props.element.id, EventHelper.point(e)) }
-            : {}),
-          contextmenu: onContextMenu
+            : {})
         },
         style: `
           pointer-events: ${!props.onMouseDown || isDraggingThisEdge ? 'none' : 'unset'};

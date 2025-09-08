@@ -5,7 +5,6 @@ import { CanvasContextMenu } from './react-app/context-menu-dispatcher/CanvasCon
 import { ContextMenuDispatcher } from './react-app/context-menu-dispatcher/ContextMenuDispatcher';
 import { SelectionContextMenu } from './react-app/context-menu-dispatcher/SelectionContextMenu';
 import { ContextSpecificToolbar } from './react-app/toolbar/ContextSpecificToolbar';
-import { EdgeContextMenu } from './react-app/context-menu-dispatcher/EdgeContextMenu';
 import { useEventListener } from './react-app/hooks/useEventListener';
 import { useRedraw } from './react-app/hooks/useRedraw';
 import { defaultAppActions, defaultMacAppKeymap } from './react-app/appActionMap';
@@ -74,7 +73,7 @@ import type { DiagramFactory, DocumentFactory } from '@diagram-craft/model/facto
 import { PortalContextProvider } from '@diagram-craft/app-components/PortalContext';
 import { ElectronIntegration } from './electron';
 import { DocumentName } from './react-app/DocumentName';
-import { NodeContextMenu } from './react-app/context-menu-dispatcher/NodeContextMenu';
+import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -456,15 +455,13 @@ export const App = (props: {
                                 <CanvasContextMenu target={state as ContextMenuTarget<'canvas'>} />
                               );
                             } else if (state.type === 'selection') {
-                              return <SelectionContextMenu />;
-                            } else if (state.type === 'node') {
                               return (
-                                <NodeContextMenu target={state as ContextMenuTarget<'node'>} />
+                                <SelectionContextMenu
+                                  target={state as ContextMenuTarget<'selection'>}
+                                />
                               );
                             } else {
-                              return (
-                                <EdgeContextMenu target={state as ContextMenuTarget<'edge'>} />
-                              );
+                              VERIFY_NOT_REACHED();
                             }
                           }}
                         />

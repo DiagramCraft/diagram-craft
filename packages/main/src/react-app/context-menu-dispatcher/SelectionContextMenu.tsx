@@ -4,8 +4,9 @@ import { TbChevronRight } from 'react-icons/tb';
 import { useRedraw } from '../hooks/useRedraw';
 import { useEventListener } from '../hooks/useEventListener';
 import { useDiagram } from '../../application';
+import type { ContextMenuTarget } from '@diagram-craft/canvas/context';
 
-export const SelectionContextMenu = () => {
+export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selection'> }) => {
   const redraw = useRedraw();
   const diagram = useDiagram();
   const layers = diagram.layers.all.toReversed();
@@ -15,15 +16,45 @@ export const SelectionContextMenu = () => {
   return (
     <>
       <ActionContextMenuItem action={'TEXT_EDIT'}>Edit...</ActionContextMenuItem>
-      <ActionContextMenuItem action={'SELECTION_CHANGE_SHAPE'}>
-        Change Shape...
-      </ActionContextMenuItem>
       <ActionContextMenuItem action={'SELECTION_EXECUTE_ACTION'} arg={{}}>
         Act
       </ActionContextMenuItem>
       <ContextMenu.Separator className="cmp-context-menu__separator" />
-      <ActionContextMenuItem action={'COMMENT_ADD'}>Add Comment</ActionContextMenuItem>
-      <ContextMenu.Separator className="cmp-context-menu__separator" />
+
+      {diagram.selectionState.getSelectionType() === 'single-edge' && (
+        <>
+          {/* TODO: Disable this when there's alreay a label */}
+          <ActionContextMenuItem
+            action={'EDGE_TEXT_ADD'}
+            arg={{ point: props.target.pos, id: diagram.selectionState.edges[0].id }}
+          >
+            Add text
+          </ActionContextMenuItem>
+          <ActionContextMenuItem
+            action={'WAYPOINT_ADD'}
+            arg={{ point: props.target.pos, id: diagram.selectionState.edges[0].id }}
+          >
+            Add waypoint
+          </ActionContextMenuItem>
+          <ActionContextMenuItem
+            action={'WAYPOINT_DELETE'}
+            arg={{ point: props.target.pos, id: diagram.selectionState.edges[0].id }}
+          >
+            Delete waypoint
+          </ActionContextMenuItem>
+          <ActionContextMenuItem action={'EDGE_FLIP'}>Flip edge</ActionContextMenuItem>
+          <ContextMenu.Separator className="cmp-context-menu__separator" />
+        </>
+      )}
+
+      {diagram.selectionState.getSelectionType() === 'single-node' && (
+        <>
+          <ActionContextMenuItem action={'SELECTION_CHANGE_SHAPE'}>
+            Change Shape...
+          </ActionContextMenuItem>
+          <ContextMenu.Separator className="cmp-context-menu__separator" />
+        </>
+      )}
 
       <ActionContextMenuItem action={'CLIPBOARD_CUT'}>Cut</ActionContextMenuItem>
       <ActionContextMenuItem action={'CLIPBOARD_COPY'}>Copy</ActionContextMenuItem>
@@ -153,7 +184,10 @@ export const SelectionContextMenu = () => {
       </ContextMenu.Sub>
 
       <ContextMenu.Sub>
-        <ContextMenu.SubTrigger className="cmp-context-menu__sub-trigger">
+        <ContextMenu.SubTrigger
+          className="cmp-context-menu__sub-trigger"
+          disabled={diagram.selectionState.elements.length === 1}
+        >
           Align
           <div className="cmp-context-menu__right-slot">
             <TbChevronRight />
@@ -179,7 +213,10 @@ export const SelectionContextMenu = () => {
       </ContextMenu.Sub>
 
       <ContextMenu.Sub>
-        <ContextMenu.SubTrigger className="cmp-context-menu__sub-trigger">
+        <ContextMenu.SubTrigger
+          className="cmp-context-menu__sub-trigger"
+          disabled={diagram.selectionState.elements.length === 1}
+        >
           Arrange
           <div className="cmp-context-menu__right-slot">
             <TbChevronRight />
@@ -228,6 +265,9 @@ export const SelectionContextMenu = () => {
           </ContextMenu.SubContent>
         </ContextMenu.Portal>
       </ContextMenu.Sub>
+
+      <ContextMenu.Separator className="cmp-context-menu__separator" />
+      <ActionContextMenuItem action={'COMMENT_ADD'}>Add Comment</ActionContextMenuItem>
     </>
   );
 };
