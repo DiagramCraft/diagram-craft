@@ -74,6 +74,7 @@ import type { DiagramFactory, DocumentFactory } from '@diagram-craft/model/facto
 import { PortalContextProvider } from '@diagram-craft/app-components/PortalContext';
 import { ElectronIntegration } from './electron';
 import { DocumentName } from './react-app/DocumentName';
+import { NodeContextMenu } from './react-app/context-menu-dispatcher/NodeContextMenu';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -456,6 +457,10 @@ export const App = (props: {
                               );
                             } else if (state.type === 'selection') {
                               return <SelectionContextMenu />;
+                            } else if (state.type === 'node') {
+                              return (
+                                <NodeContextMenu target={state as ContextMenuTarget<'node'>} />
+                              );
                             } else {
                               return (
                                 <EdgeContextMenu target={state as ContextMenuTarget<'edge'>} />
