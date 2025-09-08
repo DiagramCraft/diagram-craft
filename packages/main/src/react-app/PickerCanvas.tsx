@@ -3,7 +3,7 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import React, { useCallback, useRef, useState } from 'react';
 import * as Portal from '@radix-ui/react-portal';
 import { Point } from '@diagram-craft/geometry/point';
-import { useApplication } from '../application';
+import { useApplication, useDiagram } from '../application';
 import {
   StaticCanvasComponent,
   StaticCanvasProps
@@ -11,6 +11,7 @@ import {
 
 export const PickerCanvas = (props: PickerCanvasProps) => {
   const application = useApplication();
+  const $d = useDiagram();
   const diagram = props.diagram;
   const timeout = useRef<number | null>(null);
   const [hover, setHover] = useState<Point | undefined>(undefined);
@@ -45,12 +46,14 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
     setHover(undefined);
   }
 
+  // TODO: We should use default cursor instead of move cursor when disabled
+  const isRuleLayer = $d.activeLayer.type === 'rule';
   return (
     <div
-      onMouseOver={e => onMouseOver(e)}
-      onMouseLeave={onMouseOut}
-      style={{}}
-      onPointerDown={e => props.onMouseDown?.(e.nativeEvent) ?? (() => {})}
+      onMouseOver={isRuleLayer ? () => {} : e => onMouseOver(e)}
+      onMouseLeave={isRuleLayer ? () => {} : onMouseOut}
+      style={{ filter: isRuleLayer ? 'opacity(0.3)' : 'none' }}
+      onPointerDown={isRuleLayer ? () => {} : e => props.onMouseDown?.(e.nativeEvent) ?? (() => {})}
     >
       {hover && props.showHover && (
         <Portal.Root>

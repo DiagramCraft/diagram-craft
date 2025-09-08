@@ -160,6 +160,8 @@ const DataProviderResponse = (props: {
       : props.dataProvider.getData(schema);
   }, [props.dataProvider, schema, props.search, dataVersion]);
 
+  const isRuleLayer = diagram.activeLayer.type === 'rule';
+
   return (
     <div className={'cmp-query-response'}>
       {data?.map(item => {
@@ -169,6 +171,7 @@ const DataProviderResponse = (props: {
             <ContextMenu.Trigger asChild>
               <div
                 className={`util-draggable cmp-query-response__item ${expanded.includes(item._uid) ? 'cmp-query-response__item--expanded' : ''}`}
+                style={{ cursor: isRuleLayer ? 'default' : 'pointer' }}
               >
                 <>
                   <div
@@ -185,6 +188,7 @@ const DataProviderResponse = (props: {
                   </div>
 
                   <div
+                    style={{ color: isRuleLayer ? 'var(--tertiary-fg)' : 'default' }}
                     onMouseDown={ev => {
                       if (!isRegularLayer(diagram.activeLayer)) return;
                       if (ev.button !== 0) return; // Only handle left mouse button
