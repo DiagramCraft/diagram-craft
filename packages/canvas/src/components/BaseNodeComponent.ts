@@ -118,6 +118,17 @@ export class BaseNodeComponent<
       e.stopPropagation();
     };
 
+    const onContextMenu = (event: MouseEvent) => {
+      if ($d.selectionState.elements.length > 0) return;
+
+      props.context.ui.showContextMenu(
+        'node',
+        $d.viewBox.toDiagramPoint(EventHelper.point(event)),
+        event,
+        { id: props.element.id }
+      );
+    };
+
     const onDoubleClick = props.onDoubleClick
       ? (e: MouseEvent) => {
           if (e.button !== 0) return;
@@ -322,7 +333,10 @@ export class BaseNodeComponent<
             .map(h => `svg-node--highlight-${h}`)
             .join(' '),
         transform: transform.trim(),
-        style: style.filter ? `filter: ${style.filter}` : ''
+        style: style.filter ? `filter: ${style.filter}` : '',
+        on: {
+          contextmenu: onContextMenu
+        }
       },
       ...children
     );
