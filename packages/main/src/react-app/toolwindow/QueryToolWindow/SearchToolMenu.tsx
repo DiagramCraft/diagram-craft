@@ -5,6 +5,7 @@ import { useApplication, useDocument } from '../../../application';
 import { useCallback } from 'react';
 import { useRedraw } from '../../hooks/useRedraw';
 import { RuleEditorDialogCommand } from '@diagram-craft/canvas-app/dialogs';
+import { useToolWindowControls } from '../ToolWindow';
 import { ElementSearchClause } from '@diagram-craft/model/diagramElementSearch';
 import { AdjustmentRule } from '@diagram-craft/model/diagramLayerRuleTypes';
 import { RuleLayer } from '@diagram-craft/model/diagramLayerRule';
@@ -25,6 +26,7 @@ export const SearchToolMenu = (props: SearchToolMenuProps) => {
   const application = useApplication();
   const redraw = useRedraw();
   const document = useDocument();
+  const { switchTab } = useToolWindowControls();
   const history = document.props.query.history.filter(h => h.type === props.type);
   const saved = document.props.query.saved.filter(r => r.type === props.type);
 
@@ -120,6 +122,125 @@ export const SearchToolMenu = (props: SearchToolMenuProps) => {
     );
   }, [createRuleClausesFromSearch, props.getLabel, application]);
 
+  const convertSimpleSearchToDJQL = useCallback((query: string): string => {
+    if (!query.trim()) return '.elements[]';
+
+    const escapedQuery = query.replace(/"/g, '\\"');
+    return `.elements[] | select(.type == "node") | select(.name | test("${escapedQuery}"; "i"))`;
+  }, []);
+
+  const convertAdvancedSearchToDJQL = useCallback((query: string): string => {
+    if (!query.trim()) return '.elements[]';
+
+    try {
+      const parsedClauses = JSON.parse(query) as ElementSearchClause[];
+      if (parsedClauses.length === 0) return '.elements[]';
+
+      const filters: string[] = [];
+
+      for (const clause of parsedClauses) {
+        switch (clause.type) {
+          case 'props':
+            if (clause.relation === 'set') {
+              filters.push(`select(.${clause.path} != null)`);
+            } else {
+              const value = clause.value;
+              const path = clause.path;
+
+              switch (clause.relation) {
+                case 'eq': {
+                  if (isNaN(Number(value))) {
+                    filters.push(`select(.${path} == "${value}")`);
+                  } else {
+                    filters.push(`select(.${path} == ${value})`);
+                  }
+                  break;
+                }
+                case 'neq': {
+                  if (isNaN(Number(value))) {
+                    filters.push(`select(.${path} != "${value}")`);
+                  } else {
+                    filters.push(`select(.${path} != ${value})`);
+                  }
+                  break;
+                }
+                case 'gt':
+                  filters.push(`select(.${path} > ${value})`);
+                  break;
+                case 'lt':
+                  filters.push(`select(.${path} < ${value})`);
+                  break;
+                case 'contains': {
+                  const escapedValue = value.replace(/"/g, '\\"');
+                  filters.push(`select(.${path} | test("${escapedValue}"; "i"))`);
+                  break;
+                }
+                case 'matches': {
+                  const escapedRegex = value.replace(/"/g, '\\"');
+                  filters.push(`select(.${path} | test("${escapedRegex}"))`);
+                  break;
+                }
+              }
+            }
+            break;
+
+          case 'tags':
+            if (clause.tags && clause.tags.length > 0) {
+              const tagsArray = JSON.stringify(clause.tags);
+              filters.push(`select(.tags | contains(${tagsArray}))`);
+            }
+            break;
+
+          case 'comment':
+            if (clause.state) {
+              filters.push(
+                `select(.comments[] | select(.state == "${clause.state}") | length > 0)`
+              );
+            } else {
+              filters.push(`select(.comments[] | length > 0)`);
+            }
+            break;
+
+          case 'any':
+            // For 'any' clauses, we would need recursive handling
+            // For now, just add a placeholder that matches all elements
+            filters.push('select(true)');
+            break;
+        }
+      }
+
+      return `.elements[] | ${filters.join(' | ')}`;
+    } catch {
+      return '.elements[]';
+    }
+  }, []);
+
+  const convertToDJQL = useCallback(() => {
+    const query = props.getQuery();
+    const scope = props.getScope();
+
+    let djqlQuery: string;
+
+    switch (props.type) {
+      case 'simple':
+        djqlQuery = convertSimpleSearchToDJQL(query);
+        break;
+      case 'advanced':
+        djqlQuery = convertAdvancedSearchToDJQL(query);
+        break;
+      default:
+        return;
+    }
+
+    // Add the converted query to history
+    document.props.query.addHistory('djql', djqlQuery, scope, djqlQuery);
+
+    // Switch to DJQL tab
+    switchTab('djql');
+
+    redraw();
+  }, [props, convertSimpleSearchToDJQL, convertAdvancedSearchToDJQL, document, switchTab, redraw]);
+
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
@@ -186,7 +307,7 @@ export const SearchToolMenu = (props: SearchToolMenuProps) => {
           </DropdownMenu.Item>
           <DropdownMenu.Separator className="cmp-context-menu__separator" />
           {props.type !== 'djql' && (
-            <DropdownMenu.Item className="cmp-context-menu__item">
+            <DropdownMenu.Item className="cmp-context-menu__item" onClick={convertToDJQL}>
               Convert to DJQL
             </DropdownMenu.Item>
           )}

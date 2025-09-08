@@ -1,10 +1,25 @@
-import React, { JSXElementConstructor, ReactElement, ReactNode, useEffect, useState } from 'react';
+import React, { createContext, JSXElementConstructor, ReactElement, ReactNode, useContext, useEffect, useState } from 'react';
 import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import styles from './ToolWindow.module.css';
 import { ErrorBoundary } from '../ErrorBoundary';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { UserState } from '../../UserState';
 import { useEventListener } from '../hooks/useEventListener';
+
+type ToolWindowContextType = {
+  activeTab: string;
+  switchTab: (tabId: string) => void;
+};
+
+const ToolWindowContext = createContext<ToolWindowContextType | null>(null);
+
+export const useToolWindowControls = (): ToolWindowContextType => {
+  const context = useContext(ToolWindowContext);
+  if (!context) {
+    throw new Error('useToolWindowControls must be used within a ToolWindow.Root');
+  }
+  return context;
+};
 
 type RootProps = {
   children: React.ReactNode | React.ReactNode[];
@@ -51,25 +66,32 @@ const Root = (props: RootProps) => {
     }
   }, [props.children, tab, props.id, userState]);
 
+  const contextValue: ToolWindowContextType = {
+    activeTab: tab,
+    switchTab: updateTab
+  };
+
   return (
-    <Tabs.Root value={tab} onValueChange={updateTab}>
-      <Tabs.List>
-        {React.Children.map(props.children, child => {
-          if (!child) return null;
-          assert.present(child);
-          if (!isReactElement(child)) throw VERIFY_NOT_REACHED('Invalid element');
-          assert.true(child.type === Tab);
+    <ToolWindowContext.Provider value={contextValue}>
+      <Tabs.Root value={tab} onValueChange={updateTab}>
+        <Tabs.List>
+          {React.Children.map(props.children, child => {
+            if (!child) return null;
+            assert.present(child);
+            if (!isReactElement(child)) throw VERIFY_NOT_REACHED('Invalid element');
+            assert.true(child.type === Tab);
 
-          return (
-            <Tabs.Trigger value={(child.props as TabProps).id}>
-              {(child.props as TabProps).title}
-            </Tabs.Trigger>
-          );
-        })}
-      </Tabs.List>
+            return (
+              <Tabs.Trigger value={(child.props as TabProps).id}>
+                {(child.props as TabProps).title}
+              </Tabs.Trigger>
+            );
+          })}
+        </Tabs.List>
 
-      {props.children}
-    </Tabs.Root>
+        {props.children}
+      </Tabs.Root>
+    </ToolWindowContext.Provider>
   );
 };
 
