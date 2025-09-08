@@ -105,3 +105,27 @@ const buildNestedReplies = (
   
   return replies;
 };
+
+export const filterThreadsByUserParticipation = (threads: CommentThread[], userName: string): CommentThread[] => {
+  const hasUserParticipation = (thread: CommentThread): boolean => {
+    if (thread.root.author === userName) {
+      return true;
+    }
+    
+    const checkReplies = (replies: CommentThreadNode[]): boolean => {
+      for (const reply of replies) {
+        if (reply.comment.author === userName) {
+          return true;
+        }
+        if (checkReplies(reply.replies)) {
+          return true;
+        }
+      }
+      return false;
+    };
+    
+    return checkReplies(thread.replies);
+  };
+  
+  return threads.filter(hasUserParticipation);
+};

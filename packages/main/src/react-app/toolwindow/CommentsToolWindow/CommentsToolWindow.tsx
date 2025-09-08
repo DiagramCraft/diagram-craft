@@ -9,7 +9,8 @@ import {
   type GroupBy,
   groupThreadsByAuthor,
   groupThreadsByElement,
-  type SortBy
+  type SortBy,
+  filterThreadsByUserParticipation
 } from './utils';
 import { CommentsSortMenu } from './CommentsSortMenu';
 import { CommentItem } from './CommentItem';
@@ -18,6 +19,7 @@ import { ToolWindowPanel } from '../ToolWindowPanel';
 import { ToolWindow } from '../ToolWindow';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbPlus } from 'react-icons/tb';
+import { UserState } from '../../../UserState';
 
 export const CommentsToolWindow = () => {
   const application = useApplication();
@@ -88,6 +90,52 @@ export const CommentsToolWindow = () => {
         ? groupThreadsByElement(commentThreads)
         : groupThreadsByAuthor(commentThreads);
 
+  // Get current user name for "My Threads" tab
+  const currentUserName = UserState.get().awarenessState.name;
+  
+  // Filter threads for "My Threads" tab
+  const myThreads = filterThreadsByUserParticipation(commentThreads, currentUserName);
+  const myGroupedThreads =
+    groupBy === 'none'
+      ? [{ key: 'all', title: '', threads: myThreads }]
+      : groupBy === 'element'
+        ? groupThreadsByElement(myThreads)
+        : groupThreadsByAuthor(myThreads);
+
+  const renderThreadsContent = (threads: typeof commentThreads, grouped: typeof groupedThreads) => (
+    <div className={styles['comments-tool-window']}>
+      {threads.length === 0 ? (
+        <div className={styles['comments-tool-window__no-comments']}>No comments</div>
+      ) : (
+        grouped.map(group => (
+          <div key={group.key} className={styles['comments-tool-window__group']}>
+            {group.title && (
+              <div className={styles['comments-tool-window__group-title']}>
+                {group.title}
+              </div>
+            )}
+            {group.threads.map(thread => (
+              <div key={thread.root.id} className={styles['comments-tool-window__thread']}>
+                <CommentItem
+                  comment={thread.root}
+                  onResolve={handleResolveComment}
+                  formatDate={formatDate}
+                  level={0}
+                >
+                  <NestedReplies
+                    replies={thread.replies}
+                    onResolve={handleResolveComment}
+                    formatDate={formatDate}
+                  />
+                </CommentItem>
+              </div>
+            ))}
+          </div>
+        ))
+      )}
+    </div>
+  );
+
   return (
     <ToolWindow.Root id={'comments'} defaultTab={'comments'}>
       <ToolWindow.Tab title={'Comments'} id={'comments'}>
@@ -106,37 +154,27 @@ export const CommentsToolWindow = () => {
             />
           </ToolWindow.TabActions>
           <ToolWindowPanel mode={'headless'} id={'comments'} title={'Comments'}>
-            <div className={styles['comments-tool-window']}>
-              {commentThreads.length === 0 ? (
-                <div className={styles['comments-tool-window__no-comments']}>No comments</div>
-              ) : (
-                groupedThreads.map(group => (
-                  <div key={group.key} className={styles['comments-tool-window__group']}>
-                    {group.title && (
-                      <div className={styles['comments-tool-window__group-title']}>
-                        {group.title}
-                      </div>
-                    )}
-                    {group.threads.map(thread => (
-                      <div key={thread.root.id} className={styles['comments-tool-window__thread']}>
-                        <CommentItem
-                          comment={thread.root}
-                          onResolve={handleResolveComment}
-                          formatDate={formatDate}
-                          level={0}
-                        >
-                          <NestedReplies
-                            replies={thread.replies}
-                            onResolve={handleResolveComment}
-                            formatDate={formatDate}
-                          />
-                        </CommentItem>
-                      </div>
-                    ))}
-                  </div>
-                ))
-              )}
-            </div>
+            {renderThreadsContent(commentThreads, groupedThreads)}
+          </ToolWindowPanel>
+        </ToolWindow.TabContent>
+      </ToolWindow.Tab>
+      <ToolWindow.Tab title={'My Threads'} id={'my-threads'}>
+        <ToolWindow.TabContent>
+          <ToolWindow.TabActions>
+            <Button type={'icon-only'} onClick={() => application.actions.COMMENT_ADD!.execute()}>
+              <TbPlus />
+            </Button>
+            <CommentsSortMenu
+              sortBy={sortBy}
+              groupBy={groupBy}
+              hideResolved={hideResolved}
+              onSortChange={setSortBy}
+              onGroupChange={setGroupBy}
+              onHideResolvedChange={setHideResolved}
+            />
+          </ToolWindow.TabActions>
+          <ToolWindowPanel mode={'headless'} id={'my-threads'} title={'My Threads'}>
+            {renderThreadsContent(myThreads, myGroupedThreads)}
           </ToolWindowPanel>
         </ToolWindow.TabContent>
       </ToolWindow.Tab>
