@@ -112,6 +112,11 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     };
   }
 
+  // Exposed for query purposes
+  get elements() {
+    return this.diagrams.flatMap(d => d.elements);
+  }
+
   get diagrams() {
     return this.#diagrams.values.filter(d => !d.parent);
   }

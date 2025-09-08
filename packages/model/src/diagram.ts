@@ -303,6 +303,11 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     return this.layers.visible.flatMap(l => (l instanceof RegularLayer ? l.elements : []));
   }
 
+  // Exposed for query purposes
+  get elements() {
+    return [...this.visibleElements()];
+  }
+
   lookup(id: string): DiagramElement | undefined {
     return this.nodeLookup.get(id) ?? this.edgeLookup.get(id);
   }
