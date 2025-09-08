@@ -1,5 +1,7 @@
 import { CRDTList, CRDTRoot } from './collaboration/crdt';
 import type { DiagramDocument } from './diagramDocument';
+import type { EmptyObject } from '@diagram-craft/utils/types';
+import { EventEmitter } from '@diagram-craft/utils/event';
 
 export type QueryType = 'advanced' | 'simple' | 'djql';
 
@@ -12,7 +14,7 @@ export type QueryEntry = {
   value: string;
 };
 
-class Query {
+class Query extends EventEmitter<{ change: EmptyObject }> {
   private _history: CRDTList<StoredType>;
   private _saved: CRDTList<StoredType>;
 
@@ -20,6 +22,8 @@ class Query {
     private readonly root: CRDTRoot,
     private readonly document: DiagramDocument
   ) {
+    super();
+
     this._history = root.getList('query.history');
     this._saved = root.getList('query.saved');
 
@@ -58,6 +62,7 @@ class Query {
         }
       }
     });
+    this.emit('change');
   }
 
   setHistory(entries: ReadonlyArray<QueryEntry>) {
@@ -67,6 +72,7 @@ class Query {
         this.addHistory(e.type, e.label, e.scope, e.value);
       }
     });
+    this.emit('change');
   }
 
   get saved(): Array<QueryEntry> {
@@ -82,6 +88,7 @@ class Query {
 
   addSaved(type: QueryType, label: string, scope: string, value: string) {
     this._saved.push([type, label, scope, value]);
+    this.emit('change');
   }
 
   setSaved(entries: ReadonlyArray<QueryEntry>) {
@@ -101,6 +108,7 @@ class Query {
         }
       }
     });
+    this.emit('change');
   }
 }
 

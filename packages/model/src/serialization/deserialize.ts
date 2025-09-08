@@ -226,14 +226,22 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
     doc.data.templates.replaceBy(document.data?.templates ?? []);
 
     if (document.props?.query?.saved) {
-      if (!Array.isArray(document.props.query.saved)) {
-        doc.props.query.setSaved(document.props.query.saved);
+      let saved = document.props?.query.saved ?? [];
+      COMPATIBILITY: {
+        if (Array.isArray(document.props.query.saved?.[0])) {
+          saved = [];
+        }
       }
+      doc.props.query.setSaved(saved);
     }
     if (document.props?.query?.history) {
-      if (!Array.isArray(document.props.query.history)) {
-        doc.props.query.setHistory(document.props.query.history);
+      let history = document.props?.query.history ?? [];
+      COMPATIBILITY: {
+        if (Array.isArray(document.props.query.history?.[0])) {
+          history = [];
+        }
       }
+      doc.props.query.setHistory(history);
     }
     if (document.props?.stencils) {
       doc.props.recentStencils.set(document.props?.stencils);
