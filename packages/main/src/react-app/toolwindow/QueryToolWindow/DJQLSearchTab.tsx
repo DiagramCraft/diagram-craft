@@ -6,6 +6,7 @@ import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useDiagram } from '../../../application';
 import { useRef, useState } from 'react';
+import { useQueryToolWindowContext } from './QueryToolWindowContext';
 import { parseAndQuery } from 'embeddable-jq';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { ToolWindowPanel } from '../ToolWindowPanel';
@@ -20,6 +21,7 @@ const replacer = (key: string, value: unknown) => {
   }
 
   if (key === 'trackableType') return undefined;
+  if (key === 'diagram') return undefined;
 
   // Handle known circular references
   if (key === 'parent') return value ? '...' : undefined;
@@ -53,18 +55,17 @@ const getSource = (source: string, diagram: Diagram) => {
 export const DJQLSearchTab = () => {
   const redraw = useRedraw();
   const diagram = useDiagram();
+  const { djqlQuery, djqlScope, setDjqlQuery } = useQueryToolWindowContext();
   const ref = useRef<HTMLTextAreaElement>(null);
   const downloadRef = useRef<HTMLAnchorElement>(null);
-  const [queryString, setQueryString] = useState<string>('.elements[]');
   const [expanded, setExpanded] = useState<number[]>([]);
-  const [source, setSource] = useState<string | undefined>('active-layer');
   const [downloadLink, setDownloadLink] = useState('');
   const [queryIdx, setQueryIdx] = useState(0);
   const [queryInput, setQueryInput] = useState<unknown>({});
 
   const queries: { q: string; output: unknown }[] = [];
 
-  let qs = queryString;
+  let qs = djqlQuery;
   while (true) {
     const m = qs.match(/^(.*?)\|\s*?drilldown\(([^)]+)\)\s*?\|(.*)$/);
 
@@ -85,15 +86,15 @@ export const DJQLSearchTab = () => {
   let error = undefined;
   try {
     const q = queries[queryIdx].q;
-    const input = queryIdx === 0 ? getSource(source!, diagram) : queryInput;
+    const input = queryIdx === 0 ? getSource(djqlScope!, diagram) : queryInput;
 
     res = parseAndQuery(q, [input]);
 
     diagram.document.props.query.addHistory(
       'djql',
-      queryString,
-      source ?? 'active-layer',
-      queryString
+      djqlQuery,
+      djqlScope ?? 'active-layer',
+      djqlQuery
     );
   } catch (e) {
     error = e;
@@ -114,13 +115,12 @@ export const DJQLSearchTab = () => {
         <SearchToolMenu
           type={'djql'}
           onQuerySelect={(scope, query) => {
-            setSource(scope);
-            setQueryString(query);
+            setDjqlQuery(query, scope);
             ref.current!.value = query;
           }}
           getQuery={() => ref.current!.value}
           getLabel={() => ref.current!.value}
-          getScope={() => source!}
+          getScope={() => djqlScope!}
         />
       </ToolWindow.TabActions>
       <Accordion.Root type="multiple" defaultValue={['query', 'response']}>
@@ -133,7 +133,10 @@ export const DJQLSearchTab = () => {
               alignItems: 'center'
             }}
           >
-            <Select.Root onChange={setSource} value={source}>
+            <Select.Root
+              onChange={s => setDjqlQuery(djqlQuery, s ?? 'active-layer')}
+              value={djqlScope}
+            >
               <Select.Item value={'active-layer'}>Active Layer</Select.Item>
               <Select.Item value={'active-diagram'}>Active Diagram</Select.Item>
               <Select.Item value={'active-document'}>Active Document</Select.Item>
@@ -141,7 +144,7 @@ export const DJQLSearchTab = () => {
             </Select.Root>
           </div>
 
-          <TextArea ref={ref} value={queryString} style={{ minHeight: '100px' }} />
+          <TextArea ref={ref} value={djqlQuery} style={{ minHeight: '100px' }} />
           <div
             style={{
               display: 'flex',
@@ -176,13 +179,13 @@ export const DJQLSearchTab = () => {
             </a>
             <Button
               onClick={() => {
-                if (ref.current?.value === queryString) {
+                if (ref.current?.value === djqlQuery) {
                   redraw();
                 } else {
                   setQueryIdx(0);
                   setQueryInput({});
                   setExpanded([]);
-                  setQueryString(ref.current?.value ?? '');
+                  setDjqlQuery(ref.current?.value ?? '', djqlScope);
                 }
               }}
             >

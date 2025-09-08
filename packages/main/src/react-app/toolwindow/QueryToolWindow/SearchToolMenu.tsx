@@ -5,7 +5,10 @@ import { useApplication, useDocument } from '../../../application';
 import { useCallback } from 'react';
 import { useRedraw } from '../../hooks/useRedraw';
 import { RuleEditorDialogCommand } from '@diagram-craft/canvas-app/dialogs';
+import { useToolWindowControls } from '../ToolWindow';
+import { useQueryToolWindowContext } from './QueryToolWindowContext';
 import { ElementSearchClause } from '@diagram-craft/model/diagramElementSearch';
+import { convertSimpleSearchToDJQL, convertAdvancedSearchToDJQL } from './djqlConverter';
 import { AdjustmentRule } from '@diagram-craft/model/diagramLayerRuleTypes';
 import { RuleLayer } from '@diagram-craft/model/diagramLayerRule';
 import { newid } from '@diagram-craft/utils/id';
@@ -25,6 +28,8 @@ export const SearchToolMenu = (props: SearchToolMenuProps) => {
   const application = useApplication();
   const redraw = useRedraw();
   const document = useDocument();
+  const { switchTab } = useToolWindowControls();
+  const { setDjqlQuery } = useQueryToolWindowContext();
   const history = document.props.query.history.filter(h => h.type === props.type);
   const saved = document.props.query.saved.filter(r => r.type === props.type);
 
@@ -120,6 +125,28 @@ export const SearchToolMenu = (props: SearchToolMenuProps) => {
     );
   }, [createRuleClausesFromSearch, props.getLabel, application]);
 
+  const convertToDJQL = useCallback(() => {
+    const query = props.getQuery();
+    const scope = props.getScope();
+
+    let djqlQuery: string;
+
+    switch (props.type) {
+      case 'simple':
+        djqlQuery = convertSimpleSearchToDJQL(query);
+        break;
+      case 'advanced':
+        djqlQuery = convertAdvancedSearchToDJQL(query);
+        break;
+      default:
+        return VERIFY_NOT_REACHED();
+    }
+
+    document.props.query.addHistory('djql', djqlQuery, scope, djqlQuery);
+    setDjqlQuery(djqlQuery, scope);
+    switchTab('djql');
+  }, [props, document, setDjqlQuery, switchTab, redraw]);
+
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
@@ -186,7 +213,7 @@ export const SearchToolMenu = (props: SearchToolMenuProps) => {
           </DropdownMenu.Item>
           <DropdownMenu.Separator className="cmp-context-menu__separator" />
           {props.type !== 'djql' && (
-            <DropdownMenu.Item className="cmp-context-menu__item">
+            <DropdownMenu.Item className="cmp-context-menu__item" onClick={convertToDJQL}>
               Convert to DJQL
             </DropdownMenu.Item>
           )}
