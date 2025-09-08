@@ -90,6 +90,18 @@ class Query {
       this.addSaved(e.type, e.label, e.scope, e.value);
     }
   }
+
+  removeSaved(type: QueryType, label: string, scope: string, value: string) {
+    this.document.root.transact(() => {
+      for (let i = 0; i < this._saved.length; i++) {
+        const [a, b, c, d] = this._saved.get(i);
+        if (a === type && b === label && c === scope && d === value) {
+          this._saved.delete(i);
+          break;
+        }
+      }
+    });
+  }
 }
 
 const MAX_LENGTH = 30;
