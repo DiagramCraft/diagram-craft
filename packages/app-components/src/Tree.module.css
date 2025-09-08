@@ -1,6 +1,6 @@
 .cmp-tree {
   display: grid;
-  grid-template-columns: 1fr min-content;
+  grid-template-columns: minmax(max-content, 1fr) max-content;
   grid-template-rows: 1fr;
   max-width: 100%;
 
@@ -12,18 +12,22 @@
     grid-template-columns: subgrid;
     grid-template-rows: subgrid;
     align-items: center;
-    padding: 2px 2px 2px 0.5rem;
+    padding: 2px 5px 2px 0.5rem;
 
     border-bottom: 1px dashed var(--cmp-border);
   }
+
   .cmp-tree__node:last-child {
     border-bottom: none;
   }
+
   .cmp-tree__node[data-state='on'] {
     color: var(--highlight-fg);
   }
+
   .cmp-tree__node[data-state='child'] {
     color: var(--highlight-fg);
+
     .cmp-tree__node__label {
       font-style: italic;
     }
@@ -32,7 +36,7 @@
   .cmp-tree__node__action {
     display: flex;
     justify-self: end;
-    padding-right: 0.25rem;
+    padding-right: 0.125rem;
     margin-top: 0.2rem;
     gap: 0.35rem
   }
@@ -40,24 +44,31 @@
   .cmp-tree__node[data-depth="1"] > .cmp-tree__node__label {
     margin-left: 0.5rem;
   }
+
   .cmp-tree__node[data-depth="2"] > .cmp-tree__node__label {
     margin-left: 1rem;
   }
+
   .cmp-tree__node[data-depth="3"] > .cmp-tree__node__label {
     margin-left: 1.5rem;
   }
+
   .cmp-tree__node[data-depth="4"] > .cmp-tree__node__label {
     margin-left: 2rem;
   }
+
   .cmp-tree__node[data-depth="5"] > .cmp-tree__node__label {
     margin-left: 2.5rem;
   }
+
   .cmp-tree__node[data-depth="6"] > .cmp-tree__node__label {
     margin-left: 3rem;
   }
+
   .cmp-tree__node[data-depth="7"] > .cmp-tree__node__label {
     margin-left: 3.5rem;
   }
+
   .cmp-tree__node[data-depth="8"] > .cmp-tree__node__label {
     margin-left: 4rem;
   }
