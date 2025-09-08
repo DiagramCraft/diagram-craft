@@ -29,6 +29,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
       checked: state.checked
     }),
 
+  getUsername: () => ipcRenderer.invoke('user:getUsername'),
+
   platform: process.platform,
 
   isElectron: true

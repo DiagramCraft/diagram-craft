@@ -1,6 +1,7 @@
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { AppConfig } from './appConfig';
 import type { AwarenessUserState } from '@diagram-craft/model/collaboration/awareness';
+import { CollaborationConfig } from '@diagram-craft/model/collaboration/collaborationConfig';
 
 type UserStateEvents = {
   change: { after: UserState };
@@ -57,6 +58,11 @@ export class UserState extends EventEmitter<UserStateEvents> {
       };
     }
     return this.awarenessStateCache!;
+  }
+
+  set awarenessState(state: AwarenessUserState) {
+    this.awarenessStateCache = state;
+    CollaborationConfig.Backend.awareness?.updateUser(state);
   }
 
   set recentFiles(recentFiles: Array<string>) {

@@ -15,6 +15,8 @@ export type ElectronAPI = {
 
   setMenu: (items: MenuEntry[], keybindings: Record<string, string>) => void;
   setMenuEntryState: (id: string, state: { enabled: boolean; value?: boolean }) => void;
+
+  getUsername: () => Promise<string>;
 };
 
 declare global {
