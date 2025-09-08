@@ -120,6 +120,9 @@ export const defaultAppConfig: AppConfig = {
         import('@diagram-craft/canvas-drawio/drawioLoaders').then(m => m.fileLoaderDrawio),
 
       '.json': async () => (content, doc, diagramFactory) =>
+        deserializeDiagramDocument(JSON.parse(content), doc, diagramFactory),
+
+      '.dcd': async () => (content, doc, diagramFactory) =>
         deserializeDiagramDocument(JSON.parse(content), doc, diagramFactory)
     }
   },

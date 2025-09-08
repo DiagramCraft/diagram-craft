@@ -126,7 +126,7 @@ describe('convertAdvancedSearchToDJQL', () => {
 
     const result = convertAdvancedSearchToDJQL(clauses);
     expect(result).toBe(
-      '.elements[]\n  | select(.comments[] | select(.state == "unresolved") | length > 0)'
+      '.elements[]\n  | select(any(.comments[]; .state == "unresolved"))'
     );
   });
 
@@ -139,7 +139,7 @@ describe('convertAdvancedSearchToDJQL', () => {
     ]);
 
     const result = convertAdvancedSearchToDJQL(clauses);
-    expect(result).toBe('.elements[]\n  | select(.comments[] | length > 0)');
+    expect(result).toBe('.elements[]\n  | select(.comments | length > 0)');
   });
 
   test('converts multiple clauses with proper formatting', () => {

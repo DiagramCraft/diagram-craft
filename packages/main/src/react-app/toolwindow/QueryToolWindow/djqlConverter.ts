@@ -69,9 +69,9 @@ function convertClauses(parsedClauses: ElementSearchClause[]) {
 
       case 'comment':
         if (clause.state) {
-          filters.push(`select(.comments[] | select(.state == "${clause.state}") | length > 0)`);
+          filters.push(`select(any(.comments[]; .state == "${clause.state}"))`);
         } else {
-          filters.push(`select(.comments[] | length > 0)`);
+          filters.push(`select(.comments | length > 0)`);
         }
         break;
 
