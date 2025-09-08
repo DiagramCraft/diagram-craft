@@ -62,7 +62,7 @@ class Query extends EventEmitter<{ change: EmptyObject }> {
         }
       }
     });
-    this.emit('change');
+    this.emitAsync('change');
   }
 
   setHistory(entries: ReadonlyArray<QueryEntry>) {
@@ -72,7 +72,7 @@ class Query extends EventEmitter<{ change: EmptyObject }> {
         this.addHistory(e.type, e.label, e.scope, e.value);
       }
     });
-    this.emit('change');
+    this.emitAsync('change');
   }
 
   get saved(): Array<QueryEntry> {
@@ -88,7 +88,7 @@ class Query extends EventEmitter<{ change: EmptyObject }> {
 
   addSaved(type: QueryType, label: string, scope: string, value: string) {
     this._saved.push([type, label, scope, value]);
-    this.emit('change');
+    this.emitAsync('change');
   }
 
   setSaved(entries: ReadonlyArray<QueryEntry>) {
@@ -108,7 +108,7 @@ class Query extends EventEmitter<{ change: EmptyObject }> {
         }
       }
     });
-    this.emit('change');
+    this.emitAsync('change');
   }
 }
 

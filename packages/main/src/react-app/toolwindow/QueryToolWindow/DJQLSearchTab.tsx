@@ -79,8 +79,6 @@ export const DJQLSearchTab = () => {
     queries.push({ q: m[1], output: m[2] });
   }
 
-  //console.log(queries);
-
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let res: any[] | undefined = undefined;
   let error = undefined;
@@ -161,12 +159,7 @@ export const DJQLSearchTab = () => {
             >
               Save as...
             </Button>
-            <Button
-              type={'secondary'}
-              onClick={() => {
-                exportToFile();
-              }}
-            >
+            <Button type={'secondary'} onClick={() => exportToFile()}>
               Export
             </Button>
             <a

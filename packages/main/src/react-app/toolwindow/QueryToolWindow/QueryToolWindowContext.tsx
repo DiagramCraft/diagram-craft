@@ -20,7 +20,7 @@ type QueryToolWindowProviderProps = {
 };
 
 export const QueryToolWindowProvider = ({ children }: QueryToolWindowProviderProps) => {
-  const [djqlQuery, setDjqlQueryState] = useState<string>('.elements[]');
+  const [djqlQuery, setDjqlQueryState] = useState<string>('');
   const [djqlScope, setDjqlScopeState] = useState<string>('active-layer');
 
   const setDjqlQuery = (query: string, scope: string) => {
