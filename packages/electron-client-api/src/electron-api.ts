@@ -17,6 +17,11 @@ export type ElectronAPI = {
   setMenuEntryState: (id: string, state: { enabled: boolean; value?: boolean }) => void;
 
   getUsername: () => Promise<string>;
+
+  autosaveSave: (data: string) => Promise<boolean>;
+  autosaveLoad: () => Promise<string | undefined>;
+  autosaveExists: () => Promise<boolean>;
+  autosaveClear: () => Promise<boolean>;
 };
 
 declare global {
