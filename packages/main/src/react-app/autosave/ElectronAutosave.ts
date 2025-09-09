@@ -107,13 +107,15 @@ export const ElectronAutosave: Autosave = {
     callback?: (d: SerializedDiagramDocument) => void
   ): void => {
     needsSave = { url, doc, callback };
+  },
+
+  init: () => {
+    // Background save interval
+    setInterval(() => {
+      if (needsSave) {
+        ElectronAutosave.save(needsSave.url, needsSave.doc, needsSave.callback);
+        needsSave = undefined;
+      }
+    }, 1000);
   }
 };
-
-// Background save interval
-setInterval(() => {
-  if (needsSave) {
-    ElectronAutosave.save(needsSave.url, needsSave.doc, needsSave.callback);
-    needsSave = undefined;
-  }
-}, 1000);

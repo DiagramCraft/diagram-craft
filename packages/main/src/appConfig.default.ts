@@ -2,6 +2,7 @@ import type { AppConfig } from './appConfig';
 import { deserializeDiagramDocument } from '@diagram-craft/model/serialization/deserialize';
 import { Random } from '@diagram-craft/utils/random';
 import { MultiWindowAutosave } from './react-app/autosave/MultiWindowAutosave';
+import { ElectronAutosave } from './react-app/autosave/ElectronAutosave';
 
 const random = new Random(new Date().getTime());
 
@@ -147,5 +148,5 @@ export const defaultAppConfig: AppConfig = {
       url: import.meta.env.VITE_CRDT_BACKEND_YJS_URL
     }
   },
-  autosave: MultiWindowAutosave
+  autosave: window.electronAPI ? ElectronAutosave : MultiWindowAutosave
 };

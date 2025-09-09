@@ -6,8 +6,6 @@ import { FileSystem } from '@diagram-craft/canvas-app/loaders';
 import { mainMenuStructure } from './react-app/mainMenuData';
 import type { MenuEntry } from '@diagram-craft/electron-client-api/electron-api';
 import { UserState } from './UserState';
-import { Autosave } from './react-app/autosave/Autosave';
-import { ElectronAutosave } from './react-app/autosave/ElectronAutosave';
 
 const updateState = (e: MenuEntry, app: Application, recurse: boolean = false) => {
   const state = { enabled: true, checked: false, keybinding: '' };
@@ -97,9 +95,6 @@ export const ElectronIntegration = {
       if (!r) return;
       UserState.get().awarenessState = { name: r, color: '#000000' };
     });
-
-    // Initialize ElectronAutosave for Electron mode
-    Autosave.init(ElectronAutosave);
   }
 };
 

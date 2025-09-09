@@ -242,16 +242,18 @@ export const MultiWindowAutosave = {
     callback?: (d: SerializedDiagramDocument) => void
   ): void => {
     needsSave = { url, doc, callback };
+  },
+
+  init: () => {
+    // Background save interval
+    setInterval(() => {
+      if (needsSave) {
+        MultiWindowAutosave.save(needsSave.url, needsSave.doc, needsSave.callback);
+        needsSave = undefined;
+      }
+    }, 1000);
+
+    // Background cleanup interval - clean up autosaves from inactive windows every 30 seconds
+    setInterval(() => MultiWindowAutosave.cleanupInactiveWindows(), 30000);
   }
 };
-
-// Background save interval
-setInterval(() => {
-  if (needsSave) {
-    MultiWindowAutosave.save(needsSave.url, needsSave.doc, needsSave.callback);
-    needsSave = undefined;
-  }
-}, 1000);
-
-// Background cleanup interval - clean up autosaves from inactive windows every 30 seconds
-setInterval(() => MultiWindowAutosave.cleanupInactiveWindows(), 30000);
