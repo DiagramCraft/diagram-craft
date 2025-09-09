@@ -29,6 +29,8 @@ export type Autosave = {
   exists: () => Promise<boolean>;
 
   clear: () => void;
+
+  init: () => void;
 };
 
 let AUTOSAVE_INSTANCE: Autosave | undefined = undefined;
@@ -36,6 +38,7 @@ let AUTOSAVE_INSTANCE: Autosave | undefined = undefined;
 export const Autosave = {
   init(instance: Autosave) {
     AUTOSAVE_INSTANCE = instance;
+    AUTOSAVE_INSTANCE.init();
   },
 
   get(): Autosave {
