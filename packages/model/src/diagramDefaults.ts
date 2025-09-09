@@ -295,9 +295,9 @@ const _nodeDefaults: Omit<NodePropsForRendering, 'name' | 'custom' | 'indicators
 
     isometric: {
       enabled: false,
-      shape: 'none',
+      shape: 'rect',
       size: 10,
-      color: 'gray'
+      color: '#eeeeee'
     }
   },
 

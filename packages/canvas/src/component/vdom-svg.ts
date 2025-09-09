@@ -18,6 +18,7 @@ type CommonPresentationAttributes = {
   'cursor'?: string;
   'clip-path'?: string;
   'pointer-events'?: string;
+  'filter'?: string;
 };
 
 export const circle = (
