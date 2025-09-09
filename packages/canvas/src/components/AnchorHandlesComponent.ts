@@ -2,15 +2,16 @@ import { DRAG_DROP_MANAGER } from '../dragDropManager';
 import { CanvasState } from '../canvas/EditableCanvasComponent';
 import { Component, createEffect, Observable } from '../component/component';
 import * as svg from '../component/vdom-svg';
+import { Transforms } from '../component/vdom-svg';
 import { VNode } from '../component/vdom';
 import { MoveDrag } from '../drag/moveDrag';
 import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
 import { AnchorHandleDrag } from '../drag/anchorHandleDrag';
-import { Transforms } from '../component/vdom-svg';
 import { Zoom } from './zoom';
 import { ViewboxEvents } from '@diagram-craft/model/viewBox';
 import { Vector } from '@diagram-craft/geometry/vector';
+import { Point } from '@diagram-craft/geometry/point';
 
 type State = 'background' | 'node' | 'handle';
 
@@ -98,16 +99,6 @@ export class AnchorHandlesComponent extends Component<Props> {
     const z = new Zoom(diagram.viewBox.zoomLevel);
     const anchorSizeInEffect = z.num(ANCHOR_SIZE, 2);
 
-    const sBounds = shouldScale
-      ? {
-          x: node.bounds.x - z.num(SCALE),
-          y: node.bounds.y - z.num(SCALE),
-          w: node.bounds.w + z.num(2 * SCALE),
-          h: node.bounds.h + z.num(2 * SCALE),
-          r: node.bounds.r
-        }
-      : node.bounds;
-
     if (diagram.activeLayer.type !== 'regular') {
       return svg.g({});
     }
@@ -118,49 +109,54 @@ export class AnchorHandlesComponent extends Component<Props> {
       if (a.clip) return;
       if (!a.isPrimary) return;
 
-      const normal = Vector.fromPolar(a.normal ?? 0, z.num(10, 7));
+      const p1 = node._getPositionInBounds(a.start);
 
-      const x = a.start.x;
-      const y = a.start.y;
+      // Need to calculate a new normal, by creating a vector in the unit coordinate system along the normal
+      // Then, calculating the angle of the vector between the two projected points
+      const p2 = node._getPositionInBounds(Point.add(a.start, Vector.fromPolar(a.normal ?? 0, 1)));
+      const normalInEffect = Vector.angle(Vector.from(p1, p2));
+
+      const p = shouldScale
+        ? Point.add(p1, Vector.fromPolar(normalInEffect ?? 0, z.num(SCALE)))
+        : p1;
+      const normalEndpoint = Point.add(p, Vector.fromPolar(normalInEffect ?? 0, z.num(10, 7)));
+
       children.push(
-        svg.g(
-          {
-            transform: `translate(${sBounds.x + x * sBounds.w} ${sBounds.y + y * sBounds.h})`,
-            on: {
-              mouseover: () => (this.state = 'handle'),
-              mouseout: () => {
-                this.state = 'background';
-                this.clearTimeout();
-                this.triggerMouseOut(shouldScale);
-              },
-              mousedown: e => {
-                if (diagram.activeLayer.type !== 'regular') return;
+        svg.line({
+          'x1': p.x,
+          'y1': p.y,
+          'x2': normalEndpoint.x,
+          'y2': normalEndpoint.y,
+          'stroke': 'var(--accent-9)',
+          'stroke-width': z.num(1)
+        })
+      );
+      children.push(
+        svg.circle({
+          class: 'svg-handle svg-anchor-handle',
+          cx: p.x,
+          cy: p.y,
+          r: anchorSizeInEffect,
+          on: {
+            mouseover: () => (this.state = 'handle'),
+            mouseout: () => {
+              this.state = 'background';
+              this.clearTimeout();
+              this.triggerMouseOut(shouldScale);
+            },
+            mousedown: e => {
+              if (diagram.activeLayer.type !== 'regular') return;
 
-                DRAG_DROP_MANAGER.initiate(
-                  new AnchorHandleDrag(node, a.id, EventHelper.point(e), props.context)
-                );
-                this.clearTimeout();
-                this.setState(undefined, 'background');
-                e.preventDefault();
-                e.stopPropagation();
-              }
+              DRAG_DROP_MANAGER.initiate(
+                new AnchorHandleDrag(node, a.id, EventHelper.point(e), props.context)
+              );
+              this.clearTimeout();
+              this.setState(undefined, 'background');
+              e.preventDefault();
+              e.stopPropagation();
             }
-          },
-          svg.line({
-            'x1': 0,
-            'y1': 0,
-            'x2': normal.x,
-            'y2': normal.y,
-            'stroke': 'var(--accent-9)',
-            'stroke-width': z.num(1)
-          }),
-          svg.circle({
-            class: 'svg-handle svg-anchor-handle',
-            cx: 0,
-            cy: 0,
-            r: anchorSizeInEffect
-          })
-        )
+          }
+        })
       );
     });
 
