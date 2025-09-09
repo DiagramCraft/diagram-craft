@@ -71,7 +71,7 @@ export const MultiWindowAutosave = {
     documentFactory: DocumentFactory,
     diagramFactory: DiagramFactory,
     failSilently = false
-  ): Promise<{ document: DiagramDocument; url?: string; windowId: string } | undefined> => {
+  ): Promise<{ document: DiagramDocument; url?: string } | undefined> => {
     if (!CollaborationConfig.isNoOp) return undefined;
 
     try {
@@ -96,8 +96,7 @@ export const MultiWindowAutosave = {
         await doc.load();
         return {
           document: doc,
-          url: entry.url,
-          windowId: currentWindowId
+          url: entry.url
         };
       }
 
@@ -144,7 +143,7 @@ export const MultiWindowAutosave = {
       await deserializeDiagramDocument(selectedEntry.diagram, doc, diagramFactory);
       await doc.load();
 
-      return { document: doc, url: selectedEntry.url, windowId: currentWindowId };
+      return { document: doc, url: selectedEntry.url };
     } catch (e) {
       if (!failSilently) throw e;
 

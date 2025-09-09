@@ -29,7 +29,6 @@ import { NodeTool } from '@diagram-craft/canvas/tools/nodeTool';
 import { PenTool } from '@diagram-craft/canvas-app/tools/penTool';
 import { makeActionMap } from '@diagram-craft/canvas/keyMap';
 import { EditableCanvas } from '@diagram-craft/canvas-react/EditableCanvas';
-import { MultiWindowAutosave } from './MultiWindowAutosave';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { HelpMessage } from './react-app/components/HelpMessage';
 import { Diagram } from '@diagram-craft/model/diagram';
@@ -74,6 +73,7 @@ import { PortalContextProvider } from '@diagram-craft/app-components/PortalConte
 import { ElectronIntegration } from './electron';
 import { DocumentName } from './react-app/DocumentName';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+import { Autosave } from './react-app/autosave/Autosave';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -205,7 +205,7 @@ export const App = (props: {
 
       updateApplicationModel(doc.diagrams[0], application.current, progressCallback);
 
-      MultiWindowAutosave.clear();
+      Autosave.get().clear();
       setDirty(false);
       setHash(doc.hash);
 
@@ -231,12 +231,12 @@ export const App = (props: {
 
       updateApplicationModel(diagram, application.current, progressCallback);
 
-      MultiWindowAutosave.clear();
+      Autosave.get().clear();
       setDirty(false);
       setHash(doc.hash);
     },
     clearDirty: () => {
-      MultiWindowAutosave.clear();
+      Autosave.get().clear();
       setDirty(false);
       setHash(application.current.model.activeDocument.hash);
     }
@@ -246,7 +246,7 @@ export const App = (props: {
     updateApplicationModel(props.doc.diagrams[0], application.current, progressCallback);
   });
 
-  const [dirty, setDirty] = useState(MultiWindowAutosave.exists());
+  const [dirty, setDirty] = useState(Autosave.get().exists());
   const [hash, setHash] = useState(application.current.model.activeDocument.hash);
   const [popoverState, setPopoverState] = useState<NodeTypePopupState>(NodeTypePopup.INITIAL_STATE);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -274,7 +274,7 @@ export const App = (props: {
   const autosave = (event: any) => {
     if (event.silent) return;
 
-    MultiWindowAutosave.asyncSave(url, doc, s => {
+    Autosave.get().asyncSave(url, doc, s => {
       setDirty(s.hash !== hash);
     });
     setDirty(true);

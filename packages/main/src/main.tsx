@@ -16,7 +16,7 @@ import {
 } from '@diagram-craft/model/factory';
 import { AppConfig, type StencilRegistryConfig } from './appConfig';
 import { ElectronIntegration } from './electron';
-import { MultiWindowAutosave } from './MultiWindowAutosave';
+import { Autosave } from './react-app/autosave/Autosave';
 
 ELECTRON: {
   if (window.electronAPI) {
@@ -44,7 +44,7 @@ const diagrams: Array<DiagramRef> = [];
 if (location.hash !== '') {
   const url = location.hash.slice(1);
   diagrams.unshift({ url });
-  MultiWindowAutosave.clear();
+  Autosave.get().clear();
 } else {
   const userState = UserState.get();
   if (userState.recentFiles.length > 0) {
