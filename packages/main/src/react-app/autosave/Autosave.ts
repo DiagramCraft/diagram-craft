@@ -3,7 +3,7 @@ import { ProgressCallback } from '@diagram-craft/model/types';
 import type { DiagramFactory, DocumentFactory } from '@diagram-craft/model/factory';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import type { SerializedDiagramDocument } from '@diagram-craft/model/serialization/types';
-import { MultiWindowAutosave } from './MultiWindowAutosave';
+import { assert } from '@diagram-craft/utils/assert';
 
 export type Autosave = {
   load: (
@@ -31,8 +31,15 @@ export type Autosave = {
   clear: () => void;
 };
 
+let AUTOSAVE_INSTANCE: Autosave | undefined = undefined;
+
 export const Autosave = {
+  init(instance: Autosave) {
+    AUTOSAVE_INSTANCE = instance;
+  },
+
   get(): Autosave {
-    return MultiWindowAutosave;
+    assert.present(AUTOSAVE_INSTANCE);
+    return AUTOSAVE_INSTANCE;
   }
 };

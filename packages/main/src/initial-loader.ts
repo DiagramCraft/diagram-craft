@@ -5,6 +5,7 @@ import defineAppConfig from '@diagram-craft/config';
 import { defaultAppConfig } from './appConfig.default';
 import { fileLoaderRegistry, stencilLoaderRegistry } from '@diagram-craft/canvas-app/loaders';
 import { AppConfig } from './appConfig';
+import { Autosave } from './react-app/autosave/Autosave';
 
 const config = defineAppConfig(defaultAppConfig);
 AppConfig.set(config);
@@ -29,3 +30,5 @@ for (const [k, v] of Object.entries(config.stencils?.loaders ?? {})) {
   // @ts-ignore
   stencilLoaderRegistry[k] = v;
 }
+
+Autosave.init(config.autosave);
