@@ -4,6 +4,10 @@ import { range } from '@diagram-craft/utils/array';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { extractMouseEvents } from '@diagram-craft/app-components/utils';
 import { DiagramPalette } from '@diagram-craft/model/diagramPalette';
+import {
+  disablePropertyEditorTooltip,
+  enablePropertyEditorTooltip
+} from '@diagram-craft/app-components/Tooltip';
 
 const transpose = (matrix: string[][]) =>
   Object.keys(matrix[0]).map(colNumber =>
@@ -69,7 +73,17 @@ export const ColorPicker = (props: Props) => {
 
   return (
     <div className={'cmp-color-picker'}>
-      <Popover.Root open={open} onOpenChange={o => setOpen(o)}>
+      <Popover.Root
+        open={open}
+        onOpenChange={o => {
+          setOpen(o);
+          if (o) {
+            disablePropertyEditorTooltip();
+          } else {
+            enablePropertyEditorTooltip();
+          }
+        }}
+      >
         <Popover.Trigger>
           <button
             {...extractMouseEvents(props)}
@@ -106,6 +120,7 @@ export const ColorPicker = (props: Props) => {
                   }}
                   onClick={() => {
                     setColor('');
+                    enablePropertyEditorTooltip();
                   }}
                 ></button>
               </div>
@@ -118,6 +133,7 @@ export const ColorPicker = (props: Props) => {
                   style={{ backgroundColor: c }}
                   onClick={() => {
                     setColor(c);
+                    enablePropertyEditorTooltip();
                   }}
                 ></button>
               ));
@@ -130,6 +146,7 @@ export const ColorPicker = (props: Props) => {
                 style={{ backgroundColor: c }}
                 onClick={() => {
                   setColor(c);
+                  enablePropertyEditorTooltip();
                 }}
               ></button>
             ))}
@@ -143,6 +160,7 @@ export const ColorPicker = (props: Props) => {
                     style={{ backgroundColor: c }}
                     onClick={() => {
                       setColor(c);
+                      enablePropertyEditorTooltip();
                     }}
                   ></button>
                 ))}
@@ -159,6 +177,7 @@ export const ColorPicker = (props: Props) => {
                 }}
                 onChange={c => {
                   props.onChangeCustomPalette(i, c);
+                  enablePropertyEditorTooltip();
                 }}
               />
             ))}
