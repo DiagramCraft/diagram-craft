@@ -199,7 +199,7 @@ export const MultiWindowAutosave = {
   /**
    * Check if any autosave exists
    */
-  exists: (): boolean => {
+  exists: async (): Promise<boolean> => {
     const storage = AutosaveStorage.get();
     return storage.entries.length > 0;
   },

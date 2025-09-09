@@ -7,7 +7,7 @@ import type { CRDTRoot } from '@diagram-craft/model/collaboration/crdt';
 import type { DiagramFactory, DocumentFactory } from '@diagram-craft/model/factory';
 import type { SerializedDiagramDocument } from '@diagram-craft/model/serialization/types';
 import type { Autosave } from './Autosave';
-
+import { assert } from '@diagram-craft/utils/assert';
 
 let needsSave:
   | {
@@ -29,7 +29,7 @@ export const ElectronAutosave: Autosave = {
     failSilently = false
   ): Promise<{ document: DiagramDocument; url?: string } | undefined> => {
     if (!CollaborationConfig.isNoOp) return undefined;
-    if (!window.electronAPI) return undefined;
+    assert.present(window.electronAPI);
 
     try {
       const autosaveContent = await window.electronAPI.autosaveLoad();
@@ -60,7 +60,7 @@ export const ElectronAutosave: Autosave = {
     callback?: (d: SerializedDiagramDocument) => void
   ): Promise<void> => {
     if (!CollaborationConfig.isNoOp) return;
-    if (!window.electronAPI) return;
+    assert.present(window.electronAPI);
 
     try {
       const diagram = await serializeDiagramDocument(doc);
@@ -81,13 +81,10 @@ export const ElectronAutosave: Autosave = {
   /**
    * Check if any autosave exists
    */
-  exists: (): boolean => {
-    if (!window.electronAPI) return false;
-    
+  exists: async (): Promise<boolean> => {
+    assert.present(window.electronAPI);
     try {
-      // Since the API is async but this method should be sync, 
-      // we'll return false and let the load method handle the actual check
-      return false;
+      return await window.electronAPI.autosaveExists();
     } catch {
       return false;
     }
@@ -97,7 +94,7 @@ export const ElectronAutosave: Autosave = {
    * Clear all autosave data
    */
   clear: (): void => {
-    if (!window.electronAPI) return;
+    assert.present(window.electronAPI);
     window.electronAPI.autosaveClear();
   },
 

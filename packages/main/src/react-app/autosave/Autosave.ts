@@ -26,7 +26,7 @@ export type Autosave = {
     callback?: (d: SerializedDiagramDocument) => void
   ) => void;
 
-  exists: () => boolean;
+  exists: () => Promise<boolean>;
 
   clear: () => void;
 };

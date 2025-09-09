@@ -246,7 +246,7 @@ export const App = (props: {
     updateApplicationModel(props.doc.diagrams[0], application.current, progressCallback);
   });
 
-  const [dirty, setDirty] = useState(Autosave.get().exists());
+  const [dirty, setDirty] = useState(false);
   const [hash, setHash] = useState(application.current.model.activeDocument.hash);
   const [popoverState, setPopoverState] = useState<NodeTypePopupState>(NodeTypePopup.INITIAL_STATE);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -258,6 +258,11 @@ export const App = (props: {
   useEffect(() => {
     if (props.url) userState.current.addRecentFile(props.url);
   }, [props.url]);
+
+  // Check initial autosave state
+  useEffect(() => {
+    Autosave.get().exists().then(setDirty).catch(() => setDirty(false));
+  }, []);
 
   // TODO: Can we change this to use state instead - see https://stackoverflow.com/questions/59600572/how-to-rerender-when-refs-change
   //       Can be tested if ruler indicators work at startup immediately or not
