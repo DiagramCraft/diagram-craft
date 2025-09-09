@@ -4,6 +4,7 @@ import { usePortal } from './PortalContext';
 import styles from './Select.module.css';
 import { extractDataAttributes, extractMouseEvents } from './utils';
 import { CSSProperties, ReactNode } from 'react';
+import { disablePropertyEditorTooltip, enablePropertyEditorTooltip } from './Tooltip';
 
 const Root = (props: RootProps) => {
   const portal = usePortal();
@@ -13,6 +14,13 @@ const Root = (props: RootProps) => {
       onValueChange={props.onChange}
       value={props.isIndeterminate ? undefined : props.value}
       open={props.open}
+      onOpenChange={open => {
+        if (open) {
+          disablePropertyEditorTooltip();
+        } else {
+          enablePropertyEditorTooltip();
+        }
+      }}
     >
       <ReactSelect.Trigger
         className={styles.cmpSelectTrigger}
@@ -27,7 +35,7 @@ const Root = (props: RootProps) => {
             props.isIndeterminate ? (
               <div style={{ color: 'var(--primary-fg)' }}>···</div>
             ) : (
-              props.placeholder ?? ''
+              (props.placeholder ?? '')
             )
           }
         />
@@ -65,6 +73,18 @@ const Item = (props: ItemProps) => {
       value={props.value}
       disabled={props.disabled ?? false}
       {...extractDataAttributes(props)}
+      onPointerEnter={e => {
+        console.log('enter');
+        e.stopPropagation();
+      }}
+      onPointerLeave={e => {
+        console.log('leave');
+        e.stopPropagation();
+      }}
+      onPointerMove={e => {
+        console.log('move');
+        e.stopPropagation();
+      }}
     >
       <ReactSelect.ItemText>{props.children}</ReactSelect.ItemText>
       <ReactSelect.ItemIndicator className={styles.cmpSelectContentItemIndicator}>
