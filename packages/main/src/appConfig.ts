@@ -1,5 +1,6 @@
 import { fileLoaderRegistry, type stencilLoaderRegistry } from '@diagram-craft/canvas-app/loaders';
 import { assert } from '@diagram-craft/utils/assert';
+import type { Autosave } from './react-app/autosave/Autosave';
 
 /**
  * Main application configuration type that defines all configurable aspects of the application.
@@ -112,6 +113,11 @@ export type AppConfig = {
      */
     loaders: typeof fileLoaderRegistry;
   };
+
+  /**
+   * Which Autosave implementation to use
+   */
+  autosave: Autosave;
 };
 
 type StencilRegistryConfigEntry<K extends keyof StencilLoaderOpts> = {

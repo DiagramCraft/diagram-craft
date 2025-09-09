@@ -5,7 +5,6 @@ import { App, DiagramRef } from './App';
 import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { loadFileFromUrl, stencilLoaderRegistry } from '@diagram-craft/canvas-app/loaders';
 import { assert } from '@diagram-craft/utils/assert';
-import { Autosave } from './Autosave';
 import { newid } from '@diagram-craft/utils/id';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -14,6 +13,7 @@ import type { DiagramFactory, DocumentFactory } from '@diagram-craft/model/facto
 import type { AwarenessUserState } from '@diagram-craft/model/collaboration/awareness';
 import { UserState } from './UserState';
 import { AppConfig, type StencilRegistryConfig } from './appConfig';
+import { Autosave } from './react-app/autosave/Autosave';
 
 const loadInitialDocument = async (
   diagram: DiagramRef | undefined,
@@ -42,11 +42,19 @@ const loadInitialDocument = async (
       const v = await documentFactory.createDocument(root, diagram!.url, progress);
       return { doc: v, url: diagram?.url };
     } else {
-      const autosaved = await Autosave.load(root, progress, documentFactory, diagramFactory, true);
-      if (autosaved) {
+      // Try multi-window autosave first
+      const multiWindowAutosaved = await Autosave.get().load(
+        root,
+        progress,
+        documentFactory,
+        diagramFactory,
+        true
+      );
+
+      if (multiWindowAutosaved) {
         console.log('Load from auto save');
-        autosaved.document!.url = diagram?.url;
-        return { doc: autosaved.document, url: diagram?.url };
+        multiWindowAutosaved.document!.url = diagram?.url;
+        return { doc: multiWindowAutosaved.document, url: diagram?.url };
       } else {
         console.log('Load from url');
         const defDiagram = await loadFileFromUrl(
