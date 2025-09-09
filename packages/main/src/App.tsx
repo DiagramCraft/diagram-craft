@@ -29,7 +29,7 @@ import { NodeTool } from '@diagram-craft/canvas/tools/nodeTool';
 import { PenTool } from '@diagram-craft/canvas-app/tools/penTool';
 import { makeActionMap } from '@diagram-craft/canvas/keyMap';
 import { EditableCanvas } from '@diagram-craft/canvas-react/EditableCanvas';
-import { Autosave } from './Autosave';
+import { MultiWindowAutosave } from './MultiWindowAutosave';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { HelpMessage } from './react-app/components/HelpMessage';
 import { Diagram } from '@diagram-craft/model/diagram';
@@ -205,7 +205,7 @@ export const App = (props: {
 
       updateApplicationModel(doc.diagrams[0], application.current, progressCallback);
 
-      Autosave.clear();
+      MultiWindowAutosave.clear();
       setDirty(false);
       setHash(doc.hash);
 
@@ -231,12 +231,12 @@ export const App = (props: {
 
       updateApplicationModel(diagram, application.current, progressCallback);
 
-      Autosave.clear();
+      MultiWindowAutosave.clear();
       setDirty(false);
       setHash(doc.hash);
     },
     clearDirty: () => {
-      Autosave.clear();
+      MultiWindowAutosave.clear();
       setDirty(false);
       setHash(application.current.model.activeDocument.hash);
     }
@@ -246,7 +246,7 @@ export const App = (props: {
     updateApplicationModel(props.doc.diagrams[0], application.current, progressCallback);
   });
 
-  const [dirty, setDirty] = useState(Autosave.exists());
+  const [dirty, setDirty] = useState(MultiWindowAutosave.exists());
   const [hash, setHash] = useState(application.current.model.activeDocument.hash);
   const [popoverState, setPopoverState] = useState<NodeTypePopupState>(NodeTypePopup.INITIAL_STATE);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -274,7 +274,7 @@ export const App = (props: {
   const autosave = (event: any) => {
     if (event.silent) return;
 
-    Autosave.asyncSave(url, doc, s => {
+    MultiWindowAutosave.asyncSave(url, doc, s => {
       setDirty(s.hash !== hash);
     });
     setDirty(true);

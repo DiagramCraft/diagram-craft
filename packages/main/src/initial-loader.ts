@@ -11,7 +11,7 @@ AppConfig.set(config);
 
 // Initialize collaboration
 if (config.collaboration?.backend === 'yjs') {
-  CollaborationConfig.idNoOp = false;
+  CollaborationConfig.isNoOp = false;
   CollaborationConfig.CRDTRoot = YJSRoot;
   CollaborationConfig.CRDTMap = YJSMap;
   CollaborationConfig.Backend = new YJSWebSocketCollaborationBackend(

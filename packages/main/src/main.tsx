@@ -9,7 +9,6 @@ import {
 } from '@diagram-craft/canvas-app/defaultRegistry';
 import { registerDrawioBaseNodeTypes } from '@diagram-craft/canvas-drawio/register';
 import { DiagramRef } from './App';
-import { Autosave } from './Autosave';
 import { UserState } from './UserState';
 import {
   makeDefaultDiagramFactory,
@@ -17,6 +16,7 @@ import {
 } from '@diagram-craft/model/factory';
 import { AppConfig, type StencilRegistryConfig } from './appConfig';
 import { ElectronIntegration } from './electron';
+import { MultiWindowAutosave } from './MultiWindowAutosave';
 
 ELECTRON: {
   if (window.electronAPI) {
@@ -44,7 +44,7 @@ const diagrams: Array<DiagramRef> = [];
 if (location.hash !== '') {
   const url = location.hash.slice(1);
   diagrams.unshift({ url });
-  Autosave.clear();
+  MultiWindowAutosave.clear();
 } else {
   const userState = UserState.get();
   if (userState.recentFiles.length > 0) {
