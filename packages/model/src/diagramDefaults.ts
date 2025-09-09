@@ -291,7 +291,14 @@ const _nodeDefaults: Omit<NodePropsForRendering, 'name' | 'custom' | 'indicators
     sketchFillType: 'fill',
     sketchStrength: 0.1,
     rounding: false,
-    roundingAmount: 20
+    roundingAmount: 20,
+
+    isometric: {
+      enabled: false,
+      shape: 'none',
+      size: 10,
+      color: 'gray'
+    }
   },
 
   // TODO: Honor these properties even if part of group

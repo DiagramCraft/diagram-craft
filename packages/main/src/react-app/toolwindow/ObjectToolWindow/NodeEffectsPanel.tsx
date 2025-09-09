@@ -10,6 +10,8 @@ import { Property } from './types';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { PropertyEditor } from '../../components/PropertyEditor';
 import { useDiagram } from '../../../application';
+import { ColorPicker } from '../../components/ColorPicker';
+import { useConfiguration } from '../../context/ConfigurationContext';
 
 type FormProps = {
   diagram: Diagram;
@@ -23,6 +25,11 @@ type FormProps = {
   sketchFillType: Property<'fill' | 'hachure'>;
   rounding: Property<boolean>;
   roundingAmount: Property<number>;
+
+  isometric: Property<boolean>;
+  isometricShape: Property<'none' | 'rect'>;
+  isometricSize: Property<number>;
+  isometricColor: Property<string>;
 };
 
 export const NodeEffectsPanelForm = ({
@@ -36,8 +43,13 @@ export const NodeEffectsPanelForm = ({
   sketchStrength,
   sketchFillType,
   rounding,
-  roundingAmount
+  roundingAmount,
+  isometric,
+  isometricShape,
+  isometricSize,
+  isometricColor
 }: FormProps) => {
+  const $cfg = useConfiguration();
   return (
     <div className={'cmp-labeled-table'}>
       <div className={'cmp-labeled-table__label'}>Reflection:</div>
@@ -125,6 +137,50 @@ export const NodeEffectsPanelForm = ({
           </div>
         </>
       )}
+
+      <div className={'cmp-labeled-table__label'}>Isometric:</div>
+      <div className={'cmp-labeled-table__value'}>
+        <PropertyEditor property={isometric} render={props => <Checkbox {...props} />} />
+      </div>
+
+      <div className={'cmp-labeled-table__label'}></div>
+      <div className={'cmp-labeled-table__value'}>
+        <PropertyEditor
+          property={isometricShape}
+          render={props => (
+            <Select.Root {...props} onChange={s => props.onChange(s as 'none' | 'rect')}>
+              <Select.Item value={'none'}>None</Select.Item>
+              <Select.Item value={'rect'}>Rectangle</Select.Item>
+            </Select.Root>
+          )}
+        />
+      </div>
+
+      <div className={'cmp-labeled-table__label'}></div>
+      <div className={'cmp-labeled-table__value'}>
+        <PropertyEditor
+          property={isometricSize}
+          formatValue={v => round(v)}
+          storeValue={v => v}
+          render={props => <Slider {...props} unit={'px'} max={25} />}
+        />
+      </div>
+
+      <div className={'cmp-labeled-table__label'}></div>
+      <div className={'cmp-labeled-table__value'}>
+        <PropertyEditor
+          property={isometricColor}
+          render={props => (
+            <ColorPicker
+              {...props}
+              palette={$cfg.palette.primary}
+              canClearColor={true}
+              customPalette={$d.document.customPalette}
+              onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+            />
+          )}
+        />
+      </div>
     </div>
   );
 };
@@ -147,6 +203,11 @@ export const NodeEffectsPanel = (props: Props) => {
   const sketchStrength = useNodeProperty($d, 'effects.sketchStrength');
   const sketchFillType = useNodeProperty($d, 'effects.sketchFillType');
 
+  const isometric = useNodeProperty($d, 'effects.isometric.enabled');
+  const isometricShape = useNodeProperty($d, 'effects.isometric.shape');
+  const isometricSize = useNodeProperty($d, 'effects.isometric.size');
+  const isometricColor = useNodeProperty($d, 'effects.isometric.color');
+
   useEventListener($d.selectionState, 'change', redraw);
 
   return (
@@ -168,6 +229,10 @@ export const NodeEffectsPanel = (props: Props) => {
         sketchFillType={sketchFillType}
         rounding={rounding}
         roundingAmount={roundingAmount}
+        isometric={isometric}
+        isometricShape={isometricShape}
+        isometricSize={isometricSize}
+        isometricColor={isometricColor}
       />
     </ToolWindowPanel>
   );
