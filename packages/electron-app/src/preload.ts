@@ -31,6 +31,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   getUsername: () => ipcRenderer.invoke('user:getUsername'),
 
+  autosaveSave: (data: string) => ipcRenderer.invoke('autosave:save', data),
+  autosaveLoad: () => ipcRenderer.invoke('autosave:load'),
+  autosaveExists: () => ipcRenderer.invoke('autosave:exists'),
+  autosaveClear: () => ipcRenderer.invoke('autosave:clear'),
+
   platform: process.platform,
 
   isElectron: true
