@@ -109,11 +109,14 @@ export class AnchorHandlesComponent extends Component<Props> {
       if (a.clip) return;
       if (!a.isPrimary) return;
 
-      const p1 = node._getPositionInBounds(a.start);
+      const p1 = node._getPositionInBounds(a.start, false);
 
       // Need to calculate a new normal, by creating a vector in the unit coordinate system along the normal
       // Then, calculating the angle of the vector between the two projected points
-      const p2 = node._getPositionInBounds(Point.add(a.start, Vector.fromPolar(a.normal ?? 0, 1)));
+      const p2 = node._getPositionInBounds(
+        Point.add(a.start, Vector.fromPolar(a.normal ?? 0, 1)),
+        false
+      );
       const normalInEffect = Vector.angle(Vector.from(p1, p2));
 
       const p = shouldScale

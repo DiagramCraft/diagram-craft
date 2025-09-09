@@ -846,7 +846,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     return this._getPositionInBounds(this.getAnchor(anchor).start);
   }
 
-  _getPositionInBounds(p: Point) {
+  _getPositionInBounds(p: Point, respectRotation = true) {
     const point = {
       x: this.bounds.x + this.bounds.w * (this.renderProps.geometry.flipH ? 1 - p.x : p.x),
       y: this.bounds.y + this.bounds.h * (this.renderProps.geometry.flipV ? 1 - p.y : p.y)
@@ -855,7 +855,9 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     const adjustedPoint = this.renderProps.effects.isometric.enabled
       ? makeIsometricTransform(this.bounds).point(point)
       : point;
-    return Point.rotateAround(adjustedPoint, this.bounds.r, Box.center(this.bounds));
+    return respectRotation
+      ? Point.rotateAround(adjustedPoint, this.bounds.r, Box.center(this.bounds))
+      : adjustedPoint;
   }
 
   get edges(): DiagramEdge[] {
