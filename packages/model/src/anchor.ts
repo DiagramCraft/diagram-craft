@@ -109,14 +109,7 @@ export const getAnchorPosition = (
   anchor: Anchor,
   key: 'start' | 'end' = 'start'
 ): Point => {
-  return Point.rotateAround(
-    {
-      x: node.bounds.x + anchor[key]!.x * node.bounds.w,
-      y: node.bounds.y + anchor[key]!.y * node.bounds.h
-    },
-    node.bounds.r,
-    Box.center(node.bounds)
-  );
+  return node._getPositionInBounds(anchor[key]!);
 };
 
 export type BoundaryDirection = 'clockwise' | 'counter-clockwise' | 'unknown';

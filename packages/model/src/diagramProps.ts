@@ -224,6 +224,13 @@ declare global {
 
       rounding?: boolean;
       roundingAmount?: number;
+
+      isometric?: {
+        enabled?: boolean;
+        shape?: 'none' | 'rect';
+        size?: number;
+        color?: string;
+      };
     };
 
     text?: {

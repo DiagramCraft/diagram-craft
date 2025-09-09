@@ -21,6 +21,7 @@ import { DeepRequired } from '@diagram-craft/utils/types';
 import { INDICATORS } from './indicators';
 import { Box, WritableBox } from '@diagram-craft/geometry/box';
 import { isEmptyString } from '@diagram-craft/utils/strings';
+import { isometricBaseShape, makeIsometricTransform } from '../effects/isometric';
 
 export type NodeComponentProps = {
   element: DiagramNode;
@@ -224,8 +225,25 @@ export class BaseNodeComponent<
 
     /* Handle all effects ************************************************************ */
 
+    const isIsometric = nodeProps.effects.isometric.enabled;
+    const isometricTransform = isIsometric
+      ? makeIsometricTransform(props.element.bounds)
+      : undefined;
+
     if (nodeProps.shadow.enabled) {
       style.filter = makeShadowFilter(nodeProps.shadow);
+    }
+
+    if (isIsometric) {
+      children.push(
+        ...isometricBaseShape(
+          props.element.bounds,
+          isometricTransform!,
+          nodeProps.effects.isometric.size,
+          nodeProps.effects.isometric.color,
+          nodeProps.effects.isometric.shape
+        )
+      );
     }
 
     if (nodeProps.effects.blur || nodeProps.effects.opacity !== 1) {
@@ -304,12 +322,13 @@ export class BaseNodeComponent<
       );
     }
 
-    const transform = `${Transforms.rotate(props.element.bounds)} ${nodeProps.geometry.flipH ? Transforms.flipH(props.element.bounds) : ''} ${nodeProps.geometry.flipV ? Transforms.flipV(props.element.bounds) : ''}`;
+    const transform = `${Transforms.rotate(props.element.bounds)} ${nodeProps.geometry.flipH ? Transforms.flipH(props.element.bounds) : ''} ${nodeProps.geometry.flipV ? Transforms.flipV(props.element.bounds) : ''} ${isIsometric ? isometricTransform?.svgForward() : ''}`;
     const hasAction =
       props.element.renderProps.action.type !== undefined &&
       props.element.renderProps.action.type !== 'none' &&
       !isEmptyString(props.element.renderProps.action.url);
-    return svg.g(
+
+    const mainGroup = svg.g(
       {
         id: `node-${props.element.id}`,
         class:
@@ -322,10 +341,16 @@ export class BaseNodeComponent<
             .map(h => `svg-node--highlight-${h}`)
             .join(' '),
         transform: transform.trim(),
-        style: style.filter ? `filter: ${style.filter}` : ''
+        style: !isIsometric && style.filter ? `filter: ${style.filter}` : ''
       },
       ...children
     );
+
+    if (isIsometric) {
+      return svg.g({ style: style.filter ? `filter: ${style.filter}` : '' }, mainGroup);
+    } else {
+      return mainGroup;
+    }
   }
 
   private buildIndicator(props: NodeComponentProps, indicator: DeepRequired<Indicator>) {

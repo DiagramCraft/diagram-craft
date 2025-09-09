@@ -27,6 +27,10 @@ export const NodeEffectsEditor: Editor = props => {
       sketch={makeProperty($p, 'effects.sketch', nodeDefaults, onChange)}
       sketchStrength={makeProperty($p, 'effects.sketchStrength', nodeDefaults, onChange)}
       sketchFillType={makeProperty($p, 'effects.sketchFillType', nodeDefaults, onChange)}
+      isometric={makeProperty($p, 'effects.isometric.enabled', nodeDefaults, onChange)}
+      isometricColor={makeProperty($p, 'effects.isometric.color', nodeDefaults, onChange)}
+      isometricSize={makeProperty($p, 'effects.isometric.size', nodeDefaults, onChange)}
+      isometricShape={makeProperty($p, 'effects.isometric.shape', nodeDefaults, onChange)}
     />
   );
 };

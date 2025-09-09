@@ -38,6 +38,7 @@ import {
   type MappedCRDTMapMapType
 } from './collaboration/datatypes/mapped/mappedCrdtMap';
 import { unique } from '@diagram-craft/utils/array';
+import { makeIsometricTransform } from '@diagram-craft/canvas/effects/isometric';
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;
@@ -845,15 +846,18 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     return this._getPositionInBounds(this.getAnchor(anchor).start);
   }
 
-  _getPositionInBounds(p: Point) {
-    return Point.rotateAround(
-      {
-        x: this.bounds.x + this.bounds.w * (this.renderProps.geometry.flipH ? 1 - p.x : p.x),
-        y: this.bounds.y + this.bounds.h * (this.renderProps.geometry.flipV ? 1 - p.y : p.y)
-      },
-      this.bounds.r,
-      Box.center(this.bounds)
-    );
+  _getPositionInBounds(p: Point, respectRotation = true) {
+    const point = {
+      x: this.bounds.x + this.bounds.w * (this.renderProps.geometry.flipH ? 1 - p.x : p.x),
+      y: this.bounds.y + this.bounds.h * (this.renderProps.geometry.flipV ? 1 - p.y : p.y)
+    };
+    // TODO: It would be nice if we could generalize this a bit
+    const adjustedPoint = this.renderProps.effects.isometric.enabled
+      ? makeIsometricTransform(this.bounds).point(point)
+      : point;
+    return respectRotation
+      ? Point.rotateAround(adjustedPoint, this.bounds.r, Box.center(this.bounds))
+      : adjustedPoint;
   }
 
   get edges(): DiagramEdge[] {
