@@ -2,59 +2,33 @@ import { Box } from '@diagram-craft/geometry/box';
 import { g, path, rect } from '../component/vdom-svg';
 import type { VNode } from '../component/vdom';
 import type { Point } from '@diagram-craft/geometry/point';
-
-const SVG_NS = 'http://www.w3.org/2000/svg';
-
-let svg: SVGSVGElement | undefined = undefined;
+import { SvgTransformBuilder } from '@diagram-craft/geometry/svgTransform';
 
 const SCALE = 0.5602;
+const SCALE_INV = 1 / SCALE;
 const ANGLE = 45;
 
 export type IsometricTransform = {
-  svgForwardTransform: () => string;
-  svgReverseTransform: () => string;
-  svgForwardTransformPoint: (source: Point) => Point;
+  svgForward: () => string;
+  svgReverse: () => string;
+  point: (source: Point) => Point;
 };
 
 export const makeIsometricTransform = (bounds: Box): IsometricTransform => {
-  const center = Box.center(bounds);
+  const c = Box.center(bounds);
 
-  const forward = [
-    `translate(${center.x}, ${center.y})`,
-    `scale(1, ${SCALE})`,
-    `rotate(${-ANGLE})`,
-    `translate(-${center.x}, -${center.y})`
-  ].join(' ');
-  const reverse = [
-    `translate(${center.x}, ${center.y})`,
-    `rotate(${ANGLE})`,
-    `scale(1, ${1 / SCALE})`,
-    `translate(-${center.x}, -${center.y})`
-  ].join(' ');
-
-  const el = document.createElementNS(SVG_NS, 'rect');
-  el.setAttribute('transform', forward);
-
-  const matrix = el.transform.baseVal.consolidate()?.matrix;
+  const fwd = new SvgTransformBuilder(c).scale(1, SCALE).rotate(-ANGLE).build();
+  const rev = new SvgTransformBuilder(c).rotate(ANGLE).scale(1, SCALE_INV).build();
 
   return {
-    svgForwardTransform: () => forward,
-
-    svgReverseTransform: () => reverse,
-
-    svgForwardTransformPoint: (source: Point) => {
-      svg ??= document.createElementNS(SVG_NS, 'svg');
-      const p = svg.createSVGPoint();
-      p.x = source.x;
-      p.y = source.y;
-
-      return p.matrixTransform(matrix);
-    }
+    svgForward: () => fwd.asSvgString(),
+    svgReverse: () => rev.asSvgString(),
+    point: (source: Point) => fwd.transformPoint(source)
   };
 };
 
 export const isometricBaseShape = (
-  bounds: Box,
+  box: Box,
   transform: IsometricTransform,
   height: number,
   color: string,
@@ -66,28 +40,22 @@ export const isometricBaseShape = (
 
   const dest: VNode[] = [
     rect({
-      x: bounds.x - padding,
-      y: bounds.y - padding,
-      width: bounds.w + padding * 2,
-      height: bounds.h + padding * 2,
+      x: box.x - padding,
+      y: box.y - padding,
+      width: box.w + padding * 2,
+      height: box.h + padding * 2,
       stroke: 'none',
       fill: color
     })
   ];
 
-  const tp1 = transform.svgForwardTransformPoint({ x: bounds.x - padding, y: bounds.y - padding });
-  const tp2 = transform.svgForwardTransformPoint({
-    x: bounds.x - padding,
-    y: bounds.y + padding + bounds.h
-  });
-  const tp3 = transform.svgForwardTransformPoint({
-    x: bounds.x + padding + bounds.w,
-    y: bounds.y + padding + bounds.h
-  });
+  const tp1 = transform.point({ x: box.x - padding, y: box.y - padding });
+  const tp2 = transform.point({ x: box.x - padding, y: box.y + padding + box.h });
+  const tp3 = transform.point({ x: box.x + padding + box.w, y: box.y + padding + box.h });
 
   dest.push(
     g(
-      { transform: `${transform.svgReverseTransform()}` },
+      { transform: `${transform.svgReverse()}` },
 
       path({
         d: `M ${tp1.x} ${tp1.y} L ${tp1.x} ${tp1.y + height} L ${tp2.x} ${tp2.y + height} L ${tp2.x} ${tp2.y} Z`,
