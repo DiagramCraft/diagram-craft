@@ -31,14 +31,14 @@
       margin-right: 0.5rem;
       align-items: center;
       display: flex;
-      color: var(--blue-10);
+      color: var(--accent-fg);
 
       > a {
         display: flex;
         color: var(--tertiary-fg);
 
         &:hover {
-          color: var(--blue-10);
+          color: var(--accent-hover-fg);
         }
 
         &[aria-disabled="true"] {
@@ -108,14 +108,14 @@
         color: var(--primary-fg);
 
         &:hover {
-          color: var(--blue-10);
+          color: var(--accent-hover-fg);
         }
       }
     }
   }
 
   .cmp-accordion__chevron {
-    color: var(--blue-10);
+    color: var(--accent-fg);
     transition: transform 300ms cubic-bezier(0.87, 0, 0.13, 1);
   }
 

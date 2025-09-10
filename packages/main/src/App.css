@@ -63,6 +63,12 @@
   --primary-fg: var(--slate-11);
   --primary-border: var(--slate-6);
 
+  --accent-bg: var(--blue-4);
+  --accent-fg: var(--blue-9);
+  --accent-dim-fg: var(--blue-6);
+  --accent-border: var(--blue-6);
+  --accent-hover-fg: var(--blue-11);
+
   --cmp-fg: var(--slate-11);
   --cmp-bg: var(--slate-3);
   --cmp-border: var(--slate-6);
@@ -103,6 +109,12 @@
   --primary-bg: var(--slate-2);
   --primary-fg: var(--slate-11);
   --primary-border: var(--slate-6);
+
+  --accent-bg: var(--blue-4);
+  --accent-fg: var(--blue-9);
+  --accent-dim-fg: var(--blue-6);
+  --accent-border: var(--blue-6);
+  --accent-hover-fg: var(--blue-11);
 
   --cmp-fg: var(--slate-11);
   --cmp-bg: var(--slate-3);
@@ -243,7 +255,7 @@ input::-webkit-input-placeholder {
 div[data-field-state='set'],
 button[data-field-state='set'],
 input[type="checkbox"][data-field-state='set'] {
-  border: 1px solid var(--blue-7);
+  border: 1px solid var(--accent-border);
 }
 
 div[data-field-state='overridden'],
@@ -536,7 +548,7 @@ foreignObject {
     border-top: 1px solid var(--secondary-bg);
 
     & div[data-state='active'] {
-      color: var(--blue-8);
+      color: var(--accent-fg);
     }
   }
 }
@@ -574,7 +586,7 @@ foreignObject {
     }
 
     .svg-cursor {
-      stroke: var(--blue-11);
+      stroke: var(--accent-fg);
       stroke-width: 1;
     }
   }
@@ -654,8 +666,8 @@ foreignObject {
     grid-template-columns: 1fr min-content min-content;
 
     &:hover {
-      color: var(--blue-11);
-      background-color: var(--blue-4);
+      color: var(--accent-hover-fg);
+      background-color: var(--accent-bg);
     }
   }
 
@@ -671,7 +683,7 @@ foreignObject {
       left: 0;
       right: 0;
       height: 4px;
-      background-color: var(--blue-11);
+      background-color: var(--accent-hover-fg);
       width: 100%;
       z-index: 100;
     }
@@ -685,7 +697,7 @@ foreignObject {
       left: 0;
       right: 0;
       height: 4px;
-      background-color: var(--blue-11);
+      background-color: var(--accent-hover-fg);
       width: 100%;
       z-index: 100;
     }
@@ -698,7 +710,7 @@ foreignObject {
 
   .cmp-layer-list__layer--selected {
     & .cmp-tree__node__label, .cmp-tree__node__value {
-      color: var(--blue-11);
+      color: var(--accent-hover-fg);
       font-weight: bold;
     }
   }
@@ -711,7 +723,7 @@ foreignObject {
       bottom: -1px;
       left: 0;
       width: 2px;
-      background-color: var(--blue-11);
+      background-color: var(--accent-hover-fg);
     }
   }
 }
@@ -759,12 +771,12 @@ foreignObject {
 
       &:hover {
         background-color: var(--cmp-hover-bg);
-        color: var(--blue-11);
+        color: var(--accent-hover-fg);
       }
 
       &[data-state='active'] {
-        color: var(--blue-11);
-        border-bottom: 2px solid var(--blue-11);
+        color: var(--accent-hover-fg);
+        border-bottom: 2px solid var(--accent-hover-fg);
       }
     }
   }
@@ -777,7 +789,7 @@ foreignObject {
 
     &:hover {
       background-color: var(--cmp-hover-bg);
-      color: var(--blue-11);
+      color: var(--accent-hover-fg);
     }
   }
 }
@@ -829,8 +841,8 @@ foreignObject {
     cursor: pointer;
 
     &.cmp-transform__node--active {
-      stroke: var(--blue-11);
-      fill: var(--blue-11);
+      stroke: var(--accent-hover-fg);
+      fill: var(--accent-hover-fg);
     }
   }
 
@@ -879,13 +891,17 @@ foreignObject {
     overflow: hidden;
 
     &:hover {
-      border-left: 2px solid var(--blue-11);
+      border-left: 2px solid var(--accent-hover-fg);
       background-color: var(--cmp-hover-bg);
+
+      svg {
+        color: var(--accent-hover-fg);
+      }
     }
 
     & svg {
       margin-top: 2px;
-      color: var(--blue-11);
+      color: var(--accent-fg);
     }
   }
 
@@ -895,6 +911,7 @@ foreignObject {
   }
 }
 
+/*
 .cmp-schema-selector {
   .cmp-schema-selector__schemas {
     margin-right: 2rem;
@@ -931,6 +948,7 @@ foreignObject {
     }
   }
 }
+*/
 
 /* Adjustments of general components for specific use-cases */
 
@@ -1002,7 +1020,7 @@ body[data-dragmimetype='application/x-diagram-craft-element-instances'] *[data-d
 
 .util-action {
   &:hover {
-    color: var(--blue-11);
+    color: var(--accent-hover-fg);
     cursor: pointer;
   }
 }

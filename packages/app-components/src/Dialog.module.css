@@ -22,6 +22,7 @@
     padding: 25px;
     animation: contentShow 150ms cubic-bezier(0.16, 1, 0.3, 1);
   }
+
   .cmp-dialog__content:focus {
     outline: none;
   }
@@ -58,17 +59,21 @@
     background-color: var(--primary-bg);
 
     border: 1px solid var(--_button-border);
+
     &:hover {
       outline: 2px solid var(--_button-border);
       outline-offset: -1px;
     }
   }
+
   .cmp-dialog__button--default {
-    --_button-border: var(--blue-6);
+    --_button-border: var(--accent-border);
   }
+
   .cmp-dialog__button--secondary {
     --_button-border: var(--tertiary-fg);
   }
+
   .cmp-dialog__button--danger {
     --_button-border: var(--error-fg);
   }

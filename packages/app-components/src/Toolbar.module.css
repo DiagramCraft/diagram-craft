@@ -73,7 +73,8 @@
   .cmp-toolbar__button:focus,
   .cmp-toolbar__button[data-focus="true"] {
     position: relative;
-    box-shadow: 0 0 0 2px var(--blue-7);
+    color: var(--highlight-fg);
+    background-color: var(--highlight-bg);
     outline: none;
   }
 

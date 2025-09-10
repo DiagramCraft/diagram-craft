@@ -10,8 +10,8 @@
   margin-right: -10px;
 
   &:hover {
-    color: var(--blue-11);
-    background-color: var(--blue-4);
+    color: var(--accent-hover-fg);
+    background-color: var(--accent-bg);
   }
 
   > div {

@@ -210,11 +210,11 @@
       gap: 0.25rem;
       margin-left: auto;
       padding-left: 20px;
-      color: var(--blue-11);
+      color: var(--accent-fg);
     }
 
     &[data-highlighted] > .cmp-context-menu__right-slot {
-      color: var(--blue-11);
+      color: var(--accent-fg);
     }
 
     &[data-disabled] .cmp-context-menu__right-slot {

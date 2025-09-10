@@ -32,7 +32,7 @@
   border-bottom: 2px solid transparent;
 
   &[data-state="active"] {
-    border-bottom: 2px solid var(--blue-9);
+    border-bottom: 2px solid var(--accent-hover-fg);
   }
 }
 

@@ -24,11 +24,11 @@ export const LayerIndicator = () => {
             {diagram.activeLayer.type === 'regular' ? (
               <TbStack2 />
             ) : diagram.activeLayer.type === 'reference' ? (
-              <div style={{ color: 'var(--blue-11)', display: 'flex', alignItems: 'center' }}>
+              <div style={{ color: 'var(--accent-fg)', display: 'flex', alignItems: 'center' }}>
                 <TbLink />
               </div>
             ) : (
-              <div style={{ color: 'var(--blue-11)', display: 'flex', alignItems: 'center' }}>
+              <div style={{ color: 'var(--accent-fg)', display: 'flex', alignItems: 'center' }}>
                 <TbAdjustments />
               </div>
             )}

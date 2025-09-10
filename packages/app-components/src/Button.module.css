@@ -71,7 +71,7 @@
   &:hover,
   &[data-hover="true"] {
     background: none;
-    color: var(--blue-11);
+    color: var(--accent-hover-fg);
   }
 
   &:disabled {
