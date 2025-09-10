@@ -55,11 +55,14 @@
 }
 
 :root {
+  --cmp-radius: 4px;
+}
+
+.light-theme {
   --primary-bg: var(--slate-2);
   --primary-fg: var(--slate-11);
   --primary-border: var(--slate-6);
 
-  --cmp-radius: 4px;
   --cmp-fg: var(--slate-11);
   --cmp-bg: var(--slate-3);
   --cmp-border: var(--slate-6);
@@ -84,6 +87,8 @@
 
   --secondary-bg: var(--slate-3);
   --secondary-fg: var(--slate-11);
+  --secondary-border: var(--slate-5);
+
   --tertiary-fg: var(--slate-9);
   --dimmed-fg: var(--slate-4);
 
@@ -123,6 +128,8 @@
 
   --secondary-bg: var(--slate-4);
   --secondary-fg: var(--slate-11);
+  --secondary-border: var(--slate-5);
+
   --tertiary-fg: var(--slate-9);
   --dimmed-fg: var(--slate-6);
 
@@ -242,7 +249,7 @@ input[type="checkbox"][data-field-state='set'] {
 div[data-field-state='overridden'],
 button[data-field-state='overridden'],
 input[type="checkbox"][data-field-state='overridden'] {
-  background: repeating-linear-gradient(-45deg, var(--slate-5), var(--slate-5) 5px, var(--cmp-bg) 5px, var(--cmp-bg) 10px);
+  background: repeating-linear-gradient(-45deg, var(--cmp-border), var(--cmp-border) 5px, var(--cmp-bg) 5px, var(--cmp-bg) 10px);
 }
 
 
@@ -625,6 +632,15 @@ foreignObject {
   &[data-isempty="true"] {
     border-bottom: none;
   }
+
+
+  > .cmp-toolbar {
+    padding: 3px;
+    margin: -6px 0 -3px 0;;
+    width: calc(100% + 20px);
+    max-width: calc(100% + 20px);
+  }
+
 }
 
 .cmp-panel__headless--no-padding {
@@ -644,7 +660,7 @@ foreignObject {
   }
 
   .cmp-tree__node[data-depth="0"]:not(:first-child) {
-    border-top: 1px dashed var(--slate-5);
+    border-top: 1px dashed var(--secondary-border);
   }
 
   .cmp-tree__node[data-pendingdrop="before"] {
@@ -725,7 +741,7 @@ foreignObject {
       color: var(--primary-fg);
       background-color: transparent;
       border: none;
-      border-right: 1px solid var(--slate-6);
+      border-right: 1px solid var(--cmp-border);
       border-bottom: 2px solid transparent;
       min-width: max-content;
       padding: 0;
@@ -742,7 +758,7 @@ foreignObject {
       }
 
       &:hover {
-        background-color: var(--slate-3);
+        background-color: var(--cmp-hover-bg);
         color: var(--blue-11);
       }
 
@@ -755,12 +771,12 @@ foreignObject {
 
   .cmp-document-tabs__add {
     background-color: transparent;
-    border-right: 1px solid var(--slate-6);
-    border-left: 1px solid var(--slate-6);
+    border-right: 1px solid var(--cmp-border);
+    border-left: 1px solid var(--cmp-border);
     color: var(--primary-fg);
 
     &:hover {
-      background-color: var(--slate-3);
+      background-color: var(--cmp-hover-bg);
       color: var(--blue-11);
     }
   }
@@ -772,7 +788,7 @@ foreignObject {
   margin-left: auto;
   font-size: 11px;
   border: none;
-  border-left: 1px solid var(--slate-6);
+  border-left: 1px solid var(--cmp-border);
   padding: 0 0.5rem;
   gap: 0.25rem;
   background-color: var(--primary-bg);
@@ -864,7 +880,7 @@ foreignObject {
 
     &:hover {
       border-left: 2px solid var(--blue-11);
-      background-color: var(--slate-3);
+      background-color: var(--cmp-hover-bg);
     }
 
     & svg {

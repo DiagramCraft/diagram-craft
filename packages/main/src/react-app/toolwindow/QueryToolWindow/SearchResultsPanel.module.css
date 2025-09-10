@@ -46,15 +46,9 @@
   padding: 0.25rem;
   cursor: pointer;
   border-radius: 4px;
-  background-color: var(--slate-6);
-  border: 1px solid var(--gray-6);
-
-  --canvas-fg: var(--slate-12);
-  --canvas-bg: white;
-  --canvas-bg2: white;
+  background-color: var(--canvas-bg);
 
   &:hover {
-    background-color: var(--blue-4);
-    border-color: var(--blue-7);
+    background-color: var(--cmp-hover-bg);
   }
 }

@@ -97,7 +97,7 @@
     width: 100%;
     height: 1rem;
     border-radius: 0;
-    border: 1px solid var(--slate-11);
+    border: 1px solid var(--cmp-border);
   }
 
   .cmp-color-grid__editable {
@@ -105,7 +105,7 @@
     width: 100%;
     height: 1rem;
     border-radius: 0;
-    border: 1px solid var(--slate-11);
+    border: 1px solid var(--cmp-border);
     display: flex;
     justify-content: flex-end;
     box-sizing: border-box;
@@ -150,7 +150,7 @@
       color: white;
       pointer-events: none;
       padding-left: 2px;
-      border-left: 1px solid var(--slate-11);
+      border-left: 1px solid var(--cmp-border);
     }
   }
 }
@@ -218,7 +218,7 @@
     }
 
     &[data-disabled] .cmp-context-menu__right-slot {
-      color: var(--slate-8);
+      color: var(--cmp-disabled-fg);
     }
   }
 
@@ -236,7 +236,7 @@
 
   .cmp-context-menu__separator {
     height: 1px;
-    background-color: var(--slate-8);
+    background-color: var(--cmp-border);
     margin: 5px;
   }
 

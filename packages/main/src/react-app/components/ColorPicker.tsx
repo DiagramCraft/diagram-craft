@@ -94,7 +94,7 @@ export const ColorPicker = (props: Props) => {
               className={'cmp-color-picker__well'}
               style={{
                 backgroundColor: props.value,
-                border: props.isIndeterminate ? '1px dotted var(--slate-8)' : undefined
+                border: props.isIndeterminate ? '1px dotted var(--cmp-disabled-fg)' : undefined
               }}
             >
               {props.isIndeterminate && <TbDots style={{ margin: '0px' }} />}

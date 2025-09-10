@@ -1,6 +1,6 @@
 .cmp-button {
   flex: 0 0 auto;
-  color: var(--slate-11);
+  color: var(--cmp-fg);
   height: 23px;
   padding: 0 5px;
   display: inline-flex;
@@ -19,6 +19,7 @@
   &[data-hover="true"] {
     background-color: var(--cmp-hover-bg);
   }
+
   &:focus,
   &[data-focus="true"] {
     position: relative;
@@ -26,6 +27,7 @@
     outline: none;
     border: 1px solid transparent;
   }
+
   &:disabled {
     color: var(--cmp-disabled-fg);
     border: 1px solid var(--cmp-border);
@@ -71,6 +73,7 @@
     background: none;
     color: var(--blue-11);
   }
+
   &:disabled {
     border: 1px solid transparent;
   }
