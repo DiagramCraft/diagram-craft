@@ -10,8 +10,9 @@ export const Slider = (props: Props) => {
         className={styles.cmpSliderSlider}
         defaultValue={[props.value]}
         value={[props.value]}
+        min={props.min ?? 0}
         max={props.max ?? 100}
-        step={1}
+        step={props.step ?? 1}
         disabled={props.disabled || props.isIndeterminate}
         onValueChange={v => props.onChange(v[0])}
       >
@@ -27,8 +28,8 @@ export const Slider = (props: Props) => {
       <NumberInput
         defaultUnit={props.unit ?? '%'}
         value={props.value}
-        min={0}
-        max={100}
+        min={props.min ?? 0}
+        max={props.max ?? 100}
         style={{ width: '50px' }}
         state={props.state}
         onChange={props.onChange}
@@ -41,7 +42,9 @@ export const Slider = (props: Props) => {
 
 type Props = {
   value: number;
+  min?: number;
   max?: number;
+  step?: number;
   unit?: string;
   disabled?: boolean;
   isIndeterminate?: boolean;

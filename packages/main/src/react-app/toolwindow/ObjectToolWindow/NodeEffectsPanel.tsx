@@ -30,6 +30,10 @@ type FormProps = {
   isometricShape: Property<'none' | 'rect'>;
   isometricSize: Property<number>;
   isometricColor: Property<string>;
+  isometricStrokeColor: Property<string>;
+  isometricStrokeEnabled: Property<boolean>;
+  isometricTilt: Property<number>;
+  isometricRotation: Property<number>;
 };
 
 export const NodeEffectsPanelForm = ({
@@ -47,7 +51,11 @@ export const NodeEffectsPanelForm = ({
   isometric,
   isometricShape,
   isometricSize,
-  isometricColor
+  isometricColor,
+  isometricStrokeColor,
+  isometricStrokeEnabled,
+  isometricTilt,
+  isometricRotation
 }: FormProps) => {
   const $cfg = useConfiguration();
   return (
@@ -143,7 +151,9 @@ export const NodeEffectsPanelForm = ({
         <PropertyEditor property={isometric} render={props => <Checkbox {...props} />} />
       </div>
 
-      <div className={'cmp-labeled-table__label'}></div>
+      <div className={'cmp-labeled-table__label'} style={{ color: 'var(--tertiary-fg)' }}>
+        Shape
+      </div>
       <div className={'cmp-labeled-table__value'}>
         <PropertyEditor
           property={isometricShape}
@@ -156,17 +166,9 @@ export const NodeEffectsPanelForm = ({
         />
       </div>
 
-      <div className={'cmp-labeled-table__label'}></div>
-      <div className={'cmp-labeled-table__value'}>
-        <PropertyEditor
-          property={isometricSize}
-          formatValue={v => round(v)}
-          storeValue={v => v}
-          render={props => <Slider {...props} unit={'px'} max={25} />}
-        />
+      <div className={'cmp-labeled-table__label'} style={{ color: 'var(--tertiary-fg)' }}>
+        Color
       </div>
-
-      <div className={'cmp-labeled-table__label'}></div>
       <div className={'cmp-labeled-table__value'}>
         <PropertyEditor
           property={isometricColor}
@@ -179,6 +181,64 @@ export const NodeEffectsPanelForm = ({
               onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
             />
           )}
+        />
+      </div>
+
+      <div className={'cmp-labeled-table__label'} style={{ color: 'var(--tertiary-fg)' }}>
+        Stroke
+      </div>
+      <div className={'cmp-labeled-table__value util-hstack'}>
+        <PropertyEditor
+          property={isometricStrokeEnabled}
+          render={props => <Checkbox {...props} />}
+        />
+        <PropertyEditor
+          property={isometricStrokeColor}
+          render={props => (
+            <ColorPicker
+              {...props}
+              palette={$cfg.palette.primary}
+              canClearColor={true}
+              customPalette={$d.document.customPalette}
+              onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+            />
+          )}
+        />
+      </div>
+
+      <div className={'cmp-labeled-table__label'} style={{ color: 'var(--tertiary-fg)' }}>
+        Height
+      </div>
+      <div className={'cmp-labeled-table__value'}>
+        <PropertyEditor
+          property={isometricSize}
+          formatValue={v => round(v)}
+          storeValue={v => v}
+          render={props => <Slider {...props} unit={'px'} max={25} />}
+        />
+      </div>
+
+      <div className={'cmp-labeled-table__label'} style={{ color: 'var(--tertiary-fg)' }}>
+        Tilt
+      </div>
+      <div className={'cmp-labeled-table__value'}>
+        <PropertyEditor
+          property={isometricTilt}
+          formatValue={v => round(v)}
+          storeValue={v => v}
+          render={props => <Slider {...props} unit={''} min={0.1} step={0.05} max={1} />}
+        />
+      </div>
+
+      <div className={'cmp-labeled-table__label'} style={{ color: 'var(--tertiary-fg)' }}>
+        Rotation
+      </div>
+      <div className={'cmp-labeled-table__value'}>
+        <PropertyEditor
+          property={isometricRotation}
+          formatValue={v => round(v)}
+          storeValue={v => v}
+          render={props => <Slider {...props} unit={''} min={0} max={60} />}
         />
       </div>
     </div>
@@ -208,6 +268,11 @@ export const NodeEffectsPanel = (props: Props) => {
   const isometricSize = useNodeProperty($d, 'effects.isometric.size');
   const isometricColor = useNodeProperty($d, 'effects.isometric.color');
 
+  const isometricTilt = useNodeProperty($d, 'effects.isometric.tilt');
+  const isometricRotation = useNodeProperty($d, 'effects.isometric.rotation');
+  const isometricStrokeEnabled = useNodeProperty($d, 'effects.isometric.strokeEnabled');
+  const isometricStrokeColor = useNodeProperty($d, 'effects.isometric.strokeColor');
+
   useEventListener($d.selectionState, 'change', redraw);
 
   return (
@@ -233,6 +298,10 @@ export const NodeEffectsPanel = (props: Props) => {
         isometricShape={isometricShape}
         isometricSize={isometricSize}
         isometricColor={isometricColor}
+        isometricTilt={isometricTilt}
+        isometricRotation={isometricRotation}
+        isometricStrokeEnabled={isometricStrokeEnabled}
+        isometricStrokeColor={isometricStrokeColor}
       />
     </ToolWindowPanel>
   );

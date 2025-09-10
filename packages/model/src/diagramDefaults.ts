@@ -297,7 +297,11 @@ const _nodeDefaults: Omit<NodePropsForRendering, 'name' | 'custom' | 'indicators
       enabled: false,
       shape: 'rect',
       size: 10,
-      color: '#eeeeee'
+      color: '#eeeeee',
+      strokeColor: '#000000',
+      strokeEnabled: false,
+      tilt: 0.6,
+      rotation: 45
     }
   },
 

@@ -230,6 +230,10 @@ declare global {
         shape?: 'none' | 'rect';
         size?: number;
         color?: string;
+        strokeColor?: string;
+        strokeEnabled?: boolean;
+        tilt?: number;
+        rotation?: number;
       };
     };
 
