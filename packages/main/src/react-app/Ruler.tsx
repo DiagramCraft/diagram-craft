@@ -97,7 +97,7 @@ export const Ruler = ({ orientation }: Props) => {
     }
 
     return (
-      <div id={'ruler-h'} className={'cmp-ruler'}>
+      <div id={'ruler-h'} className={'cmp-ruler dark-theme'}>
         <svg preserveAspectRatio={'none'} ref={svgRef} onMouseDown={handleMouseDown}>
           {ticks.map((tick, idx) => (
             <line
@@ -131,7 +131,7 @@ export const Ruler = ({ orientation }: Props) => {
     }
 
     return (
-      <div id={'ruler-v'} className={'cmp-ruler'}>
+      <div id={'ruler-v'} className={'cmp-ruler dark-theme'}>
         <svg preserveAspectRatio={'none'} ref={svgRef} onMouseDown={handleMouseDown}>
           {ticks.map((tick, idx) => (
             <line

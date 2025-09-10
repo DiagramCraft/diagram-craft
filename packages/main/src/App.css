@@ -1,7 +1,8 @@
-@import '@radix-ui/colors/slate.css';
-@import '@radix-ui/colors/slate-dark.css';
-@import '@radix-ui/colors/slate-alpha.css';
-@import '@radix-ui/colors/slate-dark-alpha.css';
+@import '@radix-ui/colors/gray.css';
+@import '@radix-ui/colors/gray-dark.css';
+@import '@radix-ui/colors/gray-alpha.css';
+@import '@radix-ui/colors/gray-dark-alpha.css';
+
 @import '@radix-ui/colors/blue.css';
 @import '@radix-ui/colors/blue-dark.css';
 @import '@radix-ui/colors/red.css';
@@ -59,9 +60,9 @@
 }
 
 .light-theme {
-  --primary-bg: var(--slate-2);
-  --primary-fg: var(--slate-11);
-  --primary-border: var(--slate-6);
+  --primary-bg: var(--gray-2);
+  --primary-fg: var(--gray-11);
+  --primary-border: var(--gray-6);
 
   --accent-bg: var(--blue-4);
   --accent-fg: var(--blue-9);
@@ -69,13 +70,13 @@
   --accent-border: var(--blue-6);
   --accent-hover-fg: var(--blue-11);
 
-  --cmp-fg: var(--slate-11);
-  --cmp-bg: var(--slate-3);
-  --cmp-border: var(--slate-6);
+  --cmp-fg: var(--gray-11);
+  --cmp-bg: var(--gray-3);
+  --cmp-border: var(--gray-6);
 
-  --cmp-hover-bg: var(--slate-4);
-  --cmp-is-default-fg: var(--slate-8);
-  --cmp-disabled-fg: var(--slate-8);
+  --cmp-hover-bg: var(--gray-4);
+  --cmp-is-default-fg: var(--gray-8);
+  --cmp-disabled-fg: var(--gray-8);
 
   --cmp-focus-border: var(--blue-8);
   --cmp-focus-shadow: 0 0 0 2px var(--cmp-focus-border);
@@ -91,14 +92,14 @@
   --highlight-bg: var(--blue-3);
   --highlight-fg: var(--blue-9);
 
-  --secondary-bg: var(--slate-3);
-  --secondary-fg: var(--slate-11);
-  --secondary-border: var(--slate-5);
+  --secondary-bg: var(--gray-3);
+  --secondary-fg: var(--gray-11);
+  --secondary-border: var(--gray-5);
 
-  --tertiary-fg: var(--slate-9);
-  --dimmed-fg: var(--slate-4);
+  --tertiary-fg: var(--gray-9);
+  --dimmed-fg: var(--gray-4);
 
-  --canvas-fg: var(--slate-12);
+  --canvas-fg: var(--gray-12);
   --canvas-bg: white;
   --canvas-bg2: white;
 
@@ -106,9 +107,9 @@
 }
 
 .dark-theme {
-  --primary-bg: var(--slate-2);
-  --primary-fg: var(--slate-11);
-  --primary-border: var(--slate-6);
+  --primary-bg: var(--gray-2);
+  --primary-fg: var(--gray-11);
+  --primary-border: var(--gray-6);
 
   --accent-bg: var(--blue-4);
   --accent-fg: var(--blue-9);
@@ -116,13 +117,13 @@
   --accent-border: var(--blue-6);
   --accent-hover-fg: var(--blue-11);
 
-  --cmp-fg: var(--slate-11);
-  --cmp-bg: var(--slate-3);
-  --cmp-border: var(--slate-6);
+  --cmp-fg: var(--gray-11);
+  --cmp-bg: var(--gray-3);
+  --cmp-border: var(--gray-6);
 
-  --cmp-hover-bg: var(--slate-4);
-  --cmp-is-default-fg: var(--slate-9);
-  --cmp-disabled-fg: var(--slate-8);
+  --cmp-hover-bg: var(--gray-4);
+  --cmp-is-default-fg: var(--gray-9);
+  --cmp-disabled-fg: var(--gray-8);
 
   --cmp-focus-border: var(--blue-8);
   --cmp-focus-shadow: 0 0 0 2px var(--cmp-focus-border);
@@ -138,15 +139,15 @@
   --highlight-bg: var(--blue-3);
   --highlight-fg: var(--blue-11);
 
-  --secondary-bg: var(--slate-4);
-  --secondary-fg: var(--slate-11);
-  --secondary-border: var(--slate-5);
+  --secondary-bg: var(--gray-4);
+  --secondary-fg: var(--gray-11);
+  --secondary-border: var(--gray-5);
 
-  --tertiary-fg: var(--slate-9);
-  --dimmed-fg: var(--slate-6);
+  --tertiary-fg: var(--gray-9);
+  --dimmed-fg: var(--gray-6);
 
-  --canvas-fg: var(--slate-1);
-  --canvas-bg: var(--slate-12);
+  --canvas-fg: var(--gray-1);
+  --canvas-bg: var(--gray-12);
   --canvas-bg2: white;
 
   --error-fg: var(--red-9);
@@ -155,9 +156,9 @@
 .dark-theme #left,
 .dark-theme .cmp-node-type-popup,
 .dark-theme .cmp-shape-select-dialog {
-  --canvas-fg: var(--slate-11);
-  --canvas-bg: var(--slate-2);
-  --canvas-bg2: var(--slate-3);
+  --canvas-fg: var(--gray-11);
+  --canvas-bg: var(--gray-2);
+  --canvas-bg2: var(--gray-3);
 
   .canvas {
     background-color: transparent;
@@ -167,9 +168,9 @@
 .light-theme #left,
 .light-theme .cmp-node-type-popup,
 .light-theme .cmp-shape-select-dialog {
-  --canvas-fg: var(--slate-11);
-  --canvas-bg: var(--slate-4);
-  --canvas-bg2: var(--slate-3);
+  --canvas-fg: var(--gray-11);
+  --canvas-bg: var(--gray-4);
+  --canvas-bg2: var(--gray-3);
 
   .canvas {
     background-color: transparent;
