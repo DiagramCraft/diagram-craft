@@ -227,7 +227,7 @@ export class BaseNodeComponent<
 
     const isIsometric = nodeProps.effects.isometric.enabled;
     const isometricTransform = isIsometric
-      ? makeIsometricTransform(props.element.bounds)
+      ? makeIsometricTransform(props.element.bounds, props.element.renderProps)
       : undefined;
 
     if (nodeProps.shadow.enabled) {
@@ -235,15 +235,7 @@ export class BaseNodeComponent<
     }
 
     if (isIsometric) {
-      children.push(
-        ...isometricBaseShape(
-          props.element.bounds,
-          isometricTransform!,
-          nodeProps.effects.isometric.size,
-          nodeProps.effects.isometric.color,
-          nodeProps.effects.isometric.shape
-        )
-      );
+      children.push(...isometricBaseShape(props.element.bounds, isometricTransform!, nodeProps));
     }
 
     if (nodeProps.effects.blur || nodeProps.effects.opacity !== 1) {

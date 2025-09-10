@@ -853,7 +853,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     };
     // TODO: It would be nice if we could generalize this a bit
     const adjustedPoint = this.renderProps.effects.isometric.enabled
-      ? makeIsometricTransform(this.bounds).point(point)
+      ? makeIsometricTransform(this.bounds, this.renderProps).point(point)
       : point;
     return respectRotation
       ? Point.rotateAround(adjustedPoint, this.bounds.r, Box.center(this.bounds))
