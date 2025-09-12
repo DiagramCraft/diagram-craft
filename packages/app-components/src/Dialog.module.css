@@ -45,6 +45,9 @@
   }
 
   .cmp-dialog__button {
+    --_button-border: var(--cmp-border);
+    --_button-fg: var(--base-fg);
+
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -55,23 +58,22 @@
     height: 35px;
 
     border-radius: 4px;
-    color: var(--panel-fg);
+    color: var(--_button-fg);
     background-color: var(--panel-bg);
 
     border: 1px solid var(--_button-border);
 
     &:hover {
-      outline: 2px solid var(--_button-border);
-      outline-offset: -1px;
+      box-shadow: 0 0 0 1px var(--_button-border);
     }
   }
 
   .cmp-dialog__button--default {
-    --_button-border: var(--accent-border);
+    --_button-border: var(--panel-fg);
   }
 
   .cmp-dialog__button--secondary {
-    --_button-border: var(--tertiary-fg);
+    --_button-fg: var(--secondary-fg)
   }
 
   .cmp-dialog__button--danger {

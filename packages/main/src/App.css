@@ -68,29 +68,26 @@
 
   --accent-bg: var(--blue-4);
   --accent-fg: var(--blue-11);
-  --accent-dim-fg: var(--blue-6);
+  --accent-fg-dimmed: var(--blue-6);
   --accent-border: var(--blue-6);
-  --accent-hover-fg: var(--blue-12);
-  --accent-selected-bg: var(--blue-5);
+  --accent-fg-hover: var(--blue-12);
+  --accent-bg-selected: var(--blue-5);
   --accent-chroma: var(--blue-9);
 
   --cmp-fg: var(--gray-12);
+  --cmp-fg-disabled: var(--gray-8);
+  --cmp-fg-dimmed: var(--gray-6);
   --cmp-bg: var(--gray-3);
+  --cmp-bg-hover: var(--gray-4);
   --cmp-border: var(--gray-6);
-
-  --cmp-hover-bg: var(--gray-4);
-  --cmp-is-default-fg: var(--gray-8);
-  --cmp-disabled-fg: var(--gray-8);
-
-  --cmp-focus-border: var(--blue-5);
-  --cmp-focus-shadow: 0 0 0 2px var(--cmp-focus-border);
+  --cmp-border-focus: var(--blue-5);
+  --cmp-border-shadow-focus: 0 0 0 2px var(--blue-5);
 
   --popover-shadow: 0 0 0 0.5px var(--cmp-border), 0 10px 60px rgba(0, 0, 0, 0.17), 0 10px 32px -16px rgba(0, 0, 0, 0.35);
 
   --highlight-reverse-bg: var(--blue-9);
   --highlight-reverse-fg: white;
 
-  --highlight-bg: var(--blue-3);
   --highlight-fg: var(--blue-9);
 
   --secondary-bg: var(--gray-3);
@@ -98,7 +95,6 @@
   --secondary-border: var(--gray-5);
 
   --tertiary-fg: var(--gray-9);
-  --dimmed-fg: var(--gray-4);
 
   --canvas-fg: var(--gray-12);
   --canvas-bg: white;
@@ -117,38 +113,34 @@
   --panel-border: var(--gray-6);
 
   --accent-bg: var(--blue-4);
+  --accent-bg-selected: var(--blue-5);
   --accent-fg: var(--blue-11);
-  --accent-dim-fg: var(--blue-6);
+  --accent-fg-dimmed: var(--blue-6);
+  --accent-fg-hover: var(--blue-12);
   --accent-border: var(--blue-6);
-  --accent-hover-fg: var(--blue-12);
-  --accent-selected-bg: var(--blue-5);
   --accent-chroma: var(--blue-9);
 
   --cmp-fg: var(--gray-12);
+  --cmp-fg-disabled: var(--gray-8);
+  --cmp-fg-dimmed: var(--gray-6);
   --cmp-bg: var(--gray-3);
+  --cmp-bg-hover: var(--gray-4);
   --cmp-border: var(--gray-6);
-
-  --cmp-hover-bg: var(--gray-4);
-  --cmp-is-default-fg: var(--gray-9);
-  --cmp-disabled-fg: var(--gray-8);
-
-  --cmp-focus-border: var(--blue-5);
-  --cmp-focus-shadow: 0 0 0 2px var(--cmp-focus-border);
+  --cmp-border-focus: var(--blue-5);
+  --cmp-border-shadow-focus: 0 0 0 2px var(--blue-5);
 
   --popover-shadow: 0 0 0 0.5px var(--cmp-border), 0 10px 60px rgba(0, 0, 0, 0.32), 0 10px 32px -16px rgba(0, 0, 0, 0.5);
 
   --highlight-reverse-bg: var(--blue-9);
   --highlight-reverse-fg: var(--blue-12);
 
-  --highlight-bg: var(--blue-3);
   --highlight-fg: var(--blue-11);
 
   --secondary-bg: var(--gray-4);
   --secondary-fg: var(--gray-11);
   --secondary-border: var(--gray-5);
 
-  --tertiary-fg: var(--gray-9);
-  --dimmed-fg: var(--gray-6);
+  --tertiary-fg: var(--gray-8);
 
   --canvas-fg: var(--gray-1);
   --canvas-bg: var(--gray-12);
@@ -242,13 +234,13 @@ input[type="checkbox"]:checked::before {
 }
 
 input[type="checkbox"]:focus {
-  box-shadow: var(--cmp-focus-shadow);
+  box-shadow: var(--cmp-border-shadow-focus);
   outline: none;
 }
 
 input[type="checkbox"]:disabled {
-  color: var(--cmp-disabled-fg);
-  --__fg: var(--cmp-disabled-fg);
+  color: var(--cmp-fg-disabled);
+  --__fg: var(--cmp-fg-disabled);
   cursor: not-allowed;
 }
 
@@ -311,12 +303,12 @@ input[type="checkbox"][data-field-state='overridden'] {
     background-color: var(--panel-bg);
 
     &[data-state='open'] {
-      background-color: var(--highlight-bg);
+      background-color: var(--accent-bg-selected);
       border: 1px solid var(--panel-border);
       border-radius: 6px;
 
       & svg {
-        color: var(--highlight-fg);
+        color: var(--accent-fg);
       }
     }
 
@@ -686,7 +678,7 @@ foreignObject {
     grid-template-columns: 1fr min-content min-content;
 
     &:hover {
-      color: var(--accent-hover-fg) !important;
+      color: var(--accent-fg-hover) !important;
       background-color: var(--accent-bg);
     }
   }
@@ -790,7 +782,7 @@ foreignObject {
       }
 
       &:hover {
-        background-color: var(--cmp-hover-bg);
+        background-color: var(--cmp-bg-hover);
       }
 
       &[data-state='active'] {
@@ -807,8 +799,8 @@ foreignObject {
     color: var(--panel-fg);
 
     &:hover {
-      background-color: var(--cmp-hover-bg);
-      color: var(--accent-hover-fg);
+      background-color: var(--cmp-bg-hover);
+      color: var(--accent-fg-hover);
     }
   }
 }
@@ -860,8 +852,8 @@ foreignObject {
     cursor: pointer;
 
     &.cmp-transform__node--active {
-      stroke: var(--accent-hover-fg);
-      fill: var(--accent-hover-fg);
+      stroke: var(--accent-fg-hover);
+      fill: var(--accent-fg-hover);
     }
   }
 
@@ -910,11 +902,11 @@ foreignObject {
     overflow: hidden;
 
     &:hover {
-      border-left: 2px solid var(--accent-hover-fg);
-      background-color: var(--cmp-hover-bg);
+      border-left: 2px solid var(--accent-fg-hover);
+      background-color: var(--cmp-bg-hover);
 
       svg {
-        color: var(--accent-hover-fg);
+        color: var(--accent-fg-hover);
       }
     }
 
@@ -1039,7 +1031,7 @@ body[data-dragmimetype='application/x-diagram-craft-element-instances'] *[data-d
 
 .util-action {
   &:hover {
-    color: var(--accent-hover-fg);
+    color: var(--accent-fg-hover);
     cursor: pointer;
   }
 }

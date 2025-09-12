@@ -68,18 +68,9 @@
     color: var(--accent-fg);
     background-color: var(--accent-bg);
   }
-
-
-  .cmp-toolbar__button:focus,
-  .cmp-toolbar__button[data-focus="true"] {
-    position: relative;
-    color: var(--accent-fg);
-    background-color: var(--accent-bg);
-    outline: none;
-  }
-
+  
   .cmp-toolbar__button:disabled {
-    color: var(--cmp-disabled-fg);
+    color: var(--cmp-fg-disabled);
     /* TODO: Is there a better way to disable hover when in disabled state */
     pointer-events: none;
   }

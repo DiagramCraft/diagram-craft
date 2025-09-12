@@ -17,12 +17,12 @@
     color: var(--cmp-fg);
 
     &:hover {
-      background-color: var(--cmp-hover-bg);
+      background-color: var(--cmp-bg-hover);
     }
 
     &:focus {
       outline: none;
-      box-shadow: var(--cmp-focus-shadow);
+      box-shadow: var(--cmp-border-shadow-focus);
     }
 
   }
@@ -52,12 +52,12 @@
     border: 1px solid var(--cmp-border);
 
     &:hover {
-      background-color: var(--cmp-hover-bg);
+      background-color: var(--cmp-bg-hover);
     }
 
     &:focus {
       outline: none;
-      box-shadow: var(--cmp-focus-shadow);
+      box-shadow: var(--cmp-border-shadow-focus);
     }
   }
 }
@@ -182,12 +182,12 @@
     outline: none;
 
     &[data-disabled] {
-      color: var(--cmp-disabled-fg);
+      color: var(--cmp-fg-disabled);
       pointer-events: none;
     }
 
     &[data-highlighted] {
-      background-color: var(--accent-selected-bg);
+      background-color: var(--accent-bg-selected);
     }
 
     .cmp-context-menu__item-indicator {
@@ -200,7 +200,7 @@
       color: var(--accent-fg);
 
       &[data-state='unchecked'] {
-        color: var(--dimmed-fg);
+        color: var(--cmp-fg-dimmed);
       }
     }
 
@@ -217,13 +217,13 @@
     }
 
     &[data-disabled] .cmp-context-menu__right-slot {
-      color: var(--cmp-disabled-fg);
+      color: var(--cmp-fg-disabled);
     }
   }
 
   .cmp-context-menu__sub-trigger[data-state='open'] {
-    background-color: var(--highlight-reverse-bg);
-    color: var(--highlight-reverse-fg);
+    background-color: var(--accent-bg-selected);
+    color: var(--panel-fg);
   }
 
   .cmp-context-menu__label {

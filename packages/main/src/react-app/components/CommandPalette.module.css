@@ -44,8 +44,8 @@
         box-sizing: border-box;
 
         &:focus {
-          border-color: var(--cmp-focus-border);
-          box-shadow: var(--cmp-focus-shadow);
+          border-color: var(--cmp-border-focus);
+          box-shadow: var(--cmp-border-shadow-focus);
         }
       }
     }
@@ -127,7 +127,7 @@
 
       &.commandPalette__commandList--mouseEnabled {
         .commandPalette__commandItem:hover:not(.commandPalette__commandItem--selected) {
-          background: var(--cmp-hover-bg);
+          background: var(--cmp-bg-hover);
         }
       }
     }

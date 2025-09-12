@@ -8,7 +8,7 @@
 
   &:focus-within,
   &:has(*[data-focus="true"]) {
-    box-shadow: var(--cmp-focus-shadow) !important;
+    box-shadow: var(--cmp-border-shadow-focus) !important;
   }
 
   &[data-error='true'] {
@@ -36,7 +36,7 @@
     }
 
     &:disabled {
-      color: var(--cmp-disabled-fg);
+      color: var(--cmp-fg-disabled);
     }
   }
 }

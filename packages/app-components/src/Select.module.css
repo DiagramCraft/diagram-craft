@@ -18,17 +18,17 @@
 
   &:hover:not(:disabled),
   &[data-hover="true"] {
-    background-color: var(--cmp-hover-bg);
+    background-color: var(--cmp-bg-hover);
   }
 
   &:focus:not(:disabled),
   &[data-focus="true"] {
     outline: none;
-    box-shadow: var(--cmp-focus-shadow);
+    box-shadow: var(--cmp-border-shadow-focus);
   }
 
   &:disabled {
-    color: var(--cmp-disabled-fg);
+    color: var(--cmp-fg-disabled);
   }
 
   .trigger__icon {
@@ -65,13 +65,13 @@
     user-select: none;
 
     &[data-disabled] {
-      color: var(--cmp-disabled-fg);
+      color: var(--cmp-fg-disabled);
       pointer-events: none;
     }
 
     &[data-highlighted] {
       outline: none;
-      background-color: var(--accent-selected-bg);
+      background-color: var(--accent-bg-selected);
     }
   }
 

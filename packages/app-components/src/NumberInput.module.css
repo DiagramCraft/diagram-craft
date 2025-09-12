@@ -13,7 +13,7 @@
 
   &:focus-within,
   &:has(*[data-focus="true"]) {
-    box-shadow: var(--cmp-focus-shadow) !important;
+    box-shadow: var(--cmp-border-shadow-focus) !important;
   }
 
   &[data-error='true'] {
@@ -40,7 +40,7 @@
     }
 
     &:disabled {
-      color: var(--cmp-disabled-fg);
+      color: var(--cmp-fg-disabled);
     }
   }
 
@@ -63,7 +63,7 @@
     background: var(--cmp-bg);;
 
     &:hover {
-      background-color: var(--cmp-hover-bg);
+      background-color: var(--cmp-bg-hover);
     }
   }
 
@@ -99,7 +99,7 @@
   border-left: 1px solid var(--cmp-border) !important;
 
   &:disabled {
-    color: var(--cmp-disabled-fg);
+    color: var(--cmp-fg-disabled);
   }
 }
 
@@ -111,6 +111,6 @@
   border-left: 1px solid var(--cmp-border) !important;
 
   &:disabled {
-    color: var(--cmp-disabled-fg);
+    color: var(--cmp-fg-disabled);
   }
 }

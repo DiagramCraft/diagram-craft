@@ -19,7 +19,7 @@
   }
 
   .cmp-slider__track {
-    background-color: var(--cmp-hover-bg);
+    background-color: var(--cmp-bg-hover);
     position: relative;
     flex-grow: 1;
     border-radius: 9999px;

@@ -10,7 +10,7 @@
   margin-right: -10px;
 
   &:hover {
-    color: var(--accent-hover-fg);
+    color: var(--accent-fg-hover);
     background-color: var(--accent-bg);
   }
 
@@ -49,6 +49,6 @@
   background-color: var(--canvas-bg);
 
   &:hover {
-    background-color: var(--cmp-hover-bg);
+    background-color: var(--cmp-bg-hover);
   }
 }

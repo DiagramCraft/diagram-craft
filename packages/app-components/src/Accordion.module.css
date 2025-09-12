@@ -38,11 +38,11 @@
         color: var(--cmp-fg);
 
         &:hover {
-          color: var(--accent-hover-fg);
+          color: var(--accent-fg-hover);
         }
 
         &[aria-disabled="true"] {
-          color: var(--cmp-disabled-fg);
+          color: var(--cmp-fg-disabled);
           pointer-events: none;
         }
       }
@@ -69,7 +69,7 @@
 
       &:hover,
       &[data-hover="true"] {
-        background-color: var(--cmp-hover-bg);
+        background-color: var(--cmp-bg-hover);
       }
     }
   }
@@ -110,7 +110,7 @@
         color: var(--panel-fg);
 
         &:hover {
-          color: var(--accent-hover-fg);
+          color: var(--accent-fg-hover);
         }
       }
     }

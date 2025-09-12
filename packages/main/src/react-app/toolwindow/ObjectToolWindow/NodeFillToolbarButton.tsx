@@ -23,9 +23,9 @@ export const NodeFillToolbarButton = () => {
               marginLeft: '5px',
               width: '30px',
               height: '12px',
-              backgroundColor: disabled ? 'var(--cmp-disabled-fg)' : fill.val,
+              backgroundColor: disabled ? 'var(--cmp-fg-disabled)' : fill.val,
               marginRight: '3px',
-              border: `1px solid ${disabled ? 'var(--cmp-disabled-fg)' : 'var(--panel-fg)'}`,
+              border: `1px solid ${disabled ? 'var(--cmp-fg-disabled)' : 'var(--panel-fg)'}`,
               borderRadius: '3px'
             }}
           ></div>
