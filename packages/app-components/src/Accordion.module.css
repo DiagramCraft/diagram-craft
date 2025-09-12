@@ -35,14 +35,14 @@
 
       > a {
         display: flex;
-        color: var(--tertiary-fg);
+        color: var(--cmp-fg);
 
         &:hover {
           color: var(--accent-hover-fg);
         }
 
         &[aria-disabled="true"] {
-          color: var(--dimmed-fg);
+          color: var(--cmp-disabled-fg);
           pointer-events: none;
         }
       }
@@ -57,9 +57,9 @@
       align-items: center;
       justify-content: space-between;
       font-size: 12px;
-      font-weight: bold;
+      font-weight: normal;
       line-height: 1;
-      color: var(--primary-fg);
+      color: var(--cmp-fg);
       background-color: transparent;
 
       &:focus,
@@ -69,18 +69,20 @@
 
       &:hover,
       &[data-hover="true"] {
-        background-color: var(--secondary-bg);
+        background-color: var(--cmp-hover-bg);
       }
     }
   }
 
   .cmp-accordion__content {
     overflow: hidden;
-    color: var(--primary-fg);
+    color: var(--secondary-fg);
+    background-color: var(--gray-1);
     text-align: left;
 
     &[data-state='open'] {
       animation: slideDown 150ms cubic-bezier(0.87, 0, 0.13, 1);
+      border-top: 1px solid var(--cmp-border);
     }
 
     &[data-state='closed'] {
@@ -115,7 +117,7 @@
   }
 
   .cmp-accordion__chevron {
-    color: var(--accent-fg);
+    color: var(--cmp-fg);
     transition: transform 300ms cubic-bezier(0.87, 0, 0.13, 1);
   }
 

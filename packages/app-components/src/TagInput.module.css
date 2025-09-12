@@ -42,8 +42,8 @@
 .cmp-tag-input__tag {
   display: flex;
   align-items: center;
-  background-color: var(--highlight-bg);
-  color: var(--highlight-fg);
+  background-color: var(--accent-bg);
+  color: var(--cmp-fg);
   border-radius: 3px;
   padding: 0 2px 0 3px;
   font-size: 10px;
@@ -115,7 +115,7 @@
   background-color: var(--cmp-bg);
   border: 1px solid var(--cmp-border);
   border-radius: var(--cmp-radius);
-  box-shadow: var(--menu-shadow);
+  box-shadow: var(--popover-shadow);
   z-index: 1000;
   max-height: 200px;
   overflow-y: auto;
@@ -125,7 +125,7 @@
   padding: 4px 8px;
   font-size: 11px;
   cursor: pointer;
-  color: var(--primary-fg);
+  color: var(--cmp-fg);
   border-bottom: 1px solid var(--cmp-border);
   outline: none;
 

@@ -34,7 +34,6 @@
   --accent-12: var(--blue-12);
 
   --green: var(--green-9);
-  --crimson: var(--crimson-9);
 }
 
 .light-theme {
@@ -52,7 +51,6 @@
   --accent-12: var(--blue-12);
 
   --green: var(--green-9);
-  --crimson: var(--crimson-9);
 }
 
 :root {
@@ -61,16 +59,18 @@
 
 .light-theme {
   --primary-bg: var(--gray-2);
-  --primary-fg: var(--gray-11);
+  --primary-fg: var(--gray-12);
   --primary-border: var(--gray-6);
 
   --accent-bg: var(--blue-4);
-  --accent-fg: var(--blue-9);
+  --accent-fg: var(--blue-11);
   --accent-dim-fg: var(--blue-6);
   --accent-border: var(--blue-6);
-  --accent-hover-fg: var(--blue-11);
+  --accent-hover-fg: var(--blue-12);
+  --accent-selected-bg: var(--blue-5);
+  --accent-chroma: var(--blue-9);
 
-  --cmp-fg: var(--gray-11);
+  --cmp-fg: var(--gray-12);
   --cmp-bg: var(--gray-3);
   --cmp-border: var(--gray-6);
 
@@ -78,13 +78,10 @@
   --cmp-is-default-fg: var(--gray-8);
   --cmp-disabled-fg: var(--gray-8);
 
-  --cmp-focus-border: var(--blue-8);
+  --cmp-focus-border: var(--blue-5);
   --cmp-focus-shadow: 0 0 0 2px var(--cmp-focus-border);
 
   --popover-shadow: 0 0 0 0.5px var(--cmp-border), 0 10px 60px rgba(0, 0, 0, 0.17), 0 10px 32px -16px rgba(0, 0, 0, 0.35);
-
-  --menu-shadow: var(--popover-shadow);
-  --menu-keybinding: var(--blue-11);
 
   --highlight-reverse-bg: var(--blue-9);
   --highlight-reverse-fg: white;
@@ -108,16 +105,18 @@
 
 .dark-theme {
   --primary-bg: var(--gray-2);
-  --primary-fg: var(--gray-11);
+  --primary-fg: var(--gray-12);
   --primary-border: var(--gray-6);
 
   --accent-bg: var(--blue-4);
-  --accent-fg: var(--blue-9);
+  --accent-fg: var(--blue-11);
   --accent-dim-fg: var(--blue-6);
   --accent-border: var(--blue-6);
-  --accent-hover-fg: var(--blue-11);
+  --accent-hover-fg: var(--blue-12);
+  --accent-selected-bg: var(--blue-5);
+  --accent-chroma: var(--blue-9);
 
-  --cmp-fg: var(--gray-11);
+  --cmp-fg: var(--gray-12);
   --cmp-bg: var(--gray-3);
   --cmp-border: var(--gray-6);
 
@@ -125,13 +124,10 @@
   --cmp-is-default-fg: var(--gray-9);
   --cmp-disabled-fg: var(--gray-8);
 
-  --cmp-focus-border: var(--blue-8);
+  --cmp-focus-border: var(--blue-5);
   --cmp-focus-shadow: 0 0 0 2px var(--cmp-focus-border);
 
   --popover-shadow: 0 0 0 0.5px var(--cmp-border), 0 10px 60px rgba(0, 0, 0, 0.32), 0 10px 32px -16px rgba(0, 0, 0, 0.5);
-
-  --menu-shadow: var(--popover-shadow);
-  --menu-keybinding: var(--blue-11);
 
   --highlight-reverse-bg: var(--blue-9);
   --highlight-reverse-fg: var(--blue-12);
@@ -338,8 +334,8 @@ input[type="checkbox"][data-field-state='overridden'] {
     gap: 0.25rem;
 
     .cmp-toolbar__button[data-state='on'] {
-      background-color: var(--highlight-bg);
-      color: var(--highlight-fg);
+      background-color: var(--accent-bg);
+      color: var(--accent-fg);
     }
 
     > [role="toolbar"] {
@@ -397,8 +393,8 @@ input[type="checkbox"][data-field-state='overridden'] {
   width: auto;
 
   .cmp-toolbar__button[data-state='on'] {
-    background-color: var(--highlight-bg);
-    color: var(--highlight-fg);
+    background-color: var(--accent-bg);
+    color: var(--accent-fg);
   }
 }
 
@@ -428,8 +424,8 @@ input[type="checkbox"][data-field-state='overridden'] {
   width: auto;
 
   .cmp-toolbar__button[data-state='on'] {
-    background-color: var(--highlight-bg);
-    color: var(--highlight-fg);
+    background-color: var(--accent-bg);
+    color: var(--accent-fg);
   }
 }
 
@@ -448,6 +444,26 @@ input[type="checkbox"][data-field-state='overridden'] {
 
   &::-webkit-scrollbar {
     display: none;
+  }
+}
+
+.cmp-sidebar {
+  .cmp-tabs__content {
+    background-color: var(--gray-1);
+    height: initial;
+    padding: 0.5rem 0 0 0;
+
+    &:not(:has(.cmp-panel__headless)) {
+      padding-top: 0;
+    }
+  }
+
+  .cmp-accordion__header {
+    background-color: var(--primary-bg);
+  }
+
+  .cmp-toolbar {
+    background-color: var(--primary-bg);
   }
 }
 
@@ -632,7 +648,7 @@ foreignObject {
 }
 
 .cmp-panel__headless {
-  background-color: var(--primary-bg);
+  background-color: var(--gray-1);
   padding: 2px 10px 10px 10px;
   color: var(--cmp-fg);
   border-bottom: 1px solid var(--primary-border);
@@ -657,7 +673,7 @@ foreignObject {
 }
 
 .cmp-panel__headless--no-padding {
-  padding: 5px 0;
+  padding: 5px 0 0 0;
 }
 
 .cmp-layer-list {
@@ -667,7 +683,7 @@ foreignObject {
     grid-template-columns: 1fr min-content min-content;
 
     &:hover {
-      color: var(--accent-hover-fg);
+      color: var(--accent-hover-fg) !important;
       background-color: var(--accent-bg);
     }
   }
@@ -684,7 +700,7 @@ foreignObject {
       left: 0;
       right: 0;
       height: 4px;
-      background-color: var(--accent-hover-fg);
+      background-color: var(--cmp-fg);
       width: 100%;
       z-index: 100;
     }
@@ -698,7 +714,7 @@ foreignObject {
       left: 0;
       right: 0;
       height: 4px;
-      background-color: var(--accent-hover-fg);
+      background-color: var(--cmp-fg);
       width: 100%;
       z-index: 100;
     }
@@ -711,7 +727,7 @@ foreignObject {
 
   .cmp-layer-list__layer--selected {
     & .cmp-tree__node__label, .cmp-tree__node__value {
-      color: var(--accent-hover-fg);
+      color: var(--accent-fg);
       font-weight: bold;
     }
   }
@@ -724,7 +740,7 @@ foreignObject {
       bottom: -1px;
       left: 0;
       width: 2px;
-      background-color: var(--accent-hover-fg);
+      background-color: var(--cmp-fg);
     }
   }
 }
@@ -772,12 +788,11 @@ foreignObject {
 
       &:hover {
         background-color: var(--cmp-hover-bg);
-        color: var(--accent-hover-fg);
       }
 
       &[data-state='active'] {
-        color: var(--accent-hover-fg);
-        border-bottom: 2px solid var(--accent-hover-fg);
+        color: var(--cmp-fg);
+        border-bottom: 2px solid var(--accent-chroma);
       }
     }
   }

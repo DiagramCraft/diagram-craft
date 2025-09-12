@@ -19,7 +19,7 @@
   }
 
   .cmp-slider__track {
-    background-color: var(--secondary-border);
+    background-color: var(--cmp-hover-bg);
     position: relative;
     flex-grow: 1;
     border-radius: 9999px;
@@ -28,7 +28,7 @@
 
   .cmp-slider__range {
     position: absolute;
-    background-color: var(--accent-dim-fg);
+    background-color: var(--accent-chroma);
     border-radius: 9999px;
     height: 100%;
   }
@@ -37,18 +37,18 @@
     display: block;
     width: 12px;
     height: 12px;
-    background-color: var(--accent-dim-fg);
+    background-color: var(--secondary-fg);
     border-radius: 10px;
 
     &:hover,
     &[data-thumb-hover='true'] {
-      background-color: var(--accent-hover-fg);
+      background-color: var(--primary-fg);
     }
 
     &:focus,
     &[data-thumb-focus='true'] {
       outline: none;
-      background-color: var(--accent-hover-fg);
+      background-color: var(--primary-fg);
     }
   }
 }

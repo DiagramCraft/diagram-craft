@@ -8,11 +8,12 @@
   animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   will-change: transform, opacity;
   z-index: 100;
-  color: var(--secondary-fg);
+  color: var(--primary-fg);
   font-size: 12px;
   margin-right: 0.2rem;
 
   /* TODO: Unclear what this is for? */
+
   .cmp-panel__enabled:focus {
     box-shadow: none;
     outline: none;
@@ -21,12 +22,15 @@
   &[data-state='open'][data-side='top'] {
     animation-name: slideDownAndFade;
   }
+
   &[data-state='open'][data-side='right'] {
     animation-name: slideLeftAndFade;
   }
+
   &[data-state='open'][data-side='bottom'] {
     animation-name: slideUpAndFade;
   }
+
   &[data-state='open'][data-side='left'] {
     animation-name: slideRightAndFade;
   }
@@ -43,17 +47,19 @@
     width: 25px;
     align-items: center;
     justify-content: center;
-    color: var(--highlight-fg);
+    color: var(--accent-fg);
     position: absolute;
     top: 5px;
     right: 5px;
     z-index: 200;
     border: none;
+
     &:hover {
-      color: var(--highlight-fg);
+      color: var(--accent-fg);
     }
+
     &:focus {
-      color: var(--highlight-fg);
+      color: var(--accent-fg);
     }
   }
 

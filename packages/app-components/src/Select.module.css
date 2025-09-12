@@ -39,13 +39,14 @@
 
 .cmp-select-content {
   overflow: hidden;
-  background-color: var(--cmp-hover-bg);
+  color: var(--cmp-fg);
+  background-color: var(--cmp-bg);
   z-index: 600;
   border-radius: 6px;
   box-shadow: var(--popover-shadow);
 
   svg {
-    stroke: var(--secondary-fg);
+    stroke: var(--cmp-fg);
   }
 
   .cmp-select-content__viewpoint {
@@ -55,7 +56,6 @@
   .cmp-select-content__item {
     font-size: 11px;
     line-height: 1;
-    color: var(--primary-fg);
     border-radius: 3px;
     display: flex;
     align-items: center;
@@ -68,10 +68,10 @@
       color: var(--cmp-disabled-fg);
       pointer-events: none;
     }
+
     &[data-highlighted] {
       outline: none;
-      background-color: var(--highlight-reverse-bg);
-      color: var(--highlight-reverse-fg);
+      background-color: var(--accent-selected-bg);
     }
   }
 

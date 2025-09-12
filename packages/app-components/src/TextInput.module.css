@@ -18,6 +18,7 @@
 
   &[data-error='true'] {
     color: var(--error-fg);
+
     > input {
       color: var(--error-fg);
     }
@@ -32,10 +33,12 @@
     border: none;
     background: none;
     font-size: 11px;
+
     &:focus,
     &[data-focus="true"] {
       outline: none;
     }
+
     &:disabled {
       color: var(--cmp-disabled-fg);
     }
@@ -44,10 +47,14 @@
 
 .cmp-text-input__label {
   font-size: 11px;
-  margin-top: 1px;
-  margin-right: 0.15rem;
+  margin-top: -2px;
+  margin-right: 0.25rem;
   padding-right: 4px;
   color: var(--cmp-fg);
   width: 15px;
   border-right: 1px solid var(--cmp-border);
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

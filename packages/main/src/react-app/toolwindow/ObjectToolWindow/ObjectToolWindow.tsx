@@ -163,7 +163,9 @@ export const ObjectToolWindow = () => {
           <ToolWindow.TabContent>
             <Accordion.Root type="multiple" defaultValue={['fill', 'dimensions']}>
               <NodeTableToolbarPanel />
-              <ElementStylesheetPanel type={'node'} />
+              <div style={{ marginTop: '8px' }}>
+                <ElementStylesheetPanel type={'node'} />
+              </div>
 
               <NodeFillPanel />
               <NodeTableCellDimensionsPanel />

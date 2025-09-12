@@ -111,7 +111,7 @@
           font-size: 12px;
           font-family: monospace;
           background: var(--secondary-bg);
-          color: var(--menu-keybinding);
+          color: var(--accent-fg);
           padding: 4px 8px;
           border-radius: var(--cmp-radius);
           border: 1px solid var(--cmp-border);

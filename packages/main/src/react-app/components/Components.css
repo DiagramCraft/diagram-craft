@@ -157,12 +157,12 @@
 
 .cmp-context-menu {
   min-width: 220px;
-  background-color: var(--primary-bg);
+  background-color: var(--cmp-bg);
   border-radius: 6px;
   overflow: hidden;
   padding: 5px;
-  box-shadow: var(--menu-shadow);
-  border: 1px solid var(--primary-border);
+  box-shadow: var(--popover-shadow);
+  border: 1px solid var(--cmp-border);
   z-index: 250;
 
   .cmp-context-menu__item,
@@ -171,7 +171,7 @@
   .cmp-context-menu__sub-trigger {
     font-size: 11px;
     line-height: 1;
-    color: var(--primary-fg);
+    color: var(--cmp-fg);
     border-radius: 3px;
     display: flex;
     align-items: center;
@@ -187,8 +187,7 @@
     }
 
     &[data-highlighted] {
-      background-color: var(--highlight-reverse-bg);
-      color: var(--highlight-reverse-fg);
+      background-color: var(--accent-selected-bg);
     }
 
     .cmp-context-menu__item-indicator {
@@ -198,7 +197,7 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      color: var(--menu-keybinding);
+      color: var(--accent-fg);
 
       &[data-state='unchecked'] {
         color: var(--dimmed-fg);
@@ -256,7 +255,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: var(--menu-keybinding);
+    color: var(--accent-fg);
   }
 
   .cmp-context-menu__arrow {

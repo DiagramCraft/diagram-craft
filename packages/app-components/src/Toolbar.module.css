@@ -40,12 +40,12 @@
   }
 
   .cmp-toolbar__button[data-state='on'] {
-    color: var(--highlight-fg);
+    color: var(--accent-fg);
     background-color: var(--cmp-bg);
   }
 
   .cmp-toolbar__button[data-state='on'] + .cmp-toolbar__button--more {
-    color: var(--highlight-fg);
+    color: var(--accent-fg);
     background-color: var(--cmp-bg);
   }
 
@@ -65,16 +65,16 @@
 
   .cmp-toolbar__button:hover,
   .cmp-toolbar__button[data-hover='true'] {
-    color: var(--highlight-fg);
-    background-color: var(--highlight-bg);
+    color: var(--accent-fg);
+    background-color: var(--accent-bg);
   }
 
 
   .cmp-toolbar__button:focus,
   .cmp-toolbar__button[data-focus="true"] {
     position: relative;
-    color: var(--highlight-fg);
-    background-color: var(--highlight-bg);
+    color: var(--accent-fg);
+    background-color: var(--accent-bg);
     outline: none;
   }
 

@@ -5,10 +5,7 @@
     position: relative;
     z-index: 5;
     margin-left: -2px;
-
-    &:hover {
-      background-color: var(--secondary-bg);
-    }
+    color: var(--secondary-fg);
 
     .cmp-collapsible__trigger_inner {
       width: 100%;
@@ -17,16 +14,21 @@
       align-items: center;
       gap: 0.125rem;
       font-size: 11px;
-      font-weight: bold;
-      color: var(--primary-fg);
+      color: var(--secondary-fg);
       display: flex;
       justify-content: space-between;
+
+
+      &:hover {
+        color: var(--cmp-fg);
+      }
 
       & > div:nth-child(2) {
         margin-left: auto;
       }
     }
   }
+
   .cmp-collapsible__content {
     margin-top: 0.5rem;
     will-change: height;
@@ -34,6 +36,7 @@
     &[data-state='open'] {
       animation: slideDown 200ms ease-in-out;
     }
+
     &[data-state='closed'] {
       animation: slideUp 200ms ease-in-out;
     }
