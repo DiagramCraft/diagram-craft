@@ -224,7 +224,7 @@ export const ExtendedDataTab = () => {
           id={'extended'}
           title={'Extended data'}
           mode={'headless-no-padding'}
-          style={{ padding: '0', borderBottom: 'none', marginTop: '-0.5rem' }}
+          style={{ padding: '0', borderBottom: 'none' }}
         >
           <Accordion.Root type={'multiple'} defaultValue={['_custom', ...enabledSchemas]}>
             {/* Show all schemas, but conditionally render content */}

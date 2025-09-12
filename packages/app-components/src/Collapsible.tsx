@@ -6,7 +6,12 @@ import styles from './Collapsible.module.css';
 export const Collapsible = (props: Props) => {
   const [open, setOpen] = useState(props.defaultOpen);
   return (
-    <RadixCollapsible.Root className={styles.cmpCollapsible} open={open} onOpenChange={setOpen}>
+    <RadixCollapsible.Root
+      className={styles.cmpCollapsible}
+      open={open}
+      onOpenChange={setOpen}
+      defaultOpen={props.defaultOpen}
+    >
       <div className={styles.cmpCollapsibleTrigger}>
         <RadixCollapsible.Trigger asChild>
           <button className={styles.cmpCollapsibleTriggerInner}>

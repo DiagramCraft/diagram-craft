@@ -668,7 +668,7 @@ foreignObject {
 
   > .cmp-toolbar {
     padding: 3px 0 3px 3px;
-    margin: 0 0 0 0;;
+    margin: 0;
     width: calc(100% + 20px);
     max-width: calc(100% + 20px);
   }
@@ -676,7 +676,7 @@ foreignObject {
 }
 
 .cmp-panel__headless--no-padding {
-  padding: 0 0 0 0;
+  padding: 0;
 }
 
 .cmp-layer-list {
@@ -743,7 +743,7 @@ foreignObject {
       bottom: -1px;
       left: 0;
       width: 2px;
-      background-color: var(--cmp-fg);
+      background-color: var(--accent-chroma);
     }
   }
 }

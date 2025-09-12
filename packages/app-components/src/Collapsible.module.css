@@ -4,7 +4,6 @@
   .cmp-collapsible__trigger {
     position: relative;
     z-index: 5;
-    margin-left: -2px;
     color: var(--secondary-fg);
 
     .cmp-collapsible__trigger_inner {
@@ -32,13 +31,35 @@
   .cmp-collapsible__content {
     margin-top: 0.5rem;
     will-change: height;
+    margin-left: 1px;
+    color: var(--tertiary-fg);
+    overflow: hidden;
 
     &[data-state='open'] {
-      animation: slideDown 200ms ease-in-out;
+      animation: slideDownCollapsible 200ms ease-in-out;
     }
 
     &[data-state='closed'] {
-      animation: slideUp 200ms ease-in-out;
+      animation: slideUpCollapsible 200ms ease-in-out;
     }
+  }
+}
+
+
+@keyframes slideDownCollapsible {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-collapsible-content-height);
+  }
+}
+
+@keyframes slideUpCollapsible {
+  from {
+    height: var(--radix-collapsible-content-height);
+  }
+  to {
+    height: 0;
   }
 }
