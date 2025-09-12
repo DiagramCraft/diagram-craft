@@ -10,26 +10,18 @@ export const toggleRulerActions = (context: ActionContext) => ({
 });
 
 export class ToggleRulerAction extends AbstractToggleAction {
-  private readonly userState: UserState | undefined;
-
   constructor(context: ActionContext) {
     super(context);
-    this.userState = UserState.get();
   }
 
   getStateCriteria() {
-    return ActionCriteria.EventTriggered(
-      this.userState!,
-      'change',
-      () => this.userState?.showRulers ?? true
-    );
+    return ActionCriteria.EventTriggered(UserState.get(), 'change', () => {
+      return UserState.get().showRulers ?? true;
+    });
   }
 
   execute(): void {
-    this.context.model.activeDiagram.updateProps(p => {
-      this.userState!.showRulers = !this.state;
-      return p;
-    });
-    this.state = !this.state;
+    UserState.get()!.showRulers = !this.state;
+    this.emit('actionTriggered');
   }
 }

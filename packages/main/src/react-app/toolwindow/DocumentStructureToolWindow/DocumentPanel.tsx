@@ -63,7 +63,12 @@ export const DocumentPanel = () => {
   };
 
   return (
-    <ToolWindowPanel mode={'headless-no-padding'} id={'document'} title={'Document'}>
+    <ToolWindowPanel
+      mode={'headless-no-padding'}
+      id={'document'}
+      title={'Document'}
+      style={{ padding: '0.25rem 0' }}
+    >
       <Tree.Root>
         {document.diagrams.map(node => (
           <Tree.Node key={node.id} isOpen={true} data-state={diagram.id === node.id ? 'on' : 'off'}>

@@ -356,7 +356,12 @@ export const LayerListPanel = () => {
   });
 
   return (
-    <ToolWindowPanel mode={'headless-no-padding'} id={'layer'} title={'Layer'}>
+    <ToolWindowPanel
+      mode={'headless-no-padding'}
+      id={'layer'}
+      title={'Layer'}
+      style={{ padding: '0.25rem 0' }}
+    >
       <Tree.Root
         ref={ref}
         className={'cmp-layer-list'}

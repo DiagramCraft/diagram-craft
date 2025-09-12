@@ -31,7 +31,11 @@ export const ToolWindowPanel = (props: Props) => {
   } else if (props.mode === 'headless') {
     return (
       <>
-        <div className={'cmp-panel__headless'} data-isempty={props.isEmpty}>
+        <div
+          className={'cmp-panel__headless'}
+          data-isempty={props.isEmpty}
+          style={props.style ?? {}}
+        >
           {props.children}
         </div>
       </>
@@ -42,6 +46,7 @@ export const ToolWindowPanel = (props: Props) => {
         <div
           className={'cmp-panel__headless cmp-panel__headless--no-padding'}
           data-isempty={props.isEmpty}
+          style={props.style ?? {}}
         >
           {props.children}
         </div>
@@ -97,4 +102,5 @@ type Props = {
   isEmpty?: boolean;
 
   forceMount?: boolean;
+  style?: React.CSSProperties | undefined;
 };

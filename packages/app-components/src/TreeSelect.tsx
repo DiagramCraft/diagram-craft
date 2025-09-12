@@ -77,9 +77,9 @@ const Root = (props: RootProps) => {
           disabled={props.disabled}
         >
           {props.hasMultipleValues ? (
-            <div style={{ color: 'var(--primary-fg)' }}>···</div>
+            <div style={{ color: 'var(--panel-fg)' }}>···</div>
           ) : (
-            valueLabel ?? props.placeholder ?? ''
+            (valueLabel ?? props.placeholder ?? '')
           )}
           <div className={styles.cmpSelectTriggerIcon}>
             <TbDots />

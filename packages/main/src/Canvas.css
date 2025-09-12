@@ -281,7 +281,7 @@
   .svg-shape-control-point {
     cursor: crosshair;
     fill: white;
-    stroke: var(--crimson);
+    stroke: var(--crimson-9);
     stroke-width: calc(1 * var(--zoom));
   }
 

@@ -7,7 +7,7 @@
   min-width: 0;
 
   &:not(:has(*[data-state='off'])):not(:has(*:nth-child(2))) {
-    border: 1px solid var(--cmp-focus-border);
+    border: 1px solid var(--cmp-border-focus);
   }
 
   .cmp-toggle-button-group__item {
@@ -25,11 +25,13 @@
     margin-left: 2px;
 
     /* Note, this is a bit of a hack to make some icon details red */
+
     .svg__remove {
       path:nth-child(3), path:nth-child(4) {
         stroke: #BB0000;
       }
     }
+
     .svg__insert {
       path:nth-child(3), path:nth-child(4) {
         stroke: #00BB00;
@@ -41,27 +43,28 @@
     }
 
     &[data-state='on'] {
-      background-color: var(--highlight-bg);
+      background-color: var(--accent-bg);
       color: var(--highlight-fg);
     }
 
     &:hover,
     &[data-hover='true'] {
-      background-color: var(--highlight-bg);
-      color: var(--highlight-fg);
+      background-color: var(--accent-bg);
+      color: var(--accent-fg);
     }
 
     &:focus,
-    &[data-focus="true"]{
+    &[data-focus="true"] {
       position: relative;
       outline: none;
-      box-shadow: var(--cmp-focus-shadow);
+      box-shadow: var(--cmp-border-shadow-focus);
     }
 
     &:disabled {
-      color: var(--cmp-disabled-fg);
+      color: var(--cmp-fg-disabled);
       /* TODO: Is there a better way to disable hover when in disabled state */
       pointer-events: none;
+
       & > svg > path:nth-child(n + 2) {
         stroke: currentColor !important;
       }

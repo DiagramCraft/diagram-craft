@@ -44,6 +44,7 @@ export const Light: Story = {
     title: 'Sample dialog',
     onClose: fn(),
     buttons: [
+      { label: 'Delete', type: 'danger', onClick: fn() },
       { label: 'Cancel', type: 'cancel', onClick: fn() },
       { label: 'Ok', type: 'default', onClick: fn() }
     ]
@@ -58,6 +59,7 @@ export const Dark: Story = {
     title: 'Sample dialog',
     onClose: fn(),
     buttons: [
+      { label: 'Delete', type: 'danger', onClick: fn() },
       { label: 'Cancel', type: 'cancel', onClick: fn() },
       { label: 'Ok', type: 'default', onClick: fn() }
     ]

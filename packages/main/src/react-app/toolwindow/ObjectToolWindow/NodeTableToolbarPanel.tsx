@@ -28,7 +28,7 @@ export const NodeTableToolbarPanel = () => {
   }
 
   return (
-    <ToolWindowPanel mode={'headless'} title={''} id={'custom'}>
+    <ToolWindowPanel mode={'headless-no-padding'} title={''} id={'custom'}>
       <Toolbar.Root>
         <ActionToolbarButton action={'TABLE_COLUMN_INSERT_BEFORE'}>
           <TbColumnInsertLeft className={'svg__insert'} />

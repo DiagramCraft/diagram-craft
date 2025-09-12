@@ -51,7 +51,7 @@ export const CommentToolbarButton = () => {
             borderRadius: '50%',
             width: '8px',
             height: '8px',
-            border: '1px solid var(--primary-bg)'
+            border: '1px solid var(--panel-bg)'
           }}
         ></div>
       )}

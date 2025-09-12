@@ -1,6 +1,6 @@
 .cmp-button {
   flex: 0 0 auto;
-  color: var(--slate-11);
+  color: var(--cmp-fg);
   height: 23px;
   padding: 0 5px;
   display: inline-flex;
@@ -17,24 +17,26 @@
 
   &:hover,
   &[data-hover="true"] {
-    background-color: var(--cmp-hover-bg);
+    background-color: var(--cmp-bg-hover);
   }
+
   &:focus,
   &[data-focus="true"] {
     position: relative;
-    box-shadow: var(--cmp-focus-shadow);
+    box-shadow: var(--cmp-border-shadow-focus);
     outline: none;
     border: 1px solid transparent;
   }
+
   &:disabled {
-    color: var(--cmp-disabled-fg);
+    color: var(--cmp-fg-disabled);
     border: 1px solid var(--cmp-border);
     pointer-events: none;
   }
 }
 
 .cmp-button--primary {
-  outline: 1px solid var(--cmp-focus-border);
+  outline: 1px solid var(--cmp-border-focus);
   outline-offset: -1px;
 }
 
@@ -69,8 +71,9 @@
   &:hover,
   &[data-hover="true"] {
     background: none;
-    color: var(--blue-11);
+    color: var(--accent-fg);
   }
+
   &:disabled {
     border: 1px solid transparent;
   }

@@ -33,7 +33,7 @@ const Root = (props: RootProps) => {
         <ReactSelect.Value
           placeholder={
             props.isIndeterminate ? (
-              <div style={{ color: 'var(--primary-fg)' }}>···</div>
+              <div style={{ color: 'var(--panel-fg)' }}>···</div>
             ) : (
               (props.placeholder ?? '')
             )

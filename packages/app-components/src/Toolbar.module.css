@@ -8,7 +8,7 @@
 
   .cmp-toolbar__button {
     flex: 0 0 auto;
-    color: var(--slate-11);
+    color: var(--cmp-fg);
     background-color: transparent;
     height: 25px;
     padding: 0 5px;
@@ -21,11 +21,13 @@
     margin-left: 2px;
 
     /* Note, this is a bit of a hack to make some icon details red */
+
     .svg__remove {
       path:nth-child(3), path:nth-child(4) {
         stroke: #BB0000;
       }
     }
+
     .svg__insert {
       path:nth-child(3), path:nth-child(4) {
         stroke: #00BB00;
@@ -38,12 +40,12 @@
   }
 
   .cmp-toolbar__button[data-state='on'] {
-    color: var(--highlight-fg);
+    color: var(--accent-fg);
     background-color: var(--cmp-bg);
   }
 
   .cmp-toolbar__button[data-state='on'] + .cmp-toolbar__button--more {
-    color: var(--highlight-fg);
+    color: var(--accent-fg);
     background-color: var(--cmp-bg);
   }
 
@@ -54,6 +56,7 @@
     margin-right: 2px;
     border: none;
     padding: 0;
+
     & > svg {
       width: 80%;
       height: 80%;
@@ -62,20 +65,12 @@
 
   .cmp-toolbar__button:hover,
   .cmp-toolbar__button[data-hover='true'] {
-    color: var(--highlight-fg);
-    background-color: var(--highlight-bg);
+    color: var(--accent-fg);
+    background-color: var(--accent-bg);
   }
-
-
-  .cmp-toolbar__button:focus,
-  .cmp-toolbar__button[data-focus="true"] {
-    position: relative;
-    box-shadow: 0 0 0 2px var(--blue-7);
-    outline: none;
-  }
-
+  
   .cmp-toolbar__button:disabled {
-    color: var(--slate-8);
+    color: var(--cmp-fg-disabled);
     /* TODO: Is there a better way to disable hover when in disabled state */
     pointer-events: none;
   }
@@ -86,7 +81,7 @@
 
   .cmp-toolbar__separator {
     width: 1px;
-    background-color: var(--slate-6);
+    background-color: var(--cmp-border);
     margin: 0 10px 4px 10px;
   }
 
@@ -123,10 +118,12 @@
   &[data-size='large'] {
     overflow: auto;
     flex-wrap: nowrap;
+
     .cmp-toolbar__button {
       padding: 15px 10px;
       margin-right: 2px;
     }
+
     .cmp-toolbar__separator {
       margin: 0 10px;
     }

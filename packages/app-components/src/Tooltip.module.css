@@ -2,8 +2,8 @@
   border-radius: var(--cmp-radius);
   padding: 10px 10px;
   font-size: 11px;
-  background-color: var(--primary-bg);
-  color: var(--primary-fg);
+  background-color: var(--panel-bg);
+  color: var(--panel-fg);
 
   box-shadow: var(--popover-shadow);
   user-select: none;
@@ -15,6 +15,6 @@
   z-index: 500;
 
   .cmp-tooltip__arrow {
-    fill: var(--primary-bg);
+    fill: var(--panel-bg);
   }
 }

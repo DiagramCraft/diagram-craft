@@ -21,7 +21,7 @@ export const NodeStrokeToolbarButton = () => {
               height: '12px',
               backgroundColor: fill.val,
               marginRight: '3px',
-              border: '1px solid var(--primary-fg)',
+              border: '1px solid var(--panel-fg)',
               borderRadius: '3px'
             }}
           ></div>

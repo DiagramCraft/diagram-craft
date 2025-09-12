@@ -38,7 +38,12 @@ export const ObjectInfoPanel = () => {
   }, [callback, diagram.selectionState]);
 
   return (
-    <ToolWindowPanel mode={'headless-no-padding'} id={'objectInfo'} title={'Object Info'}>
+    <ToolWindowPanel
+      mode={'headless-no-padding'}
+      id={'objectInfo'}
+      title={'Object Info'}
+      style={{ padding: '0.25rem 0' }}
+    >
       <div className={styles.objectInfoToolWindow}>
         {state === 'selection' && <SelectionInfoDetails obj={diagram.selectionState} />}
         {state === 'node' && <NodeInfoDetails obj={diagram.nodeLookup.get(nodeId!)!} />}

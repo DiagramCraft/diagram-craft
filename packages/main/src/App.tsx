@@ -103,6 +103,7 @@ export type DiagramRef = {
 const updateApplicationModel = ($d: Diagram, app: Application, callback: ProgressCallback) => {
   app.model.setActiveDocument($d.document, app.userState.awarenessState, callback);
   app.model.activeDiagram = $d;
+
   if (!app.ready) {
     const keyMap = defaultMacAppKeymap;
     app.keyMap = keyMap;
@@ -261,7 +262,10 @@ export const App = (props: {
 
   // Check initial autosave state
   useEffect(() => {
-    Autosave.get().exists().then(setDirty).catch(() => setDirty(false));
+    Autosave.get()
+      .exists()
+      .then(setDirty)
+      .catch(() => setDirty(false));
   }, []);
 
   // TODO: Can we change this to use state instead - see https://stackoverflow.com/questions/59600572/how-to-rerender-when-refs-change
