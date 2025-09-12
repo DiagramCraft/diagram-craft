@@ -47,7 +47,7 @@ export const ElementStylesheetDialog = (props: Props) => {
                   maxHeight: '100%',
                   scrollbarGutter: 'stable',
                   scrollbarWidth: 'thin',
-                  scrollbarColor: 'var(--tertiary-fg) var(--primary-bg)'
+                  scrollbarColor: 'var(--tertiary-fg) var(--panel-bg)'
                 }}
               >
                 <e.editor props={data} onChange={() => redraw()} />

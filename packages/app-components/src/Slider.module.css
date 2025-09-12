@@ -42,13 +42,13 @@
 
     &:hover,
     &[data-thumb-hover='true'] {
-      background-color: var(--primary-fg);
+      background-color: var(--panel-fg);
     }
 
     &:focus,
     &[data-thumb-focus='true'] {
       outline: none;
-      background-color: var(--primary-fg);
+      background-color: var(--panel-fg);
     }
   }
 }

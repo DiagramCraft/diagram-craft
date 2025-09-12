@@ -12,8 +12,8 @@
   font-size: 12px;
   font-weight: bold;
   line-height: 1;
-  background-color: var(--primary-bg);
-  border-bottom: 1px solid var(--primary-border);
+  background-color: var(--panel-bg);
+  border-bottom: 1px solid var(--panel-border);
   height: var(--tab-height);
 
   display: flex;
@@ -25,7 +25,7 @@
 .cmp-tabs__trigger {
   padding: 7.75px 9px;
   background: none;
-  color: var(--primary-fg);
+  color: var(--panel-fg);
   font-size: 12px;
   border-width: 0;
   position: relative;

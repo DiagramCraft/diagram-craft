@@ -85,7 +85,7 @@ export const LayerIndicator = () => {
                 {layer.name}
                 <div
                   className={'cmp-context-menu__right-slot'}
-                  style={{ color: 'var(--primary-fg)' }}
+                  style={{ color: 'var(--panel-fg)' }}
                 >
                   {layer.isLocked() && (
                     <span style={{ color: 'var(--error-fg)' }}>

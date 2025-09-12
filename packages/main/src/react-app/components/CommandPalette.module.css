@@ -5,8 +5,8 @@
   z-index: 1000;
 
   .commandPalette__content {
-    background: var(--primary-bg);
-    border: 1px solid var(--primary-border);
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
     border-radius: 8px;
     box-shadow: var(--popover-shadow);
     position: fixed;
@@ -29,7 +29,7 @@
 
     .commandPalette__searchContainer {
       padding: 16px;
-      border-bottom: 1px solid var(--primary-border);
+      border-bottom: 1px solid var(--panel-border);
       flex-shrink: 0;
 
       .commandPalette__searchInput {

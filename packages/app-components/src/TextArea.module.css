@@ -13,6 +13,7 @@
 
   &[data-error='true'] {
     color: var(--error-fg);
+
     > textarea {
       color: var(--error-fg);
     }
@@ -23,15 +24,17 @@
   }
 
   > textarea {
-    color: var(--primary-fg);
+    color: var(--panel-fg);
     border: none;
     background: none;
     font-size: 11px;
     width: calc(100% - 5px);
+
     &:focus,
     &[data-focus="true"] {
       outline: none;
     }
+
     &:disabled {
       color: var(--cmp-disabled-fg);
     }

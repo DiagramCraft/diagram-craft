@@ -147,9 +147,7 @@ export const ObjectToolWindow = () => {
           <ToolWindow.TabContent>
             <Accordion.Root type="multiple" defaultValue={['custom', 'dimensions', 'stroke']}>
               <NodeTableToolbarPanel />
-              <div style={{ marginTop: '8px' }}>
-                <ElementStylesheetPanel type={'node'} />
-              </div>
+              <ElementStylesheetPanel type={'node'} />
 
               <NodeTablePropertiesPanel />
               <NodeTableDimensionsPanel />
@@ -163,9 +161,7 @@ export const ObjectToolWindow = () => {
           <ToolWindow.TabContent>
             <Accordion.Root type="multiple" defaultValue={['fill', 'dimensions']}>
               <NodeTableToolbarPanel />
-              <div style={{ marginTop: '8px' }}>
-                <ElementStylesheetPanel type={'node'} />
-              </div>
+              <ElementStylesheetPanel type={'node'} />
 
               <NodeFillPanel />
               <NodeTableCellDimensionsPanel />

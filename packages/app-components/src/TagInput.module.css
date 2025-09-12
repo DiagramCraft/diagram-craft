@@ -87,7 +87,7 @@
 .cmp-tag-input__input {
   border: none;
   background: none;
-  color: var(--primary-fg);
+  color: var(--panel-fg);
   font-size: 11px;
   padding: 1px 2px;
   flex: 1 1 60px;

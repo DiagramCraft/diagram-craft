@@ -260,7 +260,7 @@
 
   .cmp-context-menu__arrow {
     transform: translateY(-1px);
-    fill: var(--primary-bg);
+    fill: var(--panel-bg);
   }
 }
 
@@ -270,7 +270,7 @@
   gap: 0.5rem;
   font-size: 12px;
   line-height: 1;
-  color: var(--primary-fg);
+  color: var(--panel-fg);
   margin-bottom: 0.25rem;
 
   .cmp-label__label {

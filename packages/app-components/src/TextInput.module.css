@@ -29,7 +29,7 @@
   }
 
   > input {
-    color: var(--primary-fg);
+    color: var(--panel-fg);
     border: none;
     background: none;
     font-size: 11px;

@@ -76,8 +76,8 @@
 
   .cmp-accordion__content {
     overflow: hidden;
-    color: var(--secondary-fg);
-    background-color: var(--gray-1);
+    color: var(--base-fg-dim);
+    background-color: var(--base-bg);
     text-align: left;
 
     &[data-state='open'] {
@@ -107,7 +107,7 @@
       }
 
       .cmp-accordion__chevron {
-        color: var(--primary-fg);
+        color: var(--panel-fg);
 
         &:hover {
           color: var(--accent-hover-fg);

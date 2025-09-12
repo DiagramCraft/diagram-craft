@@ -108,7 +108,7 @@
       border: 0;
       padding: 0;
       background: none;
-      color: var(--primary-fg);
+      color: var(--panel-fg);
     }
   }
 }

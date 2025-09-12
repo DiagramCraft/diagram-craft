@@ -8,7 +8,7 @@
   }
 
   .cmp-dialog__content {
-    background-color: var(--primary-bg);
+    background-color: var(--panel-bg);
     border-radius: 6px;
     box-shadow: hsl(206 22% 7% / 35%) 0px 10px 38px -10px, hsl(206 22% 7% / 20%) 0px 10px 20px -15px;
     position: fixed;
@@ -29,7 +29,7 @@
 
   .cmp-dialog__title {
     margin: 0;
-    color: var(--primary-fg);
+    color: var(--panel-fg);
     font-size: 13px;
     font-weight: 500;
     text-align: left;
@@ -38,7 +38,7 @@
   .cmp-dialog__description {
     margin-top: 0.5rem;
     margin-bottom: 20px;
-    color: var(--primary-fg);
+    color: var(--panel-fg);
     font-size: 11px;
     line-height: 1.5;
     text-align: left;
@@ -55,8 +55,8 @@
     height: 35px;
 
     border-radius: 4px;
-    color: var(--primary-fg);
-    background-color: var(--primary-bg);
+    color: var(--panel-fg);
+    background-color: var(--panel-bg);
 
     border: 1px solid var(--_button-border);
 

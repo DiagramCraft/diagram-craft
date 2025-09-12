@@ -2,13 +2,13 @@
   border-radius: 4px;
   padding: 20px;
   width: 300px;
-  background-color: var(--primary-bg);
+  background-color: var(--panel-bg);
   box-shadow: var(--popover-shadow);
   animation-duration: 400ms;
   animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   will-change: transform, opacity;
   z-index: 100;
-  color: var(--primary-fg);
+  color: var(--panel-fg);
   font-size: 12px;
   margin-right: 0.2rem;
 
@@ -36,7 +36,7 @@
   }
 
   .cmp-popover__arrow {
-    fill: var(--primary-bg);
+    fill: var(--panel-bg);
     transform: translateX(-0.2rem);
   }
 

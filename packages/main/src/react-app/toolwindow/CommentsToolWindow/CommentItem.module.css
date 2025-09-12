@@ -16,7 +16,7 @@
 
 .comment--reply {
   border: 1px solid var(--cmp-border);
-  background-color: var(--primary-bg);
+  background-color: var(--panel-bg);
 }
 
 .comment__header {
@@ -30,7 +30,7 @@
   aspect-ratio: 1 / 1;
   border-radius: 50%;
   position: relative;
-  color: var(--primary-bg);
+  color: var(--panel-bg);
   display: flex;
   justify-content: center;
   align-items: center;
