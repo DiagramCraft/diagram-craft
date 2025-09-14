@@ -73,7 +73,7 @@
   }
 
   .cmp-dialog__button--secondary {
-    --_button-fg: var(--secondary-fg)
+    --_button-fg: var(--base-fg-dim)
   }
 
   .cmp-dialog__button--danger {

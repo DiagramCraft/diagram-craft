@@ -13,7 +13,7 @@
   color: var(--cmp-fg);
 
   svg {
-    stroke: var(--secondary-fg);
+    stroke: var(--base-fg-dim);
   }
 
   &:hover:not(:disabled),
@@ -32,7 +32,7 @@
   }
 
   .trigger__icon {
-    color: var(--secondary-fg);
+    color: var(--base-fg-dim);
     margin-left: auto;
   }
 }

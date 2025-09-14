@@ -20,7 +20,7 @@
       margin-bottom: 0.25rem;
 
       a {
-        color: var(--secondary-fg);
+        color: var(--base-fg-dim);
 
         &:hover {
           color: var(--accent-fg);
@@ -33,7 +33,7 @@
     margin-bottom: 0.5rem;
 
     & > a {
-      color: var(--secondary-fg);
+      color: var(--base-fg-dim);
       margin-right: 0.25rem;
 
       &:hover {

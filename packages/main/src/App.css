@@ -88,9 +88,6 @@
   --highlight-reverse-bg: var(--blue-9);
   --highlight-reverse-fg: white;
 
-  --secondary-fg: var(--gray-11);
-  --secondary-border: var(--gray-5);
-
   --tertiary-fg: var(--gray-9);
 
   --canvas-fg: var(--gray-12);
@@ -130,9 +127,6 @@
 
   --highlight-reverse-bg: var(--blue-9);
   --highlight-reverse-fg: var(--blue-12);
-
-  --secondary-fg: var(--gray-11);
-  --secondary-border: var(--gray-5);
 
   --tertiary-fg: var(--gray-8);
 
@@ -544,7 +538,7 @@ foreignObject {
 
   .cmp-drag-label__props {
     margin-top: 0.25rem;
-    color: var(--secondary-fg);
+    color: var(--base-fg-dim);
   }
 
   .cmp-drag-label__prop {
@@ -579,7 +573,7 @@ foreignObject {
     image-rendering: crisp-edges;
 
     .svg-lbl {
-      fill: var(--secondary-fg);
+      fill: var(--base-fg-dim);
       font-size: 6px;
       text-anchor: middle;
       dominant-baseline: mathematical;
@@ -678,7 +672,7 @@ foreignObject {
   }
 
   .cmp-tree__node[data-depth="0"]:not(:first-child) {
-    border-top: 1px dashed var(--secondary-border);
+    border-top: 1px dashed var(--cmp-border);
   }
 
   .cmp-tree__node[data-pendingdrop="before"] {

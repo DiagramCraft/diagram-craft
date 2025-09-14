@@ -54,7 +54,7 @@
 }
 
 .tags__empty {
-  color: var(--secondary-fg);
+  color: var(--base-fg-dim);
   font-size: 11px;
   text-align: center;
   padding: 0.25rem 0;

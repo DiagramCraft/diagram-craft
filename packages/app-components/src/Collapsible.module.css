@@ -4,7 +4,7 @@
   .cmp-collapsible__trigger {
     position: relative;
     z-index: 5;
-    color: var(--secondary-fg);
+    color: var(--base-fg-dim);
 
     .cmp-collapsible__trigger_inner {
       width: 100%;
@@ -13,7 +13,7 @@
       align-items: center;
       gap: 0.125rem;
       font-size: 11px;
-      color: var(--secondary-fg);
+      color: var(--base-fg-dim);
       display: flex;
       justify-content: space-between;
 

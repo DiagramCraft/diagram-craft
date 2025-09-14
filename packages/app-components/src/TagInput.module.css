@@ -101,7 +101,7 @@
   }
 
   &::placeholder {
-    color: var(--secondary-fg);
+    color: var(--base-fg-dim);
   }
 }
 
