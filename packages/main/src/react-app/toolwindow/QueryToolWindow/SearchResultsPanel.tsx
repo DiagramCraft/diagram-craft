@@ -58,7 +58,9 @@ export const SearchResultsPanel = ({
         results.length > 0 ? (
           <a
             onClick={() => setViewMode(viewMode === 'text' ? 'preview' : 'text')}
-            style={{ color: viewMode === 'preview' ? 'var(--accent-fg)' : 'var(--tertiary-fg' }}
+            style={{
+              color: viewMode === 'preview' ? 'var(--accent-fg)' : 'var(--base-fg-more-dim'
+            }}
             title={viewMode === 'text' ? 'Switch to preview mode' : 'Switch to text mode'}
           >
             <TbGridDots size={12} />

@@ -16,7 +16,7 @@ import {
   MoveGuideUndoableAction
 } from '@diagram-craft/model/guides';
 
-const SECTION_LABEL_COLOR = 'var(--tertiary-fg)';
+const SECTION_LABEL_COLOR = 'var(--base-fg-more-dim)';
 
 interface GuideRowProps {
   guide: Guide;

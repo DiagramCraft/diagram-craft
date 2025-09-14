@@ -67,7 +67,7 @@ export const ExternalDataLinkDialog = (props: Props) => {
             maxHeight: '100%',
             scrollbarGutter: 'stable',
             scrollbarWidth: 'thin',
-            scrollbarColor: 'var(--tertiary-fg) var(--panel-bg)'
+            scrollbarColor: 'var(--base-fg-more-dim) var(--panel-bg)'
           }}
         >
           {data?.map(item => (

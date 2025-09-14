@@ -19,7 +19,7 @@
   padding: 2px 0.5rem 0 0.5rem;
   scrollbar-gutter: stable;
   scrollbar-width: thin;
-  scrollbar-color: var(--tertiary-fg) var(--panel-bg);
+  scrollbar-color: var(--base-fg-more-dim) var(--panel-bg);
   max-height: 20rem;
   height: 20rem;
   overflow-y: auto;

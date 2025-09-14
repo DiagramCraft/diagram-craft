@@ -61,6 +61,7 @@
   --base-bg: var(--gray-1);
   --base-fg: var(--gray-12);
   --base-fg-dim: var(--gray-11);
+  --base-fg-more-dim: var(--gray-8);
 
   --panel-bg: var(--gray-2);
   --panel-fg: var(--gray-12);
@@ -88,8 +89,6 @@
   --highlight-reverse-bg: var(--blue-9);
   --highlight-reverse-fg: white;
 
-  --tertiary-fg: var(--gray-9);
-
   --canvas-fg: var(--gray-12);
   --canvas-bg: white;
   --canvas-bg2: white;
@@ -101,6 +100,7 @@
   --base-bg: var(--gray-1);
   --base-fg: var(--gray-12);
   --base-fg-dim: var(--gray-11);
+  --base-fg-more-dim: var(--gray-8);
 
   --panel-bg: var(--gray-2);
   --panel-fg: var(--gray-12);
@@ -127,8 +127,6 @@
 
   --highlight-reverse-bg: var(--blue-9);
   --highlight-reverse-fg: var(--blue-12);
-
-  --tertiary-fg: var(--gray-8);
 
   --canvas-fg: var(--gray-1);
   --canvas-bg: var(--gray-12);
@@ -580,12 +578,12 @@ foreignObject {
     }
 
     .svg-tick {
-      stroke: var(--tertiary-fg);
+      stroke: var(--base-fg-more-dim);
       stroke-width: 1;
     }
 
     .svg-selection {
-      stroke: var(--tertiary-fg);
+      stroke: var(--base-fg-more-dim);
       fill: rgba(0, 0, 0, 0.25);
       stroke-width: 1;
     }

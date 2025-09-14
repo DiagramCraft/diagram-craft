@@ -103,7 +103,7 @@
 
           .commandPalette__commandDescription {
             font-size: 12px;
-            color: var(--tertiary-fg);
+            color: var(--base-fg-more-dim);
           }
         }
 
@@ -115,7 +115,7 @@
 
       .commandPalette__noResults {
         text-align: center;
-        color: var(--tertiary-fg);
+        color: var(--base-fg-more-dim);
         font-style: italic;
         padding: 24px;
       }
