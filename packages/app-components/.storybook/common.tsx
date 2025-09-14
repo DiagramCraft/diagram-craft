@@ -21,8 +21,8 @@ export const themeDecorator = () => {
           className={'dark-theme'}
           style={{
             padding: '1rem',
-            backgroundColor: 'var(--secondary-bg)',
-            color: 'var(--secondary-fg)'
+            backgroundColor: 'var(--base-bg)',
+            color: 'var(--base-fg)'
           }}
         >
           <PortalContextProvider>
@@ -45,8 +45,8 @@ export const themeDecorator = () => {
           className={'light-theme'}
           style={{
             padding: '1rem',
-            backgroundColor: 'var(--secondary-bg)',
-            color: 'var(--secondary-fg)'
+            backgroundColor: 'var(--base-bg)',
+            color: 'var(--base-fg)'
           }}
         >
           <PortalContextProvider>

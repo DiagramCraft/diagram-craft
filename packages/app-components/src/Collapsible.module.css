@@ -34,7 +34,7 @@
     margin-left: 1px;
     overflow: hidden;
     padding-left: 0.5rem;
-    border-left: 4px solid var(--secondary-bg);
+    border-left: 4px solid var(--cmp-border);
 
     &[data-state='open'] {
       animation: slideDownCollapsible 200ms ease-in-out;

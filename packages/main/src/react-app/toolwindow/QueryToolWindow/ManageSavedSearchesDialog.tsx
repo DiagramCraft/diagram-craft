@@ -39,10 +39,10 @@ const SavedSearchList = ({ type, title }: { type: QueryType; title: string }) =>
               alignItems: 'center',
               padding: '8px 12px',
               marginBottom: '0.5rem',
-              backgroundColor: 'var(--secondary-bg)'
+              backgroundColor: 'var(--cmp-bg)'
             }}
           >
-            <div style={{ flex: 1, minWidth: 0, fontSize: '11px', color: 'var(--secondary-fg)' }}>
+            <div style={{ flex: 1, minWidth: 0, fontSize: '11px', color: 'var(--cmp-fg)' }}>
               <div style={{ fontWeight: 'medium', marginBottom: '4px' }}>{entry.label}</div>
               <div>Scope: {entry.scope}</div>
               {entry.value !== entry.label && (
@@ -87,7 +87,9 @@ const getTabValueFromSearchType = (searchType?: QueryType): string => {
 };
 
 export const ManageSavedSearchesDialog = (props: ManageSavedSearchesDialogProps) => {
-  const [activeTab, setActiveTab] = useState(() => getTabValueFromSearchType(props.initialSearchType));
+  const [activeTab, setActiveTab] = useState(() =>
+    getTabValueFromSearchType(props.initialSearchType)
+  );
 
   return (
     <Dialog

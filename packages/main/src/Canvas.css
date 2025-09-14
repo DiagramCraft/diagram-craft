@@ -264,7 +264,7 @@
 
   .svg-edge--highlight-node__highlight {
     .svg-edge {
-      stroke: var(--highlight-fg) !important;
+      stroke: var(--accent-fg) !important;
       stroke-width: calc(3 * var(--zoom)) !important;
       stroke-dasharray: none !important;
     }

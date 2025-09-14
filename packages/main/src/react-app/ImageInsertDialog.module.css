@@ -1,6 +1,6 @@
 .cmp-insert-image-dialog {
   .cmp-insert-image-dialog__list {
-    background-color: var(--secondary-bg);
+    background-color: var(--base-bg);
     border: 1px solid var(--panel-border);
     border-radius: var(--cmp-radius);
     padding: 0.5rem 0 0.5rem 0.5rem;
@@ -23,7 +23,7 @@
         color: var(--secondary-fg);
 
         &:hover {
-          color: var(--highlight-fg);
+          color: var(--accent-fg);
         }
       }
     }
@@ -37,7 +37,7 @@
       margin-right: 0.25rem;
 
       &:hover {
-        color: var(--highlight-fg);
+        color: var(--accent-fg);
       }
 
       &:not(:first-child) {

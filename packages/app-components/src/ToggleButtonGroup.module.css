@@ -44,7 +44,7 @@
 
     &[data-state='on'] {
       background-color: var(--accent-bg);
-      color: var(--highlight-fg);
+      color: var(--accent-fg);
     }
 
     &:hover,

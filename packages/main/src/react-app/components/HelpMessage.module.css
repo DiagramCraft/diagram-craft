@@ -19,7 +19,7 @@
 
   button {
     background: transparent;
-    color: var(--highlight-fg);
+    color: var(--accent-fg);
     position: absolute;
     right: 0.55rem;
     top: 0.2rem;

@@ -214,7 +214,7 @@ export const ExtendedDataTab = () => {
           </a>
           <a
             className={'cmp-button cmp-button--icon-only'}
-            style={{ color: !editMode ? 'var(--highlight-fg)' : undefined }}
+            style={{ color: !editMode ? 'var(--accent-fg)' : undefined }}
             onClick={() => setEditMode(v => !v)}
           >
             {editMode ? <TbFilterOff /> : <TbFilter />}
@@ -294,7 +294,7 @@ export const ExtendedDataTab = () => {
                           className={'cmp-button cmp-button--icon-only'}
                           onClick={() => clearExternalLinkage(schema.id)}
                           title="Unlink external data"
-                          style={{ color: 'var(--highlight-fg)' }}
+                          style={{ color: 'var(--accent-fg)' }}
                         >
                           <TbLinkOff />
                         </a>
