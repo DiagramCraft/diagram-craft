@@ -41,3 +41,11 @@
     background-color: #3F3F3F !important;
   }
 }
+
+body.fullscreen #main-menu {
+  display: none;
+}
+
+body.fullscreen ._tools {
+  margin-left: 0.4rem;
+}

@@ -61,6 +61,17 @@ const createWindow = (): void => {
   });
 
   mainWindow.webContents.insertCSS(fs.readFileSync(resolveAsset('electron.css'), 'utf-8'));
+
+  mainWindow.on('enter-full-screen', () => {
+    mainWindow!.webContents.executeJavaScript(`
+      document.body.classList.add('fullscreen');
+    `);
+  });
+  mainWindow.on('leave-full-screen', () => {
+    mainWindow!.webContents.executeJavaScript(`
+      document.body.classList.remove('fullscreen');
+    `);
+  });
 };
 
 app.whenReady().then(() => {
