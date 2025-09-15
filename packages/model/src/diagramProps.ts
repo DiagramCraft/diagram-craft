@@ -265,10 +265,18 @@ declare global {
         | 'east-west'
         | 'directions'
         | 'per-edge'
-        | 'per-path';
+        | 'per-path'
+        | 'custom';
       perPathCount?: number;
       perEdgeCount?: number;
       directionsCount?: number;
+      customAnchors?: Record<
+        string,
+        {
+          x: number;
+          y: number;
+        }
+      >;
     };
 
     routing?: {
