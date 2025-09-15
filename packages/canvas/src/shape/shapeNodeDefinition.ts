@@ -127,7 +127,7 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
         node.renderProps.anchors.directionsCount
       );
     } else if (anchorStrategy === 'custom') {
-      return Object.entries(node.renderProps.anchors.customAnchors).map(([k, v]) => {
+      return Object.entries(node.renderProps.anchors.customAnchors ?? {}).map(([k, v]) => {
         return {
           id: k,
           start: Point.of(v.x, v.y),

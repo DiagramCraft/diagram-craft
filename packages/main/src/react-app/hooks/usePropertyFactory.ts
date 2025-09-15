@@ -94,7 +94,7 @@ export const makePropertyArrayHook = <
   getArr: (obj: TBase) => TItem[],
   getObj: (e: TItem) => DeepReadonly<TObj>,
   getStoredObj: (e: TItem) => DeepReadonly<TObj>,
-  getPropertyInfo: (e: TItem, path: TPath) => PropertyInfo<TValue>,
+  getPropertyInfo: (e: TItem, path: TPath, defaultValue?: TValue) => PropertyInfo<TValue>,
   updateObj: (obj: TBase, e: TItem, cb: (obj: TObj) => void) => void,
   subscribe: (obj: TBase, handler: () => void) => void,
   defaults: Defaults<TObj>,
@@ -169,7 +169,7 @@ export const makePropertyArrayHook = <
       info:
         multiple || getArr(obj)[0] === undefined
           ? undefined
-          : getPropertyInfo(getArr(obj)[0], path),
+          : getPropertyInfo(getArr(obj)[0], path, defaultValueOverride),
       values: values
     };
   }) as PropertyArrayHook<TBase, TObj>;
