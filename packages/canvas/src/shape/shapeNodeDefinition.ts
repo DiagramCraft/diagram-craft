@@ -131,7 +131,7 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
         return {
           id: k,
           start: Point.of(v.x, v.y),
-          type: 'point',
+          type: 'center',
           isPrimary: true
         } satisfies Anchor;
       });
