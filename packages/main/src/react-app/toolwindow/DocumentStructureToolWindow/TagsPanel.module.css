@@ -1,7 +1,7 @@
 .tags {
   display: flex;
   flex-direction: column;
-  padding: 0.5rem 0.5rem 1rem 0.5rem;
+  padding: 0.5rem;
 }
 
 .tags__list {
@@ -26,17 +26,17 @@
 }
 
 .tag:hover {
-  background-color: var(--cmp-hover-bg);
+  background-color: var(--cmp-bg-hover);
 }
 
 .tag--selected {
-  background-color: var(--highlight-bg);
-  color: var(--highlight-fg);
+  background-color: var(--accent-bg);
+  color: var(--accent-fg);
 }
 
 .tag--selected:hover {
-  background-color: var(--highlight-bg);
-  color: var(--highlight-fg);
+  background-color: var(--accent-bg);
+  color: var(--accent-fg);
 }
 
 .tag__icon {
@@ -54,7 +54,7 @@
 }
 
 .tags__empty {
-  color: var(--secondary-fg);
+  color: var(--base-fg-dim);
   font-size: 11px;
   text-align: center;
   padding: 0.25rem 0;

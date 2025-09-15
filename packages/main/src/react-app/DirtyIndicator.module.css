@@ -1,11 +1,11 @@
 .cmp-dirty-indicator {
-  color: var(--tertiary-fg);
+  color: var(--base-fg-more-dim);
   display: flex;
   align-items: center;
 
   > button {
     padding: 1px 5px;
-    color: var(--tertiary-fg);
+    color: var(--base-fg-more-dim);
   }
 
   .cmp-dirty-indicator__text {

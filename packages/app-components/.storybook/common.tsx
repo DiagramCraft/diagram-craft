@@ -9,8 +9,8 @@ export const themeDecorator = () => {
           className={'dark-theme'}
           style={{
             padding: '1rem',
-            backgroundColor: 'var(--primary-bg)',
-            color: 'var(--primary-fg)'
+            backgroundColor: 'var(--panel-bg)',
+            color: 'var(--panel-fg)'
           }}
         >
           <PortalContextProvider>
@@ -21,8 +21,8 @@ export const themeDecorator = () => {
           className={'dark-theme'}
           style={{
             padding: '1rem',
-            backgroundColor: 'var(--secondary-bg)',
-            color: 'var(--secondary-fg)'
+            backgroundColor: 'var(--base-bg)',
+            color: 'var(--base-fg)'
           }}
         >
           <PortalContextProvider>
@@ -33,8 +33,8 @@ export const themeDecorator = () => {
           className={'light-theme'}
           style={{
             padding: '1rem',
-            backgroundColor: 'var(--primary-bg)',
-            color: 'var(--primary-fg)'
+            backgroundColor: 'var(--panel-bg)',
+            color: 'var(--panel-fg)'
           }}
         >
           <PortalContextProvider>
@@ -45,8 +45,8 @@ export const themeDecorator = () => {
           className={'light-theme'}
           style={{
             padding: '1rem',
-            backgroundColor: 'var(--secondary-bg)',
-            color: 'var(--secondary-fg)'
+            backgroundColor: 'var(--base-bg)',
+            color: 'var(--base-fg)'
           }}
         >
           <PortalContextProvider>

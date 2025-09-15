@@ -264,7 +264,7 @@
 
   .svg-edge--highlight-node__highlight {
     .svg-edge {
-      stroke: var(--highlight-fg) !important;
+      stroke: var(--accent-fg) !important;
       stroke-width: calc(3 * var(--zoom)) !important;
       stroke-dasharray: none !important;
     }
@@ -281,7 +281,7 @@
   .svg-shape-control-point {
     cursor: crosshair;
     fill: white;
-    stroke: var(--crimson);
+    stroke: var(--crimson-9);
     stroke-width: calc(1 * var(--zoom));
   }
 

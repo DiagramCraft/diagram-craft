@@ -1,9 +1,9 @@
 .cmp-file-dialog {
-  width: 25rem;
+  width: 100%;
 
   .cmp-file-dialog__list {
-    background-color: var(--secondary-bg);
-    border: 1px solid var(--primary-border);
+    background-color: var(--base-bg);
+    border: 1px solid var(--panel-border);
     border-radius: var(--cmp-radius);
     padding: 0.5rem 0 0.5rem 0.5rem;
 
@@ -16,14 +16,16 @@
       margin: 0;
       padding-left: 0;
     }
+
     ul > li {
       list-style: none;
       margin-bottom: 0.25rem;
 
       a {
-        color: var(--secondary-fg);
+        color: var(--base-fg-dim);
+
         &:hover {
-          color: var(--highlight-fg);
+          color: var(--accent-fg);
         }
       }
     }
@@ -31,12 +33,13 @@
 
   .cmp-file-dialog__path {
     margin-bottom: 0.5rem;
+
     & > a {
-      color: var(--secondary-fg);
+      color: var(--base-fg-dim);
       margin-right: 0.25rem;
 
       &:hover {
-        color: var(--highlight-fg);
+        color: var(--accent-fg);
       }
 
       &:not(:first-child) {

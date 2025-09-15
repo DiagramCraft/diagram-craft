@@ -1,22 +1,23 @@
 .comment {
-  border-radius: 6px;
   padding: 12px;
   position: relative;
+  color: var(--panel-fg);
 }
 
 .comment--unresolved {
-  border: 1px solid var(--cmp-focus-border);
-  background-color: var(--secondary-bg);
+  border: 1px solid var(--panel-border);
+  border-left: 2px solid var(--accent-chroma);
+  padding-left: 11px;
 }
 
 .comment--resolved {
-  border: 1px solid var(--cmp-border);
-  background-color: var(--secondary-bg);
+  border: 1px solid var(--panel-border);
+  background-color: var(--panel-bg);
 }
 
 .comment--reply {
   border: 1px solid var(--cmp-border);
-  background-color: var(--primary-bg);
+  background-color: var(--panel-bg);
 }
 
 .comment__header {
@@ -30,7 +31,7 @@
   aspect-ratio: 1 / 1;
   border-radius: 50%;
   position: relative;
-  color: var(--primary-bg);
+  color: var(--panel-bg);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -55,7 +56,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--tertiary-fg);
+  color: var(--base-fg-more-dim);
   padding: 4px;
   border-radius: 4px;
   display: flex;

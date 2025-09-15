@@ -57,6 +57,6 @@
 .advancedSearchClause__indent {
   grid-area: indent;
   width: 0.125rem;
-  border-left: 4px solid var(--secondary-bg);
+  border-left: 4px solid var(--cmp-border);
   height: 100%;
 }

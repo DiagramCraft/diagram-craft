@@ -8,7 +8,7 @@
   }
 
   .cmp-dialog__content {
-    background-color: var(--primary-bg);
+    background-color: var(--panel-bg);
     border-radius: 6px;
     box-shadow: hsl(206 22% 7% / 35%) 0px 10px 38px -10px, hsl(206 22% 7% / 20%) 0px 10px 20px -15px;
     position: fixed;
@@ -22,13 +22,14 @@
     padding: 25px;
     animation: contentShow 150ms cubic-bezier(0.16, 1, 0.3, 1);
   }
+
   .cmp-dialog__content:focus {
     outline: none;
   }
 
   .cmp-dialog__title {
     margin: 0;
-    color: var(--primary-fg);
+    color: var(--panel-fg);
     font-size: 13px;
     font-weight: 500;
     text-align: left;
@@ -37,13 +38,16 @@
   .cmp-dialog__description {
     margin-top: 0.5rem;
     margin-bottom: 20px;
-    color: var(--primary-fg);
+    color: var(--panel-fg);
     font-size: 11px;
     line-height: 1.5;
     text-align: left;
   }
 
   .cmp-dialog__button {
+    --_button-border: var(--cmp-border);
+    --_button-fg: var(--base-fg);
+
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -54,21 +58,24 @@
     height: 35px;
 
     border-radius: 4px;
-    color: var(--primary-fg);
-    background-color: var(--primary-bg);
+    color: var(--_button-fg);
+    background-color: var(--panel-bg);
 
     border: 1px solid var(--_button-border);
+
     &:hover {
-      outline: 2px solid var(--_button-border);
-      outline-offset: -1px;
+      box-shadow: 0 0 0 1px var(--_button-border);
     }
   }
+
   .cmp-dialog__button--default {
-    --_button-border: var(--blue-6);
+    --_button-border: var(--panel-fg);
   }
+
   .cmp-dialog__button--secondary {
-    --_button-border: var(--tertiary-fg);
+    --_button-fg: var(--base-fg-dim)
   }
+
   .cmp-dialog__button--danger {
     --_button-border: var(--error-fg);
   }

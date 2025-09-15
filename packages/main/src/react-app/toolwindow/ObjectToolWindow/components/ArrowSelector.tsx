@@ -13,13 +13,13 @@ export const ArrowSelector = (props: Props) => {
       render={props => (
         <Select.Root {...props}>
           <Select.Item key={'NONE'} value={'NONE'}>
-            <ArrowPreview width={30} type={'NONE'} end={undefined} bg={'var(--secondary-bg)'} />
+            <ArrowPreview width={30} type={'NONE'} end={undefined} bg={'var(--cmp-bg)'} />
           </Select.Item>
           {Object.keys(ARROW_SHAPES).map(type => {
             const arrow = ARROW_SHAPES[type]?.(PREVIEW_SCALE, 1);
             return (
               <Select.Item key={type} value={type}>
-                <ArrowPreview width={30} type={type} end={arrow} bg={'var(--secondary-bg)'} />
+                <ArrowPreview width={30} type={type} end={arrow} bg={'var(--cmp-bg)'} />
               </Select.Item>
             );
           })}
@@ -38,7 +38,7 @@ export const ArrowSelector = (props: Props) => {
               borderRadius: '2px'
             }}
           >
-            <ArrowPreview width={30} type={type} end={arrow} bg={'var(--secondary-bg)'} />
+            <ArrowPreview width={30} type={type} end={arrow} bg={'var(--cmp-bg)'} />
           </div>
         );
       }}

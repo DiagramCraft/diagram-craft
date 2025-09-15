@@ -6,8 +6,8 @@
   right: calc(var(--right-indent) + 5.5rem);
   box-shadow: var(--popover-shadow);
 
-  color: var(--primary-fg);
-  background: var(--primary-bg);
+  color: var(--panel-fg);
+  background: var(--panel-bg);
   border-radius: 4px;
   font-size: 12px;
   text-align: center;
@@ -19,7 +19,7 @@
 
   button {
     background: transparent;
-    color: var(--highlight-fg);
+    color: var(--accent-fg);
     position: absolute;
     right: 0.55rem;
     top: 0.2rem;

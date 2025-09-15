@@ -22,11 +22,11 @@
   }
 
   .cmp-tree__node[data-state='on'] {
-    color: var(--highlight-fg);
+    color: var(--accent-fg);
   }
 
   .cmp-tree__node[data-state='child'] {
-    color: var(--highlight-fg);
+    color: var(--accent-fg);
 
     .cmp-tree__node__label {
       font-style: italic;
@@ -108,7 +108,7 @@
       border: 0;
       padding: 0;
       background: none;
-      color: var(--primary-fg);
+      color: var(--panel-fg);
     }
   }
 }

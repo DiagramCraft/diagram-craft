@@ -1,7 +1,8 @@
-@import '@radix-ui/colors/slate.css';
-@import '@radix-ui/colors/slate-dark.css';
-@import '@radix-ui/colors/slate-alpha.css';
-@import '@radix-ui/colors/slate-dark-alpha.css';
+@import '@radix-ui/colors/gray.css';
+@import '@radix-ui/colors/gray-dark.css';
+@import '@radix-ui/colors/gray-alpha.css';
+@import '@radix-ui/colors/gray-dark-alpha.css';
+
 @import '@radix-ui/colors/blue.css';
 @import '@radix-ui/colors/blue-dark.css';
 @import '@radix-ui/colors/red.css';
@@ -33,7 +34,6 @@
   --accent-12: var(--blue-12);
 
   --green: var(--green-9);
-  --crimson: var(--crimson-9);
 }
 
 .light-theme {
@@ -51,43 +51,45 @@
   --accent-12: var(--blue-12);
 
   --green: var(--green-9);
-  --crimson: var(--crimson-9);
 }
 
 :root {
-  --primary-bg: var(--slate-2);
-  --primary-fg: var(--slate-11);
-  --primary-border: var(--slate-6);
-
   --cmp-radius: 4px;
-  --cmp-fg: var(--slate-11);
-  --cmp-bg: var(--slate-3);
-  --cmp-border: var(--slate-6);
+}
 
-  --cmp-hover-bg: var(--slate-4);
-  --cmp-is-default-fg: var(--slate-8);
-  --cmp-disabled-fg: var(--slate-8);
+.light-theme {
+  --base-bg: var(--gray-1);
+  --base-fg: var(--gray-12);
+  --base-fg-dim: var(--gray-11);
+  --base-fg-more-dim: var(--gray-8);
 
-  --cmp-focus-border: var(--blue-8);
-  --cmp-focus-shadow: 0 0 0 2px var(--cmp-focus-border);
+  --panel-bg: var(--gray-2);
+  --panel-fg: var(--gray-12);
+  --panel-border: var(--gray-6);
+
+  --accent-bg: var(--blue-4);
+  --accent-fg: var(--blue-11);
+  --accent-fg-dimmed: var(--blue-6);
+  --accent-border: var(--blue-6);
+  --accent-fg-hover: var(--blue-12);
+  --accent-bg-selected: var(--blue-5);
+  --accent-chroma: var(--blue-9);
+
+  --cmp-fg: var(--gray-12);
+  --cmp-fg-disabled: var(--gray-8);
+  --cmp-fg-dimmed: var(--gray-6);
+  --cmp-bg: var(--gray-3);
+  --cmp-bg-hover: var(--gray-4);
+  --cmp-border: var(--gray-6);
+  --cmp-border-focus: var(--blue-5);
+  --cmp-border-shadow-focus: 0 0 0 2px var(--blue-5);
 
   --popover-shadow: 0 0 0 0.5px var(--cmp-border), 0 10px 60px rgba(0, 0, 0, 0.17), 0 10px 32px -16px rgba(0, 0, 0, 0.35);
-
-  --menu-shadow: var(--popover-shadow);
-  --menu-keybinding: var(--blue-11);
 
   --highlight-reverse-bg: var(--blue-9);
   --highlight-reverse-fg: white;
 
-  --highlight-bg: var(--blue-3);
-  --highlight-fg: var(--blue-9);
-
-  --secondary-bg: var(--slate-3);
-  --secondary-fg: var(--slate-11);
-  --tertiary-fg: var(--slate-9);
-  --dimmed-fg: var(--slate-4);
-
-  --canvas-fg: var(--slate-12);
+  --canvas-fg: var(--gray-12);
   --canvas-bg: white;
   --canvas-bg2: white;
 
@@ -95,39 +97,39 @@
 }
 
 .dark-theme {
-  --primary-bg: var(--slate-2);
-  --primary-fg: var(--slate-11);
-  --primary-border: var(--slate-6);
+  --base-bg: var(--gray-1);
+  --base-fg: var(--gray-12);
+  --base-fg-dim: var(--gray-11);
+  --base-fg-more-dim: var(--gray-8);
 
-  --cmp-fg: var(--slate-11);
-  --cmp-bg: var(--slate-3);
-  --cmp-border: var(--slate-6);
+  --panel-bg: var(--gray-2);
+  --panel-fg: var(--gray-12);
+  --panel-border: var(--gray-6);
 
-  --cmp-hover-bg: var(--slate-4);
-  --cmp-is-default-fg: var(--slate-9);
-  --cmp-disabled-fg: var(--slate-8);
+  --accent-bg: var(--blue-4);
+  --accent-bg-selected: var(--blue-5);
+  --accent-fg: var(--blue-11);
+  --accent-fg-dimmed: var(--blue-6);
+  --accent-fg-hover: var(--blue-12);
+  --accent-border: var(--blue-6);
+  --accent-chroma: var(--blue-9);
 
-  --cmp-focus-border: var(--blue-8);
-  --cmp-focus-shadow: 0 0 0 2px var(--cmp-focus-border);
+  --cmp-fg: var(--gray-12);
+  --cmp-fg-disabled: var(--gray-8);
+  --cmp-fg-dimmed: var(--gray-6);
+  --cmp-bg: var(--gray-3);
+  --cmp-bg-hover: var(--gray-4);
+  --cmp-border: var(--gray-6);
+  --cmp-border-focus: var(--blue-5);
+  --cmp-border-shadow-focus: 0 0 0 2px var(--blue-5);
 
   --popover-shadow: 0 0 0 0.5px var(--cmp-border), 0 10px 60px rgba(0, 0, 0, 0.32), 0 10px 32px -16px rgba(0, 0, 0, 0.5);
-
-  --menu-shadow: var(--popover-shadow);
-  --menu-keybinding: var(--blue-11);
 
   --highlight-reverse-bg: var(--blue-9);
   --highlight-reverse-fg: var(--blue-12);
 
-  --highlight-bg: var(--blue-3);
-  --highlight-fg: var(--blue-11);
-
-  --secondary-bg: var(--slate-4);
-  --secondary-fg: var(--slate-11);
-  --tertiary-fg: var(--slate-9);
-  --dimmed-fg: var(--slate-6);
-
-  --canvas-fg: var(--slate-1);
-  --canvas-bg: var(--slate-12);
+  --canvas-fg: var(--gray-1);
+  --canvas-bg: var(--gray-12);
   --canvas-bg2: white;
 
   --error-fg: var(--red-9);
@@ -136,9 +138,9 @@
 .dark-theme #left,
 .dark-theme .cmp-node-type-popup,
 .dark-theme .cmp-shape-select-dialog {
-  --canvas-fg: var(--slate-11);
-  --canvas-bg: var(--slate-2);
-  --canvas-bg2: var(--slate-3);
+  --canvas-fg: var(--gray-11);
+  --canvas-bg: var(--gray-2);
+  --canvas-bg2: var(--gray-3);
 
   .canvas {
     background-color: transparent;
@@ -148,9 +150,9 @@
 .light-theme #left,
 .light-theme .cmp-node-type-popup,
 .light-theme .cmp-shape-select-dialog {
-  --canvas-fg: var(--slate-11);
-  --canvas-bg: var(--slate-4);
-  --canvas-bg2: var(--slate-3);
+  --canvas-fg: var(--gray-11);
+  --canvas-bg: var(--gray-4);
+  --canvas-bg2: var(--gray-3);
 
   .canvas {
     background-color: transparent;
@@ -218,31 +220,31 @@ input[type="checkbox"]:checked::before {
 }
 
 input[type="checkbox"]:focus {
-  box-shadow: var(--cmp-focus-shadow);
+  box-shadow: var(--cmp-border-shadow-focus);
   outline: none;
 }
 
 input[type="checkbox"]:disabled {
-  color: var(--cmp-disabled-fg);
-  --__fg: var(--cmp-disabled-fg);
+  color: var(--cmp-fg-disabled);
+  --__fg: var(--cmp-fg-disabled);
   cursor: not-allowed;
 }
 
 input::-webkit-input-placeholder {
-  color: var(--primary-fg);
+  color: var(--panel-fg);
 }
 
 
 div[data-field-state='set'],
 button[data-field-state='set'],
 input[type="checkbox"][data-field-state='set'] {
-  border: 1px solid var(--blue-7);
+  border: 1px solid var(--accent-border);
 }
 
 div[data-field-state='overridden'],
 button[data-field-state='overridden'],
 input[type="checkbox"][data-field-state='overridden'] {
-  background: repeating-linear-gradient(-45deg, var(--slate-5), var(--slate-5) 5px, var(--cmp-bg) 5px, var(--cmp-bg) 10px);
+  background: repeating-linear-gradient(-45deg, var(--cmp-border), var(--cmp-border) 5px, var(--cmp-bg) 5px, var(--cmp-bg) 10px);
 }
 
 
@@ -273,7 +275,7 @@ input[type="checkbox"][data-field-state='overridden'] {
 #menu {
   align-items: center;
   grid-area: menu;
-  background: var(--primary-bg);
+  background: var(--panel-bg);
   display: grid;
   grid-template-columns: 1fr auto 1fr;
 
@@ -284,21 +286,21 @@ input[type="checkbox"][data-field-state='overridden'] {
     margin-left: 0.25rem;
     margin-right: 1rem;
     width: 2rem;
-    background-color: var(--primary-bg);
+    background-color: var(--panel-bg);
 
     &[data-state='open'] {
-      background-color: var(--highlight-bg);
-      border: 1px solid var(--primary-border);
+      background-color: var(--accent-bg-selected);
+      border: 1px solid var(--panel-border);
       border-radius: 6px;
 
       & svg {
-        color: var(--highlight-fg);
+        color: var(--accent-fg);
       }
     }
 
     & svg {
       display: block;
-      color: var(--primary-fg);
+      color: var(--panel-fg);
     }
 
   }
@@ -310,7 +312,7 @@ input[type="checkbox"][data-field-state='overridden'] {
     font-size: 15px;
     gap: 0.25rem;
     justify-self: center;
-    color: var(--primary-fg);
+    color: var(--panel-fg);
   }
 
   ._tools {
@@ -318,8 +320,8 @@ input[type="checkbox"][data-field-state='overridden'] {
     gap: 0.25rem;
 
     .cmp-toolbar__button[data-state='on'] {
-      background-color: var(--highlight-bg);
-      color: var(--highlight-fg);
+      background-color: var(--accent-bg);
+      color: var(--accent-fg);
     }
 
     > [role="toolbar"] {
@@ -347,9 +349,9 @@ input[type="checkbox"][data-field-state='overridden'] {
 #toolbar {
   grid-area: toolbar;
   display: flex;
-  background: var(--primary-bg);
-  border-top: 1px solid var(--primary-border);
-  border-bottom: 1px solid var(--primary-border);
+  background: var(--panel-bg);
+  border-top: 1px solid var(--panel-border);
+  border-bottom: 1px solid var(--panel-border);
   padding-left: 0.5rem;
 
   & > div > span {
@@ -361,8 +363,8 @@ input[type="checkbox"][data-field-state='overridden'] {
 #tabs {
   --__layer-indicator-width: 150px;
   grid-area: tabs;
-  background: var(--primary-bg);
-  border-top: 1px solid var(--primary-border);
+  background: var(--panel-bg);
+  border-top: 1px solid var(--panel-border);
 
   display: grid;
   grid-template-columns: 1fr var(--__layer-indicator-width);
@@ -371,21 +373,21 @@ input[type="checkbox"][data-field-state='overridden'] {
 
 #left-buttons {
   grid-area: left-buttons;
-  background: var(--primary-bg);
-  border-right: 1px solid var(--primary-border);
-  border-top: 1px solid var(--primary-border);
+  background: var(--panel-bg);
+  border-right: 1px solid var(--panel-border);
+  border-top: 1px solid var(--panel-border);
   width: auto;
 
   .cmp-toolbar__button[data-state='on'] {
-    background-color: var(--highlight-bg);
-    color: var(--highlight-fg);
+    background-color: var(--accent-bg);
+    color: var(--accent-fg);
   }
 }
 
 #left {
-  background: var(--primary-bg);
-  border-right: 1px solid var(--primary-border);
-  border-top: 1px solid var(--primary-border);
+  background: var(--panel-bg);
+  border-right: 1px solid var(--panel-border);
+  border-top: 1px solid var(--panel-border);
   position: absolute;
   left: 40px;
   top: 0;
@@ -402,21 +404,21 @@ input[type="checkbox"][data-field-state='overridden'] {
 
 #right-buttons {
   grid-area: right-buttons;
-  background: var(--primary-bg);
-  border-left: 1px solid var(--primary-border);
-  border-top: 1px solid var(--primary-border);
+  background: var(--panel-bg);
+  border-left: 1px solid var(--panel-border);
+  border-top: 1px solid var(--panel-border);
   width: auto;
 
   .cmp-toolbar__button[data-state='on'] {
-    background-color: var(--highlight-bg);
-    color: var(--highlight-fg);
+    background-color: var(--accent-bg);
+    color: var(--accent-fg);
   }
 }
 
 #right {
-  background: var(--primary-bg);
-  border-left: 1px solid var(--primary-border);
-  border-top: 1px solid var(--primary-border);
+  background: var(--panel-bg);
+  border-left: 1px solid var(--panel-border);
+  border-top: 1px solid var(--panel-border);
   position: absolute;
   right: 40px;
   top: 0;
@@ -428,6 +430,26 @@ input[type="checkbox"][data-field-state='overridden'] {
 
   &::-webkit-scrollbar {
     display: none;
+  }
+}
+
+.cmp-sidebar {
+  .cmp-tabs__content {
+    background-color: red;
+    height: initial;
+    padding: 0;
+
+    &:not(:has(.cmp-panel__headless)) {
+      padding-top: 0;
+    }
+  }
+
+  .cmp-accordion__header {
+    background-color: var(--panel-bg);
+  }
+
+  .cmp-toolbar {
+    background-color: var(--panel-bg);
   }
 }
 
@@ -475,7 +497,7 @@ input[type="checkbox"][data-field-state='overridden'] {
   &:after {
     content: '';
     position: absolute;
-    background-color: var(--primary-bg);
+    background-color: var(--panel-bg);
     left: 0;
     top: 0;
     width: 15px;
@@ -497,8 +519,8 @@ foreignObject {
 
 .cmp-drag-label {
   position: fixed;
-  background-color: var(--primary-bg);
-  color: var(--primary-fg);
+  background-color: var(--panel-bg);
+  color: var(--panel-fg);
   box-shadow: var(--popover-shadow);
   padding: 0.5rem 0.5rem;
   font-size: 11px;
@@ -514,7 +536,7 @@ foreignObject {
 
   .cmp-drag-label__props {
     margin-top: 0.25rem;
-    color: var(--secondary-fg);
+    color: var(--base-fg-dim);
   }
 
   .cmp-drag-label__prop {
@@ -526,16 +548,16 @@ foreignObject {
     padding: 0.25rem 0.5rem 0 0.5rem;
     display: flex;
     gap: 0.5rem;
-    border-top: 1px solid var(--secondary-bg);
+    border-top: 1px solid var(--cmp-border);
 
     & div[data-state='active'] {
-      color: var(--blue-8);
+      color: var(--accent-fg);
     }
   }
 }
 
 .cmp-ruler {
-  background-color: var(--primary-bg);
+  background-color: var(--panel-bg);
   z-index: 1;
 
   & > svg {
@@ -549,25 +571,25 @@ foreignObject {
     image-rendering: crisp-edges;
 
     .svg-lbl {
-      fill: var(--secondary-fg);
+      fill: var(--base-fg-dim);
       font-size: 6px;
       text-anchor: middle;
       dominant-baseline: mathematical;
     }
 
     .svg-tick {
-      stroke: var(--tertiary-fg);
+      stroke: var(--base-fg-more-dim);
       stroke-width: 1;
     }
 
     .svg-selection {
-      stroke: var(--tertiary-fg);
+      stroke: var(--base-fg-more-dim);
       fill: rgba(0, 0, 0, 0.25);
       stroke-width: 1;
     }
 
     .svg-cursor {
-      stroke: var(--blue-11);
+      stroke: var(--accent-fg);
       stroke-width: 1;
     }
   }
@@ -607,28 +629,32 @@ foreignObject {
 }
 
 .cmp-panel__children {
-  background-color: var(--primary-bg);
+  background-color: var(--panel-bg);
   margin-top: 1rem;
 }
 
 .cmp-panel__headless {
-  background-color: var(--primary-bg);
-  padding: 2px 10px 10px 10px;
-  color: var(--cmp-fg);
-  border-bottom: 1px solid var(--primary-border);
+  background-color: var(--base-bg);
+  padding: 10px 10px 10px 10px;
+  color: var(--base-fg-dim);
+  border-bottom: 1px solid var(--panel-border);
   font-size: 11px;
-
-  &:has(> .cmp-toolbar) {
-    padding: 0 0.25rem 0.25rem 0.25rem;
-  }
 
   &[data-isempty="true"] {
     border-bottom: none;
   }
+
+  > .cmp-toolbar {
+    padding: 3px 0 3px 3px;
+    margin: 0;
+    width: calc(100% + 20px);
+    max-width: calc(100% + 20px);
+  }
+
 }
 
 .cmp-panel__headless--no-padding {
-  padding: 5px 0;
+  padding: 0;
 }
 
 .cmp-layer-list {
@@ -638,13 +664,13 @@ foreignObject {
     grid-template-columns: 1fr min-content min-content;
 
     &:hover {
-      color: var(--blue-11);
-      background-color: var(--blue-4);
+      color: var(--accent-fg-hover) !important;
+      background-color: var(--accent-bg);
     }
   }
 
   .cmp-tree__node[data-depth="0"]:not(:first-child) {
-    border-top: 1px dashed var(--slate-5);
+    border-top: 1px dashed var(--cmp-border);
   }
 
   .cmp-tree__node[data-pendingdrop="before"] {
@@ -655,7 +681,7 @@ foreignObject {
       left: 0;
       right: 0;
       height: 4px;
-      background-color: var(--blue-11);
+      background-color: var(--cmp-fg);
       width: 100%;
       z-index: 100;
     }
@@ -669,20 +695,20 @@ foreignObject {
       left: 0;
       right: 0;
       height: 4px;
-      background-color: var(--blue-11);
+      background-color: var(--cmp-fg);
       width: 100%;
       z-index: 100;
     }
   }
 
   .cmp-tree__node[data-pendingdrop="on"] {
-    background-color: var(--secondary-bg);
+    background-color: var(--cmp-bg-hover);
   }
 
 
   .cmp-layer-list__layer--selected {
     & .cmp-tree__node__label, .cmp-tree__node__value {
-      color: var(--blue-11);
+      color: var(--accent-fg);
       font-weight: bold;
     }
   }
@@ -695,7 +721,7 @@ foreignObject {
       bottom: -1px;
       left: 0;
       width: 2px;
-      background-color: var(--blue-11);
+      background-color: var(--accent-chroma);
     }
   }
 }
@@ -715,17 +741,17 @@ foreignObject {
     display: flex;
     flex-direction: row;
     height: 100%;
-    background-color: var(--primary-bg);
+    background-color: var(--panel-bg);
 
 
     .cmp-document-tabs__tab-trigger {
       font-size: 11px;
       display: flex;
       align-items: center;
-      color: var(--primary-fg);
+      color: var(--panel-fg);
       background-color: transparent;
       border: none;
-      border-right: 1px solid var(--slate-6);
+      border-right: 1px solid var(--cmp-border);
       border-bottom: 2px solid transparent;
       min-width: max-content;
       padding: 0;
@@ -742,26 +768,25 @@ foreignObject {
       }
 
       &:hover {
-        background-color: var(--slate-3);
-        color: var(--blue-11);
+        background-color: var(--cmp-bg-hover);
       }
 
       &[data-state='active'] {
-        color: var(--blue-11);
-        border-bottom: 2px solid var(--blue-11);
+        color: var(--cmp-fg);
+        border-bottom: 2px solid var(--accent-chroma);
       }
     }
   }
 
   .cmp-document-tabs__add {
     background-color: transparent;
-    border-right: 1px solid var(--slate-6);
-    border-left: 1px solid var(--slate-6);
-    color: var(--primary-fg);
+    border-right: 1px solid var(--cmp-border);
+    border-left: 1px solid var(--cmp-border);
+    color: var(--panel-fg);
 
     &:hover {
-      background-color: var(--slate-3);
-      color: var(--blue-11);
+      background-color: var(--cmp-bg-hover);
+      color: var(--accent-fg-hover);
     }
   }
 }
@@ -772,12 +797,12 @@ foreignObject {
   margin-left: auto;
   font-size: 11px;
   border: none;
-  border-left: 1px solid var(--slate-6);
+  border-left: 1px solid var(--cmp-border);
   padding: 0 0.5rem;
   gap: 0.25rem;
-  background-color: var(--primary-bg);
+  background-color: var(--panel-bg);
   border-radius: 0;
-  color: var(--primary-fg);
+  color: var(--panel-fg);
   max-width: calc(var(--__layer-indicator-width) - 20px);
 
   & > span {
@@ -807,20 +832,20 @@ foreignObject {
   }
 
   .cmp-transform__node {
-    fill: var(--primary-bg);
-    stroke: var(--primary-fg);
+    fill: var(--panel-bg);
+    stroke: var(--panel-fg);
     stroke-width: 0.02;
     cursor: pointer;
 
     &.cmp-transform__node--active {
-      stroke: var(--blue-11);
-      fill: var(--blue-11);
+      stroke: var(--accent-fg-hover);
+      fill: var(--accent-fg-hover);
     }
   }
 
   .cmp-transform__rect {
     fill: transparent;
-    stroke: var(--primary-fg);
+    stroke: var(--panel-fg);
     stroke-width: 0.02;
     stroke-dasharray: 0.05 0.05;
   }
@@ -863,13 +888,17 @@ foreignObject {
     overflow: hidden;
 
     &:hover {
-      border-left: 2px solid var(--blue-11);
-      background-color: var(--slate-3);
+      border-left: 2px solid var(--accent-fg-hover);
+      background-color: var(--cmp-bg-hover);
+
+      svg {
+        color: var(--accent-fg-hover);
+      }
     }
 
     & svg {
       margin-top: 2px;
-      color: var(--blue-11);
+      color: var(--accent-fg);
     }
   }
 
@@ -879,6 +908,7 @@ foreignObject {
   }
 }
 
+/*
 .cmp-schema-selector {
   .cmp-schema-selector__schemas {
     margin-right: 2rem;
@@ -915,6 +945,7 @@ foreignObject {
     }
   }
 }
+*/
 
 /* Adjustments of general components for specific use-cases */
 
@@ -986,7 +1017,7 @@ body[data-dragmimetype='application/x-diagram-craft-element-instances'] *[data-d
 
 .util-action {
   &:hover {
-    color: var(--blue-11);
+    color: var(--accent-fg-hover);
     cursor: pointer;
   }
 }
@@ -1098,7 +1129,7 @@ body[data-dragmimetype='application/x-diagram-craft-element-instances'] *[data-d
 
 .svg-node--highlight-node__highlight .svg-node__boundary {
   stroke-width: 2px !important;
-  stroke: var(--highlight-fg) !important;
+  stroke: var(--accent-fg) !important;
 }
 
 .svg-node--highlight-node__edge-connect---point .svg-node__boundary {

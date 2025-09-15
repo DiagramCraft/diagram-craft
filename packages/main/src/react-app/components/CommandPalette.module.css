@@ -5,8 +5,8 @@
   z-index: 1000;
 
   .commandPalette__content {
-    background: var(--primary-bg);
-    border: 1px solid var(--primary-border);
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
     border-radius: 8px;
     box-shadow: var(--popover-shadow);
     position: fixed;
@@ -29,7 +29,7 @@
 
     .commandPalette__searchContainer {
       padding: 16px;
-      border-bottom: 1px solid var(--primary-border);
+      border-bottom: 1px solid var(--panel-border);
       flex-shrink: 0;
 
       .commandPalette__searchInput {
@@ -44,8 +44,8 @@
         box-sizing: border-box;
 
         &:focus {
-          border-color: var(--cmp-focus-border);
-          box-shadow: var(--cmp-focus-shadow);
+          border-color: var(--cmp-border-focus);
+          box-shadow: var(--cmp-border-shadow-focus);
         }
       }
     }
@@ -103,31 +103,26 @@
 
           .commandPalette__commandDescription {
             font-size: 12px;
-            color: var(--tertiary-fg);
+            color: var(--base-fg-more-dim);
           }
         }
 
         .commandPalette__keyBinding {
           font-size: 12px;
-          font-family: monospace;
-          background: var(--secondary-bg);
-          color: var(--menu-keybinding);
-          padding: 4px 8px;
-          border-radius: var(--cmp-radius);
-          border: 1px solid var(--cmp-border);
+          color: var(--accent-fg);
         }
       }
 
       .commandPalette__noResults {
         text-align: center;
-        color: var(--tertiary-fg);
+        color: var(--base-fg-more-dim);
         font-style: italic;
         padding: 24px;
       }
 
       &.commandPalette__commandList--mouseEnabled {
         .commandPalette__commandItem:hover:not(.commandPalette__commandItem--selected) {
-          background: var(--cmp-hover-bg);
+          background: var(--cmp-bg-hover);
         }
       }
     }

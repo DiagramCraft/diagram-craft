@@ -21,7 +21,7 @@ export const ElementTextToolbarButton = () => {
               height: '12px',
               backgroundColor: color.val,
               marginRight: '3px',
-              border: '1px solid var(--primary-fg)',
+              border: '1px solid var(--panel-fg)',
               borderRadius: '3px'
             }}
           ></div>

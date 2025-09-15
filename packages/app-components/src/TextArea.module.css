@@ -8,11 +8,12 @@
 
   &:focus-within,
   &:has(*[data-focus="true"]) {
-    box-shadow: var(--cmp-focus-shadow) !important;
+    box-shadow: var(--cmp-border-shadow-focus) !important;
   }
 
   &[data-error='true'] {
     color: var(--error-fg);
+
     > textarea {
       color: var(--error-fg);
     }
@@ -23,17 +24,19 @@
   }
 
   > textarea {
-    color: var(--primary-fg);
+    color: var(--panel-fg);
     border: none;
     background: none;
     font-size: 11px;
     width: calc(100% - 5px);
+
     &:focus,
     &[data-focus="true"] {
       outline: none;
     }
+
     &:disabled {
-      color: var(--cmp-disabled-fg);
+      color: var(--cmp-fg-disabled);
     }
   }
 }

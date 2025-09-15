@@ -6,7 +6,7 @@
 
 .comments-tool-window__no-comments {
   text-align: center;
-  color: var(--secondary-fg);
+  color: var(--base-fg-dim);
   padding: 0.25rem 0;
 }
 
@@ -18,11 +18,15 @@
 
 .comments-tool-window__group-title {
   font-weight: bold;
-  color: var(--secondary-fg);
+  color: var(--base-fg-dim);
 }
 
 .comments-tool-window__thread {
   margin-bottom: 16px;
+
+  &:last-of-type {
+    margin-bottom: 0;
+  }
 }
 
 .comments-tool-window__nested-reply {

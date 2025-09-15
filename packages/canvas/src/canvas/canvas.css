@@ -10,6 +10,7 @@
       height: 100%;
       cursor: move;
     }
+
     .svg-node__text {
       cursor: move;
       pointer-events: none;
@@ -18,7 +19,7 @@
 }
 
 .svg-node--with-action .svg-node:hover {
-  stroke: var(--cmp-focus-border) !important;
+  stroke: var(--cmp-border-focus) !important;
   stroke-width: 2px !important;
 }
 

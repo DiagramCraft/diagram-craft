@@ -188,7 +188,7 @@ const DataProviderResponse = (props: {
                   </div>
 
                   <div
-                    style={{ color: isRuleLayer ? 'var(--tertiary-fg)' : 'default' }}
+                    style={{ color: isRuleLayer ? 'var(--base-fg-more-dim)' : 'default' }}
                     onMouseDown={ev => {
                       if (!isRegularLayer(diagram.activeLayer)) return;
                       if (ev.button !== 0) return; // Only handle left mouse button
