@@ -3,6 +3,11 @@ import type { Parser } from './parser';
 import type { TokenStream } from './token-stream';
 import { Util } from './utils';
 
+/**
+ * Handles paragraph parsing. This is the fallback parser that consumes
+ * consecutive non-empty lines into a single paragraph block.
+ * Must be added last to the block parser list.
+ */
 export class ParagraphHandler implements BlockParser {
   parse(parser: Parser, stream: TokenStream, ast: ASTNode[]): boolean {
     let s = "";
@@ -30,6 +35,10 @@ export class ParagraphHandler implements BlockParser {
   }
 }
 
+/**
+ * Handles setext-style headers (underlined with = or -).
+ * Example: "Header\n=====" or "Header\n-----"
+ */
 export class SetextHeaderHandler implements BlockParser {
   parse(parser: Parser, stream: TokenStream, ast: ASTNode[]): boolean {
     const m = stream.peek(1).match(/^(?:-+|=+)$/);
@@ -50,6 +59,10 @@ export class SetextHeaderHandler implements BlockParser {
   }
 }
 
+/**
+ * Handles ATX-style headers (prefixed with #).
+ * Example: "# Header 1", "## Header 2", etc.
+ */
 export class AtxHeaderHandler implements BlockParser {
   parse(parser: Parser, stream: TokenStream, ast: ASTNode[]): boolean {
     const m = stream.peek().match(/^(#+)\s+((\S|[^#])+?)(?:\s?#+)?$/);
@@ -69,6 +82,10 @@ export class AtxHeaderHandler implements BlockParser {
   }
 }
 
+/**
+ * Handles blockquote parsing. Blockquotes start with > and can be nested.
+ * Consecutive blockquotes are merged into a single blockquote element.
+ */
 export class BlockquoteHandler implements BlockParser {
   private rS = /^(?: {0,3})?>(?: |$)?(.*)/;
 
@@ -105,6 +122,10 @@ export class BlockquoteHandler implements BlockParser {
   }
 }
 
+/**
+ * Handles indented code blocks. Code blocks are lines indented with
+ * at least 4 spaces or 1 tab character.
+ */
 export class CodeHandler implements BlockParser {
   // eslint-disable-next-line no-regex-spaces
   private rS = /^(?:\t|    )(.*)/;
@@ -136,6 +157,11 @@ export class CodeHandler implements BlockParser {
   }
 }
 
+/**
+ * Handles both ordered and unordered lists. This is one of the most complex
+ * parsers as it needs to handle nested content, loose/tight list items,
+ * and various indentation patterns.
+ */
 export class ListHandler implements BlockParser {
   private trimLeft = /^(\t| {0,4})/;
 
@@ -226,6 +252,10 @@ export class ListHandler implements BlockParser {
   }
 }
 
+/**
+ * Handles inline code spans marked with backticks.
+ * Example: `code here` or ``code with `backticks` ``
+ */
 export class InlineCodeHandler implements InlineParser {
   parse(parser: Parser, s: string, parserState: ParseState): (ASTNode | string)[] {
     return this.applyInlines(/(`+)( ?)(.+?)\2\1/g, (m) => {
@@ -257,6 +287,10 @@ export class InlineCodeHandler implements InlineParser {
   }
 }
 
+/**
+ * Handles emphasis and strong emphasis using * or _ characters.
+ * This is a simplified implementation - the full CommonMark spec is quite complex.
+ */
 export class InlineEmphasisHandler implements InlineParser {
   constructor(private sym: string) {}
 
@@ -293,6 +327,10 @@ export class InlineEmphasisHandler implements InlineParser {
   }
 }
 
+/**
+ * Handles inline links and images in the format [text](url "title").
+ * Can handle both links and images depending on constructor parameter.
+ */
 export class InlineLinkHandler implements InlineParser {
   constructor(private type: 'link' | 'image') {}
 

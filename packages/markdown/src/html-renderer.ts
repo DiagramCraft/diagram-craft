@@ -1,10 +1,25 @@
 import type { ASTNode } from './types';
 
+/**
+ * HTML renderer that converts markdown AST nodes to HTML strings.
+ * Handles proper escaping and formatting of HTML output.
+ */
 export const HTMLRenderer = {
+  /**
+   * Converts an AST node or array of nodes to HTML string.
+   * @param astNode - The AST node(s) to convert
+   * @returns HTML string representation
+   */
   toHTML(astNode: ASTNode | (ASTNode | string)[] | string): string {
     return HTMLRenderer.toHTMLInner(astNode).trim();
   },
 
+  /**
+   * Internal recursive HTML conversion method.
+   * @param astNode - AST node, array, or string to convert
+   * @returns HTML string
+   * @private
+   */
   toHTMLInner(astNode: ASTNode | (ASTNode | string)[] | string): string {
     if (Array.isArray(astNode)) {
       const parts: string[] = [];
@@ -119,6 +134,12 @@ export const HTMLRenderer = {
     }
   },
 
+  /**
+   * Escapes HTML entities in a string to prevent XSS attacks.
+   * @param s - String to escape
+   * @param escapeAll - If true, escapes all < and > characters
+   * @returns Escaped HTML string
+   */
   createHtmlEntities(s: string, escapeAll = false): string {
     let result = s.replace(/&(?!#?[a-zA-Z0-9]+;)/g, "&amp;");
 
@@ -132,6 +153,13 @@ export const HTMLRenderer = {
     return result;
   },
 
+  /**
+   * Creates an HTML tag with optional content and attributes.
+   * @param tag - HTML tag name
+   * @param content - Optional tag content (undefined for self-closing tags)
+   * @param attributes - HTML attributes as key-value pairs
+   * @returns Complete HTML tag string
+   */
   makeTag(
     tag: string,
     content?: string,

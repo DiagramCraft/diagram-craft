@@ -1,6 +1,10 @@
 import type { ASTNode, ParseState, BlockParser, InlineParser } from './types';
 import { TokenStream } from './token-stream';
 
+/**
+ * Core markdown parser that processes markdown text into an Abstract Syntax Tree (AST).
+ * Uses a two-phase approach: block-level parsing followed by inline parsing.
+ */
 export class Parser {
   private block: BlockParser[];
   private inline: InlineParser[];
@@ -8,6 +12,13 @@ export class Parser {
   private context: string[];
   private escapes = ["\\`*_{}[]()+-.!#", "abcdefghijklmno"];
 
+  /**
+   * Creates a new Parser instance with the specified handlers and configuration.
+   * @param blockParsers - Array of block-level parsers (headers, lists, etc.)
+   * @param inlineParsers - Array of inline parsers (emphasis, links, etc.)
+   * @param flags - Parser flags for customizing behavior
+   * @param context - Parsing context stack for nested parsing
+   */
   constructor(
     blockParsers: BlockParser[] = [],
     inlineParsers: InlineParser[] = [],
@@ -20,12 +31,25 @@ export class Parser {
     this.context = context;
   }
 
+  /**
+   * Escapes markdown special characters using a two-character mapping system.
+   * Converts backslash-escaped characters into temporary escape sequences.
+   * @param s - The string to escape
+   * @returns String with escaped characters replaced by control sequences
+   */
   escape(s: string): string {
     return s.replace(/\\[\\`*_{}[\]()+-.!#]/g, (c) => {
       return "\x1b" + this.escapes[1][this.escapes[0].indexOf(c[1])];
     });
   }
 
+  /**
+   * Unescapes previously escaped characters and resolves inline placeholders.
+   * If a parse state is provided, also resolves inline element placeholders.
+   * @param s - The string to unescape
+   * @param state - Optional parse state containing inline elements
+   * @returns Unescaped string or array of AST nodes/strings
+   */
   unescape(s: string | undefined, state?: ParseState): (ASTNode | string)[] | string | undefined {
     if (s === undefined) return undefined;
 
@@ -62,10 +86,23 @@ export class Parser {
     return s;
   }
 
+  /**
+   * Creates a placeholder for an inline AST node during parsing.
+   * Stores the node in the parse state and returns a unique placeholder string.
+   * @param parserState - Current parsing state
+   * @param obj - The AST node to store
+   * @returns Placeholder string that will be resolved during unescaping
+   */
   markParsedInline(parserState: ParseState, obj: ASTNode): string {
     return "\x1bq" + (parserState.inlines.push(obj) - 1) + "q";
   }
 
+  /**
+   * Creates a sub-parser for nested content (like list items or blockquotes).
+   * Filters out block parsers that shouldn't be used in the given context.
+   * @param ctx - Additional context to add to the parsing stack
+   * @returns New Parser instance configured for sub-parsing
+   */
   subparser(ctx?: string | string[]): Parser {
     const newContext = this.context.concat(Array.isArray(ctx) ? ctx : ctx ? [ctx] : []);
 
@@ -76,6 +113,13 @@ export class Parser {
     return new Parser(filteredBlock, this.inline, this.flags, newContext);
   }
 
+  /**
+   * Main parsing method that converts markdown text to AST.
+   * First escapes special characters, then applies block parsers line by line,
+   * and finally resolves reference links if this is the top-level parse.
+   * @param s - The markdown text to parse
+   * @returns Array of AST nodes representing the parsed markdown
+   */
   parse(s: string): ASTNode[] {
     const stream = new TokenStream(this.escape(s));
     const ast: ASTNode[] = [];
@@ -106,6 +150,12 @@ export class Parser {
     return ast;
   }
 
+  /**
+   * Recursively traverses the AST and applies a function to each node.
+   * Handles both individual nodes and arrays of nodes.
+   * @param n - AST node, array of nodes, or string to traverse
+   * @param fn - Function to apply to each AST node
+   */
   traverseAST(n: ASTNode[] | ASTNode | string, fn: (node: ASTNode) => void): void {
     if (Array.isArray(n)) {
       for (const item of n) {
@@ -121,6 +171,12 @@ export class Parser {
     }
   }
 
+  /**
+   * Resolves reference-style links by finding link definitions and applying them
+   * to link references. This is a two-pass process: first collect all definitions,
+   * then apply them to references.
+   * @param ast - The AST to process for link resolution
+   */
   resolveLinks(ast: ASTNode[]): void {
     const links: Record<string, ASTNode> = {};
 
@@ -142,6 +198,14 @@ export class Parser {
     });
   }
 
+  /**
+   * Parses inline elements within a string using the configured inline parsers.
+   * Processes parsers in sequence, allowing each to handle and transform the text.
+   * @param s - The string to parse for inline elements
+   * @param state - Current parsing state with inline element storage
+   * @param ctx - Additional context for inline parsing
+   * @returns Array of AST nodes and strings representing parsed inline content
+   */
   parseInlines(s: string, state?: ParseState, ctx?: string | string[]): (ASTNode | string)[] {
     const currentState: ParseState = state ?? {
       idx: 0,
