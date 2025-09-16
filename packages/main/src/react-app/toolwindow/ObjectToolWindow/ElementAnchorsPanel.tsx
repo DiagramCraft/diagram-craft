@@ -41,8 +41,6 @@ const ShapePreviewWithAnchors = ({ diagram }: { diagram: ReturnType<typeof useDi
   const previewDiagram = useMemo(() => {
     if (!selectedNode) return null;
 
-    console.log('****');
-
     const { diagram: thumbnailDiagram, node: duplicatedNode } = createThumbnailDiagramForNode(
       (d, layer) => {
         const serializedNode = serializeDiagramElement(selectedNode);
@@ -78,6 +76,29 @@ const ShapePreviewWithAnchors = ({ diagram }: { diagram: ReturnType<typeof useDi
   const previewHeight = 120;
   const previewWidth = 120;
   const anchors = selectedNode.anchors;
+
+  // Calculate the actual rendered size based on the diagram node's aspect ratio
+  const nodeAspectRatio = selectedNode.bounds.w / selectedNode.bounds.h;
+  const containerAspectRatio = previewWidth / previewHeight;
+
+  let actualWidth: number;
+  let actualHeight: number;
+  let offsetX: number;
+  let offsetY: number;
+
+  if (nodeAspectRatio > containerAspectRatio) {
+    // Node is wider than container - fit to width
+    actualWidth = previewWidth;
+    actualHeight = previewWidth / nodeAspectRatio;
+    offsetX = 0;
+    offsetY = (previewHeight - actualHeight) / 2;
+  } else {
+    // Node is taller than container - fit to height
+    actualWidth = previewHeight * nodeAspectRatio;
+    actualHeight = previewHeight;
+    offsetX = (previewWidth - actualWidth) / 2;
+    offsetY = 0;
+  }
 
   return (
     <div
@@ -121,20 +142,24 @@ const ShapePreviewWithAnchors = ({ diagram }: { diagram: ReturnType<typeof useDi
           const anchorPos = getAnchorPosition(selectedNode, anchor);
           const viewBox = previewDiagram.viewBox;
 
-          // Convert world coordinates to SVG coordinates
-          const svgX = ((anchorPos.x - viewBox.offset.x) / viewBox.dimensions.w) * previewHeight;
-          const svgY = ((anchorPos.y - viewBox.offset.y) / viewBox.dimensions.h) * previewHeight;
-
-          const isCustomAnchor = anchor.type === 'custom';
+          // Convert world coordinates to actual rendered coordinates
+          const svgX =
+            ((anchorPos.x - viewBox.offset.x) / viewBox.dimensions.w) * actualWidth + offsetX;
+          const svgY =
+            ((anchorPos.y - viewBox.offset.y) / viewBox.dimensions.h) * actualHeight + offsetY;
 
           return (
             <circle
               key={anchor.id || index}
               cx={svgX}
               cy={svgY}
-              r="3"
-              fill={isCustomAnchor ? '#ef4444' : '#6b7280'}
-              stroke="white"
+              r="4"
+              fill={
+                application.actions['TOGGLE_DARK_MODE']!.getState(undefined)
+                  ? 'var(--accent-12)'
+                  : 'var(--accent-3)'
+              }
+              stroke={'var(--accent-chroma)'}
               strokeWidth="1"
             />
           );
