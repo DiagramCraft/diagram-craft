@@ -3,12 +3,23 @@ import { useNodeProperty } from '../../hooks/useProperty';
 import { Select } from '@diagram-craft/app-components/Select';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { PropertyEditor } from '../../components/PropertyEditor';
-import { Property } from '../ObjectToolWindow/types';
-import { useDiagram } from '../../../application';
+import { Property } from './types';
+import { useApplication, useDiagram } from '../../../application';
 import { Button } from '@diagram-craft/app-components/Button';
 import { newid } from '@diagram-craft/utils/id';
 import { TbPlus, TbTrash } from 'react-icons/tb';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { useMemo } from 'react';
+import { createThumbnailDiagramForNode } from '@diagram-craft/model/diagramThumbnail';
+import { getAnchorPosition } from '@diagram-craft/model/anchor';
+import { serializeDiagramElement } from '@diagram-craft/model/serialization/serialize';
+import { deserializeDiagramElements } from '@diagram-craft/model/serialization/deserialize';
+import type { DiagramNode } from '@diagram-craft/model/diagramNode';
+import {
+  StaticCanvasComponent,
+  StaticCanvasProps
+} from '@diagram-craft/canvas/canvas/StaticCanvasComponent';
+import { Canvas } from '@diagram-craft/canvas-react/Canvas';
 
 type CustomAnchorsEditorProps = {
   customAnchors: {
@@ -17,9 +28,128 @@ type CustomAnchorsEditorProps = {
   };
   disabled: boolean;
   onChange: () => void;
+  diagram: ReturnType<typeof useDiagram>;
 };
 
-const CustomAnchorsEditor = ({ customAnchors, disabled, onChange }: CustomAnchorsEditorProps) => {
+const ShapePreviewWithAnchors = ({ diagram }: { diagram: ReturnType<typeof useDiagram> }) => {
+  const application = useApplication();
+
+  const selectedNode = useMemo(() => {
+    return diagram.selectionState.nodes[0];
+  }, [diagram.selectionState.nodes]);
+
+  const previewDiagram = useMemo(() => {
+    if (!selectedNode) return null;
+
+    console.log('****');
+
+    const { diagram: thumbnailDiagram, node: duplicatedNode } = createThumbnailDiagramForNode(
+      (d, layer) => {
+        const serializedNode = serializeDiagramElement(selectedNode);
+        const uow = UnitOfWork.immediate(d);
+
+        return deserializeDiagramElements(
+          [serializedNode],
+          d,
+          layer,
+          new Map(),
+          new Map(),
+          uow
+        )[0] as DiagramNode;
+      },
+      diagram.document.definitions
+    );
+
+    const padding = 10;
+    thumbnailDiagram.viewBox.dimensions = {
+      w: duplicatedNode.bounds.w + padding,
+      h: duplicatedNode.bounds.h + padding
+    };
+    thumbnailDiagram.viewBox.offset = {
+      x: duplicatedNode.bounds.x - padding / 2,
+      y: duplicatedNode.bounds.y - padding / 2
+    };
+
+    return thumbnailDiagram;
+  }, [selectedNode]);
+
+  if (!selectedNode || !previewDiagram) return null;
+
+  const previewHeight = 120;
+  const previewWidth = 120;
+  const anchors = selectedNode.anchors;
+
+  return (
+    <div
+      style={{
+        width: previewWidth,
+        height: previewHeight,
+        borderRadius: '6px',
+        background: 'var(--panel-bg)',
+        border: '1px solid var(--panel-border)',
+        padding: '0.5rem',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative'
+      }}
+    >
+      <Canvas<StaticCanvasComponent, StaticCanvasProps>
+        id={'preview-canvas'}
+        context={application}
+        width={'100%'}
+        height={'100%'}
+        className={''}
+        onClick={() => {}}
+        diagram={previewDiagram}
+        viewbox={previewDiagram.viewBox.svgViewboxString}
+        canvasFactory={() => new StaticCanvasComponent()}
+      />
+
+      {/* Anchor points overlay */}
+      <svg
+        width={previewWidth}
+        height={previewHeight}
+        style={{
+          position: 'absolute',
+          top: '0.5rem',
+          left: '0.5rem',
+          pointerEvents: 'none'
+        }}
+      >
+        {anchors.map((anchor, index) => {
+          const anchorPos = getAnchorPosition(selectedNode, anchor);
+          const viewBox = previewDiagram.viewBox;
+
+          // Convert world coordinates to SVG coordinates
+          const svgX = ((anchorPos.x - viewBox.offset.x) / viewBox.dimensions.w) * previewHeight;
+          const svgY = ((anchorPos.y - viewBox.offset.y) / viewBox.dimensions.h) * previewHeight;
+
+          const isCustomAnchor = anchor.type === 'custom';
+
+          return (
+            <circle
+              key={anchor.id || index}
+              cx={svgX}
+              cy={svgY}
+              r="3"
+              fill={isCustomAnchor ? '#ef4444' : '#6b7280'}
+              stroke="white"
+              strokeWidth="1"
+            />
+          );
+        })}
+      </svg>
+    </div>
+  );
+};
+
+const CustomAnchorsEditor = ({
+  customAnchors,
+  disabled,
+  onChange,
+  diagram
+}: CustomAnchorsEditorProps) => {
   return (
     <>
       <div className={'cmp-labeled-table__label util-a-top-center'} style={{ marginTop: '4px' }}>
@@ -27,6 +157,7 @@ const CustomAnchorsEditor = ({ customAnchors, disabled, onChange }: CustomAnchor
       </div>
       <div className={'cmp-labeled-table__value'}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+          <ShapePreviewWithAnchors diagram={diagram} />
           {Object.entries(customAnchors.val ?? {}).map(
             ([id, anchor]: [string, { x: number; y: number }]) => (
               <div
@@ -189,6 +320,7 @@ export const ElementAnchorsPanel = (props: Props) => {
           <CustomAnchorsEditor
             customAnchors={customAnchors}
             disabled={disabled}
+            diagram={diagram}
             onChange={() => {
               const uow = new UnitOfWork(diagram, false);
               diagram.selectionState.nodes.forEach(node => {
