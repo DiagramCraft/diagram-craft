@@ -158,6 +158,46 @@ export class CodeHandler implements BlockParser {
 }
 
 /**
+ * Handles fenced code blocks. Code blocks are surrounded by ``` or ~~~.
+ * Example: ```\ncode here\n```
+ */
+export class FencedCodeHandler implements BlockParser {
+  parse(parser: Parser, stream: TokenStream, ast: ASTNode[]): boolean {
+    const m = stream.peek().match(/^(`{3,}|~{3,})(.*)?$/);
+    if (!m) return false;
+
+    const fence = m[1];
+    const language = m[2]?.trim() || '';
+    stream.consume(); // consume opening fence
+
+    let code = '';
+    while (!stream.peek().isEmpty()) {
+      const line = stream.peek();
+      if (line.match(new RegExp(`^${fence[0]}{${fence.length},}\\s*$`))) {
+        stream.consume(); // consume closing fence
+        break;
+      }
+      code += (line.text ?? '') + '\n';
+      stream.consume();
+    }
+
+    // Remove trailing newline if present
+    if (code.endsWith('\n')) {
+      code = code.slice(0, -1);
+    }
+
+    ast.push({
+      type: 'code',
+      children: [code],
+      source: language,
+      inline: false
+    });
+
+    return true;
+  }
+}
+
+/**
  * Handles both ordered and unordered lists. This is one of the most complex
  * parsers as it needs to handle nested content, loose/tight list items,
  * and various indentation patterns.

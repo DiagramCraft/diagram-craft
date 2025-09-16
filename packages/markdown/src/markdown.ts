@@ -7,6 +7,7 @@ import {
   AtxHeaderHandler,
   BlockquoteHandler,
   CodeHandler,
+  FencedCodeHandler,
   ListHandler,
   InlineCodeHandler,
   InlineEmphasisHandler,
@@ -32,6 +33,7 @@ export class MarkdownEngine {
         new SetextHeaderHandler(),
         new AtxHeaderHandler(),
         new BlockquoteHandler(),
+        new FencedCodeHandler(),
         new CodeHandler(),
         new ListHandler()
       ],
