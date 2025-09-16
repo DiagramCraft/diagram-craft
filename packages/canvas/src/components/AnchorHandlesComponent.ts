@@ -119,21 +119,24 @@ export class AnchorHandlesComponent extends Component<Props> {
       );
       const normalInEffect = Vector.angle(Vector.from(p1, p2));
 
-      const p = shouldScale
-        ? Point.add(p1, Vector.fromPolar(normalInEffect ?? 0, z.num(SCALE)))
-        : p1;
+      const p =
+        shouldScale && a.type !== 'center'
+          ? Point.add(p1, Vector.fromPolar(normalInEffect ?? 0, z.num(SCALE)))
+          : p1;
       const normalEndpoint = Point.add(p, Vector.fromPolar(normalInEffect ?? 0, z.num(10, 7)));
 
-      children.push(
-        svg.line({
-          'x1': p.x,
-          'y1': p.y,
-          'x2': normalEndpoint.x,
-          'y2': normalEndpoint.y,
-          'stroke': 'var(--accent-9)',
-          'stroke-width': z.num(1)
-        })
-      );
+      if (a.type !== 'center') {
+        children.push(
+          svg.line({
+            'x1': p.x,
+            'y1': p.y,
+            'x2': normalEndpoint.x,
+            'y2': normalEndpoint.y,
+            'stroke': 'var(--accent-9)',
+            'stroke-width': z.num(1)
+          })
+        );
+      }
       children.push(
         svg.circle({
           class: 'svg-handle svg-anchor-handle',

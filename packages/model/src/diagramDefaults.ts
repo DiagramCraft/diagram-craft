@@ -342,7 +342,8 @@ const _nodeDefaults: Omit<NodePropsForRendering, 'name' | 'custom' | 'indicators
     type: 'shape-defaults',
     perEdgeCount: 1,
     perPathCount: 5,
-    directionsCount: 4
+    directionsCount: 4,
+    customAnchors: {}
   },
 
   routing: {

@@ -254,7 +254,10 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
   /* Props *************************************************************************************************** */
 
-  getPropsInfo<T extends PropPath<NodeProps>>(path: T): PropertyInfo<PropPathValue<NodeProps, T>> {
+  getPropsInfo<T extends PropPath<NodeProps>>(
+    path: T,
+    defaultValue?: PropPathValue<NodeProps, T>
+  ): PropertyInfo<PropPathValue<NodeProps, T>> {
     const {
       parentProps,
       styleProps,
@@ -268,10 +271,17 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
     const dest: PropertyInfo<PropPathValue<NodeProps, T>> = [];
 
-    dest.push({
-      val: nodeDefaults.get(path) as PropPathValue<NodeProps, T>,
-      type: 'default'
-    });
+    if (defaultValue !== undefined) {
+      dest.push({
+        val: defaultValue,
+        type: 'default'
+      });
+    } else {
+      dest.push({
+        val: nodeDefaults.get(path) as PropPathValue<NodeProps, T>,
+        type: 'default'
+      });
+    }
 
     if (styleProps) {
       dest.push({

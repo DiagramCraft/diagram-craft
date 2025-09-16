@@ -126,6 +126,15 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
         this.getBoundingPath(node),
         node.renderProps.anchors.directionsCount
       );
+    } else if (anchorStrategy === 'custom') {
+      return Object.entries(node.renderProps.anchors.customAnchors ?? {}).map(([k, v]) => {
+        return {
+          id: k,
+          start: Point.of(v.x, v.y),
+          type: 'center',
+          isPrimary: true
+        } satisfies Anchor;
+      });
     }
 
     throw new VerifyNotReached();

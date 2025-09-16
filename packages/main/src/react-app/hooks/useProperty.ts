@@ -96,7 +96,7 @@ export const useNodeProperty: PropertyArrayHook<Diagram, NodeProps> = makeProper
   diagram => diagram.selectionState.nodes,
   node => node.editProps,
   node => node.storedProps,
-  (node, path) => node.getPropsInfo(path),
+  (node, path, defaultValue) => node.getPropsInfo(path, defaultValue),
   (diagram, element, cb) => UnitOfWork.execute(diagram, uow => element.updateProps(cb, uow)),
   (diagram, handler) => {
     useEventListener(diagram.selectionState, 'change', handler);
