@@ -27,11 +27,17 @@ export const HTMLRenderer = {
 
       for (let i = 0; i < astNode.length; i++) {
         const rendered = HTMLRenderer.toHTMLInner(astNode[i]);
+
+        // Skip empty content
+        if (!rendered || rendered.trim() === '') {
+          continue;
+        }
+
         if (i === 0 && !rendered.match(/^<(?!em|a|img|strong|code)/)) {
           isText = true;
         }
 
-        if ((!isText && i !== 0) && !rendered.match(/^<li/) ||
+        if ((!isText && parts.length > 0) && !rendered.match(/^<li/) ||
             (rendered.match(/^<[ou]l/) && astNode.length > 1)) {
           parts.push("\n");
         }
@@ -58,7 +64,13 @@ export const HTMLRenderer = {
         );
 
       case "paragraph":
-        return this.makeTag("p", this.toHTMLInner(astNode.children ?? []));
+        const paragraphContent = this.toHTMLInner(astNode.children ?? []);
+        // Skip empty paragraphs
+        if (!paragraphContent || paragraphContent.trim() === '') {
+          return '';
+        }
+        // Remove trailing newlines from paragraph content
+        return this.makeTag("p", paragraphContent.replace(/\n+$/, ''));
 
       case "list":
         return this.makeTag(
@@ -84,7 +96,9 @@ export const HTMLRenderer = {
         }
 
       case "item":
-        return this.makeTag("li", this.toHTMLInner(astNode.children ?? []));
+        const itemContent = this.toHTMLInner(astNode.children ?? []);
+        // Remove trailing newlines from list item content
+        return this.makeTag("li", itemContent.replace(/\n+$/, ''));
 
       case "line-break":
         return this.makeTag("br");
