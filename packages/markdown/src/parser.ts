@@ -190,9 +190,13 @@ export class Parser {
       if (n.subtype === 'ref' && n.id) {
         const linkDef = links[n.id];
         if (linkDef) {
-          Object.assign(n, linkDef);
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          delete (n as any).type; // Will be set by the original node type
+          // Copy all properties except 'type' from link definition to reference node
+          Object.keys(linkDef).forEach(key => {
+            if (key !== 'type') {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (n as any)[key] = (linkDef as any)[key];
+            }
+          });
         }
       }
     });

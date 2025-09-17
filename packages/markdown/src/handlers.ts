@@ -211,7 +211,7 @@ export class ListHandler implements BlockParser {
 
     const l = m[1].length;
     const rS = new RegExp(`^( {${l}})([*+-]|[0-9]+\\.) (.*)`);
-    const rC = new RegExp(`^( {${l + 1}}|\\t)`);
+    const rC = new RegExp(`^( {${parseInt(l.toString()) + 1}}|\\t)`);
 
     let s = '';
     let containsEmpty = false;
@@ -219,12 +219,15 @@ export class ListHandler implements BlockParser {
     const items: ASTNode[] = [];
     let lineMatch: RegExpMatchArray | null = m;
 
-    do {
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
       const current = stream.peek();
       const next = stream.peek(1);
 
-      const itemCompleted =
-        s.trim() !== '' && (lineMatch || (current.isEmpty() && !next.match(rC)));
+      const itemCompleted = s.trim() !== '' && (
+        lineMatch ||
+        (current.isEmpty() && !next.match(rC))
+      );
 
       if (itemCompleted) {
         const parsedContent = parser.subparser('list').parse(s);
@@ -243,41 +246,55 @@ export class ListHandler implements BlockParser {
         s += '\n';
         containsEmpty = true;
       } else if (lineMatch) {
-        s += lineMatch![3].replace(this.trimLeft, '');
+        s += lineMatch[3].replace(this.trimLeft, '');
       } else {
         s += '\n' + (current.text?.replace(this.trimLeft, '') ?? '');
       }
 
       stream.consume();
       lineMatch = stream.peek().match(rS);
-    } while (lineMatch || stream.peek().isEmpty());
+    }
 
-    // Clean up temporary properties and determine loose items
+    // Process final item if there's content
+    if (s.trim() !== '') {
+      const parsedContent = parser.subparser('list').parse(s);
+      items.push({
+        type: 'item',
+        children: parsedContent,
+        containsEmpty,
+        followedByEmpty: false
+      });
+    }
+
+    // Ignore followed by empty for last row
     if (items.length > 0) {
       items[items.length - 1].followedByEmpty = false;
     }
 
+    // Item is loose if it contains an empty line or is followed by an empty line
     for (let i = 0; i < items.length; i++) {
       items[i].loose = !!(items[i].containsEmpty || items[i].followedByEmpty);
     }
 
+    // Items on both sides of empty line is considered "loose"
     for (let i = items.length - 1; i > 0; i--) {
       items[i].loose = items[i].loose || !!items[i - 1].followedByEmpty;
     }
 
-    // Flatten paragraph content for non-loose items
+    // If not loose, lift contents of first child, if paragraph, and replace first element
     for (const item of items) {
-      if (
-        !item.loose &&
-        item.children?.[0] &&
-        typeof item.children[0] !== 'string' &&
-        item.children[0].type === 'paragraph'
-      ) {
-        const paragraphChildren = item.children[0].children;
-        if (paragraphChildren) {
-          item.children = [paragraphChildren].flat();
-        }
+      if (item.loose) continue;
+      if (!item.children?.[0] || typeof item.children[0] === 'string') continue;
+      if (item.children[0].type !== 'paragraph') continue;
+
+      const paragraphChildren = item.children[0].children;
+      if (paragraphChildren) {
+        item.children.splice(0, 1, ...paragraphChildren);
       }
+    }
+
+    // Clean temporary loose state
+    for (const item of items) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       delete (item as any).loose;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
