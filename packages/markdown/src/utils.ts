@@ -10,7 +10,11 @@ export const Util = {
    * @param s - String to search in
    * @param fn - Function called for each match and text segment
    */
-  iterateRegex(re: RegExp, s: string, fn: (match: RegExpExecArray | string) => number | void): void {
+  iterateRegex(
+    re: RegExp,
+    s: string,
+    fn: (match: RegExpExecArray | string) => number | void
+  ): void {
     let res: RegExpExecArray | null;
     let lastIndex = 0;
 

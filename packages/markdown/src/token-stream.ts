@@ -36,7 +36,7 @@ export class TokenStream {
     return {
       text,
       match: (re: RegExp) => text?.match(re) ?? null,
-      isEmpty: () => text === null || /^\s*$/.test(text),
+      isEmpty: () => text === null || text === undefined || text.trim() === '',
       isEOS: () => text === null
     };
   }

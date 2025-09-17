@@ -149,7 +149,7 @@ export abstract class InlineParser {
     parserState: ParserState,
     s: string,
     re: RegExp,
-    fn: (match: RegExpExecArray, progress?: (length: number) => void) => ASTNode | null
+    makeAstNode: (match: RegExpExecArray, progress?: (length: number) => void) => ASTNode | null
   ): Array<ASTNode> {
     const dest: string[] = [];
     Util.iterateRegex(re, s, m => {
@@ -157,7 +157,7 @@ export abstract class InlineParser {
       if (typeof m === 'string') {
         dest.push(m);
       } else {
-        const inlineASTNode = fn(m, (i: number) => (p = i));
+        const inlineASTNode = makeAstNode(m, (i: number) => (p = i));
         if (!inlineASTNode) {
           dest.push(m[0]);
         } else {

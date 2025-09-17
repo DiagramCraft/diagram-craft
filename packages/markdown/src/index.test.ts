@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { parseMarkdown, markdownToHTML, markdownToPlainText } from './markdown';
+import { parseMarkdown, markdownToHTML, markdownToPlainText } from './index';
 
 describe('Markdown Parser', () => {
   test('should parse simple text', () => {

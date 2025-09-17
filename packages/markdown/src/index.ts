@@ -1,25 +1,8 @@
-import type { ParserConfiguration, ParserType, ASTNode } from './parser';
+import type { ASTNode, ParserConfiguration, ParserType } from './parser';
 import { Parser } from './parser';
 import { HTMLRenderer } from './html-renderer';
-import {
-  ParagraphHandler,
-  SetextHeaderHandler,
-  AtxHeaderHandler,
-  BlockquoteHandler,
-  CodeHandler,
-  FencedCodeHandler,
-  ListHandler,
-  ReferenceLinkDefinitionHandler,
-  HorizontalRulerHandler,
-  HtmlHandler,
-  CommentHandler,
-  InlineCodeHandler,
-  InlineEmphasisHandler,
-  InlineLinkHandler,
-  InlineRefImageAndLinkHandler,
-  InlineAutolinksHandler,
-  InlineLineBreakHandler
-} from './handlers';
+import { ParagraphHandler } from './handlers';
+import { strictParser } from './strict-parser';
 
 /**
  * Main markdown parsing engine that manages parser configurations and provides
@@ -34,34 +17,7 @@ export class MarkdownEngine {
    * and various inline elements like emphasis, links, and inline code.
    */
   constructor() {
-    this.registerParser('strict', {
-      flags: {},
-      block: [
-        new SetextHeaderHandler(),
-        new AtxHeaderHandler(),
-        new BlockquoteHandler(),
-        new FencedCodeHandler(),
-        new CodeHandler(),
-        new ListHandler(),
-        new HorizontalRulerHandler(),
-        new ReferenceLinkDefinitionHandler(),
-        new HtmlHandler(),
-        new CommentHandler()
-      ],
-      inline: [
-        new InlineCodeHandler(),
-        new InlineLinkHandler('image'),
-        new InlineRefImageAndLinkHandler('image'),
-        new InlineLinkHandler('link'),
-        new InlineRefImageAndLinkHandler('link'),
-        new InlineAutolinksHandler(),
-        new InlineEmphasisHandler('*'),
-        new InlineEmphasisHandler('*'),
-        new InlineEmphasisHandler('_'),
-        new InlineEmphasisHandler('_'),
-        new InlineLineBreakHandler()
-      ]
-    });
+    this.registerParser('strict', strictParser);
   }
 
   /**
@@ -84,7 +40,7 @@ export class MarkdownEngine {
     const mergedConfig = this.buildConfig(type, configuration);
 
     // Always add paragraph handler last
-    mergedConfig.block = mergedConfig.block ?? [];
+    mergedConfig.block ??= [];
     mergedConfig.block.push(new ParagraphHandler());
 
     return new Parser(mergedConfig.block, mergedConfig.inline ?? [], mergedConfig.flags ?? {});
@@ -100,9 +56,7 @@ export class MarkdownEngine {
    */
   private buildConfig(type: string, configuration: ParserConfiguration = {}): ParserConfiguration {
     const baseConfig = this.parsers[type];
-    if (!baseConfig) {
-      throw new Error(`Unknown parser type: ${type}`);
-    }
+    if (!baseConfig) throw new Error(`Unknown parser type: ${type}`);
 
     let config = { ...baseConfig };
 

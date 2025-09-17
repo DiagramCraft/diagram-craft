@@ -1,14 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { MarkdownEngine } from '../markdown';
+import { MarkdownEngine } from '../index';
 import { readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
 
+const PATH = 'packages/markdown/src/test';
+
 const verifyHtmlFixture = (engine: MarkdownEngine, filename: string): void => {
-  const expectedHtml = readFileSync(
-    join('packages/markdown/src/test', filename + '.out'),
-    'utf8'
-  ).trim();
-  const inputText = readFileSync(join('packages/markdown/src/test', filename + '.md'), 'utf8');
+  const expectedHtml = readFileSync(join(PATH, filename + '.out'), 'utf8').trim();
+  const inputText = readFileSync(join(PATH, filename + '.md'), 'utf8');
   const parser = engine.parser();
   const ast = parser.parse(inputText);
   const actualHtml = engine.toHTML(ast).trim();
@@ -19,7 +18,7 @@ const verifyHtmlFixture = (engine: MarkdownEngine, filename: string): void => {
 describe('Markdown Testsuite', () => {
   const engine = new MarkdownEngine();
 
-  const files = readdirSync('packages/markdown/src/test/markdown-testsuite/tests');
+  const files = readdirSync(`${PATH}/markdown-testsuite/tests`);
   files.forEach(file => {
     if (file.match(/md$/) && !file.match(/link-automatic-email/) && !file.match(/EOL-CR/)) {
       describe(file, () => {

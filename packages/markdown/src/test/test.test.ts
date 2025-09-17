@@ -1,14 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { MarkdownEngine, markdownToHTML } from '../markdown';
+import { MarkdownEngine, markdownToHTML } from '../index';
 import { readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
 
+const PATH = 'packages/markdown/src/test';
+
 const verifyHtmlFixture = (engine: MarkdownEngine, filename: string): void => {
-  const expectedHtml = readFileSync(
-    join('packages/markdown/src/test', filename + '.html'),
-    'utf-8'
-  );
-  const inputText = readFileSync(join('packages/markdown/src/test', filename + '.txt'), 'utf8');
+  const expectedHtml = readFileSync(join(PATH, filename + '.html'), 'utf-8');
+  const inputText = readFileSync(join(PATH, filename + '.txt'), 'utf8');
   const parser = engine.parser();
   parser.parse(inputText);
   const actualHtml = markdownToHTML(inputText);
@@ -20,7 +19,7 @@ describe('Babelmark', () => {
   const engine = new MarkdownEngine();
 
   describe('list', () => {
-    const files = readdirSync('packages/markdown/src/test/babelmark/lists');
+    const files = readdirSync(`${PATH}/babelmark/lists`);
     files.forEach(file => {
       if (file.match(/txt$/)) {
         describe(file, () => {
@@ -34,7 +33,7 @@ describe('Babelmark', () => {
   });
 
   describe('links', () => {
-    const files = readdirSync('packages/markdown/src/test/babelmark/links');
+    const files = readdirSync(`${PATH}/babelmark/links`);
     files.forEach(file => {
       if (file.match(/txt$/)) {
         describe(file, () => {
@@ -48,7 +47,7 @@ describe('Babelmark', () => {
   });
 
   describe('inline_markup', () => {
-    const files = readdirSync('packages/markdown/src/test/babelmark/inline_markup');
+    const files = readdirSync(`${PATH}/babelmark/inline_markup`);
     files.forEach(file => {
       if (file.match(/txt$/)) {
         describe(file, () => {
@@ -62,7 +61,7 @@ describe('Babelmark', () => {
   });
 
   describe('raw_html', () => {
-    const files = readdirSync('packages/markdown/src/test/babelmark/raw_html');
+    const files = readdirSync(`${PATH}/babelmark/raw_html`);
     files.forEach(file => {
       if (file.match(/txt$/)) {
         describe(file, () => {
@@ -76,7 +75,7 @@ describe('Babelmark', () => {
   });
 
   describe('other', () => {
-    const files = readdirSync('packages/markdown/src/test/babelmark/other');
+    const files = readdirSync(`${PATH}/babelmark/other`);
     files.forEach(file => {
       if (file.match(/txt$/)) {
         describe(file, () => {

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Markdown utilities for Diagram Craft",
   "type": "module",
-  "main": "src/markdown.ts",
+  "main": "src/index.ts",
   "scripts": {
     "test": "vitest"
   },
