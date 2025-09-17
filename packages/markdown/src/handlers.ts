@@ -10,8 +10,8 @@ import { Util } from './utils';
  */
 export class ParagraphHandler implements BlockParser {
   parse(parser: Parser, stream: TokenStream, ast: ASTNode[]): boolean {
-    let s = "";
-    const obj: ASTNode = { type: "paragraph" };
+    let s = '';
+    const obj: ASTNode = { type: 'paragraph' };
     ast.push(obj);
 
     while (!stream.peek().isEmpty()) {
@@ -20,17 +20,17 @@ export class ParagraphHandler implements BlockParser {
         for (const blockParser of (parser as any).block) {
           if (blockParser === this) continue;
           if (blockParser.parse(parser, stream, ast)) {
-            obj.children = parser.parseInlines(s.slice(0, -1), undefined, "paragraph");
+            obj.children = parser.parseInlines(s.slice(0, -1), undefined, 'paragraph');
             return true;
           }
         }
       }
 
-      s += stream.consume().text?.replace(/^\s+/, "") ?? "";
-      if (!stream.peek().isEmpty()) s += "\n";
+      s += stream.consume().text?.replace(/^\s+/, '') ?? '';
+      if (!stream.peek().isEmpty()) s += '\n';
     }
 
-    obj.children = parser.parseInlines(s, undefined, "paragraph");
+    obj.children = parser.parseInlines(s, undefined, 'paragraph');
     return true;
   }
 }
@@ -44,18 +44,18 @@ export class SetextHeaderHandler implements BlockParser {
     const m = stream.peek(1).match(/^(?:-+|=+)$/);
     if (!m) return false;
 
-    const text = stream.peek().text ?? "";
+    const text = stream.peek().text ?? '';
     ast.push({
-      type: "heading",
+      type: 'heading',
       level: m[0][0] === '=' ? 1 : 2,
-      children: parser.parseInlines(text, undefined, "setext-header")
+      children: parser.parseInlines(text, undefined, 'setext-header')
     });
     stream.consume(1);
     return true;
   }
 
   excludeFromSubparse(ctx: string[]): boolean {
-    return ctx.includes("list");
+    return ctx.includes('list');
   }
 }
 
@@ -69,16 +69,16 @@ export class AtxHeaderHandler implements BlockParser {
     if (!m) return false;
 
     ast.push({
-      type: "heading",
+      type: 'heading',
       level: m[1].length,
-      children: parser.parseInlines(m[2], undefined, "atx-header")
+      children: parser.parseInlines(m[2], undefined, 'atx-header')
     });
     stream.consume();
     return true;
   }
 
   excludeFromSubparse(ctx: string[]): boolean {
-    return ctx.includes("list");
+    return ctx.includes('list');
   }
 }
 
@@ -93,28 +93,28 @@ export class BlockquoteHandler implements BlockParser {
     const m = stream.peek().match(this.rS);
     if (!m) return false;
 
-    let s = "";
+    let s = '';
     while (!stream.peek().isEmpty()) {
       const lineMatch = stream.peek().match(this.rS);
       if (lineMatch) {
         s += lineMatch[1];
       } else {
-        s += stream.peek().text?.trim() ?? "";
+        s += stream.peek().text?.trim() ?? '';
       }
-      s += "\n";
+      s += '\n';
       stream.consume();
     }
 
     const lastASTNode = ast.length > 0 ? ast[ast.length - 1] : null;
-    const lastASTNodeIsBlockquote = lastASTNode?.type === "blockquote";
+    const lastASTNodeIsBlockquote = lastASTNode?.type === 'blockquote';
 
     if (lastASTNodeIsBlockquote && lastASTNode.children) {
       const newChildren = parser.subparser().parse(s);
       lastASTNode.children = lastASTNode.children.concat(newChildren);
     } else {
       ast.push({
-        type: "blockquote",
-        children: parser.subparser("blockquote").parse(s)
+        type: 'blockquote',
+        children: parser.subparser('blockquote').parse(s)
       });
     }
 
@@ -134,7 +134,7 @@ export class CodeHandler implements BlockParser {
     const m = stream.peek().match(this.rS);
     if (!m || !stream.peek(-1).isEmpty()) return false;
 
-    let s = "";
+    let s = '';
     let lineMatch: RegExpMatchArray | null = m;
 
     do {
@@ -143,14 +143,14 @@ export class CodeHandler implements BlockParser {
       } else {
         s += lineMatch![1];
       }
-      s += "\n";
+      s += '\n';
 
       stream.consume();
       lineMatch = stream.peek().match(this.rS);
     } while (lineMatch || stream.peek().isEmpty());
 
     ast.push({
-      type: "code",
+      type: 'code',
       children: [parser.unescape(s) as string]
     });
     return true;
@@ -162,7 +162,7 @@ export class CodeHandler implements BlockParser {
  * Example: ```\ncode here\n```
  */
 export class FencedCodeHandler implements BlockParser {
-  parse(parser: Parser, stream: TokenStream, ast: ASTNode[]): boolean {
+  parse(_parser: Parser, stream: TokenStream, ast: ASTNode[]): boolean {
     const m = stream.peek().match(/^(`{3,}|~{3,})(.*)?$/);
     if (!m) return false;
 
@@ -213,9 +213,9 @@ export class ListHandler implements BlockParser {
     const rS = new RegExp(`^( {${l}})([*+-]|[0-9]+\\.) (.*)`);
     const rC = new RegExp(`^( {${l + 1}}|\\t)`);
 
-    let s = "";
+    let s = '';
     let containsEmpty = false;
-    const type = m[2].match(/[*+-]/) ? "unordered" : "ordered";
+    const type = m[2].match(/[*+-]/) ? 'unordered' : 'ordered';
     const items: ASTNode[] = [];
     let lineMatch: RegExpMatchArray | null = m;
 
@@ -223,31 +223,29 @@ export class ListHandler implements BlockParser {
       const current = stream.peek();
       const next = stream.peek(1);
 
-      const itemCompleted = s.trim() !== "" && (
-        lineMatch ||
-        (current.isEmpty() && !next.match(rC))
-      );
+      const itemCompleted =
+        s.trim() !== '' && (lineMatch || (current.isEmpty() && !next.match(rC)));
 
       if (itemCompleted) {
-        const parsedContent = parser.subparser("list").parse(s);
+        const parsedContent = parser.subparser('list').parse(s);
         items.push({
-          type: "item",
+          type: 'item',
           children: parsedContent,
           containsEmpty,
           followedByEmpty: current.isEmpty()
         });
-        s = "";
+        s = '';
         containsEmpty = false;
       }
 
       if (current.isEmpty()) {
         if (!next.match(rS) && !next.match(rC)) break;
-        s += "\n";
+        s += '\n';
         containsEmpty = true;
       } else if (lineMatch) {
-        s += lineMatch![3].replace(this.trimLeft, "");
+        s += lineMatch![3].replace(this.trimLeft, '');
       } else {
-        s += "\n" + (current.text?.replace(this.trimLeft, "") ?? "");
+        s += '\n' + (current.text?.replace(this.trimLeft, '') ?? '');
       }
 
       stream.consume();
@@ -269,7 +267,12 @@ export class ListHandler implements BlockParser {
 
     // Flatten paragraph content for non-loose items
     for (const item of items) {
-      if (!item.loose && item.children?.[0] && typeof item.children[0] !== 'string' && item.children[0].type === "paragraph") {
+      if (
+        !item.loose &&
+        item.children?.[0] &&
+        typeof item.children[0] !== 'string' &&
+        item.children[0].type === 'paragraph'
+      ) {
         const paragraphChildren = item.children[0].children;
         if (paragraphChildren) {
           item.children = [paragraphChildren].flat();
@@ -284,7 +287,7 @@ export class ListHandler implements BlockParser {
     }
 
     ast.push({
-      type: "list",
+      type: 'list',
       subtype: type,
       children: items
     });
@@ -298,13 +301,19 @@ export class ListHandler implements BlockParser {
  */
 export class InlineCodeHandler implements InlineParser {
   parse(parser: Parser, s: string, parserState: ParseState): (ASTNode | string)[] {
-    return this.applyInlines(/(`+)( ?)(.+?)\2\1/g, (m) => {
-      return {
-        type: "code",
-        inline: true,
-        children: parser.parseInlines(m[3], parserState, "code")
-      };
-    }, s, parser, parserState);
+    return this.applyInlines(
+      /(`+)( ?)(.+?)\2\1/g,
+      m => {
+        return {
+          type: 'code',
+          inline: true,
+          children: parser.parseInlines(m[3], parserState, 'code')
+        };
+      },
+      s,
+      parser,
+      parserState
+    );
   }
 
   private applyInlines(
@@ -314,8 +323,8 @@ export class InlineCodeHandler implements InlineParser {
     parser: Parser,
     parserState: ParseState
   ): (ASTNode | string)[] {
-    let dest = "";
-    Util.iterateRegex(re, s, (m) => {
+    let dest = '';
+    Util.iterateRegex(re, s, m => {
       if (typeof m === 'string') {
         dest += m;
       } else {
@@ -346,22 +355,26 @@ export class InlineEmphasisHandler implements InlineParser {
     let result = s;
 
     // Handle strong (**text**)
-    result = result.replace(new RegExp(`\\${this.sym}\\${this.sym}([^\\${this.sym}]+)\\${this.sym}\\${this.sym}`, 'g'),
+    result = result.replace(
+      new RegExp(`\\${this.sym}\\${this.sym}([^\\${this.sym}]+)\\${this.sym}\\${this.sym}`, 'g'),
       (_match, content) => {
         return parser.markParsedInline(parserState, {
-          type: "strong",
-          children: parser.parseInlines(content, parserState, "strong")
+          type: 'strong',
+          children: parser.parseInlines(content, parserState, 'strong')
         });
-      });
+      }
+    );
 
     // Handle emphasis (*text*)
-    result = result.replace(new RegExp(`\\${this.sym}([^\\${this.sym}]+)\\${this.sym}`, 'g'),
+    result = result.replace(
+      new RegExp(`\\${this.sym}([^\\${this.sym}]+)\\${this.sym}`, 'g'),
       (_match, content) => {
         return parser.markParsedInline(parserState, {
-          type: "emphasis",
-          children: parser.parseInlines(content, parserState, "emphasis")
+          type: 'emphasis',
+          children: parser.parseInlines(content, parserState, 'emphasis')
         });
-      });
+      }
+    );
 
     return parser.parseInlines(result, parserState);
   }
@@ -375,20 +388,27 @@ export class InlineLinkHandler implements InlineParser {
   constructor(private type: 'link' | 'image') {}
 
   parse(parser: Parser, s: string, parserState: ParseState): (ASTNode | string)[] {
-    const regex = this.type === "image"
-      ? /!\[([^\]*]+)\]\(([^)"]+)( +"([^"]+)")?\)/g
-      : /\[([^\]*]+)\]\(([^)"]+)( +"([^"]+)")?\)/g;
+    const regex =
+      this.type === 'image'
+        ? /!\[([^\]*]+)\]\(([^)"]+)( +"([^"]+)")?\)/g
+        : /\[([^\]*]+)\]\(([^)"]+)( +"([^"]+)")?\)/g;
 
-    return this.applyInlines(regex, (m) => {
-      const obj: ASTNode = {
-        type: this.type,
-        source: m[0],
-        href: parser.unescape(m[2]) as string,
-        children: parser.parseInlines(m[1], parserState, this.type)
-      };
-      if (m[4]) obj.title = parser.unescape(m[4]) as string;
-      return obj;
-    }, s, parser, parserState);
+    return this.applyInlines(
+      regex,
+      m => {
+        const obj: ASTNode = {
+          type: this.type,
+          source: m[0],
+          href: parser.unescape(m[2]) as string,
+          children: parser.parseInlines(m[1], parserState, this.type)
+        };
+        if (m[4]) obj.title = parser.unescape(m[4]) as string;
+        return obj;
+      },
+      s,
+      parser,
+      parserState
+    );
   }
 
   private applyInlines(
@@ -398,8 +418,8 @@ export class InlineLinkHandler implements InlineParser {
     parser: Parser,
     parserState: ParseState
   ): (ASTNode | string)[] {
-    let dest = "";
-    Util.iterateRegex(re, s, (m) => {
+    let dest = '';
+    Util.iterateRegex(re, s, m => {
       if (typeof m === 'string') {
         dest += m;
       } else {
@@ -408,5 +428,221 @@ export class InlineLinkHandler implements InlineParser {
     });
 
     return parser.parseInlines(dest, parserState);
+  }
+}
+
+/**
+ * Handles reference link definitions.
+ * Example: [link id]: http://example.com "title"
+ */
+export class ReferenceLinkDefinitionHandler implements BlockParser {
+  parse(parser: Parser, stream: TokenStream, ast: ASTNode[]): boolean {
+    const m = stream.peek().match(/^\[(.+)\]:\s*<?([^" >]*)>?( +["(']([^")]+)[")'])?$/);
+    if (!m) return false;
+
+    stream.consume();
+
+    const obj: ASTNode = {
+      type: 'link-definition',
+      id: parser.unescape(m[1]) as string,
+      href: parser.unescape(m[2]) as string
+    };
+
+    if (m[4]) {
+      obj.title = parser.unescape(m[4]) as string;
+    } else {
+      const nextMatch = stream.peek().match(/\s+["(']([^]+)[")']/);
+      if (nextMatch) {
+        obj.title = nextMatch[1];
+        stream.consume();
+      }
+    }
+
+    ast.push(obj);
+    return true;
+  }
+
+  excludeFromSubparse(): boolean {
+    return true;
+  }
+}
+
+/**
+ * Handles horizontal rulers (hr tags).
+ * Example: *** or --- or ___
+ */
+export class HorizontalRulerHandler implements BlockParser {
+  parse(_parser: Parser, stream: TokenStream, ast: ASTNode[]): boolean {
+    const m = stream.peek().match(/^ *[*_-]+( *[*_-])+$/);
+    if (!m) return false;
+
+    ast.push({ type: 'hr' });
+    stream.consume();
+    return true;
+  }
+}
+
+/**
+ * Handles HTML blocks.
+ * Example: <div>content</div>
+ */
+export class HtmlHandler implements BlockParser {
+  parse(_parser: Parser, stream: TokenStream, ast: ASTNode[]): boolean {
+    const m = stream.peek().match(/^<([a-z]+)$/);
+    if (!m) return false;
+
+    const tagName = m[1];
+    let dest = '';
+
+    const re = new RegExp('^<' + tagName + ' */>');
+    while (!stream.peek().match(re)) {
+      dest += stream.consume().text ?? '';
+    }
+
+    dest += stream.consume().text ?? '';
+
+    ast.push({ type: 'html', html: dest });
+    return true;
+  }
+}
+
+/**
+ * Handles HTML comments.
+ * Example: <!-- comment -->
+ */
+export class CommentHandler implements BlockParser {
+  parse(_parser: Parser, stream: TokenStream, ast: ASTNode[]): boolean {
+    const m = stream.peek().match(/^<!--$/);
+    if (!m) return false;
+
+    let dest = '';
+
+    while (!stream.peek().match(/^-->/)) {
+      dest += (stream.consume().text ?? '') + '\n';
+    }
+
+    dest += (stream.consume().text ?? '') + '\n';
+
+    ast.push({ type: 'html', subtype: 'comment', html: dest });
+    return true;
+  }
+}
+
+/**
+ * Handles reference-style links and images.
+ * Example: [text][ref] or ![alt][ref]
+ */
+export class InlineRefImageAndLinkHandler implements InlineParser {
+  constructor(private type: 'link' | 'image') {}
+
+  parse(parser: Parser, s: string, parserState: ParseState): (ASTNode | string)[] {
+    const regex =
+      this.type === 'image'
+        ? /!\[([^\]*]+)\]\s?(\[([^\]]*)\])?/g
+        : /\[([^\]*]+)\]\s?(\[([^\]]*)\])?/g;
+
+    return this.applyInlines(
+      regex,
+      m => {
+        return {
+          type: this.type,
+          subtype: 'ref',
+          source: parser.unescape(m[0]) as string,
+          children: parser.parseInlines(m[1], parserState, this.type + '-ref'),
+          id:
+            m[3] && m[3].length > 0
+              ? (parser.unescape(m[3]) as string)
+              : (parser.unescape(m[1]) as string)
+        };
+      },
+      s,
+      parser,
+      parserState
+    );
+  }
+
+  private applyInlines(
+    re: RegExp,
+    fn: (match: RegExpExecArray) => ASTNode,
+    s: string,
+    parser: Parser,
+    parserState: ParseState
+  ): (ASTNode | string)[] {
+    let dest = '';
+    Util.iterateRegex(re, s, m => {
+      if (typeof m === 'string') {
+        dest += m;
+      } else {
+        dest += parser.markParsedInline(parserState, fn(m));
+      }
+    });
+
+    return parser.parseInlines(dest, parserState);
+  }
+}
+
+/**
+ * Handles automatic links.
+ * Example: <http://example.com> or <email@example.com>
+ */
+export class InlineAutolinksHandler implements InlineParser {
+  parse(parser: Parser, s: string, parserState: ParseState): (ASTNode | string)[] {
+    return this.applyInlines(
+      /<(((https?|ftp|mailto):[^'">\s]+)|([a-zA-Z]+@[a-zA-Z.]+))>/g,
+      m => {
+        return {
+          type: 'link',
+          children: [m[1]],
+          href: m[1].match(/[a-zA-Z]+@[a-zA-Z.]+/) ? 'mailto:' + m[1] : m[1]
+        };
+      },
+      s,
+      parser,
+      parserState
+    );
+  }
+
+  private applyInlines(
+    re: RegExp,
+    fn: (match: RegExpExecArray) => ASTNode,
+    s: string,
+    parser: Parser,
+    parserState: ParseState
+  ): (ASTNode | string)[] {
+    let dest = '';
+    Util.iterateRegex(re, s, m => {
+      if (typeof m === 'string') {
+        dest += m;
+      } else {
+        dest += parser.markParsedInline(parserState, fn(m));
+      }
+    });
+
+    return parser.parseInlines(dest, parserState);
+  }
+}
+
+/**
+ * Handles line breaks (two spaces at end of line or backslash).
+ * Example: "line  \n" or "line\\\n"
+ */
+export class InlineLineBreakHandler implements InlineParser {
+  parse(parser: Parser, s: string, parserState: ParseState): (ASTNode | string)[] {
+    const context =
+      parserState.context?.includes('atx-header') || parserState.context?.includes('setext-header');
+
+    if (context) {
+      s = s.replace(/ +$/gm, '');
+    } else {
+      s = s.replace(/  +$/gm, () => {
+        return parser.markParsedInline(parserState, { type: 'line-break' });
+      });
+      s = s.replace(/ *\\$/gm, () => {
+        return parser.markParsedInline(parserState, { type: 'line-break' });
+      });
+    }
+
+    s = s.replace(/\t$/g, '    ');
+    return parser.parseInlines(s, parserState);
   }
 }

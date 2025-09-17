@@ -9,9 +9,16 @@ import {
   CodeHandler,
   FencedCodeHandler,
   ListHandler,
+  ReferenceLinkDefinitionHandler,
+  HorizontalRulerHandler,
+  HtmlHandler,
+  CommentHandler,
   InlineCodeHandler,
   InlineEmphasisHandler,
-  InlineLinkHandler
+  InlineLinkHandler,
+  InlineRefImageAndLinkHandler,
+  InlineAutolinksHandler,
+  InlineLineBreakHandler
 } from './handlers';
 
 /**
@@ -35,14 +42,22 @@ export class MarkdownEngine {
         new BlockquoteHandler(),
         new FencedCodeHandler(),
         new CodeHandler(),
-        new ListHandler()
+        new ListHandler(),
+        new HorizontalRulerHandler(),
+        new ReferenceLinkDefinitionHandler(),
+        new HtmlHandler(),
+        new CommentHandler()
       ],
       inline: [
         new InlineCodeHandler(),
         new InlineLinkHandler('image'),
+        new InlineRefImageAndLinkHandler('image'),
         new InlineLinkHandler('link'),
+        new InlineRefImageAndLinkHandler('link'),
+        new InlineAutolinksHandler(),
         new InlineEmphasisHandler('*'),
-        new InlineEmphasisHandler('_')
+        new InlineEmphasisHandler('_'),
+        new InlineLineBreakHandler()
       ]
     });
   }
