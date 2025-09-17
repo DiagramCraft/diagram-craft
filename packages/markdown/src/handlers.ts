@@ -1,7 +1,36 @@
-import type { ASTNode, ParseState, BlockParser, InlineParser } from './types';
+import type { ASTNode, BlockParser, InlineParser, ParseState } from './types';
 import type { Parser } from './parser';
 import type { TokenStream } from './token-stream';
 import { Util } from './utils';
+
+/**
+ * Shared function for applying inline regex patterns to text.
+ */
+const applyInlines = (
+  re: RegExp,
+  fn: (match: RegExpExecArray, progress?: (length: number) => void) => ASTNode | null,
+  s: string,
+  parser: Parser,
+  parserState: ParseState
+): (ASTNode | string)[] => {
+  let dest = '';
+  Util.iterateRegex(re, s, m => {
+    let p: number | undefined;
+    if (typeof m === 'string') {
+      dest += m;
+    } else {
+      dest += parser.markParsedInline(
+        parserState,
+        fn(m, (i: number) => {
+          p = i;
+        })!
+      );
+    }
+    return p;
+  });
+
+  return parser.parseInlines(dest, parserState);
+};
 
 /**
  * Handles paragraph parsing. This is the fallback parser that consumes
@@ -224,10 +253,8 @@ export class ListHandler implements BlockParser {
       const current = stream.peek();
       const next = stream.peek(1);
 
-      const itemCompleted = s.trim() !== '' && (
-        lineMatch ||
-        (current.isEmpty() && !next.match(rC))
-      );
+      const itemCompleted =
+        s.trim() !== '' && (lineMatch || (current.isEmpty() && !next.match(rC)));
 
       if (itemCompleted) {
         const parsedContent = parser.subparser('list').parse(s);
@@ -318,7 +345,7 @@ export class ListHandler implements BlockParser {
  */
 export class InlineCodeHandler implements InlineParser {
   parse(parser: Parser, s: string, parserState: ParseState): (ASTNode | string)[] {
-    return this.applyInlines(
+    return applyInlines(
       /(`+)( ?)(.+?)\2\1/g,
       m => {
         return {
@@ -332,25 +359,6 @@ export class InlineCodeHandler implements InlineParser {
       parserState
     );
   }
-
-  private applyInlines(
-    re: RegExp,
-    fn: (match: RegExpExecArray) => ASTNode,
-    s: string,
-    parser: Parser,
-    parserState: ParseState
-  ): (ASTNode | string)[] {
-    let dest = '';
-    Util.iterateRegex(re, s, m => {
-      if (typeof m === 'string') {
-        dest += m;
-      } else {
-        dest += parser.markParsedInline(parserState, fn(m));
-      }
-    });
-
-    return parser.parseInlines(dest, parserState);
-  }
 }
 
 /**
@@ -362,7 +370,7 @@ export class InlineEmphasisHandler implements InlineParser {
   constructor(private sym: string) {}
 
   parse(parser: Parser, s: string, parserState: ParseState): (ASTNode | string)[] {
-    const LENGTHS = { 'e': 1, 's': 2 };
+    const LENGTHS = { e: 1, s: 2 };
 
     // Count mark occurrences
     let markCount = 0;
@@ -391,10 +399,10 @@ export class InlineEmphasisHandler implements InlineParser {
     }
 
     const parseMarkings = (i: number = 0, state?: ParseState, p: number = 0): ParseResult[] => {
-      if (!state) state = { tag: "", arr: [] };
+      if (!state) state = { tag: '', arr: [] };
 
       const open = (t: string): ParseState => ({
-        tag: state.tag + "/" + t,
+        tag: state.tag + '/' + t,
         arr: state.arr.concat([{ op: 1, type: t, idx: i }])
       });
 
@@ -406,45 +414,44 @@ export class InlineEmphasisHandler implements InlineParser {
       const dest: (ParseResult | undefined)[] = [];
 
       if (i >= s.length) {
-        return state.tag === "" ? [{ score: p, markings: state.arr }] : [];
+        return state.tag === '' ? [{ score: p, markings: state.arr }] : [];
       } else if (s[i] === this.sym) {
         // Calculate distance from open tag to not allow empty strong/em tags
         let dis = 0;
         const last = state.arr.length > 0 ? state.arr[state.arr.length - 1] : undefined;
         if (last) dis = i - last.idx - LENGTHS[last.type as keyof typeof LENGTHS];
 
-        if ((i + 1 < s.length) && s[i + 1] === this.sym) {
+        if (i + 1 < s.length && s[i + 1] === this.sym) {
           // Two consecutive symbols (**)
 
           // <strong> if not in <strong>
-          if (state.tag === "" || state.tag === "/e")
-            dest.push(...parseMarkings(i + LENGTHS['s'], open("s"), p));
+          if (state.tag === '' || state.tag === '/e')
+            dest.push(...parseMarkings(i + LENGTHS['s'], open('s'), p));
 
           // </strong> if in <strong>
-          if ((state.tag === "/s" || state.tag === "/e/s") && dis > 0)
-            dest.push(...parseMarkings(i + LENGTHS['s'], close("s"), p));
+          if ((state.tag === '/s' || state.tag === '/e/s') && dis > 0)
+            dest.push(...parseMarkings(i + LENGTHS['s'], close('s'), p));
 
           // </em> if in <em>
-          if ((state.tag === "/e" || state.tag === "/s/e") && dis > 0)
-            dest.push(...parseMarkings(i + LENGTHS['e'], close("e"), p));
+          if ((state.tag === '/e' || state.tag === '/s/e') && dis > 0)
+            dest.push(...parseMarkings(i + LENGTHS['e'], close('e'), p));
 
           // <em> if not in <em>
-          if (state.tag === "" || state.tag === "/s")
-            dest.push(...parseMarkings(i + LENGTHS['e'], open("e"), p));
+          if (state.tag === '' || state.tag === '/s')
+            dest.push(...parseMarkings(i + LENGTHS['e'], open('e'), p));
 
           // literal *
           dest.push(...parseMarkings(i + 1, state, p + 10));
-
         } else {
           // Single symbol (*)
 
           // </em> if in <em>
-          if ((state.tag === "/e" || state.tag === "/s/e") && dis > 0)
-            dest.push(...parseMarkings(i + LENGTHS['e'], close("e"), p));
+          if ((state.tag === '/e' || state.tag === '/s/e') && dis > 0)
+            dest.push(...parseMarkings(i + LENGTHS['e'], close('e'), p));
 
           // <em> if not in <em>
-          if (state.tag === "" || state.tag === "/s")
-            dest.push(...parseMarkings(i + LENGTHS['e'], open("e"), p));
+          if (state.tag === '' || state.tag === '/s')
+            dest.push(...parseMarkings(i + LENGTHS['e'], open('e'), p));
 
           // literal *
           dest.push(...parseMarkings(i + 1, state, p + 10));
@@ -481,8 +488,8 @@ export class InlineEmphasisHandler implements InlineParser {
     }
 
     const l = LENGTHS[outer[0].type as keyof typeof LENGTHS];
-    const type = outer[0].type === 'e' ? "emphasis" : "strong";
-    let dest = "";
+    const type = outer[0].type === 'e' ? 'emphasis' : 'strong';
+    let dest = '';
     let lastIndex = 0;
 
     for (let i = 0; i < outer.length - 1; i++) {
@@ -500,7 +507,7 @@ export class InlineEmphasisHandler implements InlineParser {
     }
 
     if (lastIndex > 0) {
-      if ((lastIndex + l) < s.length) {
+      if (lastIndex + l < s.length) {
         dest += s.slice(lastIndex + l);
       }
     } else {
@@ -529,11 +536,12 @@ export class InlineLinkHandler implements InlineParser {
         ? /!\[([^\]*]+)\]\(([^)"]+)( +"([^"]+)")?\).*/g
         : /\[([^\]*]+)\]\(([^)"]+)( +"([^"]+)")?\).*/g;
 
-    return this.applyInlines(
+    return applyInlines(
       regex,
       (m, progress) => {
         // Find balanced brackets for the text segment
-        const textSeg = prefix + Util.findBalancedSubstring(m[0].substring(textSegStartsAt), '[', ']');
+        const textSeg =
+          prefix + Util.findBalancedSubstring(m[0].substring(textSegStartsAt), '[', ']');
         if (!textSeg) {
           return null; // Invalid bracket structure
         }
@@ -573,49 +581,6 @@ export class InlineLinkHandler implements InlineParser {
       parser,
       parserState
     );
-  }
-
-  private applyInlines(
-    re: RegExp,
-    fn: (match: RegExpExecArray, progress?: (length: number) => void) => ASTNode | null,
-    s: string,
-    parser: Parser,
-    parserState: ParseState
-  ): (ASTNode | string)[] {
-    let dest = '';
-    let lastIndex = 0;
-
-    let match: RegExpExecArray | null;
-    while ((match = re.exec(s)) !== null) {
-      // Add text before the match
-      if (match.index > lastIndex) {
-        dest += s.substring(lastIndex, match.index);
-      }
-
-      let actualLength = match[0].length;
-      const progress = (length: number) => {
-        actualLength = length;
-      };
-
-      const result = fn(match, progress);
-      if (result) {
-        dest += parser.markParsedInline(parserState, result);
-        lastIndex = match.index + actualLength;
-        re.lastIndex = lastIndex; // Adjust regex position
-      } else {
-        // If fn returns null, treat as literal text
-        dest += match[0][0]; // Add just the first character
-        lastIndex = match.index + 1;
-        re.lastIndex = lastIndex;
-      }
-    }
-
-    // Add remaining text
-    if (lastIndex < s.length) {
-      dest += s.substring(lastIndex);
-    }
-
-    return parser.parseInlines(dest, parserState);
   }
 }
 
@@ -729,7 +694,7 @@ export class InlineRefImageAndLinkHandler implements InlineParser {
         ? /!\[([^\]*]+)\]\s?(\[([^\]]*)\])?/g
         : /\[([^\]*]+)\]\s?(\[([^\]]*)\])?/g;
 
-    return this.applyInlines(
+    return applyInlines(
       regex,
       m => {
         return {
@@ -748,25 +713,6 @@ export class InlineRefImageAndLinkHandler implements InlineParser {
       parserState
     );
   }
-
-  private applyInlines(
-    re: RegExp,
-    fn: (match: RegExpExecArray) => ASTNode,
-    s: string,
-    parser: Parser,
-    parserState: ParseState
-  ): (ASTNode | string)[] {
-    let dest = '';
-    Util.iterateRegex(re, s, m => {
-      if (typeof m === 'string') {
-        dest += m;
-      } else {
-        dest += parser.markParsedInline(parserState, fn(m));
-      }
-    });
-
-    return parser.parseInlines(dest, parserState);
-  }
 }
 
 /**
@@ -775,7 +721,7 @@ export class InlineRefImageAndLinkHandler implements InlineParser {
  */
 export class InlineAutolinksHandler implements InlineParser {
   parse(parser: Parser, s: string, parserState: ParseState): (ASTNode | string)[] {
-    return this.applyInlines(
+    return applyInlines(
       /<(((https?|ftp|mailto):[^'">\s]+)|([a-zA-Z]+@[a-zA-Z.]+))>/g,
       m => {
         return {
@@ -788,25 +734,6 @@ export class InlineAutolinksHandler implements InlineParser {
       parser,
       parserState
     );
-  }
-
-  private applyInlines(
-    re: RegExp,
-    fn: (match: RegExpExecArray) => ASTNode,
-    s: string,
-    parser: Parser,
-    parserState: ParseState
-  ): (ASTNode | string)[] {
-    let dest = '';
-    Util.iterateRegex(re, s, m => {
-      if (typeof m === 'string') {
-        dest += m;
-      } else {
-        dest += parser.markParsedInline(parserState, fn(m));
-      }
-    });
-
-    return parser.parseInlines(dest, parserState);
   }
 }
 
