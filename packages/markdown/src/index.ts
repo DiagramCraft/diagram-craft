@@ -3,6 +3,8 @@ import { Parser } from './parser';
 import { HTMLRenderer } from './html-renderer';
 import { ParagraphHandler } from './handlers';
 import { strictParser } from './strict-parser';
+import { HTMLToMarkdownConverter, htmlToMarkdown, htmlStringToMarkdown } from './html-to-markdown';
+import type { HTMLToMarkdownOptions } from './html-to-markdown';
 
 /**
  * Main markdown parsing engine that manages parser configurations and provides
@@ -150,3 +152,7 @@ export const markdownToPlainText = (markdown: string): string => {
 
   return text.trim();
 };
+
+// Export HTML to Markdown functionality
+export { HTMLToMarkdownConverter, htmlToMarkdown, htmlStringToMarkdown };
+export type { HTMLToMarkdownOptions };
