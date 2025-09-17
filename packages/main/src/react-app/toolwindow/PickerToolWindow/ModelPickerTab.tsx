@@ -205,11 +205,13 @@ const DataProviderResponse = (props: {
                     {expanded.includes(item._uid) && (
                       <>
                         <div>
-                          {schema.fields.map(k => (
-                            <div key={k.id}>
-                              {k.name}: {item[k.id] ?? '-'}
-                            </div>
-                          ))}
+                          {schema.fields
+                            .filter(f => f.type !== 'reference')
+                            .map(k => (
+                              <div key={k.id}>
+                                {k.name}: {item[k.id] ?? '-'}
+                              </div>
+                            ))}
                         </div>
 
                         {dataTemplates.length > 0 && (

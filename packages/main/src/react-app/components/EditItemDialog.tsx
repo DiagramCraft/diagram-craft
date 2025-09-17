@@ -1,13 +1,11 @@
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
-import { Select } from '@diagram-craft/app-components/Select';
-import { Button } from '@diagram-craft/app-components/Button';
+import { MultiSelect, MultiSelectItem } from '@diagram-craft/app-components/MultiSelect';
 import { DataProvider, MutableDataProvider, Data } from '@diagram-craft/model/dataProvider';
 import { DataSchemaField } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { newid } from '@diagram-craft/utils/id';
 import { assert } from '@diagram-craft/utils/assert';
-import { TbX } from 'react-icons/tb';
 import React, { useState } from 'react';
 
 type EditItemDialogProps = {
@@ -158,93 +156,33 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
     const selectedRefs = (formData[field.id] as string[]) || [];
     const displayField = referencedSchema.fields[0]?.id; // Use first field for display
 
-    const addReference = (uid: string) => {
-      if (!selectedRefs.includes(uid) && selectedRefs.length < field.maxCount) {
-        setFormData(prev => ({
-          ...prev,
-          [field.id]: [...selectedRefs, uid]
-        }));
-      }
-    };
+    // Convert data to MultiSelectItem format
+    const availableItems: MultiSelectItem[] = referencedData?.map(item => ({
+      value: item._uid,
+      label: item[displayField] || item._uid
+    })) || [];
 
-    const removeReference = (uid: string) => {
+    const handleSelectionChange = (values: string[]) => {
       setFormData(prev => ({
         ...prev,
-        [field.id]: selectedRefs.filter(ref => ref !== uid)
+        [field.id]: values
       }));
     };
 
-    const availableItems = referencedData?.filter(item => !selectedRefs.includes(item._uid)) || [];
-
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-        {/* Selected references */}
-        {selectedRefs.length > 0 && (
-          <div>
-            <div style={{ fontSize: '0.9em', marginBottom: '0.25rem', fontWeight: 'medium' }}>
-              Selected ({selectedRefs.length}/{field.maxCount}):
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-              {selectedRefs.map(uid => {
-                const item = referencedData?.find(d => d._uid === uid);
-                return (
-                  <div
-                    key={uid}
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      padding: '0.25rem 0.5rem',
-                      backgroundColor: 'var(--cmp-bg)',
-                      borderRadius: 'var(--cmp-radius)',
-                      fontSize: '0.9em'
-                    }}
-                  >
-                    <span>{item ? item[displayField] : uid}</span>
-                    <Button
-                      type="icon-only"
-                      onClick={() => removeReference(uid)}
-                      title="Remove reference"
-                    >
-                      <TbX />
-                    </Button>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Add new reference */}
-        {selectedRefs.length < field.maxCount && availableItems.length > 0 && (
-          <div>
-            <div style={{ fontSize: '0.9em', marginBottom: '0.25rem', fontWeight: 'medium' }}>
-              Add reference:
-            </div>
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <Select.Root
-                value=""
-                onChange={value => {
-                  if (value) {
-                    addReference(value);
-                  }
-                }}
-                placeholder={`Select ${referencedSchema.name}...`}
-              >
-                {availableItems.map(item => (
-                  <Select.Item key={item._uid} value={item._uid}>
-                    {item[displayField]}
-                  </Select.Item>
-                ))}
-              </Select.Root>
-            </div>
-          </div>
-        )}
+        <MultiSelect
+          selectedValues={selectedRefs}
+          availableItems={availableItems}
+          onSelectionChange={handleSelectionChange}
+          placeholder={`Search ${referencedSchema.name}...`}
+        />
 
         {/* Info about constraints */}
         <div style={{ fontSize: '0.8em', color: 'var(--cmp-fg-dim)' }}>
           {field.minCount > 0 && `Minimum ${field.minCount} required. `}
           {field.maxCount < Number.MAX_SAFE_INTEGER && `Maximum ${field.maxCount} allowed.`}
+          {selectedRefs.length > 0 && ` (${selectedRefs.length} selected)`}
         </div>
       </div>
     );
