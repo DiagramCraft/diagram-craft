@@ -60,14 +60,14 @@ export const EditSchemaDialog = (props: Props) => {
             return {
               ...f,
               ...updates,
-              schemaId: (updates as any).schemaId ?? '',
-              minCount: (updates as any).minCount ?? 0,
-              maxCount: (updates as any).maxCount ?? 1
+              schemaId: (updates as Partial<DataSchemaField & { type: 'reference' }>).schemaId ?? '',
+              minCount: (updates as Partial<DataSchemaField & { type: 'reference' }>).minCount ?? 0,
+              maxCount: (updates as Partial<DataSchemaField & { type: 'reference' }>).maxCount ?? 1
             } as DataSchemaField;
           }
           // If changing type from reference to other, remove reference-specific fields
           else if (f.type === 'reference' && updates.type && updates.type !== 'reference') {
-            const { schemaId, minCount, maxCount, ...rest } = f;
+            const { schemaId: _, minCount: __, maxCount: ___, ...rest } = f;
             return { ...rest, ...updates } as DataSchemaField;
           }
           // Normal update

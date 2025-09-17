@@ -130,7 +130,7 @@ const DataProviderResponse = (props: {
   const diagram = useDiagram();
   const document = diagram.document;
   const [expanded, setExpanded] = useState<string[]>([]);
-  const [_dataVersion, setDataVersion] = useState<number>(0);
+  const [, setDataVersion] = useState<number>(0);
 
   useEffect(() => {
     if (!props.dataProvider) return;

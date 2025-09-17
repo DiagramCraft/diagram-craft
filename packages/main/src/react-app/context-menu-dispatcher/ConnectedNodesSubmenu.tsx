@@ -1,10 +1,15 @@
 import * as ContextMenu from '@radix-ui/react-context-menu';
-import { TbChevronRight, TbLink, TbLinkOff, TbPentagon } from 'react-icons/tb';
+import { TbChevronRight, TbLink, TbLinkOff, TbPentagon, TbPlus } from 'react-icons/tb';
 import { useDiagram } from '../../application';
-import type { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { ConnectedEndpoint } from '@diagram-craft/model/endpoint';
+import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
+import { AnchorEndpoint, ConnectedEndpoint } from '@diagram-craft/model/endpoint';
 import type { Diagram } from '@diagram-craft/model/diagram';
 import type { Data } from '@diagram-craft/model/dataProvider';
+import { newid } from '@diagram-craft/utils/id';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 type ConnectionItem = {
   id: string;
@@ -152,6 +157,90 @@ const getConnectedItems = (diagram: Diagram): ConnectionItem[] => {
   return Array.from(connectedItems.values()).sort((a, b) => a.name.localeCompare(b.name));
 };
 
+// Helper function to create data reference for a node
+const makeDataReference = (item: Data, schemaId: string) => {
+  return {
+    type: 'external' as const,
+    external: {
+      uid: item._uid
+    },
+    data: item,
+    schema: schemaId,
+    enabled: true
+  };
+};
+
+// Helper function to create a node for a data entry
+const createNodeForData = (item: Data, schemaName: string, diagram: Diagram) => {
+  const activeLayer = diagram.activeLayer;
+  assertRegularLayer(activeLayer);
+
+  // Get the schema to find the first field for text display
+  const schema = diagram.document.data.schemas.all.find(s => s.name === schemaName);
+  if (!schema) return;
+
+  // Get current selection to position new node
+  const selectedNode = diagram.selectionState.nodes[0];
+  const offsetX = 20; // Position closer to the right of selected node
+
+  // Create the new node
+  const newNode = DiagramNode.create(
+    newid(),
+    'rect',
+    {
+      w: 100,
+      h: 100,
+      x: selectedNode.bounds.x + selectedNode.bounds.w + offsetX,
+      y: selectedNode.bounds.y,
+      r: 0
+    },
+    activeLayer,
+    {},
+    {
+      data: {
+        data: [makeDataReference(item, schema.id)]
+      }
+    },
+    {
+      text: `%${schema.fields[0]?.id ?? '_uid'}%`
+    }
+  );
+
+  // Create an edge connecting the selected node to the new node
+  const newEdge = DiagramEdge.create(
+    newid(),
+    new AnchorEndpoint(selectedNode, 'e'),
+    new AnchorEndpoint(newNode, 'w'),
+    {},
+    {},
+    [],
+    activeLayer
+  );
+
+  // Add both node and edge to the diagram
+  const uow = UnitOfWork.immediate(diagram);
+  activeLayer.addElement(newNode, uow);
+  activeLayer.addElement(newEdge, uow);
+
+  // Apply active styles
+  newNode.updateMetadata(meta => {
+    meta.style = diagram.document.styles.activeNodeStylesheet.id;
+    meta.textStyle = diagram.document.styles.activeTextStylesheet.id;
+  }, uow);
+
+  newEdge.updateMetadata(meta => {
+    meta.style = diagram.document.styles.activeEdgeStylesheet.id;
+  }, uow);
+
+  // Create undoable action for both elements
+  diagram.undoManager.addAndExecute(
+    new ElementAddUndoableAction([newNode, newEdge], diagram, activeLayer)
+  );
+
+  // Select the new node
+  diagram.selectionState.setElements([newNode]);
+};
+
 // Helper function to get the appropriate icon for each connection type
 const getConnectionIcon = (item: ConnectionItem) => {
   switch (item.type) {
@@ -246,6 +335,22 @@ export const ConnectedNodesSubmenu = () => {
                           <ContextMenu.Item className="cmp-context-menu__item" disabled>
                             UID: {item.data._uid}
                           </ContextMenu.Item>
+
+                          {/* Add "Create Node" option for data-only entries */}
+                          {item.type === 'data' && (
+                            <>
+                              <ContextMenu.Separator className="cmp-context-menu__separator" />
+                              <ContextMenu.Item
+                                className="cmp-context-menu__item"
+                                onClick={() => {
+                                  createNodeForData(item.data!, item.schemaName!, diagram);
+                                }}
+                              >
+                                <TbPlus style={{ marginRight: '0.5rem' }} />
+                                Create Node
+                              </ContextMenu.Item>
+                            </>
+                          )}
                         </>
                       )}
 
