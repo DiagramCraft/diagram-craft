@@ -56,6 +56,8 @@ export class MarkdownEngine {
         new InlineRefImageAndLinkHandler('link'),
         new InlineAutolinksHandler(),
         new InlineEmphasisHandler('*'),
+        new InlineEmphasisHandler('*'),
+        new InlineEmphasisHandler('_'),
         new InlineEmphasisHandler('_'),
         new InlineLineBreakHandler()
       ]

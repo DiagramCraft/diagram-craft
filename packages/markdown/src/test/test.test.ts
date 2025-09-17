@@ -6,7 +6,7 @@ import { join } from 'path';
 const verifyHtmlFixture = (engine: MarkdownEngine, filename: string): void => {
   const expectedHtml = readFileSync(
     join('packages/markdown/src/test', filename + '.html'),
-    'ascii'
+    'utf-8'
   );
   const inputText = readFileSync(join('packages/markdown/src/test', filename + '.txt'), 'utf8');
   const parser = engine.parser();
