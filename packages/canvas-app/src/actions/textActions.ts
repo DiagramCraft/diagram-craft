@@ -4,6 +4,7 @@ import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { Application } from '../application';
 import { StringInputDialogCommand } from '../dialogs';
 import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSelectionAction';
+import { htmlStringToMarkdown, markdownToHTML } from '@diagram-craft/markdown';
 
 declare global {
   interface ActionMap extends ReturnType<typeof textActions> {}
@@ -150,19 +151,39 @@ export class TextEditAction extends AbstractSelectionAction<Application> {
 
   execute(): void {
     const selectedItem = this.context.model.activeDiagram.selectionState.nodes[0];
+
+    // Get the current HTML text content
+    const currentHtmlText = selectedItem.texts.text ?? '';
+
+    // Convert HTML to Markdown for editing
+    let markdownText = '';
+    try {
+      markdownText = currentHtmlText ? htmlStringToMarkdown(currentHtmlText) : '';
+    } catch (error) {
+      markdownText = currentHtmlText;
+    }
+
     this.context.ui.showDialog(
       new StringInputDialogCommand(
         {
-          label: 'Text',
+          label: 'Text (Markdown)',
           title: 'Edit text',
-          description: 'Enter a new text for the selected text.',
-          value: selectedItem.texts.text,
+          description: 'Enter text using Markdown syntax. It will be converted to HTML when saved.',
+          value: markdownText,
           saveButtonLabel: 'Save',
           type: 'text'
         },
-        (d: string) => {
+        (markdownInput: string) => {
+          // Convert Markdown back to HTML for storage
+          let htmlOutput = '';
+          try {
+            htmlOutput = markdownInput ? markdownToHTML(markdownInput) : '';
+          } catch (error) {
+            htmlOutput = markdownInput;
+          }
+
           const uow = new UnitOfWork(selectedItem.diagram, true);
-          selectedItem.setText(d, uow);
+          selectedItem.setText(htmlOutput, uow);
           commitWithUndo(uow, 'Edit text');
         }
       )
