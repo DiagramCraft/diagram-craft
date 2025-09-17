@@ -147,8 +147,8 @@ export class MarkdownEngine {
    * @param astNode - The AST node(s) to convert
    * @returns HTML string representation
    */
-  toHTML(astNode: ASTNode | ASTNode[] | string): string {
-    return HTMLRenderer.toHTML(astNode);
+  toHTML(astNode: ASTNode[]): string {
+    return new HTMLRenderer().toHTML(astNode);
   }
 }
 

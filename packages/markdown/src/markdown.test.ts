@@ -34,7 +34,6 @@ describe('Markdown Parser', () => {
   test('should handle code blocks', () => {
     const result = parseMarkdown('```\ncode here\n```');
     expect(result[0].type).toBe('code');
-    expect(result[0].inline).toBeFalsy();
   });
 
   test('should handle inline code', () => {

@@ -1,24 +1,102 @@
 import { TokenStream } from './token-stream';
+import { Util } from './utils';
+
+interface BaseASTNode {
+  children?: (ASTNode | string)[];
+}
+
+interface HTMLASTNode extends BaseASTNode {
+  type: 'html';
+  subtype?: 'comment' | undefined;
+  html?: string;
+}
+
+interface LinkASTNode extends BaseASTNode {
+  type: 'link' | 'image';
+  href?: string;
+  title?: string;
+  source?: string;
+  subtype?: 'ref' | undefined;
+  id?: string;
+}
+
+interface LinkDefinitionASTNode extends BaseASTNode {
+  type: 'link-definition';
+  href?: string;
+  title?: string;
+  source?: string;
+  subtype?: 'ref' | undefined;
+  id?: string;
+}
+
+interface BlockquoteASTNode extends BaseASTNode {
+  type: 'blockquote';
+}
+
+interface EmphasisASTNode extends BaseASTNode {
+  type: 'emphasis';
+}
+
+interface StrongASTNode extends BaseASTNode {
+  type: 'strong';
+}
+
+interface LineBreakASTNode extends BaseASTNode {
+  type: 'line-break';
+}
+
+interface HRASTNode extends BaseASTNode {
+  type: 'hr';
+}
+
+interface ParagraphASTNode extends BaseASTNode {
+  type: 'paragraph';
+}
+
+interface CodeASTNode extends BaseASTNode {
+  type: 'code';
+  inline?: boolean;
+  source?: string;
+}
+
+interface ListASTNode extends BaseASTNode {
+  type: 'list';
+  subtype: 'ordered' | 'unordered';
+  level?: number;
+}
+
+interface ItemASTNode extends BaseASTNode {
+  type: 'item';
+  containsEmpty?: boolean;
+  followedByEmpty?: boolean;
+  loose?: boolean;
+}
+
+interface HeadingASTNode extends BaseASTNode {
+  type: 'heading';
+  level?: number;
+}
 
 /**
  * Represents a node in the Abstract Syntax Tree (AST) for parsed markdown.
  * All markdown elements are represented as AST nodes with a type and optional properties.
  */
-export interface ASTNode {
-  type: string;
-  subtype?: string;
-  children?: (ASTNode | string)[];
-  level?: number;
-  inline?: boolean;
-  html?: string;
-  href?: string;
-  title?: string;
-  source?: string;
-  id?: string;
-  containsEmpty?: boolean;
-  followedByEmpty?: boolean;
-  loose?: boolean;
-}
+export type ASTNode =
+  | HTMLASTNode
+  | LinkASTNode
+  | LinkDefinitionASTNode
+  | BlockquoteASTNode
+  | EmphasisASTNode
+  | StrongASTNode
+  | LineBreakASTNode
+  | HRASTNode
+  | ParagraphASTNode
+  | CodeASTNode
+  | ListASTNode
+  | ItemASTNode
+  | HeadingASTNode;
+
+export type ASTNodeOfType<T extends ASTNode['type']> = ASTNode & { type: T };
 
 /**
  * State object used during inline parsing to track parser position and
@@ -52,9 +130,40 @@ export interface BlockParser {
 /**
  * Interface for inline markdown parsers (emphasis, links, code spans, etc.).
  */
-export interface InlineParser {
-  parse(parser: Parser, s: string, parserState: ParserState): (ASTNode | string)[];
-  excludeFromSubparse?(context: string[]): boolean;
+export abstract class InlineParser {
+  abstract parse(parser: Parser, s: string, parserState: ParserState): (ASTNode | string)[];
+  excludeFromSubparse(_context: string[]) {
+    return false;
+  }
+
+  /**
+   * Shared function for applying inline regex patterns to text.
+   */
+  protected applyInlineRegExp(
+    parser: Parser,
+    parserState: ParserState,
+    s: string,
+    re: RegExp,
+    fn: (match: RegExpExecArray, progress?: (length: number) => void) => ASTNode | null
+  ): (ASTNode | string)[] {
+    const dest: string[] = [];
+    Util.iterateRegex(re, s, m => {
+      let p: number | undefined;
+      if (typeof m === 'string') {
+        dest.push(m);
+      } else {
+        const inlineASTNode = fn(m, (i: number) => (p = i));
+        if (!inlineASTNode) {
+          dest.push(m[0]);
+        } else {
+          dest.push(parser.addInline(parserState, inlineASTNode));
+        }
+      }
+      return p;
+    });
+
+    return parser.parseInlines(dest.join(''), parserState);
+  }
 }
 
 /**
@@ -67,7 +176,7 @@ export type ParserType = 'strict' | string;
  * Uses a two-phase approach: block-level parsing followed by inline parsing.
  */
 export class Parser {
-  private readonly block: BlockParser[];
+  readonly block: BlockParser[];
   private readonly inline: InlineParser[];
   private readonly flags: Record<string, unknown>;
   private readonly context: string[];
@@ -104,6 +213,15 @@ export class Parser {
     });
   }
 
+  unescape(s: string): string {
+    // eslint-disable-next-line no-control-regex
+    s = s.replace(/\x1b[a-o]/g, c => {
+      return this.escapes[0][this.escapes[1].indexOf(c[1])];
+    });
+
+    return s;
+  }
+
   /**
    * Unescapes previously escaped characters and resolves inline placeholders.
    * If a parse state is provided, also resolves inline element placeholders.
@@ -111,40 +229,26 @@ export class Parser {
    * @param state - Optional parse state containing inline elements
    * @returns Unescaped string or array of AST nodes/strings
    */
-  unescape(s: string | undefined, state?: ParserState): (ASTNode | string)[] | string | undefined {
-    if (s === undefined) return undefined;
-
+  resolveInlines(s: string, state: ParserState): (ASTNode | string)[] | undefined {
+    const dest: (ASTNode | string)[] = [];
     // eslint-disable-next-line no-control-regex
-    s = s.replace(/\x1b[a-o]/g, c => {
-      return this.escapes[0][this.escapes[1].indexOf(c[1])];
-    });
+    const regex = /\x1bq([0-9]+)q/g;
+    let lastIndex = 0;
+    let match: RegExpExecArray | null;
 
-    if (state) {
-      const dest: (ASTNode | string)[] = [];
-      // eslint-disable-next-line no-control-regex
-      const regex = /\x1bq([0-9]+)q/g;
-      let lastIndex = 0;
-      let match: RegExpExecArray | null;
-
-      while ((match = regex.exec(s)) !== null) {
-        if (match.index > lastIndex) {
-          dest.push(s.substring(lastIndex, match.index));
-        }
-        dest.push(state.inlines[parseInt(match[1])]);
-        lastIndex = regex.lastIndex;
+    while ((match = regex.exec(s)) !== null) {
+      if (match.index > lastIndex) {
+        dest.push(s.substring(lastIndex, match.index));
       }
-
-      if (lastIndex < s.length) {
-        dest.push(s.substring(lastIndex));
-      }
-
-      if (dest.length === 1 && typeof dest[0] === 'string') {
-        return dest[0];
-      }
-      return dest;
+      dest.push(state.inlines[parseInt(match[1])]);
+      lastIndex = regex.lastIndex;
     }
 
-    return s;
+    if (lastIndex < s.length) {
+      dest.push(s.substring(lastIndex));
+    }
+
+    return dest;
   }
 
   /**
@@ -154,7 +258,7 @@ export class Parser {
    * @param obj - The AST node to store
    * @returns Placeholder string that will be resolved during unescaping
    */
-  markParsedInline(parserState: ParserState, obj: ASTNode): string {
+  addInline(parserState: ParserState, obj: ASTNode): string {
     return '\x1bq' + (parserState.inlines.push(obj) - 1) + 'q';
   }
 
@@ -164,12 +268,10 @@ export class Parser {
    * @param ctx - Additional context to add to the parsing stack
    * @returns New Parser instance configured for sub-parsing
    */
-  subparser(ctx?: string | string[]): Parser {
-    const newContext = this.context.concat(Array.isArray(ctx) ? ctx : ctx ? [ctx] : []);
+  subparser(ctx?: string): Parser {
+    const newContext = this.context.concat(ctx ?? []);
 
-    const filteredBlock = this.block.filter(
-      b => !(b.excludeFromSubparse && b.excludeFromSubparse(newContext))
-    );
+    const filteredBlock = this.block.filter(b => !b.excludeFromSubparse?.(newContext));
 
     return new Parser(filteredBlock, this.inline, this.flags, newContext);
   }
@@ -217,12 +319,8 @@ export class Parser {
    * @param n - AST node, array of nodes, or string to traverse
    * @param fn - Function to apply to each AST node
    */
-  traverseAST(n: ASTNode[] | ASTNode | string, fn: (node: ASTNode) => void): void {
-    if (Array.isArray(n)) {
-      for (const item of n) {
-        this.traverseAST(item, fn);
-      }
-    } else if (typeof n === 'object' && n !== null) {
+  private traverseAST(n: ASTNode | string, fn: (node: ASTNode) => void): void {
+    if (typeof n === 'object' && n !== null) {
       fn(n);
       if (n.children) {
         for (const child of n.children) {
@@ -238,29 +336,32 @@ export class Parser {
    * then apply them to references.
    * @param ast - The AST to process for link resolution
    */
-  resolveLinks(ast: ASTNode[]): void {
-    const links: Record<string, ASTNode> = {};
+  private resolveLinks(ast: ASTNode[]): void {
+    const links: Record<string, ASTNode & { type: 'link-definition' }> = {};
 
-    this.traverseAST(ast, n => {
-      if (n.type === 'link-definition' && n.id) {
-        links[n.id] = n;
-      }
-    });
-
-    this.traverseAST(ast, n => {
-      if (n.subtype === 'ref' && n.id) {
-        const linkDef = links[n.id];
-        if (linkDef) {
-          // Copy all properties except 'type' from link definition to reference node
-          Object.keys(linkDef).forEach(key => {
-            if (key !== 'type') {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (n as any)[key] = (linkDef as any)[key];
-            }
-          });
+    ast.forEach(node =>
+      this.traverseAST(node, n => {
+        if (n.type === 'link-definition' && n.id) {
+          links[n.id] = n;
         }
-      }
-    });
+      })
+    );
+
+    ast.forEach(node =>
+      this.traverseAST(node, n => {
+        if (n.type === 'link' || n.type === 'image') {
+          if (n.subtype === 'ref' && n.id) {
+            const linkDef = links[n.id];
+            if (linkDef) {
+              n.href = linkDef.href;
+              n.subtype = linkDef.subtype;
+              n.title = linkDef.title;
+              n.source = linkDef.source;
+            }
+          }
+        }
+      })
+    );
   }
 
   /**
@@ -271,20 +372,17 @@ export class Parser {
    * @param ctx - Additional context for inline parsing
    * @returns Array of AST nodes and strings representing parsed inline content
    */
-  parseInlines(s: string, state?: ParserState, ctx?: string | string[]): (ASTNode | string)[] {
+  parseInlines(s: string, state?: ParserState, ctx?: string[]): (ASTNode | string)[] {
     const currentState: ParserState = state ?? {
       idx: 0,
       inlines: [],
       context: this.context
     };
 
-    if (ctx) {
-      currentState.context = currentState.context.concat(Array.isArray(ctx) ? ctx : [ctx]);
-    }
+    currentState.context = [...currentState.context, ...(ctx ?? [])];
 
     if (currentState.idx >= this.inline.length) {
-      const result = this.unescape(s, currentState);
-      return Array.isArray(result) ? result : [result ?? ''];
+      return this.resolveInlines(this.unescape(s), currentState) ?? [''];
     }
 
     const nextState: ParserState = {
@@ -294,10 +392,7 @@ export class Parser {
     };
 
     const currentParser = this.inline[currentState.idx];
-    if (
-      currentParser.excludeFromSubparse &&
-      currentParser.excludeFromSubparse(currentState.context)
-    ) {
+    if (currentParser.excludeFromSubparse?.(currentState.context)) {
       return this.parseInlines(s, nextState);
     }
 

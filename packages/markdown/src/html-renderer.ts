@@ -4,66 +4,60 @@ import type { ASTNode } from './parser';
  * HTML renderer that converts markdown AST nodes to HTML strings.
  * Handles proper escaping and formatting of HTML output.
  */
-export const HTMLRenderer = {
+export class HTMLRenderer {
   /**
    * Converts an AST node or array of nodes to HTML string.
    * @param astNode - The AST node(s) to convert
    * @returns HTML string representation
    */
-  toHTML(astNode: ASTNode | (ASTNode | string)[] | string): string {
-    return HTMLRenderer.toHTMLInner(astNode).trim();
-  },
+  toHTML(astNode: Array<ASTNode>): string {
+    return this.processNodeArray(astNode).trim();
+  }
 
-  /**
-   * Internal recursive HTML conversion method.
-   * @param astNode - AST node, array, or string to convert
-   * @returns HTML string
-   * @private
-   */
-  toHTMLInner(astNode: ASTNode | (ASTNode | string)[] | string): string {
-    if (Array.isArray(astNode)) {
-      const parts: string[] = [];
-      let isText = false;
+  private processNodeArray(astNode: Array<ASTNode | string>): string {
+    const parts: string[] = [];
+    let isText = false;
 
-      // Render and filter out empty children first
-      const renderedChildren = (astNode as (ASTNode | string)[])
-        .map(child => HTMLRenderer.toHTMLInner(child))
-        .filter(r => r && r.trim() !== '') as string[];
+    // Render and filter out empty children first
+    const renderedChildren = astNode
+      .map(child => this.processNode(child))
+      .filter(r => r && r.trim() !== '') as string[];
 
-      for (let i = 0; i < renderedChildren.length; i++) {
-        const rendered = renderedChildren[i];
+    for (let i = 0; i < renderedChildren.length; i++) {
+      const rendered = renderedChildren[i];
 
-        if (i === 0 && !rendered.match(/^<(?!em|a|img|strong|code)/)) {
-          isText = true;
-        }
-
-        if (
-          (!isText && i !== 0 && !rendered.match(/^<li/)) ||
-          (rendered.match(/^<[ou]l/) && renderedChildren.length > 1)
-        ) {
-          parts.push('\n');
-        }
-
-        parts.push(rendered);
-
-        if (!isText && i !== renderedChildren.length - 1) {
-          parts.push('\n');
-        }
+      if (i === 0 && !rendered.match(/^<(?!em|a|img|strong|code)/)) {
+        isText = true;
       }
 
-      return parts.join('');
+      if (
+        (!isText && i !== 0 && !rendered.match(/^<li/)) ||
+        (rendered.match(/^<[ou]l/) && renderedChildren.length > 1)
+      ) {
+        parts.push('\n');
+      }
+
+      parts.push(rendered);
+
+      if (!isText && i !== renderedChildren.length - 1) {
+        parts.push('\n');
+      }
     }
 
+    return parts.join('');
+  }
+
+  private processNode(astNode: ASTNode | string): string {
     if (typeof astNode === 'string') {
-      return HTMLRenderer.createHtmlEntities(astNode);
+      return this.createHtmlEntities(astNode);
     }
 
     switch (astNode.type) {
       case 'heading':
-        return this.makeTag(`h${astNode.level}`, this.toHTMLInner(astNode.children ?? []));
+        return this.makeTag(`h${astNode.level}`, this.processNodeArray(astNode.children ?? []));
 
       case 'paragraph': {
-        const paragraphContent = this.toHTMLInner(astNode.children ?? []);
+        const paragraphContent = this.processNodeArray(astNode.children ?? []);
         // Skip empty paragraphs
         if (!paragraphContent || paragraphContent.trim() === '') {
           return '';
@@ -74,14 +68,14 @@ export const HTMLRenderer = {
       case 'list':
         return this.makeTag(
           astNode.subtype === 'ordered' ? 'ol' : 'ul',
-          this.toHTMLInner(astNode.children ?? [])
+          this.processNodeArray(astNode.children ?? [])
         );
 
       case 'code':
         if (astNode.inline) {
           return this.makeTag(
             'code',
-            this.createHtmlEntities(this.toHTMLInner(astNode.children ?? []), true)
+            this.createHtmlEntities(this.processNodeArray(astNode.children ?? []), true)
           );
         } else {
           const content = Array.isArray(astNode.children) ? astNode.children[0] : astNode.children;
@@ -92,7 +86,7 @@ export const HTMLRenderer = {
         }
 
       case 'item': {
-        const itemContent = this.toHTMLInner(astNode.children ?? []);
+        const itemContent = this.processNodeArray(astNode.children ?? []);
         // Remove trailing newlines from list item content
         return this.makeTag('li', itemContent.replace(/\n+$/, ''));
       }
@@ -104,7 +98,7 @@ export const HTMLRenderer = {
         if (astNode.href) {
           const attrs: Record<string, string> = { href: astNode.href };
           if (astNode.title) attrs.title = astNode.title;
-          return this.makeTag('a', this.toHTMLInner(astNode.children ?? []), attrs);
+          return this.makeTag('a', this.processNodeArray(astNode.children ?? []), attrs);
         } else {
           return astNode.source ?? '';
         }
@@ -113,7 +107,7 @@ export const HTMLRenderer = {
         if (astNode.href) {
           const attrs: Record<string, string> = {
             src: astNode.href,
-            alt: this.toHTMLInner(astNode.children ?? [])
+            alt: this.processNodeArray(astNode.children ?? [])
           };
           if (astNode.title) attrs.title = astNode.title;
           return this.makeTag('img', undefined, attrs);
@@ -122,13 +116,13 @@ export const HTMLRenderer = {
         }
 
       case 'emphasis':
-        return this.makeTag('em', this.toHTMLInner(astNode.children ?? []));
+        return this.makeTag('em', this.processNodeArray(astNode.children ?? []));
 
       case 'strong':
-        return this.makeTag('strong', this.toHTMLInner(astNode.children ?? []));
+        return this.makeTag('strong', this.processNodeArray(astNode.children ?? []));
 
       case 'blockquote':
-        return this.makeTag('blockquote', this.toHTMLInner(astNode.children ?? []));
+        return this.makeTag('blockquote', this.processNodeArray(astNode.children ?? []));
 
       case 'html':
         return '\n' + (astNode.html ?? '');
@@ -140,10 +134,11 @@ export const HTMLRenderer = {
         return '';
 
       default:
-        console.log('*** Unsupported type ' + astNode.type);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        console.log('*** Unsupported type ' + (astNode as any).type);
         return '';
     }
-  },
+  }
 
   /**
    * Escapes HTML entities in a string to prevent XSS attacks.
@@ -162,7 +157,7 @@ export const HTMLRenderer = {
     }
 
     return result;
-  },
+  }
 
   /**
    * Creates an HTML tag with optional content and attributes.
@@ -208,4 +203,4 @@ export const HTMLRenderer = {
 
     return result;
   }
-};
+}
