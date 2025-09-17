@@ -1,11 +1,19 @@
-import type { MatchResult } from './types';
+/**
+ * Represents a line from the token stream with utility methods for matching.
+ */
+type MatchResult = {
+  text: string | null;
+  match(re: RegExp): RegExpMatchArray | null;
+  isEmpty(): boolean;
+  isEOS(): boolean;
+};
 
 /**
  * A line-based token stream for parsing markdown text.
  * Splits text into lines and provides methods to peek and consume lines.
  */
 export class TokenStream {
-  private lines: string[];
+  private readonly lines: string[];
   private ptr = 0;
 
   /**
@@ -23,7 +31,7 @@ export class TokenStream {
    */
   peek(i = 0): MatchResult {
     const idx = this.ptr + i;
-    const text = (idx > this.lines.length || idx < 0) ? null : this.lines[idx];
+    const text = idx > this.lines.length || idx < 0 ? null : this.lines[idx];
 
     return {
       text,

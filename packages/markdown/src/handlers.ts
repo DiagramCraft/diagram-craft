@@ -1,5 +1,4 @@
-import type { ASTNode, BlockParser, InlineParser, ParseState } from './types';
-import type { Parser } from './parser';
+import type { ASTNode, BlockParser, InlineParser, Parser, ParserState } from './parser';
 import type { TokenStream } from './token-stream';
 import { Util } from './utils';
 
@@ -11,7 +10,7 @@ const applyInlines = (
   fn: (match: RegExpExecArray, progress?: (length: number) => void) => ASTNode | null,
   s: string,
   parser: Parser,
-  parserState: ParseState
+  parserState: ParserState
 ): (ASTNode | string)[] => {
   let dest = '';
   Util.iterateRegex(re, s, m => {
@@ -248,7 +247,6 @@ export class ListHandler implements BlockParser {
     const items: ASTNode[] = [];
     let lineMatch: RegExpMatchArray | null = m;
 
-    // eslint-disable-next-line no-constant-condition
     while (true) {
       const current = stream.peek();
       const next = stream.peek(1);
@@ -344,7 +342,7 @@ export class ListHandler implements BlockParser {
  * Example: `code here` or ``code with `backticks` ``
  */
 export class InlineCodeHandler implements InlineParser {
-  parse(parser: Parser, s: string, parserState: ParseState): (ASTNode | string)[] {
+  parse(parser: Parser, s: string, parserState: ParserState): (ASTNode | string)[] {
     return applyInlines(
       /(`+)( ?)(.+?)\2\1/g,
       m => {
@@ -369,7 +367,7 @@ export class InlineCodeHandler implements InlineParser {
 export class InlineEmphasisHandler implements InlineParser {
   constructor(private sym: string) {}
 
-  parse(parser: Parser, s: string, parserState: ParseState): (ASTNode | string)[] {
+  parse(parser: Parser, s: string, parserState: ParserState): (ASTNode | string)[] {
     const LENGTHS = { e: 1, s: 2 };
 
     // Count mark occurrences
@@ -526,7 +524,7 @@ export class InlineEmphasisHandler implements InlineParser {
 export class InlineLinkHandler implements InlineParser {
   constructor(private type: 'link' | 'image') {}
 
-  parse(parser: Parser, s: string, parserState: ParseState): (ASTNode | string)[] {
+  parse(parser: Parser, s: string, parserState: ParserState): (ASTNode | string)[] {
     const textSegStartsAt = this.type === 'image' ? 1 : 0;
     const prefix = this.type === 'image' ? '!' : '';
 
@@ -688,7 +686,7 @@ export class CommentHandler implements BlockParser {
 export class InlineRefImageAndLinkHandler implements InlineParser {
   constructor(private type: 'link' | 'image') {}
 
-  parse(parser: Parser, s: string, parserState: ParseState): (ASTNode | string)[] {
+  parse(parser: Parser, s: string, parserState: ParserState): (ASTNode | string)[] {
     const regex =
       this.type === 'image'
         ? /!\[([^\]*]+)\]\s?(\[([^\]]*)\])?/g
@@ -720,7 +718,7 @@ export class InlineRefImageAndLinkHandler implements InlineParser {
  * Example: <http://example.com> or <email@example.com>
  */
 export class InlineAutolinksHandler implements InlineParser {
-  parse(parser: Parser, s: string, parserState: ParseState): (ASTNode | string)[] {
+  parse(parser: Parser, s: string, parserState: ParserState): (ASTNode | string)[] {
     return applyInlines(
       /<(((https?|ftp|mailto):[^'">\s]+)|([a-zA-Z]+@[a-zA-Z.]+))>/g,
       m => {
@@ -742,7 +740,7 @@ export class InlineAutolinksHandler implements InlineParser {
  * Example: "line  \n" or "line\\\n"
  */
 export class InlineLineBreakHandler implements InlineParser {
-  parse(parser: Parser, s: string, parserState: ParseState): (ASTNode | string)[] {
+  parse(parser: Parser, s: string, parserState: ParserState): (ASTNode | string)[] {
     const context =
       parserState.context?.includes('atx-header') || parserState.context?.includes('setext-header');
 

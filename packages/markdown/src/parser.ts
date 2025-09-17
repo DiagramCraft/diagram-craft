@@ -1,16 +1,77 @@
-import type { ASTNode, ParseState, BlockParser, InlineParser } from './types';
 import { TokenStream } from './token-stream';
+
+/**
+ * Represents a node in the Abstract Syntax Tree (AST) for parsed markdown.
+ * All markdown elements are represented as AST nodes with a type and optional properties.
+ */
+export interface ASTNode {
+  type: string;
+  subtype?: string;
+  children?: (ASTNode | string)[];
+  level?: number;
+  inline?: boolean;
+  html?: string;
+  href?: string;
+  title?: string;
+  source?: string;
+  id?: string;
+  containsEmpty?: boolean;
+  followedByEmpty?: boolean;
+  loose?: boolean;
+}
+
+/**
+ * State object used during inline parsing to track parser position and
+ * store parsed inline elements for later resolution.
+ */
+export type ParserState = {
+  idx: number;
+  inlines: ASTNode[];
+  context: string[];
+};
+
+/**
+ * Configuration object for creating markdown parsers.
+ * Defines which block and inline parsers to use, along with flags and inheritance.
+ */
+export type ParserConfiguration = {
+  flags?: Record<string, unknown>;
+  inline?: InlineParser[];
+  block?: BlockParser[];
+  parent?: string;
+};
+
+/**
+ * Interface for block-level markdown parsers (headers, paragraphs, lists, etc.).
+ */
+export interface BlockParser {
+  parse(parser: Parser, stream: TokenStream, ast: ASTNode[]): boolean;
+  excludeFromSubparse?(context: string[]): boolean;
+}
+
+/**
+ * Interface for inline markdown parsers (emphasis, links, code spans, etc.).
+ */
+export interface InlineParser {
+  parse(parser: Parser, s: string, parserState: ParserState): (ASTNode | string)[];
+  excludeFromSubparse?(context: string[]): boolean;
+}
+
+/**
+ * Valid parser type identifiers. 'strict' is the default implementation.
+ */
+export type ParserType = 'strict' | string;
 
 /**
  * Core markdown parser that processes markdown text into an Abstract Syntax Tree (AST).
  * Uses a two-phase approach: block-level parsing followed by inline parsing.
  */
 export class Parser {
-  private block: BlockParser[];
-  private inline: InlineParser[];
-  private flags: Record<string, unknown>;
-  private context: string[];
-  private escapes = ["\\`*_{}[]()+-.!#", "abcdefghijklmno"];
+  private readonly block: BlockParser[];
+  private readonly inline: InlineParser[];
+  private readonly flags: Record<string, unknown>;
+  private readonly context: string[];
+  private escapes = ['\\`*_{}[]()+-.!#', 'abcdefghijklmno'];
 
   /**
    * Creates a new Parser instance with the specified handlers and configuration.
@@ -38,8 +99,8 @@ export class Parser {
    * @returns String with escaped characters replaced by control sequences
    */
   escape(s: string): string {
-    return s.replace(/\\[\\`*_{}[\]()+-.!#]/g, (c) => {
-      return "\x1b" + this.escapes[1][this.escapes[0].indexOf(c[1])];
+    return s.replace(/\\[\\`*_{}[\]()+-.!#]/g, c => {
+      return '\x1b' + this.escapes[1][this.escapes[0].indexOf(c[1])];
     });
   }
 
@@ -50,11 +111,11 @@ export class Parser {
    * @param state - Optional parse state containing inline elements
    * @returns Unescaped string or array of AST nodes/strings
    */
-  unescape(s: string | undefined, state?: ParseState): (ASTNode | string)[] | string | undefined {
+  unescape(s: string | undefined, state?: ParserState): (ASTNode | string)[] | string | undefined {
     if (s === undefined) return undefined;
 
     // eslint-disable-next-line no-control-regex
-    s = s.replace(/\x1b[a-o]/g, (c) => {
+    s = s.replace(/\x1b[a-o]/g, c => {
       return this.escapes[0][this.escapes[1].indexOf(c[1])];
     });
 
@@ -93,8 +154,8 @@ export class Parser {
    * @param obj - The AST node to store
    * @returns Placeholder string that will be resolved during unescaping
    */
-  markParsedInline(parserState: ParseState, obj: ASTNode): string {
-    return "\x1bq" + (parserState.inlines.push(obj) - 1) + "q";
+  markParsedInline(parserState: ParserState, obj: ASTNode): string {
+    return '\x1bq' + (parserState.inlines.push(obj) - 1) + 'q';
   }
 
   /**
@@ -106,8 +167,8 @@ export class Parser {
   subparser(ctx?: string | string[]): Parser {
     const newContext = this.context.concat(Array.isArray(ctx) ? ctx : ctx ? [ctx] : []);
 
-    const filteredBlock = this.block.filter(b =>
-      !(b.excludeFromSubparse && b.excludeFromSubparse(newContext))
+    const filteredBlock = this.block.filter(
+      b => !(b.excludeFromSubparse && b.excludeFromSubparse(newContext))
     );
 
     return new Parser(filteredBlock, this.inline, this.flags, newContext);
@@ -180,13 +241,13 @@ export class Parser {
   resolveLinks(ast: ASTNode[]): void {
     const links: Record<string, ASTNode> = {};
 
-    this.traverseAST(ast, (n) => {
-      if (n.type === "link-definition" && n.id) {
+    this.traverseAST(ast, n => {
+      if (n.type === 'link-definition' && n.id) {
         links[n.id] = n;
       }
     });
 
-    this.traverseAST(ast, (n) => {
+    this.traverseAST(ast, n => {
       if (n.subtype === 'ref' && n.id) {
         const linkDef = links[n.id];
         if (linkDef) {
@@ -210,8 +271,8 @@ export class Parser {
    * @param ctx - Additional context for inline parsing
    * @returns Array of AST nodes and strings representing parsed inline content
    */
-  parseInlines(s: string, state?: ParseState, ctx?: string | string[]): (ASTNode | string)[] {
-    const currentState: ParseState = state ?? {
+  parseInlines(s: string, state?: ParserState, ctx?: string | string[]): (ASTNode | string)[] {
+    const currentState: ParserState = state ?? {
       idx: 0,
       inlines: [],
       context: this.context
@@ -226,14 +287,17 @@ export class Parser {
       return Array.isArray(result) ? result : [result ?? ''];
     }
 
-    const nextState: ParseState = {
+    const nextState: ParserState = {
       idx: currentState.idx + 1,
       inlines: currentState.inlines,
       context: currentState.context
     };
 
     const currentParser = this.inline[currentState.idx];
-    if (currentParser.excludeFromSubparse && currentParser.excludeFromSubparse(currentState.context)) {
+    if (
+      currentParser.excludeFromSubparse &&
+      currentParser.excludeFromSubparse(currentState.context)
+    ) {
       return this.parseInlines(s, nextState);
     }
 

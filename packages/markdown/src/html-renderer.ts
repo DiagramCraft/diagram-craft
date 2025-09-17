@@ -1,4 +1,4 @@
-import type { ASTNode } from './types';
+import type { ASTNode } from './parser';
 
 /**
  * HTML renderer that converts markdown AST nodes to HTML strings.
@@ -62,7 +62,7 @@ export const HTMLRenderer = {
       case 'heading':
         return this.makeTag(`h${astNode.level}`, this.toHTMLInner(astNode.children ?? []));
 
-      case 'paragraph':
+      case 'paragraph': {
         const paragraphContent = this.toHTMLInner(astNode.children ?? []);
         // Skip empty paragraphs
         if (!paragraphContent || paragraphContent.trim() === '') {
@@ -70,7 +70,7 @@ export const HTMLRenderer = {
         }
         // Remove trailing newlines from paragraph content
         return this.makeTag('p', paragraphContent.replace(/\n+$/, ''));
-
+      }
       case 'list':
         return this.makeTag(
           astNode.subtype === 'ordered' ? 'ol' : 'ul',
@@ -91,10 +91,11 @@ export const HTMLRenderer = {
           );
         }
 
-      case 'item':
+      case 'item': {
         const itemContent = this.toHTMLInner(astNode.children ?? []);
         // Remove trailing newlines from list item content
         return this.makeTag('li', itemContent.replace(/\n+$/, ''));
+      }
 
       case 'line-break':
         return this.makeTag('br');

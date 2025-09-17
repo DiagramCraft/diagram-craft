@@ -1,4 +1,4 @@
-import type { ParserConfiguration, ParserType, ASTNode } from './types';
+import type { ParserConfiguration, ParserType, ASTNode } from './parser';
 import { Parser } from './parser';
 import { HTMLRenderer } from './html-renderer';
 import {
