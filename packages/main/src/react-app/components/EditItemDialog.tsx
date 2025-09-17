@@ -27,6 +27,7 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
     props.dataProvider.schemas?.find(s => s.id === props.selectedSchema) ??
     props.dataProvider.schemas?.[0];
 
+  if (!schema) return <div></div>;
   assert.present(schema);
 
   // Reset form when dialog opens
@@ -44,7 +45,7 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
   const handleSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
     const isEditing = !!props.editItem;
     const requiredMethod = isEditing ? 'updateData' : 'addData';
-    
+
     if (!(requiredMethod in dataProvider)) return;
 
     setSubmitError(undefined);
@@ -98,7 +99,7 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
 
   return (
     <Dialog
-      title={isEditing ? "Edit Item" : "Add Item"}
+      title={isEditing ? 'Edit Item' : 'Add Item'}
       open={props.open}
       onClose={handleCancel}
       buttons={[
