@@ -656,6 +656,7 @@ export const ModelPickerTab = () => {
         open={addSchemaDialog}
         onOk={handleAddSchema}
         onCancel={() => setAddSchemaDialog(false)}
+        availableSchemas={dataProvider?.schemas ?? []}
       />
       <EditSchemaDialog
         title="Edit Schema"
@@ -663,6 +664,7 @@ export const ModelPickerTab = () => {
         onOk={handleUpdateSchema}
         onCancel={() => setEditSchemaDialog({ open: false })}
         schema={editSchemaDialog.schema}
+        availableSchemas={dataProvider?.schemas ?? []}
       />
     </ToolWindow.TabContent>
   );

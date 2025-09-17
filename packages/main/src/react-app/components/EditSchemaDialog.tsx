@@ -1,17 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbPlus, TbTrash } from 'react-icons/tb';
-import type { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
+import type { DataSchema, DataSchemaField } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { newid } from '@diagram-craft/utils/id';
-
-type DataSchemaField = {
-  id: string;
-  name: string;
-  type: 'text' | 'longtext';
-};
 
 type Props = {
   title: string;
@@ -19,6 +13,7 @@ type Props = {
   onOk: (schema: DataSchema) => void;
   onCancel: () => void;
   schema?: DataSchema;
+  availableSchemas?: DataSchema[];
 };
 
 const INITIAL_SCHEMA_FIELDS: DataSchemaField[] = [
@@ -57,7 +52,32 @@ export const EditSchemaDialog = (props: Props) => {
   };
 
   const updateField = (fieldId: string, updates: Partial<DataSchemaField>) => {
-    setFields(fields.map(f => (f.id === fieldId ? { ...f, ...updates } : f)));
+    setFields(
+      fields.map(f => {
+        if (f.id === fieldId) {
+          // If changing type to reference, ensure required fields are present
+          if (updates.type === 'reference' && f.type !== 'reference') {
+            return {
+              ...f,
+              ...updates,
+              schemaId: (updates as any).schemaId ?? '',
+              minCount: (updates as any).minCount ?? 0,
+              maxCount: (updates as any).maxCount ?? 1
+            } as DataSchemaField;
+          }
+          // If changing type from reference to other, remove reference-specific fields
+          else if (f.type === 'reference' && updates.type && updates.type !== 'reference') {
+            const { schemaId, minCount, maxCount, ...rest } = f;
+            return { ...rest, ...updates } as DataSchemaField;
+          }
+          // Normal update
+          else {
+            return { ...f, ...updates } as DataSchemaField;
+          }
+        }
+        return f;
+      })
+    );
   };
 
   const validateSchema = (): boolean => {
@@ -84,6 +104,19 @@ export const EditSchemaDialog = (props: Props) => {
         newErrors[`field-${index}-id`] = 'Field ID must be unique';
       }
       fieldIds.add(field.id);
+
+      if (field.type === 'reference') {
+        if (!field.schemaId) {
+          newErrors[`field-${index}-schemaId`] = 'Referenced schema is required';
+        }
+        if (field.minCount < 0) {
+          newErrors[`field-${index}-minCount`] = 'Minimum count cannot be negative';
+        }
+        if (field.maxCount < field.minCount) {
+          newErrors[`field-${index}-maxCount`] =
+            'Maximum count must be greater than or equal to minimum count';
+        }
+      }
     });
 
     if (fields.length === 0) {
@@ -103,11 +136,24 @@ export const EditSchemaDialog = (props: Props) => {
       id: props.schema?.id ?? newid(),
       name: name.trim(),
       source: props.schema?.source ?? 'document',
-      fields: fields.map(f => ({
-        id: f.id,
-        name: f.name.trim(),
-        type: f.type
-      }))
+      fields: fields.map(f => {
+        if (f.type === 'reference') {
+          return {
+            id: f.id,
+            name: f.name.trim(),
+            type: f.type,
+            schemaId: f.schemaId,
+            minCount: f.minCount,
+            maxCount: f.maxCount
+          };
+        } else {
+          return {
+            id: f.id,
+            name: f.name.trim(),
+            type: f.type
+          };
+        }
+      })
     };
 
     props.onOk(resultSchema);
@@ -152,54 +198,159 @@ export const EditSchemaDialog = (props: Props) => {
 
           <div
             style={{
-              display: 'grid',
+              display: 'flex',
+              flexDirection: 'column',
               gap: '0.5rem',
-              gridTemplateColumns: '2fr 1fr min-content min-content',
-              alignItems: 'start'
+              paddingTop: '0.5rem',
+              borderTop: '1px solid var(--cmp-border)'
             }}
           >
             {fields.map((field, index) => (
-              <React.Fragment key={field.id}>
-                <div>
-                  <TextInput
-                    value={field.name}
-                    onChange={value => updateField(field.id, { name: value ?? '' })}
-                    placeholder="Field name"
-                  />
-                  {errors[`field-${index}-name`] && (
-                    <div className="cmp-error" style={{ fontSize: '0.8em', marginTop: '0.2rem' }}>
-                      {errors[`field-${index}-name`]}
-                    </div>
-                  )}
+              <div
+                key={field.id}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.5rem',
+                  paddingBottom: '0.5rem',
+                  borderBottom: '1px solid var(--cmp-border)'
+                }}
+              >
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'start' }}>
+                  <div style={{ flex: 2 }}>
+                    <TextInput
+                      value={field.name}
+                      onChange={value => updateField(field.id, { name: value ?? '' })}
+                      placeholder="Field name"
+                    />
+                    {errors[`field-${index}-name`] && (
+                      <div className="cmp-error" style={{ fontSize: '0.8em', marginTop: '0.2rem' }}>
+                        {errors[`field-${index}-name`]}
+                      </div>
+                    )}
+                  </div>
+
+                  <div style={{ flex: 1 }}>
+                    <Select.Root
+                      value={field.type}
+                      onChange={value => {
+                        const newType = (value ?? 'text') as 'text' | 'longtext' | 'reference';
+                        if (newType === 'reference') {
+                          updateField(field.id, {
+                            type: newType,
+                            schemaId: props.availableSchemas?.[0]?.id ?? '',
+                            minCount: 0,
+                            maxCount: 1
+                          });
+                        } else {
+                          updateField(field.id, { type: newType });
+                        }
+                      }}
+                    >
+                      <Select.Item value="text">Text</Select.Item>
+                      <Select.Item value="longtext">Long Text</Select.Item>
+                      <Select.Item value="reference">Reference</Select.Item>
+                    </Select.Root>
+                  </div>
+
+                  <Button
+                    type="icon-only"
+                    onClick={() => addFieldAfter(index)}
+                    title="Add field below"
+                  >
+                    <TbPlus />
+                  </Button>
+
+                  <Button
+                    type="icon-only"
+                    onClick={() => removeField(index)}
+                    disabled={fields.length === 1}
+                    title={fields.length === 1 ? 'Cannot remove the last field' : 'Remove field'}
+                  >
+                    <TbTrash />
+                  </Button>
                 </div>
 
-                <Select.Root
-                  value={field.type}
-                  onChange={value =>
-                    updateField(field.id, { type: (value ?? 'text') as 'text' | 'longtext' })
-                  }
-                >
-                  <Select.Item value="text">Text</Select.Item>
-                  <Select.Item value="longtext">Long Text</Select.Item>
-                </Select.Root>
+                {field.type === 'reference' && (
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'start' }}>
+                    <div style={{ flex: 2 }}>
+                      <label
+                        style={{ fontSize: '0.9em', marginBottom: '0.2rem', display: 'block' }}
+                      >
+                        Referenced Schema:
+                      </label>
+                      <Select.Root
+                        value={field.schemaId}
+                        onChange={value => updateField(field.id, { schemaId: value ?? '' })}
+                      >
+                        {props.availableSchemas
+                          ?.filter(s => s.id !== props.schema?.id)
+                          .map(schema => (
+                            <Select.Item key={schema.id} value={schema.id}>
+                              {schema.name}
+                            </Select.Item>
+                          ))}
+                      </Select.Root>
+                      {errors[`field-${index}-schemaId`] && (
+                        <div
+                          className="cmp-error"
+                          style={{ fontSize: '0.8em', marginTop: '0.2rem' }}
+                        >
+                          {errors[`field-${index}-schemaId`]}
+                        </div>
+                      )}
+                    </div>
 
-                <Button
-                  type="icon-only"
-                  onClick={() => addFieldAfter(index)}
-                  title="Add field below"
-                >
-                  <TbPlus />
-                </Button>
+                    <div style={{ flex: 1 }}>
+                      <label
+                        style={{ fontSize: '0.9em', marginBottom: '0.2rem', display: 'block' }}
+                      >
+                        Min Count:
+                      </label>
+                      <TextInput
+                        type="number"
+                        value={field.minCount.toString()}
+                        onChange={value =>
+                          updateField(field.id, { minCount: parseInt(value ?? '0') || 0 })
+                        }
+                        placeholder="0"
+                      />
+                      {errors[`field-${index}-minCount`] && (
+                        <div
+                          className="cmp-error"
+                          style={{ fontSize: '0.8em', marginTop: '0.2rem' }}
+                        >
+                          {errors[`field-${index}-minCount`]}
+                        </div>
+                      )}
+                    </div>
 
-                <Button
-                  type="icon-only"
-                  onClick={() => removeField(index)}
-                  disabled={fields.length === 1}
-                  title={fields.length === 1 ? 'Cannot remove the last field' : 'Remove field'}
-                >
-                  <TbTrash />
-                </Button>
-              </React.Fragment>
+                    <div style={{ flex: 1 }}>
+                      <label
+                        style={{ fontSize: '0.9em', marginBottom: '0.2rem', display: 'block' }}
+                      >
+                        Max Count:
+                      </label>
+                      <TextInput
+                        type="number"
+                        value={field.maxCount.toString()}
+                        onChange={value =>
+                          updateField(field.id, { maxCount: parseInt(value ?? '1') || 1 })
+                        }
+                        placeholder="1"
+                      />
+                      {errors[`field-${index}-maxCount`] && (
+                        <div
+                          className="cmp-error"
+                          style={{ fontSize: '0.8em', marginTop: '0.2rem' }}
+                        >
+                          {errors[`field-${index}-maxCount`]}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         </div>

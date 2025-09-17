@@ -6,7 +6,7 @@ import { deepClone } from '@diagram-craft/utils/object';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { CRDTMap, CRDTRoot } from './collaboration/crdt';
 
-type DataSchemaField =
+export type DataSchemaField =
   | {
       id: string;
       name: string;
@@ -16,7 +16,7 @@ type DataSchemaField =
       id: string;
       name: string;
       type: 'reference';
-      allowedSchemas: string[];
+      schemaId: string;
       minCount: number;
       maxCount: number;
     };
