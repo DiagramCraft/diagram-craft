@@ -1,0 +1,12 @@
+{
+  "name": "@diagram-craft/markdown",
+  "version": "1.0.0",
+  "description": "Markdown utilities for Diagram Craft",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "test": "vitest"
+  },
+  "keywords": [],
+  "author": "Magnus Johansson"
+}

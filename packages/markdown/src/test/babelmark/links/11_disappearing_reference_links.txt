@@ -1,0 +1,4 @@
+[Like this][d]: [here][h].
+
+[d]: foo
+[h]: ba

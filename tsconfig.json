@@ -41,6 +41,7 @@
       "@diagram-craft/canvas-nodes/*": ["./packages/canvas-nodes/src/*"],
       "@diagram-craft/canvas-react/*": ["./packages/canvas-react/src/*"],
       "@diagram-craft/canvas-drawio/*": ["./packages/canvas-drawio/src/*"],
+      "@diagram-craft/markdown/*": ["./packages/markdown/src/*"],
       "@diagram-craft/playwright/*": ["./packages/playwright/src/*"]
     }
   },
