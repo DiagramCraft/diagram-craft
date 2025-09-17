@@ -5,6 +5,7 @@ import { useRedraw } from '../hooks/useRedraw';
 import { useEventListener } from '../hooks/useEventListener';
 import { useDiagram } from '../../application';
 import type { ContextMenuTarget } from '@diagram-craft/canvas/context';
+import { ConnectedNodesSubmenu } from './ConnectedNodesSubmenu';
 
 export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selection'> }) => {
   const redraw = useRedraw();
@@ -52,6 +53,9 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
           <ActionContextMenuItem action={'SELECTION_CHANGE_SHAPE'}>
             Change Shape...
           </ActionContextMenuItem>
+
+          <ConnectedNodesSubmenu />
+
           <ContextMenu.Separator className="cmp-context-menu__separator" />
         </>
       )}
