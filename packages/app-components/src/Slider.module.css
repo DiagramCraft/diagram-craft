@@ -1,6 +1,7 @@
 .cmp-slider {
   display: flex;
   gap: 0.5rem;
+  max-width: calc(100% - 8px);
 }
 
 .cmp-slider__slider {
