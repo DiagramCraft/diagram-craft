@@ -2,7 +2,12 @@ import { TokenStream } from './token-stream';
 import { Util } from './utils';
 
 interface BaseASTNode {
-  children?: (ASTNode | string)[];
+  children?: Array<ASTNode>;
+}
+
+interface LiteralASTNode extends BaseASTNode {
+  type: 'literal';
+  value: string;
 }
 
 interface HTMLASTNode extends BaseASTNode {
@@ -25,7 +30,6 @@ interface LinkDefinitionASTNode extends BaseASTNode {
   href?: string;
   title?: string;
   source?: string;
-  subtype?: 'ref' | undefined;
   id?: string;
 }
 
@@ -94,7 +98,8 @@ export type ASTNode =
   | CodeASTNode
   | ListASTNode
   | ItemASTNode
-  | HeadingASTNode;
+  | HeadingASTNode
+  | LiteralASTNode;
 
 export type ASTNodeOfType<T extends ASTNode['type']> = ASTNode & { type: T };
 
@@ -131,7 +136,7 @@ export interface BlockParser {
  * Interface for inline markdown parsers (emphasis, links, code spans, etc.).
  */
 export abstract class InlineParser {
-  abstract parse(parser: Parser, s: string, parserState: ParserState): (ASTNode | string)[];
+  abstract parse(parser: Parser, s: string, parserState: ParserState): Array<ASTNode>;
   excludeFromSubparse(_context: string[]) {
     return false;
   }
@@ -145,7 +150,7 @@ export abstract class InlineParser {
     s: string,
     re: RegExp,
     fn: (match: RegExpExecArray, progress?: (length: number) => void) => ASTNode | null
-  ): (ASTNode | string)[] {
+  ): Array<ASTNode> {
     const dest: string[] = [];
     Util.iterateRegex(re, s, m => {
       let p: number | undefined;
@@ -229,8 +234,8 @@ export class Parser {
    * @param state - Optional parse state containing inline elements
    * @returns Unescaped string or array of AST nodes/strings
    */
-  resolveInlines(s: string, state: ParserState): (ASTNode | string)[] | undefined {
-    const dest: (ASTNode | string)[] = [];
+  resolveInlines(s: string, state: ParserState): Array<ASTNode> | undefined {
+    const dest: Array<ASTNode> = [];
     // eslint-disable-next-line no-control-regex
     const regex = /\x1bq([0-9]+)q/g;
     let lastIndex = 0;
@@ -238,14 +243,20 @@ export class Parser {
 
     while ((match = regex.exec(s)) !== null) {
       if (match.index > lastIndex) {
-        dest.push(s.substring(lastIndex, match.index));
+        dest.push({
+          type: 'literal',
+          value: s.substring(lastIndex, match.index)
+        });
       }
       dest.push(state.inlines[parseInt(match[1])]);
       lastIndex = regex.lastIndex;
     }
 
     if (lastIndex < s.length) {
-      dest.push(s.substring(lastIndex));
+      dest.push({
+        type: 'literal',
+        value: s.substring(lastIndex)
+      });
     }
 
     return dest;
@@ -354,7 +365,6 @@ export class Parser {
             const linkDef = links[n.id];
             if (linkDef) {
               n.href = linkDef.href;
-              n.subtype = linkDef.subtype;
               n.title = linkDef.title;
               n.source = linkDef.source;
             }
@@ -372,7 +382,7 @@ export class Parser {
    * @param ctx - Additional context for inline parsing
    * @returns Array of AST nodes and strings representing parsed inline content
    */
-  parseInlines(s: string, state?: ParserState, ctx?: string[]): (ASTNode | string)[] {
+  parseInlines(s: string, state?: ParserState, ctx?: string[]): Array<ASTNode> {
     const currentState: ParserState = state ?? {
       idx: 0,
       inlines: [],
@@ -382,7 +392,14 @@ export class Parser {
     currentState.context = [...currentState.context, ...(ctx ?? [])];
 
     if (currentState.idx >= this.inline.length) {
-      return this.resolveInlines(this.unescape(s), currentState) ?? [''];
+      return (
+        this.resolveInlines(this.unescape(s), currentState) ?? [
+          {
+            type: 'literal',
+            value: ''
+          }
+        ]
+      );
     }
 
     const nextState: ParserState = {

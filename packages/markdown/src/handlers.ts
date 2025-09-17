@@ -158,7 +158,12 @@ export class CodeHandler implements BlockParser {
 
     ast.push({
       type: 'code',
-      children: [parser.unescape(s)]
+      children: [
+        {
+          type: 'literal',
+          value: parser.unescape(s)
+        }
+      ]
     });
     return true;
   }
@@ -195,7 +200,7 @@ export class FencedCodeHandler implements BlockParser {
 
     ast.push({
       type: 'code',
-      children: [code],
+      children: [{ type: 'literal', value: code }],
       source: language,
       inline: false
     });
@@ -311,7 +316,7 @@ export class ListHandler implements BlockParser {
  * Example: `code here` or ``code with `backticks` ``
  */
 export class InlineCodeHandler extends InlineParser {
-  parse(parser: Parser, s: string, parserState: ParserState): (ASTNode | string)[] {
+  parse(parser: Parser, s: string, parserState: ParserState): ASTNode[] {
     return this.applyInlineRegExp(parser, parserState, s, /(`+)( ?)(.+?)\2\1/g, m => ({
       type: 'code',
       inline: true,
@@ -329,7 +334,7 @@ export class InlineEmphasisHandler extends InlineParser {
     super();
   }
 
-  parse(parser: Parser, s: string, parserState: ParserState): (ASTNode | string)[] {
+  parse(parser: Parser, s: string, parserState: ParserState): ASTNode[] {
     const LENGTHS = { e: 1, s: 2 };
 
     // Count mark occurrences
@@ -490,7 +495,7 @@ export class InlineLinkHandler extends InlineParser {
     super();
   }
 
-  parse(parser: Parser, s: string, parserState: ParserState): (ASTNode | string)[] {
+  parse(parser: Parser, s: string, parserState: ParserState): ASTNode[] {
     const textSegStartsAt = this.type === 'image' ? 1 : 0;
     const prefix = this.type === 'image' ? '!' : '';
 
@@ -648,7 +653,7 @@ export class InlineRefImageAndLinkHandler extends InlineParser {
     super();
   }
 
-  parse(parser: Parser, s: string, parserState: ParserState): (ASTNode | string)[] {
+  parse(parser: Parser, s: string, parserState: ParserState): ASTNode[] {
     const regex =
       this.type === 'image'
         ? /!\[([^\]*]+)\]\s?(\[([^\]]*)\])?/g
@@ -671,7 +676,7 @@ export class InlineRefImageAndLinkHandler extends InlineParser {
  * Example: <http://example.com> or <email@example.com>
  */
 export class InlineAutolinksHandler extends InlineParser {
-  parse(parser: Parser, s: string, parserState: ParserState): (ASTNode | string)[] {
+  parse(parser: Parser, s: string, parserState: ParserState): ASTNode[] {
     return this.applyInlineRegExp(
       parser,
       parserState,
@@ -680,7 +685,7 @@ export class InlineAutolinksHandler extends InlineParser {
       m => {
         return {
           type: 'link',
-          children: [m[1]],
+          children: [{ type: 'literal', value: m[1] }],
           href: m[1].match(/[a-zA-Z]+@[a-zA-Z.]+/) ? 'mailto:' + m[1] : m[1]
         };
       }
@@ -693,7 +698,7 @@ export class InlineAutolinksHandler extends InlineParser {
  * Example: "line  \n" or "line\\\n"
  */
 export class InlineLineBreakHandler extends InlineParser {
-  parse(parser: Parser, s: string, parserState: ParserState): (ASTNode | string)[] {
+  parse(parser: Parser, s: string, parserState: ParserState): ASTNode[] {
     const context =
       parserState.context?.includes('atx-header') || parserState.context?.includes('setext-header');
 

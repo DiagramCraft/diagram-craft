@@ -1,4 +1,4 @@
-import type { ASTNode } from './parser';
+import type { ASTNode, ASTNodeOfType } from './parser';
 
 /**
  * HTML renderer that converts markdown AST nodes to HTML strings.
@@ -14,7 +14,7 @@ export class HTMLRenderer {
     return this.processNodeArray(astNode).trim();
   }
 
-  private processNodeArray(astNode: Array<ASTNode | string>): string {
+  private processNodeArray(astNode: Array<ASTNode>): string {
     const parts: string[] = [];
     let isText = false;
 
@@ -47,12 +47,11 @@ export class HTMLRenderer {
     return parts.join('');
   }
 
-  private processNode(astNode: ASTNode | string): string {
-    if (typeof astNode === 'string') {
-      return this.createHtmlEntities(astNode);
-    }
-
+  private processNode(astNode: ASTNode): string {
     switch (astNode.type) {
+      case 'literal':
+        return this.createHtmlEntities(astNode.value);
+
       case 'heading':
         return this.makeTag(`h${astNode.level}`, this.processNodeArray(astNode.children ?? []));
 
@@ -81,7 +80,10 @@ export class HTMLRenderer {
           const content = Array.isArray(astNode.children) ? astNode.children[0] : astNode.children;
           return this.makeTag(
             'pre',
-            this.makeTag('code', this.createHtmlEntities(content as string, true))
+            this.makeTag(
+              'code',
+              this.createHtmlEntities((content as ASTNodeOfType<'literal'>).value, true)
+            )
           );
         }
 
