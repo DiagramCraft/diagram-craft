@@ -37,19 +37,21 @@ export const HTMLRenderer = {
           isText = true;
         }
 
-        if ((!isText && parts.length > 0) && !rendered.match(/^<li/) ||
-            (rendered.match(/^<[ou]l/) && astNode.length > 1)) {
-          parts.push("\n");
+        if (
+          (!isText && i !== 0 && !rendered.match(/^<li/)) ||
+          (rendered.match(/^<[ou]l/) && astNode.length > 1)
+        ) {
+          parts.push('\n');
         }
 
         parts.push(rendered);
 
-        if (!isText && i !== (astNode.length - 1)) {
-          parts.push("\n");
+        if (!isText && i !== astNode.length - 1) {
+          parts.push('\n');
         }
       }
 
-      return parts.join("");
+      return parts.join('');
     }
 
     if (typeof astNode === 'string') {
@@ -57,94 +59,88 @@ export const HTMLRenderer = {
     }
 
     switch (astNode.type) {
-      case "heading":
-        return this.makeTag(
-          `h${astNode.level}`,
-          this.toHTMLInner(astNode.children ?? [])
-        );
+      case 'heading':
+        return this.makeTag(`h${astNode.level}`, this.toHTMLInner(astNode.children ?? []));
 
-      case "paragraph":
+      case 'paragraph':
         const paragraphContent = this.toHTMLInner(astNode.children ?? []);
         // Skip empty paragraphs
         if (!paragraphContent || paragraphContent.trim() === '') {
           return '';
         }
         // Remove trailing newlines from paragraph content
-        return this.makeTag("p", paragraphContent.replace(/\n+$/, ''));
+        return this.makeTag('p', paragraphContent.replace(/\n+$/, ''));
 
-      case "list":
+      case 'list':
         return this.makeTag(
-          astNode.subtype === "ordered" ? "ol" : "ul",
+          astNode.subtype === 'ordered' ? 'ol' : 'ul',
           this.toHTMLInner(astNode.children ?? [])
         );
 
-      case "code":
+      case 'code':
         if (astNode.inline) {
           return this.makeTag(
-            "code",
-            this.createHtmlEntities(
-              this.toHTMLInner(astNode.children ?? []),
-              true
-            )
+            'code',
+            this.createHtmlEntities(this.toHTMLInner(astNode.children ?? []), true)
           );
         } else {
           const content = Array.isArray(astNode.children) ? astNode.children[0] : astNode.children;
           return this.makeTag(
-            "pre",
-            this.makeTag("code", this.createHtmlEntities(content as string, true))
+            'pre',
+            this.makeTag('code', this.createHtmlEntities(content as string, true))
           );
         }
 
-      case "item":
+      case 'item':
         const itemContent = this.toHTMLInner(astNode.children ?? []);
         // Remove trailing newlines from list item content
-        return this.makeTag("li", itemContent.replace(/\n+$/, ''));
+        return this.makeTag('li', itemContent.replace(/\n+$/, ''));
 
-      case "line-break":
-        return this.makeTag("br");
+      case 'line-break':
+        return this.makeTag('br');
 
-      case "link":
+      case 'link':
         if (astNode.href) {
           const attrs: Record<string, string> = { href: astNode.href };
           if (astNode.title) attrs.title = astNode.title;
-          return this.makeTag("a", this.toHTMLInner(astNode.children ?? []), attrs);
+          return this.makeTag('a', this.toHTMLInner(astNode.children ?? []), attrs);
         } else {
           return astNode.source ?? '';
         }
 
-      case "image":
+      case 'image':
         if (astNode.href) {
           const attrs: Record<string, string> = {
             src: astNode.href,
             alt: this.toHTMLInner(astNode.children ?? [])
           };
           if (astNode.title) attrs.title = astNode.title;
-          return this.makeTag("img", undefined, attrs);
+          return this.makeTag('img', undefined, attrs);
         } else {
           return astNode.source ?? '';
         }
 
-      case "emphasis":
-        return this.makeTag("em", this.toHTMLInner(astNode.children ?? []));
+      case 'emphasis':
+        return this.makeTag('em', this.toHTMLInner(astNode.children ?? []));
 
-      case "strong":
-        return this.makeTag("strong", this.toHTMLInner(astNode.children ?? []));
+      case 'strong':
+        return this.makeTag('strong', this.toHTMLInner(astNode.children ?? []));
 
-      case "blockquote":
-        return this.makeTag("blockquote", this.toHTMLInner(astNode.children ?? []));
+      case 'blockquote':
+        return this.makeTag('blockquote', this.toHTMLInner(astNode.children ?? []));
 
-      case "html":
-        return "\n" + (astNode.html ?? '');
+      case 'html':
+        return '\n' + (astNode.html ?? '');
 
-      case "hr":
-        return this.makeTag("hr");
+      case 'hr':
+        return this.makeTag('hr');
 
-      case "link-definition":
-        return "";
+      case 'link-definition':
+        return '';
 
       default:
-        console.log("*** Unsupported type " + astNode.type);
-        return "";
+        console.log('*** Unsupported type ' + astNode.type);
+        return '';
     }
   },
 
@@ -155,13 +151,13 @@ export const HTMLRenderer = {
    * @returns Escaped HTML string
    */
   createHtmlEntities(s: string, escapeAll = false): string {
-    let result = s.replace(/&(?!#?[a-zA-Z0-9]+;)/g, "&amp;");
+    let result = s.replace(/&(?!#?[a-zA-Z0-9]+;)/g, '&amp;');
 
     if (!escapeAll) {
-      result = result.replace(/<(?!\/?[a-zA-Z]+)/g, "&lt;");
+      result = result.replace(/<(?!\/?[a-zA-Z]+)/g, '&lt;');
     } else {
-      result = result.replace(/</g, "&lt;");
-      result = result.replace(/>/g, "&gt;");
+      result = result.replace(/</g, '&lt;');
+      result = result.replace(/>/g, '&gt;');
     }
 
     return result;
@@ -174,12 +170,8 @@ export const HTMLRenderer = {
    * @param attributes - HTML attributes as key-value pairs
    * @returns Complete HTML tag string
    */
-  makeTag(
-    tag: string,
-    content?: string,
-    attributes: Record<string, string> = {}
-  ): string {
-    let result = "<" + tag;
+  makeTag(tag: string, content?: string, attributes: Record<string, string> = {}): string {
+    let result = '<' + tag;
 
     if (Object.keys(attributes).length > 0) {
       for (const [key, value] of Object.entries(attributes)) {
@@ -188,18 +180,26 @@ export const HTMLRenderer = {
     }
 
     if (content === undefined) {
-      result += " />";
+      result += ' />';
     } else {
-      result += ">";
+      result += '>';
 
-      if (content.match(/^<(ul|li|blockquote|p|h1|h2|h3|h4|h5|h6)/) && tag !== "pre" && tag !== "li") {
-        result += "\n";
+      if (
+        content.match(/^<(ul|li|blockquote|p|h1|h2|h3|h4|h5|h6)/) &&
+        tag !== 'pre' &&
+        tag !== 'li'
+      ) {
+        result += '\n';
       }
 
       result += content;
 
-      if (content.match(/<\/?(ul|li|blockquote|p|h1|h2|h3|h4|h5|h6)[^>]*>$/) && tag !== "pre" && tag !== "li") {
-        result += "\n";
+      if (
+        content.match(/<\/?(ul|li|blockquote|p|h1|h2|h3|h4|h5|h6)[^>]*>$/) &&
+        tag !== 'pre' &&
+        tag !== 'li'
+      ) {
+        result += '\n';
       }
 
       result += `</${tag}>`;

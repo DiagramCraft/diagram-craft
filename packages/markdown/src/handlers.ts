@@ -659,7 +659,7 @@ export class InlineLineBreakHandler implements InlineParser {
       });
     }
 
-    s = s.replace(/\t$/g, '    ');
+    s = s.replace(/\t$/gm, '    ');
     return parser.parseInlines(s, parserState);
   }
 }
