@@ -25,13 +25,13 @@ export const HTMLRenderer = {
       const parts: string[] = [];
       let isText = false;
 
-      for (let i = 0; i < astNode.length; i++) {
-        const rendered = HTMLRenderer.toHTMLInner(astNode[i]);
+      // Render and filter out empty children first
+      const renderedChildren = (astNode as (ASTNode | string)[])
+        .map(child => HTMLRenderer.toHTMLInner(child))
+        .filter(r => r && r.trim() !== '') as string[];
 
-        // Skip empty content
-        if (!rendered || rendered.trim() === '') {
-          continue;
-        }
+      for (let i = 0; i < renderedChildren.length; i++) {
+        const rendered = renderedChildren[i];
 
         if (i === 0 && !rendered.match(/^<(?!em|a|img|strong|code)/)) {
           isText = true;
@@ -39,14 +39,14 @@ export const HTMLRenderer = {
 
         if (
           (!isText && i !== 0 && !rendered.match(/^<li/)) ||
-          (rendered.match(/^<[ou]l/) && astNode.length > 1)
+          (rendered.match(/^<[ou]l/) && renderedChildren.length > 1)
         ) {
           parts.push('\n');
         }
 
         parts.push(rendered);
 
-        if (!isText && i !== astNode.length - 1) {
+        if (!isText && i !== renderedChildren.length - 1) {
           parts.push('\n');
         }
       }
