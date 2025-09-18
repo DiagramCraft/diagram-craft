@@ -14,7 +14,7 @@ import { validProps } from '@diagram-craft/model/diagramLayerRule';
 import { newid } from '@diagram-craft/utils/id';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
-import { TagInput } from '@diagram-craft/app-components/TagInput';
+import { MultiSelect } from '@diagram-craft/app-components/MultiSelect';
 import { TreeSelect } from '@diagram-craft/app-components/TreeSelect';
 import { Button } from '@diagram-craft/app-components/Button';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
@@ -124,15 +124,16 @@ const AdvancedSearchClauseList = (props: ClauseListProps) => {
               )}
 
               {c.type === 'tags' && (
-                <TagInput
-                  selectedTags={c.tags || []}
-                  availableTags={[...diagram.document.tags.tags]}
-                  onTagsChange={newTags => {
+                <MultiSelect
+                  selectedValues={c.tags || []}
+                  availableItems={[...diagram.document.tags.tags]}
+                  onSelectionChange={newTags => {
                     const newClauses = [...props.clauses];
                     // @ts-ignore
                     newClauses[idx].tags = newTags;
                     props.onChange(newClauses);
                   }}
+                  allowCustomValues={true}
                   placeholder="Select tags..."
                 />
               )}

@@ -11,6 +11,13 @@ export type MultiSelectItem = {
   label: string;
 };
 
+// Helper function to normalize string arrays to MultiSelectItem arrays
+const normalizeItems = (items: string[] | MultiSelectItem[]): MultiSelectItem[] => {
+  return items.map(item =>
+    typeof item === 'string' ? { value: item, label: item } : item
+  );
+};
+
 export const MultiSelect = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
   const [inputValue, setInputValue] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -41,8 +48,11 @@ export const MultiSelect = React.forwardRef<HTMLInputElement, Props>((props, ref
     }
   }, [showSuggestions]);
 
+  // Normalize available items to consistent format
+  const normalizedItems = normalizeItems(props.availableItems);
+
   // Filter available items based on input and exclude already selected items
-  const filteredSuggestions = props.availableItems
+  const filteredSuggestions = normalizedItems
     .filter(
       item =>
         item.label.toLowerCase().includes(inputValue.toLowerCase()) &&
@@ -70,7 +80,7 @@ export const MultiSelect = React.forwardRef<HTMLInputElement, Props>((props, ref
     setInputValue(value);
 
     // Check if there are suggestions for the new value
-    const newFilteredSuggestions = props.availableItems
+    const newFilteredSuggestions = normalizedItems
       .filter(
         item =>
           item.label.toLowerCase().includes(value.toLowerCase()) &&
@@ -78,7 +88,7 @@ export const MultiSelect = React.forwardRef<HTMLInputElement, Props>((props, ref
       )
       .slice(0, props.maxSuggestions ?? 10);
 
-    setShowSuggestions(value.length > 0 && newFilteredSuggestions.length > 0);
+    setShowSuggestions(value.length > 0 && (newFilteredSuggestions.length > 0 || !!props.allowCustomValues));
     setSelectedSuggestion(-1);
     props.onInputChange?.(value, ev);
   };
@@ -88,17 +98,22 @@ export const MultiSelect = React.forwardRef<HTMLInputElement, Props>((props, ref
 
     if (ev.key === 'Enter') {
       ev.preventDefault();
-      if (selectedSuggestion >= 0 && filteredSuggestions[selectedSuggestion]) {
+      if (selectedSuggestion >= 0 && selectedSuggestion < filteredSuggestions.length) {
         addItem(filteredSuggestions[selectedSuggestion].value);
+      } else if (selectedSuggestion === filteredSuggestions.length && !!props.allowCustomValues && inputValue.trim()) {
+        addItem(inputValue.trim());
+      } else if (!!props.allowCustomValues && inputValue.trim() && selectedSuggestion === -1) {
+        addItem(inputValue.trim());
       }
     } else if (ev.key === 'ArrowDown') {
       ev.preventDefault();
-      if (showSuggestions && filteredSuggestions.length > 0) {
-        setSelectedSuggestion(Math.min(selectedSuggestion + 1, filteredSuggestions.length - 1));
+      if (showSuggestions) {
+        const maxIndex = filteredSuggestions.length + (!!props.allowCustomValues && inputValue.trim() && !filteredSuggestions.some(item => item.value === inputValue.trim()) ? 0 : -1);
+        setSelectedSuggestion(Math.min(selectedSuggestion + 1, maxIndex));
       }
     } else if (ev.key === 'ArrowUp') {
       ev.preventDefault();
-      if (showSuggestions && filteredSuggestions.length > 0) {
+      if (showSuggestions) {
         setSelectedSuggestion(Math.max(selectedSuggestion - 1, -1));
       }
     } else if (ev.key === 'Escape') {
@@ -121,8 +136,8 @@ export const MultiSelect = React.forwardRef<HTMLInputElement, Props>((props, ref
   const handleInputFocus = () => {
     if (props.isIndeterminate) return;
 
-    // Only show suggestions if there's input text and matching suggestions
-    if (inputValue.length > 0 && filteredSuggestions.length > 0) {
+    // Only show suggestions if there's input text and matching suggestions or custom values allowed
+    if (inputValue.length > 0 && (filteredSuggestions.length > 0 || !!props.allowCustomValues)) {
       setShowSuggestions(true);
     }
   };
@@ -137,7 +152,7 @@ export const MultiSelect = React.forwardRef<HTMLInputElement, Props>((props, ref
 
   // Get label for selected value
   const getItemLabel = (value: string) => {
-    return props.availableItems.find(item => item.value === value)?.label ?? value;
+    return normalizedItems.find(item => item.value === value)?.label ?? value;
   };
 
   return (
@@ -189,7 +204,7 @@ export const MultiSelect = React.forwardRef<HTMLInputElement, Props>((props, ref
       </div>
 
       {/* Portal-based suggestions dropdown */}
-      {!props.isIndeterminate && showSuggestions && filteredSuggestions.length > 0 && (
+      {!props.isIndeterminate && showSuggestions && (filteredSuggestions.length > 0 || (!!props.allowCustomValues && inputValue.trim())) && (
         <Portal.Root>
           <div
             className={styles.cmpMultiSelectSuggestions}
@@ -212,6 +227,16 @@ export const MultiSelect = React.forwardRef<HTMLInputElement, Props>((props, ref
                 {item.label}
               </div>
             ))}
+            {!!props.allowCustomValues && inputValue.trim() && !filteredSuggestions.some(item => item.value === inputValue.trim()) && (
+              <div
+                className={styles.cmpMultiSelectSuggestion}
+                data-selected={selectedSuggestion === filteredSuggestions.length}
+                onMouseDown={() => handleSuggestionClick(inputValue.trim())}
+                onMouseEnter={() => setSelectedSuggestion(filteredSuggestions.length)}
+              >
+                Add "{inputValue.trim()}"
+              </div>
+            )}
           </div>
         </Portal.Root>
       )}
@@ -221,10 +246,11 @@ export const MultiSelect = React.forwardRef<HTMLInputElement, Props>((props, ref
 
 type Props = {
   selectedValues: string[];
-  availableItems: MultiSelectItem[];
+  availableItems: MultiSelectItem[] | string[];
   onSelectionChange: (values: string[]) => void;
   onInputChange?: (value: string, ev: ChangeEvent<HTMLInputElement>) => void;
   maxSuggestions?: number;
+  allowCustomValues?: boolean;
   isIndeterminate?: boolean;
   state?: 'set' | 'unset' | 'overridden';
 } & Omit<
