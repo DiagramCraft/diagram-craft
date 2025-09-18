@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
@@ -52,32 +52,7 @@ export const EditSchemaDialog = (props: Props) => {
   };
 
   const updateField = (fieldId: string, updates: Partial<DataSchemaField>) => {
-    setFields(
-      fields.map(f => {
-        if (f.id === fieldId) {
-          // If changing type to reference, ensure required fields are present
-          if (updates.type === 'reference' && f.type !== 'reference') {
-            return {
-              ...f,
-              ...updates,
-              schemaId: (updates as Partial<DataSchemaField & { type: 'reference' }>).schemaId ?? '',
-              minCount: (updates as Partial<DataSchemaField & { type: 'reference' }>).minCount ?? 0,
-              maxCount: (updates as Partial<DataSchemaField & { type: 'reference' }>).maxCount ?? 1
-            } as DataSchemaField;
-          }
-          // If changing type from reference to other, remove reference-specific fields
-          else if (f.type === 'reference' && updates.type && updates.type !== 'reference') {
-            const { schemaId: _, minCount: __, maxCount: ___, ...rest } = f;
-            return { ...rest, ...updates } as DataSchemaField;
-          }
-          // Normal update
-          else {
-            return { ...f, ...updates } as DataSchemaField;
-          }
-        }
-        return f;
-      })
-    );
+    setFields(fields.map(f => (f.id === fieldId ? ({ ...f, ...updates } as DataSchemaField) : f)));
   };
 
   const validateSchema = (): boolean => {
@@ -136,24 +111,7 @@ export const EditSchemaDialog = (props: Props) => {
       id: props.schema?.id ?? newid(),
       name: name.trim(),
       source: props.schema?.source ?? 'document',
-      fields: fields.map(f => {
-        if (f.type === 'reference') {
-          return {
-            id: f.id,
-            name: f.name.trim(),
-            type: f.type,
-            schemaId: f.schemaId,
-            minCount: f.minCount,
-            maxCount: f.maxCount
-          };
-        } else {
-          return {
-            id: f.id,
-            name: f.name.trim(),
-            type: f.type
-          };
-        }
-      })
+      fields: fields
     };
 
     props.onOk(resultSchema);
@@ -274,11 +232,7 @@ export const EditSchemaDialog = (props: Props) => {
                 {field.type === 'reference' && (
                   <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'start' }}>
                     <div style={{ flex: 2 }}>
-                      <label
-                        style={{ fontSize: '0.9em', marginBottom: '0.2rem', display: 'block' }}
-                      >
-                        Referenced Schema:
-                      </label>
+                      <label style={{ display: 'block' }}>Referenced Schema:</label>
                       <Select.Root
                         value={field.schemaId}
                         onChange={value => updateField(field.id, { schemaId: value ?? '' })}
@@ -292,21 +246,14 @@ export const EditSchemaDialog = (props: Props) => {
                           ))}
                       </Select.Root>
                       {errors[`field-${index}-schemaId`] && (
-                        <div
-                          className="cmp-error"
-                          style={{ fontSize: '0.8em', marginTop: '0.2rem' }}
-                        >
+                        <div className="cmp-error" style={{ marginTop: '0.125rem' }}>
                           {errors[`field-${index}-schemaId`]}
                         </div>
                       )}
                     </div>
 
                     <div style={{ flex: 1 }}>
-                      <label
-                        style={{ fontSize: '0.9em', marginBottom: '0.2rem', display: 'block' }}
-                      >
-                        Min Count:
-                      </label>
+                      <label style={{ display: 'block' }}>Min Count:</label>
                       <TextInput
                         type="number"
                         value={field.minCount.toString()}
@@ -316,21 +263,14 @@ export const EditSchemaDialog = (props: Props) => {
                         placeholder="0"
                       />
                       {errors[`field-${index}-minCount`] && (
-                        <div
-                          className="cmp-error"
-                          style={{ fontSize: '0.8em', marginTop: '0.2rem' }}
-                        >
+                        <div className="cmp-error" style={{ marginTop: '0.12rem' }}>
                           {errors[`field-${index}-minCount`]}
                         </div>
                       )}
                     </div>
 
                     <div style={{ flex: 1 }}>
-                      <label
-                        style={{ fontSize: '0.9em', marginBottom: '0.2rem', display: 'block' }}
-                      >
-                        Max Count:
-                      </label>
+                      <label style={{ display: 'block' }}>Max Count:</label>
                       <TextInput
                         type="number"
                         value={field.maxCount.toString()}
@@ -340,10 +280,7 @@ export const EditSchemaDialog = (props: Props) => {
                         placeholder="1"
                       />
                       {errors[`field-${index}-maxCount`] && (
-                        <div
-                          className="cmp-error"
-                          style={{ fontSize: '0.8em', marginTop: '0.2rem' }}
-                        >
+                        <div className="cmp-error" style={{ marginTop: '0.125rem' }}>
                           {errors[`field-${index}-maxCount`]}
                         </div>
                       )}

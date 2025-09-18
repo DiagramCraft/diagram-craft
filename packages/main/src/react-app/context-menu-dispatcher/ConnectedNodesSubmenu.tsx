@@ -1,5 +1,5 @@
 import * as ContextMenu from '@radix-ui/react-context-menu';
-import { TbChevronRight, TbLink, TbLinkOff, TbPentagon, TbPlus } from 'react-icons/tb';
+import { TbChevronRight, TbLink, TbLinkOff, TbPentagon } from 'react-icons/tb';
 import { useDiagram } from '../../application';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
@@ -14,12 +14,10 @@ import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 type ConnectionItem = {
   id: string;
   name: string;
-  type: 'node' | 'data' | 'both'; // 'both' means node with data
+  type: 'node' | 'data' | 'both';
   node?: DiagramNode;
   data?: Data;
   schemaName?: string;
-  viaEdges: number;
-  viaReferences: string[];
 };
 
 // Get connected nodes and data entries for single node selection
@@ -45,14 +43,11 @@ const getConnectedItems = (diagram: Diagram): ConnectionItem[] => {
     }
 
     if (otherNode && otherNode !== selectedNode) {
-      const existing = connectedItems.get(`node-${otherNode.id}`);
-      connectedItems.set(`node-${otherNode.id}`, {
-        id: `node-${otherNode.id}`,
+      connectedItems.set(otherNode.id, {
+        id: otherNode.id,
         name: otherNode.name,
         type: 'node',
-        node: otherNode,
-        viaEdges: (existing?.viaEdges ?? 0) + 1,
-        viaReferences: existing?.viaReferences ?? []
+        node: otherNode
       });
     }
   }
@@ -99,11 +94,10 @@ const getConnectedItems = (diagram: Diagram): ConnectionItem[] => {
             if (!dataItem) continue;
 
             // Get display name (use 'name' field if exists, otherwise first field)
-            const nameField = referencedSchema.fields.find(f => f.name.toLowerCase() === 'name') ?? referencedSchema.fields[0];
-            const displayName = dataItem[nameField?.id] || dataItem._uid;
-
-            const referenceName = `${field.name} (${schema.name})`;
-            const itemId = `data-${uid}`;
+            const nameField =
+              referencedSchema.fields.find(f => f.name.toLowerCase() === 'name') ??
+              referencedSchema.fields[0];
+            const displayName = dataItem[nameField?.id] ?? dataItem._uid;
 
             // Check if there's also a node with this data
             let associatedNode: DiagramNode | undefined;
@@ -123,29 +117,22 @@ const getConnectedItems = (diagram: Diagram): ConnectionItem[] => {
 
             // If there's an associated node, update the node entry to be 'both' type
             if (associatedNode) {
-              const nodeId = `node-${associatedNode.id}`;
-              const existing = connectedItems.get(nodeId);
-              connectedItems.set(nodeId, {
-                id: nodeId,
+              connectedItems.set(associatedNode.id, {
+                id: associatedNode.id,
                 name: associatedNode.name,
-                type: 'both', // Node with data
+                type: 'both',
                 node: associatedNode,
                 data: dataItem,
-                schemaName: referencedSchema.name,
-                viaEdges: existing?.viaEdges ?? 0,
-                viaReferences: [...(existing?.viaReferences ?? []), referenceName]
+                schemaName: referencedSchema.name
               });
             } else {
               // Add as a data-only entry
-              const existing = connectedItems.get(itemId);
-              connectedItems.set(itemId, {
-                id: itemId,
+              connectedItems.set(uid, {
+                id: uid,
                 name: displayName,
                 type: 'data',
                 data: dataItem,
-                schemaName: referencedSchema.name,
-                viaEdges: existing?.viaEdges ?? 0,
-                viaReferences: [...(existing?.viaReferences ?? []), referenceName]
+                schemaName: referencedSchema.name
               });
             }
           }
@@ -278,11 +265,10 @@ export const ConnectedNodesSubmenu = () => {
               No connected items
             </ContextMenu.Item>
           ) : (
-            connectedItems.map((item) => {
+            connectedItems.map(item => {
               // Create display name with type indicator
-              const displayName = item.type === 'data'
-                ? `${item.name} (${item.schemaName})`
-                : item.name;
+              const displayName =
+                item.type === 'data' ? `${item.name} (${item.schemaName})` : item.name;
 
               // Get the appropriate icon component
               const IconComponent = getConnectionIcon(item);
@@ -304,6 +290,29 @@ export const ConnectedNodesSubmenu = () => {
                       sideOffset={2}
                       alignOffset={-5}
                     >
+                      {/* Data-specific actions */}
+                      {(item.type === 'data' || item.type === 'both') && item.data && (
+                        <>
+                          <ContextMenu.Item className="cmp-context-menu__item" disabled>
+                            Data Entry ({item.schemaName})
+                          </ContextMenu.Item>
+
+                          {item.type === 'data' && (
+                            <>
+                              <ContextMenu.Separator className="cmp-context-menu__separator" />
+                              <ContextMenu.Item
+                                className="cmp-context-menu__item"
+                                onClick={() => {
+                                  createNodeForData(item.data!, item.schemaName!, diagram);
+                                }}
+                              >
+                                Create Node
+                              </ContextMenu.Item>
+                            </>
+                          )}
+                        </>
+                      )}
+
                       {/* Node-specific actions */}
                       {(item.type === 'node' || item.type === 'both') && item.node && (
                         <>
@@ -323,54 +332,6 @@ export const ConnectedNodesSubmenu = () => {
                           >
                             Add Node to Selection
                           </ContextMenu.Item>
-                        </>
-                      )}
-
-                      {/* Data-specific actions */}
-                      {(item.type === 'data' || item.type === 'both') && item.data && (
-                        <>
-                          <ContextMenu.Item className="cmp-context-menu__item" disabled>
-                            Data Entry ({item.schemaName})
-                          </ContextMenu.Item>
-                          <ContextMenu.Item className="cmp-context-menu__item" disabled>
-                            UID: {item.data._uid}
-                          </ContextMenu.Item>
-
-                          {/* Add "Create Node" option for data-only entries */}
-                          {item.type === 'data' && (
-                            <>
-                              <ContextMenu.Separator className="cmp-context-menu__separator" />
-                              <ContextMenu.Item
-                                className="cmp-context-menu__item"
-                                onClick={() => {
-                                  createNodeForData(item.data!, item.schemaName!, diagram);
-                                }}
-                              >
-                                <TbPlus style={{ marginRight: '0.5rem' }} />
-                                Create Node
-                              </ContextMenu.Item>
-                            </>
-                          )}
-                        </>
-                      )}
-
-                      {/* Show connection details */}
-                      {(item.viaEdges > 0 || item.viaReferences.length > 0) && (
-                        <>
-                          <ContextMenu.Separator className="cmp-context-menu__separator" />
-                          <ContextMenu.Label className="cmp-context-menu__label">
-                            Connected via:
-                          </ContextMenu.Label>
-                          {item.viaEdges > 0 && (
-                            <ContextMenu.Item className="cmp-context-menu__item" disabled>
-                              {item.viaEdges} Direct Edge{item.viaEdges !== 1 ? 's' : ''}
-                            </ContextMenu.Item>
-                          )}
-                          {item.viaReferences.map((ref, index) => (
-                            <ContextMenu.Item key={index} className="cmp-context-menu__item" disabled>
-                              {ref}
-                            </ContextMenu.Item>
-                          ))}
                         </>
                       )}
                     </ContextMenu.SubContent>

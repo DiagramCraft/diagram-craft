@@ -8,6 +8,62 @@ import { newid } from '@diagram-craft/utils/id';
 import { assert } from '@diagram-craft/utils/assert';
 import React, { useState } from 'react';
 
+type ReferenceFieldEditorProps = {
+  field: DataSchemaField & { type: 'reference' };
+  dataProvider: DataProvider;
+  selectedValues: string[];
+  onSelectionChange: (values: string[]) => void;
+};
+
+const ReferenceFieldEditor = ({
+  field,
+  dataProvider,
+  selectedValues,
+  onSelectionChange
+}: ReferenceFieldEditorProps) => {
+  const referencedSchema = dataProvider.schemas?.find(s => s.id === field.schemaId);
+  if (!referencedSchema) {
+    return <div>Referenced schema not found</div>;
+  }
+
+  const referencedData = dataProvider.getData(referencedSchema);
+  const displayField = referencedSchema.fields[0]?.id; // Use first field for display
+
+  // Convert data to MultiSelectItem format
+  const availableItems: MultiSelectItem[] =
+    referencedData?.map(item => {
+      const fieldValue = item[displayField];
+      let label: string = item._uid; // Default fallback
+
+      if (typeof fieldValue === 'string' && fieldValue) {
+        label = fieldValue;
+      }
+
+      return {
+        value: item._uid,
+        label: label
+      };
+    }) || [];
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+      <MultiSelect
+        selectedValues={selectedValues}
+        availableItems={availableItems}
+        onSelectionChange={onSelectionChange}
+        placeholder={`Search ${referencedSchema.name}...`}
+      />
+
+      {/* Info about constraints */}
+      <div style={{ fontSize: '0.8em', color: 'var(--cmp-fg-dim)' }}>
+        {field.minCount > 0 && `Minimum ${field.minCount} required. `}
+        {field.maxCount < Number.MAX_SAFE_INTEGER && `Maximum ${field.maxCount} allowed.`}
+        {selectedValues.length > 0 && ` (${selectedValues.length} selected)`}
+      </div>
+    </div>
+  );
+};
+
 type EditItemDialogProps = {
   open: boolean;
   onClose: () => void;
@@ -90,7 +146,9 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
       return false;
     });
     if (invalidReferenceFields.length > 0) {
-      setSubmitError(`Too many references in: ${invalidReferenceFields.map(f => f.name).join(', ')}`);
+      setSubmitError(
+        `Too many references in: ${invalidReferenceFields.map(f => f.name).join(', ')}`
+      );
       e.preventDefault();
       return;
     }
@@ -145,49 +203,6 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
 
   const isEditing = !!props.editItem;
 
-  // Helper component for reference field editing
-  const ReferenceFieldEditor = ({ field }: { field: DataSchemaField & { type: 'reference' } }) => {
-    const referencedSchema = dataProvider.schemas?.find(s => s.id === field.schemaId);
-    if (!referencedSchema) {
-      return <div>Referenced schema not found</div>;
-    }
-
-    const referencedData = dataProvider.getData(referencedSchema);
-    const selectedRefs = (formData[field.id] as string[]) || [];
-    const displayField = referencedSchema.fields[0]?.id; // Use first field for display
-
-    // Convert data to MultiSelectItem format
-    const availableItems: MultiSelectItem[] = referencedData?.map(item => ({
-      value: item._uid,
-      label: item[displayField] || item._uid
-    })) || [];
-
-    const handleSelectionChange = (values: string[]) => {
-      setFormData(prev => ({
-        ...prev,
-        [field.id]: values
-      }));
-    };
-
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-        <MultiSelect
-          selectedValues={selectedRefs}
-          availableItems={availableItems}
-          onSelectionChange={handleSelectionChange}
-          placeholder={`Search ${referencedSchema.name}...`}
-        />
-
-        {/* Info about constraints */}
-        <div style={{ fontSize: '0.8em', color: 'var(--cmp-fg-dim)' }}>
-          {field.minCount > 0 && `Minimum ${field.minCount} required. `}
-          {field.maxCount < Number.MAX_SAFE_INTEGER && `Maximum ${field.maxCount} allowed.`}
-          {selectedRefs.length > 0 && ` (${selectedRefs.length} selected)`}
-        </div>
-      </div>
-    );
-  };
-
   return (
     <Dialog
       title={isEditing ? 'Edit Item' : 'Add Item'}
@@ -223,7 +238,12 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
           <div key={field.id} className={'util-vstack'} style={{ gap: '0.2rem' }}>
             <label>{field.name}:</label>
             {field.type === 'reference' ? (
-              <ReferenceFieldEditor field={field} />
+              <ReferenceFieldEditor
+                field={field}
+                dataProvider={dataProvider}
+                selectedValues={(formData[field.id] as string[]) || []}
+                onSelectionChange={values => setFormData(prev => ({ ...prev, [field.id]: values }))}
+              />
             ) : field.type === 'longtext' ? (
               <TextArea
                 value={(formData[field.id] as string) ?? ''}
