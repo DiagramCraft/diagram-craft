@@ -141,7 +141,7 @@ const ClauseList = (props: ClauseListProps) => {
               {c.type === 'tags' && (
                 <MultiSelect
                   selectedValues={c.tags || []}
-                  availableItems={[...diagram.document.tags.tags]}
+                  availableItems={[...diagram.document.tags.tags].map(tag => ({ value: tag, label: tag }))}
                   onSelectionChange={newTags => {
                     const newClauses = [...props.clauses];
                     // @ts-ignore

@@ -28,7 +28,7 @@ export const ObjectNamePanel = ({ mode }: ObjectNamePanelProps) => {
       )
     );
 
-  const availableTags = [...$d.document.tags.tags];
+  const availableTags = [...$d.document.tags.tags].map(tag => ({ value: tag, label: tag }));
 
   const handleTagsChange = useCallback(
     (newTags: string[]) => {

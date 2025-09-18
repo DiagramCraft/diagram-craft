@@ -11,12 +11,6 @@ export type MultiSelectItem = {
   label: string;
 };
 
-// Helper function to normalize string arrays to MultiSelectItem arrays
-const normalizeItems = (items: string[] | MultiSelectItem[]): MultiSelectItem[] => {
-  return items.map(item =>
-    typeof item === 'string' ? { value: item, label: item } : item
-  );
-};
 
 export const MultiSelect = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
   const [inputValue, setInputValue] = useState('');
@@ -48,11 +42,8 @@ export const MultiSelect = React.forwardRef<HTMLInputElement, Props>((props, ref
     }
   }, [showSuggestions]);
 
-  // Normalize available items to consistent format
-  const normalizedItems = normalizeItems(props.availableItems);
-
   // Filter available items based on input and exclude already selected items
-  const filteredSuggestions = normalizedItems
+  const filteredSuggestions = props.availableItems
     .filter(
       item =>
         item.label.toLowerCase().includes(inputValue.toLowerCase()) &&
@@ -80,7 +71,7 @@ export const MultiSelect = React.forwardRef<HTMLInputElement, Props>((props, ref
     setInputValue(value);
 
     // Check if there are suggestions for the new value
-    const newFilteredSuggestions = normalizedItems
+    const newFilteredSuggestions = props.availableItems
       .filter(
         item =>
           item.label.toLowerCase().includes(value.toLowerCase()) &&
@@ -152,7 +143,7 @@ export const MultiSelect = React.forwardRef<HTMLInputElement, Props>((props, ref
 
   // Get label for selected value
   const getItemLabel = (value: string) => {
-    return normalizedItems.find(item => item.value === value)?.label ?? value;
+    return props.availableItems.find(item => item.value === value)?.label ?? value;
   };
 
   return (
@@ -246,7 +237,7 @@ export const MultiSelect = React.forwardRef<HTMLInputElement, Props>((props, ref
 
 type Props = {
   selectedValues: string[];
-  availableItems: MultiSelectItem[] | string[];
+  availableItems: MultiSelectItem[];
   onSelectionChange: (values: string[]) => void;
   onInputChange?: (value: string, ev: ChangeEvent<HTMLInputElement>) => void;
   maxSuggestions?: number;

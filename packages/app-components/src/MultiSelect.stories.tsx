@@ -233,22 +233,22 @@ export const ManyOptions: Story = {
   }
 };
 
-// Tag Input style stories (using string arrays and custom values)
+// Tag Input style stories (using MultiSelectItem format with allowCustomValues)
 export const TagInputStyle: Story = {
   render: MultiSelectWrapper,
   args: {
     selectedValues: [],
     availableItems: [
-      'React',
-      'TypeScript',
-      'JavaScript',
-      'CSS',
-      'HTML',
-      'Node.js',
-      'Express',
-      'MongoDB',
-      'PostgreSQL',
-      'GraphQL'
+      { value: 'React', label: 'React' },
+      { value: 'TypeScript', label: 'TypeScript' },
+      { value: 'JavaScript', label: 'JavaScript' },
+      { value: 'CSS', label: 'CSS' },
+      { value: 'HTML', label: 'HTML' },
+      { value: 'Node.js', label: 'Node.js' },
+      { value: 'Express', label: 'Express' },
+      { value: 'MongoDB', label: 'MongoDB' },
+      { value: 'PostgreSQL', label: 'PostgreSQL' },
+      { value: 'GraphQL', label: 'GraphQL' }
     ],
     allowCustomValues: true,
     placeholder: 'Add tags...',
@@ -262,16 +262,16 @@ export const TagInputWithPreselected: Story = {
   args: {
     selectedValues: ['React', 'TypeScript', 'CSS'],
     availableItems: [
-      'React',
-      'TypeScript',
-      'JavaScript',
-      'CSS',
-      'HTML',
-      'Node.js',
-      'Express',
-      'MongoDB',
-      'PostgreSQL',
-      'GraphQL'
+      { value: 'React', label: 'React' },
+      { value: 'TypeScript', label: 'TypeScript' },
+      { value: 'JavaScript', label: 'JavaScript' },
+      { value: 'CSS', label: 'CSS' },
+      { value: 'HTML', label: 'HTML' },
+      { value: 'Node.js', label: 'Node.js' },
+      { value: 'Express', label: 'Express' },
+      { value: 'MongoDB', label: 'MongoDB' },
+      { value: 'PostgreSQL', label: 'PostgreSQL' },
+      { value: 'GraphQL', label: 'GraphQL' }
     ],
     allowCustomValues: true,
     placeholder: 'Add more tags...',
