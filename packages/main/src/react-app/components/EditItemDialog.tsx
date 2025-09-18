@@ -2,8 +2,12 @@ import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { MultiSelect, MultiSelectItem } from '@diagram-craft/app-components/MultiSelect';
-import { DataProvider, MutableDataProvider, Data } from '@diagram-craft/model/dataProvider';
-import { DataSchemaField } from '@diagram-craft/model/diagramDocumentDataSchemas';
+import { Data, DataProvider, MutableDataProvider } from '@diagram-craft/model/dataProvider';
+import {
+  DataSchemaField,
+  decodeDataReferences,
+  encodeDataReferences
+} from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { newid } from '@diagram-craft/utils/id';
 import { assert } from '@diagram-craft/utils/assert';
 import React, { useState } from 'react';
@@ -93,18 +97,8 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
     const initialData: Record<string, string | string[]> = {};
     schema.fields.forEach(field => {
       if (field.type === 'reference') {
-        // For reference fields, parse JSON array or initialize empty array
-        if (props.editItem) {
-          try {
-            initialData[field.id] = JSON.parse(props.editItem[field.id] ?? '[]');
-          } catch {
-            initialData[field.id] = [];
-          }
-        } else {
-          initialData[field.id] = [];
-        }
+        initialData[field.id] = decodeDataReferences(props.editItem?.[field.id]);
       } else {
-        // For text/longtext fields, use string value
         initialData[field.id] = props.editItem ? (props.editItem[field.id] ?? '') : '';
       }
     });
@@ -154,12 +148,11 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
     }
 
     try {
-      // Convert reference field arrays to JSON strings for storage
       const processedData: Record<string, string> = {};
       schema.fields.forEach(field => {
         const value = formData[field.id];
         if (field.type === 'reference') {
-          processedData[field.id] = JSON.stringify(value as string[]);
+          processedData[field.id] = encodeDataReferences(value as string[]);
         } else {
           processedData[field.id] = value as string;
         }
@@ -185,11 +178,9 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
         `Failed to ${action} item: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
       e.preventDefault(); // Prevent dialog from closing
-      // Don't close dialog on error - let user see the error and try again
     }
   };
 
-  // Handle cancel - clear form and close dialog
   const handleCancel = () => {
     setFormData({});
     setSubmitError(undefined);

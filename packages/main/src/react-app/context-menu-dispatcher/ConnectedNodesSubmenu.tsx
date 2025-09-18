@@ -10,6 +10,7 @@ import { newid } from '@diagram-craft/utils/id';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import { decodeDataReferences } from '@diagram-craft/model/diagramDocumentDataSchemas';
 
 type ConnectionItem = {
   id: string;
@@ -66,15 +67,7 @@ const getConnectedItems = (diagram: Diagram): ConnectionItem[] => {
           // Get the referenced UIDs from the data
           let referencedUIDs: string[] = [];
           if (dataEntry.data && dataEntry.data[field.id]) {
-            const fieldValue = dataEntry.data[field.id];
-            if (typeof fieldValue === 'string') {
-              try {
-                referencedUIDs = JSON.parse(fieldValue);
-              } catch {
-                // If parsing fails, skip this field
-                continue;
-              }
-            }
+            referencedUIDs = decodeDataReferences(dataEntry.data[field.id] as string);
           }
 
           // Get the referenced schema
@@ -144,13 +137,10 @@ const getConnectedItems = (diagram: Diagram): ConnectionItem[] => {
   return Array.from(connectedItems.values()).sort((a, b) => a.name.localeCompare(b.name));
 };
 
-// Helper function to create data reference for a node
 const makeDataReference = (item: Data, schemaId: string) => {
   return {
     type: 'external' as const,
-    external: {
-      uid: item._uid
-    },
+    external: { uid: item._uid },
     data: item,
     schema: schemaId,
     enabled: true
@@ -183,14 +173,8 @@ const createNodeForData = (item: Data, schemaName: string, diagram: Diagram) => 
     },
     activeLayer,
     {},
-    {
-      data: {
-        data: [makeDataReference(item, schema.id)]
-      }
-    },
-    {
-      text: `%${schema.fields[0]?.id ?? '_uid'}%`
-    }
+    { data: { data: [makeDataReference(item, schema.id)] } },
+    { text: `%${schema.fields[0]?.id ?? '_uid'}%` }
   );
 
   // Create an edge connecting the selected node to the new node
@@ -219,12 +203,10 @@ const createNodeForData = (item: Data, schemaName: string, diagram: Diagram) => 
     meta.style = diagram.document.styles.activeEdgeStylesheet.id;
   }, uow);
 
-  // Create undoable action for both elements
   diagram.undoManager.addAndExecute(
     new ElementAddUndoableAction([newNode, newEdge], diagram, activeLayer)
   );
 
-  // Select the new node
   diagram.selectionState.setElements([newNode]);
 };
 

@@ -21,6 +21,10 @@ export type DataSchemaField =
       maxCount: number;
     };
 
+export const encodeDataReferences = (refs: string[]) => refs.join(',');
+export const decodeDataReferences = (refs: string | undefined) =>
+  refs === undefined || refs.length === 0 ? [] : refs.split(',');
+
 export type DataSchema = {
   id: string;
   name: string;
