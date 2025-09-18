@@ -8,46 +8,46 @@ const meta: Meta<typeof MultiSelect> = {
   title: 'Components/MultiSelect',
   component: MultiSelect,
   parameters: {
-    layout: 'padded',
+    layout: 'padded'
   },
   decorators: [themeDecorator()],
   argTypes: {
     selectedValues: {
       control: { type: 'object' },
-      description: 'Array of currently selected item values',
+      description: 'Array of currently selected item values'
     },
     availableItems: {
       control: { type: 'object' },
-      description: 'Array of available items for selection',
+      description: 'Array of available items for selection'
     },
     onSelectionChange: {
-      description: 'Callback when selection changes',
+      description: 'Callback when selection changes'
     },
     onInputChange: {
-      description: 'Callback when input value changes',
+      description: 'Callback when input value changes'
     },
     placeholder: {
       control: { type: 'text' },
-      description: 'Placeholder text for the input',
+      description: 'Placeholder text for the input'
     },
     maxSuggestions: {
       control: { type: 'number' },
-      description: 'Maximum number of suggestions to show',
+      description: 'Maximum number of suggestions to show'
     },
     disabled: {
       control: { type: 'boolean' },
-      description: 'Whether the input is disabled',
+      description: 'Whether the input is disabled'
     },
     state: {
       control: { type: 'select' },
       options: ['set', 'unset', 'overridden'],
-      description: 'Visual state of the field',
+      description: 'Visual state of the field'
     },
     isIndeterminate: {
       control: { type: 'boolean' },
-      description: 'Whether the field is in an indeterminate state',
-    },
-  },
+      description: 'Whether the field is in an indeterminate state'
+    }
+  }
 };
 
 export default meta;
@@ -62,7 +62,7 @@ const frameworkItems: MultiSelectItem[] = [
   { value: 'nextjs', label: 'Next.js' },
   { value: 'nuxt', label: 'Nuxt.js' },
   { value: 'gatsby', label: 'Gatsby' },
-  { value: 'remix', label: 'Remix' },
+  { value: 'remix', label: 'Remix' }
 ];
 
 const languageItems: MultiSelectItem[] = [
@@ -73,7 +73,7 @@ const languageItems: MultiSelectItem[] = [
   { value: 'csharp', label: 'C#' },
   { value: 'go', label: 'Go' },
   { value: 'rust', label: 'Rust' },
-  { value: 'php', label: 'PHP' },
+  { value: 'php', label: 'PHP' }
 ];
 
 const personItems: MultiSelectItem[] = [
@@ -84,7 +84,7 @@ const personItems: MultiSelectItem[] = [
   { value: 'charlie-brown', label: 'Charlie Brown' },
   { value: 'diana-prince', label: 'Diana Prince' },
   { value: 'peter-parker', label: 'Peter Parker' },
-  { value: 'mary-watson', label: 'Mary Watson' },
+  { value: 'mary-watson', label: 'Mary Watson' }
 ];
 
 // Interactive wrapper component for stories
@@ -95,7 +95,7 @@ const MultiSelectWrapper = (args: any) => {
     <MultiSelect
       {...args}
       selectedValues={selectedValues}
-      onSelectionChange={(values) => {
+      onSelectionChange={values => {
         setSelectedValues(values);
         args.onSelectionChange?.(values);
       }}
@@ -110,8 +110,8 @@ export const Primary: Story = {
     availableItems: frameworkItems,
     placeholder: 'Select frameworks...',
     onSelectionChange: fn(),
-    onInputChange: fn(),
-  },
+    onInputChange: fn()
+  }
 };
 
 export const WithPreselectedItems: Story = {
@@ -121,30 +121,8 @@ export const WithPreselectedItems: Story = {
     availableItems: frameworkItems,
     placeholder: 'Add more frameworks...',
     onSelectionChange: fn(),
-    onInputChange: fn(),
-  },
-};
-
-export const ProgrammingLanguages: Story = {
-  render: MultiSelectWrapper,
-  args: {
-    selectedValues: ['js', 'ts'],
-    availableItems: languageItems,
-    placeholder: 'Select programming languages...',
-    onSelectionChange: fn(),
-    onInputChange: fn(),
-  },
-};
-
-export const TeamMembers: Story = {
-  render: MultiSelectWrapper,
-  args: {
-    selectedValues: ['john-doe', 'jane-smith'],
-    availableItems: personItems,
-    placeholder: 'Search team members...',
-    onSelectionChange: fn(),
-    onInputChange: fn(),
-  },
+    onInputChange: fn()
+  }
 };
 
 export const LimitedSuggestions: Story = {
@@ -155,8 +133,8 @@ export const LimitedSuggestions: Story = {
     placeholder: 'Max 3 suggestions...',
     maxSuggestions: 3,
     onSelectionChange: fn(),
-    onInputChange: fn(),
-  },
+    onInputChange: fn()
+  }
 };
 
 export const Disabled: Story = {
@@ -167,8 +145,8 @@ export const Disabled: Story = {
     disabled: true,
     placeholder: 'Disabled input...',
     onSelectionChange: fn(),
-    onInputChange: fn(),
-  },
+    onInputChange: fn()
+  }
 };
 
 export const Indeterminate: Story = {
@@ -179,8 +157,8 @@ export const Indeterminate: Story = {
     isIndeterminate: true,
     placeholder: 'Indeterminate state...',
     onSelectionChange: fn(),
-    onInputChange: fn(),
-  },
+    onInputChange: fn()
+  }
 };
 
 export const WithSetState: Story = {
@@ -190,8 +168,8 @@ export const WithSetState: Story = {
     availableItems: frameworkItems,
     state: 'set',
     onSelectionChange: fn(),
-    onInputChange: fn(),
-  },
+    onInputChange: fn()
+  }
 };
 
 export const WithUnsetState: Story = {
@@ -201,8 +179,8 @@ export const WithUnsetState: Story = {
     availableItems: frameworkItems,
     state: 'unset',
     onSelectionChange: fn(),
-    onInputChange: fn(),
-  },
+    onInputChange: fn()
+  }
 };
 
 export const WithOverriddenState: Story = {
@@ -212,8 +190,8 @@ export const WithOverriddenState: Story = {
     availableItems: frameworkItems,
     state: 'overridden',
     onSelectionChange: fn(),
-    onInputChange: fn(),
-  },
+    onInputChange: fn()
+  }
 };
 
 export const EmptyOptions: Story = {
@@ -223,8 +201,8 @@ export const EmptyOptions: Story = {
     availableItems: [],
     placeholder: 'No options available...',
     onSelectionChange: fn(),
-    onInputChange: fn(),
-  },
+    onInputChange: fn()
+  }
 };
 
 export const ManyOptions: Story = {
@@ -243,10 +221,10 @@ export const ManyOptions: Story = {
       { value: 'mongodb', label: 'MongoDB' },
       { value: 'postgresql', label: 'PostgreSQL' },
       { value: 'redis', label: 'Redis' },
-      { value: 'elasticsearch', label: 'Elasticsearch' },
+      { value: 'elasticsearch', label: 'Elasticsearch' }
     ],
     placeholder: 'Search from many options...',
     onSelectionChange: fn(),
-    onInputChange: fn(),
-  },
+    onInputChange: fn()
+  }
 };

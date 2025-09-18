@@ -1,11 +1,10 @@
 import React, { ChangeEvent, KeyboardEvent, useRef, useState, useLayoutEffect } from 'react';
-import { createPortal } from 'react-dom';
+import * as Portal from '@radix-ui/react-portal';
 import { propsUtils } from '@diagram-craft/utils/propsUtils';
 import { extractDataAttributes } from './utils';
 import styles from './TagInput.module.css';
 import { Button } from './Button';
 import { TbX } from 'react-icons/tb';
-import { usePortal } from './PortalContext';
 
 export const TagInput = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
   const [inputValue, setInputValue] = useState('');
@@ -14,7 +13,6 @@ export const TagInput = React.forwardRef<HTMLInputElement, Props>((props, ref) =
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const portal = usePortal();
 
   // Combine external ref with internal ref
   React.useImperativeHandle(ref, () => inputRef.current!);
@@ -180,11 +178,8 @@ export const TagInput = React.forwardRef<HTMLInputElement, Props>((props, ref) =
       </div>
 
       {/* Portal-based suggestions dropdown */}
-      {!props.isIndeterminate &&
-        showSuggestions &&
-        filteredSuggestions.length > 0 &&
-        portal &&
-        createPortal(
+      {!props.isIndeterminate && showSuggestions && filteredSuggestions.length > 0 && (
+        <Portal.Root>
           <div
             className={styles.cmpTagInputSuggestions}
             style={{
@@ -206,9 +201,9 @@ export const TagInput = React.forwardRef<HTMLInputElement, Props>((props, ref) =
                 {tag}
               </div>
             ))}
-          </div>,
-          portal
-        )}
+          </div>
+        </Portal.Root>
+      )}
     </>
   );
 });

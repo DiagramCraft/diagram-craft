@@ -5,7 +5,8 @@ import * as MultiSelectStories from './MultiSelect.stories';
 
 # MultiSelect
 
-A searchable multi-select component that allows users to select multiple items from a predefined list. Features tag-like selection with search and keyboard navigation capabilities.
+A searchable multi-select component that allows users to select multiple items from a predefined list. Features tag-like
+selection with search and keyboard navigation capabilities.
 
 ## Features
 
@@ -30,18 +31,23 @@ A searchable multi-select component that allows users to select multiple items f
 ### Different Data Types
 
 #### Programming Languages
+
 <Canvas of={MultiSelectStories.ProgrammingLanguages} />
 
 #### Team Members
+
 <Canvas of={MultiSelectStories.TeamMembers} />
 
 ### Limited Suggestions
+
 <Canvas of={MultiSelectStories.LimitedSuggestions} />
 
 ### Many Options
+
 <Canvas of={MultiSelectStories.ManyOptions} />
 
 ### Disabled State
+
 <Canvas of={MultiSelectStories.Disabled} />
 
 ### Field States
@@ -52,58 +58,3 @@ The component supports different visual states:
 <Canvas of={MultiSelectStories.WithUnsetState} />
 <Canvas of={MultiSelectStories.WithOverriddenState} />
 <Canvas of={MultiSelectStories.Indeterminate} />
-
-### Edge Cases
-
-#### No Options Available
-<Canvas of={MultiSelectStories.EmptyOptions} />
-
-## Keyboard Shortcuts
-
-- **Enter**: Select the highlighted suggestion
-- **Arrow Down/Up**: Navigate through suggestions
-- **Escape**: Close suggestions dropdown
-- **Backspace**: When input is empty, remove the last selected item
-- **Type to search**: Filter available options in real-time
-
-## Props
-
-<ArgTypes of={MultiSelectStories} />
-
-## Data Format
-
-The component expects an array of `MultiSelectItem` objects:
-
-```typescript
-type MultiSelectItem = {
-  value: string;  // Unique identifier
-  label: string;  // Display text
-};
-```
-
-Example:
-```typescript
-const items: MultiSelectItem[] = [
-  { value: 'react', label: 'React' },
-  { value: 'vue', label: 'Vue.js' },
-  { value: 'angular', label: 'Angular' },
-];
-```
-
-## Styling
-
-The MultiSelect component uses CSS modules and follows the same design system as other components. It supports:
-
-- CSS custom properties for theming
-- Field states (set, unset, overridden, indeterminate)
-- Focus and disabled states
-- Responsive container queries for smaller layouts
-- Portal-based suggestions with proper z-index and positioning
-
-## Common Use Cases
-
-- **Reference fields**: Selecting related items in data schemas
-- **Tag assignment**: Assigning multiple categories or labels
-- **Team selection**: Choosing team members for projects
-- **Technology stack**: Selecting frameworks, languages, or tools
-- **Filtering**: Multi-criteria filtering interfaces
