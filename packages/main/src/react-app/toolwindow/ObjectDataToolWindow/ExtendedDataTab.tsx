@@ -457,6 +457,7 @@ export const ExtendedDataTab = () => {
           setEditSchemaDialog({ open: false });
         }}
         onCancel={() => setEditSchemaDialog({ open: false })}
+        availableSchemas={$d.document.data.schemas.all}
       />
     </>
   );

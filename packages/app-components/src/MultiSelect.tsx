@@ -2,11 +2,16 @@ import React, { ChangeEvent, KeyboardEvent, useRef, useState, useLayoutEffect } 
 import * as Portal from '@radix-ui/react-portal';
 import { propsUtils } from '@diagram-craft/utils/propsUtils';
 import { extractDataAttributes } from './utils';
-import styles from './TagInput.module.css';
+import styles from './MultiSelect.module.css';
 import { Button } from './Button';
 import { TbX } from 'react-icons/tb';
 
-export const TagInput = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
+export type MultiSelectItem = {
+  value: string;
+  label: string;
+};
+
+export const MultiSelect = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
   const [inputValue, setInputValue] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedSuggestion, setSelectedSuggestion] = useState(-1);
@@ -36,25 +41,26 @@ export const TagInput = React.forwardRef<HTMLInputElement, Props>((props, ref) =
     }
   }, [showSuggestions]);
 
-  // Filter available tags based on input and exclude already selected tags
-  const filteredSuggestions = props.availableTags
+  // Filter available items based on input and exclude already selected items
+  const filteredSuggestions = props.availableItems
     .filter(
-      tag =>
-        tag.toLowerCase().includes(inputValue.toLowerCase()) && !props.selectedTags.includes(tag)
+      item =>
+        item.label.toLowerCase().includes(inputValue.toLowerCase()) &&
+        !props.selectedValues.includes(item.value)
     )
     .slice(0, props.maxSuggestions ?? 10);
 
-  const addTag = (tag: string) => {
-    if (tag.trim() && !props.selectedTags.includes(tag.trim())) {
-      props.onTagsChange([...props.selectedTags, tag.trim()]);
+  const addItem = (value: string) => {
+    if (value.trim() && !props.selectedValues.includes(value.trim())) {
+      props.onSelectionChange([...props.selectedValues, value.trim()]);
       setInputValue('');
       setShowSuggestions(false);
       setSelectedSuggestion(-1);
     }
   };
 
-  const removeTag = (tagToRemove: string) => {
-    props.onTagsChange(props.selectedTags.filter(tag => tag !== tagToRemove));
+  const removeItem = (valueToRemove: string) => {
+    props.onSelectionChange(props.selectedValues.filter(value => value !== valueToRemove));
   };
 
   const handleInputChange = (ev: ChangeEvent<HTMLInputElement>) => {
@@ -64,9 +70,11 @@ export const TagInput = React.forwardRef<HTMLInputElement, Props>((props, ref) =
     setInputValue(value);
 
     // Check if there are suggestions for the new value
-    const newFilteredSuggestions = props.availableTags
+    const newFilteredSuggestions = props.availableItems
       .filter(
-        tag => tag.toLowerCase().includes(value.toLowerCase()) && !props.selectedTags.includes(tag)
+        item =>
+          item.label.toLowerCase().includes(value.toLowerCase()) &&
+          !props.selectedValues.includes(item.value)
       )
       .slice(0, props.maxSuggestions ?? 10);
 
@@ -81,9 +89,7 @@ export const TagInput = React.forwardRef<HTMLInputElement, Props>((props, ref) =
     if (ev.key === 'Enter') {
       ev.preventDefault();
       if (selectedSuggestion >= 0 && filteredSuggestions[selectedSuggestion]) {
-        addTag(filteredSuggestions[selectedSuggestion]);
-      } else if (inputValue.trim()) {
-        addTag(inputValue.trim());
+        addItem(filteredSuggestions[selectedSuggestion].value);
       }
     } else if (ev.key === 'ArrowDown') {
       ev.preventDefault();
@@ -98,18 +104,18 @@ export const TagInput = React.forwardRef<HTMLInputElement, Props>((props, ref) =
     } else if (ev.key === 'Escape') {
       setShowSuggestions(false);
       setSelectedSuggestion(-1);
-    } else if (ev.key === 'Backspace' && inputValue === '' && props.selectedTags.length > 0) {
-      removeTag(props.selectedTags[props.selectedTags.length - 1]);
+    } else if (ev.key === 'Backspace' && inputValue === '' && props.selectedValues.length > 0) {
+      removeItem(props.selectedValues[props.selectedValues.length - 1]);
     }
   };
 
-  const handleSuggestionSelect = (tag: string) => {
-    addTag(tag);
+  const handleSuggestionSelect = (value: string) => {
+    addItem(value);
     inputRef.current?.focus();
   };
 
-  const handleSuggestionClick = (tag: string) => {
-    handleSuggestionSelect(tag);
+  const handleSuggestionClick = (value: string) => {
+    handleSuggestionSelect(value);
   };
 
   const handleInputFocus = () => {
@@ -129,24 +135,29 @@ export const TagInput = React.forwardRef<HTMLInputElement, Props>((props, ref) =
     }, 150);
   };
 
+  // Get label for selected value
+  const getItemLabel = (value: string) => {
+    return props.availableItems.find(item => item.value === value)?.label ?? value;
+  };
+
   return (
     <>
       <div
-        className={styles.cmpTagInput}
+        className={styles.cmpMultiSelect}
         {...extractDataAttributes(props)}
         data-field-state={props.isIndeterminate ? 'indeterminate' : props.state}
         style={props.style ?? {}}
       >
-        <div className={styles.cmpTagInputContainer} ref={containerRef}>
-          <div className={styles.cmpTagInputTags}>
+        <div className={styles.cmpMultiSelectContainer} ref={containerRef}>
+          <div className={styles.cmpMultiSelectTags}>
             {!props.isIndeterminate &&
-              props.selectedTags.map((tag, index) => (
-                <div key={`${tag}-${index}`} className={styles.cmpTagInputTag}>
-                  <span className={styles.cmpTagInputTagText}>{tag}</span>
+              props.selectedValues.map((value, index) => (
+                <div key={`${value}-${index}`} className={styles.cmpMultiSelectTag}>
+                  <span className={styles.cmpMultiSelectTagText}>{getItemLabel(value)}</span>
                   <Button
                     type="icon-only"
-                    className={styles.cmpTagInputTagRemove}
-                    onClick={() => removeTag(tag)}
+                    className={styles.cmpMultiSelectTagRemove}
+                    onClick={() => removeItem(value)}
                     tabIndex={-1}
                   >
                     <TbX />
@@ -162,12 +173,12 @@ export const TagInput = React.forwardRef<HTMLInputElement, Props>((props, ref) =
               placeholder={
                 props.isIndeterminate
                   ? '···'
-                  : props.selectedTags.length === 0
-                    ? (props.placeholder ?? 'Add tags...')
+                  : props.selectedValues.length === 0
+                    ? (props.placeholder ?? 'Search and select...')
                     : ''
               }
               disabled={props.disabled}
-              className={styles.cmpTagInputInput}
+              className={styles.cmpMultiSelectInput}
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
               onFocus={handleInputFocus}
@@ -181,7 +192,7 @@ export const TagInput = React.forwardRef<HTMLInputElement, Props>((props, ref) =
       {!props.isIndeterminate && showSuggestions && filteredSuggestions.length > 0 && (
         <Portal.Root>
           <div
-            className={styles.cmpTagInputSuggestions}
+            className={styles.cmpMultiSelectSuggestions}
             style={{
               position: 'absolute',
               top: dropdownPosition.top,
@@ -190,15 +201,15 @@ export const TagInput = React.forwardRef<HTMLInputElement, Props>((props, ref) =
               zIndex: 1000
             }}
           >
-            {filteredSuggestions.map((tag, index) => (
+            {filteredSuggestions.map((item, index) => (
               <div
-                key={tag}
-                className={styles.cmpTagInputSuggestion}
+                key={item.value}
+                className={styles.cmpMultiSelectSuggestion}
                 data-selected={index === selectedSuggestion}
-                onMouseDown={() => handleSuggestionClick(tag)}
+                onMouseDown={() => handleSuggestionClick(item.value)}
                 onMouseEnter={() => setSelectedSuggestion(index)}
               >
-                {tag}
+                {item.label}
               </div>
             ))}
           </div>
@@ -209,9 +220,9 @@ export const TagInput = React.forwardRef<HTMLInputElement, Props>((props, ref) =
 });
 
 type Props = {
-  selectedTags: string[];
-  availableTags: string[];
-  onTagsChange: (tags: string[]) => void;
+  selectedValues: string[];
+  availableItems: MultiSelectItem[];
+  onSelectionChange: (values: string[]) => void;
   onInputChange?: (value: string, ev: ChangeEvent<HTMLInputElement>) => void;
   maxSuggestions?: number;
   isIndeterminate?: boolean;

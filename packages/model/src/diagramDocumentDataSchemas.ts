@@ -6,11 +6,24 @@ import { deepClone } from '@diagram-craft/utils/object';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { CRDTMap, CRDTRoot } from './collaboration/crdt';
 
-type DataSchemaField = {
-  id: string;
-  name: string;
-  type: 'text' | 'longtext';
-};
+export type DataSchemaField =
+  | {
+      id: string;
+      name: string;
+      type: 'text' | 'longtext';
+    }
+  | {
+      id: string;
+      name: string;
+      type: 'reference';
+      schemaId: string;
+      minCount: number;
+      maxCount: number;
+    };
+
+export const encodeDataReferences = (refs: string[]) => refs.join(',');
+export const decodeDataReferences = (refs: string | undefined) =>
+  refs === undefined || refs.length === 0 ? [] : refs.split(',');
 
 export type DataSchema = {
   id: string;

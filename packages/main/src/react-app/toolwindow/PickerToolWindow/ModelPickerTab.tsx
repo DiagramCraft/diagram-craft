@@ -10,19 +10,19 @@ import {
   RefreshableSchemaProvider
 } from '@diagram-craft/model/dataProvider';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRedraw } from '../../hooks/useRedraw';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { newid } from '@diagram-craft/utils/id';
 import {
   TbChevronDown,
   TbChevronRight,
+  TbPencil,
   TbPlus,
   TbRefresh,
+  TbSearch,
   TbSettings,
-  TbPencil,
-  TbTrash,
-  TbSearch
+  TbTrash
 } from 'react-icons/tb';
 import { DRAG_DROP_MANAGER } from '@diagram-craft/canvas/dragDropManager';
 import { ObjectPickerDrag } from './objectPickerDrag';
@@ -130,11 +130,7 @@ const DataProviderResponse = (props: {
   const diagram = useDiagram();
   const document = diagram.document;
   const [expanded, setExpanded] = useState<string[]>([]);
-  const [dataVersion, setDataVersion] = useState<number>(0);
-
-  const schema =
-    props.dataProvider?.schemas?.find(s => s.id === props.selectedSchema) ??
-    props.dataProvider?.schemas?.[0];
+  const [, setDataVersion] = useState<number>(0);
 
   useEffect(() => {
     if (!props.dataProvider) return;
@@ -152,14 +148,15 @@ const DataProviderResponse = (props: {
     };
   }, [props.dataProvider]);
 
+  const schema =
+    props.dataProvider?.schemas?.find(s => s.id === props.selectedSchema) ??
+    props.dataProvider?.schemas?.[0];
   if (!schema) return <div>Loading...</div>;
 
-  const data = useMemo(() => {
-    return props.search.trim() !== ''
+  const data =
+    props.search.trim() !== ''
       ? props.dataProvider.queryData(schema, props.search)
       : props.dataProvider.getData(schema);
-  }, [props.dataProvider, schema, props.search, dataVersion]);
-
   const isRuleLayer = diagram.activeLayer.type === 'rule';
 
   return (
@@ -208,11 +205,13 @@ const DataProviderResponse = (props: {
                     {expanded.includes(item._uid) && (
                       <>
                         <div>
-                          {schema.fields.map(k => (
-                            <div key={k.id}>
-                              {k.name}: {item[k.id] ?? '-'}
-                            </div>
-                          ))}
+                          {schema.fields
+                            .filter(f => f.type !== 'reference')
+                            .map(k => (
+                              <div key={k.id}>
+                                {k.name}: {item[k.id] ?? '-'}
+                              </div>
+                            ))}
                         </div>
 
                         {dataTemplates.length > 0 && (
@@ -620,10 +619,7 @@ export const ModelPickerTab = () => {
             mode={'accordion'}
             headerButtons={
               'addData' in dataProvider && (
-                <a
-                  className={'cmp-button cmp-button--icon-only'}
-                  onClick={() => setAddItemDialog(true)}
-                >
+                <a className={'cmp-button--icon-only'} onClick={() => setAddItemDialog(true)}>
                   <TbPlus />
                 </a>
               )
@@ -662,6 +658,7 @@ export const ModelPickerTab = () => {
         open={addSchemaDialog}
         onOk={handleAddSchema}
         onCancel={() => setAddSchemaDialog(false)}
+        availableSchemas={dataProvider?.schemas ?? []}
       />
       <EditSchemaDialog
         title="Edit Schema"
@@ -669,6 +666,7 @@ export const ModelPickerTab = () => {
         onOk={handleUpdateSchema}
         onCancel={() => setEditSchemaDialog({ open: false })}
         schema={editSchemaDialog.schema}
+        availableSchemas={dataProvider?.schemas ?? []}
       />
     </ToolWindow.TabContent>
   );

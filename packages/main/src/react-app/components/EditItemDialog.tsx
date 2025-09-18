@@ -1,10 +1,72 @@
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
-import { DataProvider, MutableDataProvider, Data } from '@diagram-craft/model/dataProvider';
+import { MultiSelect, MultiSelectItem } from '@diagram-craft/app-components/MultiSelect';
+import { Data, DataProvider, MutableDataProvider } from '@diagram-craft/model/dataProvider';
+import {
+  DataSchemaField,
+  decodeDataReferences,
+  encodeDataReferences
+} from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { newid } from '@diagram-craft/utils/id';
 import { assert } from '@diagram-craft/utils/assert';
 import React, { useState } from 'react';
+
+type ReferenceFieldEditorProps = {
+  field: DataSchemaField & { type: 'reference' };
+  dataProvider: DataProvider;
+  selectedValues: string[];
+  onSelectionChange: (values: string[]) => void;
+};
+
+const ReferenceFieldEditor = ({
+  field,
+  dataProvider,
+  selectedValues,
+  onSelectionChange
+}: ReferenceFieldEditorProps) => {
+  const referencedSchema = dataProvider.schemas?.find(s => s.id === field.schemaId);
+  if (!referencedSchema) {
+    return <div>Referenced schema not found</div>;
+  }
+
+  const referencedData = dataProvider.getData(referencedSchema);
+  const displayField = referencedSchema.fields[0]?.id; // Use first field for display
+
+  // Convert data to MultiSelectItem format
+  const availableItems: MultiSelectItem[] =
+    referencedData?.map(item => {
+      const fieldValue = item[displayField];
+      let label: string = item._uid; // Default fallback
+
+      if (typeof fieldValue === 'string' && fieldValue) {
+        label = fieldValue;
+      }
+
+      return {
+        value: item._uid,
+        label: label
+      };
+    }) || [];
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+      <MultiSelect
+        selectedValues={selectedValues}
+        availableItems={availableItems}
+        onSelectionChange={onSelectionChange}
+        placeholder={`Search ${referencedSchema.name}...`}
+      />
+
+      {/* Info about constraints */}
+      <div style={{ fontSize: '0.8em', color: 'var(--cmp-fg-dim)' }}>
+        {field.minCount > 0 && `Minimum ${field.minCount} required. `}
+        {field.maxCount < Number.MAX_SAFE_INTEGER && `Maximum ${field.maxCount} allowed.`}
+        {selectedValues.length > 0 && ` (${selectedValues.length} selected)`}
+      </div>
+    </div>
+  );
+};
 
 type EditItemDialogProps = {
   open: boolean;
@@ -15,7 +77,7 @@ type EditItemDialogProps = {
 };
 
 export const EditItemDialog = (props: EditItemDialogProps) => {
-  const [formData, setFormData] = useState<Record<string, string>>({});
+  const [formData, setFormData] = useState<Record<string, string | string[]>>({});
   const [submitError, setSubmitError] = useState<string | undefined>();
 
   if (!props.dataProvider) return <div></div>;
@@ -27,14 +89,18 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
     props.dataProvider.schemas?.find(s => s.id === props.selectedSchema) ??
     props.dataProvider.schemas?.[0];
 
+  if (!schema) return <div></div>;
   assert.present(schema);
 
   // Reset form when dialog opens
   const handleOpen = () => {
-    const initialData: Record<string, string> = {};
+    const initialData: Record<string, string | string[]> = {};
     schema.fields.forEach(field => {
-      // If editing an existing item, populate with existing data
-      initialData[field.id] = props.editItem ? (props.editItem[field.id] ?? '') : '';
+      if (field.type === 'reference') {
+        initialData[field.id] = decodeDataReferences(props.editItem?.[field.id]);
+      } else {
+        initialData[field.id] = props.editItem ? (props.editItem[field.id] ?? '') : '';
+      }
     });
     setFormData(initialData);
     setSubmitError(undefined);
@@ -44,22 +110,56 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
   const handleSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
     const isEditing = !!props.editItem;
     const requiredMethod = isEditing ? 'updateData' : 'addData';
-    
+
     if (!(requiredMethod in dataProvider)) return;
 
     setSubmitError(undefined);
 
     // Validate required fields
-    const missingFields = schema.fields.filter(field => !formData[field.id]?.trim());
+    const missingFields = schema.fields.filter(field => {
+      const value = formData[field.id];
+      if (field.type === 'reference') {
+        const refs = value as string[];
+        return refs.length < field.minCount;
+      } else {
+        return !(value as string)?.trim();
+      }
+    });
     if (missingFields.length > 0) {
       setSubmitError(`Please fill in: ${missingFields.map(f => f.name).join(', ')}`);
       e.preventDefault(); // Prevent dialog from closing
       return;
     }
 
+    // Validate reference field constraints
+    const invalidReferenceFields = schema.fields.filter(field => {
+      if (field.type === 'reference') {
+        const refs = formData[field.id] as string[];
+        return refs.length > field.maxCount;
+      }
+      return false;
+    });
+    if (invalidReferenceFields.length > 0) {
+      setSubmitError(
+        `Too many references in: ${invalidReferenceFields.map(f => f.name).join(', ')}`
+      );
+      e.preventDefault();
+      return;
+    }
+
     try {
+      const processedData: Record<string, string> = {};
+      schema.fields.forEach(field => {
+        const value = formData[field.id];
+        if (field.type === 'reference') {
+          processedData[field.id] = encodeDataReferences(value as string[]);
+        } else {
+          processedData[field.id] = value as string;
+        }
+      });
+
       const itemData: Data = {
-        ...formData,
+        ...processedData,
         _uid: isEditing ? props.editItem!._uid : newid()
       };
 
@@ -78,11 +178,9 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
         `Failed to ${action} item: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
       e.preventDefault(); // Prevent dialog from closing
-      // Don't close dialog on error - let user see the error and try again
     }
   };
 
-  // Handle cancel - clear form and close dialog
   const handleCancel = () => {
     setFormData({});
     setSubmitError(undefined);
@@ -98,7 +196,7 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
 
   return (
     <Dialog
-      title={isEditing ? "Edit Item" : "Add Item"}
+      title={isEditing ? 'Edit Item' : 'Add Item'}
       open={props.open}
       onClose={handleCancel}
       buttons={[
@@ -130,9 +228,16 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
         {schema.fields.map(field => (
           <div key={field.id} className={'util-vstack'} style={{ gap: '0.2rem' }}>
             <label>{field.name}:</label>
-            {field.type === 'longtext' ? (
+            {field.type === 'reference' ? (
+              <ReferenceFieldEditor
+                field={field}
+                dataProvider={dataProvider}
+                selectedValues={(formData[field.id] as string[]) || []}
+                onSelectionChange={values => setFormData(prev => ({ ...prev, [field.id]: values }))}
+              />
+            ) : field.type === 'longtext' ? (
               <TextArea
-                value={formData[field.id] ?? ''}
+                value={(formData[field.id] as string) ?? ''}
                 onChange={v => setFormData(prev => ({ ...prev, [field.id]: v ?? '' }))}
                 style={{
                   minHeight: '5rem'
@@ -140,7 +245,7 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
               />
             ) : (
               <TextInput
-                value={formData[field.id] ?? ''}
+                value={(formData[field.id] as string) ?? ''}
                 onChange={v => setFormData(prev => ({ ...prev, [field.id]: v ?? '' }))}
               />
             )}

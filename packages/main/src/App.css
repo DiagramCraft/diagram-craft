@@ -866,8 +866,6 @@ foreignObject {
 }
 
 .cmp-query-response {
-  margin-top: -10px;
-
   pre {
     margin: 0;
   }
