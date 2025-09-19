@@ -1,5 +1,4 @@
-import React, { ChangeEvent, KeyboardEvent, useRef, useState, useLayoutEffect } from 'react';
-import * as Portal from '@radix-ui/react-portal';
+import React, { ChangeEvent, KeyboardEvent, useRef, useState } from 'react';
 import { propsUtils } from '@diagram-craft/utils/propsUtils';
 import { extractDataAttributes } from './utils';
 import styles from './MultiSelect.module.css';
@@ -11,35 +10,12 @@ export type MultiSelectItem = {
   label: string;
 };
 
-export const MultiSelect = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
+export const MultiSelect = (props: Props) => {
   const [inputValue, setInputValue] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedSuggestion, setSelectedSuggestion] = useState(-1);
-  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  // Combine external ref with internal ref
-  React.useImperativeHandle(ref, () => inputRef.current!);
-
-  // Update dropdown position based on input container position
-  const updateDropdownPosition = () => {
-    if (containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      setDropdownPosition({
-        top: rect.bottom + window.scrollY,
-        left: rect.left + window.scrollX,
-        width: rect.width
-      });
-    }
-  };
-
-  // Update position when suggestions are shown
-  useLayoutEffect(() => {
-    if (showSuggestions) {
-      updateDropdownPosition();
-    }
-  }, [showSuggestions]);
 
   // Filter available items based on input and exclude already selected items
   const filteredSuggestions = props.availableItems
@@ -78,7 +54,9 @@ export const MultiSelect = React.forwardRef<HTMLInputElement, Props>((props, ref
       )
       .slice(0, props.maxSuggestions ?? 10);
 
-    setShowSuggestions(value.length > 0 && newFilteredSuggestions.length > 0);
+    setShowSuggestions(
+      value.length > 0 && (newFilteredSuggestions.length > 0 || !!props.allowCustomValues)
+    );
     setSelectedSuggestion(-1);
     props.onInputChange?.(value, ev);
   };
@@ -88,17 +66,32 @@ export const MultiSelect = React.forwardRef<HTMLInputElement, Props>((props, ref
 
     if (ev.key === 'Enter') {
       ev.preventDefault();
-      if (selectedSuggestion >= 0 && filteredSuggestions[selectedSuggestion]) {
+      if (selectedSuggestion >= 0 && selectedSuggestion < filteredSuggestions.length) {
         addItem(filteredSuggestions[selectedSuggestion].value);
+      } else if (
+        selectedSuggestion === filteredSuggestions.length &&
+        !!props.allowCustomValues &&
+        inputValue.trim()
+      ) {
+        addItem(inputValue.trim());
+      } else if (!!props.allowCustomValues && inputValue.trim() && selectedSuggestion === -1) {
+        addItem(inputValue.trim());
       }
     } else if (ev.key === 'ArrowDown') {
       ev.preventDefault();
-      if (showSuggestions && filteredSuggestions.length > 0) {
-        setSelectedSuggestion(Math.min(selectedSuggestion + 1, filteredSuggestions.length - 1));
+      if (showSuggestions) {
+        const maxIndex =
+          filteredSuggestions.length +
+          (!!props.allowCustomValues &&
+          inputValue.trim() &&
+          !filteredSuggestions.some(item => item.value === inputValue.trim())
+            ? 0
+            : -1);
+        setSelectedSuggestion(Math.min(selectedSuggestion + 1, maxIndex));
       }
     } else if (ev.key === 'ArrowUp') {
       ev.preventDefault();
-      if (showSuggestions && filteredSuggestions.length > 0) {
+      if (showSuggestions) {
         setSelectedSuggestion(Math.max(selectedSuggestion - 1, -1));
       }
     } else if (ev.key === 'Escape') {
@@ -121,8 +114,8 @@ export const MultiSelect = React.forwardRef<HTMLInputElement, Props>((props, ref
   const handleInputFocus = () => {
     if (props.isIndeterminate) return;
 
-    // Only show suggestions if there's input text and matching suggestions
-    if (inputValue.length > 0 && filteredSuggestions.length > 0) {
+    // Only show suggestions if there's input text and matching suggestions or custom values allowed
+    if (inputValue.length > 0 && (filteredSuggestions.length > 0 || !!props.allowCustomValues)) {
       setShowSuggestions(true);
     }
   };
@@ -132,7 +125,7 @@ export const MultiSelect = React.forwardRef<HTMLInputElement, Props>((props, ref
     setTimeout(() => {
       setShowSuggestions(false);
       setSelectedSuggestion(-1);
-    }, 150);
+    }, 200);
   };
 
   // Get label for selected value
@@ -185,39 +178,31 @@ export const MultiSelect = React.forwardRef<HTMLInputElement, Props>((props, ref
               onBlur={handleInputBlur}
             />
           </div>
+
+          {/* Suggestions dropdown */}
+          {!props.isIndeterminate &&
+            showSuggestions &&
+            (filteredSuggestions.length > 0 ||
+              (!!props.allowCustomValues && inputValue.trim())) && (
+              <div className={styles.cmpMultiSelectSuggestions}>
+                {filteredSuggestions.map((item, index) => (
+                  <div
+                    key={item.value}
+                    className={styles.cmpMultiSelectSuggestion}
+                    data-selected={index === selectedSuggestion}
+                    onClick={() => handleSuggestionClick(item.value)}
+                    onMouseEnter={() => setSelectedSuggestion(index)}
+                  >
+                    {item.label}
+                  </div>
+                ))}
+              </div>
+            )}
         </div>
       </div>
-
-      {/* Portal-based suggestions dropdown */}
-      {!props.isIndeterminate && showSuggestions && filteredSuggestions.length > 0 && (
-        <Portal.Root>
-          <div
-            className={styles.cmpMultiSelectSuggestions}
-            style={{
-              position: 'absolute',
-              top: dropdownPosition.top,
-              left: dropdownPosition.left,
-              width: dropdownPosition.width,
-              zIndex: 1000
-            }}
-          >
-            {filteredSuggestions.map((item, index) => (
-              <div
-                key={item.value}
-                className={styles.cmpMultiSelectSuggestion}
-                data-selected={index === selectedSuggestion}
-                onMouseDown={() => handleSuggestionClick(item.value)}
-                onMouseEnter={() => setSelectedSuggestion(index)}
-              >
-                {item.label}
-              </div>
-            ))}
-          </div>
-        </Portal.Root>
-      )}
     </>
   );
-});
+};
 
 type Props = {
   selectedValues: string[];
@@ -225,6 +210,7 @@ type Props = {
   onSelectionChange: (values: string[]) => void;
   onInputChange?: (value: string, ev: ChangeEvent<HTMLInputElement>) => void;
   maxSuggestions?: number;
+  allowCustomValues?: boolean;
   isIndeterminate?: boolean;
   state?: 'set' | 'unset' | 'overridden';
 } & Omit<

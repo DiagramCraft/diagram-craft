@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
-import { TagInput } from '@diagram-craft/app-components/TagInput';
+import { MultiSelect } from '@diagram-craft/app-components/MultiSelect';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { useElementMetadata } from '../../hooks/useProperty';
 import { useDiagram } from '../../../application';
@@ -28,7 +28,7 @@ export const ObjectNamePanel = ({ mode }: ObjectNamePanelProps) => {
       )
     );
 
-  const availableTags = [...$d.document.tags.tags];
+  const availableTags = [...$d.document.tags.tags].map(tag => ({ value: tag, label: tag }));
 
   const handleTagsChange = useCallback(
     (newTags: string[]) => {
@@ -53,10 +53,11 @@ export const ObjectNamePanel = ({ mode }: ObjectNamePanelProps) => {
         </div>
         <div className={'cmp-labeled-table__label util-a-top-center'}>Tags:</div>
         <div className={'cmp-labeled-table__value'}>
-          <TagInput
-            selectedTags={selectedTags}
-            availableTags={availableTags}
-            onTagsChange={handleTagsChange}
+          <MultiSelect
+            selectedValues={selectedTags}
+            availableItems={availableTags}
+            onSelectionChange={handleTagsChange}
+            allowCustomValues={true}
             isIndeterminate={isIndeterminate}
             placeholder="Add tags..."
           />

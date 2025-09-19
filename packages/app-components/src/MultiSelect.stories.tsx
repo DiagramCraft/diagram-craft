@@ -34,6 +34,10 @@ const meta: Meta<typeof MultiSelect> = {
       control: { type: 'number' },
       description: 'Maximum number of suggestions to show'
     },
+    allowCustomValues: {
+      control: { type: 'boolean' },
+      description: 'Whether users can add custom values not in the available items'
+    },
     disabled: {
       control: { type: 'boolean' },
       description: 'Whether the input is disabled'
@@ -224,6 +228,65 @@ export const ManyOptions: Story = {
       { value: 'elasticsearch', label: 'Elasticsearch' }
     ],
     placeholder: 'Search from many options...',
+    onSelectionChange: fn(),
+    onInputChange: fn()
+  }
+};
+
+// Tag Input style stories (using MultiSelectItem format with allowCustomValues)
+export const TagInputStyle: Story = {
+  render: MultiSelectWrapper,
+  args: {
+    selectedValues: [],
+    availableItems: [
+      { value: 'React', label: 'React' },
+      { value: 'TypeScript', label: 'TypeScript' },
+      { value: 'JavaScript', label: 'JavaScript' },
+      { value: 'CSS', label: 'CSS' },
+      { value: 'HTML', label: 'HTML' },
+      { value: 'Node.js', label: 'Node.js' },
+      { value: 'Express', label: 'Express' },
+      { value: 'MongoDB', label: 'MongoDB' },
+      { value: 'PostgreSQL', label: 'PostgreSQL' },
+      { value: 'GraphQL', label: 'GraphQL' }
+    ],
+    allowCustomValues: true,
+    placeholder: 'Add tags...',
+    onSelectionChange: fn(),
+    onInputChange: fn()
+  }
+};
+
+export const TagInputWithPreselected: Story = {
+  render: MultiSelectWrapper,
+  args: {
+    selectedValues: ['React', 'TypeScript', 'CSS'],
+    availableItems: [
+      { value: 'React', label: 'React' },
+      { value: 'TypeScript', label: 'TypeScript' },
+      { value: 'JavaScript', label: 'JavaScript' },
+      { value: 'CSS', label: 'CSS' },
+      { value: 'HTML', label: 'HTML' },
+      { value: 'Node.js', label: 'Node.js' },
+      { value: 'Express', label: 'Express' },
+      { value: 'MongoDB', label: 'MongoDB' },
+      { value: 'PostgreSQL', label: 'PostgreSQL' },
+      { value: 'GraphQL', label: 'GraphQL' }
+    ],
+    allowCustomValues: true,
+    placeholder: 'Add more tags...',
+    onSelectionChange: fn(),
+    onInputChange: fn()
+  }
+};
+
+export const TagInputCustomOnly: Story = {
+  render: MultiSelectWrapper,
+  args: {
+    selectedValues: [],
+    availableItems: [],
+    allowCustomValues: true,
+    placeholder: 'Type and press Enter to add tags...',
     onSelectionChange: fn(),
     onInputChange: fn()
   }

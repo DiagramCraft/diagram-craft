@@ -18,7 +18,7 @@ import { HideAction } from './HideAction';
 import { RuleEditorDialogProps } from '@diagram-craft/canvas-app/dialogs';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
-import { TagInput } from '@diagram-craft/app-components/TagInput';
+import { MultiSelect } from '@diagram-craft/app-components/MultiSelect';
 import { useDiagram } from '../../../application';
 import styles from './RuleEditorDialog.module.css';
 
@@ -139,15 +139,16 @@ const ClauseList = (props: ClauseListProps) => {
                 </div>
               )}
               {c.type === 'tags' && (
-                <TagInput
-                  selectedTags={c.tags || []}
-                  availableTags={[...diagram.document.tags.tags]}
-                  onTagsChange={newTags => {
+                <MultiSelect
+                  selectedValues={c.tags || []}
+                  availableItems={[...diagram.document.tags.tags].map(tag => ({ value: tag, label: tag }))}
+                  onSelectionChange={newTags => {
                     const newClauses = [...props.clauses];
                     // @ts-ignore
                     newClauses[idx].tags = newTags;
                     props.onChange(newClauses);
                   }}
+                  allowCustomValues={true}
                   placeholder="Select tags..."
                 />
               )}

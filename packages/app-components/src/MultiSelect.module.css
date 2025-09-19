@@ -107,36 +107,40 @@
 
 .cmp-multi-select__suggestions {
   position: absolute;
-  top: 100%;
-  left: -5px;
+  top: calc(100% + 2px);
+  left: -8px;
   right: 0;
-  width: 200px;
+  width: 150px;
   margin-top: 2px;
   background-color: var(--cmp-bg);
-  border: 1px solid var(--cmp-border);
-  border-radius: var(--cmp-radius);
+  border-radius: 6px;
   box-shadow: var(--popover-shadow);
   z-index: 1000;
   max-height: 200px;
-  overflow-y: auto;
+  overflow: hidden;
+  padding: 5px;
 }
 
 .cmp-multi-select__suggestion {
-  padding: 4px 8px;
   font-size: 11px;
+  line-height: 1;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  height: 25px;
+  padding: 0 5px 0 5px;
+  position: relative;
+  user-select: none;
   cursor: pointer;
   color: var(--cmp-fg);
-  border-bottom: 1px solid var(--cmp-border);
   outline: none;
 
-  &:last-child {
-    border-bottom: none;
+  &:hover {
+    background-color: var(--cmp-bg-hover);
   }
 
-  &:hover,
   &[data-selected="true"] {
-    background-color: var(--highlight-reverse-bg);
-    color: var(--highlight-reverse-fg);
+    background-color: var(--accent-bg-selected);
   }
 }
 
