@@ -1,5 +1,4 @@
-import React, { ChangeEvent, KeyboardEvent, useRef, useState, useLayoutEffect } from 'react';
-import * as Portal from '@radix-ui/react-portal';
+import React, { ChangeEvent, KeyboardEvent, useRef, useState } from 'react';
 import { propsUtils } from '@diagram-craft/utils/propsUtils';
 import { extractDataAttributes } from './utils';
 import styles from './MultiSelect.module.css';
@@ -15,28 +14,8 @@ export const MultiSelect = (props: Props) => {
   const [inputValue, setInputValue] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedSuggestion, setSelectedSuggestion] = useState(-1);
-  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  // Update dropdown position based on input container position
-  const updateDropdownPosition = () => {
-    if (containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      setDropdownPosition({
-        top: rect.bottom + window.scrollY,
-        left: rect.left + window.scrollX,
-        width: rect.width
-      });
-    }
-  };
-
-  // Update position when suggestions are shown
-  useLayoutEffect(() => {
-    if (showSuggestions) {
-      updateDropdownPosition();
-    }
-  }, [showSuggestions]);
 
   // Filter available items based on input and exclude already selected items
   const filteredSuggestions = props.availableItems
@@ -199,38 +178,28 @@ export const MultiSelect = (props: Props) => {
               onBlur={handleInputBlur}
             />
           </div>
+
+          {/* Suggestions dropdown */}
+          {!props.isIndeterminate &&
+            showSuggestions &&
+            (filteredSuggestions.length > 0 ||
+              (!!props.allowCustomValues && inputValue.trim())) && (
+              <div className={styles.cmpMultiSelectSuggestions}>
+                {filteredSuggestions.map((item, index) => (
+                  <div
+                    key={item.value}
+                    className={styles.cmpMultiSelectSuggestion}
+                    data-selected={index === selectedSuggestion}
+                    onClick={() => handleSuggestionClick(item.value)}
+                    onMouseEnter={() => setSelectedSuggestion(index)}
+                  >
+                    {item.label}
+                  </div>
+                ))}
+              </div>
+            )}
         </div>
       </div>
-
-      {/* Portal-based suggestions dropdown */}
-      {!props.isIndeterminate &&
-        showSuggestions &&
-        (filteredSuggestions.length > 0 || (!!props.allowCustomValues && inputValue.trim())) && (
-          <Portal.Root>
-            <div
-              className={styles.cmpMultiSelectSuggestions}
-              style={{
-                position: 'absolute',
-                top: dropdownPosition.top,
-                left: dropdownPosition.left,
-                width: dropdownPosition.width,
-                zIndex: 1000
-              }}
-            >
-              {filteredSuggestions.map((item, index) => (
-                <div
-                  key={item.value}
-                  className={styles.cmpMultiSelectSuggestion}
-                  data-selected={index === selectedSuggestion}
-                  onClick={() => handleSuggestionClick(item.value)}
-                  onMouseEnter={() => setSelectedSuggestion(index)}
-                >
-                  {item.label}
-                </div>
-              ))}
-            </div>
-          </Portal.Root>
-        )}
     </>
   );
 };
