@@ -11,17 +11,13 @@ export type MultiSelectItem = {
   label: string;
 };
 
-
-export const MultiSelect = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
+export const MultiSelect = (props: Props) => {
   const [inputValue, setInputValue] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedSuggestion, setSelectedSuggestion] = useState(-1);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  // Combine external ref with internal ref
-  React.useImperativeHandle(ref, () => inputRef.current!);
 
   // Update dropdown position based on input container position
   const updateDropdownPosition = () => {
@@ -79,7 +75,9 @@ export const MultiSelect = React.forwardRef<HTMLInputElement, Props>((props, ref
       )
       .slice(0, props.maxSuggestions ?? 10);
 
-    setShowSuggestions(value.length > 0 && (newFilteredSuggestions.length > 0 || !!props.allowCustomValues));
+    setShowSuggestions(
+      value.length > 0 && (newFilteredSuggestions.length > 0 || !!props.allowCustomValues)
+    );
     setSelectedSuggestion(-1);
     props.onInputChange?.(value, ev);
   };
@@ -91,7 +89,11 @@ export const MultiSelect = React.forwardRef<HTMLInputElement, Props>((props, ref
       ev.preventDefault();
       if (selectedSuggestion >= 0 && selectedSuggestion < filteredSuggestions.length) {
         addItem(filteredSuggestions[selectedSuggestion].value);
-      } else if (selectedSuggestion === filteredSuggestions.length && !!props.allowCustomValues && inputValue.trim()) {
+      } else if (
+        selectedSuggestion === filteredSuggestions.length &&
+        !!props.allowCustomValues &&
+        inputValue.trim()
+      ) {
         addItem(inputValue.trim());
       } else if (!!props.allowCustomValues && inputValue.trim() && selectedSuggestion === -1) {
         addItem(inputValue.trim());
@@ -99,7 +101,13 @@ export const MultiSelect = React.forwardRef<HTMLInputElement, Props>((props, ref
     } else if (ev.key === 'ArrowDown') {
       ev.preventDefault();
       if (showSuggestions) {
-        const maxIndex = filteredSuggestions.length + (!!props.allowCustomValues && inputValue.trim() && !filteredSuggestions.some(item => item.value === inputValue.trim()) ? 0 : -1);
+        const maxIndex =
+          filteredSuggestions.length +
+          (!!props.allowCustomValues &&
+          inputValue.trim() &&
+          !filteredSuggestions.some(item => item.value === inputValue.trim())
+            ? 0
+            : -1);
         setSelectedSuggestion(Math.min(selectedSuggestion + 1, maxIndex));
       }
     } else if (ev.key === 'ArrowUp') {
@@ -195,45 +203,49 @@ export const MultiSelect = React.forwardRef<HTMLInputElement, Props>((props, ref
       </div>
 
       {/* Portal-based suggestions dropdown */}
-      {!props.isIndeterminate && showSuggestions && (filteredSuggestions.length > 0 || (!!props.allowCustomValues && inputValue.trim())) && (
-        <Portal.Root>
-          <div
-            className={styles.cmpMultiSelectSuggestions}
-            style={{
-              position: 'absolute',
-              top: dropdownPosition.top,
-              left: dropdownPosition.left,
-              width: dropdownPosition.width,
-              zIndex: 1000
-            }}
-          >
-            {filteredSuggestions.map((item, index) => (
-              <div
-                key={item.value}
-                className={styles.cmpMultiSelectSuggestion}
-                data-selected={index === selectedSuggestion}
-                onMouseDown={() => handleSuggestionClick(item.value)}
-                onMouseEnter={() => setSelectedSuggestion(index)}
-              >
-                {item.label}
-              </div>
-            ))}
-            {!!props.allowCustomValues && inputValue.trim() && !filteredSuggestions.some(item => item.value === inputValue.trim()) && (
-              <div
-                className={styles.cmpMultiSelectSuggestion}
-                data-selected={selectedSuggestion === filteredSuggestions.length}
-                onMouseDown={() => handleSuggestionClick(inputValue.trim())}
-                onMouseEnter={() => setSelectedSuggestion(filteredSuggestions.length)}
-              >
-                Add "{inputValue.trim()}"
-              </div>
-            )}
-          </div>
-        </Portal.Root>
-      )}
+      {!props.isIndeterminate &&
+        showSuggestions &&
+        (filteredSuggestions.length > 0 || (!!props.allowCustomValues && inputValue.trim())) && (
+          <Portal.Root>
+            <div
+              className={styles.cmpMultiSelectSuggestions}
+              style={{
+                position: 'absolute',
+                top: dropdownPosition.top,
+                left: dropdownPosition.left,
+                width: dropdownPosition.width,
+                zIndex: 1000
+              }}
+            >
+              {filteredSuggestions.map((item, index) => (
+                <div
+                  key={item.value}
+                  className={styles.cmpMultiSelectSuggestion}
+                  data-selected={index === selectedSuggestion}
+                  onMouseDown={() => handleSuggestionClick(item.value)}
+                  onMouseEnter={() => setSelectedSuggestion(index)}
+                >
+                  {item.label}
+                </div>
+              ))}
+              {!!props.allowCustomValues &&
+                inputValue.trim() &&
+                !filteredSuggestions.some(item => item.value === inputValue.trim()) && (
+                  <div
+                    className={styles.cmpMultiSelectSuggestion}
+                    data-selected={selectedSuggestion === filteredSuggestions.length}
+                    onMouseDown={() => handleSuggestionClick(inputValue.trim())}
+                    onMouseEnter={() => setSelectedSuggestion(filteredSuggestions.length)}
+                  >
+                    Add "{inputValue.trim()}"
+                  </div>
+                )}
+            </div>
+          </Portal.Root>
+        )}
     </>
   );
-});
+};
 
 type Props = {
   selectedValues: string[];
