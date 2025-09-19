@@ -146,7 +146,7 @@ export const MultiSelect = (props: Props) => {
     setTimeout(() => {
       setShowSuggestions(false);
       setSelectedSuggestion(-1);
-    }, 150);
+    }, 200);
   };
 
   // Get label for selected value
@@ -222,24 +222,12 @@ export const MultiSelect = (props: Props) => {
                   key={item.value}
                   className={styles.cmpMultiSelectSuggestion}
                   data-selected={index === selectedSuggestion}
-                  onMouseDown={() => handleSuggestionClick(item.value)}
+                  onClick={() => handleSuggestionClick(item.value)}
                   onMouseEnter={() => setSelectedSuggestion(index)}
                 >
                   {item.label}
                 </div>
               ))}
-              {!!props.allowCustomValues &&
-                inputValue.trim() &&
-                !filteredSuggestions.some(item => item.value === inputValue.trim()) && (
-                  <div
-                    className={styles.cmpMultiSelectSuggestion}
-                    data-selected={selectedSuggestion === filteredSuggestions.length}
-                    onMouseDown={() => handleSuggestionClick(inputValue.trim())}
-                    onMouseEnter={() => setSelectedSuggestion(filteredSuggestions.length)}
-                  >
-                    Add "{inputValue.trim()}"
-                  </div>
-                )}
             </div>
           </Portal.Root>
         )}
