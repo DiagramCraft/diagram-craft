@@ -465,6 +465,18 @@ input[type="checkbox"][data-field-state='overridden'] {
   }
 }
 
+#left + .cmp-sidebar-bottom-toolbar {
+  position: absolute;
+  left: 0;
+  bottom: 5px;
+  width: 39px;
+  display: flex;
+
+  > div {
+    padding-bottom: 3px !important;
+  }
+}
+
 #canvas-area {
   grid-area: canvas-area;
   position: relative;
