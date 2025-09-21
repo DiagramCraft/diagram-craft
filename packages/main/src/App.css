@@ -658,10 +658,17 @@ foreignObject {
 }
 
 .cmp-layer-list {
+  grid-template-columns: 1fr max-content !important;
+  max-width: 100% !important;
+  width: 100% !important;
+
+  .cmp-tree__node__label__text {
+    white-space: initial !important;
+  }
+
+
   .cmp-tree__node {
     position: relative;
-
-    grid-template-columns: 1fr min-content min-content;
 
     &:hover {
       color: var(--accent-fg-hover) !important;
