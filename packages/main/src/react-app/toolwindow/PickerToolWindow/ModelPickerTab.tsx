@@ -25,7 +25,6 @@ import { DRAG_DROP_MANAGER } from '@diagram-craft/canvas/dragDropManager';
 import { ObjectPickerDrag } from './objectPickerDrag';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { assert } from '@diagram-craft/utils/assert';
-import { ModelCenterDialogCommand } from '@diagram-craft/canvas-app/dialogs';
 import { Button } from '@diagram-craft/app-components/Button';
 import { PickerCanvas } from '../../PickerCanvas';
 import { DataTemplate } from '@diagram-craft/model/diagramDocument';
@@ -42,6 +41,7 @@ import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { EditItemDialog } from '../../components/EditItemDialog';
 import { ToolWindow } from '../ToolWindow';
 import { ToolWindowPanel } from '../ToolWindowPanel';
+import { ModelCenterDialogCommand } from '../../components/ModelCenterDialog/ModelCenterDialog';
 
 const NODE_CACHE = new Map<string, DiagramNode>();
 
