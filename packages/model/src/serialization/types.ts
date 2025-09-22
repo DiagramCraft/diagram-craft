@@ -61,8 +61,10 @@ export interface SerializedDiagramDocument {
     };
   };
   data?: {
-    providerId?: string;
-    data?: string;
+    providers?: Array<{
+      providerId: string;
+      data: string;
+    }>;
     templates: DataTemplate[];
   };
   hash?: string;

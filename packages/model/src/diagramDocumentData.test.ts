@@ -24,14 +24,14 @@ describe.each(Backends.all())('DiagramDocumentData [%s]', (_name, backend) => {
         `{ "dataUrl": "${dataUrl}", "schemaUrl": "${schemaUrl}" }`,
         false
       );
-      docData1.setProvider(provider);
+      docData1.setProviders([provider]);
 
       // Verify
-      expect((docData1.provider as UrlDataProvider).dataUrl).toBe(dataUrl);
-      expect((docData1.provider as UrlDataProvider).schemaUrl).toBe(schemaUrl);
+      expect((docData1.providers[0] as UrlDataProvider).dataUrl).toBe(dataUrl);
+      expect((docData1.providers[0] as UrlDataProvider).schemaUrl).toBe(schemaUrl);
       if (docData2) {
-        expect((docData2.provider as UrlDataProvider).dataUrl).toBe(dataUrl);
-        expect((docData2.provider as UrlDataProvider).schemaUrl).toBe(schemaUrl);
+        expect((docData2.providers[0] as UrlDataProvider).dataUrl).toBe(dataUrl);
+        expect((docData2.providers[0] as UrlDataProvider).schemaUrl).toBe(schemaUrl);
       }
     });
 
@@ -46,14 +46,14 @@ describe.each(Backends.all())('DiagramDocumentData [%s]', (_name, backend) => {
 
       const provider = new DefaultDataProvider('{}');
 
-      docData1.setProvider(provider);
+      docData1.setProviders([provider]);
 
       // Acti
-      docData1.setProvider(undefined);
+      docData1.setProviders([]);
 
       // Verify
-      expect(docData1.provider).toBeUndefined();
-      if (docData2) expect(docData2.provider).toBeUndefined();
+      expect(docData1.providers[0]).toBeUndefined();
+      if (docData2) expect(docData2.providers[0]).toBeUndefined();
     });
 
     it('calls listeners when provider changes', () => {
@@ -74,7 +74,7 @@ describe.each(Backends.all())('DiagramDocumentData [%s]', (_name, backend) => {
       docData2?.on('change', onChange2);
 
       // Act
-      docData1.setProvider(provider);
+      docData1.setProviders([provider]);
 
       // Verify
       expect(onChange1).toHaveBeenCalledTimes(1);
@@ -87,7 +87,7 @@ describe.each(Backends.all())('DiagramDocumentData [%s]', (_name, backend) => {
       const onChange = vi.fn();
 
       docData.on('change', onChange);
-      docData.setProvider(provider, true);
+      docData.setProviders([provider], true);
 
       expect(onChange).not.toHaveBeenCalled();
     });

@@ -73,8 +73,10 @@ const RESTDataProviderSettings = (props: ProviderSettingsProps<RESTDataProvider>
 export const ModelProvidersTab = () => {
   const document = useDocument();
   const [provider, setProvider] = useState<DataProvider | undefined>(
-    document.data.provider
-      ? DataProviderRegistry.get(document.data.provider.id)!(document.data.provider.serialize())
+    document.data.providers.length > 0
+      ? DataProviderRegistry.get(document.data.providers[0].id)!(
+          document.data.providers[0].serialize()
+        )
       : undefined
   );
   const [providers, setProviders] = useState<Record<string, DataProvider | undefined>>({
@@ -85,14 +87,14 @@ export const ModelProvidersTab = () => {
 
   const handleSave = () => {
     if (provider === undefined) {
-      document.data.setProvider(provider);
+      document.data.setProviders([]);
       setSuccessMessage('Settings saved successfully');
       setErrorMessage(undefined);
     } else {
       const error = provider.verifySettings();
       error.then(f => {
         if (!f) {
-          document.data.setProvider(provider);
+          document.data.setProviders([provider]);
           setSuccessMessage('Settings saved successfully');
           setErrorMessage(undefined);
         } else {
@@ -136,7 +138,9 @@ export const ModelProvidersTab = () => {
         </div>
 
         {errorMessage && <div className={styles.modelProvidersTabErrorMessage}>{errorMessage}</div>}
-        {successMessage && <div className={styles.modelProvidersTabSuccessMessage}>{successMessage}</div>}
+        {successMessage && (
+          <div className={styles.modelProvidersTabSuccessMessage}>{successMessage}</div>
+        )}
 
         {provider instanceof UrlDataProvider && <UrlDataProviderSettings provider={provider} />}
         {provider instanceof DefaultDataProvider && (

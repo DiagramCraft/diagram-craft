@@ -91,7 +91,7 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
   readonly #templates: DiagramDocumentDataTemplates;
 
   // Transient properties
-  #provider: DataProvider | undefined;
+  #providers: Array<DataProvider> = [];
   readonly #crdt: CRDTMap<Record<string, string>>;
 
   readonly #updateDataListener: (data: { data: Data[] }) => void;
@@ -121,10 +121,12 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
     const updateProvider = (e: CRDTMapEvents['remoteUpdate'] | CRDTMapEvents['remoteInsert']) => {
       if (e.key !== 'provider') return;
       if (e.value.length === 0) {
-        this.setProviderInternal(undefined);
+        this.setProviderInternal([]);
       } else {
-        const { id, data } = JSON.parse(e.value);
-        this.setProviderInternal(DataProviderRegistry.providers.get(id)!(data));
+        const entries = JSON.parse(e.value) as Array<{ id: string; data: string }>;
+        this.setProviderInternal(
+          entries.map(({ id, data }) => DataProviderRegistry.providers.get(id)!(data))
+        );
       }
     };
 
@@ -132,40 +134,38 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
     this.#crdt.on('remoteInsert', updateProvider);
   }
 
-  private setProviderInternal(dataProvider: DataProvider | undefined, initial = false) {
-    this.#provider?.off?.('addData', this.#updateDataListener);
-    this.#provider?.off?.('updateData', this.#updateDataListener);
-    this.#provider?.off?.('deleteData', this.#deleteDataListener);
-    this.#provider?.off?.('addSchema', this.#updateSchemaListener);
-    this.#provider?.off?.('updateSchema', this.#updateSchemaListener);
-    this.#provider?.off?.('deleteSchema', this.#deleteSchemaListener);
+  private setProviderInternal(dataProviders: Array<DataProvider>, initial = false) {
+    this.#providers?.forEach(p => p?.off?.('addData', this.#updateDataListener));
+    this.#providers?.forEach(p => p?.off?.('updateData', this.#updateDataListener));
+    this.#providers?.forEach(p => p?.off?.('deleteData', this.#deleteDataListener));
+    this.#providers?.forEach(p => p?.off?.('addSchema', this.#updateSchemaListener));
+    this.#providers?.forEach(p => p?.off?.('updateSchema', this.#updateSchemaListener));
+    this.#providers?.forEach(p => p?.off?.('deleteSchema', this.#deleteSchemaListener));
 
-    this.#provider = dataProvider;
+    this.#providers = dataProviders;
     if (!initial) this.emit('change');
 
-    if (this.#provider) {
-      this.#provider.on('addData', this.#updateDataListener);
-      this.#provider.on('updateData', this.#updateDataListener);
-      this.#provider.on('deleteData', this.#deleteDataListener);
-      this.#provider.on('addSchema', this.#updateSchemaListener);
-      this.#provider.on('updateSchema', this.#updateSchemaListener);
-      this.#provider.on('deleteSchema', this.#deleteSchemaListener);
-    }
+    this.#providers.forEach(p => p.on('addData', this.#updateDataListener));
+    this.#providers.forEach(p => p.on('updateData', this.#updateDataListener));
+    this.#providers.forEach(p => p.on('deleteData', this.#deleteDataListener));
+    this.#providers.forEach(p => p.on('addSchema', this.#updateSchemaListener));
+    this.#providers.forEach(p => p.on('updateSchema', this.#updateSchemaListener));
+    this.#providers.forEach(p => p.on('deleteSchema', this.#deleteSchemaListener));
   }
 
-  setProvider(dataProvider: DataProvider | undefined, initial = false) {
-    this.setProviderInternal(dataProvider, initial);
+  setProviders(dataProviders: Array<DataProvider>, initial = false) {
+    this.setProviderInternal(dataProviders, initial);
 
     this.#crdt.set(
       'provider',
-      this.#provider
-        ? JSON.stringify({ id: this.#provider!.id, data: this.#provider!.serialize() })
+      this.#providers
+        ? JSON.stringify(this.#providers.map(p => ({ id: p.id, data: p.serialize() })))
         : ''
     );
   }
 
-  get provider() {
-    return this.#provider;
+  get providers() {
+    return this.#providers;
   }
 
   get _schemas() {
@@ -177,13 +177,16 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
   }
 
   get db() {
-    return new DataManager(this.#provider);
+    return new DataManager(this.#providers);
   }
 }
 
 export class DataManager extends EventEmitter<DataProviderEventMap> {
-  constructor(private readonly provider: DataProvider | undefined) {
+  private provider: DataProvider;
+
+  constructor(providers: Array<DataProvider>) {
     super();
+    this.provider = providers[0];
   }
 
   isMutable() {

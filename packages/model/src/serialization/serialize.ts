@@ -38,8 +38,10 @@ export const serializeDiagramDocument = async (
       stencils: document.props.recentStencils.stencils
     },
     data: {
-      providerId: document.data.provider?.id,
-      data: document.data.provider?.serialize(),
+      providers: document.data.providers.map(p => ({
+        providerId: p.id,
+        data: p.serialize()
+      })),
       templates: document.data.templates.all
     }
   };
