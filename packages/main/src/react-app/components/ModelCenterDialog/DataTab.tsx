@@ -165,33 +165,35 @@ export const DataTab = () => {
     <>
       <div className={styles.dataTabHeader}>
         <p className={styles.dataTabTitle}>Data</p>
-        {canMutateData && hasSchemas && (
-          <DropdownMenu.Root>
-            <DropdownMenu.Trigger asChild>
-              <Button type="secondary" className={styles.dataTabAddButton}>
-                <TbPlus /> Add Data
-              </Button>
-            </DropdownMenu.Trigger>
-            <DropdownMenu.Portal>
-              <DropdownMenu.Content className="cmp-context-menu" sideOffset={5}>
-                {dataProvider?.schemas?.map(schema => (
-                  <DropdownMenu.Item
-                    key={schema.id}
-                    className="cmp-context-menu__item"
-                    onSelect={() => setAddItemDialog({ open: true, schemaId: schema.id })}
-                  >
-                    {schema.name}
-                  </DropdownMenu.Item>
-                ))}
-                <DropdownMenu.Arrow className="cmp-context-menu__arrow" />
-              </DropdownMenu.Content>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Root>
-        )}
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger asChild>
+            <Button
+              type="secondary"
+              className={styles.dataTabAddButton}
+              disabled={!(canMutateData && hasSchemas)}
+            >
+              <TbPlus /> Add Data
+            </Button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Portal>
+            <DropdownMenu.Content className="cmp-context-menu" sideOffset={5}>
+              {dataProvider?.schemas?.map(schema => (
+                <DropdownMenu.Item
+                  key={schema.id}
+                  className="cmp-context-menu__item"
+                  onSelect={() => setAddItemDialog({ open: true, schemaId: schema.id })}
+                >
+                  {schema.name}
+                </DropdownMenu.Item>
+              ))}
+              <DropdownMenu.Arrow className="cmp-context-menu__arrow" />
+            </DropdownMenu.Content>
+          </DropdownMenu.Portal>
+        </DropdownMenu.Root>
       </div>
 
       {!dataProvider && (
-        <div className={`${styles.dataTabMessageBox} ${styles.dataTabMessageBoxNoProvider}`}>
+        <div className={`${styles.dataTabMessageBox}`}>
           <p>No data provider configured</p>
           <p>Configure a data provider in the Model Providers tab to manage data.</p>
         </div>
@@ -205,7 +207,7 @@ export const DataTab = () => {
       )}
 
       {dataProvider && !canMutateData && (
-        <div className={`${styles.dataTabMessageBox} ${styles.dataTabMessageBoxNoMutation}`}>
+        <div className={`${styles.dataTabMessageBox}`}>
           <p>The current data provider does not support data management.</p>
           <p>Switch to a different provider (like REST API) to manage data.</p>
         </div>

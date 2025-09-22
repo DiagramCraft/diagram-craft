@@ -15,23 +15,24 @@
   align-self: end;
 }
 
-/* Message Boxes */
-
 .data-tab__message-box {
-  padding: 2rem;
-  text-align: center;
-  background-color: var(--base-bg-dim);
-  border-radius: 6px;
-}
-
-.data-tab__message-box--no-provider {
-  color: var(--base-fg-dim);
-}
-
-.data-tab__message-box--no-mutation {
   padding: 1rem;
-  color: var(--base-fg-dim);
+  text-align: left;
+  background-color: var(--panel-bg);
+  border-radius: 6px;
+  font-size: 11px;
+  border-left: 4px solid var(--error-fg);
+
+  p {
+    padding: 0;
+    margin: 0 0 0.5rem 0;
+
+    &:last-of-type {
+      margin-bottom: 0;
+    }
+  }
 }
+
 
 /* Search and Filter Controls */
 

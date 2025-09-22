@@ -96,33 +96,32 @@ export const SchemasTab = () => {
     <>
       <div className={styles.schemasTabHeader}>
         <p className={styles.schemasTabTitle}>Schemas</p>
-        {canMutateSchemas && (
-          <Button type="primary" onClick={() => setAddSchemaDialog(true)}>
-            <TbPlus /> Add Schema
-          </Button>
-        )}
+        <Button
+          type="secondary"
+          onClick={() => setAddSchemaDialog(true)}
+          disabled={!canMutateSchemas}
+        >
+          <TbPlus /> Add Schema
+        </Button>
       </div>
 
       {!dataProvider && (
-        <div className={`${styles.schemasTabMessageBox} ${styles.schemasTabMessageBoxNoProvider}`}>
+        <div className={styles.schemasTabMessageBox}>
           <p>No data provider configured</p>
           <p>Configure a data provider in the Model Providers tab to manage schemas.</p>
         </div>
       )}
 
       {dataProvider && !canMutateSchemas && (
-        <div className={`${styles.schemasTabMessageBox} ${styles.schemasTabMessageBoxNoMutation}`}>
+        <div className={styles.schemasTabMessageBox}>
           <p>The current data provider does not support schema management.</p>
           <p>Switch to a different provider (like REST API) to manage schemas.</p>
         </div>
       )}
 
       {schemas.length === 0 && canMutateSchemas && (
-        <div className={styles.schemasTabEmptyState}>
+        <div className={styles.schemasTabMessageBox}>
           <p>No schemas defined yet</p>
-          <Button type="primary" onClick={() => setAddSchemaDialog(true)}>
-            <TbPlus /> Create Your First Schema
-          </Button>
         </div>
       )}
 
