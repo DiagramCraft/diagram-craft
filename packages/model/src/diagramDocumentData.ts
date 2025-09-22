@@ -155,7 +155,7 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
   }
 
   setProviders(dataProviders: Array<DataProvider>, initial = false) {
-    if (dataProviders[0]?.id !== DefaultDataProviderId) {
+    if (dataProviders[0]?.providerId !== DefaultDataProviderId) {
       dataProviders.unshift(
         new DefaultDataProvider(`{ "schemas": ${JSON.stringify(DEFAULT_SCHEMA)} }`)
       );
@@ -166,7 +166,7 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
     this.#crdt.set(
       'provider',
       this.#providers
-        ? JSON.stringify(this.#providers.map(p => ({ id: p.id, data: p.serialize() })))
+        ? JSON.stringify(this.#providers.map(p => ({ id: p.providerId, data: p.serialize() })))
         : ''
     );
   }

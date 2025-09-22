@@ -39,7 +39,8 @@ export const serializeDiagramDocument = async (
     },
     data: {
       providers: document.data.providers.map(p => ({
-        providerId: p.id,
+        id: p.id,
+        providerId: p.providerId,
         data: p.serialize()
       })),
       templates: document.data.templates.all

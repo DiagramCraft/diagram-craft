@@ -7,8 +7,11 @@ type DataWithSchema = Data & { _schemaId: string };
 
 export const RestDataProviderId = 'restDataProvider';
 
-export class RESTDataProvider extends BaseHTTPDataProvider implements MutableDataProvider, MutableSchemaProvider {
-  id = RestDataProviderId;
+export class RESTDataProvider
+  extends BaseHTTPDataProvider
+  implements MutableDataProvider, MutableSchemaProvider
+{
+  providerId = RestDataProviderId;
 
   baseUrl: string | undefined = undefined;
 

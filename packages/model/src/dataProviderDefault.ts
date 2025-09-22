@@ -16,7 +16,8 @@ export class DefaultDataProvider
   extends EventEmitter<DataProviderEventMap>
   implements MutableDataProvider, MutableSchemaProvider
 {
-  id = DefaultDataProviderId;
+  providerId = DefaultDataProviderId;
+  id: string = 'Default';
 
   schemas: DataSchema[];
   private readonly data: DataWithSchema[] = [];

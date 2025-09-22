@@ -221,7 +221,9 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
         if (!providerFactory) {
           console.warn(`Provider ${provider.providerId} not found`);
         } else {
-          providers.push(providerFactory(provider.data));
+          const p = providerFactory(provider.data);
+          p.id = provider.id;
+          providers.push(p);
         }
       }
       doc.data.setProviders(providers, true);

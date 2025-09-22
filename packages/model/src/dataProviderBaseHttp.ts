@@ -15,7 +15,8 @@ export abstract class BaseHTTPDataProvider
   extends EventEmitter<DataProviderEventMap>
   implements DataProvider, RefreshableDataProvider, RefreshableSchemaProvider
 {
-  abstract id: string;
+  abstract providerId: string;
+  id: string = '';
 
   schemas: DataSchema[] = [];
   protected data: DataWithSchema[] = [];
