@@ -157,8 +157,8 @@ export const ExtendedDataTab = () => {
 
   const editExternalData = useCallback(
     (schema: string) => {
-      const dataProvider = $d.document.data.manager;
-      assert.present(dataProvider);
+      const db = $d.document.data.manager;
+      assert.present(db);
 
       // Get the external data item for editing
       const e = $d.selectionState.elements[0];
@@ -166,7 +166,7 @@ export const ExtendedDataTab = () => {
       assert.true(externalData?.type === 'external');
 
       if (externalData?.enabled) {
-        const items = dataProvider.getById([externalData.external!.uid]);
+        const items = db.getById(db.getSchema(externalData.schema), [externalData.external!.uid]);
         assert.arrayWithExactlyOneElement(items);
 
         setEditItemDialog({

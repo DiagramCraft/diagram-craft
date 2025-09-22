@@ -16,7 +16,7 @@ import { UnitOfWork } from './unitOfWork';
 import { deepEquals } from '@diagram-craft/utils/object';
 import { EventEmitter, type EventKey, type EventReceiver } from '@diagram-craft/utils/event';
 import { CRDTMap, CRDTMapEvents, CRDTRoot } from './collaboration/crdt';
-import { VerifyNotReached } from '@diagram-craft/utils/assert';
+import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
 
 const makeDataListener =
   (document: DiagramDocument, mode: 'update' | 'delete') => (data: { data: Data[] }) => {
@@ -202,6 +202,12 @@ export class DataManager extends EventEmitter<DataProviderEventMap> {
     return (this.provider as unknown as RefreshableSchemaProvider).refreshSchemas();
   }
 
+  getSchema(schema: string) {
+    const r = this.schemas.find(s => s.id === schema);
+    assert.present(r);
+    return r;
+  }
+
   addSchema(schema: DataSchema) {
     if (!isMutableSchemaProvider(this.provider!)) throw new VerifyNotReached();
     return this.provider.addSchema(schema);
@@ -225,7 +231,7 @@ export class DataManager extends EventEmitter<DataProviderEventMap> {
     return this.provider?.schemas ?? [];
   }
 
-  getById(ids: string[]) {
+  getById(_schema: DataSchema, ids: string[]) {
     return this.provider?.getById(ids) ?? [];
   }
 
