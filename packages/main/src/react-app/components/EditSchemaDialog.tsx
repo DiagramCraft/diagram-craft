@@ -110,7 +110,7 @@ export const EditSchemaDialog = (props: Props) => {
     const resultSchema: DataSchema = {
       id: props.schema?.id ?? newid(),
       name: name.trim(),
-      source: props.schema?.source ?? 'document',
+      providerId: props.schema?.providerId ?? 'document',
       fields: fields
     };
 

@@ -8,7 +8,7 @@ describe('DefaultDataProvider', () => {
   const testSchema: DataSchema = {
     id: 'test-schema',
     name: 'Test Schema',
-    source: 'external',
+    providerId: 'external',
     fields: [
       { id: 'name', name: 'Name', type: 'text' },
       { id: 'value', name: 'Value', type: 'text' }

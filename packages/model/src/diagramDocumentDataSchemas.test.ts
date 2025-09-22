@@ -28,7 +28,7 @@ describe.each(Backends.all())('DiagramDocumentDataSchemas [%s]', (_name, backend
 
     test('should replace schemas when initial schemas are provided', () => {
       const initialSchemas: DataSchema[] = [
-        { id: '1', name: 'test', source: 'document', fields: [] }
+        { id: '1', name: 'test', providerId: 'document', fields: [] }
       ];
       const diagramSchemas = new DiagramDocumentDataSchemas(
         CRDT.makeRoot(),
@@ -63,7 +63,12 @@ describe.each(Backends.all())('DiagramDocumentDataSchemas [%s]', (_name, backend
         : undefined;
 
       // Act
-      const newSchema: DataSchema = { id: '1', name: 'NewSchema', source: 'document', fields: [] };
+      const newSchema: DataSchema = {
+        id: '1',
+        name: 'NewSchema',
+        providerId: 'document',
+        fields: []
+      };
       instance1.add(newSchema);
 
       // Verify
@@ -93,7 +98,12 @@ describe.each(Backends.all())('DiagramDocumentDataSchemas [%s]', (_name, backend
       instance2?.on('add', addListener2);
 
       // Act
-      const newSchema: DataSchema = { id: '1', name: 'NewSchema', source: 'document', fields: [] };
+      const newSchema: DataSchema = {
+        id: '1',
+        name: 'NewSchema',
+        providerId: 'document',
+        fields: []
+      };
       instance1.add(newSchema);
 
       // Verify
@@ -106,13 +116,13 @@ describe.each(Backends.all())('DiagramDocumentDataSchemas [%s]', (_name, backend
       const existingSchema: DataSchema = {
         id: '1',
         name: 'ExistingSchema',
-        source: 'document',
+        providerId: 'document',
         fields: []
       };
       const updatedSchema: DataSchema = {
         id: '1',
         name: 'UpdatedSchema',
-        source: 'document',
+        providerId: 'document',
         fields: [{ id: 'test', name: 'name', type: 'text' }]
       };
 
@@ -149,8 +159,8 @@ describe.each(Backends.all())('DiagramDocumentDataSchemas [%s]', (_name, backend
     test('should replace all schemas when replaceBy is called', () => {
       // Setup
       const newSchemas: DataSchema[] = [
-        { id: '1', name: 'Schema1', source: 'document', fields: [] },
-        { id: '2', name: 'Schema2', source: 'document', fields: [] }
+        { id: '1', name: 'Schema1', providerId: 'document', fields: [] },
+        { id: '2', name: 'Schema2', providerId: 'document', fields: [] }
       ];
 
       const [root1, root2] = backend.syncedDocs();
@@ -178,7 +188,7 @@ describe.each(Backends.all())('DeleteSchemaUndoableAction [%s]', (_name, backend
     const schema: DataSchema = {
       id: 'newId',
       name: 'Schema2',
-      source: 'document',
+      providerId: 'document',
       fields: []
     };
     diagram1.document.data.schemas.add(schema);
@@ -216,7 +226,7 @@ describe.each(Backends.all())('AddSchemaUndoableAction [%s]', (_name, backend) =
     const action = new AddSchemaUndoableAction(diagram1, {
       id: 'newId',
       name: 'Schema2',
-      source: 'document',
+      providerId: 'document',
       fields: []
     });
 
@@ -251,7 +261,7 @@ describe.each(Backends.all())('ModifySchemaUndoableAction [%s]', (_name, backend
     const schema: DataSchema = {
       id: 'newId',
       name: 'OldName',
-      source: 'document',
+      providerId: 'document',
       fields: []
     };
     diagram1.document.data.schemas.add(schema);

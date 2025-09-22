@@ -233,7 +233,7 @@ export const ExtendedDataTab = () => {
               const isExternal = $d.selectionState.elements.some(
                 e => e.metadata.data?.data?.find(d => d.schema === schema.id)?.type === 'external'
               );
-              const isExternalSchema = schema.source === 'external';
+              const isExternalSchema = schema.providerId !== 'document';
 
               if (!editMode && !isSchemaEnabled) return null;
               return (
@@ -308,7 +308,7 @@ export const ExtendedDataTab = () => {
                           <TbLink />
                         </a>
                       )}
-                      {schema.source !== 'external' && (
+                      {schema.providerId === 'document' && (
                         <DropdownMenu.Root>
                           <DropdownMenu.Trigger asChild>
                             <a

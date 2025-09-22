@@ -8,7 +8,7 @@ describe('UrlDataProvider', () => {
   const testSchema: DataSchema = {
     id: 'test-schema',
     name: 'Test Schema',
-    source: 'external',
+    providerId: 'external',
     fields: [
       { id: 'name', name: 'Name', type: 'text' },
       { id: 'value', name: 'Value', type: 'text' }
@@ -34,7 +34,7 @@ describe('UrlDataProvider', () => {
 
   // Mock fetch API
   const originalFetch = global.fetch;
-  
+
   beforeEach(() => {
     // Mock fetch to return test data
     global.fetch = vi.fn().mockImplementation((url: string) => {
@@ -58,21 +58,27 @@ describe('UrlDataProvider', () => {
   });
 
   const createEmptyProvider = () => {
-    return new UrlDataProvider(JSON.stringify({
-      schemas: [],
-      data: [],
-      dataUrl,
-      schemaUrl
-    }), false); // Disable auto-refresh
+    return new UrlDataProvider(
+      JSON.stringify({
+        schemas: [],
+        data: [],
+        dataUrl,
+        schemaUrl
+      }),
+      false
+    ); // Disable auto-refresh
   };
 
   const createProviderWithSchemaAndData = () => {
-    return new UrlDataProvider(JSON.stringify({
-      schemas: [testSchema],
-      data: [testData, testData2],
-      dataUrl,
-      schemaUrl
-    }), false); // Disable auto-refresh
+    return new UrlDataProvider(
+      JSON.stringify({
+        schemas: [testSchema],
+        data: [testData, testData2],
+        dataUrl,
+        schemaUrl
+      }),
+      false
+    ); // Disable auto-refresh
   };
 
   describe('constructor', () => {
@@ -108,27 +114,30 @@ describe('UrlDataProvider', () => {
       // Mock refreshSchemas and refreshData
       const refreshSchemasSpy = vi.spyOn(UrlDataProvider.prototype, 'refreshSchemas');
       const refreshDataSpy = vi.spyOn(UrlDataProvider.prototype, 'refreshData');
-      
+
       // Create provider with autoRefresh = true
-      new UrlDataProvider(JSON.stringify({
-        schemas: [],
-        data: [],
-        dataUrl,
-        schemaUrl
-      }), true);
-      
+      new UrlDataProvider(
+        JSON.stringify({
+          schemas: [],
+          data: [],
+          dataUrl,
+          schemaUrl
+        }),
+        true
+      );
+
       // Wait for promises to resolve
       await new Promise(resolve => setTimeout(resolve, 0));
-      
+
       // Verify refreshSchemas was called
       expect(refreshSchemasSpy).toHaveBeenCalledWith(false);
-      
+
       // Wait for refreshSchemas promise to resolve
       await new Promise(resolve => setTimeout(resolve, 0));
-      
+
       // Verify refreshData was called
       expect(refreshDataSpy).toHaveBeenCalledWith(false);
-      
+
       // Restore original methods
       refreshSchemasSpy.mockRestore();
       refreshDataSpy.mockRestore();
@@ -181,7 +190,7 @@ describe('UrlDataProvider', () => {
   describe('refreshData', () => {
     it('should fetch new data and update internal state', async () => {
       const provider = createEmptyProvider();
-      
+
       // Set up event listeners
       const updateDataSpy = vi.fn();
       const addDataSpy = vi.fn();
@@ -189,10 +198,10 @@ describe('UrlDataProvider', () => {
       provider.on('updateData', updateDataSpy);
       provider.on('addData', addDataSpy);
       provider.on('deleteData', deleteDataSpy);
-      
+
       // Act
       await provider.refreshData();
-      
+
       // Assert
       expect(global.fetch).toHaveBeenCalledWith(dataUrl, { cache: 'no-cache' });
       expect(provider.getById([testData._uid, testData2._uid])).toHaveLength(2);
@@ -205,7 +214,7 @@ describe('UrlDataProvider', () => {
     it('should handle updates, additions, and deletions correctly', async () => {
       // Create provider with initial data
       const provider = createProviderWithSchemaAndData();
-      
+
       // Set up event listeners
       const updateDataSpy = vi.fn();
       const addDataSpy = vi.fn();
@@ -213,16 +222,16 @@ describe('UrlDataProvider', () => {
       provider.on('updateData', updateDataSpy);
       provider.on('addData', addDataSpy);
       provider.on('deleteData', deleteDataSpy);
-      
+
       // Mock fetch to return updated data
       const updatedData = { ...testData, value: 'Updated Value' };
-      const newData = { 
-        _uid: 'test-data-3', 
+      const newData = {
+        _uid: 'test-data-3',
         _schemaId: 'test-schema',
-        name: 'Test Data 3', 
-        value: 'Value 3' 
+        name: 'Test Data 3',
+        value: 'Value 3'
       };
-      
+
       global.fetch = vi.fn().mockImplementation((url: string) => {
         if (url === dataUrl) {
           // Return updated first item, remove second item, add new third item
@@ -236,34 +245,34 @@ describe('UrlDataProvider', () => {
         }
         return Promise.reject(new Error(`Unexpected URL: ${url}`));
       });
-      
+
       // Act
       await provider.refreshData();
-      
+
       // Assert
       expect(global.fetch).toHaveBeenCalledWith(dataUrl, { cache: 'no-cache' });
-      
+
       // Check data was updated correctly
       const allData = provider.getData(testSchema);
       expect(allData).toHaveLength(2);
       expect(allData.find(d => d._uid === testData._uid)?.value).toBe('Updated Value');
       expect(allData.find(d => d._uid === 'test-data-3')).toBeDefined();
       expect(allData.find(d => d._uid === testData2._uid)).toBeUndefined();
-      
+
       // Check events were emitted correctly
       expect(updateDataSpy).toHaveBeenCalledWith({ data: [updatedData] });
       expect(addDataSpy).toHaveBeenCalledWith({ data: [newData] });
-      
+
       // The base class implementation correctly detects deleted items
       expect(deleteDataSpy).toHaveBeenCalledWith({ data: [testData2] });
     });
 
     it('should use cache when force is false', async () => {
       const provider = createEmptyProvider();
-      
+
       // Act
       await provider.refreshData(false);
-      
+
       // Assert
       expect(global.fetch).toHaveBeenCalledWith(dataUrl, { cache: 'default' });
     });
@@ -272,7 +281,7 @@ describe('UrlDataProvider', () => {
   describe('refreshSchemas', () => {
     it('should fetch new schemas and update internal state', async () => {
       const provider = createEmptyProvider();
-      
+
       // Set up event listeners
       const updateSchemaSpy = vi.fn();
       const addSchemaSpy = vi.fn();
@@ -280,10 +289,10 @@ describe('UrlDataProvider', () => {
       provider.on('updateSchema', updateSchemaSpy);
       provider.on('addSchema', addSchemaSpy);
       provider.on('deleteSchema', deleteSchemaSpy);
-      
+
       // Act
       await provider.refreshSchemas();
-      
+
       // Assert
       expect(global.fetch).toHaveBeenCalledWith(schemaUrl, { cache: 'no-cache' });
       expect(provider.schemas).toEqual([testSchema]);
@@ -295,7 +304,7 @@ describe('UrlDataProvider', () => {
     it('should handle updates and deletions correctly', async () => {
       // Create provider with initial schema
       const provider = createProviderWithSchemaAndData();
-      
+
       // Set up event listeners
       const updateSchemaSpy = vi.fn();
       const addSchemaSpy = vi.fn();
@@ -303,10 +312,10 @@ describe('UrlDataProvider', () => {
       provider.on('updateSchema', updateSchemaSpy);
       provider.on('addSchema', addSchemaSpy);
       provider.on('deleteSchema', deleteSchemaSpy);
-      
+
       // Mock fetch to return updated schema
       const updatedSchema = { ...testSchema, name: 'Updated Schema Name' };
-      
+
       global.fetch = vi.fn().mockImplementation((url: string) => {
         if (url === dataUrl) {
           return Promise.resolve({
@@ -319,16 +328,16 @@ describe('UrlDataProvider', () => {
         }
         return Promise.reject(new Error(`Unexpected URL: ${url}`));
       });
-      
+
       // Act
       await provider.refreshSchemas();
-      
+
       // Assert
       expect(global.fetch).toHaveBeenCalledWith(schemaUrl, { cache: 'no-cache' });
-      
+
       // Check schemas were updated correctly
       expect(provider.schemas).toEqual([updatedSchema]);
-      
+
       // Check events were emitted correctly
       expect(updateSchemaSpy).toHaveBeenCalledWith(updatedSchema);
       expect(addSchemaSpy).not.toHaveBeenCalled();
@@ -337,10 +346,10 @@ describe('UrlDataProvider', () => {
 
     it('should use cache when force is false', async () => {
       const provider = createEmptyProvider();
-      
+
       // Act
       await provider.refreshSchemas(false);
-      
+
       // Assert
       expect(global.fetch).toHaveBeenCalledWith(schemaUrl, { cache: 'default' });
     });
@@ -349,11 +358,11 @@ describe('UrlDataProvider', () => {
   describe('serialize', () => {
     it('should serialize data, schemas, and URLs to JSON string', () => {
       const provider = createProviderWithSchemaAndData();
-      
+
       // Act
       const serialized = provider.serialize();
       const parsed = JSON.parse(serialized);
-      
+
       // Assert
       expect(parsed).toHaveProperty('schemas');
       expect(parsed).toHaveProperty('data');
@@ -368,10 +377,10 @@ describe('UrlDataProvider', () => {
   describe('verifySettings', () => {
     it('should return undefined when fetch succeeds', async () => {
       const provider = createProviderWithSchemaAndData();
-      
+
       // Act
       const result = await provider.verifySettings();
-      
+
       // Assert
       expect(result).toBeUndefined();
       expect(global.fetch).toHaveBeenCalledTimes(2);
@@ -379,13 +388,13 @@ describe('UrlDataProvider', () => {
 
     it('should return error message when fetch fails', async () => {
       const provider = createProviderWithSchemaAndData();
-      
+
       // Mock fetch to throw error
       global.fetch = vi.fn().mockRejectedValue(new Error('Network error'));
-      
+
       // Act
       const result = await provider.verifySettings();
-      
+
       // Assert
       expect(result).toContain('Error fetching data');
       expect(result).toContain('Network error');
@@ -395,14 +404,14 @@ describe('UrlDataProvider', () => {
   describe('fetchData and fetchSchemas', () => {
     it('should throw an error when dataUrl is not set', async () => {
       const provider = new UrlDataProvider(undefined, false);
-      
+
       // Act & Assert
       await expect(provider.refreshData()).rejects.toThrow();
     });
 
     it('should throw an error when schemaUrl is not set', async () => {
       const provider = new UrlDataProvider(undefined, false);
-      
+
       // Act & Assert
       await expect(provider.refreshSchemas()).rejects.toThrow();
     });

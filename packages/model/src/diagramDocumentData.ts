@@ -69,7 +69,7 @@ const DEFAULT_SCHEMA: DataSchema[] = [
   {
     id: 'default',
     name: 'Default',
-    source: 'document',
+    providerId: 'document',
     fields: [
       {
         id: 'name',

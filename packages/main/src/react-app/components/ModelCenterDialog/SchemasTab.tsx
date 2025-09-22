@@ -131,7 +131,7 @@ export const SchemasTab = () => {
               <tr key={schema.id}>
                 <td>{schema.name}</td>
                 <td>{getFieldNamesDisplay(schema)}</td>
-                <td>{schema.source}</td>
+                <td>{schema.providerId}</td>
                 {canMutateSchemas && (
                   <td>
                     <div className={styles.schemasTabTableActions}>

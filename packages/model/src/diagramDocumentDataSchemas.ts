@@ -28,7 +28,7 @@ export const decodeDataReferences = (refs: string | undefined) =>
 export type DataSchema = {
   id: string;
   name: string;
-  source: 'document' | 'external';
+  providerId: string;
   fields: DataSchemaField[];
 };
 
@@ -64,7 +64,7 @@ export class DiagramDocumentDataSchemas extends EventEmitter<DiagramDocumentData
   }
 
   get(id: string) {
-    return this.#schemas.get(id) ?? { id: '', name: '', source: 'document', fields: [] };
+    return this.#schemas.get(id) ?? { id: '', name: '', providerId: 'document', fields: [] };
   }
 
   has(id: string) {
