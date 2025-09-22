@@ -86,11 +86,11 @@ export const CommandPalette = ({ open, onClose }: CommandPaletteProps) => {
     (commandId: ActionName) => {
       const action = application.actions[commandId];
       if (action && (!action.isEnabled || action.isEnabled({}))) {
-        action.execute({ source: 'ui-element' });
         onClose();
+        action.execute({ source: 'ui-element' });
       }
     },
-    [application.actions, onClose]
+    [application, application.actions, onClose]
   );
 
   const handleKeyDown = useCallback(
@@ -155,18 +155,18 @@ export const CommandPalette = ({ open, onClose }: CommandPaletteProps) => {
   // Track actual mouse movement
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     const currentPos = { x: e.clientX, y: e.clientY };
-    
+
     if (lastMousePos.current) {
       const deltaX = Math.abs(currentPos.x - lastMousePos.current.x);
       const deltaY = Math.abs(currentPos.y - lastMousePos.current.y);
-      
+
       // Only consider it mouse movement if the mouse moved more than 2 pixels
       if (deltaX > 2 || deltaY > 2) {
         setHasMouseMoved(true);
         setIsKeyboardNavigation(false);
       }
     }
-    
+
     lastMousePos.current = currentPos;
   }, []);
 
@@ -192,8 +192,8 @@ export const CommandPalette = ({ open, onClose }: CommandPaletteProps) => {
         </div>
 
         {searchText.trim() !== '' && (
-          <div 
-            ref={commandListRef} 
+          <div
+            ref={commandListRef}
             className={`${styles.commandPalette__commandList} ${
               hasMouseMoved ? styles['commandPalette__commandList--mouseEnabled'] : ''
             }`}

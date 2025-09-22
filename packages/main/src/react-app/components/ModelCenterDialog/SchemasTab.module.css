@@ -1,0 +1,40 @@
+/* Header */
+.schemas-tab__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.schemas-tab__title {
+  margin: 0;
+}
+
+/* Message Boxes */
+.schemas-tab__message-box {
+  padding: 1rem;
+  text-align: left;
+  background-color: var(--panel-bg);
+  border-radius: 6px;
+  font-size: 11px;
+  border-left: 4px solid var(--error-fg);
+
+  p {
+    padding: 0;
+    margin: 0 0 0.5rem 0;
+
+    &:last-of-type {
+      margin-bottom: 0;
+    }
+  }
+}
+
+/* Table */
+.schemas-tab__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.schemas-tab__table-actions {
+  display: flex;
+  gap: 4px;
+}

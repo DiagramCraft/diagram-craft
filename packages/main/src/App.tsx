@@ -47,6 +47,7 @@ import { RectTool } from '@diagram-craft/canvas-app/tools/rectTool';
 import { ReferenceLayerDialog } from './react-app/components/NewReferenceLayerDialog';
 import { StringInputDialog } from './react-app/components/StringInputDialog';
 import { RuleEditorDialog } from './react-app/components/RuleEditorDialog/RuleEditorDialog';
+import { ModelCenterDialog } from './react-app/components/ModelCenterDialog/ModelCenterDialog';
 import { useOnChange } from './react-app/hooks/useOnChange';
 import { MainMenu } from './react-app/MainMenu';
 import { MainToolbar } from './react-app/MainToolbar';
@@ -389,6 +390,11 @@ export const App = (props: {
             {...dialogState?.props}
             onOk={dialogState?.onOk}
             onCancel={dialogState?.onCancel}
+          />
+          <ModelCenterDialog
+            open={dialogState?.id === 'modelCenter'}
+            onClose={() => dialogState?.onCancel?.()}
+            defaultTab={dialogState?.props?.defaultTab}
           />
           <ShapeSelectDialog
             open={dialogState?.id === 'shapeSelect'}

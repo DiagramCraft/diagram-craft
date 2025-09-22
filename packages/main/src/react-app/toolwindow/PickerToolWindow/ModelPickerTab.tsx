@@ -5,7 +5,6 @@ import {
   Data,
   DataProvider,
   type MutableDataProvider,
-  type MutableSchemaProvider,
   RefreshableDataProvider,
   RefreshableSchemaProvider
 } from '@diagram-craft/model/dataProvider';
@@ -17,18 +16,16 @@ import { newid } from '@diagram-craft/utils/id';
 import {
   TbChevronDown,
   TbChevronRight,
-  TbPencil,
   TbPlus,
   TbRefresh,
   TbSearch,
-  TbSettings,
-  TbTrash
+  TbSettings
 } from 'react-icons/tb';
 import { DRAG_DROP_MANAGER } from '@diagram-craft/canvas/dragDropManager';
 import { ObjectPickerDrag } from './objectPickerDrag';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { assert } from '@diagram-craft/utils/assert';
-import { DataProviderSettingsDialog } from './DataProviderSettingsDialog';
+import { ModelCenterDialogCommand } from '@diagram-craft/canvas-app/dialogs';
 import { Button } from '@diagram-craft/app-components/Button';
 import { PickerCanvas } from '../../PickerCanvas';
 import { DataTemplate } from '@diagram-craft/model/diagramDocument';
@@ -43,7 +40,6 @@ import { createThumbnailDiagramForNode } from '@diagram-craft/model/diagramThumb
 import { isRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { EditItemDialog } from '../../components/EditItemDialog';
-import { EditSchemaDialog } from '../../components/EditSchemaDialog';
 import { ToolWindow } from '../ToolWindow';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 
@@ -324,18 +320,9 @@ const DataProviderQueryView = (props: {
   selectedSchema: string;
   onChangeSchema: (s: string | undefined) => void;
   onSearch: (s: string) => void;
-  onAddSchema: () => void;
-  onEditSchema: (schema: DataSchema) => void;
-  onDeleteSchema: (schema: DataSchema) => void;
 }) => {
   const ref = useRef<HTMLInputElement>(null);
   const [search, setSearch] = useState<string>('');
-
-  const selectedSchemaObject = props.dataProvider.schemas?.find(s => s.id === props.selectedSchema);
-  const isMutableSchemaProvider =
-    'addSchema' in props.dataProvider &&
-    'updateSchema' in props.dataProvider &&
-    'deleteSchema' in props.dataProvider;
 
   return (
     <div style={{ width: '100%' }} className={'util-vstack'}>
@@ -349,31 +336,6 @@ const DataProviderQueryView = (props: {
             ))}
           </Select.Root>
         </div>
-        {isMutableSchemaProvider && (
-          <>
-            <Button type="icon-only" onClick={props.onAddSchema} title="Add new schema">
-              <TbPlus />
-            </Button>
-            {selectedSchemaObject && (
-              <>
-                <Button
-                  type="icon-only"
-                  onClick={() => props.onEditSchema(selectedSchemaObject)}
-                  title="Edit schema"
-                >
-                  <TbPencil />
-                </Button>
-                <Button
-                  type="icon-only"
-                  onClick={() => props.onDeleteSchema(selectedSchemaObject)}
-                  title="Delete schema"
-                >
-                  <TbTrash />
-                </Button>
-              </>
-            )}
-          </>
-        )}
       </div>
       <div className={'util-hstack'}>
         <TextInput
@@ -421,13 +383,8 @@ export const ModelPickerTab = () => {
   const redraw = useRedraw();
   const $diagram = useDiagram();
   const application = useApplication();
-  const [providerSettingsWindow, setProviderSettingsWindow] = useState<boolean>(false);
   const [addItemDialog, setAddItemDialog] = useState<boolean>(false);
   const [editItemDialog, setEditItemDialog] = useState<{ open: boolean; item?: Data }>({
-    open: false
-  });
-  const [addSchemaDialog, setAddSchemaDialog] = useState<boolean>(false);
-  const [editSchemaDialog, setEditSchemaDialog] = useState<{ open: boolean; schema?: DataSchema }>({
     open: false
   });
   const document = $diagram.document;
@@ -498,66 +455,6 @@ export const ModelPickerTab = () => {
     );
   };
 
-  // Helper function to check if provider supports schema mutations
-  const isMutableSchemaProvider = (
-    provider: DataProvider
-  ): provider is DataProvider & MutableSchemaProvider => {
-    return 'addSchema' in provider && 'updateSchema' in provider && 'deleteSchema' in provider;
-  };
-
-  // Handle schema operations
-  const handleAddSchema = async (schema: DataSchema) => {
-    if (!dataProvider || !isMutableSchemaProvider(dataProvider)) return;
-
-    try {
-      await dataProvider.addSchema(schema);
-      setAddSchemaDialog(false);
-      setSelectedSchema(schema.id);
-    } catch (error) {
-      console.error('Failed to add schema:', error);
-      // You could show an error message to the user here
-    }
-  };
-
-  const handleUpdateSchema = async (schema: DataSchema) => {
-    if (!dataProvider || !isMutableSchemaProvider(dataProvider)) return;
-
-    try {
-      await dataProvider.updateSchema(schema);
-      setEditSchemaDialog({ open: false });
-    } catch (error) {
-      console.error('Failed to update schema:', error);
-      // You could show an error message to the user here
-    }
-  };
-
-  const handleDeleteSchema = (schema: DataSchema) => {
-    if (!dataProvider || !isMutableSchemaProvider(dataProvider)) return;
-
-    application.ui.showDialog(
-      new MessageDialogCommand(
-        {
-          title: 'Delete Schema',
-          message: `Are you sure you want to delete schema "${schema.name}"? This will also delete all associated data.`,
-          okLabel: 'Delete',
-          okType: 'danger',
-          cancelLabel: 'Cancel'
-        },
-        async () => {
-          try {
-            await dataProvider.deleteSchema(schema);
-            if (selectedSchema === schema.id) {
-              setSelectedSchema(dataProvider.schemas?.[0]?.id);
-            }
-          } catch (error) {
-            console.error('Failed to delete schema:', error);
-            // You could show an error message to the user here
-          }
-        }
-      )
-    );
-  };
-
   return (
     <ToolWindow.TabContent>
       <ToolWindow.TabActions>
@@ -581,7 +478,15 @@ export const ModelPickerTab = () => {
         </a>
         <a
           className={'cmp-button cmp-button--icon-only'}
-          onClick={() => setProviderSettingsWindow(true)}
+          onClick={() => {
+            application.ui.showDialog(
+              new ModelCenterDialogCommand(
+                { defaultTab: 'model-providers' },
+                () => {},
+                () => {}
+              )
+            );
+          }}
         >
           <TbSettings />
         </a>
@@ -604,9 +509,6 @@ export const ModelPickerTab = () => {
                 dataProvider={dataProvider}
                 selectedSchema={selectedSchema!}
                 onChangeSchema={setSelectedSchema}
-                onAddSchema={() => setAddSchemaDialog(true)}
-                onEditSchema={schema => setEditSchemaDialog({ open: true, schema })}
-                onDeleteSchema={handleDeleteSchema}
               />
             )}
           </div>
@@ -636,10 +538,6 @@ export const ModelPickerTab = () => {
         )}
       </Accordion.Root>
 
-      <DataProviderSettingsDialog
-        onClose={() => setProviderSettingsWindow(false)}
-        open={providerSettingsWindow}
-      />
       <EditItemDialog
         open={addItemDialog}
         onClose={() => setAddItemDialog(false)}
@@ -652,21 +550,6 @@ export const ModelPickerTab = () => {
         dataProvider={dataProvider}
         selectedSchema={selectedSchema}
         editItem={editItemDialog.item}
-      />
-      <EditSchemaDialog
-        title="Add Schema"
-        open={addSchemaDialog}
-        onOk={handleAddSchema}
-        onCancel={() => setAddSchemaDialog(false)}
-        availableSchemas={dataProvider?.schemas ?? []}
-      />
-      <EditSchemaDialog
-        title="Edit Schema"
-        open={editSchemaDialog.open}
-        onOk={handleUpdateSchema}
-        onCancel={() => setEditSchemaDialog({ open: false })}
-        schema={editSchemaDialog.schema}
-        availableSchemas={dataProvider?.schemas ?? []}
       />
     </ToolWindow.TabContent>
   );

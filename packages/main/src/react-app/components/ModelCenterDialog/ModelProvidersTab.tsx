@@ -1,4 +1,3 @@
-import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { DataProvider, DataProviderRegistry } from '@diagram-craft/model/dataProvider';
 import { useDocument } from '../../../application';
 import { UrlDataProvider, UrlDataProviderId } from '@diagram-craft/model/dataProviderUrl';
@@ -10,6 +9,8 @@ import { RESTDataProvider, RestDataProviderId } from '@diagram-craft/model/dataP
 import { Select } from '@diagram-craft/app-components/Select';
 import { useState } from 'react';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { Button } from '@diagram-craft/app-components/Button';
+import styles from './ModelProvidersTab.module.css';
 
 type ProviderSettingsProps<T extends DataProvider> = {
   provider: T;
@@ -19,9 +20,9 @@ const UrlDataProviderSettings = (props: ProviderSettingsProps<UrlDataProvider>) 
   const [dataUrl, setDataUrl] = useState<string>(props.provider.dataUrl!);
   const [schemaUrl, setSchemaUrl] = useState<string>(props.provider.schemaUrl!);
   return (
-    <div className={'util-vstack'}>
-      <div className={'util-vstack'} style={{ gap: '0.2rem' }}>
-        <label>{'Data URL'}:</label>
+    <div className={styles.modelProvidersTabStack}>
+      <div className={styles.modelProvidersTabSettingsGroup}>
+        <label className={styles.modelProvidersTabSettingsLabel}>{'Data URL'}:</label>
         <TextInput
           type="text"
           value={dataUrl}
@@ -31,8 +32,8 @@ const UrlDataProviderSettings = (props: ProviderSettingsProps<UrlDataProvider>) 
           }}
         />
       </div>
-      <div className={'util-vstack'} style={{ gap: '0.2rem' }}>
-        <label>{'Schema URL'}:</label>
+      <div className={styles.modelProvidersTabSettingsGroup}>
+        <label className={styles.modelProvidersTabSettingsLabel}>{'Schema URL'}:</label>
         <TextInput
           value={schemaUrl}
           onChange={v => {
@@ -46,15 +47,15 @@ const UrlDataProviderSettings = (props: ProviderSettingsProps<UrlDataProvider>) 
 };
 
 const DefaultDataProviderSettings = (_props: ProviderSettingsProps<DefaultDataProvider>) => {
-  return <div className={'util-vstack'}>No settings needed.</div>;
+  return <div className={styles.modelProvidersTabStack}>No settings needed.</div>;
 };
 
 const RESTDataProviderSettings = (props: ProviderSettingsProps<RESTDataProvider>) => {
   const [baseUrl, setBaseUrl] = useState<string>(props.provider.baseUrl || '');
   return (
-    <div className={'util-vstack'}>
-      <div className={'util-vstack'} style={{ gap: '0.2rem' }}>
-        <label>{'Base URL'}:</label>
+    <div className={styles.modelProvidersTabStack}>
+      <div className={styles.modelProvidersTabSettingsGroup}>
+        <label className={styles.modelProvidersTabSettingsLabel}>{'Base URL'}:</label>
         <TextInput
           type="text"
           value={baseUrl}
@@ -69,7 +70,7 @@ const RESTDataProviderSettings = (props: ProviderSettingsProps<RESTDataProvider>
   );
 };
 
-export function DataProviderSettingsDialog(props: { onClose: () => void; open: boolean }) {
+export const ModelProvidersTab = () => {
   const document = useDocument();
   const [provider, setProvider] = useState<DataProvider | undefined>(
     document.data.provider
@@ -80,40 +81,35 @@ export function DataProviderSettingsDialog(props: { onClose: () => void; open: b
     [provider?.id ?? 'none']: provider
   });
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
+  const [successMessage, setSuccessMessage] = useState<string | undefined>();
+
+  const handleSave = () => {
+    if (provider === undefined) {
+      document.data.setProvider(provider);
+      setSuccessMessage('Settings saved successfully');
+      setErrorMessage(undefined);
+    } else {
+      const error = provider.verifySettings();
+      error.then(f => {
+        if (!f) {
+          document.data.setProvider(provider);
+          setSuccessMessage('Settings saved successfully');
+          setErrorMessage(undefined);
+        } else {
+          setErrorMessage(f);
+          setSuccessMessage(undefined);
+        }
+      });
+    }
+  };
 
   return (
-    <Dialog
-      buttons={[
-        {
-          type: 'default',
-          label: 'Close',
-          onClick: e => {
-            if (provider === undefined) {
-              document.data.setProvider(provider);
-              props.onClose();
-            } else {
-              e.preventDefault();
+    <>
+      <div>Model Providers</div>
 
-              const error = provider.verifySettings();
-              error.then(f => {
-                if (!f) {
-                  document.data.setProvider(provider);
-                  props.onClose();
-                } else {
-                  setErrorMessage(f);
-                }
-              });
-            }
-          }
-        }
-      ]}
-      onClose={props.onClose}
-      open={props.open}
-      title={'Data Provider Settings'}
-    >
-      <div className={'util-vstack'}>
-        <div className={'util-vstack'} style={{ gap: '0.2rem' }}>
-          <label>Type of provider:</label>
+      <div className={styles.modelProvidersTabStack}>
+        <div className={styles.modelProvidersTabProviderGroup}>
+          <label className={styles.modelProvidersTabProviderLabel}>Type of provider:</label>
 
           <Select.Root
             value={provider?.id ?? 'none'}
@@ -128,6 +124,8 @@ export function DataProviderSettingsDialog(props: { onClose: () => void; open: b
               }
               setProviders({ ...providers, [v!]: p });
               setProvider(p);
+              setErrorMessage(undefined);
+              setSuccessMessage(undefined);
             }}
           >
             <Select.Item value={'none'}>None</Select.Item>
@@ -137,13 +135,21 @@ export function DataProviderSettingsDialog(props: { onClose: () => void; open: b
           </Select.Root>
         </div>
 
-        {errorMessage && <div style={{ color: 'var(--error-fg)' }}>{errorMessage}</div>}
+        {errorMessage && <div className={styles.modelProvidersTabErrorMessage}>{errorMessage}</div>}
+        {successMessage && <div className={styles.modelProvidersTabSuccessMessage}>{successMessage}</div>}
+
         {provider instanceof UrlDataProvider && <UrlDataProviderSettings provider={provider} />}
         {provider instanceof DefaultDataProvider && (
           <DefaultDataProviderSettings provider={provider} />
         )}
         {provider instanceof RESTDataProvider && <RESTDataProviderSettings provider={provider} />}
+
+        <div className={styles.modelProvidersTabSaveSection}>
+          <Button type="primary" onClick={handleSave}>
+            Save Settings
+          </Button>
+        </div>
       </div>
-    </Dialog>
+    </>
   );
-}
+};

@@ -71,3 +71,15 @@ export class DataProviderQuery {
     return Object.values(d).some(s => (s ?? '').toString().includes(this.query));
   }
 }
+
+export const isMutableSchemaProvider = (
+  provider: DataProvider
+): provider is DataProvider & MutableSchemaProvider => {
+  return 'addSchema' in provider && 'updateSchema' in provider && 'deleteSchema' in provider;
+};
+
+export const isMutableDataProvider = (
+  provider: DataProvider
+): provider is DataProvider & MutableDataProvider => {
+  return 'addData' in provider && 'updateData' in provider && 'deleteData' in provider;
+};
