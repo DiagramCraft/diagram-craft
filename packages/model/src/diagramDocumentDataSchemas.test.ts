@@ -48,7 +48,7 @@ describe.each(Backends.all())('DiagramDocumentDataSchemas [%s]', (_name, backend
       );
       const schema = diagramSchemas.get('unknown-id');
 
-      expect(schema).toEqual({ id: '', name: '', source: 'document', fields: [] });
+      expect(schema).toEqual({ id: '', name: '', providerId: 'document', fields: [] });
     });
   });
 

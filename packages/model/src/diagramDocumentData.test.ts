@@ -52,8 +52,8 @@ describe.each(Backends.all())('DiagramDocumentData [%s]', (_name, backend) => {
       docData1.setProvider(undefined);
 
       // Verify
-      expect(docData1.manager).toBeUndefined();
-      if (docData2) expect(docData2.manager).toBeUndefined();
+      expect(docData1.provider).toBeUndefined();
+      if (docData2) expect(docData2.provider).toBeUndefined();
     });
 
     it('calls listeners when provider changes', () => {
