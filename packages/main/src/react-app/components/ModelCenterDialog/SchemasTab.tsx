@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useApplication, useDocument } from '../../../application';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { Button } from '@diagram-craft/app-components/Button';
@@ -14,18 +14,8 @@ export const SchemasTab = () => {
   const [editSchemaDialog, setEditSchemaDialog] = useState<{ open: boolean; schema?: DataSchema }>({
     open: false
   });
-  const [schemas, setSchemas] = useState<DataSchema[]>([]);
-
   const dataProvider = document.data.db;
-
-  // Update schemas list when provider changes
-  useEffect(() => {
-    if (dataProvider?.schemas) {
-      setSchemas([...dataProvider.schemas]);
-    } else {
-      setSchemas([]);
-    }
-  }, [dataProvider?.schemas]);
+  const schemas = dataProvider?.schemas ?? [];
 
   // Handle schema operations
   const handleAddSchema = async (schema: DataSchema) => {
@@ -34,7 +24,6 @@ export const SchemasTab = () => {
     try {
       await dataProvider.addSchema(schema);
       setAddSchemaDialog(false);
-      setSchemas([...dataProvider.schemas]);
     } catch (error) {
       console.error('Failed to add schema:', error);
     }
@@ -46,7 +35,6 @@ export const SchemasTab = () => {
     try {
       await dataProvider.updateSchema(schema);
       setEditSchemaDialog({ open: false });
-      setSchemas([...dataProvider.schemas]);
     } catch (error) {
       console.error('Failed to update schema:', error);
     }
@@ -67,7 +55,6 @@ export const SchemasTab = () => {
         async () => {
           try {
             await dataProvider.deleteSchema(schema);
-            setSchemas([...dataProvider.schemas]);
           } catch (error) {
             console.error('Failed to delete schema:', error);
           }
