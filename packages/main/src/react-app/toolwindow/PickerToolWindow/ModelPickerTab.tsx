@@ -118,7 +118,7 @@ const DataProviderResponse = (props: {
   const app = useApplication();
   const diagram = useDiagram();
   const document = diagram.document;
-  const db = document.data.manager;
+  const db = document.data.db;
   const [expanded, setExpanded] = useState<string[]>([]);
   const [, setDataVersion] = useState<number>(0);
 
@@ -310,7 +310,7 @@ const DataProviderQueryView = (props: {
   onSearch: (s: string) => void;
 }) => {
   const document = useDocument();
-  const db = document.data.manager;
+  const db = document.data.db;
   const ref = useRef<HTMLInputElement>(null);
   const [search, setSearch] = useState<string>('');
 
@@ -380,7 +380,7 @@ export const ModelPickerTab = () => {
   const document = $diagram.document;
   const [search, setSearch] = useState<string>('');
 
-  const dataProvider = document.data.manager;
+  const dataProvider = document.data.db;
 
   useEffect(() => {
     if (!dataProvider) return;
@@ -413,7 +413,7 @@ export const ModelPickerTab = () => {
     setSelectedSchema(dataProvider.schemas[0].id);
   }
 
-  const provider = document.data.manager;
+  const db = document.data.db;
 
   // Handle delete confirmation
   const handleDeleteItem = (item: Data) => {
@@ -450,17 +450,15 @@ export const ModelPickerTab = () => {
       <ToolWindow.TabActions>
         <a
           className={'cmp-button cmp-button--icon-only'}
-          aria-disabled={
-            !provider || (!('refreshData' in provider) && !('refreshSchemas' in provider))
-          }
+          aria-disabled={!db || (!('refreshData' in db) && !('refreshSchemas' in db))}
           onClick={async () => {
-            assert.present(provider);
+            assert.present(db);
 
-            if ('refreshData' in provider) {
-              await provider.refreshData();
+            if ('refreshData' in db) {
+              await db.refreshData();
             }
-            if ('refreshSchemas' in provider) {
-              await provider.refreshSchemas();
+            if ('refreshSchemas' in db) {
+              await db.refreshSchemas();
             }
           }}
         >

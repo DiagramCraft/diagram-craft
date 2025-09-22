@@ -16,7 +16,7 @@ export const SchemasTab = () => {
   });
   const [schemas, setSchemas] = useState<DataSchema[]>([]);
 
-  const dataProvider = document.data.manager;
+  const dataProvider = document.data.db;
 
   // Update schemas list when provider changes
   useEffect(() => {

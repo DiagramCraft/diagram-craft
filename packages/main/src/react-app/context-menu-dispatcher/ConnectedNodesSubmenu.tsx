@@ -75,7 +75,7 @@ const getConnectedItems = (diagram: Diagram): ConnectionItem[] => {
           if (!referencedSchema) continue;
 
           // Find the actual data entries for these UIDs
-          const dataProvider = diagram.document.data.manager;
+          const dataProvider = diagram.document.data.db;
           if (!dataProvider) continue;
 
           const referencedData = dataProvider.getData(referencedSchema);

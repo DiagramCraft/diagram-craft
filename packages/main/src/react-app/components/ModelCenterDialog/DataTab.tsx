@@ -54,7 +54,7 @@ export const DataTab = () => {
     open: false
   });
 
-  const dataProvider = document.data.manager;
+  const dataProvider = document.data.db;
 
   // Collect all data items from all schemas
   useEffect(() => {

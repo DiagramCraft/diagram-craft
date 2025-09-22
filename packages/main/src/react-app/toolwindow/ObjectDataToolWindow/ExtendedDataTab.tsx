@@ -157,7 +157,7 @@ export const ExtendedDataTab = () => {
 
   const editExternalData = useCallback(
     (schema: string) => {
-      const db = $d.document.data.manager;
+      const db = $d.document.data.db;
       assert.present(db);
 
       // Get the external data item for editing

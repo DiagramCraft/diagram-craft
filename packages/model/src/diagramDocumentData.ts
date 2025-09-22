@@ -176,7 +176,7 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
     return this.#templates;
   }
 
-  get manager() {
+  get db() {
     return new DataManager(this.#provider);
   }
 }

@@ -25,7 +25,7 @@ const ReferenceFieldEditor = ({
   onSelectionChange
 }: ReferenceFieldEditorProps) => {
   const document = useDocument();
-  const db = document.data.manager;
+  const db = document.data.db;
 
   const referencedSchema = db.schemas?.find(s => s.id === field.schemaId);
   if (!referencedSchema) {
@@ -79,7 +79,7 @@ type EditItemDialogProps = {
 
 export const EditItemDialog = (props: EditItemDialogProps) => {
   const document = useDocument();
-  const db = document.data.manager;
+  const db = document.data.db;
   const [formData, setFormData] = useState<Record<string, string | string[]>>({});
   const [submitError, setSubmitError] = useState<string | undefined>();
 
