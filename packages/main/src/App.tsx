@@ -394,6 +394,7 @@ export const App = (props: {
           <ModelCenterDialog
             open={dialogState?.id === 'modelCenter'}
             onClose={() => dialogState?.onCancel?.()}
+            defaultTab={dialogState?.props?.defaultTab}
           />
           <ShapeSelectDialog
             open={dialogState?.id === 'shapeSelect'}

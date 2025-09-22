@@ -51,11 +51,15 @@ export class RuleEditorDialogCommand
   ) {}
 }
 
-export class ModelCenterDialogCommand implements DialogCommand<EmptyObject, void> {
+export type ModelCenterDialogProps = {
+  defaultTab?: 'data' | 'schemas' | 'model-providers';
+};
+
+export class ModelCenterDialogCommand implements DialogCommand<ModelCenterDialogProps, void> {
   id = 'modelCenter';
-  props = {};
 
   constructor(
+    public readonly props: ModelCenterDialogProps = {},
     public readonly onOk: () => void = () => {},
     public readonly onCancel: () => void = () => {}
   ) {}

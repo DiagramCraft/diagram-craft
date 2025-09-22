@@ -28,7 +28,7 @@ import { DRAG_DROP_MANAGER } from '@diagram-craft/canvas/dragDropManager';
 import { ObjectPickerDrag } from './objectPickerDrag';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { assert } from '@diagram-craft/utils/assert';
-import { DataProviderSettingsDialog } from './DataProviderSettingsDialog';
+import { ModelCenterDialogCommand } from '@diagram-craft/canvas-app/dialogs';
 import { Button } from '@diagram-craft/app-components/Button';
 import { PickerCanvas } from '../../PickerCanvas';
 import { DataTemplate } from '@diagram-craft/model/diagramDocument';
@@ -421,7 +421,6 @@ export const ModelPickerTab = () => {
   const redraw = useRedraw();
   const $diagram = useDiagram();
   const application = useApplication();
-  const [providerSettingsWindow, setProviderSettingsWindow] = useState<boolean>(false);
   const [addItemDialog, setAddItemDialog] = useState<boolean>(false);
   const [editItemDialog, setEditItemDialog] = useState<{ open: boolean; item?: Data }>({
     open: false
@@ -581,7 +580,15 @@ export const ModelPickerTab = () => {
         </a>
         <a
           className={'cmp-button cmp-button--icon-only'}
-          onClick={() => setProviderSettingsWindow(true)}
+          onClick={() => {
+            application.ui.showDialog(
+              new ModelCenterDialogCommand(
+                { defaultTab: 'model-providers' },
+                () => {},
+                () => {}
+              )
+            );
+          }}
         >
           <TbSettings />
         </a>
@@ -636,10 +643,6 @@ export const ModelPickerTab = () => {
         )}
       </Accordion.Root>
 
-      <DataProviderSettingsDialog
-        onClose={() => setProviderSettingsWindow(false)}
-        open={providerSettingsWindow}
-      />
       <EditItemDialog
         open={addItemDialog}
         onClose={() => setAddItemDialog(false)}

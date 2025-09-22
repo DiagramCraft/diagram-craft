@@ -1,19 +1,30 @@
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePortal } from '@diagram-craft/app-components/PortalContext';
 import styles from './ModelCenterDialog.module.css';
 import { TbX } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
+import { DataTab } from './ModelCenterDialog/DataTab';
+import { SchemasTab } from './ModelCenterDialog/SchemasTab';
+import { ModelProvidersTab } from './ModelCenterDialog/ModelProvidersTab';
 
 type Props = {
   open: boolean;
   onClose: () => void;
+  defaultTab?: 'data' | 'schemas' | 'model-providers';
 };
 
 export const ModelCenterDialog = (props: Props) => {
   const portal = usePortal();
-  const [activeTab, setActiveTab] = useState('data');
+  const [activeTab, setActiveTab] = useState(props.defaultTab ?? 'data');
+
+  // Reset to defaultTab when dialog is opened
+  useEffect(() => {
+    if (props.open) {
+      setActiveTab(props.defaultTab ?? 'data');
+    }
+  }, [props.open, props.defaultTab]);
 
   return (
     <AlertDialog.Root
@@ -47,7 +58,10 @@ export const ModelCenterDialog = (props: Props) => {
               </div>
             </AlertDialog.Title>
             <div className={styles.modelCenterDialogMainContent}>
-              <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
+              <Tabs.Root
+                value={activeTab}
+                onValueChange={(value) => setActiveTab(value as 'data' | 'schemas' | 'model-providers')}
+              >
                 <Tabs.List>
                   <Tabs.Trigger value="data">Data</Tabs.Trigger>
                   <Tabs.Trigger value="schemas">Schemas</Tabs.Trigger>
@@ -55,24 +69,15 @@ export const ModelCenterDialog = (props: Props) => {
                 </Tabs.List>
 
                 <Tabs.Content value="data">
-                  <div>
-                    <h3>Data Management</h3>
-                    <p>Manage your data sources and datasets here.</p>
-                  </div>
+                  <DataTab />
                 </Tabs.Content>
 
                 <Tabs.Content value="schemas">
-                  <div>
-                    <h3>Schema Management</h3>
-                    <p>Define and manage your data schemas here.</p>
-                  </div>
+                  <SchemasTab />
                 </Tabs.Content>
 
                 <Tabs.Content value="model-providers">
-                  <div>
-                    <h3>Model Providers</h3>
-                    <p>Configure and manage your model providers here.</p>
-                  </div>
+                  <ModelProvidersTab />
                 </Tabs.Content>
               </Tabs.Root>
             </div>
