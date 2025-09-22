@@ -196,7 +196,7 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
 
     if (document.schemas) {
       for (const schema of document.schemas) {
-        doc.data.schemas.add(schema);
+        doc.data._schemas.add(schema);
       }
     }
 

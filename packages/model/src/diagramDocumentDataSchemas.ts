@@ -135,11 +135,11 @@ export class DeleteSchemaUndoableAction implements UndoableAction {
   ) {}
 
   undo() {
-    this.diagram.document.data.schemas.add(this.schema);
+    this.diagram.document.data.db.addSchema(this.schema);
   }
 
-  redo(uow: UnitOfWork) {
-    this.diagram.document.data.schemas.removeAndClearUsage(this.schema, uow);
+  redo() {
+    this.diagram.document.data.db.deleteSchema(this.schema);
   }
 }
 
@@ -151,12 +151,12 @@ export class AddSchemaUndoableAction implements UndoableAction {
     private readonly schema: DataSchema
   ) {}
 
-  undo(uow: UnitOfWork) {
-    this.diagram.document.data.schemas.removeAndClearUsage(this.schema, uow);
+  undo() {
+    this.diagram.document.data.db.deleteSchema(this.schema);
   }
 
   redo() {
-    this.diagram.document.data.schemas.add(this.schema);
+    this.diagram.document.data.db.addSchema(this.schema);
   }
 }
 
@@ -171,14 +171,14 @@ export class ModifySchemaUndoableAction implements UndoableAction {
     schema: DataSchema
   ) {
     this.schema = deepClone(schema);
-    this.oldSchema = deepClone(this.diagram.document.data.schemas.get(schema.id));
+    this.oldSchema = deepClone(this.diagram.document.data.db.getSchema(schema.id));
   }
 
   undo() {
-    this.diagram.document.data.schemas.update(this.oldSchema);
+    this.diagram.document.data.db.updateSchema(this.oldSchema);
   }
 
   redo() {
-    this.diagram.document.data.schemas.update(this.schema);
+    this.diagram.document.data.db.updateSchema(this.schema);
   }
 }

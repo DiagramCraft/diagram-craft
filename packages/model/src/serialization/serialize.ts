@@ -29,7 +29,7 @@ export const serializeDiagramDocument = async (
     attachments: await serializeAttachments(document.attachments),
     customPalette: serializeCustomPalette(document.customPalette),
     styles: serializeStyles(document.styles),
-    schemas: serializeSchemas(document.data.schemas),
+    schemas: serializeSchemas(document.data._schemas),
     props: {
       query: {
         history: document.props.query.history,

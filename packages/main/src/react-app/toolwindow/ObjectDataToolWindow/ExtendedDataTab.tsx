@@ -4,33 +4,16 @@ import { useApplication, useDiagram } from '../../../application';
 import { useRedraw } from '../../hooks/useRedraw';
 import React, { ChangeEvent, useCallback, useState } from 'react';
 import type { Data } from '@diagram-craft/model/dataProvider';
-import {
-  AddSchemaUndoableAction,
-  DataSchema,
-  DeleteSchemaUndoableAction,
-  ModifySchemaUndoableAction
-} from '@diagram-craft/model/diagramDocumentDataSchemas';
+import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { useEventListener } from '../../hooks/useEventListener';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
-import { commitWithUndo, SnapshotUndoableAction } from '@diagram-craft/model/diagramUndoActions';
+import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { unique } from '@diagram-craft/utils/array';
 import type { DiagramElement } from '@diagram-craft/model/diagramElement';
-import {
-  TbDots,
-  TbFilter,
-  TbFilterOff,
-  TbLink,
-  TbLinkOff,
-  TbPencil,
-  TbTablePlus
-} from 'react-icons/tb';
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { MessageDialogCommand } from '@diagram-craft/canvas/context';
-import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
+import { TbFilter, TbFilterOff, TbLink, TbLinkOff, TbPencil } from 'react-icons/tb';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { EditItemDialog } from '../../components/EditItemDialog';
-import { EditSchemaDialog } from '../../components/EditSchemaDialog';
 import { ToolWindow } from '../ToolWindow';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 
@@ -48,10 +31,6 @@ export const ExtendedDataTab = () => {
     schema?: string;
   }>({ open: false });
 
-  const [editSchemaDialog, setEditSchemaDialog] = useState<{
-    open: boolean;
-    schema?: DataSchema;
-  }>({ open: false });
   const [editMode, setEditMode] = useState(true);
 
   useEventListener($d.selectionState, 'change', redraw);
@@ -179,15 +158,6 @@ export const ExtendedDataTab = () => {
     [$d, setEditItemDialog]
   );
 
-  const saveSchema = useCallback((s: DataSchema) => {
-    const schemas = $d.document.data.schemas;
-    const isNew = schemas.get(s.id).id === '';
-    $d.undoManager.addAndExecute(
-      isNew ? new AddSchemaUndoableAction($d, s) : new ModifySchemaUndoableAction($d, s)
-    );
-    redraw();
-  }, []);
-
   const customDataKeys = unique(
     $d.selectionState.elements.flatMap(e => Object.keys(e.metadata.data?.customData ?? {}))
   ).toSorted();
@@ -207,13 +177,6 @@ export const ExtendedDataTab = () => {
         <ToolWindow.TabActions>
           <a
             className={'cmp-button cmp-button--icon-only'}
-            onClick={() => setEditSchemaDialog({ open: true, schema: undefined })}
-            title="Add new schema"
-          >
-            <TbTablePlus />
-          </a>
-          <a
-            className={'cmp-button cmp-button--icon-only'}
             style={{ color: !editMode ? 'var(--accent-fg)' : undefined }}
             onClick={() => setEditMode(v => !v)}
           >
@@ -228,7 +191,7 @@ export const ExtendedDataTab = () => {
         >
           <Accordion.Root type={'multiple'} defaultValue={['_custom', ...enabledSchemas]}>
             {/* Show all schemas, but conditionally render content */}
-            {$d.document.data.schemas.all.map(schema => {
+            {$d.document.data.db.schemas.map(schema => {
               const isSchemaEnabled = enabledSchemas.includes(schema.id);
               const isExternal = $d.selectionState.elements.some(
                 e => e.metadata.data?.data?.find(d => d.schema === schema.id)?.type === 'external'
@@ -307,64 +270,6 @@ export const ExtendedDataTab = () => {
                         >
                           <TbLink />
                         </a>
-                      )}
-                      {schema.providerId === 'document' && (
-                        <DropdownMenu.Root>
-                          <DropdownMenu.Trigger asChild>
-                            <a
-                              className={'cmp-button cmp-button--icon-only'}
-                              title="Schema options"
-                            >
-                              <TbDots />
-                            </a>
-                          </DropdownMenu.Trigger>
-                          <DropdownMenu.Portal>
-                            <DropdownMenu.Content className="cmp-context-menu" sideOffset={2}>
-                              <DropdownMenu.Item
-                                className="cmp-context-menu__item"
-                                onClick={() => setEditSchemaDialog({ open: true, schema: schema })}
-                              >
-                                Edit Schema
-                              </DropdownMenu.Item>
-                              <DropdownMenu.Item
-                                className="cmp-context-menu__item"
-                                onClick={() => {
-                                  application.ui.showDialog(
-                                    new MessageDialogCommand(
-                                      {
-                                        title: 'Confirm delete',
-                                        message: 'Are you sure you want to delete this schema?',
-                                        okLabel: 'Yes',
-                                        okType: 'danger',
-                                        cancelLabel: 'No'
-                                      },
-                                      () => {
-                                        const uow = new UnitOfWork($d, true);
-                                        const schemas = $d.document.data.schemas;
-                                        schemas.removeAndClearUsage(schema, uow);
-
-                                        const snapshots = uow.commit();
-                                        $d.undoManager.add(
-                                          new CompoundUndoableAction([
-                                            new DeleteSchemaUndoableAction(uow.diagram, schema),
-                                            new SnapshotUndoableAction(
-                                              'Delete schema',
-                                              uow.diagram,
-                                              snapshots
-                                            )
-                                          ])
-                                        );
-                                        redraw();
-                                      }
-                                    )
-                                  );
-                                }}
-                              >
-                                Delete Schema
-                              </DropdownMenu.Item>
-                            </DropdownMenu.Content>
-                          </DropdownMenu.Portal>
-                        </DropdownMenu.Root>
                       )}
                     </Accordion.ItemHeaderButtons>
                   </Accordion.ItemHeader>
@@ -446,17 +351,6 @@ export const ExtendedDataTab = () => {
         onClose={() => setEditItemDialog({ open: false })}
         selectedSchema={editItemDialog.schema}
         editItem={editItemDialog.item}
-      />
-      <EditSchemaDialog
-        title={editSchemaDialog.schema ? 'Edit Schema' : 'New Schema'}
-        open={editSchemaDialog.open}
-        schema={editSchemaDialog.schema}
-        onOk={schema => {
-          saveSchema(schema);
-          setEditSchemaDialog({ open: false });
-        }}
-        onCancel={() => setEditSchemaDialog({ open: false })}
-        availableSchemas={$d.document.data.schemas.all}
       />
     </>
   );

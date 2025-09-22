@@ -164,7 +164,7 @@ export class ExternalDataLinkAction extends AbstractSelectionAction<Application,
         commitWithUndo(uow, 'Link external data');
       },
       props: {
-        schema: this.context.model.activeDocument.data.schemas.get(arg.schemaId!)!
+        schema: this.context.model.activeDocument.data.db.getSchema(arg.schemaId!)!
       }
     });
   }

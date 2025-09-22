@@ -51,11 +51,11 @@ const makeDataListener =
   };
 
 const makeDeleteSchemaListener = (document: DiagramDocument) => (s: DataSchema) => {
-  document.data.schemas.removeAndClearUsage(s, UnitOfWork.immediate(document.diagrams[0]));
+  document.data._schemas.removeAndClearUsage(s, UnitOfWork.immediate(document.diagrams[0]));
 };
 
 const makeUpdateSchemaListener = (document: DiagramDocument) => (s: DataSchema) => {
-  const schemas = document.data.schemas;
+  const schemas = document.data._schemas;
   if (schemas.has(s.id)) {
     if (deepEquals(schemas.get(s.id), s)) return;
     schemas.update(s);
@@ -168,7 +168,7 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
     return this.#provider;
   }
 
-  get schemas() {
+  get _schemas() {
     return this.#schemas;
   }
 
@@ -206,6 +206,10 @@ export class DataManager extends EventEmitter<DataProviderEventMap> {
     const r = this.schemas.find(s => s.id === schema);
     assert.present(r);
     return r;
+  }
+
+  findSchemaByName(name: string): DataSchema | undefined {
+    return this.schemas.find(s => s.name === name);
   }
 
   addSchema(schema: DataSchema) {
