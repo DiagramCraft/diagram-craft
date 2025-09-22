@@ -328,13 +328,11 @@ export const DataTab = () => {
       <EditItemDialog
         open={addItemDialog.open}
         onClose={() => setAddItemDialog({ open: false })}
-        dataManager={dataProvider}
         selectedSchema={addItemDialog.schemaId}
       />
       <EditItemDialog
         open={editItemDialog.open}
         onClose={() => setEditItemDialog({ open: false })}
-        dataManager={dataProvider}
         selectedSchema={editItemDialog.schema?.id}
         editItem={editItemDialog.item}
       />

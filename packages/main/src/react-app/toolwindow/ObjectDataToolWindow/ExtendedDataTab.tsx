@@ -444,7 +444,6 @@ export const ExtendedDataTab = () => {
       <EditItemDialog
         open={editItemDialog.open}
         onClose={() => setEditItemDialog({ open: false })}
-        dataManager={$d.document.data.manager}
         selectedSchema={editItemDialog.schema}
         editItem={editItemDialog.item}
       />

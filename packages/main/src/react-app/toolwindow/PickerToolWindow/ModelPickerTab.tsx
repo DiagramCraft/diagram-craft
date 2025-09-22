@@ -1,5 +1,5 @@
 import { Accordion } from '@diagram-craft/app-components/Accordion';
-import { useApplication, useDiagram } from '../../../application';
+import { useApplication, useDiagram, useDocument } from '../../../application';
 import { Select } from '@diagram-craft/app-components/Select';
 import { Data } from '@diagram-craft/model/dataProvider';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
@@ -36,7 +36,6 @@ import { EditItemDialog } from '../../components/EditItemDialog';
 import { ToolWindow } from '../ToolWindow';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { ModelCenterDialogCommand } from '../../components/ModelCenterDialog/ModelCenterDialog';
-import type { DataManager } from '@diagram-craft/model/diagramDocumentData';
 
 const NODE_CACHE = new Map<string, DiagramNode>();
 
@@ -111,7 +110,6 @@ const makeDefaultNode = (item: Data, schema: DataSchema, definitions: Definition
 };
 
 const DataProviderResponse = (props: {
-  dataProvider: DataManager;
   selectedSchema: string;
   search: string;
   onEditItem: (item: Data) => void;
@@ -120,34 +118,30 @@ const DataProviderResponse = (props: {
   const app = useApplication();
   const diagram = useDiagram();
   const document = diagram.document;
+  const db = document.data.manager;
   const [expanded, setExpanded] = useState<string[]>([]);
   const [, setDataVersion] = useState<number>(0);
 
   useEffect(() => {
-    if (!props.dataProvider) return;
+    if (!db) return;
 
     const handleDataChange = () => setDataVersion(prev => prev + 1);
 
-    props.dataProvider.on('addData', handleDataChange);
-    props.dataProvider.on('updateData', handleDataChange);
-    props.dataProvider.on('deleteData', handleDataChange);
+    db.on('addData', handleDataChange);
+    db.on('updateData', handleDataChange);
+    db.on('deleteData', handleDataChange);
 
     return () => {
-      props.dataProvider.off('addData', handleDataChange);
-      props.dataProvider.off('updateData', handleDataChange);
-      props.dataProvider.off('deleteData', handleDataChange);
+      db.off('addData', handleDataChange);
+      db.off('updateData', handleDataChange);
+      db.off('deleteData', handleDataChange);
     };
-  }, [props.dataProvider]);
+  }, [db]);
 
-  const schema =
-    props.dataProvider?.schemas?.find(s => s.id === props.selectedSchema) ??
-    props.dataProvider?.schemas?.[0];
+  const schema = db?.schemas?.find(s => s.id === props.selectedSchema) ?? db?.schemas?.[0];
   if (!schema) return <div>Loading...</div>;
 
-  const data =
-    props.search.trim() !== ''
-      ? props.dataProvider.queryData(schema, props.search)
-      : props.dataProvider.getData(schema);
+  const data = props.search.trim() !== '' ? db.queryData(schema, props.search) : db.getData(schema);
   const isRuleLayer = diagram.activeLayer.type === 'rule';
 
   return (
@@ -311,11 +305,12 @@ const DataProviderResponse = (props: {
 };
 
 const DataProviderQueryView = (props: {
-  dataProvider: DataManager;
   selectedSchema: string;
   onChangeSchema: (s: string | undefined) => void;
   onSearch: (s: string) => void;
 }) => {
+  const document = useDocument();
+  const db = document.data.manager;
   const ref = useRef<HTMLInputElement>(null);
   const [search, setSearch] = useState<string>('');
 
@@ -324,7 +319,7 @@ const DataProviderQueryView = (props: {
       <div className={'util-hstack'}>
         <div style={{ flexGrow: 1 }}>
           <Select.Root value={props.selectedSchema} onChange={props.onChangeSchema}>
-            {props.dataProvider.schemas?.map?.(schema => (
+            {db.schemas?.map?.(schema => (
               <Select.Item key={schema.id} value={schema.id}>
                 {schema.name}
               </Select.Item>
@@ -501,7 +496,6 @@ export const ModelPickerTab = () => {
             {dataProvider !== undefined && (
               <DataProviderQueryView
                 onSearch={setSearch}
-                dataProvider={dataProvider}
                 selectedSchema={selectedSchema!}
                 onChangeSchema={setSelectedSchema}
               />
@@ -523,7 +517,6 @@ export const ModelPickerTab = () => {
             }
           >
             <DataProviderResponse
-              dataProvider={dataProvider}
               selectedSchema={selectedSchema!}
               search={search}
               onEditItem={item => setEditItemDialog({ open: true, item })}
@@ -536,13 +529,11 @@ export const ModelPickerTab = () => {
       <EditItemDialog
         open={addItemDialog}
         onClose={() => setAddItemDialog(false)}
-        dataManager={dataProvider}
         selectedSchema={selectedSchema}
       />
       <EditItemDialog
         open={editItemDialog.open}
         onClose={() => setEditItemDialog({ open: false })}
-        dataManager={dataProvider}
         selectedSchema={selectedSchema}
         editItem={editItemDialog.item}
       />

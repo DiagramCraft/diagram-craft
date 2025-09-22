@@ -11,27 +11,28 @@ import {
 import { newid } from '@diagram-craft/utils/id';
 import { assert } from '@diagram-craft/utils/assert';
 import React, { useState } from 'react';
-import { DataManager } from '@diagram-craft/model/diagramDocumentData';
+import { useDocument } from '../../application';
 
 type ReferenceFieldEditorProps = {
   field: DataSchemaField & { type: 'reference' };
-  dataProvider: DataManager;
   selectedValues: string[];
   onSelectionChange: (values: string[]) => void;
 };
 
 const ReferenceFieldEditor = ({
   field,
-  dataProvider,
   selectedValues,
   onSelectionChange
 }: ReferenceFieldEditorProps) => {
-  const referencedSchema = dataProvider.schemas?.find(s => s.id === field.schemaId);
+  const document = useDocument();
+  const db = document.data.manager;
+
+  const referencedSchema = db.schemas?.find(s => s.id === field.schemaId);
   if (!referencedSchema) {
     return <div>Referenced schema not found</div>;
   }
 
-  const referencedData = dataProvider.getData(referencedSchema);
+  const referencedData = db.getData(referencedSchema);
   const displayField = referencedSchema.fields[0]?.id; // Use first field for display
 
   // Convert data to MultiSelectItem format
@@ -72,23 +73,22 @@ const ReferenceFieldEditor = ({
 type EditItemDialogProps = {
   open: boolean;
   onClose: () => void;
-  dataManager: DataManager | undefined;
   selectedSchema: string | undefined;
   editItem?: Data; // If provided, we're editing this item instead of creating new
 };
 
 export const EditItemDialog = (props: EditItemDialogProps) => {
+  const document = useDocument();
+  const db = document.data.manager;
   const [formData, setFormData] = useState<Record<string, string | string[]>>({});
   const [submitError, setSubmitError] = useState<string | undefined>();
 
-  if (!props.dataManager) return <div></div>;
-  assert.present(props.dataManager);
+  if (!db) return <div></div>;
+  assert.present(db);
 
-  const dataProvider = props.dataManager;
+  const dataProvider = db;
 
-  const schema =
-    props.dataManager.schemas?.find(s => s.id === props.selectedSchema) ??
-    props.dataManager.schemas?.[0];
+  const schema = db.schemas?.find(s => s.id === props.selectedSchema) ?? db.schemas?.[0];
 
   if (!schema) return <div></div>;
   assert.present(schema);
@@ -232,7 +232,6 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
             {field.type === 'reference' ? (
               <ReferenceFieldEditor
                 field={field}
-                dataProvider={dataProvider}
                 selectedValues={(formData[field.id] as string[]) || []}
                 onSelectionChange={values => setFormData(prev => ({ ...prev, [field.id]: values }))}
               />
