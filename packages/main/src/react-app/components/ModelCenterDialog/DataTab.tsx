@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useApplication, useDocument } from '../../../application';
-import { Data, isMutableDataProvider } from '@diagram-craft/model/dataProvider';
+import { Data } from '@diagram-craft/model/dataProvider';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
@@ -54,7 +54,7 @@ export const DataTab = () => {
     open: false
   });
 
-  const dataProvider = document.data.provider;
+  const dataProvider = document.data.manager;
 
   // Collect all data items from all schemas
   useEffect(() => {
@@ -110,7 +110,7 @@ export const DataTab = () => {
   }, [allDataItems, selectedSchemaId]);
 
   const handleDeleteItem = (item: DataItemWithSchema) => {
-    if (!dataProvider || !isMutableDataProvider(dataProvider)) return;
+    if (!dataProvider || !dataProvider.isMutable()) return;
 
     const displayValue = item._schema.fields[0] ? item[item._schema.fields[0].id] : item._uid;
     const itemName = displayValue ?? 'this item';
@@ -151,7 +151,7 @@ export const DataTab = () => {
     return value;
   };
 
-  const canMutateData = dataProvider && isMutableDataProvider(dataProvider);
+  const canMutateData = dataProvider && dataProvider.isMutable();
   const hasSchemas = dataProvider?.schemas && dataProvider.schemas.length > 0;
 
   return (
@@ -328,13 +328,13 @@ export const DataTab = () => {
       <EditItemDialog
         open={addItemDialog.open}
         onClose={() => setAddItemDialog({ open: false })}
-        dataProvider={dataProvider}
+        dataManager={dataProvider}
         selectedSchema={addItemDialog.schemaId}
       />
       <EditItemDialog
         open={editItemDialog.open}
         onClose={() => setEditItemDialog({ open: false })}
-        dataProvider={dataProvider}
+        dataManager={dataProvider}
         selectedSchema={editItemDialog.schema?.id}
         editItem={editItemDialog.item}
       />

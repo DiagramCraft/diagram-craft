@@ -48,10 +48,10 @@ export const serializeDiagramDocument = async (
   const jsonString = JSON.stringify(serialized);
   const jsonBytes = new TextEncoder().encode(jsonString);
   const hashValue = hash64(jsonBytes);
-  
+
   // Set the hash on both the serialized data and the original document
   document.hash = hashValue;
-  
+
   return {
     ...serialized,
     hash: hashValue

@@ -2,7 +2,7 @@ import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { MultiSelect, MultiSelectItem } from '@diagram-craft/app-components/MultiSelect';
-import { Data, DataProvider, MutableDataProvider } from '@diagram-craft/model/dataProvider';
+import { Data } from '@diagram-craft/model/dataProvider';
 import {
   DataSchemaField,
   decodeDataReferences,
@@ -11,10 +11,11 @@ import {
 import { newid } from '@diagram-craft/utils/id';
 import { assert } from '@diagram-craft/utils/assert';
 import React, { useState } from 'react';
+import { DataManager } from '@diagram-craft/model/diagramDocumentData';
 
 type ReferenceFieldEditorProps = {
   field: DataSchemaField & { type: 'reference' };
-  dataProvider: DataProvider;
+  dataProvider: DataManager;
   selectedValues: string[];
   onSelectionChange: (values: string[]) => void;
 };
@@ -71,7 +72,7 @@ const ReferenceFieldEditor = ({
 type EditItemDialogProps = {
   open: boolean;
   onClose: () => void;
-  dataProvider: DataProvider | undefined;
+  dataManager: DataManager | undefined;
   selectedSchema: string | undefined;
   editItem?: Data; // If provided, we're editing this item instead of creating new
 };
@@ -80,14 +81,14 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
   const [formData, setFormData] = useState<Record<string, string | string[]>>({});
   const [submitError, setSubmitError] = useState<string | undefined>();
 
-  if (!props.dataProvider) return <div></div>;
-  assert.present(props.dataProvider);
+  if (!props.dataManager) return <div></div>;
+  assert.present(props.dataManager);
 
-  const dataProvider = props.dataProvider;
+  const dataProvider = props.dataManager;
 
   const schema =
-    props.dataProvider.schemas?.find(s => s.id === props.selectedSchema) ??
-    props.dataProvider.schemas?.[0];
+    props.dataManager.schemas?.find(s => s.id === props.selectedSchema) ??
+    props.dataManager.schemas?.[0];
 
   if (!schema) return <div></div>;
   assert.present(schema);
@@ -164,9 +165,9 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
       };
 
       if (isEditing) {
-        await (dataProvider as MutableDataProvider).updateData(schema, itemData);
+        await dataProvider.updateData(schema, itemData);
       } else {
-        await (dataProvider as MutableDataProvider).addData(schema, itemData);
+        await dataProvider.addData(schema, itemData);
       }
 
       // Only close dialog and reset form on success

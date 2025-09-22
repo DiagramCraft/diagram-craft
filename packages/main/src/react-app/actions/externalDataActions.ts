@@ -153,7 +153,7 @@ export class ExternalDataLinkAction extends AbstractSelectionAction<Application,
             };
             item.type = 'external';
 
-            const [data] = $d.document.data.provider!.getById([v]);
+            const [data] = $d.document.data.manager!.getById([v]);
             for (const k of Object.keys(data)) {
               if (k.startsWith('_')) continue;
               item.data[k] = data[k];

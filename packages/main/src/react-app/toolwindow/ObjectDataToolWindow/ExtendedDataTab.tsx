@@ -157,7 +157,7 @@ export const ExtendedDataTab = () => {
 
   const editExternalData = useCallback(
     (schema: string) => {
-      const dataProvider = $d.document.data.provider;
+      const dataProvider = $d.document.data.manager;
       assert.present(dataProvider);
 
       // Get the external data item for editing
@@ -444,7 +444,7 @@ export const ExtendedDataTab = () => {
       <EditItemDialog
         open={editItemDialog.open}
         onClose={() => setEditItemDialog({ open: false })}
-        dataProvider={$d.document.data.provider}
+        dataManager={$d.document.data.manager}
         selectedSchema={editItemDialog.schema}
         editItem={editItemDialog.item}
       />

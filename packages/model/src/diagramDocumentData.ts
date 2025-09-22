@@ -1,11 +1,22 @@
-import { Data, DataProvider, DataProviderRegistry } from './dataProvider';
+import {
+  Data,
+  DataProvider,
+  type DataProviderEventMap,
+  DataProviderRegistry,
+  isMutableDataProvider,
+  isMutableSchemaProvider,
+  type MutableDataProvider,
+  type RefreshableDataProvider,
+  type RefreshableSchemaProvider
+} from './dataProvider';
 import { DataSchema, DiagramDocumentDataSchemas } from './diagramDocumentDataSchemas';
 import type { DiagramDocument } from './diagramDocument';
 import { DiagramDocumentDataTemplates } from './diagramDocumentDataTemplates';
 import { UnitOfWork } from './unitOfWork';
 import { deepEquals } from '@diagram-craft/utils/object';
-import { EventEmitter } from '@diagram-craft/utils/event';
+import { EventEmitter, type EventKey, type EventReceiver } from '@diagram-craft/utils/event';
 import { CRDTMap, CRDTMapEvents, CRDTRoot } from './collaboration/crdt';
+import { VerifyNotReached } from '@diagram-craft/utils/assert';
 
 const makeDataListener =
   (document: DiagramDocument, mode: 'update' | 'delete') => (data: { data: Data[] }) => {
@@ -121,10 +132,6 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
     this.#crdt.on('remoteInsert', updateProvider);
   }
 
-  get provider() {
-    return this.#provider;
-  }
-
   private setProviderInternal(dataProvider: DataProvider | undefined, initial = false) {
     this.#provider?.off?.('addData', this.#updateDataListener);
     this.#provider?.off?.('updateData', this.#updateDataListener);
@@ -157,11 +164,99 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
     );
   }
 
+  get provider() {
+    return this.#provider;
+  }
+
   get schemas() {
     return this.#schemas;
   }
 
   get templates() {
     return this.#templates;
+  }
+
+  get manager() {
+    return new DataManager(this.#provider);
+  }
+}
+
+export class DataManager extends EventEmitter<DataProviderEventMap> {
+  constructor(private readonly provider: DataProvider | undefined) {
+    super();
+  }
+
+  isMutable() {
+    return isMutableDataProvider(this.provider!);
+  }
+
+  isMutableSchema() {
+    return isMutableSchemaProvider(this.provider!);
+  }
+
+  refreshData() {
+    return (this.provider as RefreshableDataProvider).refreshData();
+  }
+
+  refreshSchemas() {
+    return (this.provider as unknown as RefreshableSchemaProvider).refreshSchemas();
+  }
+
+  addSchema(schema: DataSchema) {
+    if (!isMutableSchemaProvider(this.provider!)) throw new VerifyNotReached();
+    return this.provider.addSchema(schema);
+  }
+
+  updateSchema(schema: DataSchema) {
+    if (!isMutableSchemaProvider(this.provider!)) throw new VerifyNotReached();
+    return this.provider.updateSchema(schema);
+  }
+
+  deleteSchema(schema: DataSchema) {
+    if (!isMutableSchemaProvider(this.provider!)) throw new VerifyNotReached();
+    return this.provider.deleteSchema(schema);
+  }
+
+  getData(schema: DataSchema) {
+    return this.provider?.getData(schema) ?? [];
+  }
+
+  get schemas() {
+    return this.provider?.schemas ?? [];
+  }
+
+  getById(ids: string[]) {
+    return this.provider?.getById(ids) ?? [];
+  }
+
+  queryData(schema: DataSchema, query: string) {
+    return this.provider?.queryData(schema, query);
+  }
+
+  deleteData(schema: DataSchema, data: Data) {
+    return (this.provider as MutableDataProvider)?.deleteData(schema, data);
+  }
+
+  updateData(schema: DataSchema, data: Data) {
+    return (this.provider as MutableDataProvider)?.updateData(schema, data);
+  }
+
+  addData(schema: DataSchema, data: Data) {
+    return (this.provider as MutableDataProvider)?.addData(schema, data);
+  }
+
+  on<K extends EventKey<DataProviderEventMap>>(
+    eventName: K,
+    fn: EventReceiver<DataProviderEventMap[K]>,
+    id?: string
+  ) {
+    this.provider?.on(eventName, fn, id);
+  }
+
+  off<K extends EventKey<DataProviderEventMap>>(
+    eventName: K,
+    fnOrId: EventReceiver<DataProviderEventMap[K]> | string
+  ) {
+    this.provider?.off(eventName, fnOrId);
   }
 }

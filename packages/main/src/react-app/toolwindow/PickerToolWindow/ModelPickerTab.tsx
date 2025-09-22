@@ -1,13 +1,7 @@
 import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { useApplication, useDiagram } from '../../../application';
 import { Select } from '@diagram-craft/app-components/Select';
-import {
-  Data,
-  DataProvider,
-  type MutableDataProvider,
-  RefreshableDataProvider,
-  RefreshableSchemaProvider
-} from '@diagram-craft/model/dataProvider';
+import { Data } from '@diagram-craft/model/dataProvider';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { useEffect, useRef, useState } from 'react';
 import { useRedraw } from '../../hooks/useRedraw';
@@ -42,6 +36,7 @@ import { EditItemDialog } from '../../components/EditItemDialog';
 import { ToolWindow } from '../ToolWindow';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { ModelCenterDialogCommand } from '../../components/ModelCenterDialog/ModelCenterDialog';
+import type { DataManager } from '@diagram-craft/model/diagramDocumentData';
 
 const NODE_CACHE = new Map<string, DiagramNode>();
 
@@ -116,7 +111,7 @@ const makeDefaultNode = (item: Data, schema: DataSchema, definitions: Definition
 };
 
 const DataProviderResponse = (props: {
-  dataProvider: DataProvider;
+  dataProvider: DataManager;
   selectedSchema: string;
   search: string;
   onEditItem: (item: Data) => void;
@@ -316,7 +311,7 @@ const DataProviderResponse = (props: {
 };
 
 const DataProviderQueryView = (props: {
-  dataProvider: DataProvider;
+  dataProvider: DataManager;
   selectedSchema: string;
   onChangeSchema: (s: string | undefined) => void;
   onSearch: (s: string) => void;
@@ -390,7 +385,7 @@ export const ModelPickerTab = () => {
   const document = $diagram.document;
   const [search, setSearch] = useState<string>('');
 
-  const dataProvider = document.data.provider;
+  const dataProvider = document.data.manager;
 
   useEffect(() => {
     if (!dataProvider) return;
@@ -423,7 +418,7 @@ export const ModelPickerTab = () => {
     setSelectedSchema(dataProvider.schemas[0].id);
   }
 
-  const provider = document.data.provider;
+  const provider = document.data.manager;
 
   // Handle delete confirmation
   const handleDeleteItem = (item: Data) => {
@@ -446,7 +441,7 @@ export const ModelPickerTab = () => {
         },
         async () => {
           try {
-            await (dataProvider as MutableDataProvider).deleteData(schema, item);
+            await dataProvider.deleteData(schema, item);
           } catch (error) {
             console.error('Failed to delete item:', error);
           }
@@ -467,10 +462,10 @@ export const ModelPickerTab = () => {
             assert.present(provider);
 
             if ('refreshData' in provider) {
-              await (provider as RefreshableDataProvider).refreshData();
+              await provider.refreshData();
             }
             if ('refreshSchemas' in provider) {
-              await (provider as RefreshableSchemaProvider).refreshSchemas();
+              await provider.refreshSchemas();
             }
           }}
         >
@@ -541,13 +536,13 @@ export const ModelPickerTab = () => {
       <EditItemDialog
         open={addItemDialog}
         onClose={() => setAddItemDialog(false)}
-        dataProvider={dataProvider}
+        dataManager={dataProvider}
         selectedSchema={selectedSchema}
       />
       <EditItemDialog
         open={editItemDialog.open}
         onClose={() => setEditItemDialog({ open: false })}
-        dataProvider={dataProvider}
+        dataManager={dataProvider}
         selectedSchema={selectedSchema}
         editItem={editItemDialog.item}
       />

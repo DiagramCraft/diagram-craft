@@ -6,7 +6,6 @@ import { TbPencil, TbPlus, TbTrash } from 'react-icons/tb';
 import { EditSchemaDialog } from '../EditSchemaDialog';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import styles from './SchemasTab.module.css';
-import { isMutableSchemaProvider } from '@diagram-craft/model/dataProvider';
 
 export const SchemasTab = () => {
   const document = useDocument();
@@ -17,7 +16,7 @@ export const SchemasTab = () => {
   });
   const [schemas, setSchemas] = useState<DataSchema[]>([]);
 
-  const dataProvider = document.data.provider;
+  const dataProvider = document.data.manager;
 
   // Update schemas list when provider changes
   useEffect(() => {
@@ -30,7 +29,7 @@ export const SchemasTab = () => {
 
   // Handle schema operations
   const handleAddSchema = async (schema: DataSchema) => {
-    if (!dataProvider || !isMutableSchemaProvider(dataProvider)) return;
+    if (!dataProvider || !dataProvider.isMutableSchema()) return;
 
     try {
       await dataProvider.addSchema(schema);
@@ -42,7 +41,7 @@ export const SchemasTab = () => {
   };
 
   const handleUpdateSchema = async (schema: DataSchema) => {
-    if (!dataProvider || !isMutableSchemaProvider(dataProvider)) return;
+    if (!dataProvider || !dataProvider.isMutableSchema()) return;
 
     try {
       await dataProvider.updateSchema(schema);
@@ -54,7 +53,7 @@ export const SchemasTab = () => {
   };
 
   const handleDeleteSchema = (schema: DataSchema) => {
-    if (!dataProvider || !isMutableSchemaProvider(dataProvider)) return;
+    if (!dataProvider || !dataProvider.isMutableSchema()) return;
 
     application.ui.showDialog(
       new MessageDialogCommand(
@@ -82,7 +81,7 @@ export const SchemasTab = () => {
     return fieldNames.join(', ');
   };
 
-  const canMutateSchemas = dataProvider && isMutableSchemaProvider(dataProvider);
+  const canMutateSchemas = dataProvider && dataProvider.isMutableSchema();
 
   return (
     <>
