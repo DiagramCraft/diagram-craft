@@ -4,7 +4,7 @@ import { DataProvider, MutableSchemaProvider } from '@diagram-craft/model/dataPr
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbPlus, TbPencil, TbTrash } from 'react-icons/tb';
-import { EditSchemaDialog } from '../../components/EditSchemaDialog';
+import { EditSchemaDialog } from '../EditSchemaDialog';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { useApplication } from '../../../application';
 
@@ -92,9 +92,9 @@ export const SchemasTab = () => {
   const canMutateSchemas = dataProvider && isMutableSchemaProvider(dataProvider);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', height: '100%' }}>
+    <>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h3 style={{ margin: 0 }}>Schema Management</h3>
+        <p style={{ margin: 0 }}>Schemas</p>
         {canMutateSchemas && (
           <Button type="primary" onClick={() => setAddSchemaDialog(true)}>
             <TbPlus /> Add Schema
@@ -103,37 +103,43 @@ export const SchemasTab = () => {
       </div>
 
       {!dataProvider && (
-        <div style={{
-          padding: '2rem',
-          textAlign: 'center',
-          color: 'var(--base-fg-dim)',
-          backgroundColor: 'var(--base-bg-dim)',
-          borderRadius: '6px'
-        }}>
+        <div
+          style={{
+            padding: '2rem',
+            textAlign: 'center',
+            color: 'var(--base-fg-dim)',
+            backgroundColor: 'var(--base-bg-dim)',
+            borderRadius: '6px'
+          }}
+        >
           <p>No data provider configured</p>
           <p>Configure a data provider in the Model Providers tab to manage schemas.</p>
         </div>
       )}
 
       {dataProvider && !canMutateSchemas && (
-        <div style={{
-          padding: '1rem',
-          backgroundColor: 'var(--base-bg-dim)',
-          borderRadius: '6px',
-          color: 'var(--base-fg-dim)'
-        }}>
+        <div
+          style={{
+            padding: '1rem',
+            backgroundColor: 'var(--base-bg-dim)',
+            borderRadius: '6px',
+            color: 'var(--base-fg-dim)'
+          }}
+        >
           <p>The current data provider does not support schema management.</p>
           <p>Switch to a different provider (like REST API) to manage schemas.</p>
         </div>
       )}
 
       {schemas.length === 0 && canMutateSchemas && (
-        <div style={{
-          padding: '2rem',
-          textAlign: 'center',
-          backgroundColor: 'var(--base-bg-dim)',
-          borderRadius: '6px'
-        }}>
+        <div
+          style={{
+            padding: '2rem',
+            textAlign: 'center',
+            backgroundColor: 'var(--base-bg-dim)',
+            borderRadius: '6px'
+          }}
+        >
           <p>No schemas defined yet</p>
           <Button type="primary" onClick={() => setAddSchemaDialog(true)}>
             <TbPlus /> Create Your First Schema
@@ -142,131 +148,50 @@ export const SchemasTab = () => {
       )}
 
       {schemas.length > 0 && (
-        <div style={{
-          border: '1px solid var(--cmp-border)',
-          borderRadius: '6px',
-          overflow: 'hidden'
-        }}>
-          <table style={{
+        <table
+          style={{
             width: '100%',
-            borderCollapse: 'collapse',
-            fontSize: '13px'
-          }}>
-            <thead>
-              <tr style={{
-                backgroundColor: 'var(--cmp-bg)',
-                borderBottom: '1px solid var(--cmp-border)'
-              }}>
-                <th style={{
-                  padding: '12px',
-                  textAlign: 'left',
-                  fontWeight: '600',
-                  color: 'var(--panel-fg)'
-                }}>
-                  Name
-                </th>
-                <th style={{
-                  padding: '12px',
-                  textAlign: 'left',
-                  fontWeight: '600',
-                  color: 'var(--panel-fg)'
-                }}>
-                  Fields
-                </th>
-                <th style={{
-                  padding: '12px',
-                  textAlign: 'left',
-                  fontWeight: '600',
-                  color: 'var(--panel-fg)'
-                }}>
-                  Field Names
-                </th>
-                <th style={{
-                  padding: '12px',
-                  textAlign: 'left',
-                  fontWeight: '600',
-                  color: 'var(--panel-fg)'
-                }}>
-                  Source
-                </th>
+            borderCollapse: 'collapse'
+          }}
+        >
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Field Names</th>
+              <th>Source</th>
+              {canMutateSchemas && <th>Actions</th>}
+            </tr>
+          </thead>
+          <tbody>
+            {schemas.map(schema => (
+              <tr key={schema.id}>
+                <td>{schema.name}</td>
+                <td>{getFieldNamesDisplay(schema)}</td>
+                <td>{schema.source}</td>
                 {canMutateSchemas && (
-                  <th style={{
-                    padding: '12px',
-                    textAlign: 'center',
-                    fontWeight: '600',
-                    color: 'var(--panel-fg)',
-                    width: '120px'
-                  }}>
-                    Actions
-                  </th>
+                  <td>
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                      <Button
+                        type="icon-only"
+                        onClick={() => setEditSchemaDialog({ open: true, schema })}
+                        title="Edit schema"
+                      >
+                        <TbPencil />
+                      </Button>
+                      <Button
+                        type="icon-only"
+                        onClick={() => handleDeleteSchema(schema)}
+                        title="Delete schema"
+                      >
+                        <TbTrash />
+                      </Button>
+                    </div>
+                  </td>
                 )}
               </tr>
-            </thead>
-            <tbody>
-              {schemas.map((schema, index) => (
-                <tr
-                  key={schema.id}
-                  style={{
-                    borderBottom: index < schemas.length - 1 ? '1px solid var(--cmp-border)' : 'none',
-                    backgroundColor: index % 2 === 0 ? 'var(--panel-bg)' : 'var(--base-bg)'
-                  }}
-                >
-                  <td style={{
-                    padding: '12px',
-                    color: 'var(--panel-fg)',
-                    fontWeight: '500'
-                  }}>
-                    {schema.name}
-                  </td>
-                  <td style={{
-                    padding: '12px',
-                    color: 'var(--panel-fg)'
-                  }}>
-                    {schema.fields.length} field{schema.fields.length !== 1 ? 's' : ''}
-                  </td>
-                  <td style={{
-                    padding: '12px',
-                    color: 'var(--base-fg-dim)',
-                    fontSize: '12px'
-                  }}>
-                    {getFieldNamesDisplay(schema)}
-                  </td>
-                  <td style={{
-                    padding: '12px',
-                    color: 'var(--base-fg-dim)',
-                    fontSize: '12px',
-                    textTransform: 'capitalize'
-                  }}>
-                    {schema.source}
-                  </td>
-                  {canMutateSchemas && (
-                    <td style={{
-                      padding: '12px',
-                      textAlign: 'center'
-                    }}>
-                      <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
-                        <Button
-                          type="icon-only"
-                          onClick={() => setEditSchemaDialog({ open: true, schema })}
-                          title="Edit schema"
-                        >
-                          <TbPencil />
-                        </Button>
-                        <Button
-                          type="icon-only"
-                          onClick={() => handleDeleteSchema(schema)}
-                          title="Delete schema"
-                        >
-                          <TbTrash />
-                        </Button>
-                      </div>
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
       )}
 
       {/* Schema Management Dialogs */}
@@ -285,6 +210,6 @@ export const SchemasTab = () => {
         schema={editSchemaDialog.schema}
         availableSchemas={schemas}
       />
-    </div>
+    </>
   );
 };

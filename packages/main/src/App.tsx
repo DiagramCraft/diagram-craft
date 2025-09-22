@@ -47,7 +47,7 @@ import { RectTool } from '@diagram-craft/canvas-app/tools/rectTool';
 import { ReferenceLayerDialog } from './react-app/components/NewReferenceLayerDialog';
 import { StringInputDialog } from './react-app/components/StringInputDialog';
 import { RuleEditorDialog } from './react-app/components/RuleEditorDialog/RuleEditorDialog';
-import { ModelCenterDialog } from './react-app/components/ModelCenterDialog';
+import { ModelCenterDialog } from './react-app/components/ModelCenterDialog/ModelCenterDialog';
 import { useOnChange } from './react-app/hooks/useOnChange';
 import { MainMenu } from './react-app/MainMenu';
 import { MainToolbar } from './react-app/MainToolbar';

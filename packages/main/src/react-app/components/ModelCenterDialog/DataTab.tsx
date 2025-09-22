@@ -6,7 +6,7 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TbPlus, TbPencil, TbTrash, TbSearch } from 'react-icons/tb';
-import { EditItemDialog } from '../../components/EditItemDialog';
+import { EditItemDialog } from '../EditItemDialog';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 
 type DataItemWithSchema = Data & {
@@ -24,7 +24,11 @@ export const DataTab = () => {
   const [searchText, setSearchText] = useState<string>('');
   const [addItemDialog, setAddItemDialog] = useState<boolean>(false);
   const [selectedAddSchema, setSelectedAddSchema] = useState<string>('');
-  const [editItemDialog, setEditItemDialog] = useState<{ open: boolean; item?: Data; schema?: DataSchema }>({
+  const [editItemDialog, setEditItemDialog] = useState<{
+    open: boolean;
+    item?: Data;
+    schema?: DataSchema;
+  }>({
     open: false
   });
 
@@ -42,10 +46,13 @@ export const DataTab = () => {
 
     for (const schema of dataProvider.schemas) {
       const schemaData = dataProvider.getData(schema);
-      const itemsWithSchema = schemaData.map(item => ({
-        ...item,
-        _schema: schema
-      } as DataItemWithSchema));
+      const itemsWithSchema = schemaData.map(
+        item =>
+          ({
+            ...item,
+            _schema: schema
+          }) as DataItemWithSchema
+      );
       allItems.push(...itemsWithSchema);
     }
 
@@ -67,10 +74,13 @@ export const DataTab = () => {
       const allItems: DataItemWithSchema[] = [];
       for (const schema of dataProvider.schemas) {
         const schemaData = dataProvider.getData(schema);
-        const itemsWithSchema = schemaData.map(item => ({
-          ...item,
-          _schema: schema
-        } as DataItemWithSchema));
+        const itemsWithSchema = schemaData.map(
+          item =>
+            ({
+              ...item,
+              _schema: schema
+            }) as DataItemWithSchema
+        );
         allItems.push(...itemsWithSchema);
       }
       setAllDataItems(allItems);
@@ -149,7 +159,10 @@ export const DataTab = () => {
     searchRef.current?.blur();
   };
 
-  const getDisplayValue = (item: DataItemWithSchema, field: { id: string; name: string }): string => {
+  const getDisplayValue = (
+    item: DataItemWithSchema,
+    field: { id: string; name: string }
+  ): string => {
     const value = item[field.id];
     if (!value) return '-';
     if (typeof value === 'string' && value.length > 50) {
@@ -162,27 +175,22 @@ export const DataTab = () => {
   const hasSchemas = dataProvider?.schemas && dataProvider.schemas.length > 0;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', height: '100%' }}>
+    <>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h3 style={{ margin: 0 }}>Data Management</h3>
+        <p style={{ margin: 0 }}>Data</p>
         {canMutateData && hasSchemas && (
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-              <label style={{ fontSize: '11px', color: 'var(--base-fg-dim)' }}>
-                Add to schema:
-              </label>
-              <Select.Root
-                value={selectedAddSchema}
-                onChange={v => setSelectedAddSchema(v ?? '')}
-                style={{ minWidth: '150px' }}
-              >
-                {dataProvider?.schemas?.map(schema => (
-                  <Select.Item key={schema.id} value={schema.id}>
-                    {schema.name}
-                  </Select.Item>
-                ))}
-              </Select.Root>
-            </div>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <Select.Root
+              value={selectedAddSchema}
+              onChange={v => setSelectedAddSchema(v ?? '')}
+              style={{ minWidth: '150px' }}
+            >
+              {dataProvider?.schemas?.map(schema => (
+                <Select.Item key={schema.id} value={schema.id}>
+                  {schema.name}
+                </Select.Item>
+              ))}
+            </Select.Root>
             <Button
               type="primary"
               onClick={() => setAddItemDialog(true)}
@@ -196,37 +204,43 @@ export const DataTab = () => {
       </div>
 
       {!dataProvider && (
-        <div style={{
-          padding: '2rem',
-          textAlign: 'center',
-          color: 'var(--base-fg-dim)',
-          backgroundColor: 'var(--base-bg-dim)',
-          borderRadius: '6px'
-        }}>
+        <div
+          style={{
+            padding: '2rem',
+            textAlign: 'center',
+            color: 'var(--base-fg-dim)',
+            backgroundColor: 'var(--base-bg-dim)',
+            borderRadius: '6px'
+          }}
+        >
           <p>No data provider configured</p>
           <p>Configure a data provider in the Model Providers tab to manage data.</p>
         </div>
       )}
 
       {dataProvider && !hasSchemas && (
-        <div style={{
-          padding: '2rem',
-          textAlign: 'center',
-          backgroundColor: 'var(--base-bg-dim)',
-          borderRadius: '6px'
-        }}>
+        <div
+          style={{
+            padding: '2rem',
+            textAlign: 'center',
+            backgroundColor: 'var(--base-bg-dim)',
+            borderRadius: '6px'
+          }}
+        >
           <p>No schemas available</p>
           <p>Create schemas in the Schemas tab before adding data.</p>
         </div>
       )}
 
       {dataProvider && !canMutateData && (
-        <div style={{
-          padding: '1rem',
-          backgroundColor: 'var(--base-bg-dim)',
-          borderRadius: '6px',
-          color: 'var(--base-fg-dim)'
-        }}>
+        <div
+          style={{
+            padding: '1rem',
+            backgroundColor: 'var(--base-bg-dim)',
+            borderRadius: '6px',
+            color: 'var(--base-fg-dim)'
+          }}
+        >
           <p>The current data provider does not support data management.</p>
           <p>Switch to a different provider (like REST API) to manage data.</p>
         </div>
@@ -235,7 +249,16 @@ export const DataTab = () => {
       {hasSchemas && (
         <>
           {/* Search and Filter Controls */}
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'end' }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: '1rem',
+              alignItems: 'end',
+              backgroundColor: 'var(--panel-bg)',
+              padding: '1rem',
+              borderRadius: 'var(--cmp-radius)'
+            }}
+          >
             <div style={{ flex: 1 }}>
               <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '13px' }}>
                 Filter by Schema:
@@ -284,17 +307,26 @@ export const DataTab = () => {
 
           {/* Data Results */}
           {filteredDataItems.length === 0 && (
-            <div style={{
-              padding: '2rem',
-              textAlign: 'center',
-              backgroundColor: 'var(--base-bg-dim)',
-              borderRadius: '6px'
-            }}>
+            <div
+              style={{
+                padding: '2rem',
+                textAlign: 'center',
+                backgroundColor: 'var(--base-bg-dim)',
+                borderRadius: '6px'
+              }}
+            >
               {allDataItems.length === 0 ? (
                 <>
                   <p>No data items yet</p>
                   {canMutateData && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '1rem',
+                        alignItems: 'center'
+                      }}
+                    >
                       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'end' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                           <label style={{ fontSize: '11px', color: 'var(--base-fg-dim)' }}>
@@ -330,141 +362,60 @@ export const DataTab = () => {
           )}
 
           {filteredDataItems.length > 0 && (
-            <div style={{
-              border: '1px solid var(--cmp-border)',
-              borderRadius: '6px',
-              overflow: 'hidden'
-            }}>
-              <table style={{
-                width: '100%',
-                borderCollapse: 'collapse',
-                fontSize: '13px'
-              }}>
-                <thead>
-                  <tr style={{
-                    backgroundColor: 'var(--cmp-bg)',
-                    borderBottom: '1px solid var(--cmp-border)'
-                  }}>
-                    <th style={{
-                      padding: '12px',
-                      textAlign: 'left',
-                      fontWeight: '600',
-                      color: 'var(--panel-fg)'
-                    }}>
-                      Schema
-                    </th>
-                    <th style={{
-                      padding: '12px',
-                      textAlign: 'left',
-                      fontWeight: '600',
-                      color: 'var(--panel-fg)'
-                    }}>
-                      Primary Field
-                    </th>
-                    <th style={{
-                      padding: '12px',
-                      textAlign: 'left',
-                      fontWeight: '600',
-                      color: 'var(--panel-fg)'
-                    }}>
-                      Fields
-                    </th>
-                    <th style={{
-                      padding: '12px',
-                      textAlign: 'left',
-                      fontWeight: '600',
-                      color: 'var(--panel-fg)'
-                    }}>
-                      ID
-                    </th>
-                    {canMutateData && (
-                      <th style={{
-                        padding: '12px',
-                        textAlign: 'center',
-                        fontWeight: '600',
-                        color: 'var(--panel-fg)',
-                        width: '120px'
-                      }}>
-                        Actions
-                      </th>
-                    )}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredDataItems.map((item, index) => {
-                    const primaryField = item._schema.fields[0];
-                    const displayFields = item._schema.fields.slice(1, 3); // Show up to 2 additional fields
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>ID</th>
+                  <th>Schema</th>
+                  <th>Fields</th>
+                  {canMutateData && <th>Actions</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {filteredDataItems.map(item => {
+                  const primaryField = item._schema.fields[0];
+                  const displayFields = item._schema.fields.slice(1, 3); // Show up to 2 additional fields
 
-                    return (
-                      <tr
-                        key={item._uid}
-                        style={{
-                          borderBottom: index < filteredDataItems.length - 1 ? '1px solid var(--cmp-border)' : 'none',
-                          backgroundColor: index % 2 === 0 ? 'var(--panel-bg)' : 'var(--base-bg)'
-                        }}
-                      >
-                        <td style={{
-                          padding: '12px',
-                          color: 'var(--base-fg-dim)',
-                          fontWeight: '500',
-                          fontSize: '12px'
-                        }}>
-                          {item._schema.name}
+                  return (
+                    <tr key={item._uid}>
+                      <td>{primaryField ? getDisplayValue(item, primaryField) : '-'}</td>
+                      <td>{item._uid.substring(0, 8)}</td>
+                      <td>{item._schema.name}</td>
+                      <td>
+                        {displayFields.length > 0
+                          ? displayFields
+                              .map(field => `${field.name}: ${getDisplayValue(item, field)}`)
+                              .join(', ')
+                          : '-'}
+                      </td>
+                      {canMutateData && (
+                        <td>
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <Button
+                              type="icon-only"
+                              onClick={() =>
+                                setEditItemDialog({ open: true, item, schema: item._schema })
+                              }
+                              title="Edit item"
+                            >
+                              <TbPencil />
+                            </Button>
+                            <Button
+                              type="icon-only"
+                              onClick={() => handleDeleteItem(item)}
+                              title="Delete item"
+                            >
+                              <TbTrash />
+                            </Button>
+                          </div>
                         </td>
-                        <td style={{
-                          padding: '12px',
-                          color: 'var(--panel-fg)',
-                          fontWeight: '500'
-                        }}>
-                          {primaryField ? getDisplayValue(item, primaryField) : '-'}
-                        </td>
-                        <td style={{
-                          padding: '12px',
-                          color: 'var(--base-fg-dim)',
-                          fontSize: '12px'
-                        }}>
-                          {displayFields.length > 0
-                            ? displayFields.map(field => `${field.name}: ${getDisplayValue(item, field)}`).join(', ')
-                            : '-'
-                          }
-                        </td>
-                        <td style={{
-                          padding: '12px',
-                          color: 'var(--base-fg-more-dim)',
-                          fontSize: '11px',
-                          fontFamily: 'monospace'
-                        }}>
-                          {item._uid.substring(0, 8)}...
-                        </td>
-                        {canMutateData && (
-                          <td style={{
-                            padding: '12px',
-                            textAlign: 'center'
-                          }}>
-                            <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
-                              <Button
-                                type="icon-only"
-                                onClick={() => setEditItemDialog({ open: true, item, schema: item._schema })}
-                                title="Edit item"
-                              >
-                                <TbPencil />
-                              </Button>
-                              <Button
-                                type="icon-only"
-                                onClick={() => handleDeleteItem(item)}
-                                title="Delete item"
-                              >
-                                <TbTrash />
-                              </Button>
-                            </div>
-                          </td>
-                        )}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           )}
         </>
       )}
@@ -483,6 +434,6 @@ export const DataTab = () => {
         selectedSchema={editItemDialog.schema?.id}
         editItem={editItemDialog.item}
       />
-    </div>
+    </>
   );
 };

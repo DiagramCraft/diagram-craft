@@ -5,9 +5,9 @@ import styles from './ModelCenterDialog.module.css';
 import { TbX } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
-import { DataTab } from './ModelCenterDialog/DataTab';
-import { SchemasTab } from './ModelCenterDialog/SchemasTab';
-import { ModelProvidersTab } from './ModelCenterDialog/ModelProvidersTab';
+import { DataTab } from './DataTab';
+import { SchemasTab } from './SchemasTab';
+import { ModelProvidersTab } from './ModelProvidersTab';
 
 type Props = {
   open: boolean;
@@ -60,7 +60,9 @@ export const ModelCenterDialog = (props: Props) => {
             <div className={styles.modelCenterDialogMainContent}>
               <Tabs.Root
                 value={activeTab}
-                onValueChange={(value) => setActiveTab(value as 'data' | 'schemas' | 'model-providers')}
+                onValueChange={value =>
+                  setActiveTab(value as 'data' | 'schemas' | 'model-providers')
+                }
               >
                 <Tabs.List>
                   <Tabs.Trigger value="data">Data</Tabs.Trigger>

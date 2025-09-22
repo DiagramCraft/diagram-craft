@@ -247,6 +247,26 @@ input[type="checkbox"][data-field-state='overridden'] {
   background: repeating-linear-gradient(-45deg, var(--cmp-border), var(--cmp-border) 5px, var(--cmp-bg) 5px, var(--cmp-bg) 10px);
 }
 
+table {
+  border-bottom: 2px solid var(--panel-border);
+
+  td, th {
+    font-size: 11px;
+    padding: 0.5rem;
+  }
+
+  thead > tr {
+    border-top: 2px solid var(--panel-border);
+    border-bottom: 2px solid var(--panel-border);
+    background-color: var(--cmp-bg);
+  }
+
+  tbody > tr {
+    border-bottom: 1px solid var(--cmp-border);
+    background-color: var(--panel-bg);
+  }
+}
+
 
 /* App layout */
 #app {

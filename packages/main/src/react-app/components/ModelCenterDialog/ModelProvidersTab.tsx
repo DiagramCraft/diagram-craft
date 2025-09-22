@@ -103,9 +103,8 @@ export const ModelProvidersTab = () => {
   };
 
   return (
-    <div className={'util-vstack'} style={{ gap: '1rem' }}>
-      <h3>Model Providers</h3>
-      <p>Configure and manage your data providers here.</p>
+    <>
+      <div>Model Providers</div>
 
       <div className={'util-vstack'}>
         <div className={'util-vstack'} style={{ gap: '0.2rem' }}>
@@ -150,6 +149,6 @@ export const ModelProvidersTab = () => {
           </Button>
         </div>
       </div>
-    </div>
+    </>
   );
 };
