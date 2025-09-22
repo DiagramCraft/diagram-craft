@@ -4,7 +4,7 @@ import { PickerToolWindow } from './toolwindow/PickerToolWindow/PickerToolWindow
 import { DocumentStructureToolWindow } from './toolwindow/DocumentStructureToolWindow/DocumentStructureToolWindow';
 import { HistoryToolWindow } from './toolwindow/HistoryToolWindow/HistoryToolWindow';
 import { QueryToolWindow } from './toolwindow/QueryToolWindow/QueryToolWindow';
-import { ActionToggleButton } from './toolbar/ActionToggleButton';
+import { ActionToolbarButton } from './toolbar/ActionToolbarButton';
 
 export const LeftSidebar = () => {
   return (
@@ -12,9 +12,9 @@ export const LeftSidebar = () => {
       side={'left'}
       bottom={
         <SideBarBottomToolbar>
-          <ActionToggleButton action={'TOGGLE_HELP'}>
+          <ActionToolbarButton action={'MODEL_CENTER'} arg={{}}>
             <TbDatabaseCog size={'17.5px'} />
-          </ActionToggleButton>
+          </ActionToolbarButton>
         </SideBarBottomToolbar>
       }
     >

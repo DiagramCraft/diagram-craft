@@ -1,0 +1,50 @@
+.model-center-dialog {
+
+  .model-center-dialog__overlay {
+    position: fixed;
+    inset: 0;
+  }
+
+  .model-center-dialog__content {
+    background-color: var(--base-bg);
+    border-radius: 6px;
+    position: fixed;
+    /*top: 46px;*/
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: auto;
+  }
+
+  .model-center-dialog__content:focus {
+    outline: none;
+  }
+
+  .model-center-dialog__title {
+    margin: 0 0 1rem 0;
+    color: var(--panel-fg);
+    padding: 11px 25px 11px 25px;
+    font-size: 15px;
+    font-weight: normal;
+    text-align: center;
+    border-bottom: 1px solid var(--panel-border);
+  }
+
+  .model-center-dialog__main__content {
+    padding: 1px 25px;
+    color: var(--panel-fg);
+    font-size: 14px;
+    line-height: 1.5;
+    text-align: left;
+  }
+
+  .model-center-dialog__actions {
+    position: absolute;
+    top: 11px;
+    right: 18px;
+    display: flex;
+    gap: 10px;
+  }
+
+}

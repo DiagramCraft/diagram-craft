@@ -21,6 +21,7 @@ import { geometryActions } from './actions/geometryActions';
 import { toggleRulerActions } from './actions/toggleRulerAction';
 import { commentActions } from './actions/commentActions';
 import { commandPaletteActions } from './actions/commandPaletteAction';
+import { modelCenterActions } from './actions/modelCenterAction';
 
 export const defaultAppActions: ActionMapFactory<Application> = application => ({
   ...toolActions(application),
@@ -43,7 +44,8 @@ export const defaultAppActions: ActionMapFactory<Application> = application => (
   ...geometryActions(application),
   ...toggleRulerActions(application),
   ...commentActions(application),
-  ...commandPaletteActions(application)
+  ...commandPaletteActions(application),
+  ...modelCenterActions(application)
 });
 
 export const defaultMacAppKeymap: KeyMap = {

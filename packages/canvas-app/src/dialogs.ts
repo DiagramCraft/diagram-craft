@@ -50,3 +50,13 @@ export class RuleEditorDialogCommand
     public readonly onCancel: () => void = () => {}
   ) {}
 }
+
+export class ModelCenterDialogCommand implements DialogCommand<EmptyObject, void> {
+  id = 'modelCenter';
+  props = {};
+
+  constructor(
+    public readonly onOk: () => void = () => {},
+    public readonly onCancel: () => void = () => {}
+  ) {}
+}
