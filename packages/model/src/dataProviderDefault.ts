@@ -91,7 +91,7 @@ export class DefaultDataProvider
 
   serialize(): string {
     return JSON.stringify({
-      schema: this.schemas,
+      schemas: this.schemas,
       data: this.data
     });
   }

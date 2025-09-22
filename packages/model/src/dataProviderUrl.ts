@@ -44,8 +44,8 @@ export class UrlDataProvider extends BaseHTTPDataProvider {
 
   serialize(): string {
     return JSON.stringify({
-      schemas: this.schemas,
-      data: this.data,
+      schemas: this.schemas ?? [],
+      data: this.data ?? [],
       dataUrl: this.dataUrl,
       schemaUrl: this.schemaUrl
     });

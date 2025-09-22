@@ -109,12 +109,11 @@ export const ModelProvidersTab = () => {
       }
 
       // Save all providers
-      document.data.setProviders(
-        providers.map(p => {
-          if (!p.isFirst) p.provider.id = p.id;
-          return p.provider;
-        })
-      );
+      const newProviders = providers.map(p => {
+        if (!p.isFirst) p.provider.id = p.id;
+        return p.provider;
+      });
+      document.data.setProviders(newProviders);
       setSuccessMessage('All providers saved successfully');
       setErrorMessage(undefined);
     } catch (error) {

@@ -191,7 +191,7 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
 export class DataManager extends EventEmitter<DataProviderEventMap> {
   private provider: DataProvider;
 
-  constructor(providers: Array<DataProvider>) {
+  constructor(private readonly providers: Array<DataProvider>) {
     super();
     this.provider = providers[0];
   }
@@ -205,11 +205,25 @@ export class DataManager extends EventEmitter<DataProviderEventMap> {
   }
 
   refreshData() {
-    return (this.provider as RefreshableDataProvider).refreshData();
+    return Promise.all(
+      this.providers.map(p =>
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (p as any)['refreshData']
+          ? (p as unknown as RefreshableDataProvider).refreshData()
+          : undefined
+      )
+    );
   }
 
   refreshSchemas() {
-    return (this.provider as unknown as RefreshableSchemaProvider).refreshSchemas();
+    return Promise.all(
+      this.providers.map(p =>
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (p as any)['refreshSchemas']
+          ? (p as unknown as RefreshableSchemaProvider).refreshSchemas()
+          : undefined
+      )
+    );
   }
 
   getSchema(schema: string) {
@@ -242,7 +256,7 @@ export class DataManager extends EventEmitter<DataProviderEventMap> {
   }
 
   get schemas() {
-    return this.provider?.schemas ?? [];
+    return this.providers?.flatMap(p => p.schemas ?? []);
   }
 
   getById(_schema: DataSchema, ids: string[]) {

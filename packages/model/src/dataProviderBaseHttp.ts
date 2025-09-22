@@ -25,7 +25,7 @@ export abstract class BaseHTTPDataProvider
     super();
 
     if (autoRefresh) {
-      this.initializeWithAutoRefresh();
+      setTimeout(() => this.initializeWithAutoRefresh(), 200);
     }
   }
 
