@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
-import { useDocument, useApplication } from '../../../application';
-import { DataProvider, MutableDataProvider, Data } from '@diagram-craft/model/dataProvider';
+import { useEffect, useRef, useState } from 'react';
+import { useApplication, useDocument } from '../../../application';
+import { Data, isMutableDataProvider } from '@diagram-craft/model/dataProvider';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
-import { TbPlus, TbPencil, TbTrash, TbSearch, TbChevronDown } from 'react-icons/tb';
+import { TbPencil, TbPlus, TbSearch, TbTrash } from 'react-icons/tb';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { EditItemDialog } from '../EditItemDialog';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
@@ -13,13 +13,6 @@ import styles from './DataTab.module.css';
 
 type DataItemWithSchema = Data & {
   _schema: DataSchema;
-};
-
-// Helper function to check if provider supports data mutations
-const isMutableDataProvider = (
-  provider: DataProvider
-): provider is DataProvider & MutableDataProvider => {
-  return 'addData' in provider && 'updateData' in provider && 'deleteData' in provider;
 };
 
 const filterItems = (items: DataItemWithSchema[], schemaId: string, searchQuery: string) => {
@@ -120,7 +113,7 @@ export const DataTab = () => {
     if (!dataProvider || !isMutableDataProvider(dataProvider)) return;
 
     const displayValue = item._schema.fields[0] ? item[item._schema.fields[0].id] : item._uid;
-    const itemName = displayValue || 'this item';
+    const itemName = displayValue ?? 'this item';
 
     application.ui.showDialog(
       new MessageDialogCommand(
@@ -222,10 +215,9 @@ export const DataTab = () => {
               <Select.Root value={selectedSchemaId} onChange={v => setSelectedSchemaId(v ?? 'all')}>
                 <Select.Item value="all">All Schemas ({allDataItems.length} items)</Select.Item>
                 {dataProvider?.schemas?.map(schema => {
-                  const count = allDataItems.filter(item => item._schema.id === schema.id).length;
                   return (
                     <Select.Item key={schema.id} value={schema.id}>
-                      {schema.name} ({count} items)
+                      {schema.name}
                     </Select.Item>
                   );
                 })}
@@ -239,7 +231,6 @@ export const DataTab = () => {
                   ref={searchRef}
                   value={searchText}
                   onChange={v => setSearchText(v ?? '')}
-                  placeholder="Search across all fields..."
                   onKeyDown={e => {
                     if (e.key === 'Enter') {
                       handleSearch();
@@ -255,7 +246,7 @@ export const DataTab = () => {
                   className={styles.dataTabSearchInput}
                 />
                 <Button type="secondary" onClick={handleSearch}>
-                  <TbSearch />
+                  <TbSearch /> Search
                 </Button>
               </div>
             </div>
@@ -263,37 +254,10 @@ export const DataTab = () => {
 
           {/* Data Results */}
           {filteredDataItems.length === 0 && (
-            <div className={styles.dataTabEmptyState}>
+            <div className={styles.dataTab__messageBox}>
               {allDataItems.length === 0 ? (
                 <>
                   <p>No data items yet</p>
-                  {canMutateData && (
-                    <div className={styles.dataTabEmptyStateControls}>
-                      <DropdownMenu.Root>
-                        <DropdownMenu.Trigger asChild>
-                          <Button type="primary">
-                            <TbPlus /> Add Your First Data Item <TbChevronDown />
-                          </Button>
-                        </DropdownMenu.Trigger>
-                        <DropdownMenu.Portal>
-                          <DropdownMenu.Content className="cmp-context-menu" sideOffset={5}>
-                            {dataProvider?.schemas?.map(schema => (
-                              <DropdownMenu.Item
-                                key={schema.id}
-                                className="cmp-context-menu__item"
-                                onSelect={() =>
-                                  setAddItemDialog({ open: true, schemaId: schema.id })
-                                }
-                              >
-                                {schema.name}
-                              </DropdownMenu.Item>
-                            ))}
-                            <DropdownMenu.Arrow className="cmp-context-menu__arrow" />
-                          </DropdownMenu.Content>
-                        </DropdownMenu.Portal>
-                      </DropdownMenu.Root>
-                    </div>
-                  )}
                 </>
               ) : (
                 <p>No items match your current filters</p>

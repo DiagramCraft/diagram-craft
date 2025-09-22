@@ -68,14 +68,6 @@
   flex: 1;
 }
 
-/* Empty State */
-
-.data-tab__empty-state {
-  padding: 2rem;
-  text-align: center;
-  background-color: var(--base-bg-dim);
-  border-radius: 6px;
-}
 
 .data-tab__empty-state-controls {
   display: flex;

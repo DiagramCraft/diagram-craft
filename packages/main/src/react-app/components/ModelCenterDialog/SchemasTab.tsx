@@ -1,13 +1,12 @@
-import { useState, useEffect } from 'react';
-import { useDocument } from '../../../application';
-import { DataProvider, MutableSchemaProvider } from '@diagram-craft/model/dataProvider';
+import { useEffect, useState } from 'react';
+import { useApplication, useDocument } from '../../../application';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { Button } from '@diagram-craft/app-components/Button';
-import { TbPlus, TbPencil, TbTrash } from 'react-icons/tb';
+import { TbPencil, TbPlus, TbTrash } from 'react-icons/tb';
 import { EditSchemaDialog } from '../EditSchemaDialog';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
-import { useApplication } from '../../../application';
 import styles from './SchemasTab.module.css';
+import { isMutableSchemaProvider } from '@diagram-craft/model/dataProvider';
 
 export const SchemasTab = () => {
   const document = useDocument();
@@ -28,13 +27,6 @@ export const SchemasTab = () => {
       setSchemas([]);
     }
   }, [dataProvider?.schemas]);
-
-  // Helper function to check if provider supports schema mutations
-  const isMutableSchemaProvider = (
-    provider: DataProvider
-  ): provider is DataProvider & MutableSchemaProvider => {
-    return 'addSchema' in provider && 'updateSchema' in provider && 'deleteSchema' in provider;
-  };
 
   // Handle schema operations
   const handleAddSchema = async (schema: DataSchema) => {
