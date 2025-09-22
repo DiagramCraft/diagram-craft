@@ -93,7 +93,7 @@ export const SchemasTab = () => {
   const canMutateSchemas = dataProvider && isMutableSchemaProvider(dataProvider);
 
   return (
-    <div className={styles.schemasTab}>
+    <>
       <div className={styles.schemasTabHeader}>
         <p className={styles.schemasTabTitle}>Schemas</p>
         {canMutateSchemas && (
@@ -184,6 +184,6 @@ export const SchemasTab = () => {
         schema={editSchemaDialog.schema}
         availableSchemas={schemas}
       />
-    </div>
+    </>
   );
 };

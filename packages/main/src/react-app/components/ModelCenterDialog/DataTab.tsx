@@ -5,13 +5,40 @@ import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
-import { TbPlus, TbPencil, TbTrash, TbSearch } from 'react-icons/tb';
+import { TbPlus, TbPencil, TbTrash, TbSearch, TbChevronDown } from 'react-icons/tb';
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { EditItemDialog } from '../EditItemDialog';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import styles from './DataTab.module.css';
 
 type DataItemWithSchema = Data & {
   _schema: DataSchema;
+};
+
+// Helper function to check if provider supports data mutations
+const isMutableDataProvider = (
+  provider: DataProvider
+): provider is DataProvider & MutableDataProvider => {
+  return 'addData' in provider && 'updateData' in provider && 'deleteData' in provider;
+};
+
+const filterItems = (items: DataItemWithSchema[], schemaId: string, searchQuery: string) => {
+  let filtered = items;
+
+  if (schemaId !== 'all') {
+    filtered = filtered.filter(item => item._schema.id === schemaId);
+  }
+
+  if (searchQuery.trim() !== '') {
+    filtered = filtered.filter(item => {
+      return item._schema.fields.some(field => {
+        const value = item[field.id];
+        return value && value.toLowerCase().includes(searchQuery.toLowerCase());
+      });
+    });
+  }
+
+  return filtered;
 };
 
 export const DataTab = () => {
@@ -23,8 +50,9 @@ export const DataTab = () => {
   const [filteredDataItems, setFilteredDataItems] = useState<DataItemWithSchema[]>([]);
   const [selectedSchemaId, setSelectedSchemaId] = useState<string>('all');
   const [searchText, setSearchText] = useState<string>('');
-  const [addItemDialog, setAddItemDialog] = useState<boolean>(false);
-  const [selectedAddSchema, setSelectedAddSchema] = useState<string>('');
+  const [addItemDialog, setAddItemDialog] = useState<{ open: boolean; schemaId?: string }>({
+    open: false
+  });
   const [editItemDialog, setEditItemDialog] = useState<{
     open: boolean;
     item?: Data;
@@ -39,7 +67,6 @@ export const DataTab = () => {
   useEffect(() => {
     if (!dataProvider?.schemas) {
       setAllDataItems([]);
-      setSelectedAddSchema('');
       return;
     }
 
@@ -48,24 +75,14 @@ export const DataTab = () => {
     for (const schema of dataProvider.schemas) {
       const schemaData = dataProvider.getData(schema);
       const itemsWithSchema = schemaData.map(
-        item =>
-          ({
-            ...item,
-            _schema: schema
-          }) as DataItemWithSchema
+        item => ({ ...item, _schema: schema }) as DataItemWithSchema
       );
       allItems.push(...itemsWithSchema);
     }
 
     setAllDataItems(allItems);
+  }, [dataProvider?.schemas]);
 
-    // Set default schema for add dialog
-    if (dataProvider.schemas.length > 0 && !selectedAddSchema) {
-      setSelectedAddSchema(dataProvider.schemas[0].id);
-    }
-  }, [dataProvider?.schemas, selectedAddSchema]);
-
-  // Update data when provider changes
   useEffect(() => {
     if (!dataProvider) return;
 
@@ -76,11 +93,7 @@ export const DataTab = () => {
       for (const schema of dataProvider.schemas) {
         const schemaData = dataProvider.getData(schema);
         const itemsWithSchema = schemaData.map(
-          item =>
-            ({
-              ...item,
-              _schema: schema
-            }) as DataItemWithSchema
+          item => ({ ...item, _schema: schema }) as DataItemWithSchema
         );
         allItems.push(...itemsWithSchema);
       }
@@ -98,37 +111,11 @@ export const DataTab = () => {
     };
   }, [dataProvider]);
 
-  // Filter and search data items
   useEffect(() => {
-    let filtered = allDataItems;
-
-    // Filter by schema
-    if (selectedSchemaId !== 'all') {
-      filtered = filtered.filter(item => item._schema.id === selectedSchemaId);
-    }
-
-    // Filter by search text
-    if (searchText.trim() !== '') {
-      filtered = filtered.filter(item => {
-        // Search across all field values
-        return item._schema.fields.some(field => {
-          const value = item[field.id];
-          return value && value.toLowerCase().includes(searchText.toLowerCase());
-        });
-      });
-    }
-
+    const filtered = filterItems(allDataItems, selectedSchemaId, '');
     setFilteredDataItems(filtered);
-  }, [allDataItems, selectedSchemaId, searchText]);
+  }, [allDataItems, selectedSchemaId]);
 
-  // Helper function to check if provider supports data mutations
-  const isMutableDataProvider = (
-    provider: DataProvider
-  ): provider is DataProvider & MutableDataProvider => {
-    return 'addData' in provider && 'updateData' in provider && 'deleteData' in provider;
-  };
-
-  // Handle data operations
   const handleDeleteItem = (item: DataItemWithSchema) => {
     if (!dataProvider || !isMutableDataProvider(dataProvider)) return;
 
@@ -156,7 +143,8 @@ export const DataTab = () => {
   };
 
   const handleSearch = () => {
-    // Search is handled by the useEffect above
+    const filtered = filterItems(allDataItems, selectedSchemaId, searchText);
+    setFilteredDataItems(filtered);
     searchRef.current?.blur();
   };
 
@@ -166,9 +154,7 @@ export const DataTab = () => {
   ): string => {
     const value = item[field.id];
     if (!value) return '-';
-    if (typeof value === 'string' && value.length > 50) {
-      return value.substring(0, 50) + '...';
-    }
+    if (value.length > 50) return value.substring(0, 50) + '...';
     return value;
   };
 
@@ -176,27 +162,31 @@ export const DataTab = () => {
   const hasSchemas = dataProvider?.schemas && dataProvider.schemas.length > 0;
 
   return (
-    <div className={styles.dataTab}>
+    <>
       <div className={styles.dataTabHeader}>
         <p className={styles.dataTabTitle}>Data</p>
         {canMutateData && hasSchemas && (
-          <div className={styles.dataTabAddControls}>
-            <Select.Root value={selectedAddSchema} onChange={v => setSelectedAddSchema(v ?? '')}>
-              {dataProvider?.schemas?.map(schema => (
-                <Select.Item key={schema.id} value={schema.id}>
-                  {schema.name}
-                </Select.Item>
-              ))}
-            </Select.Root>
-            <Button
-              type="primary"
-              onClick={() => setAddItemDialog(true)}
-              disabled={!selectedAddSchema}
-              className={styles.dataTabAddButton}
-            >
-              <TbPlus /> Add Data
-            </Button>
-          </div>
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger asChild>
+              <Button type="secondary" className={styles.dataTabAddButton}>
+                <TbPlus /> Add Data
+              </Button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Portal>
+              <DropdownMenu.Content className="cmp-context-menu" sideOffset={5}>
+                {dataProvider?.schemas?.map(schema => (
+                  <DropdownMenu.Item
+                    key={schema.id}
+                    className="cmp-context-menu__item"
+                    onSelect={() => setAddItemDialog({ open: true, schemaId: schema.id })}
+                  >
+                    {schema.name}
+                  </DropdownMenu.Item>
+                ))}
+                <DropdownMenu.Arrow className="cmp-context-menu__arrow" />
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Root>
         )}
       </div>
 
@@ -255,6 +245,8 @@ export const DataTab = () => {
                       e.preventDefault();
                       e.stopPropagation();
                       setSearchText('');
+                      const filtered = filterItems(allDataItems, selectedSchemaId, '');
+                      setFilteredDataItems(filtered);
                       searchRef.current?.blur();
                     }
                   }}
@@ -275,30 +267,29 @@ export const DataTab = () => {
                   <p>No data items yet</p>
                   {canMutateData && (
                     <div className={styles.dataTabEmptyStateControls}>
-                      <div className={styles.dataTabEmptyStateAddControls}>
-                        <div className={styles.dataTabEmptyStateSchemaGroup}>
-                          <label className={styles.dataTabEmptyStateSchemaLabel}>
-                            Add to schema:
-                          </label>
-                          <Select.Root
-                            value={selectedAddSchema}
-                            onChange={v => setSelectedAddSchema(v ?? '')}
-                          >
+                      <DropdownMenu.Root>
+                        <DropdownMenu.Trigger asChild>
+                          <Button type="primary">
+                            <TbPlus /> Add Your First Data Item <TbChevronDown />
+                          </Button>
+                        </DropdownMenu.Trigger>
+                        <DropdownMenu.Portal>
+                          <DropdownMenu.Content className="cmp-context-menu" sideOffset={5}>
                             {dataProvider?.schemas?.map(schema => (
-                              <Select.Item key={schema.id} value={schema.id}>
+                              <DropdownMenu.Item
+                                key={schema.id}
+                                className="cmp-context-menu__item"
+                                onSelect={() =>
+                                  setAddItemDialog({ open: true, schemaId: schema.id })
+                                }
+                              >
                                 {schema.name}
-                              </Select.Item>
+                              </DropdownMenu.Item>
                             ))}
-                          </Select.Root>
-                        </div>
-                        <Button
-                          type="primary"
-                          onClick={() => setAddItemDialog(true)}
-                          disabled={!selectedAddSchema}
-                        >
-                          <TbPlus /> Add Your First Data Item
-                        </Button>
-                      </div>
+                            <DropdownMenu.Arrow className="cmp-context-menu__arrow" />
+                          </DropdownMenu.Content>
+                        </DropdownMenu.Portal>
+                      </DropdownMenu.Root>
                     </div>
                   )}
                 </>
@@ -369,10 +360,10 @@ export const DataTab = () => {
 
       {/* Data Management Dialogs */}
       <EditItemDialog
-        open={addItemDialog}
-        onClose={() => setAddItemDialog(false)}
+        open={addItemDialog.open}
+        onClose={() => setAddItemDialog({ open: false })}
         dataProvider={dataProvider}
-        selectedSchema={selectedAddSchema}
+        selectedSchema={addItemDialog.schemaId}
       />
       <EditItemDialog
         open={editItemDialog.open}
@@ -381,6 +372,6 @@ export const DataTab = () => {
         selectedSchema={editItemDialog.schema?.id}
         editItem={editItemDialog.item}
       />
-    </div>
+    </>
   );
 };

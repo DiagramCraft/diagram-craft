@@ -1,55 +1,57 @@
-.model-providers-tab {
+/* Stack layout */
 
-  /* Stack layout */
-  .model-providers-tab__stack {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
+.model-providers-tab__stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
 
-  .model-providers-tab__stack--small-gap {
-    gap: 0.2rem;
-  }
+.model-providers-tab__stack--small-gap {
+  gap: 0.2rem;
+}
 
-  /* Provider Selection */
-  .model-providers-tab__provider-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-  }
+/* Provider Selection */
 
-  .model-providers-tab__provider-label {
-    display: block;
-    font-size: 14px;
-    margin-bottom: 0.2rem;
-  }
+.model-providers-tab__provider-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
 
-  /* Settings Groups */
-  .model-providers-tab__settings-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-  }
+.model-providers-tab__provider-label {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 0.2rem;
+}
 
-  .model-providers-tab__settings-label {
-    display: block;
-    font-size: 14px;
-    margin-bottom: 0.2rem;
-  }
+/* Settings Groups */
 
-  /* Messages */
-  .model-providers-tab__error-message {
-    color: var(--error-fg);
-    font-size: 14px;
-  }
+.model-providers-tab__settings-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
 
-  .model-providers-tab__success-message {
-    color: var(--success-fg);
-    font-size: 14px;
-  }
+.model-providers-tab__settings-label {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 0.2rem;
+}
 
-  /* Save Button */
-  .model-providers-tab__save-section {
-    margin-top: 1rem;
-  }
+/* Messages */
+
+.model-providers-tab__error-message {
+  color: var(--error-fg);
+  font-size: 14px;
+}
+
+.model-providers-tab__success-message {
+  color: var(--success-fg);
+  font-size: 14px;
+}
+
+/* Save Button */
+
+.model-providers-tab__save-section {
+  margin-top: 1rem;
 }
