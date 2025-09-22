@@ -1,8 +1,10 @@
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
+import { useState } from 'react';
 import { usePortal } from '@diagram-craft/app-components/PortalContext';
 import styles from './ModelCenterDialog.module.css';
 import { TbX } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
+import { Tabs } from '@diagram-craft/app-components/Tabs';
 
 type Props = {
   open: boolean;
@@ -11,6 +13,7 @@ type Props = {
 
 export const ModelCenterDialog = (props: Props) => {
   const portal = usePortal();
+  const [activeTab, setActiveTab] = useState('data');
 
   return (
     <AlertDialog.Root
@@ -44,7 +47,34 @@ export const ModelCenterDialog = (props: Props) => {
               </div>
             </AlertDialog.Title>
             <div className={styles.modelCenterDialogMainContent}>
-              <p>This is a fullscreen dialog for the Model Center.</p>
+              <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
+                <Tabs.List>
+                  <Tabs.Trigger value="data">Data</Tabs.Trigger>
+                  <Tabs.Trigger value="schemas">Schemas</Tabs.Trigger>
+                  <Tabs.Trigger value="model-providers">Model Providers</Tabs.Trigger>
+                </Tabs.List>
+
+                <Tabs.Content value="data">
+                  <div>
+                    <h3>Data Management</h3>
+                    <p>Manage your data sources and datasets here.</p>
+                  </div>
+                </Tabs.Content>
+
+                <Tabs.Content value="schemas">
+                  <div>
+                    <h3>Schema Management</h3>
+                    <p>Define and manage your data schemas here.</p>
+                  </div>
+                </Tabs.Content>
+
+                <Tabs.Content value="model-providers">
+                  <div>
+                    <h3>Model Providers</h3>
+                    <p>Configure and manage your model providers here.</p>
+                  </div>
+                </Tabs.Content>
+              </Tabs.Root>
             </div>
           </AlertDialog.Content>
         </div>
