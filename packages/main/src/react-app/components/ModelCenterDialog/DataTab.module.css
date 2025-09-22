@@ -1,0 +1,132 @@
+.data-tab {
+
+  /* Header */
+
+  .data-tab__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .data-tab__title {
+    margin: 0;
+  }
+
+  .data-tab__add-controls {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .data-tab__add-button {
+    align-self: end;
+  }
+
+  /* Message Boxes */
+
+  .data-tab__message-box {
+    padding: 2rem;
+    text-align: center;
+    background-color: var(--base-bg-dim);
+    border-radius: 6px;
+  }
+
+  .data-tab__message-box--no-provider {
+    color: var(--base-fg-dim);
+  }
+
+  .data-tab__message-box--no-mutation {
+    padding: 1rem;
+    color: var(--base-fg-dim);
+  }
+
+  /* Search and Filter Controls */
+
+  .data-tab__search-controls {
+    display: flex;
+    gap: 1rem;
+    align-items: end;
+    background-color: var(--panel-bg);
+    padding: 1rem;
+    border-radius: var(--cmp-radius);
+  }
+
+  .data-tab__filter-group {
+    flex: 1;
+  }
+
+  .data-tab__filter-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 13px;
+  }
+
+  .data-tab__search-group {
+    flex: 1;
+  }
+
+  .data-tab__search-input-group {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .data-tab__search-input {
+    flex: 1;
+  }
+
+  /* Empty State */
+
+  .data-tab__empty-state {
+    padding: 2rem;
+    text-align: center;
+    background-color: var(--base-bg-dim);
+    border-radius: 6px;
+  }
+
+  .data-tab__empty-state-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  .data-tab__empty-state-add-controls {
+    display: flex;
+    gap: 0.5rem;
+    align-items: end;
+  }
+
+  .data-tab__empty-state-schema-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .data-tab__empty-state-schema-label {
+    font-size: 11px;
+    color: var(--base-fg-dim);
+  }
+
+  /* Data Table */
+
+  .data-tab__table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .data-tab__table-header {
+    /* Styles handled by existing table styling */
+  }
+
+  .data-tab__table-row {
+    /* Styles handled by existing table styling */
+  }
+
+  .data-tab__table-cell {
+    /* Styles handled by existing table styling */
+  }
+
+  .data-tab__table-actions {
+    display: flex;
+    gap: 4px;
+  }
+}

@@ -8,6 +8,7 @@ import { Select } from '@diagram-craft/app-components/Select';
 import { TbPlus, TbPencil, TbTrash, TbSearch } from 'react-icons/tb';
 import { EditItemDialog } from '../EditItemDialog';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
+import styles from './DataTab.module.css';
 
 type DataItemWithSchema = Data & {
   _schema: DataSchema;
@@ -175,16 +176,12 @@ export const DataTab = () => {
   const hasSchemas = dataProvider?.schemas && dataProvider.schemas.length > 0;
 
   return (
-    <>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <p style={{ margin: 0 }}>Data</p>
+    <div className={styles.dataTab}>
+      <div className={styles.dataTabHeader}>
+        <p className={styles.dataTabTitle}>Data</p>
         {canMutateData && hasSchemas && (
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <Select.Root
-              value={selectedAddSchema}
-              onChange={v => setSelectedAddSchema(v ?? '')}
-              style={{ minWidth: '150px' }}
-            >
+          <div className={styles.dataTabAddControls}>
+            <Select.Root value={selectedAddSchema} onChange={v => setSelectedAddSchema(v ?? '')}>
               {dataProvider?.schemas?.map(schema => (
                 <Select.Item key={schema.id} value={schema.id}>
                   {schema.name}
@@ -195,7 +192,7 @@ export const DataTab = () => {
               type="primary"
               onClick={() => setAddItemDialog(true)}
               disabled={!selectedAddSchema}
-              style={{ alignSelf: 'end' }}
+              className={styles.dataTabAddButton}
             >
               <TbPlus /> Add Data
             </Button>
@@ -204,43 +201,21 @@ export const DataTab = () => {
       </div>
 
       {!dataProvider && (
-        <div
-          style={{
-            padding: '2rem',
-            textAlign: 'center',
-            color: 'var(--base-fg-dim)',
-            backgroundColor: 'var(--base-bg-dim)',
-            borderRadius: '6px'
-          }}
-        >
+        <div className={`${styles.dataTabMessageBox} ${styles.dataTabMessageBoxNoProvider}`}>
           <p>No data provider configured</p>
           <p>Configure a data provider in the Model Providers tab to manage data.</p>
         </div>
       )}
 
       {dataProvider && !hasSchemas && (
-        <div
-          style={{
-            padding: '2rem',
-            textAlign: 'center',
-            backgroundColor: 'var(--base-bg-dim)',
-            borderRadius: '6px'
-          }}
-        >
+        <div className={styles.dataTabMessageBox}>
           <p>No schemas available</p>
           <p>Create schemas in the Schemas tab before adding data.</p>
         </div>
       )}
 
       {dataProvider && !canMutateData && (
-        <div
-          style={{
-            padding: '1rem',
-            backgroundColor: 'var(--base-bg-dim)',
-            borderRadius: '6px',
-            color: 'var(--base-fg-dim)'
-          }}
-        >
+        <div className={`${styles.dataTabMessageBox} ${styles.dataTabMessageBoxNoMutation}`}>
           <p>The current data provider does not support data management.</p>
           <p>Switch to a different provider (like REST API) to manage data.</p>
         </div>
@@ -249,20 +224,9 @@ export const DataTab = () => {
       {hasSchemas && (
         <>
           {/* Search and Filter Controls */}
-          <div
-            style={{
-              display: 'flex',
-              gap: '1rem',
-              alignItems: 'end',
-              backgroundColor: 'var(--panel-bg)',
-              padding: '1rem',
-              borderRadius: 'var(--cmp-radius)'
-            }}
-          >
-            <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '13px' }}>
-                Filter by Schema:
-              </label>
+          <div className={styles.dataTabSearchControls}>
+            <div className={styles.dataTabFilterGroup}>
+              <label className={styles.dataTabFilterLabel}>Filter by Schema:</label>
               <Select.Root value={selectedSchemaId} onChange={v => setSelectedSchemaId(v ?? 'all')}>
                 <Select.Item value="all">All Schemas ({allDataItems.length} items)</Select.Item>
                 {dataProvider?.schemas?.map(schema => {
@@ -276,11 +240,9 @@ export const DataTab = () => {
               </Select.Root>
             </div>
 
-            <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '13px' }}>
-                Search:
-              </label>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <div className={styles.dataTabSearchGroup}>
+              <label className={styles.dataTabFilterLabel}>Search:</label>
+              <div className={styles.dataTabSearchInputGroup}>
                 <TextInput
                   ref={searchRef}
                   value={searchText}
@@ -296,7 +258,7 @@ export const DataTab = () => {
                       searchRef.current?.blur();
                     }
                   }}
-                  style={{ flex: 1 }}
+                  className={styles.dataTabSearchInput}
                 />
                 <Button type="secondary" onClick={handleSearch}>
                   <TbSearch />
@@ -307,35 +269,20 @@ export const DataTab = () => {
 
           {/* Data Results */}
           {filteredDataItems.length === 0 && (
-            <div
-              style={{
-                padding: '2rem',
-                textAlign: 'center',
-                backgroundColor: 'var(--base-bg-dim)',
-                borderRadius: '6px'
-              }}
-            >
+            <div className={styles.dataTabEmptyState}>
               {allDataItems.length === 0 ? (
                 <>
                   <p>No data items yet</p>
                   {canMutateData && (
-                    <div
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '1rem',
-                        alignItems: 'center'
-                      }}
-                    >
-                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'end' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                          <label style={{ fontSize: '11px', color: 'var(--base-fg-dim)' }}>
+                    <div className={styles.dataTabEmptyStateControls}>
+                      <div className={styles.dataTabEmptyStateAddControls}>
+                        <div className={styles.dataTabEmptyStateSchemaGroup}>
+                          <label className={styles.dataTabEmptyStateSchemaLabel}>
                             Add to schema:
                           </label>
                           <Select.Root
                             value={selectedAddSchema}
                             onChange={v => setSelectedAddSchema(v ?? '')}
-                            style={{ minWidth: '150px' }}
                           >
                             {dataProvider?.schemas?.map(schema => (
                               <Select.Item key={schema.id} value={schema.id}>
@@ -362,7 +309,7 @@ export const DataTab = () => {
           )}
 
           {filteredDataItems.length > 0 && (
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <table className={styles.dataTabTable}>
               <thead>
                 <tr>
                   <th>Name</th>
@@ -391,7 +338,7 @@ export const DataTab = () => {
                       </td>
                       {canMutateData && (
                         <td>
-                          <div style={{ display: 'flex', gap: '4px' }}>
+                          <div className={styles.dataTabTableActions}>
                             <Button
                               type="icon-only"
                               onClick={() =>
@@ -434,6 +381,6 @@ export const DataTab = () => {
         selectedSchema={editItemDialog.schema?.id}
         editItem={editItemDialog.item}
       />
-    </>
+    </div>
   );
 };

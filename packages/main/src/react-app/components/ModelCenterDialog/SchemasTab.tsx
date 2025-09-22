@@ -7,6 +7,7 @@ import { TbPlus, TbPencil, TbTrash } from 'react-icons/tb';
 import { EditSchemaDialog } from '../EditSchemaDialog';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { useApplication } from '../../../application';
+import styles from './SchemasTab.module.css';
 
 export const SchemasTab = () => {
   const document = useDocument();
@@ -92,9 +93,9 @@ export const SchemasTab = () => {
   const canMutateSchemas = dataProvider && isMutableSchemaProvider(dataProvider);
 
   return (
-    <>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <p style={{ margin: 0 }}>Schemas</p>
+    <div className={styles.schemasTab}>
+      <div className={styles.schemasTabHeader}>
+        <p className={styles.schemasTabTitle}>Schemas</p>
         {canMutateSchemas && (
           <Button type="primary" onClick={() => setAddSchemaDialog(true)}>
             <TbPlus /> Add Schema
@@ -103,43 +104,21 @@ export const SchemasTab = () => {
       </div>
 
       {!dataProvider && (
-        <div
-          style={{
-            padding: '2rem',
-            textAlign: 'center',
-            color: 'var(--base-fg-dim)',
-            backgroundColor: 'var(--base-bg-dim)',
-            borderRadius: '6px'
-          }}
-        >
+        <div className={`${styles.schemasTabMessageBox} ${styles.schemasTabMessageBoxNoProvider}`}>
           <p>No data provider configured</p>
           <p>Configure a data provider in the Model Providers tab to manage schemas.</p>
         </div>
       )}
 
       {dataProvider && !canMutateSchemas && (
-        <div
-          style={{
-            padding: '1rem',
-            backgroundColor: 'var(--base-bg-dim)',
-            borderRadius: '6px',
-            color: 'var(--base-fg-dim)'
-          }}
-        >
+        <div className={`${styles.schemasTabMessageBox} ${styles.schemasTabMessageBoxNoMutation}`}>
           <p>The current data provider does not support schema management.</p>
           <p>Switch to a different provider (like REST API) to manage schemas.</p>
         </div>
       )}
 
       {schemas.length === 0 && canMutateSchemas && (
-        <div
-          style={{
-            padding: '2rem',
-            textAlign: 'center',
-            backgroundColor: 'var(--base-bg-dim)',
-            borderRadius: '6px'
-          }}
-        >
+        <div className={styles.schemasTabEmptyState}>
           <p>No schemas defined yet</p>
           <Button type="primary" onClick={() => setAddSchemaDialog(true)}>
             <TbPlus /> Create Your First Schema
@@ -148,12 +127,7 @@ export const SchemasTab = () => {
       )}
 
       {schemas.length > 0 && (
-        <table
-          style={{
-            width: '100%',
-            borderCollapse: 'collapse'
-          }}
-        >
+        <table className={styles.schemasTabTable}>
           <thead>
             <tr>
               <th>Name</th>
@@ -170,7 +144,7 @@ export const SchemasTab = () => {
                 <td>{schema.source}</td>
                 {canMutateSchemas && (
                   <td>
-                    <div style={{ display: 'flex', gap: '4px' }}>
+                    <div className={styles.schemasTabTableActions}>
                       <Button
                         type="icon-only"
                         onClick={() => setEditSchemaDialog({ open: true, schema })}
@@ -210,6 +184,6 @@ export const SchemasTab = () => {
         schema={editSchemaDialog.schema}
         availableSchemas={schemas}
       />
-    </>
+    </div>
   );
 };

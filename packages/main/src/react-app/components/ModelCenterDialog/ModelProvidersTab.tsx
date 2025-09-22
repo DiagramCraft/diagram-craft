@@ -10,6 +10,7 @@ import { Select } from '@diagram-craft/app-components/Select';
 import { useState } from 'react';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Button } from '@diagram-craft/app-components/Button';
+import styles from './ModelProvidersTab.module.css';
 
 type ProviderSettingsProps<T extends DataProvider> = {
   provider: T;
@@ -19,9 +20,9 @@ const UrlDataProviderSettings = (props: ProviderSettingsProps<UrlDataProvider>) 
   const [dataUrl, setDataUrl] = useState<string>(props.provider.dataUrl!);
   const [schemaUrl, setSchemaUrl] = useState<string>(props.provider.schemaUrl!);
   return (
-    <div className={'util-vstack'}>
-      <div className={'util-vstack'} style={{ gap: '0.2rem' }}>
-        <label>{'Data URL'}:</label>
+    <div className={styles.modelProvidersTabStack}>
+      <div className={styles.modelProvidersTabSettingsGroup}>
+        <label className={styles.modelProvidersTabSettingsLabel}>{'Data URL'}:</label>
         <TextInput
           type="text"
           value={dataUrl}
@@ -31,8 +32,8 @@ const UrlDataProviderSettings = (props: ProviderSettingsProps<UrlDataProvider>) 
           }}
         />
       </div>
-      <div className={'util-vstack'} style={{ gap: '0.2rem' }}>
-        <label>{'Schema URL'}:</label>
+      <div className={styles.modelProvidersTabSettingsGroup}>
+        <label className={styles.modelProvidersTabSettingsLabel}>{'Schema URL'}:</label>
         <TextInput
           value={schemaUrl}
           onChange={v => {
@@ -46,15 +47,15 @@ const UrlDataProviderSettings = (props: ProviderSettingsProps<UrlDataProvider>) 
 };
 
 const DefaultDataProviderSettings = (_props: ProviderSettingsProps<DefaultDataProvider>) => {
-  return <div className={'util-vstack'}>No settings needed.</div>;
+  return <div className={styles.modelProvidersTabStack}>No settings needed.</div>;
 };
 
 const RESTDataProviderSettings = (props: ProviderSettingsProps<RESTDataProvider>) => {
   const [baseUrl, setBaseUrl] = useState<string>(props.provider.baseUrl || '');
   return (
-    <div className={'util-vstack'}>
-      <div className={'util-vstack'} style={{ gap: '0.2rem' }}>
-        <label>{'Base URL'}:</label>
+    <div className={styles.modelProvidersTabStack}>
+      <div className={styles.modelProvidersTabSettingsGroup}>
+        <label className={styles.modelProvidersTabSettingsLabel}>{'Base URL'}:</label>
         <TextInput
           type="text"
           value={baseUrl}
@@ -106,9 +107,9 @@ export const ModelProvidersTab = () => {
     <>
       <div>Model Providers</div>
 
-      <div className={'util-vstack'}>
-        <div className={'util-vstack'} style={{ gap: '0.2rem' }}>
-          <label>Type of provider:</label>
+      <div className={styles.modelProvidersTabStack}>
+        <div className={styles.modelProvidersTabProviderGroup}>
+          <label className={styles.modelProvidersTabProviderLabel}>Type of provider:</label>
 
           <Select.Root
             value={provider?.id ?? 'none'}
@@ -134,8 +135,8 @@ export const ModelProvidersTab = () => {
           </Select.Root>
         </div>
 
-        {errorMessage && <div style={{ color: 'var(--error-fg)' }}>{errorMessage}</div>}
-        {successMessage && <div style={{ color: 'var(--success-fg)' }}>{successMessage}</div>}
+        {errorMessage && <div className={styles.modelProvidersTabErrorMessage}>{errorMessage}</div>}
+        {successMessage && <div className={styles.modelProvidersTabSuccessMessage}>{successMessage}</div>}
 
         {provider instanceof UrlDataProvider && <UrlDataProviderSettings provider={provider} />}
         {provider instanceof DefaultDataProvider && (
@@ -143,7 +144,7 @@ export const ModelProvidersTab = () => {
         )}
         {provider instanceof RESTDataProvider && <RESTDataProviderSettings provider={provider} />}
 
-        <div style={{ marginTop: '1rem' }}>
+        <div className={styles.modelProvidersTabSaveSection}>
           <Button type="primary" onClick={handleSave}>
             Save Settings
           </Button>
