@@ -225,6 +225,8 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
         }
       }
       doc.data.setProviders(providers, true);
+    } else {
+      doc.data.setProviders([], true);
     }
 
     doc.data.templates.replaceBy(document.data?.templates ?? []);

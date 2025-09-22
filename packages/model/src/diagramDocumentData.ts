@@ -17,6 +17,7 @@ import { deepEquals } from '@diagram-craft/utils/object';
 import { EventEmitter, type EventKey, type EventReceiver } from '@diagram-craft/utils/event';
 import { CRDTMap, CRDTMapEvents, CRDTRoot } from './collaboration/crdt';
 import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
+import { DefaultDataProvider, DefaultDataProviderId } from './dataProviderDefault';
 
 const makeDataListener =
   (document: DiagramDocument, mode: 'update' | 'delete') => (data: { data: Data[] }) => {
@@ -154,6 +155,12 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
   }
 
   setProviders(dataProviders: Array<DataProvider>, initial = false) {
+    if (dataProviders[0]?.id !== DefaultDataProviderId) {
+      dataProviders.unshift(
+        new DefaultDataProvider(`{ "schemas": ${JSON.stringify(DEFAULT_SCHEMA)} }`)
+      );
+    }
+
     this.setProviderInternal(dataProviders, initial);
 
     this.#crdt.set(
