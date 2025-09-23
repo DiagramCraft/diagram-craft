@@ -84,6 +84,12 @@ const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   (e as any)._triggered = true;
 };
 
+type DialogStackItem = {
+  dialog: DialogCommand<any, any>;
+  zIndex: number;
+  id: string;
+};
+
 const tools: Record<ToolType, ToolConstructor> = {
   move: MoveTool,
   text: TextTool,
@@ -177,17 +183,25 @@ export const App = (props: {
       });
     },
     showDialog: (dialog: DialogCommand<unknown, unknown>) => {
-      setDialogState({
-        ...dialog,
-        onOk: (data: unknown) => {
-          dialog.onOk(data);
-          setDialogState(undefined);
+      const dialogId = newid();
+      const baseZIndex = 1000;
+      const newZIndex = baseZIndex + dialogStack.length;
+
+      setDialogStack(prev => [...prev, {
+        dialog: {
+          ...dialog,
+          onOk: (data: unknown) => {
+            dialog.onOk(data);
+            setDialogStack(current => current.filter(item => item.id !== dialogId));
+          },
+          onCancel: () => {
+            dialog.onCancel?.();
+            setDialogStack(current => current.filter(item => item.id !== dialogId));
+          }
         },
-        onCancel: () => {
-          dialog.onCancel?.();
-          setDialogState(undefined);
-        }
-      });
+        zIndex: newZIndex,
+        id: dialogId
+      }]);
     },
     showPreview: () => setPreview(true)
   };
@@ -251,8 +265,7 @@ export const App = (props: {
   const [dirty, setDirty] = useState(false);
   const [hash, setHash] = useState(application.current.model.activeDocument.hash);
   const [popoverState, setPopoverState] = useState<NodeTypePopupState>(NodeTypePopup.INITIAL_STATE);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [dialogState, setDialogState] = useState<DialogCommand<any, any> | undefined>(undefined);
+  const [dialogStack, setDialogStack] = useState<DialogStackItem[]>([]);
   const contextMenuTarget = useRef<ContextMenuTarget | null>(null);
 
   const svgRef = useRef<SVGSVGElement>(null);
@@ -337,81 +350,172 @@ export const App = (props: {
           }}
         >
           {/* Dialogs */}
-          <FileDialog
-            open={dialogState?.id === 'fileOpen'}
-            {...dialogState?.props}
-            onOk={dialogState?.onOk}
-            onCancel={dialogState?.onCancel}
-          />
-          <ImageInsertDialog
-            open={dialogState?.id === 'imageInsert'}
-            {...dialogState?.props}
-            onOk={dialogState?.onOk}
-            onCancel={dialogState?.onCancel}
-          />
-          <TableInsertDialog
-            open={dialogState?.id === 'tableInsert'}
-            {...dialogState?.props}
-            onOk={dialogState?.onOk}
-            onCancel={dialogState?.onCancel}
-          />
-          <ReferenceLayerDialog
-            open={dialogState?.id === 'newReferenceLayer'}
-            {...dialogState?.props}
-            onOk={dialogState?.onOk}
-            onCancel={dialogState?.onCancel}
-          />
-          <StringInputDialog
-            open={dialogState?.id === 'stringInput'}
-            {...dialogState?.props}
-            onOk={dialogState?.onOk}
-            onCancel={dialogState?.onCancel}
-          />
-          <RuleEditorDialog
-            open={dialogState?.id === 'ruleEditor'}
-            {...dialogState?.props}
-            onOk={dialogState?.onOk}
-            onCancel={dialogState?.onCancel}
-          />
-          <MessageDialog
-            open={dialogState?.id === 'message'}
-            {...dialogState?.props}
-            onOk={dialogState?.onOk}
-            onCancel={dialogState?.onCancel}
-          />
-          <JSONDialog
-            open={dialogState?.id === 'json'}
-            {...dialogState?.props}
-            onOk={dialogState?.onOk}
-            onCancel={dialogState?.onCancel}
-          />
-          <ExternalDataLinkDialog
-            open={dialogState?.id === 'externalDataLink'}
-            {...dialogState?.props}
-            onOk={dialogState?.onOk}
-            onCancel={dialogState?.onCancel}
-          />
-          <ModelCenterDialog
-            open={dialogState?.id === 'modelCenter'}
-            onClose={() => dialogState?.onCancel?.()}
-            defaultTab={dialogState?.props?.defaultTab}
-          />
-          <ShapeSelectDialog
-            open={dialogState?.id === 'shapeSelect'}
-            {...dialogState?.props}
-            onOk={dialogState?.onOk}
-            onCancel={dialogState?.onCancel}
-          />
-          <CommentDialog
-            open={dialogState?.id === 'comment'}
-            {...dialogState?.props}
-            onOk={dialogState?.onOk}
-            onCancel={dialogState?.onCancel}
-          />
-          <CommandPalette
-            open={dialogState?.id === 'commandPalette'}
-            onClose={() => setDialogState(undefined)}
-          />
+          {dialogStack.map(item => {
+            if (item.dialog.id !== 'fileOpen') return null;
+            return (
+              <div key={item.id} style={{ zIndex: item.zIndex }}>
+                <FileDialog
+                  open={true}
+                  {...item.dialog.props}
+                  onOk={item.dialog.onOk}
+                  onCancel={item.dialog.onCancel}
+                />
+              </div>
+            );
+          })}
+          {dialogStack.map(item => {
+            if (item.dialog.id !== 'imageInsert') return null;
+            return (
+              <div key={item.id} style={{ zIndex: item.zIndex }}>
+                <ImageInsertDialog
+                  open={true}
+                  {...item.dialog.props}
+                  onOk={item.dialog.onOk}
+                  onCancel={item.dialog.onCancel}
+                />
+              </div>
+            );
+          })}
+          {dialogStack.map(item => {
+            if (item.dialog.id !== 'tableInsert') return null;
+            return (
+              <div key={item.id} style={{ zIndex: item.zIndex }}>
+                <TableInsertDialog
+                  open={true}
+                  {...item.dialog.props}
+                  onOk={item.dialog.onOk}
+                  onCancel={item.dialog.onCancel}
+                />
+              </div>
+            );
+          })}
+          {dialogStack.map(item => {
+            if (item.dialog.id !== 'newReferenceLayer') return null;
+            return (
+              <div key={item.id} style={{ zIndex: item.zIndex }}>
+                <ReferenceLayerDialog
+                  open={true}
+                  {...item.dialog.props}
+                  onOk={item.dialog.onOk}
+                  onCancel={item.dialog.onCancel}
+                />
+              </div>
+            );
+          })}
+          {dialogStack.map(item => {
+            if (item.dialog.id !== 'stringInput') return null;
+            return (
+              <div key={item.id} style={{ zIndex: item.zIndex }}>
+                <StringInputDialog
+                  open={true}
+                  {...item.dialog.props}
+                  onOk={item.dialog.onOk}
+                  onCancel={item.dialog.onCancel}
+                />
+              </div>
+            );
+          })}
+          {dialogStack.map(item => {
+            if (item.dialog.id !== 'ruleEditor') return null;
+            return (
+              <div key={item.id} style={{ zIndex: item.zIndex }}>
+                <RuleEditorDialog
+                  open={true}
+                  {...item.dialog.props}
+                  onOk={item.dialog.onOk}
+                  onCancel={item.dialog.onCancel}
+                />
+              </div>
+            );
+          })}
+          {dialogStack.map(item => {
+            if (item.dialog.id !== 'message') return null;
+            return (
+              <div key={item.id} style={{ zIndex: item.zIndex }}>
+                <MessageDialog
+                  open={true}
+                  {...item.dialog.props}
+                  onOk={item.dialog.onOk}
+                  onCancel={item.dialog.onCancel}
+                />
+              </div>
+            );
+          })}
+          {dialogStack.map(item => {
+            if (item.dialog.id !== 'json') return null;
+            return (
+              <div key={item.id} style={{ zIndex: item.zIndex }}>
+                <JSONDialog
+                  open={true}
+                  {...item.dialog.props}
+                  onOk={item.dialog.onOk}
+                  onCancel={item.dialog.onCancel}
+                />
+              </div>
+            );
+          })}
+          {dialogStack.map(item => {
+            if (item.dialog.id !== 'externalDataLink') return null;
+            return (
+              <div key={item.id} style={{ zIndex: item.zIndex }}>
+                <ExternalDataLinkDialog
+                  open={true}
+                  {...item.dialog.props}
+                  onOk={item.dialog.onOk}
+                  onCancel={item.dialog.onCancel}
+                />
+              </div>
+            );
+          })}
+          {dialogStack.map(item => {
+            if (item.dialog.id !== 'modelCenter') return null;
+            return (
+              <div key={item.id} style={{ zIndex: item.zIndex }}>
+                <ModelCenterDialog
+                  open={true}
+                  onClose={() => item.dialog.onCancel?.()}
+                  defaultTab={item.dialog.props?.defaultTab}
+                />
+              </div>
+            );
+          })}
+          {dialogStack.map(item => {
+            if (item.dialog.id !== 'shapeSelect') return null;
+            return (
+              <div key={item.id} style={{ zIndex: item.zIndex }}>
+                <ShapeSelectDialog
+                  open={true}
+                  {...item.dialog.props}
+                  onOk={item.dialog.onOk}
+                  onCancel={item.dialog.onCancel}
+                />
+              </div>
+            );
+          })}
+          {dialogStack.map(item => {
+            if (item.dialog.id !== 'comment') return null;
+            return (
+              <div key={item.id} style={{ zIndex: item.zIndex }}>
+                <CommentDialog
+                  open={true}
+                  {...item.dialog.props}
+                  onOk={item.dialog.onOk}
+                  onCancel={item.dialog.onCancel}
+                />
+              </div>
+            );
+          })}
+          {dialogStack.map(item => {
+            if (item.dialog.id !== 'commandPalette') return null;
+            return (
+              <div key={item.id} style={{ zIndex: item.zIndex }}>
+                <CommandPalette
+                  open={true}
+                  onClose={() => item.dialog.onCancel?.()}
+                />
+              </div>
+            );
+          })}
 
           <div id="app" className={'dark-theme'}>
             <div id="menu">
