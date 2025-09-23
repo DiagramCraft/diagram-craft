@@ -32,7 +32,7 @@ export const SchemasTab = () => {
 
   // Handle schema operations
   const handleAddSchema = async (providerId: string, schema: DataSchema) => {
-    if (!db || !db.isMutableSchema(providerId)) return;
+    if (!db || !db.isSchemasEditable(providerId)) return;
 
     try {
       await db.addSchema(schema, providerId);
@@ -43,7 +43,7 @@ export const SchemasTab = () => {
   };
 
   const handleUpdateSchema = async (schema: DataSchema) => {
-    if (!db || !db.isMutableSchema(schema.providerId)) return;
+    if (!db || !db.isSchemasEditable(schema.providerId)) return;
 
     try {
       await db.updateSchema(schema);
@@ -54,7 +54,7 @@ export const SchemasTab = () => {
   };
 
   const handleDeleteSchema = (schema: DataSchema) => {
-    if (!db || !db.isMutableSchema(schema.providerId)) return;
+    if (!db || !db.isSchemasEditable(schema.providerId)) return;
 
     application.ui.showDialog(
       new MessageDialogCommand(
@@ -94,7 +94,7 @@ export const SchemasTab = () => {
     }
   };
 
-  const canMutateSchemas = db && providers.some(p => db.isMutableSchema(p.id));
+  const canMutateSchemas = db && providers.some(p => db.isSchemasEditable(p.id));
 
   return (
     <>
@@ -113,7 +113,7 @@ export const SchemasTab = () => {
                   <DropdownMenu.Item
                     key={provider.id}
                     className="cmp-context-menu__item"
-                    disabled={!db.isMutableSchema(provider.id)}
+                    disabled={!db.isSchemasEditable(provider.id)}
                     onSelect={() => setAddSchemaDialog({ open: true, providerId: provider.id })}
                   >
                     {getProviderTypeName(provider.providerId)}: {provider.id}
@@ -192,7 +192,7 @@ export const SchemasTab = () => {
                         type="icon-only"
                         onClick={() => setEditSchemaDialog({ open: true, schema })}
                         title="Edit schema"
-                        disabled={!db.isMutableSchema(schema.providerId)}
+                        disabled={!db.isSchemasEditable(schema.providerId)}
                       >
                         <TbPencil />
                       </Button>
@@ -200,7 +200,7 @@ export const SchemasTab = () => {
                         type="icon-only"
                         onClick={() => handleDeleteSchema(schema)}
                         title="Delete schema"
-                        disabled={!db.isMutableSchema(schema.providerId)}
+                        disabled={!db.isSchemasEditable(schema.providerId)}
                       >
                         <TbTrash />
                       </Button>

@@ -192,11 +192,11 @@ export class DataManager extends EventEmitter<DataProviderEventMap> {
     super();
   }
 
-  isMutable(schema: DataSchema) {
+  isDataEditable(schema: DataSchema) {
     return isMutableSchemaProvider(this.getProvider(schema.providerId));
   }
 
-  isMutableSchema(providerId: string) {
+  isSchemasEditable(providerId: string) {
     return isMutableSchemaProvider(this.getProvider(providerId));
   }
 

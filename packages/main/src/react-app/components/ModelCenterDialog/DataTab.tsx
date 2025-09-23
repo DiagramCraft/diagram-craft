@@ -110,7 +110,7 @@ export const DataTab = () => {
   }, [allDataItems, selectedSchemaId]);
 
   const handleDeleteItem = (item: DataItemWithSchema) => {
-    if (!db || !db.isMutable(item._schema)) return;
+    if (!db || !db.isDataEditable(item._schema)) return;
 
     const displayValue = item._schema.fields[0] ? item[item._schema.fields[0].id] : item._uid;
     const itemName = displayValue ?? 'this item';
@@ -151,7 +151,7 @@ export const DataTab = () => {
     return value;
   };
 
-  const canMutateData = db && db.schemas.some(s => db.isMutable(s));
+  const canMutateData = db && db.schemas.some(s => db.isDataEditable(s));
   const hasSchemas = db?.schemas && db.schemas.length > 0;
 
   return (
@@ -175,7 +175,7 @@ export const DataTab = () => {
                   key={schema.id}
                   className="cmp-context-menu__item"
                   onSelect={() => setAddItemDialog({ open: true, schemaId: schema.id })}
-                  disabled={!db.isMutable(schema)}
+                  disabled={!db.isDataEditable(schema)}
                 >
                   {schema.name}
                 </DropdownMenu.Item>
@@ -303,7 +303,7 @@ export const DataTab = () => {
                                 setEditItemDialog({ open: true, item, schema: item._schema })
                               }
                               title="Edit item"
-                              disabled={!db.isMutable(item._schema)}
+                              disabled={!db.isDataEditable(item._schema)}
                             >
                               <TbPencil />
                             </Button>
@@ -311,7 +311,7 @@ export const DataTab = () => {
                               type="icon-only"
                               onClick={() => handleDeleteItem(item)}
                               title="Delete item"
-                              disabled={!db.isMutable(item._schema)}
+                              disabled={!db.isDataEditable(item._schema)}
                             >
                               <TbTrash />
                             </Button>
