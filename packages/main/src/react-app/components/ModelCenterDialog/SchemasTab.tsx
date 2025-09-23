@@ -20,21 +20,22 @@ export const SchemasTab = () => {
   });
   const [selectedProviderId, setSelectedProviderId] = useState<string>('all');
 
-  const dataProvider = document.data.db;
-  const allSchemas = dataProvider?.schemas ?? [];
+  const db = document.data.db;
+  const allSchemas = db?.schemas ?? [];
   const providers = document.data.providers;
 
   // Filter schemas by selected provider
-  const schemas = selectedProviderId === 'all'
-    ? allSchemas
-    : allSchemas.filter(schema => schema.providerId === selectedProviderId);
+  const schemas =
+    selectedProviderId === 'all'
+      ? allSchemas
+      : allSchemas.filter(schema => schema.providerId === selectedProviderId);
 
   // Handle schema operations
   const handleAddSchema = async (providerId: string, schema: DataSchema) => {
-    if (!dataProvider || !dataProvider.isMutableSchema()) return;
+    if (!db || !db.isMutableSchema(providerId)) return;
 
     try {
-      await dataProvider.addSchema(schema, providerId);
+      await db.addSchema(schema, providerId);
       setAddSchemaDialog({ open: false });
     } catch (error) {
       console.error('Failed to add schema:', error);
@@ -42,10 +43,10 @@ export const SchemasTab = () => {
   };
 
   const handleUpdateSchema = async (schema: DataSchema) => {
-    if (!dataProvider || !dataProvider.isMutableSchema()) return;
+    if (!db || !db.isMutableSchema(schema.providerId)) return;
 
     try {
-      await dataProvider.updateSchema(schema);
+      await db.updateSchema(schema);
       setEditSchemaDialog({ open: false });
     } catch (error) {
       console.error('Failed to update schema:', error);
@@ -53,7 +54,7 @@ export const SchemasTab = () => {
   };
 
   const handleDeleteSchema = (schema: DataSchema) => {
-    if (!dataProvider || !dataProvider.isMutableSchema()) return;
+    if (!db || !db.isMutableSchema(schema.providerId)) return;
 
     application.ui.showDialog(
       new MessageDialogCommand(
@@ -66,7 +67,7 @@ export const SchemasTab = () => {
         },
         async () => {
           try {
-            await dataProvider.deleteSchema(schema);
+            await db.deleteSchema(schema);
           } catch (error) {
             console.error('Failed to delete schema:', error);
           }
@@ -93,7 +94,7 @@ export const SchemasTab = () => {
     }
   };
 
-  const canMutateSchemas = dataProvider && dataProvider.isMutableSchema();
+  const canMutateSchemas = db && providers.some(p => db.isMutableSchema(p.id));
 
   return (
     <>
@@ -112,6 +113,7 @@ export const SchemasTab = () => {
                   <DropdownMenu.Item
                     key={provider.id}
                     className="cmp-context-menu__item"
+                    disabled={!db.isMutableSchema(provider.id)}
                     onSelect={() => setAddSchemaDialog({ open: true, providerId: provider.id })}
                   >
                     {getProviderTypeName(provider.providerId)}: {provider.id}
@@ -124,14 +126,14 @@ export const SchemasTab = () => {
         )}
       </div>
 
-      {!dataProvider && (
+      {!db && (
         <div className={styles.schemasTabMessageBox}>
           <p>No data provider configured</p>
           <p>Configure a data provider in the Model Providers tab to manage schemas.</p>
         </div>
       )}
 
-      {dataProvider && !canMutateSchemas && (
+      {db && !canMutateSchemas && (
         <div className={styles.schemasTabMessageBox}>
           <p>The current data provider does not support schema management.</p>
           <p>Switch to a different provider (like REST API) to manage schemas.</p>
@@ -142,7 +144,10 @@ export const SchemasTab = () => {
         <div className={styles.schemasTabFilterControls}>
           <div className={styles.schemasTabFilterGroup}>
             <label className={styles.schemasTabFilterLabel}>Filter by Provider:</label>
-            <Select.Root value={selectedProviderId} onChange={v => setSelectedProviderId(v ?? 'all')}>
+            <Select.Root
+              value={selectedProviderId}
+              onChange={v => setSelectedProviderId(v ?? 'all')}
+            >
               <Select.Item value="all">All Providers</Select.Item>
               {providers.map(provider => (
                 <Select.Item key={provider.id} value={provider.id}>
@@ -187,6 +192,7 @@ export const SchemasTab = () => {
                         type="icon-only"
                         onClick={() => setEditSchemaDialog({ open: true, schema })}
                         title="Edit schema"
+                        disabled={!db.isMutableSchema(schema.providerId)}
                       >
                         <TbPencil />
                       </Button>
@@ -194,6 +200,7 @@ export const SchemasTab = () => {
                         type="icon-only"
                         onClick={() => handleDeleteSchema(schema)}
                         title="Delete schema"
+                        disabled={!db.isMutableSchema(schema.providerId)}
                       >
                         <TbTrash />
                       </Button>

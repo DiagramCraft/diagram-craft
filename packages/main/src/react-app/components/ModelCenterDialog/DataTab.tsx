@@ -54,19 +54,19 @@ export const DataTab = () => {
     open: false
   });
 
-  const dataProvider = document.data.db;
+  const db = document.data.db;
 
   // Collect all data items from all schemas
   useEffect(() => {
-    if (!dataProvider?.schemas) {
+    if (!db?.schemas) {
       setAllDataItems([]);
       return;
     }
 
     const allItems: DataItemWithSchema[] = [];
 
-    for (const schema of dataProvider.schemas) {
-      const schemaData = dataProvider.getData(schema);
+    for (const schema of db.schemas) {
+      const schemaData = db.getData(schema);
       const itemsWithSchema = schemaData.map(
         item => ({ ...item, _schema: schema }) as DataItemWithSchema
       );
@@ -74,17 +74,17 @@ export const DataTab = () => {
     }
 
     setAllDataItems(allItems);
-  }, [dataProvider?.schemas]);
+  }, [db?.schemas]);
 
   useEffect(() => {
-    if (!dataProvider) return;
+    if (!db) return;
 
     const handleDataChange = () => {
-      if (!dataProvider.schemas) return;
+      if (!db.schemas) return;
 
       const allItems: DataItemWithSchema[] = [];
-      for (const schema of dataProvider.schemas) {
-        const schemaData = dataProvider.getData(schema);
+      for (const schema of db.schemas) {
+        const schemaData = db.getData(schema);
         const itemsWithSchema = schemaData.map(
           item => ({ ...item, _schema: schema }) as DataItemWithSchema
         );
@@ -93,16 +93,16 @@ export const DataTab = () => {
       setAllDataItems(allItems);
     };
 
-    dataProvider.on('addData', handleDataChange);
-    dataProvider.on('updateData', handleDataChange);
-    dataProvider.on('deleteData', handleDataChange);
+    db.on('addData', handleDataChange);
+    db.on('updateData', handleDataChange);
+    db.on('deleteData', handleDataChange);
 
     return () => {
-      dataProvider.off('addData', handleDataChange);
-      dataProvider.off('updateData', handleDataChange);
-      dataProvider.off('deleteData', handleDataChange);
+      db.off('addData', handleDataChange);
+      db.off('updateData', handleDataChange);
+      db.off('deleteData', handleDataChange);
     };
-  }, [dataProvider]);
+  }, [db]);
 
   useEffect(() => {
     const filtered = filterItems(allDataItems, selectedSchemaId, '');
@@ -110,7 +110,7 @@ export const DataTab = () => {
   }, [allDataItems, selectedSchemaId]);
 
   const handleDeleteItem = (item: DataItemWithSchema) => {
-    if (!dataProvider || !dataProvider.isMutable()) return;
+    if (!db || !db.isMutable(item._schema)) return;
 
     const displayValue = item._schema.fields[0] ? item[item._schema.fields[0].id] : item._uid;
     const itemName = displayValue ?? 'this item';
@@ -126,7 +126,7 @@ export const DataTab = () => {
         },
         async () => {
           try {
-            await dataProvider.deleteData(item._schema, item);
+            await db.deleteData(item._schema, item);
           } catch (error) {
             console.error('Failed to delete item:', error);
           }
@@ -151,8 +151,8 @@ export const DataTab = () => {
     return value;
   };
 
-  const canMutateData = dataProvider && dataProvider.isMutable();
-  const hasSchemas = dataProvider?.schemas && dataProvider.schemas.length > 0;
+  const canMutateData = db && db.schemas.some(s => db.isMutable(s));
+  const hasSchemas = db?.schemas && db.schemas.length > 0;
 
   return (
     <>
@@ -170,11 +170,12 @@ export const DataTab = () => {
           </DropdownMenu.Trigger>
           <DropdownMenu.Portal>
             <DropdownMenu.Content className="cmp-context-menu" sideOffset={5}>
-              {dataProvider?.schemas?.map(schema => (
+              {db?.schemas?.map(schema => (
                 <DropdownMenu.Item
                   key={schema.id}
                   className="cmp-context-menu__item"
                   onSelect={() => setAddItemDialog({ open: true, schemaId: schema.id })}
+                  disabled={!db.isMutable(schema)}
                 >
                   {schema.name}
                 </DropdownMenu.Item>
@@ -185,21 +186,21 @@ export const DataTab = () => {
         </DropdownMenu.Root>
       </div>
 
-      {!dataProvider && (
+      {!db && (
         <div className={`${styles.dataTabMessageBox}`}>
           <p>No data provider configured</p>
           <p>Configure a data provider in the Model Providers tab to manage data.</p>
         </div>
       )}
 
-      {dataProvider && !hasSchemas && (
+      {db && !hasSchemas && (
         <div className={styles.dataTabMessageBox}>
           <p>No schemas available</p>
           <p>Create schemas in the Schemas tab before adding data.</p>
         </div>
       )}
 
-      {dataProvider && !canMutateData && (
+      {db && !canMutateData && (
         <div className={`${styles.dataTabMessageBox}`}>
           <p>The current data provider does not support data management.</p>
           <p>Switch to a different provider (like REST API) to manage data.</p>
@@ -214,7 +215,7 @@ export const DataTab = () => {
               <label className={styles.dataTabFilterLabel}>Filter by Schema:</label>
               <Select.Root value={selectedSchemaId} onChange={v => setSelectedSchemaId(v ?? 'all')}>
                 <Select.Item value="all">All Schemas ({allDataItems.length} items)</Select.Item>
-                {dataProvider?.schemas?.map(schema => {
+                {db?.schemas?.map(schema => {
                   return (
                     <Select.Item key={schema.id} value={schema.id}>
                       {schema.name}
@@ -302,6 +303,7 @@ export const DataTab = () => {
                                 setEditItemDialog({ open: true, item, schema: item._schema })
                               }
                               title="Edit item"
+                              disabled={!db.isMutable(item._schema)}
                             >
                               <TbPencil />
                             </Button>
@@ -309,6 +311,7 @@ export const DataTab = () => {
                               type="icon-only"
                               onClick={() => handleDeleteItem(item)}
                               title="Delete item"
+                              disabled={!db.isMutable(item._schema)}
                             >
                               <TbTrash />
                             </Button>

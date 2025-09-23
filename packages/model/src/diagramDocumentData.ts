@@ -3,7 +3,6 @@ import {
   DataProvider,
   type DataProviderEventMap,
   DataProviderRegistry,
-  isMutableDataProvider,
   isMutableSchemaProvider,
   type MutableDataProvider,
   type RefreshableDataProvider,
@@ -189,19 +188,16 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
 }
 
 export class DataManager extends EventEmitter<DataProviderEventMap> {
-  private provider: DataProvider;
-
   constructor(private readonly providers: Array<DataProvider>) {
     super();
-    this.provider = providers[0];
   }
 
-  isMutable() {
-    return isMutableDataProvider(this.provider!);
+  isMutable(schema: DataSchema) {
+    return isMutableSchemaProvider(this.getProvider(schema.providerId));
   }
 
-  isMutableSchema() {
-    return isMutableSchemaProvider(this.provider!);
+  isMutableSchema(providerId: string) {
+    return isMutableSchemaProvider(this.getProvider(providerId));
   }
 
   refreshData() {
@@ -237,47 +233,61 @@ export class DataManager extends EventEmitter<DataProviderEventMap> {
   }
 
   addSchema(schema: DataSchema, providerId: string) {
-    const provider = this.providers.find(p => p.providerId === providerId);
+    const provider = this.getProvider(providerId);
     if (!isMutableSchemaProvider(provider!)) throw new VerifyNotReached();
     return provider.addSchema(schema);
   }
 
+  private getProvider(providerId: string) {
+    const p = this.providers.find(p => p.id === providerId);
+    assert.present(p, `Provider ${providerId} not found`);
+    return p;
+  }
+
   updateSchema(schema: DataSchema) {
-    if (!isMutableSchemaProvider(this.provider!)) throw new VerifyNotReached();
-    return this.provider.updateSchema(schema);
+    const provider = this.getProvider(schema.providerId);
+    if (!isMutableSchemaProvider(provider)) throw new VerifyNotReached();
+    return provider.updateSchema(schema);
   }
 
   deleteSchema(schema: DataSchema) {
-    if (!isMutableSchemaProvider(this.provider!)) throw new VerifyNotReached();
-    return this.provider.deleteSchema(schema);
+    const provider = this.getProvider(schema.providerId);
+    if (!isMutableSchemaProvider(provider)) throw new VerifyNotReached();
+    return provider.deleteSchema(schema);
   }
 
   getData(schema: DataSchema) {
-    return this.provider?.getData(schema) ?? [];
+    const provider = this.getProvider(schema.providerId);
+    return provider?.getData(schema) ?? [];
   }
 
   get schemas() {
     return this.providers?.flatMap(p => p.schemas ?? []);
   }
 
-  getById(_schema: DataSchema, ids: string[]) {
-    return this.provider?.getById(ids) ?? [];
+  getById(schema: DataSchema, ids: string[]) {
+    const provider = this.getProvider(schema.providerId);
+    return provider?.getById(ids) ?? [];
   }
 
   queryData(schema: DataSchema, query: string) {
-    return this.provider?.queryData(schema, query);
+    const provider = this.getProvider(schema.providerId);
+    return provider?.queryData(schema, query);
   }
 
   deleteData(schema: DataSchema, data: Data) {
-    return (this.provider as MutableDataProvider)?.deleteData(schema, data);
+    const provider = this.getProvider(schema.providerId);
+    return (provider as MutableDataProvider)?.deleteData(schema, data);
   }
 
   updateData(schema: DataSchema, data: Data) {
-    return (this.provider as MutableDataProvider)?.updateData(schema, data);
+    const provider = this.getProvider(schema.providerId);
+    return (provider as MutableDataProvider)?.updateData(schema, data);
   }
 
   addData(schema: DataSchema, data: Data) {
-    return (this.provider as MutableDataProvider)?.addData(schema, data);
+    const provider = this.getProvider(schema.providerId);
+    return (provider as MutableDataProvider)?.addData(schema, data);
   }
 
   on<K extends EventKey<DataProviderEventMap>>(
@@ -285,13 +295,13 @@ export class DataManager extends EventEmitter<DataProviderEventMap> {
     fn: EventReceiver<DataProviderEventMap[K]>,
     id?: string
   ) {
-    this.provider?.on(eventName, fn, id);
+    this.providers.forEach(p => p?.on(eventName, fn, id));
   }
 
   off<K extends EventKey<DataProviderEventMap>>(
     eventName: K,
     fnOrId: EventReceiver<DataProviderEventMap[K]> | string
   ) {
-    this.provider?.off(eventName, fnOrId);
+    this.providers.forEach(p => p?.off(eventName, fnOrId));
   }
 }
