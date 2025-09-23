@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useApplication, useDocument } from '../../../application';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { Button } from '@diagram-craft/app-components/Button';
+import { Select } from '@diagram-craft/app-components/Select';
 import { TbPencil, TbPlus, TbTrash } from 'react-icons/tb';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { EditSchemaDialog } from '../EditSchemaDialog';
@@ -17,9 +18,16 @@ export const SchemasTab = () => {
   const [editSchemaDialog, setEditSchemaDialog] = useState<{ open: boolean; schema?: DataSchema }>({
     open: false
   });
+  const [selectedProviderId, setSelectedProviderId] = useState<string>('all');
+
   const dataProvider = document.data.db;
-  const schemas = dataProvider?.schemas ?? [];
+  const allSchemas = dataProvider?.schemas ?? [];
   const providers = document.data.providers;
+
+  // Filter schemas by selected provider
+  const schemas = selectedProviderId === 'all'
+    ? allSchemas
+    : allSchemas.filter(schema => schema.providerId === selectedProviderId);
 
   // Handle schema operations
   const handleAddSchema = async (providerId: string, schema: DataSchema) => {
@@ -130,9 +138,29 @@ export const SchemasTab = () => {
         </div>
       )}
 
+      {providers.length > 0 && (
+        <div className={styles.schemasTabFilterControls}>
+          <div className={styles.schemasTabFilterGroup}>
+            <label className={styles.schemasTabFilterLabel}>Filter by Provider:</label>
+            <Select.Root value={selectedProviderId} onChange={v => setSelectedProviderId(v ?? 'all')}>
+              <Select.Item value="all">All Providers</Select.Item>
+              {providers.map(provider => (
+                <Select.Item key={provider.id} value={provider.id}>
+                  {getProviderTypeName(provider.providerId)}: {provider.id}
+                </Select.Item>
+              ))}
+            </Select.Root>
+          </div>
+        </div>
+      )}
+
       {schemas.length === 0 && canMutateSchemas && (
         <div className={styles.schemasTabMessageBox}>
-          <p>No schemas defined yet</p>
+          {allSchemas.length === 0 ? (
+            <p>No schemas defined yet</p>
+          ) : (
+            <p>No schemas match your current filter</p>
+          )}
         </div>
       )}
 
