@@ -10,7 +10,7 @@ import { Select } from '@diagram-craft/app-components/Select';
 import { useState } from 'react';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Button } from '@diagram-craft/app-components/Button';
-import { TbPencil, TbPlus, TbTrash } from 'react-icons/tb';
+import { TbPencil, TbPlus, TbTrash, TbRefresh } from 'react-icons/tb';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import styles from './ModelProvidersTab.module.css';
 
@@ -162,6 +162,18 @@ export const ModelProvidersTab = () => {
     setEditingProvider({ open: false });
   };
 
+  const handleRefreshAll = async () => {
+    try {
+      await document.data.db.refreshSchemas();
+      await document.data.db.refreshData();
+      setSuccessMessage('All data refreshed successfully');
+      setErrorMessage(undefined);
+    } catch (error) {
+      setErrorMessage('Failed to refresh data');
+      setSuccessMessage(undefined);
+    }
+  };
+
   const getProviderTypeName = (providerId: string): string => {
     switch (providerId) {
       case UrlDataProviderId:
@@ -191,9 +203,14 @@ export const ModelProvidersTab = () => {
       <div className={styles.modelProvidersTabStack}>
         <div className={styles.modelProvidersTabHeader}>
           <p className={styles.modelProvidersTabTitle}>Model Providers</p>
-          <Button type="primary" onClick={handleAddProvider}>
-            <TbPlus /> Add Provider
-          </Button>
+          <div className={styles.modelProvidersTabHeaderActions}>
+            <Button type="secondary" onClick={handleRefreshAll}>
+              <TbRefresh /> Refresh All
+            </Button>
+            <Button type="primary" onClick={handleAddProvider}>
+              <TbPlus /> Add Provider
+            </Button>
+          </div>
         </div>
 
         {errorMessage && <div className={styles.modelProvidersTabErrorMessage}>{errorMessage}</div>}

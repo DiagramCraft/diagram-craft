@@ -17,7 +17,7 @@ export class DefaultDataProvider
   implements MutableDataProvider, MutableSchemaProvider
 {
   providerId = DefaultDataProviderId;
-  id: string = 'Default';
+  id: string = 'default';
 
   schemas: DataSchema[];
   private readonly data: DataWithSchema[] = [];
@@ -70,11 +70,13 @@ export class DefaultDataProvider
   }
 
   async addSchema(schema: DataSchema): Promise<void> {
+    schema.providerId = this.id;
     this.schemas.push(schema);
     this.emit('addSchema', schema);
   }
 
   async updateSchema(schema: DataSchema): Promise<void> {
+    schema.providerId = this.id;
     const idx = this.schemas.findIndex(s => s.id === schema.id);
     if (idx < 0) return;
     this.schemas[idx] = schema;

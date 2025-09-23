@@ -140,7 +140,8 @@ export class RESTDataProvider
       throw new Error(`Failed to add schema: ${res.statusText}`);
     }
 
-    const createdSchema = await res.json();
+    const createdSchema: DataSchema = await res.json();
+    createdSchema.providerId = this.id;
     this.schemas.push(createdSchema);
     this.emit('addSchema', createdSchema);
   }
@@ -163,7 +164,8 @@ export class RESTDataProvider
       throw new Error(`Failed to update schema: ${res.statusText}`);
     }
 
-    const updatedSchema = await res.json();
+    const updatedSchema: DataSchema = await res.json();
+    updatedSchema.providerId = this.id;
     this.schemas[index] = updatedSchema;
     this.emit('updateSchema', updatedSchema);
   }

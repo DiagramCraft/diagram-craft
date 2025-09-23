@@ -90,6 +90,7 @@ export abstract class BaseHTTPDataProvider
     const newSchemas = await this.fetchSchemas(force);
 
     for (const schema of newSchemas) {
+      schema.providerId = this.id;
       const oldSchema = oldSchemas.find(s => s.id === schema.id);
       if (oldSchema) {
         this.emit('updateSchema', schema);
