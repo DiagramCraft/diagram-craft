@@ -8,7 +8,7 @@ describe('DefaultDataProvider', () => {
   const testSchema: DataSchema = {
     id: 'test-schema',
     name: 'Test Schema',
-    source: 'external',
+    providerId: 'external',
     fields: [
       { id: 'name', name: 'Name', type: 'text' },
       { id: 'value', name: 'Value', type: 'text' }
@@ -257,7 +257,7 @@ describe('DefaultDataProvider', () => {
       const parsed = JSON.parse(serialized);
 
       // Assert
-      expect(parsed).toHaveProperty('schema');
+      expect(parsed).toHaveProperty('schemas');
       expect(parsed).toHaveProperty('data');
       expect(parsed.data).toHaveLength(2);
     });

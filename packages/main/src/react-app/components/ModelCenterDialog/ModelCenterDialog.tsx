@@ -8,12 +8,27 @@ import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { DataTab } from './DataTab';
 import { SchemasTab } from './SchemasTab';
 import { ModelProvidersTab } from './ModelProvidersTab';
+import { DialogCommand } from '@diagram-craft/canvas/context';
 
 type Props = {
   open: boolean;
   onClose: () => void;
   defaultTab?: 'data' | 'schemas' | 'model-providers';
 };
+
+export type ModelCenterDialogProps = {
+  defaultTab?: 'data' | 'schemas' | 'model-providers';
+};
+
+export class ModelCenterDialogCommand implements DialogCommand<ModelCenterDialogProps, void> {
+  id = 'modelCenter';
+
+  constructor(
+    public readonly props: ModelCenterDialogProps = {},
+    public readonly onOk: () => void = () => {},
+    public readonly onCancel: () => void = () => {}
+  ) {}
+}
 
 export const ModelCenterDialog = (props: Props) => {
   const portal = usePortal();

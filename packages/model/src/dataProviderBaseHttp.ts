@@ -15,7 +15,8 @@ export abstract class BaseHTTPDataProvider
   extends EventEmitter<DataProviderEventMap>
   implements DataProvider, RefreshableDataProvider, RefreshableSchemaProvider
 {
-  abstract id: string;
+  abstract providerId: string;
+  id: string = '';
 
   schemas: DataSchema[] = [];
   protected data: DataWithSchema[] = [];
@@ -24,7 +25,7 @@ export abstract class BaseHTTPDataProvider
     super();
 
     if (autoRefresh) {
-      this.initializeWithAutoRefresh();
+      setTimeout(() => this.initializeWithAutoRefresh(), 200);
     }
   }
 
@@ -89,6 +90,7 @@ export abstract class BaseHTTPDataProvider
     const newSchemas = await this.fetchSchemas(force);
 
     for (const schema of newSchemas) {
+      schema.providerId = this.id;
       const oldSchema = oldSchemas.find(s => s.id === schema.id);
       if (oldSchema) {
         this.emit('updateSchema', schema);

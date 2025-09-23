@@ -8,7 +8,7 @@ describe('RESTDataProvider', () => {
   const testSchema: DataSchema = {
     id: 'test-schema',
     name: 'Test Schema',
-    source: 'external',
+    providerId: 'external',
     fields: [
       { id: 'name', name: 'Name', type: 'text' },
       { id: 'value', name: 'Value', type: 'text' }
@@ -620,14 +620,13 @@ describe('RESTDataProvider', () => {
   describe('addSchema', () => {
     it('should make POST request to add schema and emit events', async () => {
       const provider = createEmptyProvider();
-      
+      provider.id = 'external';
+
       const newSchema: DataSchema = {
         id: 'new-schema',
         name: 'New Schema',
-        source: 'external',
-        fields: [
-          { id: 'title', name: 'Title', type: 'text' }
-        ]
+        providerId: 'external',
+        fields: [{ id: 'title', name: 'Title', type: 'text' }]
       };
 
       // Set up event listener
@@ -648,7 +647,7 @@ describe('RESTDataProvider', () => {
           body: JSON.stringify(newSchema)
         })
       );
-      
+
       expect(provider.schemas.find(s => s.id === newSchema.id)).toBeDefined();
       expect(addSchemaSpy).toHaveBeenCalledWith(newSchema);
     });
@@ -665,7 +664,7 @@ describe('RESTDataProvider', () => {
       const newSchema: DataSchema = {
         id: 'new-schema',
         name: 'New Schema',
-        source: 'external',
+        providerId: 'external',
         fields: [{ id: 'title', name: 'Title', type: 'text' }]
       };
 
@@ -673,7 +672,7 @@ describe('RESTDataProvider', () => {
       await expect(provider.addSchema(newSchema)).rejects.toThrow(
         'Failed to add schema: Server Error'
       );
-      
+
       // Schema should not be added on failure
       expect(provider.schemas).not.toContain(newSchema);
     });
@@ -682,7 +681,7 @@ describe('RESTDataProvider', () => {
   describe('updateSchema', () => {
     it('should make PUT request to update schema and emit events', async () => {
       const provider = createProviderWithSchemaAndData();
-      
+
       const updatedSchema: DataSchema = {
         ...testSchema,
         name: 'Updated Schema Name'
@@ -706,7 +705,7 @@ describe('RESTDataProvider', () => {
           body: JSON.stringify(updatedSchema)
         })
       );
-      
+
       expect(provider.schemas[0].name).toBe('Updated Schema Name');
       expect(updateSchemaSpy).toHaveBeenCalledWith(updatedSchema);
     });
@@ -730,18 +729,18 @@ describe('RESTDataProvider', () => {
       await expect(provider.updateSchema(updatedSchema)).rejects.toThrow(
         'Failed to update schema: Server Error'
       );
-      
+
       // Schema should remain unchanged on failure
       expect(provider.schemas[0].name).toBe(originalName);
     });
 
     it('should do nothing when schema does not exist', async () => {
       const provider = createEmptyProvider();
-      
+
       const nonExistentSchema: DataSchema = {
         id: 'non-existent',
         name: 'Non Existent',
-        source: 'external',
+        providerId: 'external',
         fields: []
       };
 
@@ -772,7 +771,7 @@ describe('RESTDataProvider', () => {
           method: 'DELETE'
         })
       );
-      
+
       expect(provider.schemas).not.toContain(testSchema);
       expect(deleteSchemaSpy).toHaveBeenCalledWith(testSchema);
     });
@@ -790,18 +789,18 @@ describe('RESTDataProvider', () => {
       await expect(provider.deleteSchema(testSchema)).rejects.toThrow(
         'Failed to delete schema: Server Error'
       );
-      
+
       // Schema should remain in the list on failure
       expect(provider.schemas.find(s => s.id === testSchema.id)).toBeDefined();
     });
 
     it('should do nothing when schema does not exist', async () => {
       const provider = createEmptyProvider();
-      
+
       const nonExistentSchema: DataSchema = {
         id: 'non-existent',
         name: 'Non Existent',
-        source: 'external',
+        providerId: 'external',
         fields: []
       };
 

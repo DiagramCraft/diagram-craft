@@ -16,7 +16,8 @@ export class DefaultDataProvider
   extends EventEmitter<DataProviderEventMap>
   implements MutableDataProvider, MutableSchemaProvider
 {
-  id = DefaultDataProviderId;
+  providerId = DefaultDataProviderId;
+  id: string = 'default';
 
   schemas: DataSchema[];
   private readonly data: DataWithSchema[] = [];
@@ -69,11 +70,13 @@ export class DefaultDataProvider
   }
 
   async addSchema(schema: DataSchema): Promise<void> {
+    schema.providerId = this.id;
     this.schemas.push(schema);
     this.emit('addSchema', schema);
   }
 
   async updateSchema(schema: DataSchema): Promise<void> {
+    schema.providerId = this.id;
     const idx = this.schemas.findIndex(s => s.id === schema.id);
     if (idx < 0) return;
     this.schemas[idx] = schema;
@@ -90,7 +93,7 @@ export class DefaultDataProvider
 
   serialize(): string {
     return JSON.stringify({
-      schema: this.schemas,
+      schemas: this.schemas,
       data: this.data
     });
   }

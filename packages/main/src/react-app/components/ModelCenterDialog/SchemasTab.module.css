@@ -9,6 +9,24 @@
   margin: 0;
 }
 
+/* Filter Controls */
+.schemas-tab__filter-controls {
+  background-color: var(--panel-bg);
+  padding: 1rem;
+  border-radius: var(--cmp-radius);
+}
+
+.schemas-tab__filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.schemas-tab__filter-label {
+  display: block;
+  font-size: 13px;
+}
+
 /* Message Boxes */
 .schemas-tab__message-box {
   padding: 1rem;

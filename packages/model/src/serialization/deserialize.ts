@@ -19,7 +19,7 @@ import { DiagramStyles, Stylesheet } from '../diagramStyles';
 import { DefaultStyles } from '../diagramDefaults';
 import { ReferenceLayer } from '../diagramLayerReference';
 import { RuleLayer } from '../diagramLayerRule';
-import { DataProviderRegistry } from '../dataProvider';
+import { type DataProvider, DataProviderRegistry } from '../dataProvider';
 import { RegularLayer } from '../diagramLayerRegular';
 import type { DiagramFactory } from '../factory';
 import { Comment } from '../comment';
@@ -196,7 +196,7 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
 
     if (document.schemas) {
       for (const schema of document.schemas) {
-        doc.data.schemas.add(schema);
+        doc.data._schemas.add(schema);
       }
     }
 
@@ -214,13 +214,21 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
       doc.tags.set(Array.from(tags));
     }
 
-    if (document.data?.providerId) {
-      const provider = DataProviderRegistry.get(document.data.providerId);
-      if (provider) {
-        doc.data.setProvider(provider(document.data.data!), true);
-      } else {
-        console.warn(`Provider ${document.data.providerId} not found`);
+    if (document.data?.providers) {
+      const providers: DataProvider[] = [];
+      for (const provider of document.data.providers) {
+        const providerFactory = DataProviderRegistry.get(provider.providerId);
+        if (!providerFactory) {
+          console.warn(`Provider ${provider.providerId} not found`);
+        } else {
+          const p = providerFactory(provider.data);
+          p.id = provider.id;
+          providers.push(p);
+        }
       }
+      doc.data.setProviders(providers, true);
+    } else {
+      doc.data.setProviders([], true);
     }
 
     doc.data.templates.replaceBy(document.data?.templates ?? []);

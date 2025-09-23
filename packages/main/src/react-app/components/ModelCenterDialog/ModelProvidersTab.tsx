@@ -1,5 +1,5 @@
 import { DataProvider, DataProviderRegistry } from '@diagram-craft/model/dataProvider';
-import { useDocument } from '../../../application';
+import { useApplication, useDocument } from '../../../application';
 import { UrlDataProvider, UrlDataProviderId } from '@diagram-craft/model/dataProviderUrl';
 import {
   DefaultDataProvider,
@@ -10,6 +10,8 @@ import { Select } from '@diagram-craft/app-components/Select';
 import { useState } from 'react';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Button } from '@diagram-craft/app-components/Button';
+import { TbPencil, TbPlus, TbTrash, TbRefresh } from 'react-icons/tb';
+import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import styles from './ModelProvidersTab.module.css';
 
 type ProviderSettingsProps<T extends DataProvider> = {
@@ -17,8 +19,8 @@ type ProviderSettingsProps<T extends DataProvider> = {
 };
 
 const UrlDataProviderSettings = (props: ProviderSettingsProps<UrlDataProvider>) => {
-  const [dataUrl, setDataUrl] = useState<string>(props.provider.dataUrl!);
-  const [schemaUrl, setSchemaUrl] = useState<string>(props.provider.schemaUrl!);
+  const [dataUrl, setDataUrl] = useState<string>(props.provider.dataUrl || '');
+  const [schemaUrl, setSchemaUrl] = useState<string>(props.provider.schemaUrl || '');
   return (
     <div className={styles.modelProvidersTabStack}>
       <div className={styles.modelProvidersTabSettingsGroup}>
@@ -46,10 +48,6 @@ const UrlDataProviderSettings = (props: ProviderSettingsProps<UrlDataProvider>) 
   );
 };
 
-const DefaultDataProviderSettings = (_props: ProviderSettingsProps<DefaultDataProvider>) => {
-  return <div className={styles.modelProvidersTabStack}>No settings needed.</div>;
-};
-
 const RESTDataProviderSettings = (props: ProviderSettingsProps<RESTDataProvider>) => {
   const [baseUrl, setBaseUrl] = useState<string>(props.provider.baseUrl || '');
   return (
@@ -70,86 +68,334 @@ const RESTDataProviderSettings = (props: ProviderSettingsProps<RESTDataProvider>
   );
 };
 
+type ProviderWithId = {
+  id: string;
+  provider: DataProvider;
+  isFirst: boolean;
+};
+
 export const ModelProvidersTab = () => {
   const document = useDocument();
-  const [provider, setProvider] = useState<DataProvider | undefined>(
-    document.data.provider
-      ? DataProviderRegistry.get(document.data.provider.id)!(document.data.provider.serialize())
-      : undefined
-  );
-  const [providers, setProviders] = useState<Record<string, DataProvider | undefined>>({
-    [provider?.id ?? 'none']: provider
+  const application = useApplication();
+
+  const [providers, setProviders] = useState<ProviderWithId[]>(() => {
+    return document.data.providers.map((p, index) => ({
+      id: p.id,
+      provider: DataProviderRegistry.get(p.providerId)!(p.serialize()),
+      isFirst: index === 0
+    }));
   });
+
+  const [editingProvider, setEditingProvider] = useState<{
+    open: boolean;
+    provider?: ProviderWithId;
+    isNew?: boolean;
+  }>({ open: false });
+
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
   const [successMessage, setSuccessMessage] = useState<string | undefined>();
 
-  const handleSave = () => {
-    if (provider === undefined) {
-      document.data.setProvider(provider);
-      setSuccessMessage('Settings saved successfully');
-      setErrorMessage(undefined);
-    } else {
-      const error = provider.verifySettings();
-      error.then(f => {
-        if (!f) {
-          document.data.setProvider(provider);
-          setSuccessMessage('Settings saved successfully');
-          setErrorMessage(undefined);
-        } else {
-          setErrorMessage(f);
-          setSuccessMessage(undefined);
-        }
+  const saveProviders = async () => {
+    try {
+      // Save all providers
+      const newProviders = providers.map(p => {
+        if (!p.isFirst) p.provider.id = p.id;
+        return p.provider;
       });
+      document.data.setProviders(newProviders);
+      setSuccessMessage('Providers saved successfully');
+      setErrorMessage(undefined);
+    } catch (error) {
+      setErrorMessage('Failed to save providers');
+      setSuccessMessage(undefined);
     }
+  };
+
+  const handleAddProvider = () => {
+    setEditingProvider({ open: true, isNew: true });
+  };
+
+  const handleEditProvider = (providerWithId: ProviderWithId) => {
+    setEditingProvider({ open: true, provider: providerWithId });
+  };
+
+  const handleDeleteProvider = (providerWithId: ProviderWithId) => {
+    application.ui.showDialog(
+      new MessageDialogCommand(
+        {
+          title: 'Delete Provider',
+          message: `Are you sure you want to delete provider "${providerWithId.id}"?`,
+          okLabel: 'Delete',
+          okType: 'danger',
+          cancelLabel: 'Cancel'
+        },
+        async () => {
+          const updatedProviders = providers.filter(p => p.id !== providerWithId.id);
+          setProviders(updatedProviders);
+
+          // Auto-save after deletion
+          try {
+            const newProviders = updatedProviders.map(p => {
+              if (!p.isFirst) p.provider.id = p.id;
+              return p.provider;
+            });
+            document.data.setProviders(newProviders);
+            setSuccessMessage('Provider deleted successfully');
+            setErrorMessage(undefined);
+          } catch (error) {
+            setErrorMessage('Failed to delete provider');
+            setSuccessMessage(undefined);
+          }
+        }
+      )
+    );
+  };
+
+  const handleSaveEditingProvider = async (newProvider: DataProvider, id: string) => {
+    // Verify provider settings before saving
+    const error = await newProvider.verifySettings();
+    if (error) {
+      setErrorMessage(`Error in provider settings: ${error}`);
+      setSuccessMessage(undefined);
+      return;
+    }
+
+    if (editingProvider.isNew) {
+      const newProviderWithId: ProviderWithId = {
+        id,
+        provider: newProvider,
+        isFirst: false
+      };
+      setProviders(prev => [...prev, newProviderWithId]);
+    } else if (editingProvider.provider) {
+      setProviders(prev =>
+        prev.map(p => (p.id === editingProvider.provider!.id ? { ...p, provider: newProvider } : p))
+      );
+    }
+    setEditingProvider({ open: false });
+
+    // Auto-save after add/edit
+    await saveProviders();
+  };
+
+  const handleRefreshAll = async () => {
+    try {
+      await document.data.db.refreshSchemas();
+      await document.data.db.refreshData();
+      setSuccessMessage('All data refreshed successfully');
+      setErrorMessage(undefined);
+    } catch (error) {
+      setErrorMessage('Failed to refresh data');
+      setSuccessMessage(undefined);
+    }
+  };
+
+  const getProviderTypeName = (providerId: string): string => {
+    switch (providerId) {
+      case UrlDataProviderId:
+        return 'URL';
+      case RestDataProviderId:
+        return 'REST API';
+      case DefaultDataProviderId:
+        return 'Document';
+      default:
+        return providerId;
+    }
+  };
+
+  const getProviderConfigDisplay = (provider: DataProvider): string => {
+    if (provider instanceof UrlDataProvider) {
+      return provider.dataUrl || 'No URL configured';
+    } else if (provider instanceof RESTDataProvider) {
+      return provider.baseUrl || 'No base URL configured';
+    } else if (provider instanceof DefaultDataProvider) {
+      return 'Built-in document storage';
+    }
+    return 'No configuration';
   };
 
   return (
     <>
-      <div>Model Providers</div>
-
       <div className={styles.modelProvidersTabStack}>
-        <div className={styles.modelProvidersTabProviderGroup}>
-          <label className={styles.modelProvidersTabProviderLabel}>Type of provider:</label>
-
-          <Select.Root
-            value={provider?.id ?? 'none'}
-            onChange={v => {
-              let p: DataProvider | undefined;
-              if (v === 'none') {
-                p = undefined;
-              } else if (providers[v!]) {
-                p = providers[v!];
-              } else {
-                p = DataProviderRegistry.get(v!)!('{}');
-              }
-              setProviders({ ...providers, [v!]: p });
-              setProvider(p);
-              setErrorMessage(undefined);
-              setSuccessMessage(undefined);
-            }}
-          >
-            <Select.Item value={'none'}>None</Select.Item>
-            <Select.Item value={DefaultDataProviderId}>Document</Select.Item>
-            <Select.Item value={UrlDataProviderId}>URL</Select.Item>
-            <Select.Item value={RestDataProviderId}>REST API</Select.Item>
-          </Select.Root>
+        <div className={styles.modelProvidersTabHeader}>
+          <p className={styles.modelProvidersTabTitle}>Model Providers</p>
+          <div className={styles.modelProvidersTabHeaderActions}>
+            <Button
+              type="secondary"
+              onClick={handleRefreshAll}
+              style={{ display: 'flex', gap: '0.25rem' }}
+            >
+              <TbRefresh /> Refresh All
+            </Button>
+            <Button
+              type="secondary"
+              onClick={handleAddProvider}
+              style={{ display: 'flex', gap: '0.25rem' }}
+            >
+              <TbPlus /> Add Provider
+            </Button>
+          </div>
         </div>
 
         {errorMessage && <div className={styles.modelProvidersTabErrorMessage}>{errorMessage}</div>}
-        {successMessage && <div className={styles.modelProvidersTabSuccessMessage}>{successMessage}</div>}
-
-        {provider instanceof UrlDataProvider && <UrlDataProviderSettings provider={provider} />}
-        {provider instanceof DefaultDataProvider && (
-          <DefaultDataProviderSettings provider={provider} />
+        {successMessage && (
+          <div className={styles.modelProvidersTabSuccessMessage}>{successMessage}</div>
         )}
-        {provider instanceof RESTDataProvider && <RESTDataProviderSettings provider={provider} />}
 
-        <div className={styles.modelProvidersTabSaveSection}>
-          <Button type="primary" onClick={handleSave}>
-            Save Settings
+        {providers.length === 0 ? (
+          <div className={styles.modelProvidersTabEmptyState}>
+            <p>No providers configured</p>
+            <Button type="primary" onClick={handleAddProvider}>
+              <TbPlus /> Add Your First Provider
+            </Button>
+          </div>
+        ) : (
+          <table className={styles.modelProvidersTabTable}>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Type</th>
+                <th>Configuration</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {providers.map(providerWithId => (
+                <tr key={providerWithId.id}>
+                  <td>{providerWithId.id}</td>
+                  <td>{getProviderTypeName(providerWithId.provider.providerId)}</td>
+                  <td>{getProviderConfigDisplay(providerWithId.provider)}</td>
+                  <td>
+                    <div className={styles.modelProvidersTabTableActions}>
+                      <Button
+                        type="icon-only"
+                        onClick={() => handleEditProvider(providerWithId)}
+                        title="Edit provider"
+                        disabled={providerWithId.isFirst}
+                      >
+                        <TbPencil />
+                      </Button>
+                      {!providerWithId.isFirst && (
+                        <Button
+                          type="icon-only"
+                          onClick={() => handleDeleteProvider(providerWithId)}
+                          title="Delete provider"
+                        >
+                          <TbTrash />
+                        </Button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {editingProvider.open && (
+        <ProviderEditDialog
+          open={editingProvider.open}
+          provider={editingProvider.provider?.provider}
+          providerId={editingProvider.provider?.id}
+          isNew={editingProvider.isNew}
+          onSave={handleSaveEditingProvider}
+          onCancel={() => setEditingProvider({ open: false })}
+        />
+      )}
+    </>
+  );
+};
+
+type ProviderEditDialogProps = {
+  open: boolean;
+  provider?: DataProvider;
+  providerId?: string;
+  isNew?: boolean;
+  onSave: (provider: DataProvider, id: string) => void;
+  onCancel: () => void;
+};
+
+const ProviderEditDialog = (props: ProviderEditDialogProps) => {
+  const document = useDocument();
+  const [selectedProviderId, setSelectedProviderId] = useState<string>(
+    props.provider?.providerId ?? UrlDataProviderId
+  );
+  const [id, setId] = useState<string>(props.providerId ?? '');
+  const [provider, setProvider] = useState<DataProvider>(() => {
+    if (props.provider) {
+      return props.provider;
+    }
+    return DataProviderRegistry.get(UrlDataProviderId)!('{}');
+  });
+
+  const existingProviders = document.data.providers;
+  const isIdTaken =
+    id.trim() !== '' &&
+    existingProviders.some(p => p.id === id.trim() && p.id !== props.providerId);
+  const isIdValid = id.trim() !== '' && !isIdTaken;
+
+  const handleProviderTypeChange = (newProviderId: string) => {
+    if (newProviderId === DefaultDataProviderId) return; // Don't allow DefaultDataProvider
+
+    setSelectedProviderId(newProviderId);
+    const newProvider = DataProviderRegistry.get(newProviderId)!('{}');
+    setProvider(newProvider);
+  };
+
+  const handleSave = () => {
+    if (!isIdValid) return;
+    props.onSave(provider, id.trim());
+  };
+
+  return (
+    <div className={styles.modelProvidersTabOverlay}>
+      <div className={styles.modelProvidersTabDialog}>
+        <div className={styles.modelProvidersTabDialogHeader}>
+          <h3>{props.isNew ? 'Add Provider' : 'Edit Provider'}</h3>
+        </div>
+
+        <div className={styles.modelProvidersTabDialogContent}>
+          <div className={styles.modelProvidersTabProviderGroup}>
+            <label className={styles.modelProvidersTabProviderLabel}>Provider ID:</label>
+            <TextInput
+              value={id}
+              onChange={v => setId(v ?? '')}
+              placeholder="Enter unique provider ID"
+              disabled={!props.isNew}
+            />
+            {isIdTaken && (
+              <div className={styles.modelProvidersTabErrorMessage}>This ID is already taken</div>
+            )}
+            {id.trim() === '' && (
+              <div className={styles.modelProvidersTabErrorMessage}>Provider ID is required</div>
+            )}
+          </div>
+
+          <div className={styles.modelProvidersTabProviderGroup}>
+            <label className={styles.modelProvidersTabProviderLabel}>Provider Type:</label>
+            <Select.Root
+              value={selectedProviderId}
+              onChange={v => v && handleProviderTypeChange(v)}
+            >
+              <Select.Item value={UrlDataProviderId}>URL</Select.Item>
+              <Select.Item value={RestDataProviderId}>REST API</Select.Item>
+            </Select.Root>
+          </div>
+
+          {provider instanceof UrlDataProvider && <UrlDataProviderSettings provider={provider} />}
+          {provider instanceof RESTDataProvider && <RESTDataProviderSettings provider={provider} />}
+        </div>
+
+        <div className={styles.modelProvidersTabDialogActions}>
+          <Button type="secondary" onClick={props.onCancel}>
+            Cancel
+          </Button>
+          <Button type="primary" onClick={handleSave} disabled={!isIdValid}>
+            {props.isNew ? 'Add' : 'Save'}
           </Button>
         </div>
       </div>
-    </>
+    </div>
   );
 };

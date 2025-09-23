@@ -1,7 +1,5 @@
 import type { DiagramDocument } from './diagramDocument';
 import { UnitOfWork } from './unitOfWork';
-import type { UndoableAction } from './undoManager';
-import type { Diagram } from './diagram';
 import { deepClone } from '@diagram-craft/utils/object';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { CRDTMap, CRDTRoot } from './collaboration/crdt';
@@ -28,7 +26,7 @@ export const decodeDataReferences = (refs: string | undefined) =>
 export type DataSchema = {
   id: string;
   name: string;
-  source: 'document' | 'external';
+  providerId: string;
   fields: DataSchemaField[];
 };
 
@@ -64,7 +62,7 @@ export class DiagramDocumentDataSchemas extends EventEmitter<DiagramDocumentData
   }
 
   get(id: string) {
-    return this.#schemas.get(id) ?? { id: '', name: '', source: 'document', fields: [] };
+    return this.#schemas.get(id) ?? { id: '', name: '', providerId: 'document', fields: [] };
   }
 
   has(id: string) {
@@ -123,62 +121,5 @@ export class DiagramDocumentDataSchemas extends EventEmitter<DiagramDocumentData
       }
       // TODO: Should we emit events here?
     });
-  }
-}
-
-export class DeleteSchemaUndoableAction implements UndoableAction {
-  description = 'Delete schema';
-
-  constructor(
-    private readonly diagram: Diagram,
-    private readonly schema: DataSchema
-  ) {}
-
-  undo() {
-    this.diagram.document.data.schemas.add(this.schema);
-  }
-
-  redo(uow: UnitOfWork) {
-    this.diagram.document.data.schemas.removeAndClearUsage(this.schema, uow);
-  }
-}
-
-export class AddSchemaUndoableAction implements UndoableAction {
-  description = 'Add schema';
-
-  constructor(
-    private readonly diagram: Diagram,
-    private readonly schema: DataSchema
-  ) {}
-
-  undo(uow: UnitOfWork) {
-    this.diagram.document.data.schemas.removeAndClearUsage(this.schema, uow);
-  }
-
-  redo() {
-    this.diagram.document.data.schemas.add(this.schema);
-  }
-}
-
-export class ModifySchemaUndoableAction implements UndoableAction {
-  description = 'Modify schema';
-
-  private readonly oldSchema: DataSchema;
-  private readonly schema: DataSchema;
-
-  constructor(
-    private readonly diagram: Diagram,
-    schema: DataSchema
-  ) {
-    this.schema = deepClone(schema);
-    this.oldSchema = deepClone(this.diagram.document.data.schemas.get(schema.id));
-  }
-
-  undo() {
-    this.diagram.document.data.schemas.update(this.oldSchema);
-  }
-
-  redo() {
-    this.diagram.document.data.schemas.update(this.schema);
   }
 }

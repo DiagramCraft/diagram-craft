@@ -29,7 +29,7 @@ export const serializeDiagramDocument = async (
     attachments: await serializeAttachments(document.attachments),
     customPalette: serializeCustomPalette(document.customPalette),
     styles: serializeStyles(document.styles),
-    schemas: serializeSchemas(document.data.schemas),
+    schemas: serializeSchemas(document.data._schemas),
     props: {
       query: {
         history: document.props.query.history,
@@ -38,8 +38,11 @@ export const serializeDiagramDocument = async (
       stencils: document.props.recentStencils.stencils
     },
     data: {
-      providerId: document.data.provider?.id,
-      data: document.data.provider?.serialize(),
+      providers: document.data.providers.map(p => ({
+        id: p.id,
+        providerId: p.providerId,
+        data: p.serialize()
+      })),
       templates: document.data.templates.all
     }
   };
@@ -48,10 +51,10 @@ export const serializeDiagramDocument = async (
   const jsonString = JSON.stringify(serialized);
   const jsonBytes = new TextEncoder().encode(jsonString);
   const hashValue = hash64(jsonBytes);
-  
+
   // Set the hash on both the serialized data and the original document
   document.hash = hashValue;
-  
+
   return {
     ...serialized,
     hash: hashValue

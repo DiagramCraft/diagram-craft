@@ -8,7 +8,7 @@ type DataWithSchema = Data & { _schemaId: string };
 export const UrlDataProviderId = 'urlDataProvider';
 
 export class UrlDataProvider extends BaseHTTPDataProvider {
-  id = UrlDataProviderId;
+  providerId = UrlDataProviderId;
 
   dataUrl: string | undefined = undefined;
   schemaUrl: string | undefined = undefined;
@@ -19,7 +19,7 @@ export class UrlDataProvider extends BaseHTTPDataProvider {
     if (s) {
       const d = JSON.parse(s);
       this.schemas = d.schemas ?? [];
-      this.data = d.data;
+      this.data = d.data ?? [];
       this.schemaUrl = d.schemaUrl;
       this.dataUrl = d.dataUrl;
 
@@ -44,8 +44,8 @@ export class UrlDataProvider extends BaseHTTPDataProvider {
 
   serialize(): string {
     return JSON.stringify({
-      schemas: this.schemas,
-      data: this.data,
+      schemas: this.schemas ?? [],
+      data: this.data ?? [],
       dataUrl: this.dataUrl,
       schemaUrl: this.schemaUrl
     });

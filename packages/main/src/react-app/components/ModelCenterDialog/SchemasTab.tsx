@@ -1,61 +1,68 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useApplication, useDocument } from '../../../application';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { Button } from '@diagram-craft/app-components/Button';
+import { Select } from '@diagram-craft/app-components/Select';
 import { TbPencil, TbPlus, TbTrash } from 'react-icons/tb';
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { EditSchemaDialog } from '../EditSchemaDialog';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import styles from './SchemasTab.module.css';
-import { isMutableSchemaProvider } from '@diagram-craft/model/dataProvider';
+
+const getProviderTypeName = (providerId: string): string => {
+  switch (providerId) {
+    case 'urlDataProvider':
+      return 'URL';
+    case 'restDataProvider':
+      return 'REST API';
+    case 'defaultDataProvider':
+      return 'Document';
+    default:
+      return providerId;
+  }
+};
 
 export const SchemasTab = () => {
   const document = useDocument();
   const application = useApplication();
-  const [addSchemaDialog, setAddSchemaDialog] = useState<boolean>(false);
+  const [addSchemaDialog, setAddSchemaDialog] = useState<{ open: boolean; providerId?: string }>({
+    open: false
+  });
   const [editSchemaDialog, setEditSchemaDialog] = useState<{ open: boolean; schema?: DataSchema }>({
     open: false
   });
-  const [schemas, setSchemas] = useState<DataSchema[]>([]);
+  const [selectedProviderId, setSelectedProviderId] = useState<string>('all');
 
-  const dataProvider = document.data.provider;
+  const db = document.data.db;
 
-  // Update schemas list when provider changes
-  useEffect(() => {
-    if (dataProvider?.schemas) {
-      setSchemas([...dataProvider.schemas]);
-    } else {
-      setSchemas([]);
-    }
-  }, [dataProvider?.schemas]);
+  const providers = document.data.providers;
+
+  // Filter schemas by selected provider
+  const schemas =
+    selectedProviderId === 'all'
+      ? db.schemas
+      : db.schemas.filter(schema => schema.providerId === selectedProviderId);
 
   // Handle schema operations
-  const handleAddSchema = async (schema: DataSchema) => {
-    if (!dataProvider || !isMutableSchemaProvider(dataProvider)) return;
-
+  const handleAddSchema = async (providerId: string, schema: DataSchema) => {
     try {
-      await dataProvider.addSchema(schema);
-      setAddSchemaDialog(false);
-      setSchemas([...dataProvider.schemas]);
+      await db.addSchema(schema, providerId);
+      setAddSchemaDialog({ open: false });
     } catch (error) {
       console.error('Failed to add schema:', error);
     }
   };
 
   const handleUpdateSchema = async (schema: DataSchema) => {
-    if (!dataProvider || !isMutableSchemaProvider(dataProvider)) return;
-
     try {
-      await dataProvider.updateSchema(schema);
+      await db.updateSchema(schema);
       setEditSchemaDialog({ open: false });
-      setSchemas([...dataProvider.schemas]);
     } catch (error) {
       console.error('Failed to update schema:', error);
     }
   };
 
   const handleDeleteSchema = (schema: DataSchema) => {
-    if (!dataProvider || !isMutableSchemaProvider(dataProvider)) return;
-
     application.ui.showDialog(
       new MessageDialogCommand(
         {
@@ -67,8 +74,7 @@ export const SchemasTab = () => {
         },
         async () => {
           try {
-            await dataProvider.deleteSchema(schema);
-            setSchemas([...dataProvider.schemas]);
+            await db.deleteSchema(schema);
           } catch (error) {
             console.error('Failed to delete schema:', error);
           }
@@ -82,38 +88,76 @@ export const SchemasTab = () => {
     return fieldNames.join(', ');
   };
 
-  const canMutateSchemas = dataProvider && isMutableSchemaProvider(dataProvider);
+  const canMutateSchemas = db && providers.some(p => db.isSchemasEditable(p.id));
 
   return (
     <>
       <div className={styles.schemasTabHeader}>
         <p className={styles.schemasTabTitle}>Schemas</p>
-        <Button
-          type="secondary"
-          onClick={() => setAddSchemaDialog(true)}
-          disabled={!canMutateSchemas}
-        >
-          <TbPlus /> Add Schema
-        </Button>
+        {providers.length > 0 && (
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger asChild>
+              <Button
+                type="secondary"
+                disabled={!canMutateSchemas}
+                style={{ display: 'flex', gap: '0.25rem' }}
+              >
+                <TbPlus /> Add Schema
+              </Button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Portal>
+              <DropdownMenu.Content className="cmp-context-menu" sideOffset={5}>
+                {providers.map(provider => (
+                  <DropdownMenu.Item
+                    key={provider.id}
+                    className="cmp-context-menu__item"
+                    disabled={!db.isSchemasEditable(provider.id)}
+                    onSelect={() => setAddSchemaDialog({ open: true, providerId: provider.id })}
+                  >
+                    {getProviderTypeName(provider.providerId)}: {provider.id}
+                  </DropdownMenu.Item>
+                ))}
+                <DropdownMenu.Arrow className="cmp-context-menu__arrow" />
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Root>
+        )}
       </div>
 
-      {!dataProvider && (
-        <div className={styles.schemasTabMessageBox}>
-          <p>No data provider configured</p>
-          <p>Configure a data provider in the Model Providers tab to manage schemas.</p>
-        </div>
-      )}
-
-      {dataProvider && !canMutateSchemas && (
+      {!canMutateSchemas && (
         <div className={styles.schemasTabMessageBox}>
           <p>The current data provider does not support schema management.</p>
           <p>Switch to a different provider (like REST API) to manage schemas.</p>
         </div>
       )}
 
+      {providers.length > 0 && (
+        <div className={styles.schemasTabFilterControls}>
+          <div className={styles.schemasTabFilterGroup}>
+            <label className={styles.schemasTabFilterLabel}>Filter by Provider:</label>
+            <Select.Root
+              value={selectedProviderId}
+              onChange={v => setSelectedProviderId(v ?? 'all')}
+              style={{ maxWidth: '20rem' }}
+            >
+              <Select.Item value="all">All Providers</Select.Item>
+              {providers.map(provider => (
+                <Select.Item key={provider.id} value={provider.id}>
+                  {getProviderTypeName(provider.providerId)}: {provider.id}
+                </Select.Item>
+              ))}
+            </Select.Root>
+          </div>
+        </div>
+      )}
+
       {schemas.length === 0 && canMutateSchemas && (
         <div className={styles.schemasTabMessageBox}>
-          <p>No schemas defined yet</p>
+          {db.schemas.length === 0 ? (
+            <p>No schemas defined yet</p>
+          ) : (
+            <p>No schemas match your current filter</p>
+          )}
         </div>
       )}
 
@@ -132,7 +176,7 @@ export const SchemasTab = () => {
               <tr key={schema.id}>
                 <td>{schema.name}</td>
                 <td>{getFieldNamesDisplay(schema)}</td>
-                <td>{schema.source}</td>
+                <td>{schema.providerId}</td>
                 {canMutateSchemas && (
                   <td>
                     <div className={styles.schemasTabTableActions}>
@@ -140,6 +184,7 @@ export const SchemasTab = () => {
                         type="icon-only"
                         onClick={() => setEditSchemaDialog({ open: true, schema })}
                         title="Edit schema"
+                        disabled={!db.isSchemasEditable(schema.providerId)}
                       >
                         <TbPencil />
                       </Button>
@@ -147,6 +192,7 @@ export const SchemasTab = () => {
                         type="icon-only"
                         onClick={() => handleDeleteSchema(schema)}
                         title="Delete schema"
+                        disabled={!db.isSchemasEditable(schema.providerId)}
                       >
                         <TbTrash />
                       </Button>
@@ -162,9 +208,9 @@ export const SchemasTab = () => {
       {/* Schema Management Dialogs */}
       <EditSchemaDialog
         title="Add Schema"
-        open={addSchemaDialog}
-        onOk={handleAddSchema}
-        onCancel={() => setAddSchemaDialog(false)}
+        open={addSchemaDialog.open}
+        onOk={(s: DataSchema) => handleAddSchema(addSchemaDialog.providerId!, s)}
+        onCancel={() => setAddSchemaDialog({ open: false })}
         availableSchemas={schemas}
       />
       <EditSchemaDialog

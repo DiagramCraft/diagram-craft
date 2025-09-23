@@ -6,10 +6,6 @@
   gap: 1rem;
 }
 
-.model-providers-tab__stack--small-gap {
-  gap: 0.2rem;
-}
-
 /* Provider Selection */
 
 .model-providers-tab__provider-group {
@@ -50,8 +46,89 @@
   font-size: 14px;
 }
 
-/* Save Button */
+/* Header */
 
-.model-providers-tab__save-section {
-  margin-top: 1rem;
+.model-providers-tab__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
+
+.model-providers-tab__title {
+  margin: 0;
+}
+
+.model-providers-tab__header-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Empty State */
+
+.model-providers-tab__empty-state {
+  padding: 2rem;
+  text-align: center;
+  background-color: var(--base-bg-dim);
+  border-radius: 6px;
+}
+
+/* Provider Table */
+
+.model-providers-tab__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.model-providers-tab__table-actions {
+  display: flex;
+  gap: 4px;
+}
+
+/* Dialog */
+
+.model-providers-tab__overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.model-providers-tab__dialog {
+  background-color: var(--base-bg);
+  border-radius: 8px;
+  min-width: 500px;
+  max-width: 600px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.model-providers-tab__dialog-header {
+  padding: 1rem;
+  border-bottom: 1px solid var(--base-border);
+}
+
+.model-providers-tab__dialog-header h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.model-providers-tab__dialog-content {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.model-providers-tab__dialog-actions {
+  padding: 1rem;
+  border-top: 1px solid var(--base-border);
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+

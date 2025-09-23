@@ -2,7 +2,7 @@ import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { MultiSelect, MultiSelectItem } from '@diagram-craft/app-components/MultiSelect';
-import { Data, DataProvider, MutableDataProvider } from '@diagram-craft/model/dataProvider';
+import { Data } from '@diagram-craft/model/dataProvider';
 import {
   DataSchemaField,
   decodeDataReferences,
@@ -11,26 +11,28 @@ import {
 import { newid } from '@diagram-craft/utils/id';
 import { assert } from '@diagram-craft/utils/assert';
 import React, { useState } from 'react';
+import { useDocument } from '../../application';
 
 type ReferenceFieldEditorProps = {
   field: DataSchemaField & { type: 'reference' };
-  dataProvider: DataProvider;
   selectedValues: string[];
   onSelectionChange: (values: string[]) => void;
 };
 
 const ReferenceFieldEditor = ({
   field,
-  dataProvider,
   selectedValues,
   onSelectionChange
 }: ReferenceFieldEditorProps) => {
-  const referencedSchema = dataProvider.schemas?.find(s => s.id === field.schemaId);
+  const document = useDocument();
+  const db = document.data.db;
+
+  const referencedSchema = db.schemas?.find(s => s.id === field.schemaId);
   if (!referencedSchema) {
     return <div>Referenced schema not found</div>;
   }
 
-  const referencedData = dataProvider.getData(referencedSchema);
+  const referencedData = db.getData(referencedSchema);
   const displayField = referencedSchema.fields[0]?.id; // Use first field for display
 
   // Convert data to MultiSelectItem format
@@ -71,23 +73,17 @@ const ReferenceFieldEditor = ({
 type EditItemDialogProps = {
   open: boolean;
   onClose: () => void;
-  dataProvider: DataProvider | undefined;
   selectedSchema: string | undefined;
   editItem?: Data; // If provided, we're editing this item instead of creating new
 };
 
 export const EditItemDialog = (props: EditItemDialogProps) => {
+  const document = useDocument();
+  const db = document.data.db;
   const [formData, setFormData] = useState<Record<string, string | string[]>>({});
   const [submitError, setSubmitError] = useState<string | undefined>();
 
-  if (!props.dataProvider) return <div></div>;
-  assert.present(props.dataProvider);
-
-  const dataProvider = props.dataProvider;
-
-  const schema =
-    props.dataProvider.schemas?.find(s => s.id === props.selectedSchema) ??
-    props.dataProvider.schemas?.[0];
+  const schema = db.schemas?.find(s => s.id === props.selectedSchema) ?? db.schemas?.[0];
 
   if (!schema) return <div></div>;
   assert.present(schema);
@@ -111,7 +107,7 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
     const isEditing = !!props.editItem;
     const requiredMethod = isEditing ? 'updateData' : 'addData';
 
-    if (!(requiredMethod in dataProvider)) return;
+    if (!(requiredMethod in db)) return;
 
     setSubmitError(undefined);
 
@@ -164,9 +160,9 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
       };
 
       if (isEditing) {
-        await (dataProvider as MutableDataProvider).updateData(schema, itemData);
+        await db.updateData(schema, itemData);
       } else {
-        await (dataProvider as MutableDataProvider).addData(schema, itemData);
+        await db.addData(schema, itemData);
       }
 
       // Only close dialog and reset form on success
@@ -231,7 +227,6 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
             {field.type === 'reference' ? (
               <ReferenceFieldEditor
                 field={field}
-                dataProvider={dataProvider}
                 selectedValues={(formData[field.id] as string[]) || []}
                 onSelectionChange={values => setFormData(prev => ({ ...prev, [field.id]: values }))}
               />

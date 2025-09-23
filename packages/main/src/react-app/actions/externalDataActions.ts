@@ -153,7 +153,8 @@ export class ExternalDataLinkAction extends AbstractSelectionAction<Application,
             };
             item.type = 'external';
 
-            const [data] = $d.document.data.provider!.getById([v]);
+            const db = $d.document.data.db!;
+            const [data] = db.getById(db.getSchema(arg.schemaId!), [v]);
             for (const k of Object.keys(data)) {
               if (k.startsWith('_')) continue;
               item.data[k] = data[k];
@@ -163,7 +164,7 @@ export class ExternalDataLinkAction extends AbstractSelectionAction<Application,
         commitWithUndo(uow, 'Link external data');
       },
       props: {
-        schema: this.context.model.activeDocument.data.schemas.get(arg.schemaId!)!
+        schema: this.context.model.activeDocument.data.db.getSchema(arg.schemaId!)!
       }
     });
   }

@@ -1,13 +1,7 @@
 import { Accordion } from '@diagram-craft/app-components/Accordion';
-import { useApplication, useDiagram } from '../../../application';
+import { useApplication, useDiagram, useDocument } from '../../../application';
 import { Select } from '@diagram-craft/app-components/Select';
-import {
-  Data,
-  DataProvider,
-  type MutableDataProvider,
-  RefreshableDataProvider,
-  RefreshableSchemaProvider
-} from '@diagram-craft/model/dataProvider';
+import { Data } from '@diagram-craft/model/dataProvider';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { useEffect, useRef, useState } from 'react';
 import { useRedraw } from '../../hooks/useRedraw';
@@ -25,7 +19,6 @@ import { DRAG_DROP_MANAGER } from '@diagram-craft/canvas/dragDropManager';
 import { ObjectPickerDrag } from './objectPickerDrag';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { assert } from '@diagram-craft/utils/assert';
-import { ModelCenterDialogCommand } from '@diagram-craft/canvas-app/dialogs';
 import { Button } from '@diagram-craft/app-components/Button';
 import { PickerCanvas } from '../../PickerCanvas';
 import { DataTemplate } from '@diagram-craft/model/diagramDocument';
@@ -42,6 +35,7 @@ import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { EditItemDialog } from '../../components/EditItemDialog';
 import { ToolWindow } from '../ToolWindow';
 import { ToolWindowPanel } from '../ToolWindowPanel';
+import { ModelCenterDialogCommand } from '../../components/ModelCenterDialog/ModelCenterDialog';
 
 const NODE_CACHE = new Map<string, DiagramNode>();
 
@@ -116,7 +110,6 @@ const makeDefaultNode = (item: Data, schema: DataSchema, definitions: Definition
 };
 
 const DataProviderResponse = (props: {
-  dataProvider: DataProvider;
   selectedSchema: string;
   search: string;
   onEditItem: (item: Data) => void;
@@ -125,34 +118,30 @@ const DataProviderResponse = (props: {
   const app = useApplication();
   const diagram = useDiagram();
   const document = diagram.document;
+  const db = document.data.db;
   const [expanded, setExpanded] = useState<string[]>([]);
   const [, setDataVersion] = useState<number>(0);
 
   useEffect(() => {
-    if (!props.dataProvider) return;
+    if (!db) return;
 
     const handleDataChange = () => setDataVersion(prev => prev + 1);
 
-    props.dataProvider.on('addData', handleDataChange);
-    props.dataProvider.on('updateData', handleDataChange);
-    props.dataProvider.on('deleteData', handleDataChange);
+    db.on('addData', handleDataChange);
+    db.on('updateData', handleDataChange);
+    db.on('deleteData', handleDataChange);
 
     return () => {
-      props.dataProvider.off('addData', handleDataChange);
-      props.dataProvider.off('updateData', handleDataChange);
-      props.dataProvider.off('deleteData', handleDataChange);
+      db.off('addData', handleDataChange);
+      db.off('updateData', handleDataChange);
+      db.off('deleteData', handleDataChange);
     };
-  }, [props.dataProvider]);
+  }, [db]);
 
-  const schema =
-    props.dataProvider?.schemas?.find(s => s.id === props.selectedSchema) ??
-    props.dataProvider?.schemas?.[0];
+  const schema = db?.schemas?.find(s => s.id === props.selectedSchema) ?? db?.schemas?.[0];
   if (!schema) return <div>Loading...</div>;
 
-  const data =
-    props.search.trim() !== ''
-      ? props.dataProvider.queryData(schema, props.search)
-      : props.dataProvider.getData(schema);
+  const data = props.search.trim() !== '' ? db.queryData(schema, props.search) : db.getData(schema);
   const isRuleLayer = diagram.activeLayer.type === 'rule';
 
   return (
@@ -316,11 +305,12 @@ const DataProviderResponse = (props: {
 };
 
 const DataProviderQueryView = (props: {
-  dataProvider: DataProvider;
   selectedSchema: string;
   onChangeSchema: (s: string | undefined) => void;
   onSearch: (s: string) => void;
 }) => {
+  const document = useDocument();
+  const db = document.data.db;
   const ref = useRef<HTMLInputElement>(null);
   const [search, setSearch] = useState<string>('');
 
@@ -329,7 +319,7 @@ const DataProviderQueryView = (props: {
       <div className={'util-hstack'}>
         <div style={{ flexGrow: 1 }}>
           <Select.Root value={props.selectedSchema} onChange={props.onChangeSchema}>
-            {props.dataProvider.schemas?.map?.(schema => (
+            {db.schemas?.map?.(schema => (
               <Select.Item key={schema.id} value={schema.id}>
                 {schema.name}
               </Select.Item>
@@ -390,7 +380,7 @@ export const ModelPickerTab = () => {
   const document = $diagram.document;
   const [search, setSearch] = useState<string>('');
 
-  const dataProvider = document.data.provider;
+  const dataProvider = document.data.db;
 
   useEffect(() => {
     if (!dataProvider) return;
@@ -423,7 +413,7 @@ export const ModelPickerTab = () => {
     setSelectedSchema(dataProvider.schemas[0].id);
   }
 
-  const provider = document.data.provider;
+  const db = document.data.db;
 
   // Handle delete confirmation
   const handleDeleteItem = (item: Data) => {
@@ -446,7 +436,7 @@ export const ModelPickerTab = () => {
         },
         async () => {
           try {
-            await (dataProvider as MutableDataProvider).deleteData(schema, item);
+            await dataProvider.deleteData(schema, item);
           } catch (error) {
             console.error('Failed to delete item:', error);
           }
@@ -460,17 +450,15 @@ export const ModelPickerTab = () => {
       <ToolWindow.TabActions>
         <a
           className={'cmp-button cmp-button--icon-only'}
-          aria-disabled={
-            !provider || (!('refreshData' in provider) && !('refreshSchemas' in provider))
-          }
+          aria-disabled={!db || (!('refreshData' in db) && !('refreshSchemas' in db))}
           onClick={async () => {
-            assert.present(provider);
+            assert.present(db);
 
-            if ('refreshData' in provider) {
-              await (provider as RefreshableDataProvider).refreshData();
+            if ('refreshData' in db) {
+              await db.refreshData();
             }
-            if ('refreshSchemas' in provider) {
-              await (provider as RefreshableSchemaProvider).refreshSchemas();
+            if ('refreshSchemas' in db) {
+              await db.refreshSchemas();
             }
           }}
         >
@@ -506,7 +494,6 @@ export const ModelPickerTab = () => {
             {dataProvider !== undefined && (
               <DataProviderQueryView
                 onSearch={setSearch}
-                dataProvider={dataProvider}
                 selectedSchema={selectedSchema!}
                 onChangeSchema={setSelectedSchema}
               />
@@ -528,7 +515,6 @@ export const ModelPickerTab = () => {
             }
           >
             <DataProviderResponse
-              dataProvider={dataProvider}
               selectedSchema={selectedSchema!}
               search={search}
               onEditItem={item => setEditItemDialog({ open: true, item })}
@@ -541,13 +527,11 @@ export const ModelPickerTab = () => {
       <EditItemDialog
         open={addItemDialog}
         onClose={() => setAddItemDialog(false)}
-        dataProvider={dataProvider}
         selectedSchema={selectedSchema}
       />
       <EditItemDialog
         open={editItemDialog.open}
         onClose={() => setEditItemDialog({ open: false })}
-        dataProvider={dataProvider}
         selectedSchema={selectedSchema}
         editItem={editItemDialog.item}
       />

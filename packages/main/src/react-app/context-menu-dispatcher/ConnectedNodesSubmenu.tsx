@@ -58,7 +58,7 @@ const getConnectedItems = (diagram: Diagram): ConnectionItem[] => {
   if (nodeData && nodeData.length > 0) {
     for (const dataEntry of nodeData) {
       // Get the schema for this data entry
-      const schema = diagram.document.data.schemas.get(dataEntry.schema);
+      const schema = diagram.document.data.db.getSchema(dataEntry.schema);
       if (!schema) continue;
 
       // Check each field in the schema for reference fields
@@ -71,11 +71,11 @@ const getConnectedItems = (diagram: Diagram): ConnectionItem[] => {
           }
 
           // Get the referenced schema
-          const referencedSchema = diagram.document.data.schemas.get(field.schemaId);
+          const referencedSchema = diagram.document.data.db.getSchema(field.schemaId);
           if (!referencedSchema) continue;
 
           // Find the actual data entries for these UIDs
-          const dataProvider = diagram.document.data.provider;
+          const dataProvider = diagram.document.data.db;
           if (!dataProvider) continue;
 
           const referencedData = dataProvider.getData(referencedSchema);
@@ -153,7 +153,7 @@ const createNodeForData = (item: Data, schemaName: string, diagram: Diagram) => 
   assertRegularLayer(activeLayer);
 
   // Get the schema to find the first field for text display
-  const schema = diagram.document.data.schemas.all.find(s => s.name === schemaName);
+  const schema = diagram.document.data.db.findSchemaByName(schemaName);
   if (!schema) return;
 
   // Get current selection to position new node
