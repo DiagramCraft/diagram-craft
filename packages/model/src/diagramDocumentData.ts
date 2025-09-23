@@ -236,9 +236,10 @@ export class DataManager extends EventEmitter<DataProviderEventMap> {
     return this.schemas.find(s => s.name === name);
   }
 
-  addSchema(schema: DataSchema) {
-    if (!isMutableSchemaProvider(this.provider!)) throw new VerifyNotReached();
-    return this.provider.addSchema(schema);
+  addSchema(schema: DataSchema, providerId: string) {
+    const provider = this.providers.find(p => p.providerId === providerId);
+    if (!isMutableSchemaProvider(provider!)) throw new VerifyNotReached();
+    return provider.addSchema(schema);
   }
 
   updateSchema(schema: DataSchema) {

@@ -3,6 +3,7 @@ import { useApplication, useDocument } from '../../../application';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbPencil, TbPlus, TbTrash } from 'react-icons/tb';
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { EditSchemaDialog } from '../EditSchemaDialog';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import styles from './SchemasTab.module.css';
@@ -10,20 +11,23 @@ import styles from './SchemasTab.module.css';
 export const SchemasTab = () => {
   const document = useDocument();
   const application = useApplication();
-  const [addSchemaDialog, setAddSchemaDialog] = useState<boolean>(false);
+  const [addSchemaDialog, setAddSchemaDialog] = useState<{ open: boolean; providerId?: string }>({
+    open: false
+  });
   const [editSchemaDialog, setEditSchemaDialog] = useState<{ open: boolean; schema?: DataSchema }>({
     open: false
   });
   const dataProvider = document.data.db;
   const schemas = dataProvider?.schemas ?? [];
+  const providers = document.data.providers;
 
   // Handle schema operations
-  const handleAddSchema = async (schema: DataSchema) => {
+  const handleAddSchema = async (providerId: string, schema: DataSchema) => {
     if (!dataProvider || !dataProvider.isMutableSchema()) return;
 
     try {
-      await dataProvider.addSchema(schema);
-      setAddSchemaDialog(false);
+      await dataProvider.addSchema(schema, providerId);
+      setAddSchemaDialog({ open: false });
     } catch (error) {
       console.error('Failed to add schema:', error);
     }
@@ -68,19 +72,48 @@ export const SchemasTab = () => {
     return fieldNames.join(', ');
   };
 
+  const getProviderTypeName = (providerId: string): string => {
+    switch (providerId) {
+      case 'urlDataProvider':
+        return 'URL';
+      case 'restDataProvider':
+        return 'REST API';
+      case 'defaultDataProvider':
+        return 'Document';
+      default:
+        return providerId;
+    }
+  };
+
   const canMutateSchemas = dataProvider && dataProvider.isMutableSchema();
 
   return (
     <>
       <div className={styles.schemasTabHeader}>
         <p className={styles.schemasTabTitle}>Schemas</p>
-        <Button
-          type="secondary"
-          onClick={() => setAddSchemaDialog(true)}
-          disabled={!canMutateSchemas}
-        >
-          <TbPlus /> Add Schema
-        </Button>
+        {providers.length > 0 && (
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger asChild>
+              <Button type="secondary" disabled={!canMutateSchemas}>
+                <TbPlus /> Add Schema
+              </Button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Portal>
+              <DropdownMenu.Content className="cmp-context-menu" sideOffset={5}>
+                {providers.map(provider => (
+                  <DropdownMenu.Item
+                    key={provider.id}
+                    className="cmp-context-menu__item"
+                    onSelect={() => setAddSchemaDialog({ open: true, providerId: provider.id })}
+                  >
+                    {getProviderTypeName(provider.providerId)}: {provider.id}
+                  </DropdownMenu.Item>
+                ))}
+                <DropdownMenu.Arrow className="cmp-context-menu__arrow" />
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Root>
+        )}
       </div>
 
       {!dataProvider && (
@@ -148,9 +181,9 @@ export const SchemasTab = () => {
       {/* Schema Management Dialogs */}
       <EditSchemaDialog
         title="Add Schema"
-        open={addSchemaDialog}
-        onOk={handleAddSchema}
-        onCancel={() => setAddSchemaDialog(false)}
+        open={addSchemaDialog.open}
+        onOk={(s: DataSchema) => handleAddSchema(addSchemaDialog.providerId!, s)}
+        onCancel={() => setAddSchemaDialog({ open: false })}
         availableSchemas={schemas}
       />
       <EditSchemaDialog

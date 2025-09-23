@@ -12,7 +12,6 @@ import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbPencil, TbPlus, TbTrash } from 'react-icons/tb';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
-import { newid } from '@diagram-craft/utils/id';
 import styles from './ModelProvidersTab.module.css';
 
 type ProviderSettingsProps<T extends DataProvider> = {
@@ -283,16 +282,23 @@ type ProviderEditDialogProps = {
 };
 
 const ProviderEditDialog = (props: ProviderEditDialogProps) => {
+  const document = useDocument();
   const [selectedProviderId, setSelectedProviderId] = useState<string>(
     props.provider?.providerId ?? UrlDataProviderId
   );
-  const [id] = useState<string>(props.providerId ?? newid());
+  const [id, setId] = useState<string>(props.providerId ?? '');
   const [provider, setProvider] = useState<DataProvider>(() => {
     if (props.provider) {
       return props.provider;
     }
     return DataProviderRegistry.get(UrlDataProviderId)!('{}');
   });
+
+  const existingProviders = document.data.providers;
+  const isIdTaken =
+    id.trim() !== '' &&
+    existingProviders.some(p => p.id === id.trim() && p.id !== props.providerId);
+  const isIdValid = id.trim() !== '' && !isIdTaken;
 
   const handleProviderTypeChange = (newProviderId: string) => {
     if (newProviderId === DefaultDataProviderId) return; // Don't allow DefaultDataProvider
@@ -303,7 +309,7 @@ const ProviderEditDialog = (props: ProviderEditDialogProps) => {
   };
 
   const handleSave = () => {
-    if (!id.trim()) return;
+    if (!isIdValid) return;
     props.onSave(provider, id.trim());
   };
 
@@ -315,6 +321,22 @@ const ProviderEditDialog = (props: ProviderEditDialogProps) => {
         </div>
 
         <div className={styles.modelProvidersTabDialogContent}>
+          <div className={styles.modelProvidersTabProviderGroup}>
+            <label className={styles.modelProvidersTabProviderLabel}>Provider ID:</label>
+            <TextInput
+              value={id}
+              onChange={v => setId(v ?? '')}
+              placeholder="Enter unique provider ID"
+              disabled={!props.isNew}
+            />
+            {isIdTaken && (
+              <div className={styles.modelProvidersTabErrorMessage}>This ID is already taken</div>
+            )}
+            {id.trim() === '' && (
+              <div className={styles.modelProvidersTabErrorMessage}>Provider ID is required</div>
+            )}
+          </div>
+
           <div className={styles.modelProvidersTabProviderGroup}>
             <label className={styles.modelProvidersTabProviderLabel}>Provider Type:</label>
             <Select.Root
@@ -334,7 +356,7 @@ const ProviderEditDialog = (props: ProviderEditDialogProps) => {
           <Button type="secondary" onClick={props.onCancel}>
             Cancel
           </Button>
-          <Button type="primary" onClick={handleSave} disabled={!id.trim()}>
+          <Button type="primary" onClick={handleSave} disabled={!isIdValid}>
             {props.isNew ? 'Add' : 'Save'}
           </Button>
         </div>
