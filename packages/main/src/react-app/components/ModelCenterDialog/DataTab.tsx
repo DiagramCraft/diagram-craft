@@ -164,6 +164,7 @@ export const DataTab = () => {
               type="secondary"
               className={styles.dataTabAddButton}
               disabled={!(canMutateData && hasSchemas)}
+              style={{ display: 'flex', gap: '0.25rem' }}
             >
               <TbPlus /> Add Data
             </Button>
@@ -246,7 +247,11 @@ export const DataTab = () => {
                   }}
                   className={styles.dataTabSearchInput}
                 />
-                <Button type="secondary" onClick={handleSearch}>
+                <Button
+                  type="secondary"
+                  onClick={handleSearch}
+                  style={{ display: 'flex', gap: '0.25rem' }}
+                >
                   <TbSearch /> Search
                 </Button>
               </div>

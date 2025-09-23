@@ -103,7 +103,11 @@ export const SchemasTab = () => {
         {providers.length > 0 && (
           <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
-              <Button type="secondary" disabled={!canMutateSchemas}>
+              <Button
+                type="secondary"
+                disabled={!canMutateSchemas}
+                style={{ display: 'flex', gap: '0.25rem' }}
+              >
                 <TbPlus /> Add Schema
               </Button>
             </DropdownMenu.Trigger>
@@ -147,6 +151,7 @@ export const SchemasTab = () => {
             <Select.Root
               value={selectedProviderId}
               onChange={v => setSelectedProviderId(v ?? 'all')}
+              style={{ maxWidth: '20rem' }}
             >
               <Select.Item value="all">All Providers</Select.Item>
               {providers.map(provider => (

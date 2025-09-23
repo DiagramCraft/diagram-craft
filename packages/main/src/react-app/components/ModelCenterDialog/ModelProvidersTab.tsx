@@ -220,10 +220,18 @@ export const ModelProvidersTab = () => {
         <div className={styles.modelProvidersTabHeader}>
           <p className={styles.modelProvidersTabTitle}>Model Providers</p>
           <div className={styles.modelProvidersTabHeaderActions}>
-            <Button type="secondary" onClick={handleRefreshAll}>
+            <Button
+              type="secondary"
+              onClick={handleRefreshAll}
+              style={{ display: 'flex', gap: '0.25rem' }}
+            >
               <TbRefresh /> Refresh All
             </Button>
-            <Button type="primary" onClick={handleAddProvider}>
+            <Button
+              type="secondary"
+              onClick={handleAddProvider}
+              style={{ display: 'flex', gap: '0.25rem' }}
+            >
               <TbPlus /> Add Provider
             </Button>
           </div>
