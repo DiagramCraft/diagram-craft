@@ -6,10 +6,6 @@
   gap: 1rem;
 }
 
-.model-providers-tab__stack--small-gap {
-  gap: 0.2rem;
-}
-
 /* Provider Selection */
 
 .model-providers-tab__provider-group {
@@ -136,8 +132,3 @@
   justify-content: flex-end;
 }
 
-/* Save Button */
-
-.model-providers-tab__save-section {
-  margin-top: 1rem;
-}

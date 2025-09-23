@@ -83,11 +83,6 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
   const [formData, setFormData] = useState<Record<string, string | string[]>>({});
   const [submitError, setSubmitError] = useState<string | undefined>();
 
-  if (!db) return <div></div>;
-  assert.present(db);
-
-  const dataProvider = db;
-
   const schema = db.schemas?.find(s => s.id === props.selectedSchema) ?? db.schemas?.[0];
 
   if (!schema) return <div></div>;
@@ -112,7 +107,7 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
     const isEditing = !!props.editItem;
     const requiredMethod = isEditing ? 'updateData' : 'addData';
 
-    if (!(requiredMethod in dataProvider)) return;
+    if (!(requiredMethod in db)) return;
 
     setSubmitError(undefined);
 
@@ -165,9 +160,9 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
       };
 
       if (isEditing) {
-        await dataProvider.updateData(schema, itemData);
+        await db.updateData(schema, itemData);
       } else {
-        await dataProvider.addData(schema, itemData);
+        await db.addData(schema, itemData);
       }
 
       // Only close dialog and reset form on success

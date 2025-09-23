@@ -58,7 +58,7 @@ export const DataTab = () => {
 
   // Collect all data items from all schemas
   useEffect(() => {
-    if (!db?.schemas) {
+    if (!db.schemas) {
       setAllDataItems([]);
       return;
     }
@@ -74,11 +74,9 @@ export const DataTab = () => {
     }
 
     setAllDataItems(allItems);
-  }, [db?.schemas]);
+  }, [db.schemas]);
 
   useEffect(() => {
-    if (!db) return;
-
     const handleDataChange = () => {
       if (!db.schemas) return;
 
@@ -110,8 +108,6 @@ export const DataTab = () => {
   }, [allDataItems, selectedSchemaId]);
 
   const handleDeleteItem = (item: DataItemWithSchema) => {
-    if (!db || !db.isDataEditable(item._schema)) return;
-
     const displayValue = item._schema.fields[0] ? item[item._schema.fields[0].id] : item._uid;
     const itemName = displayValue ?? 'this item';
 
@@ -151,8 +147,8 @@ export const DataTab = () => {
     return value;
   };
 
-  const canMutateData = db && db.schemas.some(s => db.isDataEditable(s));
-  const hasSchemas = db?.schemas && db.schemas.length > 0;
+  const canMutateData = db.schemas.some(s => db.isDataEditable(s));
+  const hasSchemas = db.schemas.length > 0;
 
   return (
     <>
@@ -171,7 +167,7 @@ export const DataTab = () => {
           </DropdownMenu.Trigger>
           <DropdownMenu.Portal>
             <DropdownMenu.Content className="cmp-context-menu" sideOffset={5}>
-              {db?.schemas?.map(schema => (
+              {db.schemas.map(schema => (
                 <DropdownMenu.Item
                   key={schema.id}
                   className="cmp-context-menu__item"
@@ -187,21 +183,14 @@ export const DataTab = () => {
         </DropdownMenu.Root>
       </div>
 
-      {!db && (
-        <div className={`${styles.dataTabMessageBox}`}>
-          <p>No data provider configured</p>
-          <p>Configure a data provider in the Model Providers tab to manage data.</p>
-        </div>
-      )}
-
-      {db && !hasSchemas && (
+      {!hasSchemas && (
         <div className={styles.dataTabMessageBox}>
           <p>No schemas available</p>
           <p>Create schemas in the Schemas tab before adding data.</p>
         </div>
       )}
 
-      {db && !canMutateData && (
+      {!canMutateData && (
         <div className={`${styles.dataTabMessageBox}`}>
           <p>The current data provider does not support data management.</p>
           <p>Switch to a different provider (like REST API) to manage data.</p>
@@ -210,13 +199,12 @@ export const DataTab = () => {
 
       {hasSchemas && (
         <>
-          {/* Search and Filter Controls */}
           <div className={styles.dataTabSearchControls}>
-            <div className={styles.dataTabFilterGroup}>
+            <div>
               <label className={styles.dataTabFilterLabel}>Filter by Schema:</label>
               <Select.Root value={selectedSchemaId} onChange={v => setSelectedSchemaId(v ?? 'all')}>
                 <Select.Item value="all">All Schemas ({allDataItems.length} items)</Select.Item>
-                {db?.schemas?.map(schema => {
+                {db.schemas.map(schema => {
                   return (
                     <Select.Item key={schema.id} value={schema.id}>
                       {schema.name}
@@ -226,7 +214,7 @@ export const DataTab = () => {
               </Select.Root>
             </div>
 
-            <div className={styles.dataTabSearchGroup}>
+            <div>
               <label className={styles.dataTabFilterLabel}>Search:</label>
               <div className={styles.dataTabSearchInputGroup}>
                 <TextInput
@@ -262,9 +250,7 @@ export const DataTab = () => {
           {filteredDataItems.length === 0 && (
             <div className={styles.dataTab__messageBox}>
               {allDataItems.length === 0 ? (
-                <>
-                  <p>No data items yet</p>
-                </>
+                <p>No data items yet</p>
               ) : (
                 <p>No items match your current filters</p>
               )}
@@ -332,7 +318,6 @@ export const DataTab = () => {
         </>
       )}
 
-      {/* Data Management Dialogs */}
       <EditItemDialog
         open={addItemDialog.open}
         onClose={() => setAddItemDialog({ open: false })}

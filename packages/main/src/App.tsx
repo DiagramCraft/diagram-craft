@@ -85,6 +85,7 @@ const oncePerEvent = (e: MouseEvent, fn: () => void) => {
 };
 
 type DialogStackItem = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   dialog: DialogCommand<any, any>;
   zIndex: number;
   id: string;
@@ -187,21 +188,24 @@ export const App = (props: {
       const baseZIndex = 1000;
       const newZIndex = baseZIndex + dialogStack.length;
 
-      setDialogStack(prev => [...prev, {
-        dialog: {
-          ...dialog,
-          onOk: (data: unknown) => {
-            dialog.onOk(data);
-            setDialogStack(current => current.filter(item => item.id !== dialogId));
+      setDialogStack(prev => [
+        ...prev,
+        {
+          dialog: {
+            ...dialog,
+            onOk: (data: unknown) => {
+              dialog.onOk(data);
+              setDialogStack(current => current.filter(item => item.id !== dialogId));
+            },
+            onCancel: () => {
+              dialog.onCancel?.();
+              setDialogStack(current => current.filter(item => item.id !== dialogId));
+            }
           },
-          onCancel: () => {
-            dialog.onCancel?.();
-            setDialogStack(current => current.filter(item => item.id !== dialogId));
-          }
-        },
-        zIndex: newZIndex,
-        id: dialogId
-      }]);
+          zIndex: newZIndex,
+          id: dialogId
+        }
+      ]);
     },
     showPreview: () => setPreview(true)
   };
@@ -509,10 +513,7 @@ export const App = (props: {
             if (item.dialog.id !== 'commandPalette') return null;
             return (
               <div key={item.id} style={{ zIndex: item.zIndex }}>
-                <CommandPalette
-                  open={true}
-                  onClose={() => item.dialog.onCancel?.()}
-                />
+                <CommandPalette open={true} onClose={() => item.dialog.onCancel?.()} />
               </div>
             );
           })}
