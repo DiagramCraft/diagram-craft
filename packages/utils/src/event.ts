@@ -11,7 +11,7 @@ export interface Emitter<T extends EventMap> {
 }
 
 export class EventEmitter<T extends EventMap> implements Emitter<T> {
-  private listeners: {
+  protected listeners: {
     [K in keyof T]?: Array<{
       id: string;
       fn: EventReceiver<T[K]>;
@@ -56,5 +56,9 @@ export class EventEmitter<T extends EventMap> implements Emitter<T> {
     (this.listeners[eventName] ?? []).forEach(l => {
       l.fn({ ...(params ?? {}) } as T[K]);
     });
+  }
+
+  protected clearListeners() {
+    this.listeners = {};
   }
 }

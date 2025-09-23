@@ -94,6 +94,8 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
   #providers: Array<DataProvider> = [];
   readonly #crdt: CRDTMap<Record<string, string>>;
 
+  #dataManager: DataManager | undefined;
+
   readonly #updateDataListener: (data: { data: Data[] }) => void;
   readonly #deleteDataListener: (data: { data: Data[] }) => void;
   readonly #deleteSchemaListener: (s: DataSchema) => void;
@@ -134,6 +136,14 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
     this.#crdt.on('remoteInsert', updateProvider);
   }
 
+  private rebuildDataManager() {
+    if (this.#dataManager) {
+      this.#dataManager.destroy();
+    }
+
+    this.#dataManager = new DataManager(this.#providers);
+  }
+
   private setProviderInternal(dataProviders: Array<DataProvider>, initial = false) {
     this.#providers?.forEach(p => p?.off?.('addData', this.#updateDataListener));
     this.#providers?.forEach(p => p?.off?.('updateData', this.#updateDataListener));
@@ -143,6 +153,9 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
     this.#providers?.forEach(p => p?.off?.('deleteSchema', this.#deleteSchemaListener));
 
     this.#providers = dataProviders;
+
+    this.rebuildDataManager();
+
     if (!initial) this.emit('change');
 
     this.#providers.forEach(p => p.on('addData', this.#updateDataListener));
@@ -182,14 +195,20 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
     return this.#templates;
   }
 
-  get db() {
-    return new DataManager(this.#providers);
+  get db(): DataManager {
+    if (!this.#dataManager) this.rebuildDataManager();
+    return this.#dataManager!;
   }
 }
 
 export class DataManager extends EventEmitter<DataProviderEventMap> {
   constructor(private readonly providers: Array<DataProvider>) {
     super();
+  }
+
+  destroy() {
+    // Clean up all event listeners
+    this.clearListeners();
   }
 
   isDataEditable(schema: DataSchema) {
