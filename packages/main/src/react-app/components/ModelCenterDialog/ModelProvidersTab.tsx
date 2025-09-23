@@ -95,25 +95,15 @@ export const ModelProvidersTab = () => {
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
   const [successMessage, setSuccessMessage] = useState<string | undefined>();
 
-  const handleSaveProviders = async () => {
+  const saveProviders = async () => {
     try {
-      // Verify all providers before saving
-      for (const providerWithId of providers) {
-        const error = await providerWithId.provider.verifySettings();
-        if (error) {
-          setErrorMessage(`Error in provider "${providerWithId.id}": ${error}`);
-          setSuccessMessage(undefined);
-          return;
-        }
-      }
-
       // Save all providers
       const newProviders = providers.map(p => {
         if (!p.isFirst) p.provider.id = p.id;
         return p.provider;
       });
       document.data.setProviders(newProviders);
-      setSuccessMessage('All providers saved successfully');
+      setSuccessMessage('Providers saved successfully');
       setErrorMessage(undefined);
     } catch (error) {
       setErrorMessage('Failed to save providers');
@@ -139,14 +129,37 @@ export const ModelProvidersTab = () => {
           okType: 'danger',
           cancelLabel: 'Cancel'
         },
-        () => {
-          setProviders(prev => prev.filter(p => p.id !== providerWithId.id));
+        async () => {
+          const updatedProviders = providers.filter(p => p.id !== providerWithId.id);
+          setProviders(updatedProviders);
+
+          // Auto-save after deletion
+          try {
+            const newProviders = updatedProviders.map(p => {
+              if (!p.isFirst) p.provider.id = p.id;
+              return p.provider;
+            });
+            document.data.setProviders(newProviders);
+            setSuccessMessage('Provider deleted successfully');
+            setErrorMessage(undefined);
+          } catch (error) {
+            setErrorMessage('Failed to delete provider');
+            setSuccessMessage(undefined);
+          }
         }
       )
     );
   };
 
-  const handleSaveEditingProvider = (newProvider: DataProvider, id: string) => {
+  const handleSaveEditingProvider = async (newProvider: DataProvider, id: string) => {
+    // Verify provider settings before saving
+    const error = await newProvider.verifySettings();
+    if (error) {
+      setErrorMessage(`Error in provider settings: ${error}`);
+      setSuccessMessage(undefined);
+      return;
+    }
+
     if (editingProvider.isNew) {
       const newProviderWithId: ProviderWithId = {
         id,
@@ -160,6 +173,9 @@ export const ModelProvidersTab = () => {
       );
     }
     setEditingProvider({ open: false });
+
+    // Auto-save after add/edit
+    await saveProviders();
   };
 
   const handleRefreshAll = async () => {
@@ -267,12 +283,6 @@ export const ModelProvidersTab = () => {
             </tbody>
           </table>
         )}
-
-        <div className={styles.modelProvidersTabSaveSection}>
-          <Button type="primary" onClick={handleSaveProviders}>
-            Save All Providers
-          </Button>
-        </div>
       </div>
 
       {editingProvider.open && (
