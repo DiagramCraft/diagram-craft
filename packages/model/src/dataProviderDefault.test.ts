@@ -257,7 +257,7 @@ describe('DefaultDataProvider', () => {
       const parsed = JSON.parse(serialized);
 
       // Assert
-      expect(parsed).toHaveProperty('schema');
+      expect(parsed).toHaveProperty('schemas');
       expect(parsed).toHaveProperty('data');
       expect(parsed.data).toHaveLength(2);
     });

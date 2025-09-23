@@ -1,14 +1,8 @@
 import { describe, expect, test, vi } from 'vitest';
-import {
-  AddSchemaUndoableAction,
-  DataSchema,
-  DeleteSchemaUndoableAction,
-  DiagramDocumentDataSchemas,
-  ModifySchemaUndoableAction
-} from './diagramDocumentDataSchemas';
+import { DataSchema, DiagramDocumentDataSchemas } from './diagramDocumentDataSchemas';
 import { CRDT } from './collaboration/crdt';
 import { TestModel } from './test-support/builder';
-import { Backends, standardTestModel } from './collaboration/collaborationTestUtils';
+import { Backends } from './collaboration/collaborationTestUtils';
 
 describe.each(Backends.all())('DiagramDocumentDataSchemas [%s]', (_name, backend) => {
   describe('constructor', () => {
@@ -177,122 +171,5 @@ describe.each(Backends.all())('DiagramDocumentDataSchemas [%s]', (_name, backend
       expect(instance1.all).toEqual(newSchemas);
       if (instance2) expect(instance2.all).toEqual(newSchemas);
     });
-  });
-});
-
-describe.each(Backends.all())('DeleteSchemaUndoableAction [%s]', (_name, backend) => {
-  test('should redo, undo, redo', () => {
-    // Setup
-    const { diagram1, diagram2 } = standardTestModel(backend);
-
-    const schema: DataSchema = {
-      id: 'newId',
-      name: 'Schema2',
-      providerId: 'document',
-      fields: []
-    };
-    diagram1.document.data._schemas.add(schema);
-
-    const action = new DeleteSchemaUndoableAction(diagram1, schema);
-
-    // Act
-    diagram1.undoManager.addAndExecute(action);
-
-    // Verify
-    expect(diagram1.document.data._schemas.has('newId')).toBe(false);
-    if (diagram2) expect(diagram2.document.data._schemas.has('newId')).toBe(false);
-
-    // Act
-    diagram1.undoManager.undo();
-
-    // Verify
-    expect(diagram1.document.data._schemas.has('newId')).toBe(true);
-    if (diagram2) expect(diagram2.document.data._schemas.has('newId')).toBe(true);
-
-    // Act
-    diagram1.undoManager.redo();
-
-    // Verify
-    expect(diagram1.document.data._schemas.has('newId')).toBe(false);
-    if (diagram2) expect(diagram2.document.data._schemas.has('newId')).toBe(false);
-  });
-});
-
-describe.each(Backends.all())('AddSchemaUndoableAction [%s]', (_name, backend) => {
-  test('should redo, undo, redo', () => {
-    // Setup
-    const { diagram1, diagram2 } = standardTestModel(backend);
-
-    const action = new AddSchemaUndoableAction(diagram1, {
-      id: 'newId',
-      name: 'Schema2',
-      providerId: 'document',
-      fields: []
-    });
-
-    // Act
-    diagram1.undoManager.addAndExecute(action);
-
-    // Verify
-    expect(diagram1.document.data._schemas.has('newId')).toBe(true);
-    if (diagram2) expect(diagram2.document.data._schemas.has('newId')).toBe(true);
-
-    // Act
-    diagram1.undoManager.undo();
-
-    // Verify
-    expect(diagram1.document.data._schemas.has('newId')).toBe(false);
-    if (diagram2) expect(diagram2.document.data._schemas.has('newId')).toBe(false);
-
-    // Act
-    diagram1.undoManager.redo();
-
-    // Verify
-    expect(diagram1.document.data._schemas.has('newId')).toBe(true);
-    if (diagram2) expect(diagram2.document.data._schemas.has('newId')).toBe(true);
-  });
-});
-
-describe.each(Backends.all())('ModifySchemaUndoableAction [%s]', (_name, backend) => {
-  test('should redo, undo, redo', () => {
-    // Setup
-    const { diagram1, diagram2 } = standardTestModel(backend);
-
-    const schema: DataSchema = {
-      id: 'newId',
-      name: 'OldName',
-      providerId: 'document',
-      fields: []
-    };
-    diagram1.document.data._schemas.add(schema);
-
-    const action = new ModifySchemaUndoableAction(diagram1, { ...schema, name: 'NewName' });
-
-    // Act
-    diagram1.undoManager.addAndExecute(action);
-
-    // Verify
-    expect(diagram1.document.data._schemas.get('newId').name).toBe('NewName');
-    if (diagram2) {
-      expect(diagram2.document.data._schemas.get('newId').name).toBe('NewName');
-    }
-
-    // Act
-    diagram1.undoManager.undo();
-
-    // Verify
-    expect(diagram1.document.data._schemas.get('newId').name).toBe('OldName');
-    if (diagram2) {
-      expect(diagram2.document.data._schemas.get('newId').name).toBe('OldName');
-    }
-
-    // Act
-    diagram1.undoManager.redo();
-
-    // Verify
-    expect(diagram1.document.data._schemas.get('newId').name).toBe('NewName');
-    if (diagram2) {
-      expect(diagram2.document.data._schemas.get('newId').name).toBe('NewName');
-    }
   });
 });

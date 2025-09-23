@@ -620,6 +620,7 @@ describe('RESTDataProvider', () => {
   describe('addSchema', () => {
     it('should make POST request to add schema and emit events', async () => {
       const provider = createEmptyProvider();
+      provider.id = 'external';
 
       const newSchema: DataSchema = {
         id: 'new-schema',

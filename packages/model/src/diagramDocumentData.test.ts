@@ -27,11 +27,11 @@ describe.each(Backends.all())('DiagramDocumentData [%s]', (_name, backend) => {
       docData1.setProviders([provider]);
 
       // Verify
-      expect((docData1.providers[0] as UrlDataProvider).dataUrl).toBe(dataUrl);
-      expect((docData1.providers[0] as UrlDataProvider).schemaUrl).toBe(schemaUrl);
+      expect((docData1.providers[1] as UrlDataProvider).dataUrl).toBe(dataUrl);
+      expect((docData1.providers[1] as UrlDataProvider).schemaUrl).toBe(schemaUrl);
       if (docData2) {
-        expect((docData2.providers[0] as UrlDataProvider).dataUrl).toBe(dataUrl);
-        expect((docData2.providers[0] as UrlDataProvider).schemaUrl).toBe(schemaUrl);
+        expect((docData2.providers[1] as UrlDataProvider).dataUrl).toBe(dataUrl);
+        expect((docData2.providers[1] as UrlDataProvider).schemaUrl).toBe(schemaUrl);
       }
     });
 
@@ -52,8 +52,8 @@ describe.each(Backends.all())('DiagramDocumentData [%s]', (_name, backend) => {
       docData1.setProviders([]);
 
       // Verify
-      expect(docData1.providers[0]).toBeUndefined();
-      if (docData2) expect(docData2.providers[0]).toBeUndefined();
+      expect(docData1.providers[1]).toBeUndefined();
+      if (docData2) expect(docData2.providers[1]).toBeUndefined();
     });
 
     it('calls listeners when provider changes', () => {
