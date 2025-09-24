@@ -199,7 +199,7 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
       const styles = new DiagramStyles(root, document, true);
       const nodeStyles = styles.nodeStyles;
       expect(nodeStyles.length).toBeGreaterThan(0);
-      expect(nodeStyles[0].type).toBe('node');
+      expect(nodeStyles[0]!.type).toBe('node');
     });
   });
 
@@ -208,7 +208,7 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
       const styles = new DiagramStyles(root, document, true);
       const edgeStyles = styles.edgeStyles;
       expect(edgeStyles.length).toBeGreaterThan(0);
-      expect(edgeStyles[0].type).toBe('edge');
+      expect(edgeStyles[0]!.type).toBe('edge');
     });
   });
 
@@ -217,7 +217,7 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
       const styles = new DiagramStyles(root, document, true);
       const textStyles = styles.textStyles;
       expect(textStyles.length).toBeGreaterThan(0);
-      expect(textStyles[0].type).toBe('text');
+      expect(textStyles[0]!.type).toBe('text');
     });
   });
 
@@ -244,7 +244,7 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
         styles1.activeNodeStylesheet = customNodeStyle;
 
         expect(styles1.activeNodeStylesheet.id).toBe(customNodeStyle.id);
-        expect(styles2.activeNodeStylesheet.id).toBe(styles2.nodeStyles[0].id);
+        expect(styles2.activeNodeStylesheet.id).toBe(styles2.nodeStyles[0]!.id);
       }
     });
 
@@ -252,7 +252,7 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
       const styles = new DiagramStyles(root, document, true);
       const activeNodeStyle = styles.activeNodeStylesheet;
       expect(activeNodeStyle.type).toBe('node');
-      expect(activeNodeStyle.id).toBe(styles.nodeStyles[0].id);
+      expect(activeNodeStyle.id).toBe(styles.nodeStyles[0]!.id);
     });
 
     it('should set the active node stylesheet', () => {
@@ -295,7 +295,7 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
         styles1.activeEdgeStylesheet = customEdgeStyle;
 
         expect(styles1.activeEdgeStylesheet.id).toBe(customEdgeStyle.id);
-        expect(styles2.activeEdgeStylesheet.id).toBe(styles2.edgeStyles[0].id);
+        expect(styles2.activeEdgeStylesheet.id).toBe(styles2.edgeStyles[0]!.id);
       }
     });
 
@@ -303,7 +303,7 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
       const styles = new DiagramStyles(root, document, true);
       const activeEdgeStyle = styles.activeEdgeStylesheet;
       expect(activeEdgeStyle.type).toBe('edge');
-      expect(activeEdgeStyle.id).toBe(styles.edgeStyles[0].id);
+      expect(activeEdgeStyle.id).toBe(styles.edgeStyles[0]!.id);
     });
 
     it('should set the active edge stylesheet', () => {
@@ -346,7 +346,7 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
         styles1.activeTextStylesheet = customTextStyle;
 
         expect(styles1.activeTextStylesheet.id).toBe(customTextStyle.id);
-        expect(styles2.activeTextStylesheet.id).toBe(styles2.textStyles[0].id);
+        expect(styles2.activeTextStylesheet.id).toBe(styles2.textStyles[0]!.id);
       }
     });
 
@@ -354,7 +354,7 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
       const styles = new DiagramStyles(root, document, true);
       const activeTextStyle = styles.activeTextStylesheet;
       expect(activeTextStyle.type).toBe('text');
-      expect(activeTextStyle.id).toBe(styles.textStyles[0].id);
+      expect(activeTextStyle.id).toBe(styles.textStyles[0]!.id);
     });
 
     it('should set the active text stylesheet', () => {
@@ -379,19 +379,19 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
     it('should get a stylesheet by id', () => {
       const styles = new DiagramStyles(root, document, true);
 
-      const defaultNodeStyleId = styles.nodeStyles[0].id;
+      const defaultNodeStyleId = styles.nodeStyles[0]!.id;
       const nodeStyle = styles.get(defaultNodeStyleId);
       expect(nodeStyle).toBeDefined();
       expect(nodeStyle?.type).toBe('node');
       expect(nodeStyle?.id).toBe(defaultNodeStyleId);
 
-      const defaultEdgeStyleId = styles.edgeStyles[0].id;
+      const defaultEdgeStyleId = styles.edgeStyles[0]!.id;
       const edgeStyle = styles.get(defaultEdgeStyleId);
       expect(edgeStyle).toBeDefined();
       expect(edgeStyle?.type).toBe('edge');
       expect(edgeStyle?.id).toBe(defaultEdgeStyleId);
 
-      const defaultTextStyleId = styles.textStyles[0].id;
+      const defaultTextStyleId = styles.textStyles[0]!.id;
       const textStyle = styles.get(defaultTextStyleId);
       expect(textStyle).toBeDefined();
       expect(textStyle?.type).toBe('text');
@@ -410,7 +410,7 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
     it('should get a node stylesheet by id', () => {
       const styles = new DiagramStyles(root, document, true);
 
-      const defaultNodeStyleId = styles.nodeStyles[0].id;
+      const defaultNodeStyleId = styles.nodeStyles[0]!.id;
       const nodeStyle = styles.getNodeStyle(defaultNodeStyleId);
       expect(nodeStyle).toBeDefined();
       expect(nodeStyle?.type).toBe('node');
@@ -422,7 +422,7 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
     it('should get an edge stylesheet by id', () => {
       const styles = new DiagramStyles(root, document, true);
 
-      const defaultEdgeStyleId = styles.edgeStyles[0].id;
+      const defaultEdgeStyleId = styles.edgeStyles[0]!.id;
       const edgeStyle = styles.getEdgeStyle(defaultEdgeStyleId);
       expect(edgeStyle).toBeDefined();
       expect(edgeStyle?.type).toBe('edge');
@@ -434,7 +434,7 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
     it('should get a text stylesheet by id', () => {
       const styles = new DiagramStyles(root, document, true);
 
-      const defaultTextStyleId = styles.textStyles[0].id;
+      const defaultTextStyleId = styles.textStyles[0]!.id;
       const textStyle = styles.getTextStyle(defaultTextStyleId);
       expect(textStyle).toBeDefined();
       expect(textStyle?.type).toBe('text');
@@ -557,7 +557,7 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
       styles1.addStylesheet('custom-node', customNodeStyle);
 
       // Act
-      styles1.deleteStylesheet('custom-node', UnitOfWork.immediate(document.diagrams[0]));
+      styles1.deleteStylesheet('custom-node', UnitOfWork.immediate(document.diagrams[0]!));
 
       // Verify
       expect(styles1.getNodeStyle('custom-node')).toBeUndefined();
@@ -570,10 +570,10 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
       const styles = new DiagramStyles(root, document, true);
 
       // Get the default node stylesheet ID
-      const defaultNodeStyleId = styles.nodeStyles[0].id;
+      const defaultNodeStyleId = styles.nodeStyles[0]!.id;
 
       // Try to delete the default node stylesheet
-      styles.deleteStylesheet(defaultNodeStyleId, UnitOfWork.immediate(document.diagrams[0]));
+      styles.deleteStylesheet(defaultNodeStyleId, UnitOfWork.immediate(document.diagrams[0]!));
 
       // Verify it was not deleted
       expect(styles.getNodeStyle(defaultNodeStyleId)).toBeDefined();
@@ -608,7 +608,7 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
       expect(styles.activeNodeStylesheet.id).toBe('custom-node-2');
 
       // Delete custom-node-2
-      styles.deleteStylesheet('custom-node-2', UnitOfWork.immediate(document.diagrams[0]));
+      styles.deleteStylesheet('custom-node-2', UnitOfWork.immediate(document.diagrams[0]!));
 
       // Verify active stylesheet is updated
       expect(styles.activeNodeStylesheet.id).not.toBe('custom-node-2');
@@ -624,13 +624,13 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
       const styles = new DiagramStyles(root, diagram.document, true);
 
       // Get the default node stylesheet ID
-      const defaultNodeStyleId = styles.nodeStyles[0].id;
+      const defaultNodeStyleId = styles.nodeStyles[0]!.id;
 
       // Set a stylesheet on the element
       styles.setStylesheet(
         element as any,
         defaultNodeStyleId,
-        UnitOfWork.immediate(document.diagrams[0]),
+        UnitOfWork.immediate(document.diagrams[0]!),
         true
       );
 
@@ -645,13 +645,13 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
       const styles = new DiagramStyles(root, diagram.document, true);
 
       // Get the default text stylesheet ID
-      const defaultTextStyleId = styles.textStyles[0].id;
+      const defaultTextStyleId = styles.textStyles[0]!.id;
 
       // Set a text stylesheet on the element
       styles.setStylesheet(
         element as any,
         defaultTextStyleId,
-        UnitOfWork.immediate(document.diagrams[0]),
+        UnitOfWork.immediate(document.diagrams[0]!),
         true
       );
 
@@ -666,7 +666,7 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
       const styles = new DiagramStyles(root, diagram.document, true);
 
       // Get the default node stylesheet ID
-      const defaultNodeStyleId = styles.nodeStyles[0].id;
+      const defaultNodeStyleId = styles.nodeStyles[0]!.id;
 
       // Add a custom node stylesheet
       const customNodeStyle = Stylesheet.fromSnapshot(
@@ -684,7 +684,7 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
       styles.setStylesheet(
         element as any,
         defaultNodeStyleId,
-        UnitOfWork.immediate(document.diagrams[0]),
+        UnitOfWork.immediate(document.diagrams[0]!),
         true
       );
 

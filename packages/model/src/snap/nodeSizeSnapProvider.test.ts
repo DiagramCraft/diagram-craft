@@ -273,8 +273,8 @@ describe('NodeSizeSnapProvider', () => {
       expect(sizeMagnet.distancePairs).toHaveLength(2);
 
       // Check distance pairs
-      const currentBoxPair = sizeMagnet.distancePairs[0];
-      const referenceNodePair = sizeMagnet.distancePairs[1];
+      const currentBoxPair = sizeMagnet.distancePairs[0]!;
+      const referenceNodePair = sizeMagnet.distancePairs[1]!;
 
       expect(currentBoxPair.distance).toBe(80); // Target size
       expect(referenceNodePair.distance).toBe(80);
@@ -316,8 +316,8 @@ describe('NodeSizeSnapProvider', () => {
       // Verify distance pairs for width matching
       expect(sizeMagnet.distancePairs).toHaveLength(2);
 
-      const currentBoxPair = sizeMagnet.distancePairs[0];
-      const referenceNodePair = sizeMagnet.distancePairs[1];
+      const currentBoxPair = sizeMagnet.distancePairs[0]!;
+      const referenceNodePair = sizeMagnet.distancePairs[1]!;
 
       expect(currentBoxPair.distance).toBe(100); // Target width
       expect(referenceNodePair.distance).toBe(100);
@@ -355,7 +355,7 @@ describe('NodeSizeSnapProvider', () => {
       provider.highlight(testBox, matchingPair, Axis.h);
 
       // Check reference node distance pair
-      const referenceNodePair = sizeMagnet.distancePairs[1];
+      const referenceNodePair = sizeMagnet.distancePairs[1]!;
 
       expect(referenceNodePair.pointA.x).toBe(55); // Midpoint of reference node top edge (30 + 50/2)
       expect(referenceNodePair.pointB.x).toBe(55); // Midpoint of reference node bottom edge

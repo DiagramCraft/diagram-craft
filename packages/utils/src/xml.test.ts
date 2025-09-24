@@ -33,9 +33,9 @@ describe('XML Utilities', () => {
 
       // Verify results
       expect(elements.length).toBe(3);
-      expect(elements[0].id).toBe('div1');
-      expect(elements[1].id).toBe('div2');
-      expect(elements[2].id).toBe('span1');
+      expect(elements[0]!.id).toBe('div1');
+      expect(elements[1]!.id).toBe('div2');
+      expect(elements[2]!.id).toBe('span1');
     });
 
     it('should skip non-element nodes', () => {
@@ -65,8 +65,8 @@ describe('XML Utilities', () => {
 
       // Verify results
       expect(elements.length).toBe(2);
-      expect(elements[0].id).toBe('test-div');
-      expect(elements[1].id).toBe('test-span');
+      expect(elements[0]!.id).toBe('test-div');
+      expect(elements[1]!.id).toBe('test-span');
     });
 
     it('should handle empty collections', () => {

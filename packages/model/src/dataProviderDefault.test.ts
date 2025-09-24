@@ -59,7 +59,7 @@ describe('DefaultDataProvider', () => {
       const provider = createProviderWithSchemaAndData();
       expect(provider.schemas).toEqual([testSchema]);
       expect(provider.getById([testData._uid])).toHaveLength(1);
-      expect(provider.getById([testData._uid])[0]._uid).toBe(testData._uid);
+      expect(provider.getById([testData._uid])[0]!._uid).toBe(testData._uid);
     });
   });
 
@@ -102,7 +102,7 @@ describe('DefaultDataProvider', () => {
       const provider = createProviderWithSchemaAndData();
       const result = provider.queryData(testSchema, 'Value 1');
       expect(result).toHaveLength(1);
-      expect(result[0]._uid).toBe(testData._uid);
+      expect(result[0]!._uid).toBe(testData._uid);
     });
   });
 
@@ -120,7 +120,7 @@ describe('DefaultDataProvider', () => {
 
       // Assert
       expect(provider.getData(testSchema)).toHaveLength(1);
-      expect(provider.getData(testSchema)[0]._uid).toBe(testData._uid);
+      expect(provider.getData(testSchema)[0]!._uid).toBe(testData._uid);
       expect(addDataSpy).toHaveBeenCalledTimes(1);
       expect(addDataSpy).toHaveBeenCalledWith({ data: [testData] });
     });
@@ -140,7 +140,7 @@ describe('DefaultDataProvider', () => {
       // Assert
       const remainingData = provider.getData(testSchema);
       expect(remainingData).toHaveLength(1);
-      expect(remainingData[0]._uid).toBe(testData2._uid);
+      expect(remainingData[0]!._uid).toBe(testData2._uid);
       expect(deleteDataSpy).toHaveBeenCalledTimes(1);
       expect(deleteDataSpy).toHaveBeenCalledWith({ data: [testData] });
     });
@@ -176,7 +176,7 @@ describe('DefaultDataProvider', () => {
       provider.updateData(testSchema, updatedData);
 
       // Assert
-      const data = provider.getById([testData._uid])[0];
+      const data = provider.getById([testData._uid])[0]!;
       expect(data.value).toBe('Updated Value');
       expect(updateDataSpy).toHaveBeenCalledTimes(1);
       expect(updateDataSpy).toHaveBeenCalledWith({ data: [updatedData] });
@@ -209,7 +209,7 @@ describe('DefaultDataProvider', () => {
       await provider.updateSchema(updatedSchema);
 
       // Assert
-      expect(provider.schemas[0].name).toBe('Updated Schema Name');
+      expect(provider.schemas[0]!.name).toBe('Updated Schema Name');
     });
 
     it('should do nothing if schema does not exist', async () => {

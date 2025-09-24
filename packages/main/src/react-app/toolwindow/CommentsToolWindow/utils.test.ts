@@ -79,8 +79,8 @@ describe('CommentsToolWindow utils', () => {
       const threads = buildCommentThreads([comment]);
 
       expect(threads).toHaveLength(1);
-      expect(threads[0].root).toBe(comment);
-      expect(threads[0].replies).toHaveLength(0);
+      expect(threads[0]!.root).toBe(comment);
+      expect(threads[0]!.replies).toHaveLength(0);
     });
 
     test('builds thread with replies', () => {
@@ -120,13 +120,13 @@ describe('CommentsToolWindow utils', () => {
       const threads = buildCommentThreads([rootComment, reply1, reply2]);
 
       expect(threads).toHaveLength(1);
-      expect(threads[0].root).toBe(rootComment);
-      expect(threads[0].replies).toHaveLength(1);
-      expect(threads[0].replies[0].comment).toBe(reply1);
-      expect(threads[0].replies[0].level).toBe(1);
-      expect(threads[0].replies[0].replies).toHaveLength(1);
-      expect(threads[0].replies[0].replies[0].comment).toBe(reply2);
-      expect(threads[0].replies[0].replies[0].level).toBe(2);
+      expect(threads[0]!.root).toBe(rootComment);
+      expect(threads[0]!.replies).toHaveLength(1);
+      expect(threads[0]!.replies[0]!.comment).toBe(reply1);
+      expect(threads[0]!.replies[0]!.level).toBe(1);
+      expect(threads[0]!.replies[0]!.replies).toHaveLength(1);
+      expect(threads[0]!.replies[0]!.replies[0]!.comment).toBe(reply2);
+      expect(threads[0]!.replies[0]!.replies[0]!.level).toBe(2);
     });
 
     test('filters out replies from root level', () => {
@@ -154,7 +154,7 @@ describe('CommentsToolWindow utils', () => {
       const threads = buildCommentThreads([rootComment, reply]);
 
       expect(threads).toHaveLength(1);
-      expect(threads[0].root).toBe(rootComment);
+      expect(threads[0]!.root).toBe(rootComment);
     });
 
     test('limits nesting depth to 3 levels', () => {
@@ -181,17 +181,17 @@ describe('CommentsToolWindow utils', () => {
       const threads = buildCommentThreads(comments);
 
       expect(threads).toHaveLength(1);
-      
+
       // Check that we only go 3 levels deep (root + 3 reply levels)
-      let currentNode = threads[0];
+      let currentNode = threads[0]!;
       let depth = 0;
-      
+
       while (currentNode.replies.length > 0) {
         depth++;
-        currentNode = { replies: currentNode.replies[0].replies } as any;
+        currentNode = { replies: currentNode.replies[0]!.replies } as any;
         if (depth >= 3) break;
       }
-      
+
       expect(depth).toBe(3);
     });
   });
@@ -226,18 +226,18 @@ describe('CommentsToolWindow utils', () => {
       const groups = groupThreadsByElement(threads);
 
       expect(groups.length).toBeGreaterThanOrEqual(2);
-      
+
       // Find groups by checking the threads they contain
       const diagramGroup = groups.find(g => g.threads.some(t => t.root.type === 'diagram'));
       const elementGroup = groups.find(g => g.threads.some(t => t.root.type === 'element'));
-      
+
       expect(diagramGroup).toBeDefined();
       expect(diagramGroup!.threads).toHaveLength(1);
-      expect(diagramGroup!.threads[0].root).toBe(diagramComment);
-      
+      expect(diagramGroup!.threads[0]!.root).toBe(diagramComment);
+
       expect(elementGroup).toBeDefined();
       expect(elementGroup!.threads).toHaveLength(1);
-      expect(elementGroup!.threads[0].root).toBe(elementComment);
+      expect(elementGroup!.threads[0]!.root).toBe(elementComment);
     });
   });
 
@@ -279,14 +279,14 @@ describe('CommentsToolWindow utils', () => {
       const groups = groupThreadsByAuthor(threads);
 
       expect(groups).toHaveLength(2);
-      
+
       const johnGroup = groups.find(g => g.key === 'John Doe');
       const janeGroup = groups.find(g => g.key === 'Jane Doe');
-      
+
       expect(johnGroup).toBeDefined();
       expect(johnGroup!.threads).toHaveLength(2);
       expect(johnGroup!.title).toBe('John Doe');
-      
+
       expect(janeGroup).toBeDefined();
       expect(janeGroup!.threads).toHaveLength(1);
       expect(janeGroup!.title).toBe('Jane Doe');

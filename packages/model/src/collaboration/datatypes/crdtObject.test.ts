@@ -97,10 +97,10 @@ describe('CRDTObject', () => {
 
     // Verify array access through proxy
     const proxy = obj.get();
-    expect(proxy.people?.[0].firstName).toBe('John');
-    expect(proxy.people?.[0].lastName).toBe('Doe');
-    expect(proxy.people?.[1].firstName).toBe('Jane');
-    expect(proxy.people?.[1].lastName).toBe('Smith');
+    expect(proxy.people![0]!.firstName).toBe('John');
+    expect(proxy.people![0]!.lastName).toBe('Doe');
+    expect(proxy.people![1]!.firstName).toBe('Jane');
+    expect(proxy.people![1]!.lastName).toBe('Smith');
 
     // Verify array structure in clone
     const clone = obj.getClone();
@@ -162,16 +162,16 @@ describe('CRDTObject', () => {
     // Modify array elements
     obj.update(p => {
       if (p.people) {
-        p.people[0].firstName = 'Alicia';
+        p.people[0]!.firstName = 'Alicia';
         p.people[1] = { firstName: 'Robert', lastName: 'Wilson' };
       }
     });
 
     // Verify modifications
     const clone = obj.getClone();
-    expect(clone.people?.[0].firstName).toBe('Alicia');
-    expect(clone.people?.[1].firstName).toBe('Robert');
-    expect(clone.people?.[1].lastName).toBe('Wilson');
+    expect(clone.people![0]!.firstName).toBe('Alicia');
+    expect(clone.people![1]!.firstName).toBe('Robert');
+    expect(clone.people![1]!.lastName).toBe('Wilson');
   });
 
   describe('getClone', () => {

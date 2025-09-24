@@ -105,7 +105,7 @@ describe('UrlDataProvider', () => {
       const provider = createProviderWithSchemaAndData();
       expect(provider.schemas).toEqual([testSchema]);
       expect(provider.getById([testData._uid])).toHaveLength(1);
-      expect(provider.getById([testData._uid])[0]._uid).toBe(testData._uid);
+      expect(provider.getById([testData._uid])[0]!._uid).toBe(testData._uid);
       expect(provider.dataUrl).toBe(dataUrl);
       expect(provider.schemaUrl).toBe(schemaUrl);
     });
@@ -183,7 +183,7 @@ describe('UrlDataProvider', () => {
       const provider = createProviderWithSchemaAndData();
       const result = provider.queryData(testSchema, 'Value 1');
       expect(result).toHaveLength(1);
-      expect(result[0]._uid).toBe(testData._uid);
+      expect(result[0]!._uid).toBe(testData._uid);
     });
   });
 

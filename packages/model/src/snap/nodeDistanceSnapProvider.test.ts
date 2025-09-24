@@ -51,10 +51,10 @@ describe('NodeDistanceSnapProvider', () => {
       const eastMagnets = distanceMagnets.filter(m => m.matchDirection === 'e');
       expect(eastMagnets.length).toBe(1);
 
-      const eastMagnet = eastMagnets[0];
+      const eastMagnet = eastMagnets[0]!;
       expect(eastMagnet.line.from.x).toBe(-40); // 10 - 50 = -40
       expect(eastMagnet.distancePairs).toHaveLength(1);
-      expect(eastMagnet.distancePairs[0].distance).toBe(50);
+      expect(eastMagnet.distancePairs[0]!.distance).toBe(50);
       expect(eastMagnet.respectDirection).toBe(true);
     });
 
@@ -96,7 +96,7 @@ describe('NodeDistanceSnapProvider', () => {
       expect(eastMagnets.length).toBeGreaterThan(0);
 
       // Check that we have at least one distance pattern
-      const distances = eastMagnets.map(m => m.distancePairs[0].distance);
+      const distances = eastMagnets.map(m => m.distancePairs[0]!.distance);
       expect(distances.length).toBeGreaterThan(0);
     });
   });
@@ -128,9 +128,9 @@ describe('NodeDistanceSnapProvider', () => {
       const southMagnets = magnets.filter(m => m.matchDirection === 's');
       expect(southMagnets.length).toBe(1);
 
-      const southMagnet = southMagnets[0];
+      const southMagnet = southMagnets[0]!;
       expect(southMagnet.line.from.y).toBe(-30); // 10 - 40 = -30
-      expect(southMagnet.distancePairs[0].distance).toBe(40);
+      expect(southMagnet.distancePairs[0]!.distance).toBe(40);
       expect(southMagnet.axis).toBe('h'); // horizontal axis for vertical magnets
     });
 
@@ -151,9 +151,9 @@ describe('NodeDistanceSnapProvider', () => {
       const northMagnets = magnets.filter(m => m.matchDirection === 'n');
       expect(northMagnets.length).toBe(1);
 
-      const northMagnet = northMagnets[0];
+      const northMagnet = northMagnets[0]!;
       expect(northMagnet.line.from.y).toBe(140); // 105 + 35 = 140
-      expect(northMagnet.distancePairs[0].distance).toBe(35);
+      expect(northMagnet.distancePairs[0]!.distance).toBe(35);
     });
   });
 
@@ -333,7 +333,7 @@ describe('NodeDistanceSnapProvider', () => {
       expect(eastMagnet).toBeDefined();
       expect(eastMagnet.distancePairs).toHaveLength(1);
 
-      const dp = eastMagnet.distancePairs[0];
+      const dp = eastMagnet.distancePairs[0]!;
       expect(dp.distance).toBe(50);
 
       // Points should be at the intersection midpoint of overlapping ranges
@@ -412,8 +412,8 @@ describe('NodeDistanceSnapProvider', () => {
       expect(distanceMagnet.distancePairs).toHaveLength(2);
 
       // New distance pair should have the same distance as original
-      const newPair = distanceMagnet.distancePairs[1];
-      expect(newPair.distance).toBe(distanceMagnet.distancePairs[0].distance);
+      const newPair = distanceMagnet.distancePairs[1]!;
+      expect(newPair.distance).toBe(distanceMagnet.distancePairs[0]!.distance);
     });
 
     test('should return undefined when no valid intersection exists', () => {
@@ -430,7 +430,7 @@ describe('NodeDistanceSnapProvider', () => {
       const magnets = provider.getMagnets(testBox);
 
       if (magnets.length > 0) {
-        const distanceMagnet = magnets[0];
+        const distanceMagnet = magnets[0]!;
         const sourceMagnet = {
           line: Line.vertical(7.5, Range.of(50, 70)),
           axis: Axis.v,
@@ -486,8 +486,8 @@ describe('NodeDistanceSnapProvider', () => {
       // All distance pairs should have their points aligned to the intersection midpoint
       const intersection = Range.intersection(
         Range.intersection(
-          distanceMagnet.distancePairs[0].rangeA,
-          distanceMagnet.distancePairs[0].rangeB
+          distanceMagnet.distancePairs[0]!.rangeA,
+          distanceMagnet.distancePairs[0]!.rangeB
         )!,
         Range.of(30, 50) // testBox horizontal range
       );
@@ -590,7 +590,7 @@ describe('NodeDistanceSnapProvider', () => {
 
       const eastMagnet = magnets.find(m => m.matchDirection === 'e');
       expect(eastMagnet).toBeDefined();
-      expect(eastMagnet!.distancePairs[0].distance).toBe(30); // 50 - 20 = 30
+      expect(eastMagnet!.distancePairs[0]!.distance).toBe(30); // 50 - 20 = 30
     });
   });
 });

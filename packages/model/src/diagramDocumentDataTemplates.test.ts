@@ -75,7 +75,7 @@ describe.each(Backends.all())('DiagramDocumentDataTemplates [%s]', (_name, backe
       instance2?.on('remove', removeListener2);
 
       // Act
-      const templateToRemove = templates[0];
+      const templateToRemove = templates[0]!;
       instance1.remove(templateToRemove);
 
       // Verify
@@ -128,7 +128,7 @@ describe.each(Backends.all())('DiagramDocumentDataTemplates [%s]', (_name, backe
       instance2?.on('update', updateListener2);
 
       // Act
-      const updatedTemplate = { ...templates[0], name: 'Updated Template 1' };
+      const updatedTemplate = { ...templates[0]!, name: 'Updated Template 1' };
       instance1.update(updatedTemplate);
 
       // Verify

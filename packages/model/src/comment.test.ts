@@ -14,7 +14,7 @@ describe.each(Backends.all())('Comment [%s]', (_name, backend) => {
   describe('Comment', () => {
     it('should resolve comment', () => {
       const { doc1 } = standardTestModel(backend);
-      const comment = new Comment(doc1.diagrams[0], 'diagram', '1', 'Test', 'Author', new Date());
+      const comment = new Comment(doc1.diagrams[0]!, 'diagram', '1', 'Test', 'Author', new Date());
 
       expect(comment.state).toBe('unresolved');
       comment.resolve();
@@ -23,7 +23,7 @@ describe.each(Backends.all())('Comment [%s]', (_name, backend) => {
 
     it('should unresolve comment', () => {
       const { doc1 } = standardTestModel(backend);
-      const comment = new Comment(doc1.diagrams[0], 'diagram', '1', 'Test', 'Author', new Date());
+      const comment = new Comment(doc1.diagrams[0]!, 'diagram', '1', 'Test', 'Author', new Date());
       comment.resolve();
 
       expect(comment.state).toBe('resolved');
@@ -33,9 +33,9 @@ describe.each(Backends.all())('Comment [%s]', (_name, backend) => {
 
     it('should identify if comment is a reply', () => {
       const { doc1 } = standardTestModel(backend);
-      const comment = new Comment(doc1.diagrams[0], 'diagram', '1', 'Root', 'Author', new Date());
+      const comment = new Comment(doc1.diagrams[0]!, 'diagram', '1', 'Root', 'Author', new Date());
       const replyComment = new Comment(
-        doc1.diagrams[0],
+        doc1.diagrams[0]!,
         'diagram',
         '2',
         'Reply',
@@ -110,10 +110,10 @@ describe.each(Backends.all())('Comment [%s]', (_name, backend) => {
     beforeEach(() => {
       const { doc1, doc2 } = standardTestModel(backend);
       doc = doc1;
-      diagram = doc.diagrams[0];
+      diagram = doc.diagrams[0]!;
 
       commentManager = diagram.commentManager;
-      commentManager2 = doc2 ? doc2.diagrams[0].commentManager : undefined;
+      commentManager2 = doc2 ? doc2.diagrams[0]!.commentManager : undefined;
     });
 
     it('should add and retrieve comment', () => {
@@ -187,7 +187,7 @@ describe.each(Backends.all())('Comment [%s]', (_name, backend) => {
       const diagramComments = commentManager.getDiagramComments();
 
       expect(diagramComments).toHaveLength(1);
-      expect(diagramComments[0].id).toBe('1');
+      expect(diagramComments[0]!.id).toBe('1');
     });
 
     it('should update existing comment', () => {
@@ -380,9 +380,9 @@ describe.each(Backends.all())('Comment [%s]', (_name, backend) => {
 
       const thread = commentManager.getCommentThread(nestedReply);
       expect(thread).toHaveLength(3);
-      expect(thread[0].id).toBe('root');
-      expect(thread[1].id).toBe('reply-1');
-      expect(thread[2].id).toBe('nested');
+      expect(thread[0]!.id).toBe('root');
+      expect(thread[1]!.id).toBe('reply-1');
+      expect(thread[2]!.id).toBe('nested');
     });
 
     it('should emit commentAdded event when replying to comment', () => {

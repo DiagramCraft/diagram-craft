@@ -120,14 +120,14 @@ describe.each(Backends.all())('AttachmentManager [%s]', (_name, backend) => {
       // Verify
       const attachments = manager1.attachments;
       expect(attachments.length).toBe(2);
-      expect(await attachments[0][1].content.text()).toBe('attachment 1');
-      expect(await attachments[1][1].content.text()).toBe('attachment 2');
+      expect(await attachments[0]![1].content.text()).toBe('attachment 1');
+      expect(await attachments[1]![1].content.text()).toBe('attachment 2');
 
       if (manager2) {
         const attachments2 = manager2.attachments;
         expect(attachments2.length).toBe(2);
-        expect(await attachments2[0][1].content.text()).toBe('attachment 1');
-        expect(await attachments2[1][1].content.text()).toBe('attachment 2');
+        expect(await attachments2[0]![1].content.text()).toBe('attachment 1');
+        expect(await attachments2[1]![1].content.text()).toBe('attachment 2');
       }
     });
   });

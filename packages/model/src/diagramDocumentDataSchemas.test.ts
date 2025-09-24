@@ -143,7 +143,7 @@ describe.each(Backends.all())('DiagramDocumentDataSchemas [%s]', (_name, backend
       expect(existingSchema.fields).toEqual(updatedSchema.fields);
       expect(updateListener1).toHaveBeenCalledWith({ schema: updatedSchema });
       if (instance2) {
-        expect(instance2.all[0].name).toBe(updatedSchema.name);
+        expect(instance2.all[0]!.name).toBe(updatedSchema.name);
         expect(updateListener2).toHaveBeenCalledTimes(1);
       }
     });

@@ -152,7 +152,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
 
       expect(node.getText()).toBe('LabelNodeName');
       if (model.doc2) {
-        const n = model.doc2.diagrams[0].lookup(node.id) as DiagramNode;
+        const n = model.doc2.diagrams[0]!.lookup(node.id) as DiagramNode;
         expect(n.getText()).toBe('LabelNodeName');
       }
 
@@ -160,7 +160,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
 
       expect(node.getText()).toBe('LabelNodeName');
       if (model.doc2) {
-        const n = model.doc2.diagrams[0].lookup(node.id) as DiagramNode;
+        const n = model.doc2.diagrams[0]!.lookup(node.id) as DiagramNode;
         expect(n.getText()).toBe('LabelNodeName');
       }
     });
@@ -288,7 +288,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       node1.addChild(child, model.uow);
 
       expect(node1.children[node1.children.length - 1]).toBe(child);
-      if (model.doc2) expect(node2!.children[node2!.children.length - 1].id).toBe(child.id);
+      if (model.doc2) expect(node2!.children[node2!.children.length - 1]!.id).toBe(child.id);
     });
 
     it('should update both parent and child in UnitOfWork', () => {
@@ -327,8 +327,8 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       node1.addChild(child, model.uow);
 
       const elementRemove = [vi.fn(), vi.fn()];
-      model.diagram1.on('elementRemove', elementRemove[0]);
-      if (model.diagram2) model.diagram2.on('elementRemove', elementRemove[1]);
+      model.diagram1.on('elementRemove', elementRemove[0]!);
+      if (model.diagram2) model.diagram2.on('elementRemove', elementRemove[1]!);
 
       // **** Act
       UnitOfWork.execute(model.diagram1, uow => node1.removeChild(child, uow));

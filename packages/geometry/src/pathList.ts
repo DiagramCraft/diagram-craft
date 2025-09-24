@@ -24,7 +24,10 @@ export class PathList {
   constructor(private paths: Path[]) {}
 
   singular() {
-    assert.true(this.paths.length === 1, `Expected a single path, ${this.paths.length} found`);
+    assert.arrayWithExactlyOneElement(
+      this.paths,
+      `Expected a single path, ${this.paths.length} found`
+    );
     return this.paths[0];
   }
 

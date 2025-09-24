@@ -16,13 +16,13 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const doc2 = root2 ? TestModel.newDocument(root2) : undefined;
 
       const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
-      const layer1_2 = doc2?.diagrams[0].layers.all[0] as RegularLayer;
+      const layer1_2 = doc2?.diagrams[0]!.layers.all[0] as RegularLayer;
 
       const element = new DiagramNode('id1', layer1);
       layer1.addElement(element, UnitOfWork.immediate(d1));
 
       expect(element.id).toBe('id1');
-      if (doc2) expect(layer1_2!.elements[0].id).toBe('id1');
+      if (doc2) expect(layer1_2!.elements[0]!.id).toBe('id1');
     });
   });
 
@@ -33,13 +33,13 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const doc2 = root2 ? TestModel.newDocument(root2) : undefined;
 
       const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
-      const layer1_2 = doc2?.diagrams[0].layers.all[0] as RegularLayer;
+      const layer1_2 = doc2?.diagrams[0]!.layers.all[0] as RegularLayer;
 
       const element = new DiagramNode('id1', layer1);
       layer1.addElement(element, UnitOfWork.immediate(d1));
 
       expect(element.type).toBe('node');
-      if (doc2) expect(layer1_2!.elements[0].type).toBe('node');
+      if (doc2) expect(layer1_2!.elements[0]!.type).toBe('node');
     });
   });
 
@@ -97,7 +97,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const doc2 = root2 ? TestModel.newDocument(root2) : undefined;
 
       const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
-      const layer1_2 = doc2?.diagrams[0].layers.all[0] as RegularLayer;
+      const layer1_2 = doc2?.diagrams[0]!.layers.all[0] as RegularLayer;
 
       const element = new DiagramNode('id1', layer1);
       layer1.addElement(element, UnitOfWork.immediate(d1));
@@ -105,7 +105,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       element.updateMetadata(m => (m.style = 'lorem'), UnitOfWork.immediate(d1));
 
       expect(element.metadata.style).toBe('lorem');
-      if (doc2) expect(layer1_2!.elements[0].metadata.style).toStrictEqual('lorem');
+      if (doc2) expect(layer1_2!.elements[0]!.metadata.style).toStrictEqual('lorem');
     });
 
     it('should emit elementChanged event', async () => {
@@ -122,7 +122,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       layer1.addElement(element, UnitOfWork.immediate(d1));
 
       d1.on('elementChange', changeEvent1);
-      doc2?.diagrams[0].on('elementChange', changeEvent2);
+      doc2?.diagrams[0]!.on('elementChange', changeEvent2);
 
       UnitOfWork.execute(d1, uow => element.updateMetadata(m => (m.style = 'lorem'), uow));
 
@@ -138,13 +138,13 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const doc2 = root2 ? TestModel.newDocument(root2) : undefined;
 
       const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
-      const layer1_2 = doc2?.diagrams[0].layers.all[0] as RegularLayer;
+      const layer1_2 = doc2?.diagrams[0]!.layers.all[0] as RegularLayer;
 
       const element = new DiagramNode('id1', layer1);
       layer1.addElement(element, UnitOfWork.immediate(d1));
 
       expect(element.tags).toEqual([]);
-      if (doc2) expect(layer1_2!.elements[0].tags).toEqual([]);
+      if (doc2) expect(layer1_2!.elements[0]!.tags).toEqual([]);
     });
 
     it('should get the current tags', () => {
@@ -153,7 +153,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const doc2 = root2 ? TestModel.newDocument(root2) : undefined;
 
       const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
-      const layer1_2 = doc2?.diagrams[0].layers.all[0] as RegularLayer;
+      const layer1_2 = doc2?.diagrams[0]!.layers.all[0] as RegularLayer;
 
       const element = new DiagramNode('id1', layer1);
       layer1.addElement(element, UnitOfWork.immediate(d1));
@@ -161,7 +161,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       element.setTags(['important', 'draft'], UnitOfWork.immediate(d1));
 
       expect(element.tags).toEqual(['important', 'draft']);
-      if (doc2) expect(layer1_2!.elements[0].tags).toEqual(['important', 'draft']);
+      if (doc2) expect(layer1_2!.elements[0]!.tags).toEqual(['important', 'draft']);
     });
   });
 
@@ -172,7 +172,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const doc2 = root2 ? TestModel.newDocument(root2) : undefined;
 
       const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
-      const layer1_2 = doc2?.diagrams[0].layers.all[0] as RegularLayer;
+      const layer1_2 = doc2?.diagrams[0]!.layers.all[0] as RegularLayer;
 
       const element = new DiagramNode('id1', layer1);
       layer1.addElement(element, UnitOfWork.immediate(d1));
@@ -180,7 +180,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       element.setTags(['tag1', 'tag2'], UnitOfWork.immediate(d1));
 
       expect(element.tags).toEqual(['tag1', 'tag2']);
-      if (doc2) expect(layer1_2!.elements[0].tags).toEqual(['tag1', 'tag2']);
+      if (doc2) expect(layer1_2!.elements[0]!.tags).toEqual(['tag1', 'tag2']);
     });
 
     it('should replace existing tags', () => {
@@ -189,7 +189,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const doc2 = root2 ? TestModel.newDocument(root2) : undefined;
 
       const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
-      const layer1_2 = doc2?.diagrams[0].layers.all[0] as RegularLayer;
+      const layer1_2 = doc2?.diagrams[0]!.layers.all[0] as RegularLayer;
 
       const element = new DiagramNode('id1', layer1);
       layer1.addElement(element, UnitOfWork.immediate(d1));
@@ -202,9 +202,9 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       expect(element.tags).not.toContain('old2');
 
       if (doc2) {
-        expect(layer1_2!.elements[0].tags).toEqual(['new1', 'new2']);
-        expect(layer1_2!.elements[0].tags).not.toContain('old1');
-        expect(layer1_2!.elements[0].tags).not.toContain('old2');
+        expect(layer1_2!.elements[0]!.tags).toEqual(['new1', 'new2']);
+        expect(layer1_2!.elements[0]!.tags).not.toContain('old1');
+        expect(layer1_2!.elements[0]!.tags).not.toContain('old2');
       }
     });
 
@@ -265,10 +265,10 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       expect(d1.document.tags.tags).toContain('element-tag2');
 
       if (doc2) {
-        expect(doc2.diagrams[0].document.tags.has('element-tag1')).toBe(true);
-        expect(doc2.diagrams[0].document.tags.has('element-tag2')).toBe(true);
-        expect(doc2.diagrams[0].document.tags.tags).toContain('element-tag1');
-        expect(doc2.diagrams[0].document.tags.tags).toContain('element-tag2');
+        expect(doc2.diagrams[0]!.document.tags.has('element-tag1')).toBe(true);
+        expect(doc2.diagrams[0]!.document.tags.has('element-tag2')).toBe(true);
+        expect(doc2.diagrams[0]!.document.tags.tags).toContain('element-tag1');
+        expect(doc2.diagrams[0]!.document.tags.tags).toContain('element-tag2');
       }
     });
 

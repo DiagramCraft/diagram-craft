@@ -37,7 +37,7 @@ describe.each(Backends.all())('DiagramDocument [%s]', (_name, backend) => {
 
       // Verify
       expect(parentDiagram.diagrams).toContain(childDiagram);
-      if (doc2) expect(doc2.diagrams[0].diagrams).toHaveLength(1);
+      if (doc2) expect(doc2.diagrams[0]!.diagrams).toHaveLength(1);
     });
   });
 
@@ -77,7 +77,7 @@ describe.each(Backends.all())('DiagramDocument [%s]', (_name, backend) => {
       doc1.removeDiagram(childDiagram);
 
       expect(parentDiagram.diagrams).not.toContain(childDiagram);
-      if (doc2) expect(doc2.diagrams[0].diagrams).toHaveLength(0);
+      if (doc2) expect(doc2.diagrams[0]!.diagrams).toHaveLength(0);
     });
   });
 

@@ -22,14 +22,14 @@ describe.each(Backends.all())('RuleLayer [%s]', (_name, backend) => {
       const rules = ruleLayer.rules;
 
       expect(rules).toHaveLength(2);
-      expect(rules[0].id).toEqual('rule1');
-      expect(rules[1].id).toEqual('rule2');
+      expect(rules[0]!.id).toEqual('rule1');
+      expect(rules[1]!.id).toEqual('rule2');
 
       if (diagram2) {
         const rules2 = (diagram2.layers.byId('layer1') as RuleLayer).rules;
         expect(rules2.length).toEqual(2);
-        expect(rules2[0].id).toEqual('rule1');
-        expect(rules2[1].id).toEqual('rule2');
+        expect(rules2[0]!.id).toEqual('rule1');
+        expect(rules2[1]!.id).toEqual('rule2');
       }
     });
   });
@@ -52,11 +52,11 @@ describe.each(Backends.all())('RuleLayer [%s]', (_name, backend) => {
 
       const rules = ruleLayer.rules;
       expect(rules).toHaveLength(3);
-      expect(rules[2].id).toEqual('rule3');
+      expect(rules[2]!.id).toEqual('rule3');
 
       if (diagram2) {
         expect((diagram2.layers.byId('layer1') as RuleLayer).rules.length).toEqual(3);
-        expect((diagram2.layers.byId('layer1') as RuleLayer).rules[2].id).toEqual('rule3');
+        expect((diagram2.layers.byId('layer1') as RuleLayer).rules[2]!.id).toEqual('rule3');
       }
     });
   });
@@ -73,16 +73,16 @@ describe.each(Backends.all())('RuleLayer [%s]', (_name, backend) => {
       diagram1.layers.add(ruleLayer, UnitOfWork.immediate(diagram1));
 
       // Act
-      ruleLayer.removeRule(ruleLayer.rules[1], UnitOfWork.immediate(diagram1));
+      ruleLayer.removeRule(ruleLayer.rules[1]!, UnitOfWork.immediate(diagram1));
 
       // Verify
       const rules = ruleLayer.rules;
       expect(rules).toHaveLength(1);
-      expect(rules[0].id).toEqual('rule1');
+      expect(rules[0]!.id).toEqual('rule1');
 
       if (diagram2) {
         expect((diagram2.layers.byId('layer1') as RuleLayer).rules.length).toEqual(1);
-        expect((diagram2.layers.byId('layer1') as RuleLayer).rules[0].id).toEqual('rule1');
+        expect((diagram2.layers.byId('layer1') as RuleLayer).rules[0]!.id).toEqual('rule1');
       }
     });
   });
@@ -102,7 +102,7 @@ describe.each(Backends.all())('RuleLayer [%s]', (_name, backend) => {
 
       // Act
       ruleLayer.replaceRule(
-        ruleLayer.rules[0],
+        ruleLayer.rules[0]!,
         { type: 'node', ...newRule },
         UnitOfWork.immediate(diagram1)
       );
@@ -111,14 +111,14 @@ describe.each(Backends.all())('RuleLayer [%s]', (_name, backend) => {
       const rules = ruleLayer.rules;
 
       expect(rules).toHaveLength(2);
-      expect(rules[0].id).toEqual('rule3');
-      expect(rules[1].id).toEqual('rule2');
+      expect(rules[0]!.id).toEqual('rule3');
+      expect(rules[1]!.id).toEqual('rule2');
 
       if (diagram2) {
         const rules = (diagram2.layers.byId('layer1') as RuleLayer).rules;
         expect(rules.length).toEqual(2);
-        expect(rules[0].id).toEqual('rule3');
-        expect(rules[1].id).toEqual('rule2');
+        expect(rules[0]!.id).toEqual('rule3');
+        expect(rules[1]!.id).toEqual('rule2');
       }
     });
   });
@@ -132,7 +132,7 @@ describe.each(Backends.all())('RuleLayer [%s]', (_name, backend) => {
       const ruleLayer = new RuleLayer('layer1', 'Test Layer', diagram, []);
       diagram.layers.add(ruleLayer, UnitOfWork.immediate(diagram));
 
-      const element = layer.elements[0];
+      const element = layer.elements[0]!;
 
       const comment = new Comment(
         diagram,
@@ -168,7 +168,7 @@ describe.each(Backends.all())('RuleLayer [%s]', (_name, backend) => {
       const ruleLayer = new RuleLayer('layer1', 'Test Layer', diagram, []);
       diagram.layers.add(ruleLayer, UnitOfWork.immediate(diagram));
 
-      const element = layer.elements[0];
+      const element = layer.elements[0]!;
 
       const unresolvedComment = new Comment(
         diagram,
@@ -217,7 +217,7 @@ describe.each(Backends.all())('RuleLayer [%s]', (_name, backend) => {
       const ruleLayer = new RuleLayer('layer1', 'Test Layer', diagram, []);
       diagram.layers.add(ruleLayer, UnitOfWork.immediate(diagram));
 
-      const element = layer.elements[0];
+      const element = layer.elements[0]!;
 
       const resolvedComment = new Comment(
         diagram,
@@ -254,7 +254,7 @@ describe.each(Backends.all())('RuleLayer [%s]', (_name, backend) => {
       const ruleLayer = new RuleLayer('layer1', 'Test Layer', diagram, []);
       diagram.layers.add(ruleLayer, UnitOfWork.immediate(diagram));
 
-      const element = layer.elements[0];
+      const element = layer.elements[0]!;
 
       const rule = {
         id: 'comment-rule',
@@ -278,7 +278,7 @@ describe.each(Backends.all())('RuleLayer [%s]', (_name, backend) => {
       const ruleLayer = new RuleLayer('layer1', 'Test Layer', diagram, []);
       diagram.layers.add(ruleLayer, UnitOfWork.immediate(diagram));
 
-      const element = layer.elements[0];
+      const element = layer.elements[0]!;
 
       const resolvedComment = new Comment(
         diagram,
