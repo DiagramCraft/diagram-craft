@@ -42,7 +42,7 @@ export class SelectionComponent extends Component<CanvasState> {
 
     const labelNode =
       selection.getSelectionType() === 'single-label-node'
-        ? selection.nodes[0].labelNode()!
+        ? selection.nodes[0]!.labelNode()!
         : undefined;
     const shouldHaveRotation = !(labelNode && labelNode.type !== 'independent');
 

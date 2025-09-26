@@ -74,16 +74,16 @@ export const DJQLSearchTab = () => {
       break;
     }
 
-    qs = m[3];
+    qs = m[3]!;
 
-    queries.push({ q: m[1], output: m[2] });
+    queries.push({ q: m[1]!, output: m[2]! });
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let res: any[] | undefined = undefined;
   let error = undefined;
   try {
-    const q = queries[queryIdx].q;
+    const q = queries[queryIdx]!.q;
     const input = queryIdx === 0 ? getSource(djqlScope!, diagram) : queryInput;
 
     res = parseAndQuery(q, [input]);

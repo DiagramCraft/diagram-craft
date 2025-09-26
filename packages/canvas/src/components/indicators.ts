@@ -175,7 +175,10 @@ const NoteIndicator = (bounds: Box, indicator: DeepRequired<Indicator>, fillColo
   });
 };
 
-export const INDICATORS: Record<string, IndicatorRenderer> = {
+export const INDICATORS: Record<
+  'none' | 'disc' | 'triangle' | 'star' | 'actor' | 'lock' | 'comment' | 'note',
+  IndicatorRenderer
+> = {
   none: DiscIndicator,
   disc: DiscIndicator,
   triangle: TriangleIndicator,

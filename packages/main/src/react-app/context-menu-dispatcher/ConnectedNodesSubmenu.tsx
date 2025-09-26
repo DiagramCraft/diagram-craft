@@ -11,6 +11,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { decodeDataReferences } from '@diagram-craft/model/diagramDocumentDataSchemas';
+import { assert } from '@diagram-craft/utils/assert';
 
 type ConnectionItem = {
   id: string;
@@ -24,6 +25,7 @@ type ConnectionItem = {
 // Get connected nodes and data entries for single node selection
 const getConnectedItems = (diagram: Diagram): ConnectionItem[] => {
   if (diagram.selectionState.getSelectionType() !== 'single-node') return [];
+  assert.arrayNotEmpty(diagram.selectionState.nodes);
 
   const selectedNode = diagram.selectionState.nodes[0];
   const connectedItems = new Map<string, ConnectionItem>();
@@ -87,6 +89,7 @@ const getConnectedItems = (diagram: Diagram): ConnectionItem[] => {
             if (!dataItem) continue;
 
             // Get display name (use 'name' field if exists, otherwise first field)
+            assert.arrayNotEmpty(referencedSchema.fields);
             const nameField =
               referencedSchema.fields.find(f => f.name.toLowerCase() === 'name') ??
               referencedSchema.fields[0];
@@ -157,6 +160,7 @@ const createNodeForData = (item: Data, schemaName: string, diagram: Diagram) => 
   if (!schema) return;
 
   // Get current selection to position new node
+  assert.arrayNotEmpty(diagram.selectionState.nodes);
   const selectedNode = diagram.selectionState.nodes[0];
   const offsetX = 20; // Position closer to the right of selected node
 

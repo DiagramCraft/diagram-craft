@@ -180,6 +180,7 @@ export class CreateLinkedNodeAction extends AbstractSelectionAction {
   execute(): void {
     const $sel = this.context.model.activeDiagram.selectionState;
     const node = $sel.nodes[0];
+    assert.present(node);
 
     let best: [number, Anchor | undefined] = [Number.MAX_SAFE_INTEGER, undefined];
     for (const anchor of node.anchors) {

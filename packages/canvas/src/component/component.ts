@@ -64,14 +64,14 @@ class EffectManager {
     const id = (this.idx++).toString();
     if (
       id in this.dependencies &&
-      (this.dependencies[id].deps.length === 0 ||
-        deps.every((d, i) => d === this.dependencies[id].deps[i]))
+      (this.dependencies[id]!.deps.length === 0 ||
+        deps.every((d, i) => d === this.dependencies[id]!.deps[i]))
     ) {
       return;
     }
 
     if (id in this.dependencies) {
-      this.dependencies[id].cleanup();
+      this.dependencies[id]!.cleanup();
     }
 
     const res = dependency();
@@ -83,7 +83,7 @@ class EffectManager {
 
   cleanup() {
     for (const id in this.dependencies) {
-      this.dependencies[id].cleanup();
+      this.dependencies[id]!.cleanup();
     }
   }
 

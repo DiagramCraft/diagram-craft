@@ -33,7 +33,7 @@ const ReferenceFieldEditor = ({
   }
 
   const referencedData = db.getData(referencedSchema);
-  const displayField = referencedSchema.fields[0]?.id; // Use first field for display
+  const displayField = referencedSchema.fields[0]!.id; // Use first field for display
 
   // Convert data to MultiSelectItem format
   const availableItems: MultiSelectItem[] =

@@ -47,11 +47,17 @@ const BezierTest = () => {
           <line
             x1={p.x}
             y1={p.y}
-            x2={p.x + tangents[i].x}
-            y2={p.y + tangents[i].y}
+            x2={p.x + tangents[i]!.x}
+            y2={p.y + tangents[i]!.y}
             stroke={'green'}
           />
-          <line x1={p.x} y1={p.y} x2={p.x + normals[i].x} y2={p.y + normals[i].y} stroke={'blue'} />
+          <line
+            x1={p.x}
+            y1={p.y}
+            x2={p.x + normals[i]!.x}
+            y2={p.y + normals[i]!.y}
+            stroke={'blue'}
+          />
         </React.Fragment>
       ))}
       <path

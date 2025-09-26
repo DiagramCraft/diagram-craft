@@ -276,8 +276,8 @@ const applyUpdates = (
       break;
     }
 
-    const newChild = newChildren[i];
-    const oldChild = oldChildren[j];
+    const newChild = newChildren[i]!;
+    const oldChild = oldChildren[j]!;
 
     if (newChild === oldChild) {
       // Do nothing
@@ -299,14 +299,14 @@ const applyUpdates = (
   }
 
   for (; j < oldChildren.length; j++) {
-    const oldChild = oldChildren[j];
+    const oldChild = oldChildren[j]!;
     onRemove(oldChild);
     oldChild.el!.remove();
     childrenChanged = true;
   }
 
   for (; i < newChildren.length; i++) {
-    const newChild = newChildren[i];
+    const newChild = newChildren[i]!;
     createElement(newChild, newElement, insertQueue);
     if (newChild.type !== 'r') newElement.el!.appendChild(newChild.el!);
     childrenChanged = true;

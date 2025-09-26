@@ -169,7 +169,7 @@ export const makePropertyArrayHook = <
       info:
         multiple || getArr(obj)[0] === undefined
           ? undefined
-          : getPropertyInfo(getArr(obj)[0], path, defaultValueOverride),
+          : getPropertyInfo(getArr(obj)[0]!, path, defaultValueOverride),
       values: values
     };
   }) as PropertyArrayHook<TBase, TObj>;

@@ -112,7 +112,7 @@ export const MultiWindowAutosave = {
       if (potentiallyFreeEntries.length === 0) return undefined;
 
       // Use the newest potentially free autosave
-      const selectedEntry = potentiallyFreeEntries[0]; // Already sorted newest first
+      const selectedEntry = potentiallyFreeEntries[0]!; // Already sorted newest first
 
       // Only clean up autosaves that are old (beyond retention time) AND inactive
       const now = Date.now();

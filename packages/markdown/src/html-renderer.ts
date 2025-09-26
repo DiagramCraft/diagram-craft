@@ -24,7 +24,7 @@ export class HTMLRenderer {
       .filter(r => r && r.trim() !== '') as string[];
 
     for (let i = 0; i < renderedChildren.length; i++) {
-      const rendered = renderedChildren[i];
+      const rendered = renderedChildren[i]!;
 
       if (i === 0 && !rendered.match(/^<(?!em|a|img|strong|code)/)) {
         isText = true;

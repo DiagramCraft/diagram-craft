@@ -14,7 +14,7 @@ export const buildBezierEdgePath = (edge: DiagramEdge) => {
 
     // Ensure all control points exists, as they may not in case the edge type has been changed
     for (let i = 0; i < edge.waypoints.length; i++) {
-      const wp = edge.waypoints[i];
+      const wp = edge.waypoints[i]!;
       if (wp.controlPoints) {
         controlPoints.push(wp.controlPoints);
       } else {
@@ -22,15 +22,15 @@ export const buildBezierEdgePath = (edge: DiagramEdge) => {
       }
     }
 
-    const fp = edge.waypoints[0];
-    path.quadTo(fp.point, Point.add(controlPoints[0].cp1, fp.point));
+    const fp = edge.waypoints[0]!;
+    path.quadTo(fp.point, Point.add(controlPoints[0]!.cp1, fp.point));
     for (let i = 1; i < edge.waypoints.length; i++) {
-      const wp = edge.waypoints[i];
-      const pwp = edge.waypoints[i - 1];
+      const wp = edge.waypoints[i]!;
+      const pwp = edge.waypoints[i - 1]!;
       path.cubicTo(
         wp.point,
-        Point.add(controlPoints[i - 1].cp2, pwp.point),
-        Point.add(controlPoints[i].cp1, wp.point)
+        Point.add(controlPoints[i - 1]!.cp2, pwp.point),
+        Point.add(controlPoints[i]!.cp1, wp.point)
       );
     }
 

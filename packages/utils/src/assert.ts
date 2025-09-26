@@ -24,8 +24,9 @@ export const is = {
     arg === null || arg === undefined,
   arrayWithExactlyOneElement: (arg: unknown) =>
     is.present(arg) && Array.isArray(arg) && arg.length === 1,
-  arrayNotEmpty: <T = unknown>(arg: T[] | undefined | null): arg is [T, ...T[]] =>
-    is.present(arg) && Array.isArray(arg) && arg.length >= 1,
+  arrayNotEmpty: <T = unknown>(
+    arg: T[] | ReadonlyArray<T> | undefined | null
+  ): arg is [T, ...T[]] => is.present(arg) && Array.isArray(arg) && arg.length >= 1,
   true: (arg: unknown) => arg === true,
   false: (arg: unknown) => arg === false
 };
@@ -38,7 +39,7 @@ type AssertType = {
     msg?: string
   ) => asserts arg is [T];
   arrayNotEmpty: <T = unknown>(
-    arg: T[] | undefined | null,
+    arg: T[] | ReadonlyArray<T> | undefined | null,
     msg?: string
   ) => asserts arg is [T, ...T[]];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -65,7 +66,10 @@ const makeAssertions = (error: (m: string) => never): AssertType & AssertTypeExt
   ): asserts arg is [T] => {
     if (!is.arrayWithExactlyOneElement(arg)) error(msg ?? 'array has not exactly one element');
   },
-  arrayNotEmpty: <T = unknown>(arg: T[] | undefined | null, msg?: string): asserts arg is [T] => {
+  arrayNotEmpty: <T = unknown>(
+    arg: T[] | ReadonlyArray<T> | undefined | null,
+    msg?: string
+  ): asserts arg is [T, ...T[]] => {
     if (!is.arrayNotEmpty(arg)) error(msg ?? 'array has at least one element');
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

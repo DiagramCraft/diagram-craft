@@ -48,7 +48,7 @@ export class WaypointDeleteAction extends AbstractAction<WaypointDeleteActionArg
     )!.idx;
 
     const uow = new UnitOfWork(this.context.model.activeDiagram, true);
-    edge.removeWaypoint(edge.waypoints[closestWaypointIndex], uow);
+    edge.removeWaypoint(edge.waypoints[closestWaypointIndex]!, uow);
 
     commitWithUndo(uow, 'Delete waypoint');
   }

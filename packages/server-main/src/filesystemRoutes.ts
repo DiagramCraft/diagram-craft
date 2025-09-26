@@ -146,12 +146,12 @@ export function createFilesystemRoutes(rootPath: string) {
   );
   router.get(
     API_FS_WILDCARD,
-    defineEventHandler(event => get(event.context.params!._, event))
+    defineEventHandler(event => get(event.context.params!._!, event))
   );
 
   router.put(
     API_FS_WILDCARD,
-    defineEventHandler(event => put(event.context.params!._, event))
+    defineEventHandler(event => put(event.context.params!._!, event))
   );
 
   return router;

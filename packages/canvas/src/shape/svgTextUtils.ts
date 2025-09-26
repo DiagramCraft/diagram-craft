@@ -142,14 +142,14 @@ export class SvgTextHelper {
     if (blockElement.children.every(be => be.space)) return;
 
     // Trim leading space
-    while (blockElement.children.length > 0 && blockElement.children[0].space) {
+    while (blockElement.children.length > 0 && blockElement.children[0]!.space) {
       blockElement.children.shift();
     }
 
     // Trim trailing space
     while (
       blockElement.children.length > 0 &&
-      blockElement.children[blockElement.children.length - 1].space
+      blockElement.children[blockElement.children.length - 1]!.space
     ) {
       blockElement.children.pop();
     }
@@ -169,13 +169,13 @@ export class SvgTextHelper {
 
       const textNodes = getTextNodesInEl(line);
       for (let i = 0; i < textNodes.length; i++) {
-        const textNode = textNodes[i];
+        const textNode = textNodes[i]!;
 
         const style = getComputedStyle(textNode.parentElement!);
 
         const words = (textNode.nodeValue ?? '').split(/(\s)/);
         for (let j = 0; j < words.length; j++) {
-          const word = words[j];
+          const word = words[j]!;
           if (word === '') continue;
 
           blockElement.children.push({
@@ -233,17 +233,17 @@ export class SvgTextHelper {
     for (const blockElement of blockElements) {
       let target: BlockElement = { ...blockElement, children: [] };
       for (let i = 0; i < blockElement.children.length; i++) {
-        const inlineElement = blockElement.children[i];
+        const inlineElement = blockElement.children[i]!;
 
         const elementSet: InlineElement[] = [inlineElement];
         let elementWidth = inlineElement.with;
         while (
           i < blockElement.children.length - 1 &&
-          blockElement.children[i + 1].keepWithPrevious
+          blockElement.children[i + 1]!.keepWithPrevious
         ) {
           i++;
-          elementWidth += blockElement.children[i].with;
-          elementSet.push(blockElement.children[i]);
+          elementWidth += blockElement.children[i]!.with;
+          elementSet.push(blockElement.children[i]!);
         }
 
         // Make new line if needed
@@ -275,7 +275,7 @@ export class SvgTextHelper {
     let lastLineHeight = 0;
     const domElements: SVGTSpanElement[] = [];
     for (let i = 0; i < reflowedBlockElements.length; i++) {
-      const blockElement = reflowedBlockElements[i];
+      const blockElement = reflowedBlockElements[i]!;
 
       const line = createTSpan();
       line.setAttribute('x', this.x.toString());
@@ -332,7 +332,7 @@ export class SvgTextHelper {
     for (const child of children) {
       if (child instanceof SVGTSpanElement) {
         lines.push(child);
-        child.x.baseVal[0].value = this.x;
+        child.x.baseVal[0]!.value = this.x;
       }
     }
 
@@ -354,14 +354,14 @@ export class SvgTextHelper {
       return acc + line.getBBox().height;
     }, 0);
     if (vAlign === 'middle') {
-      lines[0].setAttribute(
+      lines[0]!.setAttribute(
         'y',
         (this.y + (this.height - totalHeight) / 2 + this.ascent).toString()
       );
     } else if (vAlign === 'bottom') {
-      lines[0].setAttribute('y', (this.y + (this.height - totalHeight) + this.ascent).toString());
+      lines[0]!.setAttribute('y', (this.y + (this.height - totalHeight) + this.ascent).toString());
     } else {
-      lines[0].setAttribute('y', (this.y + this.ascent).toString());
+      lines[0]!.setAttribute('y', (this.y + this.ascent).toString());
     }
   }
 
@@ -389,7 +389,7 @@ export class HTMLToSvgTransformer implements HTMLParserCallback {
 
     if (this.tagStack.length > 0) {
       for (let i = 0; i < this.tagStack.length; i++) {
-        const e = this.tagStack[i];
+        const e = this.tagStack[i]!;
         this.currentLine += `<tspan data-tag="${e.tag}" style="${e.style}">`;
       }
     }

@@ -25,7 +25,7 @@ import { isDifferent } from '@diagram-craft/utils/math';
 import { Direction } from '@diagram-craft/geometry/direction';
 import { EdgeDefinition } from './elementDefinitionRegistry';
 import { isEmptyString } from '@diagram-craft/utils/strings';
-import { assert } from '@diagram-craft/utils/assert';
+import { assert, is } from '@diagram-craft/utils/assert';
 import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
 import { getAdjustments } from './diagramLayerRuleTypes';
@@ -58,8 +58,8 @@ export type Intersection = {
 const intersectionListIsSame = (a: Intersection[], b: Intersection[]) => {
   if (a.length !== b.length) return false;
   for (let i = 0; i < a.length; i++) {
-    if (!Point.isEqual(a[i].point, b[i].point)) return false;
-    if (a[i].type !== b[i].type) return false;
+    if (!Point.isEqual(a[i]!.point, b[i]!.point)) return false;
+    if (a[i]!.type !== b[i]!.type) return false;
   }
   return true;
 };
@@ -328,7 +328,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
 
     if (this.#props.get().type === 'bezier' && oldType !== 'bezier') {
       for (let i = 0; i < this.waypoints.length; i++) {
-        const wp = this.waypoints[i];
+        const wp = this.waypoints[i]!;
         if (!wp.controlPoints) {
           this.replaceWaypoint(
             i,
@@ -360,8 +360,9 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   }
 
   inferControlPoints(i: number) {
-    const before = i === 0 ? this.start.position : this.waypoints[i - 1].point;
-    const after = i === this.waypoints.length - 1 ? this.end.position : this.waypoints[i + 1].point;
+    const before = i === 0 ? this.start.position : this.waypoints[i - 1]!.point;
+    const after =
+      i === this.waypoints.length - 1 ? this.end.position : this.waypoints[i + 1]!.point;
 
     return {
       cp1: Vector.scale(Vector.from(after, before), 0.2),
@@ -387,7 +388,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
 
   get name() {
     // First we use any label nodes
-    if (this.#labelNodes && this.#labelNodes.size > 0) {
+    if (is.arrayNotEmpty(this.#labelNodes.values)) {
       return this.#labelNodes.values[0].node().name;
     }
 
@@ -695,12 +696,12 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       const newWaypoints: Waypoint[] = [];
 
       for (let i = 0; i < segments.length - 1; i++) {
-        const segment = segments[i];
+        const segment = segments[i]!;
         newWaypoints.push({
           point: segment.end,
           controlPoints: {
             cp1: Point.subtract(segment.p2, segment.end),
-            cp2: Point.subtract(segments[i + 1].p1, segment.end)
+            cp2: Point.subtract(segments[i + 1]!.p1, segment.end)
           }
         });
       }
@@ -819,7 +820,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     // Clone any label nodes
     const newLabelNodes: ResolvedLabelNode[] = [];
     for (let i = 0; i < (edge.labelNodes ?? []).length; i++) {
-      const l = (edge.labelNodes ?? [])[i];
+      const l = (edge.labelNodes ?? [])[i]!;
 
       const newNode = l.node().duplicate(ctx, id ? `${id}-${i}` : undefined);
       newLabelNodes.push({
@@ -892,7 +893,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       // endpoint on the boundary path
       const t = boundingPath.projectPoint(endpoint.position);
 
-      const tangent = paths[t.pathIdx].tangentAt(t.offset);
+      const tangent = paths[t.pathIdx]!.tangentAt(t.offset);
 
       // TODO: We need to check this is going in the right direction (i.e. outwards)
       //       probably need to pick up some code from ShapeNodeDefinition.getAnchors
@@ -924,8 +925,8 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
           point: transformedPoint,
           controlPoints: w.controlPoints
             ? {
-                cp1: relativeControlPoints[0],
-                cp2: relativeControlPoints[1]
+                cp1: relativeControlPoints[0]!,
+                cp2: relativeControlPoints[1]!
               }
             : undefined
         };

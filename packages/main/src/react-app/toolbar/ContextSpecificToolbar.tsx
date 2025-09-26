@@ -29,7 +29,7 @@ export const ContextSpecificToolbar = () => {
   const callback = useCallback(() => {
     setSelectionType(diagram.selectionState.getSelectionType());
     if (diagram.selectionState.isNodesOnly() && diagram.selectionState.nodes.length === 1) {
-      setNodeType(diagram.selectionState.nodes[0].nodeType);
+      setNodeType(diagram.selectionState.nodes[0]!.nodeType);
     } else {
       setNodeType(undefined);
     }

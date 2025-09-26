@@ -120,9 +120,9 @@ export class Stylesheet<T extends StylesheetType, P = TypeMap[T]>
 
 export const getCommonProps = <T extends Record<string, unknown>>(arr: Array<T>): Partial<T> => {
   if (arr.length === 0) return {};
-  let e: T = arr[0];
+  let e: T = arr[0]!;
   for (let i = 1; i < arr.length; i++) {
-    e = common(e, arr[i]) as T;
+    e = common(e, arr[i]!) as T;
   }
   return e as Partial<T>;
 };
@@ -189,7 +189,7 @@ export const isSelectionDirty = ($d: Diagram, isText: boolean) => {
     return false;
   }
 
-  const metadata = $d.selectionState.elements[0].metadata;
+  const metadata = $d.selectionState.elements[0]!.metadata;
 
   const stylesheet = isText
     ? styles.get(metadata.textStyle ?? DefaultStyles.text.default)

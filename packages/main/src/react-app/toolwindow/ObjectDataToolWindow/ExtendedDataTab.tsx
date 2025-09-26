@@ -140,7 +140,7 @@ export const ExtendedDataTab = () => {
       assert.present(db);
 
       // Get the external data item for editing
-      const e = $d.selectionState.elements[0];
+      const e = $d.selectionState.elements[0]!;
       const externalData = findEntryBySchema(e, schema);
       assert.true(externalData?.type === 'external');
 

@@ -36,7 +36,7 @@ export const NamedIndicatorEditor: Editor = props => {
             value={id}
             onChange={v => {
               $p.indicators ??= {};
-              $p.indicators![v ?? ''] = $p.indicators![id];
+              $p.indicators![v ?? ''] = $p.indicators![id]!;
               delete $p.indicators![id];
 
               setId(v ?? '');

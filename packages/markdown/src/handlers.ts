@@ -8,6 +8,7 @@ import {
 } from './parser';
 import type { TokenStream } from './token-stream';
 import { Util } from './utils';
+import { assert } from '@diagram-craft/utils/assert';
 
 /**
  * Handles paragraph parsing. This is the fallback parser that consumes
@@ -75,10 +76,12 @@ export class AtxHeaderHandler implements BlockParser {
     const m = stream.peek().match(/^(#+)\s+((\S|[^#])+?)(?:\s?#+)?$/);
     if (!m) return false;
 
+    assert.true(m.length >= 3, 'Invalid ATX header');
+
     ast.push({
       type: 'heading',
-      level: m[1].length,
-      children: parser.parseInlines(m[2], undefined, ['atx-header'])
+      level: m[1]!.length,
+      children: parser.parseInlines(m[2]!, undefined, ['atx-header'])
     });
     stream.consume();
     return true;
@@ -178,7 +181,7 @@ export class FencedCodeHandler implements BlockParser {
     const m = stream.peek().match(/^(`{3,}|~{3,})(.*)?$/);
     if (!m) return false;
 
-    const fence = m[1];
+    const fence = m[1]!;
     const language = m[2]?.trim() || '';
     stream.consume(); // consume opening fence
 
@@ -221,13 +224,13 @@ export class ListHandler implements BlockParser {
     const m = stream.peek().match(/^( {0,3})([*+-](?!\s?[*+-])|[0-9]+\.) (.*)/);
     if (!m) return false;
 
-    const l = m[1].length;
+    const l = m[1]!.length;
     const rS = new RegExp(`^( {${l}})([*+-]|[0-9]+\\.) (.*)`);
     const rC = new RegExp(`^( {${parseInt(l.toString()) + 1}}|\\t)`);
 
     let s = '';
     let containsEmpty = false;
-    const type = m[2].match(/[*+-]/) ? 'unordered' : 'ordered';
+    const type = m[2]!.match(/[*+-]/) ? 'unordered' : 'ordered';
     const items: Array<ASTNodeOfType<'item'>> = [];
     let lineMatch: RegExpMatchArray | null = m;
 
@@ -255,7 +258,7 @@ export class ListHandler implements BlockParser {
         s += '\n';
         containsEmpty = true;
       } else if (lineMatch) {
-        s += lineMatch[3].replace(this.trimLeft, '');
+        s += lineMatch[3]!.replace(this.trimLeft, '');
       } else {
         s += '\n' + (current.text?.replace(this.trimLeft, '') ?? '');
       }
@@ -277,17 +280,17 @@ export class ListHandler implements BlockParser {
 
     // Ignore followed by empty for last row
     if (items.length > 0) {
-      items[items.length - 1].followedByEmpty = false;
+      items[items.length - 1]!.followedByEmpty = false;
     }
 
     // Item is loose if it contains an empty line or is followed by an empty line
     for (let i = 0; i < items.length; i++) {
-      items[i].loose = !!(items[i].containsEmpty || items[i].followedByEmpty);
+      items[i]!.loose = !!(items[i]!.containsEmpty || items[i]!.followedByEmpty);
     }
 
     // Items on both sides of empty line is considered "loose"
     for (let i = items.length - 1; i > 0; i--) {
-      items[i].loose = items[i].loose || !!items[i - 1].followedByEmpty;
+      items[i]!.loose = items[i]!.loose || !!items[i - 1]!.followedByEmpty;
     }
 
     // If not loose, lift contents of first child, if paragraph, and replace first element
@@ -320,7 +323,7 @@ export class InlineCodeHandler extends InlineParser {
     return this.applyInlineRegExp(parser, parserState, s, /(`+)( ?)(.+?)\2\1/g, m => ({
       type: 'code',
       inline: true,
-      children: parser.parseInlines(m[3], parserState, ['code'])
+      children: parser.parseInlines(m[3]!, parserState, ['code'])
     }));
   }
 }
@@ -438,13 +441,13 @@ export class InlineEmphasisHandler extends InlineParser {
       return parser.parseInlines(s, parserState);
     }
 
-    const markings = allResults.sort((a, b) => a.score - b.score)[0].markings;
+    const markings = allResults.sort((a, b) => a.score - b.score)[0]!.markings;
     const outer: MarkingOperation[] = [];
 
     // Filter out only outer markings
     for (let i = 0; i < markings.length; i++) {
-      if (outer.length === 0 || markings[i].type === outer[0].type) {
-        outer.push(markings[i]);
+      if (outer.length === 0 || markings[i]!.type === outer[0]!.type) {
+        outer.push(markings[i]!);
       }
     }
 
@@ -452,21 +455,21 @@ export class InlineEmphasisHandler extends InlineParser {
       return parser.parseInlines(s, parserState);
     }
 
-    const l = LENGTHS[outer[0].type as keyof typeof LENGTHS];
-    const type = outer[0].type === 'e' ? 'emphasis' : 'strong';
+    const l = LENGTHS[outer[0]!.type as keyof typeof LENGTHS];
+    const type = outer[0]!.type === 'e' ? 'emphasis' : 'strong';
     let dest = '';
     let lastIndex = 0;
 
     for (let i = 0; i < outer.length - 1; i++) {
-      if (outer[i].idx > lastIndex) {
-        dest += s.substring(lastIndex, outer[i].idx);
+      if (outer[i]!.idx > lastIndex) {
+        dest += s.substring(lastIndex, outer[i]!.idx);
       }
 
-      lastIndex = outer[i + 1].idx;
-      if (outer[i].op === 1) {
+      lastIndex = outer[i + 1]!.idx;
+      if (outer[i]!.op === 1) {
         dest += parser.addInline(parserState, {
           type: type,
-          children: parser.parseInlines(s.substring(outer[i].idx + l, lastIndex), parserState, [
+          children: parser.parseInlines(s.substring(outer[i]!.idx + l, lastIndex), parserState, [
             type
           ])
         });
@@ -530,7 +533,7 @@ export class InlineLinkHandler extends InlineParser {
       const obj: ASTNode = {
         type: this.type,
         source: textSeg + hrefSeg,
-        href: parser.unescape(hrefMatch[1]),
+        href: parser.unescape(hrefMatch[1]!),
         children: parser.parseInlines(
           textSeg.slice(this.type === 'image' ? 2 : 1, -1),
           parserState,
@@ -560,8 +563,8 @@ export class ReferenceLinkDefinitionHandler implements BlockParser {
 
     const obj: ASTNodeOfType<'link-definition'> = {
       type: 'link-definition',
-      id: parser.unescape(m[1]),
-      href: parser.unescape(m[2])
+      id: parser.unescape(m[1]!),
+      href: parser.unescape(m[2]!)
     };
 
     if (m[4]) {
@@ -664,8 +667,8 @@ export class InlineRefImageAndLinkHandler extends InlineParser {
         type: this.type,
         subtype: 'ref',
         source: parser.unescape(m[0]),
-        children: parser.parseInlines(m[1], parserState, [this.type + '-ref']),
-        id: m[3] && m[3].length > 0 ? parser.unescape(m[3]) : parser.unescape(m[1])
+        children: parser.parseInlines(m[1]!, parserState, [this.type + '-ref']),
+        id: m[3] && m[3].length > 0 ? parser.unescape(m[3]) : parser.unescape(m[1]!)
       };
     });
   }
@@ -685,8 +688,8 @@ export class InlineAutolinksHandler extends InlineParser {
       m => {
         return {
           type: 'link',
-          children: [{ type: 'literal', value: m[1] }],
-          href: m[1].match(/[a-zA-Z]+@[a-zA-Z.]+/) ? 'mailto:' + m[1] : m[1]
+          children: [{ type: 'literal', value: m[1]! }],
+          href: m[1]!.match(/[a-zA-Z]+@[a-zA-Z.]+/) ? 'mailto:' + m[1] : m[1]
         };
       }
     );

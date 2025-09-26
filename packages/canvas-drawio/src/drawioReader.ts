@@ -447,7 +447,7 @@ const getNodeProps = (style: StyleManager, isEdge: boolean) => {
       valign: valign,
 
       position:
-        POSITIONS[style.str('labelPosition', 'center')][
+        POSITIONS[style.str('labelPosition', 'center')]![
           style.str('verticalLabelPosition', 'middle')
         ]
     },
@@ -534,7 +534,7 @@ const getNodeProps = (style: StyleManager, isEdge: boolean) => {
 
   if (style.is('dashed')) {
     const pattern: string = style.str('dashPattern') ?? '4 4';
-    const [baseSize, baseGap] = pattern.split(' ').map(s => parseNum(s, 4));
+    const [baseSize, baseGap] = pattern.split(' ').map(s => parseNum(s, 4)) as [number, number];
     const strokeWidth = style.num('strokeWidth', 1);
 
     props.stroke.pattern = 'DASHED';
@@ -922,19 +922,19 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
             // TODO: Maybe we should apply BezierUtils.qubicFromThreePoints here
             //       ...to smoothen the curve further
 
-            const next = wps[i + 1];
-            const midpoint = Line.midpoint(Line.of(wps[i], next));
+            const next = wps[i + 1]!;
+            const midpoint = Line.midpoint(Line.of(wps[i]!, next));
             waypoints.push({
               point: midpoint,
               controlPoints: {
-                cp1: Vector.scale(Point.subtract(wps[i], midpoint), 1),
-                cp2: Vector.scale(Point.subtract(wps[i + 1], midpoint), 1)
+                cp1: Vector.scale(Point.subtract(wps[i]!, midpoint), 1),
+                cp2: Vector.scale(Point.subtract(wps[i + 1]!, midpoint), 1)
               }
             });
           } else {
             // Some times the waypoints are duplicated, so we need to filter them out
-            if (i > 0 && Point.isEqual(wps[i], wps[i - 1])) continue;
-            waypoints.push({ point: wps[i] });
+            if (i > 0 && Point.isEqual(wps[i]!, wps[i - 1]!)) continue;
+            waypoints.push({ point: wps[i]! });
           }
         }
 
@@ -988,7 +988,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
             // TODO: This is all a bit duplication - we should refactor this
             let bgNode: DiagramNode;
             if (style.shape! in shapeParsers) {
-              bgNode = await shapeParsers[style.shape!](
+              bgNode = await shapeParsers[style.shape!]!(
                 newid(),
                 bounds,
                 props,
@@ -1067,7 +1067,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         parents.set(id, node);
       } else if (style.shape! in shapeParsers) {
         nodes.push(
-          await shapeParsers[style.shape!](id, bounds, props, metadata, texts, style, layer, queue)
+          await shapeParsers[style.shape!]!(id, bounds, props, metadata, texts, style, layer, queue)
         );
       } else if (style.shape?.startsWith('mxgraph.') || !!getLoader(style.shape)) {
         const registry = diagram.document.nodeDefinitions;

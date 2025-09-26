@@ -4,11 +4,17 @@ import { validProps } from '@diagram-craft/model/diagramLayerRule';
 import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbLine, TbPentagon, TbPlus, TbTrash } from 'react-icons/tb';
-import { EditorRegistry, PropsEditor } from '@diagram-craft/canvas-app/PropsEditor';
+import { PropsEditor } from '@diagram-craft/canvas-app/PropsEditor';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
 import { deepClone } from '@diagram-craft/utils/object';
 import { newid } from '@diagram-craft/utils/id';
-import { EDGE_EDITORS, Editor, EditorTypes, NODE_EDITORS } from './editors';
+import {
+  EDGE_EDITORS,
+  type EdgeEditorRegistry,
+  EditorTypes,
+  NODE_EDITORS,
+  type NodeEditorRegistry
+} from './editors';
 import { StyleAction } from './StyleAction';
 import { TreeSelect } from '@diagram-craft/app-components/TreeSelect';
 import { StyleSheetAction } from './StyleSheetAction';
@@ -27,14 +33,14 @@ export type EditableElementSearchClause = Partial<ElementSearchClause>;
 
 const normalizeRuleActions = (
   rule: AdjustmentRule | undefined,
-  registry: EditorRegistry<Editor>
+  registry: NodeEditorRegistry | EdgeEditorRegistry
 ): Array<EditableAdjustmentRuleAction> => {
   if (!rule) return [];
 
   const dest: Array<EditableAdjustmentRuleAction> = [];
   for (const a of rule.actions) {
     if (a.type === 'set-props') {
-      const propsEditor = new PropsEditor<Editor>(registry, a.props);
+      const propsEditor = new PropsEditor(registry, a.props);
       for (const e of propsEditor.getEntries()) {
         dest.push({
           id: newid(),
@@ -141,7 +147,10 @@ const ClauseList = (props: ClauseListProps) => {
               {c.type === 'tags' && (
                 <MultiSelect
                   selectedValues={c.tags || []}
-                  availableItems={[...diagram.document.tags.tags].map(tag => ({ value: tag, label: tag }))}
+                  availableItems={[...diagram.document.tags.tags].map(tag => ({
+                    value: tag,
+                    label: tag
+                  }))}
                   onSelectionChange={newTags => {
                     const newClauses = [...props.clauses];
                     // @ts-ignore

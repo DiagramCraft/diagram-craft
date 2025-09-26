@@ -47,7 +47,7 @@ class ShapeInsertAction extends AbstractAction<undefined, Application> {
           [stencil.node(diagram)],
           diagram.activeLayer,
           UnitOfWork.immediate(diagram)
-        )[0];
+        )[0]!;
 
         assignNewBounds(
           [node],

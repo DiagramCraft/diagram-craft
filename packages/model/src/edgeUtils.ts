@@ -195,8 +195,8 @@ export const applyLineHops = (
       } else {
         dest[dest.length - 1] = before;
       }
-      addLineHop(dest, before, after, thisType, gapSize);
-      dest.push(after);
+      addLineHop(dest, before, after!, thisType, gapSize);
+      dest.push(after!);
     }
   }
 

@@ -126,6 +126,7 @@ export class EditablePath {
     const projection = path.projectPoint(p);
 
     const segment = this.segments[projection.pathIdx];
+    assert.present(segment);
     segment.type = 'line';
 
     const startWp = this.waypoints.find(wp => wp.postSegment === segment);
@@ -154,6 +155,7 @@ export class EditablePath {
     const paths = pathList.all();
 
     const pathToSplit = paths[pp.pathIdx];
+    assert.present(pathToSplit);
     const splitPath = pathToSplit.split(pp.offset);
 
     const pre = [...paths.slice(0, pp.pathIdx).flatMap(p => p.segments), ...splitPath[0].segments];
@@ -174,11 +176,11 @@ export class EditablePath {
       pb.withTransform(toUnitLCS(bounds));
     }
 
-    pb.moveTo(this.waypoints[0].point);
+    pb.moveTo(this.waypoints[0]!.point);
 
     const segCount = this.segments.length;
     for (let i = 0; i < segCount; i++) {
-      const segment = this.segments[i];
+      const segment = this.segments[i]!;
 
       switch (segment.type) {
         case 'line':
@@ -263,7 +265,7 @@ export class EditablePath {
     this.waypoints = [];
 
     const isClosed =
-      segments.length === 0 || Point.isEqual(segments[0].start, segments.at(-1)!.end);
+      segments.length === 0 || Point.isEqual(segments[0]!.start, segments.at(-1)!.end);
 
     let waypointsInSegment: EditableWaypoint[] = [];
 
@@ -298,17 +300,17 @@ export class EditablePath {
 
       waypointsInSegment.push(wp);
 
-      if (i < segments.length - 1 && !Point.isEqual(s.end, segments[i + 1].start)) {
+      if (i < segments.length - 1 && !Point.isEqual(s.end, segments[i + 1]!.start)) {
         // TODO: We should only do this if the segments connect
-        if (isClosed) waypointsInSegment[0].preSegment = this.segments.at(-1)!;
+        if (isClosed) waypointsInSegment[0]!.preSegment = this.segments.at(-1)!;
         this.waypoints.push(...waypointsInSegment);
 
         waypointsInSegment = [];
 
         this.segments.push({
           type: 'move',
-          start: segments[i].end,
-          end: segments[i + 1].start,
+          start: segments[i]!.end,
+          end: segments[i + 1]!.start,
           controlPoints: { p1: { x: 0, y: 0 }, p2: { x: 0, y: 0 } }
         });
       }
@@ -316,7 +318,7 @@ export class EditablePath {
 
     if (waypointsInSegment.length > 0) {
       // TODO: We should only do this if the segments connect
-      if (isClosed) waypointsInSegment[0].preSegment = this.segments.at(-1)!;
+      if (isClosed) waypointsInSegment[0]!.preSegment = this.segments.at(-1)!;
       this.waypoints.push(...waypointsInSegment);
     }
   }

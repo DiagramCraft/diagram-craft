@@ -67,7 +67,7 @@ export const MultiSelect = (props: Props) => {
     if (ev.key === 'Enter') {
       ev.preventDefault();
       if (selectedSuggestion >= 0 && selectedSuggestion < filteredSuggestions.length) {
-        addItem(filteredSuggestions[selectedSuggestion].value);
+        addItem(filteredSuggestions[selectedSuggestion]!.value);
       } else if (
         selectedSuggestion === filteredSuggestions.length &&
         !!props.allowCustomValues &&
@@ -98,7 +98,7 @@ export const MultiSelect = (props: Props) => {
       setShowSuggestions(false);
       setSelectedSuggestion(-1);
     } else if (ev.key === 'Backspace' && inputValue === '' && props.selectedValues.length > 0) {
-      removeItem(props.selectedValues[props.selectedValues.length - 1]);
+      removeItem(props.selectedValues[props.selectedValues.length - 1]!);
     }
   };
 

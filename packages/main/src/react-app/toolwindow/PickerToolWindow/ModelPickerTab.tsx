@@ -102,7 +102,7 @@ const makeDefaultNode = (item: Data, schema: DataSchema, definitions: Definition
           }
         },
         {
-          text: `%${schema.fields[0].id}%`
+          text: `%${schema.fields[0]!.id}%`
         }
       ),
     definitions
@@ -177,7 +177,7 @@ const DataProviderResponse = (props: {
 
                       const node =
                         dataTemplates.length > 0
-                          ? makeTemplateNode(item, schema, document.definitions, dataTemplates[0])
+                          ? makeTemplateNode(item, schema, document.definitions, dataTemplates[0]!)
                           : makeDefaultNode(item, schema, document.definitions);
 
                       DRAG_DROP_MANAGER.initiate(
@@ -185,7 +185,7 @@ const DataProviderResponse = (props: {
                       );
                     }}
                   >
-                    {item[schema.fields[0].id]}
+                    {item[schema.fields[0]!.id]}
 
                     {expanded.includes(item._uid) && (
                       <>
@@ -410,7 +410,7 @@ export const ModelPickerTab = () => {
     dataProvider?.schemas?.length > 0 &&
     dataProvider?.schemas.find(s => s.id === selectedSchema) === undefined
   ) {
-    setSelectedSchema(dataProvider.schemas[0].id);
+    setSelectedSchema(dataProvider.schemas[0]!.id);
   }
 
   const db = document.data.db;

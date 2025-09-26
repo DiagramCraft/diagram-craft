@@ -23,7 +23,9 @@ export class NodeDrag extends Drag {
     this.startTime = new Date().getTime();
     this.uow = new UnitOfWork(this.editablePath.node.diagram, true);
 
-    this.initialPositions = this.waypointIndices.map(idx => this.editablePath.waypoints[idx].point);
+    this.initialPositions = this.waypointIndices.map(
+      idx => this.editablePath.waypoints[idx]!.point
+    );
 
     this.context.help.push('NodeDrag', 'Move waypoints');
   }
@@ -35,10 +37,10 @@ export class NodeDrag extends Drag {
 
     for (let i = 0; i < this.waypointIndices.length; i++) {
       const waypointIdx = this.waypointIndices[i];
-      const wp = this.editablePath.waypoints[waypointIdx];
+      const wp = this.editablePath.waypoints[waypointIdx!]!;
 
       const delta = Point.subtract(offset, this.startPoint!);
-      const newPosition = Point.add(this.initialPositions[i], delta);
+      const newPosition = Point.add(this.initialPositions[i]!, delta);
       wp.point = this.editablePath.toLocalCoordinate(newPosition);
     }
     this.editablePath.commitToNode(this.uow);

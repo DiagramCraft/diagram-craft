@@ -8,6 +8,7 @@ import { _p, Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
 import { isSerializedEndpointPointInNode, isSerializedEndpointFree } from './serialization/utils';
 import { getTypedKeys } from '@diagram-craft/utils/object';
+import { assert } from '@diagram-craft/utils/assert';
 
 export interface Endpoint {
   readonly position: Point;
@@ -97,7 +98,9 @@ export class AnchorEndpoint
   }
 
   getAnchor() {
-    return this.node.getAnchor(this.anchorId);
+    const anchor = this.node.getAnchor(this.anchorId);
+    assert.present(anchor);
+    return anchor;
   }
 
   get position() {

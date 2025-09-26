@@ -75,7 +75,7 @@ class DiagramRemoveAction extends AbstractAction<{ diagramId?: string }, Applica
     // TODO: This can be improved to choose the "closest" diagram
     const diagramToFallbackTo =
       this.context.model.activeDiagram === diagram
-        ? document.diagrams[0]
+        ? document.diagrams[0]!
         : this.context.model.activeDiagram;
 
     const undoManager = diagramToFallbackTo.undoManager;

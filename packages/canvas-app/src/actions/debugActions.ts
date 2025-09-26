@@ -5,6 +5,7 @@ import {
 } from '@diagram-craft/model/serialization/serialize';
 import { Translation } from '@diagram-craft/geometry/transform';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { assert } from '@diagram-craft/utils/assert';
 
 export const debugActions = (context: ActionContext) => ({
   DOCUMENT_DUMP: new DumpDocument(context),
@@ -48,13 +49,15 @@ class RedrawAction extends AbstractAction {
 
   execute(): void {
     const diagram = this.context.model.activeDiagram;
+    assert.arrayNotEmpty(diagram.selectionState.nodes);
+
     UnitOfWork.execute(diagram, uow => {
-      diagram.selectionState.nodes[0].transform([new Translation({ x: 10, y: 10 })], uow);
+      diagram.selectionState.nodes[0]!.transform([new Translation({ x: 10, y: 10 })], uow);
     });
 
     setTimeout(() => {
       UnitOfWork.execute(diagram, uow => {
-        diagram.selectionState.nodes[0].transform([new Translation({ x: -10, y: -10 })], uow);
+        diagram.selectionState.nodes[0]!.transform([new Translation({ x: -10, y: -10 })], uow);
       });
     }, 200);
   }

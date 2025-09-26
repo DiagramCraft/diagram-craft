@@ -96,8 +96,8 @@ class SelectionBooleanOperation extends AbstractSelectionAction<Application> {
     // TODO: Convert to condition
     if (nodes.length !== 2) return;
 
-    const a = nodes[0].getDefinition().getBoundingPath(nodes[0]);
-    const b = nodes[1].getDefinition().getBoundingPath(nodes[1]);
+    const a = nodes[0]!.getDefinition().getBoundingPath(nodes[0]!);
+    const b = nodes[1]!.getDefinition().getBoundingPath(nodes[1]!);
 
     const paths = applyBooleanOperation(a, b, this.type);
     const newNodes = paths.map(p => {
@@ -111,7 +111,7 @@ class SelectionBooleanOperation extends AbstractSelectionAction<Application> {
         nodeBounds,
         diagram.activeLayer as RegularLayer,
         {
-          ...nodes[0].storedProps,
+          ...nodes[0]!.storedProps,
           custom: {
             genericPath: {
               path: scaledPath.asSvgPath()
@@ -119,7 +119,7 @@ class SelectionBooleanOperation extends AbstractSelectionAction<Application> {
           }
         },
         {
-          ...nodes[0].metadata
+          ...nodes[0]!.metadata
         }
       );
     });

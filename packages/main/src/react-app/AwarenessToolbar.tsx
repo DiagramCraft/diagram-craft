@@ -29,7 +29,7 @@ export const AwarenessToolbar = () => {
             style={{ '--avatar-color': user.color } as React.CSSProperties}
           >
             {user.name[0]}
-            {user.name[1].toUpperCase()}
+            {user.name.at(1)?.toUpperCase()}
           </div>
         ))}
     </div>

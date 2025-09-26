@@ -106,7 +106,7 @@ export const ImageInsertDialog = (props: Props) => {
             type={'file'}
             style={{ display: 'none', width: 0 }}
             onChange={async e => {
-              props.onOk!(e.target.files![0]);
+              props.onOk!(e.target.files![0]!);
             }}
           />
         </Tabs.Content>

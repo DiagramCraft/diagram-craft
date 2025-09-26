@@ -231,7 +231,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   /* Text **************************************************************************************************** */
 
   getText(id = 'text') {
-    return this.#text.get()[id === '1' ? 'text' : id];
+    return this.#text.get()[id === '1' ? 'text' : id]!;
   }
 
   setText(text: string, uow: UnitOfWork, id = 'text') {
@@ -566,7 +566,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   }
 
   getAnchor(anchor: string) {
-    return this.anchors.find(a => a.id === anchor) ?? this.anchors[0];
+    return this.anchors.find(a => a.id === anchor) ?? this.anchors[0]!;
   }
 
   /* Snapshot ************************************************************************************************ */
@@ -660,7 +660,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     // Phase 1 - duplicate all elements in the group
     const newChildren: DiagramElement[] = [];
     for (let i = 0; i < this.children.length; i++) {
-      const c = this.children[i];
+      const c = this.children[i]!;
       const newElement = c.duplicate(context, id ? `${id}-${i}` : undefined);
       newChildren.push(newElement);
     }

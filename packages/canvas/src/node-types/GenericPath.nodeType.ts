@@ -216,7 +216,7 @@ class GenericPathComponent extends BaseNodeComponent {
               dblclick: e => {
                 const uow = new UnitOfWork(props.node.diagram, true);
 
-                const wp = editablePath.waypoints[idx];
+                const wp = editablePath.waypoints[idx]!;
                 if (e.metaKey) {
                   editablePath.deleteWaypoint(wp);
                   editablePath.commitToNode(uow);

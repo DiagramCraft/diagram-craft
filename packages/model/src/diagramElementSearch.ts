@@ -83,7 +83,7 @@ export const searchByElementSearchClauses = (
       results.push(new Set(...(r as string[])));
     } else if (clause.type === 'any') {
       const anyResult = searchByElementSearchClauses(diagram, clause.clauses);
-      const result = anyResult.reduce((p, c) => p.union(c), anyResult[0]);
+      const result = anyResult.reduce((p, c) => p.union(c), anyResult[0]!);
       results.push(result);
     } else if (clause.type === 'props') {
       const re = clause.relation === 'matches' ? new RegExp(clause.value) : undefined;
@@ -100,7 +100,10 @@ export const searchByElementSearchClauses = (
               case 'eq':
                 if (typeof value === 'string' && typeof clause.value === 'string') {
                   if (value.toLowerCase() === clause.value.toLowerCase()) result.add(element.id);
-                } else if (typeof value === 'boolean' && (clause.value === 'true' || clause.value === 'false')) {
+                } else if (
+                  typeof value === 'boolean' &&
+                  (clause.value === 'true' || clause.value === 'false')
+                ) {
                   if (value.toString() === clause.value) result.add(element.id);
                 } else if (typeof value === 'number' && !isNaN(Number(clause.value))) {
                   if (value === Number(clause.value)) result.add(element.id);
@@ -111,7 +114,10 @@ export const searchByElementSearchClauses = (
               case 'neq':
                 if (typeof value === 'string' && typeof clause.value === 'string') {
                   if (value.toLowerCase() !== clause.value.toLowerCase()) result.add(element.id);
-                } else if (typeof value === 'boolean' && (clause.value === 'true' || clause.value === 'false')) {
+                } else if (
+                  typeof value === 'boolean' &&
+                  (clause.value === 'true' || clause.value === 'false')
+                ) {
                   if (value.toString() !== clause.value) result.add(element.id);
                 } else if (typeof value === 'number' && !isNaN(Number(clause.value))) {
                   if (value !== Number(clause.value)) result.add(element.id);
@@ -134,7 +140,11 @@ export const searchByElementSearchClauses = (
                 }
                 break;
               case 'contains':
-                if (value != null && typeof value === 'string' && value.toLowerCase().includes(clause.value.toLowerCase()))
+                if (
+                  value != null &&
+                  typeof value === 'string' &&
+                  value.toLowerCase().includes(clause.value.toLowerCase())
+                )
                   result.add(element.id);
                 break;
               case 'matches':
@@ -155,7 +165,7 @@ export const searchByElementSearchClauses = (
         if (layer instanceof RegularLayer) {
           for (const element of (layer as RegularLayer).elements) {
             const elementTags = element.tags ?? [];
-            const hasMatchingTag = clause.tags.some(ruleTag => 
+            const hasMatchingTag = clause.tags.some(ruleTag =>
               elementTags.some(elementTag => elementTag.toLowerCase() === ruleTag.toLowerCase())
             );
 

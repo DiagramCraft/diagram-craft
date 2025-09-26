@@ -51,7 +51,7 @@ export class ResizeHandlesComponent extends Component<Props> {
       p => p.renderProps.capabilities.resizable.horizontal !== false
     );
 
-    const points: Point[] = Box.corners({ ...bounds, r: 0 });
+    const points = Box.corners({ ...bounds, r: 0 });
 
     const north = Point.midpoint(points[0], points[1]);
     const east = Point.midpoint(points[1], points[2]);

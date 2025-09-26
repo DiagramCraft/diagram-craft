@@ -1,20 +1,17 @@
 import { assert } from '@diagram-craft/utils/assert';
 import { deepIsEmpty } from '@diagram-craft/utils/object';
-
-type Entry<E> = {
-  editor: E;
-  name: string;
-  pick: (props: NodeProps | EdgeProps) => Partial<NodeProps | EdgeProps>;
-};
-export type EditorRegistry<E> = Record<string, Entry<E>>;
+import type {
+  EdgeEditorRegistry,
+  NodeEditorRegistry
+} from '@diagram-craft/main/react-app/components/RuleEditorDialog/editors';
 
 /**
  * Supports editing of ElementProps using partial editors.
  * It provides methods to retrieve entries for editing and to retrieve all registered editors.
  */
-export class PropsEditor<E> {
+export class PropsEditor {
   constructor(
-    private readonly editors: EditorRegistry<E>,
+    private readonly editors: NodeEditorRegistry | EdgeEditorRegistry,
     private readonly props?: NodeProps | EdgeProps
   ) {}
 

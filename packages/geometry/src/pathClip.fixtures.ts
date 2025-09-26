@@ -113,7 +113,7 @@ export const VECTOR_BOOLEAN_TEST_CASES = {
     );
     return {
       p1: makeCircle(210, 110, 20),
-      p2: allParts[0]
+      p2: allParts[0]!
     };
   },
   ComplexShapes2: () => {

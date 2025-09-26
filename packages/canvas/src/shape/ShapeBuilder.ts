@@ -322,7 +322,7 @@ export class ShapeBuilder {
     for (let i = 0; i < maxLength; i++) {
       joinedPaths.push({
         path: renderedPaths.map(p => p[i]?.path ?? '').join(' '),
-        style: renderedPaths[0][i].style
+        style: renderedPaths[0]![i]!.style
       });
     }
     return joinedPaths;

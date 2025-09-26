@@ -11,6 +11,7 @@ import { Angle } from '@diagram-craft/geometry/angle';
 import { Button } from '@diagram-craft/app-components/Button';
 import { FillType } from '@diagram-craft/model/diagramProps';
 import { Diagram } from '@diagram-craft/model/diagram';
+import { mustExist } from '@diagram-craft/utils/assert';
 
 const TEXTURES = [
   'bubbles1.jpeg',
@@ -384,7 +385,9 @@ export const FillPanelForm = ({
                 onChange={async e => {
                   // TODO: Should add a spinner...
 
-                  const att = await $d.document.attachments.addAttachment(e.target.files![0]);
+                  const att = await $d.document.attachments.addAttachment(
+                    mustExist(e.target.files![0])
+                  );
 
                   const img = await createImageBitmap(att.content);
                   const { width, height } = img;

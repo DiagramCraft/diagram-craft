@@ -111,7 +111,7 @@ export class RuleLayer extends Layer<RuleLayer> {
 
     const results = searchByElementSearchClauses(this.diagram, rule.clauses);
 
-    const result = results.reduce((p, c) => p.intersection(c), results[0]);
+    const result = results.reduce((p, c) => p.intersection(c), results[0]!);
     for (const k of result) {
       for (const action of rule.actions) {
         notImplemented.true(

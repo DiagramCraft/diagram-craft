@@ -29,7 +29,7 @@ export const ElementStylesheetDialog = (props: Props) => {
       onClose={props.onClose}
     >
       <div style={{ marginBottom: '3rem', height: '20rem' }}>
-        <Tabs.Root defaultValue={props.editors[0].name}>
+        <Tabs.Root defaultValue={props.editors[0]!.name}>
           <Tabs.List>
             {props.editors.map(e => (
               <Tabs.Trigger key={e.name} value={e.name}>

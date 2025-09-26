@@ -22,7 +22,7 @@ export class RoundingPathRenderer implements PathRenderer {
     return [
       {
         path: new Path(
-          rounded[0].start,
+          rounded[0]!.start,
           rounded.flatMap(r => r.raw())
         ).asSvgPath(),
         style: path.style

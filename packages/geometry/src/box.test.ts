@@ -157,7 +157,7 @@ describe('Box', () => {
 
     test('calculates opposite corners only when oppositeOnly is true', () => {
       const box = { x: 0, y: 0, w: 10, h: 10, r: 0 };
-      expect(Box.corners(box, true)).toStrictEqual([
+      expect(Box.oppositeCorners(box)).toStrictEqual([
         { x: 0, y: 0 },
         { x: 10, y: 10 }
       ]);

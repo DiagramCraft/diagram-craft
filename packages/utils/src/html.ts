@@ -51,11 +51,11 @@ export class HTMLParser {
         const match = html.match(this.tagStart);
         if (!match) break;
 
-        const tag = match[1];
+        const tag = match[1]!;
         const end = html.indexOf('>');
         if (end === -1) break;
 
-        const attributes = this.parseAttributes(html.slice(match[1].length + 1, end));
+        const attributes = this.parseAttributes(html.slice(match[1]!.length + 1, end));
         this.handler.onTagOpen(tag, attributes);
 
         if (this.selfClosingTags.includes(tag)) {
@@ -85,7 +85,7 @@ export class HTMLParser {
     let match: RegExpExecArray | null;
 
     while ((match = attr.exec(s))) {
-      attributes[match[1]] = match[2];
+      attributes[match[1]!] = match[2]!;
     }
 
     return attributes;

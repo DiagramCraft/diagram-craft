@@ -46,7 +46,7 @@ export class RuleLayerDeleteAction extends AbstractAction<LayerActionArg, Applic
           precondition.is.present(id);
 
           // TODO: Need to change such that it's possible to pass more arguments to the action
-          const [layerId, ruleId] = id.split(':');
+          const [layerId, ruleId] = id.split(':') as [string, string];
 
           const layer = this.context.model.activeDiagram.layers.byId(layerId) as RuleLayer;
           const rule = layer.byId(ruleId);
@@ -76,7 +76,7 @@ export class RuleLayerEditAction extends AbstractAction<LayerActionArg, Applicat
     precondition.is.present(id);
 
     // TODO: Need to change such that it's possible to pass more arguments to the action
-    const [layerId, ruleId] = id.split(':');
+    const [layerId, ruleId] = id.split(':') as [string, string];
 
     const layer = this.context.model.activeDiagram.layers.byId(layerId) as RuleLayer;
     const rule = layer.byId(ruleId);

@@ -1,4 +1,5 @@
 import React, { DragEventHandler, useState } from 'react';
+import { assert } from '@diagram-craft/utils/assert';
 
 type PendingDrop = {
   before?: string[];
@@ -112,6 +113,7 @@ export const useDropTarget = <E extends HTMLElement, M extends string>(
     const rect = ev.currentTarget.getBoundingClientRect();
 
     const keys = mimeTypes.filter(mt => ev.dataTransfer.types.includes(mt));
+    assert.arrayNotEmpty(keys);
     const split = opts?.split?.(keys[0]) ?? [0.25, 0.5, 0.25];
 
     if (ev.clientY < rect.top + rect.height * split[0]) {

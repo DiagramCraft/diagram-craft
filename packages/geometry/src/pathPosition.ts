@@ -35,7 +35,7 @@ export const TimeOffsetOnSegment = {
     p: T,
     path: Path
   ): LengthOffsetOnSegment & T => {
-    const segment = path.segments[p.segment];
+    const segment = path.segments[p.segment]!;
     return {
       ...p,
       segmentD: segment.lengthAtT(p.segmentT)
@@ -48,7 +48,7 @@ export const LengthOffsetOnSegment = {
     p: T,
     path: Path
   ): TimeOffsetOnSegment & T => {
-    const segment = path.segments[p.segment];
+    const segment = path.segments[p.segment]!;
     return {
       ...p,
       segmentT: segment.tAtLength(p.segmentD)
@@ -85,7 +85,7 @@ export const LengthOffsetOnPath = {
     let idx = 0;
     let len = 0;
     while (len < p.pathD && idx < path.segments.length) {
-      const newLen = len + path.segments[idx].length();
+      const newLen = len + path.segments[idx]!.length();
       if (newLen >= p.pathD) {
         break;
       }

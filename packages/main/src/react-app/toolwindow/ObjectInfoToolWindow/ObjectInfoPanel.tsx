@@ -17,10 +17,10 @@ export const ObjectInfoPanel = () => {
     const selectionType = diagram.selectionState.getSelectionType();
     if (selectionType === 'single-node' || selectionType === 'single-label-node') {
       setState('node');
-      setNodeId(diagram.selectionState.nodes[0].id);
+      setNodeId(diagram.selectionState.nodes[0]!.id);
     } else if (selectionType === 'single-edge') {
       setState('edge');
-      setEdgeId(diagram.selectionState.edges[0].id);
+      setEdgeId(diagram.selectionState.edges[0]!.id);
     } else if (!diagram.selectionState.isEmpty()) {
       setState('selection');
     } else {

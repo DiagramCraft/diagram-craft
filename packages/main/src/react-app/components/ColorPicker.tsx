@@ -10,8 +10,8 @@ import {
 } from '@diagram-craft/app-components/Tooltip';
 
 const transpose = (matrix: string[][]) =>
-  Object.keys(matrix[0]).map(colNumber =>
-    matrix.map(rowNumber => rowNumber[colNumber as unknown as number])
+  Object.keys(matrix[0]!).map(colNumber =>
+    matrix.map(rowNumber => rowNumber[colNumber as unknown as number]!)
   );
 
 const EditableColorWell = (props: {
@@ -171,7 +171,7 @@ export const ColorPicker = (props: Props) => {
             {range(0, 14).map(i => (
               <EditableColorWell
                 key={i}
-                color={customPalette[i]}
+                color={customPalette[i]!}
                 onSet={c => {
                   setColor(c);
                 }}

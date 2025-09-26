@@ -53,7 +53,7 @@ export class DiagramPalette {
 
     this.doc.transact(() => {
       for (let i = 0; i < color.length; i++) {
-        this.setColor(i, color[i]);
+        this.setColor(i, color[i]!);
       }
     });
   }

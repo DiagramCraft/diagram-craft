@@ -2,7 +2,7 @@ import { Point } from './point';
 import { Vector } from './vector';
 
 export type Polygon = {
-  points: Point[];
+  points: ReadonlyArray<Point>;
 };
 
 export const Polygon = {
@@ -11,8 +11,8 @@ export const Polygon = {
       for (let i = 0; i < polygon.points.length; i++) {
         const j = (i + 1) % polygon.points.length;
 
-        const start = polygon.points[i];
-        const end = polygon.points[j];
+        const start = polygon.points[i]!;
+        const end = polygon.points[j]!;
 
         const normal = { y: end.y - start.y, x: start.x - end.x };
 
@@ -43,10 +43,10 @@ export const Polygon = {
     const crossProducts: number[] = [];
 
     for (let i = 0; i < polygon.points.length; i++) {
-      if (Point.isEqual(polygon.points[i], testPoint)) return true;
+      if (Point.isEqual(polygon.points[i]!, testPoint)) return true;
 
-      const start = polygon.points[i];
-      const end = polygon.points[(i + 1) % polygon.points.length];
+      const start = polygon.points[i]!;
+      const end = polygon.points[(i + 1) % polygon.points.length]!;
 
       crossProducts.push(
         Vector.crossProduct(Vector.from(start, end), Vector.from(testPoint, start))

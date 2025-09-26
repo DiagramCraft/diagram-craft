@@ -24,6 +24,7 @@ import { ToolWindowPanel } from '../ToolWindowPanel';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { ToolWindow } from '../ToolWindow';
 import { SearchToolMenu } from './SearchToolMenu';
+import { assert } from '@diagram-craft/utils/assert';
 
 type SearchScope = 'active-layer' | 'active-diagram' | 'active-document';
 
@@ -126,7 +127,10 @@ const AdvancedSearchClauseList = (props: ClauseListProps) => {
               {c.type === 'tags' && (
                 <MultiSelect
                   selectedValues={c.tags || []}
-                  availableItems={[...diagram.document.tags.tags].map(tag => ({ value: tag, label: tag }))}
+                  availableItems={[...diagram.document.tags.tags].map(tag => ({
+                    value: tag,
+                    label: tag
+                  }))}
                   onSelectionChange={newTags => {
                     const newClauses = [...props.clauses];
                     // @ts-ignore
@@ -234,6 +238,8 @@ export const AdvancedSearchTab = () => {
 
     try {
       const searchResults = searchByElementSearchClauses(diagram, validClauses);
+      assert.arrayNotEmpty(searchResults);
+
       const intersection = searchResults.reduce((p, c) => p.intersection(c), searchResults[0]);
       const matchedElements = elements.filter(e => intersection.has(e.id));
       setResults(matchedElements);

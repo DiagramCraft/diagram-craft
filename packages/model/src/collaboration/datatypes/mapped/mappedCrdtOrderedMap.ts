@@ -37,7 +37,7 @@ export class MappedCRDTOrderedMap<
     const remoteUpdate: EventReceiver<CRDTMapEvents['remoteUpdate']> = e => {
       const idx = this.#entries.findIndex(entry => entry[0] === e.key);
       if (idx >= 0) {
-        props?.onRemoteChange?.(this.#entries[idx][1]);
+        props?.onRemoteChange?.(this.#entries[idx]![1]);
       }
 
       this.populateFromCRDT(e);
@@ -46,7 +46,7 @@ export class MappedCRDTOrderedMap<
     const remoteDelete: EventReceiver<CRDTMapEvents['remoteDelete']> = e => {
       const idx = this.#entries.findIndex(entry => entry[0] === e.key);
       if (idx >= 0) {
-        props?.onRemoteRemove?.(this.#entries[idx][1]);
+        props?.onRemoteRemove?.(this.#entries[idx]![1]);
         this.#entries.splice(idx, 1);
       }
     };
@@ -55,7 +55,7 @@ export class MappedCRDTOrderedMap<
       this.populateFromCRDT(e);
       const idx = this.#entries.findIndex(entry => entry[0] === e.key);
       if (idx >= 0) {
-        props?.onRemoteAdd?.(this.#entries[idx][1]);
+        props?.onRemoteAdd?.(this.#entries[idx]![1]);
       }
     };
 

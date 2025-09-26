@@ -83,7 +83,7 @@ export const ObjectPickerPanel = (props: Props) => {
                 diagram={d}
                 showHover={showHover}
                 name={
-                  stencils[idx].name ??
+                  stencils[idx]!.name ??
                   diagram.document.nodeDefinitions.get(node.nodeType).name ??
                   'unknown'
                 }

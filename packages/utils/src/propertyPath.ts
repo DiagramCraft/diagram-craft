@@ -76,9 +76,9 @@ export class DynamicAccessor<T> {
     const parts = (key as string).split('.');
     let current: any = obj;
     for (let i = 0; i < parts.length - 1; i++) {
-      current[parts[i]] ??= {};
-      current = current[parts[i]];
+      current[parts[i]!] ??= {};
+      current = current[parts[i]!];
     }
-    current[parts[parts.length - 1]] = value;
+    current[parts[parts.length - 1]!] = value;
   }
 }

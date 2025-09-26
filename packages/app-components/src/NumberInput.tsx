@@ -7,7 +7,7 @@ import styles from './NumberInput.module.css';
 type UnitAndValue = [string, string | undefined];
 
 const parseNumberAndUnit = (value: string): UnitAndValue | undefined => {
-  const m = value.match(/^ ?(-?\d+\.?\d*) ?([^ ]*)$/);
+  const m = value.match(/^ ?(-?\d+\.?\d*) ?([^ ]*)$/) as [string, string, string] | null;
   if (!m) return undefined;
   if (m[2] === '') return [m[1], undefined];
   return [m[1], m[2]];
@@ -21,7 +21,7 @@ const formatValue = (value: string, defaultUnit: string | undefined, fallback: s
 let idx = 0;
 
 const AdjustButton = (props: {
-  className: string;
+  className: string | undefined;
   children: React.ReactNode;
   onClick: () => void;
   disabled?: boolean;

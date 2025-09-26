@@ -47,7 +47,7 @@ class Highlight {
 
   getArg(highlight: string) {
     const s = this.highlights.filter(h => h.startsWith(getHighlight(highlight, '')));
-    return s.length === 0 ? undefined : s[0].split(DELIMITER)[1];
+    return s.length === 0 ? undefined : s[0]!.split(DELIMITER)[1];
   }
 }
 

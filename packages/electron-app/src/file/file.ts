@@ -16,7 +16,7 @@ export const fileHandlers: IpcHandlers = {
       });
 
       if (!result.canceled && result.filePaths.length > 0) {
-        const filePath = result.filePaths[0];
+        const filePath = result.filePaths[0]!;
         BrowserWindow.getFocusedWindow()?.setRepresentedFilename(filePath);
         app.addRecentDocument(filePath);
         return { url: filePath };

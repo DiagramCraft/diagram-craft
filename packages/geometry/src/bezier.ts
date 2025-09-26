@@ -193,9 +193,9 @@ export const BezierUtils = {
     const hx = (4 / 3) * rx * t;
     const hy = (4 / 3) * ry * t;
 
-    const m2 = [x1 - hx * Math.sin(f1), y1 + hy * Math.cos(f1)];
-    const m3 = [x2 + hx * Math.sin(f2), y2 - hy * Math.cos(f2)];
-    const m4 = [x2, y2];
+    const m2 = [x1 - hx * Math.sin(f1), y1 + hy * Math.cos(f1)] as const;
+    const m3 = [x2 + hx * Math.sin(f2), y2 - hy * Math.cos(f2)] as const;
+    const m4 = [x2, y2] as const;
 
     if (recursive) {
       return [['C', m2[0], m2[1], m3[0], m3[1], m4[0], m4[1]], ...res];
@@ -425,7 +425,7 @@ export class CubicBezier {
 
     let sum = 0;
     for (let i = 0; i < X.length; i++) {
-      sum += W[i] * this.darclen(z * X[i] + z);
+      sum += W[i]! * this.darclen(z * X[i]! + z);
     }
 
     this.#length = z * sum;
@@ -615,12 +615,12 @@ export class CubicBezier {
     let t2 = clamp((smallestIdx + 2) / numberOfSamples, 0, 1);
 
     while ((v = t2 - t1) > precision && --maxIter > 0) {
-      const ts = [t1, t1 + 0.25 * v, t1 + 0.5 * v, t1 + 0.75 * v, t2];
+      const ts = [t1, t1 + 0.25 * v, t1 + 0.5 * v, t1 + 0.75 * v, t2] as const;
 
       smallestIdx = smallestIndex(ts.map(t => Point.squareDistance(p, this.point(t))));
 
-      t1 = ts[Math.max(0, smallestIdx - 1)];
-      t2 = ts[Math.min(4, smallestIdx + 1)];
+      t1 = ts[Math.max(0, smallestIdx - 1)]!;
+      t2 = ts[Math.min(4, smallestIdx + 1)]!;
     }
 
     const pp = this.point(clamp(t1, 0, 1));

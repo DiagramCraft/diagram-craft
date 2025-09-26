@@ -113,7 +113,7 @@ export const CanvasGuidesPanel = (props: Props) => {
       });
     } else {
       // Use the last guide as reference
-      const lastGuide = existingGuides[existingGuides.length - 1];
+      const lastGuide = existingGuides[existingGuides.length - 1]!;
       newGuide = diagram.addGuide({
         type: lastGuide.type,
         position: lastGuide.position + 100,

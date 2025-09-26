@@ -71,17 +71,17 @@ export class SvgTransform {
 
     switch (op.type) {
       case 'translate': {
-        const [x, y] = op.values;
+        const [x, y] = op.values as [number, number];
         opMatrix = [1, 0, 0, 1, x, y];
         break;
       }
       case 'scale': {
-        const [sx, sy = sx] = op.values;
+        const [sx, sy = sx] = op.values as [number, number];
         opMatrix = [sx, 0, 0, sy, 0, 0];
         break;
       }
       case 'rotate': {
-        const [angle, cx, cy] = op.values;
+        const [angle, cx, cy] = op.values as [number, number | undefined, number | undefined];
         const rad = (angle * Math.PI) / 180;
         const cos = Math.cos(rad);
         const sin = Math.sin(rad);

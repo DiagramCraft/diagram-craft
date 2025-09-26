@@ -8,7 +8,7 @@ export interface IpcHandlers {
 export const registerIpcHandlers = (handlers: IpcHandlers, mainWindow: BrowserWindow) =>
   handlers.register(mainWindow);
 
-export const Channels: Record<string, Channel> = {
+export const Channels: Record<'MenuAction' | 'FileRecentFileOpen', Channel> = {
   MenuAction: 'menu:action',
   FileRecentFileOpen: 'file:recentFileOpen'
 };

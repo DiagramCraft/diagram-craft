@@ -66,7 +66,7 @@ const Root = (props: RootProps) => {
     });
 
     if (!ids.includes(tab)) {
-      const fallbackTab = ids[0];
+      const fallbackTab = ids[0]!;
       setTab(fallbackTab);
       userState.setToolWindowTab(props.id, fallbackTab);
     }

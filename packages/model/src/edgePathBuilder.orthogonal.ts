@@ -307,7 +307,7 @@ class PathfindingSegmentProvider implements SegmentProvider {
 
     // Add for midpoints valid waypoints
     for (let i = 0; i < this.edge.waypoints.length; i++) {
-      const wp = this.edge.waypoints[i];
+      const wp = this.edge.waypoints[i]!;
 
       if (i === 0) {
         if (this.startNode) {
@@ -328,7 +328,7 @@ class PathfindingSegmentProvider implements SegmentProvider {
       }
 
       if (i < this.edge.waypoints.length - 1) {
-        const nextWp = this.edge.waypoints[i + 1];
+        const nextWp = this.edge.waypoints[i + 1]!;
         addForPoint(Point.midpoint(wp.point, nextWp.point), 'waypoint-mid');
       }
     }
@@ -342,7 +342,7 @@ class PathfindingSegmentProvider implements SegmentProvider {
 
     // Add for valid waypoints
     for (let i = 0; i < this.edge.waypoints.length; i++) {
-      const wp = this.edge.waypoints[i];
+      const wp = this.edge.waypoints[i]!;
       addForPoint(wp.point, 'waypoint');
     }
 
@@ -357,7 +357,7 @@ class PathfindingSegmentProvider implements SegmentProvider {
       .filter(
         (v, i, a) =>
           i === 0 ||
-          Math.abs(v - a[i - 1]) > TOO_CLOSE ||
+          Math.abs(v - a[i - 1]!) > TOO_CLOSE ||
           ys.get(v) === 'start-end' ||
           ys.get(v) === 'waypoint'
       );
@@ -366,7 +366,7 @@ class PathfindingSegmentProvider implements SegmentProvider {
       .filter(
         (v, i, a) =>
           i === 0 ||
-          Math.abs(v - a[i - 1]) > TOO_CLOSE ||
+          Math.abs(v - a[i - 1]!) > TOO_CLOSE ||
           xs.get(v) === 'start-end' ||
           xs.get(v) === 'waypoint'
       );
@@ -392,19 +392,19 @@ class PathfindingSegmentProvider implements SegmentProvider {
         c2 < 0 ||
         r1 >= grid.length ||
         r2 >= grid.length ||
-        c1 >= grid[0].length ||
-        c2 >= grid[0].length
+        c1 >= grid[0]!.length ||
+        c2 >= grid[0]!.length
       ) {
         return;
       }
 
-      const a = Point.toString(grid[r1][c1]);
-      const b = Point.toString(grid[r2][c2]);
+      const a = Point.toString(grid[r1]![c1]!);
+      const b = Point.toString(grid[r2]![c2]!);
 
-      const weight = Point.manhattanDistance(grid[r1][c1], grid[r2][c2]);
+      const weight = Point.manhattanDistance(grid[r1]![c1]!, grid[r2]![c2]!)!;
 
       const isHorizontal = d === 'e' || d === 'w';
-      const type = isHorizontal ? ys.get(grid[r1][c1].y)! : xs.get(grid[r1][c1].x)!;
+      const type = isHorizontal ? ys.get(grid[r1]![c1]!.y)! : xs.get(grid[r1]![c1]!.x)!;
 
       graph.addEdge({
         id: `${a}-${b}`,
@@ -423,9 +423,9 @@ class PathfindingSegmentProvider implements SegmentProvider {
     };
 
     for (let r = 0; r < grid.length; r++) {
-      for (let c = 0; c < grid[r].length; c++) {
-        const vertexId = Point.toString(grid[r][c]);
-        graph.addVertex({ id: vertexId, data: grid[r][c] });
+      for (let c = 0; c < grid[r]!.length; c++) {
+        const vertexId = Point.toString(grid[r]![c]!);
+        graph.addVertex({ id: vertexId, data: grid[r]![c]! });
 
         addEdge(r, c, r + 1, c, 's');
         addEdge(r, c, r, c + 1, 'e');
@@ -439,10 +439,10 @@ class PathfindingSegmentProvider implements SegmentProvider {
         cr += rd;
         cc += cd;
         if (cr < 0 || cr >= grid.length) return { r: -1, c: -1 };
-        if (cc < 0 || cc >= grid[0].length) return { r: -1, c: -1 };
+        if (cc < 0 || cc >= grid[0]!.length) return { r: -1, c: -1 };
       } while (
-        (Box.contains(startBounds, grid[cr][cc]) || Box.contains(endBounds, grid[cr][cc])) &&
-        !mustKeepPoints.has(Point.toString(grid[cr][cc]))
+        (Box.contains(startBounds, grid[cr]![cc]!) || Box.contains(endBounds, grid[cr]![cc]!)) &&
+        !mustKeepPoints.has(Point.toString(grid[cr]![cc]!))
       );
 
       return { r: cr, c: cc };
@@ -453,12 +453,12 @@ class PathfindingSegmentProvider implements SegmentProvider {
 
     const verticesToRemove = new Set<string>();
     for (let r = 0; r < grid.length; r++) {
-      for (let c = 0; c < grid[r].length; c++) {
+      for (let c = 0; c < grid[r]!.length; c++) {
         if (
-          (Box.contains(startBounds, grid[r][c]) || Box.contains(endBounds, grid[r][c])) &&
-          !mustKeepPoints.has(Point.toString(grid[r][c]))
+          (Box.contains(startBounds, grid[r]![c]!) || Box.contains(endBounds, grid[r]![c]!)) &&
+          !mustKeepPoints.has(Point.toString(grid[r]![c]!))
         ) {
-          const vid = Point.toString(grid[r][c]);
+          const vid = Point.toString(grid[r]![c]!);
           if (verticesToRemove.has(vid)) continue;
 
           verticesToRemove.add(vid);
@@ -626,7 +626,7 @@ export const buildOrthogonalEdgePath = (
   let endPoint = edge.end.position;
 
   if (!isStartForced && whenConnected(edge.start)?.isMidpoint() && edge.waypoints.length > 0) {
-    startPoint = readjustConnection(startPoint, edge.waypoints[0].point, startNode!.bounds);
+    startPoint = readjustConnection(startPoint, edge.waypoints[0]!.point, startNode!.bounds);
   }
 
   if (!isEndForced && whenConnected(edge.end)?.isMidpoint() && edge.waypoints.length > 0) {
@@ -667,10 +667,10 @@ export const buildOrthogonalEdgePath = (
       visitedPoints
     );
 
-    availableDirections = result[0].availableDirections;
-    preferredDirections = result[0].preferredDirection;
+    availableDirections = result[0]!.availableDirections;
+    preferredDirections = result[0]!.preferredDirection;
 
-    result[0].points.forEach(p => {
+    result[0]!.points.forEach(p => {
       path.lineTo(p);
       visitedPoints.add(Point.toString(p));
     });
@@ -698,7 +698,7 @@ export const buildOrthogonalEdgePath = (
       const c1 = a.points.length ?? 100;
       const c2 = b.points.length ?? 100;
       return c1 - c2;
-    })[0];
+    })[0]!;
 
   best.points.forEach(p => path.lineTo(p));
 

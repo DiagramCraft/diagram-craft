@@ -230,6 +230,7 @@ export class SnapManager {
       );
 
       if (matchingMagnets.length > 0) {
+        assert.arrayNotEmpty(matchingMagnets);
         const [m] = matchingMagnets;
         return {
           highlights: [],

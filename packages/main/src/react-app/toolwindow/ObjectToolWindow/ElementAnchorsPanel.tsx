@@ -203,7 +203,7 @@ const CustomAnchorsEditor = ({
                     onChange={x => {
                       const newAnchors = { ...(customAnchors.val ?? {}) };
                       newAnchors[id] = {
-                        ...newAnchors[id],
+                        ...newAnchors[id]!,
                         x: Math.max(0, Math.min(1, x ?? 0))
                       };
                       customAnchors.set(newAnchors);
@@ -221,7 +221,7 @@ const CustomAnchorsEditor = ({
                     onChange={y => {
                       const newAnchors = { ...(customAnchors.val ?? {}) };
                       newAnchors[id] = {
-                        ...newAnchors[id],
+                        ...newAnchors[id]!,
                         y: Math.max(0, Math.min(1, y ?? 0))
                       };
                       customAnchors.set(newAnchors);

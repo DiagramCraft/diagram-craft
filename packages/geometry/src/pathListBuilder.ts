@@ -136,22 +136,22 @@ export class PathListBuilder {
 
       switch (t) {
         case 'M':
-          d.moveTo({ x: pn[0], y: pn[1] });
+          d.moveTo({ x: pn[0]!, y: pn[1]! });
           break;
         case 'L':
-          d.lineTo({ x: pn[0], y: pn[1] });
+          d.lineTo({ x: pn[0]!, y: pn[1]! });
           break;
         case 'C':
-          d.cubicTo({ x: pn[4], y: pn[5] }, { x: pn[0], y: pn[1] }, { x: pn[2], y: pn[3] });
+          d.cubicTo({ x: pn[4]!, y: pn[5]! }, { x: pn[0]!, y: pn[1]! }, { x: pn[2]!, y: pn[3]! });
           break;
         case 'Q':
-          d.quadTo({ x: pn[2], y: pn[3] }, { x: pn[0], y: pn[1] });
+          d.quadTo({ x: pn[2]!, y: pn[3]! }, { x: pn[0]!, y: pn[1]! });
           break;
         case 'T':
-          d.curveTo({ x: pn[0], y: pn[1] });
+          d.curveTo({ x: pn[0]!, y: pn[1]! });
           break;
         case 'A':
-          d.arcTo({ x: pn[5], y: pn[6] }, pn[0], pn[1], pn[2], pn[3] as 0 | 1, pn[4] as 0 | 1);
+          d.arcTo({ x: pn[5]!, y: pn[6]! }, pn[0]!, pn[1]!, pn[2], pn[3] as 0 | 1, pn[4] as 0 | 1);
           break;
         default:
           throw new VerifyNotReached(`command ${t} not supported: ${path}`);

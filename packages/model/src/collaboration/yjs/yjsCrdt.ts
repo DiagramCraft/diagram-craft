@@ -366,7 +366,7 @@ export class YJSList<T extends CRDTCompatibleObject> implements CRDTList<T> {
 
   get(index: number): T {
     if (this.initial) {
-      return this.initial[index];
+      return this.initial[index]!;
     }
     return wrap(this.delegate.get(index));
   }

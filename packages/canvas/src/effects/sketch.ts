@@ -94,7 +94,7 @@ const calculateHachureLines = (
       let inside = false;
       for (let i = 0; i < sortedIntersections.length; i++) {
         if (inside) {
-          dest.push(Line.of(sortedIntersections[i - 1].point, sortedIntersections[i].point));
+          dest.push(Line.of(sortedIntersections[i - 1]!.point, sortedIntersections[i]!.point));
         }
         inside = !inside;
       }
@@ -215,7 +215,7 @@ export const asDistortedSvgPath = (
         const distortionTo = opts.unidirectional && !direction ? 0 : distortion;
 
         const m = i % 2 === 0 ? [0.5, 0.85] : [0.15, 0.5];
-        const d = r.nextRange(m[0], m[1]);
+        const d = r.nextRange(m[0]!, m[1]!);
         const midpoint = Point.add(s.start, Vector.scale(Vector.from(s.start, s.end), d));
         const distortedMidpoint = Point.add(midpoint, randDelta(r, distortionFrom, distortionTo));
 

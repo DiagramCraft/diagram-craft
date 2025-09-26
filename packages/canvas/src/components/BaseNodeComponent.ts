@@ -389,7 +389,7 @@ export class BaseNodeComponent<
     };
     const r = DIRECTIONS[indicator.direction];
 
-    const renderer = INDICATORS[indicator.shape] ?? INDICATORS['none'];
+    const renderer = INDICATORS[indicator.shape as keyof typeof INDICATORS] ?? INDICATORS['none'];
 
     return svg.g(
       {

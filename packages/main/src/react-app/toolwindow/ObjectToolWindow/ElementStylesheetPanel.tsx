@@ -193,7 +193,7 @@ export const ElementStylesheetPanel = (props: Props) => {
 
                             $d.document.styles.addStylesheet(s.id, s, uow);
                             $d.document.styles.setStylesheet(
-                              $d.selectionState.elements[0],
+                              $d.selectionState.elements[0]!,
                               id,
                               uow,
                               true

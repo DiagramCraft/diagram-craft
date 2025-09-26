@@ -6,14 +6,14 @@ let hidePopupRuleId: number[] = [];
 
 export const enablePropertyEditorTooltip = () => {
   if (hidePopupRuleId !== undefined) {
-    const stylesheet = document.styleSheets[0];
+    const stylesheet = document.styleSheets[0]!;
     hidePopupRuleId.forEach(r => stylesheet.deleteRule(r));
     hidePopupRuleId = [];
   }
 };
 
 export const disablePropertyEditorTooltip = () => {
-  const stylesheet = document.styleSheets[0];
+  const stylesheet = document.styleSheets[0]!;
   hidePopupRuleId.push(stylesheet.insertRule('.cmp-tooltip { display: none !important; }', 0));
 };
 

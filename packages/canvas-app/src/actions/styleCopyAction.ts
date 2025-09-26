@@ -25,9 +25,11 @@ export class StyleCopyAction extends AbstractSelectionAction {
 
   execute(): void {
     if (this.context.model.activeDiagram.selectionState.isNodesOnly()) {
-      currentNodeStyle = this.context.model.activeDiagram.selectionState.nodes[0].storedPropsCloned;
+      currentNodeStyle =
+        this.context.model.activeDiagram.selectionState.nodes[0]!.storedPropsCloned;
     } else if (this.context.model.activeDiagram.selectionState.isEdgesOnly()) {
-      currentEdgeStyle = this.context.model.activeDiagram.selectionState.edges[0].storedPropsCloned;
+      currentEdgeStyle =
+        this.context.model.activeDiagram.selectionState.edges[0]!.storedPropsCloned;
     } else {
       VERIFY_NOT_REACHED();
     }

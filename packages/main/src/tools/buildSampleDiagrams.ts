@@ -394,7 +394,7 @@ const writeShape = (
   const uow = new UnitOfWork(diagram);
 
   for (let i = 0; i < SHAPES_DEFS.length; i++) {
-    const def = SHAPES_DEFS[i];
+    const def = SHAPES_DEFS[i]!;
     const n = factory(diagram).duplicate(undefined, `${shape}-${i}`);
     n.transform([new Scale(dimensions.w / n.bounds.w, dimensions.h / n.bounds.h)], uow);
     n.setBounds({ x: x, y: y, ...dimensions, r: 0 }, uow);
@@ -472,7 +472,7 @@ const shapesTestFile = async (
       h: y + opts.yDiff
     };
   } else {
-    const [, p, shape] = pkg.split(':');
+    const [, p, shape] = pkg.split(':') as [string, string, string];
 
     let x = 0;
     let y = 10;

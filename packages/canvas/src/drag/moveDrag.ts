@@ -390,7 +390,7 @@ export class MoveDrag extends AbstractMoveDrag {
     // Reset the original selection back to the position of the now
     // removed duplicates
     selection.elements.forEach((e, idx) => {
-      e.setBounds(posititions[idx], this.uow);
+      e.setBounds(posititions[idx]!, this.uow);
     });
 
     this.uow.notify();

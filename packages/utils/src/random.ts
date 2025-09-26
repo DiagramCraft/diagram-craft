@@ -14,7 +14,7 @@ export class Random {
   }
 
   pick<T>(arr: T[]): T {
-    return arr[Math.floor(this.next() * arr.length)];
+    return arr[Math.floor(this.next() * arr.length)]!;
   }
 
   nextFloat() {

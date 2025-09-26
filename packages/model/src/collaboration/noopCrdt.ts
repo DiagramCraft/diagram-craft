@@ -117,7 +117,7 @@ export class NoOpCRDTList<T extends CRDTCompatibleObject>
   }
 
   get(index: number): T {
-    return this.backing[index];
+    return this.backing[index]!;
   }
 
   clone() {

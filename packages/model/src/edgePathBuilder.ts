@@ -47,6 +47,8 @@ const convertToCurves = (segments: ReadonlyArray<PathSegment>) => {
   // and then form a QuadSegment for every pair of lines (with the end of the first
   // as the control point)
 
+  assert.arrayNotEmpty(segments);
+
   let start = segments[0].start;
   let cp = segments[0].end;
   for (let i = 1; i < segments.length - 1; i++) {
@@ -72,7 +74,7 @@ const applyRounding = (rounding: number) => (segments: ReadonlyArray<PathSegment
   const dest: PathSegment[] = [];
   for (let i = 0; i < segments.length; i++) {
     const previous = i === 0 ? undefined : segments.at(i - 1);
-    const segment = segments[i];
+    const segment = segments[i]!;
     const next = segments.at(i + 1);
 
     const previousIsLine = previous instanceof LineSegment;

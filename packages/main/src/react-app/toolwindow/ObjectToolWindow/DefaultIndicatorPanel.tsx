@@ -10,7 +10,9 @@ export const DefaultIndicatorPanel = (props: { mode?: 'accordion' | 'panel' }) =
   const indicators = useElementProperty($d, 'indicators');
 
   const update = <K extends keyof Indicator>(id: string, key: K, value: Indicator[K]) => {
-    const newIndicator: Indicator = deepClone(indicators.val[id]) ?? {};
+    const newIndicator: Indicator = deepClone(indicators.val[id]) ?? {
+      enabled: false
+    };
     newIndicator[key] = value;
 
     const newIndicators = { ...indicators.val };

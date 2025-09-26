@@ -381,7 +381,7 @@ export const getDiagramElementPath = (element: DiagramElement): DiagramElement[]
 
 export const getTopMostNode = (element: DiagramElement): DiagramElement => {
   const path = getDiagramElementPath(element);
-  return path.length > 0 ? path[path.length - 1] : element;
+  return path.length > 0 ? path[path.length - 1]! : element;
 };
 
 export const isNode = (e: DiagramElement | undefined): e is DiagramNode => !!e && e.type === 'node';

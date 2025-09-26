@@ -75,7 +75,7 @@ export class Defaults<T> {
 
         if (k === '') return this.patterns[p];
 
-        const v = this.patterns[p][k];
+        const v = this.patterns[p]![k];
         if (v !== undefined) return v;
       }
     }
@@ -99,7 +99,7 @@ export class Defaults<T> {
 
     const offset = '.*'.length;
     this.patterns[key.slice(0, -offset)] ??= {};
-    unfoldObject(this.patterns[key.slice(0, -offset)], value);
+    unfoldObject(this.patterns[key.slice(0, -offset)]!, value);
   }
 
   applyDefaults(props: DeepPartial<T>): T {

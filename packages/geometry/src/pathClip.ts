@@ -383,7 +383,7 @@ export const classifyClipVertices = (
     const atEnd: Array<() => void> = [];
 
     for (let i = 0; i < currentShape.length; i += 1) {
-      const shape = currentShape[i];
+      const shape = currentShape[i]!;
       const vertices = shape.vertices;
 
       const [v0, j0] = findStartingPositionNotOnPath(vertices, otherShape);
@@ -403,7 +403,7 @@ export const classifyClipVertices = (
       // ... starting at j0
       for (let J = 0; J < vertices.length; J++) {
         const j = (J + j0) % vertices.length;
-        const v = vertices[j];
+        const v = vertices[j]!;
 
         // if Pi->intersect then
         if (isIntersection(v)) {
@@ -639,7 +639,7 @@ const processDisjointPathsHierarchy = (
     }
   }
 
-  let depth = disjointHierarchy[0][1].depth;
+  let depth = disjointHierarchy[0]![1].depth;
   while (depth >= 1) {
     for (const [path, hierarchy] of disjointHierarchy) {
       if (hierarchy.depth !== depth) continue;
@@ -702,7 +702,7 @@ const groupSubShapes = (entries: SubShapeRelation[]) => {
     clips.add(first.clip);
 
     for (let i = 0; i < remainingCrossings.length; i++) {
-      const relation = remainingCrossings[i];
+      const relation = remainingCrossings[i]!;
       if (subjects.has(relation.subject) || clips.has(relation.clip)) {
         subjects.add(relation.subject);
         clips.add(relation.clip);
@@ -758,18 +758,18 @@ const classifyDegeneracies = (vertexList: VertexList) => {
 const splitSegments = (vertexList: VertexList) => {
   const vertices = vertexList.vertices;
   for (let i = 0; i < vertices.length; i++) {
-    const current = vertices[i];
+    const current = vertices[i]!;
 
     const clips: Array<IntersectionVertex> = [];
     for (let j = i + 1; j < vertices.length; j++) {
-      const c = vertices[j];
-      if (c.segment !== vertices[i].segment) break;
+      const c = vertices[j]!;
+      if (c.segment !== vertices[i]!.segment) break;
 
       assertIntersection(c);
 
       DEBUG: {
         if (clips.length > 0) {
-          assert.true(clips[clips.length - 1].alpha < c.alpha, 'Alpha must be in ascending order');
+          assert.true(clips[clips.length - 1]!.alpha < c.alpha, 'Alpha must be in ascending order');
         }
       }
       clips.push(c);
@@ -815,7 +815,7 @@ const sortIntoVertexList = (
   // both simple and intersection vertices
   for (let i = 0; i < shapes.length; i++) {
     const otherShape = i === 0 ? shapes[1] : shapes[0];
-    const shape = shapes[i];
+    const shape = shapes[i]!;
     const interimResult: VertexList[] = [];
 
     for (const path of shape.all()) {
@@ -839,7 +839,7 @@ const sortIntoVertexList = (
       interimResult.push({
         path,
         vertices,
-        type: mustExist(tree[i].get(path)).type
+        type: mustExist(tree[i]!.get(path)).type
       });
     }
 
@@ -865,8 +865,8 @@ const removeRedundantVertices = (
       for (const entry of res) {
         const vertices = entry.vertices;
         for (let i = 0; i < vertices.length; i++) {
-          const first = vertices[i];
-          const second = vertices[(i + 1) % vertices.length];
+          const first = vertices[i]!;
+          const second = vertices[(i + 1) % vertices.length]!;
 
           if (!Point.isEqual(first.point, second.point)) continue;
 
@@ -951,8 +951,8 @@ const arrangeSegments = (dest: Array<Vertex[]>) => {
   for (const contour of dest) {
     const currentPath: PathSegment[] = [];
     for (let i = 0; i < contour.length - 1; i++) {
-      const current = contour[i];
-      const next = contour[i + 1];
+      const current = contour[i]!;
+      const next = contour[i + 1]!;
       if (current.next === next || current.next === (next as IntersectionVertex).neighbor) {
         currentPath.push(current.segment);
       } else if (current.prev === next) {
@@ -970,7 +970,7 @@ const arrangeSegments = (dest: Array<Vertex[]>) => {
       // TODO: Handle this better
       if (arr.length === 0) return new Path({ x: 0, y: 0 }, []);
       return new Path(
-        arr[0].start,
+        arr[0]!.start,
         arr.flatMap(s => s.raw())
       );
     })
@@ -994,7 +994,7 @@ const findStartingPositionNotOnPath = (
 
   // First look at all existing vertices
   while (j0 < pVertices.length) {
-    const p = pVertices[j0];
+    const p = pVertices[j0]!;
     if (!path.isOn(p.point)) {
       p0 = p;
       break;
@@ -1010,7 +1010,7 @@ const findStartingPositionNotOnPath = (
       // We prefer a couple of fixed offset, and then try 10 random offsets
       const offsets = [0.5, 0.25, 0.75, ...range(1, 10).map(() => random.nextRange(0, 1))];
       for (const o of offsets) {
-        const current = pVertices[j];
+        const current = pVertices[j]!;
         const p = current.segment.point(o);
         if (!path.isOn(p)) {
           const newVertex = makeTransientVertex({
@@ -1039,7 +1039,7 @@ const toggle = <T>(value: T, values: T[]): T => {
 
   const other = values.filter(v => v !== value);
   if (other.length === 0) return value;
-  return other[0];
+  return other[0]!;
 };
 
 function assertTwoElements<T>(arg: T[]): asserts arg is [T, T] {
@@ -1125,8 +1125,8 @@ const changeVertexType = (
 
 const makeLinkedList = (vertexList: VertexList) => {
   for (let i = 0; i < vertexList.vertices.length; i++) {
-    vertexList.vertices[i].next = vertexList.vertices[mod(i + 1, vertexList.vertices.length)];
-    vertexList.vertices[i].prev = vertexList.vertices[mod(i - 1, vertexList.vertices.length)];
+    vertexList.vertices[i]!.next = vertexList.vertices[mod(i + 1, vertexList.vertices.length)]!;
+    vertexList.vertices[i]!.prev = vertexList.vertices[mod(i - 1, vertexList.vertices.length)]!;
   }
 };
 
@@ -1171,9 +1171,9 @@ const assertConsistency = (subject: VertexList[], clip: VertexList[]) => {
 
   const verifyLinkedListAndNeighbor = (vertexList: VertexList, set: Set<Vertex>) => {
     for (let i = 0; i < vertexList.vertices.length; i++) {
-      const current = vertexList.vertices[i];
+      const current = vertexList.vertices[i]!;
 
-      const next = vertexList.vertices[(i + 1) % vertexList.vertices.length];
+      const next = vertexList.vertices[(i + 1) % vertexList.vertices.length]!;
       const prev =
         vertexList.vertices[(i + vertexList.vertices.length - 1) % vertexList.vertices.length];
 
@@ -1214,8 +1214,8 @@ const assertPathSegmentsAreConnected = (subject: VertexList[], clip: VertexList[
     for (const vertexList of list) {
       const vertices = vertexList.vertices;
       for (let i = 0; i < vertices.length; i++) {
-        const current = vertices[i];
-        const next = vertices[(i + 1) % vertices.length];
+        const current = vertices[i]!;
+        const next = vertices[(i + 1) % vertices.length]!;
         assert.true(
           Point.isEqual(current.segment.end, next.point, epsilon(current.segment.length(), 0.1))
         );

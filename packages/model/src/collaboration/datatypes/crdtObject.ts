@@ -39,7 +39,7 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
       let current: any = result;
 
       for (let i = 0; i < parts.length - 1; i++) {
-        const part = parts[i];
+        const part = parts[i]!;
 
         if (!(part in current)) {
           // If the next part is a number, create an array, otherwise create an object
@@ -58,7 +58,7 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
         current = current[part] as Record<string, unknown>;
       }
 
-      const lastPart = parts[parts.length - 1];
+      const lastPart = parts[parts.length - 1]!;
       if (value !== undefined) {
         current[lastPart] = value;
       } else if (!(lastPart in current)) {
@@ -118,7 +118,7 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
           Array.from(that.#current.keys())
             .filter(k => path === '' || k.startsWith(path + '.'))
             .map(k => (path === '' ? k : k.substring(path.length + 1)))
-            .map(k => k.split('.')[0])
+            .map(k => k.split('.')[0]!)
         );
 
         // If this is an array-like object (all keys are numeric), include 'length'

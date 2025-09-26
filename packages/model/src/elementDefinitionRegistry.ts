@@ -140,7 +140,7 @@ export class NodeDefinitionRegistry {
     const idx = this.preRegistrations.findIndex(a => a.shapes.test(s));
     if (idx === -1) return false;
 
-    const entry = this.preRegistrations[idx];
+    const entry = this.preRegistrations[idx]!;
     //this.preRegistrations.splice(idx, 1);
 
     const loader = stencilLoaderRegistry[entry.type];
@@ -337,7 +337,7 @@ export class StencilRegistry extends EventEmitter<StencilEvents> {
 
   getStencil(id: string) {
     assert.true(id.includes(DELIMITER), 'Invalid id');
-    const [pkgId] = id.split(DELIMITER);
+    const [pkgId] = id.split(DELIMITER) as [string];
     return this.get(pkgId)?.stencils.find(s => s.id === id);
   }
 
