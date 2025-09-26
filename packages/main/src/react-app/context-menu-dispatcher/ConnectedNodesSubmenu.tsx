@@ -61,27 +61,23 @@ const getConnectedItems = (diagram: Diagram): ConnectionItem[] => {
     for (const dataEntry of nodeData) {
       // Get the schema for this data entry
       const schema = diagram.document.data.db.getSchema(dataEntry.schema);
-      if (!schema) continue;
 
       // Check each field in the schema for reference fields
       for (const field of schema.fields) {
         if (field.type === 'reference') {
           // Get the referenced UIDs from the data
           let referencedUIDs: string[] = [];
-          if (dataEntry.data && dataEntry.data[field.id]) {
+          if (dataEntry.data[field.id]) {
             referencedUIDs = decodeDataReferences(dataEntry.data[field.id] as string);
           }
 
           // Get the referenced schema
           const referencedSchema = diagram.document.data.db.getSchema(field.schemaId);
-          if (!referencedSchema) continue;
 
           // Find the actual data entries for these UIDs
           const dataProvider = diagram.document.data.db;
-          if (!dataProvider) continue;
 
           const referencedData = dataProvider.getData(referencedSchema);
-          if (!referencedData) continue;
 
           for (const uid of referencedUIDs) {
             // Find the data entry with this UID
@@ -93,7 +89,7 @@ const getConnectedItems = (diagram: Diagram): ConnectionItem[] => {
             const nameField =
               referencedSchema.fields.find(f => f.name.toLowerCase() === 'name') ??
               referencedSchema.fields[0];
-            const displayName = dataItem[nameField?.id] ?? dataItem._uid;
+            const displayName = dataItem[nameField.id] ?? dataItem._uid;
 
             // Check if there's also a node with this data
             let associatedNode: DiagramNode | undefined;
@@ -102,7 +98,7 @@ const getConnectedItems = (diagram: Diagram): ConnectionItem[] => {
                 const node = element as DiagramNode;
                 const nodeDataEntries = node.metadata.data?.data ?? [];
                 for (const nodeDataEntry of nodeDataEntries) {
-                  if (nodeDataEntry.data && nodeDataEntry.data._uid === uid) {
+                  if (nodeDataEntry.data._uid === uid) {
                     associatedNode = node;
                     break;
                   }

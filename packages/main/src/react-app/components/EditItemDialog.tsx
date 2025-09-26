@@ -27,7 +27,7 @@ const ReferenceFieldEditor = ({
   const document = useDocument();
   const db = document.data.db;
 
-  const referencedSchema = db.schemas?.find(s => s.id === field.schemaId);
+  const referencedSchema = db.schemas.find(s => s.id === field.schemaId);
   if (!referencedSchema) {
     return <div>Referenced schema not found</div>;
   }
@@ -36,20 +36,19 @@ const ReferenceFieldEditor = ({
   const displayField = referencedSchema.fields[0]!.id; // Use first field for display
 
   // Convert data to MultiSelectItem format
-  const availableItems: MultiSelectItem[] =
-    referencedData?.map(item => {
-      const fieldValue = item[displayField];
-      let label: string = item._uid; // Default fallback
+  const availableItems: MultiSelectItem[] = referencedData.map(item => {
+    const fieldValue = item[displayField];
+    let label: string = item._uid; // Default fallback
 
-      if (typeof fieldValue === 'string' && fieldValue) {
-        label = fieldValue;
-      }
+    if (fieldValue) {
+      label = fieldValue;
+    }
 
-      return {
-        value: item._uid,
-        label: label
-      };
-    }) || [];
+    return {
+      value: item._uid,
+      label: label
+    };
+  });
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -83,7 +82,7 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
   const [formData, setFormData] = useState<Record<string, string | string[]>>({});
   const [submitError, setSubmitError] = useState<string | undefined>();
 
-  const schema = db.schemas?.find(s => s.id === props.selectedSchema) ?? db.schemas?.[0];
+  const schema = db.schemas.find(s => s.id === props.selectedSchema) ?? db.schemas[0];
 
   if (!schema) return <div></div>;
   assert.present(schema);
@@ -118,7 +117,7 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
         const refs = value as string[];
         return refs.length < field.minCount;
       } else {
-        return !(value as string)?.trim();
+        return !(value as string).trim();
       }
     });
     if (missingFields.length > 0) {
@@ -227,12 +226,12 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
             {field.type === 'reference' ? (
               <ReferenceFieldEditor
                 field={field}
-                selectedValues={(formData[field.id] as string[]) || []}
+                selectedValues={formData[field.id] as string[]}
                 onSelectionChange={values => setFormData(prev => ({ ...prev, [field.id]: values }))}
               />
             ) : field.type === 'longtext' ? (
               <TextArea
-                value={(formData[field.id] as string) ?? ''}
+                value={formData[field.id] as string}
                 onChange={v => setFormData(prev => ({ ...prev, [field.id]: v ?? '' }))}
                 style={{
                   minHeight: '5rem'
@@ -240,7 +239,7 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
               />
             ) : (
               <TextInput
-                value={(formData[field.id] as string) ?? ''}
+                value={formData[field.id] as string}
                 onChange={v => setFormData(prev => ({ ...prev, [field.id]: v ?? '' }))}
               />
             )}

@@ -163,7 +163,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     // Note: It is important that this comes last, as it might trigger
     //       events etc - so important that everything is set up before
     //       that to avoid flashing of incorrect formatting/style
-    if (this.#anchors.get() === undefined && this.diagram.layers) {
+    if (this.#anchors.get() === undefined) {
       this.invalidateAnchors(UnitOfWork.immediate(this.diagram));
     }
   }
@@ -199,12 +199,11 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     node.#nodeType.set(nodeType);
     node.#text.set(text);
 
-    node.#props.set((props ?? {}) as NodeProps);
+    node.#props.set(props as NodeProps);
 
-    const m = metadata ?? {};
-    m.style ??= nodeType === 'text' ? DefaultStyles.node.text : DefaultStyles.node.default;
-    m.textStyle ??= DefaultStyles.text.default;
-    node._metadata.set(m);
+    metadata.style ??= nodeType === 'text' ? DefaultStyles.node.text : DefaultStyles.node.default;
+    metadata.textStyle ??= DefaultStyles.text.default;
+    node._metadata.set(metadata);
 
     node._cache?.clear();
   }
@@ -355,14 +354,13 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       .map(([, v]) => v.elementStyle)
       .filter(e => !!e)
       .at(-1);
-    const ruleStyleProps = this.diagram.document.styles.getNodeStyle(ruleElementStyle)?.props ?? {};
+    const ruleStyleProps = this.diagram.document.styles.getNodeStyle(ruleElementStyle)?.props;
 
     const ruleTextStyle = adjustments
       .map(([, v]) => v.textStyle)
       .filter(e => !!e)
       .at(-1);
-    const ruleTextStyleProps =
-      this.diagram.document.styles.getTextStyle(ruleTextStyle)?.props ?? {};
+    const ruleTextStyleProps = this.diagram.document.styles.getTextStyle(ruleTextStyle)?.props;
 
     return {
       parentProps,
@@ -929,7 +927,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   }
 
   getAttachmentsInUse() {
-    return [this.renderProps.fill?.image?.id, this.renderProps.fill?.pattern];
+    return [this.renderProps.fill.image.id, this.renderProps.fill.pattern];
   }
 
   private getNestedElements(): DiagramElement[] {

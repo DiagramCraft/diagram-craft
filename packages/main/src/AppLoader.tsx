@@ -40,7 +40,7 @@ const loadInitialDocument = async (
     ) {
       console.log('Load from server');
       const v = await documentFactory.createDocument(root, diagram!.url, progress);
-      return { doc: v, url: diagram?.url };
+      return { doc: v, url: diagram.url };
     } else {
       // Try multi-window autosave first
       const multiWindowAutosaved = await Autosave.get().load(
@@ -53,8 +53,8 @@ const loadInitialDocument = async (
 
       if (multiWindowAutosaved) {
         console.log('Load from auto save');
-        multiWindowAutosaved.document!.url = diagram?.url;
-        return { doc: multiWindowAutosaved.document, url: diagram?.url };
+        multiWindowAutosaved.document!.url = diagram.url;
+        return { doc: multiWindowAutosaved.document, url: diagram.url };
       } else {
         console.log('Load from url');
         const defDiagram = await loadFileFromUrl(

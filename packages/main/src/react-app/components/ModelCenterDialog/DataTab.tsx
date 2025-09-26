@@ -58,11 +58,6 @@ export const DataTab = () => {
 
   // Collect all data items from all schemas
   useEffect(() => {
-    if (!db.schemas) {
-      setAllDataItems([]);
-      return;
-    }
-
     const allItems: DataItemWithSchema[] = [];
 
     for (const schema of db.schemas) {
@@ -78,8 +73,6 @@ export const DataTab = () => {
 
   useEffect(() => {
     const handleDataChange = () => {
-      if (!db.schemas) return;
-
       const allItems: DataItemWithSchema[] = [];
       for (const schema of db.schemas) {
         const schemaData = db.getData(schema);

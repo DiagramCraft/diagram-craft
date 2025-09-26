@@ -263,7 +263,7 @@ export const unfoldObject = (
   value: unknown,
   path: string[] = []
 ): Record<string, unknown> => {
-  if (isObj(value) && value !== null) {
+  if (value !== null && isObj(value)) {
     for (const key of Object.keys(value)) {
       unfoldObject(dest, value[key], [...path, key]);
     }

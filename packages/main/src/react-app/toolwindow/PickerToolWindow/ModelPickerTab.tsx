@@ -123,8 +123,6 @@ const DataProviderResponse = (props: {
   const [, setDataVersion] = useState<number>(0);
 
   useEffect(() => {
-    if (!db) return;
-
     const handleDataChange = () => setDataVersion(prev => prev + 1);
 
     db.on('addData', handleDataChange);
@@ -138,7 +136,7 @@ const DataProviderResponse = (props: {
     };
   }, [db]);
 
-  const schema = db?.schemas?.find(s => s.id === props.selectedSchema) ?? db?.schemas?.[0];
+  const schema = db.schemas.find(s => s.id === props.selectedSchema) ?? db.schemas[0];
   if (!schema) return <div>Loading...</div>;
 
   const data = props.search.trim() !== '' ? db.queryData(schema, props.search) : db.getData(schema);
@@ -146,7 +144,7 @@ const DataProviderResponse = (props: {
 
   return (
     <div className={'cmp-query-response'}>
-      {data?.map(item => {
+      {data.map(item => {
         const dataTemplates = document.data.templates.bySchema(schema.id);
         return (
           <ContextMenu.Root key={item._uid}>
@@ -249,7 +247,7 @@ const DataProviderResponse = (props: {
                                           diagramHeight={n.diagram.viewBox.dimensions.h}
                                           diagram={n.diagram}
                                           showHover={true}
-                                          name={t.name ?? ''}
+                                          name={t.name}
                                           onMouseDown={() => {}}
                                         />
                                       </div>
@@ -319,7 +317,7 @@ const DataProviderQueryView = (props: {
       <div className={'util-hstack'}>
         <div style={{ flexGrow: 1 }}>
           <Select.Root value={props.selectedSchema} onChange={props.onChangeSchema}>
-            {db.schemas?.map?.(schema => (
+            {db.schemas.map(schema => (
               <Select.Item key={schema.id} value={schema.id}>
                 {schema.name}
               </Select.Item>
@@ -380,47 +378,36 @@ export const ModelPickerTab = () => {
   const document = $diagram.document;
   const [search, setSearch] = useState<string>('');
 
-  const dataProvider = document.data.db;
+  const db = document.data.db;
 
   useEffect(() => {
-    if (!dataProvider) return;
-
     const rd = () => redraw();
 
-    dataProvider.on('addData', rd);
-    dataProvider.on('updateData', rd);
-    dataProvider.on('deleteData', rd);
+    db.on('addData', rd);
+    db.on('updateData', rd);
+    db.on('deleteData', rd);
     return () => {
-      dataProvider.off('addData', rd);
-      dataProvider.off('updateData', rd);
-      dataProvider.off('deleteData', rd);
+      db.off('addData', rd);
+      db.off('updateData', rd);
+      db.off('deleteData', rd);
     };
-  }, [dataProvider]);
+  }, [db]);
 
   useEventListener(document.data.templates, 'add', redraw);
   useEventListener(document.data.templates, 'update', redraw);
   useEventListener(document.data.templates, 'remove', redraw);
 
-  const [selectedSchema, setSelectedSchema] = useState<string | undefined>(
-    dataProvider?.schemas?.[0]?.id
-  );
+  const [selectedSchema, setSelectedSchema] = useState<string | undefined>(db.schemas[0]!.id);
 
-  if (
-    dataProvider?.schemas &&
-    dataProvider?.schemas?.length > 0 &&
-    dataProvider?.schemas.find(s => s.id === selectedSchema) === undefined
-  ) {
-    setSelectedSchema(dataProvider.schemas[0]!.id);
+  if (db.schemas.length > 0 && db.schemas.find(s => s.id === selectedSchema) === undefined) {
+    setSelectedSchema(db.schemas[0]!.id);
   }
-
-  const db = document.data.db;
 
   // Handle delete confirmation
   const handleDeleteItem = (item: Data) => {
-    if (!dataProvider || !('deleteData' in dataProvider)) return;
+    if (!('deleteData' in db)) return;
 
-    const schema =
-      dataProvider.schemas?.find(s => s.id === selectedSchema) ?? dataProvider.schemas?.[0];
+    const schema = db.schemas.find(s => s.id === selectedSchema) ?? db.schemas[0];
     if (!schema) return;
 
     const itemName = item[schema.fields[0]?.id ?? ''] ?? 'this item';
@@ -436,7 +423,7 @@ export const ModelPickerTab = () => {
         },
         async () => {
           try {
-            await dataProvider.deleteData(schema, item);
+            await db.deleteData(schema, item);
           } catch (error) {
             console.error('Failed to delete item:', error);
           }
@@ -450,7 +437,7 @@ export const ModelPickerTab = () => {
       <ToolWindow.TabActions>
         <a
           className={'cmp-button cmp-button--icon-only'}
-          aria-disabled={!db || (!('refreshData' in db) && !('refreshSchemas' in db))}
+          aria-disabled={!('refreshData' in db) && !('refreshSchemas' in db)}
           onClick={async () => {
             assert.present(db);
 
@@ -489,39 +476,33 @@ export const ModelPickerTab = () => {
               alignItems: 'center'
             }}
           >
-            {dataProvider === undefined && <div>No data provider configured</div>}
-
-            {dataProvider !== undefined && (
-              <DataProviderQueryView
-                onSearch={setSearch}
-                selectedSchema={selectedSchema!}
-                onChangeSchema={setSelectedSchema}
-              />
-            )}
+            <DataProviderQueryView
+              onSearch={setSearch}
+              selectedSchema={selectedSchema!}
+              onChangeSchema={setSelectedSchema}
+            />
           </div>
         </ToolWindowPanel>
 
-        {dataProvider !== undefined && (
-          <ToolWindowPanel
-            id={'response'}
-            title={'Data'}
-            mode={'accordion'}
-            headerButtons={
-              'addData' in dataProvider && (
-                <a className={'cmp-button--icon-only'} onClick={() => setAddItemDialog(true)}>
-                  <TbPlus />
-                </a>
-              )
-            }
-          >
-            <DataProviderResponse
-              selectedSchema={selectedSchema!}
-              search={search}
-              onEditItem={item => setEditItemDialog({ open: true, item })}
-              onDeleteItem={handleDeleteItem}
-            />
-          </ToolWindowPanel>
-        )}
+        <ToolWindowPanel
+          id={'response'}
+          title={'Data'}
+          mode={'accordion'}
+          headerButtons={
+            'addData' in db && (
+              <a className={'cmp-button--icon-only'} onClick={() => setAddItemDialog(true)}>
+                <TbPlus />
+              </a>
+            )
+          }
+        >
+          <DataProviderResponse
+            selectedSchema={selectedSchema!}
+            search={search}
+            onEditItem={item => setEditItemDialog({ open: true, item })}
+            onDeleteItem={handleDeleteItem}
+          />
+        </ToolWindowPanel>
       </Accordion.Root>
 
       <EditItemDialog

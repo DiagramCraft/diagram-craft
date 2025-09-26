@@ -75,7 +75,7 @@ export const Preview = (props: Props) => {
         <Button
           type={'icon-only'}
           onClick={() => {
-            viewbox.zoom(1.1, viewbox?.midpoint);
+            viewbox.zoom(1.1, viewbox.midpoint);
           }}
         >
           <TbZoomOut />
@@ -83,7 +83,7 @@ export const Preview = (props: Props) => {
         <Button
           type={'icon-only'}
           onClick={() => {
-            viewbox.zoom(0.9, viewbox?.midpoint);
+            viewbox.zoom(0.9, viewbox.midpoint);
           }}
         >
           <TbZoomIn />

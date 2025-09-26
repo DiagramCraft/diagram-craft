@@ -46,30 +46,34 @@ export const ExtendedDataTab = () => {
     ) => {
       const uow = new UnitOfWork($d, true);
 
-      if (type === 'data') {
-        $d.selectionState.elements.forEach(e => {
-          e.updateMetadata(p => {
-            p.data ??= {};
-            p.data.data ??= [];
-            let s = p.data.data.find(e => e.schema === schema);
-            if (!s) {
-              s = { schema, type: 'schema', data: {} };
-              p.data.data.push(s);
-            }
-            s.data ??= {};
-            s.data[id] = (ev.target! as HTMLInputElement).value;
-          }, uow);
-        });
-      } else if (type === 'custom') {
-        $d.selectionState.elements.forEach(e => {
-          e.updateMetadata(p => {
-            p.data ??= {};
-            p.data.customData ??= {};
-            p.data.customData[id] = (ev.target! as HTMLInputElement).value;
-          }, uow);
-        });
-      } else {
-        VERIFY_NOT_REACHED();
+      switch (type) {
+        case 'data':
+          $d.selectionState.elements.forEach(e => {
+            e.updateMetadata(p => {
+              p.data ??= {};
+              p.data.data ??= [];
+              let s = p.data.data.find(e => e.schema === schema);
+              if (!s) {
+                s = { schema, type: 'schema', data: {} };
+                p.data.data.push(s);
+              }
+              // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+              s.data ??= {};
+              s.data[id] = (ev.target! as HTMLInputElement).value;
+            }, uow);
+          });
+          break;
+        case 'custom':
+          $d.selectionState.elements.forEach(e => {
+            e.updateMetadata(p => {
+              p.data ??= {};
+              p.data.customData ??= {};
+              p.data.customData[id] = (ev.target! as HTMLInputElement).value;
+            }, uow);
+          });
+          break;
+        default:
+          VERIFY_NOT_REACHED();
       }
       commitWithUndo(uow, 'Update data');
     },
@@ -213,25 +217,23 @@ export const ExtendedDataTab = () => {
                             const accordionItem = e.target.closest(
                               '.cmp-accordion__item'
                             ) as HTMLElement;
-                            const accordionContent = accordionItem?.querySelector(
+                            const accordionContent = accordionItem.querySelector(
                               '.cmp-accordion__content'
                             ) as HTMLElement;
-                            const accordionHeader = accordionItem?.querySelector(
+                            const accordionHeader = accordionItem.querySelector(
                               '.cmp-accordion__header'
                             ) as HTMLElement;
 
-                            if (accordionItem) {
-                              if (isChecked) {
-                                accordionItem.dataset.state = 'open';
-                                accordionContent.dataset.state = 'open';
-                                accordionHeader.dataset.state = 'open';
-                                addSchemaToSelection(schema.id);
-                              } else {
-                                accordionItem.dataset.state = 'closed';
-                                accordionContent.dataset.state = 'closed';
-                                accordionHeader.dataset.state = 'closed';
-                                removeSchemaFromSelection(schema.id);
-                              }
+                            if (isChecked) {
+                              accordionItem.dataset.state = 'open';
+                              accordionContent.dataset.state = 'open';
+                              accordionHeader.dataset.state = 'open';
+                              addSchemaToSelection(schema.id);
+                            } else {
+                              accordionItem.dataset.state = 'closed';
+                              accordionContent.dataset.state = 'closed';
+                              accordionHeader.dataset.state = 'closed';
+                              removeSchemaFromSelection(schema.id);
                             }
                           }}
                           onClick={e => e.stopPropagation()}
@@ -278,7 +280,7 @@ export const ExtendedDataTab = () => {
                       {schema.fields.map(f => {
                         const v = unique(
                           $d.selectionState.elements.map(
-                            e => findEntryBySchema(e, schema.id)?.data?.[f.id]
+                            e => findEntryBySchema(e, schema.id)?.data[f.id]
                           )
                         );
 

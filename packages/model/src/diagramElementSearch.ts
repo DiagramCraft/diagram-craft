@@ -68,11 +68,7 @@ export const searchByElementSearchClauses = (
   const results: Set<string>[] = [];
   for (const clause of clauses) {
     notImplemented.true(
-      clause.type === 'query' ||
-        clause.type === 'any' ||
-        clause.type === 'props' ||
-        clause.type === 'tags' ||
-        clause.type === 'comment',
+      ['query', 'any', 'props', 'tags', 'comment'].includes(clause.type),
       'Not implemented yet'
     );
     if (clause.type === 'query') {
@@ -98,7 +94,7 @@ export const searchByElementSearchClauses = (
 
             switch (clause.relation) {
               case 'eq':
-                if (typeof value === 'string' && typeof clause.value === 'string') {
+                if (typeof value === 'string') {
                   if (value.toLowerCase() === clause.value.toLowerCase()) result.add(element.id);
                 } else if (
                   typeof value === 'boolean' &&
@@ -112,7 +108,7 @@ export const searchByElementSearchClauses = (
                 }
                 break;
               case 'neq':
-                if (typeof value === 'string' && typeof clause.value === 'string') {
+                if (typeof value === 'string') {
                   if (value.toLowerCase() !== clause.value.toLowerCase()) result.add(element.id);
                 } else if (
                   typeof value === 'boolean' &&
@@ -164,7 +160,7 @@ export const searchByElementSearchClauses = (
       for (const layer of diagram.layers.visible) {
         if (layer instanceof RegularLayer) {
           for (const element of (layer as RegularLayer).elements) {
-            const elementTags = element.tags ?? [];
+            const elementTags = element.tags;
             const hasMatchingTag = clause.tags.some(ruleTag =>
               elementTags.some(elementTag => elementTag.toLowerCase() === ruleTag.toLowerCase())
             );
@@ -176,6 +172,8 @@ export const searchByElementSearchClauses = (
         }
       }
       results.push(result);
+
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     } else if (clause.type === 'comment') {
       const allComments = diagram.commentManager.getAll();
 

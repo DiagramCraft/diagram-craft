@@ -39,7 +39,7 @@ const Weights = {
 const makeHeuristic =
   (end: Point): HeuristicFunction<Point, [Direction, string]> =>
   (_from: Vertex<Point>, to: Vertex<Point>) =>
-    Point.manhattanDistance(to.data ?? end, end) * 0.8;
+    Point.manhattanDistance(to.data, end) * 0.8;
 
 interface SegmentProvider {
   addSegment(
@@ -95,7 +95,7 @@ class OrthogonalGraph extends SimpleGraph<Point, [Direction, string]> {
     for (const edge of this.edges()) {
       const start = this.getVertex(edge.from);
       const end = this.getVertex(edge.to);
-      if (!start || !end || !start.data || !end.data) continue;
+      if (!start || !end) continue;
 
       const b = Box.fromCorners(start.data, end.data);
       if (Box.intersects(bounds, b)) {
@@ -568,7 +568,6 @@ class PathfindingSegmentProvider implements SegmentProvider {
 
     const points: Point[] = [];
     for (const e of shortestPathToWaypoint!.path) {
-      if (e.data! === undefined) continue;
       points.push(e.data!);
     }
 
@@ -619,8 +618,8 @@ export const buildOrthogonalEdgePath = (
   const preferredStartDirection = hasStartRC ? startRC : preferredStartDirectionP;
   const preferredEndDirection = hasEndRC ? endRC : preferredEndDirectionP;
 
-  const isStartForced = (isStartForcedP || hasStartRC) ?? false;
-  const isEndForced = (isEndForcedP || hasEndRC) ?? false;
+  const isStartForced = isStartForcedP || hasStartRC;
+  const isEndForced = isEndForcedP || hasEndRC;
 
   let startPoint = edge.start.position;
   let endPoint = edge.end.position;
@@ -694,11 +693,7 @@ export const buildOrthogonalEdgePath = (
 
   const best =
     endResult.find(r => r.endDirection === preferredEndDirection) ??
-    endResult.toSorted((a, b) => {
-      const c1 = a.points.length ?? 100;
-      const c2 = b.points.length ?? 100;
-      return c1 - c2;
-    })[0]!;
+    endResult.toSorted((a, b) => a.points.length - b.points.length)[0]!;
 
   best.points.forEach(p => path.lineTo(p));
 

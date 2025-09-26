@@ -200,7 +200,7 @@ export const isSelectionDirty = ($d: Diagram, isText: boolean) => {
     const propsFromElement = stylesheet.getPropsFromElement(e);
     return isPropsDirty(
       propsFromElement,
-      stylesheet?.props ?? {},
+      stylesheet.props,
       // @ts-ignore
       isNode(e) ? nodeDefaults : edgeDefaults,
       []
@@ -351,7 +351,7 @@ export class DiagramStyles {
 
             if ('custom' in stylesheet.props) {
               for (const key of Object.keys(stylesheet.props.custom!)) {
-                if (shapeToClear.custom !== undefined && key in shapeToClear.custom) {
+                if (key in (shapeToClear.custom ?? {})) {
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   delete (shapeToClear.custom! as any)[key];
                 }

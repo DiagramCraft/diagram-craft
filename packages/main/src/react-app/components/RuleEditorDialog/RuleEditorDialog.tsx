@@ -334,7 +334,7 @@ export const RuleEditorDialog = (props: Props) => {
       <div className={styles.ruleEditor__container}>
         <div>
           <label>{'Name'}:</label>
-          <TextInput ref={ref} value={rule?.name ?? ''} size={40} />
+          <TextInput ref={ref} value={rule.name} size={40} />
         </div>
         <div>
           <label>{'Type'}:</label>

@@ -703,7 +703,7 @@ export class InlineAutolinksHandler extends InlineParser {
 export class InlineLineBreakHandler extends InlineParser {
   parse(parser: Parser, s: string, parserState: ParserState): ASTNode[] {
     const context =
-      parserState.context?.includes('atx-header') || parserState.context?.includes('setext-header');
+      parserState.context.includes('atx-header') || parserState.context.includes('setext-header');
 
     if (context) {
       s = s.replace(/ +$/gm, '');
