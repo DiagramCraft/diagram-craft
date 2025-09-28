@@ -48,8 +48,7 @@
         "noExtraBooleanCast": "off",
         "useLiteralKeys": "off",
         "noStaticOnlyClass": "off",
-        "noAdjacentSpacesInRegex": "off",
-        "useIndexOf": "off"
+        "noAdjacentSpacesInRegex": "off"
       },
       "correctness": {
         "useExhaustiveDependencies": "off",

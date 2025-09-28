@@ -179,7 +179,7 @@ export class MappedCRDTOrderedMap<
   setOrder(keys: string[]) {
     this.#current.transact(() => {
       for (const [k, v] of this.#current.entries()) {
-        const idx = keys.findIndex(key => key === k);
+        const idx = keys.indexOf(k);
         if (idx >= 0) {
           if (v.get('index') !== idx) v.set('index', idx);
         }
