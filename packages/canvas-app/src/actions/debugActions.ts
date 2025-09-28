@@ -18,9 +18,6 @@ declare global {
 }
 
 class DumpDocument extends AbstractAction {
-  constructor(context: ActionContext) {
-    super(context);
-  }
 
   execute(): void {
     serializeDiagramDocument(this.context.model.activeDiagram.document).then(e => {
@@ -30,9 +27,6 @@ class DumpDocument extends AbstractAction {
 }
 
 class DumpSelectionAction extends AbstractAction {
-  constructor(context: ActionContext) {
-    super(context);
-  }
 
   execute(): void {
     this.context.model.activeDiagram.selectionState.elements.forEach(e => {
@@ -43,9 +37,6 @@ class DumpSelectionAction extends AbstractAction {
 }
 
 class RedrawAction extends AbstractAction {
-  constructor(context: ActionContext) {
-    super(context);
-  }
 
   execute(): void {
     const diagram = this.context.model.activeDiagram;

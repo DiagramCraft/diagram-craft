@@ -12,9 +12,6 @@ declare global {
 }
 
 class FileSaveAction extends AbstractAction<undefined, Application> {
-  constructor(application: Application) {
-    super(application);
-  }
 
   getCriteria(application: Application) {
     return [ActionCriteria.Simple(() => !!application.model.activeDocument.url)];

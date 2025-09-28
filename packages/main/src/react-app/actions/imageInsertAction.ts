@@ -16,9 +16,6 @@ declare global {
 }
 
 class ImageInsertAction extends AbstractAction<undefined, Application> {
-  constructor(application: Application) {
-    super(application);
-  }
 
   getCriteria(application: Application) {
     return ActionCriteria.EventTriggered(

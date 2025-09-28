@@ -20,10 +20,6 @@ type WaypointDeleteActionArg = {
 };
 
 export class WaypointDeleteAction extends AbstractAction<WaypointDeleteActionArg> {
-  constructor(context: ActionContext) {
-    super(context);
-  }
-
   execute(context: WaypointDeleteActionArg): void {
     precondition.is.present(context.point);
 

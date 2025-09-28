@@ -14,10 +14,6 @@ export const waypointAddActions = (context: ActionContext) => ({
 type WaypointAddActionArg = { id?: string; point?: Point };
 
 export class WaypointAddAction extends AbstractAction<WaypointAddActionArg> {
-  constructor(context: ActionContext) {
-    super(context);
-  }
-
   execute(context: WaypointAddActionArg): void {
     const edge = this.context.model.activeDiagram.edgeLookup.get(context.id!);
 

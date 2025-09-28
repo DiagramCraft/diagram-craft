@@ -36,9 +36,6 @@ declare global {
 }
 
 class EdgeToolEdgeEndpointMoveDrag extends EdgeEndpointMoveDrag {
-  constructor(diagram: Diagram, edge: DiagramEdge, direction: 'start' | 'end', context: Context) {
-    super(diagram, edge, direction, context);
-  }
 
   onDragEnd() {
     super.onDragEnd();

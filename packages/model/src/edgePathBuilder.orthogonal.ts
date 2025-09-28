@@ -160,7 +160,6 @@ export type EdgeType =
   | 'outer-bounds';
 
 class FastSegmentProvider implements SegmentProvider {
-  constructor() {}
 
   addSegment(
     start: {

@@ -45,7 +45,6 @@ export type PropPathValue<T, P extends PropPath<T>> = P extends `${infer Key}.${
  * accessor.set(myObject, 'path.to.property', newValue);
  */
 export class DynamicAccessor<T> {
-  constructor() {}
 
   /**
    * Gets the value of a property in an object using a string path.

@@ -376,8 +376,6 @@ export class HTMLToSvgTransformer implements HTMLParserCallback {
     style: string;
   }> = [];
 
-  constructor() {}
-
   private newLine() {
     this.svgTags += `<tspan class="line">${this.currentLine}</tspan>`;
     for (let i = 0; i < this.tagStack.length; i++) {

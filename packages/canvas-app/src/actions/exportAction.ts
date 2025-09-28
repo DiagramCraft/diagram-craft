@@ -23,9 +23,6 @@ const MARGIN = 50;
 const SCALE = 2;
 
 class ExportImageAction extends AbstractAction {
-  constructor(context: ActionContext) {
-    super(context);
-  }
 
   execute(): void {
     const run = async () => {

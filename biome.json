@@ -47,7 +47,6 @@
         "noImportantStyles": "off",
         "useDateNow": "off",
         "noExtraBooleanCast": "off",
-        "noUselessConstructor": "off",
         "useLiteralKeys": "off",
         "noThisInStatic": "off",
         "noStaticOnlyClass": "off",

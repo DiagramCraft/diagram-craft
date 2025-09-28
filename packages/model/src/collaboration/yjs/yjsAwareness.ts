@@ -9,10 +9,6 @@ export class YJSAwareness extends EventEmitter<AwarenessEvents> implements Aware
   private userStates: Array<AwarenessUserState> = [];
   private cursorStates: Array<AwarenessUserState & AwarenessCursorState> = [];
 
-  constructor() {
-    super();
-  }
-
   setBackend(backend: awarenessProtocol.Awareness) {
     this.backend?.destroy();
 

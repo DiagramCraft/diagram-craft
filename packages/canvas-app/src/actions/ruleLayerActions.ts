@@ -23,10 +23,6 @@ declare global {
 type LayerActionArg = { id?: string };
 
 export class RuleLayerDeleteAction extends AbstractAction<LayerActionArg, Application> {
-  constructor(application: Application) {
-    super(application);
-  }
-
   isEnabled({ id }: LayerActionArg): boolean {
     return id !== undefined;
   }
@@ -65,10 +61,6 @@ export class RuleLayerDeleteAction extends AbstractAction<LayerActionArg, Applic
 }
 
 export class RuleLayerEditAction extends AbstractAction<LayerActionArg, Application> {
-  constructor(application: Application) {
-    super(application);
-  }
-
   isEnabled({ id }: LayerActionArg): boolean {
     return id !== undefined;
   }
@@ -100,10 +92,6 @@ export class RuleLayerEditAction extends AbstractAction<LayerActionArg, Applicat
 }
 
 export class RuleLayerAddAction extends AbstractAction<LayerActionArg, Application> {
-  constructor(application: Application) {
-    super(application);
-  }
-
   isEnabled({ id }: LayerActionArg): boolean {
     return (
       id !== undefined &&

@@ -1,6 +1,5 @@
-import type { EligibleNodePredicate, MatchingMagnetPair, SnapProvider } from './snapManager';
+import type { MatchingMagnetPair, SnapProvider } from './snapManager';
 import { Highlight } from '../selectionState';
-import type { Diagram } from '../diagram';
 import { DistancePairWithRange, MagnetOfType } from './magnet';
 import { AbstractNodeSnapProvider } from './abstractNodeSnapProvider';
 import { Direction } from '@diagram-craft/geometry/direction';
@@ -68,9 +67,6 @@ export class NodeDistanceSnapProvider
   extends AbstractNodeSnapProvider
   implements SnapProvider<'distance'>
 {
-  constructor(diagram: Diagram, eligibleNodePredicate: EligibleNodePredicate) {
-    super(diagram, eligibleNodePredicate);
-  }
 
   /**
    * Generate distance magnets based on spacing between existing nodes

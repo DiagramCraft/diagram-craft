@@ -1,7 +1,6 @@
 import {
   AbstractAction,
   AbstractToggleAction,
-  ActionContext,
   ToggleActionUndoableAction
 } from '@diagram-craft/canvas/action';
 import { Diagram } from '@diagram-craft/model/diagram';
@@ -41,9 +40,6 @@ declare global {
 type LayerActionArg = { id?: string };
 
 export class LayerDeleteAction extends AbstractAction<LayerActionArg, Application> {
-  constructor(application: Application) {
-    super(application);
-  }
 
   isEnabled({ id }: LayerActionArg): boolean {
     return id !== undefined && this.context.model.activeDiagram.layers.byId(id) !== undefined;
@@ -146,9 +142,6 @@ class LayerDeleteUndoableAction implements UndoableAction {
 }
 
 export class LayerToggleVisibilityAction extends AbstractToggleAction<LayerActionArg> {
-  constructor(context: ActionContext) {
-    super(context);
-  }
 
   isEnabled({ id }: LayerActionArg): boolean {
     return id !== undefined && this.context.model.activeDiagram.layers.byId(id) !== undefined;
@@ -179,9 +172,6 @@ export class LayerToggleVisibilityAction extends AbstractToggleAction<LayerActio
 }
 
 export class LayerToggleLockedAction extends AbstractToggleAction<LayerActionArg> {
-  constructor(context: ActionContext) {
-    super(context);
-  }
 
   isEnabled({ id }: LayerActionArg): boolean {
     const diagram = this.context.model.activeDiagram;
@@ -213,9 +203,6 @@ export class LayerToggleLockedAction extends AbstractToggleAction<LayerActionArg
 }
 
 export class LayerRenameAction extends AbstractAction<LayerActionArg, Application> {
-  constructor(context: Application) {
-    super(context);
-  }
 
   isEnabled({ id }: LayerActionArg): boolean {
     return id !== undefined && this.context.model.activeDiagram.layers.byId(id) !== undefined;
@@ -333,9 +320,6 @@ class LayerAddUndoableAction implements UndoableAction {
 }
 
 export class LayerSelectionMoveAction extends AbstractAction<LayerActionArg> {
-  constructor(context: ActionContext) {
-    super(context);
-  }
 
   execute({ id }: LayerActionArg): void {
     precondition.is.present(id);
@@ -352,9 +336,6 @@ export class LayerSelectionMoveAction extends AbstractAction<LayerActionArg> {
 }
 
 export class LayerSelectionMoveNewAction extends AbstractAction {
-  constructor(context: ActionContext) {
-    super(context);
-  }
 
   execute(): void {
     const diagram = this.context.model.activeDiagram;
