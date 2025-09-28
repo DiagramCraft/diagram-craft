@@ -201,7 +201,7 @@ export const isSelectionDirty = ($d: Diagram, isText: boolean) => {
     return isPropsDirty(
       propsFromElement,
       stylesheet.props,
-      // @ts-ignore
+      // @ts-expect-error
       isNode(e) ? nodeDefaults : edgeDefaults,
       []
     );
@@ -462,7 +462,7 @@ export class DiagramStyles {
     el.updateProps((props: NodeProps & EdgeProps) => {
       Object.keys(stylesheet.props).forEach(key => {
         const validKey = key as keyof (NodeProps | EdgeStyleProps);
-        // @ts-ignore
+        // @ts-expect-error
         props[validKey] = deepMerge({}, props[validKey], stylesheet.props[validKey]);
       });
     }, uow);

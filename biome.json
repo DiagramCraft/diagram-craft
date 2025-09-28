@@ -28,7 +28,7 @@
       "suspicious": {
         "noEmptyBlock": "off",
         "noDuplicateProperties": "off",
-        "noTsIgnore": "off",
+        "noTsIgnore": "on",
         "noExplicitAny": "off",
         "useIterableCallbackReturn": "off",
         "noAssignInExpressions": "off",

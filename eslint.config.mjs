@@ -54,7 +54,7 @@ export default tseslint.config(
         }
       ],
 
-      '@typescript-eslint/ban-ts-comment': 'warn',
+      '@typescript-eslint/ban-ts-comment': 'off',
       '@typescript-eslint/no-unused-expressions': 'warn',
       '@typescript-eslint/no-empty-object-type': [
         'error',

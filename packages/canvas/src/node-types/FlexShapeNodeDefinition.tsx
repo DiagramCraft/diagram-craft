@@ -120,7 +120,7 @@ export class FlexShapeNodeDefinition<
         const cmpProps = deepMerge(
           {},
           getValue(cmpDef?.props, props.nodeProps) ?? {},
-          // @ts-ignore - this should be fine
+          // @ts-expect-error - this should be fine
           getValue(cmp.props ?? cmpDef?.props ?? {}, props.nodeProps)
         );
         const cmpNodeType = getValue(cmp.nodeType ?? cmpDef?.nodeType, props.nodeProps);

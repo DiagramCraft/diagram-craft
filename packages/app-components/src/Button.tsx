@@ -5,7 +5,7 @@ import { DataAttributes } from './utils';
 
 export const Button = React.forwardRef<HTMLButtonElement, Props>((props, forwardedRef) => {
   return (
-    // @ts-ignore
+    // @ts-expect-error
     <button
       {...propsUtils.filter(props, 'type')}
       className={`${styles.cmpButton} cmp-button--${props.type ?? 'primary'} ${props.className ?? ''}`}

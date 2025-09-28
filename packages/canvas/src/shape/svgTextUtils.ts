@@ -47,14 +47,14 @@ const copyStyle = (
 
   for (const prop of style) {
     if (
-      // @ts-ignore
+      // @ts-expect-error
       style[prop] !== elementStyle[prop] &&
-      // @ts-ignore
+      // @ts-expect-error
       prop !== 'display' &&
-      // @ts-ignore
+      // @ts-expect-error
       style[prop] !== stylesToNotCopy[prop]
     ) {
-      // @ts-ignore
+      // @ts-expect-error
       target.style[prop] = style[prop];
     }
   }

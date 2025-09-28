@@ -17,7 +17,7 @@ export const NamedIndicatorEditor: Editor = props => {
     props.onChange();
   };
 
-  // @ts-ignore
+  // @ts-expect-error
   const shape = makeProperty($p, path(id, 'shape'), nodeDefaults, onChange);
   const color = makeProperty($p, path(id, 'color'), nodeDefaults, onChange);
   const width = makeProperty($p, path(id, 'width'), nodeDefaults, onChange);

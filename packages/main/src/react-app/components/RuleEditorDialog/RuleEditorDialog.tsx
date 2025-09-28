@@ -71,7 +71,7 @@ const ClauseList = (props: ClauseListProps) => {
                 placeholder={'Select Rule'}
                 onChange={t => {
                   const newClauses = [...props.clauses];
-                  // @ts-ignore
+                  // @ts-expect-error
                   newClauses[idx].type = t;
                   props.onChange(newClauses);
                 }}
@@ -95,7 +95,7 @@ const ClauseList = (props: ClauseListProps) => {
                   }}
                   onChange={e => {
                     const newClauses = [...props.clauses];
-                    // @ts-ignore
+                    // @ts-expect-error
                     newClauses[idx].query = e.target.value;
                     props.onChange(newClauses);
                   }}
@@ -122,7 +122,7 @@ const ClauseList = (props: ClauseListProps) => {
                   <Select.Root
                     value={'eq'}
                     onChange={cond => {
-                      // @ts-ignore
+                      // @ts-expect-error
                       c.relation = cond;
                       props.onChange([...props.clauses]);
                     }}
@@ -153,7 +153,7 @@ const ClauseList = (props: ClauseListProps) => {
                   }))}
                   onSelectionChange={newTags => {
                     const newClauses = [...props.clauses];
-                    // @ts-ignore
+                    // @ts-expect-error
                     newClauses[idx].tags = newTags;
                     props.onChange(newClauses);
                   }}
@@ -167,7 +167,7 @@ const ClauseList = (props: ClauseListProps) => {
                   placeholder={'Any comment state'}
                   onChange={state => {
                     const newClauses = [...props.clauses];
-                    // @ts-ignore
+                    // @ts-expect-error
                     newClauses[idx].state = state === 'any' ? undefined : state;
                     props.onChange(newClauses);
                   }}
@@ -386,7 +386,7 @@ export const RuleEditorDialog = (props: Props) => {
                   placeholder={'Select action'}
                   onChange={s => {
                     const newActions = [...actions];
-                    // @ts-ignore
+                    // @ts-expect-error
                     newActions[idx].type = s;
                     setActions(newActions);
                   }}

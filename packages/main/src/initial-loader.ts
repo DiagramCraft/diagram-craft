@@ -27,7 +27,7 @@ for (const [k, v] of Object.entries(config.file.loaders)) {
 
 // Initialize stencil loaders
 for (const [k, v] of Object.entries(config.stencils.loaders)) {
-  // @ts-ignore
+  // @ts-expect-error
   stencilLoaderRegistry[k] = v;
 }
 

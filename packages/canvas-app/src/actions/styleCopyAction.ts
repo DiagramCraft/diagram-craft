@@ -47,14 +47,14 @@ export class StylePasteAction extends AbstractSelectionAction {
       if (isNode(e)) {
         e.updateProps(p => {
           for (const k in currentNodeStyle) {
-            // @ts-ignore
+            // @ts-expect-error
             p[k] = deepMerge({}, p[k], currentNodeStyle[k]);
           }
         }, uow);
       } else if (isEdge(e)) {
         e.updateProps(p => {
           for (const k in currentEdgeStyle) {
-            // @ts-ignore
+            // @ts-expect-error
             p[k] = deepMerge({}, p[k], currentEdgeStyle[k]);
           }
         }, uow);

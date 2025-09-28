@@ -70,7 +70,7 @@ const AdvancedSearchClauseList = (props: ClauseListProps) => {
                 placeholder={'Select Rule'}
                 onChange={t => {
                   const newClauses = [...props.clauses];
-                  // @ts-ignore
+                  // @ts-expect-error
                   newClauses[idx].type = t;
                   props.onChange(newClauses);
                 }}
@@ -98,7 +98,7 @@ const AdvancedSearchClauseList = (props: ClauseListProps) => {
                   <Select.Root
                     value={c.relation ?? 'eq'}
                     onChange={cond => {
-                      // @ts-ignore
+                      // @ts-expect-error
                       c.relation = cond;
                       props.onChange([...props.clauses]);
                     }}
@@ -133,7 +133,7 @@ const AdvancedSearchClauseList = (props: ClauseListProps) => {
                   }))}
                   onSelectionChange={newTags => {
                     const newClauses = [...props.clauses];
-                    // @ts-ignore
+                    // @ts-expect-error
                     newClauses[idx].tags = newTags;
                     props.onChange(newClauses);
                   }}
@@ -148,7 +148,7 @@ const AdvancedSearchClauseList = (props: ClauseListProps) => {
                   placeholder={'Any comment state'}
                   onChange={state => {
                     const newClauses = [...props.clauses];
-                    // @ts-ignore
+                    // @ts-expect-error
                     newClauses[idx].state = state === 'any' ? undefined : state;
                     props.onChange(newClauses);
                   }}

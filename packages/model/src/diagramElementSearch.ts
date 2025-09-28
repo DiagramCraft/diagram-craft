@@ -88,7 +88,7 @@ export const searchByElementSearchClauses = (
       for (const layer of diagram.layers.visible) {
         if (layer instanceof RegularLayer) {
           for (const element of layer.elements) {
-            // @ts-ignore
+            // @ts-expect-error
             // eslint-disable-next-line @typescript-eslint/no-explicit-any,@typescript-eslint/no-unsafe-return
             const value: any = clause.path.split('.').reduce((p, c) => p[c], element);
 

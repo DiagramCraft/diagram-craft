@@ -99,7 +99,7 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
       // Then set the new values
       if (Array.isArray(obj)) {
         for (let i = 0; i < obj.length; i++) {
-          // @ts-ignore
+          // @ts-expect-error
           this.#proxy![i] = obj[i];
         }
       } else {
