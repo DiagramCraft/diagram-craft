@@ -792,7 +792,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         props.custom ??= {};
         props.custom.drawio = { shape: btoa(await decode(stencil)) };
         nodes.push(DiagramNode.create(id, 'drawio', bounds, layer, props, metadata, texts));
-      } else if (style.styleName == 'text') {
+      } else if (style.styleName === 'text') {
         // TODO: We should be able to move these two to the global style parsing/conversion
         if (style.str('strokeColor', 'none') === 'none') {
           props.stroke!.enabled = false;
@@ -970,7 +970,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           queue.add(() => calculateLabelNodeActualSize(style, textNode, value, uow));
           queue.add(() => edge.invalidate(uow), 1);
         }
-      } else if (parentChild.has(id) || style.styleName == 'group') {
+      } else if (parentChild.has(id) || style.styleName === 'group') {
         // Handle groups
 
         let node: DiagramNode;
@@ -987,7 +987,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           nodes.push(node);
 
           if (
-            style.styleName != 'group' &&
+            style.styleName !== 'group' &&
             (style.str('fillColor') || style.str('strokeColor') || value || style.shape)
           ) {
             // TODO: This is all a bit duplication - we should refactor this

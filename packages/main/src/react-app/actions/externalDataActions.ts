@@ -44,7 +44,7 @@ export class ExternalDataUnlinkAction extends AbstractSelectionAction<Applicatio
       getExternalDataStatus(
         this.context.model.activeDiagram.selectionState.elements[0]!,
         arg.schemaId!
-      ) == 'linked'
+      ) === 'linked'
     );
   }
   execute(arg: Partial<SchemaArg>): void {
@@ -79,7 +79,7 @@ export class ExternalDataClear extends AbstractSelectionAction<Application, Sche
       getExternalDataStatus(
         this.context.model.activeDiagram.selectionState.elements[0]!,
         arg.schemaId!
-      ) == 'linked'
+      ) === 'linked'
     );
   }
   execute(arg: Partial<SchemaArg>): void {

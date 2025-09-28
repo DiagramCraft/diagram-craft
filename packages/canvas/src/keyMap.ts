@@ -140,9 +140,9 @@ export const formatKeyBinding = (
   const formatted = s.replace('Key', '').replace('Digit', '');
 
   let formattingConfig = FORMATTING_WINDOWS;
-  if (platform.indexOf('Mac') != -1) {
+  if (platform.indexOf('Mac') !== -1) {
     formattingConfig = FORMATTING_MAC;
-  } else if (platform.indexOf('Linux') != -1) {
+  } else if (platform.indexOf('Linux') !== -1) {
     formattingConfig = FORMATTING_LINUX;
   }
 

@@ -53,7 +53,7 @@ export class DefaultDataProvider
   }
 
   async deleteData(schema: DataSchema, data: Data): Promise<void> {
-    const idx = this.data.findIndex(d => d._schemaId === schema.id && d._uid == data._uid);
+    const idx = this.data.findIndex(d => d._schemaId === schema.id && d._uid === data._uid);
     if (idx < 0) return;
     this.data.splice(idx, 1);
 
@@ -61,7 +61,7 @@ export class DefaultDataProvider
   }
 
   async updateData(schema: DataSchema, data: Data): Promise<void> {
-    const idx = this.data.findIndex(d => d._schemaId === schema.id && d._uid == data._uid);
+    const idx = this.data.findIndex(d => d._schemaId === schema.id && d._uid === data._uid);
     if (idx < 0) return;
     this.data.splice(idx, 1);
 

@@ -32,7 +32,6 @@
         "noExplicitAny": "off",
         "useIterableCallbackReturn": "off",
         "noAssignInExpressions": "off",
-        "noDoubleEquals": "off",
         "noArrayIndexKey": "off",
         "noConfusingVoidType": "off",
         "noPrototypeBuiltins": "off",

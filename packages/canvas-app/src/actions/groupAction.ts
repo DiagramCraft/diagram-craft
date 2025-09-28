@@ -128,7 +128,7 @@ export class GroupAction extends AbstractSelectionAction {
       )
     );
 
-    if (this.type == 'ungroup') {
+    if (this.type === 'ungroup') {
       dest.push(
         ActionCriteria.EventTriggered(context.model.activeDiagram.selectionState, 'add', () =>
           context.model.activeDiagram.selectionState.nodes.some(e => e.nodeType === 'group')
