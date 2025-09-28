@@ -26,12 +26,14 @@ export class YJSAwareness extends EventEmitter<AwarenessEvents> implements Aware
 
       this.userStates = Array.from(this.backend!.getStates().values())
         .filter(s => !!s)
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         .map(s => s.user);
       this.cursorStates = Array.from(
         this.backend!.getStates()
           .entries()
           // Hide ourselves
           .filter(e => e[0] !== this.backend!.clientID)
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           .map(s => ({ ...s[1].cursor, ...s[1].user }))
           .filter(k => !!k)
       );

@@ -61,7 +61,7 @@ export class DynamicAccessor<T> {
       if (current === undefined) return undefined as PropPathValue<T, K>;
       current = current[part] as PropPathValue<T, K>;
     }
-    return current;
+    return current as PropPathValue<T, K>;
   }
 
   /**

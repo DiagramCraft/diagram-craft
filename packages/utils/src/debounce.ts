@@ -23,6 +23,8 @@ export function debounce<T extends (...args: any[]) => any>(fn: T, ms = 0): T {
   // Using function() instead of arrow function to preserve 'this' context
   return function (this: ThisParameterType<T>, ...args: Parameters<T>): void {
     clearTimeout(timeoutId);
+    // TODO: This function should always return void
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     timeoutId = setTimeout(() => fn.apply(this, args), ms);
   } as T;
 }

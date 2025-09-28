@@ -37,7 +37,7 @@ export const fileHandlers: IpcHandlers = {
       }
     });
 
-    ipcMain.handle('file:save', async (_event, { url, data }) => {
+    ipcMain.handle('file:save', async (_event, { url, data }: { url: string; data: string }) => {
       try {
         writeFileSync(url, data);
         return url;

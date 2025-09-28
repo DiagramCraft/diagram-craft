@@ -28,6 +28,7 @@ const replacer = (key: string, value: unknown) => {
 
   // Handle Map objects
   if (value instanceof Map) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return {
       __type: 'Map',
       ...Object.fromEntries(value.entries())

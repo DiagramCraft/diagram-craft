@@ -70,7 +70,7 @@ export const deepMerge = <T extends Props>(
     }
   }
 
-  return result;
+  return result as T;
 };
 
 /**

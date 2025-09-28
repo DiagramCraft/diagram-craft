@@ -13,7 +13,7 @@ import { EventEmitter, EventKey, EventReceiver } from '@diagram-craft/utils/even
 import { mapIterator } from '@diagram-craft/utils/iterator';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const wrap = (e: any) => {
+const wrap = (e: any): any => {
   if (e instanceof Y.Array) {
     return new YJSList<CRDTCompatibleObject>(e as Y.Array<CRDTCompatibleObject>);
   } else if (e instanceof Y.Map) {
@@ -26,7 +26,7 @@ const wrap = (e: any) => {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const unwrap = (e: any) => {
+const unwrap = (e: any): any => {
   if (e instanceof YJSMap) {
     return e.delegate;
   } else if (e instanceof YJSList) {
@@ -210,7 +210,8 @@ export class YJSMap<T extends { [key: string]: CRDTCompatibleObject }> implement
     this.delegate.delete(key);
   }
 
-  get<K extends keyof T & string>(key: K, factory?: () => T[K]) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  get<K extends keyof T & string>(key: K, factory?: () => T[K]): any {
     if (this.initial) {
       if (!this.initial.has(key) && factory !== undefined) {
         this.set(key, factory());
@@ -243,6 +244,7 @@ export class YJSMap<T extends { [key: string]: CRDTCompatibleObject }> implement
     const delegate = this.delegate;
     return {
       [Symbol.iterator]() {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return mapIterator<[string, T], [string, T]>(delegate.entries(), ([k, v]) => [k, wrap(v)]);
       }
     } as Iterable<[string, T[string]]>;
@@ -368,6 +370,7 @@ export class YJSList<T extends CRDTCompatibleObject> implements CRDTList<T> {
     if (this.initial) {
       return this.initial[index]!;
     }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return wrap(this.delegate.get(index));
   }
 
@@ -394,6 +397,7 @@ export class YJSList<T extends CRDTCompatibleObject> implements CRDTList<T> {
   }
 
   toArray(): T[] {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return this.initial ? this.initial : this.delegate.toArray().map(wrap);
   }
 
