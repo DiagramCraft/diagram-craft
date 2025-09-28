@@ -40,8 +40,8 @@ export default tseslint.config(
       '@typescript-eslint/no-unsafe-argument': 'off',
       '@typescript-eslint/no-redundant-type-constituents': 'off',
       '@typescript-eslint/require-await': 'off',
-      '@typescript-eslint/no-misused-promises': 'off',
-      '@typescript-eslint/no-floating-promises': 'off',
+      '@typescript-eslint/no-misused-promises': 'warn',
+      '@typescript-eslint/no-floating-promises': 'warn',
       '@typescript-eslint/no-unnecessary-condition': 'warn',
 
       'no-unused-labels': 'off',

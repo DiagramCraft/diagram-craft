@@ -258,7 +258,7 @@ export const EditSchemaDialog = (props: Props) => {
                         type="number"
                         value={field.minCount.toString()}
                         onChange={value =>
-                          updateField(field.id, { minCount: parseInt(value ?? '0') || 0 })
+                          updateField(field.id, { minCount: parseInt(value ?? '0', 10) || 0 })
                         }
                         placeholder="0"
                       />
@@ -275,7 +275,7 @@ export const EditSchemaDialog = (props: Props) => {
                         type="number"
                         value={field.maxCount.toString()}
                         onChange={value =>
-                          updateField(field.id, { maxCount: parseInt(value ?? '1') || 1 })
+                          updateField(field.id, { maxCount: parseInt(value ?? '1', 10) || 1 })
                         }
                         placeholder="1"
                       />

@@ -3,7 +3,7 @@ import { HTMLParserCallback } from '@diagram-craft/utils/html';
 
 const getNumericStyleProp = (style: CSSStyleDeclaration, prop: string) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return parseInt((style[prop as any] ?? '0px').replace('px', ''));
+  return parseInt((style[prop as any] ?? '0px').replace('px', ''), 10);
 };
 
 const getNumericAttr = (el: Element, attr: string) => {
@@ -121,7 +121,7 @@ export class SvgTextHelper {
 
     this.width =
       (this.element.dataset.width
-        ? Number.parseInt(this.element.dataset.width)
+        ? Number.parseInt(this.element.dataset.width, 10)
         : elementParentNode.getBBox().width - this.x) -
       (getNumericStyleProp(style, 'margin-left') +
         getNumericStyleProp(style, 'margin-right') +
@@ -130,7 +130,7 @@ export class SvgTextHelper {
 
     this.height =
       (this.element.dataset.height
-        ? Number.parseInt(this.element.dataset.height)
+        ? Number.parseInt(this.element.dataset.height, 10)
         : elementParentNode.getBBox().height - this.x) -
       (getNumericStyleProp(style, 'margin-top') +
         getNumericStyleProp(style, 'margin-bottom') +

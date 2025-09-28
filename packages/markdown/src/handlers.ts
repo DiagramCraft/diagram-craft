@@ -226,7 +226,7 @@ export class ListHandler implements BlockParser {
 
     const l = m[1]!.length;
     const rS = new RegExp(`^( {${l}})([*+-]|[0-9]+\\.) (.*)`);
-    const rC = new RegExp(`^( {${parseInt(l.toString()) + 1}}|\\t)`);
+    const rC = new RegExp(`^( {${parseInt(l.toString(), 10) + 1}}|\\t)`);
 
     let s = '';
     let containsEmpty = false;

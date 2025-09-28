@@ -248,7 +248,7 @@ export class Parser {
           value: s.substring(lastIndex, match.index)
         });
       }
-      dest.push(state.inlines[parseInt(match[1]!)]!);
+      dest.push(state.inlines[parseInt(match[1]!, 10)]!);
       lastIndex = regex.lastIndex;
     }
 

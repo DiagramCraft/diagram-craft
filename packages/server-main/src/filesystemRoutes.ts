@@ -102,7 +102,7 @@ export function createFilesystemRoutes(rootPath: string) {
     }
 
     // Check content length to prevent large uploads
-    const contentLength = parseInt(event.node.req.headers['content-length'] ?? '0');
+    const contentLength = parseInt(event.node.req.headers['content-length'] ?? '0', 10);
     if (contentLength > MAX_REQUEST_SIZE) {
       throw createError({
         status: 413,

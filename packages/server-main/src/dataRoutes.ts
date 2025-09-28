@@ -33,7 +33,7 @@ export function createDataRoutes(dataStore: FileSystemDataStore) {
     const contentLengthStr = Array.isArray(contentLengthHeader)
       ? contentLengthHeader[0]
       : contentLengthHeader;
-    const contentLength = parseInt(contentLengthStr ?? '0');
+    const contentLength = parseInt(contentLengthStr ?? '0', 10);
     if (contentLength > MAX_REQUEST_SIZE) {
       throw createError({
         status: 413,

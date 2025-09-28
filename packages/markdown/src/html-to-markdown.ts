@@ -60,7 +60,7 @@ export class HTMLToMarkdownConverter {
       case 'h4':
       case 'h5':
       case 'h6':
-        return this.convertHeading(el, parseInt(tagName[1]!));
+        return this.convertHeading(el, parseInt(tagName[1]!, 10));
       case 'p':
         return this.convertParagraph(el);
       case 'strong':
