@@ -1187,7 +1187,7 @@ const assertConsistency = (subject: VertexList[], clip: VertexList[]) => {
         assert.true(current === current.neighbor.neighbor);
         assert.true(
           set.has(current.neighbor),
-          `${current.label} : ${current.neighbor.label} not in set ${[...set.keys()].map(e => e.label)}`
+          `${current.label} : ${current.neighbor.label} not in set ${[...set.keys()].map(e => e.label ?? 'unknown').join(', ')}`
         );
 
         assert.true(

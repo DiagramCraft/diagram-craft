@@ -57,7 +57,7 @@ export class CRDTProp<
     const v = this.#cachedValue ?? this.#current.get(this.name, this.props.factory);
     assert.present(
       v,
-      `Can't get ${this.name}. cache=${this.props.cache}, cachedValue=${this.#cachedValue}`
+      `Can't get ${this.name}. cache=${this.props.cache}, cachedValue=${JSON.stringify(this.#cachedValue)}`
     );
     return v;
   }

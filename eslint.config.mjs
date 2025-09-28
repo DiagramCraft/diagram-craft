@@ -45,7 +45,7 @@ export default tseslint.config(
       '@typescript-eslint/require-await': 'off',
       '@typescript-eslint/no-unnecessary-type-assertion': 'off',
       '@typescript-eslint/no-duplicate-type-constituents': 'off',
-      '@typescript-eslint/restrict-template-expressions': 'off',
+      //'@typescript-eslint/restrict-template-expressions': 'off',
       '@typescript-eslint/no-misused-promises': 'off',
       '@typescript-eslint/no-floating-promises': 'off',
       '@typescript-eslint/no-base-to-string': 'off',

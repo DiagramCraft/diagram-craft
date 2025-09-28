@@ -237,7 +237,7 @@ export function assertDrawioShapeNodeDefinition(
   def: NodeDefinition
 ): asserts def is DrawioShapeNodeDefinition {
   if (!(def instanceof DrawioShapeNodeDefinition)) {
-    throw new Error(`Expected DrawioShapeNodeDefinition, got ${def}`);
+    throw new Error(`Expected DrawioShapeNodeDefinition, got ${JSON.stringify(def)}`);
   }
 }
 
