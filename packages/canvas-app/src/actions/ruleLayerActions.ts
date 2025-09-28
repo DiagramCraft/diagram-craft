@@ -8,6 +8,7 @@ import { newid } from '@diagram-craft/utils/id';
 import { Application } from '../application';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { RuleEditorDialogCommand } from '../dialogs';
+import { safeSplit } from '@diagram-craft/utils/safe';
 
 export const ruleLayerActions = (application: Application) => ({
   RULE_LAYER_EDIT: new RuleLayerEditAction(application),
@@ -46,7 +47,7 @@ export class RuleLayerDeleteAction extends AbstractAction<LayerActionArg, Applic
           precondition.is.present(id);
 
           // TODO: Need to change such that it's possible to pass more arguments to the action
-          const [layerId, ruleId] = id.split(':') as [string, string];
+          const [layerId, ruleId] = safeSplit(id, ':', 2);
 
           const layer = this.context.model.activeDiagram.layers.byId(layerId) as RuleLayer;
           const rule = layer.byId(ruleId);
@@ -76,7 +77,7 @@ export class RuleLayerEditAction extends AbstractAction<LayerActionArg, Applicat
     precondition.is.present(id);
 
     // TODO: Need to change such that it's possible to pass more arguments to the action
-    const [layerId, ruleId] = id.split(':') as [string, string];
+    const [layerId, ruleId] = safeSplit(id, ':', 2);
 
     const layer = this.context.model.activeDiagram.layers.byId(layerId) as RuleLayer;
     const rule = layer.byId(ruleId);

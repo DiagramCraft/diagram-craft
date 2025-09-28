@@ -3,11 +3,12 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { propsUtils } from '@diagram-craft/utils/propsUtils';
 import { extractDataAttributes } from './utils';
 import styles from './NumberInput.module.css';
+import { safeReMatch } from '@diagram-craft/utils/safe';
 
 type UnitAndValue = [string, string | undefined];
 
 const parseNumberAndUnit = (value: string): UnitAndValue | undefined => {
-  const m = value.match(/^ ?(-?\d+\.?\d*) ?([^ ]*)$/) as [string, string, string] | null;
+  const m = safeReMatch(value, /^ ?(-?\d+\.?\d*) ?([^ ]*)$/, 3);
   if (!m) return undefined;
   if (m[2] === '') return [m[1], undefined];
   return [m[1], m[2]];

@@ -21,6 +21,7 @@ import { Scale } from '@diagram-craft/geometry/transform';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import { safeSplit } from '@diagram-craft/utils/safe';
 
 const SIZES = [50, 80, 100, 120, 150];
 const WIDTHS = [1, 2, 3, 4, 5];
@@ -472,7 +473,7 @@ const shapesTestFile = async (
       h: y + opts.yDiff
     };
   } else {
-    const [, p, shape] = pkg.split(':') as [string, string, string];
+    const [, p, shape] = safeSplit(pkg, ':', 3);
 
     let x = 0;
     let y = 10;

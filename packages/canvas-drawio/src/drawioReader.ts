@@ -60,6 +60,7 @@ import { parseNum } from '@diagram-craft/utils/number';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { getParser, shapeParsers } from './drawioShapeParsers';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import { safeSplit } from '@diagram-craft/utils/safe';
 
 const drawioBuiltinShapes: Partial<Record<string, string>> = {
   actor:
@@ -534,7 +535,10 @@ const getNodeProps = (style: StyleManager, isEdge: boolean) => {
 
   if (style.is('dashed')) {
     const pattern: string = style.str('dashPattern') ?? '4 4';
-    const [baseSize, baseGap] = pattern.split(' ').map(s => parseNum(s, 4)) as [number, number];
+    const [baseSize, baseGap] = safeSplit(pattern, ' ', 2).map(s => parseNum(s, 4)) as [
+      number,
+      number
+    ];
     const strokeWidth = style.num('strokeWidth', 1);
 
     props.stroke.pattern = 'DASHED';

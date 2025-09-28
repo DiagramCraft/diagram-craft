@@ -15,6 +15,7 @@ import { stencilLoaderRegistry } from '@diagram-craft/canvas-app/loaders';
 import { Property } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
 import { PathList } from '@diagram-craft/geometry/pathList';
 import { assertRegularLayer } from './diagramLayerUtils';
+import { safeSplit } from '@diagram-craft/utils/safe';
 
 export type NodeCapability =
   | 'children'
@@ -337,7 +338,7 @@ export class StencilRegistry extends EventEmitter<StencilEvents> {
 
   getStencil(id: string) {
     assert.true(id.includes(DELIMITER), 'Invalid id');
-    const [pkgId] = id.split(DELIMITER) as [string];
+    const [pkgId] = safeSplit(id, DELIMITER, Number.MAX_VALUE);
     return this.get(pkgId).stencils.find(s => s.id === id);
   }
 

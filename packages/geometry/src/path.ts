@@ -22,6 +22,7 @@ import { isSame, roundHighPrecision } from '@diagram-craft/utils/math';
 import { Vector } from './vector';
 import { Line } from './line';
 import { Lazy } from '@diagram-craft/utils/lazy';
+import { safeTupleCast } from '@diagram-craft/utils/safe';
 
 export type Projection = { t: number; distance: number; point: Point };
 
@@ -372,10 +373,11 @@ export class Path {
         new Path(b.start, [...b.raw(), ...this.#path.slice(p1.segment + 1, p2.segment), ...c.raw()])
       );
       dest.push(new Path(d.start, [...d.raw(), ...this.#path.slice(p2.segment + 1)]));
+      return safeTupleCast(dest, 3);
     } else {
       dest.push(new Path(b.start, [...b.raw(), ...this.#path.slice(p1.segment + 1)]));
+      return safeTupleCast(dest, 2);
     }
-    return dest as [Path, Path] | [Path, Path, Path];
   }
 
   offset(n: number) {
