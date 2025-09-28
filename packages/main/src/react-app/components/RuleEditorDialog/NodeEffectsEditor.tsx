@@ -16,7 +16,6 @@ export const NodeEffectsEditor: Editor = props => {
   return (
     <NodeEffectsPanelForm
       diagram={diagram}
-      /* @ts-expect-error */
       rounding={makeProperty($p, 'effects.rounding', nodeDefaults, onChange)}
       roundingAmount={makeProperty($p, 'effects.roundingAmount', nodeDefaults, onChange)}
       reflection={makeProperty($p, 'effects.reflection', nodeDefaults, onChange)}

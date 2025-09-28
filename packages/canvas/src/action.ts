@@ -79,7 +79,7 @@ export abstract class AbstractAction<T = undefined, C extends ActionContext = Ac
   private criteria: Array<ActionCriteria> = [];
   private enabled: boolean = true;
   protected context: C;
-  
+
   description?: string = undefined;
   availableInCommandPalette: boolean = true;
 
@@ -131,7 +131,7 @@ export abstract class AbstractToggleAction<T = undefined, C extends ActionContex
   private stateCriteria: Array<ActionCriteria> = [];
   protected state: boolean = false;
 
-  protected constructor(context: C) {
+  public constructor(context: C) {
     super(context);
     this.context = context;
 
