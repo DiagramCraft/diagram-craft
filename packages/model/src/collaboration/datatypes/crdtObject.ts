@@ -97,8 +97,16 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
       }
 
       // Then set the new values
-      for (const key in obj) {
-        this.#proxy![key] = obj[key];
+      if (Array.isArray(obj)) {
+        for (let i = 0; i < obj.length; i++) {
+          // @ts-ignore
+          this.#proxy![i] = obj[i];
+        }
+      } else {
+        // eslint-disable-next-line @typescript-eslint/no-for-in-array
+        for (const key in obj) {
+          this.#proxy![key] = obj[key];
+        }
       }
     });
   }

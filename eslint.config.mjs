@@ -47,7 +47,6 @@ export default tseslint.config(
       '@typescript-eslint/no-duplicate-type-constituents': 'off',
       '@typescript-eslint/restrict-template-expressions': 'off',
       '@typescript-eslint/no-misused-promises': 'off',
-      '@typescript-eslint/no-for-in-array': 'off',
       '@typescript-eslint/no-floating-promises': 'off',
       '@typescript-eslint/no-base-to-string': 'off',
 
