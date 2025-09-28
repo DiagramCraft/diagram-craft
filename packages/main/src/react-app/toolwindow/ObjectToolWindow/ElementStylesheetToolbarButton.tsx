@@ -23,7 +23,7 @@ export const ElementStylesheetToolbarButton = (props: Props) => {
   const isDirty = !style.hasMultipleValues && isSelectionDirty($d, false);
   const isTextDirty = !textStyle.hasMultipleValues && isSelectionDirty($d, true);
 
-  if (props.selectionType === 'mixed') return <></>;
+  if (props.selectionType === 'mixed') return null;
 
   const onValueChange = (v: string | undefined, type: 'style' | 'text-style' = 'style') => {
     const uow = new UnitOfWork($d, true);

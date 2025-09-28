@@ -175,7 +175,7 @@ class FastSegmentProvider implements SegmentProvider {
     }
   ): SegmentResult[] {
     const { x: px, y: py } = start.point;
-    const { x: x, y: y } = end.point;
+    const { x, y } = end.point;
 
     const isAvailable = (d: Direction) => {
       if (d === 's' && y > py) return true;

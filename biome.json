@@ -53,7 +53,6 @@
         "noThisInStatic": "off",
         "noStaticOnlyClass": "off",
         "noAdjacentSpacesInRegex": "off",
-        "noUselessRename": "off",
         "noFlatMapIdentity": "off",
         "useIndexOf": "off"
       },
