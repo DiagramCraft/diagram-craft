@@ -70,7 +70,7 @@ export const autosaveHandlers: IpcHandlers = {
           await access(filePath);
           await unlink(filePath);
           log.debug('Autosave cleared:', filePath);
-        } catch (accessError) {
+        } catch (_accessError) {
           // File doesn't exist, which is fine for clearing
         }
         return true;

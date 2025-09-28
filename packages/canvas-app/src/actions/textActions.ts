@@ -159,7 +159,7 @@ export class TextEditAction extends AbstractSelectionAction<Application> {
     let markdownText = '';
     try {
       markdownText = currentHtmlText ? htmlStringToMarkdown(currentHtmlText) : '';
-    } catch (error) {
+    } catch (_error) {
       markdownText = currentHtmlText;
     }
 
@@ -178,7 +178,7 @@ export class TextEditAction extends AbstractSelectionAction<Application> {
           let htmlOutput = '';
           try {
             htmlOutput = markdownInput ? markdownToHTML(markdownInput) : '';
-          } catch (error) {
+          } catch (_error) {
             htmlOutput = markdownInput;
           }
 

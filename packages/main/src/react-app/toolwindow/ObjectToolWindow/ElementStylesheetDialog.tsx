@@ -64,7 +64,7 @@ export const ElementStylesheetDialog = (props: Props) => {
                 onChange={v => {
                   try {
                     setData(JSON.parse(v ?? ''));
-                  } catch (e) {
+                  } catch (_e) {
                     // Ignore
                   }
                 }}

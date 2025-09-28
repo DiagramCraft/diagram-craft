@@ -258,7 +258,7 @@ const hasValue = (value: string | undefined | null): value is string => {
       const d = new DOMParser().parseFromString(value, 'text/html');
       const text = d.body.textContent;
       return !!text && text.trim() !== '';
-    } catch (e) {
+    } catch (_e) {
       // Ignore
     }
   }

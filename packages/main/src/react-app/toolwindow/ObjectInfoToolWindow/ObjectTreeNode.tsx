@@ -5,7 +5,7 @@ export const ObjectTreeNode = (props: Props) => {
   let keys: string[];
   try {
     keys = Object.keys(props.obj);
-  } catch (error) {
+  } catch (_error) {
     // Handle proxy objects with incomplete ownKeys trap
     keys = [];
   }

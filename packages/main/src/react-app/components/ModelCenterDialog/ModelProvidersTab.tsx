@@ -105,7 +105,7 @@ export const ModelProvidersTab = () => {
       document.data.setProviders(newProviders);
       setSuccessMessage('Providers saved successfully');
       setErrorMessage(undefined);
-    } catch (error) {
+    } catch (_error) {
       setErrorMessage('Failed to save providers');
       setSuccessMessage(undefined);
     }
@@ -142,7 +142,7 @@ export const ModelProvidersTab = () => {
             document.data.setProviders(newProviders);
             setSuccessMessage('Provider deleted successfully');
             setErrorMessage(undefined);
-          } catch (error) {
+          } catch (_error) {
             setErrorMessage('Failed to delete provider');
             setSuccessMessage(undefined);
           }
@@ -184,7 +184,7 @@ export const ModelProvidersTab = () => {
       await document.data.db.refreshData();
       setSuccessMessage('All data refreshed successfully');
       setErrorMessage(undefined);
-    } catch (error) {
+    } catch (_error) {
       setErrorMessage('Failed to refresh data');
       setSuccessMessage(undefined);
     }

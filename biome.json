@@ -61,7 +61,6 @@
       },
       "correctness": {
         "useExhaustiveDependencies": "off",
-        "noUnusedVariables": "off",
         "noConstantCondition": "off",
         "useUniqueElementIds": "off",
         "noUnusedLabels": "off",

@@ -496,7 +496,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
             this.cache.set('name', applyTemplate(textContent, metadata));
             return textContent;
           }
-        } catch (e) {
+        } catch (_e) {
           // Ignore
         }
       }

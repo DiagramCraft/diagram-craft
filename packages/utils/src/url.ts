@@ -8,7 +8,7 @@ export const urlToName = (s: string) => {
   let pathname = s;
   try {
     pathname = new URL(s).pathname;
-  } catch (e) {
+  } catch (_e) {
     // Ignore
   }
   return pathname.split('/').pop()!;

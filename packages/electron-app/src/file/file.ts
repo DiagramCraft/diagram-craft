@@ -65,7 +65,7 @@ export const fileHandlers: IpcHandlers = {
         }
 
         return undefined;
-      } catch (error) {
+      } catch (_error) {
         return undefined;
       }
     });

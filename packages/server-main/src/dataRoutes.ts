@@ -75,7 +75,7 @@ export function createDataRoutes(dataStore: FileSystemDataStore) {
     defineEventHandler(async _event => {
       try {
         return dataStore.getAllData();
-      } catch (error) {
+      } catch (_error) {
         throw createError({
           status: 500,
           statusMessage: 'Internal Server Error',
