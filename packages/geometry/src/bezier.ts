@@ -110,7 +110,7 @@ export const BezierUtils = {
     sweep_flag: 0 | 1,
     x2: number,
     y2: number,
-    recursive?: [number, number, number, number] | undefined
+    recursive?: [number, number, number, number]
   ): RawCubicSegment[] => {
     const rad = Angle.toRad(angle);
 

@@ -204,7 +204,7 @@ export class StyleManager {
 
   str(key: StringKey): string | undefined;
   str(key: StringKey, def: string): string;
-  str(key: StringKey, def?: string | undefined): string | undefined {
+  str(key: StringKey, def?: string): string | undefined {
     return this.get(key) ?? def;
   }
 

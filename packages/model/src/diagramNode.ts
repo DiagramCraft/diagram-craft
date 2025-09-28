@@ -631,7 +631,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     }, uow);
   }
 
-  duplicate(ctx?: DuplicationContext | undefined, id?: string | undefined): DiagramNode {
+  duplicate(ctx?: DuplicationContext, id?: string): DiagramNode {
     const isTopLevel = ctx === undefined;
     const context = ctx ?? {
       targetElementsInGroup: new Map()

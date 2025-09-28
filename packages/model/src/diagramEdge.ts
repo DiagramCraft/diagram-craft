@@ -794,7 +794,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     this._cache?.clear();
   }
 
-  duplicate(ctx?: DuplicationContext, id?: string | undefined) {
+  duplicate(ctx?: DuplicationContext, id?: string) {
     const uow = new UnitOfWork(this.diagram);
 
     const edge = DiagramEdge.create(

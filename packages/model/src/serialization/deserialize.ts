@@ -27,7 +27,7 @@ import { Comment } from '../comment';
 const unfoldGroup = (node: SerializedElement) => {
   const recurse = (
     nodes: ReadonlyArray<SerializedElement>,
-    parent?: SerializedElement | undefined
+    parent?: SerializedElement
   ): (SerializedElement & { parent?: SerializedElement | undefined })[] => {
     return [
       ...nodes.map(n => ({ ...n, parent })),

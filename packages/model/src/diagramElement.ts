@@ -141,7 +141,7 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
 
   abstract invalidate(uow: UnitOfWork): void;
   abstract detach(uow: UnitOfWork): void;
-  abstract duplicate(ctx?: DuplicationContext, id?: string | undefined): DiagramElement;
+  abstract duplicate(ctx?: DuplicationContext, id?: string): DiagramElement;
   abstract transform(
     transforms: ReadonlyArray<Transform>,
     uow: UnitOfWork,
