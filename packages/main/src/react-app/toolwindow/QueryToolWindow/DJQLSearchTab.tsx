@@ -81,7 +81,7 @@ export const DJQLSearchTab = () => {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let res: any[] | undefined = undefined;
-  let error = undefined;
+  let error: string | undefined = undefined;
   try {
     const q = queries[queryIdx]!.q;
     const input = queryIdx === 0 ? getSource(djqlScope!, diagram) : queryInput;
@@ -95,7 +95,8 @@ export const DJQLSearchTab = () => {
       djqlQuery
     );
   } catch (e) {
-    error = e;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any,@typescript-eslint/no-unnecessary-condition
+    error = (e as Error).message ?? (e as any).toString();
   }
 
   const exportToFile = () => {
@@ -189,7 +190,7 @@ export const DJQLSearchTab = () => {
 
         <ToolWindowPanel mode={'accordion'} id={'response'} title={'Query Response'}>
           <div className={'cmp-query-response'}>
-            {!!error && <div className={'cmp-error'}>{error.toString()}</div>}
+            {!!error && <div className={'cmp-error'}>{error}</div>}
             {res &&
               res.map((e, idx) => (
                 <div

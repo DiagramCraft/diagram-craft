@@ -46,7 +46,6 @@ export default tseslint.config(
       '@typescript-eslint/no-duplicate-type-constituents': 'off',
       '@typescript-eslint/no-misused-promises': 'off',
       '@typescript-eslint/no-floating-promises': 'off',
-      '@typescript-eslint/no-base-to-string': 'off',
       '@typescript-eslint/no-unnecessary-condition': 'warn',
 
       'no-unused-labels': 'off',
