@@ -61,8 +61,7 @@
         "useExhaustiveDependencies": "off",
         "noConstantCondition": "off",
         "useUniqueElementIds": "off",
-        "noUnusedLabels": "off",
-        "noEmptyCharacterClassInRegex": "off"
+        "noUnusedLabels": "off"
       },
       "security": {
         "noDangerouslySetInnerHtml": "off"

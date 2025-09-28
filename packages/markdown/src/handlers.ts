@@ -570,7 +570,7 @@ export class ReferenceLinkDefinitionHandler implements BlockParser {
     if (m[4]) {
       obj.title = parser.unescape(m[4]);
     } else {
-      const nextMatch = stream.peek().match(/\s+["(']([^]+)[")']/);
+      const nextMatch = stream.peek().match(/\s+["(']([^\\]+)[")']/);
       if (nextMatch) {
         obj.title = nextMatch[1];
         stream.consume();
