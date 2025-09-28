@@ -4,7 +4,7 @@ import { EventEmitter, type EventKey, type EventMap } from '@diagram-craft/utils
 
 type Callback = () => void | (() => void);
 
-let CURRENT_EFFECT_MANAGER: EffectManager | undefined = undefined;
+let CURRENT_EFFECT_MANAGER: EffectManager | undefined ;
 
 export class Observable<T> extends EventEmitter<{ change: { newValue: T } }> {
   #value: T;

@@ -81,7 +81,7 @@ export const getClosestAnchor = (
 
   if (includeBoundary && node.getDefinition().supports('connect-to-boundary')) {
     const boundingPath = node.getDefinition().getBoundingPath(node);
-    let closestPoint: Point | undefined = undefined;
+    let closestPoint: Point | undefined ;
     let closestPointDistance = Number.MAX_SAFE_INTEGER;
     for (const path of boundingPath.all()) {
       const pp = path.projectPoint(coord).point;

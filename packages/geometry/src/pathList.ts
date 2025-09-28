@@ -85,7 +85,7 @@ export class PathList {
   }
 
   projectPoint(p: Point): ProjectedPointOnPathList {
-    let best: ProjectedPointOnPathList | undefined = undefined;
+    let best: ProjectedPointOnPathList | undefined ;
     for (let idx = 0; idx < this.paths.length; idx++) {
       const path = this.paths[idx]!;
 

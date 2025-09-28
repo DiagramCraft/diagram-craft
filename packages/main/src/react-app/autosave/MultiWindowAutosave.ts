@@ -30,7 +30,7 @@ let needsSave:
       doc: DiagramDocument;
       callback?: (d: SerializedDiagramDocument) => void;
     }
-  | undefined = undefined;
+  | undefined ;
 
 const AUTOSAVE_KEY = 'autosave-multi-window';
 

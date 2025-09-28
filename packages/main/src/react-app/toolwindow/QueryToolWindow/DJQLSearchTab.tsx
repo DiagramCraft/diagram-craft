@@ -81,8 +81,8 @@ export const DJQLSearchTab = () => {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let res: any[] | undefined = undefined;
-  let error: string | undefined = undefined;
+  let res: any[] | undefined ;
+  let error: string | undefined ;
   try {
     const q = queries[queryIdx]!.q;
     const input = queryIdx === 0 ? getSource(djqlScope, diagram) : queryInput;

@@ -479,8 +479,8 @@ export class CubicBezier {
     // If it doesn't exist, return undefined.
     if (!this.bboxIntersects(other)) return undefined;
 
-    let start = undefined;
-    let startT = undefined;
+    let start ;
+    let startT ;
 
     const p1 = this.projectPoint(other.start);
     if (p1.distance < threshold) {
@@ -493,8 +493,8 @@ export class CubicBezier {
 
     if (!start) return undefined;
 
-    let end = undefined;
-    let endT = undefined;
+    let end ;
+    let endT ;
 
     const p2 = this.projectPoint(other.end);
     if (p2.distance < threshold) {

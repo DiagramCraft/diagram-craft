@@ -51,7 +51,6 @@
         "noUselessConstructor": "off",
         "useLiteralKeys": "off",
         "noThisInStatic": "off",
-        "noUselessUndefinedInitialization": "off",
         "noStaticOnlyClass": "off",
         "noAdjacentSpacesInRegex": "off",
         "noUselessRename": "off",

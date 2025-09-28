@@ -12,7 +12,7 @@ export const makeReflection = (node: DiagramNode, children: VNode[]) => {
 
   const center = Box.center(bounds);
 
-  let pathBounds: Box | undefined = undefined;
+  let pathBounds: Box | undefined ;
   if (props.effects?.reflection) {
     const paths = node.diagram.document.nodeDefinitions.get(node.nodeType).getBoundingPath(node);
 

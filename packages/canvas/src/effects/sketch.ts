@@ -108,8 +108,8 @@ export const parseArrowSvgPath = (path: string): Path[] => {
   const dest: [Point, PathSegment[]][] = [];
   let segments: PathSegment[] = [];
 
-  let startPoint: Point | undefined = undefined;
-  let point: Point | undefined = undefined;
+  let startPoint: Point | undefined ;
+  let point: Point | undefined ;
   for (const rs of parseSvgPath(path)) {
     if (rs[0] === 'M') {
       point = { x: Number(rs[1]), y: Number(rs[2]) };
