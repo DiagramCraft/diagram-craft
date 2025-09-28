@@ -46,7 +46,6 @@
       "complexity": {
         "noImportantStyles": "off",
         "useDateNow": "off",
-        "useOptionalChain": "off",
         "noExtraBooleanCast": "off",
         "noUselessConstructor": "off",
         "useLiteralKeys": "off",

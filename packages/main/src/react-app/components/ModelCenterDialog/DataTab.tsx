@@ -26,7 +26,7 @@ const filterItems = (items: DataItemWithSchema[], schemaId: string, searchQuery:
     filtered = filtered.filter(item => {
       return item._schema.fields.some(field => {
         const value = item[field.id];
-        return value && value.toLowerCase().includes(searchQuery.toLowerCase());
+        return value?.toLowerCase().includes(searchQuery.toLowerCase());
       });
     });
   }

@@ -4,7 +4,7 @@ import { EventEmitter, type EventKey, type EventMap } from '@diagram-craft/utils
 
 type Callback = () => void | (() => void);
 
-let CURRENT_EFFECT_MANAGER: EffectManager | undefined ;
+let CURRENT_EFFECT_MANAGER: EffectManager | undefined;
 
 export class Observable<T> extends EventEmitter<{ change: { newValue: T } }> {
   #value: T;
@@ -143,7 +143,7 @@ export abstract class Component<P = Record<string, never>> {
     this.onDetach(this.currentProps!);
     // Note: the check with contains here is to avoid the issue explained at
     //       https://stackoverflow.com/questions/21926083/failed-to-execute-removechild-on-node
-    if (this.element?.el && this.element.el.parentElement?.contains(this.element.el)) {
+    if (this.element?.el?.parentElement?.contains(this.element.el)) {
       try {
         this.element.el.remove();
       } catch {

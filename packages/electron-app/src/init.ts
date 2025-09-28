@@ -101,7 +101,7 @@ app.on('open-file', (event, path) => {
   event.preventDefault();
   log.info('Opening recent file:', path);
 
-  if (mainWindow && mainWindow.webContents) {
+  if (mainWindow?.webContents) {
     mainWindow.webContents.send(Channels.FileRecentFileOpen, path);
   } else {
     // If no window exists, create one and then open the file

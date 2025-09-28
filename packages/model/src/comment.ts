@@ -123,7 +123,7 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> {
 
       this.emit('commentRemoved', { commentId: p.key });
 
-      if (comment && comment.element) {
+      if (comment?.element) {
         const uow = new UnitOfWork(comment.element.diagram);
         comment.element.commentsUpdated(uow);
         uow.commit();

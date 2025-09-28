@@ -70,7 +70,7 @@ export const deserializeDiagramElements = (
         // Note: this is for backwards compatibility only
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const textProps: any = c.props.text;
-        if (textProps && textProps.text && (!c.texts || !c.texts.text)) {
+        if (textProps?.text && (!c.texts || !c.texts.text)) {
           c.texts ??= { text: textProps.text };
           c.texts.text = textProps.text;
           delete textProps.text;

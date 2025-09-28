@@ -15,7 +15,7 @@ export const HelpMessage = (props: Props) => {
 
   return (
     <div id="help" className={styles.cmpHelp}>
-      <div>{props.helpState.help && props.helpState.help.message}</div>
+      <div>{props.helpState.help?.message}</div>
       <Button
         type={'icon-only'}
         onClick={() => {

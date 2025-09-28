@@ -71,7 +71,7 @@ export const CommandPalette = ({ open, onClose }: CommandPaletteProps) => {
       cmd =>
         cmd.label.toLowerCase().includes(searchLower) ||
         cmd.id.toLowerCase().includes(searchLower) ||
-        (cmd.keyBinding && cmd.keyBinding.toLowerCase().includes(searchLower))
+        cmd.keyBinding?.toLowerCase().includes(searchLower)
     );
 
     // Sort so enabled actions come first, then disabled actions
