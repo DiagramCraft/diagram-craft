@@ -190,20 +190,18 @@ export const FillPanelForm = ({
             />
 
             {type.val === 'gradient' && (
-              <>
-                <PropertyEditor
-                  property={color2}
-                  render={props => (
-                    <ColorPicker
-                      {...props}
-                      palette={$cfg.palette.primary}
-                      customPalette={$d.document.customPalette}
-                      onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
-                    />
-                  )}
-                  renderValue={props => <ColorPreview {...props} />}
-                />
-              </>
+              <PropertyEditor
+                property={color2}
+                render={props => (
+                  <ColorPicker
+                    {...props}
+                    palette={$cfg.palette.primary}
+                    customPalette={$d.document.customPalette}
+                    onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+                  />
+                )}
+                renderValue={props => <ColorPreview {...props} />}
+              />
             )}
           </div>
         </>

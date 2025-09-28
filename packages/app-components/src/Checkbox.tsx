@@ -35,8 +35,7 @@ export const Checkbox = (props: Props) => {
 
 export const FancyCheckbox = (props: Props) => {
   return (
-    <>
-      <ToggleButtonGroup.Root
+    <ToggleButtonGroup.Root
         type={'single'}
         value={props.value ? 'set' : ''}
         data-field-state={props.isIndeterminate ? 'indeterminate' : props.state}
@@ -50,7 +49,6 @@ export const FancyCheckbox = (props: Props) => {
           </div>
         </ToggleButtonGroup.Item>
       </ToggleButtonGroup.Root>
-    </>
   );
 };
 

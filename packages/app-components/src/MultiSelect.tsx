@@ -134,8 +134,7 @@ export const MultiSelect = (props: Props) => {
   };
 
   return (
-    <>
-      <div
+    <div
         className={styles.cmpMultiSelect}
         {...extractDataAttributes(props)}
         data-field-state={props.isIndeterminate ? 'indeterminate' : props.state}
@@ -200,7 +199,6 @@ export const MultiSelect = (props: Props) => {
             )}
         </div>
       </div>
-    </>
   );
 };
 

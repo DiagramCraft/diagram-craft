@@ -17,8 +17,7 @@ export const LayerIndicator = () => {
   useEventListener(diagram, 'change', redraw);
 
   return (
-    <>
-      <DropdownMenu.Root>
+    <DropdownMenu.Root>
         <DropdownMenu.Trigger asChild>
           <button className="cmp-layer-indicator" aria-label="Customise options">
             {diagram.activeLayer.type === 'regular' ? (
@@ -100,6 +99,5 @@ export const LayerIndicator = () => {
           </DropdownMenu.Content>
         </DropdownMenu.Portal>
       </DropdownMenu.Root>
-    </>
   );
 };

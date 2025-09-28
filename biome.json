@@ -56,15 +56,13 @@
         "noAdjacentSpacesInRegex": "off",
         "noUselessRename": "off",
         "noFlatMapIdentity": "off",
-        "useIndexOf": "off",
-        "noUselessFragments": "off"
+        "useIndexOf": "off"
       },
       "correctness": {
         "useExhaustiveDependencies": "off",
         "noConstantCondition": "off",
         "useUniqueElementIds": "off",
         "noUnusedLabels": "off",
-        "useParseIntRadix": "on",
         "noEmptyCharacterClassInRegex": "off"
       },
       "security": {
