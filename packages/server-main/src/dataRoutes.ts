@@ -46,6 +46,7 @@ export function createDataRoutes(dataStore: FileSystemDataStore) {
   // Helper function to handle errors consistently
   const handleError = (error: unknown, fallbackMessage: string) => {
     if (error && typeof error === 'object' && 'statusCode' in error) {
+      // eslint-disable-next-line @typescript-eslint/only-throw-error
       throw error;
     }
     if (

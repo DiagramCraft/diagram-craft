@@ -23,7 +23,7 @@ export function createFilesystemRoutes(rootPath: string) {
   const ROOT_RESOLVED = path.resolve(rootPath);
 
   const badRequest = (message: string) => {
-    throw createError({
+    return createError({
       status: 400,
       statusMessage: 'Bad Request',
       data: { message }

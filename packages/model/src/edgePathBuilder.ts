@@ -8,7 +8,7 @@ import {
   QuadSegment
 } from '@diagram-craft/geometry/pathSegment';
 import { Line } from '@diagram-craft/geometry/line';
-import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { buildOrthogonalEdgePath } from './edgePathBuilder.orthogonal';
 import { buildBezierEdgePath } from './edgePathBuilder.bezier';
 import { buildStraightEdgePath } from './edgePathBuilder.straight';
@@ -56,7 +56,7 @@ const convertToCurves = (segments: ReadonlyArray<PathSegment>) => {
 
     // We know all segments are line segments (as we call this following
     // buildOrthogonalEdgePath)
-    if (!(segment instanceof LineSegment)) throw VERIFY_NOT_REACHED();
+    if (!(segment instanceof LineSegment)) throw new VerifyNotReached();
 
     const newEnd = Line.midpoint(Line.of(segment.start, segment.end));
     dest.push(new QuadSegment(start, cp, newEnd));

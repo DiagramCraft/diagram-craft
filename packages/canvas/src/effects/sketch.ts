@@ -152,7 +152,7 @@ export const parseArrowSvgPath = (path: string): Path[] => {
     } else if (rs[0] === 'z' || rs[0] === 'Z') {
       segments.push(new LineSegment(point!, startPoint!));
     } else {
-      throw `Unsupported type ${rs[0]} - ${rs.join(' ')}`;
+      throw new Error(`Unsupported type ${rs[0]} - ${rs.join(' ')}`);
     }
 
     point = segments.length > 0 ? segments.at(-1)!.end : point;
