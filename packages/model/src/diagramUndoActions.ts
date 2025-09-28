@@ -91,8 +91,7 @@ export class SnapshotUndoableAction implements UndoableAction {
 
     if (
       nextAction.description === this.description &&
-      hasSameElements(nextAction.afterSnapshot.keys, this.afterSnapshot.keys) &&
-      new Date().getTime() - this.timestamp!.getTime() < 2000
+      hasSameElements(nextAction.afterSnapshot.keys, this.afterSnapshot.keys) &&Date.now()- this.timestamp!.getTime() < 2000
     ) {
       this.afterSnapshot = nextAction.afterSnapshot;
       this.timestamp = new Date();

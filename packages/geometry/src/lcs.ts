@@ -15,7 +15,7 @@ export class LocalCoordinateSystem {
 
   static fromBox(box: Box) {
     if (Point.isEqual(Point.ORIGIN, box) && box.r === 0 && box.w === 1 && box.h === 1)
-      return this.UNITY;
+      return LocalCoordinateSystem.UNITY;
     return new LocalCoordinateSystem(box);
   }
 

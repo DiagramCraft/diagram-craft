@@ -1234,7 +1234,7 @@ async function decode(data: string) {
 }
 
 export const drawioReader = async (contents: string, doc: DiagramDocument): Promise<void> => {
-  const start = new Date().getTime();
+  const start = Date.now();
 
   const parser = new DOMParser();
   const $doc = parser.parseFromString(contents, 'application/xml');
@@ -1289,5 +1289,5 @@ export const drawioReader = async (contents: string, doc: DiagramDocument): Prom
     }
   }
 
-  console.log(`Duration: ${new Date().getTime() - start}`);
+  console.log(`Duration: ${Date.now()- start}`);
 };

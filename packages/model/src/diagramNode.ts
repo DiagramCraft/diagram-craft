@@ -182,7 +182,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   ) {
     const node = new DiagramNode(id, layer, anchorCache);
 
-    this.initializeNode(node, nodeType, bounds, props, metadata, text);
+    DiagramNode.initializeNode(node, nodeType, bounds, props, metadata, text);
 
     return node;
   }
@@ -871,7 +871,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   get edges(): DiagramEdge[] {
     return [
       ...Array.from(this.#edges.values)
-        .flatMap(e => e)
+        .flat()
         .map(e => this.diagram.edgeLookup.get(e)!),
       ...this.children.flatMap(c => (isNode(c) ? c.edges : []))
     ];

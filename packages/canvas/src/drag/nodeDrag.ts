@@ -20,7 +20,7 @@ export class NodeDrag extends Drag {
   ) {
     super();
 
-    this.startTime = new Date().getTime();
+    this.startTime = Date.now();
     this.uow = new UnitOfWork(this.editablePath.node.diagram, true);
 
     this.initialPositions = this.waypointIndices.map(
@@ -54,7 +54,7 @@ export class NodeDrag extends Drag {
     if (
       this.lastPoint === undefined ||
       this.startPoint === undefined ||
-      (new Date().getTime() - this.startTime < 200 &&
+      (Date.now()- this.startTime < 200 &&
         Point.distance(this.lastPoint, this.startPoint) < 5)
     ) {
       this.uow.abort();

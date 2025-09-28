@@ -4,7 +4,7 @@ import { Random } from '@diagram-craft/utils/random';
 import { MultiWindowAutosave } from './react-app/autosave/MultiWindowAutosave';
 import { ElectronAutosave } from './react-app/autosave/ElectronAutosave';
 
-const random = new Random(new Date().getTime());
+const random = new Random(Date.now());
 
 export const defaultAppConfig: AppConfig = {
   stencils: {

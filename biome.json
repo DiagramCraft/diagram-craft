@@ -45,13 +45,10 @@
       },
       "complexity": {
         "noImportantStyles": "off",
-        "useDateNow": "off",
         "noExtraBooleanCast": "off",
         "useLiteralKeys": "off",
-        "noThisInStatic": "off",
         "noStaticOnlyClass": "off",
         "noAdjacentSpacesInRegex": "off",
-        "noFlatMapIdentity": "off",
         "useIndexOf": "off"
       },
       "correctness": {

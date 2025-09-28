@@ -108,11 +108,11 @@ export class PathListBuilder {
   private transformList: Transform[] | undefined = undefined;
 
   static fromPathList(pathList: PathList) {
-    return this.fromString(pathList.asSvgPath());
+    return PathListBuilder.fromString(pathList.asSvgPath());
   }
 
   static fromPath(path: Path) {
-    return this.fromSegments(
+    return PathListBuilder.fromSegments(
       path.start,
       path.segments.flatMap(s => s.raw())
     );
