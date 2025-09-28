@@ -44,9 +44,9 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
         if (!(part in current)) {
           // If the next part is a number, create an array, otherwise create an object
           const nextPart = i + 1 < parts.length ? parts[i + 1] : '';
-          const nextIsArrayIndex = !isNaN(Number(nextPart));
+          const nextIsArrayIndex = !Number.isNaN(Number(nextPart));
 
-          const isArrayIndex = !isNaN(Number(part));
+          const isArrayIndex = !Number.isNaN(Number(part));
           if (isArrayIndex && !Array.isArray(current)) {
             assert.true(Object.keys(current).length === 0);
             current = [];
@@ -63,7 +63,7 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
         current[lastPart] = value;
       } else if (!(lastPart in current)) {
         // Check if this is part of an array
-        const isArrayIndex = !isNaN(Number(lastPart));
+        const isArrayIndex = !Number.isNaN(Number(lastPart));
         if (isArrayIndex && !Array.isArray(current)) {
           assert.true(Object.keys(current).length === 0);
           current = [];
@@ -130,7 +130,7 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
         );
 
         // If this is an array-like object (all keys are numeric), include 'length'
-        const isArrayLike = keys.length > 0 && keys.every(k => !isNaN(Number(k)));
+        const isArrayLike = keys.length > 0 && keys.every(k => !Number.isNaN(Number(k)));
         if (isArrayLike && !keys.includes('length')) {
           keys.push('length');
         }
@@ -164,7 +164,7 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
             .filter(k => path === '' || k.startsWith(path + '.'))
             .map(k => (path === '' ? k : k.substring(path.length + 1)))
             .map(k => k.split('.')[0])
-            .filter(k => !isNaN(Number(k)));
+            .filter(k => !Number.isNaN(Number(k)));
 
           if (keys.length > 0) {
             return Math.max(...keys.map(k => Number(k))) + 1;
@@ -184,7 +184,7 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
           if (keys.length === 0) {
             return undefined;
           } else if (
-            keys.every(k => !isNaN(Number(k.substring(fullPath.length + 1).split('.')[0])))
+            keys.every(k => !Number.isNaN(Number(k.substring(fullPath.length + 1).split('.')[0])))
           ) {
             const numericKeys = keys.map(k =>
               Number(k.substring(fullPath.length + 1).split('.')[0])

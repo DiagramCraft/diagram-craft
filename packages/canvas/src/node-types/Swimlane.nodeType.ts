@@ -103,7 +103,7 @@ export class SwimlaneNodeDefinition extends ShapeNodeDefinition {
       let targetHeight = row.row.bounds.h;
 
       // TODO: Why is this needed
-      if (isNaN(targetHeight) || !isFinite(targetHeight)) targetHeight = 100;
+      if (Number.isNaN(targetHeight) || !Number.isFinite(targetHeight)) targetHeight = 100;
 
       row.newLocalBounds = {
         x: 0,

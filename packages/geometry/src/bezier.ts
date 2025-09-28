@@ -583,7 +583,7 @@ export class CubicBezier {
 
     const res = [];
     for (const t of roots) {
-      if (isNaN(t) || t < 0 || t > 1) continue;
+      if (Number.isNaN(t) || t < 0 || t > 1) continue;
 
       const p = {
         x: ((Ax * t + Bx) * t + Cx) * t + Dx,

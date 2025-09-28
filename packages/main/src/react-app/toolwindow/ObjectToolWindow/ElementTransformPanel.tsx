@@ -236,7 +236,7 @@ export const ElementTransformPanel = (props: Props) => {
                   const number = ev ?? 0;
                   updateBounds({
                     ...transformedBounds,
-                    r: Angle.toRad(isNaN(number) ? 0 : number)
+                    r: Angle.toRad(Number.isNaN(number) ? 0 : number)
                   });
                 }}
               />

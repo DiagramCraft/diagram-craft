@@ -35,9 +35,7 @@
         "noDoubleEquals": "off",
         "noArrayIndexKey": "off",
         "noConfusingVoidType": "off",
-        "noGlobalIsNan": "off",
         "noPrototypeBuiltins": "off",
-        "noGlobalIsFinite": "off",
         "noImportantInKeyframe": "off",
         "noConfusingLabels": "off",
         "noControlCharactersInRegex": "off",
@@ -45,7 +43,6 @@
       },
       "complexity": {
         "noImportantStyles": "off",
-        "noExtraBooleanCast": "off",
         "useLiteralKeys": "off",
         "noStaticOnlyClass": "off",
         "noAdjacentSpacesInRegex": "off"
@@ -73,7 +70,8 @@
       "!**/playground",
       "!**/*.test.ts",
       "!**/*.stories.tsx",
-      "!**/vite.config.ts"
+      "!**/vite.config.ts",
+      "!**/vitest.config.ts"
     ]
   },
   "javascript": {

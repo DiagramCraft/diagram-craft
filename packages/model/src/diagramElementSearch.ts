@@ -101,7 +101,7 @@ export const searchByElementSearchClauses = (
                   (clause.value === 'true' || clause.value === 'false')
                 ) {
                   if (value.toString() === clause.value) result.add(element.id);
-                } else if (typeof value === 'number' && !isNaN(Number(clause.value))) {
+                } else if (typeof value === 'number' && !Number.isNaN(Number(clause.value))) {
                   if (value === Number(clause.value)) result.add(element.id);
                 } else if (value === clause.value) {
                   result.add(element.id);
@@ -115,21 +115,21 @@ export const searchByElementSearchClauses = (
                   (clause.value === 'true' || clause.value === 'false')
                 ) {
                   if (value.toString() !== clause.value) result.add(element.id);
-                } else if (typeof value === 'number' && !isNaN(Number(clause.value))) {
+                } else if (typeof value === 'number' && !Number.isNaN(Number(clause.value))) {
                   if (value !== Number(clause.value)) result.add(element.id);
                 } else if (value !== clause.value) {
                   result.add(element.id);
                 }
                 break;
               case 'gt':
-                if (value != null && typeof value === 'number' && !isNaN(Number(clause.value))) {
+                if (value != null && typeof value === 'number' && !Number.isNaN(Number(clause.value))) {
                   if (value > Number(clause.value)) result.add(element.id);
                 } else if (value != null && value > clause.value) {
                   result.add(element.id);
                 }
                 break;
               case 'lt':
-                if (value != null && typeof value === 'number' && !isNaN(Number(clause.value))) {
+                if (value != null && typeof value === 'number' && !Number.isNaN(Number(clause.value))) {
                   if (value < Number(clause.value)) result.add(element.id);
                 } else if (value != null && value < clause.value) {
                   result.add(element.id);

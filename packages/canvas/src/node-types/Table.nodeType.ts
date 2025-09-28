@@ -130,7 +130,7 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
       let targetHeight = Math.max(...row.columns.map(c => c.cell.bounds.h));
 
       // TODO: Why is this needed
-      if (isNaN(targetHeight) || !isFinite(targetHeight)) targetHeight = 100;
+      if (Number.isNaN(targetHeight) || !Number.isFinite(targetHeight)) targetHeight = 100;
 
       // Layout row
       y += gap;

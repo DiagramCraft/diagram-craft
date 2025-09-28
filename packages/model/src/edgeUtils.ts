@@ -231,10 +231,10 @@ const addLineHop = (dest: Path[], before: Path, after: Path, type: string, size:
       const endStart = Point.add(end, Vector.scale(normalEnd, lineLength / 2));
       const endEnd = Point.subtract(end, Vector.scale(normalEnd, lineLength / 2));
 
-      if (isNaN(startStart.x) || isNaN(startStart.y) || isNaN(startEnd.x) || isNaN(startEnd.y)) {
+      if (Number.isNaN(startStart.x) || Number.isNaN(startStart.y) || Number.isNaN(startEnd.x) || Number.isNaN(startEnd.y)) {
         return;
       }
-      if (isNaN(endStart.x) || isNaN(endStart.y) || isNaN(endEnd.x) || isNaN(endEnd.y)) {
+      if (Number.isNaN(endStart.x) || Number.isNaN(endStart.y) || Number.isNaN(endEnd.x) || Number.isNaN(endEnd.y)) {
         return;
       }
 
