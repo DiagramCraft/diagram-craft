@@ -1,8 +1,8 @@
 import { type IpcHandlers } from '../ipc';
 import { app, BrowserWindow, ipcMain } from 'electron';
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
-import { unlink, access } from 'fs/promises';
-import { join } from 'path';
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { unlink, access } from 'node:fs/promises';
+import { join } from 'node:path';
 import log from 'electron-log/main';
 
 const AUTOSAVE_FILENAME = 'diagram-craft-autosave.json';

@@ -1,7 +1,7 @@
 import { type IpcHandlers } from '../ipc';
 import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 import { resolveFile } from '../utils/path';
-import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import log from 'electron-log/main';
 
 export const fileHandlers: IpcHandlers = {

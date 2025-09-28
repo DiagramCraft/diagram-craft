@@ -21,8 +21,6 @@
         "noNonNullAssertion": "off",
         "useImportType": "off",
         "useTemplate": "off",
-        "useNodejsImportProtocol": "off",
-        "useArrayLiterals": "off",
         "useShorthandFunctionType": "off"
       },
       "suspicious": {
@@ -37,8 +35,7 @@
         "noPrototypeBuiltins": "off",
         "noImportantInKeyframe": "off",
         "noConfusingLabels": "off",
-        "noControlCharactersInRegex": "off",
-        "noImplicitAnyLet": "off"
+        "noControlCharactersInRegex": "off"
       },
       "complexity": {
         "noImportantStyles": "off",
