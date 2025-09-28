@@ -89,7 +89,7 @@ export const clipPath = (
   startArrow: ArrowShape | undefined,
   endArrow: ArrowShape | undefined
 ) => {
-  const diagram = edge.diagram!;
+  const diagram = edge.diagram;
 
   const start =
     edge.start instanceof ConnectedEndpoint

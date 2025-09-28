@@ -8,7 +8,7 @@ import { isLinux, isMac, isWindows } from '../utils/platform';
 export const menuHandlers: IpcHandlers = {
   register(mainWindow: BrowserWindow): void {
     ipcMain.handle('menu:set', async (_event, { items, keybindings }) => {
-      createMenu(items, keybindings, mainWindow!);
+      createMenu(items, keybindings, mainWindow);
     });
 
     ipcMain.handle('menu:setState', async (_event, { id, enabled, checked }) => {

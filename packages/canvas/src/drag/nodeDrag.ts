@@ -55,7 +55,7 @@ export class NodeDrag extends Drag {
       this.lastPoint === undefined ||
       this.startPoint === undefined ||
       (new Date().getTime() - this.startTime < 200 &&
-        Point.distance(this.lastPoint, this.startPoint!) < 5)
+        Point.distance(this.lastPoint, this.startPoint) < 5)
     ) {
       this.uow.abort();
       return;

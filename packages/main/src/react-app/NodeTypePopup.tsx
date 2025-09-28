@@ -85,7 +85,7 @@ export const NodeTypePopup = (props: Props) => {
   // TODO: Add some smartness to select recent node types and/or node types suggested by the source
   //       node type
   const diagramsAndNodes: Array<[Stencil, Diagram]> = useMemo(() => {
-    const nodes = diagram.document.nodeDefinitions.stencilRegistry.get('default')!.stencils;
+    const nodes = diagram.document.nodeDefinitions.stencilRegistry.get('default').stencils;
     return nodes.map(n => {
       const { diagram: dest, layer } = DocumentBuilder.empty(
         n.id,

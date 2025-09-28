@@ -94,7 +94,7 @@ export class AnchorEndpoint
   }
 
   private getAnchorType() {
-    return this.getAnchor()!.type;
+    return this.getAnchor().type;
   }
 
   getAnchor() {
@@ -105,7 +105,7 @@ export class AnchorEndpoint
 
   get position() {
     const bounds = this.node.bounds;
-    const ref = this.node._getAnchorPosition(this.anchorId!);
+    const ref = this.node._getAnchorPosition(this.anchorId);
 
     const v = { x: this.offset.x * bounds.w, y: this.offset.y * bounds.h };
     const rotatedOffset = Point.rotateAround(v, bounds.r, Point.ORIGIN);
@@ -159,7 +159,7 @@ export class PointInNodeEndpoint
 
   get position() {
     const bounds = this.node.bounds;
-    const ref = this.ref ? this.node!._getPositionInBounds(this.ref) : bounds;
+    const ref = this.ref ? this.node._getPositionInBounds(this.ref) : bounds;
 
     const v =
       this.offsetType === 'absolute'

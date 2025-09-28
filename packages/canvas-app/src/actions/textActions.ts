@@ -78,7 +78,7 @@ export class TextAction extends AbstractToggleAction {
 
     commitWithUndo(uow, `Text: ${this.prop}`);
 
-    this.state = !!node.renderProps.text![this.prop];
+    this.state = !!node.renderProps.text[this.prop];
     this.emit('actionChanged');
   }
 }
@@ -139,7 +139,7 @@ export class TextDecorationAction extends AbstractToggleAction {
 
     commitWithUndo(uow, `Text decoration`);
 
-    this.state = node.renderProps.text!.textDecoration === this.prop;
+    this.state = node.renderProps.text.textDecoration === this.prop;
     this.emit('actionChanged');
   }
 }

@@ -134,8 +134,8 @@ export class SwimlaneNodeDefinition extends ShapeNodeDefinition {
       uow.registerOnCommitCallback('onChildChanged', node.parent, () => {
         assert.node(node.parent!);
 
-        const parentDef = node.parent!.getDefinition();
-        parentDef.onChildChanged(node.parent!, uow);
+        const parentDef = node.parent.getDefinition();
+        parentDef.onChildChanged(node.parent, uow);
       });
     }
   }

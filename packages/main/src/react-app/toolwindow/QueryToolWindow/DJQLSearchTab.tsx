@@ -84,7 +84,7 @@ export const DJQLSearchTab = () => {
   let error: string | undefined = undefined;
   try {
     const q = queries[queryIdx]!.q;
-    const input = queryIdx === 0 ? getSource(djqlScope!, diagram) : queryInput;
+    const input = queryIdx === 0 ? getSource(djqlScope, diagram) : queryInput;
 
     res = parseAndQuery(q, [input]);
 
@@ -119,7 +119,7 @@ export const DJQLSearchTab = () => {
           }}
           getQuery={() => ref.current!.value}
           getLabel={() => ref.current!.value}
-          getScope={() => djqlScope!}
+          getScope={() => djqlScope}
         />
       </ToolWindow.TabActions>
       <Accordion.Root type="multiple" defaultValue={['query', 'response']}>

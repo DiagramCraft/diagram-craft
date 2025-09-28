@@ -79,7 +79,7 @@ export class Stylesheet<T extends StylesheetType, P = TypeMap[T]>
 
   restore(snapshot: StylesheetSnapshot, uow: UnitOfWork): void {
     this.crdt.set('name', snapshot.name);
-    this.crdt.set('props', snapshot.props as NodeProps | EdgeProps);
+    this.crdt.set('props', snapshot.props);
     uow.updateElement(this);
   }
 

@@ -48,7 +48,7 @@ export const ReferenceLayerDialog = (props: Props) => {
               props.onOk?.({
                 diagramId: selectedDiagram.id,
                 layerId: selectedLayer.id,
-                name: ref.current!.value
+                name: ref.current.value
               });
             }
           },

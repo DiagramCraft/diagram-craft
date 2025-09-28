@@ -78,7 +78,7 @@ export class ZoomTool extends AbstractTool {
 
     if (!this.clickPoint) return;
 
-    const p1 = this.diagram.viewBox.toDiagramPoint(this.clickPoint!);
+    const p1 = this.diagram.viewBox.toDiagramPoint(this.clickPoint);
     const p2 = this.diagram.viewBox.toDiagramPoint(point);
 
     const newW = Math.abs(p2.x - p1.x);

@@ -41,7 +41,7 @@ const makeDataListener =
           } else {
             e.updateMetadata(cb => {
               cb.data ??= {};
-              cb.data!.data = cb.data.data?.filter(dt => !predicate(dt));
+              cb.data.data = cb.data.data?.filter(dt => !predicate(dt));
             }, uow);
           }
         }
@@ -253,7 +253,7 @@ export class DataManager extends EventEmitter<DataProviderEventMap> {
 
   addSchema(schema: DataSchema, providerId: string) {
     const provider = this.getProvider(providerId);
-    if (!isMutableSchemaProvider(provider!)) throw new VerifyNotReached();
+    if (!isMutableSchemaProvider(provider)) throw new VerifyNotReached();
     return provider.addSchema(schema);
   }
 

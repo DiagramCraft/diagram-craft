@@ -21,7 +21,7 @@ export class HTMLRenderer {
     // Render and filter out empty children first
     const renderedChildren = astNode
       .map(child => this.processNode(child))
-      .filter(r => r && r.trim() !== '') as string[];
+      .filter(r => r && r.trim() !== '');
 
     for (let i = 0; i < renderedChildren.length; i++) {
       const rendered = renderedChildren[i]!;

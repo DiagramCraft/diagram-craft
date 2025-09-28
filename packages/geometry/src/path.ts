@@ -52,7 +52,7 @@ class SegmentList {
           dest.push(new QuadSegment(end, { x: seg[1], y: seg[2] }, { x: seg[3], y: seg[4] }));
           break;
         case 'T': {
-          const cp = (dest.at(-1) as QuadSegment).p2!;
+          const cp = (dest.at(-1) as QuadSegment).p2;
           const cp2 = Point.add(end, Point.subtract(end, cp));
           dest.push(new QuadSegment(end, cp2, { x: seg[1], y: seg[2] }));
           break;
@@ -145,12 +145,12 @@ class SegmentList {
     const l = this.segments.slice(0, bestSegment).reduce((acc, cur) => acc + cur.length(), 0);
     return {
       segmentIndex: bestSegment,
-      t: bestProject!.t,
+      t: bestProject.t,
 
       // TODO: Should we really return this back here - as it's a bit expensive to calculate
-      globalL: l + this.segments[bestSegment]!.lengthAtT(bestProject!.t),
-      distance: bestProject!.distance,
-      point: bestProject!.point
+      globalL: l + this.segments[bestSegment]!.lengthAtT(bestProject.t),
+      distance: bestProject.distance,
+      point: bestProject.point
     };
   }
 }

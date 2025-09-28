@@ -238,7 +238,7 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
 
   updateMetadata(callback: (props: ElementMetadata) => void, uow: UnitOfWork) {
     uow.snapshot(this);
-    const metadata = this._metadata.getClone()! as ElementMetadata;
+    const metadata = this._metadata.getClone() as ElementMetadata;
     callback(metadata);
     this._metadata.set(metadata);
     uow.updateElement(this);

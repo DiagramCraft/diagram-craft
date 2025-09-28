@@ -87,7 +87,7 @@ export const searchByElementSearchClauses = (
       const result = new Set<string>();
       for (const layer of diagram.layers.visible) {
         if (layer instanceof RegularLayer) {
-          for (const element of (layer as RegularLayer).elements) {
+          for (const element of layer.elements) {
             // @ts-ignore
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const value: any = clause.path.split('.').reduce((p, c) => p[c], element);
@@ -159,7 +159,7 @@ export const searchByElementSearchClauses = (
       const result = new Set<string>();
       for (const layer of diagram.layers.visible) {
         if (layer instanceof RegularLayer) {
-          for (const element of (layer as RegularLayer).elements) {
+          for (const element of layer.elements) {
             const elementTags = element.tags;
             const hasMatchingTag = clause.tags.some(ruleTag =>
               elementTags.some(elementTag => elementTag.toLowerCase() === ruleTag.toLowerCase())
@@ -193,7 +193,7 @@ export const searchByElementSearchClauses = (
       const result = new Set<string>();
       for (const layer of diagram.layers.visible) {
         if (layer instanceof RegularLayer) {
-          for (const element of (layer as RegularLayer).elements) {
+          for (const element of layer.elements) {
             if (matchingElements.has(element.id)) {
               result.add(element.id);
             }

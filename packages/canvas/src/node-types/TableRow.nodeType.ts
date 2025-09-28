@@ -26,8 +26,8 @@ export class TableRowNodeDefinition extends ShapeNodeDefinition {
     const parent = node.parent;
     if (parent && isNode(parent)) {
       uow.registerOnCommitCallback('onChildChanged', parent, () => {
-        const parentDef = parent!.getDefinition();
-        parentDef.onChildChanged(parent!, uow);
+        const parentDef = parent.getDefinition();
+        parentDef.onChildChanged(parent, uow);
       });
     }
   }

@@ -646,7 +646,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       // Check that no children are elements of the layer
       for (const c of this.children) {
         assert.false(
-          c.layer.type === 'regular' && !!(c.layer as RegularLayer).elements.find(e => e === c),
+          c.layer.type === 'regular' && !!c.layer.elements.find(e => e === c),
           "Label node doesn't match children - element"
         );
       }
@@ -802,7 +802,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       this.start,
       this.end,
       deepClone(this.#props) as EdgeProps,
-      deepClone(this.metadata) as ElementMetadata,
+      deepClone(this.metadata),
       deepClone(this.waypoints) as Array<Waypoint>,
       this.layer
     );
@@ -993,8 +993,8 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
 
     // Note, need to check if the element is still in the layer to avoid infinite recursion
     assert.true(this.layer.type === 'regular');
-    if ((this.layer as RegularLayer).elements.includes(this)) {
-      (this.layer as RegularLayer).removeElement(this, uow);
+    if (this.layer.elements.includes(this)) {
+      this.layer.removeElement(this, uow);
     }
   }
 
@@ -1022,7 +1022,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       intersections.push(
         ...intersectionsWithOther.map(e => ({
           point: e.point,
-          type: (currentEdgeHasBeenSeen ? 'below' : 'above') as Intersection['type']
+          type: currentEdgeHasBeenSeen ? ('below' as const) : ('above' as const)
         }))
       );
       if (propagate) {

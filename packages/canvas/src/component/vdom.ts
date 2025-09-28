@@ -155,7 +155,7 @@ const onCreate = (node: VNode) => {
 const onRemove = (node: VNode) => {
   for (const child of node.children) {
     if (typeof child === 'string') continue;
-    onRemove(child as VNode);
+    onRemove(child);
   }
 
   node.data.hooks?.onRemove?.(node);
@@ -167,7 +167,7 @@ const updateAttrs = (oldVNode: VNode, newVNode: VNode) => {
 
   const oldAttrs = oldVNode.data ?? {};
   const newAttrs = newVNode.data;
-  const newNode = newVNode.el! as DOMElement;
+  const newNode = newVNode.el!;
 
   for (const key in newAttrs) {
     if (key === 'on' || key === 'hooks' || key === 'component') return;
@@ -190,7 +190,7 @@ const updateEvents = (oldVNode: VNode, newVNode: VNode) => {
 
   if (oldKeys.length === 0 && newKeys.length === 0) return;
 
-  const newNode = newVNode.el! as DOMElement;
+  const newNode = newVNode.el!;
 
   // Note: We have changed to assign to the `on{...}` properties instead
   //       of using addEventListener/removeEventListener - as we only
@@ -212,10 +212,10 @@ const createElement = (e: VNode, parentElement: VNode | undefined, insertQueue: 
   insertQueue.push(e);
 
   if (e.type === 't') {
-    e.el = document.createTextNode(e.children[0] as string);
+    e.el = document.createTextNode(e.children[0]);
     onCreate(e);
   } else if (e.type === 'r') {
-    (parentElement!.el as HTMLElement).innerHTML = e.children[0] as string;
+    (parentElement!.el as HTMLElement).innerHTML = e.children[0];
 
     // NOTE: Not very elegant
     e.el = parentElement!.el! as DOMElement;
@@ -234,8 +234,8 @@ const createElement = (e: VNode, parentElement: VNode | undefined, insertQueue: 
     onUpdate(emptyVNode(), e, undefined);
 
     e.children.forEach(child => {
-      createElement(child as VNode, e, insertQueue);
-      if ((child as VNode).type !== 'r') node.appendChild((child as VNode).el!);
+      createElement(child, e, insertQueue);
+      if (child.type !== 'r') node.appendChild(child.el!);
     });
   }
 };
@@ -263,7 +263,7 @@ const applyUpdates = (
 
   // Diff children
   const oldChildren = oldElement.children;
-  const newChildren = newElement.children as VNode[];
+  const newChildren = newElement.children;
 
   let childrenChanged = false;
 

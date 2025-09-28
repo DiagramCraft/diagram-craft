@@ -2,7 +2,7 @@ import { app, type BrowserWindow, dialog } from 'electron';
 import { resolveAsset } from './utils/path';
 
 export const showAboutDialog = (mainWindow: BrowserWindow): void => {
-  dialog.showMessageBox(mainWindow!, {
+  dialog.showMessageBox(mainWindow, {
     type: 'info',
     title: 'About Diagram Craft',
     message: 'Diagram Craft',

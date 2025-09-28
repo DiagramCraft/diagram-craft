@@ -158,9 +158,7 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> {
     for (const comment of this.commentsMap.values()) {
       serializedComments.push(comment);
     }
-    return serializedComments
-      .map(sc => Comment.deserialize(sc, this.diagram))
-      .filter(c => c !== null) as Comment[];
+    return serializedComments.map(sc => Comment.deserialize(sc, this.diagram));
   }
 
   getDiagramComments(): Comment[] {

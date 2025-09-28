@@ -50,7 +50,7 @@ export class EdgeControlPointDrag extends Drag {
     }
 
     const controlPoints = {
-      [cIdx]: Point.subtract(offset, wp!.point),
+      [cIdx]: Point.subtract(offset, wp.point),
       [ocIdx]: otherControlPoint
     } as ControlPoints;
 

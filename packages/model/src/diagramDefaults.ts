@@ -111,7 +111,7 @@ export class Defaults<T> {
     // Handle patterns
     const patternDefaults = {};
     const accessor = new DynamicAccessor<DeepPartial<T>>();
-    for (const [key, value] of Object.entries(this.cachedPatternDefaultsObjects!)) {
+    for (const [key, value] of Object.entries(this.cachedPatternDefaultsObjects)) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       accessor.set(patternDefaults, key as PropPath<DeepPartial<T>>, {} as any);
 

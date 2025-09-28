@@ -21,7 +21,7 @@ export class ToggleRulerAction extends AbstractToggleAction {
   }
 
   execute(): void {
-    UserState.get()!.showRulers = !this.state;
+    UserState.get().showRulers = !this.state;
     this.emit('actionTriggered');
   }
 }

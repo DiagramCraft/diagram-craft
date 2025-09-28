@@ -81,7 +81,7 @@ export class BaseNodeComponent<
           newBounds.x = bounds.x - (width - bounds.w) / 2;
         }
 
-        UnitOfWork.execute(props.node.diagram!, uow => props.node.setBounds(newBounds, uow), true);
+        UnitOfWork.execute(props.node.diagram, uow => props.node.setBounds(newBounds, uow), true);
       }
     };
   }

@@ -92,7 +92,7 @@ export class ExternalDataClear extends AbstractSelectionAction<Application, Sche
     for (const e of elements) {
       e.updateMetadata(p => {
         p.data!.data ??= [];
-        p.data!.data = p.data!.data!.filter(s => s.schema !== arg.schemaId);
+        p.data!.data = p.data!.data.filter(s => s.schema !== arg.schemaId);
       }, uow);
     }
 
@@ -154,7 +154,7 @@ export class ExternalDataLinkAction extends AbstractSelectionAction<Application,
             };
             item.type = 'external';
 
-            const db = $d.document.data.db!;
+            const db = $d.document.data.db;
             const [data] = db.getById(db.getSchema(arg.schemaId!), [v]) as [Data];
             for (const k of Object.keys(data)) {
               if (k.startsWith('_')) continue;
@@ -165,7 +165,7 @@ export class ExternalDataLinkAction extends AbstractSelectionAction<Application,
         commitWithUndo(uow, 'Link external data');
       },
       props: {
-        schema: this.context.model.activeDocument.data.db.getSchema(arg.schemaId!)!
+        schema: this.context.model.activeDocument.data.db.getSchema(arg.schemaId!)
       }
     });
   }

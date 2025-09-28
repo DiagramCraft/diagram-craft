@@ -76,7 +76,7 @@ const StartAngle = {
       node.updateCustomProps('blockArc', props => (props.startAngle = undefined), uow);
     } else {
       if (value >= 360 || value <= -360) return;
-      if (value >= $defaults(node.editProps.custom!.blockArc!).endAngle) {
+      if (value >= $defaults(node.editProps.custom!.blockArc).endAngle) {
         StartAngle.set(value - 360, node, uow);
         return;
       }

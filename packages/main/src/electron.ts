@@ -111,7 +111,7 @@ class ElectronFileSaveAction extends AbstractAction<undefined, Application> {
     const url = this.context.model.activeDocument.url;
     assert.present(url);
 
-    serializeDiagramDocument(this.context.model.activeDocument!).then(async e => {
+    serializeDiagramDocument(this.context.model.activeDocument).then(async e => {
       const serialized = JSON.stringify(e);
 
       window.electronAPI?.fileSave(url, serialized).then(async (result: string | undefined) => {
@@ -138,7 +138,7 @@ class ElectronFileSaveAsAction extends AbstractAction<undefined, Application> {
     const url = this.context.model.activeDocument.url;
     assert.present(url);
 
-    serializeDiagramDocument(this.context.model.activeDocument!).then(async e => {
+    serializeDiagramDocument(this.context.model.activeDocument).then(async e => {
       const serialized = JSON.stringify(e);
 
       window.electronAPI?.fileSaveAs(url, serialized).then(async (result: string | undefined) => {

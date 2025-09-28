@@ -44,7 +44,7 @@ export const createEffect = (callback: Callback, deps: unknown[]) => {
   if (!CURRENT_EFFECT_MANAGER) {
     throw new Error('Effect must be run inside a component');
   }
-  CURRENT_EFFECT_MANAGER!.add(callback, deps);
+  CURRENT_EFFECT_MANAGER.add(callback, deps);
 };
 
 export const isInComponent = () => {
@@ -212,7 +212,7 @@ export abstract class Component<P = Record<string, never>> {
         hooks: {
           onInsert: node => {
             (node.data as ComponentVNodeData<P>).component.instance?.onAttach(
-              (node.data as ComponentVNodeData<P>).component!.instance!.currentProps!
+              (node.data as ComponentVNodeData<P>).component.instance!.currentProps!
             );
             hooks?.onInsert?.(node);
           },

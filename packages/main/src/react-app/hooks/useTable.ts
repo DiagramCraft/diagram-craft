@@ -56,7 +56,7 @@ export const useTableProperty: PropertyArrayHook<Diagram, NodeProps> = makePrope
     if (nodes.length !== 1) return [];
     if (!isNode(nodes[0])) return [];
 
-    const node = nodes[0] as DiagramNode;
+    const node = nodes[0];
     if (node.nodeType === 'table') return [node];
     if (isNode(node.parent) && node.parent?.nodeType === 'tableRow') return [node.parent.parent];
     return [];

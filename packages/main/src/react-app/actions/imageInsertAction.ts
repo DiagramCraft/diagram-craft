@@ -35,7 +35,7 @@ class ImageInsertAction extends AbstractAction<undefined, Application> {
         if (data instanceof Blob) {
           att = await this.context.model.activeDocument.attachments.addAttachment(data);
         } else {
-          const res = await fetch(data as string);
+          const res = await fetch(data);
           const blob = await res.blob();
           att = await this.context.model.activeDocument.attachments.addAttachment(blob);
         }

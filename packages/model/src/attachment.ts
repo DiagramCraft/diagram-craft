@@ -97,7 +97,7 @@ export class AttachmentManager {
       for (const hash of this.#attachments.keys()) {
         const d = this.#attachments.get(hash);
         d!.inUse = used.has(hash);
-        this.#attachments.set(hash, d!);
+        this.#attachments.set(hash, d);
       }
     });
   }

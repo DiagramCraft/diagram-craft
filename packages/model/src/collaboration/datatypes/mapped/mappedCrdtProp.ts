@@ -59,13 +59,13 @@ export class MappedCRDTProp<
 
   set(v: T) {
     this.#value = v;
-    this.#current.set(this.name, this.mapper.toCRDT(v) as C[N]);
+    this.#current.set(this.name, this.mapper.toCRDT(v));
   }
 
   init(v: T) {
     if (!this.#current.has(this.name)) {
       this.#value = v;
-      this.#current.set(this.name, this.mapper.toCRDT(v) as C[N]);
+      this.#current.set(this.name, this.mapper.toCRDT(v));
     }
   }
 }

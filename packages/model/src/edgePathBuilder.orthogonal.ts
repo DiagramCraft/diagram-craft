@@ -121,12 +121,12 @@ class OrthogonalGraph extends SimpleGraph<Point, [Direction, string]> {
 
     const oldWeights = new Map<string, number>();
 
-    for (const adj of this.adjacencyList().get(start.id)!) {
+    for (const adj of this.adjacencyList().get(start.id)) {
       oldWeights.set(adj.edge.id, adj.edge.weight);
       adj.edge.weight += start.directionPenalties[adj.edge.data[0]] ?? 0;
     }
 
-    for (const adj of this.adjacencyList().get(end.id)!) {
+    for (const adj of this.adjacencyList().get(end.id)) {
       const edge = this.getEdge(`${adj.vertexId}-${end.id}`)!;
       oldWeights.set(edge.id, edge.weight);
       edge.weight += end.directionPenalties[Direction.opposite(edge.data[0])] ?? 0;
@@ -401,7 +401,7 @@ class PathfindingSegmentProvider implements SegmentProvider {
       const a = Point.toString(grid[r1]![c1]!);
       const b = Point.toString(grid[r2]![c2]!);
 
-      const weight = Point.manhattanDistance(grid[r1]![c1]!, grid[r2]![c2]!)!;
+      const weight = Point.manhattanDistance(grid[r1]![c1]!, grid[r2]![c2]!);
 
       const isHorizontal = d === 'e' || d === 'w';
       const type = isHorizontal ? ys.get(grid[r1]![c1]!.y)! : xs.get(grid[r1]![c1]!.x)!;
@@ -568,11 +568,11 @@ class PathfindingSegmentProvider implements SegmentProvider {
 
     const points: Point[] = [];
     for (const e of shortestPathToWaypoint!.path) {
-      points.push(e.data!);
+      points.push(e.data);
     }
 
-    const firstEdge = shortestPathToWaypoint!.edges!.at(0)!;
-    const lastEdge = shortestPathToWaypoint!.edges!.at(-1)!;
+    const firstEdge = shortestPathToWaypoint!.edges.at(0)!;
+    const lastEdge = shortestPathToWaypoint!.edges.at(-1)!;
     return [
       {
         points,

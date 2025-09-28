@@ -295,13 +295,13 @@ export const RuleEditorDialog = (props: Props) => {
         {
           type: 'default',
           onClick: () => {
-            rule!.name = ref.current!.value;
-            rule!.type = type;
-            rule!.clauses = clauses
+            rule.name = ref.current!.value;
+            rule.type = type;
+            rule.clauses = clauses
               // TODO: Additional validations
               .filter(c => c.type !== undefined)
               .map(c => c as ElementSearchClause);
-            rule!.actions = actions
+            rule.actions = actions
               // TODO: Additional validations
               .filter(a => a.type !== undefined)
               .map(a => a as AdjustmentRuleAction);

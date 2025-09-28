@@ -34,7 +34,7 @@ class FileNewAction extends AbstractAction<undefined, Application> {
     const availableWidth = svgElement.clientWidth - (leftIndent + rightIndent) - margin * 2;
     const availableHeight = svgElement.clientHeight - margin * 2;
 
-    const rulerWidth = rulerEl ? Number(getComputedStyle(rulerEl!).width.replace('px', '')) : 0;
+    const rulerWidth = rulerEl ? Number(getComputedStyle(rulerEl).width.replace('px', '')) : 0;
 
     const offset = { x: -(margin + rulerWidth / 2) - leftIndent, y: -(margin + rulerWidth / 2) };
 

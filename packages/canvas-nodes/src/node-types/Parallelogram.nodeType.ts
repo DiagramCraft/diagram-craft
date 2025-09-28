@@ -74,7 +74,7 @@ class ParallelogramComponent extends BaseNodeComponent {
         if (distance < props.node.bounds.w / 2 && distance < props.node.bounds.h / 2) {
           props.node.updateCustomProps('parallelogram', props => (props.slant = distance), uow);
         }
-        return `Slant: ${props.node.renderProps.custom.parallelogram!.slant}px`;
+        return `Slant: ${props.node.renderProps.custom.parallelogram.slant}px`;
       }
     );
   }

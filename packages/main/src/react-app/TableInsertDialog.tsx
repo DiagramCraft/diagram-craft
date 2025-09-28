@@ -18,7 +18,7 @@ export const TableInsertDialog = (props: Props) => {
         {
           label: 'Insert',
           type: 'default',
-          onClick: () => props.onOk!({ width, height })
+          onClick: () => props.onOk({ width, height })
         }
       ]}
     >

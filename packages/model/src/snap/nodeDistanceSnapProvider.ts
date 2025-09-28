@@ -256,7 +256,7 @@ export class NodeDistanceSnapProvider
     if (!intersection) return undefined;
 
     // Use the midpoint of the intersection for positioning the distance guide lines
-    const mp = Range.midpoint(intersection!);
+    const mp = Range.midpoint(intersection);
 
     // Add a new distance pair showing the equal distance from the snapped element
     // to the original node pattern. This visualizes the new equal spacing created.
@@ -268,8 +268,8 @@ export class NodeDistanceSnapProvider
         y: axis === 'h' ? directions[m.matchDirection!].sign * m.distancePairs[0]!.distance : 0
       }),
       pointB: tp, // The snapped element's position
-      rangeA: intersection!,
-      rangeB: intersection!
+      rangeA: intersection,
+      rangeB: intersection
     });
 
     // Update all distance pairs to use the intersection midpoint for visual alignment

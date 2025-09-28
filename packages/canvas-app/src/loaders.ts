@@ -45,7 +45,7 @@ export const loadFileFromUrl = async (
     root?: CRDTRoot;
   }
 ) => {
-  const content = (await FileSystem.loadFromUrl(url))!;
+  const content = await FileSystem.loadFromUrl(url);
 
   const fileLoaderFactory = getFileLoaderForUrl(url);
   assert.present(fileLoaderFactory, `File loader for ${url} not found`);

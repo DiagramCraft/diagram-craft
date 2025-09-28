@@ -43,7 +43,7 @@ const adjustRowHeight = (row: DiagramNode, h: number, uow: UnitOfWork) => {
 
 const adjustColumnWidth = (colIdx: number, table: DiagramNode, w: number, uow: UnitOfWork) => {
   for (const r of table.children) {
-    const cell = (r as DiagramNode).children![colIdx]!;
+    const cell = (r as DiagramNode).children[colIdx]!;
     const t = TransformFactory.fromTo(cell.bounds, { ...cell.bounds, w });
     cell.transform(t, uow);
   }

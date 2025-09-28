@@ -298,7 +298,7 @@ export const ElementStylesheetPanel = (props: Props) => {
             const style = dialogProps.style;
 
             const uow = new UnitOfWork($d, true);
-            const stylesheet = $d.document.styles.get(style!.id);
+            const stylesheet = $d.document.styles.get(style.id);
             if (stylesheet) {
               stylesheet.setProps(e, $d.document.styles, uow);
               commitWithUndo(uow, 'Modify style');

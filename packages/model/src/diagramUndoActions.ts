@@ -31,7 +31,7 @@ const restoreSnapshots = (e: ElementsSnapshot, diagram: Diagram, uow: UnitOfWork
       }
     } else {
       const el = diagram.lookup(id);
-      if (el) el.restore(snapshot!, uow);
+      if (el) el.restore(snapshot, uow);
     }
   }
 };
@@ -76,7 +76,7 @@ export class SnapshotUndoableAction implements UndoableAction {
       } else {
         const node = this.diagram.lookup(id);
         if (node) {
-          node.restore(snapshot!, uow);
+          node.restore(snapshot, uow);
         }
       }
     }

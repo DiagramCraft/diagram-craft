@@ -266,10 +266,10 @@ export const getClipVertices = (
               makeNeighbors(t1, o1);
 
               if (
-                isSame(t1.alpha!, 0) ||
-                isSame(t1.alpha!, 1) ||
-                isSame(t1.neighbor!.alpha!, 0) ||
-                isSame(t1.neighbor!.alpha!, 1)
+                isSame(t1.alpha, 0) ||
+                isSame(t1.alpha, 1) ||
+                isSame(t1.neighbor.alpha, 0) ||
+                isSame(t1.neighbor.alpha, 1)
               ) {
                 changeVertexType(t1, 'degeneracy', 'initial');
               }
@@ -933,7 +933,7 @@ const removeRedundantVertices = (
         type: e.type,
         path: e.path,
         vertices: e.vertices.filter(
-          v => !deleted.has(v) && !(isIntersection(v) && deleted.has(v.neighbor!))
+          v => !deleted.has(v) && !(isIntersection(v) && deleted.has(v.neighbor))
         )
       }))
     );

@@ -57,7 +57,7 @@ export class UserState extends EventEmitter<UserStateEvents> {
         color: config.awareness.color()
       };
     }
-    return this.awarenessStateCache!;
+    return this.awarenessStateCache;
   }
 
   set awarenessState(state: AwarenessUserState) {

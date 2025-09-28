@@ -165,7 +165,7 @@ export const parseArrowSvgPath = (path: string): Path[] => {
   return dest.map(
     ([point, segs]) =>
       new Path(
-        point!,
+        point,
         segs.flatMap(d => d.raw())
       )
   );

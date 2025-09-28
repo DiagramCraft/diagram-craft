@@ -69,10 +69,10 @@ export class UmlLifeline extends SimpleShapeNodeDefinition {
 
     const participant = coalesce(props.node.renderProps.custom.umlLifeline?.participant, 'rect')!;
 
-    const shape = this.registry.get(participant)!;
+    const shape = this.registry.get(participant);
     if (!shape) VERIFY_NOT_REACHED();
 
-    const nodeComponent = (shape as ShapeNodeDefinition).component!;
+    const nodeComponent = (shape as ShapeNodeDefinition).component;
 
     const participantProps = deepClone(props.nodeProps) as DeepWriteable<NodePropsForRendering>;
 

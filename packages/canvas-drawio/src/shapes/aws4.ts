@@ -25,7 +25,7 @@ const registerStencil = (
   const stencil = findStencilByName(stencils, name);
 
   const node = new DrawioShapeNodeDefinition(`mxgraph.aws4.${toTypeName(name)}`, name, stencil);
-  stencilDimensions.set(node.type, stencil.dimensions!);
+  stencilDimensions.set(node.type, stencil.dimensions);
 
   registry.register(node);
 };
@@ -46,7 +46,7 @@ export const parseAWS4Shapes = async (
   if (style.str('shape') === 'mxgraph.aws4.resourceIcon') {
     const MARGIN = 0.1;
 
-    const dim = stencilDimensions.get(style!.str('resIcon')!)!;
+    const dim = stencilDimensions.get(style.str('resIcon')!)!;
 
     let fgBounds: Box;
     if (dim.h > dim.w) {
@@ -61,7 +61,7 @@ export const parseAWS4Shapes = async (
     props.custom.flex.components = [
       {
         id: 'icon',
-        nodeType: style!.str('resIcon')!,
+        nodeType: style.str('resIcon')!,
         bounds: fgBounds,
         props: {
           fill: {
@@ -93,7 +93,7 @@ export const parseAWS4Shapes = async (
     props.custom.flex.components = [
       {
         id: 'icon',
-        nodeType: style!.str('grIcon')!,
+        nodeType: style.str('grIcon')!,
         props: {
           fill: {
             color: fg,

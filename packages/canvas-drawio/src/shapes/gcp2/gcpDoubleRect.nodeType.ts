@@ -52,7 +52,7 @@ export class GCPDoubleRectNodeDefinition extends ShapeNodeDefinition {
         .lineTo(_p(1 - offsetW, offsetH));
 
       const lineProps = cloneAsWriteable(props.nodeProps);
-      lineProps.shadow!.enabled = false;
+      lineProps.shadow.enabled = false;
       shapeBuilder.path(pathBuilder.getPaths().all(), lineProps);
     }
   };

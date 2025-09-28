@@ -23,13 +23,13 @@ export class LabelAttachmentPointDrag extends Drag {
     const timeOffset = LengthOffsetOnPath.toTimeOffsetOnPath(pointOnPath, this.path);
 
     const prevOffset = this.path.pointAt(
-      TimeOffsetOnPath.toLengthOffsetOnPath({ pathT: this.labelNode!.timeOffset! }, this.path)
+      TimeOffsetOnPath.toLengthOffsetOnPath({ pathT: this.labelNode.timeOffset }, this.path)
     );
     const delta = Point.subtract(pointOnPath.point, prevOffset);
 
     const offset =
       this.labelNode.type === 'independent'
-        ? Point.subtract(this.labelNode!.offset, delta)
+        ? Point.subtract(this.labelNode.offset, delta)
         : this.labelNode.offset;
     this.labelNode
       .node()

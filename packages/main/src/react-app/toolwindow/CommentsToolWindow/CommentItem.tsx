@@ -159,7 +159,7 @@ export const CommentItem = ({
           onClick={() => {
             addHighlight(comment.element!, Highlights.NODE__HIGHLIGHT);
             setTimeout(() => {
-              removeHighlight(comment.element!, Highlights.NODE__HIGHLIGHT);
+              removeHighlight(comment.element, Highlights.NODE__HIGHLIGHT);
             }, 1000);
             return false;
           }}

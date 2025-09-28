@@ -21,7 +21,7 @@ export class HelpState extends EventEmitter<HelpStateEvents> {
       this.#help.push(help!);
     } else if (this.#help.at(-1)!.id === help?.id) {
       this.#help.pop();
-      this.#help.push(help!);
+      this.#help.push(help);
     } else {
       // Ignore
     }

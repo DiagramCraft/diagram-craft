@@ -196,7 +196,7 @@ export class YJSMap<T extends { [key: string]: CRDTCompatibleObject }> implement
     if (!this.delegate.doc) {
       callback();
     } else {
-      this.delegate.doc!.transact(callback);
+      this.delegate.doc.transact(callback);
     }
   }
 
@@ -238,7 +238,7 @@ export class YJSMap<T extends { [key: string]: CRDTCompatibleObject }> implement
   }
 
   entries(): Iterable<[string, T[string]]> {
-    if (this.initial) return this.initial!.entries();
+    if (this.initial) return this.initial.entries();
 
     const delegate = this.delegate;
     return {
@@ -347,7 +347,7 @@ export class YJSList<T extends CRDTCompatibleObject> implements CRDTList<T> {
     if (!this.delegate.doc) {
       callback();
     } else {
-      this.delegate.doc!.transact(callback);
+      this.delegate.doc.transact(callback);
     }
   }
 

@@ -221,7 +221,7 @@ const parseEdgeArrow = (t: 'start' | 'end', style: StyleManager, props: EdgeProp
     }
 
     props.arrow ??= {};
-    props.arrow![t] = {
+    props.arrow[t] = {
       type: arrows[type],
       size: parseNum(size, 6) * (type === 'circle' || type === 'circlePlus-outline' ? 20 : 11)
     };
@@ -697,10 +697,11 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
   const parents = new Map<string, Layer | DiagramNode | DiagramEdge>();
   for (const $cell of xIterElements($$cells)) {
     const $parent = $cell.parentElement!;
-    const isWrappedByObject = $parent!.tagName === 'object' || $parent!.tagName === 'UserObject';
+    const isWrappedByObject = $parent.tagName === 'object' || $parent.tagName === 'UserObject';
 
     const id =
-      $cell.getAttribute('id')! ?? (isWrappedByObject ? $parent.getAttribute('id') : newid());
+      $cell.getAttribute('id') ?? (isWrappedByObject ? $parent.getAttribute('id') : newid());
+    assert.present(id);
 
     // Ignore the root
     if (id === rootId) continue;
@@ -743,7 +744,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
       assert.present(p);
 
-      const layer = p instanceof Layer ? p : p!.layer;
+      const layer = p instanceof Layer ? p : p.layer;
       assertRegularLayer(layer);
 
       const metadata: ElementMetadata = {};
@@ -912,7 +913,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         }
 
         if (style.is('rounded')) {
-          edgeProps.routing!.rounding = 10;
+          edgeProps.routing.rounding = 10;
         }
 
         const waypoints: Waypoint[] = [];
@@ -974,7 +975,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
         let node: DiagramNode;
         if (style.shape === 'table' || style.shape === 'tableRow') {
-          const parser = getParser(style.shape!)!;
+          const parser = getParser(style.shape)!;
           node = await parser(id, bounds, props, metadata, texts, style, layer, queue);
           nodes.push(node);
           // TODO: Support more than stackLayout
@@ -1016,13 +1017,13 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
                 await load(loader, registry, alreadyLoaded);
               }
 
-              const parser = getParser(style.shape!);
+              const parser = getParser(style.shape);
               if (parser) {
                 bgNode = await parser(newid(), bounds, props, metadata, texts, style, layer, queue);
               } else {
                 bgNode = DiagramNode.create(
                   newid(),
-                  style.shape!,
+                  style.shape,
                   bounds,
                   layer,
                   props,
@@ -1122,7 +1123,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           newBounds = { ...newBounds, r: Math.PI };
         }
 
-        const parser = getParser(style.shape!);
+        const parser = getParser(style.shape);
         if (parser) {
           nodes.push(await parser(id, newBounds, props, metadata, texts, style, layer, queue));
         } else {
@@ -1169,7 +1170,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           node.setBounds(newBounds, uow);
 
           if (node instanceof DiagramEdge) {
-            const edge = node as DiagramEdge;
+            const edge = node;
             edge.waypoints.forEach(wp => {
               edge.moveWaypoint(wp, Point.add(p.bounds, wp.point), uow);
             });
@@ -1177,12 +1178,12 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
           if (node.editProps.fill?.color === 'inherit') {
             node.updateProps(props => {
-              props.fill!.color = p.renderProps.fill!.color;
+              props.fill!.color = p.renderProps.fill.color;
             }, uow);
           }
           if (node.editProps.stroke?.color === 'inherit') {
             node.updateProps(props => {
-              props.stroke!.color = p.renderProps.stroke!.color;
+              props.stroke!.color = p.renderProps.stroke.color;
             }, uow);
           }
 

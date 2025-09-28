@@ -92,7 +92,7 @@ class UndoableGroupAction implements UndoableAction {
     });
 
     assertRegularLayer(this.#group.layer);
-    this.#group.layer.removeElement(this.#group!, uow);
+    this.#group.layer.removeElement(this.#group, uow);
     this.#elements = this.#group.children;
 
     children.forEach(e => {

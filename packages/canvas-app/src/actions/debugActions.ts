@@ -23,7 +23,7 @@ class DumpDocument extends AbstractAction {
   }
 
   execute(): void {
-    serializeDiagramDocument(this.context.model.activeDiagram.document!).then(e => {
+    serializeDiagramDocument(this.context.model.activeDiagram.document).then(e => {
       console.log(JSON.stringify(e, undefined, '  '));
     });
   }

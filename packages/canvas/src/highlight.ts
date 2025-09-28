@@ -87,5 +87,5 @@ export const getHighlights = (element: DiagramElement | undefined) => {
 export const getHighlightValue = (element: DiagramElement | undefined, highlight: string) => {
   if (!element) return [];
 
-  return Highlight.get(element)!.getArg(highlight);
+  return Highlight.get(element).getArg(highlight);
 };

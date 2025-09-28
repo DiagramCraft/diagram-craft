@@ -501,7 +501,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   }
 
   get guides(): ReadonlyArray<Guide> {
-    return Array.from(this.#guides.values()) as Guide[];
+    return Array.from(this.#guides.values());
   }
 
   addGuide(guide: Omit<Guide, 'id'> & { id?: string }): Guide {

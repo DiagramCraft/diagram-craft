@@ -88,8 +88,8 @@ export class EditableWaypoint {
       };
     }
 
-    this.#preSegment!.controlPoints.p2 = this.#controlPoints.p1;
-    this.#postSegment!.controlPoints.p1 = this.#controlPoints.p2;
+    this.#preSegment.controlPoints.p2 = this.#controlPoints.p1;
+    this.#postSegment.controlPoints.p1 = this.#controlPoints.p2;
   }
 }
 
@@ -193,12 +193,12 @@ export class EditablePath {
           assert.present(startWp);
 
           if (!endWp) {
-            pb.quadTo(segment.end, Point.add(startWp.point, startWp.controlPoints.p2!));
+            pb.quadTo(segment.end, Point.add(startWp.point, startWp.controlPoints.p2));
           } else {
             pb.cubicTo(
               segment.end,
-              Point.add(startWp.point, startWp.controlPoints.p2!),
-              Point.add(endWp.point, endWp.controlPoints.p1!)
+              Point.add(startWp.point, startWp.controlPoints.p2),
+              Point.add(endWp.point, endWp.controlPoints.p1)
             );
           }
           break;

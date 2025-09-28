@@ -27,7 +27,7 @@ export const registerC4Shapes = async (r: NodeDefinitionRegistry) => {
           }),
           text: p => ({
             id: '1',
-            text: p.text!
+            text: p.text
           })
         },
         {
@@ -61,7 +61,7 @@ export const registerC4Shapes = async (r: NodeDefinitionRegistry) => {
             fill: {
               enabled: true,
               type: 'solid',
-              color: p.stroke!.color
+              color: p.stroke.color
             }
           })
         },

@@ -82,7 +82,7 @@ export const Ruler = ({ orientation }: Props) => {
 
     document.addEventListener('mousemove', handler);
     return () => {
-      document!.removeEventListener('mousemove', handler);
+      document.removeEventListener('mousemove', handler);
     };
   }, [userState.showRulers, orientation, viewbox, updateCursorLine]);
 

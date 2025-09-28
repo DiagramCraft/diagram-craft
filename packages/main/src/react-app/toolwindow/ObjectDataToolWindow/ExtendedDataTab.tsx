@@ -59,7 +59,7 @@ export const ExtendedDataTab = () => {
               }
               // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
               s.data ??= {};
-              s.data[id] = (ev.target! as HTMLInputElement).value;
+              s.data[id] = (ev.target as HTMLInputElement).value;
             }, uow);
           });
           break;
@@ -68,7 +68,7 @@ export const ExtendedDataTab = () => {
             e.updateMetadata(p => {
               p.data ??= {};
               p.data.customData ??= {};
-              p.data.customData[id] = (ev.target! as HTMLInputElement).value;
+              p.data.customData[id] = (ev.target as HTMLInputElement).value;
             }, uow);
           });
           break;

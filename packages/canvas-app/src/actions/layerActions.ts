@@ -343,10 +343,10 @@ export class LayerSelectionMoveAction extends AbstractAction<LayerActionArg> {
     const diagram = this.context.model.activeDiagram;
     const uow = new UnitOfWork(diagram, true);
 
-    const layer = diagram.layers.byId(id!)!;
+    const layer = diagram.layers.byId(id)!;
     assert.present(layer);
 
-    diagram.moveElement(diagram.selectionState.elements, uow, layer!);
+    diagram.moveElement(diagram.selectionState.elements, uow, layer);
     commitWithUndo(uow, `Move to layer ${layer.name}`);
   }
 }
@@ -363,12 +363,12 @@ export class LayerSelectionMoveNewAction extends AbstractAction {
     const layer = new RegularLayer(newid(), 'New Layer', [], diagram);
     diagram.layers.add(layer, uow);
 
-    diagram.moveElement(diagram.selectionState.elements, uow, layer!);
+    diagram.moveElement(diagram.selectionState.elements, uow, layer);
 
     const snapshots = uow.commit();
     uow.diagram.undoManager.add(
       new CompoundUndoableAction([
-        new LayerAddUndoableAction(uow.diagram, layer!),
+        new LayerAddUndoableAction(uow.diagram, layer),
         new SnapshotUndoableAction('Move to new layer', uow.diagram, snapshots)
       ])
     );

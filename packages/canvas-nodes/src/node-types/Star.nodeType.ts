@@ -100,7 +100,7 @@ class StarComponent extends BaseNodeComponent {
         p => (p.innerRadius = distance / (props.node.bounds.w / 2)),
         uow
       );
-      return `Inner radius: ${round(props.node.renderProps.custom.star!.innerRadius! * 100)}%`;
+      return `Inner radius: ${round(props.node.renderProps.custom.star.innerRadius * 100)}%`;
     });
 
     shapeBuilder.controlPoint(path.segments[2]!.start, ({ x, y }, uow) => {

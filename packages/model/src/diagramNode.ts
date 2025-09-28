@@ -318,7 +318,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     });
 
     dest.push({
-      val: accessor.get(this.#props.get()! as NodeProps, path) as PropPathValue<NodeProps, T>,
+      val: accessor.get(this.#props.get() as NodeProps, path) as PropPathValue<NodeProps, T>,
       type: 'stored'
     });
 
@@ -599,13 +599,13 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       snapshot.children.map(c => {
         const el = this.diagram.lookup(c);
         if (!el) VERIFY_NOT_REACHED();
-        return el!;
+        return el;
       }),
       uow
     );
     const edges = snapshot.edges ?? {};
     for (const [k, v] of Object.entries(edges)) {
-      this.#edges.set(k, unique([...(this.#edges.get(k) ?? []), ...v.map(e => e.id!)]));
+      this.#edges.set(k, unique([...(this.#edges.get(k) ?? []), ...v.map(e => e.id)]));
     }
 
     uow.updateElement(this);
@@ -793,8 +793,8 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
     // Note, need to check if the element is still in the layer to avoid infinite recursion
     assert.true(this.layer.type === 'regular');
-    if ((this.layer as RegularLayer).elements.includes(this)) {
-      (this.layer as RegularLayer).removeElement(this, uow);
+    if (this.layer.elements.includes(this)) {
+      this.layer.removeElement(this, uow);
     }
   }
 
@@ -912,7 +912,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     const edge = this.labelEdge();
     assert.present(edge);
     edge.setLabelNodes(
-      edge.labelNodes!.map((n: ResolvedLabelNode) => (n.node() === this ? replacement : n)),
+      edge.labelNodes.map((n: ResolvedLabelNode) => (n.node() === this ? replacement : n)),
       uow
     );
 

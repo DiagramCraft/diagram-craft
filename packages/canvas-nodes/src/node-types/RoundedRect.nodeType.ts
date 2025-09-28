@@ -101,7 +101,7 @@ export class RoundedRectComponent extends BaseNodeComponent {
       if (distance < props.node.bounds.w / 2 && distance < props.node.bounds.h / 2) {
         props.node.updateCustomProps('roundedRect', props => (props.radius = distance), uow);
       }
-      return `Radius: ${round(props.node.renderProps.custom.roundedRect!.radius)}px`;
+      return `Radius: ${round(props.node.renderProps.custom.roundedRect.radius)}px`;
     });
   }
 }

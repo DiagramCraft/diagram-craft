@@ -460,7 +460,7 @@ const shapesTestFile = async (
   if (pkg.startsWith('pkg:')) {
     let y = 10;
 
-    for (const stencil of nodeDefinitions.stencilRegistry.get(pkg.slice(4))!.stencils) {
+    for (const stencil of nodeDefinitions.stencilRegistry.get(pkg.slice(4)).stencils) {
       if (stencil.id === 'table' || stencil.id === 'container') continue;
       writeShape(stencil.name ?? stencil.id, stencil.node, y, layer, diagram, opts);
       y += opts.yDiff;
@@ -477,7 +477,7 @@ const shapesTestFile = async (
 
     let x = 0;
     let y = 10;
-    for (const stencil of nodeDefinitions.stencilRegistry.get(p)!.stencils) {
+    for (const stencil of nodeDefinitions.stencilRegistry.get(p).stencils) {
       if (stencil.id === shape) {
         const ret = writeShape(stencil.name ?? stencil.id, stencil.node, y, layer, diagram, opts);
         x = ret.x;

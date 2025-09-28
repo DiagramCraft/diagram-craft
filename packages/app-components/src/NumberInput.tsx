@@ -84,7 +84,7 @@ export const NumberInput = (props: Props) => {
         const p = parseNumberAndUnit(prev);
         if (!p) return prev;
 
-        const newValue = parseFloat(p[0]!) + delta;
+        const newValue = parseFloat(p[0]) + delta;
 
         if (props.min !== undefined && newValue < Number(props.min)) return prev;
         if (props.max !== undefined && newValue > Number(props.max)) return prev;
@@ -141,7 +141,7 @@ export const NumberInput = (props: Props) => {
           }
 
           setError(false);
-          props.onChange(parseFloat(p[0]!), p[1] ?? props.defaultUnit);
+          props.onChange(parseFloat(p[0]), p[1] ?? props.defaultUnit);
           return;
         }}
         {...extractDataAttributes(props)}

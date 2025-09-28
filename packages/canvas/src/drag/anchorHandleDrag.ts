@@ -58,7 +58,7 @@ export class AnchorHandleDrag extends Drag {
 
     const isShortDrag =
       this.delegate.point === undefined ||
-      Point.distance(this.delegate.point!, diagram.viewBox.toDiagramPoint(this.point)) < 5;
+      Point.distance(this.delegate.point, diagram.viewBox.toDiagramPoint(this.point)) < 5;
 
     if (isShortDrag) {
       // Undo work to drag new edge
@@ -89,7 +89,7 @@ export class AnchorHandleDrag extends Drag {
     // In case we have connected to an existing node, we don't need to show the popup
     if (this.edge.end.isConnected) return;
 
-    this.context.ui.showNodeLinkPopup(this.edge.end.position, this.node!.id, this.edge.id);
+    this.context.ui.showNodeLinkPopup(this.edge.end.position, this.node.id, this.edge.id);
   }
 
   onDrag(event: DragEvents.DragStart): void {
