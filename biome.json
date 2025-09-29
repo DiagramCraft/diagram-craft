@@ -46,6 +46,7 @@
         "noDangerouslySetInnerHtml": "off"
       },
       "nursery": {
+        "noUnnecessaryConditions": "off",
         "noImportCycles": {
           "level": "error",
           "options": {
