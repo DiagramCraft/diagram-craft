@@ -355,9 +355,6 @@ table {
     justify-self: end;
     padding-right: 1rem;
   }
-
-  #awareness {
-  }
 }
 
 @media (max-width: 1000px) {

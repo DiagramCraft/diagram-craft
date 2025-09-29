@@ -5,7 +5,6 @@
     "rules": {
       "recommended": true,
       "a11y": {
-        "useGenericFontNames": "off",
         "useKeyWithClickEvents": "off",
         "noStaticElementInteractions": "off",
         "useKeyWithMouseEvents": "off",
@@ -22,7 +21,6 @@
         "useShorthandFunctionType": "off"
       },
       "suspicious": {
-        "noEmptyBlock": "off",
         "noDuplicateProperties": "off",
         "noTsIgnore": "on",
         "noExplicitAny": "off",

@@ -136,9 +136,9 @@ export const CommentItem = ({
               .toUpperCase()}
           </div>
         </Tooltip>
-        <div className={styles['comment__author-info']}>
-          <div className={styles['comment__author-name']}>{comment.author}</div>
-          <div className={styles.comment__date}>{formatDate(comment.date)}</div>
+        <div>
+          <div>{comment.author}</div>
+          <div>{formatDate(comment.date)}</div>
         </div>
         <div className={styles.comment__menu}>
           <CommentItemMenu

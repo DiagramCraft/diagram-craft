@@ -20,6 +20,7 @@ a {
   color: #646cff;
   text-decoration: inherit;
 }
+
 a:hover {
   color: #535bf2;
 }
@@ -34,12 +35,11 @@ button {
   border: 1px solid transparent;
   font-family: inherit;
 }
-button:hover {
-}
 
 input, textarea {
   font-family: inherit;
 }
+
 /*button {
   border-radius: 8px;
   border: 1px solid transparent;
@@ -64,9 +64,11 @@ button:focus-visible {
     color: #213547;
     background-color: #ffffff;
   }
+
   a:hover {
     color: #747bff;
   }
+
   button {
     background-color: #f9f9f9;
   }
