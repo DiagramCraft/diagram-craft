@@ -25,7 +25,7 @@ function convertClauses(parsedClauses: ElementSearchClause[]) {
 
           switch (clause.relation) {
             case 'eq': {
-              if (isNaN(Number(value))) {
+              if (Number.isNaN(Number(value))) {
                 filters.push(`select(.${path} == "${value}")`);
               } else {
                 filters.push(`select(.${path} == ${value})`);
@@ -33,7 +33,7 @@ function convertClauses(parsedClauses: ElementSearchClause[]) {
               break;
             }
             case 'neq': {
-              if (isNaN(Number(value))) {
+              if (Number.isNaN(Number(value))) {
                 filters.push(`select(.${path} != "${value}")`);
               } else {
                 filters.push(`select(.${path} != ${value})`);

@@ -6,7 +6,7 @@ import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { makeProperty } from './utils';
 import { IndicatorForm } from '../../toolwindow/ObjectToolWindow/IndicatorForm';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: false positive
 const path = (id: string, rest: string): any => `indicators.${id}.${rest}`;
 
 export const NamedIndicatorEditor: Editor = props => {
@@ -17,7 +17,6 @@ export const NamedIndicatorEditor: Editor = props => {
     props.onChange();
   };
 
-  // @ts-ignore
   const shape = makeProperty($p, path(id, 'shape'), nodeDefaults, onChange);
   const color = makeProperty($p, path(id, 'color'), nodeDefaults, onChange);
   const width = makeProperty($p, path(id, 'width'), nodeDefaults, onChange);
@@ -36,8 +35,8 @@ export const NamedIndicatorEditor: Editor = props => {
             value={id}
             onChange={v => {
               $p.indicators ??= {};
-              $p.indicators![v ?? ''] = $p.indicators![id];
-              delete $p.indicators![id];
+              $p.indicators[v ?? ''] = $p.indicators[id]!;
+              delete $p.indicators[id];
 
               setId(v ?? '');
               onChange();

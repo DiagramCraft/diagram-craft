@@ -21,6 +21,7 @@ import { Scale } from '@diagram-craft/geometry/transform';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import { safeSplit } from '@diagram-craft/utils/safe';
 
 const SIZES = [50, 80, 100, 120, 150];
 const WIDTHS = [1, 2, 3, 4, 5];
@@ -394,7 +395,7 @@ const writeShape = (
   const uow = new UnitOfWork(diagram);
 
   for (let i = 0; i < SHAPES_DEFS.length; i++) {
-    const def = SHAPES_DEFS[i];
+    const def = SHAPES_DEFS[i]!;
     const n = factory(diagram).duplicate(undefined, `${shape}-${i}`);
     n.transform([new Scale(dimensions.w / n.bounds.w, dimensions.h / n.bounds.h)], uow);
     n.setBounds({ x: x, y: y, ...dimensions, r: 0 }, uow);
@@ -459,7 +460,7 @@ const shapesTestFile = async (
   if (pkg.startsWith('pkg:')) {
     let y = 10;
 
-    for (const stencil of nodeDefinitions.stencilRegistry.get(pkg.slice(4))!.stencils) {
+    for (const stencil of nodeDefinitions.stencilRegistry.get(pkg.slice(4)).stencils) {
       if (stencil.id === 'table' || stencil.id === 'container') continue;
       writeShape(stencil.name ?? stencil.id, stencil.node, y, layer, diagram, opts);
       y += opts.yDiff;
@@ -472,11 +473,11 @@ const shapesTestFile = async (
       h: y + opts.yDiff
     };
   } else {
-    const [, p, shape] = pkg.split(':');
+    const [, p, shape] = safeSplit(pkg, ':', 3);
 
     let x = 0;
     let y = 10;
-    for (const stencil of nodeDefinitions.stencilRegistry.get(p)!.stencils) {
+    for (const stencil of nodeDefinitions.stencilRegistry.get(p).stencils) {
       if (stencil.id === shape) {
         const ret = writeShape(stencil.name ?? stencil.id, stencil.node, y, layer, diagram, opts);
         x = ret.x;

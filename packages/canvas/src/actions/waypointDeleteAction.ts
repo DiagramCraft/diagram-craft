@@ -20,10 +20,6 @@ type WaypointDeleteActionArg = {
 };
 
 export class WaypointDeleteAction extends AbstractAction<WaypointDeleteActionArg> {
-  constructor(context: ActionContext) {
-    super(context);
-  }
-
   execute(context: WaypointDeleteActionArg): void {
     precondition.is.present(context.point);
 
@@ -48,7 +44,7 @@ export class WaypointDeleteAction extends AbstractAction<WaypointDeleteActionArg
     )!.idx;
 
     const uow = new UnitOfWork(this.context.model.activeDiagram, true);
-    edge.removeWaypoint(edge.waypoints[closestWaypointIndex], uow);
+    edge.removeWaypoint(edge.waypoints[closestWaypointIndex]!, uow);
 
     commitWithUndo(uow, 'Delete waypoint');
   }

@@ -16,7 +16,7 @@ const VALIGN_TO_FLEX_JUSTIFY = {
   bottom: 'flex-end'
 };
 
-const withPx = (n?: number) => (n ? n + 'px' : undefined);
+const withPx = (n?: number) => (n ? `${n}px` : undefined);
 
 export type ShapeTextProps = {
   id: string;
@@ -213,12 +213,12 @@ export class ShapeText extends Component<ShapeTextProps> {
       foreignObject,
       svg.text(
         {
-          'id': props.id + '-text',
+          'id': `${props.id}-text`,
           'x': props.bounds.x.toString(),
           'y': props.bounds.y.toString(),
           'data-width': props.bounds.w.toString(),
           'data-height': props.bounds.h.toString(),
-          'style': styleString + 'pointer-events: none;',
+          'style': `${styleString}pointer-events: none;`,
           'hooks': {
             onChildrenChanged: (n: VNode) => {
               const target = n.el! as SVGTextElement;

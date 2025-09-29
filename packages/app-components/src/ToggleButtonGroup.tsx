@@ -5,7 +5,7 @@ import styles from './ToggleButtonGroup.module.css';
 
 const Root = (props: RootProps) => {
   return (
-    /* @ts-ignore */
+    /* @ts-expect-error */
     <RadixToggleGroup.Root
       className={styles.cmpToggleButtonGroup}
       data-field-state={props.isIndeterminate ? 'indeterminate' : props.state}

@@ -2,8 +2,6 @@ import type { Meta, StoryObj } from '@storybook/react';
 import React, { useState } from 'react';
 import { CubicBezier } from '@diagram-craft/geometry/bezier';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 const BezierTest = () => {
   const [drag, setDrag] = useState<{ callback: (e: React.MouseEvent<any>) => void } | undefined>(
     undefined

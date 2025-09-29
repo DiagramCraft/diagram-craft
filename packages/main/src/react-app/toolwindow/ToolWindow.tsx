@@ -7,7 +7,7 @@ import React, {
   useEffect,
   useState
 } from 'react';
-import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
 import styles from './ToolWindow.module.css';
 import { ErrorBoundary } from '../ErrorBoundary';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
@@ -66,7 +66,7 @@ const Root = (props: RootProps) => {
     });
 
     if (!ids.includes(tab)) {
-      const fallbackTab = ids[0];
+      const fallbackTab = ids[0]!;
       setTab(fallbackTab);
       userState.setToolWindowTab(props.id, fallbackTab);
     }
@@ -84,7 +84,7 @@ const Root = (props: RootProps) => {
           {React.Children.map(props.children, child => {
             if (!child) return null;
             assert.present(child);
-            if (!isReactElement(child)) throw VERIFY_NOT_REACHED('Invalid element');
+            if (!isReactElement(child)) throw new VerifyNotReached('Invalid element');
             assert.true(child.type === Tab);
 
             return (

@@ -173,8 +173,8 @@ describe('PathListBuilder', () => {
 
       expect(scaledPath.start).toEqual({ x: 0, y: 0 });
       expect(scaledPath.segments[0]).toBeInstanceOf(QuadSegment);
-      expect(scaledPath.segments[0].start).toEqual({ x: 0, y: 0 });
-      expect(scaledPath.segments[0].end).toEqual({ x: 40, y: 40 });
+      expect(scaledPath.segments[0]!.start).toEqual({ x: 0, y: 0 });
+      expect(scaledPath.segments[0]!.end).toEqual({ x: 40, y: 40 });
       expect((scaledPath.segments[0] as QuadSegment).quadP1).toEqual({ x: 20, y: 20 });
     });
 
@@ -189,8 +189,8 @@ describe('PathListBuilder', () => {
 
       expect(scaledPath.start).toEqual({ x: 0, y: 0 });
       expect(scaledPath.segments[0]).toBeInstanceOf(QuadSegment);
-      expect(scaledPath.segments[1].start).toEqual({ x: 40, y: 40 });
-      expect(scaledPath.segments[1].end).toEqual({ x: 60, y: 60 });
+      expect(scaledPath.segments[1]!.start).toEqual({ x: 40, y: 40 });
+      expect(scaledPath.segments[1]!.end).toEqual({ x: 60, y: 60 });
     });
 
     it('scales a path with arc segments correctly', () => {
@@ -204,9 +204,9 @@ describe('PathListBuilder', () => {
 
       expect(scaledPath.start).toEqual({ x: 0, y: 0 });
       // Arc segments are converted to cubic segments internally
-      expect(scaledPath.segments[0].start).toEqual({ x: 0, y: 0 });
-      expect(scaledPath.segments[0].end.x).toBeCloseTo(47.32);
-      expect(scaledPath.segments[0].end.y).toBeCloseTo(12.679);
+      expect(scaledPath.segments[0]!.start).toEqual({ x: 0, y: 0 });
+      expect(scaledPath.segments[0]!.end.x).toBeCloseTo(47.32);
+      expect(scaledPath.segments[0]!.end.y).toBeCloseTo(12.679);
     });
 
     it('handles zero scaling correctly', () => {
@@ -219,8 +219,8 @@ describe('PathListBuilder', () => {
         .singular();
 
       expect(scaledPath.start).toEqual({ x: 5, y: 5 });
-      expect(scaledPath.segments[0].start).toEqual({ x: 5, y: 5 });
-      expect(scaledPath.segments[0].end).toEqual({ x: 5, y: 5 });
+      expect(scaledPath.segments[0]!.start).toEqual({ x: 5, y: 5 });
+      expect(scaledPath.segments[0]!.end).toEqual({ x: 5, y: 5 });
     });
 
     it('handles negative scaling correctly', () => {
@@ -233,8 +233,8 @@ describe('PathListBuilder', () => {
         .singular();
 
       expect(scaledPath.start).toEqual({ x: 0, y: 0 });
-      expect(scaledPath.segments[0].start).toEqual({ x: 0, y: 0 });
-      expect(scaledPath.segments[0].end).toEqual({ x: -10, y: -10 });
+      expect(scaledPath.segments[0]!.start).toEqual({ x: 0, y: 0 });
+      expect(scaledPath.segments[0]!.end).toEqual({ x: -10, y: -10 });
     });
   });
 });

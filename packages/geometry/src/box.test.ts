@@ -137,16 +137,16 @@ describe('Box', () => {
       // Instead of checking exact coordinates, we'll verify that the corners form a square
       // by checking that adjacent sides have equal length
       const side1 = Math.sqrt(
-        Math.pow(corners[0].x - corners[1].x, 2) + Math.pow(corners[0].y - corners[1].y, 2)
+        Math.pow(corners[0]!.x - corners[1]!.x, 2) + Math.pow(corners[0]!.y - corners[1]!.y, 2)
       );
       const side2 = Math.sqrt(
-        Math.pow(corners[1].x - corners[2].x, 2) + Math.pow(corners[1].y - corners[2].y, 2)
+        Math.pow(corners[1]!.x - corners[2]!.x, 2) + Math.pow(corners[1]!.y - corners[2]!.y, 2)
       );
       const side3 = Math.sqrt(
-        Math.pow(corners[2].x - corners[3].x, 2) + Math.pow(corners[2].y - corners[3].y, 2)
+        Math.pow(corners[2]!.x - corners[3]!.x, 2) + Math.pow(corners[2]!.y - corners[3]!.y, 2)
       );
       const side4 = Math.sqrt(
-        Math.pow(corners[3].x - corners[0].x, 2) + Math.pow(corners[3].y - corners[0].y, 2)
+        Math.pow(corners[3]!.x - corners[0]!.x, 2) + Math.pow(corners[3]!.y - corners[0]!.y, 2)
       );
 
       expect(side1).toBeCloseTo(10);
@@ -157,7 +157,7 @@ describe('Box', () => {
 
     test('calculates opposite corners only when oppositeOnly is true', () => {
       const box = { x: 0, y: 0, w: 10, h: 10, r: 0 };
-      expect(Box.corners(box, true)).toStrictEqual([
+      expect(Box.oppositeCorners(box)).toStrictEqual([
         { x: 0, y: 0 },
         { x: 10, y: 10 }
       ]);

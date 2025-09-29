@@ -33,8 +33,8 @@ export class TextAction extends AbstractToggleAction {
 
     const callback = () => {
       if ($d.selectionState.isNodesOnly() && $d.selectionState.nodes.length === 1) {
-        const node = $d.selectionState.nodes[0];
-        return !!node.renderProps.text?.[this.prop];
+        const node = $d.selectionState.nodes[0]!;
+        return !!node.renderProps.text[this.prop];
       }
 
       return false;
@@ -52,7 +52,7 @@ export class TextAction extends AbstractToggleAction {
 
     const callback = () => {
       if ($d.selectionState.isNodesOnly() && $d.selectionState.nodes.length === 1) {
-        const node = $d.selectionState.nodes[0];
+        const node = $d.selectionState.nodes[0]!;
         return node.nodeType === 'text';
       }
 
@@ -66,7 +66,7 @@ export class TextAction extends AbstractToggleAction {
   }
 
   execute(): void {
-    const node = this.context.model.activeDiagram.selectionState.nodes[0];
+    const node = this.context.model.activeDiagram.selectionState.nodes[0]!;
 
     const uow = new UnitOfWork(this.context.model.activeDiagram, true);
 
@@ -78,7 +78,7 @@ export class TextAction extends AbstractToggleAction {
 
     commitWithUndo(uow, `Text: ${this.prop}`);
 
-    this.state = !!node.renderProps.text![this.prop];
+    this.state = !!node.renderProps.text[this.prop];
     this.emit('actionChanged');
   }
 }
@@ -95,7 +95,7 @@ export class TextDecorationAction extends AbstractToggleAction {
     const $d = context.model.activeDiagram;
     const callback = () => {
       if ($d.selectionState.isNodesOnly() && $d.selectionState.nodes.length === 1) {
-        const node = $d.selectionState.nodes[0];
+        const node = $d.selectionState.nodes[0]!;
         return node.renderProps.text?.textDecoration === this.prop;
       }
       return false;
@@ -111,7 +111,7 @@ export class TextDecorationAction extends AbstractToggleAction {
     const $d = context.model.activeDiagram;
     const callback = () => {
       if ($d.selectionState.isNodesOnly() && $d.selectionState.nodes.length === 1) {
-        const node = $d.selectionState.nodes[0];
+        const node = $d.selectionState.nodes[0]!;
         return node.nodeType === 'text';
       }
       return false;
@@ -124,7 +124,7 @@ export class TextDecorationAction extends AbstractToggleAction {
   }
 
   execute(): void {
-    const node = this.context.model.activeDiagram.selectionState.nodes[0];
+    const node = this.context.model.activeDiagram.selectionState.nodes[0]!;
 
     const uow = new UnitOfWork(this.context.model.activeDiagram, true);
 
@@ -139,7 +139,7 @@ export class TextDecorationAction extends AbstractToggleAction {
 
     commitWithUndo(uow, `Text decoration`);
 
-    this.state = node.renderProps.text!.textDecoration === this.prop;
+    this.state = node.renderProps.text.textDecoration === this.prop;
     this.emit('actionChanged');
   }
 }
@@ -150,7 +150,7 @@ export class TextEditAction extends AbstractSelectionAction<Application> {
   }
 
   execute(): void {
-    const selectedItem = this.context.model.activeDiagram.selectionState.nodes[0];
+    const selectedItem = this.context.model.activeDiagram.selectionState.nodes[0]!;
 
     // Get the current HTML text content
     const currentHtmlText = selectedItem.texts.text ?? '';
@@ -159,7 +159,7 @@ export class TextEditAction extends AbstractSelectionAction<Application> {
     let markdownText = '';
     try {
       markdownText = currentHtmlText ? htmlStringToMarkdown(currentHtmlText) : '';
-    } catch (error) {
+    } catch (_error) {
       markdownText = currentHtmlText;
     }
 
@@ -178,7 +178,7 @@ export class TextEditAction extends AbstractSelectionAction<Application> {
           let htmlOutput = '';
           try {
             htmlOutput = markdownInput ? markdownToHTML(markdownInput) : '';
-          } catch (error) {
+          } catch (_error) {
             htmlOutput = markdownInput;
           }
 

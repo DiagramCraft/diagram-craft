@@ -40,11 +40,11 @@ export const NodeTableCellDimensionsPanel = (props: Props) => {
 
   const updateWidth = (w: number) => {
     const row = (table.children as DiagramNode[]).find(e => e.children.includes(node));
-    const colIdx = row!.children.findIndex(e => e === node);
+    const colIdx = row!.children.indexOf(node);
 
     const uow = new UnitOfWork(diagram, true);
     for (const r of table.children) {
-      const cell = (r as DiagramNode).children![colIdx];
+      const cell = (r as DiagramNode).children[colIdx]!;
       const t = TransformFactory.fromTo(cell.bounds, { ...cell.bounds, w });
       cell.transform(t, uow);
     }

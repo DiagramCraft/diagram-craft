@@ -27,19 +27,19 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
           {/* TODO: Disable this when there's alreay a label */}
           <ActionContextMenuItem
             action={'EDGE_TEXT_ADD'}
-            arg={{ point: props.target.pos, id: diagram.selectionState.edges[0].id }}
+            arg={{ point: props.target.pos, id: diagram.selectionState.edges[0]!.id }}
           >
             Add text
           </ActionContextMenuItem>
           <ActionContextMenuItem
             action={'WAYPOINT_ADD'}
-            arg={{ point: props.target.pos, id: diagram.selectionState.edges[0].id }}
+            arg={{ point: props.target.pos, id: diagram.selectionState.edges[0]!.id }}
           >
             Add waypoint
           </ActionContextMenuItem>
           <ActionContextMenuItem
             action={'WAYPOINT_DELETE'}
-            arg={{ point: props.target.pos, id: diagram.selectionState.edges[0].id }}
+            arg={{ point: props.target.pos, id: diagram.selectionState.edges[0]!.id }}
           >
             Delete waypoint
           </ActionContextMenuItem>

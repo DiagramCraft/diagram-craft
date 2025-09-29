@@ -32,7 +32,7 @@ type CommentItemMenuProps = {
 const CommentItemMenu = (props: CommentItemMenuProps) => (
   <DropdownMenu.Root>
     <DropdownMenu.Trigger asChild>
-      <button className={styles['comment__menu-button']}>
+      <button type="button" className={styles['comment__menu-button']}>
         <TbDots size={14} />
       </button>
     </DropdownMenu.Trigger>
@@ -136,9 +136,9 @@ export const CommentItem = ({
               .toUpperCase()}
           </div>
         </Tooltip>
-        <div className={styles['comment__author-info']}>
-          <div className={styles['comment__author-name']}>{comment.author}</div>
-          <div className={styles.comment__date}>{formatDate(comment.date)}</div>
+        <div>
+          <div>{comment.author}</div>
+          <div>{formatDate(comment.date)}</div>
         </div>
         <div className={styles.comment__menu}>
           <CommentItemMenu
@@ -159,7 +159,7 @@ export const CommentItem = ({
           onClick={() => {
             addHighlight(comment.element!, Highlights.NODE__HIGHLIGHT);
             setTimeout(() => {
-              removeHighlight(comment.element!, Highlights.NODE__HIGHLIGHT);
+              removeHighlight(comment.element, Highlights.NODE__HIGHLIGHT);
             }, 1000);
             return false;
           }}

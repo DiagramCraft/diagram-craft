@@ -24,9 +24,9 @@ export const constructPathTree = (paths: Path[], epsilon = 0.1) => {
       if (child === parent) continue;
 
       if (
-        paths[child].segments
-          .map(s => s.start)
-          .every(p => paths[parent].isInside(p) || paths[parent].isOn(p, epsilon))
+        paths[child]!.segments.map(s => s.start).every(
+          p => paths[parent]!.isInside(p) || paths[parent]!.isOn(p, epsilon)
+        )
       ) {
         childToParents.add(child, parent);
       }
@@ -44,7 +44,7 @@ export const constructPathTree = (paths: Path[], epsilon = 0.1) => {
       const sortedParents = childToParents.get(childIdx).toSorted();
 
       if (hasSamePath(sortedParents, sortedPath)) {
-        dest.set(paths[childIdx], { depth, type, parent });
+        dest.set(paths[childIdx]!, { depth, type, parent });
         children.push(childIdx);
       }
     }

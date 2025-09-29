@@ -18,10 +18,10 @@ class DrawioTransparentComponent extends BaseNodeComponent {
     const boundary = this.def.getBoundingPathBuilder(props.node).getPaths();
 
     const p = makeWriteable(deepClone(props.nodeProps));
-    p.stroke!.color = 'transparent';
-    p.stroke!.enabled = false;
-    p.fill!.color = 'transparent';
-    p.fill!.enabled = false;
+    p.stroke.color = 'transparent';
+    p.stroke.enabled = false;
+    p.fill.color = 'transparent';
+    p.fill.enabled = false;
 
     shapeBuilder.boundaryPath(boundary.all(), p);
     shapeBuilder.text(this);

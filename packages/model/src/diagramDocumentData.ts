@@ -41,7 +41,7 @@ const makeDataListener =
           } else {
             e.updateMetadata(cb => {
               cb.data ??= {};
-              cb.data!.data = cb.data?.data?.filter(dt => !predicate(dt));
+              cb.data.data = cb.data.data?.filter(dt => !predicate(dt));
             }, uow);
           }
         }
@@ -51,7 +51,7 @@ const makeDataListener =
   };
 
 const makeDeleteSchemaListener = (document: DiagramDocument) => (s: DataSchema) => {
-  document.data._schemas.removeAndClearUsage(s, UnitOfWork.immediate(document.diagrams[0]));
+  document.data._schemas.removeAndClearUsage(s, UnitOfWork.immediate(document.diagrams[0]!));
 };
 
 const makeUpdateSchemaListener = (document: DiagramDocument) => (s: DataSchema) => {
@@ -145,12 +145,12 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
   }
 
   private setProviderInternal(dataProviders: Array<DataProvider>, initial = false) {
-    this.#providers?.forEach(p => p?.off?.('addData', this.#updateDataListener));
-    this.#providers?.forEach(p => p?.off?.('updateData', this.#updateDataListener));
-    this.#providers?.forEach(p => p?.off?.('deleteData', this.#deleteDataListener));
-    this.#providers?.forEach(p => p?.off?.('addSchema', this.#updateSchemaListener));
-    this.#providers?.forEach(p => p?.off?.('updateSchema', this.#updateSchemaListener));
-    this.#providers?.forEach(p => p?.off?.('deleteSchema', this.#deleteSchemaListener));
+    this.#providers.forEach(p => p.off('addData', this.#updateDataListener));
+    this.#providers.forEach(p => p.off('updateData', this.#updateDataListener));
+    this.#providers.forEach(p => p.off('deleteData', this.#deleteDataListener));
+    this.#providers.forEach(p => p.off('addSchema', this.#updateSchemaListener));
+    this.#providers.forEach(p => p.off('updateSchema', this.#updateSchemaListener));
+    this.#providers.forEach(p => p.off('deleteSchema', this.#deleteSchemaListener));
 
     this.#providers = dataProviders;
 
@@ -222,7 +222,7 @@ export class DataManager extends EventEmitter<DataProviderEventMap> {
   refreshData() {
     return Promise.all(
       this.providers.map(p =>
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // biome-ignore lint/suspicious/noExplicitAny: false positive
         (p as any)['refreshData']
           ? (p as unknown as RefreshableDataProvider).refreshData()
           : undefined
@@ -233,7 +233,7 @@ export class DataManager extends EventEmitter<DataProviderEventMap> {
   refreshSchemas() {
     return Promise.all(
       this.providers.map(p =>
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // biome-ignore lint/suspicious/noExplicitAny: false positive
         (p as any)['refreshSchemas']
           ? (p as unknown as RefreshableSchemaProvider).refreshSchemas()
           : undefined
@@ -253,7 +253,7 @@ export class DataManager extends EventEmitter<DataProviderEventMap> {
 
   addSchema(schema: DataSchema, providerId: string) {
     const provider = this.getProvider(providerId);
-    if (!isMutableSchemaProvider(provider!)) throw new VerifyNotReached();
+    if (!isMutableSchemaProvider(provider)) throw new VerifyNotReached();
     return provider.addSchema(schema);
   }
 
@@ -277,36 +277,36 @@ export class DataManager extends EventEmitter<DataProviderEventMap> {
 
   getData(schema: DataSchema) {
     const provider = this.getProvider(schema.providerId);
-    return provider?.getData(schema) ?? [];
+    return provider.getData(schema);
   }
 
   get schemas() {
-    return this.providers?.flatMap(p => p.schemas ?? []);
+    return this.providers.flatMap(p => p.schemas);
   }
 
   getById(schema: DataSchema, ids: string[]) {
     const provider = this.getProvider(schema.providerId);
-    return provider?.getById(ids) ?? [];
+    return provider.getById(ids);
   }
 
   queryData(schema: DataSchema, query: string) {
     const provider = this.getProvider(schema.providerId);
-    return provider?.queryData(schema, query);
+    return provider.queryData(schema, query);
   }
 
   deleteData(schema: DataSchema, data: Data) {
     const provider = this.getProvider(schema.providerId);
-    return (provider as MutableDataProvider)?.deleteData(schema, data);
+    return (provider as MutableDataProvider).deleteData(schema, data);
   }
 
   updateData(schema: DataSchema, data: Data) {
     const provider = this.getProvider(schema.providerId);
-    return (provider as MutableDataProvider)?.updateData(schema, data);
+    return (provider as MutableDataProvider).updateData(schema, data);
   }
 
   addData(schema: DataSchema, data: Data) {
     const provider = this.getProvider(schema.providerId);
-    return (provider as MutableDataProvider)?.addData(schema, data);
+    return (provider as MutableDataProvider).addData(schema, data);
   }
 
   on<K extends EventKey<DataProviderEventMap>>(
@@ -314,13 +314,13 @@ export class DataManager extends EventEmitter<DataProviderEventMap> {
     fn: EventReceiver<DataProviderEventMap[K]>,
     id?: string
   ) {
-    this.providers.forEach(p => p?.on(eventName, fn, id));
+    this.providers.forEach(p => p.on(eventName, fn, id));
   }
 
   off<K extends EventKey<DataProviderEventMap>>(
     eventName: K,
     fnOrId: EventReceiver<DataProviderEventMap[K]> | string
   ) {
-    this.providers.forEach(p => p?.off(eventName, fnOrId));
+    this.providers.forEach(p => p.off(eventName, fnOrId));
   }
 }

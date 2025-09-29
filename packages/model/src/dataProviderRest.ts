@@ -56,7 +56,7 @@ export class RESTDataProvider
       await this.fetchSchemas(true);
       await this.fetchData(true);
     } catch (e) {
-      return 'Error fetching data: ' + (e as Error).toString();
+      return `Error fetching data: ${(e as Error).toString()}`;
     }
   }
 
@@ -208,7 +208,7 @@ export class RESTDataProvider
       throw new Error(`Failed to fetch data: ${res.statusText}`);
     }
 
-    return res.json();
+    return res.json() as Promise<DataWithSchema[]>;
   }
 
   protected async fetchSchemas(force = true): Promise<DataSchema[]> {
@@ -222,6 +222,6 @@ export class RESTDataProvider
       throw new Error(`Failed to fetch schemas: ${res.statusText}`);
     }
 
-    return res.json();
+    return res.json() as Promise<DataSchema[]>;
   }
 }

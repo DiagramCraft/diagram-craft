@@ -15,7 +15,7 @@ let needsSave:
       doc: DiagramDocument;
       callback?: (d: SerializedDiagramDocument) => void;
     }
-  | undefined = undefined;
+  | undefined ;
 
 export const ElectronAutosave: Autosave = {
   /**

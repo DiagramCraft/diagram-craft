@@ -5,7 +5,6 @@ import { AbsoluteOffset, Point } from '@diagram-craft/geometry/point';
 import { Diagram } from '@diagram-craft/model/diagram';
 
 declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Extensions {
     interface Tools {
       pan: PanTool;

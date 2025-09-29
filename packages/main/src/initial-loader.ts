@@ -11,7 +11,7 @@ const config = defineAppConfig(defaultAppConfig);
 AppConfig.set(config);
 
 // Initialize collaboration
-if (config.collaboration?.backend === 'yjs') {
+if (config.collaboration.backend === 'yjs') {
   CollaborationConfig.isNoOp = false;
   CollaborationConfig.CRDTRoot = YJSRoot;
   CollaborationConfig.CRDTMap = YJSMap;
@@ -21,13 +21,13 @@ if (config.collaboration?.backend === 'yjs') {
 }
 
 // Initialize file loaders
-for (const [k, v] of Object.entries(config.file?.loaders ?? {})) {
+for (const [k, v] of Object.entries(config.file.loaders)) {
   fileLoaderRegistry[k] = v;
 }
 
 // Initialize stencil loaders
-for (const [k, v] of Object.entries(config.stencils?.loaders ?? {})) {
-  // @ts-ignore
+for (const [k, v] of Object.entries(config.stencils.loaders)) {
+  // @ts-expect-error
   stencilLoaderRegistry[k] = v;
 }
 

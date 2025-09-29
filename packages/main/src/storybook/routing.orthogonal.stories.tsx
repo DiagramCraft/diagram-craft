@@ -7,8 +7,6 @@ import { _test, type EdgeType } from '@diagram-craft/model/edgePathBuilder.ortho
 import { Box } from '@diagram-craft/geometry/box';
 import React, { useState } from 'react';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 const OrthogonalRoutingTest = (props: { start: any; end: any; numberOfWayPoints: number }) => {
   const [drag, setDrag] = useState<{ callback: (e: React.MouseEvent<any>) => void } | undefined>(
     undefined

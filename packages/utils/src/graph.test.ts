@@ -121,8 +121,8 @@ describe('Graph utilities', () => {
       expect(result).toBeDefined();
       expect(result!.distance).toBe(4); // Manhattan distance in grid
       expect(result!.path).toHaveLength(5); // 5 vertices in path
-      expect(result!.path[0].id).toBe('0,0');
-      expect(result!.path[result!.path.length - 1].id).toBe('2,2');
+      expect(result!.path[0]!.id).toBe('0,0');
+      expect(result!.path[result!.path.length - 1]!.id).toBe('2,2');
     });
 
     test('returns undefined for non-existent vertices', () => {

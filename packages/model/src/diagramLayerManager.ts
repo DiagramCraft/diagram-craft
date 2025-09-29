@@ -157,7 +157,7 @@ export class LayerManager implements UOWTrackable<LayersSnapshot>, AttachmentCon
       this.#activeLayer = this.visible[0];
     }
     assert.present(this.#activeLayer);
-    return this.#activeLayer!;
+    return this.#activeLayer;
   }
 
   byId(id: string) {

@@ -21,10 +21,10 @@ export class HTMLRenderer {
     // Render and filter out empty children first
     const renderedChildren = astNode
       .map(child => this.processNode(child))
-      .filter(r => r && r.trim() !== '') as string[];
+      .filter(r => r && r.trim() !== '');
 
     for (let i = 0; i < renderedChildren.length; i++) {
-      const rendered = renderedChildren[i];
+      const rendered = renderedChildren[i]!;
 
       if (i === 0 && !rendered.match(/^<(?!em|a|img|strong|code)/)) {
         isText = true;
@@ -127,7 +127,7 @@ export class HTMLRenderer {
         return this.makeTag('blockquote', this.processNodeArray(astNode.children ?? []));
 
       case 'html':
-        return '\n' + (astNode.html ?? '');
+        return `\n${astNode.html ?? ''}`;
 
       case 'hr':
         return this.makeTag('hr');
@@ -136,8 +136,8 @@ export class HTMLRenderer {
         return '';
 
       default:
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        console.log('*** Unsupported type ' + (astNode as any).type);
+        // biome-ignore lint/suspicious/noExplicitAny: false positive
+        console.log(`*** Unsupported type ${(astNode as any).type}`);
         return '';
     }
   }
@@ -169,7 +169,7 @@ export class HTMLRenderer {
    * @returns Complete HTML tag string
    */
   makeTag(tag: string, content?: string, attributes: Record<string, string> = {}): string {
-    let result = '<' + tag;
+    let result = `<${tag}`;
 
     if (Object.keys(attributes).length > 0) {
       for (const [key, value] of Object.entries(attributes)) {

@@ -18,7 +18,7 @@ const mkContext = (d: Diagram) => {
   return {
     model: {
       activeDiagram: d,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // biome-ignore lint/suspicious/noExplicitAny: false positive
       on: (_a: any, _b: any, _c: any) => {}
     }
   } as ActionContext;
@@ -41,7 +41,7 @@ describe('DuplicateAction', () => {
       const node2 = layer.addNode({ bounds: { x: 200, y: 200, w: 50, h: 50, r: 0 } });
 
       diagram.selectionState.setElements([node1]);
-      
+
       const initialNodeCount = layer.elements.filter(isNode).length;
       const initialEdgeCount = layer.elements.filter(isEdge).length;
 
@@ -53,7 +53,9 @@ describe('DuplicateAction', () => {
       expect(finalNodeCount).toBe(initialNodeCount + 1);
       expect(finalEdgeCount).toBe(initialEdgeCount); // No edges should be duplicated
 
-      const duplicatedNode = layer.elements.filter(isNode).find(n => n.id !== node1.id && n.id !== node2.id)!;
+      const duplicatedNode = layer.elements
+        .filter(isNode)
+        .find(n => n.id !== node1.id && n.id !== node2.id)!;
       expect(duplicatedNode).toBeDefined();
       expect(duplicatedNode.bounds.x).toBe(node1.bounds.x + OFFSET);
       expect(duplicatedNode.bounds.y).toBe(node1.bounds.y + OFFSET);
@@ -140,13 +142,15 @@ describe('DuplicateAction', () => {
       expect(finalNodeCount).toBe(initialNodeCount + 2);
       expect(finalEdgeCount).toBe(initialEdgeCount + 1);
 
-      const duplicatedNodes = layer.elements.filter(isNode).filter(n => n.id !== node1.id && n.id !== node2.id);
+      const duplicatedNodes = layer.elements
+        .filter(isNode)
+        .filter(n => n.id !== node1.id && n.id !== node2.id);
       const duplicatedEdges = layer.elements.filter(isEdge).filter(e => e.id !== connectedEdge.id);
 
       expect(duplicatedNodes).toHaveLength(2);
       expect(duplicatedEdges).toHaveLength(1);
 
-      const duplicatedEdge = duplicatedEdges[0];
+      const duplicatedEdge = duplicatedEdges[0]!;
 
       // The duplicated edge should connect to the duplicated nodes
       expect(duplicatedEdge.start).toBeInstanceOf(AnchorEndpoint);
@@ -183,14 +187,16 @@ describe('DuplicateAction', () => {
 
       new DuplicateAction(mkContext(diagram)).execute();
 
-      const duplicatedNodes = layer.elements.filter(isNode).filter(n => n.id !== node1.id && n.id !== node2.id);
+      const duplicatedNodes = layer.elements
+        .filter(isNode)
+        .filter(n => n.id !== node1.id && n.id !== node2.id);
       const duplicatedEdges = layer.elements.filter(isEdge).filter(e => e.id !== connectedEdge.id);
 
       expect(duplicatedNodes).toHaveLength(1);
       expect(duplicatedEdges).toHaveLength(1);
 
-      const duplicatedEdge = duplicatedEdges[0];
-      const duplicatedNode = duplicatedNodes[0];
+      const duplicatedEdge = duplicatedEdges[0]!;
+      const duplicatedNode = duplicatedNodes[0]!;
 
       // The duplicated edge should connect to the duplicated node on one end and be free on the other
       if ((duplicatedEdge.start as AnchorEndpoint).node?.id === duplicatedNode.id) {
@@ -224,7 +230,7 @@ describe('DuplicateAction', () => {
       new DuplicateAction(mkContext(diagram)).execute();
 
       const duplicatedEdges = layer.elements.filter(isEdge).filter(e => e.id !== connectedEdge.id);
-      const duplicatedEdge = duplicatedEdges[0];
+      const duplicatedEdge = duplicatedEdges[0]!;
 
       // Check that endpoint properties are preserved
       expect(duplicatedEdge.start).toBeInstanceOf(AnchorEndpoint);

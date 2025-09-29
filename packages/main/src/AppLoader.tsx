@@ -39,8 +39,8 @@ const loadInitialDocument = async (
       AppConfig.get().collaboration.forceLoadFromServer()
     ) {
       console.log('Load from server');
-      const v = await documentFactory.createDocument(root, diagram!.url, progress);
-      return { doc: v, url: diagram?.url };
+      const v = await documentFactory.createDocument(root, diagram.url, progress);
+      return { doc: v, url: diagram.url };
     } else {
       // Try multi-window autosave first
       const multiWindowAutosaved = await Autosave.get().load(
@@ -53,19 +53,19 @@ const loadInitialDocument = async (
 
       if (multiWindowAutosaved) {
         console.log('Load from auto save');
-        multiWindowAutosaved.document!.url = diagram?.url;
-        return { doc: multiWindowAutosaved.document, url: diagram?.url };
+        multiWindowAutosaved.document.url = diagram.url;
+        return { doc: multiWindowAutosaved.document, url: diagram.url };
       } else {
         console.log('Load from url');
         const defDiagram = await loadFileFromUrl(
-          diagram!.url,
+          diagram.url,
           userState,
           progress,
           documentFactory,
           diagramFactory,
           { root }
         );
-        defDiagram!.url = diagram?.url;
+        defDiagram.url = diagram?.url;
         return { doc: defDiagram, url: diagram?.url };
       }
     }
@@ -115,8 +115,8 @@ export const AppLoader = (props: Props) => {
       const loader = stencilLoaderRegistry[def.type];
       assert.present(loader, `Stencil loader ${def.type} not found`);
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      loader().then(loader => loader(doc!.nodeDefinitions, def.opts as any));
+      // biome-ignore lint/suspicious/noExplicitAny: false positive
+      loader().then(loader => loader(doc.nodeDefinitions, def.opts as any));
     }
   }, [props.stencils, doc]);
 
@@ -145,7 +145,7 @@ export const AppLoader = (props: Props) => {
         setProgress(undefined);
 
         doc.deactivate(() => {});
-        load({ url: url! });
+        load({ url: url });
       },
       'doc-cleared'
     );

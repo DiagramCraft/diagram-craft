@@ -5,7 +5,7 @@ export const hash64 = (arr: Uint8Array, seed = 0): string => {
   let ch: number = 0;
 
   for (let i = 0; i < arr.byteLength; i++) {
-    ch = arr[i];
+    ch = arr[i]!;
     h1 = Math.imul(h1 ^ ch, 2654435761);
     h2 = Math.imul(h2 ^ ch, 1597334677);
   }
@@ -21,7 +21,7 @@ export const hash64 = (arr: Uint8Array, seed = 0): string => {
 export const hash = (arr: Uint8Array): number => {
   let res = 5381;
   for (let i = 0; i < arr.length; i++) {
-    res = (res * 33) ^ arr[i];
+    res = (res * 33) ^ arr[i]!;
   }
   return res >>> 0;
 };

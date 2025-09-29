@@ -45,8 +45,11 @@ export class WatchableValue<T> extends EventEmitter<{
    * @param {K} arg - An array of `WatchableValue` instances that the result depends on.
    * @return {WatchableValue<T>} A new `WatchableValue` instance that tracks the computed result of the function.
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  static from<T, K extends Array<WatchableValue<any>>>(fn: (arg: K) => T, arg: K) {
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
+  static from<T, K extends [WatchableValue<any>, ...WatchableValue<any>[]]>(
+    fn: (arg: K) => T,
+    arg: K
+  ) {
     const v = new WatchableValue(fn(arg));
 
     for (const wv of arg) {

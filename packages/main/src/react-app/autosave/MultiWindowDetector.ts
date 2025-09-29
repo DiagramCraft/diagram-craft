@@ -38,7 +38,7 @@ const PersistentWindowList = {
   get(): Record<string, number> {
     try {
       const stored = localStorage.getItem(PERSISTENT_WINDOW_LIST);
-      return stored ? JSON.parse(stored) : {};
+      return stored ? (JSON.parse(stored) as Record<string, number>) : {};
     } catch {
       return {};
     }

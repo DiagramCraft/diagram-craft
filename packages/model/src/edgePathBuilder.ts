@@ -8,7 +8,7 @@ import {
   QuadSegment
 } from '@diagram-craft/geometry/pathSegment';
 import { Line } from '@diagram-craft/geometry/line';
-import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { buildOrthogonalEdgePath } from './edgePathBuilder.orthogonal';
 import { buildBezierEdgePath } from './edgePathBuilder.bezier';
 import { buildStraightEdgePath } from './edgePathBuilder.straight';
@@ -47,6 +47,8 @@ const convertToCurves = (segments: ReadonlyArray<PathSegment>) => {
   // and then form a QuadSegment for every pair of lines (with the end of the first
   // as the control point)
 
+  assert.arrayNotEmpty(segments);
+
   let start = segments[0].start;
   let cp = segments[0].end;
   for (let i = 1; i < segments.length - 1; i++) {
@@ -54,7 +56,7 @@ const convertToCurves = (segments: ReadonlyArray<PathSegment>) => {
 
     // We know all segments are line segments (as we call this following
     // buildOrthogonalEdgePath)
-    if (!(segment instanceof LineSegment)) throw VERIFY_NOT_REACHED();
+    if (!(segment instanceof LineSegment)) throw new VerifyNotReached();
 
     const newEnd = Line.midpoint(Line.of(segment.start, segment.end));
     dest.push(new QuadSegment(start, cp, newEnd));
@@ -72,7 +74,7 @@ const applyRounding = (rounding: number) => (segments: ReadonlyArray<PathSegment
   const dest: PathSegment[] = [];
   for (let i = 0; i < segments.length; i++) {
     const previous = i === 0 ? undefined : segments.at(i - 1);
-    const segment = segments[i];
+    const segment = segments[i]!;
     const next = segments.at(i + 1);
 
     const previousIsLine = previous instanceof LineSegment;

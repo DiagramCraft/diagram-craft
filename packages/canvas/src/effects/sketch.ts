@@ -94,7 +94,7 @@ const calculateHachureLines = (
       let inside = false;
       for (let i = 0; i < sortedIntersections.length; i++) {
         if (inside) {
-          dest.push(Line.of(sortedIntersections[i - 1].point, sortedIntersections[i].point));
+          dest.push(Line.of(sortedIntersections[i - 1]!.point, sortedIntersections[i]!.point));
         }
         inside = !inside;
       }
@@ -108,8 +108,8 @@ export const parseArrowSvgPath = (path: string): Path[] => {
   const dest: [Point, PathSegment[]][] = [];
   let segments: PathSegment[] = [];
 
-  let startPoint: Point | undefined = undefined;
-  let point: Point | undefined = undefined;
+  let startPoint: Point | undefined ;
+  let point: Point | undefined ;
   for (const rs of parseSvgPath(path)) {
     if (rs[0] === 'M') {
       point = { x: Number(rs[1]), y: Number(rs[2]) };
@@ -152,7 +152,7 @@ export const parseArrowSvgPath = (path: string): Path[] => {
     } else if (rs[0] === 'z' || rs[0] === 'Z') {
       segments.push(new LineSegment(point!, startPoint!));
     } else {
-      throw `Unsupported type ${rs[0]} - ${rs.join(' ')}`;
+      throw new Error(`Unsupported type ${rs[0]} - ${rs.join(' ')}`);
     }
 
     point = segments.length > 0 ? segments.at(-1)!.end : point;
@@ -165,7 +165,7 @@ export const parseArrowSvgPath = (path: string): Path[] => {
   return dest.map(
     ([point, segs]) =>
       new Path(
-        point!,
+        point,
         segs.flatMap(d => d.raw())
       )
   );
@@ -215,7 +215,7 @@ export const asDistortedSvgPath = (
         const distortionTo = opts.unidirectional && !direction ? 0 : distortion;
 
         const m = i % 2 === 0 ? [0.5, 0.85] : [0.15, 0.5];
-        const d = r.nextRange(m[0], m[1]);
+        const d = r.nextRange(m[0]!, m[1]!);
         const midpoint = Point.add(s.start, Vector.scale(Vector.from(s.start, s.end), d));
         const distortedMidpoint = Point.add(midpoint, randDelta(r, distortionFrom, distortionTo));
 

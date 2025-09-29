@@ -1,6 +1,5 @@
-import type { EligibleNodePredicate, MatchingMagnetPair, SnapProvider } from './snapManager';
+import type { MatchingMagnetPair, SnapProvider } from './snapManager';
 import { Highlight } from '../selectionState';
-import type { Diagram } from '../diagram';
 import { DistancePairWithRange, MagnetOfType } from './magnet';
 import { AbstractNodeSnapProvider } from './abstractNodeSnapProvider';
 import { Direction } from '@diagram-craft/geometry/direction';
@@ -68,9 +67,6 @@ export class NodeDistanceSnapProvider
   extends AbstractNodeSnapProvider
   implements SnapProvider<'distance'>
 {
-  constructor(diagram: Diagram, eligibleNodePredicate: EligibleNodePredicate) {
-    super(diagram, eligibleNodePredicate);
-  }
 
   /**
    * Generate distance magnets based on spacing between existing nodes
@@ -130,7 +126,7 @@ export class NodeDistanceSnapProvider
 
       // Examine pairs of nodes to find distance patterns
       for (let i = 0; i < nodesInDirection.length - 1; i++) {
-        const first = nodesInDirection[i].bounds; // The closer node to the box
+        const first = nodesInDirection[i]!.bounds; // The closer node to the box
 
         // This is a performance optimization to only look for a capped number
         // of magnets in each direction
@@ -143,7 +139,7 @@ export class NodeDistanceSnapProvider
         // This creates potential distance patterns that other elements can snap to
         const distances: Array<DistancePairWithRange> = [];
         for (let j = i + 1; j < nodesInDirection.length; j++) {
-          const node = nodesInDirection[j];
+          const node = nodesInDirection[j]!;
 
           const nodeEdgePositionOppositeDir = this.getEdgePosition(node.bounds, oppositeDir);
 
@@ -248,7 +244,7 @@ export class NodeDistanceSnapProvider
     // 2. The range of the newly snapped box
     // This determines where the distance guides should be drawn
     const intersection = Range.intersection(
-      Range.intersection(m.distancePairs[0].rangeA, m.distancePairs[0].rangeB)!,
+      Range.intersection(m.distancePairs[0]!.rangeA, m.distancePairs[0]!.rangeB)!,
       this.getRange(box, axis)
     );
 
@@ -256,20 +252,20 @@ export class NodeDistanceSnapProvider
     if (!intersection) return undefined;
 
     // Use the midpoint of the intersection for positioning the distance guide lines
-    const mp = Range.midpoint(intersection!);
+    const mp = Range.midpoint(intersection);
 
     // Add a new distance pair showing the equal distance from the snapped element
     // to the original node pattern. This visualizes the new equal spacing created.
     m.distancePairs.push({
-      distance: m.distancePairs[0].distance, // Same distance as the original pair
+      distance: m.distancePairs[0]!.distance, // Same distance as the original pair
       pointA: Point.add(tp, {
         // Calculate the point that's the same distance away from the snapped element
-        x: axis === 'v' ? directions[m.matchDirection!].sign * m.distancePairs[0].distance : 0,
-        y: axis === 'h' ? directions[m.matchDirection!].sign * m.distancePairs[0].distance : 0
+        x: axis === 'v' ? directions[m.matchDirection!].sign * m.distancePairs[0]!.distance : 0,
+        y: axis === 'h' ? directions[m.matchDirection!].sign * m.distancePairs[0]!.distance : 0
       }),
       pointB: tp, // The snapped element's position
-      rangeA: intersection!,
-      rangeB: intersection!
+      rangeA: intersection,
+      rangeB: intersection
     });
 
     // Update all distance pairs to use the intersection midpoint for visual alignment

@@ -1,4 +1,3 @@
-import { EditorRegistry } from '@diagram-craft/canvas-app/PropsEditor';
 import { ReactElement } from 'react';
 import { NodeFillEditor } from './NodeFillEditor';
 import { NodeStrokeEditor } from './NodeStrokeEditor';
@@ -20,7 +19,31 @@ export type Editor = (props: {
 
 export type EditorTypes = 'node' | 'edge';
 
-export const NODE_EDITORS: EditorRegistry<Editor> = {
+type Entry<E> = {
+  editor: E;
+  name: string;
+  pick: (props: NodeProps | EdgeProps) => Partial<NodeProps | EdgeProps>;
+};
+
+export type NodeEditorRegistry = Record<
+  | 'fill'
+  | 'stroke'
+  | 'shadow'
+  | 'effects'
+  | 'text'
+  | 'nodeCustom'
+  | 'indicators'
+  | 'action'
+  | 'advanced',
+  Entry<Editor>
+>;
+
+export type EdgeEditorRegistry = Record<
+  'shadow' | 'edgeCustom' | 'edgeEffects' | 'edgeLine',
+  Entry<Editor>
+>;
+
+export const NODE_EDITORS: NodeEditorRegistry = {
   fill: {
     name: 'Fill',
     editor: NodeFillEditor,
@@ -73,7 +96,7 @@ export const NODE_EDITORS: EditorRegistry<Editor> = {
   }
 };
 
-export const EDGE_EDITORS: EditorRegistry<Editor> = {
+export const EDGE_EDITORS: EdgeEditorRegistry = {
   shadow: {
     name: 'Shadow',
     editor: ElementShadowEditor,

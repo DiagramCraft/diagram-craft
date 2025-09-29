@@ -21,7 +21,7 @@ export interface UIActions {
   /**
    * Show dialog using centralized dialog system. Dialogs must be registered in App.tsx.
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
   showDialog: (command: DialogCommand<any, any>) => void;
 }
 
@@ -68,7 +68,6 @@ export class MessageDialogCommand implements DialogCommand<MessageDialogProps, E
   ) {}
 }
 
-// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace UIActions {
   export interface ContextMenus extends Extensions.ContextMenus {
     canvas: object;
@@ -85,7 +84,6 @@ export type ContextMenuTarget<
 };
 
 declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Extensions {
     interface ContextMenus {}
   }

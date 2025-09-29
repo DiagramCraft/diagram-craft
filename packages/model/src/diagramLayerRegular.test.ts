@@ -49,7 +49,7 @@ describe.for(Backends.all())('RegularLayer [%s]', ([_name, backend]) => {
       expect(layer1.elements.length).toEqual(1);
 
       if (doc2) {
-        const layerDoc2 = doc2.diagrams[0].layers.all[0];
+        const layerDoc2 = doc2.diagrams[0]!.layers.all[0];
         expect(layerDoc2).toBeInstanceOf(RegularLayer);
         expect((layerDoc2 as RegularLayer).elements.length).toEqual(1);
       }
@@ -68,12 +68,12 @@ describe.for(Backends.all())('RegularLayer [%s]', ([_name, backend]) => {
       d1.on('elementAdd', elementAdd1);
 
       const elementAdd2 = vi.fn();
-      if (doc2) doc2.diagrams[0].on('elementAdd', elementAdd2);
+      if (doc2) doc2.diagrams[0]!.on('elementAdd', elementAdd2);
 
       const layer1 = new RegularLayer('layer1', 'layer1', [], d1);
       d1.layers.add(layer1, UnitOfWork.immediate(d1));
 
-      const layerDoc2 = doc2 ? doc2.diagrams[0].layers.all[0] : undefined;
+      const layerDoc2 = doc2 ? doc2.diagrams[0]!.layers.all[0] : undefined;
 
       const element = new DiagramNode('id1', layer1);
       UnitOfWork.execute(d1, uow => layer1.addElement(element, uow));
@@ -113,7 +113,7 @@ describe.for(Backends.all())('RegularLayer [%s]', ([_name, backend]) => {
       const layer1 = new RegularLayer('layer1', 'layer1', [], d1);
       d1.layers.add(layer1, UnitOfWork.immediate(d1));
 
-      const layerDoc2 = doc2 ? doc2.diagrams[0].layers.all[0] : undefined;
+      const layerDoc2 = doc2 ? doc2.diagrams[0]!.layers.all[0] : undefined;
 
       const element = new DiagramNode('id1', layer1);
       layer1.addElement(element, UnitOfWork.immediate(d1));

@@ -1,6 +1,6 @@
 import type { IpcHandlers } from '../ipc';
 import { BrowserWindow, ipcMain } from 'electron';
-import os from 'os';
+import os from 'node:os';
 
 export const userHandlers: IpcHandlers = {
   register(_mainWindow: BrowserWindow): void {

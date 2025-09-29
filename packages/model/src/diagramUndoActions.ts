@@ -31,7 +31,7 @@ const restoreSnapshots = (e: ElementsSnapshot, diagram: Diagram, uow: UnitOfWork
       }
     } else {
       const el = diagram.lookup(id);
-      if (el) el.restore(snapshot!, uow);
+      if (el) el.restore(snapshot, uow);
     }
   }
 };
@@ -76,7 +76,7 @@ export class SnapshotUndoableAction implements UndoableAction {
       } else {
         const node = this.diagram.lookup(id);
         if (node) {
-          node.restore(snapshot!, uow);
+          node.restore(snapshot, uow);
         }
       }
     }
@@ -91,8 +91,7 @@ export class SnapshotUndoableAction implements UndoableAction {
 
     if (
       nextAction.description === this.description &&
-      hasSameElements(nextAction.afterSnapshot.keys, this.afterSnapshot.keys) &&
-      new Date().getTime() - this.timestamp!.getTime() < 2000
+      hasSameElements(nextAction.afterSnapshot.keys, this.afterSnapshot.keys) &&Date.now()- this.timestamp!.getTime() < 2000
     ) {
       this.afterSnapshot = nextAction.afterSnapshot;
       this.timestamp = new Date();

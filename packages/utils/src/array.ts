@@ -1,3 +1,5 @@
+import { assert } from './assert';
+
 /**
  * Returns the smallest element in an array based on a provided comparator function.
  *
@@ -17,6 +19,8 @@ export const smallest = <T>(
   arr: ReadonlyArray<T>,
   comparator: (a: T, b: T) => number
 ): T | undefined => {
+  if (arr.length === 0) return undefined;
+  assert.arrayNotEmpty(arr);
   return arr.slice(1).reduce((acc, cur) => (comparator(acc, cur) < 0 ? acc : cur), arr[0]);
 };
 
@@ -35,12 +39,14 @@ export const smallest = <T>(
  * smallestIndex([42]);
  */
 export const smallestIndex = <T>(a: ReadonlyArray<T>) => {
+  assert.arrayNotEmpty(a);
+
   let lowest = 0;
   let lowestVal = a[0];
   for (let i = 1; i < a.length; i++) {
-    if (a[i] < lowestVal) {
+    if (a[i]! < lowestVal) {
       lowest = i;
-      lowestVal = a[i];
+      lowestVal = a[i]!;
     }
   }
   return lowest;
@@ -65,6 +71,8 @@ export const largest = <T>(
   arr: ReadonlyArray<T>,
   comparator: (a: T, b: T) => number
 ): T | undefined => {
+  if (arr.length === 0) return undefined;
+  assert.arrayNotEmpty(arr);
   return arr.slice(1).reduce((acc, cur) => (comparator(acc, cur) > 0 ? acc : cur), arr[0]);
 };
 
@@ -87,7 +95,7 @@ export const unique = <T>(arr: ReadonlyArray<T>, respectTo: (e: T) => unknown = 
   const seen = new Set<unknown>();
   const result: T[] = [];
   for (let i = 0; i < arr.length; i++) {
-    const e = arr[i];
+    const e = arr[i]!;
     const key = respectTo(e);
     if (seen.has(key)) continue;
     seen.add(key);
@@ -121,7 +129,7 @@ export const uniqueWithCount = <T>(
 ): Array<{ val: T; count: number }> => {
   const seen = new Map<unknown, { val: T; count: number }>();
   for (let i = 0; i < arr.length; i++) {
-    const e = arr[i];
+    const e = arr[i]!;
     const key = respectTo(e);
     const existing = seen.get(key);
     if (existing) {

@@ -11,6 +11,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { decodeDataReferences } from '@diagram-craft/model/diagramDocumentDataSchemas';
+import { assert } from '@diagram-craft/utils/assert';
 
 type ConnectionItem = {
   id: string;
@@ -24,6 +25,7 @@ type ConnectionItem = {
 // Get connected nodes and data entries for single node selection
 const getConnectedItems = (diagram: Diagram): ConnectionItem[] => {
   if (diagram.selectionState.getSelectionType() !== 'single-node') return [];
+  assert.arrayNotEmpty(diagram.selectionState.nodes);
 
   const selectedNode = diagram.selectionState.nodes[0];
   const connectedItems = new Map<string, ConnectionItem>();
@@ -59,27 +61,23 @@ const getConnectedItems = (diagram: Diagram): ConnectionItem[] => {
     for (const dataEntry of nodeData) {
       // Get the schema for this data entry
       const schema = diagram.document.data.db.getSchema(dataEntry.schema);
-      if (!schema) continue;
 
       // Check each field in the schema for reference fields
       for (const field of schema.fields) {
         if (field.type === 'reference') {
           // Get the referenced UIDs from the data
           let referencedUIDs: string[] = [];
-          if (dataEntry.data && dataEntry.data[field.id]) {
+          if (dataEntry.data[field.id]) {
             referencedUIDs = decodeDataReferences(dataEntry.data[field.id] as string);
           }
 
           // Get the referenced schema
           const referencedSchema = diagram.document.data.db.getSchema(field.schemaId);
-          if (!referencedSchema) continue;
 
           // Find the actual data entries for these UIDs
           const dataProvider = diagram.document.data.db;
-          if (!dataProvider) continue;
 
           const referencedData = dataProvider.getData(referencedSchema);
-          if (!referencedData) continue;
 
           for (const uid of referencedUIDs) {
             // Find the data entry with this UID
@@ -87,10 +85,11 @@ const getConnectedItems = (diagram: Diagram): ConnectionItem[] => {
             if (!dataItem) continue;
 
             // Get display name (use 'name' field if exists, otherwise first field)
+            assert.arrayNotEmpty(referencedSchema.fields);
             const nameField =
               referencedSchema.fields.find(f => f.name.toLowerCase() === 'name') ??
               referencedSchema.fields[0];
-            const displayName = dataItem[nameField?.id] ?? dataItem._uid;
+            const displayName = dataItem[nameField.id] ?? dataItem._uid;
 
             // Check if there's also a node with this data
             let associatedNode: DiagramNode | undefined;
@@ -99,7 +98,7 @@ const getConnectedItems = (diagram: Diagram): ConnectionItem[] => {
                 const node = element as DiagramNode;
                 const nodeDataEntries = node.metadata.data?.data ?? [];
                 for (const nodeDataEntry of nodeDataEntries) {
-                  if (nodeDataEntry.data && nodeDataEntry.data._uid === uid) {
+                  if (nodeDataEntry.data._uid === uid) {
                     associatedNode = node;
                     break;
                   }
@@ -157,6 +156,7 @@ const createNodeForData = (item: Data, schemaName: string, diagram: Diagram) => 
   if (!schema) return;
 
   // Get current selection to position new node
+  assert.arrayNotEmpty(diagram.selectionState.nodes);
   const selectedNode = diagram.selectionState.nodes[0];
   const offsetX = 20; // Position closer to the right of selected node
 

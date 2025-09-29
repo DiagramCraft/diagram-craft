@@ -29,7 +29,7 @@ export const LabelNodePanel = (props: Props) => {
 
   if ($d.selectionState.getSelectionType() !== 'single-label-node') return null;
 
-  const node = $d.selectionState.nodes[0];
+  const node = $d.selectionState.nodes[0]!;
   const edge = node.labelEdge();
   assert.present(edge);
 
@@ -55,7 +55,7 @@ export const LabelNodePanel = (props: Props) => {
               value={type}
               onChange={v => {
                 UnitOfWork.execute(edge.diagram, uow => {
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  // biome-ignore lint/suspicious/noExplicitAny: false positive
                   node.updateLabelNode({ type: v as any, offset: { x: 0, y: 0 } }, uow);
                 });
               }}

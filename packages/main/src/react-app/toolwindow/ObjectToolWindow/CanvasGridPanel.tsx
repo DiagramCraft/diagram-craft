@@ -39,14 +39,14 @@ export const CanvasGridPanel = (props: Props) => {
         <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
           <ColorPicker
             palette={$cfg.palette.primary}
-            value={color.val ?? 'transparent'}
+            value={color.val}
             onChange={color.set}
             customPalette={$d.document.customPalette}
             onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
           />
           <NumberInput
             style={{ width: '45px' }}
-            value={size.val ?? 10}
+            value={size.val}
             onChange={n => size.set(n ?? 0)}
             validUnits={['px']}
             defaultUnit={'px'}
@@ -73,14 +73,14 @@ export const CanvasGridPanel = (props: Props) => {
         <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
           <ColorPicker
             palette={$cfg.palette.primary}
-            value={majorColor.val ?? 'transparent'}
+            value={majorColor.val}
             onChange={majorColor.set}
             customPalette={$d.document.customPalette}
             onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
           />
           <NumberInput
             style={{ width: '45px' }}
-            value={majorCount.val ?? 5}
+            value={majorCount.val}
             onChange={n => majorCount.set(n ?? 0)}
           />
           <ToggleButtonGroup.Root

@@ -39,18 +39,18 @@ export const clausesToString = (clauses: ElementSearchClause[]): string => {
         dest.push(clause.query);
         break;
       case 'any':
-        dest.push('ANY(' + clausesToString(clause.clauses) + ')');
+        dest.push(`ANY(${clausesToString(clause.clauses)})`);
         break;
       case 'props':
-        dest.push(clause.path + ' ' + clause.relation + ' ' + clause.value);
+        dest.push(`${clause.path} ${clause.relation} ${clause.value}`);
 
         break;
       case 'tags':
-        dest.push('tags' + ' ' + clause.tags.join(','));
+        dest.push(`tags ${clause.tags.join(',')}`);
         break;
       case 'comment':
         if (clause.state) {
-          dest.push('comment ' + clause.state);
+          dest.push(`comment ${clause.state}`);
         } else {
           dest.push('comment any');
         }
@@ -68,11 +68,7 @@ export const searchByElementSearchClauses = (
   const results: Set<string>[] = [];
   for (const clause of clauses) {
     notImplemented.true(
-      clause.type === 'query' ||
-        clause.type === 'any' ||
-        clause.type === 'props' ||
-        clause.type === 'tags' ||
-        clause.type === 'comment',
+      ['query', 'any', 'props', 'tags', 'comment'].includes(clause.type),
       'Not implemented yet'
     );
     if (clause.type === 'query') {
@@ -83,7 +79,7 @@ export const searchByElementSearchClauses = (
       results.push(new Set(...(r as string[])));
     } else if (clause.type === 'any') {
       const anyResult = searchByElementSearchClauses(diagram, clause.clauses);
-      const result = anyResult.reduce((p, c) => p.union(c), anyResult[0]);
+      const result = anyResult.reduce((p, c) => p.union(c), anyResult[0]!);
       results.push(result);
     } else if (clause.type === 'props') {
       const re = clause.relation === 'matches' ? new RegExp(clause.value) : undefined;
@@ -91,50 +87,68 @@ export const searchByElementSearchClauses = (
       const result = new Set<string>();
       for (const layer of diagram.layers.visible) {
         if (layer instanceof RegularLayer) {
-          for (const element of (layer as RegularLayer).elements) {
-            // @ts-ignore
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          for (const element of layer.elements) {
+            // @ts-expect-error
+            // biome-ignore lint/suspicious/noExplicitAny: false positive,@typescript-eslint/no-unsafe-return
             const value: any = clause.path.split('.').reduce((p, c) => p[c], element);
 
             switch (clause.relation) {
               case 'eq':
-                if (typeof value === 'string' && typeof clause.value === 'string') {
+                if (typeof value === 'string') {
                   if (value.toLowerCase() === clause.value.toLowerCase()) result.add(element.id);
-                } else if (typeof value === 'boolean' && (clause.value === 'true' || clause.value === 'false')) {
+                } else if (
+                  typeof value === 'boolean' &&
+                  (clause.value === 'true' || clause.value === 'false')
+                ) {
                   if (value.toString() === clause.value) result.add(element.id);
-                } else if (typeof value === 'number' && !isNaN(Number(clause.value))) {
+                } else if (typeof value === 'number' && !Number.isNaN(Number(clause.value))) {
                   if (value === Number(clause.value)) result.add(element.id);
                 } else if (value === clause.value) {
                   result.add(element.id);
                 }
                 break;
               case 'neq':
-                if (typeof value === 'string' && typeof clause.value === 'string') {
+                if (typeof value === 'string') {
                   if (value.toLowerCase() !== clause.value.toLowerCase()) result.add(element.id);
-                } else if (typeof value === 'boolean' && (clause.value === 'true' || clause.value === 'false')) {
+                } else if (
+                  typeof value === 'boolean' &&
+                  (clause.value === 'true' || clause.value === 'false')
+                ) {
                   if (value.toString() !== clause.value) result.add(element.id);
-                } else if (typeof value === 'number' && !isNaN(Number(clause.value))) {
+                } else if (typeof value === 'number' && !Number.isNaN(Number(clause.value))) {
                   if (value !== Number(clause.value)) result.add(element.id);
                 } else if (value !== clause.value) {
                   result.add(element.id);
                 }
                 break;
               case 'gt':
-                if (value != null && typeof value === 'number' && !isNaN(Number(clause.value))) {
+                if (
+                  value != null &&
+                  typeof value === 'number' &&
+                  !Number.isNaN(Number(clause.value))
+                ) {
                   if (value > Number(clause.value)) result.add(element.id);
                 } else if (value != null && value > clause.value) {
                   result.add(element.id);
                 }
                 break;
               case 'lt':
-                if (value != null && typeof value === 'number' && !isNaN(Number(clause.value))) {
+                if (
+                  value != null &&
+                  typeof value === 'number' &&
+                  !Number.isNaN(Number(clause.value))
+                ) {
                   if (value < Number(clause.value)) result.add(element.id);
                 } else if (value != null && value < clause.value) {
                   result.add(element.id);
                 }
                 break;
               case 'contains':
-                if (value != null && typeof value === 'string' && value.toLowerCase().includes(clause.value.toLowerCase()))
+                if (
+                  value != null &&
+                  typeof value === 'string' &&
+                  value.toLowerCase().includes(clause.value.toLowerCase())
+                )
                   result.add(element.id);
                 break;
               case 'matches':
@@ -153,9 +167,9 @@ export const searchByElementSearchClauses = (
       const result = new Set<string>();
       for (const layer of diagram.layers.visible) {
         if (layer instanceof RegularLayer) {
-          for (const element of (layer as RegularLayer).elements) {
-            const elementTags = element.tags ?? [];
-            const hasMatchingTag = clause.tags.some(ruleTag => 
+          for (const element of layer.elements) {
+            const elementTags = element.tags;
+            const hasMatchingTag = clause.tags.some(ruleTag =>
               elementTags.some(elementTag => elementTag.toLowerCase() === ruleTag.toLowerCase())
             );
 
@@ -185,7 +199,7 @@ export const searchByElementSearchClauses = (
       const result = new Set<string>();
       for (const layer of diagram.layers.visible) {
         if (layer instanceof RegularLayer) {
-          for (const element of (layer as RegularLayer).elements) {
+          for (const element of layer.elements) {
             if (matchingElements.has(element.id)) {
               result.add(element.id);
             }

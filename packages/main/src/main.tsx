@@ -27,7 +27,7 @@ ELECTRON: {
 const nodeRegistry = defaultNodeRegistry();
 const stencilRegistry: StencilRegistryConfig = AppConfig.get().stencils?.registry ?? [];
 for (let i = 0; i < stencilRegistry.length; i++) {
-  const s = stencilRegistry[i];
+  const s = stencilRegistry[i]!;
   if (s.shapes) {
     nodeRegistry.preregister(s.shapes, s.type, s.opts);
   }
@@ -48,7 +48,7 @@ if (location.hash !== '') {
 } else {
   const userState = UserState.get();
   if (userState.recentFiles.length > 0) {
-    diagrams.unshift({ url: userState.recentFiles[0] });
+    diagrams.unshift({ url: userState.recentFiles[0]! });
   }
 }
 

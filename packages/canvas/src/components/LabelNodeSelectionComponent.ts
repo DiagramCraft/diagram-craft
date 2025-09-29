@@ -21,7 +21,7 @@ export class LabelNodeSelectionComponent extends Component<Props> {
 
     const path = edge.path();
     const attachmentPoint = path.pointAt(
-      TimeOffsetOnPath.toLengthOffsetOnPath({ pathT: labelNode.timeOffset! }, path)
+      TimeOffsetOnPath.toLengthOffsetOnPath({ pathT: labelNode.timeOffset }, path)
     );
 
     const z = new Zoom(props.node.diagram.viewBox.zoomLevel);

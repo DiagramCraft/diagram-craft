@@ -4,7 +4,7 @@ import type { CRDTCompatibleObject, CRDTMap, CRDTMapEvents } from '../../crdt';
 import type { WatchableValue } from '@diagram-craft/utils/watchableValue';
 import type { EventReceiver } from '@diagram-craft/utils/event';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: false positive
 type WrapperType<T extends Record<string, CRDTCompatibleObject> = any> = {
   value: CRDTMap<T>;
   index: number;
@@ -37,7 +37,7 @@ export class MappedCRDTOrderedMap<
     const remoteUpdate: EventReceiver<CRDTMapEvents['remoteUpdate']> = e => {
       const idx = this.#entries.findIndex(entry => entry[0] === e.key);
       if (idx >= 0) {
-        props?.onRemoteChange?.(this.#entries[idx][1]);
+        props?.onRemoteChange?.(this.#entries[idx]![1]);
       }
 
       this.populateFromCRDT(e);
@@ -46,7 +46,7 @@ export class MappedCRDTOrderedMap<
     const remoteDelete: EventReceiver<CRDTMapEvents['remoteDelete']> = e => {
       const idx = this.#entries.findIndex(entry => entry[0] === e.key);
       if (idx >= 0) {
-        props?.onRemoteRemove?.(this.#entries[idx][1]);
+        props?.onRemoteRemove?.(this.#entries[idx]![1]);
         this.#entries.splice(idx, 1);
       }
     };
@@ -55,7 +55,7 @@ export class MappedCRDTOrderedMap<
       this.populateFromCRDT(e);
       const idx = this.#entries.findIndex(entry => entry[0] === e.key);
       if (idx >= 0) {
-        props?.onRemoteAdd?.(this.#entries[idx][1]);
+        props?.onRemoteAdd?.(this.#entries[idx]![1]);
       }
     };
 
@@ -179,7 +179,7 @@ export class MappedCRDTOrderedMap<
   setOrder(keys: string[]) {
     this.#current.transact(() => {
       for (const [k, v] of this.#current.entries()) {
-        const idx = keys.findIndex(key => key === k);
+        const idx = keys.indexOf(k);
         if (idx >= 0) {
           if (v.get('index') !== idx) v.set('index', idx);
         }

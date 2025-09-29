@@ -33,7 +33,7 @@ export type Autosave = {
   init: () => void;
 };
 
-let AUTOSAVE_INSTANCE: Autosave | undefined = undefined;
+let AUTOSAVE_INSTANCE: Autosave | undefined ;
 
 export const Autosave = {
   init(instance: Autosave) {

@@ -79,7 +79,7 @@ export class ImagePasteHandler extends PasteHandler {
       DiagramNode.create(
         newid(),
         'rect',
-        { x: point!.x, y: point!.y, w: img.width, h: img.height, r: 0 },
+        { x: point.x, y: point.y, w: img.width, h: img.height, r: 0 },
         layer,
         {
           fill: {
@@ -112,7 +112,7 @@ export class TextPasteHandler extends PasteHandler {
       DiagramNode.create(
         newid(),
         'text',
-        { x: point!.x, y: point!.y, w: 200, h: 20, r: 0 },
+        { x: point.x, y: point.y, w: 200, h: 20, r: 0 },
         layer,
         {
           stroke: {

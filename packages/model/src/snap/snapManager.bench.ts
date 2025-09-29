@@ -45,7 +45,7 @@ describe('snapManager', () => {
   bench(
     'snapManager',
     () => {
-      snapManager!.snapMove(randomBox());
+      snapManager.snapMove(randomBox());
     },
     opts
   );

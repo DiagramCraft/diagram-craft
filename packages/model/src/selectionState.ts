@@ -182,7 +182,7 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
 
   isChanged(): boolean {
     return this.#elements.some((node, i) => {
-      return !Box.isEqual(node.bounds, this.#source.elementBoxes[i]);
+      return !Box.isEqual(node.bounds, this.#source.elementBoxes[i]!);
     });
   }
 

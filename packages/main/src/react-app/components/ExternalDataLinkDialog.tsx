@@ -87,7 +87,7 @@ export const ExternalDataLinkDialog = (props: Props) => {
                 }}
               />
               <span style={{ paddingTop: '3px' }}>
-                {item['name'] ?? item[props.schema.fields[0].id]}
+                {item['name'] ?? item[props.schema.fields[0]!.id]}
               </span>
             </div>
           ))}

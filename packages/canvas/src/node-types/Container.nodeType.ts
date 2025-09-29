@@ -278,7 +278,7 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
 
     if (children.length === 0) return;
 
-    const layout = LAYOUTS[props.layout];
+    const layout = LAYOUTS[props.layout]!;
     let newBounds = layout.fn(node, props, children, localBounds);
 
     // Shrink to minimum size, but retain the position

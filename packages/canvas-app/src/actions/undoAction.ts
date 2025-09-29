@@ -9,10 +9,6 @@ export const undoActions = (context: ActionContext) => ({
 });
 
 export class UndoAction extends AbstractAction {
-  constructor(context: ActionContext) {
-    super(context);
-  }
-
   getCriteria(context: ActionContext) {
     return ActionCriteria.EventTriggered(
       context.model.activeDiagram.undoManager,

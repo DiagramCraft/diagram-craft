@@ -117,7 +117,7 @@ export const ElementStylesheetPanel = (props: Props) => {
             </Select.Root>
             <DropdownMenu.Root>
               <DropdownMenu.Trigger asChild>
-                <button className={'cmp-button'}>
+                <button type="button" className={'cmp-button'}>
                   <TbDots />
                 </button>
               </DropdownMenu.Trigger>
@@ -193,7 +193,7 @@ export const ElementStylesheetPanel = (props: Props) => {
 
                             $d.document.styles.addStylesheet(s.id, s, uow);
                             $d.document.styles.setStylesheet(
-                              $d.selectionState.elements[0],
+                              $d.selectionState.elements[0]!,
                               id,
                               uow,
                               true
@@ -298,7 +298,7 @@ export const ElementStylesheetPanel = (props: Props) => {
             const style = dialogProps.style;
 
             const uow = new UnitOfWork($d, true);
-            const stylesheet = $d.document.styles.get(style!.id);
+            const stylesheet = $d.document.styles.get(style.id);
             if (stylesheet) {
               stylesheet.setProps(e, $d.document.styles, uow);
               commitWithUndo(uow, 'Modify style');

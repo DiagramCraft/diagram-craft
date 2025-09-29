@@ -1,5 +1,5 @@
 declare module '*.yaml' {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
   const value: Record<string, any>;
   export default value;
 }

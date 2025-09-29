@@ -1,5 +1,5 @@
-import type { Diagram } from '../diagram';
-import type { EligibleNodePredicate, MatchingMagnetPair, SnapProvider } from './snapManager';
+
+import type { MatchingMagnetPair, SnapProvider } from './snapManager';
 import { Highlight } from '../selectionState';
 import { Magnet, MagnetOfType } from './magnet';
 import { isNode } from '../diagramElement';
@@ -53,9 +53,6 @@ const compareFn = (a: AnchorWithDistance, b: AnchorWithDistance) => b.distance -
  * - Creating grid-like layouts by snapping to existing element positions
  */
 export class NodeSnapProvider extends AbstractNodeSnapProvider implements SnapProvider<'node'> {
-  constructor(diagram: Diagram, eligibleNodePredicate: EligibleNodePredicate) {
-    super(diagram, eligibleNodePredicate);
-  }
 
   /**
    * Generate node-based magnets for snapping alignment

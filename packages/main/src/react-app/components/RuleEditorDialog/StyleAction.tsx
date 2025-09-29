@@ -12,7 +12,8 @@ export const StyleAction = (props: Props) => {
   const editors = props.type === 'node' ? NODE_EDITORS : EDGE_EDITORS;
   const propsEditor = new PropsEditor(editors);
 
-  const entry = editors[props.action.kind!];
+  // @ts-expect-error
+  const entry = editors[props.action.kind!]!;
 
   return (
     <div

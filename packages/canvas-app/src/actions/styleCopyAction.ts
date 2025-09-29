@@ -25,9 +25,11 @@ export class StyleCopyAction extends AbstractSelectionAction {
 
   execute(): void {
     if (this.context.model.activeDiagram.selectionState.isNodesOnly()) {
-      currentNodeStyle = this.context.model.activeDiagram.selectionState.nodes[0].storedPropsCloned;
+      currentNodeStyle =
+        this.context.model.activeDiagram.selectionState.nodes[0]!.storedPropsCloned;
     } else if (this.context.model.activeDiagram.selectionState.isEdgesOnly()) {
-      currentEdgeStyle = this.context.model.activeDiagram.selectionState.edges[0].storedPropsCloned;
+      currentEdgeStyle =
+        this.context.model.activeDiagram.selectionState.edges[0]!.storedPropsCloned;
     } else {
       VERIFY_NOT_REACHED();
     }
@@ -45,14 +47,14 @@ export class StylePasteAction extends AbstractSelectionAction {
       if (isNode(e)) {
         e.updateProps(p => {
           for (const k in currentNodeStyle) {
-            // @ts-ignore
+            // @ts-expect-error
             p[k] = deepMerge({}, p[k], currentNodeStyle[k]);
           }
         }, uow);
       } else if (isEdge(e)) {
         e.updateProps(p => {
           for (const k in currentEdgeStyle) {
-            // @ts-ignore
+            // @ts-expect-error
             p[k] = deepMerge({}, p[k], currentEdgeStyle[k]);
           }
         }, uow);

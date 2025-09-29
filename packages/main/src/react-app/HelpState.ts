@@ -12,16 +12,12 @@ type HelpStateEvents = {
 export class HelpState extends EventEmitter<HelpStateEvents> {
   #help: Array<Help> = [];
 
-  constructor() {
-    super();
-  }
-
   pushHelp(help: Help | undefined) {
     if (!this.#help.find(h => h.id === help?.id)) {
       this.#help.push(help!);
     } else if (this.#help.at(-1)!.id === help?.id) {
       this.#help.pop();
-      this.#help.push(help!);
+      this.#help.push(help);
     } else {
       // Ignore
     }

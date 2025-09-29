@@ -163,7 +163,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     // Note: It is important that this comes last, as it might trigger
     //       events etc - so important that everything is set up before
     //       that to avoid flashing of incorrect formatting/style
-    if (this.#anchors.get() === undefined && this.diagram.layers) {
+    if (this.#anchors.get() === undefined) {
       this.invalidateAnchors(UnitOfWork.immediate(this.diagram));
     }
   }
@@ -182,7 +182,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   ) {
     const node = new DiagramNode(id, layer, anchorCache);
 
-    this.initializeNode(node, nodeType, bounds, props, metadata, text);
+    DiagramNode.initializeNode(node, nodeType, bounds, props, metadata, text);
 
     return node;
   }
@@ -199,12 +199,11 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     node.#nodeType.set(nodeType);
     node.#text.set(text);
 
-    node.#props.set((props ?? {}) as NodeProps);
+    node.#props.set(props as NodeProps);
 
-    const m = metadata ?? {};
-    m.style ??= nodeType === 'text' ? DefaultStyles.node.text : DefaultStyles.node.default;
-    m.textStyle ??= DefaultStyles.text.default;
-    node._metadata.set(m);
+    metadata.style ??= nodeType === 'text' ? DefaultStyles.node.text : DefaultStyles.node.default;
+    metadata.textStyle ??= DefaultStyles.text.default;
+    node._metadata.set(metadata);
 
     node._cache?.clear();
   }
@@ -231,7 +230,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   /* Text **************************************************************************************************** */
 
   getText(id = 'text') {
-    return this.#text.get()[id === '1' ? 'text' : id];
+    return this.#text.get()[id === '1' ? 'text' : id]!;
   }
 
   setText(text: string, uow: UnitOfWork, id = 'text') {
@@ -319,7 +318,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     });
 
     dest.push({
-      val: accessor.get(this.#props.get()! as NodeProps, path) as PropPathValue<NodeProps, T>,
+      val: accessor.get(this.#props.get() as NodeProps, path) as PropPathValue<NodeProps, T>,
       type: 'stored'
     });
 
@@ -355,14 +354,13 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       .map(([, v]) => v.elementStyle)
       .filter(e => !!e)
       .at(-1);
-    const ruleStyleProps = this.diagram.document.styles.getNodeStyle(ruleElementStyle)?.props ?? {};
+    const ruleStyleProps = this.diagram.document.styles.getNodeStyle(ruleElementStyle)?.props;
 
     const ruleTextStyle = adjustments
       .map(([, v]) => v.textStyle)
       .filter(e => !!e)
       .at(-1);
-    const ruleTextStyleProps =
-      this.diagram.document.styles.getTextStyle(ruleTextStyle)?.props ?? {};
+    const ruleTextStyleProps = this.diagram.document.styles.getTextStyle(ruleTextStyle)?.props;
 
     return {
       parentProps,
@@ -498,7 +496,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
             this.cache.set('name', applyTemplate(textContent, metadata));
             return textContent;
           }
-        } catch (e) {
+        } catch (_e) {
           // Ignore
         }
       }
@@ -506,7 +504,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       this.cache.set('name', applyTemplate(text, metadata));
       return this.cache.get('name') as string;
     }
-    return this.nodeType + ' / ' + this.id;
+    return `${this.nodeType} / ${this.id}`;
   }
 
   /* Children *********************************************************************************************** */
@@ -566,7 +564,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   }
 
   getAnchor(anchor: string) {
-    return this.anchors.find(a => a.id === anchor) ?? this.anchors[0];
+    return this.anchors.find(a => a.id === anchor) ?? this.anchors[0]!;
   }
 
   /* Snapshot ************************************************************************************************ */
@@ -601,13 +599,13 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       snapshot.children.map(c => {
         const el = this.diagram.lookup(c);
         if (!el) VERIFY_NOT_REACHED();
-        return el!;
+        return el;
       }),
       uow
     );
     const edges = snapshot.edges ?? {};
     for (const [k, v] of Object.entries(edges)) {
-      this.#edges.set(k, unique([...(this.#edges.get(k) ?? []), ...v.map(e => e.id!)]));
+      this.#edges.set(k, unique([...(this.#edges.get(k) ?? []), ...v.map(e => e.id)]));
     }
 
     uow.updateElement(this);
@@ -633,7 +631,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     }, uow);
   }
 
-  duplicate(ctx?: DuplicationContext | undefined, id?: string | undefined): DiagramNode {
+  duplicate(ctx?: DuplicationContext, id?: string): DiagramNode {
     const isTopLevel = ctx === undefined;
     const context = ctx ?? {
       targetElementsInGroup: new Map()
@@ -660,7 +658,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     // Phase 1 - duplicate all elements in the group
     const newChildren: DiagramElement[] = [];
     for (let i = 0; i < this.children.length; i++) {
-      const c = this.children[i];
+      const c = this.children[i]!;
       const newElement = c.duplicate(context, id ? `${id}-${i}` : undefined);
       newChildren.push(newElement);
     }
@@ -795,8 +793,8 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
     // Note, need to check if the element is still in the layer to avoid infinite recursion
     assert.true(this.layer.type === 'regular');
-    if ((this.layer as RegularLayer).elements.includes(this)) {
-      (this.layer as RegularLayer).removeElement(this, uow);
+    if (this.layer.elements.includes(this)) {
+      this.layer.removeElement(this, uow);
     }
   }
 
@@ -873,7 +871,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   get edges(): DiagramEdge[] {
     return [
       ...Array.from(this.#edges.values)
-        .flatMap(e => e)
+        .flat()
         .map(e => this.diagram.edgeLookup.get(e)!),
       ...this.children.flatMap(c => (isNode(c) ? c.edges : []))
     ];
@@ -914,7 +912,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     const edge = this.labelEdge();
     assert.present(edge);
     edge.setLabelNodes(
-      edge.labelNodes!.map((n: ResolvedLabelNode) => (n.node() === this ? replacement : n)),
+      edge.labelNodes.map((n: ResolvedLabelNode) => (n.node() === this ? replacement : n)),
       uow
     );
 
@@ -929,7 +927,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   }
 
   getAttachmentsInUse() {
-    return [this.renderProps.fill?.image?.id, this.renderProps.fill?.pattern];
+    return [this.renderProps.fill.image.id, this.renderProps.fill.pattern];
   }
 
   private getNestedElements(): DiagramElement[] {

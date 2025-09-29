@@ -67,9 +67,6 @@ class CommentAddAction extends AbstractSelectionAction<Application, { elementId:
 }
 
 class CommentEditAction extends AbstractAction<{ comment: Comment }, Application> {
-  constructor(application: Application) {
-    super(application);
-  }
 
   execute(arg: Partial<{ comment: Comment }>): void {
     const comment = arg.comment;

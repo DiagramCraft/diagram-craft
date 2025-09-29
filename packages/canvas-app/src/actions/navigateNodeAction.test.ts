@@ -25,7 +25,7 @@ describe('NavigateNodeAction', () => {
     layer.addNode({ id: 'node1', bounds: { x: 0, y: 50, w: 50, h: 50, r: 0 } });
     layer.addNode({ id: 'node2', bounds: { x: 100, y: 50, w: 50, h: 50, r: 0 } });
     layer.addNode({ id: 'node3', bounds: { x: 200, y: 50, w: 50, h: 50, r: 0 } });
-    diagram.selectionState.setElements([layer.elements[0]]);
+    diagram.selectionState.setElements([layer.elements[0]!]);
 
     // Act: Execute the navigate east action
     const action = new NavigateNodeAction(context, 'e');
@@ -33,14 +33,14 @@ describe('NavigateNodeAction', () => {
 
     // Verify: Should select node2 (the closest node to the east)
     expect(diagram.selectionState.nodes).toHaveLength(1);
-    expect(diagram.selectionState.nodes[0].id).toBe('node2');
+    expect(diagram.selectionState.nodes[0]!.id).toBe('node2');
   });
 
   test('should extend selection when extendSelection is true', () => {
     // Setup: Create two nodes and select the first one
     layer.addNode({ id: 'node1', bounds: { x: 0, y: 50, w: 50, h: 50, r: 0 } });
     layer.addNode({ id: 'node2', bounds: { x: 100, y: 50, w: 50, h: 50, r: 0 } });
-    diagram.selectionState.setElements([layer.elements[0]]);
+    diagram.selectionState.setElements([layer.elements[0]!]);
 
     // Act: Execute the navigate east action with extend selection
     const action = new NavigateNodeAction(context, 'e', true);
@@ -59,7 +59,7 @@ describe('NavigateNodeAction', () => {
       id: 'node2',
       bounds: { x: -100, y: 50, w: 50, h: 50, r: 0 } // To the west
     });
-    diagram.selectionState.setElements([layer.elements[0]]);
+    diagram.selectionState.setElements([layer.elements[0]!]);
 
     // Act: Execute the navigate east action (but there's no node to the east)
     const action = new NavigateNodeAction(context, 'e');
@@ -67,7 +67,7 @@ describe('NavigateNodeAction', () => {
 
     // Verify: Should still have only the original node selected
     expect(diagram.selectionState.nodes).toHaveLength(1);
-    expect(diagram.selectionState.nodes[0].id).toBe('node1');
+    expect(diagram.selectionState.nodes[0]!.id).toBe('node1');
   });
 
   test('should navigate from the most recently selected node when multiple are selected', () => {
@@ -75,8 +75,8 @@ describe('NavigateNodeAction', () => {
     layer.addNode({ id: 'node1', bounds: { x: 0, y: 50, w: 50, h: 50, r: 0 } });
     layer.addNode({ id: 'node2', bounds: { x: 100, y: 50, w: 50, h: 50, r: 0 } });
     layer.addNode({ id: 'node3', bounds: { x: 200, y: 50, w: 50, h: 50, r: 0 } });
-    diagram.selectionState.setElements([layer.elements[0]]);
-    diagram.selectionState.toggle(layer.elements[1]);
+    diagram.selectionState.setElements([layer.elements[0]!]);
+    diagram.selectionState.toggle(layer.elements[1]!);
 
     // Verify setup: Should have both selected with node2 being the most recent
     expect(diagram.selectionState.nodes).toHaveLength(2);
@@ -88,7 +88,7 @@ describe('NavigateNodeAction', () => {
 
     // Verify: Should select only node3 (since extendSelection is false)
     expect(diagram.selectionState.nodes).toHaveLength(1);
-    expect(diagram.selectionState.nodes[0].id).toBe('node3');
+    expect(diagram.selectionState.nodes[0]!.id).toBe('node3');
   });
 
   test('should skip label nodes when navigating', () => {
@@ -101,7 +101,7 @@ describe('NavigateNodeAction', () => {
     const mockLabelNode = labelNode as any;
     mockLabelNode.isLabelNode = () => true;
 
-    diagram.selectionState.setElements([layer.elements[0]]);
+    diagram.selectionState.setElements([layer.elements[0]!]);
 
     // Act: Navigate east - should skip the label node and go to node3
     const action = new NavigateNodeAction(context, 'e');
@@ -109,6 +109,6 @@ describe('NavigateNodeAction', () => {
 
     // Verify: Should select node3, skipping the label node
     expect(diagram.selectionState.nodes).toHaveLength(1);
-    expect(diagram.selectionState.nodes[0].id).toBe('node3');
+    expect(diagram.selectionState.nodes[0]!.id).toBe('node3');
   });
 });

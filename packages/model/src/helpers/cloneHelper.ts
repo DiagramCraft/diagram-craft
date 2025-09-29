@@ -14,8 +14,7 @@ import { deserializeDiagramElements } from '../serialization/deserialize';
 export const assignNewIdsToSerializedElements = (e: SerializedNode | SerializedEdge) => {
   e.id = newid();
   if (e.type === 'node') {
-    const n = e as SerializedNode;
-    for (const c of n?.children ?? []) {
+    for (const c of e.children ?? []) {
       assignNewIdsToSerializedElements(c);
     }
   }

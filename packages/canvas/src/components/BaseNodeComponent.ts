@@ -81,7 +81,7 @@ export class BaseNodeComponent<
           newBounds.x = bounds.x - (width - bounds.w) / 2;
         }
 
-        UnitOfWork.execute(props.node.diagram!, uow => props.node.setBounds(newBounds, uow), true);
+        UnitOfWork.execute(props.node.diagram, uow => props.node.setBounds(newBounds, uow), true);
       }
     };
   }
@@ -240,7 +240,7 @@ export class BaseNodeComponent<
 
     if (nodeProps.effects.blur || nodeProps.effects.opacity !== 1) {
       const filterId = `node-${props.element.id}-filter`;
-      style.filter = (style.filter ?? '') + ` url(#${filterId})`;
+      style.filter = `${style.filter ?? ''} url(#${filterId})`;
 
       children.push(
         svg.filter(
@@ -389,7 +389,7 @@ export class BaseNodeComponent<
     };
     const r = DIRECTIONS[indicator.direction];
 
-    const renderer = INDICATORS[indicator.shape] ?? INDICATORS['none'];
+    const renderer = INDICATORS[indicator.shape as keyof typeof INDICATORS] ?? INDICATORS['none'];
 
     return svg.g(
       {

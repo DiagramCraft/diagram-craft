@@ -16,6 +16,7 @@ import { serializeDiagramElement } from '@diagram-craft/model/serialization/seri
 import { AbstractAction } from '@diagram-craft/canvas/action';
 import { makeUndoableAction } from '@diagram-craft/model/undoManager';
 import { deepClone } from '@diagram-craft/utils/object';
+import type { Data } from '@diagram-craft/model/dataProvider';
 
 export const externalDataActions = (application: Application) => ({
   EXTERNAL_DATA_UNLINK: new ExternalDataUnlinkAction(application),
@@ -41,16 +42,16 @@ export class ExternalDataUnlinkAction extends AbstractSelectionAction<Applicatio
     return (
       super.isEnabled(arg) &&
       getExternalDataStatus(
-        this.context.model.activeDiagram.selectionState.elements[0],
+        this.context.model.activeDiagram.selectionState.elements[0]!,
         arg.schemaId!
-      ) == 'linked'
+      ) === 'linked'
     );
   }
   execute(arg: Partial<SchemaArg>): void {
     const elements = this.context.model.activeDiagram.selectionState.elements;
     assert.arrayNotEmpty(elements as DiagramElement[]);
 
-    const $d = elements[0].diagram;
+    const $d = elements[0]!.diagram;
     const uow = new UnitOfWork($d, true);
 
     for (const e of elements) {
@@ -76,22 +77,22 @@ export class ExternalDataClear extends AbstractSelectionAction<Application, Sche
     return (
       super.isEnabled(arg) &&
       getExternalDataStatus(
-        this.context.model.activeDiagram.selectionState.elements[0],
+        this.context.model.activeDiagram.selectionState.elements[0]!,
         arg.schemaId!
-      ) == 'linked'
+      ) === 'linked'
     );
   }
   execute(arg: Partial<SchemaArg>): void {
     const elements = this.context.model.activeDiagram.selectionState.elements;
     assert.arrayNotEmpty(elements as DiagramElement[]);
 
-    const $d = elements[0].diagram;
+    const $d = elements[0]!.diagram;
     const uow = new UnitOfWork($d, true);
 
     for (const e of elements) {
       e.updateMetadata(p => {
         p.data!.data ??= [];
-        p.data!.data = p.data!.data!.filter(s => s.schema !== arg.schemaId);
+        p.data!.data = p.data!.data.filter(s => s.schema !== arg.schemaId);
       }, uow);
     }
 
@@ -112,7 +113,7 @@ export class ExternalDataLinkAction extends AbstractSelectionAction<Application,
     return (
       super.isEnabled(arg) &&
       getExternalDataStatus(
-        this.context.model.activeDiagram.selectionState.elements[0],
+        this.context.model.activeDiagram.selectionState.elements[0]!,
         arg.schemaId!
       ) !== 'linked'
     );
@@ -153,8 +154,8 @@ export class ExternalDataLinkAction extends AbstractSelectionAction<Application,
             };
             item.type = 'external';
 
-            const db = $d.document.data.db!;
-            const [data] = db.getById(db.getSchema(arg.schemaId!), [v]);
+            const db = $d.document.data.db;
+            const [data] = db.getById(db.getSchema(arg.schemaId!), [v]) as [Data];
             for (const k of Object.keys(data)) {
               if (k.startsWith('_')) continue;
               item.data[k] = data[k];
@@ -164,7 +165,7 @@ export class ExternalDataLinkAction extends AbstractSelectionAction<Application,
         commitWithUndo(uow, 'Link external data');
       },
       props: {
-        schema: this.context.model.activeDocument.data.db.getSchema(arg.schemaId!)!
+        schema: this.context.model.activeDocument.data.db.getSchema(arg.schemaId!)
       }
     });
   }
@@ -182,7 +183,7 @@ export class ExternalDataMakeTemplateAction extends AbstractSelectionAction<
     return (
       super.isEnabled(arg) &&
       getExternalDataStatus(
-        this.context.model.activeDiagram.selectionState.elements[0],
+        this.context.model.activeDiagram.selectionState.elements[0]!,
         arg.schemaId!
       ) === 'linked'
     );
@@ -205,7 +206,7 @@ export class ExternalDataMakeTemplateAction extends AbstractSelectionAction<
           schemaId: arg.schemaId!,
           name: v,
           template: serializeDiagramElement(
-            this.context.model.activeDiagram.selectionState.elements[0]
+            this.context.model.activeDiagram.selectionState.elements[0]!
           )
         };
 

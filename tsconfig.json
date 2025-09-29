@@ -9,9 +9,8 @@
     ],
     "module": "ESNext",
     "skipLibCheck": true,
-    "strictNullChecks":true,
+    "strictNullChecks": true,
     "experimentalDecorators": true,
-
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": false,
@@ -19,32 +18,70 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    //"noUncheckedIndexedAccess": true,
+    "noUncheckedIndexedAccess": true,
 
     "paths": {
-      "@diagram-craft/config": ["./packages/main/app.config.ts"],
-      "@diagram-craft/main/*": ["./packages/main/src/*"],
-      "@diagram-craft/app-components/*": ["./packages/app-components/src/*"],
-      "@diagram-craft/utils/*": ["./packages/utils/src/*"],
-      "@diagram-craft/geometry/*": ["./packages/geometry/src/*"],
-      "@diagram-craft/model/*": ["./packages/model/src/*"],
-      "@diagram-craft/electron-client-api/*": ["./packages/electron-client-api/src/*"],
-      "@diagram-craft/canvas/*": ["./packages/canvas/src/*"],
-      "@diagram-craft/canvas-app/*": ["./packages/canvas-app/src/*"],
-      "@diagram-craft/canvas-edges/*": ["./packages/canvas-edges/src/*"],
-      "@diagram-craft/canvas-nodes/*": ["./packages/canvas-nodes/src/*"],
-      "@diagram-craft/canvas-react/*": ["./packages/canvas-react/src/*"],
-      "@diagram-craft/canvas-drawio/*": ["./packages/canvas-drawio/src/*"],
-      "@diagram-craft/markdown/*": ["./packages/markdown/src/*"],
-      "@diagram-craft/playwright/*": ["./packages/playwright/src/*"]
+      "@diagram-craft/config": [
+        "./packages/main/app.config.ts"
+      ],
+      "@diagram-craft/main/*": [
+        "./packages/main/src/*"
+      ],
+      "@diagram-craft/app-components/*": [
+        "./packages/app-components/src/*"
+      ],
+      "@diagram-craft/utils/*": [
+        "./packages/utils/src/*"
+      ],
+      "@diagram-craft/geometry/*": [
+        "./packages/geometry/src/*"
+      ],
+      "@diagram-craft/model/*": [
+        "./packages/model/src/*"
+      ],
+      "@diagram-craft/electron-client-api/*": [
+        "./packages/electron-client-api/src/*"
+      ],
+      "@diagram-craft/canvas/*": [
+        "./packages/canvas/src/*"
+      ],
+      "@diagram-craft/canvas-app/*": [
+        "./packages/canvas-app/src/*"
+      ],
+      "@diagram-craft/canvas-edges/*": [
+        "./packages/canvas-edges/src/*"
+      ],
+      "@diagram-craft/canvas-nodes/*": [
+        "./packages/canvas-nodes/src/*"
+      ],
+      "@diagram-craft/canvas-react/*": [
+        "./packages/canvas-react/src/*"
+      ],
+      "@diagram-craft/canvas-drawio/*": [
+        "./packages/canvas-drawio/src/*"
+      ],
+      "@diagram-craft/markdown/*": [
+        "./packages/markdown/src/*"
+      ],
+      "@diagram-craft/playwright/*": [
+        "./packages/playwright/src/*"
+      ]
     }
   },
-  "exclude": ["node_modules", "dist", "**/vite.config.ts", "**/playground"],
-  "references": [{ "path": "./tsconfig.node.json"}]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/vite.config.ts",
+    "**/playground"
+  ],
+  "references": [
+    {
+      "path": "./tsconfig.node.json"
+    }
+  ]
 }

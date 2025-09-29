@@ -6,7 +6,6 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { fitInAspectRatio } from '@diagram-craft/model/viewBox';
 
 declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Extensions {
     interface Tools {
       zoom: ZoomTool;
@@ -78,7 +77,7 @@ export class ZoomTool extends AbstractTool {
 
     if (!this.clickPoint) return;
 
-    const p1 = this.diagram.viewBox.toDiagramPoint(this.clickPoint!);
+    const p1 = this.diagram.viewBox.toDiagramPoint(this.clickPoint);
     const p2 = this.diagram.viewBox.toDiagramPoint(point);
 
     const newW = Math.abs(p2.x - p1.x);

@@ -60,7 +60,7 @@ type ToggleItemProps = {
 
 const ToggleGroup = (props: ToggleGroupProps) => {
   return (
-    // @ts-ignore
+    // @ts-expect-error
     <RadixToolbar.ToggleGroup type={props.type} value={props.value}>
       {props.children}
     </RadixToolbar.ToggleGroup>

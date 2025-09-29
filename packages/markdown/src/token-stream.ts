@@ -31,7 +31,7 @@ export class TokenStream {
    */
   peek(i = 0): MatchResult {
     const idx = this.ptr + i;
-    const text = idx > this.lines.length || idx < 0 ? null : this.lines[idx];
+    const text = idx > this.lines.length || idx < 0 ? null : this.lines[idx]!;
 
     return {
       text,

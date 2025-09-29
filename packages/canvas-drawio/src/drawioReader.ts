@@ -60,6 +60,7 @@ import { parseNum } from '@diagram-craft/utils/number';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { getParser, shapeParsers } from './drawioShapeParsers';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import { safeSplit } from '@diagram-craft/utils/safe';
 
 const drawioBuiltinShapes: Partial<Record<string, string>> = {
   actor:
@@ -220,7 +221,7 @@ const parseEdgeArrow = (t: 'start' | 'end', style: StyleManager, props: EdgeProp
     }
 
     props.arrow ??= {};
-    props.arrow![t] = {
+    props.arrow[t] = {
       type: arrows[type],
       size: parseNum(size, 6) * (type === 'circle' || type === 'circlePlus-outline' ? 20 : 11)
     };
@@ -257,7 +258,7 @@ const hasValue = (value: string | undefined | null): value is string => {
       const d = new DOMParser().parseFromString(value, 'text/html');
       const text = d.body.textContent;
       return !!text && text.trim() !== '';
-    } catch (e) {
+    } catch (_e) {
       // Ignore
     }
   }
@@ -279,8 +280,8 @@ const calculateLabelNodeActualSize = (
 
   const css: string[] = [];
 
-  css.push('font-size: ' + style.num('fontSize', 12) + 'px');
-  css.push('font-family: ' + (style.str('fontFamily') ?? 'Helvetica'));
+  css.push(`font-size: ${style.num('fontSize', 12)}px`);
+  css.push(`font-family: ${style.str('fontFamily') ?? 'Helvetica'}`);
   css.push('direction: ltr');
   css.push('line-height: 120%');
   css.push('color: black');
@@ -447,7 +448,7 @@ const getNodeProps = (style: StyleManager, isEdge: boolean) => {
       valign: valign,
 
       position:
-        POSITIONS[style.str('labelPosition', 'center')][
+        POSITIONS[style.str('labelPosition', 'center')]![
           style.str('verticalLabelPosition', 'middle')
         ]
     },
@@ -534,7 +535,10 @@ const getNodeProps = (style: StyleManager, isEdge: boolean) => {
 
   if (style.is('dashed')) {
     const pattern: string = style.str('dashPattern') ?? '4 4';
-    const [baseSize, baseGap] = pattern.split(' ').map(s => parseNum(s, 4));
+    const [baseSize, baseGap] = safeSplit(pattern, ' ', 2).map(s => parseNum(s, 4)) as [
+      number,
+      number
+    ];
     const strokeWidth = style.num('strokeWidth', 1);
 
     props.stroke.pattern = 'DASHED';
@@ -693,10 +697,11 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
   const parents = new Map<string, Layer | DiagramNode | DiagramEdge>();
   for (const $cell of xIterElements($$cells)) {
     const $parent = $cell.parentElement!;
-    const isWrappedByObject = $parent!.tagName === 'object' || $parent!.tagName === 'UserObject';
+    const isWrappedByObject = $parent.tagName === 'object' || $parent.tagName === 'UserObject';
 
     const id =
-      $cell.getAttribute('id')! ?? (isWrappedByObject ? $parent.getAttribute('id') : newid());
+      $cell.getAttribute('id') ?? (isWrappedByObject ? $parent.getAttribute('id') : newid());
+    assert.present(id);
 
     // Ignore the root
     if (id === rootId) continue;
@@ -739,7 +744,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
       assert.present(p);
 
-      const layer = p instanceof Layer ? p : p!.layer;
+      const layer = p instanceof Layer ? p : p.layer;
       assertRegularLayer(layer);
 
       const metadata: ElementMetadata = {};
@@ -787,7 +792,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         props.custom ??= {};
         props.custom.drawio = { shape: btoa(await decode(stencil)) };
         nodes.push(DiagramNode.create(id, 'drawio', bounds, layer, props, metadata, texts));
-      } else if (style.styleName == 'text') {
+      } else if (style.styleName === 'text') {
         // TODO: We should be able to move these two to the global style parsing/conversion
         if (style.str('strokeColor', 'none') === 'none') {
           props.stroke!.enabled = false;
@@ -908,7 +913,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         }
 
         if (style.is('rounded')) {
-          edgeProps.routing!.rounding = 10;
+          edgeProps.routing.rounding = 10;
         }
 
         const waypoints: Waypoint[] = [];
@@ -922,19 +927,19 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
             // TODO: Maybe we should apply BezierUtils.qubicFromThreePoints here
             //       ...to smoothen the curve further
 
-            const next = wps[i + 1];
-            const midpoint = Line.midpoint(Line.of(wps[i], next));
+            const next = wps[i + 1]!;
+            const midpoint = Line.midpoint(Line.of(wps[i]!, next));
             waypoints.push({
               point: midpoint,
               controlPoints: {
-                cp1: Vector.scale(Point.subtract(wps[i], midpoint), 1),
-                cp2: Vector.scale(Point.subtract(wps[i + 1], midpoint), 1)
+                cp1: Vector.scale(Point.subtract(wps[i]!, midpoint), 1),
+                cp2: Vector.scale(Point.subtract(wps[i + 1]!, midpoint), 1)
               }
             });
           } else {
             // Some times the waypoints are duplicated, so we need to filter them out
-            if (i > 0 && Point.isEqual(wps[i], wps[i - 1])) continue;
-            waypoints.push({ point: wps[i] });
+            if (i > 0 && Point.isEqual(wps[i]!, wps[i - 1]!)) continue;
+            waypoints.push({ point: wps[i]! });
           }
         }
 
@@ -965,12 +970,12 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           queue.add(() => calculateLabelNodeActualSize(style, textNode, value, uow));
           queue.add(() => edge.invalidate(uow), 1);
         }
-      } else if (parentChild.has(id) || style.styleName == 'group') {
+      } else if (parentChild.has(id) || style.styleName === 'group') {
         // Handle groups
 
         let node: DiagramNode;
         if (style.shape === 'table' || style.shape === 'tableRow') {
-          const parser = getParser(style.shape!)!;
+          const parser = getParser(style.shape)!;
           node = await parser(id, bounds, props, metadata, texts, style, layer, queue);
           nodes.push(node);
           // TODO: Support more than stackLayout
@@ -982,13 +987,13 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           nodes.push(node);
 
           if (
-            style.styleName != 'group' &&
+            style.styleName !== 'group' &&
             (style.str('fillColor') || style.str('strokeColor') || value || style.shape)
           ) {
             // TODO: This is all a bit duplication - we should refactor this
             let bgNode: DiagramNode;
             if (style.shape! in shapeParsers) {
-              bgNode = await shapeParsers[style.shape!](
+              bgNode = await shapeParsers[style.shape!]!(
                 newid(),
                 bounds,
                 props,
@@ -1012,13 +1017,13 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
                 await load(loader, registry, alreadyLoaded);
               }
 
-              const parser = getParser(style.shape!);
+              const parser = getParser(style.shape);
               if (parser) {
                 bgNode = await parser(newid(), bounds, props, metadata, texts, style, layer, queue);
               } else {
                 bgNode = DiagramNode.create(
                   newid(),
-                  style.shape!,
+                  style.shape,
                   bounds,
                   layer,
                   props,
@@ -1067,7 +1072,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         parents.set(id, node);
       } else if (style.shape! in shapeParsers) {
         nodes.push(
-          await shapeParsers[style.shape!](id, bounds, props, metadata, texts, style, layer, queue)
+          await shapeParsers[style.shape!]!(id, bounds, props, metadata, texts, style, layer, queue)
         );
       } else if (style.shape?.startsWith('mxgraph.') || !!getLoader(style.shape)) {
         const registry = diagram.document.nodeDefinitions;
@@ -1118,7 +1123,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           newBounds = { ...newBounds, r: Math.PI };
         }
 
-        const parser = getParser(style.shape!);
+        const parser = getParser(style.shape);
         if (parser) {
           nodes.push(await parser(id, newBounds, props, metadata, texts, style, layer, queue));
         } else {
@@ -1165,7 +1170,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           node.setBounds(newBounds, uow);
 
           if (node instanceof DiagramEdge) {
-            const edge = node as DiagramEdge;
+            const edge = node;
             edge.waypoints.forEach(wp => {
               edge.moveWaypoint(wp, Point.add(p.bounds, wp.point), uow);
             });
@@ -1173,12 +1178,12 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
           if (node.editProps.fill?.color === 'inherit') {
             node.updateProps(props => {
-              props.fill!.color = p.renderProps.fill!.color;
+              props.fill!.color = p.renderProps.fill.color;
             }, uow);
           }
           if (node.editProps.stroke?.color === 'inherit') {
             node.updateProps(props => {
-              props.stroke!.color = p.renderProps.stroke!.color;
+              props.stroke!.color = p.renderProps.stroke.color;
             }, uow);
           }
 
@@ -1229,7 +1234,7 @@ async function decode(data: string) {
 }
 
 export const drawioReader = async (contents: string, doc: DiagramDocument): Promise<void> => {
-  const start = new Date().getTime();
+  const start = Date.now();
 
   const parser = new DOMParser();
   const $doc = parser.parseFromString(contents, 'application/xml');
@@ -1284,5 +1289,5 @@ export const drawioReader = async (contents: string, doc: DiagramDocument): Prom
     }
   }
 
-  console.log(`Duration: ${new Date().getTime() - start}`);
+  console.log(`Duration: ${Date.now()- start}`);
 };

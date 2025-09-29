@@ -12,9 +12,6 @@ declare global {
 }
 
 class FileSaveAction extends AbstractAction<undefined, Application> {
-  constructor(application: Application) {
-    super(application);
-  }
 
   getCriteria(application: Application) {
     return [ActionCriteria.Simple(() => !!application.model.activeDocument.url)];
@@ -24,7 +21,7 @@ class FileSaveAction extends AbstractAction<undefined, Application> {
     const url = this.context.model.activeDocument.url;
     assert.present(url);
 
-    serializeDiagramDocument(this.context.model.activeDocument!).then(async e => {
+    serializeDiagramDocument(this.context.model.activeDocument).then(async e => {
       const serialized = JSON.stringify(e);
       const response = await fetch(`http://localhost:3000/api/fs/${url}`, {
         method: 'PUT',

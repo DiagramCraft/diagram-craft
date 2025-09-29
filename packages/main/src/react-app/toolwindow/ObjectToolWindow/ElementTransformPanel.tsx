@@ -13,8 +13,9 @@ import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { ToggleButton } from '@diagram-craft/app-components/ToggleButton';
 import { useDiagram } from '../../../application';
 import { isNode } from '@diagram-craft/model/diagramElement';
+import { assert } from '@diagram-craft/utils/assert';
 
-const origins: Record<string, Point> = {
+const origins = {
   tl: { x: 0, y: 0 },
   tc: { x: 0.5, y: 0 },
   tr: { x: 1, y: 0 },
@@ -24,14 +25,14 @@ const origins: Record<string, Point> = {
   bl: { x: 0, y: 1 },
   bc: { x: 0.5, y: 1 },
   br: { x: 1, y: 1 }
-};
+} as const;
 
 export const ElementTransformPanel = (props: Props) => {
   const diagram = useDiagram();
 
   const [bounds, setBounds] = useState<Box | undefined>(undefined);
   const [lockAspectRatio, setLockAspectRatio] = useState(false);
-  const [origin, setOrigin] = useState('tl');
+  const [origin, setOrigin] = useState<keyof typeof origins>('tl');
 
   const flipV = useNodeProperty(diagram, 'geometry.flipV');
   const flipH = useNodeProperty(diagram, 'geometry.flipH');
@@ -88,7 +89,7 @@ export const ElementTransformPanel = (props: Props) => {
     const callback = () => {
       const selection = diagram.selectionState;
       if (selection.getSelectionType() === 'single-node') {
-        setBounds(selection.nodes[0].bounds);
+        setBounds(selection.nodes[0]!.bounds);
       } else {
         setBounds(undefined);
       }
@@ -136,6 +137,7 @@ export const ElementTransformPanel = (props: Props) => {
 
     UnitOfWork.execute(diagram, uow => {
       const selectedElement = diagram.selectionState.elements[0];
+      assert.present(selectedElement);
       const transforms = TransformFactory.fromTo(
         selectedElement.bounds,
         WritableBox.asBox(newBounds)
@@ -163,7 +165,7 @@ export const ElementTransformPanel = (props: Props) => {
                 cx={0.1 + v.x * 0.8}
                 cy={0.1 + v.y * 0.8}
                 r={0.08}
-                onClick={() => setOrigin(k)}
+                onClick={() => setOrigin(k as keyof typeof origins)}
               />
             ))}
           </svg>
@@ -234,7 +236,7 @@ export const ElementTransformPanel = (props: Props) => {
                   const number = ev ?? 0;
                   updateBounds({
                     ...transformedBounds,
-                    r: Angle.toRad(isNaN(number) ? 0 : number)
+                    r: Angle.toRad(Number.isNaN(number) ? 0 : number)
                   });
                 }}
               />

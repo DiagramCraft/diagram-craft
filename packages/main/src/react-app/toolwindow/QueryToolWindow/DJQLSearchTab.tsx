@@ -74,17 +74,17 @@ export const DJQLSearchTab = () => {
       break;
     }
 
-    qs = m[3];
+    qs = m[3]!;
 
-    queries.push({ q: m[1], output: m[2] });
+    queries.push({ q: m[1]!, output: m[2]! });
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let res: any[] | undefined = undefined;
-  let error = undefined;
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
+  let res: any[] | undefined;
+  let error: string | undefined;
   try {
-    const q = queries[queryIdx].q;
-    const input = queryIdx === 0 ? getSource(djqlScope!, diagram) : queryInput;
+    const q = queries[queryIdx]!.q;
+    const input = queryIdx === 0 ? getSource(djqlScope, diagram) : queryInput;
 
     res = parseAndQuery(q, [input]);
 
@@ -95,7 +95,8 @@ export const DJQLSearchTab = () => {
       djqlQuery
     );
   } catch (e) {
-    error = e;
+    // biome-ignore lint/suspicious/noExplicitAny: false positive,@typescript-eslint/no-unnecessary-condition
+    error = (e as Error).message ?? (e as any).toString();
   }
 
   const exportToFile = () => {
@@ -118,7 +119,7 @@ export const DJQLSearchTab = () => {
           }}
           getQuery={() => ref.current!.value}
           getLabel={() => ref.current!.value}
-          getScope={() => djqlScope!}
+          getScope={() => djqlScope}
         />
       </ToolWindow.TabActions>
       <Accordion.Root type="multiple" defaultValue={['query', 'response']}>
@@ -189,68 +190,67 @@ export const DJQLSearchTab = () => {
 
         <ToolWindowPanel mode={'accordion'} id={'response'} title={'Query Response'}>
           <div className={'cmp-query-response'}>
-            {!!error && <div className={'cmp-error'}>{error.toString()}</div>}
-            {res &&
-              res.map((e, idx) => (
-                <div
-                  key={idx}
-                  className={`cmp-query-response__item ${expanded.includes(idx) ? 'cmp-query-response__item--expanded' : ''}`}
-                  style={{
-                    cursor: 'pointer'
-                  }}
-                  onClick={() => {
-                    if (expanded.includes(idx)) {
-                      setExpanded(expanded.filter(e => e !== idx));
-                    } else {
-                      setExpanded([...expanded, idx]);
-                    }
-                  }}
-                  onMouseEnter={() => {
-                    if (e.type && e.id) {
-                      const el = diagram.lookup(e.id);
-                      if (el) addHighlight(el, Highlights.NODE__HIGHLIGHT);
-                    }
-                  }}
-                  onMouseLeave={() => {
-                    if (e.type && e.id) {
-                      const el = diagram.lookup(e.id);
-                      if (el) removeHighlight(el, Highlights.NODE__HIGHLIGHT);
-                    }
-                  }}
-                >
-                  {expanded.includes(idx) ? <TbChevronDown /> : <TbChevronRight />}
-                  {expanded.includes(idx) && (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        right: '0.5rem',
-                        top: '0.125rem',
-                        display: 'flex',
-                        gap: '0.25rem'
+            {!!error && <div className={'cmp-error'}>{error}</div>}
+            {res?.map((e, idx) => (
+              <div
+                key={idx}
+                className={`cmp-query-response__item ${expanded.includes(idx) ? 'cmp-query-response__item--expanded' : ''}`}
+                style={{
+                  cursor: 'pointer'
+                }}
+                onClick={() => {
+                  if (expanded.includes(idx)) {
+                    setExpanded(expanded.filter(e => e !== idx));
+                  } else {
+                    setExpanded([...expanded, idx]);
+                  }
+                }}
+                onMouseEnter={() => {
+                  if (e.type && e.id) {
+                    const el = diagram.lookup(e.id);
+                    if (el) addHighlight(el, Highlights.NODE__HIGHLIGHT);
+                  }
+                }}
+                onMouseLeave={() => {
+                  if (e.type && e.id) {
+                    const el = diagram.lookup(e.id);
+                    if (el) removeHighlight(el, Highlights.NODE__HIGHLIGHT);
+                  }
+                }}
+              >
+                {expanded.includes(idx) ? <TbChevronDown /> : <TbChevronRight />}
+                {expanded.includes(idx) && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      right: '0.5rem',
+                      top: '0.125rem',
+                      display: 'flex',
+                      gap: '0.25rem'
+                    }}
+                  >
+                    <Button type={'icon-only'}>
+                      <TbArrowDownRight />
+                    </Button>
+                    <Button
+                      type={'icon-only'}
+                      onClick={ev => {
+                        navigator.clipboard.writeText(
+                          JSON.stringify(e, replacer, expanded.includes(idx) ? 2 : undefined)
+                        );
+                        ev.preventDefault();
+                        ev.stopPropagation();
                       }}
                     >
-                      <Button type={'icon-only'}>
-                        <TbArrowDownRight />
-                      </Button>
-                      <Button
-                        type={'icon-only'}
-                        onClick={ev => {
-                          navigator.clipboard.writeText(
-                            JSON.stringify(e, replacer, expanded.includes(idx) ? 2 : undefined)
-                          );
-                          ev.preventDefault();
-                          ev.stopPropagation();
-                        }}
-                      >
-                        <TbClipboardCopy />
-                      </Button>
-                    </div>
-                  )}
-                  <pre key={idx}>
-                    {JSON.stringify(e, replacer, expanded.includes(idx) ? 2 : undefined)}
-                  </pre>
-                </div>
-              ))}
+                      <TbClipboardCopy />
+                    </Button>
+                  </div>
+                )}
+                <pre key={idx}>
+                  {JSON.stringify(e, replacer, expanded.includes(idx) ? 2 : undefined)}
+                </pre>
+              </div>
+            ))}
           </div>
         </ToolWindowPanel>
       </Accordion.Root>

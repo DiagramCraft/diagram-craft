@@ -39,10 +39,6 @@ const PASTE_HANDLERS = {
 export class ClipboardPasteAction extends AbstractAction<BaseActionArgs> {
   layer: RegularLayer | undefined;
 
-  constructor(context: ActionContext) {
-    super(context);
-  }
-
   getCriteria(context: ActionContext) {
     return ActionCriteria.EventTriggered(context.model.activeDiagram, 'change', () => {
       const activeLayer = context.model.activeDiagram.activeLayer;

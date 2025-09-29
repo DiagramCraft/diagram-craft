@@ -25,7 +25,7 @@ import { isDifferent } from '@diagram-craft/utils/math';
 import { Direction } from '@diagram-craft/geometry/direction';
 import { EdgeDefinition } from './elementDefinitionRegistry';
 import { isEmptyString } from '@diagram-craft/utils/strings';
-import { assert } from '@diagram-craft/utils/assert';
+import { assert, is, mustExist } from '@diagram-craft/utils/assert';
 import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
 import { getAdjustments } from './diagramLayerRuleTypes';
@@ -58,8 +58,8 @@ export type Intersection = {
 const intersectionListIsSame = (a: Intersection[], b: Intersection[]) => {
   if (a.length !== b.length) return false;
   for (let i = 0; i < a.length; i++) {
-    if (!Point.isEqual(a[i].point, b[i].point)) return false;
-    if (a[i].type !== b[i].type) return false;
+    if (!Point.isEqual(a[i]!.point, b[i]!.point)) return false;
+    if (a[i]!.type !== b[i]!.type) return false;
   }
   return true;
 };
@@ -91,15 +91,7 @@ const makeLabelNodeMapper = (
       const node = e.get('node')!;
       return {
         ...node,
-        node: () => {
-          const relatedNode = edge.diagram.nodeLookup.get(node.nodeId)!;
-          if (!relatedNode) {
-            assert.fail(
-              `Edge ${edge.id} references node ${node.nodeId} which does not exist in the diagram, ${[...edge.diagram.nodeLookup.keys()]}`
-            );
-          }
-          return relatedNode!;
-        }
+        node: () => mustExist(edge.diagram.nodeLookup.get(node.nodeId))
       };
     },
 
@@ -198,9 +190,8 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     edge.#props.set(props as EdgeProps);
     if (midpoints.length > 0) edge.#waypoints.set(midpoints);
 
-    const m = metadata ?? {};
-    m.style ??= DefaultStyles.edge.default;
-    edge._metadata.set(m);
+    metadata.style ??= DefaultStyles.edge.default;
+    edge._metadata.set(metadata);
 
     if (start instanceof ConnectedEndpoint)
       start.node._addEdge(start instanceof AnchorEndpoint ? start.anchorId : undefined, edge);
@@ -328,7 +319,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
 
     if (this.#props.get().type === 'bezier' && oldType !== 'bezier') {
       for (let i = 0; i < this.waypoints.length; i++) {
-        const wp = this.waypoints[i];
+        const wp = this.waypoints[i]!;
         if (!wp.controlPoints) {
           this.replaceWaypoint(
             i,
@@ -360,8 +351,9 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   }
 
   inferControlPoints(i: number) {
-    const before = i === 0 ? this.start.position : this.waypoints[i - 1].point;
-    const after = i === this.waypoints.length - 1 ? this.end.position : this.waypoints[i + 1].point;
+    const before = i === 0 ? this.start.position : this.waypoints[i - 1]!.point;
+    const after =
+      i === this.waypoints.length - 1 ? this.end.position : this.waypoints[i + 1]!.point;
 
     return {
       cp1: Vector.scale(Vector.from(after, before), 0.2),
@@ -387,7 +379,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
 
   get name() {
     // First we use any label nodes
-    if (this.#labelNodes && this.#labelNodes.size > 0) {
+    if (is.arrayNotEmpty(this.#labelNodes.values)) {
       return this.#labelNodes.values[0].node().name;
     }
 
@@ -542,8 +534,9 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     uow.snapshot(this);
 
     // Find all children with corresponding label node
-    const existingLabelNodes =
-      this.#labelNodes?.values.filter(ln => this.children.find(c => c.id === ln.node().id)) ?? [];
+    const existingLabelNodes = this.#labelNodes.values.filter(ln =>
+      this.children.find(c => c.id === ln.node().id)
+    );
 
     const newLabelNodes: ResolvedLabelNode[] = [];
     for (const c of this.children) {
@@ -572,7 +565,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   private syncChildrenBasedOnLabelNodes(uow: UnitOfWork) {
     uow.snapshot(this);
 
-    this.#labelNodes?.values.forEach(ln => {
+    this.#labelNodes.values.forEach(ln => {
       const node = ln.node();
       const layer = node.layer;
       if (layer.type === 'regular') {
@@ -602,7 +595,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     });
 
     for (const c of this.children) {
-      if (!this.#labelNodes?.values.find(ln => ln.node() === c)) {
+      if (!this.#labelNodes.values.find(ln => ln.node() === c)) {
         this.removeChild(c, uow);
       }
     }
@@ -620,16 +613,16 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   addLabelNode(labelNode: ResolvedLabelNode, uow: UnitOfWork) {
     uow.snapshot(this);
 
-    this.setLabelNodes([...(this.labelNodes ?? []), labelNode], uow);
+    this.setLabelNodes([...this.labelNodes, labelNode], uow);
   }
 
   removeLabelNode(labelNode: ResolvedLabelNode, uow: UnitOfWork) {
-    assert.true(!!this.labelNodes?.find(n => labelNode.id === n.id));
+    assert.true(!!this.labelNodes.find(n => labelNode.id === n.id));
 
     uow.snapshot(this);
 
     this.setLabelNodes(
-      this.labelNodes?.filter(ln => ln.id !== labelNode.id),
+      this.labelNodes.filter(ln => ln.id !== labelNode.id),
       uow
     );
   }
@@ -638,22 +631,22 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     DEBUG: {
       // Check that labelNodes and children have the same length
       assert.true(
-        this.#labelNodes?.size === this.children.length,
-        `Label nodes don't match children - different length; ${this.children.length} != ${this.#labelNodes?.size}`
+        this.#labelNodes.size === this.children.length,
+        `Label nodes don't match children - different length; ${this.children.length} != ${this.#labelNodes.size}`
       );
 
       // Check that labelNodes and children have the same nodes
-      for (const ln of this.#labelNodes.values ?? []) {
+      for (const ln of this.#labelNodes.values) {
         assert.true(
           !!this.children.find(c => c.id === ln.node().id),
-          `Label node doesn't match children - different ids; ${this.children.map(c => c.id).join(', ')} != ${this.#labelNodes?.values.map(ln => ln.node().id).join(', ')}`
+          `Label node doesn't match children - different ids; ${this.children.map(c => c.id).join(', ')} != ${this.#labelNodes.values.map(ln => ln.node().id).join(', ')}`
         );
       }
 
       // Check that no children are elements of the layer
       for (const c of this.children) {
         assert.false(
-          c.layer.type === 'regular' && !!(c.layer as RegularLayer).elements.find(e => e === c),
+          c.layer.type === 'regular' && !!c.layer.elements.find(e => e === c),
           "Label node doesn't match children - element"
         );
       }
@@ -695,12 +688,12 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       const newWaypoints: Waypoint[] = [];
 
       for (let i = 0; i < segments.length - 1; i++) {
-        const segment = segments[i];
+        const segment = segments[i]!;
         newWaypoints.push({
           point: segment.end,
           controlPoints: {
             cp1: Point.subtract(segment.p2, segment.end),
-            cp2: Point.subtract(segments[i + 1].p1, segment.end)
+            cp2: Point.subtract(segments[i + 1]!.p1, segment.end)
           }
         });
       }
@@ -769,7 +762,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       start: this.start.serialize(),
       end: this.end.serialize(),
       waypoints: deepClone(this.waypoints),
-      labelNodes: this.labelNodes?.map(ln => ({
+      labelNodes: this.labelNodes.map(ln => ({
         id: ln.id,
         type: ln.type,
         offset: ln.offset,
@@ -801,7 +794,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     this._cache?.clear();
   }
 
-  duplicate(ctx?: DuplicationContext, id?: string | undefined) {
+  duplicate(ctx?: DuplicationContext, id?: string) {
     const uow = new UnitOfWork(this.diagram);
 
     const edge = DiagramEdge.create(
@@ -809,7 +802,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       this.start,
       this.end,
       deepClone(this.#props) as EdgeProps,
-      deepClone(this.metadata) as ElementMetadata,
+      deepClone(this.metadata),
       deepClone(this.waypoints) as Array<Waypoint>,
       this.layer
     );
@@ -818,8 +811,8 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
 
     // Clone any label nodes
     const newLabelNodes: ResolvedLabelNode[] = [];
-    for (let i = 0; i < (edge.labelNodes ?? []).length; i++) {
-      const l = (edge.labelNodes ?? [])[i];
+    for (let i = 0; i < edge.labelNodes.length; i++) {
+      const l = edge.labelNodes[i]!;
 
       const newNode = l.node().duplicate(ctx, id ? `${id}-${i}` : undefined);
       newLabelNodes.push({
@@ -892,7 +885,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       // endpoint on the boundary path
       const t = boundingPath.projectPoint(endpoint.position);
 
-      const tangent = paths[t.pathIdx].tangentAt(t.offset);
+      const tangent = paths[t.pathIdx]!.tangentAt(t.offset);
 
       // TODO: We need to check this is going in the right direction (i.e. outwards)
       //       probably need to pick up some code from ShapeNodeDefinition.getAnchors
@@ -924,8 +917,8 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
           point: transformedPoint,
           controlPoints: w.controlPoints
             ? {
-                cp1: relativeControlPoints[0],
-                cp2: relativeControlPoints[1]
+                cp1: relativeControlPoints[0]!,
+                cp2: relativeControlPoints[1]!
               }
             : undefined
         };
@@ -979,10 +972,8 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     }
 
     // All label nodes must be detached
-    if (this.labelNodes) {
-      for (const l of this.labelNodes) {
-        l.node().detach(uow);
-      }
+    for (const l of this.labelNodes) {
+      l.node().detach(uow);
     }
 
     if (isConnected(this.start)) {
@@ -1002,8 +993,8 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
 
     // Note, need to check if the element is still in the layer to avoid infinite recursion
     assert.true(this.layer.type === 'regular');
-    if ((this.layer as RegularLayer).elements.includes(this)) {
-      (this.layer as RegularLayer).removeElement(this, uow);
+    if (this.layer.elements.includes(this)) {
+      this.layer.removeElement(this, uow);
     }
   }
 
@@ -1031,7 +1022,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       intersections.push(
         ...intersectionsWithOther.map(e => ({
           point: e.point,
-          type: (currentEdgeHasBeenSeen ? 'below' : 'above') as Intersection['type']
+          type: currentEdgeHasBeenSeen ? ('below' as const) : ('above' as const)
         }))
       );
       if (propagate) {
@@ -1046,7 +1037,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   }
 
   private adjustLabelNodePosition(uow: UnitOfWork) {
-    if (!this.labelNodes || this.labelNodes.length === 0) return;
+    if (this.labelNodes.length === 0) return;
 
     const path = this.path();
 

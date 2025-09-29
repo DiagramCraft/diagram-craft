@@ -17,7 +17,7 @@ type Result = Map<string, Adjustment>;
 
 type Prop = { value: string; label: string; type?: string; items?: Prop[] };
 export const validProps = (_type: 'edge' | 'node'): Prop[] => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
   const defaultProps = (d: any, path = '') => {
     if (d === null || d === undefined) return [];
 
@@ -25,13 +25,13 @@ export const validProps = (_type: 'edge' | 'node'): Prop[] => {
     for (const key of Object.keys(d)) {
       if (typeof d[key] === 'object') {
         dest.push({
-          value: path === '' ? key : path + '.' + key,
+          value: path === '' ? key : `${path}.${key}`,
           label: key,
-          items: defaultProps(d[key], path === '' ? key : path + '.' + key)
+          items: defaultProps(d[key], path === '' ? key : `${path}.${key}`)
         });
       } else {
         dest.push({
-          value: path === '' ? key : path + '.' + key,
+          value: path === '' ? key : `${path}.${key}`,
           label: key,
           type: typeof d[key]
         });
@@ -92,7 +92,7 @@ export class RuleLayer extends Layer<RuleLayer> {
     for (const rule of this.#rules.toArray()) {
       const interim = this.runRule(rule);
       for (const k of interim.keys()) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // biome-ignore lint/suspicious/noExplicitAny: false positive
         res.set(k, deepMerge((res.get(k) ?? {}) as any, interim.get(k) as any));
       }
     }
@@ -111,7 +111,7 @@ export class RuleLayer extends Layer<RuleLayer> {
 
     const results = searchByElementSearchClauses(this.diagram, rule.clauses);
 
-    const result = results.reduce((p, c) => p.intersection(c), results[0]);
+    const result = results.reduce((p, c) => p.intersection(c), results[0]!);
     for (const k of result) {
       for (const action of rule.actions) {
         notImplemented.true(

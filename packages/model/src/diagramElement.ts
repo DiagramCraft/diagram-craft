@@ -26,7 +26,7 @@ import {
 import { makeElementMapper } from './diagramElementMapper';
 import { MappedCRDTProp } from './collaboration/datatypes/mapped/mappedCrdtProp';
 
-// eslint-disable-next-line
+// biome-ignore lint/suspicious/noExplicitAny: false positive
 type Snapshot = any;
 
 export type ElementPropsForEditing = EdgePropsForEditing | NodePropsForEditing;
@@ -141,7 +141,7 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
 
   abstract invalidate(uow: UnitOfWork): void;
   abstract detach(uow: UnitOfWork): void;
-  abstract duplicate(ctx?: DuplicationContext, id?: string | undefined): DiagramElement;
+  abstract duplicate(ctx?: DuplicationContext, id?: string): DiagramElement;
   abstract transform(
     transforms: ReadonlyArray<Transform>,
     uow: UnitOfWork,
@@ -238,7 +238,7 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
 
   updateMetadata(callback: (props: ElementMetadata) => void, uow: UnitOfWork) {
     uow.snapshot(this);
-    const metadata = this._metadata.getClone()! as ElementMetadata;
+    const metadata = this._metadata.getClone() as ElementMetadata;
     callback(metadata);
     this._metadata.set(metadata);
     uow.updateElement(this);
@@ -381,7 +381,7 @@ export const getDiagramElementPath = (element: DiagramElement): DiagramElement[]
 
 export const getTopMostNode = (element: DiagramElement): DiagramElement => {
   const path = getDiagramElementPath(element);
-  return path.length > 0 ? path[path.length - 1] : element;
+  return path.length > 0 ? path[path.length - 1]! : element;
 };
 
 export const isNode = (e: DiagramElement | undefined): e is DiagramNode => !!e && e.type === 'node';

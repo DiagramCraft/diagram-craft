@@ -9,9 +9,6 @@ export const redoActions = (context: ActionContext) => ({
 });
 
 export class RedoAction extends AbstractAction {
-  constructor(context: ActionContext) {
-    super(context);
-  }
 
   getCriteria(context: ActionContext) {
     return ActionCriteria.EventTriggered(

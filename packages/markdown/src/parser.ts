@@ -214,14 +214,13 @@ export class Parser {
    */
   escape(s: string): string {
     return s.replace(/\\[\\`*_{}[\]()+-.!#]/g, c => {
-      return '\x1b' + this.escapes[1][this.escapes[0].indexOf(c[1])];
+      return `\x1b${this.escapes[1]![this.escapes[0]!.indexOf(c[1]!)]}`;
     });
   }
 
   unescape(s: string): string {
-    // eslint-disable-next-line no-control-regex
     s = s.replace(/\x1b[a-o]/g, c => {
-      return this.escapes[0][this.escapes[1].indexOf(c[1])];
+      return this.escapes[0]![this.escapes[1]!.indexOf(c[1]!)]!;
     });
 
     return s;
@@ -236,7 +235,6 @@ export class Parser {
    */
   resolveInlines(s: string, state: ParserState): Array<ASTNode> | undefined {
     const dest: Array<ASTNode> = [];
-    // eslint-disable-next-line no-control-regex
     const regex = /\x1bq([0-9]+)q/g;
     let lastIndex = 0;
     let match: RegExpExecArray | null;
@@ -248,7 +246,7 @@ export class Parser {
           value: s.substring(lastIndex, match.index)
         });
       }
-      dest.push(state.inlines[parseInt(match[1])]);
+      dest.push(state.inlines[parseInt(match[1]!, 10)]!);
       lastIndex = regex.lastIndex;
     }
 
@@ -270,7 +268,7 @@ export class Parser {
    * @returns Placeholder string that will be resolved during unescaping
    */
   addInline(parserState: ParserState, obj: ASTNode): string {
-    return '\x1bq' + (parserState.inlines.push(obj) - 1) + 'q';
+    return `\x1bq${parserState.inlines.push(obj) - 1}q`;
   }
 
   /**
@@ -408,7 +406,7 @@ export class Parser {
       context: currentState.context
     };
 
-    const currentParser = this.inline[currentState.idx];
+    const currentParser = this.inline[currentState.idx]!;
     if (currentParser.excludeFromSubparse?.(currentState.context)) {
       return this.parseInlines(s, nextState);
     }

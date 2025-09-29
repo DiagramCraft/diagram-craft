@@ -18,7 +18,7 @@ import type { EligibleNodePredicate } from './snapManager';
  * - Filter nodes based on visibility, eligibility, and spatial relationships
  */
 export abstract class AbstractNodeSnapProvider {
-  protected constructor(
+  public constructor(
     protected readonly diagram: Diagram,
     protected readonly eligibleNodePredicate: EligibleNodePredicate
   ) {}

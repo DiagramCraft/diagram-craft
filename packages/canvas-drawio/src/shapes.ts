@@ -290,7 +290,7 @@ export const parseImage = async (
           true
         );
       };
-      img.src = props.fill!.image!.url!;
+      img.src = props.fill.image.url!;
     }
   });
 

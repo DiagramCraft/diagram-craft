@@ -52,17 +52,16 @@ export const bindDocumentDragAndDrop = () => {
     const drag = DRAG_DROP_MANAGER.current();
     if (!drag || !drag.isGlobal) return;
 
-    drag.onKeyDown(event!);
+    drag.onKeyDown(event);
   });
   document.addEventListener('keyup', event => {
     const drag = DRAG_DROP_MANAGER.current();
     if (!drag || !drag.isGlobal) return;
 
-    drag.onKeyUp(event!);
+    drag.onKeyUp(event);
   });
 };
 
-// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace DragEvents {
   export class DragStart {
     constructor(

@@ -1,16 +1,16 @@
 import { AbstractTool } from '@diagram-craft/canvas/tool';
 import { DragDopManager, Modifiers } from '@diagram-craft/canvas/dragDropManager';
 import { Point } from '@diagram-craft/geometry/point';
-import { toUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
+import { PathListBuilder, toUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { newid } from '@diagram-craft/utils/id';
 import { Context } from '@diagram-craft/canvas/context';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import { assert } from '@diagram-craft/utils/assert';
 
 declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Extensions {
     interface Tools {
       freehand: FreehandTool;
@@ -131,11 +131,11 @@ export class FreehandTool extends AbstractTool {
   }
 
   private douglasPeucker(points: Point[], tolerance: number): Point[] {
-    if (points.length === 2) return [points[0], points[1]];
+    if (points.length === 2) return [points[0]!, points[1]!];
     let dmax = 0;
     let index = 0;
     for (let i = 1; i < points.length - 1; i++) {
-      const d = perpendicularDistance(points[i], points[0], points[points.length - 1]);
+      const d = perpendicularDistance(points[i]!, points[0]!, points[points.length - 1]!);
       if (d > dmax) {
         index = i;
         dmax = d;
@@ -146,7 +146,7 @@ export class FreehandTool extends AbstractTool {
       const results2 = this.douglasPeucker(points.slice(index), tolerance);
       return results1.slice(0, results1.length - 1).concat(results2);
     } else {
-      return [points[0], points[points.length - 1]];
+      return [points[0]!, points[points.length - 1]!];
     }
   }
 
@@ -157,24 +157,28 @@ export class FreehandTool extends AbstractTool {
     this.path!.setAttribute('d', pathData.join(' '));
   }
 
-  private smoothenPoints() {
-    const pts = [];
+  private smoothenPoints(): Point[] {
+    assert.arrayNotEmpty(this.points);
+
+    const pts: Point[] = [];
     pts.push(this.points[0]);
     for (let i = 1; i < this.points.length - 1; i++) {
       pts.push({
-        x: pts.at(-1)!.x + (this.points[i].x - pts.at(-1)!.x) * 0.5,
-        y: pts.at(-1)!.y + (this.points[i].y - pts.at(-1)!.y) * 0.5
+        x: pts.at(-1)!.x + (this.points[i]!.x - pts.at(-1)!.x) * 0.5,
+        y: pts.at(-1)!.y + (this.points[i]!.y - pts.at(-1)!.y) * 0.5
       });
     }
-    pts.push(this.points[this.points.length - 1]);
+    pts.push(this.points[this.points.length - 1]!);
     return pts;
   }
 
   private static makePath(pts: Point[]) {
+    assert.arrayNotEmpty(pts);
+
     const pathData = ['M', pts[0].x, pts[0].y];
     for (let i = 1; i < pts.length; i++) {
-      const point = pts[i];
-      const next = pts[i + 1] ?? point;
+      const point = pts[i]!;
+      const next = pts.at(i + 1) ?? point;
       if (i === 1) {
         pathData.push('Q', point.x, point.y, (point.x + next.x) / 2, (point.y + next.y) / 2);
       } else {

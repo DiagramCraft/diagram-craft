@@ -35,18 +35,18 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
 
     for (const [path, value] of map.entries()) {
       const parts = path.split('.');
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // biome-ignore lint/suspicious/noExplicitAny: false positive
       let current: any = result;
 
       for (let i = 0; i < parts.length - 1; i++) {
-        const part = parts[i];
+        const part = parts[i]!;
 
         if (!(part in current)) {
           // If the next part is a number, create an array, otherwise create an object
           const nextPart = i + 1 < parts.length ? parts[i + 1] : '';
-          const nextIsArrayIndex = !isNaN(Number(nextPart));
+          const nextIsArrayIndex = !Number.isNaN(Number(nextPart));
 
-          const isArrayIndex = !isNaN(Number(part));
+          const isArrayIndex = !Number.isNaN(Number(part));
           if (isArrayIndex && !Array.isArray(current)) {
             assert.true(Object.keys(current).length === 0);
             current = [];
@@ -58,12 +58,12 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
         current = current[part] as Record<string, unknown>;
       }
 
-      const lastPart = parts[parts.length - 1];
+      const lastPart = parts[parts.length - 1]!;
       if (value !== undefined) {
         current[lastPart] = value;
       } else if (!(lastPart in current)) {
         // Check if this is part of an array
-        const isArrayIndex = !isNaN(Number(lastPart));
+        const isArrayIndex = !Number.isNaN(Number(lastPart));
         if (isArrayIndex && !Array.isArray(current)) {
           assert.true(Object.keys(current).length === 0);
           current = [];
@@ -92,13 +92,20 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
 
       // Delete keys that are missing from the new object
       for (const key of existingTopLevelKeys.difference(newKeys)) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // biome-ignore lint/suspicious/noExplicitAny: false positive
         this.#proxy![key as keyof T] = undefined as any;
       }
 
       // Then set the new values
-      for (const key in obj) {
-        this.#proxy![key] = obj[key];
+      if (Array.isArray(obj)) {
+        for (let i = 0; i < obj.length; i++) {
+          // @ts-expect-error
+          this.#proxy![i] = obj[i];
+        }
+      } else {
+        for (const key in obj) {
+          this.#proxy![key] = obj[key];
+        }
       }
     });
   }
@@ -110,19 +117,18 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
   }
 
   private createProxy(target = {}, path = ''): T {
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const that = this;
     return new Proxy<T>(target as unknown as T, {
       ownKeys(_target: T): ArrayLike<string | symbol> {
         const keys = unique(
           Array.from(that.#current.keys())
-            .filter(k => path === '' || k.startsWith(path + '.'))
+            .filter(k => path === '' || k.startsWith(`${path}.`))
             .map(k => (path === '' ? k : k.substring(path.length + 1)))
-            .map(k => k.split('.')[0])
+            .map(k => k.split('.')[0]!)
         );
 
         // If this is an array-like object (all keys are numeric), include 'length'
-        const isArrayLike = keys.length > 0 && keys.every(k => !isNaN(Number(k)));
+        const isArrayLike = keys.length > 0 && keys.every(k => !Number.isNaN(Number(k)));
         if (isArrayLike && !keys.includes('length')) {
           keys.push('length');
         }
@@ -153,10 +159,10 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
         // Handle 'length' property for array-like objects
         if (prop === 'length') {
           const keys = Array.from(this.#current.keys())
-            .filter(k => path === '' || k.startsWith(path + '.'))
+            .filter(k => path === '' || k.startsWith(`${path}.`))
             .map(k => (path === '' ? k : k.substring(path.length + 1)))
             .map(k => k.split('.')[0])
-            .filter(k => !isNaN(Number(k)));
+            .filter(k => !Number.isNaN(Number(k)));
 
           if (keys.length > 0) {
             return Math.max(...keys.map(k => Number(k))) + 1;
@@ -172,11 +178,11 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
         if (value === undefined) {
           if (map.has(fullPath)) return this.createProxy({}, fullPath);
 
-          const keys = Array.from(this.#current.keys()).filter(k => k.startsWith(fullPath + '.'));
+          const keys = Array.from(this.#current.keys()).filter(k => k.startsWith(`${fullPath}.`));
           if (keys.length === 0) {
             return undefined;
           } else if (
-            keys.every(k => !isNaN(Number(k.substring(fullPath.length + 1).split('.')[0])))
+            keys.every(k => !Number.isNaN(Number(k.substring(fullPath.length + 1).split('.')[0])))
           ) {
             const numericKeys = keys.map(k =>
               Number(k.substring(fullPath.length + 1).split('.')[0])
@@ -207,29 +213,29 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
         if (value === undefined) {
           map.delete(fullPath);
           for (const k of this.#current.keys()) {
-            if (k.startsWith(fullPath + '.')) {
+            if (k.startsWith(`${fullPath}.`)) {
               map.delete(k);
             }
           }
         } else {
           if (isPrimitive(value)) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            // biome-ignore lint/suspicious/noExplicitAny: false positive
             map.set(fullPath, value as any);
           } else if (value instanceof Object && Object.keys(value).length === 0) {
             map.set(fullPath, undefined);
           } else {
             // First, remove all existing nested properties under this path
             for (const k of Array.from(this.#current.keys())) {
-              if (k.startsWith(fullPath + '.')) {
+              if (k.startsWith(`${fullPath}.`)) {
                 map.delete(k);
               }
             }
 
             // Then set the new nested values
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            // biome-ignore lint/suspicious/noExplicitAny: false positive
             const setNestedValue = (nestedValue: any, currentPath: string) => {
               if (isPrimitive(nestedValue)) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                // biome-ignore lint/suspicious/noExplicitAny: false positive
                 map.set(currentPath, nestedValue as any);
               } else if (nestedValue !== null && typeof nestedValue === 'object') {
                 for (const key in nestedValue) {

@@ -199,7 +199,7 @@ describe('AbstractNodeSnapProvider', () => {
 
       // Only one node should pass the predicate
       expect(result.n).toHaveLength(1);
-      expect(result.n[0].id).toBe('included-node');
+      expect(result.n[0]!.id).toBe('included-node');
     });
 
     test('should handle multiple nodes in different directions', () => {

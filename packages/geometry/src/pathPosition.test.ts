@@ -134,7 +134,7 @@ describe('pathPosition', () => {
     test('toTimeOffsetOnSegment should work with curved paths', () => {
       const path = createCurvePath();
       // Get the length of the curve segment
-      const curveLength = path.segments[0].length();
+      const curveLength = path.segments[0]!.length();
       const lengthOffset = { segment: 0, segmentD: curveLength / 2 };
 
       const result = LengthOffsetOnSegment.toTimeOffsetOnSegment(lengthOffset, path);

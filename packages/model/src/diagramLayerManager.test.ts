@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it } from 'vitest';
 import { RegularLayer } from './diagramLayerRegular';
 import { TestLayerBuilder } from './test-support/builder';

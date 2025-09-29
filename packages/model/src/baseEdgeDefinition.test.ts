@@ -30,7 +30,7 @@ describe('baseEdgeDefinition', () => {
         dia1 = TestModel.newDiagram(root1);
         doc2 = root2 ? TestModel.newDocument(root2) : undefined;
         layer1 = dia1.newLayer('layer');
-        layer1_2 = doc2 ? (doc2.diagrams[0].layers.all[0] as RegularLayer) : undefined;
+        layer1_2 = doc2 ? (doc2.diagrams[0]!.layers.all[0] as RegularLayer) : undefined;
 
         const uow = new UnitOfWork(dia1);
 

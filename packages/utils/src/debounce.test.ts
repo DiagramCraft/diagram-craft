@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it, vi } from 'vitest';
 import { debounce, debounceMicrotask } from './debounce';
 
@@ -107,7 +106,7 @@ describe('debounceMicrotask', () => {
 
   it('should retain the correct "this" context when executed', async () => {
     const context = { test: 'context' };
-    const mockFn = vi.fn(function(this: any) {
+    const mockFn = vi.fn(function (this: any) {
       expect(this.test).toBe('context');
     });
 

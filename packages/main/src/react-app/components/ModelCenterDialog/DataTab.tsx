@@ -26,7 +26,7 @@ const filterItems = (items: DataItemWithSchema[], schemaId: string, searchQuery:
     filtered = filtered.filter(item => {
       return item._schema.fields.some(field => {
         const value = item[field.id];
-        return value && value.toLowerCase().includes(searchQuery.toLowerCase());
+        return value?.toLowerCase().includes(searchQuery.toLowerCase());
       });
     });
   }
@@ -58,11 +58,6 @@ export const DataTab = () => {
 
   // Collect all data items from all schemas
   useEffect(() => {
-    if (!db.schemas) {
-      setAllDataItems([]);
-      return;
-    }
-
     const allItems: DataItemWithSchema[] = [];
 
     for (const schema of db.schemas) {
@@ -78,8 +73,6 @@ export const DataTab = () => {
 
   useEffect(() => {
     const handleDataChange = () => {
-      if (!db.schemas) return;
-
       const allItems: DataItemWithSchema[] = [];
       for (const schema of db.schemas) {
         const schemaData = db.getData(schema);
@@ -143,7 +136,7 @@ export const DataTab = () => {
   ): string => {
     const value = item[field.id];
     if (!value) return '-';
-    if (value.length > 50) return value.substring(0, 50) + '...';
+    if (value.length > 50) return `${value.substring(0, 50)}...`;
     return value;
   };
 

@@ -103,7 +103,7 @@ export class SwimlaneNodeDefinition extends ShapeNodeDefinition {
       let targetHeight = row.row.bounds.h;
 
       // TODO: Why is this needed
-      if (isNaN(targetHeight) || !isFinite(targetHeight)) targetHeight = 100;
+      if (Number.isNaN(targetHeight) || !Number.isFinite(targetHeight)) targetHeight = 100;
 
       row.newLocalBounds = {
         x: 0,
@@ -134,8 +134,8 @@ export class SwimlaneNodeDefinition extends ShapeNodeDefinition {
       uow.registerOnCommitCallback('onChildChanged', node.parent, () => {
         assert.node(node.parent!);
 
-        const parentDef = node.parent!.getDefinition();
-        parentDef.onChildChanged(node.parent!, uow);
+        const parentDef = node.parent.getDefinition();
+        parentDef.onChildChanged(node.parent, uow);
       });
     }
   }

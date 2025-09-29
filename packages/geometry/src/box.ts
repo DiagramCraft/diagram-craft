@@ -5,6 +5,7 @@ import { Line } from './line';
 import { Extent } from './extent';
 import { DeepWriteable } from '@diagram-craft/utils/types';
 import { round } from '@diagram-craft/utils/math';
+import { assert } from '@diagram-craft/utils/assert';
 
 /**
  * Represents a rectangle with position, dimensions, and rotation
@@ -124,6 +125,7 @@ export const Box = {
     if (boxes.length === 0) {
       return { x: 0, y: 0, w: 0, h: 0, r: 0 };
     }
+    assert.arrayNotEmpty(boxes);
 
     let minX = Number.MAX_SAFE_INTEGER;
     let minY = Number.MAX_SAFE_INTEGER;
@@ -133,9 +135,9 @@ export const Box = {
     // If all boxes have the same rotation
     if (!forceAxisAligned && boxes.every(b => b.r === boxes[0].r)) {
       // Pick one corner of one box and rotate each corner of each box around it
-      const rotationPoint = Box.corners(boxes[0], true)[0];
+      const rotationPoint = Box.oppositeCorners(boxes[0])[0];
       for (const box of boxes) {
-        for (const c of Box.corners(box, true)) {
+        for (const c of Box.oppositeCorners(box)) {
           const rotated = Point.rotate(Point.subtract(c, rotationPoint), -box.r);
 
           minX = Math.min(minX, rotated.x);
@@ -185,22 +187,26 @@ export const Box = {
   /**
    * Calculates the corners of a box
    * @param box The box
-   * @param oppositeOnly If true, returns only the top-left and bottom-right corners,
-   *                     otherwise returns all four corners
    * @returns Array of corner points, clockwise from top-left
    */
-  corners: (box: Box, oppositeOnly = false) => {
-    const corners = oppositeOnly
-      ? [
-          { x: box.x, y: box.y },
-          { x: box.x + box.w, y: box.y + box.h }
-        ]
-      : [
-          { x: box.x, y: box.y },
-          { x: box.x + box.w, y: box.y },
-          { x: box.x + box.w, y: box.y + box.h },
-          { x: box.x, y: box.y + box.h }
-        ];
+  corners: (box: Box) => {
+    const corners = [
+      { x: box.x, y: box.y },
+      { x: box.x + box.w, y: box.y },
+      { x: box.x + box.w, y: box.y + box.h },
+      { x: box.x, y: box.y + box.h }
+    ] as const;
+
+    if (round(box.r) === 0) return corners;
+
+    return corners.map(c => Point.rotateAround(c, box.r, Box.center(box)));
+  },
+
+  oppositeCorners: (box: Box) => {
+    const corners = [
+      { x: box.x, y: box.y },
+      { x: box.x + box.w, y: box.y + box.h }
+    ] as const;
 
     if (round(box.r) === 0) return corners;
 

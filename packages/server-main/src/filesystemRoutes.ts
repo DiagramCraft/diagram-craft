@@ -23,7 +23,7 @@ export function createFilesystemRoutes(rootPath: string) {
   const ROOT_RESOLVED = path.resolve(rootPath);
 
   const badRequest = (message: string) => {
-    throw createError({
+    return createError({
       status: 400,
       statusMessage: 'Bad Request',
       data: { message }
@@ -102,7 +102,7 @@ export function createFilesystemRoutes(rootPath: string) {
     }
 
     // Check content length to prevent large uploads
-    const contentLength = parseInt(event.node.req.headers['content-length'] ?? '0');
+    const contentLength = parseInt(event.node.req.headers['content-length'] ?? '0', 10);
     if (contentLength > MAX_REQUEST_SIZE) {
       throw createError({
         status: 413,
@@ -146,12 +146,12 @@ export function createFilesystemRoutes(rootPath: string) {
   );
   router.get(
     API_FS_WILDCARD,
-    defineEventHandler(event => get(event.context.params!._, event))
+    defineEventHandler(event => get(event.context.params!._!, event))
   );
 
   router.put(
     API_FS_WILDCARD,
-    defineEventHandler(event => put(event.context.params!._, event))
+    defineEventHandler(event => put(event.context.params!._!, event))
   );
 
   return router;

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it, test } from 'vitest';
 import { _test, applyBooleanOperation } from './pathClip';
 import { PathListBuilder } from './pathListBuilder';

@@ -43,7 +43,7 @@ const adjustRowHeight = (row: DiagramNode, h: number, uow: UnitOfWork) => {
 
 const adjustColumnWidth = (colIdx: number, table: DiagramNode, w: number, uow: UnitOfWork) => {
   for (const r of table.children) {
-    const cell = (r as DiagramNode).children![colIdx];
+    const cell = (r as DiagramNode).children[colIdx]!;
     const t = TransformFactory.fromTo(cell.bounds, { ...cell.bounds, w });
     cell.transform(t, uow);
   }
@@ -58,7 +58,7 @@ const getCellRow = (diagram: Diagram): number | undefined => {
 
   const rows = table.children as DiagramNode[];
   for (let i = 0; i < rows.length; i++) {
-    if (rows[i].children.includes(elements[0])) return i;
+    if (rows[i]!.children.includes(elements[0])) return i;
   }
   return undefined;
 };
@@ -72,7 +72,7 @@ const getCellColumn = (diagram: Diagram): number | undefined => {
 
   const rows = table.children as DiagramNode[];
   for (let i = 0; i < rows.length; i++) {
-    const idx = rows[i].children.indexOf(elements[0]);
+    const idx = rows[i]!.children.indexOf(elements[0]);
     if (idx >= 0) return idx;
   }
   return undefined;
@@ -157,7 +157,7 @@ export class TableRemoveAction extends AbstractAction {
       if (rowIdx === undefined) return;
 
       const uow = new UnitOfWork(this.context.model.activeDiagram, true);
-      const row = table.children[rowIdx];
+      const row = table.children[rowIdx]!;
       uow.snapshot(row);
       table.removeChild(row, uow);
       assertRegularLayer(row.layer);
@@ -168,7 +168,7 @@ export class TableRemoveAction extends AbstractAction {
 
       const uow = new UnitOfWork(this.context.model.activeDiagram, true);
       for (const r of table.children) {
-        const cell = (r as DiagramNode).children[colIdx];
+        const cell = (r as DiagramNode).children[colIdx]!;
         uow.snapshot(cell);
         (r as DiagramNode).removeChild(cell, uow);
         assertRegularLayer(cell.layer);

@@ -62,12 +62,12 @@ const getCellsInOrder = (rows: DiagramNode[]): CellsInOrder => {
   dest.sort((a, b) => a.row.bounds.y - b.row.bounds.y);
 
   for (let i = 0; i < dest.length; i++) {
-    dest[i].idx = i;
-    for (let j = 0; j < dest[i].columns.length; j++) {
-      dest[i].columns[j].idx = j;
+    dest[i]!.idx = i;
+    for (let j = 0; j < dest[i]!.columns.length; j++) {
+      dest[i]!.columns[j]!.idx = j;
     }
 
-    dest[i].columns.sort((a, b) => a.cell.bounds.x - b.cell.bounds.x);
+    dest[i]!.columns.sort((a, b) => a.cell.bounds.x - b.cell.bounds.x);
   }
 
   return dest;
@@ -130,7 +130,7 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
       let targetHeight = Math.max(...row.columns.map(c => c.cell.bounds.h));
 
       // TODO: Why is this needed
-      if (isNaN(targetHeight) || !isFinite(targetHeight)) targetHeight = 100;
+      if (Number.isNaN(targetHeight) || !Number.isFinite(targetHeight)) targetHeight = 100;
 
       // Layout row
       y += gap;
@@ -138,7 +138,7 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
       // Layout columns in row
       let x = 0;
       for (const cell of row.columns) {
-        const targetWidth = columnWidths[cell.idx!];
+        const targetWidth = columnWidths[cell.idx!]!;
 
         x += gap;
         cell.newLocalBounds = {

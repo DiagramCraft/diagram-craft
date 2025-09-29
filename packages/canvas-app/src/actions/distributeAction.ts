@@ -48,7 +48,7 @@ export class DistributeAction extends AbstractSelectionAction {
       (a, b) => minBounds(a.bounds)[orientation] - minBounds(b.bounds)[orientation]
     );
 
-    const minimal = elementsInOrder[0];
+    const minimal = elementsInOrder[0]!;
     const min = minBounds(minimal.bounds)[orientation];
     const max = maxBounds(elementsInOrder.at(-1)!.bounds)[orientation];
 

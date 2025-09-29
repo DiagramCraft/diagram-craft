@@ -123,7 +123,7 @@ describe('RESTDataProvider', () => {
       const provider = createProviderWithSchemaAndData();
       expect(provider.schemas).toEqual([testSchema]);
       expect(provider.getById([testData._uid])).toHaveLength(1);
-      expect(provider.getById([testData._uid])[0]._uid).toBe(testData._uid);
+      expect(provider.getById([testData._uid])[0]!._uid).toBe(testData._uid);
       expect(provider.baseUrl).toBe(baseUrl);
     });
 
@@ -199,7 +199,7 @@ describe('RESTDataProvider', () => {
       const provider = createProviderWithSchemaAndData();
       const result = provider.queryData(testSchema, 'Value 1');
       expect(result).toHaveLength(1);
-      expect(result[0]._uid).toBe(testData._uid);
+      expect(result[0]!._uid).toBe(testData._uid);
     });
   });
 
@@ -706,7 +706,7 @@ describe('RESTDataProvider', () => {
         })
       );
 
-      expect(provider.schemas[0].name).toBe('Updated Schema Name');
+      expect(provider.schemas[0]!.name).toBe('Updated Schema Name');
       expect(updateSchemaSpy).toHaveBeenCalledWith(updatedSchema);
     });
 
@@ -731,7 +731,7 @@ describe('RESTDataProvider', () => {
       );
 
       // Schema should remain unchanged on failure
-      expect(provider.schemas[0].name).toBe(originalName);
+      expect(provider.schemas[0]!.name).toBe(originalName);
     });
 
     it('should do nothing when schema does not exist', async () => {

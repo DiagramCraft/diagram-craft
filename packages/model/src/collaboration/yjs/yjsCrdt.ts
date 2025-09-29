@@ -12,8 +12,8 @@ import * as Y from 'yjs';
 import { EventEmitter, EventKey, EventReceiver } from '@diagram-craft/utils/event';
 import { mapIterator } from '@diagram-craft/utils/iterator';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const wrap = (e: any) => {
+// biome-ignore lint/suspicious/noExplicitAny: false positive
+const wrap = (e: any): any => {
   if (e instanceof Y.Array) {
     return new YJSList<CRDTCompatibleObject>(e as Y.Array<CRDTCompatibleObject>);
   } else if (e instanceof Y.Map) {
@@ -25,8 +25,8 @@ const wrap = (e: any) => {
   }
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const unwrap = (e: any) => {
+// biome-ignore lint/suspicious/noExplicitAny: false positive
+const unwrap = (e: any): any => {
   if (e instanceof YJSMap) {
     return e.delegate;
   } else if (e instanceof YJSList) {
@@ -178,7 +178,7 @@ export class YJSMap<T extends { [key: string]: CRDTCompatibleObject }> implement
   }
 
   clone() {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // biome-ignore lint/suspicious/noExplicitAny: false positive
     const dest = new YJSMap<any>();
     for (const [key, value] of this.entries()) {
       if (value instanceof YJSMap) {
@@ -196,7 +196,7 @@ export class YJSMap<T extends { [key: string]: CRDTCompatibleObject }> implement
     if (!this.delegate.doc) {
       callback();
     } else {
-      this.delegate.doc!.transact(callback);
+      this.delegate.doc.transact(callback);
     }
   }
 
@@ -210,7 +210,8 @@ export class YJSMap<T extends { [key: string]: CRDTCompatibleObject }> implement
     this.delegate.delete(key);
   }
 
-  get<K extends keyof T & string>(key: K, factory?: () => T[K]) {
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
+  get<K extends keyof T & string>(key: K, factory?: () => T[K]): any {
     if (this.initial) {
       if (!this.initial.has(key) && factory !== undefined) {
         this.set(key, factory());
@@ -238,7 +239,7 @@ export class YJSMap<T extends { [key: string]: CRDTCompatibleObject }> implement
   }
 
   entries(): Iterable<[string, T[string]]> {
-    if (this.initial) return this.initial!.entries();
+    if (this.initial) return this.initial.entries();
 
     const delegate = this.delegate;
     return {
@@ -315,7 +316,7 @@ export class YJSList<T extends CRDTCompatibleObject> implements CRDTList<T> {
           if (!isLocal) {
             this.emitter.emit('remoteInsert', {
               index: idx,
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              // biome-ignore lint/suspicious/noExplicitAny: false positive
               value: (delta.insert as any[]).map(wrap)
             });
           }
@@ -328,7 +329,7 @@ export class YJSList<T extends CRDTCompatibleObject> implements CRDTList<T> {
   }
 
   clone() {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // biome-ignore lint/suspicious/noExplicitAny: false positive
     const dest = new YJSList<any>();
     for (let i = 0; i < this.length; i++) {
       const value = this.get(i);
@@ -347,7 +348,7 @@ export class YJSList<T extends CRDTCompatibleObject> implements CRDTList<T> {
     if (!this.delegate.doc) {
       callback();
     } else {
-      this.delegate.doc!.transact(callback);
+      this.delegate.doc.transact(callback);
     }
   }
 
@@ -366,7 +367,7 @@ export class YJSList<T extends CRDTCompatibleObject> implements CRDTList<T> {
 
   get(index: number): T {
     if (this.initial) {
-      return this.initial[index];
+      return this.initial[index]!;
     }
     return wrap(this.delegate.get(index));
   }

@@ -1,0 +1,90 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.2.4/schema.json",
+  "linter": {
+    "enabled": true,
+    "domains": {
+      "project": "recommended",
+      "react": "recommended",
+      "test": "recommended"
+    },
+    "rules": {
+      "recommended": true,
+      "a11y": {
+        "useKeyWithClickEvents": "off",
+        "noStaticElementInteractions": "off",
+        "useKeyWithMouseEvents": "off",
+        "useValidAnchor": "off",
+        "noSvgWithoutTitle": "off",
+        "noLabelWithoutControl": "off",
+        "noAutofocus": "off",
+        "useAltText": "off"
+      },
+      "style": {
+        "noDescendingSpecificity": "off",
+        "noNonNullAssertion": "off",
+        "useImportType": "off",
+        "useShorthandFunctionType": "off"
+      },
+      "suspicious": {
+        "useIterableCallbackReturn": "off",
+        "noAssignInExpressions": "off",
+        "noArrayIndexKey": "off",
+        "noConfusingVoidType": "off",
+        "noImportantInKeyframe": "off",
+        "noConfusingLabels": "off",
+        "noControlCharactersInRegex": "off"
+      },
+      "complexity": {
+        "noImportantStyles": "off",
+        "useLiteralKeys": "off",
+        "noStaticOnlyClass": "off",
+        "noAdjacentSpacesInRegex": "off"
+      },
+      "correctness": {
+        "useExhaustiveDependencies": "warn",
+        "noConstantCondition": "off",
+        "useUniqueElementIds": "off",
+        "noUnusedLabels": "off",
+        "noNestedComponentDefinitions": "error",
+        "noPrivateImports": "error"
+      },
+      "security": {
+        "noDangerouslySetInnerHtml": "off"
+      },
+      "nursery": {
+        "noUnnecessaryConditions": "off",
+        "noImportCycles": {
+          "level": "error",
+          "options": {
+            "ignoreTypes": true
+          }
+        }
+      },
+      "performance": {
+        "noBarrelFile": "error"
+      }
+    },
+    "includes": [
+      "**",
+      "!**/dist",
+      "!**/eslintrc.cjs",
+      "!**/*.js",
+      "!**/.storybook",
+      "!**/.*",
+      "!**/sample/**",
+      "!**/coverage/**",
+      "!**/storybook-static/**",
+      "!**/playground",
+      "!**/*.test.ts",
+      "!**/*.stories.tsx",
+      "!**/vite.config.ts",
+      "!**/vitest.config.ts"
+    ]
+  },
+  "javascript": {
+    "globals": []
+  },
+  "assist": {
+    "enabled": false
+  }
+}

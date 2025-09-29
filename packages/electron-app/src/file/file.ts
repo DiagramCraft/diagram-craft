@@ -1,13 +1,13 @@
 import { type IpcHandlers } from '../ipc';
 import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 import { resolveFile } from '../utils/path';
-import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import log from 'electron-log/main';
 
 export const fileHandlers: IpcHandlers = {
   register(mainWindow: BrowserWindow): void {
     ipcMain.handle('file:open', async (_event, _action) => {
-      const result = await dialog.showOpenDialog(mainWindow!, {
+      const result = await dialog.showOpenDialog(mainWindow, {
         properties: ['openFile'],
         filters: [
           { name: 'Diagram Files', extensions: ['dcd'] },
@@ -16,7 +16,7 @@ export const fileHandlers: IpcHandlers = {
       });
 
       if (!result.canceled && result.filePaths.length > 0) {
-        const filePath = result.filePaths[0];
+        const filePath = result.filePaths[0]!;
         BrowserWindow.getFocusedWindow()?.setRepresentedFilename(filePath);
         app.addRecentDocument(filePath);
         return { url: filePath };
@@ -36,7 +36,7 @@ export const fileHandlers: IpcHandlers = {
       }
     });
 
-    ipcMain.handle('file:save', async (_event, { url, data }) => {
+    ipcMain.handle('file:save', async (_event, { url, data }: { url: string; data: string }) => {
       try {
         writeFileSync(url, data);
         return url;
@@ -48,7 +48,7 @@ export const fileHandlers: IpcHandlers = {
 
     ipcMain.handle('file:saveAs', async (_event, { url, data }) => {
       try {
-        const result = await dialog.showSaveDialog(mainWindow!, {
+        const result = await dialog.showSaveDialog(mainWindow, {
           defaultPath: url,
           filters: [
             { name: 'Diagram Files', extensions: ['dcd'] },
@@ -64,7 +64,7 @@ export const fileHandlers: IpcHandlers = {
         }
 
         return undefined;
-      } catch (error) {
+      } catch (_error) {
         return undefined;
       }
     });

@@ -99,9 +99,6 @@ export const ElectronIntegration = {
 };
 
 class ElectronFileSaveAction extends AbstractAction<undefined, Application> {
-  constructor(application: Application) {
-    super(application);
-  }
 
   getCriteria(application: Application) {
     return [ActionCriteria.Simple(() => !!application.model.activeDocument.url)];
@@ -111,7 +108,7 @@ class ElectronFileSaveAction extends AbstractAction<undefined, Application> {
     const url = this.context.model.activeDocument.url;
     assert.present(url);
 
-    serializeDiagramDocument(this.context.model.activeDocument!).then(async e => {
+    serializeDiagramDocument(this.context.model.activeDocument).then(async e => {
       const serialized = JSON.stringify(e);
 
       window.electronAPI?.fileSave(url, serialized).then(async (result: string | undefined) => {
@@ -126,9 +123,6 @@ class ElectronFileSaveAction extends AbstractAction<undefined, Application> {
 }
 
 class ElectronFileSaveAsAction extends AbstractAction<undefined, Application> {
-  constructor(application: Application) {
-    super(application);
-  }
 
   getCriteria(application: Application) {
     return [ActionCriteria.Simple(() => !!application.model.activeDocument.url)];
@@ -138,7 +132,7 @@ class ElectronFileSaveAsAction extends AbstractAction<undefined, Application> {
     const url = this.context.model.activeDocument.url;
     assert.present(url);
 
-    serializeDiagramDocument(this.context.model.activeDocument!).then(async e => {
+    serializeDiagramDocument(this.context.model.activeDocument).then(async e => {
       const serialized = JSON.stringify(e);
 
       window.electronAPI?.fileSaveAs(url, serialized).then(async (result: string | undefined) => {
@@ -153,9 +147,6 @@ class ElectronFileSaveAsAction extends AbstractAction<undefined, Application> {
 }
 
 class ElectronFileOpenAction extends AbstractAction<unknown, Application> {
-  constructor(application: Application) {
-    super(application);
-  }
 
   execute(): void {
     window.electronAPI?.fileOpen()?.then(async (result: { url: string } | undefined) => {

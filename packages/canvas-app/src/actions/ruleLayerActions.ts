@@ -8,6 +8,7 @@ import { newid } from '@diagram-craft/utils/id';
 import { Application } from '../application';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { RuleEditorDialogCommand } from '../dialogs';
+import { safeSplit } from '@diagram-craft/utils/safe';
 
 export const ruleLayerActions = (application: Application) => ({
   RULE_LAYER_EDIT: new RuleLayerEditAction(application),
@@ -22,10 +23,6 @@ declare global {
 type LayerActionArg = { id?: string };
 
 export class RuleLayerDeleteAction extends AbstractAction<LayerActionArg, Application> {
-  constructor(application: Application) {
-    super(application);
-  }
-
   isEnabled({ id }: LayerActionArg): boolean {
     return id !== undefined;
   }
@@ -46,12 +43,12 @@ export class RuleLayerDeleteAction extends AbstractAction<LayerActionArg, Applic
           precondition.is.present(id);
 
           // TODO: Need to change such that it's possible to pass more arguments to the action
-          const [layerId, ruleId] = id.split(':');
+          const [layerId, ruleId] = safeSplit(id, ':', 2);
 
           const layer = this.context.model.activeDiagram.layers.byId(layerId) as RuleLayer;
           const rule = layer.byId(ruleId);
 
-          assert.present(rule, 'Rule with id ' + ruleId + ' not found');
+          assert.present(rule, `Rule with id ${ruleId} not found`);
 
           const uow = new UnitOfWork(this.context.model.activeDiagram, true);
 
@@ -64,10 +61,6 @@ export class RuleLayerDeleteAction extends AbstractAction<LayerActionArg, Applic
 }
 
 export class RuleLayerEditAction extends AbstractAction<LayerActionArg, Application> {
-  constructor(application: Application) {
-    super(application);
-  }
-
   isEnabled({ id }: LayerActionArg): boolean {
     return id !== undefined;
   }
@@ -76,12 +69,12 @@ export class RuleLayerEditAction extends AbstractAction<LayerActionArg, Applicat
     precondition.is.present(id);
 
     // TODO: Need to change such that it's possible to pass more arguments to the action
-    const [layerId, ruleId] = id.split(':');
+    const [layerId, ruleId] = safeSplit(id, ':', 2);
 
     const layer = this.context.model.activeDiagram.layers.byId(layerId) as RuleLayer;
     const rule = layer.byId(ruleId);
 
-    assert.present(rule, 'Rule with id ' + ruleId + ' not found');
+    assert.present(rule, `Rule with id ${ruleId} not found`);
 
     this.context.ui.showDialog(
       new RuleEditorDialogCommand(
@@ -99,10 +92,6 @@ export class RuleLayerEditAction extends AbstractAction<LayerActionArg, Applicat
 }
 
 export class RuleLayerAddAction extends AbstractAction<LayerActionArg, Application> {
-  constructor(application: Application) {
-    super(application);
-  }
-
   isEnabled({ id }: LayerActionArg): boolean {
     return (
       id !== undefined &&

@@ -87,12 +87,12 @@ const NodeLabel = (props: { children: React.ReactNode } & React.HTMLAttributes<H
     >
       <div className={styles.cmpTreeNodeLabelToggle}>
         {ctx.hasChildren && !ctx.open && (
-          <button onClick={() => ctx.setOpen!(true)}>
+          <button type="button" onClick={() => ctx.setOpen!(true)}>
             <TbChevronRight />
           </button>
         )}
         {ctx.hasChildren && ctx.open && (
-          <button onClick={() => ctx.setOpen!(false)}>
+          <button type="button" onClick={() => ctx.setOpen!(false)}>
             <TbChevronDown />
           </button>
         )}

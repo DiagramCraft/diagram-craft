@@ -92,7 +92,7 @@ class UndoableGroupAction implements UndoableAction {
     });
 
     assertRegularLayer(this.#group.layer);
-    this.#group.layer.removeElement(this.#group!, uow);
+    this.#group.layer.removeElement(this.#group, uow);
     this.#elements = this.#group.children;
 
     children.forEach(e => {
@@ -128,7 +128,7 @@ export class GroupAction extends AbstractSelectionAction {
       )
     );
 
-    if (this.type == 'ungroup') {
+    if (this.type === 'ungroup') {
       dest.push(
         ActionCriteria.EventTriggered(context.model.activeDiagram.selectionState, 'add', () =>
           context.model.activeDiagram.selectionState.nodes.some(e => e.nodeType === 'group')

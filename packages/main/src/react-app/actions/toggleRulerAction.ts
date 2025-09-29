@@ -10,9 +10,6 @@ export const toggleRulerActions = (context: ActionContext) => ({
 });
 
 export class ToggleRulerAction extends AbstractToggleAction {
-  constructor(context: ActionContext) {
-    super(context);
-  }
 
   getStateCriteria() {
     return ActionCriteria.EventTriggered(UserState.get(), 'change', () => {
@@ -21,7 +18,7 @@ export class ToggleRulerAction extends AbstractToggleAction {
   }
 
   execute(): void {
-    UserState.get()!.showRulers = !this.state;
+    UserState.get().showRulers = !this.state;
     this.emit('actionTriggered');
   }
 }

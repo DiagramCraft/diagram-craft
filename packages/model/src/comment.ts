@@ -123,7 +123,7 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> {
 
       this.emit('commentRemoved', { commentId: p.key });
 
-      if (comment && comment.element) {
+      if (comment?.element) {
         const uow = new UnitOfWork(comment.element.diagram);
         comment.element.commentsUpdated(uow);
         uow.commit();
@@ -158,9 +158,7 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> {
     for (const comment of this.commentsMap.values()) {
       serializedComments.push(comment);
     }
-    return serializedComments
-      .map(sc => Comment.deserialize(sc, this.diagram))
-      .filter(c => c !== null) as Comment[];
+    return serializedComments.map(sc => Comment.deserialize(sc, this.diagram));
   }
 
   getDiagramComments(): Comment[] {

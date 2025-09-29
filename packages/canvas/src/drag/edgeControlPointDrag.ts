@@ -31,7 +31,7 @@ export class EdgeControlPointDrag extends Drag {
   }
 
   onDrag({ offset, modifiers }: DragEvents.DragStart) {
-    const wp = this.edge.waypoints[this.waypointIdx];
+    const wp = this.edge.waypoints[this.waypointIdx]!;
 
     const cIdx = this.controlPointIdx;
     const ocIdx = otherCp(cIdx);
@@ -50,7 +50,7 @@ export class EdgeControlPointDrag extends Drag {
     }
 
     const controlPoints = {
-      [cIdx]: Point.subtract(offset, wp!.point),
+      [cIdx]: Point.subtract(offset, wp.point),
       [ocIdx]: otherControlPoint
     } as ControlPoints;
 

@@ -15,9 +15,6 @@ declare global {
 }
 
 class ShapeInsertAction extends AbstractAction<undefined, Application> {
-  constructor(application: Application) {
-    super(application);
-  }
 
   getCriteria(application: Application) {
     return ActionCriteria.EventTriggered(
@@ -47,7 +44,7 @@ class ShapeInsertAction extends AbstractAction<undefined, Application> {
           [stencil.node(diagram)],
           diagram.activeLayer,
           UnitOfWork.immediate(diagram)
-        )[0];
+        )[0]!;
 
         assignNewBounds(
           [node],

@@ -128,7 +128,7 @@ type StencilRegistryConfigEntry<K extends keyof StencilLoaderOpts> = {
 
 export type StencilRegistryConfig = Array<StencilRegistryConfigEntry<keyof StencilLoaderOpts>>;
 
-let CONFIG_IN_USE: AppConfig | undefined = undefined;
+let CONFIG_IN_USE: AppConfig | undefined ;
 
 export const AppConfig = {
   get(): AppConfig {

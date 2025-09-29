@@ -102,7 +102,7 @@ export const SearchResultsPanel = ({
           ))}
         </div>
       ) : (
-        <div className={styles.searchResultGrid + ' light-theme'}>
+        <div className={`${styles.searchResultGrid} light-theme`}>
           {results.map(element => (
             <div
               key={element.id}

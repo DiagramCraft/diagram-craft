@@ -77,9 +77,7 @@ const intersectWithNode = (
     return endIntersections[0] ?? { point: endpointPosition };
   } else {
     const closeIntersections = endIntersections.filter(
-      i =>
-        Point.distance(endpointPosition, i.point) <
-        1.5 * (endpoint.node.renderProps.stroke?.width ?? 1)
+      i => Point.distance(endpointPosition, i.point) < 1.5 * endpoint.node.renderProps.stroke.width
     );
     return closeIntersections[0] ?? { point: endpointPosition };
   }
@@ -91,7 +89,7 @@ export const clipPath = (
   startArrow: ArrowShape | undefined,
   endArrow: ArrowShape | undefined
 ) => {
-  const diagram = edge.diagram!;
+  const diagram = edge.diagram;
 
   const start =
     edge.start instanceof ConnectedEndpoint
@@ -145,8 +143,8 @@ export const applyLineHops = (
   endArrow: ArrowShape | undefined,
   intersections: Intersection[]
 ): Path[] => {
-  const thisType = edge.renderProps.lineHops?.type ?? 'none';
-  const gapSize = edge.renderProps.lineHops?.size ?? 10;
+  const thisType = edge.renderProps.lineHops.type;
+  const gapSize = edge.renderProps.lineHops.size;
 
   if (intersections.length === 0 || thisType === 'none') return [basePath];
 
@@ -195,8 +193,8 @@ export const applyLineHops = (
       } else {
         dest[dest.length - 1] = before;
       }
-      addLineHop(dest, before, after, thisType, gapSize);
-      dest.push(after);
+      addLineHop(dest, before, after!, thisType, gapSize);
+      dest.push(after!);
     }
   }
 
@@ -233,10 +231,10 @@ const addLineHop = (dest: Path[], before: Path, after: Path, type: string, size:
       const endStart = Point.add(end, Vector.scale(normalEnd, lineLength / 2));
       const endEnd = Point.subtract(end, Vector.scale(normalEnd, lineLength / 2));
 
-      if (isNaN(startStart.x) || isNaN(startStart.y) || isNaN(startEnd.x) || isNaN(startEnd.y)) {
+      if (Number.isNaN(startStart.x) || Number.isNaN(startStart.y) || Number.isNaN(startEnd.x) || Number.isNaN(startEnd.y)) {
         return;
       }
-      if (isNaN(endStart.x) || isNaN(endStart.y) || isNaN(endEnd.x) || isNaN(endEnd.y)) {
+      if (Number.isNaN(endStart.x) || Number.isNaN(endStart.y) || Number.isNaN(endEnd.x) || Number.isNaN(endEnd.y)) {
         return;
       }
 

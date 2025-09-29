@@ -15,6 +15,7 @@ import { stencilLoaderRegistry } from '@diagram-craft/canvas-app/loaders';
 import { Property } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
 import { PathList } from '@diagram-craft/geometry/pathList';
 import { assertRegularLayer } from './diagramLayerUtils';
+import { safeSplit } from '@diagram-craft/utils/safe';
 
 export type NodeCapability =
   | 'children'
@@ -61,7 +62,7 @@ export const asProperty = (
     val: customProp.value,
     set: (v: unknown) => {
       change(uow => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // biome-ignore lint/suspicious/noExplicitAny: false positive
         customProp.onChange(v as any, uow);
       });
     },
@@ -104,7 +105,7 @@ export interface NodeDefinition {
 
 const missing = new Set();
 if (typeof window !== 'undefined') {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
   (window as any).dump_missing = () => {
     console.log([...missing].join('\n'));
   };
@@ -140,14 +141,14 @@ export class NodeDefinitionRegistry {
     const idx = this.preRegistrations.findIndex(a => a.shapes.test(s));
     if (idx === -1) return false;
 
-    const entry = this.preRegistrations[idx];
+    const entry = this.preRegistrations[idx]!;
     //this.preRegistrations.splice(idx, 1);
 
     const loader = stencilLoaderRegistry[entry.type];
     assert.present(loader, `Stencil loader ${entry.type} not found`);
 
     const l = await loader();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // biome-ignore lint/suspicious/noExplicitAny: false positive
     await l(this, entry.opts as any);
 
     return true;
@@ -167,7 +168,7 @@ export class NodeDefinitionRegistry {
       return this.nodes.get('rect')!;
     }
 
-    assert.present(r, 'Not found: ' + type);
+    assert.present(r, `Not found: ${type}`);
     return r;
   }
 
@@ -337,8 +338,8 @@ export class StencilRegistry extends EventEmitter<StencilEvents> {
 
   getStencil(id: string) {
     assert.true(id.includes(DELIMITER), 'Invalid id');
-    const [pkgId] = id.split(DELIMITER);
-    return this.get(pkgId)?.stencils.find(s => s.id === id);
+    const [pkgId] = safeSplit(id, DELIMITER, Number.MAX_VALUE);
+    return this.get(pkgId).stencils.find(s => s.id === id);
   }
 
   get(id: string): StencilPackage {
@@ -364,7 +365,7 @@ export class StencilRegistry extends EventEmitter<StencilEvents> {
         results.push(...pkg.stencils);
       } else {
         for (const stencil of pkg.stencils) {
-          if (stencil.name?.toLowerCase()?.includes(s.toLowerCase())) {
+          if (stencil.name?.toLowerCase().includes(s.toLowerCase())) {
             results.push(stencil);
           }
         }

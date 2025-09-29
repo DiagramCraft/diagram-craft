@@ -101,9 +101,6 @@
       stroke-width: calc(1 * var(--zoom));
       fill: none;
 
-      &:hover, &:active {
-      }
-
       .svg-rotation-handle__backing {
         stroke: transparent;
         stroke-width: calc(8 * var(--zoom));

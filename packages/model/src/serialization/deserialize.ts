@@ -27,7 +27,7 @@ import { Comment } from '../comment';
 const unfoldGroup = (node: SerializedElement) => {
   const recurse = (
     nodes: ReadonlyArray<SerializedElement>,
-    parent?: SerializedElement | undefined
+    parent?: SerializedElement
   ): (SerializedElement & { parent?: SerializedElement | undefined })[] => {
     return [
       ...nodes.map(n => ({ ...n, parent })),
@@ -68,9 +68,9 @@ export const deserializeDiagramElements = (
 
       COMPATIBILITY: {
         // Note: this is for backwards compatibility only
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // biome-ignore lint/suspicious/noExplicitAny: false positive
         const textProps: any = c.props.text;
-        if (textProps && textProps.text && (!c.texts || !c.texts.text)) {
+        if (textProps?.text && (!c.texts || !c.texts.text)) {
           c.texts ??= { text: textProps.text };
           c.texts.text = textProps.text;
           delete textProps.text;
@@ -181,23 +181,17 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
   }
 
   doc.root.transact(() => {
-    if (document.customPalette) {
-      doc.customPalette.setColors(document.customPalette);
+    doc.customPalette.setColors(document.customPalette);
+
+    for (const edgeStyle of document.styles.edgeStyles) {
+      doc.styles.addStylesheet(edgeStyle.id, deserializeStylesheet(edgeStyle, doc.styles));
+    }
+    for (const nodeStyle of document.styles.nodeStyles) {
+      doc.styles.addStylesheet(nodeStyle.id, deserializeStylesheet(nodeStyle, doc.styles));
     }
 
-    if (document.styles) {
-      for (const edgeStyle of document.styles.edgeStyles) {
-        doc.styles.addStylesheet(edgeStyle.id, deserializeStylesheet(edgeStyle, doc.styles));
-      }
-      for (const nodeStyle of document.styles.nodeStyles) {
-        doc.styles.addStylesheet(nodeStyle.id, deserializeStylesheet(nodeStyle, doc.styles));
-      }
-    }
-
-    if (document.schemas) {
-      for (const schema of document.schemas) {
-        doc.data._schemas.add(schema);
-      }
+    for (const schema of document.schemas) {
+      doc.data._schemas.add(schema);
     }
 
     const dest = deserializeDiagrams(doc, diagrams, diagramFactory);
@@ -234,25 +228,25 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
     doc.data.templates.replaceBy(document.data?.templates ?? []);
 
     if (document.props?.query?.saved) {
-      let saved = document.props?.query.saved ?? [];
+      let saved = document.props?.query.saved;
       COMPATIBILITY: {
-        if (Array.isArray(document.props.query.saved?.[0])) {
+        if (Array.isArray(document.props.query.saved[0])) {
           saved = [];
         }
       }
       doc.props.query.setSaved(saved);
     }
     if (document.props?.query?.history) {
-      let history = document.props?.query.history ?? [];
+      let history = document.props?.query.history;
       COMPATIBILITY: {
-        if (Array.isArray(document.props.query.history?.[0])) {
+        if (Array.isArray(document.props.query.history[0])) {
           history = [];
         }
       }
       doc.props.query.setHistory(history);
     }
     if (document.props?.stencils) {
-      doc.props.recentStencils.set(document.props?.stencils);
+      doc.props.recentStencils.set(document.props.stencils);
     }
   });
 
@@ -282,33 +276,41 @@ const deserializeDiagrams = <T extends Diagram>(
 
     const uow = new UnitOfWork(newDiagram);
     for (const l of $d.layers) {
-      if (l.layerType === 'regular' || l.layerType === 'basic') {
-        const layer = new RegularLayer(l.id, l.name, [], newDiagram);
-        newDiagram.layers.add(layer, UnitOfWork.immediate(newDiagram));
+      switch (l.layerType) {
+        case 'regular':
+        case 'basic': {
+          const layer = new RegularLayer(l.id, l.name, [], newDiagram);
+          newDiagram.layers.add(layer, UnitOfWork.immediate(newDiagram));
 
-        const elements = deserializeDiagramElements(
-          l.elements,
-          newDiagram,
-          layer,
-          nodeLookup,
-          edgeLookup
-        );
-        elements.forEach(e => {
-          layer.addElement(e, uow);
-        });
+          const elements = deserializeDiagramElements(
+            l.elements,
+            newDiagram,
+            layer,
+            nodeLookup,
+            edgeLookup
+          );
+          elements.forEach(e => {
+            layer.addElement(e, uow);
+          });
 
-        layer.elements.forEach(e => e.invalidate(uow));
-      } else if (l.layerType === 'reference') {
-        const layer = new ReferenceLayer(l.id, l.name, newDiagram, {
-          diagramId: l.diagramId,
-          layerId: l.layerId
-        });
-        newDiagram.layers.add(layer, UnitOfWork.immediate(newDiagram));
-      } else if (l.layerType === 'rule') {
-        const layer = new RuleLayer(l.id, l.name, newDiagram, l.rules ?? []);
-        newDiagram.layers.add(layer, UnitOfWork.immediate(newDiagram));
-      } else {
-        throw new VerifyNotReached();
+          layer.elements.forEach(e => e.invalidate(uow));
+          break;
+        }
+        case 'reference': {
+          const layer = new ReferenceLayer(l.id, l.name, newDiagram, {
+            diagramId: l.diagramId,
+            layerId: l.layerId
+          });
+          newDiagram.layers.add(layer, UnitOfWork.immediate(newDiagram));
+          break;
+        }
+        case 'rule': {
+          const layer = new RuleLayer(l.id, l.name, newDiagram, l.rules);
+          newDiagram.layers.add(layer, UnitOfWork.immediate(newDiagram));
+          break;
+        }
+        default:
+          throw new VerifyNotReached();
       }
     }
 

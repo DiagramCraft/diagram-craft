@@ -75,7 +75,7 @@ export class Defaults<T> {
 
         if (k === '') return this.patterns[p];
 
-        const v = this.patterns[p][k];
+        const v = this.patterns[p]![k];
         if (v !== undefined) return v;
       }
     }
@@ -99,7 +99,7 @@ export class Defaults<T> {
 
     const offset = '.*'.length;
     this.patterns[key.slice(0, -offset)] ??= {};
-    unfoldObject(this.patterns[key.slice(0, -offset)], value);
+    unfoldObject(this.patterns[key.slice(0, -offset)]!, value);
   }
 
   applyDefaults(props: DeepPartial<T>): T {
@@ -111,16 +111,16 @@ export class Defaults<T> {
     // Handle patterns
     const patternDefaults = {};
     const accessor = new DynamicAccessor<DeepPartial<T>>();
-    for (const [key, value] of Object.entries(this.cachedPatternDefaultsObjects!)) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    for (const [key, value] of Object.entries(this.cachedPatternDefaultsObjects)) {
+      // biome-ignore lint/suspicious/noExplicitAny: false positive
       accessor.set(patternDefaults, key as PropPath<DeepPartial<T>>, {} as any);
 
       const patternRoot = accessor.get(props, key as PropPath<DeepPartial<T>>);
       if (!patternRoot) continue;
 
       for (const k of Object.keys(patternRoot)) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        accessor.set(patternDefaults, (key + '.' + k) as PropPath<DeepPartial<T>>, value as any);
+        // biome-ignore lint/suspicious/noExplicitAny: false positive
+        accessor.set(patternDefaults, `${key}.${k}` as PropPath<DeepPartial<T>>, value as any);
       }
     }
 

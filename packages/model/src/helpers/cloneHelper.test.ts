@@ -60,7 +60,7 @@ describe('cloneHelper', () => {
 
       // Verify
       expect(parentNode.id).not.toBe('parent-id');
-      expect(parentNode.children![0].id).not.toBe('child-id');
+      expect(parentNode.children![0]!.id).not.toBe('child-id');
     });
 
     it('should assign a new ID to a serialized edge', () => {

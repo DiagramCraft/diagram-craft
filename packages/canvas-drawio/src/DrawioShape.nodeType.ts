@@ -120,7 +120,7 @@ class Compiler {
   private parseElement(element: Element | null, pathBuilder: PathListBuilder) {
     if (!element) return;
 
-    const outlines = element!.childNodes;
+    const outlines = element.childNodes;
     for (let i = 0; i < outlines.length; i++) {
       const node = outlines.item(i);
       if (node.nodeType !== Node.ELEMENT_NODE) continue;
@@ -159,7 +159,11 @@ const parseShapeElement = ($el: Element, pathBuilder: PathListBuilder) => {
       r: 0
     });
   } else if ($el.nodeName === 'roundrect') {
-    const [x, y, w, h, arcsize] = ['x', 'y', 'w', 'h', 'arcsize'].map(attr => xNum($el, attr));
+    const x = xNum($el, 'x');
+    const y = xNum($el, 'y');
+    const w = xNum($el, 'w');
+    const h = xNum($el, 'h');
+    const arcsize = xNum($el, 'arcsize');
 
     const rx = (arcsize / 100) * w;
     const ry = (arcsize / 100) * h;
@@ -223,7 +227,7 @@ const parseShapeElement = ($el: Element, pathBuilder: PathListBuilder) => {
           xNum($pce, 'sweep-flag') as 0 | 1
         );
       } else {
-        console.log(`No support for path.` + $pc.nodeName);
+        console.log(`No support for path.${$pc.nodeName}`);
       }
     }
   }
@@ -233,7 +237,7 @@ export function assertDrawioShapeNodeDefinition(
   def: NodeDefinition
 ): asserts def is DrawioShapeNodeDefinition {
   if (!(def instanceof DrawioShapeNodeDefinition)) {
-    throw new Error(`Expected DrawioShapeNodeDefinition, got ${def}`);
+    throw new Error(`Expected DrawioShapeNodeDefinition, got ${JSON.stringify(def)}`);
   }
 }
 
@@ -335,38 +339,38 @@ class DrawioShapeComponent extends BaseNodeComponent {
           fillAlpha = restored.fillAlpha;
           fillAlpha = restored.fillAlpha;
         } else if ($el.nodeName === 'fontcolor') {
-          style.text!.color = $el.getAttribute('color')!;
+          style.text.color = $el.getAttribute('color')!;
         } else if ($el.nodeName === 'fontsize') {
-          style.text!.fontSize = xNum($el, 'size')!;
+          style.text.fontSize = xNum($el, 'size')!;
         } else if ($el.nodeName === 'strokecolor') {
           strokeColor = $el.getAttribute('color')!;
-          style.stroke!.color = makeColor(strokeColor, strokeAlpha);
+          style.stroke.color = makeColor(strokeColor, strokeAlpha);
         } else if ($el.nodeName === 'fillcolor') {
           fillColor = $el.getAttribute('color')!;
-          style.fill!.color = makeColor(fillColor, fillAlpha);
-          style.fill!.type = 'solid';
+          style.fill.color = makeColor(fillColor, fillAlpha);
+          style.fill.type = 'solid';
         } else if ($el.nodeName === 'fillalpha') {
           fillAlpha = xNum($el, 'alpha')!;
-          style.fill!.color = makeColor(fillColor, fillAlpha);
+          style.fill.color = makeColor(fillColor, fillAlpha);
         } else if ($el.nodeName === 'strokealpha') {
           strokeAlpha = xNum($el, 'alpha')!;
-          style.stroke!.color = makeColor(strokeColor, strokeAlpha);
+          style.stroke.color = makeColor(strokeColor, strokeAlpha);
         } else if ($el.nodeName === 'alpha') {
           fillAlpha = xNum($el, 'alpha')!;
           strokeAlpha = xNum($el, 'alpha')!;
 
-          style.fill!.color = makeColor(fillColor, fillAlpha);
-          style.stroke!.color = makeColor(strokeColor, strokeAlpha);
+          style.fill.color = makeColor(fillColor, fillAlpha);
+          style.stroke.color = makeColor(strokeColor, strokeAlpha);
         } else if ($el.nodeName === 'strokewidth') {
-          style.stroke!.width = xNum($el, 'width');
+          style.stroke.width = xNum($el, 'width');
         } else if ($el.nodeName === 'dashpattern') {
-          style.stroke!.pattern = $el.getAttribute('pattern')!;
+          style.stroke.pattern = $el.getAttribute('pattern')!;
         } else if ($el.nodeName === 'dashed') {
           if ($el.getAttribute('dashed') === '0') {
-            style.stroke!.pattern = null;
+            style.stroke.pattern = null;
           }
         } else if ($el.nodeName === 'miterlimit') {
-          style.stroke!.miterLimit = xNum($el, 'miterlimit')!;
+          style.stroke.miterLimit = xNum($el, 'miterlimit')!;
         } else if ($el.nodeName === 'linecap') {
           const lineCap =
             $el.getAttribute('linecap') === 'flat' ? 'round' : $el.getAttribute('linecap');
@@ -374,14 +378,14 @@ class DrawioShapeComponent extends BaseNodeComponent {
           if (!lineCap) continue;
           assertLineCap(lineCap);
 
-          style.stroke!.lineCap = lineCap;
+          style.stroke.lineCap = lineCap;
         } else if ($el.nodeName === 'linejoin') {
           const lineJoin = $el.getAttribute('linejoin');
 
           if (!lineJoin) continue;
           assertLineJoin(lineJoin);
 
-          style.stroke!.lineJoin = lineJoin;
+          style.stroke.lineJoin = lineJoin;
         }
       }
     }
@@ -398,16 +402,16 @@ class DrawioShapeComponent extends BaseNodeComponent {
         currentShape(style);
         backgroundDrawn = true;
       } else if ($el.nodeName === 'fill') {
-        const old = style.stroke!.color;
-        style.stroke!.color = 'transparent';
+        const old = style.stroke.color;
+        style.stroke.color = 'transparent';
         currentShape(style);
-        style.stroke!.color = old;
+        style.stroke.color = old;
         backgroundDrawn = true;
       } else if ($el.nodeName === 'stroke') {
-        const old = style.fill!.color;
-        style.fill!.color = 'transparent';
+        const old = style.fill.color;
+        style.fill.color = 'transparent';
         currentShape(style);
-        style.fill!.color = old;
+        style.fill.color = old;
         backgroundDrawn = true;
       } else if ($el.nodeName === 'text') {
         if (!backgroundDrawn) drawBackground();
@@ -448,37 +452,37 @@ class DrawioShapeComponent extends BaseNodeComponent {
         fillAlpha = restored.fillAlpha;
       } else if ($el.nodeName === 'strokecolor') {
         strokeColor = $el.getAttribute('color')!;
-        style.stroke!.color = makeColor(strokeColor, strokeAlpha);
+        style.stroke.color = makeColor(strokeColor, strokeAlpha);
       } else if ($el.nodeName === 'fontcolor') {
-        style.text!.color = $el.getAttribute('color')!;
+        style.text.color = $el.getAttribute('color')!;
       } else if ($el.nodeName === 'fontsize') {
-        style.text!.fontSize = xNum($el, 'size')!;
+        style.text.fontSize = xNum($el, 'size')!;
       } else if ($el.nodeName === 'fillcolor') {
         fillColor = $el.getAttribute('color')!;
-        style.fill!.color = makeColor(fillColor, fillAlpha);
-        style.fill!.type = 'solid';
+        style.fill.color = makeColor(fillColor, fillAlpha);
+        style.fill.type = 'solid';
       } else if ($el.nodeName === 'fillalpha') {
         fillAlpha = xNum($el, 'alpha')!;
-        style.fill!.color = makeColor(fillColor, fillAlpha);
+        style.fill.color = makeColor(fillColor, fillAlpha);
       } else if ($el.nodeName === 'strokealpha') {
         strokeAlpha = xNum($el, 'alpha')!;
-        style.stroke!.color = makeColor(strokeColor, strokeAlpha);
+        style.stroke.color = makeColor(strokeColor, strokeAlpha);
       } else if ($el.nodeName === 'alpha') {
         fillAlpha = xNum($el, 'alpha')!;
         strokeAlpha = xNum($el, 'alpha')!;
 
-        style.fill!.color = makeColor(fillColor, fillAlpha);
-        style.stroke!.color = makeColor(strokeColor, strokeAlpha);
+        style.fill.color = makeColor(fillColor, fillAlpha);
+        style.stroke.color = makeColor(strokeColor, strokeAlpha);
       } else if ($el.nodeName === 'strokewidth') {
-        style.stroke!.width = xNum($el, 'width');
+        style.stroke.width = xNum($el, 'width');
       } else if ($el.nodeName === 'dashpattern') {
-        style.stroke!.pattern = $el.getAttribute('pattern')!;
+        style.stroke.pattern = $el.getAttribute('pattern')!;
       } else if ($el.nodeName === 'dashed') {
         if ($el.getAttribute('dashed') === '0') {
-          style.stroke!.pattern = null;
+          style.stroke.pattern = null;
         }
       } else if ($el.nodeName === 'miterlimit') {
-        style.stroke!.miterLimit = xNum($el, 'miterlimit')!;
+        style.stroke.miterLimit = xNum($el, 'miterlimit')!;
       } else if ($el.nodeName === 'linecap') {
         const lineCap =
           $el.getAttribute('linecap') === 'flat' ? 'round' : $el.getAttribute('linecap');
@@ -486,14 +490,14 @@ class DrawioShapeComponent extends BaseNodeComponent {
         if (!lineCap) continue;
         assertLineCap(lineCap);
 
-        style.stroke!.lineCap = lineCap;
+        style.stroke.lineCap = lineCap;
       } else if ($el.nodeName === 'linejoin') {
         const lineJoin = $el.getAttribute('linejoin');
 
         if (!lineJoin) continue;
         assertLineJoin(lineJoin);
 
-        style.stroke!.lineJoin = lineJoin;
+        style.stroke.lineJoin = lineJoin;
       } else if (isShapeElement($el)) {
         if (!backgroundDrawn) drawBackground();
 

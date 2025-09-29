@@ -36,7 +36,7 @@ export const loadDrawioStencils = async (
 
   const $shapes = $doc.getElementsByTagName('shape');
   for (let i = 0; i < $shapes.length; i++) {
-    const name = $shapes[i].getAttribute('name')!;
+    const name = $shapes[i]!.getAttribute('name')!;
     newStencils.push({
       group: group,
       key: name,
@@ -44,12 +44,12 @@ export const loadDrawioStencils = async (
         fill: { color: background },
         stroke: { color: foreground },
         custom: {
-          drawio: { shape: btoa(xmlSerializer.serializeToString($shapes[i])) }
+          drawio: { shape: btoa(xmlSerializer.serializeToString($shapes[i]!)) }
         }
       },
       dimensions: {
-        w: xNum($shapes[i], 'w'),
-        h: xNum($shapes[i], 'h')
+        w: xNum($shapes[i]!, 'w'),
+        h: xNum($shapes[i]!, 'h')
       }
     });
   }

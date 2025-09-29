@@ -5,11 +5,11 @@ export const ObjectTreeNode = (props: Props) => {
   let keys: string[];
   try {
     keys = Object.keys(props.obj);
-  } catch (error) {
+  } catch (_error) {
     // Handle proxy objects with incomplete ownKeys trap
     keys = [];
   }
-  
+
   return keys.map(key => {
     const v = props.obj[key];
     if (v === null || v === undefined) {
@@ -48,6 +48,6 @@ export const ObjectTreeNode = (props: Props) => {
 };
 
 type Props = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
   obj: any;
 };

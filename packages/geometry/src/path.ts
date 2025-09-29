@@ -22,6 +22,7 @@ import { isSame, roundHighPrecision } from '@diagram-craft/utils/math';
 import { Vector } from './vector';
 import { Line } from './line';
 import { Lazy } from '@diagram-craft/utils/lazy';
+import { safeTupleCast } from '@diagram-craft/utils/safe';
 
 export type Projection = { t: number; distance: number; point: Point };
 
@@ -51,7 +52,7 @@ class SegmentList {
           dest.push(new QuadSegment(end, { x: seg[1], y: seg[2] }, { x: seg[3], y: seg[4] }));
           break;
         case 'T': {
-          const cp = (dest.at(-1) as QuadSegment).p2!;
+          const cp = (dest.at(-1) as QuadSegment).p2;
           const cp2 = Point.add(end, Point.subtract(end, cp));
           dest.push(new QuadSegment(end, cp2, { x: seg[1], y: seg[2] }));
           break;
@@ -97,10 +98,10 @@ class SegmentList {
     // Find the segment that contains the point
     let currentD = t.pathD;
     let segmentIndex = 0;
-    let segment = this.segments[segmentIndex];
+    let segment = this.segments[segmentIndex]!;
     while (currentD > segment.length()) {
       currentD -= segment.length();
-      segment = this.segments[++segmentIndex];
+      segment = this.segments[++segmentIndex]!;
     }
 
     // TODO: This is a bit incorrect, we should probably use tAtLength here
@@ -111,10 +112,10 @@ class SegmentList {
     // Find the segment that contains the point
     let currentD = t.pathD;
     let segmentIndex = 0;
-    let segment = this.segments[segmentIndex];
+    let segment = this.segments[segmentIndex]!;
     while (currentD > segment.length()) {
       currentD -= segment.length();
-      segment = this.segments[++segmentIndex];
+      segment = this.segments[++segmentIndex]!;
     }
 
     // TODO: This is a bit incorrect, we should probably use tAtLength here
@@ -128,7 +129,7 @@ class SegmentList {
 
     const segments = this.segments;
     for (let i = 0; i < segments.length; i++) {
-      const s = segments[i];
+      const s = segments[i]!;
       const projection = s.projectPoint(point, limit);
       if (projection.distance < bestDistance) {
         bestProject = projection;
@@ -144,12 +145,12 @@ class SegmentList {
     const l = this.segments.slice(0, bestSegment).reduce((acc, cur) => acc + cur.length(), 0);
     return {
       segmentIndex: bestSegment,
-      t: bestProject!.t,
+      t: bestProject.t,
 
       // TODO: Should we really return this back here - as it's a bit expensive to calculate
-      globalL: l + this.segments[bestSegment].lengthAtT(bestProject!.t),
-      distance: bestProject!.distance,
-      point: bestProject!.point
+      globalL: l + this.segments[bestSegment]!.lengthAtT(bestProject.t),
+      distance: bestProject.distance,
+      point: bestProject.point
     };
   }
 }
@@ -169,6 +170,7 @@ export class Path {
   }
 
   static join(...paths: Path[]) {
+    assert.arrayNotEmpty(paths);
     const dest: RawSegment[] = [];
     for (const path of paths) {
       dest.push(...path.#path);
@@ -227,7 +229,7 @@ export class Path {
     const newSegmentList: PathSegment[] = [];
     const segments = SegmentList.make(this.#start, this.#path).segments;
     for (let i = segments.length - 1; i >= 0; i--) {
-      newSegmentList.push(segments[i].reverse());
+      newSegmentList.push(segments[i]!.reverse());
     }
 
     return new Path(
@@ -288,10 +290,10 @@ export class Path {
     const segments = this.segments;
 
     for (let idx = 0; idx < segments.length; idx++) {
-      const segment = segments[idx];
+      const segment = segments[idx]!;
 
       for (let oIdx = 0; oIdx < other.segments.length; oIdx++) {
-        const otherSegment = other.segments[oIdx];
+        const otherSegment = other.segments[oIdx]!;
 
         const intersections = segment.intersectionsWith(otherSegment, opts);
         if (intersections.length === 0) continue;
@@ -319,14 +321,14 @@ export class Path {
   split(
     p1: TimeOffsetOnSegment | (TimeOffsetOnSegment & LengthOffsetOnSegment),
     p2?: TimeOffsetOnSegment
-  ): ReadonlyArray<Path> {
+  ): [Path, Path] | [Path, Path, Path] {
     // In case both points are on the same segment, we need to split that segment into
     // three, which is a bit complicated, as we need to calculate the length offset
     if (p2 && p1.segment === p2.segment) {
       // Note: this is a bit of a weird optimization, but it gives quite a bit of
       //       performance boost when we have already calculated the length offset on the segment
       const d1 =
-        (p1 as LengthOffsetOnSegment).segmentD ?? this.segments[p1.segment].lengthAtT(p1.segmentT);
+        (p1 as LengthOffsetOnSegment).segmentD ?? this.segments[p1.segment]!.lengthAtT(p1.segmentT);
 
       // Split into a,b,c as follows
       //
@@ -340,7 +342,7 @@ export class Path {
       // Result
       // ---------|---|--------------------
       //
-      const [prefix, c] = this.segments[p2.segment].split(p2.segmentT);
+      const [prefix, c] = this.segments[p2.segment]!.split(p2.segmentT);
       const [a, b] = prefix.split(prefix.tAtLength(d1));
 
       return [
@@ -362,19 +364,20 @@ export class Path {
     // Result
     // ---------|-------------------|----------
     //
-    const [a, b] = this.segments[p1.segment].split(p1.segmentT);
+    const [a, b] = this.segments[p1.segment]!.split(p1.segmentT);
 
     const dest: Path[] = [new Path(this.#start, [...this.#path.slice(0, p1.segment), ...a.raw()])];
     if (p2) {
-      const [c, d] = this.segments[p2.segment].split(p2.segmentT);
+      const [c, d] = this.segments[p2.segment]!.split(p2.segmentT);
       dest.push(
         new Path(b.start, [...b.raw(), ...this.#path.slice(p1.segment + 1, p2.segment), ...c.raw()])
       );
       dest.push(new Path(d.start, [...d.raw(), ...this.#path.slice(p2.segment + 1)]));
+      return safeTupleCast(dest, 3);
     } else {
       dest.push(new Path(b.start, [...b.raw(), ...this.#path.slice(p1.segment + 1)]));
+      return safeTupleCast(dest, 2);
     }
-    return dest;
   }
 
   offset(n: number) {
@@ -408,8 +411,8 @@ export class Path {
     // Join all lines
     const joinedEntries: Array<{ type: 'L' | 'C'; line: Line }> = [];
     for (let i = 1; i < entries.length; i++) {
-      const prev = entries[i - 1];
-      const current = entries[i];
+      const prev = entries[i - 1]!;
+      const current = entries[i]!;
 
       const intersection = Line.intersection(prev.line, current.line, true);
       if (!intersection) {
@@ -428,24 +431,24 @@ export class Path {
     // For segments from the lines
     const dest: RawSegment[] = [];
     for (let i = 0; i < joinedEntries.length; i++) {
-      const entry = joinedEntries[i];
+      const entry = joinedEntries[i]!;
 
       if (entry.type === 'L') {
         dest.push(['L', entry.line.to.x, entry.line.to.y]);
       } else {
-        assert.true(joinedEntries[i + 1].type === 'C');
-        assert.true(joinedEntries[i + 2].type === 'C');
+        assert.true(joinedEntries[i + 1]!.type === 'C');
+        assert.true(joinedEntries[i + 2]!.type === 'C');
 
-        const p1 = joinedEntries[i].line.to;
-        const p2 = joinedEntries[i + 1].line.to;
-        const end = joinedEntries[i + 2].line.to;
+        const p1 = joinedEntries[i]!.line.to;
+        const p2 = joinedEntries[i + 1]!.line.to;
+        const end = joinedEntries[i + 2]!.line.to;
 
         dest.push(['C', p1.x, p1.y, p2.x, p2.y, end.x, end.y]);
 
         i += 2;
       }
     }
-    return new Path(joinedEntries[0].line.from, dest);
+    return new Path(joinedEntries[0]!.line.from, dest);
   }
 
   asSvgPath() {
@@ -476,10 +479,10 @@ export class Path {
 
   clean() {
     // Remove any repeated segments
-    const dest: RawSegment[] = [this.#path[0]];
+    const dest: RawSegment[] = [this.#path[0]!];
     for (let i = 1; i < this.#path.length; i++) {
-      const current = this.#path[i];
-      const previous = this.#path[i - 1];
+      const current = this.#path[i]!;
+      const previous = this.#path[i - 1]!;
 
       if (current.every((e, idx) => e === previous[idx])) continue;
       dest.push(current);
@@ -492,8 +495,8 @@ export class Path {
     const segments = this.segments;
     let sum = 0;
     for (let i = 0; i < segments.length; i++) {
-      const s = segments[i];
-      const next = segments[(i + 1) % segments.length];
+      const s = segments[i]!;
+      const next = segments[(i + 1) % segments.length]!;
       sum += (next.start.x - s.start.x) * (-next.start.y - s.start.y);
     }
 
@@ -505,8 +508,8 @@ export class Path {
   hasArea() {
     if (this.segments.length % 2 === 1) return true;
     for (let i = 0; i < this.segments.length; i += 2) {
-      const s1 = this.segments[i];
-      const s2 = this.segments[i + 1];
+      const s1 = this.segments[i]!;
+      const s2 = this.segments[i + 1]!;
       if (!s1.equals(s2.reverse())) return true;
     }
     return false;
@@ -517,7 +520,7 @@ export class Path {
     if (this.segments.length <= 1) return this;
 
     for (let i = 0; i < this.segments.length; i++) {
-      const currentSegment = this.segments[i];
+      const currentSegment = this.segments[i]!;
 
       if (!(currentSegment instanceof LineSegment)) {
         simplifiedSegments.push(currentSegment);
@@ -564,8 +567,8 @@ export class Path {
       // If we found consecutive line segments in the same direction, merge them
       if (consecutiveLines.length > 1) {
         const mergedSegment = new LineSegment(
-          consecutiveLines[0].start,
-          consecutiveLines[consecutiveLines.length - 1].end
+          consecutiveLines[0]!.start,
+          consecutiveLines[consecutiveLines.length - 1]!.end
         );
         // Double-check that the merged segment is not zero-length
         if (!Point.isEqual(mergedSegment.start, mergedSegment.end)) {

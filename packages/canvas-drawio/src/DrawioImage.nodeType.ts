@@ -54,11 +54,11 @@ class DrawioImageComponent extends BaseNodeComponent {
     const customProps = props.nodeProps.custom.drawioImage;
 
     const imageWidth = customProps.imageWidth.includes('%')
-      ? props.node.bounds.w * (parseInt(customProps.imageWidth) / 100)
-      : parseInt(customProps.imageWidth);
+      ? props.node.bounds.w * (parseInt(customProps.imageWidth, 10) / 100)
+      : parseInt(customProps.imageWidth, 10);
     const imageHeight = customProps.imageHeight.includes('%')
-      ? props.node.bounds.h * (parseInt(customProps.imageHeight) / 100)
-      : parseInt(customProps.imageHeight);
+      ? props.node.bounds.h * (parseInt(customProps.imageHeight, 10) / 100)
+      : parseInt(customProps.imageHeight, 10);
 
     let x = props.node.bounds.x + customProps.imageMargin;
     let y = props.node.bounds.y + customProps.imageMargin;

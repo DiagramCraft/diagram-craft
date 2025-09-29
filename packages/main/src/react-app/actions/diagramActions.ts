@@ -18,9 +18,6 @@ declare global {
 }
 
 class DiagramAddAction extends AbstractAction<{ parentId?: string }, Application> {
-  constructor(application: Application) {
-    super(application);
-  }
 
   execute(props: { parentId?: string }): void {
     const document = this.context.model.activeDocument;
@@ -61,9 +58,6 @@ class DiagramAddAction extends AbstractAction<{ parentId?: string }, Application
 }
 
 class DiagramRemoveAction extends AbstractAction<{ diagramId?: string }, Application> {
-  constructor(application: Application) {
-    super(application);
-  }
 
   execute(props: { diagramId?: string }): void {
     assert.present(props.diagramId);
@@ -75,7 +69,7 @@ class DiagramRemoveAction extends AbstractAction<{ diagramId?: string }, Applica
     // TODO: This can be improved to choose the "closest" diagram
     const diagramToFallbackTo =
       this.context.model.activeDiagram === diagram
-        ? document.diagrams[0]
+        ? document.diagrams[0]!
         : this.context.model.activeDiagram;
 
     const undoManager = diagramToFallbackTo.undoManager;
@@ -108,9 +102,6 @@ class DiagramRemoveAction extends AbstractAction<{ diagramId?: string }, Applica
 }
 
 class DiagramRenameAction extends AbstractAction<{ diagramId?: string }, Application> {
-  constructor(context: Application) {
-    super(context);
-  }
 
   execute({ diagramId }: { diagramId?: string }): void {
     precondition.is.present(diagramId);

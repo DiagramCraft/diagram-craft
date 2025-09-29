@@ -205,7 +205,7 @@ const RuleEntry = (props: { rule: AdjustmentRule; layer: RuleLayer; diagram: Dia
           }
           setTimeout(() => {
             for (const key of keys) {
-              removeHighlight(props.diagram.lookup(key)!, 'search-match');
+              removeHighlight(props.diagram.lookup(key), 'search-match');
             }
           }, 1000);
         }}

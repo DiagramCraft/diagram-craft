@@ -11,7 +11,7 @@ import { IndicatorForm } from './IndicatorForm';
 import { useElementProperty } from '../../hooks/useProperty';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: false positive
 const path = (id: string, rest: string): any => `indicators.${id}.${rest}`;
 
 const FormWrapper = (props: {
@@ -51,7 +51,7 @@ export const NamedIndicatorPanel = (_props: { mode?: 'accordion' | 'panel' }) =>
   const [visible, setVisible] = useState<string[]>([]);
 
   const update = <K extends keyof Indicator>(id: string, key: K, value: Indicator[K]) => {
-    const newIndicator: Indicator = deepClone(indicators.val[id]);
+    const newIndicator: Indicator = deepClone(indicators.val[id]!);
     newIndicator[key] = value;
 
     const newIndicators = { ...indicators.val };
@@ -110,7 +110,7 @@ export const NamedIndicatorPanel = (_props: { mode?: 'accordion' | 'panel' }) =>
           }
 
           const newIndicators = { ...indicators.val };
-          newIndicators[newKey] = deepClone(newIndicators[oldKey]);
+          newIndicators[newKey] = deepClone(newIndicators[oldKey]!);
           delete newIndicators[oldKey];
           indicators.set(newIndicators, 'Rename indicator');
 
@@ -144,11 +144,11 @@ export const NamedIndicatorPanel = (_props: { mode?: 'accordion' | 'panel' }) =>
   const ruleIndicatorKeys: string[] = [];
   const enabledRruleIndicatorKeys: string[] = [];
   if ($d.selectionState.elements.length === 1) {
-    const keys = Object.keys($d.selectionState.elements[0].renderProps.indicators ?? {});
+    const keys = Object.keys($d.selectionState.elements[0]!.renderProps.indicators ?? {});
     for (const k of keys) {
       if (!indicators.val[k]) {
         ruleIndicatorKeys.push(k);
-        if ($d.selectionState.elements[0].renderProps.indicators[k].enabled) {
+        if ($d.selectionState.elements[0]!.renderProps.indicators[k]!.enabled) {
           enabledRruleIndicatorKeys.push(k);
         }
       }
@@ -243,7 +243,7 @@ export const NamedIndicatorPanel = (_props: { mode?: 'accordion' | 'panel' }) =>
                       <FormWrapper
                         key={k}
                         id={k}
-                        indicator={indicators.val[k]}
+                        indicator={indicators.val[k]!}
                         isReadOnly={isRuleAdded}
                         update={(p, v) => {
                           update(k, p, v);

@@ -30,27 +30,19 @@ export const ToolWindowPanel = (props: Props) => {
     );
   } else if (props.mode === 'headless') {
     return (
-      <>
-        <div
-          className={'cmp-panel__headless'}
-          data-isempty={props.isEmpty}
-          style={props.style ?? {}}
-        >
-          {props.children}
-        </div>
-      </>
+      <div className={'cmp-panel__headless'} data-isempty={props.isEmpty} style={props.style ?? {}}>
+        {props.children}
+      </div>
     );
   } else if (props.mode === 'headless-no-padding') {
     return (
-      <>
-        <div
-          className={'cmp-panel__headless cmp-panel__headless--no-padding'}
-          data-isempty={props.isEmpty}
-          style={props.style ?? {}}
-        >
-          {props.children}
-        </div>
-      </>
+      <div
+        className={'cmp-panel__headless cmp-panel__headless--no-padding'}
+        data-isempty={props.isEmpty}
+        style={props.style ?? {}}
+      >
+        {props.children}
+      </div>
     );
   } else {
     return (

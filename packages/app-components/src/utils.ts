@@ -1,7 +1,4 @@
-export const extractDataAttributes = (
-  props: Record<string, unknown>,
-  include?: string[] | undefined
-) =>
+export const extractDataAttributes = (props: Record<string, unknown>, include?: string[]) =>
   Object.keys(props).reduce(
     (acc, key) => {
       if (

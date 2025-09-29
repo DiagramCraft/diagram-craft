@@ -60,7 +60,7 @@ export class HTMLToMarkdownConverter {
       case 'h4':
       case 'h5':
       case 'h6':
-        return this.convertHeading(el, parseInt(tagName[1]));
+        return this.convertHeading(el, parseInt(tagName[1]!, 10));
       case 'p':
         return this.convertParagraph(el);
       case 'strong':
@@ -107,16 +107,16 @@ export class HTMLToMarkdownConverter {
   private convertHeading(element: Element, level: number): string {
     const content = this.processChildren(element).trim();
     if (this.options.headingStyle === 'atx') {
-      return '\n' + '#'.repeat(level) + ' ' + content + '\n\n';
+      return `\n${'#'.repeat(level)} ${content}\n\n`;
     } else {
       const underline = level === 1 ? '=' : '-';
-      return '\n' + content + '\n' + underline.repeat(content.length) + '\n\n';
+      return `\n${content}\n${underline.repeat(content.length)}\n\n`;
     }
   }
 
   private convertParagraph(element: Element): string {
     const content = this.processChildren(element).trim();
-    return content ? content + '\n\n' : '';
+    return content ? `${content}\n\n` : '';
   }
 
   private convertStrong(element: Element): string {
@@ -152,7 +152,7 @@ export class HTMLToMarkdownConverter {
 
   private convertInlineCode(element: Element): string {
     const content = this.processChildren(element);
-    return '`' + content + '`';
+    return `\`${content}\``;
   }
 
   private convertCodeBlock(element: Element): string {
@@ -161,31 +161,31 @@ export class HTMLToMarkdownConverter {
     const language = codeElement?.getAttribute('class')?.replace('language-', '') ?? '';
 
     if (this.options.codeBlockStyle === 'fenced') {
-      return '\n```' + language + '\n' + content + '\n```\n\n';
+      return `\n\`\`\`${language}\n${content}\n\`\`\`\n\n`;
     } else {
       const indentedContent = content
         .split('\n')
-        .map(line => '    ' + line)
+        .map(line => `    ${line}`)
         .join('\n');
-      return indentedContent + '\n\n';
+      return `${indentedContent}\n\n`;
     }
   }
 
   private convertBlockquote(element: Element): string {
     const content = this.processChildren(element).trim();
     const lines = content.split('\n');
-    const quotedLines = lines.map(line => '> ' + line);
-    return '\n' + quotedLines.join('\n') + '\n\n';
+    const quotedLines = lines.map(line => `> ${line}`);
+    return `\n${quotedLines.join('\n')}\n\n`;
   }
 
   private convertUnorderedList(element: Element): string {
     const content = this.processChildren(element);
-    return '\n' + content;
+    return `\n${content}`;
   }
 
   private convertOrderedList(element: Element): string {
     const content = this.processChildren(element);
-    return '\n' + content;
+    return `\n${content}`;
   }
 
   private convertListItem(element: Element): string {

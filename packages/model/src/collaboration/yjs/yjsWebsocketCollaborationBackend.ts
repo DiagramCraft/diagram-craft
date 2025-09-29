@@ -36,7 +36,7 @@ export class YJSWebSocketCollaborationBackend implements CollaborationBackend {
       console.log('Sync');
     });
     this.wsProvider.on('status', e => {
-      console.log('Status: ' + e.status);
+      console.log(`Status: ${e.status}`);
     });
 
     this.awareness.setBackend(this.wsProvider.awareness);

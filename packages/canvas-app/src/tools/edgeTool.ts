@@ -27,7 +27,6 @@ import { assert } from '@diagram-craft/utils/assert';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Extensions {
     interface Tools {
       edge: EdgeTool;
@@ -36,10 +35,6 @@ declare global {
 }
 
 class EdgeToolEdgeEndpointMoveDrag extends EdgeEndpointMoveDrag {
-  constructor(diagram: Diagram, edge: DiagramEdge, direction: 'start' | 'end', context: Context) {
-    super(diagram, edge, direction, context);
-  }
-
   onDragEnd() {
     super.onDragEnd();
 
@@ -47,7 +42,7 @@ class EdgeToolEdgeEndpointMoveDrag extends EdgeEndpointMoveDrag {
     if (this.modifiers?.shiftKey && this.hoverElement === undefined) {
       this.context.ui.showNodeLinkPopup(
         this.point!,
-        (this.edge.start as ConnectedEndpoint)!.node.id,
+        (this.edge.start as ConnectedEndpoint).node.id,
         this.edge.id
       );
     }
@@ -115,7 +110,7 @@ export class EdgeTool extends AbstractTool {
       assert.present(edge);
 
       if (this.currentElement) {
-        removeHighlight(this.diagram.lookup(this.currentElement!), Highlights.NODE__EDGE_CONNECT);
+        removeHighlight(this.diagram.lookup(this.currentElement), Highlights.NODE__EDGE_CONNECT);
       }
       if (Point.distance(edge.end.position, edge.start.position) < 5) {
         UnitOfWork.execute(this.diagram, uow => {

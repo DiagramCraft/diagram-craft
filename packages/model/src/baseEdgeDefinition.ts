@@ -54,7 +54,7 @@ export class BaseEdgeDefinition implements EdgeDefinition {
       new AnchorEndpoint(element, anchor),
       edge.end,
       deepClone(edge.editProps) as EdgeProps,
-      edge.metadataCloned as ElementMetadata,
+      edge.metadataCloned,
       [],
       edge.layer
     );

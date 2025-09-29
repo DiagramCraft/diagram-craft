@@ -4,11 +4,17 @@ import { validProps } from '@diagram-craft/model/diagramLayerRule';
 import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbLine, TbPentagon, TbPlus, TbTrash } from 'react-icons/tb';
-import { EditorRegistry, PropsEditor } from '@diagram-craft/canvas-app/PropsEditor';
+import { PropsEditor } from '@diagram-craft/canvas-app/PropsEditor';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
 import { deepClone } from '@diagram-craft/utils/object';
 import { newid } from '@diagram-craft/utils/id';
-import { EDGE_EDITORS, Editor, EditorTypes, NODE_EDITORS } from './editors';
+import {
+  EDGE_EDITORS,
+  type EdgeEditorRegistry,
+  EditorTypes,
+  NODE_EDITORS,
+  type NodeEditorRegistry
+} from './editors';
 import { StyleAction } from './StyleAction';
 import { TreeSelect } from '@diagram-craft/app-components/TreeSelect';
 import { StyleSheetAction } from './StyleSheetAction';
@@ -27,14 +33,14 @@ export type EditableElementSearchClause = Partial<ElementSearchClause>;
 
 const normalizeRuleActions = (
   rule: AdjustmentRule | undefined,
-  registry: EditorRegistry<Editor>
+  registry: NodeEditorRegistry | EdgeEditorRegistry
 ): Array<EditableAdjustmentRuleAction> => {
   if (!rule) return [];
 
   const dest: Array<EditableAdjustmentRuleAction> = [];
   for (const a of rule.actions) {
     if (a.type === 'set-props') {
-      const propsEditor = new PropsEditor<Editor>(registry, a.props);
+      const propsEditor = new PropsEditor(registry, a.props);
       for (const e of propsEditor.getEntries()) {
         dest.push({
           id: newid(),
@@ -65,7 +71,7 @@ const ClauseList = (props: ClauseListProps) => {
                 placeholder={'Select Rule'}
                 onChange={t => {
                   const newClauses = [...props.clauses];
-                  // @ts-ignore
+                  // @ts-expect-error
                   newClauses[idx].type = t;
                   props.onChange(newClauses);
                 }}
@@ -89,7 +95,7 @@ const ClauseList = (props: ClauseListProps) => {
                   }}
                   onChange={e => {
                     const newClauses = [...props.clauses];
-                    // @ts-ignore
+                    // @ts-expect-error
                     newClauses[idx].query = e.target.value;
                     props.onChange(newClauses);
                   }}
@@ -116,7 +122,7 @@ const ClauseList = (props: ClauseListProps) => {
                   <Select.Root
                     value={'eq'}
                     onChange={cond => {
-                      // @ts-ignore
+                      // @ts-expect-error
                       c.relation = cond;
                       props.onChange([...props.clauses]);
                     }}
@@ -141,10 +147,13 @@ const ClauseList = (props: ClauseListProps) => {
               {c.type === 'tags' && (
                 <MultiSelect
                   selectedValues={c.tags || []}
-                  availableItems={[...diagram.document.tags.tags].map(tag => ({ value: tag, label: tag }))}
+                  availableItems={[...diagram.document.tags.tags].map(tag => ({
+                    value: tag,
+                    label: tag
+                  }))}
                   onSelectionChange={newTags => {
                     const newClauses = [...props.clauses];
-                    // @ts-ignore
+                    // @ts-expect-error
                     newClauses[idx].tags = newTags;
                     props.onChange(newClauses);
                   }}
@@ -158,7 +167,7 @@ const ClauseList = (props: ClauseListProps) => {
                   placeholder={'Any comment state'}
                   onChange={state => {
                     const newClauses = [...props.clauses];
-                    // @ts-ignore
+                    // @ts-expect-error
                     newClauses[idx].state = state === 'any' ? undefined : state;
                     props.onChange(newClauses);
                   }}
@@ -286,13 +295,13 @@ export const RuleEditorDialog = (props: Props) => {
         {
           type: 'default',
           onClick: () => {
-            rule!.name = ref.current!.value;
-            rule!.type = type;
-            rule!.clauses = clauses
+            rule.name = ref.current!.value;
+            rule.type = type;
+            rule.clauses = clauses
               // TODO: Additional validations
               .filter(c => c.type !== undefined)
               .map(c => c as ElementSearchClause);
-            rule!.actions = actions
+            rule.actions = actions
               // TODO: Additional validations
               .filter(a => a.type !== undefined)
               .map(a => a as AdjustmentRuleAction);
@@ -325,7 +334,7 @@ export const RuleEditorDialog = (props: Props) => {
       <div className={styles.ruleEditor__container}>
         <div>
           <label>{'Name'}:</label>
-          <TextInput ref={ref} value={rule?.name ?? ''} size={40} />
+          <TextInput ref={ref} value={rule.name} size={40} />
         </div>
         <div>
           <label>{'Type'}:</label>
@@ -334,7 +343,7 @@ export const RuleEditorDialog = (props: Props) => {
               type={'single'}
               value={type}
               onChange={value => {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                // biome-ignore lint/suspicious/noExplicitAny: false positive
                 setType(value as any);
               }}
             >
@@ -377,7 +386,7 @@ export const RuleEditorDialog = (props: Props) => {
                   placeholder={'Select action'}
                   onChange={s => {
                     const newActions = [...actions];
-                    // @ts-ignore
+                    // @ts-expect-error
                     newActions[idx].type = s;
                     setActions(newActions);
                   }}

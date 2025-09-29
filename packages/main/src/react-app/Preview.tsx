@@ -75,7 +75,7 @@ export const Preview = (props: Props) => {
         <Button
           type={'icon-only'}
           onClick={() => {
-            viewbox.zoom(1.1, viewbox?.midpoint);
+            viewbox.zoom(1.1, viewbox.midpoint);
           }}
         >
           <TbZoomOut />
@@ -83,7 +83,7 @@ export const Preview = (props: Props) => {
         <Button
           type={'icon-only'}
           onClick={() => {
-            viewbox.zoom(0.9, viewbox?.midpoint);
+            viewbox.zoom(0.9, viewbox.midpoint);
           }}
         >
           <TbZoomIn />
@@ -110,7 +110,7 @@ export const Preview = (props: Props) => {
               try {
                 await document.exitFullscreen();
                 setIsFullScreen(false);
-              } catch (e) {
+              } catch (_e) {
                 // Ignore
               }
             }}
@@ -123,7 +123,7 @@ export const Preview = (props: Props) => {
           onClick={async () => {
             try {
               await document.exitFullscreen();
-            } catch (e) {
+            } catch (_e) {
               // Ignore
             }
             props.onClose();

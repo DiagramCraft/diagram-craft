@@ -93,7 +93,7 @@ describe('serialization', () => {
         );
 
         // Verify
-        const newDiagram = newDoc.diagrams[0];
+        const newDiagram = newDoc.diagrams[0]!;
         const newLayer = newDiagram.layers.all[0] as RegularLayer;
         const elements = newLayer.elements;
 
@@ -175,7 +175,7 @@ describe('serialization', () => {
         // Verify
         expect(newDoc.tags.tags).toEqual([]);
 
-        const newDiagram = newDoc.diagrams[0];
+        const newDiagram = newDoc.diagrams[0]!;
         const newLayer = newDiagram.layers.all[0] as RegularLayer;
         const elements = newLayer.elements;
 
@@ -276,13 +276,13 @@ describe('serialization', () => {
         );
 
         // Verify
-        const allComments = newDoc.diagrams[0].commentManager.getAll();
+        const allComments = newDoc.diagrams[0]!.commentManager.getAll();
         expect(allComments).toHaveLength(3);
 
-        const diagramComments = newDoc.diagrams[0].commentManager.getDiagramComments();
+        const diagramComments = newDoc.diagrams[0]!.commentManager.getDiagramComments();
         expect(diagramComments).toHaveLength(1);
-        expect(diagramComments[0].message).toBe('This is a diagram comment');
-        expect(diagramComments[0].author).toBe('author1');
+        expect(diagramComments[0]!.message).toBe('This is a diagram comment');
+        expect(diagramComments[0]!.author).toBe('author1');
       });
 
       it('should handle documents with no comments', async () => {
@@ -303,7 +303,7 @@ describe('serialization', () => {
         );
 
         // Verify
-        expect(newDoc.diagrams[0].commentManager.getAll()).toHaveLength(0);
+        expect(newDoc.diagrams[0]!.commentManager.getAll()).toHaveLength(0);
       });
     });
   });

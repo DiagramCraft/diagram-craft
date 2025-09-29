@@ -23,7 +23,7 @@ export class GenericPathControlPointDrag extends Drag {
   }
 
   onDrag({ offset, modifiers }: DragEvents.DragStart) {
-    const wp = this.editablePath.waypoints[this.waypointIdx];
+    const wp = this.editablePath.waypoints[this.waypointIdx]!;
     wp.updateControlPoint(
       this.controlPoint,
       this.editablePath.toLocalCoordinate(offset),

@@ -36,7 +36,7 @@ export type KeyMap = Partial<Record<KeyBinding, keyof ActionMap>>;
 
 declare global {
   interface ActionMap
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // biome-ignore lint/suspicious/noExplicitAny: false positive
     extends Record<string, (Action<any> | ToggleAction<any>) & EventEmitter<ActionEvents>> {}
 }
 
@@ -140,9 +140,9 @@ export const formatKeyBinding = (
   const formatted = s.replace('Key', '').replace('Digit', '');
 
   let formattingConfig = FORMATTING_WINDOWS;
-  if (platform.indexOf('Mac') != -1) {
+  if (platform.indexOf('Mac') !== -1) {
     formattingConfig = FORMATTING_MAC;
-  } else if (platform.indexOf('Linux') != -1) {
+  } else if (platform.indexOf('Linux') !== -1) {
     formattingConfig = FORMATTING_LINUX;
   }
 

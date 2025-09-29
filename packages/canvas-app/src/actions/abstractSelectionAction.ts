@@ -3,11 +3,11 @@ import { LayerType } from '@diagram-craft/model/diagramLayer';
 
 export type MultipleType = 'single-only' | 'multiple-only' | 'both';
 
-export const MultipleType: Record<string, MultipleType> = {
+export const MultipleType = {
   SingleOnly: 'single-only',
   MultipleOnly: 'multiple-only',
   Both: 'both'
-};
+} as const;
 
 export type ElementType = 'node' | 'edge' | 'both';
 

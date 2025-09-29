@@ -24,6 +24,7 @@ import { ToolWindowPanel } from '../ToolWindowPanel';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { ToolWindow } from '../ToolWindow';
 import { SearchToolMenu } from './SearchToolMenu';
+import { assert } from '@diagram-craft/utils/assert';
 
 type SearchScope = 'active-layer' | 'active-diagram' | 'active-document';
 
@@ -69,7 +70,7 @@ const AdvancedSearchClauseList = (props: ClauseListProps) => {
                 placeholder={'Select Rule'}
                 onChange={t => {
                   const newClauses = [...props.clauses];
-                  // @ts-ignore
+                  // @ts-expect-error
                   newClauses[idx].type = t;
                   props.onChange(newClauses);
                 }}
@@ -97,7 +98,7 @@ const AdvancedSearchClauseList = (props: ClauseListProps) => {
                   <Select.Root
                     value={c.relation ?? 'eq'}
                     onChange={cond => {
-                      // @ts-ignore
+                      // @ts-expect-error
                       c.relation = cond;
                       props.onChange([...props.clauses]);
                     }}
@@ -126,10 +127,13 @@ const AdvancedSearchClauseList = (props: ClauseListProps) => {
               {c.type === 'tags' && (
                 <MultiSelect
                   selectedValues={c.tags || []}
-                  availableItems={[...diagram.document.tags.tags].map(tag => ({ value: tag, label: tag }))}
+                  availableItems={[...diagram.document.tags.tags].map(tag => ({
+                    value: tag,
+                    label: tag
+                  }))}
                   onSelectionChange={newTags => {
                     const newClauses = [...props.clauses];
-                    // @ts-ignore
+                    // @ts-expect-error
                     newClauses[idx].tags = newTags;
                     props.onChange(newClauses);
                   }}
@@ -144,7 +148,7 @@ const AdvancedSearchClauseList = (props: ClauseListProps) => {
                   placeholder={'Any comment state'}
                   onChange={state => {
                     const newClauses = [...props.clauses];
-                    // @ts-ignore
+                    // @ts-expect-error
                     newClauses[idx].state = state === 'any' ? undefined : state;
                     props.onChange(newClauses);
                   }}
@@ -234,6 +238,8 @@ export const AdvancedSearchTab = () => {
 
     try {
       const searchResults = searchByElementSearchClauses(diagram, validClauses);
+      assert.arrayNotEmpty(searchResults);
+
       const intersection = searchResults.reduce((p, c) => p.intersection(c), searchResults[0]);
       const matchedElements = elements.filter(e => intersection.has(e.id));
       setResults(matchedElements);

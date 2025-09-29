@@ -104,7 +104,7 @@ export class EdgeEndpointMoveDrag extends Drag {
       }
     } else {
       if (!this.modifiers.shiftKey) {
-        const res = this.snapManager.snapPoint(this.point!);
+        const res = this.snapManager.snapPoint(this.point);
         this.point = res.adjusted;
       }
 
@@ -164,14 +164,14 @@ export class EdgeEndpointMoveDrag extends Drag {
 
         const offset = this.calculateOffset(pp, ref, hoverNode.bounds);
         addHighlight(hoverNode, Highlights.NODE__EDGE_CONNECT, 'anchor-edge');
-        this.setEndpoint(new AnchorEndpoint(hoverNode, a.anchor.id, offset)!);
+        this.setEndpoint(new AnchorEndpoint(hoverNode, a.anchor.id, offset));
       }
     } else {
       addHighlight(hoverNode, Highlights.NODE__EDGE_CONNECT, 'edge');
 
       const offset = this.calculateOffset(a.point, hoverNode.bounds, hoverNode.bounds);
 
-      this.setEndpoint(new PointInNodeEndpoint(hoverNode, undefined, offset, 'relative')!);
+      this.setEndpoint(new PointInNodeEndpoint(hoverNode, undefined, offset, 'relative'));
     }
   }
 
@@ -185,7 +185,7 @@ export class EdgeEndpointMoveDrag extends Drag {
 
     const offset = this.calculateOffset(p, hoverNode.bounds, hoverNode.bounds);
 
-    this.setEndpoint(new PointInNodeEndpoint(hoverNode, undefined, offset, 'relative')!);
+    this.setEndpoint(new PointInNodeEndpoint(hoverNode, undefined, offset, 'relative'));
   }
 
   private calculateOffset(p: Point, ref: Point, bounds: Box) {

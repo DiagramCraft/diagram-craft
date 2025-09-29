@@ -33,11 +33,11 @@ export const renderElement = (
 
   if (isNode(child)) {
     const nodeDefinition = child.getDefinition() as ShapeNodeDefinition;
-    const nodeComponent = nodeDefinition.component!;
+    const nodeComponent = nodeDefinition.component;
     return component.subComponent(() => new nodeComponent(nodeDefinition), p);
   } else if (isEdge(child)) {
     const edgeDefinition = child.getDefinition() as ShapeEdgeDefinition;
-    const edgeComponent = edgeDefinition.component!;
+    const edgeComponent = edgeDefinition.component;
     return component.subComponent(() => new edgeComponent(edgeDefinition), p);
   } else {
     VERIFY_NOT_REACHED();

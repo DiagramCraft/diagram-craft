@@ -161,7 +161,7 @@ export class FileSystemDataStore {
         this.saveData();
         console.log(`Bootstrapped data from: ${dataFilePath}`);
       }
-    } catch (error) {
+    } catch (_error) {
       throw new Error(`Failed to bootstrap data from ${dataFilePath}`);
     }
 
@@ -172,7 +172,7 @@ export class FileSystemDataStore {
         this.saveSchemas();
         console.log(`Bootstrapped schemas from: ${schemasFilePath}`);
       }
-    } catch (error) {
+    } catch (_error) {
       throw new Error(`Failed to bootstrap schemas from ${schemasFilePath}`);
     }
   }

@@ -8,7 +8,7 @@ const formatTimestamp = (ts: Date | undefined) => {
   if (!ts) {
     return '';
   }
-  return '[' + ts.toLocaleTimeString() + ']';
+  return `[${ts.toLocaleTimeString()}]`;
 };
 
 export const UndoStackPanel = () => {

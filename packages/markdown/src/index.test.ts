@@ -5,7 +5,7 @@ describe('Markdown Parser', () => {
   test('should parse simple text', () => {
     const result = parseMarkdown('Hello world');
     expect(result).toHaveLength(1);
-    expect(result[0].type).toBe('paragraph');
+    expect(result[0]!.type).toBe('paragraph');
   });
 
   test('should parse headers', () => {
@@ -13,10 +13,10 @@ describe('Markdown Parser', () => {
     // Filter out any empty paragraphs that might be created
     const headings = result.filter(node => node.type === 'heading');
     expect(headings).toHaveLength(2);
-    expect(headings[0].type).toBe('heading');
-    expect(headings[0].level).toBe(1);
-    expect(headings[1].type).toBe('heading');
-    expect(headings[1].level).toBe(2);
+    expect(headings[0]!.type).toBe('heading');
+    expect(headings[0]!.level).toBe(1);
+    expect(headings[1]!.type).toBe('heading');
+    expect(headings[1]!.level).toBe(2);
   });
 
   test('should convert to HTML', () => {
@@ -33,7 +33,7 @@ describe('Markdown Parser', () => {
 
   test('should handle code blocks', () => {
     const result = parseMarkdown('```\ncode here\n```');
-    expect(result[0].type).toBe('code');
+    expect(result[0]!.type).toBe('code');
   });
 
   test('should handle inline code', () => {

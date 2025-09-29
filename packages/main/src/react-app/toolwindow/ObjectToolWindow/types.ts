@@ -29,7 +29,7 @@ type PropertyInfoEntry<V> = {
 };
 
 export abstract class MultiProperty<T> implements Property<T> {
-  // eslint-disable-next-line
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
   protected constructor(protected readonly props: Array<Property<any>>) {}
 
   abstract get val(): T;
@@ -103,7 +103,7 @@ export abstract class MultiProperty<T> implements Property<T> {
       });
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return info.filter(e => e.val !== '') as any;
+    // TODO: This is not entirely correct to cast as <T>
+    return info.filter(e => e.val !== '') as PropertyInfo<T>;
   }
 }

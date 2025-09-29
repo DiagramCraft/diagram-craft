@@ -4,8 +4,6 @@ import { CubicBezier } from '@diagram-craft/geometry/bezier';
 import { Point } from '@diagram-craft/geometry/point';
 import { Vector } from '@diagram-craft/geometry/vector';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 const BezierTest = () => {
   const [drag, setDrag] = useState<{ callback: (e: React.MouseEvent<any>) => void } | undefined>(
     undefined
@@ -47,11 +45,17 @@ const BezierTest = () => {
           <line
             x1={p.x}
             y1={p.y}
-            x2={p.x + tangents[i].x}
-            y2={p.y + tangents[i].y}
+            x2={p.x + tangents[i]!.x}
+            y2={p.y + tangents[i]!.y}
             stroke={'green'}
           />
-          <line x1={p.x} y1={p.y} x2={p.x + normals[i].x} y2={p.y + normals[i].y} stroke={'blue'} />
+          <line
+            x1={p.x}
+            y1={p.y}
+            x2={p.x + normals[i]!.x}
+            y2={p.y + normals[i]!.y}
+            stroke={'blue'}
+          />
         </React.Fragment>
       ))}
       <path

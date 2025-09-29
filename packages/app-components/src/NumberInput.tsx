@@ -3,11 +3,12 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { propsUtils } from '@diagram-craft/utils/propsUtils';
 import { extractDataAttributes } from './utils';
 import styles from './NumberInput.module.css';
+import { safeReMatch } from '@diagram-craft/utils/safe';
 
 type UnitAndValue = [string, string | undefined];
 
 const parseNumberAndUnit = (value: string): UnitAndValue | undefined => {
-  const m = value.match(/^ ?(-?\d+\.?\d*) ?([^ ]*)$/);
+  const m = safeReMatch(value, /^ ?(-?\d+\.?\d*) ?([^ ]*)$/, 3);
   if (!m) return undefined;
   if (m[2] === '') return [m[1], undefined];
   return [m[1], m[2]];
@@ -21,13 +22,13 @@ const formatValue = (value: string, defaultUnit: string | undefined, fallback: s
 let idx = 0;
 
 const AdjustButton = (props: {
-  className: string;
+  className: string | undefined;
   children: React.ReactNode;
   onClick: () => void;
   disabled?: boolean;
 }) => {
   const btnRef = useRef<HTMLButtonElement>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
   const timerRef = useRef<any>(null);
 
   useEffect(() => {
@@ -59,7 +60,7 @@ const AdjustButton = (props: {
   }, [btnRef, props, props.onClick]);
 
   return (
-    <button ref={btnRef} className={props.className} disabled={props.disabled}>
+    <button ref={btnRef} type="button" className={props.className} disabled={props.disabled}>
       {props.children}
     </button>
   );
@@ -83,7 +84,7 @@ export const NumberInput = (props: Props) => {
         const p = parseNumberAndUnit(prev);
         if (!p) return prev;
 
-        const newValue = parseFloat(p[0]!) + delta;
+        const newValue = parseFloat(p[0]) + delta;
 
         if (props.min !== undefined && newValue < Number(props.min)) return prev;
         if (props.max !== undefined && newValue > Number(props.max)) return prev;
@@ -91,7 +92,7 @@ export const NumberInput = (props: Props) => {
         const newUnit = p[1] ?? props.defaultUnit;
 
         setTimeout(() => props.onChange(newValue, newUnit), 0);
-        return newValue.toString() + ' ' + (newUnit ?? '');
+        return `${newValue.toString()} ${newUnit ?? ''}`;
       });
     },
     [props]
@@ -140,7 +141,7 @@ export const NumberInput = (props: Props) => {
           }
 
           setError(false);
-          props.onChange(parseFloat(p[0]!), p[1] ?? props.defaultUnit);
+          props.onChange(parseFloat(p[0]), p[1] ?? props.defaultUnit);
           return;
         }}
         {...extractDataAttributes(props)}

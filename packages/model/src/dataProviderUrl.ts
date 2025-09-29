@@ -37,8 +37,8 @@ export class UrlDataProvider extends BaseHTTPDataProvider {
       await this.fetchSchemas(true);
       await this.fetchData(true);
     } catch (e) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return 'Error fetching data: ' + (e as any).toString();
+      // biome-ignore lint/suspicious/noExplicitAny: false positive
+      return `Error fetching data: ${(e as any).toString()}`;
     }
   }
 
@@ -56,7 +56,7 @@ export class UrlDataProvider extends BaseHTTPDataProvider {
     const res = await fetch(this.dataUrl, {
       cache: force ? 'no-cache' : 'default'
     });
-    return res.json();
+    return res.json() as Promise<DataWithSchema[]>;
   }
 
   protected async fetchSchemas(force = true): Promise<DataSchema[]> {
@@ -64,6 +64,6 @@ export class UrlDataProvider extends BaseHTTPDataProvider {
     const res = await fetch(this.schemaUrl, {
       cache: force ? 'no-cache' : 'default'
     });
-    return res.json();
+    return res.json() as Promise<DataSchema[]>;
   }
 }

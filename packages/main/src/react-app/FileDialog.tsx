@@ -69,7 +69,7 @@ export const FileDialog = (props: Props) => {
                         href={'#'}
                         onClick={() => {
                           if (props.onOk) {
-                            props.onOk(path.join('/') + '/' + entry.name);
+                            props.onOk(`${path.join('/')}/${entry.name}`);
                           }
                         }}
                       >

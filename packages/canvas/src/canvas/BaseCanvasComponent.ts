@@ -114,7 +114,7 @@ export abstract class BaseCanvasComponent<
         const edgeDef = $d.document.edgeDefinitions.get(edge.renderProps.shape);
 
         return this.subComponent(
-          () => new (edgeDef as ShapeEdgeDefinition).component!(edgeDef as ShapeEdgeDefinition),
+          () => new (edgeDef as ShapeEdgeDefinition).component(edgeDef as ShapeEdgeDefinition),
           {
             key: `edge-${id}`,
             onDoubleClick: onEdgeDoubleClick,
@@ -145,7 +145,7 @@ export abstract class BaseCanvasComponent<
         const nodeDef = $d.document.nodeDefinitions.get(node.nodeType);
 
         return this.subComponent<NodeComponentProps>(
-          () => new (nodeDef as ShapeNodeDefinition).component!(nodeDef as ShapeNodeDefinition),
+          () => new (nodeDef as ShapeNodeDefinition).component(nodeDef as ShapeNodeDefinition),
           {
             key: `node-${node.nodeType}-${id}`,
             element: node,

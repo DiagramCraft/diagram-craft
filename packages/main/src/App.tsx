@@ -73,19 +73,19 @@ import type { DiagramFactory, DocumentFactory } from '@diagram-craft/model/facto
 import { PortalContextProvider } from '@diagram-craft/app-components/PortalContext';
 import { ElectronIntegration } from './electron';
 import { DocumentName } from './react-app/DocumentName';
-import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { Autosave } from './react-app/autosave/Autosave';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
-  // eslint-disable-next-line
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
   if ((e as any)._triggered) return;
   fn();
-  // eslint-disable-next-line
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
   (e as any)._triggered = true;
 };
 
 type DialogStackItem = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
   dialog: DialogCommand<any, any>;
   zIndex: number;
   id: string;
@@ -223,6 +223,7 @@ export const App = (props: {
       );
       doc.url = url;
 
+      assert.arrayNotEmpty(doc.diagrams);
       updateApplicationModel(doc.diagrams[0], application.current, progressCallback);
 
       Autosave.get().clear();
@@ -263,6 +264,7 @@ export const App = (props: {
   };
 
   useOnChange(props.doc, () => {
+    assert.arrayNotEmpty(props.doc.diagrams);
     updateApplicationModel(props.doc.diagrams[0], application.current, progressCallback);
   });
 
@@ -297,7 +299,7 @@ export const App = (props: {
   const doc = application.current.model.activeDocument;
   const url = application.current.model.activeDocument.url;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
   const autosave = (event: any) => {
     if (event.silent) return;
 

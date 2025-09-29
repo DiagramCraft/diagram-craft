@@ -6,7 +6,7 @@ import { extractDataAttributes } from './utils';
 
 const Root = (props: RootProps) => {
   return (
-    // @ts-ignore
+    // @ts-expect-error
     <RadixAccordion.Root
       className={styles.cmpAccordion}
       type={props.type}
@@ -88,7 +88,7 @@ const ItemContent = (props: ItemContentProps) => {
   return (
     <RadixAccordion.Content
       className={styles.cmpAccordionContent}
-      // @ts-ignore
+      // @ts-expect-error
       forceMount={props.forceMount ?? false}
     >
       <div className={styles.cmpAccordionContentText}>{props.children}</div>

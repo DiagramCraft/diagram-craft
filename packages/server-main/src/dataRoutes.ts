@@ -33,7 +33,7 @@ export function createDataRoutes(dataStore: FileSystemDataStore) {
     const contentLengthStr = Array.isArray(contentLengthHeader)
       ? contentLengthHeader[0]
       : contentLengthHeader;
-    const contentLength = parseInt(contentLengthStr ?? '0');
+    const contentLength = parseInt(contentLengthStr ?? '0', 10);
     if (contentLength > MAX_REQUEST_SIZE) {
       throw createError({
         status: 413,
@@ -74,7 +74,7 @@ export function createDataRoutes(dataStore: FileSystemDataStore) {
     defineEventHandler(async _event => {
       try {
         return dataStore.getAllData();
-      } catch (error) {
+      } catch (_error) {
         throw createError({
           status: 500,
           statusMessage: 'Internal Server Error',

@@ -11,9 +11,6 @@ declare global {
 }
 
 class FileOpenAction extends AbstractAction<unknown, Application> {
-  constructor(application: Application) {
-    super(application);
-  }
 
   execute(): void {
     this.context.ui.showDialog(

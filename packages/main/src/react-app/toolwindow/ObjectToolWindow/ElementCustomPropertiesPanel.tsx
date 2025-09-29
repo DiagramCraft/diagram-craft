@@ -39,7 +39,7 @@ export const ElementCustomPropertiesPanelForm = ({
             <React.Fragment key={key}>
               <div className={'cmp-labeled-table__label'}>{value.label}:</div>
               <div className={'cmp-labeled-table__value'}>
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                {/* biome-ignore lint/suspicious/noExplicitAny: false positive */}
                 <PropertyEditor<any>
                   property={prop}
                   render={props => (
@@ -62,7 +62,7 @@ export const ElementCustomPropertiesPanelForm = ({
             <React.Fragment key={key}>
               <div className={'cmp-labeled-table__label'}>{value.label}:</div>
               <div className={'cmp-labeled-table__value'}>
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                {/* biome-ignore lint/suspicious/noExplicitAny: false positive */}
                 <PropertyEditor<any> property={prop} render={props => <Checkbox {...props} />} />
               </div>
             </React.Fragment>

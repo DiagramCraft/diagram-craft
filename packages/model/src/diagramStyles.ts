@@ -79,7 +79,7 @@ export class Stylesheet<T extends StylesheetType, P = TypeMap[T]>
 
   restore(snapshot: StylesheetSnapshot, uow: UnitOfWork): void {
     this.crdt.set('name', snapshot.name);
-    this.crdt.set('props', snapshot.props as NodeProps | EdgeProps);
+    this.crdt.set('props', snapshot.props);
     uow.updateElement(this);
   }
 
@@ -120,9 +120,9 @@ export class Stylesheet<T extends StylesheetType, P = TypeMap[T]>
 
 export const getCommonProps = <T extends Record<string, unknown>>(arr: Array<T>): Partial<T> => {
   if (arr.length === 0) return {};
-  let e: T = arr[0];
+  let e: T = arr[0]!;
   for (let i = 1; i < arr.length; i++) {
-    e = common(e, arr[i]) as T;
+    e = common(e, arr[i]!) as T;
   }
   return e as Partial<T>;
 };
@@ -157,7 +157,7 @@ const isPropsDirty = (
         if (Object.keys(props[key]).length === 0) continue;
 
         // Also an object with all defaults is not dirty
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // biome-ignore lint/suspicious/noExplicitAny: false positive
         if (defaults.isSameAsDefaults(props, [...path, key].join('.') as any)) continue;
 
         // TODO: It's unclear if this should be here or not
@@ -189,7 +189,7 @@ export const isSelectionDirty = ($d: Diagram, isText: boolean) => {
     return false;
   }
 
-  const metadata = $d.selectionState.elements[0].metadata;
+  const metadata = $d.selectionState.elements[0]!.metadata;
 
   const stylesheet = isText
     ? styles.get(metadata.textStyle ?? DefaultStyles.text.default)
@@ -200,8 +200,8 @@ export const isSelectionDirty = ($d: Diagram, isText: boolean) => {
     const propsFromElement = stylesheet.getPropsFromElement(e);
     return isPropsDirty(
       propsFromElement,
-      stylesheet?.props ?? {},
-      // @ts-ignore
+      stylesheet.props,
+      // @ts-expect-error
       isNode(e) ? nodeDefaults : edgeDefaults,
       []
     );
@@ -215,7 +215,7 @@ declare global {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: false positive
 const mapper: CRDTMapper<Stylesheet<any>, CRDTMap<StylesheetSnapshot>> = {
   fromCRDT<T extends StylesheetType>(e: CRDTMap<StylesheetSnapshot>): Stylesheet<T> {
     return new Stylesheet<T>(e);
@@ -351,8 +351,8 @@ export class DiagramStyles {
 
             if ('custom' in stylesheet.props) {
               for (const key of Object.keys(stylesheet.props.custom!)) {
-                if (shapeToClear.custom !== undefined && key in shapeToClear.custom) {
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                if (key in (shapeToClear.custom ?? {})) {
+                  // biome-ignore lint/suspicious/noExplicitAny: false positive
                   delete (shapeToClear.custom! as any)[key];
                 }
               }
@@ -462,7 +462,7 @@ export class DiagramStyles {
     el.updateProps((props: NodeProps & EdgeProps) => {
       Object.keys(stylesheet.props).forEach(key => {
         const validKey = key as keyof (NodeProps | EdgeStyleProps);
-        // @ts-ignore
+        // @ts-expect-error
         props[validKey] = deepMerge({}, props[validKey], stylesheet.props[validKey]);
       });
     }, uow);
@@ -474,7 +474,7 @@ export class DiagramStyles {
     }, uow);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
   addStylesheet(id: string, stylesheet: Stylesheet<any>, _uow?: UnitOfWork) {
     this.crdt.transact(() => {
       if (stylesheet.type === 'node') {

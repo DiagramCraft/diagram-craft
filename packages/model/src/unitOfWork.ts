@@ -74,7 +74,7 @@ export interface UOWTrackable<T extends Snapshot> {
   restore(snapshot: T, uow: UnitOfWork): void;
 }
 
-// eslint-disable-next-line
+// biome-ignore lint/suspicious/noExplicitAny: false positive
 type Trackable = (DiagramElement | Layer | LayerManager | Stylesheet<any>) & UOWTrackable<Snapshot>;
 
 export class ElementsSnapshot {
@@ -154,7 +154,7 @@ export class UnitOfWork {
     public isThrowaway: boolean = false,
     public isRemote: boolean = false
   ) {
-    registry.register(this, this.isThrowaway.toString() + ';' + new Error().stack, this);
+    registry.register(this, `${this.isThrowaway.toString()};${new Error().stack}`, this);
   }
 
   static immediate(diagram: Diagram) {

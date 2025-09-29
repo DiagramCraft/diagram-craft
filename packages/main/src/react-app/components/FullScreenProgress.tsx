@@ -16,7 +16,7 @@ export const FullScreenProgress = (props: Props) => {
   return (
     <div
       className={
-        styles.cmpFullscreenProgress + ' ' + (visible ? styles.cmpFullscreenProgressVisible : '')
+        `${styles.cmpFullscreenProgress} ${visible ? styles.cmpFullscreenProgressVisible : ''}`
       }
     >
       <div>{props.message}</div>

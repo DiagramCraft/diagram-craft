@@ -14,7 +14,6 @@ type DeferredMouseAction = {
 };
 
 declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Extensions {
     interface Tools {
       move: MoveTool;
@@ -176,7 +175,7 @@ export class MoveTool extends AbstractTool {
       e.target === document.body &&
       e.key !== 'Shift'
     ) {
-      const node = this.diagram.selectionState.nodes[0];
+      const node = this.diagram.selectionState.nodes[0]!;
       node.getDefinition().requestFocus(node, false);
     }
   }

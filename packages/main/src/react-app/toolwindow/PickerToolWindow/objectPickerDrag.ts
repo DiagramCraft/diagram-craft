@@ -237,7 +237,7 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
     const activeLayer = this.diagram.activeLayer;
     assertRegularLayer(activeLayer);
     UnitOfWork.execute(this.diagram, uow => {
-      this.#elements.map(e => activeLayer.removeElement(e!, uow));
+      this.#elements.map(e => activeLayer.removeElement(e, uow));
     });
   }
 }

@@ -27,12 +27,12 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
   public readonly type: string;
   public readonly component: NodeShapeConstructor<this>;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
   protected constructor(type: string, component: NodeShapeConstructor<any>);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
   protected constructor(type: string, name: string, component: NodeShapeConstructor<any>);
   protected constructor(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // biome-ignore lint/suspicious/noExplicitAny: false positive
     ...arr: [string, NodeShapeConstructor<any>] | [string, string, NodeShapeConstructor<any>]
   ) {
     if (arr.length === 2) {

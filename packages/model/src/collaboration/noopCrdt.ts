@@ -44,7 +44,7 @@ export class NoOpCRDTMap<T extends { [key: string]: CRDTCompatibleObject }>
   }
 
   clone() {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // biome-ignore lint/suspicious/noExplicitAny: false positive
     const dest = new NoOpCRDTMap<any>();
     for (const [key, value] of this.entries()) {
       if (value instanceof NoOpCRDTMap) {
@@ -117,11 +117,11 @@ export class NoOpCRDTList<T extends CRDTCompatibleObject>
   }
 
   get(index: number): T {
-    return this.backing[index];
+    return this.backing[index]!;
   }
 
   clone() {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // biome-ignore lint/suspicious/noExplicitAny: false positive
     const dest = new NoOpCRDTList<any>();
     for (let i = 0; i < this.length; i++) {
       const value = this.get(i);
@@ -167,9 +167,9 @@ export class NoOpCRDTList<T extends CRDTCompatibleObject>
 }
 
 export class NoOpCRDTRoot extends EventEmitter<CRDTRootEvents> implements CRDTRoot {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
   private map: Map<string, any> = new Map();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
   private list: Map<string, any> = new Map();
 
   readonly factory = new NoOpCRDTFactory();

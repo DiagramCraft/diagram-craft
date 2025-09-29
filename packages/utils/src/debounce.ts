@@ -16,13 +16,14 @@
  * debouncedFn();
  * debouncedFn(); // Only this call will result in execution
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: false positive
 export function debounce<T extends (...args: any[]) => any>(fn: T, ms = 0): T {
   let timeoutId: ReturnType<typeof setTimeout>;
 
   // Using function() instead of arrow function to preserve 'this' context
   return function (this: ThisParameterType<T>, ...args: Parameters<T>): void {
     clearTimeout(timeoutId);
+    // TODO: This function should always return void
     timeoutId = setTimeout(() => fn.apply(this, args), ms);
   } as T;
 }
@@ -45,7 +46,7 @@ export function debounce<T extends (...args: any[]) => any>(fn: T, ms = 0): T {
  * debouncedFn();
  * debouncedFn(); // Only one execution will happen in the next microtask
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: false positive
 export function debounceMicrotask<T extends (...args: any[]) => any>(fn: T): T {
   let queued = false;
 

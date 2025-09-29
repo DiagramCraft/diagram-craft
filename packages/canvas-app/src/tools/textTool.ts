@@ -17,7 +17,6 @@ import { ResizeDrag } from '@diagram-craft/canvas/drag/resizeDrag';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Extensions {
     interface Tools {
       text: TextTool;

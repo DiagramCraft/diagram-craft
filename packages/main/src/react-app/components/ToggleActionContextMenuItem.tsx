@@ -37,6 +37,6 @@ export function ToggleActionContextMenuItem<K extends keyof ActionMap>(props: Pr
 
 type Props<K extends keyof ActionMap> = {
   action: K;
-  arg: Parameters<ActionMap[K]['execute']>[0];
+  arg?: Parameters<ActionMap[K]['execute']>[0];
   children: React.ReactNode;
 };

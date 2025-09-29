@@ -62,7 +62,7 @@ export const getClosestAnchor = (
   let closestAnchor = -1;
   let closestDistance = Number.MAX_SAFE_INTEGER;
   for (let i = 0; i < anchors.length; i++) {
-    const a = anchors[i];
+    const a = anchors[i]!;
     const pos = getAnchorPosition(node, a);
 
     let d = Point.squareDistance(coord, pos);
@@ -81,7 +81,7 @@ export const getClosestAnchor = (
 
   if (includeBoundary && node.getDefinition().supports('connect-to-boundary')) {
     const boundingPath = node.getDefinition().getBoundingPath(node);
-    let closestPoint: Point | undefined = undefined;
+    let closestPoint: Point | undefined ;
     let closestPointDistance = Number.MAX_SAFE_INTEGER;
     for (const path of boundingPath.all()) {
       const pp = path.projectPoint(coord).point;
@@ -101,7 +101,10 @@ export const getClosestAnchor = (
 
   if (closestAnchor === -1) return undefined;
 
-  return { anchor: anchors[closestAnchor], point: getAnchorPosition(node, anchors[closestAnchor]) };
+  return {
+    anchor: anchors[closestAnchor],
+    point: getAnchorPosition(node, anchors[closestAnchor]!)
+  };
 };
 
 export const getAnchorPosition = (
@@ -128,7 +131,7 @@ export const AnchorStrategy = {
     for (let d = 0; d < 2 * Math.PI; d += (2 * Math.PI) / numberOfDirections) {
       const l = Line.of(center, Point.add(center, Vector.fromPolar(d + node.bounds.r, maxD)));
       const linePath = new Path(center, [['L', l.to.x, l.to.y]]);
-      const firstPath = paths.all()[0];
+      const firstPath = paths.all()[0]!;
       firstPath.intersections(linePath).forEach(p => {
         const lengthOffsetOnPath = PointOnPath.toTimeOffset(p, firstPath);
 
@@ -174,10 +177,10 @@ export const AnchorStrategy = {
 
     // Get anchors per side
     for (let i = 0; i < paths.all().length; i++) {
-      const path = paths.all()[i];
+      const path = paths.all()[i]!;
       for (let j = 0; j < path.segments.length; j++) {
         for (let n = 0; n < numberPerEdge; n++) {
-          const p = path.segments[j];
+          const p = path.segments[j]!;
           const pct = (n + 1) * d;
           const { x, y } = p.point(pct);
 
@@ -232,7 +235,7 @@ export const AnchorStrategy = {
 
     // Get anchors per side
     for (let i = 0; i < paths.all().length; i++) {
-      const path = paths.all()[i];
+      const path = paths.all()[i]!;
       const length = path.length();
       for (let n = 0; n < numberPerPath; n++) {
         const pct = Math.min(0.999, n * d);

@@ -41,7 +41,7 @@ export const CommandPalette = ({ open, onClose }: CommandPaletteProps) => {
       // Skip actions that are not available in command palette
       if (action.availableInCommandPalette === false) continue;
 
-      const keyBindings = findKeyBindingsForAction(actionId as ActionName, keyMap);
+      const keyBindings = findKeyBindingsForAction(actionId, keyMap);
       const keyBinding = keyBindings.length > 0 ? formatKeyBinding(keyBindings[0]) : undefined;
 
       // Use description if available, otherwise generate label from action ID
@@ -53,10 +53,10 @@ export const CommandPalette = ({ open, onClose }: CommandPaletteProps) => {
           .join(' ');
 
       result.push({
-        id: actionId as ActionName,
+        id: actionId,
         label,
         keyBinding,
-        isEnabled: action.isEnabled ? action.isEnabled({}) : true
+        isEnabled: action.isEnabled({})
       });
     }
 
@@ -71,7 +71,7 @@ export const CommandPalette = ({ open, onClose }: CommandPaletteProps) => {
       cmd =>
         cmd.label.toLowerCase().includes(searchLower) ||
         cmd.id.toLowerCase().includes(searchLower) ||
-        (cmd.keyBinding && cmd.keyBinding.toLowerCase().includes(searchLower))
+        cmd.keyBinding?.toLowerCase().includes(searchLower)
     );
 
     // Sort so enabled actions come first, then disabled actions

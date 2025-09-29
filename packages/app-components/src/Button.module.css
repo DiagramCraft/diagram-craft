@@ -40,9 +40,6 @@
   outline-offset: -1px;
 }
 
-.cmp-button--secondary {
-}
-
 .cmp-button--danger {
   border: 1px solid var(--error-fg);
   color: var(--error-fg);

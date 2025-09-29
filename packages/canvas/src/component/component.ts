@@ -4,7 +4,7 @@ import { EventEmitter, type EventKey, type EventMap } from '@diagram-craft/utils
 
 type Callback = () => void | (() => void);
 
-let CURRENT_EFFECT_MANAGER: EffectManager | undefined = undefined;
+let CURRENT_EFFECT_MANAGER: EffectManager | undefined;
 
 export class Observable<T> extends EventEmitter<{ change: { newValue: T } }> {
   #value: T;
@@ -44,7 +44,7 @@ export const createEffect = (callback: Callback, deps: unknown[]) => {
   if (!CURRENT_EFFECT_MANAGER) {
     throw new Error('Effect must be run inside a component');
   }
-  CURRENT_EFFECT_MANAGER!.add(callback, deps);
+  CURRENT_EFFECT_MANAGER.add(callback, deps);
 };
 
 export const isInComponent = () => {
@@ -64,14 +64,14 @@ class EffectManager {
     const id = (this.idx++).toString();
     if (
       id in this.dependencies &&
-      (this.dependencies[id].deps.length === 0 ||
-        deps.every((d, i) => d === this.dependencies[id].deps[i]))
+      (this.dependencies[id]!.deps.length === 0 ||
+        deps.every((d, i) => d === this.dependencies[id]!.deps[i]))
     ) {
       return;
     }
 
     if (id in this.dependencies) {
-      this.dependencies[id].cleanup();
+      this.dependencies[id]!.cleanup();
     }
 
     const res = dependency();
@@ -83,14 +83,13 @@ class EffectManager {
 
   cleanup() {
     for (const id in this.dependencies) {
-      this.dependencies[id].cleanup();
+      this.dependencies[id]!.cleanup();
     }
   }
 
   _start() {
     this.idx = 0;
 
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
     CURRENT_EFFECT_MANAGER = this;
   }
 
@@ -143,7 +142,7 @@ export abstract class Component<P = Record<string, never>> {
     this.onDetach(this.currentProps!);
     // Note: the check with contains here is to avoid the issue explained at
     //       https://stackoverflow.com/questions/21926083/failed-to-execute-removechild-on-node
-    if (this.element?.el && this.element.el.parentElement?.contains(this.element.el)) {
+    if (this.element?.el?.parentElement?.contains(this.element.el)) {
       try {
         this.element.el.remove();
       } catch {
@@ -212,7 +211,7 @@ export abstract class Component<P = Record<string, never>> {
         hooks: {
           onInsert: node => {
             (node.data as ComponentVNodeData<P>).component.instance?.onAttach(
-              (node.data as ComponentVNodeData<P>).component!.instance!.currentProps!
+              (node.data as ComponentVNodeData<P>).component.instance!.currentProps!
             );
             hooks?.onInsert?.(node);
           },

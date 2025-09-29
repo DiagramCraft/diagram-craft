@@ -340,7 +340,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
 
       // **** Verify
       expect(edge1.children[edge1.children.length - 1]).toBe(child);
-      if (model.doc2) expect(edge2!.children[edge2!.children.length - 1].id).toBe(child.id);
+      if (model.doc2) expect(edge2!.children[edge2!.children.length - 1]!.id).toBe(child.id);
     });
 
     it('should update both parent and child in UnitOfWork', () => {
@@ -370,10 +370,10 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
 
       // **** Verify
       expect(edge1.labelNodes?.length).toBe(1);
-      expect(edge1.labelNodes?.[0].node().id).toBe(child.id);
+      expect(edge1.labelNodes?.[0]!.node().id).toBe(child.id);
       if (model.doc2) {
         expect(edge2?.labelNodes).toHaveLength(1);
-        expect(edge2?.labelNodes?.[0].node().id).toBe(child.id);
+        expect(edge2?.labelNodes?.[0]!.node().id).toBe(child.id);
       }
     });
 
@@ -409,8 +409,8 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
     it('should remove the child from the children array', () => {
       // **** Setup
       const elementRemove = [vi.fn(), vi.fn()];
-      model.diagram1.on('elementRemove', elementRemove[0]);
-      if (model.diagram2) model.diagram2.on('elementRemove', elementRemove[1]);
+      model.diagram1.on('elementRemove', elementRemove[0]!);
+      if (model.diagram2) model.diagram2.on('elementRemove', elementRemove[1]!);
 
       const child = model.layer1.createNode();
       edge1.addChild(child, model.uow);
@@ -628,8 +628,8 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       edge1.addLabelNode(labelNode, model.uow);
 
       const elementChange = [vi.fn(), vi.fn()];
-      model.diagram1.on('elementChange', elementChange[0]);
-      if (model.diagram2) model.diagram2.on('elementChange', elementChange[1]);
+      model.diagram1.on('elementChange', elementChange[0]!);
+      if (model.diagram2) model.diagram2.on('elementChange', elementChange[1]!);
 
       // **** Act
       UnitOfWork.execute(model.diagram1, uow => edge1.removeLabelNode(labelNode, uow));
@@ -663,11 +663,11 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
 
       // Verify
       expect(edge1.waypoints).toHaveLength(1);
-      expect(edge1.waypoints[0].point).toEqual({ x: 5, y: 5 });
+      expect(edge1.waypoints[0]!.point).toEqual({ x: 5, y: 5 });
       expect(model.elementChange[0]).toHaveBeenCalledTimes(1);
       if (edge2) {
         expect(edge2.waypoints).toHaveLength(1);
-        expect(edge2.waypoints[0].point).toEqual({ x: 5, y: 5 });
+        expect(edge2.waypoints[0]!.point).toEqual({ x: 5, y: 5 });
         expect(model.elementChange[1]).toHaveBeenCalledTimes(1);
       }
     });
@@ -679,12 +679,12 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
 
       // Verify
       expect(edge1.waypoints).toHaveLength(2);
-      expect(edge1.waypoints[0].point).toEqual({ x: 5, y: 5 });
-      expect(edge1.waypoints[1].point).toEqual({ x: 75, y: 75 });
+      expect(edge1.waypoints[0]!.point).toEqual({ x: 5, y: 5 });
+      expect(edge1.waypoints[1]!.point).toEqual({ x: 75, y: 75 });
       if (edge2) {
         expect(edge2.waypoints).toHaveLength(2);
-        expect(edge2.waypoints[0].point).toEqual({ x: 5, y: 5 });
-        expect(edge2.waypoints[1].point).toEqual({ x: 75, y: 75 });
+        expect(edge2.waypoints[0]!.point).toEqual({ x: 5, y: 5 });
+        expect(edge2.waypoints[1]!.point).toEqual({ x: 75, y: 75 });
       }
     });
   });
@@ -697,15 +697,15 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
 
       // Act
       model.reset();
-      UnitOfWork.execute(model.diagram1, uow => edge1.removeWaypoint(edge1.waypoints[0], uow));
+      UnitOfWork.execute(model.diagram1, uow => edge1.removeWaypoint(edge1.waypoints[0]!, uow));
 
       // Verify
       expect(edge1.waypoints).toHaveLength(1);
-      expect(edge1.waypoints[0].point).toEqual({ x: 75, y: 75 });
+      expect(edge1.waypoints[0]!.point).toEqual({ x: 75, y: 75 });
       expect(model.elementChange[0]).toHaveBeenCalledTimes(1);
       if (edge2) {
         expect(edge2.waypoints).toHaveLength(1);
-        expect(edge2.waypoints[0].point).toEqual({ x: 75, y: 75 });
+        expect(edge2.waypoints[0]!.point).toEqual({ x: 75, y: 75 });
         expect(model.elementChange[1]).toHaveBeenCalledTimes(1);
       }
     });
@@ -720,14 +720,14 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       // Act
       model.reset();
       UnitOfWork.execute(model.diagram1, uow =>
-        edge1.moveWaypoint(edge1.waypoints[0], { x: 50, y: 50 }, uow)
+        edge1.moveWaypoint(edge1.waypoints[0]!, { x: 50, y: 50 }, uow)
       );
 
       // Verify
-      expect(edge1.waypoints[0].point).toEqual({ x: 50, y: 50 });
+      expect(edge1.waypoints[0]!.point).toEqual({ x: 50, y: 50 });
       expect(model.elementChange[0]).toHaveBeenCalledTimes(1);
       if (edge2) {
-        expect(edge2.waypoints[0].point).toEqual({ x: 50, y: 50 });
+        expect(edge2.waypoints[0]!.point).toEqual({ x: 50, y: 50 });
         expect(model.elementChange[1]).toHaveBeenCalledTimes(1);
       }
     });
@@ -746,10 +746,10 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       );
 
       // Verify
-      expect(edge1.waypoints[1].point).toEqual({ x: 50, y: 50 });
+      expect(edge1.waypoints[1]!.point).toEqual({ x: 50, y: 50 });
       expect(model.elementChange[0]).toHaveBeenCalledTimes(1);
       if (edge2) {
-        expect(edge2.waypoints[1].point).toEqual({ x: 50, y: 50 });
+        expect(edge2.waypoints[1]!.point).toEqual({ x: 50, y: 50 });
         expect(model.elementChange[1]).toHaveBeenCalledTimes(1);
       }
     });

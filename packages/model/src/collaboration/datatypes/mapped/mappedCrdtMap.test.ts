@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it } from 'vitest';
 import { watch } from '@diagram-craft/utils/watchableValue';
 import { type CRDTFactory, type CRDTMap } from '../../crdt';

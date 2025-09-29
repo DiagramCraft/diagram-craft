@@ -93,17 +93,17 @@ class StarComponent extends BaseNodeComponent {
 
     const path = boundary.singular();
 
-    shapeBuilder.controlPoint(path.segments[1].start, ({ x, y }, uow) => {
+    shapeBuilder.controlPoint(path.segments[1]!.start, ({ x, y }, uow) => {
       const distance = Point.distance({ x, y }, Box.center(props.node.bounds));
       props.node.updateCustomProps(
         'star',
         p => (p.innerRadius = distance / (props.node.bounds.w / 2)),
         uow
       );
-      return `Inner radius: ${round(props.node.renderProps.custom.star!.innerRadius! * 100)}%`;
+      return `Inner radius: ${round(props.node.renderProps.custom.star.innerRadius * 100)}%`;
     });
 
-    shapeBuilder.controlPoint(path.segments[2].start, ({ x, y }, uow) => {
+    shapeBuilder.controlPoint(path.segments[2]!.start, ({ x, y }, uow) => {
       const angle =
         Math.PI / 2 +
         Vector.angle(Point.subtract({ x, y }, Box.center(props.node.bounds))) -

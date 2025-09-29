@@ -101,7 +101,7 @@ export const CanvasGuidesPanel = (props: Props) => {
 
   const addGuide = () => {
     const existingGuides = [...diagram.guides];
-    let newGuide;
+    let newGuide: Guide;
 
     if (existingGuides.length === 0) {
       // First guide: vertical at center of canvas
@@ -113,7 +113,7 @@ export const CanvasGuidesPanel = (props: Props) => {
       });
     } else {
       // Use the last guide as reference
-      const lastGuide = existingGuides[existingGuides.length - 1];
+      const lastGuide = existingGuides[existingGuides.length - 1]!;
       newGuide = diagram.addGuide({
         type: lastGuide.type,
         position: lastGuide.position + 100,

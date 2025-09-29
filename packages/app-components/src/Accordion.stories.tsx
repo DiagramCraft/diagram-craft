@@ -20,7 +20,7 @@ type Story = StoryObj<typeof meta>;
 const render = function Component(args: Story['args']) {
   const [, setArgs] = useArgs();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
   const onValueChange = (value: any) => {
     args.onValueChange?.(value);
     setArgs({ value: value });

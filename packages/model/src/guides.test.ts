@@ -102,7 +102,7 @@ describe('Guide Undoable Actions', () => {
       action.undo(); // Restore
 
       // Verify
-      const restoredGuide = diagram.guides[0];
+      const restoredGuide = diagram.guides[0]!;
       expect(restoredGuide.id).toBe(guide.id);
       expect(restoredGuide.type).toBe('vertical');
       expect(restoredGuide.position).toBe(150);
@@ -361,10 +361,10 @@ describe('Guide Undoable Actions', () => {
       expect(restoredGuide.color).toBe('#red');
 
       diagram.undoManager.undo(); // Undo color change
-      expect(diagram.guides[0].color).toBe('#blue');
+      expect(diagram.guides[0]!.color).toBe('#blue');
 
       diagram.undoManager.undo(); // Undo move
-      expect(diagram.guides[0].position).toBe(50);
+      expect(diagram.guides[0]!.position).toBe(50);
 
       diagram.undoManager.undo(); // Undo create
       expect(diagram.guides).toHaveLength(0);
@@ -374,10 +374,10 @@ describe('Guide Undoable Actions', () => {
       expect(diagram.guides).toHaveLength(1);
 
       diagram.undoManager.redo(); // Move
-      expect(diagram.guides[0].position).toBe(100);
+      expect(diagram.guides[0]!.position).toBe(100);
 
       diagram.undoManager.redo(); // Edit color
-      expect(diagram.guides[0].color).toBe('#red');
+      expect(diagram.guides[0]!.color).toBe('#red');
 
       diagram.undoManager.redo(); // Delete
       expect(diagram.guides).toHaveLength(0);

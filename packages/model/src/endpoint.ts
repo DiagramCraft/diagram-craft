@@ -8,6 +8,7 @@ import { _p, Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
 import { isSerializedEndpointPointInNode, isSerializedEndpointFree } from './serialization/utils';
 import { getTypedKeys } from '@diagram-craft/utils/object';
+import { assert } from '@diagram-craft/utils/assert';
 
 export interface Endpoint {
   readonly position: Point;
@@ -93,16 +94,18 @@ export class AnchorEndpoint
   }
 
   private getAnchorType() {
-    return this.getAnchor()!.type;
+    return this.getAnchor().type;
   }
 
   getAnchor() {
-    return this.node.getAnchor(this.anchorId);
+    const anchor = this.node.getAnchor(this.anchorId);
+    assert.present(anchor);
+    return anchor;
   }
 
   get position() {
     const bounds = this.node.bounds;
-    const ref = this.node._getAnchorPosition(this.anchorId!);
+    const ref = this.node._getAnchorPosition(this.anchorId);
 
     const v = { x: this.offset.x * bounds.w, y: this.offset.y * bounds.h };
     const rotatedOffset = Point.rotateAround(v, bounds.r, Point.ORIGIN);
@@ -156,7 +159,7 @@ export class PointInNodeEndpoint
 
   get position() {
     const bounds = this.node.bounds;
-    const ref = this.ref ? this.node!._getPositionInBounds(this.ref) : bounds;
+    const ref = this.ref ? this.node._getPositionInBounds(this.ref) : bounds;
 
     const v =
       this.offsetType === 'absolute'

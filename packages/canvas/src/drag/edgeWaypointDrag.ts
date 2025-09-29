@@ -19,7 +19,7 @@ export class EdgeWaypointDrag extends Drag {
   }
 
   onDrag({ offset }: DragEvents.DragStart) {
-    this.edge.moveWaypoint(this.edge.waypoints[this.waypointIdx], offset, this.uow);
+    this.edge.moveWaypoint(this.edge.waypoints[this.waypointIdx]!, offset, this.uow);
     this.uow.notify();
   }
 

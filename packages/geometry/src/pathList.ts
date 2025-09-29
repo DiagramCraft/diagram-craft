@@ -24,7 +24,10 @@ export class PathList {
   constructor(private paths: Path[]) {}
 
   singular() {
-    assert.true(this.paths.length === 1, `Expected a single path, ${this.paths.length} found`);
+    assert.arrayWithExactlyOneElement(
+      this.paths,
+      `Expected a single path, ${this.paths.length} found`
+    );
     return this.paths[0];
   }
 
@@ -82,9 +85,9 @@ export class PathList {
   }
 
   projectPoint(p: Point): ProjectedPointOnPathList {
-    let best: ProjectedPointOnPathList | undefined = undefined;
+    let best: ProjectedPointOnPathList | undefined ;
     for (let idx = 0; idx < this.paths.length; idx++) {
-      const path = this.paths[idx];
+      const path = this.paths[idx]!;
 
       const bp = path.projectPoint(p);
       if (best === undefined || Point.distance(p, bp.point) < Point.distance(p, best.point)) {
