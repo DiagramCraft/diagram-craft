@@ -163,7 +163,7 @@ export const deepEquals = <T>(a: T, b: T): boolean => {
   if (keysA.length !== keysB.length) return false;
 
   for (const key of keysA) {
-    if (!Object.prototype.hasOwnProperty.call(b, key) || !deepEquals(a[key], b[key])) return false;
+    if (!Object.hasOwn(b, key) || !deepEquals(a[key], b[key])) return false;
   }
 
   return true;
@@ -201,7 +201,7 @@ export const shallowEquals = <T>(a: T, b: T): boolean => {
   if (keysA.length !== keysB.length) return false;
 
   for (const key of keysA) {
-    if (!Object.prototype.hasOwnProperty.call(b, key) || a[key] !== b[key]) return false;
+    if (!Object.hasOwn(b, key) || a[key] !== b[key]) return false;
   }
 
   return true;

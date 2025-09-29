@@ -22,12 +22,10 @@
       },
       "suspicious": {
         "noDuplicateProperties": "off",
-        "noTsIgnore": "on",
         "useIterableCallbackReturn": "off",
         "noAssignInExpressions": "off",
         "noArrayIndexKey": "off",
         "noConfusingVoidType": "off",
-        "noPrototypeBuiltins": "off",
         "noImportantInKeyframe": "off",
         "noConfusingLabels": "off",
         "noControlCharactersInRegex": "off"
