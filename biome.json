@@ -41,7 +41,7 @@
         "noAdjacentSpacesInRegex": "off"
       },
       "correctness": {
-        "useExhaustiveDependencies": "off",
+        "useExhaustiveDependencies": "warn",
         "noConstantCondition": "off",
         "useUniqueElementIds": "off",
         "noUnusedLabels": "off",
