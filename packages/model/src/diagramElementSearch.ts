@@ -89,7 +89,7 @@ export const searchByElementSearchClauses = (
         if (layer instanceof RegularLayer) {
           for (const element of layer.elements) {
             // @ts-expect-error
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any,@typescript-eslint/no-unsafe-return
+            // biome-ignore lint/suspicious/noExplicitAny: false positive,@typescript-eslint/no-unsafe-return
             const value: any = clause.path.split('.').reduce((p, c) => p[c], element);
 
             switch (clause.relation) {
@@ -122,14 +122,22 @@ export const searchByElementSearchClauses = (
                 }
                 break;
               case 'gt':
-                if (value != null && typeof value === 'number' && !Number.isNaN(Number(clause.value))) {
+                if (
+                  value != null &&
+                  typeof value === 'number' &&
+                  !Number.isNaN(Number(clause.value))
+                ) {
                   if (value > Number(clause.value)) result.add(element.id);
                 } else if (value != null && value > clause.value) {
                   result.add(element.id);
                 }
                 break;
               case 'lt':
-                if (value != null && typeof value === 'number' && !Number.isNaN(Number(clause.value))) {
+                if (
+                  value != null &&
+                  typeof value === 'number' &&
+                  !Number.isNaN(Number(clause.value))
+                ) {
                   if (value < Number(clause.value)) result.add(element.id);
                 } else if (value != null && value < clause.value) {
                   result.add(element.id);
@@ -172,8 +180,6 @@ export const searchByElementSearchClauses = (
         }
       }
       results.push(result);
-
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     } else if (clause.type === 'comment') {
       const allComments = diagram.commentManager.getAll();
 

@@ -7,13 +7,13 @@ export type ActionEvents = {
   /**
    * This event is emitted when the action is enabled or disabled.
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
   actionChanged: { action?: Action<any> };
 
   /**
    * This event is emitted when the action is triggered.
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
   actionTriggered: { action?: Action<any> };
 };
 
@@ -36,7 +36,7 @@ export interface Action<T = undefined> extends Emitter<ActionEvents> {
   availableInCommandPalette: boolean;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: false positive
 export class ActionCriteria<T extends EventMap = any> {
   private triggerCallback: { (): void } | undefined;
 

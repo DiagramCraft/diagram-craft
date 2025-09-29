@@ -1,7 +1,7 @@
 import { AbstractTool } from '@diagram-craft/canvas/tool';
 import { DragDopManager, Modifiers } from '@diagram-craft/canvas/dragDropManager';
 import { Point } from '@diagram-craft/geometry/point';
-import { toUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
+import { PathListBuilder, toUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -11,7 +11,6 @@ import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { assert } from '@diagram-craft/utils/assert';
 
 declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Extensions {
     interface Tools {
       freehand: FreehandTool;

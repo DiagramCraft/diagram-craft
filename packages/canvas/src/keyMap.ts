@@ -36,7 +36,7 @@ export type KeyMap = Partial<Record<KeyBinding, keyof ActionMap>>;
 
 declare global {
   interface ActionMap
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // biome-ignore lint/suspicious/noExplicitAny: false positive
     extends Record<string, (Action<any> | ToggleAction<any>) & EventEmitter<ActionEvents>> {}
 }
 

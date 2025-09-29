@@ -45,7 +45,7 @@ export const createLinkedNode = (
   // We need to determine the correct anchor before we adjust along the secondary axis
   // ... as we want when creating multiple nodes that all connect to the "same" anchor
   let distance = Number.MAX_SAFE_INTEGER;
-  let shortest: Anchor | undefined ;
+  let shortest: Anchor | undefined;
   for (const anchor of newNode.anchors) {
     const d = Point.distance(
       node._getAnchorPosition(sourceAnchorId),
@@ -80,8 +80,6 @@ export const createLinkedNode = (
       },
       uow
     );
-
-    // eslint-disable-next-line no-constant-condition
   } while (true);
 
   const rightSecondaryOffset = secondaryOffset;
@@ -105,8 +103,6 @@ export const createLinkedNode = (
       },
       uow
     );
-
-    // eslint-disable-next-line no-constant-condition
   } while (true);
 
   // Keep the best direction

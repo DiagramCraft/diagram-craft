@@ -115,7 +115,7 @@ export const AppLoader = (props: Props) => {
       const loader = stencilLoaderRegistry[def.type];
       assert.present(loader, `Stencil loader ${def.type} not found`);
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // biome-ignore lint/suspicious/noExplicitAny: false positive
       loader().then(loader => loader(doc.nodeDefinitions, def.opts as any));
     }
   }, [props.stencils, doc]);

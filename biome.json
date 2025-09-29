@@ -23,7 +23,6 @@
       "suspicious": {
         "noDuplicateProperties": "off",
         "noTsIgnore": "on",
-        "noExplicitAny": "off",
         "useIterableCallbackReturn": "off",
         "noAssignInExpressions": "off",
         "noArrayIndexKey": "off",
@@ -76,5 +75,8 @@
   },
   "javascript": {
     "globals": []
+  },
+  "assist": {
+    "enabled": false
   }
 }

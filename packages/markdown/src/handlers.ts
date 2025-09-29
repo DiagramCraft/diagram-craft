@@ -137,7 +137,6 @@ export class BlockquoteHandler implements BlockParser {
  * at least 4 spaces or 1 tab character.
  */
 export class CodeHandler implements BlockParser {
-  // eslint-disable-next-line no-regex-spaces
   private re = /^(?:\t|    )(.*)/;
 
   parse(parser: Parser, stream: TokenStream, ast: ASTNode[]): boolean {

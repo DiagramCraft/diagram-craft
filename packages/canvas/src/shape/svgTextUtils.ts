@@ -2,7 +2,7 @@ import { assert } from '@diagram-craft/utils/assert';
 import { HTMLParserCallback } from '@diagram-craft/utils/html';
 
 const getNumericStyleProp = (style: CSSStyleDeclaration, prop: string) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
   return parseInt((style[prop as any] ?? '0px').replace('px', ''), 10);
 };
 

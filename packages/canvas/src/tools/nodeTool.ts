@@ -9,7 +9,6 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 
 declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Extensions {
     interface Tools {
       node: NodeTool;

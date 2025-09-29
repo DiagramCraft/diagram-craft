@@ -157,7 +157,7 @@ const isPropsDirty = (
         if (Object.keys(props[key]).length === 0) continue;
 
         // Also an object with all defaults is not dirty
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // biome-ignore lint/suspicious/noExplicitAny: false positive
         if (defaults.isSameAsDefaults(props, [...path, key].join('.') as any)) continue;
 
         // TODO: It's unclear if this should be here or not
@@ -215,7 +215,7 @@ declare global {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: false positive
 const mapper: CRDTMapper<Stylesheet<any>, CRDTMap<StylesheetSnapshot>> = {
   fromCRDT<T extends StylesheetType>(e: CRDTMap<StylesheetSnapshot>): Stylesheet<T> {
     return new Stylesheet<T>(e);
@@ -352,7 +352,7 @@ export class DiagramStyles {
             if ('custom' in stylesheet.props) {
               for (const key of Object.keys(stylesheet.props.custom!)) {
                 if (key in (shapeToClear.custom ?? {})) {
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  // biome-ignore lint/suspicious/noExplicitAny: false positive
                   delete (shapeToClear.custom! as any)[key];
                 }
               }
@@ -474,7 +474,7 @@ export class DiagramStyles {
     }, uow);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
   addStylesheet(id: string, stylesheet: Stylesheet<any>, _uow?: UnitOfWork) {
     this.crdt.transact(() => {
       if (stylesheet.type === 'node') {

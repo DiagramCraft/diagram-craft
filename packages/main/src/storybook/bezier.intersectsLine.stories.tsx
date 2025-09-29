@@ -3,8 +3,6 @@ import React, { useState } from 'react';
 import { CubicBezier } from '@diagram-craft/geometry/bezier';
 import { Line } from '@diagram-craft/geometry/line';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 const BezierTest = () => {
   const [drag, setDrag] = useState<{ callback: (e: React.MouseEvent<any>) => void } | undefined>(
     undefined

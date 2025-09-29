@@ -4,8 +4,6 @@ import { CubicBezier } from '@diagram-craft/geometry/bezier';
 import { Point } from '@diagram-craft/geometry/point';
 import { Vector } from '@diagram-craft/geometry/vector';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 const BezierTest = () => {
   const [drag, setDrag] = useState<{ callback: (e: React.MouseEvent<any>) => void } | undefined>(
     undefined

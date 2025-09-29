@@ -16,7 +16,6 @@ export const fileHandlers: IpcHandlers = {
       });
 
       if (!result.canceled && result.filePaths.length > 0) {
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         const filePath = result.filePaths[0]!;
         BrowserWindow.getFocusedWindow()?.setRepresentedFilename(filePath);
         app.addRecentDocument(filePath);

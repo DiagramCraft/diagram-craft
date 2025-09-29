@@ -88,7 +88,7 @@ export type Json = string | number | boolean | null | Json[] | { [key: string]: 
  * Represents a nested object of any shape.
  * @deprecated Use more specific types instead of this generic type.
  */
-// eslint-disable-next-line
+// biome-ignore lint/suspicious/noExplicitAny: false positive
 export type NestedObject = any;
 
 export type NoneEmptyArray<T> = [T, ...T[]];

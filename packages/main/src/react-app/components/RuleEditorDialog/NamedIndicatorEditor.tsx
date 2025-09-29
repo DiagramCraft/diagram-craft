@@ -6,7 +6,7 @@ import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { makeProperty } from './utils';
 import { IndicatorForm } from '../../toolwindow/ObjectToolWindow/IndicatorForm';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: false positive
 const path = (id: string, rest: string): any => `indicators.${id}.${rest}`;
 
 export const NamedIndicatorEditor: Editor = props => {

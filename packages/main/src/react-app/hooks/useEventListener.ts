@@ -64,7 +64,7 @@ export function useDomEventListener<
 ) {
   useEffect(() => {
     const $target =
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // biome-ignore lint/suspicious/noExplicitAny: false positive
       element === window || element === document ? element : (element as RefObject<any>).current;
     if (!$target || !$target.addEventListener) return;
 

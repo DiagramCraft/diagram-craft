@@ -57,7 +57,6 @@ export const ExtendedDataTab = () => {
                 s = { schema, type: 'schema', data: {} };
                 p.data.data.push(s);
               }
-              // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
               s.data ??= {};
               s.data[id] = (ev.target as HTMLInputElement).value;
             }, uow);

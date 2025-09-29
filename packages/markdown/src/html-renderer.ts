@@ -136,7 +136,7 @@ export class HTMLRenderer {
         return '';
 
       default:
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // biome-ignore lint/suspicious/noExplicitAny: false positive
         console.log(`*** Unsupported type ${(astNode as any).type}`);
         return '';
     }

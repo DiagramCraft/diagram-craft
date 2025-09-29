@@ -6,7 +6,6 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { fitInAspectRatio } from '@diagram-craft/model/viewBox';
 
 declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Extensions {
     interface Tools {
       zoom: ZoomTool;

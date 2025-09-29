@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { beforeEach, describe, expect, it } from 'vitest';
 import { DiagramStyles, getCommonProps, Stylesheet } from './diagramStyles';
 import { StylesheetSnapshot, UnitOfWork } from './unitOfWork';

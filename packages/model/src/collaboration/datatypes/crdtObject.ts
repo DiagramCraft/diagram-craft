@@ -35,7 +35,7 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
 
     for (const [path, value] of map.entries()) {
       const parts = path.split('.');
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // biome-ignore lint/suspicious/noExplicitAny: false positive
       let current: any = result;
 
       for (let i = 0; i < parts.length - 1; i++) {
@@ -92,7 +92,7 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
 
       // Delete keys that are missing from the new object
       for (const key of existingTopLevelKeys.difference(newKeys)) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // biome-ignore lint/suspicious/noExplicitAny: false positive
         this.#proxy![key as keyof T] = undefined as any;
       }
 
@@ -103,7 +103,6 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
           this.#proxy![i] = obj[i];
         }
       } else {
-        // eslint-disable-next-line @typescript-eslint/no-for-in-array
         for (const key in obj) {
           this.#proxy![key] = obj[key];
         }
@@ -118,7 +117,6 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
   }
 
   private createProxy(target = {}, path = ''): T {
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const that = this;
     return new Proxy<T>(target as unknown as T, {
       ownKeys(_target: T): ArrayLike<string | symbol> {
@@ -221,7 +219,7 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
           }
         } else {
           if (isPrimitive(value)) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            // biome-ignore lint/suspicious/noExplicitAny: false positive
             map.set(fullPath, value as any);
           } else if (value instanceof Object && Object.keys(value).length === 0) {
             map.set(fullPath, undefined);
@@ -234,10 +232,10 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
             }
 
             // Then set the new nested values
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            // biome-ignore lint/suspicious/noExplicitAny: false positive
             const setNestedValue = (nestedValue: any, currentPath: string) => {
               if (isPrimitive(nestedValue)) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                // biome-ignore lint/suspicious/noExplicitAny: false positive
                 map.set(currentPath, nestedValue as any);
               } else if (nestedValue !== null && typeof nestedValue === 'object') {
                 for (const key in nestedValue) {

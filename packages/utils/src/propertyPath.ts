@@ -1,17 +1,18 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 type IsAny<T> = unknown extends T ? ([keyof T] extends [never] ? false : true) : false;
 
 type PropPathImpl<T, Key extends keyof T> = Key extends string
   ? IsAny<T[Key]> extends true
     ? never
-    : NonNullable<T[Key]> extends Record<string, any>
+    : // biome-ignore lint/suspicious/noExplicitAny: false positive
+      NonNullable<T[Key]> extends Record<string, any>
       ?
           | `${Key}.${PropPathImpl<
               NonNullable<T[Key]>,
+              // biome-ignore lint/suspicious/noExplicitAny: false positive
               Exclude<keyof NonNullable<T[Key]>, keyof any[]>
             > &
               string}`
+          // biome-ignore lint/suspicious/noExplicitAny: false positive
           | `${Key}.${Exclude<keyof NonNullable<T[Key]>, keyof any[]> & string}`
       : never
   : never;
@@ -45,7 +46,6 @@ export type PropPathValue<T, P extends PropPath<T>> = P extends `${infer Key}.${
  * accessor.set(myObject, 'path.to.property', newValue);
  */
 export class DynamicAccessor<T> {
-
   /**
    * Gets the value of a property in an object using a string path.
    *
@@ -55,6 +55,7 @@ export class DynamicAccessor<T> {
    */
   get<K extends PropPath<T> = PropPath<T>>(obj: T, key: K): PropPathValue<T, K> | undefined {
     const parts = (key as string).split('.');
+    // biome-ignore lint/suspicious/noExplicitAny: false positive
     let current: any = obj;
     for (const part of parts) {
       if (current === undefined) return undefined as PropPathValue<T, K>;
@@ -73,6 +74,7 @@ export class DynamicAccessor<T> {
    */
   set<K extends PropPath<T> = PropPath<T>>(obj: T, key: K, value: PropPathValue<T, K>): void {
     const parts = (key as string).split('.');
+    // biome-ignore lint/suspicious/noExplicitAny: false positive
     let current: any = obj;
     for (let i = 0; i < parts.length - 1; i++) {
       current[parts[i]!] ??= {};

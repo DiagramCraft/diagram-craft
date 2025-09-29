@@ -62,7 +62,7 @@ export const asProperty = (
     val: customProp.value,
     set: (v: unknown) => {
       change(uow => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // biome-ignore lint/suspicious/noExplicitAny: false positive
         customProp.onChange(v as any, uow);
       });
     },
@@ -105,7 +105,7 @@ export interface NodeDefinition {
 
 const missing = new Set();
 if (typeof window !== 'undefined') {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
   (window as any).dump_missing = () => {
     console.log([...missing].join('\n'));
   };
@@ -148,7 +148,7 @@ export class NodeDefinitionRegistry {
     assert.present(loader, `Stencil loader ${entry.type} not found`);
 
     const l = await loader();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // biome-ignore lint/suspicious/noExplicitAny: false positive
     await l(this, entry.opts as any);
 
     return true;

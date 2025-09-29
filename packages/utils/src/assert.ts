@@ -42,9 +42,9 @@ type AssertType = {
     arg: T[] | ReadonlyArray<T> | undefined | null,
     msg?: string
   ) => asserts arg is [T, ...T[]];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
   true: (arg: any, msg?: string) => asserts arg is true;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
   false: (arg: any, msg?: string) => asserts arg is false;
   fail: (msg?: string) => never;
 };
@@ -72,11 +72,11 @@ const makeAssertions = (error: (m: string) => never): AssertType & AssertTypeExt
   ): asserts arg is [T, ...T[]] => {
     if (!is.arrayNotEmpty(arg)) error(msg ?? 'array has at least one element');
   },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
   true: (arg: any, msg?: string): asserts arg is true => {
     if (!is.true(arg)) error(msg ?? 'must be true');
   },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
   false: (arg: any, msg?: string): asserts arg is false => {
     if (!is.false(arg)) error(msg ?? 'must be false');
   },

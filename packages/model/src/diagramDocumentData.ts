@@ -222,7 +222,7 @@ export class DataManager extends EventEmitter<DataProviderEventMap> {
   refreshData() {
     return Promise.all(
       this.providers.map(p =>
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // biome-ignore lint/suspicious/noExplicitAny: false positive
         (p as any)['refreshData']
           ? (p as unknown as RefreshableDataProvider).refreshData()
           : undefined
@@ -233,7 +233,7 @@ export class DataManager extends EventEmitter<DataProviderEventMap> {
   refreshSchemas() {
     return Promise.all(
       this.providers.map(p =>
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // biome-ignore lint/suspicious/noExplicitAny: false positive
         (p as any)['refreshSchemas']
           ? (p as unknown as RefreshableSchemaProvider).refreshSchemas()
           : undefined

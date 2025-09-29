@@ -26,7 +26,7 @@ import {
 import { makeElementMapper } from './diagramElementMapper';
 import { MappedCRDTProp } from './collaboration/datatypes/mapped/mappedCrdtProp';
 
-// eslint-disable-next-line
+// biome-ignore lint/suspicious/noExplicitAny: false positive
 type Snapshot = any;
 
 export type ElementPropsForEditing = EdgePropsForEditing | NodePropsForEditing;

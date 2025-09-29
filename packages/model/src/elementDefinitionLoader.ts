@@ -7,7 +7,7 @@ import { deserializeDiagramElements } from './serialization/deserialize';
 import type { DiagramNode } from './diagramNode';
 import { UnitOfWork } from './unitOfWork';
 
-// eslint-disable-next-line
+// biome-ignore lint/suspicious/noExplicitAny: false positive
 export const loadStencilsFromYaml = (stencils: any) => {
   const dest: Array<Stencil> = [];
   for (const stencil of stencils.stencils) {

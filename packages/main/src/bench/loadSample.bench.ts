@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { bench, describe } from 'vitest';
 import {
   defaultEdgeRegistry,
@@ -29,9 +28,11 @@ describe('loadSample', () => {
   bench(
     'loadShapes',
     async () => {
+      // biome-ignore lint/suspicious/noExplicitAny: false positive
       const root = await documentFactory.loadCRDT(undefined, {} as any, () => {});
       const document = await documentFactory.createDocument(root, undefined, () => {});
 
+      // biome-ignore lint/suspicious/noExplicitAny: false positive
       await deserializeDiagramDocument(shapes as any, document, diagramFactory);
     },
     {
@@ -71,9 +72,11 @@ describe('loadSample', () => {
   bench.skip(
     'loadArrows',
     async () => {
+      // biome-ignore lint/suspicious/noExplicitAny: false positive
       const root = await documentFactory.loadCRDT(undefined, {} as any, () => {});
       const document = await documentFactory.createDocument(root, undefined, () => {});
 
+      // biome-ignore lint/suspicious/noExplicitAny: false positive
       await deserializeDiagramDocument(arrows as any, document, diagramFactory);
     },
     {

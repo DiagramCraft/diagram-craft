@@ -343,7 +343,7 @@ export const RuleEditorDialog = (props: Props) => {
               type={'single'}
               value={type}
               onChange={value => {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                // biome-ignore lint/suspicious/noExplicitAny: false positive
                 setType(value as any);
               }}
             >

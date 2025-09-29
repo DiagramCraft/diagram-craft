@@ -2,7 +2,7 @@ import { CollaborationConfig } from './collaborationConfig';
 import { Emitter } from '@diagram-craft/utils/event';
 import { EmptyObject } from '@diagram-craft/utils/types';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: false positive
 export type CRDTCompatibleObject = CRDTMap<any> | CRDTList<any> | CRDTCompatibleInnerObject;
 
 type CRDTCompatibleInnerObject =
@@ -14,9 +14,9 @@ type CRDTCompatibleInnerObject =
   | Uint8Array
   | Array<CRDTCompatibleInnerObject>
   | ReadonlyArray<CRDTCompatibleObject>
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
   | CRDTMap<any>
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
   | CRDTList<any>
   | AdditionalCRDTCompatibleInnerObjects[keyof AdditionalCRDTCompatibleInnerObjects]
   | { [key: string]: Pick<CRDTCompatibleInnerObject, keyof CRDTCompatibleInnerObject> };
@@ -48,7 +48,7 @@ export interface CRDTRoot extends Emitter<CRDTRootEvents> {
   transact(callback: () => void): void;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: false positive
 export type CRDTMapEvents<T extends CRDTCompatibleObject = any> = {
   remoteInsert: { key: string; value: T };
   remoteDelete: { key: string; value: T };

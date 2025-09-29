@@ -8,8 +8,6 @@ import { useRedraw } from './useRedraw';
 import { Property, PropertyInfo } from '../toolwindow/ObjectToolWindow/types';
 import { Defaults } from '@diagram-craft/model/diagramDefaults';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 export type PropertyHook<TBase, TObj> = <
   K extends PropPath<TObj>,
   V extends PropPathValue<TObj, K>,
@@ -186,7 +184,9 @@ export class PropertyArrayUndoableAction<TItem, TObj, TPath extends PropPath<TOb
     public readonly description: string,
     private readonly items: TItem[],
     private readonly path: TPath,
+    // biome-ignore lint/suspicious/noExplicitAny: false positive
     private readonly before: any[],
+    // biome-ignore lint/suspicious/noExplicitAny: false positive
     private readonly after: any,
 
     // TODO: Where is this uowFactory coming from
@@ -221,9 +221,13 @@ export class PropertyUndoableAction<T> implements UndoableAction {
   #accessor = new DynamicAccessor<T>();
 
   constructor(
+    // biome-ignore lint/suspicious/noExplicitAny: false positive
     private readonly obj: any,
+    // biome-ignore lint/suspicious/noExplicitAny: false positive
     private readonly path: any,
+    // biome-ignore lint/suspicious/noExplicitAny: false positive
     private readonly before: any,
+    // biome-ignore lint/suspicious/noExplicitAny: false positive
     private readonly after: any,
     public readonly description: string,
     private readonly commit: (obj: T) => void

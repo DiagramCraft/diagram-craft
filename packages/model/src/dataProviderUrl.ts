@@ -37,7 +37,7 @@ export class UrlDataProvider extends BaseHTTPDataProvider {
       await this.fetchSchemas(true);
       await this.fetchData(true);
     } catch (e) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // biome-ignore lint/suspicious/noExplicitAny: false positive
       return `Error fetching data: ${(e as any).toString()}`;
     }
   }

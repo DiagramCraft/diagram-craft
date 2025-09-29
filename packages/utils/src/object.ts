@@ -1,6 +1,6 @@
 import { DeepPartial, type DeepReadonly, type DeepWriteable } from './types';
 
-// eslint-disable-next-line
+// biome-ignore lint/suspicious/noExplicitAny: false positive
 type Props = Record<string, any>;
 
 export const isObj = (x: unknown): x is Record<string, unknown> => isObject(x);
@@ -31,12 +31,12 @@ export const common = <T extends Record<string, unknown>>(a: T, b: T): DeepParti
 
       // If the value of the current key is an object in both objects, call the function recursively.
       if (isObj(value) && isObj(other)) {
-        // eslint-disable-next-line
+        // biome-ignore lint/suspicious/noExplicitAny: false positive
         (result as any)[key] = common(value, other);
       }
       // If the value of the current key is the same in both objects, add it to the result object.
       else if (value === other) {
-        // eslint-disable-next-line
+        // biome-ignore lint/suspicious/noExplicitAny: false positive
         (result as any)[key] = value;
       }
     });
@@ -50,7 +50,7 @@ export const deepMerge = <T extends Props>(
   target: Partial<T>,
   ...sources: Array<Partial<T> | undefined>
 ): T => {
-  // eslint-disable-next-line
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
   const result: any = target;
 
   if (!isObject(result)) return target as T;
@@ -233,7 +233,7 @@ export const deepClear = <T extends Props>(source: T, target: T) => {
   }
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: false positive
 export const deepIsEmpty = (obj: any | undefined | null) => {
   if (obj === null || obj === undefined) return true;
 

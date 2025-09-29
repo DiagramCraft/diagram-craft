@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it, vi } from 'vitest';
 import { YJSFactory, YJSList, YJSMap, YJSRoot } from './yjsCrdt';
 import { createSyncedYJSCRDTs } from './yjsTestUtils';

@@ -11,7 +11,7 @@ import { IndicatorForm } from './IndicatorForm';
 import { useElementProperty } from '../../hooks/useProperty';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: false positive
 const path = (id: string, rest: string): any => `indicators.${id}.${rest}`;
 
 const FormWrapper = (props: {

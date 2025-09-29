@@ -68,7 +68,7 @@ export const deserializeDiagramElements = (
 
       COMPATIBILITY: {
         // Note: this is for backwards compatibility only
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // biome-ignore lint/suspicious/noExplicitAny: false positive
         const textProps: any = c.props.text;
         if (textProps?.text && (!c.texts || !c.texts.text)) {
           c.texts ??= { text: textProps.text };

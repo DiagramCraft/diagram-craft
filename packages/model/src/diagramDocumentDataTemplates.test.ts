@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { describe, expect, it, vi } from 'vitest';
 import { DiagramDocumentDataTemplates } from './diagramDocumentDataTemplates';
 import { DataTemplate } from './diagramDocument';

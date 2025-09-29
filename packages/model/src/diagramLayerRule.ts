@@ -17,7 +17,7 @@ type Result = Map<string, Adjustment>;
 
 type Prop = { value: string; label: string; type?: string; items?: Prop[] };
 export const validProps = (_type: 'edge' | 'node'): Prop[] => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
   const defaultProps = (d: any, path = '') => {
     if (d === null || d === undefined) return [];
 
@@ -92,7 +92,7 @@ export class RuleLayer extends Layer<RuleLayer> {
     for (const rule of this.#rules.toArray()) {
       const interim = this.runRule(rule);
       for (const k of interim.keys()) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // biome-ignore lint/suspicious/noExplicitAny: false positive
         res.set(k, deepMerge((res.get(k) ?? {}) as any, interim.get(k) as any));
       }
     }

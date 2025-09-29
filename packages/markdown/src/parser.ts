@@ -219,7 +219,6 @@ export class Parser {
   }
 
   unescape(s: string): string {
-    // eslint-disable-next-line no-control-regex
     s = s.replace(/\x1b[a-o]/g, c => {
       return this.escapes[0]![this.escapes[1]!.indexOf(c[1]!)]!;
     });
@@ -236,7 +235,6 @@ export class Parser {
    */
   resolveInlines(s: string, state: ParserState): Array<ASTNode> | undefined {
     const dest: Array<ASTNode> = [];
-    // eslint-disable-next-line no-control-regex
     const regex = /\x1bq([0-9]+)q/g;
     let lastIndex = 0;
     let match: RegExpExecArray | null;

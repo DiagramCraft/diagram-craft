@@ -23,7 +23,7 @@ const mkContext = (d: Diagram) => {
   return {
     model: {
       activeDiagram: d,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // biome-ignore lint/suspicious/noExplicitAny: false positive
       on: (_a: any, _b: any, _c: any) => {}
     }
   } as ActionContext;

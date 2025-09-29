@@ -4,7 +4,6 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import type { Context } from './context';
 
 declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Extensions {
     interface Tools {}
   }

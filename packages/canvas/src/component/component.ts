@@ -90,7 +90,6 @@ class EffectManager {
   _start() {
     this.idx = 0;
 
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
     CURRENT_EFFECT_MANAGER = this;
   }
 

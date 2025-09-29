@@ -28,7 +28,7 @@ const AdjustButton = (props: {
   disabled?: boolean;
 }) => {
   const btnRef = useRef<HTMLButtonElement>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
   const timerRef = useRef<any>(null);
 
   useEffect(() => {

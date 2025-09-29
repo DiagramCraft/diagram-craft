@@ -4,7 +4,7 @@ import type { CRDTCompatibleObject, CRDTMap, CRDTMapEvents } from '../../crdt';
 import type { WatchableValue } from '@diagram-craft/utils/watchableValue';
 import type { EventReceiver } from '@diagram-craft/utils/event';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: false positive
 type WrapperType<T extends Record<string, CRDTCompatibleObject> = any> = {
   value: CRDTMap<T>;
   index: number;

@@ -4,9 +4,9 @@ import { NoOpCRDTMap, NoOpCRDTRoot } from './noopCrdt';
 
 export const CollaborationConfig: {
   isNoOp: boolean;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
   CRDTRoot: new (...args: any[]) => CRDTRoot;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
   CRDTMap: new (...args: any[]) => CRDTMap<any>;
   Backend: CollaborationBackend;
 } = {

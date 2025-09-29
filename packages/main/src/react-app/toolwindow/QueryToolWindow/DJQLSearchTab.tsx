@@ -28,7 +28,6 @@ const replacer = (key: string, value: unknown) => {
 
   // Handle Map objects
   if (value instanceof Map) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return {
       __type: 'Map',
       ...Object.fromEntries(value.entries())
@@ -80,7 +79,7 @@ export const DJQLSearchTab = () => {
     queries.push({ q: m[1]!, output: m[2]! });
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
   let res: any[] | undefined;
   let error: string | undefined;
   try {
@@ -96,7 +95,7 @@ export const DJQLSearchTab = () => {
       djqlQuery
     );
   } catch (e) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any,@typescript-eslint/no-unnecessary-condition
+    // biome-ignore lint/suspicious/noExplicitAny: false positive,@typescript-eslint/no-unnecessary-condition
     error = (e as Error).message ?? (e as any).toString();
   }
 
