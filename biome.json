@@ -21,7 +21,6 @@
         "useShorthandFunctionType": "off"
       },
       "suspicious": {
-        "noDuplicateProperties": "off",
         "useIterableCallbackReturn": "off",
         "noAssignInExpressions": "off",
         "noArrayIndexKey": "off",
@@ -40,7 +39,9 @@
         "useExhaustiveDependencies": "off",
         "noConstantCondition": "off",
         "useUniqueElementIds": "off",
-        "noUnusedLabels": "off"
+        "noUnusedLabels": "off",
+        "noNestedComponentDefinitions": "error",
+        "noPrivateImports": "error"
       },
       "security": {
         "noDangerouslySetInnerHtml": "off"
@@ -53,6 +54,9 @@
             "ignoreTypes": true
           }
         }
+      },
+      "performance": {
+        "noBarrelFile": "error"
       }
     },
     "includes": [
