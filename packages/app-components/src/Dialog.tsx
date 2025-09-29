@@ -8,6 +8,7 @@ const DialogButton = (props: Button) => {
     return (
       <AlertDialog.Cancel asChild>
         <button
+          type="button"
           className={`${styles.cmpDialogButton} ${styles.cmpDialogButtonSecondary}`}
           onClick={props.onClick}
         >
@@ -19,6 +20,7 @@ const DialogButton = (props: Button) => {
     return (
       <AlertDialog.Action asChild>
         <button
+          type="button"
           className={`${styles.cmpDialogButton} cmp-dialog__button--${props.type}`}
           onClick={props.onClick}
         >

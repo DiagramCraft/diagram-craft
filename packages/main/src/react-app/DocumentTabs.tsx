@@ -153,6 +153,7 @@ export const DocumentTabs = (props: Props) => {
       </Tabs.Root>
       <button
         className={'cmp-document-tabs__add'}
+        type="button"
         onClick={() => application.actions['DIAGRAM_ADD']?.execute({})}
       >
         <TbPlus />

@@ -90,7 +90,7 @@ export const MainMenu = () => {
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
-        <button className={'_menu-button'} id={'main-menu'}>
+        <button className={'_menu-button'} id={'main-menu'} type="button">
           <TbMenu2 size={'24px'} />
         </button>
       </DropdownMenu.Trigger>

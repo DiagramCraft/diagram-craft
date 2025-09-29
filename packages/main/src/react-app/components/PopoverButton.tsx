@@ -8,7 +8,7 @@ export const PopoverButton = (props: Props) => {
     <div className={'cmp-more'}>
       <Popover.Root open={open} onOpenChange={o => setOpen(o)}>
         <Popover.Trigger>
-          <button>{props.label}</button>
+          <button type="button">{props.label}</button>
         </Popover.Trigger>
         <Popover.Content
           sideOffset={5}

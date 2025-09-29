@@ -60,7 +60,7 @@ const AdjustButton = (props: {
   }, [btnRef, props, props.onClick]);
 
   return (
-    <button ref={btnRef} className={props.className} disabled={props.disabled}>
+    <button ref={btnRef} type="button" className={props.className} disabled={props.disabled}>
       {props.children}
     </button>
   );

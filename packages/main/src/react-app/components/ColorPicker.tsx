@@ -23,6 +23,7 @@ const EditableColorWell = (props: {
   return (
     <div className={'cmp-color-grid__editable'} style={{ backgroundColor: color }}>
       <button
+        type="button"
         onClick={() => {
           props.onSet(color);
         }}
@@ -114,6 +115,7 @@ export const ColorPicker = (props: Props) => {
                 }}
               >
                 <button
+                  type="button"
                   style={{
                     background:
                       'linear-gradient(to right bottom, white 48%, red 48%, red 52%, white 52%)'
@@ -130,6 +132,7 @@ export const ColorPicker = (props: Props) => {
               return arr.map((c, idx) => (
                 <button
                   key={idx}
+                  type="button"
                   style={{ backgroundColor: c }}
                   onClick={() => {
                     setColor(c);
@@ -143,6 +146,7 @@ export const ColorPicker = (props: Props) => {
             {['red', 'green', 'blue', 'yellow', 'gray', 'white', 'black'].map(c => (
               <button
                 key={c}
+                type="button"
                 style={{ backgroundColor: c }}
                 onClick={() => {
                   setColor(c);
@@ -157,6 +161,7 @@ export const ColorPicker = (props: Props) => {
                 {recentColors.map(c => (
                   <button
                     key={c}
+                    type="button"
                     style={{ backgroundColor: c }}
                     onClick={() => {
                       setColor(c);

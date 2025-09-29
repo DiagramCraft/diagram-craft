@@ -5,7 +5,6 @@
     "rules": {
       "recommended": true,
       "a11y": {
-        "useButtonType": "off",
         "useGenericFontNames": "off",
         "useKeyWithClickEvents": "off",
         "noStaticElementInteractions": "off",
@@ -51,6 +50,14 @@
       },
       "security": {
         "noDangerouslySetInnerHtml": "off"
+      },
+      "nursery": {
+        "noImportCycles": {
+          "level": "error",
+          "options": {
+            "ignoreTypes": true
+          }
+        }
       }
     },
     "includes": [

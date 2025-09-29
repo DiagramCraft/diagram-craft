@@ -117,7 +117,7 @@ export const ElementStylesheetPanel = (props: Props) => {
             </Select.Root>
             <DropdownMenu.Root>
               <DropdownMenu.Trigger asChild>
-                <button className={'cmp-button'}>
+                <button type="button" className={'cmp-button'}>
                   <TbDots />
                 </button>
               </DropdownMenu.Trigger>

@@ -18,7 +18,8 @@
     "test:watch": "vitest watch",
     "test:bench": "vitest bench --run",
     "lint:tsc": "tsc --noEmit",
-    "lint": "biome lint && tsc --noEmit && madge --circular --ts-config tsconfig.node.json --extensions ts,tsx packages"
+    "lint": "biome lint && tsc --noEmit",
+    "madge": "madge --circular --ts-config tsconfig.node.json --extensions ts,tsx packages"
   },
   "keywords": [],
   "author": "Magnus Johansson",

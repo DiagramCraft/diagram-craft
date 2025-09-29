@@ -32,7 +32,7 @@ type CommentItemMenuProps = {
 const CommentItemMenu = (props: CommentItemMenuProps) => (
   <DropdownMenu.Root>
     <DropdownMenu.Trigger asChild>
-      <button className={styles['comment__menu-button']}>
+      <button type="button" className={styles['comment__menu-button']}>
         <TbDots size={14} />
       </button>
     </DropdownMenu.Trigger>

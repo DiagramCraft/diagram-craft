@@ -14,7 +14,7 @@ export const Collapsible = (props: Props) => {
     >
       <div className={styles.cmpCollapsibleTrigger}>
         <RadixCollapsible.Trigger asChild>
-          <button className={styles.cmpCollapsibleTriggerInner}>
+          <button type="button" className={styles.cmpCollapsibleTriggerInner}>
             <div>{props.label}</div>
             <div>{open ? <TbMinus /> : <TbPlus />}</div>
           </button>
