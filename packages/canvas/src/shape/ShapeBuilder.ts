@@ -187,7 +187,7 @@ export class ShapeBuilder {
           width: bounds.w.toString(),
           height: bounds.h.toString(),
           class: opts.className,
-          style: toInlineCSS(p.style) + '; pointer-events: none;'
+          style: `${toInlineCSS(p.style)}; pointer-events: none;`
         }))
         .map(p => opts.map!(svg.path(p)))
     );
@@ -223,7 +223,7 @@ export class ShapeBuilder {
     this.nodes.push(
       ...[
         svg.path({
-          'class': opts.className + ` ${opts.className}__backing`,
+          'class': `${opts.className} ${opts.className}__backing`,
           'd': path,
           'stroke': 'transparent',
           'stroke-width': 15

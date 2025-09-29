@@ -45,7 +45,7 @@ export const makeDefaultDocumentFactory = (
         if (location.hash !== '') {
           // TODO: This is a hack for the testing setup
           await CollaborationConfig.Backend.connect(
-            url + '__' + newid(),
+            `${url}__${newid()}`,
             root,
             userState,
             statusCallback

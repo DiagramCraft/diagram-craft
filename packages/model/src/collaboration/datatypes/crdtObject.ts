@@ -124,7 +124,7 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
       ownKeys(_target: T): ArrayLike<string | symbol> {
         const keys = unique(
           Array.from(that.#current.keys())
-            .filter(k => path === '' || k.startsWith(path + '.'))
+            .filter(k => path === '' || k.startsWith(`${path}.`))
             .map(k => (path === '' ? k : k.substring(path.length + 1)))
             .map(k => k.split('.')[0]!)
         );
@@ -161,7 +161,7 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
         // Handle 'length' property for array-like objects
         if (prop === 'length') {
           const keys = Array.from(this.#current.keys())
-            .filter(k => path === '' || k.startsWith(path + '.'))
+            .filter(k => path === '' || k.startsWith(`${path}.`))
             .map(k => (path === '' ? k : k.substring(path.length + 1)))
             .map(k => k.split('.')[0])
             .filter(k => !Number.isNaN(Number(k)));
@@ -180,7 +180,7 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
         if (value === undefined) {
           if (map.has(fullPath)) return this.createProxy({}, fullPath);
 
-          const keys = Array.from(this.#current.keys()).filter(k => k.startsWith(fullPath + '.'));
+          const keys = Array.from(this.#current.keys()).filter(k => k.startsWith(`${fullPath}.`));
           if (keys.length === 0) {
             return undefined;
           } else if (
@@ -215,7 +215,7 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
         if (value === undefined) {
           map.delete(fullPath);
           for (const k of this.#current.keys()) {
-            if (k.startsWith(fullPath + '.')) {
+            if (k.startsWith(`${fullPath}.`)) {
               map.delete(k);
             }
           }
@@ -228,7 +228,7 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
           } else {
             // First, remove all existing nested properties under this path
             for (const k of Array.from(this.#current.keys())) {
-              if (k.startsWith(fullPath + '.')) {
+              if (k.startsWith(`${fullPath}.`)) {
                 map.delete(k);
               }
             }

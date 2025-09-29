@@ -136,7 +136,7 @@ export const DataTab = () => {
   ): string => {
     const value = item[field.id];
     if (!value) return '-';
-    if (value.length > 50) return value.substring(0, 50) + '...';
+    if (value.length > 50) return `${value.substring(0, 50)}...`;
     return value;
   };
 

@@ -214,7 +214,7 @@ export class Parser {
    */
   escape(s: string): string {
     return s.replace(/\\[\\`*_{}[\]()+-.!#]/g, c => {
-      return '\x1b' + this.escapes[1]![this.escapes[0]!.indexOf(c[1]!)];
+      return `\x1b${this.escapes[1]![this.escapes[0]!.indexOf(c[1]!)]}`;
     });
   }
 
@@ -270,7 +270,7 @@ export class Parser {
    * @returns Placeholder string that will be resolved during unescaping
    */
   addInline(parserState: ParserState, obj: ASTNode): string {
-    return '\x1bq' + (parserState.inlines.push(obj) - 1) + 'q';
+    return `\x1bq${parserState.inlines.push(obj) - 1}q`;
   }
 
   /**

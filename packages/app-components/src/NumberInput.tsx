@@ -92,7 +92,7 @@ export const NumberInput = (props: Props) => {
         const newUnit = p[1] ?? props.defaultUnit;
 
         setTimeout(() => props.onChange(newValue, newUnit), 0);
-        return newValue.toString() + ' ' + (newUnit ?? '');
+        return `${newValue.toString()} ${newUnit ?? ''}`;
       });
     },
     [props]

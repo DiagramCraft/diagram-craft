@@ -39,18 +39,18 @@ export const clausesToString = (clauses: ElementSearchClause[]): string => {
         dest.push(clause.query);
         break;
       case 'any':
-        dest.push('ANY(' + clausesToString(clause.clauses) + ')');
+        dest.push(`ANY(${clausesToString(clause.clauses)})`);
         break;
       case 'props':
-        dest.push(clause.path + ' ' + clause.relation + ' ' + clause.value);
+        dest.push(`${clause.path} ${clause.relation} ${clause.value}`);
 
         break;
       case 'tags':
-        dest.push('tags' + ' ' + clause.tags.join(','));
+        dest.push(`tags ${clause.tags.join(',')}`);
         break;
       case 'comment':
         if (clause.state) {
-          dest.push('comment ' + clause.state);
+          dest.push(`comment ${clause.state}`);
         } else {
           dest.push('comment any');
         }

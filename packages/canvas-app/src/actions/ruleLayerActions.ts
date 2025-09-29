@@ -48,7 +48,7 @@ export class RuleLayerDeleteAction extends AbstractAction<LayerActionArg, Applic
           const layer = this.context.model.activeDiagram.layers.byId(layerId) as RuleLayer;
           const rule = layer.byId(ruleId);
 
-          assert.present(rule, 'Rule with id ' + ruleId + ' not found');
+          assert.present(rule, `Rule with id ${ruleId} not found`);
 
           const uow = new UnitOfWork(this.context.model.activeDiagram, true);
 
@@ -74,7 +74,7 @@ export class RuleLayerEditAction extends AbstractAction<LayerActionArg, Applicat
     const layer = this.context.model.activeDiagram.layers.byId(layerId) as RuleLayer;
     const rule = layer.byId(ruleId);
 
-    assert.present(rule, 'Rule with id ' + ruleId + ' not found');
+    assert.present(rule, `Rule with id ${ruleId} not found`);
 
     this.context.ui.showDialog(
       new RuleEditorDialogCommand(

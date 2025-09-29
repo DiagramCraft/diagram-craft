@@ -192,7 +192,7 @@ export class FencedCodeHandler implements BlockParser {
         stream.consume(); // consume closing fence
         break;
       }
-      code += (line.text ?? '') + '\n';
+      code += `${line.text ?? ''}\n`;
       stream.consume();
     }
 
@@ -260,7 +260,7 @@ export class ListHandler implements BlockParser {
       } else if (lineMatch) {
         s += lineMatch[3]!.replace(this.trimLeft, '');
       } else {
-        s += '\n' + (current.text?.replace(this.trimLeft, '') ?? '');
+        s += `\n${current.text?.replace(this.trimLeft, '') ?? ''}`;
       }
 
       stream.consume();
@@ -370,7 +370,7 @@ export class InlineEmphasisHandler extends InlineParser {
       if (!state) state = { tag: '', arr: [] };
 
       const open = (t: string): ParseState => ({
-        tag: state.tag + '/' + t,
+        tag: `${state.tag}/${t}`,
         arr: state.arr.concat([{ op: 1, type: t, idx: i }])
       });
 
@@ -613,7 +613,7 @@ export class HtmlHandler implements BlockParser {
     const tagName = m[1];
     let dest = '';
 
-    const re = new RegExp('^<' + tagName + ' */>');
+    const re = new RegExp(`^<${tagName} */>`);
     while (!stream.peek().match(re)) {
       dest += stream.consume().text ?? '';
     }
@@ -637,10 +637,10 @@ export class CommentHandler implements BlockParser {
     let dest = '';
 
     while (!stream.peek().match(/^-->/)) {
-      dest += (stream.consume().text ?? '') + '\n';
+      dest += `${stream.consume().text ?? ''}\n`;
     }
 
-    dest += (stream.consume().text ?? '') + '\n';
+    dest += `${stream.consume().text ?? ''}\n`;
 
     ast.push({ type: 'html', subtype: 'comment', html: dest });
     return true;
@@ -667,7 +667,7 @@ export class InlineRefImageAndLinkHandler extends InlineParser {
         type: this.type,
         subtype: 'ref',
         source: parser.unescape(m[0]),
-        children: parser.parseInlines(m[1]!, parserState, [this.type + '-ref']),
+        children: parser.parseInlines(m[1]!, parserState, [`${this.type}-ref`]),
         id: m[3] && m[3].length > 0 ? parser.unescape(m[3]) : parser.unescape(m[1]!)
       };
     });
@@ -689,7 +689,7 @@ export class InlineAutolinksHandler extends InlineParser {
         return {
           type: 'link',
           children: [{ type: 'literal', value: m[1]! }],
-          href: m[1]!.match(/[a-zA-Z]+@[a-zA-Z.]+/) ? 'mailto:' + m[1] : m[1]
+          href: m[1]!.match(/[a-zA-Z]+@[a-zA-Z.]+/) ? `mailto:${m[1]}` : m[1]
         };
       }
     );

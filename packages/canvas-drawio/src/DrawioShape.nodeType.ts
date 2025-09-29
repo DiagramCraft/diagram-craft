@@ -227,7 +227,7 @@ const parseShapeElement = ($el: Element, pathBuilder: PathListBuilder) => {
           xNum($pce, 'sweep-flag') as 0 | 1
         );
       } else {
-        console.log(`No support for path.` + $pc.nodeName);
+        console.log(`No support for path.${$pc.nodeName}`);
       }
     }
   }

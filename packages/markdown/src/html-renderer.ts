@@ -127,7 +127,7 @@ export class HTMLRenderer {
         return this.makeTag('blockquote', this.processNodeArray(astNode.children ?? []));
 
       case 'html':
-        return '\n' + (astNode.html ?? '');
+        return `\n${astNode.html ?? ''}`;
 
       case 'hr':
         return this.makeTag('hr');
@@ -137,7 +137,7 @@ export class HTMLRenderer {
 
       default:
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        console.log('*** Unsupported type ' + (astNode as any).type);
+        console.log(`*** Unsupported type ${(astNode as any).type}`);
         return '';
     }
   }
@@ -169,7 +169,7 @@ export class HTMLRenderer {
    * @returns Complete HTML tag string
    */
   makeTag(tag: string, content?: string, attributes: Record<string, string> = {}): string {
-    let result = '<' + tag;
+    let result = `<${tag}`;
 
     if (Object.keys(attributes).length > 0) {
       for (const [key, value] of Object.entries(attributes)) {

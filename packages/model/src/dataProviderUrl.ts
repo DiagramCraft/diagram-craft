@@ -38,7 +38,7 @@ export class UrlDataProvider extends BaseHTTPDataProvider {
       await this.fetchData(true);
     } catch (e) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return 'Error fetching data: ' + (e as any).toString();
+      return `Error fetching data: ${(e as any).toString()}`;
     }
   }
 

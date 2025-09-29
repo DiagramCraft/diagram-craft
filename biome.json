@@ -19,7 +19,6 @@
         "noDescendingSpecificity": "off",
         "noNonNullAssertion": "off",
         "useImportType": "off",
-        "useTemplate": "off",
         "useShorthandFunctionType": "off"
       },
       "suspicious": {

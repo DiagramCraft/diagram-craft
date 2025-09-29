@@ -240,7 +240,7 @@ export class BaseNodeComponent<
 
     if (nodeProps.effects.blur || nodeProps.effects.opacity !== 1) {
       const filterId = `node-${props.element.id}-filter`;
-      style.filter = (style.filter ?? '') + ` url(#${filterId})`;
+      style.filter = `${style.filter ?? ''} url(#${filterId})`;
 
       children.push(
         svg.filter(

@@ -37,7 +37,7 @@ export const parseCisco19Shapes = async (
     props.fill!.color = '#005073';
     return DiagramNode.create(
       id,
-      'mxgraph.cisco19.' + style.str('prIcon'),
+      `mxgraph.cisco19.${style.str('prIcon')}`,
       bounds,
       layer,
       props,

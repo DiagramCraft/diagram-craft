@@ -120,7 +120,7 @@ export class Defaults<T> {
 
       for (const k of Object.keys(patternRoot)) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        accessor.set(patternDefaults, (key + '.' + k) as PropPath<DeepPartial<T>>, value as any);
+        accessor.set(patternDefaults, (`${key}.${k}`) as PropPath<DeepPartial<T>>, value as any);
       }
     }
 

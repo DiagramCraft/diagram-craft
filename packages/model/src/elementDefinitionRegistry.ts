@@ -168,7 +168,7 @@ export class NodeDefinitionRegistry {
       return this.nodes.get('rect')!;
     }
 
-    assert.present(r, 'Not found: ' + type);
+    assert.present(r, `Not found: ${type}`);
     return r;
   }
 

@@ -13,7 +13,7 @@ type Clipboard = {
   write: (content: string, contentType: string, mode: ClipboardWriteMode) => Promise<void>;
 };
 
-const PREFIX = ELEMENTS_CONTENT_TYPE + ';';
+const PREFIX = `${ELEMENTS_CONTENT_TYPE};`;
 
 /**
  * Note: There is special handling of application/x-diagram-craft-selection here,

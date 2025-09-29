@@ -504,7 +504,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       this.cache.set('name', applyTemplate(text, metadata));
       return this.cache.get('name') as string;
     }
-    return this.nodeType + ' / ' + this.id;
+    return `${this.nodeType} / ${this.id}`;
   }
 
   /* Children *********************************************************************************************** */

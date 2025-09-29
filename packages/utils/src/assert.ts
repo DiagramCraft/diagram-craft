@@ -1,12 +1,12 @@
 export class VerifyNotReached extends Error {
   constructor(msg?: string) {
-    super('Should not be reached ' + (msg ?? ''));
+    super(`Should not be reached ${msg ?? ''}`);
   }
 }
 
 export class NotImplementedYet extends Error {
   constructor(msg?: string) {
-    super('Not implemented yet ' + (msg ?? ''));
+    super(`Not implemented yet ${msg ?? ''}`);
   }
 }
 

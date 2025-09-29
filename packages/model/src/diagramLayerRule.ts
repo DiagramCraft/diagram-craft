@@ -25,13 +25,13 @@ export const validProps = (_type: 'edge' | 'node'): Prop[] => {
     for (const key of Object.keys(d)) {
       if (typeof d[key] === 'object') {
         dest.push({
-          value: path === '' ? key : path + '.' + key,
+          value: path === '' ? key : `${path}.${key}`,
           label: key,
-          items: defaultProps(d[key], path === '' ? key : path + '.' + key)
+          items: defaultProps(d[key], path === '' ? key : `${path}.${key}`)
         });
       } else {
         dest.push({
-          value: path === '' ? key : path + '.' + key,
+          value: path === '' ? key : `${path}.${key}`,
           label: key,
           type: typeof d[key]
         });

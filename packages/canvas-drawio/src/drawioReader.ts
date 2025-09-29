@@ -280,8 +280,8 @@ const calculateLabelNodeActualSize = (
 
   const css: string[] = [];
 
-  css.push('font-size: ' + style.num('fontSize', 12) + 'px');
-  css.push('font-family: ' + (style.str('fontFamily') ?? 'Helvetica'));
+  css.push(`font-size: ${style.num('fontSize', 12)}px`);
+  css.push(`font-family: ${style.str('fontFamily') ?? 'Helvetica'}`);
   css.push('direction: ltr');
   css.push('line-height: 120%');
   css.push('color: black');

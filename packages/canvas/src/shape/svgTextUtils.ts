@@ -429,7 +429,7 @@ export class HTMLToSvgTransformer implements HTMLParserCallback {
 
   onTagClose(tag: string) {
     if (tag !== 'br') {
-      this.currentLine += `</tspan>` + (tag === 'div' || tag === 'p' ? ' ' : '');
+      this.currentLine += `</tspan>${tag === 'div' || tag === 'p' ? ' ' : ''}`;
       this.tagStack.pop();
     }
 

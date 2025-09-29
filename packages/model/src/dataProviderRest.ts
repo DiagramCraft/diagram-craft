@@ -56,7 +56,7 @@ export class RESTDataProvider
       await this.fetchSchemas(true);
       await this.fetchData(true);
     } catch (e) {
-      return 'Error fetching data: ' + (e as Error).toString();
+      return `Error fetching data: ${(e as Error).toString()}`;
     }
   }
 

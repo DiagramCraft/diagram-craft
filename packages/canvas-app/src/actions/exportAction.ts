@@ -65,7 +65,7 @@ class ExportImageAction extends AbstractAction {
       // Need to embed all object urls
       for (const [, a] of this.context.model.activeDiagram.document.attachments.attachments) {
         const dataUrl = await a.getDataUrl();
-        clonedSvg.querySelectorAll('image[href="' + a.url + '"]').forEach(e => {
+        clonedSvg.querySelectorAll(`image[href="${a.url}"]`).forEach(e => {
           e.setAttribute('href', dataUrl);
         });
       }
@@ -75,7 +75,7 @@ class ExportImageAction extends AbstractAction {
         const href = img.href.baseVal;
         if (href.startsWith('data:')) continue;
 
-        console.log('Downloading ' + href);
+        console.log(`Downloading ${href}`);
 
         const connection = await fetch(href);
         const data = await connection.blob();
@@ -101,7 +101,7 @@ class ExportImageAction extends AbstractAction {
       const img = new Image();
       const svgData = new XMLSerializer().serializeToString(clonedSvg);
 
-      img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData))); //btoa(svgData);
+      img.src = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svgData)))}`; //btoa(svgData);
 
       img.onload = () => {
         ctx.drawImage(img, 0, 0);

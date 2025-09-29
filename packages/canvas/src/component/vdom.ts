@@ -5,7 +5,7 @@ import { VerifyNotReached } from '@diagram-craft/utils/assert';
 const _cache = new Map<string, string>();
 const toKebabCase = (key: string) => {
   if (_cache.has(key)) return _cache.get(key)!;
-  const result = key.replace(/[A-Z]/g, match => '-' + match.toLowerCase());
+  const result = key.replace(/[A-Z]/g, match => `-${match.toLowerCase()}`);
   _cache.set(key, result);
   return result;
 };
@@ -198,13 +198,13 @@ const updateEvents = (oldVNode: VNode, newVNode: VNode) => {
   //       makes cleanup significantly easier
 
   for (const key of oldKeys) {
-    newNode[('on' + key) as unknown as ValidEvents] = null;
+    newNode[(`on${key}`) as unknown as ValidEvents] = null;
   }
 
   for (const key of newKeys) {
     const value = newEvents[key as keyof EventListenerMap];
 
-    newNode[('on' + key) as unknown as ValidEvents] = value as EventListener;
+    newNode[(`on${key}`) as unknown as ValidEvents] = value as EventListener;
   }
 };
 

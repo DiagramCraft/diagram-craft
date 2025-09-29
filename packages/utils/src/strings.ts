@@ -9,7 +9,7 @@ export const shorten = (str: string, length: number) => {
   if (length < 0) return str;
   if (str.length <= length) return str;
 
-  return str.substring(0, length) + '...';
+  return `${str.substring(0, length)}...`;
 };
 
 /**

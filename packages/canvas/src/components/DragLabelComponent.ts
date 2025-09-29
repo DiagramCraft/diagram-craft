@@ -34,8 +34,8 @@ export class DragLabelComponent extends Component<CanvasState> {
 
     createEffect(() => {
       const cb = (e: MouseEvent) => {
-        (this.element!.el! as HTMLDivElement).style.setProperty('left', e.pageX + 20 + 'px');
-        (this.element!.el! as HTMLDivElement).style.setProperty('top', e.pageY + 20 + 'px');
+        (this.element!.el! as HTMLDivElement).style.setProperty('left', `${e.pageX + 20}px`);
+        (this.element!.el! as HTMLDivElement).style.setProperty('top', `${e.pageY + 20}px`);
       };
 
       document.addEventListener('mousemove', cb);

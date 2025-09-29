@@ -57,7 +57,7 @@ const makeTemplateNode = (
   definitions: Definitions,
   template: DataTemplate
 ) => {
-  const cacheKey = item._uid + '/' + template.id;
+  const cacheKey = `${item._uid}/${template.id}`;
 
   if (NODE_CACHE.has(cacheKey)) {
     return NODE_CACHE.get(cacheKey)!;

@@ -63,7 +63,7 @@ const ImageInsertDialogBrowser = (props: Props) => {
                     <a
                       href={'#'}
                       onClick={() => {
-                        props.onOk(path.join('/') + '/' + entry.name);
+                        props.onOk(`${path.join('/')}/${entry.name}`);
                       }}
                     >
                       <TbFile /> {entry.name}
