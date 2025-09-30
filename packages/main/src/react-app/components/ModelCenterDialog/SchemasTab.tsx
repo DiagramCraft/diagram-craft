@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useApplication, useDocument } from '../../../application';
-import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
+import { DataSchema, SchemaMetadata } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Select } from '@diagram-craft/app-components/Select';
+import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { TbPencil, TbPlus, TbTrash } from 'react-icons/tb';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { EditSchemaDialog } from '../EditSchemaDialog';
@@ -88,6 +89,15 @@ export const SchemasTab = () => {
     return fieldNames.join(', ');
   };
 
+  const handleMetadataChange = (schemaId: string, field: keyof SchemaMetadata, value: boolean) => {
+    const currentMetadata = document.data.getSchemaMetadata(schemaId);
+    const updatedMetadata: SchemaMetadata = {
+      ...currentMetadata,
+      [field]: value
+    };
+    document.data.setSchemaMetadata(schemaId, updatedMetadata);
+  };
+
   const canMutateSchemas = db && providers.some(p => db.isSchemasEditable(p.id));
 
   return (
@@ -168,39 +178,66 @@ export const SchemasTab = () => {
               <th>Name</th>
               <th>Field Names</th>
               <th>Source</th>
+              <th>Available for Element Data</th>
+              <th>Use Document Overrides</th>
               {canMutateSchemas && <th>Actions</th>}
             </tr>
           </thead>
           <tbody>
-            {schemas.map(schema => (
-              <tr key={schema.id}>
-                <td>{schema.name}</td>
-                <td>{getFieldNamesDisplay(schema)}</td>
-                <td>{schema.providerId}</td>
-                {canMutateSchemas && (
+            {schemas.map(schema => {
+              const metadata = document.data.getSchemaMetadata(schema.id);
+              const isDefaultProvider = schema.providerId === 'default';
+              return (
+                <tr key={schema.id}>
+                  <td>{schema.name}</td>
+                  <td>{getFieldNamesDisplay(schema)}</td>
+                  <td>{schema.providerId}</td>
                   <td>
-                    <div className={styles.schemasTabTableActions}>
-                      <Button
-                        type="icon-only"
-                        onClick={() => setEditSchemaDialog({ open: true, schema })}
-                        title="Edit schema"
-                        disabled={!db.isSchemasEditable(schema.providerId)}
-                      >
-                        <TbPencil />
-                      </Button>
-                      <Button
-                        type="icon-only"
-                        onClick={() => handleDeleteSchema(schema)}
-                        title="Delete schema"
-                        disabled={!db.isSchemasEditable(schema.providerId)}
-                      >
-                        <TbTrash />
-                      </Button>
-                    </div>
+                    <Checkbox
+                      value={metadata.availableForElementLocalData ?? false}
+                      onChange={checked =>
+                        handleMetadataChange(
+                          schema.id,
+                          'availableForElementLocalData',
+                          checked ?? false
+                        )
+                      }
+                    />
                   </td>
-                )}
-              </tr>
-            ))}
+                  <td>
+                    <Checkbox
+                      value={metadata.useDocumentOverrides ?? false}
+                      disabled={isDefaultProvider}
+                      onChange={checked =>
+                        handleMetadataChange(schema.id, 'useDocumentOverrides', checked ?? false)
+                      }
+                    />
+                  </td>
+                  {canMutateSchemas && (
+                    <td>
+                      <div className={styles.schemasTabTableActions}>
+                        <Button
+                          type="icon-only"
+                          onClick={() => setEditSchemaDialog({ open: true, schema })}
+                          title="Edit schema"
+                          disabled={!db.isSchemasEditable(schema.providerId)}
+                        >
+                          <TbPencil />
+                        </Button>
+                        <Button
+                          type="icon-only"
+                          onClick={() => handleDeleteSchema(schema)}
+                          title="Delete schema"
+                          disabled={!db.isSchemasEditable(schema.providerId)}
+                        >
+                          <TbTrash />
+                        </Button>
+                      </div>
+                    </td>
+                  )}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       )}
