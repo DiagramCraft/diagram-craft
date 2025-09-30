@@ -132,6 +132,8 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
       }
     };
 
+    if (this.#providers.length === 0) this.setProviders([]);
+
     this.#crdt.on('remoteUpdate', updateProvider);
     this.#crdt.on('remoteInsert', updateProvider);
   }

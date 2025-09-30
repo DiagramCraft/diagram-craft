@@ -57,7 +57,6 @@ const RESTDataProviderSettings = (props: ProviderSettingsProps<RESTDataProvider>
         <TextInput
           type="text"
           value={baseUrl}
-          placeholder="Base URL"
           onChange={v => {
             setBaseUrl(v ?? '');
             props.provider.baseUrl = v || undefined;
@@ -95,10 +94,10 @@ export const ModelProvidersTab = () => {
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
   const [successMessage, setSuccessMessage] = useState<string | undefined>();
 
-  const saveProviders = async () => {
+  const saveProviders = async (providersToSave: ProviderWithId[] = providers) => {
     try {
       // Save all providers
-      const newProviders = providers.map(p => {
+      const newProviders = providersToSave.map(p => {
         if (!p.isFirst) p.provider.id = p.id;
         return p.provider;
       });
@@ -160,22 +159,32 @@ export const ModelProvidersTab = () => {
       return;
     }
 
+    let updatedProviders: ProviderWithId[];
     if (editingProvider.isNew) {
       const newProviderWithId: ProviderWithId = {
         id,
         provider: newProvider,
         isFirst: false
       };
-      setProviders(prev => [...prev, newProviderWithId]);
+      updatedProviders = [...providers, newProviderWithId];
+      setProviders(updatedProviders);
     } else if (editingProvider.provider) {
-      setProviders(prev =>
-        prev.map(p => (p.id === editingProvider.provider!.id ? { ...p, provider: newProvider } : p))
+      updatedProviders = providers.map(p =>
+        p.id === editingProvider.provider!.id ? { ...p, provider: newProvider } : p
       );
+      setProviders(updatedProviders);
+    } else {
+      return;
     }
     setEditingProvider({ open: false });
 
     // Auto-save after add/edit
-    await saveProviders();
+    await saveProviders(updatedProviders);
+
+    setTimeout(async () => {
+      await document.data.db.refreshSchemas();
+      await document.data.db.refreshData();
+    }, 100);
   };
 
   const handleRefreshAll = async () => {
@@ -322,6 +331,7 @@ const ProviderEditDialog = (props: ProviderEditDialogProps) => {
     props.provider?.providerId ?? UrlDataProviderId
   );
   const [id, setId] = useState<string>(props.providerId ?? '');
+  const [edited, setEdited] = useState<boolean>(false);
   const [provider, setProvider] = useState<DataProvider>(() => {
     if (props.provider) {
       return props.provider;
@@ -357,18 +367,20 @@ const ProviderEditDialog = (props: ProviderEditDialogProps) => {
 
         <div className={styles.modelProvidersTabDialogContent}>
           <div className={styles.modelProvidersTabProviderGroup}>
-            <label className={styles.modelProvidersTabProviderLabel}>Provider ID:</label>
+            <label className={styles.modelProvidersTabProviderLabel}>Provider name:</label>
             <TextInput
               value={id}
-              onChange={v => setId(v ?? '')}
-              placeholder="Enter unique provider ID"
+              onChange={v => {
+                setId(v ?? '');
+                setEdited(true);
+              }}
               disabled={!props.isNew}
             />
             {isIdTaken && (
-              <div className={styles.modelProvidersTabErrorMessage}>This ID is already taken</div>
+              <div className={styles.modelProvidersTabErrorMessage}>This name is already taken</div>
             )}
-            {id.trim() === '' && (
-              <div className={styles.modelProvidersTabErrorMessage}>Provider ID is required</div>
+            {edited && id.trim() === '' && (
+              <div className={styles.modelProvidersTabErrorMessage}>Provider name is required</div>
             )}
           </div>
 
