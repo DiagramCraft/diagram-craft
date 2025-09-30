@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useApplication, useDocument } from '../../../application';
 import { DataSchema, SchemaMetadata } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { Button } from '@diagram-craft/app-components/Button';
@@ -33,10 +33,24 @@ export const SchemasTab = () => {
     open: false
   });
   const [selectedProviderId, setSelectedProviderId] = useState<string>('all');
+  const [, forceUpdate] = useState({});
 
   const db = document.data.db;
 
   const providers = document.data.providers;
+
+  // Listen for schema updates to re-render when metadata changes
+  useEffect(() => {
+    const handleUpdate = () => {
+      forceUpdate({});
+    };
+
+    document.data._schemas.on('update', handleUpdate);
+
+    return () => {
+      document.data._schemas.off('update', handleUpdate);
+    };
+  }, [document]);
 
   // Filter schemas by selected provider
   const schemas =
