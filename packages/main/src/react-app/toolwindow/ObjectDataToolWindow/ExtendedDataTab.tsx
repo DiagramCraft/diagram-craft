@@ -320,7 +320,7 @@ export const ExtendedDataTab = () => {
                             $d.selectionState.elements.map(e => {
                               const d = findEntryBySchema(e, schema.id);
                               try {
-                                return d?.data?.[f.id];
+                                return d?.data?.[f.id] ?? '';
                               } catch (_e) {
                                 return '';
                               }
@@ -365,8 +365,8 @@ export const ExtendedDataTab = () => {
                   <div className={'cmp-labeled-table'}>
                     {customDataKeys.map(k => {
                       const v = unique(
-                        $d.selectionState.elements.map(e =>
-                          e.metadata.data?.customData?.[k]?.toString()
+                        $d.selectionState.elements.map(
+                          e => e.metadata.data?.customData?.[k]?.toString() ?? ''
                         )
                       );
 
@@ -393,7 +393,7 @@ export const ExtendedDataTab = () => {
       </ToolWindow.TabContent>
       <EditItemDialog
         open={editItemDialog.open}
-        onClose={() => setEditItemDialog({ open: false })}
+        onClose={() => setEditItemDialog(prev => ({ ...prev, open: false }))}
         selectedSchema={editItemDialog.schema}
         editItem={editItemDialog.item}
       />
