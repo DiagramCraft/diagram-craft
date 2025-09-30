@@ -54,8 +54,10 @@ export const ExtendedDataTab = () => {
               p.data.data ??= [];
               let s = p.data.data.find(e => e.schema === schema);
               if (!s) {
-                s = { schema, type: 'schema', data: {} };
+                s = { schema, type: 'schema', data: {}, enabled: true };
                 p.data.data.push(s);
+              } else if (!s.enabled) {
+                s.enabled = true;
               }
               s.data ??= {};
               s.data[id] = (ev.target as HTMLInputElement).value;
