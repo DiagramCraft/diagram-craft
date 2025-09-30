@@ -9,7 +9,11 @@ import {
   MultipleType
 } from '@diagram-craft/canvas-app/actions/abstractSelectionAction';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
-import { getExternalDataStatus } from '@diagram-craft/model/externalDataHelpers';
+import {
+  getExternalDataStatus,
+  hasDataForSchema,
+  findEntryBySchema
+} from '@diagram-craft/model/externalDataHelpers';
 import { DataTemplate } from '@diagram-craft/model/diagramDocument';
 import { newid } from '@diagram-craft/utils/id';
 import { serializeDiagramElement } from '@diagram-craft/model/serialization/serialize';
@@ -120,11 +124,35 @@ export class ExternalDataLinkAction extends AbstractSelectionAction<Application,
   }
 
   execute(arg: Partial<SchemaArg>): void {
+    const $d = this.context.model.activeDiagram;
+    const element = $d.selectionState.elements[0]!;
+    const schema = this.context.model.activeDocument.data.db.getSchema(arg.schemaId!);
+
+    const hasElementData = hasDataForSchema(element, arg.schemaId!);
+    const elementDataEntry = findEntryBySchema(element, arg.schemaId!);
+    const canCreateData = this.context.model.activeDocument.data.db.isDataEditable(schema);
+
     this.context.ui.showDialog({
       id: 'externalDataLink',
       onCancel: () => {},
-      onOk: (v: string) => {
-        const $d = this.context.model.activeDiagram;
+      onOk: async (uid: string) => {
+        const db = $d.document.data.db;
+
+        // Check if this uid exists in the database
+        const existingData = db.getById(schema, [uid]);
+
+        // If it doesn't exist and we have element data, create it
+        if (existingData.length === 0 && elementDataEntry?.data) {
+          const newData: Data = {
+            _uid: uid,
+            ...elementDataEntry.data
+          };
+
+          // Create the shared data entry
+          await db.addData(schema, newData);
+        }
+
+        // Link to the data (either newly created or existing)
         const uow = new UnitOfWork($d, true);
         $d.selectionState.elements.forEach(e => {
           e.updateMetadata(p => {
@@ -136,12 +164,9 @@ export class ExternalDataLinkAction extends AbstractSelectionAction<Application,
               item = {
                 schema: arg.schemaId!,
                 type: 'schema',
-                data: {
-                  _uid: v,
-                  _schemaId: arg.schemaId!
-                },
+                data: {},
                 external: {
-                  uid: v
+                  uid: uid
                 },
                 enabled: true
               };
@@ -150,12 +175,11 @@ export class ExternalDataLinkAction extends AbstractSelectionAction<Application,
             assert.present(item);
 
             item.external = {
-              uid: v
+              uid: uid
             };
             item.type = 'external';
 
-            const db = $d.document.data.db;
-            const [data] = db.getById(db.getSchema(arg.schemaId!), [v]) as [Data];
+            const [data] = db.getById(db.getSchema(arg.schemaId!), [uid]) as [Data];
             for (const k of Object.keys(data)) {
               if (k.startsWith('_')) continue;
               item.data[k] = data[k];
@@ -165,7 +189,10 @@ export class ExternalDataLinkAction extends AbstractSelectionAction<Application,
         commitWithUndo(uow, 'Link external data');
       },
       props: {
-        schema: this.context.model.activeDocument.data.db.getSchema(arg.schemaId!)
+        schema,
+        hasElementData,
+        elementData: elementDataEntry?.data,
+        canCreateData
       }
     });
   }

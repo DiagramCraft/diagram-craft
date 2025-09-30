@@ -3,6 +3,7 @@ import {
   DataProvider,
   type DataProviderEventMap,
   DataProviderRegistry,
+  isMutableDataProvider,
   isMutableSchemaProvider,
   type MutableDataProvider,
   type RefreshableDataProvider,
@@ -226,7 +227,7 @@ export class DataManager extends EventEmitter<DataProviderEventMap> {
   }
 
   isDataEditable(schema: DataSchema) {
-    return isMutableSchemaProvider(this.getProvider(schema.providerId));
+    return isMutableDataProvider(this.getProvider(schema.providerId));
   }
 
   isSchemasEditable(providerId: string) {

@@ -79,7 +79,7 @@ type EditItemDialogProps = {
 export const EditItemDialog = (props: EditItemDialogProps) => {
   const document = useDocument();
   const db = document.data.db;
-  const [formData, setFormData] = useState<Record<string, string | string[]>>({});
+  const [formData, setFormData] = useState<Record<string, undefined | string | string[]>>({});
   const [submitError, setSubmitError] = useState<string | undefined>();
 
   const schema = db.schemas.find(s => s.id === props.selectedSchema) ?? db.schemas[0];
@@ -231,7 +231,7 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
               />
             ) : field.type === 'longtext' ? (
               <TextArea
-                value={formData[field.id] as string}
+                value={(formData[field.id] as string | undefined) ?? ''}
                 onChange={v => setFormData(prev => ({ ...prev, [field.id]: v ?? '' }))}
                 style={{
                   minHeight: '5rem'
@@ -239,7 +239,7 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
               />
             ) : (
               <TextInput
-                value={formData[field.id] as string}
+                value={(formData[field.id] as string | undefined) ?? ''}
                 onChange={v => setFormData(prev => ({ ...prev, [field.id]: v ?? '' }))}
               />
             )}

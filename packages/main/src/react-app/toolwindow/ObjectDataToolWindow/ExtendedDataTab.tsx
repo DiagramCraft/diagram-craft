@@ -10,23 +10,13 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { unique } from '@diagram-craft/utils/array';
-import type { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { TbFilter, TbFilterOff, TbLink, TbLinkOff, TbPencil } from 'react-icons/tb';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { EditItemDialog } from '../../components/EditItemDialog';
 import { ToolWindow } from '../ToolWindow';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
-
-const findEntryBySchema = (e: DiagramElement, schema: string) => {
-  return e.metadata.data?.data?.find(s => s.schema === schema);
-};
-
-const hasDataForSchema = (e: DiagramElement, schema: string) => {
-  const entry = findEntryBySchema(e, schema);
-  if (!entry?.data) return false;
-  return Object.values(entry.data).some(value => value !== undefined && value !== '');
-};
+import { findEntryBySchema, hasDataForSchema } from '@diagram-craft/model/externalDataHelpers';
 
 export const ExtendedDataTab = () => {
   const $d = useDiagram();
@@ -289,14 +279,13 @@ export const ExtendedDataTab = () => {
                           />
                         )}
 
-                        <span>
-                          {schema.name} {isExternal ? '(external)' : ''}
-                        </span>
+                        <span>{schema.name}</span>
                       </div>
                       <Accordion.ItemHeaderButtons>
                         {isExternal && (
                           <a
                             className={'cmp-button cmp-button--icon-only'}
+                            style={{ marginRight: '0.5rem' }}
                             onClick={() => editExternalData(schema.id)}
                             title="Edit external data"
                           >
@@ -328,9 +317,14 @@ export const ExtendedDataTab = () => {
                       <div className={'cmp-labeled-table'}>
                         {schema.fields.map(f => {
                           const v = unique(
-                            $d.selectionState.elements.map(
-                              e => findEntryBySchema(e, schema.id)?.data[f.id]
-                            )
+                            $d.selectionState.elements.map(e => {
+                              const d = findEntryBySchema(e, schema.id);
+                              try {
+                                return d?.data?.[f.id] ?? '';
+                              } catch (_e) {
+                                return '';
+                              }
+                            })
                           );
 
                           return (
@@ -371,8 +365,8 @@ export const ExtendedDataTab = () => {
                   <div className={'cmp-labeled-table'}>
                     {customDataKeys.map(k => {
                       const v = unique(
-                        $d.selectionState.elements.map(e =>
-                          e.metadata.data?.customData?.[k]?.toString()
+                        $d.selectionState.elements.map(
+                          e => e.metadata.data?.customData?.[k]?.toString() ?? ''
                         )
                       );
 
@@ -399,7 +393,7 @@ export const ExtendedDataTab = () => {
       </ToolWindow.TabContent>
       <EditItemDialog
         open={editItemDialog.open}
-        onClose={() => setEditItemDialog({ open: false })}
+        onClose={() => setEditItemDialog(prev => ({ ...prev, open: false }))}
         selectedSchema={editItemDialog.schema}
         editItem={editItemDialog.item}
       />
