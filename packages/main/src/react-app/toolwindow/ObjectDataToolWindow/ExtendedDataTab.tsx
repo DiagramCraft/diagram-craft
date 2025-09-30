@@ -16,9 +16,16 @@ import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { EditItemDialog } from '../../components/EditItemDialog';
 import { ToolWindow } from '../ToolWindow';
 import { ToolWindowPanel } from '../ToolWindowPanel';
+import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 
 const findEntryBySchema = (e: DiagramElement, schema: string) => {
   return e.metadata.data?.data?.find(s => s.schema === schema);
+};
+
+const hasDataForSchema = (e: DiagramElement, schema: string) => {
+  const entry = findEntryBySchema(e, schema);
+  if (!entry?.data) return false;
+  return Object.values(entry.data).some(value => value !== undefined && value !== '');
 };
 
 export const ExtendedDataTab = () => {
@@ -118,10 +125,12 @@ export const ExtendedDataTab = () => {
     (schema: string) => {
       $d.selectionState.elements.forEach(e => {
         const entry = findEntryBySchema(e, schema);
-        if (entry?.enabled) {
+        if (entry) {
           const uow = new UnitOfWork($d, true);
           e.updateMetadata(p => {
-            p.data!.data!.find(s => s.schema === schema)!.enabled = false;
+            p.data ??= {};
+            p.data.data ??= [];
+            p.data.data = p.data.data.filter(s => s.schema !== schema);
           }, uow);
           commitWithUndo(uow, 'Remove schema from selection');
         }
@@ -238,10 +247,42 @@ export const ExtendedDataTab = () => {
                                 accordionHeader.dataset.state = 'open';
                                 addSchemaToSelection(schema.id);
                               } else {
-                                accordionItem.dataset.state = 'closed';
-                                accordionContent.dataset.state = 'closed';
-                                accordionHeader.dataset.state = 'closed';
-                                removeSchemaFromSelection(schema.id);
+                                // Check if any element has data for this schema
+                                const hasData = $d.selectionState.elements.some(el =>
+                                  hasDataForSchema(el, schema.id)
+                                );
+
+                                if (hasData) {
+                                  // Show confirmation dialog
+                                  application.ui.showDialog(
+                                    new MessageDialogCommand(
+                                      {
+                                        title: 'Disable schema',
+                                        message: `This will remove all data for "${schema.name}" from the selected element(s). Are you sure?`,
+                                        okLabel: 'Remove',
+                                        okType: 'danger',
+                                        cancelLabel: 'Cancel'
+                                      },
+                                      () => {
+                                        accordionItem.dataset.state = 'closed';
+                                        accordionContent.dataset.state = 'closed';
+                                        accordionHeader.dataset.state = 'closed';
+                                        removeSchemaFromSelection(schema.id);
+                                        redraw();
+                                      },
+                                      () => {
+                                        // On cancel, reset the checkbox
+                                        e.target.checked = true;
+                                        redraw();
+                                      }
+                                    )
+                                  );
+                                } else {
+                                  accordionItem.dataset.state = 'closed';
+                                  accordionContent.dataset.state = 'closed';
+                                  accordionHeader.dataset.state = 'closed';
+                                  removeSchemaFromSelection(schema.id);
+                                }
                               }
                             }}
                             onClick={e => e.stopPropagation()}
