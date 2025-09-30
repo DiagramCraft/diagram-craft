@@ -3,6 +3,7 @@ import { UnitOfWork } from './unitOfWork';
 import { deepClone } from '@diagram-craft/utils/object';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { CRDTMap, CRDTRoot } from './collaboration/crdt';
+import { assert } from '@diagram-craft/utils/assert';
 
 export type DataSchemaField =
   | {
@@ -30,6 +31,11 @@ export type DataSchema = {
   fields: DataSchemaField[];
 };
 
+export type SchemaMetadata = {
+  availableForElementLocalData?: boolean;
+  useDocumentOverrides?: boolean;
+};
+
 type DiagramDocumentDataSchemasEvents = {
   update: { schema: DataSchema };
   add: { schema: DataSchema };
@@ -38,6 +44,7 @@ type DiagramDocumentDataSchemasEvents = {
 
 export class DiagramDocumentDataSchemas extends EventEmitter<DiagramDocumentDataSchemasEvents> {
   readonly #schemas: CRDTMap<Record<string, DataSchema>>;
+  readonly #schemaMetadata: CRDTMap<Record<string, SchemaMetadata>>;
 
   constructor(
     private readonly root: CRDTRoot,
@@ -47,10 +54,14 @@ export class DiagramDocumentDataSchemas extends EventEmitter<DiagramDocumentData
     super();
 
     this.#schemas = root.getMap('schemas');
+    this.#schemaMetadata = root.getMap('schemaMetadata');
 
     this.#schemas.on('remoteUpdate', p => this.emit('update', { schema: p.value }));
     this.#schemas.on('remoteDelete', p => this.emit('remove', { schema: p.value }));
     this.#schemas.on('remoteInsert', p => this.emit('add', { schema: p.value }));
+
+    this.#schemaMetadata.on('remoteUpdate', p => this.emit('update', { schema: this.get(p.key) }));
+    this.#schemaMetadata.on('remoteInsert', p => this.emit('update', { schema: this.get(p.key) }));
 
     if (this.all.length === 0 && schemas) {
       this.replaceBy(schemas);
@@ -83,6 +94,7 @@ export class DiagramDocumentDataSchemas extends EventEmitter<DiagramDocumentData
   private remove(schema: DataSchema) {
     if (!this.#schemas.has(schema.id)) return;
     this.#schemas.delete(schema.id);
+    this.#schemaMetadata.delete(schema.id);
     this.emit('remove', { schema });
   }
 
@@ -121,5 +133,17 @@ export class DiagramDocumentDataSchemas extends EventEmitter<DiagramDocumentData
       }
       // TODO: Should we emit events here?
     });
+  }
+
+  getMetadata(schemaId: string): SchemaMetadata {
+    return this.#schemaMetadata.get(schemaId) ?? {};
+  }
+
+  setMetadata(schemaId: string, metadata: SchemaMetadata) {
+    const schema = this.get(schemaId);
+    assert.present(schema);
+
+    this.#schemaMetadata.set(schemaId, metadata);
+    this.emit('update', { schema });
   }
 }
