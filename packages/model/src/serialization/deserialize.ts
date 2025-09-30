@@ -192,6 +192,13 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
 
     for (const schema of document.schemas) {
       doc.data._schemas.add(schema);
+
+      // Set metadata if provided, otherwise use backwards-compatible defaults
+      const metadata = document.schemaMetadata?.[schema.id] ?? {
+        availableForElementLocalData: true,
+        useDocumentOverrides: false
+      };
+      doc.data.setSchemaMetadata(schema.id, metadata);
     }
 
     const dest = deserializeDiagrams(doc, diagrams, diagramFactory);

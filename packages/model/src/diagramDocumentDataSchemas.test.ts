@@ -194,7 +194,10 @@ describe.each(Backends.all())('DiagramDocumentDataSchemas [%s]', (_name, backend
 
       const metadata = diagramSchemas.getMetadata('1');
 
-      expect(metadata).toEqual({});
+      expect(metadata).toEqual({
+        availableForElementLocalData: false,
+        useDocumentOverrides: false
+      });
     });
 
     test('should return metadata after it has been set', () => {
@@ -330,9 +333,15 @@ describe.each(Backends.all())('DiagramDocumentDataSchemas [%s]', (_name, backend
       instance1.removeAndClearUsage(schema, UnitOfWork.immediate(document1.diagrams[0]!));
 
       // Verify - metadata should be removed
-      expect(instance1.getMetadata('1')).toEqual({});
+      expect(instance1.getMetadata('1')).toEqual({
+        availableForElementLocalData: false,
+        useDocumentOverrides: false
+      });
       if (instance2) {
-        expect(instance2.getMetadata('1')).toEqual({});
+        expect(instance2.getMetadata('1')).toEqual({
+          availableForElementLocalData: false,
+          useDocumentOverrides: false
+        });
       }
     });
   });

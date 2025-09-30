@@ -136,7 +136,12 @@ export class DiagramDocumentDataSchemas extends EventEmitter<DiagramDocumentData
   }
 
   getMetadata(schemaId: string): SchemaMetadata {
-    return this.#schemaMetadata.get(schemaId) ?? {};
+    return (
+      this.#schemaMetadata.get(schemaId) ?? {
+        availableForElementLocalData: false,
+        useDocumentOverrides: false
+      }
+    );
   }
 
   setMetadata(schemaId: string, metadata: SchemaMetadata) {

@@ -4,7 +4,7 @@ import type { EdgePropsForEditing } from '../diagramEdge';
 import type { NodePropsForEditing, NodeTexts } from '../diagramNode';
 import type { OffsetType } from '../endpoint';
 import type { StylesheetSnapshot } from '../unitOfWork';
-import type { DataSchema } from '../diagramDocumentDataSchemas';
+import type { DataSchema, SchemaMetadata } from '../diagramDocumentDataSchemas';
 import type { Canvas } from '../diagram';
 import type { AdjustmentRule } from '../diagramLayerRuleTypes';
 import type { DataTemplate } from '../diagramDocument';
@@ -53,6 +53,7 @@ export interface SerializedDiagramDocument {
   customPalette: ReadonlyArray<string>;
   styles: SerializedStyles;
   schemas: ReadonlyArray<DataSchema>;
+  schemaMetadata?: Record<string, SchemaMetadata>;
   props?: {
     stencils?: ReadonlyArray<string>;
     query?: {
