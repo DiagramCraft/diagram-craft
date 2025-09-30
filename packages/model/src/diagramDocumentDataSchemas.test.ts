@@ -1,8 +1,13 @@
 import { describe, expect, test, vi } from 'vitest';
-import { DataSchema, DiagramDocumentDataSchemas } from './diagramDocumentDataSchemas';
+import {
+  DataSchema,
+  DiagramDocumentDataSchemas,
+  SchemaMetadata
+} from './diagramDocumentDataSchemas';
 import { CRDT } from './collaboration/crdt';
 import { TestModel } from './test-support/builder';
 import { Backends } from './collaboration/collaborationTestUtils';
+import { UnitOfWork } from './unitOfWork';
 
 describe.each(Backends.all())('DiagramDocumentDataSchemas [%s]', (_name, backend) => {
   describe('constructor', () => {
@@ -170,6 +175,174 @@ describe.each(Backends.all())('DiagramDocumentDataSchemas [%s]', (_name, backend
       // Verify
       expect(instance1.all).toEqual(newSchemas);
       if (instance2) expect(instance2.all).toEqual(newSchemas);
+    });
+  });
+
+  describe('getMetadata', () => {
+    test('should return empty object for schema without metadata', () => {
+      const diagramSchemas = new DiagramDocumentDataSchemas(
+        CRDT.makeRoot(),
+        TestModel.newDocument()
+      );
+      const schema: DataSchema = {
+        id: '1',
+        name: 'TestSchema',
+        providerId: 'document',
+        fields: []
+      };
+      diagramSchemas.add(schema);
+
+      const metadata = diagramSchemas.getMetadata('1');
+
+      expect(metadata).toEqual({
+        availableForElementLocalData: false,
+        useDocumentOverrides: false
+      });
+    });
+
+    test('should return metadata after it has been set', () => {
+      // Setup
+      const [root1, root2] = backend.syncedDocs();
+
+      const instance1 = new DiagramDocumentDataSchemas(root1, TestModel.newDocument());
+      const instance2 = root2
+        ? new DiagramDocumentDataSchemas(root2, TestModel.newDocument())
+        : undefined;
+
+      const schema: DataSchema = {
+        id: '1',
+        name: 'TestSchema',
+        providerId: 'document',
+        fields: []
+      };
+      instance1.add(schema);
+
+      const metadata: SchemaMetadata = {
+        availableForElementLocalData: true,
+        useDocumentOverrides: false
+      };
+
+      // Act
+      instance1.setMetadata('1', metadata);
+
+      // Verify
+      expect(instance1.getMetadata('1')).toEqual(metadata);
+      if (instance2) {
+        expect(instance2.getMetadata('1')).toEqual(metadata);
+      }
+    });
+  });
+
+  describe('setMetadata', () => {
+    test('should set metadata and emit update event', () => {
+      // Setup
+      const [root1, root2] = backend.syncedDocs();
+
+      const instance1 = new DiagramDocumentDataSchemas(root1, TestModel.newDocument());
+      const instance2 = root2
+        ? new DiagramDocumentDataSchemas(root2, TestModel.newDocument())
+        : undefined;
+
+      const schema: DataSchema = {
+        id: '1',
+        name: 'TestSchema',
+        providerId: 'document',
+        fields: []
+      };
+      instance1.add(schema);
+
+      const updateListener1 = vi.fn();
+      instance1.on('update', updateListener1);
+
+      const updateListener2 = vi.fn();
+      instance2?.on('update', updateListener2);
+
+      const metadata: SchemaMetadata = {
+        availableForElementLocalData: true,
+        useDocumentOverrides: true
+      };
+
+      // Act
+      instance1.setMetadata('1', metadata);
+
+      // Verify
+      expect(updateListener1).toHaveBeenCalledWith({ schema });
+      if (instance2) {
+        expect(updateListener2).toHaveBeenCalledTimes(1);
+      }
+    });
+
+    test('should update existing metadata', () => {
+      const diagramSchemas = new DiagramDocumentDataSchemas(
+        CRDT.makeRoot(),
+        TestModel.newDocument()
+      );
+      const schema: DataSchema = {
+        id: '1',
+        name: 'TestSchema',
+        providerId: 'document',
+        fields: []
+      };
+      diagramSchemas.add(schema);
+
+      const metadata1: SchemaMetadata = {
+        availableForElementLocalData: true,
+        useDocumentOverrides: false
+      };
+      diagramSchemas.setMetadata('1', metadata1);
+
+      const metadata2: SchemaMetadata = {
+        availableForElementLocalData: false,
+        useDocumentOverrides: true
+      };
+      diagramSchemas.setMetadata('1', metadata2);
+
+      expect(diagramSchemas.getMetadata('1')).toEqual(metadata2);
+    });
+  });
+
+  describe('remove', () => {
+    test('should remove schema metadata when schema is deleted', () => {
+      // Setup
+      const [root1, root2] = backend.syncedDocs();
+
+      const document1 = TestModel.newDocument();
+      const instance1 = new DiagramDocumentDataSchemas(root1, document1);
+      const instance2 = root2
+        ? new DiagramDocumentDataSchemas(root2, TestModel.newDocument())
+        : undefined;
+
+      const schema: DataSchema = {
+        id: '1',
+        name: 'TestSchema',
+        providerId: 'document',
+        fields: []
+      };
+      instance1.add(schema);
+
+      const metadata: SchemaMetadata = {
+        availableForElementLocalData: true,
+        useDocumentOverrides: false
+      };
+      instance1.setMetadata('1', metadata);
+
+      // Verify metadata is set
+      expect(instance1.getMetadata('1')).toEqual(metadata);
+
+      // Act - remove the schema
+      instance1.removeAndClearUsage(schema, UnitOfWork.immediate(document1.diagrams[0]!));
+
+      // Verify - metadata should be removed
+      expect(instance1.getMetadata('1')).toEqual({
+        availableForElementLocalData: false,
+        useDocumentOverrides: false
+      });
+      if (instance2) {
+        expect(instance2.getMetadata('1')).toEqual({
+          availableForElementLocalData: false,
+          useDocumentOverrides: false
+        });
+      }
     });
   });
 });

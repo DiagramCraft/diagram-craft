@@ -306,5 +306,80 @@ describe('serialization', () => {
         expect(newDoc.diagrams[0]!.commentManager.getAll()).toHaveLength(0);
       });
     });
+
+    describe('schema metadata', () => {
+      it('should serialize and deserialize schema metadata', async () => {
+        // Setup
+        const originalDoc = TestModel.newDocument();
+        const diagram = new TestDiagramBuilder(originalDoc);
+        diagram.newLayer(); // Add a layer so serialization works
+        originalDoc.addDiagram(diagram);
+
+        // Add a schema with metadata
+        const schema = {
+          id: 'test-schema',
+          name: 'Test Schema',
+          providerId: 'urlDataProvider',
+          fields: []
+        };
+        originalDoc.data._schemas.add(schema);
+        originalDoc.data._schemas.setMetadata('test-schema', {
+          availableForElementLocalData: true,
+          useDocumentOverrides: true
+        });
+
+        // Act
+        const serialized = await serializeDiagramDocument(originalDoc);
+
+        const newDoc = TestModel.newDocument();
+        await deserializeDiagramDocument(
+          serialized,
+          newDoc,
+          (d, doc) => new TestDiagramBuilder(doc, d.id)
+        );
+
+        // Verify
+        const metadata = newDoc.data._schemas.getMetadata('test-schema');
+        expect(metadata.availableForElementLocalData).toBe(true);
+        expect(metadata.useDocumentOverrides).toBe(true);
+      });
+
+      it('should handle backwards compatibility for old documents without metadata', async () => {
+        // Setup - create a serialized document with old format (no schemaMetadata field)
+        const originalDoc = TestModel.newDocument();
+        const diagram = new TestDiagramBuilder(originalDoc);
+        diagram.newLayer(); // Add a layer so serialization works
+        originalDoc.addDiagram(diagram);
+
+        const schema = {
+          id: 'old-schema',
+          name: 'Old Schema',
+          providerId: 'urlDataProvider',
+          fields: []
+        };
+        originalDoc.data._schemas.add(schema);
+
+        const serialized = await serializeDiagramDocument(originalDoc);
+
+        // Modify serialized to old format (remove schemaMetadata)
+        const oldFormatSerialized = {
+          ...serialized
+        };
+        delete oldFormatSerialized.schemaMetadata;
+
+        // Act
+        const newDoc = TestModel.newDocument();
+        await deserializeDiagramDocument(
+          oldFormatSerialized,
+          newDoc,
+          (d, doc) => new TestDiagramBuilder(doc, d.id)
+        );
+
+        // Verify - should use default values
+        const metadata = newDoc.data._schemas.getMetadata('old-schema');
+        expect(metadata.availableForElementLocalData).toBe(true);
+        expect(metadata.useDocumentOverrides).toBe(false);
+      });
+    });
   });
 });

@@ -14,7 +14,7 @@ import { NotImplementedYet, VerifyNotReached } from '@diagram-craft/utils/assert
 import { AttachmentManager } from '../attachment';
 import { DiagramPalette } from '../diagramPalette';
 import { DiagramStyles } from '../diagramStyles';
-import { DiagramDocumentDataSchemas } from '../diagramDocumentDataSchemas';
+import { DiagramDocumentDataSchemas, type SchemaMetadata } from '../diagramDocumentDataSchemas';
 import { ReferenceLayer } from '../diagramLayerReference';
 import { RuleLayer } from '../diagramLayerRule';
 import { RegularLayer } from '../diagramLayerRegular';
@@ -24,12 +24,14 @@ import { hash64 } from '@diagram-craft/utils/hash';
 export const serializeDiagramDocument = async (
   document: DiagramDocument
 ): Promise<SerializedDiagramDocument> => {
+  const schemaMetadata = serializeSchemaMetadata(document.data._schemas);
   const serialized = {
     diagrams: document.diagrams.map(serializeDiagram),
     attachments: await serializeAttachments(document.attachments),
     customPalette: serializeCustomPalette(document.customPalette),
     styles: serializeStyles(document.styles),
     schemas: serializeSchemas(document.data._schemas),
+    ...(Object.keys(schemaMetadata).length > 0 && { schemaMetadata }),
     props: {
       query: {
         history: document.props.query.history,
@@ -74,6 +76,14 @@ const serializeStyles = (styles: DiagramStyles): SerializedStyles => {
 
 const serializeSchemas = (schemas: DiagramDocumentDataSchemas) => {
   return schemas.all;
+};
+
+const serializeSchemaMetadata = (schemas: DiagramDocumentDataSchemas) => {
+  const acc: Record<string, SchemaMetadata> = {};
+  for (const schema of schemas.all) {
+    acc[schema.id] = schemas.getMetadata(schema.id);
+  }
+  return acc;
 };
 
 const serializeComments = (commentManager: CommentManager): SerializedComment[] => {

@@ -8,7 +8,11 @@ import {
   type RefreshableDataProvider,
   type RefreshableSchemaProvider
 } from './dataProvider';
-import { DataSchema, DiagramDocumentDataSchemas } from './diagramDocumentDataSchemas';
+import {
+  DataSchema,
+  DiagramDocumentDataSchemas,
+  SchemaMetadata
+} from './diagramDocumentDataSchemas';
 import type { DiagramDocument } from './diagramDocument';
 import { DiagramDocumentDataTemplates } from './diagramDocumentDataTemplates';
 import { UnitOfWork } from './unitOfWork';
@@ -132,6 +136,8 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
       }
     };
 
+    if (this.#providers.length === 0) this.setProviders([]);
+
     this.#crdt.on('remoteUpdate', updateProvider);
     this.#crdt.on('remoteInsert', updateProvider);
   }
@@ -198,6 +204,14 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
   get db(): DataManager {
     if (!this.#dataManager) this.rebuildDataManager();
     return this.#dataManager!;
+  }
+
+  getSchemaMetadata(schemaId: string) {
+    return this.#schemas.getMetadata(schemaId);
+  }
+
+  setSchemaMetadata(schemaId: string, metadata: SchemaMetadata) {
+    this.#schemas.setMetadata(schemaId, metadata);
   }
 }
 
