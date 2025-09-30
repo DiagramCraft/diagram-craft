@@ -8,6 +8,7 @@ import { TbPencil, TbPlus, TbTrash } from 'react-icons/tb';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { EditSchemaDialog } from '../EditSchemaDialog';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
+import { useRedraw } from '../../hooks/useRedraw';
 import styles from './SchemasTab.module.css';
 
 const getProviderTypeName = (providerId: string): string => {
@@ -26,6 +27,7 @@ const getProviderTypeName = (providerId: string): string => {
 export const SchemasTab = () => {
   const document = useDocument();
   const application = useApplication();
+  const redraw = useRedraw();
   const [addSchemaDialog, setAddSchemaDialog] = useState<{ open: boolean; providerId?: string }>({
     open: false
   });
@@ -33,7 +35,6 @@ export const SchemasTab = () => {
     open: false
   });
   const [selectedProviderId, setSelectedProviderId] = useState<string>('all');
-  const [, forceUpdate] = useState({});
 
   const db = document.data.db;
 
@@ -41,16 +42,9 @@ export const SchemasTab = () => {
 
   // Listen for schema updates to re-render when metadata changes
   useEffect(() => {
-    const handleUpdate = () => {
-      forceUpdate({});
-    };
-
-    document.data._schemas.on('update', handleUpdate);
-
-    return () => {
-      document.data._schemas.off('update', handleUpdate);
-    };
-  }, [document]);
+    document.data._schemas.on('update', redraw);
+    return () => document.data._schemas.off('update', redraw);
+  }, [document, redraw]);
 
   // Filter schemas by selected provider
   const schemas =
