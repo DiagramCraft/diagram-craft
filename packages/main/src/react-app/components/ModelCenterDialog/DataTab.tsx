@@ -161,7 +161,6 @@ export const DataTab = () => {
           title: 'Apply Overrides',
           message: `Apply ${itemsToApply.length} override(s) to the data provider?`,
           okLabel: 'Apply',
-          okType: 'primary',
           cancelLabel: 'Cancel'
         },
         async () => {
@@ -169,13 +168,16 @@ export const DataTab = () => {
             await db.applyOverrides(targets);
             setSelectedItems(new Set());
           } catch (error) {
-            console.error('Failed to apply overrides:', error);
             application.ui.showDialog(
-              new MessageDialogCommand({
-                title: 'Error',
-                message: `Failed to apply overrides: ${error instanceof Error ? error.message : 'Unknown error'}`,
-                okLabel: 'OK'
-              })
+              new MessageDialogCommand(
+                {
+                  title: 'Error',
+                  message: `Failed to apply overrides: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                  okLabel: 'OK',
+                  cancelLabel: undefined
+                },
+                () => {}
+              )
             );
           }
         }
