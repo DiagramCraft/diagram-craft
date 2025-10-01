@@ -140,6 +140,33 @@ export const DataTab = () => {
     return value;
   };
 
+  const getOverrideStatus = (item: DataItemWithSchema): { text: string; cssClass: string } => {
+    const schemaMetadata = document.data.getSchemaMetadata(item._schema.id);
+
+    if (!schemaMetadata.useDocumentOverrides) {
+      return { text: 'N/A', cssClass: 'na' };
+    }
+
+    const result = db.getOverrideStatusForItem(item._schema.id, item._uid);
+
+    if (result.status === 'unmodified') {
+      return { text: 'No', cssClass: 'unmodified' };
+    }
+
+    if (result.status === 'modified-error') {
+      return {
+        text: `Error (${result.override?.type ?? 'unknown'})`,
+        cssClass: 'error'
+      };
+    }
+
+    // status === 'modified'
+    return {
+      text: `Yes (${result.override?.type ?? 'unknown'})`,
+      cssClass: 'modified'
+    };
+  };
+
   const canMutateData = db.schemas.some(s => db.isDataEditable(s));
   const hasSchemas = db.schemas.length > 0;
 
@@ -258,6 +285,7 @@ export const DataTab = () => {
                   <th>ID</th>
                   <th>Schema</th>
                   <th>Fields</th>
+                  <th>Override Status</th>
                   {canMutateData && <th>Actions</th>}
                 </tr>
               </thead>
@@ -265,6 +293,7 @@ export const DataTab = () => {
                 {filteredDataItems.map(item => {
                   const primaryField = item._schema.fields[0];
                   const displayFields = item._schema.fields.slice(1, 3); // Show up to 2 additional fields
+                  const overrideStatus = getOverrideStatus(item);
 
                   return (
                     <tr key={item._uid}>
@@ -277,6 +306,15 @@ export const DataTab = () => {
                               .map(field => `${field.name}: ${getDisplayValue(item, field)}`)
                               .join(', ')
                           : '-'}
+                      </td>
+                      <td
+                        className={
+                          styles[
+                            `dataTabOverrideStatus${overrideStatus.cssClass.charAt(0).toUpperCase()}${overrideStatus.cssClass.slice(1)}`
+                          ]
+                        }
+                      >
+                        {overrideStatus.text}
                       </td>
                       {canMutateData && (
                         <td>

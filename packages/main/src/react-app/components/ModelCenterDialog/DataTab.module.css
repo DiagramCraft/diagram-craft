@@ -72,3 +72,21 @@
   display: flex;
   gap: 4px;
 }
+
+.data-tab__override-status--unmodified {
+  /* No style change */
+}
+
+.data-tab__override-status--modified {
+  color: var(--warning-fg);
+  font-weight: 500;
+}
+
+.data-tab__override-status--error {
+  color: var(--error-fg);
+  font-weight: 500;
+}
+
+.data-tab__override-status--na {
+  color: var(--base-fg-more-dim);
+}
