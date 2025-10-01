@@ -9,17 +9,18 @@ import { DataSchema } from './diagramDocumentDataSchemas';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { type CRDTMap, CRDTRoot } from './collaboration/crdt';
 import { assert } from '@diagram-craft/utils/assert';
+import { newid } from '@diagram-craft/utils/id';
 
 type DataWithSchema = Data & { _schemaId: string };
 
 export const DefaultDataProviderId = 'defaultDataProvider';
 
-const DATA_DELETE = 'DefaultDataProvider.data.remoteDelete';
-const DATA_INSERT = 'DefaultDataProvider.data.remoteInsert';
-const DATA_UPDATE = 'DefaultDataProvider.data.remoteUpdate';
-const SCHEMA_DELETE = 'DefaultDataProvider.schema.remoteDelete';
-const SCHEMA_INSERT = 'DefaultDataProvider.schema.remoteInsert';
-const SCHEMA_UPDATE = 'DefaultDataProvider.schema.remoteUpdate';
+const DATA_DELETE = `${newid()}.d.delete`;
+const DATA_INSERT = `${newid()}.d.insert`;
+const DATA_UPDATE = `${newid()}.d.update`;
+const SCHEMA_DELETE = `${newid()}.s.delete`;
+const SCHEMA_INSERT = `${newid()}.s.insert`;
+const SCHEMA_UPDATE = `${newid()}.s.update`;
 
 export class DefaultDataProvider
   extends EventEmitter<DataProviderEventMap>
@@ -58,7 +59,6 @@ export class DefaultDataProvider
     this.#crdtSchemas = root.getMap('defaultDataProviderSchemas');
 
     if (this.#storedState) {
-      console.log(this.#storedState);
       // Note, ignoring the promise in these cases are fine as we know the implementation
       // in DefaultDataProvider is synchronous (it's only the interface that is async)
       this.#storedState.schemas?.forEach(schema => {
