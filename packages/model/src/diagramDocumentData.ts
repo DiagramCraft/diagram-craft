@@ -270,6 +270,14 @@ export class DataManager extends EventEmitter<DataProviderEventMap> {
       const operation = schemaOverrides.get(uid);
       if (!operation) continue;
 
+      if (operation.type === 'update' || operation.type === 'delete') {
+        // There is a chance that the underlying data has been deleted
+        // before we've had a chance to apply the override.
+        if (provider.getById([uid])?.length === 0) {
+          throw new Error(`Data item ${uid} no longer found in provider ${schema.providerId}`);
+        }
+      }
+
       operations.push({ schemaId, uid, schema, provider, operation });
     }
 
@@ -278,13 +286,7 @@ export class DataManager extends EventEmitter<DataProviderEventMap> {
       if (operation.type === 'add') {
         await provider.addData(schema, operation.data);
       } else if (operation.type === 'update') {
-        // There is a chance that the underlying data has been deleted
-        // before we've had a chance to apply the override.
-        if (provider.getById([uid])?.length === 0) {
-          await provider.addData(schema, operation.data);
-        } else {
-          await provider.updateData(schema, operation.data);
-        }
+        await provider.updateData(schema, operation.data);
       } else if (operation.type === 'delete') {
         await provider.deleteData(schema, operation.data);
       }
