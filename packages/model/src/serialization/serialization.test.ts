@@ -5,6 +5,7 @@ import { deserializeDiagramDocument } from './deserialize';
 import { UnitOfWork } from '../unitOfWork';
 import type { RegularLayer } from '../diagramLayerRegular';
 import { Comment } from '../comment';
+import { DefaultDataProvider } from '../dataProviderDefault';
 
 describe('serialization', () => {
   describe('serializeDiagramElement', () => {
@@ -388,23 +389,34 @@ describe('serialization', () => {
         const doc = TestModel.newDocument();
         const schemaId = 'test-schema';
 
-        // Add a schema with useDocumentOverrides enabled
-        doc.data._schemas.add({
-          id: schemaId,
-          name: 'Test Schema',
-          providerId: 'default',
-          fields: [{ id: 'name', name: 'Name', type: 'text' }]
-        });
+        // Set up provider with schema and some data
+        const updateData = { _uid: 'update-uid-2', name: 'Updated Item' };
+        const deleteData = { _uid: 'delete-uid-3', name: 'Deleted Item' };
+        const provider = new DefaultDataProvider(
+          JSON.stringify({
+            schemas: [
+              {
+                id: schemaId,
+                name: 'Test Schema',
+                providerId: 'default',
+                fields: [{ id: 'name', name: 'Name', type: 'text' }]
+              }
+            ],
+            data: [
+              { ...updateData, _schemaId: schemaId, name: 'Original Update Item' },
+              { ...deleteData, _schemaId: schemaId }
+            ]
+          })
+        );
+        doc.data.setProviders([provider]);
         doc.data.setSchemaMetadata(schemaId, { useDocumentOverrides: true });
 
         // Add some overrides
         const addData = { _uid: 'add-uid-1', name: 'Added Item' };
-        const updateData = { _uid: 'update-uid-2', name: 'Updated Item' };
-        const deleteData = { _uid: 'delete-uid-3', name: 'Deleted Item' };
 
-        await doc.data.db.addData(doc.data._schemas.get(schemaId), addData);
-        await doc.data.db.updateData(doc.data._schemas.get(schemaId), updateData);
-        await doc.data.db.deleteData(doc.data._schemas.get(schemaId), deleteData);
+        await doc.data.db.addData(doc.data.db.getSchema(schemaId), addData);
+        await doc.data.db.updateData(doc.data.db.getSchema(schemaId), updateData);
+        await doc.data.db.deleteData(doc.data.db.getSchema(schemaId), deleteData);
 
         // Act - Serialize
         const serialized = await serializeDiagramDocument(doc);
@@ -434,15 +446,18 @@ describe('serialization', () => {
         );
 
         // Verify deserialization
-        expect(newDoc.data.db.getOverrideForItem(schemaId, 'add-uid-1')).toEqual({
+        const addResult = newDoc.data.db.getOverrideStatusForItem(schemaId, 'add-uid-1');
+        expect(addResult.override).toEqual({
           type: 'add',
           data: addData
         });
-        expect(newDoc.data.db.getOverrideForItem(schemaId, 'update-uid-2')).toEqual({
+        const updateResult = newDoc.data.db.getOverrideStatusForItem(schemaId, 'update-uid-2');
+        expect(updateResult.override).toEqual({
           type: 'update',
           data: updateData
         });
-        expect(newDoc.data.db.getOverrideForItem(schemaId, 'delete-uid-3')).toEqual({
+        const deleteResult = newDoc.data.db.getOverrideStatusForItem(schemaId, 'delete-uid-3');
+        expect(deleteResult.override).toEqual({
           type: 'delete',
           data: deleteData
         });

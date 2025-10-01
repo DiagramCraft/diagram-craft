@@ -244,10 +244,42 @@ export class DataManager extends EventEmitter<DataProviderEventMap> {
     return this.overrides;
   }
 
-  getOverrideForItem(schemaId: string, uid: string): OverrideOperation | undefined {
+  getOverrideStatusForItem(
+    schemaId: string,
+    uid: string
+  ): {
+    status: 'unmodified' | 'modified' | 'modified-error';
+    override: OverrideOperation | undefined;
+  } {
     const schemaOverrides = this.overrides.get(schemaId);
-    if (!schemaOverrides) return undefined;
-    return schemaOverrides.get(uid);
+    const operation = schemaOverrides?.get(uid);
+
+    if (!schemaOverrides || !operation) {
+      return {
+        status: 'unmodified',
+        override: undefined
+      };
+    }
+
+    if (operation.type === 'update' || operation.type === 'delete') {
+      // There is a chance that the underlying data has been deleted
+      // before we've had a chance to apply the override.
+      const provider = this.getProvider(this.getSchema(schemaId).providerId);
+      if (provider.getById([uid])?.length === 0) {
+        return {
+          status: 'modified-error',
+          override: operation
+        };
+      }
+    }
+
+    return { status: 'modified', override: operation };
+  }
+
+  clearOverride(schemaId: string, uid: string) {
+    const schemaOverrides = this.overrides.get(schemaId);
+    if (!schemaOverrides) return;
+    schemaOverrides.delete(uid);
   }
 
   async applyOverrides(targets: Array<{ schemaId: string; uid: string }>) {

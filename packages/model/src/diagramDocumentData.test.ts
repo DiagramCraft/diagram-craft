@@ -119,17 +119,19 @@ describe.each(Backends.all())('DataManager [%s]', (_name, backend) => {
       docData1.db.addData(docData1._schemas.get(schemaId), testData);
 
       // Verify override is stored in CRDT
-      const override1 = docData1.db.getOverrideForItem(schemaId, testData._uid);
-      expect(override1).toBeDefined();
-      expect(override1?.type).toBe('add');
-      expect(override1?.data).toEqual(testData);
+      const result1 = docData1.db.getOverrideStatusForItem(schemaId, testData._uid);
+      expect(result1.status).toBe('modified');
+      expect(result1.override).toBeDefined();
+      expect(result1.override?.type).toBe('add');
+      expect(result1.override?.data).toEqual(testData);
 
       // Verify it syncs to other instance
       if (docData2) {
-        const override2 = docData2.db.getOverrideForItem(schemaId, testData._uid);
-        expect(override2).toBeDefined();
-        expect(override2?.type).toBe('add');
-        expect(override2?.data).toEqual(testData);
+        const result2 = docData2.db.getOverrideStatusForItem(schemaId, testData._uid);
+        expect(result2.status).toBe('modified');
+        expect(result2.override).toBeDefined();
+        expect(result2.override?.type).toBe('add');
+        expect(result2.override?.data).toEqual(testData);
       }
     });
 
@@ -141,24 +143,34 @@ describe.each(Backends.all())('DataManager [%s]', (_name, backend) => {
         : undefined;
 
       const schemaId = 'test-schema';
-      docData1._schemas.add({
-        id: schemaId,
-        name: 'Test Schema',
-        providerId: 'default',
-        fields: [{ id: 'name', name: 'Name', type: 'text' }]
-      });
+      const testData = { _uid: newid(), name: 'Updated Item' };
+      const provider = new DefaultDataProvider(
+        JSON.stringify({
+          schemas: [
+            {
+              id: schemaId,
+              name: 'Test Schema',
+              providerId: 'default',
+              fields: [{ id: 'name', name: 'Name', type: 'text' }]
+            }
+          ],
+          data: [{ ...testData, _schemaId: schemaId, name: 'Original Item' }]
+        })
+      );
+      docData1.setProviders([provider]);
       docData1.setSchemaMetadata(schemaId, { useDocumentOverrides: true });
 
-      const testData = { _uid: newid(), name: 'Updated Item' };
-      docData1.db.updateData(docData1._schemas.get(schemaId), testData);
+      docData1.db.updateData(docData1.db.getSchema(schemaId), testData);
 
-      const override1 = docData1.db.getOverrideForItem(schemaId, testData._uid);
-      expect(override1?.type).toBe('update');
-      expect(override1?.data).toEqual(testData);
+      const result1 = docData1.db.getOverrideStatusForItem(schemaId, testData._uid);
+      expect(result1.status).toBe('modified');
+      expect(result1.override?.type).toBe('update');
+      expect(result1.override?.data).toEqual(testData);
 
       if (docData2) {
-        const override2 = docData2.db.getOverrideForItem(schemaId, testData._uid);
-        expect(override2?.type).toBe('update');
+        const result2 = docData2.db.getOverrideStatusForItem(schemaId, testData._uid);
+        expect(result2.status).toBe('modified');
+        expect(result2.override?.type).toBe('update');
       }
     });
 
@@ -170,6 +182,7 @@ describe.each(Backends.all())('DataManager [%s]', (_name, backend) => {
         : undefined;
 
       const schemaId = 'test-schema';
+      const testData = { _uid: newid(), name: 'To Delete' };
       const provider = new DefaultDataProvider(
         JSON.stringify({
           schemas: [
@@ -180,22 +193,23 @@ describe.each(Backends.all())('DataManager [%s]', (_name, backend) => {
               fields: [{ id: 'name', name: 'Name', type: 'text' }]
             }
           ],
-          data: []
+          data: [{ ...testData, _schemaId: schemaId }]
         })
       );
       docData1.setProviders([provider]);
       docData1.setSchemaMetadata(schemaId, { useDocumentOverrides: true });
 
-      const testData = { _uid: newid(), name: 'To Delete' };
       docData1.db.deleteData(docData1.db.getSchema(schemaId), testData);
 
-      const override1 = docData1.db.getOverrideForItem(schemaId, testData._uid);
-      expect(override1?.type).toBe('delete');
-      expect(override1?.data).toEqual(testData);
+      const result1 = docData1.db.getOverrideStatusForItem(schemaId, testData._uid);
+      expect(result1.status).toBe('modified');
+      expect(result1.override?.type).toBe('delete');
+      expect(result1.override?.data).toEqual(testData);
 
       if (docData2) {
-        const override2 = docData2.db.getOverrideForItem(schemaId, testData._uid);
-        expect(override2?.type).toBe('delete');
+        const result2 = docData2.db.getOverrideStatusForItem(schemaId, testData._uid);
+        expect(result2.status).toBe('modified');
+        expect(result2.override?.type).toBe('delete');
       }
     });
 
@@ -224,8 +238,9 @@ describe.each(Backends.all())('DataManager [%s]', (_name, backend) => {
       await docData.db.addData(docData.db.getSchema(schemaId), testData);
 
       // Should NOT create an override
-      const override = docData.db.getOverrideForItem(schemaId, testData._uid);
-      expect(override).toBeUndefined();
+      const result = docData.db.getOverrideStatusForItem(schemaId, testData._uid);
+      expect(result.status).toBe('unmodified');
+      expect(result.override).toBeUndefined();
 
       // Should be in the provider
       const providerData = docData.db.getData(docData.db.getSchema(schemaId));
@@ -358,7 +373,9 @@ describe.each(Backends.all())('DataManager [%s]', (_name, backend) => {
       await docData.db.applyOverrides([{ schemaId, uid: testData._uid }]);
 
       // Verify override is removed
-      expect(docData.db.getOverrideForItem(schemaId, testData._uid)).toBeUndefined();
+      const result = docData.db.getOverrideStatusForItem(schemaId, testData._uid);
+      expect(result.status).toBe('unmodified');
+      expect(result.override).toBeUndefined();
 
       // Verify data is in provider
       const providerData = docData.db.getData(docData.db.getSchema(schemaId));
@@ -396,7 +413,9 @@ describe.each(Backends.all())('DataManager [%s]', (_name, backend) => {
       await docData.db.applyOverrides([{ schemaId, uid: dataUid }]);
 
       // Verify override is removed
-      expect(docData.db.getOverrideForItem(schemaId, dataUid)).toBeUndefined();
+      const resultAfterApply = docData.db.getOverrideStatusForItem(schemaId, dataUid);
+      expect(resultAfterApply.status).toBe('unmodified');
+      expect(resultAfterApply.override).toBeUndefined();
 
       // Verify data is updated in provider (after disabling overrides to read actual provider data)
       docData.setSchemaMetadata(schemaId, { useDocumentOverrides: false });
@@ -434,12 +453,103 @@ describe.each(Backends.all())('DataManager [%s]', (_name, backend) => {
       await docData.db.applyOverrides([{ schemaId, uid: dataUid }]);
 
       // Verify override is removed
-      expect(docData.db.getOverrideForItem(schemaId, dataUid)).toBeUndefined();
+      const resultAfterApply = docData.db.getOverrideStatusForItem(schemaId, dataUid);
+      expect(resultAfterApply.status).toBe('unmodified');
+      expect(resultAfterApply.override).toBeUndefined();
 
       // Verify data is deleted from provider
       docData.setSchemaMetadata(schemaId, { useDocumentOverrides: false });
       const providerData = docData.db.getData(docData.db.getSchema(schemaId));
       expect(providerData).toHaveLength(0);
+    });
+
+    it('clearOverride removes a specific override', () => {
+      const { root1, root2 } = standardTestModel(backend);
+      const docData1 = new DiagramDocumentData(root1, TestModel.newDocument(root1));
+      const docData2 = root2
+        ? new DiagramDocumentData(root2, TestModel.newDocument(root2))
+        : undefined;
+
+      const schemaId = 'test-schema';
+      const provider = new DefaultDataProvider(
+        JSON.stringify({
+          schemas: [
+            {
+              id: schemaId,
+              name: 'Test Schema',
+              providerId: 'default',
+              fields: [{ id: 'name', name: 'Name', type: 'text' }]
+            }
+          ],
+          data: []
+        })
+      );
+      docData1.setProviders([provider]);
+      docData1.setSchemaMetadata(schemaId, { useDocumentOverrides: true });
+
+      // Add multiple overrides
+      const data1 = { _uid: newid(), name: 'Item 1' };
+      const data2 = { _uid: newid(), name: 'Item 2' };
+      docData1.db.addData(docData1.db.getSchema(schemaId), data1);
+      docData1.db.addData(docData1.db.getSchema(schemaId), data2);
+
+      // Verify both exist
+      const result1Before = docData1.db.getOverrideStatusForItem(schemaId, data1._uid);
+      expect(result1Before.status).toBe('modified');
+      const result2Before = docData1.db.getOverrideStatusForItem(schemaId, data2._uid);
+      expect(result2Before.status).toBe('modified');
+
+      // Clear only the first override
+      docData1.db.clearOverride(schemaId, data1._uid);
+
+      // Verify first is cleared, second remains
+      const result1After = docData1.db.getOverrideStatusForItem(schemaId, data1._uid);
+      expect(result1After.status).toBe('unmodified');
+      expect(result1After.override).toBeUndefined();
+
+      const result2After = docData1.db.getOverrideStatusForItem(schemaId, data2._uid);
+      expect(result2After.status).toBe('modified');
+      expect(result2After.override).toBeDefined();
+
+      // If syncing, verify it syncs to other instance
+      if (docData2) {
+        const result1Sync = docData2.db.getOverrideStatusForItem(schemaId, data1._uid);
+        expect(result1Sync.status).toBe('unmodified');
+
+        const result2Sync = docData2.db.getOverrideStatusForItem(schemaId, data2._uid);
+        expect(result2Sync.status).toBe('modified');
+      }
+    });
+
+    it('clearOverride is safe to call on non-existent overrides', () => {
+      const { root1 } = standardTestModel(backend);
+      const docData = new DiagramDocumentData(root1, TestModel.newDocument(root1));
+
+      const schemaId = 'test-schema';
+      const provider = new DefaultDataProvider(
+        JSON.stringify({
+          schemas: [
+            {
+              id: schemaId,
+              name: 'Test Schema',
+              providerId: 'default',
+              fields: [{ id: 'name', name: 'Name', type: 'text' }]
+            }
+          ],
+          data: []
+        })
+      );
+      docData.setProviders([provider]);
+
+      // Should not throw when clearing non-existent override
+      expect(() => {
+        docData.db.clearOverride(schemaId, 'non-existent-uid');
+      }).not.toThrow();
+
+      // Should not throw when schema has no overrides at all
+      expect(() => {
+        docData.db.clearOverride('non-existent-schema', 'non-existent-uid');
+      }).not.toThrow();
     });
 
     it('applyOverrides throws error if provider is not mutable', async () => {
