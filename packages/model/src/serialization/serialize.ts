@@ -8,6 +8,7 @@ import {
   SerializedElement,
   SerializedLayer,
   SerializedNode,
+  type SerializedOverride,
   SerializedStyles
 } from './types';
 import { NotImplementedYet, VerifyNotReached } from '@diagram-craft/utils/assert';
@@ -20,6 +21,7 @@ import { RuleLayer } from '../diagramLayerRule';
 import { RegularLayer } from '../diagramLayerRegular';
 import { CommentManager, SerializedComment } from '../comment';
 import { hash64 } from '@diagram-craft/utils/hash';
+import type { DataManager } from '../diagramDocumentData';
 
 export const serializeDiagramDocument = async (
   document: DiagramDocument
@@ -45,7 +47,8 @@ export const serializeDiagramDocument = async (
         providerId: p.providerId,
         data: p.serialize()
       })),
-      templates: document.data.templates.all
+      templates: document.data.templates.all,
+      overrides: serializeOverrides(document.data.db)
     }
   };
 
@@ -196,4 +199,19 @@ export const serializeDiagramElement = (element: DiagramElement): SerializedElem
   } else {
     throw new VerifyNotReached();
   }
+};
+
+const serializeOverrides = (db: DataManager) => {
+  const dest: Record<string, Record<string, SerializedOverride>> = {};
+
+  for (const [schemaId, schemaOverrides] of db.getOverrides().entries()) {
+    const serializedSchemaOverrides: Record<string, SerializedOverride> = {};
+    dest[schemaId] = serializedSchemaOverrides;
+
+    for (const [uid, operation] of schemaOverrides.entries()) {
+      serializedSchemaOverrides[uid] = { ...operation };
+    }
+  }
+
+  return dest;
 };

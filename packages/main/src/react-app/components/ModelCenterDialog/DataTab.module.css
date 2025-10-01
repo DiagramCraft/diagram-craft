@@ -72,3 +72,21 @@
   display: flex;
   gap: 4px;
 }
+
+.data-tab__override-status[data-status=modified] {
+  color: var(--warning-fg);
+  font-weight: 500;
+}
+
+.data-tab__override-status[data-status=error] {
+  color: var(--error-fg);
+  font-weight: 500;
+}
+
+.data-tab__override-status[data-status=na] {
+  color: var(--base-fg-more-dim);
+}
+
+.data-tab__table input[type='checkbox'] {
+  cursor: pointer;
+}

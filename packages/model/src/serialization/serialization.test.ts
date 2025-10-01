@@ -5,6 +5,7 @@ import { deserializeDiagramDocument } from './deserialize';
 import { UnitOfWork } from '../unitOfWork';
 import type { RegularLayer } from '../diagramLayerRegular';
 import { Comment } from '../comment';
+import { DefaultDataProvider } from '../dataProviderDefault';
 
 describe('serialization', () => {
   describe('serializeDiagramElement', () => {
@@ -379,6 +380,109 @@ describe('serialization', () => {
         const metadata = newDoc.data._schemas.getMetadata('old-schema');
         expect(metadata.availableForElementLocalData).toBe(true);
         expect(metadata.useDocumentOverrides).toBe(false);
+      });
+    });
+
+    describe('overrides', () => {
+      it('should serialize and deserialize document overrides', async () => {
+        // Setup
+        const doc = TestModel.newDocument();
+        const schemaId = 'test-schema';
+
+        // Set up provider with schema and some data
+        const updateData = { _uid: 'update-uid-2', name: 'Updated Item' };
+        const deleteData = { _uid: 'delete-uid-3', name: 'Deleted Item' };
+        const provider = new DefaultDataProvider(
+          JSON.stringify({
+            schemas: [
+              {
+                id: schemaId,
+                name: 'Test Schema',
+                providerId: 'default',
+                fields: [{ id: 'name', name: 'Name', type: 'text' }]
+              }
+            ],
+            data: [
+              { ...updateData, _schemaId: schemaId, name: 'Original Update Item' },
+              { ...deleteData, _schemaId: schemaId }
+            ]
+          })
+        );
+        doc.data.setProviders([provider]);
+        doc.data.setSchemaMetadata(schemaId, { useDocumentOverrides: true });
+
+        // Add some overrides
+        const addData = { _uid: 'add-uid-1', name: 'Added Item' };
+
+        await doc.data.db.addData(doc.data.db.getSchema(schemaId), addData);
+        await doc.data.db.updateData(doc.data.db.getSchema(schemaId), updateData);
+        await doc.data.db.deleteData(doc.data.db.getSchema(schemaId), deleteData);
+
+        // Act - Serialize
+        const serialized = await serializeDiagramDocument(doc);
+
+        // Verify serialization
+        expect(serialized.data?.overrides).toBeDefined();
+        expect(serialized.data?.overrides![schemaId]).toBeDefined();
+        expect(serialized.data!.overrides![schemaId]!['add-uid-1']).toEqual({
+          type: 'add',
+          data: addData
+        });
+        expect(serialized.data!.overrides![schemaId]!['update-uid-2']).toEqual({
+          type: 'update',
+          data: updateData
+        });
+        expect(serialized.data!.overrides![schemaId]!['delete-uid-3']).toEqual({
+          type: 'delete',
+          data: deleteData
+        });
+
+        // Act - Deserialize
+        const newDoc = TestModel.newDocument();
+        await deserializeDiagramDocument(
+          serialized,
+          newDoc,
+          (d, doc) => new TestDiagramBuilder(doc, d.id)
+        );
+
+        // Verify deserialization
+        const addResult = newDoc.data.db.getOverrideStatusForItem(schemaId, 'add-uid-1');
+        expect(addResult.override).toEqual({
+          type: 'add',
+          data: addData
+        });
+        const updateResult = newDoc.data.db.getOverrideStatusForItem(schemaId, 'update-uid-2');
+        expect(updateResult.override).toEqual({
+          type: 'update',
+          data: updateData
+        });
+        const deleteResult = newDoc.data.db.getOverrideStatusForItem(schemaId, 'delete-uid-3');
+        expect(deleteResult.override).toEqual({
+          type: 'delete',
+          data: deleteData
+        });
+      });
+
+      it('should handle empty overrides', async () => {
+        // Setup
+        const doc = TestModel.newDocument();
+
+        // Act
+        const serialized = await serializeDiagramDocument(doc);
+
+        // Verify
+        expect(serialized.data?.overrides).toEqual({});
+
+        // Deserialize
+        const newDoc = TestModel.newDocument();
+        await deserializeDiagramDocument(
+          serialized,
+          newDoc,
+          (d, doc) => new TestDiagramBuilder(doc, d.id)
+        );
+
+        // Should not throw and should work fine
+        expect(newDoc.data.db).toBeDefined();
       });
     });
   });

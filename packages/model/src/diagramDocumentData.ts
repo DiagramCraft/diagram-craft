@@ -94,6 +94,7 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
   // Shared properties
   readonly #schemas: DiagramDocumentDataSchemas;
   readonly #templates: DiagramDocumentDataTemplates;
+  readonly #root: CRDTRoot;
 
   // Transient properties
   #providers: Array<DataProvider> = [];
@@ -109,6 +110,7 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
   constructor(root: CRDTRoot, document: DiagramDocument) {
     super();
 
+    this.#root = root;
     this.#crdt = root.getMap('documentData');
     this.#schemas = new DiagramDocumentDataSchemas(root, document, DEFAULT_SCHEMA);
     this.#templates = new DiagramDocumentDataTemplates(root);
@@ -148,7 +150,7 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
       this.#dataManager.destroy();
     }
 
-    this.#dataManager = new DataManager(this.#providers);
+    this.#dataManager = new DataManager(this.#providers, this.#schemas, this.#root);
   }
 
   private setProviderInternal(dataProviders: Array<DataProvider>, initial = false) {
@@ -216,14 +218,119 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
   }
 }
 
+type OverrideOperation =
+  | { type: 'add'; data: Data }
+  | { type: 'update'; data: Data }
+  | { type: 'delete'; data: Data };
+
 export class DataManager extends EventEmitter<DataProviderEventMap> {
-  constructor(private readonly providers: Array<DataProvider>) {
+  // CRDT-backed store for overrides: schemaId -> uid -> operation
+  private readonly overrides: CRDTMap<Record<string, CRDTMap<Record<string, OverrideOperation>>>>;
+
+  constructor(
+    private readonly providers: Array<DataProvider>,
+    private readonly schemaRegistry: DiagramDocumentDataSchemas,
+    private readonly root: CRDTRoot
+  ) {
     super();
+    this.overrides = root.getMap('dataOverrides');
   }
 
   destroy() {
-    // Clean up all event listeners
     this.clearListeners();
+  }
+
+  getOverrides(): CRDTMap<Record<string, CRDTMap<Record<string, OverrideOperation>>>> {
+    return this.overrides;
+  }
+
+  getOverrideStatusForItem(
+    schemaId: string,
+    uid: string
+  ): {
+    status: 'unmodified' | 'modified' | 'modified-error';
+    override: OverrideOperation | undefined;
+  } {
+    const schemaOverrides = this.overrides.get(schemaId);
+    const operation = schemaOverrides?.get(uid);
+
+    if (!schemaOverrides || !operation) {
+      return {
+        status: 'unmodified',
+        override: undefined
+      };
+    }
+
+    if (operation.type === 'update' || operation.type === 'delete') {
+      // There is a chance that the underlying data has been deleted
+      // before we've had a chance to apply the override.
+      const provider = this.getProvider(this.getSchema(schemaId).providerId);
+      if (provider.getById([uid])?.length === 0) {
+        return {
+          status: 'modified-error',
+          override: operation
+        };
+      }
+    }
+
+    return { status: 'modified', override: operation };
+  }
+
+  clearOverride(schemaId: string, uid: string) {
+    const schemaOverrides = this.overrides.get(schemaId);
+    if (!schemaOverrides) return;
+    schemaOverrides.delete(uid);
+  }
+
+  async applyOverrides(targets: Array<{ schemaId: string; uid: string }>) {
+    // First, validate that all affected providers are mutable
+    const operations: Array<{
+      schemaId: string;
+      uid: string;
+      schema: DataSchema;
+      provider: MutableDataProvider;
+      operation: OverrideOperation;
+    }> = [];
+
+    for (const { schemaId, uid } of targets) {
+      const schema = this.getSchema(schemaId);
+      const provider = this.getProvider(schema.providerId);
+
+      if (!isMutableDataProvider(provider)) {
+        throw new Error(`Provider ${schema.providerId} for schema ${schemaId} is not mutable`);
+      }
+
+      const schemaOverrides = this.overrides.get(schemaId);
+      if (!schemaOverrides) continue;
+
+      const operation = schemaOverrides.get(uid);
+      if (!operation) continue;
+
+      if (operation.type === 'update' || operation.type === 'delete') {
+        // There is a chance that the underlying data has been deleted
+        // before we've had a chance to apply the override.
+        if (provider.getById([uid])?.length === 0) {
+          throw new Error(`Data item ${uid} no longer found in provider ${schema.providerId}`);
+        }
+      }
+
+      operations.push({ schemaId, uid, schema, provider, operation });
+    }
+
+    // Now apply all overrides
+    for (const { schemaId, uid, schema, provider, operation } of operations) {
+      if (operation.type === 'add') {
+        await provider.addData(schema, operation.data);
+      } else if (operation.type === 'update') {
+        await provider.updateData(schema, operation.data);
+      } else if (operation.type === 'delete') {
+        await provider.deleteData(schema, operation.data);
+      }
+
+      // Remove the override after successful application
+      const schemaOverrides = this.overrides.get(schemaId)!;
+      schemaOverrides.delete(uid);
+    }
   }
 
   isDataEditable(schema: DataSchema) {
@@ -272,12 +379,6 @@ export class DataManager extends EventEmitter<DataProviderEventMap> {
     return provider.addSchema(schema);
   }
 
-  private getProvider(providerId: string) {
-    const p = this.providers.find(p => p.id === providerId);
-    assert.present(p, `Provider ${providerId} not found`);
-    return p;
-  }
-
   updateSchema(schema: DataSchema) {
     const provider = this.getProvider(schema.providerId);
     if (!isMutableSchemaProvider(provider)) throw new VerifyNotReached();
@@ -292,7 +393,7 @@ export class DataManager extends EventEmitter<DataProviderEventMap> {
 
   getData(schema: DataSchema) {
     const provider = this.getProvider(schema.providerId);
-    return provider.getData(schema);
+    return this.mergeWithOverrides(schema.id, provider.getData(schema));
   }
 
   get schemas() {
@@ -301,25 +402,40 @@ export class DataManager extends EventEmitter<DataProviderEventMap> {
 
   getById(schema: DataSchema, ids: string[]) {
     const provider = this.getProvider(schema.providerId);
-    return provider.getById(ids);
+    return this.mergeWithOverrides(schema.id, provider.getById(ids));
   }
 
   queryData(schema: DataSchema, query: string) {
     const provider = this.getProvider(schema.providerId);
-    return provider.queryData(schema, query);
+    return this.mergeWithOverrides(schema.id, provider.queryData(schema, query));
   }
 
   deleteData(schema: DataSchema, data: Data) {
+    if (this.useDocumentOverridesForSchema(schema.id)) {
+      this.addOverride(schema.id, { type: 'delete', data });
+      return Promise.resolve();
+    }
+
     const provider = this.getProvider(schema.providerId);
     return (provider as MutableDataProvider).deleteData(schema, data);
   }
 
   updateData(schema: DataSchema, data: Data) {
+    if (this.useDocumentOverridesForSchema(schema.id)) {
+      this.addOverride(schema.id, { type: 'update', data });
+      return Promise.resolve();
+    }
+
     const provider = this.getProvider(schema.providerId);
     return (provider as MutableDataProvider).updateData(schema, data);
   }
 
   addData(schema: DataSchema, data: Data) {
+    if (this.useDocumentOverridesForSchema(schema.id)) {
+      this.addOverride(schema.id, { type: 'add', data });
+      return Promise.resolve();
+    }
+
     const provider = this.getProvider(schema.providerId);
     return (provider as MutableDataProvider).addData(schema, data);
   }
@@ -337,5 +453,64 @@ export class DataManager extends EventEmitter<DataProviderEventMap> {
     fnOrId: EventReceiver<DataProviderEventMap[K]> | string
   ) {
     this.providers.forEach(p => p.off(eventName, fnOrId));
+  }
+
+  private useDocumentOverridesForSchema(schemaId: string): boolean {
+    return this.schemaRegistry.getMetadata(schemaId).useDocumentOverrides ?? false;
+  }
+
+  private addOverride(schemaId: string, operation: OverrideOperation) {
+    let schemaOverrides = this.overrides.get(schemaId);
+    if (!schemaOverrides) {
+      schemaOverrides = this.root.factory.makeMap<Record<string, OverrideOperation>>();
+      this.overrides.set(schemaId, schemaOverrides);
+    }
+    const uid = operation.data._uid;
+    schemaOverrides.set(uid, operation);
+
+    // Emit events to notify listeners
+    if (operation.type === 'add') {
+      this.emit('addData', { data: [operation.data] });
+    } else if (operation.type === 'update') {
+      this.emit('updateData', { data: [operation.data] });
+    } else if (operation.type === 'delete') {
+      this.emit('deleteData', { data: [operation.data] });
+    }
+  }
+
+  private mergeWithOverrides(schemaId: string, providerData: Data[]): Data[] {
+    if (!this.useDocumentOverridesForSchema(schemaId)) {
+      return providerData;
+    }
+
+    const schemaOverrides = this.overrides.get(schemaId);
+    if (!schemaOverrides || schemaOverrides.size === 0) {
+      return providerData;
+    }
+
+    // Start with provider data, keyed by _uid
+    const resultMap = new Map<string, Data>();
+    for (const data of providerData) {
+      resultMap.set(data._uid, data);
+    }
+
+    // Apply overrides
+    for (const [uid, operation] of schemaOverrides.entries()) {
+      if (operation.type === 'delete') {
+        resultMap.delete(uid);
+      } else if (operation.type === 'add') {
+        resultMap.set(uid, operation.data);
+      } else if (operation.type === 'update') {
+        resultMap.set(uid, operation.data);
+      }
+    }
+
+    return Array.from(resultMap.values());
+  }
+
+  private getProvider(providerId: string) {
+    const p = this.providers.find(p => p.id === providerId);
+    assert.present(p, `Provider ${providerId} not found`);
+    return p;
   }
 }

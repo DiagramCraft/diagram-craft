@@ -10,6 +10,9 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { EditItemDialog } from '../EditItemDialog';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import styles from './DataTab.module.css';
+import type { DiagramDocument } from '@diagram-craft/model/diagramDocument';
+import { asyncExecuteWithErrorDialog } from '../../ErrorBoundary';
+import { shorten } from '@diagram-craft/utils/strings';
 
 type DataItemWithSchema = Data & {
   _schema: DataSchema;
@@ -34,6 +37,36 @@ const filterItems = (items: DataItemWithSchema[], schemaId: string, searchQuery:
   return filtered;
 };
 
+const getOverrideStatus = (
+  document: DiagramDocument,
+  item: DataItemWithSchema
+): { text: string; status: string } => {
+  const db = document.data.db;
+
+  const schemaMetadata = document.data.getSchemaMetadata(item._schema.id);
+
+  if (!schemaMetadata.useDocumentOverrides) {
+    return { text: 'N/A', status: 'na' };
+  }
+
+  const result = db.getOverrideStatusForItem(item._schema.id, item._uid);
+
+  switch (result.status) {
+    case 'unmodified':
+      return { text: 'No', status: 'unmodified' };
+    case 'modified-error':
+      return {
+        text: `Error (${result.override!.type})`,
+        status: 'error'
+      };
+    case 'modified':
+      return {
+        text: `Yes (${result.override!.type})`,
+        status: 'modified'
+      };
+  }
+};
+
 export const DataTab = () => {
   const document = useDocument();
   const application = useApplication();
@@ -43,6 +76,7 @@ export const DataTab = () => {
   const [filteredDataItems, setFilteredDataItems] = useState<DataItemWithSchema[]>([]);
   const [selectedSchemaId, setSelectedSchemaId] = useState<string>('all');
   const [searchText, setSearchText] = useState<string>('');
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [addItemDialog, setAddItemDialog] = useState<{ open: boolean; schemaId?: string }>({
     open: false
   });
@@ -69,7 +103,7 @@ export const DataTab = () => {
     }
 
     setAllDataItems(allItems);
-  }, [db.schemas]);
+  }, [db]);
 
   useEffect(() => {
     const handleDataChange = () => {
@@ -114,11 +148,79 @@ export const DataTab = () => {
           cancelLabel: 'Cancel'
         },
         async () => {
-          try {
-            await db.deleteData(item._schema, item);
-          } catch (error) {
-            console.error('Failed to delete item:', error);
+          await db.deleteData(item._schema, item);
+        }
+      )
+    );
+  };
+
+  const handleToggleSelection = (uid: string) => {
+    setSelectedItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(uid)) {
+        newSet.delete(uid);
+      } else {
+        newSet.add(uid);
+      }
+      return newSet;
+    });
+  };
+
+  const handleToggleSelectAll = () => {
+    if (selectedItems.size === filteredDataItems.length) {
+      setSelectedItems(new Set());
+    } else {
+      setSelectedItems(new Set(filteredDataItems.map(item => item._uid)));
+    }
+  };
+
+  const handleApplySelectedOverrides = async () => {
+    const itemsToApply = filteredDataItems.filter(item => selectedItems.has(item._uid));
+
+    if (itemsToApply.length === 0) return;
+
+    const targets = itemsToApply.map(item => ({
+      schemaId: item._schema.id,
+      uid: item._uid
+    }));
+
+    application.ui.showDialog(
+      new MessageDialogCommand(
+        {
+          title: 'Apply Overrides',
+          message: `Apply ${itemsToApply.length} override(s) to the data provider?`,
+          okLabel: 'Apply',
+          cancelLabel: 'Cancel'
+        },
+        async () => {
+          await asyncExecuteWithErrorDialog({ application }, async () => {
+            await db.applyOverrides(targets);
+            setSelectedItems(new Set());
+          });
+        }
+      )
+    );
+  };
+
+  const handleClearSelectedOverrides = () => {
+    const itemsToClear = filteredDataItems.filter(item => selectedItems.has(item._uid));
+
+    if (itemsToClear.length === 0) return;
+
+    application.ui.showDialog(
+      new MessageDialogCommand(
+        {
+          title: 'Clear Overrides',
+          message: `Clear ${itemsToClear.length} override(s)? This will discard the local changes.`,
+          okLabel: 'Clear',
+          okType: 'danger',
+          cancelLabel: 'Cancel'
+        },
+        () => {
+          for (const item of itemsToClear) {
+            db.clearOverride(item._schema.id, item._uid);
           }
+          setSelectedItems(new Set());
         }
       )
     );
@@ -143,37 +245,64 @@ export const DataTab = () => {
   const canMutateData = db.schemas.some(s => db.isDataEditable(s));
   const hasSchemas = db.schemas.length > 0;
 
+  // Check if all selected items have overrides
+  const selectedItemsWithOverrides = filteredDataItems.filter(item => {
+    if (!selectedItems.has(item._uid)) return false;
+    const status = getOverrideStatus(document, item);
+    return status.status === 'modified' || status.status === 'error';
+  });
+  const allSelectedHaveOverrides =
+    selectedItems.size > 0 && selectedItemsWithOverrides.length === selectedItems.size;
+
   return (
     <>
       <div className={styles.dataTabHeader}>
         <p className={styles.dataTabTitle}>Data</p>
-        <DropdownMenu.Root>
-          <DropdownMenu.Trigger asChild>
-            <Button
-              type="secondary"
-              className={styles.dataTabAddButton}
-              disabled={!(canMutateData && hasSchemas)}
-              style={{ display: 'flex', gap: '0.25rem' }}
-            >
-              <TbPlus /> Add Data
-            </Button>
-          </DropdownMenu.Trigger>
-          <DropdownMenu.Portal>
-            <DropdownMenu.Content className="cmp-context-menu" sideOffset={5}>
-              {db.schemas.map(schema => (
-                <DropdownMenu.Item
-                  key={schema.id}
-                  className="cmp-context-menu__item"
-                  onSelect={() => setAddItemDialog({ open: true, schemaId: schema.id })}
-                  disabled={!db.isDataEditable(schema)}
-                >
-                  {schema.name}
-                </DropdownMenu.Item>
-              ))}
-              <DropdownMenu.Arrow className="cmp-context-menu__arrow" />
-            </DropdownMenu.Content>
-          </DropdownMenu.Portal>
-        </DropdownMenu.Root>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <Button
+            type="secondary"
+            onClick={handleApplySelectedOverrides}
+            disabled={!allSelectedHaveOverrides}
+            style={{ display: 'flex', gap: '0.25rem' }}
+          >
+            Apply Overrides
+          </Button>
+          <Button
+            type="danger"
+            onClick={handleClearSelectedOverrides}
+            disabled={!allSelectedHaveOverrides}
+            style={{ display: 'flex', gap: '0.25rem' }}
+          >
+            Clear Overrides
+          </Button>
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger asChild>
+              <Button
+                type="secondary"
+                className={styles.dataTabAddButton}
+                disabled={!(canMutateData && hasSchemas)}
+                style={{ display: 'flex', gap: '0.25rem' }}
+              >
+                <TbPlus /> Add Data
+              </Button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Portal>
+              <DropdownMenu.Content className="cmp-context-menu" sideOffset={5}>
+                {db.schemas.map(schema => (
+                  <DropdownMenu.Item
+                    key={schema.id}
+                    className="cmp-context-menu__item"
+                    onSelect={() => setAddItemDialog({ open: true, schemaId: schema.id })}
+                    disabled={!db.isDataEditable(schema)}
+                  >
+                    {schema.name}
+                  </DropdownMenu.Item>
+                ))}
+                <DropdownMenu.Arrow className="cmp-context-menu__arrow" />
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Root>
+        </div>
       </div>
 
       {!hasSchemas && (
@@ -254,10 +383,21 @@ export const DataTab = () => {
             <table className={styles.dataTabTable}>
               <thead>
                 <tr>
+                  <th style={{ width: '40px' }}>
+                    <input
+                      type="checkbox"
+                      checked={
+                        selectedItems.size === filteredDataItems.length &&
+                        filteredDataItems.length > 0
+                      }
+                      onChange={handleToggleSelectAll}
+                    />
+                  </th>
                   <th>Name</th>
                   <th>ID</th>
                   <th>Schema</th>
-                  <th>Fields</th>
+                  <th>Data</th>
+                  <th>Overridden</th>
                   {canMutateData && <th>Actions</th>}
                 </tr>
               </thead>
@@ -265,18 +405,35 @@ export const DataTab = () => {
                 {filteredDataItems.map(item => {
                   const primaryField = item._schema.fields[0];
                   const displayFields = item._schema.fields.slice(1, 3); // Show up to 2 additional fields
+                  const overrideStatus = getOverrideStatus(document, item);
 
                   return (
                     <tr key={item._uid}>
+                      <td>
+                        <input
+                          type="checkbox"
+                          checked={selectedItems.has(item._uid)}
+                          onChange={() => handleToggleSelection(item._uid)}
+                        />
+                      </td>
                       <td>{primaryField ? getDisplayValue(item, primaryField) : '-'}</td>
                       <td>{item._uid.substring(0, 8)}</td>
                       <td>{item._schema.name}</td>
                       <td>
                         {displayFields.length > 0
-                          ? displayFields
-                              .map(field => `${field.name}: ${getDisplayValue(item, field)}`)
-                              .join(', ')
+                          ? shorten(
+                              displayFields
+                                .map(field => `${field.name}: ${getDisplayValue(item, field)}`)
+                                .join(', '),
+                              40
+                            )
                           : '-'}
+                      </td>
+                      <td
+                        data-status={overrideStatus.status}
+                        className={styles.dataTabOverrideStatus}
+                      >
+                        {overrideStatus.text}
                       </td>
                       {canMutateData && (
                         <td>

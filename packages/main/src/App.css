@@ -14,6 +14,9 @@
 @import '@radix-ui/colors/crimson.css';
 @import '@radix-ui/colors/crimson-dark.css';
 
+@import '@radix-ui/colors/orange.css';
+@import '@radix-ui/colors/orange-dark.css';
+
 @import '@radix-ui/colors/black-alpha.css';
 
 @import "./react-app/components/Components.css";
@@ -94,6 +97,7 @@
   --canvas-bg2: white;
 
   --error-fg: var(--red-9);
+  --warning-fg: var(--orange-9);
 }
 
 .dark-theme {
@@ -133,6 +137,7 @@
   --canvas-bg2: white;
 
   --error-fg: var(--red-9);
+  --warning-fg: var(--orange-9);
 }
 
 .dark-theme #left,

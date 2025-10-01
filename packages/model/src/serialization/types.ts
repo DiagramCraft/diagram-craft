@@ -68,9 +68,15 @@ export interface SerializedDiagramDocument {
       data: string;
     }>;
     templates: DataTemplate[];
+    overrides?: Record<string, Record<string, SerializedOverride>>;
   };
   hash?: string;
 }
+
+export type SerializedOverride = {
+  type: 'add' | 'update' | 'delete';
+  data: Record<string, string> & { _uid: string };
+};
 
 export interface SerializedStyles {
   edgeStyles: ReadonlyArray<SerializedStylesheet>;
