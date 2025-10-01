@@ -43,6 +43,7 @@ export const DataTab = () => {
   const [filteredDataItems, setFilteredDataItems] = useState<DataItemWithSchema[]>([]);
   const [selectedSchemaId, setSelectedSchemaId] = useState<string>('all');
   const [searchText, setSearchText] = useState<string>('');
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [addItemDialog, setAddItemDialog] = useState<{ open: boolean; schemaId?: string }>({
     open: false
   });
@@ -124,6 +125,88 @@ export const DataTab = () => {
     );
   };
 
+  const handleToggleSelection = (uid: string) => {
+    setSelectedItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(uid)) {
+        newSet.delete(uid);
+      } else {
+        newSet.add(uid);
+      }
+      return newSet;
+    });
+  };
+
+  const handleToggleSelectAll = () => {
+    if (selectedItems.size === filteredDataItems.length) {
+      setSelectedItems(new Set());
+    } else {
+      setSelectedItems(new Set(filteredDataItems.map(item => item._uid)));
+    }
+  };
+
+  const handleApplySelectedOverrides = async () => {
+    const itemsToApply = filteredDataItems.filter(item => selectedItems.has(item._uid));
+
+    if (itemsToApply.length === 0) return;
+
+    const targets = itemsToApply.map(item => ({
+      schemaId: item._schema.id,
+      uid: item._uid
+    }));
+
+    application.ui.showDialog(
+      new MessageDialogCommand(
+        {
+          title: 'Apply Overrides',
+          message: `Apply ${itemsToApply.length} override(s) to the data provider?`,
+          okLabel: 'Apply',
+          okType: 'primary',
+          cancelLabel: 'Cancel'
+        },
+        async () => {
+          try {
+            await db.applyOverrides(targets);
+            setSelectedItems(new Set());
+          } catch (error) {
+            console.error('Failed to apply overrides:', error);
+            application.ui.showDialog(
+              new MessageDialogCommand({
+                title: 'Error',
+                message: `Failed to apply overrides: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                okLabel: 'OK'
+              })
+            );
+          }
+        }
+      )
+    );
+  };
+
+  const handleClearSelectedOverrides = () => {
+    const itemsToClear = filteredDataItems.filter(item => selectedItems.has(item._uid));
+
+    if (itemsToClear.length === 0) return;
+
+    application.ui.showDialog(
+      new MessageDialogCommand(
+        {
+          title: 'Clear Overrides',
+          message: `Clear ${itemsToClear.length} override(s)? This will discard the local changes.`,
+          okLabel: 'Clear',
+          okType: 'danger',
+          cancelLabel: 'Cancel'
+        },
+        () => {
+          for (const item of itemsToClear) {
+            db.clearOverride(item._schema.id, item._uid);
+          }
+          setSelectedItems(new Set());
+        }
+      )
+    );
+  };
+
   const handleSearch = () => {
     const filtered = filterItems(allDataItems, selectedSchemaId, searchText);
     setFilteredDataItems(filtered);
@@ -170,37 +253,64 @@ export const DataTab = () => {
   const canMutateData = db.schemas.some(s => db.isDataEditable(s));
   const hasSchemas = db.schemas.length > 0;
 
+  // Check if all selected items have overrides
+  const selectedItemsWithOverrides = filteredDataItems.filter(item => {
+    if (!selectedItems.has(item._uid)) return false;
+    const status = getOverrideStatus(item);
+    return status.cssClass === 'modified' || status.cssClass === 'error';
+  });
+  const allSelectedHaveOverrides =
+    selectedItems.size > 0 && selectedItemsWithOverrides.length === selectedItems.size;
+
   return (
     <>
       <div className={styles.dataTabHeader}>
         <p className={styles.dataTabTitle}>Data</p>
-        <DropdownMenu.Root>
-          <DropdownMenu.Trigger asChild>
-            <Button
-              type="secondary"
-              className={styles.dataTabAddButton}
-              disabled={!(canMutateData && hasSchemas)}
-              style={{ display: 'flex', gap: '0.25rem' }}
-            >
-              <TbPlus /> Add Data
-            </Button>
-          </DropdownMenu.Trigger>
-          <DropdownMenu.Portal>
-            <DropdownMenu.Content className="cmp-context-menu" sideOffset={5}>
-              {db.schemas.map(schema => (
-                <DropdownMenu.Item
-                  key={schema.id}
-                  className="cmp-context-menu__item"
-                  onSelect={() => setAddItemDialog({ open: true, schemaId: schema.id })}
-                  disabled={!db.isDataEditable(schema)}
-                >
-                  {schema.name}
-                </DropdownMenu.Item>
-              ))}
-              <DropdownMenu.Arrow className="cmp-context-menu__arrow" />
-            </DropdownMenu.Content>
-          </DropdownMenu.Portal>
-        </DropdownMenu.Root>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <Button
+            type="secondary"
+            onClick={handleApplySelectedOverrides}
+            disabled={!allSelectedHaveOverrides}
+            style={{ display: 'flex', gap: '0.25rem' }}
+          >
+            Apply Overrides
+          </Button>
+          <Button
+            type="danger"
+            onClick={handleClearSelectedOverrides}
+            disabled={!allSelectedHaveOverrides}
+            style={{ display: 'flex', gap: '0.25rem' }}
+          >
+            Clear Overrides
+          </Button>
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger asChild>
+              <Button
+                type="secondary"
+                className={styles.dataTabAddButton}
+                disabled={!(canMutateData && hasSchemas)}
+                style={{ display: 'flex', gap: '0.25rem' }}
+              >
+                <TbPlus /> Add Data
+              </Button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Portal>
+              <DropdownMenu.Content className="cmp-context-menu" sideOffset={5}>
+                {db.schemas.map(schema => (
+                  <DropdownMenu.Item
+                    key={schema.id}
+                    className="cmp-context-menu__item"
+                    onSelect={() => setAddItemDialog({ open: true, schemaId: schema.id })}
+                    disabled={!db.isDataEditable(schema)}
+                  >
+                    {schema.name}
+                  </DropdownMenu.Item>
+                ))}
+                <DropdownMenu.Arrow className="cmp-context-menu__arrow" />
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Root>
+        </div>
       </div>
 
       {!hasSchemas && (
@@ -281,6 +391,16 @@ export const DataTab = () => {
             <table className={styles.dataTabTable}>
               <thead>
                 <tr>
+                  <th style={{ width: '40px' }}>
+                    <input
+                      type="checkbox"
+                      checked={
+                        selectedItems.size === filteredDataItems.length &&
+                        filteredDataItems.length > 0
+                      }
+                      onChange={handleToggleSelectAll}
+                    />
+                  </th>
                   <th>Name</th>
                   <th>ID</th>
                   <th>Schema</th>
@@ -297,6 +417,13 @@ export const DataTab = () => {
 
                   return (
                     <tr key={item._uid}>
+                      <td>
+                        <input
+                          type="checkbox"
+                          checked={selectedItems.has(item._uid)}
+                          onChange={() => handleToggleSelection(item._uid)}
+                        />
+                      </td>
                       <td>{primaryField ? getDisplayValue(item, primaryField) : '-'}</td>
                       <td>{item._uid.substring(0, 8)}</td>
                       <td>{item._schema.name}</td>

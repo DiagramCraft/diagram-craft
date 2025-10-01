@@ -90,3 +90,7 @@
 .data-tab__override-status--na {
   color: var(--base-fg-more-dim);
 }
+
+.data-tab__table input[type='checkbox'] {
+  cursor: pointer;
+}
