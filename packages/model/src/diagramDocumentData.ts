@@ -94,6 +94,7 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
   // Shared properties
   readonly #schemas: DiagramDocumentDataSchemas;
   readonly #templates: DiagramDocumentDataTemplates;
+  readonly #root: CRDTRoot;
 
   // Transient properties
   #providers: Array<DataProvider> = [];
@@ -109,6 +110,7 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
   constructor(root: CRDTRoot, document: DiagramDocument) {
     super();
 
+    this.#root = root;
     this.#crdt = root.getMap('documentData');
     this.#schemas = new DiagramDocumentDataSchemas(root, document, DEFAULT_SCHEMA);
     this.#templates = new DiagramDocumentDataTemplates(root);
@@ -148,7 +150,7 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
       this.#dataManager.destroy();
     }
 
-    this.#dataManager = new DataManager(this.#providers, this.#schemas);
+    this.#dataManager = new DataManager(this.#providers, this.#schemas, this.#root);
   }
 
   private setProviderInternal(dataProviders: Array<DataProvider>, initial = false) {
@@ -222,28 +224,30 @@ type OverrideOperation =
   | { type: 'delete'; data: Data };
 
 export class DataManager extends EventEmitter<DataProviderEventMap> {
-  // In-memory store for overrides: schemaId -> uid -> operation
-  private readonly overrides = new Map<string, Map<string, OverrideOperation>>();
+  // CRDT-backed store for overrides: schemaId -> uid -> operation
+  private readonly overrides: CRDTMap<Record<string, CRDTMap<Record<string, OverrideOperation>>>>;
 
   constructor(
     private readonly providers: Array<DataProvider>,
-    private readonly schemaRegistry: DiagramDocumentDataSchemas
+    private readonly schemaRegistry: DiagramDocumentDataSchemas,
+    private readonly root: CRDTRoot
   ) {
     super();
+    this.overrides = root.getMap('dataOverrides');
   }
 
   destroy() {
-    // Clean up all event listeners
     this.clearListeners();
-    this.overrides.clear();
   }
 
-  getOverrides(): Map<string, Map<string, OverrideOperation>> {
+  getOverrides(): CRDTMap<Record<string, CRDTMap<Record<string, OverrideOperation>>>> {
     return this.overrides;
   }
 
   getOverrideForItem(schemaId: string, uid: string): OverrideOperation | undefined {
-    return this.overrides.get(schemaId)?.get(uid);
+    const schemaOverrides = this.overrides.get(schemaId);
+    if (!schemaOverrides) return undefined;
+    return schemaOverrides.get(uid);
   }
 
   async applyOverrides(targets: Array<{ schemaId: string; uid: string }>) {
@@ -424,10 +428,11 @@ export class DataManager extends EventEmitter<DataProviderEventMap> {
   }
 
   private addOverride(schemaId: string, operation: OverrideOperation) {
-    if (!this.overrides.has(schemaId)) {
-      this.overrides.set(schemaId, new Map());
+    let schemaOverrides = this.overrides.get(schemaId);
+    if (!schemaOverrides) {
+      schemaOverrides = this.root.factory.makeMap<Record<string, OverrideOperation>>();
+      this.overrides.set(schemaId, schemaOverrides);
     }
-    const schemaOverrides = this.overrides.get(schemaId)!;
     const uid = operation.data._uid;
     schemaOverrides.set(uid, operation);
 
@@ -458,7 +463,7 @@ export class DataManager extends EventEmitter<DataProviderEventMap> {
     }
 
     // Apply overrides
-    for (const [uid, operation] of schemaOverrides) {
+    for (const [uid, operation] of schemaOverrides.entries()) {
       if (operation.type === 'delete') {
         resultMap.delete(uid);
       } else if (operation.type === 'add') {
