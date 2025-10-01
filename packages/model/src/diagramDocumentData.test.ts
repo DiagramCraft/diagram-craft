@@ -157,6 +157,7 @@ describe.each(Backends.all())('DataManager [%s]', (_name, backend) => {
           data: [{ ...testData, _schemaId: schemaId, name: 'Original Item' }]
         })
       );
+      provider.setCRDT(root1);
       docData1.setProviders([provider]);
       docData1.setSchemaMetadata(schemaId, { useDocumentOverrides: true });
 
@@ -196,6 +197,7 @@ describe.each(Backends.all())('DataManager [%s]', (_name, backend) => {
           data: [{ ...testData, _schemaId: schemaId }]
         })
       );
+      provider.setCRDT(root1);
       docData1.setProviders([provider]);
       docData1.setSchemaMetadata(schemaId, { useDocumentOverrides: true });
 

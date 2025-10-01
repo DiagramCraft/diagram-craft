@@ -2,7 +2,7 @@ import { DataSchema } from './diagramDocumentDataSchemas';
 import { Emitter } from '@diagram-craft/utils/event';
 
 export interface SchemaProvider {
-  schemas: DataSchema[];
+  readonly schemas: ReadonlyArray<DataSchema>;
 }
 
 export interface MutableSchemaProvider extends SchemaProvider {

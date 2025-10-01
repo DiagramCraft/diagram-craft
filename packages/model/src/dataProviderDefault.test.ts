@@ -1,14 +1,23 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { DefaultDataProvider } from './dataProviderDefault';
 import { DataSchema } from './diagramDocumentDataSchemas';
 import { Data } from './dataProvider';
+import { Backends } from './collaboration/collaborationTestUtils';
 
-describe('DefaultDataProvider', () => {
+describe.each(Backends.all())('DefaultDataProvider [%s]', (_name, backend) => {
+  beforeEach(() => {
+    backend.beforeEach();
+  });
+
+  afterEach(() => {
+    backend.afterEach();
+  });
+
   // Test data and schemas
   const testSchema: DataSchema = {
     id: 'test-schema',
     name: 'Test Schema',
-    providerId: 'external',
+    providerId: 'default',
     fields: [
       { id: 'name', name: 'Name', type: 'text' },
       { id: 'value', name: 'Value', type: 'text' }
@@ -28,16 +37,20 @@ describe('DefaultDataProvider', () => {
   };
 
   const createEmptyProvider = () => {
-    return new DefaultDataProvider(
+    const [root1] = backend.syncedDocs();
+    const p = new DefaultDataProvider(
       JSON.stringify({
         schemas: [],
         data: []
       })
     );
+    p.setCRDT(root1);
+    return p;
   };
 
   const createProviderWithSchemaAndData = () => {
-    return new DefaultDataProvider(
+    const [root1] = backend.syncedDocs();
+    const p = new DefaultDataProvider(
       JSON.stringify({
         schemas: [testSchema],
         data: [
@@ -46,11 +59,49 @@ describe('DefaultDataProvider', () => {
         ]
       })
     );
+    p.setCRDT(root1);
+    return p;
+  };
+
+  const createSyncedProviders = () => {
+    const [root1, root2] = backend.syncedDocs();
+
+    const p1 = new DefaultDataProvider(
+      JSON.stringify({
+        schemas: [],
+        data: []
+      })
+    );
+    p1.setCRDT(root1);
+
+    const p2 = root2
+      ? new DefaultDataProvider(
+          JSON.stringify({
+            schemas: [],
+            data: []
+          })
+        )
+      : undefined;
+    if (p2 && root2) {
+      p2.setCRDT(root2);
+    }
+
+    return { provider1: p1, provider2: p2 };
+  };
+
+  const initializeTestData = (provider: DefaultDataProvider) => {
+    // Note, ignoring the promise is ok in this situation as the
+    // DefaultDataProvider is synchronous
+    provider.addSchema(testSchema);
+    provider.addData(testSchema, testData);
+    provider.addData(testSchema, testData2);
   };
 
   describe('constructor', () => {
     it('should initialize with empty data and schemas when given empty JSON', () => {
+      const [root1] = backend.syncedDocs();
       const provider = new DefaultDataProvider('{}');
+      provider.setCRDT(root1);
       expect(provider.schemas).toEqual([]);
       expect(provider.getById([])).toEqual([]);
     });
@@ -109,7 +160,7 @@ describe('DefaultDataProvider', () => {
   describe('addData', () => {
     it('should add data and emit event', () => {
       const provider = createEmptyProvider();
-      provider.schemas.push(testSchema);
+      provider.addSchema(testSchema);
 
       // Set up event listener
       const addDataSpy = vi.fn();
@@ -147,7 +198,7 @@ describe('DefaultDataProvider', () => {
 
     it('should do nothing if data does not exist', () => {
       const provider = createEmptyProvider();
-      provider.schemas.push(testSchema);
+      provider.addSchema(testSchema);
 
       // Set up event listener
       const deleteDataSpy = vi.fn();
@@ -184,7 +235,7 @@ describe('DefaultDataProvider', () => {
 
     it('should do nothing if data does not exist', () => {
       const provider = createEmptyProvider();
-      provider.schemas.push(testSchema);
+      provider.addSchema(testSchema);
 
       // Set up event listener
       const updateDataSpy = vi.fn();
@@ -272,6 +323,209 @@ describe('DefaultDataProvider', () => {
 
       // Assert
       expect(result).toBeUndefined();
+    });
+  });
+
+  describe('CRDT replication', () => {
+    describe('data replication', () => {
+      it('should replicate added data to synced provider', async () => {
+        const { provider1, provider2 } = createSyncedProviders();
+        if (!provider2) return; // Skip for noop backend
+
+        provider1.addSchema(testSchema);
+
+        const addDataSpy = vi.fn();
+        provider2.on('addData', addDataSpy);
+
+        // Add data on provider1
+        await provider1.addData(testSchema, testData);
+
+        // Allow async event to process
+        await new Promise(resolve => setTimeout(resolve, 10));
+
+        // Verify provider2 received the data
+        expect(addDataSpy).toHaveBeenCalled();
+        expect(provider2.getById([testData._uid])).toHaveLength(1);
+        expect(provider2.getById([testData._uid])[0]!._uid).toBe(testData._uid);
+      });
+
+      it('should replicate updated data to synced provider', async () => {
+        const { provider1, provider2 } = createSyncedProviders();
+        if (!provider2) return; // Skip for noop backend
+
+        initializeTestData(provider1);
+        await new Promise(resolve => setTimeout(resolve, 10));
+
+        const updateDataSpy = vi.fn();
+        provider2.on('updateData', updateDataSpy);
+
+        // Update data on provider1
+        const updatedData = { ...testData, value: 'Updated Value' };
+        await provider1.updateData(testSchema, updatedData);
+
+        // Allow async event to process
+        await new Promise(resolve => setTimeout(resolve, 10));
+
+        // Verify provider2 received the update
+        expect(updateDataSpy).toHaveBeenCalled();
+        expect(provider2.getById([testData._uid])[0]!.value).toBe('Updated Value');
+      });
+
+      it('should replicate deleted data to synced provider', async () => {
+        const { provider1, provider2 } = createSyncedProviders();
+        if (!provider2) return; // Skip for noop backend
+
+        initializeTestData(provider1);
+        await new Promise(resolve => setTimeout(resolve, 10));
+
+        const deleteDataSpy = vi.fn();
+        provider2.on('deleteData', deleteDataSpy);
+
+        // Delete data on provider1
+        await provider1.deleteData(testSchema, testData);
+
+        // Allow async event to process
+        await new Promise(resolve => setTimeout(resolve, 10));
+
+        // Verify provider2 received the deletion
+        expect(deleteDataSpy).toHaveBeenCalled();
+        expect(provider2.getById([testData._uid])).toHaveLength(0);
+      });
+    });
+
+    describe('schema replication', () => {
+      it('should replicate added schema to synced provider', async () => {
+        const { provider1, provider2 } = createSyncedProviders();
+        if (!provider2) return; // Skip for noop backend
+
+        const addSchemaSpy = vi.fn();
+        provider2.on('addSchema', addSchemaSpy);
+
+        // Add schema on provider1
+        await provider1.addSchema(testSchema);
+
+        // Allow async event to process
+        await new Promise(resolve => setTimeout(resolve, 10));
+
+        // Verify provider2 received the schema
+        expect(addSchemaSpy).toHaveBeenCalled();
+        expect(provider2.schemas).toHaveLength(1);
+        expect(provider2.schemas[0]!.id).toBe(testSchema.id);
+      });
+
+      it('should replicate updated schema to synced provider', async () => {
+        const { provider1, provider2 } = createSyncedProviders();
+        if (!provider2) return; // Skip for noop backend
+
+        initializeTestData(provider1);
+        await new Promise(resolve => setTimeout(resolve, 10));
+
+        const updateSchemaSpy = vi.fn();
+        provider2.on('updateSchema', updateSchemaSpy);
+
+        // Update schema on provider1
+        const updatedSchema = { ...testSchema, name: 'Updated Schema Name' };
+        await provider1.updateSchema(updatedSchema);
+
+        // Allow async event to process
+        await new Promise(resolve => setTimeout(resolve, 10));
+
+        // Verify provider2 received the update
+        expect(updateSchemaSpy).toHaveBeenCalled();
+        expect(provider2.schemas[0]!.name).toBe('Updated Schema Name');
+      });
+
+      it('should replicate deleted schema to synced provider', async () => {
+        const { provider1, provider2 } = createSyncedProviders();
+        if (!provider2) return; // Skip for noop backend
+
+        initializeTestData(provider1);
+        await new Promise(resolve => setTimeout(resolve, 10));
+
+        const deleteSchemaSpy = vi.fn();
+        provider2.on('deleteSchema', deleteSchemaSpy);
+
+        // Delete schema on provider1
+        await provider1.deleteSchema(testSchema);
+
+        // Allow async event to process
+        await new Promise(resolve => setTimeout(resolve, 10));
+
+        // Verify provider2 received the deletion
+        expect(deleteSchemaSpy).toHaveBeenCalled();
+        expect(provider2.schemas).toHaveLength(0);
+      });
+    });
+
+    describe('stored state initialization', () => {
+      it('should properly initialize with stored state when setCRDT is called', () => {
+        const [root1] = backend.syncedDocs();
+        const p = new DefaultDataProvider(
+          JSON.stringify({
+            schemas: [testSchema],
+            data: [
+              { ...testData, _schemaId: testSchema.id },
+              { ...testData2, _schemaId: testSchema.id }
+            ]
+          })
+        );
+
+        // Before setCRDT, schemas and data should be empty
+        expect(p.schemas).toEqual([]);
+        expect(p.getById([testData._uid])).toEqual([]);
+
+        // After setCRDT, stored state should be loaded
+        p.setCRDT(root1);
+
+        expect(p.schemas).toHaveLength(1);
+        expect(p.schemas[0]!.id).toBe(testSchema.id);
+        expect(p.getById([testData._uid, testData2._uid])).toHaveLength(2);
+      });
+
+      it('should replicate initial state to synced provider', async () => {
+        const { provider1, provider2 } = createSyncedProviders();
+        if (!provider2) return; // Skip for noop backend
+
+        initializeTestData(provider1);
+
+        // Allow async replication to complete
+        await new Promise(resolve => setTimeout(resolve, 10));
+
+        // Verify provider2 has the same data as provider1
+        expect(provider2.schemas).toHaveLength(1);
+        expect(provider2.schemas[0]!.id).toBe(testSchema.id);
+        expect(provider2.getById([testData._uid, testData2._uid])).toHaveLength(2);
+      });
+    });
+
+    describe('bidirectional replication', () => {
+      it('should replicate changes from provider2 to provider1', async () => {
+        const { provider1, provider2 } = createSyncedProviders();
+        if (!provider2) return; // Skip for noop backend
+
+        initializeTestData(provider1);
+        await new Promise(resolve => setTimeout(resolve, 10));
+
+        const addDataSpy = vi.fn();
+        provider1.on('addData', addDataSpy);
+
+        const newData: Data = {
+          _uid: 'test-data-3',
+          name: 'Test Data 3',
+          value: 'Value 3'
+        };
+
+        // Add data on provider2
+        await provider2.addData(testSchema, newData);
+
+        // Allow async event to process
+        await new Promise(resolve => setTimeout(resolve, 10));
+
+        // Verify provider1 received the data
+        expect(addDataSpy).toHaveBeenCalled();
+        expect(provider1.getById([newData._uid])).toHaveLength(1);
+        expect(provider1.getById([newData._uid])[0]!._uid).toBe(newData._uid);
+      });
     });
   });
 });
