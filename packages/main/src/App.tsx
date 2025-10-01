@@ -320,6 +320,13 @@ export const App = (props: {
   useEventListener($d.commentManager, 'commentAdded', autosave);
   useEventListener($d.commentManager, 'commentUpdated', autosave);
   useEventListener($d.commentManager, 'commentRemoved', autosave);
+  useEventListener(doc.data, 'change', autosave);
+  useEventListener(doc.data.db, 'updateData', autosave);
+  useEventListener(doc.data.db, 'deleteData', autosave);
+  useEventListener(doc.data.db, 'addData', autosave);
+  useEventListener(doc.data.db, 'addSchema', autosave);
+  useEventListener(doc.data.db, 'deleteSchema', autosave);
+  useEventListener(doc.data.db, 'updateSchema', autosave);
   useEventListener(doc.props.query, 'change', autosave);
 
   useEffect(() => bindDocumentDragAndDrop());
