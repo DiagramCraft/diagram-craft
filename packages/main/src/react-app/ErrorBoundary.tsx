@@ -27,6 +27,22 @@ export class ErrorBoundary extends React.Component<Props, { hasError: boolean }>
   }
 }
 
+const getMessageDialogCommand = (
+  opts: { application: Application; message?: (e: unknown) => string },
+  error: unknown
+) =>
+  new MessageDialogCommand(
+    {
+      title: 'Error',
+      message:
+        opts.message?.(error) ??
+        `An error occurred: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      okLabel: 'OK',
+      cancelLabel: undefined
+    },
+    () => {}
+  );
+
 export async function asyncExecuteWithErrorDialog<T>(
   opts: { application: Application; message?: (e: unknown) => string },
   callback: () => Promise<T>
@@ -34,19 +50,7 @@ export async function asyncExecuteWithErrorDialog<T>(
   try {
     return await callback();
   } catch (error) {
-    opts.application.ui.showDialog(
-      new MessageDialogCommand(
-        {
-          title: 'Error',
-          message:
-            opts.message?.(error) ??
-            `An error occurred: ${error instanceof Error ? error.message : 'Unknown error'}`,
-          okLabel: 'OK',
-          cancelLabel: undefined
-        },
-        () => {}
-      )
-    );
+    opts.application.ui.showDialog(getMessageDialogCommand(opts, error));
   }
 }
 
@@ -57,18 +61,6 @@ export function executeWithErrorDialog<T>(
   try {
     return callback();
   } catch (error) {
-    opts.application.ui.showDialog(
-      new MessageDialogCommand(
-        {
-          title: 'Error',
-          message:
-            opts.message?.(error) ??
-            `An error occurred: ${error instanceof Error ? error.message : 'Unknown error'}`,
-          okLabel: 'OK',
-          cancelLabel: undefined
-        },
-        () => {}
-      )
-    );
+    opts.application.ui.showDialog(getMessageDialogCommand(opts, error));
   }
 }

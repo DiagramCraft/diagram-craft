@@ -12,6 +12,7 @@ import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import styles from './DataTab.module.css';
 import type { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { asyncExecuteWithErrorDialog } from '../../ErrorBoundary';
+import { shorten } from '@diagram-craft/utils/strings';
 
 type DataItemWithSchema = Data & {
   _schema: DataSchema;
@@ -39,33 +40,31 @@ const filterItems = (items: DataItemWithSchema[], schemaId: string, searchQuery:
 const getOverrideStatus = (
   document: DiagramDocument,
   item: DataItemWithSchema
-): { text: string; cssClass: string } => {
+): { text: string; status: string } => {
   const db = document.data.db;
 
   const schemaMetadata = document.data.getSchemaMetadata(item._schema.id);
 
   if (!schemaMetadata.useDocumentOverrides) {
-    return { text: 'N/A', cssClass: 'na' };
+    return { text: 'N/A', status: 'na' };
   }
 
   const result = db.getOverrideStatusForItem(item._schema.id, item._uid);
 
-  if (result.status === 'unmodified') {
-    return { text: 'No', cssClass: 'unmodified' };
+  switch (result.status) {
+    case 'unmodified':
+      return { text: 'No', status: 'unmodified' };
+    case 'modified-error':
+      return {
+        text: `Error (${result.override!.type})`,
+        status: 'error'
+      };
+    case 'modified':
+      return {
+        text: `Yes (${result.override!.type})`,
+        status: 'modified'
+      };
   }
-
-  if (result.status === 'modified-error') {
-    return {
-      text: `Error (${result.override?.type ?? 'unknown'})`,
-      cssClass: 'error'
-    };
-  }
-
-  // status === 'modified'
-  return {
-    text: `Yes (${result.override?.type ?? 'unknown'})`,
-    cssClass: 'modified'
-  };
 };
 
 export const DataTab = () => {
@@ -250,7 +249,7 @@ export const DataTab = () => {
   const selectedItemsWithOverrides = filteredDataItems.filter(item => {
     if (!selectedItems.has(item._uid)) return false;
     const status = getOverrideStatus(document, item);
-    return status.cssClass === 'modified' || status.cssClass === 'error';
+    return status.status === 'modified' || status.status === 'error';
   });
   const allSelectedHaveOverrides =
     selectedItems.size > 0 && selectedItemsWithOverrides.length === selectedItems.size;
@@ -397,8 +396,8 @@ export const DataTab = () => {
                   <th>Name</th>
                   <th>ID</th>
                   <th>Schema</th>
-                  <th>Fields</th>
-                  <th>Override Status</th>
+                  <th>Data</th>
+                  <th>Overridden</th>
                   {canMutateData && <th>Actions</th>}
                 </tr>
               </thead>
@@ -422,17 +421,17 @@ export const DataTab = () => {
                       <td>{item._schema.name}</td>
                       <td>
                         {displayFields.length > 0
-                          ? displayFields
-                              .map(field => `${field.name}: ${getDisplayValue(item, field)}`)
-                              .join(', ')
+                          ? shorten(
+                              displayFields
+                                .map(field => `${field.name}: ${getDisplayValue(item, field)}`)
+                                .join(', '),
+                              40
+                            )
                           : '-'}
                       </td>
                       <td
-                        className={
-                          styles[
-                            `dataTabOverrideStatus${overrideStatus.cssClass.charAt(0).toUpperCase()}${overrideStatus.cssClass.slice(1)}`
-                          ]
-                        }
+                        data-status={overrideStatus.status}
+                        className={styles.dataTabOverrideStatus}
                       >
                         {overrideStatus.text}
                       </td>
