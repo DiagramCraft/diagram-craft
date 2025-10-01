@@ -26,6 +26,7 @@ export type DataProviderEventMap = {
 export interface DataProvider extends SchemaProvider, Emitter<DataProviderEventMap> {
   providerId: string;
   id: string;
+  supportsUndo: boolean;
 
   getById(id: Array<string>): Data[];
   getData(schema: DataSchema): Array<Data>;

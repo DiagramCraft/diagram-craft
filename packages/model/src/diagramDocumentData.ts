@@ -423,6 +423,10 @@ export class DataManager extends EventEmitter<DataProviderEventMap> {
     return this.mergeWithOverrides(schema.id, provider.queryData(schema, query));
   }
 
+  supportsUndo(providerId: string): boolean {
+    return this.getProvider(providerId).supportsUndo;
+  }
+
   deleteData(schema: DataSchema, data: Data) {
     if (this.useDocumentOverridesForSchema(schema.id)) {
       this.addOverride(schema.id, { type: 'delete', data });

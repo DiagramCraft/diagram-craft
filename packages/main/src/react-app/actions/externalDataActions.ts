@@ -10,9 +10,9 @@ import {
 } from '@diagram-craft/canvas-app/actions/abstractSelectionAction';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import {
+  findEntryBySchema,
   getExternalDataStatus,
-  hasDataForSchema,
-  findEntryBySchema
+  hasDataForSchema
 } from '@diagram-craft/model/externalDataHelpers';
 import { DataTemplate } from '@diagram-craft/model/diagramDocument';
 import { newid } from '@diagram-craft/utils/id';
@@ -21,6 +21,7 @@ import { AbstractAction } from '@diagram-craft/canvas/action';
 import { makeUndoableAction } from '@diagram-craft/model/undoManager';
 import { deepClone } from '@diagram-craft/utils/object';
 import type { Data } from '@diagram-craft/model/dataProvider';
+import { DataManagerUndoableFacade } from '@diagram-craft/model/diagramDocumentDataUndoActions';
 
 export const externalDataActions = (application: Application) => ({
   EXTERNAL_DATA_UNLINK: new ExternalDataUnlinkAction(application),
@@ -137,6 +138,7 @@ export class ExternalDataLinkAction extends AbstractSelectionAction<Application,
       onCancel: () => {},
       onOk: async (uid: string) => {
         const db = $d.document.data.db;
+        const dbUndoable = new DataManagerUndoableFacade($d.undoManager, db);
 
         // Check if this uid exists in the database
         const existingData = db.getById(schema, [uid]);
@@ -149,7 +151,7 @@ export class ExternalDataLinkAction extends AbstractSelectionAction<Application,
           };
 
           // Create the shared data entry
-          await db.addData(schema, newData);
+          await dbUndoable.addData(schema, newData);
         }
 
         // Link to the data (either newly created or existing)

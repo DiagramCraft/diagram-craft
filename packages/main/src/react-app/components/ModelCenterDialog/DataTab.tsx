@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useApplication, useDocument } from '../../../application';
+import { useApplication, useDiagram, useDocument } from '../../../application';
 import { Data } from '@diagram-craft/model/dataProvider';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { Button } from '@diagram-craft/app-components/Button';
@@ -13,6 +13,7 @@ import styles from './DataTab.module.css';
 import type { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { asyncExecuteWithErrorDialog } from '../../ErrorBoundary';
 import { shorten } from '@diagram-craft/utils/strings';
+import { DataManagerUndoableFacade } from '@diagram-craft/model/diagramDocumentDataUndoActions';
 
 type DataItemWithSchema = Data & {
   _schema: DataSchema;
@@ -69,6 +70,7 @@ const getOverrideStatus = (
 
 export const DataTab = () => {
   const document = useDocument();
+  const diagram = useDiagram();
   const application = useApplication();
   const searchRef = useRef<HTMLInputElement>(null);
 
@@ -89,6 +91,7 @@ export const DataTab = () => {
   });
 
   const db = document.data.db;
+  const dbUndoable = new DataManagerUndoableFacade(diagram.undoManager, document.data.db);
 
   // Collect all data items from all schemas
   useEffect(() => {
@@ -148,7 +151,7 @@ export const DataTab = () => {
           cancelLabel: 'Cancel'
         },
         async () => {
-          await db.deleteData(item._schema, item);
+          await dbUndoable.deleteData(item._schema, item);
         }
       )
     );

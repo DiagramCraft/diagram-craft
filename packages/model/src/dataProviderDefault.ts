@@ -28,6 +28,7 @@ export class DefaultDataProvider
 {
   providerId = DefaultDataProviderId;
   id: string = 'default';
+  supportsUndo = true;
 
   #crdtData: CRDTMap<{ [p: string]: DataWithSchema }> | undefined = undefined;
   #crdtSchemas: CRDTMap<{ [p: string]: DataSchema }> | undefined = undefined;
