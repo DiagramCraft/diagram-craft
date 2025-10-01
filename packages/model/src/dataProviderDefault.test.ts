@@ -2,13 +2,14 @@ import { describe, expect, it, vi } from 'vitest';
 import { DefaultDataProvider } from './dataProviderDefault';
 import { DataSchema } from './diagramDocumentDataSchemas';
 import { Data } from './dataProvider';
+import { NoOpCRDTRoot } from './collaboration/noopCrdt';
 
 describe('DefaultDataProvider', () => {
   // Test data and schemas
   const testSchema: DataSchema = {
     id: 'test-schema',
     name: 'Test Schema',
-    providerId: 'external',
+    providerId: 'default',
     fields: [
       { id: 'name', name: 'Name', type: 'text' },
       { id: 'value', name: 'Value', type: 'text' }
@@ -28,16 +29,18 @@ describe('DefaultDataProvider', () => {
   };
 
   const createEmptyProvider = () => {
-    return new DefaultDataProvider(
+    const p = new DefaultDataProvider(
       JSON.stringify({
         schemas: [],
         data: []
       })
     );
+    p.setCRDT(new NoOpCRDTRoot());
+    return p;
   };
 
   const createProviderWithSchemaAndData = () => {
-    return new DefaultDataProvider(
+    const p = new DefaultDataProvider(
       JSON.stringify({
         schemas: [testSchema],
         data: [
@@ -46,6 +49,8 @@ describe('DefaultDataProvider', () => {
         ]
       })
     );
+    p.setCRDT(new NoOpCRDTRoot());
+    return p;
   };
 
   describe('constructor', () => {
@@ -109,7 +114,7 @@ describe('DefaultDataProvider', () => {
   describe('addData', () => {
     it('should add data and emit event', () => {
       const provider = createEmptyProvider();
-      provider.schemas.push(testSchema);
+      provider.addSchema(testSchema);
 
       // Set up event listener
       const addDataSpy = vi.fn();
@@ -147,7 +152,7 @@ describe('DefaultDataProvider', () => {
 
     it('should do nothing if data does not exist', () => {
       const provider = createEmptyProvider();
-      provider.schemas.push(testSchema);
+      provider.addSchema(testSchema);
 
       // Set up event listener
       const deleteDataSpy = vi.fn();
@@ -184,7 +189,7 @@ describe('DefaultDataProvider', () => {
 
     it('should do nothing if data does not exist', () => {
       const provider = createEmptyProvider();
-      provider.schemas.push(testSchema);
+      provider.addSchema(testSchema);
 
       // Set up event listener
       const updateDataSpy = vi.fn();

@@ -60,6 +60,10 @@ const makeDeleteSchemaListener = (document: DiagramDocument) => (s: DataSchema) 
 };
 
 const makeUpdateSchemaListener = (document: DiagramDocument) => (s: DataSchema) => {
+  // This is to prevent from an issue where the listeners are created
+  // from within the constructor of DiagramDocumentData, which is thus not
+  // yet initialized.
+  if (!document.data) return;
   const schemas = document.data._schemas;
   if (schemas.has(s.id)) {
     if (deepEquals(schemas.get(s.id), s)) return;
@@ -136,6 +140,10 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
         this.setProviderInternal(
           entries.map(({ id, data }) => DataProviderRegistry.providers.get(id)!(data))
         );
+        for (const p of this.#providers) {
+          if (!(p instanceof DefaultDataProvider)) continue;
+          p.setCRDT(this.#root);
+        }
       }
     };
 
@@ -190,6 +198,11 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
         ? JSON.stringify(this.#providers.map(p => ({ id: p.providerId, data: p.serialize() })))
         : ''
     );
+
+    for (const p of this.#providers) {
+      if (!(p instanceof DefaultDataProvider)) continue;
+      p.setCRDT(this.#root);
+    }
   }
 
   get providers() {
