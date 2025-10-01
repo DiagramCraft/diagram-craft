@@ -11,6 +11,7 @@ import {
   SerializedDiagramDocument,
   SerializedElement,
   SerializedFreeEndpoint,
+  type SerializedOverride,
   SerializedPointInNodeEndpoint,
   SerializedStylesheet
 } from './types';
@@ -23,6 +24,7 @@ import { type DataProvider, DataProviderRegistry } from '../dataProvider';
 import { RegularLayer } from '../diagramLayerRegular';
 import type { DiagramFactory } from '../factory';
 import { Comment } from '../comment';
+import type { DataManager } from '../diagramDocumentData';
 
 const unfoldGroup = (node: SerializedElement) => {
   const recurse = (
@@ -234,6 +236,10 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
 
     doc.data.templates.replaceBy(document.data?.templates ?? []);
 
+    if (document.data?.overrides) {
+      deserializeOverrides(doc.data.db, document.data.overrides);
+    }
+
     if (document.props?.query?.saved) {
       let saved = document.props?.query.saved;
       COMPATIBILITY: {
@@ -363,4 +369,23 @@ const deserializeDiagrams = <T extends Diagram>(
   }
 
   return dest;
+};
+
+const deserializeOverrides = (
+  db: DataManager,
+  overrides: Record<string, Record<string, SerializedOverride>>
+) => {
+  const overridesCRDT = db.getOverrides();
+
+  for (const [schemaId, schemaOverrides] of Object.entries(overrides)) {
+    let schemaCRDT = overridesCRDT.get(schemaId);
+    if (!schemaCRDT) {
+      schemaCRDT = overridesCRDT.factory.makeMap<Record<string, SerializedOverride>>();
+      overridesCRDT.set(schemaId, schemaCRDT);
+    }
+
+    for (const [uid, operation] of Object.entries(schemaOverrides)) {
+      schemaCRDT.set(uid, operation);
+    }
+  }
 };

@@ -381,5 +381,94 @@ describe('serialization', () => {
         expect(metadata.useDocumentOverrides).toBe(false);
       });
     });
+
+    describe('overrides', () => {
+      it('should serialize and deserialize document overrides', async () => {
+        // Setup
+        const doc = TestModel.newDocument();
+        const schemaId = 'test-schema';
+
+        // Add a schema with useDocumentOverrides enabled
+        doc.data._schemas.add({
+          id: schemaId,
+          name: 'Test Schema',
+          providerId: 'default',
+          fields: [{ id: 'name', name: 'Name', type: 'text' }]
+        });
+        doc.data.setSchemaMetadata(schemaId, { useDocumentOverrides: true });
+
+        // Add some overrides
+        const addData = { _uid: 'add-uid-1', name: 'Added Item' };
+        const updateData = { _uid: 'update-uid-2', name: 'Updated Item' };
+        const deleteData = { _uid: 'delete-uid-3', name: 'Deleted Item' };
+
+        await doc.data.db.addData(doc.data._schemas.get(schemaId), addData);
+        await doc.data.db.updateData(doc.data._schemas.get(schemaId), updateData);
+        await doc.data.db.deleteData(doc.data._schemas.get(schemaId), deleteData);
+
+        // Act - Serialize
+        const serialized = await serializeDiagramDocument(doc);
+
+        // Verify serialization
+        expect(serialized.data?.overrides).toBeDefined();
+        expect(serialized.data?.overrides![schemaId]).toBeDefined();
+        expect(serialized.data!.overrides![schemaId]!['add-uid-1']).toEqual({
+          type: 'add',
+          data: addData
+        });
+        expect(serialized.data!.overrides![schemaId]!['update-uid-2']).toEqual({
+          type: 'update',
+          data: updateData
+        });
+        expect(serialized.data!.overrides![schemaId]!['delete-uid-3']).toEqual({
+          type: 'delete',
+          data: deleteData
+        });
+
+        // Act - Deserialize
+        const newDoc = TestModel.newDocument();
+        await deserializeDiagramDocument(
+          serialized,
+          newDoc,
+          (d, doc) => new TestDiagramBuilder(doc, d.id)
+        );
+
+        // Verify deserialization
+        expect(newDoc.data.db.getOverrideForItem(schemaId, 'add-uid-1')).toEqual({
+          type: 'add',
+          data: addData
+        });
+        expect(newDoc.data.db.getOverrideForItem(schemaId, 'update-uid-2')).toEqual({
+          type: 'update',
+          data: updateData
+        });
+        expect(newDoc.data.db.getOverrideForItem(schemaId, 'delete-uid-3')).toEqual({
+          type: 'delete',
+          data: deleteData
+        });
+      });
+
+      it('should handle empty overrides', async () => {
+        // Setup
+        const doc = TestModel.newDocument();
+
+        // Act
+        const serialized = await serializeDiagramDocument(doc);
+
+        // Verify
+        expect(serialized.data?.overrides).toEqual({});
+
+        // Deserialize
+        const newDoc = TestModel.newDocument();
+        await deserializeDiagramDocument(
+          serialized,
+          newDoc,
+          (d, doc) => new TestDiagramBuilder(doc, d.id)
+        );
+
+        // Should not throw and should work fine
+        expect(newDoc.data.db).toBeDefined();
+      });
+    });
   });
 });
