@@ -10,6 +10,8 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { EditItemDialog } from '../EditItemDialog';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import styles from './DataTab.module.css';
+import type { DiagramDocument } from '@diagram-craft/model/diagramDocument';
+import { asyncExecuteWithErrorDialog } from '../../ErrorBoundary';
 
 type DataItemWithSchema = Data & {
   _schema: DataSchema;
@@ -32,6 +34,38 @@ const filterItems = (items: DataItemWithSchema[], schemaId: string, searchQuery:
   }
 
   return filtered;
+};
+
+const getOverrideStatus = (
+  document: DiagramDocument,
+  item: DataItemWithSchema
+): { text: string; cssClass: string } => {
+  const db = document.data.db;
+
+  const schemaMetadata = document.data.getSchemaMetadata(item._schema.id);
+
+  if (!schemaMetadata.useDocumentOverrides) {
+    return { text: 'N/A', cssClass: 'na' };
+  }
+
+  const result = db.getOverrideStatusForItem(item._schema.id, item._uid);
+
+  if (result.status === 'unmodified') {
+    return { text: 'No', cssClass: 'unmodified' };
+  }
+
+  if (result.status === 'modified-error') {
+    return {
+      text: `Error (${result.override?.type ?? 'unknown'})`,
+      cssClass: 'error'
+    };
+  }
+
+  // status === 'modified'
+  return {
+    text: `Yes (${result.override?.type ?? 'unknown'})`,
+    cssClass: 'modified'
+  };
 };
 
 export const DataTab = () => {
@@ -70,7 +104,7 @@ export const DataTab = () => {
     }
 
     setAllDataItems(allItems);
-  }, [db.schemas]);
+  }, [db]);
 
   useEffect(() => {
     const handleDataChange = () => {
@@ -115,11 +149,7 @@ export const DataTab = () => {
           cancelLabel: 'Cancel'
         },
         async () => {
-          try {
-            await db.deleteData(item._schema, item);
-          } catch (error) {
-            console.error('Failed to delete item:', error);
-          }
+          await db.deleteData(item._schema, item);
         }
       )
     );
@@ -164,22 +194,10 @@ export const DataTab = () => {
           cancelLabel: 'Cancel'
         },
         async () => {
-          try {
+          await asyncExecuteWithErrorDialog({ application }, async () => {
             await db.applyOverrides(targets);
             setSelectedItems(new Set());
-          } catch (error) {
-            application.ui.showDialog(
-              new MessageDialogCommand(
-                {
-                  title: 'Error',
-                  message: `Failed to apply overrides: ${error instanceof Error ? error.message : 'Unknown error'}`,
-                  okLabel: 'OK',
-                  cancelLabel: undefined
-                },
-                () => {}
-              )
-            );
-          }
+          });
         }
       )
     );
@@ -225,40 +243,13 @@ export const DataTab = () => {
     return value;
   };
 
-  const getOverrideStatus = (item: DataItemWithSchema): { text: string; cssClass: string } => {
-    const schemaMetadata = document.data.getSchemaMetadata(item._schema.id);
-
-    if (!schemaMetadata.useDocumentOverrides) {
-      return { text: 'N/A', cssClass: 'na' };
-    }
-
-    const result = db.getOverrideStatusForItem(item._schema.id, item._uid);
-
-    if (result.status === 'unmodified') {
-      return { text: 'No', cssClass: 'unmodified' };
-    }
-
-    if (result.status === 'modified-error') {
-      return {
-        text: `Error (${result.override?.type ?? 'unknown'})`,
-        cssClass: 'error'
-      };
-    }
-
-    // status === 'modified'
-    return {
-      text: `Yes (${result.override?.type ?? 'unknown'})`,
-      cssClass: 'modified'
-    };
-  };
-
   const canMutateData = db.schemas.some(s => db.isDataEditable(s));
   const hasSchemas = db.schemas.length > 0;
 
   // Check if all selected items have overrides
   const selectedItemsWithOverrides = filteredDataItems.filter(item => {
     if (!selectedItems.has(item._uid)) return false;
-    const status = getOverrideStatus(item);
+    const status = getOverrideStatus(document, item);
     return status.cssClass === 'modified' || status.cssClass === 'error';
   });
   const allSelectedHaveOverrides =
@@ -415,7 +406,7 @@ export const DataTab = () => {
                 {filteredDataItems.map(item => {
                   const primaryField = item._schema.fields[0];
                   const displayFields = item._schema.fields.slice(1, 3); // Show up to 2 additional fields
-                  const overrideStatus = getOverrideStatus(item);
+                  const overrideStatus = getOverrideStatus(document, item);
 
                   return (
                     <tr key={item._uid}>
