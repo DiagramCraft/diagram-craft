@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useApplication, useDocument } from '../../../application';
+import { useApplication, useDiagram, useDocument } from '../../../application';
 import { DataSchema, SchemaMetadata } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Select } from '@diagram-craft/app-components/Select';
@@ -10,6 +10,7 @@ import { EditSchemaDialog } from '../EditSchemaDialog';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { useRedraw } from '../../hooks/useRedraw';
 import styles from './SchemasTab.module.css';
+import { DataManagerUndoableFacade } from '@diagram-craft/model/diagramDocumentDataUndoActions';
 
 const getProviderTypeName = (providerId: string): string => {
   switch (providerId) {
@@ -26,6 +27,7 @@ const getProviderTypeName = (providerId: string): string => {
 
 export const SchemasTab = () => {
   const document = useDocument();
+  const diagram = useDiagram();
   const application = useApplication();
   const redraw = useRedraw();
   const [addSchemaDialog, setAddSchemaDialog] = useState<{ open: boolean; providerId?: string }>({
@@ -37,6 +39,7 @@ export const SchemasTab = () => {
   const [selectedProviderId, setSelectedProviderId] = useState<string>('all');
 
   const db = document.data.db;
+  const dbUndoable = new DataManagerUndoableFacade(diagram.undoManager, db);
 
   const providers = document.data.providers;
 
@@ -55,7 +58,7 @@ export const SchemasTab = () => {
   // Handle schema operations
   const handleAddSchema = async (providerId: string, schema: DataSchema) => {
     try {
-      await db.addSchema(schema, providerId);
+      await dbUndoable.addSchema(schema, providerId);
       setAddSchemaDialog({ open: false });
     } catch (error) {
       console.error('Failed to add schema:', error);
@@ -64,7 +67,7 @@ export const SchemasTab = () => {
 
   const handleUpdateSchema = async (schema: DataSchema) => {
     try {
-      await db.updateSchema(schema);
+      await dbUndoable.updateSchema(editSchemaDialog.schema!, schema);
       setEditSchemaDialog({ open: false });
     } catch (error) {
       console.error('Failed to update schema:', error);
@@ -83,7 +86,7 @@ export const SchemasTab = () => {
         },
         async () => {
           try {
-            await db.deleteSchema(schema);
+            await dbUndoable.deleteSchema(schema);
           } catch (error) {
             console.error('Failed to delete schema:', error);
           }

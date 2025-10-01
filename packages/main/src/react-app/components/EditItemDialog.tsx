@@ -11,7 +11,8 @@ import {
 import { newid } from '@diagram-craft/utils/id';
 import { assert } from '@diagram-craft/utils/assert';
 import React, { useState } from 'react';
-import { useDocument } from '../../application';
+import { useDiagram, useDocument } from '../../application';
+import { DataManagerUndoableFacade } from '@diagram-craft/model/diagramDocumentDataUndoActions';
 
 type ReferenceFieldEditorProps = {
   field: DataSchemaField & { type: 'reference' };
@@ -78,7 +79,9 @@ type EditItemDialogProps = {
 
 export const EditItemDialog = (props: EditItemDialogProps) => {
   const document = useDocument();
+  const diagram = useDiagram();
   const db = document.data.db;
+  const dbUndoable = new DataManagerUndoableFacade(diagram.undoManager, document.data.db);
   const [formData, setFormData] = useState<Record<string, undefined | string | string[]>>({});
   const [submitError, setSubmitError] = useState<string | undefined>();
 
@@ -159,9 +162,9 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
       };
 
       if (isEditing) {
-        await db.updateData(schema, itemData);
+        await dbUndoable.updateData(schema, props.editItem!, itemData);
       } else {
-        await db.addData(schema, itemData);
+        await dbUndoable.addData(schema, itemData);
       }
 
       // Only close dialog and reset form on success

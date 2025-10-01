@@ -17,6 +17,7 @@ export abstract class BaseHTTPDataProvider
 {
   abstract providerId: string;
   id: string = '';
+  supportsUndo = false;
 
   schemas: DataSchema[] = [];
   protected data: DataWithSchema[] = [];
