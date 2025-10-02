@@ -1,7 +1,7 @@
 import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../components/BaseNodeComponent';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
 import { PathListBuilder, PathBuilderHelper } from '@diagram-craft/geometry/pathListBuilder';
-import { isNode } from '@diagram-craft/model/diagramElement';
+import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Point } from '@diagram-craft/geometry/point';
@@ -327,5 +327,80 @@ class TableComponent extends BaseNodeComponent {
         : props.nodeProps.stroke,
       fill: {}
     });
+  }
+}
+
+export class TableHelper {
+  readonly #tableNode: DiagramNode | undefined;
+  readonly cell: DiagramNode | undefined;
+
+  constructor(readonly element: DiagramElement) {
+    if (!isNode(element)) return;
+
+    const parent = element.parent;
+
+    if (element.nodeType === 'table') {
+      this.#tableNode = element;
+    } else if (isNode(parent) && parent.nodeType === 'tableRow') {
+      const grandParent = parent.parent;
+
+      assert.node(grandParent!);
+      assert.true(grandParent.nodeType === 'table');
+
+      this.#tableNode = grandParent;
+    }
+
+    this.cell = element;
+  }
+
+  get tableNode() {
+    assert.present(this.#tableNode);
+    return this.#tableNode;
+  }
+
+  isTable() {
+    return !!this.#tableNode;
+  }
+
+  getCellRow(): number | undefined {
+    if (!this.#tableNode) return;
+
+    const rows = (this.#tableNode.children as DiagramNode[]).toSorted(
+      (a, b) => a.bounds.y - b.bounds.y
+    );
+    for (let i = 0; i < rows.length; i++) {
+      if (rows[i]!.children.includes(this.cell!)) return i;
+    }
+    return undefined;
+  }
+
+  getCellColumn(): number | undefined {
+    if (!this.#tableNode) return;
+
+    const row = this.cell!.parent as DiagramNode;
+    if (!row) return undefined;
+
+    const columns = (row.children as DiagramNode[]).toSorted((a, b) => a.bounds.x - b.bounds.x);
+    return columns.indexOf(this.cell!);
+  }
+
+  getRowsSorted(): DiagramNode[] {
+    if (!this.#tableNode) return [];
+    return (this.#tableNode.children as DiagramNode[]).toSorted((a, b) => a.bounds.y - b.bounds.y);
+  }
+
+  getColumnsSorted(row: DiagramNode): DiagramNode[] {
+    return (row.children as DiagramNode[]).toSorted((a, b) => a.bounds.x - b.bounds.x);
+  }
+
+  getCurrentRow(): DiagramNode | undefined {
+    const rowIdx = this.getCellRow();
+    if (rowIdx === undefined) return undefined;
+    return this.getRowsSorted()[rowIdx];
+  }
+
+  getColumnCount(): number {
+    if (!this.#tableNode || this.#tableNode.children.length === 0) return 0;
+    return (this.#tableNode.children[0] as DiagramNode).children.length;
   }
 }

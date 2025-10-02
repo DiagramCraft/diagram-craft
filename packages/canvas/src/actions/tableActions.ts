@@ -6,7 +6,12 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
-import { assert } from '@diagram-craft/utils/assert';
+import { TableHelper } from '../node-types/Table.nodeType';
+import {
+  AbstractSelectionAction,
+  ElementType,
+  MultipleType
+} from '@diagram-craft/canvas-app/actions/abstractSelectionAction';
 
 declare global {
   interface ActionMap extends ReturnType<typeof tableActions> {}
@@ -27,17 +32,8 @@ export const tableActions = (context: ActionContext) => ({
   TABLE_COLUMN_MOVE_RIGHT: new TableColumnMoveAction(1, context)
 });
 
-const getTableNode = (diagram: Diagram): DiagramNode | undefined => {
-  const elements = diagram.selectionState.elements;
-  if (elements.length === 1 && isNode(elements[0])) {
-    if (isNode(elements[0].parent) && elements[0].parent?.nodeType === 'tableRow') {
-      assert.node(elements[0].parent.parent!);
-      assert.true(elements[0].parent.parent.nodeType === 'table');
-
-      return elements[0].parent.parent;
-    }
-    if (elements[0].nodeType === 'table') return elements[0];
-  }
+const getTableHelper = (diagram: Diagram): TableHelper => {
+  return new TableHelper(diagram.selectionState.elements[0]!);
 };
 
 const adjustRowHeight = (row: DiagramNode, h: number, uow: UnitOfWork) => {
@@ -53,33 +49,20 @@ const adjustColumnWidth = (colIdx: number, table: DiagramNode, w: number, uow: U
   }
 };
 
-const getCellRow = (diagram: Diagram): number | undefined => {
-  const table = getTableNode(diagram);
-  if (!table) return;
+const swapPositions = (
+  node1: DiagramNode,
+  node2: DiagramNode,
+  axis: 'x' | 'y',
+  uow: UnitOfWork
+) => {
+  const coord1 = node1.bounds[axis];
+  const coord2 = node2.bounds[axis];
 
-  const elements = diagram.selectionState.elements;
-  if (elements.length !== 1 || !isNode(elements[0])) return;
+  const t1 = TransformFactory.fromTo(node1.bounds, { ...node1.bounds, [axis]: coord2 });
+  const t2 = TransformFactory.fromTo(node2.bounds, { ...node2.bounds, [axis]: coord1 });
 
-  const rows = (table.children as DiagramNode[]).toSorted((a, b) => a.bounds.y - b.bounds.y);
-  for (let i = 0; i < rows.length; i++) {
-    if (rows[i]!.children.includes(elements[0])) return i;
-  }
-  return undefined;
-};
-
-const getCellColumn = (diagram: Diagram): number | undefined => {
-  const table = getTableNode(diagram);
-  if (!table) return;
-
-  const elements = diagram.selectionState.elements;
-  if (elements.length !== 1 || !isNode(elements[0])) return;
-
-  const cell = elements[0];
-  const row = cell.parent as DiagramNode;
-  if (!row) return undefined;
-
-  const columns = (row.children as DiagramNode[]).toSorted((a, b) => a.bounds.x - b.bounds.x);
-  return columns.indexOf(cell);
+  node1.transform(t1, uow);
+  node2.transform(t2, uow);
 };
 
 export class TableDistributeAction extends AbstractAction {
@@ -91,8 +74,9 @@ export class TableDistributeAction extends AbstractAction {
   }
 
   execute(): void {
-    const tableElement = getTableNode(this.context.model.activeDiagram);
-    if (!tableElement) return;
+    const helper = getTableHelper(this.context.model.activeDiagram);
+
+    const tableElement = helper.tableNode;
 
     if (this.type === 'row') {
       const h =
@@ -139,29 +123,25 @@ export class TableRemoveAction extends AbstractAction {
       context.model.activeDiagram.selectionState,
       'change',
       () => {
-        const elements = context.model.activeDiagram.selectionState.elements;
-        return (
-          elements.length === 1 &&
-          isNode(elements[0]) &&
-          isNode(elements[0].parent) &&
-          elements[0].parent?.nodeType === 'tableRow'
-        );
+        const helper = getTableHelper(context.model.activeDiagram);
+        return helper?.isTable() ?? false;
       }
     );
   }
 
   execute(): void {
-    const rowIdx = getCellRow(this.context.model.activeDiagram);
-    const colIdx = getCellColumn(this.context.model.activeDiagram);
+    const helper = getTableHelper(this.context.model.activeDiagram);
+    if (!helper?.tableNode) return;
 
-    const table = getTableNode(this.context.model.activeDiagram);
-    if (!table) return;
+    const rowIdx = helper.getCellRow();
+    const colIdx = helper.getCellColumn();
+    const table = helper.tableNode;
 
     if (this.type === 'row') {
       if (rowIdx === undefined) return;
 
       const uow = new UnitOfWork(this.context.model.activeDiagram, true);
-      const row = table.children[rowIdx]!;
+      const row = helper.getRowsSorted()[rowIdx]!;
       uow.snapshot(row);
       table.removeChild(row, uow);
       assertRegularLayer(row.layer);
@@ -199,34 +179,30 @@ export class TableInsertAction extends AbstractAction {
       context.model.activeDiagram.selectionState,
       'change',
       () => {
-        const elements = context.model.activeDiagram.selectionState.elements;
-        return (
-          elements.length === 1 &&
-          isNode(elements[0]) &&
-          isNode(elements[0].parent) &&
-          elements[0].parent?.nodeType === 'tableRow'
-        );
+        const helper = getTableHelper(context.model.activeDiagram);
+        return helper?.isTable() ?? false;
       }
     );
   }
 
   execute(): void {
-    const rowIdx = getCellRow(this.context.model.activeDiagram);
-    const colIdx = getCellColumn(this.context.model.activeDiagram);
+    const helper = getTableHelper(this.context.model.activeDiagram);
 
-    const table = getTableNode(this.context.model.activeDiagram);
-    if (!table) return;
+    const rowIdx = helper.getCellRow();
+    const colIdx = helper.getCellColumn();
+    const table = helper.tableNode;
 
     if (this.type === 'row') {
       if (rowIdx === undefined) return;
 
       const uow = new UnitOfWork(this.context.model.activeDiagram, true);
-      const current = table.children[rowIdx] as DiagramNode;
+      const rows = helper.getRowsSorted();
+      const current = rows[rowIdx]!;
       const newRow = current.duplicate();
 
       // Shift nodes below
-      for (let i = rowIdx + (this.position === -1 ? 0 : 1); i < table.children.length; i++) {
-        const r = table.children[i] as DiagramNode;
+      for (let i = rowIdx + (this.position === -1 ? 0 : 1); i < rows.length; i++) {
+        const r = rows[i]!;
         const t = TransformFactory.fromTo(r.bounds, {
           ...r.bounds,
           y: r.bounds.y + newRow.bounds.h
@@ -249,16 +225,14 @@ export class TableInsertAction extends AbstractAction {
       const uow = new UnitOfWork(this.context.model.activeDiagram, true);
 
       for (const r of table.children) {
-        const cell = (r as DiagramNode).children[colIdx] as DiagramNode;
+        const row = r as DiagramNode;
+        const columns = helper.getColumnsSorted(row);
+        const cell = columns[colIdx]!;
         const newCell = cell.duplicate();
 
         // Shift following columns
-        for (
-          let i = colIdx + (this.position === -1 ? 0 : 1);
-          i < (r as DiagramNode).children.length;
-          i++
-        ) {
-          const c = (r as DiagramNode).children[i] as DiagramNode;
+        for (let i = colIdx + (this.position === -1 ? 0 : 1); i < columns.length; i++) {
+          const c = columns[i]!;
           const t = TransformFactory.fromTo(c.bounds, {
             ...c.bounds,
             x: c.bounds.x + newCell.bounds.w
@@ -267,7 +241,7 @@ export class TableInsertAction extends AbstractAction {
         }
 
         uow.snapshot(newCell);
-        (r as DiagramNode).addChild(newCell, uow, {
+        row.addChild(newCell, uow, {
           ref: cell,
           type: this.position === -1 ? 'before' : 'after'
         });
@@ -280,52 +254,42 @@ export class TableInsertAction extends AbstractAction {
   }
 }
 
-export class TableRowMoveAction extends AbstractAction {
+export class TableRowMoveAction extends AbstractSelectionAction {
   constructor(
     private readonly direction: -1 | 1,
     context: ActionContext
   ) {
-    super(context);
+    super(context, MultipleType.SingleOnly, ElementType.Node);
   }
 
   getCriteria(context: ActionContext) {
-    const checkEnabled = () => {
-      const elements = context.model.activeDiagram.selectionState.elements;
-      if (
-        elements.length !== 1 ||
-        !isNode(elements[0]) ||
-        !isNode(elements[0].parent) ||
-        elements[0].parent?.nodeType !== 'tableRow'
-      ) {
-        return false;
-      }
+    const baseCriteria = super.getCriteria(context);
 
-      const table = getTableNode(context.model.activeDiagram);
-      if (!table) return false;
+    const check = () => {
+      const helper = getTableHelper(context.model.activeDiagram);
+      if (!helper.isTable()) return false;
 
-      const rowIdx = getCellRow(context.model.activeDiagram);
+      const rowIdx = helper.getCellRow();
       if (rowIdx === undefined) return false;
 
       const targetIdx = rowIdx + this.direction;
-      return targetIdx >= 0 && targetIdx < table.children.length;
+      return targetIdx >= 0 && targetIdx < helper.getRowsSorted().length;
     };
 
     return [
-      ActionCriteria.EventTriggered(
-        context.model.activeDiagram.selectionState,
-        'change',
-        checkEnabled
-      ),
-      ActionCriteria.EventTriggered(context.model.activeDiagram, 'change', checkEnabled)
+      ...baseCriteria,
+      ActionCriteria.EventTriggered(context.model.activeDiagram.selectionState, 'change', check),
+      ActionCriteria.EventTriggered(context.model.activeDiagram, 'change', check)
     ];
   }
 
   execute(): void {
-    const rowIdx = getCellRow(this.context.model.activeDiagram);
-    const table = getTableNode(this.context.model.activeDiagram);
-    if (!table || rowIdx === undefined) return;
+    const helper = getTableHelper(this.context.model.activeDiagram);
+    const table = helper.tableNode;
+    const rowIdx = helper.getCellRow();
+    if (rowIdx === undefined) return;
 
-    const rows = (table.children as DiagramNode[]).toSorted((a, b) => a.bounds.y - b.bounds.y);
+    const rows = helper.getRowsSorted();
     const targetIdx = rowIdx + this.direction;
     if (targetIdx < 0 || targetIdx >= rows.length) return;
 
@@ -333,17 +297,9 @@ export class TableRowMoveAction extends AbstractAction {
     const currentRow = rows[rowIdx]!;
     const targetRow = rows[targetIdx]!;
 
-    // Swap positions
-    const currentY = currentRow.bounds.y;
-    const targetY = targetRow.bounds.y;
+    swapPositions(currentRow, targetRow, 'y', uow);
 
-    const t1 = TransformFactory.fromTo(currentRow.bounds, { ...currentRow.bounds, y: targetY });
-    const t2 = TransformFactory.fromTo(targetRow.bounds, { ...targetRow.bounds, y: currentY });
-
-    currentRow.transform(t1, uow);
-    targetRow.transform(t2, uow);
-
-    // Reorder children - remember that top-most row is last in children array
+    // Reorder children - top-most row is last in children array
     table.removeChild(currentRow, uow);
     table.addChild(currentRow, uow, {
       ref: targetRow,
@@ -354,62 +310,47 @@ export class TableRowMoveAction extends AbstractAction {
   }
 }
 
-export class TableColumnMoveAction extends AbstractAction {
+export class TableColumnMoveAction extends AbstractSelectionAction {
   constructor(
     private readonly direction: -1 | 1,
     context: ActionContext
   ) {
-    super(context);
+    super(context, MultipleType.SingleOnly, ElementType.Node);
   }
 
   getCriteria(context: ActionContext) {
-    const checkEnabled = () => {
-      const elements = context.model.activeDiagram.selectionState.elements;
-      if (
-        elements.length !== 1 ||
-        !isNode(elements[0]) ||
-        !isNode(elements[0].parent) ||
-        elements[0].parent?.nodeType !== 'tableRow'
-      ) {
-        return false;
-      }
+    const baseCriteria = super.getCriteria(context);
 
-      const table = getTableNode(context.model.activeDiagram);
-      if (!table || table.children.length === 0) {
-        return false;
-      }
+    const check = () => {
+      const helper = getTableHelper(context.model.activeDiagram);
+      if (!helper.isTable()) return false;
 
-      const colIdx = getCellColumn(context.model.activeDiagram);
-      if (colIdx === undefined) {
-        return false;
-      }
+      const colIdx = helper.getCellColumn();
+      if (colIdx === undefined) return false;
 
-      const colCount = (table.children[0] as DiagramNode).children.length;
+      const colCount = helper.getColumnCount();
       const targetIdx = colIdx + this.direction;
       return targetIdx >= 0 && targetIdx < colCount;
     };
 
     return [
-      ActionCriteria.EventTriggered(
-        context.model.activeDiagram.selectionState,
-        'change',
-        checkEnabled
-      ),
-      ActionCriteria.EventTriggered(context.model.activeDiagram, 'change', checkEnabled)
+      ...baseCriteria,
+      ActionCriteria.EventTriggered(context.model.activeDiagram.selectionState, 'change', check),
+      ActionCriteria.EventTriggered(context.model.activeDiagram, 'change', check)
     ];
   }
 
   execute(): void {
-    const colIdx = getCellColumn(this.context.model.activeDiagram);
-    const table = getTableNode(this.context.model.activeDiagram);
-    if (!table || colIdx === undefined) return;
+    const helper = getTableHelper(this.context.model.activeDiagram);
+    const table = helper.tableNode;
+    const colIdx = helper.getCellColumn();
+    if (colIdx === undefined) return;
 
     const uow = new UnitOfWork(this.context.model.activeDiagram, true);
 
-    // Move column in each row
     for (const r of table.children) {
       const row = r as DiagramNode;
-      const columns = (row.children as DiagramNode[]).toSorted((a, b) => a.bounds.x - b.bounds.x);
+      const columns = helper.getColumnsSorted(row);
 
       const targetIdx = colIdx + this.direction;
       if (targetIdx < 0 || targetIdx >= columns.length) return;
@@ -417,17 +358,9 @@ export class TableColumnMoveAction extends AbstractAction {
       const currentCell = columns[colIdx]!;
       const targetCell = columns[targetIdx]!;
 
-      // Swap x positions
-      const currentX = currentCell.bounds.x;
-      const targetX = targetCell.bounds.x;
+      swapPositions(currentCell, targetCell, 'x', uow);
 
-      const t1 = TransformFactory.fromTo(currentCell.bounds, { ...currentCell.bounds, x: targetX });
-      const t2 = TransformFactory.fromTo(targetCell.bounds, { ...targetCell.bounds, x: currentX });
-
-      currentCell.transform(t1, uow);
-      targetCell.transform(t2, uow);
-
-      // Reorder children - remember that right-most column is first in children array
+      // Reorder children - right-most column is first in children array
       row.removeChild(currentCell, uow);
       row.addChild(currentCell, uow, {
         ref: targetCell,
