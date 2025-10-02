@@ -103,6 +103,12 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
             <ActionContextMenuItem action={'TABLE_COLUMN_DISTRIBUTE'}>
               Distribute columns
             </ActionContextMenuItem>
+            <ActionContextMenuItem action={'TABLE_COLUMN_MOVE_LEFT'}>
+              Move column left
+            </ActionContextMenuItem>
+            <ActionContextMenuItem action={'TABLE_COLUMN_MOVE_RIGHT'}>
+              Move column right
+            </ActionContextMenuItem>
             <ContextMenu.Separator className="cmp-context-menu__separator" />
             <ActionContextMenuItem action={'TABLE_ROW_INSERT_BEFORE'}>
               Insert row before
@@ -113,6 +119,10 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
             <ActionContextMenuItem action={'TABLE_ROW_REMOVE'}>Remove row</ActionContextMenuItem>
             <ActionContextMenuItem action={'TABLE_ROW_DISTRIBUTE'}>
               Distribute rows
+            </ActionContextMenuItem>
+            <ActionContextMenuItem action={'TABLE_ROW_MOVE_UP'}>Move row up</ActionContextMenuItem>
+            <ActionContextMenuItem action={'TABLE_ROW_MOVE_DOWN'}>
+              Move row down
             </ActionContextMenuItem>
           </ContextMenu.SubContent>
         </ContextMenu.Portal>
