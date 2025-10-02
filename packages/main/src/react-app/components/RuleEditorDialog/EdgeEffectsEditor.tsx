@@ -15,6 +15,8 @@ export const EdgeEffectsEditor: Editor = props => {
       opacity={makeProperty($p, 'effects.opacity', edgeDefaults, onChange)}
       sketch={makeProperty($p, 'effects.sketch', edgeDefaults, onChange)}
       sketchStrength={makeProperty($p, 'effects.sketchStrength', edgeDefaults, onChange)}
+      marchingAnts={makeProperty($p, 'effects.marchingAnts', edgeDefaults, onChange)}
+      marchingAntsSpeed={makeProperty($p, 'effects.marchingAntsSpeed', edgeDefaults, onChange)}
     />
   );
 };

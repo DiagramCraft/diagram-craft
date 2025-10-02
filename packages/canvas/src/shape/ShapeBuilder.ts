@@ -195,7 +195,7 @@ export class ShapeBuilder {
 
   edge(
     paths: Path[],
-    props: ElementProps | DeepReadonly<ElementProps> | undefined = undefined,
+    props: EdgeProps | DeepReadonly<EdgeProps> | undefined = undefined,
     startArrow: ArrowShape | undefined = undefined,
     endArrow: ArrowShape | undefined = undefined,
     opts?: Opts
@@ -220,6 +220,28 @@ export class ShapeBuilder {
       )
       .join(' ');
 
+    const animations: VNode[] = [];
+
+    if (props?.effects?.marchingAnts) {
+      style.strokeDasharray ??= '10, 10';
+
+      const patternLength = style.strokeDasharray
+        .split(/,/)
+        .map(e => parseInt(e, 10))
+        .reduce((a, b) => a + b, 0);
+
+      const duration = 0.1 / (props.effects.marchingAntsSpeed ?? 0.25);
+
+      animations.push(
+        svg.animate({
+          attributeName: 'stroke-dashoffset',
+          dur: `${duration}s`,
+          repeatCount: 'indefinite',
+          values: `0;${patternLength}`
+        })
+      );
+    }
+
     this.nodes.push(
       ...[
         svg.path({
@@ -228,13 +250,16 @@ export class ShapeBuilder {
           'stroke': 'transparent',
           'stroke-width': 15
         }),
-        svg.path({
-          'class': opts.className,
-          'd': path,
-          'style': toInlineCSS(style),
-          'marker-start': startArrow ? `url(#s_${this.props.element.id})` : '',
-          'marker-end': endArrow ? `url(#e_${this.props.element.id})` : ''
-        })
+        svg.path(
+          {
+            'class': opts.className,
+            'd': path,
+            'style': toInlineCSS(style),
+            'marker-start': startArrow ? `url(#s_${this.props.element.id})` : '',
+            'marker-end': endArrow ? `url(#e_${this.props.element.id})` : ''
+          },
+          ...animations
+        )
       ]
     );
   }

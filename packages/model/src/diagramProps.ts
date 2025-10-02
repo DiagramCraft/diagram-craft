@@ -190,6 +190,20 @@ declare global {
     };
 
     custom?: CustomEdgeProps;
+
+    effects?: {
+      sketch?: boolean;
+      sketchStrength?: number;
+      sketchFillType?: 'fill' | 'hachure';
+
+      opacity?: number;
+
+      rounding?: boolean;
+      roundingAmount?: number;
+
+      marchingAnts?: boolean;
+      marchingAntsSpeed?: number;
+    };
   }
 
   interface NodeProps extends ElementProps {

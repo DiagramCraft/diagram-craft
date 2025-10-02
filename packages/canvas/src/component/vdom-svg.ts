@@ -68,6 +68,17 @@ export const path = (
   return s('path', attrs, ...children);
 };
 
+export const animate = (
+  attrs: Attr<{
+    attributeName: string;
+    dur?: string | number;
+    repeatCount?: string | number;
+    values?: string;
+  }>
+) => {
+  return s('animate', attrs);
+};
+
 export const clipPath = (
   attrs: Attr<
     {

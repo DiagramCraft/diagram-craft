@@ -378,7 +378,9 @@ const _edgeDefaults: Omit<EdgePropsForRendering, 'custom' | 'shape' | 'indicator
     sketchFillType: 'fill',
     opacity: 1,
     rounding: false,
-    roundingAmount: 20
+    roundingAmount: 20,
+    marchingAnts: false,
+    marchingAntsSpeed: 0.5
   },
   spacing: {
     start: 0,
@@ -387,7 +389,11 @@ const _edgeDefaults: Omit<EdgePropsForRendering, 'custom' | 'shape' | 'indicator
 };
 
 const _mergedEdgeDefaults = makeWriteable(
-  deepMerge<EdgePropsForRendering>({}, { ..._nodeDefaults, routing: undefined }, _edgeDefaults)
+  deepMerge<EdgePropsForRendering>(
+    {},
+    { ..._nodeDefaults, routing: undefined, effects: undefined },
+    _edgeDefaults
+  )
 );
 
 export const nodeDefaults = new Defaults<NodeProps>(_nodeDefaults);
