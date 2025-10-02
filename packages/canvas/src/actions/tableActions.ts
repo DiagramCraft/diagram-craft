@@ -1,4 +1,4 @@
-import { AbstractAction, ActionContext, ActionCriteria } from '../action';
+import { ActionContext, ActionCriteria } from '../action';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
@@ -65,12 +65,12 @@ const swapPositions = (
   node2.transform(t2, uow);
 };
 
-export class TableDistributeAction extends AbstractAction {
+export class TableDistributeAction extends AbstractSelectionAction {
   constructor(
     private readonly type: 'row' | 'column',
     context: ActionContext
   ) {
-    super(context);
+    super(context, MultipleType.SingleOnly, ElementType.Node);
   }
 
   execute(): void {
@@ -110,23 +110,22 @@ export class TableDistributeAction extends AbstractAction {
   }
 }
 
-export class TableRemoveAction extends AbstractAction {
+export class TableRemoveAction extends AbstractSelectionAction {
   constructor(
     private readonly type: 'row' | 'column',
     context: ActionContext
   ) {
-    super(context);
+    super(context, MultipleType.SingleOnly, ElementType.Node);
   }
 
   getCriteria(context: ActionContext) {
-    return ActionCriteria.EventTriggered(
-      context.model.activeDiagram.selectionState,
-      'change',
-      () => {
+    return [
+      ...super.getCriteria(context),
+      ActionCriteria.EventTriggered(context.model.activeDiagram.selectionState, 'change', () => {
         const helper = getTableHelper(context.model.activeDiagram);
-        return helper?.isTable() ?? false;
-      }
-    );
+        return helper.isTable();
+      })
+    ];
   }
 
   execute(): void {
@@ -165,24 +164,23 @@ export class TableRemoveAction extends AbstractAction {
   }
 }
 
-export class TableInsertAction extends AbstractAction {
+export class TableInsertAction extends AbstractSelectionAction {
   constructor(
     private readonly type: 'row' | 'column',
     private readonly position: -1 | 1,
     context: ActionContext
   ) {
-    super(context);
+    super(context, MultipleType.SingleOnly, ElementType.Node);
   }
 
   getCriteria(context: ActionContext) {
-    return ActionCriteria.EventTriggered(
-      context.model.activeDiagram.selectionState,
-      'change',
-      () => {
+    return [
+      ...super.getCriteria(context),
+      ActionCriteria.EventTriggered(context.model.activeDiagram.selectionState, 'change', () => {
         const helper = getTableHelper(context.model.activeDiagram);
-        return helper?.isTable() ?? false;
-      }
-    );
+        return helper.isTable();
+      })
+    ];
   }
 
   execute(): void {
