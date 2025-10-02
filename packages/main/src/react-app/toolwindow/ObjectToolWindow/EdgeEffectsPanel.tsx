@@ -14,9 +14,17 @@ type FormProps = {
   opacity: Property<number>;
   sketch: Property<boolean>;
   sketchStrength: Property<number>;
+  marchingAnts: Property<boolean>;
+  marchingAntsSpeed: Property<number>;
 };
 
-export const EdgeEffectsPanelForm = ({ opacity, sketch, sketchStrength }: FormProps) => {
+export const EdgeEffectsPanelForm = ({
+  opacity,
+  sketch,
+  sketchStrength,
+  marchingAnts,
+  marchingAntsSpeed
+}: FormProps) => {
   return (
     <div className={'cmp-labeled-table'}>
       <Collapsible label={'Opacity'} defaultOpen={opacity.isSet && opacity.val > 0}>
@@ -35,7 +43,7 @@ export const EdgeEffectsPanelForm = ({ opacity, sketch, sketchStrength }: FormPr
 
       <Collapsible label={'Sketch'} defaultOpen={sketch.isSet && sketch.val}>
         <div className={'cmp-labeled-table'}>
-          <div className={'cmp-labeled-table__label'}>Sketch:</div>
+          <div className={'cmp-labeled-table__label'}>Enabled:</div>
           <div className={'cmp-labeled-table__value'}>
             <PropertyEditor property={sketch} render={props => <Checkbox {...props} />} />
           </div>
@@ -47,6 +55,25 @@ export const EdgeEffectsPanelForm = ({ opacity, sketch, sketchStrength }: FormPr
               formatValue={v => round(v * 100)}
               storeValue={v => v / 100}
               render={props => <Slider {...props} max={25} />}
+            />
+          </div>
+        </div>
+      </Collapsible>
+
+      <Collapsible label={'Marching Ants'} defaultOpen={marchingAnts.isSet && marchingAnts.val}>
+        <div className={'cmp-labeled-table'}>
+          <div className={'cmp-labeled-table__label'}>Enabled:</div>
+          <div className={'cmp-labeled-table__value'}>
+            <PropertyEditor property={marchingAnts} render={props => <Checkbox {...props} />} />
+          </div>
+
+          <div className={'cmp-labeled-table__label'}></div>
+          <div className={'cmp-labeled-table__value'}>
+            <PropertyEditor
+              property={marchingAntsSpeed}
+              formatValue={v => round(v * 100)}
+              storeValue={v => v / 100}
+              render={props => <Slider {...props} max={100} />}
             />
           </div>
         </div>
@@ -67,6 +94,9 @@ export const EdgeEffectsPanel = (props: Props) => {
   const sketch = useEdgeProperty($d, 'effects.sketch');
   const sketchStrength = useEdgeProperty($d, 'effects.sketchStrength');
 
+  const marchingAnts = useEdgeProperty($d, 'effects.marchingAnts');
+  const marchingAntsSpeed = useEdgeProperty($d, 'effects.marchingAntsSpeed');
+
   useEventListener($d.selectionState, 'change', redraw);
 
   return (
@@ -76,7 +106,13 @@ export const EdgeEffectsPanel = (props: Props) => {
       title={'Effects'}
       hasCheckbox={false}
     >
-      <EdgeEffectsPanelForm opacity={opacity} sketch={sketch} sketchStrength={sketchStrength} />
+      <EdgeEffectsPanelForm
+        opacity={opacity}
+        sketch={sketch}
+        sketchStrength={sketchStrength}
+        marchingAnts={marchingAnts}
+        marchingAntsSpeed={marchingAntsSpeed}
+      />
     </ToolWindowPanel>
   );
 };
