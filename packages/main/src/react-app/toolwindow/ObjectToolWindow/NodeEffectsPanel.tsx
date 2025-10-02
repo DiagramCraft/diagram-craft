@@ -161,8 +161,6 @@ export const NodeEffectsPanelForm = ({
             <div className={'cmp-labeled-table__value'}>
               <PropertyEditor
                 property={roundingAmount}
-                formatValue={v => round(v * 100)}
-                storeValue={v => v / 100}
                 render={props => <Slider {...props} max={200} unit={'px'} />}
               />
             </div>

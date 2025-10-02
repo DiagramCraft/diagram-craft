@@ -377,10 +377,10 @@ const _edgeDefaults: Omit<EdgePropsForRendering, 'custom' | 'shape' | 'indicator
     sketchStrength: 0.1,
     sketchFillType: 'fill',
     opacity: 1,
-    rounding: false,
-    roundingAmount: 20,
     marchingAnts: false,
-    marchingAntsSpeed: 0.5
+    marchingAntsSpeed: 0.5,
+    rounding: false,
+    roundingAmount: 10
   },
   spacing: {
     start: 0,

@@ -16,6 +16,8 @@ type FormProps = {
   sketchStrength: Property<number>;
   marchingAnts: Property<boolean>;
   marchingAntsSpeed: Property<number>;
+  rounding: Property<boolean>;
+  roundingAmount: Property<number>;
 };
 
 export const EdgeEffectsPanelForm = ({
@@ -23,7 +25,9 @@ export const EdgeEffectsPanelForm = ({
   sketch,
   sketchStrength,
   marchingAnts,
-  marchingAntsSpeed
+  marchingAntsSpeed,
+  rounding,
+  roundingAmount
 }: FormProps) => {
   return (
     <div className={'cmp-labeled-table'}>
@@ -78,6 +82,23 @@ export const EdgeEffectsPanelForm = ({
           </div>
         </div>
       </Collapsible>
+
+      <Collapsible label={'Rounding'} defaultOpen={rounding.isSet && rounding.val}>
+        <div className={'cmp-labeled-table'}>
+          <div className={'cmp-labeled-table__label'}>Enabled:</div>
+          <div className={'cmp-labeled-table__value'}>
+            <PropertyEditor property={rounding} render={props => <Checkbox {...props} />} />
+          </div>
+
+          <div className={'cmp-labeled-table__label'}></div>
+          <div className={'cmp-labeled-table__value'}>
+            <PropertyEditor
+              property={roundingAmount}
+              render={props => <Slider {...props} max={100} unit={'px'} />}
+            />
+          </div>
+        </div>
+      </Collapsible>
     </div>
   );
 };
@@ -97,6 +118,9 @@ export const EdgeEffectsPanel = (props: Props) => {
   const marchingAnts = useEdgeProperty($d, 'effects.marchingAnts');
   const marchingAntsSpeed = useEdgeProperty($d, 'effects.marchingAntsSpeed');
 
+  const rounding = useEdgeProperty($d, 'effects.rounding');
+  const roundingAmount = useEdgeProperty($d, 'effects.roundingAmount');
+
   useEventListener($d.selectionState, 'change', redraw);
 
   return (
@@ -112,6 +136,8 @@ export const EdgeEffectsPanel = (props: Props) => {
         sketchStrength={sketchStrength}
         marchingAnts={marchingAnts}
         marchingAntsSpeed={marchingAntsSpeed}
+        rounding={rounding}
+        roundingAmount={roundingAmount}
       />
     </ToolWindowPanel>
   );

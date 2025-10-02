@@ -14,14 +14,14 @@ import { hash } from '@diagram-craft/utils/hash';
 import { Random } from '@diagram-craft/utils/random';
 import { VerifyNotReached } from '@diagram-craft/utils/assert';
 import { round } from '@diagram-craft/utils/math';
-import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
+import { DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import { parseSvgPath } from '@diagram-craft/geometry/svgPathUtils';
 
 export class SketchPathRenderer implements PathRenderer {
-  render(node: DiagramElement, path: StyledPath): RenderedStyledPath[] {
-    const svgPathOutline = asDistortedSvgPath(path.path, hash(new TextEncoder().encode(node.id)), {
+  render(el: DiagramElement, path: StyledPath): RenderedStyledPath[] {
+    const svgPathOutline = asDistortedSvgPath(path.path, hash(new TextEncoder().encode(el.id)), {
       passes: 2,
-      amount: node.renderProps.effects?.sketchStrength ?? 0.1
+      amount: el.renderProps.effects?.sketchStrength ?? 0.1
     });
 
     const boundaryStyle = { ...path.style };
@@ -31,17 +31,17 @@ export class SketchPathRenderer implements PathRenderer {
     fillStyle.stroke = 'none';
 
     const dest: RenderedStyledPath[] = [];
-    if (isNode(node) && !node.getDefinition().supports('fill')) {
+    if (isNode(el) && !el.getDefinition().supports('fill')) {
       // Do nothing
-    } else if (node.renderProps.effects?.sketchFillType === 'hachure') {
-      const lines = calculateHachureLines(node.bounds, path.path, Math.PI / 4, 10);
+    } else if (el.renderProps.effects?.sketchFillType === 'hachure') {
+      const lines = calculateHachureLines(el.bounds, path.path, Math.PI / 4, 10);
       const hachure = lines.map(l => {
         return asDistortedSvgPath(
           new Path(l.from, [['L', l.to.x, l.to.y]]),
-          hash(new TextEncoder().encode(node.id)),
+          hash(new TextEncoder().encode(el.id)),
           {
             passes: 2,
-            amount: node.renderProps.effects?.sketchStrength ?? 0.1,
+            amount: el.renderProps.effects?.sketchStrength ?? 0.1,
             unidirectional: false
           }
         );
@@ -49,10 +49,17 @@ export class SketchPathRenderer implements PathRenderer {
       hachure.forEach(l => {
         dest.push({ path: l, style: { stroke: fillStyle.fill, strokeWidth: '1', fill: 'none' } });
       });
+    } else if (isEdge(el)) {
+      const svgPathFill = asDistortedSvgPath(path.path, hash(new TextEncoder().encode(el.id)), {
+        passes: 2,
+        amount: el.renderProps.effects?.sketchStrength ?? 0.1,
+        unidirectional: true
+      });
+      dest.push({ path: svgPathFill, style: fillStyle });
     } else {
-      const svgPathFill = asDistortedSvgPath(path.path, hash(new TextEncoder().encode(node.id)), {
+      const svgPathFill = asDistortedSvgPath(path.path, hash(new TextEncoder().encode(el.id)), {
         passes: 1,
-        amount: node.renderProps.effects?.sketchStrength ?? 0.1,
+        amount: el.renderProps.effects?.sketchStrength ?? 0.1,
         distortVertices: true
       });
       dest.push({ path: svgPathFill, style: fillStyle });
@@ -108,8 +115,8 @@ export const parseArrowSvgPath = (path: string): Path[] => {
   const dest: [Point, PathSegment[]][] = [];
   let segments: PathSegment[] = [];
 
-  let startPoint: Point | undefined ;
-  let point: Point | undefined ;
+  let startPoint: Point | undefined;
+  let point: Point | undefined;
   for (const rs of parseSvgPath(path)) {
     if (rs[0] === 'M') {
       point = { x: Number(rs[1]), y: Number(rs[2]) };

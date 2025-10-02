@@ -4,7 +4,7 @@ import { ShapeText, ShapeTextProps } from './ShapeText';
 import { DefaultPathRenderer, PathRenderer, StyledPath } from './PathRenderer';
 import * as svg from '../component/vdom-svg';
 import { ControlPoint, ControlPointCallback } from './ShapeControlPoint';
-import { asDistortedSvgPath, SketchPathRenderer } from '@diagram-craft/canvas/effects/sketch';
+import { SketchPathRenderer } from '@diagram-craft/canvas/effects/sketch';
 import { Path } from '@diagram-craft/geometry/path';
 import { Box } from '@diagram-craft/geometry/box';
 import { Extent } from '@diagram-craft/geometry/extent';
@@ -17,7 +17,6 @@ import {
   ElementPropsForEditing,
   isNode
 } from '@diagram-craft/model/diagramElement';
-import { hash } from '@diagram-craft/utils/hash';
 import { ArrowShape } from '../arrowShapes';
 import { deepMerge } from '@diagram-craft/utils/object';
 import { makeShadowFilter } from '../effects/shadow';
@@ -207,17 +206,8 @@ export class ShapeBuilder {
 
     const style = deepMerge({}, this.props.style, props ? this.makeStyle(props) : {}, opts.style);
 
-    const seed = hash(new TextEncoder().encode(this.props.element.id));
-    const path = paths
-      .map(p =>
-        props?.effects?.sketch
-          ? asDistortedSvgPath(p, seed, {
-              passes: 2,
-              amount: props.effects.sketchStrength ?? 0.1,
-              unidirectional: true
-            })
-          : p.asSvgPath()
-      )
+    const path = this.processPath(props, opts, paths)
+      .map(p => p.path)
       .join(' ');
 
     const animations: VNode[] = [];
