@@ -89,6 +89,17 @@ declare global {
   interface CustomNodeProps {}
   interface CustomEdgeProps {}
 
+  type ElementEffectProps = {
+    sketch?: boolean;
+    sketchStrength?: number;
+    sketchFillType?: 'fill' | 'hachure';
+
+    opacity?: number;
+
+    rounding?: boolean;
+    roundingAmount?: number;
+  };
+
   interface ElementProps {
     hidden?: boolean;
 
@@ -142,16 +153,7 @@ declare global {
         type?: 'linear' | 'radial';
       };
     };
-    effects?: {
-      sketch?: boolean;
-      sketchStrength?: number;
-      sketchFillType?: 'fill' | 'hachure';
-
-      opacity?: number;
-
-      rounding?: boolean;
-      roundingAmount?: number;
-    };
+    effects?: ElementEffectProps;
 
     debug?: {
       boundingPath?: boolean;
@@ -177,9 +179,6 @@ declare global {
         size?: number;
       };
     };
-    routing?: {
-      rounding?: number;
-    };
     lineHops?: {
       type?: 'none' | 'below-line' | 'above-arc' | 'below-arc' | 'below-hide';
       size?: number;
@@ -191,16 +190,7 @@ declare global {
 
     custom?: CustomEdgeProps;
 
-    effects?: {
-      sketch?: boolean;
-      sketchStrength?: number;
-      sketchFillType?: 'fill' | 'hachure';
-
-      opacity?: number;
-
-      rounding?: boolean;
-      roundingAmount?: number;
-
+    effects?: ElementEffectProps & {
       marchingAnts?: boolean;
       marchingAntsSpeed?: number;
     };
@@ -224,20 +214,12 @@ declare global {
       deletable?: boolean;
     };
 
-    effects?: {
+    effects?: ElementEffectProps & {
       reflection?: boolean;
       reflectionStrength?: number;
       blur?: number;
-      sketch?: boolean;
-      sketchStrength?: number;
-      sketchFillType?: 'fill' | 'hachure';
 
       glass?: boolean;
-
-      opacity?: number;
-
-      rounding?: boolean;
-      roundingAmount?: number;
 
       isometric?: {
         enabled?: boolean;
