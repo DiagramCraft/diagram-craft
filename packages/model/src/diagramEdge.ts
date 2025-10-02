@@ -839,17 +839,8 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     const startDirection = this._getNormalDirection(this.start);
     const endDirection = this._getNormalDirection(this.end);
 
-    let rounding = 0;
-    if (
-      this.#props.get().stroke?.lineJoin === undefined ||
-      this.#props.get().stroke?.lineJoin === 'round'
-    ) {
-      rounding = this.#props.get().routing?.rounding ?? 0;
-    }
-
     return buildEdgePath(
       this,
-      rounding,
       startDirection,
       endDirection ? Direction.opposite(endDirection) : undefined
     );

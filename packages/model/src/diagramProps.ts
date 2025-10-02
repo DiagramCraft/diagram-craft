@@ -179,9 +179,6 @@ declare global {
         size?: number;
       };
     };
-    routing?: {
-      rounding?: number;
-    };
     lineHops?: {
       type?: 'none' | 'below-line' | 'above-arc' | 'below-arc' | 'below-hide';
       size?: number;

@@ -365,9 +365,6 @@ const _edgeDefaults: Omit<EdgePropsForRendering, 'custom' | 'shape' | 'indicator
       size: 100
     }
   },
-  routing: {
-    rounding: 0
-  },
   lineHops: {
     type: 'none',
     size: 10
@@ -389,11 +386,7 @@ const _edgeDefaults: Omit<EdgePropsForRendering, 'custom' | 'shape' | 'indicator
 };
 
 const _mergedEdgeDefaults = makeWriteable(
-  deepMerge<EdgePropsForRendering>(
-    {},
-    { ..._nodeDefaults, routing: undefined, effects: undefined },
-    _edgeDefaults
-  )
+  deepMerge<EdgePropsForRendering>({}, { ..._nodeDefaults, effects: undefined }, _edgeDefaults)
 );
 
 export const nodeDefaults = new Defaults<NodeProps>(_nodeDefaults);

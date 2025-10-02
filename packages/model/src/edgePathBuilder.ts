@@ -1,12 +1,7 @@
 import type { DiagramEdge } from './diagramEdge';
 import { Direction } from '@diagram-craft/geometry/direction';
 import { Path } from '@diagram-craft/geometry/path';
-import {
-  CubicSegment,
-  LineSegment,
-  PathSegment,
-  QuadSegment
-} from '@diagram-craft/geometry/pathSegment';
+import { LineSegment, PathSegment, QuadSegment } from '@diagram-craft/geometry/pathSegment';
 import { Line } from '@diagram-craft/geometry/line';
 import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { buildOrthogonalEdgePath } from './edgePathBuilder.orthogonal';
@@ -15,14 +10,12 @@ import { buildStraightEdgePath } from './edgePathBuilder.straight';
 
 export const buildEdgePath = (
   edge: DiagramEdge,
-  rounding: number,
   startDirection?: Direction,
   endDirection?: Direction
 ): Path => {
   switch (edge.renderProps.type) {
     case 'orthogonal': {
-      const r = buildOrthogonalEdgePath(edge, startDirection, endDirection);
-      return rounding > 0 ? Path.from(r, applyRounding(rounding)) : r;
+      return buildOrthogonalEdgePath(edge, startDirection, endDirection);
     }
     case 'curved': {
       const r = buildOrthogonalEdgePath(edge, startDirection, endDirection).clean();
@@ -32,10 +25,7 @@ export const buildEdgePath = (
       return buildBezierEdgePath(edge);
 
     default: {
-      let r = buildStraightEdgePath(edge);
-      if (rounding > 0 && r.segments.length > 1) r = Path.from(r, applyRounding(rounding));
-      assert.true(r.segments.length > 0, 'Straight edge path must have at least one segment');
-      return r;
+      return buildStraightEdgePath(edge);
     }
   }
 };
@@ -66,43 +56,6 @@ const convertToCurves = (segments: ReadonlyArray<PathSegment>) => {
   }
 
   dest.push(new QuadSegment(start, cp, segments.at(-1)!.end));
-
-  return dest;
-};
-
-const applyRounding = (rounding: number) => (segments: ReadonlyArray<PathSegment>) => {
-  const dest: PathSegment[] = [];
-  for (let i = 0; i < segments.length; i++) {
-    const previous = i === 0 ? undefined : segments.at(i - 1);
-    const segment = segments[i]!;
-    const next = segments.at(i + 1);
-
-    const previousIsLine = previous instanceof LineSegment;
-    const nextIsLine = next instanceof LineSegment;
-    const isLine = segment instanceof LineSegment;
-
-    if (isLine) {
-      const line = Line.of(segment.start, segment.end);
-      if (previousIsLine && nextIsLine) {
-        const s = Line.extend(line, 0, -rounding);
-        const n = Line.extend(Line.of(next.start, next.end), -rounding, 0);
-
-        dest.push(new LineSegment(s.from, s.to));
-        dest.push(new CubicSegment(s.to, segment.end, segment.end, n.from));
-      } else if (previousIsLine) {
-        const s = Line.extend(line, -rounding, 0);
-        dest.push(new LineSegment(s.from, s.to));
-      } else if (nextIsLine) {
-        const s = Line.extend(line, 0, -rounding);
-        const n = Line.extend(Line.of(next.start, next.end), -rounding, 0);
-
-        dest.push(new LineSegment(s.from, s.to));
-        dest.push(new CubicSegment(s.to, segment.end, segment.end, n.from));
-      }
-    } else {
-      dest.push(segment);
-    }
-  }
 
   return dest;
 };

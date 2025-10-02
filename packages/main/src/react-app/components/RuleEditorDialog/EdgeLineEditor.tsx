@@ -32,7 +32,6 @@ export const EdgeLineEditor: Editor = props => {
       startSize={makeProperty($p, 'arrow.start.size', edgeDefaults, onChange)}
       endType={makeProperty($p, 'arrow.end.type', edgeDefaults, onChange)}
       endSize={makeProperty($p, 'arrow.end.size', edgeDefaults, onChange)}
-      rounding={makeProperty($p, 'routing.rounding', edgeDefaults, onChange)}
       lineHopsSize={makeProperty($p, 'lineHops.size', edgeDefaults, onChange)}
       lineHopsType={makeProperty($p, 'lineHops.type', edgeDefaults, onChange)}
       lineCap={makeProperty($p, 'stroke.lineCap', edgeDefaults, onChange)}

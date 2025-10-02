@@ -120,7 +120,6 @@ export const EDGE_EDITORS: EdgeEditorRegistry = {
       fill: props.fill,
       type: (props as EdgeProps).type,
       arrow: (props as EdgeProps).arrow,
-      routing: (props as EdgeProps).routing,
       lineHops: (props as EdgeProps).lineHops
     })
   }

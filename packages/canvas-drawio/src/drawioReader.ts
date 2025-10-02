@@ -859,8 +859,6 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         parseEdgeArrow('end', style, props);
 
         const edgeProps = props as EdgeProps;
-        edgeProps.routing ??= {};
-        edgeProps.stroke!.lineJoin = 'round';
 
         const isNonCurveEdgeStyle =
           style.str('edgeStyle') === 'orthogonalEdgeStyle' ||
@@ -910,10 +908,6 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           edgeProps.effects = {
             opacity: style.has('opacity') ? style.num('opacity', 100) / 100 : 1
           };
-        }
-
-        if (style.is('rounded')) {
-          edgeProps.routing.rounding = 10;
         }
 
         const waypoints: Waypoint[] = [];
@@ -1289,5 +1283,5 @@ export const drawioReader = async (contents: string, doc: DiagramDocument): Prom
     }
   }
 
-  console.log(`Duration: ${Date.now()- start}`);
+  console.log(`Duration: ${Date.now() - start}`);
 };

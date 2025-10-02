@@ -23,7 +23,6 @@ type FormProps = {
   endType: Property<string>;
   endSize: Property<number>;
 
-  rounding: Property<number>;
   strokeColor: Property<string>;
   strokeSize: Property<number>;
   strokeWidth: Property<number>;
@@ -50,7 +49,6 @@ export const EdgeLinePanelForm = ({
   startSize,
   endSize,
   strokeSize,
-  rounding,
   strokeWidth,
   lineCap,
   lineJoin,
@@ -240,15 +238,6 @@ export const EdgeLinePanelForm = ({
             render={props => <NumberInput {...props} min={0} style={{ width: '50px' }} />}
           />
         )}
-
-        {lineJoin.val === 'round' && (
-          <PropertyEditor
-            property={rounding}
-            render={props => (
-              <NumberInput {...props} defaultUnit={'px'} min={0} style={{ width: '50px' }} />
-            )}
-          />
-        )}
       </div>
     </div>
   );
@@ -272,8 +261,6 @@ export const EdgeLinePanel = (props: Props) => {
   const startSize = useEdgeProperty($d, 'arrow.start.size');
   const endType = useEdgeProperty($d, 'arrow.end.type');
   const endSize = useEdgeProperty($d, 'arrow.end.size');
-
-  const rounding = useEdgeProperty($d, 'routing.rounding');
 
   const lineHopsSize = useEdgeProperty($d, 'lineHops.size');
   const lineHopsType = useEdgeProperty($d, 'lineHops.type');
@@ -309,7 +296,6 @@ export const EdgeLinePanel = (props: Props) => {
         endSize={endSize}
         strokeSize={strokeSize}
         strokeWidth={strokeWidth}
-        rounding={rounding}
         strokeColor={strokeColor}
         strokeSpacing={strokeSpacing}
         pattern={pattern}
