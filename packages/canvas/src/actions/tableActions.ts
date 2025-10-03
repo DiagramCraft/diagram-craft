@@ -1,6 +1,6 @@
 import { ActionContext, ActionCriteria } from '../action';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { isNode } from '@diagram-craft/model/diagramElement';
+import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
@@ -47,6 +47,32 @@ const adjustColumnWidth = (colIdx: number, table: DiagramNode, w: number, uow: U
     const t = TransformFactory.fromTo(cell.bounds, { ...cell.bounds, w });
     cell.transform(t, uow);
   }
+};
+
+const removeElement = (element: DiagramElement, parent: DiagramNode, uow: UnitOfWork) => {
+  uow.snapshot(element);
+  parent.removeChild(element, uow);
+  assertRegularLayer(element.layer);
+  element.layer.removeElement(element, uow);
+};
+
+const addElement = (
+  element: DiagramNode,
+  parent: DiagramNode,
+  uow: UnitOfWork,
+  options?: { ref: DiagramNode; type: 'before' | 'after' }
+) => {
+  uow.snapshot(element);
+  parent.addChild(element, uow, options);
+  assertRegularLayer(parent.layer);
+  parent.layer.addElement(element, uow);
+};
+
+const isTableCriteria = (context: ActionContext) => {
+  return ActionCriteria.EventTriggered(context.model.activeDiagram.selectionState, 'change', () => {
+    const helper = getTableHelper(context.model.activeDiagram);
+    return helper.isTable();
+  });
 };
 
 const swapPositions = (
@@ -119,43 +145,31 @@ export class TableRemoveAction extends AbstractSelectionAction {
   }
 
   getCriteria(context: ActionContext) {
-    return [
-      ...super.getCriteria(context),
-      ActionCriteria.EventTriggered(context.model.activeDiagram.selectionState, 'change', () => {
-        const helper = getTableHelper(context.model.activeDiagram);
-        return helper.isTable();
-      })
-    ];
+    return [...super.getCriteria(context), isTableCriteria(context)];
   }
 
   execute(): void {
     const helper = getTableHelper(this.context.model.activeDiagram);
     if (!helper?.tableNode) return;
 
-    const rowIdx = helper.getCellRow();
-    const colIdx = helper.getCellColumn();
     const table = helper.tableNode;
+    const uow = new UnitOfWork(this.context.model.activeDiagram, true);
 
     if (this.type === 'row') {
+      const rowIdx = helper.getCellRow();
       if (rowIdx === undefined) return;
 
-      const uow = new UnitOfWork(this.context.model.activeDiagram, true);
       const row = helper.getRowsSorted()[rowIdx]!;
-      uow.snapshot(row);
-      table.removeChild(row, uow);
-      assertRegularLayer(row.layer);
-      row.layer.removeElement(row, uow);
+      removeElement(row, table, uow);
       commitWithUndo(uow, 'Remove row');
     } else {
+      const colIdx = helper.getCellColumn();
       if (colIdx === undefined) return;
 
-      const uow = new UnitOfWork(this.context.model.activeDiagram, true);
       for (const r of table.children) {
-        const cell = (r as DiagramNode).children[colIdx]!;
-        uow.snapshot(cell);
-        (r as DiagramNode).removeChild(cell, uow);
-        assertRegularLayer(cell.layer);
-        cell.layer.removeElement(cell, uow);
+        const row = r as DiagramNode;
+        const cell = row.children[colIdx]!;
+        removeElement(cell, row, uow);
       }
       commitWithUndo(uow, 'Remove column');
     }
@@ -174,32 +188,25 @@ export class TableInsertAction extends AbstractSelectionAction {
   }
 
   getCriteria(context: ActionContext) {
-    return [
-      ...super.getCriteria(context),
-      ActionCriteria.EventTriggered(context.model.activeDiagram.selectionState, 'change', () => {
-        const helper = getTableHelper(context.model.activeDiagram);
-        return helper.isTable();
-      })
-    ];
+    return [...super.getCriteria(context), isTableCriteria(context)];
   }
 
   execute(): void {
     const helper = getTableHelper(this.context.model.activeDiagram);
-
-    const rowIdx = helper.getCellRow();
-    const colIdx = helper.getCellColumn();
     const table = helper.tableNode;
+    const uow = new UnitOfWork(this.context.model.activeDiagram, true);
 
     if (this.type === 'row') {
+      const rowIdx = helper.getCellRow();
       if (rowIdx === undefined) return;
 
-      const uow = new UnitOfWork(this.context.model.activeDiagram, true);
       const rows = helper.getRowsSorted();
       const current = rows[rowIdx]!;
       const newRow = current.duplicate();
 
-      // Shift nodes below
-      for (let i = rowIdx + (this.position === -1 ? 0 : 1); i < rows.length; i++) {
+      // Shift rows below the insertion point
+      const startIdx = rowIdx + (this.position === -1 ? 0 : 1);
+      for (let i = startIdx; i < rows.length; i++) {
         const r = rows[i]!;
         const t = TransformFactory.fromTo(r.bounds, {
           ...r.bounds,
@@ -208,19 +215,15 @@ export class TableInsertAction extends AbstractSelectionAction {
         r.transform(t, uow);
       }
 
-      uow.snapshot(newRow);
-      table.addChild(newRow, uow, {
+      addElement(newRow, table, uow, {
         ref: current,
         type: this.position === -1 ? 'before' : 'after'
       });
-      assertRegularLayer(table.layer);
-      table.layer.addElement(newRow, uow);
 
       commitWithUndo(uow, 'Insert row');
     } else {
+      const colIdx = helper.getCellColumn();
       if (colIdx === undefined) return;
-
-      const uow = new UnitOfWork(this.context.model.activeDiagram, true);
 
       for (const r of table.children) {
         const row = r as DiagramNode;
@@ -228,8 +231,9 @@ export class TableInsertAction extends AbstractSelectionAction {
         const cell = columns[colIdx]!;
         const newCell = cell.duplicate();
 
-        // Shift following columns
-        for (let i = colIdx + (this.position === -1 ? 0 : 1); i < columns.length; i++) {
+        // Shift columns after the insertion point
+        const startIdx = colIdx + (this.position === -1 ? 0 : 1);
+        for (let i = startIdx; i < columns.length; i++) {
           const c = columns[i]!;
           const t = TransformFactory.fromTo(c.bounds, {
             ...c.bounds,
@@ -238,13 +242,10 @@ export class TableInsertAction extends AbstractSelectionAction {
           c.transform(t, uow);
         }
 
-        uow.snapshot(newCell);
-        row.addChild(newCell, uow, {
+        addElement(newCell, row, uow, {
           ref: cell,
           type: this.position === -1 ? 'before' : 'after'
         });
-        assertRegularLayer(table.layer);
-        table.layer.addElement(newCell, uow);
       }
 
       commitWithUndo(uow, 'Insert column');
