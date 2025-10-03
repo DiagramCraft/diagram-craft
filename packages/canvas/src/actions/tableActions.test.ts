@@ -31,21 +31,49 @@ describe('TableRowMoveAction', () => {
     //                  b, a
 
     // Create table node
-    table = layer.addNode({ id: 'table-1', type: 'table', bounds: { x: 0, y: 0, w: 200, h: 200, r: 0 } });
+    table = layer.addNode({
+      id: 'table-1',
+      type: 'table',
+      bounds: { x: 0, y: 0, w: 200, h: 200, r: 0 }
+    });
 
     // Create row 1 (top row visually, but last in children)
-    const row1 = layer.addNode({ id: 'row-1', type: 'tableRow', bounds: { x: 0, y: 0, w: 200, h: 100, r: 0 } });
+    const row1 = layer.addNode({
+      id: 'row-1',
+      type: 'tableRow',
+      bounds: { x: 0, y: 0, w: 200, h: 100, r: 0 }
+    });
 
     // Create row 2 (bottom row visually, but first in children)
-    const row2 = layer.addNode({ id: 'row-2', type: 'tableRow', bounds: { x: 0, y: 100, w: 200, h: 100, r: 0 } });
+    const row2 = layer.addNode({
+      id: 'row-2',
+      type: 'tableRow',
+      bounds: { x: 0, y: 100, w: 200, h: 100, r: 0 }
+    });
 
     // Create cells for row 1 (rightmost first)
-    const cellB = layer.addNode({ id: 'cell-b', type: 'rect', bounds: { x: 100, y: 0, w: 100, h: 100, r: 0 } });
-    const cellA = layer.addNode({ id: 'cell-a', type: 'rect', bounds: { x: 0, y: 0, w: 100, h: 100, r: 0 } });
+    const cellB = layer.addNode({
+      id: 'cell-b',
+      type: 'rect',
+      bounds: { x: 100, y: 0, w: 100, h: 100, r: 0 }
+    });
+    const cellA = layer.addNode({
+      id: 'cell-a',
+      type: 'rect',
+      bounds: { x: 0, y: 0, w: 100, h: 100, r: 0 }
+    });
 
     // Create cells for row 2 (rightmost first)
-    const cellD = layer.addNode({ id: 'cell-d', type: 'rect', bounds: { x: 100, y: 100, w: 100, h: 100, r: 0 } });
-    const cellC = layer.addNode({ id: 'cell-c', type: 'rect', bounds: { x: 0, y: 100, w: 100, h: 100, r: 0 } });
+    const cellD = layer.addNode({
+      id: 'cell-d',
+      type: 'rect',
+      bounds: { x: 100, y: 100, w: 100, h: 100, r: 0 }
+    });
+    const cellC = layer.addNode({
+      id: 'cell-c',
+      type: 'rect',
+      bounds: { x: 0, y: 100, w: 100, h: 100, r: 0 }
+    });
 
     // Build hierarchy (reverse order)
     const uow = UnitOfWork.immediate(diagram);
@@ -117,21 +145,49 @@ describe('TableColumnMoveAction', () => {
     const layer = diagramBuilder.newLayer();
 
     // Create a 2x2 table
-    table = layer.addNode({ id: 'table-1', type: 'table', bounds: { x: 0, y: 0, w: 200, h: 200, r: 0 } });
+    table = layer.addNode({
+      id: 'table-1',
+      type: 'table',
+      bounds: { x: 0, y: 0, w: 200, h: 200, r: 0 }
+    });
 
     // Create row 1 (top row)
-    const row1 = layer.addNode({ id: 'row-1', type: 'tableRow', bounds: { x: 0, y: 0, w: 200, h: 100, r: 0 } });
+    const row1 = layer.addNode({
+      id: 'row-1',
+      type: 'tableRow',
+      bounds: { x: 0, y: 0, w: 200, h: 100, r: 0 }
+    });
 
     // Create row 2 (bottom row)
-    const row2 = layer.addNode({ id: 'row-2', type: 'tableRow', bounds: { x: 0, y: 100, w: 200, h: 100, r: 0 } });
+    const row2 = layer.addNode({
+      id: 'row-2',
+      type: 'tableRow',
+      bounds: { x: 0, y: 100, w: 200, h: 100, r: 0 }
+    });
 
     // Create cells for row 1 (rightmost first)
-    const cellB = layer.addNode({ id: 'cell-b', type: 'rect', bounds: { x: 100, y: 0, w: 100, h: 100, r: 0 } });
-    const cellA = layer.addNode({ id: 'cell-a', type: 'rect', bounds: { x: 0, y: 0, w: 100, h: 100, r: 0 } });
+    const cellB = layer.addNode({
+      id: 'cell-b',
+      type: 'rect',
+      bounds: { x: 100, y: 0, w: 100, h: 100, r: 0 }
+    });
+    const cellA = layer.addNode({
+      id: 'cell-a',
+      type: 'rect',
+      bounds: { x: 0, y: 0, w: 100, h: 100, r: 0 }
+    });
 
     // Create cells for row 2 (rightmost first)
-    const cellD = layer.addNode({ id: 'cell-d', type: 'rect', bounds: { x: 100, y: 100, w: 100, h: 100, r: 0 } });
-    const cellC = layer.addNode({ id: 'cell-c', type: 'rect', bounds: { x: 0, y: 100, w: 100, h: 100, r: 0 } });
+    const cellD = layer.addNode({
+      id: 'cell-d',
+      type: 'rect',
+      bounds: { x: 100, y: 100, w: 100, h: 100, r: 0 }
+    });
+    const cellC = layer.addNode({
+      id: 'cell-c',
+      type: 'rect',
+      bounds: { x: 0, y: 100, w: 100, h: 100, r: 0 }
+    });
 
     // Build hierarchy (reverse order)
     const uow = UnitOfWork.immediate(diagram);
@@ -207,15 +263,43 @@ describe('TableInsertAction', () => {
     diagram = diagramBuilder;
     const layer = diagramBuilder.newLayer();
 
-    table = layer.addNode({ id: 'table-1', type: 'table', bounds: { x: 0, y: 0, w: 200, h: 200, r: 0 } });
+    table = layer.addNode({
+      id: 'table-1',
+      type: 'table',
+      bounds: { x: 0, y: 0, w: 200, h: 200, r: 0 }
+    });
 
-    const row1 = layer.addNode({ id: 'row-1', type: 'tableRow', bounds: { x: 0, y: 0, w: 200, h: 100, r: 0 } });
-    const row2 = layer.addNode({ id: 'row-2', type: 'tableRow', bounds: { x: 0, y: 100, w: 200, h: 100, r: 0 } });
+    const row1 = layer.addNode({
+      id: 'row-1',
+      type: 'tableRow',
+      bounds: { x: 0, y: 0, w: 200, h: 100, r: 0 }
+    });
+    const row2 = layer.addNode({
+      id: 'row-2',
+      type: 'tableRow',
+      bounds: { x: 0, y: 100, w: 200, h: 100, r: 0 }
+    });
 
-    const cellB = layer.addNode({ id: 'cell-b', type: 'rect', bounds: { x: 100, y: 0, w: 100, h: 100, r: 0 } });
-    const cellA = layer.addNode({ id: 'cell-a', type: 'rect', bounds: { x: 0, y: 0, w: 100, h: 100, r: 0 } });
-    const cellD = layer.addNode({ id: 'cell-d', type: 'rect', bounds: { x: 100, y: 100, w: 100, h: 100, r: 0 } });
-    const cellC = layer.addNode({ id: 'cell-c', type: 'rect', bounds: { x: 0, y: 100, w: 100, h: 100, r: 0 } });
+    const cellB = layer.addNode({
+      id: 'cell-b',
+      type: 'rect',
+      bounds: { x: 100, y: 0, w: 100, h: 100, r: 0 }
+    });
+    const cellA = layer.addNode({
+      id: 'cell-a',
+      type: 'rect',
+      bounds: { x: 0, y: 0, w: 100, h: 100, r: 0 }
+    });
+    const cellD = layer.addNode({
+      id: 'cell-d',
+      type: 'rect',
+      bounds: { x: 100, y: 100, w: 100, h: 100, r: 0 }
+    });
+    const cellC = layer.addNode({
+      id: 'cell-c',
+      type: 'rect',
+      bounds: { x: 0, y: 100, w: 100, h: 100, r: 0 }
+    });
 
     const uow = UnitOfWork.immediate(diagram);
     row1.addChild(cellB, uow);
@@ -282,8 +366,12 @@ describe('TableInsertAction', () => {
     const row1After = table.children[1] as DiagramNode;
     const row2After = table.children[0] as DiagramNode;
 
-    const columnsRow1 = (row1After.children as DiagramNode[]).toSorted((a, b) => a.bounds.x - b.bounds.x);
-    const columnsRow2 = (row2After.children as DiagramNode[]).toSorted((a, b) => a.bounds.x - b.bounds.x);
+    const columnsRow1 = (row1After.children as DiagramNode[]).toSorted(
+      (a, b) => a.bounds.x - b.bounds.x
+    );
+    const columnsRow2 = (row2After.children as DiagramNode[]).toSorted(
+      (a, b) => a.bounds.x - b.bounds.x
+    );
 
     expect(columnsRow1).toHaveLength(3);
     expect(columnsRow2).toHaveLength(3);
@@ -306,8 +394,12 @@ describe('TableInsertAction', () => {
     const row1After = table.children[1] as DiagramNode;
     const row2After = table.children[0] as DiagramNode;
 
-    const columnsRow1 = (row1After.children as DiagramNode[]).toSorted((a, b) => a.bounds.x - b.bounds.x);
-    const columnsRow2 = (row2After.children as DiagramNode[]).toSorted((a, b) => a.bounds.x - b.bounds.x);
+    const columnsRow1 = (row1After.children as DiagramNode[]).toSorted(
+      (a, b) => a.bounds.x - b.bounds.x
+    );
+    const columnsRow2 = (row2After.children as DiagramNode[]).toSorted(
+      (a, b) => a.bounds.x - b.bounds.x
+    );
 
     expect(columnsRow1).toHaveLength(3);
     expect(columnsRow2).toHaveLength(3);
@@ -329,16 +421,44 @@ describe('TableRemoveAction', () => {
     diagram = diagramBuilder;
     const layer = diagramBuilder.newLayer();
 
-    table = layer.addNode({ id: 'table-1', type: 'table', bounds: { x: 0, y: 0, w: 200, h: 200, r: 0 } });
+    table = layer.addNode({
+      id: 'table-1',
+      type: 'table',
+      bounds: { x: 0, y: 0, w: 200, h: 200, r: 0 }
+    });
 
-    const row1 = layer.addNode({ id: 'row-1', type: 'tableRow', bounds: { x: 0, y: 0, w: 200, h: 100, r: 0 } });
-    const row2 = layer.addNode({ id: 'row-2', type: 'tableRow', bounds: { x: 0, y: 100, w: 200, h: 100, r: 0 } });
+    const row1 = layer.addNode({
+      id: 'row-1',
+      type: 'tableRow',
+      bounds: { x: 0, y: 0, w: 200, h: 100, r: 0 }
+    });
+    const row2 = layer.addNode({
+      id: 'row-2',
+      type: 'tableRow',
+      bounds: { x: 0, y: 100, w: 200, h: 100, r: 0 }
+    });
 
     // Create cells in left-to-right order (matching real app behavior)
-    const cellA = layer.addNode({ id: 'cell-a', type: 'rect', bounds: { x: 0, y: 0, w: 100, h: 100, r: 0 } });
-    const cellB = layer.addNode({ id: 'cell-b', type: 'rect', bounds: { x: 100, y: 0, w: 100, h: 100, r: 0 } });
-    const cellC = layer.addNode({ id: 'cell-c', type: 'rect', bounds: { x: 0, y: 100, w: 100, h: 100, r: 0 } });
-    const cellD = layer.addNode({ id: 'cell-d', type: 'rect', bounds: { x: 100, y: 100, w: 100, h: 100, r: 0 } });
+    const cellA = layer.addNode({
+      id: 'cell-a',
+      type: 'rect',
+      bounds: { x: 0, y: 0, w: 100, h: 100, r: 0 }
+    });
+    const cellB = layer.addNode({
+      id: 'cell-b',
+      type: 'rect',
+      bounds: { x: 100, y: 0, w: 100, h: 100, r: 0 }
+    });
+    const cellC = layer.addNode({
+      id: 'cell-c',
+      type: 'rect',
+      bounds: { x: 0, y: 100, w: 100, h: 100, r: 0 }
+    });
+    const cellD = layer.addNode({
+      id: 'cell-d',
+      type: 'rect',
+      bounds: { x: 100, y: 100, w: 100, h: 100, r: 0 }
+    });
 
     const uow = UnitOfWork.immediate(diagram);
     row1.addChild(cellA, uow);
@@ -452,25 +572,77 @@ describe('TableDistributeAction', () => {
     diagram = diagramBuilder;
     const layer = diagramBuilder.newLayer();
 
-    table = layer.addNode({ id: 'table-1', type: 'table', bounds: { x: 0, y: 0, w: 300, h: 300, r: 0 } });
+    table = layer.addNode({
+      id: 'table-1',
+      type: 'table',
+      bounds: { x: 0, y: 0, w: 300, h: 300, r: 0 }
+    });
 
     // Create 3 rows with different heights
-    const row1 = layer.addNode({ id: 'row-1', type: 'tableRow', bounds: { x: 0, y: 0, w: 300, h: 50, r: 0 } });
-    const row2 = layer.addNode({ id: 'row-2', type: 'tableRow', bounds: { x: 0, y: 50, w: 300, h: 150, r: 0 } });
-    const row3 = layer.addNode({ id: 'row-3', type: 'tableRow', bounds: { x: 0, y: 200, w: 300, h: 100, r: 0 } });
+    const row1 = layer.addNode({
+      id: 'row-1',
+      type: 'tableRow',
+      bounds: { x: 0, y: 0, w: 300, h: 50, r: 0 }
+    });
+    const row2 = layer.addNode({
+      id: 'row-2',
+      type: 'tableRow',
+      bounds: { x: 0, y: 50, w: 300, h: 150, r: 0 }
+    });
+    const row3 = layer.addNode({
+      id: 'row-3',
+      type: 'tableRow',
+      bounds: { x: 0, y: 200, w: 300, h: 100, r: 0 }
+    });
 
     // Create cells with different widths for each row
-    const cellA1 = layer.addNode({ id: 'cell-a1', type: 'rect', bounds: { x: 0, y: 0, w: 50, h: 50, r: 0 } });
-    const cellA2 = layer.addNode({ id: 'cell-a2', type: 'rect', bounds: { x: 50, y: 0, w: 100, h: 50, r: 0 } });
-    const cellA3 = layer.addNode({ id: 'cell-a3', type: 'rect', bounds: { x: 150, y: 0, w: 150, h: 50, r: 0 } });
+    const cellA1 = layer.addNode({
+      id: 'cell-a1',
+      type: 'rect',
+      bounds: { x: 0, y: 0, w: 50, h: 50, r: 0 }
+    });
+    const cellA2 = layer.addNode({
+      id: 'cell-a2',
+      type: 'rect',
+      bounds: { x: 50, y: 0, w: 100, h: 50, r: 0 }
+    });
+    const cellA3 = layer.addNode({
+      id: 'cell-a3',
+      type: 'rect',
+      bounds: { x: 150, y: 0, w: 150, h: 50, r: 0 }
+    });
 
-    const cellB1 = layer.addNode({ id: 'cell-b1', type: 'rect', bounds: { x: 0, y: 50, w: 50, h: 150, r: 0 } });
-    const cellB2 = layer.addNode({ id: 'cell-b2', type: 'rect', bounds: { x: 50, y: 50, w: 100, h: 150, r: 0 } });
-    const cellB3 = layer.addNode({ id: 'cell-b3', type: 'rect', bounds: { x: 150, y: 50, w: 150, h: 150, r: 0 } });
+    const cellB1 = layer.addNode({
+      id: 'cell-b1',
+      type: 'rect',
+      bounds: { x: 0, y: 50, w: 50, h: 150, r: 0 }
+    });
+    const cellB2 = layer.addNode({
+      id: 'cell-b2',
+      type: 'rect',
+      bounds: { x: 50, y: 50, w: 100, h: 150, r: 0 }
+    });
+    const cellB3 = layer.addNode({
+      id: 'cell-b3',
+      type: 'rect',
+      bounds: { x: 150, y: 50, w: 150, h: 150, r: 0 }
+    });
 
-    const cellC1 = layer.addNode({ id: 'cell-c1', type: 'rect', bounds: { x: 0, y: 200, w: 50, h: 100, r: 0 } });
-    const cellC2 = layer.addNode({ id: 'cell-c2', type: 'rect', bounds: { x: 50, y: 200, w: 100, h: 100, r: 0 } });
-    const cellC3 = layer.addNode({ id: 'cell-c3', type: 'rect', bounds: { x: 150, y: 200, w: 150, h: 100, r: 0 } });
+    const cellC1 = layer.addNode({
+      id: 'cell-c1',
+      type: 'rect',
+      bounds: { x: 0, y: 200, w: 50, h: 100, r: 0 }
+    });
+    const cellC2 = layer.addNode({
+      id: 'cell-c2',
+      type: 'rect',
+      bounds: { x: 50, y: 200, w: 100, h: 100, r: 0 }
+    });
+    const cellC3 = layer.addNode({
+      id: 'cell-c3',
+      type: 'rect',
+      bounds: { x: 150, y: 200, w: 150, h: 100, r: 0 }
+    });
 
     const uow = UnitOfWork.immediate(diagram);
     row1.addChild(cellA1, uow);
@@ -548,6 +720,7 @@ describe('TableDistributeAction', () => {
       id: 'table-2',
       type: 'table',
       bounds: { x: 0, y: 0, w: 300, h: 300, r: 0 },
+      // @ts-expect-error - test property
       props: {
         custom: {
           table: {
@@ -558,13 +731,37 @@ describe('TableDistributeAction', () => {
       }
     });
 
-    const row1 = layer2.addNode({ id: 'row-1', type: 'tableRow', bounds: { x: 0, y: 50, w: 300, h: 50, r: 0 } });
-    const row2 = layer2.addNode({ id: 'row-2', type: 'tableRow', bounds: { x: 0, y: 100, w: 300, h: 100, r: 0 } });
-    const row3 = layer2.addNode({ id: 'row-3', type: 'tableRow', bounds: { x: 0, y: 200, w: 300, h: 100, r: 0 } });
+    const row1 = layer2.addNode({
+      id: 'row-1',
+      type: 'tableRow',
+      bounds: { x: 0, y: 50, w: 300, h: 50, r: 0 }
+    });
+    const row2 = layer2.addNode({
+      id: 'row-2',
+      type: 'tableRow',
+      bounds: { x: 0, y: 100, w: 300, h: 100, r: 0 }
+    });
+    const row3 = layer2.addNode({
+      id: 'row-3',
+      type: 'tableRow',
+      bounds: { x: 0, y: 200, w: 300, h: 100, r: 0 }
+    });
 
-    const cellA = layer2.addNode({ id: 'cell-a', type: 'rect', bounds: { x: 0, y: 50, w: 100, h: 50, r: 0 } });
-    const cellB = layer2.addNode({ id: 'cell-b', type: 'rect', bounds: { x: 0, y: 100, w: 100, h: 100, r: 0 } });
-    const cellC = layer2.addNode({ id: 'cell-c', type: 'rect', bounds: { x: 0, y: 200, w: 100, h: 100, r: 0 } });
+    const cellA = layer2.addNode({
+      id: 'cell-a',
+      type: 'rect',
+      bounds: { x: 0, y: 50, w: 100, h: 50, r: 0 }
+    });
+    const cellB = layer2.addNode({
+      id: 'cell-b',
+      type: 'rect',
+      bounds: { x: 0, y: 100, w: 100, h: 100, r: 0 }
+    });
+    const cellC = layer2.addNode({
+      id: 'cell-c',
+      type: 'rect',
+      bounds: { x: 0, y: 200, w: 100, h: 100, r: 0 }
+    });
 
     const uow = UnitOfWork.immediate(diagram2);
     row1.addChild(cellA, uow);
@@ -599,15 +796,43 @@ describe('TableDistributeAction', () => {
     const diagram2 = TestModel.newDiagram();
     const layer2 = diagram2.newLayer();
 
-    const table2 = layer2.addNode({ id: 'table-2', type: 'table', bounds: { x: 0, y: 0, w: 200, h: 200, r: 0 } });
+    const table2 = layer2.addNode({
+      id: 'table-2',
+      type: 'table',
+      bounds: { x: 0, y: 0, w: 200, h: 200, r: 0 }
+    });
 
-    const row1 = layer2.addNode({ id: 'row-1', type: 'tableRow', bounds: { x: 0, y: 0, w: 200, h: 80, r: 0 } });
-    const row2 = layer2.addNode({ id: 'row-2', type: 'tableRow', bounds: { x: 0, y: 80, w: 200, h: 120, r: 0 } });
+    const row1 = layer2.addNode({
+      id: 'row-1',
+      type: 'tableRow',
+      bounds: { x: 0, y: 0, w: 200, h: 80, r: 0 }
+    });
+    const row2 = layer2.addNode({
+      id: 'row-2',
+      type: 'tableRow',
+      bounds: { x: 0, y: 80, w: 200, h: 120, r: 0 }
+    });
 
-    const cellA = layer2.addNode({ id: 'cell-a', type: 'rect', bounds: { x: 0, y: 0, w: 100, h: 80, r: 0 } });
-    const cellB = layer2.addNode({ id: 'cell-b', type: 'rect', bounds: { x: 100, y: 0, w: 100, h: 80, r: 0 } });
-    const cellC = layer2.addNode({ id: 'cell-c', type: 'rect', bounds: { x: 0, y: 80, w: 100, h: 120, r: 0 } });
-    const cellD = layer2.addNode({ id: 'cell-d', type: 'rect', bounds: { x: 100, y: 80, w: 100, h: 120, r: 0 } });
+    const cellA = layer2.addNode({
+      id: 'cell-a',
+      type: 'rect',
+      bounds: { x: 0, y: 0, w: 100, h: 80, r: 0 }
+    });
+    const cellB = layer2.addNode({
+      id: 'cell-b',
+      type: 'rect',
+      bounds: { x: 100, y: 0, w: 100, h: 80, r: 0 }
+    });
+    const cellC = layer2.addNode({
+      id: 'cell-c',
+      type: 'rect',
+      bounds: { x: 0, y: 80, w: 100, h: 120, r: 0 }
+    });
+    const cellD = layer2.addNode({
+      id: 'cell-d',
+      type: 'rect',
+      bounds: { x: 100, y: 80, w: 100, h: 120, r: 0 }
+    });
 
     const uow = UnitOfWork.immediate(diagram2);
     row1.addChild(cellA, uow);
@@ -640,15 +865,43 @@ describe('TableDistributeAction', () => {
     const diagram2 = TestModel.newDiagram();
     const layer2 = diagram2.newLayer();
 
-    const table2 = layer2.addNode({ id: 'table-2', type: 'table', bounds: { x: 0, y: 0, w: 200, h: 200, r: 0 } });
+    const table2 = layer2.addNode({
+      id: 'table-2',
+      type: 'table',
+      bounds: { x: 0, y: 0, w: 200, h: 200, r: 0 }
+    });
 
-    const row1 = layer2.addNode({ id: 'row-1', type: 'tableRow', bounds: { x: 0, y: 0, w: 200, h: 100, r: 0 } });
-    const row2 = layer2.addNode({ id: 'row-2', type: 'tableRow', bounds: { x: 0, y: 100, w: 200, h: 100, r: 0 } });
+    const row1 = layer2.addNode({
+      id: 'row-1',
+      type: 'tableRow',
+      bounds: { x: 0, y: 0, w: 200, h: 100, r: 0 }
+    });
+    const row2 = layer2.addNode({
+      id: 'row-2',
+      type: 'tableRow',
+      bounds: { x: 0, y: 100, w: 200, h: 100, r: 0 }
+    });
 
-    const cellA = layer2.addNode({ id: 'cell-a', type: 'rect', bounds: { x: 0, y: 0, w: 50, h: 100, r: 0 } });
-    const cellB = layer2.addNode({ id: 'cell-b', type: 'rect', bounds: { x: 50, y: 0, w: 150, h: 100, r: 0 } });
-    const cellC = layer2.addNode({ id: 'cell-c', type: 'rect', bounds: { x: 0, y: 100, w: 50, h: 100, r: 0 } });
-    const cellD = layer2.addNode({ id: 'cell-d', type: 'rect', bounds: { x: 50, y: 100, w: 150, h: 100, r: 0 } });
+    const cellA = layer2.addNode({
+      id: 'cell-a',
+      type: 'rect',
+      bounds: { x: 0, y: 0, w: 50, h: 100, r: 0 }
+    });
+    const cellB = layer2.addNode({
+      id: 'cell-b',
+      type: 'rect',
+      bounds: { x: 50, y: 0, w: 150, h: 100, r: 0 }
+    });
+    const cellC = layer2.addNode({
+      id: 'cell-c',
+      type: 'rect',
+      bounds: { x: 0, y: 100, w: 50, h: 100, r: 0 }
+    });
+    const cellD = layer2.addNode({
+      id: 'cell-d',
+      type: 'rect',
+      bounds: { x: 50, y: 100, w: 150, h: 100, r: 0 }
+    });
 
     const uow = UnitOfWork.immediate(diagram2);
     row1.addChild(cellA, uow);
