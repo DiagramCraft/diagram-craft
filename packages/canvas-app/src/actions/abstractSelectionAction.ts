@@ -32,7 +32,7 @@ export abstract class AbstractSelectionAction<
     super(context);
   }
 
-  getCriteria(context: C) {
+  getCriteria(context: C): Array<ActionCriteria> {
     const cb = () => {
       const $s = context.model.activeDiagram.selectionState;
       if ($s.isEmpty()) {

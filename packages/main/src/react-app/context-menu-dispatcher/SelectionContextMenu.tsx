@@ -6,6 +6,7 @@ import { useEventListener } from '../hooks/useEventListener';
 import { useDiagram } from '../../application';
 import type { ContextMenuTarget } from '@diagram-craft/canvas/context';
 import { ConnectedNodesSubmenu } from './ConnectedNodesSubmenu';
+import { isNode } from '@diagram-craft/model/diagramElement';
 
 export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selection'> }) => {
   const redraw = useRedraw();
@@ -13,6 +14,11 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
   const layers = diagram.layers.all.toReversed();
 
   useEventListener(diagram, 'change', redraw);
+
+  const isSingleElementInTableRow =
+    diagram.selectionState.elements.length === 1 &&
+    isNode(diagram.selectionState.elements?.[0]?.parent) &&
+    diagram.selectionState.elements[0].parent?.nodeType === 'tableRow';
 
   return (
     <>
@@ -71,6 +77,56 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
 
       <ActionContextMenuItem action={'GROUP_GROUP'}>Group</ActionContextMenuItem>
       <ActionContextMenuItem action={'GROUP_UNGROUP'}>Ungroup</ActionContextMenuItem>
+      <ContextMenu.Separator className="cmp-context-menu__separator" />
+
+      <ContextMenu.Sub>
+        <ContextMenu.SubTrigger
+          className="cmp-context-menu__sub-trigger"
+          disabled={!isSingleElementInTableRow}
+        >
+          Table
+          <div className="cmp-context-menu__right-slot">
+            <TbChevronRight />
+          </div>
+        </ContextMenu.SubTrigger>
+        <ContextMenu.Portal>
+          <ContextMenu.SubContent className="cmp-context-menu" sideOffset={2} alignOffset={-5}>
+            <ActionContextMenuItem action={'TABLE_COLUMN_INSERT_BEFORE'}>
+              Insert column before
+            </ActionContextMenuItem>
+            <ActionContextMenuItem action={'TABLE_COLUMN_INSERT_AFTER'}>
+              Insert column after
+            </ActionContextMenuItem>
+            <ActionContextMenuItem action={'TABLE_COLUMN_REMOVE'}>
+              Remove column
+            </ActionContextMenuItem>
+            <ActionContextMenuItem action={'TABLE_COLUMN_DISTRIBUTE'}>
+              Distribute columns
+            </ActionContextMenuItem>
+            <ActionContextMenuItem action={'TABLE_COLUMN_MOVE_LEFT'}>
+              Move column left
+            </ActionContextMenuItem>
+            <ActionContextMenuItem action={'TABLE_COLUMN_MOVE_RIGHT'}>
+              Move column right
+            </ActionContextMenuItem>
+            <ContextMenu.Separator className="cmp-context-menu__separator" />
+            <ActionContextMenuItem action={'TABLE_ROW_INSERT_BEFORE'}>
+              Insert row before
+            </ActionContextMenuItem>
+            <ActionContextMenuItem action={'TABLE_ROW_INSERT_AFTER'}>
+              Insert row after
+            </ActionContextMenuItem>
+            <ActionContextMenuItem action={'TABLE_ROW_REMOVE'}>Remove row</ActionContextMenuItem>
+            <ActionContextMenuItem action={'TABLE_ROW_DISTRIBUTE'}>
+              Distribute rows
+            </ActionContextMenuItem>
+            <ActionContextMenuItem action={'TABLE_ROW_MOVE_UP'}>Move row up</ActionContextMenuItem>
+            <ActionContextMenuItem action={'TABLE_ROW_MOVE_DOWN'}>
+              Move row down
+            </ActionContextMenuItem>
+          </ContextMenu.SubContent>
+        </ContextMenu.Portal>
+      </ContextMenu.Sub>
       <ContextMenu.Separator className="cmp-context-menu__separator" />
 
       <ContextMenu.Sub>
