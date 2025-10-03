@@ -90,27 +90,28 @@ export class TableDistributeAction extends AbstractSelectionAction {
     super(context, MultipleType.SingleOnly, ElementType.Node);
   }
 
+  getCriteria(context: ActionContext) {
+    return [...super.getCriteria(context), isTableCriteria(context)];
+  }
+
   execute(): void {
     const helper = TableHelper.get(this.context.model.activeDiagram);
-
-    const tblEl = helper.tableNode;
+    const table = helper.tableNode;
+    const uow = new UnitOfWork(this.context.model.activeDiagram, true);
 
     if (this.type === 'row') {
-      const h =
-        tblEl.bounds.h -
-        (tblEl.renderProps.custom.table.title ? tblEl.renderProps.custom.table.titleSize : 0);
-      const rows = helper.rows;
-      const rowHeight = h / rows.length;
+      const titleSize = table.renderProps.custom.table.title
+        ? table.renderProps.custom.table.titleSize
+        : 0;
+      const availableHeight = table.bounds.h - titleSize;
+      const rowHeight = availableHeight / helper.rows.length;
 
-      const uow = new UnitOfWork(this.context.model.activeDiagram, true);
-      rows.forEach(r => adjustRowHeight(r, rowHeight, uow));
+      helper.rows.forEach(r => adjustRowHeight(r, rowHeight, uow));
       commitWithUndo(uow, 'Distribute rows');
     } else {
-      const w = tblEl.bounds.w;
       const colCount = helper.getColumnCount();
-      const columnWidth = w / colCount;
+      const columnWidth = table.bounds.w / colCount;
 
-      const uow = new UnitOfWork(this.context.model.activeDiagram, true);
       for (let i = 0; i < colCount; i++) {
         adjustColumnWidth(i, helper, columnWidth, uow);
       }
