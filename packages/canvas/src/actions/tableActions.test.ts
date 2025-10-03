@@ -1,5 +1,10 @@
 import { describe, expect, test, beforeEach } from 'vitest';
-import { TableRowMoveAction, TableColumnMoveAction } from './tableActions';
+import {
+  TableRowMoveAction,
+  TableColumnMoveAction,
+  TableInsertAction,
+  TableRemoveAction
+} from './tableActions';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { ActionContext } from '../action';
@@ -188,5 +193,250 @@ describe('TableColumnMoveAction', () => {
     // Check all cells in both rows - D also moved to the left
     expect(cellD.bounds.x).toBe(0);
     expect(cellC.bounds.x).toBe(100);
+  });
+});
+
+describe('TableInsertAction', () => {
+  let diagram: Diagram;
+  let table: DiagramNode;
+  let context: ActionContext;
+
+  beforeEach(() => {
+    const diagramBuilder = TestModel.newDiagram();
+    diagram = diagramBuilder;
+    const layer = diagramBuilder.newLayer();
+
+    table = layer.addNode({ id: 'table-1', type: 'table', bounds: { x: 0, y: 0, w: 200, h: 200, r: 0 } });
+
+    const row1 = layer.addNode({ id: 'row-1', type: 'tableRow', bounds: { x: 0, y: 0, w: 200, h: 100, r: 0 } });
+    const row2 = layer.addNode({ id: 'row-2', type: 'tableRow', bounds: { x: 0, y: 100, w: 200, h: 100, r: 0 } });
+
+    const cellB = layer.addNode({ id: 'cell-b', type: 'rect', bounds: { x: 100, y: 0, w: 100, h: 100, r: 0 } });
+    const cellA = layer.addNode({ id: 'cell-a', type: 'rect', bounds: { x: 0, y: 0, w: 100, h: 100, r: 0 } });
+    const cellD = layer.addNode({ id: 'cell-d', type: 'rect', bounds: { x: 100, y: 100, w: 100, h: 100, r: 0 } });
+    const cellC = layer.addNode({ id: 'cell-c', type: 'rect', bounds: { x: 0, y: 100, w: 100, h: 100, r: 0 } });
+
+    const uow = UnitOfWork.immediate(diagram);
+    row1.addChild(cellB, uow);
+    row1.addChild(cellA, uow);
+    row2.addChild(cellD, uow);
+    row2.addChild(cellC, uow);
+    table.addChild(row2, uow);
+    table.addChild(row1, uow);
+
+    context = {
+      model: {
+        activeDiagram: diagram,
+        on: () => {},
+        off: () => {}
+      }
+    } as unknown as ActionContext;
+  });
+
+  test('inserts row before top row', () => {
+    const row1 = table.children[1] as DiagramNode;
+    const cellA = row1.children[1] as DiagramNode;
+
+    diagram.selectionState.setElements([cellA]);
+
+    const action = new TableInsertAction('row', -1, context);
+    action.execute();
+
+    const rows = (table.children as DiagramNode[]).toSorted((a, b) => a.bounds.y - b.bounds.y);
+    expect(rows).toHaveLength(3);
+
+    // New row should be at y=0, original top row shifted to y=100
+    expect(rows[0]!.bounds.y).toBe(0);
+    expect(rows[1]!.bounds.y).toBe(100);
+    expect(rows[2]!.bounds.y).toBe(200);
+  });
+
+  test('inserts row after top row', () => {
+    const row1 = table.children[1] as DiagramNode;
+    const cellA = row1.children[1] as DiagramNode;
+
+    diagram.selectionState.setElements([cellA]);
+
+    const action = new TableInsertAction('row', 1, context);
+    action.execute();
+
+    const rows = (table.children as DiagramNode[]).toSorted((a, b) => a.bounds.y - b.bounds.y);
+    expect(rows).toHaveLength(3);
+
+    // Original top row at y=0, new row at y=100, original bottom row shifted
+    expect(rows[0]!.bounds.y).toBe(0);
+    expect(rows[1]!.bounds.y).toBe(100);
+    expect(rows[2]!.bounds.y).toBe(200);
+  });
+
+  test('inserts column before left column', () => {
+    const row1 = table.children[1] as DiagramNode;
+    const cellA = row1.children[1] as DiagramNode;
+
+    diagram.selectionState.setElements([cellA]);
+
+    const action = new TableInsertAction('column', -1, context);
+    action.execute();
+
+    const row1After = table.children[1] as DiagramNode;
+    const row2After = table.children[0] as DiagramNode;
+
+    const columnsRow1 = (row1After.children as DiagramNode[]).toSorted((a, b) => a.bounds.x - b.bounds.x);
+    const columnsRow2 = (row2After.children as DiagramNode[]).toSorted((a, b) => a.bounds.x - b.bounds.x);
+
+    expect(columnsRow1).toHaveLength(3);
+    expect(columnsRow2).toHaveLength(3);
+
+    // New column at x=0, original left at x=100
+    expect(columnsRow1[0]!.bounds.x).toBe(0);
+    expect(columnsRow1[1]!.id).toBe('cell-a');
+    expect(columnsRow1[1]!.bounds.x).toBe(100);
+  });
+
+  test('inserts column after right column', () => {
+    const row1 = table.children[1] as DiagramNode;
+    const cellB = row1.children[0] as DiagramNode;
+
+    diagram.selectionState.setElements([cellB]);
+
+    const action = new TableInsertAction('column', 1, context);
+    action.execute();
+
+    const row1After = table.children[1] as DiagramNode;
+    const row2After = table.children[0] as DiagramNode;
+
+    const columnsRow1 = (row1After.children as DiagramNode[]).toSorted((a, b) => a.bounds.x - b.bounds.x);
+    const columnsRow2 = (row2After.children as DiagramNode[]).toSorted((a, b) => a.bounds.x - b.bounds.x);
+
+    expect(columnsRow1).toHaveLength(3);
+    expect(columnsRow2).toHaveLength(3);
+
+    // Original right at x=100, new column at x=200
+    expect(columnsRow1[1]!.id).toBe('cell-b');
+    expect(columnsRow1[1]!.bounds.x).toBe(100);
+    expect(columnsRow1[2]!.bounds.x).toBe(200);
+  });
+});
+
+describe('TableRemoveAction', () => {
+  let diagram: Diagram;
+  let table: DiagramNode;
+  let context: ActionContext;
+
+  beforeEach(() => {
+    const diagramBuilder = TestModel.newDiagram();
+    diagram = diagramBuilder;
+    const layer = diagramBuilder.newLayer();
+
+    table = layer.addNode({ id: 'table-1', type: 'table', bounds: { x: 0, y: 0, w: 200, h: 200, r: 0 } });
+
+    const row1 = layer.addNode({ id: 'row-1', type: 'tableRow', bounds: { x: 0, y: 0, w: 200, h: 100, r: 0 } });
+    const row2 = layer.addNode({ id: 'row-2', type: 'tableRow', bounds: { x: 0, y: 100, w: 200, h: 100, r: 0 } });
+
+    // Create cells in left-to-right order (matching real app behavior)
+    const cellA = layer.addNode({ id: 'cell-a', type: 'rect', bounds: { x: 0, y: 0, w: 100, h: 100, r: 0 } });
+    const cellB = layer.addNode({ id: 'cell-b', type: 'rect', bounds: { x: 100, y: 0, w: 100, h: 100, r: 0 } });
+    const cellC = layer.addNode({ id: 'cell-c', type: 'rect', bounds: { x: 0, y: 100, w: 100, h: 100, r: 0 } });
+    const cellD = layer.addNode({ id: 'cell-d', type: 'rect', bounds: { x: 100, y: 100, w: 100, h: 100, r: 0 } });
+
+    const uow = UnitOfWork.immediate(diagram);
+    row1.addChild(cellA, uow);
+    row1.addChild(cellB, uow);
+    row2.addChild(cellC, uow);
+    row2.addChild(cellD, uow);
+    table.addChild(row2, uow);
+    table.addChild(row1, uow);
+
+    context = {
+      model: {
+        activeDiagram: diagram,
+        on: () => {},
+        off: () => {}
+      }
+    } as unknown as ActionContext;
+  });
+
+  test('removes top row', () => {
+    const row1 = table.children[1] as DiagramNode;
+    const cellA = row1.children[1] as DiagramNode;
+
+    diagram.selectionState.setElements([cellA]);
+
+    const action = new TableRemoveAction('row', context);
+    action.execute();
+
+    const rows = table.children as DiagramNode[];
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.id).toBe('row-2');
+  });
+
+  test('removes bottom row', () => {
+    const row2 = table.children[0] as DiagramNode;
+    const cellC = row2.children[1] as DiagramNode;
+
+    diagram.selectionState.setElements([cellC]);
+
+    const action = new TableRemoveAction('row', context);
+    action.execute();
+
+    const rows = table.children as DiagramNode[];
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.id).toBe('row-1');
+  });
+
+  test('removes left column', () => {
+    const row1 = table.children[1] as DiagramNode;
+    const cellA = row1.children[0] as DiagramNode; // Left cell at array index 0
+
+    diagram.selectionState.setElements([cellA]);
+
+    const action = new TableRemoveAction('column', context);
+    action.execute();
+
+    const row1After = table.children[1] as DiagramNode;
+    const row2After = table.children[0] as DiagramNode;
+
+    expect(row1After.children).toHaveLength(1);
+    expect(row2After.children).toHaveLength(1);
+
+    // Left column removed, right column remains
+    const remainingCell1 = row1After.children[0] as DiagramNode;
+    const remainingCell2 = row2After.children[0] as DiagramNode;
+    expect(remainingCell1.id).toBe('cell-b');
+    expect(remainingCell2.id).toBe('cell-d');
+  });
+
+  test('removes right column', () => {
+    const row1 = table.children[1] as DiagramNode;
+    const cellB = row1.children[1] as DiagramNode; // Right cell at array index 1
+
+    diagram.selectionState.setElements([cellB]);
+
+    const action = new TableRemoveAction('column', context);
+    action.execute();
+
+    const row1After = table.children[1] as DiagramNode;
+    const row2After = table.children[0] as DiagramNode;
+
+    expect(row1After.children).toHaveLength(1);
+    expect(row2After.children).toHaveLength(1);
+
+    // Right column removed, left column remains
+    const remainingCell1 = row1After.children[0] as DiagramNode;
+    const remainingCell2 = row2After.children[0] as DiagramNode;
+    expect(remainingCell1.id).toBe('cell-a');
+    expect(remainingCell2.id).toBe('cell-c');
+  });
+
+  test('clears selection after removal', () => {
+    const row1 = table.children[1] as DiagramNode;
+    const cellA = row1.children[0] as DiagramNode;
+
+    diagram.selectionState.setElements([cellA]);
+
+    const action = new TableRemoveAction('row', context);
+    action.execute();
+
+    expect(diagram.selectionState.isEmpty()).toBe(true);
   });
 });
