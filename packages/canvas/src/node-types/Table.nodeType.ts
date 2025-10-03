@@ -15,6 +15,7 @@ import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinition
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { hasHighlight, Highlights } from '../highlight';
 import { renderElement } from '../components/renderElement';
+import type { Diagram } from '@diagram-craft/model/diagram';
 
 declare global {
   interface CustomNodeProps {
@@ -353,6 +354,10 @@ export class TableHelper {
     this.cell = element;
   }
 
+  static get(diagram: Diagram) {
+    return new TableHelper(diagram.selectionState.elements[0]!);
+  }
+
   get tableNode() {
     assert.present(this.#tableNode);
     return this.#tableNode;
@@ -362,7 +367,15 @@ export class TableHelper {
     return !!this.#tableNode;
   }
 
-  getCellRow(): number | undefined {
+  get rows() {
+    return this.tableNode.children.filter(isNode);
+  }
+
+  getCellRow() {
+    return this.rows[this.getCellRowIndex()!];
+  }
+
+  getCellRowIndex(): number | undefined {
     if (!this.#tableNode) return;
 
     const rows = (this.#tableNode.children as DiagramNode[]).toSorted(
@@ -374,7 +387,7 @@ export class TableHelper {
     return undefined;
   }
 
-  getCellColumn(): number | undefined {
+  getCellColumnIndex(): number | undefined {
     if (!this.#tableNode) return;
 
     const row = this.cell!.parent as DiagramNode;
@@ -394,7 +407,7 @@ export class TableHelper {
   }
 
   getCurrentRow(): DiagramNode | undefined {
-    const rowIdx = this.getCellRow();
+    const rowIdx = this.getCellRowIndex();
     if (rowIdx === undefined) return undefined;
     return this.getRowsSorted()[rowIdx];
   }

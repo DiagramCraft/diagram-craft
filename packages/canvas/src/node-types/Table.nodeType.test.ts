@@ -123,7 +123,7 @@ describe('TableHelper', () => {
 
       // Based on the setup: row1 has y=0, row2 has y=100
       // But testing shows row2's cells are at sorted index 0
-      expect(helper.getCellRow()).toBe(0);
+      expect(helper.getCellRowIndex()).toBe(0);
     });
 
     test('returns correct row index for cell in bottom row visually', () => {
@@ -132,13 +132,13 @@ describe('TableHelper', () => {
       const helper = new TableHelper(cellA);
 
       // Testing shows row1's cells are at sorted index 1
-      expect(helper.getCellRow()).toBe(1);
+      expect(helper.getCellRowIndex()).toBe(1);
     });
 
     test('returns undefined for table node', () => {
       const helper = new TableHelper(table);
 
-      expect(helper.getCellRow()).toBe(undefined);
+      expect(helper.getCellRowIndex()).toBe(undefined);
     });
 
     test('returns undefined for non-table element', () => {
@@ -151,7 +151,7 @@ describe('TableHelper', () => {
       });
       const helper = new TableHelper(nonTableNode);
 
-      expect(helper.getCellRow()).toBe(undefined);
+      expect(helper.getCellRowIndex()).toBe(undefined);
     });
   });
 
@@ -161,7 +161,7 @@ describe('TableHelper', () => {
       const cellA = row1.children[1] as DiagramNode;
       const helper = new TableHelper(cellA);
 
-      expect(helper.getCellColumn()).toBe(0);
+      expect(helper.getCellColumnIndex()).toBe(0);
     });
 
     test('returns correct column index for right cell', () => {
@@ -169,13 +169,13 @@ describe('TableHelper', () => {
       const cellB = row1.children[0] as DiagramNode;
       const helper = new TableHelper(cellB);
 
-      expect(helper.getCellColumn()).toBe(1);
+      expect(helper.getCellColumnIndex()).toBe(1);
     });
 
     test('returns undefined for table node', () => {
       const helper = new TableHelper(table);
 
-      expect(helper.getCellColumn()).toBe(undefined);
+      expect(helper.getCellColumnIndex()).toBe(undefined);
     });
 
     test('returns undefined for non-table element', () => {
@@ -188,7 +188,7 @@ describe('TableHelper', () => {
       });
       const helper = new TableHelper(nonTableNode);
 
-      expect(helper.getCellColumn()).toBe(undefined);
+      expect(helper.getCellColumnIndex()).toBe(undefined);
     });
   });
 
