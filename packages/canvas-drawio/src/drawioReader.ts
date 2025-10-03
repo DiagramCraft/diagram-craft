@@ -461,7 +461,9 @@ const getNodeProps = (style: StyleManager, isEdge: boolean) => {
       flipH: style.has('shape') && style.is('flipH'),
       flipV: style.has('shape') && style.is('flipV')
     },
-    inheritStyle: false
+    capabilities: {
+      inheritStyle: false
+    }
   };
 
   if (style.num('perimeterSpacing', 0) !== 0) {

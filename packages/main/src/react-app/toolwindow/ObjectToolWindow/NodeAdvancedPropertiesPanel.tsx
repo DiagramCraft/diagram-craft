@@ -72,7 +72,7 @@ export const NodeAdvancedPropertiesPanel = (props: Props) => {
   const editable = useNodeProperty(diagram, 'capabilities.editable');
   const deletable = useNodeProperty(diagram, 'capabilities.deletable');
   const rotatable = useNodeProperty(diagram, 'capabilities.rotatable');
-  const inheritStyle = useNodeProperty(diagram, 'inheritStyle');
+  const inheritStyle = useNodeProperty(diagram, 'capabilities.inheritStyle');
 
   return (
     <ToolWindowPanel

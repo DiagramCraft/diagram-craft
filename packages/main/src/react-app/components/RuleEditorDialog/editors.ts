@@ -90,8 +90,7 @@ export const NODE_EDITORS: NodeEditorRegistry = {
     name: 'Advanced',
     editor: NodeAdvancedPropertiesEditor,
     pick: (props: NodeProps | EdgeProps) => ({
-      capabilities: (props as NodeProps).capabilities,
-      inheritStyle: (props as NodeProps).inheritStyle
+      capabilities: (props as NodeProps).capabilities
     })
   }
 };

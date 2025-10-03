@@ -341,7 +341,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     )?.props;
 
     const parentProps: Partial<NodeProps & EdgeProps> = deepClone(
-      this._parent.get() && this.#props.get().inheritStyle
+      this._parent.get() && this.#props.get().capabilities?.inheritStyle
         ? // @ts-expect-error this.#parent.editProps cannot be properly typed
           makeWriteable(this._parent.get().editProps)
         : {}

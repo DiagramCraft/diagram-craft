@@ -216,7 +216,7 @@ export const DefaultStyles = {
 
 const _elementDefaults: Pick<
   ElementPropsForRendering,
-  'debug' | 'geometry' | 'fill' | 'shadow' | 'stroke' | 'inheritStyle' | 'hidden'
+  'debug' | 'geometry' | 'fill' | 'shadow' | 'stroke' | 'hidden'
 > = {
   hidden: false,
   geometry: {
@@ -269,8 +269,7 @@ const _elementDefaults: Pick<
   debug: {
     boundingPath: false,
     anchors: false
-  },
-  inheritStyle: true
+  }
 };
 
 const _nodeDefaults: Omit<NodePropsForRendering, 'name' | 'custom' | 'indicators'> = {
@@ -315,7 +314,8 @@ const _nodeDefaults: Omit<NodePropsForRendering, 'name' | 'custom' | 'indicators
     deletable: true,
     movable: true,
     rotatable: true,
-    textGrow: false
+    textGrow: false,
+    inheritStyle: true
   },
 
   text: {

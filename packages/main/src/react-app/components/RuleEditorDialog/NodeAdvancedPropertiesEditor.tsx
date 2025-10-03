@@ -18,7 +18,7 @@ export const NodeAdvancedPropertiesEditor: Editor = props => {
       editable={makeProperty($p, 'capabilities.editable', nodeDefaults, onChange)}
       deletable={makeProperty($p, 'capabilities.deletable', nodeDefaults, onChange)}
       rotatable={makeProperty($p, 'capabilities.rotatable', nodeDefaults, onChange)}
-      inheritStyle={makeProperty($p, 'inheritStyle', nodeDefaults, onChange)}
+      inheritStyle={makeProperty($p, 'capabilities.inheritStyle', nodeDefaults, onChange)}
     />
   );
 };

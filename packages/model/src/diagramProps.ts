@@ -160,8 +160,6 @@ declare global {
       anchors?: boolean;
     };
 
-    inheritStyle?: boolean;
-
     indicators?: Record<string, Indicator>;
   }
 
@@ -212,6 +210,7 @@ declare global {
       textGrow?: boolean;
       editable?: boolean;
       deletable?: boolean;
+      inheritStyle?: boolean;
     };
 
     effects?: ElementEffectProps & {
