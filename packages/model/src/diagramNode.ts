@@ -855,16 +855,20 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   }
 
   _getPositionInBounds(p: Point, respectRotation = true) {
+    let bounds = this.bounds;
+    if (this.renderProps.routing.spacing > 0) {
+      bounds = Box.grow(bounds, this.renderProps.routing.spacing);
+    }
     const point = {
-      x: this.bounds.x + this.bounds.w * (this.renderProps.geometry.flipH ? 1 - p.x : p.x),
-      y: this.bounds.y + this.bounds.h * (this.renderProps.geometry.flipV ? 1 - p.y : p.y)
+      x: bounds.x + bounds.w * (this.renderProps.geometry.flipH ? 1 - p.x : p.x),
+      y: bounds.y + bounds.h * (this.renderProps.geometry.flipV ? 1 - p.y : p.y)
     };
     // TODO: It would be nice if we could generalize this a bit
     const adjustedPoint = this.renderProps.effects.isometric.enabled
-      ? makeIsometricTransform(this.bounds, this.renderProps).point(point)
+      ? makeIsometricTransform(bounds, this.renderProps).point(point)
       : point;
     return respectRotation
-      ? Point.rotateAround(adjustedPoint, this.bounds.r, Box.center(this.bounds))
+      ? Point.rotateAround(adjustedPoint, bounds.r, Box.center(bounds))
       : adjustedPoint;
   }
 

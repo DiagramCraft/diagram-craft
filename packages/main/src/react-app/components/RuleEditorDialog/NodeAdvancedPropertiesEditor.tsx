@@ -19,6 +19,7 @@ export const NodeAdvancedPropertiesEditor: Editor = props => {
       deletable={makeProperty($p, 'capabilities.deletable', nodeDefaults, onChange)}
       rotatable={makeProperty($p, 'capabilities.rotatable', nodeDefaults, onChange)}
       inheritStyle={makeProperty($p, 'capabilities.inheritStyle', nodeDefaults, onChange)}
+      routingSpacing={makeProperty($p, 'routing.spacing', nodeDefaults, onChange)}
     />
   );
 };

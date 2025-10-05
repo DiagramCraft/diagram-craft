@@ -11,7 +11,6 @@ import { Point } from '@diagram-craft/geometry/point';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { Diagram } from './diagram';
 import { VERIFY_NOT_REACHED, VerifyNotReached } from '@diagram-craft/utils/assert';
-import type { DiagramNode } from './diagramNode';
 
 type ArrowShape = {
   height: number;
@@ -42,12 +41,12 @@ const adjustForPerimeterSpacing = (
   pointOnPath: PointOnPath | undefined,
   path: Path,
   edge: DiagramEdge,
-  node: DiagramNode
+  endpoint: ConnectedEndpoint
 ): PointOnPath | undefined => {
   if (!pointOnPath) return undefined;
 
   let spacing = type === 'start' ? edge.renderProps.spacing.start : edge.renderProps.spacing.end;
-  if (spacing === 0) spacing = node.renderProps.routing.spacing;
+  if (spacing === 0 && endpoint.isMidpoint()) spacing = endpoint.node.renderProps.routing.spacing;
   if (spacing === 0) return pointOnPath;
 
   const baseTOS = PointOnPath.toTimeOffset(pointOnPath, path);
@@ -98,7 +97,7 @@ export const clipPath = (
           intersectWithNode(edge.start, edge.start.position, path, diagram),
           path,
           edge,
-          edge.start.node
+          edge.start
         )
       : { point: path.start };
   const startOffset = adjustForArrow(start, startArrow, path, 1);
@@ -110,7 +109,7 @@ export const clipPath = (
           intersectWithNode(edge.end, edge.end.position, path, diagram),
           path,
           edge,
-          edge.end.node
+          edge.end
         )
       : { point: path.end };
   const endOffset = adjustForArrow(end, endArrow, path, -1);
@@ -231,10 +230,20 @@ const addLineHop = (dest: Path[], before: Path, after: Path, type: string, size:
       const endStart = Point.add(end, Vector.scale(normalEnd, lineLength / 2));
       const endEnd = Point.subtract(end, Vector.scale(normalEnd, lineLength / 2));
 
-      if (Number.isNaN(startStart.x) || Number.isNaN(startStart.y) || Number.isNaN(startEnd.x) || Number.isNaN(startEnd.y)) {
+      if (
+        Number.isNaN(startStart.x) ||
+        Number.isNaN(startStart.y) ||
+        Number.isNaN(startEnd.x) ||
+        Number.isNaN(startEnd.y)
+      ) {
         return;
       }
-      if (Number.isNaN(endStart.x) || Number.isNaN(endStart.y) || Number.isNaN(endEnd.x) || Number.isNaN(endEnd.y)) {
+      if (
+        Number.isNaN(endStart.x) ||
+        Number.isNaN(endStart.y) ||
+        Number.isNaN(endEnd.x) ||
+        Number.isNaN(endEnd.y)
+      ) {
         return;
       }
 
