@@ -24,6 +24,9 @@ type Props = CanvasState & { hoverElement: Observable<string | undefined> };
 //       to describe the state machine - or somehow subscribe to mouse move events
 //       to trigger the hiding of the handles
 //
+// TODO: Can we change this logic to be more around distance from the element and the anchor
+//       rather than the angle between the anchor and the element?
+//       Maybe in combination with a timeout - potentially a delay when hovering over new elements
 export class AnchorHandlesComponent extends Component<Props> {
   private hoverNode: DiagramElement | undefined;
   private state: State = 'background';
@@ -194,7 +197,7 @@ export class AnchorHandlesComponent extends Component<Props> {
         if (this.state === 'handle') return;
         this.setState(undefined, 'background');
       },
-      shouldScale ? 400 : 50
+      shouldScale ? 250 : 250
     );
   }
 }
