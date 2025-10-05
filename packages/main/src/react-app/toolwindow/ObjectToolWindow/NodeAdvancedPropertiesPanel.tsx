@@ -4,6 +4,7 @@ import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { PropertyEditor } from '../../components/PropertyEditor';
 import { Property } from '../ObjectToolWindow/types';
 import { useDiagram } from '../../../application';
+import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 
 type FormProps = {
   resizableH: Property<boolean>;
@@ -13,6 +14,7 @@ type FormProps = {
   deletable: Property<boolean>;
   rotatable: Property<boolean>;
   inheritStyle: Property<boolean>;
+  routingSpacing: Property<number>;
 };
 
 export const NodeAdvancedPropertiesPanelForm = ({
@@ -22,7 +24,8 @@ export const NodeAdvancedPropertiesPanelForm = ({
   editable,
   deletable,
   rotatable,
-  inheritStyle
+  inheritStyle,
+  routingSpacing
 }: FormProps) => {
   return (
     <div className={'cmp-labeled-table cmp-labeled-table--wide'}>
@@ -60,6 +63,14 @@ export const NodeAdvancedPropertiesPanelForm = ({
       <div className={'cmp-labeled-table__value'}>
         <PropertyEditor property={inheritStyle} render={props => <Checkbox {...props} />} />
       </div>
+
+      <div className={'cmp-labeled-table__label'}>Anchor Spacing:</div>
+      <div className={'cmp-labeled-table__value'}>
+        <PropertyEditor
+          property={routingSpacing}
+          render={props => <NumberInput {...props} defaultUnit={'px'} />}
+        />
+      </div>
     </div>
   );
 };
@@ -73,6 +84,7 @@ export const NodeAdvancedPropertiesPanel = (props: Props) => {
   const deletable = useNodeProperty(diagram, 'capabilities.deletable');
   const rotatable = useNodeProperty(diagram, 'capabilities.rotatable');
   const inheritStyle = useNodeProperty(diagram, 'capabilities.inheritStyle');
+  const routingSpacing = useNodeProperty(diagram, 'routing.spacing');
 
   return (
     <ToolWindowPanel
@@ -89,6 +101,7 @@ export const NodeAdvancedPropertiesPanel = (props: Props) => {
         deletable={deletable}
         rotatable={rotatable}
         inheritStyle={inheritStyle}
+        routingSpacing={routingSpacing}
       />
     </ToolWindowPanel>
   );
