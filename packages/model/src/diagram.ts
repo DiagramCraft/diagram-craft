@@ -11,7 +11,7 @@ import type { DiagramDocument } from './diagramDocument';
 import { Box } from '@diagram-craft/geometry/box';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { Extent } from '@diagram-craft/geometry/extent';
-import { EventEmitter, EventKey } from '@diagram-craft/utils/event';
+import { EventEmitter } from '@diagram-craft/utils/event';
 import { assert } from '@diagram-craft/utils/assert';
 import { AttachmentConsumer } from './attachment';
 import { newid } from '@diagram-craft/utils/id';
@@ -231,6 +231,9 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
       this,
       this._crdt.get().get('comments', () => document.root.factory.makeMap())!
     );
+
+    // TODO: Is this still needed?
+    //this.on('change', () => clearCacheForDiagram(this));
   }
 
   get id() {
@@ -270,16 +273,6 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
   get crdt() {
     return this._crdt.get();
-  }
-
-  emit<K extends EventKey<DiagramEvents>>(eventName: K, params?: DiagramEvents[K]) {
-    // This is triggered for instance when a rule layer toggles visibility
-    if (eventName === 'change') {
-      this.edgeLookup.forEach(v => v.cache.clear());
-      this.nodeLookup.forEach(v => v.cache.clear());
-      this.layers.clearCache();
-    }
-    super.emit(eventName, params);
   }
 
   get activeLayer() {
