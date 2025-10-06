@@ -296,6 +296,21 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   *allElements(): Generator<DiagramElement> {
     yield* this.nodeLookup.values();
     yield* this.edgeLookup.values();
+
+    // Need to handle all referenced layers separately as the edgeLookup and nodeLookup
+    // won't contain these elements
+    for (const l of this.layers.all) {
+      if (l.type !== 'reference') continue;
+
+      const resolved = l.resolve();
+      if (resolved?.type === 'regular') {
+        for (const e of (resolved as RegularLayer).elements) {
+          if (e instanceof DiagramNode || e instanceof DiagramEdge) {
+            yield e;
+          }
+        }
+      }
+    }
   }
 
   visibleElements() {

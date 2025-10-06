@@ -12,7 +12,6 @@ import { MappedCRDTMap } from './collaboration/datatypes/mapped/mappedCrdtMap';
 import { type CRDTMapper } from './collaboration/datatypes/mapped/types';
 import { watch } from '@diagram-craft/utils/watchableValue';
 import { EventEmitter } from '@diagram-craft/utils/event';
-import { clearCacheForDiagram } from './diagramLayerManager';
 
 export type StylesheetType = 'node' | 'edge' | 'text';
 
@@ -63,7 +62,7 @@ export class Stylesheet<T extends StylesheetType, P = TypeMap[T]>
     uow.snapshot(this);
     this.crdt.set('props', this.cleanProps(props) as NodeProps | EdgeProps);
     uow.updateElement(this);
-    manager.emit('stylesheetUpdated', { stylesheet: this as unknown as Stylesheet<StylesheetType> });
+    manager.emit('stylesheetUpdated', { stylesheet: this });
   }
 
   get name() {
@@ -74,7 +73,7 @@ export class Stylesheet<T extends StylesheetType, P = TypeMap[T]>
     uow.snapshot(this);
     this.crdt.set('name', name);
     uow.updateElement(this);
-    manager.emit('stylesheetUpdated', { stylesheet: this as unknown as Stylesheet<StylesheetType> });
+    manager.emit('stylesheetUpdated', { stylesheet: this });
   }
 
   invalidate(_uow: UnitOfWork): void {
@@ -298,11 +297,23 @@ export class DiagramStyles extends EventEmitter<DiagramStylesEvents> {
       });
     }
 
-    // TODO: We could perhaps optimize this by updating all related
-    //       elements in a single transaction instead
-    this.on('stylesheetUpdated', () => {
-      for (const d of this.document.diagramIterator({ nest: true })) {
-        clearCacheForDiagram(d);
+    this.on('stylesheetUpdated', s => {
+      const id = s.stylesheet.id;
+
+      for (const diagram of this.document.diagramIterator({ nest: true })) {
+        const elements = new Set<DiagramElement>();
+        for (const el of diagram.allElements()) {
+          if (el.metadata.style === id) {
+            elements.add(el);
+          } else if (isNode(el) && el.metadata.textStyle === id) {
+            elements.add(el);
+          }
+        }
+        elements.forEach(e => {
+          e.clearCache();
+          e.diagram.emit('elementChange', { element: e });
+        });
+        diagram.emit('elementBatchChange', { added: [], removed: [], updated: [...elements] });
       }
     });
   }

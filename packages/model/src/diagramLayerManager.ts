@@ -13,8 +13,6 @@ import {
 } from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import { AttachmentConsumer } from './attachment';
 import { RegularLayer } from './diagramLayerRegular';
-import { DiagramNode } from './diagramNode';
-import { DiagramEdge } from './diagramEdge';
 import { watch } from '@diagram-craft/utils/watchableValue';
 import { EventEmitter } from '@diagram-craft/utils/event';
 
@@ -211,23 +209,6 @@ export class LayerManager
     // Nothing for now...
   }
 
-  clearCache() {
-    // Need to handle all referenced layers separately as the edgeLookup and nodeLookup
-    // won't contain these elements
-    for (const l of this.all) {
-      if (l.type === 'reference') {
-        const resolved = l.resolve();
-        if (resolved?.type === 'regular') {
-          for (const e of (resolved as RegularLayer).elements) {
-            if (e instanceof DiagramNode || e instanceof DiagramEdge) {
-              e.cache.clear();
-            }
-          }
-        }
-      }
-    }
-  }
-
   snapshot(): LayersSnapshot {
     return {
       _snapshotType: 'layers',
@@ -259,7 +240,5 @@ export class LayerManager
 }
 
 export const clearCacheForDiagram = (diagram: Diagram) => {
-  diagram.layers.clearCache();
-  diagram.edgeLookup.values().forEach(v => v.clearCache());
-  diagram.nodeLookup.values().forEach(v => v.clearCache());
+  diagram.allElements().forEach(e => e.clearCache());
 };
