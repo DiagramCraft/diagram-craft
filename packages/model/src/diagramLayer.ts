@@ -48,14 +48,10 @@ export abstract class Layer<T extends RegularLayer | RuleLayer = RegularLayer | 
 
     this.#name = new CRDTProp(watch(this.crdt), 'name', {
       onRemoteChange: () => {
-        this.diagram.emit('change', { diagram: this.diagram });
+        diagram.layers.emit('layerUpdated', { layer: this });
       }
     });
     this.#id = new CRDTProp(watch(this.crdt), 'id');
-
-    this.crdt.on('remoteUpdate', () => {
-      diagram.layers.emit('layerUpdated', { layer: this });
-    });
 
     this.diagram = diagram;
   }
@@ -85,7 +81,7 @@ export abstract class Layer<T extends RegularLayer | RuleLayer = RegularLayer | 
   // TODO: Add uow here
   set locked(value: boolean) {
     this.#locked = value;
-    this.diagram.emit('change', { diagram: this.diagram });
+    this.diagram.layers.emit('layerStructureChange', { layer: this });
   }
 
   abstract resolve(): T | undefined;
