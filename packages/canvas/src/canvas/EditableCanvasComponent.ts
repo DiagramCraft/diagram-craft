@@ -219,9 +219,10 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
       };
     }, [diagram]);
 
-    this.onEventRedraw('elementAdd', diagram);
-    this.onEventRedraw('elementRemove', diagram);
-    this.onEventRedraw('change', diagram);
+    this.onEventRedraw(diagram, 'elementAdd');
+    this.onEventRedraw(diagram, 'elementRemove');
+    this.onEventRedraw(diagram, 'change');
+    this.onEventRedraw(diagram.layers, 'layerStructureChange');
 
     this.onSelectionRedrawElement(selection);
 

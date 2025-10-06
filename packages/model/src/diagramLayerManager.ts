@@ -16,6 +16,7 @@ import { RegularLayer } from './diagramLayerRegular';
 import { DiagramNode } from './diagramNode';
 import { DiagramEdge } from './diagramEdge';
 import { watch } from '@diagram-craft/utils/watchableValue';
+import { EventEmitter } from '@diagram-craft/utils/event';
 
 export type LayerManagerCRDT = {
   // TODO: Should we move visibility to be a property of the layer instead
@@ -57,7 +58,17 @@ export const makeLayerMapper = (diagram: Diagram): CRDTMapper<Layer, CRDTMap<Lay
   };
 };
 
-export class LayerManager implements UOWTrackable<LayersSnapshot>, AttachmentConsumer {
+export type LayerManagerEvents = {
+  layerAdded: { layer: Layer };
+  layerUpdated: { layer: Layer };
+  layerRemoved: { layer: Layer };
+  layerStructureChange: {};
+};
+
+export class LayerManager
+  extends EventEmitter<LayerManagerEvents>
+  implements UOWTrackable<LayersSnapshot>, AttachmentConsumer
+{
   readonly id = 'layers';
   readonly trackableType = 'layerManager';
 
@@ -72,6 +83,7 @@ export class LayerManager implements UOWTrackable<LayersSnapshot>, AttachmentCon
     readonly diagram: Diagram,
     protected readonly crdt: CRDTMap<LayerManagerCRDT>
   ) {
+    super();
     this.#layers = new MappedCRDTOrderedMap(
       watch(crdt.get('layers', () => diagram.document.root.factory.makeMap())!),
       makeLayerMapper(diagram)
@@ -97,6 +109,8 @@ export class LayerManager implements UOWTrackable<LayersSnapshot>, AttachmentCon
         this.active = firstRegularLayer;
       }
     });
+
+    this.on('layerStructureChange', () => clearCacheForDiagram(diagram));
   }
 
   isAbove(a: DiagramElement, b: DiagramElement) {
@@ -143,13 +157,14 @@ export class LayerManager implements UOWTrackable<LayersSnapshot>, AttachmentCon
       this.#visibleLayers.set(layer.id, true);
     }
 
-    this.diagram.emit('change', { diagram: this.diagram });
+    this.emit('layerStructureChange', {});
   }
 
   set active(layer: Layer) {
     if (this.#activeLayer === layer) return;
     this.#activeLayer = layer;
-    this.diagram.emit('change', { diagram: this.diagram });
+
+    this.emit('layerStructureChange', {});
   }
 
   get active() {
@@ -170,6 +185,7 @@ export class LayerManager implements UOWTrackable<LayersSnapshot>, AttachmentCon
     this.#visibleLayers.set(layer.id, true);
     this.#activeLayer = layer;
     uow.updateElement(this);
+    uow.addElement(layer);
   }
 
   remove(layer: Layer, uow: UnitOfWork) {
@@ -180,6 +196,7 @@ export class LayerManager implements UOWTrackable<LayersSnapshot>, AttachmentCon
       this.diagram.selectionState.clear();
     }
     uow.updateElement(this);
+    uow.removeElement(layer);
   }
 
   invalidate(_uow: UnitOfWork) {
@@ -232,3 +249,9 @@ export class LayerManager implements UOWTrackable<LayersSnapshot>, AttachmentCon
     return this.#layers.values.flatMap(e => e.getAttachmentsInUse());
   }
 }
+
+export const clearCacheForDiagram = (diagram: Diagram) => {
+  diagram.layers.clearCache();
+  diagram.edgeLookup.values().forEach(v => v.clearCache());
+  diagram.nodeLookup.values().forEach(v => v.clearCache());
+};
