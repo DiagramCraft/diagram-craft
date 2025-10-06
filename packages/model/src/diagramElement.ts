@@ -51,7 +51,8 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
   protected _layer: RegularLayer;
   protected _activeDiagram: Diagram;
 
-  protected _cache: Map<string, unknown> | undefined = undefined;
+  // The cache is created lazily for performance reasons
+  private _cache: Map<string, unknown> | undefined = undefined;
 
   // Shared properties
   protected readonly _metadata: CRDTObject<ElementMetadata>;
@@ -127,14 +128,14 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
     this._metadata = new CRDTObject<ElementMetadata>(metadataMap, () => {
       this.invalidate(UnitOfWork.immediate(this._diagram));
       this._diagram.emit('elementChange', { element: this });
-      this._cache?.clear();
+      this.clearCache();
     });
   }
 
   commentsUpdated(uow: UnitOfWork) {
     uow.updateElement(this);
     this._diagram.emit('elementChange', { element: this });
-    this._cache?.clear();
+    this.clearCache();
   }
 
   abstract getAttachmentsInUse(): Array<string>;
@@ -242,7 +243,7 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
     callback(metadata);
     this._metadata.set(metadata);
     uow.updateElement(this);
-    this._cache?.clear();
+    this.clearCache();
   }
 
   /* Tags ******************************************************************************************************** */
@@ -262,7 +263,7 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
     });
 
     uow.updateElement(this);
-    this._cache?.clear();
+    this.clearCache();
   }
 
   /* Cache *************************************************************************************************** */
@@ -272,6 +273,10 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
       this._cache = new Map<string, unknown>();
     }
     return this._cache;
+  }
+
+  clearCache() {
+    this._cache?.clear();
   }
 
   /* Children ************************************************************************************************ */

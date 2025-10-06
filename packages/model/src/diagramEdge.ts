@@ -168,7 +168,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
 
     this.#props = new CRDTObject<EdgeProps>(propsMap, () => {
       getRemoteUnitOfWork(this.diagram).updateElement(this);
-      this._cache?.clear();
+      this.clearCache();
     });
   }
 
@@ -335,7 +335,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
 
     uow.updateElement(this);
 
-    this._cache?.clear();
+    this.clearCache();
   }
 
   updateCustomProps<K extends keyof CustomEdgeProps>(
@@ -791,7 +791,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     this.syncChildrenBasedOnLabelNodes(uow);
 
     uow.updateElement(this);
-    this._cache?.clear();
+    this.clearCache();
   }
 
   duplicate(ctx?: DuplicationContext, id?: string) {
