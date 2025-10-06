@@ -11,6 +11,8 @@ import { DEFAULT_EDGE_STYLES, DEFAULT_NODE_STYLES, DEFAULT_TEXT_STYLES } from '.
 import { MappedCRDTMap } from './collaboration/datatypes/mapped/mappedCrdtMap';
 import { type CRDTMapper } from './collaboration/datatypes/mapped/types';
 import { watch } from '@diagram-craft/utils/watchableValue';
+import { EventEmitter } from '@diagram-craft/utils/event';
+import { clearCacheForDiagram } from './diagramLayerManager';
 
 export type StylesheetType = 'node' | 'edge' | 'text';
 
@@ -226,7 +228,13 @@ const mapper: CRDTMapper<Stylesheet<any>, CRDTMap<StylesheetSnapshot>> = {
   }
 };
 
-export class DiagramStyles {
+export type DiagramStylesEvents = {
+  stylesheetAdded: { stylesheet: Stylesheet<StylesheetType> };
+  stylesheetUpdated: { stylesheet: Stylesheet<StylesheetType> };
+  stylesheetRemoved: { stylesheet: Stylesheet<StylesheetType> };
+};
+
+export class DiagramStyles extends EventEmitter<DiagramStylesEvents> {
   #textStyles: MappedCRDTMap<Stylesheet<'text'>, StylesheetSnapshot>;
   #nodeStyles: MappedCRDTMap<Stylesheet<'node'>, StylesheetSnapshot>;
   #edgeStyles: MappedCRDTMap<Stylesheet<'edge'>, StylesheetSnapshot>;
@@ -240,6 +248,8 @@ export class DiagramStyles {
     private readonly document: DiagramDocument,
     addDefaultStyles: boolean
   ) {
+    super();
+
     this.#textStyles = new MappedCRDTMap(watch(crdt.getMap('styles.text')), mapper);
     this.#nodeStyles = new MappedCRDTMap(watch(crdt.getMap('styles.node')), mapper);
     this.#edgeStyles = new MappedCRDTMap(watch(crdt.getMap('styles.edge')), mapper);
@@ -267,6 +277,14 @@ export class DiagramStyles {
         }
       });
     }
+
+    // TODO: We could perhaps optimize this by updating all related
+    //       elements in a single transaction instead
+    this.on('stylesheetUpdated', () => {
+      for (const d of this.document.diagramIterator({ nest: true })) {
+        clearCacheForDiagram(d);
+      }
+    });
   }
 
   get nodeStyles(): Stylesheet<'node'>[] {
@@ -394,6 +412,8 @@ export class DiagramStyles {
         this.#edgeStyles.remove(id);
       }
 
+      this.emit('stylesheetRemoved', { stylesheet });
+
       // TODO: This can fail in case we delete the last stylesheet
       if (stylesheet.type === 'node') {
         this.activeNodeStylesheet = this.getNodeStyle(Array.from(this.#nodeStyles.keys)[0])!;
@@ -487,6 +507,7 @@ export class DiagramStyles {
         this.#edgeStyles.set(id, stylesheet);
         this.activeEdgeStylesheet = stylesheet;
       }
+      this.emit('stylesheetAdded', { stylesheet });
     });
   }
 }

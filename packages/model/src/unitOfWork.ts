@@ -286,7 +286,23 @@ export class UnitOfWork {
             break;
         }
       } else if (e.trackableType === 'stylesheet') {
-        this.#shouldUpdateDiagram = true;
+        switch (s) {
+          case 'add':
+            this.diagram.document.styles.emit('stylesheetAdded', {
+              stylesheet: e as Stylesheet<StylesheetType>
+            });
+            break;
+          case 'update':
+            this.diagram.document.styles.emit('stylesheetUpdated', {
+              stylesheet: e as Stylesheet<StylesheetType>
+            });
+            break;
+          case 'remove':
+            this.diagram.document.styles.emit('stylesheetRemoved', {
+              stylesheet: e as Stylesheet<StylesheetType>
+            });
+            break;
+        }
       } else {
         switch (s) {
           case 'add':
