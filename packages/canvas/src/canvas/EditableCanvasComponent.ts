@@ -33,6 +33,7 @@ import { AwarenessCursorComponent } from '../components/AwarenessCursorComponent
 import { isResolvableToRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { AnchorHighlightComponent } from '../components/AnchorHighlightComponent';
 import { MoveTool } from '../tools/moveTool';
+import type { SerializedComment, Comment } from '@diagram-craft/model/comment';
 
 const removeSuffix = (s: string) => {
   return s.replace(/---.+$/, '');
@@ -173,6 +174,22 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
       diagram.on('uowCommit', commitCb);
       return () => {
         diagram.off('uowCommit', commitCb);
+      };
+    }, [diagram]);
+
+    createEffect(() => {
+      const commentChangeCb = (e: { comment: Comment }) =>
+        this.redrawElements([e.comment.element!]);
+      const serializedCommentChangeCb = (e: { comment: SerializedComment }) =>
+        this.redrawElements([diagram.lookup(e.comment.elementId!)!]);
+
+      diagram.commentManager.on('commentAdded', commentChangeCb);
+      diagram.commentManager.on('commentUpdated', commentChangeCb);
+      diagram.commentManager.on('commentRemoved', serializedCommentChangeCb);
+      return () => {
+        diagram.commentManager.off('commentAdded', commentChangeCb);
+        diagram.commentManager.off('commentUpdated', commentChangeCb);
+        diagram.commentManager.off('commentRemoved', serializedCommentChangeCb);
       };
     }, [diagram]);
 

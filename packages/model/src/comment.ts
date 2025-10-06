@@ -2,8 +2,7 @@ import type { Diagram } from './diagram';
 import { DiagramElement } from './diagramElement';
 import type { CRDTMap } from './collaboration/crdt';
 import { EventEmitter } from '@diagram-craft/utils/event';
-import { UnitOfWork } from './unitOfWork';
-import { precondition } from '@diagram-craft/utils/assert';
+import { assert, precondition } from '@diagram-craft/utils/assert';
 
 export type CommentState = 'unresolved' | 'resolved';
 
@@ -109,7 +108,7 @@ export type SerializedComment = {
 export type CommentManagerEvents = {
   commentAdded: { comment: Comment };
   commentUpdated: { comment: Comment };
-  commentRemoved: { commentId: string };
+  commentRemoved: { comment: SerializedComment };
 };
 
 export class CommentManager extends EventEmitter<CommentManagerEvents> {
@@ -121,35 +120,22 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> {
     this.commentsMap.on('remoteDelete', p => {
       const comment = this.getComment(p.key);
 
-      this.emit('commentRemoved', { commentId: p.key });
-
-      if (comment?.element) {
-        const uow = new UnitOfWork(comment.element.diagram);
-        comment.element.commentsUpdated(uow);
-        uow.commit();
+      if (comment) {
+        this.updateCommentElementConnection(comment);
       }
+      this.emit('commentRemoved', { comment: p.value });
     });
     this.commentsMap.on('remoteInsert', p => {
       const comment = this.getComment(p.key)!;
 
+      this.updateCommentElementConnection(comment);
       this.emit('commentAdded', { comment: comment });
-
-      if (comment.element) {
-        const uow = new UnitOfWork(comment.element.diagram);
-        comment.element.commentsUpdated(uow);
-        uow.commit();
-      }
     });
     this.commentsMap.on('remoteUpdate', p => {
       const comment = this.getComment(p.key)!;
 
+      this.updateCommentElementConnection(comment);
       this.emit('commentUpdated', { comment: this.getComment(p.key)! });
-
-      if (comment.element) {
-        const uow = new UnitOfWork(comment.element.diagram);
-        comment.element.commentsUpdated(uow);
-        uow.commit();
-      }
     });
   }
 
@@ -170,11 +156,8 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> {
 
     const serialized = comment.serialize();
     this.commentsMap.set(comment.id, serialized);
-    if (comment.element) {
-      const uow = new UnitOfWork(comment.element.diagram);
-      comment.element.commentsUpdated(uow);
-      uow.commit();
-    }
+
+    this.updateCommentElementConnection(comment);
     this.emit('commentAdded', { comment });
   }
 
@@ -184,12 +167,9 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> {
     if (this.commentsMap.has(comment.id)) {
       const serialized = comment.serialize();
       this.commentsMap.set(comment.id, serialized);
+
+      this.updateCommentElementConnection(comment);
       this.emit('commentUpdated', { comment });
-      if (comment.element) {
-        const uow = new UnitOfWork(comment.element.diagram);
-        comment.element.commentsUpdated(uow);
-        uow.commit();
-      }
     }
   }
 
@@ -202,6 +182,7 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> {
 
   removeComment(commentId: string): void {
     const comment = this.getComment(commentId);
+    assert.present(comment);
     precondition.is.true(comment?.diagram === this.diagram);
 
     // First, recursively delete all replies
@@ -213,13 +194,8 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> {
     // Then delete the comment itself
     this.commentsMap.delete(commentId);
 
-    if (comment?.element) {
-      const uow = new UnitOfWork(comment.element.diagram);
-      comment.element.commentsUpdated(uow);
-      uow.commit();
-    }
-
-    this.emit('commentRemoved', { commentId });
+    this.updateCommentElementConnection(comment);
+    this.emit('commentRemoved', { comment: comment.serialize() });
   }
 
   getComment(commentId: string): Comment | undefined {
@@ -252,5 +228,12 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> {
 
     addToThread(current);
     return thread;
+  }
+
+  private updateCommentElementConnection(comment: Comment) {
+    if (!comment.element) return;
+
+    comment.element.clearCache();
+    this.diagram.emit('elementChange', { element: comment.element });
   }
 }
