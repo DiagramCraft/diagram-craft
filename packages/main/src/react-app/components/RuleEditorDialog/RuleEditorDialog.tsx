@@ -280,6 +280,8 @@ export const RuleEditorDialog = (props: Props) => {
     setActions(actions);
   }
 
+  console.log(actions);
+
   return (
     <Dialog
       open={props.open}
@@ -372,9 +374,8 @@ export const RuleEditorDialog = (props: Props) => {
           <ClauseList clauses={clauses} onChange={setClauses} subClauses={false} type={type} />
         </div>
 
-        <div className={styles.ruleEditor__hiddenSection}>
+        <div className={styles.ruleEditor__actionSection}>
           <h4 className={styles.ruleEditor__sectionTitle}>Then</h4>
-          <div></div>
           <div></div>
           <div></div>
 
@@ -420,27 +421,29 @@ export const RuleEditorDialog = (props: Props) => {
                   action.type !== 'set-stylesheet' &&
                   action.type !== 'hide' && <div></div>}
 
-                <Button
-                  type={'icon-only'}
-                  onClick={() => {
-                    const newActions = actions.toSpliced(idx + 1, 0, {
-                      id: newid()
-                    });
-                    setActions(newActions);
-                  }}
-                >
-                  <TbPlus />
-                </Button>
-                <Button
-                  type={'icon-only'}
-                  disabled={idx === 0 && actions.length === 1}
-                  onClick={() => {
-                    const newActions = actions.toSpliced(idx, 1);
-                    setActions(newActions);
-                  }}
-                >
-                  <TbTrash />
-                </Button>
+                <div>
+                  <Button
+                    type={'icon-only'}
+                    onClick={() => {
+                      const newActions = actions.toSpliced(idx + 1, 0, {
+                        id: newid()
+                      });
+                      setActions(newActions);
+                    }}
+                  >
+                    <TbPlus />
+                  </Button>
+                  <Button
+                    type={'icon-only'}
+                    disabled={idx === 0 && actions.length === 1}
+                    onClick={() => {
+                      const newActions = actions.toSpliced(idx, 1);
+                      setActions(newActions);
+                    }}
+                  >
+                    <TbTrash />
+                  </Button>
+                </div>
               </React.Fragment>
             );
           })}

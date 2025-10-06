@@ -11,17 +11,16 @@
 }
 
 .ruleEditor__sectionTitle {
-  margin: 0.5rem 0 0 0;
+  margin: 1rem 0 0 0;
 }
 
 .ruleEditor__clauseList {
-  margin: 0.5rem -1rem 2rem -0.5rem;
+  margin: 0.5rem -0.5rem 0.5rem -0.5rem;
   padding: 2px 0.5rem 0 0.5rem;
   scrollbar-gutter: stable;
   scrollbar-width: thin;
   scrollbar-color: var(--base-fg-more-dim) var(--panel-bg);
   max-height: 20rem;
-  height: 20rem;
   overflow-y: auto;
 }
 
@@ -41,8 +40,11 @@
   gap: 0;
 }
 
-.ruleEditor__hiddenSection {
-  display: none;
+.ruleEditor__actionSection {
+  margin: 0.5rem 0 2rem 0;
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: 8rem 1fr max-content;
 }
 
 .ruleEditorClause__select {
