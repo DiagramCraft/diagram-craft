@@ -691,4 +691,327 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
       expect(styles.activeNodeStylesheet.id).toBe(defaultNodeStyleId);
     });
   });
+
+  describe('events', () => {
+    it('should emit stylesheetAdded event when a node stylesheet is added remotely', () => {
+      const [root1, root2] = backend.syncedDocs();
+      if (!root2) return;
+
+      const styles1 = new DiagramStyles(root1, TestModel.newDocument(), true);
+      const styles2 = new DiagramStyles(root2, TestModel.newDocument(), true);
+
+      const addedStylesheets: Array<Stylesheet<any>> = [];
+      styles2.on('stylesheetAdded', ({ stylesheet }) => {
+        addedStylesheets.push(stylesheet);
+      });
+
+      const customNodeStyle = Stylesheet.fromSnapshot(
+        'node',
+        {
+          id: 'remote-node',
+          name: 'Remote Node',
+          props: { fill: { color: 'blue' } }
+        },
+        styles1.crdt.factory
+      );
+      styles1.addStylesheet('remote-node', customNodeStyle);
+
+      expect(addedStylesheets).toHaveLength(1);
+      expect(addedStylesheets[0]!.id).toBe('remote-node');
+      expect(addedStylesheets[0]!.name).toBe('Remote Node');
+      expect(addedStylesheets[0]!.type).toBe('node');
+    });
+
+    it('should emit stylesheetAdded event when an edge stylesheet is added remotely', () => {
+      const [root1, root2] = backend.syncedDocs();
+      if (!root2) return;
+
+      const styles1 = new DiagramStyles(root1, TestModel.newDocument(), true);
+      const styles2 = new DiagramStyles(root2, TestModel.newDocument(), true);
+
+      const addedStylesheets: Array<Stylesheet<any>> = [];
+      styles2.on('stylesheetAdded', ({ stylesheet }) => {
+        addedStylesheets.push(stylesheet);
+      });
+
+      const customEdgeStyle = Stylesheet.fromSnapshot(
+        'edge',
+        {
+          id: 'remote-edge',
+          name: 'Remote Edge',
+          props: { stroke: { color: 'red' } }
+        },
+        styles1.crdt.factory
+      );
+      styles1.addStylesheet('remote-edge', customEdgeStyle);
+
+      expect(addedStylesheets).toHaveLength(1);
+      expect(addedStylesheets[0]!.id).toBe('remote-edge');
+      expect(addedStylesheets[0]!.name).toBe('Remote Edge');
+      expect(addedStylesheets[0]!.type).toBe('edge');
+    });
+
+    it('should emit stylesheetAdded event when a text stylesheet is added remotely', () => {
+      const [root1, root2] = backend.syncedDocs();
+      if (!root2) return;
+
+      const styles1 = new DiagramStyles(root1, TestModel.newDocument(), true);
+      const styles2 = new DiagramStyles(root2, TestModel.newDocument(), true);
+
+      const addedStylesheets: Array<Stylesheet<any>> = [];
+      styles2.on('stylesheetAdded', ({ stylesheet }) => {
+        addedStylesheets.push(stylesheet);
+      });
+
+      const customTextStyle = Stylesheet.fromSnapshot(
+        'text',
+        {
+          id: 'remote-text',
+          name: 'Remote Text',
+          props: { text: { fontSize: 16 } }
+        },
+        styles1.crdt.factory
+      );
+      styles1.addStylesheet('remote-text', customTextStyle);
+
+      expect(addedStylesheets).toHaveLength(1);
+      expect(addedStylesheets[0]!.id).toBe('remote-text');
+      expect(addedStylesheets[0]!.name).toBe('Remote Text');
+      expect(addedStylesheets[0]!.type).toBe('text');
+    });
+
+    it('should emit stylesheetUpdated event when a stylesheet is updated remotely', () => {
+      const [root1, root2] = backend.syncedDocs();
+      if (!root2) return;
+
+      const styles1 = new DiagramStyles(root1, TestModel.newDocument(), true);
+      const styles2 = new DiagramStyles(root2, TestModel.newDocument(), true);
+
+      const customNodeStyle = Stylesheet.fromSnapshot(
+        'node',
+        {
+          id: 'update-test',
+          name: 'Update Test',
+          props: { fill: { color: 'blue' } }
+        },
+        styles1.crdt.factory
+      );
+      styles1.addStylesheet('update-test', customNodeStyle);
+
+      const updatedStylesheets: Array<Stylesheet<any>> = [];
+      styles2.on('stylesheetUpdated', ({ stylesheet }) => {
+        updatedStylesheets.push(stylesheet);
+      });
+
+      customNodeStyle.setProps({ fill: { color: 'red' } }, styles1, UnitOfWork.immediate(null!));
+
+      expect(updatedStylesheets).toHaveLength(1);
+      expect(updatedStylesheets[0]!.id).toBe('update-test');
+      expect(updatedStylesheets[0]!.props.fill?.color).toBe('red');
+    });
+
+    it('should emit stylesheetUpdated event when a stylesheet name is updated remotely', () => {
+      const [root1, root2] = backend.syncedDocs();
+      if (!root2) return;
+
+      const styles1 = new DiagramStyles(root1, TestModel.newDocument(), true);
+      const styles2 = new DiagramStyles(root2, TestModel.newDocument(), true);
+
+      const customNodeStyle = Stylesheet.fromSnapshot(
+        'node',
+        {
+          id: 'name-test',
+          name: 'Old Name',
+          props: {}
+        },
+        styles1.crdt.factory
+      );
+      styles1.addStylesheet('name-test', customNodeStyle);
+
+      const updatedStylesheets: Array<Stylesheet<any>> = [];
+      styles2.on('stylesheetUpdated', ({ stylesheet }) => {
+        updatedStylesheets.push(stylesheet);
+      });
+
+      customNodeStyle.setName('New Name', styles1, UnitOfWork.immediate(null!));
+
+      expect(updatedStylesheets).toHaveLength(1);
+      expect(updatedStylesheets[0]!.id).toBe('name-test');
+      expect(updatedStylesheets[0]!.name).toBe('New Name');
+    });
+
+    it('should emit stylesheetRemoved event when a stylesheet is deleted remotely', () => {
+      const [root1, root2] = backend.syncedDocs();
+      if (!root2) return;
+
+      const styles1 = new DiagramStyles(root1, TestModel.newDocument(), true);
+      const styles2 = new DiagramStyles(root2, TestModel.newDocument(), true);
+
+      const customNodeStyle = Stylesheet.fromSnapshot(
+        'node',
+        {
+          id: 'delete-test',
+          name: 'Delete Test',
+          props: {}
+        },
+        styles1.crdt.factory
+      );
+      styles1.addStylesheet('delete-test', customNodeStyle);
+
+      const removedStylesheets: Array<string> = [];
+      styles2.on('stylesheetRemoved', ({ stylesheet }) => {
+        removedStylesheets.push(stylesheet);
+      });
+
+      styles1.deleteStylesheet('delete-test', UnitOfWork.immediate(document.diagrams[0]!));
+
+      expect(removedStylesheets).toHaveLength(1);
+      expect(removedStylesheets[0]!).toBe('delete-test');
+    });
+
+    it('should emit stylesheetAdded event for local additions', () => {
+      const styles = new DiagramStyles(root, document, true);
+
+      const addedStylesheets: Array<Stylesheet<any>> = [];
+      styles.on('stylesheetAdded', ({ stylesheet }) => {
+        addedStylesheets.push(stylesheet);
+      });
+
+      const customNodeStyle = Stylesheet.fromSnapshot(
+        'node',
+        {
+          id: 'local-node',
+          name: 'Local Node',
+          props: {}
+        },
+        styles.crdt.factory
+      );
+      styles.addStylesheet('local-node', customNodeStyle);
+
+      expect(addedStylesheets).toHaveLength(1);
+      expect(addedStylesheets[0]!.id).toBe('local-node');
+    });
+
+    it('should emit stylesheetUpdated event for local updates', () => {
+      const styles = new DiagramStyles(root, document, true);
+
+      const customNodeStyle = Stylesheet.fromSnapshot(
+        'node',
+        {
+          id: 'local-update',
+          name: 'Local Update',
+          props: { fill: { color: 'blue' } }
+        },
+        styles.crdt.factory
+      );
+      styles.addStylesheet('local-update', customNodeStyle);
+
+      const updatedStylesheets: Array<Stylesheet<any>> = [];
+      styles.on('stylesheetUpdated', ({ stylesheet }) => {
+        updatedStylesheets.push(stylesheet);
+      });
+
+      customNodeStyle.setProps({ fill: { color: 'red' } }, styles, UnitOfWork.immediate(null!));
+
+      expect(updatedStylesheets).toHaveLength(1);
+      expect(updatedStylesheets[0]!.id).toBe('local-update');
+      expect(updatedStylesheets[0]!.props.fill?.color).toBe('red');
+    });
+
+    it('should emit stylesheetUpdated event for local name changes', () => {
+      const styles = new DiagramStyles(root, document, true);
+
+      const customNodeStyle = Stylesheet.fromSnapshot(
+        'node',
+        {
+          id: 'local-name',
+          name: 'Old Name',
+          props: {}
+        },
+        styles.crdt.factory
+      );
+      styles.addStylesheet('local-name', customNodeStyle);
+
+      const updatedStylesheets: Array<Stylesheet<any>> = [];
+      styles.on('stylesheetUpdated', ({ stylesheet }) => {
+        updatedStylesheets.push(stylesheet);
+      });
+
+      customNodeStyle.setName('New Name', styles, UnitOfWork.immediate(null!));
+
+      expect(updatedStylesheets).toHaveLength(1);
+      expect(updatedStylesheets[0]!.id).toBe('local-name');
+      expect(updatedStylesheets[0]!.name).toBe('New Name');
+    });
+
+    it('should emit stylesheetRemoved event for local deletions', () => {
+      const styles = new DiagramStyles(root, document, true);
+
+      const customNodeStyle = Stylesheet.fromSnapshot(
+        'node',
+        {
+          id: 'local-delete',
+          name: 'Local Delete',
+          props: {}
+        },
+        styles.crdt.factory
+      );
+      styles.addStylesheet('local-delete', customNodeStyle);
+
+      const removedStylesheets: Array<string> = [];
+      styles.on('stylesheetRemoved', ({ stylesheet }) => {
+        removedStylesheets.push(stylesheet);
+      });
+
+      styles.deleteStylesheet('local-delete', UnitOfWork.immediate(document.diagrams[0]!));
+
+      expect(removedStylesheets).toHaveLength(1);
+      expect(removedStylesheets[0]!).toBe('local-delete');
+    });
+
+    it('should emit multiple events when multiple remote changes occur', () => {
+      const [root1, root2] = backend.syncedDocs();
+      if (!root2) return;
+
+      const styles1 = new DiagramStyles(root1, TestModel.newDocument(), true);
+      const styles2 = new DiagramStyles(root2, TestModel.newDocument(), true);
+
+      const events: Array<{ type: string; id: string }> = [];
+      styles2.on('stylesheetAdded', ({ stylesheet }) => {
+        events.push({ type: 'added', id: stylesheet.id });
+      });
+      styles2.on('stylesheetUpdated', ({ stylesheet }) => {
+        events.push({ type: 'updated', id: stylesheet.id });
+      });
+      styles2.on('stylesheetRemoved', ({ stylesheet }) => {
+        events.push({ type: 'removed', id: stylesheet });
+      });
+
+      const style1 = Stylesheet.fromSnapshot(
+        'node',
+        { id: 'multi-1', name: 'Multi 1', props: {} },
+        styles1.crdt.factory
+      );
+      styles1.addStylesheet('multi-1', style1);
+
+      const style2 = Stylesheet.fromSnapshot(
+        'edge',
+        { id: 'multi-2', name: 'Multi 2', props: {} },
+        styles1.crdt.factory
+      );
+      styles1.addStylesheet('multi-2', style2);
+
+      style1.setName('Updated Multi 1', styles1, UnitOfWork.immediate(null!));
+
+      styles1.deleteStylesheet('multi-2', UnitOfWork.immediate(document.diagrams[0]!));
+
+      expect(events).toHaveLength(4);
+      expect(events).toEqual([
+        { type: 'added', id: 'multi-1' },
+        { type: 'added', id: 'multi-2' },
+        { type: 'updated', id: 'multi-1' },
+        { type: 'removed', id: 'multi-2' }
+      ]);
+    });
+  });
 });

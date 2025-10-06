@@ -59,20 +59,22 @@ export class Stylesheet<T extends StylesheetType, P = TypeMap[T]>
     return this.crdt.get('props') as P;
   }
 
-  setProps(props: Partial<P>, _manager: DiagramStyles, uow: UnitOfWork): void {
+  setProps(props: Partial<P>, manager: DiagramStyles, uow: UnitOfWork): void {
     uow.snapshot(this);
     this.crdt.set('props', this.cleanProps(props) as NodeProps | EdgeProps);
     uow.updateElement(this);
+    manager.emit('stylesheetUpdated', { stylesheet: this as unknown as Stylesheet<StylesheetType> });
   }
 
   get name() {
     return this.crdt.get('name')!;
   }
 
-  setName(name: string, _manager: DiagramStyles, uow: UnitOfWork) {
+  setName(name: string, manager: DiagramStyles, uow: UnitOfWork) {
     uow.snapshot(this);
     this.crdt.set('name', name);
     uow.updateElement(this);
+    manager.emit('stylesheetUpdated', { stylesheet: this as unknown as Stylesheet<StylesheetType> });
   }
 
   invalidate(_uow: UnitOfWork): void {
@@ -218,20 +220,26 @@ declare global {
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: false positive
-const mapper: CRDTMapper<Stylesheet<any>, CRDTMap<StylesheetSnapshot>> = {
+const mapper: (
+  d: DiagramStyles
+) => CRDTMapper<Stylesheet<any>, CRDTMap<StylesheetSnapshot>> = d => ({
   fromCRDT<T extends StylesheetType>(e: CRDTMap<StylesheetSnapshot>): Stylesheet<T> {
-    return new Stylesheet<T>(e);
+    const s = new Stylesheet<T>(e);
+    s.crdt.on('remoteUpdate', _e => {
+      d.emit('stylesheetUpdated', { stylesheet: s });
+    });
+    return s;
   },
 
   toCRDT<T extends StylesheetType>(e: Stylesheet<T>): CRDTMap<StylesheetSnapshot> {
     return e.crdt;
   }
-};
+});
 
 export type DiagramStylesEvents = {
   stylesheetAdded: { stylesheet: Stylesheet<StylesheetType> };
   stylesheetUpdated: { stylesheet: Stylesheet<StylesheetType> };
-  stylesheetRemoved: { stylesheet: Stylesheet<StylesheetType> };
+  stylesheetRemoved: { stylesheet: string };
 };
 
 export class DiagramStyles extends EventEmitter<DiagramStylesEvents> {
@@ -250,9 +258,21 @@ export class DiagramStyles extends EventEmitter<DiagramStylesEvents> {
   ) {
     super();
 
-    this.#textStyles = new MappedCRDTMap(watch(crdt.getMap('styles.text')), mapper);
-    this.#nodeStyles = new MappedCRDTMap(watch(crdt.getMap('styles.node')), mapper);
-    this.#edgeStyles = new MappedCRDTMap(watch(crdt.getMap('styles.edge')), mapper);
+    this.#textStyles = new MappedCRDTMap(watch(crdt.getMap('styles.text')), mapper(this), {
+      onRemoteChange: e => this.emit('stylesheetUpdated', { stylesheet: e }),
+      onRemoteAdd: e => this.emit('stylesheetAdded', { stylesheet: e }),
+      onRemoteRemove: e => this.emit('stylesheetRemoved', { stylesheet: e })
+    });
+    this.#nodeStyles = new MappedCRDTMap(watch(crdt.getMap('styles.node')), mapper(this), {
+      onRemoteChange: e => this.emit('stylesheetUpdated', { stylesheet: e }),
+      onRemoteAdd: e => this.emit('stylesheetAdded', { stylesheet: e }),
+      onRemoteRemove: e => this.emit('stylesheetRemoved', { stylesheet: e })
+    });
+    this.#edgeStyles = new MappedCRDTMap(watch(crdt.getMap('styles.edge')), mapper(this), {
+      onRemoteChange: e => this.emit('stylesheetUpdated', { stylesheet: e }),
+      onRemoteAdd: e => this.emit('stylesheetAdded', { stylesheet: e }),
+      onRemoteRemove: e => this.emit('stylesheetRemoved', { stylesheet: e })
+    });
 
     const hasNoTextStyles = this.#textStyles.size === 0;
     const hasNoNodeStyles = this.#nodeStyles.size === 0;
@@ -412,7 +432,7 @@ export class DiagramStyles extends EventEmitter<DiagramStylesEvents> {
         this.#edgeStyles.remove(id);
       }
 
-      this.emit('stylesheetRemoved', { stylesheet });
+      this.emit('stylesheetRemoved', { stylesheet: stylesheet.id });
 
       // TODO: This can fail in case we delete the last stylesheet
       if (stylesheet.type === 'node') {

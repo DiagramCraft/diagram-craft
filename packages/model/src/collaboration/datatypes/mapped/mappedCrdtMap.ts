@@ -11,7 +11,7 @@ export type MappedCRDTMapMapType<T extends Record<string, CRDTCompatibleObject>>
 
 type Props<T> = {
   onRemoteAdd?: (e: T) => void;
-  onRemoteRemove?: (e: T) => void;
+  onRemoteRemove?: (id: string, e: T) => void;
   onRemoteChange?: (e: T) => void;
   onInit?: (e: T) => void;
 };
@@ -46,7 +46,7 @@ export class MappedCRDTMap<
     };
 
     const remoteDelete: EventReceiver<CRDTMapEvents['remoteDelete']> = e => {
-      props?.onRemoteRemove?.(mapper.fromCRDT(e.value));
+      props?.onRemoteRemove?.(e.key, mapper.fromCRDT(e.value));
       this.#map.delete(e.key);
     };
 
