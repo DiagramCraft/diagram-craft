@@ -299,7 +299,7 @@ export class UnitOfWork {
             break;
           case 'remove':
             this.diagram.document.styles.emit('stylesheetRemoved', {
-              stylesheet: e as Stylesheet<StylesheetType>
+              stylesheet: e.id
             });
             break;
         }

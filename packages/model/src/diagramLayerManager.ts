@@ -86,12 +86,20 @@ export class LayerManager
     super();
     this.#layers = new MappedCRDTOrderedMap(
       watch(crdt.get('layers', () => diagram.document.root.factory.makeMap())!),
-      makeLayerMapper(diagram)
+      makeLayerMapper(diagram),
+      {
+        onRemoteAdd: layer => this.emit('layerAdded', { layer }),
+        onRemoteRemove: layer => this.emit('layerRemoved', { layer }),
+        onRemoteChange: layer => this.emit('layerUpdated', { layer })
+      }
     );
 
     this.#activeLayer = undefined;
 
     this.#visibleLayers = crdt.get('visibleLayers', () => diagram.document.root.factory.makeMap())!;
+    this.#visibleLayers.on('remoteUpdate', () => this.emit('layerStructureChange', {}));
+    this.#visibleLayers.on('remoteInsert', () => this.emit('layerStructureChange', {}));
+    this.#visibleLayers.on('remoteDelete', () => this.emit('layerStructureChange', {}));
 
     this.diagram.selectionState.on('add', () => {
       const firstRegularLayer = this.diagram.selectionState.elements

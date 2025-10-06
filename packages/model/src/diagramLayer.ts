@@ -53,6 +53,10 @@ export abstract class Layer<T extends RegularLayer | RuleLayer = RegularLayer | 
     });
     this.#id = new CRDTProp(watch(this.crdt), 'id');
 
+    this.crdt.on('remoteUpdate', () => {
+      diagram.layers.emit('layerUpdated', { layer: this });
+    });
+
     this.diagram = diagram;
   }
 
