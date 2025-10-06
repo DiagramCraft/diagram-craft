@@ -309,7 +309,7 @@ export const App = (props: {
     setDirty(true);
   };
 
-  useEventListener($d, 'change', autosave);
+  useEventListener($d, 'diagramChange', autosave);
   useEventListener($d, 'elementAdd', autosave);
   useEventListener($d, 'elementChange', autosave);
   useEventListener($d, 'elementRemove', autosave);

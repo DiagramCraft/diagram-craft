@@ -21,7 +21,7 @@ export const SelectionInfoDetails = (props: { obj: SelectionState }) => {
 
   useEventListener(diagram.selectionState, 'add', redraw);
   useEventListener(diagram.selectionState, 'remove', redraw);
-  useEventListener(diagram, 'change', redraw);
+  useEventListener(diagram, 'diagramChange', redraw);
   useEventListener(diagram, 'elementChange', ({ element }) => {
     if (names[element.id] !== element.name) {
       redraw();

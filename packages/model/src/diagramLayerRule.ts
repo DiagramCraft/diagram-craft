@@ -71,7 +71,7 @@ export class RuleLayer extends Layer<RuleLayer> {
       this.#rules.push(rule);
     }
 
-    this.diagram.on('change', () => this.#cache.clear());
+    this.diagram.on('diagramChange', () => this.#cache.clear());
     this.diagram.on('elementChange', () => this.#cache.clear());
     this.diagram.on('elementAdd', () => this.#cache.clear());
     this.diagram.on('elementRemove', () => this.#cache.clear());

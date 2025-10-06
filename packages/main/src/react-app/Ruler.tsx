@@ -63,7 +63,7 @@ export const Ruler = ({ orientation }: Props) => {
     [diagram, orientation]
   );
 
-  useEventListener(diagram, 'change', () => queueMicrotask(() => redraw()));
+  useEventListener(diagram, 'diagramChange', () => queueMicrotask(() => redraw()));
   useEventListener(diagram.viewBox, 'viewbox', () => queueMicrotask(() => redraw()));
   useEventListener(diagram.selectionState, 'change', updateSelection);
   useEventListener(UserState.get(), 'change', () => queueMicrotask(() => redraw()));

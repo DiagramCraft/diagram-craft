@@ -17,11 +17,10 @@ declare global {
 }
 
 class TableInsertAction extends AbstractAction<undefined, Application> {
-
   getCriteria(application: Application) {
     return ActionCriteria.EventTriggered(
       application.model.activeDiagram,
-      'change',
+      'diagramChange',
       () => application.model.activeDiagram.activeLayer.type === 'regular'
     );
   }

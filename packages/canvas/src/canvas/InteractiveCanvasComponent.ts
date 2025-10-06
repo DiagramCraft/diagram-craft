@@ -105,7 +105,7 @@ export class InteractiveCanvasComponent extends BaseCanvasComponent<InteractiveC
 
     this.onEventRedraw(diagram, 'elementAdd');
     this.onEventRedraw(diagram, 'elementRemove');
-    this.onEventRedraw(diagram, 'change');
+    this.onEventRedraw(diagram, 'diagramChange');
 
     createUpdateOnViewboxChangeEffect(() => this.svgRef, viewbox, diagram);
 

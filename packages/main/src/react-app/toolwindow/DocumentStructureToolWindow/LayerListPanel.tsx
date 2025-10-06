@@ -334,7 +334,7 @@ export const LayerListPanel = () => {
     )
   );
 
-  useEventListener(diagram, 'change', redraw);
+  useEventListener(diagram, 'diagramChange', redraw);
 
   useEventListener(diagram.layers, 'layerAdded', redraw);
   useEventListener(diagram.layers, 'layerUpdated', redraw);

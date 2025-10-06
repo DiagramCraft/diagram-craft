@@ -250,7 +250,7 @@ export class UnitOfWork {
     this.processEvents(silent);
 
     if (this.#shouldUpdateDiagram) {
-      this.diagram.emit('change', { diagram: this.diagram });
+      this.diagram.emit('diagramChange', { diagram: this.diagram });
     }
 
     registry.unregister(this);
@@ -324,7 +324,7 @@ export class UnitOfWork {
     this.#elementsToUpdate.forEach(handle('update'));
     this.#elementsToAdd.forEach(handle('add'));
 
-    this.diagram.emit('uowCommit', {
+    this.diagram.emit('elementBatchChange', {
       removed: [...this.#elementsToRemove.values()].filter(
         e => e.trackableType === 'element'
       ) as DiagramElement[],

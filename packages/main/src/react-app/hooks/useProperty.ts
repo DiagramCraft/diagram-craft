@@ -27,7 +27,7 @@ export const useDiagramProperty: PropertyHook<Diagram, DiagramProps> = makePrope
   diagram => diagram.props,
   (diagram, callback) => diagram.updateProps(callback),
   (diagram, handler) => {
-    useEventListener(diagram, 'change', handler);
+    useEventListener(diagram, 'diagramChange', handler);
   },
   {
     onAfterSet: (diagram, path, oldValue, newValue) => {

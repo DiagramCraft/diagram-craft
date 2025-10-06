@@ -171,9 +171,9 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
 
     createEffect(() => {
       const commitCb = (e: { updated: DiagramElement[] }) => this.redrawElements(e.updated);
-      diagram.on('uowCommit', commitCb);
+      diagram.on('elementBatchChange', commitCb);
       return () => {
-        diagram.off('uowCommit', commitCb);
+        diagram.off('elementBatchChange', commitCb);
       };
     }, [diagram]);
 
@@ -221,7 +221,7 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
 
     this.onEventRedraw(diagram, 'elementAdd');
     this.onEventRedraw(diagram, 'elementRemove');
-    this.onEventRedraw(diagram, 'change');
+    this.onEventRedraw(diagram, 'diagramChange');
     this.onEventRedraw(diagram.layers, 'layerStructureChange');
     this.onEventRedraw(diagram.document.styles, 'stylesheetUpdated');
 

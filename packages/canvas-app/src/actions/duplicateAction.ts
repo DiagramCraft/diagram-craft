@@ -64,7 +64,7 @@ export class DuplicateAction extends AbstractSelectionAction {
       ...super.getCriteria(context),
       ActionCriteria.EventTriggered(
         context.model.activeDiagram,
-        'change',
+        'diagramChange',
         () => context.model.activeDiagram.activeLayer.type === 'regular'
       )
     ];

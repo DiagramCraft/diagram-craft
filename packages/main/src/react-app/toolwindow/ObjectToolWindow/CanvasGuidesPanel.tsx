@@ -97,7 +97,7 @@ export const CanvasGuidesPanel = (props: Props) => {
   const redraw = useRedraw();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  useEventListener(diagram, 'change', redraw);
+  useEventListener(diagram, 'diagramChange', redraw);
 
   const addGuide = () => {
     const existingGuides = [...diagram.guides];

@@ -51,10 +51,9 @@ export function* diagramIterator(
 export type Canvas = Omit<Box, 'r'>;
 
 export type DiagramEvents = {
-  /* Diagram props, canvas have changed, or a large restructure of
-   * elements have occurred (e.g. change of stacking order)
+  /* Diagram props, canvas have changed
    */
-  change: { diagram: Diagram };
+  diagramChange: { diagram: Diagram };
 
   /* A single element has changed (e.g. moved, resized, etc) */
   elementChange: { element: DiagramElement; silent?: boolean };
@@ -68,8 +67,15 @@ export type DiagramEvents = {
   /* An element has highlights changed */
   elementHighlighted: { element: DiagramElement };
 
-  /* A unit of work has been commited - useful for batch operations */
-  uowCommit: { removed: DiagramElement[]; added: DiagramElement[]; updated: DiagramElement[] };
+  /* A batch operation has completed,
+   * This event is triggered in *addition* to the elementChange event
+   * for each element that has changed.
+   */
+  elementBatchChange: {
+    removed: DiagramElement[];
+    added: DiagramElement[];
+    updated: DiagramElement[];
+  };
 };
 
 export const DocumentBuilder = {
@@ -518,7 +524,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   }
 
   emitDiagramChange(type: 'content' | 'metadata') {
-    this.emit('change', { diagram: this });
+    this.emit('diagramChange', { diagram: this });
     if (type === 'metadata') {
       this.document.emit('diagramChanged', { diagram: this });
     }

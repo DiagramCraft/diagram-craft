@@ -31,7 +31,7 @@ export class SelectionRestackAction extends AbstractSelectionAction {
       ...super.getCriteria(context),
       ActionCriteria.EventTriggered(
         context.model.activeDiagram,
-        'change',
+        'diagramChange',
         () => context.model.activeDiagram.activeLayer instanceof RegularLayer
       )
     ];
