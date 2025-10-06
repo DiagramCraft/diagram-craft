@@ -41,6 +41,8 @@ export type DiagramElementCRDT = {
   parentId: string;
 };
 
+type CacheKeys = 'name' | 'props.forEditing' | 'props.forRendering' | string;
+
 export abstract class DiagramElement implements ElementInterface, AttachmentConsumer {
   readonly trackableType = 'element';
 
@@ -52,7 +54,7 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
   protected _activeDiagram: Diagram;
 
   // The cache is created lazily for performance reasons
-  private _cache: Map<string, unknown> | undefined = undefined;
+  private _cache: Map<CacheKeys, unknown> | undefined = undefined;
 
   // Shared properties
   protected readonly _metadata: CRDTObject<ElementMetadata>;
@@ -270,7 +272,7 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
 
   get cache() {
     if (!this._cache) {
-      this._cache = new Map<string, unknown>();
+      this._cache = new Map<CacheKeys, unknown>();
     }
     return this._cache;
   }
