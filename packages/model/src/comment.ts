@@ -235,5 +235,6 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> {
 
     comment.element.clearCache();
     this.diagram.emit('elementChange', { element: comment.element });
+    this.diagram.emit('elementBatchChange', { updated: [comment.element], removed: [], added: [] });
   }
 }
