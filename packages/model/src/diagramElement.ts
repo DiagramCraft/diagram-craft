@@ -380,9 +380,8 @@ export const getDiagramElementPath = (element: DiagramElement): DiagramElement[]
   return dest;
 };
 
-// TODO: This can be optimized to avoid building the full path in case
-//       the element is a root node
 export const getTopMostNode = (element: DiagramElement): DiagramElement => {
+  if (element.parent === undefined) return element;
   const path = getDiagramElementPath(element);
   return path.length > 0 ? path[path.length - 1]! : element;
 };
