@@ -296,26 +296,6 @@ export class DiagramStyles extends EventEmitter<DiagramStylesEvents> {
         }
       });
     }
-
-    this.on('stylesheetUpdated', s => {
-      const id = s.stylesheet.id;
-
-      for (const diagram of this.document.diagramIterator({ nest: true })) {
-        const elements = new Set<DiagramElement>();
-        for (const el of diagram.allElements()) {
-          if (el.metadata.style === id) {
-            elements.add(el);
-          } else if (isNode(el) && el.metadata.textStyle === id) {
-            elements.add(el);
-          }
-        }
-        elements.forEach(e => {
-          e.clearCache();
-          e.diagram.emit('elementChange', { element: e });
-        });
-        diagram.emit('elementBatchChange', { added: [], removed: [], updated: [...elements] });
-      }
-    });
   }
 
   get nodeStyles(): Stylesheet<'node'>[] {

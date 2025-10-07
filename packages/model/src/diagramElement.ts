@@ -387,6 +387,45 @@ export const getTopMostNode = (element: DiagramElement): DiagramElement => {
   return path.length > 0 ? path[path.length - 1]! : element;
 };
 
+export const bindElementListeners = (diagram: Diagram) => {
+  /* On comment change ----------------------------------------------- */
+  const commentListener = (elementId: string | undefined) => {
+    if (!elementId) return;
+    const element = diagram.lookup(elementId);
+    if (!element) return;
+
+    element.clearCache();
+    diagram.emit('elementChange', { element });
+    diagram.emit('elementBatchChange', { updated: [element], removed: [], added: [] });
+  };
+
+  diagram.commentManager.on('commentUpdated', c => commentListener(c.comment.element?.id));
+  diagram.commentManager.on('commentRemoved', c => commentListener(c.comment.elementId));
+  diagram.commentManager.on('commentAdded', c => commentListener(c.comment.element?.id));
+
+  /* On stylesheet change -------------------------------------------- */
+  diagram.document.styles.on('stylesheetUpdated', s => {
+    const id = s.stylesheet.id;
+
+    const elements = new Set<DiagramElement>();
+    for (const el of diagram.allElements()) {
+      if (el.metadata.style === id || (isNode(el) && el.metadata.textStyle === id)) {
+        elements.add(el);
+      }
+    }
+    elements.forEach(e => {
+      e.clearCache();
+      e.diagram.emit('elementChange', { element: e });
+    });
+    diagram.emit('elementBatchChange', { added: [], removed: [], updated: [...elements] });
+  });
+
+  /* On layer change ------------------------------------------------- */
+  diagram.layers.on('layerStructureChange', () => {
+    diagram.allElements().forEach(e => e.clearCache());
+  });
+};
+
 export const isNode = (e: DiagramElement | undefined): e is DiagramNode => !!e && e.type === 'node';
 export const isEdge = (e: DiagramElement | undefined): e is DiagramEdge => !!e && e.type === 'edge';
 

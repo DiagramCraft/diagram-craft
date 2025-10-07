@@ -115,8 +115,6 @@ export class LayerManager
         this.active = firstRegularLayer;
       }
     });
-
-    this.on('layerStructureChange', () => clearCacheForDiagram(diagram));
   }
 
   isAbove(a: DiagramElement, b: DiagramElement) {
@@ -238,7 +236,3 @@ export class LayerManager
     return this.#layers.values.flatMap(e => e.getAttachmentsInUse());
   }
 }
-
-export const clearCacheForDiagram = (diagram: Diagram) => {
-  diagram.allElements().forEach(e => e.clearCache());
-};

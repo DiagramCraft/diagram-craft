@@ -6,7 +6,7 @@ import { UndoManager } from './undoManager';
 import { SnapManager } from './snap/snapManager';
 import { SnapManagerConfig } from './snap/snapManagerConfig';
 import { UnitOfWork } from './unitOfWork';
-import { DiagramElement, isEdge, isNode } from './diagramElement';
+import { bindElementListeners, DiagramElement, isEdge, isNode } from './diagramElement';
 import type { DiagramDocument } from './diagramDocument';
 import { Box } from '@diagram-craft/geometry/box';
 import { Transform } from '@diagram-craft/geometry/transform';
@@ -240,6 +240,8 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
     // TODO: Is this still needed?
     //this.on('change', () => clearCacheForDiagram(this));
+
+    bindElementListeners(this);
   }
 
   get id() {

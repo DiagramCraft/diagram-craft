@@ -118,24 +118,15 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> {
   ) {
     super();
     this.commentsMap.on('remoteDelete', p => {
-      const comment = this.getComment(p.key);
-
-      if (comment) {
-        this.updateCommentElementConnection(comment);
-      }
       this.emit('commentRemoved', { comment: p.value });
     });
     this.commentsMap.on('remoteInsert', p => {
       const comment = this.getComment(p.key)!;
-
-      this.updateCommentElementConnection(comment);
       this.emit('commentAdded', { comment: comment });
     });
     this.commentsMap.on('remoteUpdate', p => {
       const comment = this.getComment(p.key)!;
-
-      this.updateCommentElementConnection(comment);
-      this.emit('commentUpdated', { comment: this.getComment(p.key)! });
+      this.emit('commentUpdated', { comment: comment });
     });
   }
 
@@ -157,7 +148,6 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> {
     const serialized = comment.serialize();
     this.commentsMap.set(comment.id, serialized);
 
-    this.updateCommentElementConnection(comment);
     this.emit('commentAdded', { comment });
   }
 
@@ -168,7 +158,6 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> {
       const serialized = comment.serialize();
       this.commentsMap.set(comment.id, serialized);
 
-      this.updateCommentElementConnection(comment);
       this.emit('commentUpdated', { comment });
     }
   }
@@ -194,7 +183,6 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> {
     // Then delete the comment itself
     this.commentsMap.delete(commentId);
 
-    this.updateCommentElementConnection(comment);
     this.emit('commentRemoved', { comment: comment.serialize() });
   }
 
@@ -228,13 +216,5 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> {
 
     addToThread(current);
     return thread;
-  }
-
-  private updateCommentElementConnection(comment: Comment) {
-    if (!comment.element) return;
-
-    comment.element.clearCache();
-    this.diagram.emit('elementChange', { element: comment.element });
-    this.diagram.emit('elementBatchChange', { updated: [comment.element], removed: [], added: [] });
   }
 }
