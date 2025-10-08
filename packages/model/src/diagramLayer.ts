@@ -11,15 +11,21 @@ import type { AdjustmentRule } from './diagramLayerRuleTypes';
 import type { MappedCRDTOrderedMapMapType } from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import { watch } from '@diagram-craft/utils/watchableValue';
 import { CRDTProp } from './collaboration/datatypes/crdtProp';
+import type { ModificationLayer } from './diagramLayerModification';
 
-export type LayerType = 'regular' | 'rule' | 'reference';
+export type LayerType = 'regular' | 'rule' | 'reference' | 'modification';
 export type StackPosition = { element: DiagramElement; idx: number };
 
 export function isReferenceLayer(l: Layer): l is ReferenceLayer {
   return l.type === 'reference';
 }
 
-export abstract class Layer<T extends RegularLayer | RuleLayer = RegularLayer | RuleLayer>
+export abstract class Layer<
+    T extends RegularLayer | RuleLayer | ModificationLayer =
+      | RegularLayer
+      | RuleLayer
+      | ModificationLayer
+  >
   implements UOWTrackable<LayerSnapshot>, AttachmentConsumer
 {
   #locked = false;
