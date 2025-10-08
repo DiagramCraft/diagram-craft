@@ -11,6 +11,7 @@ import { DEFAULT_EDGE_STYLES, DEFAULT_NODE_STYLES, DEFAULT_TEXT_STYLES } from '.
 import { MappedCRDTMap } from './collaboration/datatypes/mapped/mappedCrdtMap';
 import { type CRDTMapper } from './collaboration/datatypes/mapped/types';
 import { watch } from '@diagram-craft/utils/watchableValue';
+import { EventEmitter } from '@diagram-craft/utils/event';
 
 export type StylesheetType = 'node' | 'edge' | 'text';
 
@@ -57,20 +58,22 @@ export class Stylesheet<T extends StylesheetType, P = TypeMap[T]>
     return this.crdt.get('props') as P;
   }
 
-  setProps(props: Partial<P>, _manager: DiagramStyles, uow: UnitOfWork): void {
+  setProps(props: Partial<P>, manager: DiagramStyles, uow: UnitOfWork): void {
     uow.snapshot(this);
     this.crdt.set('props', this.cleanProps(props) as NodeProps | EdgeProps);
     uow.updateElement(this);
+    manager.emit('stylesheetUpdated', { stylesheet: this });
   }
 
   get name() {
     return this.crdt.get('name')!;
   }
 
-  setName(name: string, _manager: DiagramStyles, uow: UnitOfWork) {
+  setName(name: string, manager: DiagramStyles, uow: UnitOfWork) {
     uow.snapshot(this);
     this.crdt.set('name', name);
     uow.updateElement(this);
+    manager.emit('stylesheetUpdated', { stylesheet: this });
   }
 
   invalidate(_uow: UnitOfWork): void {
@@ -216,17 +219,29 @@ declare global {
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: false positive
-const mapper: CRDTMapper<Stylesheet<any>, CRDTMap<StylesheetSnapshot>> = {
+const mapper: (
+  d: DiagramStyles
+) => CRDTMapper<Stylesheet<any>, CRDTMap<StylesheetSnapshot>> = d => ({
   fromCRDT<T extends StylesheetType>(e: CRDTMap<StylesheetSnapshot>): Stylesheet<T> {
-    return new Stylesheet<T>(e);
+    const s = new Stylesheet<T>(e);
+    s.crdt.on('remoteUpdate', _e => {
+      d.emit('stylesheetUpdated', { stylesheet: s });
+    });
+    return s;
   },
 
   toCRDT<T extends StylesheetType>(e: Stylesheet<T>): CRDTMap<StylesheetSnapshot> {
     return e.crdt;
   }
+});
+
+export type DiagramStylesEvents = {
+  stylesheetAdded: { stylesheet: Stylesheet<StylesheetType> };
+  stylesheetUpdated: { stylesheet: Stylesheet<StylesheetType> };
+  stylesheetRemoved: { stylesheet: string };
 };
 
-export class DiagramStyles {
+export class DiagramStyles extends EventEmitter<DiagramStylesEvents> {
   #textStyles: MappedCRDTMap<Stylesheet<'text'>, StylesheetSnapshot>;
   #nodeStyles: MappedCRDTMap<Stylesheet<'node'>, StylesheetSnapshot>;
   #edgeStyles: MappedCRDTMap<Stylesheet<'edge'>, StylesheetSnapshot>;
@@ -240,9 +255,23 @@ export class DiagramStyles {
     private readonly document: DiagramDocument,
     addDefaultStyles: boolean
   ) {
-    this.#textStyles = new MappedCRDTMap(watch(crdt.getMap('styles.text')), mapper);
-    this.#nodeStyles = new MappedCRDTMap(watch(crdt.getMap('styles.node')), mapper);
-    this.#edgeStyles = new MappedCRDTMap(watch(crdt.getMap('styles.edge')), mapper);
+    super();
+
+    this.#textStyles = new MappedCRDTMap(watch(crdt.getMap('styles.text')), mapper(this), {
+      onRemoteChange: e => this.emit('stylesheetUpdated', { stylesheet: e }),
+      onRemoteAdd: e => this.emit('stylesheetAdded', { stylesheet: e }),
+      onRemoteRemove: e => this.emit('stylesheetRemoved', { stylesheet: e })
+    });
+    this.#nodeStyles = new MappedCRDTMap(watch(crdt.getMap('styles.node')), mapper(this), {
+      onRemoteChange: e => this.emit('stylesheetUpdated', { stylesheet: e }),
+      onRemoteAdd: e => this.emit('stylesheetAdded', { stylesheet: e }),
+      onRemoteRemove: e => this.emit('stylesheetRemoved', { stylesheet: e })
+    });
+    this.#edgeStyles = new MappedCRDTMap(watch(crdt.getMap('styles.edge')), mapper(this), {
+      onRemoteChange: e => this.emit('stylesheetUpdated', { stylesheet: e }),
+      onRemoteAdd: e => this.emit('stylesheetAdded', { stylesheet: e }),
+      onRemoteRemove: e => this.emit('stylesheetRemoved', { stylesheet: e })
+    });
 
     const hasNoTextStyles = this.#textStyles.size === 0;
     const hasNoNodeStyles = this.#nodeStyles.size === 0;
@@ -394,6 +423,8 @@ export class DiagramStyles {
         this.#edgeStyles.remove(id);
       }
 
+      this.emit('stylesheetRemoved', { stylesheet: stylesheet.id });
+
       // TODO: This can fail in case we delete the last stylesheet
       if (stylesheet.type === 'node') {
         this.activeNodeStylesheet = this.getNodeStyle(Array.from(this.#nodeStyles.keys)[0])!;
@@ -487,6 +518,7 @@ export class DiagramStyles {
         this.#edgeStyles.set(id, stylesheet);
         this.activeEdgeStylesheet = stylesheet;
       }
+      this.emit('stylesheetAdded', { stylesheet });
     });
   }
 }

@@ -13,7 +13,7 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
   const diagram = useDiagram();
   const layers = diagram.layers.all.toReversed();
 
-  useEventListener(diagram, 'change', redraw);
+  useEventListener(diagram, 'diagramChange', redraw);
 
   const isSingleElementInTableRow =
     diagram.selectionState.elements.length === 1 &&

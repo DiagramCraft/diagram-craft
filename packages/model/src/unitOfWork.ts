@@ -3,8 +3,7 @@ import { assert } from '@diagram-craft/utils/assert';
 import { SerializedEdge, SerializedNode } from './serialization/types';
 import type { Stylesheet, StylesheetType } from './diagramStyles';
 import type { Layer, LayerType } from './diagramLayer';
-import type { Diagram, DiagramEvents } from './diagram';
-import { EventKey } from '@diagram-craft/utils/event';
+import type { Diagram } from './diagram';
 import type { AdjustmentRule } from './diagramLayerRuleTypes';
 import type { LayerManager } from './diagramLayerManager';
 import { newid } from '@diagram-craft/utils/id';
@@ -251,7 +250,7 @@ export class UnitOfWork {
     this.processEvents(silent);
 
     if (this.#shouldUpdateDiagram) {
-      this.diagram.emit('change', { diagram: this.diagram });
+      this.diagram.emit('diagramChange', { diagram: this.diagram });
     }
 
     registry.unregister(this);
@@ -271,24 +270,61 @@ export class UnitOfWork {
       this.#elementsToAdd.forEach(e => e.invalidate(this));
     }
 
-    const handle = (s: EventKey<DiagramEvents>) => (e: Trackable) => {
-      if (e.trackableType === 'layer' || e.trackableType === 'layerManager') {
-        this.#shouldUpdateDiagram = true;
+    const handle = (s: 'add' | 'remove' | 'update') => (e: Trackable) => {
+      if (e.trackableType === 'layerManager') {
+        this.diagram.layers.emit('layerStructureChange', {});
+      } else if (e.trackableType === 'layer') {
+        switch (s) {
+          case 'add':
+            this.diagram.layers.emit('layerAdded', { layer: e as Layer });
+            break;
+          case 'update':
+            this.diagram.layers.emit('layerUpdated', { layer: e as Layer });
+            break;
+          case 'remove':
+            this.diagram.layers.emit('layerRemoved', { layer: e as Layer });
+            break;
+        }
       } else if (e.trackableType === 'stylesheet') {
-        this.#shouldUpdateDiagram = true;
+        switch (s) {
+          case 'add':
+            this.diagram.document.styles.emit('stylesheetAdded', {
+              stylesheet: e as Stylesheet<StylesheetType>
+            });
+            break;
+          case 'update':
+            this.diagram.document.styles.emit('stylesheetUpdated', {
+              stylesheet: e as Stylesheet<StylesheetType>
+            });
+            break;
+          case 'remove':
+            this.diagram.document.styles.emit('stylesheetRemoved', {
+              stylesheet: e.id
+            });
+            break;
+        }
       } else {
-        //if (e.type === 'node' && (e as DiagramNode).isLabelNode()) return;
-        this.diagram.emit(s, { element: e as DiagramElement, silent });
+        switch (s) {
+          case 'add':
+            this.diagram.emit('elementAdd', { element: e as DiagramElement });
+            break;
+          case 'update':
+            this.diagram.emit('elementChange', { element: e as DiagramElement, silent });
+            break;
+          case 'remove':
+            this.diagram.emit('elementRemove', { element: e as DiagramElement });
+            break;
+        }
       }
     };
 
     // TODO: Need to think about the order here a bit better to optimize the number of events
     //       ... can be only CHANGE, ADD, REMOVE, ADD_CHANGE
-    this.#elementsToRemove.forEach(handle('elementRemove'));
-    this.#elementsToUpdate.forEach(handle('elementChange'));
-    this.#elementsToAdd.forEach(handle('elementAdd'));
+    this.#elementsToRemove.forEach(handle('remove'));
+    this.#elementsToUpdate.forEach(handle('update'));
+    this.#elementsToAdd.forEach(handle('add'));
 
-    this.diagram.emit('uowCommit', {
+    this.diagram.emit('elementBatchChange', {
       removed: [...this.#elementsToRemove.values()].filter(
         e => e.trackableType === 'element'
       ) as DiagramElement[],

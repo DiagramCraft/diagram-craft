@@ -83,7 +83,7 @@ export const ObjectToolWindow = () => {
   useEffect(callback, [diagram.selectionState]);
 
   // To update overrides in style panel as rule layers are toggled
-  useEventListener(diagram, 'change', redraw);
+  useEventListener(diagram, 'diagramChange', redraw);
 
   const tabs = TABS[type];
 

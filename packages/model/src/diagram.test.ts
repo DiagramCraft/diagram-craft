@@ -27,8 +27,8 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       // Setup
       const { doc1, doc2 } = standardTestModel(backend);
       const diagramChange = [vi.fn(), vi.fn()];
-      doc1.diagrams[0]!.on('change', diagramChange[0]!);
-      doc2?.diagrams[0]?.on?.('change', diagramChange[1]!);
+      doc1.diagrams[0]!.on('diagramChange', diagramChange[0]!);
+      doc2?.diagrams[0]?.on?.('diagramChange', diagramChange[1]!);
 
       const documentDiagramChange = [vi.fn(), vi.fn()];
       doc1.on('diagramChanged', documentDiagramChange[0]!);
@@ -64,8 +64,8 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       const { doc1, doc2 } = standardTestModel(backend);
 
       const diagramChange = [vi.fn(), vi.fn()];
-      doc1.diagrams[0]!.on('change', diagramChange[0]!);
-      doc2?.diagrams[0]?.on?.('change', diagramChange[1]!);
+      doc1.diagrams[0]!.on('diagramChange', diagramChange[0]!);
+      doc2?.diagrams[0]?.on?.('diagramChange', diagramChange[1]!);
 
       const documentDiagramChange = [vi.fn(), vi.fn()];
       doc1.on('diagramChanged', documentDiagramChange[0]!);
@@ -120,8 +120,8 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       const { doc1, doc2 } = standardTestModel(backend);
 
       const diagramChange = [vi.fn(), vi.fn()];
-      doc1.diagrams[0]!.on('change', diagramChange[0]!);
-      doc2?.diagrams[0]?.on?.('change', diagramChange[1]!);
+      doc1.diagrams[0]!.on('diagramChange', diagramChange[0]!);
+      doc2?.diagrams[0]?.on?.('diagramChange', diagramChange[1]!);
 
       const documentDiagramChange = [vi.fn(), vi.fn()];
       doc1.on('diagramChanged', documentDiagramChange[0]!);
@@ -225,8 +225,8 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       const { doc1, doc2 } = standardTestModel(backend);
 
       const diagramChange = [vi.fn(), vi.fn()];
-      doc1.diagrams[0]!.on('change', diagramChange[0]!);
-      doc2?.diagrams[0]?.on?.('change', diagramChange[1]!);
+      doc1.diagrams[0]!.on('diagramChange', diagramChange[0]!);
+      doc2?.diagrams[0]?.on?.('diagramChange', diagramChange[1]!);
 
       const diagram = doc1.diagrams[0]!;
 
@@ -268,8 +268,8 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       const guide = diagram.addGuide({ type: 'horizontal', position: 100, color: 'blue' });
 
       const diagramChange = [vi.fn(), vi.fn()];
-      doc1.diagrams[0]!.on('change', diagramChange[0]!);
-      doc2?.diagrams[0]?.on?.('change', diagramChange[1]!);
+      doc1.diagrams[0]!.on('diagramChange', diagramChange[0]!);
+      doc2?.diagrams[0]?.on?.('diagramChange', diagramChange[1]!);
 
       // Act
       diagram.removeGuide(guide.id);
@@ -291,8 +291,8 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       const guide = diagram.addGuide({ type: 'vertical', position: 150 });
 
       const diagramChange = [vi.fn(), vi.fn()];
-      doc1.diagrams[0]!.on('change', diagramChange[0]!);
-      doc2?.diagrams[0]?.on?.('change', diagramChange[1]!);
+      doc1.diagrams[0]!.on('diagramChange', diagramChange[0]!);
+      doc2?.diagrams[0]?.on?.('diagramChange', diagramChange[1]!);
 
       // Act
       diagram.updateGuide(guide.id, { position: 300, color: 'green' });

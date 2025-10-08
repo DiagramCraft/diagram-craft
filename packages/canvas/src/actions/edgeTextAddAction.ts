@@ -25,7 +25,7 @@ export class EdgeTextAddAction extends AbstractAction<EdgeTextAddActionArg> {
   getCriteria(context: ActionContext) {
     return ActionCriteria.EventTriggered(
       context.model.activeDiagram,
-      'change',
+      'diagramChange',
       () => context.model.activeDiagram.activeLayer.type === 'regular'
     );
   }

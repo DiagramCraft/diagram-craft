@@ -281,13 +281,13 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       layer1.addElement(element, UnitOfWork.immediate(d1));
 
       // Put something in cache
-      element.cache.set('test-key', 'test-value');
-      expect(element.cache.get('test-key')).toBe('test-value');
+      element.cache.set('name', 'test-value');
+      expect(element.cache.get('name')).toBe('test-value');
 
       // Setting tags should clear the cache
       element.setTags(['test-tag'], UnitOfWork.immediate(d1));
 
-      expect(element.cache.get('test-key')).toBeUndefined();
+      expect(element.cache.get('name')).toBeUndefined();
     });
 
     it('should handle setting empty tags array', () => {

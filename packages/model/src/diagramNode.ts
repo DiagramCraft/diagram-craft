@@ -112,7 +112,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
         this._children.clear();
         getRemoteUnitOfWork(this.diagram).updateElement(this);
 
-        this._cache?.clear();
+        this.clearCache();
 
         const uow = new UnitOfWork(this.diagram, false, true);
         this.invalidateAnchors(uow);
@@ -127,7 +127,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     );
     this.#text = new CRDTObject<NodeTexts>(textMap, () => {
       getRemoteUnitOfWork(this.diagram).updateElement(this);
-      this._cache?.clear();
+      this.clearCache();
     });
     this.#text.init({ text: '' });
 
@@ -137,7 +137,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     );
     this.#props = new CRDTObject<NodeProps>(propsMap, () => {
       getRemoteUnitOfWork(this.diagram).updateElement(this);
-      this._cache?.clear();
+      this.clearCache();
     });
 
     this.#anchors = new CRDTProp<DiagramNodeCRDT, 'anchors'>(nodeCrdt, 'anchors', {
@@ -205,7 +205,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     metadata.textStyle ??= DefaultStyles.text.default;
     node._metadata.set(metadata);
 
-    node._cache?.clear();
+    node.clearCache();
   }
 
   getDefinition() {
@@ -222,7 +222,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     this._children.clear();
     uow.updateElement(this);
 
-    this._cache?.clear();
+    this.clearCache();
     this.invalidateAnchors(uow);
     this.getDefinition().onPropUpdate(this, uow);
   }
@@ -240,7 +240,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       [id === '1' ? 'text' : id]: text
     });
     uow.updateElement(this);
-    this._cache?.clear();
+    this.clearCache();
   }
 
   get texts() {
@@ -444,7 +444,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       this.#props.update(callback);
       uow.updateElement(this);
 
-      this._cache?.clear();
+      this.clearCache();
       this.invalidateAnchors(uow);
       this.getDefinition().onPropUpdate(this, uow);
     });
@@ -477,7 +477,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   }
 
   get name() {
-    if (this._cache?.has('name')) return this._cache.get('name') as string;
+    if (this.cache.has('name')) return this.cache.get('name') as string;
 
     if (!isEmptyString(this.metadata.name)) {
       this.cache.set('name', this.metadata.name!);
@@ -609,7 +609,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     }
 
     uow.updateElement(this);
-    this._cache?.clear();
+    this.clearCache();
   }
 
   convertToPath(uow: UnitOfWork) {

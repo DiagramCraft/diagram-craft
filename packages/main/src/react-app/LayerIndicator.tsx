@@ -14,7 +14,7 @@ export const LayerIndicator = () => {
   const application = useApplication();
   const actions = application.actions;
 
-  useEventListener(diagram, 'change', redraw);
+  useEventListener(diagram, 'diagramChange', redraw);
 
   return (
     <DropdownMenu.Root>

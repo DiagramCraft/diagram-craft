@@ -10,8 +10,8 @@ export const ObjectDataToolWindow = () => {
   const redraw = useRedraw();
 
   useEventListener($d.selectionState, 'change', redraw);
-  useEventListener($d, 'change', redraw);
-  useEventListener($d, 'uowCommit', redraw);
+  useEventListener($d, 'diagramChange', redraw);
+  useEventListener($d, 'elementBatchChange', redraw);
 
   return (
     <ToolWindow.Root id={'object-data'} defaultTab={'name'}>

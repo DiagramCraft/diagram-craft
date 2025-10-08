@@ -41,6 +41,8 @@ export type DiagramElementCRDT = {
   parentId: string;
 };
 
+type CacheKeys = 'name' | 'props.forEditing' | 'props.forRendering' | string;
+
 export abstract class DiagramElement implements ElementInterface, AttachmentConsumer {
   readonly trackableType = 'element';
 
@@ -51,7 +53,8 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
   protected _layer: RegularLayer;
   protected _activeDiagram: Diagram;
 
-  protected _cache: Map<string, unknown> | undefined = undefined;
+  // The cache is created lazily for performance reasons
+  private _cache: Map<CacheKeys, unknown> | undefined = undefined;
 
   // Shared properties
   protected readonly _metadata: CRDTObject<ElementMetadata>;
@@ -127,14 +130,8 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
     this._metadata = new CRDTObject<ElementMetadata>(metadataMap, () => {
       this.invalidate(UnitOfWork.immediate(this._diagram));
       this._diagram.emit('elementChange', { element: this });
-      this._cache?.clear();
+      this.clearCache();
     });
-  }
-
-  commentsUpdated(uow: UnitOfWork) {
-    uow.updateElement(this);
-    this._diagram.emit('elementChange', { element: this });
-    this._cache?.clear();
   }
 
   abstract getAttachmentsInUse(): Array<string>;
@@ -242,7 +239,7 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
     callback(metadata);
     this._metadata.set(metadata);
     uow.updateElement(this);
-    this._cache?.clear();
+    this.clearCache();
   }
 
   /* Tags ******************************************************************************************************** */
@@ -262,16 +259,20 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
     });
 
     uow.updateElement(this);
-    this._cache?.clear();
+    this.clearCache();
   }
 
   /* Cache *************************************************************************************************** */
 
   get cache() {
     if (!this._cache) {
-      this._cache = new Map<string, unknown>();
+      this._cache = new Map<CacheKeys, unknown>();
     }
     return this._cache;
+  }
+
+  clearCache() {
+    this._cache?.clear();
   }
 
   /* Children ************************************************************************************************ */
@@ -380,8 +381,48 @@ export const getDiagramElementPath = (element: DiagramElement): DiagramElement[]
 };
 
 export const getTopMostNode = (element: DiagramElement): DiagramElement => {
+  if (element.parent === undefined) return element;
   const path = getDiagramElementPath(element);
   return path.length > 0 ? path[path.length - 1]! : element;
+};
+
+export const bindElementListeners = (diagram: Diagram) => {
+  /* On comment change ----------------------------------------------- */
+  const commentListener = (elementId: string | undefined) => {
+    if (!elementId) return;
+    const element = diagram.lookup(elementId);
+    if (!element) return;
+
+    element.clearCache();
+    diagram.emit('elementChange', { element });
+    diagram.emit('elementBatchChange', { updated: [element], removed: [], added: [] });
+  };
+
+  diagram.commentManager.on('commentUpdated', c => commentListener(c.comment.element?.id));
+  diagram.commentManager.on('commentRemoved', c => commentListener(c.comment.elementId));
+  diagram.commentManager.on('commentAdded', c => commentListener(c.comment.element?.id));
+
+  /* On stylesheet change -------------------------------------------- */
+  diagram.document.styles.on('stylesheetUpdated', s => {
+    const id = s.stylesheet.id;
+
+    const elements = new Set<DiagramElement>();
+    for (const el of diagram.allElements()) {
+      if (el.metadata.style === id || (isNode(el) && el.metadata.textStyle === id)) {
+        elements.add(el);
+      }
+    }
+    elements.forEach(e => {
+      e.clearCache();
+      e.diagram.emit('elementChange', { element: e });
+    });
+    diagram.emit('elementBatchChange', { added: [], removed: [], updated: [...elements] });
+  });
+
+  /* On layer change ------------------------------------------------- */
+  diagram.layers.on('layerStructureChange', () => {
+    diagram.allElements().forEach(e => e.clearCache());
+  });
 };
 
 export const isNode = (e: DiagramElement | undefined): e is DiagramNode => !!e && e.type === 'node';

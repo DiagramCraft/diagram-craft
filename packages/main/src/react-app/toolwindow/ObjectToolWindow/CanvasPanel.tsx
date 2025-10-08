@@ -17,7 +17,7 @@ export const CanvasPanel = (props: Props) => {
   const $cfg = useConfiguration();
   const redraw = useRedraw();
 
-  useEventListener($d, 'change', redraw);
+  useEventListener($d, 'diagramChange', redraw);
 
   const bounds = { ...$d.canvas, r: 0 };
 

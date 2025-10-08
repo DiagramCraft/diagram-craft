@@ -40,7 +40,7 @@ export class ClipboardPasteAction extends AbstractAction<BaseActionArgs> {
   layer: RegularLayer | undefined;
 
   getCriteria(context: ActionContext) {
-    return ActionCriteria.EventTriggered(context.model.activeDiagram, 'change', () => {
+    return ActionCriteria.EventTriggered(context.model.activeDiagram, 'diagramChange', () => {
       const activeLayer = context.model.activeDiagram.activeLayer;
       if (activeLayer instanceof RegularLayer) {
         this.layer = activeLayer;

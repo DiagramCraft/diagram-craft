@@ -334,7 +334,13 @@ export const LayerListPanel = () => {
     )
   );
 
-  useEventListener(diagram, 'change', redraw);
+  useEventListener(diagram, 'diagramChange', redraw);
+
+  useEventListener(diagram.layers, 'layerAdded', redraw);
+  useEventListener(diagram.layers, 'layerUpdated', redraw);
+  useEventListener(diagram.layers, 'layerRemoved', redraw);
+  useEventListener(diagram.layers, 'layerStructureChange', redraw);
+
   useEventListener(diagram, 'elementChange', ({ element }) => {
     if (names[element.id] !== element.name) {
       redraw();

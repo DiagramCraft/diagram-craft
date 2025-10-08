@@ -123,7 +123,7 @@ export class GroupAction extends AbstractSelectionAction {
     dest.push(
       ActionCriteria.EventTriggered(
         context.model.activeDiagram,
-        'change',
+        'diagramChange',
         () => context.model.activeDiagram.activeLayer instanceof RegularLayer
       )
     );

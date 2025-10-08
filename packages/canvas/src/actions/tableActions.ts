@@ -255,7 +255,7 @@ export class TableRowMoveAction extends AbstractSelectionAction {
     return [
       ...baseCriteria,
       ActionCriteria.EventTriggered(context.model.activeDiagram.selectionState, 'change', check),
-      ActionCriteria.EventTriggered(context.model.activeDiagram, 'change', check)
+      ActionCriteria.EventTriggered(context.model.activeDiagram, 'diagramChange', check)
     ];
   }
 
@@ -311,7 +311,7 @@ export class TableColumnMoveAction extends AbstractSelectionAction {
     return [
       ...baseCriteria,
       ActionCriteria.EventTriggered(context.model.activeDiagram.selectionState, 'change', check),
-      ActionCriteria.EventTriggered(context.model.activeDiagram, 'change', check)
+      ActionCriteria.EventTriggered(context.model.activeDiagram, 'diagramChange', check)
     ];
   }
 

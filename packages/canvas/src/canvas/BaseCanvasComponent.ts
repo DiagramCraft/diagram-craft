@@ -7,14 +7,14 @@ import {
 } from '@diagram-craft/canvas/component/component';
 import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { Layer } from '@diagram-craft/model/diagramLayer';
-import { Diagram, DiagramEvents } from '@diagram-craft/model/diagram';
+import { Diagram } from '@diagram-craft/model/diagram';
 import { Point } from '@diagram-craft/geometry/point';
 import { Modifiers } from '@diagram-craft/canvas/dragDropManager';
 import { isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import { ShapeEdgeDefinition } from '@diagram-craft/canvas/shape/shapeEdgeDefinition';
 import { NodeComponentProps } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
-import { EventKey } from '@diagram-craft/utils/event';
+import { EventEmitter, EventKey, type EventMap } from '@diagram-craft/utils/event';
 import * as svg from '@diagram-craft/canvas/component/vdom-svg';
 import { Browser } from '@diagram-craft/canvas/browser';
 import * as html from '../component/vdom-html';
@@ -177,14 +177,14 @@ export abstract class BaseCanvasComponent<
     });
   }
 
-  protected onEventRedraw(eventName: EventKey<DiagramEvents>, diagram: Diagram) {
+  protected onEventRedraw<E extends EventMap>(target: EventEmitter<E>, eventName: EventKey<E>) {
     if (!isInComponent()) return;
 
     createEffect(() => {
       const cb = () => this.redraw();
-      diagram.on(eventName, cb);
-      return () => diagram.off(eventName, cb);
-    }, [diagram]);
+      target.on(eventName, cb);
+      return () => target.off(eventName, cb);
+    }, [target]);
   }
 
   protected svgFilterDefs() {

@@ -13,9 +13,8 @@ import {
 } from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import { AttachmentConsumer } from './attachment';
 import { RegularLayer } from './diagramLayerRegular';
-import { DiagramNode } from './diagramNode';
-import { DiagramEdge } from './diagramEdge';
 import { watch } from '@diagram-craft/utils/watchableValue';
+import { EventEmitter } from '@diagram-craft/utils/event';
 
 export type LayerManagerCRDT = {
   // TODO: Should we move visibility to be a property of the layer instead
@@ -57,7 +56,17 @@ export const makeLayerMapper = (diagram: Diagram): CRDTMapper<Layer, CRDTMap<Lay
   };
 };
 
-export class LayerManager implements UOWTrackable<LayersSnapshot>, AttachmentConsumer {
+export type LayerManagerEvents = {
+  layerAdded: { layer: Layer };
+  layerUpdated: { layer: Layer };
+  layerRemoved: { layer: Layer };
+  layerStructureChange: {};
+};
+
+export class LayerManager
+  extends EventEmitter<LayerManagerEvents>
+  implements UOWTrackable<LayersSnapshot>, AttachmentConsumer
+{
   readonly id = 'layers';
   readonly trackableType = 'layerManager';
 
@@ -72,14 +81,23 @@ export class LayerManager implements UOWTrackable<LayersSnapshot>, AttachmentCon
     readonly diagram: Diagram,
     protected readonly crdt: CRDTMap<LayerManagerCRDT>
   ) {
+    super();
     this.#layers = new MappedCRDTOrderedMap(
       watch(crdt.get('layers', () => diagram.document.root.factory.makeMap())!),
-      makeLayerMapper(diagram)
+      makeLayerMapper(diagram),
+      {
+        onRemoteAdd: layer => this.emit('layerAdded', { layer }),
+        onRemoteRemove: layer => this.emit('layerRemoved', { layer }),
+        onRemoteChange: layer => this.emit('layerUpdated', { layer })
+      }
     );
 
     this.#activeLayer = undefined;
 
     this.#visibleLayers = crdt.get('visibleLayers', () => diagram.document.root.factory.makeMap())!;
+    this.#visibleLayers.on('remoteUpdate', () => this.emit('layerStructureChange', {}));
+    this.#visibleLayers.on('remoteInsert', () => this.emit('layerStructureChange', {}));
+    this.#visibleLayers.on('remoteDelete', () => this.emit('layerStructureChange', {}));
 
     this.diagram.selectionState.on('add', () => {
       const firstRegularLayer = this.diagram.selectionState.elements
@@ -143,13 +161,14 @@ export class LayerManager implements UOWTrackable<LayersSnapshot>, AttachmentCon
       this.#visibleLayers.set(layer.id, true);
     }
 
-    this.diagram.emit('change', { diagram: this.diagram });
+    this.emit('layerStructureChange', {});
   }
 
   set active(layer: Layer) {
     if (this.#activeLayer === layer) return;
     this.#activeLayer = layer;
-    this.diagram.emit('change', { diagram: this.diagram });
+
+    this.emit('layerStructureChange', {});
   }
 
   get active() {
@@ -170,6 +189,7 @@ export class LayerManager implements UOWTrackable<LayersSnapshot>, AttachmentCon
     this.#visibleLayers.set(layer.id, true);
     this.#activeLayer = layer;
     uow.updateElement(this);
+    uow.addElement(layer);
   }
 
   remove(layer: Layer, uow: UnitOfWork) {
@@ -180,27 +200,11 @@ export class LayerManager implements UOWTrackable<LayersSnapshot>, AttachmentCon
       this.diagram.selectionState.clear();
     }
     uow.updateElement(this);
+    uow.removeElement(layer);
   }
 
   invalidate(_uow: UnitOfWork) {
     // Nothing for now...
-  }
-
-  clearCache() {
-    // Need to handle all referenced layers separately as the edgeLookup and nodeLookup
-    // won't contain these elements
-    for (const l of this.all) {
-      if (l.type === 'reference') {
-        const resolved = l.resolve();
-        if (resolved?.type === 'regular') {
-          for (const e of (resolved as RegularLayer).elements) {
-            if (e instanceof DiagramNode || e instanceof DiagramEdge) {
-              e.cache.clear();
-            }
-          }
-        }
-      }
-    }
   }
 
   snapshot(): LayersSnapshot {

@@ -31,8 +31,8 @@ export const ExtendedDataTab = () => {
   const [editMode, setEditMode] = useState(true);
 
   useEventListener($d.selectionState, 'change', redraw);
-  useEventListener($d, 'change', redraw);
-  useEventListener($d, 'uowCommit', redraw);
+  useEventListener($d, 'diagramChange', redraw);
+  useEventListener($d, 'elementBatchChange', redraw);
 
   const changeCallback = useCallback(
     (

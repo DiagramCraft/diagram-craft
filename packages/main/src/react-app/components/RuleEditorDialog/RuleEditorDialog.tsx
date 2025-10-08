@@ -280,8 +280,6 @@ export const RuleEditorDialog = (props: Props) => {
     setActions(actions);
   }
 
-  console.log(actions);
-
   return (
     <Dialog
       open={props.open}

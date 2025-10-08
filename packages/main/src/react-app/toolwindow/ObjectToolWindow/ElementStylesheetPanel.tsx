@@ -62,7 +62,7 @@ export const ElementStylesheetPanel = (props: Props) => {
   const isText = props.type === 'text';
 
   useEventListener($d.selectionState, 'change', redraw);
-  useEventListener($d, 'change', redraw);
+  useEventListener($d, 'diagramChange', redraw);
 
   const style = useElementMetadata($d, 'style', DefaultStyles.node.default);
   const textStyle = useElementMetadata($d, 'textStyle', DefaultStyles.text.default);

@@ -16,22 +16,21 @@ function isResolvableToRuleLayer(l: Layer): l is Layer<RuleLayer> {
   return true;
 }
 
-
 export type AdjustmentRuleAction = { id: string } & (
   | {
       type: 'set-props';
       props: ElementProps;
-      where?: 'before' | 'after';
+      // where?: 'before' | 'after';
     }
   | {
       type: 'set-stylesheet';
       elementStyle: string;
       textStyle: string;
-      where?: 'before' | 'after';
+      //where?: 'before' | 'after';
     }
   | {
       type: 'hide';
-      hideOrphans?: boolean;
+      //hideOrphans?: boolean;
     }
 );
 
