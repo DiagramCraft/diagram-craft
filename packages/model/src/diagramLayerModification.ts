@@ -2,7 +2,6 @@ import { Layer, type LayerCRDT } from './diagramLayer';
 import { CRDTMap } from './collaboration/crdt';
 import { type Diagram } from './diagram';
 import type { DiagramElement } from './diagramElement';
-import { Array } from 'yjs';
 
 type Modification = {
   id: string;
