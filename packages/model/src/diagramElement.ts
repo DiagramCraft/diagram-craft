@@ -25,6 +25,7 @@ import {
 } from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import { makeElementMapper } from './diagramElementMapper';
 import { MappedCRDTProp } from './collaboration/datatypes/mapped/mappedCrdtProp';
+import type { ModificationLayer } from './diagramLayerModification';
 
 // biome-ignore lint/suspicious/noExplicitAny: false positive
 type Snapshot = any;
@@ -50,7 +51,7 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
   protected readonly _crdt: WatchableValue<CRDTMap<DiagramElementCRDT>>;
 
   protected _diagram: Diagram;
-  protected _layer: RegularLayer;
+  protected _layer: RegularLayer | ModificationLayer;
   protected _activeDiagram: Diagram;
 
   // The cache is created lazily for performance reasons
@@ -68,7 +69,7 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
   protected constructor(
     public readonly type: string,
     public readonly id: string,
-    layer: RegularLayer,
+    layer: RegularLayer | ModificationLayer,
     crdt?: CRDTMap<DiagramElementCRDT>
   ) {
     this._diagram = layer.diagram;
@@ -185,7 +186,7 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
 
   /* Diagram/layer ******************************************************************************************* */
 
-  _setLayer(layer: RegularLayer, diagram: Diagram) {
+  _setLayer(layer: RegularLayer | ModificationLayer, diagram: Diagram) {
     this._layer = layer;
     this._diagram = diagram;
   }

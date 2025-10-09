@@ -7,6 +7,7 @@ import type { Diagram } from './diagram';
 import type { AdjustmentRule } from './diagramLayerRuleTypes';
 import type { LayerManager } from './diagramLayerManager';
 import { newid } from '@diagram-craft/utils/id';
+import type { ModificationCRDT } from './diagramLayerModification';
 
 type ActionCallback = () => void;
 
@@ -38,6 +39,7 @@ export type LayerSnapshot = {
   elements: string[];
   type: LayerType;
   rules?: AdjustmentRule[];
+  modifications?: Array<Pick<ModificationCRDT, 'id' | 'type'> & { elementId?: string }>;
 };
 
 export type DiagramNodeSnapshot = Omit<SerializedNode, 'children'> & {

@@ -188,7 +188,8 @@ export class RuleLayer extends Layer<RuleLayer> {
 
   snapshot(): LayerSnapshot {
     return {
-      ...super.snapshot()
+      ...super.snapshot(),
+      rules: deepClone(this.rules)
     };
   }
 

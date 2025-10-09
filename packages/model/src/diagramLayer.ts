@@ -11,7 +11,7 @@ import type { AdjustmentRule } from './diagramLayerRuleTypes';
 import type { MappedCRDTOrderedMapMapType } from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import { watch } from '@diagram-craft/utils/watchableValue';
 import { CRDTProp } from './collaboration/datatypes/crdtProp';
-import type { ModificationLayer } from './diagramLayerModification';
+import type { ModificationCRDT, ModificationLayer } from './diagramLayerModification';
 
 export type LayerType = 'regular' | 'rule' | 'reference' | 'modification';
 export type StackPosition = { element: DiagramElement; idx: number };
@@ -169,4 +169,7 @@ export type LayerCRDT = {
 
   // Rule layer
   rules: CRDTList<AdjustmentRule>;
+
+  // Modification layer
+  modifications: CRDTMap<MappedCRDTOrderedMapMapType<ModificationCRDT>>;
 };

@@ -39,6 +39,7 @@ import {
 } from './collaboration/datatypes/mapped/mappedCrdtMap';
 import { unique } from '@diagram-craft/utils/array';
 import { makeIsometricTransform } from '@diagram-craft/canvas/effects/isometric';
+import type { ModificationLayer } from './diagramLayerModification';
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;
@@ -86,7 +87,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
   constructor(
     id: string,
-    layer: RegularLayer,
+    layer: RegularLayer | ModificationLayer,
     anchorCache?: ReadonlyArray<Anchor>,
     crdt?: CRDTMap<DiagramElementCRDT>
   ) {
@@ -174,7 +175,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     id: string,
     nodeType: 'group' | string,
     bounds: Box,
-    layer: RegularLayer,
+    layer: RegularLayer | ModificationLayer,
     props: NodePropsForEditing,
     metadata: ElementMetadata,
     text: NodeTexts = { text: '' },
