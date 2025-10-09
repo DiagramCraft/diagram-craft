@@ -8,6 +8,7 @@ import { makeElementMapper } from './diagramElementMapper';
 import { getRemoteUnitOfWork, type LayerSnapshot, UnitOfWork } from './unitOfWork';
 import { assert, mustExist } from '@diagram-craft/utils/assert';
 import { DiagramEdge } from './diagramEdge';
+import type { Adjustment } from './diagramLayerRuleTypes';
 
 type ModificationType = 'add' | 'remove' | 'change';
 const ModificationType = {
@@ -173,6 +174,12 @@ export class ModificationLayer extends Layer<ModificationLayer> {
       uow.updateElement(this.diagram.lookup(id)!);
     }
     uow.updateElement(this);
+  }
+
+  adjustments(): Map<string, Adjustment> {
+    return new Map(
+      Array.from(this.#modifications.values).map(m => [m.id, { props: { hidden: true } }])
+    );
   }
 
   snapshot(): LayerSnapshot {
