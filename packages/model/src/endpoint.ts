@@ -6,9 +6,10 @@ import type {
 import type { DiagramNode } from './diagramNode';
 import { _p, Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
-import { isSerializedEndpointPointInNode, isSerializedEndpointFree } from './serialization/utils';
+import { isSerializedEndpointFree, isSerializedEndpointPointInNode } from './serialization/utils';
 import { getTypedKeys } from '@diagram-craft/utils/object';
 import { assert } from '@diagram-craft/utils/assert';
+import { ElementLookup } from './diagram';
 
 export interface Endpoint {
   readonly position: Point;
@@ -17,11 +18,16 @@ export interface Endpoint {
 }
 
 const Maplike = {
-  get<T, K extends string | number | symbol>(m: Record<K, T> | Map<K, T>, key: K): T | undefined {
-    return m instanceof Map ? m.get(key) : m[key];
+  get(
+    m: Record<string, DiagramNode> | Map<string, DiagramNode> | ElementLookup<DiagramNode>,
+    key: string
+  ): DiagramNode | undefined {
+    return m instanceof Map || m instanceof ElementLookup ? m.get(key) : m[key];
   },
-  keys<T, K extends string | number | symbol>(m: Record<K, T> | Map<K, T>): Array<K> {
-    return m instanceof Map ? Array.from(m.keys()) : getTypedKeys(m);
+  keys(
+    m: Record<string, DiagramNode> | Map<string, DiagramNode> | ElementLookup<DiagramNode>
+  ): Array<string> {
+    return m instanceof Map || m instanceof ElementLookup ? Array.from(m.keys()) : getTypedKeys(m);
   }
 };
 
@@ -49,7 +55,7 @@ export type OffsetType = 'absolute' | 'relative';
 export const Endpoint = {
   deserialize: (
     endpoint: SerializedEndpoint,
-    nodeLookup: Record<string, DiagramNode> | Map<string, DiagramNode>,
+    nodeLookup: ElementLookup<DiagramNode> | Record<string, DiagramNode> | Map<string, DiagramNode>,
     defer = false
   ): Endpoint => {
     if (isSerializedEndpointFree(endpoint)) {

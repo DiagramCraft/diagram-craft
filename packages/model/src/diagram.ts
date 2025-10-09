@@ -114,6 +114,34 @@ const DEFAULT_CANVAS = {
   y: 0
 };
 
+export class ElementLookup<T extends DiagramElement> {
+  private _lookup = new Map<string, T>();
+
+  get(id: string): T | undefined {
+    return this._lookup.get(id);
+  }
+
+  set(id: string, element: T) {
+    this._lookup.set(id, element);
+  }
+
+  delete(id: string) {
+    this._lookup.delete(id);
+  }
+
+  has(id: string) {
+    return this._lookup.has(id);
+  }
+
+  values() {
+    return this._lookup.values();
+  }
+
+  keys() {
+    return this._lookup.keys();
+  }
+}
+
 export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentConsumer {
   // Transient properties
   #document: DiagramDocument | undefined;
@@ -143,8 +171,8 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     'size'
   ]);
   readonly viewBox: Viewbox;
-  readonly nodeLookup = new Map<string, DiagramNode>();
-  readonly edgeLookup = new Map<string, DiagramEdge>();
+  readonly nodeLookup = new ElementLookup<DiagramNode>();
+  readonly edgeLookup = new ElementLookup<DiagramEdge>();
   readonly undoManager = new UndoManager(this);
 
   readonly commentManager: CommentManager;
