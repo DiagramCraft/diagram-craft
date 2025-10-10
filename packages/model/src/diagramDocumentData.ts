@@ -18,7 +18,12 @@ import type { DiagramDocument } from './diagramDocument';
 import { DiagramDocumentDataTemplates } from './diagramDocumentDataTemplates';
 import { UnitOfWork } from './unitOfWork';
 import { deepEquals } from '@diagram-craft/utils/object';
-import { EventEmitter, type EventKey, type EventReceiver } from '@diagram-craft/utils/event';
+import {
+  EventEmitter,
+  type EventKey,
+  type EventReceiver,
+  type EventSubscriptionOpts
+} from '@diagram-craft/utils/event';
 import { CRDTMap, CRDTMapEvents, CRDTRoot } from './collaboration/crdt';
 import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { DefaultDataProvider, DefaultDataProviderId } from './dataProviderDefault';
@@ -460,9 +465,9 @@ export class DataManager extends EventEmitter<DataProviderEventMap> {
   on<K extends EventKey<DataProviderEventMap>>(
     eventName: K,
     fn: EventReceiver<DataProviderEventMap[K]>,
-    id?: string
+    opts?: EventSubscriptionOpts
   ) {
-    this.providers.forEach(p => p.on(eventName, fn, id));
+    this.providers.forEach(p => p.on(eventName, fn, opts));
   }
 
   off<K extends EventKey<DataProviderEventMap>>(

@@ -421,8 +421,21 @@ export const bindElementListeners = (diagram: Diagram) => {
   });
 
   /* On layer change ------------------------------------------------- */
-  diagram.layers.on('layerStructureChange', () => {
-    diagram.allElements().forEach(e => e.clearCache());
+  diagram.layers.on(
+    'layerStructureChange',
+    () => {
+      diagram.allElements().forEach(e => e.clearCache());
+    },
+    {
+      priority: 1000
+    }
+  );
+  // TODO: Ideally we should have this logic in BaseCanvasComponent instead
+  //       ... and not reemit a layerStructureChange event, but rather just redraw in this case
+  diagram.layers.on('layerUpdated', l => {
+    if (l.layer.type === 'rule' || l.layer.type === 'modification') {
+      diagram.layers.emit('layerStructureChange');
+    }
   });
 };
 
