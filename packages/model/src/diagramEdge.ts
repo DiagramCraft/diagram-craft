@@ -28,9 +28,8 @@ import { isEmptyString } from '@diagram-craft/utils/strings';
 import { assert, is, mustExist } from '@diagram-craft/utils/assert';
 import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
-import { getAdjustments } from './diagramLayerRuleTypes';
 import type { RegularLayer } from './diagramLayerRegular';
-import { assertRegularLayer } from './diagramLayerUtils';
+import { assertRegularLayer, getAdjustments } from './diagramLayerUtils';
 import type { Reference, SerializedEndpoint } from './serialization/types';
 import type { CRDTMap, FlatCRDTMap } from './collaboration/crdt';
 import { WatchableValue } from '@diagram-craft/utils/watchableValue';
@@ -42,6 +41,7 @@ import { type CRDTMapper } from './collaboration/datatypes/mapped/types';
 import { CRDTProp } from './collaboration/datatypes/crdtProp';
 import { MappedCRDTProp } from './collaboration/datatypes/mapped/mappedCrdtProp';
 import { CRDTObject } from './collaboration/datatypes/crdtObject';
+import type { ModificationLayer } from './diagramLayerModification';
 
 const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
   endpoint instanceof ConnectedEndpoint;
@@ -125,7 +125,11 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   readonly #end: MappedCRDTProp<DiagramEdgeCRDT, 'end', Endpoint>;
   readonly #props: CRDTObject<EdgeProps>;
 
-  constructor(id: string, layer: RegularLayer, crdt?: CRDTMap<DiagramElementCRDT>) {
+  constructor(
+    id: string,
+    layer: RegularLayer | ModificationLayer,
+    crdt?: CRDTMap<DiagramElementCRDT>
+  ) {
     super('edge', id, layer, crdt);
 
     const edgeCrdt = this._crdt as unknown as WatchableValue<CRDTMap<DiagramEdgeCRDT>>;
@@ -181,7 +185,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     props: EdgePropsForEditing,
     metadata: ElementMetadata,
     midpoints: ReadonlyArray<Waypoint>,
-    layer: RegularLayer
+    layer: RegularLayer | ModificationLayer
   ) {
     const edge = new DiagramEdge(id, layer);
 

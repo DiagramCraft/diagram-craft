@@ -146,6 +146,7 @@ export class RuleLayer extends Layer<RuleLayer> {
   addRule(rule: AdjustmentRule, uow: UnitOfWork) {
     uow.snapshot(this);
     this.#rules.push(rule);
+    this.#cache.clear();
     uow.updateElement(this);
   }
 
@@ -153,28 +154,10 @@ export class RuleLayer extends Layer<RuleLayer> {
     uow.snapshot(this);
     const idx = this.#rules.toArray().findIndex(r => r.id === rule.id);
     this.#rules.delete(idx);
+    this.#cache.clear();
+
     uow.updateElement(this);
   }
-
-  /*
-  moveRule(
-    rule: AdjustmentRule,
-    uow: UnitOfWork,
-    ref: { layer: RuleLayer; rule: AdjustmentRule; position: 'before' | 'after' }
-  ) {
-    // TODO: Support moving to a different AdjustmentLayer
-    uow.snapshot(this);
-    const index = this.#rules.indexOf(rule);
-    const refIndex = this.#rules.indexOf(ref.rule);
-    if (index === -1 || refIndex === -1) {
-      return;
-    }
-
-    this.#rules.splice(index, 1);
-    this.#rules.splice(refIndex + (ref.position === 'after' ? 1 : 0), 0, rule);
-    uow.updateElement(this);
-  }
-   */
 
   replaceRule(existing: AdjustmentRule, newRule: AdjustmentRule, uow: UnitOfWork) {
     uow.snapshot(this);
@@ -182,13 +165,15 @@ export class RuleLayer extends Layer<RuleLayer> {
     const idx = this.#rules.toArray().findIndex(r => r.id === existing.id);
     this.#rules.delete(idx);
     this.#rules.insert(idx, [newRule]);
+    this.#cache.clear();
 
     uow.updateElement(this);
   }
 
   snapshot(): LayerSnapshot {
     return {
-      ...super.snapshot()
+      ...super.snapshot(),
+      rules: deepClone(this.rules)
     };
   }
 

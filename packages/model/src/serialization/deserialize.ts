@@ -25,6 +25,7 @@ import { RegularLayer } from '../diagramLayerRegular';
 import type { DiagramFactory } from '../factory';
 import { Comment } from '../comment';
 import type { DataManager } from '../diagramDocumentData';
+import { ElementLookup } from '../elementLookup';
 
 const unfoldGroup = (node: SerializedElement) => {
   const recurse = (
@@ -46,7 +47,7 @@ const unfoldGroup = (node: SerializedElement) => {
 
 const deserializeEndpoint = (
   e: SerializedAnchorEndpoint | SerializedPointInNodeEndpoint | SerializedFreeEndpoint,
-  nodeLookup: Record<string, DiagramNode> | Map<string, DiagramNode>
+  nodeLookup: ElementLookup<DiagramNode>
 ) => {
   return Endpoint.deserialize(e, nodeLookup);
 };
@@ -55,12 +56,12 @@ export const deserializeDiagramElements = (
   diagramElements: ReadonlyArray<SerializedElement>,
   diagram: Diagram,
   layer: RegularLayer,
-  nodeLookup?: Map<string, DiagramNode>,
-  edgeLookup?: Map<string, DiagramEdge>,
+  nodeLookup?: ElementLookup<DiagramNode>,
+  edgeLookup?: ElementLookup<DiagramEdge>,
   uow?: UnitOfWork
 ) => {
-  nodeLookup ??= new Map();
-  edgeLookup ??= new Map();
+  nodeLookup ??= new ElementLookup<DiagramNode>();
+  edgeLookup ??= new ElementLookup<DiagramEdge>();
   uow ??= new UnitOfWork(diagram, false, true);
 
   // Pass 1: create placeholders for all nodes
@@ -281,8 +282,8 @@ const deserializeDiagrams = <T extends Diagram>(
 ) => {
   const dest: T[] = [];
   for (const $d of diagrams) {
-    const nodeLookup: Map<string, DiagramNode> = new Map();
-    const edgeLookup: Map<string, DiagramEdge> = new Map();
+    const nodeLookup = new ElementLookup<DiagramNode>();
+    const edgeLookup = new ElementLookup<DiagramEdge>();
 
     const newDiagram = diagramFactory($d, doc);
     newDiagram.canvas = $d.canvas;

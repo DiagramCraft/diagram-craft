@@ -27,6 +27,7 @@ import { CRDTObject } from './collaboration/datatypes/crdtObject';
 import { Guide } from './types';
 import { CommentManager, type SerializedComment } from './comment';
 import type { Point } from '@diagram-craft/geometry/point';
+import { ElementLookup } from './elementLookup';
 
 export type DiagramIteratorOpts = {
   nest?: boolean;
@@ -143,8 +144,8 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     'size'
   ]);
   readonly viewBox: Viewbox;
-  readonly nodeLookup = new Map<string, DiagramNode>();
-  readonly edgeLookup = new Map<string, DiagramEdge>();
+  readonly nodeLookup = new ElementLookup<DiagramNode>();
+  readonly edgeLookup = new ElementLookup<DiagramEdge>();
   readonly undoManager = new UndoManager(this);
 
   readonly commentManager: CommentManager;

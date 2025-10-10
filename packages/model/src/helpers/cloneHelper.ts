@@ -8,6 +8,9 @@ import { deepClone } from '@diagram-craft/utils/object';
 import type { SerializedEdge, SerializedNode } from '../serialization/types';
 import type { RegularLayer } from '../diagramLayerRegular';
 import { deserializeDiagramElements } from '../serialization/deserialize';
+import type { DiagramNode } from '../diagramNode';
+import type { DiagramEdge } from '../diagramEdge';
+import { ElementLookup } from '../elementLookup';
 
 // TODO: Ensure linking between edges and nodes works
 //       See ElementsPasteHandler
@@ -37,8 +40,8 @@ export const cloneElements = (
     source,
     targetLayer.diagram,
     targetLayer,
-    new Map(),
-    new Map(),
+    new ElementLookup<DiagramNode>(),
+    new ElementLookup<DiagramEdge>(),
     uow
   );
 };

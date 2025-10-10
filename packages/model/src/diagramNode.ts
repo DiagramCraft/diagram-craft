@@ -23,7 +23,6 @@ import { isEmptyString } from '@diagram-craft/utils/strings';
 import { Anchor } from './anchor';
 import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
-import { getAdjustments } from './diagramLayerRuleTypes';
 import { toUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
 import type { RegularLayer } from './diagramLayerRegular';
 import { transformPathList } from '@diagram-craft/geometry/pathListUtils';
@@ -39,6 +38,8 @@ import {
 } from './collaboration/datatypes/mapped/mappedCrdtMap';
 import { unique } from '@diagram-craft/utils/array';
 import { makeIsometricTransform } from '@diagram-craft/canvas/effects/isometric';
+import type { ModificationLayer } from './diagramLayerModification';
+import { getAdjustments } from './diagramLayerUtils';
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;
@@ -86,7 +87,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
   constructor(
     id: string,
-    layer: RegularLayer,
+    layer: RegularLayer | ModificationLayer,
     anchorCache?: ReadonlyArray<Anchor>,
     crdt?: CRDTMap<DiagramElementCRDT>
   ) {
@@ -174,7 +175,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     id: string,
     nodeType: 'group' | string,
     bounds: Box,
-    layer: RegularLayer,
+    layer: RegularLayer | ModificationLayer,
     props: NodePropsForEditing,
     metadata: ElementMetadata,
     text: NodeTexts = { text: '' },

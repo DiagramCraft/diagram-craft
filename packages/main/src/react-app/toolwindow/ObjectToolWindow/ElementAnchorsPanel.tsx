@@ -20,6 +20,8 @@ import {
   StaticCanvasProps
 } from '@diagram-craft/canvas/canvas/StaticCanvasComponent';
 import { Canvas } from '@diagram-craft/canvas-react/Canvas';
+import type { DiagramEdge } from '@diagram-craft/model/diagramEdge';
+import { ElementLookup } from '@diagram-craft/model/elementLookup';
 
 type CustomAnchorsEditorProps = {
   customAnchors: {
@@ -50,8 +52,8 @@ const ShapePreviewWithAnchors = ({ diagram }: { diagram: ReturnType<typeof useDi
           [serializedNode],
           d,
           layer,
-          new Map(),
-          new Map(),
+          new ElementLookup<DiagramNode>(),
+          new ElementLookup<DiagramEdge>(),
           uow
         )[0] as DiagramNode;
       },
