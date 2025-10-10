@@ -218,14 +218,16 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   }
 
   changeNodeType(nodeType: string, uow: UnitOfWork) {
-    uow.snapshot(this);
-    this.#nodeType.set(nodeType);
-    this._children.clear();
-    uow.updateElement(this);
+    const elementToUpdate = this.getElementToUpdate();
 
-    this.clearCache();
-    this.invalidateAnchors(uow);
-    this.getDefinition().onPropUpdate(this, uow);
+    uow.snapshot(elementToUpdate);
+    elementToUpdate.#nodeType.set(nodeType);
+    elementToUpdate._children.clear();
+    uow.updateElement(elementToUpdate);
+
+    elementToUpdate.clearCache();
+    elementToUpdate.invalidateAnchors(uow);
+    elementToUpdate.getDefinition().onPropUpdate(elementToUpdate, uow);
   }
 
   /* Text **************************************************************************************************** */
@@ -235,13 +237,15 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   }
 
   setText(text: string, uow: UnitOfWork, id = 'text') {
-    uow.snapshot(this);
-    this.#text.set({
-      ...this.#text.get(),
+    const elementToUpdate = this.getElementToUpdate();
+
+    uow.snapshot(elementToUpdate);
+    elementToUpdate.#text.set({
+      ...elementToUpdate.#text.get(),
       [id === '1' ? 'text' : id]: text
     });
-    uow.updateElement(this);
-    this.clearCache();
+    uow.updateElement(elementToUpdate);
+    elementToUpdate.clearCache();
   }
 
   get texts() {
@@ -440,14 +444,16 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   }
 
   updateProps(callback: (props: NodeProps) => void, uow: UnitOfWork) {
-    this.crdt.get().transact(() => {
-      uow.snapshot(this);
-      this.#props.update(callback);
-      uow.updateElement(this);
+    const elementToUpdate = this.getElementToUpdate();
 
-      this.clearCache();
-      this.invalidateAnchors(uow);
-      this.getDefinition().onPropUpdate(this, uow);
+    elementToUpdate.crdt.get().transact(() => {
+      uow.snapshot(elementToUpdate);
+      elementToUpdate.#props.update(callback);
+      uow.updateElement(elementToUpdate);
+
+      elementToUpdate.clearCache();
+      elementToUpdate.invalidateAnchors(uow);
+      elementToUpdate.getDefinition().onPropUpdate(elementToUpdate, uow);
     });
   }
 
@@ -456,7 +462,9 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     callback: (props: NonNullable<CustomNodeProps[K]>) => void,
     uow: UnitOfWork
   ) {
-    this.updateProps(p => {
+    const elementToUpdate = this.getElementToUpdate();
+
+    elementToUpdate.updateProps(p => {
       p.custom ??= {};
       p.custom[key] ??= {};
       callback(p.custom[key]!);
@@ -511,6 +519,8 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   /* Children *********************************************************************************************** */
 
   setChildren(children: ReadonlyArray<DiagramElement>, uow: UnitOfWork) {
+    this.assertNonModificationLayer();
+
     super.setChildren(children, uow);
 
     uow.registerOnCommitCallback('onChildChanged', this, () => {
@@ -523,6 +533,8 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     uow: UnitOfWork,
     relation?: { ref: DiagramElement; type: 'after' | 'before' }
   ) {
+    this.assertNonModificationLayer();
+
     super.addChild(child, uow, relation);
 
     uow.registerOnCommitCallback('onChildChanged', this, () => {
@@ -531,6 +543,8 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   }
 
   removeChild(child: DiagramElement, uow: UnitOfWork) {
+    this.assertNonModificationLayer();
+
     super.removeChild(child, uow);
 
     uow.registerOnCommitCallback('onChildChanged', this, () => {
@@ -545,10 +559,12 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   }
 
   setBounds(bounds: Box, uow: UnitOfWork) {
-    uow.snapshot(this);
-    const oldBounds = this.bounds;
-    this.#bounds.set(bounds);
-    if (!Box.isEqual(oldBounds, this.bounds)) uow.updateElement(this);
+    const elementToUpdate = this.getElementToUpdate();
+
+    uow.snapshot(elementToUpdate);
+    const oldBounds = elementToUpdate.bounds;
+    elementToUpdate.#bounds.set(bounds);
+    if (!Box.isEqual(oldBounds, elementToUpdate.bounds)) uow.updateElement(elementToUpdate);
   }
 
   /* Anchors ************************************************************************************************ */
@@ -614,6 +630,8 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   }
 
   convertToPath(uow: UnitOfWork) {
+    this.assertNonModificationLayer();
+
     uow.snapshot(this);
 
     const paths = this.getDefinition().getBoundingPath(this);
@@ -800,35 +818,39 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   }
 
   transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork, isChild = false) {
-    uow.snapshot(this);
+    const elementToUpdate = this.getElementToUpdate();
 
-    const previousBounds = this.bounds;
-    this.setBounds(Transform.box(this.bounds, ...transforms), uow);
+    uow.snapshot(elementToUpdate);
 
-    this.getDefinition().onTransform(transforms, this, this.bounds, previousBounds, uow);
+    const previousBounds = elementToUpdate.bounds;
+    elementToUpdate.setBounds(Transform.box(elementToUpdate.bounds, ...transforms), uow);
 
-    if (this.parent && !isChild) {
-      const parent = this.parent;
+    elementToUpdate
+      .getDefinition()
+      .onTransform(transforms, elementToUpdate, elementToUpdate.bounds, previousBounds, uow);
+
+    if (elementToUpdate.parent && !isChild) {
+      const parent = elementToUpdate.parent;
       if (isNode(parent)) {
         uow.registerOnCommitCallback('onChildChanged', parent, () => {
           parent.getDefinition().onChildChanged(parent, uow);
         });
       } else {
-        assert.true(this.isLabelNode());
+        assert.true(elementToUpdate.isLabelNode());
 
         // TODO: This should be possible to put in the invalidation() method
 
-        if (uow.contains(this.labelEdge()!)) return;
+        if (uow.contains(elementToUpdate.labelEdge()!)) return;
 
-        const labelNode = this.labelNode();
+        const labelNode = elementToUpdate.labelNode();
         assert.present(labelNode);
 
-        const dx = this.bounds.x - previousBounds.x;
-        const dy = this.bounds.y - previousBounds.y;
+        const dx = elementToUpdate.bounds.x - previousBounds.x;
+        const dy = elementToUpdate.bounds.y - previousBounds.y;
 
         const clampAmount = 100;
 
-        this.updateLabelNode(
+        elementToUpdate.updateLabelNode(
           {
             offset: {
               x: clamp(labelNode.offset.x + dx, -clampAmount, clampAmount),
@@ -840,14 +862,18 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       }
     }
 
-    uow.updateElement(this);
+    uow.updateElement(elementToUpdate);
   }
 
   _removeEdge(anchor: string | undefined, edge: DiagramEdge) {
+    this.assertNonModificationLayer();
+
     this.#edges.set(anchor ?? '', this.#edges.get(anchor ?? '')?.filter(e => e !== edge.id) ?? []);
   }
 
   _addEdge(anchor: string | undefined, edge: DiagramEdge) {
+    this.assertNonModificationLayer();
+
     this.#edges.set(anchor ?? '', unique([...(this.#edges.get(anchor ?? '') ?? []), edge.id]));
   }
 
@@ -904,6 +930,8 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
   // TODO: Is this really needed - shouldn't this be part of DiagramEdge
   updateLabelNode(labelNode: Partial<LabelNode>, uow: UnitOfWork) {
+    this.assertNonModificationLayer();
+
     if (!this.isLabelNode()) return;
 
     uow.snapshot(this);

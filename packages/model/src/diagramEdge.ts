@@ -316,20 +316,21 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   }
 
   updateProps(callback: (props: EdgeProps) => void, uow: UnitOfWork) {
-    uow.snapshot(this);
+    const elementToUpdate = this.getElementToUpdate();
+    uow.snapshot(elementToUpdate);
 
-    const oldType = this.#props.get().type;
-    this.#props.update(callback);
+    const oldType = elementToUpdate.#props.get().type;
+    elementToUpdate.#props.update(callback);
 
-    if (this.#props.get().type === 'bezier' && oldType !== 'bezier') {
-      for (let i = 0; i < this.waypoints.length; i++) {
-        const wp = this.waypoints[i]!;
+    if (elementToUpdate.#props.get().type === 'bezier' && oldType !== 'bezier') {
+      for (let i = 0; i < elementToUpdate.waypoints.length; i++) {
+        const wp = elementToUpdate.waypoints[i]!;
         if (!wp.controlPoints) {
-          this.replaceWaypoint(
+          elementToUpdate.replaceWaypoint(
             i,
             {
               ...wp,
-              controlPoints: this.inferControlPoints(i)
+              controlPoints: elementToUpdate.inferControlPoints(i)
             },
             uow
           );
@@ -337,9 +338,9 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       }
     }
 
-    uow.updateElement(this);
+    uow.updateElement(elementToUpdate);
 
-    this.clearCache();
+    elementToUpdate.clearCache();
   }
 
   updateCustomProps<K extends keyof CustomEdgeProps>(
@@ -347,7 +348,8 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     callback: (props: NonNullable<CustomEdgeProps[K]>) => void,
     uow: UnitOfWork
   ) {
-    this.updateProps(p => {
+    const elementToUpdate = this.getElementToUpdate();
+    elementToUpdate.updateProps(p => {
       p.custom ??= {};
       p.custom[key] ??= {};
       callback(p.custom[key]!);
@@ -419,55 +421,62 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   }
 
   setBounds(b: Box, uow: UnitOfWork) {
-    uow.snapshot(this);
+    const elementToUpdate = this.getElementToUpdate();
+    uow.snapshot(elementToUpdate);
 
-    const delta = Point.subtract(b, this.bounds);
+    const delta = Point.subtract(b, elementToUpdate.bounds);
 
-    if (!isConnected(this.start)) {
-      this.#start.set(
+    if (!isConnected(elementToUpdate.start)) {
+      elementToUpdate.#start.set(
         new FreeEndpoint({
-          x: this.start.position.x + delta.x,
-          y: this.start.position.y + delta.y
+          x: elementToUpdate.start.position.x + delta.x,
+          y: elementToUpdate.start.position.y + delta.y
         })
       );
-      uow.updateElement(this);
+      uow.updateElement(elementToUpdate);
     }
-    if (!isConnected(this.end)) {
-      this.#end.set(
+    if (!isConnected(elementToUpdate.end)) {
+      elementToUpdate.#end.set(
         new FreeEndpoint({
-          x: this.end.position.x + delta.x,
-          y: this.end.position.y + delta.y
+          x: elementToUpdate.end.position.x + delta.x,
+          y: elementToUpdate.end.position.y + delta.y
         })
       );
-      uow.updateElement(this);
+      uow.updateElement(elementToUpdate);
     }
   }
 
   /* Endpoints ********************************************************************************************** */
 
   setStart(start: Endpoint, uow: UnitOfWork) {
-    uow.snapshot(this);
+    const elementToUpdate = this.getElementToUpdate();
+    uow.snapshot(elementToUpdate);
 
-    if (isConnected(this.start)) {
-      uow.snapshot(this.start.node);
+    if (isConnected(elementToUpdate.start)) {
+      uow.snapshot(elementToUpdate.start.node);
 
-      this.start.node._removeEdge(
-        this.start instanceof AnchorEndpoint ? this.start.anchorId : undefined,
-        this
+      elementToUpdate.start.node._removeEdge(
+        elementToUpdate.start instanceof AnchorEndpoint
+          ? elementToUpdate.start.anchorId
+          : undefined,
+        elementToUpdate
       );
-      uow.updateElement(this.start.node);
+      uow.updateElement(elementToUpdate.start.node);
     }
 
     if (isConnected(start)) {
       uow.snapshot(start.node);
 
-      start.node._addEdge(start instanceof AnchorEndpoint ? start.anchorId : undefined, this);
+      start.node._addEdge(
+        start instanceof AnchorEndpoint ? start.anchorId : undefined,
+        elementToUpdate
+      );
       uow.updateElement(start.node);
     }
 
-    this.#start.set(start);
+    elementToUpdate.#start.set(start);
 
-    uow.updateElement(this);
+    uow.updateElement(elementToUpdate);
   }
 
   get start() {
@@ -475,28 +484,29 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   }
 
   setEnd(end: Endpoint, uow: UnitOfWork) {
-    uow.snapshot(this);
+    const elementToUpdate = this.getElementToUpdate();
+    uow.snapshot(elementToUpdate);
 
-    if (isConnected(this.end)) {
-      uow.snapshot(this.end.node);
+    if (isConnected(elementToUpdate.end)) {
+      uow.snapshot(elementToUpdate.end.node);
 
-      this.end.node._removeEdge(
-        this.end instanceof AnchorEndpoint ? this.end.anchorId : undefined,
-        this
+      elementToUpdate.end.node._removeEdge(
+        elementToUpdate.end instanceof AnchorEndpoint ? elementToUpdate.end.anchorId : undefined,
+        elementToUpdate
       );
-      uow.updateElement(this.end.node);
+      uow.updateElement(elementToUpdate.end.node);
     }
 
     if (isConnected(end)) {
       uow.snapshot(end.node);
 
-      end.node._addEdge(end instanceof AnchorEndpoint ? end.anchorId : undefined, this);
+      end.node._addEdge(end instanceof AnchorEndpoint ? end.anchorId : undefined, elementToUpdate);
       uow.updateElement(end.node);
     }
 
-    this.#end.set(end);
+    elementToUpdate.#end.set(end);
 
-    uow.updateElement(this);
+    uow.updateElement(elementToUpdate);
   }
 
   get end() {
@@ -514,11 +524,15 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   }
 
   removeChild(child: DiagramElement, uow: UnitOfWork) {
+    this.assertNonModificationLayer();
+
     super.removeChild(child, uow);
     this.syncLabelNodesBasedOnChildren(uow);
   }
 
   addChild(child: DiagramElement, uow: UnitOfWork) {
+    this.assertNonModificationLayer();
+
     // Note: we don't support edges to be children of edges
     assert.true(isNode(child));
 
@@ -527,6 +541,8 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   }
 
   setChildren(children: ReadonlyArray<DiagramElement>, uow: UnitOfWork) {
+    this.assertNonModificationLayer();
+
     // Note: we don't support edges to be children of edges
     assert.true(children.every(isNode));
 
@@ -610,17 +626,23 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   }
 
   setLabelNodes(labelNodes: ReadonlyArray<ResolvedLabelNode> | undefined, uow: UnitOfWork) {
+    this.assertNonModificationLayer();
+
     this.#labelNodes.set(labelNodes?.map(n => [n.id, n]) ?? []);
     this.syncChildrenBasedOnLabelNodes(uow);
   }
 
   addLabelNode(labelNode: ResolvedLabelNode, uow: UnitOfWork) {
+    this.assertNonModificationLayer();
+
     uow.snapshot(this);
 
     this.setLabelNodes([...this.labelNodes, labelNode], uow);
   }
 
   removeLabelNode(labelNode: ResolvedLabelNode, uow: UnitOfWork) {
+    this.assertNonModificationLayer();
+
     assert.true(!!this.labelNodes.find(n => labelNode.id === n.id));
 
     uow.snapshot(this);
@@ -672,12 +694,13 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   }
 
   addWaypoint(waypoint: Waypoint, uow: UnitOfWork) {
-    uow.snapshot(this);
+    const elementToUpdate = this.getElementToUpdate();
+    uow.snapshot(elementToUpdate);
 
-    const path = this.path();
+    const path = elementToUpdate.path();
     const projection = path.projectPoint(waypoint.point);
 
-    if (this.#props.get().type === 'bezier' && !waypoint.controlPoints) {
+    if (elementToUpdate.#props.get().type === 'bezier' && !waypoint.controlPoints) {
       const offset = PointOnPath.toTimeOffset({ point: waypoint.point }, path);
       const [p1, p2] = path.split(offset);
 
@@ -702,13 +725,13 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
         });
       }
 
-      this.#waypoints.set(newWaypoints);
+      elementToUpdate.#waypoints.set(newWaypoints);
 
-      uow.updateElement(this);
+      uow.updateElement(elementToUpdate);
 
       return offset.segment;
     } else {
-      const wpDistances = this.waypoints.map(p => {
+      const wpDistances = elementToUpdate.waypoints.map(p => {
         return {
           pathD: PointOnPath.toTimeOffset({ point: p.point }, path).pathD,
           ...p
@@ -716,32 +739,39 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       });
 
       const newWaypoint = { ...waypoint, pathD: projection.pathD };
-      this.#waypoints.set(
+      elementToUpdate.#waypoints.set(
         [...wpDistances, newWaypoint].sort((a, b) => a.pathD - b.pathD) as Array<Waypoint>
       );
 
-      uow.updateElement(this);
+      uow.updateElement(elementToUpdate);
 
       return this.waypoints.indexOf(newWaypoint);
     }
   }
 
   removeWaypoint(waypoint: Waypoint, uow: UnitOfWork) {
-    uow.snapshot(this);
-    this.#waypoints.set(this.waypoints.filter(w => w !== waypoint));
-    uow.updateElement(this);
+    const elementToUpdate = this.getElementToUpdate();
+    uow.snapshot(elementToUpdate);
+    elementToUpdate.#waypoints.set(elementToUpdate.waypoints.filter(w => w !== waypoint));
+    uow.updateElement(elementToUpdate);
   }
 
   moveWaypoint(waypoint: Waypoint, point: Point, uow: UnitOfWork) {
-    uow.snapshot(this);
-    this.#waypoints.set(this.waypoints.map(w => (w === waypoint ? { ...w, point } : w)));
-    uow.updateElement(this);
+    const elementToUpdate = this.getElementToUpdate();
+    uow.snapshot(elementToUpdate);
+    elementToUpdate.#waypoints.set(
+      elementToUpdate.waypoints.map(w => (w === waypoint ? { ...w, point } : w))
+    );
+    uow.updateElement(elementToUpdate);
   }
 
   replaceWaypoint(idx: number, waypoint: Waypoint, uow: UnitOfWork) {
-    uow.snapshot(this);
-    this.#waypoints.set(this.waypoints.map((w, i) => (i === idx ? waypoint : w)));
-    uow.updateElement(this);
+    const elementToUpdate = this.getElementToUpdate();
+    uow.snapshot(elementToUpdate);
+    elementToUpdate.#waypoints.set(
+      elementToUpdate.waypoints.map((w, i) => (i === idx ? waypoint : w))
+    );
+    uow.updateElement(elementToUpdate);
   }
 
   /* Midpoints *********************************************************************************************** */
@@ -891,12 +921,13 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   }
 
   transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork) {
-    uow.snapshot(this);
+    const elementToUpdate = this.getElementToUpdate();
+    uow.snapshot(elementToUpdate);
 
-    this.setBounds(Transform.box(this.bounds, ...transforms), uow);
+    elementToUpdate.setBounds(Transform.box(elementToUpdate.bounds, ...transforms), uow);
 
-    this.#waypoints.set(
-      this.waypoints.map(w => {
+    elementToUpdate.#waypoints.set(
+      elementToUpdate.waypoints.map(w => {
         const absoluteControlPoints = Object.values(w.controlPoints ?? {}).map(cp =>
           Point.add(w.point, cp)
         );
@@ -920,7 +951,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
       })
     );
 
-    uow.updateElement(this);
+    uow.updateElement(elementToUpdate);
   }
 
   get intersections() {
@@ -928,16 +959,17 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   }
 
   flip(uow: UnitOfWork) {
-    uow.snapshot(this);
+    const elementToUpdate = this.getElementToUpdate();
+    uow.snapshot(elementToUpdate);
 
-    const start = this.#start.getNonNull();
-    const end = this.#end.getNonNull();
+    const start = elementToUpdate.#start.getNonNull();
+    const end = elementToUpdate.#end.getNonNull();
 
     // Need to "zero" the end so that the setters logic should work correctly
-    this.#end.set(new FreeEndpoint(Point.ORIGIN));
+    elementToUpdate.#end.set(new FreeEndpoint(Point.ORIGIN));
 
-    this.setStart(end, uow);
-    this.setEnd(start, uow);
+    elementToUpdate.setStart(end, uow);
+    elementToUpdate.setEnd(start, uow);
   }
 
   /**

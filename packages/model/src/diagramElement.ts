@@ -14,7 +14,7 @@ import { AttachmentConsumer } from './attachment';
 import { FlatObject } from '@diagram-craft/utils/types';
 import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
 import { PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
-import { assert } from '@diagram-craft/utils/assert';
+import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import type { RegularLayer } from './diagramLayerRegular';
 import type { CRDTMap, FlatCRDTMap } from './collaboration/crdt';
 import { watch, WatchableValue } from '@diagram-craft/utils/watchableValue';
@@ -174,6 +174,14 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
     return this._crdt;
   }
 
+  protected getElementToUpdate() {
+    return this;
+  }
+
+  protected assertNonModificationLayer() {
+    if (this.diagram.layers.active.type === 'modification') VERIFY_NOT_REACHED();
+  }
+
   /* Flags *************************************************************************************************** */
 
   isLocked() {
@@ -217,6 +225,7 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
   }
 
   _setParent(parent: DiagramElement | undefined) {
+    this.assertNonModificationLayer();
     this._parent.set(parent);
   }
 
@@ -235,12 +244,14 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
   }
 
   updateMetadata(callback: (props: ElementMetadata) => void, uow: UnitOfWork) {
-    uow.snapshot(this);
-    const metadata = this._metadata.getClone() as ElementMetadata;
+    const elementToUpdate = this.getElementToUpdate();
+
+    uow.snapshot(elementToUpdate);
+    const metadata = elementToUpdate._metadata.getClone() as ElementMetadata;
     callback(metadata);
-    this._metadata.set(metadata);
-    uow.updateElement(this);
-    this.clearCache();
+    elementToUpdate._metadata.set(metadata);
+    uow.updateElement(elementToUpdate);
+    elementToUpdate.clearCache();
   }
 
   /* Tags ******************************************************************************************************** */
@@ -250,6 +261,8 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
   }
 
   setTags(tags: ReadonlyArray<string>, uow: UnitOfWork) {
+    this.assertNonModificationLayer();
+
     uow.snapshot(this);
     const uniqueTags = Array.from(new Set(tags.map(t => t.trim()).filter(t => t)));
     this._crdt.get().set('tags', uniqueTags);
@@ -283,6 +296,8 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
   }
 
   setChildren(children: ReadonlyArray<DiagramElement>, uow: UnitOfWork) {
+    this.assertNonModificationLayer();
+
     uow.snapshot(this);
 
     const oldChildren = this._children.values;
@@ -315,6 +330,8 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
     uow: UnitOfWork,
     relation?: { ref: DiagramElement; type: 'after' | 'before' }
   ) {
+    this.assertNonModificationLayer();
+
     assert.true(child.diagram === this.diagram);
     assert.false(this._children.has(child.id));
 
@@ -352,6 +369,8 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
   }
 
   removeChild(child: DiagramElement, uow: UnitOfWork) {
+    this.assertNonModificationLayer();
+
     assert.true(this._children.has(child.id));
 
     uow.snapshot(this);
