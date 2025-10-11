@@ -1,4 +1,4 @@
-import { DiagramElement, type DiagramElementCRDT } from './diagramElement';
+import { AbstractDiagramElement, DiagramElement, type DiagramElementCRDT } from './diagramElement';
 import { type RegularLayer } from './diagramLayerRegular';
 import { type ModificationLayer } from './diagramLayerModification';
 import type { CRDTMap } from './collaboration/crdt';
@@ -8,7 +8,7 @@ import { UnitOfWork } from './unitOfWork';
 import { type Diagram } from './diagram';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 
-export abstract class DelegatingDiagramElement extends DiagramElement {
+export abstract class DelegatingDiagramElement extends AbstractDiagramElement {
   protected readonly delegate: DiagramElement;
 
   private _overriddenMetadata: CRDTObject<ElementMetadata>;

@@ -1,7 +1,13 @@
 import { LabelNode } from './types';
 import { Box } from '@diagram-craft/geometry/box';
 import { Transform } from '@diagram-craft/geometry/transform';
-import { DiagramElement, type DiagramElementCRDT, isEdge, isNode } from './diagramElement';
+import {
+  AbstractDiagramElement,
+  DiagramElement,
+  type DiagramElementCRDT,
+  isEdge,
+  isNode
+} from './diagramElement';
 import { DiagramNodeSnapshot, getRemoteUnitOfWork, UnitOfWork, UOWTrackable } from './unitOfWork';
 import type { DiagramEdge, ResolvedLabelNode } from './diagramEdge';
 import { DefaultStyles, nodeDefaults } from './diagramDefaults';
@@ -74,7 +80,10 @@ const makeEdgesMapper = (
 
 const DEFAULT_BOUNDS = { x: 0, y: 0, w: 10, h: 10, r: 0 };
 
-export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramNodeSnapshot> {
+export class DiagramNode
+  extends AbstractDiagramElement
+  implements UOWTrackable<DiagramNodeSnapshot>
+{
   // Shared properties
   readonly #nodeType: CRDTProp<DiagramNodeCRDT, 'nodeType'>;
   readonly #edges: MappedCRDTMap<string[], { edges: Array<string> }>;

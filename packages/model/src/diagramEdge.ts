@@ -6,7 +6,13 @@ import { Box } from '@diagram-craft/geometry/box';
 import { PointOnPath, TimeOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
 import { CubicSegment, LineSegment } from '@diagram-craft/geometry/pathSegment';
 import { Transform } from '@diagram-craft/geometry/transform';
-import { DiagramElement, type DiagramElementCRDT, isEdge, isNode } from './diagramElement';
+import {
+  AbstractDiagramElement,
+  DiagramElement,
+  type DiagramElementCRDT,
+  isEdge,
+  isNode
+} from './diagramElement';
 import { DiagramEdgeSnapshot, getRemoteUnitOfWork, UnitOfWork, UOWTrackable } from './unitOfWork';
 import {
   AnchorEndpoint,
@@ -114,7 +120,10 @@ const makeEndpointMapper = (edge: DiagramEdge): CRDTMapper<Endpoint, SerializedE
   toCRDT: (e: Endpoint) => e.serialize()
 });
 
-export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramEdgeSnapshot> {
+export class DiagramEdge
+  extends AbstractDiagramElement
+  implements UOWTrackable<DiagramEdgeSnapshot>
+{
   // Transient properties
   #intersections: Intersection[] = [];
 

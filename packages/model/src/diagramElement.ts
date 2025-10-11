@@ -26,6 +26,7 @@ import {
 import { makeElementMapper } from './diagramElementMapper';
 import { MappedCRDTProp } from './collaboration/datatypes/mapped/mappedCrdtProp';
 import type { ModificationLayer } from './diagramLayerModification';
+import type { Comment } from './comment';
 
 // biome-ignore lint/suspicious/noExplicitAny: false positive
 type Snapshot = any;
@@ -44,7 +45,77 @@ export type DiagramElementCRDT = {
 
 type CacheKeys = 'name' | 'props.forEditing' | 'props.forRendering' | string;
 
-export abstract class DiagramElement implements ElementInterface, AttachmentConsumer {
+export interface DiagramElement {
+  trackableType: 'element';
+
+  readonly id: string;
+  readonly type: string;
+
+  getAttachmentsInUse(): Array<string>;
+
+  invalidate(uow: UnitOfWork): void;
+  detach(uow: UnitOfWork): void;
+  duplicate(ctx?: DuplicationContext, id?: string): DiagramElement;
+  transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork, isChild?: boolean): void;
+
+  readonly bounds: Box;
+  setBounds(bounds: Box, uow: UnitOfWork): void;
+
+  readonly name: string;
+  readonly dataForTemplate: FlatObject;
+  readonly editProps: ElementPropsForEditing;
+  readonly renderProps: ElementPropsForRendering;
+  readonly storedProps: ElementProps;
+
+  getPropsInfo<T extends PropPath<ElementProps>>(
+    path: T
+  ): PropertyInfo<PropPathValue<ElementProps, T>>;
+
+  updateProps(callback: (props: NodeProps | EdgeProps) => void, uow: UnitOfWork): void;
+
+  snapshot(): Snapshot;
+  restore(snapshot: Snapshot, uow: UnitOfWork): void;
+
+  detachCRDT(callback: () => void): void;
+
+  readonly crdt: WatchableValue<CRDTMap<DiagramElementCRDT>>;
+
+  isLocked(): boolean;
+  isHidden(): boolean;
+
+  _setLayer(layer: RegularLayer | ModificationLayer, diagram: Diagram): void;
+  readonly diagram: Diagram;
+  readonly layer: RegularLayer | ModificationLayer;
+  activeDiagram: Diagram;
+
+  readonly parent: DiagramElement | undefined;
+  _setParent(parent: DiagramElement | undefined): void;
+
+  readonly metadata: ElementMetadata;
+  readonly metadataCloned: ElementMetadata;
+  updateMetadata(callback: (props: ElementMetadata) => void, uow: UnitOfWork): void;
+
+  readonly tags: ReadonlyArray<string>;
+  setTags(tags: ReadonlyArray<string>, uow: UnitOfWork): void;
+
+  readonly cache: Map<CacheKeys, unknown>;
+  clearCache(): void;
+
+  readonly children: ReadonlyArray<DiagramElement>;
+  setChildren(children: ReadonlyArray<DiagramElement>, uow: UnitOfWork): void;
+  addChild(
+    child: DiagramElement,
+    uow: UnitOfWork,
+    relation?: { ref: DiagramElement; type: 'after' | 'before' }
+  ): void;
+  removeChild(child: DiagramElement, uow: UnitOfWork): void;
+
+  comments: ReadonlyArray<Comment>;
+}
+
+export abstract class AbstractDiagramElement
+  implements DiagramElement, ElementInterface, AttachmentConsumer
+{
   readonly trackableType = 'element';
 
   // Transient properties
@@ -66,7 +137,7 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
     DiagramElement | undefined
   >;
 
-  public readonly _id: string;
+  private readonly _id: string;
 
   protected constructor(
     public readonly type: string,
