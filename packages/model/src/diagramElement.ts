@@ -66,12 +66,16 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
     DiagramElement | undefined
   >;
 
+  public readonly _id: string;
+
   protected constructor(
     public readonly type: string,
-    public readonly id: string,
+    id: string,
     layer: RegularLayer | ModificationLayer,
     crdt?: CRDTMap<DiagramElementCRDT>
   ) {
+    this._id = id;
+
     this._diagram = layer.diagram;
     this._layer = layer;
     this._activeDiagram = this._diagram;
@@ -133,6 +137,10 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
       this._diagram.emit('elementChange', { element: this });
       this.clearCache();
     });
+  }
+
+  get id(): string {
+    return this._id;
   }
 
   abstract getAttachmentsInUse(): Array<string>;
