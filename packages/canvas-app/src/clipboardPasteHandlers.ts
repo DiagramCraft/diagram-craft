@@ -1,7 +1,7 @@
 import { Point } from '@diagram-craft/geometry/point';
 import { hash64 } from '@diagram-craft/utils/hash';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { SimpleDiagramNode } from '@diagram-craft/model/diagramNode';
 import { newid } from '@diagram-craft/utils/id';
 import { SerializedElement } from '@diagram-craft/model/serialization/types';
 import { Box } from '@diagram-craft/geometry/box';
@@ -76,7 +76,7 @@ export class ImagePasteHandler extends PasteHandler {
     const img = await createImageBitmap(att.content);
 
     const newElements = [
-      DiagramNode.create(
+      SimpleDiagramNode.create(
         newid(),
         'rect',
         { x: point.x, y: point.y, w: img.width, h: img.height, r: 0 },
@@ -109,7 +109,7 @@ export class TextPasteHandler extends PasteHandler {
 
     const text = await content.text();
     const newElements = [
-      DiagramNode.create(
+      SimpleDiagramNode.create(
         newid(),
         'text',
         { x: point.x, y: point.y, w: 200, h: 20, r: 0 },

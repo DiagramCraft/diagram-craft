@@ -7,7 +7,7 @@ import {
 import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { Box } from '@diagram-craft/geometry/box';
 import type { ShapeParser } from '../../drawioReader';
-import { DiagramNode, NodeTexts } from '@diagram-craft/model/diagramNode';
+import { DiagramNode, NodeTexts, SimpleDiagramNode } from '@diagram-craft/model/diagramNode';
 import { DrawioShapeNodeDefinition } from '../../DrawioShape.nodeType';
 import { Spinner2NodeDefinition } from './spinner2.nodeType';
 import { AndroidRectNodeDefinition } from './androidRect.nodeType';
@@ -71,7 +71,7 @@ export const parseAndroidShapes = async (
     }
   }
 
-  return DiagramNode.create(id, style.str('shape')!, bounds, layer, props, metadata, texts);
+  return SimpleDiagramNode.create(id, style.str('shape')!, bounds, layer, props, metadata, texts);
 };
 
 export const registerAndroidShapes = async (

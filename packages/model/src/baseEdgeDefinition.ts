@@ -5,7 +5,7 @@ import {
   EdgeCapability,
   EdgeDefinition
 } from './elementDefinitionRegistry';
-import { DiagramEdge } from './diagramEdge';
+import { DiagramEdge, SimpleDiagramEdge } from './diagramEdge';
 import { DiagramElement, isNode } from './diagramElement';
 import { UnitOfWork } from './unitOfWork';
 import { DiagramNode } from './diagramNode';
@@ -49,7 +49,7 @@ export class BaseEdgeDefinition implements EdgeDefinition {
     const anchor = 'c';
 
     // TODO: This requires some work to support dropping on multi-segment edges
-    const newEdge = DiagramEdge.create(
+    const newEdge = SimpleDiagramEdge.create(
       newid(),
       new AnchorEndpoint(element, anchor),
       edge.end,

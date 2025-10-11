@@ -1,6 +1,6 @@
 import { Viewbox } from './viewBox';
-import { DiagramNode } from './diagramNode';
-import { DiagramEdge } from './diagramEdge';
+import { DiagramNode, SimpleDiagramNode } from './diagramNode';
+import { DiagramEdge, SimpleDiagramEdge } from './diagramEdge';
 import { SelectionState } from './selectionState';
 import { UndoManager } from './undoManager';
 import { SnapManager } from './snap/snapManager';
@@ -210,7 +210,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
     const toggleHasEdgesWithLineHops = (type: 'add' | 'remove' | 'change', e: DiagramElement) => {
       if (type === 'add' && this.hasEdgesWithLineHops) return;
-      if (!(e instanceof DiagramEdge)) return;
+      if (!(e instanceof SimpleDiagramEdge)) return;
 
       const needsLineHops = e.renderProps.lineHops.type !== 'none';
       if (type === 'add' && (!needsLineHops || this.hasEdgesWithLineHops)) return;
@@ -308,7 +308,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
       const resolved = l.resolve();
       if (resolved?.type === 'regular') {
         for (const e of (resolved as RegularLayer).elements) {
-          if (e instanceof DiagramNode || e instanceof DiagramEdge) {
+          if (e instanceof SimpleDiagramNode || e instanceof SimpleDiagramEdge) {
             yield e;
           }
         }

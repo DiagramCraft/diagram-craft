@@ -17,7 +17,7 @@ import {
 } from 'react-icons/tb';
 import { DRAG_DROP_MANAGER } from '@diagram-craft/canvas/dragDropManager';
 import { ObjectPickerDrag } from './objectPickerDrag';
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { DiagramNode, SimpleDiagramNode } from '@diagram-craft/model/diagramNode';
 import { assert } from '@diagram-craft/utils/assert';
 import { Button } from '@diagram-craft/app-components/Button';
 import { PickerCanvas } from '../../PickerCanvas';
@@ -90,7 +90,7 @@ const makeTemplateNode = (
 const makeDefaultNode = (item: Data, schema: DataSchema, definitions: Definitions): DiagramNode => {
   return createThumbnailDiagramForNode(
     (_diagram, layer) =>
-      DiagramNode.create(
+      SimpleDiagramNode.create(
         newid(),
         'rect',
         { w: 100, h: 100, y: 0, x: 0, r: 0 },

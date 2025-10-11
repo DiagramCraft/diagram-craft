@@ -1,10 +1,10 @@
 import { DiagramNode, DuplicationContext } from './diagramNode';
-import { LabelNode, Waypoint } from './types';
+import { type ControlPoints, LabelNode, Waypoint } from './types';
 import { Point } from '@diagram-craft/geometry/point';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { Box } from '@diagram-craft/geometry/box';
 import { PointOnPath, TimeOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
-import { CubicSegment, LineSegment } from '@diagram-craft/geometry/pathSegment';
+import { CubicSegment, LineSegment, type PathSegment } from '@diagram-craft/geometry/pathSegment';
 import { Transform } from '@diagram-craft/geometry/transform';
 import {
   AbstractDiagramElement,
@@ -24,7 +24,7 @@ import {
 import { DefaultStyles, edgeDefaults } from './diagramDefaults';
 import { buildEdgePath } from './edgePathBuilder';
 import { isHorizontal, isParallel, isPerpendicular, isReadable, isVertical } from './labelNode';
-import { DeepReadonly, DeepRequired } from '@diagram-craft/utils/types';
+import { DeepReadonly, DeepRequired, type FlatObject } from '@diagram-craft/utils/types';
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { newid } from '@diagram-craft/utils/id';
 import { isDifferent } from '@diagram-craft/utils/math';
@@ -48,6 +48,7 @@ import { CRDTProp } from './collaboration/datatypes/crdtProp';
 import { MappedCRDTProp } from './collaboration/datatypes/mapped/mappedCrdtProp';
 import { CRDTObject } from './collaboration/datatypes/crdtObject';
 import type { ModificationLayer } from './diagramLayerModification';
+import type { Path } from '@diagram-craft/geometry/path';
 
 const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
   endpoint instanceof ConnectedEndpoint;
@@ -120,9 +121,55 @@ const makeEndpointMapper = (edge: DiagramEdge): CRDTMapper<Endpoint, SerializedE
   toCRDT: (e: Endpoint) => e.serialize()
 });
 
-export class DiagramEdge
+export interface DiagramEdge extends DiagramElement {
+  getDefinition(): EdgeDefinition;
+  getPropsInfo<T extends PropPath<EdgeProps>>(path: T): PropertyInfo<PropPathValue<EdgeProps, T>>;
+
+  readonly storedProps: DeepReadonly<EdgeProps>;
+  readonly storedPropsCloned: DeepReadonly<EdgeProps>;
+  readonly editProps: DeepReadonly<EdgePropsForEditing>;
+  readonly renderProps: DeepReadonly<EdgePropsForRendering>;
+  updateProps(callback: (props: EdgeProps) => void, uow: UnitOfWork): void;
+  updateCustomProps<K extends keyof CustomEdgeProps>(
+    key: K,
+    callback: (props: NonNullable<CustomEdgeProps[K]>) => void,
+    uow: UnitOfWork
+  ): void;
+  inferControlPoints(i: number): ControlPoints;
+
+  readonly dataForTemplate: FlatObject;
+  readonly name: string;
+
+  setStart(start: Endpoint, uow: UnitOfWork): void;
+  get start(): Endpoint;
+  setEnd(end: Endpoint, uow: UnitOfWork): void;
+  get end(): Endpoint;
+  isConnected(): boolean;
+
+  labelNodes: ReadonlyArray<ResolvedLabelNode>;
+  addLabelNode(node: ResolvedLabelNode, uow: UnitOfWork): void;
+  setLabelNodes(labelNodes: ReadonlyArray<ResolvedLabelNode> | undefined, uow: UnitOfWork): void;
+  removeLabelNode(node: LabelNode, uow: UnitOfWork): void;
+
+  readonly waypoints: ReadonlyArray<Waypoint>;
+  replaceWaypoint(i: number, wp: Waypoint, uow: UnitOfWork): void;
+  addWaypoint(wp: Waypoint, uow: UnitOfWork): number;
+  removeWaypoint(waypoint: Waypoint, uow: UnitOfWork): void;
+  moveWaypoint(waypoint: Waypoint, point: Point, uow: UnitOfWork): void;
+
+  readonly midpoints: ReadonlyArray<Point>;
+
+  path(): Path;
+
+  readonly intersections: Array<Intersection>;
+  flip(uow: UnitOfWork): void;
+
+  _recalculateIntersections(uow: UnitOfWork, propagate: boolean): void;
+}
+
+export class SimpleDiagramEdge
   extends AbstractDiagramElement
-  implements UOWTrackable<DiagramEdgeSnapshot>
+  implements DiagramEdge, UOWTrackable<DiagramEdgeSnapshot>
 {
   // Transient properties
   #intersections: Intersection[] = [];
@@ -196,7 +243,7 @@ export class DiagramEdge
     midpoints: ReadonlyArray<Waypoint>,
     layer: RegularLayer | ModificationLayer
   ) {
-    const edge = new DiagramEdge(id, layer);
+    const edge = new SimpleDiagramEdge(id, layer);
 
     edge.#start.set(start);
     edge.#end.set(end);
@@ -786,9 +833,9 @@ export class DiagramEdge
   /* Midpoints *********************************************************************************************** */
 
   // TODO: Can we move this to Path?
-  get midpoints() {
+  get midpoints(): ReadonlyArray<Point> {
     const path = this.path();
-    return path.segments.map(s => {
+    return path.segments.map((s: PathSegment) => {
       return s.point(0.5);
     });
   }
@@ -840,7 +887,7 @@ export class DiagramEdge
   duplicate(ctx?: DuplicationContext, id?: string) {
     const uow = new UnitOfWork(this.diagram);
 
-    const edge = DiagramEdge.create(
+    const edge = SimpleDiagramEdge.create(
       id ?? newid(),
       this.start,
       this.end,
@@ -876,7 +923,7 @@ export class DiagramEdge
     return this.layer.isLocked();
   }
 
-  path() {
+  path(): Path {
     // TODO: We should be able to cache this, and then invalidate it when the edge changes (see invalidate())
 
     const startDirection = this._getNormalDirection(this.start);
@@ -998,7 +1045,7 @@ export class DiagramEdge
     uow.beginInvalidation(this);
 
     this.adjustLabelNodePosition(uow);
-    this.recalculateIntersections(uow, true);
+    this._recalculateIntersections(uow, true);
   }
 
   detach(uow: UnitOfWork) {
@@ -1034,7 +1081,7 @@ export class DiagramEdge
     }
   }
 
-  private recalculateIntersections(uow: UnitOfWork, propagate = false) {
+  _recalculateIntersections(uow: UnitOfWork, propagate = false) {
     if (!this.diagram.hasEdgesWithLineHops) return;
 
     let currentEdgeHasBeenSeen = false;
@@ -1062,7 +1109,7 @@ export class DiagramEdge
         }))
       );
       if (propagate) {
-        edge.recalculateIntersections(uow, false);
+        edge._recalculateIntersections(uow, false);
       }
     }
 

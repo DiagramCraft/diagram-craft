@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestModel } from './test-support/builder';
 import { RegularLayer } from './diagramLayerRegular';
-import { DiagramNode } from './diagramNode';
+import { SimpleDiagramNode } from './diagramNode';
 import { UnitOfWork } from './unitOfWork';
 import { Backends } from './collaboration/collaborationTestUtils';
 
@@ -18,7 +18,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
       const layer1_2 = doc2?.diagrams[0]!.layers.all[0] as RegularLayer;
 
-      const element = new DiagramNode('id1', layer1);
+      const element = new SimpleDiagramNode('id1', layer1);
       layer1.addElement(element, UnitOfWork.immediate(d1));
 
       expect(element.id).toBe('id1');
@@ -35,7 +35,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
       const layer1_2 = doc2?.diagrams[0]!.layers.all[0] as RegularLayer;
 
-      const element = new DiagramNode('id1', layer1);
+      const element = new SimpleDiagramNode('id1', layer1);
       layer1.addElement(element, UnitOfWork.immediate(d1));
 
       expect(element.type).toBe('node');
@@ -53,7 +53,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const layer1 = d1.layers.all[0] as RegularLayer;
       const layer1_2 = doc2?.diagrams[0].layers.all[0] as RegularLayer;
 
-      const element = new DiagramNode('id1', layer1);
+      const element = new SimpleDiagramNode('id1', layer1);
       layer1.addElement(element, UnitOfWork.immediate(d1));
 
       element.highlights = ['h1', 'h2'];
@@ -76,7 +76,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const highlightedEvent1 = vi.fn();
       const highlightedEvent2 = vi.fn();
 
-      const element = new DiagramNode('id1', layer1);
+      const element = new SimpleDiagramNode('id1', layer1);
       layer1.addElement(element, UnitOfWork.immediate(d1));
 
       d1.on('elementHighlighted', highlightedEvent1);
@@ -99,7 +99,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
       const layer1_2 = doc2?.diagrams[0]!.layers.all[0] as RegularLayer;
 
-      const element = new DiagramNode('id1', layer1);
+      const element = new SimpleDiagramNode('id1', layer1);
       layer1.addElement(element, UnitOfWork.immediate(d1));
 
       element.updateMetadata(m => (m.style = 'lorem'), UnitOfWork.immediate(d1));
@@ -118,7 +118,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const changeEvent1 = vi.fn();
       const changeEvent2 = vi.fn();
 
-      const element = new DiagramNode('id1', layer1);
+      const element = new SimpleDiagramNode('id1', layer1);
       layer1.addElement(element, UnitOfWork.immediate(d1));
 
       d1.on('elementChange', changeEvent1);
@@ -140,7 +140,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
       const layer1_2 = doc2?.diagrams[0]!.layers.all[0] as RegularLayer;
 
-      const element = new DiagramNode('id1', layer1);
+      const element = new SimpleDiagramNode('id1', layer1);
       layer1.addElement(element, UnitOfWork.immediate(d1));
 
       expect(element.tags).toEqual([]);
@@ -155,7 +155,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
       const layer1_2 = doc2?.diagrams[0]!.layers.all[0] as RegularLayer;
 
-      const element = new DiagramNode('id1', layer1);
+      const element = new SimpleDiagramNode('id1', layer1);
       layer1.addElement(element, UnitOfWork.immediate(d1));
 
       element.setTags(['important', 'draft'], UnitOfWork.immediate(d1));
@@ -174,7 +174,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
       const layer1_2 = doc2?.diagrams[0]!.layers.all[0] as RegularLayer;
 
-      const element = new DiagramNode('id1', layer1);
+      const element = new SimpleDiagramNode('id1', layer1);
       layer1.addElement(element, UnitOfWork.immediate(d1));
 
       element.setTags(['tag1', 'tag2'], UnitOfWork.immediate(d1));
@@ -191,7 +191,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
       const layer1_2 = doc2?.diagrams[0]!.layers.all[0] as RegularLayer;
 
-      const element = new DiagramNode('id1', layer1);
+      const element = new SimpleDiagramNode('id1', layer1);
       layer1.addElement(element, UnitOfWork.immediate(d1));
 
       element.setTags(['old1', 'old2'], UnitOfWork.immediate(d1));
@@ -213,7 +213,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
 
       const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
 
-      const element = new DiagramNode('id1', layer1);
+      const element = new SimpleDiagramNode('id1', layer1);
       layer1.addElement(element, UnitOfWork.immediate(d1));
 
       element.setTags(['  tag1  ', '\ttag2\n', 'tag3'], UnitOfWork.immediate(d1));
@@ -226,7 +226,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
 
       const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
 
-      const element = new DiagramNode('id1', layer1);
+      const element = new SimpleDiagramNode('id1', layer1);
       layer1.addElement(element, UnitOfWork.immediate(d1));
 
       element.setTags(['tag1', '', '   ', 'tag2', '\t\n'], UnitOfWork.immediate(d1));
@@ -239,7 +239,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
 
       const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
 
-      const element = new DiagramNode('id1', layer1);
+      const element = new SimpleDiagramNode('id1', layer1);
       layer1.addElement(element, UnitOfWork.immediate(d1));
 
       element.setTags(['tag1', 'tag2', 'tag1', 'tag3'], UnitOfWork.immediate(d1));
@@ -254,7 +254,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
 
       const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
 
-      const element = new DiagramNode('id1', layer1);
+      const element = new SimpleDiagramNode('id1', layer1);
       layer1.addElement(element, UnitOfWork.immediate(d1));
 
       element.setTags(['element-tag1', 'element-tag2'], UnitOfWork.immediate(d1));
@@ -277,7 +277,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
 
       const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
 
-      const element = new DiagramNode('id1', layer1);
+      const element = new SimpleDiagramNode('id1', layer1);
       layer1.addElement(element, UnitOfWork.immediate(d1));
 
       // Put something in cache
@@ -295,7 +295,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
 
       const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
 
-      const element = new DiagramNode('id1', layer1);
+      const element = new SimpleDiagramNode('id1', layer1);
       layer1.addElement(element, UnitOfWork.immediate(d1));
 
       // First set some tags

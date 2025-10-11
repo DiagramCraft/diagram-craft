@@ -2,7 +2,7 @@ import { AbstractTool } from '@diagram-craft/canvas/tool';
 import { DragDopManager, Modifiers } from '@diagram-craft/canvas/dragDropManager';
 import { Point } from '@diagram-craft/geometry/point';
 import { PathListBuilder, toUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { SimpleDiagramNode } from '@diagram-craft/model/diagramNode';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { newid } from '@diagram-craft/utils/id';
@@ -107,7 +107,7 @@ export class FreehandTool extends AbstractTool {
       .singular()
       .asSvgPath();
 
-    const node = DiagramNode.create(
+    const node = SimpleDiagramNode.create(
       newid(),
       'generic-path',
       { x: bbox.x, y: bbox.y, w: bbox.width, h: bbox.height, r: 0 },

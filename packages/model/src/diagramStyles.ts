@@ -218,9 +218,9 @@ declare global {
   }
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: false positive
 const mapper: (
   d: DiagramStyles
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
 ) => CRDTMapper<Stylesheet<any>, CRDTMap<StylesheetSnapshot>> = d => ({
   fromCRDT<T extends StylesheetType>(e: CRDTMap<StylesheetSnapshot>): Stylesheet<T> {
     const s = new Stylesheet<T>(e);

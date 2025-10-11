@@ -7,7 +7,7 @@ import {
 import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { Box } from '@diagram-craft/geometry/box';
 import type { ShapeParser } from '../drawioReader';
-import { DiagramNode, NodeTexts } from '@diagram-craft/model/diagramNode';
+import { DiagramNode, NodeTexts, SimpleDiagramNode } from '@diagram-craft/model/diagramNode';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { FlexShapeNodeDefinition } from '@diagram-craft/canvas/node-types/FlexShapeNodeDefinition';
 import { RectNodeDefinition } from '@diagram-craft/canvas/node-types/Rect.nodeType';
@@ -72,7 +72,7 @@ export const parseAWS4Shapes = async (
       }
     ];
 
-    return DiagramNode.create(
+    return SimpleDiagramNode.create(
       id,
       'mxgraph.aws4.resourceIcon',
       bounds,
@@ -103,10 +103,10 @@ export const parseAWS4Shapes = async (
       }
     ];
 
-    return DiagramNode.create(id, style.str('shape')!, bounds, layer, props, metadata, texts);
+    return SimpleDiagramNode.create(id, style.str('shape')!, bounds, layer, props, metadata, texts);
   }
 
-  return DiagramNode.create(id, style.str('shape')!, bounds, layer, props, metadata);
+  return SimpleDiagramNode.create(id, style.str('shape')!, bounds, layer, props, metadata);
 };
 
 export const registerAWS4Shapes = async (

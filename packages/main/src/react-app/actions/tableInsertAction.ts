@@ -1,6 +1,6 @@
 import { AbstractAction, ActionCriteria } from '@diagram-craft/canvas/action';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { SimpleDiagramNode } from '@diagram-craft/model/diagramNode';
 import { newid } from '@diagram-craft/utils/id';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
@@ -48,11 +48,11 @@ class TableInsertAction extends AbstractAction<undefined, Application> {
 
         const elements: DiagramElement[] = [];
 
-        const table = DiagramNode.create(newid(), 'table', bounds, layer, {}, {});
+        const table = SimpleDiagramNode.create(newid(), 'table', bounds, layer, {}, {});
         elements.push(table);
 
         for (let r = 0; r < height; r++) {
-          const row = DiagramNode.create(
+          const row = SimpleDiagramNode.create(
             newid(),
             'tableRow',
             { w: bounds.w, h: rowHeight, x: 0, y: r * rowHeight, r: 0 },
@@ -64,7 +64,7 @@ class TableInsertAction extends AbstractAction<undefined, Application> {
           elements.push(row);
 
           for (let c = 0; c < width; c++) {
-            const cell = DiagramNode.create(
+            const cell = SimpleDiagramNode.create(
               newid(),
               'text',
               { w: colWidth, h: rowHeight, x: c * colWidth, y: 0, r: 0 },

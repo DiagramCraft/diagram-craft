@@ -4,7 +4,11 @@ import {
   SimpleShapeNodeDefinitionProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
-import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
+import {
+  DiagramNode,
+  NodePropsForRendering,
+  SimpleDiagramNode
+} from '@diagram-craft/model/diagramNode';
 import { Anchor } from '@diagram-craft/model/anchor';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { coalesce } from '@diagram-craft/utils/strings';
@@ -76,7 +80,7 @@ export class UmlLifeline extends SimpleShapeNodeDefinition {
 
     const participantProps = deepClone(props.nodeProps) as DeepWriteable<NodePropsForRendering>;
 
-    const node = DiagramNode.create(
+    const node = SimpleDiagramNode.create(
       `${props.node.id}---participant`,
       shape.type,
       {

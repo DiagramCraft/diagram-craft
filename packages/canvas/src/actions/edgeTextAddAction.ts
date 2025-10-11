@@ -1,7 +1,7 @@
 import { AbstractAction, ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 import { LengthOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
 import { precondition } from '@diagram-craft/utils/assert';
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { SimpleDiagramNode } from '@diagram-craft/model/diagramNode';
 import { newid } from '@diagram-craft/utils/id';
 import { makeUndoableAction } from '@diagram-craft/model/undoManager';
 import { Point } from '@diagram-craft/geometry/point';
@@ -42,7 +42,7 @@ export class EdgeTextAddAction extends AbstractAction<EdgeTextAddActionArg> {
     const path = edge.path();
     const projection = path.projectPoint(context.point);
 
-    const textNode = DiagramNode.create(
+    const textNode = SimpleDiagramNode.create(
       newid(),
       'text',
       { ...projection.point, r: 0, w: 100, h: 0 },

@@ -4,14 +4,17 @@ import type { Diagram } from './diagram';
 import { CRDTMap } from './collaboration/crdt';
 import { getRemoteUnitOfWork, LayerSnapshot, UnitOfWork } from './unitOfWork';
 import { groupBy } from '@diagram-craft/utils/array';
-import { DiagramEdge } from './diagramEdge';
+import { DiagramEdge, SimpleDiagramEdge } from './diagramEdge';
 import { MappedCRDTOrderedMap } from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import { makeElementMapper, registerElementFactory } from './diagramElementMapper';
-import { DiagramNode } from './diagramNode';
+import { SimpleDiagramNode } from './diagramNode';
 import { watch } from '@diagram-craft/utils/watchableValue';
 
-registerElementFactory('node', (id, layer, crdt) => new DiagramNode(id, layer, undefined, crdt));
-registerElementFactory('edge', (id, layer, crdt) => new DiagramEdge(id, layer, crdt));
+registerElementFactory(
+  'node',
+  (id, layer, crdt) => new SimpleDiagramNode(id, layer, undefined, crdt)
+);
+registerElementFactory('edge', (id, layer, crdt) => new SimpleDiagramEdge(id, layer, crdt));
 
 export class RegularLayer extends Layer<RegularLayer> {
   #elements: MappedCRDTOrderedMap<DiagramElement, DiagramElementCRDT>;

@@ -9,10 +9,10 @@ import { serializeDiagramDocument } from '@diagram-craft/model/serialization/ser
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { ARROW_SHAPES } from '@diagram-craft/canvas/arrowShapes';
-import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
+import { SimpleDiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { newid } from '@diagram-craft/utils/id';
 import { AnchorEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { DiagramNode, SimpleDiagramNode } from '@diagram-craft/model/diagramNode';
 import { Point } from '@diagram-craft/geometry/point';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { registerUMLShapes } from '@diagram-craft/canvas-drawio/shapes/uml/uml';
@@ -32,7 +32,7 @@ const writeArrow = (
   layer: RegularLayer,
   diagram: Diagram
 ) => {
-  const n = DiagramNode.create(
+  const n = SimpleDiagramNode.create(
     newid(),
     'text',
     {
@@ -59,7 +59,7 @@ const writeArrow = (
   y += 30;
   for (let w = 0; w < WIDTHS.length; w++) {
     for (let s = 0; s < SIZES.length; s++) {
-      const edge = DiagramEdge.create(
+      const edge = SimpleDiagramEdge.create(
         newid(),
         new FreeEndpoint({ x: 10 + w * 110, y: y + s * 30 }),
         new FreeEndpoint({ x: 80 + w * 110, y: y + s * 30 }),
@@ -86,7 +86,7 @@ const writeArrow = (
   }
 
   for (let s = 0; s < SIZES.length; s++) {
-    const n = DiagramNode.create(
+    const n = SimpleDiagramNode.create(
       newid(),
       'rect',
       {
@@ -107,7 +107,7 @@ const writeArrow = (
     );
     layer.addElement(n, UnitOfWork.immediate(diagram));
 
-    const edge = DiagramEdge.create(
+    const edge = SimpleDiagramEdge.create(
       newid(),
       new FreeEndpoint({ x: 10 + 600, y: y + s * 30 }),
       new AnchorEndpoint(n, 'c'),
@@ -256,7 +256,7 @@ const SHAPES_DEFS = [
       if (a.type === 'point') {
         const start = n._getAnchorPosition(a.id);
         const dest = Point.add(start, Vector.fromPolar((a.normal ?? 0) + rotation, 20));
-        const e = DiagramEdge.create(
+        const e = SimpleDiagramEdge.create(
           newid(),
           new AnchorEndpoint(n, a.id),
           new FreeEndpoint(dest),
@@ -277,7 +277,7 @@ const SHAPES_DEFS = [
         const offset = Vector.scale(Vector.from(a.start, a.end!), 0.5);
         const start = n._getPositionInBounds(Point.add(a.start, offset));
         const dest = Point.add(start, Vector.fromPolar((a.normal ?? 0) + rotation, 20));
-        const e = DiagramEdge.create(
+        const e = SimpleDiagramEdge.create(
           newid(),
           new AnchorEndpoint(n, a.id, offset),
           new FreeEndpoint(dest),
@@ -363,7 +363,7 @@ const writeShape = (
   diagram: Diagram,
   { xDiff, yDiff, startX, dimensions, shapesPerLine }: ShapeOpts
 ): { x: number; y: number } => {
-  const n = DiagramNode.create(
+  const n = SimpleDiagramNode.create(
     newid(),
     'text',
     {
@@ -403,7 +403,7 @@ const writeShape = (
     n.invalidateAnchors(uow);
     layer.addElement(n, uow);
 
-    const label = DiagramNode.create(
+    const label = SimpleDiagramNode.create(
       `${shape}-${i}-label`,
       'text',
       {

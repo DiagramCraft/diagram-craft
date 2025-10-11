@@ -1,4 +1,4 @@
-import { DiagramNode, NodeTexts } from './diagramNode';
+import { DiagramNode, NodeTexts, SimpleDiagramNode } from './diagramNode';
 import { assert } from '@diagram-craft/utils/assert';
 import type { DiagramElement } from './diagramElement';
 import type { DiagramEdge } from './diagramEdge';
@@ -248,7 +248,7 @@ export const makeStencilNode =
     const layer = $d.activeLayer;
     assertRegularLayer(layer);
 
-    const n = DiagramNode.create(
+    const n = SimpleDiagramNode.create(
       newid(),
       typeId,
       Box.applyAspectRatio(

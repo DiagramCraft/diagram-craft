@@ -2,7 +2,7 @@ import { AbstractTool } from '@diagram-craft/canvas/tool';
 import { Context } from '@diagram-craft/canvas/context';
 import { DragDopManager, Modifiers } from '@diagram-craft/canvas/dragDropManager';
 import { Point } from '@diagram-craft/geometry/point';
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { DiagramNode, SimpleDiagramNode } from '@diagram-craft/model/diagramNode';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
@@ -54,7 +54,7 @@ export class PenTool extends AbstractTool {
     if (!this.node) {
       const initialPath = { x: 0, y: 0 };
 
-      this.node = DiagramNode.create(
+      this.node = SimpleDiagramNode.create(
         newid(),
         'generic-path',
         { x: diagramPoint.x, y: diagramPoint.y, w: 10, h: 10, r: 0 },

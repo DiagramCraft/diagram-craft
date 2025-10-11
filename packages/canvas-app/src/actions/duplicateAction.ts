@@ -2,19 +2,19 @@ import { AbstractSelectionAction } from './abstractSelectionAction';
 import { Translation } from '@diagram-craft/geometry/transform';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
+import { SimpleDiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import {
   AnchorEndpoint,
   ConnectedEndpoint,
+  Endpoint,
   FreeEndpoint,
   PointInNodeEndpoint
 } from '@diagram-craft/model/endpoint';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { newid } from '@diagram-craft/utils/id';
-import { Endpoint } from '@diagram-craft/model/endpoint';
 
 declare global {
   interface ActionMap extends ReturnType<typeof duplicateActions> {}
@@ -91,7 +91,7 @@ export class DuplicateAction extends AbstractSelectionAction {
       const newStart = reconnectEndpoint(originalEdge.start, nodeMapping);
       const newEnd = reconnectEndpoint(originalEdge.end, nodeMapping);
 
-      const newEdge = DiagramEdge.create(
+      const newEdge = SimpleDiagramEdge.create(
         newid(),
         newStart,
         newEnd,

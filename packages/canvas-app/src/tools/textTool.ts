@@ -7,7 +7,7 @@ import {
 } from '@diagram-craft/canvas/dragDropManager';
 import { Point } from '@diagram-craft/geometry/point';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { DiagramNode, SimpleDiagramNode } from '@diagram-craft/model/diagramNode';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { newid } from '@diagram-craft/utils/id';
 import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
@@ -46,7 +46,7 @@ export class TextTool extends AbstractTool {
     assertRegularLayer(layer);
 
     this.startPoint = this.diagram.viewBox.toDiagramPoint(point);
-    this.node = DiagramNode.create(
+    this.node = SimpleDiagramNode.create(
       newid(),
       'text',
       {

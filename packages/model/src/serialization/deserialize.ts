@@ -1,6 +1,6 @@
 import { Diagram } from '../diagram';
-import { DiagramNode } from '../diagramNode';
-import { DiagramEdge } from '../diagramEdge';
+import { DiagramNode, SimpleDiagramNode } from '../diagramNode';
+import { DiagramEdge, SimpleDiagramEdge } from '../diagramEdge';
 import { UnitOfWork } from '../unitOfWork';
 import { isSerializedEndpointAnchor, isSerializedEndpointPointInNode } from './utils';
 import { DiagramDocument } from '../diagramDocument';
@@ -80,7 +80,7 @@ export const deserializeDiagramElements = (
         }
       }
 
-      const node = DiagramNode.create(
+      const node = SimpleDiagramNode.create(
         c.id,
         c.nodeType,
         c.bounds,
@@ -108,7 +108,7 @@ export const deserializeDiagramElements = (
       const startEndpoint = deserializeEndpoint(start, nodeLookup);
       const endEndpoint = deserializeEndpoint(end, nodeLookup);
 
-      const edge = DiagramEdge.create(
+      const edge = SimpleDiagramEdge.create(
         e.id,
         startEndpoint,
         endEndpoint,

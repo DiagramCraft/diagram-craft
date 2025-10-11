@@ -2,12 +2,12 @@ import { beforeEach, describe, expect, test } from 'vitest';
 import { DuplicateAction } from './duplicateAction';
 import {
   TestDiagramBuilder,
-  TestModel,
-  TestLayerBuilder
+  TestLayerBuilder,
+  TestModel
 } from '@diagram-craft/model/test-support/builder';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { ActionContext } from '@diagram-craft/canvas/action';
-import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
+import { SimpleDiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { AnchorEndpoint, FreeEndpoint, PointInNodeEndpoint } from '@diagram-craft/model/endpoint';
 import { Point } from '@diagram-craft/geometry/point';
 import { isEdge, isNode } from '@diagram-craft/model/diagramElement';
@@ -118,7 +118,7 @@ describe('DuplicateAction', () => {
       const node2 = layer.addNode({ bounds: { x: 200, y: 200, w: 50, h: 50, r: 0 } });
 
       // Create an edge connecting the two nodes
-      const connectedEdge = DiagramEdge.create(
+      const connectedEdge = SimpleDiagramEdge.create(
         newid(),
         new AnchorEndpoint(node1, 'c', Point.ORIGIN),
         new AnchorEndpoint(node2, 'c', Point.ORIGIN),
@@ -171,7 +171,7 @@ describe('DuplicateAction', () => {
       const node2 = layer.addNode({ bounds: { x: 200, y: 200, w: 50, h: 50, r: 0 } });
 
       // Create an edge connecting the two nodes
-      const connectedEdge = DiagramEdge.create(
+      const connectedEdge = SimpleDiagramEdge.create(
         newid(),
         new AnchorEndpoint(node1, 'c', Point.ORIGIN),
         new AnchorEndpoint(node2, 'c', Point.ORIGIN),
@@ -214,7 +214,7 @@ describe('DuplicateAction', () => {
       const node2 = layer.addNode({ bounds: { x: 200, y: 200, w: 50, h: 50, r: 0 } });
 
       // Create an edge with specific endpoint properties
-      const connectedEdge = DiagramEdge.create(
+      const connectedEdge = SimpleDiagramEdge.create(
         newid(),
         new AnchorEndpoint(node1, 'top', { x: 5, y: 5 }),
         new PointInNodeEndpoint(node2, { x: 0.5, y: 0.5 }, { x: 10, y: 10 }, 'relative'),

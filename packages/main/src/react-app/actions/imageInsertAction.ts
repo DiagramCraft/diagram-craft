@@ -1,7 +1,7 @@
 import { AbstractAction, ActionCriteria } from '@diagram-craft/canvas/action';
 import { Attachment } from '@diagram-craft/model/attachment';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { SimpleDiagramNode } from '@diagram-craft/model/diagramNode';
 import { newid } from '@diagram-craft/utils/id';
 import { Application } from '../../application';
 import { ImageInsertDialog } from '../ImageInsertDialog';
@@ -43,7 +43,7 @@ class ImageInsertAction extends AbstractAction<undefined, Application> {
         const layer = this.context.model.activeDiagram.activeLayer;
         assertRegularLayer(layer);
 
-        const e = DiagramNode.create(
+        const e = SimpleDiagramNode.create(
           newid(),
           'rect',
           {

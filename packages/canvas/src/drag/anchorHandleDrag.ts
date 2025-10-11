@@ -1,5 +1,5 @@
 import { Drag, DragEvents } from '../dragDropManager';
-import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
+import { DiagramEdge, SimpleDiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { EdgeEndpointMoveDrag } from './edgeEndpointMoveDrag';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Point } from '@diagram-craft/geometry/point';
@@ -27,7 +27,7 @@ export class AnchorHandleDrag extends Drag {
     const diagram = this.node.diagram;
     assertRegularLayer(diagram.activeLayer);
 
-    this.edge = DiagramEdge.create(
+    this.edge = SimpleDiagramEdge.create(
       newid(),
       new AnchorEndpoint(this.node, this.anchorId),
       new FreeEndpoint(diagram.viewBox.toDiagramPoint(this.point)),

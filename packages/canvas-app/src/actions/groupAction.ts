@@ -2,7 +2,7 @@ import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSe
 import { Box } from '@diagram-craft/geometry/box';
 import { UndoableAction } from '@diagram-craft/model/undoManager';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { DiagramNode, SimpleDiagramNode } from '@diagram-craft/model/diagramNode';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { newid } from '@diagram-craft/utils/id';
@@ -63,7 +63,7 @@ class UndoableGroupAction implements UndoableAction {
     const layer = this.diagram.activeLayer;
     assertRegularLayer(layer);
 
-    this.#group = DiagramNode.create(
+    this.#group = SimpleDiagramNode.create(
       newid(),
       'group',
       Box.boundingBox(this.#elements.map(e => e.bounds)),

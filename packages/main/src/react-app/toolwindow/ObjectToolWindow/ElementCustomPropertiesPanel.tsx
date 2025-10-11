@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
+import { SimpleDiagramNode } from '@diagram-craft/model/diagramNode';
+import { SimpleDiagramEdge } from '@diagram-craft/model/diagramEdge';
 import {
   asProperty,
   CustomPropertyDefinition,
@@ -128,10 +128,10 @@ export const ElementCustomPropertiesPanel = (props: Props) => {
   let def: EdgeDefinition | NodeDefinition;
   let customProperties: ReadonlyArray<CustomPropertyDefinition>;
 
-  if (element instanceof DiagramNode) {
+  if (element instanceof SimpleDiagramNode) {
     def = element.getDefinition();
     customProperties = def.getCustomPropertyDefinitions(element);
-  } else if (element instanceof DiagramEdge) {
+  } else if (element instanceof SimpleDiagramEdge) {
     def = element.getDefinition();
     customProperties = def.getCustomPropertyDefinitions(element);
   } else {

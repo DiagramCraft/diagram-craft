@@ -1,5 +1,5 @@
 import type { Editor } from './editors';
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { SimpleDiagramNode } from '@diagram-craft/model/diagramNode';
 import { newid } from '@diagram-craft/utils/id';
 import { deepClone } from '@diagram-craft/utils/object';
 import { useState } from 'react';
@@ -20,7 +20,7 @@ export const NodeCustomPropertiesEditor: Editor = props => {
   const layer = $d.activeLayer;
   assertRegularLayer(layer);
 
-  const node = DiagramNode.create(
+  const node = SimpleDiagramNode.create(
     newid(),
     type === '' ? 'rect' : type,
     { x: 0, y: 0, w: 1000, h: 1000, r: 0 },

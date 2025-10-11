@@ -18,7 +18,12 @@ import {
   FreeEndpoint,
   PointInNodeEndpoint
 } from './endpoint';
-import { DeepReadonly, DeepRequired, makeWriteable } from '@diagram-craft/utils/types';
+import {
+  DeepReadonly,
+  DeepRequired,
+  type FlatObject,
+  makeWriteable
+} from '@diagram-craft/utils/types';
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { assert, VERIFY_NOT_REACHED, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { newid } from '@diagram-craft/utils/id';
@@ -46,6 +51,7 @@ import { unique } from '@diagram-craft/utils/array';
 import { makeIsometricTransform } from '@diagram-craft/canvas/effects/isometric';
 import type { ModificationLayer } from './diagramLayerModification';
 import { getAdjustments } from './diagramLayerUtils';
+import type { NodeDefinition } from './elementDefinitionRegistry';
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;
@@ -80,9 +86,58 @@ const makeEdgesMapper = (
 
 const DEFAULT_BOUNDS = { x: 0, y: 0, w: 10, h: 10, r: 0 };
 
-export class DiagramNode
+export interface DiagramNode extends DiagramElement {
+  getDefinition(): NodeDefinition;
+  get nodeType(): string;
+  changeNodeType(nodeType: string, uow: UnitOfWork): void;
+  getText(id?: string): string;
+  setText(text: string, uow: UnitOfWork, id?: string): void;
+  readonly texts: NodeTexts;
+  readonly textsCloned: NodeTexts;
+  getPropsInfo<T extends PropPath<NodeProps>>(
+    path: T,
+    defaultValue?: PropPathValue<NodeProps, T>
+  ): PropertyInfo<PropPathValue<NodeProps, T>>;
+
+  readonly props: NodePropsForRendering;
+  readonly storedProps: NodeProps;
+  readonly storedPropsCloned: NodeProps;
+  readonly editProps: NodePropsForEditing;
+  readonly renderProps: NodePropsForRendering;
+  updateProps(callback: (props: NodeProps) => void, uow: UnitOfWork): void;
+  updateCustomProps<K extends keyof CustomNodeProps>(
+    key: K,
+    callback: (props: NonNullable<CustomNodeProps[K]>) => void,
+    uow: UnitOfWork
+  ): void;
+  readonly dataForTemplate: FlatObject;
+  readonly name: string;
+  convertToPath(uow: UnitOfWork): void;
+
+  _removeEdge(anchor: string | undefined, edge: DiagramEdge): void;
+  _addEdge(anchor: string | undefined, edge: DiagramEdge): void;
+  _getAnchorPosition(anchor: string): Point;
+  _getPositionInBounds(p: Point, respectRotation?: boolean): Point;
+
+  readonly edges: ReadonlyArray<DiagramEdge>;
+  isLabelNode(): boolean;
+  labelNode(): ResolvedLabelNode | undefined;
+  labelEdge(): DiagramEdge | undefined;
+  updateLabelNode(labelNode: Partial<LabelNode>, uow: UnitOfWork): void;
+  invalidateAnchors(uow: UnitOfWork): void;
+
+  get anchors(): ReadonlyArray<Anchor>;
+  getAnchor(anchor: string): Anchor;
+  duplicate(ctx?: DuplicationContext, id?: string): DiagramNode;
+
+  _populatePropsCache(): void;
+
+  _getNestedElements(): DiagramElement[];
+}
+
+export class SimpleDiagramNode
   extends AbstractDiagramElement
-  implements UOWTrackable<DiagramNodeSnapshot>
+  implements DiagramNode, UOWTrackable<DiagramNodeSnapshot>
 {
   // Shared properties
   readonly #nodeType: CRDTProp<DiagramNodeCRDT, 'nodeType'>;
@@ -190,15 +245,15 @@ export class DiagramNode
     text: NodeTexts = { text: '' },
     anchorCache?: ReadonlyArray<Anchor>
   ) {
-    const node = new DiagramNode(id, layer, anchorCache);
+    const node = new SimpleDiagramNode(id, layer, anchorCache);
 
-    DiagramNode.initializeNode(node, nodeType, bounds, props, metadata, text);
+    SimpleDiagramNode.initializeNode(node, nodeType, bounds, props, metadata, text);
 
     return node;
   }
 
   protected static initializeNode(
-    node: DiagramNode,
+    node: SimpleDiagramNode,
     nodeType: 'group' | string,
     bounds: Box,
     props: NodePropsForEditing,
@@ -386,7 +441,7 @@ export class DiagramNode
     };
   }
 
-  protected populatePropsCache() {
+  _populatePropsCache() {
     const {
       parentProps,
       styleProps,
@@ -424,7 +479,7 @@ export class DiagramNode
 
     for (const child of this.children) {
       if (isNode(child)) {
-        child.populatePropsCache();
+        child._populatePropsCache();
       }
     }
 
@@ -444,12 +499,12 @@ export class DiagramNode
 
   get editProps(): NodePropsForEditing {
     return (this.cache.get('props.forEditing') ??
-      this.populatePropsCache().forEditing) as NodePropsForEditing;
+      this._populatePropsCache().forEditing) as NodePropsForEditing;
   }
 
   get renderProps(): NodePropsForRendering {
     return (this.cache.get('props.forRendering') ??
-      this.populatePropsCache().forRendering) as NodePropsForRendering;
+      this._populatePropsCache().forRendering) as NodePropsForRendering;
   }
 
   updateProps(callback: (props: NodeProps) => void, uow: UnitOfWork) {
@@ -670,7 +725,7 @@ export class DiagramNode
       return context.targetElementsInGroup.get(this.id) as DiagramNode;
     }
 
-    const node = DiagramNode.create(
+    const node = SimpleDiagramNode.create(
       id ?? newid(),
       this.nodeType,
       deepClone(this.bounds),
@@ -696,7 +751,7 @@ export class DiagramNode
     if (!isTopLevel) return node;
 
     // Phase 2 - update all edges to point to the new elements
-    for (const e of node.getNestedElements()) {
+    for (const e of node._getNestedElements()) {
       if (isEdge(e)) {
         let newStart: Endpoint;
         let newEnd: Endpoint;
@@ -972,8 +1027,8 @@ export class DiagramNode
     return [this.renderProps.fill.image.id, this.renderProps.fill.pattern];
   }
 
-  private getNestedElements(): DiagramElement[] {
-    return [this, ...this.children.flatMap(c => (isNode(c) ? c.getNestedElements() : c))];
+  _getNestedElements(): DiagramElement[] {
+    return [this, ...this.children.flatMap(c => (isNode(c) ? c._getNestedElements() : c))];
   }
 
   /* Query Support ***************************************************************************************** */
