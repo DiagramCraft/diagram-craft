@@ -4,7 +4,7 @@ import { DiagramEdge } from '../diagramEdge';
 import { UnitOfWork } from '../unitOfWork';
 import { isSerializedEndpointAnchor, isSerializedEndpointPointInNode } from './utils';
 import { DiagramDocument } from '../diagramDocument';
-import { VerifyNotReached } from '@diagram-craft/utils/assert';
+import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
 import {
   SerializedAnchorEndpoint,
   SerializedDiagram,
@@ -289,25 +289,14 @@ const deserializeDiagrams = <T extends Diagram>(
     newDiagram.canvas = $d.canvas;
 
     const uow = new UnitOfWork(newDiagram);
+
+    // Need to first create all layers, and then in step 2, fill them with elements
     for (const l of $d.layers) {
       switch (l.layerType) {
         case 'regular':
         case 'basic': {
           const layer = new RegularLayer(l.id, l.name, [], newDiagram);
           newDiagram.layers.add(layer, UnitOfWork.immediate(newDiagram));
-
-          const elements = deserializeDiagramElements(
-            l.elements,
-            newDiagram,
-            layer,
-            nodeLookup,
-            edgeLookup
-          );
-          elements.forEach(e => {
-            layer.addElement(e, uow);
-          });
-
-          layer.elements.forEach(e => e.invalidate(uow));
           break;
         }
         case 'reference': {
@@ -325,6 +314,34 @@ const deserializeDiagrams = <T extends Diagram>(
         }
         default:
           throw new VerifyNotReached();
+      }
+    }
+
+    for (const l of $d.layers) {
+      switch (l.layerType) {
+        case 'regular':
+        case 'basic': {
+          const layer = newDiagram.layers.byId(l.id) as RegularLayer | undefined;
+          assert.present(layer);
+
+          const elements = deserializeDiagramElements(
+            l.elements,
+            newDiagram,
+            layer,
+            nodeLookup,
+            edgeLookup
+          );
+          layer.setElements(elements, uow);
+
+          // Need to invalidate and clear cache, as this may have been
+          // populate with partial data during the adding of elements
+          layer.elements.forEach(e => {
+            e.clearCache();
+            e.invalidate(uow);
+          });
+
+          break;
+        }
       }
     }
 
