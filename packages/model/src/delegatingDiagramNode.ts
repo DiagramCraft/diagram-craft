@@ -38,6 +38,7 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
 
   private readonly _overriddenProps: CRDTObject<NodeProps>;
   private readonly _overriddenBounds: MappedCRDTProp<DelegatingDiagramNodeCRDT, 'bounds', Box>;
+  private readonly _overriddenTexts: CRDTObject<NodeTexts>;
 
   constructor(
     id: string,
@@ -75,6 +76,18 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
       }
     );
     this._overriddenBounds.init(UNSET_BOX);
+
+    // Initialize override texts
+    const textsMap = WatchableValue.from(
+      ([parent]) => parent.get().get('text', () => layer.crdt.factory.makeMap())!,
+      [nodeCrdt] as const
+    );
+
+    this._overriddenTexts = new CRDTObject<NodeTexts>(textsMap, () => {
+      this.invalidate(UnitOfWork.immediate(this.diagram));
+      this.diagram.emit('elementChange', { element: this });
+      this.clearCache();
+    });
   }
 
   /* Props with merging ********************************************************************************** */
@@ -153,6 +166,41 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
     uow.updateElement(this);
   }
 
+  /* Text with override *************************************************************************************** */
+
+  getText(id?: string): string {
+    const overriddenTexts = this._overriddenTexts.get();
+    const key = id ?? 'text';
+
+    // Check if we have an override for this specific text id
+    if (overriddenTexts && overriddenTexts[key] !== undefined) {
+      return overriddenTexts[key];
+    }
+
+    // Fall back to delegate
+    return this.delegate.getText(id);
+  }
+
+  setText(text: string, uow: UnitOfWork, id?: string): void {
+    uow.snapshot(this);
+    const texts = this._overriddenTexts.getClone() as NodeTexts;
+    const key = id ?? 'text';
+    texts[key] = text;
+    this._overriddenTexts.set(texts);
+    uow.updateElement(this);
+    this.clearCache();
+  }
+
+  get texts(): NodeTexts {
+    const delegateTexts = this.delegate.texts;
+    const overriddenTexts = this._overriddenTexts.get() ?? {};
+    return { ...delegateTexts, ...overriddenTexts };
+  }
+
+  get textsCloned(): NodeTexts {
+    return JSON.parse(JSON.stringify(this.texts));
+  }
+
   /* Delegated methods *************************************************************************************** */
 
   getDefinition(): NodeDefinition {
@@ -165,22 +213,6 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
 
   changeNodeType(nodeType: string, uow: UnitOfWork): void {
     this.delegate.changeNodeType(nodeType, uow);
-  }
-
-  getText(id?: string): string {
-    return this.delegate.getText(id);
-  }
-
-  setText(text: string, uow: UnitOfWork, id?: string): void {
-    this.delegate.setText(text, uow, id);
-  }
-
-  get texts(): NodeTexts {
-    return this.delegate.texts;
-  }
-
-  get textsCloned(): NodeTexts {
-    return this.delegate.textsCloned;
   }
 
   get dataForTemplate() {

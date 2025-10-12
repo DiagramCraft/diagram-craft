@@ -684,4 +684,313 @@ describe.each(Backends.all())('DelegatingDiagramNode [%s]', (_name, backend) => 
       expect(propsInfo).toEqual(delegatePropsInfo);
     });
   });
+
+  describe('getText', () => {
+    it('should return delegate text when no override is set', () => {
+      // Setup - set text on delegate
+      UnitOfWork.execute(model.diagram1, uow => delegateNode.setText('Delegate Text', uow));
+
+      // Verify
+      expect(delegatingNode.getText()).toBe('Delegate Text');
+      expect(delegatingNode.getText()).toBe(delegateNode.getText());
+
+      // Verify CRDT sync
+      if (delegatingNode2 && delegateNode2) {
+        expect(delegatingNode2.getText()).toBe('Delegate Text');
+      }
+    });
+
+    it('should return overridden text when set', () => {
+      // Setup - set text on delegate
+      UnitOfWork.execute(model.diagram1, uow => delegateNode.setText('Delegate Text', uow));
+
+      // Act - override text on delegating node
+      UnitOfWork.execute(model.diagram1, uow => delegatingNode.setText('Override Text', uow));
+
+      // Verify
+      expect(delegatingNode.getText()).toBe('Override Text');
+      expect(delegateNode.getText()).toBe('Delegate Text');
+
+      // Verify CRDT sync
+      if (delegatingNode2 && delegateNode2) {
+        expect(delegatingNode2.getText()).toBe('Override Text');
+        expect(delegateNode2.getText()).toBe('Delegate Text');
+      }
+    });
+
+    it('should persist overridden text after delegate changes', () => {
+      // Setup - override text
+      UnitOfWork.execute(model.diagram1, uow => delegatingNode.setText('Override Text', uow));
+
+      // Act - change delegate text
+      UnitOfWork.execute(model.diagram1, uow => delegateNode.setText('New Delegate Text', uow));
+
+      // Verify - delegating node should keep overridden text
+      expect(delegatingNode.getText()).toBe('Override Text');
+      expect(delegateNode.getText()).toBe('New Delegate Text');
+
+      // Verify CRDT sync
+      if (delegatingNode2 && delegateNode2) {
+        expect(delegatingNode2.getText()).toBe('Override Text');
+        expect(delegateNode2.getText()).toBe('New Delegate Text');
+      }
+    });
+
+    it('should handle text with custom id', () => {
+      // Setup - set custom text on delegate
+      UnitOfWork.execute(model.diagram1, uow =>
+        delegateNode.setText('Delegate Custom', uow, 'customId')
+      );
+
+      // Act - override custom text on delegating node
+      UnitOfWork.execute(model.diagram1, uow =>
+        delegatingNode.setText('Override Custom', uow, 'customId')
+      );
+
+      // Verify
+      expect(delegatingNode.getText('customId')).toBe('Override Custom');
+      expect(delegateNode.getText('customId')).toBe('Delegate Custom');
+
+      // Verify CRDT sync
+      if (delegatingNode2 && delegateNode2) {
+        expect(delegatingNode2.getText('customId')).toBe('Override Custom');
+        expect(delegateNode2.getText('customId')).toBe('Delegate Custom');
+      }
+    });
+
+    it('should handle empty text', () => {
+      // Act
+      UnitOfWork.execute(model.diagram1, uow => delegatingNode.setText('', uow));
+
+      // Verify
+      expect(delegatingNode.getText()).toBe('');
+
+      // Verify CRDT sync
+      if (delegatingNode2) {
+        expect(delegatingNode2.getText()).toBe('');
+      }
+    });
+  });
+
+  describe('setText', () => {
+    it('should set text correctly and sync via CRDT', () => {
+      // Setup
+      model.reset();
+
+      // Act
+      UnitOfWork.execute(model.diagram1, uow => delegatingNode.setText('New Text', uow));
+
+      // Verify
+      expect(delegatingNode.getText()).toBe('New Text');
+      expect(model.elementChange[0]).toHaveBeenCalledTimes(1);
+
+      // Verify CRDT sync
+      if (delegatingNode2) {
+        expect(delegatingNode2.getText()).toBe('New Text');
+        expect(model.elementChange[1]).toHaveBeenCalledTimes(1);
+      }
+    });
+
+    it('should not affect delegate text', () => {
+      // Setup - set delegate text
+      UnitOfWork.execute(model.diagram1, uow => delegateNode.setText('Delegate Text', uow));
+
+      const originalDelegateText = delegateNode.getText();
+
+      // Act - update delegating node text
+      UnitOfWork.execute(model.diagram1, uow => delegatingNode.setText('Override Text', uow));
+
+      // Verify
+      expect(delegatingNode.getText()).toBe('Override Text');
+      expect(delegateNode.getText()).toBe(originalDelegateText);
+
+      // Verify CRDT sync
+      if (delegatingNode2 && delegateNode2) {
+        expect(delegatingNode2.getText()).toBe('Override Text');
+        expect(delegateNode2.getText()).toBe(originalDelegateText);
+      }
+    });
+
+    it('should update element in unit of work', () => {
+      // Act
+      const uow = new UnitOfWork(model.diagram1, false, false);
+      delegatingNode.setText('Test Text', uow);
+
+      // Verify
+      expect(delegatingNode.getText()).toBe('Test Text');
+      expect(uow.contains(delegatingNode, 'update')).toBe(true);
+    });
+
+    it('should allow multiple text updates with CRDT sync', () => {
+      // Act - first update
+      UnitOfWork.execute(model.diagram1, uow => delegatingNode.setText('Text 1', uow));
+      expect(delegatingNode.getText()).toBe('Text 1');
+      if (delegatingNode2) expect(delegatingNode2.getText()).toBe('Text 1');
+
+      // Act - second update
+      UnitOfWork.execute(model.diagram1, uow => delegatingNode.setText('Text 2', uow));
+      expect(delegatingNode.getText()).toBe('Text 2');
+      if (delegatingNode2) expect(delegatingNode2.getText()).toBe('Text 2');
+
+      // Act - third update
+      UnitOfWork.execute(model.diagram1, uow => delegatingNode.setText('Text 3', uow));
+      expect(delegatingNode.getText()).toBe('Text 3');
+      if (delegatingNode2) expect(delegatingNode2.getText()).toBe('Text 3');
+    });
+
+    it('should create snapshot when setting text', () => {
+      // Act
+      const uow = new UnitOfWork(model.diagram1, true, false);
+      delegatingNode.setText('Snapshot Text', uow);
+
+      // Verify
+      expect(delegatingNode.getText()).toBe('Snapshot Text');
+      expect(uow.contains(delegatingNode, 'update')).toBe(true);
+    });
+
+    it('should handle text with special characters', () => {
+      // Act
+      const specialText = 'Text with\nnewlines\tand\ttabs & special chars <>&"';
+      UnitOfWork.execute(model.diagram1, uow => delegatingNode.setText(specialText, uow));
+
+      // Verify
+      expect(delegatingNode.getText()).toBe(specialText);
+
+      // Verify CRDT sync
+      if (delegatingNode2) {
+        expect(delegatingNode2.getText()).toBe(specialText);
+      }
+    });
+
+    it('should handle very long text', () => {
+      // Act
+      const longText = 'A'.repeat(10000);
+      UnitOfWork.execute(model.diagram1, uow => delegatingNode.setText(longText, uow));
+
+      // Verify
+      expect(delegatingNode.getText()).toBe(longText);
+
+      // Verify CRDT sync
+      if (delegatingNode2) {
+        expect(delegatingNode2.getText()).toBe(longText);
+      }
+    });
+  });
+
+  describe('texts', () => {
+    it('should return delegate texts when no override is set', () => {
+      // Setup - set texts on delegate
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegateNode.setText('Main Text', uow);
+        delegateNode.setText('Custom 1', uow, 'custom1');
+        delegateNode.setText('Custom 2', uow, 'custom2');
+      });
+
+      // Verify
+      expect(delegatingNode.texts.text).toBe('Main Text');
+      expect(delegatingNode.texts.custom1).toBe('Custom 1');
+      expect(delegatingNode.texts.custom2).toBe('Custom 2');
+
+      // Verify CRDT sync
+      if (delegatingNode2) {
+        expect(delegatingNode2.texts.text).toBe('Main Text');
+        expect(delegatingNode2.texts.custom1).toBe('Custom 1');
+      }
+    });
+
+    it('should merge delegate texts with overridden texts', () => {
+      // Setup - set texts on delegate
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegateNode.setText('Delegate Main', uow);
+        delegateNode.setText('Delegate Custom 1', uow, 'custom1');
+      });
+
+      // Act - override some texts on delegating node
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegatingNode.setText('Override Main', uow);
+        delegatingNode.setText('Override Custom 2', uow, 'custom2');
+      });
+
+      // Verify - should have overridden main and custom2, but delegate custom1
+      expect(delegatingNode.texts.text).toBe('Override Main');
+      expect(delegatingNode.texts.custom1).toBe('Delegate Custom 1');
+      expect(delegatingNode.texts.custom2).toBe('Override Custom 2');
+      expect(delegateNode.texts.text).toBe('Delegate Main');
+
+      // Verify CRDT sync
+      if (delegatingNode2 && delegateNode2) {
+        expect(delegatingNode2.texts.text).toBe('Override Main');
+        expect(delegatingNode2.texts.custom1).toBe('Delegate Custom 1');
+        expect(delegatingNode2.texts.custom2).toBe('Override Custom 2');
+      }
+    });
+
+    it('should persist overridden texts after delegate changes', () => {
+      // Setup - override texts
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegatingNode.setText('Override Main', uow);
+        delegatingNode.setText('Override Custom', uow, 'custom1');
+      });
+
+      // Act - change delegate texts
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegateNode.setText('New Delegate Main', uow);
+        delegateNode.setText('New Delegate Custom', uow, 'custom1');
+      });
+
+      // Verify - delegating node should keep overridden texts
+      expect(delegatingNode.texts.text).toBe('Override Main');
+      expect(delegatingNode.texts.custom1).toBe('Override Custom');
+      expect(delegateNode.texts.text).toBe('New Delegate Main');
+
+      // Verify CRDT sync
+      if (delegatingNode2 && delegateNode2) {
+        expect(delegatingNode2.texts.text).toBe('Override Main');
+        expect(delegatingNode2.texts.custom1).toBe('Override Custom');
+      }
+    });
+  });
+
+  describe('textsCloned', () => {
+    it('should return a deep clone of texts', () => {
+      // Setup
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegatingNode.setText('Main Text', uow);
+        delegatingNode.setText('Custom Text', uow, 'custom1');
+      });
+
+      // Act
+      const cloned = delegatingNode.textsCloned;
+      cloned.text = 'Modified Main';
+      cloned.custom1 = 'Modified Custom';
+
+      // Verify - original should not be affected
+      expect(delegatingNode.texts.text).toBe('Main Text');
+      expect(delegatingNode.texts.custom1).toBe('Custom Text');
+      expect(cloned.text).toBe('Modified Main');
+      expect(cloned.custom1).toBe('Modified Custom');
+    });
+
+    it('should clone merged texts from delegate and override', () => {
+      // Setup
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegateNode.setText('Delegate Main', uow);
+        delegateNode.setText('Delegate Custom', uow, 'custom1');
+      });
+
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegatingNode.setText('Override Main', uow);
+      });
+
+      // Act
+      const cloned = delegatingNode.textsCloned;
+      cloned.text = 'Modified';
+
+      // Verify - original merged texts should not be affected
+      expect(delegatingNode.texts.text).toBe('Override Main');
+      expect(delegatingNode.texts.custom1).toBe('Delegate Custom');
+      expect(cloned.text).toBe('Modified');
+      expect(cloned.custom1).toBe('Delegate Custom');
+    });
+  });
 });
