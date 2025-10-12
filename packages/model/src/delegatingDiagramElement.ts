@@ -28,7 +28,7 @@ export abstract class DelegatingDiagramElement implements DiagramElement {
   protected readonly delegate: DiagramElement;
 
   private _metadata: CRDTObject<ElementMetadata>;
-  private readonly _crdt: WatchableValue<CRDTMap<DiagramElementCRDT>>;
+  protected readonly _crdt: WatchableValue<CRDTMap<DiagramElementCRDT>>;
   private _layer: RegularLayer | ModificationLayer;
   private _diagram: Diagram;
 
