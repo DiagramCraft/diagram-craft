@@ -10,6 +10,7 @@ import type { ModificationLayer } from './diagramLayerModification';
 type DiagramElementFactory = (
   id: string,
   layer: RegularLayer | ModificationLayer,
+  delegate: DiagramElement | undefined,
   crdt: CRDTMap<DiagramElementCRDT>
 ) => DiagramElement;
 
@@ -20,7 +21,8 @@ export const registerElementFactory = (type: string, factory: DiagramElementFact
 };
 
 export const makeElementMapper = (
-  layer: RegularLayer | ModificationLayer
+  layer: RegularLayer | ModificationLayer,
+  delegate: DiagramElement | undefined
 ): CRDTMapper<DiagramElement, CRDTMap<DiagramElementCRDT>> => ({
   fromCRDT: (e: CRDTMap<DiagramElementCRDT>) => {
     const type = e.get('type')!;
@@ -33,7 +35,7 @@ export const makeElementMapper = (
     }
 
     if (!FACTORIES[type]) assert.fail(`Unknown element type: ${type}`);
-    return FACTORIES[type](id, layer, e);
+    return FACTORIES[type](id, layer, delegate, e);
   },
 
   toCRDT: (e: DiagramElement) => e.crdt.get()

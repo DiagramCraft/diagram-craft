@@ -41,7 +41,7 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
     layer: RegularLayer | ModificationLayer,
     crdt?: CRDTMap<DiagramEdgeCRDT>
   ) {
-    super(id, delegate, layer, crdt);
+    super(id, 'delegating-edge', delegate, layer, crdt);
 
     const edgeCrdt = this._crdt as unknown as WatchableValue<CRDTMap<DiagramEdgeCRDT>>;
 

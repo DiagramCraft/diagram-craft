@@ -5,12 +5,12 @@ import {
   type ElementPropsForRendering
 } from './diagramElement';
 import { type RegularLayer } from './diagramLayerRegular';
-import { type ModificationLayer } from './diagramLayerModification';
+import type { ModificationLayer } from './diagramLayerModification';
 import type { CRDTMap } from './collaboration/crdt';
 import { watch, WatchableValue } from '@diagram-craft/utils/watchableValue';
 import { CRDTObject } from './collaboration/datatypes/crdtObject';
 import { UnitOfWork } from './unitOfWork';
-import { type Diagram } from './diagram';
+import type { Diagram } from './diagram';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { Transform } from '@diagram-craft/geometry/transform';
 import type { Box } from '@diagram-craft/geometry/box';
@@ -34,6 +34,7 @@ export abstract class DelegatingDiagramElement implements DiagramElement {
 
   protected constructor(
     id: string,
+    type: string,
     delegate: DiagramElement,
     layer: RegularLayer | ModificationLayer,
     crdt?: CRDTMap<DiagramElementCRDT>
@@ -42,6 +43,7 @@ export abstract class DelegatingDiagramElement implements DiagramElement {
 
     this._crdt = watch(crdt ?? layer.crdt.factory.makeMap());
     this._crdt.get().set('id', id);
+    this._crdt.get().set('type', type);
     this._layer = layer;
     this._diagram = layer.diagram;
 

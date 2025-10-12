@@ -165,7 +165,7 @@ export abstract class AbstractDiagramElement
         ([m]) => m.get().get('children', () => layer.crdt.factory.makeMap())!,
         [this._crdt]
       ),
-      makeElementMapper(this.layer),
+      makeElementMapper(this.layer, undefined),
       {
         onRemoteAdd: e => {
           this._diagram.register(e);

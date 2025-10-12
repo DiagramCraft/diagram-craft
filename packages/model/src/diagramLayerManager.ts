@@ -15,6 +15,7 @@ import { AttachmentConsumer } from './attachment';
 import { RegularLayer } from './diagramLayerRegular';
 import { watch } from '@diagram-craft/utils/watchableValue';
 import { EventEmitter } from '@diagram-craft/utils/event';
+import { ModificationLayer } from './diagramLayerModification';
 
 export type LayerManagerCRDT = {
   // TODO: Should we move visibility to be a property of the layer instead
@@ -45,6 +46,9 @@ export const makeLayerMapper = (diagram: Diagram): CRDTMapper<Layer, CRDTMap<Lay
             },
             e
           );
+        case 'modification':
+          return new ModificationLayer(id, name, diagram, [], e);
+
         default:
           return VERIFY_NOT_REACHED();
       }

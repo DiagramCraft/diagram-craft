@@ -1,14 +1,29 @@
 import { Layer, type LayerCRDT } from './diagramLayer';
 import { CRDTMap } from './collaboration/crdt';
-import { type Diagram } from './diagram';
+import type { Diagram } from './diagram';
 import { type DiagramElement, type DiagramElementCRDT, isNode } from './diagramElement';
 import { MappedCRDTOrderedMap } from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import { watch } from '@diagram-craft/utils/watchableValue';
-import { makeElementMapper } from './diagramElementMapper';
+import { makeElementMapper, registerElementFactory } from './diagramElementMapper';
 import { getRemoteUnitOfWork, type LayerSnapshot, UnitOfWork } from './unitOfWork';
 import { assert, mustExist } from '@diagram-craft/utils/assert';
 import { DiagramEdge } from './diagramEdge';
 import type { Adjustment } from './diagramLayerRuleTypes';
+import type { RegularLayer } from './diagramLayerRegular';
+import type { DiagramNode } from './diagramNode';
+import { DelegatingDiagramNode } from './delegatingDiagramNode';
+
+registerElementFactory(
+  'delegating-node',
+  (
+    id: string,
+    layer: RegularLayer | ModificationLayer,
+    delegate: DiagramElement | undefined,
+    crdt: CRDTMap<DiagramElementCRDT>
+  ) => {
+    return new DelegatingDiagramNode(id, delegate! as DiagramNode, layer, crdt);
+  }
+);
 
 type ModificationType = 'add' | 'remove' | 'change';
 const ModificationType = {
@@ -53,7 +68,7 @@ export class ModificationLayer extends Layer<ModificationLayer> {
 
           let element: DiagramElement | undefined;
           if (type === ModificationType.Add || type === ModificationType.Change) {
-            element = makeElementMapper(this).fromCRDT(e.get('element')!);
+            element = makeElementMapper(this, this.diagram.lookup(id)!).fromCRDT(e.get('element')!);
           }
 
           return { id, type, element };
@@ -63,7 +78,9 @@ export class ModificationLayer extends Layer<ModificationLayer> {
           return diagram.document.root.factory.makeMap({
             id: e.id,
             type: e.type,
-            element: e.element ? makeElementMapper(this).toCRDT(e.element) : undefined
+            element: e.element
+              ? makeElementMapper(this, this.diagram.lookup(id)!).toCRDT(e.element)
+              : undefined
           });
         }
       },

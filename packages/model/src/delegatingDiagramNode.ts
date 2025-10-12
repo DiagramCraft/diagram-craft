@@ -25,8 +25,10 @@ import type { Anchor } from './anchor';
 import type { LabelNode } from './types';
 import { MappedCRDTProp } from './collaboration/datatypes/mapped/mappedCrdtProp';
 
+const UNSET_BOX: Box = { x: -1, y: -1, w: 999999, h: 999999, r: -1 };
+
 export type DelegatingDiagramNodeCRDT = DiagramElementCRDT & {
-  bounds?: Box | undefined;
+  bounds: Box;
   text: FlatCRDTMap;
   props: FlatCRDTMap;
 };
@@ -35,11 +37,7 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
   declare protected readonly delegate: DiagramNode;
 
   private readonly _overriddenProps: CRDTObject<NodeProps>;
-  private readonly _overriddenBounds: MappedCRDTProp<
-    DelegatingDiagramNodeCRDT,
-    'bounds',
-    Box | undefined
-  >;
+  private readonly _overriddenBounds: MappedCRDTProp<DelegatingDiagramNodeCRDT, 'bounds', Box>;
 
   constructor(
     id: string,
@@ -47,7 +45,7 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
     layer: RegularLayer | ModificationLayer,
     crdt?: CRDTMap<DiagramElementCRDT>
   ) {
-    super(id, delegate, layer, crdt);
+    super(id, 'delegating-node', delegate, layer, crdt);
 
     const nodeCrdt = this._crdt as unknown as WatchableValue<CRDTMap<DelegatingDiagramNodeCRDT>>;
 
@@ -63,21 +61,20 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
       this.clearCache();
     });
 
-    this._overriddenBounds = new MappedCRDTProp<
-      DelegatingDiagramNodeCRDT,
-      'bounds',
-      Box | undefined
-    >(
+    this._overriddenBounds = new MappedCRDTProp<DelegatingDiagramNodeCRDT, 'bounds', Box>(
       nodeCrdt,
       'bounds',
       {
-        toCRDT: (b: Box | undefined) => b,
-        fromCRDT: (b: Box | undefined) => b
+        toCRDT: (b: Box) => b,
+        fromCRDT: (b: Box) => b
       },
       {
-        onRemoteChange: () => getRemoteUnitOfWork(this.diagram).updateElement(this)
+        onRemoteChange: () => {
+          getRemoteUnitOfWork(this.diagram).updateElement(this);
+        }
       }
     );
+    this._overriddenBounds.init(UNSET_BOX);
   }
 
   /* Props with merging ********************************************************************************** */
@@ -145,7 +142,9 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
   /* Bounds with override ************************************************************************************ */
 
   get bounds(): Box {
-    return this._overriddenBounds.get() ?? this.delegate.bounds;
+    return Box.isEqual(UNSET_BOX, this._overriddenBounds.getNonNull())
+      ? this.delegate.bounds
+      : this._overriddenBounds.getNonNull();
   }
 
   setBounds(bounds: Box, uow: UnitOfWork): void {
