@@ -10,7 +10,7 @@ import type { RegularLayer } from './diagramLayerRegular';
 import type { ModificationLayer } from './diagramLayerModification';
 import type { CRDTMap } from './collaboration/crdt';
 import { getRemoteUnitOfWork, UnitOfWork } from './unitOfWork';
-import type { Endpoint } from './endpoint';
+import { Endpoint } from './endpoint';
 import type { Waypoint } from './types';
 import { Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
@@ -24,7 +24,7 @@ import type { Path } from '@diagram-craft/geometry/path';
 import { Transform } from '@diagram-craft/geometry/transform';
 import type { DuplicationContext } from './diagramNode';
 import { DiagramElement } from './diagramElement';
-import { SerializedEdge } from './serialization/types';
+import { SerializedEdge, SerializedEndpoint } from './serialization/types';
 import { MappedCRDTProp } from './collaboration/datatypes/mapped/mappedCrdtProp';
 import { CRDTProp } from './collaboration/datatypes/crdtProp';
 
@@ -34,6 +34,8 @@ export type DiagramEdgeSnapshot = SerializedEdge & {
 
 type DelegatingDiagramEdgeCRDT = DiagramEdgeCRDT & {
   waypointsOverridden: boolean;
+  startOverridden: boolean;
+  endOverridden: boolean;
 };
 
 export class DelegatingDiagramEdge extends DelegatingDiagramElement implements DiagramEdge {
@@ -46,6 +48,10 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
     ReadonlyArray<Waypoint>
   >;
   private _waypointsOverridden: CRDTProp<DelegatingDiagramEdgeCRDT, 'waypointsOverridden'>;
+  private readonly _overriddenStart: MappedCRDTProp<DelegatingDiagramEdgeCRDT, 'start', Endpoint>;
+  private readonly _overriddenEnd: MappedCRDTProp<DelegatingDiagramEdgeCRDT, 'end', Endpoint>;
+  private _startOverridden: CRDTProp<DelegatingDiagramEdgeCRDT, 'startOverridden'>;
+  private _endOverridden: CRDTProp<DelegatingDiagramEdgeCRDT, 'endOverridden'>;
 
   constructor(
     id: string,
@@ -90,6 +96,39 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
     this._overriddenWaypoints.init([]);
 
     this._waypointsOverridden = new CRDTProp(edgeCrdt, 'waypointsOverridden');
+
+    // Initialize override endpoints
+    const makeEndpointMapper = () => ({
+      fromCRDT: (e: SerializedEndpoint) => Endpoint.deserialize(e, this.diagram.nodeLookup, true),
+      toCRDT: (e: Endpoint) => e.serialize()
+    });
+
+    this._overriddenStart = new MappedCRDTProp<DelegatingDiagramEdgeCRDT, 'start', Endpoint>(
+      edgeCrdt,
+      'start',
+      makeEndpointMapper(),
+      {
+        onRemoteChange: () => {
+          getRemoteUnitOfWork(this.diagram).updateElement(this);
+        }
+      }
+    );
+    this._overriddenStart.init(delegate.start);
+
+    this._overriddenEnd = new MappedCRDTProp<DelegatingDiagramEdgeCRDT, 'end', Endpoint>(
+      edgeCrdt,
+      'end',
+      makeEndpointMapper(),
+      {
+        onRemoteChange: () => {
+          getRemoteUnitOfWork(this.diagram).updateElement(this);
+        }
+      }
+    );
+    this._overriddenEnd.init(delegate.end);
+
+    this._startOverridden = new CRDTProp(edgeCrdt, 'startOverridden');
+    this._endOverridden = new CRDTProp(edgeCrdt, 'endOverridden');
   }
 
   /* Props with merging ********************************************************************************** */
@@ -170,20 +209,38 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
     return this.delegate.name;
   }
 
-  setStart(start: Endpoint, uow: UnitOfWork): void {
-    this.delegate.setStart(start, uow);
-  }
+  /* Start/End with override ********************************************************************************* */
 
   get start(): Endpoint {
+    const isOverridden = this._startOverridden.get();
+    if (isOverridden) {
+      return this._overriddenStart.getNonNull();
+    }
     return this.delegate.start;
   }
 
-  setEnd(end: Endpoint, uow: UnitOfWork): void {
-    this.delegate.setEnd(end, uow);
+  setStart(start: Endpoint, uow: UnitOfWork): void {
+    uow.snapshot(this);
+    this._overriddenStart.set(start);
+    this._startOverridden.set(true);
+    uow.updateElement(this);
+    this.clearCache();
   }
 
   get end(): Endpoint {
+    const isOverridden = this._endOverridden.get();
+    if (isOverridden) {
+      return this._overriddenEnd.getNonNull();
+    }
     return this.delegate.end;
+  }
+
+  setEnd(end: Endpoint, uow: UnitOfWork): void {
+    uow.snapshot(this);
+    this._overriddenEnd.set(end);
+    this._endOverridden.set(true);
+    uow.updateElement(this);
+    this.clearCache();
   }
 
   isConnected(): boolean {

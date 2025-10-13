@@ -8,6 +8,7 @@ import {
 import type { DiagramEdge } from './diagramEdge';
 import { ModificationLayer } from './diagramLayerModification';
 import { DelegatingDiagramEdge } from './delegatingDiagramEdge';
+import { FreeEndpoint } from './endpoint';
 
 describe.each(Backends.all())('DelegatingDiagramEdge [%s]', (_name, backend) => {
   let model: StandardTestModel;
@@ -887,6 +888,234 @@ describe.each(Backends.all())('DelegatingDiagramEdge [%s]', (_name, backend) => 
           cp2: { x: 60, y: 60 }
         });
       }
+    });
+  });
+
+  describe('start endpoint', () => {
+    it('should return delegate start when no override is set', () => {
+      // Verify
+      expect(delegatingEdge.start).toEqual(delegateEdge.start);
+      expect(delegatingEdge.start.position).toEqual(delegateEdge.start.position);
+
+      // Verify CRDT sync
+      if (delegatingEdge2 && delegateEdge2) {
+        expect(delegatingEdge2.start.position).toEqual(delegateEdge2.start.position);
+      }
+    });
+
+    it('should return overridden start when set', () => {
+      const originalStart = delegateEdge.start;
+
+      // Act - set new start on delegating edge
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegatingEdge.setStart(new FreeEndpoint({ x: 100, y: 200 }), uow);
+      });
+
+      // Verify - delegating edge should have new start, delegate unchanged
+      expect(delegatingEdge.start.position).toEqual({ x: 100, y: 200 });
+      expect(delegateEdge.start).toEqual(originalStart);
+
+      // Verify CRDT sync
+      if (delegatingEdge2 && delegateEdge2) {
+        expect(delegatingEdge2.start.position).toEqual({ x: 100, y: 200 });
+        expect(delegateEdge2.start).toEqual(originalStart);
+      }
+    });
+
+    it('should set start endpoint and sync via CRDT', () => {
+      // Setup
+      model.reset();
+
+      // Act
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegatingEdge.setStart(new FreeEndpoint({ x: 50, y: 75 }), uow);
+      });
+
+      // Verify
+      expect(delegatingEdge.start.position).toEqual({ x: 50, y: 75 });
+      expect(model.elementChange[0]).toHaveBeenCalledTimes(1);
+
+      // Verify CRDT sync
+      if (delegatingEdge2) {
+        expect(delegatingEdge2.start.position).toEqual({ x: 50, y: 75 });
+        expect(model.elementChange[1]).toHaveBeenCalledTimes(1);
+      }
+    });
+
+    it('should not affect delegate start', () => {
+      // Setup - get original delegate start
+      const originalDelegateStart = delegateEdge.start;
+
+      // Act - change start on delegating edge
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegatingEdge.setStart(new FreeEndpoint({ x: 999, y: 888 }), uow);
+      });
+
+      // Verify
+      expect(delegatingEdge.start.position).toEqual({ x: 999, y: 888 });
+      expect(delegateEdge.start).toEqual(originalDelegateStart);
+
+      // Verify CRDT sync
+      if (delegatingEdge2 && delegateEdge2) {
+        expect(delegatingEdge2.start.position).toEqual({ x: 999, y: 888 });
+        expect(delegateEdge2.start).toEqual(originalDelegateStart);
+      }
+    });
+
+    it('should persist overridden start after delegate changes', () => {
+      // Setup - override start
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegatingEdge.setStart(new FreeEndpoint({ x: 100, y: 100 }), uow);
+      });
+
+      // Act - change delegate start
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegateEdge.setStart(new FreeEndpoint({ x: 200, y: 200 }), uow);
+      });
+
+      // Verify - delegating edge should keep overridden start
+      expect(delegatingEdge.start.position).toEqual({ x: 100, y: 100 });
+      expect(delegateEdge.start.position).toEqual({ x: 200, y: 200 });
+
+      // Verify CRDT sync
+      if (delegatingEdge2 && delegateEdge2) {
+        expect(delegatingEdge2.start.position).toEqual({ x: 100, y: 100 });
+        expect(delegateEdge2.start.position).toEqual({ x: 200, y: 200 });
+      }
+    });
+
+    it('should update element in unit of work when setting start', () => {
+      // Act
+      const uow = new UnitOfWork(model.diagram1, false, false);
+      delegatingEdge.setStart(new FreeEndpoint({ x: 150, y: 250 }), uow);
+
+      // Verify
+      expect(delegatingEdge.start.position).toEqual({ x: 150, y: 250 });
+      expect(uow.contains(delegatingEdge, 'update')).toBe(true);
+    });
+
+    it('should create snapshot when setting start', () => {
+      // Act
+      const uow = new UnitOfWork(model.diagram1, true, false);
+      delegatingEdge.setStart(new FreeEndpoint({ x: 175, y: 275 }), uow);
+
+      // Verify
+      expect(delegatingEdge.start.position).toEqual({ x: 175, y: 275 });
+      expect(uow.contains(delegatingEdge, 'update')).toBe(true);
+    });
+  });
+
+  describe('end endpoint', () => {
+    it('should return delegate end when no override is set', () => {
+      // Verify
+      expect(delegatingEdge.end).toEqual(delegateEdge.end);
+      expect(delegatingEdge.end.position).toEqual(delegateEdge.end.position);
+
+      // Verify CRDT sync
+      if (delegatingEdge2 && delegateEdge2) {
+        expect(delegatingEdge2.end.position).toEqual(delegateEdge2.end.position);
+      }
+    });
+
+    it('should return overridden end when set', () => {
+      const originalEnd = delegateEdge.end;
+
+      // Act - set new end on delegating edge
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegatingEdge.setEnd(new FreeEndpoint({ x: 300, y: 400 }), uow);
+      });
+
+      // Verify - delegating edge should have new end, delegate unchanged
+      expect(delegatingEdge.end.position).toEqual({ x: 300, y: 400 });
+      expect(delegateEdge.end).toEqual(originalEnd);
+
+      // Verify CRDT sync
+      if (delegatingEdge2 && delegateEdge2) {
+        expect(delegatingEdge2.end.position).toEqual({ x: 300, y: 400 });
+        expect(delegateEdge2.end).toEqual(originalEnd);
+      }
+    });
+
+    it('should set end endpoint and sync via CRDT', () => {
+      // Setup
+      model.reset();
+
+      // Act
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegatingEdge.setEnd(new FreeEndpoint({ x: 150, y: 175 }), uow);
+      });
+
+      // Verify
+      expect(delegatingEdge.end.position).toEqual({ x: 150, y: 175 });
+      expect(model.elementChange[0]).toHaveBeenCalledTimes(1);
+
+      // Verify CRDT sync
+      if (delegatingEdge2) {
+        expect(delegatingEdge2.end.position).toEqual({ x: 150, y: 175 });
+        expect(model.elementChange[1]).toHaveBeenCalledTimes(1);
+      }
+    });
+
+    it('should not affect delegate end', () => {
+      // Setup - get original delegate end
+      const originalDelegateEnd = delegateEdge.end;
+
+      // Act - change end on delegating edge
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegatingEdge.setEnd(new FreeEndpoint({ x: 777, y: 666 }), uow);
+      });
+
+      // Verify
+      expect(delegatingEdge.end.position).toEqual({ x: 777, y: 666 });
+      expect(delegateEdge.end).toEqual(originalDelegateEnd);
+
+      // Verify CRDT sync
+      if (delegatingEdge2 && delegateEdge2) {
+        expect(delegatingEdge2.end.position).toEqual({ x: 777, y: 666 });
+        expect(delegateEdge2.end).toEqual(originalDelegateEnd);
+      }
+    });
+
+    it('should persist overridden end after delegate changes', () => {
+      // Setup - override end
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegatingEdge.setEnd(new FreeEndpoint({ x: 500, y: 500 }), uow);
+      });
+
+      // Act - change delegate end
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegateEdge.setEnd(new FreeEndpoint({ x: 600, y: 600 }), uow);
+      });
+
+      // Verify - delegating edge should keep overridden end
+      expect(delegatingEdge.end.position).toEqual({ x: 500, y: 500 });
+      expect(delegateEdge.end.position).toEqual({ x: 600, y: 600 });
+
+      // Verify CRDT sync
+      if (delegatingEdge2 && delegateEdge2) {
+        expect(delegatingEdge2.end.position).toEqual({ x: 500, y: 500 });
+        expect(delegateEdge2.end.position).toEqual({ x: 600, y: 600 });
+      }
+    });
+
+    it('should update element in unit of work when setting end', () => {
+      // Act
+      const uow = new UnitOfWork(model.diagram1, false, false);
+      delegatingEdge.setEnd(new FreeEndpoint({ x: 350, y: 450 }), uow);
+
+      // Verify
+      expect(delegatingEdge.end.position).toEqual({ x: 350, y: 450 });
+      expect(uow.contains(delegatingEdge, 'update')).toBe(true);
+    });
+
+    it('should create snapshot when setting end', () => {
+      // Act
+      const uow = new UnitOfWork(model.diagram1, true, false);
+      delegatingEdge.setEnd(new FreeEndpoint({ x: 375, y: 475 }), uow);
+
+      // Verify
+      expect(delegatingEdge.end.position).toEqual({ x: 375, y: 475 });
+      expect(uow.contains(delegatingEdge, 'update')).toBe(true);
     });
   });
 });
