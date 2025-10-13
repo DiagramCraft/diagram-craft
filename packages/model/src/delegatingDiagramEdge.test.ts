@@ -484,4 +484,409 @@ describe.each(Backends.all())('DelegatingDiagramEdge [%s]', (_name, backend) => 
       expect(propsInfo).toEqual(delegatePropsInfo);
     });
   });
+
+  describe('waypoints', () => {
+    it('should return delegate waypoints when no override is set', () => {
+      // Setup - add waypoints to delegate
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegateEdge.addWaypoint({ point: { x: 10, y: 10 } }, uow);
+        delegateEdge.addWaypoint({ point: { x: 20, y: 20 } }, uow);
+      });
+
+      // Verify
+      expect(delegatingEdge.waypoints).toHaveLength(2);
+      expect(delegatingEdge.waypoints[0]?.point).toEqual({ x: 10, y: 10 });
+      expect(delegatingEdge.waypoints[1]?.point).toEqual({ x: 20, y: 20 });
+
+      // Verify CRDT sync
+      if (delegatingEdge2 && delegateEdge2) {
+        expect(delegatingEdge2.waypoints).toHaveLength(2);
+        expect(delegatingEdge2.waypoints[0]?.point).toEqual({ x: 10, y: 10 });
+      }
+    });
+
+    it('should return overridden waypoints when set', () => {
+      // Setup - add waypoints to delegate
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegateEdge.addWaypoint({ point: { x: 10, y: 10 } }, uow);
+      });
+
+      // Act - add waypoint to delegating edge
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegatingEdge.addWaypoint({ point: { x: 50, y: 50 } }, uow);
+      });
+
+      // Verify - delegating edge should have 2 waypoints (copied from delegate + new one)
+      expect(delegatingEdge.waypoints).toHaveLength(2);
+      expect(delegatingEdge.waypoints[0]?.point).toEqual({ x: 10, y: 10 });
+      expect(delegatingEdge.waypoints[1]?.point).toEqual({ x: 50, y: 50 });
+      expect(delegateEdge.waypoints).toHaveLength(1);
+      expect(delegateEdge.waypoints[0]?.point).toEqual({ x: 10, y: 10 });
+
+      // Verify CRDT sync
+      if (delegatingEdge2 && delegateEdge2) {
+        expect(delegatingEdge2.waypoints).toHaveLength(2);
+        expect(delegateEdge2.waypoints).toHaveLength(1);
+      }
+    });
+
+    it('should persist overridden waypoints after delegate changes', () => {
+      // Setup - add waypoint to delegating edge
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegatingEdge.addWaypoint({ point: { x: 50, y: 50 } }, uow);
+      });
+
+      // Act - add waypoint to delegate
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegateEdge.addWaypoint({ point: { x: 10, y: 10 } }, uow);
+      });
+
+      // Verify - delegating edge should keep its overridden waypoints
+      expect(delegatingEdge.waypoints).toHaveLength(1);
+      expect(delegatingEdge.waypoints[0]?.point).toEqual({ x: 50, y: 50 });
+      expect(delegateEdge.waypoints).toHaveLength(1);
+      expect(delegateEdge.waypoints[0]?.point).toEqual({ x: 10, y: 10 });
+
+      // Verify CRDT sync
+      if (delegatingEdge2 && delegateEdge2) {
+        expect(delegatingEdge2.waypoints).toHaveLength(1);
+        expect(delegatingEdge2.waypoints[0]?.point).toEqual({ x: 50, y: 50 });
+      }
+    });
+
+    it('should handle empty waypoints', () => {
+      // Setup - add waypoint to delegate
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegateEdge.addWaypoint({ point: { x: 10, y: 10 } }, uow);
+      });
+
+      // Verify delegate has waypoint
+      expect(delegateEdge.waypoints).toHaveLength(1);
+      expect(delegatingEdge.waypoints).toHaveLength(1);
+
+      // Act - explicitly set empty waypoints on delegating edge
+      UnitOfWork.execute(model.diagram1, uow => {
+        const wp = delegatingEdge.waypoints[0]!;
+        delegatingEdge.removeWaypoint(wp, uow);
+      });
+
+      // Verify - delegating edge should have no waypoints even though delegate does
+      expect(delegatingEdge.waypoints).toHaveLength(0);
+      expect(delegateEdge.waypoints).toHaveLength(1);
+
+      // Verify CRDT sync
+      if (delegatingEdge2 && delegateEdge2) {
+        expect(delegatingEdge2.waypoints).toHaveLength(0);
+        expect(delegateEdge2.waypoints).toHaveLength(1);
+      }
+    });
+  });
+
+  describe('addWaypoint', () => {
+    it('should add waypoint and sync via CRDT', () => {
+      // Setup
+      model.reset();
+
+      // Act
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegatingEdge.addWaypoint({ point: { x: 25, y: 35 } }, uow);
+      });
+
+      // Verify
+      expect(delegatingEdge.waypoints).toHaveLength(1);
+      expect(delegatingEdge.waypoints[0]?.point).toEqual({ x: 25, y: 35 });
+      expect(model.elementChange[0]).toHaveBeenCalledTimes(1);
+
+      // Verify CRDT sync
+      if (delegatingEdge2) {
+        expect(delegatingEdge2.waypoints).toHaveLength(1);
+        expect(delegatingEdge2.waypoints[0]?.point).toEqual({ x: 25, y: 35 });
+        expect(model.elementChange[1]).toHaveBeenCalledTimes(1);
+      }
+    });
+
+    it('should not affect delegate waypoints', () => {
+      // Setup - add waypoint to delegate
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegateEdge.addWaypoint({ point: { x: 10, y: 10 } }, uow);
+      });
+
+      const originalDelegateWaypoints = delegateEdge.waypoints.length;
+
+      // Act - add waypoint to delegating edge
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegatingEdge.addWaypoint({ point: { x: 99, y: 88 } }, uow);
+      });
+
+      // Verify
+      expect(delegatingEdge.waypoints).toHaveLength(2);
+      expect(delegateEdge.waypoints).toHaveLength(originalDelegateWaypoints);
+
+      // Verify CRDT sync
+      if (delegatingEdge2 && delegateEdge2) {
+        expect(delegatingEdge2.waypoints).toHaveLength(2);
+        expect(delegateEdge2.waypoints).toHaveLength(originalDelegateWaypoints);
+      }
+    });
+
+    it('should add multiple waypoints with CRDT sync', () => {
+      // Act
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegatingEdge.addWaypoint({ point: { x: 10, y: 10 } }, uow);
+      });
+      expect(delegatingEdge.waypoints).toHaveLength(1);
+      if (delegatingEdge2) expect(delegatingEdge2.waypoints).toHaveLength(1);
+
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegatingEdge.addWaypoint({ point: { x: 20, y: 20 } }, uow);
+      });
+      expect(delegatingEdge.waypoints).toHaveLength(2);
+      if (delegatingEdge2) expect(delegatingEdge2.waypoints).toHaveLength(2);
+
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegatingEdge.addWaypoint({ point: { x: 30, y: 30 } }, uow);
+      });
+      expect(delegatingEdge.waypoints).toHaveLength(3);
+      if (delegatingEdge2) expect(delegatingEdge2.waypoints).toHaveLength(3);
+    });
+
+    it('should create snapshot when adding waypoint', () => {
+      // Act
+      const uow = new UnitOfWork(model.diagram1, true, false);
+      delegatingEdge.addWaypoint({ point: { x: 15, y: 25 } }, uow);
+
+      // Verify
+      expect(delegatingEdge.waypoints).toHaveLength(1);
+      expect(uow.contains(delegatingEdge, 'update')).toBe(true);
+    });
+  });
+
+  describe('removeWaypoint', () => {
+    it('should remove waypoint and sync via CRDT', () => {
+      // Setup - add waypoints
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegatingEdge.addWaypoint({ point: { x: 10, y: 10 } }, uow);
+        delegatingEdge.addWaypoint({ point: { x: 20, y: 20 } }, uow);
+      });
+
+      // Act
+      model.reset();
+      const waypointToRemove = delegatingEdge.waypoints[0]!;
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegatingEdge.removeWaypoint(waypointToRemove, uow);
+      });
+
+      // Verify
+      expect(delegatingEdge.waypoints).toHaveLength(1);
+      expect(delegatingEdge.waypoints[0]?.point).toEqual({ x: 20, y: 20 });
+      expect(model.elementChange[0]).toHaveBeenCalledTimes(1);
+
+      // Verify CRDT sync
+      if (delegatingEdge2) {
+        expect(delegatingEdge2.waypoints).toHaveLength(1);
+        expect(delegatingEdge2.waypoints[0]?.point).toEqual({ x: 20, y: 20 });
+        expect(model.elementChange[1]).toHaveBeenCalledTimes(1);
+      }
+    });
+
+    it('should not affect delegate waypoints', () => {
+      // Setup - add waypoint to delegate
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegateEdge.addWaypoint({ point: { x: 10, y: 10 } }, uow);
+      });
+
+      // Act - add then remove waypoint on delegating edge
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegatingEdge.addWaypoint({ point: { x: 20, y: 20 } }, uow);
+      });
+
+      const waypointToRemove = delegatingEdge.waypoints[1]!;
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegatingEdge.removeWaypoint(waypointToRemove, uow);
+      });
+
+      // Verify
+      expect(delegatingEdge.waypoints).toHaveLength(1);
+      expect(delegateEdge.waypoints).toHaveLength(1);
+
+      // Verify CRDT sync
+      if (delegatingEdge2 && delegateEdge2) {
+        expect(delegatingEdge2.waypoints).toHaveLength(1);
+        expect(delegateEdge2.waypoints).toHaveLength(1);
+      }
+    });
+  });
+
+  describe('moveWaypoint', () => {
+    it('should move waypoint and sync via CRDT', () => {
+      // Setup - add waypoints
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegatingEdge.addWaypoint({ point: { x: 10, y: 10 } }, uow);
+        delegatingEdge.addWaypoint({ point: { x: 20, y: 20 } }, uow);
+      });
+
+      // Act
+      model.reset();
+      const waypointToMove = delegatingEdge.waypoints[0]!;
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegatingEdge.moveWaypoint(waypointToMove, { x: 50, y: 50 }, uow);
+      });
+
+      // Verify
+      expect(delegatingEdge.waypoints).toHaveLength(2);
+      expect(delegatingEdge.waypoints[0]?.point).toEqual({ x: 50, y: 50 });
+      expect(delegatingEdge.waypoints[1]?.point).toEqual({ x: 20, y: 20 });
+      expect(model.elementChange[0]).toHaveBeenCalledTimes(1);
+
+      // Verify CRDT sync
+      if (delegatingEdge2) {
+        expect(delegatingEdge2.waypoints).toHaveLength(2);
+        expect(delegatingEdge2.waypoints[0]?.point).toEqual({ x: 50, y: 50 });
+        expect(model.elementChange[1]).toHaveBeenCalledTimes(1);
+      }
+    });
+
+    it('should not affect delegate waypoints', () => {
+      // Setup - add waypoint to delegate
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegateEdge.addWaypoint({ point: { x: 10, y: 10 } }, uow);
+      });
+
+      // Act - move waypoint on delegating edge
+      const waypointToMove = delegatingEdge.waypoints[0]!;
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegatingEdge.moveWaypoint(waypointToMove, { x: 99, y: 88 }, uow);
+      });
+
+      // Verify
+      expect(delegatingEdge.waypoints[0]?.point).toEqual({ x: 99, y: 88 });
+      expect(delegateEdge.waypoints[0]?.point).toEqual({ x: 10, y: 10 });
+
+      // Verify CRDT sync
+      if (delegatingEdge2 && delegateEdge2) {
+        expect(delegatingEdge2.waypoints[0]?.point).toEqual({ x: 99, y: 88 });
+        expect(delegateEdge2.waypoints[0]?.point).toEqual({ x: 10, y: 10 });
+      }
+    });
+
+    it('should preserve waypoint control points when moving', () => {
+      // Setup - add waypoint with control points
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegatingEdge.addWaypoint(
+          {
+            point: { x: 10, y: 10 },
+            controlPoints: { cp1: { x: 5, y: 5 }, cp2: { x: 15, y: 15 } }
+          },
+          uow
+        );
+      });
+
+      // Act - move waypoint
+      const waypointToMove = delegatingEdge.waypoints[0]!;
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegatingEdge.moveWaypoint(waypointToMove, { x: 50, y: 50 }, uow);
+      });
+
+      // Verify - control points should be preserved
+      expect(delegatingEdge.waypoints[0]?.point).toEqual({ x: 50, y: 50 });
+      expect(delegatingEdge.waypoints[0]?.controlPoints).toEqual({
+        cp1: { x: 5, y: 5 },
+        cp2: { x: 15, y: 15 }
+      });
+
+      // Verify CRDT sync
+      if (delegatingEdge2) {
+        expect(delegatingEdge2.waypoints[0]?.controlPoints).toEqual({
+          cp1: { x: 5, y: 5 },
+          cp2: { x: 15, y: 15 }
+        });
+      }
+    });
+  });
+
+  describe('replaceWaypoint', () => {
+    it('should replace waypoint and sync via CRDT', () => {
+      // Setup - add waypoints
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegatingEdge.addWaypoint({ point: { x: 10, y: 10 } }, uow);
+        delegatingEdge.addWaypoint({ point: { x: 20, y: 20 } }, uow);
+      });
+
+      // Act
+      model.reset();
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegatingEdge.replaceWaypoint(0, { point: { x: 50, y: 50 } }, uow);
+      });
+
+      // Verify
+      expect(delegatingEdge.waypoints).toHaveLength(2);
+      expect(delegatingEdge.waypoints[0]?.point).toEqual({ x: 50, y: 50 });
+      expect(delegatingEdge.waypoints[1]?.point).toEqual({ x: 20, y: 20 });
+      expect(model.elementChange[0]).toHaveBeenCalledTimes(1);
+
+      // Verify CRDT sync
+      if (delegatingEdge2) {
+        expect(delegatingEdge2.waypoints).toHaveLength(2);
+        expect(delegatingEdge2.waypoints[0]?.point).toEqual({ x: 50, y: 50 });
+        expect(model.elementChange[1]).toHaveBeenCalledTimes(1);
+      }
+    });
+
+    it('should not affect delegate waypoints', () => {
+      // Setup - add waypoint to delegate
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegateEdge.addWaypoint({ point: { x: 10, y: 10 } }, uow);
+      });
+
+      // Act - replace waypoint on delegating edge
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegatingEdge.replaceWaypoint(0, { point: { x: 99, y: 88 } }, uow);
+      });
+
+      // Verify
+      expect(delegatingEdge.waypoints[0]?.point).toEqual({ x: 99, y: 88 });
+      expect(delegateEdge.waypoints[0]?.point).toEqual({ x: 10, y: 10 });
+
+      // Verify CRDT sync
+      if (delegatingEdge2 && delegateEdge2) {
+        expect(delegatingEdge2.waypoints[0]?.point).toEqual({ x: 99, y: 88 });
+        expect(delegateEdge2.waypoints[0]?.point).toEqual({ x: 10, y: 10 });
+      }
+    });
+
+    it('should handle waypoint with control points', () => {
+      // Setup - add waypoint
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegatingEdge.addWaypoint({ point: { x: 10, y: 10 } }, uow);
+      });
+
+      // Act - replace with waypoint that has control points
+      UnitOfWork.execute(model.diagram1, uow => {
+        delegatingEdge.replaceWaypoint(
+          0,
+          {
+            point: { x: 50, y: 50 },
+            controlPoints: { cp1: { x: 40, y: 40 }, cp2: { x: 60, y: 60 } }
+          },
+          uow
+        );
+      });
+
+      // Verify
+      expect(delegatingEdge.waypoints[0]?.point).toEqual({ x: 50, y: 50 });
+      expect(delegatingEdge.waypoints[0]?.controlPoints).toEqual({
+        cp1: { x: 40, y: 40 },
+        cp2: { x: 60, y: 60 }
+      });
+
+      // Verify CRDT sync
+      if (delegatingEdge2) {
+        expect(delegatingEdge2.waypoints[0]?.point).toEqual({ x: 50, y: 50 });
+        expect(delegatingEdge2.waypoints[0]?.controlPoints).toEqual({
+          cp1: { x: 40, y: 40 },
+          cp2: { x: 60, y: 60 }
+        });
+      }
+    });
+  });
 });

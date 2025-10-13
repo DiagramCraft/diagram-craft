@@ -9,7 +9,7 @@ import type {
 import type { RegularLayer } from './diagramLayerRegular';
 import type { ModificationLayer } from './diagramLayerModification';
 import type { CRDTMap } from './collaboration/crdt';
-import { UnitOfWork } from './unitOfWork';
+import { getRemoteUnitOfWork, UnitOfWork } from './unitOfWork';
 import type { Endpoint } from './endpoint';
 import type { Waypoint } from './types';
 import { Point } from '@diagram-craft/geometry/point';
@@ -25,15 +25,27 @@ import { Transform } from '@diagram-craft/geometry/transform';
 import type { DuplicationContext } from './diagramNode';
 import { DiagramElement } from './diagramElement';
 import { SerializedEdge } from './serialization/types';
+import { MappedCRDTProp } from './collaboration/datatypes/mapped/mappedCrdtProp';
+import { CRDTProp } from './collaboration/datatypes/crdtProp';
 
 export type DiagramEdgeSnapshot = SerializedEdge & {
   _snapshotType: 'edge';
+};
+
+type DelegatingDiagramEdgeCRDT = DiagramEdgeCRDT & {
+  waypointsOverridden: boolean;
 };
 
 export class DelegatingDiagramEdge extends DelegatingDiagramElement implements DiagramEdge {
   declare protected readonly delegate: DiagramEdge;
 
   private readonly _overriddenProps: CRDTObject<EdgeProps>;
+  private readonly _overriddenWaypoints: MappedCRDTProp<
+    DelegatingDiagramEdgeCRDT,
+    'waypoints',
+    ReadonlyArray<Waypoint>
+  >;
+  private _waypointsOverridden: CRDTProp<DelegatingDiagramEdgeCRDT, 'waypointsOverridden'>;
 
   constructor(
     id: string,
@@ -43,7 +55,7 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
   ) {
     super(id, 'delegating-edge', delegate, layer, crdt);
 
-    const edgeCrdt = this._crdt as unknown as WatchableValue<CRDTMap<DiagramEdgeCRDT>>;
+    const edgeCrdt = this._crdt as unknown as WatchableValue<CRDTMap<DelegatingDiagramEdgeCRDT>>;
 
     // Initialize override props
     const propsMap = WatchableValue.from(
@@ -56,6 +68,28 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
       this.diagram.emit('elementChange', { element: this });
       this.clearCache();
     });
+
+    // Initialize override waypoints
+    this._overriddenWaypoints = new MappedCRDTProp<
+      DelegatingDiagramEdgeCRDT,
+      'waypoints',
+      ReadonlyArray<Waypoint>
+    >(
+      edgeCrdt,
+      'waypoints',
+      {
+        toCRDT: (waypoints: ReadonlyArray<Waypoint>) => waypoints,
+        fromCRDT: (waypoints: ReadonlyArray<Waypoint>) => waypoints
+      },
+      {
+        onRemoteChange: () => {
+          getRemoteUnitOfWork(this.diagram).updateElement(this);
+        }
+      }
+    );
+    this._overriddenWaypoints.init([]);
+
+    this._waypointsOverridden = new CRDTProp(edgeCrdt, 'waypointsOverridden');
   }
 
   /* Props with merging ********************************************************************************** */
@@ -172,24 +206,60 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
     this.delegate.removeLabelNode(node, uow);
   }
 
+  /* Waypoints with override ********************************************************************************* */
+
   get waypoints(): ReadonlyArray<Waypoint> {
+    const isOverridden = this._waypointsOverridden.get();
+
+    const overriddenWaypoints = this._overriddenWaypoints.getNonNull();
+    if (isOverridden) {
+      return overriddenWaypoints;
+    }
+
     return this.delegate.waypoints;
   }
 
   replaceWaypoint(i: number, wp: Waypoint, uow: UnitOfWork): void {
-    this.delegate.replaceWaypoint(i, wp, uow);
+    uow.snapshot(this);
+    const currentWaypoints = [...this.waypoints];
+    currentWaypoints[i] = wp;
+    this._overriddenWaypoints.set(currentWaypoints);
+    this._waypointsOverridden.set(true);
+
+    uow.updateElement(this);
+    this.clearCache();
   }
 
   addWaypoint(wp: Waypoint, uow: UnitOfWork): number {
-    return this.delegate.addWaypoint(wp, uow);
+    uow.snapshot(this);
+    const currentWaypoints = [...this.waypoints];
+    currentWaypoints.push(wp);
+    this._overriddenWaypoints.set(currentWaypoints);
+    this._waypointsOverridden.set(true);
+
+    uow.updateElement(this);
+    this.clearCache();
+    return currentWaypoints.length - 1;
   }
 
   removeWaypoint(waypoint: Waypoint, uow: UnitOfWork): void {
-    this.delegate.removeWaypoint(waypoint, uow);
+    uow.snapshot(this);
+    const currentWaypoints = this.waypoints.filter(wp => wp !== waypoint);
+    this._overriddenWaypoints.set(currentWaypoints);
+    this._waypointsOverridden.set(true);
+
+    uow.updateElement(this);
+    this.clearCache();
   }
 
   moveWaypoint(waypoint: Waypoint, point: Point, uow: UnitOfWork): void {
-    this.delegate.moveWaypoint(waypoint, point, uow);
+    uow.snapshot(this);
+    const currentWaypoints = this.waypoints.map(wp => (wp === waypoint ? { ...wp, point } : wp));
+    this._overriddenWaypoints.set(currentWaypoints);
+    this._waypointsOverridden.set(true);
+
+    uow.updateElement(this);
+    this.clearCache();
   }
 
   get midpoints(): ReadonlyArray<Point> {

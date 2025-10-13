@@ -24,13 +24,13 @@ import type { Point } from '@diagram-craft/geometry/point';
 import type { Anchor } from './anchor';
 import type { LabelNode } from './types';
 import { MappedCRDTProp } from './collaboration/datatypes/mapped/mappedCrdtProp';
-
-const UNSET_BOX: Box = { x: -1, y: -1, w: 999999, h: 999999, r: -1 };
+import { CRDTProp } from './collaboration/datatypes/crdtProp';
 
 export type DelegatingDiagramNodeCRDT = DiagramElementCRDT & {
   bounds: Box;
   text: FlatCRDTMap;
   props: FlatCRDTMap;
+  boundsOverridden: boolean;
 };
 
 export class DelegatingDiagramNode extends DelegatingDiagramElement implements DiagramNode {
@@ -39,6 +39,7 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
   private readonly _overriddenProps: CRDTObject<NodeProps>;
   private readonly _overriddenBounds: MappedCRDTProp<DelegatingDiagramNodeCRDT, 'bounds', Box>;
   private readonly _overriddenTexts: CRDTObject<NodeTexts>;
+  private _boundsOverridden: CRDTProp<DelegatingDiagramNodeCRDT, 'boundsOverridden'>;
 
   constructor(
     id: string,
@@ -75,7 +76,9 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
         }
       }
     );
-    this._overriddenBounds.init(UNSET_BOX);
+    this._overriddenBounds.init({ x: 0, y: 0, w: 0, h: 0, r: 0 });
+
+    this._boundsOverridden = new CRDTProp(nodeCrdt, 'boundsOverridden');
 
     // Initialize override texts
     const textsMap = WatchableValue.from(
@@ -155,14 +158,14 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
   /* Bounds with override ************************************************************************************ */
 
   get bounds(): Box {
-    return Box.isEqual(UNSET_BOX, this._overriddenBounds.getNonNull())
-      ? this.delegate.bounds
-      : this._overriddenBounds.getNonNull();
+    const boundsOverridden = this._boundsOverridden.get();
+    return !boundsOverridden ? this.delegate.bounds : this._overriddenBounds.getNonNull();
   }
 
   setBounds(bounds: Box, uow: UnitOfWork): void {
     uow.snapshot(this);
     this._overriddenBounds.set(bounds);
+    this._boundsOverridden.set(true);
     uow.updateElement(this);
   }
 
