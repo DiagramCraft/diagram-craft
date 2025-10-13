@@ -20,6 +20,8 @@ import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { PropertyEditor } from '../../components/PropertyEditor';
 import { Property } from './types';
 import { useDiagram } from '../../../application';
+import { DelegatingDiagramNode } from '@diagram-craft/model/delegatingDiagramNode';
+import { DelegatingDiagramEdge } from '@diagram-craft/model/delegatingDiagramEdge';
 
 export const ElementCustomPropertiesPanelForm = ({
   customProperties,
@@ -128,10 +130,10 @@ export const ElementCustomPropertiesPanel = (props: Props) => {
   let def: EdgeDefinition | NodeDefinition;
   let customProperties: ReadonlyArray<CustomPropertyDefinition>;
 
-  if (element instanceof SimpleDiagramNode) {
+  if (element instanceof SimpleDiagramNode || element instanceof DelegatingDiagramNode) {
     def = element.getDefinition();
     customProperties = def.getCustomPropertyDefinitions(element);
-  } else if (element instanceof SimpleDiagramEdge) {
+  } else if (element instanceof SimpleDiagramEdge || element instanceof DelegatingDiagramEdge) {
     def = element.getDefinition();
     customProperties = def.getCustomPropertyDefinitions(element);
   } else {
