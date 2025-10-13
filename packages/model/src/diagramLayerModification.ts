@@ -197,7 +197,7 @@ export class ModificationLayer extends Layer<ModificationLayer> {
 
     this.processElementForAdd(el);
 
-    uow.updateElement(el);
+    uow.addElement(el);
     uow.updateElement(this);
   }
 
