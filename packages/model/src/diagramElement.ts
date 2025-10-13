@@ -14,7 +14,7 @@ import { AttachmentConsumer } from './attachment';
 import { FlatObject } from '@diagram-craft/utils/types';
 import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
 import { PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
-import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+import { assert, VERIFY_NOT_REACHED, VerifyNotReached } from '@diagram-craft/utils/assert';
 import type { RegularLayer } from './diagramLayerRegular';
 import type { CRDTMap, FlatCRDTMap } from './collaboration/crdt';
 import { watch, WatchableValue } from '@diagram-craft/utils/watchableValue';
@@ -254,8 +254,11 @@ export abstract class AbstractDiagramElement
     return this._crdt;
   }
 
-  // TODO: Add uow support here
-  protected getElementToUpdate(): DiagramElement {
+  protected isModified() {
+    return this._diagram.activeLayer.type === 'modification' && this._layer.type !== 'modification';
+  }
+
+  protected getModificationElement(uow: UnitOfWork): DiagramElement {
     if (this._diagram.activeLayer.type === 'modification' && this._layer.type !== 'modification') {
       const layer = this._diagram.activeLayer as ModificationLayer;
 
@@ -267,15 +270,16 @@ export abstract class AbstractDiagramElement
 
       if (isNode(this)) {
         const delegatingNode = getElementFactory('delegating-node')!(newid(), layer, this);
-        layer.modifyAdd(this.id, delegatingNode, UnitOfWork.immediate(this._diagram));
+        layer.modifyAdd(this.id, delegatingNode, uow);
       } else if (isEdge(this)) {
         const delegatingEdge = getElementFactory('delegating-edge')!(newid(), layer, this);
-        layer.modifyAdd(this.id, delegatingEdge, UnitOfWork.immediate(this._diagram));
+        layer.modifyAdd(this.id, delegatingEdge, uow);
       } else {
         VERIFY_NOT_REACHED();
       }
     }
-    return this;
+
+    throw new VerifyNotReached();
   }
 
   protected assertNonModificationLayer() {
@@ -344,17 +348,16 @@ export abstract class AbstractDiagramElement
   }
 
   updateMetadata(callback: (props: ElementMetadata) => void, uow: UnitOfWork) {
-    const elementToUpdate = this.getElementToUpdate();
-    if (elementToUpdate instanceof AbstractDiagramElement) {
-      uow.snapshot(elementToUpdate);
-      const metadata = elementToUpdate._metadata.getClone() as ElementMetadata;
-      callback(metadata);
-      elementToUpdate._metadata.set(metadata);
-      uow.updateElement(elementToUpdate);
-      elementToUpdate.clearCache();
-    } else {
-      elementToUpdate.updateMetadata(callback, uow);
+    if (this.isModified()) {
+      return this.getModificationElement(uow).updateMetadata(callback, uow);
     }
+
+    uow.snapshot(this);
+    const metadata = this._metadata.getClone() as ElementMetadata;
+    callback(metadata);
+    this._metadata.set(metadata);
+    uow.updateElement(this);
+    this.clearCache();
   }
 
   /* Tags ******************************************************************************************************** */

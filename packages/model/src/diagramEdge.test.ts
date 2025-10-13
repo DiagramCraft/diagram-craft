@@ -325,7 +325,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       const child = model.layer1.createNode();
       UnitOfWork.execute(model.diagram1, uow => edge1.addChild(child, uow));
 
-      expect(child.parent).toBe(edge1);
+      expect(child.parent!.id).toBe(edge1.id);
       expect(model.elementChange[0]).toHaveBeenCalledTimes(2);
       if (model.doc2) {
         expect(model.diagram2!.lookup(child.id)!.parent).toBe(edge2);

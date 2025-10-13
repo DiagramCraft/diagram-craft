@@ -290,19 +290,18 @@ export class SimpleDiagramNode
   }
 
   changeNodeType(nodeType: string, uow: UnitOfWork) {
-    const elementToUpdate = this.getElementToUpdate();
-    if (elementToUpdate instanceof SimpleDiagramNode) {
-      uow.snapshot(elementToUpdate);
-      elementToUpdate.#nodeType.set(nodeType);
-      elementToUpdate._children.clear();
-      uow.updateElement(elementToUpdate);
-
-      elementToUpdate.clearCache();
-      elementToUpdate.invalidateAnchors(uow);
-      elementToUpdate.getDefinition().onPropUpdate(elementToUpdate, uow);
-    } else {
-      (elementToUpdate as DiagramNode).changeNodeType(nodeType, uow);
+    if (this.isModified()) {
+      return this.getModificationElement(uow).changeNodeType(nodeType, uow);
     }
+
+    uow.snapshot(this);
+    this.#nodeType.set(nodeType);
+    this._children.clear();
+    uow.updateElement(this);
+
+    this.clearCache();
+    this.invalidateAnchors(uow);
+    this.getDefinition().onPropUpdate(this, uow);
   }
 
   /* Text **************************************************************************************************** */
@@ -312,18 +311,17 @@ export class SimpleDiagramNode
   }
 
   setText(text: string, uow: UnitOfWork, id = 'text') {
-    const elementToUpdate = this.getElementToUpdate();
-    if (elementToUpdate instanceof SimpleDiagramNode) {
-      uow.snapshot(elementToUpdate);
-      elementToUpdate.#text.set({
-        ...elementToUpdate.#text.get(),
-        [id === '1' ? 'text' : id]: text
-      });
-      uow.updateElement(elementToUpdate);
-      elementToUpdate.clearCache();
-    } else {
-      (elementToUpdate as DiagramNode).setText(text, uow, id);
+    if (this.isModified()) {
+      return this.getModificationElement(uow).setText(text, uow, id);
     }
+
+    uow.snapshot(this);
+    this.#text.set({
+      ...this.#text.get(),
+      [id === '1' ? 'text' : id]: text
+    });
+    uow.updateElement(this);
+    this.clearCache();
   }
 
   get texts() {
@@ -522,20 +520,19 @@ export class SimpleDiagramNode
   }
 
   updateProps(callback: (props: NodeProps) => void, uow: UnitOfWork) {
-    const elementToUpdate = this.getElementToUpdate();
-    if (elementToUpdate instanceof SimpleDiagramNode) {
-      elementToUpdate.crdt.get().transact(() => {
-        uow.snapshot(elementToUpdate);
-        elementToUpdate.#props.update(callback);
-        uow.updateElement(elementToUpdate);
-
-        elementToUpdate.clearCache();
-        elementToUpdate.invalidateAnchors(uow);
-        elementToUpdate.getDefinition().onPropUpdate(elementToUpdate, uow);
-      });
-    } else {
-      (elementToUpdate as DiagramNode).updateProps(callback, uow);
+    if (this.isModified()) {
+      return this.getModificationElement(uow).updateProps(callback, uow);
     }
+
+    this.crdt.get().transact(() => {
+      uow.snapshot(this);
+      this.#props.update(callback);
+      uow.updateElement(this);
+
+      this.clearCache();
+      this.invalidateAnchors(uow);
+      this.getDefinition().onPropUpdate(this, uow);
+    });
   }
 
   updateCustomProps<K extends keyof CustomNodeProps>(
@@ -543,16 +540,15 @@ export class SimpleDiagramNode
     callback: (props: NonNullable<CustomNodeProps[K]>) => void,
     uow: UnitOfWork
   ) {
-    const elementToUpdate = this.getElementToUpdate();
-    if (elementToUpdate instanceof SimpleDiagramNode) {
-      elementToUpdate.updateProps(p => {
-        p.custom ??= {};
-        p.custom[key] ??= {};
-        callback(p.custom[key]!);
-      }, uow);
-    } else {
-      (elementToUpdate as DiagramNode).updateCustomProps(key, callback, uow);
+    if (this.isModified()) {
+      return this.getModificationElement(uow).updateCustomProps(key, callback, uow);
     }
+
+    this.updateProps(p => {
+      p.custom ??= {};
+      p.custom[key] ??= {};
+      callback(p.custom[key]!);
+    }, uow);
   }
 
   /* Name **************************************************************************************************** */
@@ -643,15 +639,14 @@ export class SimpleDiagramNode
   }
 
   setBounds(bounds: Box, uow: UnitOfWork) {
-    const elementToUpdate = this.getElementToUpdate();
-    if (elementToUpdate instanceof SimpleDiagramNode) {
-      uow.snapshot(elementToUpdate);
-      const oldBounds = elementToUpdate.bounds;
-      elementToUpdate.#bounds.set(bounds);
-      if (!Box.isEqual(oldBounds, elementToUpdate.bounds)) uow.updateElement(elementToUpdate);
-    } else {
-      (elementToUpdate as DiagramNode).setBounds(bounds, uow);
+    if (this.isModified()) {
+      return this.getModificationElement(uow).setBounds(bounds, uow);
     }
+
+    uow.snapshot(this);
+    const oldBounds = this.bounds;
+    this.#bounds.set(bounds);
+    if (!Box.isEqual(oldBounds, this.bounds)) uow.updateElement(this);
   }
 
   /* Anchors ************************************************************************************************ */
@@ -905,54 +900,51 @@ export class SimpleDiagramNode
   }
 
   transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork, isChild = false) {
-    const elementToUpdate = this.getElementToUpdate();
-    if (elementToUpdate instanceof SimpleDiagramNode) {
-      uow.snapshot(elementToUpdate);
-
-      const previousBounds = elementToUpdate.bounds;
-      elementToUpdate.setBounds(Transform.box(elementToUpdate.bounds, ...transforms), uow);
-
-      elementToUpdate
-        .getDefinition()
-        .onTransform(transforms, elementToUpdate, elementToUpdate.bounds, previousBounds, uow);
-
-      if (elementToUpdate.parent && !isChild) {
-        const parent = elementToUpdate.parent;
-        if (isNode(parent)) {
-          uow.registerOnCommitCallback('onChildChanged', parent, () => {
-            parent.getDefinition().onChildChanged(parent, uow);
-          });
-        } else {
-          assert.true(elementToUpdate.isLabelNode());
-
-          // TODO: This should be possible to put in the invalidation() method
-
-          if (uow.contains(elementToUpdate.labelEdge()!)) return;
-
-          const labelNode = elementToUpdate.labelNode();
-          assert.present(labelNode);
-
-          const dx = elementToUpdate.bounds.x - previousBounds.x;
-          const dy = elementToUpdate.bounds.y - previousBounds.y;
-
-          const clampAmount = 100;
-
-          elementToUpdate.updateLabelNode(
-            {
-              offset: {
-                x: clamp(labelNode.offset.x + dx, -clampAmount, clampAmount),
-                y: clamp(labelNode.offset.y + dy, -clampAmount, clampAmount)
-              }
-            },
-            uow
-          );
-        }
-      }
-
-      uow.updateElement(elementToUpdate);
-    } else {
-      (elementToUpdate as DiagramNode).transform(transforms, uow, isChild);
+    if (this.isModified()) {
+      return this.getModificationElement(uow).transform(transforms, uow, isChild);
     }
+
+    uow.snapshot(this);
+
+    const previousBounds = this.bounds;
+    this.setBounds(Transform.box(this.bounds, ...transforms), uow);
+
+    this.getDefinition().onTransform(transforms, this, this.bounds, previousBounds, uow);
+
+    if (this.parent && !isChild) {
+      const parent = this.parent;
+      if (isNode(parent)) {
+        uow.registerOnCommitCallback('onChildChanged', parent, () => {
+          parent.getDefinition().onChildChanged(parent, uow);
+        });
+      } else {
+        assert.true(this.isLabelNode());
+
+        // TODO: This should be possible to put in the invalidation() method
+
+        if (uow.contains(this.labelEdge()!)) return;
+
+        const labelNode = this.labelNode();
+        assert.present(labelNode);
+
+        const dx = this.bounds.x - previousBounds.x;
+        const dy = this.bounds.y - previousBounds.y;
+
+        const clampAmount = 100;
+
+        this.updateLabelNode(
+          {
+            offset: {
+              x: clamp(labelNode.offset.x + dx, -clampAmount, clampAmount),
+              y: clamp(labelNode.offset.y + dy, -clampAmount, clampAmount)
+            }
+          },
+          uow
+        );
+      }
+    }
+
+    uow.updateElement(this);
   }
 
   _removeEdge(anchor: string | undefined, edge: DiagramEdge) {
@@ -1075,5 +1067,9 @@ export class SimpleDiagramNode
 
   get props() {
     return this.renderProps;
+  }
+
+  protected getModificationElement(uow: UnitOfWork): DiagramNode {
+    return super.getModificationElement(uow) as DiagramNode;
   }
 }
