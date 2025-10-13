@@ -37,6 +37,9 @@ export const LayerContextMenu = (props: Props) => {
             New reference layer...
           </ActionContextMenuItem>
           <ActionContextMenuItem action={'LAYER_ADD_RULE'}>New rule layer...</ActionContextMenuItem>
+          <ActionContextMenuItem action={'LAYER_ADD_MODIFICATION'}>
+            New modification layer...
+          </ActionContextMenuItem>
         </ContextMenu.Content>
       </ContextMenu.Portal>
     </ContextMenu.Root>

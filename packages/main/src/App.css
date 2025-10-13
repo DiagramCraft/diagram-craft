@@ -638,6 +638,10 @@ foreignObject {
   &[data-ruler-enabled="false"] {
     --ruler-width: 0px;
   }
+
+  &[data-layer-type="modification"] {
+    box-shadow: inset 0 0 5px 2px var(--blue-9);
+  }
 }
 
 .cmp-object-picker {

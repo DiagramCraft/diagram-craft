@@ -29,6 +29,14 @@ export type SerializedLayer = { id: string; name: string; type: 'layer' } & (
       layerType: 'rule';
       rules: ReadonlyArray<AdjustmentRule>;
     }
+  | {
+      layerType: 'modification';
+      modifications: ReadonlyArray<{
+        id: string;
+        type: 'add' | 'remove' | 'change';
+        element?: SerializedElement;
+      }>;
+    }
 );
 
 export type SerializedDiagram = {

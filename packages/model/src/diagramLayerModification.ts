@@ -167,6 +167,10 @@ export class ModificationLayer extends Layer<ModificationLayer> {
       .map(e => e.element!);
   }
 
+  get modifications(): ReadonlyArray<Modification> {
+    return this.#modifications.values;
+  }
+
   removeElement(el: DiagramElement, uow: UnitOfWork) {
     this.modifyRemove(el.id, uow);
   }

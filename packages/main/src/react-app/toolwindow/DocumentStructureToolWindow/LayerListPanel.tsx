@@ -6,15 +6,19 @@ import {
   TbEye,
   TbEyeOff,
   TbFilterCog,
+  TbLayersSelectedBottom,
   TbLine,
   TbLink,
   TbLock,
   TbLockOff,
   TbPencil,
+  TbPlus,
   TbRectangle,
   TbTable,
   TbTableRow,
-  TbTextSize
+  TbTextSize,
+  TbTrash,
+  TbX
 } from 'react-icons/tb';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
@@ -36,6 +40,7 @@ import { RuleContextMenu } from './RuleContextMenu';
 import { useApplication, useDiagram } from '../../../application';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { ToolWindowPanel } from '../ToolWindowPanel';
+import { ModificationLayer } from '@diagram-craft/model/diagramLayerModification';
 
 const ELEMENT_INSTANCES = 'application/x-diagram-craft-element-instances';
 const LAYER_INSTANCES = 'application/x-diagram-craft-layer-instances';
@@ -138,6 +143,7 @@ const LayerEntry = (props: { layer: Layer }) => {
           >
             {layer.type === 'reference' ? <TbLink /> : undefined}
             {layer.resolveForced().type === 'rule' ? <TbAdjustments /> : undefined}
+            {layer.type === 'modification' ? <TbLayersSelectedBottom /> : undefined}
             {layer.name}
           </div>
         </Tree.NodeLabel>
@@ -165,9 +171,31 @@ const LayerEntry = (props: { layer: Layer }) => {
                 ))}
               </div>
             )}
-            {!(layer instanceof RegularLayer) && !(layer instanceof RuleLayer) && (
-              <div style={{ color: 'red' }}>Not implemented yet</div>
+            {layer instanceof ModificationLayer && (
+              <div style={{ display: 'contents' }}>
+                {(layer as ModificationLayer).modifications.length === 0 ? (
+                  <Tree.Node>
+                    <Tree.NodeLabel style={{ fontStyle: 'italic' }}>
+                      No modifications
+                    </Tree.NodeLabel>
+                  </Tree.Node>
+                ) : (
+                  (layer as ModificationLayer).modifications.toReversed().map(m => (
+                    <ModificationEntry
+                      key={m.id}
+                      diagram={diagram}
+                      modification={m}
+                      layer={layer as ModificationLayer}
+                    />
+                  ))
+                )}
+              </div>
             )}
+            {!(layer instanceof RegularLayer) &&
+              !(layer instanceof RuleLayer) &&
+              !(layer instanceof ModificationLayer) && (
+                <div style={{ color: 'red' }}>Not implemented yet</div>
+              )}
           </Tree.Children>
         )}
         {layer instanceof ReferenceLayer && (
@@ -229,6 +257,61 @@ const RuleEntry = (props: { rule: AdjustmentRule; layer: RuleLayer; diagram: Dia
         </Tree.NodeCell>
       </Tree.Node>
     </RuleContextMenu>
+  );
+};
+
+const ModificationEntry = (props: {
+  modification: { id: string; type: 'add' | 'remove' | 'change'; element?: DiagramElement };
+  layer: ModificationLayer;
+  diagram: Diagram;
+}) => {
+  const m = props.modification;
+  const element = m.type === 'remove' ? props.diagram.lookup(m.id) : m.element;
+
+  let icon = <TbPencil />;
+  let label = '';
+
+  if (m.type === 'add') {
+    icon = <TbPlus />;
+    label = `Add: ${element?.name ?? m.id}`;
+  } else if (m.type === 'remove') {
+    icon = <TbX />;
+    label = `Remove: ${element?.name ?? m.id}`;
+  } else {
+    icon = <TbPencil />;
+    label = `Change: ${element?.name ?? m.id}`;
+  }
+
+  return (
+    <Tree.Node
+      key={m.id}
+      onClick={() => {
+        if (element) {
+          addHighlight(element, 'search-match');
+          setTimeout(() => {
+            removeHighlight(element, 'search-match');
+          }, 1000);
+        }
+      }}
+    >
+      <Tree.NodeLabel>
+        {icon} &nbsp;{shorten(label, 30)}
+      </Tree.NodeLabel>
+      <Tree.NodeCell className="cmp-tree__node__action">
+        <span
+          style={{ cursor: 'pointer' }}
+          onClick={e => {
+            const uow = new UnitOfWork(props.diagram, true);
+            props.layer.clearModification(m.id, uow);
+            commitWithUndo(uow, 'Clear modification');
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+        >
+          <TbTrash />
+        </span>
+      </Tree.NodeCell>
+    </Tree.Node>
   );
 };
 

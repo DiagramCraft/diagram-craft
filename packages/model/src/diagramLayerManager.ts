@@ -104,6 +104,8 @@ export class LayerManager
     this.#visibleLayers.on('remoteDelete', () => this.emit('layerStructureChange', {}));
 
     this.diagram.selectionState.on('add', () => {
+      if (this.active.type === 'modification') return;
+
       const firstRegularLayer = this.diagram.selectionState.elements
         .map(e => e.layer)
         .filter(e => e.type === 'regular')[0];
@@ -112,6 +114,8 @@ export class LayerManager
       }
     });
     this.diagram.selectionState.on('remove', () => {
+      if (this.active.type === 'modification') return;
+
       const firstRegularLayer = this.diagram.selectionState.elements
         .map(e => e.layer)
         .filter(e => e.type === 'regular')[0];
