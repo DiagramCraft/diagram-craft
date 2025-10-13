@@ -7,11 +7,12 @@ import { watch } from '@diagram-craft/utils/watchableValue';
 import { makeElementMapper, registerElementFactory } from './diagramElementMapper';
 import { getRemoteUnitOfWork, type LayerSnapshot, UnitOfWork } from './unitOfWork';
 import { assert, mustExist } from '@diagram-craft/utils/assert';
-import { DiagramEdge } from './diagramEdge';
+import { DiagramEdge, type DiagramEdgeCRDT } from './diagramEdge';
 import type { Adjustment } from './diagramLayerRuleTypes';
 import type { RegularLayer } from './diagramLayerRegular';
 import type { DiagramNode } from './diagramNode';
 import { DelegatingDiagramNode } from './delegatingDiagramNode';
+import { DelegatingDiagramEdge } from './delegatingDiagramEdge';
 
 registerElementFactory(
   'delegating-node',
@@ -22,6 +23,22 @@ registerElementFactory(
     crdt: CRDTMap<DiagramElementCRDT>
   ) => {
     return new DelegatingDiagramNode(id, delegate! as DiagramNode, layer, crdt);
+  }
+);
+registerElementFactory(
+  'delegating-edge',
+  (
+    id: string,
+    layer: RegularLayer | ModificationLayer,
+    delegate: DiagramElement | undefined,
+    crdt: CRDTMap<DiagramElementCRDT>
+  ) => {
+    return new DelegatingDiagramEdge(
+      id,
+      delegate! as DiagramEdge,
+      layer,
+      crdt as CRDTMap<DiagramEdgeCRDT>
+    );
   }
 );
 
