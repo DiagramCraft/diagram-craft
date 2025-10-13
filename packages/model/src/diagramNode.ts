@@ -283,15 +283,18 @@ export class SimpleDiagramNode
 
   changeNodeType(nodeType: string, uow: UnitOfWork) {
     const elementToUpdate = this.getElementToUpdate();
+    if (elementToUpdate instanceof SimpleDiagramNode) {
+      uow.snapshot(elementToUpdate);
+      elementToUpdate.#nodeType.set(nodeType);
+      elementToUpdate._children.clear();
+      uow.updateElement(elementToUpdate);
 
-    uow.snapshot(elementToUpdate);
-    elementToUpdate.#nodeType.set(nodeType);
-    elementToUpdate._children.clear();
-    uow.updateElement(elementToUpdate);
-
-    elementToUpdate.clearCache();
-    elementToUpdate.invalidateAnchors(uow);
-    elementToUpdate.getDefinition().onPropUpdate(elementToUpdate, uow);
+      elementToUpdate.clearCache();
+      elementToUpdate.invalidateAnchors(uow);
+      elementToUpdate.getDefinition().onPropUpdate(elementToUpdate, uow);
+    } else {
+      (elementToUpdate as DiagramNode).changeNodeType(nodeType, uow);
+    }
   }
 
   /* Text **************************************************************************************************** */
@@ -302,14 +305,17 @@ export class SimpleDiagramNode
 
   setText(text: string, uow: UnitOfWork, id = 'text') {
     const elementToUpdate = this.getElementToUpdate();
-
-    uow.snapshot(elementToUpdate);
-    elementToUpdate.#text.set({
-      ...elementToUpdate.#text.get(),
-      [id === '1' ? 'text' : id]: text
-    });
-    uow.updateElement(elementToUpdate);
-    elementToUpdate.clearCache();
+    if (elementToUpdate instanceof SimpleDiagramNode) {
+      uow.snapshot(elementToUpdate);
+      elementToUpdate.#text.set({
+        ...elementToUpdate.#text.get(),
+        [id === '1' ? 'text' : id]: text
+      });
+      uow.updateElement(elementToUpdate);
+      elementToUpdate.clearCache();
+    } else {
+      (elementToUpdate as DiagramNode).setText(text, uow, id);
+    }
   }
 
   get texts() {
@@ -509,16 +515,19 @@ export class SimpleDiagramNode
 
   updateProps(callback: (props: NodeProps) => void, uow: UnitOfWork) {
     const elementToUpdate = this.getElementToUpdate();
+    if (elementToUpdate instanceof SimpleDiagramNode) {
+      elementToUpdate.crdt.get().transact(() => {
+        uow.snapshot(elementToUpdate);
+        elementToUpdate.#props.update(callback);
+        uow.updateElement(elementToUpdate);
 
-    elementToUpdate.crdt.get().transact(() => {
-      uow.snapshot(elementToUpdate);
-      elementToUpdate.#props.update(callback);
-      uow.updateElement(elementToUpdate);
-
-      elementToUpdate.clearCache();
-      elementToUpdate.invalidateAnchors(uow);
-      elementToUpdate.getDefinition().onPropUpdate(elementToUpdate, uow);
-    });
+        elementToUpdate.clearCache();
+        elementToUpdate.invalidateAnchors(uow);
+        elementToUpdate.getDefinition().onPropUpdate(elementToUpdate, uow);
+      });
+    } else {
+      (elementToUpdate as DiagramNode).updateProps(callback, uow);
+    }
   }
 
   updateCustomProps<K extends keyof CustomNodeProps>(
@@ -527,12 +536,15 @@ export class SimpleDiagramNode
     uow: UnitOfWork
   ) {
     const elementToUpdate = this.getElementToUpdate();
-
-    elementToUpdate.updateProps(p => {
-      p.custom ??= {};
-      p.custom[key] ??= {};
-      callback(p.custom[key]!);
-    }, uow);
+    if (elementToUpdate instanceof SimpleDiagramNode) {
+      elementToUpdate.updateProps(p => {
+        p.custom ??= {};
+        p.custom[key] ??= {};
+        callback(p.custom[key]!);
+      }, uow);
+    } else {
+      (elementToUpdate as DiagramNode).updateCustomProps(key, callback, uow);
+    }
   }
 
   /* Name **************************************************************************************************** */
@@ -624,11 +636,14 @@ export class SimpleDiagramNode
 
   setBounds(bounds: Box, uow: UnitOfWork) {
     const elementToUpdate = this.getElementToUpdate();
-
-    uow.snapshot(elementToUpdate);
-    const oldBounds = elementToUpdate.bounds;
-    elementToUpdate.#bounds.set(bounds);
-    if (!Box.isEqual(oldBounds, elementToUpdate.bounds)) uow.updateElement(elementToUpdate);
+    if (elementToUpdate instanceof SimpleDiagramNode) {
+      uow.snapshot(elementToUpdate);
+      const oldBounds = elementToUpdate.bounds;
+      elementToUpdate.#bounds.set(bounds);
+      if (!Box.isEqual(oldBounds, elementToUpdate.bounds)) uow.updateElement(elementToUpdate);
+    } else {
+      (elementToUpdate as DiagramNode).setBounds(bounds, uow);
+    }
   }
 
   /* Anchors ************************************************************************************************ */
@@ -883,50 +898,53 @@ export class SimpleDiagramNode
 
   transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork, isChild = false) {
     const elementToUpdate = this.getElementToUpdate();
+    if (elementToUpdate instanceof SimpleDiagramNode) {
+      uow.snapshot(elementToUpdate);
 
-    uow.snapshot(elementToUpdate);
+      const previousBounds = elementToUpdate.bounds;
+      elementToUpdate.setBounds(Transform.box(elementToUpdate.bounds, ...transforms), uow);
 
-    const previousBounds = elementToUpdate.bounds;
-    elementToUpdate.setBounds(Transform.box(elementToUpdate.bounds, ...transforms), uow);
+      elementToUpdate
+        .getDefinition()
+        .onTransform(transforms, elementToUpdate, elementToUpdate.bounds, previousBounds, uow);
 
-    elementToUpdate
-      .getDefinition()
-      .onTransform(transforms, elementToUpdate, elementToUpdate.bounds, previousBounds, uow);
+      if (elementToUpdate.parent && !isChild) {
+        const parent = elementToUpdate.parent;
+        if (isNode(parent)) {
+          uow.registerOnCommitCallback('onChildChanged', parent, () => {
+            parent.getDefinition().onChildChanged(parent, uow);
+          });
+        } else {
+          assert.true(elementToUpdate.isLabelNode());
 
-    if (elementToUpdate.parent && !isChild) {
-      const parent = elementToUpdate.parent;
-      if (isNode(parent)) {
-        uow.registerOnCommitCallback('onChildChanged', parent, () => {
-          parent.getDefinition().onChildChanged(parent, uow);
-        });
-      } else {
-        assert.true(elementToUpdate.isLabelNode());
+          // TODO: This should be possible to put in the invalidation() method
 
-        // TODO: This should be possible to put in the invalidation() method
+          if (uow.contains(elementToUpdate.labelEdge()!)) return;
 
-        if (uow.contains(elementToUpdate.labelEdge()!)) return;
+          const labelNode = elementToUpdate.labelNode();
+          assert.present(labelNode);
 
-        const labelNode = elementToUpdate.labelNode();
-        assert.present(labelNode);
+          const dx = elementToUpdate.bounds.x - previousBounds.x;
+          const dy = elementToUpdate.bounds.y - previousBounds.y;
 
-        const dx = elementToUpdate.bounds.x - previousBounds.x;
-        const dy = elementToUpdate.bounds.y - previousBounds.y;
+          const clampAmount = 100;
 
-        const clampAmount = 100;
-
-        elementToUpdate.updateLabelNode(
-          {
-            offset: {
-              x: clamp(labelNode.offset.x + dx, -clampAmount, clampAmount),
-              y: clamp(labelNode.offset.y + dy, -clampAmount, clampAmount)
-            }
-          },
-          uow
-        );
+          elementToUpdate.updateLabelNode(
+            {
+              offset: {
+                x: clamp(labelNode.offset.x + dx, -clampAmount, clampAmount),
+                y: clamp(labelNode.offset.y + dy, -clampAmount, clampAmount)
+              }
+            },
+            uow
+          );
+        }
       }
-    }
 
-    uow.updateElement(elementToUpdate);
+      uow.updateElement(elementToUpdate);
+    } else {
+      (elementToUpdate as DiagramNode).transform(transforms, uow, isChild);
+    }
   }
 
   _removeEdge(anchor: string | undefined, edge: DiagramEdge) {

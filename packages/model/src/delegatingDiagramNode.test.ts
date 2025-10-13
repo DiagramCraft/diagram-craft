@@ -41,6 +41,8 @@ describe.each(Backends.all())('DelegatingDiagramNode [%s]', (_name, backend) => 
     );
     model.diagram1.layers.add(modificationLayer, UnitOfWork.immediate(model.diagram1));
 
+    model.diagram1.layers.active = model.layer1;
+
     // Find the modification layer in diagram2 if it exists
     if (model.diagram2) {
       modificationLayer2 = model.diagram2.layers.byId('mod-layer-1') as

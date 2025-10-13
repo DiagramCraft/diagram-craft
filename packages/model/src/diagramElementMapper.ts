@@ -11,7 +11,7 @@ type DiagramElementFactory = (
   id: string,
   layer: RegularLayer | ModificationLayer,
   delegate: DiagramElement | undefined,
-  crdt: CRDTMap<DiagramElementCRDT>
+  crdt?: CRDTMap<DiagramElementCRDT>
 ) => DiagramElement;
 
 const FACTORIES: Record<string, DiagramElementFactory> = {};
@@ -40,3 +40,7 @@ export const makeElementMapper = (
 
   toCRDT: (e: DiagramElement) => e.crdt.get()
 });
+
+export const getElementFactory = (type: string): DiagramElementFactory | undefined => {
+  return FACTORIES[type];
+};

@@ -1,4 +1,4 @@
-import { DiagramNode, DuplicationContext } from './diagramNode';
+import type { DiagramNode, DuplicationContext } from './diagramNode';
 import { type ControlPoints, LabelNode, Waypoint } from './types';
 import { Point } from '@diagram-craft/geometry/point';
 import { Vector } from '@diagram-craft/geometry/vector';
@@ -29,7 +29,7 @@ import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { newid } from '@diagram-craft/utils/id';
 import { isDifferent } from '@diagram-craft/utils/math';
 import { Direction } from '@diagram-craft/geometry/direction';
-import { EdgeDefinition } from './elementDefinitionRegistry';
+import type { EdgeDefinition } from './elementDefinitionRegistry';
 import { isEmptyString } from '@diagram-craft/utils/strings';
 import { assert, is, mustExist } from '@diagram-craft/utils/assert';
 import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
@@ -373,30 +373,34 @@ export class SimpleDiagramEdge
 
   updateProps(callback: (props: EdgeProps) => void, uow: UnitOfWork) {
     const elementToUpdate = this.getElementToUpdate();
-    uow.snapshot(elementToUpdate);
+    if (elementToUpdate instanceof SimpleDiagramEdge) {
+      uow.snapshot(elementToUpdate);
 
-    const oldType = elementToUpdate.#props.get().type;
-    elementToUpdate.#props.update(callback);
+      const oldType = elementToUpdate.#props.get().type;
+      elementToUpdate.#props.update(callback);
 
-    if (elementToUpdate.#props.get().type === 'bezier' && oldType !== 'bezier') {
-      for (let i = 0; i < elementToUpdate.waypoints.length; i++) {
-        const wp = elementToUpdate.waypoints[i]!;
-        if (!wp.controlPoints) {
-          elementToUpdate.replaceWaypoint(
-            i,
-            {
-              ...wp,
-              controlPoints: elementToUpdate.inferControlPoints(i)
-            },
-            uow
-          );
+      if (elementToUpdate.#props.get().type === 'bezier' && oldType !== 'bezier') {
+        for (let i = 0; i < elementToUpdate.waypoints.length; i++) {
+          const wp = elementToUpdate.waypoints[i]!;
+          if (!wp.controlPoints) {
+            elementToUpdate.replaceWaypoint(
+              i,
+              {
+                ...wp,
+                controlPoints: elementToUpdate.inferControlPoints(i)
+              },
+              uow
+            );
+          }
         }
       }
+
+      uow.updateElement(elementToUpdate);
+
+      elementToUpdate.clearCache();
+    } else {
+      (elementToUpdate as DiagramEdge).updateProps(callback, uow);
     }
-
-    uow.updateElement(elementToUpdate);
-
-    elementToUpdate.clearCache();
   }
 
   updateCustomProps<K extends keyof CustomEdgeProps>(
@@ -405,11 +409,15 @@ export class SimpleDiagramEdge
     uow: UnitOfWork
   ) {
     const elementToUpdate = this.getElementToUpdate();
-    elementToUpdate.updateProps(p => {
-      p.custom ??= {};
-      p.custom[key] ??= {};
-      callback(p.custom[key]!);
-    }, uow);
+    if (elementToUpdate instanceof SimpleDiagramEdge) {
+      elementToUpdate.updateProps(p => {
+        p.custom ??= {};
+        p.custom[key] ??= {};
+        callback(p.custom[key]!);
+      }, uow);
+    } else {
+      (elementToUpdate as DiagramEdge).updateCustomProps(key, callback, uow);
+    }
   }
 
   inferControlPoints(i: number) {
@@ -478,27 +486,31 @@ export class SimpleDiagramEdge
 
   setBounds(b: Box, uow: UnitOfWork) {
     const elementToUpdate = this.getElementToUpdate();
-    uow.snapshot(elementToUpdate);
+    if (elementToUpdate instanceof SimpleDiagramEdge) {
+      uow.snapshot(elementToUpdate);
 
-    const delta = Point.subtract(b, elementToUpdate.bounds);
+      const delta = Point.subtract(b, elementToUpdate.bounds);
 
-    if (!isConnected(elementToUpdate.start)) {
-      elementToUpdate.#start.set(
-        new FreeEndpoint({
-          x: elementToUpdate.start.position.x + delta.x,
-          y: elementToUpdate.start.position.y + delta.y
-        })
-      );
-      uow.updateElement(elementToUpdate);
-    }
-    if (!isConnected(elementToUpdate.end)) {
-      elementToUpdate.#end.set(
-        new FreeEndpoint({
-          x: elementToUpdate.end.position.x + delta.x,
-          y: elementToUpdate.end.position.y + delta.y
-        })
-      );
-      uow.updateElement(elementToUpdate);
+      if (!isConnected(elementToUpdate.start)) {
+        elementToUpdate.#start.set(
+          new FreeEndpoint({
+            x: elementToUpdate.start.position.x + delta.x,
+            y: elementToUpdate.start.position.y + delta.y
+          })
+        );
+        uow.updateElement(elementToUpdate);
+      }
+      if (!isConnected(elementToUpdate.end)) {
+        elementToUpdate.#end.set(
+          new FreeEndpoint({
+            x: elementToUpdate.end.position.x + delta.x,
+            y: elementToUpdate.end.position.y + delta.y
+          })
+        );
+        uow.updateElement(elementToUpdate);
+      }
+    } else {
+      (elementToUpdate as DiagramEdge).setBounds(b, uow);
     }
   }
 
@@ -506,33 +518,37 @@ export class SimpleDiagramEdge
 
   setStart(start: Endpoint, uow: UnitOfWork) {
     const elementToUpdate = this.getElementToUpdate();
-    uow.snapshot(elementToUpdate);
+    if (elementToUpdate instanceof SimpleDiagramEdge) {
+      uow.snapshot(elementToUpdate);
 
-    if (isConnected(elementToUpdate.start)) {
-      uow.snapshot(elementToUpdate.start.node);
+      if (isConnected(elementToUpdate.start)) {
+        uow.snapshot(elementToUpdate.start.node);
 
-      elementToUpdate.start.node._removeEdge(
-        elementToUpdate.start instanceof AnchorEndpoint
-          ? elementToUpdate.start.anchorId
-          : undefined,
-        elementToUpdate
-      );
-      uow.updateElement(elementToUpdate.start.node);
+        elementToUpdate.start.node._removeEdge(
+          elementToUpdate.start instanceof AnchorEndpoint
+            ? elementToUpdate.start.anchorId
+            : undefined,
+          elementToUpdate
+        );
+        uow.updateElement(elementToUpdate.start.node);
+      }
+
+      if (isConnected(start)) {
+        uow.snapshot(start.node);
+
+        start.node._addEdge(
+          start instanceof AnchorEndpoint ? start.anchorId : undefined,
+          elementToUpdate
+        );
+        uow.updateElement(start.node);
+      }
+
+      elementToUpdate.#start.set(start);
+
+      uow.updateElement(elementToUpdate);
+    } else {
+      (elementToUpdate as DiagramEdge).setStart(start, uow);
     }
-
-    if (isConnected(start)) {
-      uow.snapshot(start.node);
-
-      start.node._addEdge(
-        start instanceof AnchorEndpoint ? start.anchorId : undefined,
-        elementToUpdate
-      );
-      uow.updateElement(start.node);
-    }
-
-    elementToUpdate.#start.set(start);
-
-    uow.updateElement(elementToUpdate);
   }
 
   get start() {
@@ -541,28 +557,35 @@ export class SimpleDiagramEdge
 
   setEnd(end: Endpoint, uow: UnitOfWork) {
     const elementToUpdate = this.getElementToUpdate();
-    uow.snapshot(elementToUpdate);
+    if (elementToUpdate instanceof SimpleDiagramEdge) {
+      uow.snapshot(elementToUpdate);
 
-    if (isConnected(elementToUpdate.end)) {
-      uow.snapshot(elementToUpdate.end.node);
+      if (isConnected(elementToUpdate.end)) {
+        uow.snapshot(elementToUpdate.end.node);
 
-      elementToUpdate.end.node._removeEdge(
-        elementToUpdate.end instanceof AnchorEndpoint ? elementToUpdate.end.anchorId : undefined,
-        elementToUpdate
-      );
-      uow.updateElement(elementToUpdate.end.node);
+        elementToUpdate.end.node._removeEdge(
+          elementToUpdate.end instanceof AnchorEndpoint ? elementToUpdate.end.anchorId : undefined,
+          elementToUpdate
+        );
+        uow.updateElement(elementToUpdate.end.node);
+      }
+
+      if (isConnected(end)) {
+        uow.snapshot(end.node);
+
+        end.node._addEdge(
+          end instanceof AnchorEndpoint ? end.anchorId : undefined,
+          elementToUpdate
+        );
+        uow.updateElement(end.node);
+      }
+
+      elementToUpdate.#end.set(end);
+
+      uow.updateElement(elementToUpdate);
+    } else {
+      (elementToUpdate as DiagramEdge).setEnd(end, uow);
     }
-
-    if (isConnected(end)) {
-      uow.snapshot(end.node);
-
-      end.node._addEdge(end instanceof AnchorEndpoint ? end.anchorId : undefined, elementToUpdate);
-      uow.updateElement(end.node);
-    }
-
-    elementToUpdate.#end.set(end);
-
-    uow.updateElement(elementToUpdate);
   }
 
   get end() {
@@ -751,83 +774,99 @@ export class SimpleDiagramEdge
 
   addWaypoint(waypoint: Waypoint, uow: UnitOfWork) {
     const elementToUpdate = this.getElementToUpdate();
-    uow.snapshot(elementToUpdate);
+    if (elementToUpdate instanceof SimpleDiagramEdge) {
+      uow.snapshot(elementToUpdate);
 
-    const path = elementToUpdate.path();
-    const projection = path.projectPoint(waypoint.point);
+      const path = elementToUpdate.path();
+      const projection = path.projectPoint(waypoint.point);
 
-    if (elementToUpdate.#props.get().type === 'bezier' && !waypoint.controlPoints) {
-      const offset = PointOnPath.toTimeOffset({ point: waypoint.point }, path);
-      const [p1, p2] = path.split(offset);
+      if (elementToUpdate.#props.get().type === 'bezier' && !waypoint.controlPoints) {
+        const offset = PointOnPath.toTimeOffset({ point: waypoint.point }, path);
+        const [p1, p2] = path.split(offset);
 
-      const segments: CubicSegment[] = [];
-      for (const s of [...p1.segments, ...p2.segments]) {
-        if (s instanceof CubicSegment) {
-          segments.push(s);
-        } else if (s instanceof LineSegment) {
-          segments.push(CubicSegment.fromLine(s));
-        }
-      }
-      const newWaypoints: Waypoint[] = [];
-
-      for (let i = 0; i < segments.length - 1; i++) {
-        const segment = segments[i]!;
-        newWaypoints.push({
-          point: segment.end,
-          controlPoints: {
-            cp1: Point.subtract(segment.p2, segment.end),
-            cp2: Point.subtract(segments[i + 1]!.p1, segment.end)
+        const segments: CubicSegment[] = [];
+        for (const s of [...p1.segments, ...p2.segments]) {
+          if (s instanceof CubicSegment) {
+            segments.push(s);
+          } else if (s instanceof LineSegment) {
+            segments.push(CubicSegment.fromLine(s));
           }
+        }
+        const newWaypoints: Waypoint[] = [];
+
+        for (let i = 0; i < segments.length - 1; i++) {
+          const segment = segments[i]!;
+          newWaypoints.push({
+            point: segment.end,
+            controlPoints: {
+              cp1: Point.subtract(segment.p2, segment.end),
+              cp2: Point.subtract(segments[i + 1]!.p1, segment.end)
+            }
+          });
+        }
+
+        elementToUpdate.#waypoints.set(newWaypoints);
+
+        uow.updateElement(elementToUpdate);
+
+        return offset.segment;
+      } else {
+        const wpDistances = elementToUpdate.waypoints.map(p => {
+          return {
+            pathD: PointOnPath.toTimeOffset({ point: p.point }, path).pathD,
+            ...p
+          };
         });
+
+        const newWaypoint = { ...waypoint, pathD: projection.pathD };
+        elementToUpdate.#waypoints.set(
+          [...wpDistances, newWaypoint].sort((a, b) => a.pathD - b.pathD) as Array<Waypoint>
+        );
+
+        uow.updateElement(elementToUpdate);
+
+        return this.waypoints.indexOf(newWaypoint);
       }
-
-      elementToUpdate.#waypoints.set(newWaypoints);
-
-      uow.updateElement(elementToUpdate);
-
-      return offset.segment;
     } else {
-      const wpDistances = elementToUpdate.waypoints.map(p => {
-        return {
-          pathD: PointOnPath.toTimeOffset({ point: p.point }, path).pathD,
-          ...p
-        };
-      });
-
-      const newWaypoint = { ...waypoint, pathD: projection.pathD };
-      elementToUpdate.#waypoints.set(
-        [...wpDistances, newWaypoint].sort((a, b) => a.pathD - b.pathD) as Array<Waypoint>
-      );
-
-      uow.updateElement(elementToUpdate);
-
-      return this.waypoints.indexOf(newWaypoint);
+      return (elementToUpdate as DiagramEdge).addWaypoint(waypoint, uow);
     }
   }
 
   removeWaypoint(waypoint: Waypoint, uow: UnitOfWork) {
     const elementToUpdate = this.getElementToUpdate();
-    uow.snapshot(elementToUpdate);
-    elementToUpdate.#waypoints.set(elementToUpdate.waypoints.filter(w => w !== waypoint));
-    uow.updateElement(elementToUpdate);
+    if (elementToUpdate instanceof SimpleDiagramEdge) {
+      uow.snapshot(elementToUpdate);
+      elementToUpdate.#waypoints.set(elementToUpdate.waypoints.filter(w => w !== waypoint));
+      uow.updateElement(elementToUpdate);
+    } else {
+      (elementToUpdate as DiagramEdge).removeWaypoint(waypoint, uow);
+    }
   }
 
   moveWaypoint(waypoint: Waypoint, point: Point, uow: UnitOfWork) {
     const elementToUpdate = this.getElementToUpdate();
-    uow.snapshot(elementToUpdate);
-    elementToUpdate.#waypoints.set(
-      elementToUpdate.waypoints.map(w => (w === waypoint ? { ...w, point } : w))
-    );
-    uow.updateElement(elementToUpdate);
+    if (elementToUpdate instanceof SimpleDiagramEdge) {
+      uow.snapshot(elementToUpdate);
+      elementToUpdate.#waypoints.set(
+        elementToUpdate.waypoints.map(w => (w === waypoint ? { ...w, point } : w))
+      );
+      uow.updateElement(elementToUpdate);
+    } else {
+      (elementToUpdate as DiagramEdge).moveWaypoint(waypoint, point, uow);
+    }
   }
 
   replaceWaypoint(idx: number, waypoint: Waypoint, uow: UnitOfWork) {
     const elementToUpdate = this.getElementToUpdate();
-    uow.snapshot(elementToUpdate);
-    elementToUpdate.#waypoints.set(
-      elementToUpdate.waypoints.map((w, i) => (i === idx ? waypoint : w))
-    );
-    uow.updateElement(elementToUpdate);
+    if (elementToUpdate instanceof SimpleDiagramEdge) {
+      uow.snapshot(elementToUpdate);
+      elementToUpdate.#waypoints.set(
+        elementToUpdate.waypoints.map((w, i) => (i === idx ? waypoint : w))
+      );
+      uow.updateElement(elementToUpdate);
+    } else {
+      (elementToUpdate as DiagramEdge).replaceWaypoint(idx, waypoint, uow);
+    }
   }
 
   /* Midpoints *********************************************************************************************** */
@@ -978,36 +1017,40 @@ export class SimpleDiagramEdge
 
   transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork) {
     const elementToUpdate = this.getElementToUpdate();
-    uow.snapshot(elementToUpdate);
+    if (elementToUpdate instanceof SimpleDiagramEdge) {
+      uow.snapshot(elementToUpdate);
 
-    elementToUpdate.setBounds(Transform.box(elementToUpdate.bounds, ...transforms), uow);
+      elementToUpdate.setBounds(Transform.box(elementToUpdate.bounds, ...transforms), uow);
 
-    elementToUpdate.#waypoints.set(
-      elementToUpdate.waypoints.map(w => {
-        const absoluteControlPoints = Object.values(w.controlPoints ?? {}).map(cp =>
-          Point.add(w.point, cp)
-        );
-        const transformedControlPoints = absoluteControlPoints.map(cp =>
-          Transform.point(cp, ...transforms)
-        );
-        const transformedPoint = Transform.point(w.point, ...transforms);
-        const relativeControlPoints = transformedControlPoints.map(cp =>
-          Point.subtract(cp, transformedPoint)
-        );
+      elementToUpdate.#waypoints.set(
+        elementToUpdate.waypoints.map(w => {
+          const absoluteControlPoints = Object.values(w.controlPoints ?? {}).map(cp =>
+            Point.add(w.point, cp)
+          );
+          const transformedControlPoints = absoluteControlPoints.map(cp =>
+            Transform.point(cp, ...transforms)
+          );
+          const transformedPoint = Transform.point(w.point, ...transforms);
+          const relativeControlPoints = transformedControlPoints.map(cp =>
+            Point.subtract(cp, transformedPoint)
+          );
 
-        return {
-          point: transformedPoint,
-          controlPoints: w.controlPoints
-            ? {
-                cp1: relativeControlPoints[0]!,
-                cp2: relativeControlPoints[1]!
-              }
-            : undefined
-        };
-      })
-    );
+          return {
+            point: transformedPoint,
+            controlPoints: w.controlPoints
+              ? {
+                  cp1: relativeControlPoints[0]!,
+                  cp2: relativeControlPoints[1]!
+                }
+              : undefined
+          };
+        })
+      );
 
-    uow.updateElement(elementToUpdate);
+      uow.updateElement(elementToUpdate);
+    } else {
+      (elementToUpdate as DiagramEdge).transform(transforms, uow);
+    }
   }
 
   get intersections() {
@@ -1016,16 +1059,20 @@ export class SimpleDiagramEdge
 
   flip(uow: UnitOfWork) {
     const elementToUpdate = this.getElementToUpdate();
-    uow.snapshot(elementToUpdate);
+    if (elementToUpdate instanceof SimpleDiagramEdge) {
+      uow.snapshot(elementToUpdate);
 
-    const start = elementToUpdate.#start.getNonNull();
-    const end = elementToUpdate.#end.getNonNull();
+      const start = elementToUpdate.#start.getNonNull();
+      const end = elementToUpdate.#end.getNonNull();
 
-    // Need to "zero" the end so that the setters logic should work correctly
-    elementToUpdate.#end.set(new FreeEndpoint(Point.ORIGIN));
+      // Need to "zero" the end so that the setters logic should work correctly
+      elementToUpdate.#end.set(new FreeEndpoint(Point.ORIGIN));
 
-    elementToUpdate.setStart(end, uow);
-    elementToUpdate.setEnd(start, uow);
+      elementToUpdate.setStart(end, uow);
+      elementToUpdate.setEnd(start, uow);
+    } else {
+      (elementToUpdate as DiagramEdge).flip(uow);
+    }
   }
 
   /**

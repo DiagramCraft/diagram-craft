@@ -20,7 +20,7 @@ registerElementFactory(
     id: string,
     layer: RegularLayer | ModificationLayer,
     delegate: DiagramElement | undefined,
-    crdt: CRDTMap<DiagramElementCRDT>
+    crdt?: CRDTMap<DiagramElementCRDT>
   ) => {
     return new DelegatingDiagramNode(id, delegate! as DiagramNode, layer, crdt);
   }
@@ -31,7 +31,7 @@ registerElementFactory(
     id: string,
     layer: RegularLayer | ModificationLayer,
     delegate: DiagramElement | undefined,
-    crdt: CRDTMap<DiagramElementCRDT>
+    crdt?: CRDTMap<DiagramElementCRDT>
   ) => {
     return new DelegatingDiagramEdge(
       id,
@@ -208,6 +208,10 @@ export class ModificationLayer extends Layer<ModificationLayer> {
       uow.updateElement(this.diagram.lookup(id)!);
     }
     uow.updateElement(this);
+  }
+
+  getModification(id: string): Modification | undefined {
+    return this.#modifications.get(id);
   }
 
   adjustments(): Map<string, Adjustment> {

@@ -23,10 +23,11 @@ import {
   MappedCRDTOrderedMap,
   type MappedCRDTOrderedMapMapType
 } from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
-import { makeElementMapper } from './diagramElementMapper';
+import { getElementFactory, makeElementMapper } from './diagramElementMapper';
 import { MappedCRDTProp } from './collaboration/datatypes/mapped/mappedCrdtProp';
 import type { ModificationLayer } from './diagramLayerModification';
 import type { Comment } from './comment';
+import { newid } from '@diagram-craft/utils/id';
 
 // biome-ignore lint/suspicious/noExplicitAny: false positive
 type Snapshot = any;
@@ -253,7 +254,27 @@ export abstract class AbstractDiagramElement
     return this._crdt;
   }
 
-  protected getElementToUpdate() {
+  // TODO: Add uow support here
+  protected getElementToUpdate(): DiagramElement {
+    if (this._diagram.activeLayer.type === 'modification' && this._layer.type !== 'modification') {
+      const layer = this._diagram.activeLayer as ModificationLayer;
+
+      // Find existing modification if it exists
+      const modification = layer.getModification(this.id);
+      if (modification) {
+        return modification.element!;
+      }
+
+      if (isNode(this)) {
+        const delegatingNode = getElementFactory('delegating-node')!(newid(), layer, this);
+        layer.modifyAdd(this.id, delegatingNode, UnitOfWork.immediate(this._diagram));
+      } else if (isEdge(this)) {
+        const delegatingEdge = getElementFactory('delegating-edge')!(newid(), layer, this);
+        layer.modifyAdd(this.id, delegatingEdge, UnitOfWork.immediate(this._diagram));
+      } else {
+        VERIFY_NOT_REACHED();
+      }
+    }
     return this;
   }
 
@@ -324,13 +345,16 @@ export abstract class AbstractDiagramElement
 
   updateMetadata(callback: (props: ElementMetadata) => void, uow: UnitOfWork) {
     const elementToUpdate = this.getElementToUpdate();
-
-    uow.snapshot(elementToUpdate);
-    const metadata = elementToUpdate._metadata.getClone() as ElementMetadata;
-    callback(metadata);
-    elementToUpdate._metadata.set(metadata);
-    uow.updateElement(elementToUpdate);
-    elementToUpdate.clearCache();
+    if (elementToUpdate instanceof AbstractDiagramElement) {
+      uow.snapshot(elementToUpdate);
+      const metadata = elementToUpdate._metadata.getClone() as ElementMetadata;
+      callback(metadata);
+      elementToUpdate._metadata.set(metadata);
+      uow.updateElement(elementToUpdate);
+      elementToUpdate.clearCache();
+    } else {
+      elementToUpdate.updateMetadata(callback, uow);
+    }
   }
 
   /* Tags ******************************************************************************************************** */
@@ -537,8 +561,10 @@ export const bindElementListeners = (diagram: Diagram) => {
   });
 };
 
-export const isNode = (e: DiagramElement | undefined): e is DiagramNode => !!e && e.type === 'node';
-export const isEdge = (e: DiagramElement | undefined): e is DiagramEdge => !!e && e.type === 'edge';
+export const isNode = (e: DiagramElement | undefined): e is DiagramNode =>
+  !!e && (e.type === 'node' || e.type === 'delegating-node');
+export const isEdge = (e: DiagramElement | undefined): e is DiagramEdge =>
+  !!e && (e.type === 'edge' || e.type === 'delegating-edge');
 
 declare global {
   interface AssertTypeExtensions {
