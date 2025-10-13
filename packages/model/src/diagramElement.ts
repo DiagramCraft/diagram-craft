@@ -57,7 +57,11 @@ export interface DiagramElement {
   invalidate(uow: UnitOfWork): void;
   detach(uow: UnitOfWork): void;
   duplicate(ctx?: DuplicationContext, id?: string): DiagramElement;
-  transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork, isChild?: boolean): void;
+  transform(
+    transforms: ReadonlyArray<Transform>,
+    uow: UnitOfWork,
+    isChild?: boolean
+  ): DiagramElement;
 
   readonly bounds: Box;
   setBounds(bounds: Box, uow: UnitOfWork): void;
@@ -224,7 +228,7 @@ export abstract class AbstractDiagramElement
     transforms: ReadonlyArray<Transform>,
     uow: UnitOfWork,
     isChild?: boolean
-  ): void;
+  ): DiagramElement;
 
   abstract readonly bounds: Box;
   abstract setBounds(bounds: Box, uow: UnitOfWork): void;
@@ -271,10 +275,15 @@ export abstract class AbstractDiagramElement
       if (isNode(this)) {
         const delegatingNode = getElementFactory('delegating-node')!(newid(), layer, this);
         layer.modifyAdd(this.id, delegatingNode, uow);
+        console.log('add modification', delegatingNode, delegatingNode.id);
+        return delegatingNode;
       } else if (isEdge(this)) {
         const delegatingEdge = getElementFactory('delegating-edge')!(newid(), layer, this);
         layer.modifyAdd(this.id, delegatingEdge, uow);
+        console.log('add modification', delegatingEdge, delegatingEdge.id);
+        return delegatingEdge;
       } else {
+        console.log(this);
         VERIFY_NOT_REACHED();
       }
     }

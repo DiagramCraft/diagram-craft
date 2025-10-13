@@ -899,7 +899,11 @@ export class SimpleDiagramNode
     }
   }
 
-  transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork, isChild = false) {
+  transform(
+    transforms: ReadonlyArray<Transform>,
+    uow: UnitOfWork,
+    isChild = false
+  ): DiagramElement {
     if (this.isModified()) {
       return this.getModificationElement(uow).transform(transforms, uow, isChild);
     }
@@ -922,7 +926,7 @@ export class SimpleDiagramNode
 
         // TODO: This should be possible to put in the invalidation() method
 
-        if (uow.contains(this.labelEdge()!)) return;
+        if (uow.contains(this.labelEdge()!)) return this;
 
         const labelNode = this.labelNode();
         assert.present(labelNode);
@@ -945,6 +949,8 @@ export class SimpleDiagramNode
     }
 
     uow.updateElement(this);
+
+    return this;
   }
 
   _removeEdge(anchor: string | undefined, edge: DiagramEdge) {

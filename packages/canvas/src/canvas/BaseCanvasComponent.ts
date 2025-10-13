@@ -103,6 +103,8 @@ export abstract class BaseCanvasComponent<
             return elementTags.some(tag => selectedTags.includes(tag));
           });
 
+    console.log(layer.type, elementsToRender);
+
     return elementsToRender.map(e => {
       assert.present(this.currentProps);
 

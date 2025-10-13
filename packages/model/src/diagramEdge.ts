@@ -1002,7 +1002,7 @@ export class SimpleDiagramEdge
     return undefined;
   }
 
-  transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork) {
+  transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork): DiagramElement {
     if (this.isModified()) {
       return this.getModificationElement(uow).transform(transforms, uow);
     }
@@ -1037,6 +1037,8 @@ export class SimpleDiagramEdge
     );
 
     uow.updateElement(this);
+
+    return this;
   }
 
   get intersections() {

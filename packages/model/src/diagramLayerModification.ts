@@ -220,9 +220,11 @@ export class ModificationLayer extends Layer<ModificationLayer> {
   }
 
   adjustments(): Map<string, Adjustment> {
-    return new Map(
-      Array.from(this.#modifications.values).map(m => [m.id, { props: { hidden: true } }])
-    );
+    const dest = new Map<string, Adjustment>();
+    for (const m of this.#modifications.values) {
+      dest.set(m.id, { props: { hidden: true } });
+    }
+    return dest;
   }
 
   snapshot(): LayerSnapshot {

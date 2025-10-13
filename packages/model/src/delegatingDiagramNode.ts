@@ -18,13 +18,15 @@ import { deepMerge } from '@diagram-craft/utils/object';
 import { PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
 import { Transform } from '@diagram-craft/geometry/transform';
-import { DiagramElement, type DiagramElementCRDT } from './diagramElement';
+import { DiagramElement, type DiagramElementCRDT, isNode } from './diagramElement';
 import type { DiagramEdge, ResolvedLabelNode } from './diagramEdge';
 import type { Point } from '@diagram-craft/geometry/point';
 import type { Anchor } from './anchor';
 import type { LabelNode } from './types';
 import { MappedCRDTProp } from './collaboration/datatypes/mapped/mappedCrdtProp';
 import { CRDTProp } from './collaboration/datatypes/crdtProp';
+import { assert } from '@diagram-craft/utils/assert';
+import { clamp } from '@diagram-craft/utils/math';
 
 export type DelegatingDiagramNodeCRDT = DiagramElementCRDT & {
   bounds: Box;
@@ -106,6 +108,10 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
     if (opts?.texts) this._overriddenTexts.set(opts?.texts);
 
     if (opts?.props) this._overriddenProps.set(opts?.props as NodeProps);
+    // TODO: Fix this
+    this.updateProps(p => {
+      p.hidden = false;
+    }, UnitOfWork.immediate(this.diagram));
 
     if (opts?.metadata) this._metadata.set(opts?.metadata);
   }
@@ -315,8 +321,55 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
     this.delegate.detach(uow);
   }
 
-  transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork, isChild?: boolean): void {
-    this.delegate.transform(transforms, uow, isChild);
+  // TODO: Most of this code is duplicated
+  transform(
+    transforms: ReadonlyArray<Transform>,
+    uow: UnitOfWork,
+    isChild?: boolean
+  ): DiagramElement {
+    uow.snapshot(this);
+
+    const previousBounds = this.bounds;
+    this.setBounds(Transform.box(this.bounds, ...transforms), uow);
+
+    this.getDefinition().onTransform(transforms, this, this.bounds, previousBounds, uow);
+
+    if (this.parent && !isChild) {
+      const parent = this.parent;
+      if (isNode(parent)) {
+        uow.registerOnCommitCallback('onChildChanged', parent, () => {
+          parent.getDefinition().onChildChanged(parent, uow);
+        });
+      } else {
+        assert.true(this.isLabelNode());
+
+        // TODO: This should be possible to put in the invalidation() method
+
+        if (uow.contains(this.labelEdge()!)) return this;
+
+        const labelNode = this.labelNode();
+        assert.present(labelNode);
+
+        const dx = this.bounds.x - previousBounds.x;
+        const dy = this.bounds.y - previousBounds.y;
+
+        const clampAmount = 100;
+
+        this.updateLabelNode(
+          {
+            offset: {
+              x: clamp(labelNode.offset.x + dx, -clampAmount, clampAmount),
+              y: clamp(labelNode.offset.y + dy, -clampAmount, clampAmount)
+            }
+          },
+          uow
+        );
+      }
+    }
+
+    uow.updateElement(this);
+
+    return this;
   }
 
   snapshot() {

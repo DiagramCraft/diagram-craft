@@ -180,14 +180,16 @@ const LayerEntry = (props: { layer: Layer }) => {
                     </Tree.NodeLabel>
                   </Tree.Node>
                 ) : (
-                  (layer as ModificationLayer).modifications.toReversed().map(m => (
-                    <ModificationEntry
-                      key={m.id}
-                      diagram={diagram}
-                      modification={m}
-                      layer={layer as ModificationLayer}
-                    />
-                  ))
+                  (layer as ModificationLayer).modifications
+                    .toReversed()
+                    .map(m => (
+                      <ModificationEntry
+                        key={m.id}
+                        diagram={diagram}
+                        modification={m}
+                        layer={layer as ModificationLayer}
+                      />
+                    ))
                 )}
               </div>
             )}
@@ -417,6 +419,7 @@ export const LayerListPanel = () => {
     )
   );
 
+  useEventListener(diagram, 'elementAdd', redraw);
   useEventListener(diagram, 'diagramChange', redraw);
 
   useEventListener(diagram.layers, 'layerAdded', redraw);

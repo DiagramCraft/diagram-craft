@@ -377,8 +377,12 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
     return this.delegate.duplicate(ctx, id);
   }
 
-  transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork, isChild?: boolean): void {
-    this.delegate.transform(transforms, uow, isChild);
+  transform(
+    transforms: ReadonlyArray<Transform>,
+    uow: UnitOfWork,
+    isChild?: boolean
+  ): DiagramElement {
+    return this.delegate.transform(transforms, uow, isChild);
   }
 
   snapshot() {
