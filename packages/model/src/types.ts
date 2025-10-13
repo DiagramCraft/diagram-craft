@@ -13,13 +13,14 @@ export type ProgressCallback = (
   opts: Pick<Progress, 'message' | 'completion'>
 ) => void;
 
+// TODO: Can we remove this?
 export interface ElementInterface {
   id: string;
   type: string;
 }
 
 export interface NodeInterface extends ElementInterface {
-  type: 'node';
+  type: 'node' | 'delegating-node';
   nodeType: 'group' | string;
   id: string;
   bounds: Box;
@@ -44,7 +45,7 @@ export type LabelNode = Readonly<{
 }>;
 
 export interface EdgeInterface extends ElementInterface {
-  type: 'edge';
+  type: 'edge' | 'delegating-edge';
   id: string;
   waypoints?: ReadonlyArray<Waypoint>;
 

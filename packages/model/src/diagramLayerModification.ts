@@ -22,7 +22,7 @@ registerElementFactory(
     delegate: DiagramElement | undefined,
     crdt?: CRDTMap<DiagramElementCRDT>
   ) => {
-    return new DelegatingDiagramNode(id, delegate! as DiagramNode, layer, crdt);
+    return new DelegatingDiagramNode(id, delegate! as DiagramNode, layer, { crdt });
   }
 );
 registerElementFactory(
@@ -33,12 +33,9 @@ registerElementFactory(
     delegate: DiagramElement | undefined,
     crdt?: CRDTMap<DiagramElementCRDT>
   ) => {
-    return new DelegatingDiagramEdge(
-      id,
-      delegate! as DiagramEdge,
-      layer,
-      crdt as CRDTMap<DiagramEdgeCRDT>
-    );
+    return new DelegatingDiagramEdge(id, delegate! as DiagramEdge, layer, {
+      crdt: crdt as CRDTMap<DiagramEdgeCRDT>
+    });
   }
 );
 
@@ -181,6 +178,8 @@ export class ModificationLayer extends Layer<ModificationLayer> {
   }
 
   modifyAdd(id: string, el: DiagramElement, uow: UnitOfWork) {
+    assert.true(el instanceof DelegatingDiagramNode || el instanceof DelegatingDiagramEdge);
+
     uow.snapshot(this);
     this.#modifications.add(id, { id, type: ModificationType.Add, element: el });
 
@@ -191,6 +190,8 @@ export class ModificationLayer extends Layer<ModificationLayer> {
   }
 
   modifyChange(id: string, el: DiagramElement, uow: UnitOfWork) {
+    assert.true(el instanceof DelegatingDiagramNode || el instanceof DelegatingDiagramEdge);
+
     uow.snapshot(this);
     this.#modifications.add(id, { id, type: ModificationType.Change, element: el });
 

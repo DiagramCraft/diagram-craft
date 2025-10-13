@@ -22,11 +22,16 @@ import { ReferenceLayer } from '../diagramLayerReference';
 import { RuleLayer } from '../diagramLayerRule';
 import { type DataProvider, DataProviderRegistry } from '../dataProvider';
 import { RegularLayer } from '../diagramLayerRegular';
+import { ModificationLayer } from '../diagramLayerModification';
 import type { DiagramFactory } from '../factory';
 import { Comment } from '../comment';
 import type { DataManager } from '../diagramDocumentData';
 import { ElementLookup } from '../elementLookup';
 import { ElementFactory } from '../elementFactory';
+import { DelegatingDiagramNode } from '../delegatingDiagramNode';
+import type { DiagramElement } from '../diagramElement';
+import { DelegatingDiagramEdge } from '../delegatingDiagramEdge';
+import { Box } from '@diagram-craft/geometry/box';
 
 const unfoldGroup = (node: SerializedElement) => {
   const recurse = (
@@ -56,7 +61,7 @@ const deserializeEndpoint = (
 export const deserializeDiagramElements = (
   diagramElements: ReadonlyArray<SerializedElement>,
   diagram: Diagram,
-  layer: RegularLayer,
+  layer: RegularLayer | ModificationLayer,
   nodeLookup?: ElementLookup<DiagramNode>,
   edgeLookup?: ElementLookup<DiagramEdge>,
   uow?: UnitOfWork
@@ -292,6 +297,7 @@ const deserializeDiagrams = <T extends Diagram>(
     const uow = new UnitOfWork(newDiagram);
 
     // Need to first create all layers, and then in step 2, fill them with elements
+    // and finally, step 3 we load all modifications
     for (const l of $d.layers) {
       switch (l.layerType) {
         case 'regular':
@@ -313,6 +319,11 @@ const deserializeDiagrams = <T extends Diagram>(
           newDiagram.layers.add(layer, UnitOfWork.immediate(newDiagram));
           break;
         }
+        case 'modification': {
+          const layer = new ModificationLayer(l.id, l.name, newDiagram, []);
+          newDiagram.layers.add(layer, UnitOfWork.immediate(newDiagram));
+          break;
+        }
         default:
           throw new VerifyNotReached();
       }
@@ -324,6 +335,7 @@ const deserializeDiagrams = <T extends Diagram>(
         case 'basic': {
           const layer = newDiagram.layers.byId(l.id) as RegularLayer | undefined;
           assert.present(layer);
+          newDiagram.layers.active = layer;
 
           const elements = deserializeDiagramElements(
             l.elements,
@@ -342,6 +354,56 @@ const deserializeDiagrams = <T extends Diagram>(
           });
 
           break;
+        }
+        case 'modification': {
+          const layer = newDiagram.layers.byId(l.id) as ModificationLayer | undefined;
+          assert.present(layer);
+
+          break;
+        }
+      }
+    }
+
+    for (const l of $d.layers) {
+      if (l.layerType === 'modification') {
+        const layer = newDiagram.layers.byId(l.id) as ModificationLayer;
+        for (const m of l.modifications) {
+          if (m.element) {
+            let element: DiagramElement | undefined;
+            if (m.element.type === 'delegating-node') {
+              const delegate = nodeLookup.get(m.id)!;
+              element = new DelegatingDiagramNode(m.element.id, delegate, layer, {
+                bounds: Box.isEqual(m.element.bounds, delegate.bounds)
+                  ? undefined
+                  : m.element.bounds,
+                props: m.element.props,
+                metadata: m.element.metadata,
+                texts: m.element.texts
+              });
+              nodeLookup.set(m.element.id, element as DiagramNode);
+            } else if (m.element.type === 'delegating-edge') {
+              element = new DelegatingDiagramEdge(m.element.id, edgeLookup.get(m.id)!, layer, {
+                props: m.element.props,
+                metadata: m.element.metadata,
+                start: deserializeEndpoint(m.element.start, nodeLookup),
+                end: deserializeEndpoint(m.element.end, nodeLookup),
+                waypoints: m.element.waypoints
+              });
+              edgeLookup.set(m.element.id, element as DiagramEdge);
+            } else {
+              throw new VerifyNotReached();
+            }
+
+            assert.present(element);
+
+            if (m.type === 'add') {
+              layer.modifyAdd(m.id, element, uow);
+            } else if (m.type === 'change') {
+              layer.modifyChange(m.id, element, uow);
+            }
+          } else if (m.type === 'remove') {
+            layer.modifyRemove(m.id, uow);
+          }
         }
       }
     }

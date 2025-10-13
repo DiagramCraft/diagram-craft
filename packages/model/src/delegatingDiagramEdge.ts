@@ -57,9 +57,16 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
     id: string,
     delegate: DiagramEdge,
     layer: RegularLayer | ModificationLayer,
-    crdt?: CRDTMap<DiagramEdgeCRDT>
+    opts?: {
+      crdt?: CRDTMap<DiagramEdgeCRDT>;
+      props?: EdgeProps;
+      start?: Endpoint;
+      end?: Endpoint;
+      waypoints?: ReadonlyArray<Waypoint>;
+      metadata?: ElementMetadata;
+    }
   ) {
-    super(id, 'delegating-edge', delegate, layer, crdt);
+    super(id, 'delegating-edge', delegate, layer, opts?.crdt);
 
     const edgeCrdt = this._crdt as unknown as WatchableValue<CRDTMap<DelegatingDiagramEdgeCRDT>>;
 
@@ -129,6 +136,21 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
 
     this._startOverridden = new CRDTProp(edgeCrdt, 'startOverridden');
     this._endOverridden = new CRDTProp(edgeCrdt, 'endOverridden');
+
+    if (opts?.props) this._overriddenProps.set(opts.props);
+    if (opts?.start) {
+      this._overriddenStart.set(opts.start);
+      this._startOverridden.set(true);
+    }
+    if (opts?.end) {
+      this._overriddenEnd.set(opts.end);
+      this._endOverridden.set(true);
+    }
+    if (opts?.waypoints) {
+      this._overriddenWaypoints.set(opts.waypoints);
+      this._waypointsOverridden.set(true);
+    }
+    if (opts?.metadata) this._metadata.set(opts.metadata);
   }
 
   /* Props with merging ********************************************************************************** */

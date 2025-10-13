@@ -4,7 +4,7 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { newid } from '@diagram-craft/utils/id';
 import { SerializedElement } from '@diagram-craft/model/serialization/types';
 import { Box } from '@diagram-craft/geometry/box';
-import { precondition } from '@diagram-craft/utils/assert';
+import { precondition, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { deserializeDiagramElements } from '@diagram-craft/model/serialization/deserialize';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { BaseActionArgs } from '@diagram-craft/canvas/action';
@@ -141,11 +141,13 @@ export class ElementsPasteHandler extends PasteHandler {
 
     const bounds = Box.boundingBox(
       elements.map(e => {
-        if (e.type === 'node') return e.bounds;
-        else {
+        if (e.type === 'node' || e.type === 'delegating-node') return e.bounds;
+        else if (e.type === 'edge' || e.type === 'delegating-edge') {
           precondition.is.present(e.start.position);
           precondition.is.present(e.end.position);
           return Box.fromCorners(e.start.position, e.end.position);
+        } else {
+          throw new VerifyNotReached();
         }
       })
     );
@@ -163,7 +165,7 @@ export class ElementsPasteHandler extends PasteHandler {
     const nodeIdMapping = new Map<string, string>();
 
     for (const e of elements) {
-      if (e.type === 'node') {
+      if (e.type === 'node' || e.type === 'delegating-node') {
         const newId = newid();
         nodeIdMapping.set(e.id, newId);
         e.id = newId;
@@ -174,7 +176,7 @@ export class ElementsPasteHandler extends PasteHandler {
           x: adjustPosition.x,
           y: adjustPosition.y
         };
-      } else {
+      } else if (e.type === 'edge' || e.type === 'delegating-edge') {
         e.id = newid();
         if (isSerializedEndpointFree(e.start)) {
           e.start.position = this.adjustPosition(e.start.position, point, bounds);

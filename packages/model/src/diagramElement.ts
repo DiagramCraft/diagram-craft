@@ -283,7 +283,7 @@ export abstract class AbstractDiagramElement
   }
 
   protected assertNonModificationLayer() {
-    if (this.diagram.layers.active.type === 'modification') VERIFY_NOT_REACHED();
+    if (this.diagram.layers.active.type === 'modification') VERIFY_NOT_REACHED(this.id);
   }
 
   /* Flags *************************************************************************************************** */

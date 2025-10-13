@@ -45,9 +45,15 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
     id: string,
     delegate: DiagramNode,
     layer: RegularLayer | ModificationLayer,
-    crdt?: CRDTMap<DiagramElementCRDT>
+    opts?: {
+      crdt?: CRDTMap<DiagramElementCRDT>;
+      bounds?: Box | undefined;
+      props?: NodePropsForEditing;
+      metadata?: ElementMetadata;
+      texts?: NodeTexts;
+    }
   ) {
-    super(id, 'delegating-node', delegate, layer, crdt);
+    super(id, 'delegating-node', delegate, layer, opts?.crdt);
 
     const nodeCrdt = this._crdt as unknown as WatchableValue<CRDTMap<DelegatingDiagramNodeCRDT>>;
 
@@ -91,6 +97,17 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
       this.diagram.emit('elementChange', { element: this });
       this.clearCache();
     });
+
+    if (opts?.bounds) {
+      this._overriddenBounds.set(opts?.bounds);
+      this._boundsOverridden.set(true);
+    }
+
+    if (opts?.texts) this._overriddenTexts.set(opts?.texts);
+
+    if (opts?.props) this._overriddenProps.set(opts?.props as NodeProps);
+
+    if (opts?.metadata) this._metadata.set(opts?.metadata);
   }
 
   /* Props with merging ********************************************************************************** */

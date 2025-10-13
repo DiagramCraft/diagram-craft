@@ -6,6 +6,10 @@ import { UnitOfWork } from '../unitOfWork';
 import type { RegularLayer } from '../diagramLayerRegular';
 import { Comment } from '../comment';
 import { DefaultDataProvider } from '../dataProviderDefault';
+import { DelegatingDiagramNode } from '../delegatingDiagramNode';
+import { ModificationLayer } from '../diagramLayerModification';
+import { AnchorEndpoint, PointInNodeEndpoint } from '../endpoint';
+import { DelegatingDiagramEdge } from '../delegatingDiagramEdge';
 
 describe('serialization', () => {
   describe('serializeDiagramElement', () => {
@@ -483,6 +487,535 @@ describe('serialization', () => {
 
         // Should not throw and should work fine
         expect(newDoc.data.db).toBeDefined();
+      });
+    });
+
+    describe('modification layers', () => {
+      it('should serialize and deserialize modification layer with add modification', async () => {
+        // Setup
+        const originalDoc = TestModel.newDocument();
+        const diagram = new TestDiagramBuilder(originalDoc);
+
+        // Create a regular layer with base element
+        const regularLayer = diagram.newLayer();
+        const baseNode = regularLayer.addNode({ id: 'base-node' });
+        baseNode.setTags(['base', 'original'], UnitOfWork.immediate(diagram));
+
+        // Create a modification layer
+        const modLayer = new ModificationLayer('mod-layer', 'Modifications', diagram, []);
+        diagram.layers.add(modLayer, UnitOfWork.immediate(diagram));
+
+        // Add a modification (delegating node)
+        const delegatingNode = new DelegatingDiagramNode('delegating-1', baseNode, modLayer);
+        delegatingNode.setBounds(
+          { x: 15, y: 15, h: 25, w: 50, r: 0.5 },
+          UnitOfWork.immediate(diagram)
+        );
+        modLayer.modifyAdd('base-node', delegatingNode, UnitOfWork.immediate(diagram));
+
+        originalDoc.addDiagram(diagram);
+
+        // Act
+        const serialized = await serializeDiagramDocument(originalDoc);
+
+        const newDoc = TestModel.newDocument();
+        await deserializeDiagramDocument(
+          serialized,
+          newDoc,
+          (d, doc) => new TestDiagramBuilder(doc, d.id)
+        );
+
+        // Verify
+        const newDiagram = newDoc.diagrams[0]!;
+        const modificationLayer = newDiagram.layers.all.find(l => l.type === 'modification') as
+          | InstanceType<typeof ModificationLayer>
+          | undefined;
+        expect(modificationLayer).toBeDefined();
+        expect(modificationLayer!.modifications).toHaveLength(1);
+
+        const modification = modificationLayer!.modifications[0];
+        expect(modification!.type).toBe('add');
+        expect(modification!.id).toBe('base-node');
+        expect(modification!.element).toBeDefined();
+        expect(modification!.element!.type).toBe('delegating-node');
+        expect(modification!.element!.bounds).toEqual({ x: 15, y: 15, h: 25, w: 50, r: 0.5 });
+      });
+
+      it('should serialize and deserialize modification layer with remove modification', async () => {
+        // Setup
+        const originalDoc = TestModel.newDocument();
+        const diagram = new TestDiagramBuilder(originalDoc);
+
+        // Create a regular layer with element to be removed
+        const regularLayer = diagram.newLayer();
+        const nodeToRemove = regularLayer.addNode({ id: 'node-to-remove' });
+        nodeToRemove.setTags(['temp'], UnitOfWork.immediate(diagram));
+
+        // Create a modification layer
+        const modLayer = new ModificationLayer('mod-layer', 'Modifications', diagram, []);
+        diagram.layers.add(modLayer, UnitOfWork.immediate(diagram));
+
+        // Add a remove modification
+        modLayer.modifyRemove('node-to-remove', UnitOfWork.immediate(diagram));
+
+        originalDoc.addDiagram(diagram);
+
+        // Act
+        const serialized = await serializeDiagramDocument(originalDoc);
+
+        const newDoc = TestModel.newDocument();
+        await deserializeDiagramDocument(
+          serialized,
+          newDoc,
+          (d, doc) => new TestDiagramBuilder(doc, d.id)
+        );
+
+        // Verify
+        const newDiagram = newDoc.diagrams[0]!;
+        const modificationLayer = newDiagram.layers.all.find(l => l.type === 'modification') as
+          | InstanceType<typeof ModificationLayer>
+          | undefined;
+        expect(modificationLayer).toBeDefined();
+        expect(modificationLayer!.modifications).toHaveLength(1);
+
+        const modification = modificationLayer!.modifications[0];
+        expect(modification!.type).toBe('remove');
+        expect(modification!.id).toBe('node-to-remove');
+        expect(modification!.element).toBeUndefined();
+      });
+
+      it('should serialize and deserialize modification layer with change modification', async () => {
+        // Setup
+        const originalDoc = TestModel.newDocument();
+        const diagram = new TestDiagramBuilder(originalDoc);
+
+        // Create a regular layer with base element
+        const regularLayer = diagram.newLayer();
+        const baseNode = regularLayer.addNode({ id: 'node-to-change' });
+        baseNode.setTags(['original'], UnitOfWork.immediate(diagram));
+
+        // Create a modification layer
+        const modLayer = new ModificationLayer('mod-layer', 'Modifications', diagram, []);
+        diagram.layers.add(modLayer, UnitOfWork.immediate(diagram));
+
+        // Add a change modification
+        const delegatingNode = new DelegatingDiagramNode('delegating-2', baseNode, modLayer);
+        delegatingNode.setBounds(
+          { x: 5, y: 10, w: 15, h: 20, r: 0.25 },
+          UnitOfWork.immediate(diagram)
+        );
+        modLayer.modifyChange('node-to-change', delegatingNode, UnitOfWork.immediate(diagram));
+
+        originalDoc.addDiagram(diagram);
+
+        // Act
+        const serialized = await serializeDiagramDocument(originalDoc);
+
+        const newDoc = TestModel.newDocument();
+        await deserializeDiagramDocument(
+          serialized,
+          newDoc,
+          (d, doc) => new TestDiagramBuilder(doc, d.id)
+        );
+
+        // Verify
+        const newDiagram = newDoc.diagrams[0]!;
+        const modificationLayer = newDiagram.layers.all.find(l => l.type === 'modification') as
+          | InstanceType<typeof ModificationLayer>
+          | undefined;
+        expect(modificationLayer).toBeDefined();
+        expect(modificationLayer!.modifications).toHaveLength(1);
+
+        const modification = modificationLayer!.modifications[0];
+        expect(modification!.type).toBe('change');
+        expect(modification!.id).toBe('node-to-change');
+        expect(modification!.element).toBeDefined();
+        expect(modification!.element!.type).toBe('delegating-node');
+        expect(modification!.element!.bounds).toEqual({ x: 5, y: 10, w: 15, h: 20, r: 0.25 });
+      });
+
+      it('should handle empty modification layer', async () => {
+        // Setup
+        const originalDoc = TestModel.newDocument();
+        const diagram = new TestDiagramBuilder(originalDoc);
+
+        // Create regular layer
+        diagram.newLayer();
+
+        // Create empty modification layer
+        const modLayer = new ModificationLayer('mod-layer', 'Modifications', diagram, []);
+        diagram.layers.add(modLayer, UnitOfWork.immediate(diagram));
+
+        originalDoc.addDiagram(diagram);
+
+        // Act
+        const serialized = await serializeDiagramDocument(originalDoc);
+
+        const newDoc = TestModel.newDocument();
+        await deserializeDiagramDocument(
+          serialized,
+          newDoc,
+          (d, doc) => new TestDiagramBuilder(doc, d.id)
+        );
+
+        // Verify
+        const newDiagram = newDoc.diagrams[0]!;
+        const modificationLayer = newDiagram.layers.all.find(l => l.type === 'modification') as
+          | InstanceType<typeof ModificationLayer>
+          | undefined;
+        expect(modificationLayer).toBeDefined();
+        expect(modificationLayer!.modifications).toHaveLength(0);
+      });
+
+      it('should serialize and deserialize delegating node with all overridable attributes', async () => {
+        // Setup
+        const originalDoc = TestModel.newDocument();
+        const diagram = new TestDiagramBuilder(originalDoc);
+
+        // Create a regular layer with base element
+        const regularLayer = diagram.newLayer();
+        const baseNode = regularLayer.addNode({ id: 'base-node' });
+
+        // Set properties on base node
+        baseNode.updateProps(props => {
+          props.fill = { color: 'red' };
+          props.stroke = { color: 'blue' };
+        }, UnitOfWork.immediate(diagram));
+        baseNode.setText('Base Text', UnitOfWork.immediate(diagram));
+        baseNode.updateMetadata(metadata => {
+          metadata.name = 'Base Name';
+        }, UnitOfWork.immediate(diagram));
+
+        // Create a modification layer
+        const modLayer = new ModificationLayer('mod-layer', 'Modifications', diagram, []);
+        diagram.layers.add(modLayer, UnitOfWork.immediate(diagram));
+
+        // Create delegating node with all overrides
+        const delegatingNode = new DelegatingDiagramNode('delegating-1', baseNode, modLayer, {
+          bounds: { x: 100, y: 200, w: 300, h: 400, r: 0.5 },
+          props: {
+            fill: { color: 'green' },
+            stroke: { color: 'yellow', width: 5 }
+          },
+          texts: { text: 'Override Text', subtitle: 'Override Subtitle' },
+          metadata: {
+            name: 'Override Name',
+            data: {
+              customData: { key1: 'value1' },
+              data: [{ schema: 'schema1', type: 'schema', data: {} }]
+            }
+          }
+        });
+
+        modLayer.modifyChange('base-node', delegatingNode, UnitOfWork.immediate(diagram));
+
+        originalDoc.addDiagram(diagram);
+
+        // Act
+        const serialized = await serializeDiagramDocument(originalDoc);
+
+        const newDoc = TestModel.newDocument();
+        await deserializeDiagramDocument(
+          serialized,
+          newDoc,
+          (d, doc) => new TestDiagramBuilder(doc, d.id)
+        );
+
+        // Verify
+        const newDiagram = newDoc.diagrams[0]!;
+        const modificationLayer = newDiagram.layers.all.find(l => l.type === 'modification') as
+          | InstanceType<typeof ModificationLayer>
+          | undefined;
+        expect(modificationLayer).toBeDefined();
+        expect(modificationLayer!.modifications).toHaveLength(1);
+
+        const modification = modificationLayer!.modifications[0];
+        expect(modification!.type).toBe('change');
+        expect(modification!.id).toBe('base-node');
+        expect(modification!.element).toBeDefined();
+
+        const deserializedElement = modification!.element! as DelegatingDiagramNode;
+
+        // Verify bounds override
+        expect(deserializedElement.bounds).toEqual({ x: 100, y: 200, w: 300, h: 400, r: 0.5 });
+
+        // Verify props override - should merge with base props
+        expect(deserializedElement.renderProps.fill?.color).toBe('green');
+        expect(deserializedElement.renderProps.stroke?.color).toBe('yellow');
+        expect(deserializedElement.renderProps.stroke?.width).toBe(5);
+
+        // Verify texts override
+        expect(deserializedElement.getText()).toBe('Override Text');
+        expect(deserializedElement.getText('subtitle')).toBe('Override Subtitle');
+
+        // Verify metadata override
+        expect(deserializedElement.metadata.name).toBe('Override Name');
+        expect(deserializedElement.metadata.data?.customData?.key1).toBe('value1');
+        expect(deserializedElement.metadata.data?.data).toHaveLength(1);
+        expect(deserializedElement.metadata.data?.data![0]).toEqual({
+          schema: 'schema1',
+          type: 'schema'
+        });
+      });
+
+      it('should serialize delegating node with partial overrides', async () => {
+        // Setup
+        const originalDoc = TestModel.newDocument();
+        const diagram = new TestDiagramBuilder(originalDoc);
+
+        // Create a regular layer with base element
+        const regularLayer = diagram.newLayer();
+        const baseNode = regularLayer.addNode({ id: 'base-node' });
+
+        // Set properties on base node
+        baseNode.updateProps(props => {
+          props.fill = { color: 'red' };
+          props.stroke = { color: 'blue', width: 2 };
+        }, UnitOfWork.immediate(diagram));
+        baseNode.setText('Base Text', UnitOfWork.immediate(diagram));
+
+        // Create a modification layer
+        const modLayer = new ModificationLayer('mod-layer', 'Modifications', diagram, []);
+        diagram.layers.add(modLayer, UnitOfWork.immediate(diagram));
+
+        // Create delegating node with only props override (no bounds, texts, or metadata)
+        const delegatingNode = new DelegatingDiagramNode('delegating-1', baseNode, modLayer, {
+          props: {
+            fill: { color: 'green' }
+            // Note: not overriding stroke, should inherit from base
+          }
+        });
+
+        modLayer.modifyChange('base-node', delegatingNode, UnitOfWork.immediate(diagram));
+
+        originalDoc.addDiagram(diagram);
+
+        // Act
+        const serialized = await serializeDiagramDocument(originalDoc);
+
+        const newDoc = TestModel.newDocument();
+        await deserializeDiagramDocument(
+          serialized,
+          newDoc,
+          (d, doc) => new TestDiagramBuilder(doc, d.id)
+        );
+
+        // Verify
+        const newDiagram = newDoc.diagrams[0]!;
+        const modificationLayer = newDiagram.layers.all.find(l => l.type === 'modification') as
+          | InstanceType<typeof ModificationLayer>
+          | undefined;
+        expect(modificationLayer).toBeDefined();
+
+        const modification = modificationLayer!.modifications[0];
+        const deserializedElement = modification!.element! as DelegatingDiagramNode;
+
+        // Verify props override - fill should be overridden, stroke should be inherited
+        expect(deserializedElement.renderProps.fill?.color).toBe('green');
+        expect(deserializedElement.renderProps.stroke?.color).toBe('blue');
+        expect(deserializedElement.renderProps.stroke?.width).toBe(2);
+
+        // Verify text is inherited from base
+        expect(deserializedElement.getText()).toBe('Base Text');
+
+        // Verify bounds are inherited from base (not overridden)
+        expect(deserializedElement.bounds).toEqual(baseNode.bounds);
+      });
+
+      it('should serialize and deserialize delegating edge with all overridable attributes', async () => {
+        // Setup
+        const originalDoc = TestModel.newDocument();
+        const diagram = new TestDiagramBuilder(originalDoc);
+
+        // Create a regular layer with base elements
+        const regularLayer = diagram.newLayer();
+        const node1 = regularLayer.addNode({ id: 'node-1' });
+        const node2 = regularLayer.addNode({ id: 'node-2' });
+        const baseEdge = regularLayer.addEdge({ id: 'base-edge' });
+
+        // Set properties on base edge
+        baseEdge.updateProps(props => {
+          props.stroke = { color: 'red', width: 2 };
+          props.arrow = { end: { type: 'arrow', size: 10 } };
+        }, UnitOfWork.immediate(diagram));
+        baseEdge.updateMetadata(metadata => {
+          metadata.name = 'Base Edge';
+        }, UnitOfWork.immediate(diagram));
+
+        // Create a modification layer
+        const modLayer = new ModificationLayer('mod-layer', 'Modifications', diagram, []);
+        diagram.layers.add(modLayer, UnitOfWork.immediate(diagram));
+
+        // Create delegating edge with all overrides
+        const newStart = new AnchorEndpoint(node1, 'anchor1', { x: 0.2, y: 0.3 });
+        const newEnd = new AnchorEndpoint(node2, 'anchor2', { x: 0.8, y: 0.7 });
+        const waypoints = [{ point: { x: 100, y: 100 } }, { point: { x: 200, y: 150 } }];
+
+        const delegatingEdge = new DelegatingDiagramEdge('delegating-edge-1', baseEdge, modLayer, {
+          props: {
+            stroke: { color: 'blue', width: 5 },
+            arrow: { start: { type: 'diamond', size: 12 }, end: { type: 'circle', size: 8 } }
+          },
+          start: newStart,
+          end: newEnd,
+          waypoints: waypoints,
+          metadata: {
+            name: 'Override Edge',
+            data: {
+              customData: { edgeKey: 'edgeValue' },
+              data: [{ schema: 'edge-schema', type: 'schema', data: {} }]
+            }
+          }
+        });
+
+        modLayer.modifyChange('base-edge', delegatingEdge, UnitOfWork.immediate(diagram));
+
+        originalDoc.addDiagram(diagram);
+
+        // Act
+        const serialized = await serializeDiagramDocument(originalDoc);
+
+        const newDoc = TestModel.newDocument();
+        await deserializeDiagramDocument(
+          serialized,
+          newDoc,
+          (d, doc) => new TestDiagramBuilder(doc, d.id)
+        );
+
+        // Verify
+        const newDiagram = newDoc.diagrams[0]!;
+        const modificationLayer = newDiagram.layers.all.find(l => l.type === 'modification') as
+          | InstanceType<typeof ModificationLayer>
+          | undefined;
+        expect(modificationLayer).toBeDefined();
+        expect(modificationLayer!.modifications).toHaveLength(1);
+
+        const modification = modificationLayer!.modifications[0];
+        expect(modification!.type).toBe('change');
+        expect(modification!.id).toBe('base-edge');
+        expect(modification!.element).toBeDefined();
+
+        const deserializedElement = modification!.element! as DelegatingDiagramEdge;
+
+        // Verify props override
+        expect(deserializedElement.renderProps.stroke?.color).toBe('blue');
+        expect(deserializedElement.renderProps.stroke?.width).toBe(5);
+        expect(deserializedElement.renderProps.arrow?.start).toEqual({ type: 'diamond', size: 12 });
+        expect(deserializedElement.renderProps.arrow?.end).toEqual({ type: 'circle', size: 8 });
+
+        // Verify start/end overrides
+        expect(deserializedElement.start).toBeInstanceOf(AnchorEndpoint);
+        expect(deserializedElement.end).toBeInstanceOf(AnchorEndpoint);
+        if (deserializedElement.start instanceof AnchorEndpoint) {
+          expect(deserializedElement.start.node.id).toBe(node1.id);
+          expect(deserializedElement.start.anchorId).toBe('anchor1');
+          expect(deserializedElement.start.offset).toEqual({ x: 0.2, y: 0.3 });
+        }
+        if (deserializedElement.end instanceof AnchorEndpoint) {
+          expect(deserializedElement.end.node.id).toBe(node2.id);
+          expect(deserializedElement.end.anchorId).toBe('anchor2');
+          expect(deserializedElement.end.offset).toEqual({ x: 0.8, y: 0.7 });
+        }
+
+        // Verify waypoints override
+        expect(deserializedElement.waypoints).toHaveLength(2);
+        expect(deserializedElement.waypoints[0]!.point).toEqual({ x: 100, y: 100 });
+        expect(deserializedElement.waypoints[1]!.point).toEqual({ x: 200, y: 150 });
+
+        // Verify metadata override
+        expect(deserializedElement.metadata.name).toBe('Override Edge');
+        expect(deserializedElement.metadata.data?.customData?.edgeKey).toBe('edgeValue');
+        expect(deserializedElement.metadata.data?.data).toHaveLength(1);
+        expect(deserializedElement.metadata.data?.data![0]).toEqual({
+          schema: 'edge-schema',
+          type: 'schema'
+        });
+      });
+
+      it('should serialize delegating edge with partial overrides', async () => {
+        // Setup
+        const originalDoc = TestModel.newDocument();
+        const diagram = new TestDiagramBuilder(originalDoc);
+
+        // Create a regular layer with base elements
+        const regularLayer = diagram.newLayer();
+        const node1 = regularLayer.addNode({ id: 'node-1' });
+        const node2 = regularLayer.addNode({ id: 'node-2' });
+        const baseEdge = regularLayer.addEdge({ id: 'base-edge' });
+
+        // Connect base edge to nodes
+        baseEdge.setStart(
+          new PointInNodeEndpoint(node1, { x: 0, y: 0.5 }, { x: 0, y: 0 }, 'relative'),
+          UnitOfWork.immediate(diagram)
+        );
+        baseEdge.setEnd(
+          new PointInNodeEndpoint(node2, { x: 1, y: 0.5 }, { x: 0, y: 0 }, 'relative'),
+          UnitOfWork.immediate(diagram)
+        );
+
+        // Set properties on base edge
+        baseEdge.updateProps(props => {
+          props.stroke = { color: 'red', width: 2 };
+          props.arrow = { end: { type: 'arrow', size: 10 } };
+        }, UnitOfWork.immediate(diagram));
+
+        // Create a modification layer
+        const modLayer = new ModificationLayer('mod-layer', 'Modifications', diagram, []);
+        diagram.layers.add(modLayer, UnitOfWork.immediate(diagram));
+
+        // Create delegating edge with only props override (no start, end, waypoints, or metadata)
+        const delegatingEdge = new DelegatingDiagramEdge('delegating-edge-1', baseEdge, modLayer, {
+          props: {
+            stroke: { color: 'green' }
+            // Note: not overriding arrow, should inherit from base
+            // Note: not overriding start, end, waypoints - should inherit from base
+          }
+        });
+
+        modLayer.modifyChange('base-edge', delegatingEdge, UnitOfWork.immediate(diagram));
+
+        originalDoc.addDiagram(diagram);
+
+        // Act
+        const serialized = await serializeDiagramDocument(originalDoc);
+
+        const newDoc = TestModel.newDocument();
+        await deserializeDiagramDocument(
+          serialized,
+          newDoc,
+          (d, doc) => new TestDiagramBuilder(doc, d.id)
+        );
+
+        // Verify
+        const newDiagram = newDoc.diagrams[0]!;
+        const modificationLayer = newDiagram.layers.all.find(l => l.type === 'modification') as
+          | InstanceType<typeof ModificationLayer>
+          | undefined;
+        expect(modificationLayer).toBeDefined();
+
+        const modification = modificationLayer!.modifications[0];
+        const deserializedElement = modification!.element! as DelegatingDiagramEdge;
+
+        // Verify props override - stroke color should be overridden, arrow should be inherited
+        expect(deserializedElement.renderProps.stroke?.color).toBe('green');
+        expect(deserializedElement.renderProps.stroke?.width).toBe(2); // inherited
+        expect(deserializedElement.renderProps.arrow?.start).toEqual({ type: 'NONE', size: 100 }); // inherited (default)
+        expect(deserializedElement.renderProps.arrow?.end).toEqual({ type: 'arrow', size: 10 }); // inherited
+
+        // Verify start/end are inherited from base
+        expect(deserializedElement.start).toBeInstanceOf(PointInNodeEndpoint);
+        expect(deserializedElement.end).toBeInstanceOf(PointInNodeEndpoint);
+        if (deserializedElement.start instanceof PointInNodeEndpoint) {
+          expect(deserializedElement.start.node.id).toBe(node1.id);
+          expect(deserializedElement.start.ref).toEqual({ x: 0, y: 0.5 });
+        }
+        if (deserializedElement.end instanceof PointInNodeEndpoint) {
+          expect(deserializedElement.end.node.id).toBe(node2.id);
+          expect(deserializedElement.end.ref).toEqual({ x: 1, y: 0.5 });
+        }
+
+        // Verify waypoints are inherited from base (empty)
+        expect(deserializedElement.waypoints).toEqual(baseEdge.waypoints);
       });
     });
   });

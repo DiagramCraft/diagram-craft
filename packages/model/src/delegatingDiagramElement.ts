@@ -27,7 +27,7 @@ export abstract class DelegatingDiagramElement implements DiagramElement {
 
   protected readonly delegate: DiagramElement;
 
-  private _metadata: CRDTObject<ElementMetadata>;
+  protected _metadata: CRDTObject<ElementMetadata>;
   protected readonly _crdt: WatchableValue<CRDTMap<DiagramElementCRDT>>;
   private _layer: RegularLayer | ModificationLayer;
   private _diagram: Diagram;
@@ -65,7 +65,7 @@ export abstract class DelegatingDiagramElement implements DiagramElement {
   }
 
   get type() {
-    return this.delegate.type;
+    return this._crdt.get().get('type')! as string;
   }
 
   get layer() {

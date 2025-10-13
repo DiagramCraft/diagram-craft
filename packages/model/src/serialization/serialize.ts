@@ -19,6 +19,7 @@ import { DiagramDocumentDataSchemas, type SchemaMetadata } from '../diagramDocum
 import { ReferenceLayer } from '../diagramLayerReference';
 import { RuleLayer } from '../diagramLayerRule';
 import { RegularLayer } from '../diagramLayerRegular';
+import { ModificationLayer } from '../diagramLayerModification';
 import { CommentManager, SerializedComment } from '../comment';
 import { hash64 } from '@diagram-craft/utils/hash';
 import type { DataManager } from '../diagramDocumentData';
@@ -157,6 +158,18 @@ export const serializeLayer = (layer: Layer): SerializedLayer => {
       layerType: 'rule',
       rules: (layer as RuleLayer).rules
     };
+  } else if (layer.type === 'modification') {
+    return {
+      id: layer.id,
+      name: layer.name,
+      type: 'layer',
+      layerType: 'modification',
+      modifications: (layer as ModificationLayer).modifications.map(m => ({
+        id: m.id,
+        type: m.type,
+        element: m.element ? serializeDiagramElement(m.element) : undefined
+      }))
+    };
   } else {
     throw new NotImplementedYet();
   }
@@ -167,7 +180,9 @@ export const serializeDiagramElement = (element: DiagramElement): SerializedElem
     const node = element;
     return {
       id: node.id,
-      type: 'node',
+      // TODO: Fix
+      // biome-ignore lint/suspicious/noExplicitAny: incorrect type
+      type: node.type as any,
       nodeType: node.nodeType,
       bounds: node.bounds,
       anchors: node.anchors,
@@ -181,7 +196,9 @@ export const serializeDiagramElement = (element: DiagramElement): SerializedElem
     const edge = element;
     return {
       id: edge.id,
-      type: 'edge',
+      // TODO: Fix
+      // biome-ignore lint/suspicious/noExplicitAny: incorrect type
+      type: edge.type as any,
       start: edge.start.serialize(),
       end: edge.end.serialize(),
       labelNodes: edge.labelNodes?.map(e => ({
