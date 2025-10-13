@@ -380,10 +380,6 @@ export class SimpleDiagramEdge
   }
 
   updateProps(callback: (props: EdgeProps) => void, uow: UnitOfWork) {
-    if (this.isModified()) {
-      return this.getModificationElement(uow).updateProps(callback, uow);
-    }
-
     uow.snapshot(this);
 
     const oldType = this.#props.get().type;
@@ -415,10 +411,6 @@ export class SimpleDiagramEdge
     callback: (props: NonNullable<CustomEdgeProps[K]>) => void,
     uow: UnitOfWork
   ) {
-    if (this.isModified()) {
-      return this.getModificationElement(uow).updateCustomProps(key, callback, uow);
-    }
-
     this.updateProps(p => {
       p.custom ??= {};
       p.custom[key] ??= {};
@@ -491,10 +483,6 @@ export class SimpleDiagramEdge
   }
 
   setBounds(b: Box, uow: UnitOfWork) {
-    if (this.isModified()) {
-      return this.getModificationElement(uow).setBounds(b, uow);
-    }
-
     uow.snapshot(this);
 
     const delta = Point.subtract(b, this.bounds);
@@ -522,10 +510,6 @@ export class SimpleDiagramEdge
   /* Endpoints ********************************************************************************************** */
 
   setStart(start: Endpoint, uow: UnitOfWork) {
-    if (this.isModified()) {
-      return this.getModificationElement(uow).setStart(start, uow);
-    }
-
     uow.snapshot(this);
 
     if (isConnected(this.start)) {
@@ -555,10 +539,6 @@ export class SimpleDiagramEdge
   }
 
   setEnd(end: Endpoint, uow: UnitOfWork) {
-    if (this.isModified()) {
-      return this.getModificationElement(uow).setEnd(end, uow);
-    }
-
     uow.snapshot(this);
 
     if (isConnected(this.end)) {
@@ -768,10 +748,6 @@ export class SimpleDiagramEdge
   }
 
   addWaypoint(waypoint: Waypoint, uow: UnitOfWork) {
-    if (this.isModified()) {
-      return this.getModificationElement(uow).addWaypoint(waypoint, uow);
-    }
-
     uow.snapshot(this);
 
     const path = this.path();
@@ -827,30 +803,18 @@ export class SimpleDiagramEdge
   }
 
   removeWaypoint(waypoint: Waypoint, uow: UnitOfWork) {
-    if (this.isModified()) {
-      return this.getModificationElement(uow).removeWaypoint(waypoint, uow);
-    }
-
     uow.snapshot(this);
     this.#waypoints.set(this.waypoints.filter(w => w !== waypoint));
     uow.updateElement(this);
   }
 
   moveWaypoint(waypoint: Waypoint, point: Point, uow: UnitOfWork) {
-    if (this.isModified()) {
-      return this.getModificationElement(uow).moveWaypoint(waypoint, point, uow);
-    }
-
     uow.snapshot(this);
     this.#waypoints.set(this.waypoints.map(w => (w === waypoint ? { ...w, point } : w)));
     uow.updateElement(this);
   }
 
   replaceWaypoint(idx: number, waypoint: Waypoint, uow: UnitOfWork) {
-    if (this.isModified()) {
-      return this.getModificationElement(uow).replaceWaypoint(idx, waypoint, uow);
-    }
-
     uow.snapshot(this);
     this.#waypoints.set(this.waypoints.map((w, i) => (i === idx ? waypoint : w)));
     uow.updateElement(this);
@@ -1002,11 +966,7 @@ export class SimpleDiagramEdge
     return undefined;
   }
 
-  transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork): DiagramElement {
-    if (this.isModified()) {
-      return this.getModificationElement(uow).transform(transforms, uow);
-    }
-
+  transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork): void {
     uow.snapshot(this);
 
     this.setBounds(Transform.box(this.bounds, ...transforms), uow);
@@ -1037,8 +997,6 @@ export class SimpleDiagramEdge
     );
 
     uow.updateElement(this);
-
-    return this;
   }
 
   get intersections() {
@@ -1046,10 +1004,6 @@ export class SimpleDiagramEdge
   }
 
   flip(uow: UnitOfWork) {
-    if (this.isModified()) {
-      return this.getModificationElement(uow).flip(uow);
-    }
-
     uow.snapshot(this);
 
     const start = this.#start.getNonNull();
@@ -1246,9 +1200,5 @@ export class SimpleDiagramEdge
 
   get props() {
     return this.renderProps;
-  }
-
-  protected getModificationElement(uow: UnitOfWork): DiagramEdge {
-    return super.getModificationElement(uow) as DiagramEdge;
   }
 }

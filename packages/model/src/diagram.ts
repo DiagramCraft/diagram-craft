@@ -488,14 +488,13 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     transforms: ReadonlyArray<Transform>,
     uow: UnitOfWork
   ) {
-    const transformedElements: DiagramElement[] = [];
     for (const el of elements) {
-      transformedElements.push(el.transform(transforms, uow));
+      el.transform(transforms, uow);
     }
 
     // We do this in a separate loop to as nodes might move which will
     // affect the start and end location of connected edges
-    for (const el of transformedElements) {
+    for (const el of elements) {
       uow.updateElement(el);
     }
   }

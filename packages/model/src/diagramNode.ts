@@ -290,10 +290,6 @@ export class SimpleDiagramNode
   }
 
   changeNodeType(nodeType: string, uow: UnitOfWork) {
-    if (this.isModified()) {
-      return this.getModificationElement(uow).changeNodeType(nodeType, uow);
-    }
-
     uow.snapshot(this);
     this.#nodeType.set(nodeType);
     this._children.clear();
@@ -311,10 +307,6 @@ export class SimpleDiagramNode
   }
 
   setText(text: string, uow: UnitOfWork, id = 'text') {
-    if (this.isModified()) {
-      return this.getModificationElement(uow).setText(text, uow, id);
-    }
-
     uow.snapshot(this);
     this.#text.set({
       ...this.#text.get(),
@@ -520,10 +512,6 @@ export class SimpleDiagramNode
   }
 
   updateProps(callback: (props: NodeProps) => void, uow: UnitOfWork) {
-    if (this.isModified()) {
-      return this.getModificationElement(uow).updateProps(callback, uow);
-    }
-
     this.crdt.get().transact(() => {
       uow.snapshot(this);
       this.#props.update(callback);
@@ -540,10 +528,6 @@ export class SimpleDiagramNode
     callback: (props: NonNullable<CustomNodeProps[K]>) => void,
     uow: UnitOfWork
   ) {
-    if (this.isModified()) {
-      return this.getModificationElement(uow).updateCustomProps(key, callback, uow);
-    }
-
     this.updateProps(p => {
       p.custom ??= {};
       p.custom[key] ??= {};
@@ -639,10 +623,6 @@ export class SimpleDiagramNode
   }
 
   setBounds(bounds: Box, uow: UnitOfWork) {
-    if (this.isModified()) {
-      return this.getModificationElement(uow).setBounds(bounds, uow);
-    }
-
     uow.snapshot(this);
     const oldBounds = this.bounds;
     this.#bounds.set(bounds);
@@ -899,15 +879,7 @@ export class SimpleDiagramNode
     }
   }
 
-  transform(
-    transforms: ReadonlyArray<Transform>,
-    uow: UnitOfWork,
-    isChild = false
-  ): DiagramElement {
-    if (this.isModified()) {
-      return this.getModificationElement(uow).transform(transforms, uow, isChild);
-    }
-
+  transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork, isChild = false): void {
     uow.snapshot(this);
 
     const previousBounds = this.bounds;
@@ -926,7 +898,7 @@ export class SimpleDiagramNode
 
         // TODO: This should be possible to put in the invalidation() method
 
-        if (uow.contains(this.labelEdge()!)) return this;
+        if (uow.contains(this.labelEdge()!)) return;
 
         const labelNode = this.labelNode();
         assert.present(labelNode);
@@ -949,8 +921,6 @@ export class SimpleDiagramNode
     }
 
     uow.updateElement(this);
-
-    return this;
   }
 
   _removeEdge(anchor: string | undefined, edge: DiagramEdge) {
@@ -1073,9 +1043,5 @@ export class SimpleDiagramNode
 
   get props() {
     return this.renderProps;
-  }
-
-  protected getModificationElement(uow: UnitOfWork): DiagramNode {
-    return super.getModificationElement(uow) as DiagramNode;
   }
 }

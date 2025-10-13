@@ -150,7 +150,7 @@ export abstract class DelegatingDiagramElement implements DiagramElement {
     transforms: ReadonlyArray<Transform>,
     uow: UnitOfWork,
     isChild?: boolean
-  ): DiagramElement;
+  ): void;
 
   abstract readonly bounds: Box;
   abstract setBounds(bounds: Box, uow: UnitOfWork): void;

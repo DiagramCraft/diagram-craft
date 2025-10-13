@@ -14,7 +14,7 @@ import { AttachmentConsumer } from './attachment';
 import { FlatObject } from '@diagram-craft/utils/types';
 import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
 import { PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
-import { assert, VERIFY_NOT_REACHED, VerifyNotReached } from '@diagram-craft/utils/assert';
+import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import type { RegularLayer } from './diagramLayerRegular';
 import type { CRDTMap, FlatCRDTMap } from './collaboration/crdt';
 import { watch, WatchableValue } from '@diagram-craft/utils/watchableValue';
@@ -23,11 +23,10 @@ import {
   MappedCRDTOrderedMap,
   type MappedCRDTOrderedMapMapType
 } from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
-import { getElementFactory, makeElementMapper } from './diagramElementMapper';
+import { makeElementMapper } from './diagramElementMapper';
 import { MappedCRDTProp } from './collaboration/datatypes/mapped/mappedCrdtProp';
 import type { ModificationLayer } from './diagramLayerModification';
 import type { Comment } from './comment';
-import { newid } from '@diagram-craft/utils/id';
 
 // biome-ignore lint/suspicious/noExplicitAny: false positive
 type Snapshot = any;
@@ -57,11 +56,7 @@ export interface DiagramElement {
   invalidate(uow: UnitOfWork): void;
   detach(uow: UnitOfWork): void;
   duplicate(ctx?: DuplicationContext, id?: string): DiagramElement;
-  transform(
-    transforms: ReadonlyArray<Transform>,
-    uow: UnitOfWork,
-    isChild?: boolean
-  ): DiagramElement;
+  transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork, isChild?: boolean): void;
 
   readonly bounds: Box;
   setBounds(bounds: Box, uow: UnitOfWork): void;
@@ -228,7 +223,7 @@ export abstract class AbstractDiagramElement
     transforms: ReadonlyArray<Transform>,
     uow: UnitOfWork,
     isChild?: boolean
-  ): DiagramElement;
+  ): void;
 
   abstract readonly bounds: Box;
   abstract setBounds(bounds: Box, uow: UnitOfWork): void;
@@ -256,39 +251,6 @@ export abstract class AbstractDiagramElement
 
   get crdt() {
     return this._crdt;
-  }
-
-  protected isModified() {
-    return this._diagram.activeLayer.type === 'modification' && this._layer.type !== 'modification';
-  }
-
-  protected getModificationElement(uow: UnitOfWork): DiagramElement {
-    if (this._diagram.activeLayer.type === 'modification' && this._layer.type !== 'modification') {
-      const layer = this._diagram.activeLayer as ModificationLayer;
-
-      // Find existing modification if it exists
-      const modification = layer.getModification(this.id);
-      if (modification) {
-        return modification.element!;
-      }
-
-      if (isNode(this)) {
-        const delegatingNode = getElementFactory('delegating-node')!(newid(), layer, this);
-        layer.modifyAdd(this.id, delegatingNode, uow);
-        console.log('add modification', delegatingNode, delegatingNode.id);
-        return delegatingNode;
-      } else if (isEdge(this)) {
-        const delegatingEdge = getElementFactory('delegating-edge')!(newid(), layer, this);
-        layer.modifyAdd(this.id, delegatingEdge, uow);
-        console.log('add modification', delegatingEdge, delegatingEdge.id);
-        return delegatingEdge;
-      } else {
-        console.log(this);
-        VERIFY_NOT_REACHED();
-      }
-    }
-
-    throw new VerifyNotReached();
   }
 
   protected assertNonModificationLayer() {
@@ -357,10 +319,6 @@ export abstract class AbstractDiagramElement
   }
 
   updateMetadata(callback: (props: ElementMetadata) => void, uow: UnitOfWork) {
-    if (this.isModified()) {
-      return this.getModificationElement(uow).updateMetadata(callback, uow);
-    }
-
     uow.snapshot(this);
     const metadata = this._metadata.getClone() as ElementMetadata;
     callback(metadata);
