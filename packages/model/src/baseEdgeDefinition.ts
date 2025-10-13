@@ -5,7 +5,7 @@ import {
   EdgeCapability,
   EdgeDefinition
 } from './elementDefinitionRegistry';
-import { DiagramEdge, SimpleDiagramEdge } from './diagramEdge';
+import { DiagramEdge } from './diagramEdge';
 import { DiagramElement, isNode } from './diagramElement';
 import { UnitOfWork } from './unitOfWork';
 import { DiagramNode } from './diagramNode';
@@ -14,6 +14,7 @@ import { newid } from '@diagram-craft/utils/id';
 import { deepClone } from '@diagram-craft/utils/object';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { assertRegularLayer } from './diagramLayerUtils';
+import { ElementFactory } from './elementFactory';
 
 export class BaseEdgeDefinition implements EdgeDefinition {
   public readonly name: string;
@@ -49,7 +50,7 @@ export class BaseEdgeDefinition implements EdgeDefinition {
     const anchor = 'c';
 
     // TODO: This requires some work to support dropping on multi-segment edges
-    const newEdge = SimpleDiagramEdge.create(
+    const newEdge = ElementFactory.edge(
       newid(),
       new AnchorEndpoint(element, anchor),
       edge.end,

@@ -7,7 +7,7 @@ import {
 } from '@diagram-craft/canvas/dragDropManager';
 import { Point } from '@diagram-craft/geometry/point';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { DiagramNode, SimpleDiagramNode } from '@diagram-craft/model/diagramNode';
+import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { newid } from '@diagram-craft/utils/id';
 import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
@@ -15,6 +15,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { ResizeDrag } from '@diagram-craft/canvas/drag/resizeDrag';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 declare global {
   namespace Extensions {
@@ -46,7 +47,7 @@ export class TextTool extends AbstractTool {
     assertRegularLayer(layer);
 
     this.startPoint = this.diagram.viewBox.toDiagramPoint(point);
-    this.node = SimpleDiagramNode.create(
+    this.node = ElementFactory.node(
       newid(),
       'text',
       {

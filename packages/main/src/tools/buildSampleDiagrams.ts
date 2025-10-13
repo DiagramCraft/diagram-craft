@@ -9,10 +9,9 @@ import { serializeDiagramDocument } from '@diagram-craft/model/serialization/ser
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { ARROW_SHAPES } from '@diagram-craft/canvas/arrowShapes';
-import { SimpleDiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { newid } from '@diagram-craft/utils/id';
 import { AnchorEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
-import { DiagramNode, SimpleDiagramNode } from '@diagram-craft/model/diagramNode';
+import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Point } from '@diagram-craft/geometry/point';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { registerUMLShapes } from '@diagram-craft/canvas-drawio/shapes/uml/uml';
@@ -22,6 +21,7 @@ import { Extent } from '@diagram-craft/geometry/extent';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { safeSplit } from '@diagram-craft/utils/safe';
+import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 const SIZES = [50, 80, 100, 120, 150];
 const WIDTHS = [1, 2, 3, 4, 5];
@@ -32,7 +32,7 @@ const writeArrow = (
   layer: RegularLayer,
   diagram: Diagram
 ) => {
-  const n = SimpleDiagramNode.create(
+  const n = ElementFactory.node(
     newid(),
     'text',
     {
@@ -59,7 +59,7 @@ const writeArrow = (
   y += 30;
   for (let w = 0; w < WIDTHS.length; w++) {
     for (let s = 0; s < SIZES.length; s++) {
-      const edge = SimpleDiagramEdge.create(
+      const edge = ElementFactory.edge(
         newid(),
         new FreeEndpoint({ x: 10 + w * 110, y: y + s * 30 }),
         new FreeEndpoint({ x: 80 + w * 110, y: y + s * 30 }),
@@ -86,7 +86,7 @@ const writeArrow = (
   }
 
   for (let s = 0; s < SIZES.length; s++) {
-    const n = SimpleDiagramNode.create(
+    const n = ElementFactory.node(
       newid(),
       'rect',
       {
@@ -107,7 +107,7 @@ const writeArrow = (
     );
     layer.addElement(n, UnitOfWork.immediate(diagram));
 
-    const edge = SimpleDiagramEdge.create(
+    const edge = ElementFactory.edge(
       newid(),
       new FreeEndpoint({ x: 10 + 600, y: y + s * 30 }),
       new AnchorEndpoint(n, 'c'),
@@ -256,7 +256,7 @@ const SHAPES_DEFS = [
       if (a.type === 'point') {
         const start = n._getAnchorPosition(a.id);
         const dest = Point.add(start, Vector.fromPolar((a.normal ?? 0) + rotation, 20));
-        const e = SimpleDiagramEdge.create(
+        const e = ElementFactory.edge(
           newid(),
           new AnchorEndpoint(n, a.id),
           new FreeEndpoint(dest),
@@ -277,7 +277,7 @@ const SHAPES_DEFS = [
         const offset = Vector.scale(Vector.from(a.start, a.end!), 0.5);
         const start = n._getPositionInBounds(Point.add(a.start, offset));
         const dest = Point.add(start, Vector.fromPolar((a.normal ?? 0) + rotation, 20));
-        const e = SimpleDiagramEdge.create(
+        const e = ElementFactory.edge(
           newid(),
           new AnchorEndpoint(n, a.id, offset),
           new FreeEndpoint(dest),
@@ -363,7 +363,7 @@ const writeShape = (
   diagram: Diagram,
   { xDiff, yDiff, startX, dimensions, shapesPerLine }: ShapeOpts
 ): { x: number; y: number } => {
-  const n = SimpleDiagramNode.create(
+  const n = ElementFactory.node(
     newid(),
     'text',
     {
@@ -403,7 +403,7 @@ const writeShape = (
     n.invalidateAnchors(uow);
     layer.addElement(n, uow);
 
-    const label = SimpleDiagramNode.create(
+    const label = ElementFactory.node(
       `${shape}-${i}-label`,
       'text',
       {

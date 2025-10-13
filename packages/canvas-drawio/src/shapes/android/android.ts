@@ -7,7 +7,7 @@ import {
 import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { Box } from '@diagram-craft/geometry/box';
 import type { ShapeParser } from '../../drawioReader';
-import { DiagramNode, NodeTexts, SimpleDiagramNode } from '@diagram-craft/model/diagramNode';
+import { DiagramNode, NodeTexts } from '@diagram-craft/model/diagramNode';
 import { DrawioShapeNodeDefinition } from '../../DrawioShape.nodeType';
 import { Spinner2NodeDefinition } from './spinner2.nodeType';
 import { AndroidRectNodeDefinition } from './androidRect.nodeType';
@@ -22,6 +22,7 @@ import { AndroidCheckboxNodeDefinition } from './androidCheckbox.nodeType';
 import { AndroidIndeterminateSpinner } from './androidIndeterminateSpinner.nodeType';
 import { StyleManager } from '../../styleManager';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
+import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 const registerStencil = (
   registry: NodeDefinitionRegistry,
@@ -71,7 +72,7 @@ export const parseAndroidShapes = async (
     }
   }
 
-  return SimpleDiagramNode.create(id, style.str('shape')!, bounds, layer, props, metadata, texts);
+  return ElementFactory.node(id, style.str('shape')!, bounds, layer, props, metadata, texts);
 };
 
 export const registerAndroidShapes = async (

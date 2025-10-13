@@ -1,5 +1,5 @@
 import { Box } from '@diagram-craft/geometry/box';
-import { NodeTexts, SimpleDiagramNode } from '@diagram-craft/model/diagramNode';
+import { NodeTexts } from '@diagram-craft/model/diagramNode';
 import type { WorkQueue } from './drawioReader';
 import { Angle } from '@diagram-craft/geometry/angle';
 import { dataURItoBlob } from './blobUtils';
@@ -9,6 +9,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { StyleManager } from './styleManager';
 import { parseNum } from '@diagram-craft/utils/number';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
+import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 const makeShape = (
   type: string,
@@ -25,7 +26,7 @@ const makeShape = (
   ) => {
     props.custom ??= {};
     setProps(style, props as NodeProps & { custom: CustomNodeProps });
-    return SimpleDiagramNode.create(id, type, bounds, layer, props, metadata, texts);
+    return ElementFactory.node(id, type, bounds, layer, props, metadata, texts);
   };
 };
 
@@ -61,7 +62,7 @@ export const parseRect = async (
 ) => {
   if (style.is('rounded'))
     return parseRoundedRect(id, bounds, props, metadata, texts, style, layer);
-  return SimpleDiagramNode.create(id, 'rect', bounds, layer, props, metadata, texts);
+  return ElementFactory.node(id, 'rect', bounds, layer, props, metadata, texts);
 };
 
 export const parseCube = makeShape('cube');
@@ -182,7 +183,7 @@ export const parseArrow = async (
   props.custom.arrow.y = style.num('dy', 0.2) * 50;
   props.custom.arrow.x = style.num('dx', 20);
 
-  return SimpleDiagramNode.create(id, type, bounds, layer, props, metadata, texts);
+  return ElementFactory.node(id, type, bounds, layer, props, metadata, texts);
 };
 
 export const parseImage = async (
@@ -265,7 +266,7 @@ export const parseImage = async (
   assertVAlign(valign);
   props.custom.drawioImage.imageValign = valign;
 
-  const node = SimpleDiagramNode.create(id, 'drawioImage', bounds, layer, props, metadata, texts);
+  const node = ElementFactory.node(id, 'drawioImage', bounds, layer, props, metadata, texts);
 
   // Determine image size
   queue.add(() => {
@@ -312,5 +313,5 @@ export const parseRoundedRect = async (
       ? Math.min(bounds.w / 2, bounds.h / 2, style.num('arcSize', 10) / 2)
       : (style.num('arcSize', 10) * Math.min(bounds.w, bounds.h)) / 100
   };
-  return SimpleDiagramNode.create(id, 'rounded-rect', bounds, layer, props, metadata, texts);
+  return ElementFactory.node(id, 'rounded-rect', bounds, layer, props, metadata, texts);
 };

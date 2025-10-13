@@ -1,8 +1,7 @@
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { TbChevronRight, TbLink, TbLinkOff, TbPentagon } from 'react-icons/tb';
 import { useDiagram } from '../../application';
-import { DiagramNode, SimpleDiagramNode } from '@diagram-craft/model/diagramNode';
-import { SimpleDiagramEdge } from '@diagram-craft/model/diagramEdge';
+import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { AnchorEndpoint, ConnectedEndpoint } from '@diagram-craft/model/endpoint';
 import type { Diagram } from '@diagram-craft/model/diagram';
 import type { Data } from '@diagram-craft/model/dataProvider';
@@ -12,6 +11,7 @@ import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoAction
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { decodeDataReferences } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { assert } from '@diagram-craft/utils/assert';
+import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 type ConnectionItem = {
   id: string;
@@ -161,7 +161,7 @@ const createNodeForData = (item: Data, schemaName: string, diagram: Diagram) => 
   const offsetX = 20; // Position closer to the right of selected node
 
   // Create the new node
-  const newNode = SimpleDiagramNode.create(
+  const newNode = ElementFactory.node(
     newid(),
     'rect',
     {
@@ -178,7 +178,7 @@ const createNodeForData = (item: Data, schemaName: string, diagram: Diagram) => 
   );
 
   // Create an edge connecting the selected node to the new node
-  const newEdge = SimpleDiagramEdge.create(
+  const newEdge = ElementFactory.edge(
     newid(),
     new AnchorEndpoint(selectedNode, 'e'),
     new AnchorEndpoint(newNode, 'w'),

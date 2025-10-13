@@ -1,12 +1,12 @@
 import { AbstractAction, ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 import { LengthOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
 import { precondition } from '@diagram-craft/utils/assert';
-import { SimpleDiagramNode } from '@diagram-craft/model/diagramNode';
 import { newid } from '@diagram-craft/utils/id';
 import { makeUndoableAction } from '@diagram-craft/model/undoManager';
 import { Point } from '@diagram-craft/geometry/point';
 import { ResolvedLabelNode } from '@diagram-craft/model/diagramEdge';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 declare global {
   interface ActionMap extends ReturnType<typeof edgeTextAddActions> {}
@@ -42,7 +42,7 @@ export class EdgeTextAddAction extends AbstractAction<EdgeTextAddActionArg> {
     const path = edge.path();
     const projection = path.projectPoint(context.point);
 
-    const textNode = SimpleDiagramNode.create(
+    const textNode = ElementFactory.node(
       newid(),
       'text',
       { ...projection.point, r: 0, w: 100, h: 0 },

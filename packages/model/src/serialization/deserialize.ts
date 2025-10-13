@@ -1,6 +1,6 @@
 import { Diagram } from '../diagram';
-import { DiagramNode, SimpleDiagramNode } from '../diagramNode';
-import { DiagramEdge, SimpleDiagramEdge } from '../diagramEdge';
+import { DiagramNode } from '../diagramNode';
+import { DiagramEdge } from '../diagramEdge';
 import { UnitOfWork } from '../unitOfWork';
 import { isSerializedEndpointAnchor, isSerializedEndpointPointInNode } from './utils';
 import { DiagramDocument } from '../diagramDocument';
@@ -26,6 +26,7 @@ import type { DiagramFactory } from '../factory';
 import { Comment } from '../comment';
 import type { DataManager } from '../diagramDocumentData';
 import { ElementLookup } from '../elementLookup';
+import { ElementFactory } from '../elementFactory';
 
 const unfoldGroup = (node: SerializedElement) => {
   const recurse = (
@@ -80,7 +81,7 @@ export const deserializeDiagramElements = (
         }
       }
 
-      const node = SimpleDiagramNode.create(
+      const node = ElementFactory.node(
         c.id,
         c.nodeType,
         c.bounds,
@@ -108,7 +109,7 @@ export const deserializeDiagramElements = (
       const startEndpoint = deserializeEndpoint(start, nodeLookup);
       const endEndpoint = deserializeEndpoint(end, nodeLookup);
 
-      const edge = SimpleDiagramEdge.create(
+      const edge = ElementFactory.edge(
         e.id,
         startEndpoint,
         endEndpoint,

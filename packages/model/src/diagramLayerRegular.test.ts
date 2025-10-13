@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestModel } from './test-support/builder';
 import { RegularLayer } from './diagramLayerRegular';
-import { SimpleDiagramNode } from './diagramNode';
 import { UnitOfWork } from './unitOfWork';
 import { Diagram } from './diagram';
 import { Backends } from './collaboration/collaborationTestUtils';
+import { ElementFactory } from './elementFactory';
 
 describe.for(Backends.all())('RegularLayer [%s]', ([_name, backend]) => {
   beforeEach(backend.beforeEach);
@@ -16,7 +16,7 @@ describe.for(Backends.all())('RegularLayer [%s]', ([_name, backend]) => {
 
       const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
 
-      const element = new SimpleDiagramNode('id1', layer1);
+      const element = ElementFactory.emptyNode('id1', layer1);
       layer1.addElement(element, UnitOfWork.immediate(d1));
       expect(layer1.elements).toHaveLength(1);
 
@@ -44,7 +44,7 @@ describe.for(Backends.all())('RegularLayer [%s]', ([_name, backend]) => {
       const layer1 = new RegularLayer('layer1', 'layer1', [], d1);
       d1.layers.add(layer1, UnitOfWork.immediate(d1));
 
-      layer1.addElement(new SimpleDiagramNode('id1', layer1), UnitOfWork.immediate(d1));
+      layer1.addElement(ElementFactory.emptyNode('id1', layer1), UnitOfWork.immediate(d1));
 
       expect(layer1.elements.length).toEqual(1);
 
@@ -75,7 +75,7 @@ describe.for(Backends.all())('RegularLayer [%s]', ([_name, backend]) => {
 
       const layerDoc2 = doc2 ? doc2.diagrams[0]!.layers.all[0] : undefined;
 
-      const element = new SimpleDiagramNode('id1', layer1);
+      const element = ElementFactory.emptyNode('id1', layer1);
       UnitOfWork.execute(d1, uow => layer1.addElement(element, uow));
       expect(layer1.elements.length).toEqual(1);
       expect(elementAdd1).toBeCalledTimes(1);
@@ -115,14 +115,14 @@ describe.for(Backends.all())('RegularLayer [%s]', ([_name, backend]) => {
 
       const layerDoc2 = doc2 ? doc2.diagrams[0]!.layers.all[0] : undefined;
 
-      const element = new SimpleDiagramNode('id1', layer1);
+      const element = ElementFactory.emptyNode('id1', layer1);
       layer1.addElement(element, UnitOfWork.immediate(d1));
       expect(layer1.elements.length).toEqual(1);
       if (doc2) expect((layerDoc2 as RegularLayer).elements.length).toEqual(1);
 
       const snapshot = layer1.snapshot();
 
-      layer1.addElement(new SimpleDiagramNode('id2', layer1), UnitOfWork.immediate(d1));
+      layer1.addElement(ElementFactory.emptyNode('id2', layer1), UnitOfWork.immediate(d1));
       expect(layer1.elements.length).toEqual(2);
       if (doc2) expect((layerDoc2 as RegularLayer).elements.length).toEqual(2);
 

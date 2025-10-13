@@ -1,7 +1,6 @@
 import { Point } from '@diagram-craft/geometry/point';
 import { hash64 } from '@diagram-craft/utils/hash';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { SimpleDiagramNode } from '@diagram-craft/model/diagramNode';
 import { newid } from '@diagram-craft/utils/id';
 import { SerializedElement } from '@diagram-craft/model/serialization/types';
 import { Box } from '@diagram-craft/geometry/box';
@@ -14,6 +13,7 @@ import { UndoableAction } from '@diagram-craft/model/undoManager';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 /* This contains paste handlers which are the code that is executed once
  * an item is pasted. Depending on the type of item pasted (image, node, etc)
@@ -76,7 +76,7 @@ export class ImagePasteHandler extends PasteHandler {
     const img = await createImageBitmap(att.content);
 
     const newElements = [
-      SimpleDiagramNode.create(
+      ElementFactory.node(
         newid(),
         'rect',
         { x: point.x, y: point.y, w: img.width, h: img.height, r: 0 },
@@ -109,7 +109,7 @@ export class TextPasteHandler extends PasteHandler {
 
     const text = await content.text();
     const newElements = [
-      SimpleDiagramNode.create(
+      ElementFactory.node(
         newid(),
         'text',
         { x: point.x, y: point.y, w: 200, h: 20, r: 0 },

@@ -1,11 +1,7 @@
 import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
 import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../components/BaseNodeComponent';
 import { NodeCapability } from '@diagram-craft/model/elementDefinitionRegistry';
-import {
-  DiagramNode,
-  NodePropsForRendering,
-  SimpleDiagramNode
-} from '@diagram-craft/model/diagramNode';
+import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { Box } from '@diagram-craft/geometry/box';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -21,6 +17,7 @@ import { Modifiers } from '../dragDropManager';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { hasHighlight, Highlights } from '../highlight';
 import { renderElement } from '../components/renderElement';
+import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 type TypeOrPropsFn<T> = T | ((p: NodePropsForRendering) => T);
 
@@ -150,7 +147,7 @@ export class FlexShapeNodeDefinition<
         }
 
         // Create a dummy node
-        const node = SimpleDiagramNode.create(
+        const node = ElementFactory.node(
           `${props.node.id}-${cmpDef?.id ?? cmp.id}`,
           cmpNodeType,
           adjustedBounds,

@@ -1,12 +1,12 @@
 import { AbstractAction, ActionCriteria } from '@diagram-craft/canvas/action';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
-import { SimpleDiagramNode } from '@diagram-craft/model/diagramNode';
 import { newid } from '@diagram-craft/utils/id';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { Application } from '../../application';
 import { TableInsertDialog } from '../TableInsertDialog';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 export const tableInsertActions = (application: Application) => ({
   TABLE_INSERT: new TableInsertAction(application)
@@ -48,11 +48,11 @@ class TableInsertAction extends AbstractAction<undefined, Application> {
 
         const elements: DiagramElement[] = [];
 
-        const table = SimpleDiagramNode.create(newid(), 'table', bounds, layer, {}, {});
+        const table = ElementFactory.node(newid(), 'table', bounds, layer, {}, {});
         elements.push(table);
 
         for (let r = 0; r < height; r++) {
-          const row = SimpleDiagramNode.create(
+          const row = ElementFactory.node(
             newid(),
             'tableRow',
             { w: bounds.w, h: rowHeight, x: 0, y: r * rowHeight, r: 0 },
@@ -64,7 +64,7 @@ class TableInsertAction extends AbstractAction<undefined, Application> {
           elements.push(row);
 
           for (let c = 0; c < width; c++) {
-            const cell = SimpleDiagramNode.create(
+            const cell = ElementFactory.node(
               newid(),
               'text',
               { w: colWidth, h: rowHeight, x: c * colWidth, y: 0, r: 0 },

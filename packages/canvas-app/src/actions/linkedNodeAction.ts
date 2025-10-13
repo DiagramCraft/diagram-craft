@@ -6,7 +6,6 @@ import { Anchor } from '@diagram-craft/model/anchor';
 import { Point } from '@diagram-craft/geometry/point';
 import { assert } from '@diagram-craft/utils/assert';
 import { Box } from '@diagram-craft/geometry/box';
-import { SimpleDiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { newid } from '@diagram-craft/utils/id';
 import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
 import { createResizeCanvasActionToFit } from '@diagram-craft/model/helpers/canvasResizeHelper';
@@ -16,6 +15,7 @@ import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSe
 import { Angle } from '@diagram-craft/geometry/angle';
 import { ActionContext } from '@diagram-craft/canvas/action';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 const OFFSET = 100;
 const SECONDARY_OFFSET = 20;
@@ -118,7 +118,7 @@ export const createLinkedNode = (
     additionalStyles.arrow = { end: { type: 'SQUARE_STICK_ARROW' } };
   }
 
-  const edge = SimpleDiagramEdge.create(
+  const edge = ElementFactory.edge(
     newid(),
     new AnchorEndpoint(node, sourceAnchorId),
     new AnchorEndpoint(newNode, shortest.id),

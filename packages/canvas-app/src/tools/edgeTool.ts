@@ -6,7 +6,7 @@ import {
   Modifiers
 } from '@diagram-craft/canvas/dragDropManager';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { DiagramEdge, SimpleDiagramEdge } from '@diagram-craft/model/diagramEdge';
+import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { AnchorEndpoint, ConnectedEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { newid } from '@diagram-craft/utils/id';
@@ -25,6 +25,7 @@ import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { Context } from '@diagram-craft/canvas/context';
 import { assert } from '@diagram-craft/utils/assert';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 declare global {
   namespace Extensions {
@@ -74,7 +75,7 @@ export class EdgeTool extends AbstractTool {
     const layer = this.diagram.activeLayer;
     assertRegularLayer(layer);
 
-    this.edge = SimpleDiagramEdge.create(
+    this.edge = ElementFactory.edge(
       newid(),
       this.currentAnchor
         ? new AnchorEndpoint(

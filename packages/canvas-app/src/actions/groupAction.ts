@@ -2,13 +2,14 @@ import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSe
 import { Box } from '@diagram-craft/geometry/box';
 import { UndoableAction } from '@diagram-craft/model/undoManager';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
-import { DiagramNode, SimpleDiagramNode } from '@diagram-craft/model/diagramNode';
+import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { newid } from '@diagram-craft/utils/id';
 import { ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 export const groupActions = (context: ActionContext) => ({
   GROUP_GROUP: new GroupAction('group', context),
@@ -63,7 +64,7 @@ class UndoableGroupAction implements UndoableAction {
     const layer = this.diagram.activeLayer;
     assertRegularLayer(layer);
 
-    this.#group = SimpleDiagramNode.create(
+    this.#group = ElementFactory.node(
       newid(),
       'group',
       Box.boundingBox(this.#elements.map(e => e.bounds)),

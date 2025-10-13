@@ -149,7 +149,7 @@ export class SimpleDiagramNode
   readonly #props: CRDTObject<NodeProps>;
   readonly #anchors: CRDTProp<DiagramNodeCRDT, 'anchors'>;
 
-  constructor(
+  protected constructor(
     id: string,
     layer: RegularLayer | ModificationLayer,
     anchorCache?: ReadonlyArray<Anchor>,
@@ -235,7 +235,15 @@ export class SimpleDiagramNode
 
   /* Factory ************************************************************************************************* */
 
-  static create(
+  static _createEmpty(
+    id: string,
+    layer: RegularLayer | ModificationLayer,
+    crdt?: CRDTMap<DiagramElementCRDT>
+  ): DiagramNode {
+    return new SimpleDiagramNode(id, layer, undefined, crdt);
+  }
+
+  static _create(
     id: string,
     nodeType: 'group' | string,
     bounds: Box,
@@ -740,7 +748,7 @@ export class SimpleDiagramNode
       return context.targetElementsInGroup.get(this.id) as DiagramNode;
     }
 
-    const node = SimpleDiagramNode.create(
+    const node = SimpleDiagramNode._create(
       id ?? newid(),
       this.nodeType,
       deepClone(this.bounds),

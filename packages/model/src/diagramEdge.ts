@@ -181,7 +181,7 @@ export class SimpleDiagramEdge
   readonly #end: MappedCRDTProp<DiagramEdgeCRDT, 'end', Endpoint>;
   readonly #props: CRDTObject<EdgeProps>;
 
-  constructor(
+  protected constructor(
     id: string,
     layer: RegularLayer | ModificationLayer,
     crdt?: CRDTMap<DiagramElementCRDT>
@@ -234,7 +234,15 @@ export class SimpleDiagramEdge
 
   /* Factory ************************************************************************************************* */
 
-  static create(
+  static _createEmpty(
+    id: string,
+    layer: RegularLayer | ModificationLayer,
+    crdt?: CRDTMap<DiagramElementCRDT>
+  ): DiagramEdge {
+    return new SimpleDiagramEdge(id, layer, crdt);
+  }
+
+  static _create(
     id: string,
     start: Endpoint,
     end: Endpoint,
@@ -926,7 +934,7 @@ export class SimpleDiagramEdge
   duplicate(ctx?: DuplicationContext, id?: string) {
     const uow = new UnitOfWork(this.diagram);
 
-    const edge = SimpleDiagramEdge.create(
+    const edge = SimpleDiagramEdge._create(
       id ?? newid(),
       this.start,
       this.end,

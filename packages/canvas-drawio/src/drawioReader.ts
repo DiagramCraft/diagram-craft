@@ -61,6 +61,7 @@ import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { getParser, shapeParsers } from './drawioShapeParsers';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { safeSplit } from '@diagram-craft/utils/safe';
+import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 const drawioBuiltinShapes: Partial<Record<string, string>> = {
   actor:
@@ -311,7 +312,7 @@ const createLabelNode = (
   bgColor: string,
   uow: UnitOfWork
 ) => {
-  const textNode = SimpleDiagramNode.create(
+  const textNode = ElementFactory.node(
     id,
     'text',
     edge.bounds,
@@ -793,7 +794,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
       if (stencil) {
         props.custom ??= {};
         props.custom.drawio = { shape: btoa(await decode(stencil)) };
-        nodes.push(SimpleDiagramNode.create(id, 'drawio', bounds, layer, props, metadata, texts));
+        nodes.push(ElementFactory.node(id, 'drawio', bounds, layer, props, metadata, texts));
       } else if (style.styleName === 'text') {
         // TODO: We should be able to move these two to the global style parsing/conversion
         if (style.str('strokeColor', 'none') === 'none') {
@@ -805,7 +806,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         }
 
         nodes.push(
-          SimpleDiagramNode.create(
+          ElementFactory.node(
             id,
             'rect',
             bounds,
@@ -943,15 +944,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           edgeProps.type = 'orthogonal';
         }
 
-        const edge = SimpleDiagramEdge.create(
-          id,
-          source,
-          target,
-          edgeProps,
-          metadata,
-          waypoints,
-          layer
-        );
+        const edge = ElementFactory.edge(id, source, target, edgeProps, metadata, waypoints, layer);
         nodes.push(edge);
         parents.set(id, edge);
 
@@ -987,7 +980,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           node = await parseSwimlane(id, bounds, props, metadata, texts, style, layer);
           nodes.push(node);
         } else {
-          node = SimpleDiagramNode.create(id, 'group', bounds, layer, props, metadata, texts);
+          node = ElementFactory.node(id, 'group', bounds, layer, props, metadata, texts);
           nodes.push(node);
 
           if (
@@ -1013,9 +1006,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
               const loader = getLoader(style.shape);
               if (!loader) {
                 console.warn(`No loader found for ${style.shape}`);
-                nodes.push(
-                  SimpleDiagramNode.create(id, 'rect', bounds, layer, props, metadata, texts)
-                );
+                nodes.push(ElementFactory.node(id, 'rect', bounds, layer, props, metadata, texts));
                 continue;
               }
 
@@ -1027,7 +1018,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
               if (parser) {
                 bgNode = await parser(newid(), bounds, props, metadata, texts, style, layer, queue);
               } else {
-                bgNode = SimpleDiagramNode.create(
+                bgNode = ElementFactory.node(
                   newid(),
                   style.shape,
                   bounds,
@@ -1039,7 +1030,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
               }
             } else {
               if (style.is('rounded')) {
-                bgNode = SimpleDiagramNode.create(
+                bgNode = ElementFactory.node(
                   newid(),
                   'rounded-rect',
                   { ...bounds },
@@ -1056,7 +1047,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
                   texts
                 );
               } else {
-                bgNode = SimpleDiagramNode.create(
+                bgNode = ElementFactory.node(
                   newid(),
                   'rect',
                   { ...bounds },
@@ -1086,7 +1077,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         const loader = getLoader(style.shape);
         if (!loader) {
           console.warn(`No loader found for ${style.shape}`);
-          nodes.push(SimpleDiagramNode.create(id, 'rect', bounds, layer, props, metadata, texts));
+          nodes.push(ElementFactory.node(id, 'rect', bounds, layer, props, metadata, texts));
           continue;
         }
 
@@ -1134,7 +1125,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           nodes.push(await parser(id, newBounds, props, metadata, texts, style, layer, queue));
         } else {
           nodes.push(
-            SimpleDiagramNode.create(id, style.shape!, newBounds, layer, props, metadata, texts)
+            ElementFactory.node(id, style.shape!, newBounds, layer, props, metadata, texts)
           );
         }
       } else if (style.styleName === 'ellipse') {
@@ -1145,7 +1136,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         if (style.is('rounded')) {
           nodes.push(await parseRoundedRect(id, bounds, props, metadata, texts, style, layer));
         } else {
-          nodes.push(SimpleDiagramNode.create(id, 'rect', bounds, layer, props, metadata, texts));
+          nodes.push(ElementFactory.node(id, 'rect', bounds, layer, props, metadata, texts));
         }
       }
 

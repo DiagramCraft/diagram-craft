@@ -1,5 +1,4 @@
 import type { Editor } from './editors';
-import { SimpleDiagramNode } from '@diagram-craft/model/diagramNode';
 import { newid } from '@diagram-craft/utils/id';
 import { deepClone } from '@diagram-craft/utils/object';
 import { useState } from 'react';
@@ -10,6 +9,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { sortBy } from '@diagram-craft/utils/array';
 import { useDiagram } from '../../../application';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 export const NodeCustomPropertiesEditor: Editor = props => {
   const $p = props.props as NodeProps;
@@ -20,7 +20,7 @@ export const NodeCustomPropertiesEditor: Editor = props => {
   const layer = $d.activeLayer;
   assertRegularLayer(layer);
 
-  const node = SimpleDiagramNode.create(
+  const node = ElementFactory.node(
     newid(),
     type === '' ? 'rect' : type,
     { x: 0, y: 0, w: 1000, h: 1000, r: 0 },
