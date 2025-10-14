@@ -40,6 +40,7 @@ registerElementFactory(
 );
 
 export type ModificationType = 'add' | 'remove' | 'change';
+
 const ModificationType = {
   Add: 'add' as const,
   Remove: 'remove' as const,
