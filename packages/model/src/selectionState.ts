@@ -74,7 +74,7 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
   #forcedRotation: boolean = false;
   #dragging: boolean = false;
 
-  constructor(diagram: Diagram) {
+  constructor(private diagram: Diagram) {
     super();
     this.#bounds = EMPTY_BOX;
     this.#elements = [];
@@ -84,6 +84,14 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
       this.recalculateBoundingBox();
     });
     diagram.on('elementChange', recalculateBoundingBox);
+  }
+
+  filterSelectionToVisibleElements() {
+    this.#elements = this.#elements.filter(e => {
+      return this.diagram.layers.visible.includes(e.layer);
+    });
+    this.recalculateBoundingBox();
+    this.emit('change', { selection: this });
   }
 
   setDragging(dragging: boolean) {
