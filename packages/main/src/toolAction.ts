@@ -34,9 +34,11 @@ export class ToolAction extends AbstractToggleAction<undefined, Application> {
   getCriteria(context: Application) {
     if (this.tool === 'move') return [];
     return ActionCriteria.EventTriggered(
-      context.model.activeDiagram,
-      'diagramChange',
-      () => context.model.activeDiagram.activeLayer.type === 'regular'
+      context.model.activeDiagram.layers,
+      'layerStructureChange',
+      () =>
+        context.model.activeDiagram.activeLayer.type === 'regular' &&
+        !context.model.activeDiagram.activeLayer.isLocked()
     );
   }
 
