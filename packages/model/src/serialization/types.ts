@@ -10,6 +10,7 @@ import type { AdjustmentRule } from '../diagramLayerRuleTypes';
 import type { DataTemplate } from '../diagramDocument';
 import type { SerializedComment } from '../comment';
 import type { QueryEntry } from '../documentProps';
+import type { ModificationType } from '../diagramLayerModification';
 
 export interface Reference {
   id: string;
@@ -33,7 +34,7 @@ export type SerializedLayer = { id: string; name: string; type: 'layer' } & (
       layerType: 'modification';
       modifications: ReadonlyArray<{
         id: string;
-        type: 'add' | 'remove' | 'change';
+        type: ModificationType;
         element?: SerializedElement;
       }>;
     }

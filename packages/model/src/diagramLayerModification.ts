@@ -1,12 +1,12 @@
 import { Layer, type LayerCRDT } from './diagramLayer';
 import { CRDTMap } from './collaboration/crdt';
 import type { Diagram } from './diagram';
-import { type DiagramElement, type DiagramElementCRDT, isNode } from './diagramElement';
+import { type DiagramElement, type DiagramElementCRDT, isEdge, isNode } from './diagramElement';
 import { MappedCRDTOrderedMap } from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import { watch } from '@diagram-craft/utils/watchableValue';
 import { makeElementMapper, registerElementFactory } from './diagramElementMapper';
 import { getRemoteUnitOfWork, type LayerSnapshot, UnitOfWork } from './unitOfWork';
-import { assert, mustExist } from '@diagram-craft/utils/assert';
+import { assert, mustExist, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { DiagramEdge, type DiagramEdgeCRDT } from './diagramEdge';
 import type { Adjustment } from './diagramLayerRuleTypes';
 import type { RegularLayer } from './diagramLayerRegular';
@@ -39,14 +39,14 @@ registerElementFactory(
   }
 );
 
-type ModificationType = 'add' | 'remove' | 'change';
+export type ModificationType = 'add' | 'remove' | 'change';
 const ModificationType = {
   Add: 'add' as const,
   Remove: 'remove' as const,
   Change: 'change' as const
 };
 
-type Modification = {
+export type Modification = {
   /* ID of the element to modify */
   id: string;
   type: ModificationType;
@@ -257,8 +257,10 @@ export class ModificationLayer extends Layer<ModificationLayer> {
     e._setLayer(this, this.diagram);
     if (isNode(e)) {
       this.diagram.nodeLookup.set(e.id, e);
+    } else if (isEdge(e)) {
+      this.diagram.edgeLookup.set(e.id, e);
     } else {
-      this.diagram.edgeLookup.set(e.id, e as DiagramEdge);
+      VERIFY_NOT_REACHED();
     }
   }
 }

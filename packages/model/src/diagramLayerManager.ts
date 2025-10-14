@@ -104,6 +104,8 @@ export class LayerManager
     this.#visibleLayers.on('remoteDelete', () => this.emit('layerStructureChange', {}));
 
     this.diagram.selectionState.on('add', () => {
+      // We don't want to change active layer in case we are in a modification layer, as
+      // this prevents the ability to manage the modification layer
       if (this.active.type === 'modification') return;
 
       const firstRegularLayer = this.diagram.selectionState.elements
@@ -114,6 +116,8 @@ export class LayerManager
       }
     });
     this.diagram.selectionState.on('remove', () => {
+      // We don't want to change active layer in case we are in a modification layer, as
+      // this prevents the ability to manage the modification layer
       if (this.active.type === 'modification') return;
 
       const firstRegularLayer = this.diagram.selectionState.elements

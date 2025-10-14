@@ -12,6 +12,7 @@ import { DelegatingDiagramEdge } from '@diagram-craft/model/delegatingDiagramEdg
 import { ModificationLayer } from '@diagram-craft/model/diagramLayerModification';
 import { newid } from '@diagram-craft/utils/id';
 import { ActionCriteria } from '@diagram-craft/canvas/action';
+import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 
 declare global {
   interface ActionMap extends ReturnType<typeof selectionAddToModificationLayerActions> {}
@@ -29,16 +30,12 @@ export class SelectionAddToModificationLayerAction extends AbstractSelectionActi
   getCriteria(context: Application): Array<ActionCriteria> {
     const baseCriteria = super.getCriteria(context);
 
-    const modificationLayerCheck = () => {
-      return context.model.activeDiagram.activeLayer.type === 'modification';
-    };
-
     return [
       ...baseCriteria,
       ActionCriteria.EventTriggered(
         context.model.activeDiagram.layers,
         'layerStructureChange',
-        modificationLayerCheck
+        () => context.model.activeDiagram.activeLayer.type === 'modification'
       )
     ];
   }
@@ -62,7 +59,7 @@ export class SelectionAddToModificationLayerAction extends AbstractSelectionActi
       } else if (isEdge(element)) {
         delegatingElement = new DelegatingDiagramEdge(newid(), element, layer);
       } else {
-        continue;
+        VERIFY_NOT_REACHED();
       }
 
       layer.modifyChange(element.id, delegatingElement, uow);

@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { DiagramElement } from '@diagram-craft/model/diagramElement';
-import { SimpleDiagramNode } from '@diagram-craft/model/diagramNode';
-import { SimpleDiagramEdge } from '@diagram-craft/model/diagramEdge';
+import { DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import {
   asProperty,
   CustomPropertyDefinition,
@@ -20,8 +18,6 @@ import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { PropertyEditor } from '../../components/PropertyEditor';
 import { Property } from './types';
 import { useDiagram } from '../../../application';
-import { DelegatingDiagramNode } from '@diagram-craft/model/delegatingDiagramNode';
-import { DelegatingDiagramEdge } from '@diagram-craft/model/delegatingDiagramEdge';
 
 export const ElementCustomPropertiesPanelForm = ({
   customProperties,
@@ -130,10 +126,10 @@ export const ElementCustomPropertiesPanel = (props: Props) => {
   let def: EdgeDefinition | NodeDefinition;
   let customProperties: ReadonlyArray<CustomPropertyDefinition>;
 
-  if (element instanceof SimpleDiagramNode || element instanceof DelegatingDiagramNode) {
+  if (isNode(element)) {
     def = element.getDefinition();
     customProperties = def.getCustomPropertyDefinitions(element);
-  } else if (element instanceof SimpleDiagramEdge || element instanceof DelegatingDiagramEdge) {
+  } else if (isEdge(element)) {
     def = element.getDefinition();
     customProperties = def.getCustomPropertyDefinitions(element);
   } else {

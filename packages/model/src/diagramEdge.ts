@@ -578,15 +578,11 @@ export class SimpleDiagramEdge
   }
 
   removeChild(child: DiagramElement, uow: UnitOfWork) {
-    this.assertNonModificationLayer();
-
     super.removeChild(child, uow);
     this.syncLabelNodesBasedOnChildren(uow);
   }
 
   addChild(child: DiagramElement, uow: UnitOfWork) {
-    this.assertNonModificationLayer();
-
     // Note: we don't support edges to be children of edges
     assert.true(isNode(child));
 
@@ -595,8 +591,6 @@ export class SimpleDiagramEdge
   }
 
   setChildren(children: ReadonlyArray<DiagramElement>, uow: UnitOfWork) {
-    this.assertNonModificationLayer();
-
     // Note: we don't support edges to be children of edges
     assert.true(children.every(isNode));
 
@@ -680,23 +674,17 @@ export class SimpleDiagramEdge
   }
 
   setLabelNodes(labelNodes: ReadonlyArray<ResolvedLabelNode> | undefined, uow: UnitOfWork) {
-    this.assertNonModificationLayer();
-
     this.#labelNodes.set(labelNodes?.map(n => [n.id, n]) ?? []);
     this.syncChildrenBasedOnLabelNodes(uow);
   }
 
   addLabelNode(labelNode: ResolvedLabelNode, uow: UnitOfWork) {
-    this.assertNonModificationLayer();
-
     uow.snapshot(this);
 
     this.setLabelNodes([...this.labelNodes, labelNode], uow);
   }
 
   removeLabelNode(labelNode: ResolvedLabelNode, uow: UnitOfWork) {
-    this.assertNonModificationLayer();
-
     assert.true(!!this.labelNodes.find(n => labelNode.id === n.id));
 
     uow.snapshot(this);

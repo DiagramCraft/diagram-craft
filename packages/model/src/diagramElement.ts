@@ -14,7 +14,7 @@ import { AttachmentConsumer } from './attachment';
 import { FlatObject } from '@diagram-craft/utils/types';
 import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
 import { PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
-import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+import { assert } from '@diagram-craft/utils/assert';
 import type { RegularLayer } from './diagramLayerRegular';
 import type { CRDTMap, FlatCRDTMap } from './collaboration/crdt';
 import { watch, WatchableValue } from '@diagram-craft/utils/watchableValue';
@@ -137,16 +137,12 @@ export abstract class AbstractDiagramElement
     DiagramElement | undefined
   >;
 
-  private readonly _id: string;
-
   protected constructor(
     public readonly type: string,
-    id: string,
+    public readonly id: string,
     layer: RegularLayer | ModificationLayer,
     crdt?: CRDTMap<DiagramElementCRDT>
   ) {
-    this._id = id;
-
     this._diagram = layer.diagram;
     this._layer = layer;
     this._activeDiagram = this._diagram;
@@ -210,10 +206,6 @@ export abstract class AbstractDiagramElement
     });
   }
 
-  get id(): string {
-    return this._id;
-  }
-
   abstract getAttachmentsInUse(): Array<string>;
 
   abstract invalidate(uow: UnitOfWork): void;
@@ -251,10 +243,6 @@ export abstract class AbstractDiagramElement
 
   get crdt() {
     return this._crdt;
-  }
-
-  protected assertNonModificationLayer() {
-    if (this.diagram.layers.active.type === 'modification') VERIFY_NOT_REACHED(this.id);
   }
 
   /* Flags *************************************************************************************************** */
@@ -300,7 +288,6 @@ export abstract class AbstractDiagramElement
   }
 
   _setParent(parent: DiagramElement | undefined) {
-    this.assertNonModificationLayer();
     this._parent.set(parent);
   }
 
@@ -334,8 +321,6 @@ export abstract class AbstractDiagramElement
   }
 
   setTags(tags: ReadonlyArray<string>, uow: UnitOfWork) {
-    this.assertNonModificationLayer();
-
     uow.snapshot(this);
     const uniqueTags = Array.from(new Set(tags.map(t => t.trim()).filter(t => t)));
     this._crdt.get().set('tags', uniqueTags);
@@ -369,8 +354,6 @@ export abstract class AbstractDiagramElement
   }
 
   setChildren(children: ReadonlyArray<DiagramElement>, uow: UnitOfWork) {
-    this.assertNonModificationLayer();
-
     uow.snapshot(this);
 
     const oldChildren = this._children.values;
@@ -403,8 +386,6 @@ export abstract class AbstractDiagramElement
     uow: UnitOfWork,
     relation?: { ref: DiagramElement; type: 'after' | 'before' }
   ) {
-    this.assertNonModificationLayer();
-
     assert.true(child.diagram === this.diagram);
     assert.false(this._children.has(child.id));
 
@@ -442,8 +423,6 @@ export abstract class AbstractDiagramElement
   }
 
   removeChild(child: DiagramElement, uow: UnitOfWork) {
-    this.assertNonModificationLayer();
-
     assert.true(this._children.has(child.id));
 
     uow.snapshot(this);

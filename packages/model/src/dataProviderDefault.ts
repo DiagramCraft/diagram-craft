@@ -74,41 +74,21 @@ export class DefaultDataProvider
     this.#crdtData.on('remoteDelete', p => this.emitAsync('deleteData', { data: [p.value] }), {
       id: DATA_DELETE
     });
-    this.#crdtData.on(
-      'remoteInsert',
-      p => {
-        this.emitAsync('addData', { data: [p.value] });
-      },
-      { id: DATA_INSERT }
-    );
-    this.#crdtData.on(
-      'remoteUpdate',
-      p => {
-        this.emitAsync('updateData', { data: [p.value] });
-      },
-      { id: DATA_UPDATE }
-    );
-    this.#crdtSchemas.on(
-      'remoteDelete',
-      p => {
-        this.emitAsync('deleteSchema', { ...p.value });
-      },
-      { id: SCHEMA_DELETE }
-    );
-    this.#crdtSchemas.on(
-      'remoteInsert',
-      p => {
-        this.emitAsync('addSchema', { ...p.value });
-      },
-      { id: SCHEMA_INSERT }
-    );
-    this.#crdtSchemas.on(
-      'remoteUpdate',
-      p => {
-        this.emitAsync('updateSchema', { ...p.value });
-      },
-      { id: SCHEMA_UPDATE }
-    );
+    this.#crdtData.on('remoteInsert', p => this.emitAsync('addData', { data: [p.value] }), {
+      id: DATA_INSERT
+    });
+    this.#crdtData.on('remoteUpdate', p => this.emitAsync('updateData', { data: [p.value] }), {
+      id: DATA_UPDATE
+    });
+    this.#crdtSchemas.on('remoteDelete', p => this.emitAsync('deleteSchema', { ...p.value }), {
+      id: SCHEMA_DELETE
+    });
+    this.#crdtSchemas.on('remoteInsert', p => this.emitAsync('addSchema', { ...p.value }), {
+      id: SCHEMA_INSERT
+    });
+    this.#crdtSchemas.on('remoteUpdate', p => this.emitAsync('updateSchema', { ...p.value }), {
+      id: SCHEMA_UPDATE
+    });
   }
 
   get schemas(): ReadonlyArray<DataSchema> {

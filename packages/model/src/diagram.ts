@@ -1,5 +1,5 @@
 import { Viewbox } from './viewBox';
-import { DiagramNode, SimpleDiagramNode } from './diagramNode';
+import { DiagramNode } from './diagramNode';
 import { DiagramEdge, SimpleDiagramEdge } from './diagramEdge';
 import { SelectionState } from './selectionState';
 import { UndoManager } from './undoManager';
@@ -308,9 +308,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
       const resolved = l.resolve();
       if (resolved?.type === 'regular') {
         for (const e of (resolved as RegularLayer).elements) {
-          if (e instanceof SimpleDiagramNode || e instanceof SimpleDiagramEdge) {
-            yield e;
-          }
+          yield e;
         }
       }
     }

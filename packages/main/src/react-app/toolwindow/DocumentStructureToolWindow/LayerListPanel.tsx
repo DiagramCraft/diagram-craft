@@ -12,13 +12,11 @@ import {
   TbLock,
   TbLockOff,
   TbPencil,
-  TbPlus,
   TbRectangle,
   TbTable,
   TbTableRow,
   TbTextSize,
-  TbTrash,
-  TbX
+  TbTrash
 } from 'react-icons/tb';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
@@ -40,7 +38,10 @@ import { RuleContextMenu } from './RuleContextMenu';
 import { useApplication, useDiagram } from '../../../application';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { ToolWindowPanel } from '../ToolWindowPanel';
-import { ModificationLayer } from '@diagram-craft/model/diagramLayerModification';
+import {
+  type Modification,
+  ModificationLayer
+} from '@diagram-craft/model/diagramLayerModification';
 
 const ELEMENT_INSTANCES = 'application/x-diagram-craft-element-instances';
 const LAYER_INSTANCES = 'application/x-diagram-craft-layer-instances';
@@ -173,14 +174,14 @@ const LayerEntry = (props: { layer: Layer }) => {
             )}
             {layer instanceof ModificationLayer && (
               <div style={{ display: 'contents' }}>
-                {(layer as ModificationLayer).modifications.length === 0 ? (
+                {layer.modifications.length === 0 ? (
                   <Tree.Node>
                     <Tree.NodeLabel style={{ fontStyle: 'italic' }}>
                       No modifications
                     </Tree.NodeLabel>
                   </Tree.Node>
                 ) : (
-                  (layer as ModificationLayer).modifications
+                  layer.modifications
                     .toReversed()
                     .map(m => (
                       <ModificationEntry
@@ -263,7 +264,7 @@ const RuleEntry = (props: { rule: AdjustmentRule; layer: RuleLayer; diagram: Dia
 };
 
 const ModificationEntry = (props: {
-  modification: { id: string; type: 'add' | 'remove' | 'change'; element?: DiagramElement };
+  modification: Modification;
   layer: ModificationLayer;
   diagram: Diagram;
 }) => {
@@ -287,11 +288,11 @@ const ModificationEntry = (props: {
   }
 
   // Determine color based on modification type
-  let color: string | undefined = undefined;
+  let color: string | undefined;
   if (m.type === 'add') {
-    color = 'var(--green-9)'; // green for adds
+    color = 'var(--green-9)';
   } else if (m.type === 'remove') {
-    color = 'var(--red-9)'; // red for removes
+    color = 'var(--red-9)';
   }
 
   return (

@@ -583,8 +583,6 @@ export class SimpleDiagramNode
   /* Children *********************************************************************************************** */
 
   setChildren(children: ReadonlyArray<DiagramElement>, uow: UnitOfWork) {
-    this.assertNonModificationLayer();
-
     super.setChildren(children, uow);
 
     uow.registerOnCommitCallback('onChildChanged', this, () => {
@@ -597,8 +595,6 @@ export class SimpleDiagramNode
     uow: UnitOfWork,
     relation?: { ref: DiagramElement; type: 'after' | 'before' }
   ) {
-    this.assertNonModificationLayer();
-
     super.addChild(child, uow, relation);
 
     uow.registerOnCommitCallback('onChildChanged', this, () => {
@@ -607,8 +603,6 @@ export class SimpleDiagramNode
   }
 
   removeChild(child: DiagramElement, uow: UnitOfWork) {
-    this.assertNonModificationLayer();
-
     super.removeChild(child, uow);
 
     uow.registerOnCommitCallback('onChildChanged', this, () => {
@@ -692,8 +686,6 @@ export class SimpleDiagramNode
   }
 
   convertToPath(uow: UnitOfWork) {
-    this.assertNonModificationLayer();
-
     uow.snapshot(this);
 
     const paths = this.getDefinition().getBoundingPath(this);
@@ -924,14 +916,10 @@ export class SimpleDiagramNode
   }
 
   _removeEdge(anchor: string | undefined, edge: DiagramEdge) {
-    this.assertNonModificationLayer();
-
     this.#edges.set(anchor ?? '', this.#edges.get(anchor ?? '')?.filter(e => e !== edge.id) ?? []);
   }
 
   _addEdge(anchor: string | undefined, edge: DiagramEdge) {
-    this.assertNonModificationLayer();
-
     this.#edges.set(anchor ?? '', unique([...(this.#edges.get(anchor ?? '') ?? []), edge.id]));
   }
 
@@ -988,8 +976,6 @@ export class SimpleDiagramNode
 
   // TODO: Is this really needed - shouldn't this be part of DiagramEdge
   updateLabelNode(labelNode: Partial<LabelNode>, uow: UnitOfWork) {
-    this.assertNonModificationLayer();
-
     if (!this.isLabelNode()) return;
 
     uow.snapshot(this);

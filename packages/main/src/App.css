@@ -629,10 +629,11 @@ foreignObject {
 
 .cmp-canvas-marker {
   --ruler-width: 15px;
+  --shadow-color: var(--red-9);
 
   pointer-events: none;
   position: absolute;
-  box-shadow: inset 0 0 5px 2px var(--red-9);
+  box-shadow: inset 0 0 5px 2px var(--shadow-color);
   inset: var(--ruler-width) var(--right-indent) 0 calc(var(--left-indent) + var(--ruler-width));
 
   &[data-ruler-enabled="false"] {
@@ -640,7 +641,7 @@ foreignObject {
   }
 
   &[data-layer-type="modification"] {
-    box-shadow: inset 0 0 5px 2px var(--blue-9);
+    --shadow-color: var(--blue-9);
   }
 }
 
