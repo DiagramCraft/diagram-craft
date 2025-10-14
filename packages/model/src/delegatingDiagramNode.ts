@@ -171,7 +171,6 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
     return this.delegate.getPropsInfo(path, defaultValue);
   }
 
-  // TODO: Implement this properly
   _populatePropsCache(): void {
     this.delegate._populatePropsCache();
   }
