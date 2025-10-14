@@ -33,25 +33,24 @@ export type DiagramEdgeSnapshot = SerializedEdge & {
 };
 
 type DelegatingDiagramEdgeCRDT = DiagramEdgeCRDT & {
-  waypointsOverridden: boolean;
-  startOverridden: boolean;
-  endOverridden: boolean;
+  hasLocalWaypoints: boolean;
+  hasLocalStart: boolean;
+  hasLocalEnd: boolean;
 };
 
 export class DelegatingDiagramEdge extends DelegatingDiagramElement implements DiagramEdge {
   declare protected readonly delegate: DiagramEdge;
 
-  private readonly _overriddenProps: CRDTObject<EdgeProps>;
-  private readonly _overriddenWaypoints: MappedCRDTProp<
-    DelegatingDiagramEdgeCRDT,
-    'waypoints',
-    ReadonlyArray<Waypoint>
-  >;
-  private _waypointsOverridden: CRDTProp<DelegatingDiagramEdgeCRDT, 'waypointsOverridden'>;
-  private readonly _overriddenStart: MappedCRDTProp<DelegatingDiagramEdgeCRDT, 'start', Endpoint>;
-  private readonly _overriddenEnd: MappedCRDTProp<DelegatingDiagramEdgeCRDT, 'end', Endpoint>;
-  private _startOverridden: CRDTProp<DelegatingDiagramEdgeCRDT, 'startOverridden'>;
-  private _endOverridden: CRDTProp<DelegatingDiagramEdgeCRDT, 'endOverridden'>;
+  readonly #localProps: CRDTObject<EdgeProps>;
+
+  readonly #localWaypoints: MappedCRDTProp<DelegatingDiagramEdgeCRDT, 'waypoints'>;
+  readonly #hasLocalWaypoints: CRDTProp<DelegatingDiagramEdgeCRDT, 'hasLocalWaypoints'>;
+
+  readonly #localStart: MappedCRDTProp<DelegatingDiagramEdgeCRDT, 'start', Endpoint>;
+  readonly #hasLocalStart: CRDTProp<DelegatingDiagramEdgeCRDT, 'hasLocalStart'>;
+
+  readonly #localEnd: MappedCRDTProp<DelegatingDiagramEdgeCRDT, 'end', Endpoint>;
+  readonly #hasLocalEnd: CRDTProp<DelegatingDiagramEdgeCRDT, 'hasLocalEnd'>;
 
   constructor(
     id: string,
@@ -76,18 +75,14 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
       [edgeCrdt] as const
     );
 
-    this._overriddenProps = new CRDTObject<EdgeProps>(propsMap, () => {
+    this.#localProps = new CRDTObject<EdgeProps>(propsMap, () => {
       this.invalidate(UnitOfWork.immediate(this.diagram));
       this.diagram.emit('elementChange', { element: this });
       this.clearCache();
     });
 
     // Initialize override waypoints
-    this._overriddenWaypoints = new MappedCRDTProp<
-      DelegatingDiagramEdgeCRDT,
-      'waypoints',
-      ReadonlyArray<Waypoint>
-    >(
+    this.#localWaypoints = new MappedCRDTProp<DelegatingDiagramEdgeCRDT, 'waypoints'>(
       edgeCrdt,
       'waypoints',
       {
@@ -95,14 +90,12 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
         fromCRDT: (waypoints: ReadonlyArray<Waypoint>) => waypoints
       },
       {
-        onRemoteChange: () => {
-          getRemoteUnitOfWork(this.diagram).updateElement(this);
-        }
+        onRemoteChange: () => getRemoteUnitOfWork(this.diagram).updateElement(this)
       }
     );
-    this._overriddenWaypoints.init([]);
+    this.#localWaypoints.init([]);
 
-    this._waypointsOverridden = new CRDTProp(edgeCrdt, 'waypointsOverridden');
+    this.#hasLocalWaypoints = new CRDTProp(edgeCrdt, 'hasLocalWaypoints');
 
     // Initialize override endpoints
     const makeEndpointMapper = () => ({
@@ -110,45 +103,41 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
       toCRDT: (e: Endpoint) => e.serialize()
     });
 
-    this._overriddenStart = new MappedCRDTProp<DelegatingDiagramEdgeCRDT, 'start', Endpoint>(
+    this.#localStart = new MappedCRDTProp<DelegatingDiagramEdgeCRDT, 'start', Endpoint>(
       edgeCrdt,
       'start',
       makeEndpointMapper(),
       {
-        onRemoteChange: () => {
-          getRemoteUnitOfWork(this.diagram).updateElement(this);
-        }
+        onRemoteChange: () => getRemoteUnitOfWork(this.diagram).updateElement(this)
       }
     );
-    this._overriddenStart.init(delegate.start);
+    this.#localStart.init(delegate.start);
 
-    this._overriddenEnd = new MappedCRDTProp<DelegatingDiagramEdgeCRDT, 'end', Endpoint>(
+    this.#localEnd = new MappedCRDTProp<DelegatingDiagramEdgeCRDT, 'end', Endpoint>(
       edgeCrdt,
       'end',
       makeEndpointMapper(),
       {
-        onRemoteChange: () => {
-          getRemoteUnitOfWork(this.diagram).updateElement(this);
-        }
+        onRemoteChange: () => getRemoteUnitOfWork(this.diagram).updateElement(this)
       }
     );
-    this._overriddenEnd.init(delegate.end);
+    this.#localEnd.init(delegate.end);
 
-    this._startOverridden = new CRDTProp(edgeCrdt, 'startOverridden');
-    this._endOverridden = new CRDTProp(edgeCrdt, 'endOverridden');
+    this.#hasLocalStart = new CRDTProp(edgeCrdt, 'hasLocalStart');
+    this.#hasLocalEnd = new CRDTProp(edgeCrdt, 'hasLocalEnd');
 
-    if (opts?.props) this._overriddenProps.set(opts.props);
+    if (opts?.props) this.#localProps.set(opts.props);
     if (opts?.start) {
-      this._overriddenStart.set(opts.start);
-      this._startOverridden.set(true);
+      this.#localStart.set(opts.start);
+      this.#hasLocalStart.set(true);
     }
     if (opts?.end) {
-      this._overriddenEnd.set(opts.end);
-      this._endOverridden.set(true);
+      this.#localEnd.set(opts.end);
+      this.#hasLocalEnd.set(true);
     }
     if (opts?.waypoints) {
-      this._overriddenWaypoints.set(opts.waypoints);
-      this._waypointsOverridden.set(true);
+      this.#localWaypoints.set(opts.waypoints);
+      this.#hasLocalWaypoints.set(true);
     }
     if (opts?.metadata) this._metadata.set(opts.metadata);
   }
@@ -157,7 +146,7 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
 
   get storedProps(): EdgePropsForEditing {
     const delegateProps = this.delegate.storedProps;
-    const overriddenProps = this._overriddenProps.get() ?? {};
+    const overriddenProps = this.#localProps.get() ?? {};
     return deepMerge({}, delegateProps, overriddenProps) as EdgePropsForEditing;
   }
 
@@ -167,22 +156,22 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
 
   get editProps(): EdgePropsForEditing {
     const delegateProps = this.delegate.editProps;
-    const overriddenProps = this._overriddenProps.get() ?? {};
+    const overriddenProps = this.#localProps.get() ?? {};
     return deepMerge({}, delegateProps, overriddenProps) as EdgePropsForEditing;
   }
 
   get renderProps(): EdgePropsForRendering {
     const delegateProps = this.delegate.renderProps;
-    const overriddenProps = this._overriddenProps.get() ?? {};
+    const overriddenProps = this.#localProps.get() ?? {};
 
     return deepMerge({}, delegateProps, overriddenProps) as EdgePropsForRendering;
   }
 
   updateProps(callback: (props: EdgeProps) => void, uow: UnitOfWork): void {
     uow.snapshot(this);
-    const props = this._overriddenProps.getClone() as EdgeProps;
+    const props = this.#localProps.getClone() as EdgeProps;
     callback(props);
-    this._overriddenProps.set(props);
+    this.#localProps.set(props);
     uow.updateElement(this);
     this.clearCache();
   }
@@ -234,33 +223,33 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
   /* Start/End with override ********************************************************************************* */
 
   get start(): Endpoint {
-    const isOverridden = this._startOverridden.get();
+    const isOverridden = this.#hasLocalStart.get();
     if (isOverridden) {
-      return this._overriddenStart.getNonNull();
+      return this.#localStart.getNonNull();
     }
     return this.delegate.start;
   }
 
   setStart(start: Endpoint, uow: UnitOfWork): void {
     uow.snapshot(this);
-    this._overriddenStart.set(start);
-    this._startOverridden.set(true);
+    this.#localStart.set(start);
+    this.#hasLocalStart.set(true);
     uow.updateElement(this);
     this.clearCache();
   }
 
   get end(): Endpoint {
-    const isOverridden = this._endOverridden.get();
+    const isOverridden = this.#hasLocalEnd.get();
     if (isOverridden) {
-      return this._overriddenEnd.getNonNull();
+      return this.#localEnd.getNonNull();
     }
     return this.delegate.end;
   }
 
   setEnd(end: Endpoint, uow: UnitOfWork): void {
     uow.snapshot(this);
-    this._overriddenEnd.set(end);
-    this._endOverridden.set(true);
+    this.#localEnd.set(end);
+    this.#hasLocalEnd.set(true);
     uow.updateElement(this);
     this.clearCache();
   }
@@ -288,9 +277,9 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
   /* Waypoints with override ********************************************************************************* */
 
   get waypoints(): ReadonlyArray<Waypoint> {
-    const isOverridden = this._waypointsOverridden.get();
+    const isOverridden = this.#hasLocalWaypoints.get();
 
-    const overriddenWaypoints = this._overriddenWaypoints.getNonNull();
+    const overriddenWaypoints = this.#localWaypoints.getNonNull();
     if (isOverridden) {
       return overriddenWaypoints;
     }
@@ -302,8 +291,8 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
     uow.snapshot(this);
     const currentWaypoints = [...this.waypoints];
     currentWaypoints[i] = wp;
-    this._overriddenWaypoints.set(currentWaypoints);
-    this._waypointsOverridden.set(true);
+    this.#localWaypoints.set(currentWaypoints);
+    this.#hasLocalWaypoints.set(true);
 
     uow.updateElement(this);
     this.clearCache();
@@ -313,8 +302,8 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
     uow.snapshot(this);
     const currentWaypoints = [...this.waypoints];
     currentWaypoints.push(wp);
-    this._overriddenWaypoints.set(currentWaypoints);
-    this._waypointsOverridden.set(true);
+    this.#localWaypoints.set(currentWaypoints);
+    this.#hasLocalWaypoints.set(true);
 
     uow.updateElement(this);
     this.clearCache();
@@ -324,8 +313,8 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
   removeWaypoint(waypoint: Waypoint, uow: UnitOfWork): void {
     uow.snapshot(this);
     const currentWaypoints = this.waypoints.filter(wp => wp !== waypoint);
-    this._overriddenWaypoints.set(currentWaypoints);
-    this._waypointsOverridden.set(true);
+    this.#localWaypoints.set(currentWaypoints);
+    this.#hasLocalWaypoints.set(true);
 
     uow.updateElement(this);
     this.clearCache();
@@ -334,8 +323,8 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
   moveWaypoint(waypoint: Waypoint, point: Point, uow: UnitOfWork): void {
     uow.snapshot(this);
     const currentWaypoints = this.waypoints.map(wp => (wp === waypoint ? { ...wp, point } : wp));
-    this._overriddenWaypoints.set(currentWaypoints);
-    this._waypointsOverridden.set(true);
+    this.#localWaypoints.set(currentWaypoints);
+    this.#hasLocalWaypoints.set(true);
 
     uow.updateElement(this);
     this.clearCache();

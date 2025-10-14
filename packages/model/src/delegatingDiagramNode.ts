@@ -1,10 +1,11 @@
 import { DelegatingDiagramElement } from './delegatingDiagramElement';
-import type {
-  DiagramNode,
-  DuplicationContext,
-  NodePropsForEditing,
-  NodePropsForRendering,
-  NodeTexts
+import {
+  applyNodeTransform,
+  type DiagramNode,
+  type DuplicationContext,
+  type NodePropsForEditing,
+  type NodePropsForRendering,
+  type NodeTexts
 } from './diagramNode';
 import type { RegularLayer } from './diagramLayerRegular';
 import type { ModificationLayer } from './diagramLayerModification';
@@ -18,30 +19,29 @@ import { deepMerge } from '@diagram-craft/utils/object';
 import { PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
 import { Transform } from '@diagram-craft/geometry/transform';
-import { DiagramElement, type DiagramElementCRDT, isNode } from './diagramElement';
+import { DiagramElement, type DiagramElementCRDT } from './diagramElement';
 import type { DiagramEdge, ResolvedLabelNode } from './diagramEdge';
 import type { Point } from '@diagram-craft/geometry/point';
 import type { Anchor } from './anchor';
 import type { LabelNode } from './types';
 import { MappedCRDTProp } from './collaboration/datatypes/mapped/mappedCrdtProp';
 import { CRDTProp } from './collaboration/datatypes/crdtProp';
-import { assert } from '@diagram-craft/utils/assert';
-import { clamp } from '@diagram-craft/utils/math';
 
 export type DelegatingDiagramNodeCRDT = DiagramElementCRDT & {
   bounds: Box;
   text: FlatCRDTMap;
   props: FlatCRDTMap;
-  boundsOverridden: boolean;
+  hasLocalBounds: boolean;
 };
 
 export class DelegatingDiagramNode extends DelegatingDiagramElement implements DiagramNode {
   declare protected readonly delegate: DiagramNode;
 
-  private readonly _overriddenProps: CRDTObject<NodeProps>;
-  private readonly _overriddenBounds: MappedCRDTProp<DelegatingDiagramNodeCRDT, 'bounds', Box>;
-  private readonly _overriddenTexts: CRDTObject<NodeTexts>;
-  private _boundsOverridden: CRDTProp<DelegatingDiagramNodeCRDT, 'boundsOverridden'>;
+  readonly #localProps: CRDTObject<NodeProps>;
+  readonly #localTexts: CRDTObject<NodeTexts>;
+
+  readonly #localBounds: MappedCRDTProp<DelegatingDiagramNodeCRDT, 'bounds', Box>;
+  readonly #hasLocalBounds: CRDTProp<DelegatingDiagramNodeCRDT, 'hasLocalBounds'>;
 
   constructor(
     id: string,
@@ -65,13 +65,13 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
       [nodeCrdt] as const
     );
 
-    this._overriddenProps = new CRDTObject<NodeProps>(propsMap, () => {
+    this.#localProps = new CRDTObject<NodeProps>(propsMap, () => {
       this.invalidate(UnitOfWork.immediate(this.diagram));
       this.diagram.emit('elementChange', { element: this });
       this.clearCache();
     });
 
-    this._overriddenBounds = new MappedCRDTProp<DelegatingDiagramNodeCRDT, 'bounds', Box>(
+    this.#localBounds = new MappedCRDTProp<DelegatingDiagramNodeCRDT, 'bounds', Box>(
       nodeCrdt,
       'bounds',
       {
@@ -79,14 +79,12 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
         fromCRDT: (b: Box) => b
       },
       {
-        onRemoteChange: () => {
-          getRemoteUnitOfWork(this.diagram).updateElement(this);
-        }
+        onRemoteChange: () => getRemoteUnitOfWork(this.diagram).updateElement(this)
       }
     );
-    this._overriddenBounds.init({ x: 0, y: 0, w: 0, h: 0, r: 0 });
+    this.#localBounds.init({ x: 0, y: 0, w: 0, h: 0, r: 0 });
 
-    this._boundsOverridden = new CRDTProp(nodeCrdt, 'boundsOverridden');
+    this.#hasLocalBounds = new CRDTProp(nodeCrdt, 'hasLocalBounds');
 
     // Initialize override texts
     const textsMap = WatchableValue.from(
@@ -94,20 +92,20 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
       [nodeCrdt] as const
     );
 
-    this._overriddenTexts = new CRDTObject<NodeTexts>(textsMap, () => {
+    this.#localTexts = new CRDTObject<NodeTexts>(textsMap, () => {
       this.invalidate(UnitOfWork.immediate(this.diagram));
       this.diagram.emit('elementChange', { element: this });
       this.clearCache();
     });
 
     if (opts?.bounds) {
-      this._overriddenBounds.set(opts?.bounds);
-      this._boundsOverridden.set(true);
+      this.#localBounds.set(opts?.bounds);
+      this.#hasLocalBounds.set(true);
     }
 
-    if (opts?.texts) this._overriddenTexts.set(opts?.texts);
+    if (opts?.texts) this.#localTexts.set(opts?.texts);
 
-    if (opts?.props) this._overriddenProps.set(opts?.props as NodeProps);
+    if (opts?.props) this.#localProps.set(opts?.props as NodeProps);
     // TODO: Fix this
     this.updateProps(p => {
       p.hidden = false;
@@ -120,7 +118,7 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
 
   get storedProps(): NodeProps {
     const delegateProps = this.delegate.storedProps;
-    const overriddenProps = this._overriddenProps.get() ?? {};
+    const overriddenProps = this.#localProps.get() ?? {};
     return deepMerge({}, delegateProps, overriddenProps) as NodeProps;
   }
 
@@ -130,13 +128,13 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
 
   get editProps(): NodePropsForEditing {
     const delegateProps = this.delegate.editProps;
-    const overriddenProps = this._overriddenProps.get() ?? {};
+    const overriddenProps = this.#localProps.get() ?? {};
     return deepMerge({}, delegateProps, overriddenProps) as NodePropsForEditing;
   }
 
   get renderProps(): NodePropsForRendering {
     const delegateProps = this.delegate.renderProps;
-    const overriddenProps = this._overriddenProps.get() ?? {};
+    const overriddenProps = this.#localProps.get() ?? {};
 
     return deepMerge({}, delegateProps, overriddenProps) as NodePropsForRendering;
   }
@@ -147,9 +145,9 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
 
   updateProps(callback: (props: NodeProps) => void, uow: UnitOfWork): void {
     uow.snapshot(this);
-    const props = this._overriddenProps.getClone() as NodeProps;
+    const props = this.#localProps.getClone() as NodeProps;
     callback(props);
-    this._overriddenProps.set(props);
+    this.#localProps.set(props);
     uow.updateElement(this);
     this.clearCache();
   }
@@ -181,21 +179,21 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
   /* Bounds with override ************************************************************************************ */
 
   get bounds(): Box {
-    const boundsOverridden = this._boundsOverridden.get();
-    return !boundsOverridden ? this.delegate.bounds : this._overriddenBounds.getNonNull();
+    const boundsOverridden = this.#hasLocalBounds.get();
+    return !boundsOverridden ? this.delegate.bounds : this.#localBounds.getNonNull();
   }
 
   setBounds(bounds: Box, uow: UnitOfWork): void {
     uow.snapshot(this);
-    this._overriddenBounds.set(bounds);
-    this._boundsOverridden.set(true);
+    this.#localBounds.set(bounds);
+    this.#hasLocalBounds.set(true);
     uow.updateElement(this);
   }
 
   /* Text with override *************************************************************************************** */
 
   getText(id?: string): string {
-    const overriddenTexts = this._overriddenTexts.get();
+    const overriddenTexts = this.#localTexts.get();
     const key = id ?? 'text';
 
     // Check if we have an override for this specific text id
@@ -209,17 +207,17 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
 
   setText(text: string, uow: UnitOfWork, id?: string): void {
     uow.snapshot(this);
-    const texts = this._overriddenTexts.getClone() as NodeTexts;
+    const texts = this.#localTexts.getClone() as NodeTexts;
     const key = id ?? 'text';
     texts[key] = text;
-    this._overriddenTexts.set(texts);
+    this.#localTexts.set(texts);
     uow.updateElement(this);
     this.clearCache();
   }
 
   get texts(): NodeTexts {
     const delegateTexts = this.delegate.texts;
-    const overriddenTexts = this._overriddenTexts.get() ?? {};
+    const overriddenTexts = this.#localTexts.get() ?? {};
     return { ...delegateTexts, ...overriddenTexts };
   }
 
@@ -321,55 +319,8 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
     this.delegate.detach(uow);
   }
 
-  // TODO: Most of this code is duplicated
-  transform(
-    transforms: ReadonlyArray<Transform>,
-    uow: UnitOfWork,
-    isChild?: boolean
-  ): DiagramElement {
-    uow.snapshot(this);
-
-    const previousBounds = this.bounds;
-    this.setBounds(Transform.box(this.bounds, ...transforms), uow);
-
-    this.getDefinition().onTransform(transforms, this, this.bounds, previousBounds, uow);
-
-    if (this.parent && !isChild) {
-      const parent = this.parent;
-      if (isNode(parent)) {
-        uow.registerOnCommitCallback('onChildChanged', parent, () => {
-          parent.getDefinition().onChildChanged(parent, uow);
-        });
-      } else {
-        assert.true(this.isLabelNode());
-
-        // TODO: This should be possible to put in the invalidation() method
-
-        if (uow.contains(this.labelEdge()!)) return this;
-
-        const labelNode = this.labelNode();
-        assert.present(labelNode);
-
-        const dx = this.bounds.x - previousBounds.x;
-        const dy = this.bounds.y - previousBounds.y;
-
-        const clampAmount = 100;
-
-        this.updateLabelNode(
-          {
-            offset: {
-              x: clamp(labelNode.offset.x + dx, -clampAmount, clampAmount),
-              y: clamp(labelNode.offset.y + dy, -clampAmount, clampAmount)
-            }
-          },
-          uow
-        );
-      }
-    }
-
-    uow.updateElement(this);
-
-    return this;
+  transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork, isChild = false): void {
+    applyNodeTransform(this, transforms, uow, isChild);
   }
 
   snapshot() {

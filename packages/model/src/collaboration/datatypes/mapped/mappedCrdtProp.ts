@@ -7,7 +7,7 @@ import type { CRDTMapper } from './types';
 export class MappedCRDTProp<
   C extends { [key: string]: CRDTCompatibleObject },
   N extends keyof C & string,
-  T
+  T = C[N]
 > {
   #value: T | undefined;
   #current: CRDTMap<C>;

@@ -86,6 +86,59 @@ const makeEdgesMapper = (
 
 const DEFAULT_BOUNDS = { x: 0, y: 0, w: 10, h: 10, r: 0 };
 
+/**
+ * Shared implementation for transforming a node.
+ * Used by both SimpleDiagramNode and DelegatingDiagramNode to avoid duplication.
+ */
+export const applyNodeTransform = (
+  node: DiagramNode,
+  transforms: ReadonlyArray<Transform>,
+  uow: UnitOfWork,
+  isChild = false
+): void => {
+  uow.snapshot(node);
+
+  const previousBounds = node.bounds;
+  node.setBounds(Transform.box(node.bounds, ...transforms), uow);
+
+  node.getDefinition().onTransform(transforms, node, node.bounds, previousBounds, uow);
+
+  if (node.parent && !isChild) {
+    const parent = node.parent;
+    if (isNode(parent)) {
+      uow.registerOnCommitCallback('onChildChanged', parent, () => {
+        parent.getDefinition().onChildChanged(parent, uow);
+      });
+    } else {
+      assert.true(node.isLabelNode());
+
+      // TODO: This should be possible to put in the invalidation() method
+
+      if (uow.contains(node.labelEdge()!)) return;
+
+      const labelNode = node.labelNode();
+      assert.present(labelNode);
+
+      const dx = node.bounds.x - previousBounds.x;
+      const dy = node.bounds.y - previousBounds.y;
+
+      const clampAmount = 100;
+
+      node.updateLabelNode(
+        {
+          offset: {
+            x: clamp(labelNode.offset.x + dx, -clampAmount, clampAmount),
+            y: clamp(labelNode.offset.y + dy, -clampAmount, clampAmount)
+          }
+        },
+        uow
+      );
+    }
+  }
+
+  uow.updateElement(node);
+};
+
 export interface DiagramNode extends DiagramElement {
   getDefinition(): NodeDefinition;
   get nodeType(): string;
@@ -872,47 +925,7 @@ export class SimpleDiagramNode
   }
 
   transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork, isChild = false): void {
-    uow.snapshot(this);
-
-    const previousBounds = this.bounds;
-    this.setBounds(Transform.box(this.bounds, ...transforms), uow);
-
-    this.getDefinition().onTransform(transforms, this, this.bounds, previousBounds, uow);
-
-    if (this.parent && !isChild) {
-      const parent = this.parent;
-      if (isNode(parent)) {
-        uow.registerOnCommitCallback('onChildChanged', parent, () => {
-          parent.getDefinition().onChildChanged(parent, uow);
-        });
-      } else {
-        assert.true(this.isLabelNode());
-
-        // TODO: This should be possible to put in the invalidation() method
-
-        if (uow.contains(this.labelEdge()!)) return;
-
-        const labelNode = this.labelNode();
-        assert.present(labelNode);
-
-        const dx = this.bounds.x - previousBounds.x;
-        const dy = this.bounds.y - previousBounds.y;
-
-        const clampAmount = 100;
-
-        this.updateLabelNode(
-          {
-            offset: {
-              x: clamp(labelNode.offset.x + dx, -clampAmount, clampAmount),
-              y: clamp(labelNode.offset.y + dy, -clampAmount, clampAmount)
-            }
-          },
-          uow
-        );
-      }
-    }
-
-    uow.updateElement(this);
+    applyNodeTransform(this, transforms, uow, isChild);
   }
 
   _removeEdge(anchor: string | undefined, edge: DiagramEdge) {
