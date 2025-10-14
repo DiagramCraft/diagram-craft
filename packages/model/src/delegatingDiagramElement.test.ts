@@ -11,8 +11,8 @@ import { DelegatingDiagramNode } from './delegatingDiagramNode';
 
 describe.each(Backends.all())('DelegatingDiagramElement [%s]', (_name, backend) => {
   let model: StandardTestModel;
-  let delegateNode: DiagramNode;
-  let delegateNode2: DiagramNode | undefined;
+  let baseNode: DiagramNode;
+  let baseNode2: DiagramNode | undefined;
   let modLayer: ModificationLayer;
   let modLayer2: ModificationLayer | undefined;
   let delegatingNode: DelegatingDiagramNode;
@@ -23,13 +23,13 @@ describe.each(Backends.all())('DelegatingDiagramElement [%s]', (_name, backend) 
     model = standardTestModel(backend);
 
     // Create a regular node to delegate to
-    delegateNode = model.layer1.addNode({
+    baseNode = model.layer1.addNode({
       id: 'd-1',
       bounds: { x: 10, y: 20, w: 50, h: 40, r: 0 }
     });
 
     // Find the delegate node in diagram2 if it exists
-    delegateNode2 = model.diagram2?.lookup(delegateNode.id) as DiagramNode | undefined;
+    baseNode2 = model.diagram2?.lookup(baseNode.id) as DiagramNode | undefined;
 
     // Create a modification layer and add it to the diagram
     modLayer = new ModificationLayer('mod', 'Modification', model.diagram1, []);
@@ -43,12 +43,12 @@ describe.each(Backends.all())('DelegatingDiagramElement [%s]', (_name, backend) 
     }
 
     // Create a delegating node by modifying the delegate
-    delegatingNode = new DelegatingDiagramNode(`do-${delegateNode.id}`, delegateNode, modLayer);
-    modLayer.modifyChange(delegateNode.id, delegatingNode, UnitOfWork.immediate(model.diagram1));
+    delegatingNode = new DelegatingDiagramNode(`do-${baseNode.id}`, baseNode, modLayer);
+    modLayer.modifyChange(baseNode.id, delegatingNode, UnitOfWork.immediate(model.diagram1));
 
     if (modLayer2) {
       delegatingNode2 = modLayer2.elements.find(
-        e => e.id === `do-${delegateNode.id}`
+        e => e.id === `do-${baseNode.id}`
       ) as DelegatingDiagramNode;
     }
   });
@@ -59,17 +59,17 @@ describe.each(Backends.all())('DelegatingDiagramElement [%s]', (_name, backend) 
     it('should return delegate metadata when no override is set', () => {
       // Setup - set some metadata on the delegate
       UnitOfWork.execute(model.diagram1, uow =>
-        delegateNode.updateMetadata(metadata => {
+        baseNode.updateMetadata(metadata => {
           metadata.data = { customData: { foo: 'bar' } };
         }, uow)
       );
 
       // Verify
       expect(delegatingNode.metadata.data?.customData).toEqual({ foo: 'bar' });
-      expect(delegatingNode.metadata).toMatchObject(delegateNode.metadata);
+      expect(delegatingNode.metadata).toMatchObject(baseNode.metadata);
 
       // Verify CRDT sync
-      if (delegatingNode2 && delegateNode2) {
+      if (delegatingNode2 && baseNode2) {
         expect(delegatingNode2.metadata.data?.customData).toEqual({ foo: 'bar' });
       }
     });
@@ -77,7 +77,7 @@ describe.each(Backends.all())('DelegatingDiagramElement [%s]', (_name, backend) 
     it('should merge delegate metadata with overridden metadata', () => {
       // Setup - set metadata on delegate
       UnitOfWork.execute(model.diagram1, uow =>
-        delegateNode.updateMetadata(metadata => {
+        baseNode.updateMetadata(metadata => {
           metadata.data = { customData: { delegateKey: 'delegateValue' } };
         }, uow)
       );
@@ -94,22 +94,22 @@ describe.each(Backends.all())('DelegatingDiagramElement [%s]', (_name, backend) 
         delegateKey: 'delegateValue',
         overrideKey: 'overrideValue'
       });
-      expect(delegateNode.metadata.data?.customData).toEqual({ delegateKey: 'delegateValue' });
+      expect(baseNode.metadata.data?.customData).toEqual({ delegateKey: 'delegateValue' });
 
       // Verify CRDT sync
-      if (delegatingNode2 && delegateNode2) {
+      if (delegatingNode2 && baseNode2) {
         expect(delegatingNode2.metadata.data?.customData).toEqual({
           delegateKey: 'delegateValue',
           overrideKey: 'overrideValue'
         });
-        expect(delegateNode2.metadata.data?.customData).toEqual({ delegateKey: 'delegateValue' });
+        expect(baseNode2.metadata.data?.customData).toEqual({ delegateKey: 'delegateValue' });
       }
     });
 
     it('should override delegate metadata keys with same name', () => {
       // Setup - set metadata on delegate
       UnitOfWork.execute(model.diagram1, uow =>
-        delegateNode.updateMetadata(metadata => {
+        baseNode.updateMetadata(metadata => {
           metadata.data = { customData: { key: 'delegateValue' } };
         }, uow)
       );
@@ -123,12 +123,12 @@ describe.each(Backends.all())('DelegatingDiagramElement [%s]', (_name, backend) 
 
       // Verify - override should win
       expect(delegatingNode.metadata.data?.customData).toEqual({ key: 'overrideValue' });
-      expect(delegateNode.metadata.data?.customData).toEqual({ key: 'delegateValue' });
+      expect(baseNode.metadata.data?.customData).toEqual({ key: 'delegateValue' });
 
       // Verify CRDT sync
-      if (delegatingNode2 && delegateNode2) {
+      if (delegatingNode2 && baseNode2) {
         expect(delegatingNode2.metadata.data?.customData).toEqual({ key: 'overrideValue' });
-        expect(delegateNode2.metadata.data?.customData).toEqual({ key: 'delegateValue' });
+        expect(baseNode2.metadata.data?.customData).toEqual({ key: 'delegateValue' });
       }
     });
   });
@@ -161,12 +161,12 @@ describe.each(Backends.all())('DelegatingDiagramElement [%s]', (_name, backend) 
     it('should not affect delegate metadata', () => {
       // Setup - set delegate metadata
       UnitOfWork.execute(model.diagram1, uow =>
-        delegateNode.updateMetadata(metadata => {
+        baseNode.updateMetadata(metadata => {
           metadata.data = { customData: { delegateKey: 'delegateValue' } };
         }, uow)
       );
 
-      const originalDelegateMetadata = { ...delegateNode.metadata };
+      const originalDelegateMetadata = { ...baseNode.metadata };
 
       // Act - update delegating node metadata
       UnitOfWork.execute(model.diagram1, uow =>
@@ -180,17 +180,15 @@ describe.each(Backends.all())('DelegatingDiagramElement [%s]', (_name, backend) 
         delegateKey: 'delegateValue',
         overrideKey: 'overrideValue'
       });
-      expect(delegateNode.metadata.data?.customData).toEqual(
-        originalDelegateMetadata.data?.customData
-      );
+      expect(baseNode.metadata.data?.customData).toEqual(originalDelegateMetadata.data?.customData);
 
       // Verify CRDT sync
-      if (delegatingNode2 && delegateNode2) {
+      if (delegatingNode2 && baseNode2) {
         expect(delegatingNode2.metadata.data?.customData).toEqual({
           delegateKey: 'delegateValue',
           overrideKey: 'overrideValue'
         });
-        expect(delegateNode2.metadata.data?.customData).toEqual(
+        expect(baseNode2.metadata.data?.customData).toEqual(
           originalDelegateMetadata.data?.customData
         );
       }
