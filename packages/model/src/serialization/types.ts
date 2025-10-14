@@ -61,6 +61,43 @@ export type SerializedDiagram = {
   comments?: ReadonlyArray<SerializedComment>;
 };
 
+export type SerializedStoryAction =
+  | {
+      type: 'switch-diagram';
+      diagramId: string;
+    }
+  | {
+      type: 'hide-layer';
+      diagramId: string;
+      layerId: string;
+    }
+  | {
+      type: 'show-layer';
+      diagramId: string;
+      layerId: string;
+    }
+  | {
+      type: 'pan-zoom';
+      diagramId: string;
+      x: number;
+      y: number;
+      zoom: number;
+    };
+
+export type SerializedStep = {
+  id: string;
+  title: string;
+  description: string;
+  actions: SerializedStoryAction[];
+};
+
+export type SerializedStory = {
+  id: string;
+  name: string;
+  description?: string;
+  steps: SerializedStep[];
+};
+
 export interface SerializedDiagramDocument {
   diagrams: ReadonlyArray<SerializedDiagram>;
   attachments?: Record<string, string>;
@@ -84,6 +121,7 @@ export interface SerializedDiagramDocument {
     templates: DataTemplate[];
     overrides?: Record<string, Record<string, SerializedOverride>>;
   };
+  stories?: ReadonlyArray<SerializedStory>;
   hash?: string;
 }
 

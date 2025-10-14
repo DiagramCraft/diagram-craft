@@ -268,6 +268,20 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
     if (document.props?.stencils) {
       doc.props.recentStencils.set(document.props.stencils);
     }
+
+    if (document.stories) {
+      for (const story of document.stories) {
+        const newStory = doc.stories.addStory(story.name, story.description);
+        for (const step of story.steps) {
+          const newStep = doc.stories.addStep(newStory.id, step.title, step.description);
+          if (newStep) {
+            for (const action of step.actions) {
+              doc.stories.addAction(newStory.id, newStep.id, action);
+            }
+          }
+        }
+      }
+    }
   });
 
   if (document.attachments) {

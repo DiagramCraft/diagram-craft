@@ -23,6 +23,7 @@ import { CRDT, CRDTRoot } from './collaboration/crdt';
 import { CollaborationConfig } from './collaboration/collaborationConfig';
 import { DocumentProps } from './documentProps';
 import { DocumentTags } from './documentTags';
+import { DocumentStories } from './documentStories';
 import { ProgressCallback } from './types';
 import { MappedCRDTOrderedMap } from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import { watch } from '@diagram-craft/utils/watchableValue';
@@ -53,6 +54,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
   readonly props: DocumentProps;
   readonly data: DiagramDocumentData;
   readonly tags: DocumentTags;
+  readonly stories: DocumentStories;
 
   // Shared properties
   readonly #diagrams: MappedCRDTOrderedMap<Diagram, DiagramCRDT>;
@@ -76,6 +78,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     this.attachments = new AttachmentManager(this.root, this);
     this.props = new DocumentProps(this.root, this);
     this.tags = new DocumentTags(this.root);
+    this.stories = new DocumentStories(this.root, this);
 
     this.#diagrams = new MappedCRDTOrderedMap(
       watch(this.root.getMap('diagrams')),

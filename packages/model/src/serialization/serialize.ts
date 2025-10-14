@@ -28,6 +28,7 @@ export const serializeDiagramDocument = async (
   document: DiagramDocument
 ): Promise<SerializedDiagramDocument> => {
   const schemaMetadata = serializeSchemaMetadata(document.data._schemas);
+  const stories = document.stories.stories;
   const serialized = {
     diagrams: document.diagrams.map(serializeDiagram),
     attachments: await serializeAttachments(document.attachments),
@@ -50,7 +51,8 @@ export const serializeDiagramDocument = async (
       })),
       templates: document.data.templates.all,
       overrides: serializeOverrides(document.data.db)
-    }
+    },
+    ...(stories.length > 0 && { stories })
   };
 
   // Generate hash based on the serialized JSON (excluding any existing hash)
