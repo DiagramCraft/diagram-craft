@@ -47,6 +47,7 @@ export type SerializedDiagram = {
   name: string;
   layers: ReadonlyArray<SerializedLayer>;
   activeLayerId?: string;
+  visibleLayers?: string[];
   diagrams: ReadonlyArray<SerializedDiagram>;
   guides?: ReadonlyArray<Guide>;
   zoom?: {

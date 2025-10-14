@@ -423,6 +423,14 @@ const deserializeDiagrams = <T extends Diagram>(
       }
     }
 
+    if ($d.visibleLayers) {
+      for (const layer of newDiagram.layers.all) {
+        if (!$d.visibleLayers.includes(layer.id)) {
+          newDiagram.layers.toggleVisibility(layer);
+        }
+      }
+    }
+
     if ($d.zoom) {
       newDiagram.viewBox.zoom($d.zoom.zoom);
       newDiagram.viewBox.pan({ x: $d.zoom.x, y: $d.zoom.y });
