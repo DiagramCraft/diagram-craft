@@ -174,6 +174,8 @@ export class LayerManager
       this.#visibleLayers.set(layer.id, true);
     }
 
+    this.diagram.selectionState.filterSelectionToVisibleElements();
+
     this.emit('layerStructureChange', {});
   }
 
