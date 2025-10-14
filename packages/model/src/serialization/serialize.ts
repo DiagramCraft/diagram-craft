@@ -180,9 +180,7 @@ export const serializeDiagramElement = (element: DiagramElement): SerializedElem
     const node = element;
     return {
       id: node.id,
-      // TODO: Fix
-      // biome-ignore lint/suspicious/noExplicitAny: incorrect type
-      type: node.type as any,
+      type: node.type as 'node' | 'delegating-node',
       nodeType: node.nodeType,
       bounds: node.bounds,
       anchors: node.anchors,
@@ -196,9 +194,7 @@ export const serializeDiagramElement = (element: DiagramElement): SerializedElem
     const edge = element;
     return {
       id: edge.id,
-      // TODO: Fix
-      // biome-ignore lint/suspicious/noExplicitAny: incorrect type
-      type: edge.type as any,
+      type: edge.type as 'edge' | 'delegating-edge',
       start: edge.start.serialize(),
       end: edge.end.serialize(),
       labelNodes: edge.labelNodes?.map(e => ({

@@ -44,11 +44,13 @@ export type DiagramElementCRDT = {
 
 type CacheKeys = 'name' | 'props.forEditing' | 'props.forRendering' | string;
 
+export type ElementType = 'node' | 'delegating-node' | 'edge' | 'delegating-edge';
+
 export interface DiagramElement {
   trackableType: 'element';
 
   readonly id: string;
-  readonly type: string;
+  readonly type: ElementType;
 
   getAttachmentsInUse(): Array<string>;
 
@@ -135,7 +137,7 @@ export abstract class AbstractDiagramElement implements DiagramElement, Attachme
   >;
 
   protected constructor(
-    public readonly type: string,
+    public readonly type: ElementType,
     public readonly id: string,
     layer: RegularLayer | ModificationLayer,
     crdt?: CRDTMap<DiagramElementCRDT>

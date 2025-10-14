@@ -2,7 +2,8 @@ import {
   DiagramElement,
   type DiagramElementCRDT,
   type ElementPropsForEditing,
-  type ElementPropsForRendering
+  type ElementPropsForRendering,
+  type ElementType
 } from './diagramElement';
 import { type RegularLayer } from './diagramLayerRegular';
 import type { ModificationLayer } from './diagramLayerModification';
@@ -34,7 +35,7 @@ export abstract class DelegatingDiagramElement implements DiagramElement {
 
   protected constructor(
     id: string,
-    type: string,
+    type: ElementType,
     delegate: DiagramElement,
     layer: RegularLayer | ModificationLayer,
     crdt?: CRDTMap<DiagramElementCRDT>
@@ -65,7 +66,7 @@ export abstract class DelegatingDiagramElement implements DiagramElement {
   }
 
   get type() {
-    return this._crdt.get().get('type')! as string;
+    return this._crdt.get().get('type')! as ElementType;
   }
 
   get layer() {

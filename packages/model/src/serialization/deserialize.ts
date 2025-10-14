@@ -296,8 +296,13 @@ const deserializeDiagrams = <T extends Diagram>(
 
     const uow = new UnitOfWork(newDiagram);
 
-    // Need to first create all layers, and then in step 2, fill them with elements
-    // and finally, step 3 we load all modifications
+    // This needs to be done in multiple steps as later steps depend on earlier ones:
+    //
+    //  1. Create all layers
+    //  2. Fill all layers with elements
+    //  3. Load all modifications
+
+    // Create layers
     for (const l of $d.layers) {
       switch (l.layerType) {
         case 'regular':
@@ -329,81 +334,84 @@ const deserializeDiagrams = <T extends Diagram>(
       }
     }
 
+    // Fill layers with elements
     for (const l of $d.layers) {
-      switch (l.layerType) {
-        case 'regular':
-        case 'basic': {
-          const layer = newDiagram.layers.byId(l.id) as RegularLayer | undefined;
-          assert.present(layer);
-          newDiagram.layers.active = layer;
+      if (l.layerType === 'regular' || l.layerType === 'basic') {
+        const layer = newDiagram.layers.byId(l.id) as RegularLayer | undefined;
+        assert.present(layer);
 
-          const elements = deserializeDiagramElements(
-            l.elements,
-            newDiagram,
-            layer,
-            nodeLookup,
-            edgeLookup
-          );
-          layer.setElements(elements, uow);
+        const elements = deserializeDiagramElements(
+          l.elements,
+          newDiagram,
+          layer,
+          nodeLookup,
+          edgeLookup
+        );
+        layer.setElements(elements, uow);
 
-          // Need to invalidate and clear cache, as this may have been
-          // populate with partial data during the adding of elements
-          layer.elements.forEach(e => {
-            e.clearCache();
-            e.invalidate(uow);
-          });
-
-          break;
-        }
-        case 'modification': {
-          const layer = newDiagram.layers.byId(l.id) as ModificationLayer | undefined;
-          assert.present(layer);
-
-          break;
-        }
+        // Need to invalidate and clear cache, as this may have been
+        // populate with partial data during the adding of elements
+        layer.elements.forEach(e => {
+          e.clearCache();
+          e.invalidate(uow);
+        });
       }
     }
 
+    // Load modifications
     for (const l of $d.layers) {
-      if (l.layerType === 'modification') {
-        const layer = newDiagram.layers.byId(l.id) as ModificationLayer;
-        for (const m of l.modifications) {
-          if (m.element) {
-            let element: DiagramElement | undefined;
-            if (m.element.type === 'delegating-node') {
-              const delegate = nodeLookup.get(m.id)!;
-              element = new DelegatingDiagramNode(m.element.id, delegate, layer, {
-                bounds: Box.isEqual(m.element.bounds, delegate.bounds)
+      if (l.layerType !== 'modification') continue;
+
+      const layer = newDiagram.layers.byId(l.id) as ModificationLayer;
+      for (const modification of l.modifications) {
+        if (modification.element) {
+          let element: DiagramElement | undefined;
+
+          if (modification.element.type === 'delegating-node') {
+            element = new DelegatingDiagramNode(
+              modification.element.id,
+              nodeLookup.get(modification.id)!,
+              layer,
+              {
+                bounds: Box.isEqual(
+                  modification.element.bounds,
+                  nodeLookup.get(modification.id)!.bounds
+                )
                   ? undefined
-                  : m.element.bounds,
-                props: m.element.props,
-                metadata: m.element.metadata,
-                texts: m.element.texts
-              });
-              nodeLookup.set(m.element.id, element as DiagramNode);
-            } else if (m.element.type === 'delegating-edge') {
-              element = new DelegatingDiagramEdge(m.element.id, edgeLookup.get(m.id)!, layer, {
-                props: m.element.props,
-                metadata: m.element.metadata,
-                start: deserializeEndpoint(m.element.start, nodeLookup),
-                end: deserializeEndpoint(m.element.end, nodeLookup),
-                waypoints: m.element.waypoints
-              });
-              edgeLookup.set(m.element.id, element as DiagramEdge);
-            } else {
-              throw new VerifyNotReached();
-            }
-
-            assert.present(element);
-
-            if (m.type === 'add') {
-              layer.modifyAdd(m.id, element, uow);
-            } else if (m.type === 'change') {
-              layer.modifyChange(m.id, element, uow);
-            }
-          } else if (m.type === 'remove') {
-            layer.modifyRemove(m.id, uow);
+                  : modification.element.bounds,
+                props: modification.element.props,
+                metadata: modification.element.metadata,
+                texts: modification.element.texts
+              }
+            );
+            nodeLookup.set(modification.element.id, element as DiagramNode);
+          } else if (modification.element.type === 'delegating-edge') {
+            element = new DelegatingDiagramEdge(
+              modification.element.id,
+              edgeLookup.get(modification.id)!,
+              layer,
+              {
+                props: modification.element.props,
+                metadata: modification.element.metadata,
+                start: deserializeEndpoint(modification.element.start, nodeLookup),
+                end: deserializeEndpoint(modification.element.end, nodeLookup),
+                waypoints: modification.element.waypoints
+              }
+            );
+            edgeLookup.set(modification.element.id, element as DiagramEdge);
+          } else {
+            throw new VerifyNotReached();
           }
+
+          assert.present(element);
+
+          if (modification.type === 'add') {
+            layer.modifyAdd(modification.id, element, uow);
+          } else if (modification.type === 'change') {
+            layer.modifyChange(modification.id, element, uow);
+          }
+        } else if (modification.type === 'remove') {
+          layer.modifyRemove(modification.id, uow);
         }
       }
     }
