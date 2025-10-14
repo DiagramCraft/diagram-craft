@@ -17,9 +17,11 @@ declare global {
 class ShapeInsertAction extends AbstractAction<undefined, Application> {
   getCriteria(application: Application) {
     return ActionCriteria.EventTriggered(
-      application.model.activeDiagram,
-      'diagramChange',
-      () => application.model.activeDiagram.activeLayer.type === 'regular'
+      application.model.activeDiagram.layers,
+      'layerStructureChange',
+      () =>
+        application.model.activeDiagram.activeLayer.type === 'regular' &&
+        !application.model.activeDiagram.activeLayer.isLocked()
     );
   }
 
