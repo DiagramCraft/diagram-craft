@@ -102,7 +102,7 @@ export class AnchorHandlesComponent extends Component<Props> {
     const z = new Zoom(diagram.viewBox.zoomLevel);
     const anchorSizeInEffect = z.num(ANCHOR_SIZE, 2);
 
-    if (diagram.activeLayer.type !== 'regular') {
+    if (node.layer.type !== 'regular' || node.layer.isLocked()) {
       return svg.g({});
     }
 
