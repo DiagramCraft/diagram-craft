@@ -22,6 +22,7 @@ export type SerializedLayer = { id: string; name: string; type: 'layer' } & (
   | {
       layerType: 'regular' | 'basic';
       elements: ReadonlyArray<SerializedElement>;
+      isLocked?: boolean;
     }
   | {
       layerType: 'reference';
@@ -39,6 +40,7 @@ export type SerializedLayer = { id: string; name: string; type: 'layer' } & (
         type: ModificationType;
         element?: SerializedElement;
       }>;
+      isLocked?: boolean;
     }
 );
 
