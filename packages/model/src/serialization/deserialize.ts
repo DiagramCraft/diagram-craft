@@ -308,6 +308,7 @@ const deserializeDiagrams = <T extends Diagram>(
         case 'regular':
         case 'basic': {
           const layer = new RegularLayer(l.id, l.name, [], newDiagram);
+          if (l.isLocked) layer.locked = true;
           newDiagram.layers.add(layer, UnitOfWork.immediate(newDiagram));
           break;
         }
@@ -326,6 +327,7 @@ const deserializeDiagrams = <T extends Diagram>(
         }
         case 'modification': {
           const layer = new ModificationLayer(l.id, l.name, newDiagram, []);
+          if (l.isLocked) layer.locked = true;
           newDiagram.layers.add(layer, UnitOfWork.immediate(newDiagram));
           break;
         }

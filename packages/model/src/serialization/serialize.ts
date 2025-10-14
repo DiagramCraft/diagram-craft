@@ -140,7 +140,8 @@ export const serializeLayer = (layer: Layer): SerializedLayer => {
       name: layer.name,
       type: 'layer',
       layerType: 'regular',
-      elements: (layer as RegularLayer).elements.map(serializeDiagramElement)
+      elements: (layer as RegularLayer).elements.map(serializeDiagramElement),
+      isLocked: layer.isLocked()
     };
   } else if (layer.type === 'reference') {
     return {
@@ -169,7 +170,8 @@ export const serializeLayer = (layer: Layer): SerializedLayer => {
         id: m.id,
         type: m.type,
         element: m.element ? serializeDiagramElement(m.element) : undefined
-      }))
+      })),
+      isLocked: layer.isLocked()
     };
   } else {
     throw new NotImplementedYet();
