@@ -270,18 +270,28 @@ const ModificationEntry = (props: {
   const m = props.modification;
   const element = m.type === 'remove' ? props.diagram.lookup(m.id) : m.element;
 
-  let icon = <TbPencil />;
-  let label = '';
+  // Determine icon based on element type (same as ElementEntry)
+  let icon = <TbRectangle />;
+  if (element) {
+    if (isEdge(element)) {
+      icon = <TbLine />;
+    } else if (isNode(element) && element.nodeType === 'group') {
+      icon = <TbBoxMultiple />;
+    } else if (isNode(element) && element.nodeType === 'table') {
+      icon = <TbTable />;
+    } else if (isNode(element) && element.nodeType === 'text') {
+      icon = <TbTextSize />;
+    } else if (isNode(element) && element.nodeType === 'tableRow') {
+      icon = <TbTableRow />;
+    }
+  }
 
+  // Determine color based on modification type
+  let color: string | undefined = undefined;
   if (m.type === 'add') {
-    icon = <TbPlus />;
-    label = `Add: ${element?.name ?? m.id}`;
+    color = 'var(--green-9)'; // green for adds
   } else if (m.type === 'remove') {
-    icon = <TbX />;
-    label = `Remove: ${element?.name ?? m.id}`;
-  } else {
-    icon = <TbPencil />;
-    label = `Change: ${element?.name ?? m.id}`;
+    color = 'var(--red-9)'; // red for removes
   }
 
   return (
@@ -296,8 +306,9 @@ const ModificationEntry = (props: {
         }
       }}
     >
-      <Tree.NodeLabel>
-        {icon} &nbsp;{shorten(label, 30)}
+      <Tree.NodeLabel style={{ width: 'calc(100% + 15px)', color }}>
+        <Tree.NodeLabelIcon>{icon}</Tree.NodeLabelIcon>
+        <Tree.NodeLabelText>{element?.name ?? m.id}</Tree.NodeLabelText>
       </Tree.NodeLabel>
       <Tree.NodeCell className="cmp-tree__node__action">
         <span
