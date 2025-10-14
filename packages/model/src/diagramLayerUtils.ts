@@ -11,6 +11,14 @@ export function assertRegularLayer(l: Layer): asserts l is RegularLayer {
   }
 }
 
+export function assertRegularOrModificationLayer(
+  l: Layer
+): asserts l is RegularLayer | ModificationLayer {
+  if (l.type !== 'regular' && l.type !== 'modification') {
+    throw new Error('Layer is not a regular or modification layer');
+  }
+}
+
 export function isRegularLayer(l: Layer): l is RegularLayer {
   return l.type === 'regular';
 }

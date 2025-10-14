@@ -244,3 +244,9 @@ export class LayerManager
     return this.#layers.values.flatMap(e => e.getAttachmentsInUse());
   }
 }
+
+export const LayerCapabilities = {
+  canMove(layer: Layer): boolean {
+    return layer.type === 'modification' || layer.type === 'regular';
+  }
+};

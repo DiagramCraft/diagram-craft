@@ -17,10 +17,14 @@ import {
   SnapshotUndoableAction
 } from '@diagram-craft/model/diagramUndoActions';
 import { excludeLabelNodes, includeAll, SelectionState } from '@diagram-craft/model/selectionState';
-import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+import { precondition, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { largest } from '@diagram-craft/utils/array';
 import { Context } from '../context';
-import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import {
+  assertRegularLayer,
+  assertRegularOrModificationLayer
+} from '@diagram-craft/model/diagramLayerUtils';
+import { LayerCapabilities } from '@diagram-craft/model/diagramLayerManager';
 
 const getId = (e: DiagramElement) => (isNode(e) ? `node-${e.id}` : `edge-${e.id}`);
 
@@ -60,7 +64,7 @@ export abstract class AbstractMoveDrag extends Drag {
   ) {
     super();
 
-    assertRegularLayer(this.diagram.activeLayer);
+    precondition.is.true(LayerCapabilities.canMove(this.diagram.activeLayer));
     this.uow = new UnitOfWork(this.diagram, true);
   }
 
@@ -162,7 +166,7 @@ export abstract class AbstractMoveDrag extends Drag {
 
   onDragEnd(): void {
     const activeLayer = this.diagram.activeLayer;
-    assertRegularLayer(activeLayer);
+    assertRegularOrModificationLayer(activeLayer);
 
     const selection = this.diagram.selectionState;
     selection.setDragging(false);

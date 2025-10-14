@@ -208,9 +208,12 @@ export class ModificationLayer extends Layer<ModificationLayer> {
     this.#modifications.remove(id);
 
     if (m.type === ModificationType.Add) {
+      uow.snapshot(m.element!);
       uow.removeElement(m.element!);
     } else if (m.type === ModificationType.Change || m.type === ModificationType.Remove) {
-      uow.updateElement(this.diagram.lookup(id)!);
+      const el = this.diagram.lookup(id)!;
+      uow.snapshot(el);
+      uow.updateElement(el);
     }
     uow.updateElement(this);
   }
