@@ -3,11 +3,11 @@ import { Diagram, DocumentBuilder } from './diagram';
 import { TestModel } from './test-support/builder';
 import { newid } from '@diagram-craft/utils/id';
 import { UnitOfWork } from './unitOfWork';
-import { DiagramNode } from './diagramNode';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { RegularLayer } from './diagramLayerRegular';
 import { assertRegularLayer } from './diagramLayerUtils';
 import { Backends, standardTestModel } from './collaboration/collaborationTestUtils';
+import { ElementFactory } from './elementFactory';
 
 const testBounds = { x: 0, y: 0, w: 100, h: 100, r: 0 };
 
@@ -154,8 +154,8 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       diagram.layers.add(layer2, new UnitOfWork(diagram));
 
       const uow = new UnitOfWork(diagram);
-      const node1 = DiagramNode.create('1', 'rect', testBounds, layer1, {}, {});
-      const node2 = DiagramNode.create('2', 'rect', testBounds, layer2, {}, {});
+      const node1 = ElementFactory.node('1', 'rect', testBounds, layer1, {}, {});
+      const node2 = ElementFactory.node('2', 'rect', testBounds, layer2, {}, {});
       layer1.addElement(node1, uow);
       layer2.addElement(node2, uow);
       uow.commit();
@@ -178,10 +178,10 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       const layer = diagram.activeLayer;
       assertRegularLayer(layer);
 
-      const node1 = DiagramNode.create('1', 'rect', testBounds, layer, {}, {});
+      const node1 = ElementFactory.node('1', 'rect', testBounds, layer, {}, {});
       layer.addElement(node1, uow);
 
-      const node2 = DiagramNode.create(
+      const node2 = ElementFactory.node(
         '2',
         'rect',
         {

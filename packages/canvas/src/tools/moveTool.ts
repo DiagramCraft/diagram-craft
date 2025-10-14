@@ -8,6 +8,7 @@ import { Box } from '@diagram-craft/geometry/box';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { getDiagramElementPath, isNode } from '@diagram-craft/model/diagramElement';
 import { assert } from '@diagram-craft/utils/assert';
+import { LayerCapabilities } from '@diagram-craft/model/diagramLayerManager';
 
 type DeferredMouseAction = {
   callback: () => void;
@@ -126,7 +127,7 @@ export class MoveTool extends AbstractTool {
     }
 
     const isMoveable = selection.nodes.every(p => p.renderProps.capabilities.movable !== false);
-    if (!selection.isEmpty() && isMoveable && this.diagram.activeLayer.type === 'regular') {
+    if (!selection.isEmpty() && isMoveable && LayerCapabilities.canMove(this.diagram.activeLayer)) {
       this.drag.initiate(
         new MoveDrag(
           this.diagram,

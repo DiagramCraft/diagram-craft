@@ -7,7 +7,7 @@ import {
 import { UmlModuleNodeDefinition } from './umlModule';
 import { Box } from '@diagram-craft/geometry/box';
 import { shapeParsers } from '../../drawioShapeParsers';
-import { DiagramNode, NodeTexts } from '@diagram-craft/model/diagramNode';
+import { NodeTexts } from '@diagram-craft/model/diagramNode';
 import { deepMerge } from '@diagram-craft/utils/object';
 import stencils from './uml.yaml';
 import { UmlLifeline } from './umlLifeline.nodeType';
@@ -23,6 +23,7 @@ import { RequiredInterface } from './requiredInterface.nodeType';
 import { StyleManager } from '../../styleManager';
 import { loadStencilsFromYaml } from '@diagram-craft/model/elementDefinitionLoader';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
+import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 export const parseUMLShapes = async (
   id: string,
@@ -39,14 +40,14 @@ export const parseUMLShapes = async (
       jettyWidth: style.num('jettyWidth', 20),
       jettyHeight: style.num('jettyHeight', 10)
     };
-    return DiagramNode.create(id, 'module', bounds, layer, props, {});
+    return ElementFactory.node(id, 'module', bounds, layer, props, {});
   } else if (style.str('shape') === 'umlLifeline') {
     props.custom.umlLifeline = {
       participant: style.str('participant')
     };
   }
 
-  return DiagramNode.create(id, style.str('shape')!, bounds, layer, props, metadata, texts);
+  return ElementFactory.node(id, style.str('shape')!, bounds, layer, props, metadata, texts);
 };
 
 export const registerUMLShapes = async (r: NodeDefinitionRegistry) => {

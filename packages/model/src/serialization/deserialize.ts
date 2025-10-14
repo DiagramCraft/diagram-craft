@@ -4,7 +4,7 @@ import { DiagramEdge } from '../diagramEdge';
 import { UnitOfWork } from '../unitOfWork';
 import { isSerializedEndpointAnchor, isSerializedEndpointPointInNode } from './utils';
 import { DiagramDocument } from '../diagramDocument';
-import { VerifyNotReached } from '@diagram-craft/utils/assert';
+import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
 import {
   SerializedAnchorEndpoint,
   SerializedDiagram,
@@ -22,9 +22,16 @@ import { ReferenceLayer } from '../diagramLayerReference';
 import { RuleLayer } from '../diagramLayerRule';
 import { type DataProvider, DataProviderRegistry } from '../dataProvider';
 import { RegularLayer } from '../diagramLayerRegular';
+import { ModificationLayer } from '../diagramLayerModification';
 import type { DiagramFactory } from '../factory';
 import { Comment } from '../comment';
 import type { DataManager } from '../diagramDocumentData';
+import { ElementLookup } from '../elementLookup';
+import { ElementFactory } from '../elementFactory';
+import { DelegatingDiagramNode } from '../delegatingDiagramNode';
+import type { DiagramElement } from '../diagramElement';
+import { DelegatingDiagramEdge } from '../delegatingDiagramEdge';
+import { Box } from '@diagram-craft/geometry/box';
 
 const unfoldGroup = (node: SerializedElement) => {
   const recurse = (
@@ -46,7 +53,7 @@ const unfoldGroup = (node: SerializedElement) => {
 
 const deserializeEndpoint = (
   e: SerializedAnchorEndpoint | SerializedPointInNodeEndpoint | SerializedFreeEndpoint,
-  nodeLookup: Record<string, DiagramNode> | Map<string, DiagramNode>
+  nodeLookup: ElementLookup<DiagramNode>
 ) => {
   return Endpoint.deserialize(e, nodeLookup);
 };
@@ -54,13 +61,13 @@ const deserializeEndpoint = (
 export const deserializeDiagramElements = (
   diagramElements: ReadonlyArray<SerializedElement>,
   diagram: Diagram,
-  layer: RegularLayer,
-  nodeLookup?: Map<string, DiagramNode>,
-  edgeLookup?: Map<string, DiagramEdge>,
+  layer: RegularLayer | ModificationLayer,
+  nodeLookup?: ElementLookup<DiagramNode>,
+  edgeLookup?: ElementLookup<DiagramEdge>,
   uow?: UnitOfWork
 ) => {
-  nodeLookup ??= new Map();
-  edgeLookup ??= new Map();
+  nodeLookup ??= new ElementLookup<DiagramNode>();
+  edgeLookup ??= new ElementLookup<DiagramEdge>();
   uow ??= new UnitOfWork(diagram, false, true);
 
   // Pass 1: create placeholders for all nodes
@@ -79,7 +86,7 @@ export const deserializeDiagramElements = (
         }
       }
 
-      const node = DiagramNode.create(
+      const node = ElementFactory.node(
         c.id,
         c.nodeType,
         c.bounds,
@@ -107,7 +114,7 @@ export const deserializeDiagramElements = (
       const startEndpoint = deserializeEndpoint(start, nodeLookup);
       const endEndpoint = deserializeEndpoint(end, nodeLookup);
 
-      const edge = DiagramEdge.create(
+      const edge = ElementFactory.edge(
         e.id,
         startEndpoint,
         endEndpoint,
@@ -281,32 +288,27 @@ const deserializeDiagrams = <T extends Diagram>(
 ) => {
   const dest: T[] = [];
   for (const $d of diagrams) {
-    const nodeLookup: Map<string, DiagramNode> = new Map();
-    const edgeLookup: Map<string, DiagramEdge> = new Map();
+    const nodeLookup = new ElementLookup<DiagramNode>();
+    const edgeLookup = new ElementLookup<DiagramEdge>();
 
     const newDiagram = diagramFactory($d, doc);
     newDiagram.canvas = $d.canvas;
 
     const uow = new UnitOfWork(newDiagram);
+
+    // This needs to be done in multiple steps as later steps depend on earlier ones:
+    //
+    //  1. Create all layers
+    //  2. Fill all layers with elements
+    //  3. Load all modifications
+
+    // Create layers
     for (const l of $d.layers) {
       switch (l.layerType) {
         case 'regular':
         case 'basic': {
           const layer = new RegularLayer(l.id, l.name, [], newDiagram);
           newDiagram.layers.add(layer, UnitOfWork.immediate(newDiagram));
-
-          const elements = deserializeDiagramElements(
-            l.elements,
-            newDiagram,
-            layer,
-            nodeLookup,
-            edgeLookup
-          );
-          elements.forEach(e => {
-            layer.addElement(e, uow);
-          });
-
-          layer.elements.forEach(e => e.invalidate(uow));
           break;
         }
         case 'reference': {
@@ -322,8 +324,95 @@ const deserializeDiagrams = <T extends Diagram>(
           newDiagram.layers.add(layer, UnitOfWork.immediate(newDiagram));
           break;
         }
+        case 'modification': {
+          const layer = new ModificationLayer(l.id, l.name, newDiagram, []);
+          newDiagram.layers.add(layer, UnitOfWork.immediate(newDiagram));
+          break;
+        }
         default:
           throw new VerifyNotReached();
+      }
+    }
+
+    // Fill layers with elements
+    for (const l of $d.layers) {
+      if (l.layerType === 'regular' || l.layerType === 'basic') {
+        const layer = newDiagram.layers.byId(l.id) as RegularLayer | undefined;
+        assert.present(layer);
+
+        const elements = deserializeDiagramElements(
+          l.elements,
+          newDiagram,
+          layer,
+          nodeLookup,
+          edgeLookup
+        );
+        layer.setElements(elements, uow);
+
+        // Need to invalidate and clear cache, as this may have been
+        // populate with partial data during the adding of elements
+        layer.elements.forEach(e => {
+          e.clearCache();
+          e.invalidate(uow);
+        });
+      }
+    }
+
+    // Load modifications
+    for (const l of $d.layers) {
+      if (l.layerType !== 'modification') continue;
+
+      const layer = newDiagram.layers.byId(l.id) as ModificationLayer;
+      for (const modification of l.modifications) {
+        if (modification.element) {
+          let element: DiagramElement | undefined;
+
+          if (modification.element.type === 'delegating-node') {
+            element = new DelegatingDiagramNode(
+              modification.element.id,
+              nodeLookup.get(modification.id)!,
+              layer,
+              {
+                bounds: Box.isEqual(
+                  modification.element.bounds,
+                  nodeLookup.get(modification.id)!.bounds
+                )
+                  ? undefined
+                  : modification.element.bounds,
+                props: modification.element.props,
+                metadata: modification.element.metadata,
+                texts: modification.element.texts
+              }
+            );
+            nodeLookup.set(modification.element.id, element as DiagramNode);
+          } else if (modification.element.type === 'delegating-edge') {
+            element = new DelegatingDiagramEdge(
+              modification.element.id,
+              edgeLookup.get(modification.id)!,
+              layer,
+              {
+                props: modification.element.props,
+                metadata: modification.element.metadata,
+                start: deserializeEndpoint(modification.element.start, nodeLookup),
+                end: deserializeEndpoint(modification.element.end, nodeLookup),
+                waypoints: modification.element.waypoints
+              }
+            );
+            edgeLookup.set(modification.element.id, element as DiagramEdge);
+          } else {
+            throw new VerifyNotReached();
+          }
+
+          assert.present(element);
+
+          if (modification.type === 'add') {
+            layer.modifyAdd(modification.id, element, uow);
+          } else if (modification.type === 'change') {
+            layer.modifyChange(modification.id, element, uow);
+          }
+        } else if (modification.type === 'remove') {
+          layer.modifyRemove(modification.id, uow);
+        }
       }
     }
 

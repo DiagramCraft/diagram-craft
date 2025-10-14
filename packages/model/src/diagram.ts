@@ -1,6 +1,6 @@
 import { Viewbox } from './viewBox';
 import { DiagramNode } from './diagramNode';
-import { DiagramEdge } from './diagramEdge';
+import { DiagramEdge, SimpleDiagramEdge } from './diagramEdge';
 import { SelectionState } from './selectionState';
 import { UndoManager } from './undoManager';
 import { SnapManager } from './snap/snapManager';
@@ -27,6 +27,7 @@ import { CRDTObject } from './collaboration/datatypes/crdtObject';
 import { Guide } from './types';
 import { CommentManager, type SerializedComment } from './comment';
 import type { Point } from '@diagram-craft/geometry/point';
+import { ElementLookup } from './elementLookup';
 
 export type DiagramIteratorOpts = {
   nest?: boolean;
@@ -143,8 +144,8 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     'size'
   ]);
   readonly viewBox: Viewbox;
-  readonly nodeLookup = new Map<string, DiagramNode>();
-  readonly edgeLookup = new Map<string, DiagramEdge>();
+  readonly nodeLookup = new ElementLookup<DiagramNode>();
+  readonly edgeLookup = new ElementLookup<DiagramEdge>();
   readonly undoManager = new UndoManager(this);
 
   readonly commentManager: CommentManager;
@@ -209,7 +210,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
     const toggleHasEdgesWithLineHops = (type: 'add' | 'remove' | 'change', e: DiagramElement) => {
       if (type === 'add' && this.hasEdgesWithLineHops) return;
-      if (!(e instanceof DiagramEdge)) return;
+      if (!(e instanceof SimpleDiagramEdge)) return;
 
       const needsLineHops = e.renderProps.lineHops.type !== 'none';
       if (type === 'add' && (!needsLineHops || this.hasEdgesWithLineHops)) return;
@@ -307,9 +308,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
       const resolved = l.resolve();
       if (resolved?.type === 'regular') {
         for (const e of (resolved as RegularLayer).elements) {
-          if (e instanceof DiagramNode || e instanceof DiagramEdge) {
-            yield e;
-          }
+          yield e;
         }
       }
     }

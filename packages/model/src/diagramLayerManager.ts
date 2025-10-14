@@ -15,6 +15,8 @@ import { AttachmentConsumer } from './attachment';
 import { RegularLayer } from './diagramLayerRegular';
 import { watch } from '@diagram-craft/utils/watchableValue';
 import { EventEmitter } from '@diagram-craft/utils/event';
+import { ModificationLayer } from './diagramLayerModification';
+import type { EmptyObject } from '@diagram-craft/utils/types';
 
 export type LayerManagerCRDT = {
   // TODO: Should we move visibility to be a property of the layer instead
@@ -45,6 +47,9 @@ export const makeLayerMapper = (diagram: Diagram): CRDTMapper<Layer, CRDTMap<Lay
             },
             e
           );
+        case 'modification':
+          return new ModificationLayer(id, name, diagram, [], e);
+
         default:
           return VERIFY_NOT_REACHED();
       }
@@ -60,7 +65,7 @@ export type LayerManagerEvents = {
   layerAdded: { layer: Layer };
   layerUpdated: { layer: Layer };
   layerRemoved: { layer: Layer };
-  layerStructureChange: {};
+  layerStructureChange: EmptyObject;
 };
 
 export class LayerManager
@@ -100,6 +105,10 @@ export class LayerManager
     this.#visibleLayers.on('remoteDelete', () => this.emit('layerStructureChange', {}));
 
     this.diagram.selectionState.on('add', () => {
+      // We don't want to change active layer in case we are in a modification layer, as
+      // this prevents the ability to manage the modification layer
+      if (this.active.type === 'modification') return;
+
       const firstRegularLayer = this.diagram.selectionState.elements
         .map(e => e.layer)
         .filter(e => e.type === 'regular')[0];
@@ -108,6 +117,10 @@ export class LayerManager
       }
     });
     this.diagram.selectionState.on('remove', () => {
+      // We don't want to change active layer in case we are in a modification layer, as
+      // this prevents the ability to manage the modification layer
+      if (this.active.type === 'modification') return;
+
       const firstRegularLayer = this.diagram.selectionState.elements
         .map(e => e.layer)
         .filter(e => e.type === 'regular')[0];
@@ -236,3 +249,9 @@ export class LayerManager
     return this.#layers.values.flatMap(e => e.getAttachmentsInUse());
   }
 }
+
+export const LayerCapabilities = {
+  canMove(layer: Layer): boolean {
+    return layer.type === 'modification' || layer.type === 'regular';
+  }
+};

@@ -6,6 +6,7 @@ import {
   TbEye,
   TbEyeOff,
   TbFilterCog,
+  TbLayersSelectedBottom,
   TbLine,
   TbLink,
   TbLock,
@@ -14,7 +15,8 @@ import {
   TbRectangle,
   TbTable,
   TbTableRow,
-  TbTextSize
+  TbTextSize,
+  TbTrash
 } from 'react-icons/tb';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
@@ -36,6 +38,10 @@ import { RuleContextMenu } from './RuleContextMenu';
 import { useApplication, useDiagram } from '../../../application';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { ToolWindowPanel } from '../ToolWindowPanel';
+import {
+  type Modification,
+  ModificationLayer
+} from '@diagram-craft/model/diagramLayerModification';
 
 const ELEMENT_INSTANCES = 'application/x-diagram-craft-element-instances';
 const LAYER_INSTANCES = 'application/x-diagram-craft-layer-instances';
@@ -138,6 +144,7 @@ const LayerEntry = (props: { layer: Layer }) => {
           >
             {layer.type === 'reference' ? <TbLink /> : undefined}
             {layer.resolveForced().type === 'rule' ? <TbAdjustments /> : undefined}
+            {layer.type === 'modification' ? <TbLayersSelectedBottom /> : undefined}
             {layer.name}
           </div>
         </Tree.NodeLabel>
@@ -165,9 +172,33 @@ const LayerEntry = (props: { layer: Layer }) => {
                 ))}
               </div>
             )}
-            {!(layer instanceof RegularLayer) && !(layer instanceof RuleLayer) && (
-              <div style={{ color: 'red' }}>Not implemented yet</div>
+            {layer instanceof ModificationLayer && (
+              <div style={{ display: 'contents' }}>
+                {layer.modifications.length === 0 ? (
+                  <Tree.Node>
+                    <Tree.NodeLabel style={{ fontStyle: 'italic' }}>
+                      No modifications
+                    </Tree.NodeLabel>
+                  </Tree.Node>
+                ) : (
+                  layer.modifications
+                    .toReversed()
+                    .map(m => (
+                      <ModificationEntry
+                        key={m.id}
+                        diagram={diagram}
+                        modification={m}
+                        layer={layer as ModificationLayer}
+                      />
+                    ))
+                )}
+              </div>
             )}
+            {!(layer instanceof RegularLayer) &&
+              !(layer instanceof RuleLayer) &&
+              !(layer instanceof ModificationLayer) && (
+                <div style={{ color: 'red' }}>Not implemented yet</div>
+              )}
           </Tree.Children>
         )}
         {layer instanceof ReferenceLayer && (
@@ -229,6 +260,72 @@ const RuleEntry = (props: { rule: AdjustmentRule; layer: RuleLayer; diagram: Dia
         </Tree.NodeCell>
       </Tree.Node>
     </RuleContextMenu>
+  );
+};
+
+const ModificationEntry = (props: {
+  modification: Modification;
+  layer: ModificationLayer;
+  diagram: Diagram;
+}) => {
+  const m = props.modification;
+  const element = m.type === 'remove' ? props.diagram.lookup(m.id) : m.element;
+
+  // Determine icon based on element type (same as ElementEntry)
+  let icon = <TbRectangle />;
+  if (element) {
+    if (isEdge(element)) {
+      icon = <TbLine />;
+    } else if (isNode(element) && element.nodeType === 'group') {
+      icon = <TbBoxMultiple />;
+    } else if (isNode(element) && element.nodeType === 'table') {
+      icon = <TbTable />;
+    } else if (isNode(element) && element.nodeType === 'text') {
+      icon = <TbTextSize />;
+    } else if (isNode(element) && element.nodeType === 'tableRow') {
+      icon = <TbTableRow />;
+    }
+  }
+
+  // Determine color based on modification type
+  let color: string | undefined;
+  if (m.type === 'add') {
+    color = 'var(--green-9)';
+  } else if (m.type === 'remove') {
+    color = 'var(--red-9)';
+  }
+
+  return (
+    <Tree.Node
+      key={m.id}
+      onClick={() => {
+        if (element) {
+          addHighlight(element, 'search-match');
+          setTimeout(() => {
+            removeHighlight(element, 'search-match');
+          }, 1000);
+        }
+      }}
+    >
+      <Tree.NodeLabel style={{ width: 'calc(100% + 15px)', color }}>
+        <Tree.NodeLabelIcon>{icon}</Tree.NodeLabelIcon>
+        <Tree.NodeLabelText>{element?.name ?? m.id}</Tree.NodeLabelText>
+      </Tree.NodeLabel>
+      <Tree.NodeCell className="cmp-tree__node__action">
+        <span
+          style={{ cursor: 'pointer' }}
+          onClick={e => {
+            const uow = new UnitOfWork(props.diagram, true);
+            props.layer.clearModification(m.id, uow);
+            commitWithUndo(uow, 'Clear modification');
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+        >
+          <TbTrash />
+        </span>
+      </Tree.NodeCell>
+    </Tree.Node>
   );
 };
 
@@ -334,6 +431,7 @@ export const LayerListPanel = () => {
     )
   );
 
+  useEventListener(diagram, 'elementAdd', redraw);
   useEventListener(diagram, 'diagramChange', redraw);
 
   useEventListener(diagram.layers, 'layerAdded', redraw);

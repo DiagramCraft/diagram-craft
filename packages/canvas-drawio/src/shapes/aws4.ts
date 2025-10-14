@@ -14,6 +14,7 @@ import { RectNodeDefinition } from '@diagram-craft/canvas/node-types/Rect.nodeTy
 import { DrawioShapeNodeDefinition } from '../DrawioShape.nodeType';
 import { StyleManager } from '../styleManager';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
+import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 const stencilDimensions = new Map<string, Extent>();
 
@@ -72,7 +73,7 @@ export const parseAWS4Shapes = async (
       }
     ];
 
-    return DiagramNode.create(
+    return ElementFactory.node(
       id,
       'mxgraph.aws4.resourceIcon',
       bounds,
@@ -103,10 +104,10 @@ export const parseAWS4Shapes = async (
       }
     ];
 
-    return DiagramNode.create(id, style.str('shape')!, bounds, layer, props, metadata, texts);
+    return ElementFactory.node(id, style.str('shape')!, bounds, layer, props, metadata, texts);
   }
 
-  return DiagramNode.create(id, style.str('shape')!, bounds, layer, props, metadata);
+  return ElementFactory.node(id, style.str('shape')!, bounds, layer, props, metadata);
 };
 
 export const registerAWS4Shapes = async (

@@ -5,7 +5,6 @@ import type {
   NodePropsForEditing,
   NodePropsForRendering
 } from './diagramNode';
-import { ElementInterface } from './types';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { Box } from '@diagram-craft/geometry/box';
 import { getRemoteUnitOfWork, UnitOfWork } from './unitOfWork';
@@ -25,6 +24,8 @@ import {
 } from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import { makeElementMapper } from './diagramElementMapper';
 import { MappedCRDTProp } from './collaboration/datatypes/mapped/mappedCrdtProp';
+import type { ModificationLayer } from './diagramLayerModification';
+import type { Comment } from './comment';
 
 // biome-ignore lint/suspicious/noExplicitAny: false positive
 type Snapshot = any;
@@ -43,14 +44,84 @@ export type DiagramElementCRDT = {
 
 type CacheKeys = 'name' | 'props.forEditing' | 'props.forRendering' | string;
 
-export abstract class DiagramElement implements ElementInterface, AttachmentConsumer {
+export type ElementType = 'node' | 'delegating-node' | 'edge' | 'delegating-edge';
+
+export interface DiagramElement {
+  trackableType: 'element';
+
+  readonly id: string;
+  readonly type: ElementType;
+
+  getAttachmentsInUse(): Array<string>;
+
+  invalidate(uow: UnitOfWork): void;
+  detach(uow: UnitOfWork): void;
+  duplicate(ctx?: DuplicationContext, id?: string): DiagramElement;
+  transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork, isChild?: boolean): void;
+
+  readonly bounds: Box;
+  setBounds(bounds: Box, uow: UnitOfWork): void;
+
+  readonly name: string;
+  readonly dataForTemplate: FlatObject;
+  readonly editProps: ElementPropsForEditing;
+  readonly renderProps: ElementPropsForRendering;
+  readonly storedProps: ElementProps;
+
+  getPropsInfo<T extends PropPath<ElementProps>>(
+    path: T
+  ): PropertyInfo<PropPathValue<ElementProps, T>>;
+
+  updateProps(callback: (props: NodeProps | EdgeProps) => void, uow: UnitOfWork): void;
+
+  snapshot(): Snapshot;
+  restore(snapshot: Snapshot, uow: UnitOfWork): void;
+
+  detachCRDT(callback: () => void): void;
+
+  readonly crdt: WatchableValue<CRDTMap<DiagramElementCRDT>>;
+
+  isLocked(): boolean;
+  isHidden(): boolean;
+
+  _setLayer(layer: RegularLayer | ModificationLayer, diagram: Diagram): void;
+  readonly diagram: Diagram;
+  readonly layer: RegularLayer | ModificationLayer;
+  activeDiagram: Diagram;
+
+  readonly parent: DiagramElement | undefined;
+  _setParent(parent: DiagramElement | undefined): void;
+
+  readonly metadata: ElementMetadata;
+  readonly metadataCloned: ElementMetadata;
+  updateMetadata(callback: (props: ElementMetadata) => void, uow: UnitOfWork): void;
+
+  readonly tags: ReadonlyArray<string>;
+  setTags(tags: ReadonlyArray<string>, uow: UnitOfWork): void;
+
+  readonly cache: Map<CacheKeys, unknown>;
+  clearCache(): void;
+
+  readonly children: ReadonlyArray<DiagramElement>;
+  setChildren(children: ReadonlyArray<DiagramElement>, uow: UnitOfWork): void;
+  addChild(
+    child: DiagramElement,
+    uow: UnitOfWork,
+    relation?: { ref: DiagramElement; type: 'after' | 'before' }
+  ): void;
+  removeChild(child: DiagramElement, uow: UnitOfWork): void;
+
+  comments: ReadonlyArray<Comment>;
+}
+
+export abstract class AbstractDiagramElement implements DiagramElement, AttachmentConsumer {
   readonly trackableType = 'element';
 
   // Transient properties
   protected readonly _crdt: WatchableValue<CRDTMap<DiagramElementCRDT>>;
 
   protected _diagram: Diagram;
-  protected _layer: RegularLayer;
+  protected _layer: RegularLayer | ModificationLayer;
   protected _activeDiagram: Diagram;
 
   // The cache is created lazily for performance reasons
@@ -66,9 +137,9 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
   >;
 
   protected constructor(
-    public readonly type: string,
+    public readonly type: ElementType,
     public readonly id: string,
-    layer: RegularLayer,
+    layer: RegularLayer | ModificationLayer,
     crdt?: CRDTMap<DiagramElementCRDT>
   ) {
     this._diagram = layer.diagram;
@@ -89,7 +160,7 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
         ([m]) => m.get().get('children', () => layer.crdt.factory.makeMap())!,
         [this._crdt]
       ),
-      makeElementMapper(this.layer),
+      makeElementMapper(this.layer, undefined),
       {
         onRemoteAdd: e => {
           this._diagram.register(e);
@@ -185,7 +256,7 @@ export abstract class DiagramElement implements ElementInterface, AttachmentCons
 
   /* Diagram/layer ******************************************************************************************* */
 
-  _setLayer(layer: RegularLayer, diagram: Diagram) {
+  _setLayer(layer: RegularLayer | ModificationLayer, diagram: Diagram) {
     this._layer = layer;
     this._diagram = diagram;
   }
@@ -420,13 +491,28 @@ export const bindElementListeners = (diagram: Diagram) => {
   });
 
   /* On layer change ------------------------------------------------- */
-  diagram.layers.on('layerStructureChange', () => {
-    diagram.allElements().forEach(e => e.clearCache());
+  diagram.layers.on(
+    'layerStructureChange',
+    () => {
+      diagram.allElements().forEach(e => e.clearCache());
+    },
+    {
+      priority: 1000
+    }
+  );
+  // TODO: Ideally we should have this logic in BaseCanvasComponent instead
+  //       ... and not reemit a layerStructureChange event, but rather just redraw in this case
+  diagram.layers.on('layerUpdated', l => {
+    if (l.layer.type === 'rule' || l.layer.type === 'modification') {
+      diagram.layers.emit('layerStructureChange');
+    }
   });
 };
 
-export const isNode = (e: DiagramElement | undefined): e is DiagramNode => !!e && e.type === 'node';
-export const isEdge = (e: DiagramElement | undefined): e is DiagramEdge => !!e && e.type === 'edge';
+export const isNode = (e: DiagramElement | undefined): e is DiagramNode =>
+  !!e && (e.type === 'node' || e.type === 'delegating-node');
+export const isEdge = (e: DiagramElement | undefined): e is DiagramEdge =>
+  !!e && (e.type === 'edge' || e.type === 'delegating-edge');
 
 declare global {
   interface AssertTypeExtensions {

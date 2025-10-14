@@ -12,6 +12,7 @@ import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 import { deepClone } from '@diagram-craft/utils/object';
 import { DeepWriteable } from '@diagram-craft/utils/types';
+import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 declare global {
   interface CustomNodeProps {
@@ -76,7 +77,7 @@ export class UmlLifeline extends SimpleShapeNodeDefinition {
 
     const participantProps = deepClone(props.nodeProps) as DeepWriteable<NodePropsForRendering>;
 
-    const node = DiagramNode.create(
+    const node = ElementFactory.node(
       `${props.node.id}---participant`,
       shape.type,
       {

@@ -1,5 +1,4 @@
 import type { Diagram } from '../diagram';
-import type { DiagramNode } from '../diagramNode';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { isNode } from '../diagramElement';
 import { Box } from '@diagram-craft/geometry/box';
@@ -7,6 +6,7 @@ import { Direction } from '@diagram-craft/geometry/direction';
 import { Axis } from '@diagram-craft/geometry/axis';
 import { Range } from '@diagram-craft/geometry/range';
 import type { EligibleNodePredicate } from './snapManager';
+import type { DiagramNode } from '../diagramNode';
 
 /**
  * Abstract base class for snap providers that work with diagram nodes

@@ -1,4 +1,13 @@
-import { TbAdjustments, TbCheck, TbEye, TbEyeOff, TbLink, TbLock, TbStack2 } from 'react-icons/tb';
+import {
+  TbAdjustments,
+  TbCheck,
+  TbEye,
+  TbEyeOff,
+  TbLayersSelectedBottom,
+  TbLink,
+  TbLock,
+  TbStack2
+} from 'react-icons/tb';
 import { useRedraw } from './hooks/useRedraw';
 import { useEventListener } from './hooks/useEventListener';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
@@ -15,6 +24,7 @@ export const LayerIndicator = () => {
   const actions = application.actions;
 
   useEventListener(diagram, 'diagramChange', redraw);
+  useEventListener(diagram.layers, 'layerStructureChange', redraw);
 
   return (
     <DropdownMenu.Root>
@@ -25,6 +35,10 @@ export const LayerIndicator = () => {
           ) : diagram.activeLayer.type === 'reference' ? (
             <div style={{ color: 'var(--accent-fg)', display: 'flex', alignItems: 'center' }}>
               <TbLink />
+            </div>
+          ) : diagram.activeLayer.type === 'modification' ? (
+            <div style={{ color: 'var(--accent-fg)', display: 'flex', alignItems: 'center' }}>
+              <TbLayersSelectedBottom />
             </div>
           ) : (
             <div style={{ color: 'var(--accent-fg)', display: 'flex', alignItems: 'center' }}>

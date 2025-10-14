@@ -15,6 +15,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { ResizeDrag } from '@diagram-craft/canvas/drag/resizeDrag';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 declare global {
   namespace Extensions {
@@ -46,7 +47,7 @@ export class TextTool extends AbstractTool {
     assertRegularLayer(layer);
 
     this.startPoint = this.diagram.viewBox.toDiagramPoint(point);
-    this.node = DiagramNode.create(
+    this.node = ElementFactory.node(
       newid(),
       'text',
       {

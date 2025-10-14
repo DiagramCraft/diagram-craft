@@ -7,10 +7,10 @@ import { ElementCustomPropertiesPanelForm } from '../../toolwindow/ObjectToolWin
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { sortBy } from '@diagram-craft/utils/array';
-import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { useDiagram } from '../../../application';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
+import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 export const EdgeCustomPropertiesEditor: Editor = props => {
   const $p = props.props as EdgeProps;
@@ -18,7 +18,7 @@ export const EdgeCustomPropertiesEditor: Editor = props => {
 
   const [type, setType] = useState('');
 
-  const edge = DiagramEdge.create(
+  const edge = ElementFactory.edge(
     newid(),
     new FreeEndpoint({ x: 0, y: 0 }),
     new FreeEndpoint({ x: 100, y: 100 }),

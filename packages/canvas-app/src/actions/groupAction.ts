@@ -9,6 +9,7 @@ import { newid } from '@diagram-craft/utils/id';
 import { ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 export const groupActions = (context: ActionContext) => ({
   GROUP_GROUP: new GroupAction('group', context),
@@ -63,7 +64,7 @@ class UndoableGroupAction implements UndoableAction {
     const layer = this.diagram.activeLayer;
     assertRegularLayer(layer);
 
-    this.#group = DiagramNode.create(
+    this.#group = ElementFactory.node(
       newid(),
       'group',
       Box.boundingBox(this.#elements.map(e => e.bounds)),

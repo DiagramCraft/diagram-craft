@@ -11,6 +11,7 @@ import { DiagramNode, NodeTexts } from '@diagram-craft/model/diagramNode';
 import { DrawioShapeNodeDefinition } from '../DrawioShape.nodeType';
 import { StyleManager } from '../styleManager';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
+import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 const registerStencil = (
   registry: NodeDefinitionRegistry,
@@ -35,7 +36,7 @@ export const parseCisco19Shapes = async (
 ): Promise<DiagramNode> => {
   if (style.str('shape') === 'mxgraph.cisco19.rect') {
     props.fill!.color = '#005073';
-    return DiagramNode.create(
+    return ElementFactory.node(
       id,
       `mxgraph.cisco19.${style.str('prIcon')}`,
       bounds,
@@ -45,7 +46,7 @@ export const parseCisco19Shapes = async (
     );
   }
 
-  return DiagramNode.create(id, style.str('shape')!, bounds, layer, props, metadata, texts);
+  return ElementFactory.node(id, style.str('shape')!, bounds, layer, props, metadata, texts);
 };
 
 export const registerCisco19Shapes = async (

@@ -17,6 +17,7 @@ import { Modifiers } from '../dragDropManager';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { hasHighlight, Highlights } from '../highlight';
 import { renderElement } from '../components/renderElement';
+import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 type TypeOrPropsFn<T> = T | ((p: NodePropsForRendering) => T);
 
@@ -146,7 +147,7 @@ export class FlexShapeNodeDefinition<
         }
 
         // Create a dummy node
-        const node = DiagramNode.create(
+        const node = ElementFactory.node(
           `${props.node.id}-${cmpDef?.id ?? cmp.id}`,
           cmpNodeType,
           adjustedBounds,

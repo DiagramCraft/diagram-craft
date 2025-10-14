@@ -18,7 +18,7 @@
     "test:watch": "vitest watch",
     "test:bench": "vitest bench --run",
     "lint:tsc": "tsc --noEmit",
-    "lint": "biome lint && tsc --noEmit"
+    "lint": "biome lint --max-diagnostics=100 && tsc --noEmit"
   },
   "keywords": [],
   "author": "Magnus Johansson",

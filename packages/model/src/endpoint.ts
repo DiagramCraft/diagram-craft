@@ -6,24 +6,15 @@ import type {
 import type { DiagramNode } from './diagramNode';
 import { _p, Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
-import { isSerializedEndpointPointInNode, isSerializedEndpointFree } from './serialization/utils';
-import { getTypedKeys } from '@diagram-craft/utils/object';
+import { isSerializedEndpointFree, isSerializedEndpointPointInNode } from './serialization/utils';
 import { assert } from '@diagram-craft/utils/assert';
+import { ElementLookup } from './elementLookup';
 
 export interface Endpoint {
   readonly position: Point;
   serialize(): SerializedEndpoint;
   readonly isConnected: boolean;
 }
-
-const Maplike = {
-  get<T, K extends string | number | symbol>(m: Record<K, T> | Map<K, T>, key: K): T | undefined {
-    return m instanceof Map ? m.get(key) : m[key];
-  },
-  keys<T, K extends string | number | symbol>(m: Record<K, T> | Map<K, T>): Array<K> {
-    return m instanceof Map ? Array.from(m.keys()) : getTypedKeys(m);
-  }
-};
 
 export abstract class ConnectedEndpoint<T extends SerializedEndpoint = SerializedEndpoint>
   implements Endpoint
@@ -49,25 +40,21 @@ export type OffsetType = 'absolute' | 'relative';
 export const Endpoint = {
   deserialize: (
     endpoint: SerializedEndpoint,
-    nodeLookup: Record<string, DiagramNode> | Map<string, DiagramNode>,
+    nodeLookup: ElementLookup<DiagramNode>,
     defer = false
   ): Endpoint => {
     if (isSerializedEndpointFree(endpoint)) {
       return new FreeEndpoint(endpoint.position);
     } else if (isSerializedEndpointPointInNode(endpoint)) {
       return new PointInNodeEndpoint(
-        defer
-          ? () => Maplike.get(nodeLookup, endpoint.node.id)!
-          : Maplike.get(nodeLookup, endpoint.node.id)!,
+        defer ? () => nodeLookup.get(endpoint.node.id)! : nodeLookup.get(endpoint.node.id)!,
         endpoint.ref,
         endpoint.offset,
         endpoint.offsetType ?? 'absolute'
       );
     } else {
       return new AnchorEndpoint(
-        defer
-          ? () => Maplike.get(nodeLookup, endpoint.node.id)!
-          : Maplike.get(nodeLookup, endpoint.node.id)!,
+        defer ? () => nodeLookup.get(endpoint.node.id)! : nodeLookup.get(endpoint.node.id)!,
         endpoint.anchor,
         endpoint.offset ?? Point.ORIGIN
       );

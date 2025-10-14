@@ -36,6 +36,7 @@ import { EditItemDialog } from '../../components/EditItemDialog';
 import { ToolWindow } from '../ToolWindow';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { ModelCenterDialogCommand } from '../../components/ModelCenterDialog/ModelCenterDialog';
+import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 const NODE_CACHE = new Map<string, DiagramNode>();
 
@@ -90,7 +91,7 @@ const makeTemplateNode = (
 const makeDefaultNode = (item: Data, schema: DataSchema, definitions: Definitions): DiagramNode => {
   return createThumbnailDiagramForNode(
     (_diagram, layer) =>
-      DiagramNode.create(
+      ElementFactory.node(
         newid(),
         'rect',
         { w: 100, h: 100, y: 0, x: 0, r: 0 },

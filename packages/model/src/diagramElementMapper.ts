@@ -3,13 +3,15 @@ import { CRDTMap } from './collaboration/crdt';
 import type { CRDTMapper } from './collaboration/datatypes/mapped/types';
 import { assert } from '@diagram-craft/utils/assert';
 import type { RegularLayer } from './diagramLayerRegular';
+import type { ModificationLayer } from './diagramLayerModification';
 
 /* Note: the use of FACTORIES and registerElementFactory seems somewhat convoluted,
  * but it's there to resolve circular dependencies */
 type DiagramElementFactory = (
   id: string,
-  layer: RegularLayer,
-  crdt: CRDTMap<DiagramElementCRDT>
+  layer: RegularLayer | ModificationLayer,
+  delegate: DiagramElement | undefined,
+  crdt?: CRDTMap<DiagramElementCRDT>
 ) => DiagramElement;
 
 const FACTORIES: Record<string, DiagramElementFactory> = {};
@@ -19,7 +21,8 @@ export const registerElementFactory = (type: string, factory: DiagramElementFact
 };
 
 export const makeElementMapper = (
-  layer: RegularLayer
+  layer: RegularLayer | ModificationLayer,
+  delegate: DiagramElement | undefined
 ): CRDTMapper<DiagramElement, CRDTMap<DiagramElementCRDT>> => ({
   fromCRDT: (e: CRDTMap<DiagramElementCRDT>) => {
     const type = e.get('type')!;
@@ -32,8 +35,12 @@ export const makeElementMapper = (
     }
 
     if (!FACTORIES[type]) assert.fail(`Unknown element type: ${type}`);
-    return FACTORIES[type](id, layer, e);
+    return FACTORIES[type](id, layer, delegate, e);
   },
 
   toCRDT: (e: DiagramElement) => e.crdt.get()
 });
+
+export const getElementFactory = (type: string): DiagramElementFactory | undefined => {
+  return FACTORIES[type];
+};

@@ -7,12 +7,13 @@ import { Diagram } from '../diagram';
 import { UnitOfWork } from '../unitOfWork';
 import { RegularLayer } from '../diagramLayerRegular';
 import { Box } from '@diagram-craft/geometry/box';
-import { DiagramNode } from '../diagramNode';
-import { DiagramEdge, ResolvedLabelNode } from '../diagramEdge';
+import { SimpleDiagramNode } from '../diagramNode';
+import { ResolvedLabelNode } from '../diagramEdge';
 import { FreeEndpoint } from '../endpoint';
 import { newid } from '@diagram-craft/utils/id';
 import { CRDTRoot } from '../collaboration/crdt';
 import { assertRegularLayer } from '../diagramLayerUtils';
+import { ElementFactory } from '../elementFactory';
 
 export class TestModel {
   static newDiagram(root?: CRDTRoot) {
@@ -86,7 +87,7 @@ export class TestLayerBuilder extends RegularLayer {
   }
 
   createEdge(options?: EdgeCreateOptions) {
-    return DiagramEdge.create(
+    return ElementFactory.edge(
       options?.id ?? newid(),
       new FreeEndpoint({ x: 0, y: 0 }),
       new FreeEndpoint({ x: 100, y: 100 }),
@@ -98,11 +99,11 @@ export class TestLayerBuilder extends RegularLayer {
   }
 }
 
-export class TestDiagramNodeBuilder extends DiagramNode {
+export class TestDiagramNodeBuilder extends SimpleDiagramNode {
   constructor(id: string, type: string, bounds: Box, diagram: Diagram) {
     super(id, diagram.activeLayer as RegularLayer);
     assertRegularLayer(this.layer);
-    DiagramNode.initializeNode(this, type, bounds, {}, {});
+    SimpleDiagramNode.initializeNode(this, type, bounds, {}, {});
   }
 
   asLabelNode(): ResolvedLabelNode {

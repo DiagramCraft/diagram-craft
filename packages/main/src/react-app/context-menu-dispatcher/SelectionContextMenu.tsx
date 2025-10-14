@@ -322,6 +322,10 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
       </ContextMenu.Sub>
 
       <ContextMenu.Separator className="cmp-context-menu__separator" />
+      <ActionContextMenuItem action={'SELECTION_ADD_TO_MODIFICATION_LAYER'}>
+        Add to modification layer
+      </ActionContextMenuItem>
+      <ContextMenu.Separator className="cmp-context-menu__separator" />
       <ActionContextMenuItem action={'COMMENT_ADD'}>Add Comment</ActionContextMenuItem>
     </>
   );

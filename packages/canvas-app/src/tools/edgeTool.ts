@@ -25,6 +25,7 @@ import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { Context } from '@diagram-craft/canvas/context';
 import { assert } from '@diagram-craft/utils/assert';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 declare global {
   namespace Extensions {
@@ -74,7 +75,7 @@ export class EdgeTool extends AbstractTool {
     const layer = this.diagram.activeLayer;
     assertRegularLayer(layer);
 
-    this.edge = DiagramEdge.create(
+    this.edge = ElementFactory.edge(
       newid(),
       this.currentAnchor
         ? new AnchorEndpoint(

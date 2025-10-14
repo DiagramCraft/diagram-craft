@@ -30,7 +30,10 @@ import {
 } from './InteractiveCanvasComponent';
 import { CollaborationConfig } from '@diagram-craft/model/collaboration/collaborationConfig';
 import { AwarenessCursorComponent } from '../components/AwarenessCursorComponent';
-import { isResolvableToRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import {
+  isResolvableToModificationLayer,
+  isResolvableToRegularLayer
+} from '@diagram-craft/model/diagramLayerUtils';
 import { AnchorHighlightComponent } from '../components/AnchorHighlightComponent';
 import { MoveTool } from '../tools/moveTool';
 
@@ -386,7 +389,8 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
             svg.g(
               {},
               ...diagram.layers.visible.flatMap(layer => {
-                if (!isResolvableToRegularLayer(layer)) return null;
+                if (!isResolvableToRegularLayer(layer) && !isResolvableToModificationLayer(layer))
+                  return null;
                 return this.renderLayer(layer, diagram, onMouseDown, onEdgeDoubleClick);
               })
             ),

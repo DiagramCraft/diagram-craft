@@ -1,7 +1,13 @@
 import { LabelNode } from './types';
 import { Box } from '@diagram-craft/geometry/box';
 import { Transform } from '@diagram-craft/geometry/transform';
-import { DiagramElement, type DiagramElementCRDT, isEdge, isNode } from './diagramElement';
+import {
+  AbstractDiagramElement,
+  DiagramElement,
+  type DiagramElementCRDT,
+  isEdge,
+  isNode
+} from './diagramElement';
 import { DiagramNodeSnapshot, getRemoteUnitOfWork, UnitOfWork, UOWTrackable } from './unitOfWork';
 import type { DiagramEdge, ResolvedLabelNode } from './diagramEdge';
 import { DefaultStyles, nodeDefaults } from './diagramDefaults';
@@ -12,7 +18,12 @@ import {
   FreeEndpoint,
   PointInNodeEndpoint
 } from './endpoint';
-import { DeepReadonly, DeepRequired, makeWriteable } from '@diagram-craft/utils/types';
+import {
+  DeepReadonly,
+  DeepRequired,
+  type FlatObject,
+  makeWriteable
+} from '@diagram-craft/utils/types';
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { assert, VERIFY_NOT_REACHED, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { newid } from '@diagram-craft/utils/id';
@@ -23,7 +34,6 @@ import { isEmptyString } from '@diagram-craft/utils/strings';
 import { Anchor } from './anchor';
 import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
-import { getAdjustments } from './diagramLayerRuleTypes';
 import { toUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
 import type { RegularLayer } from './diagramLayerRegular';
 import { transformPathList } from '@diagram-craft/geometry/pathListUtils';
@@ -39,6 +49,9 @@ import {
 } from './collaboration/datatypes/mapped/mappedCrdtMap';
 import { unique } from '@diagram-craft/utils/array';
 import { makeIsometricTransform } from '@diagram-craft/canvas/effects/isometric';
+import type { ModificationLayer } from './diagramLayerModification';
+import { getAdjustments } from './diagramLayerUtils';
+import type { NodeDefinition } from './elementDefinitionRegistry';
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;
@@ -73,7 +86,112 @@ const makeEdgesMapper = (
 
 const DEFAULT_BOUNDS = { x: 0, y: 0, w: 10, h: 10, r: 0 };
 
-export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramNodeSnapshot> {
+/**
+ * Shared implementation for transforming a node.
+ * Used by both SimpleDiagramNode and DelegatingDiagramNode to avoid duplication.
+ */
+export const applyNodeTransform = (
+  node: DiagramNode,
+  transforms: ReadonlyArray<Transform>,
+  uow: UnitOfWork,
+  isChild = false
+): void => {
+  uow.snapshot(node);
+
+  const previousBounds = node.bounds;
+  node.setBounds(Transform.box(node.bounds, ...transforms), uow);
+
+  node.getDefinition().onTransform(transforms, node, node.bounds, previousBounds, uow);
+
+  if (node.parent && !isChild) {
+    const parent = node.parent;
+    if (isNode(parent)) {
+      uow.registerOnCommitCallback('onChildChanged', parent, () => {
+        parent.getDefinition().onChildChanged(parent, uow);
+      });
+    } else {
+      assert.true(node.isLabelNode());
+
+      // TODO: This should be possible to put in the invalidation() method
+
+      if (uow.contains(node.labelEdge()!)) return;
+
+      const labelNode = node.labelNode();
+      assert.present(labelNode);
+
+      const dx = node.bounds.x - previousBounds.x;
+      const dy = node.bounds.y - previousBounds.y;
+
+      const clampAmount = 100;
+
+      node.updateLabelNode(
+        {
+          offset: {
+            x: clamp(labelNode.offset.x + dx, -clampAmount, clampAmount),
+            y: clamp(labelNode.offset.y + dy, -clampAmount, clampAmount)
+          }
+        },
+        uow
+      );
+    }
+  }
+
+  uow.updateElement(node);
+};
+
+export interface DiagramNode extends DiagramElement {
+  getDefinition(): NodeDefinition;
+  get nodeType(): string;
+  changeNodeType(nodeType: string, uow: UnitOfWork): void;
+  getText(id?: string): string;
+  setText(text: string, uow: UnitOfWork, id?: string): void;
+  readonly texts: NodeTexts;
+  readonly textsCloned: NodeTexts;
+  getPropsInfo<T extends PropPath<NodeProps>>(
+    path: T,
+    defaultValue?: PropPathValue<NodeProps, T>
+  ): PropertyInfo<PropPathValue<NodeProps, T>>;
+
+  readonly props: NodePropsForRendering;
+  readonly storedProps: NodeProps;
+  readonly storedPropsCloned: NodeProps;
+  readonly editProps: NodePropsForEditing;
+  readonly renderProps: NodePropsForRendering;
+  updateProps(callback: (props: NodeProps) => void, uow: UnitOfWork): void;
+  updateCustomProps<K extends keyof CustomNodeProps>(
+    key: K,
+    callback: (props: NonNullable<CustomNodeProps[K]>) => void,
+    uow: UnitOfWork
+  ): void;
+  readonly dataForTemplate: FlatObject;
+  readonly name: string;
+  convertToPath(uow: UnitOfWork): void;
+
+  _removeEdge(anchor: string | undefined, edge: DiagramEdge): void;
+  _addEdge(anchor: string | undefined, edge: DiagramEdge): void;
+  _getAnchorPosition(anchor: string): Point;
+  _getPositionInBounds(p: Point, respectRotation?: boolean): Point;
+
+  readonly edges: ReadonlyArray<DiagramEdge>;
+  isLabelNode(): boolean;
+  labelNode(): ResolvedLabelNode | undefined;
+  labelEdge(): DiagramEdge | undefined;
+  updateLabelNode(labelNode: Partial<LabelNode>, uow: UnitOfWork): void;
+  invalidateAnchors(uow: UnitOfWork): void;
+
+  get anchors(): ReadonlyArray<Anchor>;
+  getAnchor(anchor: string): Anchor;
+  duplicate(ctx?: DuplicationContext, id?: string): DiagramNode;
+
+  _populatePropsCache(): void;
+
+  _getNestedElements(): DiagramElement[];
+}
+
+export class SimpleDiagramNode
+  extends AbstractDiagramElement
+  implements DiagramNode, UOWTrackable<DiagramNodeSnapshot>
+{
   // Shared properties
   readonly #nodeType: CRDTProp<DiagramNodeCRDT, 'nodeType'>;
   readonly #edges: MappedCRDTMap<string[], { edges: Array<string> }>;
@@ -84,9 +202,9 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
   readonly #props: CRDTObject<NodeProps>;
   readonly #anchors: CRDTProp<DiagramNodeCRDT, 'anchors'>;
 
-  constructor(
+  protected constructor(
     id: string,
-    layer: RegularLayer,
+    layer: RegularLayer | ModificationLayer,
     anchorCache?: ReadonlyArray<Anchor>,
     crdt?: CRDTMap<DiagramElementCRDT>
   ) {
@@ -170,25 +288,33 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
   /* Factory ************************************************************************************************* */
 
-  static create(
+  static _createEmpty(
+    id: string,
+    layer: RegularLayer | ModificationLayer,
+    crdt?: CRDTMap<DiagramElementCRDT>
+  ): DiagramNode {
+    return new SimpleDiagramNode(id, layer, undefined, crdt);
+  }
+
+  static _create(
     id: string,
     nodeType: 'group' | string,
     bounds: Box,
-    layer: RegularLayer,
+    layer: RegularLayer | ModificationLayer,
     props: NodePropsForEditing,
     metadata: ElementMetadata,
     text: NodeTexts = { text: '' },
     anchorCache?: ReadonlyArray<Anchor>
   ) {
-    const node = new DiagramNode(id, layer, anchorCache);
+    const node = new SimpleDiagramNode(id, layer, anchorCache);
 
-    DiagramNode.initializeNode(node, nodeType, bounds, props, metadata, text);
+    SimpleDiagramNode.initializeNode(node, nodeType, bounds, props, metadata, text);
 
     return node;
   }
 
   protected static initializeNode(
-    node: DiagramNode,
+    node: SimpleDiagramNode,
     nodeType: 'group' | string,
     bounds: Box,
     props: NodePropsForEditing,
@@ -372,7 +498,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     };
   }
 
-  protected populatePropsCache() {
+  _populatePropsCache() {
     const {
       parentProps,
       styleProps,
@@ -410,7 +536,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
     for (const child of this.children) {
       if (isNode(child)) {
-        child.populatePropsCache();
+        child._populatePropsCache();
       }
     }
 
@@ -430,12 +556,12 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
 
   get editProps(): NodePropsForEditing {
     return (this.cache.get('props.forEditing') ??
-      this.populatePropsCache().forEditing) as NodePropsForEditing;
+      this._populatePropsCache().forEditing) as NodePropsForEditing;
   }
 
   get renderProps(): NodePropsForRendering {
     return (this.cache.get('props.forRendering') ??
-      this.populatePropsCache().forRendering) as NodePropsForRendering;
+      this._populatePropsCache().forRendering) as NodePropsForRendering;
   }
 
   updateProps(callback: (props: NodeProps) => void, uow: UnitOfWork) {
@@ -642,7 +768,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
       return context.targetElementsInGroup.get(this.id) as DiagramNode;
     }
 
-    const node = DiagramNode.create(
+    const node = SimpleDiagramNode._create(
       id ?? newid(),
       this.nodeType,
       deepClone(this.bounds),
@@ -668,7 +794,7 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     if (!isTopLevel) return node;
 
     // Phase 2 - update all edges to point to the new elements
-    for (const e of node.getNestedElements()) {
+    for (const e of node._getNestedElements()) {
       if (isEdge(e)) {
         let newStart: Endpoint;
         let newEnd: Endpoint;
@@ -798,48 +924,8 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     }
   }
 
-  transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork, isChild = false) {
-    uow.snapshot(this);
-
-    const previousBounds = this.bounds;
-    this.setBounds(Transform.box(this.bounds, ...transforms), uow);
-
-    this.getDefinition().onTransform(transforms, this, this.bounds, previousBounds, uow);
-
-    if (this.parent && !isChild) {
-      const parent = this.parent;
-      if (isNode(parent)) {
-        uow.registerOnCommitCallback('onChildChanged', parent, () => {
-          parent.getDefinition().onChildChanged(parent, uow);
-        });
-      } else {
-        assert.true(this.isLabelNode());
-
-        // TODO: This should be possible to put in the invalidation() method
-
-        if (uow.contains(this.labelEdge()!)) return;
-
-        const labelNode = this.labelNode();
-        assert.present(labelNode);
-
-        const dx = this.bounds.x - previousBounds.x;
-        const dy = this.bounds.y - previousBounds.y;
-
-        const clampAmount = 100;
-
-        this.updateLabelNode(
-          {
-            offset: {
-              x: clamp(labelNode.offset.x + dx, -clampAmount, clampAmount),
-              y: clamp(labelNode.offset.y + dy, -clampAmount, clampAmount)
-            }
-          },
-          uow
-        );
-      }
-    }
-
-    uow.updateElement(this);
+  transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork, isChild = false): void {
+    applyNodeTransform(this, transforms, uow, isChild);
   }
 
   _removeEdge(anchor: string | undefined, edge: DiagramEdge) {
@@ -934,8 +1020,8 @@ export class DiagramNode extends DiagramElement implements UOWTrackable<DiagramN
     return [this.renderProps.fill.image.id, this.renderProps.fill.pattern];
   }
 
-  private getNestedElements(): DiagramElement[] {
-    return [this, ...this.children.flatMap(c => (isNode(c) ? c.getNestedElements() : c))];
+  _getNestedElements(): DiagramElement[] {
+    return [this, ...this.children.flatMap(c => (isNode(c) ? c._getNestedElements() : c))];
   }
 
   /* Query Support ***************************************************************************************** */

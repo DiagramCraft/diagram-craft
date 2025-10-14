@@ -11,6 +11,7 @@ import { Direction } from '@diagram-craft/geometry/direction';
 import { createLinkedNode } from '@diagram-craft/canvas-app/actions/linkedNodeAction';
 import { Context } from '../context';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 export class AnchorHandleDrag extends Drag {
   edge: DiagramEdge;
@@ -27,7 +28,7 @@ export class AnchorHandleDrag extends Drag {
     const diagram = this.node.diagram;
     assertRegularLayer(diagram.activeLayer);
 
-    this.edge = DiagramEdge.create(
+    this.edge = ElementFactory.edge(
       newid(),
       new AnchorEndpoint(this.node, this.anchorId),
       new FreeEndpoint(diagram.viewBox.toDiagramPoint(this.point)),

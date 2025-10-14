@@ -147,7 +147,7 @@ export const AppLoader = (props: Props) => {
         doc.deactivate(() => {});
         load({ url: url });
       },
-      'doc-cleared'
+      { id: 'doc-cleared' }
     );
     return () => doc.off('cleared', 'doc-cleared');
   }, [doc]);

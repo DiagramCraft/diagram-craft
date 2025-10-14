@@ -9,7 +9,7 @@ import {
 } from '@diagram-craft/canvas-app/defaultRegistry';
 import { UnitOfWork } from '../unitOfWork';
 import { RegularLayer } from '../diagramLayerRegular';
-import { DiagramNode } from '../diagramNode';
+import { ElementFactory } from '../elementFactory';
 
 const r = new Random(123456);
 
@@ -34,7 +34,7 @@ const { diagram: d } = DocumentBuilder.empty(
 UnitOfWork.execute(d, uow => {
   for (let i = 0; i < 1000; i++) {
     (d.activeLayer as RegularLayer).addElement(
-      DiagramNode.create(i.toString(), 'rect', randomBox(), d.activeLayer as RegularLayer, {}, {}),
+      ElementFactory.node(i.toString(), 'rect', randomBox(), d.activeLayer as RegularLayer, {}, {}),
       uow
     );
   }

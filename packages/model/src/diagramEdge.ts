@@ -1,12 +1,18 @@
-import { DiagramNode, DuplicationContext } from './diagramNode';
-import { LabelNode, Waypoint } from './types';
+import type { DiagramNode, DuplicationContext } from './diagramNode';
+import { type ControlPoints, LabelNode, Waypoint } from './types';
 import { Point } from '@diagram-craft/geometry/point';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { Box } from '@diagram-craft/geometry/box';
 import { PointOnPath, TimeOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
-import { CubicSegment, LineSegment } from '@diagram-craft/geometry/pathSegment';
+import { CubicSegment, LineSegment, type PathSegment } from '@diagram-craft/geometry/pathSegment';
 import { Transform } from '@diagram-craft/geometry/transform';
-import { DiagramElement, type DiagramElementCRDT, isEdge, isNode } from './diagramElement';
+import {
+  AbstractDiagramElement,
+  DiagramElement,
+  type DiagramElementCRDT,
+  isEdge,
+  isNode
+} from './diagramElement';
 import { DiagramEdgeSnapshot, getRemoteUnitOfWork, UnitOfWork, UOWTrackable } from './unitOfWork';
 import {
   AnchorEndpoint,
@@ -18,19 +24,18 @@ import {
 import { DefaultStyles, edgeDefaults } from './diagramDefaults';
 import { buildEdgePath } from './edgePathBuilder';
 import { isHorizontal, isParallel, isPerpendicular, isReadable, isVertical } from './labelNode';
-import { DeepReadonly, DeepRequired } from '@diagram-craft/utils/types';
+import { DeepReadonly, DeepRequired, type FlatObject } from '@diagram-craft/utils/types';
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { newid } from '@diagram-craft/utils/id';
 import { isDifferent } from '@diagram-craft/utils/math';
 import { Direction } from '@diagram-craft/geometry/direction';
-import { EdgeDefinition } from './elementDefinitionRegistry';
+import type { EdgeDefinition } from './elementDefinitionRegistry';
 import { isEmptyString } from '@diagram-craft/utils/strings';
 import { assert, is, mustExist } from '@diagram-craft/utils/assert';
 import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
-import { getAdjustments } from './diagramLayerRuleTypes';
 import type { RegularLayer } from './diagramLayerRegular';
-import { assertRegularLayer } from './diagramLayerUtils';
+import { assertRegularLayer, getAdjustments } from './diagramLayerUtils';
 import type { Reference, SerializedEndpoint } from './serialization/types';
 import type { CRDTMap, FlatCRDTMap } from './collaboration/crdt';
 import { WatchableValue } from '@diagram-craft/utils/watchableValue';
@@ -42,6 +47,8 @@ import { type CRDTMapper } from './collaboration/datatypes/mapped/types';
 import { CRDTProp } from './collaboration/datatypes/crdtProp';
 import { MappedCRDTProp } from './collaboration/datatypes/mapped/mappedCrdtProp';
 import { CRDTObject } from './collaboration/datatypes/crdtObject';
+import type { ModificationLayer } from './diagramLayerModification';
+import type { Path } from '@diagram-craft/geometry/path';
 
 const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
   endpoint instanceof ConnectedEndpoint;
@@ -114,7 +121,56 @@ const makeEndpointMapper = (edge: DiagramEdge): CRDTMapper<Endpoint, SerializedE
   toCRDT: (e: Endpoint) => e.serialize()
 });
 
-export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramEdgeSnapshot> {
+export interface DiagramEdge extends DiagramElement {
+  getDefinition(): EdgeDefinition;
+  getPropsInfo<T extends PropPath<EdgeProps>>(path: T): PropertyInfo<PropPathValue<EdgeProps, T>>;
+
+  readonly storedProps: DeepReadonly<EdgeProps>;
+  readonly storedPropsCloned: DeepReadonly<EdgeProps>;
+  readonly editProps: DeepReadonly<EdgePropsForEditing>;
+  readonly renderProps: DeepReadonly<EdgePropsForRendering>;
+  updateProps(callback: (props: EdgeProps) => void, uow: UnitOfWork): void;
+  updateCustomProps<K extends keyof CustomEdgeProps>(
+    key: K,
+    callback: (props: NonNullable<CustomEdgeProps[K]>) => void,
+    uow: UnitOfWork
+  ): void;
+  inferControlPoints(i: number): ControlPoints;
+
+  readonly dataForTemplate: FlatObject;
+  readonly name: string;
+
+  setStart(start: Endpoint, uow: UnitOfWork): void;
+  get start(): Endpoint;
+  setEnd(end: Endpoint, uow: UnitOfWork): void;
+  get end(): Endpoint;
+  isConnected(): boolean;
+
+  labelNodes: ReadonlyArray<ResolvedLabelNode>;
+  addLabelNode(node: ResolvedLabelNode, uow: UnitOfWork): void;
+  setLabelNodes(labelNodes: ReadonlyArray<ResolvedLabelNode> | undefined, uow: UnitOfWork): void;
+  removeLabelNode(node: LabelNode, uow: UnitOfWork): void;
+
+  readonly waypoints: ReadonlyArray<Waypoint>;
+  replaceWaypoint(i: number, wp: Waypoint, uow: UnitOfWork): void;
+  addWaypoint(wp: Waypoint, uow: UnitOfWork): number;
+  removeWaypoint(waypoint: Waypoint, uow: UnitOfWork): void;
+  moveWaypoint(waypoint: Waypoint, point: Point, uow: UnitOfWork): void;
+
+  readonly midpoints: ReadonlyArray<Point>;
+
+  path(): Path;
+
+  readonly intersections: Array<Intersection>;
+  flip(uow: UnitOfWork): void;
+
+  _recalculateIntersections(uow: UnitOfWork, propagate: boolean): void;
+}
+
+export class SimpleDiagramEdge
+  extends AbstractDiagramElement
+  implements DiagramEdge, UOWTrackable<DiagramEdgeSnapshot>
+{
   // Transient properties
   #intersections: Intersection[] = [];
 
@@ -125,7 +181,11 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   readonly #end: MappedCRDTProp<DiagramEdgeCRDT, 'end', Endpoint>;
   readonly #props: CRDTObject<EdgeProps>;
 
-  constructor(id: string, layer: RegularLayer, crdt?: CRDTMap<DiagramElementCRDT>) {
+  protected constructor(
+    id: string,
+    layer: RegularLayer | ModificationLayer,
+    crdt?: CRDTMap<DiagramElementCRDT>
+  ) {
     super('edge', id, layer, crdt);
 
     const edgeCrdt = this._crdt as unknown as WatchableValue<CRDTMap<DiagramEdgeCRDT>>;
@@ -174,16 +234,24 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
 
   /* Factory ************************************************************************************************* */
 
-  static create(
+  static _createEmpty(
+    id: string,
+    layer: RegularLayer | ModificationLayer,
+    crdt?: CRDTMap<DiagramElementCRDT>
+  ): DiagramEdge {
+    return new SimpleDiagramEdge(id, layer, crdt);
+  }
+
+  static _create(
     id: string,
     start: Endpoint,
     end: Endpoint,
     props: EdgePropsForEditing,
     metadata: ElementMetadata,
     midpoints: ReadonlyArray<Waypoint>,
-    layer: RegularLayer
+    layer: RegularLayer | ModificationLayer
   ) {
-    const edge = new DiagramEdge(id, layer);
+    const edge = new SimpleDiagramEdge(id, layer);
 
     edge.#start.set(start);
     edge.#end.set(end);
@@ -743,9 +811,9 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   /* Midpoints *********************************************************************************************** */
 
   // TODO: Can we move this to Path?
-  get midpoints() {
+  get midpoints(): ReadonlyArray<Point> {
     const path = this.path();
-    return path.segments.map(s => {
+    return path.segments.map((s: PathSegment) => {
       return s.point(0.5);
     });
   }
@@ -797,7 +865,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
   duplicate(ctx?: DuplicationContext, id?: string) {
     const uow = new UnitOfWork(this.diagram);
 
-    const edge = DiagramEdge.create(
+    const edge = SimpleDiagramEdge._create(
       id ?? newid(),
       this.start,
       this.end,
@@ -833,7 +901,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     return this.layer.isLocked();
   }
 
-  path() {
+  path(): Path {
     // TODO: We should be able to cache this, and then invalidate it when the edge changes (see invalidate())
 
     const startDirection = this._getNormalDirection(this.start);
@@ -886,7 +954,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     return undefined;
   }
 
-  transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork) {
+  transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork): void {
     uow.snapshot(this);
 
     this.setBounds(Transform.box(this.bounds, ...transforms), uow);
@@ -953,7 +1021,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     uow.beginInvalidation(this);
 
     this.adjustLabelNodePosition(uow);
-    this.recalculateIntersections(uow, true);
+    this._recalculateIntersections(uow, true);
   }
 
   detach(uow: UnitOfWork) {
@@ -989,7 +1057,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
     }
   }
 
-  private recalculateIntersections(uow: UnitOfWork, propagate = false) {
+  _recalculateIntersections(uow: UnitOfWork, propagate = false) {
     if (!this.diagram.hasEdgesWithLineHops) return;
 
     let currentEdgeHasBeenSeen = false;
@@ -1017,7 +1085,7 @@ export class DiagramEdge extends DiagramElement implements UOWTrackable<DiagramE
         }))
       );
       if (propagate) {
-        edge.recalculateIntersections(uow, false);
+        edge._recalculateIntersections(uow, false);
       }
     }
 

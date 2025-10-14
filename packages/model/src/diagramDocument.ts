@@ -82,10 +82,14 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
       makeDiagramMapper(this),
       {
         onRemoteAdd: e =>
-          this.root.on('remoteAfterTransaction', () => getRemoteUnitOfWork(e).commit(), e.id),
+          this.root.on('remoteAfterTransaction', () => getRemoteUnitOfWork(e).commit(), {
+            id: e.id
+          }),
         onRemoteRemove: e => this.root.off('remoteAfterTransaction', e.id),
         onInit: e =>
-          this.root.on('remoteAfterTransaction', () => getRemoteUnitOfWork(e).commit(), e.id)
+          this.root.on('remoteAfterTransaction', () => getRemoteUnitOfWork(e).commit(), {
+            id: e.id
+          })
       }
     );
 
@@ -167,7 +171,9 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     this.#diagrams.add(diagram.id, diagram);
     //}
 
-    this.root.on('remoteAfterTransaction', () => getRemoteUnitOfWork(diagram).commit(), diagram.id);
+    this.root.on('remoteAfterTransaction', () => getRemoteUnitOfWork(diagram).commit(), {
+      id: diagram.id
+    });
 
     this.emit('diagramAdded', { diagram: diagram });
   }

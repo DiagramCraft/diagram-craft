@@ -22,6 +22,7 @@ import { rawHTML, VNode } from '../component/vdom';
 import styles from './canvas.css?inline';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { isResolvableToRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import type { ModificationLayer } from '@diagram-craft/model/diagramLayerModification';
 
 export type BaseCanvasProps = {
   id: string;
@@ -84,7 +85,7 @@ export abstract class BaseCanvasComponent<
   }
 
   protected renderLayer(
-    layer: Layer<RegularLayer>,
+    layer: Layer<RegularLayer> | Layer<ModificationLayer>,
     $d: Diagram,
     onMouseDown: ((id: string, coord: Point, modifiers: Modifiers) => void) | undefined,
     onEdgeDoubleClick: ((id: string, coord: Point) => void) | undefined

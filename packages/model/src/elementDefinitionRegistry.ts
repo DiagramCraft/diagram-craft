@@ -16,6 +16,7 @@ import { Property } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWin
 import { PathList } from '@diagram-craft/geometry/pathList';
 import { assertRegularLayer } from './diagramLayerUtils';
 import { safeSplit } from '@diagram-craft/utils/safe';
+import { ElementFactory } from './elementFactory';
 
 export type NodeCapability =
   | 'children'
@@ -248,7 +249,7 @@ export const makeStencilNode =
     const layer = $d.activeLayer;
     assertRegularLayer(layer);
 
-    const n = DiagramNode.create(
+    const n = ElementFactory.node(
       newid(),
       typeId,
       Box.applyAspectRatio(

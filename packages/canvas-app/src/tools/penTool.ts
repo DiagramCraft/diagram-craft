@@ -12,6 +12,7 @@ import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { isSame } from '@diagram-craft/utils/math';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 declare global {
   namespace Extensions {
@@ -54,7 +55,7 @@ export class PenTool extends AbstractTool {
     if (!this.node) {
       const initialPath = { x: 0, y: 0 };
 
-      this.node = DiagramNode.create(
+      this.node = ElementFactory.node(
         newid(),
         'generic-path',
         { x: diagramPoint.x, y: diagramPoint.y, w: 10, h: 10, r: 0 },

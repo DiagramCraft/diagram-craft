@@ -22,6 +22,7 @@ import { AndroidCheckboxNodeDefinition } from './androidCheckbox.nodeType';
 import { AndroidIndeterminateSpinner } from './androidIndeterminateSpinner.nodeType';
 import { StyleManager } from '../../styleManager';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
+import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 const registerStencil = (
   registry: NodeDefinitionRegistry,
@@ -71,7 +72,7 @@ export const parseAndroidShapes = async (
     }
   }
 
-  return DiagramNode.create(id, style.str('shape')!, bounds, layer, props, metadata, texts);
+  return ElementFactory.node(id, style.str('shape')!, bounds, layer, props, metadata, texts);
 };
 
 export const registerAndroidShapes = async (

@@ -7,11 +7,11 @@ import { groupBy } from '@diagram-craft/utils/array';
 import { DiagramEdge } from './diagramEdge';
 import { MappedCRDTOrderedMap } from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import { makeElementMapper, registerElementFactory } from './diagramElementMapper';
-import { DiagramNode } from './diagramNode';
 import { watch } from '@diagram-craft/utils/watchableValue';
+import { ElementFactory } from './elementFactory';
 
-registerElementFactory('node', (id, layer, crdt) => new DiagramNode(id, layer, undefined, crdt));
-registerElementFactory('edge', (id, layer, crdt) => new DiagramEdge(id, layer, crdt));
+registerElementFactory('node', (id, layer, _, c) => ElementFactory.emptyNode(id, layer, c));
+registerElementFactory('edge', (id, layer, _, c) => ElementFactory.emptyEdge(id, layer, c));
 
 export class RegularLayer extends Layer<RegularLayer> {
   #elements: MappedCRDTOrderedMap<DiagramElement, DiagramElementCRDT>;
@@ -27,7 +27,7 @@ export class RegularLayer extends Layer<RegularLayer> {
 
     this.#elements = new MappedCRDTOrderedMap<DiagramElement, DiagramElementCRDT>(
       watch(this.crdt.get('elements', () => diagram.document.root.factory.makeMap())!),
-      makeElementMapper(this),
+      makeElementMapper(this, undefined),
       {
         onRemoteAdd: e => {
           const uow = getRemoteUnitOfWork(diagram);

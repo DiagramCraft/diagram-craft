@@ -14,11 +14,11 @@ import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { applyBooleanOperation, BooleanOperation } from '@diagram-craft/geometry/pathClip';
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { newid } from '@diagram-craft/utils/id';
 import { ActionCriteria } from '@diagram-craft/canvas/action';
 import { toUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
 import { transformPathList } from '@diagram-craft/geometry/pathListUtils';
+import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 declare global {
   interface ActionMap extends ReturnType<typeof geometryActions> {}
@@ -105,7 +105,7 @@ class SelectionBooleanOperation extends AbstractSelectionAction<Application> {
 
       const scaledPath = transformPathList(p, toUnitLCS(nodeBounds));
 
-      return DiagramNode.create(
+      return ElementFactory.node(
         newid(),
         'generic-path',
         nodeBounds,
