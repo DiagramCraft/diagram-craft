@@ -1,6 +1,4 @@
-import { Box } from '@diagram-craft/geometry/box';
 import { Point } from '@diagram-craft/geometry/point';
-import { Anchor } from './anchor';
 
 export type Progress = {
   status: 'complete' | 'error' | 'pending';
@@ -12,21 +10,6 @@ export type ProgressCallback = (
   status: Progress['status'],
   opts: Pick<Progress, 'message' | 'completion'>
 ) => void;
-
-// TODO: Can we remove this?
-export interface ElementInterface {
-  id: string;
-  type: string;
-}
-
-export interface NodeInterface extends ElementInterface {
-  type: 'node' | 'delegating-node';
-  nodeType: 'group' | string;
-  id: string;
-  bounds: Box;
-
-  anchors?: ReadonlyArray<Anchor>;
-}
 
 export type LabelNodeType =
   | 'parallel'
@@ -43,14 +26,6 @@ export type LabelNode = Readonly<{
   timeOffset: number;
   type: LabelNodeType;
 }>;
-
-export interface EdgeInterface extends ElementInterface {
-  type: 'edge' | 'delegating-edge';
-  id: string;
-  waypoints?: ReadonlyArray<Waypoint>;
-
-  labelNodes?: ReadonlyArray<LabelNode>;
-}
 
 export type Waypoint = Readonly<{
   point: Point;

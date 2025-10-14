@@ -1,4 +1,4 @@
-import type { EdgeInterface, Guide, NodeInterface } from '../types';
+import type { Guide, LabelNode, Waypoint } from '../types';
 import { Point } from '@diagram-craft/geometry/point';
 import type { EdgePropsForEditing } from '../diagramEdge';
 import type { NodePropsForEditing, NodeTexts } from '../diagramNode';
@@ -11,6 +11,8 @@ import type { DataTemplate } from '../diagramDocument';
 import type { SerializedComment } from '../comment';
 import type { QueryEntry } from '../documentProps';
 import type { ModificationType } from '../diagramLayerModification';
+import { Box } from '@diagram-craft/geometry/box';
+import { Anchor } from '../anchor';
 
 export interface Reference {
   id: string;
@@ -94,7 +96,13 @@ export interface SerializedStyles {
 
 export type SerializedStylesheet = Omit<StylesheetSnapshot, '_snapshotType'>;
 
-export interface SerializedNode extends NodeInterface {
+export interface SerializedNode {
+  type: 'node' | 'delegating-node';
+  nodeType: 'group' | string;
+  id: string;
+  bounds: Box;
+  anchors?: ReadonlyArray<Anchor>;
+
   edges?: Record<string, ReadonlyArray<Reference>>;
   children?: ReadonlyArray<SerializedElement>;
   props: NodePropsForEditing;
@@ -123,7 +131,12 @@ export type SerializedEndpoint =
   | SerializedPointInNodeEndpoint
   | SerializedFreeEndpoint;
 
-export interface SerializedEdge extends EdgeInterface {
+export interface SerializedEdge {
+  id: string;
+  type: 'edge' | 'delegating-edge';
+  waypoints?: ReadonlyArray<Waypoint>;
+  labelNodes?: ReadonlyArray<LabelNode>;
+
   start: SerializedEndpoint;
   end: SerializedEndpoint;
   props: EdgePropsForEditing;

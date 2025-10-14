@@ -5,7 +5,6 @@ import type {
   NodePropsForEditing,
   NodePropsForRendering
 } from './diagramNode';
-import { ElementInterface } from './types';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { Box } from '@diagram-craft/geometry/box';
 import { getRemoteUnitOfWork, UnitOfWork } from './unitOfWork';
@@ -113,9 +112,7 @@ export interface DiagramElement {
   comments: ReadonlyArray<Comment>;
 }
 
-export abstract class AbstractDiagramElement
-  implements DiagramElement, ElementInterface, AttachmentConsumer
-{
+export abstract class AbstractDiagramElement implements DiagramElement, AttachmentConsumer {
   readonly trackableType = 'element';
 
   // Transient properties
