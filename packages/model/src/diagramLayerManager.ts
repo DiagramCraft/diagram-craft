@@ -16,6 +16,7 @@ import { RegularLayer } from './diagramLayerRegular';
 import { watch } from '@diagram-craft/utils/watchableValue';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { ModificationLayer } from './diagramLayerModification';
+import type { EmptyObject } from '@diagram-craft/utils/types';
 
 export type LayerManagerCRDT = {
   // TODO: Should we move visibility to be a property of the layer instead
@@ -64,7 +65,7 @@ export type LayerManagerEvents = {
   layerAdded: { layer: Layer };
   layerUpdated: { layer: Layer };
   layerRemoved: { layer: Layer };
-  layerStructureChange: {};
+  layerStructureChange: EmptyObject;
 };
 
 export class LayerManager

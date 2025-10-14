@@ -87,7 +87,7 @@ export abstract class Layer<
   // TODO: Add uow here
   set locked(value: boolean) {
     this.#locked = value;
-    this.diagram.layers.emit('layerStructureChange', { layer: this });
+    this.diagram.layers.emit('layerStructureChange');
   }
 
   abstract resolve(): T | undefined;
