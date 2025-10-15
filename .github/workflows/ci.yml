@@ -4,6 +4,8 @@ on:
     branches:
       - "main"
   workflow_dispatch:
+permissions:
+  pull-requests: write
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -131,4 +133,5 @@ jobs:
           run: pnpm vitest bench
           # token retrieved from the CodSpeed app at the previous step
           token: ${{ secrets.CODSPEED_TOKEN }}
+
 

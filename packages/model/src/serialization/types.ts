@@ -13,6 +13,7 @@ import type { QueryEntry } from '../documentProps';
 import type { ModificationType } from '../diagramLayerModification';
 import { Box } from '@diagram-craft/geometry/box';
 import { Anchor } from '../anchor';
+import type { Story } from '../documentStories';
 
 export interface Reference {
   id: string;
@@ -61,6 +62,8 @@ export type SerializedDiagram = {
   comments?: ReadonlyArray<SerializedComment>;
 };
 
+export type SerializedStory = Story;
+
 export interface SerializedDiagramDocument {
   diagrams: ReadonlyArray<SerializedDiagram>;
   attachments?: Record<string, string>;
@@ -84,6 +87,7 @@ export interface SerializedDiagramDocument {
     templates: DataTemplate[];
     overrides?: Record<string, Record<string, SerializedOverride>>;
   };
+  stories?: ReadonlyArray<SerializedStory>;
   hash?: string;
 }
 
