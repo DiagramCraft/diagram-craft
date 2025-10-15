@@ -7,6 +7,7 @@ import { useDocument, useApplication } from '../../../application';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { useState, useEffect, useMemo } from 'react';
 import { StoryPlayer } from '@diagram-craft/model/storyPlayer';
+import { mustExist } from '@diagram-craft/utils/assert';
 
 export const StoryPlayerPanel = () => {
   const redraw = useRedraw();
@@ -14,62 +15,37 @@ export const StoryPlayerPanel = () => {
   const application = useApplication();
   const stories = document.stories.stories;
 
-  const player = useMemo(() => new StoryPlayer(document), [document]);
+  const player = useMemo(
+    () => new StoryPlayer(document, d => (application.model.activeDiagram = d)),
+    [document, application]
+  );
 
   const [selectedStoryId, setSelectedStoryId] = useState<string | undefined>(
     stories.length > 0 ? stories[0]?.id : undefined
   );
 
   useEventListener(document.stories, 'change', redraw);
-  useEventListener(player, 'stateChange', ({ story }) => {
-    if (story) {
-      const currentStep = story.steps[player.currentStepIndex];
-      if (currentStep) {
-        for (const action of currentStep.actions) {
-          if (action.type === 'switch-diagram') {
-            const diagram = document.byId(action.diagramId);
-            if (diagram) {
-              application.model.activeDiagram = diagram;
-            }
-          }
-        }
-      }
-    } else if (player.currentStepIndex === -1 && player.savedDiagramId) {
-      // Restore the original diagram when stopped
-      const diagram = document.byId(player.savedDiagramId);
-      if (diagram) {
-        application.model.activeDiagram = diagram;
-      }
-    }
-    redraw();
-  });
 
   useEffect(() => {
     if (selectedStoryId) {
-      player.loadStory(selectedStoryId);
+      player.loadStory(mustExist(document.stories.getStory(selectedStoryId)));
     }
-  }, [selectedStoryId, player]);
+  }, [selectedStoryId, player, document]);
 
   const handleStart = () => {
     if (!player.currentStory) {
       if (selectedStoryId) {
-        player.loadStory(selectedStoryId);
+        player.loadStory(mustExist(document.stories.getStory(selectedStoryId)));
       }
     }
-    player.start(application.model.activeDiagram.id);
+    player.start(application.model.activeDiagram);
   };
 
-  const handleStop = () => {
-    player.stop();
-  };
+  const handleStop = () => player.stop();
 
-  const handleNext = () => {
-    player.next();
-  };
+  const handleNext = () => player.next();
 
-  const handlePrevious = () => {
-    player.previous();
-  };
+  const handlePrevious = () => player.previous();
 
   const currentStory = player.currentStory;
   const currentStep = player.currentStep;

@@ -135,12 +135,9 @@ export class DocumentStories extends EventEmitter<DocumentStoriesEvents> {
       actions: []
     };
 
-    const updatedStory: Story = {
-      ...story,
-      steps: [...story.steps, step]
-    };
+    story.steps.push(step);
 
-    this.#stories.update(story.id, updatedStory);
+    this.#stories.update(story.id, story);
     this.emitAsync('change');
     return step;
   }
@@ -149,28 +146,19 @@ export class DocumentStories extends EventEmitter<DocumentStoriesEvents> {
     const stepIndex = story.steps.findIndex(s => s.id === step.id);
     assert.true(stepIndex >= 0);
 
-    const updatedStep: Step = {
-      ...step,
-      title: updates.title ?? step.title,
-      description: updates.description ?? step.description
-    };
+    step.title = updates.title ?? step.title;
+    step.description = updates.description ?? step.description;
 
-    const updatedStory: Story = {
-      ...story,
-      steps: story.steps.toSpliced(stepIndex, 1, updatedStep)
-    };
+    story.steps[stepIndex] = step;
 
-    this.#stories.update(story.id, updatedStory);
+    this.#stories.update(story.id, story);
     this.emitAsync('change');
   }
 
   deleteStep(story: Story, step: Step) {
-    const updatedStory: Story = {
-      ...story,
-      steps: story.steps.filter(s => s.id !== step.id)
-    };
+    story.steps = story.steps.filter(s => s.id !== step.id);
 
-    this.#stories.update(story.id, updatedStory);
+    this.#stories.update(story.id, story);
     this.emitAsync('change');
   }
 
@@ -179,17 +167,11 @@ export class DocumentStories extends EventEmitter<DocumentStoriesEvents> {
     assert.true(stepIndex >= 0);
 
     const currentStep = mustExist(story.steps[stepIndex]);
-    const updatedStep: Step = {
-      ...currentStep,
-      actions: [...currentStep.actions, action]
-    };
+    currentStep.actions.push(action);
 
-    const updatedStory: Story = {
-      ...story,
-      steps: story.steps.toSpliced(stepIndex, 1, updatedStep)
-    };
+    story.steps[stepIndex] = currentStep;
 
-    this.#stories.update(story.id, updatedStory);
+    this.#stories.update(story.id, story);
     this.emitAsync('change');
   }
 
@@ -200,17 +182,11 @@ export class DocumentStories extends EventEmitter<DocumentStoriesEvents> {
     const currentStep = mustExist(story.steps[stepIndex]);
     if (actionIndex < 0 || actionIndex >= currentStep.actions.length) return;
 
-    const updatedStep: Step = {
-      ...currentStep,
-      actions: currentStep.actions.filter((_, i) => i !== actionIndex)
-    };
+    step.actions = currentStep.actions.filter((_, i) => i !== actionIndex);
 
-    const updatedStory: Story = {
-      ...story,
-      steps: story.steps.toSpliced(stepIndex, 1, updatedStep)
-    };
+    story.steps[stepIndex] = currentStep;
 
-    this.#stories.update(story.id, updatedStory);
+    this.#stories.update(story.id, story);
     this.emitAsync('change');
   }
 }

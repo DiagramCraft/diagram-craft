@@ -1,8 +1,10 @@
 import type { DiagramDocument } from './diagramDocument';
-import type { Story, StoryAction } from './documentStories';
+import type { Step, Story, StoryAction } from './documentStories';
 import { EventEmitter } from '@diagram-craft/utils/event';
+import type { Diagram } from './diagram';
+import { assert } from '@diagram-craft/utils/assert';
 
-export type StoryPlayerEvents = {
+type StoryPlayerEvents = {
   stateChange: {
     currentStepIndex: number;
     story: Story | undefined;
@@ -11,7 +13,7 @@ export type StoryPlayerEvents = {
 
 type SavedState = {
   diagramId: string;
-  layerVisibility: Map<string, boolean>; // layerId -> isVisible
+  layerVisibility: Map<string, boolean>;
   viewBox: {
     x: number;
     y: number;
@@ -24,7 +26,10 @@ export class StoryPlayer extends EventEmitter<StoryPlayerEvents> {
   #currentStepIndex = -1;
   #savedState: SavedState | undefined;
 
-  constructor(private readonly document: DiagramDocument) {
+  constructor(
+    private readonly document: DiagramDocument,
+    private readonly switchDiagramCallback: (diagram: Diagram) => void
+  ) {
     super();
   }
 
@@ -41,48 +46,28 @@ export class StoryPlayer extends EventEmitter<StoryPlayerEvents> {
     return this.#currentStory.steps[this.#currentStepIndex];
   }
 
-  get savedDiagramId() {
-    return this.#savedState?.diagramId;
-  }
-
-  loadStory(storyId: string) {
-    const story = this.document.stories.getStory(storyId);
-    if (!story) {
-      console.warn(`Story ${storyId} not found`);
-      return;
-    }
-
+  loadStory(story: Story) {
     this.#currentStory = story;
     this.#currentStepIndex = -1;
     this.emitStateChange();
   }
 
-  start(currentDiagramId?: string) {
-    if (!this.#currentStory) return;
+  start(diagram: Diagram) {
+    assert.present(this.#currentStory);
 
-    // Save current state before starting playback
-    if (this.#currentStepIndex === -1 && currentDiagramId) {
-      this.saveCurrentState(currentDiagramId);
-    }
-
-    if (this.#currentStepIndex === -1) {
-      this.next();
-    } else {
-      this.emitStateChange();
-    }
+    this.saveCurrentState(diagram);
+    this.next();
   }
 
   stop() {
     this.#currentStepIndex = -1;
-
-    // Restore the saved state
     this.restoreSavedState();
-
     this.emitStateChange();
   }
 
   next(): boolean {
-    if (!this.#currentStory) return false;
+    assert.present(this.#currentStory);
+
     if (this.#currentStepIndex >= this.#currentStory.steps.length - 1) {
       return false;
     }
@@ -90,39 +75,42 @@ export class StoryPlayer extends EventEmitter<StoryPlayerEvents> {
     this.#currentStepIndex++;
     const step = this.#currentStory.steps[this.#currentStepIndex];
     if (step) {
-      this.executeStep(step.actions);
+      this.executeStep(step);
     }
     this.emitStateChange();
     return true;
   }
 
   previous(): boolean {
-    if (!this.#currentStory) return false;
+    assert.present(this.#currentStory);
+
     if (this.#currentStepIndex <= 0) return false;
 
     this.#currentStepIndex--;
     const step = this.#currentStory.steps[this.#currentStepIndex];
     if (step) {
-      this.executeStep(step.actions);
+      this.executeStep(step);
     }
     this.emitStateChange();
     return true;
   }
 
   goToStep(stepIndex: number) {
-    if (!this.#currentStory) return;
-    if (stepIndex < 0 || stepIndex >= this.#currentStory.steps.length) return;
+    assert.present(this.#currentStory);
+    assert.true(stepIndex >= 0 && stepIndex < this.#currentStory.steps.length);
 
-    this.#currentStepIndex = stepIndex;
-    const step = this.#currentStory.steps[this.#currentStepIndex];
-    if (step) {
-      this.executeStep(step.actions);
+    for (let i = 0; i <= stepIndex; i++) {
+      const step = this.#currentStory.steps[i];
+      if (step) {
+        this.executeStep(step);
+      }
     }
+
     this.emitStateChange();
   }
 
-  private executeStep(actions: StoryAction[]) {
-    for (const action of actions) {
+  private executeStep(step: Step) {
+    for (const action of step.actions) {
       this.executeAction(action);
     }
   }
@@ -132,14 +120,9 @@ export class StoryPlayer extends EventEmitter<StoryPlayerEvents> {
       case 'switch-diagram': {
         const diagram = this.document.byId(action.diagramId);
         if (diagram) {
-          // The actual switching is handled by the application layer
-          // This event can be listened to by the UI
-          this.emit('stateChange', {
-            currentStepIndex: this.#currentStepIndex,
-            story: this.#currentStory
-          });
+          this.switchDiagramCallback(diagram);
         } else {
-          console.warn(`Diagram ${action.diagramId} not found`);
+          throw new Error(`Diagram ${action.diagramId} not found`);
         }
         break;
       }
@@ -151,7 +134,7 @@ export class StoryPlayer extends EventEmitter<StoryPlayerEvents> {
             diagram.layers.toggleVisibility(layer);
           }
         } else {
-          console.warn(`Diagram ${action.diagramId} not found`);
+          throw new Error(`Diagram ${action.diagramId} not found`);
         }
         break;
       }
@@ -163,14 +146,13 @@ export class StoryPlayer extends EventEmitter<StoryPlayerEvents> {
             diagram.layers.toggleVisibility(layer);
           }
         } else {
-          console.warn(`Diagram ${action.diagramId} not found`);
+          throw new Error(`Diagram ${action.diagramId} not found`);
         }
         break;
       }
       case 'pan-zoom': {
         const diagram = this.document.byId(action.diagramId);
         if (diagram) {
-          // Calculate relative zoom factor to reach the absolute zoom level
           const currentZoom = diagram.viewBox.zoomLevel;
           const targetZoom = action.zoom;
           const zoomFactor = targetZoom / currentZoom;
@@ -178,7 +160,7 @@ export class StoryPlayer extends EventEmitter<StoryPlayerEvents> {
           diagram.viewBox.zoom(zoomFactor);
           diagram.viewBox.pan({ x: action.x, y: action.y });
         } else {
-          console.warn(`Diagram ${action.diagramId} not found`);
+          throw new Error(`Diagram ${action.diagramId} not found`);
         }
         break;
       }
@@ -192,10 +174,7 @@ export class StoryPlayer extends EventEmitter<StoryPlayerEvents> {
     });
   }
 
-  private saveCurrentState(diagramId: string) {
-    const currentDiagram = this.document.byId(diagramId);
-    if (!currentDiagram) return;
-
+  private saveCurrentState(currentDiagram: Diagram) {
     const layerVisibility = new Map<string, boolean>();
     for (const layer of currentDiagram.layers.all) {
       layerVisibility.set(layer.id, currentDiagram.layers.visible.includes(layer));
@@ -216,7 +195,10 @@ export class StoryPlayer extends EventEmitter<StoryPlayerEvents> {
     if (!this.#savedState) return;
 
     const diagram = this.document.byId(this.#savedState.diagramId);
-    if (!diagram) return;
+    assert.present(diagram);
+
+    // Restore diagram
+    this.switchDiagramCallback(diagram);
 
     // Restore layer visibility
     for (const layer of diagram.layers.all) {
@@ -236,7 +218,7 @@ export class StoryPlayer extends EventEmitter<StoryPlayerEvents> {
     diagram.viewBox.zoom(zoomFactor);
     diagram.viewBox.pan({ x: this.#savedState.viewBox.x, y: this.#savedState.viewBox.y });
 
-    // Clear saved state after restoration
+    // Clear saved state
     this.#savedState = undefined;
   }
 }
