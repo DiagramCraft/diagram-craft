@@ -15,16 +15,18 @@ import {
 } from 'react-icons/tb';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
-import { useDocument, useDiagram } from '../../../application';
+import { useDocument, useDiagram, useApplication } from '../../../application';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { useState } from 'react';
 import type { StoryAction, Step } from '@diagram-craft/model/documentStories';
 import { useToolWindowControls } from '../ToolWindow';
+import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 
 export const StoriesPanel = () => {
   const redraw = useRedraw();
   const document = useDocument();
   const currentDiagram = useDiagram();
+  const application = useApplication();
   const stories = document.stories.stories;
   const { switchTab } = useToolWindowControls();
 
@@ -79,11 +81,43 @@ export const StoriesPanel = () => {
   };
 
   const handleDeleteStep = (storyId: string, stepId: string) => {
-    document.stories.deleteStep(storyId, stepId);
+    const story = document.stories.getStory(storyId);
+    const step = story?.steps.find(s => s.id === stepId);
+    const stepTitle = step?.title ?? 'this step';
+
+    application.ui.showDialog(
+      new MessageDialogCommand(
+        {
+          title: 'Confirm delete',
+          message: `Are you sure you want to delete "${stepTitle}"? This action cannot be undone.`,
+          okLabel: 'Yes',
+          cancelLabel: 'No'
+        },
+        () => {
+          document.stories.deleteStep(storyId, stepId);
+        }
+      )
+    );
   };
 
   const handleDeleteStory = (storyId: string) => {
-    document.stories.deleteStory(storyId);
+    const story = document.stories.getStory(storyId);
+    const storyName = story?.name ?? 'this story';
+    const stepCount = story?.steps.length ?? 0;
+
+    application.ui.showDialog(
+      new MessageDialogCommand(
+        {
+          title: 'Confirm delete',
+          message: `Are you sure you want to delete "${storyName}"? This action cannot be undone.${stepCount > 0 ? ` This will also delete ${stepCount} step${stepCount !== 1 ? 's' : ''}.` : ''}`,
+          okLabel: 'Yes',
+          cancelLabel: 'No'
+        },
+        () => {
+          document.stories.deleteStory(storyId);
+        }
+      )
+    );
   };
 
   const handleReRecordStep = (storyId: string, stepId: string) => {
