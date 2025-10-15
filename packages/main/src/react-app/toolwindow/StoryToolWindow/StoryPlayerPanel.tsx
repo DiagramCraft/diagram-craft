@@ -32,6 +32,10 @@ export const StoryPlayerPanel = () => {
     }
   }, [selectedStoryId, player, document]);
 
+  if (selectedStoryId && !player.currentStory) {
+    player.loadStory(mustExist(document.stories.getStory(selectedStoryId)));
+  }
+
   const handleStart = () => {
     if (!player.currentStory) {
       if (selectedStoryId) {
@@ -42,9 +46,7 @@ export const StoryPlayerPanel = () => {
   };
 
   const handleStop = () => player.stop();
-
   const handleNext = () => player.next();
-
   const handlePrevious = () => player.previous();
 
   const currentStory = player.currentStory;
@@ -85,17 +87,25 @@ export const StoryPlayerPanel = () => {
               </Button>
               <Button
                 onClick={handleStart}
-                type={'primary'}
+                type={!currentStory || currentStepIndex >= 0 ? 'secondary' : 'primary'}
                 disabled={!currentStory || currentStepIndex >= 0}
               >
                 <TbPlayerPlay />
               </Button>
-              <Button onClick={handleStop} type="danger" disabled={currentStepIndex < 0}>
+              <Button
+                onClick={handleStop}
+                type={currentStepIndex < 0 ? 'secondary' : 'primary'}
+                disabled={currentStepIndex < 0}
+              >
                 <TbPlayerStop />
               </Button>
               <Button
                 onClick={handleNext}
-                type={'secondary'}
+                type={
+                  currentStepIndex >= 0 && currentStepIndex < currentStory.steps.length - 1
+                    ? 'primary'
+                    : 'secondary'
+                }
                 disabled={currentStepIndex >= currentStory.steps.length - 1}
               >
                 <TbPlayerSkipForward />
@@ -120,7 +130,7 @@ export const StoryPlayerPanel = () => {
                       display: 'flex',
                       justifyContent: 'space-between',
                       fontSize: '0.8em',
-                      color: 'var(--gray-11)',
+                      color: 'var(--base-fg-dim)',
                       marginBottom: '0.5rem'
                     }}
                   >
@@ -133,7 +143,7 @@ export const StoryPlayerPanel = () => {
                     style={{
                       width: '100%',
                       height: '0.5rem',
-                      background: 'var(--gray-4)',
+                      background: 'var(--accent-bg)',
                       borderRadius: '0.25rem',
                       overflow: 'hidden'
                     }}
@@ -142,7 +152,7 @@ export const StoryPlayerPanel = () => {
                       style={{
                         width: `${((currentStepIndex + 1) / currentStory.steps.length) * 100}%`,
                         height: '100%',
-                        background: 'var(--blue-9)',
+                        background: 'var(--accent-chroma)',
                         transition: 'width 0.3s ease'
                       }}
                     />
@@ -154,7 +164,7 @@ export const StoryPlayerPanel = () => {
         )}
 
         {!currentStory && (
-          <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--gray-11)' }}>
+          <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--base-fg-dim)' }}>
             Select a story to play
           </div>
         )}

@@ -189,4 +189,11 @@ export class DocumentStories extends EventEmitter<DocumentStoriesEvents> {
     this.#stories.update(story.id, story);
     this.emitAsync('change');
   }
+
+  clearActions(story: Story, step: Step) {
+    // Remove all existing actions
+    for (let i = step.actions.length - 1; i >= 0; i--) {
+      this.removeAction(story, step, i);
+    }
+  }
 }
