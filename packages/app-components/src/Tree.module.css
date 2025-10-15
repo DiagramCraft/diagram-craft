@@ -1,8 +1,9 @@
 .cmp-tree {
   display: grid;
-  grid-template-columns: minmax(max-content, 1fr) max-content;
+  grid-template-columns: minmax(min-content, 1fr) max-content;
   grid-template-rows: 1fr;
   max-width: 100%;
+  width: 100%;
 
   font-size: 11px;
 
@@ -31,6 +32,12 @@
     .cmp-tree__node__label {
       font-style: italic;
     }
+  }
+
+  .cmp-tree__node__label {
+    width: 100px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .cmp-tree__node__action {
