@@ -1,9 +1,15 @@
-import { CRDTList, CRDTRoot } from './collaboration/crdt';
+import { CRDTMap, CRDTRoot } from './collaboration/crdt';
 import type { DiagramDocument } from './diagramDocument';
 import type { EmptyObject } from '@diagram-craft/utils/types';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { newid } from '@diagram-craft/utils/id';
-import { assert } from '@diagram-craft/utils/assert';
+import { assert, mustExist } from '@diagram-craft/utils/assert';
+import {
+  MappedCRDTOrderedMap,
+  type MappedCRDTOrderedMapMapType
+} from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
+import { type CRDTMapper } from './collaboration/datatypes/mapped/types';
+import { watch } from '@diagram-craft/utils/watchableValue';
 
 export type StoryAction =
   | {
@@ -56,51 +62,46 @@ type StoredStep = {
   actions: StoryAction[];
 };
 
+const makeStoryMapper = (document: DiagramDocument): CRDTMapper<Story, CRDTMap<StoredStory>> => {
+  return {
+    fromCRDT(crdt: CRDTMap<StoredStory>): Story {
+      return {
+        id: crdt.get('id')!,
+        name: crdt.get('name')!,
+        description: crdt.get('description'),
+        steps: crdt.get('steps')!
+      };
+    },
+    toCRDT(story: Story): CRDTMap<StoredStory> {
+      const map = document.root.factory.makeMap<StoredStory>();
+      map.set('id', story.id);
+      map.set('name', story.name);
+      map.set('description', story.description);
+      map.set('steps', story.steps);
+      return map;
+    }
+  };
+};
+
 export type DocumentStoriesEvents = {
   change: EmptyObject;
 };
 
 export class DocumentStories extends EventEmitter<DocumentStoriesEvents> {
-  #stories: CRDTList<StoredStory>;
+  #stories: MappedCRDTOrderedMap<Story, StoredStory>;
 
-  constructor(
-    root: CRDTRoot,
-    private readonly document: DiagramDocument
-  ) {
+  constructor(root: CRDTRoot, document: DiagramDocument) {
     super();
-    this.#stories = root.getList('stories');
+    const storiesMap = root.getMap<MappedCRDTOrderedMapMapType<StoredStory>>('stories');
+    this.#stories = new MappedCRDTOrderedMap(watch(storiesMap), makeStoryMapper(document));
   }
 
   get stories(): Story[] {
-    return this.#stories.toArray().map(s => ({
-      id: s.id,
-      name: s.name,
-      description: s.description,
-      steps: s.steps.map(step => ({
-        id: step.id,
-        title: step.title,
-        description: step.description,
-        actions: step.actions
-      }))
-    }));
+    return this.#stories.values;
   }
 
   getStory(id: string): Story | undefined {
-    const index = this.#stories.toArray().findIndex(s => s.id === id);
-    if (index === -1) return undefined;
-
-    const s = this.#stories.get(index);
-    return {
-      id: s.id,
-      name: s.name,
-      description: s.description,
-      steps: s.steps.map(step => ({
-        id: step.id,
-        title: step.title,
-        description: step.description,
-        actions: step.actions
-      }))
-    };
+    return this.#stories.get(id);
   }
 
   addStory(name: string, description?: string): Story {
@@ -111,57 +112,28 @@ export class DocumentStories extends EventEmitter<DocumentStoriesEvents> {
       steps: []
     };
 
-    const storedStory: StoredStory = {
-      id: story.id,
-      name: story.name,
-      description: story.description,
-      steps: []
-    };
-
-    this.#stories.push(storedStory);
-
+    this.#stories.add(story.id, story);
     this.emitAsync('change');
     return story;
   }
 
   updateStory(story: Story, updates: { name?: string; description?: string }) {
-    const index = this.#stories.toArray().findIndex(s => s.id === story.id);
-    assert.true(index >= 0);
+    const updatedStory: Story = {
+      ...story,
+      name: updates.name ?? story.name,
+      description: updates.description === undefined ? story.description : updates.description
+    };
 
-    const storedStory = this.#stories.get(index);
-
-    this.document.root.transact(() => {
-      this.#stories.delete(index);
-      this.#stories.insert(index, [
-        {
-          id: storedStory.id,
-          name: updates.name ?? storedStory.name,
-          description:
-            updates.description === undefined ? storedStory.description : updates.description,
-          steps: storedStory.steps
-        }
-      ]);
-    });
-
+    this.#stories.update(story.id, updatedStory);
     this.emitAsync('change');
   }
 
   deleteStory(story: Story) {
-    const index = this.#stories.toArray().findIndex(s => s.id === story.id);
-    assert.true(index >= 0);
-
-    this.document.root.transact(() => {
-      this.#stories.delete(index);
-    });
-
+    this.#stories.remove(story.id);
     this.emitAsync('change');
   }
 
   addStep(story: Story, title: string, description: string): Step {
-    const index = this.#stories.toArray().findIndex(s => s.id === story.id);
-    assert.true(index >= 0);
-
-    const storedStory = this.#stories.get(index);
     const step: Step = {
       id: newid(),
       title,
@@ -169,149 +141,82 @@ export class DocumentStories extends EventEmitter<DocumentStoriesEvents> {
       actions: []
     };
 
-    const storedStep: StoredStep = {
-      id: step.id,
-      title: step.title,
-      description: step.description,
-      actions: []
+    const updatedStory: Story = {
+      ...story,
+      steps: [...story.steps, step]
     };
 
-    this.document.root.transact(() => {
-      this.#stories.delete(index);
-      this.#stories.insert(index, [
-        {
-          id: storedStory.id,
-          name: storedStory.name,
-          description: storedStory.description,
-          steps: [...storedStory.steps, storedStep]
-        }
-      ]);
-    });
-
+    this.#stories.update(story.id, updatedStory);
     this.emitAsync('change');
     return step;
   }
 
   updateStep(story: Story, step: Step, updates: { title?: string; description?: string }) {
-    const storyIndex = this.#stories.toArray().findIndex(s => s.id === story.id);
-    assert.true(storyIndex >= 0);
-
-    const storedStory = this.#stories.get(storyIndex);
-    const stepIndex = storedStory.steps.findIndex(s => s.id === step.id);
+    const stepIndex = story.steps.findIndex(s => s.id === step.id);
     assert.true(stepIndex >= 0);
 
-    const storedStep = storedStory.steps[stepIndex];
-    if (!storedStep) return;
-
-    const updatedStep: StoredStep = {
-      id: storedStep.id,
-      title: updates.title ?? storedStep.title,
-      description: updates.description ?? storedStep.description,
-      actions: storedStep.actions
+    const updatedStep: Step = {
+      ...step,
+      title: updates.title ?? step.title,
+      description: updates.description ?? step.description
     };
 
-    this.document.root.transact(() => {
-      this.#stories.delete(storyIndex);
-      this.#stories.insert(storyIndex, [
-        {
-          id: storedStory.id,
-          name: storedStory.name,
-          description: storedStory.description,
-          steps: storedStory.steps.toSpliced(stepIndex, 1, updatedStep)
-        }
-      ]);
-    });
+    const updatedStory: Story = {
+      ...story,
+      steps: story.steps.toSpliced(stepIndex, 1, updatedStep)
+    };
 
+    this.#stories.update(story.id, updatedStory);
     this.emitAsync('change');
   }
 
   deleteStep(story: Story, step: Step) {
-    const storyIndex = this.#stories.toArray().findIndex(s => s.id === story.id);
-    assert.true(storyIndex >= 0);
+    const updatedStory: Story = {
+      ...story,
+      steps: story.steps.filter(s => s.id !== step.id)
+    };
 
-    const storedStory = this.#stories.get(storyIndex);
-    const stepIndex = storedStory.steps.findIndex(s => s.id === step.id);
-    assert.true(stepIndex >= 0);
-
-    this.document.root.transact(() => {
-      this.#stories.delete(storyIndex);
-      this.#stories.insert(storyIndex, [
-        {
-          id: storedStory.id,
-          name: storedStory.name,
-          description: storedStory.description,
-          steps: storedStory.steps.filter(s => s.id !== step.id)
-        }
-      ]);
-    });
-
+    this.#stories.update(story.id, updatedStory);
     this.emitAsync('change');
   }
 
   addAction(story: Story, step: Step, action: StoryAction) {
-    const storyIndex = this.#stories.toArray().findIndex(s => s.id === story.id);
-    assert.true(storyIndex >= 0);
-
-    const storedStory = this.#stories.get(storyIndex);
-    const stepIndex = storedStory.steps.findIndex(s => s.id === step.id);
+    const stepIndex = story.steps.findIndex(s => s.id === step.id);
     assert.true(stepIndex >= 0);
 
-    const storedStep = storedStory.steps[stepIndex];
-    if (!storedStep) return;
-
-    const updatedStep: StoredStep = {
-      id: storedStep.id,
-      title: storedStep.title,
-      description: storedStep.description,
-      actions: [...storedStep.actions, action]
+    const currentStep = mustExist(story.steps[stepIndex]);
+    const updatedStep: Step = {
+      ...currentStep,
+      actions: [...currentStep.actions, action]
     };
 
-    this.document.root.transact(() => {
-      this.#stories.delete(storyIndex);
-      this.#stories.insert(storyIndex, [
-        {
-          id: storedStory.id,
-          name: storedStory.name,
-          description: storedStory.description,
-          steps: storedStory.steps.toSpliced(stepIndex, 1, updatedStep)
-        }
-      ]);
-    });
+    const updatedStory: Story = {
+      ...story,
+      steps: story.steps.toSpliced(stepIndex, 1, updatedStep)
+    };
 
+    this.#stories.update(story.id, updatedStory);
     this.emitAsync('change');
   }
 
   removeAction(story: Story, step: Step, actionIndex: number) {
-    const storyIndex = this.#stories.toArray().findIndex(s => s.id === story.id);
-    assert.true(storyIndex >= 0);
-
-    const storedStory = this.#stories.get(storyIndex);
-    const stepIndex = storedStory.steps.findIndex(s => s.id === step.id);
+    const stepIndex = story.steps.findIndex(s => s.id === step.id);
     assert.true(stepIndex >= 0);
 
-    const storedStep = storedStory.steps[stepIndex];
-    if (!storedStep) return;
-    if (actionIndex < 0 || actionIndex >= storedStep.actions.length) return;
+    const currentStep = mustExist(story.steps[stepIndex]);
+    if (actionIndex < 0 || actionIndex >= currentStep.actions.length) return;
 
-    const updatedStep: StoredStep = {
-      id: storedStep.id,
-      title: storedStep.title,
-      description: storedStep.description,
-      actions: storedStep.actions.filter((_, i) => i !== actionIndex)
+    const updatedStep: Step = {
+      ...currentStep,
+      actions: currentStep.actions.filter((_, i) => i !== actionIndex)
     };
 
-    this.document.root.transact(() => {
-      this.#stories.delete(storyIndex);
-      this.#stories.insert(storyIndex, [
-        {
-          id: storedStory.id,
-          name: storedStory.name,
-          description: storedStory.description,
-          steps: storedStory.steps.toSpliced(stepIndex, 1, updatedStep)
-        }
-      ]);
-    });
+    const updatedStory: Story = {
+      ...story,
+      steps: story.steps.toSpliced(stepIndex, 1, updatedStep)
+    };
 
+    this.#stories.update(story.id, updatedStory);
     this.emitAsync('change');
   }
 }
