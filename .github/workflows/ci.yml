@@ -4,6 +4,8 @@ on:
     branches:
       - "main"
   workflow_dispatch:
+permissions:
+  pull-requests: write
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -153,13 +155,12 @@ jobs:
           OUTPUT=$(cd pr && ../sccdiff -basedir ../base)
           echo "${OUTPUT}"
           OUTPUT="${OUTPUT//$'\n'/%0A}"
-          echo "::set-output name=diff::$OUTPUT"
+          echo "diff=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: Comment Code Lines
         continue-on-error: true
         uses: marocchino/sticky-pull-request-comment@v2
         with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           header: LOC
           message: |
             ### Lines Of Code
