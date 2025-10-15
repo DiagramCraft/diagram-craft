@@ -13,6 +13,7 @@ import type { QueryEntry } from '../documentProps';
 import type { ModificationType } from '../diagramLayerModification';
 import { Box } from '@diagram-craft/geometry/box';
 import { Anchor } from '../anchor';
+import type { Story } from '../documentStories';
 
 export interface Reference {
   id: string;
@@ -61,42 +62,7 @@ export type SerializedDiagram = {
   comments?: ReadonlyArray<SerializedComment>;
 };
 
-export type SerializedStoryAction =
-  | {
-      type: 'switch-diagram';
-      diagramId: string;
-    }
-  | {
-      type: 'hide-layer';
-      diagramId: string;
-      layerId: string;
-    }
-  | {
-      type: 'show-layer';
-      diagramId: string;
-      layerId: string;
-    }
-  | {
-      type: 'pan-zoom';
-      diagramId: string;
-      x: number;
-      y: number;
-      zoom: number;
-    };
-
-export type SerializedStep = {
-  id: string;
-  title: string;
-  description: string;
-  actions: SerializedStoryAction[];
-};
-
-export type SerializedStory = {
-  id: string;
-  name: string;
-  description?: string;
-  steps: SerializedStep[];
-};
+export type SerializedStory = Story;
 
 export interface SerializedDiagramDocument {
   diagrams: ReadonlyArray<SerializedDiagram>;
