@@ -271,7 +271,7 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
 
     if (document.stories) {
       for (const story of document.stories) {
-        const newStory = doc.stories.addStory(story.name, story.description);
+        const newStory = doc.stories.addStory(story.name);
         for (const step of story.steps) {
           const newStep = doc.stories.addStep(newStory, step.title, step.description);
           if (newStep) {

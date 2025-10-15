@@ -1,11 +1,6 @@
 import { Button } from '@diagram-craft/app-components/Button';
 import { Select } from '@diagram-craft/app-components/Select';
-import {
-  TbPlayerPlay,
-  TbPlayerStop,
-  TbPlayerSkipBack,
-  TbPlayerSkipForward
-} from 'react-icons/tb';
+import { TbPlayerPlay, TbPlayerStop, TbPlayerSkipBack, TbPlayerSkipForward } from 'react-icons/tb';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
 import { useDocument, useApplication } from '../../../application';
@@ -87,57 +82,44 @@ export const StoryPlayerPanel = () => {
       title={'Story Player'}
       style={{ padding: '0.5rem' }}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem' }}>Select Story</label>
-          <Select.Root value={selectedStoryId ?? ''} onChange={value => setSelectedStoryId(value)}>
-            {stories.map(story => (
-              <Select.Item key={story.id} value={story.id}>
-                {story.name}
-              </Select.Item>
-            ))}
-          </Select.Root>
-        </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        <Select.Root value={selectedStoryId ?? ''} onChange={value => setSelectedStoryId(value)}>
+          {stories.map(story => (
+            <Select.Item key={story.id} value={story.id}>
+              {story.name}
+            </Select.Item>
+          ))}
+        </Select.Root>
 
         {currentStory && (
           <>
-            <div
-              style={{
-                padding: '1rem',
-                background: 'var(--gray-3)',
-                borderRadius: '0.25rem',
-                border: '1px solid var(--gray-6)'
-              }}
-            >
-              <div style={{ fontSize: '0.9em', color: 'var(--gray-11)', marginBottom: '0.5rem' }}>
-                {currentStory.description}
-              </div>
-              <div style={{ fontSize: '0.8em', color: 'var(--gray-10)' }}>
-                {currentStory.steps.length} step{currentStory.steps.length !== 1 ? 's' : ''}
-              </div>
-            </div>
-
             <div
               style={{
                 display: 'flex',
                 gap: '0.5rem',
                 justifyContent: 'center',
                 padding: '0.5rem',
-                background: 'var(--gray-2)',
-                borderRadius: '0.25rem'
+                background: 'var(--cmp-bg)',
+                borderRadius: 'var(--cmp-radius)',
+                border: '1px solid var(--cmp-border)'
               }}
             >
-              <Button onClick={handlePrevious} disabled={currentStepIndex <= 0}>
+              <Button onClick={handlePrevious} type={'secondary'} disabled={currentStepIndex <= 0}>
                 <TbPlayerSkipBack />
               </Button>
-              <Button onClick={handleStart} disabled={!currentStory || currentStepIndex >= 0}>
+              <Button
+                onClick={handleStart}
+                type={'primary'}
+                disabled={!currentStory || currentStepIndex >= 0}
+              >
                 <TbPlayerPlay />
               </Button>
-              <Button onClick={handleStop} disabled={currentStepIndex < 0}>
+              <Button onClick={handleStop} type="danger" disabled={currentStepIndex < 0}>
                 <TbPlayerStop />
               </Button>
               <Button
                 onClick={handleNext}
+                type={'secondary'}
                 disabled={currentStepIndex >= currentStory.steps.length - 1}
               >
                 <TbPlayerSkipForward />
@@ -147,66 +129,51 @@ export const StoryPlayerPanel = () => {
             {currentStep && (
               <div
                 style={{
-                  padding: '1rem',
-                  background: 'var(--blue-3)',
-                  borderRadius: '0.25rem',
-                  border: '1px solid var(--blue-6)'
+                  padding: '0.25rem'
                 }}
               >
-                <div style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>
-                  Step {currentStepIndex + 1}: {currentStep.title}
+                <div style={{ marginBottom: '0.5rem' }}>
+                  {currentStepIndex + 1}:{' '}
+                  <span style={{ fontWeight: 'bold' }}>{currentStep.title}</span>
                 </div>
-                <div style={{ fontSize: '0.9em', color: 'var(--gray-12)' }}>
-                  {currentStep.description}
-                </div>
-                {currentStep.actions.length > 0 && (
-                  <div style={{ marginTop: '0.5rem', fontSize: '0.8em', color: 'var(--gray-11)' }}>
-                    {currentStep.actions.length} action{currentStep.actions.length !== 1 ? 's' : ''}
+                <div>{currentStep.description}</div>
+
+                <div style={{ marginTop: '1rem' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      fontSize: '0.8em',
+                      color: 'var(--gray-11)',
+                      marginBottom: '0.5rem'
+                    }}
+                  >
+                    <span>Progress</span>
+                    <span>
+                      {Math.max(0, currentStepIndex + 1)} / {currentStory.steps.length}
+                    </span>
                   </div>
-                )}
+                  <div
+                    style={{
+                      width: '100%',
+                      height: '0.5rem',
+                      background: 'var(--gray-4)',
+                      borderRadius: '0.25rem',
+                      overflow: 'hidden'
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: `${((currentStepIndex + 1) / currentStory.steps.length) * 100}%`,
+                        height: '100%',
+                        background: 'var(--blue-9)',
+                        transition: 'width 0.3s ease'
+                      }}
+                    />
+                  </div>
+                </div>
               </div>
             )}
-
-            {currentStepIndex < 0 && (
-              <div style={{ textAlign: 'center', color: 'var(--gray-11)', padding: '1rem' }}>
-                Press <TbPlayerPlay style={{ display: 'inline', verticalAlign: 'middle' }} /> to start the story
-              </div>
-            )}
-
-            <div style={{ marginTop: '1rem' }}>
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  fontSize: '0.8em',
-                  color: 'var(--gray-11)',
-                  marginBottom: '0.5rem'
-                }}
-              >
-                <span>Progress</span>
-                <span>
-                  {Math.max(0, currentStepIndex + 1)} / {currentStory.steps.length}
-                </span>
-              </div>
-              <div
-                style={{
-                  width: '100%',
-                  height: '0.5rem',
-                  background: 'var(--gray-4)',
-                  borderRadius: '0.25rem',
-                  overflow: 'hidden'
-                }}
-              >
-                <div
-                  style={{
-                    width: `${((currentStepIndex + 1) / currentStory.steps.length) * 100}%`,
-                    height: '100%',
-                    background: 'var(--blue-9)',
-                    transition: 'width 0.3s ease'
-                  }}
-                />
-              </div>
-            </div>
           </>
         )}
 

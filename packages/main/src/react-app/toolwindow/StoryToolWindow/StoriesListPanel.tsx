@@ -17,7 +17,6 @@ export const StoriesListPanel = () => {
   const stories = document.stories.stories;
   const [showNewDialog, setShowNewDialog] = useState(false);
   const [newStoryName, setNewStoryName] = useState('');
-  const [newStoryDescription, setNewStoryDescription] = useState('');
   const [selectedStory, setSelectedStory] = useState<Story | undefined>();
   const { switchTab } = useToolWindowControls();
 
@@ -25,9 +24,8 @@ export const StoriesListPanel = () => {
 
   const handleCreateStory = () => {
     if (newStoryName.trim()) {
-      document.stories.addStory(newStoryName, newStoryDescription || undefined);
+      document.stories.addStory(newStoryName);
       setNewStoryName('');
-      setNewStoryDescription('');
       setShowNewDialog(false);
     }
   };
@@ -70,11 +68,6 @@ export const StoriesListPanel = () => {
           <Tree.Node key={story.id} onClick={() => setSelectedStory(story)}>
             <Tree.NodeLabel>
               <TbMovie /> &nbsp;{story.name}
-              {story.description && (
-                <div style={{ fontSize: '0.8em', color: 'var(--gray-11)', marginLeft: '1.5rem' }}>
-                  {story.description}
-                </div>
-              )}
             </Tree.NodeLabel>
             <Tree.NodeCell className="cmp-tree__node__action">
               <span
@@ -138,13 +131,6 @@ export const StoriesListPanel = () => {
           <div>
             <label>Name</label>
             <TextInput value={newStoryName} onChange={v => setNewStoryName(v ?? '')} />
-          </div>
-          <div>
-            <label>Description (optional)</label>
-            <TextInput
-              value={newStoryDescription}
-              onChange={v => setNewStoryDescription(v ?? '')}
-            />
           </div>
         </div>
       </Dialog>

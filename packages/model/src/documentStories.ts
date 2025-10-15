@@ -44,14 +44,12 @@ export type Step = {
 export type Story = {
   id: string;
   name: string;
-  description?: string;
   steps: Step[];
 };
 
 type StoredStory = {
   id: string;
   name: string;
-  description: string | undefined;
   steps: StoredStep[];
 };
 
@@ -68,7 +66,6 @@ const makeStoryMapper = (document: DiagramDocument): CRDTMapper<Story, CRDTMap<S
       return {
         id: crdt.get('id')!,
         name: crdt.get('name')!,
-        description: crdt.get('description'),
         steps: crdt.get('steps')!
       };
     },
@@ -76,7 +73,6 @@ const makeStoryMapper = (document: DiagramDocument): CRDTMapper<Story, CRDTMap<S
       const map = document.root.factory.makeMap<StoredStory>();
       map.set('id', story.id);
       map.set('name', story.name);
-      map.set('description', story.description);
       map.set('steps', story.steps);
       return map;
     }
@@ -104,11 +100,10 @@ export class DocumentStories extends EventEmitter<DocumentStoriesEvents> {
     return this.#stories.get(id);
   }
 
-  addStory(name: string, description?: string): Story {
+  addStory(name: string): Story {
     const story: Story = {
       id: newid(),
       name,
-      description,
       steps: []
     };
 
@@ -117,11 +112,10 @@ export class DocumentStories extends EventEmitter<DocumentStoriesEvents> {
     return story;
   }
 
-  updateStory(story: Story, updates: { name?: string; description?: string }) {
+  updateStory(story: Story, updates: { name?: string }) {
     const updatedStory: Story = {
       ...story,
-      name: updates.name ?? story.name,
-      description: updates.description === undefined ? story.description : updates.description
+      name: updates.name ?? story.name
     };
 
     this.#stories.update(story.id, updatedStory);

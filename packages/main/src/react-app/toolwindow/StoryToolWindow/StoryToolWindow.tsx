@@ -7,19 +7,16 @@ import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TbPlus } from 'react-icons/tb';
 import { useState } from 'react';
 import { useDocument } from '../../../application';
-import { TextArea } from '@diagram-craft/app-components/TextArea';
 
 export const StoryToolWindow = () => {
   const document = useDocument();
   const [showNewStoryDialog, setShowNewStoryDialog] = useState(false);
   const [newStoryName, setNewStoryName] = useState('');
-  const [newStoryDescription, setNewStoryDescription] = useState('');
 
   const handleCreateStory = () => {
     if (newStoryName.trim()) {
-      document.stories.addStory(newStoryName, newStoryDescription || undefined);
+      document.stories.addStory(newStoryName);
       setNewStoryName('');
-      setNewStoryDescription('');
       setShowNewStoryDialog(false);
     }
   };
@@ -65,14 +62,6 @@ export const StoryToolWindow = () => {
           <div>
             <label>Name</label>
             <TextInput value={newStoryName} onChange={v => setNewStoryName(v ?? '')} />
-          </div>
-          <div>
-            <label>Description (optional)</label>
-            <TextArea
-              value={newStoryDescription}
-              rows={5}
-              onChange={v => setNewStoryDescription(v ?? '')}
-            />
           </div>
         </div>
       </Dialog>

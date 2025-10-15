@@ -267,11 +267,6 @@ export const StoriesPanel = () => {
           <Tree.Node key={story.id} isOpen={true}>
             <Tree.NodeLabel>
               <TbMovie /> &nbsp;{story.name}
-              {story.description && (
-                <div style={{ fontSize: '0.8em', color: 'var(--gray-11)', marginLeft: '1.5rem' }}>
-                  {story.description}
-                </div>
-              )}
             </Tree.NodeLabel>
             <Tree.NodeCell className="cmp-tree__node__action">
               <span
@@ -348,8 +343,7 @@ export const StoriesPanel = () => {
                     </Tree.NodeCell>
                     <Tree.Children>
                       {(() => {
-                        const previousStep =
-                          stepIndex > 0 ? story.steps[stepIndex - 1] : undefined;
+                        const previousStep = stepIndex > 0 ? story.steps[stepIndex - 1] : undefined;
                         const actionsToDisplay = getStepDelta(step, previousStep);
 
                         return actionsToDisplay.length > 0 ? (

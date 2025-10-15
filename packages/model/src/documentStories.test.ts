@@ -10,18 +10,16 @@ describe.each(Backends.all())('DocumentStories - %s', (_name, backend) => {
     const stories2 = doc2?.stories;
 
     // Add a story in instance 1
-    const story = stories1.addStory('My Story', 'A test story');
+    const story = stories1.addStory('My Story');
 
     expect(stories1.stories).toHaveLength(1);
     expect(stories1.stories[0]?.name).toBe('My Story');
-    expect(stories1.stories[0]?.description).toBe('A test story');
 
     // Verify it replicates to instance 2
     if (stories2) {
       expect(stories2.stories).toHaveLength(1);
       expect(stories2.stories[0]?.id).toBe(story.id);
       expect(stories2.stories[0]?.name).toBe('My Story');
-      expect(stories2.stories[0]?.description).toBe('A test story');
     }
   });
 
@@ -32,21 +30,19 @@ describe.each(Backends.all())('DocumentStories - %s', (_name, backend) => {
     const stories2 = doc2?.stories;
 
     // Create a story
-    const story1 = stories1.addStory('Original Name', 'Original Description');
+    const story1 = stories1.addStory('Original Name');
 
     // Update the story in instance 1
-    stories1.updateStory(story1, { name: 'Updated Name', description: 'Updated Description' });
+    stories1.updateStory(story1, { name: 'Updated Name' });
 
     // Get the updated story from instance 1
     const updatedStory1 = stories1.getStory(story1.id)!;
     expect(updatedStory1.name).toBe('Updated Name');
-    expect(updatedStory1.description).toBe('Updated Description');
 
     // Verify it replicates to instance 2
     if (stories2) {
       const story2 = stories2.getStory(story1.id)!;
       expect(story2.name).toBe('Updated Name');
-      expect(story2.description).toBe('Updated Description');
     }
   });
 
@@ -57,7 +53,7 @@ describe.each(Backends.all())('DocumentStories - %s', (_name, backend) => {
     const stories2 = doc2?.stories;
 
     // Add a story
-    const story = stories1.addStory('To Delete', 'Will be deleted');
+    const story = stories1.addStory('To Delete');
 
     expect(stories1.stories).toHaveLength(1);
     if (stories2) {
@@ -322,7 +318,7 @@ describe.each(Backends.all())('DocumentStories - %s', (_name, backend) => {
     const stories2 = doc2?.stories;
 
     // Create a complex story with multiple steps and actions
-    const story1 = stories1.addStory('Complex Story', 'A story with multiple steps');
+    const story1 = stories1.addStory('Complex Story');
 
     // Add first step with actions
     let updatedStory = stories1.getStory(story1.id)!;
@@ -364,7 +360,6 @@ describe.each(Backends.all())('DocumentStories - %s', (_name, backend) => {
     if (stories2) {
       const story2 = stories2.getStory(story1.id)!;
       expect(story2.name).toBe('Complex Story');
-      expect(story2.description).toBe('A story with multiple steps');
       expect(story2.steps).toHaveLength(3);
 
       // Verify step 1
@@ -383,35 +378,6 @@ describe.each(Backends.all())('DocumentStories - %s', (_name, backend) => {
       expect(story2.steps[2]?.title).toBe('Step 3');
       expect(story2.steps[2]?.actions).toHaveLength(1);
       expect(story2.steps[2]?.actions[0]?.type).toBe('switch-diagram');
-    }
-  });
-
-  test('should handle story with undefined description', () => {
-    const { doc1, doc2 } = standardTestModel(backend);
-
-    const stories1 = doc1.stories;
-    const stories2 = doc2?.stories;
-
-    // Add story without description
-    const story1 = stories1.addStory('Story Without Description');
-
-    expect(story1.description).toBeUndefined();
-
-    // Verify replication
-    if (stories2) {
-      const story2 = stories2.getStory(story1.id)!;
-      expect(story2.description).toBeUndefined();
-    }
-
-    // Update to add description
-    stories1.updateStory(story1, { description: 'Now with description' });
-
-    const updatedStory1 = stories1.getStory(story1.id)!;
-    expect(updatedStory1.description).toBe('Now with description');
-
-    if (stories2) {
-      const updatedStory2 = stories2.getStory(story1.id)!;
-      expect(updatedStory2.description).toBe('Now with description');
     }
   });
 });
