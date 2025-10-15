@@ -40,6 +40,12 @@ export const StoryPlayerPanel = () => {
           }
         }
       }
+    } else if (player.currentStepIndex === -1 && player.savedDiagramId) {
+      // Restore the original diagram when stopped
+      const diagram = document.byId(player.savedDiagramId);
+      if (diagram) {
+        application.model.activeDiagram = diagram;
+      }
     }
     redraw();
   });
@@ -56,7 +62,7 @@ export const StoryPlayerPanel = () => {
         player.loadStory(selectedStoryId);
       }
     }
-    player.play();
+    player.play(application.model.activeDiagram.id);
   };
 
   const handlePause = () => {
