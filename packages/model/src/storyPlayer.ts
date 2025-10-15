@@ -162,7 +162,12 @@ export class StoryPlayer extends EventEmitter<StoryPlayerEvents> {
       case 'pan-zoom': {
         const diagram = this.document.byId(action.diagramId);
         if (diagram) {
-          diagram.viewBox.zoom(action.zoom);
+          // Calculate relative zoom factor to reach the absolute zoom level
+          const currentZoom = diagram.viewBox.zoomLevel;
+          const targetZoom = action.zoom;
+          const zoomFactor = targetZoom / currentZoom;
+
+          diagram.viewBox.zoom(zoomFactor);
           diagram.viewBox.pan({ x: action.x, y: action.y });
         } else {
           console.warn(`Diagram ${action.diagramId} not found`);
