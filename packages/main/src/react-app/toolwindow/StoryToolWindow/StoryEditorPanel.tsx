@@ -43,12 +43,12 @@ export const StoryEditorPanel = () => {
 
   const handleAddStep = () => {
     if (selectedStory && newStepTitle.trim()) {
-      const step = document.stories.addStep(selectedStory.id, newStepTitle, newStepDescription);
+      const step = document.stories.addStep(selectedStory, newStepTitle, newStepDescription);
 
       if (step) {
         // Record current state
         // 1. Switch to current diagram
-        document.stories.addAction(selectedStory.id, step.id, {
+        document.stories.addAction(selectedStory, step, {
           type: 'switch-diagram',
           diagramId: currentDiagram.id
         });
@@ -56,7 +56,7 @@ export const StoryEditorPanel = () => {
         // 2. Record layer visibility state
         for (const layer of currentDiagram.layers.all) {
           const isVisible = currentDiagram.layers.visible.includes(layer);
-          document.stories.addAction(selectedStory.id, step.id, {
+          document.stories.addAction(selectedStory, step, {
             type: isVisible ? 'show-layer' : 'hide-layer',
             diagramId: currentDiagram.id,
             layerId: layer.id
@@ -64,7 +64,7 @@ export const StoryEditorPanel = () => {
         }
 
         // 3. Record pan/zoom state
-        document.stories.addAction(selectedStory.id, step.id, {
+        document.stories.addAction(selectedStory, step, {
           type: 'pan-zoom',
           diagramId: currentDiagram.id,
           x: currentDiagram.viewBox.offset.x,
@@ -80,11 +80,14 @@ export const StoryEditorPanel = () => {
   };
 
   const handleDeleteStep = (stepId: string) => {
-    if (selectedStory) {
-      document.stories.deleteStep(selectedStory.id, stepId);
-      if (selectedStepId === stepId) {
-        setSelectedStepId(undefined);
-      }
+    if (!selectedStory) return;
+
+    const step = selectedStory.steps.find(s => s.id === stepId);
+    if (!step) return;
+
+    document.stories.deleteStep(selectedStory, step);
+    if (selectedStepId === stepId) {
+      setSelectedStepId(undefined);
     }
   };
 
@@ -96,12 +99,12 @@ export const StoryEditorPanel = () => {
     if (!step) return;
 
     for (let i = step.actions.length - 1; i >= 0; i--) {
-      document.stories.removeAction(selectedStory.id, stepId, i);
+      document.stories.removeAction(selectedStory, step, i);
     }
 
     // Record current state
     // 1. Switch to current diagram
-    document.stories.addAction(selectedStory.id, stepId, {
+    document.stories.addAction(selectedStory, step, {
       type: 'switch-diagram',
       diagramId: currentDiagram.id
     });
@@ -109,7 +112,7 @@ export const StoryEditorPanel = () => {
     // 2. Record layer visibility state
     for (const layer of currentDiagram.layers.all) {
       const isVisible = currentDiagram.layers.visible.includes(layer);
-      document.stories.addAction(selectedStory.id, stepId, {
+      document.stories.addAction(selectedStory, step, {
         type: isVisible ? 'show-layer' : 'hide-layer',
         diagramId: currentDiagram.id,
         layerId: layer.id
@@ -117,7 +120,7 @@ export const StoryEditorPanel = () => {
     }
 
     // 3. Record pan/zoom state
-    document.stories.addAction(selectedStory.id, stepId, {
+    document.stories.addAction(selectedStory, step, {
       type: 'pan-zoom',
       diagramId: currentDiagram.id,
       x: currentDiagram.viewBox.offset.x,

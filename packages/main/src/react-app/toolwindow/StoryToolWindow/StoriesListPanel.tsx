@@ -32,10 +32,10 @@ export const StoriesListPanel = () => {
     }
   };
 
-  const handleDeleteStory = (storyId: string, e: React.MouseEvent) => {
+  const handleDeleteStory = (story: Story, e: React.MouseEvent) => {
     e.stopPropagation();
-    document.stories.deleteStory(storyId);
-    if (selectedStory?.id === storyId) {
+    document.stories.deleteStory(story);
+    if (selectedStory?.id === story.id) {
       setSelectedStory(undefined);
     }
   };
@@ -93,7 +93,7 @@ export const StoriesListPanel = () => {
               </span>
               <span
                 style={{ cursor: 'pointer' }}
-                onClick={e => handleDeleteStory(story.id, e)}
+                onClick={e => handleDeleteStory(story, e)}
                 title="Delete story"
               >
                 <TbTrash />

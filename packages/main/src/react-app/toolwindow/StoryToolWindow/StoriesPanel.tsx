@@ -39,16 +39,15 @@ export const StoriesPanel = () => {
 
   const handleAddStep = () => {
     if (selectedStoryIdForNewStep && newStepTitle.trim()) {
-      const step = document.stories.addStep(
-        selectedStoryIdForNewStep,
-        newStepTitle,
-        newStepDescription
-      );
+      const story = document.stories.getStory(selectedStoryIdForNewStep);
+      if (!story) return;
+
+      const step = document.stories.addStep(story, newStepTitle, newStepDescription);
 
       if (step) {
         // Record current state
         // 1. Switch to current diagram
-        document.stories.addAction(selectedStoryIdForNewStep, step.id, {
+        document.stories.addAction(story, step, {
           type: 'switch-diagram',
           diagramId: currentDiagram.id
         });
@@ -56,7 +55,7 @@ export const StoriesPanel = () => {
         // 2. Record layer visibility state
         for (const layer of currentDiagram.layers.all) {
           const isVisible = currentDiagram.layers.visible.includes(layer);
-          document.stories.addAction(selectedStoryIdForNewStep, step.id, {
+          document.stories.addAction(story, step, {
             type: isVisible ? 'show-layer' : 'hide-layer',
             diagramId: currentDiagram.id,
             layerId: layer.id
@@ -64,7 +63,7 @@ export const StoriesPanel = () => {
         }
 
         // 3. Record pan/zoom state
-        document.stories.addAction(selectedStoryIdForNewStep, step.id, {
+        document.stories.addAction(story, step, {
           type: 'pan-zoom',
           diagramId: currentDiagram.id,
           x: currentDiagram.viewBox.offset.x,
@@ -82,8 +81,12 @@ export const StoriesPanel = () => {
 
   const handleDeleteStep = (storyId: string, stepId: string) => {
     const story = document.stories.getStory(storyId);
-    const step = story?.steps.find(s => s.id === stepId);
-    const stepTitle = step?.title ?? 'this step';
+    if (!story) return;
+
+    const step = story.steps.find(s => s.id === stepId);
+    if (!step) return;
+
+    const stepTitle = step.title;
 
     application.ui.showDialog(
       new MessageDialogCommand(
@@ -94,7 +97,7 @@ export const StoriesPanel = () => {
           cancelLabel: 'No'
         },
         () => {
-          document.stories.deleteStep(storyId, stepId);
+          document.stories.deleteStep(story, step);
         }
       )
     );
@@ -102,8 +105,10 @@ export const StoriesPanel = () => {
 
   const handleDeleteStory = (storyId: string) => {
     const story = document.stories.getStory(storyId);
-    const storyName = story?.name ?? 'this story';
-    const stepCount = story?.steps.length ?? 0;
+    if (!story) return;
+
+    const storyName = story.name;
+    const stepCount = story.steps.length;
 
     application.ui.showDialog(
       new MessageDialogCommand(
@@ -114,7 +119,7 @@ export const StoriesPanel = () => {
           cancelLabel: 'No'
         },
         () => {
-          document.stories.deleteStory(storyId);
+          document.stories.deleteStory(story);
         }
       )
     );
@@ -129,12 +134,12 @@ export const StoriesPanel = () => {
     if (!step) return;
 
     for (let i = step.actions.length - 1; i >= 0; i--) {
-      document.stories.removeAction(storyId, stepId, i);
+      document.stories.removeAction(story, step, i);
     }
 
     // Record current state
     // 1. Switch to current diagram
-    document.stories.addAction(storyId, stepId, {
+    document.stories.addAction(story, step, {
       type: 'switch-diagram',
       diagramId: currentDiagram.id
     });
@@ -142,7 +147,7 @@ export const StoriesPanel = () => {
     // 2. Record layer visibility state
     for (const layer of currentDiagram.layers.all) {
       const isVisible = currentDiagram.layers.visible.includes(layer);
-      document.stories.addAction(storyId, stepId, {
+      document.stories.addAction(story, step, {
         type: isVisible ? 'show-layer' : 'hide-layer',
         diagramId: currentDiagram.id,
         layerId: layer.id
@@ -150,7 +155,7 @@ export const StoriesPanel = () => {
     }
 
     // 3. Record pan/zoom state
-    document.stories.addAction(storyId, stepId, {
+    document.stories.addAction(story, step, {
       type: 'pan-zoom',
       diagramId: currentDiagram.id,
       x: currentDiagram.viewBox.offset.x,

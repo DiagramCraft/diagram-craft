@@ -2,7 +2,6 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { Select } from '@diagram-craft/app-components/Select';
 import {
   TbPlayerPlay,
-  TbPlayerPause,
   TbPlayerStop,
   TbPlayerSkipBack,
   TbPlayerSkipForward
@@ -56,17 +55,13 @@ export const StoryPlayerPanel = () => {
     }
   }, [selectedStoryId, player]);
 
-  const handlePlay = () => {
+  const handleStart = () => {
     if (!player.currentStory) {
       if (selectedStoryId) {
         player.loadStory(selectedStoryId);
       }
     }
-    player.play(application.model.activeDiagram.id);
-  };
-
-  const handlePause = () => {
-    player.pause();
+    player.start(application.model.activeDiagram.id);
   };
 
   const handleStop = () => {
@@ -84,7 +79,6 @@ export const StoryPlayerPanel = () => {
   const currentStory = player.currentStory;
   const currentStep = player.currentStep;
   const currentStepIndex = player.currentStepIndex;
-  const isPlaying = player.isPlaying;
 
   return (
     <ToolWindowPanel
@@ -136,15 +130,9 @@ export const StoryPlayerPanel = () => {
               <Button onClick={handlePrevious} disabled={currentStepIndex <= 0}>
                 <TbPlayerSkipBack />
               </Button>
-              {!isPlaying ? (
-                <Button onClick={handlePlay} disabled={!currentStory}>
-                  <TbPlayerPlay />
-                </Button>
-              ) : (
-                <Button onClick={handlePause}>
-                  <TbPlayerPause />
-                </Button>
-              )}
+              <Button onClick={handleStart} disabled={!currentStory || currentStepIndex >= 0}>
+                <TbPlayerPlay />
+              </Button>
               <Button onClick={handleStop} disabled={currentStepIndex < 0}>
                 <TbPlayerStop />
               </Button>
@@ -181,7 +169,7 @@ export const StoryPlayerPanel = () => {
 
             {currentStepIndex < 0 && (
               <div style={{ textAlign: 'center', color: 'var(--gray-11)', padding: '1rem' }}>
-                Press play to start the story
+                Press <TbPlayerPlay style={{ display: 'inline', verticalAlign: 'middle' }} /> to start the story
               </div>
             )}
 

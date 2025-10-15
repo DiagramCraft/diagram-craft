@@ -4,7 +4,6 @@ import { EventEmitter } from '@diagram-craft/utils/event';
 
 export type StoryPlayerEvents = {
   stateChange: {
-    isPlaying: boolean;
     currentStepIndex: number;
     story: Story | undefined;
   };
@@ -21,17 +20,12 @@ type SavedState = {
 };
 
 export class StoryPlayer extends EventEmitter<StoryPlayerEvents> {
-  #isPlaying = false;
   #currentStory: Story | undefined;
   #currentStepIndex = -1;
   #savedState: SavedState | undefined;
 
   constructor(private readonly document: DiagramDocument) {
     super();
-  }
-
-  get isPlaying() {
-    return this.#isPlaying;
   }
 
   get currentStory() {
@@ -60,11 +54,10 @@ export class StoryPlayer extends EventEmitter<StoryPlayerEvents> {
 
     this.#currentStory = story;
     this.#currentStepIndex = -1;
-    this.#isPlaying = false;
     this.emitStateChange();
   }
 
-  play(currentDiagramId?: string) {
+  start(currentDiagramId?: string) {
     if (!this.#currentStory) return;
 
     // Save current state before starting playback
@@ -72,7 +65,6 @@ export class StoryPlayer extends EventEmitter<StoryPlayerEvents> {
       this.saveCurrentState(currentDiagramId);
     }
 
-    this.#isPlaying = true;
     if (this.#currentStepIndex === -1) {
       this.next();
     } else {
@@ -80,13 +72,7 @@ export class StoryPlayer extends EventEmitter<StoryPlayerEvents> {
     }
   }
 
-  pause() {
-    this.#isPlaying = false;
-    this.emitStateChange();
-  }
-
   stop() {
-    this.#isPlaying = false;
     this.#currentStepIndex = -1;
 
     // Restore the saved state
@@ -98,8 +84,6 @@ export class StoryPlayer extends EventEmitter<StoryPlayerEvents> {
   next(): boolean {
     if (!this.#currentStory) return false;
     if (this.#currentStepIndex >= this.#currentStory.steps.length - 1) {
-      this.#isPlaying = false;
-      this.emitStateChange();
       return false;
     }
 
@@ -151,7 +135,6 @@ export class StoryPlayer extends EventEmitter<StoryPlayerEvents> {
           // The actual switching is handled by the application layer
           // This event can be listened to by the UI
           this.emit('stateChange', {
-            isPlaying: this.#isPlaying,
             currentStepIndex: this.#currentStepIndex,
             story: this.#currentStory
           });
@@ -204,7 +187,6 @@ export class StoryPlayer extends EventEmitter<StoryPlayerEvents> {
 
   private emitStateChange() {
     this.emit('stateChange', {
-      isPlaying: this.#isPlaying,
       currentStepIndex: this.#currentStepIndex,
       story: this.#currentStory
     });
