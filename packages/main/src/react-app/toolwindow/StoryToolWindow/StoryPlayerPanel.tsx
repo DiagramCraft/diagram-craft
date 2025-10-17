@@ -1,19 +1,30 @@
 import { Button } from '@diagram-craft/app-components/Button';
 import { Select } from '@diagram-craft/app-components/Select';
-import { TbPlayerPlay, TbPlayerStop, TbPlayerSkipBack, TbPlayerSkipForward } from 'react-icons/tb';
+import {
+  TbPlayerPlay,
+  TbPlayerSkipBack,
+  TbPlayerSkipForward,
+  TbPlayerStop,
+  TbPresentation
+} from 'react-icons/tb';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
-import { useDocument, useApplication } from '../../../application';
+import { useApplication, useDocument } from '../../../application';
 import { ToolWindowPanel } from '../ToolWindowPanel';
-import { useState, useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { StoryPlayer } from '@diagram-craft/model/storyPlayer';
 import { mustExist } from '@diagram-craft/utils/assert';
+import { PresentationMode } from './PresentationMode';
+import { usePortal } from '@diagram-craft/app-components/PortalContext';
+import { Portal } from '@radix-ui/react-portal';
 
 export const StoryPlayerPanel = () => {
   const redraw = useRedraw();
   const document = useDocument();
   const application = useApplication();
   const stories = document.stories.stories;
+  const [showPresentation, setShowPresentation] = useState(false);
+  const portal = usePortal();
 
   const player = useMemo(
     () => new StoryPlayer(document, d => (application.model.activeDiagram = d)),
@@ -49,6 +60,12 @@ export const StoryPlayerPanel = () => {
   const handleNext = () => player.next();
   const handlePrevious = () => player.previous();
 
+  const handlePresentationMode = () => {
+    if (selectedStoryId) {
+      setShowPresentation(true);
+    }
+  };
+
   const currentStory = player.currentStory;
   const currentStep = player.currentStep;
   const currentStepIndex = player.currentStepIndex;
@@ -61,13 +78,15 @@ export const StoryPlayerPanel = () => {
       style={{ padding: '0.5rem' }}
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-        <Select.Root value={selectedStoryId ?? ''} onChange={value => setSelectedStoryId(value)}>
-          {stories.map(story => (
-            <Select.Item key={story.id} value={story.id}>
-              {story.name}
-            </Select.Item>
-          ))}
-        </Select.Root>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <Select.Root value={selectedStoryId ?? ''} onChange={value => setSelectedStoryId(value)}>
+            {stories.map(story => (
+              <Select.Item key={story.id} value={story.id}>
+                {story.name}
+              </Select.Item>
+            ))}
+          </Select.Root>
+        </div>
 
         {currentStory && (
           <>
@@ -91,6 +110,14 @@ export const StoryPlayerPanel = () => {
                 disabled={!currentStory || currentStepIndex >= 0}
               >
                 <TbPlayerPlay />
+              </Button>
+              <Button
+                onClick={handlePresentationMode}
+                type={'primary'}
+                disabled={!selectedStoryId}
+                title="Start Presentation Mode"
+              >
+                <TbPresentation />
               </Button>
               <Button
                 onClick={handleStop}
@@ -169,6 +196,15 @@ export const StoryPlayerPanel = () => {
           </div>
         )}
       </div>
+
+      {showPresentation && selectedStoryId && (
+        <Portal container={portal}>
+          <PresentationMode
+            story={mustExist(document.stories.getStory(selectedStoryId))}
+            onClose={() => setShowPresentation(false)}
+          />
+        </Portal>
+      )}
     </ToolWindowPanel>
   );
 };

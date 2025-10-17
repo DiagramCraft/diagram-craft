@@ -1,0 +1,116 @@
+.presentation {
+  position: fixed;
+  background: var(--canvas-bg2);
+  top: 10px;
+  right: 10px;
+  bottom: 10px;
+  left: 10px;
+  z-index: 10000;
+
+  .presentation__tools {
+    position: absolute;
+    right: 15px;
+    top: 10px;
+
+    button {
+      margin-left: 0.5rem;
+      color: black;
+
+      svg {
+        width: 1.5rem;
+        height: 1.5rem;
+      }
+    }
+
+    z-index: 1000;
+  }
+
+  .presentation__header {
+    position: absolute;
+    left: 0;
+    top: 0;
+    max-width: 30%;
+    width: 30%;
+    background: rgba(0, 0, 0, 0.1);
+    color: black;
+    padding: 1.2rem 4rem 1.5rem 1.5rem;
+    z-index: 1000;
+    text-align: left;
+    backdrop-filter: blur(10px);
+  }
+
+  .presentation__header__title {
+    font-size: 1.3rem;
+    font-weight: bold;
+    margin-bottom: 0.3rem;
+  }
+
+  .presentation__header__description {
+    font-size: 0.9rem;
+  }
+
+  .presentation__canvas {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--canvas-bg2);
+
+    > div {
+      position: absolute;
+      inset: 0;
+
+      > svg {
+        background: var(--canvas-bg2);
+      }
+    }
+
+    .svg-node, .svg-edge {
+      cursor: default;
+    }
+
+    .svg-node--with-action .svg-node {
+      cursor: pointer;
+    }
+  }
+
+  .presentation__controls {
+    position: absolute;
+    bottom: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+  }
+
+  .presentation__controls__inner {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 8px;
+
+    button {
+      background: transparent;
+      border: none;
+      color: black;
+      outline: none;
+
+      svg {
+        width: 1.2rem;
+        height: 1.2rem;
+      }
+    }
+  }
+
+  .presentation__controls__progress {
+    color: black;
+    font-size: 0.8rem;
+    font-weight: normal;
+    margin-left: 0.5rem;
+    min-width: 4rem;
+    text-align: center;
+  }
+}
