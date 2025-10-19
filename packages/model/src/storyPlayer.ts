@@ -105,6 +105,7 @@ export class StoryPlayer extends EventEmitter<StoryPlayerEvents> {
         this.executeStep(step);
       }
     }
+    this.#currentStepIndex = stepIndex;
 
     this.emitStateChange();
   }
