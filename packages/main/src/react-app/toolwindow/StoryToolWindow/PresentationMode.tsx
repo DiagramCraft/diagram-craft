@@ -24,11 +24,17 @@ type Props = {
   story: Story;
 };
 
+let currentAnimationFrameId: number | null = null;
+
 const showActive = (immediate = false) => {
   const other = document.getElementById('presentation-canvas-other-canvas')!;
   const active = document.getElementById('presentation-canvas-active-canvas')!;
 
   if (immediate) {
+    if (currentAnimationFrameId !== null) {
+      cancelAnimationFrame(currentAnimationFrameId);
+      currentAnimationFrameId = null;
+    }
     active.style.opacity = '1';
     other.style.opacity = '0';
     return;
@@ -36,6 +42,11 @@ const showActive = (immediate = false) => {
 
   const now = Date.now();
   const animationDuration = 2000;
+  const hideAnimationDuration = 800;
+
+  const easeOut = (t: number) => {
+    return 1 - (1 - t) ** 3;
+  };
 
   const step = () => {
     const timestamp = Date.now();
@@ -44,19 +55,28 @@ const showActive = (immediate = false) => {
     if (sinceStart >= animationDuration) {
       active.style.opacity = '1';
       other.style.opacity = '0';
+      currentAnimationFrameId = null;
     } else {
-      const opacity = progress;
-      active.style.opacity = opacity.toString();
-      other.style.opacity = (1 - opacity).toString();
+      const easedProgress = easeOut(progress);
+      active.style.opacity = easedProgress.toString();
+
+      const hideProgress = Math.min(sinceStart / hideAnimationDuration, 1);
+      const easedHideProgress = easeOut(hideProgress);
+      other.style.opacity = (1 - easedHideProgress).toString();
+
       if (progress <= 1) {
-        requestAnimationFrame(step);
+        currentAnimationFrameId = requestAnimationFrame(step);
       }
     }
   };
-  requestAnimationFrame(step);
+  currentAnimationFrameId = requestAnimationFrame(step);
 };
 
 const hideActive = () => {
+  if (currentAnimationFrameId !== null) {
+    cancelAnimationFrame(currentAnimationFrameId);
+    currentAnimationFrameId = null;
+  }
   const other = document.getElementById('presentation-canvas-other-canvas')!;
   const active = document.getElementById('presentation-canvas-active-canvas')!;
   other.style.opacity = '1';
