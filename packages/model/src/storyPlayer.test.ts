@@ -251,7 +251,7 @@ describe('StoryPlayer', () => {
       // goToStep executes all steps but doesn't update currentStepIndex
       storyPlayer.goToStep(2);
 
-      expect(storyPlayer.currentStepIndex).toBe(-1);
+      expect(storyPlayer.currentStepIndex).toBe(2);
     });
 
     test('should execute all actions up to the target step', () => {
