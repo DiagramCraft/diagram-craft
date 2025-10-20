@@ -1,6 +1,9 @@
-import { FileLoader, StencilLoader } from '@diagram-craft/canvas-app/loaders';
+import { FileLoader } from '@diagram-craft/canvas-app/loaders';
 import { drawioReader } from './drawioReader';
-import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
+import {
+  NodeDefinitionRegistry,
+  type StencilLoader
+} from '@diagram-craft/model/elementDefinitionRegistry';
 import { loadDrawioStencils } from './drawioStencilLoader';
 import { toRegularStencil } from './drawioStencilUtils';
 

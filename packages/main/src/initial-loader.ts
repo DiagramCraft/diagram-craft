@@ -1,11 +1,13 @@
 import { YJSWebSocketCollaborationBackend } from '@diagram-craft/model/collaboration/yjs/yjsWebsocketCollaborationBackend';
 import { YJSMap, YJSRoot } from '@diagram-craft/model/collaboration/yjs/yjsCrdt';
 import { CollaborationConfig } from '@diagram-craft/model/collaboration/collaborationConfig';
+// biome-ignore lint/correctness/noUndeclaredDependencies: this is a vite alias
 import defineAppConfig from '@diagram-craft/config';
 import { defaultAppConfig } from './appConfig.default';
-import { fileLoaderRegistry, stencilLoaderRegistry } from '@diagram-craft/canvas-app/loaders';
+import { fileLoaderRegistry } from '@diagram-craft/canvas-app/loaders';
 import { AppConfig } from './appConfig';
 import { Autosave } from './react-app/autosave/Autosave';
+import { stencilLoaderRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
 
 const config = defineAppConfig(defaultAppConfig);
 AppConfig.set(config);

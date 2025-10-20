@@ -1,23 +1,9 @@
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { assert } from '@diagram-craft/utils/assert';
-import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { ProgressCallback } from '@diagram-craft/model/types';
 import type { CRDTRoot } from '@diagram-craft/model/collaboration/crdt';
 import type { DiagramFactory, DocumentFactory } from '@diagram-craft/model/factory';
 import type { AwarenessUserState } from '@diagram-craft/model/collaboration/awareness';
-
-declare global {
-  interface StencilLoaderOpts {}
-}
-
-export type StencilLoader<T extends keyof StencilLoaderOpts> = (
-  nodeDefinition: NodeDefinitionRegistry,
-  opts: StencilLoaderOpts[T]
-) => Promise<void>;
-
-export const stencilLoaderRegistry: Partial<{
-  [K in keyof StencilLoaderOpts]: () => Promise<StencilLoader<K>>;
-}> = {};
 
 export type FileLoader = (
   // TODO: Need to extend with blob

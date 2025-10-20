@@ -2,8 +2,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { App, DiagramRef } from './App';
-import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
-import { loadFileFromUrl, stencilLoaderRegistry } from '@diagram-craft/canvas-app/loaders';
+import {
+  NodeDefinitionRegistry,
+  stencilLoaderRegistry
+} from '@diagram-craft/model/elementDefinitionRegistry';
+import { loadFileFromUrl } from '@diagram-craft/canvas-app/loaders';
 import { assert } from '@diagram-craft/utils/assert';
 import { newid } from '@diagram-craft/utils/id';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';

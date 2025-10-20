@@ -11,7 +11,6 @@ import type { Diagram } from './diagram';
 import { newid } from '@diagram-craft/utils/id';
 import { unique } from '@diagram-craft/utils/array';
 import { EventEmitter } from '@diagram-craft/utils/event';
-import { stencilLoaderRegistry } from '@diagram-craft/canvas-app/loaders';
 import { PathList } from '@diagram-craft/geometry/pathList';
 import { assertRegularLayer } from './diagramLayerUtils';
 import { safeSplit } from '@diagram-craft/utils/safe';
@@ -110,6 +109,20 @@ if (typeof window !== 'undefined') {
     console.log([...missing].join('\n'));
   };
 }
+
+// TODO: Rename this to NodeTypeLoader
+declare global {
+  interface StencilLoaderOpts {}
+}
+
+export type StencilLoader<T extends keyof StencilLoaderOpts> = (
+  nodeDefinition: NodeDefinitionRegistry,
+  opts: StencilLoaderOpts[T]
+) => Promise<void>;
+
+export const stencilLoaderRegistry: Partial<{
+  [K in keyof StencilLoaderOpts]: () => Promise<StencilLoader<K>>;
+}> = {};
 
 type PreregistrationEntry<K extends keyof StencilLoaderOpts> = {
   type: K;
