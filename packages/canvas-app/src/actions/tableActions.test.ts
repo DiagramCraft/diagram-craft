@@ -8,7 +8,7 @@ import {
 } from './tableActions';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { ActionContext } from '../action';
+import { ActionContext } from '@diagram-craft/canvas/action';
 import { TestModel } from '@diagram-craft/model/test-support/builder';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
