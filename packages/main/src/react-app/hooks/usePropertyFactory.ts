@@ -58,6 +58,7 @@ export const makePropertyHook = <
       else return setValue(value as unknown as TValue);
     };
     subscribe(obj, handler);
+    // biome-ignore lint/correctness/useExhaustiveDependencies: this is correct
     useEffect(handler, [defaultValue, obj, path]);
 
     const accessor = new DynamicAccessor<TObj>();
@@ -136,6 +137,7 @@ export const makePropertyArrayHook = <
       setMultiple(arr.length > 1);
     };
     subscribe(obj, handler);
+    // biome-ignore lint/correctness/useExhaustiveDependencies: This is correct
     useEffect(handler, [defaultValue, obj, path]);
 
     let isSet = true;

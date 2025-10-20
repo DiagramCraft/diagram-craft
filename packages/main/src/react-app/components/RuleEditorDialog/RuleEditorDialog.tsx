@@ -252,7 +252,7 @@ export const RuleEditorDialog = (props: Props) => {
     );
     setRule(deepClone(props.rule));
     setClauses(deepClone(props.rule)?.clauses ?? []);
-  }, [props.rule, props.open]);
+  }, [props.rule, type]);
 
   const ref = useRef<HTMLInputElement>(null);
   useEffect(() => {

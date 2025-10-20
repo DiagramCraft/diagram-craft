@@ -390,7 +390,7 @@ export const ModelPickerTab = () => {
       db.off('updateData', rd);
       db.off('deleteData', rd);
     };
-  }, [db]);
+  }, [db, redraw]);
 
   useEventListener(document.data.templates, 'add', redraw);
   useEventListener(document.data.templates, 'update', redraw);

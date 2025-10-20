@@ -93,21 +93,24 @@ export const AppLoader = (props: Props) => {
   const [progress, setProgress] = useState<Progress | undefined>(undefined);
   const progressCallback = useCallback<ProgressCallback>(
     (status, opts) => queueMicrotask(() => setProgress({ status, ...opts })),
-    [setProgress]
+    []
   );
 
-  const load = (ref?: DiagramRef) => {
-    loadInitialDocument(
-      ref,
-      UserState.get().awarenessState,
-      props.documentFactory,
-      props.diagramFactory,
-      progressCallback
-    ).then(({ doc, url }) => {
-      if (doc) setDoc(doc);
-      if (url) setUrl(url);
-    });
-  };
+  const load = useCallback(
+    (ref?: DiagramRef) => {
+      loadInitialDocument(
+        ref,
+        UserState.get().awarenessState,
+        props.documentFactory,
+        props.diagramFactory,
+        progressCallback
+      ).then(({ doc, url }) => {
+        if (doc) setDoc(doc);
+        if (url) setUrl(url);
+      });
+    },
+    [progressCallback, props.diagramFactory, props.documentFactory]
+  );
 
   useEffect(() => {
     if (!doc) return;
@@ -122,7 +125,7 @@ export const AppLoader = (props: Props) => {
 
   useEffect(() => {
     load(props.diagram);
-  }, [props.diagramFactory, props.documentFactory]);
+  }, [load, props.diagram]);
 
   useEffect(() => {
     if (doc && progress?.status === 'complete') {
@@ -150,7 +153,7 @@ export const AppLoader = (props: Props) => {
       { id: 'doc-cleared' }
     );
     return () => doc.off('cleared', 'doc-cleared');
-  }, [doc]);
+  }, [doc, load, url]);
 
   if (doc && doc.diagrams.length === 0) {
     console.error('Doc contains no diagrams');

@@ -138,9 +138,10 @@ export const CommandPalette = ({ open, onClose }: CommandPaletteProps) => {
     setSelectedIndex(0);
     setIsKeyboardNavigation(false);
     commandItemRefs.current = [];
-  }, [searchText]);
+  }, []);
 
   // Scroll selected item into view when selectedIndex changes
+  // biome-ignore lint/correctness/useExhaustiveDependencies: this is correct
   useEffect(scrollSelectedIntoView, [selectedIndex, scrollSelectedIntoView]);
 
   // Reset search when dialog opens

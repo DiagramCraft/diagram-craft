@@ -57,7 +57,7 @@ const AdjustButton = (props: {
       btn.removeEventListener('mouseup', mouseUp);
       btn.removeEventListener('mouseleave', mouseUp);
     };
-  }, [btnRef, props, props.onClick]);
+  }, [props, props.onClick]);
 
   return (
     <button ref={btnRef} type="button" className={props.className} disabled={props.disabled}>

@@ -42,7 +42,7 @@ export const Preview = (props: Props) => {
     return () => {
       document.removeEventListener('keydown', cb);
     };
-  }, []);
+  }, [props.onClose]);
 
   const OFFSET = 40;
 

@@ -47,7 +47,7 @@ export const Canvas: CanvasComponentType = forwardRef((props, _ref) => {
       cmpRef.current.detach();
       cmpRef.current = factory();
     };
-  }, []);
+  }, [factory]);
 
   return <div ref={ref}></div>;
 });

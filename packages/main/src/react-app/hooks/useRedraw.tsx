@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 export const useRedraw = () => {
-  const [redraw, setRedraw] = useState(1);
-  return () => {
-    setRedraw(redraw + 1);
-  };
+  const [_redraw, setRedraw] = useState(1);
+  return useCallback(() => {
+    setRedraw(redraw => redraw + 1);
+  }, []);
 };

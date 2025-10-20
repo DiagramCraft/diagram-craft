@@ -71,7 +71,7 @@ const ShapePreviewWithAnchors = ({ diagram }: { diagram: ReturnType<typeof useDi
     };
 
     return thumbnailDiagram;
-  }, [selectedNode]);
+  }, [selectedNode, diagram.document.definitions]);
 
   if (!selectedNode || !previewDiagram) return null;
 

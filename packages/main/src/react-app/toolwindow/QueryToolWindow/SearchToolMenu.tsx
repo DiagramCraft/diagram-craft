@@ -54,7 +54,7 @@ export const SearchToolMenu = (props: SearchToolMenuProps) => {
         redraw();
       }
     });
-  }, [props.getQuery]);
+  }, [props.getQuery, application, document, props, redraw]);
 
   const createRuleClausesFromSearch = useCallback((): ElementSearchClause[] => {
     const query = props.getQuery();
@@ -147,7 +147,7 @@ export const SearchToolMenu = (props: SearchToolMenuProps) => {
     document.props.query.addHistory('djql', djqlQuery, scope, djqlQuery);
     setDjqlQuery(djqlQuery, scope);
     switchTab('djql');
-  }, [props, document, setDjqlQuery, switchTab, redraw]);
+  }, [props, document, setDjqlQuery, switchTab]);
 
   return (
     <DropdownMenu.Root>
@@ -210,7 +210,7 @@ export const SearchToolMenu = (props: SearchToolMenuProps) => {
           <DropdownMenu.Item className="cmp-context-menu__item" onClick={saveSearch}>
             Save Search
           </DropdownMenu.Item>
-          <DropdownMenu.Item 
+          <DropdownMenu.Item
             className="cmp-context-menu__item"
             onClick={() => setIsManageDialogOpen(true)}
           >
@@ -227,7 +227,7 @@ export const SearchToolMenu = (props: SearchToolMenuProps) => {
           </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
-      
+
       <ManageSavedSearchesDialog
         open={isManageDialogOpen}
         onClose={() => setIsManageDialogOpen(false)}

@@ -84,7 +84,7 @@ export const Ruler = ({ orientation }: Props) => {
     return () => {
       document.removeEventListener('mousemove', handler);
     };
-  }, [userState.showRulers, orientation, viewbox, updateCursorLine]);
+  }, [userState.showRulers, orientation, updateCursorLine]);
 
   if (!userState.showRulers) return null;
 
