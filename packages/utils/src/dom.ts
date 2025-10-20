@@ -1,5 +1,3 @@
-import { Point } from '@diagram-craft/geometry/point';
-
 /**
  * Find the closest ancestor of a given HTML element that has a specific class.
  *
@@ -27,7 +25,7 @@ export const getAncestorWithClass = (el: HTMLElement, className: string) => {
  * @param el - The element to position.
  * @param position - The position object containing x and y coordinates.
  */
-export const setPosition = (el: HTMLElement, position: Point) => {
+export const setPosition = (el: HTMLElement, position: { x: number; y: number }) => {
   el.style.left = `${position.x}px`;
   el.style.top = `${position.y}px`;
 };

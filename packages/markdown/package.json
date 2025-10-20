@@ -8,5 +8,8 @@
     "test": "vitest"
   },
   "keywords": [],
-  "author": "Magnus Johansson"
+  "author": "Magnus Johansson",
+  "dependencies": {
+    "@diagram-craft/utils": "workspace:^"
+  }
 }

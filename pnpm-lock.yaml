@@ -169,7 +169,23 @@ importers:
         specifier: workspace:^
         version: link:../utils
 
-  packages/canvas-drawio: {}
+  packages/canvas-drawio:
+    dependencies:
+      '@diagram-craft/canvas':
+        specifier: workspace:^
+        version: link:../canvas
+      '@diagram-craft/canvas-nodes':
+        specifier: workspace:^
+        version: link:../canvas-nodes
+      '@diagram-craft/geometry':
+        specifier: workspace:^
+        version: link:../geometry
+      '@diagram-craft/model':
+        specifier: workspace:^
+        version: link:../model
+      '@diagram-craft/utils':
+        specifier: workspace:^
+        version: link:../utils
 
   packages/canvas-edges:
     dependencies:
@@ -258,6 +274,10 @@ importers:
       '@diagram-craft/utils':
         specifier: workspace:^
         version: link:../utils
+    devDependencies:
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.4(@types/debug@4.1.12)(@types/node@22.18.0)(jsdom@26.1.0)(tsx@4.20.6)
 
   packages/main:
     dependencies:
@@ -385,8 +405,15 @@ importers:
       vite:
         specifier: '>=6.3.6'
         version: 6.3.6(@types/node@22.18.0)(tsx@4.20.6)
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.4(@types/debug@4.1.12)(@types/node@22.18.0)(jsdom@26.1.0)(tsx@4.20.6)
 
-  packages/markdown: {}
+  packages/markdown:
+    dependencies:
+      '@diagram-craft/utils':
+        specifier: workspace:^
+        version: link:../utils
 
   packages/model:
     dependencies:
@@ -408,6 +435,10 @@ importers:
       yjs:
         specifier: ^13.6.27
         version: 13.6.27
+    devDependencies:
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.4(@types/debug@4.1.12)(@types/node@22.18.0)(jsdom@26.1.0)(tsx@4.20.6)
 
   packages/server-main:
     dependencies:
