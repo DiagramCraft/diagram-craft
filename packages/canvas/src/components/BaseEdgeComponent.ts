@@ -115,7 +115,7 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
     const points: VNode[] = [];
 
     if (isSingleSelected && edgeProps.type !== 'curved') {
-      for (const mp of firstEdge.midpoints) {
+      for (const mp of firstEdge.path().midpoints) {
         points.push(
           svg.circle({
             class: 'svg-handle svg-midpoint-handle',

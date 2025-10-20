@@ -25,7 +25,7 @@ import {
   makeWriteable
 } from '@diagram-craft/utils/types';
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
-import { assert, VERIFY_NOT_REACHED, VerifyNotReached } from '@diagram-craft/utils/assert';
+import { assert, mustExist, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { newid } from '@diagram-craft/utils/id';
 import { clamp } from '@diagram-craft/utils/math';
 import { Point } from '@diagram-craft/geometry/point';
@@ -713,7 +713,6 @@ export class SimpleDiagramNode
     };
   }
 
-  // TODO: Add assertions for lookups
   restore(snapshot: DiagramNodeSnapshot, uow: UnitOfWork) {
     this.setBounds(snapshot.bounds, uow);
     this.#props.set(snapshot.props as NodeProps);
@@ -722,11 +721,7 @@ export class SimpleDiagramNode
     this.forceUpdateMetadata(snapshot.metadata);
 
     this.setChildren(
-      snapshot.children.map(c => {
-        const el = this.diagram.lookup(c);
-        if (!el) VERIFY_NOT_REACHED();
-        return el;
-      }),
+      snapshot.children.map(c => mustExist(this.diagram.lookup(c))),
       uow
     );
     const edges = snapshot.edges ?? {};

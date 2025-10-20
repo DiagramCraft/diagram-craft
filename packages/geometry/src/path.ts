@@ -196,6 +196,12 @@ export class Path {
     );
   }
 
+  get midpoints(): ReadonlyArray<Point> {
+    return this.segments.map((s: PathSegment) => {
+      return s.point(0.5);
+    });
+  }
+
   get start() {
     return this.#start;
   }

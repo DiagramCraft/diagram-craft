@@ -497,20 +497,6 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     }
   }
 
-  /*
-  TODO: Remove
-  toJSON() {
-    return {
-      parent: this.parent,
-      props: this.props,
-      selectionState: this.selectionState,
-      id: this.id,
-      name: this.name,
-      layers: this.layers
-    };
-  }
-   */
-
   getAttachmentsInUse() {
     return this.layers.getAttachmentsInUse();
   }

@@ -330,10 +330,6 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
     this.clearCache();
   }
 
-  get midpoints(): ReadonlyArray<Point> {
-    return this.delegate.midpoints;
-  }
-
   path(): Path {
     return this.delegate.path();
   }

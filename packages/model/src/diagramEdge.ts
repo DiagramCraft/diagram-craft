@@ -4,7 +4,7 @@ import { Point } from '@diagram-craft/geometry/point';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { Box } from '@diagram-craft/geometry/box';
 import { PointOnPath, TimeOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
-import { CubicSegment, LineSegment, type PathSegment } from '@diagram-craft/geometry/pathSegment';
+import { CubicSegment, LineSegment } from '@diagram-craft/geometry/pathSegment';
 import { Transform } from '@diagram-craft/geometry/transform';
 import {
   AbstractDiagramElement,
@@ -156,8 +156,6 @@ export interface DiagramEdge extends DiagramElement {
   addWaypoint(wp: Waypoint, uow: UnitOfWork): number;
   removeWaypoint(waypoint: Waypoint, uow: UnitOfWork): void;
   moveWaypoint(waypoint: Waypoint, point: Point, uow: UnitOfWork): void;
-
-  readonly midpoints: ReadonlyArray<Point>;
 
   path(): Path;
 
@@ -806,16 +804,6 @@ export class SimpleDiagramEdge
     uow.snapshot(this);
     this.#waypoints.set(this.waypoints.map((w, i) => (i === idx ? waypoint : w)));
     uow.updateElement(this);
-  }
-
-  /* Midpoints *********************************************************************************************** */
-
-  // TODO: Can we move this to Path?
-  get midpoints(): ReadonlyArray<Point> {
-    const path = this.path();
-    return path.segments.map((s: PathSegment) => {
-      return s.point(0.5);
-    });
   }
 
   /* Snapshot ************************************************************************************************ */
