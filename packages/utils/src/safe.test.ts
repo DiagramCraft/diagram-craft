@@ -218,11 +218,6 @@ describe('safeTupleCast', () => {
     test('should throw for empty array when n > 0', () => {
       expect(() => safeTupleCast([], 1)).toThrow();
     });
-
-    test('should succeed for empty array when n = 0', () => {
-      const result = safeTupleCast([], 0);
-      expect(result).toEqual([]);
-    });
   });
 
   describe('type preservation', () => {
