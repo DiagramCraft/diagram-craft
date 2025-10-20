@@ -6,10 +6,13 @@ export const safeReMatch = <M extends number>(value: string, re: RegExp, min: M,
   if (!m) return undefined;
   assert.true(m.length >= min && (max === undefined || m.length <= max));
 
+  // Convert to plain array to remove RegExpMatchArray properties (index, input, groups)
+  const plainArray = Array.from(m);
+
   if (max === undefined) {
-    return m as NElementArray<string, M>;
+    return plainArray as NElementArray<string, M>;
   } else {
-    return m as NOrMoreElementArray<string, M>;
+    return plainArray as NOrMoreElementArray<string, M>;
   }
 };
 
