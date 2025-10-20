@@ -24,6 +24,7 @@ import { getHighlights } from '../highlight';
 import { EdgeEndpointMoveDrag } from '../drag/edgeEndpointMoveDrag';
 import { Zoom } from './zoom';
 import { renderElement } from './renderElement';
+import { CanvasDomHelper } from '../utils/canvasDomHelper';
 
 export type EdgeComponentProps = {
   element: DiagramEdge;
@@ -245,7 +246,7 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
 
     return svg.g(
       {
-        id: `edge-${props.element.id}`,
+        id: CanvasDomHelper.edgeId(props.element),
         class: `${props.isReadOnly ? 'svg-readonly' : ''} ${getHighlights(props.element)
           .map(h => `svg-edge--highlight-${h}`)
           .join(' ')}`,

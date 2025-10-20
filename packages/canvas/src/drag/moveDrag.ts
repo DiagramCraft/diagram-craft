@@ -25,19 +25,18 @@ import {
   assertRegularOrModificationLayer
 } from '@diagram-craft/model/diagramLayerUtils';
 import { LayerCapabilities } from '@diagram-craft/model/diagramLayerManager';
-
-const getId = (e: DiagramElement) => (isNode(e) ? `node-${e.id}` : `edge-${e.id}`);
+import { CanvasDomHelper } from '../utils/canvasDomHelper';
 
 const enablePointerEvents = (elements: ReadonlyArray<DiagramElement>) => {
   for (const e of elements) {
-    document.getElementById(getId(e))!.style.pointerEvents = '';
+    CanvasDomHelper.elementElement(e)!.style.pointerEvents = '';
     if (isNode(e)) enablePointerEvents(e.children);
   }
 };
 
 const disablePointerEvents = (elements: ReadonlyArray<DiagramElement>) => {
   for (const e of elements) {
-    document.getElementById(getId(e))!.style.pointerEvents = 'none';
+    CanvasDomHelper.elementElement(e)!.style.pointerEvents = 'none';
     if (isNode(e)) disablePointerEvents(e.children);
   }
 };

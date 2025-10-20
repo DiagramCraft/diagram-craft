@@ -7,6 +7,7 @@ import { ShapeEdgeDefinition } from '../shape/shapeEdgeDefinition';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import type { EdgeComponentProps } from './BaseEdgeComponent';
 import { Component } from '../component/component';
+import { CanvasDomHelper } from '../utils/canvasDomHelper';
 
 export const renderElement = (
   component: Component<unknown>,
@@ -21,7 +22,7 @@ export const renderElement = (
   }
 ): VNode => {
   const p: NodeComponentProps & EdgeComponentProps = {
-    key: isNode(child) ? `node-${child.id}` : `edge-${child.id}`,
+    key: CanvasDomHelper.elementId(child),
     // @ts-expect-error - this is fine as child is either node or edge
     element: child,
     onDoubleClick: props.childProps.onDoubleClick,

@@ -22,6 +22,7 @@ import { INDICATORS } from './indicators';
 import { Box, WritableBox } from '@diagram-craft/geometry/box';
 import { isEmptyString } from '@diagram-craft/utils/strings';
 import { isometricBaseShape, makeIsometricTransform } from '../effects/isometric';
+import { CanvasDomHelper } from '../utils/canvasDomHelper';
 
 export type NodeComponentProps = {
   element: DiagramNode;
@@ -112,7 +113,7 @@ export class BaseNodeComponent<
     const onMouseDown = (e: MouseEvent) => {
       if (e.button !== 0) return;
 
-      const target = document.getElementById(`diagram-${$d.id}`) as HTMLElement | undefined;
+      const target = CanvasDomHelper.diagramElement($d);
       if (!target) return;
 
       props.onMouseDown(props.element.id, EventHelper.pointWithRespectTo(e, target), e);
@@ -123,7 +124,7 @@ export class BaseNodeComponent<
       ? (e: MouseEvent) => {
           if (e.button !== 0) return;
 
-          const target = document.getElementById(`diagram-${$d.id}`) as HTMLElement | undefined;
+          const target = CanvasDomHelper.diagramElement($d);
           if (!target) return;
 
           props.onDoubleClick?.(props.element.id, EventHelper.pointWithRespectTo(e, target));
@@ -322,7 +323,7 @@ export class BaseNodeComponent<
 
     const mainGroup = svg.g(
       {
-        id: `node-${props.element.id}`,
+        id: CanvasDomHelper.nodeId(props.element),
         class:
           'svg-node ' +
           (props.isReadOnly ? 'svg-readonly' : '') +

@@ -75,6 +75,7 @@ import { ElectronIntegration } from './electron';
 import { DocumentName } from './react-app/DocumentName';
 import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { Autosave } from './react-app/autosave/Autosave';
+import { CanvasDomHelper } from '@diagram-craft/canvas/utils/canvasDomHelper';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // biome-ignore lint/suspicious/noExplicitAny: false positive
@@ -553,7 +554,7 @@ export const App = (props: {
                   <ContextMenu.Root>
                     <ContextMenu.Trigger asChild={true}>
                       <EditableCanvas
-                        id={`diagram-${$d.id}`}
+                        id={CanvasDomHelper.diagramId($d)}
                         ref={svgRef}
                         diagram={$d}
                         /* Note: this uid here to force redraw in case the diagram is reloaded */

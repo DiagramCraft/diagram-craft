@@ -4,7 +4,5 @@
   "version": "1.0.0",
   "type": "module",
   "author": "Magnus Johansson",
-  "packageManager": "pnpm@9.3.0",
-  "dependencies": {},
-  "devDependencies": {}
+  "packageManager": "pnpm@9.3.0"
 }
