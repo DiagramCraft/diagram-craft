@@ -134,24 +134,7 @@ jobs:
             |----------|------|-------|--------|
             ${tableRows}| **Total** | **${formatNumber(baseTotal.Code)}** | **${formatNumber(prTotal.Code)}** | **${formatDelta(prTotal.Code, baseTotal.Code)}** |
 
-            ${totalDelta > 0 ? '📈 Code size increased' : totalDelta < 0 ? '📉 Code size decreased' : '➡️ Code size unchanged'}
-
-            <details>
-            <summary>Detailed breakdown</summary>
-
-            ### PR Branch
-            - Total Lines: ${formatNumber(prTotal.Lines)}
-            - Code: ${formatNumber(prTotal.Code)}
-            - Comments: ${formatNumber(prTotal.Comment)}
-            - Blank: ${formatNumber(prTotal.Blank)}
-
-            ### Base Branch
-            - Total Lines: ${formatNumber(baseTotal.Lines)}
-            - Code: ${formatNumber(baseTotal.Code)}
-            - Comments: ${formatNumber(baseTotal.Comment)}
-            - Blank: ${formatNumber(baseTotal.Blank)}
-
-            </details>`;
+            `;
 
             // Find existing LOC comment
             const { data: comments } = await github.rest.issues.listComments({
