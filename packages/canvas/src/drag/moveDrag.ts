@@ -7,7 +7,12 @@ import { Direction } from '@diagram-craft/geometry/direction';
 import { Translation } from '@diagram-craft/geometry/transform';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { Angle } from '@diagram-craft/geometry/angle';
-import { DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
+import {
+  DiagramElement,
+  isEdge,
+  isNode,
+  transformElements
+} from '@diagram-craft/model/diagramElement';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
@@ -147,7 +152,7 @@ export abstract class AbstractMoveDrag extends Drag {
     this.updateState(newBounds);
 
     if (!Point.isEqual(Point.ORIGIN, Point.subtract(newBounds, selection.bounds))) {
-      this.diagram.transformElements(
+      transformElements(
         selection.filter(
           'all',
           selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes
@@ -353,7 +358,7 @@ export class MoveDrag extends AbstractMoveDrag {
     });
 
     // Reset current selection back to original
-    this.diagram.transformElements(
+    transformElements(
       selection.filter(
         'nodes',
         selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes

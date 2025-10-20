@@ -457,6 +457,22 @@ export const getTopMostNode = (element: DiagramElement): DiagramElement => {
   return path.length > 0 ? path[path.length - 1]! : element;
 };
 
+export const transformElements = (
+  elements: ReadonlyArray<DiagramElement>,
+  transforms: ReadonlyArray<Transform>,
+  uow: UnitOfWork
+) => {
+  for (const el of elements) {
+    el.transform(transforms, uow);
+  }
+
+  // We do this in a separate loop to as nodes might move which will
+  // affect the start and end location of connected edges
+  for (const el of elements) {
+    uow.updateElement(el);
+  }
+};
+
 export const bindElementListeners = (diagram: Diagram) => {
   /* On comment change ----------------------------------------------- */
   const commentListener = (elementId: string | undefined) => {

@@ -4,6 +4,7 @@ import { Point } from '@diagram-craft/geometry/point';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ActionContext } from '@diagram-craft/canvas/action';
+import { transformElements } from '@diagram-craft/model/diagramElement';
 
 declare global {
   interface ActionMap extends ReturnType<typeof selectionResizeActions> {}
@@ -51,7 +52,7 @@ export class SelectionResizeAction extends AbstractSelectionAction {
     };
 
     const uow = new UnitOfWork(this.context.model.activeDiagram, true);
-    this.context.model.activeDiagram.transformElements(
+    transformElements(
       this.context.model.activeDiagram.selectionState.elements,
       TransformFactory.fromTo($sel.bounds, newBox),
       uow

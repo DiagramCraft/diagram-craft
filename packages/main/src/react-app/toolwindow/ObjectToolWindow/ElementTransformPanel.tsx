@@ -12,7 +12,7 @@ import { ToolWindowPanel } from '../ToolWindowPanel';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { ToggleButton } from '@diagram-craft/app-components/ToggleButton';
 import { useDiagram } from '../../../application';
-import { isNode } from '@diagram-craft/model/diagramElement';
+import { isNode, transformElements } from '@diagram-craft/model/diagramElement';
 import { assert } from '@diagram-craft/utils/assert';
 
 const origins = {
@@ -142,7 +142,7 @@ export const ElementTransformPanel = (props: Props) => {
         selectedElement.bounds,
         WritableBox.asBox(newBounds)
       );
-      diagram.transformElements([selectedElement], transforms, uow);
+      transformElements([selectedElement], transforms, uow);
       diagram.selectionState.highlights = [];
     });
   };

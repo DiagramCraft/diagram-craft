@@ -9,6 +9,7 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { excludeLabelNodes, includeAll } from '@diagram-craft/model/selectionState';
+import { transformElements } from '@diagram-craft/model/diagramElement';
 
 export type ResizeType = 'n' | 's' | 'e' | 'w' | 'nw' | 'ne' | 'sw' | 'se';
 
@@ -140,7 +141,7 @@ export class ResizeDrag extends Drag {
       label: `w: ${newBounds.w.toFixed(0)}, h: ${newBounds.h.toFixed(0)}`
     });
 
-    this.diagram.transformElements(
+    transformElements(
       selection.filter(
         'all',
         selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes
