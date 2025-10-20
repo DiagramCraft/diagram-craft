@@ -15,8 +15,8 @@ import { useTable } from '../../hooks/useTable';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { PropertyEditor } from '../../components/PropertyEditor';
-import { Property } from './types';
 import { useDiagram } from '../../../application';
+import type { Property } from '@diagram-craft/model/property';
 
 export const NodeTablePropertiesPanel = (props: Props) => {
   const diagram = useDiagram();

@@ -33,7 +33,6 @@ import type { EdgeDefinition } from './elementDefinitionRegistry';
 import { isEmptyString } from '@diagram-craft/utils/strings';
 import { assert, is, mustExist } from '@diagram-craft/utils/assert';
 import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
-import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
 import type { RegularLayer } from './diagramLayerRegular';
 import { assertRegularLayer, getAdjustments } from './diagramLayerUtils';
 import type { Reference, SerializedEndpoint } from './serialization/types';
@@ -49,6 +48,7 @@ import { MappedCRDTProp } from './collaboration/datatypes/mapped/mappedCrdtProp'
 import { CRDTObject } from './collaboration/datatypes/crdtObject';
 import type { ModificationLayer } from './diagramLayerModification';
 import type { Path } from '@diagram-craft/geometry/path';
+import type { PropertyInfo } from './property';
 
 const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
   endpoint instanceof ConnectedEndpoint;

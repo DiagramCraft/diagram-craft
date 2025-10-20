@@ -5,9 +5,9 @@ import { ToolWindowPanel } from '../ToolWindowPanel';
 import { ColorPicker, ColorPreview } from '../../components/ColorPicker';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { Property } from './types';
 import { PropertyEditor } from '../../components/PropertyEditor';
 import { useDiagram } from '../../../application';
+import type { Property } from '@diagram-craft/model/property';
 
 type FormProps = {
   diagram: Diagram;

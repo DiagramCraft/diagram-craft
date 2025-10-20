@@ -6,9 +6,9 @@ import { ToolWindowPanel } from '../ToolWindowPanel';
 import { Slider } from '@diagram-craft/app-components/Slider';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { PropertyEditor } from '../../components/PropertyEditor';
-import { Property } from './types';
 import { useDiagram } from '../../../application';
 import { Collapsible } from '@diagram-craft/app-components/Collapsible';
+import type { Property } from '@diagram-craft/model/property';
 
 type FormProps = {
   opacity: Property<number>;

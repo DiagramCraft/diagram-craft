@@ -33,7 +33,6 @@ import { applyTemplate } from './template';
 import { isEmptyString } from '@diagram-craft/utils/strings';
 import { Anchor } from './anchor';
 import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
-import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
 import { toUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
 import type { RegularLayer } from './diagramLayerRegular';
 import { transformPathList } from '@diagram-craft/geometry/pathListUtils';
@@ -52,6 +51,7 @@ import { makeIsometricTransform } from '@diagram-craft/canvas/effects/isometric'
 import type { ModificationLayer } from './diagramLayerModification';
 import { getAdjustments } from './diagramLayerUtils';
 import type { NodeDefinition } from './elementDefinitionRegistry';
+import type { PropertyInfo } from './property';
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;

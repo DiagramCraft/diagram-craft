@@ -9,10 +9,10 @@ import { DashSelector } from './components/DashSelector';
 import { Select } from '@diagram-craft/app-components/Select';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
 import { PropertyEditor } from '../../components/PropertyEditor';
-import { Property } from './types';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { EdgeType, LineCap, LineJoin } from '@diagram-craft/model/diagramProps';
 import { useDiagram } from '../../../application';
+import type { Property } from '@diagram-craft/model/property';
 
 type FormProps = {
   diagram: Diagram;

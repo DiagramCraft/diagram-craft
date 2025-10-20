@@ -1,7 +1,7 @@
 import { DASH_PATTERNS } from '@diagram-craft/canvas/dashPatterns';
 import { Select } from '@diagram-craft/app-components/Select';
-import { Property } from '../types';
 import { PropertyEditor } from '../../../components/PropertyEditor';
+import type { Property } from '@diagram-craft/model/property';
 
 const DashPatternPreview = (props: {
   type: string;

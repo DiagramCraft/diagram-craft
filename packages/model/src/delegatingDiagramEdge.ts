@@ -19,7 +19,6 @@ import { WatchableValue } from '@diagram-craft/utils/watchableValue';
 import { CRDTObject } from './collaboration/datatypes/crdtObject';
 import { deepMerge } from '@diagram-craft/utils/object';
 import { PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
-import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
 import type { Path } from '@diagram-craft/geometry/path';
 import { Transform } from '@diagram-craft/geometry/transform';
 import type { DuplicationContext } from './diagramNode';
@@ -27,6 +26,7 @@ import { DiagramElement } from './diagramElement';
 import { SerializedEdge, SerializedEndpoint } from './serialization/types';
 import { MappedCRDTProp } from './collaboration/datatypes/mapped/mappedCrdtProp';
 import { CRDTProp } from './collaboration/datatypes/crdtProp';
+import type { PropertyInfo } from './property';
 
 export type DiagramEdgeSnapshot = SerializedEdge & {
   _snapshotType: 'edge';

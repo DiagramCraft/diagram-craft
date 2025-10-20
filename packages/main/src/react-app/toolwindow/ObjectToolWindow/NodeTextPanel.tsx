@@ -20,9 +20,10 @@ import { HAlign, VAlign } from '@diagram-craft/model/diagramProps';
 import { round } from '@diagram-craft/utils/math';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { MultiProperty, Property } from './types';
+import { MultiProperty } from './types';
 import { PropertyEditor } from '../../components/PropertyEditor';
 import { useDiagram } from '../../../application';
+import type { Property } from '@diagram-craft/model/property';
 
 type FormProps = {
   diagram: Diagram;

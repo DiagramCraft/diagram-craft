@@ -6,13 +6,13 @@ import { ToolWindowPanel } from '../ToolWindowPanel';
 import { Slider } from '@diagram-craft/app-components/Slider';
 import { Select } from '@diagram-craft/app-components/Select';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { Property } from './types';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { PropertyEditor } from '../../components/PropertyEditor';
 import { useDiagram } from '../../../application';
 import { ColorPicker } from '../../components/ColorPicker';
 import { useConfiguration } from '../../context/ConfigurationContext';
 import { Collapsible } from '@diagram-craft/app-components/Collapsible';
+import type { Property } from '@diagram-craft/model/property';
 
 type FormProps = {
   diagram: Diagram;

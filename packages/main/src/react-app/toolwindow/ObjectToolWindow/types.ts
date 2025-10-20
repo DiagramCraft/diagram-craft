@@ -1,32 +1,5 @@
 import { unique } from '@diagram-craft/utils/array';
-
-export type Property<V> = {
-  val: V;
-  set: (value: V | undefined, message?: string) => void;
-  hasMultipleValues: boolean;
-  isSet: boolean;
-  info?: PropertyInfo<V>;
-  values?: Array<{
-    val: V;
-    count: number;
-  }>;
-};
-
-export type PropertyInfo<V> = Array<PropertyInfoEntry<V>>;
-
-type PropertyInfoEntry<V> = {
-  val: V;
-  type:
-    | 'default'
-    | 'stored'
-    | 'style'
-    | 'textStyle'
-    | 'rule'
-    | 'ruleStyle'
-    | 'ruleTextStyle'
-    | 'parent';
-  id?: string;
-};
+import type { Property, PropertyInfo } from '@diagram-craft/model/property';
 
 export abstract class MultiProperty<T> implements Property<T> {
   // biome-ignore lint/suspicious/noExplicitAny: false positive

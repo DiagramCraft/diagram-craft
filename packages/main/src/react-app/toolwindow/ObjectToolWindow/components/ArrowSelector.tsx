@@ -1,8 +1,8 @@
 import { ArrowPreview } from './ArrowPreview';
 import { ARROW_SHAPES } from '@diagram-craft/canvas/arrowShapes';
 import { Select } from '@diagram-craft/app-components/Select';
-import { Property } from '../types';
 import { PropertyEditor } from '../../../components/PropertyEditor';
+import type { Property } from '@diagram-craft/model/property';
 
 const PREVIEW_SCALE = 0.75;
 

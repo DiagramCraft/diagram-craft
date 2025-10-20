@@ -12,11 +12,11 @@ import { newid } from '@diagram-craft/utils/id';
 import { unique } from '@diagram-craft/utils/array';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { stencilLoaderRegistry } from '@diagram-craft/canvas-app/loaders';
-import { Property } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
 import { PathList } from '@diagram-craft/geometry/pathList';
 import { assertRegularLayer } from './diagramLayerUtils';
 import { safeSplit } from '@diagram-craft/utils/safe';
 import { ElementFactory } from './elementFactory';
+import type { Property } from './property';
 
 export type NodeCapability =
   | 'children'

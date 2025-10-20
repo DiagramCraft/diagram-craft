@@ -5,8 +5,8 @@ import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/p
 import { DeepReadonly } from '@diagram-craft/utils/types';
 import { unique, uniqueWithCount } from '@diagram-craft/utils/array';
 import { useRedraw } from './useRedraw';
-import { Property, PropertyInfo } from '../toolwindow/ObjectToolWindow/types';
 import { Defaults } from '@diagram-craft/model/diagramDefaults';
+import type { Property, PropertyInfo } from '@diagram-craft/model/property';
 
 export type PropertyHook<TBase, TObj> = <
   K extends PropPath<TObj>,

@@ -14,8 +14,9 @@ import { useTableProperty } from '../../hooks/useTable';
 import { DashSelector } from './components/DashSelector';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
 import { PropertyEditor } from '../../components/PropertyEditor';
-import { MultiProperty, Property } from './types';
+import { MultiProperty } from './types';
 import { useDiagram } from '../../../application';
+import type { Property } from '@diagram-craft/model/property';
 
 class StrokeProperty extends MultiProperty<string[]> {
   constructor(
