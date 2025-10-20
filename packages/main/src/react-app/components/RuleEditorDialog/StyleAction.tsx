@@ -1,5 +1,5 @@
 import { Select } from '@diagram-craft/app-components/Select';
-import { PropsEditor } from '@diagram-craft/canvas-app/PropsEditor';
+import { PropsEditor } from './PropsEditor';
 import { VerifyNotReached } from '@diagram-craft/utils/assert';
 import { EDGE_EDITORS, EditorTypes, NODE_EDITORS } from './editors';
 import type { EditableAdjustmentRuleAction } from './RuleEditorDialog';
