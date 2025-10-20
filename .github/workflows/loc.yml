@@ -1,0 +1,164 @@
+name: Lines of Code
+
+on:
+  pull_request:
+    branches:
+      - "**"
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  loc:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+
+      - name: Install SCC
+        run: |
+          curl -Lo scc.tar.gz https://github.com/boyter/scc/releases/download/v3.4.0/scc_Linux_x86_64.tar.gz
+          tar -xzf scc.tar.gz
+          chmod +x scc
+          sudo mv scc /usr/local/bin/
+
+      - name: Run SCC on PR
+        run: scc -f json --remap-all "describe(":"TypeScript Tests" . > scc-pr.json
+
+      - name: Upload PR SCC artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: scc-pr
+          path: scc-pr.json
+          retention-days: 1
+
+      - name: Checkout base branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.base_ref }}
+          submodules: 'recursive'
+
+      - name: Run SCC on base
+        run: scc -f json --remap-all "describe(":"TypeScript Tests" . > scc-base.json
+
+      - name: Upload base SCC artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: scc-base
+          path: scc-base.json
+          retention-days: 1
+
+      - name: Download PR SCC artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: scc-pr
+
+      - name: Download base SCC artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: scc-base
+
+      - name: Compare LOC and comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            let prScc, baseScc;
+
+            try {
+              prScc = JSON.parse(fs.readFileSync('scc-pr.json', 'utf8'));
+            } catch (e) {
+              console.error('Failed to read PR SCC data:', e);
+              prScc = [];
+            }
+
+            try {
+              baseScc = JSON.parse(fs.readFileSync('scc-base.json', 'utf8'));
+            } catch (e) {
+              console.error('Failed to read base SCC data:', e);
+              baseScc = [];
+            }
+
+            // Helper to find language data
+            const findLang = (data, name) => {
+              return data.find(lang => lang.Name === name) || { Lines: 0, Code: 0, Comment: 0, Blank: 0 };
+            };
+
+            // Helper to calculate totals
+            const calculateTotals = (data) => {
+              return data.reduce((acc, lang) => {
+                acc.Lines += lang.Lines;
+                acc.Code += lang.Code;
+                acc.Comment += lang.Comment;
+                acc.Blank += lang.Blank;
+                return acc;
+              }, { Lines: 0, Code: 0, Comment: 0, Blank: 0 });
+            };
+
+            const formatNumber = (num) => num.toLocaleString();
+
+            const formatDelta = (current, base) => {
+              const delta = current - base;
+              const sign = delta > 0 ? '+' : '';
+              const emoji = delta > 0 ? '🟢' : delta < 0 ? '🔴' : '⚪';
+              return `${emoji} ${sign}${formatNumber(delta)}`;
+            };
+
+            // Get key languages
+            const languages = ['TypeScript', 'TypeScript Tests', 'JavaScript', 'CSS', 'HTML'];
+            let tableRows = '';
+
+            for (const lang of languages) {
+              const prLang = findLang(prScc, lang);
+              const baseLang = findLang(baseScc, lang);
+
+              if (prLang.Lines > 0 || baseLang.Lines > 0) {
+                tableRows += `| **${lang}** | ${formatNumber(baseLang.Code)} | ${formatNumber(prLang.Code)} | ${formatDelta(prLang.Code, baseLang.Code)} |\n`;
+              }
+            }
+
+            // Calculate totals
+            const prTotal = calculateTotals(prScc);
+            const baseTotal = calculateTotals(baseScc);
+
+            const totalDelta = prTotal.Code - baseTotal.Code;
+
+            const comment = `## 📏 Lines of Code Report
+
+            | Language | Base | PR | Change |
+            |----------|------|-------|--------|
+            ${tableRows}| **Total** | **${formatNumber(baseTotal.Code)}** | **${formatNumber(prTotal.Code)}** | **${formatDelta(prTotal.Code, baseTotal.Code)}** |
+
+            `;
+
+            // Find existing LOC comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' && comment.body.includes('📏 Lines of Code Report')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: comment
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: comment
+              });
+            }
