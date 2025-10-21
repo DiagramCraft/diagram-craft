@@ -1,11 +1,4 @@
 /**
- * Makes all properties of a type writable by removing the readonly modifier.
- *
- * @template T - The type to make writable
- */
-export type Writeable<T> = { -readonly [k in keyof T]: T[k] };
-
-/**
  * Makes all properties of a type writable recursively by removing the readonly modifier
  * from all properties and nested properties.
  *
