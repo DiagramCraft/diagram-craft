@@ -6,17 +6,9 @@
  * @returns - The closest ancestor element with the specified class,
  *  `undefined` if no such element is found
  */
-export const getAncestorWithClass = (el: HTMLElement, className: string) => {
-  if (!el) return undefined;
-
-  let targetElement: HTMLElement | null = el;
-  while (targetElement) {
-    if (targetElement.classList.contains(className)) {
-      return targetElement;
-    }
-    targetElement = targetElement.parentElement;
-  }
-  return undefined;
+export const getAncestorWithClass = (el: HTMLElement | undefined, className: string) => {
+  const c = el?.closest(`.${className}`);
+  return c === null ? undefined : c;
 };
 
 /**

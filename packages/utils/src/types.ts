@@ -84,13 +84,6 @@ export type FlatObject = Record<string, string | number | boolean | undefined>;
  */
 export type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
 
-/**
- * Represents a nested object of any shape.
- * @deprecated Use more specific types instead of this generic type.
- */
-// biome-ignore lint/suspicious/noExplicitAny: false positive
-export type NestedObject = any;
-
 export type NoneEmptyArray<T> = [T, ...T[]];
 
 export type NElementArray<T, L extends number, D extends NoneEmptyArray<T> = [T]> = L extends number
