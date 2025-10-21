@@ -13,6 +13,14 @@ export const Angle = {
     return round(angle) === 0 || round(angle) === round(Math.PI);
   },
 
+  /**
+   * Checks if an angle is a cardinal direction (0°, 90°, 180°, or 270°)
+   */
+  isCardinal: (angle: number) => {
+    const cardinalDirections = [0, Math.PI / 2, Math.PI, (3 * Math.PI) / 2];
+    return cardinalDirections.some(cardinal => round(angle) === round(cardinal));
+  },
+
   normalize: (radians: number) => {
     let a = radians;
     while (a < 0) {
