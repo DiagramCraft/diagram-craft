@@ -43,7 +43,7 @@ export type Anchor = {
   clip?: boolean;
 };
 
-// This represents a endpoint connection. In most cases it's an anchor, but in
+// This represents an endpoint connection. In most cases it's an anchor, but in
 // case you are attaching to the boundary, it's a point
 //
 // Also, for edge anchors, the point indicates the exact point on the edge
