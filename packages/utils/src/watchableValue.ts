@@ -41,9 +41,9 @@ export class WatchableValue<T> extends EventEmitter<{
   /**
    * Creates a new instance of `WatchableValue` based on the provided function and array of `WatchableValue` arguments. The resulting value updates whenever any of the input `WatchableValue` instances change.
    *
-   * @param {function(K): T} fn - A function that computes a new value based on the array of `WatchableValue` instances.
-   * @param {K} arg - An array of `WatchableValue` instances that the result depends on.
-   * @return {WatchableValue<T>} A new `WatchableValue` instance that tracks the computed result of the function.
+   * @param fn - A function that computes a new value based on the array of `WatchableValue` instances.
+   * @param arg - An array of `WatchableValue` instances that the result depends on.
+   * @return A new `WatchableValue` instance that tracks the computed result of the function.
    */
   // biome-ignore lint/suspicious/noExplicitAny: false positive
   static from<T, K extends [WatchableValue<any>, ...WatchableValue<any>[]]>(
