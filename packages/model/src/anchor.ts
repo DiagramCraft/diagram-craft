@@ -10,49 +10,46 @@ import { round } from '@diagram-craft/utils/math';
 import { PathList } from '@diagram-craft/geometry/pathList';
 import { Angle } from '@diagram-craft/geometry/angle';
 
+/**
+ * An attachment point on a node where edges can connect.
+ */
 export type Anchor = {
   id: string;
   type: 'center' | 'point' | 'edge' | 'custom';
 
-  /**
-   * Position defined in a 0-1/0-1/SE coordinate system
-   */
+  /** Position in normalized [0,1] coordinate system */
   start: Point;
+
+  /** End position for edge-type anchors */
   end?: Point;
 
   // TODO: directions is not yet used
-  /**
-   * If this anchor is directional, this is the list of directions it supports
-   */
+  /** Supported directions for directional anchors */
   directions?: ReadonlyArray<Range>;
 
-  /**
-   * If this anchor is directional (type point and edge are),
-   * this is the normal of the anchor
-   */
+  /** Normal angle in radians for directional anchors */
   normal?: number;
 
-  /**
-   * If true, this anchor can be used for creating new nodes quickly
-   */
+  /** Whether this anchor should be highlighted for quick node creation */
   isPrimary?: boolean;
 
-  /**
-   * If true, edges connected to this anchor will be clipped at the boundary
-   * of the node
-   */
+  /** Whether connected edges should be clipped at the node boundary */
   clip?: boolean;
 };
 
-// This represents an endpoint connection. In most cases it's an anchor, but in
-// case you are attaching to the boundary, it's a point
-//
-// Also, for edge anchors, the point indicates the exact point on the edge
+/**
+ * Represents a connection point, either an anchor or a boundary point.
+ * For edge-type anchors, the point indicates the exact location on the edge.
+ */
 type AnchorPoint = {
   anchor?: Anchor;
   point: Point;
 };
 
+/**
+ * Finds the closest anchor to a given coordinate.
+ * Optionally includes the node's boundary as a potential connection point.
+ */
 export const getClosestAnchor = (
   coord: Point,
   node: DiagramNode,
@@ -60,11 +57,14 @@ export const getClosestAnchor = (
 ): AnchorPoint | undefined => {
   let closestAnchor: Anchor | undefined;
   let closestDistance = Number.MAX_SAFE_INTEGER;
+
+  // Find closest anchor
   for (const anchor of node.anchors) {
     const pos = getAnchorPosition(node, anchor);
 
     let d: number;
     if (anchor.type === 'edge') {
+      // For edge anchors, project the point onto the edge line
       const end = getAnchorPosition(node, anchor, 'end');
       d = Point.squareDistance(coord, Line.projectPoint(Line.of(pos, end), coord));
     } else {
@@ -77,6 +77,7 @@ export const getClosestAnchor = (
     }
   }
 
+  // Check if boundary point is closer (with 5px preference threshold)
   if (includeBoundary && node.getDefinition().supports('connect-to-boundary')) {
     let closestPoint: Point | undefined;
     let closestPointDistance = Number.MAX_SAFE_INTEGER;
@@ -90,10 +91,9 @@ export const getClosestAnchor = (
       }
     }
 
+    // Prefer boundary if significantly closer (5px² threshold)
     if (closestPoint && closestPointDistance < closestDistance - 5 * 5) {
-      return {
-        point: closestPoint
-      };
+      return { point: closestPoint };
     }
   }
 
@@ -105,71 +105,39 @@ export const getClosestAnchor = (
   };
 };
 
+/**
+ * Converts an anchor's normalized position to absolute coordinates.
+ */
 export const getAnchorPosition = (
   node: DiagramNode,
   anchor: Anchor,
   key: 'start' | 'end' = 'start'
 ) => node._getPositionInBounds(anchor[key]!);
 
+/** Direction of path traversal for determining normal vectors */
 export type BoundaryDirection = 'clockwise' | 'counter-clockwise' | 'unknown';
 
-export const makeAnchorId = (p: Point) => `${Math.round(p.x * 1000)}_${Math.round(p.y * 1000)}`;
-
-const centerAnchor = (): Anchor => ({
-  id: 'c',
-  start: Point.of(0.5, 0.5),
-  clip: true,
-  type: 'center'
-});
-
 /**
- * Converts a point from absolute coordinates to normalized [0,1] coordinates
- * relative to the node bounds, accounting for rotation.
+ * Strategies for generating anchors on nodes based on their shape.
  */
-const toNormalizedCoords = (point: Point, bounds: Box): Point => {
-  const rotated = Point.rotateAround(point, -bounds.r, Box.center(bounds));
-  return Point.of(
-    round((rotated.x - bounds.x) / bounds.w),
-    round((rotated.y - bounds.y) / bounds.h)
-  );
-};
-
-/**
- * Adjusts the normal vector based on the boundary direction.
- * For 'unknown' direction, ensures the normal points outward from the node center.
- */
-const adjustNormalDirection = (
-  baseNormal: number,
-  direction: BoundaryDirection,
-  bounds: Box,
-  point: Point
-): number => {
-  let normal = baseNormal;
-
-  if (direction === 'unknown') {
-    // Make sure normal is "outwards" from the center of the node
-    const tangent = Vector.from(Box.center(bounds), point);
-    if (Vector.dotProduct(tangent, Vector.fromPolar(normal, 1)) < 0) {
-      normal += Math.PI;
-    }
-  } else if (direction === 'clockwise') {
-    normal += Math.PI;
-  }
-
-  return normal;
-};
-
 export const AnchorStrategy = {
+  /**
+   * Creates anchors by casting rays from the center in specified directions.
+   * Cardinal directions (N, E, S, W) are marked as primary.
+   */
   getAnchorsByDirection: (node: DiagramNode, paths: PathList, numberOfDirections: number) => {
     const newAnchors: Array<Anchor> = [centerAnchor()];
 
     const firstPath = paths.all()[0]!;
-
     const center = Box.center(node.bounds);
     const maxD = Math.max(node.bounds.w, node.bounds.h);
+
+    // Cast rays at evenly distributed angles, accounting for node rotation
     for (let d = 0; d < 2 * Math.PI; d += (2 * Math.PI) / numberOfDirections) {
       const l = Line.of(center, Point.add(center, Vector.fromPolar(d + node.bounds.r, maxD)));
       const linePath = new Path(center, [['L', l.to.x, l.to.y]]);
+
+      // Find where each ray intersects the shape boundary
       firstPath.intersections(linePath).forEach(p => {
         const lengthOffsetOnPath = PointOnPath.toTimeOffset(p, firstPath);
         const start = toNormalizedCoords(p.point, node.bounds);
@@ -190,6 +158,11 @@ export const AnchorStrategy = {
 
     return newAnchors;
   },
+
+  /**
+   * Creates evenly spaced anchors along each edge segment.
+   * Skips edges that are too short relative to the node size.
+   */
   getEdgeAnchors: (
     node: DiagramNode,
     paths: PathList,
@@ -201,13 +174,12 @@ export const AnchorStrategy = {
     const d = 1 / (numberPerEdge + 1);
     const minLength = Math.min(node.bounds.w, node.bounds.h) / 20;
 
-    // Note: This is to prevent NaN issues
     if (node.bounds.h === 0 || node.bounds.w === 0) return newAnchors;
 
-    // Get anchors per side
     for (const path of paths.all()) {
       for (let j = 0; j < path.segments.length; j++) {
         const p = path.segments[j]!;
+        // Skip edges that are too short
         if (p.length() < minLength) continue;
 
         for (let n = 0; n < numberPerEdge; n++) {
@@ -231,6 +203,7 @@ export const AnchorStrategy = {
             clip: false,
             type: 'point',
             normal: normal,
+            // Mark middle anchor as primary if the edge is significant in size
             isPrimary:
               p.length() / Math.max(node.bounds.w, node.bounds.h) > 0.25 && round(pct) === 0.5
           });
@@ -240,6 +213,11 @@ export const AnchorStrategy = {
 
     return newAnchors;
   },
+
+  /**
+   * Creates evenly distributed anchors along entire paths.
+   * All path anchors are marked as primary.
+   */
   getPathAnchors: (
     node: DiagramNode,
     paths: PathList,
@@ -248,15 +226,15 @@ export const AnchorStrategy = {
   ) => {
     const newAnchors: Array<Anchor> = [centerAnchor()];
 
+    // Special case: single anchor goes at the start (0/0 would be division by zero)
     const d = numberPerPath === 1 ? 0 : 1 / (numberPerPath - 1);
 
-    // Note: This is to Prevent NaN issues
     if (node.bounds.h === 0 || node.bounds.w === 0) return newAnchors;
 
-    // Get anchors per side
     for (const path of paths.all()) {
       const length = path.length();
       for (let n = 0; n < numberPerPath; n++) {
+        // Cap at 0.999 to avoid edge cases at path end
         const pct = Math.min(0.999, n * d);
         const point = path.pointAt({ pathD: pct * length });
 
@@ -286,7 +264,56 @@ export const AnchorStrategy = {
   }
 };
 
+/** Generates a unique ID for an anchor based on its normalized position */
+const makeAnchorId = (p: Point) => `${Math.round(p.x * 1000)}_${Math.round(p.y * 1000)}`;
+
+/** Creates the center anchor that all strategies include */
+const centerAnchor = (): Anchor => ({
+  id: 'c',
+  start: Point.of(0.5, 0.5),
+  clip: true,
+  type: 'center'
+});
+
+/**
+ * Converts a point from absolute coordinates to normalized [0,1] coordinates.
+ * Accounts for node rotation by rotating the point back before normalizing.
+ */
+const toNormalizedCoords = (point: Point, bounds: Box): Point => {
+  const rotated = Point.rotateAround(point, -bounds.r, Box.center(bounds));
+  return Point.of(
+    round((rotated.x - bounds.x) / bounds.w),
+    round((rotated.y - bounds.y) / bounds.h)
+  );
+};
+
+/**
+ * Adjusts the normal vector based on boundary direction.
+ * For 'unknown', ensures the normal points outward from the node center.
+ */
+const adjustNormalDirection = (
+  baseNormal: number,
+  direction: BoundaryDirection,
+  bounds: Box,
+  point: Point
+): number => {
+  let normal = baseNormal;
+
+  if (direction === 'unknown') {
+    // Check if normal points inward by testing dot product with vector from center
+    const tangent = Vector.from(Box.center(bounds), point);
+    if (Vector.dotProduct(tangent, Vector.fromPolar(normal, 1)) < 0) {
+      normal += Math.PI; // Flip to point outward
+    }
+  } else if (direction === 'clockwise') {
+    normal += Math.PI;
+  }
+
+  return normal;
+};
+
 export const _test = {
   toNormalizedCoords,
-  adjustNormalDirection
+  adjustNormalDirection,
+  makeAnchorId
 };

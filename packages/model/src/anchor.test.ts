@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { _test, type Anchor, AnchorStrategy, getClosestAnchor, makeAnchorId } from './anchor';
+import { _test, type Anchor, AnchorStrategy, getClosestAnchor } from './anchor';
 import type { DiagramNode } from './diagramNode';
 import { Point } from '@diagram-craft/geometry/point';
 import { PathList } from '@diagram-craft/geometry/pathList';
@@ -8,12 +8,12 @@ import { Path } from '@diagram-craft/geometry/path';
 describe('makeAnchorId', () => {
   test('should create ID from point coordinates rounded to 1000ths', () => {
     const point = { x: 0.5, y: 0.5 };
-    expect(makeAnchorId(point)).toBe('500_500');
+    expect(_test.makeAnchorId(point)).toBe('500_500');
   });
 
   test('should round coordinates correctly', () => {
     const point = { x: 0.12345, y: 0.67899 };
-    expect(makeAnchorId(point)).toBe('123_679');
+    expect(_test.makeAnchorId(point)).toBe('123_679');
   });
 });
 
