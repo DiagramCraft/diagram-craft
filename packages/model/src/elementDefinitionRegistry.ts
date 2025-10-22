@@ -1,7 +1,6 @@
 import { DiagramNode, NodeTexts } from './diagramNode';
 import { assert } from '@diagram-craft/utils/assert';
 import type { DiagramElement } from './diagramElement';
-import type { DiagramEdge } from './diagramEdge';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from './unitOfWork';
@@ -16,6 +15,7 @@ import { assertRegularLayer } from './diagramLayerUtils';
 import { safeSplit } from '@diagram-craft/utils/safe';
 import { ElementFactory } from './elementFactory';
 import type { Property } from './property';
+import type { EdgeDefinition } from './edgeDefinition';
 
 export type NodeCapability =
   | 'children'
@@ -188,25 +188,6 @@ export class NodeDefinitionRegistry {
   hasRegistration(type: string) {
     return this.nodes.has(type);
   }
-}
-
-export type EdgeCapability = 'arrows' | 'fill' | 'line-hops';
-
-export interface EdgeDefinition {
-  type: string;
-  name: string;
-
-  supports(capability: EdgeCapability): boolean;
-
-  onDrop(
-    coord: Point,
-    edge: DiagramEdge,
-    elements: ReadonlyArray<DiagramElement>,
-    uow: UnitOfWork,
-    operation: string
-  ): void;
-
-  getCustomPropertyDefinitions(edge: DiagramEdge): Array<CustomPropertyDefinition>;
 }
 
 export class EdgeDefinitionRegistry {

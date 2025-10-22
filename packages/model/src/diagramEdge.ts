@@ -29,7 +29,6 @@ import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { newid } from '@diagram-craft/utils/id';
 import { isDifferent } from '@diagram-craft/utils/math';
 import { Direction } from '@diagram-craft/geometry/direction';
-import type { EdgeDefinition } from './elementDefinitionRegistry';
 import { isEmptyString } from '@diagram-craft/utils/strings';
 import { assert, is, mustExist } from '@diagram-craft/utils/assert';
 import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
@@ -49,6 +48,7 @@ import { CRDTObject } from './collaboration/datatypes/crdtObject';
 import type { ModificationLayer } from './diagramLayerModification';
 import type { Path } from '@diagram-craft/geometry/path';
 import type { PropertyInfo } from './property';
+import type { EdgeDefinition } from './edgeDefinition';
 
 const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
   endpoint instanceof ConnectedEndpoint;

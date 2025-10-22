@@ -4,7 +4,6 @@ import { DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElem
 import {
   asProperty,
   CustomPropertyDefinition,
-  EdgeDefinition,
   NodeDefinition
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { VerifyNotReached } from '@diagram-craft/utils/assert';
@@ -18,6 +17,7 @@ import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { PropertyEditor } from '../../components/PropertyEditor';
 import { useDiagram } from '../../../application';
 import type { Property } from '@diagram-craft/model/property';
+import type { EdgeDefinition } from '@diagram-craft/model/edgeDefinition';
 
 export const ElementCustomPropertiesPanelForm = ({
   customProperties,

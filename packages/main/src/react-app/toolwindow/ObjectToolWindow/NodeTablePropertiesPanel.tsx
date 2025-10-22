@@ -8,7 +8,6 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import {
   asProperty,
   CustomPropertyDefinition,
-  EdgeDefinition,
   NodeDefinition
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { useTable } from '../../hooks/useTable';
@@ -17,6 +16,7 @@ import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { PropertyEditor } from '../../components/PropertyEditor';
 import { useDiagram } from '../../../application';
 import type { Property } from '@diagram-craft/model/property';
+import type { EdgeDefinition } from '@diagram-craft/model/edgeDefinition';
 
 export const NodeTablePropertiesPanel = (props: Props) => {
   const diagram = useDiagram();

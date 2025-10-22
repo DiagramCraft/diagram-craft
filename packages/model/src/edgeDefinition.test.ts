@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { TestDiagramBuilder, TestLayerBuilder, TestModel } from './test-support/builder';
 import { FreeEndpoint } from './endpoint';
 import { UnitOfWork } from './unitOfWork';
-import { BaseEdgeDefinition } from './baseEdgeDefinition';
+import { AbstractEdgeDefinition } from './edgeDefinition';
 import { Backends } from './collaboration/collaborationTestUtils';
 import { RegularLayer } from './diagramLayerRegular';
 import { SnapshotUndoableAction } from './diagramUndoActions';
@@ -10,6 +10,15 @@ import type { DiagramEdge } from './diagramEdge';
 import type { DiagramDocument } from './diagramDocument';
 import type { DiagramNode } from './diagramNode';
 import { serializeDiagramDocument } from './serialization/serialize';
+
+class TestBaseEdgeDefinition extends AbstractEdgeDefinition {
+  constructor(
+    public readonly name: string,
+    public readonly description: string
+  ) {
+    super(name, description);
+  }
+}
 
 describe('baseEdgeDefinition', () => {
   describe.each(Backends.all())('onDrop [%s]', (_name, backend) => {
@@ -45,7 +54,7 @@ describe('baseEdgeDefinition', () => {
 
       it('should split edge', () => {
         // **** Setup
-        const def = new BaseEdgeDefinition('test', 'test');
+        const def = new TestBaseEdgeDefinition('test', 'test');
 
         // **** Act
         const uow = new UnitOfWork(dia1, true);
@@ -64,7 +73,7 @@ describe('baseEdgeDefinition', () => {
         const doc1serialized = await serializeDiagramDocument(dia1.document);
         const doc2serialized = doc2 ? await serializeDiagramDocument(doc2) : undefined;
 
-        const def = new BaseEdgeDefinition('test', 'test');
+        const def = new TestBaseEdgeDefinition('test', 'test');
 
         const uow = new UnitOfWork(dia1, true);
         def.onDrop({ x: 50, y: 50 }, edge, [node], uow, 'split');

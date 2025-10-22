@@ -16,7 +16,6 @@ import { ARROW_SHAPES, ArrowShape } from '../arrowShapes';
 import { DiagramEdge, EdgePropsForRendering } from '@diagram-craft/model/diagramEdge';
 import { VerifyNotReached } from '@diagram-craft/utils/assert';
 import { ShapeEdgeDefinition } from '../shape/shapeEdgeDefinition';
-import { EdgeCapability } from '@diagram-craft/model/elementDefinitionRegistry';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
 import { makeControlPoint } from '../shape/ShapeControlPoint';
 import { Context, OnDoubleClick, OnMouseDown } from '../context';
@@ -25,6 +24,7 @@ import { EdgeEndpointMoveDrag } from '../drag/edgeEndpointMoveDrag';
 import { Zoom } from './zoom';
 import { renderElement } from './renderElement';
 import { CanvasDomHelper } from '../utils/canvasDomHelper';
+import type { EdgeCapability } from '@diagram-craft/model/edgeDefinition';
 
 export type EdgeComponentProps = {
   element: DiagramEdge;
