@@ -4,7 +4,7 @@ import { validProps } from '@diagram-craft/model/diagramLayerRule';
 import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbLine, TbPentagon, TbPlus, TbTrash } from 'react-icons/tb';
-import { PropsEditor } from '@diagram-craft/canvas-app/PropsEditor';
+import { PropsEditor } from './PropsEditor';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
 import { deepClone } from '@diagram-craft/utils/object';
 import { newid } from '@diagram-craft/utils/id';
@@ -252,7 +252,7 @@ export const RuleEditorDialog = (props: Props) => {
     );
     setRule(deepClone(props.rule));
     setClauses(deepClone(props.rule)?.clauses ?? []);
-  }, [props.rule, props.open]);
+  }, [props.rule, type]);
 
   const ref = useRef<HTMLInputElement>(null);
   useEffect(() => {

@@ -84,7 +84,10 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
   }
 
   onDragEnter(event: DragEvents.DragEnter) {
-    const svgElement = getAncestorWithClass(event.target as HTMLElement, 'editable-canvas');
+    const svgElement = getAncestorWithClass(
+      event.target as HTMLElement,
+      'editable-canvas'
+    ) as HTMLElement;
     if (svgElement) {
       this.onStateChange(State.INSIDE, event.offset, svgElement);
     } else {

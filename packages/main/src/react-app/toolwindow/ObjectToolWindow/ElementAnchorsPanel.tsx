@@ -3,7 +3,6 @@ import { useNodeProperty } from '../../hooks/useProperty';
 import { Select } from '@diagram-craft/app-components/Select';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { PropertyEditor } from '../../components/PropertyEditor';
-import { Property } from './types';
 import { useApplication, useDiagram } from '../../../application';
 import { Button } from '@diagram-craft/app-components/Button';
 import { newid } from '@diagram-craft/utils/id';
@@ -22,6 +21,7 @@ import {
 import { Canvas } from '@diagram-craft/canvas-react/Canvas';
 import type { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { ElementLookup } from '@diagram-craft/model/elementLookup';
+import type { Property } from '@diagram-craft/model/property';
 
 type CustomAnchorsEditorProps = {
   customAnchors: {
@@ -71,7 +71,7 @@ const ShapePreviewWithAnchors = ({ diagram }: { diagram: ReturnType<typeof useDi
     };
 
     return thumbnailDiagram;
-  }, [selectedNode]);
+  }, [selectedNode, diagram.document.definitions]);
 
   if (!selectedNode || !previewDiagram) return null;
 

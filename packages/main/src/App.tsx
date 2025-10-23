@@ -75,6 +75,7 @@ import { ElectronIntegration } from './electron';
 import { DocumentName } from './react-app/DocumentName';
 import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { Autosave } from './react-app/autosave/Autosave';
+import { CanvasDomHelper } from '@diagram-craft/canvas/utils/canvasDomHelper';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // biome-ignore lint/suspicious/noExplicitAny: false positive
@@ -141,7 +142,7 @@ export const App = (props: {
   const [progress, setProgress] = useState<Progress | undefined>(undefined);
   const progressCallback = useCallback<ProgressCallback>(
     (status, opts) => queueMicrotask(() => setProgress({ status, ...opts })),
-    [setProgress]
+    []
   );
 
   useEventListener(application.current.model, 'activeDiagramChange', redraw);
@@ -290,9 +291,10 @@ export const App = (props: {
 
   // TODO: Can we change this to use state instead - see https://stackoverflow.com/questions/59600572/how-to-rerender-when-refs-change
   //       Can be tested if ruler indicators work at startup immediately or not
+  // biome-ignore lint/correctness/useExhaustiveDependencies: this is correct
   useEffect(() => {
     redraw();
-  }, [svgRef.current]);
+  }, [svgRef.current, redraw]);
 
   const $d = application.current.model.activeDiagram;
   const actionMap = application.current.actions;
@@ -553,7 +555,7 @@ export const App = (props: {
                   <ContextMenu.Root>
                     <ContextMenu.Trigger asChild={true}>
                       <EditableCanvas
-                        id={`diagram-${$d.id}`}
+                        id={CanvasDomHelper.diagramId($d)}
                         ref={svgRef}
                         diagram={$d}
                         /* Note: this uid here to force redraw in case the diagram is reloaded */

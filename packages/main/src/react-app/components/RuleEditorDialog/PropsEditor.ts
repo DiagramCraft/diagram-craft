@@ -1,9 +1,6 @@
 import { assert } from '@diagram-craft/utils/assert';
 import { deepIsEmpty } from '@diagram-craft/utils/object';
-import type {
-  EdgeEditorRegistry,
-  NodeEditorRegistry
-} from '@diagram-craft/main/react-app/components/RuleEditorDialog/editors';
+import type { EdgeEditorRegistry, NodeEditorRegistry } from './editors';
 
 /**
  * Supports editing of ElementProps using partial editors.

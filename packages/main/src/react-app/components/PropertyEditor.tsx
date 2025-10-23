@@ -1,8 +1,8 @@
-import { Property } from '../toolwindow/ObjectToolWindow/types';
 import React, { ReactElement } from 'react';
 import { useRedraw } from '../hooks/useRedraw';
 import * as RadixTooltip from '@radix-ui/react-tooltip';
 import styles from '@diagram-craft/app-components/Tooltip.module.css';
+import type { Property } from '@diagram-craft/model/property';
 
 export function PropertyEditor<T>(props: Props<T>) {
   const redraw = useRedraw();

@@ -1,10 +1,6 @@
 import { Point } from '@diagram-craft/geometry/point';
 import { LengthOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
-import {
-  CustomPropertyDefinition,
-  EdgeCapability,
-  EdgeDefinition
-} from './elementDefinitionRegistry';
+import { CustomPropertyDefinition } from './elementDefinitionRegistry';
 import { DiagramEdge } from './diagramEdge';
 import { DiagramElement, isNode } from './diagramElement';
 import { UnitOfWork } from './unitOfWork';
@@ -16,11 +12,31 @@ import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { assertRegularLayer } from './diagramLayerUtils';
 import { ElementFactory } from './elementFactory';
 
-export class BaseEdgeDefinition implements EdgeDefinition {
+export type EdgeCapability = 'arrows' | 'fill' | 'line-hops';
+export type EdgeDropOperation = 'attach' | 'split';
+
+export interface EdgeDefinition {
+  type: string;
+  name: string;
+
+  supports(capability: EdgeCapability): boolean;
+
+  onDrop(
+    coord: Point,
+    edge: DiagramEdge,
+    elements: ReadonlyArray<DiagramElement>,
+    uow: UnitOfWork,
+    operation: EdgeDropOperation
+  ): void;
+
+  getCustomPropertyDefinitions(edge: DiagramEdge): Array<CustomPropertyDefinition>;
+}
+
+export abstract class AbstractEdgeDefinition implements EdgeDefinition {
   public readonly name: string;
   public readonly type: string;
 
-  constructor(name: string, type: string) {
+  protected constructor(name: string, type: string) {
     this.name = name;
     this.type = type;
   }
@@ -34,7 +50,7 @@ export class BaseEdgeDefinition implements EdgeDefinition {
     edge: DiagramEdge,
     elements: ReadonlyArray<DiagramElement>,
     uow: UnitOfWork,
-    operation: string
+    operation: EdgeDropOperation
   ) {
     if (elements.length !== 1 || !isNode(elements[0])) return;
 
@@ -46,6 +62,8 @@ export class BaseEdgeDefinition implements EdgeDefinition {
   }
 
   private onDropSplit(edge: DiagramEdge, element: DiagramNode, uow: UnitOfWork) {
+    assertRegularLayer(edge.layer);
+
     // We will attach to the center point anchor
     const anchor = 'c';
 
@@ -59,7 +77,6 @@ export class BaseEdgeDefinition implements EdgeDefinition {
       [],
       edge.layer
     );
-    assertRegularLayer(edge.layer);
     edge.layer.addElement(newEdge, uow);
 
     edge.setEnd(new AnchorEndpoint(element, anchor), uow);

@@ -14,12 +14,10 @@ import { Endpoint } from './endpoint';
 import type { Waypoint } from './types';
 import { Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
-import type { EdgeDefinition } from './elementDefinitionRegistry';
 import { WatchableValue } from '@diagram-craft/utils/watchableValue';
 import { CRDTObject } from './collaboration/datatypes/crdtObject';
 import { deepMerge } from '@diagram-craft/utils/object';
 import { PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
-import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
 import type { Path } from '@diagram-craft/geometry/path';
 import { Transform } from '@diagram-craft/geometry/transform';
 import type { DuplicationContext } from './diagramNode';
@@ -27,6 +25,8 @@ import { DiagramElement } from './diagramElement';
 import { SerializedEdge, SerializedEndpoint } from './serialization/types';
 import { MappedCRDTProp } from './collaboration/datatypes/mapped/mappedCrdtProp';
 import { CRDTProp } from './collaboration/datatypes/crdtProp';
+import type { PropertyInfo } from './property';
+import type { EdgeDefinition } from './edgeDefinition';
 
 export type DiagramEdgeSnapshot = SerializedEdge & {
   _snapshotType: 'edge';
@@ -328,10 +328,6 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
 
     uow.updateElement(this);
     this.clearCache();
-  }
-
-  get midpoints(): ReadonlyArray<Point> {
-    return this.delegate.midpoints;
   }
 
   path(): Path {

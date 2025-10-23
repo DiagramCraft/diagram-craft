@@ -2,9 +2,9 @@ import { ToolWindowPanel } from '../ToolWindowPanel';
 import { useNodeProperty } from '../../hooks/useProperty';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { PropertyEditor } from '../../components/PropertyEditor';
-import { Property } from '../ObjectToolWindow/types';
 import { useDiagram } from '../../../application';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
+import type { Property } from '@diagram-craft/model/property';
 
 type FormProps = {
   resizableH: Property<boolean>;

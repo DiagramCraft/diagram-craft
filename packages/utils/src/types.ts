@@ -1,11 +1,4 @@
 /**
- * Makes all properties of a type writable by removing the readonly modifier.
- *
- * @template T - The type to make writable
- */
-export type Writeable<T> = { -readonly [k in keyof T]: T[k] };
-
-/**
  * Makes all properties of a type writable recursively by removing the readonly modifier
  * from all properties and nested properties.
  *
@@ -83,13 +76,6 @@ export type FlatObject = Record<string, string | number | boolean | undefined>;
  * This type can be used to type values that will be serialized to JSON.
  */
 export type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
-
-/**
- * Represents a nested object of any shape.
- * @deprecated Use more specific types instead of this generic type.
- */
-// biome-ignore lint/suspicious/noExplicitAny: false positive
-export type NestedObject = any;
 
 export type NoneEmptyArray<T> = [T, ...T[]];
 

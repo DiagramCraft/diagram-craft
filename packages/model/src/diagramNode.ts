@@ -25,7 +25,7 @@ import {
   makeWriteable
 } from '@diagram-craft/utils/types';
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
-import { assert, VERIFY_NOT_REACHED, VerifyNotReached } from '@diagram-craft/utils/assert';
+import { assert, mustExist, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { newid } from '@diagram-craft/utils/id';
 import { clamp } from '@diagram-craft/utils/math';
 import { Point } from '@diagram-craft/geometry/point';
@@ -33,7 +33,6 @@ import { applyTemplate } from './template';
 import { isEmptyString } from '@diagram-craft/utils/strings';
 import { Anchor } from './anchor';
 import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
-import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
 import { toUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
 import type { RegularLayer } from './diagramLayerRegular';
 import { transformPathList } from '@diagram-craft/geometry/pathListUtils';
@@ -52,6 +51,7 @@ import { makeIsometricTransform } from '@diagram-craft/canvas/effects/isometric'
 import type { ModificationLayer } from './diagramLayerModification';
 import { getAdjustments } from './diagramLayerUtils';
 import type { NodeDefinition } from './elementDefinitionRegistry';
+import type { PropertyInfo } from './property';
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;
@@ -713,7 +713,6 @@ export class SimpleDiagramNode
     };
   }
 
-  // TODO: Add assertions for lookups
   restore(snapshot: DiagramNodeSnapshot, uow: UnitOfWork) {
     this.setBounds(snapshot.bounds, uow);
     this.#props.set(snapshot.props as NodeProps);
@@ -722,11 +721,7 @@ export class SimpleDiagramNode
     this.forceUpdateMetadata(snapshot.metadata);
 
     this.setChildren(
-      snapshot.children.map(c => {
-        const el = this.diagram.lookup(c);
-        if (!el) VERIFY_NOT_REACHED();
-        return el;
-      }),
+      snapshot.children.map(c => mustExist(this.diagram.lookup(c))),
       uow
     );
     const edges = snapshot.edges ?? {};

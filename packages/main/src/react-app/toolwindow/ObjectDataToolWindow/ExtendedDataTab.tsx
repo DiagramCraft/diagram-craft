@@ -85,7 +85,7 @@ export const ExtendedDataTab = () => {
       });
       redraw();
     },
-    [$d]
+    [application, redraw]
   );
 
   const addSchemaToSelection = useCallback(
@@ -135,7 +135,7 @@ export const ExtendedDataTab = () => {
         schemaId: schema.id
       });
     },
-    [$d]
+    [application]
   );
 
   const editExternalData = useCallback(
@@ -159,7 +159,7 @@ export const ExtendedDataTab = () => {
         });
       }
     },
-    [$d, setEditItemDialog]
+    [$d]
   );
 
   const customDataKeys = unique(

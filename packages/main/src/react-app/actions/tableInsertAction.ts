@@ -44,9 +44,10 @@ class TableInsertAction extends AbstractAction<undefined, Application> {
 
         const bounds = { w: colWidth * width, h: rowHeight * height, x: 0, y: 0, r: 0 };
 
-        // TODO: We should look at the viewport and try to center the table in the viewport
-        bounds.x = ($d.canvas.w - bounds.w) / 2;
-        bounds.y = ($d.canvas.h - bounds.h) / 2;
+        // Center the table in the current viewport
+        const vb = $d.viewBox;
+        bounds.x = vb.offset.x + (vb.dimensions.w - bounds.w) / 2;
+        bounds.y = vb.offset.y + (vb.dimensions.h - bounds.h) / 2;
 
         const elements: DiagramElement[] = [];
 

@@ -17,7 +17,7 @@ import { debugActions } from './actions/debugActions';
 import { layerActions } from './actions/layerActions';
 import { ActionMapFactory, KeyMap } from '@diagram-craft/canvas/src/keyMap';
 import { groupActions } from './actions/groupAction';
-import { tableActions } from '@diagram-craft/canvas/actions/tableActions';
+import { tableActions } from './actions/tableActions';
 import { selectionMoveActions } from './actions/selectionMoveAction';
 import { selectionResizeActions } from './actions/selectionResizeAction';
 import { createLinkedNodeActions } from './actions/linkedNodeAction';

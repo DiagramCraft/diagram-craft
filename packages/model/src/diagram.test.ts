@@ -3,9 +3,7 @@ import { Diagram, DocumentBuilder } from './diagram';
 import { TestModel } from './test-support/builder';
 import { newid } from '@diagram-craft/utils/id';
 import { UnitOfWork } from './unitOfWork';
-import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { RegularLayer } from './diagramLayerRegular';
-import { assertRegularLayer } from './diagramLayerUtils';
 import { Backends, standardTestModel } from './collaboration/collaborationTestUtils';
 import { ElementFactory } from './elementFactory';
 
@@ -165,48 +163,6 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       expect(diagram.visibleElements()).toStrictEqual([node2]);
       diagram.layers.toggleVisibility(layer2);
       expect(diagram.visibleElements()).toStrictEqual([]);
-    });
-  });
-
-  describe('transformElements', () => {
-    it('transform rotate', () => {
-      const diagram = TestModel.newDiagram();
-      diagram.newLayer();
-
-      const uow = new UnitOfWork(diagram);
-
-      const layer = diagram.activeLayer;
-      assertRegularLayer(layer);
-
-      const node1 = ElementFactory.node('1', 'rect', testBounds, layer, {}, {});
-      layer.addElement(node1, uow);
-
-      const node2 = ElementFactory.node(
-        '2',
-        'rect',
-        {
-          x: 100,
-          y: 100,
-          w: 100,
-          h: 100,
-          r: 0
-        },
-        layer,
-        {},
-        {}
-      );
-      layer.addElement(node2, uow);
-
-      const nodes = [node1, node2];
-
-      const before = { x: 0, y: 0, w: 200, h: 200, r: 0 };
-      const after = { x: 0, y: 0, w: 200, h: 200, r: Math.PI / 2 };
-
-      diagram.transformElements(nodes, TransformFactory.fromTo(before, after), uow);
-      uow.commit();
-
-      expect(node1.bounds).toStrictEqual({ x: 100, y: 0, w: 100, h: 100, r: Math.PI / 2 });
-      expect(node2.bounds).toStrictEqual({ x: 0, y: 100, w: 100, h: 100, r: Math.PI / 2 });
     });
   });
 

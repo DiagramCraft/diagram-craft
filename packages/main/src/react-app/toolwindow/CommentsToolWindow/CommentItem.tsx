@@ -114,7 +114,7 @@ export const CommentItem = ({
         }
       )
     );
-  }, [diagram, comment.id]);
+  }, [diagram, comment.id, application]);
 
   return (
     <div

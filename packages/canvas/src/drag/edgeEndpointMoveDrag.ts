@@ -19,6 +19,7 @@ import { assert } from '@diagram-craft/utils/assert';
 import { Line } from '@diagram-craft/geometry/line';
 import { Context } from '../context';
 import { SnapManager } from '@diagram-craft/model/snap/snapManager';
+import { CanvasDomHelper } from '../utils/canvasDomHelper';
 
 export class EdgeEndpointMoveDrag extends Drag {
   private readonly uow: UnitOfWork;
@@ -37,8 +38,7 @@ export class EdgeEndpointMoveDrag extends Drag {
     super();
     this.uow = new UnitOfWork(this.edge.diagram, true);
 
-    // TODO: Make a helper for this ... as well as getting edges and nodes from ids
-    document.getElementById(`diagram-${this.diagram.id}`)!.style.cursor = 'move';
+    CanvasDomHelper.diagramElement(this.diagram)!.style.cursor = 'move';
 
     this.context.help.push(
       'EdgeEndpointMoveDrag',
@@ -126,7 +126,7 @@ export class EdgeEndpointMoveDrag extends Drag {
     }
 
     commitWithUndo(this.uow, 'Move edge endpoint');
-    document.getElementById(`diagram-${this.diagram.id}`)!.style.cursor = 'unset';
+    CanvasDomHelper.diagramElement(this.diagram)!.style.cursor = 'unset';
 
     this.context.help.pop('EdgeEndpointMoveDrag');
     this.emit('dragEnd');

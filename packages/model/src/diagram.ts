@@ -9,7 +9,6 @@ import { UnitOfWork } from './unitOfWork';
 import { bindElementListeners, DiagramElement, isEdge, isNode } from './diagramElement';
 import type { DiagramDocument } from './diagramDocument';
 import { Box } from '@diagram-craft/geometry/box';
-import { Transform } from '@diagram-craft/geometry/transform';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { assert } from '@diagram-craft/utils/assert';
@@ -479,37 +478,6 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     // TODO: Not clear if this is needed or not
     uow.updateDiagram();
   }
-
-  // TODO: No need for this to be in Diagram
-  transformElements(
-    elements: ReadonlyArray<DiagramElement>,
-    transforms: ReadonlyArray<Transform>,
-    uow: UnitOfWork
-  ) {
-    for (const el of elements) {
-      el.transform(transforms, uow);
-    }
-
-    // We do this in a separate loop to as nodes might move which will
-    // affect the start and end location of connected edges
-    for (const el of elements) {
-      uow.updateElement(el);
-    }
-  }
-
-  /*
-  TODO: Remove
-  toJSON() {
-    return {
-      parent: this.parent,
-      props: this.props,
-      selectionState: this.selectionState,
-      id: this.id,
-      name: this.name,
-      layers: this.layers
-    };
-  }
-   */
 
   getAttachmentsInUse() {
     return this.layers.getAttachmentsInUse();

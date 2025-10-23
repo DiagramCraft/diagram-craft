@@ -4,7 +4,7 @@ import { ColorPicker } from '../../components/ColorPicker';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { useDiagram } from '../../../application';
 import { PropertyEditor } from '../../components/PropertyEditor';
-import { Property } from '../ObjectToolWindow/types';
+import type { Property } from '@diagram-craft/model/property';
 
 type IndicatorFormProps = {
   shape: Property<string>;

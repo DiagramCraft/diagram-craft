@@ -5,8 +5,8 @@ import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/p
 import { DeepReadonly } from '@diagram-craft/utils/types';
 import { unique, uniqueWithCount } from '@diagram-craft/utils/array';
 import { useRedraw } from './useRedraw';
-import { Property, PropertyInfo } from '../toolwindow/ObjectToolWindow/types';
 import { Defaults } from '@diagram-craft/model/diagramDefaults';
+import type { Property, PropertyInfo } from '@diagram-craft/model/property';
 
 export type PropertyHook<TBase, TObj> = <
   K extends PropPath<TObj>,
@@ -58,6 +58,7 @@ export const makePropertyHook = <
       else return setValue(value as unknown as TValue);
     };
     subscribe(obj, handler);
+    // biome-ignore lint/correctness/useExhaustiveDependencies: this is correct
     useEffect(handler, [defaultValue, obj, path]);
 
     const accessor = new DynamicAccessor<TObj>();
@@ -136,6 +137,7 @@ export const makePropertyArrayHook = <
       setMultiple(arr.length > 1);
     };
     subscribe(obj, handler);
+    // biome-ignore lint/correctness/useExhaustiveDependencies: This is correct
     useEffect(handler, [defaultValue, obj, path]);
 
     let isSet = true;
@@ -188,8 +190,6 @@ export class PropertyArrayUndoableAction<TItem, TObj, TPath extends PropPath<TOb
     private readonly before: any[],
     // biome-ignore lint/suspicious/noExplicitAny: false positive
     private readonly after: any,
-
-    // TODO: Where is this uowFactory coming from
     private readonly uowFactory: () => UnitOfWork,
     private readonly updateObj: (item: TItem, uow: UnitOfWork, cb: (obj: TObj) => void) => void
   ) {}

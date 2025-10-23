@@ -2,6 +2,7 @@ import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
 import { Box } from '@diagram-craft/geometry/box';
 import { isEdge } from '@diagram-craft/model/diagramElement';
 import { blobToDataURL } from '@diagram-craft/utils/blobUtils';
+import { CanvasDomHelper } from '@diagram-craft/canvas/utils/canvasDomHelper';
 
 export const exportActions = (context: ActionContext) => ({
   FILE_EXPORT_IMAGE: new ExportImageAction(context)
@@ -23,7 +24,6 @@ const MARGIN = 50;
 const SCALE = 2;
 
 class ExportImageAction extends AbstractAction {
-
   execute(): void {
     const run = async () => {
       const bounds = Box.boundingBox(
@@ -32,9 +32,9 @@ class ExportImageAction extends AbstractAction {
         })
       );
 
-      const clonedSvg = document
-        .getElementById(`diagram-${this.context.model.activeDiagram.id}`)!
-        .cloneNode(true) as HTMLElement;
+      const clonedSvg = CanvasDomHelper.diagramElement(this.context.model.activeDiagram)!.cloneNode(
+        true
+      ) as HTMLElement;
       clonedSvg.setAttribute('width', bounds.w.toString());
       clonedSvg.setAttribute('height', bounds.h.toString());
 

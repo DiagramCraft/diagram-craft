@@ -1,7 +1,6 @@
 import { DiagramNode, NodeTexts } from './diagramNode';
 import { assert } from '@diagram-craft/utils/assert';
 import type { DiagramElement } from './diagramElement';
-import type { DiagramEdge } from './diagramEdge';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from './unitOfWork';
@@ -11,12 +10,12 @@ import type { Diagram } from './diagram';
 import { newid } from '@diagram-craft/utils/id';
 import { unique } from '@diagram-craft/utils/array';
 import { EventEmitter } from '@diagram-craft/utils/event';
-import { stencilLoaderRegistry } from '@diagram-craft/canvas-app/loaders';
-import { Property } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
 import { PathList } from '@diagram-craft/geometry/pathList';
 import { assertRegularLayer } from './diagramLayerUtils';
 import { safeSplit } from '@diagram-craft/utils/safe';
 import { ElementFactory } from './elementFactory';
+import type { Property } from './property';
+import type { EdgeDefinition } from './edgeDefinition';
 
 export type NodeCapability =
   | 'children'
@@ -27,7 +26,6 @@ export type NodeCapability =
   | 'anchors-configurable';
 
 // TODO: Make make this into an interface in the global namespace we can extend
-// TODO: Should we change these callbacks to have a UOW parameter?
 export type CustomPropertyDefinition = {
   id: string;
   label: string;
@@ -112,6 +110,20 @@ if (typeof window !== 'undefined') {
   };
 }
 
+// TODO: Rename this to NodeTypeLoader
+declare global {
+  interface StencilLoaderOpts {}
+}
+
+export type StencilLoader<T extends keyof StencilLoaderOpts> = (
+  nodeDefinition: NodeDefinitionRegistry,
+  opts: StencilLoaderOpts[T]
+) => Promise<void>;
+
+export const stencilLoaderRegistry: Partial<{
+  [K in keyof StencilLoaderOpts]: () => Promise<StencilLoader<K>>;
+}> = {};
+
 type PreregistrationEntry<K extends keyof StencilLoaderOpts> = {
   type: K;
   shapes: RegExp;
@@ -176,25 +188,6 @@ export class NodeDefinitionRegistry {
   hasRegistration(type: string) {
     return this.nodes.has(type);
   }
-}
-
-export type EdgeCapability = 'arrows' | 'fill' | 'line-hops';
-
-export interface EdgeDefinition {
-  type: string;
-  name: string;
-
-  supports(capability: EdgeCapability): boolean;
-
-  onDrop(
-    coord: Point,
-    edge: DiagramEdge,
-    elements: ReadonlyArray<DiagramElement>,
-    uow: UnitOfWork,
-    operation: string
-  ): void;
-
-  getCustomPropertyDefinitions(edge: DiagramEdge): Array<CustomPropertyDefinition>;
 }
 
 export class EdgeDefinitionRegistry {

@@ -11,5 +11,8 @@
   "author": "Magnus Johansson",
   "dependencies": {
     "@diagram-craft/utils": "workspace:^"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.4"
   }
 }

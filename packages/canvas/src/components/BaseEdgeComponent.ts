@@ -16,7 +16,6 @@ import { ARROW_SHAPES, ArrowShape } from '../arrowShapes';
 import { DiagramEdge, EdgePropsForRendering } from '@diagram-craft/model/diagramEdge';
 import { VerifyNotReached } from '@diagram-craft/utils/assert';
 import { ShapeEdgeDefinition } from '../shape/shapeEdgeDefinition';
-import { EdgeCapability } from '@diagram-craft/model/elementDefinitionRegistry';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
 import { makeControlPoint } from '../shape/ShapeControlPoint';
 import { Context, OnDoubleClick, OnMouseDown } from '../context';
@@ -24,6 +23,8 @@ import { getHighlights } from '../highlight';
 import { EdgeEndpointMoveDrag } from '../drag/edgeEndpointMoveDrag';
 import { Zoom } from './zoom';
 import { renderElement } from './renderElement';
+import { CanvasDomHelper } from '../utils/canvasDomHelper';
+import type { EdgeCapability } from '@diagram-craft/model/edgeDefinition';
 
 export type EdgeComponentProps = {
   element: DiagramEdge;
@@ -114,7 +115,7 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
     const points: VNode[] = [];
 
     if (isSingleSelected && edgeProps.type !== 'curved') {
-      for (const mp of firstEdge.midpoints) {
+      for (const mp of firstEdge.path().midpoints) {
         points.push(
           svg.circle({
             class: 'svg-handle svg-midpoint-handle',
@@ -245,7 +246,7 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
 
     return svg.g(
       {
-        id: `edge-${props.element.id}`,
+        id: CanvasDomHelper.edgeId(props.element),
         class: `${props.isReadOnly ? 'svg-readonly' : ''} ${getHighlights(props.element)
           .map(h => `svg-edge--highlight-${h}`)
           .join(' ')}`,

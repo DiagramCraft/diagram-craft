@@ -80,6 +80,7 @@ export const ObjectToolWindow = () => {
     );
   };
   useEventListener(diagram.selectionState, 'change', callback);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: this is correct
   useEffect(callback, [diagram.selectionState]);
 
   // To update overrides in style panel as rule layers are toggled

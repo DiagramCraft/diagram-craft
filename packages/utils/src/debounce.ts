@@ -17,13 +17,12 @@
  * debouncedFn(); // Only this call will result in execution
  */
 // biome-ignore lint/suspicious/noExplicitAny: false positive
-export function debounce<T extends (...args: any[]) => any>(fn: T, ms = 0): T {
+export function debounce<T extends (...args: any[]) => void>(fn: T, ms = 0): T {
   let timeoutId: ReturnType<typeof setTimeout>;
 
   // Using function() instead of arrow function to preserve 'this' context
   return function (this: ThisParameterType<T>, ...args: Parameters<T>): void {
     clearTimeout(timeoutId);
-    // TODO: This function should always return void
     timeoutId = setTimeout(() => fn.apply(this, args), ms);
   } as T;
 }

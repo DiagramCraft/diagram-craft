@@ -42,6 +42,7 @@
       },
       "correctness": {
         "useExhaustiveDependencies": "warn",
+        "noUndeclaredDependencies": "warn",
         "noConstantCondition": "off",
         "useUniqueElementIds": "off",
         "noUnusedLabels": "off",
@@ -86,5 +87,17 @@
   },
   "assist": {
     "enabled": false
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["**/*.test.ts", "**/*.bench.ts", "**/test-support/*"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noUndeclaredDependencies": "off"
+          }
+        }
+      }
+    }
+  ]
 }

@@ -1,7 +1,7 @@
 import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { DeepReadonly } from '@diagram-craft/utils/types';
 import { Defaults } from '@diagram-craft/model/diagramDefaults';
-import { Property } from '../../toolwindow/ObjectToolWindow/types';
+import type { Property } from '@diagram-craft/model/property';
 
 export function makeProperty<
   TObj,

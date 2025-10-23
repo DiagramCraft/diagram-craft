@@ -11,7 +11,6 @@ import { getRemoteUnitOfWork, UnitOfWork } from './unitOfWork';
 import type { Diagram } from './diagram';
 import { AttachmentConsumer } from './attachment';
 import { FlatObject } from '@diagram-craft/utils/types';
-import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
 import { PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { assert } from '@diagram-craft/utils/assert';
 import type { RegularLayer } from './diagramLayerRegular';
@@ -26,6 +25,7 @@ import { makeElementMapper } from './diagramElementMapper';
 import { MappedCRDTProp } from './collaboration/datatypes/mapped/mappedCrdtProp';
 import type { ModificationLayer } from './diagramLayerModification';
 import type { Comment } from './comment';
+import type { PropertyInfo } from './property';
 
 // biome-ignore lint/suspicious/noExplicitAny: false positive
 type Snapshot = any;
@@ -455,6 +455,22 @@ export const getTopMostNode = (element: DiagramElement): DiagramElement => {
   if (element.parent === undefined) return element;
   const path = getDiagramElementPath(element);
   return path.length > 0 ? path[path.length - 1]! : element;
+};
+
+export const transformElements = (
+  elements: ReadonlyArray<DiagramElement>,
+  transforms: ReadonlyArray<Transform>,
+  uow: UnitOfWork
+) => {
+  for (const el of elements) {
+    el.transform(transforms, uow);
+  }
+
+  // We do this in a separate loop to as nodes might move which will
+  // affect the start and end location of connected edges
+  for (const el of elements) {
+    uow.updateElement(el);
+  }
 };
 
 export const bindElementListeners = (diagram: Diagram) => {

@@ -23,7 +23,7 @@ import { CylinderNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/C
 import { CurlyBracketNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/CurlyBracket.nodeType';
 import { BlockArcNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/BlockArc.nodeType';
 import { CloudNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Cloud.nodeType';
-import { BlockArrowEdgeDefinition } from '@diagram-craft/canvas-nodes/edge-types/BlockArrow.edgeType';
+import { BlockArrowEdgeDefinition } from '@diagram-craft/canvas-edges/edge-types/BlockArrow.edgeType';
 import { SimpleEdgeDefinition } from '@diagram-craft/canvas/components/BaseEdgeComponent';
 import { StepNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Step.nodeType';
 import { DelayNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Delay.nodeType';

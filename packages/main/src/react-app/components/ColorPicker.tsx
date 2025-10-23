@@ -54,9 +54,9 @@ export const ColorPicker = (props: Props) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = React.useState(false);
 
-  const close = () => {
+  const close = useCallback(() => {
     setOpen(false);
-  };
+  }, []);
 
   const setColor = useCallback(
     (c: string) => {
@@ -67,7 +67,7 @@ export const ColorPicker = (props: Props) => {
         recentColors.splice(14);
       }
     },
-    [props]
+    [props, close]
   );
 
   const customPalette = props.customPalette.colors;

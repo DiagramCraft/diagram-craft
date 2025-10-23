@@ -225,9 +225,6 @@ export const parseImage = async (
       props.stroke!.color = style.str('strokeColor');
     } else {
       props.stroke!.enabled = false;
-
-      // TODO: Why is this needed
-      props.stroke!.color = 'transparent';
       props.stroke!.width = 0;
     }
 

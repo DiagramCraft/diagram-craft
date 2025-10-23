@@ -1,16 +1,12 @@
-import { ActionContext, ActionCriteria } from '../action';
+import { ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
-import {
-  AbstractSelectionAction,
-  ElementType,
-  MultipleType
-} from '@diagram-craft/canvas-app/actions/abstractSelectionAction';
-import { TableHelper } from '../node-types/Table.nodeType';
+import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSelectionAction';
+import { TableHelper } from '@diagram-craft/canvas/node-types/Table.nodeType';
 import { assert } from '@diagram-craft/utils/assert';
 
 declare global {

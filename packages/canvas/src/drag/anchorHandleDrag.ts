@@ -8,10 +8,10 @@ import { AnchorEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { Direction } from '@diagram-craft/geometry/direction';
-import { createLinkedNode } from '@diagram-craft/canvas-app/actions/linkedNodeAction';
 import { Context } from '../context';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
+import { createLinkedNode } from '../linkedNode';
 
 export class AnchorHandleDrag extends Drag {
   edge: DiagramEdge;

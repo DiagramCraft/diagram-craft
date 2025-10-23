@@ -4,7 +4,7 @@ import { Point } from '@diagram-craft/geometry/point';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { Box } from '@diagram-craft/geometry/box';
 import { PointOnPath, TimeOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
-import { CubicSegment, LineSegment, type PathSegment } from '@diagram-craft/geometry/pathSegment';
+import { CubicSegment, LineSegment } from '@diagram-craft/geometry/pathSegment';
 import { Transform } from '@diagram-craft/geometry/transform';
 import {
   AbstractDiagramElement,
@@ -29,11 +29,9 @@ import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { newid } from '@diagram-craft/utils/id';
 import { isDifferent } from '@diagram-craft/utils/math';
 import { Direction } from '@diagram-craft/geometry/direction';
-import type { EdgeDefinition } from './elementDefinitionRegistry';
 import { isEmptyString } from '@diagram-craft/utils/strings';
 import { assert, is, mustExist } from '@diagram-craft/utils/assert';
 import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
-import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
 import type { RegularLayer } from './diagramLayerRegular';
 import { assertRegularLayer, getAdjustments } from './diagramLayerUtils';
 import type { Reference, SerializedEndpoint } from './serialization/types';
@@ -49,6 +47,8 @@ import { MappedCRDTProp } from './collaboration/datatypes/mapped/mappedCrdtProp'
 import { CRDTObject } from './collaboration/datatypes/crdtObject';
 import type { ModificationLayer } from './diagramLayerModification';
 import type { Path } from '@diagram-craft/geometry/path';
+import type { PropertyInfo } from './property';
+import type { EdgeDefinition } from './edgeDefinition';
 
 const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
   endpoint instanceof ConnectedEndpoint;
@@ -156,8 +156,6 @@ export interface DiagramEdge extends DiagramElement {
   addWaypoint(wp: Waypoint, uow: UnitOfWork): number;
   removeWaypoint(waypoint: Waypoint, uow: UnitOfWork): void;
   moveWaypoint(waypoint: Waypoint, point: Point, uow: UnitOfWork): void;
-
-  readonly midpoints: ReadonlyArray<Point>;
 
   path(): Path;
 
@@ -806,16 +804,6 @@ export class SimpleDiagramEdge
     uow.snapshot(this);
     this.#waypoints.set(this.waypoints.map((w, i) => (i === idx ? waypoint : w)));
     uow.updateElement(this);
-  }
-
-  /* Midpoints *********************************************************************************************** */
-
-  // TODO: Can we move this to Path?
-  get midpoints(): ReadonlyArray<Point> {
-    const path = this.path();
-    return path.segments.map((s: PathSegment) => {
-      return s.point(0.5);
-    });
   }
 
   /* Snapshot ************************************************************************************************ */

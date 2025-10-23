@@ -1,4 +1,3 @@
-import { Property } from './types';
 import { PropertyEditor } from '../../components/PropertyEditor';
 import { round } from '@diagram-craft/utils/math';
 import { Slider } from '@diagram-craft/app-components/Slider';
@@ -12,6 +11,7 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { FillType } from '@diagram-craft/model/diagramProps';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { mustExist } from '@diagram-craft/utils/assert';
+import type { Property } from '@diagram-craft/model/property';
 
 const TEXTURES = [
   'bubbles1.jpeg',

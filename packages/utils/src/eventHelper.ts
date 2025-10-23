@@ -1,5 +1,3 @@
-import { Point } from '@diagram-craft/geometry/point';
-
 export const EventHelper = {
   /**
    * Returns the point of the event
@@ -17,7 +15,7 @@ export const EventHelper = {
    * @param el element
    */
   pointWithRespectTo: (
-    e: { clientX: number; clientY: number } | Point,
+    e: { clientX: number; clientY: number } | { x: number; y: number },
     el: HTMLElement | SVGElement
   ) => {
     const rect = el.getBoundingClientRect();

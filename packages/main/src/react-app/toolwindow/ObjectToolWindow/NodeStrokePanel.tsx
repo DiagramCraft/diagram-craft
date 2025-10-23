@@ -8,10 +8,10 @@ import { ConfigurationContextType, useConfiguration } from '../../context/Config
 import { Select } from '@diagram-craft/app-components/Select';
 import { DashSelector } from './components/DashSelector';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { Property } from './types';
 import { LineCap, LineJoin } from '@diagram-craft/model/diagramProps';
 import { PropertyEditor } from '../../components/PropertyEditor';
 import { useDiagram } from '../../../application';
+import type { Property } from '@diagram-craft/model/property';
 
 type FormProps = {
   diagram: Diagram;

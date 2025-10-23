@@ -7,7 +7,12 @@ import { Direction } from '@diagram-craft/geometry/direction';
 import { Translation } from '@diagram-craft/geometry/transform';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { Angle } from '@diagram-craft/geometry/angle';
-import { DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
+import {
+  DiagramElement,
+  isEdge,
+  isNode,
+  transformElements
+} from '@diagram-craft/model/diagramElement';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
@@ -25,19 +30,18 @@ import {
   assertRegularOrModificationLayer
 } from '@diagram-craft/model/diagramLayerUtils';
 import { LayerCapabilities } from '@diagram-craft/model/diagramLayerManager';
-
-const getId = (e: DiagramElement) => (isNode(e) ? `node-${e.id}` : `edge-${e.id}`);
+import { CanvasDomHelper } from '../utils/canvasDomHelper';
 
 const enablePointerEvents = (elements: ReadonlyArray<DiagramElement>) => {
   for (const e of elements) {
-    document.getElementById(getId(e))!.style.pointerEvents = '';
+    CanvasDomHelper.elementElement(e)!.style.pointerEvents = '';
     if (isNode(e)) enablePointerEvents(e.children);
   }
 };
 
 const disablePointerEvents = (elements: ReadonlyArray<DiagramElement>) => {
   for (const e of elements) {
-    document.getElementById(getId(e))!.style.pointerEvents = 'none';
+    CanvasDomHelper.elementElement(e)!.style.pointerEvents = 'none';
     if (isNode(e)) disablePointerEvents(e.children);
   }
 };
@@ -148,7 +152,7 @@ export abstract class AbstractMoveDrag extends Drag {
     this.updateState(newBounds);
 
     if (!Point.isEqual(Point.ORIGIN, Point.subtract(newBounds, selection.bounds))) {
-      this.diagram.transformElements(
+      transformElements(
         selection.filter(
           'all',
           selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes
@@ -354,7 +358,7 @@ export class MoveDrag extends AbstractMoveDrag {
     });
 
     // Reset current selection back to original
-    this.diagram.transformElements(
+    transformElements(
       selection.filter(
         'nodes',
         selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes

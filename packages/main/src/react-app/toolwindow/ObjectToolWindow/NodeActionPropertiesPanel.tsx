@@ -1,13 +1,13 @@
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { useNodeProperty } from '../../hooks/useProperty';
 import { PropertyEditor } from '../../components/PropertyEditor';
-import { Property } from '../ObjectToolWindow/types';
 import { useDiagram, useDocument } from '../../../application';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
 import { coalesce } from '@diagram-craft/utils/strings';
 import { Diagram } from '@diagram-craft/model/diagram';
 import React from 'react';
+import type { Property } from '@diagram-craft/model/property';
 
 const DiagramList = (props: { list: readonly Diagram[]; level: number }) => {
   return (

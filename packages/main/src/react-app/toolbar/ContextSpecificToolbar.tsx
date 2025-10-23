@@ -37,6 +37,7 @@ export const ContextSpecificToolbar = () => {
 
   useEventListener(diagram.selectionState, 'add', callback);
   useEventListener(diagram.selectionState, 'remove', callback);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: this is correct
   useEffect(callback, [callback]);
 
   const isNodeSelection =

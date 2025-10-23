@@ -17,8 +17,8 @@ import { Transform } from '@diagram-craft/geometry/transform';
 import type { Box } from '@diagram-craft/geometry/box';
 import type { DuplicationContext } from './diagramNode';
 import { PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
-import { PropertyInfo } from '@diagram-craft/main/react-app/toolwindow/ObjectToolWindow/types';
 import { FlatObject } from '@diagram-craft/utils/types';
+import type { PropertyInfo } from './property';
 
 // biome-ignore lint/suspicious/noExplicitAny: false positive
 type Snapshot = any;

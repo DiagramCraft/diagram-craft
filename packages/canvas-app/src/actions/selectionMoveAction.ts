@@ -4,6 +4,7 @@ import { Point } from '@diagram-craft/geometry/point';
 import { Translation } from '@diagram-craft/geometry/transform';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ActionContext } from '@diagram-craft/canvas/action';
+import { transformElements } from '@diagram-craft/model/diagramElement';
 
 declare global {
   interface ActionMap extends ReturnType<typeof selectionMoveActions> {}
@@ -36,7 +37,7 @@ export class SelectionMoveAction extends AbstractSelectionAction {
     if (this.context.model.activeDiagram.selectionState.isEmpty()) return;
 
     const uow = new UnitOfWork(this.context.model.activeDiagram, true);
-    this.context.model.activeDiagram.transformElements(
+    transformElements(
       this.context.model.activeDiagram.selectionState.elements,
       [new Translation(this.offset())],
       uow

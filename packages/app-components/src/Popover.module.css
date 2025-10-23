@@ -12,8 +12,6 @@
   font-size: 12px;
   margin-right: 0.2rem;
 
-  /* TODO: Unclear what this is for? */
-
   .cmp-panel__enabled:focus {
     box-shadow: none;
     outline: none;

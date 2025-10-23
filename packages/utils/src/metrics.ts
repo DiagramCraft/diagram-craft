@@ -10,6 +10,4 @@ export const Metrics = {
   }
 };
 
-/*setInterval(() => {
-  console.log(metrics);
-}, 10000);*/
+// setInterval(() => console.log(metrics));
