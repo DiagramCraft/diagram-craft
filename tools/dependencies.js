@@ -20,12 +20,12 @@ import process from 'process';
 function printSubmodule(submodulePath, rootModuleName, groupedGraph, indentLevel) {
   const indent = '  '.repeat(indentLevel);
 
-  console.log(`${indent}/${submodulePath.split('/').at(-1)}`);
+  console.log(`${indent}./${submodulePath.split('/').at(-1)}`);
 
   // Find and recursively print direct child submodules
   const childSubmodules = [
     ...new Set(
-      groupedGraph[submodulePath].adjacentTo.filter(
+      Object.keys(groupedGraph).filter(
         entry =>
           entry.startsWith(`${submodulePath}/`) && entry.split('/').length === indentLevel + 2
       )
@@ -68,7 +68,7 @@ function printModule(modulePath, rootModuleName, groupedGraph) {
   // Find direct child submodules (one level deep)
   const childSubmodules = [
     ...new Set(
-      groupedGraph[modulePath].adjacentTo.filter(
+      Object.keys(groupedGraph).filter(
         entry =>
           entry.startsWith(`${modulePath}/`) &&
           entry.split('/').length === modulePath.split('/').length + 1
@@ -104,7 +104,8 @@ function printModule(modulePath, rootModuleName, groupedGraph) {
  */
 async function analyzeDependencies(targetDirectory) {
   // Normalize the directory path to module name format
-  const moduleFilter = targetDirectory?.replace('packages/', '').replace('/src', '');
+  let moduleFilter = targetDirectory?.replace('packages/', '').replace('/src', '');
+  if (moduleFilter?.endsWith('/')) moduleFilter = moduleFilter.slice(0, -1);
 
   const api = await skott({
     circularMaxDepth: 10,

@@ -67,7 +67,6 @@ import { ZoomTool } from '@diagram-craft/canvas-app/tools/zoomTool';
 import { AwarenessToolbar } from './react-app/AwarenessToolbar';
 import { CommentDialog } from './react-app/components/CommentDialog';
 import { CommandPalette } from './react-app/components/CommandPalette';
-import { Progress, ProgressCallback } from '@diagram-craft/model/types';
 import { FullScreenProgress } from './react-app/components/FullScreenProgress';
 import type { DiagramFactory, DocumentFactory } from '@diagram-craft/model/factory';
 import { PortalContextProvider } from '@diagram-craft/app-components/PortalContext';
@@ -76,6 +75,7 @@ import { DocumentName } from './react-app/DocumentName';
 import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { Autosave } from './react-app/autosave/Autosave';
 import { CanvasDomHelper } from '@diagram-craft/canvas/utils/canvasDomHelper';
+import type { Progress, ProgressCallback } from '@diagram-craft/utils/progress';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // biome-ignore lint/suspicious/noExplicitAny: false positive

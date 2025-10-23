@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestModel } from './test-support/builder';
 import { RegularLayer } from './diagramLayerRegular';
 import { UnitOfWork } from './unitOfWork';
-import { Backends } from './collaboration/collaborationTestUtils';
+import { Backends } from './test-support/collaborationTestUtils';
 import { ElementFactory } from './elementFactory';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { transformElements } from './diagramElement';

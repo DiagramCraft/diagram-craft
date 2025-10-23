@@ -1,13 +1,13 @@
 import { deserializeDiagramDocument } from '@diagram-craft/model/serialization/deserialize';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { serializeDiagramDocument } from '@diagram-craft/model/serialization/serialize';
-import { ProgressCallback } from '@diagram-craft/model/types';
 import { CollaborationConfig } from '@diagram-craft/model/collaboration/collaborationConfig';
 import type { CRDTRoot } from '@diagram-craft/model/collaboration/crdt';
 import type { DiagramFactory, DocumentFactory } from '@diagram-craft/model/factory';
 import type { SerializedDiagramDocument } from '@diagram-craft/model/serialization/types';
 import type { Autosave } from './Autosave';
 import { assert } from '@diagram-craft/utils/assert';
+import type { ProgressCallback } from '@diagram-craft/utils/progress';
 
 let needsSave:
   | {
@@ -15,7 +15,7 @@ let needsSave:
       doc: DiagramDocument;
       callback?: (d: SerializedDiagramDocument) => void;
     }
-  | undefined ;
+  | undefined;
 
 export const ElectronAutosave: Autosave = {
   /**

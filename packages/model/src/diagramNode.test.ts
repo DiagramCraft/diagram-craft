@@ -5,7 +5,7 @@ import {
   Backends,
   type StandardTestModel,
   standardTestModel
-} from './collaboration/collaborationTestUtils';
+} from './test-support/collaborationTestUtils';
 import type { DiagramNode } from './diagramNode';
 import { serializeDiagram } from './serialization/serialize';
 import { commitWithUndo } from './diagramUndoActions';

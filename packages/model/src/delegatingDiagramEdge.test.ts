@@ -4,7 +4,7 @@ import {
   Backends,
   type StandardTestModel,
   standardTestModel
-} from './collaboration/collaborationTestUtils';
+} from './test-support/collaborationTestUtils';
 import type { DiagramEdge } from './diagramEdge';
 import { ModificationLayer } from './diagramLayerModification';
 import { DelegatingDiagramEdge } from './delegatingDiagramEdge';

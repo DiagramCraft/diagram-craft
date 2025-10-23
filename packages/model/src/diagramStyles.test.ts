@@ -5,7 +5,7 @@ import { NoOpCRDTFactory } from './collaboration/noopCrdt';
 import { DiagramDocument } from './diagramDocument';
 import { TestModel } from './test-support/builder';
 import type { CRDTRoot } from './collaboration/crdt';
-import { Backends } from './collaboration/collaborationTestUtils';
+import { Backends } from './test-support/collaborationTestUtils';
 
 describe.each(Backends.all())('Stylesheet [%s]', (_name, backend) => {
   describe('from', () => {

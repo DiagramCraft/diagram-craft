@@ -1,6 +1,6 @@
 import { Awareness, NoOpAwareness, type AwarenessUserState } from './awareness';
 import type { CRDTRoot } from './crdt';
-import { ProgressCallback } from '../types';
+import type { ProgressCallback } from '@diagram-craft/utils/progress';
 
 export interface CollaborationBackend {
   connect: (

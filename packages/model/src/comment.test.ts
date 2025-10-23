@@ -2,7 +2,7 @@ import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { Comment, CommentManager } from './comment';
 import { TestModel } from './test-support/builder';
 import { DiagramNode } from './diagramNode';
-import { Backends, standardTestModel } from './collaboration/collaborationTestUtils';
+import { Backends, standardTestModel } from './test-support/collaborationTestUtils';
 import type { DiagramDocument } from './diagramDocument';
 import type { Diagram } from './diagram';
 

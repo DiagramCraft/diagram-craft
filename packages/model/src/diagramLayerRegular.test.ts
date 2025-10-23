@@ -3,7 +3,7 @@ import { TestModel } from './test-support/builder';
 import { RegularLayer } from './diagramLayerRegular';
 import { UnitOfWork } from './unitOfWork';
 import { Diagram } from './diagram';
-import { Backends } from './collaboration/collaborationTestUtils';
+import { Backends } from './test-support/collaborationTestUtils';
 import { ElementFactory } from './elementFactory';
 
 describe.for(Backends.all())('RegularLayer [%s]', ([_name, backend]) => {

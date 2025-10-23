@@ -2,7 +2,7 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { DefaultDataProvider } from './dataProviderDefault';
 import { DataSchema } from './diagramDocumentDataSchemas';
 import { Data } from './dataProvider';
-import { Backends } from './collaboration/collaborationTestUtils';
+import { Backends } from './test-support/collaborationTestUtils';
 
 describe.each(Backends.all())('DefaultDataProvider [%s]', (_name, backend) => {
   beforeEach(() => {

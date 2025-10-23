@@ -1,9 +1,9 @@
 import type { CRDTRoot } from '@diagram-craft/model/collaboration/crdt';
-import { ProgressCallback } from '@diagram-craft/model/types';
 import type { DiagramFactory, DocumentFactory } from '@diagram-craft/model/factory';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import type { SerializedDiagramDocument } from '@diagram-craft/model/serialization/types';
 import { assert } from '@diagram-craft/utils/assert';
+import type { ProgressCallback } from '@diagram-craft/utils/progress';
 
 export type Autosave = {
   load: (
@@ -33,7 +33,7 @@ export type Autosave = {
   init: () => void;
 };
 
-let AUTOSAVE_INSTANCE: Autosave | undefined ;
+let AUTOSAVE_INSTANCE: Autosave | undefined;
 
 export const Autosave = {
   init(instance: Autosave) {

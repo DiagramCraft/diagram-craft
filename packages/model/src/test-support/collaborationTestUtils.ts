@@ -1,14 +1,14 @@
 import { vi } from 'vitest';
-import { type TestDiagramBuilder, TestLayerBuilder, TestModel } from '../test-support/builder';
+import { type TestDiagramBuilder, TestLayerBuilder, TestModel } from './builder';
 import type { DiagramDocument } from '../diagramDocument';
 import type { Diagram } from '../diagram';
 import type { RegularLayer } from '../diagramLayerRegular';
 import { UnitOfWork } from '../unitOfWork';
-import { createSyncedYJSCRDTs } from './yjs/yjsTestUtils';
-import { CollaborationConfig } from './collaborationConfig';
-import { YJSMap, YJSRoot } from './yjs/yjsCrdt';
-import type { CRDTRoot } from './crdt';
-import { NoOpCRDTMap, NoOpCRDTRoot } from './noopCrdt';
+import { createSyncedYJSCRDTs } from '../collaboration/yjs/yjsTestUtils';
+import { CollaborationConfig } from '../collaboration/collaborationConfig';
+import { YJSMap, YJSRoot } from '../collaboration/yjs/yjsCrdt';
+import type { CRDTRoot } from '../collaboration/crdt';
+import { NoOpCRDTMap, NoOpCRDTRoot } from '../collaboration/noopCrdt';
 
 export type Backend = {
   syncedDocs: () => [CRDTRoot, CRDTRoot | undefined];

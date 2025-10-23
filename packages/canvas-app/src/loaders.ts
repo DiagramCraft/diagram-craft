@@ -1,9 +1,9 @@
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { assert } from '@diagram-craft/utils/assert';
-import { ProgressCallback } from '@diagram-craft/model/types';
 import type { CRDTRoot } from '@diagram-craft/model/collaboration/crdt';
 import type { DiagramFactory, DocumentFactory } from '@diagram-craft/model/factory';
 import type { AwarenessUserState } from '@diagram-craft/model/collaboration/awareness';
+import type { ProgressCallback } from '@diagram-craft/utils/progress';
 
 export type FileLoader = (
   // TODO: Need to extend with blob

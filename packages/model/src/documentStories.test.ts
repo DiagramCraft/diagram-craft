@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vitest';
 import type { StoryAction } from './documentStories';
-import { Backends, standardTestModel } from './collaboration/collaborationTestUtils';
+import { Backends, standardTestModel } from './test-support/collaborationTestUtils';
 
 describe.each(Backends.all())('DocumentStories - %s', (_name, backend) => {
   test('should replicate story creation', () => {

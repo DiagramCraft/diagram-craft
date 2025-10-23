@@ -24,12 +24,12 @@ import { CollaborationConfig } from './collaboration/collaborationConfig';
 import { DocumentProps } from './documentProps';
 import { DocumentTags } from './documentTags';
 import { DocumentStories } from './documentStories';
-import { ProgressCallback } from './types';
 import { MappedCRDTOrderedMap } from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import { watch } from '@diagram-craft/utils/watchableValue';
 import { precondition } from '@diagram-craft/utils/assert';
 import type { EmptyObject } from '@diagram-craft/utils/types';
 import type { AwarenessUserState } from './collaboration/awareness';
+import type { ProgressCallback } from '@diagram-craft/utils/progress';
 
 export type DocumentEvents = {
   diagramChanged: { diagram: Diagram };

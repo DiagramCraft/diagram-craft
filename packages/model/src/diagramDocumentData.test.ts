@@ -3,7 +3,7 @@ import { DiagramDocumentData } from './diagramDocumentData';
 import { NoOpCRDTRoot } from './collaboration/noopCrdt';
 import { TestModel } from './test-support/builder';
 import { DefaultDataProvider } from './dataProviderDefault';
-import { Backends, standardTestModel } from './collaboration/collaborationTestUtils';
+import { Backends, standardTestModel } from './test-support/collaborationTestUtils';
 import { UrlDataProvider } from './dataProviderUrl';
 import { newid } from '@diagram-craft/utils/id';
 

@@ -7,7 +7,7 @@ import {
   resetListeners,
   standardTestModel,
   type StandardTestModel
-} from './collaboration/collaborationTestUtils';
+} from './test-support/collaborationTestUtils';
 import { DiagramEdge } from './diagramEdge';
 
 describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {

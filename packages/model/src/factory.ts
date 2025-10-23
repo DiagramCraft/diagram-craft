@@ -1,4 +1,3 @@
-import { ProgressCallback } from './types';
 import { CRDT, type CRDTRoot } from './collaboration/crdt';
 import { DiagramDocument } from './diagramDocument';
 import { Diagram } from './diagram';
@@ -7,6 +6,7 @@ import { CollaborationConfig } from './collaboration/collaborationConfig';
 import { newid } from '@diagram-craft/utils/id';
 import { EdgeDefinitionRegistry, type NodeDefinitionRegistry } from './elementDefinitionRegistry';
 import type { AwarenessUserState } from './collaboration/awareness';
+import type { ProgressCallback } from '@diagram-craft/utils/progress';
 
 export type DocumentFactory = {
   loadCRDT: (

@@ -4,8 +4,8 @@ import { assert } from '@diagram-craft/utils/assert';
 import { YJSRoot } from './yjsCrdt';
 import { CollaborationBackend } from '../backend';
 import { YJSAwareness } from './yjsAwareness';
-import { ProgressCallback } from '../../types';
 import type { AwarenessUserState } from '../awareness';
+import type { ProgressCallback } from '@diagram-craft/utils/progress';
 
 export class YJSWebSocketCollaborationBackend implements CollaborationBackend {
   private wsProvider: WebsocketProvider | undefined = undefined;

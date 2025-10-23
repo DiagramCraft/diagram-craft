@@ -1,7 +1,7 @@
 import { watch } from '@diagram-craft/utils/watchableValue';
 import { describe, expect, it } from 'vitest';
 import { CRDTProp } from './crdtProp';
-import { Backends } from '../collaborationTestUtils';
+import { Backends } from '../../test-support/collaborationTestUtils';
 
 type TestType = { value: string };
 

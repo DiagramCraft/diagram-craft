@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { RuleLayer } from './diagramLayerRule';
 import { UnitOfWork } from './unitOfWork';
-import { Backends, standardTestModel } from './collaboration/collaborationTestUtils';
+import { Backends, standardTestModel } from './test-support/collaborationTestUtils';
 import { Comment } from './comment';
 import { newid } from '@diagram-craft/utils/id';
 import { TestModel } from './test-support/builder';
