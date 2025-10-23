@@ -55,3 +55,4 @@ coverage/
 packages/server-main/data
 
 dist-electron
+/packages/test-ui-diagrams/src/local-tests-*.zip

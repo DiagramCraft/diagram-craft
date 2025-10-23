@@ -6,10 +6,16 @@ import { assert, precondition } from '@diagram-craft/utils/assert';
 
 export type CommentState = 'unresolved' | 'resolved';
 
+/**
+ * Represents a comment attached to either a diagram or a specific element.
+ * Comments can be part of a thread via parentId and can become stale if their element is deleted.
+ */
 export class Comment {
-  private _state: CommentState;
+  /** Timestamp when the comment became stale (element was deleted) */
   public staleSince: Date | undefined;
-  private _message: string;
+
+  #state: CommentState;
+  #message: string;
 
   constructor(
     public readonly diagram: Diagram,
@@ -23,41 +29,45 @@ export class Comment {
     public readonly parentId?: string,
     public readonly userColor?: string
   ) {
-    this._state = state;
-    this._message = message;
+    this.#state = state;
+    this.#message = message;
   }
 
-  get message(): string {
-    return this._message;
+  get message() {
+    return this.#message;
   }
 
+  /** Updates the comment message */
   edit(message: string) {
-    this._message = message;
+    this.#message = message;
   }
 
+  /** Checks if comment is stale (attached element no longer exists in diagram) */
   isStale() {
-    return (
-      this.type === 'element' &&
-      (this.element === undefined || !this.diagram.lookup(this.element.id))
-    );
+    if (this.type !== 'element') return false;
+    return this.element === undefined || !this.diagram.lookup(this.element.id);
   }
 
-  get state(): CommentState {
-    return this._state;
+  get state() {
+    return this.#state;
   }
 
-  resolve(): void {
-    this._state = 'resolved';
+  /** Marks the comment as resolved */
+  resolve() {
+    this.#state = 'resolved';
   }
 
-  unresolve(): void {
-    this._state = 'unresolved';
+  /** Marks the comment as unresolved */
+  unresolve() {
+    this.#state = 'unresolved';
   }
 
-  isReply(): boolean {
+  /** Checks if this comment is a reply to another comment */
+  isReply() {
     return this.parentId !== undefined;
   }
 
+  /** Converts the comment to a plain object for storage or transmission */
   serialize(): SerializedComment {
     return {
       id: this.id,
@@ -73,6 +83,7 @@ export class Comment {
     };
   }
 
+  /** Creates a Comment instance from a serialized representation */
   static deserialize(serialized: SerializedComment, diagram: Diagram): Comment {
     const element =
       serialized.type === 'element' ? diagram.lookup(serialized.elementId!) : undefined;
@@ -92,6 +103,7 @@ export class Comment {
   }
 }
 
+/** Plain object representation of a comment for serialization */
 export type SerializedComment = {
   id: string;
   date: string;
@@ -105,18 +117,23 @@ export type SerializedComment = {
   userColor?: string;
 };
 
-export type CommentManagerEvents = {
+type CommentManagerEvents = {
   commentAdded: { comment: Comment };
   commentUpdated: { comment: Comment };
   commentRemoved: { comment: SerializedComment };
 };
 
+/**
+ * Manages comments for a diagram using CRDT-based storage for collaboration support.
+ * Handles comment threads, staleness detection, and emits events for remote changes.
+ */
 export class CommentManager extends EventEmitter<CommentManagerEvents> {
   constructor(
     private diagram: Diagram,
     private commentsMap: CRDTMap<Record<string, SerializedComment>>
   ) {
     super();
+    // Forward CRDT remote events as local events for UI to react to
     this.commentsMap.on('remoteDelete', p => {
       this.emit('commentRemoved', { comment: p.value });
     });
@@ -130,6 +147,7 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> {
     });
   }
 
+  /** Returns all comments including stale and resolved ones */
   getAll(): Comment[] {
     const serializedComments: SerializedComment[] = [];
     for (const comment of this.commentsMap.values()) {
@@ -138,10 +156,12 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> {
     return serializedComments.map(sc => Comment.deserialize(sc, this.diagram));
   }
 
+  /** Returns only diagram-level comments that are not stale */
   getDiagramComments(): Comment[] {
     return this.getAll().filter(comment => comment.type === 'diagram' && !comment.isStale());
   }
 
+  /** Adds a new comment and emits commentAdded event */
   addComment(comment: Comment): void {
     precondition.is.true(comment.diagram === this.diagram);
 
@@ -151,6 +171,7 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> {
     this.emit('commentAdded', { comment });
   }
 
+  /** Updates an existing comment and emits commentUpdated event */
   updateComment(comment: Comment): void {
     precondition.is.true(comment.diagram === this.diagram);
 
@@ -162,6 +183,7 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> {
     }
   }
 
+  /** Adds a reply to an existing comment */
   replyToComment(replyTo: Comment, reply: Comment): void {
     if (reply.parentId !== replyTo.id) {
       throw new Error('Reply comment must have parentId matching the comment being replied to');
@@ -169,13 +191,14 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> {
     this.addComment(reply);
   }
 
+  /** Removes a comment and all its replies recursively */
   removeComment(commentId: string): void {
     const comment = this.getComment(commentId);
     assert.present(comment);
-    precondition.is.true(comment?.diagram === this.diagram);
+    precondition.is.true(comment.diagram === this.diagram);
 
     // First, recursively delete all replies
-    const repliesToDelete = this.getReplies({ id: commentId } as Comment);
+    const repliesToDelete = this.getReplies(commentId);
     for (const reply of repliesToDelete) {
       this.removeComment(reply.id);
     }
@@ -186,20 +209,25 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> {
     this.emit('commentRemoved', { comment: comment.serialize() });
   }
 
+  /** Retrieves a comment by ID */
   getComment(commentId: string): Comment | undefined {
     const serialized = this.commentsMap.get(commentId);
     if (!serialized) return undefined;
     return Comment.deserialize(serialized, this.diagram);
   }
 
-  getReplies(comment: Comment): Comment[] {
-    return this.getAll().filter(c => c.parentId === comment.id);
+  /** Returns all direct replies to a comment */
+  getReplies(comment: Comment | string): Comment[] {
+    return this.getAll().filter(
+      c => c.parentId === (typeof comment === 'string' ? comment : comment.id)
+    );
   }
 
+  /** Returns the complete thread containing this comment (root + all nested replies) */
   getCommentThread(comment: Comment): Comment[] {
     const thread: Comment[] = [];
 
-    // Find root comment
+    // Walk up to find the root comment (comment with no parent)
     let current = comment;
     while (current.parentId) {
       const parent = this.getComment(current.parentId);
@@ -207,7 +235,7 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> {
       current = parent;
     }
 
-    // Build thread starting from root
+    // Recursively build the thread starting from root
     const addToThread = (c: Comment) => {
       thread.push(c);
       const replies = this.getReplies(c);
