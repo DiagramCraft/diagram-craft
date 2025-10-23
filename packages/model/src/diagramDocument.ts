@@ -19,17 +19,17 @@ import { RESTDataProvider, RestDataProviderId } from './dataProviderRest';
 import { Generators } from '@diagram-craft/utils/generator';
 import { SerializedElement } from './serialization/types';
 import { DiagramDocumentData } from './diagramDocumentData';
-import { CRDT, CRDTRoot } from './collaboration/crdt';
-import { CollaborationConfig } from './collaboration/collaborationConfig';
 import { DocumentProps } from './documentProps';
 import { DocumentTags } from './documentTags';
 import { DocumentStories } from './documentStories';
-import { MappedCRDTOrderedMap } from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import { watch } from '@diagram-craft/utils/watchableValue';
 import { precondition } from '@diagram-craft/utils/assert';
 import type { EmptyObject } from '@diagram-craft/utils/types';
-import type { AwarenessUserState } from './collaboration/awareness';
 import type { ProgressCallback } from '@diagram-craft/utils/progress';
+import { CRDT, type CRDTRoot } from '@diagram-craft/collaboration/crdt';
+import { MappedCRDTOrderedMap } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtOrderedMap';
+import type { AwarenessUserState } from '@diagram-craft/collaboration/awareness';
+import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
 
 export type DocumentEvents = {
   diagramChanged: { diagram: Diagram };

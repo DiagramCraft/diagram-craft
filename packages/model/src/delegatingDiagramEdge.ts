@@ -8,14 +8,12 @@ import type {
 } from './diagramEdge';
 import type { RegularLayer } from './diagramLayerRegular';
 import type { ModificationLayer } from './diagramLayerModification';
-import type { CRDTMap } from './collaboration/crdt';
 import { getRemoteUnitOfWork, UnitOfWork } from './unitOfWork';
 import { Endpoint } from './endpoint';
 import type { Waypoint } from './types';
 import { Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
 import { WatchableValue } from '@diagram-craft/utils/watchableValue';
-import { CRDTObject } from './collaboration/datatypes/crdtObject';
 import { deepMerge } from '@diagram-craft/utils/object';
 import { PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import type { Path } from '@diagram-craft/geometry/path';
@@ -23,10 +21,12 @@ import { Transform } from '@diagram-craft/geometry/transform';
 import type { DuplicationContext } from './diagramNode';
 import { DiagramElement } from './diagramElement';
 import { SerializedEdge, SerializedEndpoint } from './serialization/types';
-import { MappedCRDTProp } from './collaboration/datatypes/mapped/mappedCrdtProp';
-import { CRDTProp } from './collaboration/datatypes/crdtProp';
 import type { PropertyInfo } from './property';
 import type { EdgeDefinition } from './edgeDefinition';
+import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
+import { MappedCRDTProp } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtProp';
+import { CRDTProp } from '@diagram-craft/collaboration/datatypes/crdtProp';
+import type { CRDTMap } from '@diagram-craft/collaboration/crdt';
 
 export type DiagramEdgeSnapshot = SerializedEdge & {
   _snapshotType: 'edge';

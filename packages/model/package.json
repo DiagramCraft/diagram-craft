@@ -13,9 +13,7 @@
     "embeddable-jq": "^1.0.0",
     "@diagram-craft/geometry": "workspace:^",
     "@diagram-craft/utils": "workspace:^",
-    "y-protocols": "^1.0.6",
-    "y-websocket": "^3.0.0",
-    "yjs": "^13.6.27"
+    "@diagram-craft/collaboration": "workspace:^"
   },
   "devDependencies": {
     "vitest": "^3.2.4"

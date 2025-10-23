@@ -1,12 +1,12 @@
-import { CRDT, type CRDTRoot } from './collaboration/crdt';
 import { DiagramDocument } from './diagramDocument';
 import { Diagram } from './diagram';
 import { SerializedDiagram } from './serialization/types';
-import { CollaborationConfig } from './collaboration/collaborationConfig';
 import { newid } from '@diagram-craft/utils/id';
 import { EdgeDefinitionRegistry, type NodeDefinitionRegistry } from './elementDefinitionRegistry';
-import type { AwarenessUserState } from './collaboration/awareness';
 import type { ProgressCallback } from '@diagram-craft/utils/progress';
+import { CRDT, type CRDTRoot } from '@diagram-craft/collaboration/crdt';
+import type { AwarenessUserState } from '@diagram-craft/collaboration/awareness';
+import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
 
 export type DocumentFactory = {
   loadCRDT: (

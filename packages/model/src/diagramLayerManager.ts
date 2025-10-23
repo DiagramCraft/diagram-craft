@@ -1,22 +1,22 @@
 import { DiagramElement } from './diagramElement';
 import type { Diagram } from './diagram';
-import { CRDTMap } from './collaboration/crdt';
 import { LayersSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
 import type { Layer, LayerCRDT } from './diagramLayer';
-import { type CRDTMapper } from './collaboration/datatypes/mapped/types';
 import { RuleLayer } from './diagramLayerRule';
 import { ReferenceLayer } from './diagramLayerReference';
 import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
-import {
-  MappedCRDTOrderedMap,
-  MappedCRDTOrderedMapMapType
-} from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import { AttachmentConsumer } from './attachment';
 import { RegularLayer } from './diagramLayerRegular';
 import { watch } from '@diagram-craft/utils/watchableValue';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { ModificationLayer } from './diagramLayerModification';
 import type { EmptyObject } from '@diagram-craft/utils/types';
+import type { CRDTMap } from '@diagram-craft/collaboration/crdt';
+import {
+  MappedCRDTOrderedMap,
+  type MappedCRDTOrderedMapMapType
+} from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtOrderedMap';
+import type { CRDTMapper } from '@diagram-craft/collaboration/datatypes/mapped/types';
 
 export type LayerManagerCRDT = {
   // TODO: Should we move visibility to be a property of the layer instead

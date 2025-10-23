@@ -9,12 +9,10 @@ import {
 } from './diagramNode';
 import type { RegularLayer } from './diagramLayerRegular';
 import type { ModificationLayer } from './diagramLayerModification';
-import type { CRDTMap, FlatCRDTMap } from './collaboration/crdt';
 import { DiagramNodeSnapshot, getRemoteUnitOfWork, UnitOfWork } from './unitOfWork';
 import { Box } from '@diagram-craft/geometry/box';
 import type { NodeDefinition } from './elementDefinitionRegistry';
 import { WatchableValue } from '@diagram-craft/utils/watchableValue';
-import { CRDTObject } from './collaboration/datatypes/crdtObject';
 import { deepMerge } from '@diagram-craft/utils/object';
 import { PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { Transform } from '@diagram-craft/geometry/transform';
@@ -23,9 +21,11 @@ import type { DiagramEdge, ResolvedLabelNode } from './diagramEdge';
 import type { Point } from '@diagram-craft/geometry/point';
 import type { Anchor } from './anchor';
 import type { LabelNode } from './types';
-import { MappedCRDTProp } from './collaboration/datatypes/mapped/mappedCrdtProp';
-import { CRDTProp } from './collaboration/datatypes/crdtProp';
 import type { PropertyInfo } from './property';
+import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
+import { MappedCRDTProp } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtProp';
+import { CRDTProp } from '@diagram-craft/collaboration/datatypes/crdtProp';
+import type { CRDTMap, FlatCRDTMap } from '@diagram-craft/collaboration/crdt';
 
 export type DelegatingDiagramNodeCRDT = DiagramElementCRDT & {
   bounds: Box;

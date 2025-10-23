@@ -141,6 +141,9 @@ importers:
 
   packages/canvas:
     dependencies:
+      '@diagram-craft/collaboration':
+        specifier: workspace:^
+        version: link:../collaboration
       '@diagram-craft/geometry':
         specifier: workspace:^
         version: link:../geometry
@@ -162,6 +165,9 @@ importers:
       '@diagram-craft/canvas-nodes':
         specifier: workspace:^
         version: link:../canvas-nodes
+      '@diagram-craft/collaboration':
+        specifier: workspace:^
+        version: link:../collaboration
       '@diagram-craft/geometry':
         specifier: workspace:^
         version: link:../geometry
@@ -248,6 +254,25 @@ importers:
         specifier: ^18.3.1
         version: 18.3.7(@types/react@18.3.23)
 
+  packages/collaboration:
+    dependencies:
+      '@diagram-craft/utils':
+        specifier: workspace:^
+        version: link:../utils
+      y-protocols:
+        specifier: ^1.0.6
+        version: 1.0.6(yjs@13.6.27)
+      y-websocket:
+        specifier: ^3.0.0
+        version: 3.0.0(yjs@13.6.27)
+      yjs:
+        specifier: ^13.6.27
+        version: 13.6.27
+    devDependencies:
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.4(@types/debug@4.1.12)(@types/node@22.18.0)(jsdom@26.1.0)(tsx@4.20.6)
+
   packages/electron-app:
     dependencies:
       '@diagram-craft/electron-client-api':
@@ -311,6 +336,9 @@ importers:
       '@diagram-craft/canvas-react':
         specifier: workspace:^
         version: link:../canvas-react
+      '@diagram-craft/collaboration':
+        specifier: workspace:^
+        version: link:../collaboration
       '@diagram-craft/electron-client-api':
         specifier: workspace:^
         version: link:../electron-client-api
@@ -426,6 +454,9 @@ importers:
 
   packages/model:
     dependencies:
+      '@diagram-craft/collaboration':
+        specifier: workspace:^
+        version: link:../collaboration
       '@diagram-craft/geometry':
         specifier: workspace:^
         version: link:../geometry
@@ -435,15 +466,6 @@ importers:
       embeddable-jq:
         specifier: ^1.0.0
         version: 1.0.0
-      y-protocols:
-        specifier: ^1.0.6
-        version: 1.0.6(yjs@13.6.27)
-      y-websocket:
-        specifier: ^3.0.0
-        version: 3.0.0(yjs@13.6.27)
-      yjs:
-        specifier: ^13.6.27
-        version: 13.6.27
     devDependencies:
       vitest:
         specifier: ^3.2.4

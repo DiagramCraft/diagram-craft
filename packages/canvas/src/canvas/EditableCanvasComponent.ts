@@ -28,7 +28,6 @@ import {
   createUpdateOnViewboxChangeEffect,
   createZoomPanOnMouseEventEffect
 } from './InteractiveCanvasComponent';
-import { CollaborationConfig } from '@diagram-craft/model/collaboration/collaborationConfig';
 import { AwarenessCursorComponent } from '../components/AwarenessCursorComponent';
 import {
   isResolvableToModificationLayer,
@@ -36,6 +35,7 @@ import {
 } from '@diagram-craft/model/diagramLayerUtils';
 import { AnchorHighlightComponent } from '../components/AnchorHighlightComponent';
 import { MoveTool } from '../tools/moveTool';
+import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
 
 const removeSuffix = (s: string) => {
   return s.replace(/---.+$/, '');

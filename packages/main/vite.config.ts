@@ -48,6 +48,7 @@ export default defineConfig(({ command, mode, isSsrBuild, isPreview }) => {
         '@diagram-craft/canvas-nodes': path.join(__dirname, '../../packages/canvas-nodes/src'),
         '@diagram-craft/canvas-react': path.join(__dirname, '../../packages/canvas-react/src'),
         '@diagram-craft/geometry': path.join(__dirname, '../../packages/geometry/src'),
+        '@diagram-craft/collaboration': path.join(__dirname, '../../packages/collaboration/src'),
         '@diagram-craft/model': path.join(__dirname, '../../packages/model/src'),
         '@diagram-craft/utils': path.join(__dirname, '../../packages/utils/src'),
         '@diagram-craft/app-components': path.join(__dirname, '../../packages/app-components/src')

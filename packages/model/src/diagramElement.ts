@@ -14,18 +14,18 @@ import { FlatObject } from '@diagram-craft/utils/types';
 import { PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { assert } from '@diagram-craft/utils/assert';
 import type { RegularLayer } from './diagramLayerRegular';
-import type { CRDTMap, FlatCRDTMap } from './collaboration/crdt';
 import { watch, WatchableValue } from '@diagram-craft/utils/watchableValue';
-import { CRDTObject } from './collaboration/datatypes/crdtObject';
-import {
-  MappedCRDTOrderedMap,
-  type MappedCRDTOrderedMapMapType
-} from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import { makeElementMapper } from './diagramElementMapper';
-import { MappedCRDTProp } from './collaboration/datatypes/mapped/mappedCrdtProp';
 import type { ModificationLayer } from './diagramLayerModification';
 import type { Comment } from './comment';
 import type { PropertyInfo } from './property';
+import type { CRDTMap, FlatCRDTMap } from '@diagram-craft/collaboration/crdt';
+import {
+  MappedCRDTOrderedMap,
+  type MappedCRDTOrderedMapMapType
+} from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtOrderedMap';
+import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
+import { MappedCRDTProp } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtProp';
 
 // biome-ignore lint/suspicious/noExplicitAny: false positive
 type Snapshot = any;

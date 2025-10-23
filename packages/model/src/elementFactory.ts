@@ -11,7 +11,7 @@ import {
   type NodeTexts,
   SimpleDiagramNode
 } from './diagramNode';
-import type { CRDTMap } from './collaboration/crdt';
+import type { CRDTMap } from '@diagram-craft/collaboration/crdt';
 import type { DiagramElementCRDT } from './diagramElement';
 
 export const ElementFactory = {

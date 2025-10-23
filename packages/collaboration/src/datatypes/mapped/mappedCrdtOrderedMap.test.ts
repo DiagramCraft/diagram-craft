@@ -3,7 +3,7 @@ import { watch } from '@diagram-craft/utils/watchableValue';
 import type { CRDTFactory, CRDTMap } from '../../crdt';
 import type { CRDTMapper } from './types';
 import { MappedCRDTOrderedMap, type MappedCRDTOrderedMapMapType } from './mappedCrdtOrderedMap';
-import { Backends } from '../../../test-support/collaborationTestUtils';
+import { Backends } from '../../test-support/collaborationTestUtils';
 
 class TestClass {
   constructor(public crdt: CRDTMap<CRDTType>) {}

@@ -4,51 +4,8 @@ import type { DiagramDocument } from '../diagramDocument';
 import type { Diagram } from '../diagram';
 import type { RegularLayer } from '../diagramLayerRegular';
 import { UnitOfWork } from '../unitOfWork';
-import { createSyncedYJSCRDTs } from '../collaboration/yjs/yjsTestUtils';
-import { CollaborationConfig } from '../collaboration/collaborationConfig';
-import { YJSMap, YJSRoot } from '../collaboration/yjs/yjsCrdt';
-import type { CRDTRoot } from '../collaboration/crdt';
-import { NoOpCRDTMap, NoOpCRDTRoot } from '../collaboration/noopCrdt';
-
-export type Backend = {
-  syncedDocs: () => [CRDTRoot, CRDTRoot | undefined];
-  beforeEach: () => void;
-  afterEach: () => void;
-};
-
-export const Backends = {
-  all: (): Array<[string, Backend]> => {
-    return [
-      [
-        'yjs',
-        {
-          syncedDocs: () => {
-            const yjs = createSyncedYJSCRDTs();
-            return [yjs.doc1, yjs.doc2];
-          },
-          beforeEach: () => {
-            CollaborationConfig.CRDTRoot = YJSRoot;
-            CollaborationConfig.CRDTMap = YJSMap;
-          },
-          afterEach: () => {
-            CollaborationConfig.CRDTRoot = NoOpCRDTRoot;
-            CollaborationConfig.CRDTMap = NoOpCRDTMap;
-          }
-        }
-      ],
-      [
-        'noop',
-        {
-          syncedDocs: () => {
-            return [new NoOpCRDTRoot(), undefined];
-          },
-          beforeEach: () => {},
-          afterEach: () => {}
-        }
-      ]
-    ];
-  }
-};
+import type { CRDTRoot } from '@diagram-craft/collaboration/crdt';
+import type { Backend } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
 
 export const resetListeners = (listeners: Array<ReturnType<typeof vi.fn>>) => {
   listeners.forEach(l => l.mockReset());
@@ -69,6 +26,7 @@ export type StandardTestModel = {
   reset: () => void;
   uow: UnitOfWork;
 };
+
 export const standardTestModel = (backend: Backend): StandardTestModel => {
   const [root1, root2] = backend.syncedDocs();
 

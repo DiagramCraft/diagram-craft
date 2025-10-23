@@ -24,7 +24,7 @@ import {
   type EventReceiver,
   type EventSubscriptionOpts
 } from '@diagram-craft/utils/event';
-import { CRDTMap, CRDTMapEvents, CRDTRoot } from './collaboration/crdt';
+import { CRDTMap, CRDTMapEvents, CRDTRoot } from '@diagram-craft/collaboration/crdt';
 import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { DefaultDataProvider, DefaultDataProviderId } from './dataProviderDefault';
 

@@ -10,8 +10,8 @@ import {
 import { deserializeDiagramDocument } from '@diagram-craft/model/serialization/deserialize';
 import shapes from '../../public/sample/shapes.json';
 import arrows from '../../public/sample/arrows.json';
-import { CollaborationConfig } from '@diagram-craft/model/collaboration/collaborationConfig';
-import { NoOpCRDTMap, NoOpCRDTRoot } from '@diagram-craft/model/collaboration/noopCrdt';
+import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
+import { NoOpCRDTMap, NoOpCRDTRoot } from '@diagram-craft/collaboration/noopCrdt';
 
 const origRoot = CollaborationConfig.CRDTRoot;
 const origMap = CollaborationConfig.CRDTMap;

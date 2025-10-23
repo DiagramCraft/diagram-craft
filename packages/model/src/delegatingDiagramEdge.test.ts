@@ -1,14 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { UnitOfWork } from './unitOfWork';
 import {
-  Backends,
   type StandardTestModel,
   standardTestModel
-} from './test-support/collaborationTestUtils';
+} from './test-support/collaborationModelTestUtils';
 import type { DiagramEdge } from './diagramEdge';
 import { ModificationLayer } from './diagramLayerModification';
 import { DelegatingDiagramEdge } from './delegatingDiagramEdge';
 import { FreeEndpoint } from './endpoint';
+import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
 
 describe.each(Backends.all())('DelegatingDiagramEdge [%s]', (_name, backend) => {
   let model: StandardTestModel;

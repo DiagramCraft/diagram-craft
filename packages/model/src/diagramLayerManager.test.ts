@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { RegularLayer } from './diagramLayerRegular';
 import { TestLayerBuilder } from './test-support/builder';
 import { UnitOfWork } from './unitOfWork';
-import { Backends, standardTestModel } from './test-support/collaborationTestUtils';
+import { standardTestModel } from './test-support/collaborationModelTestUtils';
+import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
 
 describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
   describe('all', () => {

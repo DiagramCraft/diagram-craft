@@ -1,7 +1,7 @@
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { EventEmitter } from '@diagram-craft/utils/event';
-import type { AwarenessUserState } from '@diagram-craft/model/collaboration/awareness';
+import type { AwarenessUserState } from '@diagram-craft/collaboration/awareness';
 import type { ProgressCallback } from '@diagram-craft/utils/progress';
 
 export type ModelStateEvents = {

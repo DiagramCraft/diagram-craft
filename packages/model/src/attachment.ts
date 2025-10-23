@@ -1,7 +1,7 @@
 import type { DiagramDocument } from './diagramDocument';
 import { hash64 } from '@diagram-craft/utils/hash';
-import { CRDTMap, CRDTRoot } from './collaboration/crdt';
 import { blobToDataURL } from '@diagram-craft/utils/blobUtils';
+import type { CRDTMap, CRDTRoot } from '@diagram-craft/collaboration/crdt';
 
 /**
  * Represents a binary attachment (image, etc.) in the diagram.

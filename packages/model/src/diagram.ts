@@ -14,19 +14,19 @@ import { EventEmitter } from '@diagram-craft/utils/event';
 import { assert } from '@diagram-craft/utils/assert';
 import { AttachmentConsumer } from './attachment';
 import { newid } from '@diagram-craft/utils/id';
-import { type CRDTMapper } from './collaboration/datatypes/mapped/types';
-import { CRDTMap, type FlatCRDTMap } from './collaboration/crdt';
 import { LayerManager, LayerManagerCRDT } from './diagramLayerManager';
 import { RegularLayer } from './diagramLayerRegular';
 import { Layer } from './diagramLayer';
 import { assertRegularLayer } from './diagramLayerUtils';
 import { watch, WatchableValue } from '@diagram-craft/utils/watchableValue';
-import { CRDTProp } from './collaboration/datatypes/crdtProp';
-import { CRDTObject } from './collaboration/datatypes/crdtObject';
 import { Guide } from './types';
 import { CommentManager, type SerializedComment } from './comment';
 import type { Point } from '@diagram-craft/geometry/point';
 import { ElementLookup } from './elementLookup';
+import type { CRDTMap, FlatCRDTMap } from '@diagram-craft/collaboration/crdt';
+import type { CRDTMapper } from '@diagram-craft/collaboration/datatypes/mapped/types';
+import { CRDTProp } from '@diagram-craft/collaboration/datatypes/crdtProp';
+import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
 
 export type DiagramIteratorOpts = {
   nest?: boolean;

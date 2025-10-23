@@ -35,20 +35,20 @@ import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/p
 import type { RegularLayer } from './diagramLayerRegular';
 import { assertRegularLayer, getAdjustments } from './diagramLayerUtils';
 import type { Reference, SerializedEndpoint } from './serialization/types';
-import type { CRDTMap, FlatCRDTMap } from './collaboration/crdt';
 import { WatchableValue } from '@diagram-craft/utils/watchableValue';
-import {
-  MappedCRDTOrderedMap,
-  type MappedCRDTOrderedMapMapType
-} from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
-import { type CRDTMapper } from './collaboration/datatypes/mapped/types';
-import { CRDTProp } from './collaboration/datatypes/crdtProp';
-import { MappedCRDTProp } from './collaboration/datatypes/mapped/mappedCrdtProp';
-import { CRDTObject } from './collaboration/datatypes/crdtObject';
 import type { ModificationLayer } from './diagramLayerModification';
 import type { Path } from '@diagram-craft/geometry/path';
 import type { PropertyInfo } from './property';
 import type { EdgeDefinition } from './edgeDefinition';
+import type { CRDTMap, FlatCRDTMap } from '@diagram-craft/collaboration/crdt';
+import {
+  MappedCRDTOrderedMap,
+  type MappedCRDTOrderedMapMapType
+} from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtOrderedMap';
+import type { CRDTMapper } from '@diagram-craft/collaboration/datatypes/mapped/types';
+import { CRDTProp } from '@diagram-craft/collaboration/datatypes/crdtProp';
+import { MappedCRDTProp } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtProp';
+import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
 
 const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
   endpoint instanceof ConnectedEndpoint;

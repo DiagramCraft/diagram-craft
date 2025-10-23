@@ -11,9 +11,9 @@ import { SimpleDiagramNode } from '../diagramNode';
 import { ResolvedLabelNode } from '../diagramEdge';
 import { FreeEndpoint } from '../endpoint';
 import { newid } from '@diagram-craft/utils/id';
-import { CRDTRoot } from '../collaboration/crdt';
 import { assertRegularLayer } from '../diagramLayerUtils';
 import { ElementFactory } from '../elementFactory';
+import type { CRDTRoot } from '@diagram-craft/collaboration/crdt';
 
 export class TestModel {
   static newDiagram(root?: CRDTRoot) {

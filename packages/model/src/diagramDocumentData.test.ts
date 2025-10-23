@@ -1,11 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 import { DiagramDocumentData } from './diagramDocumentData';
-import { NoOpCRDTRoot } from './collaboration/noopCrdt';
+import { NoOpCRDTRoot } from '@diagram-craft/collaboration/noopCrdt';
 import { TestModel } from './test-support/builder';
 import { DefaultDataProvider } from './dataProviderDefault';
-import { Backends, standardTestModel } from './test-support/collaborationTestUtils';
+import { standardTestModel } from './test-support/collaborationModelTestUtils';
 import { UrlDataProvider } from './dataProviderUrl';
 import { newid } from '@diagram-craft/utils/id';
+import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
 
 describe.each(Backends.all())('DiagramDocumentData [%s]', (_name, backend) => {
   describe('setProvider', () => {

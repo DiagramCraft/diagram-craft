@@ -1,8 +1,8 @@
 import type { Diagram } from './diagram';
 import { DiagramElement } from './diagramElement';
-import type { CRDTMap } from './collaboration/crdt';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { assert, precondition } from '@diagram-craft/utils/assert';
+import type { CRDTMap } from '@diagram-craft/collaboration/crdt';
 
 export type CommentState = 'unresolved' | 'resolved';
 

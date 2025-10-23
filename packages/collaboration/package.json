@@ -1,5 +1,5 @@
 {
-  "name": "@diagram-craft/canvas",
+  "name": "@diagram-craft/collaboration",
   "version": "1.0.0",
   "description": "",
   "type": "module",
@@ -11,8 +11,11 @@
   "author": "Magnus Johansson",
   "dependencies": {
     "@diagram-craft/utils": "workspace:^",
-    "@diagram-craft/geometry": "workspace:^",
-    "@diagram-craft/model": "workspace:^",
-    "@diagram-craft/collaboration": "workspace:^"
+    "y-protocols": "^1.0.6",
+    "y-websocket": "^3.0.0",
+    "yjs": "^13.6.27"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.4"
   }
 }

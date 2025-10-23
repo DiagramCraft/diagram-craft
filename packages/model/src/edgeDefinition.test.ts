@@ -3,13 +3,13 @@ import { TestDiagramBuilder, TestLayerBuilder, TestModel } from './test-support/
 import { FreeEndpoint } from './endpoint';
 import { UnitOfWork } from './unitOfWork';
 import { AbstractEdgeDefinition } from './edgeDefinition';
-import { Backends } from './test-support/collaborationTestUtils';
 import { RegularLayer } from './diagramLayerRegular';
 import { SnapshotUndoableAction } from './diagramUndoActions';
 import type { DiagramEdge } from './diagramEdge';
 import type { DiagramDocument } from './diagramDocument';
 import type { DiagramNode } from './diagramNode';
 import { serializeDiagramDocument } from './serialization/serialize';
+import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
 
 class TestBaseEdgeDefinition extends AbstractEdgeDefinition {
   constructor(

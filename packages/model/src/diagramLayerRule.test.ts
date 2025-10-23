@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { RuleLayer } from './diagramLayerRule';
 import { UnitOfWork } from './unitOfWork';
-import { Backends, standardTestModel } from './test-support/collaborationTestUtils';
+import { standardTestModel } from './test-support/collaborationModelTestUtils';
 import { Comment } from './comment';
 import { newid } from '@diagram-craft/utils/id';
 import { TestModel } from './test-support/builder';
+import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
 
 describe.each(Backends.all())('RuleLayer [%s]', (_name, backend) => {
   describe('rules', () => {

@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { Attachment, AttachmentManager } from './attachment';
 import { TestModel } from './test-support/builder';
-import { Backends, standardTestModel } from './test-support/collaborationTestUtils';
+import { standardTestModel } from './test-support/collaborationModelTestUtils';
+import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
 
 const createBlob = (data: string, type: string = 'text/plain') => {
   return new Blob([data], { type });

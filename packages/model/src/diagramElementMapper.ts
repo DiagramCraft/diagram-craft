@@ -1,6 +1,6 @@
 import type { DiagramElement, DiagramElementCRDT } from './diagramElement';
-import { CRDTMap } from './collaboration/crdt';
-import type { CRDTMapper } from './collaboration/datatypes/mapped/types';
+import { CRDTMap } from '@diagram-craft/collaboration/crdt';
+import type { CRDTMapper } from '@diagram-craft/collaboration/datatypes/mapped/types';
 import { assert } from '@diagram-craft/utils/assert';
 import type { RegularLayer } from './diagramLayerRegular';
 import type { ModificationLayer } from './diagramLayerModification';

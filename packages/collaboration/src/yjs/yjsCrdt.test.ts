@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { YJSFactory, YJSList, YJSMap, YJSRoot } from './yjsCrdt';
-import { createSyncedYJSCRDTs } from './yjsTestUtils';
+import { createSyncedYJSCRDTs } from '../test-support/yjsTestUtils';
 
 describe('wrap and unwrap', () => {
   it('should correctly wrap and unwrap primitive values', () => {

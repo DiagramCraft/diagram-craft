@@ -7,9 +7,9 @@ import {
 } from './dataProvider';
 import { DataSchema } from './diagramDocumentDataSchemas';
 import { EventEmitter } from '@diagram-craft/utils/event';
-import { type CRDTMap, CRDTRoot } from './collaboration/crdt';
 import { assert } from '@diagram-craft/utils/assert';
 import { newid } from '@diagram-craft/utils/id';
+import type { CRDTMap, CRDTRoot } from '@diagram-craft/collaboration/crdt';
 
 type DataWithSchema = Data & { _schemaId: string };
 

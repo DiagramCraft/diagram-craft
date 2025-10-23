@@ -1,7 +1,7 @@
 import { Component, createEffect } from '../component/component';
 import * as svg from '../component/vdom-svg';
 import type { CanvasState } from '../canvas/EditableCanvasComponent';
-import { CollaborationConfig } from '@diagram-craft/model/collaboration/collaborationConfig';
+import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
 import * as html from '../component/vdom-html';
 import { text } from '../component/vdom';
 

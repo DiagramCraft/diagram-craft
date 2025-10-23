@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DocumentTags } from './documentTags';
-import { Backends } from './test-support/collaborationTestUtils';
+import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
 
 describe.each(Backends.all())('DocumentTags [%s]', (_name, backend) => {
   describe('constructor', () => {

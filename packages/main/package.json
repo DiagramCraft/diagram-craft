@@ -23,6 +23,7 @@
     "@diagram-craft/canvas-react": "workspace:^",
     "@diagram-craft/electron-client-api": "workspace:^",
     "@diagram-craft/geometry": "workspace:^",
+    "@diagram-craft/collaboration": "workspace:^",
     "@diagram-craft/model": "workspace:^",
     "embeddable-jq": "^1.0.0",
     "@diagram-craft/app-components": "workspace:^",

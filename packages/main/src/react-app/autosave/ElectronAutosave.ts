@@ -1,8 +1,8 @@
 import { deserializeDiagramDocument } from '@diagram-craft/model/serialization/deserialize';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { serializeDiagramDocument } from '@diagram-craft/model/serialization/serialize';
-import { CollaborationConfig } from '@diagram-craft/model/collaboration/collaborationConfig';
-import type { CRDTRoot } from '@diagram-craft/model/collaboration/crdt';
+import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
+import type { CRDTRoot } from '@diagram-craft/collaboration/crdt';
 import type { DiagramFactory, DocumentFactory } from '@diagram-craft/model/factory';
 import type { SerializedDiagramDocument } from '@diagram-craft/model/serialization/types';
 import type { Autosave } from './Autosave';

@@ -1,9 +1,9 @@
 import styles from './AwarenessToolbar.module.css';
-import { CollaborationConfig } from '@diagram-craft/model/collaboration/collaborationConfig';
 import { useEventListener } from './hooks/useEventListener';
 import { useRedraw } from './hooks/useRedraw';
 import { debounce } from '@diagram-craft/utils/debounce';
 import React from 'react';
+import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
 
 export const AwarenessToolbar = () => {
   const redraw = useRedraw();

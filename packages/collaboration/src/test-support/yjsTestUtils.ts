@@ -1,5 +1,5 @@
-import { YJSRoot } from './yjsCrdt';
 import * as Y from 'yjs';
+import { YJSRoot } from '../yjs/yjsCrdt';
 
 export const createSyncedYJSCRDTs = () => {
   const doc1 = new YJSRoot();

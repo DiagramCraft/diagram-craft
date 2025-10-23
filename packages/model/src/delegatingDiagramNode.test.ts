@@ -1,14 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { UnitOfWork } from './unitOfWork';
 import {
-  Backends,
   type StandardTestModel,
   standardTestModel
-} from './test-support/collaborationTestUtils';
+} from './test-support/collaborationModelTestUtils';
 import type { DiagramNode } from './diagramNode';
 import { ModificationLayer } from './diagramLayerModification';
 import { DelegatingDiagramNode } from './delegatingDiagramNode';
 import { Box } from '@diagram-craft/geometry/box';
+import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
 
 describe.each(Backends.all())('DelegatingDiagramNode [%s]', (_name, backend) => {
   let model: StandardTestModel;

@@ -4,8 +4,9 @@ import { TestModel } from './test-support/builder';
 import { newid } from '@diagram-craft/utils/id';
 import { UnitOfWork } from './unitOfWork';
 import { RegularLayer } from './diagramLayerRegular';
-import { Backends, standardTestModel } from './test-support/collaborationTestUtils';
+import { standardTestModel } from './test-support/collaborationModelTestUtils';
 import { ElementFactory } from './elementFactory';
+import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
 
 const testBounds = { x: 0, y: 0, w: 100, h: 100, r: 0 };
 

@@ -5,13 +5,13 @@ import { AttachmentConsumer } from './attachment';
 import type { RuleLayer } from './diagramLayerRule';
 import { assert } from '@diagram-craft/utils/assert';
 import type { ReferenceLayer } from './diagramLayerReference';
-import { CRDTList, CRDTMap } from './collaboration/crdt';
 import type { RegularLayer } from './diagramLayerRegular';
 import type { AdjustmentRule } from './diagramLayerRuleTypes';
-import type { MappedCRDTOrderedMapMapType } from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import { watch } from '@diagram-craft/utils/watchableValue';
-import { CRDTProp } from './collaboration/datatypes/crdtProp';
 import type { ModificationCRDT, ModificationLayer } from './diagramLayerModification';
+import { CRDTProp } from '@diagram-craft/collaboration/datatypes/crdtProp';
+import type { CRDTList, CRDTMap } from '@diagram-craft/collaboration/crdt';
+import type { MappedCRDTOrderedMapMapType } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 
 export type LayerType = 'regular' | 'rule' | 'reference' | 'modification';
 export type StackPosition = { element: DiagramElement; idx: number };

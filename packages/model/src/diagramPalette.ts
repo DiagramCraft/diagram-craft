@@ -1,4 +1,4 @@
-import { CRDTMap, CRDTRoot } from './collaboration/crdt';
+import { CRDTMap, CRDTRoot } from '@diagram-craft/collaboration/crdt';
 import { assert } from '@diagram-craft/utils/assert';
 import { NumericalString, numberToString } from '@diagram-craft/utils/number';
 

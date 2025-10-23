@@ -1,9 +1,9 @@
-import type { CRDTRoot } from '@diagram-craft/model/collaboration/crdt';
 import type { DiagramFactory, DocumentFactory } from '@diagram-craft/model/factory';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import type { SerializedDiagramDocument } from '@diagram-craft/model/serialization/types';
 import { assert } from '@diagram-craft/utils/assert';
 import type { ProgressCallback } from '@diagram-craft/utils/progress';
+import type { CRDTRoot } from '@diagram-craft/collaboration/crdt';
 
 export type Autosave = {
   load: (

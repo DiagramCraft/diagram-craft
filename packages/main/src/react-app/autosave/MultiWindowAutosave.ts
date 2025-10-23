@@ -1,12 +1,12 @@
 import { deserializeDiagramDocument } from '@diagram-craft/model/serialization/deserialize';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { serializeDiagramDocument } from '@diagram-craft/model/serialization/serialize';
-import { CollaborationConfig } from '@diagram-craft/model/collaboration/collaborationConfig';
-import type { CRDTRoot } from '@diagram-craft/model/collaboration/crdt';
 import type { DiagramFactory, DocumentFactory } from '@diagram-craft/model/factory';
 import type { SerializedDiagramDocument } from '@diagram-craft/model/serialization/types';
 import { MULTI_WINDOW_DETECTOR } from './MultiWindowDetector';
 import type { ProgressCallback } from '@diagram-craft/utils/progress';
+import type { CRDTRoot } from '@diagram-craft/collaboration/crdt';
+import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
 
 const MAX_AUTOSAVES_PER_WINDOW = 3;
 const MAX_TOTAL_AUTOSAVES = 20;

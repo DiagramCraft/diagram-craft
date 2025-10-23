@@ -2,7 +2,7 @@ import { DiagramNode } from './diagramNode';
 import { Definitions } from './elementDefinitionRegistry';
 import { newid } from '@diagram-craft/utils/id';
 import { DiagramDocument } from './diagramDocument';
-import { NoOpCRDTMap, NoOpCRDTRoot } from './collaboration/noopCrdt';
+import { NoOpCRDTMap, NoOpCRDTRoot } from '@diagram-craft/collaboration/noopCrdt';
 import { UnitOfWork } from './unitOfWork';
 import { RegularLayer } from './diagramLayerRegular';
 import { Diagram, type DiagramCRDT } from './diagram';
