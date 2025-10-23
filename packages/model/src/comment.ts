@@ -85,6 +85,17 @@ export class Comment {
 
   /** Creates a Comment instance from a serialized representation */
   static deserialize(serialized: SerializedComment, diagram: Diagram): Comment {
+    precondition.is.present(serialized.id);
+    precondition.is.present(serialized.message);
+    precondition.is.present(serialized.author);
+    precondition.is.present(serialized.date);
+    precondition.is.present(serialized.type);
+    precondition.is.present(serialized.state);
+    precondition.is.true(serialized.diagramId === diagram.id);
+
+    const date = new Date(serialized.date);
+    assert.false(Number.isNaN(date.getTime()));
+
     const element =
       serialized.type === 'element' ? diagram.lookup(serialized.elementId!) : undefined;
 
@@ -94,7 +105,7 @@ export class Comment {
       serialized.id,
       serialized.message,
       serialized.author,
-      new Date(serialized.date),
+      date,
       serialized.state,
       element,
       serialized.parentId,
@@ -149,16 +160,19 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> {
 
   /** Returns all comments including stale and resolved ones */
   getAll(): Comment[] {
-    const serializedComments: SerializedComment[] = [];
-    for (const comment of this.commentsMap.values()) {
-      serializedComments.push(comment);
-    }
-    return serializedComments.map(sc => Comment.deserialize(sc, this.diagram));
+    return Array.from(this.commentsMap.values()).map(sc => Comment.deserialize(sc, this.diagram));
   }
 
   /** Returns only diagram-level comments that are not stale */
   getDiagramComments(): Comment[] {
-    return this.getAll().filter(comment => comment.type === 'diagram' && !comment.isStale());
+    const result: Comment[] = [];
+    for (const serialized of this.commentsMap.values()) {
+      if (serialized.type !== 'diagram') continue;
+
+      const comment = Comment.deserialize(serialized, this.diagram);
+      if (!comment.isStale()) result.push(comment);
+    }
+    return result;
   }
 
   /** Adds a new comment and emits commentAdded event */
@@ -218,9 +232,14 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> {
 
   /** Returns all direct replies to a comment */
   getReplies(comment: Comment | string): Comment[] {
-    return this.getAll().filter(
-      c => c.parentId === (typeof comment === 'string' ? comment : comment.id)
-    );
+    const parentId = typeof comment === 'string' ? comment : comment.id;
+    const result: Comment[] = [];
+    for (const serialized of this.commentsMap.values()) {
+      if (serialized.parentId !== parentId) continue;
+
+      result.push(Comment.deserialize(serialized, this.diagram));
+    }
+    return result;
   }
 
   /** Returns the complete thread containing this comment (root + all nested replies) */
