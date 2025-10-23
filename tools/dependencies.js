@@ -1,74 +1,118 @@
+/**
+ * Dependency analyzer for the diagram-craft monorepo.
+ * Uses skott to analyze internal package dependencies and outputs hierarchical trees.
+ *
+ * Usage: node tools/dependencies.js [packages/module-name/src]
+ * Example: node tools/dependencies.js packages/model/src
+ */
 import skott from 'skott';
 import process from 'process';
 
-function printSubmodule(submodule, module, groupedGraph, depth) {
-  let indent = '';
-  for (let i = 0; i < depth; i++) indent += '  ';
+/**
+ * Recursively prints a submodule and its dependencies in a tree structure.
+ * Dependencies within the same root module are prefixed with @, external dependencies are plain.
+ *
+ * @param {string} submodulePath - Full path to the submodule being printed
+ * @param {string} rootModuleName - Name of the root module for internal dependency marking
+ * @param {Object} groupedGraph - Skott's grouped dependency graph
+ * @param {number} indentLevel - Current depth for indentation (0 = no indent)
+ */
+function printSubmodule(submodulePath, rootModuleName, groupedGraph, indentLevel) {
+  const indent = '  '.repeat(indentLevel);
 
-  console.log(`${indent}/${submodule.split('/').at(-1)}`);
+  console.log(`${indent}/${submodulePath.split('/').at(-1)}`);
 
-  const children = [
+  // Find and recursively print direct child submodules
+  const childSubmodules = [
     ...new Set(
-      groupedGraph[submodule].adjacentTo.filter(
-        e => e.startsWith(`${submodule}/`) && e.split('/').length === depth + 2
+      groupedGraph[submodulePath].adjacentTo.filter(
+        entry =>
+          entry.startsWith(`${submodulePath}/`) && entry.split('/').length === indentLevel + 2
       )
     )
   ].sort();
-  for (const c of children) {
-    printSubmodule(c, module, groupedGraph, depth + 1);
+  for (const child of childSubmodules) {
+    printSubmodule(child, rootModuleName, groupedGraph, indentLevel + 1);
   }
 
-  for (const a of groupedGraph[submodule].adjacentTo.sort()) {
-    if (a.startsWith(`${submodule}/`)) continue;
-    if (a.startsWith(`${module}/`) || a === module) {
-      console.log(`${indent}  @${a}`);
+  // Print internal dependencies (prefixed with @)
+  for (const dependency of groupedGraph[submodulePath].adjacentTo.sort()) {
+    if (dependency.startsWith(`${submodulePath}/`)) continue;
+    if (dependency.startsWith(`${rootModuleName}/`) || dependency === rootModuleName) {
+      console.log(`${indent}  @${dependency}`);
     }
   }
-  for (const a of groupedGraph[submodule].adjacentTo.sort()) {
-    if (a.startsWith(`${submodule}/`) || a === module) continue;
-    if (!a.startsWith(`${module}/`)) {
-      console.log(`${indent}  ${a}`);
+
+  // Print external dependencies
+  for (const dependency of groupedGraph[submodulePath].adjacentTo.sort()) {
+    if (dependency.startsWith(`${submodulePath}/`) || dependency === rootModuleName) continue;
+    if (!dependency.startsWith(`${rootModuleName}/`)) {
+      console.log(`${indent}  ${dependency}`);
     }
   }
 }
 
-function printModule(c, m, groupedGraph) {
-  console.log(c);
+/**
+ * Prints a top-level module with all its submodules and aggregated dependencies.
+ *
+ * @param {string} modulePath - Full path to the module
+ * @param {string} rootModuleName - Base name of the root module
+ * @param {Object} groupedGraph - Skott's grouped dependency graph
+ */
+function printModule(modulePath, rootModuleName, groupedGraph) {
+  console.log(modulePath);
 
-  const allDependencies = new Set(groupedGraph[m].adjacentTo);
+  // Collect all dependencies from the module and its children
+  const allDependencies = new Set(groupedGraph[rootModuleName].adjacentTo);
 
-  const children = [
+  // Find direct child submodules (one level deep)
+  const childSubmodules = [
     ...new Set(
-      groupedGraph[c].adjacentTo.filter(
-        e => e.startsWith(`${c}/`) && e.split('/').length === c.split('/').length + 1
+      groupedGraph[modulePath].adjacentTo.filter(
+        entry =>
+          entry.startsWith(`${modulePath}/`) &&
+          entry.split('/').length === modulePath.split('/').length + 1
       )
     )
   ].sort();
 
-  for (const a of children) {
-    if (groupedGraph[a].adjacentTo) allDependencies.add(...groupedGraph[a].adjacentTo);
+  // Print each submodule and collect its dependencies
+  for (const child of childSubmodules) {
+    if (groupedGraph[child].adjacentTo) {
+      for (const dep of groupedGraph[child].adjacentTo) {
+        allDependencies.add(dep);
+      }
+    }
 
-    printSubmodule(a, m.split('/').at(0), groupedGraph, 1);
+    printSubmodule(child, rootModuleName.split('/').at(0), groupedGraph, 1);
   }
 
-  for (const a of [...allDependencies].sort()) {
-    if (a === undefined) continue;
-    if (a === m) continue;
-    if (a.startsWith(`${m}/`)) continue;
-    console.log(`  ${a}`);
+  // Print all external dependencies (not internal to this module)
+  for (const dependency of [...allDependencies].sort()) {
+    if (dependency === undefined) continue;
+    if (dependency === rootModuleName) continue;
+    if (dependency.startsWith(`${rootModuleName}/`)) continue;
+    console.log(`  ${dependency}`);
   }
 }
 
-async function printDependencies(directory) {
-  const startAt = directory.replace('packages/', '').replace('/src', '');
+/**
+ * Analyzes and prints dependencies for modules in the monorepo.
+ * Uses skott to build a dependency graph and outputs hierarchical dependency trees.
+ *
+ * @param {string} [targetDirectory] - Optional directory to filter analysis (e.g., 'packages/model/src')
+ */
+async function analyzeDependencies(targetDirectory) {
+  // Normalize the directory path to module name format
+  const moduleFilter = targetDirectory?.replace('packages/', '').replace('/src', '');
 
   const api = await skott({
     circularMaxDepth: 10,
     cwd: process.cwd(),
     dependencyTracking: {
-      builtin: false,
-      thirdParty: false,
-      typeOnly: true
+      builtin: false, // Ignore Node.js built-in modules
+      thirdParty: false, // Ignore npm packages
+      typeOnly: true // Track TypeScript type imports
     },
     fileExtensions: ['.ts', '.tsx', '.js', '.jsx'],
     ignorePatterns: ['**/*.test.ts'],
@@ -77,31 +121,36 @@ async function printDependencies(directory) {
     manifestPath: 'package.json',
     tsConfigPath: 'tsconfig.json',
     verbose: false,
-    groupBy: modulePath => {
-      let group = modulePath
+    // Group files by their package/submodule path
+    groupBy: filePath => {
+      let moduleName = filePath
         .replace('packages/', '')
         .replace('/src', '')
         .split('/')
-        .slice(0, -1)
+        .slice(0, -1) // Remove filename
         .join('/');
 
-      if (group?.endsWith('.js')) group = 'other';
+      if (moduleName?.endsWith('.js')) moduleName = 'other';
 
-      return group ?? 'other';
+      return moduleName ?? 'other';
     }
   });
 
   const { getStructure } = api;
   const { groupedGraph } = getStructure();
 
-  const modules = Object.keys(groupedGraph).sort();
-  for (const m of modules) {
-    if (m === 'other') continue;
-    if (m.includes('/') && m !== startAt) continue;
-    if (startAt && !m.startsWith(startAt)) continue;
+  const moduleNames = Object.keys(groupedGraph).sort();
+  for (const moduleName of moduleNames) {
+    if (moduleName === 'other') continue;
+    // Skip nested modules unless they match the filter
+    if (moduleName.includes('/') && moduleName !== moduleFilter) continue;
+    // If filter specified, only show modules that match
+    if (moduleFilter && !moduleName.startsWith(moduleFilter)) continue;
 
-    printModule(m, m.split('/').at(0), groupedGraph);
+    printModule(moduleName, moduleName.split('/').at(0), groupedGraph);
   }
 }
 
-printDependencies(process.argv.length > 2 ? process.argv.at(-1) : undefined);
+// Run analysis with optional directory argument from command line
+const targetDir = process.argv.length > 2 ? process.argv.at(-1) : undefined;
+analyzeDependencies(targetDir);
