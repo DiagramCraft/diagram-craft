@@ -312,6 +312,7 @@ const adjustNormalDirection = (
   return normal;
 };
 
+/** @internal */
 export const _test = {
   toNormalizedCoords,
   adjustNormalDirection,

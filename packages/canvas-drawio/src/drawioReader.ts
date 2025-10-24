@@ -11,7 +11,7 @@ import { _p, Point } from '@diagram-craft/geometry/point';
 import { assert } from '@diagram-craft/utils/assert';
 import { LengthOffsetOnPath, TimeOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
 import { Vector } from '@diagram-craft/geometry/vector';
-import { clipPath } from '@diagram-craft/model/edgeUtils';
+import { clipPath } from '@diagram-craft/model/diagramEdgeUtils';
 import { assertHAlign, assertVAlign } from '@diagram-craft/model/diagramProps';
 import { ARROW_SHAPES } from '@diagram-craft/canvas/arrowShapes';
 import { Angle } from '@diagram-craft/geometry/angle';

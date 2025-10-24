@@ -1,5 +1,5 @@
 import type { DiagramNode, DuplicationContext } from './diagramNode';
-import { type ControlPoints, LabelNode, Waypoint } from './types';
+import { type ControlPoints, Waypoint } from './types';
 import { Point } from '@diagram-craft/geometry/point';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { Box } from '@diagram-craft/geometry/box';
@@ -23,7 +23,14 @@ import {
 } from './endpoint';
 import { DefaultStyles, edgeDefaults } from './diagramDefaults';
 import { buildEdgePath } from './edgePathBuilder';
-import { isHorizontal, isParallel, isPerpendicular, isReadable, isVertical } from './labelNode';
+import {
+  isHorizontal,
+  isParallel,
+  isPerpendicular,
+  isReadable,
+  isVertical,
+  type LabelNode
+} from './labelNode';
 import { DeepReadonly, DeepRequired, type FlatObject } from '@diagram-craft/utils/types';
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { newid } from '@diagram-craft/utils/id';

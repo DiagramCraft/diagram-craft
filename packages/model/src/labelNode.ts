@@ -1,4 +1,20 @@
-import { LabelNodeType } from './types';
+import { Point } from '@diagram-craft/geometry/point';
+
+export type LabelNodeType =
+  | 'parallel'
+  | 'perpendicular'
+  | 'perpendicular-readable'
+  | 'parallel-readable'
+  | 'horizontal'
+  | 'vertical'
+  | 'independent';
+
+export type LabelNode = Readonly<{
+  id: string;
+  offset: Point;
+  timeOffset: number;
+  type: LabelNodeType;
+}>;
 
 export const isParallel = (s: LabelNodeType) => s === 'parallel' || s === 'parallel-readable';
 

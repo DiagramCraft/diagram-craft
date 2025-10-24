@@ -1,8 +1,13 @@
 import { Drag, DragEvents, Modifiers } from '../dragDropManager';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { DEFAULT_GUIDE_COLOR, Guide, GuideType } from '@diagram-craft/model/types';
 import { round } from '@diagram-craft/utils/math';
-import { CreateGuideUndoableAction, MoveGuideUndoableAction } from '@diagram-craft/model/guides';
+import {
+  CreateGuideUndoableAction,
+  DEFAULT_GUIDE_COLOR,
+  type Guide,
+  type GuideType,
+  MoveGuideUndoableAction
+} from '@diagram-craft/model/guides';
 import { getSnapConfig, SnapManager } from '../snap/snapManager';
 import { assert } from '@diagram-craft/utils/assert';
 import { Line } from '@diagram-craft/geometry/line';

@@ -2,7 +2,7 @@ import { Component } from '../component/component';
 import { Path } from '@diagram-craft/geometry/path';
 import { DeepReadonly, DeepRequired } from '@diagram-craft/utils/types';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
-import { applyLineHops, clipPath } from '@diagram-craft/model/edgeUtils';
+import { applyLineHops, clipPath } from '@diagram-craft/model/diagramEdgeUtils';
 import * as svg from '../component/vdom-svg';
 import { asDistortedSvgPath, parseArrowSvgPath } from '../effects/sketch';
 import { hash } from '@diagram-craft/utils/hash';

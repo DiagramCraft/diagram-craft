@@ -1,4 +1,4 @@
-import type { Guide, LabelNode, Waypoint } from '../types';
+import type { Waypoint } from '../types';
 import { Point } from '@diagram-craft/geometry/point';
 import type { EdgePropsForEditing } from '../diagramEdge';
 import type { NodePropsForEditing, NodeTexts } from '../diagramNode';
@@ -14,6 +14,8 @@ import { Box } from '@diagram-craft/geometry/box';
 import { Anchor } from '../anchor';
 import type { Story } from '../documentStories';
 import type { Canvas } from '../canvas';
+import type { LabelNode } from '../labelNode';
+import type { Guide } from '../guides';
 
 export interface Reference {
   id: string;

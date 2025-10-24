@@ -8,11 +8,12 @@ import { ColorPicker } from '../../components/ColorPicker';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { Button } from '@diagram-craft/app-components/Button';
 import { useConfiguration } from '../../context/ConfigurationContext';
-import { DEFAULT_GUIDE_COLOR, Guide } from '@diagram-craft/model/types';
 import {
   CreateGuideUndoableAction,
+  DEFAULT_GUIDE_COLOR,
   DeleteGuideUndoableAction,
   EditGuideUndoableAction,
+  type Guide,
   MoveGuideUndoableAction
 } from '@diagram-craft/model/guides';
 

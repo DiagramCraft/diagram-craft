@@ -4,6 +4,9 @@ import { EventEmitter } from '@diagram-craft/utils/event';
 import { assert, precondition } from '@diagram-craft/utils/assert';
 import type { CRDTMap } from '@diagram-craft/collaboration/crdt';
 
+/**
+ * Represents the state of a comment, either unresolved or resolved.
+ */
 export type CommentState = 'unresolved' | 'resolved';
 
 /**

@@ -17,15 +17,14 @@ import { RegularLayer } from './diagramLayerRegular';
 import { Layer } from './diagramLayer';
 import { assertRegularLayer } from './diagramLayerUtils';
 import { watch, WatchableValue } from '@diagram-craft/utils/watchableValue';
-import { Guide } from './types';
 import { CommentManager, type SerializedComment } from './comment';
 import type { Point } from '@diagram-craft/geometry/point';
 import { ElementLookup } from './elementLookup';
 import type { CRDTMap, FlatCRDTMap } from '@diagram-craft/collaboration/crdt';
-import type { CRDTMapper } from '@diagram-craft/collaboration/datatypes/mapped/types';
 import { CRDTProp } from '@diagram-craft/collaboration/datatypes/crdtProp';
 import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
-import type { Canvas } from './canvas';
+import { type Canvas, DEFAULT_CANVAS } from './canvas';
+import type { Guide } from './guides';
 
 export type DiagramIteratorOpts = {
   nest?: boolean;
@@ -84,6 +83,7 @@ export const DocumentBuilder = {
   }
 };
 
+/** @internal */
 export type DiagramCRDT = {
   id: string;
   parent: string | undefined;
@@ -93,22 +93,6 @@ export type DiagramCRDT = {
   layers: CRDTMap<LayerManagerCRDT>;
   guides: CRDTMap<Record<string, Guide>>;
   comments: CRDTMap<Record<string, SerializedComment>>;
-};
-
-export const makeDiagramMapper = (
-  doc: DiagramDocument
-): CRDTMapper<Diagram, CRDTMap<DiagramCRDT>> => {
-  return {
-    fromCRDT: (e: CRDTMap<DiagramCRDT>) => new Diagram(e.get('id')!, e.get('name')!, doc, e),
-    toCRDT: (e: Diagram) => e.crdt
-  };
-};
-
-const DEFAULT_CANVAS = {
-  w: 640,
-  h: 640,
-  x: 0,
-  y: 0
 };
 
 export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentConsumer {
@@ -165,14 +149,12 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     this.#parent = new CRDTProp(this._crdt, 'parent', {
       onRemoteChange: () => this.emitDiagramChange('metadata')
     });
-    const initialCanvas = canvasSize
-      ? {
-          w: Math.max(DEFAULT_CANVAS.w, canvasSize.w),
-          h: Math.max(DEFAULT_CANVAS.h, canvasSize.h),
-          x: 0,
-          y: 0
-        }
-      : DEFAULT_CANVAS;
+    const initialCanvas = {
+      w: Math.max(DEFAULT_CANVAS.w, canvasSize?.w ?? 0),
+      h: Math.max(DEFAULT_CANVAS.h, canvasSize?.h ?? 0),
+      x: 0,
+      y: 0
+    };
 
     this.#canvas = new CRDTProp(this._crdt, 'canvas', {
       onRemoteChange: () => this.emitDiagramChange('content'),

@@ -1,4 +1,3 @@
-import { LabelNode } from './types';
 import { Box } from '@diagram-craft/geometry/box';
 import { Transform } from '@diagram-craft/geometry/transform';
 import {
@@ -52,6 +51,7 @@ import type { CRDTMapper } from '@diagram-craft/collaboration/datatypes/mapped/t
 import { CRDTProp } from '@diagram-craft/collaboration/datatypes/crdtProp';
 import { MappedCRDTProp } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtProp';
 import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
+import type { LabelNode } from './labelNode';
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;
