@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DocumentProps, type QueryEntry } from './documentProps';
 import { NoOpCRDTRoot } from '@diagram-craft/collaboration/noopCrdt';
-import { TestModel } from './test-support/builder';
+import { TestModel } from './test-support/testModel';
 import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
 import { standardTestModel } from './test-support/collaborationModelTestUtils';
 

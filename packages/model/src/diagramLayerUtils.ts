@@ -24,18 +24,15 @@ export function isRegularLayer(l: Layer): l is RegularLayer {
 }
 
 export function isResolvableToRegularLayer(l: Layer): l is Layer<RegularLayer> {
-  if (l.resolve()?.type !== 'regular') return false;
-  return true;
+  return l.resolve()?.type === 'regular';
 }
 
 export function isResolvableToRuleLayer(l: Layer): l is Layer<RuleLayer> {
-  if (l.resolve()?.type !== 'rule') return false;
-  return true;
+  return l.resolve()?.type === 'rule';
 }
 
 export function isResolvableToModificationLayer(l: Layer): l is Layer<ModificationLayer> {
-  if (l.resolve()?.type !== 'modification') return false;
-  return true;
+  return l.resolve()?.type === 'modification';
 }
 
 export const getAdjustments = (diagram: Diagram, id: string) => {

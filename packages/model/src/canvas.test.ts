@@ -1,8 +1,7 @@
-import { _test, createResizeCanvasActionToFit } from './canvasResizeHelper';
+import { _test, type Canvas, createResizeCanvasActionToFit } from './canvas';
 import { describe, expect, it } from 'vitest';
-import { Canvas } from '../diagram';
 import { Box } from '@diagram-craft/geometry/box';
-import { TestModel } from '../test-support/builder';
+import { TestModel } from './test-support/testModel';
 
 describe('ResizeCanvasUndoableAction', () => {
   it('correctly undoes the canvas resize', () => {

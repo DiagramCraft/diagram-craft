@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { TestDiagramBuilder, TestLayerBuilder, TestModel } from './test-support/builder';
+import { TestDiagramBuilder, TestLayerBuilder, TestModel } from './test-support/testModel';
 import { FreeEndpoint } from './endpoint';
 import { UnitOfWork } from './unitOfWork';
 import { AbstractEdgeDefinition } from './edgeDefinition';

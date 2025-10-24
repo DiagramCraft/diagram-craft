@@ -1,20 +1,20 @@
-import { DiagramElement, isNode } from '../diagramElement';
+import { DiagramElement, isNode } from './diagramElement';
 import { newid } from '@diagram-craft/utils/id';
 import { Box } from '@diagram-craft/geometry/box';
 import { Point, Scale } from '@diagram-craft/geometry/point';
-import { UnitOfWork } from '../unitOfWork';
-import { serializeDiagramElement } from '../serialization/serialize';
+import { UnitOfWork } from './unitOfWork';
+import { serializeDiagramElement } from './serialization/serialize';
 import { deepClone } from '@diagram-craft/utils/object';
-import type { SerializedEdge, SerializedNode } from '../serialization/types';
-import type { RegularLayer } from '../diagramLayerRegular';
-import { deserializeDiagramElements } from '../serialization/deserialize';
-import type { DiagramNode } from '../diagramNode';
-import type { DiagramEdge } from '../diagramEdge';
-import { ElementLookup } from '../elementLookup';
+import type { SerializedEdge, SerializedNode } from './serialization/serializedTypes';
+import type { RegularLayer } from './diagramLayerRegular';
+import { deserializeDiagramElements } from './serialization/deserialize';
+import type { DiagramNode } from './diagramNode';
+import type { DiagramEdge } from './diagramEdge';
+import { ElementLookup } from './elementLookup';
 
 // TODO: Ensure linking between edges and nodes works
 //       See ElementsPasteHandler
-export const assignNewIdsToSerializedElements = (e: SerializedNode | SerializedEdge) => {
+const assignNewIdsToSerializedElements = (e: SerializedNode | SerializedEdge) => {
   e.id = newid();
   if (e.type === 'node') {
     for (const c of e.children ?? []) {
@@ -70,4 +70,8 @@ export const assignNewBounds = (
     }
   };
   process(elements, Box.boundingBox(elements.map(e => e.bounds)));
+};
+
+export const _test = {
+  assignNewIdsToSerializedElements
 };

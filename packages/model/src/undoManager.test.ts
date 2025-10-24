@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { UndoManager } from './undoManager';
-import { TestModel } from './test-support/builder';
+import { TestModel } from './test-support/testModel';
 
 describe('UndoManager', () => {
   test('add()', () => {

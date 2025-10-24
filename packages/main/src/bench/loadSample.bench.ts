@@ -6,7 +6,7 @@ import {
 import {
   makeDefaultDiagramFactory,
   makeDefaultDocumentFactory
-} from '@diagram-craft/model/factory';
+} from '@diagram-craft/model/diagramDocumentFactory';
 import { deserializeDiagramDocument } from '@diagram-craft/model/serialization/deserialize';
 import shapes from '../../public/sample/shapes.json';
 import arrows from '../../public/sample/arrows.json';

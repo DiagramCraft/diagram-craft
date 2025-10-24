@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { AbstractNodeSnapProvider } from './abstractNodeSnapProvider';
-import { TestModel } from '@diagram-craft/model/test-support/builder';
+import { TestModel } from '@diagram-craft/model/test-support/testModel';
 import { Box } from '@diagram-craft/geometry/box';
 import { Direction } from '@diagram-craft/geometry/direction';
 import { Axis } from '@diagram-craft/geometry/axis';

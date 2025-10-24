@@ -25,6 +25,7 @@ import type { CRDTMap, FlatCRDTMap } from '@diagram-craft/collaboration/crdt';
 import type { CRDTMapper } from '@diagram-craft/collaboration/datatypes/mapped/types';
 import { CRDTProp } from '@diagram-craft/collaboration/datatypes/crdtProp';
 import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
+import type { Canvas } from './canvas';
 
 export type DiagramIteratorOpts = {
   nest?: boolean;
@@ -45,8 +46,6 @@ export function* diagramIterator(
     if (opts.earlyExit) return;
   }
 }
-
-export type Canvas = Omit<Box, 'r'>;
 
 export type DiagramEvents = {
   /* Diagram props, canvas have changed

@@ -4,8 +4,8 @@ import {
   DataProviderQuery,
   MutableDataProvider,
   MutableSchemaProvider
-} from './dataProvider';
-import { DataSchema } from './diagramDocumentDataSchemas';
+} from '../dataProvider';
+import { DataSchema } from '../diagramDocumentDataSchemas';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { assert } from '@diagram-craft/utils/assert';
 import { newid } from '@diagram-craft/utils/id';

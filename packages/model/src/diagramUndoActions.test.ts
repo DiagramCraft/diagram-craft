@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { ElementAddUndoableAction, ElementDeleteUndoableAction } from './diagramUndoActions';
-import { TestModel } from './test-support/builder';
+import { TestModel } from './test-support/testModel';
 import { UnitOfWork } from './unitOfWork';
 import { AnchorEndpoint } from './endpoint';
 

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { DiagramStyles, getCommonProps, Stylesheet } from './diagramStyles';
 import { StylesheetSnapshot, UnitOfWork } from './unitOfWork';
 import { DiagramDocument } from './diagramDocument';
-import { TestModel } from './test-support/builder';
+import { TestModel } from './test-support/testModel';
 import { NoOpCRDTFactory } from '@diagram-craft/collaboration/noopCrdt';
 import type { CRDTRoot } from '@diagram-craft/collaboration/crdt';
 import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';

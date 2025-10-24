@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Attachment, AttachmentManager } from './attachment';
-import { TestModel } from './test-support/builder';
+import { TestModel } from './test-support/testModel';
 import { standardTestModel } from './test-support/collaborationModelTestUtils';
 import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
 

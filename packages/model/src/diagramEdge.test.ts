@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { UnitOfWork } from './unitOfWork';
 import { AnchorEndpoint, FreeEndpoint, PointInNodeEndpoint } from './endpoint';
-import { TestModel } from './test-support/builder';
+import { TestModel } from './test-support/testModel';
 import {
   resetListeners,
   standardTestModel,

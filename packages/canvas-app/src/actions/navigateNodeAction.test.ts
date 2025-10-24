@@ -6,7 +6,7 @@ import {
   TestDiagramBuilder,
   TestModel,
   TestLayerBuilder
-} from '@diagram-craft/model/test-support/builder';
+} from '@diagram-craft/model/test-support/testModel';
 
 const context: ActionContext = { model };
 

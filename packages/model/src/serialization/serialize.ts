@@ -10,7 +10,7 @@ import {
   SerializedNode,
   type SerializedOverride,
   SerializedStyles
-} from './types';
+} from './serializedTypes';
 import { NotImplementedYet, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { AttachmentManager } from '../attachment';
 import { DiagramPalette } from '../diagramPalette';

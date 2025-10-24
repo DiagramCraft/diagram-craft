@@ -3,7 +3,7 @@ import type {
   SerializedEndpoint,
   SerializedFreeEndpoint,
   SerializedPointInNodeEndpoint
-} from './types';
+} from './serializedTypes';
 
 export const isSerializedEndpointAnchor = (
   endpoint: SerializedEndpoint

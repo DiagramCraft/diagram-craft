@@ -2,7 +2,7 @@ import { bench, describe } from 'vitest';
 
 import { Random } from '@diagram-craft/utils/random';
 import type { DiagramEdge } from './diagramEdge';
-import { TestModel } from './test-support/builder';
+import { TestModel } from './test-support/testModel';
 import { PointInNodeEndpoint } from './endpoint';
 import { _p, Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from './unitOfWork';

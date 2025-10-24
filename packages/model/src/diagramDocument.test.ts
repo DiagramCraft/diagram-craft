@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { TestDiagramBuilder, TestModel } from './test-support/builder';
+import { TestDiagramBuilder, TestModel } from './test-support/testModel';
 import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
 
 describe.each(Backends.all())('DiagramDocument [%s]', (_name, backend) => {

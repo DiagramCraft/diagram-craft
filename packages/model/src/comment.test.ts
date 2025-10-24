@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { Comment, CommentManager } from './comment';
-import { TestModel } from './test-support/builder';
+import { TestModel } from './test-support/testModel';
 import { DiagramNode } from './diagramNode';
 import { standardTestModel } from './test-support/collaborationModelTestUtils';
 import type { DiagramDocument } from './diagramDocument';

@@ -13,11 +13,11 @@ import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinit
 import { isNode } from './diagramElement';
 import { getRemoteUnitOfWork, UnitOfWork } from './unitOfWork';
 import { DataProviderRegistry } from './dataProvider';
-import { DefaultDataProvider, DefaultDataProviderId } from './dataProviderDefault';
-import { UrlDataProvider, UrlDataProviderId } from './dataProviderUrl';
-import { RESTDataProvider, RestDataProviderId } from './dataProviderRest';
+import { DefaultDataProvider, DefaultDataProviderId } from './data-providers/dataProviderDefault';
+import { UrlDataProvider, UrlDataProviderId } from './data-providers/dataProviderUrl';
+import { RESTDataProvider, RestDataProviderId } from './data-providers/dataProviderRest';
 import { Generators } from '@diagram-craft/utils/generator';
-import { SerializedElement } from './serialization/types';
+import { SerializedElement } from './serialization/serializedTypes';
 import { DiagramDocumentData } from './diagramDocumentData';
 import { DocumentProps } from './documentProps';
 import { DocumentTags } from './documentTags';

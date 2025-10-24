@@ -4,7 +4,7 @@ import {
   TestDiagramBuilder,
   TestLayerBuilder,
   TestModel
-} from '@diagram-craft/model/test-support/builder';
+} from '@diagram-craft/model/test-support/testModel';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { ActionContext } from '@diagram-craft/canvas/action';
 import { AnchorEndpoint, FreeEndpoint, PointInNodeEndpoint } from '@diagram-craft/model/endpoint';

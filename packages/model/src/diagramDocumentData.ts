@@ -26,7 +26,7 @@ import {
 } from '@diagram-craft/utils/event';
 import { CRDTMap, CRDTMapEvents, CRDTRoot } from '@diagram-craft/collaboration/crdt';
 import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
-import { DefaultDataProvider, DefaultDataProviderId } from './dataProviderDefault';
+import { DefaultDataProvider, DefaultDataProviderId } from './data-providers/dataProviderDefault';
 
 const makeDataListener =
   (document: DiagramDocument, mode: 'update' | 'delete') => (data: { data: Data[] }) => {

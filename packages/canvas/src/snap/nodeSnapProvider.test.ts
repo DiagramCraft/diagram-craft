@@ -4,7 +4,7 @@ import { Axis } from '@diagram-craft/geometry/axis';
 import { Line } from '@diagram-craft/geometry/line';
 import { Range } from '@diagram-craft/geometry/range';
 import type { MatchingMagnetPair } from './snapManager';
-import { TestModel } from '@diagram-craft/model/test-support/builder';
+import { TestModel } from '@diagram-craft/model/test-support/testModel';
 
 describe('NodeSnapProvider', () => {
   describe('getMagnets', () => {

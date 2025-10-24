@@ -16,7 +16,7 @@ import {
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
-import { createResizeCanvasActionToFit } from '@diagram-craft/model/helpers/canvasResizeHelper';
+import { createResizeCanvasActionToFit } from '@diagram-craft/model/canvas';
 import {
   ElementAddUndoableAction,
   SnapshotUndoableAction

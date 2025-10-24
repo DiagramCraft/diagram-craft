@@ -14,7 +14,7 @@ import {
   type SerializedOverride,
   SerializedPointInNodeEndpoint,
   SerializedStylesheet
-} from './types';
+} from './serializedTypes';
 import { Endpoint } from '../endpoint';
 import { DiagramStyles, Stylesheet } from '../diagramStyles';
 import { DefaultStyles } from '../diagramDefaults';
@@ -23,7 +23,7 @@ import { RuleLayer } from '../diagramLayerRule';
 import { type DataProvider, DataProviderRegistry } from '../dataProvider';
 import { RegularLayer } from '../diagramLayerRegular';
 import { ModificationLayer } from '../diagramLayerModification';
-import type { DiagramFactory } from '../factory';
+import type { DiagramFactory } from '../diagramDocumentFactory';
 import { Comment } from '../comment';
 import type { DataManager } from '../diagramDocumentData';
 import { ElementLookup } from '../elementLookup';

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { getExternalDataStatus } from './externalDataHelpers';
-import { TestModel } from './test-support/builder';
+import { TestModel } from './test-support/testModel';
 import { UnitOfWork } from './unitOfWork';
 
 describe('getExternalDataStatus()', () => {

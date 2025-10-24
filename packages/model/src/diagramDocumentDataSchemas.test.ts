@@ -5,7 +5,7 @@ import {
   SchemaMetadata
 } from './diagramDocumentDataSchemas';
 import { CRDT } from '@diagram-craft/collaboration/crdt';
-import { TestModel } from './test-support/builder';
+import { TestModel } from './test-support/testModel';
 import { UnitOfWork } from './unitOfWork';
 import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
 

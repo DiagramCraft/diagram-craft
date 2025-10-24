@@ -9,7 +9,7 @@ import { newid } from '@diagram-craft/utils/id';
 import { TbPlus, TbTrash } from 'react-icons/tb';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { useMemo } from 'react';
-import { createThumbnailDiagramForNode } from '@diagram-craft/model/diagramThumbnail';
+import { createThumbnailDiagramForNode } from '@diagram-craft/canvas-app/diagramThumbnail';
 import { getAnchorPosition } from '@diagram-craft/model/anchor';
 import { serializeDiagramElement } from '@diagram-craft/model/serialization/serialize';
 import { deserializeDiagramElements } from '@diagram-craft/model/serialization/deserialize';

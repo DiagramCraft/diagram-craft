@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { RESTDataProvider } from './dataProviderRest';
-import { DataSchema } from './diagramDocumentDataSchemas';
-import { Data } from './dataProvider';
+import { DataSchema } from '../diagramDocumentDataSchemas';
+import { Data } from '../dataProvider';
 
 describe('RESTDataProvider', () => {
   // Test data and schemas

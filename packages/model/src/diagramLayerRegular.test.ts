@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { TestModel } from './test-support/builder';
+import { TestModel } from './test-support/testModel';
 import { RegularLayer } from './diagramLayerRegular';
 import { UnitOfWork } from './unitOfWork';
 import { Diagram } from './diagram';

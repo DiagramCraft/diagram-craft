@@ -5,7 +5,6 @@ import type { NodePropsForEditing, NodeTexts } from '../diagramNode';
 import type { OffsetType } from '../endpoint';
 import type { StylesheetSnapshot } from '../unitOfWork';
 import type { DataSchema, SchemaMetadata } from '../diagramDocumentDataSchemas';
-import type { Canvas } from '../diagram';
 import type { AdjustmentRule } from '../diagramLayerRuleTypes';
 import type { DataTemplate } from '../diagramDocument';
 import type { SerializedComment } from '../comment';
@@ -14,6 +13,7 @@ import type { ModificationType } from '../diagramLayerModification';
 import { Box } from '@diagram-craft/geometry/box';
 import { Anchor } from '../anchor';
 import type { Story } from '../documentStories';
+import type { Canvas } from '../canvas';
 
 export interface Reference {
   id: string;

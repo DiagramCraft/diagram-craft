@@ -6,7 +6,11 @@ import type { Diagram } from './diagram';
 import { common, deepClear, deepClone, deepMerge, isObj } from '@diagram-craft/utils/object';
 import { assert } from '@diagram-craft/utils/assert';
 import { Defaults, DefaultStyles, edgeDefaults, nodeDefaults } from './diagramDefaults';
-import { DEFAULT_EDGE_STYLES, DEFAULT_NODE_STYLES, DEFAULT_TEXT_STYLES } from './defaults';
+import {
+  DEFAULT_EDGE_STYLES,
+  DEFAULT_NODE_STYLES,
+  DEFAULT_TEXT_STYLES
+} from './diagramStylesDefaults';
 import { watch } from '@diagram-craft/utils/watchableValue';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import type { CRDTFactory, CRDTMap, CRDTRoot } from '@diagram-craft/collaboration/crdt';

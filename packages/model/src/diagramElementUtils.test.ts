@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { assignNewIdsToSerializedElements } from './cloneHelper';
-import type { SerializedEdge, SerializedNode } from '../serialization/types';
+import { _test } from './diagramElementUtils';
+import type { SerializedEdge, SerializedNode } from './serialization/serializedTypes';
 
 describe('cloneHelper', () => {
   describe('assignNewIdsToSerializedElements', () => {
@@ -20,7 +20,7 @@ describe('cloneHelper', () => {
       };
 
       // Act
-      assignNewIdsToSerializedElements(node);
+      _test.assignNewIdsToSerializedElements(node);
 
       // Verify
       expect(node.id).not.toBe('old-id');
@@ -56,7 +56,7 @@ describe('cloneHelper', () => {
       };
 
       // Act
-      assignNewIdsToSerializedElements(parentNode);
+      _test.assignNewIdsToSerializedElements(parentNode);
 
       // Verify
       expect(parentNode.id).not.toBe('parent-id');
@@ -75,7 +75,7 @@ describe('cloneHelper', () => {
       };
 
       // Act
-      assignNewIdsToSerializedElements(edge);
+      _test.assignNewIdsToSerializedElements(edge);
 
       // Verify
       expect(edge.id).not.toBe('old-id');

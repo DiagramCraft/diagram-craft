@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { TestModel } from './test-support/builder';
+import { TestModel } from './test-support/testModel';
 import { DataSchema } from './diagramDocumentDataSchemas';
 import { Data } from './dataProvider';
 import { newid } from '@diagram-craft/utils/id';

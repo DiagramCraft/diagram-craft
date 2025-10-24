@@ -20,7 +20,7 @@ import type { Path } from '@diagram-craft/geometry/path';
 import { Transform } from '@diagram-craft/geometry/transform';
 import type { DuplicationContext } from './diagramNode';
 import { DiagramElement } from './diagramElement';
-import { SerializedEdge, SerializedEndpoint } from './serialization/types';
+import { SerializedEdge, SerializedEndpoint } from './serialization/serializedTypes';
 import type { PropertyInfo } from './property';
 import type { EdgeDefinition } from './edgeDefinition';
 import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';

@@ -1,11 +1,17 @@
 import { DataProvider, DataProviderRegistry } from '@diagram-craft/model/dataProvider';
 import { useApplication, useDocument } from '../../../application';
-import { UrlDataProvider, UrlDataProviderId } from '@diagram-craft/model/dataProviderUrl';
+import {
+  UrlDataProvider,
+  UrlDataProviderId
+} from '@diagram-craft/model/data-providers/dataProviderUrl';
 import {
   DefaultDataProvider,
   DefaultDataProviderId
-} from '@diagram-craft/model/dataProviderDefault';
-import { RESTDataProvider, RestDataProviderId } from '@diagram-craft/model/dataProviderRest';
+} from '@diagram-craft/model/data-providers/dataProviderDefault';
+import {
+  RESTDataProvider,
+  RestDataProviderId
+} from '@diagram-craft/model/data-providers/dataProviderRest';
 import { Select } from '@diagram-craft/app-components/Select';
 import { useState } from 'react';
 import { TextInput } from '@diagram-craft/app-components/TextInput';

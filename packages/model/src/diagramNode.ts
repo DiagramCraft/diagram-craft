@@ -29,7 +29,7 @@ import { assert, mustExist, VerifyNotReached } from '@diagram-craft/utils/assert
 import { newid } from '@diagram-craft/utils/id';
 import { clamp } from '@diagram-craft/utils/math';
 import { Point } from '@diagram-craft/geometry/point';
-import { applyTemplate } from './template';
+import { applyTemplate } from '@diagram-craft/utils/template';
 import { isEmptyString } from '@diagram-craft/utils/strings';
 import { Anchor } from './anchor';
 import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';

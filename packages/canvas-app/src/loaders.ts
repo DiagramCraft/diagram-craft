@@ -1,7 +1,7 @@
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { assert } from '@diagram-craft/utils/assert';
 import type { CRDTRoot } from '@diagram-craft/collaboration/crdt';
-import type { DiagramFactory, DocumentFactory } from '@diagram-craft/model/factory';
+import type { DiagramFactory, DocumentFactory } from '@diagram-craft/model/diagramDocumentFactory';
 import type { AwarenessUserState } from '@diagram-craft/collaboration/awareness';
 import type { ProgressCallback } from '@diagram-craft/utils/progress';
 

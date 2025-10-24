@@ -1,6 +1,6 @@
 import { BaseHTTPDataProvider } from './dataProviderBaseHttp';
-import { Data } from './dataProvider';
-import { DataSchema } from './diagramDocumentDataSchemas';
+import { Data } from '../dataProvider';
+import { DataSchema } from '../diagramDocumentDataSchemas';
 import { assert } from '@diagram-craft/utils/assert';
 
 type DataWithSchema = Data & { _schemaId: string };

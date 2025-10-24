@@ -5,8 +5,8 @@ import {
   DataProviderQuery,
   RefreshableDataProvider,
   RefreshableSchemaProvider
-} from './dataProvider';
-import { DataSchema } from './diagramDocumentDataSchemas';
+} from '../dataProvider';
+import { DataSchema } from '../diagramDocumentDataSchemas';
 import { EventEmitter } from '@diagram-craft/utils/event';
 
 type DataWithSchema = Data & { _schemaId: string };

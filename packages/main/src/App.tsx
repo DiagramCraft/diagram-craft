@@ -68,7 +68,7 @@ import { AwarenessToolbar } from './react-app/AwarenessToolbar';
 import { CommentDialog } from './react-app/components/CommentDialog';
 import { CommandPalette } from './react-app/components/CommandPalette';
 import { FullScreenProgress } from './react-app/components/FullScreenProgress';
-import type { DiagramFactory, DocumentFactory } from '@diagram-craft/model/factory';
+import type { DiagramFactory, DocumentFactory } from '@diagram-craft/model/diagramDocumentFactory';
 import { PortalContextProvider } from '@diagram-craft/app-components/PortalContext';
 import { ElectronIntegration } from './electron';
 import { DocumentName } from './react-app/DocumentName';

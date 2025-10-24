@@ -2,7 +2,7 @@ import { Point } from '@diagram-craft/geometry/point';
 import { hash64 } from '@diagram-craft/utils/hash';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { newid } from '@diagram-craft/utils/id';
-import { SerializedElement } from '@diagram-craft/model/serialization/types';
+import { SerializedElement } from '@diagram-craft/model/serialization/serializedTypes';
 import { Box } from '@diagram-craft/geometry/box';
 import { precondition, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { deserializeDiagramElements } from '@diagram-craft/model/serialization/deserialize';

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { UnitOfWork } from './unitOfWork';
-import { TestDiagramNodeBuilder, TestModel } from './test-support/builder';
+import { TestDiagramNodeBuilder, TestModel } from './test-support/testModel';
 import {
   type StandardTestModel,
   standardTestModel

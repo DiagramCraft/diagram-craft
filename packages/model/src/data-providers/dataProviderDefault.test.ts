@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { DefaultDataProvider } from './dataProviderDefault';
-import { DataSchema } from './diagramDocumentDataSchemas';
-import { Data } from './dataProvider';
+import { DataSchema } from '../diagramDocumentDataSchemas';
+import { Data } from '../dataProvider';
 import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
 
 describe.each(Backends.all())('DefaultDataProvider [%s]', (_name, backend) => {

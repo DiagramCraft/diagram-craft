@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { Diagram, DocumentBuilder } from './diagram';
-import { TestModel } from './test-support/builder';
+import { TestModel } from './test-support/testModel';
 import { newid } from '@diagram-craft/utils/id';
 import { UnitOfWork } from './unitOfWork';
 import { RegularLayer } from './diagramLayerRegular';

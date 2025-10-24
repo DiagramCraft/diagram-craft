@@ -1,7 +1,7 @@
 import { AbstractAction, ActionCriteria } from '@diagram-craft/canvas/action';
 import { Application } from '../../application';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { assignNewBounds, cloneElements } from '@diagram-craft/model/helpers/cloneHelper';
+import { assignNewBounds, cloneElements } from '@diagram-craft/model/diagramElementUtils';
 import { assert } from '@diagram-craft/utils/assert';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';

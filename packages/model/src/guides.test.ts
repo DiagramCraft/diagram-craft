@@ -5,7 +5,7 @@ import {
   EditGuideUndoableAction,
   MoveGuideUndoableAction
 } from './guides';
-import { TestModel } from './test-support/builder';
+import { TestModel } from './test-support/testModel';
 import { Guide, GuideType } from './types';
 
 describe('Guide Undoable Actions', () => {

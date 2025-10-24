@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import { type TestDiagramBuilder, TestLayerBuilder, TestModel } from './builder';
+import { type TestDiagramBuilder, TestLayerBuilder, TestModel } from './testModel';
 import type { DiagramDocument } from '../diagramDocument';
 import type { Diagram } from '../diagram';
 import type { RegularLayer } from '../diagramLayerRegular';

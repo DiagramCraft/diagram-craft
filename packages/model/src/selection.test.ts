@@ -1,6 +1,6 @@
 import { Selection, type Highlight } from './selection';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { TestDiagramBuilder, TestModel, TestLayerBuilder } from './test-support/builder';
+import { TestDiagramBuilder, TestModel, TestLayerBuilder } from './test-support/testModel';
 
 describe('SelectionState', () => {
   let diagram: TestDiagramBuilder;

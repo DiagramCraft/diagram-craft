@@ -34,7 +34,7 @@ import { assert, is, mustExist } from '@diagram-craft/utils/assert';
 import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import type { RegularLayer } from './diagramLayerRegular';
 import { assertRegularLayer, getAdjustments } from './diagramLayerUtils';
-import type { Reference, SerializedEndpoint } from './serialization/types';
+import type { Reference, SerializedEndpoint } from './serialization/serializedTypes';
 import { WatchableValue } from '@diagram-craft/utils/watchableValue';
 import type { ModificationLayer } from './diagramLayerModification';
 import type { Path } from '@diagram-craft/geometry/path';

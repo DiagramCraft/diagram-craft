@@ -1,6 +1,6 @@
 import { DiagramDocument } from './diagramDocument';
 import { Diagram } from './diagram';
-import { SerializedDiagram } from './serialization/types';
+import { SerializedDiagram } from './serialization/serializedTypes';
 import { newid } from '@diagram-craft/utils/id';
 import { EdgeDefinitionRegistry, type NodeDefinitionRegistry } from './elementDefinitionRegistry';
 import type { ProgressCallback } from '@diagram-craft/utils/progress';
