@@ -1,5 +1,4 @@
 import type { MatchingMagnetPair, SnapProvider } from './snapManager';
-import { Highlight } from '@diagram-craft/model/selection';
 import { Magnet, MagnetOfType } from './magnet';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { Box } from '@diagram-craft/geometry/box';
@@ -9,6 +8,7 @@ import { Line } from '@diagram-craft/geometry/line';
 import { Point } from '@diagram-craft/geometry/point';
 import { unique } from '@diagram-craft/utils/array';
 import { AbstractNodeSnapProvider } from './abstractNodeSnapProvider';
+import type { Highlight } from '@diagram-craft/model/selection';
 
 /**
  * Helper functions to find the bounding extents of exactly two boxes

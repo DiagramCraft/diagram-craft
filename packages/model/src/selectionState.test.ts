@@ -1,4 +1,4 @@
-import { Highlight, Selection } from './selection';
+import { Selection, type Highlight } from './selection';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { TestDiagramBuilder, TestModel, TestLayerBuilder } from './test-support/builder';
 

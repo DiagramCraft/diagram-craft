@@ -3,11 +3,11 @@ import * as svg from '../component/vdom-svg';
 import { text, VNode } from '../component/vdom';
 import { Point } from '@diagram-craft/geometry/point';
 import { Line } from '@diagram-craft/geometry/line';
-import { Highlight } from '@diagram-craft/model/selection';
 import { newid } from '@diagram-craft/utils/id';
 import { round } from '@diagram-craft/utils/math';
 import { Zoom } from './zoom';
 import { Diagram } from '@diagram-craft/model/diagram';
+import type { Highlight } from '@diagram-craft/model/selection';
 
 const makeDistanceMarker = (p1: Point, p2: Point, lbl: string, z: Zoom): VNode[] => {
   const l = Line.of(p1, p2);

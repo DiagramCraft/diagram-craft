@@ -5,7 +5,6 @@ import { NodeDistanceSnapProvider } from './nodeDistanceSnapProvider';
 import { GridSnapProvider } from './gridSnapProvider';
 import { NodeSizeSnapProvider } from './nodeSizeSnapProvider';
 import { GuidesSnapProvider } from './guidesSnapProvider';
-import { Highlight } from '@diagram-craft/model/selection';
 import { Magnet, MagnetOfType, MagnetType } from './magnet';
 import { Axis } from '@diagram-craft/geometry/axis';
 import { Box, WritableBox } from '@diagram-craft/geometry/box';
@@ -16,6 +15,7 @@ import { Direction } from '@diagram-craft/geometry/direction';
 import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { groupBy, largest, smallest } from '@diagram-craft/utils/array';
 import { Angle } from '@diagram-craft/geometry/angle';
+import type { Highlight } from '@diagram-craft/model/selection';
 
 /**
  * Configuration properties for the SnapManager
@@ -67,6 +67,15 @@ export type SnapManagerConfig = {
 declare global {
   interface DiagramProps {
     snap?: SnapManagerConfig;
+  }
+}
+
+declare module '@diagram-craft/model/selection' {
+  interface Highlight {
+    line: Line;
+    //label?: string;
+    selfMagnet: Magnet;
+    matchingMagnet: Magnet;
   }
 }
 

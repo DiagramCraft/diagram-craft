@@ -1,10 +1,8 @@
 import { EventEmitter } from '@diagram-craft/utils/event';
-import { Magnet } from '@diagram-craft/canvas/snap/magnet';
 import { DiagramNode } from './diagramNode';
 import { DiagramEdge } from './diagramEdge';
 import { DiagramElement, isEdge, isNode } from './diagramElement';
 import { Box } from '@diagram-craft/geometry/box';
-import { Line } from '@diagram-craft/geometry/line';
 import { Marquee } from './marquee';
 import type { Diagram } from './diagram';
 import { debounceMicrotask } from '@diagram-craft/utils/debounce';
@@ -23,12 +21,9 @@ type SelectionSource = {
   boundingBox: Box;
 };
 
-export type Highlight = {
-  line: Line;
-  //label?: string;
-  selfMagnet: Magnet;
-  matchingMagnet: Magnet;
-};
+export interface Highlight {
+  id?: string;
+}
 
 export type SelectionEvents = {
   /* The selection has changed, e.g. recalculating bounding box

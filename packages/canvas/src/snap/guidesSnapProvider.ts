@@ -1,10 +1,10 @@
 import type { MatchingMagnetPair, SnapProvider } from './snapManager';
-import type { Highlight } from '@diagram-craft/model/selection';
 import type { Diagram } from '@diagram-craft/model/diagram';
 import { MagnetOfType } from './magnet';
 import { Box } from '@diagram-craft/geometry/box';
 import { Line } from '@diagram-craft/geometry/line';
 import { Axis } from '@diagram-craft/geometry/axis';
+import type { Highlight } from '@diagram-craft/model/selection';
 
 /**
  * Snap provider that provides guides for alignment

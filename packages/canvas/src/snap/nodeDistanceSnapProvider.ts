@@ -1,5 +1,4 @@
 import type { MatchingMagnetPair, SnapProvider } from './snapManager';
-import { Highlight } from '@diagram-craft/model/selection';
 import { DistancePairWithRange, MagnetOfType } from './magnet';
 import { AbstractNodeSnapProvider } from './abstractNodeSnapProvider';
 import { Direction } from '@diagram-craft/geometry/direction';
@@ -8,6 +7,7 @@ import { Axis } from '@diagram-craft/geometry/axis';
 import { Box } from '@diagram-craft/geometry/box';
 import { Line } from '@diagram-craft/geometry/line';
 import { Point } from '@diagram-craft/geometry/point';
+import { Highlight } from '@diagram-craft/model/selection';
 
 /**
  * Direction configuration for distance calculations
