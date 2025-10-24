@@ -121,7 +121,7 @@ export const EdgeEffectsPanel = (props: Props) => {
   const rounding = useEdgeProperty($d, 'effects.rounding');
   const roundingAmount = useEdgeProperty($d, 'effects.roundingAmount');
 
-  useEventListener($d.selectionState, 'change', redraw);
+  useEventListener($d.selection, 'change', redraw);
 
   return (
     <ToolWindowPanel

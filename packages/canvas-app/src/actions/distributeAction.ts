@@ -44,7 +44,7 @@ export class DistributeAction extends AbstractSelectionAction {
   }
 
   private calculateAndUpdateBounds(orientation: 'x' | 'y', size: 'w' | 'h', uow: UnitOfWork): void {
-    const elementsInOrder = this.context.model.activeDiagram.selectionState.elements.toSorted(
+    const elementsInOrder = this.context.model.activeDiagram.selection.elements.toSorted(
       (a, b) => minBounds(a.bounds)[orientation] - minBounds(b.bounds)[orientation]
     );
 
@@ -55,13 +55,10 @@ export class DistributeAction extends AbstractSelectionAction {
     const totalSpace =
       max -
       min -
-      this.context.model.activeDiagram.selectionState.elements.reduce(
-        (p, c) => p + c.bounds[size],
-        0
-      );
+      this.context.model.activeDiagram.selection.elements.reduce((p, c) => p + c.bounds[size], 0);
 
     const difference =
-      totalSpace / (this.context.model.activeDiagram.selectionState.elements.length - 1);
+      totalSpace / (this.context.model.activeDiagram.selection.elements.length - 1);
 
     let currentPosition = min + Math.abs(minimal.bounds[size] + difference);
     for (const e of elementsInOrder.slice(1)) {

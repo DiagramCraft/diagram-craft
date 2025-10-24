@@ -30,7 +30,7 @@ export const ExtendedDataTab = () => {
 
   const [editMode, setEditMode] = useState(true);
 
-  useEventListener($d.selectionState, 'change', redraw);
+  useEventListener($d.selection, 'change', redraw);
   useEventListener($d, 'diagramChange', redraw);
   useEventListener($d, 'elementBatchChange', redraw);
 
@@ -45,7 +45,7 @@ export const ExtendedDataTab = () => {
 
       switch (type) {
         case 'data':
-          $d.selectionState.elements.forEach(e => {
+          $d.selection.elements.forEach(e => {
             e.updateMetadata(p => {
               p.data ??= {};
               p.data.data ??= [];
@@ -62,7 +62,7 @@ export const ExtendedDataTab = () => {
           });
           break;
         case 'custom':
-          $d.selectionState.elements.forEach(e => {
+          $d.selection.elements.forEach(e => {
             e.updateMetadata(p => {
               p.data ??= {};
               p.data.customData ??= {};
@@ -90,7 +90,7 @@ export const ExtendedDataTab = () => {
 
   const addSchemaToSelection = useCallback(
     (schema: string) => {
-      $d.selectionState.elements.forEach(e => {
+      $d.selection.elements.forEach(e => {
         const entry = findEntryBySchema(e, schema);
         const uow = new UnitOfWork($d, true);
         if (!entry) {
@@ -113,7 +113,7 @@ export const ExtendedDataTab = () => {
 
   const removeSchemaFromSelection = useCallback(
     (schema: string) => {
-      $d.selectionState.elements.forEach(e => {
+      $d.selection.elements.forEach(e => {
         const entry = findEntryBySchema(e, schema);
         if (entry) {
           const uow = new UnitOfWork($d, true);
@@ -144,7 +144,7 @@ export const ExtendedDataTab = () => {
       assert.present(db);
 
       // Get the external data item for editing
-      const e = $d.selectionState.elements[0]!;
+      const e = $d.selection.elements[0]!;
       const externalData = findEntryBySchema(e, schema);
       assert.true(externalData?.type === 'external');
 
@@ -163,17 +163,17 @@ export const ExtendedDataTab = () => {
   );
 
   const customDataKeys = unique(
-    $d.selectionState.elements.flatMap(e => Object.keys(e.metadata.data?.customData ?? {}))
+    $d.selection.elements.flatMap(e => Object.keys(e.metadata.data?.customData ?? {}))
   ).toSorted();
 
   // Get all schemas that are enabled from all selected elements
   const enabledSchemas = unique(
-    $d.selectionState.elements.flatMap(e =>
+    $d.selection.elements.flatMap(e =>
       e.metadata.data?.data?.filter(d => d.enabled).map(d => d.schema)
     )
   ).filter((schema): schema is string => schema !== undefined);
 
-  if ($d.selectionState.elements.length !== 1) return null;
+  if ($d.selection.elements.length !== 1) return null;
 
   return (
     <>
@@ -204,7 +204,7 @@ export const ExtendedDataTab = () => {
               })
               .map(schema => {
                 const isSchemaEnabled = enabledSchemas.includes(schema.id);
-                const isExternal = $d.selectionState.elements.some(
+                const isExternal = $d.selection.elements.some(
                   e => e.metadata.data?.data?.find(d => d.schema === schema.id)?.type === 'external'
                 );
                 const isExternalSchema = schema.providerId !== 'document';
@@ -238,7 +238,7 @@ export const ExtendedDataTab = () => {
                                 addSchemaToSelection(schema.id);
                               } else {
                                 // Check if any element has data for this schema
-                                const hasData = $d.selectionState.elements.some(el =>
+                                const hasData = $d.selection.elements.some(el =>
                                   hasDataForSchema(el, schema.id)
                                 );
 
@@ -317,7 +317,7 @@ export const ExtendedDataTab = () => {
                       <div className={'cmp-labeled-table'}>
                         {schema.fields.map(f => {
                           const v = unique(
-                            $d.selectionState.elements.map(e => {
+                            $d.selection.elements.map(e => {
                               const d = findEntryBySchema(e, schema.id);
                               try {
                                 return d?.data?.[f.id] ?? '';
@@ -365,7 +365,7 @@ export const ExtendedDataTab = () => {
                   <div className={'cmp-labeled-table'}>
                     {customDataKeys.map(k => {
                       const v = unique(
-                        $d.selectionState.elements.map(
+                        $d.selection.elements.map(
                           e => e.metadata.data?.customData?.[k]?.toString() ?? ''
                         )
                       );

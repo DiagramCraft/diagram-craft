@@ -134,8 +134,8 @@ export class BaseNodeComponent<
 
     const nodeProps = props.element.renderProps;
 
-    const isSelected = $d.selectionState.elements.includes(props.element);
-    const isSingleSelected = isSelected && $d.selectionState.elements.length === 1;
+    const isSelected = $d.selection.elements.includes(props.element);
+    const isSingleSelected = isSelected && $d.selection.elements.length === 1;
     const children: VNode[] = [];
 
     const style: Partial<CSSStyleDeclaration> = {};

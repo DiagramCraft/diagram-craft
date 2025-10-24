@@ -40,7 +40,7 @@ describe('DuplicateAction', () => {
       const node1 = layer.addNode({ bounds: { x: 10, y: 10, w: 100, h: 100, r: 0 } });
       const node2 = layer.addNode({ bounds: { x: 200, y: 200, w: 50, h: 50, r: 0 } });
 
-      diagram.selectionState.setElements([node1]);
+      diagram.selection.setElements([node1]);
 
       const initialNodeCount = layer.elements.filter(isNode).length;
       const initialEdgeCount = layer.elements.filter(isEdge).length;
@@ -63,15 +63,15 @@ describe('DuplicateAction', () => {
       expect(duplicatedNode.bounds.h).toBe(node1.bounds.h);
 
       // Selection should be updated to the duplicated node
-      expect(diagram.selectionState.elements).toHaveLength(1);
-      expect(diagram.selectionState.elements[0]).toBe(duplicatedNode);
+      expect(diagram.selection.elements).toHaveLength(1);
+      expect(diagram.selection.elements[0]).toBe(duplicatedNode);
     });
 
     test('should duplicate multiple selected nodes', () => {
       const node1 = layer.addNode({ bounds: { x: 10, y: 10, w: 100, h: 100, r: 0 } });
       const node2 = layer.addNode({ bounds: { x: 200, y: 200, w: 50, h: 50, r: 0 } });
 
-      diagram.selectionState.setElements([node1, node2]);
+      diagram.selection.setElements([node1, node2]);
 
       const initialNodeCount = layer.elements.filter(isNode).length;
 
@@ -81,8 +81,8 @@ describe('DuplicateAction', () => {
       expect(finalNodeCount).toBe(initialNodeCount + 2);
 
       // Selection should contain the two duplicated nodes
-      expect(diagram.selectionState.elements).toHaveLength(2);
-      expect(diagram.selectionState.elements.every(isNode)).toBe(true);
+      expect(diagram.selection.elements).toHaveLength(2);
+      expect(diagram.selection.elements.every(isNode)).toBe(true);
     });
   });
 
@@ -90,7 +90,7 @@ describe('DuplicateAction', () => {
     test('should duplicate selected edge with disconnected endpoints', () => {
       const edge = layer.addEdge();
 
-      diagram.selectionState.setElements([edge]);
+      diagram.selection.setElements([edge]);
 
       const initialEdgeCount = layer.elements.filter(isEdge).length;
 
@@ -107,8 +107,8 @@ describe('DuplicateAction', () => {
       expect(duplicatedEdge.end).toBeInstanceOf(FreeEndpoint);
 
       // Selection should be updated to the duplicated edge
-      expect(diagram.selectionState.elements).toHaveLength(1);
-      expect(diagram.selectionState.elements[0]).toBe(duplicatedEdge);
+      expect(diagram.selection.elements).toHaveLength(1);
+      expect(diagram.selection.elements[0]).toBe(duplicatedEdge);
     });
   });
 
@@ -129,7 +129,7 @@ describe('DuplicateAction', () => {
       );
       layer.addElement(connectedEdge, UnitOfWork.immediate(diagram));
 
-      diagram.selectionState.setElements([node1, node2, connectedEdge]);
+      diagram.selection.setElements([node1, node2, connectedEdge]);
 
       const initialNodeCount = layer.elements.filter(isNode).length;
       const initialEdgeCount = layer.elements.filter(isEdge).length;
@@ -163,7 +163,7 @@ describe('DuplicateAction', () => {
       expect(duplicatedNodes.some(n => n.id === endNodeId)).toBe(true);
 
       // Selection should contain all duplicated elements
-      expect(diagram.selectionState.elements).toHaveLength(3);
+      expect(diagram.selection.elements).toHaveLength(3);
     });
 
     test('should duplicate selected edge and partially disconnect when only one connected node is selected', () => {
@@ -183,7 +183,7 @@ describe('DuplicateAction', () => {
       layer.addElement(connectedEdge, UnitOfWork.immediate(diagram));
 
       // Select only one node and the edge
-      diagram.selectionState.setElements([node1, connectedEdge]);
+      diagram.selection.setElements([node1, connectedEdge]);
 
       new DuplicateAction(mkContext(diagram)).execute();
 
@@ -225,7 +225,7 @@ describe('DuplicateAction', () => {
       );
       layer.addElement(connectedEdge, UnitOfWork.immediate(diagram));
 
-      diagram.selectionState.setElements([node1, node2, connectedEdge]);
+      diagram.selection.setElements([node1, node2, connectedEdge]);
 
       new DuplicateAction(mkContext(diagram)).execute();
 
@@ -253,18 +253,18 @@ describe('DuplicateAction', () => {
       const node = layer.addNode({ bounds: { x: 10, y: 10, w: 100, h: 100, r: 0 } });
       const edge = layer.addEdge();
 
-      diagram.selectionState.setElements([node, edge]);
+      diagram.selection.setElements([node, edge]);
 
       new DuplicateAction(mkContext(diagram)).execute();
 
       // Selection should contain the duplicated elements
-      expect(diagram.selectionState.elements).toHaveLength(2);
-      expect(diagram.selectionState.elements.some(isNode)).toBe(true);
-      expect(diagram.selectionState.elements.some(isEdge)).toBe(true);
+      expect(diagram.selection.elements).toHaveLength(2);
+      expect(diagram.selection.elements.some(isNode)).toBe(true);
+      expect(diagram.selection.elements.some(isEdge)).toBe(true);
 
       // None of the selected elements should be the original elements
-      expect(diagram.selectionState.elements.includes(node)).toBe(false);
-      expect(diagram.selectionState.elements.includes(edge)).toBe(false);
+      expect(diagram.selection.elements.includes(node)).toBe(false);
+      expect(diagram.selection.elements.includes(edge)).toBe(false);
     });
   });
 
@@ -272,7 +272,7 @@ describe('DuplicateAction', () => {
     test('should offset duplicated elements by OFFSET pixels', () => {
       const node = layer.addNode({ bounds: { x: 50, y: 50, w: 100, h: 100, r: 0 } });
 
-      diagram.selectionState.setElements([node]);
+      diagram.selection.setElements([node]);
 
       new DuplicateAction(mkContext(diagram)).execute();
 

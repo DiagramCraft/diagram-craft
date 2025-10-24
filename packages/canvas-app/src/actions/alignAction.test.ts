@@ -33,19 +33,19 @@ describe('AlignActions', () => {
 
   describe('enabled', () => {
     test('should not be enabled when there the selection is only one or empty', () => {
-      diagram.selectionState.setElements([]);
+      diagram.selection.setElements([]);
       const action1 = new AlignAction('top', mkContext(diagram));
       action1.bindCriteria();
       expect(action1.isEnabled(undefined)).toBe(false);
 
-      diagram.selectionState.setElements([layer.elements[0]!]);
+      diagram.selection.setElements([layer.elements[0]!]);
       const action2 = new AlignAction('top', mkContext(diagram));
       action2.bindCriteria();
       expect(action2.isEnabled(undefined)).toBe(false);
     });
 
     test('should be enabled when there are more than one element selected', () => {
-      diagram.selectionState.setElements(layer.elements);
+      diagram.selection.setElements(layer.elements);
       const action = new AlignAction('top', mkContext(diagram));
       action.bindCriteria();
       expect(action.isEnabled(undefined)).toBe(true);
@@ -55,7 +55,7 @@ describe('AlignActions', () => {
   describe('align', () => {
     test('should align the selected elements to the top', () => {
       const [e1, e2, e3] = layer.elements as [DiagramElement, DiagramElement, DiagramElement];
-      diagram.selectionState.setElements([e1, e2, e3]);
+      diagram.selection.setElements([e1, e2, e3]);
 
       new AlignAction('top', mkContext(diagram)).execute();
       expect(e1.bounds.y).toBe(10);
@@ -65,7 +65,7 @@ describe('AlignActions', () => {
 
     test('should align the selected elements to the bottom', () => {
       const [e1, e2, e3] = layer.elements as [DiagramElement, DiagramElement, DiagramElement];
-      diagram.selectionState.setElements([e1, e2, e3]);
+      diagram.selection.setElements([e1, e2, e3]);
 
       new AlignAction('bottom', mkContext(diagram)).execute();
       expect(e1.bounds.y).toBe(10);
@@ -75,7 +75,7 @@ describe('AlignActions', () => {
 
     test('should align the selected elements to the center-horizontal', () => {
       const [e1, e2, e3] = layer.elements as [DiagramElement, DiagramElement, DiagramElement];
-      diagram.selectionState.setElements([e1, e2, e3]);
+      diagram.selection.setElements([e1, e2, e3]);
 
       new AlignAction('center-horizontal', mkContext(diagram)).execute();
       expect(e1.bounds.y).toBe(10);
@@ -85,7 +85,7 @@ describe('AlignActions', () => {
 
     test('should align the selected elements to the left', () => {
       const [e1, e2, e3] = layer.elements as [DiagramElement, DiagramElement, DiagramElement];
-      diagram.selectionState.setElements([e1, e2, e3]);
+      diagram.selection.setElements([e1, e2, e3]);
 
       new AlignAction('left', mkContext(diagram)).execute();
       expect(e1.bounds.x).toBe(10);
@@ -95,7 +95,7 @@ describe('AlignActions', () => {
 
     test('should align the selected elements to the right', () => {
       const [e1, e2, e3] = layer.elements as [DiagramElement, DiagramElement, DiagramElement];
-      diagram.selectionState.setElements([e1, e2, e3]);
+      diagram.selection.setElements([e1, e2, e3]);
 
       new AlignAction('right', mkContext(diagram)).execute();
       expect(e1.bounds.x).toBe(10);
@@ -105,7 +105,7 @@ describe('AlignActions', () => {
 
     test('should align the selected elements to the center-vertical', () => {
       const [e1, e2, e3] = layer.elements as [DiagramElement, DiagramElement, DiagramElement];
-      diagram.selectionState.setElements([e1, e2, e3]);
+      diagram.selection.setElements([e1, e2, e3]);
 
       new AlignAction('center-vertical', mkContext(diagram)).execute();
       expect(e1.bounds.x).toBe(10);

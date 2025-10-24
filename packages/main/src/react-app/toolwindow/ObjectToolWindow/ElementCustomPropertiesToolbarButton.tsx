@@ -12,20 +12,20 @@ export const ElementCustomPropertiesToolbarButton = () => {
 
   useEffect(() => {
     const callback = () => {
-      const selectionType = diagram.selectionState.getSelectionType();
+      const selectionType = diagram.selection.type;
       if (selectionType !== 'single-node' && selectionType !== 'single-label-node') {
         setNode(undefined);
       } else {
-        setNode(diagram.selectionState.nodes[0]);
+        setNode(diagram.selection.nodes[0]);
       }
     };
     callback();
 
-    diagram.selectionState.on('change', callback);
+    diagram.selection.on('change', callback);
     return () => {
-      diagram.selectionState.off('change', callback);
+      diagram.selection.off('change', callback);
     };
-  }, [diagram.selectionState]);
+  }, [diagram.selection]);
 
   if (!node) {
     return null;

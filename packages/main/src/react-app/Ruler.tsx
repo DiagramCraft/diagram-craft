@@ -37,7 +37,7 @@ export const Ruler = ({ orientation }: Props) => {
   }, [orientation]);
 
   const updateSelection = useCallback(() => {
-    const bounds = diagram.selectionState.bounds;
+    const bounds = diagram.selection.bounds;
     const selRect = selRef.current;
     if (!selRect) return;
 
@@ -48,8 +48,8 @@ export const Ruler = ({ orientation }: Props) => {
       selRect.setAttribute('y', toScreenY(bounds.y).toString());
       selRect.setAttribute('height', (bounds.h / viewbox.zoomLevel).toString());
     }
-    selRect.style.visibility = diagram.selectionState.isEmpty() ? 'hidden' : 'visible';
-  }, [diagram.selectionState, orientation, toScreenX, toScreenY, viewbox.zoomLevel]);
+    selRect.style.visibility = diagram.selection.isEmpty() ? 'hidden' : 'visible';
+  }, [diagram.selection, orientation, toScreenX, toScreenY, viewbox.zoomLevel]);
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
@@ -65,7 +65,7 @@ export const Ruler = ({ orientation }: Props) => {
 
   useEventListener(diagram, 'diagramChange', () => queueMicrotask(() => redraw()));
   useEventListener(diagram.viewBox, 'viewbox', () => queueMicrotask(() => redraw()));
-  useEventListener(diagram.selectionState, 'change', updateSelection);
+  useEventListener(diagram.selection, 'change', updateSelection);
   useEventListener(UserState.get(), 'change', () => queueMicrotask(() => redraw()));
 
   const userState = UserState.get();

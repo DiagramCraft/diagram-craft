@@ -267,16 +267,16 @@ describe('ElementDeleteUndoableAction', () => {
     const { diagram, layer } = TestModel.newDiagramWithLayer();
     const node = layer.addNode();
 
-    diagram.selectionState.setElements([node]);
-    expect(diagram.selectionState.elements).toContain(node);
+    diagram.selection.setElements([node]);
+    expect(diagram.selection.elements).toContain(node);
 
     const action = new ElementDeleteUndoableAction(diagram, layer, [node], true);
     action.redo(UnitOfWork.immediate(diagram));
 
-    expect(diagram.selectionState.elements).toHaveLength(0);
+    expect(diagram.selection.elements).toHaveLength(0);
 
     action.undo(UnitOfWork.immediate(diagram));
 
-    expect(diagram.selectionState.elements).toContain(node);
+    expect(diagram.selection.elements).toContain(node);
   });
 });

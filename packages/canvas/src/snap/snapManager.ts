@@ -5,7 +5,7 @@ import { NodeDistanceSnapProvider } from './nodeDistanceSnapProvider';
 import { GridSnapProvider } from './gridSnapProvider';
 import { NodeSizeSnapProvider } from './nodeSizeSnapProvider';
 import { GuidesSnapProvider } from './guidesSnapProvider';
-import { Highlight } from '@diagram-craft/model/selectionState';
+import { Highlight } from '@diagram-craft/model/selection';
 import { Magnet, MagnetOfType, MagnetType } from './magnet';
 import { Axis } from '@diagram-craft/geometry/axis';
 import { Box, WritableBox } from '@diagram-craft/geometry/box';
@@ -238,8 +238,8 @@ export class SnapManager {
   static create(diagram: Diagram): SnapManager {
     const snapConfig = getSnapConfig(diagram);
 
-    const selection = diagram.selectionState.nodes;
-    const selectionIds = new Set(diagram.selectionState.elements.map(e => e.id));
+    const selection = diagram.selection.nodes;
+    const selectionIds = new Set(diagram.selection.elements.map(e => e.id));
 
     const firstParent = selection[0]?.parent;
     if (firstParent && selection.every(n => n.parent === firstParent)) {

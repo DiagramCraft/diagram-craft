@@ -76,7 +76,7 @@ export class RectTool extends AbstractTool {
       )
     );
 
-    this.diagram.selectionState.setElements([this.node]);
+    this.diagram.selection.setElements([this.node]);
 
     this.resetTool();
 

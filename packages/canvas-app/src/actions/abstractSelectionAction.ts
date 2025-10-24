@@ -34,7 +34,7 @@ export abstract class AbstractSelectionAction<
 
   getCriteria(context: C): Array<ActionCriteria> {
     const cb = () => {
-      const $s = context.model.activeDiagram.selectionState;
+      const $s = context.model.activeDiagram.selection;
       if ($s.isEmpty()) {
         return this.allowEmptySelection;
       }
@@ -69,8 +69,8 @@ export abstract class AbstractSelectionAction<
     };
 
     return [
-      ActionCriteria.EventTriggered(context.model.activeDiagram.selectionState, 'add', cb),
-      ActionCriteria.EventTriggered(context.model.activeDiagram.selectionState, 'remove', cb)
+      ActionCriteria.EventTriggered(context.model.activeDiagram.selection, 'add', cb),
+      ActionCriteria.EventTriggered(context.model.activeDiagram.selection, 'remove', cb)
     ];
   }
 

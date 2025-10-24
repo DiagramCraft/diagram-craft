@@ -40,7 +40,7 @@ export class SelectionResizeAction extends AbstractSelectionAction {
   }
 
   execute(): void {
-    const $sel = this.context.model.activeDiagram.selectionState;
+    const $sel = this.context.model.activeDiagram.selection;
     if ($sel.isEmpty()) return;
 
     const newBox = {
@@ -53,7 +53,7 @@ export class SelectionResizeAction extends AbstractSelectionAction {
 
     const uow = new UnitOfWork(this.context.model.activeDiagram, true);
     transformElements(
-      this.context.model.activeDiagram.selectionState.elements,
+      this.context.model.activeDiagram.selection.elements,
       TransformFactory.fromTo($sel.bounds, newBox),
       uow
     );

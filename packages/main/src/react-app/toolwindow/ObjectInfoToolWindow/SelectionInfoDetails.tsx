@@ -1,5 +1,5 @@
 import { Tree } from '@diagram-craft/app-components/Tree';
-import { SelectionState } from '@diagram-craft/model/selectionState';
+import { Selection } from '@diagram-craft/model/selection';
 import { ObjectTreeNode } from './ObjectTreeNode';
 import { useRedraw } from '../../hooks/useRedraw';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
@@ -9,7 +9,7 @@ import { isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import { shorten } from '@diagram-craft/utils/strings';
 import { useDiagram } from '../../../application';
 
-export const SelectionInfoDetails = (props: { obj: SelectionState }) => {
+export const SelectionInfoDetails = (props: { obj: Selection }) => {
   const redraw = useRedraw();
   const diagram = useDiagram();
 
@@ -19,8 +19,8 @@ export const SelectionInfoDetails = (props: { obj: SelectionState }) => {
     )
   );
 
-  useEventListener(diagram.selectionState, 'add', redraw);
-  useEventListener(diagram.selectionState, 'remove', redraw);
+  useEventListener(diagram.selection, 'add', redraw);
+  useEventListener(diagram.selection, 'remove', redraw);
   useEventListener(diagram, 'diagramChange', redraw);
   useEventListener(diagram, 'elementChange', ({ element }) => {
     if (names[element.id] !== element.name) {
@@ -28,7 +28,7 @@ export const SelectionInfoDetails = (props: { obj: SelectionState }) => {
     }
   });
 
-  const selection = diagram.selectionState;
+  const selection = diagram.selection;
 
   return (
     <Tree.Root>

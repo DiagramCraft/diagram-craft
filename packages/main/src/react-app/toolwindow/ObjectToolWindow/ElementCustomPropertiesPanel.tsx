@@ -98,7 +98,7 @@ export const ElementCustomPropertiesPanel = (props: Props) => {
 
   useEffect(() => {
     const callback = () => {
-      const selectionType = diagram.selectionState.getSelectionType();
+      const selectionType = diagram.selection.type;
       if (
         selectionType !== 'single-node' &&
         selectionType !== 'single-label-node' &&
@@ -106,16 +106,16 @@ export const ElementCustomPropertiesPanel = (props: Props) => {
       ) {
         setElement(undefined);
       } else {
-        setElement(diagram.selectionState.elements[0]);
+        setElement(diagram.selection.elements[0]);
       }
     };
     callback();
 
-    diagram.selectionState.on('change', callback);
+    diagram.selection.on('change', callback);
     return () => {
-      diagram.selectionState.off('change', callback);
+      diagram.selection.off('change', callback);
     };
-  }, [diagram.selectionState]);
+  }, [diagram.selection]);
 
   useEventListener(diagram, 'elementChange', redraw);
 

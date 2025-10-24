@@ -21,7 +21,7 @@ import {
   ElementAddUndoableAction,
   SnapshotUndoableAction
 } from '@diagram-craft/model/diagramUndoActions';
-import { excludeLabelNodes, includeAll, SelectionState } from '@diagram-craft/model/selectionState';
+import { excludeLabelNodes, includeAll, Selection } from '@diagram-craft/model/selection';
 import { precondition, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { largest } from '@diagram-craft/utils/array';
 import { Context } from '../context';
@@ -76,8 +76,8 @@ export abstract class AbstractMoveDrag extends Drag {
   onDragEnter({ id }: DragEvents.DragEnter) {
     if (!id) return;
 
-    const selection = this.diagram.selectionState;
-    if (selection.getSelectionType() !== 'single-node') return;
+    const selection = this.diagram.selection;
+    if (selection.type !== 'single-node') return;
 
     const hover = this.diagram.lookup(id);
 
@@ -102,11 +102,11 @@ export abstract class AbstractMoveDrag extends Drag {
 
   onKeyDown(event: KeyboardEvent) {
     this.#keys.push(event.key);
-    this.updateState(this.diagram.selectionState.bounds);
+    this.updateState(this.diagram.selection.bounds);
   }
 
   onDrag({ offset, modifiers }: DragEvents.DragStart): void {
-    const selection = this.diagram.selectionState;
+    const selection = this.diagram.selection;
     selection.setDragging(true);
 
     // Don't move connected edges
@@ -156,14 +156,14 @@ export abstract class AbstractMoveDrag extends Drag {
       transformElements(
         selection.filter(
           'all',
-          selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes
+          selection.type === 'single-label-node' ? includeAll : excludeLabelNodes
         ),
         [new Translation(Point.subtract(newBounds, selection.bounds))],
         this.uow
       );
 
       // This is mainly a performance optimization and not strictly necessary
-      this.diagram.selectionState.recalculateBoundingBox();
+      this.diagram.selection.recalculateBoundingBox();
 
       this.uow.notify();
     }
@@ -173,7 +173,7 @@ export abstract class AbstractMoveDrag extends Drag {
     const activeLayer = this.diagram.activeLayer;
     assertRegularOrModificationLayer(activeLayer);
 
-    const selection = this.diagram.selectionState;
+    const selection = this.diagram.selection;
     selection.setDragging(false);
     selection.highlights = [];
 
@@ -250,7 +250,7 @@ export abstract class AbstractMoveDrag extends Drag {
     selection.rebaseline();
   }
 
-  private constrainDrag(selection: SelectionState, coord: Point) {
+  private constrainDrag(selection: Selection, coord: Point) {
     let snapDirections = Direction.all();
     const source = Point.add(selection.source.boundingBox, this.offset);
 
@@ -350,7 +350,7 @@ export class MoveDrag extends AbstractMoveDrag {
 
     this.#hasDuplicatedSelection = true;
 
-    const selection = this.diagram.selectionState;
+    const selection = this.diagram.selection;
 
     // Clone the current selection to keep in its original position
     const newElements = selection.source.elementIds.map(e => this.diagram.lookup(e)!.duplicate());
@@ -362,7 +362,7 @@ export class MoveDrag extends AbstractMoveDrag {
     transformElements(
       selection.filter(
         'nodes',
-        selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes
+        selection.type === 'single-label-node' ? includeAll : excludeLabelNodes
       ),
       [new Translation(Point.subtract(selection.source.boundingBox, selection.bounds))],
       this.uow
@@ -384,7 +384,7 @@ export class MoveDrag extends AbstractMoveDrag {
 
     this.#hasDuplicatedSelection = false;
 
-    const selection = this.diagram.selectionState;
+    const selection = this.diagram.selection;
 
     const elementsToRemove = selection.elements;
     const posititions = elementsToRemove.map(e => e.bounds);

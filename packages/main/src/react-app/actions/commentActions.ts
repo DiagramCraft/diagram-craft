@@ -33,7 +33,7 @@ class CommentAddAction extends AbstractSelectionAction<Application, { elementId:
     if (arg?.elementId) {
       selectedElement = diagram.lookup(arg?.elementId);
     } else {
-      const selectionState = diagram.selectionState;
+      const selectionState = diagram.selection;
       selectedElement =
         selectionState.elements.length === 1 ? selectionState.elements[0] : undefined;
     }
@@ -67,7 +67,6 @@ class CommentAddAction extends AbstractSelectionAction<Application, { elementId:
 }
 
 class CommentEditAction extends AbstractAction<{ comment: Comment }, Application> {
-
   execute(arg: Partial<{ comment: Comment }>): void {
     const comment = arg.comment;
     assert.present(comment);

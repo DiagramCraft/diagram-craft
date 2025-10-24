@@ -98,9 +98,9 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
       e.stopPropagation();
     };
 
-    const isSelected = $d.selectionState.elements.includes(props.element);
-    const isSingleSelected = isSelected && $d.selectionState.elements.length === 1;
-    const firstEdge = $d.selectionState.edges[0]!;
+    const isSelected = $d.selection.elements.includes(props.element);
+    const isSingleSelected = isSelected && $d.selection.elements.length === 1;
+    const firstEdge = $d.selection.edges[0]!;
 
     const edgeProps = props.element.renderProps;
 

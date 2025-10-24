@@ -143,12 +143,12 @@ export const NamedIndicatorPanel = (_props: { mode?: 'accordion' | 'panel' }) =>
 
   const ruleIndicatorKeys: string[] = [];
   const enabledRruleIndicatorKeys: string[] = [];
-  if ($d.selectionState.elements.length === 1) {
-    const keys = Object.keys($d.selectionState.elements[0]!.renderProps.indicators ?? {});
+  if ($d.selection.elements.length === 1) {
+    const keys = Object.keys($d.selection.elements[0]!.renderProps.indicators ?? {});
     for (const k of keys) {
       if (!indicators.val[k]) {
         ruleIndicatorKeys.push(k);
-        if ($d.selectionState.elements[0]!.renderProps.indicators[k]!.enabled) {
+        if ($d.selection.elements[0]!.renderProps.indicators[k]!.enabled) {
           enabledRruleIndicatorKeys.push(k);
         }
       }

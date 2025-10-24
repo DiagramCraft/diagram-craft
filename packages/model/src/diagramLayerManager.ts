@@ -104,27 +104,27 @@ export class LayerManager
     this.#visibleLayers.on('remoteInsert', () => this.emit('layerStructureChange', {}));
     this.#visibleLayers.on('remoteDelete', () => this.emit('layerStructureChange', {}));
 
-    this.diagram.selectionState.on('add', () => {
+    this.diagram.selection.on('add', () => {
       // We don't want to change active layer in case we are in a modification layer, as
       // this prevents the ability to manage the modification layer
       if (this.active.type === 'modification') return;
 
-      const firstRegularLayer = this.diagram.selectionState.elements
+      const firstRegularLayer = this.diagram.selection.elements
         .map(e => e.layer)
         .filter(e => e.type === 'regular')[0];
-      if (!this.diagram.selectionState.isEmpty() && !!firstRegularLayer) {
+      if (!this.diagram.selection.isEmpty() && !!firstRegularLayer) {
         this.active = firstRegularLayer;
       }
     });
-    this.diagram.selectionState.on('remove', () => {
+    this.diagram.selection.on('remove', () => {
       // We don't want to change active layer in case we are in a modification layer, as
       // this prevents the ability to manage the modification layer
       if (this.active.type === 'modification') return;
 
-      const firstRegularLayer = this.diagram.selectionState.elements
+      const firstRegularLayer = this.diagram.selection.elements
         .map(e => e.layer)
         .filter(e => e.type === 'regular')[0];
-      if (!this.diagram.selectionState.isEmpty() && !!firstRegularLayer) {
+      if (!this.diagram.selection.isEmpty() && !!firstRegularLayer) {
         this.active = firstRegularLayer;
       }
     });
@@ -174,7 +174,7 @@ export class LayerManager
       this.#visibleLayers.set(layer.id, true);
     }
 
-    this.diagram.selectionState.filterSelectionToVisibleElements();
+    this.diagram.selection.filterSelectionToVisibleElements();
 
     this.emit('layerStructureChange', {});
   }
@@ -211,8 +211,8 @@ export class LayerManager
     uow.snapshot(this);
     this.#layers.remove(layer.id);
     this.#visibleLayers.delete(layer.id);
-    if (this.diagram.selectionState.nodes.some(e => e.layer === layer)) {
-      this.diagram.selectionState.clear();
+    if (this.diagram.selection.nodes.some(e => e.layer === layer)) {
+      this.diagram.selection.clear();
     }
     uow.updateElement(this);
     uow.removeElement(layer);

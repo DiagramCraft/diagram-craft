@@ -3,7 +3,7 @@ import { ActionToolbarButton } from './ActionToolbarButton';
 import { useEventListener } from '../hooks/useEventListener';
 import { useCallback, useEffect, useState } from 'react';
 import { ActionToggleButton } from './ActionToggleButton';
-import { SelectionType } from '@diagram-craft/model/selectionState';
+import { SelectionType } from '@diagram-craft/model/selection';
 import { ElementTextFontToolbarButton } from '../toolwindow/ObjectToolWindow/ElementTextFontToolbarButton';
 import { ElementTextFontSizeToolbarButton } from '../toolwindow/ObjectToolWindow/ElementTextFontSizeToolbarButton';
 import { ElementTextToolbarButton } from '../toolwindow/ObjectToolWindow/ElementTextToolbarButton';
@@ -27,16 +27,16 @@ export const ContextSpecificToolbar = () => {
   const [nodeType, setNodeType] = useState<string | undefined>(undefined);
 
   const callback = useCallback(() => {
-    setSelectionType(diagram.selectionState.getSelectionType());
-    if (diagram.selectionState.isNodesOnly() && diagram.selectionState.nodes.length === 1) {
-      setNodeType(diagram.selectionState.nodes[0]!.nodeType);
+    setSelectionType(diagram.selection.type);
+    if (diagram.selection.isNodesOnly() && diagram.selection.nodes.length === 1) {
+      setNodeType(diagram.selection.nodes[0]!.nodeType);
     } else {
       setNodeType(undefined);
     }
   }, [diagram]);
 
-  useEventListener(diagram.selectionState, 'add', callback);
-  useEventListener(diagram.selectionState, 'remove', callback);
+  useEventListener(diagram.selection, 'add', callback);
+  useEventListener(diagram.selection, 'remove', callback);
   // biome-ignore lint/correctness/useExhaustiveDependencies: this is correct
   useEffect(callback, [callback]);
 

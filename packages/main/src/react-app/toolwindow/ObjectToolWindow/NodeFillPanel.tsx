@@ -29,11 +29,11 @@ export const NodeFillPanel = (props: Props) => {
   const gradientDirection = useElementProperty($d, 'fill.gradient.direction', 0);
   const gradientType = useElementProperty($d, 'fill.gradient.type', 'linear');
 
-  useEventListener($d.selectionState, 'change', redraw);
+  useEventListener($d.selection, 'change', redraw);
 
   const panelDisabled =
-    $d.selectionState.nodes.every(n => !n.getDefinition().supports('fill')) &&
-    $d.selectionState.edges.every(n => !n.getDefinition().supports('fill'));
+    $d.selection.nodes.every(n => !n.getDefinition().supports('fill')) &&
+    $d.selection.edges.every(n => !n.getDefinition().supports('fill'));
 
   if (panelDisabled) return null;
 

@@ -16,7 +16,7 @@ export const NodeTableCellDimensionsPanel = (props: Props) => {
 
   useEventListener(diagram, 'elementChange', redraw);
 
-  const elements = diagram.selectionState.elements;
+  const elements = diagram.selection.elements;
   const table = useTable(diagram);
 
   if (!table || elements.length !== 1 || isEdge(elements[0])) return <div></div>;

@@ -61,14 +61,14 @@ export const ElementStylesheetPanel = (props: Props) => {
 
   const isText = props.type === 'text';
 
-  useEventListener($d.selectionState, 'change', redraw);
+  useEventListener($d.selection, 'change', redraw);
   useEventListener($d, 'diagramChange', redraw);
 
   const style = useElementMetadata($d, 'style', DefaultStyles.node.default);
   const textStyle = useElementMetadata($d, 'textStyle', DefaultStyles.text.default);
 
-  if ($d.selectionState.isEmpty()) return null;
-  if ($d.selectionState.getSelectionType() === 'mixed') return null;
+  if ($d.selection.isEmpty()) return null;
+  if ($d.selection.type === 'mixed') return null;
 
   const isDirty = isText
     ? !textStyle.hasMultipleValues && isSelectionDirty($d, true)
@@ -76,7 +76,7 @@ export const ElementStylesheetPanel = (props: Props) => {
 
   const styleList = isText
     ? $d.document.styles.textStyles
-    : $d.selectionState.isNodesOnly()
+    : $d.selection.isNodesOnly()
       ? $d.document.styles.nodeStyles
       : $d.document.styles.edgeStyles;
 
@@ -86,7 +86,7 @@ export const ElementStylesheetPanel = (props: Props) => {
     <>
       <ToolWindowPanel
         mode={
-          (props.mode ?? ($d.selectionState.isNodesOnly() || $d.selectionState.isEdgesOnly()))
+          (props.mode ?? ($d.selection.isNodesOnly() || $d.selection.isEdgesOnly()))
             ? 'headless'
             : 'accordion'
         }
@@ -102,7 +102,7 @@ export const ElementStylesheetPanel = (props: Props) => {
               isIndeterminate={$s.hasMultipleValues}
               onChange={v => {
                 const uow = new UnitOfWork($d, true);
-                $d.selectionState.elements.forEach(n => {
+                $d.selection.elements.forEach(n => {
                   $d.document.styles.setStylesheet(n, v!, uow, true);
                 });
                 $s.set(v);
@@ -128,7 +128,7 @@ export const ElementStylesheetPanel = (props: Props) => {
                     className="cmp-context-menu__item"
                     onSelect={() => {
                       const uow = new UnitOfWork($d, true);
-                      $d.selectionState.elements.forEach(n => {
+                      $d.selection.elements.forEach(n => {
                         $d.document.styles.setStylesheet(n, $s.val, uow, true);
                       });
                       commitWithUndo(uow, 'Reapply style');
@@ -144,7 +144,7 @@ export const ElementStylesheetPanel = (props: Props) => {
                       const stylesheet = $d.document.styles.get($s.val);
                       if (stylesheet) {
                         const commonProps = getCommonProps(
-                          $d.selectionState.elements.map(e => e.editProps)
+                          $d.selection.elements.map(e => e.editProps)
                         ) as NodeProps & EdgeProps;
                         stylesheet.setProps(
                           isText ? { text: commonProps.text } : commonProps,
@@ -172,14 +172,10 @@ export const ElementStylesheetPanel = (props: Props) => {
                           v => {
                             const id = newid();
                             const commonProps = getCommonProps(
-                              $d.selectionState.elements.map(e => e.editProps)
+                              $d.selection.elements.map(e => e.editProps)
                             ) as NodeProps & EdgeProps;
                             const s = Stylesheet.fromSnapshot(
-                              isText
-                                ? 'text'
-                                : isNode($d.selectionState.elements[0])
-                                  ? 'node'
-                                  : 'edge',
+                              isText ? 'text' : isNode($d.selection.elements[0]) ? 'node' : 'edge',
                               {
                                 id,
                                 name: v,
@@ -193,7 +189,7 @@ export const ElementStylesheetPanel = (props: Props) => {
 
                             $d.document.styles.addStylesheet(s.id, s, uow);
                             $d.document.styles.setStylesheet(
-                              $d.selectionState.elements[0]!,
+                              $d.selection.elements[0]!,
                               id,
                               uow,
                               true

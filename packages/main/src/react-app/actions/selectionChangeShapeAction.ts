@@ -45,7 +45,7 @@ export class SelectionChangeShapeAction extends AbstractSelectionAction<Applicat
 
           const uow = new UnitOfWork(diagram, true);
 
-          for (const e of diagram.selectionState.elements) {
+          for (const e of diagram.selection.elements) {
             if (isNode(e)) {
               e.changeNodeType(node.nodeType, uow);
 
@@ -70,7 +70,7 @@ export class SelectionChangeShapeAction extends AbstractSelectionAction<Applicat
       });
     };
 
-    if (diagram.selectionState.elements.some(e => isNode(e) && e.children.length > 0)) {
+    if (diagram.selection.elements.some(e => isNode(e) && e.children.length > 0)) {
       this.context.ui.showDialog(
         new MessageDialogCommand(
           {

@@ -51,7 +51,7 @@ export class SelectionAddToModificationLayerAction extends AbstractSelectionActi
     const uow = new UnitOfWork(diagram, true);
     const newDelegatingElements = [];
 
-    for (const element of diagram.selectionState.elements) {
+    for (const element of diagram.selection.elements) {
       let delegatingElement: DiagramElement;
 
       if (isNode(element)) {
@@ -69,6 +69,6 @@ export class SelectionAddToModificationLayerAction extends AbstractSelectionActi
     commitWithUndo(uow, 'Add to modification layer');
 
     // Update selection to the new delegating elements
-    diagram.selectionState.setElements(newDelegatingElements);
+    diagram.selection.setElements(newDelegatingElements);
   }
 }

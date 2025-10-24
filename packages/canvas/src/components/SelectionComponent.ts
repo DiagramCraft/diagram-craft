@@ -14,7 +14,7 @@ import { ViewboxEvents } from '@diagram-craft/model/viewBox';
 export class SelectionComponent extends Component<CanvasState> {
   render(props: CanvasState) {
     const diagram = props.diagram;
-    const selection = diagram.selectionState;
+    const selection = diagram.selection;
 
     createEffect(() => {
       const cb = ({ type }: ViewboxEvents['viewbox']) => {
@@ -41,9 +41,7 @@ export class SelectionComponent extends Component<CanvasState> {
     const bounds = selection.bounds;
 
     const labelNode =
-      selection.getSelectionType() === 'single-label-node'
-        ? selection.nodes[0]!.labelNode()!
-        : undefined;
+      selection.type === 'single-label-node' ? selection.nodes[0]!.labelNode()! : undefined;
     const shouldHaveRotation = !(labelNode && labelNode.type !== 'independent');
 
     return svg.g(

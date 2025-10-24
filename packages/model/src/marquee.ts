@@ -1,5 +1,5 @@
 import { DiagramElement } from './diagramElement';
-import type { SelectionState } from './selectionState';
+import type { Selection } from './selection';
 import { Box } from '@diagram-craft/geometry/box';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { precondition } from '@diagram-craft/utils/assert';
@@ -13,7 +13,7 @@ export class Marquee extends EventEmitter<MarqueeEvents> {
 
   pendingElements?: ReadonlyArray<DiagramElement>;
 
-  constructor(private readonly selectionState: SelectionState) {
+  constructor(private readonly selectionState: Selection) {
     super();
   }
 

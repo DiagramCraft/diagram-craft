@@ -1,7 +1,7 @@
 import { Viewbox } from './viewBox';
 import { DiagramNode } from './diagramNode';
 import { DiagramEdge, SimpleDiagramEdge } from './diagramEdge';
-import { SelectionState } from './selectionState';
+import { Selection } from './selection';
 import { UndoManager } from './undoManager';
 import { UnitOfWork } from './unitOfWork';
 import { bindElementListeners, DiagramElement, isEdge, isNode } from './diagramElement';
@@ -131,7 +131,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   readonly layers: LayerManager;
 
   // Unshared properties
-  readonly selectionState = new SelectionState(this);
+  readonly selection = new Selection(this);
   readonly viewBox: Viewbox;
   readonly nodeLookup = new ElementLookup<DiagramNode>();
   readonly edgeLookup = new ElementLookup<DiagramEdge>();

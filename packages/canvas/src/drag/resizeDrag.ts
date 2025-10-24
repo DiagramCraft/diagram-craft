@@ -8,7 +8,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
-import { excludeLabelNodes, includeAll } from '@diagram-craft/model/selectionState';
+import { excludeLabelNodes, includeAll } from '@diagram-craft/model/selection';
 import { transformElements } from '@diagram-craft/model/diagramElement';
 import { SnapManager } from '../snap/snapManager';
 
@@ -28,11 +28,11 @@ export class ResizeDrag extends Drag {
   ) {
     super();
     this.uow = new UnitOfWork(this.diagram, true);
-    this.originalBounds = this.diagram.selectionState.bounds;
+    this.originalBounds = this.diagram.selection.bounds;
   }
 
   onDrag(event: DragEvents.DragStart): void {
-    const selection = this.diagram.selectionState;
+    const selection = this.diagram.selection;
 
     const before = this.originalBounds;
     const original = selection.source.boundingBox;
@@ -145,7 +145,7 @@ export class ResizeDrag extends Drag {
     transformElements(
       selection.filter(
         'all',
-        selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes
+        selection.type === 'single-label-node' ? includeAll : excludeLabelNodes
       ),
       TransformFactory.fromTo(selection.bounds, WritableBox.asBox(newBounds)),
       this.uow
@@ -153,11 +153,11 @@ export class ResizeDrag extends Drag {
     this.uow.notify();
 
     // This is mainly a performance optimization and not strictly necessary
-    this.diagram.selectionState.recalculateBoundingBox();
+    this.diagram.selection.recalculateBoundingBox();
   }
 
   onDragEnd(): void {
-    const selection = this.diagram.selectionState;
+    const selection = this.diagram.selection;
 
     if (selection.isChanged()) {
       this.uow.stopTracking();

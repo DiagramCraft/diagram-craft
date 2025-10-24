@@ -25,11 +25,11 @@ export const LabelNodePanel = (props: Props) => {
   const redraw = useRedraw();
   const $d = useDiagram();
 
-  useEventListener($d.selectionState, 'change', redraw);
+  useEventListener($d.selection, 'change', redraw);
 
-  if ($d.selectionState.getSelectionType() !== 'single-label-node') return null;
+  if ($d.selection.type !== 'single-label-node') return null;
 
-  const node = $d.selectionState.nodes[0]!;
+  const node = $d.selection.nodes[0]!;
   const edge = node.labelEdge();
   assert.present(edge);
 

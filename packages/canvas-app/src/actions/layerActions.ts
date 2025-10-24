@@ -42,7 +42,6 @@ declare global {
 type LayerActionArg = { id?: string };
 
 export class LayerDeleteAction extends AbstractAction<LayerActionArg, Application> {
-
   isEnabled({ id }: LayerActionArg): boolean {
     return id !== undefined && this.context.model.activeDiagram.layers.byId(id) !== undefined;
   }
@@ -144,7 +143,6 @@ class LayerDeleteUndoableAction implements UndoableAction {
 }
 
 export class LayerToggleVisibilityAction extends AbstractToggleAction<LayerActionArg> {
-
   isEnabled({ id }: LayerActionArg): boolean {
     return id !== undefined && this.context.model.activeDiagram.layers.byId(id) !== undefined;
   }
@@ -174,7 +172,6 @@ export class LayerToggleVisibilityAction extends AbstractToggleAction<LayerActio
 }
 
 export class LayerToggleLockedAction extends AbstractToggleAction<LayerActionArg> {
-
   isEnabled({ id }: LayerActionArg): boolean {
     const diagram = this.context.model.activeDiagram;
     return (
@@ -205,7 +202,6 @@ export class LayerToggleLockedAction extends AbstractToggleAction<LayerActionArg
 }
 
 export class LayerRenameAction extends AbstractAction<LayerActionArg, Application> {
-
   isEnabled({ id }: LayerActionArg): boolean {
     return id !== undefined && this.context.model.activeDiagram.layers.byId(id) !== undefined;
   }
@@ -334,7 +330,6 @@ class LayerAddUndoableAction implements UndoableAction {
 }
 
 export class LayerSelectionMoveAction extends AbstractAction<LayerActionArg> {
-
   execute({ id }: LayerActionArg): void {
     precondition.is.present(id);
 
@@ -344,13 +339,12 @@ export class LayerSelectionMoveAction extends AbstractAction<LayerActionArg> {
     const layer = diagram.layers.byId(id)!;
     assert.present(layer);
 
-    diagram.moveElement(diagram.selectionState.elements, uow, layer);
+    diagram.moveElement(diagram.selection.elements, uow, layer);
     commitWithUndo(uow, `Move to layer ${layer.name}`);
   }
 }
 
 export class LayerSelectionMoveNewAction extends AbstractAction {
-
   execute(): void {
     const diagram = this.context.model.activeDiagram;
     const uow = new UnitOfWork(diagram, true);
@@ -358,7 +352,7 @@ export class LayerSelectionMoveNewAction extends AbstractAction {
     const layer = new RegularLayer(newid(), 'New Layer', [], diagram);
     diagram.layers.add(layer, uow);
 
-    diagram.moveElement(diagram.selectionState.elements, uow, layer);
+    diagram.moveElement(diagram.selection.elements, uow, layer);
 
     const snapshots = uow.commit();
     uow.diagram.undoManager.add(

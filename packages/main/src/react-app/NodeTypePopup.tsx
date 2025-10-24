@@ -75,7 +75,7 @@ export const NodeTypePopup = (props: Props) => {
       assertRegularLayer(edge.layer);
       edge.layer.removeElement(edge, uow);
     });
-    diagram.selectionState.clear();
+    diagram.selection.clear();
   }, [diagram, props.edgeId]);
 
   const size = 30;

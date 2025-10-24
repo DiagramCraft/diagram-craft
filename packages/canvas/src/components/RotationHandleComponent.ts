@@ -13,7 +13,7 @@ export class RotationHandleComponent extends Component<Props> {
   render(props: Props) {
     const { diagram } = props;
 
-    const selection = diagram.selectionState;
+    const selection = diagram.selection;
     const bounds = selection.bounds;
 
     if (selection.nodes.some(p => p.renderProps.capabilities.rotatable === false)) {

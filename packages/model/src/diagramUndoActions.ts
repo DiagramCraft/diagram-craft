@@ -91,7 +91,8 @@ export class SnapshotUndoableAction implements UndoableAction {
 
     if (
       nextAction.description === this.description &&
-      hasSameElements(nextAction.afterSnapshot.keys, this.afterSnapshot.keys) &&Date.now()- this.timestamp!.getTime() < 2000
+      hasSameElements(nextAction.afterSnapshot.keys, this.afterSnapshot.keys) &&
+      Date.now() - this.timestamp!.getTime() < 2000
     ) {
       this.afterSnapshot = nextAction.afterSnapshot;
       this.timestamp = new Date();
@@ -122,8 +123,8 @@ export class ElementAddUndoableAction implements UndoableAction {
     });
     this.snapshot = uow.commit();
 
-    this.diagram.selectionState.setElements(
-      this.diagram.selectionState.elements.filter(e => !this.elements.includes(e))
+    this.diagram.selection.setElements(
+      this.diagram.selection.elements.filter(e => !this.elements.includes(e))
     );
   }
 
@@ -166,7 +167,7 @@ export class ElementDeleteUndoableAction implements UndoableAction {
     restoreSnapshots(this.snapshot, this.diagram, uow);
 
     if (this.restoreSelection) {
-      this.diagram.selectionState.setElements(this.elements);
+      this.diagram.selection.setElements(this.elements);
     }
   }
 
@@ -180,7 +181,7 @@ export class ElementDeleteUndoableAction implements UndoableAction {
     this.snapshot = uow.commit();
 
     if (this.restoreSelection) {
-      this.diagram.selectionState.clear();
+      this.diagram.selection.clear();
     }
   }
 }

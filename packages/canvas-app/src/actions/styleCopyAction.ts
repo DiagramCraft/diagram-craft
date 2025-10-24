@@ -24,12 +24,10 @@ export class StyleCopyAction extends AbstractSelectionAction {
   }
 
   execute(): void {
-    if (this.context.model.activeDiagram.selectionState.isNodesOnly()) {
-      currentNodeStyle =
-        this.context.model.activeDiagram.selectionState.nodes[0]!.storedPropsCloned;
-    } else if (this.context.model.activeDiagram.selectionState.isEdgesOnly()) {
-      currentEdgeStyle =
-        this.context.model.activeDiagram.selectionState.edges[0]!.storedPropsCloned;
+    if (this.context.model.activeDiagram.selection.isNodesOnly()) {
+      currentNodeStyle = this.context.model.activeDiagram.selection.nodes[0]!.storedPropsCloned;
+    } else if (this.context.model.activeDiagram.selection.isEdgesOnly()) {
+      currentEdgeStyle = this.context.model.activeDiagram.selection.edges[0]!.storedPropsCloned;
     } else {
       VERIFY_NOT_REACHED();
     }
@@ -43,7 +41,7 @@ export class StylePasteAction extends AbstractSelectionAction {
 
   execute(): void {
     const uow = new UnitOfWork(this.context.model.activeDiagram, true);
-    for (const e of this.context.model.activeDiagram.selectionState.elements) {
+    for (const e of this.context.model.activeDiagram.selection.elements) {
       if (isNode(e)) {
         e.updateProps(p => {
           for (const k in currentNodeStyle) {

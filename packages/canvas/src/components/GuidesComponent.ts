@@ -3,7 +3,7 @@ import * as svg from '../component/vdom-svg';
 import { text, VNode } from '../component/vdom';
 import { Point } from '@diagram-craft/geometry/point';
 import { Line } from '@diagram-craft/geometry/line';
-import { Highlight } from '@diagram-craft/model/selectionState';
+import { Highlight } from '@diagram-craft/model/selection';
 import { newid } from '@diagram-craft/utils/id';
 import { round } from '@diagram-craft/utils/math';
 import { Zoom } from './zoom';

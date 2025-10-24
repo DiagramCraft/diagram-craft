@@ -30,12 +30,12 @@ export type Highlight = {
   matchingMagnet: Magnet;
 };
 
-export type SelectionStateEvents = {
+export type SelectionEvents = {
   /* The selection has changed, e.g. recalculating bounding box
    * This is implicitly triggered by adding/removing elements, as the bounding box
    * is changed - but this should not be relied upon
    */
-  change: { selection: SelectionState };
+  change: { selection: Selection };
 
   /* Elements have been added to the selection */
   add: { element: DiagramElement };
@@ -60,7 +60,7 @@ export const excludeLabelNodes: ElementPredicate = (n: DiagramElement) =>
 
 export const includeAll: ElementPredicate = () => true;
 
-export class SelectionState extends EventEmitter<SelectionStateEvents> {
+export class Selection extends EventEmitter<SelectionEvents> {
   readonly #marquee: Marquee;
 
   #bounds: Box;
@@ -150,19 +150,7 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
     return this.#marquee;
   }
 
-  forceRotation(r: number | undefined) {
-    if (r === undefined) {
-      this.#forcedRotation = false;
-      return;
-    }
-    this.#bounds = {
-      ...this.#bounds,
-      r: r
-    };
-    this.#forcedRotation = true;
-  }
-
-  getSelectionType(): SelectionType {
+  get type(): SelectionType {
     if (this.isEmpty()) {
       return 'empty';
     } else if (this.#elements.length === 1) {
@@ -178,6 +166,17 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
     } else {
       return 'mixed';
     }
+  }
+  forceRotation(r: number | undefined) {
+    if (r === undefined) {
+      this.#forcedRotation = false;
+      return;
+    }
+    this.#bounds = {
+      ...this.#bounds,
+      r: r
+    };
+    this.#forcedRotation = true;
   }
 
   isNodesOnly(): boolean {
@@ -276,7 +275,7 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
     return {
       bounds: this.bounds,
       elements: this.elements,
-      type: this.getSelectionType()
+      type: this.type
     };
   }
 }

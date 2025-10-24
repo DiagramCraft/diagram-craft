@@ -188,18 +188,18 @@ const isPropsDirty = (
 
 export const isSelectionDirty = ($d: Diagram, isText: boolean) => {
   const styles = $d.document.styles;
-  if ($d.selectionState.elements.length === 0) {
+  if ($d.selection.elements.length === 0) {
     return false;
   }
 
-  const metadata = $d.selectionState.elements[0]!.metadata;
+  const metadata = $d.selection.elements[0]!.metadata;
 
   const stylesheet = isText
     ? styles.get(metadata.textStyle ?? DefaultStyles.text.default)
     : styles.get(metadata.style ?? DefaultStyles.node.default);
   assert.present(stylesheet);
 
-  return $d.selectionState.elements.some(e => {
+  return $d.selection.elements.some(e => {
     const propsFromElement = stylesheet.getPropsFromElement(e);
     return isPropsDirty(
       propsFromElement,

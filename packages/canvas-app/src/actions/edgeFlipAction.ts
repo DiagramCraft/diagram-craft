@@ -18,7 +18,7 @@ export class EdgeFlipAction extends AbstractSelectionAction {
 
   execute(): void {
     const uow = new UnitOfWork(this.context.model.activeDiagram, true);
-    for (const edge of this.context.model.activeDiagram.selectionState.edges) {
+    for (const edge of this.context.model.activeDiagram.selection.edges) {
       edge.flip(uow);
     }
 

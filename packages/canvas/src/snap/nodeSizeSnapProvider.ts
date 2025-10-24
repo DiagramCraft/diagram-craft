@@ -1,5 +1,5 @@
 import type { MatchingMagnetPair, SnapProvider } from './snapManager';
-import { Highlight } from '@diagram-craft/model/selectionState';
+import { Highlight } from '@diagram-craft/model/selection';
 import { MagnetOfType } from './magnet';
 import { AbstractNodeSnapProvider } from './abstractNodeSnapProvider';
 import { Box } from '@diagram-craft/geometry/box';

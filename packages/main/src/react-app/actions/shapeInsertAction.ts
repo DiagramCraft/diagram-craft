@@ -69,7 +69,7 @@ class ShapeInsertAction extends AbstractAction<undefined, Application> {
 
         diagram.document.props.recentStencils.register(stencil.id);
 
-        diagram.selectionState.toggle(node);
+        diagram.selection.toggle(node);
       },
       onCancel: () => {},
       props: {

@@ -149,7 +149,7 @@ export const NodeEffectsPanelForm = ({
         </div>
       </Collapsible>
 
-      {$d.selectionState.nodes.some(e => e.getDefinition().supports('rounding')) && (
+      {$d.selection.nodes.some(e => e.getDefinition().supports('rounding')) && (
         <Collapsible label={'Rounding'} defaultOpen={rounding.isSet && rounding.val}>
           <div className={'cmp-labeled-table'}>
             <div className={'cmp-labeled-table__label util-a-top-center'}>Enabled:</div>
@@ -287,7 +287,7 @@ export const NodeEffectsPanel = (props: Props) => {
   const isometricStrokeEnabled = useNodeProperty($d, 'effects.isometric.strokeEnabled');
   const isometricStrokeColor = useNodeProperty($d, 'effects.isometric.strokeColor');
 
-  useEventListener($d.selectionState, 'change', redraw);
+  useEventListener($d.selection, 'change', redraw);
 
   return (
     <ToolWindowPanel

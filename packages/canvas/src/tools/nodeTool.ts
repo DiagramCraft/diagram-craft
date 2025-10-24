@@ -27,10 +27,10 @@ export class NodeTool extends AbstractTool {
     super('node', diagram, drag, svg, context, resetTool);
 
     if (
-      diagram.selectionState.getSelectionType() !== 'single-node' &&
-      diagram.selectionState.nodes[0]?.nodeType !== 'generic-path'
+      diagram.selection.type !== 'single-node' &&
+      diagram.selection.nodes[0]?.nodeType !== 'generic-path'
     ) {
-      diagram.selectionState.clear();
+      diagram.selection.clear();
     }
 
     context.help.set('Select element');
@@ -40,7 +40,7 @@ export class NodeTool extends AbstractTool {
     super.onMouseOver(id, point, target);
 
     const el = this.diagram.lookup(id);
-    if (this.diagram.selectionState.elements.includes(el!)) return;
+    if (this.diagram.selection.elements.includes(el!)) return;
     if (isNode(el)) {
       if (el.nodeType === 'generic-path') {
         addHighlight(el, Highlights.NODE__TOOL_EDIT);
@@ -71,7 +71,7 @@ export class NodeTool extends AbstractTool {
     const el = this.diagram.lookup(id);
     if (isNode(el)) {
       if (el.nodeType === 'generic-path') {
-        this.diagram.selectionState.setElements([el]);
+        this.diagram.selection.setElements([el]);
       } else if (el.nodeType !== 'text') {
         this.context.ui.showDialog(
           new MessageDialogCommand(
@@ -85,7 +85,7 @@ export class NodeTool extends AbstractTool {
               const uow = new UnitOfWork(this.diagram, true);
               el.convertToPath(uow);
               commitWithUndo(uow, 'Convert to path');
-              this.diagram.selectionState.setElements([el]);
+              this.diagram.selection.setElements([el]);
             }
           )
         );

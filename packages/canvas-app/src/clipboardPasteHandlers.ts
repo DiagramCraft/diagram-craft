@@ -95,7 +95,7 @@ export class ImagePasteHandler extends PasteHandler {
     ];
 
     diagram.undoManager.addAndExecute(new PasteUndoableAction(newElements, diagram, layer, this));
-    diagram.selectionState.setElements(newElements);
+    diagram.selection.setElements(newElements);
 
     this.registerPastePoint(hash, point);
   }
@@ -125,7 +125,7 @@ export class TextPasteHandler extends PasteHandler {
     ];
 
     diagram.undoManager.addAndExecute(new PasteUndoableAction(newElements, diagram, layer, this));
-    diagram.selectionState.setElements(newElements);
+    diagram.selection.setElements(newElements);
 
     this.registerPastePoint(hash, point);
   }
@@ -211,7 +211,7 @@ export class ElementsPasteHandler extends PasteHandler {
     const newElements = deserializeDiagramElements(elements, diagram, layer);
 
     diagram.undoManager.addAndExecute(new PasteUndoableAction(newElements, diagram, layer, this));
-    diagram.selectionState.setElements(newElements);
+    diagram.selection.setElements(newElements);
 
     this.registerPastePoint(hash, point);
   }
@@ -240,8 +240,8 @@ class PasteUndoableAction implements UndoableAction {
       e.layer.removeElement(e, uow);
     });
 
-    this.diagram.selectionState.setElements(
-      this.diagram.selectionState.elements.filter(e => !this.elements.includes(e))
+    this.diagram.selection.setElements(
+      this.diagram.selection.elements.filter(e => !this.elements.includes(e))
     );
 
     this.pasteHandler.clearPastePoint();

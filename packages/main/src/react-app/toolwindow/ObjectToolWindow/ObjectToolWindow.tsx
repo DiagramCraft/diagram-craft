@@ -53,35 +53,35 @@ export const ObjectToolWindow = () => {
 
   const callback = () => {
     if (
-      diagram.selectionState.isNodesOnly() &&
-      diagram.selectionState.nodes.every(e => e.nodeType === 'table')
+      diagram.selection.isNodesOnly() &&
+      diagram.selection.nodes.every(e => e.nodeType === 'table')
     ) {
       setType('table');
     } else if (
-      diagram.selectionState.isNodesOnly() &&
-      diagram.selectionState.nodes.every(e => isNode(e.parent) && e.parent?.nodeType === 'tableRow')
+      diagram.selection.isNodesOnly() &&
+      diagram.selection.nodes.every(e => isNode(e.parent) && e.parent?.nodeType === 'tableRow')
     ) {
       setType('table-cell');
-    } else if (diagram.selectionState.getSelectionType() === 'mixed') {
+    } else if (diagram.selection.type === 'mixed') {
       setType('mixed');
-    } else if (diagram.selectionState.getSelectionType() === 'single-label-node') {
+    } else if (diagram.selection.type === 'single-label-node') {
       setType('single-label-node');
-    } else if (diagram.selectionState.isNodesOnly()) {
+    } else if (diagram.selection.isNodesOnly()) {
       setType('node');
-    } else if (diagram.selectionState.isEdgesOnly()) {
+    } else if (diagram.selection.isEdgesOnly()) {
       setType('edge');
     } else {
       setType('diagram');
     }
 
     setEdgeSupportsFill(
-      diagram.selectionState.isEdgesOnly() &&
-        diagram.selectionState.edges.every(e => e.getDefinition().supports('fill'))
+      diagram.selection.isEdgesOnly() &&
+        diagram.selection.edges.every(e => e.getDefinition().supports('fill'))
     );
   };
-  useEventListener(diagram.selectionState, 'change', callback);
+  useEventListener(diagram.selection, 'change', callback);
   // biome-ignore lint/correctness/useExhaustiveDependencies: this is correct
-  useEffect(callback, [diagram.selectionState]);
+  useEffect(callback, [diagram.selection]);
 
   // To update overrides in style panel as rule layers are toggled
   useEventListener(diagram, 'diagramChange', redraw);
@@ -199,7 +199,7 @@ export const ObjectToolWindow = () => {
                   <NodeActionPropertiesPanel />
                 </>
               )}
-              {diagram.selectionState.getSelectionType().includes('single-') && (
+              {diagram.selection.type.includes('single-') && (
                 <>
                   <DefaultIndicatorPanel />
                   <NamedIndicatorPanel />

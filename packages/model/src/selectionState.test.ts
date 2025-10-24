@@ -1,4 +1,4 @@
-import { Highlight, SelectionState } from './selectionState';
+import { Highlight, Selection } from './selection';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { TestDiagramBuilder, TestModel, TestLayerBuilder } from './test-support/builder';
 
@@ -18,7 +18,7 @@ describe('SelectionState', () => {
   });
 
   test('isEmpty()', () => {
-    const emptySelection = new SelectionState(TestModel.newDiagram());
+    const emptySelection = new Selection(TestModel.newDiagram());
     expect(emptySelection.isEmpty()).toBe(true);
     expect(emptySelection.bounds.w).toBe(0);
     expect(emptySelection.bounds.h).toBe(0);
@@ -27,7 +27,7 @@ describe('SelectionState', () => {
   test('toggle()', () => {
     const element = layer.addNode();
 
-    const selectionState = new SelectionState(diagram);
+    const selectionState = new Selection(diagram);
 
     const changeCb = vi.fn();
     const addCb = vi.fn();
@@ -62,48 +62,48 @@ describe('SelectionState', () => {
     expect(changeCb).toHaveBeenCalledTimes(1);
   });
 
-  describe('getSelectionType()', () => {
+  describe('type', () => {
     test('empty selection', () => {
-      const selectionState = new SelectionState(diagram);
-      expect(selectionState.getSelectionType()).toBe('empty');
+      const selectionState = new Selection(diagram);
+      expect(selectionState.type).toBe('empty');
     });
 
     test('single node', () => {
-      const selectionState = new SelectionState(diagram);
+      const selectionState = new Selection(diagram);
       selectionState.toggle(layer.addNode());
-      expect(selectionState.getSelectionType()).toBe('single-node');
+      expect(selectionState.type).toBe('single-node');
     });
 
     test('single edge', () => {
-      const selectionState = new SelectionState(diagram);
+      const selectionState = new Selection(diagram);
       selectionState.toggle(layer.addEdge());
-      expect(selectionState.getSelectionType()).toBe('single-edge');
+      expect(selectionState.type).toBe('single-edge');
     });
 
     test('multiple nodes', () => {
-      const selectionState = new SelectionState(diagram);
+      const selectionState = new Selection(diagram);
       selectionState.toggle(layer.addNode());
       selectionState.toggle(layer.addNode());
-      expect(selectionState.getSelectionType()).toBe('nodes');
+      expect(selectionState.type).toBe('nodes');
     });
 
     test('multiple edges', () => {
-      const selectionState = new SelectionState(diagram);
+      const selectionState = new Selection(diagram);
       selectionState.toggle(layer.addEdge());
       selectionState.toggle(layer.addEdge());
-      expect(selectionState.getSelectionType()).toBe('edges');
+      expect(selectionState.type).toBe('edges');
     });
 
     test('mixed', () => {
-      const selectionState = new SelectionState(diagram);
+      const selectionState = new Selection(diagram);
       selectionState.toggle(layer.addNode());
       selectionState.toggle(layer.addEdge());
-      expect(selectionState.getSelectionType()).toBe('mixed');
+      expect(selectionState.type).toBe('mixed');
     });
   });
 
   test('isNodesOnly()', () => {
-    const selectionState = new SelectionState(diagram);
+    const selectionState = new Selection(diagram);
     selectionState.toggle(layer.addNode());
     expect(selectionState.isNodesOnly()).toBe(true);
     selectionState.toggle(layer.addEdge());
@@ -111,7 +111,7 @@ describe('SelectionState', () => {
   });
 
   test('isEdgesOnly()', () => {
-    const selectionState = new SelectionState(diagram);
+    const selectionState = new Selection(diagram);
     selectionState.toggle(layer.addEdge());
     expect(selectionState.isEdgesOnly()).toBe(true);
     selectionState.toggle(layer.addNode());
@@ -119,7 +119,7 @@ describe('SelectionState', () => {
   });
 
   test('set guides', () => {
-    const selectionState = new SelectionState(diagram);
+    const selectionState = new Selection(diagram);
 
     const changeCb = vi.fn();
     selectionState.on('change', changeCb);

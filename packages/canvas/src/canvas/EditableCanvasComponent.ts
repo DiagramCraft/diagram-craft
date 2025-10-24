@@ -16,7 +16,7 @@ import { Box } from '@diagram-craft/geometry/box';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { ViewboxEvents } from '@diagram-craft/model/viewBox';
 import { DiagramElement, getTopMostNode, isNode } from '@diagram-craft/model/diagramElement';
-import { SelectionState, SelectionStateEvents } from '@diagram-craft/model/selectionState';
+import { Selection, SelectionEvents } from '@diagram-craft/model/selection';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
 import { rawHTML } from '../component/vdom';
 import styles from './canvas.css?inline';
@@ -91,7 +91,7 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
     const { actionMap, keyMap } = props;
 
     // State
-    const selection = diagram.selectionState;
+    const selection = diagram.selection;
     const resetTool = () => props.context.tool.set(props.initialTool ?? 'move');
 
     this.tool ??= new props.tools[props.context.tool.get()]!(
@@ -195,7 +195,7 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
     createEffect(() => {
       const cb = ({ type }: ViewboxEvents['viewbox']) => {
         if (type === 'pan') return;
-        for (const e of this.currentProps?.diagram?.selectionState.elements ?? []) {
+        for (const e of this.currentProps?.diagram?.selection.elements ?? []) {
           this.redrawElements([e]);
         }
       };
@@ -345,7 +345,7 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
                   const el = diagram.lookup(id ?? '');
 
                   if (el && this.tool instanceof MoveTool) {
-                    diagram.selectionState.setElements([el]);
+                    diagram.selection.setElements([el]);
                     props.context.ui.showContextMenu(
                       'selection',
                       diagram.viewBox.toDiagramPoint(point),
@@ -440,16 +440,16 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
     }
   };
 
-  private onSelectionRedrawElement(selection: SelectionState) {
+  private onSelectionRedrawElement(selection: Selection) {
     createEffect(() => {
-      const cb = (e: SelectionStateEvents['add'] | SelectionStateEvents['remove']) =>
+      const cb = (e: SelectionEvents['add'] | SelectionEvents['remove']) =>
         this.redrawElements([e.element]);
       selection.on('add', cb);
       return () => selection.off('add', cb);
     }, [selection]);
 
     createEffect(() => {
-      const cb = (e: SelectionStateEvents['add'] | SelectionStateEvents['remove']) =>
+      const cb = (e: SelectionEvents['add'] | SelectionEvents['remove']) =>
         this.redrawElements([e.element]);
       selection.on('remove', cb);
       return () => selection.off('remove', cb);

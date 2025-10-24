@@ -5,7 +5,7 @@ import type { CanvasState } from '../canvas/EditableCanvasComponent';
 
 export class SelectionMarqueeComponent extends Component<CanvasState> {
   render(props: CanvasState) {
-    const selection = props.diagram.selectionState;
+    const selection = props.diagram.selection;
 
     createEffect(() => {
       const cb = () => this.redraw();

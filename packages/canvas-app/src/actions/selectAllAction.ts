@@ -20,15 +20,15 @@ export class SelectAllAction extends AbstractAction {
 
   execute(): void {
     if (this.mode === 'all') {
-      this.context.model.activeDiagram.selectionState.setElements(
+      this.context.model.activeDiagram.selection.setElements(
         this.context.model.activeDiagram.visibleElements()
       );
     } else if (this.mode === 'nodes') {
-      this.context.model.activeDiagram.selectionState.setElements(
+      this.context.model.activeDiagram.selection.setElements(
         Object.values(this.context.model.activeDiagram.nodeLookup)
       );
     } else if (this.mode === 'edges') {
-      this.context.model.activeDiagram.selectionState.setElements(
+      this.context.model.activeDiagram.selection.setElements(
         Object.values(this.context.model.activeDiagram.edgeLookup)
       );
     }

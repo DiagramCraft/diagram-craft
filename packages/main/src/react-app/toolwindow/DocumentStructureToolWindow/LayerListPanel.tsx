@@ -390,17 +390,17 @@ const ElementEntry = (props: { element: DiagramElement }) => {
     <Tree.Node
       key={e.id}
       data-state={
-        diagram.selectionState.elements.includes(e)
+        diagram.selection.elements.includes(e)
           ? 'on'
-          : diagram.selectionState.getParents().has(e)
+          : diagram.selection.getParents().has(e)
             ? 'child'
             : 'off'
       }
       {...drag.eventHandlers}
       {...dropTarget.eventHandlers}
       onClick={() => {
-        diagram.selectionState.clear();
-        diagram.selectionState.toggle(e);
+        diagram.selection.clear();
+        diagram.selection.toggle(e);
       }}
     >
       <Tree.NodeLabel style={{ width: 'calc(100% + 15px)' }}>
@@ -449,8 +449,8 @@ export const LayerListPanel = () => {
       redraw();
     }
   });
-  useEventListener(diagram.selectionState, 'add', redraw);
-  useEventListener(diagram.selectionState, 'remove', redraw);
+  useEventListener(diagram.selection, 'add', redraw);
+  useEventListener(diagram.selection, 'remove', redraw);
 
   useLayoutEffect(() => {
     // Scroll first element with data-state="on" into view

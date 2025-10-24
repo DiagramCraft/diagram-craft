@@ -40,7 +40,7 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
     super(diagram, Point.ORIGIN, event, context);
     this.isGlobal = true;
 
-    this.#originalSelectionState = diagram.selectionState.elements;
+    this.#originalSelectionState = diagram.selection.elements;
 
     this.addDragImage({ x: event.clientX, y: event.clientY });
 
@@ -109,8 +109,8 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
     super.onKeyDown(event);
 
     if (event.key === 'Escape') {
-      this.diagram.selectionState.clear();
-      this.diagram.selectionState.setElements(this.#originalSelectionState);
+      this.diagram.selection.clear();
+      this.diagram.selection.setElements(this.#originalSelectionState);
       this.removeElement();
 
       this.onDragEnd();
@@ -134,7 +134,7 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
       this.addElement(diagramPoint);
     } else {
       this.removeElement();
-      this.diagram.selectionState.clear();
+      this.diagram.selection.clear();
       this.addDragImage(point);
     }
   }
@@ -232,8 +232,8 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
 
     new ElementAddUndoableAction(this.#elements, this.diagram, activeLayer).redo();
 
-    this.diagram.selectionState.clear();
-    this.diagram.selectionState.setElements(this.#elements);
+    this.diagram.selection.clear();
+    this.diagram.selection.setElements(this.#elements);
   }
 
   private removeElement() {

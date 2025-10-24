@@ -41,7 +41,7 @@ export class ResizeHandlesComponent extends Component<Props> {
   render(props: Props) {
     const { diagram } = props;
 
-    const selection = diagram.selectionState;
+    const selection = diagram.selection;
     const bounds = selection.bounds;
 
     const resizeableVertically = selection.nodes.every(

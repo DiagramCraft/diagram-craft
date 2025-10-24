@@ -3,7 +3,7 @@ import { precondition } from '@diagram-craft/utils/assert';
 import { Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { SelectionState } from '@diagram-craft/model/selectionState';
+import { Selection } from '@diagram-craft/model/selection';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { Context } from '../context';
 
@@ -21,25 +21,25 @@ export class MarqueeDrag extends Drag {
   }
 
   onDrag({ offset }: DragEvents.DragStart) {
-    this.diagram.selectionState.marquee.bounds = Box.normalize({
+    this.diagram.selection.marquee.bounds = Box.normalize({
       ...this.offset,
       w: offset.x - this.offset.x,
       h: offset.y - this.offset.y,
       r: 0
     });
 
-    this.updatePendingElements(this.diagram.selectionState, this.diagram);
+    this.updatePendingElements(this.diagram.selection, this.diagram);
   }
 
   onDragEnd(): void {
-    if (this.diagram.selectionState.marquee.pendingElements) {
-      this.diagram.selectionState.marquee.commitSelection();
+    if (this.diagram.selection.marquee.pendingElements) {
+      this.diagram.selection.marquee.commitSelection();
     }
 
     this.context.help.pop('MarqueeDrag');
   }
 
-  private updatePendingElements(selection: SelectionState, diagram: Diagram) {
+  private updatePendingElements(selection: Selection, diagram: Diagram) {
     precondition.is.present(selection.marquee);
 
     const pending: DiagramElement[] = [];
