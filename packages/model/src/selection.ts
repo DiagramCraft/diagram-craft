@@ -3,7 +3,6 @@ import { DiagramNode } from './diagramNode';
 import { DiagramEdge } from './diagramEdge';
 import { DiagramElement, isEdge, isNode } from './diagramElement';
 import { Box } from '@diagram-craft/geometry/box';
-import { Marquee } from './marquee';
 import type { Diagram } from './diagram';
 import { debounceMicrotask } from '@diagram-craft/utils/debounce';
 
@@ -56,8 +55,6 @@ export const excludeLabelNodes: ElementPredicate = (n: DiagramElement) =>
 export const includeAll: ElementPredicate = () => true;
 
 export class Selection extends EventEmitter<SelectionEvents> {
-  readonly #marquee: Marquee;
-
   #bounds: Box;
   #highlights: ReadonlyArray<Highlight> = [];
   #elements: ReadonlyArray<DiagramElement> = [];
@@ -73,7 +70,6 @@ export class Selection extends EventEmitter<SelectionEvents> {
     super();
     this.#bounds = EMPTY_BOX;
     this.#elements = [];
-    this.#marquee = new Marquee(this);
 
     const recalculateBoundingBox = debounceMicrotask(() => {
       this.recalculateBoundingBox();
@@ -139,10 +135,6 @@ export class Selection extends EventEmitter<SelectionEvents> {
 
   get bounds(): Box {
     return this.#bounds;
-  }
-
-  get marquee() {
-    return this.#marquee;
   }
 
   get type(): SelectionType {
@@ -225,7 +217,6 @@ export class Selection extends EventEmitter<SelectionEvents> {
   }
 
   clear() {
-    this.#marquee.clear();
     this.#highlights = [];
 
     this.setElements([]);

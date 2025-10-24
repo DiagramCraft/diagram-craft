@@ -1,5 +1,5 @@
-import { DiagramElement } from './diagramElement';
-import type { Selection } from './selection';
+import { DiagramElement } from '@diagram-craft/model/diagramElement';
+import type { Selection } from '@diagram-craft/model/selection';
 import { Box } from '@diagram-craft/geometry/box';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { precondition } from '@diagram-craft/utils/assert';
@@ -12,10 +12,6 @@ export class Marquee extends EventEmitter<MarqueeEvents> {
   #bounds?: Box;
 
   pendingElements?: ReadonlyArray<DiagramElement>;
-
-  constructor(private readonly selectionState: Selection) {
-    super();
-  }
 
   set bounds(bounds: Box | undefined) {
     this.#bounds = bounds;
@@ -31,12 +27,12 @@ export class Marquee extends EventEmitter<MarqueeEvents> {
     this.pendingElements = undefined;
   }
 
-  commitSelection() {
+  commitSelection(selection: Selection) {
     precondition.is.present(this.pendingElements);
 
-    this.selectionState.setElements([
-      ...this.pendingElements.filter(e => !this.selectionState.elements.includes(e)),
-      ...this.selectionState.elements
+    selection.setElements([
+      ...this.pendingElements.filter(e => !selection.elements.includes(e)),
+      ...selection.elements
     ]);
 
     this.clear();

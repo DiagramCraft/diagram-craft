@@ -5,22 +5,20 @@ import type { CanvasState } from '../canvas/EditableCanvasComponent';
 
 export class SelectionMarqueeComponent extends Component<CanvasState> {
   render(props: CanvasState) {
-    const selection = props.diagram.selection;
-
     createEffect(() => {
       const cb = () => this.redraw();
 
-      selection.marquee.on('change', cb);
-      return () => selection.marquee.off('change', cb);
-    }, [selection.marquee]);
+      props.context.marquee.on('change', cb);
+      return () => props.context.marquee.off('change', cb);
+    }, [props.context.marquee]);
 
-    const bounds = selection.marquee.bounds;
+    const bounds = props.context.marquee.bounds;
     if (!bounds) return svg.g({});
 
     return svg.g(
       {},
       svg.rectFromBox(bounds, { class: 'svg-marquee' }),
-      ...(selection.marquee.pendingElements?.map(e =>
+      ...(props.context.marquee.pendingElements?.map(e =>
         svg.rectFromBox(e.bounds, {
           class: 'svg-marquee__element',
           transform: Transforms.rotate(e.bounds)
