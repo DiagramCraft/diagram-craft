@@ -8,7 +8,7 @@ import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { Angle } from '@diagram-craft/geometry/angle';
 import { excludeLabelNodes, includeAll } from '@diagram-craft/model/selectionState';
 import { transformElements } from '@diagram-craft/model/diagramElement';
-import { SnapManager } from '@diagram-craft/model/snap/snapManager';
+import { SnapManager } from '../snap/snapManager';
 
 const isFreeDrag = (m: Modifiers) => m.altKey;
 

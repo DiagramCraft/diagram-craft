@@ -1,11 +1,11 @@
 import { describe, expect, test } from 'vitest';
 import { AbstractNodeSnapProvider } from './abstractNodeSnapProvider';
-import { TestModel } from '../test-support/builder';
+import { TestModel } from '@diagram-craft/model/test-support/builder';
 import { Box } from '@diagram-craft/geometry/box';
 import { Direction } from '@diagram-craft/geometry/direction';
 import { Axis } from '@diagram-craft/geometry/axis';
 import type { EligibleNodePredicate } from './snapManager';
-import type { Diagram } from '../diagram';
+import type { Diagram } from '@diagram-craft/model/diagram';
 
 /**
  * Minimal concrete implementation of AbstractNodeSnapProvider for testing

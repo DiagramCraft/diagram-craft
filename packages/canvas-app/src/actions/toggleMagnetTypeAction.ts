@@ -1,6 +1,6 @@
 import { AbstractToggleAction, ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
-import { MagnetType } from '@diagram-craft/model/snap/magnet';
-import { DEFAULT_SNAP_CONFIG, getSnapConfig } from '@diagram-craft/model/snap/snapManager';
+import { MagnetType } from '@diagram-craft/canvas/snap/magnet';
+import { DEFAULT_SNAP_CONFIG, getSnapConfig } from '@diagram-craft/canvas/snap/snapManager';
 
 declare global {
   interface ActionMap extends ReturnType<typeof toggleMagnetTypeActions> {}

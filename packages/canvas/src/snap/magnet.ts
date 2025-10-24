@@ -1,4 +1,4 @@
-import type { DiagramNode } from '../diagramNode';
+import type { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Line } from '@diagram-craft/geometry/line';
 import { Axis } from '@diagram-craft/geometry/axis';
 import { Direction } from '@diagram-craft/geometry/direction';

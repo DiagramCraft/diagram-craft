@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { NodeSizeSnapProvider } from './nodeSizeSnapProvider';
-import { TestModel } from '../test-support/builder';
+import { TestModel } from '@diagram-craft/model/test-support/builder';
 import { Axis } from '@diagram-craft/geometry/axis';
 import { Line } from '@diagram-craft/geometry/line';
 import type { MatchingMagnetPair } from './snapManager';

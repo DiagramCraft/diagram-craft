@@ -1,5 +1,5 @@
 import { EventEmitter } from '@diagram-craft/utils/event';
-import { Magnet } from './snap/magnet';
+import { Magnet } from '@diagram-craft/canvas/snap/magnet';
 import { DiagramNode } from './diagramNode';
 import { DiagramEdge } from './diagramEdge';
 import { DiagramElement, isEdge, isNode } from './diagramElement';

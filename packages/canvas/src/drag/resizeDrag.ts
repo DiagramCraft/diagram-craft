@@ -10,7 +10,7 @@ import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { excludeLabelNodes, includeAll } from '@diagram-craft/model/selectionState';
 import { transformElements } from '@diagram-craft/model/diagramElement';
-import { SnapManager } from '@diagram-craft/model/snap/snapManager';
+import { SnapManager } from '../snap/snapManager';
 
 export type ResizeType = 'n' | 's' | 'e' | 'w' | 'nw' | 'ne' | 'sw' | 'se';
 

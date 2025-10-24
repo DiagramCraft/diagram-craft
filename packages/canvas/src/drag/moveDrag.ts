@@ -31,7 +31,7 @@ import {
 } from '@diagram-craft/model/diagramLayerUtils';
 import { LayerCapabilities } from '@diagram-craft/model/diagramLayerManager';
 import { CanvasDomHelper } from '../utils/canvasDomHelper';
-import { SnapManager } from '@diagram-craft/model/snap/snapManager';
+import { SnapManager } from '../snap/snapManager';
 
 const enablePointerEvents = (elements: ReadonlyArray<DiagramElement>) => {
   for (const e of elements) {

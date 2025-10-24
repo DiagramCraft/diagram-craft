@@ -1,8 +1,7 @@
-
 import type { MatchingMagnetPair, SnapProvider } from './snapManager';
-import { Highlight } from '../selectionState';
+import { Highlight } from '@diagram-craft/model/selectionState';
 import { Magnet, MagnetOfType } from './magnet';
-import { isNode } from '../diagramElement';
+import { isNode } from '@diagram-craft/model/diagramElement';
 import { Box } from '@diagram-craft/geometry/box';
 import { Range } from '@diagram-craft/geometry/range';
 import { Axis } from '@diagram-craft/geometry/axis';
@@ -53,7 +52,6 @@ const compareFn = (a: AnchorWithDistance, b: AnchorWithDistance) => b.distance -
  * - Creating grid-like layouts by snapping to existing element positions
  */
 export class NodeSnapProvider extends AbstractNodeSnapProvider implements SnapProvider<'node'> {
-
   /**
    * Generate node-based magnets for snapping alignment
    *

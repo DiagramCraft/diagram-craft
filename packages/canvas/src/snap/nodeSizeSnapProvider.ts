@@ -1,5 +1,5 @@
 import type { MatchingMagnetPair, SnapProvider } from './snapManager';
-import { Highlight } from '../selectionState';
+import { Highlight } from '@diagram-craft/model/selectionState';
 import { MagnetOfType } from './magnet';
 import { AbstractNodeSnapProvider } from './abstractNodeSnapProvider';
 import { Box } from '@diagram-craft/geometry/box';
@@ -33,7 +33,6 @@ import { smallest } from '@diagram-craft/utils/array';
  * making it intuitive for users to snap to matching sizes during resize operations.
  */
 export class NodeSizeSnapProvider extends AbstractNodeSnapProvider implements SnapProvider<'size'> {
-
   /**
    * Generate size magnets for matching node dimensions
    *

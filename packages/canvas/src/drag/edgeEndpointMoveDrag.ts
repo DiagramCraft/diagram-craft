@@ -18,7 +18,7 @@ import { Box } from '@diagram-craft/geometry/box';
 import { assert } from '@diagram-craft/utils/assert';
 import { Line } from '@diagram-craft/geometry/line';
 import { Context } from '../context';
-import { SnapManager } from '@diagram-craft/model/snap/snapManager';
+import { SnapManager } from '../snap/snapManager';
 import { CanvasDomHelper } from '../utils/canvasDomHelper';
 
 export class EdgeEndpointMoveDrag extends Drag {

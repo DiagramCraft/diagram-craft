@@ -1,11 +1,11 @@
-import type { Diagram } from '../diagram';
+import type { Diagram } from '@diagram-craft/model/diagram';
 import { CanvasSnapProvider } from './canvasSnapProvider';
 import { NodeSnapProvider } from './nodeSnapProvider';
 import { NodeDistanceSnapProvider } from './nodeDistanceSnapProvider';
 import { GridSnapProvider } from './gridSnapProvider';
 import { NodeSizeSnapProvider } from './nodeSizeSnapProvider';
 import { GuidesSnapProvider } from './guidesSnapProvider';
-import { Highlight } from '../selectionState';
+import { Highlight } from '@diagram-craft/model/selectionState';
 import { Magnet, MagnetOfType, MagnetType } from './magnet';
 import { Axis } from '@diagram-craft/geometry/axis';
 import { Box, WritableBox } from '@diagram-craft/geometry/box';
