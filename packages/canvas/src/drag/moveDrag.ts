@@ -31,6 +31,7 @@ import {
 } from '@diagram-craft/model/diagramLayerUtils';
 import { LayerCapabilities } from '@diagram-craft/model/diagramLayerManager';
 import { CanvasDomHelper } from '../utils/canvasDomHelper';
+import { SnapManager } from '@diagram-craft/model/snap/snapManager';
 
 const enablePointerEvents = (elements: ReadonlyArray<DiagramElement>) => {
   for (const e of elements) {
@@ -139,7 +140,7 @@ export abstract class AbstractMoveDrag extends Drag {
     if (isFreeDrag(modifiers)) {
       selection.highlights = [];
     } else {
-      const snapManager = this.diagram.createSnapManager();
+      const snapManager = SnapManager.create(this.diagram);
 
       const result = snapManager.snapMove(WritableBox.asBox(newBounds), snapDirections);
       selection.highlights = result.highlights;

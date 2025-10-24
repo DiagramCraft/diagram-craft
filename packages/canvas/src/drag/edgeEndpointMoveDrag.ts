@@ -45,7 +45,7 @@ export class EdgeEndpointMoveDrag extends Drag {
       'Move waypoint. Cmd-drag to attach to any point in node.'
     );
 
-    this.snapManager = this.diagram.createSnapManager();
+    this.snapManager = SnapManager.create(this.diagram);
   }
 
   onDragEnter({ id }: DragEvents.DragEnter): void {

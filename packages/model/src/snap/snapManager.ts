@@ -16,7 +16,77 @@ import { Direction } from '@diagram-craft/geometry/direction';
 import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { groupBy, largest, smallest } from '@diagram-craft/utils/array';
 import { Angle } from '@diagram-craft/geometry/angle';
-import { SnapManagerConfig } from './snapManagerConfig';
+
+/**
+ * Configuration properties for the SnapManager
+ *
+ * These properties control the behavior of the snapping system in the diagram editor.
+ * They determine which types of snapping are enabled, how sensitive the snapping is,
+ * and whether snapping is active at all.
+ */
+export type SnapManagerConfig = {
+  /**
+   * Distance threshold in pixels within which snapping will occur
+   *
+   * When an element being moved comes within this distance of a magnetic line,
+   * it will snap to that line. Smaller values require more precise positioning
+   * before snapping occurs, while larger values make snapping more "sticky".
+   *
+   * Typical values:
+   * - 3-5px: Precise snapping requiring careful positioning
+   * - 5-10px: Moderate snapping for general use
+   * - 10-15px: Aggressive snapping for rapid layout
+   */
+  threshold: number;
+
+  /**
+   * Whether snapping is enabled globally
+   *
+   * When false, no snapping will occur regardless of other settings.
+   * When true, snapping behavior is determined by the magnetTypes array
+   * and individual snap provider logic.
+   */
+  enabled: boolean;
+
+  /**
+   * Array of magnet types that are currently active
+   *
+   * Each magnet type corresponds to a different snapping behavior:
+   * - 'canvas': Snap to canvas boundaries and viewport edges
+   * - 'grid': Snap to grid lines (when grid is visible/enabled)
+   * - 'guide': Snap to user-defined guide lines
+   * - 'node': Snap to edges and centers of existing nodes
+   * - 'distance': Snap to maintain equal distances between nodes
+   * - 'size': Snap to match dimensions of existing nodes
+   *
+   * Only magnet types included in this array will be active during snapping operations.
+   */
+  magnetTypes: Partial<Record<MagnetType, boolean>>;
+};
+
+declare global {
+  interface DiagramProps {
+    snap?: SnapManagerConfig;
+  }
+}
+
+export const DEFAULT_SNAP_CONFIG: SnapManagerConfig = {
+  enabled: true,
+  threshold: 10,
+  magnetTypes: { grid: true, guide: true, node: true, canvas: true, distance: true, size: true }
+};
+
+export const getSnapConfig = (diagram: Diagram): SnapManagerConfig => {
+  if (diagram.props.snap === undefined) {
+    diagram.updateProps(p => {
+      p.snap ??= DEFAULT_SNAP_CONFIG;
+      p.snap.magnetTypes ??= DEFAULT_SNAP_CONFIG.magnetTypes;
+      p.snap.enabled ??= DEFAULT_SNAP_CONFIG.enabled;
+      p.snap.threshold ??= DEFAULT_SNAP_CONFIG.threshold;
+    });
+  }
+  return diagram.props.snap!;
+};
 
 /**
  * Result of a snap operation containing visual highlights, adjusted position/geometry, and magnets
@@ -24,10 +94,8 @@ import { SnapManagerConfig } from './snapManagerConfig';
  */
 type SnapResult<T> = {
   /** Visual highlights to show snap guides/lines to the user */
-  highlights: ReadonlyArray<Highlight>;
-  /** The adjusted position/geometry after snapping */
-  adjusted: T;
-  /** All magnets involved in the snap operation */
+  highlights: ReadonlyArray<Highlight> /** The adjusted position/geometry after snapping */;
+  adjusted: T /** All magnets involved in the snap operation */;
   magnets: ReadonlyArray<Magnet>;
 };
 
@@ -37,10 +105,8 @@ type SnapResult<T> = {
  */
 export type MatchingMagnetPair<T extends MagnetType> = {
   /** The magnet from the element being moved/resized */
-  self: Magnet;
-  /** The target magnet that self snaps to */
-  matching: MagnetOfType<T>;
-  /** Orthogonal distance between the magnets */
+  self: Magnet /** The target magnet that self snaps to */;
+  matching: MagnetOfType<T> /** Orthogonal distance between the magnets */;
   distance: number;
 };
 
@@ -162,9 +228,54 @@ export class SnapManager {
     private readonly eligibleNodePredicate: EligibleNodePredicate = () => true,
     config: SnapManagerConfig
   ) {
-    this.magnetTypes = config.magnetTypes;
+    this.magnetTypes = Object.entries(config.magnetTypes)
+      .filter(([_, enabled]) => enabled)
+      .map(([type]) => type) as ReadonlyArray<MagnetType>;
     this.threshold = config.threshold;
     this.enabled = config.enabled;
+  }
+
+  static create(diagram: Diagram): SnapManager {
+    const snapConfig = getSnapConfig(diagram);
+
+    const selection = diagram.selectionState.nodes;
+    const selectionIds = new Set(diagram.selectionState.elements.map(e => e.id));
+
+    const firstParent = selection[0]?.parent;
+    if (firstParent && selection.every(n => n.parent === firstParent)) {
+      // When moving group members, they should snap to:
+      // 1. Other members of the same group
+      // 2. Direct members of any parent group
+      // 3. Direct members of the diagram itself (top-level elements)
+
+      const eligibleNodePredicate = (id: string) => {
+        if (selectionIds.has(id)) return false;
+
+        const element = diagram.lookup(id);
+        if (!element) return false;
+
+        // 1. Other members of the same group
+        if (element.parent === firstParent) return true;
+
+        // 2. Direct members of any parent group (traverse up the hierarchy)
+        let currentParent = firstParent.parent;
+        while (currentParent) {
+          if (element.parent === currentParent) return true;
+          currentParent = currentParent.parent;
+        }
+
+        // 3. Direct members of the diagram itself (top-level elements)
+        return !element.parent;
+      };
+
+      return new SnapManager(diagram, eligibleNodePredicate, snapConfig);
+    } else {
+      return new SnapManager(
+        diagram,
+        id => !selectionIds.has(id) && !diagram.lookup(id)?.parent,
+        snapConfig
+      );
+    }
   }
 
   /**
@@ -225,7 +336,13 @@ export class SnapManager {
       const magnets = snapProviders.get('node').getMagnets(Box.fromLine(line));
 
       const matchingMagnets = this.matchMagnets(
-        [{ type: 'source', line, axis: Line.isHorizontal(line) ? Axis.h : Axis.v }],
+        [
+          {
+            type: 'source',
+            line,
+            axis: Line.isHorizontal(line) ? Axis.h : Axis.v
+          }
+        ],
         magnets
       );
 

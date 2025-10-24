@@ -3,8 +3,6 @@ import { DiagramNode } from './diagramNode';
 import { DiagramEdge, SimpleDiagramEdge } from './diagramEdge';
 import { SelectionState } from './selectionState';
 import { UndoManager } from './undoManager';
-import { SnapManager } from './snap/snapManager';
-import { SnapManagerConfig } from './snap/snapManagerConfig';
 import { UnitOfWork } from './unitOfWork';
 import { bindElementListeners, DiagramElement, isEdge, isNode } from './diagramElement';
 import type { DiagramDocument } from './diagramDocument';
@@ -134,14 +132,6 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
   // Unshared properties
   readonly selectionState = new SelectionState(this);
-  readonly snapManagerConfig = new SnapManagerConfig([
-    'grid',
-    'guide',
-    'node',
-    'canvas',
-    'distance',
-    'size'
-  ]);
   readonly viewBox: Viewbox;
   readonly nodeLookup = new ElementLookup<DiagramNode>();
   readonly edgeLookup = new ElementLookup<DiagramEdge>();
@@ -329,47 +319,6 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   register(element: DiagramElement) {
     if (isNode(element)) this.nodeLookup.set(element.id, element);
     else if (isEdge(element)) this.edgeLookup.set(element.id, element);
-  }
-
-  createSnapManager() {
-    const selection = this.selectionState.nodes;
-    const selectionIds = new Set(this.selectionState.elements.map(e => e.id));
-
-    const firstParent = selection[0]?.parent;
-    if (firstParent && selection.every(n => n.parent === firstParent)) {
-      // When moving group members, they should snap to:
-      // 1. Other members of the same group
-      // 2. Direct members of any parent group
-      // 3. Direct members of the diagram itself (top-level elements)
-
-      const eligibleNodePredicate = (id: string) => {
-        if (selectionIds.has(id)) return false;
-
-        const element = this.lookup(id);
-        if (!element) return false;
-
-        // 1. Other members of the same group
-        if (element.parent === firstParent) return true;
-
-        // 2. Direct members of any parent group (traverse up the hierarchy)
-        let currentParent = firstParent.parent;
-        while (currentParent) {
-          if (element.parent === currentParent) return true;
-          currentParent = currentParent.parent;
-        }
-
-        // 3. Direct members of the diagram itself (top-level elements)
-        return !element.parent;
-      };
-
-      return new SnapManager(this, eligibleNodePredicate, this.snapManagerConfig);
-    } else {
-      return new SnapManager(
-        this,
-        id => !selectionIds.has(id) && !this.lookup(id)?.parent,
-        this.snapManagerConfig
-      );
-    }
   }
 
   get canvas() {

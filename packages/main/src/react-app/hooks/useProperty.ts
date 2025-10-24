@@ -8,7 +8,6 @@ import {
   PropertyUndoableAction
 } from './usePropertyFactory';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { SnapManagerConfigProps } from '@diagram-craft/model/snap/snapManagerConfig';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
@@ -44,18 +43,6 @@ export const useDiagramProperty: PropertyHook<Diagram, DiagramProps> = makePrope
     }
   }
 );
-
-export const useSnapManagerProperty: PropertyHook<Diagram, SnapManagerConfigProps> =
-  makePropertyHook<Diagram, SnapManagerConfigProps>(
-    diagram => diagram.snapManagerConfig,
-    (diagram, callback) => {
-      callback(diagram.snapManagerConfig);
-      diagram.snapManagerConfig.commit();
-    },
-    (diagram, handler) => {
-      useEventListener(diagram.snapManagerConfig, 'change', handler);
-    }
-  );
 
 export const useEdgeProperty: PropertyArrayHook<Diagram, EdgeProps> = makePropertyArrayHook<
   Diagram,

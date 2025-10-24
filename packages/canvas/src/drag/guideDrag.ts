@@ -3,7 +3,7 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { DEFAULT_GUIDE_COLOR, Guide, GuideType } from '@diagram-craft/model/types';
 import { round } from '@diagram-craft/utils/math';
 import { CreateGuideUndoableAction, MoveGuideUndoableAction } from '@diagram-craft/model/guides';
-import { SnapManager } from '@diagram-craft/model/snap/snapManager';
+import { getSnapConfig, SnapManager } from '@diagram-craft/model/snap/snapManager';
 import { assert } from '@diagram-craft/utils/assert';
 import { Line } from '@diagram-craft/geometry/line';
 import { Range } from '@diagram-craft/geometry/range';
@@ -24,7 +24,7 @@ abstract class BaseGuideDrag extends Drag {
     this.snapManager = new SnapManager(
       this.diagram,
       id => !diagram.lookup(id)?.parent,
-      diagram.snapManagerConfig
+      getSnapConfig(diagram)
     );
   }
 

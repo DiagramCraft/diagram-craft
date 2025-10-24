@@ -10,6 +10,7 @@ import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { excludeLabelNodes, includeAll } from '@diagram-craft/model/selectionState';
 import { transformElements } from '@diagram-craft/model/diagramElement';
+import { SnapManager } from '@diagram-craft/model/snap/snapManager';
 
 export type ResizeType = 'n' | 's' | 'e' | 'w' | 'nw' | 'ne' | 'sw' | 'se';
 
@@ -103,7 +104,7 @@ export class ResizeDrag extends Drag {
         this.applyAspectRatioConstraint(aspectRatio, newBounds, localOriginal, lcs);
       }
     } else {
-      const snapManager = this.diagram.createSnapManager();
+      const snapManager = SnapManager.create(this.diagram);
 
       const result = snapManager.snapResize(WritableBox.asBox(newBounds), snapDirection);
       selection.highlights = result.highlights;

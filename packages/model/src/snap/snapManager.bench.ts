@@ -10,6 +10,7 @@ import {
 import { UnitOfWork } from '../unitOfWork';
 import { RegularLayer } from '../diagramLayerRegular';
 import { ElementFactory } from '../elementFactory';
+import { SnapManager } from './snapManager';
 
 const r = new Random(123456);
 
@@ -41,7 +42,7 @@ UnitOfWork.execute(d, uow => {
 });
 
 describe('snapManager', () => {
-  const snapManager = d.createSnapManager();
+  const snapManager = SnapManager.create(d);
   bench(
     'snapManager',
     () => {

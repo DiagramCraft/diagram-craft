@@ -8,6 +8,7 @@ import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { Angle } from '@diagram-craft/geometry/angle';
 import { excludeLabelNodes, includeAll } from '@diagram-craft/model/selectionState';
 import { transformElements } from '@diagram-craft/model/diagramElement';
+import { SnapManager } from '@diagram-craft/model/snap/snapManager';
 
 const isFreeDrag = (m: Modifiers) => m.altKey;
 
@@ -23,7 +24,7 @@ export class RotateDrag extends Drag {
     const selection = this.diagram.selectionState;
     selection.highlights = [];
 
-    const snapManager = this.diagram.createSnapManager();
+    const snapManager = SnapManager.create(this.diagram);
 
     const before = selection.bounds;
 
