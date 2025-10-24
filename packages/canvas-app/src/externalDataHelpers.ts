@@ -1,4 +1,4 @@
-import { DiagramElement } from './diagramElement';
+import { DiagramElement } from '@diagram-craft/model/diagramElement';
 
 export const getExternalDataStatus = (
   element: DiagramElement,

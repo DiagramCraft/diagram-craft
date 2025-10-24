@@ -13,7 +13,7 @@ import {
   findEntryBySchema,
   getExternalDataStatus,
   hasDataForSchema
-} from '@diagram-craft/model/externalDataHelpers';
+} from '@diagram-craft/canvas-app/externalDataHelpers';
 import { DataTemplate } from '@diagram-craft/model/diagramDocument';
 import { newid } from '@diagram-craft/utils/id';
 import { serializeDiagramElement } from '@diagram-craft/model/serialization/serialize';

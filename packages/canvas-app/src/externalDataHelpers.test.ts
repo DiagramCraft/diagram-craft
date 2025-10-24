@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { getExternalDataStatus } from './externalDataHelpers';
-import { TestModel } from './test-support/testModel';
-import { UnitOfWork } from './unitOfWork';
+import { TestModel } from '@diagram-craft/model/test-support/testModel';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 describe('getExternalDataStatus()', () => {
   it('should return "none" if no metadata data exists', () => {

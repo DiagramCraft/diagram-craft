@@ -16,7 +16,7 @@ import { EditItemDialog } from '../../components/EditItemDialog';
 import { ToolWindow } from '../ToolWindow';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
-import { findEntryBySchema, hasDataForSchema } from '@diagram-craft/model/externalDataHelpers';
+import { findEntryBySchema, hasDataForSchema } from '@diagram-craft/canvas-app/externalDataHelpers';
 
 export const ExtendedDataTab = () => {
   const $d = useDiagram();
