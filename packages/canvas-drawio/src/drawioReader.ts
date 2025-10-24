@@ -4,7 +4,7 @@ import { Layer } from '@diagram-craft/model/diagramLayer';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramNode, NodeTexts, SimpleDiagramNode } from '@diagram-craft/model/diagramNode';
 import { Box } from '@diagram-craft/geometry/box';
-import { DiagramEdge, SimpleDiagramEdge } from '@diagram-craft/model/diagramEdge';
+import { DiagramEdge, SimpleDiagramEdge, Waypoint } from '@diagram-craft/model/diagramEdge';
 import { DiagramElement, isEdge } from '@diagram-craft/model/diagramElement';
 import { FreeEndpoint, PointInNodeEndpoint } from '@diagram-craft/model/endpoint';
 import { _p, Point } from '@diagram-craft/geometry/point';
@@ -15,7 +15,6 @@ import { clipPath } from '@diagram-craft/model/diagramEdgeUtils';
 import { assertHAlign, assertVAlign } from '@diagram-craft/model/diagramProps';
 import { ARROW_SHAPES } from '@diagram-craft/canvas/arrowShapes';
 import { Angle } from '@diagram-craft/geometry/angle';
-import { Waypoint } from '@diagram-craft/model/types';
 import { Line } from '@diagram-craft/geometry/line';
 import { newid } from '@diagram-craft/utils/id';
 import {

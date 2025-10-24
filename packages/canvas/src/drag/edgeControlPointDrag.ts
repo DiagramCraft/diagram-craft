@@ -2,8 +2,7 @@ import { Drag, DragEvents, Modifiers } from '../dragDropManager';
 import { Point } from '@diagram-craft/geometry/point';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
-import { ControlPoints } from '@diagram-craft/model/types';
+import { ControlPoints, DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { Context } from '../context';
 

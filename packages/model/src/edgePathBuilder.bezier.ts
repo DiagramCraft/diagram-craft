@@ -1,6 +1,5 @@
-import type { DiagramEdge } from './diagramEdge';
+import type { ControlPoints, DiagramEdge } from './diagramEdge';
 import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
-import { ControlPoints } from './types';
 import { Point } from '@diagram-craft/geometry/point';
 
 export const buildBezierEdgePath = (edge: DiagramEdge) => {

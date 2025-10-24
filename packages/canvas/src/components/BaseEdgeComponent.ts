@@ -11,9 +11,12 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DRAG_DROP_MANAGER } from '../dragDropManager';
 import { EdgeWaypointDrag } from '../drag/edgeWaypointDrag';
 import { EdgeControlPointDrag } from '../drag/edgeControlPointDrag';
-import { ControlPoints } from '@diagram-craft/model/types';
 import { ARROW_SHAPES, ArrowShape } from '../arrowShapes';
-import { DiagramEdge, EdgePropsForRendering } from '@diagram-craft/model/diagramEdge';
+import {
+  type ControlPoints,
+  DiagramEdge,
+  EdgePropsForRendering
+} from '@diagram-craft/model/diagramEdge';
 import { VerifyNotReached } from '@diagram-craft/utils/assert';
 import { ShapeEdgeDefinition } from '../shape/shapeEdgeDefinition';
 import { ShapeBuilder } from '../shape/ShapeBuilder';

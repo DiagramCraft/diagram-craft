@@ -4,13 +4,13 @@ import type {
   DiagramEdgeCRDT,
   EdgePropsForEditing,
   EdgePropsForRendering,
-  ResolvedLabelNode
+  ResolvedLabelNode,
+  Waypoint
 } from './diagramEdge';
 import type { RegularLayer } from './diagramLayerRegular';
 import type { ModificationLayer } from './diagramLayerModification';
 import { getRemoteUnitOfWork, UnitOfWork } from './unitOfWork';
 import { Endpoint } from './endpoint';
-import type { Waypoint } from './types';
 import { Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
 import { WatchableValue } from '@diagram-craft/utils/watchableValue';

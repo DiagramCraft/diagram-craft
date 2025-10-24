@@ -1,4 +1,4 @@
-import type { Waypoint } from '../types';
+import type { Waypoint } from '../diagramEdge';
 import { Point } from '@diagram-craft/geometry/point';
 import type { EdgePropsForEditing } from '../diagramEdge';
 import type { NodePropsForEditing, NodeTexts } from '../diagramNode';

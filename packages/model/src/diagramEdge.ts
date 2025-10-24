@@ -1,5 +1,4 @@
 import type { DiagramNode, DuplicationContext } from './diagramNode';
-import { type ControlPoints, Waypoint } from './types';
 import { Point } from '@diagram-craft/geometry/point';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { Box } from '@diagram-craft/geometry/box';
@@ -59,6 +58,16 @@ import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
 
 const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
   endpoint instanceof ConnectedEndpoint;
+
+export type Waypoint = Readonly<{
+  point: Point;
+  controlPoints?: ControlPoints;
+}>;
+
+export type ControlPoints = Readonly<{
+  cp1: Point;
+  cp2: Point;
+}>;
 
 export type ResolvedLabelNode = LabelNode & {
   node: () => DiagramNode;
