@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, Mock, test, vi } from 'vitest';
 import { StoryPlayer } from './storyPlayer';
-import { TestDiagramBuilder, TestModel } from './test-support/builder';
+import { TestDiagramBuilder, TestModel } from './test-support/testModel';
 import type { DiagramDocument } from './diagramDocument';
 import type { Diagram } from './diagram';
 import type { StoryAction } from './documentStories';

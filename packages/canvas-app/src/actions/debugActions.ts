@@ -18,7 +18,6 @@ declare global {
 }
 
 class DumpDocument extends AbstractAction {
-
   execute(): void {
     serializeDiagramDocument(this.context.model.activeDiagram.document).then(e => {
       console.log(JSON.stringify(e, undefined, '  '));
@@ -27,9 +26,8 @@ class DumpDocument extends AbstractAction {
 }
 
 class DumpSelectionAction extends AbstractAction {
-
   execute(): void {
-    this.context.model.activeDiagram.selectionState.elements.forEach(e => {
+    this.context.model.activeDiagram.selection.elements.forEach(e => {
       const s = serializeDiagramElement(e);
       console.log(JSON.stringify(s, undefined, '  '));
     });
@@ -37,18 +35,17 @@ class DumpSelectionAction extends AbstractAction {
 }
 
 class RedrawAction extends AbstractAction {
-
   execute(): void {
     const diagram = this.context.model.activeDiagram;
-    assert.arrayNotEmpty(diagram.selectionState.nodes);
+    assert.arrayNotEmpty(diagram.selection.nodes);
 
     UnitOfWork.execute(diagram, uow => {
-      diagram.selectionState.nodes[0]!.transform([new Translation({ x: 10, y: 10 })], uow);
+      diagram.selection.nodes[0]!.transform([new Translation({ x: 10, y: 10 })], uow);
     });
 
     setTimeout(() => {
       UnitOfWork.execute(diagram, uow => {
-        diagram.selectionState.nodes[0]!.transform([new Translation({ x: -10, y: -10 })], uow);
+        diagram.selection.nodes[0]!.transform([new Translation({ x: -10, y: -10 })], uow);
       });
     }, 200);
   }

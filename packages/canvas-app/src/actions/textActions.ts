@@ -32,8 +32,8 @@ export class TextAction extends AbstractToggleAction {
     const $d = context.model.activeDiagram;
 
     const callback = () => {
-      if ($d.selectionState.isNodesOnly() && $d.selectionState.nodes.length === 1) {
-        const node = $d.selectionState.nodes[0]!;
+      if ($d.selection.isNodesOnly() && $d.selection.nodes.length === 1) {
+        const node = $d.selection.nodes[0]!;
         return !!node.renderProps.text[this.prop];
       }
 
@@ -41,8 +41,8 @@ export class TextAction extends AbstractToggleAction {
     };
 
     return [
-      ActionCriteria.EventTriggered($d.selectionState, 'add', callback),
-      ActionCriteria.EventTriggered($d.selectionState, 'remove', callback),
+      ActionCriteria.EventTriggered($d.selection, 'add', callback),
+      ActionCriteria.EventTriggered($d.selection, 'remove', callback),
       ActionCriteria.EventTriggered($d.undoManager, 'execute', callback)
     ];
   }
@@ -51,22 +51,22 @@ export class TextAction extends AbstractToggleAction {
     const $d = context.model.activeDiagram;
 
     const callback = () => {
-      if ($d.selectionState.isNodesOnly() && $d.selectionState.nodes.length === 1) {
-        const node = $d.selectionState.nodes[0]!;
+      if ($d.selection.isNodesOnly() && $d.selection.nodes.length === 1) {
+        const node = $d.selection.nodes[0]!;
         return node.nodeType === 'text';
       }
 
       return false;
     };
     return [
-      ActionCriteria.EventTriggered($d.selectionState, 'add', callback),
-      ActionCriteria.EventTriggered($d.selectionState, 'remove', callback),
+      ActionCriteria.EventTriggered($d.selection, 'add', callback),
+      ActionCriteria.EventTriggered($d.selection, 'remove', callback),
       ActionCriteria.EventTriggered($d.undoManager, 'execute', callback)
     ];
   }
 
   execute(): void {
-    const node = this.context.model.activeDiagram.selectionState.nodes[0]!;
+    const node = this.context.model.activeDiagram.selection.nodes[0]!;
 
     const uow = new UnitOfWork(this.context.model.activeDiagram, true);
 
@@ -94,15 +94,15 @@ export class TextDecorationAction extends AbstractToggleAction {
   getStateCriteria(context: ActionContext) {
     const $d = context.model.activeDiagram;
     const callback = () => {
-      if ($d.selectionState.isNodesOnly() && $d.selectionState.nodes.length === 1) {
-        const node = $d.selectionState.nodes[0]!;
+      if ($d.selection.isNodesOnly() && $d.selection.nodes.length === 1) {
+        const node = $d.selection.nodes[0]!;
         return node.renderProps.text?.textDecoration === this.prop;
       }
       return false;
     };
     return [
-      ActionCriteria.EventTriggered($d.selectionState, 'add', callback),
-      ActionCriteria.EventTriggered($d.selectionState, 'remove', callback),
+      ActionCriteria.EventTriggered($d.selection, 'add', callback),
+      ActionCriteria.EventTriggered($d.selection, 'remove', callback),
       ActionCriteria.EventTriggered($d.undoManager, 'execute', callback)
     ];
   }
@@ -110,21 +110,21 @@ export class TextDecorationAction extends AbstractToggleAction {
   getCriteria(context: ActionContext) {
     const $d = context.model.activeDiagram;
     const callback = () => {
-      if ($d.selectionState.isNodesOnly() && $d.selectionState.nodes.length === 1) {
-        const node = $d.selectionState.nodes[0]!;
+      if ($d.selection.isNodesOnly() && $d.selection.nodes.length === 1) {
+        const node = $d.selection.nodes[0]!;
         return node.nodeType === 'text';
       }
       return false;
     };
     return [
-      ActionCriteria.EventTriggered($d.selectionState, 'add', callback),
-      ActionCriteria.EventTriggered($d.selectionState, 'remove', callback),
+      ActionCriteria.EventTriggered($d.selection, 'add', callback),
+      ActionCriteria.EventTriggered($d.selection, 'remove', callback),
       ActionCriteria.EventTriggered($d.undoManager, 'execute', callback)
     ];
   }
 
   execute(): void {
-    const node = this.context.model.activeDiagram.selectionState.nodes[0]!;
+    const node = this.context.model.activeDiagram.selection.nodes[0]!;
 
     const uow = new UnitOfWork(this.context.model.activeDiagram, true);
 
@@ -150,7 +150,7 @@ export class TextEditAction extends AbstractSelectionAction<Application> {
   }
 
   execute(): void {
-    const selectedItem = this.context.model.activeDiagram.selectionState.nodes[0]!;
+    const selectedItem = this.context.model.activeDiagram.selection.nodes[0]!;
 
     // Get the current HTML text content
     const currentHtmlText = selectedItem.texts.text ?? '';

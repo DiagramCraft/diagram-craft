@@ -9,10 +9,10 @@ import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
 import { SnapshotUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
-import { assignNewBounds, cloneElements } from '@diagram-craft/model/helpers/cloneHelper';
+import { assignNewBounds, cloneElements } from '@diagram-craft/model/diagramElementUtils';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { useDiagram } from '../application';
-import { NoOpCRDTRoot } from '@diagram-craft/model/collaboration/noopCrdt';
+import { NoOpCRDTRoot } from '@diagram-craft/collaboration/noopCrdt';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import type { DiagramNode } from '@diagram-craft/model/diagramNode';
@@ -75,7 +75,7 @@ export const NodeTypePopup = (props: Props) => {
       assertRegularLayer(edge.layer);
       edge.layer.removeElement(edge, uow);
     });
-    diagram.selectionState.clear();
+    diagram.selection.clear();
   }, [diagram, props.edgeId]);
 
   const size = 30;

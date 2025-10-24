@@ -1,10 +1,11 @@
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { Comment, CommentManager } from './comment';
-import { TestModel } from './test-support/builder';
+import { TestModel } from './test-support/testModel';
 import { DiagramNode } from './diagramNode';
-import { Backends, standardTestModel } from './collaboration/collaborationTestUtils';
+import { standardTestModel } from './test-support/collaborationModelTestUtils';
 import type { DiagramDocument } from './diagramDocument';
 import type { Diagram } from './diagram';
+import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
 
 describe.each(Backends.all())('Comment [%s]', (_name, backend) => {
   beforeEach(() => {

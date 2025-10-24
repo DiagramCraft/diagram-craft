@@ -16,7 +16,7 @@ export const useTable = (diagram: Diagram) => {
   const [element, setElement] = useState<DiagramNode | undefined>(undefined);
   useEffect(() => {
     const callback = () => {
-      const selectionType = diagram.selectionState.getSelectionType();
+      const selectionType = diagram.selection.type;
       if (
         selectionType !== 'single-node' &&
         selectionType !== 'single-label-node' &&
@@ -25,7 +25,7 @@ export const useTable = (diagram: Diagram) => {
       ) {
         setElement(undefined);
       } else {
-        const el = diagram.selectionState.elements[0] as DiagramNode;
+        const el = diagram.selection.elements[0] as DiagramNode;
         if (el.nodeType === 'table') {
           setElement(el);
         } else if (el.parent && isNode(el.parent) && el.parent.nodeType === 'tableRow') {
@@ -38,11 +38,11 @@ export const useTable = (diagram: Diagram) => {
     };
     callback();
 
-    diagram.selectionState.on('change', callback);
+    diagram.selection.on('change', callback);
     return () => {
-      diagram.selectionState.off('change', callback);
+      diagram.selection.off('change', callback);
     };
-  }, [diagram.selectionState]);
+  }, [diagram.selection]);
   return element;
 };
 
@@ -52,7 +52,7 @@ export const useTableProperty: PropertyArrayHook<Diagram, NodeProps> = makePrope
   NodeProps
 >(
   (diagram => {
-    const nodes = diagram.selectionState.nodes;
+    const nodes = diagram.selection.nodes;
     if (nodes.length !== 1) return [];
     if (!isNode(nodes[0])) return [];
 
@@ -66,7 +66,7 @@ export const useTableProperty: PropertyArrayHook<Diagram, NodeProps> = makePrope
   (node, path) => node.getPropsInfo(path),
   (diagram, element, cb) => UnitOfWork.execute(diagram, uow => element.updateProps(cb, uow)),
   (diagram, handler) => {
-    useEventListener(diagram.selectionState, 'change', handler);
+    useEventListener(diagram.selection, 'change', handler);
   },
   nodeDefaults,
   {

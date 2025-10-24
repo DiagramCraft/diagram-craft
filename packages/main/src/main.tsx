@@ -13,7 +13,7 @@ import { UserState } from './UserState';
 import {
   makeDefaultDiagramFactory,
   makeDefaultDocumentFactory
-} from '@diagram-craft/model/factory';
+} from '@diagram-craft/model/diagramDocumentFactory';
 import { AppConfig, type StencilRegistryConfig } from './appConfig';
 import { ElectronIntegration } from './electron';
 import { Autosave } from './react-app/autosave/Autosave';

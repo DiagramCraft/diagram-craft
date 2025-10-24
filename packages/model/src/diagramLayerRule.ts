@@ -11,7 +11,7 @@ import {
   DEFAULT_ADJUSTMENT_RULE
 } from './diagramLayerRuleTypes';
 import { searchByElementSearchClauses } from './diagramElementSearch';
-import { CRDTList, CRDTMap } from './collaboration/crdt';
+import type { CRDTList, CRDTMap } from '@diagram-craft/collaboration/crdt';
 
 type Result = Map<string, Adjustment>;
 

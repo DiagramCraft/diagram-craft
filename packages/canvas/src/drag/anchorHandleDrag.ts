@@ -48,7 +48,7 @@ export class AnchorHandleDrag extends Drag {
     uow.updateElement(this.node);
     uow.commit();
 
-    diagram.selectionState.setElements([this.edge]);
+    diagram.selection.setElements([this.edge]);
 
     // TODO: This is the wrong this.element to use
     this.delegate = new EdgeEndpointMoveDrag(diagram, this.edge, 'end', this.context);
@@ -68,7 +68,7 @@ export class AnchorHandleDrag extends Drag {
         this.edge.layer.removeElement(this.edge, uow);
         this.edge.detach(uow);
       });
-      diagram.selectionState.setElements([]);
+      diagram.selection.setElements([]);
 
       createLinkedNode(
         this.node,

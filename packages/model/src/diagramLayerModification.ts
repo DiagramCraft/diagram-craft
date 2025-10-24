@@ -1,8 +1,6 @@
 import { Layer, type LayerCRDT } from './diagramLayer';
-import { CRDTMap } from './collaboration/crdt';
 import type { Diagram } from './diagram';
 import { type DiagramElement, type DiagramElementCRDT, isEdge, isNode } from './diagramElement';
-import { MappedCRDTOrderedMap } from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import { watch } from '@diagram-craft/utils/watchableValue';
 import { makeElementMapper, registerElementFactory } from './diagramElementMapper';
 import { getRemoteUnitOfWork, type LayerSnapshot, UnitOfWork } from './unitOfWork';
@@ -13,6 +11,8 @@ import type { RegularLayer } from './diagramLayerRegular';
 import type { DiagramNode } from './diagramNode';
 import { DelegatingDiagramNode } from './delegatingDiagramNode';
 import { DelegatingDiagramEdge } from './delegatingDiagramEdge';
+import type { CRDTMap } from '@diagram-craft/collaboration/crdt';
+import { MappedCRDTOrderedMap } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 
 registerElementFactory(
   'delegating-node',

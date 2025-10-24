@@ -1,6 +1,6 @@
 import { describe, expect, test, beforeEach } from 'vitest';
 import { TableHelper } from './Table.nodeType';
-import { TestModel } from '@diagram-craft/model/test-support/builder';
+import { TestModel } from '@diagram-craft/model/test-support/testModel';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';

@@ -11,7 +11,7 @@ export const NodeFillToolbarButton = () => {
 
   const fill = useNodeProperty(diagram, 'fill.color');
 
-  const disabled = diagram.selectionState.nodes.every(n => !n.getDefinition().supports('fill'));
+  const disabled = diagram.selection.nodes.every(n => !n.getDefinition().supports('fill'));
 
   return (
     <Popover.Root>

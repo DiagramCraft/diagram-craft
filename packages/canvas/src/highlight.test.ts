@@ -8,7 +8,7 @@ import {
   removeHighlight
 } from './highlight';
 import type { DiagramElement } from '@diagram-craft/model/diagramElement';
-import { TestModel } from '@diagram-craft/model/test-support/builder';
+import { TestModel } from '@diagram-craft/model/test-support/testModel';
 
 describe('highlight.ts', () => {
   let el: DiagramElement;

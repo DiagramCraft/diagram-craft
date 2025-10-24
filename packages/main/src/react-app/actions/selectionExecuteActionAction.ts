@@ -27,7 +27,7 @@ export class SelectionExecuteAction extends AbstractSelectionAction<Application,
     return [
       ...super.getCriteria(context),
       ActionCriteria.Simple(() => {
-        return context.model.activeDiagram.selectionState.elements.every(e => {
+        return context.model.activeDiagram.selection.elements.every(e => {
           return (
             isNode(e) &&
             e.renderProps.action.type !== undefined &&
@@ -50,9 +50,9 @@ export class SelectionExecuteAction extends AbstractSelectionAction<Application,
 
       node = n;
     } else {
-      assert.arrayWithExactlyOneElement(diagram.selectionState.nodes);
+      assert.arrayWithExactlyOneElement(diagram.selection.nodes);
 
-      node = diagram.selectionState.nodes[0];
+      node = diagram.selection.nodes[0];
     }
 
     switch (node.renderProps.action.type) {

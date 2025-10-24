@@ -9,7 +9,7 @@ import {
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { ActionContext } from '@diagram-craft/canvas/action';
-import { TestModel } from '@diagram-craft/model/test-support/builder';
+import { TestModel } from '@diagram-craft/model/test-support/testModel';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 describe('TableRowMoveAction', () => {
@@ -98,7 +98,7 @@ describe('TableRowMoveAction', () => {
     const row2 = table.children[0] as DiagramNode;
     const cellA = row1.children[1] as DiagramNode;
 
-    diagram.selectionState.setElements([cellA]);
+    diagram.selection.setElements([cellA]);
 
     const action = new TableRowMoveAction(1, context);
     action.execute();
@@ -118,7 +118,7 @@ describe('TableRowMoveAction', () => {
     const row2 = table.children[0] as DiagramNode;
     const cellC = row2.children[1] as DiagramNode;
 
-    diagram.selectionState.setElements([cellC]);
+    diagram.selection.setElements([cellC]);
 
     const action = new TableRowMoveAction(-1, context);
     action.execute();
@@ -212,7 +212,7 @@ describe('TableColumnMoveAction', () => {
     const cellA = row1.children[1] as DiagramNode;
     const cellB = row1.children[0] as DiagramNode;
 
-    diagram.selectionState.setElements([cellA]);
+    diagram.selection.setElements([cellA]);
 
     const action = new TableColumnMoveAction(1, context);
     action.execute();
@@ -238,7 +238,7 @@ describe('TableColumnMoveAction', () => {
     const cellC = row2.children[1] as DiagramNode;
     const cellD = row2.children[0] as DiagramNode;
 
-    diagram.selectionState.setElements([cellB]);
+    diagram.selection.setElements([cellB]);
 
     const action = new TableColumnMoveAction(-1, context);
     action.execute();
@@ -322,7 +322,7 @@ describe('TableInsertAction', () => {
     const row1 = table.children[1] as DiagramNode;
     const cellA = row1.children[1] as DiagramNode;
 
-    diagram.selectionState.setElements([cellA]);
+    diagram.selection.setElements([cellA]);
 
     const action = new TableInsertAction('row', -1, context);
     action.execute();
@@ -340,7 +340,7 @@ describe('TableInsertAction', () => {
     const row1 = table.children[1] as DiagramNode;
     const cellA = row1.children[1] as DiagramNode;
 
-    diagram.selectionState.setElements([cellA]);
+    diagram.selection.setElements([cellA]);
 
     const action = new TableInsertAction('row', 1, context);
     action.execute();
@@ -358,7 +358,7 @@ describe('TableInsertAction', () => {
     const row1 = table.children[1] as DiagramNode;
     const cellA = row1.children[1] as DiagramNode;
 
-    diagram.selectionState.setElements([cellA]);
+    diagram.selection.setElements([cellA]);
 
     const action = new TableInsertAction('column', -1, context);
     action.execute();
@@ -386,7 +386,7 @@ describe('TableInsertAction', () => {
     const row1 = table.children[1] as DiagramNode;
     const cellB = row1.children[0] as DiagramNode;
 
-    diagram.selectionState.setElements([cellB]);
+    diagram.selection.setElements([cellB]);
 
     const action = new TableInsertAction('column', 1, context);
     action.execute();
@@ -481,7 +481,7 @@ describe('TableRemoveAction', () => {
     const row1 = table.children[1] as DiagramNode;
     const cellA = row1.children[1] as DiagramNode;
 
-    diagram.selectionState.setElements([cellA]);
+    diagram.selection.setElements([cellA]);
 
     const action = new TableRemoveAction('row', context);
     action.execute();
@@ -495,7 +495,7 @@ describe('TableRemoveAction', () => {
     const row2 = table.children[0] as DiagramNode;
     const cellC = row2.children[1] as DiagramNode;
 
-    diagram.selectionState.setElements([cellC]);
+    diagram.selection.setElements([cellC]);
 
     const action = new TableRemoveAction('row', context);
     action.execute();
@@ -509,7 +509,7 @@ describe('TableRemoveAction', () => {
     const row1 = table.children[1] as DiagramNode;
     const cellA = row1.children[0] as DiagramNode; // Left cell at array index 0
 
-    diagram.selectionState.setElements([cellA]);
+    diagram.selection.setElements([cellA]);
 
     const action = new TableRemoveAction('column', context);
     action.execute();
@@ -531,7 +531,7 @@ describe('TableRemoveAction', () => {
     const row1 = table.children[1] as DiagramNode;
     const cellB = row1.children[1] as DiagramNode; // Right cell at array index 1
 
-    diagram.selectionState.setElements([cellB]);
+    diagram.selection.setElements([cellB]);
 
     const action = new TableRemoveAction('column', context);
     action.execute();
@@ -553,12 +553,12 @@ describe('TableRemoveAction', () => {
     const row1 = table.children[1] as DiagramNode;
     const cellA = row1.children[0] as DiagramNode;
 
-    diagram.selectionState.setElements([cellA]);
+    diagram.selection.setElements([cellA]);
 
     const action = new TableRemoveAction('row', context);
     action.execute();
 
-    expect(diagram.selectionState.isEmpty()).toBe(true);
+    expect(diagram.selection.isEmpty()).toBe(true);
   });
 });
 
@@ -671,7 +671,7 @@ describe('TableDistributeAction', () => {
     const row1 = table.children[2] as DiagramNode;
     const cellA1 = row1.children[0] as DiagramNode;
 
-    diagram.selectionState.setElements([cellA1]);
+    diagram.selection.setElements([cellA1]);
 
     const action = new TableDistributeAction('row', context);
     action.execute();
@@ -687,7 +687,7 @@ describe('TableDistributeAction', () => {
     const row1 = table.children[2] as DiagramNode;
     const cellA1 = row1.children[0] as DiagramNode;
 
-    diagram.selectionState.setElements([cellA1]);
+    diagram.selection.setElements([cellA1]);
 
     const action = new TableDistributeAction('column', context);
     action.execute();
@@ -771,7 +771,7 @@ describe('TableDistributeAction', () => {
     table2.addChild(row2, uow);
     table2.addChild(row1, uow);
 
-    diagram2.selectionState.setElements([cellA]);
+    diagram2.selection.setElements([cellA]);
 
     const context2 = {
       model: {
@@ -842,7 +842,7 @@ describe('TableDistributeAction', () => {
     table2.addChild(row2, uow);
     table2.addChild(row1, uow);
 
-    diagram2.selectionState.setElements([cellA]);
+    diagram2.selection.setElements([cellA]);
 
     const context2 = {
       model: {
@@ -911,7 +911,7 @@ describe('TableDistributeAction', () => {
     table2.addChild(row2, uow);
     table2.addChild(row1, uow);
 
-    diagram2.selectionState.setElements([cellA]);
+    diagram2.selection.setElements([cellA]);
 
     const context2 = {
       model: {

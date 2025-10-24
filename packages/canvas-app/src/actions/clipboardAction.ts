@@ -81,9 +81,7 @@ export class ClipboardCopyAction extends AbstractSelectionAction {
   execute(): void {
     CLIPBOARD.write(
       JSON.stringify(
-        this.context.model.activeDiagram.selectionState.elements.map(e =>
-          serializeDiagramElement(e)
-        )
+        this.context.model.activeDiagram.selection.elements.map(e => serializeDiagramElement(e))
       ),
       ELEMENTS_CONTENT_TYPE,
       this.mode
@@ -99,11 +97,11 @@ export class ClipboardCopyAction extends AbstractSelectionAction {
   private deleteSelection() {
     const diagram = this.context.model.activeDiagram;
     UnitOfWork.execute(diagram, uow => {
-      for (const element of diagram.selectionState.elements) {
+      for (const element of diagram.selection.elements) {
         assertRegularLayer(element.layer);
         element.layer.removeElement(element, uow);
       }
     });
-    diagram.selectionState.clear();
+    diagram.selection.clear();
   }
 }

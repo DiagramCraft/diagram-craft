@@ -1,14 +1,14 @@
 import { Layer, LayerCRDT, StackPosition } from './diagramLayer';
 import { DiagramElement, type DiagramElementCRDT, isNode } from './diagramElement';
 import type { Diagram } from './diagram';
-import { CRDTMap } from './collaboration/crdt';
 import { getRemoteUnitOfWork, LayerSnapshot, UnitOfWork } from './unitOfWork';
 import { groupBy } from '@diagram-craft/utils/array';
 import { DiagramEdge } from './diagramEdge';
-import { MappedCRDTOrderedMap } from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import { makeElementMapper, registerElementFactory } from './diagramElementMapper';
 import { watch } from '@diagram-craft/utils/watchableValue';
 import { ElementFactory } from './elementFactory';
+import { MappedCRDTOrderedMap } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtOrderedMap';
+import type { CRDTMap } from '@diagram-craft/collaboration/crdt';
 
 registerElementFactory('node', (id, layer, _, c) => ElementFactory.emptyNode(id, layer, c));
 registerElementFactory('edge', (id, layer, _, c) => ElementFactory.emptyEdge(id, layer, c));

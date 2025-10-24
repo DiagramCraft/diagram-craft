@@ -7,7 +7,7 @@ import { Box } from '@diagram-craft/geometry/box';
 import { DeepReadonly, FlatObject } from '@diagram-craft/utils/types';
 import { HTMLParser, stripTags } from '@diagram-craft/utils/html';
 import { hash64 } from '@diagram-craft/utils/hash';
-import { applyLineBreaks, applyTemplate } from '@diagram-craft/model/template';
+import { applyLineBreaks, applyTemplate } from '@diagram-craft/utils/template';
 import { HTMLToSvgTransformer, SvgTextHelper } from './svgTextUtils';
 
 const VALIGN_TO_FLEX_JUSTIFY = {

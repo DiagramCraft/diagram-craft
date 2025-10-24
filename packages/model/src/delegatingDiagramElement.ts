@@ -7,9 +7,7 @@ import {
 } from './diagramElement';
 import { type RegularLayer } from './diagramLayerRegular';
 import type { ModificationLayer } from './diagramLayerModification';
-import type { CRDTMap } from './collaboration/crdt';
 import { watch, WatchableValue } from '@diagram-craft/utils/watchableValue';
-import { CRDTObject } from './collaboration/datatypes/crdtObject';
 import { UnitOfWork } from './unitOfWork';
 import type { Diagram } from './diagram';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
@@ -19,6 +17,8 @@ import type { DuplicationContext } from './diagramNode';
 import { PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { FlatObject } from '@diagram-craft/utils/types';
 import type { PropertyInfo } from './property';
+import type { CRDTMap } from '@diagram-craft/collaboration/crdt';
+import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
 
 // biome-ignore lint/suspicious/noExplicitAny: false positive
 type Snapshot = any;

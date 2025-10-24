@@ -1,7 +1,7 @@
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { AppConfig } from './appConfig';
-import type { AwarenessUserState } from '@diagram-craft/model/collaboration/awareness';
-import { CollaborationConfig } from '@diagram-craft/model/collaboration/collaborationConfig';
+import type { AwarenessUserState } from '@diagram-craft/collaboration/awareness';
+import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
 
 type UserStateEvents = {
   change: { after: UserState };

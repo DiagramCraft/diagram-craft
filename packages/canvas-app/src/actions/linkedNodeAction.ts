@@ -33,7 +33,7 @@ export class CreateLinkedNodeAction extends AbstractSelectionAction {
   }
 
   execute(): void {
-    const $sel = this.context.model.activeDiagram.selectionState;
+    const $sel = this.context.model.activeDiagram.selection;
     const node = $sel.nodes[0];
     assert.present(node);
 

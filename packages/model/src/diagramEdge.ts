@@ -1,5 +1,4 @@
 import type { DiagramNode, DuplicationContext } from './diagramNode';
-import { type ControlPoints, LabelNode, Waypoint } from './types';
 import { Point } from '@diagram-craft/geometry/point';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { Box } from '@diagram-craft/geometry/box';
@@ -23,7 +22,14 @@ import {
 } from './endpoint';
 import { DefaultStyles, edgeDefaults } from './diagramDefaults';
 import { buildEdgePath } from './edgePathBuilder';
-import { isHorizontal, isParallel, isPerpendicular, isReadable, isVertical } from './labelNode';
+import {
+  isHorizontal,
+  isParallel,
+  isPerpendicular,
+  isReadable,
+  isVertical,
+  type LabelNode
+} from './labelNode';
 import { DeepReadonly, DeepRequired, type FlatObject } from '@diagram-craft/utils/types';
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { newid } from '@diagram-craft/utils/id';
@@ -34,24 +40,34 @@ import { assert, is, mustExist } from '@diagram-craft/utils/assert';
 import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import type { RegularLayer } from './diagramLayerRegular';
 import { assertRegularLayer, getAdjustments } from './diagramLayerUtils';
-import type { Reference, SerializedEndpoint } from './serialization/types';
-import type { CRDTMap, FlatCRDTMap } from './collaboration/crdt';
+import type { Reference, SerializedEndpoint } from './serialization/serializedTypes';
 import { WatchableValue } from '@diagram-craft/utils/watchableValue';
-import {
-  MappedCRDTOrderedMap,
-  type MappedCRDTOrderedMapMapType
-} from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
-import { type CRDTMapper } from './collaboration/datatypes/mapped/types';
-import { CRDTProp } from './collaboration/datatypes/crdtProp';
-import { MappedCRDTProp } from './collaboration/datatypes/mapped/mappedCrdtProp';
-import { CRDTObject } from './collaboration/datatypes/crdtObject';
 import type { ModificationLayer } from './diagramLayerModification';
 import type { Path } from '@diagram-craft/geometry/path';
 import type { PropertyInfo } from './property';
 import type { EdgeDefinition } from './edgeDefinition';
+import type { CRDTMap, FlatCRDTMap } from '@diagram-craft/collaboration/crdt';
+import {
+  MappedCRDTOrderedMap,
+  type MappedCRDTOrderedMapMapType
+} from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtOrderedMap';
+import type { CRDTMapper } from '@diagram-craft/collaboration/datatypes/mapped/types';
+import { CRDTProp } from '@diagram-craft/collaboration/datatypes/crdtProp';
+import { MappedCRDTProp } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtProp';
+import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
 
 const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
   endpoint instanceof ConnectedEndpoint;
+
+export type Waypoint = Readonly<{
+  point: Point;
+  controlPoints?: ControlPoints;
+}>;
+
+export type ControlPoints = Readonly<{
+  cp1: Point;
+  cp2: Point;
+}>;
 
 export type ResolvedLabelNode = LabelNode & {
   node: () => DiagramNode;

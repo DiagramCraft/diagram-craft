@@ -89,7 +89,7 @@ export class TextTool extends AbstractTool {
       new ElementAddUndoableAction([this.node], this.diagram, this.diagram.activeLayer, 'Add text')
     );
 
-    this.diagram.selectionState.setElements([this.node]);
+    this.diagram.selection.setElements([this.node]);
 
     this.resetTool();
 

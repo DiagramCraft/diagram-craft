@@ -12,6 +12,7 @@
   "dependencies": {
     "@diagram-craft/utils": "workspace:^",
     "@diagram-craft/geometry": "workspace:^",
-    "@diagram-craft/model": "workspace:^"
+    "@diagram-craft/model": "workspace:^",
+    "@diagram-craft/collaboration": "workspace:^"
   }
 }

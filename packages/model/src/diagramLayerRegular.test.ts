@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { TestModel } from './test-support/builder';
+import { TestModel } from './test-support/testModel';
 import { RegularLayer } from './diagramLayerRegular';
 import { UnitOfWork } from './unitOfWork';
 import { Diagram } from './diagram';
-import { Backends } from './collaboration/collaborationTestUtils';
 import { ElementFactory } from './elementFactory';
+import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
 
 describe.for(Backends.all())('RegularLayer [%s]', ([_name, backend]) => {
   beforeEach(backend.beforeEach);

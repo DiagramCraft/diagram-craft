@@ -4,10 +4,10 @@ import {
   DiagramDocumentDataSchemas,
   SchemaMetadata
 } from './diagramDocumentDataSchemas';
-import { CRDT } from './collaboration/crdt';
-import { TestModel } from './test-support/builder';
-import { Backends } from './collaboration/collaborationTestUtils';
+import { CRDT } from '@diagram-craft/collaboration/crdt';
+import { TestModel } from './test-support/testModel';
 import { UnitOfWork } from './unitOfWork';
+import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
 
 describe.each(Backends.all())('DiagramDocumentDataSchemas [%s]', (_name, backend) => {
   describe('constructor', () => {

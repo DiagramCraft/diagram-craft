@@ -2,7 +2,7 @@ import type {
   SerializedAnchorEndpoint,
   SerializedEndpoint,
   SerializedPointInNodeEndpoint
-} from './serialization/types';
+} from './serialization/serializedTypes';
 import type { DiagramNode } from './diagramNode';
 import { _p, Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';

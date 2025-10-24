@@ -1,14 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { UnitOfWork } from './unitOfWork';
 import { AnchorEndpoint, FreeEndpoint, PointInNodeEndpoint } from './endpoint';
-import { TestModel } from './test-support/builder';
+import { TestModel } from './test-support/testModel';
 import {
-  Backends,
   resetListeners,
   standardTestModel,
   type StandardTestModel
-} from './collaboration/collaborationTestUtils';
+} from './test-support/collaborationModelTestUtils';
 import { DiagramEdge } from './diagramEdge';
+import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
 
 describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
   let edge1: DiagramEdge;

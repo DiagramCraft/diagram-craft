@@ -34,11 +34,11 @@ export class SelectionMoveAction extends AbstractSelectionAction {
   }
 
   execute(): void {
-    if (this.context.model.activeDiagram.selectionState.isEmpty()) return;
+    if (this.context.model.activeDiagram.selection.isEmpty()) return;
 
     const uow = new UnitOfWork(this.context.model.activeDiagram, true);
     transformElements(
-      this.context.model.activeDiagram.selectionState.elements,
+      this.context.model.activeDiagram.selection.elements,
       [new Translation(this.offset())],
       uow
     );

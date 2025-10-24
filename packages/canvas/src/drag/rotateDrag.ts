@@ -6,8 +6,9 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { Angle } from '@diagram-craft/geometry/angle';
-import { excludeLabelNodes, includeAll } from '@diagram-craft/model/selectionState';
+import { excludeLabelNodes, includeAll } from '@diagram-craft/model/selection';
 import { transformElements } from '@diagram-craft/model/diagramElement';
+import { SnapManager } from '../snap/snapManager';
 
 const isFreeDrag = (m: Modifiers) => m.altKey;
 
@@ -20,10 +21,10 @@ export class RotateDrag extends Drag {
   }
 
   onDrag(event: DragEvents.DragStart) {
-    const selection = this.diagram.selectionState;
+    const selection = this.diagram.selection;
     selection.highlights = [];
 
-    const snapManager = this.diagram.createSnapManager();
+    const snapManager = SnapManager.create(this.diagram);
 
     const before = selection.bounds;
 
@@ -37,7 +38,7 @@ export class RotateDrag extends Drag {
     transformElements(
       selection.filter(
         'all',
-        selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes
+        selection.type === 'single-label-node' ? includeAll : excludeLabelNodes
       ),
       TransformFactory.fromTo(before, { ...selection.bounds, r: adjustedAngle }),
       this.uow
@@ -52,11 +53,11 @@ export class RotateDrag extends Drag {
     this.uow.notify();
 
     // This is mainly a performance optimization and not strictly necessary
-    this.diagram.selectionState.recalculateBoundingBox();
+    this.diagram.selection.recalculateBoundingBox();
   }
 
   onDragEnd(): void {
-    const selection = this.diagram.selectionState;
+    const selection = this.diagram.selection;
 
     if (selection.isChanged()) {
       this.uow.stopTracking();

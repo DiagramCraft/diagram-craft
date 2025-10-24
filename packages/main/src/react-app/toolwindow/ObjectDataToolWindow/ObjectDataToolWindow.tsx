@@ -9,7 +9,7 @@ export const ObjectDataToolWindow = () => {
   const $d = useDiagram();
   const redraw = useRedraw();
 
-  useEventListener($d.selectionState, 'change', redraw);
+  useEventListener($d.selection, 'change', redraw);
   useEventListener($d, 'diagramChange', redraw);
   useEventListener($d, 'elementBatchChange', redraw);
 
@@ -17,7 +17,7 @@ export const ObjectDataToolWindow = () => {
     <ToolWindow.Root id={'object-data'} defaultTab={'name'}>
       <ToolWindow.Tab id={'name'} title={'Basic Info'}>
         <ToolWindow.TabContent>
-          {$d.selectionState.elements.length === 1 && <ObjectNamePanel mode="headless" />}
+          {$d.selection.elements.length === 1 && <ObjectNamePanel mode="headless" />}
         </ToolWindow.TabContent>
       </ToolWindow.Tab>
       <ToolWindow.Tab id={'data'} title={'Extended Data'}>

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { TestModel } from '@diagram-craft/model/test-support/builder';
+import { TestModel } from '@diagram-craft/model/test-support/testModel';
 import { PointInNodeEndpoint } from '@diagram-craft/model/endpoint';
 import { _p, Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';

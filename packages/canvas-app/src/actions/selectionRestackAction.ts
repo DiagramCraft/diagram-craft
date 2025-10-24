@@ -46,7 +46,7 @@ export class SelectionRestackAction extends AbstractSelectionAction {
        modification is larger than the biggest feasible stack - yet
        will not lead to overflow in the internal calculations */
 
-    const elements = this.context.model.activeDiagram.selectionState.elements;
+    const elements = this.context.model.activeDiagram.selection.elements;
     switch (this.mode) {
       case 'up':
         activeLayer.stackModify(elements, 2, uow);

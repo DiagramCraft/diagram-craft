@@ -97,7 +97,7 @@ export class EdgeTool extends AbstractTool {
       new ElementAddUndoableAction([this.edge], this.diagram, this.diagram.activeLayer, 'Add edge')
     );
 
-    this.diagram.selectionState.setElements([this.edge]);
+    this.diagram.selection.setElements([this.edge]);
     this.resetTool();
 
     const drag = new EdgeToolEdgeEndpointMoveDrag(this.diagram, this.edge, 'end', this.context);

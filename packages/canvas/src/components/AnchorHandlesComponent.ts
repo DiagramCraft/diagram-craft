@@ -44,7 +44,7 @@ export class AnchorHandlesComponent extends Component<Props> {
       return () => diagram.viewBox.off('viewbox', cb);
     }, [diagram]);
 
-    const selection = diagram.selectionState;
+    const selection = diagram.selection;
     const shouldScale = selection.nodes.length === 1 && selection.nodes[0] === this.hoverNode;
 
     // Whenever an element is hovered, we capture the element (and reset any previous state)
@@ -72,9 +72,9 @@ export class AnchorHandlesComponent extends Component<Props> {
         this.clearTimeout();
         this.setState(undefined, 'background');
       };
-      diagram.selectionState.on('change', cb);
-      return () => diagram.selectionState.off('change', cb);
-    }, [diagram.selectionState]);
+      diagram.selection.on('change', cb);
+      return () => diagram.selection.off('change', cb);
+    }, [diagram.selection]);
 
     createEffect(() => {
       const cb = ({ element }: { element: DiagramElement }) => {

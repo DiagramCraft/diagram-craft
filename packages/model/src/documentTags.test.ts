@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DocumentTags } from './documentTags';
-import { Backends } from './collaboration/collaborationTestUtils';
+import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
 
 describe.each(Backends.all())('DocumentTags [%s]', (_name, backend) => {
   describe('constructor', () => {
@@ -339,7 +339,9 @@ describe.each(Backends.all())('DocumentTags [%s]', (_name, backend) => {
         const tags = new DocumentTags(root1);
         tags.add('important');
         let eventEmitted = false;
-        tags.on('selectionUpdate', () => { eventEmitted = true; });
+        tags.on('selectionUpdate', () => {
+          eventEmitted = true;
+        });
 
         // Act
         tags.selectTag('important');
@@ -353,7 +355,9 @@ describe.each(Backends.all())('DocumentTags [%s]', (_name, backend) => {
         const [root1] = backend.syncedDocs();
         const tags = new DocumentTags(root1);
         let eventEmitted = false;
-        tags.on('selectionUpdate', () => { eventEmitted = true; });
+        tags.on('selectionUpdate', () => {
+          eventEmitted = true;
+        });
 
         // Act
         tags.selectTag('nonexistent');
@@ -369,7 +373,9 @@ describe.each(Backends.all())('DocumentTags [%s]', (_name, backend) => {
         tags.add('important');
         tags.selectTag('important');
         let eventCount = 0;
-        tags.on('selectionUpdate', () => { eventCount++; });
+        tags.on('selectionUpdate', () => {
+          eventCount++;
+        });
 
         // Act
         tags.selectTag('important');
@@ -416,7 +422,9 @@ describe.each(Backends.all())('DocumentTags [%s]', (_name, backend) => {
         tags.add('important');
         tags.selectTag('important');
         let eventEmitted = false;
-        tags.on('selectionUpdate', () => { eventEmitted = true; });
+        tags.on('selectionUpdate', () => {
+          eventEmitted = true;
+        });
 
         // Act
         tags.deselectTag('important');
@@ -431,7 +439,9 @@ describe.each(Backends.all())('DocumentTags [%s]', (_name, backend) => {
         const tags = new DocumentTags(root1);
         tags.add('important');
         let eventEmitted = false;
-        tags.on('selectionUpdate', () => { eventEmitted = true; });
+        tags.on('selectionUpdate', () => {
+          eventEmitted = true;
+        });
 
         // Act
         tags.deselectTag('important');
@@ -556,7 +566,9 @@ describe.each(Backends.all())('DocumentTags [%s]', (_name, backend) => {
         tags.add('tag1');
         tags.add('tag2');
         let eventEmitted = false;
-        tags.on('selectionUpdate', () => { eventEmitted = true; });
+        tags.on('selectionUpdate', () => {
+          eventEmitted = true;
+        });
 
         // Act
         tags.setSelectedTags(['tag1', 'tag2']);
@@ -574,7 +586,9 @@ describe.each(Backends.all())('DocumentTags [%s]', (_name, backend) => {
         tags.selectTag('tag1');
         tags.selectTag('tag2');
         let eventCount = 0;
-        tags.on('selectionUpdate', () => { eventCount++; });
+        tags.on('selectionUpdate', () => {
+          eventCount++;
+        });
 
         // Act
         tags.setSelectedTags(['tag1', 'tag2']);
@@ -624,7 +638,9 @@ describe.each(Backends.all())('DocumentTags [%s]', (_name, backend) => {
         tags.add('tag1');
         tags.selectTag('tag1');
         let eventEmitted = false;
-        tags.on('selectionUpdate', () => { eventEmitted = true; });
+        tags.on('selectionUpdate', () => {
+          eventEmitted = true;
+        });
 
         // Act
         tags.clearSelectedTags();
@@ -639,7 +655,9 @@ describe.each(Backends.all())('DocumentTags [%s]', (_name, backend) => {
         const tags = new DocumentTags(root1);
         tags.add('tag1');
         let eventEmitted = false;
-        tags.on('selectionUpdate', () => { eventEmitted = true; });
+        tags.on('selectionUpdate', () => {
+          eventEmitted = true;
+        });
 
         // Act
         tags.clearSelectedTags();
@@ -654,7 +672,7 @@ describe.each(Backends.all())('DocumentTags [%s]', (_name, backend) => {
         // Setup
         const [root1, root2] = backend.syncedDocs();
         if (!root2) return; // Skip if backend doesn't support collaboration
-        
+
         const tags1 = new DocumentTags(root1);
         const tags2 = new DocumentTags(root2);
         tags1.add('shared-tag');
@@ -673,7 +691,7 @@ describe.each(Backends.all())('DocumentTags [%s]', (_name, backend) => {
         // Setup
         const [root1, root2] = backend.syncedDocs();
         if (!root2) return; // Skip if backend doesn't support collaboration
-        
+
         const tags1 = new DocumentTags(root1);
         const tags2 = new DocumentTags(root2);
         tags1.add('tag1');
@@ -739,7 +757,7 @@ describe.each(Backends.all())('DocumentTags [%s]', (_name, backend) => {
 
         // Verify - Only selections for remaining tags should persist
         expect(tags.isTagSelected('old1')).toBe(false); // removed tag
-        expect(tags.isTagSelected('old2')).toBe(true);  // kept tag
+        expect(tags.isTagSelected('old2')).toBe(true); // kept tag
         expect(tags.isTagSelected('new1')).toBe(false); // new tag, not selected
         expect(tags.selectedTags).toEqual(['old2']);
       });

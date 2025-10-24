@@ -79,7 +79,7 @@ export class DuplicateAction extends AbstractSelectionAction {
     const newElements: DiagramElement[] = [];
 
     // Duplicate selected nodes
-    for (const node of diagram.selectionState.nodes) {
+    for (const node of diagram.selection.nodes) {
       const newNode = node.duplicate();
       newNode.transform([new Translation({ x: OFFSET, y: OFFSET })], uow);
       nodeMapping.set(node.id, newNode);
@@ -87,7 +87,7 @@ export class DuplicateAction extends AbstractSelectionAction {
     }
 
     // Duplicate edges with proper reconnection logic
-    for (const originalEdge of diagram.selectionState.edges) {
+    for (const originalEdge of diagram.selection.edges) {
       const newStart = reconnectEndpoint(originalEdge.start, nodeMapping);
       const newEnd = reconnectEndpoint(originalEdge.end, nodeMapping);
 
@@ -112,8 +112,8 @@ export class DuplicateAction extends AbstractSelectionAction {
 
     uow.commit();
 
-    diagram.selectionState.clear();
-    diagram.selectionState.setElements(newElements);
+    diagram.selection.clear();
+    diagram.selection.setElements(newElements);
 
     this.emit('actionTriggered', {});
   }

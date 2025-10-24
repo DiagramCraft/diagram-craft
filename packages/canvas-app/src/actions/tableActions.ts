@@ -60,7 +60,7 @@ const addElement = (
 };
 
 const isTableCriteria = (context: ActionContext) => {
-  return ActionCriteria.EventTriggered(context.model.activeDiagram.selectionState, 'change', () => {
+  return ActionCriteria.EventTriggered(context.model.activeDiagram.selection, 'change', () => {
     return TableHelper.get(context.model.activeDiagram).isTable();
   });
 };
@@ -149,7 +149,7 @@ export class TableRemoveAction extends AbstractSelectionAction {
       commitWithUndo(uow, 'Remove column');
     }
 
-    this.context.model.activeDiagram.selectionState.clear();
+    this.context.model.activeDiagram.selection.clear();
   }
 }
 
@@ -250,7 +250,7 @@ export class TableRowMoveAction extends AbstractSelectionAction {
 
     return [
       ...baseCriteria,
-      ActionCriteria.EventTriggered(context.model.activeDiagram.selectionState, 'change', check),
+      ActionCriteria.EventTriggered(context.model.activeDiagram.selection, 'change', check),
       ActionCriteria.EventTriggered(context.model.activeDiagram, 'diagramChange', check)
     ];
   }
@@ -306,7 +306,7 @@ export class TableColumnMoveAction extends AbstractSelectionAction {
 
     return [
       ...baseCriteria,
-      ActionCriteria.EventTriggered(context.model.activeDiagram.selectionState, 'change', check),
+      ActionCriteria.EventTriggered(context.model.activeDiagram.selection, 'change', check),
       ActionCriteria.EventTriggered(context.model.activeDiagram, 'diagramChange', check)
     ];
   }

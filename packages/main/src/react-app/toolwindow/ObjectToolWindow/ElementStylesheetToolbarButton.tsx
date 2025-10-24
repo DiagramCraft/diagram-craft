@@ -1,6 +1,6 @@
 import { useElementMetadata } from '../../hooks/useProperty';
 import { Select } from '@diagram-craft/app-components/Select';
-import { SelectionType } from '@diagram-craft/model/selectionState';
+import { SelectionType } from '@diagram-craft/model/selection';
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
 import { isSelectionDirty } from '@diagram-craft/model/diagramStyles';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -27,7 +27,7 @@ export const ElementStylesheetToolbarButton = (props: Props) => {
 
   const onValueChange = (v: string | undefined, type: 'style' | 'text-style' = 'style') => {
     const uow = new UnitOfWork($d, true);
-    $d.selectionState.elements.forEach(n => {
+    $d.selection.elements.forEach(n => {
       $d.document.styles.setStylesheet(n, v!, uow, true);
     });
     if (type === 'style') style.set(v);

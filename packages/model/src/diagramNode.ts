@@ -1,4 +1,3 @@
-import { LabelNode } from './types';
 import { Box } from '@diagram-craft/geometry/box';
 import { Transform } from '@diagram-craft/geometry/transform';
 import {
@@ -29,7 +28,7 @@ import { assert, mustExist, VerifyNotReached } from '@diagram-craft/utils/assert
 import { newid } from '@diagram-craft/utils/id';
 import { clamp } from '@diagram-craft/utils/math';
 import { Point } from '@diagram-craft/geometry/point';
-import { applyTemplate } from './template';
+import { applyTemplate } from '@diagram-craft/utils/template';
 import { isEmptyString } from '@diagram-craft/utils/strings';
 import { Anchor } from './anchor';
 import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
@@ -37,21 +36,22 @@ import { toUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
 import type { RegularLayer } from './diagramLayerRegular';
 import { transformPathList } from '@diagram-craft/geometry/pathListUtils';
 import { WatchableValue } from '@diagram-craft/utils/watchableValue';
-import type { CRDTMap, FlatCRDTMap } from './collaboration/crdt';
-import { CRDTProp } from './collaboration/datatypes/crdtProp';
-import { MappedCRDTProp } from './collaboration/datatypes/mapped/mappedCrdtProp';
-import { CRDTObject } from './collaboration/datatypes/crdtObject';
-import { type CRDTMapper } from './collaboration/datatypes/mapped/types';
-import {
-  MappedCRDTMap,
-  type MappedCRDTMapMapType
-} from './collaboration/datatypes/mapped/mappedCrdtMap';
 import { unique } from '@diagram-craft/utils/array';
 import { makeIsometricTransform } from '@diagram-craft/canvas/effects/isometric';
 import type { ModificationLayer } from './diagramLayerModification';
 import { getAdjustments } from './diagramLayerUtils';
 import type { NodeDefinition } from './elementDefinitionRegistry';
 import type { PropertyInfo } from './property';
+import {
+  MappedCRDTMap,
+  type MappedCRDTMapMapType
+} from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtMap';
+import type { CRDTMap, FlatCRDTMap } from '@diagram-craft/collaboration/crdt';
+import type { CRDTMapper } from '@diagram-craft/collaboration/datatypes/mapped/types';
+import { CRDTProp } from '@diagram-craft/collaboration/datatypes/crdtProp';
+import { MappedCRDTProp } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtProp';
+import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
+import type { LabelNode } from './labelNode';
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;

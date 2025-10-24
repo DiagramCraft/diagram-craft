@@ -1,15 +1,15 @@
-import { CRDTMap, CRDTRoot } from './collaboration/crdt';
 import type { DiagramDocument } from './diagramDocument';
 import type { EmptyObject } from '@diagram-craft/utils/types';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { newid } from '@diagram-craft/utils/id';
 import { assert, mustExist } from '@diagram-craft/utils/assert';
+import { watch } from '@diagram-craft/utils/watchableValue';
+import type { CRDTMap, CRDTRoot } from '@diagram-craft/collaboration/crdt';
+import type { CRDTMapper } from '@diagram-craft/collaboration/datatypes/mapped/types';
 import {
   MappedCRDTOrderedMap,
   type MappedCRDTOrderedMapMapType
-} from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
-import { type CRDTMapper } from './collaboration/datatypes/mapped/types';
-import { watch } from '@diagram-craft/utils/watchableValue';
+} from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 
 export type StoryAction =
   | {

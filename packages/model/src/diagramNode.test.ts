@@ -1,16 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { UnitOfWork } from './unitOfWork';
-import { TestDiagramNodeBuilder, TestModel } from './test-support/builder';
+import { TestDiagramNodeBuilder, TestModel } from './test-support/testModel';
 import {
-  Backends,
   type StandardTestModel,
   standardTestModel
-} from './collaboration/collaborationTestUtils';
+} from './test-support/collaborationModelTestUtils';
 import type { DiagramNode } from './diagramNode';
 import { serializeDiagram } from './serialization/serialize';
 import { commitWithUndo } from './diagramUndoActions';
 import { AnchorEndpoint, FreeEndpoint } from './endpoint';
 import type { DiagramEdge } from './diagramEdge';
+import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
 
 describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
   let node1: TestDiagramNodeBuilder;

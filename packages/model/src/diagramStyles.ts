@@ -6,12 +6,16 @@ import type { Diagram } from './diagram';
 import { common, deepClear, deepClone, deepMerge, isObj } from '@diagram-craft/utils/object';
 import { assert } from '@diagram-craft/utils/assert';
 import { Defaults, DefaultStyles, edgeDefaults, nodeDefaults } from './diagramDefaults';
-import { CRDTFactory, CRDTMap, CRDTRoot } from './collaboration/crdt';
-import { DEFAULT_EDGE_STYLES, DEFAULT_NODE_STYLES, DEFAULT_TEXT_STYLES } from './defaults';
-import { MappedCRDTMap } from './collaboration/datatypes/mapped/mappedCrdtMap';
-import { type CRDTMapper } from './collaboration/datatypes/mapped/types';
+import {
+  DEFAULT_EDGE_STYLES,
+  DEFAULT_NODE_STYLES,
+  DEFAULT_TEXT_STYLES
+} from './diagramStylesDefaults';
 import { watch } from '@diagram-craft/utils/watchableValue';
 import { EventEmitter } from '@diagram-craft/utils/event';
+import type { CRDTFactory, CRDTMap, CRDTRoot } from '@diagram-craft/collaboration/crdt';
+import type { CRDTMapper } from '@diagram-craft/collaboration/datatypes/mapped/types';
+import { MappedCRDTMap } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtMap';
 
 export type StylesheetType = 'node' | 'edge' | 'text';
 
@@ -188,18 +192,18 @@ const isPropsDirty = (
 
 export const isSelectionDirty = ($d: Diagram, isText: boolean) => {
   const styles = $d.document.styles;
-  if ($d.selectionState.elements.length === 0) {
+  if ($d.selection.elements.length === 0) {
     return false;
   }
 
-  const metadata = $d.selectionState.elements[0]!.metadata;
+  const metadata = $d.selection.elements[0]!.metadata;
 
   const stylesheet = isText
     ? styles.get(metadata.textStyle ?? DefaultStyles.text.default)
     : styles.get(metadata.style ?? DefaultStyles.node.default);
   assert.present(stylesheet);
 
-  return $d.selectionState.elements.some(e => {
+  return $d.selection.elements.some(e => {
     const propsFromElement = stylesheet.getPropsFromElement(e);
     return isPropsDirty(
       propsFromElement,

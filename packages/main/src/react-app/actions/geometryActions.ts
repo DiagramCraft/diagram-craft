@@ -43,7 +43,7 @@ class SelectionGeometryConvertToCurves extends AbstractSelectionAction<Applicati
   }
 
   execute() {
-    const nodes = this.context.model.activeDiagram.selectionState.nodes;
+    const nodes = this.context.model.activeDiagram.selection.nodes;
 
     if (nodes.every(n => n.nodeType === 'generic-path')) return;
 
@@ -77,21 +77,21 @@ class SelectionBooleanOperation extends AbstractSelectionAction<Application> {
 
   getCriteria(context: Application) {
     const cb = () => {
-      const $s = context.model.activeDiagram.selectionState;
+      const $s = context.model.activeDiagram.selection;
       return $s.nodes.length === 2;
     };
 
     return [
       ...super.getCriteria(context),
 
-      ActionCriteria.EventTriggered(context.model.activeDiagram.selectionState, 'add', cb),
-      ActionCriteria.EventTriggered(context.model.activeDiagram.selectionState, 'remove', cb)
+      ActionCriteria.EventTriggered(context.model.activeDiagram.selection, 'add', cb),
+      ActionCriteria.EventTriggered(context.model.activeDiagram.selection, 'remove', cb)
     ];
   }
   execute() {
     const diagram = this.context.model.activeDiagram;
 
-    const nodes = diagram.selectionState.nodes;
+    const nodes = diagram.selection.nodes;
 
     // TODO: Convert to condition
     if (nodes.length !== 2) return;
@@ -130,6 +130,6 @@ class SelectionBooleanOperation extends AbstractSelectionAction<Application> {
         new ElementAddUndoableAction(newNodes, diagram, diagram.activeLayer as RegularLayer)
       ])
     );
-    diagram.selectionState.setElements(newNodes);
+    diagram.selection.setElements(newNodes);
   }
 }

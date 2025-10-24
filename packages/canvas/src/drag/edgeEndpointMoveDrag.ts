@@ -18,7 +18,7 @@ import { Box } from '@diagram-craft/geometry/box';
 import { assert } from '@diagram-craft/utils/assert';
 import { Line } from '@diagram-craft/geometry/line';
 import { Context } from '../context';
-import { SnapManager } from '@diagram-craft/model/snap/snapManager';
+import { SnapManager } from '../snap/snapManager';
 import { CanvasDomHelper } from '../utils/canvasDomHelper';
 
 export class EdgeEndpointMoveDrag extends Drag {
@@ -45,7 +45,7 @@ export class EdgeEndpointMoveDrag extends Drag {
       'Move waypoint. Cmd-drag to attach to any point in node.'
     );
 
-    this.snapManager = this.diagram.createSnapManager();
+    this.snapManager = SnapManager.create(this.diagram);
   }
 
   onDragEnter({ id }: DragEvents.DragEnter): void {
@@ -89,7 +89,7 @@ export class EdgeEndpointMoveDrag extends Drag {
   }
 
   onDrag({ offset, modifiers }: DragEvents.DragStart) {
-    const selection = this.diagram.selectionState;
+    const selection = this.diagram.selection;
     selection.highlights = [];
 
     this.point = offset;

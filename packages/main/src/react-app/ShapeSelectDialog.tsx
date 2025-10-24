@@ -9,7 +9,7 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { useRef, useState } from 'react';
 import { Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
-import { createThumbnailDiagramForNode } from '@diagram-craft/model/diagramThumbnail';
+import { createThumbnailDiagramForNode } from '@diagram-craft/canvas-app/diagramThumbnail';
 
 const SIZE = 35;
 

@@ -4,7 +4,7 @@ import { toInlineCSS } from '../component/vdom';
 import type { CanvasState } from '../canvas/EditableCanvasComponent';
 import { GuideMoveDrag } from '../drag/guideDrag';
 import { DRAG_DROP_MANAGER } from '../dragDropManager';
-import { DEFAULT_GUIDE_COLOR } from '@diagram-craft/model/types';
+import { DEFAULT_GUIDE_COLOR } from '@diagram-craft/model/guides';
 
 export class CanvasGuidesComponent extends Component<CanvasState> {
   render(props: CanvasState) {

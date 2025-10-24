@@ -1,8 +1,8 @@
 import type { DataTemplate } from './diagramDocument';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { assert } from '@diagram-craft/utils/assert';
-import { CRDTMap, CRDTRoot } from './collaboration/crdt';
 import { deepClone } from '@diagram-craft/utils/object';
+import type { CRDTMap, CRDTRoot } from '@diagram-craft/collaboration/crdt';
 
 export class DiagramDocumentDataTemplates extends EventEmitter<{
   update: { template: DataTemplate };

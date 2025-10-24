@@ -16,9 +16,9 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
   useEventListener(diagram, 'diagramChange', redraw);
 
   const isSingleElementInTableRow =
-    diagram.selectionState.elements.length === 1 &&
-    isNode(diagram.selectionState.elements?.[0]?.parent) &&
-    diagram.selectionState.elements[0].parent?.nodeType === 'tableRow';
+    diagram.selection.elements.length === 1 &&
+    isNode(diagram.selection.elements?.[0]?.parent) &&
+    diagram.selection.elements[0].parent?.nodeType === 'tableRow';
 
   return (
     <>
@@ -28,24 +28,24 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
       </ActionContextMenuItem>
       <ContextMenu.Separator className="cmp-context-menu__separator" />
 
-      {diagram.selectionState.getSelectionType() === 'single-edge' && (
+      {diagram.selection.type === 'single-edge' && (
         <>
           {/* TODO: Disable this when there's alreay a label */}
           <ActionContextMenuItem
             action={'EDGE_TEXT_ADD'}
-            arg={{ point: props.target.pos, id: diagram.selectionState.edges[0]!.id }}
+            arg={{ point: props.target.pos, id: diagram.selection.edges[0]!.id }}
           >
             Add text
           </ActionContextMenuItem>
           <ActionContextMenuItem
             action={'WAYPOINT_ADD'}
-            arg={{ point: props.target.pos, id: diagram.selectionState.edges[0]!.id }}
+            arg={{ point: props.target.pos, id: diagram.selection.edges[0]!.id }}
           >
             Add waypoint
           </ActionContextMenuItem>
           <ActionContextMenuItem
             action={'WAYPOINT_DELETE'}
-            arg={{ point: props.target.pos, id: diagram.selectionState.edges[0]!.id }}
+            arg={{ point: props.target.pos, id: diagram.selection.edges[0]!.id }}
           >
             Delete waypoint
           </ActionContextMenuItem>
@@ -54,7 +54,7 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
         </>
       )}
 
-      {diagram.selectionState.getSelectionType() === 'single-node' && (
+      {diagram.selection.type === 'single-node' && (
         <>
           <ActionContextMenuItem action={'SELECTION_CHANGE_SHAPE'}>
             Change Shape...
@@ -145,7 +145,7 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
       </ContextMenu.Sub>
       <ContextMenu.Separator className="cmp-context-menu__separator" />
 
-      {diagram.selectionState.getSelectionType() === 'single-node' && (
+      {diagram.selection.type === 'single-node' && (
         <>
           <ContextMenu.Sub>
             <ContextMenu.SubTrigger className="cmp-context-menu__sub-trigger">
@@ -241,7 +241,7 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
       <ContextMenu.Sub>
         <ContextMenu.SubTrigger
           className="cmp-context-menu__sub-trigger"
-          disabled={diagram.selectionState.elements.length === 1}
+          disabled={diagram.selection.elements.length === 1}
         >
           Align
           <div className="cmp-context-menu__right-slot">
@@ -270,7 +270,7 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
       <ContextMenu.Sub>
         <ContextMenu.SubTrigger
           className="cmp-context-menu__sub-trigger"
-          disabled={diagram.selectionState.elements.length === 1}
+          disabled={diagram.selection.elements.length === 1}
         >
           Arrange
           <div className="cmp-context-menu__right-slot">

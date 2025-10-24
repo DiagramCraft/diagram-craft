@@ -1,7 +1,7 @@
 import { Component } from '../component/component';
 import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
-import { SelectionState } from '@diagram-craft/model/selectionState';
+import { Selection } from '@diagram-craft/model/selection';
 
 export class GroupBoundsComponent extends Component<Props> {
   render(props: Props) {
@@ -19,5 +19,5 @@ export class GroupBoundsComponent extends Component<Props> {
 }
 
 type Props = {
-  selection: SelectionState;
+  selection: Selection;
 };

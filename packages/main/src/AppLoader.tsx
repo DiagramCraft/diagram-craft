@@ -11,12 +11,12 @@ import { assert } from '@diagram-craft/utils/assert';
 import { newid } from '@diagram-craft/utils/id';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { Progress, ProgressCallback } from '@diagram-craft/model/types';
-import type { DiagramFactory, DocumentFactory } from '@diagram-craft/model/factory';
-import type { AwarenessUserState } from '@diagram-craft/model/collaboration/awareness';
+import type { DiagramFactory, DocumentFactory } from '@diagram-craft/model/diagramDocumentFactory';
 import { UserState } from './UserState';
 import { AppConfig, type StencilRegistryConfig } from './appConfig';
 import { Autosave } from './react-app/autosave/Autosave';
+import type { Progress, ProgressCallback } from '@diagram-craft/utils/progress';
+import type { AwarenessUserState } from '@diagram-craft/collaboration/awareness';
 
 const loadInitialDocument = async (
   diagram: DiagramRef | undefined,

@@ -13,7 +13,7 @@ import {
   findEntryBySchema,
   getExternalDataStatus,
   hasDataForSchema
-} from '@diagram-craft/model/externalDataHelpers';
+} from '@diagram-craft/canvas-app/externalDataHelpers';
 import { DataTemplate } from '@diagram-craft/model/diagramDocument';
 import { newid } from '@diagram-craft/utils/id';
 import { serializeDiagramElement } from '@diagram-craft/model/serialization/serialize';
@@ -47,13 +47,13 @@ export class ExternalDataUnlinkAction extends AbstractSelectionAction<Applicatio
     return (
       super.isEnabled(arg) &&
       getExternalDataStatus(
-        this.context.model.activeDiagram.selectionState.elements[0]!,
+        this.context.model.activeDiagram.selection.elements[0]!,
         arg.schemaId!
       ) === 'linked'
     );
   }
   execute(arg: Partial<SchemaArg>): void {
-    const elements = this.context.model.activeDiagram.selectionState.elements;
+    const elements = this.context.model.activeDiagram.selection.elements;
     assert.arrayNotEmpty(elements as DiagramElement[]);
 
     const $d = elements[0]!.diagram;
@@ -82,13 +82,13 @@ export class ExternalDataClear extends AbstractSelectionAction<Application, Sche
     return (
       super.isEnabled(arg) &&
       getExternalDataStatus(
-        this.context.model.activeDiagram.selectionState.elements[0]!,
+        this.context.model.activeDiagram.selection.elements[0]!,
         arg.schemaId!
       ) === 'linked'
     );
   }
   execute(arg: Partial<SchemaArg>): void {
-    const elements = this.context.model.activeDiagram.selectionState.elements;
+    const elements = this.context.model.activeDiagram.selection.elements;
     assert.arrayNotEmpty(elements as DiagramElement[]);
 
     const $d = elements[0]!.diagram;
@@ -118,7 +118,7 @@ export class ExternalDataLinkAction extends AbstractSelectionAction<Application,
     return (
       super.isEnabled(arg) &&
       getExternalDataStatus(
-        this.context.model.activeDiagram.selectionState.elements[0]!,
+        this.context.model.activeDiagram.selection.elements[0]!,
         arg.schemaId!
       ) !== 'linked'
     );
@@ -126,7 +126,7 @@ export class ExternalDataLinkAction extends AbstractSelectionAction<Application,
 
   execute(arg: Partial<SchemaArg>): void {
     const $d = this.context.model.activeDiagram;
-    const element = $d.selectionState.elements[0]!;
+    const element = $d.selection.elements[0]!;
     const schema = this.context.model.activeDocument.data.db.getSchema(arg.schemaId!);
 
     const hasElementData = hasDataForSchema(element, arg.schemaId!);
@@ -156,7 +156,7 @@ export class ExternalDataLinkAction extends AbstractSelectionAction<Application,
 
         // Link to the data (either newly created or existing)
         const uow = new UnitOfWork($d, true);
-        $d.selectionState.elements.forEach(e => {
+        $d.selection.elements.forEach(e => {
           e.updateMetadata(p => {
             p.data ??= { data: [] };
 
@@ -212,7 +212,7 @@ export class ExternalDataMakeTemplateAction extends AbstractSelectionAction<
     return (
       super.isEnabled(arg) &&
       getExternalDataStatus(
-        this.context.model.activeDiagram.selectionState.elements[0]!,
+        this.context.model.activeDiagram.selection.elements[0]!,
         arg.schemaId!
       ) === 'linked'
     );
@@ -234,9 +234,7 @@ export class ExternalDataMakeTemplateAction extends AbstractSelectionAction<
           id: newid(),
           schemaId: arg.schemaId!,
           name: v,
-          template: serializeDiagramElement(
-            this.context.model.activeDiagram.selectionState.elements[0]!
-          )
+          template: serializeDiagramElement(this.context.model.activeDiagram.selection.elements[0]!)
         };
 
         const $d = this.context.model.activeDiagram;

@@ -2,7 +2,7 @@ import { Point } from '@diagram-craft/geometry/point';
 import { hash64 } from '@diagram-craft/utils/hash';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { newid } from '@diagram-craft/utils/id';
-import { SerializedElement } from '@diagram-craft/model/serialization/types';
+import { SerializedElement } from '@diagram-craft/model/serialization/serializedTypes';
 import { Box } from '@diagram-craft/geometry/box';
 import { precondition, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { deserializeDiagramElements } from '@diagram-craft/model/serialization/deserialize';
@@ -95,7 +95,7 @@ export class ImagePasteHandler extends PasteHandler {
     ];
 
     diagram.undoManager.addAndExecute(new PasteUndoableAction(newElements, diagram, layer, this));
-    diagram.selectionState.setElements(newElements);
+    diagram.selection.setElements(newElements);
 
     this.registerPastePoint(hash, point);
   }
@@ -125,7 +125,7 @@ export class TextPasteHandler extends PasteHandler {
     ];
 
     diagram.undoManager.addAndExecute(new PasteUndoableAction(newElements, diagram, layer, this));
-    diagram.selectionState.setElements(newElements);
+    diagram.selection.setElements(newElements);
 
     this.registerPastePoint(hash, point);
   }
@@ -211,7 +211,7 @@ export class ElementsPasteHandler extends PasteHandler {
     const newElements = deserializeDiagramElements(elements, diagram, layer);
 
     diagram.undoManager.addAndExecute(new PasteUndoableAction(newElements, diagram, layer, this));
-    diagram.selectionState.setElements(newElements);
+    diagram.selection.setElements(newElements);
 
     this.registerPastePoint(hash, point);
   }
@@ -240,8 +240,8 @@ class PasteUndoableAction implements UndoableAction {
       e.layer.removeElement(e, uow);
     });
 
-    this.diagram.selectionState.setElements(
-      this.diagram.selectionState.elements.filter(e => !this.elements.includes(e))
+    this.diagram.selection.setElements(
+      this.diagram.selection.elements.filter(e => !this.elements.includes(e))
     );
 
     this.pasteHandler.clearPastePoint();

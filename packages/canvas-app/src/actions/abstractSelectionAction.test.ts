@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from 'vitest';
 import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSelectionAction';
-import { TestModel } from '@diagram-craft/model/test-support/builder';
+import { TestModel } from '@diagram-craft/model/test-support/testModel';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { ActionContext } from '@diagram-craft/canvas/action';
 
@@ -38,7 +38,7 @@ describe('abstractSelectionAction', () => {
     const edge1 = layer.addEdge();
 
     beforeEach(() => {
-      diagram.selectionState.setElements([]);
+      diagram.selection.setElements([]);
     });
 
     describe('MultipleType', () => {
@@ -59,10 +59,10 @@ describe('abstractSelectionAction', () => {
 
         expect(action.isEnabled(undefined)).toBe(false);
 
-        diagram.selectionState.setElements([el1]);
+        diagram.selection.setElements([el1]);
         expect(action.isEnabled(undefined)).toBe(true);
 
-        diagram.selectionState.setElements([el1, el2]);
+        diagram.selection.setElements([el1, el2]);
         expect(action.isEnabled(undefined)).toBe(true);
       });
 
@@ -71,10 +71,10 @@ describe('abstractSelectionAction', () => {
 
         expect(action.isEnabled(undefined)).toBe(false);
 
-        diagram.selectionState.setElements([el1]);
+        diagram.selection.setElements([el1]);
         expect(action.isEnabled(undefined)).toBe(true);
 
-        diagram.selectionState.setElements([el1, el2]);
+        diagram.selection.setElements([el1, el2]);
         expect(action.isEnabled(undefined)).toBe(false);
       });
 
@@ -83,10 +83,10 @@ describe('abstractSelectionAction', () => {
 
         expect(action.isEnabled(undefined)).toBe(false);
 
-        diagram.selectionState.setElements([el1]);
+        diagram.selection.setElements([el1]);
         expect(action.isEnabled(undefined)).toBe(false);
 
-        diagram.selectionState.setElements([el1, el2]);
+        diagram.selection.setElements([el1, el2]);
         expect(action.isEnabled(undefined)).toBe(true);
       });
     });
@@ -115,13 +115,13 @@ describe('abstractSelectionAction', () => {
 
         expect(action.isEnabled(undefined)).toBe(false);
 
-        diagram.selectionState.setElements([el1]);
+        diagram.selection.setElements([el1]);
         expect(action.isEnabled(undefined)).toBe(true);
 
-        diagram.selectionState.setElements([edge1]);
+        diagram.selection.setElements([edge1]);
         expect(action.isEnabled(undefined)).toBe(true);
 
-        diagram.selectionState.setElements([el1, edge1]);
+        diagram.selection.setElements([el1, edge1]);
         expect(action.isEnabled(undefined)).toBe(true);
       });
 
@@ -130,13 +130,13 @@ describe('abstractSelectionAction', () => {
 
         expect(action.isEnabled(undefined)).toBe(false);
 
-        diagram.selectionState.setElements([el1]);
+        diagram.selection.setElements([el1]);
         expect(action.isEnabled(undefined)).toBe(true);
 
-        diagram.selectionState.setElements([edge1]);
+        diagram.selection.setElements([edge1]);
         expect(action.isEnabled(undefined)).toBe(false);
 
-        diagram.selectionState.setElements([el1, edge1]);
+        diagram.selection.setElements([el1, edge1]);
         expect(action.isEnabled(undefined)).toBe(true);
       });
 
@@ -145,13 +145,13 @@ describe('abstractSelectionAction', () => {
 
         expect(action.isEnabled(undefined)).toBe(false);
 
-        diagram.selectionState.setElements([el1]);
+        diagram.selection.setElements([el1]);
         expect(action.isEnabled(undefined)).toBe(false);
 
-        diagram.selectionState.setElements([edge1]);
+        diagram.selection.setElements([edge1]);
         expect(action.isEnabled(undefined)).toBe(true);
 
-        diagram.selectionState.setElements([el1, edge1]);
+        diagram.selection.setElements([el1, edge1]);
         expect(action.isEnabled(undefined)).toBe(true);
       });
     });

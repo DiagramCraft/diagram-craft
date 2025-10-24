@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ReferenceLayer } from './diagramLayerReference';
 import { UnitOfWork } from './unitOfWork';
 import { RegularLayer } from './diagramLayerRegular';
-import { TestModel } from './test-support/builder';
+import { TestModel } from './test-support/testModel';
 
 describe('ReferenceLayer', () => {
   describe('constructor', () => {

@@ -1,10 +1,8 @@
 import { Viewbox } from './viewBox';
 import { DiagramNode } from './diagramNode';
 import { DiagramEdge, SimpleDiagramEdge } from './diagramEdge';
-import { SelectionState } from './selectionState';
+import { Selection } from './selection';
 import { UndoManager } from './undoManager';
-import { SnapManager } from './snap/snapManager';
-import { SnapManagerConfig } from './snap/snapManagerConfig';
 import { UnitOfWork } from './unitOfWork';
 import { bindElementListeners, DiagramElement, isEdge, isNode } from './diagramElement';
 import type { DiagramDocument } from './diagramDocument';
@@ -14,19 +12,19 @@ import { EventEmitter } from '@diagram-craft/utils/event';
 import { assert } from '@diagram-craft/utils/assert';
 import { AttachmentConsumer } from './attachment';
 import { newid } from '@diagram-craft/utils/id';
-import { type CRDTMapper } from './collaboration/datatypes/mapped/types';
-import { CRDTMap, type FlatCRDTMap } from './collaboration/crdt';
 import { LayerManager, LayerManagerCRDT } from './diagramLayerManager';
 import { RegularLayer } from './diagramLayerRegular';
 import { Layer } from './diagramLayer';
 import { assertRegularLayer } from './diagramLayerUtils';
 import { watch, WatchableValue } from '@diagram-craft/utils/watchableValue';
-import { CRDTProp } from './collaboration/datatypes/crdtProp';
-import { CRDTObject } from './collaboration/datatypes/crdtObject';
-import { Guide } from './types';
 import { CommentManager, type SerializedComment } from './comment';
 import type { Point } from '@diagram-craft/geometry/point';
 import { ElementLookup } from './elementLookup';
+import type { CRDTMap, FlatCRDTMap } from '@diagram-craft/collaboration/crdt';
+import { CRDTProp } from '@diagram-craft/collaboration/datatypes/crdtProp';
+import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
+import { type Canvas, DEFAULT_CANVAS } from './canvas';
+import type { Guide } from './guides';
 
 export type DiagramIteratorOpts = {
   nest?: boolean;
@@ -47,8 +45,6 @@ export function* diagramIterator(
     if (opts.earlyExit) return;
   }
 }
-
-export type Canvas = Omit<Box, 'r'>;
 
 export type DiagramEvents = {
   /* Diagram props, canvas have changed
@@ -87,6 +83,7 @@ export const DocumentBuilder = {
   }
 };
 
+/** @internal */
 export type DiagramCRDT = {
   id: string;
   parent: string | undefined;
@@ -96,22 +93,6 @@ export type DiagramCRDT = {
   layers: CRDTMap<LayerManagerCRDT>;
   guides: CRDTMap<Record<string, Guide>>;
   comments: CRDTMap<Record<string, SerializedComment>>;
-};
-
-export const makeDiagramMapper = (
-  doc: DiagramDocument
-): CRDTMapper<Diagram, CRDTMap<DiagramCRDT>> => {
-  return {
-    fromCRDT: (e: CRDTMap<DiagramCRDT>) => new Diagram(e.get('id')!, e.get('name')!, doc, e),
-    toCRDT: (e: Diagram) => e.crdt
-  };
-};
-
-const DEFAULT_CANVAS = {
-  w: 640,
-  h: 640,
-  x: 0,
-  y: 0
 };
 
 export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentConsumer {
@@ -133,15 +114,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   readonly layers: LayerManager;
 
   // Unshared properties
-  readonly selectionState = new SelectionState(this);
-  readonly snapManagerConfig = new SnapManagerConfig([
-    'grid',
-    'guide',
-    'node',
-    'canvas',
-    'distance',
-    'size'
-  ]);
+  readonly selection = new Selection(this);
   readonly viewBox: Viewbox;
   readonly nodeLookup = new ElementLookup<DiagramNode>();
   readonly edgeLookup = new ElementLookup<DiagramEdge>();
@@ -176,14 +149,12 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     this.#parent = new CRDTProp(this._crdt, 'parent', {
       onRemoteChange: () => this.emitDiagramChange('metadata')
     });
-    const initialCanvas = canvasSize
-      ? {
-          w: Math.max(DEFAULT_CANVAS.w, canvasSize.w),
-          h: Math.max(DEFAULT_CANVAS.h, canvasSize.h),
-          x: 0,
-          y: 0
-        }
-      : DEFAULT_CANVAS;
+    const initialCanvas = {
+      w: Math.max(DEFAULT_CANVAS.w, canvasSize?.w ?? 0),
+      h: Math.max(DEFAULT_CANVAS.h, canvasSize?.h ?? 0),
+      x: 0,
+      y: 0
+    };
 
     this.#canvas = new CRDTProp(this._crdt, 'canvas', {
       onRemoteChange: () => this.emitDiagramChange('content'),
@@ -329,47 +300,6 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   register(element: DiagramElement) {
     if (isNode(element)) this.nodeLookup.set(element.id, element);
     else if (isEdge(element)) this.edgeLookup.set(element.id, element);
-  }
-
-  createSnapManager() {
-    const selection = this.selectionState.nodes;
-    const selectionIds = new Set(this.selectionState.elements.map(e => e.id));
-
-    const firstParent = selection[0]?.parent;
-    if (firstParent && selection.every(n => n.parent === firstParent)) {
-      // When moving group members, they should snap to:
-      // 1. Other members of the same group
-      // 2. Direct members of any parent group
-      // 3. Direct members of the diagram itself (top-level elements)
-
-      const eligibleNodePredicate = (id: string) => {
-        if (selectionIds.has(id)) return false;
-
-        const element = this.lookup(id);
-        if (!element) return false;
-
-        // 1. Other members of the same group
-        if (element.parent === firstParent) return true;
-
-        // 2. Direct members of any parent group (traverse up the hierarchy)
-        let currentParent = firstParent.parent;
-        while (currentParent) {
-          if (element.parent === currentParent) return true;
-          currentParent = currentParent.parent;
-        }
-
-        // 3. Direct members of the diagram itself (top-level elements)
-        return !element.parent;
-      };
-
-      return new SnapManager(this, eligibleNodePredicate, this.snapManagerConfig);
-    } else {
-      return new SnapManager(
-        this,
-        id => !selectionIds.has(id) && !this.lookup(id)?.parent,
-        this.snapManagerConfig
-      );
-    }
   }
 
   get canvas() {

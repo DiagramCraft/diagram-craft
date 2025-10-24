@@ -1,7 +1,7 @@
-import { CRDTList, CRDTRoot } from './collaboration/crdt';
 import type { DiagramDocument } from './diagramDocument';
 import type { EmptyObject } from '@diagram-craft/utils/types';
 import { EventEmitter } from '@diagram-craft/utils/event';
+import type { CRDTList, CRDTRoot } from '@diagram-craft/collaboration/crdt';
 
 export type QueryType = 'advanced' | 'simple' | 'djql';
 

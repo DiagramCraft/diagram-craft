@@ -1,12 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { TestModel } from './test-support/builder';
+import { TestModel } from './test-support/testModel';
 import { RegularLayer } from './diagramLayerRegular';
 import { UnitOfWork } from './unitOfWork';
-import { Backends } from './collaboration/collaborationTestUtils';
 import { ElementFactory } from './elementFactory';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { transformElements } from './diagramElement';
 import { assertRegularLayer } from './diagramLayerUtils';
+import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
 
 describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
   beforeEach(backend.beforeEach);

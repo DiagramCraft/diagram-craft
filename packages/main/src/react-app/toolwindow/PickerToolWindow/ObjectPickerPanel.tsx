@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useApplication, useDiagram } from '../../../application';
 import { DRAG_DROP_MANAGER } from '@diagram-craft/canvas/dragDropManager';
 import { ObjectPickerDrag } from './objectPickerDrag';
-import { createThumbnailDiagramForNode } from '@diagram-craft/model/diagramThumbnail';
+import { createThumbnailDiagramForNode } from '@diagram-craft/canvas-app/diagramThumbnail';
 import { isRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { ToolWindowPanel, type ToolWindowPanelMode } from '../ToolWindowPanel';
 import { PickerConfig } from './pickerConfig';

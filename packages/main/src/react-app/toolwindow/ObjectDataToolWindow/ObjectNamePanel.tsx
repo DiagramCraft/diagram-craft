@@ -19,11 +19,11 @@ export const ObjectNamePanel = ({ mode }: ObjectNamePanelProps) => {
   const name = useElementMetadata($d, 'name', '');
 
   // Custom hook logic for managing element tags
-  const selectedTags = unique($d.selectionState.elements.flatMap(e => [...e.tags]));
+  const selectedTags = unique($d.selection.elements.flatMap(e => [...e.tags]));
   const isIndeterminate =
-    $d.selectionState.elements.length > 1 &&
-    $d.selectionState.elements.some(e =>
-      $d.selectionState.elements.some(
+    $d.selection.elements.length > 1 &&
+    $d.selection.elements.some(e =>
+      $d.selection.elements.some(
         other => JSON.stringify([...e.tags].sort()) !== JSON.stringify([...other.tags].sort())
       )
     );
@@ -34,7 +34,7 @@ export const ObjectNamePanel = ({ mode }: ObjectNamePanelProps) => {
     (newTags: string[]) => {
       const uow = new UnitOfWork($d, true);
 
-      $d.selectionState.elements.forEach(element => {
+      $d.selection.elements.forEach(element => {
         element.setTags(newTags, uow);
       });
 

@@ -270,16 +270,16 @@ export const EdgeLinePanel = (props: Props) => {
   const miterLimit = useEdgeProperty($d, 'stroke.miterLimit');
 
   const supportsArrows =
-    !$d.selectionState.isEdgesOnly() ||
-    $d.selectionState.edges.some(e => e.getDefinition().supports('arrows'));
+    !$d.selection.isEdgesOnly() ||
+    $d.selection.edges.some(e => e.getDefinition().supports('arrows'));
 
   const supportsLineHops =
-    !$d.selectionState.isEdgesOnly() ||
-    $d.selectionState.edges.some(e => e.getDefinition().supports('line-hops'));
+    !$d.selection.isEdgesOnly() ||
+    $d.selection.edges.some(e => e.getDefinition().supports('line-hops'));
 
   const supportsFill =
-    !$d.selectionState.isEdgesOnly() ||
-    $d.selectionState.edges.every(e => e.getDefinition().supports('fill'));
+    !$d.selection.isEdgesOnly() ||
+    $d.selection.edges.every(e => e.getDefinition().supports('fill'));
 
   return (
     <ToolWindowPanel mode={props.mode ?? 'accordion'} id="line" title={'Line'} hasCheckbox={false}>

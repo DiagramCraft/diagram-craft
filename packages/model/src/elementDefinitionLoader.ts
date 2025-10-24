@@ -2,7 +2,7 @@ import type { Stencil } from './elementDefinitionRegistry';
 import { type Diagram, DocumentBuilder } from './diagram';
 import { newid } from '@diagram-craft/utils/id';
 import { DiagramDocument } from './diagramDocument';
-import { NoOpCRDTRoot } from './collaboration/noopCrdt';
+import { NoOpCRDTRoot } from '@diagram-craft/collaboration/noopCrdt';
 import { deserializeDiagramElements } from './serialization/deserialize';
 import type { DiagramNode } from './diagramNode';
 import { UnitOfWork } from './unitOfWork';

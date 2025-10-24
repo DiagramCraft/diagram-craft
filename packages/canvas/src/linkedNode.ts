@@ -9,7 +9,7 @@ import { Point } from '@diagram-craft/geometry/point';
 import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
 import { newid } from '@diagram-craft/utils/id';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
-import { createResizeCanvasActionToFit } from '@diagram-craft/model/helpers/canvasResizeHelper';
+import { createResizeCanvasActionToFit } from '@diagram-craft/model/canvas';
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { Box } from '@diagram-craft/geometry/box';

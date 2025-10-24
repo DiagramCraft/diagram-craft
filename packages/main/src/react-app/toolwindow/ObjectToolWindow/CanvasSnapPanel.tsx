@@ -1,4 +1,4 @@
-import { useSnapManagerProperty } from '../../hooks/useProperty';
+import { useDiagramProperty } from '../../hooks/useProperty';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { ActionCheckbox } from '../../components/ActionCheckbox';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
@@ -6,8 +6,8 @@ import { useDiagram } from '../../../application';
 
 export const CanvasSnapPanel = (props: Props) => {
   const diagram = useDiagram();
-  const enabled = useSnapManagerProperty(diagram, 'enabled', true);
-  const threshold = useSnapManagerProperty(diagram, 'threshold', 5);
+  const enabled = useDiagramProperty(diagram, 'snap.enabled', true);
+  const threshold = useDiagramProperty(diagram, 'snap.threshold', 5);
 
   return (
     <ToolWindowPanel

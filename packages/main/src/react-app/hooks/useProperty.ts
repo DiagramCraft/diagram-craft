@@ -8,7 +8,6 @@ import {
   PropertyUndoableAction
 } from './usePropertyFactory';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { SnapManagerConfigProps } from '@diagram-craft/model/snap/snapManagerConfig';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
@@ -45,30 +44,18 @@ export const useDiagramProperty: PropertyHook<Diagram, DiagramProps> = makePrope
   }
 );
 
-export const useSnapManagerProperty: PropertyHook<Diagram, SnapManagerConfigProps> =
-  makePropertyHook<Diagram, SnapManagerConfigProps>(
-    diagram => diagram.snapManagerConfig,
-    (diagram, callback) => {
-      callback(diagram.snapManagerConfig);
-      diagram.snapManagerConfig.commit();
-    },
-    (diagram, handler) => {
-      useEventListener(diagram.snapManagerConfig, 'change', handler);
-    }
-  );
-
 export const useEdgeProperty: PropertyArrayHook<Diagram, EdgeProps> = makePropertyArrayHook<
   Diagram,
   DiagramEdge,
   EdgeProps
 >(
-  diagram => diagram.selectionState.edges,
+  diagram => diagram.selection.edges,
   edge => edge.editProps,
   edge => edge.storedProps,
   (edge, path) => edge.getPropsInfo(path),
   (diagram, element, cb) => UnitOfWork.execute(diagram, uow => element.updateProps(cb, uow)),
   (diagram, handler) => {
-    useEventListener(diagram.selectionState, 'change', handler);
+    useEventListener(diagram.selection, 'change', handler);
   },
   edgeDefaults,
   {
@@ -93,13 +80,13 @@ export const useNodeProperty: PropertyArrayHook<Diagram, NodeProps> = makeProper
   DiagramNode,
   NodeProps
 >(
-  diagram => diagram.selectionState.nodes,
+  diagram => diagram.selection.nodes,
   node => node.editProps,
   node => node.storedProps,
   (node, path, defaultValue) => node.getPropsInfo(path, defaultValue),
   (diagram, element, cb) => UnitOfWork.execute(diagram, uow => element.updateProps(cb, uow)),
   (diagram, handler) => {
-    useEventListener(diagram.selectionState, 'change', handler);
+    useEventListener(diagram.selection, 'change', handler);
   },
   nodeDefaults,
   {
@@ -126,13 +113,13 @@ export const useElementProperty: PropertyArrayHook<Diagram, ElementProps> = make
 >(
   // TODO: This is to avoid issue with Readonly, but it's not ideal
   //       maybe change makePropertyArrayHook
-  diagram => [...diagram.selectionState.elements],
+  diagram => [...diagram.selection.elements],
   element => element.editProps,
   element => element.storedProps,
   (element, path) => element.getPropsInfo(path),
   (diagram, element, cb) => UnitOfWork.execute(diagram, uow => element.updateProps(cb, uow)),
   (diagram, handler) => {
-    useEventListener(diagram.selectionState, 'change', handler);
+    useEventListener(diagram.selection, 'change', handler);
   },
   elementDefaults,
   {
@@ -156,13 +143,13 @@ export const useElementMetadata: PropertyArrayHook<Diagram, ElementMetadata> =
   makePropertyArrayHook<Diagram, DiagramElement, ElementMetadata>(
     // TODO: This is to avoid issue with Readonly, but it's not ideal
     //       maybe change makePropertyArrayHook
-    diagram => [...diagram.selectionState.elements],
+    diagram => [...diagram.selection.elements],
     element => element.metadata,
     element => element.metadata,
     () => [],
     (diagram, element, cb) => UnitOfWork.execute(diagram, uow => element.updateMetadata(cb, uow)),
     (diagram, handler) => {
-      useEventListener(diagram.selectionState, 'change', handler);
+      useEventListener(diagram.selection, 'change', handler);
     },
     new Defaults<ElementMetadata>(), // empty defaults
     {

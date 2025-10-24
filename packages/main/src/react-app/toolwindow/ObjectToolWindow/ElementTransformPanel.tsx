@@ -40,7 +40,7 @@ export const ElementTransformPanel = (props: Props) => {
   const getRelativeCoordinates = () => {
     if (!bounds) return { x: 0, y: 0 };
 
-    const selectedNode = diagram.selectionState.nodes[0];
+    const selectedNode = diagram.selection.nodes[0];
     const parent = selectedNode?.parent;
 
     // If the node has a parent group, calculate relative coordinates
@@ -48,7 +48,7 @@ export const ElementTransformPanel = (props: Props) => {
       parent &&
       isNode(parent) &&
       parent.nodeType === 'group' &&
-      diagram.selectionState.nodes.length === 1
+      diagram.selection.nodes.length === 1
     ) {
       return {
         x: bounds.x - parent.bounds.x,
@@ -72,23 +72,21 @@ export const ElementTransformPanel = (props: Props) => {
 
   const aspectRatio = transformedBounds.w / transformedBounds.h;
 
-  const rotatable = diagram.selectionState.nodes.every(
+  const rotatable = diagram.selection.nodes.every(
     p => p.renderProps.capabilities.rotatable !== false
   );
-  const resizeableVertically = diagram.selectionState.nodes.every(
+  const resizeableVertically = diagram.selection.nodes.every(
     p => p.renderProps.capabilities.resizable.vertical !== false
   );
-  const resizeableHorizontally = diagram.selectionState.nodes.every(
+  const resizeableHorizontally = diagram.selection.nodes.every(
     p => p.renderProps.capabilities.resizable.horizontal !== false
   );
-  const movable = diagram.selectionState.nodes.every(
-    p => p.renderProps.capabilities.movable !== false
-  );
+  const movable = diagram.selection.nodes.every(p => p.renderProps.capabilities.movable !== false);
 
   useEffect(() => {
     const callback = () => {
-      const selection = diagram.selectionState;
-      if (selection.getSelectionType() === 'single-node') {
+      const selection = diagram.selection;
+      if (selection.type === 'single-node') {
         setBounds(selection.nodes[0]!.bounds);
       } else {
         setBounds(undefined);
@@ -96,11 +94,11 @@ export const ElementTransformPanel = (props: Props) => {
     };
     callback();
 
-    diagram.selectionState.on('change', callback);
+    diagram.selection.on('change', callback);
     return () => {
-      diagram.selectionState.off('change', callback);
+      diagram.selection.off('change', callback);
     };
-  }, [diagram.selectionState]);
+  }, [diagram.selection]);
 
   // TODO: This seems a bit complicated just to move an element
   //       ... especially all of the updating of the selection state
@@ -110,7 +108,7 @@ export const ElementTransformPanel = (props: Props) => {
     newBounds.y -= transformedBounds.h * origins[origin].y;
 
     // Convert relative coordinates back to absolute if the node has a parent group
-    const selectedNode = diagram.selectionState.nodes[0];
+    const selectedNode = diagram.selection.nodes[0];
     const parent = selectedNode?.parent;
     if (parent && isNode(parent) && parent.nodeType === 'group') {
       newBounds.x += parent.bounds.x;
@@ -136,14 +134,14 @@ export const ElementTransformPanel = (props: Props) => {
     }
 
     UnitOfWork.execute(diagram, uow => {
-      const selectedElement = diagram.selectionState.elements[0];
+      const selectedElement = diagram.selection.elements[0];
       assert.present(selectedElement);
       const transforms = TransformFactory.fromTo(
         selectedElement.bounds,
         WritableBox.asBox(newBounds)
       );
       transformElements([selectedElement], transforms, uow);
-      diagram.selectionState.highlights = [];
+      diagram.selection.highlights = [];
     });
   };
 

@@ -4,6 +4,7 @@ import { model } from './modelState';
 import { Observable } from './component/component';
 import { ToolType } from './tool';
 import { Modifiers } from './dragDropManager';
+import type { Marquee } from './marquee';
 
 export type OnMouseDown = (id: string, coord: Point, modifiers: Modifiers) => void;
 export type OnDoubleClick = (id: string, coord: Point) => void;
@@ -37,6 +38,7 @@ export interface Context {
   help: Help;
   tool: Observable<ToolType>;
   actions: Partial<ActionMap>;
+  marquee: Marquee;
 }
 
 /**

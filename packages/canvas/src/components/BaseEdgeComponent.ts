@@ -2,7 +2,7 @@ import { Component } from '../component/component';
 import { Path } from '@diagram-craft/geometry/path';
 import { DeepReadonly, DeepRequired } from '@diagram-craft/utils/types';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
-import { applyLineHops, clipPath } from '@diagram-craft/model/edgeUtils';
+import { applyLineHops, clipPath } from '@diagram-craft/model/diagramEdgeUtils';
 import * as svg from '../component/vdom-svg';
 import { asDistortedSvgPath, parseArrowSvgPath } from '../effects/sketch';
 import { hash } from '@diagram-craft/utils/hash';
@@ -11,9 +11,12 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DRAG_DROP_MANAGER } from '../dragDropManager';
 import { EdgeWaypointDrag } from '../drag/edgeWaypointDrag';
 import { EdgeControlPointDrag } from '../drag/edgeControlPointDrag';
-import { ControlPoints } from '@diagram-craft/model/types';
 import { ARROW_SHAPES, ArrowShape } from '../arrowShapes';
-import { DiagramEdge, EdgePropsForRendering } from '@diagram-craft/model/diagramEdge';
+import {
+  type ControlPoints,
+  DiagramEdge,
+  EdgePropsForRendering
+} from '@diagram-craft/model/diagramEdge';
 import { VerifyNotReached } from '@diagram-craft/utils/assert';
 import { ShapeEdgeDefinition } from '../shape/shapeEdgeDefinition';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
@@ -98,9 +101,9 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
       e.stopPropagation();
     };
 
-    const isSelected = $d.selectionState.elements.includes(props.element);
-    const isSingleSelected = isSelected && $d.selectionState.elements.length === 1;
-    const firstEdge = $d.selectionState.edges[0]!;
+    const isSelected = $d.selection.elements.includes(props.element);
+    const isSingleSelected = isSelected && $d.selection.elements.length === 1;
+    const firstEdge = $d.selection.edges[0]!;
 
     const edgeProps = props.element.renderProps;
 

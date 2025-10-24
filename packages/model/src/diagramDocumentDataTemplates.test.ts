@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import { DiagramDocumentDataTemplates } from './diagramDocumentDataTemplates';
 import { DataTemplate } from './diagramDocument';
-import { CRDT } from './collaboration/crdt';
-import { Backends } from './collaboration/collaborationTestUtils';
+import { CRDT } from '@diagram-craft/collaboration/crdt';
+import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
 
 const templates: DataTemplate[] = [
   { id: '1', schemaId: 'schema1', name: 'Template 1', template: {} as any },

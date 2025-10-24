@@ -1,6 +1,6 @@
 import type { DiagramElement } from './diagramElement';
 import { assert } from '@diagram-craft/utils/assert';
-import { SerializedEdge, SerializedNode } from './serialization/types';
+import { SerializedEdge, SerializedNode } from './serialization/serializedTypes';
 import type { Stylesheet, StylesheetType } from './diagramStyles';
 import type { Layer, LayerType } from './diagramLayer';
 import type { Diagram } from './diagram';

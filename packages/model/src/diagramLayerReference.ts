@@ -3,7 +3,7 @@ import type { LayerCRDT } from './diagramLayer';
 import type { Diagram } from './diagram';
 import { LayerSnapshot, UnitOfWork } from './unitOfWork';
 import { RuleLayer } from './diagramLayerRule';
-import { CRDTMap } from './collaboration/crdt';
+import { CRDTMap } from '@diagram-craft/collaboration/crdt';
 import { RegularLayer } from './diagramLayerRegular';
 
 type LayerReference = {

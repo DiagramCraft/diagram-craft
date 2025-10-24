@@ -11,14 +11,14 @@ export const CommentToolbarButton = () => {
   const application = useApplication();
 
   // Listen to selection changes
-  useEventListener(diagram.selectionState, 'add', redraw);
-  useEventListener(diagram.selectionState, 'remove', redraw);
+  useEventListener(diagram.selection, 'add', redraw);
+  useEventListener(diagram.selection, 'remove', redraw);
   useEventListener(diagram.commentManager, 'commentAdded', redraw);
   useEventListener(diagram.commentManager, 'commentUpdated', redraw);
   useEventListener(diagram.commentManager, 'commentRemoved', redraw);
 
-  const selType = diagram.selectionState.getSelectionType();
-  const selElement = diagram.selectionState.elements?.[0];
+  const selType = diagram.selection.type;
+  const selElement = diagram.selection.elements?.[0];
 
   const commentCount = diagram.commentManager
     .getAll()

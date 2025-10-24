@@ -48,7 +48,7 @@ const getSource = (source: string, diagram: Diagram) => {
     case 'active-document':
       return diagram.document;
     case 'selection':
-      return diagram.selectionState;
+      return diagram.selection;
   }
 };
 

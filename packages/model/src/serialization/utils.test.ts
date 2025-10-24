@@ -8,7 +8,7 @@ import type {
   SerializedAnchorEndpoint,
   SerializedFreeEndpoint,
   SerializedPointInNodeEndpoint
-} from './types';
+} from './serializedTypes';
 
 describe('Serialized Endpoint Type Guards', () => {
   // Test data

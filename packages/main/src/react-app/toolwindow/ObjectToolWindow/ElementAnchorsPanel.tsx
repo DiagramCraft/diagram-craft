@@ -9,7 +9,7 @@ import { newid } from '@diagram-craft/utils/id';
 import { TbPlus, TbTrash } from 'react-icons/tb';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { useMemo } from 'react';
-import { createThumbnailDiagramForNode } from '@diagram-craft/model/diagramThumbnail';
+import { createThumbnailDiagramForNode } from '@diagram-craft/canvas-app/diagramThumbnail';
 import { getAnchorPosition } from '@diagram-craft/model/anchor';
 import { serializeDiagramElement } from '@diagram-craft/model/serialization/serialize';
 import { deserializeDiagramElements } from '@diagram-craft/model/serialization/deserialize';
@@ -37,8 +37,8 @@ const ShapePreviewWithAnchors = ({ diagram }: { diagram: ReturnType<typeof useDi
   const application = useApplication();
 
   const selectedNode = useMemo(() => {
-    return diagram.selectionState.nodes[0];
-  }, [diagram.selectionState.nodes]);
+    return diagram.selection.nodes[0];
+  }, [diagram.selection.nodes]);
 
   const previewDiagram = useMemo(() => {
     if (!selectedNode) return null;
@@ -281,8 +281,8 @@ export const ElementAnchorsPanel = (props: Props) => {
   const customAnchors = useNodeProperty(diagram, 'anchors.customAnchors', {});
 
   const disabled =
-    !diagram.selectionState.isNodesOnly() ||
-    diagram.selectionState.nodes.some(e => !e.getDefinition().supports('anchors-configurable'));
+    !diagram.selection.isNodesOnly() ||
+    diagram.selection.nodes.some(e => !e.getDefinition().supports('anchors-configurable'));
 
   return (
     <ToolWindowPanel
@@ -350,7 +350,7 @@ export const ElementAnchorsPanel = (props: Props) => {
             diagram={diagram}
             onChange={() => {
               const uow = new UnitOfWork(diagram, false);
-              diagram.selectionState.nodes.forEach(node => {
+              diagram.selection.nodes.forEach(node => {
                 node.invalidateAnchors(uow);
               });
               uow.commit();

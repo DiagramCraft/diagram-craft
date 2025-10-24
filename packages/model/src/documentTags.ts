@@ -1,4 +1,4 @@
-import { CRDTRoot, CRDTMap } from './collaboration/crdt';
+import { CRDTRoot, CRDTMap } from '@diagram-craft/collaboration/crdt';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import type { EmptyObject } from '@diagram-craft/utils/types';
 
@@ -37,13 +37,13 @@ export class DocumentTags extends EventEmitter<DocumentTagsEvents> {
 
   remove(tag: string): void {
     this.#tags.delete(tag);
-    
+
     // Clean up selection if the removed tag was selected
     if (this.#selectedTags.has(tag)) {
       this.#selectedTags.delete(tag);
       this.emit('selectionUpdate', {});
     }
-    
+
     this.emit('update', {});
   }
 
@@ -80,13 +80,13 @@ export class DocumentTags extends EventEmitter<DocumentTagsEvents> {
 
   clear(): void {
     this.#tags.clear();
-    
+
     // Clear all selections since no tags exist
     if (this.#selectedTags.size > 0) {
       this.#selectedTags.clear();
       this.emit('selectionUpdate', {});
     }
-    
+
     this.emit('update', {});
   }
 
@@ -119,10 +119,12 @@ export class DocumentTags extends EventEmitter<DocumentTagsEvents> {
 
   setSelectedTags(tags: readonly string[]): void {
     const newSelectedTags = new Set(tags.filter(tag => this.has(tag)));
-    
+
     // Check if selection actually changed
-    if (newSelectedTags.size !== this.#selectedTags.size || 
-        !Array.from(newSelectedTags).every(tag => this.#selectedTags.has(tag))) {
+    if (
+      newSelectedTags.size !== this.#selectedTags.size ||
+      !Array.from(newSelectedTags).every(tag => this.#selectedTags.has(tag))
+    ) {
       this.#selectedTags = newSelectedTags;
       this.emit('selectionUpdate', {});
     }

@@ -49,7 +49,7 @@ export class MoveTool extends AbstractTool {
   }
 
   onMouseDown(id: string, point: Point, modifiers: Modifiers) {
-    const selection = this.diagram.selectionState;
+    const selection = this.diagram.selection;
 
     const isClickOnBackground = id === BACKGROUND;
 
@@ -166,17 +166,17 @@ export class MoveTool extends AbstractTool {
     if (current) {
       current.onKeyDown?.(e);
     } else if (e.key === 'Escape') {
-      this.diagram.selectionState.clear();
+      this.diagram.selection.clear();
     } else if (
       !e.ctrlKey &&
       !e.metaKey &&
       !e.altKey &&
-      this.diagram.selectionState.isNodesOnly() &&
-      this.diagram.selectionState.nodes.length === 1 &&
+      this.diagram.selection.isNodesOnly() &&
+      this.diagram.selection.nodes.length === 1 &&
       e.target === document.body &&
       e.key !== 'Shift'
     ) {
-      const node = this.diagram.selectionState.nodes[0]!;
+      const node = this.diagram.selection.nodes[0]!;
       node.getDefinition().requestFocus(node, false);
     }
   }

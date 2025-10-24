@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach } from 'vitest';
 import { Comment } from '@diagram-craft/model/comment';
-import { TestModel } from '@diagram-craft/model/test-support/builder';
+import { TestModel } from '@diagram-craft/model/test-support/testModel';
 import { newid } from '@diagram-craft/utils/id';
 import {
   buildCommentThreads,

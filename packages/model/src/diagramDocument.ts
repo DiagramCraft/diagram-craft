@@ -1,35 +1,37 @@
 import { DiagramPalette } from './diagramPalette';
 import { DiagramStyles } from './diagramStyles';
-import {
-  Diagram,
-  DiagramCRDT,
-  diagramIterator,
-  DiagramIteratorOpts,
-  makeDiagramMapper
-} from './diagram';
+import { Diagram, DiagramCRDT, diagramIterator, DiagramIteratorOpts } from './diagram';
 import { AttachmentConsumer, AttachmentManager } from './attachment';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinitionRegistry';
 import { isNode } from './diagramElement';
 import { getRemoteUnitOfWork, UnitOfWork } from './unitOfWork';
 import { DataProviderRegistry } from './dataProvider';
-import { DefaultDataProvider, DefaultDataProviderId } from './dataProviderDefault';
-import { UrlDataProvider, UrlDataProviderId } from './dataProviderUrl';
-import { RESTDataProvider, RestDataProviderId } from './dataProviderRest';
+import { DefaultDataProvider, DefaultDataProviderId } from './data-providers/dataProviderDefault';
+import { UrlDataProvider, UrlDataProviderId } from './data-providers/dataProviderUrl';
+import { RESTDataProvider, RestDataProviderId } from './data-providers/dataProviderRest';
 import { Generators } from '@diagram-craft/utils/generator';
-import { SerializedElement } from './serialization/types';
+import { SerializedElement } from './serialization/serializedTypes';
 import { DiagramDocumentData } from './diagramDocumentData';
-import { CRDT, CRDTRoot } from './collaboration/crdt';
-import { CollaborationConfig } from './collaboration/collaborationConfig';
 import { DocumentProps } from './documentProps';
 import { DocumentTags } from './documentTags';
 import { DocumentStories } from './documentStories';
-import { ProgressCallback } from './types';
-import { MappedCRDTOrderedMap } from './collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import { watch } from '@diagram-craft/utils/watchableValue';
 import { precondition } from '@diagram-craft/utils/assert';
 import type { EmptyObject } from '@diagram-craft/utils/types';
-import type { AwarenessUserState } from './collaboration/awareness';
+import type { ProgressCallback } from '@diagram-craft/utils/progress';
+import { CRDT, type CRDTMap, type CRDTRoot } from '@diagram-craft/collaboration/crdt';
+import { MappedCRDTOrderedMap } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtOrderedMap';
+import type { AwarenessUserState } from '@diagram-craft/collaboration/awareness';
+import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
+import type { CRDTMapper } from '@diagram-craft/collaboration/datatypes/mapped/types';
+
+const makeDiagramMapper = (doc: DiagramDocument): CRDTMapper<Diagram, CRDTMap<DiagramCRDT>> => {
+  return {
+    fromCRDT: (e: CRDTMap<DiagramCRDT>) => new Diagram(e.get('id')!, e.get('name')!, doc, e),
+    toCRDT: (e: Diagram) => e.crdt
+  };
+};
 
 export type DocumentEvents = {
   diagramChanged: { diagram: Diagram };

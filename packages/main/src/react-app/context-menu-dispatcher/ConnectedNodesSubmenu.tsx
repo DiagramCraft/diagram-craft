@@ -24,10 +24,10 @@ type ConnectionItem = {
 
 // Get connected nodes and data entries for single node selection
 const getConnectedItems = (diagram: Diagram): ConnectionItem[] => {
-  if (diagram.selectionState.getSelectionType() !== 'single-node') return [];
-  assert.arrayNotEmpty(diagram.selectionState.nodes);
+  if (diagram.selection.type !== 'single-node') return [];
+  assert.arrayNotEmpty(diagram.selection.nodes);
 
-  const selectedNode = diagram.selectionState.nodes[0];
+  const selectedNode = diagram.selection.nodes[0];
   const connectedItems = new Map<string, ConnectionItem>();
 
   // Find nodes connected via edges
@@ -156,8 +156,8 @@ const createNodeForData = (item: Data, schemaName: string, diagram: Diagram) => 
   if (!schema) return;
 
   // Get current selection to position new node
-  assert.arrayNotEmpty(diagram.selectionState.nodes);
-  const selectedNode = diagram.selectionState.nodes[0];
+  assert.arrayNotEmpty(diagram.selection.nodes);
+  const selectedNode = diagram.selection.nodes[0];
   const offsetX = 20; // Position closer to the right of selected node
 
   // Create the new node
@@ -207,7 +207,7 @@ const createNodeForData = (item: Data, schemaName: string, diagram: Diagram) => 
     new ElementAddUndoableAction([newNode, newEdge], diagram, activeLayer)
   );
 
-  diagram.selectionState.setElements([newNode]);
+  diagram.selection.setElements([newNode]);
 };
 
 // Helper function to get the appropriate icon for each connection type
@@ -301,7 +301,7 @@ export const ConnectedNodesSubmenu = () => {
                           <ContextMenu.Item
                             className="cmp-context-menu__item"
                             onClick={() => {
-                              diagram.selectionState.setElements([item.node!]);
+                              diagram.selection.setElements([item.node!]);
                             }}
                           >
                             Select Node
@@ -309,7 +309,7 @@ export const ConnectedNodesSubmenu = () => {
                           <ContextMenu.Item
                             className="cmp-context-menu__item"
                             onClick={() => {
-                              diagram.selectionState.toggle(item.node!);
+                              diagram.selection.toggle(item.node!);
                             }}
                           >
                             Add Node to Selection

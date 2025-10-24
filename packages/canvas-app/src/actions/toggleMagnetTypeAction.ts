@@ -1,5 +1,6 @@
 import { AbstractToggleAction, ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
-import { MagnetType } from '@diagram-craft/model/snap/magnet';
+import { MagnetType } from '@diagram-craft/canvas/snap/magnet';
+import { DEFAULT_SNAP_CONFIG, getSnapConfig } from '@diagram-craft/canvas/snap/snapManager';
 
 declare global {
   interface ActionMap extends ReturnType<typeof toggleMagnetTypeActions> {}
@@ -20,26 +21,23 @@ export class ToggleMagnetTypeAction extends AbstractToggleAction {
     context: ActionContext
   ) {
     super(context);
-    this.state = context.model.activeDiagram.snapManagerConfig.magnetTypes.includes(magnetType);
+    this.state = getSnapConfig(context.model.activeDiagram).magnetTypes[magnetType] === true;
   }
 
   getStateCriteria(context: ActionContext) {
-    return ActionCriteria.EventTriggered(
-      context.model.activeDiagram.snapManagerConfig,
-      'change',
-      () => {
-        return context.model.activeDiagram.snapManagerConfig.magnetTypes.includes(this.magnetType);
-      }
-    );
+    return ActionCriteria.EventTriggered(context.model.activeDiagram, 'diagramChange', () => {
+      return getSnapConfig(context.model.activeDiagram).magnetTypes[this.magnetType] === true;
+    });
   }
 
   execute(): void {
-    const snapMgr = this.context.model.activeDiagram.snapManagerConfig;
-    if (this.state) {
-      snapMgr.magnetTypes = snapMgr.magnetTypes.filter(type => type !== this.magnetType);
-    } else {
-      snapMgr.magnetTypes = [...snapMgr.magnetTypes, this.magnetType];
-    }
-    snapMgr.commit();
+    this.context.model.activeDiagram.updateProps(p => {
+      p.snap ??= DEFAULT_SNAP_CONFIG;
+      if (this.state) {
+        p.snap.magnetTypes[this.magnetType] = false;
+      } else {
+        p.snap.magnetTypes[this.magnetType] = true;
+      }
+    });
   }
 }

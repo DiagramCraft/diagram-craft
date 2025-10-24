@@ -29,9 +29,9 @@ export class SelectionDeleteAction extends AbstractSelectionAction {
   }
 
   execute(): void {
-    if (this.context.model.activeDiagram.selectionState.isEmpty()) return;
+    if (this.context.model.activeDiagram.selection.isEmpty()) return;
 
-    const deletableElements = this.context.model.activeDiagram.selectionState.elements.filter(e => {
+    const deletableElements = this.context.model.activeDiagram.selection.elements.filter(e => {
       return !(isNode(e) && e.renderProps.capabilities.deletable === false);
     });
 

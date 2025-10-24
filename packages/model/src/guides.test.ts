@@ -3,10 +3,11 @@ import {
   CreateGuideUndoableAction,
   DeleteGuideUndoableAction,
   EditGuideUndoableAction,
+  type Guide,
+  type GuideType,
   MoveGuideUndoableAction
 } from './guides';
-import { TestModel } from './test-support/builder';
-import { Guide, GuideType } from './types';
+import { TestModel } from './test-support/testModel';
 
 describe('Guide Undoable Actions', () => {
   const createTestGuide = (

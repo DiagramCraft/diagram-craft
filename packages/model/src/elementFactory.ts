@@ -1,6 +1,6 @@
 import type { Endpoint } from './endpoint';
 import { type DiagramEdge, type EdgePropsForEditing, SimpleDiagramEdge } from './diagramEdge';
-import type { Waypoint } from './types';
+import type { Waypoint } from './diagramEdge';
 import type { RegularLayer } from './diagramLayerRegular';
 import type { ModificationLayer } from './diagramLayerModification';
 import { Box } from '@diagram-craft/geometry/box';
@@ -11,7 +11,7 @@ import {
   type NodeTexts,
   SimpleDiagramNode
 } from './diagramNode';
-import type { CRDTMap } from './collaboration/crdt';
+import type { CRDTMap } from '@diagram-craft/collaboration/crdt';
 import type { DiagramElementCRDT } from './diagramElement';
 
 export const ElementFactory = {

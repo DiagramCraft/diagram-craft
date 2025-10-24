@@ -355,7 +355,7 @@ export class TableHelper {
   }
 
   static get(diagram: Diagram) {
-    return new TableHelper(diagram.selectionState.elements[0]!);
+    return new TableHelper(diagram.selection.elements[0]!);
   }
 
   get tableNode() {

@@ -2,8 +2,8 @@ import type { DiagramDocument } from './diagramDocument';
 import { UnitOfWork } from './unitOfWork';
 import { deepClone } from '@diagram-craft/utils/object';
 import { EventEmitter } from '@diagram-craft/utils/event';
-import { CRDTMap, CRDTRoot } from './collaboration/crdt';
 import { assert } from '@diagram-craft/utils/assert';
+import type { CRDTMap, CRDTRoot } from '@diagram-craft/collaboration/crdt';
 
 export type DataSchemaField =
   | {

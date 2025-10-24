@@ -51,7 +51,7 @@ class UndoableGroupAction implements UndoableAction {
 
   private group(uow: UnitOfWork) {
     if (this.#elements === undefined) {
-      this.#elements = this.diagram.selectionState.elements.toSorted((a, b) => {
+      this.#elements = this.diagram.selection.elements.toSorted((a, b) => {
         return this.diagram.layers.isAbove(a, b) ? 1 : -1;
       });
     }
@@ -77,12 +77,12 @@ class UndoableGroupAction implements UndoableAction {
     assertRegularLayer(this.diagram.activeLayer);
     this.diagram.activeLayer.addElement(this.#group, uow);
 
-    this.diagram.selectionState.setElements([this.#group]);
+    this.diagram.selection.setElements([this.#group]);
   }
 
   private ungroup(uow: UnitOfWork) {
     if (this.#group === undefined) {
-      this.#group = this.diagram.selectionState.elements[0] as DiagramNode;
+      this.#group = this.diagram.selection.elements[0] as DiagramNode;
     }
 
     const children = this.#group.children;
@@ -102,7 +102,7 @@ class UndoableGroupAction implements UndoableAction {
       this.diagram.activeLayer.addElement(e, uow);
     });
 
-    this.diagram.selectionState.setElements(children);
+    this.diagram.selection.setElements(children);
   }
 }
 
@@ -131,13 +131,13 @@ export class GroupAction extends AbstractSelectionAction {
 
     if (this.type === 'ungroup') {
       dest.push(
-        ActionCriteria.EventTriggered(context.model.activeDiagram.selectionState, 'add', () =>
-          context.model.activeDiagram.selectionState.nodes.some(e => e.nodeType === 'group')
+        ActionCriteria.EventTriggered(context.model.activeDiagram.selection, 'add', () =>
+          context.model.activeDiagram.selection.nodes.some(e => e.nodeType === 'group')
         )
       );
       dest.push(
-        ActionCriteria.EventTriggered(context.model.activeDiagram.selectionState, 'remove', () =>
-          context.model.activeDiagram.selectionState.nodes.some(e => e.nodeType === 'group')
+        ActionCriteria.EventTriggered(context.model.activeDiagram.selection, 'remove', () =>
+          context.model.activeDiagram.selection.nodes.some(e => e.nodeType === 'group')
         )
       );
     }

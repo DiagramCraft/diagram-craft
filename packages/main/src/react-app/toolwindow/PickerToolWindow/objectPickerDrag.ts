@@ -8,14 +8,14 @@ import { DRAG_DROP_MANAGER, DragEvents } from '@diagram-craft/canvas/dragDropMan
 import { getAncestorWithClass, setPosition } from '@diagram-craft/utils/dom';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
-import { assignNewBounds, cloneElements } from '@diagram-craft/model/helpers/cloneHelper';
+import { assignNewBounds, cloneElements } from '@diagram-craft/model/diagramElementUtils';
 import { Box } from '@diagram-craft/geometry/box';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 import { clamp } from '@diagram-craft/utils/math';
 import { insert } from '@diagram-craft/canvas/component/vdom';
 import { StaticCanvasComponent } from '@diagram-craft/canvas/canvas/StaticCanvasComponent';
-import { createThumbnailDiagramForNode } from '@diagram-craft/model/diagramThumbnail';
+import { createThumbnailDiagramForNode } from '@diagram-craft/canvas-app/diagramThumbnail';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 enum State {
@@ -40,7 +40,7 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
     super(diagram, Point.ORIGIN, event, context);
     this.isGlobal = true;
 
-    this.#originalSelectionState = diagram.selectionState.elements;
+    this.#originalSelectionState = diagram.selection.elements;
 
     this.addDragImage({ x: event.clientX, y: event.clientY });
 
@@ -109,8 +109,8 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
     super.onKeyDown(event);
 
     if (event.key === 'Escape') {
-      this.diagram.selectionState.clear();
-      this.diagram.selectionState.setElements(this.#originalSelectionState);
+      this.diagram.selection.clear();
+      this.diagram.selection.setElements(this.#originalSelectionState);
       this.removeElement();
 
       this.onDragEnd();
@@ -134,7 +134,7 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
       this.addElement(diagramPoint);
     } else {
       this.removeElement();
-      this.diagram.selectionState.clear();
+      this.diagram.selection.clear();
       this.addDragImage(point);
     }
   }
@@ -232,8 +232,8 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
 
     new ElementAddUndoableAction(this.#elements, this.diagram, activeLayer).redo();
 
-    this.diagram.selectionState.clear();
-    this.diagram.selectionState.setElements(this.#elements);
+    this.diagram.selection.clear();
+    this.diagram.selection.setElements(this.#elements);
   }
 
   private removeElement() {

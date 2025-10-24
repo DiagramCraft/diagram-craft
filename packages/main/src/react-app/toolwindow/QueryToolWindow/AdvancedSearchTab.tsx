@@ -258,8 +258,8 @@ export const AdvancedSearchTab = () => {
 
   const handleElementClick = (element: DiagramElement) => {
     // Select the element
-    diagram.selectionState.clear();
-    diagram.selectionState.setElements([element]);
+    diagram.selection.clear();
+    diagram.selection.setElements([element]);
 
     // Focus on the element by centering it in the viewport if possible
     redraw();
