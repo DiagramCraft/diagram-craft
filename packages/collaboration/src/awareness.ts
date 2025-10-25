@@ -25,7 +25,6 @@ export interface Awareness extends Emitter<AwarenessEvents> {
 }
 
 export class NoOpAwareness extends EventEmitter<AwarenessEvents> implements Awareness {
-
   updateUser() {}
   updateCursor() {}
 

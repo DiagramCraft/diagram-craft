@@ -265,5 +265,33 @@ describe('Box', () => {
       const box = { x: 0, y: 0, w: 10, h: 10, r: 0 };
       expect(Box.applyAspectRatio(box, 2)).toStrictEqual({ ...box, h: 5 });
     });
+
+    test('grow expands box by given amount', () => {
+      const box = { x: 10, y: 10, w: 20, h: 20, r: 0 };
+      expect(Box.grow(box, 5)).toStrictEqual({ x: 5, y: 5, w: 30, h: 30, r: 0 });
+    });
+
+    test('grow preserves rotation', () => {
+      const box = { x: 10, y: 10, w: 20, h: 20, r: Math.PI / 4 };
+      expect(Box.grow(box, 5)).toStrictEqual({ x: 5, y: 5, w: 30, h: 30, r: Math.PI / 4 });
+    });
+
+    test('midpoint calculates midpoint between horizontally separated boxes', () => {
+      const box1 = { x: 0, y: 0, w: 10, h: 10, r: 0 };
+      const box2 = { x: 20, y: 0, w: 10, h: 10, r: 0 };
+      expect(Box.midpoint(box1, box2)).toStrictEqual({ x: 15, y: 10 });
+    });
+
+    test('midpoint calculates midpoint between vertically separated boxes', () => {
+      const box1 = { x: 0, y: 0, w: 10, h: 10, r: 0 };
+      const box2 = { x: 0, y: 20, w: 10, h: 10, r: 0 };
+      expect(Box.midpoint(box1, box2)).toStrictEqual({ x: 10, y: 15 });
+    });
+
+    test('midpoint handles overlapping boxes', () => {
+      const box1 = { x: 0, y: 0, w: 10, h: 10, r: 0 };
+      const box2 = { x: 5, y: 5, w: 10, h: 10, r: 0 };
+      expect(Box.midpoint(box1, box2)).toStrictEqual({ x: 10, y: 10 });
+    });
   });
 });

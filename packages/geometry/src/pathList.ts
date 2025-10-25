@@ -85,7 +85,7 @@ export class PathList {
   }
 
   projectPoint(p: Point): ProjectedPointOnPathList {
-    let best: ProjectedPointOnPathList | undefined ;
+    let best: ProjectedPointOnPathList | undefined;
     for (let idx = 0; idx < this.paths.length; idx++) {
       const path = this.paths[idx]!;
 
@@ -111,6 +111,7 @@ export class PathList {
     return true;
   }
 
+  /*
   isInHole(p: Point): boolean {
     for (const [dx, dy] of RAY_OFFSETS) {
       const line = new Path(p, [['L', dx * FAR_DISTANCE, dy * FAR_DISTANCE]]);
@@ -119,6 +120,7 @@ export class PathList {
     }
     return true;
   }
+   */
 
   isOn(p: Point, epsilon = 0.0001): boolean {
     return this.paths.some(path => path.isOn(p, epsilon));

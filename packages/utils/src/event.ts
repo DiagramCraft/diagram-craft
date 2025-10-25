@@ -52,7 +52,7 @@ export class EventEmitter<T extends EventMap> implements Emitter<T> {
     });
   }
 
-  emitAsyncWithDebounce<K extends EventKey<T>>(eventName: K, params?: T[K]) {
+  protected emitAsyncWithDebounce<K extends EventKey<T>>(eventName: K, params?: T[K]) {
     (this.listeners[eventName] ?? []).forEach(l => {
       l.fnDebounce({ ...(params ?? {}) } as T[K]);
     });

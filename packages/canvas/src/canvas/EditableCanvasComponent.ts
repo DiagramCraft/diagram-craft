@@ -5,7 +5,7 @@ import { CanvasGuidesComponent } from '../components/CanvasGuidesComponent';
 import { Actions, findAndExecuteAction } from '../keyMap';
 import { DocumentBoundsComponent } from '../components/DocumentBoundsComponent';
 import { DRAG_DROP_MANAGER, Modifiers } from '../dragDropManager';
-import { AbstractTool, BACKGROUND, Tool, ToolConstructor, ToolType } from '../tool';
+import { AbstractTool, Tool, ToolConstructor, ToolType } from '../tool';
 import { DragLabelComponent } from '../components/DragLabelComponent';
 import { AnchorHandlesComponent } from '@diagram-craft/canvas/components/AnchorHandlesComponent';
 import { $cmp, createEffect, Observable } from '../component/component';
@@ -278,10 +278,10 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
                   this.setTool(panTool);
                   panTool.setResetOnMouseUp(true);
                   this.updateToolClassOnSvg('pan');
-                  panTool.onMouseDown(BACKGROUND, EventHelper.point(e), e);
+                  panTool.onMouseDown(AbstractTool.BACKGROUND, EventHelper.point(e), e);
                 }
                 if (e.button !== 0) return;
-                this.tool!.onMouseDown(BACKGROUND, EventHelper.point(e), e);
+                this.tool!.onMouseDown(AbstractTool.BACKGROUND, EventHelper.point(e), e);
               },
               mouseover: e => {
                 const el = getAncestorDiagramElement(e.target as SVGElement);

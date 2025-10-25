@@ -1,4 +1,4 @@
-import { AbstractTool, BACKGROUND } from '../tool';
+import { AbstractTool } from '../tool';
 import { addHighlight, Highlights, removeHighlight } from '../highlight';
 import { Context, MessageDialogCommand } from '../context';
 import { Point } from '@diagram-craft/geometry/point';
@@ -61,7 +61,7 @@ export class NodeTool extends AbstractTool {
   }
 
   onMouseDown(id: string, _point: Readonly<{ x: number; y: number }>, _modifiers: Modifiers): void {
-    const isClickOnBackground = id === BACKGROUND;
+    const isClickOnBackground = id === AbstractTool.BACKGROUND;
 
     if (isClickOnBackground) {
       this.resetTool();

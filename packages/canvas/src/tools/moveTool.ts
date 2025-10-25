@@ -1,4 +1,4 @@
-import { AbstractTool, BACKGROUND } from '../tool';
+import { AbstractTool } from '../tool';
 import { Context } from '../context';
 import { DragDopManager, DragEvents, Modifiers } from '../dragDropManager';
 import { MarqueeDrag } from '../drag/marqueeDrag';
@@ -51,7 +51,7 @@ export class MoveTool extends AbstractTool {
   onMouseDown(id: string, point: Point, modifiers: Modifiers) {
     const selection = this.diagram.selection;
 
-    const isClickOnBackground = id === BACKGROUND;
+    const isClickOnBackground = id === AbstractTool.BACKGROUND;
 
     const isClickOnSelection = Box.contains(
       selection.bounds,

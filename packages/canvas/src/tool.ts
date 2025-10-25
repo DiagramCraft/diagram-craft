@@ -38,10 +38,12 @@ export type ToolConstructor = {
   ): Tool;
 };
 
-// TODO: Move this constant somewhere else
-export const BACKGROUND = 'background';
-
 export abstract class AbstractTool implements Tool {
+  /**
+   * This is a special element id that's used to represent a click on the background of the canvas.
+   */
+  public static BACKGROUND = 'background';
+
   currentElement: string | undefined;
 
   protected constructor(
