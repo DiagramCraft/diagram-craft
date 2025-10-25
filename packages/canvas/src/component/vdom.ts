@@ -198,13 +198,13 @@ const updateEvents = (oldVNode: VNode, newVNode: VNode) => {
   //       makes cleanup significantly easier
 
   for (const key of oldKeys) {
-    newNode[(`on${key}`) as unknown as ValidEvents] = null;
+    newNode[`on${key}` as unknown as ValidEvents] = null;
   }
 
   for (const key of newKeys) {
     const value = newEvents[key as keyof EventListenerMap];
 
-    newNode[(`on${key}`) as unknown as ValidEvents] = value as EventListener;
+    newNode[`on${key}` as unknown as ValidEvents] = value as EventListener;
   }
 };
 
@@ -339,4 +339,8 @@ export const insert = (newElement: VNode) => {
     insertQueue.forEach(onInsert);
   });
   return newElement;
+};
+
+export const _test = {
+  toKebabCase
 };
