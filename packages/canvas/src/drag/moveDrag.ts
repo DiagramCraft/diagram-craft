@@ -16,7 +16,7 @@ import {
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
-import { createResizeCanvasActionToFit } from '@diagram-craft/model/canvas';
+import { createResizeToFitAction } from '@diagram-craft/model/diagramBounds';
 import {
   ElementAddUndoableAction,
   SnapshotUndoableAction
@@ -31,7 +31,7 @@ import {
 } from '@diagram-craft/model/diagramLayerUtils';
 import { LayerCapabilities } from '@diagram-craft/model/diagramLayerManager';
 import { CanvasDomHelper } from '../utils/canvasDomHelper';
-import { SnapManager } from '../snap/snapManager';
+import { SnapManager, SnapMarkers } from '../snap/snapManager';
 
 const enablePointerEvents = (elements: ReadonlyArray<DiagramElement>) => {
   for (const e of elements) {
@@ -138,12 +138,12 @@ export abstract class AbstractMoveDrag extends Drag {
     }
 
     if (isFreeDrag(modifiers)) {
-      selection.highlights = [];
+      SnapMarkers.get(this.diagram).clear();
     } else {
       const snapManager = SnapManager.create(this.diagram);
 
       const result = snapManager.snapMove(WritableBox.asBox(newBounds), snapDirections);
-      selection.highlights = result.highlights;
+      SnapMarkers.get(this.diagram).set(result.markers);
 
       newBounds.x = result.adjusted.x;
       newBounds.y = result.adjusted.y;
@@ -175,7 +175,7 @@ export abstract class AbstractMoveDrag extends Drag {
 
     const selection = this.diagram.selection;
     selection.setDragging(false);
-    selection.highlights = [];
+    SnapMarkers.get(this.diagram).clear();
 
     this.clearHighlight();
     enablePointerEvents(selection.elements);
@@ -185,7 +185,7 @@ export abstract class AbstractMoveDrag extends Drag {
     if (selection.isChanged()) {
       const compoundUndoAction = new CompoundUndoableAction();
 
-      const resizeCanvasAction = createResizeCanvasActionToFit(
+      const resizeCanvasAction = createResizeToFitAction(
         this.diagram,
         Box.boundingBox(
           selection.nodes.map(e => e.bounds),
@@ -370,7 +370,7 @@ export class MoveDrag extends AbstractMoveDrag {
 
     enablePointerEvents(selection.elements);
 
-    selection.highlights = [];
+    SnapMarkers.get(this.diagram).clear();
     selection.setElements(newElements, false);
 
     this.uow.notify();
@@ -390,7 +390,7 @@ export class MoveDrag extends AbstractMoveDrag {
     const posititions = elementsToRemove.map(e => e.bounds);
 
     selection.setElements(selection.source.elementIds.map(e => this.diagram.lookup(e)!));
-    selection.highlights = [];
+    SnapMarkers.get(this.diagram).clear();
 
     elementsToRemove.forEach(e => {
       e.layer.removeElement(e, this.uow);

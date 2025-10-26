@@ -23,7 +23,7 @@ import { ElementLookup } from './elementLookup';
 import type { CRDTMap, FlatCRDTMap } from '@diagram-craft/collaboration/crdt';
 import { CRDTProp } from '@diagram-craft/collaboration/datatypes/crdtProp';
 import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
-import { type Canvas, DEFAULT_CANVAS } from './canvas';
+import { type DiagramBounds, DEFAULT_CANVAS } from './diagramBounds';
 import type { Guide } from './guides';
 
 export type DiagramIteratorOpts = {
@@ -107,7 +107,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   readonly #name: CRDTProp<DiagramCRDT, 'name'>;
   readonly #id: CRDTProp<DiagramCRDT, 'id'>;
   readonly #parent: CRDTProp<DiagramCRDT, 'parent'>;
-  readonly #canvas: CRDTProp<DiagramCRDT, 'canvas'>;
+  readonly _: CRDTProp<DiagramCRDT, 'canvas'>;
   readonly #props: CRDTObject<DiagramProps>;
   readonly #guides: CRDTMap<Record<string, Guide>>;
 
@@ -156,7 +156,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
       y: 0
     };
 
-    this.#canvas = new CRDTProp(this._crdt, 'canvas', {
+    this._ = new CRDTProp(this._crdt, 'canvas', {
       onRemoteChange: () => this.emitDiagramChange('content'),
       initialValue: initialCanvas
     });
@@ -174,7 +174,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     this.#guides = this._crdt.get().get('guides', () => document.root.factory.makeMap())!;
     this.#guides.on('remoteAfterTransaction', () => this.emitDiagramChange('content'));
 
-    this.viewBox = new Viewbox(this.canvas);
+    this.viewBox = new Viewbox(this.bounds);
 
     if (canvasOffset) this.viewBox.offset = canvasOffset;
 
@@ -302,12 +302,12 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     else if (isEdge(element)) this.edgeLookup.set(element.id, element);
   }
 
-  get canvas() {
-    return this.#canvas.getNonNull();
+  get bounds() {
+    return this._.getNonNull();
   }
 
-  set canvas(b: Canvas) {
-    this.#canvas.set(b);
+  set bounds(b: DiagramBounds) {
+    this._.set(b);
     this.emitDiagramChange('content');
   }
 

@@ -131,7 +131,7 @@ export const serializeDiagram = (diagram: Diagram): SerializedDiagram => {
       y: diagram.viewBox.offset.y,
       zoom: diagram.viewBox.zoomLevel
     },
-    canvas: diagram.canvas
+    canvas: diagram.bounds
   };
 };
 

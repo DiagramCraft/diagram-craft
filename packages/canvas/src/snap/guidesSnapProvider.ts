@@ -1,10 +1,9 @@
-import type { MatchingMagnetPair, SnapProvider } from './snapManager';
+import type { MatchingMagnetPair, SnapMarker, SnapProvider } from './snapManager';
 import type { Diagram } from '@diagram-craft/model/diagram';
 import { MagnetOfType } from './magnet';
 import { Box } from '@diagram-craft/geometry/box';
 import { Line } from '@diagram-craft/geometry/line';
 import { Axis } from '@diagram-craft/geometry/axis';
-import type { Highlight } from '@diagram-craft/model/selection';
 
 /**
  * Snap provider that provides guides for alignment
@@ -40,11 +39,11 @@ export class GuidesSnapProvider implements SnapProvider<'guide'> {
   /**
    * As the guides are already drawn, we don't need to highlight them'
    */
-  highlight(_box: Box, _match: MatchingMagnetPair<'guide'>, _axis: Axis): Highlight | undefined {
+  mark(_box: Box, _match: MatchingMagnetPair<'guide'>, _axis: Axis): SnapMarker | undefined {
     return undefined;
   }
 
-  filterHighlights(guides: Highlight[]): Highlight[] {
-    return guides;
+  filterMarkers(marks: SnapMarker[]): SnapMarker[] {
+    return marks;
   }
 }

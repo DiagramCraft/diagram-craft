@@ -1,4 +1,4 @@
-import { Component } from '../component/component';
+import { Component, createEffect } from '../component/component';
 import * as svg from '../component/vdom-svg';
 import { text, VNode } from '../component/vdom';
 import { Point } from '@diagram-craft/geometry/point';
@@ -7,7 +7,7 @@ import { newid } from '@diagram-craft/utils/id';
 import { round } from '@diagram-craft/utils/math';
 import { Zoom } from './zoom';
 import { Diagram } from '@diagram-craft/model/diagram';
-import type { Highlight } from '@diagram-craft/model/selection';
+import { SnapMarkers } from '../snap/snapManager';
 
 const makeDistanceMarker = (p1: Point, p2: Point, lbl: string, z: Zoom): VNode[] => {
   const l = Line.of(p1, p2);
@@ -55,14 +55,23 @@ const makeDistanceMarker = (p1: Point, p2: Point, lbl: string, z: Zoom): VNode[]
   ];
 };
 
-export class GuidesComponent extends Component<Props> {
+export class SnapMarkersComponent extends Component<Props> {
   render(props: Props) {
+    const mgr = SnapMarkers.get(props.diagram);
+
+    createEffect(() => {
+      const cb = () => this.redraw();
+
+      mgr.on('clear', cb);
+      return () => mgr.off('clear', cb);
+    }, [mgr]);
+
     const z = new Zoom(props.diagram.viewBox.zoomLevel);
     return svg.g(
       {},
       ...[
-        ...props.highlights.filter(s => s.matchingMagnet.type !== 'distance'),
-        ...props.highlights.filter(s => s.matchingMagnet.type === 'distance')
+        ...mgr.markers.filter(s => s.matchingMagnet.type !== 'distance'),
+        ...mgr.markers.filter(s => s.matchingMagnet.type === 'distance')
       ].flatMap(g => {
         const l = Line.extend(g.line, 30, 30);
         return [
@@ -98,5 +107,4 @@ export class GuidesComponent extends Component<Props> {
 
 type Props = {
   diagram: Diagram;
-  highlights: ReadonlyArray<Highlight>;
 };

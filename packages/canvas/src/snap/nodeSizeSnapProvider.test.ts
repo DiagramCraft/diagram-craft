@@ -261,13 +261,13 @@ describe('NodeSizeSnapProvider', () => {
       };
 
       // Act
-      const highlight = provider.highlight(testBox, matchingPair, Axis.h);
+      const marker = provider.mark(testBox, matchingPair, Axis.h);
 
       // Verify
-      expect(highlight).toBeDefined();
-      expect(highlight.line).toBe(sizeMagnet.line);
-      expect(highlight.matchingMagnet).toBe(sizeMagnet);
-      expect(highlight.selfMagnet).toBe(sourceMagnet);
+      expect(marker).toBeDefined();
+      expect(marker.line).toBe(sizeMagnet.line);
+      expect(marker.matchingMagnet).toBe(sizeMagnet);
+      expect(marker.selfMagnet).toBe(sourceMagnet);
 
       // Should have added distance pairs for both current box and reference node
       expect(sizeMagnet.distancePairs).toHaveLength(2);
@@ -311,7 +311,7 @@ describe('NodeSizeSnapProvider', () => {
       };
 
       // Act
-      provider.highlight(testBox, matchingPair, Axis.v);
+      provider.mark(testBox, matchingPair, Axis.v);
 
       // Verify distance pairs for width matching
       expect(sizeMagnet.distancePairs).toHaveLength(2);
@@ -352,7 +352,7 @@ describe('NodeSizeSnapProvider', () => {
         distance: 0
       };
 
-      provider.highlight(testBox, matchingPair, Axis.h);
+      provider.mark(testBox, matchingPair, Axis.h);
 
       // Check reference node distance pair
       const referenceNodePair = sizeMagnet.distancePairs[1]!;

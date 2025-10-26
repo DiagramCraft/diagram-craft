@@ -158,16 +158,16 @@ describe('GridSnapProvider', () => {
       };
 
       // Act
-      const highlight = provider.highlight(box, matchingPair, Axis.v);
+      const mark = provider.mark(box, matchingPair, Axis.v);
 
-      // Verify - highlight should be vertical line at grid position spanning box height
-      expect(highlight).toBeDefined();
-      expect(Line.isVertical(highlight.line)).toBe(true);
-      expect(highlight.line.from.x).toBe(60); // Grid line position
-      expect(highlight.line.from.y).toBe(30); // Box top
-      expect(highlight.line.to.y).toBe(50); // Box bottom
-      expect(highlight.matchingMagnet).toBe(gridMagnet);
-      expect(highlight.selfMagnet).toBe(sourceMagnet);
+      // Verify - mark should be vertical line at grid position spanning box height
+      expect(mark).toBeDefined();
+      expect(Line.isVertical(mark.line)).toBe(true);
+      expect(mark.line.from.x).toBe(60); // Grid line position
+      expect(mark.line.from.y).toBe(30); // Box top
+      expect(mark.line.to.y).toBe(50); // Box bottom
+      expect(mark.matchingMagnet).toBe(gridMagnet);
+      expect(mark.selfMagnet).toBe(sourceMagnet);
     });
   });
 
@@ -209,7 +209,7 @@ describe('GridSnapProvider', () => {
       ];
 
       // Act
-      const filtered = provider.filterHighlights(highlights);
+      const filtered = provider.filterMarkers(highlights);
 
       // Verify - should keep all highlights
       expect(filtered).toHaveLength(2);
@@ -222,7 +222,7 @@ describe('GridSnapProvider', () => {
       const provider = new GridSnapProvider(diagram);
 
       // Act
-      const filtered = provider.filterHighlights([]);
+      const filtered = provider.filterMarkers([]);
 
       // Verify
       expect(filtered).toEqual([]);
@@ -297,7 +297,7 @@ describe('GridSnapProvider', () => {
       ];
 
       // Act
-      const filtered = provider.filterHighlights(highlights);
+      const filtered = provider.filterMarkers(highlights);
 
       // Verify - should keep only center guides
       expect(filtered).toHaveLength(2);

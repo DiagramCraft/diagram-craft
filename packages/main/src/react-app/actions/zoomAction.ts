@@ -35,23 +35,23 @@ class ZoomFitAction extends AbstractAction<{ rulerWidth?: number }> {
   execute(props: { rulerWidth?: number }): void {
     const diagram = this.context.model.activeDiagram;
     // TODO: Use width/height of ruler
-    if (diagram.canvas.w > diagram.canvas.h * diagram.viewBox.aspectRatio) {
+    if (diagram.bounds.w > diagram.bounds.h * diagram.viewBox.aspectRatio) {
       diagram.viewBox.dimensions = {
-        w: diagram.canvas.w + OFFSET,
-        h: (diagram.canvas.w + OFFSET) / diagram.viewBox.aspectRatio
+        w: diagram.bounds.w + OFFSET,
+        h: (diagram.bounds.w + OFFSET) / diagram.viewBox.aspectRatio
       };
     } else {
       diagram.viewBox.dimensions = {
-        w: (diagram.canvas.h + OFFSET) * diagram.viewBox.aspectRatio,
-        h: diagram.canvas.h + OFFSET
+        w: (diagram.bounds.h + OFFSET) * diagram.viewBox.aspectRatio,
+        h: diagram.bounds.h + OFFSET
       };
     }
 
     const rulerWidth = UserState.get().showRulers ? (props.rulerWidth ?? 0) : 0;
 
     diagram.viewBox.offset = {
-      x: diagram.canvas.x + (diagram.canvas.w - diagram.viewBox.dimensions.w) / 2 - rulerWidth / 2,
-      y: diagram.canvas.y + (diagram.canvas.h - diagram.viewBox.dimensions.h) / 2 - rulerWidth / 2
+      x: diagram.bounds.x + (diagram.bounds.w - diagram.viewBox.dimensions.w) / 2 - rulerWidth / 2,
+      y: diagram.bounds.y + (diagram.bounds.h - diagram.viewBox.dimensions.h) / 2 - rulerWidth / 2
     };
   }
 }

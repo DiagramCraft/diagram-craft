@@ -50,8 +50,8 @@ class ImageInsertAction extends AbstractAction<undefined, Application> {
           'rect',
           {
             // TODO: Improve placement to ensure it's at least partially placed within the current viewport
-            x: (this.context.model.activeDiagram.canvas.w - width) / 2,
-            y: (this.context.model.activeDiagram.canvas.h - height) / 2,
+            x: (this.context.model.activeDiagram.bounds.w - width) / 2,
+            y: (this.context.model.activeDiagram.bounds.h - height) / 2,
             w: width,
             h: height,
             r: 0

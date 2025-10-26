@@ -1,4 +1,4 @@
-import type { MatchingMagnetPair, SnapProvider } from './snapManager';
+import type { MatchingMagnetPair, SnapMarker, SnapProvider } from './snapManager';
 import { Magnet, MagnetOfType } from './magnet';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { Box } from '@diagram-craft/geometry/box';
@@ -8,7 +8,6 @@ import { Line } from '@diagram-craft/geometry/line';
 import { Point } from '@diagram-craft/geometry/point';
 import { unique } from '@diagram-craft/utils/array';
 import { AbstractNodeSnapProvider } from './abstractNodeSnapProvider';
-import type { Highlight } from '@diagram-craft/model/selection';
 
 /**
  * Helper functions to find the bounding extents of exactly two boxes
@@ -139,7 +138,8 @@ export class NodeSnapProvider extends AbstractNodeSnapProvider implements SnapPr
   }
 
   /**
-   * Create highlights for node-based snapping
+   * Create markers
+   * for node-based snapping
    *
    * When an element snaps to a node magnet, this creates a visual highlight line that
    * spans between the source element and the target node.
@@ -150,7 +150,7 @@ export class NodeSnapProvider extends AbstractNodeSnapProvider implements SnapPr
    * - For vertical magnets: Creates a vertical line spanning from the topmost edge
    *   of either element to the bottommost edge of either element
    */
-  highlight(box: Box, match: MatchingMagnetPair<'node'>, _axis: Axis): Highlight {
+  mark(box: Box, match: MatchingMagnetPair<'node'>, _axis: Axis): SnapMarker {
     const mBox = match.matching.node.bounds;
     return {
       line: Line.isHorizontal(match.matching.line)
@@ -162,13 +162,15 @@ export class NodeSnapProvider extends AbstractNodeSnapProvider implements SnapPr
   }
 
   /**
-   * Filter/consolidate node highlights
+   * Filter/consolidate node markers
    *
-   * Node highlights don't need special filtering or consolidation,
+   *
+   * Node markers
+   * don't need special filtering or consolidation,
    * as each node magnet represents a unique alignment relationship.
    * This method simply passes through all highlights unchanged.
    */
-  filterHighlights(guides: Highlight[]): Highlight[] {
-    return guides;
+  filterMarkers(markers: SnapMarker[]): SnapMarker[] {
+    return markers;
   }
 }

@@ -1,6 +1,6 @@
 import { LabelNodeSelectionComponent } from '@diagram-craft/canvas/components/LabelNodeSelectionComponent';
 import { GroupBoundsComponent } from '@diagram-craft/canvas/components/GroupBoundsComponent';
-import { GuidesComponent } from '@diagram-craft/canvas/components/GuidesComponent';
+import { SnapMarkersComponent } from './SnapMarkersComponent';
 import { RotationHandleComponent } from '@diagram-craft/canvas/components/RotationHandleComponent';
 import { ResizeHandlesComponent } from '@diagram-craft/canvas/components/ResizeHandlesComponent';
 import { EdgeSelectionComponent } from '@diagram-craft/canvas/components/EdgeSelectionComponent';
@@ -46,8 +46,7 @@ export class SelectionComponent extends Component<CanvasState> {
 
     return svg.g(
       {},
-      !isOnlyEdges &&
-        this.subComponent($cmp(GuidesComponent), { diagram, highlights: selection.highlights }),
+      !isOnlyEdges && this.subComponent($cmp(SnapMarkersComponent), { diagram }),
       svg.g(
         { class: 'svg-selection' },
         !isOnlyEdges &&

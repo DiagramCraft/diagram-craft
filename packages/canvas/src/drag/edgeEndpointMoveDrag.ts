@@ -18,7 +18,7 @@ import { Box } from '@diagram-craft/geometry/box';
 import { assert } from '@diagram-craft/utils/assert';
 import { Line } from '@diagram-craft/geometry/line';
 import { Context } from '../context';
-import { SnapManager } from '../snap/snapManager';
+import { SnapManager, SnapMarkers } from '../snap/snapManager';
 import { CanvasDomHelper } from '../utils/canvasDomHelper';
 
 export class EdgeEndpointMoveDrag extends Drag {
@@ -89,8 +89,7 @@ export class EdgeEndpointMoveDrag extends Drag {
   }
 
   onDrag({ offset, modifiers }: DragEvents.DragStart) {
-    const selection = this.diagram.selection;
-    selection.highlights = [];
+    SnapMarkers.get(this.diagram).clear();
 
     this.point = offset;
 

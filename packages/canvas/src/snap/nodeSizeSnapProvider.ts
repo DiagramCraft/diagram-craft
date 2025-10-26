@@ -1,4 +1,4 @@
-import type { MatchingMagnetPair, SnapProvider } from './snapManager';
+import type { MatchingMagnetPair, SnapMarker, SnapProvider } from './snapManager';
 import { MagnetOfType } from './magnet';
 import { AbstractNodeSnapProvider } from './abstractNodeSnapProvider';
 import { Box } from '@diagram-craft/geometry/box';
@@ -8,7 +8,6 @@ import { Axis } from '@diagram-craft/geometry/axis';
 import { Line } from '@diagram-craft/geometry/line';
 import { getTypedKeys } from '@diagram-craft/utils/object';
 import { smallest } from '@diagram-craft/utils/array';
-import type { Highlight } from '@diagram-craft/model/selection';
 
 /**
  * Snap provider for matching node dimensions during resize operations
@@ -141,7 +140,7 @@ export class NodeSizeSnapProvider extends AbstractNodeSnapProvider implements Sn
    * @param _axis - The axis along which the size matching occurs (not used in this implementation)
    * @returns Highlight object with visual guide information
    */
-  highlight(box: Box, match: MatchingMagnetPair<'size'>, _axis: Axis): Highlight {
+  mark(box: Box, match: MatchingMagnetPair<'size'>, _axis: Axis): SnapMarker {
     if (match.matching.axis === 'h') {
       // For horizontal axis (height matching), create vertical measurement lines
 
@@ -184,12 +183,12 @@ export class NodeSizeSnapProvider extends AbstractNodeSnapProvider implements Sn
   }
 
   /**
-   * Filter/consolidate size highlights
+   * Filter/consolidate size markers
    *
-   * Size highlights don't need special filtering or consolidation,
+   * Size markers don't need special filtering or consolidation,
    * as each size magnet represents a unique size matching relationship.
    */
-  filterHighlights(highlights: Highlight[]): Highlight[] {
-    return highlights;
+  filterMarkers(markers: SnapMarker[]): SnapMarker[] {
+    return markers;
   }
 }

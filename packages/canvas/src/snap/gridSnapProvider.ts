@@ -1,4 +1,4 @@
-import type { MatchingMagnetPair, SnapProvider } from './snapManager';
+import type { MatchingMagnetPair, SnapMarker, SnapProvider } from './snapManager';
 import type { Diagram } from '@diagram-craft/model/diagram';
 import { MagnetOfType } from './magnet';
 import { Box } from '@diagram-craft/geometry/box';
@@ -6,7 +6,6 @@ import { Line } from '@diagram-craft/geometry/line';
 import { Axis } from '@diagram-craft/geometry/axis';
 import { Point } from '@diagram-craft/geometry/point';
 import { Range } from '@diagram-craft/geometry/range';
-import type { Highlight } from '@diagram-craft/model/selection';
 
 const DEFAULT_GRID_SIZE = 10;
 
@@ -70,10 +69,10 @@ export class GridSnapProvider implements SnapProvider<'grid'> {
   }
 
   /**
-   * Create a highlight for a grid snap
+   * Create a mark for a grid snap
    * Shows a grid line extending across the width/height of the snapped element
    */
-  highlight(box: Box, match: MatchingMagnetPair<'grid'>, _axis: Axis): Highlight {
+  mark(box: Box, match: MatchingMagnetPair<'grid'>, _axis: Axis): SnapMarker {
     return {
       line: Line.isHorizontal(match.matching.line)
         ? Line.horizontal(match.matching.line.from.y, Range.of(box.x, box.x + box.w))
@@ -84,12 +83,12 @@ export class GridSnapProvider implements SnapProvider<'grid'> {
   }
 
   /**
-   * Filter/consolidate grid highlights
-   * If center lines are snapping, hide edge line highlights on the same axis
+   * Filter/consolidate grid marks
+   * If center lines are snapping, hide edge line marks on the same axis
    * This prevents visual clutter when both center and edge snap to the same grid
    */
-  filterHighlights(guides: Highlight[]) {
-    let result = [...guides] as Array<Highlight & { selfMagnet: MagnetOfType<'source'> }>;
+  filterMarkers(marks: SnapMarker[]) {
+    let result = [...marks] as Array<SnapMarker & { selfMagnet: MagnetOfType<'source'> }>;
 
     if (result.find(c => c.selfMagnet.subtype === 'center' && c.selfMagnet.axis === 'h')) {
       result = result.filter(

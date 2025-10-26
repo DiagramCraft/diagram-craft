@@ -10,7 +10,7 @@ describe('CanvasSnapProvider', () => {
   test('should generate vertical and horizontal center magnets for standard canvas', () => {
     // Setup
     const diagram = TestModel.newDiagram();
-    diagram.canvas = { x: 0, y: 0, w: 400, h: 300 };
+    diagram.bounds = { x: 0, y: 0, w: 400, h: 300 };
     const provider = new CanvasSnapProvider(diagram);
     const box = { x: 50, y: 50, w: 100, h: 50, r: 0 };
 
@@ -36,7 +36,7 @@ describe('CanvasSnapProvider', () => {
   test('should work with different canvas sizes', () => {
     // Setup - large canvas
     const diagram = TestModel.newDiagram();
-    diagram.canvas = { x: 0, y: 0, w: 1000, h: 800 };
+    diagram.bounds = { x: 0, y: 0, w: 1000, h: 800 };
     const provider = new CanvasSnapProvider(diagram);
     const box = { x: 0, y: 0, w: 50, h: 50, r: 0 };
 
@@ -54,7 +54,7 @@ describe('CanvasSnapProvider', () => {
   test('should create proper highlights for canvas snaps', () => {
     // Setup
     const diagram = TestModel.newDiagram();
-    diagram.canvas = { x: 0, y: 0, w: 400, h: 300 };
+    diagram.bounds = { x: 0, y: 0, w: 400, h: 300 };
     const provider = new CanvasSnapProvider(diagram);
     const box = { x: 50, y: 50, w: 100, h: 50, r: 0 };
 
@@ -76,19 +76,19 @@ describe('CanvasSnapProvider', () => {
     };
 
     // Act
-    const highlight = provider.highlight(box, matchingPair, Axis.v);
+    const mark = provider.mark(box, matchingPair, Axis.v);
 
     // Verify
-    expect(highlight).toBeDefined();
-    expect(highlight.line).toEqual(canvasCenterMagnet.line);
-    expect(highlight.matchingMagnet).toBe(canvasCenterMagnet);
-    expect(highlight.selfMagnet).toBe(sourceMagnet);
+    expect(mark).toBeDefined();
+    expect(mark.line).toEqual(canvasCenterMagnet.line);
+    expect(mark.matchingMagnet).toBe(canvasCenterMagnet);
+    expect(mark.selfMagnet).toBe(sourceMagnet);
   });
 
   test('magnet axis', () => {
     // Setup
     const diagram = TestModel.newDiagram();
-    diagram.canvas = { x: 0, y: 0, w: 400, h: 300 };
+    diagram.bounds = { x: 0, y: 0, w: 400, h: 300 };
     const provider = new CanvasSnapProvider(diagram);
     const box = { x: 50, y: 50, w: 100, h: 50, r: 0 };
 

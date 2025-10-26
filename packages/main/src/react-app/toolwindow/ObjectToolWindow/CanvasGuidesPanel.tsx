@@ -105,8 +105,8 @@ export const CanvasGuidesPanel = (props: Props) => {
     let newGuide: Guide;
 
     if (existingGuides.length === 0) {
-      // First guide: vertical at center of canvas
-      const centerX = diagram.canvas.x + diagram.canvas.w / 2;
+      // First guide: vertical at center of bounds
+      const centerX = diagram.bounds.x + diagram.bounds.w / 2;
       newGuide = diagram.addGuide({
         type: 'vertical',
         position: centerX,

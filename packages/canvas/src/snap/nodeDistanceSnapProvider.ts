@@ -1,4 +1,4 @@
-import type { MatchingMagnetPair, SnapProvider } from './snapManager';
+import type { MatchingMagnetPair, SnapMarker, SnapProvider } from './snapManager';
 import { DistancePairWithRange, MagnetOfType } from './magnet';
 import { AbstractNodeSnapProvider } from './abstractNodeSnapProvider';
 import { Direction } from '@diagram-craft/geometry/direction';
@@ -7,7 +7,6 @@ import { Axis } from '@diagram-craft/geometry/axis';
 import { Box } from '@diagram-craft/geometry/box';
 import { Line } from '@diagram-craft/geometry/line';
 import { Point } from '@diagram-craft/geometry/point';
-import { Highlight } from '@diagram-craft/model/selection';
 
 /**
  * Direction configuration for distance calculations
@@ -218,13 +217,13 @@ export class NodeDistanceSnapProvider
   }
 
   /**
-   * Create a highlight visualization for distance-based snapping
+   * Create a marker visualization for distance-based snapping
    *
    * When an element snaps to a distance magnet, this creates visual guides showing:
    * 1. The original distance between existing nodes (from distancePairs)
    * 2. The new equal distance created by the snapped element
    *
-   * The highlight updates the distance pairs to show the actual visual connections,
+   * The marker updates the distance pairs to show the actual visual connections,
    * adjusting point positions to align with the intersection of overlapping ranges.
    *
    * @param box - The box that snapped to the distance magnet
@@ -232,7 +231,7 @@ export class NodeDistanceSnapProvider
    * @param axis - The axis along which the distance alignment occurs
    * @returns Highlight with updated distance pair visualization, or undefined if no valid intersection
    */
-  highlight(box: Box, match: MatchingMagnetPair<'distance'>, axis: Axis): Highlight | undefined {
+  mark(box: Box, match: MatchingMagnetPair<'distance'>, axis: Axis): SnapMarker | undefined {
     const m = match.matching; // The distance magnet that was matched
 
     // Get the midpoint of the snapped element's magnet line
@@ -268,7 +267,7 @@ export class NodeDistanceSnapProvider
     });
 
     // Update all distance pairs to use the intersection midpoint for visual alignment
-    // This ensures all distance highlights are drawn at the same position along the alignment axis
+    // This ensures all distance markers are drawn at the same position along the alignment axis
     for (const dp of m.distancePairs) {
       dp.pointA = {
         x: axis === 'h' ? mp : dp.pointA.x, // Use midpoint for horizontal alignment
@@ -294,7 +293,7 @@ export class NodeDistanceSnapProvider
    * Distance highlights don't need special filtering or consolidation,
    * as each distance magnet represents a unique spacing relationship.
    */
-  filterHighlights(guides: Highlight[]): Highlight[] {
-    return guides;
+  filterMarkers(markers: SnapMarker[]): SnapMarker[] {
+    return markers;
   }
 }

@@ -400,13 +400,13 @@ describe('NodeDistanceSnapProvider', () => {
       };
 
       // Act
-      const highlight = provider.highlight(testBox, matchingPair, Axis.v);
+      const marker = provider.mark(testBox, matchingPair, Axis.v);
 
       // Verify
-      expect(highlight).toBeDefined();
-      expect(highlight!.line).toBe(sourceMagnet.line);
-      expect(highlight!.matchingMagnet).toBe(distanceMagnet);
-      expect(highlight!.selfMagnet).toBe(sourceMagnet);
+      expect(marker).toBeDefined();
+      expect(marker!.line).toBe(sourceMagnet.line);
+      expect(marker!.matchingMagnet).toBe(distanceMagnet);
+      expect(marker!.selfMagnet).toBe(sourceMagnet);
 
       // Should have added a new distance pair
       expect(distanceMagnet.distancePairs).toHaveLength(2);
@@ -444,7 +444,7 @@ describe('NodeDistanceSnapProvider', () => {
         };
 
         // Act - this should handle the no-intersection case gracefully
-        const highlight = provider.highlight(testBox, matchingPair, Axis.v);
+        const highlight = provider.mark(testBox, matchingPair, Axis.v);
 
         // Should return undefined when no valid intersection
         expect(highlight).toBeUndefined();
@@ -478,10 +478,10 @@ describe('NodeDistanceSnapProvider', () => {
       };
 
       // Act
-      const highlight = provider.highlight(testBox, matchingPair, Axis.h);
+      const marker = provider.mark(testBox, matchingPair, Axis.h);
 
       // Verify distance pairs have been updated with intersection midpoint
-      expect(highlight).toBeDefined();
+      expect(marker).toBeDefined();
 
       // All distance pairs should have their points aligned to the intersection midpoint
       const intersection = Range.intersection(
@@ -521,7 +521,7 @@ describe('NodeDistanceSnapProvider', () => {
         }
       ];
 
-      const filtered = provider.filterHighlights(mockHighlights as any);
+      const filtered = provider.filterMarkers(mockHighlights as any);
 
       // Should return all highlights without modification
       expect(filtered).toBe(mockHighlights);

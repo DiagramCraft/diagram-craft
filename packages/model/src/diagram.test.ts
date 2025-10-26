@@ -110,8 +110,8 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
     it('should initialize correctly', () => {
       const doc = TestModel.newDocument();
       const diagram = new Diagram('test-id', 'test-name', doc);
-      expect(diagram.canvas).toBeDefined();
-      expect(diagram.canvas).toEqual({ x: 0, y: 0, w: 640, h: 640 });
+      expect(diagram.bounds).toBeDefined();
+      expect(diagram.bounds).toEqual({ x: 0, y: 0, w: 640, h: 640 });
     });
 
     it('should update correctly', () => {
@@ -128,14 +128,14 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
 
       // Act
       const diagram = doc1.diagrams[0]!;
-      diagram.canvas = { x: 100, y: 100, w: 110, h: 100 };
+      diagram.bounds = { x: 100, y: 100, w: 110, h: 100 };
 
       // Verify
-      expect(diagram.canvas).toEqual({ x: 100, y: 100, w: 110, h: 100 });
+      expect(diagram.bounds).toEqual({ x: 100, y: 100, w: 110, h: 100 });
       expect(diagramChange[0]).toHaveBeenCalledTimes(1);
       expect(documentDiagramChange[0]).toHaveBeenCalledTimes(0);
       if (doc2) {
-        expect(doc2.diagrams[0]!.canvas).toEqual({ x: 100, y: 100, w: 110, h: 100 });
+        expect(doc2.diagrams[0]!.bounds).toEqual({ x: 100, y: 100, w: 110, h: 100 });
         expect(diagramChange[1]).toHaveBeenCalledTimes(1);
         expect(documentDiagramChange[1]).toHaveBeenCalledTimes(0);
       }
