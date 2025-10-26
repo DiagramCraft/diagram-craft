@@ -34,7 +34,11 @@ export const StoryToolWindow = () => {
             <StoriesPanel />
           </ToolWindow.TabContent>
         </ToolWindow.Tab>
-        <ToolWindow.Tab id={'player'} title={'Player'}>
+        <ToolWindow.Tab
+          id={'player'}
+          title={'Player'}
+          disabled={document.stories.stories.length === 0}
+        >
           <ToolWindow.TabContent>
             <StoryPlayerPanel />
           </ToolWindow.TabContent>

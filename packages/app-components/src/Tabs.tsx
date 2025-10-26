@@ -32,7 +32,11 @@ type ListProps = {
 
 const Trigger = (props: TriggerProps) => {
   return (
-    <RadixTabs.Trigger className={styles.cmpTabsTrigger} value={props.value}>
+    <RadixTabs.Trigger
+      className={styles.cmpTabsTrigger}
+      value={props.value}
+      disabled={props.disabled}
+    >
       {props.children}
     </RadixTabs.Trigger>
   );
@@ -41,6 +45,7 @@ const Trigger = (props: TriggerProps) => {
 type TriggerProps = {
   value: string;
   children: React.ReactNode;
+  disabled?: boolean;
 };
 
 const Content = (props: ContentProps) => {

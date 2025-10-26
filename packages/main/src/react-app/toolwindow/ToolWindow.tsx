@@ -88,7 +88,10 @@ const Root = (props: RootProps) => {
             assert.true(child.type === Tab);
 
             return (
-              <Tabs.Trigger value={(child.props as TabProps).id}>
+              <Tabs.Trigger
+                value={(child.props as TabProps).id}
+                disabled={(child.props as TabProps).disabled}
+              >
                 {(child.props as TabProps).title}
               </Tabs.Trigger>
             );
@@ -105,6 +108,7 @@ type TabProps = {
   children: React.ReactNode | React.ReactNode[];
   title: string;
   id: string;
+  disabled?: boolean;
 };
 
 const Tab = (props: TabProps) => {

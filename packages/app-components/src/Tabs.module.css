@@ -34,6 +34,10 @@
   &[data-state="active"] {
     border-bottom: 2px solid var(--accent-chroma);
   }
+
+  &:disabled {
+    color: var(--cmp-fg-disabled);
+  }
 }
 
 .cmp-tabs__content {
