@@ -208,9 +208,18 @@ const orthogonalDistance = (a1: Magnet, a2: Magnet) => {
 
 const SNAP_MARKERS_STORE = new WeakMap<Diagram, SnapMarkers>();
 
+/**
+ * Store for managing snap markers (visual highlights)
+ * This is a singleton class that stores all snap markers for a diagram
+ * and allows listening to changes in the markers.
+ */
 export class SnapMarkers extends EventEmitter<{ set: EmptyObject; clear: EmptyObject }> {
   #markers: ReadonlyArray<SnapMarker> = [];
 
+  /**
+   * Get the singleton instance for a diagram
+   * @param diagram - The diagram to get the snap markers for
+   */
   static get(diagram: Diagram) {
     const res = SNAP_MARKERS_STORE.get(diagram);
     if (res) return res;
