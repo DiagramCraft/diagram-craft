@@ -15,6 +15,8 @@ import { Direction } from '@diagram-craft/geometry/direction';
 import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { groupBy, largest, smallest } from '@diagram-craft/utils/array';
 import { Angle } from '@diagram-craft/geometry/angle';
+import { EventEmitter } from '@diagram-craft/utils/event';
+import type { EmptyObject } from '@diagram-craft/utils/types';
 
 /**
  * Configuration properties for the SnapManager
@@ -204,20 +206,34 @@ const orthogonalDistance = (a1: Magnet, a2: Magnet) => {
   return a1.line.from[axis] - a2.line.from[axis];
 };
 
-const snapMarks = new Map<Diagram, ReadonlyArray<SnapMarker>>();
+const SNAP_MARKERS_STORE = new WeakMap<Diagram, SnapMarkers>();
 
-export const SnapMarkers = {
-  get: (diagram: Diagram) => {
-    return snapMarks.get(diagram) ?? [];
-  },
-  set: (diagram: Diagram, marks: ReadonlyArray<SnapMarker>) => {
-    snapMarks.set(diagram, marks);
-  },
-  clear: (diagram: Diagram) => {
-    snapMarks.delete(diagram);
-    diagram.selection.emitAsync('change');
+export class SnapMarkers extends EventEmitter<{ set: EmptyObject; clear: EmptyObject }> {
+  #markers: ReadonlyArray<SnapMarker> = [];
+
+  static get(diagram: Diagram) {
+    const res = SNAP_MARKERS_STORE.get(diagram);
+    if (res) return res;
+
+    const newRes = new SnapMarkers();
+    SNAP_MARKERS_STORE.set(diagram, newRes);
+    return newRes;
   }
-};
+
+  get markers() {
+    return this.#markers;
+  }
+
+  set(markers: ReadonlyArray<SnapMarker>) {
+    this.#markers = markers;
+    this.emit('set');
+  }
+
+  clear() {
+    this.#markers = [];
+    this.emit('clear');
+  }
+}
 
 /**
  * Main class responsible for performing snap operations on diagram elements

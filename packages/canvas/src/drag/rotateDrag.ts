@@ -22,7 +22,7 @@ export class RotateDrag extends Drag {
 
   onDrag(event: DragEvents.DragStart) {
     const selection = this.diagram.selection;
-    SnapMarkers.clear(this.diagram);
+    SnapMarkers.get(this.diagram).clear();
 
     const snapManager = SnapManager.create(this.diagram);
 

@@ -10,7 +10,6 @@ import { Transforms } from '../component/vdom-svg';
 import type { CanvasState } from '../canvas/EditableCanvasComponent';
 import { $c } from '@diagram-craft/utils/classname';
 import { ViewboxEvents } from '@diagram-craft/model/viewBox';
-import { SnapMarkers } from '../snap/snapManager';
 
 export class SelectionComponent extends Component<CanvasState> {
   render(props: CanvasState) {
@@ -47,11 +46,7 @@ export class SelectionComponent extends Component<CanvasState> {
 
     return svg.g(
       {},
-      !isOnlyEdges &&
-        this.subComponent($cmp(SnapMarkersComponent), {
-          diagram,
-          markers: SnapMarkers.get(diagram)
-        }),
+      !isOnlyEdges && this.subComponent($cmp(SnapMarkersComponent), { diagram }),
       svg.g(
         { class: 'svg-selection' },
         !isOnlyEdges &&

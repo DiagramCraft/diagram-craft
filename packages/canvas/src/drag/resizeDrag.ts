@@ -98,7 +98,7 @@ export class ResizeDrag extends Drag {
     const newBounds = Box.asReadWrite(lcs.toGlobal(WritableBox.asBox(localTarget)));
 
     if (isFreeDrag(event.modifiers)) {
-      SnapMarkers.clear(this.diagram);
+      SnapMarkers.get(this.diagram).clear();
 
       if (isConstraintDrag(event.modifiers)) {
         this.applyAspectRatioConstraint(aspectRatio, newBounds, localOriginal, lcs);
@@ -107,7 +107,7 @@ export class ResizeDrag extends Drag {
       const snapManager = SnapManager.create(this.diagram);
 
       const result = snapManager.snapResize(WritableBox.asBox(newBounds), snapDirection);
-      SnapMarkers.set(this.diagram, result.markers);
+      SnapMarkers.get(this.diagram).set(result.markers);
 
       newBounds.x = result.adjusted.x;
       newBounds.y = result.adjusted.y;
@@ -116,8 +116,7 @@ export class ResizeDrag extends Drag {
 
       if (isConstraintDrag(event.modifiers)) {
         this.applyAspectRatioConstraint(aspectRatio, newBounds, localOriginal, lcs);
-        SnapMarkers.set(
-          this.diagram,
+        SnapMarkers.get(this.diagram).set(
           snapManager.reviseMarkers(result.markers, WritableBox.asBox(newBounds))
         );
       }

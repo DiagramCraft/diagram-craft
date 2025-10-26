@@ -142,7 +142,7 @@ export const ElementTransformPanel = (props: Props) => {
         WritableBox.asBox(newBounds)
       );
       transformElements([selectedElement], transforms, uow);
-      SnapMarkers.clear(diagram);
+      SnapMarkers.get(diagram).clear();
     });
   };
 

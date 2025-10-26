@@ -89,7 +89,7 @@ export class EdgeEndpointMoveDrag extends Drag {
   }
 
   onDrag({ offset, modifiers }: DragEvents.DragStart) {
-    SnapMarkers.clear(this.diagram);
+    SnapMarkers.get(this.diagram).clear();
 
     this.point = offset;
 
