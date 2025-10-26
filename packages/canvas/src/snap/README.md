@@ -150,12 +150,12 @@ class CustomSnapProvider implements SnapProvider<'custom'> {
     // Generate custom magnetic lines
   }
 
-  highlight(box: Box, match: MatchingMagnetPair<'custom'>, axis: Axis): Highlight {
+  mark(box: Box, match: MatchingMagnetPair<'custom'>, axis: Axis): SnapMarker {
     // Create visual feedback for snapping
   }
 
-  filterHighlights(highlights: Highlight[]): Highlight[] {
-    // Optional: filter or consolidate highlights
+  filterMarkers(markers: SnapMarker[]): SnapMarker[] {
+    // Optional: filter or consolidate markers
   }
 }
 ```
