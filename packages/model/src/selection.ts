@@ -20,10 +20,6 @@ type SelectionSource = {
   boundingBox: Box;
 };
 
-export interface Highlight {
-  id?: string;
-}
-
 export type SelectionEvents = {
   /* The selection has changed, e.g. recalculating bounding box
    * This is implicitly triggered by adding/removing elements, as the bounding box
@@ -56,7 +52,7 @@ export const includeAll: ElementPredicate = () => true;
 
 export class Selection extends EventEmitter<SelectionEvents> {
   #bounds: Box;
-  #highlights: ReadonlyArray<Highlight> = [];
+  //#highlights: ReadonlyArray<Highlight> = [];
   #elements: ReadonlyArray<DiagramElement> = [];
   #source: SelectionSource = {
     elementBoxes: [],
@@ -122,15 +118,6 @@ export class Selection extends EventEmitter<SelectionEvents> {
     } else {
       return this.nodes.filter(predicate);
     }
-  }
-
-  get highlights() {
-    return this.#highlights;
-  }
-
-  set highlights(guides: ReadonlyArray<Highlight>) {
-    this.#highlights = guides;
-    this.emitAsyncWithDebounce('change', { selection: this });
   }
 
   get bounds(): Box {
@@ -217,8 +204,6 @@ export class Selection extends EventEmitter<SelectionEvents> {
   }
 
   clear() {
-    this.#highlights = [];
-
     this.setElements([]);
   }
 

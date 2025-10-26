@@ -14,6 +14,7 @@ import { ToggleButton } from '@diagram-craft/app-components/ToggleButton';
 import { useDiagram } from '../../../application';
 import { isNode, transformElements } from '@diagram-craft/model/diagramElement';
 import { assert } from '@diagram-craft/utils/assert';
+import { SnapMarkers } from '@diagram-craft/canvas/snap/snapManager';
 
 const origins = {
   tl: { x: 0, y: 0 },
@@ -141,7 +142,7 @@ export const ElementTransformPanel = (props: Props) => {
         WritableBox.asBox(newBounds)
       );
       transformElements([selectedElement], transforms, uow);
-      diagram.selection.highlights = [];
+      SnapMarkers.clear(diagram);
     });
   };
 

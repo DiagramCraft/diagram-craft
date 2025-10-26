@@ -76,13 +76,13 @@ describe('CanvasSnapProvider', () => {
     };
 
     // Act
-    const highlight = provider.highlight(box, matchingPair, Axis.v);
+    const mark = provider.mark(box, matchingPair, Axis.v);
 
     // Verify
-    expect(highlight).toBeDefined();
-    expect(highlight.line).toEqual(canvasCenterMagnet.line);
-    expect(highlight.matchingMagnet).toBe(canvasCenterMagnet);
-    expect(highlight.selfMagnet).toBe(sourceMagnet);
+    expect(mark).toBeDefined();
+    expect(mark.line).toEqual(canvasCenterMagnet.line);
+    expect(mark.matchingMagnet).toBe(canvasCenterMagnet);
+    expect(mark.selfMagnet).toBe(sourceMagnet);
   });
 
   test('magnet axis', () => {

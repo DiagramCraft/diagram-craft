@@ -7,7 +7,7 @@ import { newid } from '@diagram-craft/utils/id';
 import { round } from '@diagram-craft/utils/math';
 import { Zoom } from './zoom';
 import { Diagram } from '@diagram-craft/model/diagram';
-import type { Highlight } from '@diagram-craft/model/selection';
+import type { SnapMarker } from '../snap/snapManager';
 
 const makeDistanceMarker = (p1: Point, p2: Point, lbl: string, z: Zoom): VNode[] => {
   const l = Line.of(p1, p2);
@@ -55,14 +55,14 @@ const makeDistanceMarker = (p1: Point, p2: Point, lbl: string, z: Zoom): VNode[]
   ];
 };
 
-export class GuidesComponent extends Component<Props> {
+export class SnapMarkersComponent extends Component<Props> {
   render(props: Props) {
     const z = new Zoom(props.diagram.viewBox.zoomLevel);
     return svg.g(
       {},
       ...[
-        ...props.highlights.filter(s => s.matchingMagnet.type !== 'distance'),
-        ...props.highlights.filter(s => s.matchingMagnet.type === 'distance')
+        ...props.markers.filter(s => s.matchingMagnet.type !== 'distance'),
+        ...props.markers.filter(s => s.matchingMagnet.type === 'distance')
       ].flatMap(g => {
         const l = Line.extend(g.line, 30, 30);
         return [
@@ -98,5 +98,5 @@ export class GuidesComponent extends Component<Props> {
 
 type Props = {
   diagram: Diagram;
-  highlights: ReadonlyArray<Highlight>;
+  markers: ReadonlyArray<SnapMarker>;
 };

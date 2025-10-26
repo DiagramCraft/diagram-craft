@@ -1,4 +1,4 @@
-import { Selection, type Highlight } from './selection';
+import { Selection } from './selection';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { TestDiagramBuilder, TestModel, TestLayerBuilder } from './test-support/testModel';
 import { UnitOfWork } from './unitOfWork';
@@ -95,19 +95,6 @@ describe('selection', () => {
     expect(selection.isEdgesOnly()).toBe(false);
   });
 
-  test('highlights', () => {
-    const selection = new Selection(diagram);
-    const changeCb = vi.fn();
-    selection.on('change', changeCb);
-
-    const guides: Highlight[] = [{} as unknown as Highlight];
-    selection.highlights = guides;
-    expect(selection.highlights).toBe(guides);
-
-    vi.advanceTimersByTime(1);
-    expect(changeCb).toHaveBeenCalledTimes(1);
-  });
-
   test('nodes and edges getters', () => {
     const selection = new Selection(diagram);
     const node1 = layer.addNode();
@@ -176,12 +163,10 @@ describe('selection', () => {
     const node = layer.addNode();
 
     selection.setElements([node]);
-    selection.highlights = [{ id: 'test' } as any];
 
     selection.clear();
 
     expect(selection.isEmpty()).toBe(true);
-    expect(selection.highlights).toHaveLength(0);
   });
 
   test('getParents()', () => {

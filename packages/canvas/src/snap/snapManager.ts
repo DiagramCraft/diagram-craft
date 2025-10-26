@@ -15,7 +15,6 @@ import { Direction } from '@diagram-craft/geometry/direction';
 import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { groupBy, largest, smallest } from '@diagram-craft/utils/array';
 import { Angle } from '@diagram-craft/geometry/angle';
-import type { Highlight } from '@diagram-craft/model/selection';
 
 /**
  * Configuration properties for the SnapManager
@@ -70,13 +69,11 @@ declare global {
   }
 }
 
-declare module '@diagram-craft/model/selection' {
-  interface Highlight {
-    line: Line;
-    //label?: string;
-    selfMagnet: Magnet;
-    matchingMagnet: Magnet;
-  }
+export interface SnapMarker {
+  line: Line;
+  //label?: string;
+  selfMagnet: Magnet;
+  matchingMagnet: Magnet;
 }
 
 export const DEFAULT_SNAP_CONFIG: SnapManagerConfig = {
@@ -103,7 +100,7 @@ export const getSnapConfig = (diagram: Diagram): SnapManagerConfig => {
  */
 type SnapResult<T> = {
   /** Visual highlights to show snap guides/lines to the user */
-  highlights: ReadonlyArray<Highlight> /** The adjusted position/geometry after snapping */;
+  markers: ReadonlyArray<SnapMarker> /** The adjusted position/geometry after snapping */;
   adjusted: T /** All magnets involved in the snap operation */;
   magnets: ReadonlyArray<Magnet>;
 };
@@ -129,10 +126,10 @@ export interface SnapProvider<T extends MagnetType> {
   getMagnets(box: Box): ReadonlyArray<MagnetOfType<T>>;
 
   /** Create a visual highlight/guide line for a successful snap match */
-  highlight(box: Box, match: MatchingMagnetPair<T>, axis: Axis): Highlight | undefined;
+  mark(box: Box, match: MatchingMagnetPair<T>, axis: Axis): SnapMarker | undefined;
 
   /** Combine multiple highlights into consolidated guide lines */
-  filterHighlights(guides: Highlight[]): Highlight[];
+  filterMarkers(markers: SnapMarker[]): SnapMarker[];
 }
 
 /**
@@ -145,13 +142,13 @@ class SourceSnapProvider implements SnapProvider<'source'> {
     throw new VerifyNotReached();
   }
 
-  /** Source provider doesn't create highlights - throws if called */
-  highlight(_box: Box, _match: MatchingMagnetPair<'source'>, _axis: Axis): Highlight {
+  /** Source provider doesn't create marks - throws if called */
+  mark(_box: Box, _match: MatchingMagnetPair<'source'>, _axis: Axis): SnapMarker {
     throw new VerifyNotReached();
   }
 
-  filterHighlights(guides: Highlight[]): Highlight[] {
-    return guides;
+  filterMarkers(marks: SnapMarker[]): SnapMarker[] {
+    return marks;
   }
 }
 
@@ -205,6 +202,21 @@ class SnapProviders {
 const orthogonalDistance = (a1: Magnet, a2: Magnet) => {
   const axis = Axis.toXY(Axis.orthogonal(a1.axis));
   return a1.line.from[axis] - a2.line.from[axis];
+};
+
+const snapMarks = new Map<Diagram, ReadonlyArray<SnapMarker>>();
+
+export const SnapMarkers = {
+  get: (diagram: Diagram) => {
+    return snapMarks.get(diagram) ?? [];
+  },
+  set: (diagram: Diagram, marks: ReadonlyArray<SnapMarker>) => {
+    snapMarks.set(diagram, marks);
+  },
+  clear: (diagram: Diagram) => {
+    snapMarks.delete(diagram);
+    diagram.selection.emitAsync('change');
+  }
 };
 
 /**
@@ -321,11 +333,11 @@ export class SnapManager {
    */
   snapPoint(p: Point): SnapResult<Point> {
     if (!this.enabled || !this.magnetTypes.includes('grid')) {
-      return { highlights: [], magnets: [], adjusted: p };
+      return { markers: [], magnets: [], adjusted: p };
     }
 
     return {
-      highlights: [],
+      markers: [],
       magnets: [],
       adjusted: GridSnapProvider.snapPoint(p, this.diagram.props.grid?.size ?? 10)
     };
@@ -338,7 +350,7 @@ export class SnapManager {
   snapOrthoLinearLine(line: Line): SnapResult<Line> {
     assert.true(Line.isHorizontal(line) || Line.isVertical(line));
 
-    if (!this.enabled) return { highlights: [], magnets: [], adjusted: line };
+    if (!this.enabled) return { markers: [], magnets: [], adjusted: line };
 
     if (this.magnetTypes.includes('node')) {
       const snapProviders = new SnapProviders(this.diagram, this.eligibleNodePredicate);
@@ -359,7 +371,7 @@ export class SnapManager {
         assert.arrayNotEmpty(matchingMagnets);
         const [m] = matchingMagnets;
         return {
-          highlights: [],
+          markers: [],
           magnets: [],
           adjusted: Line.isHorizontal(line)
             ? Line.horizontal(m.matching.line.from.y, Range.of(line.from.x, line.to.x))
@@ -374,7 +386,7 @@ export class SnapManager {
 
       if (!Point.isEqual(p, snappedPoint)) {
         return {
-          highlights: [],
+          markers: [],
           magnets: [],
           adjusted: Line.isHorizontal(line)
             ? Line.horizontal(snappedPoint.y, Range.of(line.from.x, line.to.x))
@@ -383,7 +395,7 @@ export class SnapManager {
       }
     }
 
-    return { highlights: [], magnets: [], adjusted: line };
+    return { markers: [], magnets: [], adjusted: line };
   }
 
   /**
@@ -391,7 +403,7 @@ export class SnapManager {
    * Helps align rotated elements to common angles
    */
   snapRotate(b: Box): SnapResult<Box> {
-    if (!this.enabled) return { highlights: [], magnets: [], adjusted: b };
+    if (!this.enabled) return { markers: [], magnets: [], adjusted: b };
 
     const newBounds = Box.asReadWrite(b);
 
@@ -402,7 +414,7 @@ export class SnapManager {
       newBounds.r = Angle.toRad(Math.round(Angle.toDeg(b.r) / roundTo) * roundTo);
     }
 
-    return { highlights: [], magnets: [], adjusted: WritableBox.asBox(newBounds) };
+    return { markers: [], magnets: [], adjusted: WritableBox.asBox(newBounds) };
   }
 
   /**
@@ -412,7 +424,7 @@ export class SnapManager {
    * @param directions - Which edges are being moved (e.g. ['e', 's'] for bottom-right corner)
    */
   snapResize(b: Box, directions: ReadonlyArray<Direction>): SnapResult<Box> {
-    if (!this.enabled) return { highlights: [], magnets: [], adjusted: b };
+    if (!this.enabled) return { markers: [], magnets: [], adjusted: b };
 
     const enabledSnapProviders = this.magnetTypes;
     const snapProviders = new SnapProviders(this.diagram, this.eligibleNodePredicate);
@@ -452,7 +464,7 @@ export class SnapManager {
     });
 
     return {
-      highlights: this.generateHighlights(
+      markers: this.generateMarkers(
         WritableBox.asBox(newBounds),
         sourceMagnets,
         matchingMagnets,
@@ -471,7 +483,7 @@ export class SnapManager {
    * @param directions - Which directions to consider for snapping (defaults to all)
    */
   snapMove(b: Box, directions: ReadonlyArray<Direction> = ['n', 'w', 'e', 's']): SnapResult<Box> {
-    if (!this.enabled) return { highlights: [], magnets: [], adjusted: b };
+    if (!this.enabled) return { markers: [], magnets: [], adjusted: b };
 
     const enabledSnapProviders = this.magnetTypes.filter(a => a !== 'size');
     const snapProviders = new SnapProviders(this.diagram, this.eligibleNodePredicate);
@@ -512,7 +524,7 @@ export class SnapManager {
     }
 
     return {
-      highlights: this.generateHighlights(
+      markers: this.generateMarkers(
         WritableBox.asBox(newBounds),
         magnets,
         matchingMagnets,
@@ -533,7 +545,7 @@ export class SnapManager {
    * @param snapProviders - Provider registry for creating highlights
    * @param enabledSnapProviders - Which provider types are enabled
    */
-  private generateHighlights(
+  private generateMarkers(
     bounds: Box,
     selfMagnets: ReadonlyArray<Magnet>,
     matchingMagnets: ReadonlyArray<MatchingMagnetPair<MagnetType>>,
@@ -542,7 +554,7 @@ export class SnapManager {
   ) {
     // Check for guides in all four directions for each matching magnet
     // ... also draw the guide to the matching magnet that is furthest away
-    const guides: Highlight[] = [];
+    const guides: SnapMarker[] = [];
     for (const self of selfMagnets) {
       const axis = self.axis;
       const oppositeAxis = Axis.orthogonal(axis);
@@ -571,29 +583,29 @@ export class SnapManager {
 
       if (!match) continue;
 
-      const guide = snapProviders.get(match.matching.type).highlight(bounds, match, axis);
+      const guide = snapProviders.get(match.matching.type).mark(bounds, match, axis);
       if (guide) guides.push(guide);
     }
 
     // TODO: Remove guides that are too close to each other or redundant (e.g. center if both left and right)
 
     // Consolidate guides
-    const consolidatedGuides: Highlight[] = [];
+    const consolidatedGuides: SnapMarker[] = [];
     const groupedGuides = groupBy(guides, g => g.matchingMagnet.type);
     for (const [type, guidesOfType] of groupedGuides) {
       const snapProvider = snapProviders.get(type);
-      consolidatedGuides.push(...snapProvider.filterHighlights(guidesOfType));
+      consolidatedGuides.push(...snapProvider.filterMarkers(guidesOfType));
     }
 
     return consolidatedGuides;
   }
 
   /**
-   * Filter highlights to only show those that align with the current box edges
-   * Used to update highlights when an element's position changes during interaction
+   * Filter markers to only show those that align with the current box edges
+   * Used to update markers when an element's position changes during interaction
    */
-  reviseHighlights(highlights: ReadonlyArray<Highlight>, b: Box): ReadonlyArray<Highlight> {
-    return highlights.filter(g => {
+  reviseMarkers(markers: ReadonlyArray<SnapMarker>, b: Box): ReadonlyArray<SnapMarker> {
+    return markers.filter(g => {
       if (Line.isHorizontal(g.line)) {
         return g.line.from.y === b.y || g.line.from.y === b.y + b.h;
       } else {

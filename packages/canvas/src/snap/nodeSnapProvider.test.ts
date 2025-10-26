@@ -355,13 +355,13 @@ describe('NodeSnapProvider', () => {
         distance: 0
       };
 
-      const highlight = provider.highlight(testBox, matchingPair, Axis.h);
+      const marker = provider.mark(testBox, matchingPair, Axis.h);
 
-      expect(highlight).toBeDefined();
-      expect(highlight.line).toBeDefined();
-      expect(Line.isHorizontal(highlight.line)).toBe(true);
-      expect(highlight.matchingMagnet).toBe(horizontalMagnet);
-      expect(highlight.selfMagnet).toBe(sourceMagnet);
+      expect(marker).toBeDefined();
+      expect(marker.line).toBeDefined();
+      expect(Line.isHorizontal(marker.line)).toBe(true);
+      expect(marker.matchingMagnet).toBe(horizontalMagnet);
+      expect(marker.selfMagnet).toBe(sourceMagnet);
 
       // Highlight should span from leftmost to rightmost edge of both elements
       const expectedMinX = Math.min(testBox.x, horizontalMagnet.node.bounds.x);
@@ -370,8 +370,8 @@ describe('NodeSnapProvider', () => {
         horizontalMagnet.node.bounds.x + horizontalMagnet.node.bounds.w
       );
 
-      expect(highlight.line.from.x).toBe(expectedMinX);
-      expect(highlight.line.to.x).toBe(expectedMaxX);
+      expect(marker.line.from.x).toBe(expectedMinX);
+      expect(marker.line.to.x).toBe(expectedMaxX);
     });
 
     test('should create highlight for vertical alignment', () => {
@@ -397,7 +397,7 @@ describe('NodeSnapProvider', () => {
         distance: 0
       };
 
-      const highlight = provider.highlight(testBox, matchingPair, Axis.v);
+      const highlight = provider.mark(testBox, matchingPair, Axis.v);
 
       expect(highlight).toBeDefined();
       expect(highlight.line).toBeDefined();
@@ -442,11 +442,11 @@ describe('NodeSnapProvider', () => {
           distance: 0
         };
 
-        const highlight = provider.highlight(testBox, matchingPair, Axis.h);
+        const marker = provider.mark(testBox, matchingPair, Axis.h);
 
         // Highlight should be positioned at the center line coordinate
-        expect(highlight.line.from.y).toBe(170);
-        expect(highlight.line.to.y).toBe(170);
+        expect(marker.line.from.y).toBe(170);
+        expect(marker.line.to.y).toBe(170);
       }
     });
   });

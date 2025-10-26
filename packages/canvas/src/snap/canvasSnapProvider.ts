@@ -1,10 +1,9 @@
-import type { MatchingMagnetPair, SnapProvider } from './snapManager';
+import type { MatchingMagnetPair, SnapMarker, SnapProvider } from './snapManager';
 import type { Diagram } from '@diagram-craft/model/diagram';
 import type { MagnetOfType } from './magnet';
 import { Box } from '@diagram-craft/geometry/box';
 import { Line } from '@diagram-craft/geometry/line';
 import { Axis } from '@diagram-craft/geometry/axis';
-import type { Highlight } from '@diagram-craft/model/selection';
 
 /**
  * Snap provider that provides canvas center line magnets for alignment
@@ -31,7 +30,7 @@ export class CanvasSnapProvider implements SnapProvider<'canvas'> {
     ];
   }
 
-  highlight(_box: Box, match: MatchingMagnetPair<'canvas'>, _axis: Axis): Highlight {
+  mark(_box: Box, match: MatchingMagnetPair<'canvas'>, _axis: Axis): SnapMarker {
     return {
       // Since the canvas magnets are the full height/width, we simply highlight
       // by returning this magnet line as a whole
@@ -41,7 +40,7 @@ export class CanvasSnapProvider implements SnapProvider<'canvas'> {
     };
   }
 
-  filterHighlights(highlights: Highlight[]): Highlight[] {
-    return highlights;
+  filterMarkers(marks: SnapMarker[]): SnapMarker[] {
+    return marks;
   }
 }
