@@ -62,7 +62,7 @@ export class GridComponent extends Component<CanvasState> {
     // Note: we don't need to listen to diagram change events here, because this is handled
     //       through a full redraw of EditableCanvas when diagram changes.
 
-    const { x, y, w, h } = diagram.canvas;
+    const { x, y, w, h } = diagram.bounds;
 
     const dx = diagram.props.grid?.size ?? 10;
     const dy = diagram.props.grid?.size ?? 10;

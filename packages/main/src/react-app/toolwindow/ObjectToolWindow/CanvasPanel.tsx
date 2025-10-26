@@ -19,7 +19,7 @@ export const CanvasPanel = (props: Props) => {
 
   useEventListener($d, 'diagramChange', redraw);
 
-  const bounds = { ...$d.canvas, r: 0 };
+  const bounds = { ...$d.bounds, r: 0 };
 
   const color = useDiagramProperty($d, 'background.color', 'white');
   const pattern = useDiagramProperty($d, 'background.pattern', '');
@@ -59,7 +59,7 @@ export const CanvasPanel = (props: Props) => {
   const gradientType = useDiagramProperty($d, 'background.gradient.type', 'linear');
 
   const updateBounds = (newBounds: Box) => {
-    $d.canvas = newBounds;
+    $d.bounds = newBounds;
   };
 
   return (

@@ -34,7 +34,7 @@ export class DocumentBoundsComponent extends Component<CanvasState> {
         fillType,
         fill,
         diagram,
-        diagram.canvas,
+        diagram.bounds,
         style,
         children,
         this
@@ -45,10 +45,10 @@ export class DocumentBoundsComponent extends Component<CanvasState> {
       {},
       svg.rect({
         class: 'svg-doc-bounds',
-        x: diagram.canvas.x,
-        y: diagram.canvas.y,
-        width: diagram.canvas.w,
-        height: diagram.canvas.h,
+        x: diagram.bounds.x,
+        y: diagram.bounds.y,
+        width: diagram.bounds.w,
+        height: diagram.bounds.h,
         style: toInlineCSS(style)
       }),
       ...children

@@ -92,7 +92,7 @@ export const Ruler = ({ orientation }: Props) => {
 
   if (orientation === 'horizontal') {
     if (diagram.viewBox.isInitialized()) {
-      for (let x = diagram.canvas.x; x <= diagram.canvas.x + diagram.canvas.w; x += 10) {
+      for (let x = diagram.bounds.x; x <= diagram.bounds.x + diagram.bounds.w; x += 10) {
         ticks.push({ pos: toScreenX(x), lbl: x.toString() });
       }
     }
@@ -126,7 +126,7 @@ export const Ruler = ({ orientation }: Props) => {
     );
   } else {
     if (diagram.viewBox.isInitialized()) {
-      for (let y = diagram.canvas.y; y <= diagram.canvas.y + diagram.canvas.h; y += 10) {
+      for (let y = diagram.bounds.y; y <= diagram.bounds.y + diagram.bounds.h; y += 10) {
         ticks.push({ pos: toScreenY(y), lbl: y.toString() });
       }
     }

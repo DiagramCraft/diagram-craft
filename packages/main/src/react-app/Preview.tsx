@@ -49,21 +49,21 @@ export const Preview = (props: Props) => {
   const zoomFit = () => {
     assert.present(viewbox);
 
-    if (diagram.canvas.w > diagram.canvas.h * viewbox.aspectRatio) {
+    if (diagram.bounds.w > diagram.bounds.h * viewbox.aspectRatio) {
       viewbox.dimensions = {
-        w: diagram.canvas.w + OFFSET,
-        h: (diagram.canvas.w + OFFSET) / viewbox.aspectRatio
+        w: diagram.bounds.w + OFFSET,
+        h: (diagram.bounds.w + OFFSET) / viewbox.aspectRatio
       };
     } else {
       viewbox.dimensions = {
-        w: (diagram.canvas.h + OFFSET) * viewbox.aspectRatio,
-        h: diagram.canvas.h + OFFSET
+        w: (diagram.bounds.h + OFFSET) * viewbox.aspectRatio,
+        h: diagram.bounds.h + OFFSET
       };
     }
 
     viewbox.offset = {
-      x: diagram.canvas.x + (diagram.canvas.w - viewbox.dimensions.w) / 2,
-      y: diagram.canvas.y + (diagram.canvas.h - viewbox.dimensions.h) / 2
+      x: diagram.bounds.x + (diagram.bounds.w - viewbox.dimensions.w) / 2,
+      y: diagram.bounds.y + (diagram.bounds.h - viewbox.dimensions.h) / 2
     };
   };
 

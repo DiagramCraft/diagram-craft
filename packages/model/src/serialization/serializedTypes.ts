@@ -13,7 +13,7 @@ import type { ModificationType } from '../diagramLayerModification';
 import { Box } from '@diagram-craft/geometry/box';
 import { Anchor } from '../anchor';
 import type { Story } from '../documentStories';
-import type { Canvas } from '../canvas';
+import type { DiagramBounds } from '../diagramBounds';
 import type { LabelNode } from '../labelNode';
 import type { Guide } from '../guides';
 
@@ -60,7 +60,7 @@ export type SerializedDiagram = {
     y: number;
     zoom: number;
   };
-  canvas: Canvas;
+  canvas: DiagramBounds;
   comments?: ReadonlyArray<SerializedComment>;
 };
 

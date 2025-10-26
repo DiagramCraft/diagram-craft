@@ -148,7 +148,7 @@ const arrowsTestFile = async () => {
     //if (y > 2000) break;
   }
 
-  diagram.canvas = {
+  diagram.bounds = {
     x: 0,
     y: 0,
     w: 1000,
@@ -466,7 +466,7 @@ const shapesTestFile = async (
       y += opts.yDiff;
     }
 
-    diagram.canvas = {
+    diagram.bounds = {
       x: 0,
       y: 0,
       w: 2100,
@@ -486,7 +486,7 @@ const shapesTestFile = async (
       }
     }
 
-    diagram.canvas = {
+    diagram.bounds = {
       x: 0,
       y: 0,
       w: x + 20,

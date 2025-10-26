@@ -16,7 +16,7 @@ import {
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
-import { createResizeCanvasActionToFit } from '@diagram-craft/model/canvas';
+import { createResizeToFitAction } from '@diagram-craft/model/diagramBounds';
 import {
   ElementAddUndoableAction,
   SnapshotUndoableAction
@@ -185,7 +185,7 @@ export abstract class AbstractMoveDrag extends Drag {
     if (selection.isChanged()) {
       const compoundUndoAction = new CompoundUndoableAction();
 
-      const resizeCanvasAction = createResizeCanvasActionToFit(
+      const resizeCanvasAction = createResizeToFitAction(
         this.diagram,
         Box.boundingBox(
           selection.nodes.map(e => e.bounds),

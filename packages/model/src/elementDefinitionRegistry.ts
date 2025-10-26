@@ -246,7 +246,7 @@ export const makeStencilNode =
       newid(),
       typeId,
       Box.applyAspectRatio(
-        { x: 0, y: 0, w: $d.canvas.w, h: $d.canvas.h, r: 0 },
+        { x: 0, y: 0, w: $d.bounds.w, h: $d.bounds.h, r: 0 },
         opts?.aspectRatio ?? 1
       ),
       layer,

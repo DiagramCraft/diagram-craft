@@ -9,7 +9,7 @@ import { Point } from '@diagram-craft/geometry/point';
 import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
 import { newid } from '@diagram-craft/utils/id';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
-import { createResizeCanvasActionToFit } from '@diagram-craft/model/canvas';
+import { createResizeToFitAction } from '@diagram-craft/model/diagramBounds';
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { Box } from '@diagram-craft/geometry/box';
@@ -127,7 +127,7 @@ export const createLinkedNode = (
     node.layer
   );
 
-  const resizeAction = createResizeCanvasActionToFit(node.diagram, newNode.bounds);
+  const resizeAction = createResizeToFitAction(node.diagram, newNode.bounds);
   node.diagram.undoManager.addAndExecute(
     new CompoundUndoableAction([
       new ElementAddUndoableAction(
