@@ -319,6 +319,10 @@ export class MoveDrag extends AbstractMoveDrag {
       'MoveDrag',
       'Move elements. Shift+Click - add, Shift - constrain, Option - free, Cmd - duplicate'
     );
+
+    if (isDuplicateDrag(modifiers)) {
+      this.duplicate();
+    }
   }
 
   onKeyUp(event: KeyboardEvent) {
