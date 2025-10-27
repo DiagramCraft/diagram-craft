@@ -1,0 +1,12 @@
+.textEditor {
+  padding: 10px;
+  font-family: monospace;
+  border: 1px solid var(--base-bg);
+  margin: 0;
+  overflow: auto;
+
+  &:focus {
+    border: 1px solid var(--accent-chroma);
+    outline: none;
+  }
+}
