@@ -122,6 +122,20 @@ const addElement = (element: DiagramElement, lines: string[], indent = '') => {
   }
 };
 
+const applySyntaxHighlighting = (lines: string[]) => {
+  const result: string[] = [];
+  for (const line of lines) {
+    let dest = line;
+    dest = dest.replaceAll(/("[^"]+")/g, '<span class="syntax-string">$1</span> = "');
+    dest = dest.replaceAll(/^(\s*props):/g, '<span class="syntax-props">$1</span>:');
+    dest = dest.replaceAll(/^(\s*[^:]+):/g, '<span class="syntax-label">$1</span>:');
+    dest = dest.replaceAll(/({|})/g, '<span class="syntax-bracket">$1</span>');
+    result.push(dest);
+  }
+
+  return result;
+};
+
 export const TextToolWindow = () => {
   const redraw = useRedraw();
   const diagram = useDiagram();
@@ -156,7 +170,9 @@ export const TextToolWindow = () => {
         <ToolWindow.TabContent>
           <ToolWindowPanel mode={'headless-no-padding'} id={'text'} title={'Text'}>
             <pre className={styles.textEditor}>
-              <code>{lines.join('\n')}</code>
+              <code
+                dangerouslySetInnerHTML={{ __html: applySyntaxHighlighting(lines).join('\n') }}
+              />
             </pre>
           </ToolWindowPanel>
         </ToolWindow.TabContent>
