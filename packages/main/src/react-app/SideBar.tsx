@@ -1,10 +1,16 @@
 import { ToolWindowButton } from './toolwindow/ToolWindowButton';
-import React, { type ReactElement, useEffect, useState } from 'react';
+import React, { type ReactElement, useCallback, useEffect, useRef, useState } from 'react';
 import { useEventListener } from './hooks/useEventListener';
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
 import { ErrorBoundary } from './ErrorBoundary';
 import { UserState } from '../UserState';
 import { IconType } from 'react-icons';
+
+const MIN_WIDTH = 248;
+const MAX_WIDTH = 1024;
+const DEFAULT_WIDTH = 248;
+const MIN_DIAGRAM_WIDTH = 300;
+const TOOLBAR_WIDTH = 40; // Width of left and right button toolbars
 
 export const SideBarPage = (props: SideBarPageProps) => {
   return <ErrorBoundary>{props.children}</ErrorBoundary>;
@@ -26,9 +32,14 @@ export const SideBarBottomToolbar = (props: { children: React.ReactNode }) => {
 
 export const SideBar = (props: Props) => {
   const propName = props.side === 'left' ? 'panelLeft' : 'panelRight';
+  const widthPropName = props.side === 'left' ? 'panelLeftWidth' : 'panelRightWidth';
 
   const userState = UserState.get();
   const [selected, setSelected] = useState(userState[propName] ?? -1);
+  const [width, setWidth] = useState(userState[widthPropName]);
+  const [isResizing, setIsResizing] = useState(false);
+  const resizeStartX = useRef(0);
+  const resizeStartWidth = useRef(0);
 
   const updateSelected = (idx: number) => {
     setSelected(idx);
@@ -39,19 +50,80 @@ export const SideBar = (props: Props) => {
     setSelected(userState[propName] ?? 0);
   });
 
-  // TODO: Can we do this with CSS?
-  //       potentially setting a variable
-  const d = '15.5rem';
+  const updateWidth = useCallback(
+    (newWidth: number) => {
+      // Get the other sidebar's width (0 if not shown)
+      const otherSide = props.side === 'left' ? 'panelRight' : 'panelLeft';
+      const otherWidthProp = props.side === 'left' ? 'panelRightWidth' : 'panelLeftWidth';
+      const otherSideSelected = userState[otherSide] ?? -1;
+      const otherSideWidth = otherSideSelected === -1 ? 0 : userState[otherWidthProp];
+
+      // Calculate available space: window width - toolbars - other sidebar - minimum diagram width
+      const windowWidth = window.innerWidth;
+      const maxAllowedWidth = windowWidth - TOOLBAR_WIDTH * 2 - otherSideWidth - MIN_DIAGRAM_WIDTH;
+
+      // Clamp width between MIN_WIDTH and the minimum of MAX_WIDTH and maxAllowedWidth
+      const clampedWidth = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, maxAllowedWidth, newWidth));
+      setWidth(clampedWidth);
+      userState[widthPropName] = clampedWidth;
+    },
+    [widthPropName, userState, props.side]
+  );
+
+  const handleResizeStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+    resizeStartX.current = e.clientX;
+    resizeStartWidth.current = width;
+  };
+
   useEffect(() => {
+    if (!isResizing) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const delta =
+        props.side === 'left' ? e.clientX - resizeStartX.current : resizeStartX.current - e.clientX;
+      const newWidth = resizeStartWidth.current + delta;
+      updateWidth(newWidth);
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing, props.side, updateWidth]);
+
+  // Handle window resize to ensure minimum diagram width is maintained
+  useEffect(() => {
+    const handleWindowResize = () => {
+      // Re-validate width when window is resized
+      updateWidth(width);
+    };
+
+    window.addEventListener('resize', handleWindowResize);
+    return () => {
+      window.removeEventListener('resize', handleWindowResize);
+    };
+  }, [width, updateWidth]);
+
+  useEffect(() => {
+    const widthPx = `${width}px`;
     if (props.side === 'left') {
       if (selected === -1) {
         document.getElementById(`toolbar`)!.style.marginLeft = '0';
         document.getElementById(`tabs`)!.style.marginLeft = '0';
         document.body.style.setProperty('--left-indent', '0px');
       } else {
-        document.getElementById(`toolbar`)!.style.marginLeft = d;
-        document.getElementById(`tabs`)!.style.marginLeft = d;
-        document.body.style.setProperty('--left-indent', d);
+        document.getElementById(`toolbar`)!.style.marginLeft = widthPx;
+        document.getElementById(`tabs`)!.style.marginLeft = widthPx;
+        document.body.style.setProperty('--left-indent', widthPx);
       }
     } else {
       if (selected === -1) {
@@ -59,12 +131,12 @@ export const SideBar = (props: Props) => {
         document.getElementById(`tabs`)!.style.marginRight = '0';
         document.body.style.setProperty('--right-indent', '0px');
       } else {
-        document.getElementById(`toolbar`)!.style.marginRight = d;
-        document.getElementById(`tabs`)!.style.marginRight = d;
-        document.body.style.setProperty('--right-indent', d);
+        document.getElementById(`toolbar`)!.style.marginRight = widthPx;
+        document.getElementById(`tabs`)!.style.marginRight = widthPx;
+        document.body.style.setProperty('--right-indent', widthPx);
       }
     }
-  }, [props.side, selected]);
+  }, [props.side, selected, width]);
 
   return (
     <>
@@ -102,6 +174,12 @@ export const SideBar = (props: Props) => {
         className={'cmp-sidebar'}
         style={{ display: selected === -1 ? 'none' : 'block' }}
       >
+        <div
+          className={`cmp-sidebar-resize-handle cmp-sidebar-resize-handle-${props.side}`}
+          onMouseDown={handleResizeStart}
+          onDoubleClick={() => updateWidth(DEFAULT_WIDTH)}
+          style={{ cursor: isResizing ? 'col-resize' : undefined }}
+        />
         {props.children[selected]}
       </div>
       {props.bottom}
