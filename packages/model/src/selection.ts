@@ -141,6 +141,7 @@ export class Selection extends EventEmitter<SelectionEvents> {
       return 'mixed';
     }
   }
+
   forceRotation(r: number | undefined) {
     if (r === undefined) {
       this.#forcedRotation = false;
@@ -151,6 +152,7 @@ export class Selection extends EventEmitter<SelectionEvents> {
       r: r
     };
     this.#forcedRotation = true;
+    this.emitAsyncWithDebounce('change', { selection: this });
   }
 
   isNodesOnly(): boolean {
