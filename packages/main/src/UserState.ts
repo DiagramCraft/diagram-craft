@@ -14,6 +14,8 @@ const MAX_RECENT_FILES = 10;
 export class UserState extends EventEmitter<UserStateEvents> {
   #panelLeft?: number;
   #panelRight?: number;
+  #panelLeftWidth: number = 248;
+  #panelRightWidth: number = 248;
   #showHelp: boolean = true;
   #showRulers: boolean = true;
   #stencils: Array<{ id: string; isOpen?: boolean }> = DEFAULT_STENCILS;
@@ -36,6 +38,8 @@ export class UserState extends EventEmitter<UserStateEvents> {
     const state = JSON.parse(localStorage.getItem('diagram-craft.user-state') ?? '{}');
     this.#panelLeft = state.panelLeft;
     this.#panelRight = state.panelRight;
+    this.#panelLeftWidth = state.panelLeftWidth ?? 248;
+    this.#panelRightWidth = state.panelRightWidth ?? 248;
     this.#showHelp = state.showHelp;
     this.#stencils = state.stencils ?? DEFAULT_STENCILS;
     this.#recentFiles = state.recentFiles ?? [];
@@ -92,6 +96,24 @@ export class UserState extends EventEmitter<UserStateEvents> {
     return this.#panelRight;
   }
 
+  set panelLeftWidth(width: number) {
+    this.#panelLeftWidth = width;
+    this.triggerChange();
+  }
+
+  get panelLeftWidth(): number {
+    return this.#panelLeftWidth;
+  }
+
+  set panelRightWidth(width: number) {
+    this.#panelRightWidth = width;
+    this.triggerChange();
+  }
+
+  get panelRightWidth(): number {
+    return this.#panelRightWidth;
+  }
+
   set showHelp(showHelp: boolean) {
     this.#showHelp = showHelp;
     this.triggerChange();
@@ -134,6 +156,8 @@ export class UserState extends EventEmitter<UserStateEvents> {
       JSON.stringify({
         panelLeft: this.#panelLeft,
         panelRight: this.#panelRight,
+        panelLeftWidth: this.#panelLeftWidth,
+        panelRightWidth: this.#panelRightWidth,
         showHelp: this.#showHelp,
         stencils: this.#stencils,
         recentFiles: this.#recentFiles,
