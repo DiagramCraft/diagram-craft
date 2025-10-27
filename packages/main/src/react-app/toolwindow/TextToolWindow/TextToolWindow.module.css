@@ -9,4 +9,20 @@
     border: 1px solid var(--accent-chroma);
     outline: none;
   }
+
+  .syntax-label {
+    color: var(--accent-fg);
+  }
+
+  .syntax-string {
+    color: var(--green-9);
+  }
+
+  .syntax-bracket {
+    color: var(--base-fg);
+  }
+
+  .syntax-props {
+    color: var(--accent-chroma);
+  }
 }
