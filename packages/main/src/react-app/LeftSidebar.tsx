@@ -1,11 +1,12 @@
 import { SideBar, SideBarBottomToolbar, SideBarPage } from './SideBar';
 import {
+  TbCodeAsterisk,
   TbDatabaseCog,
   TbHistory,
   TbPentagonPlus,
+  TbPresentation,
   TbSearch,
-  TbStack,
-  TbPresentation
+  TbStack
 } from 'react-icons/tb';
 import { PickerToolWindow } from './toolwindow/PickerToolWindow/PickerToolWindow';
 import { DocumentStructureToolWindow } from './toolwindow/DocumentStructureToolWindow/DocumentStructureToolWindow';
@@ -13,6 +14,7 @@ import { HistoryToolWindow } from './toolwindow/HistoryToolWindow/HistoryToolWin
 import { QueryToolWindow } from './toolwindow/QueryToolWindow/QueryToolWindow';
 import { StoryToolWindow } from './toolwindow/StoryToolWindow/StoryToolWindow';
 import { ActionToolbarButton } from './toolbar/ActionToolbarButton';
+import { TextToolWindow } from './toolwindow/TextToolWindow/TextToolWindow';
 
 export const LeftSidebar = () => {
   return (
@@ -40,6 +42,9 @@ export const LeftSidebar = () => {
       </SideBarPage>
       <SideBarPage icon={TbPresentation}>
         <StoryToolWindow />
+      </SideBarPage>
+      <SideBarPage icon={TbCodeAsterisk}>
+        <TextToolWindow />
       </SideBarPage>
     </SideBar>
   );
