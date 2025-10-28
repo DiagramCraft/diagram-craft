@@ -175,7 +175,7 @@ export const TextToolWindow = () => {
       for (const element of layer.elements) {
         addElement(element, newLines);
         newLines.push('');
-      }
+      } 
     }
     setLines(newLines);
     setErrors([]);
@@ -265,7 +265,22 @@ export const TextToolWindow = () => {
 
   return (
     <ToolWindow.Root id={'text'} defaultTab={'text'}>
-      <ToolWindow.Tab id={'text'} title={'Text'}>
+      <ToolWindow.Tab
+        id={'text'}
+        title={'Text'}
+        indicator={
+          dirty ? (
+            <div
+              style={{
+                backgroundColor: 'var(--highlight-reverse-bg)',
+                borderRadius: '50%',
+                width: '6px',
+                height: '6px'
+              }}
+            />
+          ) : null
+        }
+      >
         <ToolWindow.TabActions>
           <Button type={'icon-only'} disabled={!dirty} onClick={() => updateLines()}>
             <TbRestore />
