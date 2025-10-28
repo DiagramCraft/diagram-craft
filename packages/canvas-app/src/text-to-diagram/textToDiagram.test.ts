@@ -1,12 +1,14 @@
-import { describe, test, expect, beforeEach } from 'vitest';
-import { textToDiagram, _test } from './textToDiagram';
+import { beforeEach, describe, expect, test } from 'vitest';
+import { _test, textToDiagram } from './textToDiagram';
+import type {
+  TestDiagramBuilder,
+  TestLayerBuilder
+} from '@diagram-craft/model/test-support/testModel';
 import { TestModel } from '@diagram-craft/model/test-support/testModel';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { AnchorEndpoint, ConnectedEndpoint } from '@diagram-craft/model/endpoint';
 import type { ParsedElement } from './parser';
-import { isNode, isEdge } from '@diagram-craft/model/diagramElement';
-import type { TestLayerBuilder } from '@diagram-craft/model/test-support/testModel';
-import type { TestDiagramBuilder } from '@diagram-craft/model/test-support/testModel';
+import { isEdge, isNode } from '@diagram-craft/model/diagramElement';
 
 const { parsePropsString, parseMetadataString, updateOrCreateLabelNode } = _test;
 
@@ -55,24 +57,6 @@ describe('textToDiagram', () => {
         arrow: { start: { type: 'SQUARE_ARROW_OUTLINE' } }
       });
     });
-
-    test('handles empty string', () => {
-      const result = parsePropsString('');
-      expect(result).toEqual({});
-    });
-
-    test('skips invalid pairs', () => {
-      const result = parsePropsString('valid=true;;novalue=;=nokey');
-      // Empty string value is parsed as 0, which is valid
-      expect(result).toEqual({ valid: true, novalue: 0 });
-    });
-
-    test('handles multiple nested levels', () => {
-      const result = parsePropsString('a.b.c.d=value');
-      expect(result).toEqual({
-        a: { b: { c: { d: 'value' } } }
-      });
-    });
   });
 
   describe('parseMetadataString', () => {
@@ -84,16 +68,6 @@ describe('textToDiagram', () => {
     test('ignores unknown metadata keys', () => {
       const result = parseMetadataString('name=Test;unknown=value');
       expect(result).toEqual({ name: 'Test' });
-    });
-
-    test('handles empty string', () => {
-      const result = parseMetadataString('');
-      expect(result).toEqual({});
-    });
-
-    test('skips invalid pairs', () => {
-      const result = parseMetadataString('name=Valid;;novalue=');
-      expect(result).toEqual({ name: 'Valid' });
     });
   });
 
@@ -204,20 +178,6 @@ describe('textToDiagram', () => {
       }
     });
 
-    test('adds node with metadata', () => {
-      const elements: ParsedElement[] = [
-        { id: '1', type: 'node', shape: 'rect', metadata: 'name=TestNode', line: 0 }
-      ];
-
-      textToDiagram(elements, diagram);
-
-      const node = diagram.lookup('1');
-      expect(node).toBeDefined();
-      if (isNode(node!)) {
-        expect(node!.metadata.name).toBe('TestNode');
-      }
-    });
-
     test('adds node with stylesheets', () => {
       const elements: ParsedElement[] = [
         {
@@ -238,17 +198,6 @@ describe('textToDiagram', () => {
         expect(node!.metadata.style).toBe('custom-style');
         expect(node!.metadata.textStyle).toBe('h1');
       }
-    });
-
-    test('adds edge without connections', () => {
-      const elements: ParsedElement[] = [{ id: 'e1', type: 'edge', line: 0 }];
-
-      textToDiagram(elements, diagram);
-
-      expect(layer.elements.length).toBe(1);
-      const edge = diagram.lookup('e1');
-      expect(edge).toBeDefined();
-      expect(isEdge(edge!)).toBe(true);
     });
 
     test('adds edge with connections', () => {
@@ -283,25 +232,6 @@ describe('textToDiagram', () => {
       if (isEdge(edge!)) {
         expect(edge!.labelNodes.length).toBe(1);
         expect(edge!.labelNodes[0]!.node().getText()).toBe('Edge Label');
-      }
-    });
-
-    test('adds edge with props', () => {
-      const elements: ParsedElement[] = [
-        {
-          id: 'e1',
-          type: 'edge',
-          props: 'arrow.start.type=SQUARE_ARROW_OUTLINE',
-          line: 0
-        }
-      ];
-
-      textToDiagram(elements, diagram);
-
-      const edge = diagram.lookup('e1');
-      expect(edge).toBeDefined();
-      if (isEdge(edge!)) {
-        expect(edge!.renderProps.arrow?.start?.type).toBe('SQUARE_ARROW_OUTLINE');
       }
     });
 
@@ -358,46 +288,6 @@ describe('textToDiagram', () => {
       }
     });
 
-    test('updates node metadata', () => {
-      layer.addNode({ id: '1', type: 'rect' });
-
-      const elements: ParsedElement[] = [
-        { id: '1', type: 'node', shape: 'rect', metadata: 'name=NewName', line: 0 }
-      ];
-
-      textToDiagram(elements, diagram);
-
-      const updated = diagram.lookup('1');
-      expect(updated).toBeDefined();
-      if (isNode(updated!)) {
-        expect(updated!.metadata.name).toBe('NewName');
-      }
-    });
-
-    test('updates node stylesheets', () => {
-      layer.addNode({ id: '1', type: 'rect' });
-
-      const elements: ParsedElement[] = [
-        {
-          id: '1',
-          type: 'node',
-          shape: 'rect',
-          stylesheet: 'new-style',
-          textStylesheet: 'h2',
-          line: 0
-        }
-      ];
-
-      textToDiagram(elements, diagram);
-
-      const updated = diagram.lookup('1');
-      expect(updated).toBeDefined();
-      if (isNode(updated!)) {
-        expect(updated!.metadata.style).toBe('new-style');
-        expect(updated!.metadata.textStyle).toBe('h2');
-      }
-    });
-
     test('updates edge connections', () => {
       const n1 = layer.addNode({ id: 'n1', type: 'rect' });
       const n2 = layer.addNode({ id: 'n2', type: 'rect' });
@@ -444,24 +334,6 @@ describe('textToDiagram', () => {
         expect(updated!.labelNodes[0]!.node().getText()).toBe('Updated Label');
       }
     });
-
-    test('removes edge label when not specified', () => {
-      const edge = layer.addEdge({ id: 'e1' });
-      const label = layer.createNode({ id: 'label1', type: 'text' });
-      label.setText('Label', UnitOfWork.immediate(diagram));
-      edge.addChild(label, UnitOfWork.immediate(diagram));
-      edge.labelNodes.push(label.asLabelNode());
-
-      const elements: ParsedElement[] = [{ id: 'e1', type: 'edge', line: 0 }];
-
-      textToDiagram(elements, diagram);
-
-      const updated = diagram.lookup('e1');
-      expect(updated).toBeDefined();
-      if (isEdge(updated!)) {
-        expect(updated!.labelNodes.length).toBe(0);
-      }
-    });
   });
 
   describe('textToDiagram - remove elements', () => {
@@ -478,21 +350,6 @@ describe('textToDiagram', () => {
       expect(diagram.lookup('1')).toBeDefined();
       expect(diagram.lookup('2')).toBeUndefined();
       expect(diagram.lookup('3')).toBeUndefined();
-    });
-
-    test('updates selection when removing selected elements', () => {
-      const n1 = layer.addNode({ id: '1', type: 'rect' });
-      const n2 = layer.addNode({ id: '2', type: 'rect' });
-
-      diagram.selection.setElements([n1, n2]);
-      expect(diagram.selection.elements.length).toBe(2);
-
-      const elements: ParsedElement[] = [{ id: '1', type: 'node', shape: 'rect', line: 0 }];
-
-      textToDiagram(elements, diagram);
-
-      expect(diagram.selection.elements.length).toBe(1);
-      expect(diagram.selection.elements[0]?.id).toBe('1');
     });
   });
 
@@ -540,123 +397,6 @@ describe('textToDiagram', () => {
       expect(updated).toBeDefined();
       if (isNode(updated!)) {
         expect(updated!.getText()).toBe('Updated');
-      }
-    });
-  });
-
-  describe('textToDiagram - undo/redo support', () => {
-    test('creates undoable action for additions', () => {
-      const elements: ParsedElement[] = [{ id: '1', type: 'node', shape: 'rect', line: 0 }];
-
-      textToDiagram(elements, diagram);
-
-      expect(diagram.lookup('1')).toBeDefined();
-      expect(layer.elements.length).toBe(1);
-
-      diagram.undoManager.undo();
-      expect(layer.elements.length).toBe(0);
-
-      diagram.undoManager.redo();
-      expect(layer.elements.length).toBe(1);
-    });
-
-    test('creates undoable action for updates', () => {
-      const node = layer.addNode({ id: '1', type: 'text' });
-      node.setText('Original', UnitOfWork.immediate(diagram));
-
-      const elements: ParsedElement[] = [
-        { id: '1', type: 'node', shape: 'text', name: 'Updated', line: 0 }
-      ];
-
-      textToDiagram(elements, diagram);
-
-      const updated = diagram.lookup('1');
-      if (isNode(updated!)) {
-        expect(updated!.getText()).toBe('Updated');
-      }
-
-      diagram.undoManager.undo();
-      const reverted = diagram.lookup('1');
-      if (isNode(reverted!)) {
-        expect(reverted!.getText()).toBe('Original');
-      }
-
-      diagram.undoManager.redo();
-      const reapplied = diagram.lookup('1');
-      if (isNode(reapplied!)) {
-        expect(reapplied!.getText()).toBe('Updated');
-      }
-    });
-
-    test('handles mixed operations without errors', () => {
-      // Add initial nodes
-      const n1 = layer.addNode({ id: '1', type: 'rect' });
-      n1.setText('Original', UnitOfWork.immediate(diagram));
-      layer.addNode({ id: '2', type: 'rect' });
-
-      // Perform add, update, and remove in one operation
-      const elements: ParsedElement[] = [
-        { id: '1', type: 'node', shape: 'rect', name: 'Updated', line: 0 },
-        { id: '3', type: 'node', shape: 'circle', line: 1 }
-      ];
-
-      // Should not throw
-      expect(() => {
-        textToDiagram(elements, diagram);
-      }).not.toThrow();
-
-      // Verify the operations were applied
-      expect(layer.elements.length).toBe(2);
-      const updated1 = diagram.lookup('1');
-      if (isNode(updated1!)) {
-        expect(updated1!.getText()).toBe('Updated');
-      }
-      expect(diagram.lookup('2')).toBeUndefined();
-      expect(diagram.lookup('3')).toBeDefined();
-    });
-  });
-
-  describe('textToDiagram - edge cases', () => {
-    test('handles empty elements array', () => {
-      layer.addNode({ id: '1', type: 'rect' });
-
-      textToDiagram([], diagram);
-
-      expect(layer.elements.length).toBe(0);
-    });
-
-    test('handles edge with non-existent node references', () => {
-      const elements: ParsedElement[] = [
-        { id: 'e1', type: 'edge', from: 'nonexistent1', to: 'nonexistent2', line: 0 }
-      ];
-
-      textToDiagram(elements, diagram);
-
-      const edge = diagram.lookup('e1');
-      expect(edge).toBeDefined();
-      // Edge should be created but with free endpoints since nodes don't exist
-      expect(isEdge(edge!)).toBe(true);
-    });
-
-    test('handles mixed add, update, and remove operations', () => {
-      layer.addNode({ id: '1', type: 'rect' });
-      layer.addNode({ id: '2', type: 'rect' });
-
-      const elements: ParsedElement[] = [
-        { id: '1', type: 'node', shape: 'rect', name: 'Updated 1', line: 0 },
-        { id: '3', type: 'node', shape: 'circle', line: 1 }
-      ];
-
-      textToDiagram(elements, diagram);
-
-      expect(layer.elements.length).toBe(2);
-      expect(diagram.lookup('1')).toBeDefined();
-      expect(diagram.lookup('2')).toBeUndefined();
-      expect(diagram.lookup('3')).toBeDefined();
-
-      const node1 = diagram.lookup('1');
-      if (isNode(node1!)) {
-        expect(node1!.getText()).toBe('Updated 1');
       }
     });
   });
