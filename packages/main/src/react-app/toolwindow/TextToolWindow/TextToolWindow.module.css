@@ -34,6 +34,13 @@
   }
 }
 
+.textEditorDirtyIndicator {
+  background-color: var(--highlight-reverse-bg);
+  border-radius: 50%;
+  width: 6px;
+  height: 6px;
+}
+
 .textEditorContainer {
   font: 11px / 15px monospace;
   border: 1px solid var(--base-bg);

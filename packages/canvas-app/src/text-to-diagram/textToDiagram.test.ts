@@ -8,8 +8,7 @@ import { isNode, isEdge } from '@diagram-craft/model/diagramElement';
 import type { TestLayerBuilder } from '@diagram-craft/model/test-support/testModel';
 import type { TestDiagramBuilder } from '@diagram-craft/model/test-support/testModel';
 
-const { parsePropsString, parseMetadataString, collectParsedElementIds, updateOrCreateLabelNode } =
-  _test;
+const { parsePropsString, parseMetadataString, updateOrCreateLabelNode } = _test;
 
 describe('textToDiagram', () => {
   let diagram: TestDiagramBuilder;
@@ -95,65 +94,6 @@ describe('textToDiagram', () => {
     test('skips invalid pairs', () => {
       const result = parseMetadataString('name=Valid;;novalue=');
       expect(result).toEqual({ name: 'Valid' });
-    });
-  });
-
-  describe('collectParsedElementIds', () => {
-    test('collects IDs from flat list', () => {
-      const elements: ParsedElement[] = [
-        { id: '1', type: 'node', shape: 'rect', line: 0 },
-        { id: '2', type: 'node', shape: 'circle', line: 1 }
-      ];
-      const ids = new Set<string>();
-      collectParsedElementIds(elements, ids);
-      expect(ids).toEqual(new Set(['1', '2']));
-    });
-
-    test('collects IDs from nested structure', () => {
-      const elements: ParsedElement[] = [
-        {
-          id: 'parent',
-          type: 'node',
-          shape: 'group',
-          line: 0,
-          children: [
-            { id: 'child1', type: 'node', shape: 'rect', line: 1 },
-            { id: 'child2', type: 'node', shape: 'circle', line: 2 }
-          ]
-        }
-      ];
-      const ids = new Set<string>();
-      collectParsedElementIds(elements, ids);
-      expect(ids).toEqual(new Set(['parent', 'child1', 'child2']));
-    });
-
-    test('handles empty array', () => {
-      const ids = new Set<string>();
-      collectParsedElementIds([], ids);
-      expect(ids).toEqual(new Set());
-    });
-
-    test('handles deeply nested structure', () => {
-      const elements: ParsedElement[] = [
-        {
-          id: 'level1',
-          type: 'node',
-          shape: 'group',
-          line: 0,
-          children: [
-            {
-              id: 'level2',
-              type: 'node',
-              shape: 'group',
-              line: 1,
-              children: [{ id: 'level3', type: 'node', shape: 'rect', line: 2 }]
-            }
-          ]
-        }
-      ];
-      const ids = new Set<string>();
-      collectParsedElementIds(elements, ids);
-      expect(ids).toEqual(new Set(['level1', 'level2', 'level3']));
     });
   });
 
@@ -334,9 +274,7 @@ describe('textToDiagram', () => {
     });
 
     test('adds edge with label', () => {
-      const elements: ParsedElement[] = [
-        { id: 'e1', type: 'edge', label: 'Edge Label', line: 0 }
-      ];
+      const elements: ParsedElement[] = [{ id: 'e1', type: 'edge', label: 'Edge Label', line: 0 }];
 
       textToDiagram(elements, diagram);
 

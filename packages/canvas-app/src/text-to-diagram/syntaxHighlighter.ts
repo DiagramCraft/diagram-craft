@@ -1,8 +1,10 @@
-export const applySyntaxHighlighting = (lines: string[], errors: Array<string | undefined>) => {
+import type { ParseErrors } from './parser';
+
+export const applySyntaxHighlighting = (lines: string[], errors: ParseErrors) => {
   const result: string[] = [];
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i]!;
-    const error = errors[i];
+    const error = errors.get(i);
 
     let dest = line;
     dest = dest.replaceAll(/("[^"]+")/g, '<span class="syntax-string">$1</span>');

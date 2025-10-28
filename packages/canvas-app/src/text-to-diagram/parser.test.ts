@@ -6,7 +6,7 @@ describe('parser', () => {
     const input = '4: rect';
     const result = parse(input);
 
-    expect(result.errors.filter(e => e).length).toBe(0);
+    expect(result.errors.size).toBe(0);
     expect(result.elements).toHaveLength(1);
     expect(result.elements[0]).toMatchObject({
       id: '4',
@@ -20,7 +20,7 @@ describe('parser', () => {
     const input = '3: rounded-rect "Lorem"';
     const result = parse(input);
 
-    expect(result.errors.filter(e => e).length).toBe(0);
+    expect(result.errors.size).toBe(0);
     expect(result.elements).toHaveLength(1);
     expect(result.elements[0]).toMatchObject({
       id: '3',
@@ -37,7 +37,7 @@ describe('parser', () => {
 }`;
     const result = parse(input);
 
-    expect(result.errors.filter(e => e).length).toBe(0);
+    expect(result.errors.size).toBe(0);
     expect(result.elements).toHaveLength(1);
     expect(result.elements[0]).toMatchObject({
       id: 'cukdoml',
@@ -52,7 +52,7 @@ describe('parser', () => {
     const input = 'e2: edge';
     const result = parse(input);
 
-    expect(result.errors.filter(e => e).length).toBe(0);
+    expect(result.errors.size).toBe(0);
     expect(result.elements).toHaveLength(1);
     expect(result.elements[0]).toMatchObject({
       id: 'e2',
@@ -65,7 +65,7 @@ describe('parser', () => {
     const input = 'e1: edge 3 -> 4';
     const result = parse(input);
 
-    expect(result.errors.filter(e => e).length).toBe(0);
+    expect(result.errors.size).toBe(0);
     expect(result.elements).toHaveLength(1);
     expect(result.elements[0]).toMatchObject({
       id: 'e1',
@@ -80,7 +80,7 @@ describe('parser', () => {
     const input = 'e1: edge 3 -> 4 "Hello world"';
     const result = parse(input);
 
-    expect(result.errors.filter(e => e).length).toBe(0);
+    expect(result.errors.size).toBe(0);
     expect(result.elements).toHaveLength(1);
     expect(result.elements[0]).toMatchObject({
       id: 'e1',
@@ -99,7 +99,7 @@ describe('parser', () => {
 }`;
     const result = parse(input);
 
-    expect(result.errors.filter(e => e).length).toBe(0);
+    expect(result.errors.size).toBe(0);
     expect(result.elements).toHaveLength(1);
     expect(result.elements[0]).toMatchObject({
       id: 'e1',
@@ -134,7 +134,7 @@ describe('parser', () => {
 }`;
     const result = parse(input);
 
-    expect(result.errors.filter(e => e).length).toBe(0);
+    expect(result.errors.size).toBe(0);
     expect(result.elements).toHaveLength(1);
     expect(result.elements[0]).toMatchObject({
       id: 'epb7kko',
@@ -174,7 +174,7 @@ describe('parser', () => {
 4: rect`;
     const result = parse(input);
 
-    expect(result.errors.filter(e => e).length).toBe(0);
+    expect(result.errors.size).toBe(0);
     expect(result.elements).toHaveLength(3);
     expect(result.elements[0]).toMatchObject({ id: 'e1', type: 'edge' });
     expect(result.elements[1]).toMatchObject({ id: '3', type: 'node' });
@@ -188,7 +188,7 @@ invalid line without colon
     const result = parse(input);
 
     // Should have an error on line 1 (0-indexed)
-    expect(result.errors[1]).toBeTruthy();
+    expect(result.errors.get(1)).toBeTruthy();
     // Should still parse valid lines
     expect(result.elements).toHaveLength(2);
     expect(result.elements[0]?.id).toBe('1');
@@ -200,7 +200,7 @@ invalid line without colon
     const result = parse(input);
 
     // Should report error for unterminated string
-    expect(result.errors[0]).toBe('Unterminated string literal');
+    expect(result.errors.get(0)).toBe('Unterminated string literal');
 
     // Should still parse the element for error recovery
     expect(result.elements).toHaveLength(1);
@@ -218,7 +218,7 @@ invalid line without colon
     const result = parse(input);
 
     // Should report error about missing brace
-    expect(result.errors.filter(e => e).length).toBeGreaterThan(0);
+    expect(result.errors.size).toBeGreaterThan(0);
     // Should still parse the element
     expect(result.elements).toHaveLength(1);
   });
@@ -227,7 +227,7 @@ invalid line without colon
     const input = 'e1: edge 3 ->';
     const result = parse(input);
 
-    expect(result.errors.filter(e => e).length).toBe(0);
+    expect(result.errors.size).toBe(0);
     expect(result.elements).toHaveLength(1);
     expect(result.elements[0]).toMatchObject({
       id: 'e1',
@@ -240,7 +240,7 @@ invalid line without colon
     const input = 'e1: edge -> 4';
     const result = parse(input);
 
-    expect(result.errors.filter(e => e).length).toBe(0);
+    expect(result.errors.size).toBe(0);
     expect(result.elements).toHaveLength(1);
     expect(result.elements[0]).toMatchObject({
       id: 'e1',
@@ -253,7 +253,7 @@ invalid line without colon
     const input = '1: text "Hello \\"World\\""';
     const result = parse(input);
 
-    expect(result.errors.filter(e => e).length).toBe(0);
+    expect(result.errors.size).toBe(0);
     expect(result.elements[0]).toMatchObject({
       id: '1',
       type: 'node',
@@ -270,7 +270,7 @@ invalid line without colon
 }`;
     const result = parse(input);
 
-    expect(result.errors.filter(e => e).length).toBe(0);
+    expect(result.errors.size).toBe(0);
     expect(result.elements).toHaveLength(2);
     expect(result.elements[0]).toMatchObject({
       id: 'e2',
@@ -291,7 +291,7 @@ invalid line without colon
 }`;
     const result = parse(input);
 
-    expect(result.errors.filter(e => e).length).toBe(0);
+    expect(result.errors.size).toBe(0);
     expect(result.elements).toHaveLength(1);
     expect(result.elements[0]).toMatchObject({
       id: '1',
@@ -308,7 +308,7 @@ invalid line without colon
 }`;
     const result = parse(input);
 
-    expect(result.errors.filter(e => e).length).toBe(0);
+    expect(result.errors.size).toBe(0);
     expect(result.elements).toHaveLength(1);
     expect(result.elements[0]).toMatchObject({
       id: '1',
@@ -324,7 +324,7 @@ invalid line without colon
 }`;
     const result = parse(input);
 
-    expect(result.errors.filter(e => e).length).toBe(0);
+    expect(result.errors.size).toBe(0);
     expect(result.elements).toHaveLength(1);
     expect(result.elements[0]).toMatchObject({
       id: '1',
@@ -340,7 +340,7 @@ invalid line without colon
 }`;
     const result = parse(input);
 
-    expect(result.errors.filter(e => e).length).toBe(0);
+    expect(result.errors.size).toBe(0);
     expect(result.elements).toHaveLength(1);
     expect(result.elements[0]).toMatchObject({
       id: 'e1',
@@ -354,7 +354,7 @@ invalid line without colon
     const result = parse(input);
 
     // Should report error
-    expect(result.errors[0]).toBe('Unterminated string literal');
+    expect(result.errors.get(0)).toBe('Unterminated string literal');
 
     // Should still parse for error recovery
     expect(result.elements).toHaveLength(1);
@@ -373,8 +373,8 @@ invalid line without colon
     const result = parse(input);
 
     // Should report duplicate ID error on both lines (0 and 2)
-    expect(result.errors[0]).toBe('Duplicate element ID: "1"');
-    expect(result.errors[2]).toBe('Duplicate element ID: "1"');
+    expect(result.errors.get(0)).toBe('Duplicate element ID: "1"');
+    expect(result.errors.get(2)).toBe('Duplicate element ID: "1"');
 
     // Should still parse all elements
     expect(result.elements).toHaveLength(3);
@@ -391,8 +391,8 @@ invalid line without colon
     const result = parse(input);
 
     // Should report duplicate ID error on both child lines (1 and 2)
-    expect(result.errors[1]).toBe('Duplicate element ID: "cell_1"');
-    expect(result.errors[2]).toBe('Duplicate element ID: "cell_1"');
+    expect(result.errors.get(1)).toBe('Duplicate element ID: "cell_1"');
+    expect(result.errors.get(2)).toBe('Duplicate element ID: "cell_1"');
 
     // Should still parse all elements
     expect(result.elements).toHaveLength(1);
@@ -412,8 +412,8 @@ invalid line without colon
     const result = parse(input);
 
     // Should report duplicate ID error on both lines (0 and 1)
-    expect(result.errors[0]).toBe('Duplicate element ID: "parent_1"');
-    expect(result.errors[1]).toBe('Duplicate element ID: "parent_1"');
+    expect(result.errors.get(0)).toBe('Duplicate element ID: "parent_1"');
+    expect(result.errors.get(1)).toBe('Duplicate element ID: "parent_1"');
 
     // Should still parse all elements
     expect(result.elements).toHaveLength(1);

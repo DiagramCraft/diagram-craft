@@ -39,7 +39,7 @@ const serializeProps = (data: ElementProps | undefined) => {
   return res.join(';');
 };
 
-const addElement = (element: DiagramElement, lines: string[], indent = '') => {
+const elementToText = (element: DiagramElement, lines: string[], indent = '') => {
   if (isNode(element)) {
     let node = indent;
     node += `${element.id}:`;
@@ -52,7 +52,7 @@ const addElement = (element: DiagramElement, lines: string[], indent = '') => {
     const sublines: string[] = [];
 
     for (const child of element.children) {
-      addElement(child, sublines, `${indent}  `);
+      elementToText(child, sublines, `${indent}  `);
     }
 
     const metadataCloned = element.metadataCloned;
@@ -112,7 +112,7 @@ const addElement = (element: DiagramElement, lines: string[], indent = '') => {
     const labelNodeId = hasSingleLabelNode ? element.labelNodes[0]!.node().id : null;
     for (const child of element.children) {
       if (child.id !== labelNodeId) {
-        addElement(child, sublines, `${indent}  `);
+        elementToText(child, sublines, `${indent}  `);
       }
     }
 
@@ -134,7 +134,7 @@ const addElement = (element: DiagramElement, lines: string[], indent = '') => {
 export const diagramToText = (layer: RegularLayer) => {
   const newLines: string[] = [];
   for (const element of layer.elements) {
-    addElement(element, newLines);
+    elementToText(element, newLines);
     newLines.push('');
   }
   return newLines;

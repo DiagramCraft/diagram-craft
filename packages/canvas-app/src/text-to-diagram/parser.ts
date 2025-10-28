@@ -1,46 +1,43 @@
+import { VALIDATION_RULES } from './parser.validation';
+import { assert } from '@diagram-craft/utils/assert';
+
 export type ParsedElement = {
   id: string;
   line: number; // Line number where this element is defined
+  props?: string;
+  metadata?: string;
+  stylesheet?: string;
+  children?: ParsedElement[];
 } & (
   | {
       type: 'edge';
       from?: string;
       to?: string;
       label?: string;
-      props?: string;
-      metadata?: string;
-      stylesheet?: string;
-      children?: ParsedElement[];
     }
   | {
       type: 'node';
       shape: string;
       name?: string;
-      props?: string;
-      metadata?: string;
-      stylesheet?: string;
       textStylesheet?: string;
-      children?: ParsedElement[];
     }
 );
 
+export type ParseErrors = Map<number, string>;
+
 type ParseResult = {
   elements: ParsedElement[];
-  errors: string[];
+  errors: ParseErrors;
 };
 
 /**
- * Validation rule that checks the parsed elements and returns errors keyed by line number.
- * Returns a Map where keys are line numbers and values are error messages.
- */
-type ValidationRule = (elements: ParsedElement[]) => Map<number, string>;
-
-/**
- * Context passed during parsing to track current element being parsed
+ * Context passed during parsing to track the current line being parsed
  */
 type ParseContext = {
-  line: number; // Line number where current element is being defined
+  line: number;
 };
+
+const KEYWORDS = new Set(['edge', 'props', 'metadata', 'stylesheet']);
 
 enum TokenType {
   ID = 'ID',
@@ -62,60 +59,12 @@ type Token = {
   col: number;
 };
 
-const KEYWORDS = new Set(['edge', 'props', 'metadata', 'stylesheet']);
-
-/**
- * Recursively collect all element IDs and their line numbers from parsed elements
- */
-const collectElementIds = (elements: ParsedElement[], idMap: Map<string, number[]>): void => {
-  for (const element of elements) {
-    if (!idMap.has(element.id)) {
-      idMap.set(element.id, []);
-    }
-    idMap.get(element.id)!.push(element.line);
-
-    // Recursively process children
-    if (element.children) {
-      collectElementIds(element.children, idMap);
-    }
-  }
-};
-
-/**
- * Validation rule: Check that all element IDs are unique
- */
-const validateUniqueIds: ValidationRule = (elements: ParsedElement[]): Map<number, string> => {
-  const errors = new Map<number, string>();
-  const idMap = new Map<string, number[]>();
-
-  // Collect all IDs and their line numbers
-  collectElementIds(elements, idMap);
-
-  // Check for duplicates
-  for (const [id, lines] of idMap.entries()) {
-    if (lines.length > 1) {
-      // Add error to all lines where the duplicate ID appears
-      for (const line of lines) {
-        errors.set(line, `Duplicate element ID: "${id}"`);
-      }
-    }
-  }
-
-  return errors;
-};
-
-/**
- * All validation rules to run on the parsed elements
- */
-const VALIDATION_RULES: ValidationRule[] = [
-  validateUniqueIds
-  // Add more validation rules here as needed
-];
+type TokenizationResult = { tokens: Token[]; errors: ParseErrors };
 
 /**
  * Tokenize the input text line by line
  */
-const tokenize = (text: string): { tokens: Token[]; errors: Map<number, string> } => {
+const tokenize = (text: string): TokenizationResult => {
   const tokens: Token[] = [];
   const errors = new Map<number, string>();
   const lines = text.split('\n');
@@ -229,121 +178,93 @@ const tokenize = (text: string): { tokens: Token[]; errors: Map<number, string> 
  * Parser class for recursive descent parsing
  */
 class Parser {
-  private tokens: Token[];
-  private pos: number;
-  private errors: Map<number, string>;
+  #position: number;
+  readonly #errors: Map<number, string>;
 
-  constructor(tokens: Token[], tokenizerErrors: Map<number, string>) {
-    this.tokens = tokens;
-    this.pos = 0;
-    this.errors = new Map(tokenizerErrors); // Start with tokenizer errors
+  constructor(
+    private readonly tokens: Token[],
+    tokenizerErrors: Map<number, string>
+  ) {
+    this.#position = 0;
+    this.#errors = new Map(tokenizerErrors); // Start with tokenizer errors
   }
 
-  private current(): Token {
-    return this.tokens[this.pos] ?? { type: TokenType.EOF, value: '', line: -1, col: -1 };
+  private peek(): Token {
+    return this.tokens[this.#position] ?? { type: TokenType.EOF, value: '', line: -1, col: -1 };
   }
 
-  private advance(): Token {
-    const token = this.current();
-    this.pos++;
+  private next(): Token {
+    const token = this.peek();
+    this.#position++;
     return token;
   }
 
-  private expect(type: TokenType, message?: string): Token | null {
-    const token = this.current();
+  private consume(type: TokenType, message?: string, skipToNextLine = false): Token | null {
+    const token = this.peek();
     if (token.type !== type) {
       const errorMsg = message ?? `Expected ${type}, got ${token.type}`;
       this.addError(token.line, errorMsg);
+      if (skipToNextLine) {
+        this.skipToNextLine();
+      }
       return null;
     }
-    return this.advance();
+    return this.next();
   }
 
   private addError(line: number, message: string): void {
-    if (!this.errors.has(line)) {
-      this.errors.set(line, message);
-    }
+    this.#errors.set(line, message);
   }
 
-  /**
-   * Skip any number of NEWLINE tokens
-   */
   private skipNewlines(): void {
-    while (this.current().type === TokenType.NEWLINE) {
-      this.advance();
+    while (this.peek().type === TokenType.NEWLINE) {
+      this.next();
     }
   }
 
-  /**
-   * Consume tokens until we hit a NEWLINE or EOF
-   */
   private skipToNextLine(): void {
-    while (this.current().type !== TokenType.NEWLINE && this.current().type !== TokenType.EOF) {
-      this.advance();
+    while (this.peek().type !== TokenType.NEWLINE && this.peek().type !== TokenType.EOF) {
+      this.next();
     }
     // Consume the newline too
-    if (this.current().type === TokenType.NEWLINE) {
-      this.advance();
+    if (this.peek().type === TokenType.NEWLINE) {
+      this.next();
     }
   }
 
   parse(): ParseResult {
-    const elements: ParsedElement[] = [];
+    const dest: ParsedElement[] = [];
 
-    // Skip any leading newlines
-    this.skipNewlines();
+    while (this.peek().type !== TokenType.EOF) {
+      this.skipNewlines();
 
-    while (this.current().type !== TokenType.EOF) {
       const element = this.parseElement();
       if (element) {
-        elements.push(element);
+        dest.push(element);
       }
-
-      // Skip newlines between elements
-      this.skipNewlines();
     }
 
     // Run validation rules on the parsed elements
     for (const rule of VALIDATION_RULES) {
-      const validationErrors = rule(elements);
+      const validationErrors = rule(dest);
       // Merge validation errors with parsing errors
       for (const [line, message] of validationErrors.entries()) {
-        // Only add if there's not already an error on this line
-        if (!this.errors.has(line)) {
-          this.errors.set(line, message);
-        }
+        this.#errors.set(line, message);
       }
     }
 
-    const maxLine = this.errors.size > 0 ? Math.max(...this.errors.keys()) : -1;
-    const errors: string[] = Array.from(
-      { length: maxLine + 1 },
-      (_, i) => this.errors.get(i) ?? ''
-    );
-
-    return {
-      elements,
-      errors
-    };
+    return { elements: dest, errors: this.#errors };
   }
 
   private parseElement(): ParsedElement | null {
-    const token = this.current();
-
-    // Handle closing braces at top level (error recovery)
-    if (token.type === TokenType.RBRACE) {
-      this.advance(); // consume the extra brace
-      return null;
-    }
-
-    // Shouldn't happen due to skipNewlines in parse(), but just in case
-    if (token.type === TokenType.NEWLINE) {
-      this.advance();
-      return null;
-    }
+    const token = this.peek();
 
     if (token.type === TokenType.EOF) {
       return null;
+    }
+
+    if (token.type === TokenType.NEWLINE) {
+      assert.fail('Unexpected newline at top level');
     }
 
     // Parse: id: ...
@@ -353,50 +274,47 @@ class Parser {
       return null;
     }
 
-    const idToken = this.advance();
+    const idToken = this.next();
     const id = idToken.value;
 
-    if (!this.expect(TokenType.COLON, 'Expected ":" after element ID')) {
+    if (!this.consume(TokenType.COLON, 'Expected ":" after element ID')) {
       this.skipToNextLine();
       return null;
     }
 
-    // Create parse context with line number
-    const ctx: ParseContext = { line: idToken.line };
-
     // Check if it's an edge or node
-    const nextToken = this.current();
+    const nextToken = this.peek();
     if (nextToken.type === TokenType.KEYWORD && nextToken.value === 'edge') {
-      return this.parseEdge(id, ctx);
+      return this.parseEdge(id, { line: idToken.line });
     } else {
-      return this.parseNode(id, ctx);
+      return this.parseNode(id, { line: idToken.line });
     }
   }
 
   private parseNode(id: string, ctx: ParseContext): ParsedElement | null {
     // Parse node type
-    const typeToken = this.current();
+    const typeToken = this.peek();
     if (typeToken.type !== TokenType.ID && typeToken.type !== TokenType.KEYWORD) {
       this.addError(typeToken.line, 'Expected node type');
       this.skipToNextLine();
       return null;
     }
 
-    const shape = this.advance().value;
+    const shape = this.next().value;
 
     // Optional: name (must be before newline or brace)
     let name: string | undefined;
-    if (this.current().type === TokenType.STRING) {
-      name = this.advance().value;
+    if (this.peek().type === TokenType.STRING) {
+      name = this.next().value;
     }
 
     // Expect end of line or opening brace
     if (
-      this.current().type !== TokenType.NEWLINE &&
-      this.current().type !== TokenType.LBRACE &&
-      this.current().type !== TokenType.EOF
+      this.peek().type !== TokenType.NEWLINE &&
+      this.peek().type !== TokenType.LBRACE &&
+      this.peek().type !== TokenType.EOF
     ) {
-      this.addError(this.current().line, 'Unexpected token after node definition');
+      this.addError(this.peek().line, 'Unexpected token after node definition');
       this.skipToNextLine();
     }
 
@@ -418,44 +336,44 @@ class Parser {
   }
 
   private parseEdge(id: string, ctx: ParseContext): ParsedElement | null {
-    this.advance(); // consume 'edge' keyword
+    this.next(); // consume 'edge' keyword
 
     let from: string | undefined;
     let to: string | undefined;
     let label: string | undefined;
 
     // Optional: from -> to (must be before newline or brace)
-    const nextToken = this.current();
+    const nextToken = this.peek();
     if (nextToken.type === TokenType.ID) {
-      from = this.advance().value;
+      from = this.next().value;
 
-      if (this.current().type === TokenType.ARROW) {
-        this.advance(); // consume ->
+      if (this.peek().type === TokenType.ARROW) {
+        this.next(); // consume ->
 
-        if (this.current().type === TokenType.ID) {
-          to = this.advance().value;
+        if (this.peek().type === TokenType.ID) {
+          to = this.next().value;
         }
       }
     } else if (nextToken.type === TokenType.ARROW) {
       // Case: edge -> to
-      this.advance(); // consume ->
-      if (this.current().type === TokenType.ID) {
-        to = this.advance().value;
+      this.next(); // consume ->
+      if (this.peek().type === TokenType.ID) {
+        to = this.next().value;
       }
     }
 
     // Optional: label (must be before newline or brace)
-    if (this.current().type === TokenType.STRING) {
-      label = this.advance().value;
+    if (this.peek().type === TokenType.STRING) {
+      label = this.next().value;
     }
 
     // Expect end of line or opening brace
     if (
-      this.current().type !== TokenType.NEWLINE &&
-      this.current().type !== TokenType.LBRACE &&
-      this.current().type !== TokenType.EOF
+      this.peek().type !== TokenType.NEWLINE &&
+      this.peek().type !== TokenType.LBRACE &&
+      this.peek().type !== TokenType.EOF
     ) {
-      this.addError(this.current().line, 'Unexpected token after edge definition');
+      this.addError(this.peek().line, 'Unexpected token after edge definition');
       this.skipToNextLine();
     }
 
@@ -464,7 +382,7 @@ class Parser {
 
     // Warn if textStylesheet was specified for an edge
     if (textStylesheet) {
-      this.addError(this.current().line, 'Edges cannot have textStylesheet');
+      this.addError(this.peek().line, 'Edges cannot have textStylesheet');
     }
 
     return {
@@ -488,86 +406,75 @@ class Parser {
     textStylesheet?: string;
     children?: ParsedElement[];
   } {
+    // Check for opening brace
+    if (this.peek().type !== TokenType.LBRACE) {
+      return {
+        props: undefined,
+        metadata: undefined,
+        stylesheet: undefined,
+        textStylesheet: undefined,
+        children: undefined
+      };
+    }
+
     let props: string | undefined;
     let metadata: string | undefined;
     let stylesheet: string | undefined;
     let textStylesheet: string | undefined;
     const children: ParsedElement[] = [];
 
-    // Check for opening brace
-    if (this.current().type !== TokenType.LBRACE) {
-      return {
-        props,
-        metadata,
-        stylesheet,
-        textStylesheet,
-        children: children.length > 0 ? children : undefined
-      };
-    }
+    this.consume(TokenType.LBRACE);
 
-    this.advance(); // consume {
-    this.skipNewlines(); // Skip newlines after opening brace
-
-    while (this.current().type !== TokenType.RBRACE && this.current().type !== TokenType.EOF) {
-      const token = this.current();
+    while (this.peek().type !== TokenType.RBRACE && this.peek().type !== TokenType.EOF) {
+      const token = this.peek();
 
       // Skip newlines within body
       if (token.type === TokenType.NEWLINE) {
-        this.advance();
+        this.next();
         continue;
       }
 
       // Handle props, metadata, stylesheet
       if (token.type === TokenType.KEYWORD) {
         if (token.value === 'props') {
-          this.advance();
-          if (!this.expect(TokenType.COLON)) {
-            this.skipToNextLine();
+          this.next();
+          if (!this.consume(TokenType.COLON, 'Expected ":" after props:', true)) {
             continue;
           }
-          if (this.current().type === TokenType.STRING) {
-            props = this.advance().value;
-          } else {
-            this.addError(token.line, 'Expected string after props:');
-            this.skipToNextLine();
-          }
+          const str = this.consume(TokenType.STRING, 'Expected string after props:', true);
+          props ??= str?.value;
         } else if (token.value === 'metadata') {
-          this.advance();
-          if (!this.expect(TokenType.COLON)) {
-            this.skipToNextLine();
+          this.next();
+          if (!this.consume(TokenType.COLON, 'Expected ":" after metadata:', true)) {
             continue;
           }
-          if (this.current().type === TokenType.STRING) {
-            metadata = this.advance().value;
-          } else {
-            this.addError(token.line, 'Expected string after metadata:');
-            this.skipToNextLine();
-          }
+
+          const str = this.consume(TokenType.STRING, 'Expected string after metadata:', true);
+          metadata ??= str?.value;
         } else if (token.value === 'stylesheet') {
-          this.advance();
-          if (!this.expect(TokenType.COLON)) {
-            this.skipToNextLine();
+          this.next();
+          if (!this.consume(TokenType.COLON, 'Expected ":" after stylesheet:', true)) {
             continue;
           }
           // Parse stylesheet: [style] / [textStyle]
           // Format can be: "style /", "/ textStyle", or "style / textStyle"
-          const currentToken = this.current();
+          const currentToken = this.peek();
 
           // Check if starts with slash (meaning no style, only textStyle)
           if (currentToken.type === TokenType.SLASH) {
-            this.advance(); // consume /
-            if (this.current().type === TokenType.ID) {
-              textStylesheet = this.advance().value;
+            this.next(); // consume /
+            if (this.peek().type === TokenType.ID) {
+              textStylesheet = this.next().value;
             }
           } else if (currentToken.type === TokenType.ID) {
             // First ID is the stylesheet
-            stylesheet = this.advance().value;
+            stylesheet = this.next().value;
 
             // Check if there's a slash followed by textStyle
-            if (this.current().type === TokenType.SLASH) {
-              this.advance(); // consume /
-              if (this.current().type === TokenType.ID) {
-                textStylesheet = this.advance().value;
+            if (this.peek().type === TokenType.SLASH) {
+              this.next(); // consume /
+              if (this.peek().type === TokenType.ID) {
+                textStylesheet = this.next().value;
               }
             }
           }
@@ -591,13 +498,13 @@ class Parser {
       }
     }
 
-    if (this.current().type === TokenType.RBRACE) {
-      this.advance(); // consume }
-    } else if (this.current().type !== TokenType.EOF) {
-      this.addError(this.current().line, 'Expected closing brace');
+    if (this.peek().type === TokenType.RBRACE) {
+      this.next(); // consume }
+    } else if (this.peek().type !== TokenType.EOF) {
+      this.addError(this.peek().line, 'Expected closing brace');
     } else {
       // EOF reached without closing brace - report error on last token
-      const lastToken = this.tokens[this.pos - 1];
+      const lastToken = this.tokens[this.#position - 1];
       if (lastToken) {
         this.addError(lastToken.line, 'Expected closing brace');
       }

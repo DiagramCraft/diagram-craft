@@ -8,7 +8,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { assert } from '@diagram-craft/utils/assert';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbCheck, TbRestore } from 'react-icons/tb';
-import { parse } from '@diagram-craft/canvas-app/text-to-diagram/parser';
+import { parse, type ParseErrors } from '@diagram-craft/canvas-app/text-to-diagram/parser';
 import { textToDiagram } from '@diagram-craft/canvas-app/text-to-diagram/textToDiagram';
 import { diagramToText } from '@diagram-craft/canvas-app/text-to-diagram/diagramToText';
 import { applySyntaxHighlighting } from '@diagram-craft/canvas-app/text-to-diagram/syntaxHighlighter';
@@ -16,7 +16,7 @@ import { applySyntaxHighlighting } from '@diagram-craft/canvas-app/text-to-diagr
 export const TextToolWindow = () => {
   const diagram = useDiagram();
   const [lines, setLines] = useState<string[]>([]);
-  const [errors, setErrors] = useState<Array<string | undefined>>([]);
+  const [errors, setErrors] = useState<ParseErrors>(new Map<number, string>());
   const [dirty, setDirty] = useState(false);
   const [tooltip, setTooltip] = useState<{ x: number; y: number; message: string } | null>(null);
 
@@ -36,7 +36,7 @@ export const TextToolWindow = () => {
     const layer = diagram.activeLayer;
     const newLines = isRegularLayer(layer) ? diagramToText(layer) : [];
     setLines(newLines);
-    setErrors([]);
+    setErrors(new Map<number, string>());
     setDirty(false);
   }, [diagram]);
 
@@ -52,7 +52,7 @@ export const TextToolWindow = () => {
   const applyChanges = useCallback(() => {
     const text = lines.join('\n');
     const result = parse(text);
-    if (result.errors.length > 0) {
+    if (result.errors.size > 0) {
       setErrors(result.errors);
       return;
     }
@@ -117,11 +117,11 @@ export const TextToolWindow = () => {
       const lineIndex = Math.floor(mouseY / lineHeight);
 
       // Check if there's an error on this line
-      if (lineIndex >= 0 && lineIndex < errors.length && errors[lineIndex]) {
+      if (lineIndex >= 0 && lineIndex < errors.size && errors.has(lineIndex)) {
         setTooltip({
           x: e.clientX,
           y: e.clientY,
-          message: errors[lineIndex]!
+          message: errors.get(lineIndex)!
         });
       } else {
         setTooltip(null);
@@ -130,27 +130,14 @@ export const TextToolWindow = () => {
     [errors]
   );
 
-  const onMouseLeave = useCallback(() => {
-    setTooltip(null);
-  }, []);
+  const onMouseLeave = useCallback(() => setTooltip(null), []);
 
   return (
     <ToolWindow.Root id={'text'} defaultTab={'text'}>
       <ToolWindow.Tab
         id={'text'}
         title={'Text'}
-        indicator={
-          dirty ? (
-            <div
-              style={{
-                backgroundColor: 'var(--highlight-reverse-bg)',
-                borderRadius: '50%',
-                width: '6px',
-                height: '6px'
-              }}
-            />
-          ) : null
-        }
+        indicator={dirty ? <div className={styles.textEditorDirtyIndicator} /> : null}
       >
         <ToolWindow.TabActions>
           <Button type={'icon-only'} disabled={!dirty} onClick={() => updateLines()}>
@@ -195,10 +182,7 @@ export const TextToolWindow = () => {
               {tooltip && (
                 <div
                   className={styles.tooltip}
-                  style={{
-                    left: `${tooltip.x}px`,
-                    top: `${tooltip.y + 20}px`
-                  }}
+                  style={{ left: `${tooltip.x}px`, top: `${tooltip.y + 20}px` }}
                 >
                   {tooltip.message}
                 </div>

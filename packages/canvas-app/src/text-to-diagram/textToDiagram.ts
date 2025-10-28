@@ -1,6 +1,6 @@
 import type { Diagram } from '@diagram-craft/model/diagram';
 import { type DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
-import type { NodePropsForEditing, DiagramNode } from '@diagram-craft/model/diagramNode';
+import type { DiagramNode, NodePropsForEditing } from '@diagram-craft/model/diagramNode';
 import type { EdgePropsForEditing, ResolvedLabelNode } from '@diagram-craft/model/diagramEdge';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
@@ -14,8 +14,9 @@ import {
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { deepMerge } from '@diagram-craft/utils/object';
-import type { ParsedElement } from './parser';
+import { type ParsedElement } from './parser';
 import { newid } from '@diagram-craft/utils/id';
+import { collectElementIds } from './utils';
 
 /**
  * Parse a props string like "fill.color=#ff0000;stroke.width=2" into a nested object
@@ -70,18 +71,6 @@ const parseMetadataString = (metadataStr: string): Partial<ElementMetadata> => {
   }
 
   return result;
-};
-
-/**
- * Recursively collect all element IDs from parsed elements
- */
-const collectParsedElementIds = (elements: ParsedElement[], ids: Set<string>) => {
-  for (const element of elements) {
-    ids.add(element.id);
-    if (element.children) {
-      collectParsedElementIds(element.children, ids);
-    }
-  }
 };
 
 /**
@@ -149,8 +138,7 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
   const uow = new UnitOfWork(diagram, true);
 
   // Collect all parsed element IDs
-  const parsedIds = new Set<string>();
-  collectParsedElementIds(elements, parsedIds);
+  const parsedIds = collectElementIds(elements);
 
   // Collect existing element IDs in the active layer
   const existingIds = new Set<string>();
@@ -449,6 +437,5 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
 export const _test = {
   parsePropsString,
   parseMetadataString,
-  collectParsedElementIds,
   updateOrCreateLabelNode
 };
