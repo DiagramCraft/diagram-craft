@@ -154,9 +154,11 @@ export const TextToolWindow = () => {
   const [lines, setLines] = useState<string[]>([]);
   const [errors, setErrors] = useState<Array<string | undefined>>([]);
   const [dirty, setDirty] = useState(false);
+  const [tooltip, setTooltip] = useState<{ x: number; y: number; message: string } | null>(null);
 
   const codeElementRef = useRef<HTMLElement>(null);
   const preElementRef = useRef<HTMLPreElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const parseTimer = useRef<ReturnType<typeof setTimeout>>();
 
@@ -231,6 +233,36 @@ export const TextToolWindow = () => {
     preElementRef.current.scrollLeft = source.scrollLeft;
   }, []);
 
+  const onMouseMove = useCallback(
+    (e: React.MouseEvent<HTMLTextAreaElement>) => {
+      const textarea = e.currentTarget;
+      const rect = textarea.getBoundingClientRect();
+
+      // Calculate which line the mouse is over based on line height
+      const padding = 10; // matches CSS: padding: 10px;
+      const lineHeight = 15; // matches CSS: 11px / 15px monospace
+      const scrollTop = textarea.scrollTop;
+      const mouseY = e.clientY - rect.top - padding + scrollTop;
+      const lineIndex = Math.floor(mouseY / lineHeight);
+
+      // Check if there's an error on this line
+      if (lineIndex >= 0 && lineIndex < errors.length && errors[lineIndex]) {
+        setTooltip({
+          x: e.clientX,
+          y: e.clientY,
+          message: errors[lineIndex]!
+        });
+      } else {
+        setTooltip(null);
+      }
+    },
+    [errors]
+  );
+
+  const onMouseLeave = useCallback(() => {
+    setTooltip(null);
+  }, []);
+
   return (
     <ToolWindow.Root id={'text'} defaultTab={'text'}>
       <ToolWindow.Tab id={'text'} title={'Text'}>
@@ -252,6 +284,7 @@ export const TextToolWindow = () => {
           >
             <div className={styles.textEditorContainer}>
               <textarea
+                ref={textareaRef}
                 spellCheck={false}
                 onKeyDown={e => onKeydown(e)}
                 onInput={e => {
@@ -259,6 +292,8 @@ export const TextToolWindow = () => {
                   onScroll(e.target as HTMLElement);
                 }}
                 onScroll={e => onScroll(e.target as HTMLElement)}
+                onMouseMove={onMouseMove}
+                onMouseLeave={onMouseLeave}
                 value={lines.join('\n')}
               />
 
@@ -270,6 +305,18 @@ export const TextToolWindow = () => {
                   }}
                 />
               </pre>
+
+              {tooltip && (
+                <div
+                  className={styles.tooltip}
+                  style={{
+                    left: `${tooltip.x}px`,
+                    top: `${tooltip.y + 20}px`
+                  }}
+                >
+                  {tooltip.message}
+                </div>
+              )}
             </div>
           </ToolWindowPanel>
         </ToolWindow.TabContent>

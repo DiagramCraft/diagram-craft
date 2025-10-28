@@ -66,3 +66,18 @@
     }
   }
 }
+
+.tooltip {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-size: 11px;
+  position: fixed;
+  background: var(--red-9);
+  color: white;
+  padding: 6px 10px;
+  border-radius: 4px;
+  z-index: 1000;
+  pointer-events: none;
+  max-width: 300px;
+  word-wrap: break-word;
+  white-space: normal;
+}
