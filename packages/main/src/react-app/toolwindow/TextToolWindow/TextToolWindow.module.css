@@ -26,6 +26,19 @@
   .syntax-props {
     color: var(--accent-chroma);
   }
+
+  .syntax-error {
+    text-decoration: underline;
+    text-decoration-color: var(--red-9);
+    text-decoration-style: wavy;
+  }
+}
+
+.textEditorDirtyIndicator {
+  background-color: var(--highlight-reverse-bg);
+  border-radius: 50%;
+  width: 6px;
+  height: 6px;
 }
 
 .textEditorContainer {
@@ -59,4 +72,19 @@
       border: 1px solid var(--accent-border);
     }
   }
+}
+
+.tooltip {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-size: 11px;
+  position: fixed;
+  background: var(--red-9);
+  color: white;
+  padding: 6px 10px;
+  border-radius: 4px;
+  z-index: 1000;
+  pointer-events: none;
+  max-width: 300px;
+  word-wrap: break-word;
+  white-space: normal;
 }

@@ -2,159 +2,42 @@ import { ToolWindow } from '../ToolWindow';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import styles from './TextToolWindow.module.css';
 import { useDiagram } from '../../../application';
-import { type DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import { isRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
-import { ConnectedEndpoint } from '@diagram-craft/model/endpoint';
 import { useEventListener } from '../../hooks/useEventListener';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { assert } from '@diagram-craft/utils/assert';
-
-const serializeMetadata = (data: ElementMetadata | undefined) => {
-  if (!data) return undefined;
-  if (data.name) return `name=${data.name}`;
-  return undefined;
-};
-
-const serializeProps = (data: ElementProps | undefined) => {
-  if (!data) return undefined;
-
-  // biome-ignore lint/suspicious/noExplicitAny: this is a valid use of any
-  const collect = (obj: any, prefix = '') => {
-    const result: string[] = [];
-    for (const key in obj) {
-      const value = obj[key];
-      if (typeof value === 'object' && value !== null) {
-        result.push(...collect(value, `${prefix}${key}.`));
-      } else {
-        result.push(`${prefix}${key}=${value}`);
-      }
-    }
-    return result;
-  };
-
-  const res = collect(data);
-  if (res.length === 0) return undefined;
-  return res.join(';');
-};
-
-const addElement = (element: DiagramElement, lines: string[], indent = '') => {
-  if (isNode(element)) {
-    let node = indent;
-    node += `${element.id}:`;
-    node += ` ${element.nodeType}`;
-
-    if (element.texts.text) {
-      node += ` "${element.texts.text}"`;
-    }
-
-    const sublines: string[] = [];
-
-    for (const child of element.children) {
-      addElement(child, sublines, `${indent}  `);
-    }
-
-    const metadataCloned = element.metadataCloned;
-    const propsCloned = element.storedPropsCloned;
-
-    let style = metadataCloned.style;
-    let textStyle = metadataCloned.textStyle;
-    if (style === 'default' || style === 'default-text') style = undefined;
-    if (textStyle === 'default-text-default') textStyle = undefined;
-
-    if (style || textStyle) {
-      sublines.push(
-        `${indent}  stylesheet: ${[style ? `${style} ` : '', textStyle ? ` ${textStyle}` : ''].join('/')}`
-      );
-    }
-
-    const propsS = serializeProps(propsCloned);
-    if (propsS) {
-      sublines.push(`${indent}  props: "${propsS}"`);
-    }
-
-    const metadataS = serializeMetadata(metadataCloned);
-    if (metadataS) {
-      sublines.push(`${indent}  metadata: "${metadataS}"`);
-    }
-
-    if (sublines.length > 0) {
-      lines.push(`${node} {`);
-      lines.push(...sublines);
-      lines.push(`${indent}}`);
-    } else {
-      lines.push(`${node}`);
-    }
-  } else if (isEdge(element)) {
-    let edge = indent;
-    edge += `${element.id}: edge`;
-
-    if (element.start.isConnected || element.end.isConnected) {
-      if (element.start.isConnected) {
-        edge += ` ${(element.start as ConnectedEndpoint).node.id}`;
-      }
-      edge += ' -> ';
-      if (element.end.isConnected) {
-        edge += `${(element.end as ConnectedEndpoint).node.id}`;
-      }
-    }
-
-    if (element.labelNodes.length === 1) {
-      edge += ` "${element.labelNodes[0]!.node().texts.text}"`;
-    }
-
-    const sublines: string[] = [];
-    const propsCloned = element.storedPropsCloned;
-
-    for (const child of element.children) {
-      addElement(child, sublines, `${indent}  `);
-    }
-
-    const propsS = serializeProps(propsCloned);
-    if (propsS) {
-      sublines.push(`${indent}  props: "${propsS}"`);
-    }
-
-    if (sublines.length > 0) {
-      lines.push(`${edge} {`);
-      lines.push(...sublines);
-      lines.push(`${indent}}`);
-    } else {
-      lines.push(`${edge}`);
-    }
-  }
-};
-
-const applySyntaxHighlighting = (lines: string[]) => {
-  const result: string[] = [];
-  for (const line of lines) {
-    let dest = line;
-    dest = dest.replaceAll(/("[^"]+")/g, '<span class="syntax-string">$1</span>');
-    dest = dest.replaceAll(/^(\s*props):/g, '<span class="syntax-props">$1</span>:');
-    dest = dest.replaceAll(/^(\s*[^:]+):/g, '<span class="syntax-label">$1</span>:');
-    dest = dest.replaceAll(/({|})/g, '<span class="syntax-bracket">$1</span>');
-    result.push(dest);
-  }
-
-  return result;
-};
+import { Button } from '@diagram-craft/app-components/Button';
+import { TbCheck, TbRestore } from 'react-icons/tb';
+import { parse, type ParseErrors } from '@diagram-craft/canvas-app/text-to-diagram/parser';
+import { textToDiagram } from '@diagram-craft/canvas-app/text-to-diagram/textToDiagram';
+import { diagramToText } from '@diagram-craft/canvas-app/text-to-diagram/diagramToText';
+import { applySyntaxHighlighting } from '@diagram-craft/canvas-app/text-to-diagram/syntaxHighlighter';
 
 export const TextToolWindow = () => {
   const diagram = useDiagram();
   const [lines, setLines] = useState<string[]>([]);
+  const [errors, setErrors] = useState<ParseErrors>(new Map<number, string>());
+  const [dirty, setDirty] = useState(false);
+  const [tooltip, setTooltip] = useState<{ x: number; y: number; message: string } | null>(null);
 
   const codeElementRef = useRef<HTMLElement>(null);
   const preElementRef = useRef<HTMLPreElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const parseTimer = useRef<ReturnType<typeof setTimeout>>();
+
+  const parseText = useCallback((lines: string[]) => {
+    const text = lines.join('\n');
+    const result = parse(text);
+    setErrors(result.errors);
+  }, []);
 
   const updateLines = useCallback(() => {
     const layer = diagram.activeLayer;
-    const newLines: string[] = [];
-    if (isRegularLayer(layer)) {
-      for (const element of layer.elements) {
-        addElement(element, newLines);
-        newLines.push('');
-      }
-    }
+    const newLines = isRegularLayer(layer) ? diagramToText(layer) : [];
     setLines(newLines);
+    setErrors(new Map<number, string>());
+    setDirty(false);
   }, [diagram]);
 
   useEffect(() => updateLines(), [updateLines]);
@@ -166,10 +49,33 @@ export const TextToolWindow = () => {
   useEventListener(diagram, 'elementRemove', updateLines);
   useEventListener(diagram, 'elementBatchChange', updateLines);
 
-  const onChange = useCallback((text: string) => {
-    assert.present(codeElementRef.current);
-    codeElementRef.current.innerHTML = applySyntaxHighlighting(text.split('\n')).join('\n');
-  }, []);
+  const applyChanges = useCallback(() => {
+    const text = lines.join('\n');
+    const result = parse(text);
+    if (result.errors.size > 0) {
+      setErrors(result.errors);
+      return;
+    }
+
+    textToDiagram(result.elements, diagram);
+
+    updateLines();
+  }, [diagram, lines, updateLines]);
+
+  const onChange = useCallback(
+    (text: string) => {
+      assert.present(codeElementRef.current);
+      setDirty(true);
+      const lines = text.split('\n');
+      setLines(lines);
+
+      if (parseTimer.current) {
+        clearTimeout(parseTimer.current);
+      }
+      parseTimer.current = setTimeout(() => parseText(lines), 500);
+    },
+    [parseText]
+  );
 
   const onKeydown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -198,17 +104,49 @@ export const TextToolWindow = () => {
     preElementRef.current.scrollLeft = source.scrollLeft;
   }, []);
 
+  const onMouseMove = useCallback(
+    (e: React.MouseEvent<HTMLTextAreaElement>) => {
+      const textarea = e.currentTarget;
+      const rect = textarea.getBoundingClientRect();
+
+      // Calculate which line the mouse is over based on line height
+      const padding = 10; // matches CSS: padding: 10px;
+      const lineHeight = 15; // matches CSS: 11px / 15px monospace
+      const scrollTop = textarea.scrollTop;
+      const mouseY = e.clientY - rect.top - padding + scrollTop;
+      const lineIndex = Math.floor(mouseY / lineHeight);
+
+      // Check if there's an error on this line
+      if (lineIndex >= 0 && lineIndex < errors.size && errors.has(lineIndex)) {
+        setTooltip({
+          x: e.clientX,
+          y: e.clientY,
+          message: errors.get(lineIndex)!
+        });
+      } else {
+        setTooltip(null);
+      }
+    },
+    [errors]
+  );
+
+  const onMouseLeave = useCallback(() => setTooltip(null), []);
+
   return (
     <ToolWindow.Root id={'text'} defaultTab={'text'}>
-      <ToolWindow.Tab id={'text'} title={'Text'}>
-        {/*
+      <ToolWindow.Tab
+        id={'text'}
+        title={'Text'}
+        indicator={dirty ? <div className={styles.textEditorDirtyIndicator} /> : null}
+      >
         <ToolWindow.TabActions>
-          <Button type={'secondary'}>
-            <TbRefresh />
-            &nbsp; Apply
+          <Button type={'icon-only'} disabled={!dirty} onClick={() => updateLines()}>
+            <TbRestore />
+          </Button>
+          <Button type={'icon-only'} disabled={!dirty} onClick={() => applyChanges()}>
+            <TbCheck />
           </Button>
         </ToolWindow.TabActions>
-        */}
         <ToolWindow.TabContent>
           <ToolWindowPanel
             mode={'headless-no-padding'}
@@ -219,6 +157,7 @@ export const TextToolWindow = () => {
           >
             <div className={styles.textEditorContainer}>
               <textarea
+                ref={textareaRef}
                 spellCheck={false}
                 onKeyDown={e => onKeydown(e)}
                 onInput={e => {
@@ -226,15 +165,28 @@ export const TextToolWindow = () => {
                   onScroll(e.target as HTMLElement);
                 }}
                 onScroll={e => onScroll(e.target as HTMLElement)}
+                onMouseMove={onMouseMove}
+                onMouseLeave={onMouseLeave}
                 value={lines.join('\n')}
               />
 
               <pre className={styles.textEditor} ref={preElementRef}>
                 <code
                   ref={codeElementRef}
-                  dangerouslySetInnerHTML={{ __html: applySyntaxHighlighting(lines).join('\n') }}
+                  dangerouslySetInnerHTML={{
+                    __html: applySyntaxHighlighting(lines, errors).join('\n')
+                  }}
                 />
               </pre>
+
+              {tooltip && (
+                <div
+                  className={styles.tooltip}
+                  style={{ left: `${tooltip.x}px`, top: `${tooltip.y + 20}px` }}
+                >
+                  {tooltip.message}
+                </div>
+              )}
             </div>
           </ToolWindowPanel>
         </ToolWindow.TabContent>

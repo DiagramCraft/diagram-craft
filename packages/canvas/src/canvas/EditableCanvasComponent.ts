@@ -134,9 +134,14 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
 
     createEffect(() => {
       const cb = (e: KeyboardEvent) => {
+        const target = e.target as HTMLElement | undefined;
+        const tagName = target?.tagName?.toLowerCase();
+
         if (
           e.code === 'Space' &&
           !(e.srcElement as HTMLElement | undefined)?.className.includes('svg-node__text') &&
+          tagName !== 'input' &&
+          tagName !== 'textarea' &&
           !e.ctrlKey &&
           !e.altKey &&
           !e.metaKey &&
