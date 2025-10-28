@@ -3,14 +3,26 @@ import { ToolWindowPanel } from '../ToolWindowPanel';
 import styles from './TextToolWindow.module.css';
 import { useDiagram } from '../../../application';
 import { type DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
-import { isRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
-import { ConnectedEndpoint } from '@diagram-craft/model/endpoint';
+import type { NodePropsForEditing } from '@diagram-craft/model/diagramNode';
+import type { EdgePropsForEditing } from '@diagram-craft/model/diagramEdge';
+import { assertRegularLayer, isRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import { AnchorEndpoint, ConnectedEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { useEventListener } from '../../hooks/useEventListener';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { assert } from '@diagram-craft/utils/assert';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbCheck, TbRestore } from 'react-icons/tb';
-import { parse } from './parser';
+import { parse, type ParsedElement } from './parser';
+import type { Diagram } from '@diagram-craft/model/diagram';
+import { ElementFactory } from '@diagram-craft/model/elementFactory';
+import {
+  ElementAddUndoableAction,
+  ElementDeleteUndoableAction,
+  SnapshotUndoableAction
+} from '@diagram-craft/model/diagramUndoActions';
+import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { deepMerge } from '@diagram-craft/utils/object';
 
 const serializeMetadata = (data: ElementMetadata | undefined) => {
   if (!data) return undefined;
@@ -149,6 +161,346 @@ const applySyntaxHighlighting = (lines: string[], errors: Array<string | undefin
   return result;
 };
 
+/**
+ * Parse a props string like "fill.color=#ff0000;stroke.width=2" into a nested object
+ */
+const parsePropsString = (propsStr: string): Partial<NodeProps | EdgeProps> => {
+  const result: Record<string, unknown> = {};
+
+  for (const pair of propsStr.split(';')) {
+    const [key, value] = pair.split('=');
+    if (!key || value === undefined) continue;
+
+    const parts = key.split('.');
+
+    let current: Record<string, unknown> = result;
+    for (let i = 0; i < parts.length - 1; i++) {
+      const part = parts[i]!;
+      if (!(part in current)) {
+        current[part] = {};
+      }
+      current = current[part] as Record<string, unknown>;
+    }
+
+    const lastKey = parts[parts.length - 1]!;
+    // Try to parse as number or boolean, otherwise keep as string
+    if (value === 'true') {
+      current[lastKey] = true;
+    } else if (value === 'false') {
+      current[lastKey] = false;
+    } else if (!Number.isNaN(Number(value))) {
+      current[lastKey] = Number(value);
+    } else {
+      current[lastKey] = value;
+    }
+  }
+
+  return result as Partial<NodeProps | EdgeProps>;
+};
+
+/**
+ * Parse metadata string like "name=value" into an object
+ */
+const parseMetadataString = (metadataStr: string): Partial<ElementMetadata> => {
+  const result: Partial<ElementMetadata> = {};
+
+  for (const pair of metadataStr.split(';')) {
+    const [key, value] = pair.split('=');
+    if (!key || value === undefined) continue;
+
+    if (key === 'name') {
+      result.name = value;
+    }
+  }
+
+  return result;
+};
+
+/**
+ * Recursively collect all element IDs from parsed elements
+ */
+const collectParsedElementIds = (elements: ParsedElement[], ids: Set<string>) => {
+  for (const element of elements) {
+    ids.add(element.id);
+    if (element.children) {
+      collectParsedElementIds(element.children, ids);
+    }
+  }
+};
+
+const updateDiagram = (diagram: Diagram, elements: ParsedElement[]) => {
+  const layer = diagram.activeLayer;
+  assertRegularLayer(layer);
+
+  const uow = new UnitOfWork(diagram, true);
+
+  // Collect all parsed element IDs
+  const parsedIds = new Set<string>();
+  collectParsedElementIds(elements, parsedIds);
+
+  // Collect existing element IDs in the active layer
+  const existingIds = new Set<string>();
+  const existingElements = new Map<string, DiagramElement>();
+  for (const element of layer.elements) {
+    existingIds.add(element.id);
+    existingElements.set(element.id, element);
+  }
+
+  // Track elements to be removed
+  const elementsToRemove: DiagramElement[] = [];
+
+  // Process removals (elements in diagram but not in parsed data)
+  for (const id of existingIds) {
+    if (!parsedIds.has(id)) {
+      const element = existingElements.get(id)!;
+      uow.snapshot(element);
+      element.layer.removeElement(element, uow);
+      elementsToRemove.push(element);
+    }
+  }
+
+  // Process updates and additions
+  const processElement = (parsedElement: ParsedElement): DiagramElement | undefined => {
+    const existingElement = diagram.lookup(parsedElement.id);
+
+    if (existingElement) {
+      // Update existing element
+      uow.snapshot(existingElement);
+
+      if (parsedElement.type === 'node' && isNode(existingElement)) {
+        // Update text
+        if (parsedElement.name !== undefined) {
+          existingElement.setText(parsedElement.name, uow);
+        }
+
+        // Update props
+        if (parsedElement.props) {
+          const parsedProps = parsePropsString(parsedElement.props) as Partial<NodeProps>;
+          existingElement.updateProps(props => {
+            deepMerge(props, parsedProps);
+          }, uow);
+        }
+
+        // Update metadata
+        if (parsedElement.metadata) {
+          const parsedMetadata = parseMetadataString(parsedElement.metadata);
+          existingElement.updateMetadata(metadata => {
+            Object.assign(metadata, parsedMetadata);
+          }, uow);
+        }
+
+        // Update stylesheets
+        if (parsedElement.stylesheet) {
+          existingElement.updateMetadata(metadata => {
+            metadata.style = parsedElement.stylesheet!;
+          }, uow);
+        }
+        if (parsedElement.textStylesheet) {
+          existingElement.updateMetadata(metadata => {
+            metadata.textStyle = parsedElement.textStylesheet!;
+          }, uow);
+        }
+
+        // Process children
+        if (parsedElement.children) {
+          for (const child of parsedElement.children) {
+            processElement(child);
+          }
+        }
+      } else if (parsedElement.type === 'edge' && isEdge(existingElement)) {
+        // Update edge props
+        if (parsedElement.props) {
+          const parsedProps = parsePropsString(parsedElement.props) as Partial<EdgeProps>;
+          existingElement.updateProps(props => {
+            deepMerge(props, parsedProps);
+          }, uow);
+        }
+
+        // Update metadata
+        if (parsedElement.metadata) {
+          const parsedMetadata = parseMetadataString(parsedElement.metadata);
+          existingElement.updateMetadata(metadata => {
+            Object.assign(metadata, parsedMetadata);
+          }, uow);
+        }
+
+        // Update stylesheet
+        if (parsedElement.stylesheet) {
+          existingElement.updateMetadata(metadata => {
+            metadata.style = parsedElement.stylesheet!;
+          }, uow);
+        }
+
+        // Update connections (from/to)
+        if (parsedElement.from !== undefined || parsedElement.to !== undefined) {
+          if (parsedElement.from) {
+            const fromNode = diagram.lookup(parsedElement.from);
+            if (fromNode && isNode(fromNode)) {
+              existingElement.setStart(new AnchorEndpoint(fromNode, 'c'), uow);
+            }
+          }
+          if (parsedElement.to) {
+            const toNode = diagram.lookup(parsedElement.to);
+            if (toNode && isNode(toNode)) {
+              existingElement.setEnd(new AnchorEndpoint(toNode, 'c'), uow);
+            }
+          }
+        }
+      }
+
+      uow.updateElement(existingElement);
+      return existingElement;
+    } else {
+      // Add new element
+      let newElement: DiagramElement | undefined;
+
+      if (parsedElement.type === 'node') {
+        // Create new node at diagram center
+        const centerX = diagram.bounds.x + diagram.bounds.w / 2;
+        const centerY = diagram.bounds.y + diagram.bounds.h / 2;
+        const bounds = { x: centerX - 50, y: centerY - 50, w: 100, h: 100, r: 0 };
+
+        const props: NodePropsForEditing = {};
+        const metadata: ElementMetadata = {};
+
+        // Parse and apply props
+        if (parsedElement.props) {
+          const parsedProps = parsePropsString(parsedElement.props);
+          Object.assign(props, parsedProps);
+        }
+
+        // Parse and apply metadata
+        if (parsedElement.metadata) {
+          const parsedMetadata = parseMetadataString(parsedElement.metadata);
+          Object.assign(metadata, parsedMetadata);
+        }
+
+        // Apply stylesheets
+        if (parsedElement.stylesheet) {
+          metadata.style = parsedElement.stylesheet;
+        }
+        if (parsedElement.textStylesheet) {
+          metadata.textStyle = parsedElement.textStylesheet;
+        }
+
+        newElement = ElementFactory.node(
+          parsedElement.id,
+          parsedElement.shape,
+          bounds,
+          layer,
+          props,
+          metadata,
+          { text: parsedElement.name ?? '' }
+        );
+
+        layer.addElement(newElement, uow);
+
+        // Process children
+        if (parsedElement.children) {
+          for (const child of parsedElement.children) {
+            processElement(child);
+          }
+        }
+      } else if (parsedElement.type === 'edge') {
+        // Create new edge
+        const props: EdgePropsForEditing = {};
+        const metadata: ElementMetadata = {};
+
+        // Parse and apply props
+        if (parsedElement.props) {
+          const parsedProps = parsePropsString(parsedElement.props);
+          Object.assign(props, parsedProps);
+        }
+
+        // Parse and apply metadata
+        if (parsedElement.metadata) {
+          const parsedMetadata = parseMetadataString(parsedElement.metadata);
+          Object.assign(metadata, parsedMetadata);
+        }
+
+        // Apply stylesheet
+        if (parsedElement.stylesheet) {
+          metadata.style = parsedElement.stylesheet;
+        }
+
+        // Determine endpoints
+        let start: FreeEndpoint | AnchorEndpoint;
+        let end: FreeEndpoint | AnchorEndpoint;
+
+        if (parsedElement.from) {
+          const fromNode = diagram.lookup(parsedElement.from);
+          start =
+            fromNode && isNode(fromNode)
+              ? new AnchorEndpoint(fromNode, 'c')
+              : new FreeEndpoint({ x: 0, y: 0 });
+        } else {
+          start = new FreeEndpoint({ x: 100, y: 100 });
+        }
+
+        if (parsedElement.to) {
+          const toNode = diagram.lookup(parsedElement.to);
+          end =
+            toNode && isNode(toNode)
+              ? new AnchorEndpoint(toNode, 'c')
+              : new FreeEndpoint({ x: 200, y: 200 });
+        } else {
+          end = new FreeEndpoint({ x: 200, y: 200 });
+        }
+
+        newElement = ElementFactory.edge(parsedElement.id, start, end, props, metadata, [], layer);
+
+        layer.addElement(newElement, uow);
+      }
+
+      if (newElement) {
+        uow.addElement(newElement);
+      }
+
+      return newElement;
+    }
+  };
+
+  // Process all top-level elements
+  for (const element of elements) {
+    processElement(element);
+  }
+
+  // Commit the UnitOfWork
+  const snapshots = uow.commit();
+
+  // Create compound undoable action
+  const compoundAction = new CompoundUndoableAction();
+
+  // Add undoable action for removals
+  if (elementsToRemove.length > 0) {
+    compoundAction.addAction(
+      new ElementDeleteUndoableAction(diagram, layer, elementsToRemove, false)
+    );
+  }
+
+  // Add undoable actions for additions
+  const addedElements = snapshots.onlyAdded().keys;
+  if (addedElements.length > 0) {
+    compoundAction.addAction(
+      new ElementAddUndoableAction(
+        addedElements.map(id => diagram.lookup(id)!),
+        diagram,
+        layer
+      )
+    );
+  }
+
+  // Add undoable action for updates (via snapshot)
+  const updatedSnapshots = snapshots.onlyUpdated();
+  if (updatedSnapshots.keys.length > 0) {
+    compoundAction.addAction(new SnapshotUndoableAction('Update diagram', diagram, updatedSnapshots));
+  }
+
+  if (compoundAction.hasActions()) {
+    diagram.undoManager.add(compoundAction);
+  }
+};
+
 export const TextToolWindow = () => {
   const diagram = useDiagram();
   const [lines, setLines] = useState<string[]>([]);
@@ -175,7 +527,7 @@ export const TextToolWindow = () => {
       for (const element of layer.elements) {
         addElement(element, newLines);
         newLines.push('');
-      } 
+      }
     }
     setLines(newLines);
     setErrors([]);
@@ -190,6 +542,19 @@ export const TextToolWindow = () => {
   useEventListener(diagram, 'elementChange', updateLines);
   useEventListener(diagram, 'elementRemove', updateLines);
   useEventListener(diagram, 'elementBatchChange', updateLines);
+
+  const applyChanges = useCallback(() => {
+    const text = lines.join('\n');
+    const result = parse(text);
+    if (result.errors.length > 0) {
+      setErrors(result.errors);
+      return;
+    }
+
+    updateDiagram(diagram, result.elements);
+
+    updateLines();
+  }, [diagram, lines, updateLines]);
 
   const onChange = useCallback(
     (text: string) => {
@@ -285,7 +650,7 @@ export const TextToolWindow = () => {
           <Button type={'icon-only'} disabled={!dirty} onClick={() => updateLines()}>
             <TbRestore />
           </Button>
-          <Button type={'icon-only'} disabled={!dirty}>
+          <Button type={'icon-only'} disabled={!dirty} onClick={() => applyChanges()}>
             <TbCheck />
           </Button>
         </ToolWindow.TabActions>

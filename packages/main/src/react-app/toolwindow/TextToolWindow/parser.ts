@@ -1,4 +1,4 @@
-type ParsedElement = {
+export type ParsedElement = {
   id: string;
   line: number; // Line number where this element is defined
 } & (
