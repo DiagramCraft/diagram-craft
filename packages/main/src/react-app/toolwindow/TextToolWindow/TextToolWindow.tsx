@@ -5,9 +5,8 @@ import { useDiagram } from '../../../application';
 import { type DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import { isRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { ConnectedEndpoint } from '@diagram-craft/model/endpoint';
-import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { assert } from '@diagram-craft/utils/assert';
 
 const serializeMetadata = (data: ElementMetadata | undefined) => {
@@ -19,6 +18,7 @@ const serializeMetadata = (data: ElementMetadata | undefined) => {
 const serializeProps = (data: ElementProps | undefined) => {
   if (!data) return undefined;
 
+  // biome-ignore lint/suspicious/noExplicitAny: this is a valid use of any
   const collect = (obj: any, prefix = '') => {
     const result: string[] = [];
     for (const key in obj) {
@@ -139,19 +139,36 @@ const applySyntaxHighlighting = (lines: string[]) => {
 };
 
 export const TextToolWindow = () => {
-  const redraw = useRedraw();
   const diagram = useDiagram();
+  const [lines, setlines] = useState<string[]>([]);
 
-  useEventListener(diagram, 'diagramChange', redraw);
-  useEventListener(diagram, 'elementAdd', redraw);
-  useEventListener(diagram, 'elementChange', redraw);
-  useEventListener(diagram, 'elementRemove', redraw);
-  useEventListener(diagram, 'elementBatchChange', redraw);
+  const codeElementRef = useRef<HTMLElement>(null);
+  const preElementRef = useRef<HTMLPreElement>(null);
+
+  const updateLines = useCallback(() => {
+    const layer = diagram.activeLayer;
+    const lines: string[] = [];
+    if (isRegularLayer(layer)) {
+      for (const element of layer.elements) {
+        addElement(element, lines);
+        lines.push('');
+      }
+    }
+    setlines(lines);
+  }, [diagram]);
+
+  useEffect(() => updateLines(), [updateLines]);
+
+  useEventListener(diagram, 'diagramChange', updateLines);
+  useEventListener(diagram.layers, 'layerStructureChange', updateLines);
+  useEventListener(diagram, 'elementAdd', updateLines);
+  useEventListener(diagram, 'elementChange', updateLines);
+  useEventListener(diagram, 'elementRemove', updateLines);
+  useEventListener(diagram, 'elementBatchChange', updateLines);
 
   const onChange = useCallback((text: string) => {
-    const outputElement = document.querySelector('#highlighted-content');
-    assert.present(outputElement);
-    outputElement.innerHTML = applySyntaxHighlighting(text.split('\n')).join('\n');
+    assert.present(codeElementRef.current);
+    codeElementRef.current.innerHTML = applySyntaxHighlighting(text.split('\n')).join('\n');
   }, []);
 
   const onKeydown = useCallback(
@@ -176,21 +193,11 @@ export const TextToolWindow = () => {
   );
 
   const onScroll = useCallback((source: HTMLElement) => {
-    const $el = document.querySelector('#highlighted');
-    assert.present($el);
-    $el.scrollTop = source.scrollTop;
-    $el.scrollLeft = source.scrollLeft;
+    assert.present(preElementRef.current);
+    preElementRef.current.scrollTop = source.scrollTop;
+    preElementRef.current.scrollLeft = source.scrollLeft;
   }, []);
 
-  const layer = diagram.activeLayer;
-
-  const lines: string[] = [];
-  if (isRegularLayer(layer)) {
-    for (const element of layer.elements) {
-      addElement(element, lines);
-      lines.push('');
-    }
-  }
   return (
     <ToolWindow.Root id={'text'} defaultTab={'text'}>
       <ToolWindow.Tab id={'text'} title={'Text'}>
@@ -222,9 +229,9 @@ export const TextToolWindow = () => {
                 defaultValue={lines.join('\n')}
               />
 
-              <pre className={styles.textEditor} id={'highlighted'}>
+              <pre className={styles.textEditor} ref={preElementRef}>
                 <code
-                  id={'highlighted-content'}
+                  ref={codeElementRef}
                   dangerouslySetInnerHTML={{ __html: applySyntaxHighlighting(lines).join('\n') }}
                 />
               </pre>
