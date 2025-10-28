@@ -7,11 +7,12 @@ describe('parser', () => {
     const result = parse(input);
 
     expect(result.errors.filter(e => e).length).toBe(0);
-    expect(result.ast).toHaveLength(1);
-    expect(result.ast[0]).toEqual({
+    expect(result.elements).toHaveLength(1);
+    expect(result.elements[0]).toMatchObject({
       id: '4',
       type: 'node',
-      shape: 'rect'
+      shape: 'rect',
+      line: 0
     });
   });
 
@@ -20,12 +21,13 @@ describe('parser', () => {
     const result = parse(input);
 
     expect(result.errors.filter(e => e).length).toBe(0);
-    expect(result.ast).toHaveLength(1);
-    expect(result.ast[0]).toEqual({
+    expect(result.elements).toHaveLength(1);
+    expect(result.elements[0]).toMatchObject({
       id: '3',
       type: 'node',
       shape: 'rounded-rect',
-      name: 'Lorem'
+      name: 'Lorem',
+      line: 0
     });
   });
 
@@ -36,8 +38,8 @@ describe('parser', () => {
     const result = parse(input);
 
     expect(result.errors.filter(e => e).length).toBe(0);
-    expect(result.ast).toHaveLength(1);
-    expect(result.ast[0]).toMatchObject({
+    expect(result.elements).toHaveLength(1);
+    expect(result.elements[0]).toMatchObject({
       id: 'cukdoml',
       type: 'node',
       shape: 'text',
@@ -51,10 +53,11 @@ describe('parser', () => {
     const result = parse(input);
 
     expect(result.errors.filter(e => e).length).toBe(0);
-    expect(result.ast).toHaveLength(1);
-    expect(result.ast[0]).toEqual({
+    expect(result.elements).toHaveLength(1);
+    expect(result.elements[0]).toMatchObject({
       id: 'e2',
-      type: 'edge'
+      type: 'edge',
+      line: 0
     });
   });
 
@@ -63,12 +66,13 @@ describe('parser', () => {
     const result = parse(input);
 
     expect(result.errors.filter(e => e).length).toBe(0);
-    expect(result.ast).toHaveLength(1);
-    expect(result.ast[0]).toEqual({
+    expect(result.elements).toHaveLength(1);
+    expect(result.elements[0]).toMatchObject({
       id: 'e1',
       type: 'edge',
       from: '3',
-      to: '4'
+      to: '4',
+      line: 0
     });
   });
 
@@ -77,8 +81,8 @@ describe('parser', () => {
     const result = parse(input);
 
     expect(result.errors.filter(e => e).length).toBe(0);
-    expect(result.ast).toHaveLength(1);
-    expect(result.ast[0]).toMatchObject({
+    expect(result.elements).toHaveLength(1);
+    expect(result.elements[0]).toMatchObject({
       id: 'e1',
       type: 'edge',
       from: '3',
@@ -96,8 +100,8 @@ describe('parser', () => {
     const result = parse(input);
 
     expect(result.errors.filter(e => e).length).toBe(0);
-    expect(result.ast).toHaveLength(1);
-    expect(result.ast[0]).toMatchObject({
+    expect(result.elements).toHaveLength(1);
+    expect(result.elements[0]).toMatchObject({
       id: 'e1',
       type: 'edge',
       from: '3',
@@ -131,15 +135,15 @@ describe('parser', () => {
     const result = parse(input);
 
     expect(result.errors.filter(e => e).length).toBe(0);
-    expect(result.ast).toHaveLength(1);
-    expect(result.ast[0]).toMatchObject({
+    expect(result.elements).toHaveLength(1);
+    expect(result.elements[0]).toMatchObject({
       id: 'epb7kko',
       type: 'node',
       shape: 'table',
       props: 'custom.container.containerResize=both;custom.container.layout=vertical'
     });
 
-    const table = result.ast[0];
+    const table = result.elements[0];
     if (table?.type === 'node') {
       expect(table.children).toHaveLength(1);
       expect(table.children?.[0]).toMatchObject({
@@ -171,10 +175,10 @@ describe('parser', () => {
     const result = parse(input);
 
     expect(result.errors.filter(e => e).length).toBe(0);
-    expect(result.ast).toHaveLength(3);
-    expect(result.ast[0]).toMatchObject({ id: 'e1', type: 'edge' });
-    expect(result.ast[1]).toMatchObject({ id: '3', type: 'node' });
-    expect(result.ast[2]).toMatchObject({ id: '4', type: 'node' });
+    expect(result.elements).toHaveLength(3);
+    expect(result.elements[0]).toMatchObject({ id: 'e1', type: 'edge' });
+    expect(result.elements[1]).toMatchObject({ id: '3', type: 'node' });
+    expect(result.elements[2]).toMatchObject({ id: '4', type: 'node' });
   });
 
   test('handles syntax errors gracefully', () => {
@@ -186,9 +190,9 @@ invalid line without colon
     // Should have an error on line 1 (0-indexed)
     expect(result.errors[1]).toBeTruthy();
     // Should still parse valid lines
-    expect(result.ast).toHaveLength(2);
-    expect(result.ast[0]?.id).toBe('1');
-    expect(result.ast[1]?.id).toBe('3');
+    expect(result.elements).toHaveLength(2);
+    expect(result.elements[0]?.id).toBe('1');
+    expect(result.elements[1]?.id).toBe('3');
   });
 
   test('handles unterminated string', () => {
@@ -199,8 +203,8 @@ invalid line without colon
     expect(result.errors[0]).toBe('Unterminated string literal');
 
     // Should still parse the element for error recovery
-    expect(result.ast).toHaveLength(1);
-    expect(result.ast[0]).toMatchObject({
+    expect(result.elements).toHaveLength(1);
+    expect(result.elements[0]).toMatchObject({
       id: '1',
       type: 'node',
       shape: 'text',
@@ -216,7 +220,7 @@ invalid line without colon
     // Should report error about missing brace
     expect(result.errors.filter(e => e).length).toBeGreaterThan(0);
     // Should still parse the element
-    expect(result.ast).toHaveLength(1);
+    expect(result.elements).toHaveLength(1);
   });
 
   test('parses edge with only from connection', () => {
@@ -224,8 +228,8 @@ invalid line without colon
     const result = parse(input);
 
     expect(result.errors.filter(e => e).length).toBe(0);
-    expect(result.ast).toHaveLength(1);
-    expect(result.ast[0]).toMatchObject({
+    expect(result.elements).toHaveLength(1);
+    expect(result.elements[0]).toMatchObject({
       id: 'e1',
       type: 'edge',
       from: '3'
@@ -237,8 +241,8 @@ invalid line without colon
     const result = parse(input);
 
     expect(result.errors.filter(e => e).length).toBe(0);
-    expect(result.ast).toHaveLength(1);
-    expect(result.ast[0]).toMatchObject({
+    expect(result.elements).toHaveLength(1);
+    expect(result.elements[0]).toMatchObject({
       id: 'e1',
       type: 'edge',
       to: '4'
@@ -250,7 +254,7 @@ invalid line without colon
     const result = parse(input);
 
     expect(result.errors.filter(e => e).length).toBe(0);
-    expect(result.ast[0]).toMatchObject({
+    expect(result.elements[0]).toMatchObject({
       id: '1',
       type: 'node',
       shape: 'text',
@@ -267,12 +271,12 @@ invalid line without colon
     const result = parse(input);
 
     expect(result.errors.filter(e => e).length).toBe(0);
-    expect(result.ast).toHaveLength(2);
-    expect(result.ast[0]).toMatchObject({
+    expect(result.elements).toHaveLength(2);
+    expect(result.elements[0]).toMatchObject({
       id: 'e2',
       type: 'edge'
     });
-    expect(result.ast[1]).toMatchObject({
+    expect(result.elements[1]).toMatchObject({
       id: '3',
       type: 'node',
       shape: 'rounded-rect',
@@ -288,8 +292,8 @@ invalid line without colon
     const result = parse(input);
 
     expect(result.errors.filter(e => e).length).toBe(0);
-    expect(result.ast).toHaveLength(1);
-    expect(result.ast[0]).toMatchObject({
+    expect(result.elements).toHaveLength(1);
+    expect(result.elements[0]).toMatchObject({
       id: '1',
       type: 'node',
       shape: 'rect',
@@ -305,8 +309,8 @@ invalid line without colon
     const result = parse(input);
 
     expect(result.errors.filter(e => e).length).toBe(0);
-    expect(result.ast).toHaveLength(1);
-    expect(result.ast[0]).toMatchObject({
+    expect(result.elements).toHaveLength(1);
+    expect(result.elements[0]).toMatchObject({
       id: '1',
       type: 'node',
       shape: 'rect',
@@ -321,8 +325,8 @@ invalid line without colon
     const result = parse(input);
 
     expect(result.errors.filter(e => e).length).toBe(0);
-    expect(result.ast).toHaveLength(1);
-    expect(result.ast[0]).toMatchObject({
+    expect(result.elements).toHaveLength(1);
+    expect(result.elements[0]).toMatchObject({
       id: '1',
       type: 'node',
       shape: 'rect',
@@ -337,8 +341,8 @@ invalid line without colon
     const result = parse(input);
 
     expect(result.errors.filter(e => e).length).toBe(0);
-    expect(result.ast).toHaveLength(1);
-    expect(result.ast[0]).toMatchObject({
+    expect(result.elements).toHaveLength(1);
+    expect(result.elements[0]).toMatchObject({
       id: 'e1',
       type: 'edge',
       stylesheet: 'arrow-style'
@@ -353,12 +357,71 @@ invalid line without colon
     expect(result.errors[0]).toBe('Unterminated string literal');
 
     // Should still parse for error recovery
-    expect(result.ast).toHaveLength(1);
-    expect(result.ast[0]).toMatchObject({
+    expect(result.elements).toHaveLength(1);
+    expect(result.elements[0]).toMatchObject({
       id: '4',
       type: 'node',
       shape: 'rect',
       name: 'jkjskd'
     });
+  });
+
+  test('detects duplicate IDs', () => {
+    const input = `1: rect
+2: text "Hello"
+1: circle`;
+    const result = parse(input);
+
+    // Should report duplicate ID error on both lines (0 and 2)
+    expect(result.errors[0]).toBe('Duplicate element ID: "1"');
+    expect(result.errors[2]).toBe('Duplicate element ID: "1"');
+
+    // Should still parse all elements
+    expect(result.elements).toHaveLength(3);
+    expect(result.elements[0]).toMatchObject({ id: '1', line: 0 });
+    expect(result.elements[1]).toMatchObject({ id: '2', line: 1 });
+    expect(result.elements[2]).toMatchObject({ id: '1', line: 2 });
+  });
+
+  test('detects duplicate IDs in nested children', () => {
+    const input = `table_1: table {
+  cell_1: text "A"
+  cell_1: text "B"
+}`;
+    const result = parse(input);
+
+    // Should report duplicate ID error on both child lines (1 and 2)
+    expect(result.errors[1]).toBe('Duplicate element ID: "cell_1"');
+    expect(result.errors[2]).toBe('Duplicate element ID: "cell_1"');
+
+    // Should still parse all elements
+    expect(result.elements).toHaveLength(1);
+    expect(result.elements[0]).toMatchObject({ id: 'table_1', line: 0 });
+    const table = result.elements[0];
+    if (table?.type === 'node') {
+      expect(table.children).toHaveLength(2);
+      expect(table.children?.[0]).toMatchObject({ id: 'cell_1', line: 1 });
+      expect(table.children?.[1]).toMatchObject({ id: 'cell_1', line: 2 });
+    }
+  });
+
+  test('detects duplicate IDs across parent and children', () => {
+    const input = `parent_1: table {
+  parent_1: text "Duplicate with parent"
+}`;
+    const result = parse(input);
+
+    // Should report duplicate ID error on both lines (0 and 1)
+    expect(result.errors[0]).toBe('Duplicate element ID: "parent_1"');
+    expect(result.errors[1]).toBe('Duplicate element ID: "parent_1"');
+
+    // Should still parse all elements
+    expect(result.elements).toHaveLength(1);
+    expect(result.elements[0]).toMatchObject({ id: 'parent_1', line: 0 });
+    const parent = result.elements[0];
+    if (parent?.type === 'node') {
+      expect(parent.children).toHaveLength(1);
+      expect(parent.children?.[0]).toMatchObject({ id: 'parent_1', line: 1 });
+    }
   });
 });
