@@ -10,6 +10,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { assert } from '@diagram-craft/utils/assert';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbCheck, TbRestore } from 'react-icons/tb';
+import { parse } from './parser';
 
 const serializeMetadata = (data: ElementMetadata | undefined) => {
   if (!data) return undefined;
@@ -159,9 +160,10 @@ export const TextToolWindow = () => {
 
   const parseTimer = useRef<ReturnType<typeof setTimeout>>();
 
-  const parse = useCallback((lines: string[]) => {
-    //setLines([]);
-    setErrors([undefined, 'Error', undefined]);
+  const parseText = useCallback((lines: string[]) => {
+    const text = lines.join('\n');
+    const result = parse(text);
+    setErrors(result.errors);
   }, []);
 
   const updateLines = useCallback(() => {
@@ -197,9 +199,9 @@ export const TextToolWindow = () => {
       if (parseTimer.current) {
         clearTimeout(parseTimer.current);
       }
-      parseTimer.current = setTimeout(() => parse(lines), 500);
+      parseTimer.current = setTimeout(() => parseText(lines), 500);
     },
-    [parse]
+    [parseText]
   );
 
   const onKeydown = useCallback(
