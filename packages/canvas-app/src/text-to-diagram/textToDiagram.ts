@@ -445,3 +445,10 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
     diagram.undoManager.add(compoundAction);
   }
 };
+
+export const _test = {
+  parsePropsString,
+  parseMetadataString,
+  collectParsedElementIds,
+  updateOrCreateLabelNode
+};
