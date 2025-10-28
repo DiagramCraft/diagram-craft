@@ -140,21 +140,21 @@ const applySyntaxHighlighting = (lines: string[]) => {
 
 export const TextToolWindow = () => {
   const diagram = useDiagram();
-  const [lines, setlines] = useState<string[]>([]);
+  const [lines, setLines] = useState<string[]>([]);
 
   const codeElementRef = useRef<HTMLElement>(null);
   const preElementRef = useRef<HTMLPreElement>(null);
 
   const updateLines = useCallback(() => {
     const layer = diagram.activeLayer;
-    const lines: string[] = [];
+    const newLines: string[] = [];
     if (isRegularLayer(layer)) {
       for (const element of layer.elements) {
-        addElement(element, lines);
-        lines.push('');
+        addElement(element, newLines);
+        newLines.push('');
       }
     }
-    setlines(lines);
+    setLines(newLines);
   }, [diagram]);
 
   useEffect(() => updateLines(), [updateLines]);
