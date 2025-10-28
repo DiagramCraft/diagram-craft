@@ -63,7 +63,7 @@ const addElement = (element: DiagramElement, lines: string[], indent = '') => {
 
     if (style || textStyle) {
       sublines.push(
-        `${indent}  styleheet: ${[style ? `${style} ` : '', textStyle ? ` ${textStyle}` : ''].join('/')}`
+        `${indent}  stylesheet: ${[style ? `${style} ` : '', textStyle ? ` ${textStyle}` : ''].join('/')}`
       );
     }
 
@@ -226,7 +226,7 @@ export const TextToolWindow = () => {
                   onScroll(e.target as HTMLElement);
                 }}
                 onScroll={e => onScroll(e.target as HTMLElement)}
-                defaultValue={lines.join('\n')}
+                value={lines.join('\n')}
               />
 
               <pre className={styles.textEditor} ref={preElementRef}>
