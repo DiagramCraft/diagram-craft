@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
+import type { Meta, StoryObj } from '@storybook/react';
 import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { EXTRA_TEST_CASES } from '@diagram-craft/geometry/pathClip.fixtures';
 import { Scale, Translation } from '@diagram-craft/geometry/transform';

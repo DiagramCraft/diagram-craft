@@ -1,6 +1,6 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
+import type { Meta, StoryObj } from '@storybook/react';
 import { TextInput } from './TextInput';
-import { fn } from 'storybook/test';
+import { fn } from '@storybook/test';
 import { themeDecorator } from '../.storybook/common';
 
 const meta = {

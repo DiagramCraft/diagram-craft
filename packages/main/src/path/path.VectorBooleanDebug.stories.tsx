@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
+import type { Meta, StoryObj } from '@storybook/react';
 import { VECTOR_BOOLEAN_DEBUG_TEST_CASES } from '@diagram-craft/geometry/pathClip.fixtures';
 import { BooleanTest } from './BooleanTest';
 

@@ -1,7 +1,7 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
+import type { Meta, StoryObj } from '@storybook/react';
 import { themeDecorator } from '../.storybook/common';
 import { Button } from './Button';
-import { fn } from 'storybook/test';
+import { fn } from '@storybook/test';
 import { TbBold } from 'react-icons/tb';
 
 const meta = {

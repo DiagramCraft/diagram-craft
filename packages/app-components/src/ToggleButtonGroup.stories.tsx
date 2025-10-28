@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
-import { fn } from 'storybook/test';
+import type { Meta, StoryObj } from '@storybook/react';
+import { fn } from '@storybook/test';
 import { themeDecorator } from '../.storybook/common';
 import { ToggleButtonGroup } from './ToggleButtonGroup';
 import { TbBold, TbItalic, TbUnderline } from 'react-icons/tb';
