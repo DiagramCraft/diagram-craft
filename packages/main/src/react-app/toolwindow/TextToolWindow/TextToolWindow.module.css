@@ -1,9 +1,10 @@
 .textEditor {
-  padding: 10px;
-  font-family: monospace;
   border: 1px solid var(--base-bg);
   margin: 0;
-  overflow: auto;
+  overflow: scroll;
+  position: absolute;
+  inset: 0;
+  padding: 10px;
 
   &:focus {
     border: 1px solid var(--accent-chroma);
@@ -24,5 +25,38 @@
 
   .syntax-props {
     color: var(--accent-chroma);
+  }
+}
+
+.textEditorContainer {
+  font: 11px / 15px monospace;
+  border: 1px solid var(--base-bg);
+  outline: none;
+
+  position: absolute;
+  inset: 0;
+  position-anchor: --content;
+  top: anchor(bottom);
+
+  textarea {
+    font: 11px / 15px monospace;
+    color: transparent;
+    white-space: nowrap;
+    overflow: auto;
+    caret-color: var(--base-fg);
+    border: 1px solid transparent;
+
+    position: absolute;
+    inset: 0;
+    padding: 10px;
+
+    resize: none;
+    z-index: 100;
+    background: transparent;
+
+    &:focus {
+      outline: none;
+      border: 1px solid var(--accent-border);
+    }
   }
 }

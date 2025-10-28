@@ -5,8 +5,9 @@ import { useDiagram } from '../../../application';
 import { type DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import { isRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { ConnectedEndpoint } from '@diagram-craft/model/endpoint';
-import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { assert } from '@diagram-craft/utils/assert';
 
 const serializeMetadata = (data: ElementMetadata | undefined) => {
   if (!data) return undefined;
@@ -17,6 +18,7 @@ const serializeMetadata = (data: ElementMetadata | undefined) => {
 const serializeProps = (data: ElementProps | undefined) => {
   if (!data) return undefined;
 
+  // biome-ignore lint/suspicious/noExplicitAny: this is a valid use of any
   const collect = (obj: any, prefix = '') => {
     const result: string[] = [];
     for (const key in obj) {
@@ -61,7 +63,7 @@ const addElement = (element: DiagramElement, lines: string[], indent = '') => {
 
     if (style || textStyle) {
       sublines.push(
-        `${indent}  styleheet: ${[style ? `${style} ` : '', textStyle ? ` ${textStyle}` : ''].join('/')}`
+        `${indent}  stylesheet: ${[style ? `${style} ` : '', textStyle ? ` ${textStyle}` : ''].join('/')}`
       );
     }
 
@@ -126,7 +128,7 @@ const applySyntaxHighlighting = (lines: string[]) => {
   const result: string[] = [];
   for (const line of lines) {
     let dest = line;
-    dest = dest.replaceAll(/("[^"]+")/g, '<span class="syntax-string">$1</span> = "');
+    dest = dest.replaceAll(/("[^"]+")/g, '<span class="syntax-string">$1</span>');
     dest = dest.replaceAll(/^(\s*props):/g, '<span class="syntax-props">$1</span>:');
     dest = dest.replaceAll(/^(\s*[^:]+):/g, '<span class="syntax-label">$1</span>:');
     dest = dest.replaceAll(/({|})/g, '<span class="syntax-bracket">$1</span>');
@@ -137,24 +139,64 @@ const applySyntaxHighlighting = (lines: string[]) => {
 };
 
 export const TextToolWindow = () => {
-  const redraw = useRedraw();
   const diagram = useDiagram();
+  const [lines, setLines] = useState<string[]>([]);
 
-  useEventListener(diagram, 'diagramChange', redraw);
-  useEventListener(diagram, 'elementAdd', redraw);
-  useEventListener(diagram, 'elementChange', redraw);
-  useEventListener(diagram, 'elementRemove', redraw);
-  useEventListener(diagram, 'elementBatchChange', redraw);
+  const codeElementRef = useRef<HTMLElement>(null);
+  const preElementRef = useRef<HTMLPreElement>(null);
 
-  const layer = diagram.activeLayer;
-
-  const lines: string[] = [];
-  if (isRegularLayer(layer)) {
-    for (const element of layer.elements) {
-      addElement(element, lines);
-      lines.push('');
+  const updateLines = useCallback(() => {
+    const layer = diagram.activeLayer;
+    const newLines: string[] = [];
+    if (isRegularLayer(layer)) {
+      for (const element of layer.elements) {
+        addElement(element, newLines);
+        newLines.push('');
+      }
     }
-  }
+    setLines(newLines);
+  }, [diagram]);
+
+  useEffect(() => updateLines(), [updateLines]);
+
+  useEventListener(diagram, 'diagramChange', updateLines);
+  useEventListener(diagram.layers, 'layerStructureChange', updateLines);
+  useEventListener(diagram, 'elementAdd', updateLines);
+  useEventListener(diagram, 'elementChange', updateLines);
+  useEventListener(diagram, 'elementRemove', updateLines);
+  useEventListener(diagram, 'elementBatchChange', updateLines);
+
+  const onChange = useCallback((text: string) => {
+    assert.present(codeElementRef.current);
+    codeElementRef.current.innerHTML = applySyntaxHighlighting(text.split('\n')).join('\n');
+  }, []);
+
+  const onKeydown = useCallback(
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (e.key === 'Tab') {
+        e.preventDefault();
+
+        const $el = e.target as HTMLTextAreaElement;
+        const text = $el.value;
+
+        const before = text.slice(0, $el.selectionStart);
+        const after = text.slice($el.selectionEnd, $el.value.length);
+        const pos = $el.selectionEnd + 1;
+        $el.value = `${before}  ${after}`;
+        $el.selectionStart = pos;
+        $el.selectionEnd = pos;
+
+        onChange($el.value);
+      }
+    },
+    [onChange]
+  );
+
+  const onScroll = useCallback((source: HTMLElement) => {
+    assert.present(preElementRef.current);
+    preElementRef.current.scrollTop = source.scrollTop;
+    preElementRef.current.scrollLeft = source.scrollLeft;
+  }, []);
 
   return (
     <ToolWindow.Root id={'text'} defaultTab={'text'}>
@@ -168,12 +210,32 @@ export const TextToolWindow = () => {
         </ToolWindow.TabActions>
         */}
         <ToolWindow.TabContent>
-          <ToolWindowPanel mode={'headless-no-padding'} id={'text'} title={'Text'}>
-            <pre className={styles.textEditor}>
-              <code
-                dangerouslySetInnerHTML={{ __html: applySyntaxHighlighting(lines).join('\n') }}
+          <ToolWindowPanel
+            mode={'headless-no-padding'}
+            id={'text'}
+            title={'Text'}
+            // @ts-ignore
+            style={{ anchorName: '--content' }}
+          >
+            <div className={styles.textEditorContainer}>
+              <textarea
+                spellCheck={false}
+                onKeyDown={e => onKeydown(e)}
+                onInput={e => {
+                  onChange((e.target as HTMLTextAreaElement).value);
+                  onScroll(e.target as HTMLElement);
+                }}
+                onScroll={e => onScroll(e.target as HTMLElement)}
+                value={lines.join('\n')}
               />
-            </pre>
+
+              <pre className={styles.textEditor} ref={preElementRef}>
+                <code
+                  ref={codeElementRef}
+                  dangerouslySetInnerHTML={{ __html: applySyntaxHighlighting(lines).join('\n') }}
+                />
+              </pre>
+            </div>
           </ToolWindowPanel>
         </ToolWindow.TabContent>
       </ToolWindow.Tab>
