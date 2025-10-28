@@ -79,7 +79,8 @@
       "!**/*.test.ts",
       "!**/*.stories.tsx",
       "!**/vite.config.ts",
-      "!**/vitest.config.ts"
+      "!**/vitest.config.ts",
+      "!**/*.html"
     ]
   },
   "javascript": {

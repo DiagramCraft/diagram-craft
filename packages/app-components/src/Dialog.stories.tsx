@@ -1,6 +1,6 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Dialog } from './Dialog';
-import { fn } from '@storybook/test';
+import { fn } from 'storybook/test';
 import { PortalContextProvider } from './PortalContext';
 
 const meta = {
