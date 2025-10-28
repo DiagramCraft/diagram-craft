@@ -8,6 +8,8 @@ import { ConnectedEndpoint } from '@diagram-craft/model/endpoint';
 import { useEventListener } from '../../hooks/useEventListener';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { assert } from '@diagram-craft/utils/assert';
+import { Button } from '@diagram-craft/app-components/Button';
+import { TbCheck, TbRestore } from 'react-icons/tb';
 
 const serializeMetadata = (data: ElementMetadata | undefined) => {
   if (!data) return undefined;
@@ -124,14 +126,22 @@ const addElement = (element: DiagramElement, lines: string[], indent = '') => {
   }
 };
 
-const applySyntaxHighlighting = (lines: string[]) => {
+const applySyntaxHighlighting = (lines: string[], errors: Array<string | undefined>) => {
   const result: string[] = [];
-  for (const line of lines) {
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]!;
+    const error = errors[i];
+
     let dest = line;
     dest = dest.replaceAll(/("[^"]+")/g, '<span class="syntax-string">$1</span>');
     dest = dest.replaceAll(/^(\s*props):/g, '<span class="syntax-props">$1</span>:');
     dest = dest.replaceAll(/^(\s*[^:]+):/g, '<span class="syntax-label">$1</span>:');
     dest = dest.replaceAll(/({|})/g, '<span class="syntax-bracket">$1</span>');
+
+    if (error) {
+      dest = `<span class="syntax-error">${dest}</span>`;
+    }
+
     result.push(dest);
   }
 
@@ -141,9 +151,18 @@ const applySyntaxHighlighting = (lines: string[]) => {
 export const TextToolWindow = () => {
   const diagram = useDiagram();
   const [lines, setLines] = useState<string[]>([]);
+  const [errors, setErrors] = useState<Array<string | undefined>>([]);
+  const [dirty, setDirty] = useState(false);
 
   const codeElementRef = useRef<HTMLElement>(null);
   const preElementRef = useRef<HTMLPreElement>(null);
+
+  const parseTimer = useRef<ReturnType<typeof setTimeout>>();
+
+  const parse = useCallback((lines: string[]) => {
+    //setLines([]);
+    setErrors([undefined, 'Error', undefined]);
+  }, []);
 
   const updateLines = useCallback(() => {
     const layer = diagram.activeLayer;
@@ -155,6 +174,8 @@ export const TextToolWindow = () => {
       }
     }
     setLines(newLines);
+    setErrors([]);
+    setDirty(false);
   }, [diagram]);
 
   useEffect(() => updateLines(), [updateLines]);
@@ -166,10 +187,20 @@ export const TextToolWindow = () => {
   useEventListener(diagram, 'elementRemove', updateLines);
   useEventListener(diagram, 'elementBatchChange', updateLines);
 
-  const onChange = useCallback((text: string) => {
-    assert.present(codeElementRef.current);
-    codeElementRef.current.innerHTML = applySyntaxHighlighting(text.split('\n')).join('\n');
-  }, []);
+  const onChange = useCallback(
+    (text: string) => {
+      assert.present(codeElementRef.current);
+      setDirty(true);
+      const lines = text.split('\n');
+      setLines(lines);
+
+      if (parseTimer.current) {
+        clearTimeout(parseTimer.current);
+      }
+      parseTimer.current = setTimeout(() => parse(lines), 500);
+    },
+    [parse]
+  );
 
   const onKeydown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -201,14 +232,14 @@ export const TextToolWindow = () => {
   return (
     <ToolWindow.Root id={'text'} defaultTab={'text'}>
       <ToolWindow.Tab id={'text'} title={'Text'}>
-        {/*
         <ToolWindow.TabActions>
-          <Button type={'secondary'}>
-            <TbRefresh />
-            &nbsp; Apply
+          <Button type={'icon-only'} disabled={!dirty} onClick={() => updateLines()}>
+            <TbRestore />
+          </Button>
+          <Button type={'icon-only'} disabled={!dirty}>
+            <TbCheck />
           </Button>
         </ToolWindow.TabActions>
-        */}
         <ToolWindow.TabContent>
           <ToolWindowPanel
             mode={'headless-no-padding'}
@@ -232,7 +263,9 @@ export const TextToolWindow = () => {
               <pre className={styles.textEditor} ref={preElementRef}>
                 <code
                   ref={codeElementRef}
-                  dangerouslySetInnerHTML={{ __html: applySyntaxHighlighting(lines).join('\n') }}
+                  dangerouslySetInnerHTML={{
+                    __html: applySyntaxHighlighting(lines, errors).join('\n')
+                  }}
                 />
               </pre>
             </div>

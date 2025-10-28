@@ -26,6 +26,12 @@
   .syntax-props {
     color: var(--accent-chroma);
   }
+
+  .syntax-error {
+    text-decoration: underline;
+    text-decoration-color: var(--red-9);
+    text-decoration-style: wavy;
+  }
 }
 
 .textEditorContainer {
