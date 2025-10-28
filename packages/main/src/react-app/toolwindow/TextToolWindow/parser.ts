@@ -6,6 +6,7 @@ export type ParsedElement = {
       type: 'edge';
       from?: string;
       to?: string;
+      label?: string;
       props?: string;
       metadata?: string;
       stylesheet?: string;
@@ -421,6 +422,7 @@ class Parser {
 
     let from: string | undefined;
     let to: string | undefined;
+    let label: string | undefined;
 
     // Optional: from -> to (must be before newline or brace)
     const nextToken = this.current();
@@ -444,7 +446,7 @@ class Parser {
 
     // Optional: label (must be before newline or brace)
     if (this.current().type === TokenType.STRING) {
-      this.advance().value; // consume but don't use - label is in labelNodes
+      label = this.advance().value;
     }
 
     // Expect end of line or opening brace
@@ -471,6 +473,7 @@ class Parser {
       type: 'edge',
       from,
       to,
+      label,
       props,
       metadata,
       stylesheet,
