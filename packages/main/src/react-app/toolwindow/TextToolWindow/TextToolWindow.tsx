@@ -468,6 +468,17 @@ const updateDiagram = (diagram: Diagram, elements: ParsedElement[]) => {
   // Commit the UnitOfWork
   const snapshots = uow.commit();
 
+  // Update selection to remove any elements that were removed
+  if (elementsToRemove.length > 0) {
+    const removedIds = new Set(elementsToRemove.map(e => e.id));
+    const currentSelection = diagram.selection.elements;
+    const updatedSelection = currentSelection.filter(e => !removedIds.has(e.id));
+
+    if (updatedSelection.length !== currentSelection.length) {
+      diagram.selection.setElements(updatedSelection);
+    }
+  }
+
   // Create compound undoable action
   const compoundAction = new CompoundUndoableAction();
 
