@@ -28,63 +28,137 @@ type ParseResult = {
 };
 
 /**
- * This parses the text and returns the AST as well as
- * an array of errors (indexed by the line number)
+ * Parses diagram text format into an Abstract Syntax Tree (AST) with error reporting.
  *
- * The input text follows the following format:
+ * @param text - The diagram text to parse
+ * @returns ParseResult containing the AST array and any parsing errors indexed by line number
+ *
+ * ## Grammar
+ *
+ * The parser implements a line-oriented grammar where elements are separated by newlines.
+ * String literals cannot span multiple lines.
+ *
+ * ### Node Syntax
  * ```
- * [id]: [type] ("[name]") {
- *   (props: "string")
- *   (metadata: "string")
- *   (children)
- * }
- * [id]: edge (("[from]") -> ("[to]")) ("[label]"){
- *   (props: "string")
- *   (metadata: "string")
- *   (children)
+ * id: node-type ["name"] {
+ *   stylesheet: [style] / [textStyle]
+ *   props: "key=value;key2=value2"
+ *   metadata: "key=value"
+ *   [child elements...]
  * }
  * ```
  *
- * Example:
+ * - **id**: Unique identifier (alphanumeric, hyphens, underscores)
+ * - **node-type**: The shape/type of the node (e.g., `rect`, `rounded-rect`, `text`, `table`)
+ * - **name**: Optional quoted string literal for node text/label
+ * - **stylesheet**: Optional style and/or text style (format: `style / textStyle`)
+ *   - Both parts optional: `/ textStyle`, `style /`, or `style / textStyle`
+ *   - Only nodes support textStyle; edges only support style
+ * - **props**: Optional serialized properties as semicolon-separated key=value pairs
+ * - **metadata**: Optional metadata as key=value pairs
+ * - **children**: Optional nested elements with same syntax
+ * - **Body** (`{...}`): Optional; if omitted, element ends at newline
+ *
+ * ### Edge Syntax
  * ```
- * e1: edge 3 -> 4 "Hello world" {
- *   t2: text "Hello world" {
- *     props: "labelForEdgeId=e1;text.align=center;fill.enabled=true;fill.color=#ffffff"
+ * id: edge [from] -> [to] ["label"] {
+ *   stylesheet: [style]
+ *   props: "key=value"
+ *   metadata: "key=value"
+ *   [child elements...]
+ * }
+ * ```
+ *
+ * - **from/to**: Optional node IDs for connections
+ *   - Can have both, one, or neither
+ *   - Examples: `edge 3 -> 4`, `edge -> 4`, `edge 3 ->`, `edge`
+ * - **label**: Optional quoted string (usually stored as child text node in practice)
+ * - **stylesheet**: Only style part supported (no textStyle)
+ * - Connection syntax must be on same line as `edge` keyword
+ *
+ * ### Lexical Rules
+ *
+ * - **Identifiers**: `[a-zA-Z0-9_-]+`
+ * - **Strings**: Quoted with `"`, support escaped quotes `\"`
+ * - **Keywords**: `edge`, `props`, `metadata`, `stylesheet`
+ * - **Operators**: `:` (definition), `->` (edge connection), `/` (stylesheet separator)
+ * - **Delimiters**: `{` `}` (body), newlines (element separator)
+ * - **Comments**: Not supported
+ *
+ * ### Error Handling
+ *
+ * The parser continues after errors to provide comprehensive error reporting:
+ * - Unterminated string literals
+ * - Missing colons, closing braces
+ * - Invalid token sequences
+ * - Unexpected tokens
+ *
+ * Errors are reported by line number in the returned errors array.
+ *
+ * ## Examples
+ *
+ * ### Simple Node
+ * ```
+ * 4: rect
+ * ```
+ *
+ * ### Node with Name and Properties
+ * ```
+ * 3: rounded-rect "Lorem" {
+ *   props: "fill.color=#ff0000;stroke.width=2"
+ * }
+ * ```
+ *
+ * ### Node with Stylesheet
+ * ```
+ * 1: text "Title" {
+ *   stylesheet: heading / h1
+ * }
+ * ```
+ *
+ * ### Edge with Connections
+ * ```
+ * e1: edge 3 -> 4 "Connection Label" {
+ *   props: "arrow.end.type=ARROW"
+ * }
+ * ```
+ *
+ * ### Nested Structure (Table Example)
+ * ```
+ * table_1: table {
+ *   row_1: tableRow {
+ *     cell_1: text "Header 1" {
+ *       props: "stroke.enabled=false;fill.enabled=true"
+ *     }
+ *     cell_2: text "Header 2" {
+ *       props: "stroke.enabled=false;fill.enabled=true"
+ *     }
  *   }
- *   props: "arrow.start.type=SQUARE_ARROW_OUTLINE;arrow.end.type=CROWS_FEET_BAR"
+ *   row_2: tableRow {
+ *     cell_3: text "Data 1"
+ *     cell_4: text "Data 2"
+ *   }
+ * }
+ * ```
+ *
+ * ### Complete Example with Multiple Elements
+ * ```
+ * // Edge connecting two nodes with label
+ * e1: edge 3 -> 4 "Connects to" {
+ *   props: "arrow.end.type=ARROW"
  * }
  *
+ * // Standalone edge (no connections)
  * e2: edge
  *
+ * // Node with stylesheet (textStyle only)
  * 3: rounded-rect "Lorem" {
  *   stylesheet: / h1
  * }
  *
+ * // Simple node without body
  * 4: rect
- *
- * epb7kko: table {
- *   el4hq06: tableRow {
- *     cukdoml: text "Lorem ipsum" {
- *       props: "stroke.enabled=false;fill.enabled=true"
- *     }
- *     3p0ktgd: text "Dolor sit amet" {
- *       props: "stroke.enabled=false;fill.enabled=true;fill.color=#f7edfe"
- *     }
- *     props: "custom.container.containerResize=both;custom.container.layout=horizontal;custom.container.childResize=fill;custom.container.gapType=around;custom.container.gap=0"
- *   }
- *   ekk5sda: tableRow {
- *     nq982mr: text "Consectetur adipiscing elit" {
- *       props: "stroke.enabled=false;fill.enabled=true;fill.color=#d2deff"
- *     }
- *     rpvl4ar: text "12345" {
- *       props: "stroke.enabled=false;fill.enabled=true;fill.color=#e9f6e9"
- *     }
- *     props: "custom.container.containerResize=both;custom.container.layout=horizontal;custom.container.childResize=fill;custom.container.gapType=around;custom.container.gap=0"
- *   }
- *   props: "custom.container.containerResize=both;custom.container.layout=vertical;custom.container.childResize=scale;custom.container.gapType=around;custom.container.gap=10;custom.table.gap=0"
- * }
  * ```
- *
  */
 
 enum TokenType {
