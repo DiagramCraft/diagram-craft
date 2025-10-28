@@ -8,10 +8,10 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { assert } from '@diagram-craft/utils/assert';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbCheck, TbRestore } from 'react-icons/tb';
-import { parse } from './parser';
-import { textToDiagram } from './textToDiagram';
-import { diagramToText } from './diagramToText';
-import { applySyntaxHighlighting } from './syntaxHighlighter';
+import { parse } from '@diagram-craft/canvas-app/text-to-diagram/parser';
+import { textToDiagram } from '@diagram-craft/canvas-app/text-to-diagram/textToDiagram';
+import { diagramToText } from '@diagram-craft/canvas-app/text-to-diagram/diagramToText';
+import { applySyntaxHighlighting } from '@diagram-craft/canvas-app/text-to-diagram/syntaxHighlighter';
 
 export const TextToolWindow = () => {
   const diagram = useDiagram();
