@@ -1,6 +1,7 @@
 import { VALIDATION_RULES } from '../../validation';
 import { assert } from '@diagram-craft/utils/assert';
 import type { DiagramParser, ParsedElement, ParseErrors } from '../../types';
+import { parsePropsString, parseMetadataString } from '../../utils';
 
 type ParseResult = {
   elements: ParsedElement[];
@@ -380,8 +381,8 @@ class Parser {
   }
 
   private parseBody(): {
-    props?: string;
-    metadata?: string;
+    props?: Partial<NodeProps | EdgeProps>;
+    metadata?: Partial<ElementMetadata>;
     stylesheet?: string;
     textStylesheet?: string;
     children?: ParsedElement[];
@@ -397,8 +398,8 @@ class Parser {
       };
     }
 
-    let props: string | undefined;
-    let metadata: string | undefined;
+    let props: Partial<NodeProps | EdgeProps> | undefined;
+    let metadata: Partial<ElementMetadata> | undefined;
     let stylesheet: string | undefined;
     let textStylesheet: string | undefined;
     const children: ParsedElement[] = [];
@@ -422,7 +423,9 @@ class Parser {
             continue;
           }
           const str = this.consume(TokenType.STRING, 'Expected string after props:', true);
-          props ??= str?.value;
+          if (str && !props) {
+            props = parsePropsString(str.value);
+          }
         } else if (token.value === 'metadata') {
           this.next();
           if (!this.consume(TokenType.COLON, 'Expected ":" after metadata:', true)) {
@@ -430,7 +433,9 @@ class Parser {
           }
 
           const str = this.consume(TokenType.STRING, 'Expected string after metadata:', true);
-          metadata ??= str?.value;
+          if (str && !metadata) {
+            metadata = parseMetadataString(str.value);
+          }
         } else if (token.value === 'stylesheet') {
           this.next();
           if (!this.consume(TokenType.COLON, 'Expected ":" after stylesheet:', true)) {

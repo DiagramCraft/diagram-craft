@@ -46,7 +46,10 @@ describe('parser', () => {
       type: 'node',
       shape: 'text',
       name: 'Lorem ipsum',
-      props: 'stroke.enabled=false;fill.enabled=true'
+      props: {
+        stroke: { enabled: false },
+        fill: { enabled: true }
+      }
     });
   });
 
@@ -108,14 +111,23 @@ describe('parser', () => {
       type: 'edge',
       from: '3',
       to: '4',
-      props: 'arrow.start.type=SQUARE_ARROW_OUTLINE;arrow.end.type=CROWS_FEET_BAR',
+      props: {
+        arrow: {
+          start: { type: 'SQUARE_ARROW_OUTLINE' },
+          end: { type: 'CROWS_FEET_BAR' }
+        }
+      },
       children: [
         {
           id: 't2',
           type: 'node',
           shape: 'text',
           name: 'Hello world',
-          props: 'labelForEdgeId=e1;text.align=center;fill.enabled=true;fill.color=#ffffff'
+          props: {
+            labelForEdgeId: 'e1',
+            text: { align: 'center' },
+            fill: { enabled: true, color: '#ffffff' }
+          }
         }
       ]
     });
@@ -142,7 +154,14 @@ describe('parser', () => {
       id: 'epb7kko',
       type: 'node',
       shape: 'table',
-      props: 'custom.container.containerResize=both;custom.container.layout=vertical'
+      props: {
+        custom: {
+          container: {
+            containerResize: 'both',
+            layout: 'vertical'
+          }
+        }
+      }
     });
 
     const table = result.elements[0];
@@ -152,7 +171,14 @@ describe('parser', () => {
         id: 'el4hq06',
         type: 'node',
         shape: 'tableRow',
-        props: 'custom.container.containerResize=both;custom.container.layout=horizontal'
+        props: {
+          custom: {
+            container: {
+              containerResize: 'both',
+              layout: 'horizontal'
+            }
+          }
+        }
       });
 
       const row = table.children?.[0];

@@ -114,7 +114,10 @@ describe('textToDiagram', () => {
           id: '1',
           type: 'node',
           shape: 'rect',
-          props: 'fill.color=#ff0000;stroke.width=2',
+          props: {
+            fill: { color: '#ff0000' },
+            stroke: { width: 2 }
+          },
           line: 0
         }
       ];
@@ -227,7 +230,13 @@ describe('textToDiagram', () => {
       }, UnitOfWork.immediate(diagram));
 
       const elements: ParsedElement[] = [
-        { id: '1', type: 'node', shape: 'rect', props: 'fill.color=#00ff00', line: 0 }
+        {
+          id: '1',
+          type: 'node',
+          shape: 'rect',
+          props: { fill: { color: '#00ff00' } },
+          line: 0
+        }
       ];
 
       textToDiagram(elements, diagram);

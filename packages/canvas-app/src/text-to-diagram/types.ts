@@ -67,8 +67,8 @@ export interface DiagramFormat {
 export type ParsedElement = {
   id: string;
   line: number; // Line number where this element is defined
-  props?: string;
-  metadata?: string;
+  props?: Partial<NodeProps | EdgeProps>;
+  metadata?: Partial<ElementMetadata>;
   stylesheet?: string;
   children?: ParsedElement[];
 } & (
