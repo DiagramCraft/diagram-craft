@@ -1,29 +1,7 @@
-import { VALIDATION_RULES } from './parser.validation';
+import { VALIDATION_RULES } from '../../validation';
 import { assert } from '@diagram-craft/utils/assert';
-
-export type ParsedElement = {
-  id: string;
-  line: number; // Line number where this element is defined
-  props?: string;
-  metadata?: string;
-  stylesheet?: string;
-  children?: ParsedElement[];
-} & (
-  | {
-      type: 'edge';
-      from?: string;
-      to?: string;
-      label?: string;
-    }
-  | {
-      type: 'node';
-      shape: string;
-      name?: string;
-      textStylesheet?: string;
-    }
-);
-
-export type ParseErrors = Map<number, string>;
+import type { DiagramParser, ParsedElement, ParseErrors } from '../../types';
+import { parsePropsString, parseMetadataString } from '../../utils';
 
 type ParseResult = {
   elements: ParsedElement[];
@@ -403,8 +381,8 @@ class Parser {
   }
 
   private parseBody(): {
-    props?: string;
-    metadata?: string;
+    props?: Partial<NodeProps | EdgeProps>;
+    metadata?: Partial<ElementMetadata>;
     stylesheet?: string;
     textStylesheet?: string;
     children?: ParsedElement[];
@@ -420,8 +398,8 @@ class Parser {
       };
     }
 
-    let props: string | undefined;
-    let metadata: string | undefined;
+    let props: Partial<NodeProps | EdgeProps> | undefined;
+    let metadata: Partial<ElementMetadata> | undefined;
     let stylesheet: string | undefined;
     let textStylesheet: string | undefined;
     const children: ParsedElement[] = [];
@@ -445,7 +423,9 @@ class Parser {
             continue;
           }
           const str = this.consume(TokenType.STRING, 'Expected string after props:', true);
-          props ??= str?.value;
+          if (str && !props) {
+            props = parsePropsString(str.value);
+          }
         } else if (token.value === 'metadata') {
           this.next();
           if (!this.consume(TokenType.COLON, 'Expected ":" after metadata:', true)) {
@@ -453,7 +433,9 @@ class Parser {
           }
 
           const str = this.consume(TokenType.STRING, 'Expected string after metadata:', true);
-          metadata ??= str?.value;
+          if (str && !metadata) {
+            metadata = parseMetadataString(str.value);
+          }
         } else if (token.value === 'stylesheet') {
           this.next();
           if (!this.consume(TokenType.COLON, 'Expected ":" after stylesheet:', true)) {
@@ -524,165 +506,12 @@ class Parser {
 }
 
 /**
- * Parses diagram text format into a list of parsed elements with error reporting.
- *
- * @param text - The diagram text to parse
- * @returns ParseResult containing the parsed elements array and any parsing errors indexed by line number
- *
- * ## Grammar
- *
- * The parser implements a line-oriented grammar where elements are separated by newlines.
- * String literals cannot span multiple lines.
- *
- * ### Node Syntax
- * ```
- * id: node-type ["name"] {
- *   stylesheet: [style] / [textStyle]
- *   props: "key=value;key2=value2"
- *   metadata: "key=value"
- *   [child elements...]
- * }
- * ```
- *
- * - **id**: Unique identifier
- *   - Unquoted: alphanumeric, hyphens, underscores (e.g., `myNode`, `node-1`, `node_2`)
- *   - Quoted: any string with spaces must be quoted (e.g., `"my node"`, `"node 1"`)
- * - **node-type**: The shape/type of the node (e.g., `rect`, `rounded-rect`, `text`, `table`)
- * - **name**: Optional quoted string literal for node text/label
- * - **stylesheet**: Optional style and/or text style (format: `style / textStyle`)
- *   - Both parts optional: `/ textStyle`, `style /`, or `style / textStyle`
- *   - Only nodes support textStyle; edges only support style
- * - **props**: Optional serialized properties as semicolon-separated key=value pairs
- * - **metadata**: Optional metadata as key=value pairs
- * - **children**: Optional nested elements with same syntax
- * - **Body** (`{...}`): Optional; if omitted, element ends at newline
- *
- * ### Edge Syntax
- * ```
- * id: edge [from] -> [to] ["label"] {
- *   stylesheet: [style]
- *   props: "key=value"
- *   metadata: "key=value"
- *   [child elements...]
- * }
- * ```
- *
- * - **from/to**: Optional node IDs for connections (can be quoted or unquoted)
- *   - Can have both, one, or neither
- *   - Examples: `edge 3 -> 4`, `edge -> 4`, `edge 3 ->`, `edge`
- *   - With spaces: `edge "node 1" -> "node 2"`, `edge "from node" ->`, `edge -> "to node"`
- * - **label**: Optional quoted string (usually stored as child text node in practice)
- * - **stylesheet**: Only style part supported (no textStyle)
- * - Connection syntax must be on same line as `edge` keyword
- *
- * ### Lexical Rules
- *
- * - **Identifiers**: `[a-zA-Z0-9_-]+` (unquoted IDs)
- * - **Strings**: Quoted with `"`, support escaped quotes `\"` (used for quoted IDs and labels)
- * - **Keywords**: `edge`, `props`, `metadata`, `stylesheet`
- * - **Operators**: `:` (definition), `->` (edge connection), `/` (stylesheet separator)
- * - **Delimiters**: `{` `}` (body), newlines (element separator)
- * - **Comments**: Not supported
- * - **Quoted IDs**: IDs containing spaces must be quoted (e.g., `"my node"`)
- *
- * ### Error Handling
- *
- * The parser continues after errors to provide comprehensive error reporting:
- * - Unterminated string literals
- * - Missing colons, closing braces
- * - Invalid token sequences
- * - Unexpected tokens
- *
- * Errors are reported by line number in the returned errors array.
- *
- * ## Examples
- *
- * ### Simple Node
- * ```
- * 4: rect
- * ```
- *
- * ### Node with Name and Properties
- * ```
- * 3: rounded-rect "Lorem" {
- *   props: "fill.color=#ff0000;stroke.width=2"
- * }
- * ```
- *
- * ### Node with Stylesheet
- * ```
- * 1: text "Title" {
- *   stylesheet: heading / h1
- * }
- * ```
- *
- * ### Edge with Connections
- * ```
- * e1: edge 3 -> 4 "Connection Label" {
- *   props: "arrow.end.type=ARROW"
- * }
- * ```
- *
- * ### Nested Structure (Table Example)
- * ```
- * table_1: table {
- *   row_1: tableRow {
- *     cell_1: text "Header 1" {
- *       props: "stroke.enabled=false;fill.enabled=true"
- *     }
- *     cell_2: text "Header 2" {
- *       props: "stroke.enabled=false;fill.enabled=true"
- *     }
- *   }
- *   row_2: tableRow {
- *     cell_3: text "Data 1"
- *     cell_4: text "Data 2"
- *   }
- * }
- * ```
- *
- * ### Complete Example with Multiple Elements
- * ```
- * // Edge connecting two nodes with label
- * e1: edge 3 -> 4 "Connects to" {
- *   props: "arrow.end.type=ARROW"
- * }
- *
- * // Standalone edge (no connections)
- * e2: edge
- *
- * // Node with stylesheet (textStyle only)
- * 3: rounded-rect "Lorem" {
- *   stylesheet: / h1
- * }
- *
- * // Simple node without body
- * 4: rect
- * ```
- *
- * ### Examples with Quoted IDs (IDs containing spaces)
- * ```
- * // Node with quoted ID
- * "my node": rect "My Rectangle"
- *
- * // Edge with quoted ID and endpoints
- * "edge 1": edge "my node" -> "another node"
- *
- * // Mixed quoted and unquoted IDs
- * simpleNode: circle
- * "node with spaces": rect
- * e1: edge simpleNode -> "node with spaces"
- *
- * // Nested elements with quoted IDs
- * "parent table": table {
- *   "child row": tableRow {
- *     "cell 1": text "First Cell"
- *   }
- * }
- * ```
+ * Default format parser implementation
  */
-export const parse = (text: string): ParseResult => {
-  const { tokens, errors } = tokenize(text);
-  const parser = new Parser(tokens, errors);
-  return parser.parse();
+export const defaultParser: DiagramParser = {
+  parse(text: string): { elements: ParsedElement[]; errors: ParseErrors } {
+    const { tokens, errors } = tokenize(text);
+    const parser = new Parser(tokens, errors);
+    return parser.parse();
+  }
 };

@@ -14,65 +14,10 @@ import {
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { deepMerge } from '@diagram-craft/utils/object';
-import { type ParsedElement } from './parser';
+import { type ParsedElement } from './types';
 import { newid } from '@diagram-craft/utils/id';
 import { collectElementIds } from './utils';
 import { placeNode } from '@diagram-craft/canvas/utils/placeNode';
-
-/**
- * Parse a props string like "fill.color=#ff0000;stroke.width=2" into a nested object
- */
-const parsePropsString = (propsStr: string): Partial<NodeProps | EdgeProps> => {
-  const result: Record<string, unknown> = {};
-
-  for (const pair of propsStr.split(';')) {
-    const [key, value] = pair.split('=');
-    if (!key || value === undefined) continue;
-
-    const parts = key.split('.');
-
-    let current: Record<string, unknown> = result;
-    for (let i = 0; i < parts.length - 1; i++) {
-      const part = parts[i]!;
-      if (!(part in current)) {
-        current[part] = {};
-      }
-      current = current[part] as Record<string, unknown>;
-    }
-
-    const lastKey = parts[parts.length - 1]!;
-    // Try to parse as number or boolean, otherwise keep as string
-    if (value === 'true') {
-      current[lastKey] = true;
-    } else if (value === 'false') {
-      current[lastKey] = false;
-    } else if (!Number.isNaN(Number(value))) {
-      current[lastKey] = Number(value);
-    } else {
-      current[lastKey] = value;
-    }
-  }
-
-  return result as Partial<NodeProps | EdgeProps>;
-};
-
-/**
- * Parse metadata string like "name=value" into an object
- */
-const parseMetadataString = (metadataStr: string): Partial<ElementMetadata> => {
-  const result: Partial<ElementMetadata> = {};
-
-  for (const pair of metadataStr.split(';')) {
-    const [key, value] = pair.split('=');
-    if (!key || value === undefined) continue;
-
-    if (key === 'name') {
-      result.name = value;
-    }
-  }
-
-  return result;
-};
 
 /**
  * Update or create a label node for an edge
@@ -181,17 +126,15 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
 
         // Update props
         if (parsedElement.props) {
-          const parsedProps = parsePropsString(parsedElement.props) as Partial<NodeProps>;
           existingElement.updateProps(props => {
-            deepMerge(props, parsedProps);
+            deepMerge(props, parsedElement.props as Partial<NodeProps>);
           }, uow);
         }
 
         // Update metadata
         if (parsedElement.metadata) {
-          const parsedMetadata = parseMetadataString(parsedElement.metadata);
           existingElement.updateMetadata(metadata => {
-            Object.assign(metadata, parsedMetadata);
+            Object.assign(metadata, parsedElement.metadata);
           }, uow);
         }
 
@@ -219,17 +162,15 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
       } else if (parsedElement.type === 'edge' && isEdge(existingElement)) {
         // Update edge props
         if (parsedElement.props) {
-          const parsedProps = parsePropsString(parsedElement.props) as Partial<EdgeProps>;
           existingElement.updateProps(props => {
-            deepMerge(props, parsedProps);
+            deepMerge(props, parsedElement.props as Partial<EdgeProps>);
           }, uow);
         }
 
         // Update metadata
         if (parsedElement.metadata) {
-          const parsedMetadata = parseMetadataString(parsedElement.metadata);
           existingElement.updateMetadata(metadata => {
-            Object.assign(metadata, parsedMetadata);
+            Object.assign(metadata, parsedElement.metadata);
           }, uow);
         }
 
@@ -295,17 +236,8 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
         const props: NodePropsForEditing = {};
         const metadata: ElementMetadata = {};
 
-        // Parse and apply props
-        if (parsedElement.props) {
-          const parsedProps = parsePropsString(parsedElement.props);
-          Object.assign(props, parsedProps);
-        }
-
-        // Parse and apply metadata
-        if (parsedElement.metadata) {
-          const parsedMetadata = parseMetadataString(parsedElement.metadata);
-          Object.assign(metadata, parsedMetadata);
-        }
+        if (parsedElement.props) Object.assign(props, parsedElement.props);
+        if (parsedElement.metadata) Object.assign(metadata, parsedElement.metadata);
 
         // Apply stylesheets
         if (parsedElement.stylesheet) {
@@ -343,16 +275,14 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
         const props: EdgePropsForEditing = {};
         const metadata: ElementMetadata = {};
 
-        // Parse and apply props
+        // Apply props
         if (parsedElement.props) {
-          const parsedProps = parsePropsString(parsedElement.props);
-          Object.assign(props, parsedProps);
+          Object.assign(props, parsedElement.props);
         }
 
-        // Parse and apply metadata
+        // Apply metadata
         if (parsedElement.metadata) {
-          const parsedMetadata = parseMetadataString(parsedElement.metadata);
-          Object.assign(metadata, parsedMetadata);
+          Object.assign(metadata, parsedElement.metadata);
         }
 
         // Apply stylesheet
@@ -457,7 +387,5 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
 };
 
 export const _test = {
-  parsePropsString,
-  parseMetadataString,
   updateOrCreateLabelNode
 };

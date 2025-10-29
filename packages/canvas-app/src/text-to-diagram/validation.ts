@@ -1,11 +1,11 @@
-import type { ParsedElement, ParseErrors } from './parser';
+import type { ParsedElement, ParseErrors } from './types';
 import { collectElementIds } from './utils';
 
 /**
  * Validation rule that checks the parsed elements and returns errors keyed by line number.
  * Returns a Map where keys are line numbers and values are error messages.
  */
-type ValidationRule = (elements: ParsedElement[]) => ParseErrors;
+export type ValidationRule = (elements: ParsedElement[]) => ParseErrors;
 
 /**
  * Validation rule: Check that all element IDs are unique
