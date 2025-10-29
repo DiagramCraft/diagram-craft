@@ -267,8 +267,8 @@ class Parser {
       assert.fail('Unexpected newline at top level');
     }
 
-    // Parse: id: ...
-    if (token.type !== TokenType.ID) {
+    // Parse: id: ... (id can be either ID or STRING token)
+    if (token.type !== TokenType.ID && token.type !== TokenType.STRING) {
       this.addError(token.line, `Expected element ID, got ${token.type}`);
       this.skipToNextLine();
       return null;
@@ -343,21 +343,24 @@ class Parser {
     let label: string | undefined;
 
     // Optional: from -> to (must be before newline or brace)
+    // IDs can be either ID or STRING tokens (for quoted IDs with spaces)
     const nextToken = this.peek();
-    if (nextToken.type === TokenType.ID) {
+    if (nextToken.type === TokenType.ID || nextToken.type === TokenType.STRING) {
       from = this.next().value;
 
       if (this.peek().type === TokenType.ARROW) {
         this.next(); // consume ->
 
-        if (this.peek().type === TokenType.ID) {
+        const toToken = this.peek();
+        if (toToken.type === TokenType.ID || toToken.type === TokenType.STRING) {
           to = this.next().value;
         }
       }
     } else if (nextToken.type === TokenType.ARROW) {
       // Case: edge -> to
       this.next(); // consume ->
-      if (this.peek().type === TokenType.ID) {
+      const toToken = this.peek();
+      if (toToken.type === TokenType.ID || toToken.type === TokenType.STRING) {
         to = this.next().value;
       }
     }
@@ -485,8 +488,8 @@ class Parser {
           this.addError(token.line, `Unknown keyword: ${token.value}`);
           this.skipToNextLine();
         }
-      } else if (token.type === TokenType.ID) {
-        // Child element
+      } else if (token.type === TokenType.ID || token.type === TokenType.STRING) {
+        // Child element (ID can be quoted or unquoted)
         const child = this.parseElement();
         if (child) {
           children.push(child);
@@ -541,7 +544,9 @@ class Parser {
  * }
  * ```
  *
- * - **id**: Unique identifier (alphanumeric, hyphens, underscores)
+ * - **id**: Unique identifier
+ *   - Unquoted: alphanumeric, hyphens, underscores (e.g., `myNode`, `node-1`, `node_2`)
+ *   - Quoted: any string with spaces must be quoted (e.g., `"my node"`, `"node 1"`)
  * - **node-type**: The shape/type of the node (e.g., `rect`, `rounded-rect`, `text`, `table`)
  * - **name**: Optional quoted string literal for node text/label
  * - **stylesheet**: Optional style and/or text style (format: `style / textStyle`)
@@ -562,21 +567,23 @@ class Parser {
  * }
  * ```
  *
- * - **from/to**: Optional node IDs for connections
+ * - **from/to**: Optional node IDs for connections (can be quoted or unquoted)
  *   - Can have both, one, or neither
  *   - Examples: `edge 3 -> 4`, `edge -> 4`, `edge 3 ->`, `edge`
+ *   - With spaces: `edge "node 1" -> "node 2"`, `edge "from node" ->`, `edge -> "to node"`
  * - **label**: Optional quoted string (usually stored as child text node in practice)
  * - **stylesheet**: Only style part supported (no textStyle)
  * - Connection syntax must be on same line as `edge` keyword
  *
  * ### Lexical Rules
  *
- * - **Identifiers**: `[a-zA-Z0-9_-]+`
- * - **Strings**: Quoted with `"`, support escaped quotes `\"`
+ * - **Identifiers**: `[a-zA-Z0-9_-]+` (unquoted IDs)
+ * - **Strings**: Quoted with `"`, support escaped quotes `\"` (used for quoted IDs and labels)
  * - **Keywords**: `edge`, `props`, `metadata`, `stylesheet`
  * - **Operators**: `:` (definition), `->` (edge connection), `/` (stylesheet separator)
  * - **Delimiters**: `{` `}` (body), newlines (element separator)
  * - **Comments**: Not supported
+ * - **Quoted IDs**: IDs containing spaces must be quoted (e.g., `"my node"`)
  *
  * ### Error Handling
  *
@@ -651,6 +658,27 @@ class Parser {
  *
  * // Simple node without body
  * 4: rect
+ * ```
+ *
+ * ### Examples with Quoted IDs (IDs containing spaces)
+ * ```
+ * // Node with quoted ID
+ * "my node": rect "My Rectangle"
+ *
+ * // Edge with quoted ID and endpoints
+ * "edge 1": edge "my node" -> "another node"
+ *
+ * // Mixed quoted and unquoted IDs
+ * simpleNode: circle
+ * "node with spaces": rect
+ * e1: edge simpleNode -> "node with spaces"
+ *
+ * // Nested elements with quoted IDs
+ * "parent table": table {
+ *   "child row": tableRow {
+ *     "cell 1": text "First Cell"
+ *   }
+ * }
  * ```
  */
 export const parse = (text: string): ParseResult => {
