@@ -294,4 +294,82 @@ describe('diagramToText', () => {
     // Should not include stylesheet line when using default-text style
     expect(result).toEqual(['1: rect', '']);
   });
+
+  test('converts node with ID containing spaces to quoted format', () => {
+    const { layer } = TestModel.newDiagramWithLayer();
+    layer.addNode({ id: 'my node', type: 'rect' });
+
+    const result = diagramToText(layer);
+
+    expect(result).toEqual(['"my node": rect', '']);
+  });
+
+  test('converts node with ID without spaces to unquoted format', () => {
+    const { layer } = TestModel.newDiagramWithLayer();
+    layer.addNode({ id: 'myNode', type: 'rect' });
+
+    const result = diagramToText(layer);
+
+    expect(result).toEqual(['myNode: rect', '']);
+  });
+
+  test('converts edge with endpoint IDs containing spaces to quoted format', () => {
+    const { layer } = TestModel.newDiagramWithLayer();
+    const node1 = layer.addNode({ id: 'node 1', type: 'rect' });
+    const node2 = layer.addNode({ id: 'node 2', type: 'rect' });
+    const edge = layer.addEdge({ id: 'edge 1' });
+
+    edge.setStart(new AnchorEndpoint(node1, 'c'), UnitOfWork.immediate(layer.diagram));
+    edge.setEnd(new AnchorEndpoint(node2, 'c'), UnitOfWork.immediate(layer.diagram));
+
+    const result = diagramToText(layer);
+
+    const edgeLine = result.find(line => line.startsWith('"edge 1":'));
+    expect(edgeLine).toContain('"node 1" -> "node 2"');
+  });
+
+  test('converts edge with mixed quoted and unquoted endpoint IDs', () => {
+    const { layer } = TestModel.newDiagramWithLayer();
+    const node1 = layer.addNode({ id: 'node 1', type: 'rect' });
+    const node2 = layer.addNode({ id: 'simpleNode', type: 'rect' });
+    const edge = layer.addEdge({ id: 'e1' });
+
+    edge.setStart(new AnchorEndpoint(node1, 'c'), UnitOfWork.immediate(layer.diagram));
+    edge.setEnd(new AnchorEndpoint(node2, 'c'), UnitOfWork.immediate(layer.diagram));
+
+    const result = diagramToText(layer);
+
+    const edgeLine = result.find(line => line.startsWith('e1:'));
+    expect(edgeLine).toContain('"node 1" -> simpleNode');
+  });
+
+  test('converts nested structure with quoted IDs', () => {
+    const { layer } = TestModel.newDiagramWithLayer();
+    const parent = layer.addNode({ id: 'parent node', type: 'group' });
+    const child = layer.createNode({ id: 'child node', type: 'text' });
+    child.setText('Child text', UnitOfWork.immediate(layer.diagram));
+    parent.addChild(child, UnitOfWork.immediate(layer.diagram));
+
+    const result = diagramToText(layer);
+
+    expect(result[0]).toBe('"parent node": group {');
+    expect(result.some(line => line.trim().startsWith('"child node": text "Child text"'))).toBe(true);
+    expect(result.some(line => line === '}')).toBe(true);
+  });
+
+  test('converts node with ID containing spaces and props', () => {
+    const { layer } = TestModel.newDiagramWithLayer();
+    const node = layer.addNode({ id: 'my node', type: 'rect' });
+    node.updateProps(
+      props => {
+        props.stroke = { enabled: false };
+      },
+      UnitOfWork.immediate(layer.diagram)
+    );
+
+    const result = diagramToText(layer);
+
+    expect(result[0]).toContain('"my node": rect {');
+    expect(result.some(line => line.includes('props: "stroke.enabled=false"'))).toBe(true);
+  });
 });

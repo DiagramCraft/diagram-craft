@@ -424,4 +424,61 @@ invalid line without colon
       expect(parent.children?.[0]).toMatchObject({ id: 'parent_1', line: 1 });
     }
   });
+
+  test('parses node with quoted ID containing spaces', () => {
+    const input = '"another id": rect "Another rectangle"';
+    const result = parse(input);
+
+    expect(result.errors.size).toBe(0);
+    expect(result.elements).toHaveLength(1);
+    expect(result.elements[0]).toMatchObject({
+      id: 'another id',
+      type: 'node',
+      shape: 'rect',
+      name: 'Another rectangle',
+      line: 0
+    });
+  });
+
+  test('parses edge with quoted endpoint IDs containing spaces', () => {
+    const input = '"e 1": edge "node 1" -> "node 2"';
+    const result = parse(input);
+
+    expect(result.errors.size).toBe(0);
+    expect(result.elements).toHaveLength(1);
+    expect(result.elements[0]).toMatchObject({
+      id: 'e 1',
+      type: 'edge',
+      from: 'node 1',
+      to: 'node 2',
+      line: 0
+    });
+  });
+
+  test('parses mixed quoted and unquoted IDs', () => {
+    const input = `"my node": rect "Node with space ID"
+e1: edge "my node" -> simple
+simple: circle`;
+    const result = parse(input);
+
+    expect(result.errors.size).toBe(0);
+    expect(result.elements).toHaveLength(3);
+    expect(result.elements[0]).toMatchObject({
+      id: 'my node',
+      type: 'node',
+      shape: 'rect',
+      name: 'Node with space ID'
+    });
+    expect(result.elements[1]).toMatchObject({
+      id: 'e1',
+      type: 'edge',
+      from: 'my node',
+      to: 'simple'
+    });
+    expect(result.elements[2]).toMatchObject({
+      id: 'simple',
+      type: 'node',
+      shape: 'circle'
+    });
+  });
 });

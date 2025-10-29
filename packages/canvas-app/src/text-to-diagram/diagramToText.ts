@@ -11,6 +11,10 @@ type ElementMetadata = {
 // biome-ignore lint/suspicious/noExplicitAny: this needs to handle both NodeProps and EdgeProps
 type ElementProps = any;
 
+const needsQuotes = (id: string) => id.includes(' ');
+
+const formatId = (id: string) => (needsQuotes(id) ? `"${id}"` : id);
+
 const serializeMetadata = (data: ElementMetadata | undefined) => {
   if (!data) return undefined;
   if (data.name) return `name=${data.name}`;
@@ -42,7 +46,7 @@ const serializeProps = (data: ElementProps | undefined) => {
 const elementToText = (element: DiagramElement, lines: string[], indent = '') => {
   if (isNode(element)) {
     let node = indent;
-    node += `${element.id}:`;
+    node += `${formatId(element.id)}:`;
     node += ` ${element.nodeType}`;
 
     if (element.texts.text) {
@@ -88,15 +92,15 @@ const elementToText = (element: DiagramElement, lines: string[], indent = '') =>
     }
   } else if (isEdge(element)) {
     let edge = indent;
-    edge += `${element.id}: edge`;
+    edge += `${formatId(element.id)}: edge`;
 
     if (element.start.isConnected || element.end.isConnected) {
       if (element.start.isConnected) {
-        edge += ` ${(element.start as ConnectedEndpoint).node.id}`;
+        edge += ` ${formatId((element.start as ConnectedEndpoint).node.id)}`;
       }
       edge += ' -> ';
       if (element.end.isConnected) {
-        edge += `${(element.end as ConnectedEndpoint).node.id}`;
+        edge += formatId((element.end as ConnectedEndpoint).node.id);
       }
     }
 
