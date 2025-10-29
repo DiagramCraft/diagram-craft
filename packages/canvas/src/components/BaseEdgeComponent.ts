@@ -4,7 +4,6 @@ import { DeepReadonly, DeepRequired } from '@diagram-craft/utils/types';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
 import { applyLineHops, clipPath } from '@diagram-craft/model/diagramEdgeUtils';
 import * as svg from '../component/vdom-svg';
-import { applySketchEffectToArrow } from '../effects/sketch';
 import { VNode } from '../component/vdom';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DRAG_DROP_MANAGER } from '../dragDropManager';
@@ -27,6 +26,7 @@ import { Zoom } from './zoom';
 import { renderElement } from './renderElement';
 import { CanvasDomHelper } from '../utils/canvasDomHelper';
 import type { EdgeCapability } from '@diagram-craft/model/edgeDefinition';
+import { EffectsRegistry } from '../effects/effects';
 
 export type EdgeComponentProps = {
   element: DiagramEdge;
@@ -45,11 +45,13 @@ const makeArrowMarker = (
 
   const { color, width } = edgeProps.stroke;
   const fillColor = edgeProps.fill.color;
-  const sketch = edgeProps.effects.sketch;
 
   let path = arrow.path;
-  if (sketch) {
-    path = applySketchEffectToArrow(id, arrow);
+  const effect = EffectsRegistry.all().filter(
+    e => e.isActiveForEdge(edgeProps) && e.modifyArrow
+  )?.[0];
+  if (effect) {
+    path = effect.modifyArrow!(id, arrow);
   }
 
   return svg.marker(

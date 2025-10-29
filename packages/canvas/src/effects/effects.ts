@@ -7,10 +7,11 @@ import { makeBlur } from './blur';
 import { makeOpacity } from './opacity';
 import { makeShadowFilter } from './shadow';
 import { makeReflection } from './reflection';
-import { SketchPathRenderer } from './sketch';
+import { applySketchEffectToArrow, SketchPathRenderer } from './sketch';
 import type { PathRenderer } from '../shape/PathRenderer';
 import { RoundingPathRenderer } from './rounding';
 import type { EdgePropsForRendering } from '@diagram-craft/model/diagramEdge';
+import type { ArrowShape } from '../arrowShapes';
 
 type Effect = {
   isActiveForNode: (props: NodeProps | NodePropsForRendering) => boolean;
@@ -20,6 +21,7 @@ type Effect = {
   getCSSFilter?: (props: NodePropsForRendering) => string;
   getExtraSVGElements?: (node: DiagramNode, shapeNodes: VNode[]) => VNode[];
   getPathRenderer?: () => PathRenderer;
+  modifyArrow?: (id: string, arrow: ArrowShape) => string;
 };
 
 const effects: Array<[Effect, number]> = [];
@@ -46,7 +48,8 @@ EffectsRegistry.register(
   {
     isActiveForEdge: props => !!props.effects?.sketch,
     isActiveForNode: props => !!props.effects?.sketch,
-    getPathRenderer: () => new SketchPathRenderer()
+    getPathRenderer: () => new SketchPathRenderer(),
+    modifyArrow: (id: string, arrow: ArrowShape) => applySketchEffectToArrow(id, arrow)
   },
   100
 );
