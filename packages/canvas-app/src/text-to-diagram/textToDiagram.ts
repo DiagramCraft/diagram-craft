@@ -16,63 +16,8 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { deepMerge } from '@diagram-craft/utils/object';
 import { type ParsedElement } from './types';
 import { newid } from '@diagram-craft/utils/id';
-import { collectElementIds } from './utils';
+import { collectElementIds, parseMetadataString, parsePropsString } from './utils';
 import { placeNode } from '@diagram-craft/canvas/utils/placeNode';
-
-/**
- * Parse a props string like "fill.color=#ff0000;stroke.width=2" into a nested object
- */
-const parsePropsString = (propsStr: string): Partial<NodeProps | EdgeProps> => {
-  const result: Record<string, unknown> = {};
-
-  for (const pair of propsStr.split(';')) {
-    const [key, value] = pair.split('=');
-    if (!key || value === undefined) continue;
-
-    const parts = key.split('.');
-
-    let current: Record<string, unknown> = result;
-    for (let i = 0; i < parts.length - 1; i++) {
-      const part = parts[i]!;
-      if (!(part in current)) {
-        current[part] = {};
-      }
-      current = current[part] as Record<string, unknown>;
-    }
-
-    const lastKey = parts[parts.length - 1]!;
-    // Try to parse as number or boolean, otherwise keep as string
-    if (value === 'true') {
-      current[lastKey] = true;
-    } else if (value === 'false') {
-      current[lastKey] = false;
-    } else if (!Number.isNaN(Number(value))) {
-      current[lastKey] = Number(value);
-    } else {
-      current[lastKey] = value;
-    }
-  }
-
-  return result as Partial<NodeProps | EdgeProps>;
-};
-
-/**
- * Parse metadata string like "name=value" into an object
- */
-const parseMetadataString = (metadataStr: string): Partial<ElementMetadata> => {
-  const result: Partial<ElementMetadata> = {};
-
-  for (const pair of metadataStr.split(';')) {
-    const [key, value] = pair.split('=');
-    if (!key || value === undefined) continue;
-
-    if (key === 'name') {
-      result.name = value;
-    }
-  }
-
-  return result;
-};
 
 /**
  * Update or create a label node for an edge
@@ -457,7 +402,5 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
 };
 
 export const _test = {
-  parsePropsString,
-  parseMetadataString,
   updateOrCreateLabelNode
 };

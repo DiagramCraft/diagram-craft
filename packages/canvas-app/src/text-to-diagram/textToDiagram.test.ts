@@ -10,7 +10,7 @@ import { AnchorEndpoint, ConnectedEndpoint } from '@diagram-craft/model/endpoint
 import type { ParsedElement } from './types';
 import { isEdge, isNode } from '@diagram-craft/model/diagramElement';
 
-const { parsePropsString, parseMetadataString, updateOrCreateLabelNode } = _test;
+const { updateOrCreateLabelNode } = _test;
 
 describe('textToDiagram', () => {
   let diagram: TestDiagramBuilder;
@@ -20,55 +20,6 @@ describe('textToDiagram', () => {
     const setup = TestModel.newDiagramWithLayer();
     diagram = setup.diagram;
     layer = setup.layer;
-  });
-
-  describe('parsePropsString', () => {
-    test('parses simple key-value pair', () => {
-      const result = parsePropsString('color=red');
-      expect(result).toEqual({ color: 'red' });
-    });
-
-    test('parses nested properties', () => {
-      const result = parsePropsString('fill.color=#ff0000');
-      expect(result).toEqual({ fill: { color: '#ff0000' } });
-    });
-
-    test('parses multiple properties', () => {
-      const result = parsePropsString('fill.color=#ff0000;stroke.width=2');
-      expect(result).toEqual({
-        fill: { color: '#ff0000' },
-        stroke: { width: 2 }
-      });
-    });
-
-    test('parses boolean values', () => {
-      const result = parsePropsString('enabled=true;disabled=false');
-      expect(result).toEqual({ enabled: true, disabled: false });
-    });
-
-    test('parses numeric values', () => {
-      const result = parsePropsString('width=100;height=200.5');
-      expect(result).toEqual({ width: 100, height: 200.5 });
-    });
-
-    test('parses deeply nested properties', () => {
-      const result = parsePropsString('arrow.start.type=SQUARE_ARROW_OUTLINE');
-      expect(result).toEqual({
-        arrow: { start: { type: 'SQUARE_ARROW_OUTLINE' } }
-      });
-    });
-  });
-
-  describe('parseMetadataString', () => {
-    test('parses name metadata', () => {
-      const result = parseMetadataString('name=TestNode');
-      expect(result).toEqual({ name: 'TestNode' });
-    });
-
-    test('ignores unknown metadata keys', () => {
-      const result = parseMetadataString('name=Test;unknown=value');
-      expect(result).toEqual({ name: 'Test' });
-    });
   });
 
   describe('updateOrCreateLabelNode', () => {
