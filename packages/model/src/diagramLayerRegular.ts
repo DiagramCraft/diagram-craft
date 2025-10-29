@@ -60,7 +60,7 @@ export class RegularLayer extends Layer<RegularLayer> {
     return this.#elements.values;
   }
 
-  get spatialIndex(): SpatialIndex {
+  get index(): SpatialIndex {
     if (!this.#spatialIndex) {
       this.#spatialIndex = new SpatialIndex(this);
     }

@@ -58,10 +58,12 @@ export class SpatialIndex {
     const point = 'w' in ref ? Box.center(ref) : ref;
     const grid = this.#index;
     const [row, col] = this.pointToCell(point);
-    const candidates = new Set<DiagramElement>();
+    const yielded = new Set<DiagramElement>();
 
     const radius = Math.max(GRID_SIZE, GRID_SIZE);
     for (let r = 0; r <= radius; r++) {
+      const ringCandidates = new Set<DiagramElement>();
+
       for (let dr = -r; dr <= r; dr++) {
         for (let dc = -r; dc <= r; dc++) {
           if (Math.abs(dr) !== r && Math.abs(dc) !== r) continue;
@@ -73,26 +75,30 @@ export class SpatialIndex {
             const cell = grid[cellRow]?.[cellCol];
             if (cell) {
               for (const element of cell) {
-                candidates.add(element);
+                if (!yielded.has(element)) {
+                  ringCandidates.add(element);
+                }
               }
             }
           }
         }
       }
 
-      if (candidates.size === 0) continue;
+      if (ringCandidates.size === 0) {
+        if (r > 0) break;
+        continue;
+      }
 
-      const sorted = Array.from(candidates).sort((a, b) => {
+      const sorted = Array.from(ringCandidates).sort((a, b) => {
         const distA = this.distanceToElement(point, a);
         const distB = this.distanceToElement(point, b);
         return distA - distB;
       });
 
       for (const element of sorted) {
+        yielded.add(element);
         yield element;
       }
-
-      candidates.clear();
     }
   }
 
@@ -100,42 +106,70 @@ export class SpatialIndex {
     this.rebuildIndexIfNeeded();
     assert.present(this.#index);
 
-    const allElements = getVisibleElements(this.source);
-    const candidates: DiagramElement[] = [];
+    const grid = this.#index;
+    const [row, col] = this.pointToCell(from);
+    const yielded = new Set<DiagramElement>();
 
-    for (const element of allElements) {
-      const elementBounds = getElementBounds(element);
-      const center = Box.center(elementBounds);
+    const radius = Math.max(GRID_SIZE, GRID_SIZE);
+    for (let r = 0; r <= radius; r++) {
+      const ringCandidates: DiagramElement[] = [];
 
-      let isInDirection = false;
-      switch (direction) {
-        case 'n':
-          isInDirection = center.y < from.y;
-          break;
-        case 's':
-          isInDirection = center.y > from.y;
-          break;
-        case 'e':
-          isInDirection = center.x > from.x;
-          break;
-        case 'w':
-          isInDirection = center.x < from.x;
-          break;
+      for (let dr = -r; dr <= r; dr++) {
+        for (let dc = -r; dc <= r; dc++) {
+          if (Math.abs(dr) !== r && Math.abs(dc) !== r) continue;
+
+          const cellRow = row + dr;
+          const cellCol = col + dc;
+
+          if (cellRow >= 0 && cellRow < GRID_SIZE && cellCol >= 0 && cellCol < GRID_SIZE) {
+            const cell = grid[cellRow]?.[cellCol];
+            if (cell) {
+              for (const element of cell) {
+                if (yielded.has(element)) continue;
+
+                const elementBounds = getElementBounds(element);
+                const center = Box.center(elementBounds);
+
+                let isInDirection = false;
+                switch (direction) {
+                  case 'n':
+                    isInDirection = center.y < from.y;
+                    break;
+                  case 's':
+                    isInDirection = center.y > from.y;
+                    break;
+                  case 'e':
+                    isInDirection = center.x > from.x;
+                    break;
+                  case 'w':
+                    isInDirection = center.x < from.x;
+                    break;
+                }
+
+                if (isInDirection) {
+                  ringCandidates.push(element);
+                }
+              }
+            }
+          }
+        }
       }
 
-      if (isInDirection) {
-        candidates.push(element);
+      if (ringCandidates.length === 0) {
+        if (r > 0) break;
+        continue;
       }
-    }
 
-    candidates.sort((a, b) => {
-      const distA = this.distanceToElement(from, a);
-      const distB = this.distanceToElement(from, b);
-      return distA - distB;
-    });
+      ringCandidates.sort((a, b) => {
+        const distA = this.distanceToElement(from, a);
+        const distB = this.distanceToElement(from, b);
+        return distA - distB;
+      });
 
-    for (const element of candidates) {
-      yield element;
+      for (const element of ringCandidates) {
+        yielded.add(element);
+        yield element;
+      }
     }
   }
 
