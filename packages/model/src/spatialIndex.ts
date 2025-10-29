@@ -43,8 +43,8 @@ export class SpatialIndex {
   readonly #diagram: Diagram;
 
   constructor(private readonly source: Diagram | RegularLayer) {
-    this.setupListeners();
     this.#diagram = isRegularLayer(source) ? source.diagram : source;
+    this.setupListeners();
   }
 
   invalidate(): void {
