@@ -4,11 +4,13 @@ import { makeIsometricTransform } from './isometric';
 import type { Box } from '@diagram-craft/geometry/box';
 import type { VNode } from '../component/vdom';
 import type { PathRenderer } from '../shape/PathRenderer';
+import { makeBlur } from './blur';
+import { makeOpacity } from './opacity';
 
 type Effect = {
   isActiveForNode: (props: NodePropsForRendering) => boolean;
   transformPoint?: (bounds: Box, props: NodePropsForRendering, p: Point) => Point;
-  getFilter?: (props: NodePropsForRendering) => VNode[];
+  getSVGFilter?: (props: NodePropsForRendering) => VNode[];
   getCSSFilter?: () => string | undefined;
   transformShapes?: (shapes: VNode[], props: NodePropsForRendering) => VNode[];
   getPathRenderer?: (props: NodePropsForRendering) => PathRenderer | undefined;
@@ -38,4 +40,16 @@ EffectsRegistry.register({
   isActiveForNode: props => props.effects.isometric.enabled,
   transformPoint: (bounds: Box, props: NodePropsForRendering, p: Point) =>
     makeIsometricTransform(bounds, props).point(p)
+});
+
+// Blur effect
+EffectsRegistry.register({
+  isActiveForNode: props => !!props.effects.blur,
+  getSVGFilter: props => [makeBlur(props.effects.blur)]
+});
+
+// Opacity effect
+EffectsRegistry.register({
+  isActiveForNode: props => props.effects.opacity !== 1,
+  getSVGFilter: props => [makeOpacity(props.effects.opacity)]
 });

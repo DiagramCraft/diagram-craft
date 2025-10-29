@@ -11,8 +11,6 @@ import { makeControlPoint } from '../shape/ShapeControlPoint';
 import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
 import { makeReflection } from '../effects/reflection';
-import { makeBlur } from '../effects/blur';
-import { makeOpacity } from '../effects/opacity';
 import { Context, OnDoubleClick, OnMouseDown } from '../context';
 import { getHighlights } from '../highlight';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -23,6 +21,7 @@ import { Box, WritableBox } from '@diagram-craft/geometry/box';
 import { isEmptyString } from '@diagram-craft/utils/strings';
 import { isometricBaseShape, makeIsometricTransform } from '../effects/isometric';
 import { CanvasDomHelper } from '../utils/canvasDomHelper';
+import { EffectsRegistry } from '../effects/effects';
 
 export type NodeComponentProps = {
   element: DiagramNode;
@@ -239,17 +238,14 @@ export class BaseNodeComponent<
       children.push(...isometricBaseShape(props.element.bounds, isometricTransform!, nodeProps));
     }
 
-    if (nodeProps.effects.blur || nodeProps.effects.opacity !== 1) {
+    const svgFilters = EffectsRegistry.all()
+      .filter(e => e.isActiveForNode(nodeProps) && e.getSVGFilter)
+      .flatMap(e => e.getSVGFilter!(nodeProps));
+    if (svgFilters.length > 0) {
       const filterId = `node-${props.element.id}-filter`;
       style.filter = `${style.filter ?? ''} url(#${filterId})`;
 
-      children.push(
-        svg.filter(
-          { id: filterId, filterUnits: 'objectBoundingBox' },
-          nodeProps.effects.blur ? makeBlur(nodeProps.effects.blur) : null,
-          nodeProps.effects.opacity !== 1 ? makeOpacity(nodeProps.effects.opacity) : null
-        )
-      );
+      children.push(svg.filter({ id: filterId, filterUnits: 'objectBoundingBox' }, ...svgFilters));
     }
 
     if (nodeProps.effects.reflection) {
