@@ -1,10 +1,9 @@
 import { toInlineCSS, VNode } from '../component/vdom';
 import { $cmp, Component } from '../component/component';
 import { ShapeText, ShapeTextProps } from './ShapeText';
-import { DefaultPathRenderer, PathRenderer, StyledPath } from './PathRenderer';
+import { DefaultPathRenderer, StyledPath } from './PathRenderer';
 import * as svg from '../component/vdom-svg';
 import { ControlPoint, ControlPointCallback } from './ShapeControlPoint';
-import { SketchPathRenderer } from '@diagram-craft/canvas/effects/sketch';
 import { Path } from '@diagram-craft/geometry/path';
 import { Box } from '@diagram-craft/geometry/box';
 import { Extent } from '@diagram-craft/geometry/extent';
@@ -21,11 +20,11 @@ import { ArrowShape } from '../arrowShapes';
 import { deepMerge } from '@diagram-craft/utils/object';
 import { makeShadowFilter } from '../effects/shadow';
 import { DiagramNode, NodePropsForEditing } from '@diagram-craft/model/diagramNode';
-import { RoundingPathRenderer } from '../effects/rounding';
 import { SVGGBuilder } from './SVGGBuilder';
 import { newid } from '@diagram-craft/utils/id';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
+import { EffectsRegistry } from '@diagram-craft/model/effect';
 
 const defaultOnChange = (element: DiagramNode) => (text: string) => {
   const uow = new UnitOfWork(element.diagram, true);
@@ -345,11 +344,10 @@ export class ShapeBuilder {
 
   private getPathRenderer(propsInEffect: ElementProps) {
     // TODO: Can we apply multiple path renderers
-    const pathRenderer: PathRenderer = propsInEffect.effects?.sketch
-      ? new SketchPathRenderer()
-      : propsInEffect.effects?.rounding
-        ? new RoundingPathRenderer()
-        : new DefaultPathRenderer();
-    return pathRenderer;
+    return (
+      EffectsRegistry.get(propsInEffect, propsInEffect, 'getPathRenderer').map(e =>
+        e.getPathRenderer()
+      )?.[0] ?? new DefaultPathRenderer()
+    );
   }
 }

@@ -1,7 +1,6 @@
 import { Component } from '../component/component';
 import { VNode } from '../component/vdom';
 import { DASH_PATTERNS } from '../dashPatterns';
-import { makeShadowFilter } from '../effects/shadow';
 import { addFillComponents, makeLinearGradient } from '../shape/shapeFill';
 import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
@@ -10,9 +9,6 @@ import { ShapeBuilder } from '../shape/ShapeBuilder';
 import { makeControlPoint } from '../shape/ShapeControlPoint';
 import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
-import { makeReflection } from '../effects/reflection';
-import { makeBlur } from '../effects/blur';
-import { makeOpacity } from '../effects/opacity';
 import { Context, OnDoubleClick, OnMouseDown } from '../context';
 import { getHighlights } from '../highlight';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -21,8 +17,9 @@ import { DeepRequired } from '@diagram-craft/utils/types';
 import { INDICATORS } from './indicators';
 import { Box, WritableBox } from '@diagram-craft/geometry/box';
 import { isEmptyString } from '@diagram-craft/utils/strings';
-import { isometricBaseShape, makeIsometricTransform } from '../effects/isometric';
+import { makeIsometricTransform } from '../effects/isometric';
 import { CanvasDomHelper } from '../utils/canvasDomHelper';
+import { EffectsRegistry } from '@diagram-craft/model/effect';
 
 export type NodeComponentProps = {
   element: DiagramNode;
@@ -231,32 +228,31 @@ export class BaseNodeComponent<
       ? makeIsometricTransform(props.element.bounds, props.element.renderProps)
       : undefined;
 
-    if (nodeProps.shadow.enabled) {
-      style.filter = makeShadowFilter(nodeProps.shadow);
+    const cssFilter = EffectsRegistry.get(nodeProps, undefined, 'getCSSFilter')
+      .map(e => e.getCSSFilter(nodeProps))
+      .join(' ');
+    if (!isEmptyString(cssFilter)) {
+      style.filter = cssFilter;
     }
 
-    if (isIsometric) {
-      children.push(...isometricBaseShape(props.element.bounds, isometricTransform!, nodeProps));
-    }
-
-    if (nodeProps.effects.blur || nodeProps.effects.opacity !== 1) {
+    const svgFilters = EffectsRegistry.get(nodeProps, undefined, 'getSVGFilter').flatMap(e =>
+      e.getSVGFilter(nodeProps)
+    );
+    if (svgFilters.length > 0) {
       const filterId = `node-${props.element.id}-filter`;
       style.filter = `${style.filter ?? ''} url(#${filterId})`;
 
-      children.push(
-        svg.filter(
-          { id: filterId, filterUnits: 'objectBoundingBox' },
-          nodeProps.effects.blur ? makeBlur(nodeProps.effects.blur) : null,
-          nodeProps.effects.opacity !== 1 ? makeOpacity(nodeProps.effects.opacity) : null
-        )
-      );
+      children.push(svg.filter({ id: filterId, filterUnits: 'objectBoundingBox' }, ...svgFilters));
     }
 
-    if (nodeProps.effects.reflection) {
-      children.push(svg.g({}, ...makeReflection(props.element, shapeVNodes), ...shapeVNodes));
-    } else {
-      children.push(...shapeVNodes);
+    const extraNodes = EffectsRegistry.get(nodeProps, undefined, 'getExtraSVGElements').flatMap(e =>
+      e.getExtraSVGElements(props.element, shapeVNodes)
+    );
+    if (extraNodes.length > 0) {
+      children.push(...extraNodes);
     }
+
+    children.push(...shapeVNodes);
 
     /* Handle indicators */
     for (const indicator of Object.values(nodeProps.indicators)) {

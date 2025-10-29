@@ -1,11 +1,11 @@
 import { describe, test, expect } from 'vitest';
 import { ARROW_SHAPES } from '../arrowShapes';
-import { parseArrowSvgPath } from './sketch';
+import { _test } from './sketch';
 
 describe('parseArrowSvgPath', () => {
   test('can parse ARROW_SHAPES', () => {
     Object.values(ARROW_SHAPES).forEach(shape => {
-      expect(parseArrowSvgPath(shape!(10, 1).path)).toBeTruthy();
+      expect(_test.parseArrowSvgPath(shape!(10, 1).path)).toBeTruthy();
     });
   });
 });
