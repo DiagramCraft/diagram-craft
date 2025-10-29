@@ -19,7 +19,7 @@ import { Box, WritableBox } from '@diagram-craft/geometry/box';
 import { isEmptyString } from '@diagram-craft/utils/strings';
 import { makeIsometricTransform } from '../effects/isometric';
 import { CanvasDomHelper } from '../utils/canvasDomHelper';
-import { EffectsRegistry } from '../effects/effects';
+import { EffectsRegistry } from '@diagram-craft/model/effect';
 
 export type NodeComponentProps = {
   element: DiagramNode;
@@ -231,7 +231,7 @@ export class BaseNodeComponent<
     const effects = EffectsRegistry.all();
 
     const cssFilter = effects
-      .filter(e => e.isActiveForNode(nodeProps) && e.getCSSFilter)
+      .filter(e => e.isUsedForNode(nodeProps) && e.getCSSFilter)
       .map(e => e.getCSSFilter!(nodeProps))
       .join(' ');
     if (!isEmptyString(cssFilter)) {
@@ -239,7 +239,7 @@ export class BaseNodeComponent<
     }
 
     const svgFilters = effects
-      .filter(e => e.isActiveForNode(nodeProps) && e.getSVGFilter)
+      .filter(e => e.isUsedForNode(nodeProps) && e.getSVGFilter)
       .flatMap(e => e.getSVGFilter!(nodeProps));
     if (svgFilters.length > 0) {
       const filterId = `node-${props.element.id}-filter`;
@@ -249,7 +249,7 @@ export class BaseNodeComponent<
     }
 
     const extraNodes = effects
-      .filter(e => e.isActiveForNode(nodeProps) && e.getExtraSVGElements)
+      .filter(e => e.isUsedForNode(nodeProps) && e.getExtraSVGElements)
       .flatMap(e => e.getExtraSVGElements!(props.element, shapeVNodes));
     if (extraNodes.length > 0) {
       children.push(...extraNodes);

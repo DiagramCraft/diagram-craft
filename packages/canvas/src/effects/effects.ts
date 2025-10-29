@@ -10,95 +10,78 @@ import { makeReflection } from './reflection';
 import { applySketchEffectToArrow, SketchPathRenderer } from './sketch';
 import type { PathRenderer } from '../shape/PathRenderer';
 import { RoundingPathRenderer } from './rounding';
-import type { EdgePropsForRendering } from '@diagram-craft/model/diagramEdge';
 import type { ArrowShape } from '../arrowShapes';
+import { EffectsRegistry } from '@diagram-craft/model/effect';
 
-type Effect = {
-  isActiveForNode: (props: NodeProps | NodePropsForRendering) => boolean;
-  isActiveForEdge: (props: EdgeProps | EdgePropsForRendering) => boolean;
-  transformPoint?: (bounds: Box, props: NodePropsForRendering, p: Point) => Point;
-  getSVGFilter?: (props: NodePropsForRendering) => VNode[];
-  getCSSFilter?: (props: NodePropsForRendering) => string;
-  getExtraSVGElements?: (node: DiagramNode, shapeNodes: VNode[]) => VNode[];
-  getPathRenderer?: () => PathRenderer;
-  modifyArrow?: (id: string, arrow: ArrowShape) => string;
-};
-
-const effects: Array<[Effect, number]> = [];
-
-export const EffectsRegistry = {
-  all: () => effects.map(e => e[0]),
-  register: (effect: Effect, priority = 0) => {
-    // Find the correct insertion index based on priority
-    let insertIndex = effects.length;
-    for (let i = 0; i < effects.length; i++) {
-      if (effects[i]![1] < priority) {
-        insertIndex = i;
-        break;
-      }
-    }
-
-    // Insert the effect at the calculated index
-    effects.splice(insertIndex, 0, [effect, priority]);
+declare global {
+  interface Effect {
+    getSVGFilter?: (props: NodePropsForRendering) => VNode[];
+    getCSSFilter?: (props: NodePropsForRendering) => string;
+    getExtraSVGElements?: (node: DiagramNode, shapeNodes: VNode[]) => VNode[];
+    getPathRenderer?: () => PathRenderer;
+    getArrowPath?: (id: string, arrow: ArrowShape) => string;
   }
+}
+
+export const registerDefaultEffects = () => {
+  // Sketch effect
+  EffectsRegistry.register(
+    {
+      isUsedForEdge: props => !!props.effects?.sketch,
+      isUsedForNode: props => !!props.effects?.sketch,
+      getPathRenderer: () => new SketchPathRenderer(),
+      getArrowPath: (id: string, arrow: ArrowShape) => applySketchEffectToArrow(id, arrow)
+    },
+    100
+  );
+
+  // Rounding effect
+  EffectsRegistry.register({
+    isUsedForEdge: props => !!props.effects?.rounding,
+    isUsedForNode: props => !!props.effects?.rounding,
+    getPathRenderer: () => new RoundingPathRenderer()
+  });
+
+  // Isometric effect
+  EffectsRegistry.register({
+    isUsedForEdge: () => false,
+    isUsedForNode: props => !!props.effects?.isometric?.enabled,
+    transformPoint: (bounds: Box, props: NodePropsForRendering, p: Point) =>
+      makeIsometricTransform(bounds, props).point(p),
+    getExtraSVGElements: (node: DiagramNode, _shapeNodes: VNode[]) =>
+      isometricBaseShape(
+        node.bounds,
+        makeIsometricTransform(node.bounds, node.renderProps),
+        node.renderProps
+      )
+  });
+
+  // Reflection effect
+  EffectsRegistry.register({
+    isUsedForEdge: () => false,
+    isUsedForNode: props => !!props.effects?.reflection,
+    getExtraSVGElements: (node: DiagramNode, shapeNodes: VNode[]) =>
+      makeReflection(node, shapeNodes)
+  });
+
+  // Blur effect
+  EffectsRegistry.register({
+    isUsedForEdge: () => false,
+    isUsedForNode: props => !!props.effects?.blur,
+    getSVGFilter: props => [makeBlur(props.effects.blur)]
+  });
+
+  // Opacity effect
+  EffectsRegistry.register({
+    isUsedForEdge: () => false,
+    isUsedForNode: props => props.effects?.opacity !== 1,
+    getSVGFilter: props => [makeOpacity(props.effects.opacity)]
+  });
+
+  // Shadow effect
+  EffectsRegistry.register({
+    isUsedForEdge: () => false,
+    isUsedForNode: props => !!props.shadow?.enabled,
+    getCSSFilter: props => makeShadowFilter(props.shadow)
+  });
 };
-
-// Sketch effect
-EffectsRegistry.register(
-  {
-    isActiveForEdge: props => !!props.effects?.sketch,
-    isActiveForNode: props => !!props.effects?.sketch,
-    getPathRenderer: () => new SketchPathRenderer(),
-    modifyArrow: (id: string, arrow: ArrowShape) => applySketchEffectToArrow(id, arrow)
-  },
-  100
-);
-
-// Rounding effect
-EffectsRegistry.register({
-  isActiveForEdge: props => !!props.effects?.rounding,
-  isActiveForNode: props => !!props.effects?.rounding,
-  getPathRenderer: () => new RoundingPathRenderer()
-});
-
-// Isometric effect
-EffectsRegistry.register({
-  isActiveForEdge: () => false,
-  isActiveForNode: props => !!props.effects?.isometric?.enabled,
-  transformPoint: (bounds: Box, props: NodePropsForRendering, p: Point) =>
-    makeIsometricTransform(bounds, props).point(p),
-  getExtraSVGElements: (node: DiagramNode, _shapeNodes: VNode[]) =>
-    isometricBaseShape(
-      node.bounds,
-      makeIsometricTransform(node.bounds, node.renderProps),
-      node.renderProps
-    )
-});
-
-// Reflection effect
-EffectsRegistry.register({
-  isActiveForEdge: () => false,
-  isActiveForNode: props => !!props.effects?.reflection,
-  getExtraSVGElements: (node: DiagramNode, shapeNodes: VNode[]) => makeReflection(node, shapeNodes)
-});
-
-// Blur effect
-EffectsRegistry.register({
-  isActiveForEdge: () => false,
-  isActiveForNode: props => !!props.effects?.blur,
-  getSVGFilter: props => [makeBlur(props.effects.blur)]
-});
-
-// Opacity effect
-EffectsRegistry.register({
-  isActiveForEdge: () => false,
-  isActiveForNode: props => props.effects?.opacity !== 1,
-  getSVGFilter: props => [makeOpacity(props.effects.opacity)]
-});
-
-// Shadow effect
-EffectsRegistry.register({
-  isActiveForEdge: () => false,
-  isActiveForNode: props => !!props.shadow?.enabled,
-  getCSSFilter: props => makeShadowFilter(props.shadow)
-});

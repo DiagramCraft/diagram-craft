@@ -17,6 +17,7 @@ import {
 import { AppConfig, type StencilRegistryConfig } from './appConfig';
 import { ElectronIntegration } from './electron';
 import { Autosave } from './react-app/autosave/Autosave';
+import { registerDefaultEffects } from '@diagram-craft/canvas/effects/effects';
 
 ELECTRON: {
   if (window.electronAPI) {
@@ -35,6 +36,8 @@ for (let i = 0; i < stencilRegistry.length; i++) {
 registerDrawioBaseNodeTypes(nodeRegistry);
 
 const edgeRegistry = defaultEdgeRegistry();
+
+registerDefaultEffects();
 
 const diagramFactory = makeDefaultDiagramFactory();
 const documentFactory = makeDefaultDocumentFactory(nodeRegistry, edgeRegistry);

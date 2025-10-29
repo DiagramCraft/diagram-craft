@@ -26,7 +26,7 @@ import { Zoom } from './zoom';
 import { renderElement } from './renderElement';
 import { CanvasDomHelper } from '../utils/canvasDomHelper';
 import type { EdgeCapability } from '@diagram-craft/model/edgeDefinition';
-import { EffectsRegistry } from '../effects/effects';
+import { EffectsRegistry } from '@diagram-craft/model/effect';
 
 export type EdgeComponentProps = {
   element: DiagramEdge;
@@ -48,10 +48,10 @@ const makeArrowMarker = (
 
   let path = arrow.path;
   const effect = EffectsRegistry.all().filter(
-    e => e.isActiveForEdge(edgeProps) && e.modifyArrow
+    e => e.isUsedForEdge(edgeProps) && e.getArrowPath
   )?.[0];
   if (effect) {
-    path = effect.modifyArrow!(id, arrow);
+    path = effect.getArrowPath!(id, arrow);
   }
 
   return svg.marker(

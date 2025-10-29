@@ -51,7 +51,7 @@ import { CRDTProp } from '@diagram-craft/collaboration/datatypes/crdtProp';
 import { MappedCRDTProp } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtProp';
 import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
 import type { LabelNode } from './labelNode';
-import { EffectsRegistry } from '@diagram-craft/canvas/effects/effects';
+import { EffectsRegistry } from './effect';
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;
@@ -947,7 +947,7 @@ export class SimpleDiagramNode
 
     let adjustedPoint = point;
     for (const e of EffectsRegistry.all()) {
-      if (e.isActiveForNode(this.renderProps) && e.transformPoint) {
+      if (e.isUsedForNode(this.renderProps) && e.transformPoint) {
         adjustedPoint = e.transformPoint(this.bounds, this.renderProps, point);
       }
     }
