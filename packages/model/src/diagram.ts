@@ -25,6 +25,7 @@ import { CRDTProp } from '@diagram-craft/collaboration/datatypes/crdtProp';
 import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
 import { type DiagramBounds, DEFAULT_CANVAS } from './diagramBounds';
 import type { Guide } from './guides';
+import { SpatialIndex } from './spatialIndex';
 
 export type DiagramIteratorOpts = {
   nest?: boolean;
@@ -98,6 +99,7 @@ export type DiagramCRDT = {
 export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentConsumer {
   // Transient properties
   #document: DiagramDocument | undefined;
+  #spatialIndex: SpatialIndex | undefined;
 
   readonly uid = newid();
   readonly _crdt: WatchableValue<CRDTMap<DiagramCRDT>>;
@@ -300,6 +302,13 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   register(element: DiagramElement) {
     if (isNode(element)) this.nodeLookup.set(element.id, element);
     else if (isEdge(element)) this.edgeLookup.set(element.id, element);
+  }
+
+  get spatialIndex(): SpatialIndex {
+    if (!this.#spatialIndex) {
+      this.#spatialIndex = new SpatialIndex(this);
+    }
+    return this.#spatialIndex;
   }
 
   get bounds() {

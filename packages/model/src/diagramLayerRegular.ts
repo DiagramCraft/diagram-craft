@@ -9,12 +9,14 @@ import { watch } from '@diagram-craft/utils/watchableValue';
 import { ElementFactory } from './elementFactory';
 import { MappedCRDTOrderedMap } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import type { CRDTMap } from '@diagram-craft/collaboration/crdt';
+import { SpatialIndex } from './spatialIndex';
 
 registerElementFactory('node', (id, layer, _, c) => ElementFactory.emptyNode(id, layer, c));
 registerElementFactory('edge', (id, layer, _, c) => ElementFactory.emptyEdge(id, layer, c));
 
 export class RegularLayer extends Layer<RegularLayer> {
   #elements: MappedCRDTOrderedMap<DiagramElement, DiagramElementCRDT>;
+  #spatialIndex: SpatialIndex | undefined;
 
   constructor(
     id: string,
@@ -56,6 +58,13 @@ export class RegularLayer extends Layer<RegularLayer> {
 
   get elements(): ReadonlyArray<DiagramElement> {
     return this.#elements.values;
+  }
+
+  get spatialIndex(): SpatialIndex {
+    if (!this.#spatialIndex) {
+      this.#spatialIndex = new SpatialIndex(this);
+    }
+    return this.#spatialIndex;
   }
 
   resolve() {
