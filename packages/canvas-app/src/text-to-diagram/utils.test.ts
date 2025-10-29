@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vitest';
 import { collectElementIds } from './utils';
-import type { ParsedElement } from './parser';
+import type { ParsedElement } from './types';
 
 describe('utils', () => {
   describe('collectElementIds', () => {

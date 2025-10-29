@@ -7,7 +7,7 @@ import type {
 import { TestModel } from '@diagram-craft/model/test-support/testModel';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { AnchorEndpoint, ConnectedEndpoint } from '@diagram-craft/model/endpoint';
-import type { ParsedElement } from './parser';
+import type { ParsedElement } from './types';
 import { isEdge, isNode } from '@diagram-craft/model/diagramElement';
 
 const { parsePropsString, parseMetadataString, updateOrCreateLabelNode } = _test;

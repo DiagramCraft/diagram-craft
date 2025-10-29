@@ -1,5 +1,5 @@
 import { MultiMap } from '@diagram-craft/utils/multimap';
-import type { ParsedElement } from './parser';
+import type { ParsedElement } from './types';
 
 /**
  * Recursively collect all element IDs and their line numbers from parsed elements

@@ -1,5 +1,7 @@
 import { describe, test, expect } from 'vitest';
-import { parse } from './parser';
+import { defaultParser } from './parser';
+
+const parse = (text: string) => defaultParser.parse(text);
 
 describe('parser', () => {
   test('parses simple node', () => {

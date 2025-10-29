@@ -8,10 +8,9 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { assert } from '@diagram-craft/utils/assert';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbCheck, TbRestore } from 'react-icons/tb';
-import { parse, type ParseErrors } from '@diagram-craft/canvas-app/text-to-diagram/parser';
+import { type ParseErrors } from '@diagram-craft/canvas-app/text-to-diagram/types';
 import { textToDiagram } from '@diagram-craft/canvas-app/text-to-diagram/textToDiagram';
-import { diagramToText } from '@diagram-craft/canvas-app/text-to-diagram/diagramToText';
-import { applySyntaxHighlighting } from '@diagram-craft/canvas-app/text-to-diagram/syntaxHighlighter';
+import { FormatRegistry } from '@diagram-craft/canvas-app/text-to-diagram/registry';
 
 export const TextToolWindow = () => {
   const diagram = useDiagram();
@@ -25,20 +24,26 @@ export const TextToolWindow = () => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const parseTimer = useRef<ReturnType<typeof setTimeout>>();
+  const format = FormatRegistry['default'];
 
-  const parseText = useCallback((lines: string[]) => {
-    const text = lines.join('\n');
-    const result = parse(text);
-    setErrors(result.errors);
-  }, []);
+  const parseText = useCallback(
+    (lines: string[]) => {
+      const text = lines.join('\n');
+      if (!format) throw new Error('Default format not found');
+      const result = format.parser.parse(text);
+      setErrors(result.errors);
+    },
+    [format]
+  );
 
   const updateLines = useCallback(() => {
     const layer = diagram.activeLayer;
-    const newLines = isRegularLayer(layer) ? diagramToText(layer) : [];
+    if (!format) throw new Error('Default format not found');
+    const newLines = isRegularLayer(layer) ? format.serializer.serialize(layer) : [];
     setLines(newLines);
     setErrors(new Map<number, string>());
     setDirty(false);
-  }, [diagram]);
+  }, [diagram, format]);
 
   useEffect(() => updateLines(), [updateLines]);
 
@@ -51,7 +56,8 @@ export const TextToolWindow = () => {
 
   const applyChanges = useCallback(() => {
     const text = lines.join('\n');
-    const result = parse(text);
+    if (!format) throw new Error('Default format not found');
+    const result = format.parser.parse(text);
     if (result.errors.size > 0) {
       setErrors(result.errors);
       return;
@@ -60,7 +66,7 @@ export const TextToolWindow = () => {
     textToDiagram(result.elements, diagram);
 
     updateLines();
-  }, [diagram, lines, updateLines]);
+  }, [diagram, lines, updateLines, format]);
 
   const onChange = useCallback(
     (text: string) => {
@@ -152,7 +158,7 @@ export const TextToolWindow = () => {
             mode={'headless-no-padding'}
             id={'text'}
             title={'Text'}
-            // @ts-ignore
+            // @ts-expect-error - anchorName is a new CSS property
             style={{ anchorName: '--content' }}
           >
             <div className={styles.textEditorContainer}>
@@ -174,7 +180,12 @@ export const TextToolWindow = () => {
                 <code
                   ref={codeElementRef}
                   dangerouslySetInnerHTML={{
-                    __html: applySyntaxHighlighting(lines, errors).join('\n')
+                    __html: (() => {
+                      const highlighter = format.syntaxHighlighter;
+                      return highlighter
+                        ? highlighter.highlight(lines, errors).join('\n')
+                        : lines.join('\n');
+                    })()
                   }}
                 />
               </pre>

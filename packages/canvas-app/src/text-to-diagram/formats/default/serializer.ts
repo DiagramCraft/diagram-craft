@@ -1,6 +1,7 @@
 import { type DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import { ConnectedEndpoint } from '@diagram-craft/model/endpoint';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
+import type { DiagramSerializer } from '../../types';
 
 type ElementMetadata = {
   name?: string;
@@ -135,11 +136,16 @@ const elementToText = (element: DiagramElement, lines: string[], indent = '') =>
   }
 };
 
-export const diagramToText = (layer: RegularLayer) => {
-  const newLines: string[] = [];
-  for (const element of layer.elements) {
-    elementToText(element, newLines);
-    newLines.push('');
+/**
+ * Default format serializer implementation
+ */
+export const defaultSerializer: DiagramSerializer = {
+  serialize(layer: RegularLayer): string[] {
+    const newLines: string[] = [];
+    for (const element of layer.elements) {
+      elementToText(element, newLines);
+      newLines.push('');
+    }
+    return newLines;
   }
-  return newLines;
 };

@@ -14,7 +14,7 @@ import {
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { deepMerge } from '@diagram-craft/utils/object';
-import { type ParsedElement } from './parser';
+import { type ParsedElement } from './types';
 import { newid } from '@diagram-craft/utils/id';
 import { collectElementIds } from './utils';
 import { placeNode } from '@diagram-craft/canvas/utils/placeNode';
