@@ -1,20 +1,19 @@
 import type { Point } from '@diagram-craft/geometry/point';
-import type { NodePropsForRendering } from '@diagram-craft/model/diagramNode';
-import { makeIsometricTransform } from './isometric';
+import type { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
+import { isometricBaseShape, makeIsometricTransform } from './isometric';
 import type { Box } from '@diagram-craft/geometry/box';
 import type { VNode } from '../component/vdom';
-import type { PathRenderer } from '../shape/PathRenderer';
 import { makeBlur } from './blur';
 import { makeOpacity } from './opacity';
 import { makeShadowFilter } from './shadow';
+import { makeReflection } from './reflection';
 
 type Effect = {
   isActiveForNode: (props: NodePropsForRendering) => boolean;
   transformPoint?: (bounds: Box, props: NodePropsForRendering, p: Point) => Point;
   getSVGFilter?: (props: NodePropsForRendering) => VNode[];
   getCSSFilter?: (props: NodePropsForRendering) => string;
-  transformShapes?: (shapes: VNode[], props: NodePropsForRendering) => VNode[];
-  getPathRenderer?: (props: NodePropsForRendering) => PathRenderer | undefined;
+  getExtraSVGElements?: (node: DiagramNode, shapeNodes: VNode[]) => VNode[];
 };
 
 const effects: Array<[Effect, number]> = [];
@@ -40,7 +39,19 @@ export const EffectsRegistry = {
 EffectsRegistry.register({
   isActiveForNode: props => props.effects.isometric.enabled,
   transformPoint: (bounds: Box, props: NodePropsForRendering, p: Point) =>
-    makeIsometricTransform(bounds, props).point(p)
+    makeIsometricTransform(bounds, props).point(p),
+  getExtraSVGElements: (node: DiagramNode, _shapeNodes: VNode[]) =>
+    isometricBaseShape(
+      node.bounds,
+      makeIsometricTransform(node.bounds, node.renderProps),
+      node.renderProps
+    )
+});
+
+// Reflection effect
+EffectsRegistry.register({
+  isActiveForNode: props => !!props.effects.reflection,
+  getExtraSVGElements: (node: DiagramNode, shapeNodes: VNode[]) => makeReflection(node, shapeNodes)
 });
 
 // Blur effect

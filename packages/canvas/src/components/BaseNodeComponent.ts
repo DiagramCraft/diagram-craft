@@ -9,7 +9,6 @@ import { ShapeBuilder } from '../shape/ShapeBuilder';
 import { makeControlPoint } from '../shape/ShapeControlPoint';
 import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
-import { makeReflection } from '../effects/reflection';
 import { Context, OnDoubleClick, OnMouseDown } from '../context';
 import { getHighlights } from '../highlight';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -18,7 +17,7 @@ import { DeepRequired } from '@diagram-craft/utils/types';
 import { INDICATORS } from './indicators';
 import { Box, WritableBox } from '@diagram-craft/geometry/box';
 import { isEmptyString } from '@diagram-craft/utils/strings';
-import { isometricBaseShape, makeIsometricTransform } from '../effects/isometric';
+import { makeIsometricTransform } from '../effects/isometric';
 import { CanvasDomHelper } from '../utils/canvasDomHelper';
 import { EffectsRegistry } from '../effects/effects';
 
@@ -229,7 +228,9 @@ export class BaseNodeComponent<
       ? makeIsometricTransform(props.element.bounds, props.element.renderProps)
       : undefined;
 
-    const cssFilter = EffectsRegistry.all()
+    const effects = EffectsRegistry.all();
+
+    const cssFilter = effects
       .filter(e => e.isActiveForNode(nodeProps) && e.getCSSFilter)
       .map(e => e.getCSSFilter!(nodeProps))
       .join(' ');
@@ -237,7 +238,7 @@ export class BaseNodeComponent<
       style.filter = cssFilter;
     }
 
-    const svgFilters = EffectsRegistry.all()
+    const svgFilters = effects
       .filter(e => e.isActiveForNode(nodeProps) && e.getSVGFilter)
       .flatMap(e => e.getSVGFilter!(nodeProps));
     if (svgFilters.length > 0) {
@@ -247,12 +248,11 @@ export class BaseNodeComponent<
       children.push(svg.filter({ id: filterId, filterUnits: 'objectBoundingBox' }, ...svgFilters));
     }
 
-    if (isIsometric) {
-      children.push(...isometricBaseShape(props.element.bounds, isometricTransform!, nodeProps));
-    }
-
-    if (nodeProps.effects.reflection) {
-      children.push(...makeReflection(props.element, shapeVNodes));
+    const extraNodes = effects
+      .filter(e => e.isActiveForNode(nodeProps) && e.getExtraSVGElements)
+      .flatMap(e => e.getExtraSVGElements!(props.element, shapeVNodes));
+    if (extraNodes.length > 0) {
+      children.push(...extraNodes);
     }
 
     children.push(...shapeVNodes);
