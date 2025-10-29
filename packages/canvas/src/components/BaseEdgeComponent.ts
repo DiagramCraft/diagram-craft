@@ -47,11 +47,9 @@ const makeArrowMarker = (
   const fillColor = edgeProps.fill.color;
 
   let path = arrow.path;
-  const effect = EffectsRegistry.all().filter(
-    e => e.isUsedForEdge(edgeProps) && e.getArrowPath
-  )?.[0];
+  const effect = EffectsRegistry.get(undefined, edgeProps, 'getArrowPath')?.[0];
   if (effect) {
-    path = effect.getArrowPath!(id, arrow);
+    path = effect.getArrowPath(id, arrow);
   }
 
   return svg.marker(

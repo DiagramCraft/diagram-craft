@@ -345,12 +345,9 @@ export class ShapeBuilder {
   private getPathRenderer(propsInEffect: ElementProps) {
     // TODO: Can we apply multiple path renderers
     return (
-      EffectsRegistry.all()
-        .filter(
-          e =>
-            (e.isUsedForNode(propsInEffect) || e.isUsedForEdge(propsInEffect)) && e.getPathRenderer
-        )
-        .map(e => e.getPathRenderer!())?.[0] ?? new DefaultPathRenderer()
+      EffectsRegistry.get(propsInEffect, propsInEffect, 'getPathRenderer').map(e =>
+        e.getPathRenderer()
+      )?.[0] ?? new DefaultPathRenderer()
     );
   }
 }

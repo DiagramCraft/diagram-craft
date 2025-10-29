@@ -228,19 +228,16 @@ export class BaseNodeComponent<
       ? makeIsometricTransform(props.element.bounds, props.element.renderProps)
       : undefined;
 
-    const effects = EffectsRegistry.all();
-
-    const cssFilter = effects
-      .filter(e => e.isUsedForNode(nodeProps) && e.getCSSFilter)
-      .map(e => e.getCSSFilter!(nodeProps))
+    const cssFilter = EffectsRegistry.get(nodeProps, undefined, 'getCSSFilter')
+      .map(e => e.getCSSFilter(nodeProps))
       .join(' ');
     if (!isEmptyString(cssFilter)) {
       style.filter = cssFilter;
     }
 
-    const svgFilters = effects
-      .filter(e => e.isUsedForNode(nodeProps) && e.getSVGFilter)
-      .flatMap(e => e.getSVGFilter!(nodeProps));
+    const svgFilters = EffectsRegistry.get(nodeProps, undefined, 'getSVGFilter').flatMap(e =>
+      e.getSVGFilter(nodeProps)
+    );
     if (svgFilters.length > 0) {
       const filterId = `node-${props.element.id}-filter`;
       style.filter = `${style.filter ?? ''} url(#${filterId})`;
@@ -248,9 +245,9 @@ export class BaseNodeComponent<
       children.push(svg.filter({ id: filterId, filterUnits: 'objectBoundingBox' }, ...svgFilters));
     }
 
-    const extraNodes = effects
-      .filter(e => e.isUsedForNode(nodeProps) && e.getExtraSVGElements)
-      .flatMap(e => e.getExtraSVGElements!(props.element, shapeVNodes));
+    const extraNodes = EffectsRegistry.get(nodeProps, undefined, 'getExtraSVGElements').flatMap(e =>
+      e.getExtraSVGElements(props.element, shapeVNodes)
+    );
     if (extraNodes.length > 0) {
       children.push(...extraNodes);
     }

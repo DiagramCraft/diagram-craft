@@ -15,6 +15,18 @@ const effects: Array<[Effect, number]> = [];
 
 export const EffectsRegistry = {
   all: () => effects.map(e => e[0]),
+  get: <K extends keyof Effect>(
+    nodeProps: NodeProps | NodePropsForRendering | undefined,
+    edgeProps: EdgeProps | EdgePropsForRendering | undefined,
+    fn: K
+  ): Array<Omit<Effect, K> & Required<Pick<Effect, K>>> => {
+    return effects
+      .map(e => e[0])
+      .filter(
+        e => (nodeProps && e.isUsedForNode(nodeProps)) || (edgeProps && e.isUsedForEdge(edgeProps))
+      )
+      .filter(e => e[fn]) as unknown as Array<Omit<Effect, K> & Required<Pick<Effect, K>>>;
+  },
   register: (effect: Effect, priority = 0) => {
     // Find the correct insertion index based on priority
     let insertIndex = effects.length;
