@@ -1,7 +1,6 @@
 import { Component } from '../component/component';
 import { VNode } from '../component/vdom';
 import { DASH_PATTERNS } from '../dashPatterns';
-import { makeShadowFilter } from '../effects/shadow';
 import { addFillComponents, makeLinearGradient } from '../shape/shapeFill';
 import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
@@ -230,12 +229,12 @@ export class BaseNodeComponent<
       ? makeIsometricTransform(props.element.bounds, props.element.renderProps)
       : undefined;
 
-    if (nodeProps.shadow.enabled) {
-      style.filter = makeShadowFilter(nodeProps.shadow);
-    }
-
-    if (isIsometric) {
-      children.push(...isometricBaseShape(props.element.bounds, isometricTransform!, nodeProps));
+    const cssFilter = EffectsRegistry.all()
+      .filter(e => e.isActiveForNode(nodeProps) && e.getCSSFilter)
+      .map(e => e.getCSSFilter!(nodeProps))
+      .join(' ');
+    if (!isEmptyString(cssFilter)) {
+      style.filter = cssFilter;
     }
 
     const svgFilters = EffectsRegistry.all()
@@ -248,11 +247,15 @@ export class BaseNodeComponent<
       children.push(svg.filter({ id: filterId, filterUnits: 'objectBoundingBox' }, ...svgFilters));
     }
 
-    if (nodeProps.effects.reflection) {
-      children.push(svg.g({}, ...makeReflection(props.element, shapeVNodes), ...shapeVNodes));
-    } else {
-      children.push(...shapeVNodes);
+    if (isIsometric) {
+      children.push(...isometricBaseShape(props.element.bounds, isometricTransform!, nodeProps));
     }
+
+    if (nodeProps.effects.reflection) {
+      children.push(...makeReflection(props.element, shapeVNodes));
+    }
+
+    children.push(...shapeVNodes);
 
     /* Handle indicators */
     for (const indicator of Object.values(nodeProps.indicators)) {

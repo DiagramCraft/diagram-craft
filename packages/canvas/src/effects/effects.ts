@@ -6,12 +6,13 @@ import type { VNode } from '../component/vdom';
 import type { PathRenderer } from '../shape/PathRenderer';
 import { makeBlur } from './blur';
 import { makeOpacity } from './opacity';
+import { makeShadowFilter } from './shadow';
 
 type Effect = {
   isActiveForNode: (props: NodePropsForRendering) => boolean;
   transformPoint?: (bounds: Box, props: NodePropsForRendering, p: Point) => Point;
   getSVGFilter?: (props: NodePropsForRendering) => VNode[];
-  getCSSFilter?: () => string | undefined;
+  getCSSFilter?: (props: NodePropsForRendering) => string;
   transformShapes?: (shapes: VNode[], props: NodePropsForRendering) => VNode[];
   getPathRenderer?: (props: NodePropsForRendering) => PathRenderer | undefined;
 };
@@ -52,4 +53,10 @@ EffectsRegistry.register({
 EffectsRegistry.register({
   isActiveForNode: props => props.effects.opacity !== 1,
   getSVGFilter: props => [makeOpacity(props.effects.opacity)]
+});
+
+// Shadow effect
+EffectsRegistry.register({
+  isActiveForNode: props => props.shadow.enabled,
+  getCSSFilter: props => makeShadowFilter(props.shadow)
 });
