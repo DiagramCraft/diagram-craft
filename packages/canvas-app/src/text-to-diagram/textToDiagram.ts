@@ -17,6 +17,7 @@ import { deepMerge } from '@diagram-craft/utils/object';
 import { type ParsedElement } from './parser';
 import { newid } from '@diagram-craft/utils/id';
 import { collectElementIds } from './utils';
+import { placeNode } from '@diagram-craft/canvas/utils/placeNode';
 
 /**
  * Parse a props string like "fill.color=#ff0000;stroke.width=2" into a nested object
@@ -151,6 +152,9 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
   // Track elements to be removed
   const elementsToRemove: DiagramElement[] = [];
 
+  // Track last created/processed node for smart placement
+  let lastReferenceNode: DiagramNode | undefined;
+
   // Process removals (elements in diagram but not in parsed data)
   for (const id of existingIds) {
     if (!parsedIds.has(id)) {
@@ -202,6 +206,9 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
             metadata.textStyle = parsedElement.textStylesheet!;
           }, uow);
         }
+
+        // Update reference for next node placement
+        lastReferenceNode = existingElement;
 
         // Process children
         if (parsedElement.children) {
@@ -270,10 +277,20 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
       let newElement: DiagramElement | undefined;
 
       if (parsedElement.type === 'node') {
-        // Create new node at diagram center
-        const centerX = diagram.bounds.x + diagram.bounds.w / 2;
-        const centerY = diagram.bounds.y + diagram.bounds.h / 2;
-        const bounds = { x: centerX - 50, y: centerY - 50, w: 100, h: 100, r: 0 };
+        // Determine initial bounds for the new node
+        let bounds = { x: 0, y: 0, w: 100, h: 100, r: 0 };
+
+        if (lastReferenceNode) {
+          // Use placeNode to find a suitable position relative to the previous node
+          bounds = placeNode(bounds, lastReferenceNode, diagram, {
+            considerAllLayers: false
+          });
+        } else {
+          // First node: place at diagram center
+          const centerX = diagram.bounds.x + diagram.bounds.w / 2;
+          const centerY = diagram.bounds.y + diagram.bounds.h / 2;
+          bounds = { x: centerX - 50, y: centerY - 50, w: 100, h: 100, r: 0 };
+        }
 
         const props: NodePropsForEditing = {};
         const metadata: ElementMetadata = {};
@@ -309,6 +326,11 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
         );
 
         layer.addElement(newElement, uow);
+
+        // Update reference for next node placement
+        if (isNode(newElement)) {
+          lastReferenceNode = newElement;
+        }
 
         // Process children
         if (parsedElement.children) {
