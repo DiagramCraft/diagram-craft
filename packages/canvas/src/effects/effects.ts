@@ -10,10 +10,11 @@ import { makeReflection } from './reflection';
 import { SketchPathRenderer } from './sketch';
 import type { PathRenderer } from '../shape/PathRenderer';
 import { RoundingPathRenderer } from './rounding';
+import type { EdgePropsForRendering } from '@diagram-craft/model/diagramEdge';
 
 type Effect = {
-  isActiveForNode: (props: NodeProps) => boolean;
-  isActiveForEdge: (props: EdgeProps) => boolean;
+  isActiveForNode: (props: NodeProps | NodePropsForRendering) => boolean;
+  isActiveForEdge: (props: EdgeProps | EdgePropsForRendering) => boolean;
   transformPoint?: (bounds: Box, props: NodePropsForRendering, p: Point) => Point;
   getSVGFilter?: (props: NodePropsForRendering) => VNode[];
   getCSSFilter?: (props: NodePropsForRendering) => string;

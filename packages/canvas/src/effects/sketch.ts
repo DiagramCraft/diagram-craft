@@ -16,6 +16,7 @@ import { VerifyNotReached } from '@diagram-craft/utils/assert';
 import { round } from '@diagram-craft/utils/math';
 import { DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import { parseSvgPath } from '@diagram-craft/geometry/svgPathUtils';
+import type { ArrowShape } from '../arrowShapes';
 
 export class SketchPathRenderer implements PathRenderer {
   render(el: DiagramElement, path: StyledPath): RenderedStyledPath[] {
@@ -111,7 +112,14 @@ const calculateHachureLines = (
   return dest;
 };
 
-export const parseArrowSvgPath = (path: string): Path[] => {
+export const applySketchEffectToArrow = (id: string, arrow: ArrowShape) => {
+  const seed = hash(new TextEncoder().encode(id));
+  return parseArrowSvgPath(arrow.path)
+    .map(p => asDistortedSvgPath(p, seed, { passes: 2 }))
+    .join(' ');
+};
+
+const parseArrowSvgPath = (path: string): Path[] => {
   const dest: [Point, PathSegment[]][] = [];
   let segments: PathSegment[] = [];
 
@@ -185,7 +193,7 @@ const randDelta = (r: Random, from: number, to: number) => {
   };
 };
 
-export const asDistortedSvgPath = (
+const asDistortedSvgPath = (
   path: Path,
   seed: number,
   opts: {
@@ -245,4 +253,9 @@ export const asDistortedSvgPath = (
     `M ${round(path.start.x)},${round(path.start.y)}` +
     distortedPath.map(e => e.join(' ')).join(' ')
   );
+};
+
+export const _test = {
+  asDistortedSvgPath,
+  parseArrowSvgPath
 };

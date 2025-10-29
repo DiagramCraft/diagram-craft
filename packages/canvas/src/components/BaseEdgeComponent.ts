@@ -4,8 +4,7 @@ import { DeepReadonly, DeepRequired } from '@diagram-craft/utils/types';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
 import { applyLineHops, clipPath } from '@diagram-craft/model/diagramEdgeUtils';
 import * as svg from '../component/vdom-svg';
-import { asDistortedSvgPath, parseArrowSvgPath } from '../effects/sketch';
-import { hash } from '@diagram-craft/utils/hash';
+import { applySketchEffectToArrow } from '../effects/sketch';
 import { VNode } from '../component/vdom';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DRAG_DROP_MANAGER } from '../dragDropManager';
@@ -50,10 +49,7 @@ const makeArrowMarker = (
 
   let path = arrow.path;
   if (sketch) {
-    const seed = hash(new TextEncoder().encode(id));
-    path = parseArrowSvgPath(arrow.path)
-      .map(p => asDistortedSvgPath(p, seed, { passes: 2 }))
-      .join(' ');
+    path = applySketchEffectToArrow(id, arrow);
   }
 
   return svg.marker(
