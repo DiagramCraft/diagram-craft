@@ -37,7 +37,6 @@ import type { RegularLayer } from './diagramLayerRegular';
 import { transformPathList } from '@diagram-craft/geometry/pathListUtils';
 import { WatchableValue } from '@diagram-craft/utils/watchableValue';
 import { unique } from '@diagram-craft/utils/array';
-import { makeIsometricTransform } from '@diagram-craft/canvas/effects/isometric';
 import type { ModificationLayer } from './diagramLayerModification';
 import { getAdjustments } from './diagramLayerUtils';
 import type { NodeDefinition } from './elementDefinitionRegistry';
@@ -52,6 +51,7 @@ import { CRDTProp } from '@diagram-craft/collaboration/datatypes/crdtProp';
 import { MappedCRDTProp } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtProp';
 import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
 import type { LabelNode } from './labelNode';
+import { EffectsRegistry } from '@diagram-craft/canvas/effects/effects';
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;
@@ -944,10 +944,14 @@ export class SimpleDiagramNode
       x: bounds.x + bounds.w * (this.renderProps.geometry.flipH ? 1 - p.x : p.x),
       y: bounds.y + bounds.h * (this.renderProps.geometry.flipV ? 1 - p.y : p.y)
     };
-    // TODO: It would be nice if we could generalize this a bit
-    const adjustedPoint = this.renderProps.effects.isometric.enabled
-      ? makeIsometricTransform(bounds, this.renderProps).point(point)
-      : point;
+
+    let adjustedPoint = point;
+    for (const e of EffectsRegistry.all()) {
+      if (e.isActiveForNode(this.renderProps) && e.transformPoint) {
+        adjustedPoint = e.transformPoint(this.bounds, this.renderProps, point);
+      }
+    }
+
     return respectRotation
       ? Point.rotateAround(adjustedPoint, bounds.r, Box.center(bounds))
       : adjustedPoint;
