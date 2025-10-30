@@ -18,7 +18,8 @@
     "test:watch": "vitest watch",
     "test:bench": "vitest bench --run",
     "lint:tsc": "tsc --noEmit",
-    "lint": "biome lint --max-diagnostics=100 && tsc --noEmit"
+    "lint": "biome lint --max-diagnostics=100 && tsc --noEmit",
+    "doc": "typedoc"
   },
   "keywords": [],
   "author": "Magnus Johansson",
@@ -46,6 +47,8 @@
     "skott": "^0.35.6",
     "syncpack": "^12.4.0",
     "tsx": "^4.20.6",
+    "typedoc": "^0.28.14",
+    "typedoc-github-theme": "^0.3.1",
     "typescript": "^5.9.3",
     "vite-node": "^3.2.4",
     "vite-tsconfig-paths": "^5.1.4",

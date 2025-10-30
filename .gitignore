@@ -48,6 +48,7 @@ node_modules/
 /playground
 
 coverage/
+output/
 
 **/storybook-static
 **/local-tests

@@ -1,0 +1,41 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "name": "Diagram Craft",
+  "out": "output/typedoc",
+  "entryPointStrategy": "packages",
+  "entryPoints": [
+    "packages/geometry",
+    "packages/utils",
+    "packages/model",
+    "packages/canvas",
+    "packages/canvas-app",
+    "packages/canvas-react",
+    "packages/collaboration"
+  ],
+  "useFirstParagraphOfCommentAsSummary": true,
+  "plugin": "typedoc-github-theme",
+  "projectDocuments": [
+    "docs/introduction/*.md",
+    "docs/features/*.md",
+    "docs/reference/*.md",
+    "docs/api/*.md"
+  ],
+  "readme": "docs/intro.md",
+  "categorizeByGroup": false,
+  "defaultCategory": "API",
+  "categoryOrder": ["Introduction", "Features", "Reference", "API"],
+  "navigation": {
+    "includeCategories": true,
+    "includeGroups": true,
+    "includeFolders": true,
+    "compactFolders": false,
+    "excludeReferences": true
+  },
+  "packageOptions": {
+    "entryPointStrategy": "expand",
+    "entryPoints": ["src"],
+    "exclude": ["**/*.test.ts", "**/*.bench.ts", "**/*.fixtures.ts", "**/test-support/**"],
+    "excludePrivate": true,
+    "excludeInternal": true
+  }
+}

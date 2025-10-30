@@ -9,6 +9,7 @@ export type Line = Readonly<{
   to: Point;
 }>;
 
+/** @namespace */
 export const Line = {
   extend: (line: Line, fromLength: number, toLength: number) => {
     const v = Vector.from(line.from, line.to);
