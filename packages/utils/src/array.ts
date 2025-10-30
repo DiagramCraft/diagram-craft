@@ -1,3 +1,8 @@
+/**
+ * @module
+ * @summary Array-related utilities
+ */
+
 import { assert } from './assert';
 
 /**
@@ -149,6 +154,8 @@ export const uniqueWithCount = <T>(
  * @param arr - The array to be processed.
  * @param respectTo - The function used to determine the key for each element.
  * @returns A Map where the keys are the return values of the `respectTo` function and the values are arrays of elements that returned the corresponding key.
+ * @typeParam T - The type of the elements in the input array.
+ * @typeParam K - The type of the grouping keys
  *
  * @example
  * // returns new Map([[1, ['a', 'b']], [2, ['c']]])
