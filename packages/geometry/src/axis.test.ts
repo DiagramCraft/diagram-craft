@@ -13,6 +13,6 @@ describe('Axis', () => {
   });
 
   test('axises', () => {
-    expect(Axis.axises()).toStrictEqual(['h', 'v']);
+    expect(Axis.axes()).toStrictEqual(['h', 'v']);
   });
 });

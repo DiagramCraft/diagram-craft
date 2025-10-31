@@ -1,3 +1,34 @@
+/**
+ * Cubic Bezier curve operations and utilities.
+ *
+ * @example
+ * ```ts
+ * import { CubicBezier, BezierUtils } from '@diagram-craft/geometry/bezier';
+ *
+ * // Create a cubic Bezier curve
+ * const curve = new CubicBezier(
+ *   { x: 0, y: 0 },      // start
+ *   { x: 50, y: 100 },   // control point 1
+ *   { x: 150, y: 100 },  // control point 2
+ *   { x: 200, y: 0 }     // end
+ * );
+ *
+ * // Get point at parameter t (0-1)
+ * const midpoint = curve.point(0.5);
+ *
+ * // Calculate curve length
+ * const length = curve.length();
+ *
+ * // Find intersections with a line
+ * const intersections = curve.intersectsLine(line);
+ *
+ * // Convert SVG arc to Bezier segments
+ * const segments = BezierUtils.fromArc(x1, y1, rx, ry, angle, 0, 1, x2, y2);
+ * ```
+ *
+ * @module
+ */
+
 import { Point } from './point';
 import type { RawCubicSegment } from './pathListBuilder';
 import { Box } from './box';
@@ -99,10 +130,29 @@ const quadraticRoots = (a: number, b: number, c: number) => {
   }
 };
 
-/** @namespace */
+/**
+ * Utility functions for working with Bezier curves.
+ *
+ * @namespace
+ */
 export const BezierUtils = {
-  // For more information of where this Math came from visit:
-  // http://www.w3.org/TR/SVG11/implnote.html#ArcImplementationNotes
+  /**
+   * Converts an SVG arc to cubic Bezier curve segments.
+   *
+   * For more information see: http://www.w3.org/TR/SVG11/implnote.html#ArcImplementationNotes
+   *
+   * @param x1 - Start point x coordinate
+   * @param y1 - Start point y coordinate
+   * @param rx - X-axis radius
+   * @param ry - Y-axis radius
+   * @param angle - Rotation angle in degrees
+   * @param large_arc_flag - Large arc flag (0 or 1)
+   * @param sweep_flag - Sweep direction flag (0 or 1)
+   * @param x2 - End point x coordinate
+   * @param y2 - End point y coordinate
+   * @param recursive - Internal recursion parameters
+   * @returns Array of cubic Bezier segments representing the arc
+   */
   fromArc: (
     x1: number,
     y1: number,
@@ -221,6 +271,14 @@ export const BezierUtils = {
     }
   },
 
+  /**
+   * Calculates the control point for a quadratic Bezier curve given three points.
+   *
+   * @param start - Start point of the curve
+   * @param pointOnPath - A point that should lie on the curve
+   * @param end - End point of the curve
+   * @returns The calculated control point
+   */
   qubicFromThreePoints: (start: Point, pointOnPath: Point, end: Point): Point => {
     const B = pointOnPath;
     const d1 = Point.distance(start, B);
@@ -277,6 +335,12 @@ const recurseIntersection = (c1: CubicBezier, c2: CubicBezier, threshold: number
 
 type Projection = { distance: number; t: number; point: Point };
 
+/**
+ * Represents a cubic Bezier curve with start, end, and two control points.
+ *
+ * Provides methods for curve evaluation, splitting, intersection detection,
+ * and geometric calculations.
+ */
 export class CubicBezier {
   #dp1: Point;
   #dp2: Point;
@@ -285,6 +349,14 @@ export class CubicBezier {
   #bbox: Box | undefined;
   #length: number | undefined;
 
+  /**
+   * Creates a new cubic Bezier curve.
+   *
+   * @param start - Start point of the curve
+   * @param cp1 - First control point
+   * @param cp2 - Second control point
+   * @param end - End point of the curve
+   */
   constructor(
     public readonly start: Point,
     public readonly cp1: Point,
@@ -296,6 +368,12 @@ export class CubicBezier {
     this.#dp3 = { x: (end.x - cp2.x) * 3, y: (end.y - cp2.y) * 3 };
   }
 
+  /**
+   * Evaluates the curve at parameter t.
+   *
+   * @param t - Parameter value (0 = start, 1 = end)
+   * @returns Point on the curve at parameter t
+   */
   point(t: number) {
     const t2 = t * t;
     const t3 = t2 * t;
@@ -308,6 +386,14 @@ export class CubicBezier {
     };
   }
 
+  /**
+   * Samples n points along the curve.
+   *
+   * @param n - Number of points to sample (default: 100)
+   * @param start - Start parameter (default: 0)
+   * @param end - End parameter (default: 1)
+   * @returns Array of sampled points
+   */
   sample(n = 100, start = 0, end = 1): ReadonlyArray<Point> {
     const d = end - start;
     const points: Array<Point> = [];
@@ -317,6 +403,12 @@ export class CubicBezier {
     return points;
   }
 
+  /**
+   * Splits the curve at parameter t into two curves.
+   *
+   * @param t - Parameter value at which to split (0-1)
+   * @returns Tuple of two curves [before t, after t]
+   */
   split(t: number): [CubicBezier, CubicBezier] {
     const t2 = t * t;
     const t3 = t2 * t;
@@ -355,6 +447,12 @@ export class CubicBezier {
     ];
   }
 
+  /**
+   * Calculates the derivative (velocity vector) at parameter t.
+   *
+   * @param t - Parameter value (0-1)
+   * @returns Derivative vector at t
+   */
   derivative(t: number) {
     const mt = 1 - t;
     return {
@@ -363,18 +461,35 @@ export class CubicBezier {
     };
   }
 
+  /**
+   * Calculates the unit tangent vector at parameter t.
+   *
+   * @param t - Parameter value (0-1)
+   * @returns Normalized tangent vector at t
+   */
   tangent(t: number) {
     const d = this.derivative(t);
     const l = Math.sqrt(d.x * d.x + d.y * d.y);
     return { x: d.x / l, y: d.y / l };
   }
 
+  /**
+   * Calculates the unit normal vector at parameter t.
+   *
+   * @param t - Parameter value (0-1)
+   * @returns Normalized normal vector at t (perpendicular to tangent)
+   */
   normal(t: number) {
     const d = this.derivative(t);
     const l = Math.sqrt(d.x * d.x + d.y * d.y);
     return { x: -d.y / l, y: d.x / l };
   }
 
+  /**
+   * Finds extreme points (minimum/maximum x and y values) on the curve.
+   *
+   * @returns Object with arrays of t values for x and y extremes
+   */
   extreme() {
     const a_x = this.#dp1.x - 2 * this.#dp2.x + this.#dp3.x;
     const a_y = this.#dp1.y - 2 * this.#dp2.y + this.#dp3.y;
@@ -386,6 +501,13 @@ export class CubicBezier {
     return { x: roots_x, y: roots_y };
   }
 
+  /**
+   * Calculates the tight bounding box for the curve.
+   *
+   * Uses extreme points to compute an accurate bounding box. Result is cached.
+   *
+   * @returns Bounding box containing the curve
+   */
   bbox() {
     if (this.#bbox) return this.#bbox;
 
@@ -413,6 +535,13 @@ export class CubicBezier {
     return this.#bbox;
   }
 
+  /**
+   * Calculates a fast, coarse bounding box from control points.
+   *
+   * Faster than bbox() but less tight. Useful for quick intersection tests.
+   *
+   * @returns Coarse bounding box containing all control points
+   */
   coarseBbox() {
     const minX = Math.min(this.start.x, this.cp1.x, this.cp2.x, this.end.x);
     const maxX = Math.max(this.start.x, this.cp1.x, this.cp2.x, this.end.x);
@@ -421,6 +550,13 @@ export class CubicBezier {
     return { x: minX, y: minY, w: maxX - minX, h: maxY - minY, r: 0 };
   }
 
+  /**
+   * Calculates the arc length of the curve.
+   *
+   * Uses Gauss-Legendre quadrature for accurate length calculation. Result is cached.
+   *
+   * @returns Total length of the curve
+   */
   length() {
     if (this.#length) return this.#length;
 
@@ -440,6 +576,12 @@ export class CubicBezier {
     return this.#length;
   }
 
+  /**
+   * Finds the parameter t at a given arc length along the curve.
+   *
+   * @param l - Arc length from the start of the curve
+   * @returns Parameter t (0-1) at the specified length
+   */
   tAtLength(l: number) {
     const len = this.length() / 2; // this.#length ?? 1000;
 
@@ -460,10 +602,22 @@ export class CubicBezier {
     return 1;
   }
 
+  /**
+   * Calculates the arc length from the start to parameter t.
+   *
+   * @param t - Parameter value (0-1)
+   * @returns Arc length from start to t
+   */
   lengthAtT(t: number) {
     return this.split(t)[0].length();
   }
 
+  /**
+   * Checks if this curve's bounding box intersects another curve's bounding box.
+   *
+   * @param other - Another cubic Bezier curve
+   * @returns True if bounding boxes intersect
+   */
   bboxIntersects(other: CubicBezier) {
     return (
       // Note, not entirely sure if this is 100% correct, but as far as I can understand,
@@ -475,11 +629,25 @@ export class CubicBezier {
     );
   }
 
+  /**
+   * Checks if a point lies on the curve within a threshold.
+   *
+   * @param p - Point to test
+   * @param threshold - Maximum distance for point to be considered "on" the curve (default: 0.1)
+   * @returns True if point is on the curve
+   */
   isOn(p: Point, threshold = 0.1) {
     const pp = this.projectPoint(p, 0.0001);
     return pp.distance < threshold;
   }
 
+  /**
+   * Finds the overlapping segment between this curve and another curve.
+   *
+   * @param other - Another cubic Bezier curve
+   * @param threshold - Maximum distance for curves to be considered overlapping (default: 0.1)
+   * @returns The overlapping curve segment, or undefined if no overlap
+   */
   overlap(other: CubicBezier, threshold = 0.1) {
     // Calculate the cubic bezier, if it exists, that overlaps both this
     // and the other cubic bezier.
@@ -537,6 +705,13 @@ export class CubicBezier {
     return b.split(startT / endT)[1];
   }
 
+  /**
+   * Finds intersection points between this curve and another Bezier curve.
+   *
+   * @param other - Another cubic Bezier curve
+   * @param threshold - Minimum detail level for intersection detection (default: 0.1)
+   * @returns Array of intersection points
+   */
   intersectsBezier(other: CubicBezier, threshold = 0.1) {
     if (!this.bboxIntersects(other)) return [];
 
@@ -554,6 +729,14 @@ export class CubicBezier {
     return d.length === 0 ? [] : d;
   }
 
+  /**
+   * Finds intersection points between this curve and a line segment.
+   *
+   * Uses cubic equation solving for accurate intersection detection.
+   *
+   * @param line - Line segment to test for intersections
+   * @returns Array of intersection points, or undefined if no intersections
+   */
   intersectsLine(line: Line) {
     const min_x = Math.min(line.from.x, line.to.x);
     const max_x = Math.max(line.from.x, line.to.x);
@@ -608,6 +791,16 @@ export class CubicBezier {
     return res.length === 0 ? undefined : res;
   }
 
+  /**
+   * Projects a point onto the curve, finding the closest point on the curve.
+   *
+   * Uses iterative refinement with sampling to find the parameter t
+   * that minimizes the distance to the given point.
+   *
+   * @param p - Point to project onto the curve
+   * @param precision - Precision for the search (default: 0.001)
+   * @returns Projection containing distance, parameter t, and the closest point on curve
+   */
   projectPoint(p: Point, precision = 0.001): Projection {
     // Note: micro-benchmarking suggests this is a good starting point
     const numberOfSamples = 10;
