@@ -1,26 +1,105 @@
+/**
+ * Transformation system for applying geometric transformations to points and boxes.
+ *
+ * This module provides a composable transformation system with support for translation,
+ * rotation, and scaling. Transformations can be chained and inverted.
+ *
+ * @example
+ * ```ts
+ * import { Translation, Rotation, Scale, Transform } from '@diagram-craft/geometry/transform';
+ *
+ * // Apply a single transformation
+ * const translation = new Translation({ x: 10, y: 20 });
+ * const point = { x: 5, y: 5 };
+ * const translated = translation.apply(point); // { x: 15, y: 25 }
+ *
+ * // Chain multiple transformations
+ * const box = { x: 0, y: 0, w: 100, h: 100, r: 0 };
+ * const transformed = Transform.box(
+ *   box,
+ *   new Translation({ x: 10, y: 20 }),
+ *   new Rotation(Math.PI / 4),
+ *   new Scale(2, 2)
+ * );
+ *
+ * // Invert a transformation
+ * const inverse = translation.invert();
+ * const original = inverse.apply(translated); // Back to { x: 5, y: 5 }
+ *
+ * // Use factory methods
+ * const transforms = TransformFactory.fromTo(
+ *   { x: 0, y: 0, w: 100, h: 100, r: 0 },
+ *   { x: 50, y: 50, w: 200, h: 200, r: Math.PI / 2 }
+ * );
+ * const result = Transform.box(box, ...transforms);
+ *
+ * // Rotate around a specific point
+ * const rotateTransforms = TransformFactory.rotateAround(Math.PI / 4, { x: 50, y: 50 });
+ * ```
+ *
+ * @module
+ */
+
 import { Vector } from './vector';
 import { Point } from './point';
 import { Box } from './box';
 import { round } from '@diagram-craft/utils/math';
 import { assert } from '@diagram-craft/utils/assert';
 
+/**
+ * Interface for geometric transformations that can be applied to points or boxes.
+ *
+ * All transformations support application to both Point and Box types, and can be inverted.
+ */
 export interface Transform {
+  /** Applies the transformation to a box */
   apply(b: Box): Box;
+  /** Applies the transformation to a point */
   apply(b: Point): Point;
+  /** Applies the transformation to a box or point */
   apply(b: Box | Point): Box | Point;
+  /** Returns the inverse transformation */
   invert(): Transform;
 }
 
-/** @namespace */
+/**
+ * Utility functions for applying transformations.
+ *
+ * @namespace
+ */
 export const Transform = {
+  /**
+   * Applies a sequence of transformations to a box.
+   *
+   * Transformations are applied left-to-right (first transformation is applied first).
+   *
+   * @param b The box to transform
+   * @param transforms The transformations to apply in order
+   * @returns The transformed box
+   */
   box: (b: Box, ...transforms: Transform[]): Box => {
     return transforms.reduce((b, t) => t.apply(b), b);
   },
+
+  /**
+   * Applies a sequence of transformations to a point.
+   *
+   * Transformations are applied left-to-right (first transformation is applied first).
+   *
+   * @param b The point to transform
+   * @param transforms The transformations to apply in order
+   * @returns The transformed point
+   */
   point: (b: Point, ...transforms: Transform[]): Point => {
     return transforms.reduce((b, t) => t.apply(b), b);
   }
 };
 
+/**
+ * A no-operation transformation that returns the input unchanged.
+ *
+ * Useful as a placeholder or when a transformation is conditionally needed.
+ */
 export class Noop implements Transform {
   apply(b: Box): Box;
   apply(b: Point): Point;

@@ -1,3 +1,36 @@
+/**
+ * Rectangle (box) geometry utilities with support for rotation.
+ *
+ * @example
+ * ```ts
+ * import { Box } from '@diagram-craft/geometry/box';
+ *
+ * // Create a box
+ * const nodeBox = { x: 100, y: 100, w: 200, h: 150, r: 0 };
+ *
+ * // Calculate center point
+ * const center = Box.center(nodeBox);
+ *
+ * // Check if box contains a point
+ * if (Box.contains(nodeBox, mousePosition)) {
+ *   console.log('Clicked on node');
+ * }
+ *
+ * // Get bounding box of multiple shapes
+ * const bounds = Box.boundingBox([box1, box2, box3]);
+ *
+ * // Check intersection
+ * if (Box.intersects(nodeBox, selectionBox)) {
+ *   console.log('Node is selected');
+ * }
+ *
+ * // Get corners for rotated box
+ * const corners = Box.corners(nodeBox);
+ * ```
+ *
+ * @module
+ */
+
 import { Point } from './point';
 import { Polygon } from './polygon';
 import { Direction } from './direction';
@@ -8,8 +41,9 @@ import { round } from '@diagram-craft/utils/math';
 import { assert } from '@diagram-craft/utils/assert';
 
 /**
- * Represents a rectangle with position, dimensions, and rotation
- * A Box is a combination of a Point (x, y), an Extent (w, h), and a rotation (r)
+ * Represents a rectangle with position, dimensions, and rotation.
+ *
+ * A Box is a combination of a Point (x, y), an Extent (w, h), and a rotation (r).
  */
 export type Box = Point & Extent & Readonly<{ r: number; _discriminator?: 'ro' }>;
 
@@ -34,7 +68,11 @@ export const WritableBox = {
   }
 };
 
-/** @namespace */
+/**
+ * Utility functions for working with Box objects.
+ *
+ * @namespace
+ */
 export const Box = {
   /**
    * Returns a copy of the box with rotation set to 0
@@ -205,6 +243,12 @@ export const Box = {
     return corners.map(c => Point.rotateAround(c, box.r, Box.center(box)));
   },
 
+  /**
+   * Calculates the two opposite corners of a box (top-left and bottom-right).
+   *
+   * @param box The box
+   * @returns Array of two corner points (top-left and bottom-right)
+   */
   oppositeCorners: (box: Box) => {
     const corners = [
       { x: box.x, y: box.y },
@@ -259,6 +303,15 @@ export const Box = {
     }
   },
 
+  /**
+   * Expands or shrinks a box by a given amount on all sides.
+   *
+   * Positive amounts expand the box, negative amounts shrink it.
+   *
+   * @param box The box to grow
+   * @param amount The amount to grow (positive) or shrink (negative) on each side
+   * @returns A new box expanded or shrunk by the specified amount
+   */
   grow: (box: Box, amount: number): Box => {
     return {
       x: box.x - amount,

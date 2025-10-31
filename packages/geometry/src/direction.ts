@@ -1,3 +1,31 @@
+/**
+ * Cardinal direction types and utilities.
+ *
+ * @example
+ * ```ts
+ * import { Direction } from '@diagram-craft/geometry/direction';
+ *
+ * // Determine edge connection side from angle
+ * const side = Direction.fromAngle(edgeAngle);
+ *
+ * // Get opposite side for edge routing
+ * const exitSide = Direction.opposite('n'); // 's'
+ *
+ * // Convert direction to angle for positioning
+ * const angle = Direction.toAngle('e'); // 0 radians
+ *
+ * // Determine direction from mouse drag vector
+ * const resizeDirection = Direction.fromVector({ x: 10, y: -5 }); // 'e'
+ *
+ * // Iterate over all sides for anchor points
+ * for (const dir of Direction.all()) {
+ *   createAnchorPoint(node, dir);
+ * }
+ * ```
+ *
+ * @module
+ */
+
 import { Point } from './point';
 import { Angle } from './angle';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
@@ -38,7 +66,11 @@ export function assertFullDirectionOrUndefined(
   }
 }
 
-/** @namespace */
+/**
+ * Utility functions for working with cardinal directions.
+ *
+ * @namespace
+ */
 export const Direction = {
   /**
    * Returns the opposite cardinal direction.

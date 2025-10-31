@@ -1,3 +1,42 @@
+/**
+ * Builder for constructing paths programmatically with support for transformations and SVG parsing.
+ *
+ * PathListBuilder provides a fluent API for creating complex paths from lines, curves, and arcs.
+ * It supports transformations, SVG path parsing, and multiple path segments.
+ *
+ * @example
+ * ```ts
+ * import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
+ *
+ * // Build a simple rectangle
+ * const rect = new PathListBuilder()
+ *   .moveTo({ x: 0, y: 0 })
+ *   .lineTo({ x: 100, y: 0 })
+ *   .lineTo({ x: 100, y: 100 })
+ *   .lineTo({ x: 0, y: 100 })
+ *   .close();
+ *
+ * // Build a path with curves
+ * const curve = new PathListBuilder()
+ *   .moveTo({ x: 0, y: 50 })
+ *   .cubicTo({ x: 100, y: 50 }, { x: 25, y: 0 }, { x: 75, y: 100 });
+ *
+ * // Parse from SVG path string
+ * const fromSvg = PathListBuilder.fromString('M 0 0 L 100 100 C 150 150 200 200 250 250');
+ *
+ * // Apply transformations
+ * const scaled = new PathListBuilder()
+ *   .moveTo({ x: 0, y: 0 })
+ *   .lineTo({ x: 10, y: 10 })
+ *   .withTransform(TransformFactory.scale(2, 2));
+ *
+ * // Get the result as a PathList
+ * const paths = rect.getPaths();
+ * ```
+ *
+ * @module
+ */
+
 import { Point } from './point';
 import { Box } from './box';
 import { Path } from './path';
@@ -68,6 +107,11 @@ type RawCurveSegment = ['T', number, number];
  */
 type RawQuadSegment = ['Q', number, number, number, number];
 
+/**
+ * Union type representing all possible raw path segment types.
+ *
+ * This includes lines, cubic curves, quadratic curves, smooth curves, and arcs.
+ */
 export type RawSegment =
   | RawCubicSegment
   | RawLineSegment
@@ -75,28 +119,41 @@ export type RawSegment =
   | RawCurveSegment
   | RawQuadSegment;
 
-/**
- * A function that creates a transformation from a unit local coordinate system
- * to a specified box's coordinate system, disregarding rotation.
- */
-export const fromUnitLCS = (b: Box) =>
-  TransformFactory.fromTo({ x: 0, y: 0, w: 1, h: 1, r: 0 }, Box.withoutRotation(b));
-
-/**
- * Converts a given box to a unit bounding box in local coordinate space (LCS).
- *
- * This function takes a box object, defined with specific dimensions and position,
- * and transforms it into a unit box with normalized dimensions and position.
- * The resulting unit box has dimensions `w: 1, h: 1`, is positioned at `x: 0, y: 0`,
- * and has a rotation of `r: 0` in local coordinate space.
- */
-export const toUnitLCS = (b: Box) => TransformFactory.fromTo(b, { x: 0, y: 0, w: 1, h: 1, r: 0 });
-
 type RawPath = {
   start: Point | undefined;
   instructions: RawSegment[];
 };
 
+/**
+ * Creates a transformation from unit local coordinate system (0,0 to 1,1) to a box's coordinate system.
+ *
+ * This is useful for mapping normalized coordinates to actual pixel coordinates within a box.
+ * The rotation of the box is disregarded.
+ *
+ * @param b The target box
+ * @returns Array of transforms to apply
+ */
+export const fromUnitLCS = (b: Box) =>
+  TransformFactory.fromTo({ x: 0, y: 0, w: 1, h: 1, r: 0 }, Box.withoutRotation(b));
+
+/**
+ * Creates a transformation from a box's coordinate system to unit local coordinate system (0,0 to 1,1).
+ *
+ * This is useful for normalizing coordinates from actual pixel coordinates to a unit coordinate space.
+ * The resulting unit box has dimensions w: 1, h: 1, is positioned at x: 0, y: 0,
+ * and has a rotation of r: 0 in local coordinate space.
+ *
+ * @param b The source box
+ * @returns Array of transforms to apply
+ */
+export const toUnitLCS = (b: Box) => TransformFactory.fromTo(b, { x: 0, y: 0, w: 1, h: 1, r: 0 });
+
+/**
+ * Builder for constructing paths with a fluent API.
+ *
+ * Provides methods for creating paths from scratch or parsing SVG path strings,
+ * with support for transformations and multiple path segments.
+ */
 export class PathListBuilder {
   private readonly rawPaths: RawPath[] = [{ start: undefined, instructions: [] }];
   private readonly pathCache = new Lazy<Path[]>(() => {
@@ -107,10 +164,22 @@ export class PathListBuilder {
 
   private transformList: Transform[] | undefined = undefined;
 
+  /**
+   * Creates a PathListBuilder from an existing PathList.
+   *
+   * @param pathList The path list to convert
+   * @returns A new PathListBuilder instance
+   */
   static fromPathList(pathList: PathList) {
     return PathListBuilder.fromString(pathList.asSvgPath());
   }
 
+  /**
+   * Creates a PathListBuilder from an existing Path.
+   *
+   * @param path The path to convert
+   * @returns A new PathListBuilder instance
+   */
   static fromPath(path: Path) {
     return PathListBuilder.fromSegments(
       path.start,
@@ -118,6 +187,13 @@ export class PathListBuilder {
     );
   }
 
+  /**
+   * Creates a PathListBuilder from a starting point and raw segment instructions.
+   *
+   * @param start The starting point of the path
+   * @param instructions Array of raw segment instructions
+   * @returns A new PathListBuilder instance
+   */
   static fromSegments(start: Point, instructions: RawSegment[]) {
     const d = new PathListBuilder();
     d.moveTo(start);
@@ -127,6 +203,15 @@ export class PathListBuilder {
     return d;
   }
 
+  /**
+   * Creates a PathListBuilder by parsing an SVG path string.
+   *
+   * Supports standard SVG path commands: M (move), L (line), C (cubic curve),
+   * Q (quadratic curve), T (smooth curve), and A (arc).
+   *
+   * @param path The SVG path string to parse
+   * @returns A new PathListBuilder instance
+   */
   static fromString(path: string) {
     const d = new PathListBuilder();
 
@@ -161,22 +246,50 @@ export class PathListBuilder {
     return d;
   }
 
+  /**
+   * Gets the currently active path being built.
+   *
+   * @returns The active raw path
+   */
   get active(): RawPath {
     return this.rawPaths.at(-1)!;
   }
 
+  /**
+   * Gets the number of paths in this builder.
+   *
+   * @returns The path count
+   */
   get pathCount() {
     return this.rawPaths.length;
   }
 
+  /**
+   * Gets the number of instructions in the currently active path.
+   *
+   * @returns The instruction count
+   */
   get activeInstructionCount() {
     return this.active.instructions.length;
   }
 
+  /**
+   * Calculates the bounding box of all paths.
+   *
+   * @returns A box containing all paths
+   */
   bounds() {
     return Box.boundingBox(this.pathCache.get().map(p => p.bounds()));
   }
 
+  /**
+   * Moves to a new point, starting a new sub-path if necessary.
+   *
+   * If the active path already has a start point, this creates a new path segment.
+   *
+   * @param p The point to move to
+   * @returns This builder (for chaining)
+   */
   moveTo(p: Point) {
     if (this.active.start) this.newSegment();
     this.active.start = p;
@@ -184,6 +297,12 @@ export class PathListBuilder {
     return this;
   }
 
+  /**
+   * Adds a line segment to the specified point.
+   *
+   * @param p The endpoint of the line
+   * @returns This builder (for chaining)
+   */
   lineTo(p: Point) {
     precondition.is.present(this.active.start);
     this.active.instructions.push(['L', p.x, p.y]);
@@ -191,12 +310,26 @@ export class PathListBuilder {
     return this;
   }
 
+  /**
+   * Creates a line from one point to another.
+   *
+   * Equivalent to moveTo(p1).lineTo(p2).
+   *
+   * @param p1 The starting point
+   * @param p2 The ending point
+   * @returns This builder (for chaining)
+   */
   line(p1: Point, p2: Point) {
     this.moveTo(p1);
     this.lineTo(p2);
     return this;
   }
 
+  /**
+   * Closes the current path by adding a line back to the start point.
+   *
+   * @returns This builder (for chaining)
+   */
   close() {
     precondition.is.present(this.active.start);
     this.active.instructions.push(['L', this.active.start.x, this.active.start.y]);
@@ -204,6 +337,17 @@ export class PathListBuilder {
     return this;
   }
 
+  /**
+   * Adds an elliptical arc segment to the specified point.
+   *
+   * @param p The endpoint of the arc
+   * @param rx The x-axis radius of the ellipse
+   * @param ry The y-axis radius of the ellipse
+   * @param angle The rotation angle in degrees for the ellipse's x-axis
+   * @param large_arc_flag Determines if the arc should be greater than 180 degrees (1) or not (0)
+   * @param sweep_flag Determines if the arc is drawn in positive-angle (1) or negative-angle (0) direction
+   * @returns This builder (for chaining)
+   */
   arcTo(
     p: Point,
     rx: number,
@@ -227,6 +371,14 @@ export class PathListBuilder {
     return this;
   }
 
+  /**
+   * Adds a smooth quadratic curve segment to the specified point.
+   *
+   * The control point is reflected from the previous segment's control point.
+   *
+   * @param p The endpoint of the curve
+   * @returns This builder (for chaining)
+   */
   curveTo(p: Point) {
     precondition.is.present(this.active.start);
     this.active.instructions.push(['T', p.x, p.y]);
@@ -234,6 +386,13 @@ export class PathListBuilder {
     return this;
   }
 
+  /**
+   * Adds a quadratic Bézier curve segment to the specified point.
+   *
+   * @param p The endpoint of the curve
+   * @param p1 The control point
+   * @returns This builder (for chaining)
+   */
   quadTo(p: Point, p1: Point) {
     precondition.is.present(this.active.start);
     this.active.instructions.push(['Q', p1.x, p1.y, p.x, p.y]);
@@ -241,6 +400,14 @@ export class PathListBuilder {
     return this;
   }
 
+  /**
+   * Adds a cubic Bézier curve segment to the specified point.
+   *
+   * @param p The endpoint of the curve
+   * @param p1 The first control point
+   * @param p2 The second control point
+   * @returns This builder (for chaining)
+   */
   cubicTo(p: Point, p1: Point, p2: Point) {
     precondition.is.present(this.active.start);
     this.active.instructions.push(['C', p1.x, p1.y, p2.x, p2.y, p.x, p.y]);
@@ -248,16 +415,30 @@ export class PathListBuilder {
     return this;
   }
 
+  /**
+   * Appends a raw segment instruction to the active path.
+   *
+   * @param instruction The raw segment instruction to append
+   */
   appendInstruction(instruction: RawSegment) {
     this.active.instructions.push(instruction);
     this.pathCache.clear();
   }
 
+  /**
+   * Removes the last instruction from the active path.
+   */
   popInstruction() {
     this.active.instructions.pop();
     this.pathCache.clear();
   }
 
+  /**
+   * Appends all paths from another PathListBuilder to this builder.
+   *
+   * @param path The PathListBuilder to append
+   * @returns This builder (for chaining)
+   */
   append(path: PathListBuilder) {
     for (const p of path.rawPaths) {
       this.rawPaths.push(p);
@@ -266,6 +447,11 @@ export class PathListBuilder {
     return this;
   }
 
+  /**
+   * Creates a new PathListBuilder with all paths reversed.
+   *
+   * @returns A new PathListBuilder with reversed paths
+   */
   reverse() {
     return PathListBuilder.fromString(
       this.getPaths()
@@ -275,6 +461,14 @@ export class PathListBuilder {
     );
   }
 
+  /**
+   * Sets the transformation to apply to all paths.
+   *
+   * Replaces any existing transformations. Use addTransform to append transformations.
+   *
+   * @param transform Array of transforms to apply
+   * @returns This builder (for chaining)
+   */
   withTransform(transform: Transform[]) {
     assert.true(!this.transformList || this.transformList.length === 0);
     this.transformList = transform;
@@ -282,6 +476,12 @@ export class PathListBuilder {
     return this;
   }
 
+  /**
+   * Adds one or more transformations to the existing transformation list.
+   *
+   * @param transform A single transform or array of transforms to add
+   * @returns This builder (for chaining)
+   */
   addTransform(transform: Transform | Transform[]) {
     this.transformList ??= [];
     if (Array.isArray(transform)) {
@@ -293,6 +493,14 @@ export class PathListBuilder {
     return this;
   }
 
+  /**
+   * Gets the constructed paths as a PathList.
+   *
+   * Applies any configured transformations to the paths before returning them.
+   *
+   * @param transforms Optional transforms to apply (overrides configured transforms)
+   * @returns A PathList containing the constructed paths
+   */
   getPaths(transforms?: Transform[]) {
     const paths = transforms ? this._getPaths(transforms) : this.pathCache.get();
     /*for (const p of paths) {
@@ -381,6 +589,13 @@ export class PathListBuilder {
     });
   }
 
+  /**
+   * Converts the builder to a string representation.
+   *
+   * Useful for debugging and inspecting the raw path data.
+   *
+   * @returns String representation of all paths
+   */
   toString() {
     return this.rawPaths
       .map(r => `M ${r.start!.x} ${r.start!.y} ${r.instructions.join(' ')}`)
@@ -388,8 +603,20 @@ export class PathListBuilder {
   }
 }
 
-/** @namespace */
+/**
+ * Helper functions for common path construction patterns.
+ *
+ * @namespace
+ */
 export const PathBuilderHelper = {
+  /**
+   * Adds a rectangle to the builder.
+   *
+   * Creates a closed rectangular path using the specified box dimensions.
+   *
+   * @param b The PathListBuilder to add the rectangle to
+   * @param box The box defining the rectangle's position and size
+   */
   rect: (b: PathListBuilder, box: Box) => {
     b.moveTo(Point.of(box.x, box.y));
     b.lineTo(Point.of(box.x + box.w, box.y));
