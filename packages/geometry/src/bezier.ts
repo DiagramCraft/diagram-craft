@@ -41,6 +41,8 @@ const X = [
   -0.9766639214595175, 0.9766639214595175, -0.9955569697904981, 0.9955569697904981
 ] as const;
 
+const X_05 = X.map(x => x * 0.5 + 0.5);
+
 const VALID_EXTREMES = (e: number) => e >= 0 && e <= 1;
 
 const sgn = (a: number) => (a >= 0 ? 1 : -1);
@@ -424,9 +426,14 @@ export class CubicBezier {
 
     const z = 0.5;
 
+    const f = (t: number) => {
+      const d = this.derivative(t);
+      return Math.sqrt(d.x * d.x + d.y * d.y);
+    };
+
     let sum = 0;
-    for (let i = 0; i < X.length; i++) {
-      sum += W[i]! * this.darclen(z * X[i]! + z);
+    for (let i = 0; i < X_05.length; i++) {
+      sum += W[i]! * f(X_05[i]!);
     }
 
     this.#length = z * sum;
