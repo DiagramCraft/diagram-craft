@@ -7,7 +7,7 @@ import React, {
   useState
 } from 'react';
 import { TbChevronDown, TbChevronRight } from 'react-icons/tb';
-import { propsUtils } from '@diagram-craft/utils/propsUtils';
+import { PropsUtils } from '@diagram-craft/utils/propsUtils';
 import styles from './Tree.module.css';
 
 const isReactElement = (
@@ -28,7 +28,7 @@ const Root = React.forwardRef<HTMLDivElement, RootProps>((props, ref) => {
   return (
     <TreeContext.Provider value={{ depth: 0 }}>
       <div
-        {...propsUtils.filterDomProperties(props)}
+        {...PropsUtils.filterDomProperties(props)}
         className={`${styles.cmpTree} ${props.className ?? ''}`}
         ref={ref}
       >
@@ -53,7 +53,7 @@ const Node = (props: NodeProps) => {
   return (
     <TreeContext.Provider value={{ depth: ctx!.depth + 1, open, setOpen, hasChildren }}>
       <div
-        {...propsUtils.filterDomProperties(props)}
+        {...PropsUtils.filterDomProperties(props)}
         className={`${styles.cmpTreeNode} ${props.className ?? ''}`}
         data-depth={ctx!.depth}
         onClick={props.onClick}
@@ -82,7 +82,7 @@ const NodeLabel = (props: { children: React.ReactNode } & React.HTMLAttributes<H
   const ctx = useContext(TreeContext)!;
   return (
     <div
-      {...propsUtils.filterDomProperties(props)}
+      {...PropsUtils.filterDomProperties(props)}
       className={`${styles.cmpTreeNodeLabel} ${props.className ?? ''}`}
     >
       <div className={styles.cmpTreeNodeLabelToggle}>
@@ -105,7 +105,7 @@ const NodeLabel = (props: { children: React.ReactNode } & React.HTMLAttributes<H
 const NodeCell = (props: { children: React.ReactNode } & React.HTMLAttributes<HTMLDivElement>) => {
   return (
     <div
-      {...propsUtils.filterDomProperties(props)}
+      {...PropsUtils.filterDomProperties(props)}
       className={`cmp-tree-node-cell ${props.className ?? ''}`}
     >
       {props.children}
@@ -118,7 +118,7 @@ const NodeLabelText = (
 ) => {
   return (
     <div
-      {...propsUtils.filterDomProperties(props)}
+      {...PropsUtils.filterDomProperties(props)}
       className={`${styles.cmpTreeNodeLabelText} ${props.className ?? ''}`}
     >
       {props.children}
@@ -131,7 +131,7 @@ const NodeLabelIcon = (
 ) => {
   return (
     <div
-      {...propsUtils.filterDomProperties(props)}
+      {...PropsUtils.filterDomProperties(props)}
       className={`${styles.cmpTreeNodeLabelIcon} ${props.className ?? ''}`}
     >
       {props.children}

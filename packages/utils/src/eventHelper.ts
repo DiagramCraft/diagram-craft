@@ -1,3 +1,20 @@
+/**
+ * DOM event coordinate extraction utilities.
+ *
+ * @example
+ * ```ts
+ * import { EventHelper } from '@diagram-craft/utils/eventHelper';
+ *
+ * element.addEventListener('click', (e) => {
+ *   const point = EventHelper.point(e);
+ *   console.log(point.x, point.y);
+ * });
+ * ```
+ *
+ * @module
+ */
+
+/** @namespace */
 export const EventHelper = {
   /**
    * Returns the point of the event

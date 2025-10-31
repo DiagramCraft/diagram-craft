@@ -1,4 +1,18 @@
 /**
+ * BEM-style class name generation utility.
+ *
+ * @example
+ * ```ts
+ * import { $c } from '@diagram-craft/utils/classname';
+ *
+ * const className = $c('button', { large: true, disabled: false });
+ * // Returns: 'button button--large'
+ * ```
+ *
+ * @module
+ */
+
+/**
  * Generates a BEM (Block Element Modifier) style class name based on the base class name and a set of modifiers.
  *
  * @param base - The base class name.

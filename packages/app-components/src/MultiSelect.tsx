@@ -1,5 +1,5 @@
 import React, { ChangeEvent, KeyboardEvent, useRef, useState } from 'react';
-import { propsUtils } from '@diagram-craft/utils/propsUtils';
+import { PropsUtils } from '@diagram-craft/utils/propsUtils';
 import { extractDataAttributes } from './utils';
 import styles from './MultiSelect.module.css';
 import { Button } from './Button';
@@ -135,70 +135,69 @@ export const MultiSelect = (props: Props) => {
 
   return (
     <div
-        className={styles.cmpMultiSelect}
-        {...extractDataAttributes(props)}
-        data-field-state={props.isIndeterminate ? 'indeterminate' : props.state}
-        style={props.style ?? {}}
-      >
-        <div className={styles.cmpMultiSelectContainer} ref={containerRef}>
-          <div className={styles.cmpMultiSelectTags}>
-            {!props.isIndeterminate &&
-              props.selectedValues.map((value, index) => (
-                <div key={`${value}-${index}`} className={styles.cmpMultiSelectTag}>
-                  <span className={styles.cmpMultiSelectTagText}>{getItemLabel(value)}</span>
-                  <Button
-                    type="icon-only"
-                    className={styles.cmpMultiSelectTagRemove}
-                    onClick={() => removeItem(value)}
-                    tabIndex={-1}
-                  >
-                    <TbX />
-                  </Button>
+      className={styles.cmpMultiSelect}
+      {...extractDataAttributes(props)}
+      data-field-state={props.isIndeterminate ? 'indeterminate' : props.state}
+      style={props.style ?? {}}
+    >
+      <div className={styles.cmpMultiSelectContainer} ref={containerRef}>
+        <div className={styles.cmpMultiSelectTags}>
+          {!props.isIndeterminate &&
+            props.selectedValues.map((value, index) => (
+              <div key={`${value}-${index}`} className={styles.cmpMultiSelectTag}>
+                <span className={styles.cmpMultiSelectTagText}>{getItemLabel(value)}</span>
+                <Button
+                  type="icon-only"
+                  className={styles.cmpMultiSelectTagRemove}
+                  onClick={() => removeItem(value)}
+                  tabIndex={-1}
+                >
+                  <TbX />
+                </Button>
+              </div>
+            ))}
+
+          <input
+            ref={inputRef}
+            {...PropsUtils.filterDomProperties(props)}
+            type="text"
+            value={props.isIndeterminate ? '' : inputValue}
+            placeholder={
+              props.isIndeterminate
+                ? '···'
+                : props.selectedValues.length === 0
+                  ? (props.placeholder ?? 'Search and select...')
+                  : ''
+            }
+            disabled={props.disabled}
+            className={styles.cmpMultiSelectInput}
+            onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
+            onFocus={handleInputFocus}
+            onBlur={handleInputBlur}
+          />
+        </div>
+
+        {/* Suggestions dropdown */}
+        {!props.isIndeterminate &&
+          showSuggestions &&
+          (filteredSuggestions.length > 0 || (!!props.allowCustomValues && inputValue.trim())) && (
+            <div className={styles.cmpMultiSelectSuggestions}>
+              {filteredSuggestions.map((item, index) => (
+                <div
+                  key={item.value}
+                  className={styles.cmpMultiSelectSuggestion}
+                  data-selected={index === selectedSuggestion}
+                  onClick={() => handleSuggestionClick(item.value)}
+                  onMouseEnter={() => setSelectedSuggestion(index)}
+                >
+                  {item.label}
                 </div>
               ))}
-
-            <input
-              ref={inputRef}
-              {...propsUtils.filterDomProperties(props)}
-              type="text"
-              value={props.isIndeterminate ? '' : inputValue}
-              placeholder={
-                props.isIndeterminate
-                  ? '···'
-                  : props.selectedValues.length === 0
-                    ? (props.placeholder ?? 'Search and select...')
-                    : ''
-              }
-              disabled={props.disabled}
-              className={styles.cmpMultiSelectInput}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              onFocus={handleInputFocus}
-              onBlur={handleInputBlur}
-            />
-          </div>
-
-          {/* Suggestions dropdown */}
-          {!props.isIndeterminate &&
-            showSuggestions &&
-            (filteredSuggestions.length > 0 ||
-              (!!props.allowCustomValues && inputValue.trim())) && (
-              <div className={styles.cmpMultiSelectSuggestions}>
-                {filteredSuggestions.map((item, index) => (
-                  <div
-                    key={item.value}
-                    className={styles.cmpMultiSelectSuggestion}
-                    data-selected={index === selectedSuggestion}
-                    onClick={() => handleSuggestionClick(item.value)}
-                    onMouseEnter={() => setSelectedSuggestion(index)}
-                  >
-                    {item.label}
-                  </div>
-                ))}
-              </div>
-            )}
-        </div>
+            </div>
+          )}
       </div>
+    </div>
   );
 };
 

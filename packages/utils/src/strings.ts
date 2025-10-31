@@ -1,4 +1,19 @@
 /**
+ * String manipulation and validation utilities.
+ *
+ * @example
+ * ```ts
+ * import { shorten, coalesce, isEmptyString } from '@diagram-craft/utils/strings';
+ *
+ * const text = shorten('Long text here', 8); // 'Long tex...'
+ * const fallback = coalesce(null, undefined, 'default'); // 'default'
+ * const empty = isEmptyString('  '); // true
+ * ```
+ *
+ * @module
+ */
+
+/**
  * Shortens a string to a specified length and appends '...' if the string is longer than the specified length.
  *
  * @param str - The string to be shortened.

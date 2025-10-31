@@ -252,6 +252,7 @@ export class LayerManager
   }
 }
 
+/** @namespace */
 export const LayerCapabilities = {
   canMove(layer: Layer): boolean {
     return layer.type === 'modification' || layer.type === 'regular';

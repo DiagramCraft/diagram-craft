@@ -83,6 +83,8 @@ export interface RefreshableSchemaProvider extends SchemaProvider {
 /**
  * Global registry for data provider factory functions.
  * Maps provider type identifiers to factory functions that create provider instances.
+ *
+ * @namespace
  */
 export const DataProviderRegistry = {
   providers: new Map<string, (s: string) => DataProvider>(),

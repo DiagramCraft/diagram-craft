@@ -1,3 +1,26 @@
+/**
+ * Graph data structures and A* shortest path algorithm.
+ *
+ * @example
+ * ```ts
+ * import { SimpleGraph, findShortestPathAStar } from '@diagram-craft/utils/graph';
+ *
+ * const graph = new SimpleGraph();
+ * graph.addVertex({ id: 'A', data: {} });
+ * graph.addVertex({ id: 'B', data: {} });
+ * graph.addEdge({ id: 'e1', from: 'A', to: 'B', weight: 1, data: {} });
+ *
+ * const result = findShortestPathAStar(
+ *   graph,
+ *   'A',
+ *   'B',
+ *   (from, to) => 0 // heuristic function
+ * );
+ * ```
+ *
+ * @module
+ */
+
 import { PriorityQueue } from './priorityQueue';
 import { MultiMap } from './multimap';
 

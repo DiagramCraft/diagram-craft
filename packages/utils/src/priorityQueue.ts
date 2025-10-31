@@ -1,4 +1,24 @@
 /**
+ * Priority queue data structure with min-heap behavior.
+ *
+ * @example
+ * ```ts
+ * import { PriorityQueue } from '@diagram-craft/utils/priorityQueue';
+ *
+ * const queue = new PriorityQueue<string>();
+ * queue.enqueue('low', 10);
+ * queue.enqueue('high', 1);
+ * queue.enqueue('medium', 5);
+ *
+ * queue.dequeue(); // 'high' (priority 1)
+ * queue.dequeue(); // 'medium' (priority 5)
+ * queue.dequeue(); // 'low' (priority 10)
+ * ```
+ *
+ * @module
+ */
+
+/**
  * A priority queue implementation where elements with lower priority values are dequeued first.
  */
 export class PriorityQueue<T> {

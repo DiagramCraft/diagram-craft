@@ -1,8 +1,28 @@
 /**
- * Get the name of the file from the URL
+ * URL parsing and manipulation utilities.
  *
- * @param s - The URL
- * @returns The name of the file
+ * @example
+ * ```ts
+ * import { urlToName } from '@diagram-craft/utils/url';
+ *
+ * const name = urlToName('https://example.com/path/file.pdf');
+ * // Result: 'file.pdf'
+ * ```
+ *
+ * @module
+ */
+
+/**
+ * Extracts the filename from a URL.
+ *
+ * @param s - The URL string
+ * @returns The filename (last segment of the path)
+ *
+ * @example
+ * ```ts
+ * urlToName('https://example.com/docs/guide.pdf'); // 'guide.pdf'
+ * urlToName('/local/path/image.png'); // 'image.png'
+ * ```
  */
 export const urlToName = (s: string) => {
   let pathname = s;

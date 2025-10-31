@@ -1,4 +1,30 @@
-// TODO: Need to properly test this
+/**
+ * HTML parsing and manipulation utilities.
+ *
+ * @example
+ * ```ts
+ * import { stripTags, HTMLParser } from '@diagram-craft/utils/html';
+ *
+ * const cleaned = stripTags('<p>Hello <script>bad</script> World</p>', ['p']);
+ * // Returns: '<p>Hello  World</p>'
+ * ```
+ *
+ * @module
+ */
+
+/**
+ * Removes HTML tags from a string except those in the allowed list.
+ *
+ * @param input - The HTML string to process
+ * @param allowed - Array of tag names to preserve (default: common formatting tags)
+ * @returns String with non-allowed tags removed
+ *
+ * @example
+ * ```ts
+ * stripTags('<div>Hello <script>alert(1)</script></div>', ['div']);
+ * // Returns: '<div>Hello </div>'
+ * ```
+ */
 export const stripTags = (
   input: string,
   allowed: Array<string> = ['br', 'i', 'u', 'b', 'span', 'div', 'font']
@@ -10,18 +36,45 @@ export const stripTags = (
     .replace(tags, ($0, $1) => (allowed.includes($1.toLowerCase()) ? $0 : ''));
 };
 
+/**
+ * Callback interface for HTML parsing events.
+ */
 export interface HTMLParserCallback {
+  /** Called when text content is encountered */
   onText: (text: string) => void;
+  /** Called when an opening tag is encountered */
   onTagOpen: (tag: string, attributes: Record<string, string>) => void;
+  /** Called when a closing tag is encountered */
   onTagClose: (tag: string) => void;
+  /** Called at the start of parsing */
   onStart: () => void;
+  /** Called at the end of parsing */
   onEnd: () => void;
 }
 
-// Note: This is a rather trivial HTML parser. There will be multiple
-// cases in which it will fail to parse the HTML correctly. However,
-// the main purpose of this parser is to parse sanitized HTML coming from
-// the clipboard
+/**
+ * Simple HTML parser for sanitized HTML content.
+ *
+ * This is a basic parser designed primarily for parsing clipboard HTML content.
+ * It may not handle all edge cases in arbitrary HTML.
+ *
+ * Note: This is a rather trivial HTML parser. There will be multiple
+ * cases in which it will fail to parse the HTML correctly. However,
+ * the main purpose of this parser is to parse sanitized HTML coming from
+ * the clipboard
+ *
+ * @example
+ * ```ts
+ * const parser = new HTMLParser({
+ *   onText: (text) => console.log('Text:', text),
+ *   onTagOpen: (tag, attrs) => console.log('Open:', tag),
+ *   onTagClose: (tag) => console.log('Close:', tag),
+ *   onStart: () => console.log('Start'),
+ *   onEnd: () => console.log('End')
+ * });
+ * parser.parse('<p>Hello</p>');
+ * ```
+ */
 export class HTMLParser {
   private tagStart = /<([a-z][a-z0-9]*)\b[^>]*>/i;
   private selfClosingTags =
@@ -29,10 +82,20 @@ export class HTMLParser {
       ','
     );
 
+  /**
+   * Creates a new HTML parser instance.
+   *
+   * @param handler - Callback handler for parsing events
+   */
   constructor(private readonly handler: HTMLParserCallback) {
     this.handler.onStart();
   }
 
+  /**
+   * Parses an HTML string and invokes callbacks for each element encountered.
+   *
+   * @param s - The HTML string to parse
+   */
   parse(s: string) {
     let html = s;
 

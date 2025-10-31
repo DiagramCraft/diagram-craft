@@ -462,7 +462,7 @@ export class SnapManager {
 
     const newBounds = Box.asReadWrite(b);
 
-    for (const axis of Axis.axises()) {
+    for (const axis of Axis.axes()) {
       // Find magnet with the closest orthogonal distance to the matching magnet line
       // i.e. optimize for snapping the least distance
       const closest = smallest(
@@ -527,7 +527,7 @@ export class SnapManager {
     const newBounds = Box.asReadWrite(b);
 
     // Snap to the closest matching magnet in each direction
-    for (const axis of Axis.axises()) {
+    for (const axis of Axis.axes()) {
       // Find magnet with the closest orthogonal distance to the matching magnet line
       // i.e. optimize for snapping the least distance
       const closest = smallest(

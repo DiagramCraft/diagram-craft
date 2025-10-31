@@ -1,5 +1,5 @@
 import React, { ChangeEvent, useRef, useState } from 'react';
-import { propsUtils } from '@diagram-craft/utils/propsUtils';
+import { PropsUtils } from '@diagram-craft/utils/propsUtils';
 import { extractDataAttributes } from './utils';
 import styles from './TextArea.module.css';
 
@@ -24,7 +24,7 @@ export const TextArea = React.forwardRef<HTMLTextAreaElement, Props>((props, ref
     >
       <textarea
         ref={ref}
-        {...propsUtils.filterDomProperties(props)}
+        {...PropsUtils.filterDomProperties(props)}
         placeholder={props.isIndeterminate ? '···' : undefined}
         disabled={props.disabled}
         onFocus={e => {

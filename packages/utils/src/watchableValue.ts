@@ -1,3 +1,27 @@
+/**
+ * Observable value container with change notifications.
+ *
+ * @example
+ * ```ts
+ * import { WatchableValue, watch } from '@diagram-craft/utils/watchableValue';
+ *
+ * const count = new WatchableValue(0);
+ *
+ * // Watch for changes
+ * count.on('change', ({ newValue }) => {
+ *   console.log('Count changed to:', newValue);
+ * });
+ *
+ * count.set(5); // Logs: "Count changed to: 5"
+ * count.get(); // 5
+ *
+ * // Computed values
+ * const doubled = WatchableValue.from(([c]) => c.get() * 2, [count]);
+ * ```
+ *
+ * @module
+ */
+
 import { EventEmitter } from './event';
 
 /**
@@ -39,7 +63,8 @@ export class WatchableValue<T> extends EventEmitter<{
   }
 
   /**
-   * Creates a new instance of `WatchableValue` based on the provided function and array of `WatchableValue` arguments. The resulting value updates whenever any of the input `WatchableValue` instances change.
+   * Creates a new instance of `WatchableValue` based on the provided function and array of `WatchableValue` arguments.
+   * The resulting value updates whenever any of the input `WatchableValue` instances change.
    *
    * @param fn - A function that computes a new value based on the array of `WatchableValue` instances.
    * @param arg - An array of `WatchableValue` instances that the result depends on.
@@ -60,4 +85,18 @@ export class WatchableValue<T> extends EventEmitter<{
   }
 }
 
+/**
+ * Convenience function to create a new WatchableValue.
+ *
+ * @template T - The type of value to watch
+ * @param value - The initial value
+ * @returns A new WatchableValue instance
+ *
+ * @example
+ * ```ts
+ * const name = watch('Alice');
+ * name.on('change', ({ newValue }) => console.log(newValue));
+ * name.set('Bob'); // Logs: "Bob"
+ * ```
+ */
 export const watch = <T>(value: T) => new WatchableValue<T>(value);

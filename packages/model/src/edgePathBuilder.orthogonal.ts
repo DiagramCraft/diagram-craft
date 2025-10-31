@@ -11,7 +11,7 @@ import { Direction } from '@diagram-craft/geometry/direction';
 import type { DiagramEdge } from './diagramEdge';
 import { ConnectedEndpoint, type Endpoint } from './endpoint';
 import { unique } from '@diagram-craft/utils/array';
-import { roundHighPrecision } from '@diagram-craft/utils/math';
+import { round } from '@diagram-craft/utils/math';
 import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { assert } from '@diagram-craft/utils/assert';
 import type { DiagramNode } from './diagramNode';
@@ -160,7 +160,6 @@ export type EdgeType =
   | 'outer-bounds';
 
 class FastSegmentProvider implements SegmentProvider {
-
   addSegment(
     start: {
       point: Point;
@@ -274,15 +273,15 @@ class PathfindingSegmentProvider implements SegmentProvider {
     const xs = new Map<number, EdgeType>();
 
     const addForPoint = (p: Point, type: EdgeType) => {
-      ys.set(roundHighPrecision(p.y), type);
-      xs.set(roundHighPrecision(p.x), type);
+      ys.set(round(p.y, 4), type);
+      xs.set(round(p.x, 4), type);
     };
     const addForBox = (b: Box | undefined, type: EdgeType) => {
       if (!b) return;
-      ys.set(roundHighPrecision(b.y), type);
-      ys.set(roundHighPrecision(b.y + b.h), type);
-      xs.set(roundHighPrecision(b.x), type);
-      xs.set(roundHighPrecision(b.x + b.w), type);
+      ys.set(round(b.y, 4), type);
+      ys.set(round(b.y, 4 + b.h), type);
+      xs.set(round(b.x, 4), type);
+      xs.set(round(b.x, 4 + b.w), type);
     };
 
     const mustKeepPoints = new Set<string>(

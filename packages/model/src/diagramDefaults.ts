@@ -6,6 +6,7 @@ import type { ElementPropsForRendering } from './diagramElement';
 import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { assert } from '@diagram-craft/utils/assert';
 
+/** @namespace */
 export const DiagramDefaultsPrivate = {
   isSameAsDefaults(props: Record<string, unknown>, defaults: Record<string, unknown>): boolean {
     if (props !== undefined && defaults === undefined) return false;

@@ -1,8 +1,30 @@
+/**
+ * Object manipulation utilities for deep operations.
+ *
+ * @example
+ * ```ts
+ * import { deepClone, deepEquals, deepMerge } from '@diagram-craft/utils/object';
+ *
+ * const original = { a: 1, b: { c: 2 } };
+ * const clone = deepClone(original);
+ * const merged = deepMerge({ a: 1 }, { b: 2 });
+ * const same = deepEquals(original, clone); // true
+ * ```
+ *
+ * @module
+ */
+
 import { DeepPartial, type DeepReadonly, type DeepWriteable } from './types';
 
 // biome-ignore lint/suspicious/noExplicitAny: false positive
 type Props = Record<string, any>;
 
+/**
+ * Type guard to check if a value is a plain object.
+ *
+ * @param x - The value to check
+ * @returns True if the value is a plain object
+ */
 export const isObj = (x: unknown): x is Record<string, unknown> => isObject(x);
 
 const isObject = (item: unknown) => typeof item === 'object' && !Array.isArray(item);
@@ -46,6 +68,25 @@ export const common = <T extends Record<string, unknown>>(a: T, b: T): DeepParti
   return result;
 };
 
+/**
+ * Deeply merges multiple source objects into a target object.
+ *
+ * Recursively merges nested objects, with later sources overwriting earlier ones.
+ * Null values are skipped during merging.
+ *
+ * @template T - The type of the objects to merge
+ * @param target - The target object to merge into
+ * @param sources - One or more source objects to merge
+ * @returns The merged object
+ *
+ * @example
+ * ```ts
+ * const base = { a: 1, b: { c: 2 } };
+ * const override = { b: { d: 3 }, e: 4 };
+ * const result = deepMerge(base, override);
+ * // Result: { a: 1, b: { c: 2, d: 3 }, e: 4 }
+ * ```
+ */
 export const deepMerge = <T extends Props>(
   target: Partial<T>,
   ...sources: Array<Partial<T> | undefined>
@@ -233,6 +274,24 @@ export const deepClear = <T extends Props>(source: T, target: T) => {
   }
 };
 
+/**
+ * Checks if an object is deeply empty (has no non-null/undefined values).
+ *
+ * Recursively checks nested objects. An object is considered empty if all
+ * its properties are null, undefined, or empty objects.
+ *
+ * @param obj - The object to check
+ * @returns True if the object is deeply empty
+ *
+ * @example
+ * ```ts
+ * deepIsEmpty({}); // true
+ * deepIsEmpty({ a: null }); // true
+ * deepIsEmpty({ a: { b: undefined } }); // true
+ * deepIsEmpty({ a: 1 }); // false
+ * deepIsEmpty({ a: { b: 2 } }); // false
+ * ```
+ */
 // biome-ignore lint/suspicious/noExplicitAny: false positive
 export const deepIsEmpty = (obj: any | undefined | null) => {
   if (obj === null || obj === undefined) return true;
@@ -295,6 +354,22 @@ export const isPrimitive = (value: unknown) => {
   );
 };
 
+/**
+ * Clones a deeply readonly object and returns it as a writable type.
+ *
+ * This is an alias for {@link deepClone} with type casting to remove readonly modifiers.
+ *
+ * @template T - The type of the object
+ * @param o - The readonly object to clone
+ * @returns A writable deep clone of the object
+ *
+ * @example
+ * ```ts
+ * const readonly: DeepReadonly<{ a: number }> = { a: 1 };
+ * const writable = cloneAsWriteable(readonly);
+ * writable.a = 2; // OK, now writable
+ * ```
+ */
 export const cloneAsWriteable: <T>(o: DeepReadonly<T>) => DeepWriteable<T> = deepClone;
 
 /**

@@ -1,5 +1,5 @@
 import React, { ChangeEvent, useRef, useState } from 'react';
-import { propsUtils } from '@diagram-craft/utils/propsUtils';
+import { PropsUtils } from '@diagram-craft/utils/propsUtils';
 import { extractDataAttributes } from './utils';
 import styles from './TextInput.module.css';
 import { Button } from './Button';
@@ -27,7 +27,7 @@ export const TextInput = React.forwardRef<HTMLInputElement, Props>((props, ref) 
       {props.label && <div className={styles.cmpTextInputLabel}>{props.label}</div>}
       <input
         ref={ref}
-        {...propsUtils.filterDomProperties(props)}
+        {...PropsUtils.filterDomProperties(props)}
         placeholder={props.isIndeterminate ? '···' : props.placeholder}
         type={props.type}
         value={props.isIndeterminate ? '' : currentValue}

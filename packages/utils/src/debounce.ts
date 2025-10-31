@@ -1,10 +1,25 @@
 /**
+ * Function debouncing utilities for delaying execution.
+ *
+ * @example
+ * ```ts
+ * import { debounce } from '@diagram-craft/utils/debounce';
+ *
+ * const handleSearch = debounce((query: string) => {
+ *   console.log('Searching:', query);
+ * }, 300);
+ * ```
+ *
+ * @module
+ */
+
+/**
  * Creates a debounced function that delays invoking the provided function
  * until after the specified wait time has elapsed since the last time it was invoked.
  *
  * @template T - The type of the function to debounce
  * @param {T} fn - The function to debounce
- * @param {number} ms - The number of milliseconds to delay (default: 0)
+ * @param ms - The number of milliseconds to delay (default: 0)
  * @returns {T} A debounced version of the function
  *
  * @example

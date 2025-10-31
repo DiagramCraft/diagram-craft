@@ -1,6 +1,24 @@
 /**
+ * Array utility functions for common operations like finding min/max elements,
+ * deduplication, grouping, and sorting.
+ *
+ * @example
+ * ```ts
+ * import { unique, groupBy, sortBy } from '@diagram-craft/utils/array';
+ *
+ * const items = [{ id: 1, type: 'a' }, { id: 2, type: 'b' }, { id: 3, type: 'a' }];
+ *
+ * // Remove duplicates by type
+ * const uniqueItems = unique(items, item => item.type);
+ *
+ * // Group by type
+ * const grouped = groupBy(items, item => item.type);
+ *
+ * // Sort by id
+ * const sorted = sortBy(items, item => item.id);
+ * ```
+ *
  * @module
- * @summary Array-related utilities
  */
 
 import { assert } from './assert';

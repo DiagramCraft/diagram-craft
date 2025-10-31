@@ -1,4 +1,23 @@
 /**
+ * TypeScript utility types and type guards.
+ *
+ * @example
+ * ```ts
+ * import { DeepPartial, DeepReadonly, isEnum } from '@diagram-craft/utils/types';
+ *
+ * type Config = { server: { port: number; host: string } };
+ *
+ * // Make all properties optional recursively
+ * const partial: DeepPartial<Config> = { server: { port: 3000 } };
+ *
+ * // Make all properties readonly recursively
+ * const readonly: DeepReadonly<Config> = { server: { port: 3000, host: 'localhost' } };
+ * ```
+ *
+ * @module
+ */
+
+/**
  * Makes all properties of a type writable recursively by removing the readonly modifier
  * from all properties and nested properties.
  *
@@ -41,21 +60,19 @@ export type DeepPartial<T> = { [P in keyof T]?: DeepPartial<T[P]> };
 export const makeWriteable = <T>(o: DeepReadonly<T>): DeepWriteable<T> => o as DeepWriteable<T>;
 
 /**
- * Type guard function to check if a value is one of a set of enum values.
+ * Type guard function to check if a value is one of a set of string values.
  *
- * @template T - The type of the enum values (must be a string)
+ * @template T - The string union type
  * @param {unknown} o - The value to check
- * @param {T[]} values - The array of valid enum values
- * @returns {boolean} True if the value is one of the enum values, false otherwise
+ * @param {T[]} values - The array of valid string values
+ * @returns {boolean} True if the value is one of the string values, false otherwise
  *
  * @example
- * enum Color { Red = 'red', Blue = 'blue' }
- * const values = Object.values(Color);
- * if (isEnum(value, values)) {
- *   // value is typed as Color
+ * if (isEnum(value, ['red', 'green', 'blue'])) {
+ *   // value is typed as 'red' | 'green' | 'blue'
  * }
  */
-export const isEnum = <T extends string>(o: unknown, values: T[]): o is T => {
+export const isStringUnion = <T extends string>(o: unknown, values: T[]): o is T => {
   return !(typeof o !== 'string' || !values.includes(o as T));
 };
 
@@ -77,8 +94,19 @@ export type FlatObject = Record<string, string | number | boolean | undefined>;
  */
 export type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
 
+/**
+ * Represents a non-empty array (at least one element).
+ *
+ * @template T - The type of array elements
+ */
 export type NoneEmptyArray<T> = [T, ...T[]];
 
+/**
+ * Represents an array with exactly N elements.
+ *
+ * @template T - The type of array elements
+ * @template L - The exact number of elements
+ */
 export type NElementArray<T, L extends number, D extends NoneEmptyArray<T> = [T]> = L extends number
   ? number extends L
     ? NoneEmptyArray<T>
@@ -87,6 +115,12 @@ export type NElementArray<T, L extends number, D extends NoneEmptyArray<T> = [T]
       : NElementArray<T, L, [T, ...D]>
   : never;
 
+/**
+ * Represents an array with at least N elements.
+ *
+ * @template T - The type of array elements
+ * @template L - The minimum number of elements
+ */
 export type NOrMoreElementArray<
   T,
   L extends number,
