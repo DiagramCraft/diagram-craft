@@ -1,5 +1,5 @@
 import { Vector } from './vector';
-import { isSame, round, roundHighPrecision } from '@diagram-craft/utils/math';
+import { isSame, round } from '@diagram-craft/utils/math';
 
 export type Point = Readonly<{
   x: number;
@@ -10,6 +10,7 @@ export type Scale = Point;
 export type RelativeOffset = Point;
 export type AbsoluteOffset = Point;
 
+/** @namespace */
 export const Point = {
   ORIGIN: { x: 0, y: 0 },
 
@@ -54,7 +55,7 @@ export const Point = {
     return Math.sqrt(Point.squareDistance(posA, posB));
   },
 
-  toString: (p: Point) => `(${roundHighPrecision(p.x)}, ${roundHighPrecision(p.y)})`
+  toString: (p: Point) => `(${round(p.x, 4)}, ${round(p.y, 4)})`
 };
 
 export const _p = Point.of;

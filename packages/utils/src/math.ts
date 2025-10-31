@@ -1,16 +1,36 @@
 /**
- * Round a number to 2 decimal places (for display purposes)
+ * Mathematical utility functions.
+ *
+ * @example
+ * ```ts
+ * import { round, clamp, isSame } from '@diagram-craft/utils/math';
+ *
+ * const value = round(3.14159, 2); // 3.14
+ * const limited = clamp(15, 0, 10); // 10
+ * const equal = isSame(0.1 + 0.2, 0.3); // true
+ * ```
+ *
+ * @module
  */
-export const round = (n: number) => {
-  const res = Math.round(n * 100) / 100;
-  // To ensure -0 === 0
-  if (res === 0) return 0;
-  return res;
-};
 
-// TODO: Merge this with round - and add a second parameter indicating precision
-export const roundHighPrecision = (n: number) => {
-  const res = Math.round(n * 10000) / 10000;
+/**
+ * Rounds a number to a specified number of decimal places.
+ *
+ * Ensures -0 is normalized to 0.
+ *
+ * @param n - The number to round
+ * @param precision - Number of decimal places (default: 2)
+ * @returns The rounded number
+ *
+ * @example
+ * ```ts
+ * round(3.14159); // 3.14
+ * round(3.14159, 3); // 3.142
+ * ```
+ */
+export const round = (n: number, precision = 2) => {
+  const p = 10 ** precision;
+  const res = Math.round(n * p) / p;
   // To ensure -0 === 0
   if (res === 0) return 0;
   return res;

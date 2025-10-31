@@ -37,6 +37,7 @@ export abstract class ConnectedEndpoint<T extends SerializedEndpoint = Serialize
 
 export type OffsetType = 'absolute' | 'relative';
 
+/** @namespace */
 export const Endpoint = {
   deserialize: (
     endpoint: SerializedEndpoint,

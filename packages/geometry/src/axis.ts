@@ -1,5 +1,6 @@
 export type Axis = 'h' | 'v';
 
+/** @namespace */
 export const Axis = {
   h: 'h' as Axis,
   v: 'v' as Axis,

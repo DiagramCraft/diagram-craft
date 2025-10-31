@@ -388,6 +388,7 @@ export class PathListBuilder {
   }
 }
 
+/** @namespace */
 export const PathBuilderHelper = {
   rect: (b: PathListBuilder, box: Box) => {
     b.moveTo(Point.of(box.x, box.y));

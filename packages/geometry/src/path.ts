@@ -18,7 +18,7 @@ import type { RawSegment } from './pathListBuilder';
 import { BezierUtils } from './bezier';
 import { Box } from './box';
 import { assert, VERIFY_NOT_REACHED, VerifyNotReached } from '@diagram-craft/utils/assert';
-import { isSame, roundHighPrecision } from '@diagram-craft/utils/math';
+import { isSame, round } from '@diagram-craft/utils/math';
 import { Vector } from './vector';
 import { Line } from './line';
 import { Lazy } from '@diagram-craft/utils/lazy';
@@ -466,13 +466,13 @@ export class Path {
       : this.#path;
 
     return [
-      `M ${roundHighPrecision(this.#start.x)},${roundHighPrecision(this.#start.y)}`,
+      `M ${round(this.#start.x, 4)},${round(this.#start.y, 4)}`,
       ...normalizedPath.map(r => {
         // We know the first element of a raw segment is the command, followed
         // by a number of numbers
         const [command, ...numbers] = r;
 
-        const roundedNumbers = numbers.map(e => roundHighPrecision(e));
+        const roundedNumbers = numbers.map(e => round(e, 4));
         return `${command} ${roundedNumbers.join(',')}`;
       })
     ].join(' ');

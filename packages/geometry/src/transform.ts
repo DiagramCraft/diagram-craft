@@ -11,6 +11,7 @@ export interface Transform {
   invert(): Transform;
 }
 
+/** @namespace */
 export const Transform = {
   box: (b: Box, ...transforms: Transform[]): Box => {
     return transforms.reduce((b, t) => t.apply(b), b);
@@ -127,6 +128,7 @@ export class Rotation implements Transform {
   }
 }
 
+/** @namespace */
 export const TransformFactory = {
   // TODO: Compile transformation as needed
   fromTo: (before: Box, after: Box): Transform[] => {

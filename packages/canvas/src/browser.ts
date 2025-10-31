@@ -1,3 +1,4 @@
+/** @namespace */
 export const Browser = {
   isChrome: () => {
     return (

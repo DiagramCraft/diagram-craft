@@ -3,6 +3,7 @@ import { isSame } from '@diagram-craft/utils/math';
 
 export type Vector = Point;
 
+/** @namespace */
 export const Vector = {
   from: (c1: Point, c2: Point) => {
     return { x: c2.x - c1.x, y: c2.y - c1.y };
@@ -44,6 +45,7 @@ export const Vector = {
   }
 };
 
+/** @namespace */
 export const ScreenVector = {
   fromPolar: (angle: number, length: number) => {
     return { x: length * Math.cos(angle), y: -length * Math.sin(angle) };

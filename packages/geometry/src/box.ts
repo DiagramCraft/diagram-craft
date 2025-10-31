@@ -20,6 +20,8 @@ export type WritableBox = DeepWriteable<Omit<Box, '_discriminator'>> & { _discri
 
 /**
  * Utility functions for working with WritableBox objects
+ *
+ * @namespace
  */
 export const WritableBox = {
   /**
@@ -32,6 +34,7 @@ export const WritableBox = {
   }
 };
 
+/** @namespace */
 export const Box = {
   /**
    * Returns a copy of the box with rotation set to 0

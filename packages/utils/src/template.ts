@@ -1,3 +1,18 @@
+/**
+ * String template variable substitution utilities.
+ *
+ * @example
+ * ```ts
+ * import { applyTemplate } from '@diagram-craft/utils/template';
+ *
+ * const template = 'Name: %name%, Age: %age%';
+ * const result = applyTemplate(template, { name: 'Alice', age: 30 });
+ * // Result: 'Name: Alice, Age: 30'
+ * ```
+ *
+ * @module
+ */
+
 import { FlatObject } from '@diagram-craft/utils/types';
 
 /**

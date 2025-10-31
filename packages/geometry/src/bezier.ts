@@ -97,6 +97,7 @@ const quadraticRoots = (a: number, b: number, c: number) => {
   }
 };
 
+/** @namespace */
 export const BezierUtils = {
   // For more information of where this Math came from visit:
   // http://www.w3.org/TR/SVG11/implnote.html#ArcImplementationNotes

@@ -14,6 +14,7 @@ export type LengthOffsetOnSegment = WithSegment<{ segmentD: number }>;
 export type TimeOffsetOnPath = { pathT: number };
 export type LengthOffsetOnPath = { pathD: number };
 
+/** @namespace */
 export const PointOnPath = {
   toTimeOffset: <T extends PointOnPath>(
     p: T,
@@ -30,6 +31,7 @@ export const PointOnPath = {
   }
 };
 
+/** @namespace */
 export const TimeOffsetOnSegment = {
   toLengthOffsetOnSegment: <T extends TimeOffsetOnSegment>(
     p: T,
@@ -43,6 +45,7 @@ export const TimeOffsetOnSegment = {
   }
 };
 
+/** @namespace */
 export const LengthOffsetOnSegment = {
   toTimeOffsetOnSegment: <T extends LengthOffsetOnSegment>(
     p: T,
@@ -56,6 +59,7 @@ export const LengthOffsetOnSegment = {
   }
 };
 
+/** @namespace */
 export const TimeOffsetOnPath = {
   toLengthOffsetOnPath: <T extends TimeOffsetOnPath>(p: T, path: Path): LengthOffsetOnPath & T => {
     // TODO: This is incorrect
@@ -67,6 +71,7 @@ export const TimeOffsetOnPath = {
   }
 };
 
+/** @namespace */
 export const LengthOffsetOnPath = {
   toTimeOffsetOnSegment: <T extends LengthOffsetOnPath>(
     p: T,

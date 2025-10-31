@@ -1,0 +1,299 @@
+{
+  "diagram": {
+    "diagrams": [
+      {
+        "id": "jvcn7ke",
+        "name": "Untitled",
+        "layers": [
+          {
+            "id": "kqhtfz2",
+            "name": "Default",
+            "type": "layer",
+            "layerType": "regular",
+            "elements": [
+              {
+                "id": "k29fdq9",
+                "type": "node",
+                "nodeType": "rect",
+                "bounds": { "x": 165, "y": 145, "w": 100, "h": 100, "r": 0 },
+                "anchors": [
+                  { "id": "c", "start": { "x": 0.5, "y": 0.5 }, "clip": true, "type": "center" },
+                  {
+                    "id": "500_0",
+                    "start": { "x": 0.5, "y": 0 },
+                    "clip": false,
+                    "type": "point",
+                    "normal": 4.71238898038469,
+                    "isPrimary": true
+                  },
+                  {
+                    "id": "1000_500",
+                    "start": { "x": 1, "y": 0.5 },
+                    "clip": false,
+                    "type": "point",
+                    "normal": 6.283185307179586,
+                    "isPrimary": true
+                  },
+                  {
+                    "id": "500_1000",
+                    "start": { "x": 0.5, "y": 1 },
+                    "clip": false,
+                    "type": "point",
+                    "normal": 1.5707963267948966,
+                    "isPrimary": true
+                  },
+                  {
+                    "id": "0_500",
+                    "start": { "x": 0, "y": 0.5 },
+                    "clip": false,
+                    "type": "point",
+                    "normal": 3.141592653589793,
+                    "isPrimary": true
+                  }
+                ],
+                "children": [],
+                "props": { "shadow": { "enabled": true }, "fill": { "color": "#fee9f5" } },
+                "metadata": { "style": "default", "textStyle": "default-text-default" },
+                "texts": { "text": "" }
+              },
+              {
+                "id": "ba1rsqi",
+                "type": "node",
+                "nodeType": "rect",
+                "bounds": { "x": 395, "y": 145, "w": 100, "h": 100, "r": 0 },
+                "anchors": [
+                  { "id": "c", "start": { "x": 0.5, "y": 0.5 }, "clip": true, "type": "center" },
+                  {
+                    "id": "500_0",
+                    "start": { "x": 0.5, "y": 0 },
+                    "clip": false,
+                    "type": "point",
+                    "normal": 4.71238898038469,
+                    "isPrimary": true
+                  },
+                  {
+                    "id": "1000_500",
+                    "start": { "x": 1, "y": 0.5 },
+                    "clip": false,
+                    "type": "point",
+                    "normal": 6.283185307179586,
+                    "isPrimary": true
+                  },
+                  {
+                    "id": "500_1000",
+                    "start": { "x": 0.5, "y": 1 },
+                    "clip": false,
+                    "type": "point",
+                    "normal": 1.5707963267948966,
+                    "isPrimary": true
+                  },
+                  {
+                    "id": "0_500",
+                    "start": { "x": 0, "y": 0.5 },
+                    "clip": false,
+                    "type": "point",
+                    "normal": 3.141592653589793,
+                    "isPrimary": true
+                  }
+                ],
+                "children": [],
+                "props": { "shadow": { "enabled": true }, "fill": { "color": "#e9f6e9" } },
+                "metadata": { "style": "default", "textStyle": "default-text-default" },
+                "texts": { "text": "" }
+              },
+              {
+                "id": "goa4s2k",
+                "type": "edge",
+                "start": {
+                  "anchor": "1000_500",
+                  "node": { "id": "k29fdq9" },
+                  "position": { "x": 265, "y": 195 },
+                  "offset": { "x": 0, "y": 0 }
+                },
+                "end": {
+                  "anchor": "0_500",
+                  "node": { "id": "ba1rsqi" },
+                  "position": { "x": 395, "y": 195 },
+                  "offset": { "x": 0, "y": 0 }
+                },
+                "labelNodes": [],
+                "waypoints": [],
+                "props": {
+                  "arrow": { "start": { "type": "NONE" }, "end": { "type": "SQUARE_ARROW_FILLED" } }
+                },
+                "metadata": { "style": "default-edge" },
+                "children": []
+              },
+              {
+                "id": "3p4cmtu",
+                "type": "node",
+                "nodeType": "cylinder",
+                "bounds": { "x": 395, "y": 355, "w": 100, "h": 100, "r": 0 },
+                "anchors": [
+                  {
+                    "id": "1",
+                    "start": { "x": 0.5, "y": 0 },
+                    "type": "point",
+                    "isPrimary": true,
+                    "normal": -1.5707963267948966
+                  },
+                  {
+                    "id": "2",
+                    "start": { "x": 1, "y": 0.5 },
+                    "type": "point",
+                    "isPrimary": true,
+                    "normal": 0
+                  },
+                  {
+                    "id": "3",
+                    "start": { "x": 0.5, "y": 1 },
+                    "type": "point",
+                    "isPrimary": true,
+                    "normal": 1.5707963267948966
+                  },
+                  {
+                    "id": "4",
+                    "start": { "x": 0, "y": 0.5 },
+                    "type": "point",
+                    "isPrimary": true,
+                    "normal": 3.141592653589793
+                  },
+                  { "id": "c", "start": { "x": 0.5, "y": 0.5 }, "clip": true, "type": "center" }
+                ],
+                "children": [],
+                "props": { "shadow": { "enabled": true }, "fill": { "color": "#feebe7" } },
+                "metadata": { "style": "default", "textStyle": "default-text-default" },
+                "texts": { "text": "" }
+              },
+              {
+                "id": "wjrzj25",
+                "type": "edge",
+                "start": {
+                  "anchor": "500_1000",
+                  "node": { "id": "k29fdq9" },
+                  "position": { "x": 215, "y": 245 },
+                  "offset": { "x": 0, "y": 0 }
+                },
+                "end": {
+                  "anchor": "4",
+                  "node": { "id": "3p4cmtu" },
+                  "position": { "x": 395, "y": 405 },
+                  "offset": { "x": 0, "y": 0 }
+                },
+                "labelNodes": [],
+                "waypoints": [],
+                "props": {
+                  "type": "orthogonal",
+                  "arrow": { "end": { "type": "SQUARE_ARROW_OUTLINE" } }
+                },
+                "metadata": { "style": "default-edge" },
+                "children": []
+              }
+            ],
+            "isLocked": false
+          }
+        ],
+        "activeLayerId": "kqhtfz2",
+        "visibleLayers": ["kqhtfz2"],
+        "diagrams": [],
+        "comments": [],
+        "zoom": { "x": -285.5, "y": -37.5, "zoom": 1 },
+        "canvas": { "w": 640, "h": 640, "x": 0, "y": 0 }
+      }
+    ],
+    "attachments": {},
+    "customPalette": [
+      "#000000",
+      "#000000",
+      "#000000",
+      "#000000",
+      "#000000",
+      "#000000",
+      "#000000",
+      "#000000",
+      "#000000",
+      "#000000",
+      "#000000",
+      "#000000",
+      "#000000",
+      "#000000"
+    ],
+    "styles": {
+      "edgeStyles": [
+        {
+          "_snapshotType": "stylesheet",
+          "id": "default-edge",
+          "name": "Default",
+          "props": { "stroke": { "color": "var(--canvas-fg)" }, "type": "straight" },
+          "type": "edge"
+        }
+      ],
+      "nodeStyles": [
+        {
+          "_snapshotType": "stylesheet",
+          "id": "default",
+          "name": "Default",
+          "props": {
+            "fill": { "color": "var(--canvas-bg2)" },
+            "stroke": { "color": "var(--canvas-fg)" }
+          },
+          "type": "node"
+        },
+        {
+          "_snapshotType": "stylesheet",
+          "id": "default-text",
+          "name": "Text",
+          "props": { "fill": { "enabled": false }, "stroke": { "enabled": false } },
+          "type": "node"
+        }
+      ]
+    },
+    "schemas": [
+      {
+        "id": "default",
+        "name": "Default",
+        "providerId": "default",
+        "fields": [
+          { "id": "name", "name": "Name", "type": "text" },
+          { "id": "notes", "name": "Notes", "type": "longtext" }
+        ]
+      }
+    ],
+    "schemaMetadata": {
+      "default": { "availableForElementLocalData": false, "useDocumentOverrides": false }
+    },
+    "props": {
+      "query": {
+        "history": [
+          {
+            "type": "djql",
+            "label": ".elements[]",
+            "scope": "active-layer",
+            "value": ".elements[]"
+          },
+          {
+            "type": "djql",
+            "label": ".elements[] | select(.edges | length > 0)",
+            "scope": "active-layer",
+            "value": ".elements[] | select(.edges | length > 0)"
+          }
+        ],
+        "saved": []
+      },
+      "stencils": []
+    },
+    "data": {
+      "providers": [
+        {
+          "id": "default",
+          "providerId": "defaultDataProvider",
+          "data": "{\"schemas\":[{\"id\":\"default\",\"name\":\"Default\",\"providerId\":\"default\",\"fields\":[{\"id\":\"name\",\"name\":\"Name\",\"type\":\"text\"},{\"id\":\"notes\",\"name\":\"Notes\",\"type\":\"longtext\"}]}],\"data\":[]}"
+        }
+      ],
+      "templates": [],
+      "overrides": {}
+    },
+    "hash": "6dd1a4197d9e1c52"
+  },
+  "timestamp": 1761838495068
+}

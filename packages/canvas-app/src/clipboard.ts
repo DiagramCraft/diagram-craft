@@ -131,6 +131,7 @@ const TextareaClipboard: Clipboard = {
   }
 };
 
+/** @namespace */
 export const Clipboard = {
   get(): Clipboard {
     if (Browser.isFirefox()) {

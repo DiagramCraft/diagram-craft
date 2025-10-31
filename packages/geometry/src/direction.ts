@@ -38,6 +38,7 @@ export function assertFullDirectionOrUndefined(
   }
 }
 
+/** @namespace */
 export const Direction = {
   /**
    * Returns the opposite cardinal direction.

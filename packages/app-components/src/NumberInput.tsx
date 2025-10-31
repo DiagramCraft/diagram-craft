@@ -1,6 +1,6 @@
 import { TbChevronDown, TbChevronUp } from 'react-icons/tb';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { propsUtils } from '@diagram-craft/utils/propsUtils';
+import { PropsUtils } from '@diagram-craft/utils/propsUtils';
 import { extractDataAttributes } from './utils';
 import styles from './NumberInput.module.css';
 import { safeReMatch } from '@diagram-craft/utils/safe';
@@ -113,7 +113,7 @@ export const NumberInput = (props: Props) => {
     >
       {props.label && <div className={styles.cmpNumberInputLabel}>{props.label}</div>}
       <input
-        {...propsUtils.filterDomProperties(props)}
+        {...PropsUtils.filterDomProperties(props)}
         placeholder={props.isIndeterminate ? '···' : undefined}
         type={'text'}
         value={props.isIndeterminate ? '' : currentValue}

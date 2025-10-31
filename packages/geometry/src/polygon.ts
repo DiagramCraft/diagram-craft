@@ -5,6 +5,7 @@ export type Polygon = {
   points: ReadonlyArray<Point>;
 };
 
+/** @namespace */
 export const Polygon = {
   intersects(a: Polygon, b: Polygon) {
     for (const polygon of [a, b]) {

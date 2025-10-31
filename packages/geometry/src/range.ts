@@ -1,5 +1,6 @@
 export type Range = [number, number];
 
+/** @namespace */
 export const Range = {
   of: (from: number, to: number): Range => {
     return [from, to];
