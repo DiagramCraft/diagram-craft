@@ -634,9 +634,4 @@ export class CubicBezier {
     const pp = this.point(clamp(t1, 0, 1));
     return { distance: Point.distance(pp, p), t: t1, point: pp };
   }
-
-  private darclen(t: number) {
-    const d = this.derivative(t);
-    return Math.sqrt(d.x * d.x + d.y * d.y);
-  }
 }
