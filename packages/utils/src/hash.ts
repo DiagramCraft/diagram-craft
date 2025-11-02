@@ -1,4 +1,27 @@
-// See https://stackoverflow.com/questions/7616461/generate-a-hash-from-string-in-javascript
+/**
+ * Fast non-cryptographic hash functions for byte arrays.
+ *
+ * @example
+ * ```ts
+ * import { hash, hash64 } from '@diagram-craft/utils/hash';
+ *
+ * const data = new TextEncoder().encode('Hello, World!');
+ * const numericHash = hash(data);
+ * const stringHash = hash64(data);
+ * ```
+ *
+ * @module
+ */
+
+/**
+ * Generates a 64-bit hash as a hexadecimal string.
+ *
+ * @param arr - The byte array to hash
+ * @param seed - Optional seed value for hash initialization (default: 0)
+ * @returns 16-character hexadecimal hash string
+ *
+ * @see https://stackoverflow.com/questions/7616461/generate-a-hash-from-string-in-javascript
+ */
 export const hash64 = (arr: Uint8Array, seed = 0): string => {
   let h1 = 0xdeadbeef ^ seed;
   let h2 = 0x41c6ce57 ^ seed;
@@ -17,7 +40,14 @@ export const hash64 = (arr: Uint8Array, seed = 0): string => {
   return (h2 >>> 0).toString(16).padStart(8, '0') + (h1 >>> 0).toString(16).padStart(8, '0');
 };
 
-// See https://gist.github.com/eplawless/52813b1d8ad9af510d85
+/**
+ * Generates a 32-bit hash as a number.
+ *
+ * @param arr - The byte array to hash
+ * @returns 32-bit unsigned integer hash value
+ *
+ * @see https://gist.github.com/eplawless/52813b1d8ad9af510d85
+ */
 export const hash = (arr: Uint8Array): number => {
   let res = 5381;
   for (let i = 0; i < arr.length; i++) {

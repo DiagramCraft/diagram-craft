@@ -13,7 +13,7 @@
     "packages/collaboration"
   ],
   "useFirstParagraphOfCommentAsSummary": true,
-  "plugin": "typedoc-github-theme",
+  "plugin": ["typedoc-github-theme"],
   "projectDocuments": [
     "docs/introduction/*.md",
     "docs/features/*.md",

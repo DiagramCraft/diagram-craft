@@ -75,6 +75,7 @@ export type DiagramEvents = {
   };
 };
 
+/** @namespace */
 export const DocumentBuilder = {
   empty: (id: string, name: string, document: DiagramDocument) => {
     const diagram = new Diagram(id, name, document);

@@ -1,24 +1,139 @@
+/**
+ * Range operations and utilities for working with 1D intervals.
+ *
+ * This module provides utilities for working with ranges (intervals) represented as tuples of two numbers.
+ * Ranges can be used for many purposes like coordinate ranges, time intervals, or any bounded numeric values.
+ *
+ * @example
+ * ```ts
+ * import { Range } from '@diagram-craft/geometry/range';
+ *
+ * // Create ranges
+ * const r1 = Range.of(0, 100);    // [0, 100]
+ * const r2 = Range.of(50, 150);   // [50, 150]
+ *
+ * // Check if ranges overlap
+ * if (Range.overlaps(r1, r2)) {
+ *   console.log('Ranges overlap'); // true
+ * }
+ *
+ * // Find intersection
+ * const intersection = Range.intersection(r1, r2); // [50, 100]
+ *
+ * // Calculate properties
+ * const mid = Range.midpoint(r1);  // 50
+ * const len = Range.length(r1);    // 100
+ *
+ * // Transform ranges
+ * const shifted = Range.add(r1, 10);     // [10, 110]
+ * const scaled = Range.scale(r1, 2);      // [-50, 150]
+ *
+ * // Test containment
+ * Range.contains(r1, 50);  // true
+ * Range.contains(r1, 150); // false
+ *
+ * // Clamp values
+ * const clamped = Range.clamp(r1, 150); // 100
+ *
+ * // Normalize invalid ranges
+ * const invalid = Range.of(100, 0);
+ * const valid = Range.normalize(invalid); // [0, 100]
+ * ```
+ *
+ * @module
+ */
+
+/**
+ * Represents a 1D range (interval) as a tuple of two numbers [start, end].
+ *
+ * By convention, the first element should be less than or equal to the second,
+ * though some functions handle non-normalized ranges gracefully.
+ */
 export type Range = [number, number];
 
+/**
+ * Utility functions for working with ranges.
+ *
+ * @namespace
+ */
 export const Range = {
+  /**
+   * Creates a range from start and end values.
+   *
+   * @param from The start of the range
+   * @param to The end of the range
+   * @returns A new range tuple
+   */
   of: (from: number, to: number): Range => {
     return [from, to];
   },
 
+  /**
+   * Checks if two ranges overlap (have any common values).
+   *
+   * Ranges are considered overlapping if they share at least one point,
+   * including at their endpoints.
+   *
+   * @param r1 The first range
+   * @param r2 The second range
+   * @returns True if the ranges overlap, false otherwise
+   *
+   * @example
+   * ```ts
+   * Range.overlaps([0, 10], [5, 15]);  // true (overlap)
+   * Range.overlaps([0, 10], [10, 20]); // true (touch at 10)
+   * Range.overlaps([0, 10], [11, 20]); // false (no overlap)
+   * ```
+   */
   overlaps: (r1: Range, r2: Range) => {
     return r1[0] <= r2[1] && r2[0] <= r1[1];
   },
 
+  /**
+   * Finds the intersection of two ranges.
+   *
+   * Returns the overlapping portion of both ranges, or undefined if they don't overlap.
+   *
+   * @param r1 The first range
+   * @param r2 The second range
+   * @returns The intersection range, or undefined if no overlap exists
+   *
+   * @example
+   * ```ts
+   * Range.intersection([0, 10], [5, 15]);  // [5, 10]
+   * Range.intersection([0, 10], [10, 20]); // [10, 10]
+   * Range.intersection([0, 10], [11, 20]); // undefined
+   * ```
+   */
   intersection: (r1: Range, r2: Range): Range | undefined => {
     if (!Range.overlaps(r1, r2)) return undefined;
 
     return Range.of(Math.max(r1[0], r2[0]), Math.min(r1[1], r2[1]));
   },
 
+  /**
+   * Calculates the midpoint of a range.
+   *
+   * @param r The range
+   * @returns The value exactly in the middle of the range
+   */
   midpoint: (r: Range): number => {
     return (r[0] + r[1]) / 2;
   },
 
+  /**
+   * Shifts a range by adding a constant value to both endpoints.
+   *
+   * @param r The range to shift
+   * @param d The amount to add to both endpoints
+   * @returns A new range shifted by d
+   *
+   * @example
+   * ```ts
+   * Range.add([0, 10], 5);  // [5, 15]
+   * Range.add([0, 10], -5); // [-5, 5]
+   * ```
+   */
   add: (r: Range, d: number): Range => {
     return [r[0] + d, r[1] + d];
   },

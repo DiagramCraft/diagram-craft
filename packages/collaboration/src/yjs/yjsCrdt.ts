@@ -10,7 +10,6 @@ import {
 } from '../crdt';
 import * as Y from 'yjs';
 import { EventEmitter, EventKey, EventReceiver } from '@diagram-craft/utils/event';
-import { mapIterator } from '@diagram-craft/utils/iterator';
 
 // biome-ignore lint/suspicious/noExplicitAny: false positive
 const wrap = (e: any): any => {
@@ -35,6 +34,12 @@ const unwrap = (e: any): any => {
     return e;
   }
 };
+
+function* mapIterator<T, K>(iterator: IterableIterator<T>, callback: (value: T) => K): Iterator<K> {
+  for (const value of iterator) {
+    yield callback(value);
+  }
+}
 
 export class YJSFactory implements CRDTFactory {
   makeMap<T extends Record<string, CRDTCompatibleObject>>(initial?: T): YJSMap<T> {

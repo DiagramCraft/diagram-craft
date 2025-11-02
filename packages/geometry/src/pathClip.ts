@@ -1,3 +1,44 @@
+/**
+ * Boolean operations on paths including union, intersection, difference, and XOR.
+ *
+ * This module implements the Greiner-Hormann polygon clipping algorithm with extensions
+ * for handling overlaps and degeneracies. It supports complex path operations with holes
+ * and nested shapes.
+ *
+ * @example
+ * ```ts
+ * import { applyBooleanOperation } from '@diagram-craft/geometry/pathClip';
+ * import { PathList } from '@diagram-craft/geometry/pathList';
+ *
+ * // Create two overlapping shapes
+ * const rect1 = new PathList([
+ *   new Path({ x: 0, y: 0 }, [
+ *     ['L', 100, 0],
+ *     ['L', 100, 100],
+ *     ['L', 0, 100],
+ *     ['L', 0, 0]
+ *   ])
+ * ]);
+ *
+ * const rect2 = new PathList([
+ *   new Path({ x: 50, y: 50 }, [
+ *     ['L', 150, 50],
+ *     ['L', 150, 150],
+ *     ['L', 50, 150],
+ *     ['L', 50, 50]
+ *   ])
+ * ]);
+ *
+ * // Perform boolean operations
+ * const union = applyBooleanOperation(rect1, rect2, 'A union B');
+ * const intersection = applyBooleanOperation(rect1, rect2, 'A intersection B');
+ * const difference = applyBooleanOperation(rect1, rect2, 'A not B');
+ * const xor = applyBooleanOperation(rect1, rect2, 'A xor B');
+ * ```
+ *
+ * @module
+ */
+
 import { Point } from './point';
 import { LineSegment, PathSegment } from './pathSegment';
 import { assert, mustExist, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
@@ -80,6 +121,16 @@ type VertexList = {
   type: Hierarchy['type'];
 };
 
+/**
+ * Supported boolean operations between two paths (A and B).
+ *
+ * - `'A union B'` - Combines both paths into a single shape
+ * - `'A not B'` - Subtracts B from A (difference)
+ * - `'B not A'` - Subtracts A from B (reverse difference)
+ * - `'A intersection B'` - Only the overlapping area
+ * - `'A xor B'` - Symmetric difference (union minus intersection)
+ * - `'A divide B'` - Splits A by B into separate regions
+ */
 export type BooleanOperation =
   | 'A union B'
   | 'A not B'
@@ -90,9 +141,21 @@ export type BooleanOperation =
 
 /* CORE ALGORITHM ************************************************************************* */
 
-/*
- * This implementation is based on https://www.inf.usi.ch/hormann/papers/Greiner.1998.ECO.pdf
- * as well as https://www.cs.sjtu.edu.cn/~yaobin/papers/tr_EBCAP.pdf
+/**
+ * Applies a boolean operation between two path lists.
+ *
+ * This implementation is based on the Greiner-Hormann polygon clipping algorithm with
+ * extensions for handling overlaps and degeneracies. Supports complex shapes with holes
+ * and nested regions.
+ *
+ * References:
+ * - https://www.inf.usi.ch/hormann/papers/Greiner.1998.ECO.pdf
+ * - https://www.cs.sjtu.edu.cn/~yaobin/papers/tr_EBCAP.pdf
+ *
+ * @param pSubject The first path list (subject)
+ * @param pClip The second path list (clip)
+ * @param operation The boolean operation to perform
+ * @returns Array of resulting path lists after the operation
  */
 export const applyBooleanOperation = (
   pSubject: PathList,
@@ -213,18 +276,33 @@ export const applyBooleanOperation = (
   }
 };
 
-/*
-  for each vertex Si of subject polygon do
-    for each vertex Cj of clip polygon do
-      if intersect(Si,Si+1,Cj,Cj+1,a,b)
-        I1 = CreateVertex(Si,Si+1,a)
-        I2 = CreateVertex(Cj,Cj+1,b)
-        link intersection points I1 and I2
-        sort I1 into subject polygon
-        sort I2 into clip polygon
-      end if
-    end for
-  end for
+/**
+ * Computes the intersection vertices between subject and clip paths.
+ *
+ * This function finds all intersection points between the paths, creates vertex objects
+ * for each intersection, and organizes them into vertex lists. It handles both crossing
+ * intersections and overlapping segments.
+ *
+ * Pseudocode:
+ * ```
+ *   for each vertex Si of subject polygon do
+ *     for each vertex Cj of clip polygon do
+ *       if intersect(Si,Si+1,Cj,Cj+1,a,b)
+ *         I1 = CreateVertex(Si,Si+1,a)
+ *         I2 = CreateVertex(Cj,Cj+1,b)
+ *         link intersection points I1 and I2
+ *         sort I1 into subject polygon
+ *         sort I2 into clip polygon
+ *       end if
+ *     end for
+ *   end for
+ * ```
+ *
+ * @param subject The subject path list
+ * @param clip The clip path list
+ * @param subjectTree Hierarchy tree for the subject paths
+ * @param clipTree Hierarchy tree for the clip paths
+ * @returns A tuple of vertex lists for subject and clip paths
  */
 export const getClipVertices = (
   subject: PathList,
@@ -359,20 +437,33 @@ export const getClipVertices = (
   return [subjectVertices, clipVertices];
 };
 
-/*
-  for both polygons P do
-    if P0 inside other polygon
-      status = exit
-    else
-      status = entry
-    end if
-    for each vertex Pi of polygon do
-      if Pi->intersect then
-        Pi->entry_exit = status
-        toggle status
-      end if
-    end for
-  end for
+/**
+ * Classifies intersection vertices as entry or exit points.
+ *
+ * This function determines whether each intersection vertex represents an entry into or
+ * exit from the other polygon. This classification is essential for the polygon walking
+ * algorithm to construct the correct result paths.
+ *
+ * Pseudocode:
+ * ```
+ *   for both polygons P do
+ *     if P0 inside other polygon
+ *       status = exit
+ *     else
+ *       status = entry
+ *     end if
+ *     for each vertex Pi of polygon do
+ *       if Pi->intersect then
+ *         Pi->entry_exit = status
+ *         toggle status
+ *       end if
+ *     end for
+ *   end for
+ * ```
+ *
+ * @param shapes Tuple of vertex lists for both shapes
+ * @param fullShape Tuple of complete path lists for both shapes
+ * @returns Array of crossing points found during classification
  */
 export const classifyClipVertices = (
   shapes: [Array<VertexList>, Array<VertexList>],

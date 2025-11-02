@@ -119,6 +119,8 @@ export type BoundaryDirection = 'clockwise' | 'counter-clockwise' | 'unknown';
 
 /**
  * Strategies for generating anchors on nodes based on their shape.
+ *
+ * @namespace
  */
 export const AnchorStrategy = {
   /**

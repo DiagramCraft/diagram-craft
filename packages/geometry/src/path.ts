@@ -1,3 +1,40 @@
+/**
+ * Path representation and operations for complex curves including lines, quadratic, and cubic bezier segments.
+ *
+ * @example
+ * ```ts
+ * import { Path } from '@diagram-craft/geometry/path';
+ *
+ * // Create a path with line and cubic bezier segments
+ * const path = new Path({ x: 0, y: 0 }, [
+ *   ['L', 100, 0],
+ *   ['C', 100, 50, 150, 50, 150, 100]
+ * ]);
+ *
+ * // Get the length of the path
+ * const length = path.length();
+ *
+ * // Find a point along the path at a specific distance
+ * const point = path.pointAt({ pathD: length / 2 });
+ *
+ * // Project a point onto the path
+ * const projected = path.projectPoint(mousePosition);
+ *
+ * // Check if a point is on or inside the path
+ * if (path.isOn(point)) {
+ *   console.log('Point is on the path');
+ * }
+ *
+ * // Split a path at specific points
+ * const [part1, part2] = path.split({ segment: 2, segmentT: 0.5 });
+ *
+ * // Create an offset path (parallel curve)
+ * const offsetPath = path.offset(10);
+ * ```
+ *
+ * @module
+ */
+
 import { Point } from './point';
 import {
   CubicSegment,
@@ -18,12 +55,15 @@ import type { RawSegment } from './pathListBuilder';
 import { BezierUtils } from './bezier';
 import { Box } from './box';
 import { assert, VERIFY_NOT_REACHED, VerifyNotReached } from '@diagram-craft/utils/assert';
-import { isSame, roundHighPrecision } from '@diagram-craft/utils/math';
+import { isSame, round } from '@diagram-craft/utils/math';
 import { Vector } from './vector';
 import { Line } from './line';
 import { Lazy } from '@diagram-craft/utils/lazy';
 import { safeTupleCast } from '@diagram-craft/utils/safe';
 
+/**
+ * Represents the result of projecting a point onto a path or segment.
+ */
 export type Projection = { t: number; distance: number; point: Point };
 
 class SegmentList {
@@ -155,6 +195,13 @@ class SegmentList {
   }
 }
 
+/**
+ * Represents a path composed of line segments and bezier curves.
+ *
+ * A Path consists of a starting point and a series of path segments (lines, quadratic, or cubic beziers).
+ * It provides operations for measuring length, projecting points, finding intersections, splitting,
+ * offsetting, and more.
+ */
 export class Path {
   readonly #path: RawSegment[] = [];
   readonly #segmentList;
@@ -169,6 +216,12 @@ export class Path {
     );
   }
 
+  /**
+   * Joins multiple paths into a single path.
+   *
+   * @param paths The paths to join
+   * @returns A new path containing all segments from the input paths
+   */
   static join(...paths: Path[]) {
     assert.arrayNotEmpty(paths);
     const dest: RawSegment[] = [];
@@ -178,6 +231,13 @@ export class Path {
     return new Path(paths[0].start, dest);
   }
 
+  /**
+   * Creates a new path from an existing path by transforming its segments.
+   *
+   * @param p The source path
+   * @param fn A function that transforms the segments
+   * @returns A new path with transformed segments
+   */
   static from(p: Path, fn: (segments: ReadonlyArray<PathSegment>) => PathSegment[]) {
     const segmentList = new SegmentList(fn(p.segmentList.segments));
     const path = segmentList.segments.flatMap(e => e.raw());
@@ -188,6 +248,11 @@ export class Path {
     return this.#segmentList.get();
   }
 
+  /**
+   * Creates a deep copy of the path.
+   *
+   * @returns A new path with the same start point and segments
+   */
   clone() {
     return new Path(
       this.start,
@@ -196,39 +261,48 @@ export class Path {
     );
   }
 
+  /**
+   * Gets the midpoint of each segment in the path.
+   */
   get midpoints(): ReadonlyArray<Point> {
     return this.segments.map((s: PathSegment) => {
       return s.point(0.5);
     });
   }
 
+  /**
+   * Gets the starting point of the path.
+   */
   get start() {
     return this.#start;
   }
 
+  /**
+   * Gets the ending point of the path.
+   */
   get end(): Point {
     return this.segmentList.segments.at(-1)!.end;
   }
 
+  /**
+   * Gets the raw segment data of the path.
+   */
   get raw() {
     return this.#path;
   }
 
-  /*transform(t: Array<Transform>) {
-    return PathListBuilder.fromSegments(this.start, this.#path)
-      .withTransform(t)
-      .getPaths()
-      .singular();
-  }*/
-
-  get numberOfSegments() {
-    return this.#segmentList.hasValue() ? this.#segmentList.get().length() : this.#path.length;
-  }
-
+  /**
+   * Gets the path segments.
+   */
   get segments(): ReadonlyArray<PathSegment> {
     return this.segmentList.segments;
   }
 
+  /**
+   * Creates a new path with all segments reversed.
+   *
+   * @returns A new path that goes from the original end point to the original start point
+   */
   reverse() {
     const end = this.end;
 
@@ -244,12 +318,25 @@ export class Path {
     );
   }
 
+  /**
+   * Checks if a point is inside a closed path using the ray casting algorithm.
+   *
+   * @param p The point to check
+   * @returns True if the point is inside the path, false otherwise
+   */
   isInside(p: Point) {
     const line = new Path(p, [['L', Number.MAX_SAFE_INTEGER / 17, Number.MAX_SAFE_INTEGER / 53]]);
     const intersections = this.intersections(line);
     return intersections.length % 2 !== 0;
   }
 
+  /**
+   * Checks if a point lies on the path within a given tolerance.
+   *
+   * @param p The point to check
+   * @param epsilon The tolerance for the check (default: 0.0001)
+   * @returns True if the point is on the path, false otherwise
+   */
   isOn(p: Point, epsilon = 0.0001) {
     const pp = this.projectPoint(p);
     return (
@@ -259,18 +346,42 @@ export class Path {
     );
   }
 
+  /**
+   * Calculates the total length of the path.
+   *
+   * @returns The length of the path
+   */
   length() {
     return this.segmentList.length();
   }
 
+  /**
+   * Finds the point at a specific distance along the path.
+   *
+   * @param t The length offset along the path
+   * @returns The point at that position
+   */
   pointAt(t: LengthOffsetOnPath) {
     return this.segmentList.pointAt(t);
   }
 
+  /**
+   * Calculates the tangent vector at a specific distance along the path.
+   *
+   * @param t The length offset along the path
+   * @returns The tangent vector at that position
+   */
   tangentAt(t: LengthOffsetOnPath) {
     return this.segmentList.tangentAt(t);
   }
 
+  /**
+   * Projects a point onto the path, finding the closest point on the path.
+   *
+   * @param point The point to project
+   * @param limit If true, limit the projection to the path bounds
+   * @returns The projected point with position information
+   */
   projectPoint(point: Point, limit = true): PointOnPath & LengthOffsetOnPath & TimeOffsetOnSegment {
     const projection = this.segmentList.projectPoint(point, limit);
 
@@ -282,6 +393,13 @@ export class Path {
     };
   }
 
+  /**
+   * Finds all intersection points between this path and another path.
+   *
+   * @param other The other path to check for intersections
+   * @param opts Options for intersection detection
+   * @returns Array of intersection points with segment information
+   */
   intersections(
     other: Path,
     opts?: IntersectionOpts
@@ -321,8 +439,17 @@ export class Path {
   }
 
   /**
-   * Note: passing a LengthOffsetOnSegment in addition as the first parameter, gives
-   * quite a bit of performance boost later on
+   * Splits the path at one or two points.
+   *
+   * If one point is provided, returns two paths. If two points are provided, returns three paths.
+   * When both points are on the same segment, the segment is split into three parts.
+   *
+   * Note: passing a LengthOffsetOnSegment in addition as the first parameter gives
+   * a performance boost for calculations.
+   *
+   * @param p1 The first split point
+   * @param p2 Optional second split point
+   * @returns Two paths if p2 is not provided, three paths if p2 is provided
    */
   split(
     p1: TimeOffsetOnSegment | (TimeOffsetOnSegment & LengthOffsetOnSegment),
@@ -386,6 +513,15 @@ export class Path {
     }
   }
 
+  /**
+   * Creates an offset path (parallel curve) at a given distance.
+   *
+   * Uses the Tiller-Hanson algorithm to create a path parallel to the original
+   * at the specified distance.
+   *
+   * @param n The offset distance (positive for outward, negative for inward)
+   * @returns A new path offset from the original
+   */
   offset(n: number) {
     // Note: this is basically the Tiller-Hanson algorithm
 
@@ -457,6 +593,13 @@ export class Path {
     return new Path(joinedEntries[0]!.line.from, dest);
   }
 
+  /**
+   * Converts the path to an SVG path string.
+   *
+   * Resolves any T-segments and formats the path as an SVG-compatible string.
+   *
+   * @returns An SVG path string representation
+   */
   asSvgPath() {
     // Need to resolve any T-segments, as many of the QuadSegments will
     // at this point (post processing) have turned into CubicSegment and SVG
@@ -466,23 +609,33 @@ export class Path {
       : this.#path;
 
     return [
-      `M ${roundHighPrecision(this.#start.x)},${roundHighPrecision(this.#start.y)}`,
+      `M ${round(this.#start.x, 4)},${round(this.#start.y, 4)}`,
       ...normalizedPath.map(r => {
         // We know the first element of a raw segment is the command, followed
         // by a number of numbers
         const [command, ...numbers] = r;
 
-        const roundedNumbers = numbers.map(e => roundHighPrecision(e));
+        const roundedNumbers = numbers.map(e => round(e, 4));
         return `${command} ${roundedNumbers.join(',')}`;
       })
     ].join(' ');
   }
 
+  /**
+   * Calculates the bounding box of the path.
+   *
+   * @returns A box that contains the entire path
+   */
   bounds() {
     const boxes = this.segments.map(s => s.bounds());
     return Box.boundingBox(boxes);
   }
 
+  /**
+   * Removes duplicate consecutive segments from the path.
+   *
+   * @returns A new path with duplicate segments removed
+   */
   clean() {
     // Remove any repeated segments
     const dest: RawSegment[] = [this.#path[0]!];
@@ -497,6 +650,11 @@ export class Path {
     return new Path(this.#start, dest);
   }
 
+  /**
+   * Determines if the path is oriented clockwise.
+   *
+   * @returns True if the path is clockwise, false otherwise
+   */
   isClockwise() {
     const segments = this.segments;
     let sum = 0;
@@ -509,8 +667,13 @@ export class Path {
     return sum < 0;
   }
 
-  // TODO: This is a somewhat simplistic way to calculate if a Path has area or not
-  //       It just checks for pairwise segments to see if they are each others reverse
+  /**
+   * Checks if the path encloses an area.
+   *
+   * Uses a simplistic check for pairwise segments to see if they are reversed.
+   *
+   * @returns True if the path has area, false otherwise
+   */
   hasArea() {
     if (this.segments.length % 2 === 1) return true;
     for (let i = 0; i < this.segments.length; i += 2) {
@@ -521,6 +684,13 @@ export class Path {
     return false;
   }
 
+  /**
+   * Simplifies the path by merging consecutive collinear line segments.
+   *
+   * Removes zero-length segments and combines consecutive line segments that go in the same direction.
+   *
+   * @returns A new simplified path
+   */
   simplify() {
     const simplifiedSegments: PathSegment[] = [];
     if (this.segments.length <= 1) return this;

@@ -14,35 +14,35 @@ import { largest } from '@diagram-craft/utils/array';
 import { assert } from '@diagram-craft/utils/assert';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { hasHighlight, Highlights } from '../highlight';
-import { isEnum } from '@diagram-craft/utils/types';
+import { isStringUnion } from '@diagram-craft/utils/types';
 import { renderElement } from '../components/renderElement';
 
 type ContainerResize = 'none' | 'shrink' | 'grow' | 'both';
 function assertIsContainerResizeOrUndefined(
   value: string | undefined
 ): asserts value is ContainerResize | undefined {
-  assert.true(value === undefined || isEnum(value, ['none', 'shrink', 'grow', 'both']));
+  assert.true(value === undefined || isStringUnion(value, ['none', 'shrink', 'grow', 'both']));
 }
 
 type ChildResize = 'fixed' | 'scale' | 'fill';
 function assertIsChildResizeOrUndefined(
   value: string | undefined
 ): asserts value is ChildResize | undefined {
-  assert.true(value === undefined || isEnum(value, ['fixed', 'scale', 'fill']));
+  assert.true(value === undefined || isStringUnion(value, ['fixed', 'scale', 'fill']));
 }
 
 type LayoutType = 'manual' | 'horizontal' | 'vertical';
 function assertIsLayoutTypeOrUndefined(
   value: string | undefined
 ): asserts value is LayoutType | undefined {
-  assert.true(value === undefined || isEnum(value, ['manual', 'horizontal', 'vertical']));
+  assert.true(value === undefined || isStringUnion(value, ['manual', 'horizontal', 'vertical']));
 }
 
 type GapType = 'between' | 'around';
 function assertIsGapTypeOrUndefined(
   value: string | undefined
 ): asserts value is GapType | undefined {
-  assert.true(value === undefined || isEnum(value, ['between', 'around']));
+  assert.true(value === undefined || isStringUnion(value, ['between', 'around']));
 }
 
 declare global {

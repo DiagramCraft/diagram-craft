@@ -1,3 +1,24 @@
+/**
+ * DOM and SVG property validation and filtering utilities.
+ *
+ * @example
+ * ```ts
+ * import { PropsUtils } from '@diagram-craft/utils/propsUtils';
+ *
+ * const props = { className: 'box', onClick: () => {}, customProp: 123 };
+ *
+ * // Filter to only valid DOM attributes
+ * const domProps = PropsUtils.filterDomProperties(props);
+ * // Result: { className: 'box', onClick: () => {} }
+ *
+ * // Check if attribute is valid
+ * PropsUtils.isValidDomAttribute('className'); // true
+ * PropsUtils.isValidDomAttribute('customProp'); // false
+ * ```
+ *
+ * @module
+ */
+
 const domAttributes = [
   'accept',
   'acceptCharset',
@@ -415,35 +436,104 @@ const events = [
   'onTransitionEnd'
 ];
 
-export const propsUtils = {
+/** @namespace */
+export const PropsUtils = {
+  /**
+   * Checks if a property name is a valid DOM attribute.
+   *
+   * Includes standard DOM attributes, events, data-* and aria-* attributes.
+   *
+   * @param name - The property name to check
+   * @returns True if the name is a valid DOM attribute
+   */
   isValidDomAttribute: (name: string) =>
     domAttributes.includes(name) ||
     events.includes(name) ||
     name.startsWith('data-') ||
     name.startsWith('aria-'),
+
+  /**
+   * Checks if a property name is a valid SVG attribute.
+   *
+   * Includes standard SVG attributes, events, data-* and aria-* attributes.
+   *
+   * @param name - The property name to check
+   * @returns True if the name is a valid SVG attribute
+   */
   isValidSvgAttribute: (name: string) =>
     svgAttributes.includes(name) ||
     events.includes(name) ||
     name.startsWith('data-') ||
     name.startsWith('aria-'),
+
+  /**
+   * Filters an object to only include valid DOM properties, excluding specified keys.
+   *
+   * @template T - The type of the props object
+   * @param props - The props object to filter
+   * @param keys - Keys to exclude from the result
+   * @returns A new object with only valid DOM properties
+   *
+   * @example
+   * ```ts
+   * const filtered = PropsUtils.filterDomProperties(
+   *   { className: 'box', custom: 123, onClick: fn },
+   *   'onClick'
+   * );
+   * // Result: { className: 'box' }
+   * ```
+   */
   filterDomProperties: <T>(props: T, ...keys: (keyof T)[]) => {
     const result = { ...props };
     for (const key in result) {
-      if (!propsUtils.isValidDomAttribute(key) || keys.includes(key)) {
+      if (!PropsUtils.isValidDomAttribute(key) || keys.includes(key)) {
         delete result[key];
       }
     }
     return result;
   },
+
+  /**
+   * Filters an object to only include valid SVG properties, excluding specified keys.
+   *
+   * @template T - The type of the props object
+   * @param props - The props object to filter
+   * @param keys - Keys to exclude from the result
+   * @returns A new object with only valid SVG properties
+   *
+   * @example
+   * ```ts
+   * const filtered = PropsUtils.filterSvgProperties(
+   *   { fill: 'red', custom: 123, onClick: fn },
+   *   'onClick'
+   * );
+   * // Result: { fill: 'red' }
+   * ```
+   */
   filterSvgProperties: <T>(props: T, ...keys: (keyof T)[]) => {
     const result = { ...props };
     for (const key in result) {
-      if (!propsUtils.isValidSvgAttribute(key) || keys.includes(key)) {
+      if (!PropsUtils.isValidSvgAttribute(key) || keys.includes(key)) {
         delete result[key];
       }
     }
     return result;
   },
+
+  /**
+   * Removes specified keys from an object.
+   *
+   * @template T - The type of the props object
+   * @param props - The props object to filter
+   * @param keys - Keys to remove
+   * @returns A new object without the specified keys
+   *
+   * @example
+   * ```ts
+   * const filtered = PropsUtils.filter({ a: 1, b: 2, c: 3 }, 'b', 'c');
+   * // Result: { a: 1 }
+   * ```
+   */
   filter: <T>(props: T, ...keys: (keyof T)[]) => {
     const result = { ...props };
     for (const key of keys) {

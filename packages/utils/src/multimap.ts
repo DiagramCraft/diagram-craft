@@ -1,7 +1,49 @@
 /**
+ * MultiMap data structure for mapping keys to multiple values.
+ *
+ * @example
+ * ```ts
+ * import { MultiMap } from '@diagram-craft/utils/multimap';
+ *
+ * const map = new MultiMap<string, number>();
+ * map.add('ids', 95);
+ * map.add('ids', 87);
+ * map.get('ids'); // [95, 87]
+ * ```
+ *
+ * @module
+ */
+
+/**
  * A data structure that maps keys to multiple values.
  * Unlike a regular Map where each key maps to a single value,
  * MultiMap allows multiple values to be associated with a single key.
+ *
+ * @template K - The type of keys
+ * @template V - The type of values
+ *
+ * @example
+ * ```ts
+ * const shapesByColor = new MultiMap<string, DiagramNode>();
+ *
+ * // Group shapes by their fill color
+ * shapesByColor.add('red', node1);
+ * shapesByColor.add('red', node2);
+ * shapesByColor.add('blue', node3);
+ *
+ * // Get all red shapes
+ * shapesByColor.get('red'); // [node1, node2]
+ * shapesByColor.get('blue'); // [node3]
+ * shapesByColor.get('green'); // []
+ *
+ * // Check if any shapes have a color
+ * shapesByColor.has('red'); // true
+ * shapesByColor.has('green'); // false
+ *
+ * // Remove a specific shape from a color group
+ * shapesByColor.remove('red', node1);
+ * shapesByColor.get('red'); // [node2]
+ * ```
  */
 export class MultiMap<K, V> {
   /**
@@ -56,10 +98,20 @@ export class MultiMap<K, V> {
     return this.get(k).length > 0;
   }
 
+  /**
+   * Returns an iterator of all keys in the multimap.
+   *
+   * @returns An iterator over the keys
+   */
   keys() {
     return this.delegate.keys();
   }
 
+  /**
+   * Returns an iterator of key-value array pairs.
+   *
+   * @returns An iterator over [key, values[]] pairs
+   */
   entries() {
     return this.delegate.entries();
   }

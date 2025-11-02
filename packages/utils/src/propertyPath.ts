@@ -1,3 +1,22 @@
+/**
+ * Type-safe property path utilities for accessing nested object properties.
+ *
+ * @example
+ * ```ts
+ * import { DynamicAccessor, PropPath } from '@diagram-craft/utils/propertyPath';
+ *
+ * type Config = { server: { port: number; host: string } };
+ *
+ * const accessor = new DynamicAccessor<Config>();
+ * const config: Config = { server: { port: 3000, host: 'localhost' } };
+ *
+ * const port = accessor.get(config, 'server.port'); // 3000 (type-safe)
+ * accessor.set(config, 'server.host', '127.0.0.1');
+ * ```
+ *
+ * @module
+ */
+
 type IsAny<T> = unknown extends T ? ([keyof T] extends [never] ? false : true) : false;
 
 type PropPathImpl<T, Key extends keyof T> = Key extends string
@@ -19,6 +38,13 @@ type PropPathImpl<T, Key extends keyof T> = Key extends string
 
 type PropPathImpl2<T> = PropPathImpl<T, keyof T> | keyof T;
 
+/**
+ * Type representing valid property paths for an object type.
+ *
+ * Generates string literal types like 'a', 'a.b', 'a.b.c' for nested properties.
+ *
+ * @template T - The object type to generate paths for
+ */
 export type PropPath<T> = keyof T extends string
   ? PropPathImpl2<T> extends infer P
     ? P extends string | keyof T
@@ -27,6 +53,12 @@ export type PropPath<T> = keyof T extends string
     : keyof T
   : never;
 
+/**
+ * Type representing the value type at a given property path.
+ *
+ * @template T - The object type
+ * @template P - The property path
+ */
 export type PropPathValue<T, P extends PropPath<T>> = P extends `${infer Key}.${infer Rest}`
   ? Key extends keyof T
     ? Rest extends PropPath<NonNullable<T[Key]>>
