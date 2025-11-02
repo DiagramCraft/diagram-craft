@@ -148,5 +148,8 @@ export const defaultAppConfig: AppConfig = {
       url: import.meta.env.VITE_CRDT_BACKEND_YJS_URL
     }
   },
-  autosave: window.electronAPI ? ElectronAutosave : MultiWindowAutosave
+  autosave: window.electronAPI ? ElectronAutosave : MultiWindowAutosave,
+  filesystem: {
+    endpoint: import.meta.env.VITE_FS_ENDPOINT ?? 'http://localhost:3000'
+  }
 };

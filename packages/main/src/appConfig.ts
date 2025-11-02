@@ -119,6 +119,11 @@ export type AppConfig = {
    * Which Autosave implementation to use
    */
   autosave: Autosave;
+
+  filesystem: {
+    // TODO: Add type for endpoint
+    endpoint: string;
+  };
 };
 
 type StencilRegistryConfigEntry<K extends keyof StencilLoaderOpts> = {

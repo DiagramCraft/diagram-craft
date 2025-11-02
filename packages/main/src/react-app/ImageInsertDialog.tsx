@@ -5,6 +5,7 @@ import { TbFile, TbFolder } from 'react-icons/tb';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { DialogCommand } from '@diagram-craft/canvas/context';
 import { EmptyObject } from '@diagram-craft/utils/types';
+import { AppConfig } from '../appConfig';
 
 type DirEntry = {
   name: string;
@@ -17,7 +18,9 @@ const ImageInsertDialogBrowser = (props: Props) => {
 
   useEffect(() => {
     const getData = async () => {
-      const response = await fetch(`http://localhost:3000/api/fs/${path.join('/')}`);
+      const response = await fetch(
+        `${AppConfig.get().filesystem.endpoint}/api/fs/${path.join('/')}`
+      );
       const data = await response.json();
       setList(data.entries);
     };
