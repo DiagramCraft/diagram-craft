@@ -379,6 +379,19 @@ export const App = (props: {
             );
           })}
           {dialogStack.map(item => {
+            if (item.dialog.id !== 'fileSaveAs') return null;
+            return (
+              <div key={item.id} style={{ zIndex: item.zIndex }}>
+                <FileDialog
+                  open={true}
+                  {...item.dialog.props}
+                  onOk={item.dialog.onOk}
+                  onCancel={item.dialog.onCancel}
+                />
+              </div>
+            );
+          })}
+          {dialogStack.map(item => {
             if (item.dialog.id !== 'imageInsert') return null;
             return (
               <div key={item.id} style={{ zIndex: item.zIndex }}>
