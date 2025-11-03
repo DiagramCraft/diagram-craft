@@ -34,6 +34,11 @@ export const stencilLoaderDrawioXml: StencilLoader<'drawioXml'> = async (nodeDef
   const { name, url, foreground, background } = opts;
   const drawioStencils = await loadDrawioStencils(url, name, foreground, background);
 
+  if (drawioStencils.length === 0) {
+    console.warn(`No stencils found for ${name}`);
+    return;
+  }
+
   const stencilRegistry = nodeDefinitions.stencilRegistry;
   stencilRegistry.register({
     id: name,
