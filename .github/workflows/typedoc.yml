@@ -43,7 +43,7 @@ jobs:
         uses: actions/configure-pages@v5
 
       - name: Build
-        run: pnpm run client:build
+        run: VITE_FS_PROVIDER=none VITE_STENCIL_ROOT=. pnpm run client:build
 
       - name: Copy files
         run: |
