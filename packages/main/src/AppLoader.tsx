@@ -73,9 +73,37 @@ const loadInitialDocument = async (
       }
     }
   } else {
+    const margin = 30;
+
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+
+    const rightIndent = 50;
+    const leftIndent = 50;
+
+    const availableWidth = windowWidth - (leftIndent + rightIndent) - margin * 2;
+    const availableHeight = windowHeight - margin * 2 - 110;
+
+    const rulerWidth = 20;
+
+    const offset = {
+      x: -(margin + rulerWidth / 2) - 10,
+      y: -(margin + rulerWidth / 2)
+    };
+
     const doc = await documentFactory.createDocument(root, undefined, progress);
 
-    const diagram = new Diagram(newid(), 'Untitled', doc);
+    const diagram = new Diagram(
+      newid(),
+      'Untitled',
+      doc,
+      undefined,
+      {
+        w: availableWidth,
+        h: availableHeight
+      },
+      offset
+    );
     diagram.layers.add(
       new RegularLayer(newid(), 'Default', [], diagram),
       UnitOfWork.immediate(diagram)
