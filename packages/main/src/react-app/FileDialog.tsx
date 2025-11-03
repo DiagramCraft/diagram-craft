@@ -5,6 +5,7 @@ import { TbFile, TbFolder } from 'react-icons/tb';
 import { DialogCommand } from '@diagram-craft/canvas/context';
 import { EmptyObject } from '@diagram-craft/utils/types';
 import { AppConfig } from '../appConfig';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 
 type DirEntry = {
   name: string;
@@ -14,6 +15,7 @@ type DirEntry = {
 export const FileDialog = (props: Props) => {
   const [path, setPath] = useState<string[]>([]);
   const [list, setList] = useState<DirEntry[] | undefined>(undefined);
+  const [filename, setFilename] = useState<string>(props.defaultFilename! ?? '');
 
   useEffect(() => {
     const getData = async () => {
@@ -26,12 +28,42 @@ export const FileDialog = (props: Props) => {
     getData();
   }, [path]);
 
+  const mode = props.mode ?? 'open';
+  const isValidFilename = filename.trim().length > 0 && !/[\/\\]/.test(filename);
+
+  const handleSave = () => {
+    if (!isValidFilename) return;
+    const fullPath = path.length > 0 ? `${path.join('/')}/${filename}` : filename;
+    props.onOk(fullPath);
+  };
+
+  const handleEntryClick = (entry: DirEntry) => {
+    if (entry.isDirectory) {
+      setPath(p => [...p, entry.name]);
+    } else if (mode === 'saveAs') {
+      setFilename(entry.name);
+    } else {
+      props.onOk?.(`${path.join('/')}/${entry.name}`);
+    }
+  };
+
   return (
     <Dialog
       open={props.open}
       onClose={props.onCancel!}
-      title={'Open'}
-      buttons={[{ label: 'Cancel', type: 'cancel', onClick: props.onCancel! }]}
+      title={mode === 'saveAs' ? 'Save As' : 'Open'}
+      buttons={
+        mode === 'saveAs'
+          ? [
+              {
+                label: 'Save',
+                type: 'default',
+                onClick: handleSave
+              },
+              { label: 'Cancel', type: 'cancel', onClick: props.onCancel! }
+            ]
+          : [{ label: 'Cancel', type: 'cancel', onClick: props.onCancel! }]
+      }
     >
       <div className={styles.cmpFileDialog}>
         <div className={styles.cmpFileDialogPath}>
@@ -63,26 +95,36 @@ export const FileDialog = (props: Props) => {
               <ul>
                 {list.map(entry => (
                   <li key={entry.name}>
-                    {entry.isDirectory ? (
-                      <a href={'#'} onClick={() => setPath(p => [...p, entry.name])}>
-                        <TbFolder /> {entry.name}
-                      </a>
-                    ) : (
-                      <a
-                        href={'#'}
-                        onClick={() => {
-                          if (props.onOk) {
-                            props.onOk(`${path.join('/')}/${entry.name}`);
-                          }
-                        }}
-                      >
-                        <TbFile /> {entry.name}
-                      </a>
-                    )}
+                    <a href={'#'} onClick={() => handleEntryClick(entry)}>
+                      {entry.isDirectory ? <TbFolder /> : <TbFile />} {entry.name}
+                    </a>
                   </li>
                 ))}
               </ul>
             </div>
+          </div>
+        )}
+
+        {mode === 'saveAs' && (
+          <div style={{ marginTop: '1rem' }}>
+            <label>Filename:</label>
+            <TextInput
+              type={'text'}
+              value={filename}
+              onChange={value => setFilename(value ?? '')}
+              onKeyDown={e => {
+                e.stopPropagation();
+                if (e.key === 'Enter' && isValidFilename) {
+                  handleSave();
+                }
+              }}
+              style={{ width: '100%', marginTop: '0.25rem' }}
+            />
+            {!isValidFilename && filename.length > 0 && (
+              <p style={{ color: 'var(--danger-fg)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
+                Filename cannot contain / or \ characters
+              </p>
+            )}
           </div>
         )}
       </div>
@@ -102,8 +144,23 @@ FileDialog.create = (
   };
 };
 
+FileDialog.createSaveAs = (
+  onOk: Props['onOk'],
+  onCancel: Props['onCancel'] = () => {},
+  defaultFilename: string
+): DialogCommand<{ mode: 'saveAs'; defaultFilename?: string }, string> => {
+  return {
+    id: 'fileSaveAs',
+    props: { mode: 'saveAs', defaultFilename },
+    onOk: onOk,
+    onCancel: onCancel
+  };
+};
+
 type Props = {
   open: boolean;
   onOk: (file: string) => void;
   onCancel?: () => void;
+  mode?: 'open' | 'saveAs';
+  defaultFilename?: string;
 };

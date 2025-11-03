@@ -128,7 +128,7 @@ class ElectronFileSaveAsAction extends AbstractAction<undefined, Application> {
     return [ActionCriteria.Simple(() => !!application.model.activeDocument.url)];
   }
 
-  execute(): void {
+  async execute(): Promise<void> {
     const url = this.context.model.activeDocument.url;
     assert.present(url);
 
@@ -139,6 +139,7 @@ class ElectronFileSaveAsAction extends AbstractAction<undefined, Application> {
         if (!result) {
           console.log('Error');
         } else {
+          this.context.model.activeDocument.url = result;
           this.context.file.clearDirty();
         }
       });

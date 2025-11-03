@@ -7,6 +7,7 @@ import { toggleHelpActions } from './actions/toggleHelp';
 import { fileNewActions } from './actions/fileNewAction';
 import { fileOpenActions } from './actions/fileOpenAction';
 import { fileSaveActions } from './actions/fileSaveAction';
+import { fileSaveAsActions } from './actions/fileSaveAsAction';
 import { imageInsertActions } from './actions/imageInsertAction';
 import { tableInsertActions } from './actions/tableInsertAction';
 import { Application } from '../application';
@@ -35,6 +36,7 @@ export const defaultAppActions: ActionMapFactory<Application> = application => (
   ...fileOpenActions(application),
   ...fileNewActions(application),
   ...fileSaveActions(application),
+  ...fileSaveAsActions(application),
   ...imageInsertActions(application),
   ...shapeInsertActions(application),
   ...tableInsertActions(application),
@@ -69,6 +71,7 @@ export const defaultMacAppKeymap: KeyMap = {
   'A-Digit8': 'SIDEBAR_DATA',
 
   'M-KeyS': 'FILE_SAVE',
+  'M-S-KeyS': 'FILE_SAVE_AS',
   'M-KeyN': 'FILE_NEW',
   'M-KeyK': 'COMMAND_PALETTE',
 
