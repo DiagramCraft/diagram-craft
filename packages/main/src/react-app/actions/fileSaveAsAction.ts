@@ -15,16 +15,12 @@ declare global {
 
 class FileSaveAsAction extends AbstractAction<undefined, Application> {
   async execute(): Promise<void> {
-    const currentFilename = this.context.model.activeDocument.url?.split('/').pop() ?? 'diagram.json';
+    const currentFilename = this.context.model.activeDocument.url?.split('/').pop()!;
 
     this.context.ui.showDialog(
       FileDialog.createSaveAs(
-        async (path: string) => {
-          await saveToPath(this.context, path);
-        },
-        () => {
-          // Dialog closes automatically
-        },
+        async (path: string) => await saveToPath(this.context, path),
+        () => {},
         currentFilename
       )
     );
@@ -32,9 +28,7 @@ class FileSaveAsAction extends AbstractAction<undefined, Application> {
 }
 
 async function saveToPath(context: Application, path: string): Promise<void> {
-  // Check if file exists
   const fileExists = await checkFileExists(path);
-
   if (fileExists) {
     // Show confirmation dialog
     context.ui.showDialog(
@@ -46,12 +40,8 @@ async function saveToPath(context: Application, path: string): Promise<void> {
           okType: 'danger',
           cancelLabel: 'Cancel'
         },
-        async () => {
-          await performSave(context, path);
-        },
-        () => {
-          // Dialog closes automatically
-        }
+        async () => await performSave(context, path),
+        () => {}
       )
     );
   } else {

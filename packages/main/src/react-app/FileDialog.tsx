@@ -15,7 +15,7 @@ type DirEntry = {
 export const FileDialog = (props: Props) => {
   const [path, setPath] = useState<string[]>([]);
   const [list, setList] = useState<DirEntry[] | undefined>(undefined);
-  const [filename, setFilename] = useState<string>(props.defaultFilename ?? 'diagram.json');
+  const [filename, setFilename] = useState<string>(props.defaultFilename! ?? '');
 
   useEffect(() => {
     const getData = async () => {
@@ -35,6 +35,16 @@ export const FileDialog = (props: Props) => {
     if (!isValidFilename) return;
     const fullPath = path.length > 0 ? `${path.join('/')}/${filename}` : filename;
     props.onOk(fullPath);
+  };
+
+  const handleEntryClick = (entry: DirEntry) => {
+    if (entry.isDirectory) {
+      setPath(p => [...p, entry.name]);
+    } else if (mode === 'saveAs') {
+      setFilename(entry.name);
+    } else {
+      props.onOk?.(`${path.join('/')}/${entry.name}`);
+    }
   };
 
   return (
@@ -85,31 +95,9 @@ export const FileDialog = (props: Props) => {
               <ul>
                 {list.map(entry => (
                   <li key={entry.name}>
-                    {entry.isDirectory ? (
-                      <a href={'#'} onClick={() => setPath(p => [...p, entry.name])}>
-                        <TbFolder /> {entry.name}
-                      </a>
-                    ) : mode === 'saveAs' ? (
-                      <a
-                        href={'#'}
-                        onClick={() => {
-                          setFilename(entry.name);
-                        }}
-                      >
-                        <TbFile /> {entry.name}
-                      </a>
-                    ) : (
-                      <a
-                        href={'#'}
-                        onClick={() => {
-                          if (props.onOk) {
-                            props.onOk(`${path.join('/')}/${entry.name}`);
-                          }
-                        }}
-                      >
-                        <TbFile /> {entry.name}
-                      </a>
-                    )}
+                    <a href={'#'} onClick={() => handleEntryClick(entry)}>
+                      {entry.isDirectory ? <TbFolder /> : <TbFile />} {entry.name}
+                    </a>
                   </li>
                 ))}
               </ul>
@@ -159,7 +147,7 @@ FileDialog.create = (
 FileDialog.createSaveAs = (
   onOk: Props['onOk'],
   onCancel: Props['onCancel'] = () => {},
-  defaultFilename?: string
+  defaultFilename: string
 ): DialogCommand<{ mode: 'saveAs'; defaultFilename?: string }, string> => {
   return {
     id: 'fileSaveAs',
