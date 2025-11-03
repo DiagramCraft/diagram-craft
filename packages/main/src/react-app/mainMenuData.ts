@@ -1,4 +1,5 @@
 import type { MenuEntry } from '@diagram-craft/electron-client-api/electron-api';
+import { AppConfig } from '../appConfig';
 
 export const mainMenuStructure: MenuEntry[] = [
   {
@@ -12,29 +13,33 @@ export const mainMenuStructure: MenuEntry[] = [
         action: 'FILE_NEW',
         type: 'action'
       },
-      {
-        id: 'open',
-        label: 'Open...',
-        action: 'FILE_OPEN',
-        type: 'action'
-      },
-      {
-        id: 'recent',
-        label: 'Open Recent...',
-        type: 'recent'
-      },
-      {
-        id: 'save',
-        label: 'Save',
-        action: 'FILE_SAVE',
-        type: 'action'
-      },
-      {
-        id: 'save-as',
-        label: 'Save As...',
-        action: 'FILE_SAVE_AS',
-        type: 'action'
-      }
+      ...(AppConfig.get().filesystem.provider === 'none'
+        ? []
+        : ([
+            {
+              id: 'open',
+              label: 'Open...',
+              action: 'FILE_OPEN',
+              type: 'action'
+            },
+            {
+              id: 'recent',
+              label: 'Open Recent...',
+              type: 'recent'
+            },
+            {
+              id: 'save',
+              label: 'Save',
+              action: 'FILE_SAVE',
+              type: 'action'
+            },
+            {
+              id: 'save-as',
+              label: 'Save As...',
+              action: 'FILE_SAVE_AS',
+              type: 'action'
+            }
+          ] as MenuEntry[]))
     ]
   },
   {

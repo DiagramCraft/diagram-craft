@@ -1,12 +1,17 @@
-import { AbstractAction, ActionCriteria } from '@diagram-craft/canvas/action';
+import { AbstractAction, ActionCriteria, NoopAction } from '@diagram-craft/canvas/action';
 import { assert } from '@diagram-craft/utils/assert';
 import { serializeDiagramDocument } from '@diagram-craft/model/serialization/serialize';
 import { Application } from '../../application';
 import { AppConfig } from '../../appConfig';
 
-export const fileSaveActions = (application: Application) => ({
-  FILE_SAVE: new FileSaveAction(application)
-});
+export const fileSaveActions = (application: Application) =>
+  AppConfig.get().filesystem.provider === 'none'
+    ? {
+        FILE_SAVE: new NoopAction(application)
+      }
+    : {
+        FILE_SAVE: new FileSaveAction(application)
+      };
 
 declare global {
   interface ActionMap extends ReturnType<typeof fileSaveActions> {}

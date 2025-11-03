@@ -1,13 +1,18 @@
-import { AbstractAction } from '@diagram-craft/canvas/action';
+import { AbstractAction, NoopAction } from '@diagram-craft/canvas/action';
 import { serializeDiagramDocument } from '@diagram-craft/model/serialization/serialize';
 import { Application } from '../../application';
 import { AppConfig } from '../../appConfig';
 import { FileDialog } from '../FileDialog';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 
-export const fileSaveAsActions = (application: Application) => ({
-  FILE_SAVE_AS: new FileSaveAsAction(application)
-});
+export const fileSaveAsActions = (application: Application) =>
+  AppConfig.get().filesystem.provider === 'none'
+    ? {
+        FILE_SAVE_AS: new NoopAction(application)
+      }
+    : {
+        FILE_SAVE_AS: new FileSaveAsAction(application)
+      };
 
 declare global {
   interface ActionMap extends ReturnType<typeof fileSaveAsActions> {}
