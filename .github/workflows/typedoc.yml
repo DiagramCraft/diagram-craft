@@ -48,7 +48,7 @@ jobs:
       - name: Copy files
         run: |
           mkdir -p ./output/typedoc/app
-          cp -r ./dist/* ./output/typedoc/app
+          cp -r ./packages/main/dist/* ./output/typedoc/app
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
