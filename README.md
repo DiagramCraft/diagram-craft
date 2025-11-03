@@ -9,6 +9,8 @@ Diagram Craft is currently in alpha, and is not yet ready for production use..
 
 ![Screenshot Diagram Craft](docs/images/screenshot.png)
 
+A demo is available at https://diagramcraft.github.io/diagram-craft/app/.
+
 ## Features
 
 * **Multi-user collaboration**: Work simultaneously with team members on the same diagram with real-time updates,
