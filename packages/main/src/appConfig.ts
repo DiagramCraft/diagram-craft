@@ -121,7 +121,7 @@ export type AppConfig = {
   autosave: Autosave;
 
   filesystem: {
-    // TODO: Add type for endpoint
+    provider: 'none' | 'remote' | 'local';
     endpoint: string;
   };
 };

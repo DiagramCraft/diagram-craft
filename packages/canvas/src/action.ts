@@ -192,3 +192,7 @@ export class ToggleActionUndoableAction<T = undefined> implements UndoableAction
     this.action.execute(this.arg);
   }
 }
+
+export class NoopAction extends AbstractAction {
+  execute() {}
+}
