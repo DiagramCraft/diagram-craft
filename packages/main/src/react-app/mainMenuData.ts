@@ -39,7 +39,31 @@ export const mainMenuStructure: MenuEntry[] = [
               action: 'FILE_SAVE_AS',
               type: 'action'
             }
-          ] as MenuEntry[]))
+          ] as MenuEntry[])),
+      {
+        id: 's1',
+        label: '',
+        type: 'separator'
+      },
+      {
+        id: 'export',
+        label: 'Export...',
+        type: 'submenu',
+        submenu: [
+          {
+            id: 'export-image',
+            label: 'Export as PNG...',
+            action: 'FILE_EXPORT_IMAGE',
+            type: 'action'
+          },
+          {
+            id: 'export-svg',
+            label: 'Export as SVG...',
+            action: 'FILE_EXPORT_SVG',
+            type: 'action'
+          }
+        ]
+      }
     ]
   },
   {
