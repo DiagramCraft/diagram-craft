@@ -89,17 +89,6 @@ jobs:
               return data.find(lang => lang.Name === name) || { Lines: 0, Code: 0, Comment: 0, Blank: 0 };
             };
 
-            // Helper to calculate totals
-            const calculateTotals = (data) => {
-              return data.reduce((acc, lang) => {
-                acc.Lines += lang.Lines;
-                acc.Code += lang.Code;
-                acc.Comment += lang.Comment;
-                acc.Blank += lang.Blank;
-                return acc;
-              }, { Lines: 0, Code: 0, Comment: 0, Blank: 0 });
-            };
-
             const formatNumber = (num) => num.toLocaleString();
 
             const formatDelta = (current, base) => {
@@ -122,17 +111,11 @@ jobs:
               }
             }
 
-            // Calculate totals
-            const prTotal = calculateTotals(prScc);
-            const baseTotal = calculateTotals(baseScc);
-
-            const totalDelta = prTotal.Code - baseTotal.Code;
-
             const comment = `## 📏 Lines of Code Report
 
             | Language | Base | PR | Change |
             |----------|------|-------|--------|
-            ${tableRows}| **Total** | **${formatNumber(baseTotal.Code)}** | **${formatNumber(prTotal.Code)}** | **${formatDelta(prTotal.Code, baseTotal.Code)}** |
+            ${tableRows}
 
             `;
 
