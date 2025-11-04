@@ -1,7 +1,7 @@
 .cmp-tree {
   display: grid;
   grid-template-columns: minmax(min-content, 1fr) max-content;
-  grid-template-rows: 1fr;
+  grid-auto-rows: 24px;
   max-width: 100%;
   width: 100%;
 
