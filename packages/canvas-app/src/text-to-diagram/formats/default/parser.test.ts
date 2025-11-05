@@ -509,4 +509,97 @@ simple: circle`;
       shape: 'circle'
     });
   });
+
+  test('parses node without ID (auto-generated)', () => {
+    const input = ': rect';
+    const result = parse(input);
+
+    expect(result.errors.size).toBe(0);
+    expect(result.elements).toHaveLength(1);
+    expect(result.elements[0]).toMatchObject({
+      type: 'node',
+      shape: 'rect',
+      line: 0
+    });
+    // Verify ID was auto-generated (non-empty string)
+    expect(result.elements[0]?.id).toBeTruthy();
+    expect(typeof result.elements[0]?.id).toBe('string');
+  });
+
+  test('parses edge without ID', () => {
+    const input = ': edge';
+    const result = parse(input);
+
+    expect(result.errors.size).toBe(0);
+    expect(result.elements).toHaveLength(1);
+    expect(result.elements[0]).toMatchObject({
+      type: 'edge',
+      line: 0
+    });
+    // Verify ID was auto-generated
+    expect(result.elements[0]?.id).toBeTruthy();
+  });
+
+  test('parses mix of explicit and auto-generated IDs', () => {
+    const input = `node1: rect "Explicit"
+: circle "Auto"
+node2: text "Explicit"`;
+    const result = parse(input);
+
+    expect(result.errors.size).toBe(0);
+    expect(result.elements).toHaveLength(3);
+    expect(result.elements[0]).toMatchObject({
+      id: 'node1',
+      type: 'node',
+      shape: 'rect'
+    });
+    expect(result.elements[1]).toMatchObject({
+      type: 'node',
+      shape: 'circle'
+    });
+    expect(result.elements[1]?.id).toBeTruthy();
+    expect(result.elements[1]?.id).not.toBe('node1');
+    expect(result.elements[2]).toMatchObject({
+      id: 'node2',
+      type: 'node',
+      shape: 'text'
+    });
+  });
+
+  test('parses nested children without IDs', () => {
+    const input = `parent: table {
+  : text "Child 1"
+  : text "Child 2"
+}`;
+    const result = parse(input);
+
+    expect(result.errors.size).toBe(0);
+    expect(result.elements).toHaveLength(1);
+    expect(result.elements[0]).toMatchObject({
+      id: 'parent',
+      type: 'node',
+      shape: 'table'
+    });
+
+    const parent = result.elements[0];
+    if (parent?.type === 'node') {
+      expect(parent.children).toHaveLength(2);
+      expect(parent.children?.[0]).toMatchObject({
+        type: 'node',
+        shape: 'text',
+        name: 'Child 1'
+      });
+      expect(parent.children?.[1]).toMatchObject({
+        type: 'node',
+        shape: 'text',
+        name: 'Child 2'
+      });
+
+      // Verify both children have auto-generated IDs
+      expect(parent.children?.[0]?.id).toBeTruthy();
+      expect(parent.children?.[1]?.id).toBeTruthy();
+      // Verify IDs are unique
+      expect(parent.children?.[0]?.id).not.toBe(parent.children?.[1]?.id);
+    }
+  });
 });

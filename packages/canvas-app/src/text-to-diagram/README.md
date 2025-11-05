@@ -42,6 +42,7 @@ node2: circle "World" {
   props: "fill.color=#ff0000"
 }
 e1: edge node1 -> node2 "connects to"
+: rect "Auto-generated ID"
 ```
 
 See `formats/default/parser.ts` for complete grammar documentation.
