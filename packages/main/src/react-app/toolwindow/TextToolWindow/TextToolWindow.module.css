@@ -51,6 +51,11 @@
   position-anchor: --content;
   top: anchor(bottom);
 
+  /* Safari doesn't support position-anchor before v26 */
+  @supports not (position-anchor: --content) {
+    top: 35px;
+  }
+
   textarea {
     font: 11px / 15px monospace;
     color: transparent;
