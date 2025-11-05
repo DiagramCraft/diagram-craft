@@ -2,6 +2,7 @@ import { createApp, defineEventHandler, handleCors } from 'h3';
 import { FileSystemDataStore } from './dataStore';
 import { createDataRoutes } from './dataRoutes';
 import { createFilesystemRoutes } from './filesystemRoutes';
+import openapiSpec from './openapi.json';
 
 // Parse CLI arguments
 const parseArgs = () => {
@@ -81,6 +82,14 @@ app.use(
     if (didHandleCors) {
       return;
     }
+  })
+);
+
+// Add OpenAPI spec route
+app.use(
+  '/api/openapi.json',
+  defineEventHandler(() => {
+    return openapiSpec;
   })
 );
 

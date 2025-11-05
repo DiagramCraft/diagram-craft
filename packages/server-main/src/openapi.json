@@ -1,0 +1,797 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Diagram Craft Server API",
+    "description": "REST API server for Diagram Craft data management and filesystem operations. Provides CRUD operations for diagram data and schemas, plus filesystem access.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Diagram Craft",
+      "url": "https://github.com/diagram-craft/diagram-craft"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Local development server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Data",
+      "description": "Operations for managing diagram data entities"
+    },
+    {
+      "name": "Schemas",
+      "description": "Operations for managing data schemas"
+    },
+    {
+      "name": "Filesystem",
+      "description": "Operations for filesystem access and file management"
+    }
+  ],
+  "paths": {
+    "/api/data": {
+      "get": {
+        "tags": ["Data"],
+        "summary": "Get all data",
+        "description": "Retrieves all data entities stored in the system",
+        "operationId": "getAllData",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DataWithSchema"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Data"],
+        "summary": "Create new data",
+        "description": "Creates a new data entity with the provided properties",
+        "operationId": "createData",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DataWithSchema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Data created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataWithSchema"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "415": {
+            "$ref": "#/components/responses/UnsupportedMediaType"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/data/{id}": {
+      "get": {
+        "tags": ["Data"],
+        "summary": "Get data by ID",
+        "description": "Retrieves a specific data entity by its unique identifier",
+        "operationId": "getDataById",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DataId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataWithSchema"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Data"],
+        "summary": "Update data",
+        "description": "Updates an existing data entity with the provided properties",
+        "operationId": "updateData",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DataId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DataWithSchema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Data updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataWithSchema"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "415": {
+            "$ref": "#/components/responses/UnsupportedMediaType"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Data"],
+        "summary": "Delete data",
+        "description": "Deletes a specific data entity by its unique identifier",
+        "operationId": "deleteData",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DataId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Data deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/schemas": {
+      "get": {
+        "tags": ["Schemas"],
+        "summary": "Get all schemas",
+        "description": "Retrieves all data schemas stored in the system",
+        "operationId": "getAllSchemas",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DataSchema"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Schemas"],
+        "summary": "Create new schema",
+        "description": "Creates a new data schema definition",
+        "operationId": "createSchema",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DataSchema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Schema created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataSchema"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/schemas/{id}": {
+      "get": {
+        "tags": ["Schemas"],
+        "summary": "Get schema by ID",
+        "description": "Retrieves a specific schema by its unique identifier",
+        "operationId": "getSchemaById",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SchemaId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataSchema"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Schemas"],
+        "summary": "Update schema",
+        "description": "Updates an existing schema definition",
+        "operationId": "updateSchema",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SchemaId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DataSchema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Schema updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataSchema"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Schemas"],
+        "summary": "Delete schema",
+        "description": "Deletes a specific schema by its unique identifier",
+        "operationId": "deleteSchema",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SchemaId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Schema deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/fs": {
+      "get": {
+        "tags": ["Filesystem"],
+        "summary": "List root directory",
+        "description": "Lists all files and directories in the configured root directory",
+        "operationId": "listRootDirectory",
+        "responses": {
+          "200": {
+            "description": "Directory listing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DirectoryListing"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/fs/{path}": {
+      "get": {
+        "tags": ["Filesystem"],
+        "summary": "Get file or list directory",
+        "description": "Gets file contents if path points to a file, or lists directory contents if path points to a directory",
+        "operationId": "getFileOrDirectory",
+        "parameters": [
+          {
+            "name": "path",
+            "in": "path",
+            "description": "Relative path to file or directory",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9._/-]+$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "File contents or directory listing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "description": "File contents as JSON"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DirectoryListing"
+                    }
+                  ]
+                }
+              },
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary",
+                  "description": "File contents as binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Filesystem"],
+        "summary": "Upload file or create directory",
+        "description": "Uploads a file if request body is provided, or creates a directory if no body is provided",
+        "operationId": "putFileOrDirectory",
+        "parameters": [
+          {
+            "name": "path",
+            "in": "path",
+            "description": "Relative path for file or directory",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9._/-]+$"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "File contents (omit for directory creation)",
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "JSON file contents"
+              }
+            },
+            "text/plain": {
+              "schema": {
+                "type": "string",
+                "description": "Text file contents"
+              }
+            },
+            "application/octet-stream": {
+              "schema": {
+                "type": "string",
+                "format": "binary",
+                "description": "Binary file contents"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "File uploaded or directory created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "ok"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "DataWithSchema": {
+        "type": "object",
+        "description": "Data entity with schema reference and user-defined fields",
+        "required": ["_uid", "_schemaId"],
+        "properties": {
+          "_uid": {
+            "type": "string",
+            "description": "Unique identifier for the data entity"
+          },
+          "_schemaId": {
+            "type": "string",
+            "description": "Reference to the schema that defines this data structure"
+          }
+        },
+        "additionalProperties": {
+          "type": "string",
+          "description": "User-defined fields as defined by the schema"
+        },
+        "example": {
+          "_uid": "data_123",
+          "_schemaId": "schema_456",
+          "name": "Example Item",
+          "description": "This is an example data item"
+        }
+      },
+      "DataSchema": {
+        "type": "object",
+        "description": "Schema definition for data entities",
+        "required": ["id", "name", "source", "fields"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the schema"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable name for the schema"
+          },
+          "source": {
+            "type": "string",
+            "enum": ["document", "external"],
+            "description": "Source of the schema (document-specific or external)"
+          },
+          "fields": {
+            "type": "array",
+            "description": "Field definitions for this schema",
+            "items": {
+              "$ref": "#/components/schemas/DataSchemaField"
+            }
+          }
+        },
+        "example": {
+          "id": "schema_456",
+          "name": "Product Schema",
+          "source": "document",
+          "fields": [
+            {
+              "id": "name",
+              "name": "Product Name",
+              "type": "text"
+            },
+            {
+              "id": "description",
+              "name": "Product Description",
+              "type": "longtext"
+            }
+          ]
+        }
+      },
+      "DataSchemaField": {
+        "type": "object",
+        "description": "Field definition within a schema",
+        "required": ["id", "name", "type"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the field"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable name for the field"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["text", "longtext"],
+            "description": "Data type of the field"
+          }
+        }
+      },
+      "DirectoryListing": {
+        "type": "object",
+        "description": "Directory contents listing",
+        "required": ["entries"],
+        "properties": {
+          "entries": {
+            "type": "array",
+            "description": "List of files and directories",
+            "items": {
+              "type": "object",
+              "required": ["name", "isDirectory"],
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Name of the file or directory"
+                },
+                "isDirectory": {
+                  "type": "boolean",
+                  "description": "Whether this entry is a directory"
+                }
+              }
+            }
+          }
+        },
+        "example": {
+          "entries": [
+            {
+              "name": "documents",
+              "isDirectory": true
+            },
+            {
+              "name": "data.json",
+              "isDirectory": false
+            }
+          ]
+        }
+      },
+      "SuccessResponse": {
+        "type": "object",
+        "description": "Generic success response",
+        "required": ["success", "message"],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "example": "Operation completed successfully"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "description": "Error response",
+        "required": ["message"],
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Error message describing what went wrong"
+          }
+        }
+      }
+    },
+    "parameters": {
+      "DataId": {
+        "name": "id",
+        "in": "path",
+        "description": "Unique identifier of the data entity",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "SchemaId": {
+        "name": "id",
+        "in": "path",
+        "description": "Unique identifier of the schema",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Bad Request - Invalid input or missing required fields",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "example": {
+              "message": "Request body must be a valid JSON object"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Not Found - The requested resource does not exist",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "example": {
+              "message": "Data with ID 'abc123' not found"
+            }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "Conflict - Resource already exists",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "example": {
+              "message": "Resource already exists"
+            }
+          }
+        }
+      },
+      "PayloadTooLarge": {
+        "description": "Payload Too Large - Request body exceeds size limit",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "example": {
+              "message": "Request size exceeds limit of 10485760 bytes"
+            }
+          }
+        }
+      },
+      "UnsupportedMediaType": {
+        "description": "Unsupported Media Type - Content-Type must be application/json",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "example": {
+              "message": "Content-Type must be application/json"
+            }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "Internal Server Error - An unexpected error occurred",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "example": {
+              "message": "Failed to retrieve data"
+            }
+          }
+        }
+      }
+    }
+  }
+}
