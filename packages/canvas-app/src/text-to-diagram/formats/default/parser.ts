@@ -1,5 +1,6 @@
 import { VALIDATION_RULES } from '../../validation';
 import { assert } from '@diagram-craft/utils/assert';
+import { newid } from '@diagram-craft/utils/id';
 import type { DiagramParser, ParsedElement, ParseErrors } from '../../types';
 import { parsePropsString, parseMetadataString } from '../../utils';
 
@@ -245,17 +246,28 @@ class Parser {
       assert.fail('Unexpected newline at top level');
     }
 
-    // Parse: id: ... (id can be either ID or STRING token)
-    if (token.type !== TokenType.ID && token.type !== TokenType.STRING) {
-      this.addError(token.line, `Expected element ID, got ${token.type}`);
-      this.skipToNextLine();
-      return null;
-    }
+    // Parse: [id]: ... (id can be either ID or STRING token, or omitted)
+    // If ID is omitted (starts with ':'), auto-generate one
+    let id: string;
+    let lineNum: number;
 
-    const idToken = this.next();
-    const id = idToken.value;
+    if (token.type === TokenType.COLON) {
+      // Auto-generate ID when element starts with ':'
+      id = newid();
+      lineNum = token.line;
+      this.next(); // consume the colon
+    } else if (token.type === TokenType.ID || token.type === TokenType.STRING) {
+      // Explicit ID provided
+      const idToken = this.next();
+      id = idToken.value;
+      lineNum = idToken.line;
 
-    if (!this.consume(TokenType.COLON, 'Expected ":" after element ID')) {
+      if (!this.consume(TokenType.COLON, 'Expected ":" after element ID')) {
+        this.skipToNextLine();
+        return null;
+      }
+    } else {
+      this.addError(token.line, `Expected element ID or ':', got ${token.type}`);
       this.skipToNextLine();
       return null;
     }
@@ -263,9 +275,9 @@ class Parser {
     // Check if it's an edge or node
     const nextToken = this.peek();
     if (nextToken.type === TokenType.KEYWORD && nextToken.value === 'edge') {
-      return this.parseEdge(id, { line: idToken.line });
+      return this.parseEdge(id, { line: lineNum });
     } else {
-      return this.parseNode(id, { line: idToken.line });
+      return this.parseNode(id, { line: lineNum });
     }
   }
 
@@ -470,8 +482,12 @@ class Parser {
           this.addError(token.line, `Unknown keyword: ${token.value}`);
           this.skipToNextLine();
         }
-      } else if (token.type === TokenType.ID || token.type === TokenType.STRING) {
-        // Child element (ID can be quoted or unquoted)
+      } else if (
+        token.type === TokenType.ID ||
+        token.type === TokenType.STRING ||
+        token.type === TokenType.COLON
+      ) {
+        // Child element (ID can be explicit or auto-generated with ':')
         const child = this.parseElement();
         if (child) {
           children.push(child);
