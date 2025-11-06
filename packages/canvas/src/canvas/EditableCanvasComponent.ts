@@ -234,111 +234,119 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
 
     const viewBox = this.getViewboxString(props);
 
-    return html.div(
-      {
-        class: 'light-theme canvas-wrapper'
-      },
-      [
-        html.textarea({ id: 'clipboard', style: 'position: absolute; left: -4000px' }),
-        this.subComponent($cmp(DragLabelComponent), { ...canvasState }),
-        html.svg(
-          {
-            id: props.id,
-            class: this.getClassName(props),
+    return html.div({}, [
+      html.textarea({ id: 'clipboard', style: 'position: absolute; left: -4000px' }),
+      this.subComponent($cmp(DragLabelComponent), { ...canvasState }),
+      html.svg(
+        {
+          id: props.id,
+          class: `${this.getClassName(props)} light-theme`,
 
-            ...this.getDimension(props),
+          ...this.getDimension(props),
 
-            preserveAspectRatio: this.preserveAspectRatio,
-            style: `user-select: none`,
-            ...(viewBox ? { viewBox: viewBox } : {}),
-            hooks: {
-              onInsert: node => {
-                this.svgRef = node.el! as SVGSVGElement;
-                this.adjustViewbox(diagram);
+          preserveAspectRatio: this.preserveAspectRatio,
+          style: `user-select: none`,
+          ...(viewBox ? { viewBox: viewBox } : {}),
+          hooks: {
+            onInsert: node => {
+              this.svgRef = node.el! as SVGSVGElement;
+              this.adjustViewbox(diagram);
 
-                // Note: this causes an extra redraw, but it's necessary to ensure that
-                //       the wheel events (among others) are bound correctly
-                this.redraw();
-              },
-              onRemove: () => {
-                this.svgRef = null;
-              }
+              // Note: this causes an extra redraw, but it's necessary to ensure that
+              //       the wheel events (among others) are bound correctly
+              this.redraw();
             },
-            on: {
-              click: e => {
-                props.onClick?.(e);
-              },
-              mousedown: e => {
-                if (e.button === 1) {
-                  const currentTool = props.context.tool.get();
-                  const panTool = new PanTool(
-                    diagram,
-                    DRAG_DROP_MANAGER,
-                    this.svgRef,
-                    props.context,
-                    () => {
-                      props.context.tool.set(currentTool);
-                    }
-                  );
-                  this.setTool(panTool);
-                  panTool.setResetOnMouseUp(true);
-                  this.updateToolClassOnSvg('pan');
-                  panTool.onMouseDown(AbstractTool.BACKGROUND, EventHelper.point(e), e);
-                }
-                if (e.button !== 0) return;
-                this.tool!.onMouseDown(AbstractTool.BACKGROUND, EventHelper.point(e), e);
-              },
-              mouseover: e => {
-                const el = getAncestorDiagramElement(e.target as SVGElement);
-                if (!el) return;
-                this.tool!.onMouseOver(el.id, EventHelper.point(e), e.currentTarget!);
-                props.onMouseOver?.(e, el);
-                this.hoverElement.value = el.id;
-              },
-              mouseout: e => {
-                const el = getAncestorDiagramElement(e.target as SVGElement);
-                if (!el) return;
-                this.tool!.onMouseOut(el.id, EventHelper.point(e), e.currentTarget!);
-                props.onMouseOut?.(e, el);
-                this.hoverElement.value = undefined;
-              },
-              mouseup: e => this.tool!.onMouseUp(EventHelper.point(e), e, e.currentTarget!),
-              mousemove: e => {
-                // TODO: Could we cache this and only update in case a resize happens?
-                const b = (e.currentTarget! as SVGSVGElement).getBoundingClientRect();
-                this.tool!.onMouseMove(
-                  {
-                    x: e.clientX - b.x,
-                    y: e.clientY - b.y
-                  },
-                  e,
-                  e.currentTarget!
+            onRemove: () => {
+              this.svgRef = null;
+            }
+          },
+          on: {
+            click: e => {
+              props.onClick?.(e);
+            },
+            mousedown: e => {
+              if (e.button === 1) {
+                const currentTool = props.context.tool.get();
+                const panTool = new PanTool(
+                  diagram,
+                  DRAG_DROP_MANAGER,
+                  this.svgRef,
+                  props.context,
+                  () => {
+                    props.context.tool.set(currentTool);
+                  }
                 );
-                if (e.x >= b.left && e.x <= b.right && e.y >= b.top && e.y <= b.bottom) {
-                  this.point = diagram.viewBox.toDiagramPoint({
-                    x: e.x - b.left,
-                    y: e.y - b.top
-                  });
-                }
-
-                CollaborationConfig.Backend.awareness?.updateCursor({
-                  ...this.point,
-                  activeDiagramId: diagram.id
+                this.setTool(panTool);
+                panTool.setResetOnMouseUp(true);
+                this.updateToolClassOnSvg('pan');
+                panTool.onMouseDown(AbstractTool.BACKGROUND, EventHelper.point(e), e);
+              }
+              if (e.button !== 0) return;
+              this.tool!.onMouseDown(AbstractTool.BACKGROUND, EventHelper.point(e), e);
+            },
+            mouseover: e => {
+              const el = getAncestorDiagramElement(e.target as SVGElement);
+              if (!el) return;
+              this.tool!.onMouseOver(el.id, EventHelper.point(e), e.currentTarget!);
+              props.onMouseOver?.(e, el);
+              this.hoverElement.value = el.id;
+            },
+            mouseout: e => {
+              const el = getAncestorDiagramElement(e.target as SVGElement);
+              if (!el) return;
+              this.tool!.onMouseOut(el.id, EventHelper.point(e), e.currentTarget!);
+              props.onMouseOut?.(e, el);
+              this.hoverElement.value = undefined;
+            },
+            mouseup: e => this.tool!.onMouseUp(EventHelper.point(e), e, e.currentTarget!),
+            mousemove: e => {
+              // TODO: Could we cache this and only update in case a resize happens?
+              const b = (e.currentTarget! as SVGSVGElement).getBoundingClientRect();
+              this.tool!.onMouseMove(
+                {
+                  x: e.clientX - b.x,
+                  y: e.clientY - b.y
+                },
+                e,
+                e.currentTarget!
+              );
+              if (e.x >= b.left && e.x <= b.right && e.y >= b.top && e.y <= b.bottom) {
+                this.point = diagram.viewBox.toDiagramPoint({
+                  x: e.x - b.left,
+                  y: e.y - b.top
                 });
-              },
-              contextmenu: event => {
-                const bounds = this.svgRef!.getBoundingClientRect();
-                const point = {
-                  x: event.clientX - bounds.x,
-                  y: event.clientY - bounds.y
-                };
+              }
 
-                const isClickOnSelection = Box.contains(
-                  selection.bounds,
-                  diagram.viewBox.toDiagramPoint(point)
+              CollaborationConfig.Backend.awareness?.updateCursor({
+                ...this.point,
+                activeDiagramId: diagram.id
+              });
+            },
+            contextmenu: event => {
+              const bounds = this.svgRef!.getBoundingClientRect();
+              const point = {
+                x: event.clientX - bounds.x,
+                y: event.clientY - bounds.y
+              };
+
+              const isClickOnSelection = Box.contains(
+                selection.bounds,
+                diagram.viewBox.toDiagramPoint(point)
+              );
+
+              if (isClickOnSelection) {
+                props.context.ui.showContextMenu(
+                  'selection',
+                  diagram.viewBox.toDiagramPoint(point),
+                  event,
+                  {}
                 );
+              } else {
+                const id = (this.tool as AbstractTool).currentElement;
+                const el = diagram.lookup(id ?? '');
 
-                if (isClickOnSelection) {
+                if (el && this.tool instanceof MoveTool) {
+                  diagram.selection.setElements([el]);
                   props.context.ui.showContextMenu(
                     'selection',
                     diagram.viewBox.toDiagramPoint(point),
@@ -346,80 +354,67 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
                     {}
                   );
                 } else {
-                  const id = (this.tool as AbstractTool).currentElement;
-                  const el = diagram.lookup(id ?? '');
-
-                  if (el && this.tool instanceof MoveTool) {
-                    diagram.selection.setElements([el]);
-                    props.context.ui.showContextMenu(
-                      'selection',
-                      diagram.viewBox.toDiagramPoint(point),
-                      event,
-                      {}
-                    );
-                  } else {
-                    props.context.ui.showContextMenu(
-                      'canvas',
-                      diagram.viewBox.toDiagramPoint(point),
-                      event,
-                      {}
-                    );
-                  }
+                  props.context.ui.showContextMenu(
+                    'canvas',
+                    diagram.viewBox.toDiagramPoint(point),
+                    event,
+                    {}
+                  );
                 }
-
-                props.onContextMenu?.(event);
-              },
-
-              drag: e => {
-                props.onDrag?.(e);
-              },
-              drop: e => {
-                props.onDrop?.(e);
-              },
-              dragover: e => {
-                props.onDragOver?.(e);
               }
+
+              props.onContextMenu?.(event);
+            },
+
+            drag: e => {
+              props.onDrag?.(e);
+            },
+            drop: e => {
+              props.onDrop?.(e);
+            },
+            dragover: e => {
+              props.onDragOver?.(e);
             }
-          },
-          [
-            svg.style({}, rawHTML(styles)),
-            this.svgFilterDefs(),
+          }
+        },
+        [
+          svg.style({}, rawHTML(styles)),
+          this.svgFilterDefs(),
 
-            this.subComponent($cmp(DocumentBoundsComponent), { ...canvasState }),
+          this.subComponent($cmp(DocumentBoundsComponent), { ...canvasState }),
 
-            this.subComponent($cmp(GridComponent), { ...canvasState }),
+          this.subComponent($cmp(GridComponent), { ...canvasState }),
 
-            this.subComponent($cmp(CanvasGuidesComponent), { ...canvasState }),
+          this.subComponent($cmp(CanvasGuidesComponent), { ...canvasState }),
 
-            svg.g(
-              {},
-              ...diagram.layers.visible.flatMap(layer => {
-                if (!isResolvableToRegularLayer(layer) && !isResolvableToModificationLayer(layer))
-                  return null;
-                return this.renderLayer(layer, diagram, onMouseDown, onEdgeDoubleClick);
+          svg.g(
+            {},
+            ...diagram.layers.visible.flatMap(layer => {
+              if (!isResolvableToRegularLayer(layer) && !isResolvableToModificationLayer(layer))
+                return null;
+              return this.renderLayer(layer, diagram, onMouseDown, onEdgeDoubleClick);
+            })
+          ),
+
+          this.tool.type === 'move'
+            ? this.subComponent($cmp(SelectionComponent), { ...canvasState })
+            : svg.g({}),
+
+          this.subComponent($cmp(AnchorHighlightComponent), { ...canvasState }),
+
+          this.subComponent($cmp(SelectionMarqueeComponent), { ...canvasState }),
+
+          this.tool.type === 'move'
+            ? this.subComponent($cmp(AnchorHandlesComponent), {
+                ...canvasState,
+                hoverElement: this.hoverElement
               })
-            ),
+            : svg.g({}),
 
-            this.tool.type === 'move'
-              ? this.subComponent($cmp(SelectionComponent), { ...canvasState })
-              : svg.g({}),
-
-            this.subComponent($cmp(AnchorHighlightComponent), { ...canvasState }),
-
-            this.subComponent($cmp(SelectionMarqueeComponent), { ...canvasState }),
-
-            this.tool.type === 'move'
-              ? this.subComponent($cmp(AnchorHandlesComponent), {
-                  ...canvasState,
-                  hoverElement: this.hoverElement
-                })
-              : svg.g({}),
-
-            this.subComponent($cmp(AwarenessCursorComponent), { ...canvasState })
-          ]
-        )
-      ]
-    );
+          this.subComponent($cmp(AwarenessCursorComponent), { ...canvasState })
+        ]
+      )
+    ]);
   }
 
   private updateToolClassOnSvg(s: ToolType) {
