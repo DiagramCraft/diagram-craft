@@ -593,6 +593,12 @@ foreignObject {
   top: 0;
   z-index: 1000;
 
+  /* Note: this is fixing a specific issue in safari */
+
+  > div::selection {
+    background-color: transparent;
+  }
+
   .cmp-drag-label__props {
     margin-top: 0.25rem;
     color: var(--base-fg-dim);

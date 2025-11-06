@@ -563,7 +563,7 @@ export const App = (props: {
               <LeftSidebar />
               <RightSidebar />
 
-              <div id="canvas-area" className={'light-theme'}>
+              <div id="canvas-area">
                 <ErrorBoundary>
                   <ContextMenu.Root>
                     <ContextMenu.Trigger asChild={true}>
