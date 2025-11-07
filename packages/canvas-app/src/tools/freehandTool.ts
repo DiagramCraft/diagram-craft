@@ -1,7 +1,11 @@
 import { AbstractTool } from '@diagram-craft/canvas/tool';
 import { DragDopManager, Modifiers } from '@diagram-craft/canvas/dragDropManager';
 import { Point } from '@diagram-craft/geometry/point';
-import { PathListBuilder, toUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
+import {
+  PathListBuilder,
+  type RawSegment,
+  toUnitLCS
+} from '@diagram-craft/geometry/pathListBuilder';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { newid } from '@diagram-craft/utils/id';
@@ -85,7 +89,6 @@ export class FreehandTool extends AbstractTool {
 
   onMouseUp(_point: Point): void {
     const pts = this.douglasPeucker(this.smoothenPoints(), 1);
-    const pathData = FreehandTool.makePath(pts);
 
     const bbox = this.path!.getBBox();
 
@@ -93,7 +96,7 @@ export class FreehandTool extends AbstractTool {
     assertRegularLayer(layer);
 
     // TODO: This removes all T commands and converts them to C
-    const path = PathListBuilder.fromString(pathData.join(' '))
+    const path = PathListBuilder.fromString(this.makePath(pts))
       .withTransform(
         toUnitLCS({
           x: bbox.x,
@@ -142,7 +145,7 @@ export class FreehandTool extends AbstractTool {
       }
     }
     if (dmax > tolerance) {
-      const results1 = this.douglasPeucker(points.slice(0, index), tolerance);
+      const results1 = this.douglasPeucker(points.slice(0, index + 1), tolerance);
       const results2 = this.douglasPeucker(points.slice(index), tolerance);
       return results1.slice(0, results1.length - 1).concat(results2);
     } else {
@@ -151,10 +154,7 @@ export class FreehandTool extends AbstractTool {
   }
 
   private draw() {
-    const pts = this.smoothenPoints();
-    const pathData = FreehandTool.makePath(pts);
-
-    this.path!.setAttribute('d', pathData.join(' '));
+    this.path!.setAttribute('d', this.makePath(this.smoothenPoints()));
   }
 
   private smoothenPoints(): Point[] {
@@ -172,19 +172,35 @@ export class FreehandTool extends AbstractTool {
     return pts;
   }
 
-  private static makePath(pts: Point[]) {
+  private makePath(pts: Point[]) {
     assert.arrayNotEmpty(pts);
 
-    const pathData = ['M', pts[0].x, pts[0].y];
+    const segments: Array<RawSegment> = [];
+
+    let prevControlPoint: Point | undefined;
+    let prevEndPoint: Point | undefined;
+
     for (let i = 1; i < pts.length; i++) {
       const point = pts[i]!;
       const next = pts.at(i + 1) ?? point;
-      if (i === 1) {
-        pathData.push('Q', point.x, point.y, (point.x + next.x) / 2, (point.y + next.y) / 2);
-      } else {
-        pathData.push('T', (point.x + next.x) / 2, (point.y + next.y) / 2);
-      }
+      const endPoint = Point.midpoint(point, next);
+
+      const controlPoint =
+        i === 1
+          ? // First curve - use the point itself as control
+            point
+          : // Subsequent curves - reflect the previous control point across the previous end point
+            {
+              x: 2 * prevEndPoint!.x - prevControlPoint!.x,
+              y: 2 * prevEndPoint!.y - prevControlPoint!.y
+            };
+
+      segments.push(['Q', controlPoint.x, controlPoint.y, endPoint.x, endPoint.y]);
+
+      prevControlPoint = controlPoint;
+      prevEndPoint = endPoint;
     }
-    return pathData;
+
+    return `M ${pts[0].x} ${pts[0].y} ${segments.map(s => s.join(' ')).join(' ')}`;
   }
 }
