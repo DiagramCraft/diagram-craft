@@ -99,7 +99,7 @@ const elementToText = (element: DiagramElement, lines: string[], indent = '') =>
 
     // Try to generate arrow notation from edge props
     const propsCloned = element.storedPropsCloned;
-    let arrowNotation: string | null = null;
+    let arrowNotation: string | undefined = undefined;
     let propsWithoutArrow: ElementProps = propsCloned;
 
     if (propsCloned) {
@@ -107,6 +107,7 @@ const elementToText = (element: DiagramElement, lines: string[], indent = '') =>
 
       if (arrowNotation) {
         // Remove arrow and stroke properties from props since they're in the notation
+        // biome-ignore lint/suspicious/noExplicitAny: this needs to be any
         const cloned: any = { ...propsCloned };
         delete cloned.arrow;
         if (propsCloned.stroke) {

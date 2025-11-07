@@ -661,8 +661,8 @@ describe('deserializeDiagramDocument', () => {
       // Verify edge props override
       expect(deserializedEdge.renderProps.stroke?.color).toBe('blue');
       expect(deserializedEdge.renderProps.stroke?.width).toBe(5);
-      expect(deserializedEdge.renderProps.arrow?.start).toEqual({ type: 'diamond', size: 12 });
-      expect(deserializedEdge.renderProps.arrow?.end).toEqual({ type: 'circle', size: 8 });
+      expect(deserializedEdge.renderProps.arrow?.start).toEqual({ type: 'BALL_FILLED', size: 12 });
+      expect(deserializedEdge.renderProps.arrow?.end).toEqual({ type: 'BAR_END', size: 8 });
 
       // Verify edge start/end overrides
       expect(deserializedEdge.start).toBeInstanceOf(AnchorEndpoint);

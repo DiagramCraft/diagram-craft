@@ -1,51 +1,8 @@
 import { type ArrowType } from '@diagram-craft/canvas/arrowShapes';
 
 /**
- * Maps arrow notation symbols to arrow type names
- */
-const ARROW_SYMBOL_MAP: Record<string, ArrowType> = {
-  '<|#': 'SQUARE_ARROW_FILLED',
-  '#|>': 'SQUARE_ARROW_FILLED',
-  '<|': 'SQUARE_ARROW_OUTLINE',
-  '|>': 'SQUARE_ARROW_OUTLINE',
-  'o#': 'BALL_FILLED',
-  '#o': 'BALL_FILLED',
-  'o': 'BALL_OUTLINE',
-  'o+': 'BALL_PLUS_OUTLINE',
-  '+o': 'BALL_PLUS_OUTLINE',
-  '<|<|#': 'SQUARE_DOUBLE_ARROW_FILLED',
-  '#|>|>': 'SQUARE_DOUBLE_ARROW_FILLED',
-  '<|<|': 'SQUARE_DOUBLE_ARROW_OUTLINE',
-  '|>|>': 'SQUARE_DOUBLE_ARROW_OUTLINE',
-  '[]#': 'BOX_FILLED',
-  '#[]': 'BOX_FILLED',
-  '[]': 'BOX_OUTLINE',
-  '<>#': 'DIAMOND_FILLED',
-  '#<>': 'DIAMOND_FILLED',
-  '<>': 'DIAMOND_OUTLINE',
-  'E': 'FORK',
-  '<': 'SQUARE_STICK_ARROW',
-  '>': 'SQUARE_STICK_ARROW',
-  '<<': 'SQUARE_DOUBLE_STICK_ARROW',
-  '>>': 'SQUARE_DOUBLE_STICK_ARROW',
-  '-|': 'BAR',
-  '|-': 'BAR',
-  '|': 'BAR_END',
-  '||': 'BAR_DOUBLE',
-  '>o#': 'CROWS_FEET_BALL_FILLED',
-  '#o<': 'CROWS_FEET_BALL_FILLED',
-  '>o': 'CROWS_FEET_BALL',
-  'o<': 'CROWS_FEET_BALL',
-  '|o': 'BAR_BALL',
-  'o|': 'BAR_BALL',
-  ')': 'SOCKET',
-  '(': 'SOCKET',
-  '/': 'SLASH',
-  'x': 'CROSS'
-};
-
-/**
- * Reverse mapping from arrow type to symbol
+ * Master mapping from arrow type to symbols (left and right variants)
+ * This is the source of truth for all arrow notation mappings
  */
 const ARROW_TYPE_TO_SYMBOL: Record<string, { left: string; right: string }> = {
   SQUARE_ARROW_FILLED: { left: '<|#', right: '#|>' },
@@ -77,9 +34,29 @@ const ARROW_TYPE_TO_SYMBOL: Record<string, { left: string; right: string }> = {
   CROSS: { left: 'x', right: 'x' }
 };
 
-// Special case for CROWS_FEET >--<
-const CROWS_FEET_LEFT = '>';
-const CROWS_FEET_RIGHT = '<';
+/**
+ * Generated reverse mapping for left-side symbols
+ * Built automatically from ARROW_TYPE_TO_SYMBOL
+ */
+const LEFT_ARROW_SYMBOL_MAP: Record<string, ArrowType> = (() => {
+  const map: Record<string, ArrowType> = {};
+  for (const [arrowType, symbols] of Object.entries(ARROW_TYPE_TO_SYMBOL)) {
+    map[symbols.left] = arrowType as ArrowType;
+  }
+  return map;
+})();
+
+/**
+ * Generated reverse mapping for right-side symbols
+ * Built automatically from ARROW_TYPE_TO_SYMBOL
+ */
+const RIGHT_ARROW_SYMBOL_MAP: Record<string, ArrowType> = (() => {
+  const map: Record<string, ArrowType> = {};
+  for (const [arrowType, symbols] of Object.entries(ARROW_TYPE_TO_SYMBOL)) {
+    map[symbols.right] = arrowType as ArrowType;
+  }
+  return map;
+})();
 
 type LinePattern = {
   strokeWidth: number;
@@ -145,21 +122,13 @@ export const parseArrowNotation = (arrowString: string): ParsedArrowNotation | u
   const leftSymbol = arrowString.substring(0, patternIdx);
   const rightSymbol = arrowString.substring(patternIdx + linePatternMatch.length);
 
-  // Special case for CROWS_FEET as it is the same SQUARE_STICK_ARROW but with
-  // the arrows reversed
-  if (leftSymbol === CROWS_FEET_LEFT && rightSymbol === CROWS_FEET_RIGHT) {
-    result.leftArrow = 'CROWS_FEET';
-    result.rightArrow = 'CROWS_FEET';
-    return result;
-  }
-
   // Map left arrow symbol
   if (leftSymbol) {
     // Try to match from longest to shortest
-    const sortedKeys = Object.keys(ARROW_SYMBOL_MAP).sort((a, b) => b.length - a.length);
+    const sortedKeys = Object.keys(LEFT_ARROW_SYMBOL_MAP).sort((a, b) => b.length - a.length);
     for (const key of sortedKeys) {
       if (leftSymbol === key) {
-        result.leftArrow = ARROW_SYMBOL_MAP[key];
+        result.leftArrow = LEFT_ARROW_SYMBOL_MAP[key];
         break;
       }
     }
@@ -167,10 +136,10 @@ export const parseArrowNotation = (arrowString: string): ParsedArrowNotation | u
 
   // Map right arrow symbol
   if (rightSymbol) {
-    const sortedKeys = Object.keys(ARROW_SYMBOL_MAP).sort((a, b) => b.length - a.length);
+    const sortedKeys = Object.keys(RIGHT_ARROW_SYMBOL_MAP).sort((a, b) => b.length - a.length);
     for (const key of sortedKeys) {
       if (rightSymbol === key) {
-        result.rightArrow = ARROW_SYMBOL_MAP[key];
+        result.rightArrow = RIGHT_ARROW_SYMBOL_MAP[key];
         break;
       }
     }
@@ -216,7 +185,7 @@ export const arrowNotationToProps = (notation: ParsedArrowNotation): Partial<Edg
  * Converts EdgeProps to arrow notation string if it matches a standard pattern
  * Returns null if the props don't match a standard pattern
  */
-export const propsToArrowNotation = (props: EdgeProps): string | null => {
+export const propsToArrowNotation = (props: EdgeProps): string | undefined => {
   // Extract relevant properties
   const strokeWidth = props.stroke?.width ?? 1;
   const strokePattern = props.stroke?.pattern;
@@ -233,9 +202,7 @@ export const propsToArrowNotation = (props: EdgeProps): string | null => {
   }
 
   // If no matching line pattern, can't generate notation
-  if (!linePatternSymbol) {
-    return null;
-  }
+  if (!linePatternSymbol) return undefined;
 
   // Get arrow symbols
   let leftSymbol = '';
@@ -243,17 +210,13 @@ export const propsToArrowNotation = (props: EdgeProps): string | null => {
 
   if (leftArrowType && leftArrowType !== 'NONE') {
     const symbolMap = ARROW_TYPE_TO_SYMBOL[leftArrowType];
-    if (!symbolMap) {
-      return null;
-    }
+    if (!symbolMap) return undefined;
     leftSymbol = symbolMap.left;
   }
 
   if (rightArrowType && rightArrowType !== 'NONE') {
     const symbolMap = ARROW_TYPE_TO_SYMBOL[rightArrowType];
-    if (!symbolMap) {
-      return null;
-    }
+    if (!symbolMap) return undefined;
     rightSymbol = symbolMap.right;
   }
 
