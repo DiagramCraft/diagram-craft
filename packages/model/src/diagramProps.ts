@@ -1,6 +1,7 @@
 import { DeepWriteable, FlatObject } from '@diagram-craft/utils/types';
 import { deepClone } from '@diagram-craft/utils/object';
 import { Direction } from '@diagram-craft/geometry/direction';
+import type { ArrowType } from '@diagram-craft/canvas/arrowShapes';
 
 type GridType = 'lines' | 'dots';
 
@@ -169,11 +170,11 @@ declare global {
 
     arrow?: {
       start?: {
-        type?: string;
+        type?: ArrowType | 'NONE';
         size?: number;
       };
       end?: {
-        type?: string;
+        type?: ArrowType | 'NONE';
         size?: number;
       };
     };

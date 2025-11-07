@@ -96,8 +96,8 @@ const LINE_PATTERN_MAP: Record<string, LinePattern> = {
 };
 
 export type ParsedArrowNotation = {
-  leftArrow?: string;
-  rightArrow?: string;
+  leftArrow?: ArrowType | 'NONE';
+  rightArrow?: ArrowType | 'NONE';
   strokeWidth: number;
   strokePattern?: string;
 };
@@ -265,10 +265,9 @@ export const propsToArrowNotation = (props: EdgeProps): string | null => {
  * Parses a full arrow notation string and returns EdgeProps
  * Returns null if the notation is invalid
  */
-export const parseArrowNotationToProps = (notation: string): Partial<EdgeProps> | null => {
+export const parseArrowNotationToProps = (notation: string): Partial<EdgeProps> | undefined => {
   const parsed = parseArrowNotation(notation);
-  if (!parsed) {
-    return null;
-  }
+  if (!parsed) return undefined;
+
   return arrowNotationToProps(parsed);
 };

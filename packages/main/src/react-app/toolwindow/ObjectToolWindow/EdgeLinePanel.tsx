@@ -13,14 +13,15 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { EdgeType, LineCap, LineJoin } from '@diagram-craft/model/diagramProps';
 import { useDiagram } from '../../../application';
 import type { Property } from '@diagram-craft/model/property';
+import type { ArrowType } from '@diagram-craft/canvas/arrowShapes';
 
 type FormProps = {
   diagram: Diagram;
   config: ConfigurationContextType;
   type: Property<EdgeType>;
-  startType: Property<string>;
+  startType: Property<ArrowType | 'NONE'>;
   startSize: Property<number>;
-  endType: Property<string>;
+  endType: Property<ArrowType | 'NONE'>;
   endSize: Property<number>;
 
   strokeColor: Property<string>;

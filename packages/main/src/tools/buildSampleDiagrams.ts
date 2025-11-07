@@ -22,6 +22,7 @@ import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { safeSplit } from '@diagram-craft/utils/safe';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
+import { getTypedKeys } from '@diagram-craft/utils/object';
 
 const SIZES = [50, 80, 100, 120, 150];
 const WIDTHS = [1, 2, 3, 4, 5];
@@ -142,7 +143,7 @@ const arrowsTestFile = async () => {
 
   let y = 10;
 
-  for (const arrow of Object.keys(ARROW_SHAPES)) {
+  for (const arrow of getTypedKeys(ARROW_SHAPES)) {
     writeArrow(arrow, y, layer, diagram);
     y += 200;
     //if (y > 2000) break;

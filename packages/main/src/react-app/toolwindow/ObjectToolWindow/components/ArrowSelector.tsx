@@ -1,8 +1,9 @@
 import { ArrowPreview } from './ArrowPreview';
-import { ARROW_SHAPES } from '@diagram-craft/canvas/arrowShapes';
+import { ARROW_SHAPES, type ArrowType } from '@diagram-craft/canvas/arrowShapes';
 import { Select } from '@diagram-craft/app-components/Select';
 import { PropertyEditor } from '../../../components/PropertyEditor';
 import type { Property } from '@diagram-craft/model/property';
+import { getTypedKeys } from '@diagram-craft/utils/object';
 
 const PREVIEW_SCALE = 0.75;
 
@@ -11,11 +12,12 @@ export const ArrowSelector = (props: Props) => {
     <PropertyEditor
       property={props.property}
       render={props => (
-        <Select.Root {...props}>
+        // biome-ignore lint/suspicious/noExplicitAny: need to fix
+        <Select.Root {...(props as any)}>
           <Select.Item key={'NONE'} value={'NONE'}>
             <ArrowPreview width={30} type={'NONE'} end={undefined} bg={'var(--cmp-bg)'} />
           </Select.Item>
-          {Object.keys(ARROW_SHAPES).map(type => {
+          {getTypedKeys(ARROW_SHAPES).map(type => {
             const arrow = ARROW_SHAPES[type]?.(PREVIEW_SCALE, 1);
             return (
               <Select.Item key={type} value={type}>
@@ -26,7 +28,7 @@ export const ArrowSelector = (props: Props) => {
         </Select.Root>
       )}
       renderValue={props => {
-        const type = props.value;
+        const type = props.value as ArrowType;
         const arrow = ARROW_SHAPES[type]?.(PREVIEW_SCALE, 1);
         return (
           <div
@@ -47,5 +49,5 @@ export const ArrowSelector = (props: Props) => {
 };
 
 interface Props {
-  property: Property<string>;
+  property: Property<ArrowType | 'NONE'>;
 }

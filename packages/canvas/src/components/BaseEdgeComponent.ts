@@ -9,7 +9,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DRAG_DROP_MANAGER } from '../dragDropManager';
 import { EdgeWaypointDrag } from '../drag/edgeWaypointDrag';
 import { EdgeControlPointDrag } from '../drag/edgeControlPointDrag';
-import { ARROW_SHAPES, ArrowShape } from '../arrowShapes';
+import { ARROW_SHAPES, ArrowShape, type ArrowType } from '../arrowShapes';
 import {
   type ControlPoints,
   DiagramEdge,
@@ -268,9 +268,12 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
     );
   }
 
-  protected getArrow(type: 'start' | 'end', edgeProps: DeepReadonly<DeepRequired<EdgeProps>>) {
+  protected getArrow(
+    type: 'start' | 'end',
+    edgeProps: DeepReadonly<DeepRequired<EdgeProps>>
+  ): ArrowShape | undefined {
     const size = (1 + (edgeProps.stroke.width - 1) * 10 + edgeProps.arrow[type].size) / 100;
-    return ARROW_SHAPES[edgeProps.arrow[type].type]?.(size, edgeProps.stroke.width);
+    return ARROW_SHAPES[edgeProps.arrow[type].type as ArrowType]?.(size, edgeProps.stroke.width);
   }
 }
 

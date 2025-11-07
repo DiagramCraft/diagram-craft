@@ -553,7 +553,7 @@ describe('deserializeDiagramDocument', () => {
       const baseEdge = regularLayer.addEdge({ id: 'base-edge' });
       baseEdge.updateProps(props => {
         props.stroke = { color: 'red', width: 2 };
-        props.arrow = { end: { type: 'arrow', size: 10 } };
+        props.arrow = { end: { type: 'BAR', size: 10 } };
       }, UnitOfWork.immediate(diagram));
       baseEdge.updateMetadata(metadata => {
         metadata.name = 'Base Edge';
@@ -588,7 +588,7 @@ describe('deserializeDiagramDocument', () => {
       const delegatingEdge = new DelegatingDiagramEdge('delegating-edge-1', baseEdge, modLayer, {
         props: {
           stroke: { color: 'blue', width: 5 },
-          arrow: { start: { type: 'diamond', size: 12 }, end: { type: 'circle', size: 8 } }
+          arrow: { start: { type: 'BALL_FILLED', size: 12 }, end: { type: 'BAR_END', size: 8 } }
         },
         start: newStart,
         end: newEnd,
