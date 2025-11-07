@@ -4,7 +4,6 @@ import { newid } from '@diagram-craft/utils/id';
 import type { DiagramParser, ParsedElement, ParseErrors } from '../../types';
 import { parsePropsString, parseMetadataString } from '../../utils';
 import { parseArrowNotationToProps } from './arrowNotation';
-// EdgeProps, NodeProps, and ElementMetadata are globally available
 
 type ParseResult = {
   elements: ParsedElement[];
@@ -122,10 +121,24 @@ const tokenize = (text: string): TokenizationResult => {
         // Continue collecting arrow notation characters
         while (col < line.length) {
           const c = line[col]!;
-          if (c === '-' || c === '.' || c === '=' || c === '<' || c === '>' ||
-              c === '|' || c === '#' || c === 'o' || c === '[' || c === ']' ||
-              c === '+' || c === 'E' || c === ')' || c === '(' || c === '/' ||
-              c === 'x') {
+          if (
+            c === '-' ||
+            c === '.' ||
+            c === '=' ||
+            c === '<' ||
+            c === '>' ||
+            c === '|' ||
+            c === '#' ||
+            c === 'o' ||
+            c === '[' ||
+            c === ']' ||
+            c === '+' ||
+            c === 'E' ||
+            c === ')' ||
+            c === '(' ||
+            c === '/' ||
+            c === 'x'
+          ) {
             notation += c;
             col++;
           } else {
@@ -146,10 +159,24 @@ const tokenize = (text: string): TokenizationResult => {
         // Continue collecting arrow notation characters
         while (col < line.length) {
           const c = line[col]!;
-          if (c === '-' || c === '.' || c === '=' || c === '<' || c === '>' ||
-              c === '|' || c === '#' || c === 'o' || c === '[' || c === ']' ||
-              c === '+' || c === 'E' || c === ')' || c === '(' || c === '/' ||
-              c === 'x') {
+          if (
+            c === '-' ||
+            c === '.' ||
+            c === '=' ||
+            c === '<' ||
+            c === '>' ||
+            c === '|' ||
+            c === '#' ||
+            c === 'o' ||
+            c === '[' ||
+            c === ']' ||
+            c === '+' ||
+            c === 'E' ||
+            c === ')' ||
+            c === '(' ||
+            c === '/' ||
+            c === 'x'
+          ) {
             notation += c;
             col++;
           } else {
@@ -165,9 +192,23 @@ const tokenize = (text: string): TokenizationResult => {
       // We'll look for patterns that contain one of the line patterns: --, .., -., ==
       // Only try to match if we see a potential arrow notation start character
       // Note: / is treated specially - only consumed if followed by line pattern chars
-      if (char === '-' || char === '.' || char === '=' || char === '<' || char === '>' ||
-          char === '|' || char === '#' || char === 'o' || char === '[' || char === ']' ||
-          char === '+' || char === 'E' || char === ')' || char === '(' || char === 'x') {
+      if (
+        char === '-' ||
+        char === '.' ||
+        char === '=' ||
+        char === '<' ||
+        char === '>' ||
+        char === '|' ||
+        char === '#' ||
+        char === 'o' ||
+        char === '[' ||
+        char === ']' ||
+        char === '+' ||
+        char === 'E' ||
+        char === ')' ||
+        char === '(' ||
+        char === 'x'
+      ) {
         // Try to match an arrow notation pattern
         const startCol = col;
         let notation = '';
@@ -175,12 +216,30 @@ const tokenize = (text: string): TokenizationResult => {
         // Collect characters that could be part of arrow notation
         while (col < line.length) {
           const c = line[col]!;
-          if (c === '-' || c === '.' || c === '=' || c === '<' || c === '>' ||
-              c === '|' || c === '#' || c === 'o' || c === '[' || c === ']' ||
-              c === '+' || c === 'E' || c === ')' || c === '(' || c === 'x') {
+          if (
+            c === '-' ||
+            c === '.' ||
+            c === '=' ||
+            c === '<' ||
+            c === '>' ||
+            c === '|' ||
+            c === '#' ||
+            c === 'o' ||
+            c === '[' ||
+            c === ']' ||
+            c === '+' ||
+            c === 'E' ||
+            c === ')' ||
+            c === '(' ||
+            c === 'x'
+          ) {
             notation += c;
             col++;
-          } else if (c === '/' && notation.length > 0 && (notation.includes('-') || notation.includes('.') || notation.includes('='))) {
+          } else if (
+            c === '/' &&
+            notation.length > 0 &&
+            (notation.includes('-') || notation.includes('.') || notation.includes('='))
+          ) {
             // Only include / if we've already seen some pattern chars
             notation += c;
             col++;

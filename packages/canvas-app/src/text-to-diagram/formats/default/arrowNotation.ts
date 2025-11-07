@@ -44,147 +44,6 @@ const ARROW_SYMBOL_MAP: Record<string, ArrowType> = {
   'x': 'CROSS'
 };
 
-// Special case for CROWS_FEET which only appears without other symbols
-const CROWS_FEET_LEFT = '>';
-const CROWS_FEET_RIGHT = '<';
-
-/**
- * Line pattern definitions
- */
-interface LinePattern {
-  strokeWidth: number;
-  strokePattern?: string;
-}
-
-const LINE_PATTERN_MAP: Record<string, LinePattern> = {
-  '--': { strokeWidth: 1 },
-  '..': { strokeWidth: 1, strokePattern: 'dotted' },
-  '-.': { strokeWidth: 1, strokePattern: 'dashed' },
-  '==': { strokeWidth: 2 },
-  '::': { strokeWidth: 2, strokePattern: 'dotted' },
-  '=:': { strokeWidth: 2, strokePattern: 'dashed' }
-};
-
-/**
- * Result of parsing arrow notation
- */
-export interface ParsedArrowNotation {
-  leftArrow?: string;
-  rightArrow?: string;
-  strokeWidth: number;
-  strokePattern?: string;
-}
-
-/**
- * Parses arrow notation and returns arrow types and line properties
- */
-export function parseArrowNotation(notation: string): ParsedArrowNotation | null {
-  // Try to match the pattern: [left arrow][line pattern][right arrow]
-  // We need to be smart about parsing because some arrow symbols contain the line pattern chars
-
-  // First, try to extract the line pattern from the middle
-  let linePatternMatch: string | null = null;
-  let linePattern: LinePattern | null | undefined = null;
-
-  for (const pattern of Object.keys(LINE_PATTERN_MAP).sort((a, b) => b.length - a.length)) {
-    const idx = notation.indexOf(pattern);
-    if (idx > -1) {
-      // Check if this is actually the middle section
-      // For patterns like `<|#--#|>`, we want to match the `--` in the middle
-      // For patterns like `<-->`, we want to match `--` in the middle
-      // For patterns like `--`, the entire string is the pattern (plain line)
-      const before = notation.substring(0, idx);
-      const after = notation.substring(idx + pattern.length);
-
-      // Accept if there's content on either side, or if the pattern is the entire notation
-      if (before.length > 0 || after.length > 0 || notation === pattern) {
-        linePatternMatch = pattern;
-        linePattern = LINE_PATTERN_MAP[pattern];
-        break;
-      }
-    }
-  }
-
-  if (!linePattern || linePatternMatch === null) {
-    return null;
-  }
-
-  // Extract left and right arrow symbols
-  const patternIdx = notation.indexOf(linePatternMatch);
-  const leftSymbol = notation.substring(0, patternIdx);
-  const rightSymbol = notation.substring(patternIdx + linePatternMatch.length);
-
-  const result: ParsedArrowNotation = {
-    strokeWidth: linePattern.strokeWidth,
-    strokePattern: linePattern.strokePattern
-  };
-
-  // Special case for CROWS_FEET
-  if (leftSymbol === CROWS_FEET_LEFT && rightSymbol === CROWS_FEET_RIGHT) {
-    result.leftArrow = 'CROWS_FEET';
-    result.rightArrow = 'CROWS_FEET';
-    return result;
-  }
-
-  // Map left arrow symbol
-  if (leftSymbol) {
-    // Try to match from longest to shortest
-    const sortedKeys = Object.keys(ARROW_SYMBOL_MAP).sort((a, b) => b.length - a.length);
-    for (const key of sortedKeys) {
-      if (leftSymbol === key) {
-        result.leftArrow = ARROW_SYMBOL_MAP[key];
-        break;
-      }
-    }
-  }
-
-  // Map right arrow symbol
-  if (rightSymbol) {
-    const sortedKeys = Object.keys(ARROW_SYMBOL_MAP).sort((a, b) => b.length - a.length);
-    for (const key of sortedKeys) {
-      if (rightSymbol === key) {
-        result.rightArrow = ARROW_SYMBOL_MAP[key];
-        break;
-      }
-    }
-  }
-
-  return result;
-}
-
-/**
- * Converts parsed arrow notation to EdgeProps
- */
-export function arrowNotationToProps(notation: ParsedArrowNotation): Partial<EdgeProps> {
-  const props: Partial<EdgeProps> = {
-    stroke: {
-      width: notation.strokeWidth
-    }
-  };
-
-  if (notation.strokePattern) {
-    props.stroke!.pattern = notation.strokePattern;
-  }
-
-  if (notation.leftArrow || notation.rightArrow) {
-    props.arrow = {};
-
-    if (notation.leftArrow && notation.leftArrow !== 'NONE') {
-      props.arrow.start = {
-        type: notation.leftArrow
-      };
-    }
-
-    if (notation.rightArrow && notation.rightArrow !== 'NONE') {
-      props.arrow.end = {
-        type: notation.rightArrow
-      };
-    }
-  }
-
-  return props;
-}
-
 /**
  * Reverse mapping from arrow type to symbol
  */
@@ -218,11 +77,146 @@ const ARROW_TYPE_TO_SYMBOL: Record<string, { left: string; right: string }> = {
   CROSS: { left: 'x', right: 'x' }
 };
 
+// Special case for CROWS_FEET >--<
+const CROWS_FEET_LEFT = '>';
+const CROWS_FEET_RIGHT = '<';
+
+type LinePattern = {
+  strokeWidth: number;
+  strokePattern?: string;
+};
+
+const LINE_PATTERN_MAP: Record<string, LinePattern> = {
+  '--': { strokeWidth: 1 },
+  '..': { strokeWidth: 1, strokePattern: 'dotted' },
+  '-.': { strokeWidth: 1, strokePattern: 'dashed' },
+  '==': { strokeWidth: 2 },
+  '::': { strokeWidth: 2, strokePattern: 'dotted' },
+  '=:': { strokeWidth: 2, strokePattern: 'dashed' }
+};
+
+export type ParsedArrowNotation = {
+  leftArrow?: string;
+  rightArrow?: string;
+  strokeWidth: number;
+  strokePattern?: string;
+};
+
+/**
+ * Parses arrow notation and returns arrow types and line properties
+ */
+export const parseArrowNotation = (arrowString: string): ParsedArrowNotation | undefined => {
+  // Try to match the pattern: [left arrow][line pattern][right arrow]
+  // We need to be smart about parsing because some arrow symbols contain the line pattern chars
+
+  // First, try to extract the line pattern from the middle
+  let linePatternMatch: string | null = null;
+  let linePattern: LinePattern | null | undefined = null;
+
+  // We start by trying to find a line string (2 characters)
+  for (const pattern of Object.keys(LINE_PATTERN_MAP).sort((a, b) => b.length - a.length)) {
+    const idx = arrowString.indexOf(pattern);
+    if (idx > -1) {
+      const before = arrowString.substring(0, idx);
+      const after = arrowString.substring(idx + pattern.length);
+
+      // Accept if there's content on either side, or if the pattern is the entire notation
+      if (before.length > 0 || after.length > 0 || arrowString === pattern) {
+        linePatternMatch = pattern;
+        linePattern = LINE_PATTERN_MAP[pattern];
+        break;
+      }
+    }
+  }
+
+  // If there are no line characters, then this is not a line
+  if (!linePattern || linePatternMatch === null) {
+    return undefined;
+  }
+
+  // Else we at least have a line pattern, so we can try to extract arrows
+  const result: ParsedArrowNotation = {
+    strokeWidth: linePattern.strokeWidth,
+    strokePattern: linePattern.strokePattern
+  };
+
+  // Extract left and right arrow symbols
+  const patternIdx = arrowString.indexOf(linePatternMatch);
+  const leftSymbol = arrowString.substring(0, patternIdx);
+  const rightSymbol = arrowString.substring(patternIdx + linePatternMatch.length);
+
+  // Special case for CROWS_FEET as it is the same SQUARE_STICK_ARROW but with
+  // the arrows reversed
+  if (leftSymbol === CROWS_FEET_LEFT && rightSymbol === CROWS_FEET_RIGHT) {
+    result.leftArrow = 'CROWS_FEET';
+    result.rightArrow = 'CROWS_FEET';
+    return result;
+  }
+
+  // Map left arrow symbol
+  if (leftSymbol) {
+    // Try to match from longest to shortest
+    const sortedKeys = Object.keys(ARROW_SYMBOL_MAP).sort((a, b) => b.length - a.length);
+    for (const key of sortedKeys) {
+      if (leftSymbol === key) {
+        result.leftArrow = ARROW_SYMBOL_MAP[key];
+        break;
+      }
+    }
+  }
+
+  // Map right arrow symbol
+  if (rightSymbol) {
+    const sortedKeys = Object.keys(ARROW_SYMBOL_MAP).sort((a, b) => b.length - a.length);
+    for (const key of sortedKeys) {
+      if (rightSymbol === key) {
+        result.rightArrow = ARROW_SYMBOL_MAP[key];
+        break;
+      }
+    }
+  }
+
+  return result;
+};
+
+/**
+ * Converts parsed arrow notation to EdgeProps
+ */
+export const arrowNotationToProps = (notation: ParsedArrowNotation): Partial<EdgeProps> => {
+  const props: Partial<EdgeProps> = {
+    stroke: {
+      width: notation.strokeWidth
+    }
+  };
+
+  if (notation.strokePattern) {
+    props.stroke!.pattern = notation.strokePattern;
+  }
+
+  if (notation.leftArrow || notation.rightArrow) {
+    props.arrow = {};
+
+    if (notation.leftArrow && notation.leftArrow !== 'NONE') {
+      props.arrow.start = {
+        type: notation.leftArrow
+      };
+    }
+
+    if (notation.rightArrow && notation.rightArrow !== 'NONE') {
+      props.arrow.end = {
+        type: notation.rightArrow
+      };
+    }
+  }
+
+  return props;
+};
+
 /**
  * Converts EdgeProps to arrow notation string if it matches a standard pattern
  * Returns null if the props don't match a standard pattern
  */
-export function propsToArrowNotation(props: EdgeProps): string | null {
+export const propsToArrowNotation = (props: EdgeProps): string | null => {
   // Extract relevant properties
   const strokeWidth = props.stroke?.width ?? 1;
   const strokePattern = props.stroke?.pattern;
@@ -265,16 +259,16 @@ export function propsToArrowNotation(props: EdgeProps): string | null {
 
   // Build notation
   return leftSymbol + linePatternSymbol + rightSymbol;
-}
+};
 
 /**
  * Parses a full arrow notation string and returns EdgeProps
  * Returns null if the notation is invalid
  */
-export function parseArrowNotationToProps(notation: string): Partial<EdgeProps> | null {
+export const parseArrowNotationToProps = (notation: string): Partial<EdgeProps> | null => {
   const parsed = parseArrowNotation(notation);
   if (!parsed) {
     return null;
   }
   return arrowNotationToProps(parsed);
-}
+};
