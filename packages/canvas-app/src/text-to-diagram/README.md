@@ -45,6 +45,54 @@ e1: edge node1 -> node2 "connects to"
 : rect "Auto-generated ID"
 ```
 
+### Arrow Notation
+
+The default format supports rich arrow notation for edges, allowing you to specify arrow types, line styles, and thickness inline:
+
+```
+# Simple arrows
+e1: edge node1 --> node2         # Arrow at end
+e2: edge node1 <-- node2          # Arrow at start
+e3: edge node1 <--> node2         # Arrows at both ends
+
+# Line thickness (== is 2px, -- is 1px)
+e4: edge node1 ==> node2          # Thick arrow
+e5: edge node1 <==> node2         # Thick bidirectional
+
+# Dotted lines (:: is thick, .. is thin)
+e6: edge node1 ..> node2          # Dotted with arrow
+e7: edge node1 ::> node2          # Thick dotted with arrow
+
+# Dash-dot lines (=: is thick, -. is thin)
+e8: edge node1 -.> node2          # Dash-dot with arrow
+
+# Complex arrow types
+e9: edge node1 <|#--#|> node2     # Filled square arrows
+e10: edge node1 <|--|> node2      # Outline square arrows
+e11: edge node1 o#--#o node2      # Filled ball/circle
+e12: edge node1 <>--<> node2      # Diamond outline
+e13: edge node1 <>#--#<> node2    # Diamond filled
+e14: edge node1 <<-->> node2      # Double arrows
+
+# Database/UML notation
+e15: edge node1 >--< node2        # Crow's feet (many-to-many)
+e16: edge node1 []#--#[] node2    # Box filled
+
+# Plain line (no arrows)
+e17: edge node1 -- node2          # Simple line
+e18: edge node1 == node2          # Thick line
+```
+
+Arrow notation properties take precedence over explicit `props`, allowing you to override with detailed settings when needed:
+
+```
+e1: edge node1 --> node2 {
+  props: "arrow.end.type=DIAMOND_FILLED;stroke.width=3"
+}
+```
+
+See `arrowspec.txt` for the complete list of arrow types and `formats/default/arrowNotation.ts` for implementation details.
+
 See `formats/default/parser.ts` for complete grammar documentation.
 
 ## Adding a New Format

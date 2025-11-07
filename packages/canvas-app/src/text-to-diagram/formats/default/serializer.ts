@@ -2,6 +2,8 @@ import { type DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagra
 import { ConnectedEndpoint } from '@diagram-craft/model/endpoint';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import type { DiagramSerializer } from '../../types';
+import { propsToArrowNotation } from './arrowNotation';
+// EdgeProps is globally available from @diagram-craft/model/src/diagramProps
 
 type ElementMetadata = {
   name?: string;
@@ -95,11 +97,38 @@ const elementToText = (element: DiagramElement, lines: string[], indent = '') =>
     let edge = indent;
     edge += `${formatId(element.id)}: edge`;
 
+    // Try to generate arrow notation from edge props
+    const propsCloned = element.storedPropsCloned;
+    let arrowNotation: string | null = null;
+    let propsWithoutArrow: ElementProps = propsCloned;
+
+    if (propsCloned) {
+      arrowNotation = propsToArrowNotation(propsCloned as EdgeProps);
+
+      if (arrowNotation) {
+        // Remove arrow and stroke properties from props since they're in the notation
+        const cloned: any = { ...propsCloned };
+        delete cloned.arrow;
+        if (propsCloned.stroke) {
+          const { width, pattern, ...remainingStroke } = propsCloned.stroke;
+          if (Object.keys(remainingStroke).length === 0) {
+            delete cloned.stroke;
+          } else {
+            cloned.stroke = remainingStroke;
+          }
+        }
+        propsWithoutArrow = cloned;
+      }
+    }
+
+    // Fall back to default notation if no match
+    const notation = arrowNotation ?? '--';
+
     if (element.start.isConnected || element.end.isConnected) {
       if (element.start.isConnected) {
         edge += ` ${formatId((element.start as ConnectedEndpoint).node.id)}`;
       }
-      edge += ' -> ';
+      edge += ` ${notation} `;
       if (element.end.isConnected) {
         edge += formatId((element.end as ConnectedEndpoint).node.id);
       }
@@ -111,7 +140,6 @@ const elementToText = (element: DiagramElement, lines: string[], indent = '') =>
     }
 
     const sublines: string[] = [];
-    const propsCloned = element.storedPropsCloned;
 
     // When there's a single label node, don't serialize it as a child since it's shown inline
     const labelNodeId = hasSingleLabelNode ? element.labelNodes[0]!.node().id : null;
@@ -121,7 +149,7 @@ const elementToText = (element: DiagramElement, lines: string[], indent = '') =>
       }
     }
 
-    const propsS = serializeProps(propsCloned);
+    const propsS = serializeProps(propsWithoutArrow);
     if (propsS) {
       sublines.push(`${indent}  props: "${propsS}"`);
     }
