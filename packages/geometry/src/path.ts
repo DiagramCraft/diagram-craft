@@ -92,7 +92,7 @@ class SegmentList {
           dest.push(new QuadSegment(end, { x: seg[1], y: seg[2] }, { x: seg[3], y: seg[4] }));
           break;
         case 'T': {
-          const cp = (dest.at(-1) as QuadSegment).p2;
+          const cp = (dest.at(-1) as QuadSegment).quadP1;
           const cp2 = Point.add(end, Point.subtract(end, cp));
           dest.push(new QuadSegment(end, cp2, { x: seg[1], y: seg[2] }));
           break;
