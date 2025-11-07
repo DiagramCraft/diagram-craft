@@ -621,6 +621,7 @@ class Parser {
     // Copy all other explicit props
     for (const key in explicitProps) {
       if (key !== 'stroke' && key !== 'arrow') {
+        // biome-ignore lint/suspicious/noExplicitAny: any is the easiest solution
         (merged as any)[key] = (explicitProps as any)[key];
       }
     }

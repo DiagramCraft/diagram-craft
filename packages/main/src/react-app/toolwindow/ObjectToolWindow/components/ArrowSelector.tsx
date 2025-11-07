@@ -12,8 +12,7 @@ export const ArrowSelector = (props: Props) => {
     <PropertyEditor
       property={props.property}
       render={props => (
-        // biome-ignore lint/suspicious/noExplicitAny: need to fix
-        <Select.Root {...(props as any)}>
+        <Select.Root {...props}>
           <Select.Item key={'NONE'} value={'NONE'}>
             <ArrowPreview width={30} type={'NONE'} end={undefined} bg={'var(--cmp-bg)'} />
           </Select.Item>
@@ -49,5 +48,5 @@ export const ArrowSelector = (props: Props) => {
 };
 
 interface Props {
-  property: Property<ArrowType | 'NONE'>;
+  property: Property<string>;
 }

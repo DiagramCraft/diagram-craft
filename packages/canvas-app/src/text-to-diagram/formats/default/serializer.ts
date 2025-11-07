@@ -3,7 +3,6 @@ import { ConnectedEndpoint } from '@diagram-craft/model/endpoint';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import type { DiagramSerializer } from '../../types';
 import { propsToArrowNotation } from './arrowNotation';
-// EdgeProps is globally available from @diagram-craft/model/src/diagramProps
 
 type ElementMetadata = {
   name?: string;
@@ -111,7 +110,7 @@ const elementToText = (element: DiagramElement, lines: string[], indent = '') =>
         const cloned: any = { ...propsCloned };
         delete cloned.arrow;
         if (propsCloned.stroke) {
-          const { width, pattern, ...remainingStroke } = propsCloned.stroke;
+          const { ...remainingStroke } = propsCloned.stroke;
           if (Object.keys(remainingStroke).length === 0) {
             delete cloned.stroke;
           } else {
