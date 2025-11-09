@@ -151,7 +151,9 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
         }
 
         // Update reference for next node placement
-        lastReferenceNode = existingElement;
+        if (existingElement.parent === undefined) {
+          lastReferenceNode = existingElement;
+        }
 
         // Process children
         if (parsedElement.children) {
