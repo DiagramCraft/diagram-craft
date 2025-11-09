@@ -99,9 +99,12 @@ export const TextToolWindow = () => {
         $el.selectionEnd = pos;
 
         onChange($el.value);
+      } else if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        applyChanges();
       }
     },
-    [onChange]
+    [onChange, applyChanges]
   );
 
   const onScroll = useCallback((source: HTMLElement) => {
