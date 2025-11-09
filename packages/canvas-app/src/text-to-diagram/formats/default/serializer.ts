@@ -3,6 +3,8 @@ import { ConnectedEndpoint } from '@diagram-craft/model/endpoint';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import type { DiagramSerializer } from '../../types';
 import { propsToArrowNotation } from './arrowNotation';
+import { deepClone } from '@diagram-craft/utils/object';
+import type { DeepWriteable } from '@diagram-craft/utils/types';
 
 type ElementMetadata = {
   name?: string;
@@ -98,7 +100,7 @@ const elementToText = (element: DiagramElement, lines: string[], indent = '') =>
 
     // Try to generate arrow notation from edge props
     const propsCloned = element.storedPropsCloned;
-    let arrowNotation: string | undefined = undefined;
+    let arrowNotation: string | undefined;
     let propsWithoutArrow: ElementProps = propsCloned;
 
     if (propsCloned) {
@@ -106,16 +108,10 @@ const elementToText = (element: DiagramElement, lines: string[], indent = '') =>
 
       if (arrowNotation) {
         // Remove arrow and stroke properties from props since they're in the notation
-        // biome-ignore lint/suspicious/noExplicitAny: this needs to be any
-        const cloned: any = { ...propsCloned };
+        const cloned = deepClone(propsCloned) as DeepWriteable<EdgeProps>;
         delete cloned.arrow;
-        if (propsCloned.stroke) {
-          const { ...remainingStroke } = propsCloned.stroke;
-          if (Object.keys(remainingStroke).length === 0) {
-            delete cloned.stroke;
-          } else {
-            cloned.stroke = remainingStroke;
-          }
+        if (cloned.stroke && Object.keys(cloned.stroke).length === 0) {
+          delete cloned.stroke;
         }
         propsWithoutArrow = cloned;
       }

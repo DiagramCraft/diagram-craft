@@ -47,7 +47,8 @@ e1: edge node1 -> node2 "connects to"
 
 ### Arrow Notation
 
-The default format supports rich arrow notation for edges, allowing you to specify arrow types, line styles, and thickness inline:
+The default format supports rich arrow notation for edges, allowing you to specify arrow types, line styles, and
+thickness inline:
 
 ```
 # Simple arrows
@@ -83,15 +84,14 @@ e17: edge node1 -- node2          # Simple line
 e18: edge node1 == node2          # Thick line
 ```
 
-Arrow notation properties take precedence over explicit `props`, allowing you to override with detailed settings when needed:
+Arrow notation properties take precedence over explicit `props`, allowing you to override with detailed settings when
+needed:
 
 ```
 e1: edge node1 --> node2 {
   props: "arrow.end.type=DIAMOND_FILLED;stroke.width=3"
 }
 ```
-
-See `arrowspec.txt` for the complete list of arrow types and `formats/default/arrowNotation.ts` for implementation details.
 
 See `formats/default/parser.ts` for complete grammar documentation.
 
