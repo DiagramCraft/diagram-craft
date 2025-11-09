@@ -1,6 +1,6 @@
 import { EdgeLinePanel } from './EdgeLinePanel';
 import { ArrowPreview } from './components/ArrowPreview';
-import { ARROW_SHAPES } from '@diagram-craft/canvas/arrowShapes';
+import { ARROW_SHAPES, type ArrowType } from '@diagram-craft/canvas/arrowShapes';
 import { useEdgeProperty } from '../../hooks/useProperty';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
@@ -35,8 +35,8 @@ export const EdgeLineToolbarButton = () => {
               color={strokeColor.val}
               width={65}
               type={arrowStart.val}
-              start={ARROW_SHAPES[arrowStart.val]?.(0.75, 1)}
-              end={ARROW_SHAPES[arrowEnd.val]?.(0.75, 1)}
+              start={ARROW_SHAPES[arrowStart.val as ArrowType]?.(0.75, 1)}
+              end={ARROW_SHAPES[arrowEnd.val as ArrowType]?.(0.75, 1)}
             />
           </div>
         </Toolbar.Button>

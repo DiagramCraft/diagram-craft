@@ -602,4 +602,389 @@ node2: text "Explicit"`;
       expect(parent.children?.[0]?.id).not.toBe(parent.children?.[1]?.id);
     }
   });
+
+  describe('arrow notation', () => {
+    test('parses simple arrow notation -->', () => {
+      const input = 'e1: edge node1 --> node2';
+      const result = parse(input);
+
+      expect(result.errors.size).toBe(0);
+      expect(result.elements).toHaveLength(1);
+      expect(result.elements[0]).toMatchObject({
+        id: 'e1',
+        type: 'edge',
+        from: 'node1',
+        to: 'node2',
+        props: {
+          arrow: {
+            end: { type: 'SQUARE_STICK_ARROW' }
+          },
+          stroke: {
+            width: 1
+          }
+        }
+      });
+    });
+
+    test('parses bidirectional arrow <-->', () => {
+      const input = 'e1: edge node1 <--> node2';
+      const result = parse(input);
+
+      expect(result.errors.size).toBe(0);
+      expect(result.elements).toHaveLength(1);
+      expect(result.elements[0]).toMatchObject({
+        id: 'e1',
+        type: 'edge',
+        from: 'node1',
+        to: 'node2',
+        props: {
+          arrow: {
+            start: { type: 'SQUARE_STICK_ARROW' },
+            end: { type: 'SQUARE_STICK_ARROW' }
+          },
+          stroke: {
+            width: 1
+          }
+        }
+      });
+    });
+
+    test('parses thick arrow ==>', () => {
+      const input = 'e1: edge node1 ==> node2';
+      const result = parse(input);
+
+      expect(result.errors.size).toBe(0);
+      expect(result.elements).toHaveLength(1);
+      expect(result.elements[0]).toMatchObject({
+        id: 'e1',
+        type: 'edge',
+        from: 'node1',
+        to: 'node2',
+        props: {
+          arrow: {
+            end: { type: 'SQUARE_STICK_ARROW' }
+          },
+          stroke: {
+            width: 2
+          }
+        }
+      });
+    });
+
+    test('parses thick bidirectional arrow <==>', () => {
+      const input = 'e1: edge node1 <==> node2';
+      const result = parse(input);
+
+      expect(result.errors.size).toBe(0);
+      expect(result.elements).toHaveLength(1);
+      expect(result.elements[0]).toMatchObject({
+        id: 'e1',
+        type: 'edge',
+        from: 'node1',
+        to: 'node2',
+        props: {
+          arrow: {
+            start: { type: 'SQUARE_STICK_ARROW' },
+            end: { type: 'SQUARE_STICK_ARROW' }
+          },
+          stroke: {
+            width: 2
+          }
+        }
+      });
+    });
+
+    test('parses dotted arrow ..>', () => {
+      const input = 'e1: edge node1 ..> node2';
+      const result = parse(input);
+
+      expect(result.errors.size).toBe(0);
+      expect(result.elements).toHaveLength(1);
+      expect(result.elements[0]).toMatchObject({
+        id: 'e1',
+        type: 'edge',
+        from: 'node1',
+        to: 'node2',
+        props: {
+          arrow: {
+            end: { type: 'SQUARE_STICK_ARROW' }
+          },
+          stroke: {
+            width: 1,
+            pattern: 'dotted'
+          }
+        }
+      });
+    });
+
+    test('parses thick dotted arrow ::>', () => {
+      const input = 'e1: edge node1 ::> node2';
+      const result = parse(input);
+
+      expect(result.errors.size).toBe(0);
+      expect(result.elements).toHaveLength(1);
+      expect(result.elements[0]).toMatchObject({
+        id: 'e1',
+        type: 'edge',
+        from: 'node1',
+        to: 'node2',
+        props: {
+          arrow: {
+            end: { type: 'SQUARE_STICK_ARROW' }
+          },
+          stroke: {
+            width: 2,
+            pattern: 'dotted'
+          }
+        }
+      });
+    });
+
+    test('parses dash-dot arrow -.>', () => {
+      const input = 'e1: edge node1 -.> node2';
+      const result = parse(input);
+
+      expect(result.errors.size).toBe(0);
+      expect(result.elements).toHaveLength(1);
+      expect(result.elements[0]).toMatchObject({
+        id: 'e1',
+        type: 'edge',
+        from: 'node1',
+        to: 'node2',
+        props: {
+          arrow: {
+            end: { type: 'SQUARE_STICK_ARROW' }
+          },
+          stroke: {
+            width: 1,
+            pattern: 'dashed'
+          }
+        }
+      });
+    });
+
+    test('parses filled square arrow <|#--#|>', () => {
+      const input = 'e1: edge node1 <|#--#|> node2';
+      const result = parse(input);
+
+      expect(result.errors.size).toBe(0);
+      expect(result.elements).toHaveLength(1);
+      expect(result.elements[0]).toMatchObject({
+        id: 'e1',
+        type: 'edge',
+        from: 'node1',
+        to: 'node2',
+        props: {
+          arrow: {
+            start: { type: 'SQUARE_ARROW_FILLED' },
+            end: { type: 'SQUARE_ARROW_FILLED' }
+          },
+          stroke: {
+            width: 1
+          }
+        }
+      });
+    });
+
+    test('parses outline square arrow <|--|>', () => {
+      const input = 'e1: edge node1 <|--|> node2';
+      const result = parse(input);
+
+      expect(result.errors.size).toBe(0);
+      expect(result.elements).toHaveLength(1);
+      expect(result.elements[0]).toMatchObject({
+        id: 'e1',
+        type: 'edge',
+        from: 'node1',
+        to: 'node2',
+        props: {
+          arrow: {
+            start: { type: 'SQUARE_ARROW_OUTLINE' },
+            end: { type: 'SQUARE_ARROW_OUTLINE' }
+          },
+          stroke: {
+            width: 1
+          }
+        }
+      });
+    });
+
+    test('parses ball filled o#--#o', () => {
+      const input = 'e1: edge node1 o#--#o node2';
+      const result = parse(input);
+
+      expect(result.errors.size).toBe(0);
+      expect(result.elements).toHaveLength(1);
+      expect(result.elements[0]).toMatchObject({
+        id: 'e1',
+        type: 'edge',
+        from: 'node1',
+        to: 'node2',
+        props: {
+          arrow: {
+            start: { type: 'BALL_FILLED' },
+            end: { type: 'BALL_FILLED' }
+          },
+          stroke: {
+            width: 1
+          }
+        }
+      });
+    });
+
+    test('parses double stick arrow <<-->>', () => {
+      const input = 'e1: edge node1 <<-->> node2';
+      const result = parse(input);
+
+      expect(result.errors.size).toBe(0);
+      expect(result.elements).toHaveLength(1);
+      expect(result.elements[0]).toMatchObject({
+        id: 'e1',
+        type: 'edge',
+        from: 'node1',
+        to: 'node2',
+        props: {
+          arrow: {
+            start: { type: 'SQUARE_DOUBLE_STICK_ARROW' },
+            end: { type: 'SQUARE_DOUBLE_STICK_ARROW' }
+          },
+          stroke: {
+            width: 1
+          }
+        }
+      });
+    });
+
+    test('parses diamond filled <>#--#<>', () => {
+      const input = 'e1: edge node1 <>#--#<> node2';
+      const result = parse(input);
+
+      expect(result.errors.size).toBe(0);
+      expect(result.elements).toHaveLength(1);
+      expect(result.elements[0]).toMatchObject({
+        id: 'e1',
+        type: 'edge',
+        from: 'node1',
+        to: 'node2',
+        props: {
+          arrow: {
+            start: { type: 'DIAMOND_FILLED' },
+            end: { type: 'DIAMOND_FILLED' }
+          },
+          stroke: {
+            width: 1
+          }
+        }
+      });
+    });
+
+    test('parses plain line --', () => {
+      const input = 'e1: edge node1 -- node2';
+      const result = parse(input);
+
+      expect(result.errors.size).toBe(0);
+      expect(result.elements).toHaveLength(1);
+      expect(result.elements[0]).toMatchObject({
+        id: 'e1',
+        type: 'edge',
+        from: 'node1',
+        to: 'node2',
+        props: {
+          stroke: {
+            width: 1
+          }
+        }
+      });
+    });
+
+    test('explicit props override arrow notation', () => {
+      const input = `e1: edge node1 --> node2 {
+  props: "arrow.end.type=DIAMOND_FILLED;stroke.width=3"
+}`;
+      const result = parse(input);
+
+      expect(result.errors.size).toBe(0);
+      expect(result.elements).toHaveLength(1);
+      expect(result.elements[0]).toMatchObject({
+        id: 'e1',
+        type: 'edge',
+        from: 'node1',
+        to: 'node2',
+        props: {
+          arrow: {
+            end: { type: 'DIAMOND_FILLED' }
+          },
+          stroke: {
+            width: 3
+          }
+        }
+      });
+    });
+
+    test('parses edge with arrow notation and label', () => {
+      const input = 'e1: edge node1 ==> node2 "Connection"';
+      const result = parse(input);
+
+      expect(result.errors.size).toBe(0);
+      expect(result.elements).toHaveLength(1);
+      expect(result.elements[0]).toMatchObject({
+        id: 'e1',
+        type: 'edge',
+        from: 'node1',
+        to: 'node2',
+        props: {
+          arrow: {
+            end: { type: 'SQUARE_STICK_ARROW' }
+          },
+          stroke: {
+            width: 2
+          }
+        }
+      });
+    });
+
+    test('parses edge with only to connection and arrow notation', () => {
+      const input = 'e1: edge --> node2';
+      const result = parse(input);
+
+      expect(result.errors.size).toBe(0);
+      expect(result.elements).toHaveLength(1);
+      expect(result.elements[0]).toMatchObject({
+        id: 'e1',
+        type: 'edge',
+        to: 'node2',
+        props: {
+          arrow: {
+            end: { type: 'SQUARE_STICK_ARROW' }
+          },
+          stroke: {
+            width: 1
+          }
+        }
+      });
+    });
+
+    test('parses crows feet >--<', () => {
+      const input = 'e1: edge node1 >--< node2';
+      const result = parse(input);
+
+      expect(result.errors.size).toBe(0);
+      expect(result.elements).toHaveLength(1);
+      expect(result.elements[0]).toMatchObject({
+        id: 'e1',
+        type: 'edge',
+        from: 'node1',
+        to: 'node2',
+        props: {
+          arrow: {
+            start: { type: 'CROWS_FEET' },
+            end: { type: 'CROWS_FEET' }
+          },
+          stroke: {
+            width: 1
+          }
+        }
+      });
+    });
+  });
 });

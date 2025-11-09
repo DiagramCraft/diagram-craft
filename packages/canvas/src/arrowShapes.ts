@@ -11,7 +11,46 @@ export type ArrowShape = {
 
 export type ArrowShapeFactory = (scale: number, stroke: number) => ArrowShape;
 
-export const ARROW_SHAPES: Partial<Record<string, ArrowShapeFactory>> = {
+export type ArrowType =
+  | 'SQUARE_ARROW_FILLED'
+  | 'SQUARE_ARROW_THIN_FILLED'
+  | 'SQUARE_ARROW_OUTLINE'
+  | 'SQUARE_ARROW_THIN_OUTLINE'
+  | 'BALL_FILLED'
+  | 'BALL_OUTLINE'
+  | 'BALL_PLUS_OUTLINE'
+  | 'SQUARE_DOUBLE_ARROW_FILLED'
+  | 'SQUARE_DOUBLE_ARROW_OUTLINE'
+  | 'BOX_FILLED'
+  | 'BOX_OUTLINE'
+  | 'DIAMOND_FILLED'
+  | 'DIAMOND_THIN_FILLED'
+  | 'DIAMOND_THIN_OUTLINE'
+  | 'DIAMOND_OUTLINE'
+  | 'FORK'
+  | 'SQUARE_STICK_ARROW'
+  | 'SQUARE_STICK_ARROW_HALF_LEFT_THIN_FILLED'
+  | 'SQUARE_STICK_ARROW_HALF_LEFT_THIN_OUTLINE'
+  | 'SQUARE_STICK_ARROW_HALF_LEFT'
+  | 'SQUARE_STICK_ARROW_HALF_RIGHT'
+  | 'SQUARE_DOUBLE_STICK_ARROW'
+  | 'BAR'
+  | 'BAR_END'
+  | 'BAR_DOUBLE'
+  | 'SHARP_ARROW_FILLED'
+  | 'SHARP_ARROW_THIN_FILLED'
+  | 'SHARP_ARROW_OUTLINE'
+  | 'CROWS_FEET'
+  | 'CROWS_FEET_BAR'
+  | 'CROWS_FEET_BALL'
+  | 'CROWS_FEET_BALL_FILLED'
+  | 'BAR_BALL'
+  | 'ARROW_DIMENSION_STICK_ARROW'
+  | 'SOCKET'
+  | 'SLASH'
+  | 'CROSS';
+
+export const ARROW_SHAPES: Record<ArrowType, ArrowShapeFactory> = {
   SQUARE_ARROW_FILLED: (z, s) => ({
     width: z * 10 + 2 * s,
     height: z * 10 + 2 * s,

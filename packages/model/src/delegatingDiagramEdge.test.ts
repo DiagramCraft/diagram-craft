@@ -82,7 +82,7 @@ describe.each(Backends.all())('DelegatingDiagramEdge [%s]', (_name, backend) => 
       UnitOfWork.execute(model.diagram1, uow =>
         baseEdge.updateProps(props => {
           props.stroke = { color: 'blue', width: 2 };
-          props.arrow = { end: { type: 'arrow', size: 10 } };
+          props.arrow = { end: { type: 'BALL_FILLED', size: 10 } };
         }, uow)
       );
 
@@ -96,14 +96,14 @@ describe.each(Backends.all())('DelegatingDiagramEdge [%s]', (_name, backend) => 
       // Verify - should have overridden stroke but delegate arrow
       expect(delegatingEdge.storedProps.stroke?.color).toBe('red');
       expect(delegatingEdge.storedProps.stroke?.width).toBe(3);
-      expect(delegatingEdge.storedProps.arrow?.end?.type).toBe('arrow');
+      expect(delegatingEdge.storedProps.arrow?.end?.type).toBe('BALL_FILLED');
       expect(baseEdge.storedProps.stroke?.color).toBe('blue');
 
       // Verify CRDT sync
       if (delegatingEdge2 && baseEdge2) {
         expect(delegatingEdge2.storedProps.stroke?.color).toBe('red');
         expect(delegatingEdge2.storedProps.stroke?.width).toBe(3);
-        expect(delegatingEdge2.storedProps.arrow?.end?.type).toBe('arrow');
+        expect(delegatingEdge2.storedProps.arrow?.end?.type).toBe('BALL_FILLED');
         expect(baseEdge2.storedProps.stroke?.color).toBe('blue');
       }
     });
@@ -118,19 +118,19 @@ describe.each(Backends.all())('DelegatingDiagramEdge [%s]', (_name, backend) => 
       UnitOfWork.execute(model.diagram1, uow =>
         delegatingEdge.updateProps(props => {
           props.stroke = { color: 'orange', width: 4 };
-          props.arrow = { end: { type: 'diamond', size: 15 } };
+          props.arrow = { end: { type: 'BAR', size: 15 } };
         }, uow)
       );
 
       // Verify
       expect(delegatingEdge.storedProps.stroke?.color).toBe('orange');
-      expect(delegatingEdge.storedProps.arrow?.end?.type).toBe('diamond');
+      expect(delegatingEdge.storedProps.arrow?.end?.type).toBe('BAR');
       expect(model.elementChange[0]).toHaveBeenCalledTimes(1);
 
       // Verify CRDT sync
       if (delegatingEdge2) {
         expect(delegatingEdge2.storedProps.stroke?.color).toBe('orange');
-        expect(delegatingEdge2.storedProps.arrow?.end?.type).toBe('diamond');
+        expect(delegatingEdge2.storedProps.arrow?.end?.type).toBe('BAR');
         expect(model.elementChange[1]).toHaveBeenCalledTimes(1);
       }
     });

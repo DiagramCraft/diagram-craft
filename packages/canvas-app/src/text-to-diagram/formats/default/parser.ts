@@ -3,6 +3,7 @@ import { assert } from '@diagram-craft/utils/assert';
 import { newid } from '@diagram-craft/utils/id';
 import type { DiagramParser, ParsedElement, ParseErrors } from '../../types';
 import { parsePropsString, parseMetadataString } from '../../utils';
+import { parseArrowNotationToProps } from './arrowNotation';
 
 type ParseResult = {
   elements: ParsedElement[];
@@ -96,11 +97,169 @@ const tokenize = (text: string): TokenizationResult => {
         continue;
       }
 
-      // Arrow ->
+      // Arrow notation - handle both old -> and new arrow notation
+      // Special case: old syntax -> for backwards compatibility
       if (char === '-' && col + 1 < line.length && line[col + 1] === '>') {
-        tokens.push({ type: TokenType.ARROW, value: '->', line: lineNum, col });
+        // Check if this is followed by a space or end of line (old syntax)
+        // or if it's part of a longer arrow notation pattern
+        const nextChar = col + 2 < line.length ? line[col + 2] : ' ';
+        if (nextChar === ' ' || nextChar === '\t' || nextChar === '\n' || col + 2 >= line.length) {
+          // Old syntax ->
+          tokens.push({ type: TokenType.ARROW, value: '->', line: lineNum, col });
+          col += 2;
+          continue;
+        }
+      }
+
+      // Special handling for :: and =: patterns (thick dotted/dashed arrows)
+      if (char === ':' && col + 1 < line.length && line[col + 1] === ':') {
+        // This could be :: pattern, collect the full arrow notation
+        const startCol = col;
+        let notation = '::';
         col += 2;
+
+        // Continue collecting arrow notation characters
+        while (col < line.length) {
+          const c = line[col]!;
+          if (
+            c === '-' ||
+            c === '.' ||
+            c === '=' ||
+            c === '<' ||
+            c === '>' ||
+            c === '|' ||
+            c === '#' ||
+            c === 'o' ||
+            c === '[' ||
+            c === ']' ||
+            c === '+' ||
+            c === 'E' ||
+            c === ')' ||
+            c === '(' ||
+            c === '/' ||
+            c === 'x'
+          ) {
+            notation += c;
+            col++;
+          } else {
+            break;
+          }
+        }
+
+        tokens.push({ type: TokenType.ARROW, value: notation, line: lineNum, col: startCol });
         continue;
+      }
+
+      if (char === '=' && col + 1 < line.length && line[col + 1] === ':') {
+        // This is =: pattern, collect the full arrow notation
+        const startCol = col;
+        let notation = '=:';
+        col += 2;
+
+        // Continue collecting arrow notation characters
+        while (col < line.length) {
+          const c = line[col]!;
+          if (
+            c === '-' ||
+            c === '.' ||
+            c === '=' ||
+            c === '<' ||
+            c === '>' ||
+            c === '|' ||
+            c === '#' ||
+            c === 'o' ||
+            c === '[' ||
+            c === ']' ||
+            c === '+' ||
+            c === 'E' ||
+            c === ')' ||
+            c === '(' ||
+            c === '/' ||
+            c === 'x'
+          ) {
+            notation += c;
+            col++;
+          } else {
+            break;
+          }
+        }
+
+        tokens.push({ type: TokenType.ARROW, value: notation, line: lineNum, col: startCol });
+        continue;
+      }
+
+      // New arrow notation - match complex patterns like <|#--#|>, ==>, .., etc.
+      // We'll look for patterns that contain one of the line patterns: --, .., -., ==
+      // Only try to match if we see a potential arrow notation start character
+      // Note: / is treated specially - only consumed if followed by line pattern chars
+      if (
+        char === '-' ||
+        char === '.' ||
+        char === '=' ||
+        char === '<' ||
+        char === '>' ||
+        char === '|' ||
+        char === '#' ||
+        char === 'o' ||
+        char === '[' ||
+        char === ']' ||
+        char === '+' ||
+        char === 'E' ||
+        char === ')' ||
+        char === '(' ||
+        char === 'x'
+      ) {
+        // Try to match an arrow notation pattern
+        const startCol = col;
+        let notation = '';
+
+        // Collect characters that could be part of arrow notation
+        while (col < line.length) {
+          const c = line[col]!;
+          if (
+            c === '-' ||
+            c === '.' ||
+            c === '=' ||
+            c === '<' ||
+            c === '>' ||
+            c === '|' ||
+            c === '#' ||
+            c === 'o' ||
+            c === '[' ||
+            c === ']' ||
+            c === '+' ||
+            c === 'E' ||
+            c === ')' ||
+            c === '(' ||
+            c === 'x'
+          ) {
+            notation += c;
+            col++;
+          } else if (
+            c === '/' &&
+            notation.length > 0 &&
+            (notation.includes('-') || notation.includes('.') || notation.includes('='))
+          ) {
+            // Only include / if we've already seen some pattern chars
+            notation += c;
+            col++;
+          } else {
+            break;
+          }
+        }
+
+        // Check if this contains a line pattern (indicating it's arrow notation)
+        const linePatterns = ['--', '..', '-.', '=='];
+        const hasLinePattern = linePatterns.some(pattern => notation.includes(pattern));
+
+        if (hasLinePattern) {
+          tokens.push({ type: TokenType.ARROW, value: notation, line: lineNum, col: startCol });
+          continue;
+        } else {
+          // Not arrow notation, reset and treat as unknown character
+          col = startCol + 1;
+          continue;
+        }
       }
 
       // Single character tokens
@@ -331,6 +490,7 @@ class Parser {
     let from: string | undefined;
     let to: string | undefined;
     let label: string | undefined;
+    let arrowNotationProps: Partial<EdgeProps> | undefined;
 
     // Optional: from -> to (must be before newline or brace)
     // IDs can be either ID or STRING tokens (for quoted IDs with spaces)
@@ -339,7 +499,18 @@ class Parser {
       from = this.next().value;
 
       if (this.peek().type === TokenType.ARROW) {
-        this.next(); // consume ->
+        const arrowToken = this.next(); // consume arrow notation
+        const notation = arrowToken.value;
+
+        // Only parse arrow notation if it's not the old syntax ->
+        if (notation !== '->') {
+          const parsedProps = parseArrowNotationToProps(notation);
+          if (parsedProps) {
+            arrowNotationProps = parsedProps;
+          } else {
+            this.addError(arrowToken.line, `Invalid arrow notation: ${notation}`);
+          }
+        }
 
         const toToken = this.peek();
         if (toToken.type === TokenType.ID || toToken.type === TokenType.STRING) {
@@ -348,7 +519,19 @@ class Parser {
       }
     } else if (nextToken.type === TokenType.ARROW) {
       // Case: edge -> to
-      this.next(); // consume ->
+      const arrowToken = this.next(); // consume arrow notation
+      const notation = arrowToken.value;
+
+      // Only parse arrow notation if it's not the old syntax ->
+      if (notation !== '->') {
+        const parsedProps = parseArrowNotationToProps(notation);
+        if (parsedProps) {
+          arrowNotationProps = parsedProps;
+        } else {
+          this.addError(arrowToken.line, `Invalid arrow notation: ${notation}`);
+        }
+      }
+
       const toToken = this.peek();
       if (toToken.type === TokenType.ID || toToken.type === TokenType.STRING) {
         to = this.next().value;
@@ -373,6 +556,12 @@ class Parser {
     // Optional: body
     const { props, metadata, stylesheet, textStylesheet, children } = this.parseBody();
 
+    // Merge arrow notation props with explicit props (explicit props override)
+    let finalProps = props;
+    if (arrowNotationProps) {
+      finalProps = this.mergeProps(arrowNotationProps, props);
+    }
+
     // Warn if textStylesheet was specified for an edge
     if (textStylesheet) {
       this.addError(this.peek().line, 'Edges cannot have textStylesheet');
@@ -385,11 +574,59 @@ class Parser {
       from,
       to,
       label,
-      props,
+      props: finalProps,
       metadata,
       stylesheet,
       children
     };
+  }
+
+  /**
+   * Merges arrow notation props with explicit props
+   * Explicit props take precedence over arrow notation props
+   */
+  private mergeProps(
+    arrowNotationProps: Partial<EdgeProps>,
+    explicitProps?: Partial<NodeProps | EdgeProps>
+  ): Partial<EdgeProps> {
+    if (!explicitProps) {
+      return arrowNotationProps;
+    }
+
+    // Deep merge props - explicit props override arrow notation props
+    const merged: Partial<EdgeProps> = { ...arrowNotationProps };
+
+    // Handle stroke properties
+    if (explicitProps.stroke) {
+      merged.stroke = {
+        ...arrowNotationProps.stroke,
+        ...explicitProps.stroke
+      };
+    }
+
+    // Handle arrow properties
+    if ('arrow' in explicitProps && explicitProps.arrow) {
+      merged.arrow = {
+        start: {
+          ...arrowNotationProps.arrow?.start,
+          ...explicitProps.arrow?.start
+        },
+        end: {
+          ...arrowNotationProps.arrow?.end,
+          ...explicitProps.arrow?.end
+        }
+      };
+    }
+
+    // Copy all other explicit props
+    for (const key in explicitProps) {
+      if (key !== 'stroke' && key !== 'arrow') {
+        // biome-ignore lint/suspicious/noExplicitAny: any is the easiest solution
+        (merged as any)[key] = (explicitProps as any)[key];
+      }
+    }
+
+    return merged;
   }
 
   private parseBody(): {

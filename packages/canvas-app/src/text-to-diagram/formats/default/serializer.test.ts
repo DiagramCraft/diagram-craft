@@ -133,7 +133,7 @@ describe('serializer', () => {
 
     // Find the edge line
     const edgeLine = result.find(line => line.startsWith('e1:'));
-    expect(edgeLine).toContain('n1 -> n2');
+    expect(edgeLine).toContain('n1 -- n2');
   });
 
   test('converts edge with single label node inline', () => {
@@ -159,25 +159,20 @@ describe('serializer', () => {
     expect(hasLabelAsChild).toBe(false);
   });
 
-  test('converts edge with props', () => {
+  test('converts edge with custom props', () => {
     const { layer } = TestModel.newDiagramWithLayer();
     const edge = layer.addEdge({ id: 'e1' });
     edge.updateProps(props => {
-      props.arrow = {
-        start: { type: 'SQUARE_ARROW_OUTLINE' },
-        end: { type: 'CROWS_FEET_BAR' }
-      };
+      props.stroke = { color: '#ff0000', width: 3 };
     }, UnitOfWork.immediate(layer.diagram));
 
     const result = serialize(layer);
 
+    // Custom props are serialized in props block
     expect(result.length).toBeGreaterThan(2);
     expect(result[0]).toContain('e1: edge {');
-    expect(
-      result.some(line =>
-        line.includes('arrow.start.type=SQUARE_ARROW_OUTLINE;arrow.end.type=CROWS_FEET_BAR')
-      )
-    ).toBe(true);
+    expect(result.some(line => line.includes('stroke.color=#ff0000'))).toBe(true);
+    expect(result.some(line => line.includes('stroke.width=3'))).toBe(true);
   });
 
   test('converts multiple elements with blank lines between', () => {
@@ -303,7 +298,7 @@ describe('serializer', () => {
     const result = serialize(layer);
 
     const edgeLine = result.find(line => line.startsWith('"edge 1":'));
-    expect(edgeLine).toContain('"node 1" -> "node 2"');
+    expect(edgeLine).toContain('"node 1" -- "node 2"');
   });
 
   test('converts edge with mixed quoted and unquoted endpoint IDs', () => {
@@ -318,7 +313,7 @@ describe('serializer', () => {
     const result = serialize(layer);
 
     const edgeLine = result.find(line => line.startsWith('e1:'));
-    expect(edgeLine).toContain('"node 1" -> simpleNode');
+    expect(edgeLine).toContain('"node 1" -- simpleNode');
   });
 
   test('converts nested structure with quoted IDs', () => {

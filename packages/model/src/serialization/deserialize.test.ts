@@ -553,7 +553,7 @@ describe('deserializeDiagramDocument', () => {
       const baseEdge = regularLayer.addEdge({ id: 'base-edge' });
       baseEdge.updateProps(props => {
         props.stroke = { color: 'red', width: 2 };
-        props.arrow = { end: { type: 'arrow', size: 10 } };
+        props.arrow = { end: { type: 'BAR', size: 10 } };
       }, UnitOfWork.immediate(diagram));
       baseEdge.updateMetadata(metadata => {
         metadata.name = 'Base Edge';
@@ -588,7 +588,7 @@ describe('deserializeDiagramDocument', () => {
       const delegatingEdge = new DelegatingDiagramEdge('delegating-edge-1', baseEdge, modLayer, {
         props: {
           stroke: { color: 'blue', width: 5 },
-          arrow: { start: { type: 'diamond', size: 12 }, end: { type: 'circle', size: 8 } }
+          arrow: { start: { type: 'BALL_FILLED', size: 12 }, end: { type: 'BAR_END', size: 8 } }
         },
         start: newStart,
         end: newEnd,
@@ -661,8 +661,8 @@ describe('deserializeDiagramDocument', () => {
       // Verify edge props override
       expect(deserializedEdge.renderProps.stroke?.color).toBe('blue');
       expect(deserializedEdge.renderProps.stroke?.width).toBe(5);
-      expect(deserializedEdge.renderProps.arrow?.start).toEqual({ type: 'diamond', size: 12 });
-      expect(deserializedEdge.renderProps.arrow?.end).toEqual({ type: 'circle', size: 8 });
+      expect(deserializedEdge.renderProps.arrow?.start).toEqual({ type: 'BALL_FILLED', size: 12 });
+      expect(deserializedEdge.renderProps.arrow?.end).toEqual({ type: 'BAR_END', size: 8 });
 
       // Verify edge start/end overrides
       expect(deserializedEdge.start).toBeInstanceOf(AnchorEndpoint);
