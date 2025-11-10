@@ -28,9 +28,11 @@ import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 declare global {
-  namespace Extensions {
-    interface Tools {
-      edge: EdgeTool;
+  namespace DiagramCraft {
+    namespace Extensions {
+      interface Tools {
+        edge: EdgeTool;
+      }
     }
   }
 }

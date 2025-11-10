@@ -18,9 +18,11 @@ import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 declare global {
-  namespace Extensions {
-    interface Tools {
-      text: TextTool;
+  namespace DiagramCraft {
+    namespace Extensions {
+      interface Tools {
+        text: TextTool;
+      }
     }
   }
 }

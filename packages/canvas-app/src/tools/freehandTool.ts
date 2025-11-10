@@ -15,9 +15,11 @@ import { assert } from '@diagram-craft/utils/assert';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 declare global {
-  namespace Extensions {
-    interface Tools {
-      freehand: FreehandTool;
+  namespace DiagramCraft {
+    namespace Extensions {
+      interface Tools {
+        freehand: FreehandTool;
+      }
     }
   }
 }

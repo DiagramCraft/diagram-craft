@@ -15,9 +15,11 @@ type DeferredMouseAction = {
 };
 
 declare global {
-  namespace Extensions {
-    interface Tools {
-      move: MoveTool;
+  namespace DiagramCraft {
+    namespace Extensions {
+      interface Tools {
+        move: MoveTool;
+      }
     }
   }
 }

@@ -4,12 +4,14 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import type { Context } from './context';
 
 declare global {
-  namespace Extensions {
-    interface Tools {}
+  namespace DiagramCraft {
+    namespace Extensions {
+      interface Tools {}
+    }
   }
 }
 
-export interface Tools extends Extensions.Tools {}
+export interface Tools extends DiagramCraft.Extensions.Tools {}
 
 export type ToolType = keyof Tools;
 

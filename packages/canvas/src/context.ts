@@ -71,7 +71,7 @@ export class MessageDialogCommand implements DialogCommand<MessageDialogProps, E
 }
 
 export namespace UIActions {
-  export interface ContextMenus extends Extensions.ContextMenus {
+  export interface ContextMenus extends DiagramCraft.Extensions.ContextMenus {
     canvas: object;
     selection: object;
   }
@@ -86,7 +86,9 @@ export type ContextMenuTarget<
 };
 
 declare global {
-  namespace Extensions {
-    interface ContextMenus {}
+  namespace DiagramCraft {
+    namespace Extensions {
+      interface ContextMenus {}
+    }
   }
 }

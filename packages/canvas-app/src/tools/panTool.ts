@@ -5,9 +5,11 @@ import { AbsoluteOffset, Point } from '@diagram-craft/geometry/point';
 import { Diagram } from '@diagram-craft/model/diagram';
 
 declare global {
-  namespace Extensions {
-    interface Tools {
-      pan: PanTool;
+  namespace DiagramCraft {
+    namespace Extensions {
+      interface Tools {
+        pan: PanTool;
+      }
     }
   }
 }

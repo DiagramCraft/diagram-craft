@@ -6,9 +6,11 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { fitInAspectRatio } from '@diagram-craft/model/viewBox';
 
 declare global {
-  namespace Extensions {
-    interface Tools {
-      zoom: ZoomTool;
+  namespace DiagramCraft {
+    namespace Extensions {
+      interface Tools {
+        zoom: ZoomTool;
+      }
     }
   }
 }
