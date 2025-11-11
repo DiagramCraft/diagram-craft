@@ -16,6 +16,7 @@ import { EventEmitter } from '@diagram-craft/utils/event';
 import type { CRDTFactory, CRDTMap, CRDTRoot } from '@diagram-craft/collaboration/crdt';
 import type { CRDTMapper } from '@diagram-craft/collaboration/datatypes/mapped/types';
 import { MappedCRDTMap } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtMap';
+import type { EdgeProps, NodeProps } from './diagramProps';
 
 export type StylesheetType = 'node' | 'edge' | 'text';
 
@@ -216,9 +217,11 @@ export const isSelectionDirty = ($d: Diagram, isText: boolean) => {
 };
 
 declare global {
-  interface AdditionalCRDTCompatibleInnerObjects {
-    nodeProps: NodeProps;
-    edgeProps: EdgeProps;
+  namespace DiagramCraft {
+    interface AdditionalCRDTCompatibleInnerObjects {
+      nodeProps: NodeProps;
+      edgeProps: EdgeProps;
+    }
   }
 }
 

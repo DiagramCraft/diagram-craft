@@ -2,6 +2,7 @@ import { nodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import type { Editor } from './editors';
 import { makeProperty } from './utils';
 import { NodeAdvancedPropertiesPanelForm } from '../../toolwindow/ObjectToolWindow/NodeAdvancedPropertiesPanel';
+import type { NodeProps } from '@diagram-craft/model/diagramProps';
 
 export const NodeAdvancedPropertiesEditor: Editor = props => {
   const $p = props.props as NodeProps;

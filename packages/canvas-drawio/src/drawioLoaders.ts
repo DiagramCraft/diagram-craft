@@ -8,16 +8,18 @@ import { loadDrawioStencils } from './drawioStencilLoader';
 import { toRegularStencil } from './drawioStencilUtils';
 
 declare global {
-  interface StencilLoaderOpts {
-    drawioManual: {
-      callback: () => Promise<(def: NodeDefinitionRegistry) => Promise<void>>;
-    };
-    drawioXml: {
-      name: string;
-      url: string;
-      foreground: string;
-      background: string;
-    };
+  namespace DiagramCraft {
+    interface StencilLoaderOptsExtensions {
+      drawioManual: {
+        callback: () => Promise<(def: NodeDefinitionRegistry) => Promise<void>>;
+      };
+      drawioXml: {
+        name: string;
+        url: string;
+        foreground: string;
+        background: string;
+      };
+    }
   }
 }
 

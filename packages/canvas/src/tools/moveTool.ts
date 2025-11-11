@@ -14,14 +14,6 @@ type DeferredMouseAction = {
   callback: () => void;
 };
 
-declare global {
-  namespace Extensions {
-    interface Tools {
-      move: MoveTool;
-    }
-  }
-}
-
 export class MoveTool extends AbstractTool {
   private deferredMouseAction: DeferredMouseAction | undefined;
 

@@ -2,7 +2,9 @@ import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
 import { UserState } from '../../UserState';
 
 declare global {
-  interface ActionMap extends ReturnType<typeof zoomActions> {}
+  namespace DiagramCraft {
+    interface ActionMapExtensions extends ReturnType<typeof zoomActions> {}
+  }
 }
 
 export const zoomActions = (context: ActionContext) => ({

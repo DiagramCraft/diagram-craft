@@ -48,238 +48,243 @@ export interface Indicator {
   offset?: number;
 }
 
-declare global {
-  interface DiagramProps {
-    background?: NodeProps['fill'];
-    grid?: {
-      enabled?: boolean;
-      size?: number;
-      majorCount?: number;
-      color?: string;
-      majorColor?: string;
-      type?: GridType;
-      majorType?: GridType;
-    };
-    guides?: {
-      enabled?: boolean;
-    };
-  }
+export interface ElementDataEntry {
+  schema: string;
+  type: 'schema' | 'external';
+  external?: {
+    uid: string;
+  };
+  data: FlatObject;
+  enabled?: boolean;
+}
 
-  interface ElementDataEntry {
-    schema: string;
-    type: 'schema' | 'external';
-    external?: {
-      uid: string;
-    };
-    data: FlatObject;
+export type ElementMetadata = {
+  name?: string;
+  style?: string;
+  textStyle?: string;
+  data?: {
+    data?: Array<ElementDataEntry>;
+    customData?: FlatObject;
+  };
+};
+
+type ElementEffectProps = {
+  sketch?: boolean;
+  sketchStrength?: number;
+  sketchFillType?: 'fill' | 'hachure';
+
+  opacity?: number;
+
+  rounding?: boolean;
+  roundingAmount?: number;
+};
+
+export interface ElementProps {
+  hidden?: boolean;
+
+  stroke?: {
     enabled?: boolean;
-  }
-
-  // TODO: Move from global namespace
-  type ElementMetadata = {
-    name?: string;
-    style?: string;
-    textStyle?: string;
-    data?: {
-      data?: Array<ElementDataEntry>;
-      customData?: FlatObject;
-    };
+    color?: string;
+    width?: number;
+    pattern?: string | null;
+    patternSpacing?: number;
+    patternSize?: number;
+    miterLimit?: number;
+    lineCap?: LineCap;
+    lineJoin?: LineJoin;
   };
 
-  interface CustomNodeProps {}
-  interface CustomEdgeProps {}
-
-  type ElementEffectProps = {
-    sketch?: boolean;
-    sketchStrength?: number;
-    sketchFillType?: 'fill' | 'hachure';
-
+  shadow?: {
+    enabled?: boolean;
+    color?: string;
     opacity?: number;
-
-    rounding?: boolean;
-    roundingAmount?: number;
+    x?: number;
+    y?: number;
+    blur?: number;
+  };
+  geometry?: {
+    flipV?: boolean;
+    flipH?: boolean;
   };
 
-  interface ElementProps {
-    hidden?: boolean;
-
-    stroke?: {
-      enabled?: boolean;
-      color?: string;
-      width?: number;
-      pattern?: string | null;
-      patternSpacing?: number;
-      patternSize?: number;
-      miterLimit?: number;
-      lineCap?: LineCap;
-      lineJoin?: LineJoin;
+  // TODO: Why is all of fill part of edge?
+  fill?: {
+    enabled?: boolean;
+    image?: {
+      w?: number;
+      h?: number;
+      url?: string;
+      id?: string;
+      fit: 'fill' | 'contain' | 'cover' | 'keep' | 'tile';
+      scale?: number;
+      tint?: string;
+      tintStrength?: number;
+      brightness?: number;
+      contrast?: number;
+      saturation?: number;
     };
-
-    shadow?: {
-      enabled?: boolean;
-      color?: string;
-      opacity?: number;
-      x?: number;
-      y?: number;
-      blur?: number;
+    pattern?: string;
+    color?: string;
+    type?: FillType;
+    color2?: string;
+    gradient?: {
+      direction?: number;
+      type?: 'linear' | 'radial';
     };
-    geometry?: {
-      flipV?: boolean;
-      flipH?: boolean;
-    };
+  };
+  effects?: ElementEffectProps;
 
-    // TODO: Why is all of fill part of edge?
-    fill?: {
-      enabled?: boolean;
-      image?: {
-        w?: number;
-        h?: number;
-        url?: string;
-        id?: string;
-        fit: 'fill' | 'contain' | 'cover' | 'keep' | 'tile';
-        scale?: number;
-        tint?: string;
-        tintStrength?: number;
-        brightness?: number;
-        contrast?: number;
-        saturation?: number;
-      };
-      pattern?: string;
-      color?: string;
-      type?: FillType;
-      color2?: string;
-      gradient?: {
-        direction?: number;
-        type?: 'linear' | 'radial';
-      };
-    };
-    effects?: ElementEffectProps;
+  debug?: {
+    boundingPath?: boolean;
+    anchors?: boolean;
+  };
 
-    debug?: {
-      boundingPath?: boolean;
-      anchors?: boolean;
-    };
+  indicators?: Record<string, Indicator>;
+}
 
-    indicators?: Record<string, Indicator>;
-  }
+export interface EdgeProps extends ElementProps {
+  type?: EdgeType;
+  shape?: string;
 
-  interface EdgeProps extends ElementProps {
-    type?: EdgeType;
-    shape?: string;
-
-    arrow?: {
-      start?: {
-        type?: string;
-        size?: number;
-      };
-      end?: {
-        type?: string;
-        size?: number;
-      };
-    };
-    lineHops?: {
-      type?: 'none' | 'below-line' | 'above-arc' | 'below-arc' | 'below-hide';
+  arrow?: {
+    start?: {
+      type?: string;
       size?: number;
     };
-    spacing?: {
-      start?: number;
-      end?: number;
+    end?: {
+      type?: string;
+      size?: number;
     };
+  };
+  lineHops?: {
+    type?: 'none' | 'below-line' | 'above-arc' | 'below-arc' | 'below-hide';
+    size?: number;
+  };
+  spacing?: {
+    start?: number;
+    end?: number;
+  };
 
-    custom?: CustomEdgeProps;
+  custom?: CustomEdgeProps;
 
-    effects?: ElementEffectProps & {
-      marchingAnts?: boolean;
-      marchingAntsSpeed?: number;
+  effects?: ElementEffectProps & {
+    marchingAnts?: boolean;
+    marchingAntsSpeed?: number;
+  };
+}
+
+export interface CustomEdgeProps extends DiagramCraft.CustomEdgePropsExtensions {}
+export interface CustomNodeProps extends DiagramCraft.CustomNodePropsExtensions {}
+
+export interface NodeProps extends ElementProps {
+  action?: {
+    type: 'url' | 'diagram' | 'layer' | 'none';
+    url?: string;
+  };
+
+  capabilities?: {
+    resizable?: {
+      vertical?: boolean;
+      horizontal?: boolean;
     };
-  }
+    movable?: boolean;
+    rotatable?: boolean;
+    textGrow?: boolean;
+    editable?: boolean;
+    deletable?: boolean;
+    inheritStyle?: boolean;
+  };
 
-  interface NodeProps extends ElementProps {
-    action?: {
-      type: 'url' | 'diagram' | 'layer' | 'none';
-      url?: string;
-    };
+  effects?: ElementEffectProps & {
+    reflection?: boolean;
+    reflectionStrength?: number;
+    blur?: number;
 
-    capabilities?: {
-      resizable?: {
-        vertical?: boolean;
-        horizontal?: boolean;
-      };
-      movable?: boolean;
-      rotatable?: boolean;
-      textGrow?: boolean;
-      editable?: boolean;
-      deletable?: boolean;
-      inheritStyle?: boolean;
-    };
+    glass?: boolean;
 
-    effects?: ElementEffectProps & {
-      reflection?: boolean;
-      reflectionStrength?: number;
-      blur?: number;
-
-      glass?: boolean;
-
-      isometric?: {
-        enabled?: boolean;
-        shape?: 'none' | 'rect';
-        size?: number;
-        color?: string;
-        strokeColor?: string;
-        strokeEnabled?: boolean;
-        tilt?: number;
-        rotation?: number;
-      };
-    };
-
-    text?: {
-      font?: string;
-      fontSize?: number;
-      lineHeight?: number;
-      bold?: boolean;
-      italic?: boolean;
-      textDecoration?: 'none' | 'underline' | 'line-through' | 'overline';
-      textTransform?: 'none' | 'uppercase' | 'lowercase' | 'capitalize';
+    isometric?: {
+      enabled?: boolean;
+      shape?: 'none' | 'rect';
+      size?: number;
       color?: string;
-      align?: HAlign;
-      valign?: VAlign;
-      top?: number;
-      left?: number;
-      right?: number;
-      bottom?: number;
-      wrap?: boolean;
-      overflow?: 'hidden' | 'visible';
-      position?: 'c' | 'e' | 'w' | 'n' | 's' | 'ne' | 'nw' | 'se' | 'sw';
+      strokeColor?: string;
+      strokeEnabled?: boolean;
+      tilt?: number;
+      rotation?: number;
     };
+  };
 
-    anchors?: {
-      type:
-        | 'none'
-        | 'shape-defaults'
-        | 'north-south'
-        | 'east-west'
-        | 'directions'
-        | 'per-edge'
-        | 'per-path'
-        | 'custom';
-      perPathCount?: number;
-      perEdgeCount?: number;
-      directionsCount?: number;
-      customAnchors?: Record<
-        string,
-        {
-          x: number;
-          y: number;
-        }
-      >;
-    };
+  text?: {
+    font?: string;
+    fontSize?: number;
+    lineHeight?: number;
+    bold?: boolean;
+    italic?: boolean;
+    textDecoration?: 'none' | 'underline' | 'line-through' | 'overline';
+    textTransform?: 'none' | 'uppercase' | 'lowercase' | 'capitalize';
+    color?: string;
+    align?: HAlign;
+    valign?: VAlign;
+    top?: number;
+    left?: number;
+    right?: number;
+    bottom?: number;
+    wrap?: boolean;
+    overflow?: 'hidden' | 'visible';
+    position?: 'c' | 'e' | 'w' | 'n' | 's' | 'ne' | 'nw' | 'se' | 'sw';
+  };
 
-    routing?: {
-      spacing?: number;
-      constraint?: 'none' | Direction;
-    };
+  anchors?: {
+    type:
+      | 'none'
+      | 'shape-defaults'
+      | 'north-south'
+      | 'east-west'
+      | 'directions'
+      | 'per-edge'
+      | 'per-path'
+      | 'custom';
+    perPathCount?: number;
+    perEdgeCount?: number;
+    directionsCount?: number;
+    customAnchors?: Record<
+      string,
+      {
+        x: number;
+        y: number;
+      }
+    >;
+  };
 
-    custom?: CustomNodeProps;
+  routing?: {
+    spacing?: number;
+    constraint?: 'none' | Direction;
+  };
+
+  custom?: CustomNodeProps;
+}
+
+export interface DiagramProps extends DiagramCraft.DiagramPropsExtensions {
+  background?: NodeProps['fill'];
+  grid?: {
+    enabled?: boolean;
+    size?: number;
+    majorCount?: number;
+    color?: string;
+    majorColor?: string;
+    type?: GridType;
+    majorType?: GridType;
+  };
+  guides?: {
+    enabled?: boolean;
+  };
+}
+
+declare global {
+  namespace DiagramCraft {
+    interface DiagramPropsExtensions {}
+    interface CustomNodePropsExtensions {}
+    interface CustomEdgePropsExtensions {}
   }
 }
 

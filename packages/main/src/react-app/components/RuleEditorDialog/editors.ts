@@ -11,6 +11,7 @@ import { EdgeEffectsEditor } from './EdgeEffectsEditor';
 import { EdgeLineEditor } from './EdgeLineEditor';
 import { NamedIndicatorEditor } from './NamedIndicatorEditor';
 import { NodeActionPropertiesEditor } from './NodeActionPropertiesEditor';
+import type { EdgeProps, NodeProps } from '@diagram-craft/model/diagramProps';
 
 export type Editor = (props: {
   props: NodeProps | EdgeProps;
@@ -67,17 +68,23 @@ export const NODE_EDITORS: NodeEditorRegistry = {
   text: {
     name: 'Text',
     editor: NodeTextEditor,
-    pick: (props: NodeProps | EdgeProps) => ({ text: (props as NodeProps).text })
+    pick: (props: NodeProps | EdgeProps) => ({
+      text: (props as NodeProps).text
+    })
   },
   nodeCustom: {
     name: 'Type specific properties',
     editor: NodeCustomPropertiesEditor,
-    pick: (props: NodeProps | EdgeProps) => ({ custom: (props as NodeProps).custom })
+    pick: (props: NodeProps | EdgeProps) => ({
+      custom: (props as NodeProps).custom
+    })
   },
   indicators: {
     name: 'Indicator',
     editor: NamedIndicatorEditor,
-    pick: (props: NodeProps | EdgeProps) => ({ indicators: (props as NodeProps).indicators })
+    pick: (props: NodeProps | EdgeProps) => ({
+      indicators: (props as NodeProps).indicators
+    })
   },
   action: {
     name: 'Action',
@@ -104,7 +111,9 @@ export const EDGE_EDITORS: EdgeEditorRegistry = {
   edgeCustom: {
     name: 'Type specific properties',
     editor: EdgeCustomPropertiesEditor,
-    pick: (props: NodeProps | EdgeProps) => ({ custom: (props as EdgeProps).custom })
+    pick: (props: NodeProps | EdgeProps) => ({
+      custom: (props as EdgeProps).custom
+    })
   },
   edgeEffects: {
     name: 'Effects',

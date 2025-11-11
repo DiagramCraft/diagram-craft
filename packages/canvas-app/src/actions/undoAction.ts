@@ -1,7 +1,9 @@
 import { AbstractAction, ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 
 declare global {
-  interface ActionMap extends ReturnType<typeof undoActions> {}
+  namespace DiagramCraft {
+    interface ActionMapExtensions extends ReturnType<typeof undoActions> {}
+  }
 }
 
 export const undoActions = (context: ActionContext) => ({

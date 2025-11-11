@@ -16,10 +16,12 @@ import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults
 import { Zoom } from '../components/zoom';
 
 declare global {
-  interface CustomNodeProps {
-    genericPath?: {
-      path?: string;
-    };
+  namespace DiagramCraft {
+    interface CustomNodePropsExtensions {
+      genericPath?: {
+        path?: string;
+      };
+    }
   }
 }
 

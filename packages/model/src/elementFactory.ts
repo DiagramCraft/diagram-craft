@@ -13,6 +13,7 @@ import {
 } from './diagramNode';
 import type { CRDTMap } from '@diagram-craft/collaboration/crdt';
 import type { DiagramElementCRDT } from './diagramElement';
+import type { ElementMetadata } from './diagramProps';
 
 export const ElementFactory = {
   edge(

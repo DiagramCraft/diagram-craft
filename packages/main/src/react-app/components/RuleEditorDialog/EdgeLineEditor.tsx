@@ -4,6 +4,7 @@ import { EdgeLinePanelForm } from '../../toolwindow/ObjectToolWindow/EdgeLinePan
 import { useConfiguration } from '../../context/ConfigurationContext';
 import { useDiagram } from '../../../application';
 import { makeProperty } from './utils';
+import type { EdgeProps } from '@diagram-craft/model/diagramProps';
 
 export const EdgeLineEditor: Editor = props => {
   const $d = useDiagram();

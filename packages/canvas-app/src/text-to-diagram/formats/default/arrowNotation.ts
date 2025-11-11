@@ -1,4 +1,5 @@
 import { type ArrowType } from '@diagram-craft/canvas/arrowShapes';
+import type { EdgeProps } from '@diagram-craft/model/diagramProps';
 
 /**
  * Master mapping from arrow type to symbols (left and right variants)

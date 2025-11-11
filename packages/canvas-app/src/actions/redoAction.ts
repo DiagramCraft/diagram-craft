@@ -1,7 +1,9 @@
 import { AbstractAction, ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 
 declare global {
-  interface ActionMap extends ReturnType<typeof redoActions> {}
+  namespace DiagramCraft {
+    interface ActionMapExtensions extends ReturnType<typeof redoActions> {}
+  }
 }
 
 export const redoActions = (context: ActionContext) => ({
@@ -9,7 +11,6 @@ export const redoActions = (context: ActionContext) => ({
 });
 
 export class RedoAction extends AbstractAction {
-
   getCriteria(context: ActionContext) {
     return ActionCriteria.EventTriggered(
       context.model.activeDiagram.undoManager,

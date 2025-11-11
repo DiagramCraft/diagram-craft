@@ -13,6 +13,7 @@ import { createResizeToFitAction } from '@diagram-craft/model/diagramBounds';
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { Box } from '@diagram-craft/geometry/box';
+import type { EdgeProps } from '@diagram-craft/model/diagramProps';
 
 const OFFSET = 100;
 const SECONDARY_OFFSET = 20;

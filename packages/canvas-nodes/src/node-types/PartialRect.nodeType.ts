@@ -1,4 +1,4 @@
-import { PathListBuilder, fromUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
+import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { _p } from '@diagram-craft/geometry/point';
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 import {
@@ -7,6 +7,7 @@ import {
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import type { NodeProps } from '@diagram-craft/model/diagramProps';
 
 // NodeProps extension for custom props *****************************************
 
@@ -18,8 +19,10 @@ type ExtraProps = {
 };
 
 declare global {
-  interface CustomNodeProps {
-    partialRect?: ExtraProps;
+  namespace DiagramCraft {
+    interface CustomNodePropsExtensions {
+      partialRect?: ExtraProps;
+    }
   }
 }
 

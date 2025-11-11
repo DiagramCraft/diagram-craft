@@ -14,11 +14,12 @@ export const diagramActions = (application: Application) => ({
 });
 
 declare global {
-  interface ActionMap extends ReturnType<typeof diagramActions> {}
+  namespace DiagramCraft {
+    interface ActionMapExtensions extends ReturnType<typeof diagramActions> {}
+  }
 }
 
 class DiagramAddAction extends AbstractAction<{ parentId?: string }, Application> {
-
   execute(props: { parentId?: string }): void {
     const document = this.context.model.activeDocument;
     const diagram = this.context.model.activeDiagram;
@@ -58,7 +59,6 @@ class DiagramAddAction extends AbstractAction<{ parentId?: string }, Application
 }
 
 class DiagramRemoveAction extends AbstractAction<{ diagramId?: string }, Application> {
-
   execute(props: { diagramId?: string }): void {
     assert.present(props.diagramId);
 
@@ -102,7 +102,6 @@ class DiagramRemoveAction extends AbstractAction<{ diagramId?: string }, Applica
 }
 
 class DiagramRenameAction extends AbstractAction<{ diagramId?: string }, Application> {
-
   execute({ diagramId }: { diagramId?: string }): void {
     precondition.is.present(diagramId);
 

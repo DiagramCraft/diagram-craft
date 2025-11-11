@@ -15,10 +15,12 @@ import { DeepWriteable } from '@diagram-craft/utils/types';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 declare global {
-  interface CustomNodeProps {
-    umlLifeline?: {
-      participant?: string;
-    };
+  namespace DiagramCraft {
+    interface CustomNodePropsExtensions {
+      umlLifeline?: {
+        participant?: string;
+      };
+    }
   }
 }
 

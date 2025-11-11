@@ -14,14 +14,6 @@ import { isSame } from '@diagram-craft/utils/math';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
-declare global {
-  namespace Extensions {
-    interface Tools {
-      pen: PenTool;
-    }
-  }
-}
-
 const UNIT_BOUNDS = { x: 0, y: 0, w: 1, h: 1, r: 0 };
 
 export class PenTool extends AbstractTool {

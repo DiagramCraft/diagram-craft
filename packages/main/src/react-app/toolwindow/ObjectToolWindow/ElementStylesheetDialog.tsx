@@ -6,6 +6,7 @@ import { StylesheetType } from '@diagram-craft/model/diagramStyles';
 import { deepClone } from '@diagram-craft/utils/object';
 import { useRedraw } from '../../hooks/useRedraw';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
+import type { EdgeProps, NodeProps } from '@diagram-craft/model/diagramProps';
 
 export const ElementStylesheetDialog = (props: Props) => {
   const redraw = useRedraw();

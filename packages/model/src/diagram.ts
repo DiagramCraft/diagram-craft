@@ -26,6 +26,7 @@ import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
 import { type DiagramBounds, DEFAULT_CANVAS } from './diagramBounds';
 import type { Guide } from './guides';
 import { SpatialIndex } from './spatialIndex';
+import type { DiagramProps } from './diagramProps';
 
 export type DiagramIteratorOpts = {
   nest?: boolean;

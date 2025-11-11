@@ -3,6 +3,7 @@ import { useEventListener } from '../hooks/useEventListener';
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
 import { Tooltip } from '@diagram-craft/app-components/Tooltip';
 import { useApplication } from '../../application';
+import type { ActionMap } from '@diagram-craft/canvas/actions/action';
 
 export function ActionToolbarButton<
   K extends keyof ActionMap,

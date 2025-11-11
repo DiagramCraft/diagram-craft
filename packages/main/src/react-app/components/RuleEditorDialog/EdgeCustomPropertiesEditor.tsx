@@ -11,6 +11,7 @@ import { FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { useDiagram } from '../../../application';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
+import type { EdgeProps } from '@diagram-craft/model/diagramProps';
 
 export const EdgeCustomPropertiesEditor: Editor = props => {
   const $p = props.props as EdgeProps;

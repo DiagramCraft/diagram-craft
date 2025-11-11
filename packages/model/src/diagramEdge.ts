@@ -55,6 +55,7 @@ import type { CRDTMapper } from '@diagram-craft/collaboration/datatypes/mapped/t
 import { CRDTProp } from '@diagram-craft/collaboration/datatypes/crdtProp';
 import { MappedCRDTProp } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtProp';
 import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
+import type { CustomEdgeProps, EdgeProps, ElementMetadata } from './diagramProps';
 
 const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
   endpoint instanceof ConnectedEndpoint;
@@ -91,8 +92,10 @@ export type EdgePropsForEditing = DeepReadonly<EdgeProps>;
 export type EdgePropsForRendering = DeepReadonly<DeepRequired<EdgeProps>>;
 
 declare global {
-  interface AdditionalCRDTCompatibleInnerObjects {
-    reference: Reference;
+  namespace DiagramCraft {
+    interface AdditionalCRDTCompatibleInnerObjects {
+      reference: Reference;
+    }
   }
 }
 
@@ -344,7 +347,11 @@ export class SimpleDiagramEdge
       .at(-1);
     const ruleStyleProps = this.diagram.document.styles.getEdgeStyle(ruleElementStyle)?.props;
 
-    return { styleProps, ruleProps: ruleProps as [string, EdgeProps][], ruleStyleProps };
+    return {
+      styleProps,
+      ruleProps: ruleProps as [string, EdgeProps][],
+      ruleStyleProps
+    };
   }
 
   private populatePropsCache() {

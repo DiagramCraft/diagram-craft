@@ -25,6 +25,7 @@ import { newid } from '@diagram-craft/utils/id';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { EffectsRegistry } from '@diagram-craft/model/effect';
+import type { EdgeProps, ElementProps, NodeProps } from '@diagram-craft/model/diagramProps';
 
 const defaultOnChange = (element: DiagramNode) => (text: string) => {
   const uow = new UnitOfWork(element.diagram, true);

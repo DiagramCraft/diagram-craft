@@ -5,9 +5,12 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import { ActionContext } from '@diagram-craft/canvas/action';
+import type { EdgeProps, NodeProps } from '@diagram-craft/model/diagramProps';
 
 declare global {
-  interface ActionMap extends ReturnType<typeof styleCopyActions> {}
+  namespace DiagramCraft {
+    interface ActionMapExtensions extends ReturnType<typeof styleCopyActions> {}
+  }
 }
 
 export const styleCopyActions = (context: ActionContext) => ({

@@ -18,6 +18,7 @@ import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults
 import { hasHighlight, Highlights } from '../highlight';
 import { renderElement } from '../components/renderElement';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
+import type { NodeProps } from '@diagram-craft/model/diagramProps';
 
 type TypeOrPropsFn<T> = T | ((p: NodePropsForRendering) => T);
 
@@ -51,17 +52,19 @@ type FlexShapeNodeDefinitionConfig<T extends ShapeNodeDefinition> = {
 };
 
 declare global {
-  interface CustomNodeProps {
-    flex?: {
-      components?: Array<{
-        id: string;
-        nodeType?: string | null;
-        bounds?: Box | null;
-        offset?: Omit<Box, 'r'> | null;
-        props?: NodeProps | null;
-        text?: TextConfig | null;
-      }> | null;
-    };
+  namespace DiagramCraft {
+    interface CustomNodePropsExtensions {
+      flex?: {
+        components?: Array<{
+          id: string;
+          nodeType?: string | null;
+          bounds?: Box | null;
+          offset?: Omit<Box, 'r'> | null;
+          props?: NodeProps | null;
+          text?: TextConfig | null;
+        }> | null;
+      };
+    }
   }
 }
 

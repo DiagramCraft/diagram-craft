@@ -1,6 +1,6 @@
 import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../components/BaseNodeComponent';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
-import { PathListBuilder, PathBuilderHelper } from '@diagram-craft/geometry/pathListBuilder';
+import { PathBuilderHelper, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -17,15 +17,17 @@ import { hasHighlight, Highlights } from '../highlight';
 import { renderElement } from '../components/renderElement';
 
 declare global {
-  interface CustomNodeProps {
-    swimlane?: {
-      horizontalBorder?: boolean;
-      outerBorder?: boolean;
-      title?: boolean;
-      titleBorder?: boolean;
-      titleSize?: number;
-      fill?: boolean;
-    };
+  namespace DiagramCraft {
+    interface CustomNodePropsExtensions {
+      swimlane?: {
+        horizontalBorder?: boolean;
+        outerBorder?: boolean;
+        title?: boolean;
+        titleBorder?: boolean;
+        titleSize?: number;
+        fill?: boolean;
+      };
+    }
   }
 }
 

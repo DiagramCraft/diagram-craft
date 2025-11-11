@@ -5,6 +5,7 @@ import type { DiagramSerializer } from '../../types';
 import { propsToArrowNotation } from './arrowNotation';
 import { deepClone } from '@diagram-craft/utils/object';
 import type { DeepWriteable } from '@diagram-craft/utils/types';
+import type { EdgeProps } from '@diagram-craft/model/diagramProps';
 
 type ElementMetadata = {
   name?: string;

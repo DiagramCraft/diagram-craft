@@ -26,6 +26,7 @@ import { ElementStylesheetDialog } from './ElementStylesheetDialog';
 import { NodeTextEditor } from '../../components/RuleEditorDialog/NodeTextEditor';
 import { useState } from 'react';
 import { EDGE_EDITORS, NODE_EDITORS } from '../../components/RuleEditorDialog/editors';
+import type { EdgeProps, NodeProps } from '@diagram-craft/model/diagramProps';
 
 const EDITORS = {
   text: [{ name: 'Text', editor: NodeTextEditor }],

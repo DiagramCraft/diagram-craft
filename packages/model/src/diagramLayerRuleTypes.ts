@@ -1,4 +1,5 @@
 import type { ElementSearchClause } from './diagramElementSearch';
+import type { EdgeProps, ElementProps, NodeProps } from './diagramProps';
 
 export type AdjustmentRule = {
   id: string;

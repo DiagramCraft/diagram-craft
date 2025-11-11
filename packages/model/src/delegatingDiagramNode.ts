@@ -26,6 +26,7 @@ import { MappedCRDTProp } from '@diagram-craft/collaboration/datatypes/mapped/ma
 import { CRDTProp } from '@diagram-craft/collaboration/datatypes/crdtProp';
 import type { CRDTMap, FlatCRDTMap } from '@diagram-craft/collaboration/crdt';
 import type { LabelNode } from './labelNode';
+import type { CustomNodeProps, ElementMetadata, NodeProps } from './diagramProps';
 
 export type DelegatingDiagramNodeCRDT = DiagramElementCRDT & {
   bounds: Box;

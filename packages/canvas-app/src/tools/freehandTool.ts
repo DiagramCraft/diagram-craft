@@ -14,14 +14,6 @@ import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { assert } from '@diagram-craft/utils/assert';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
-declare global {
-  namespace Extensions {
-    interface Tools {
-      freehand: FreehandTool;
-    }
-  }
-}
-
 const perpendicularDistance = (p: Point, start: Point, end: Point) => {
   let x = start.x;
   let y = start.y;

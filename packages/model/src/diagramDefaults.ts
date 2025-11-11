@@ -5,6 +5,13 @@ import type { EdgePropsForRendering } from './diagramEdge';
 import type { ElementPropsForRendering } from './diagramElement';
 import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { assert } from '@diagram-craft/utils/assert';
+import type {
+  CustomEdgeProps,
+  CustomNodeProps,
+  EdgeProps,
+  ElementProps,
+  NodeProps
+} from './diagramProps';
 
 /** @namespace */
 export const DiagramDefaultsPrivate = {

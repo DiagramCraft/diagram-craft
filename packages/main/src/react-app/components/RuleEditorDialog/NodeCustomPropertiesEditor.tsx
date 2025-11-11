@@ -10,6 +10,7 @@ import { sortBy } from '@diagram-craft/utils/array';
 import { useDiagram } from '../../../application';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
+import type { NodeProps } from '@diagram-craft/model/diagramProps';
 
 export const NodeCustomPropertiesEditor: Editor = props => {
   const $p = props.props as NodeProps;

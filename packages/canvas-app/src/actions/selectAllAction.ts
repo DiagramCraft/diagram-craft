@@ -1,7 +1,9 @@
 import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
 
 declare global {
-  interface ActionMap extends ReturnType<typeof selectAllActions> {}
+  namespace DiagramCraft {
+    interface ActionMapExtensions extends ReturnType<typeof selectAllActions> {}
+  }
 }
 
 export const selectAllActions = (context: ActionContext) => ({

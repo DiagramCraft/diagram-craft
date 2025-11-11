@@ -18,6 +18,13 @@ import {
   elementDefaults,
   nodeDefaults
 } from '@diagram-craft/model/diagramDefaults';
+import type {
+  DiagramProps,
+  EdgeProps,
+  ElementMetadata,
+  ElementProps,
+  NodeProps
+} from '@diagram-craft/model/diagramProps';
 
 export const useDiagramProperty: PropertyHook<Diagram, DiagramProps> = makePropertyHook<
   Diagram,

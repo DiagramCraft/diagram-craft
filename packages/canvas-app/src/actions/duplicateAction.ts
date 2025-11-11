@@ -17,7 +17,9 @@ import { newid } from '@diagram-craft/utils/id';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 declare global {
-  interface ActionMap extends ReturnType<typeof duplicateActions> {}
+  namespace DiagramCraft {
+    interface ActionMapExtensions extends ReturnType<typeof duplicateActions> {}
+  }
 }
 
 export const duplicateActions = (application: ActionContext) => ({

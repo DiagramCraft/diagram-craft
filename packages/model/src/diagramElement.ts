@@ -26,6 +26,7 @@ import {
 } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
 import { MappedCRDTProp } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtProp';
+import type { EdgeProps, ElementMetadata, ElementProps, NodeProps } from './diagramProps';
 
 // biome-ignore lint/suspicious/noExplicitAny: false positive
 type Snapshot = any;
@@ -531,9 +532,11 @@ export const isEdge = (e: DiagramElement | undefined): e is DiagramEdge =>
   !!e && (e.type === 'edge' || e.type === 'delegating-edge');
 
 declare global {
-  interface AssertTypeExtensions {
-    node: (e: DiagramElement) => asserts e is DiagramNode;
-    edge: (e: DiagramElement) => asserts e is DiagramEdge;
+  namespace DiagramCraft {
+    interface AssertTypeExtensions {
+      node: (e: DiagramElement) => asserts e is DiagramNode;
+      edge: (e: DiagramElement) => asserts e is DiagramEdge;
+    }
   }
 }
 

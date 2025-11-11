@@ -3,6 +3,7 @@ import { useRedraw } from '../hooks/useRedraw';
 import React, { useId } from 'react';
 import { ToggleAction } from '@diagram-craft/canvas/action';
 import { useApplication } from '../../application';
+import type { ActionMap } from '@diagram-craft/canvas/actions/action';
 
 export const ActionCheckbox = (props: Props) => {
   const application = useApplication();

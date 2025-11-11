@@ -16,6 +16,7 @@ import type { Story } from '../documentStories';
 import type { DiagramBounds } from '../diagramBounds';
 import type { LabelNode } from '../labelNode';
 import type { Guide } from '../guides';
+import type { ElementMetadata } from '../diagramProps';
 
 export interface Reference {
   id: string;

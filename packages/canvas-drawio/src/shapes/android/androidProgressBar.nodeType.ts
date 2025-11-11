@@ -6,12 +6,14 @@ import {
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 
 declare global {
-  interface CustomNodeProps {
-    androidProgressBar?: {
-      width?: number;
-      dx1?: number;
-      dx2?: number;
-    };
+  namespace DiagramCraft {
+    interface CustomNodePropsExtensions {
+      androidProgressBar?: {
+        width?: number;
+        dx1?: number;
+        dx2?: number;
+      };
+    }
   }
 }
 

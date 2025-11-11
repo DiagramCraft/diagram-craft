@@ -2,13 +2,12 @@ import type { NodePropsForRendering } from './diagramNode';
 import type { EdgePropsForRendering } from './diagramEdge';
 import type { Box } from '@diagram-craft/geometry/box';
 import type { Point } from '@diagram-craft/geometry/point';
+import type { EdgeProps, NodeProps } from './diagramProps';
 
-declare global {
-  interface Effect {
-    isUsedForNode: (props: NodeProps | NodePropsForRendering) => boolean;
-    isUsedForEdge: (props: EdgeProps | EdgePropsForRendering) => boolean;
-    transformPoint?: (bounds: Box, props: NodePropsForRendering, p: Point) => Point;
-  }
+export interface Effect {
+  isUsedForNode: (props: NodeProps | NodePropsForRendering) => boolean;
+  isUsedForEdge: (props: EdgeProps | EdgePropsForRendering) => boolean;
+  transformPoint?: (bounds: Box, props: NodePropsForRendering, p: Point) => Point;
 }
 
 const effects: Array<[Effect, number]> = [];

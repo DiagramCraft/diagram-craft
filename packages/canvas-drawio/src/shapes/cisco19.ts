@@ -12,6 +12,7 @@ import { DrawioShapeNodeDefinition } from '../DrawioShape.nodeType';
 import { StyleManager } from '../styleManager';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
+import type { ElementMetadata, NodeProps } from '@diagram-craft/model/diagramProps';
 
 const registerStencil = (
   registry: NodeDefinitionRegistry,

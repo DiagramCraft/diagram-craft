@@ -18,6 +18,7 @@ import { type ParsedElement } from './types';
 import { newid } from '@diagram-craft/utils/id';
 import { collectElementIds } from './utils';
 import { placeNode } from '@diagram-craft/canvas/utils/placeNode';
+import type { EdgeProps, ElementMetadata, NodeProps } from '@diagram-craft/model/diagramProps';
 
 /**
  * Update or create a label node for an edge

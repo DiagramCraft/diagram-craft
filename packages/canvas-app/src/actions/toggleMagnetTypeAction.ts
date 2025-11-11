@@ -3,7 +3,9 @@ import { MagnetType } from '@diagram-craft/canvas/snap/magnet';
 import { DEFAULT_SNAP_CONFIG, getSnapConfig } from '@diagram-craft/canvas/snap/snapManager';
 
 declare global {
-  interface ActionMap extends ReturnType<typeof toggleMagnetTypeActions> {}
+  namespace DiagramCraft {
+    interface ActionMapExtensions extends ReturnType<typeof toggleMagnetTypeActions> {}
+  }
 }
 
 export const toggleMagnetTypeActions = (context: ActionContext) => ({

@@ -11,6 +11,7 @@ import { deepClone } from '@diagram-craft/utils/object';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { assertRegularLayer } from './diagramLayerUtils';
 import { ElementFactory } from './elementFactory';
+import type { EdgeProps } from './diagramProps';
 
 export type EdgeCapability = 'arrows' | 'fill' | 'line-hops';
 export type EdgeDropOperation = 'attach' | 'split';

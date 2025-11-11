@@ -4,14 +4,6 @@ import { DragDopManager, Modifiers } from '@diagram-craft/canvas/dragDropManager
 import { AbsoluteOffset, Point } from '@diagram-craft/geometry/point';
 import { Diagram } from '@diagram-craft/model/diagram';
 
-declare global {
-  namespace Extensions {
-    interface Tools {
-      pan: PanTool;
-    }
-  }
-}
-
 export class PanTool extends AbstractTool {
   private isMouseDown = false;
   private clickPoint: Point | undefined = undefined;

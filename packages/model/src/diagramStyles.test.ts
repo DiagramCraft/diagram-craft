@@ -6,6 +6,7 @@ import { TestModel } from './test-support/testModel';
 import { NoOpCRDTFactory } from '@diagram-craft/collaboration/noopCrdt';
 import type { CRDTRoot } from '@diagram-craft/collaboration/crdt';
 import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
+import type { NodeProps } from './diagramProps';
 
 describe.each(Backends.all())('Stylesheet [%s]', (_name, backend) => {
   describe('from', () => {

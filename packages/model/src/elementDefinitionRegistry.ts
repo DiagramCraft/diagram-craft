@@ -16,6 +16,7 @@ import { safeSplit } from '@diagram-craft/utils/safe';
 import { ElementFactory } from './elementFactory';
 import type { Property } from './property';
 import type { EdgeDefinition } from './edgeDefinition';
+import type { ElementMetadata, NodeProps } from './diagramProps';
 
 export type NodeCapability =
   | 'children'
@@ -112,8 +113,12 @@ if (typeof window !== 'undefined') {
 
 // TODO: Rename this to NodeTypeLoader
 declare global {
-  interface StencilLoaderOpts {}
+  namespace DiagramCraft {
+    interface StencilLoaderOptsExtensions {}
+  }
 }
+
+export interface StencilLoaderOpts extends DiagramCraft.StencilLoaderOptsExtensions {}
 
 export type StencilLoader<T extends keyof StencilLoaderOpts> = (
   nodeDefinition: NodeDefinitionRegistry,

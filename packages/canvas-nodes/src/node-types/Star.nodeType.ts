@@ -4,7 +4,7 @@ import {
   BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
-import { PathListBuilder, fromUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
+import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { _p, Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
 import { Vector } from '@diagram-craft/geometry/vector';
@@ -15,11 +15,13 @@ import { round } from '@diagram-craft/utils/math';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
 declare global {
-  interface CustomNodeProps {
-    star?: {
-      numberOfSides?: number;
-      innerRadius?: number;
-    };
+  namespace DiagramCraft {
+    interface CustomNodePropsExtensions {
+      star?: {
+        numberOfSides?: number;
+        innerRadius?: number;
+      };
+    }
   }
 }
 

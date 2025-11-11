@@ -9,14 +9,14 @@ import {
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { Box } from '@diagram-craft/geometry/box';
 import { Extent } from '@diagram-craft/geometry/extent';
-import { deepClone } from '@diagram-craft/utils/object';
-import { cloneAsWriteable } from '@diagram-craft/utils/object';
+import { cloneAsWriteable, deepClone } from '@diagram-craft/utils/object';
 import { Anchor } from '@diagram-craft/model/anchor';
 import {
   assertHAlign,
   assertLineCap,
   assertLineJoin,
-  assertVAlign
+  assertVAlign,
+  type NodeProps
 } from '@diagram-craft/model/diagramProps';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { coalesce } from '@diagram-craft/utils/strings';
@@ -27,10 +27,12 @@ import { xNum } from '@diagram-craft/utils/xml';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
 
 declare global {
-  interface CustomNodeProps {
-    drawio?: {
-      shape?: string;
-    };
+  namespace DiagramCraft {
+    interface CustomNodePropsExtensions {
+      drawio?: {
+        shape?: string;
+      };
+    }
   }
 }
 

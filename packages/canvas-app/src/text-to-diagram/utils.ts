@@ -1,5 +1,6 @@
 import { MultiMap } from '@diagram-craft/utils/multimap';
 import type { ParsedElement } from './types';
+import type { EdgeProps, ElementMetadata, NodeProps } from '@diagram-craft/model/diagramProps';
 
 /**
  * Recursively collect all element IDs and their line numbers from parsed elements

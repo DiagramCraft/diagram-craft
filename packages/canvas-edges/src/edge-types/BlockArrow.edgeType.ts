@@ -14,6 +14,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { round } from '@diagram-craft/utils/math';
 import { registerCustomEdgeDefaults } from '@diagram-craft/model/diagramDefaults';
 import type { EdgeCapability } from '@diagram-craft/model/edgeDefinition';
+import type { EdgeProps } from '@diagram-craft/model/diagramProps';
 
 // EdgeProps extension for custom props *****************************************
 
@@ -24,8 +25,10 @@ type ExtraProps = {
 };
 
 declare global {
-  interface CustomEdgeProps {
-    blockArrow?: ExtraProps;
+  namespace DiagramCraft {
+    interface CustomEdgePropsExtensions {
+      blockArrow?: ExtraProps;
+    }
   }
 }
 

@@ -3,17 +3,24 @@ import { NodeTexts } from '@diagram-craft/model/diagramNode';
 import type { WorkQueue } from './drawioReader';
 import { Angle } from '@diagram-craft/geometry/angle';
 import { dataURItoBlob } from './blobUtils';
-import { assertHAlign, assertVAlign, HAlign } from '@diagram-craft/model/diagramProps';
+import {
+  assertHAlign,
+  assertVAlign,
+  type ElementMetadata,
+  HAlign,
+  type NodeProps
+} from '@diagram-craft/model/diagramProps';
 import { FullDirection } from '@diagram-craft/geometry/direction';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { StyleManager } from './styleManager';
 import { parseNum } from '@diagram-craft/utils/number';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
+import type { WithRequired } from '@diagram-craft/utils/types';
 
 const makeShape = (
   type: string,
-  setProps: (s: StyleManager, p: NodeProps & { custom: CustomNodeProps }) => void = () => {}
+  setProps: (s: StyleManager, p: WithRequired<NodeProps, 'custom'>) => void = () => {}
 ) => {
   return async (
     id: string,
@@ -25,7 +32,7 @@ const makeShape = (
     layer: RegularLayer
   ) => {
     props.custom ??= {};
-    setProps(style, props as NodeProps & { custom: CustomNodeProps });
+    setProps(style, props as WithRequired<NodeProps, 'custom'>);
     return ElementFactory.node(id, type, bounds, layer, props, metadata, texts);
   };
 };

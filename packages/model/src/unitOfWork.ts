@@ -8,6 +8,7 @@ import type { AdjustmentRule } from './diagramLayerRuleTypes';
 import type { LayerManager } from './diagramLayerManager';
 import { newid } from '@diagram-craft/utils/id';
 import type { ModificationCRDT } from './diagramLayerModification';
+import type { EdgeProps, NodeProps } from './diagramProps';
 
 type ActionCallback = () => void;
 

@@ -8,7 +8,9 @@ export const edgeFlipActions = (application: ActionContext) => ({
 });
 
 declare global {
-  interface ActionMap extends ReturnType<typeof edgeFlipActions> {}
+  namespace DiagramCraft {
+    interface ActionMapExtensions extends ReturnType<typeof edgeFlipActions> {}
+  }
 }
 
 export class EdgeFlipAction extends AbstractSelectionAction {

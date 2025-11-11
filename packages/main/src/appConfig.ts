@@ -1,7 +1,10 @@
 import { fileLoaderRegistry } from '@diagram-craft/canvas-app/loaders';
 import { assert } from '@diagram-craft/utils/assert';
 import type { Autosave } from './react-app/autosave/Autosave';
-import type { stencilLoaderRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
+import type {
+  StencilLoaderOpts,
+  stencilLoaderRegistry
+} from '@diagram-craft/model/elementDefinitionRegistry';
 
 /**
  * Main application configuration type that defines all configurable aspects of the application.

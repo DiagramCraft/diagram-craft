@@ -4,6 +4,7 @@ import { newid } from '@diagram-craft/utils/id';
 import type { DiagramParser, ParsedElement, ParseErrors } from '../../types';
 import { parsePropsString, parseMetadataString } from '../../utils';
 import { parseArrowNotationToProps } from './arrowNotation';
+import type { EdgeProps, ElementMetadata, NodeProps } from '@diagram-craft/model/diagramProps';
 
 type ParseResult = {
   elements: ParsedElement[];

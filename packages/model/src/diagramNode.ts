@@ -52,6 +52,7 @@ import { MappedCRDTProp } from '@diagram-craft/collaboration/datatypes/mapped/ma
 import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
 import type { LabelNode } from './labelNode';
 import { EffectsRegistry } from './effect';
+import type { CustomNodeProps, EdgeProps, ElementMetadata, NodeProps } from './diagramProps';
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;

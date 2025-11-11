@@ -24,6 +24,7 @@ import { StyleManager } from '../../styleManager';
 import { loadStencilsFromYaml } from '@diagram-craft/model/elementDefinitionLoader';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
+import type { ElementMetadata, NodeProps } from '@diagram-craft/model/diagramProps';
 
 export const parseUMLShapes = async (
   id: string,

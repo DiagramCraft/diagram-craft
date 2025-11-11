@@ -37,6 +37,7 @@ import { ToolWindow } from '../ToolWindow';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { ModelCenterDialogCommand } from '../../components/ModelCenterDialog/ModelCenterDialog';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
+import type { ElementDataEntry } from '@diagram-craft/model/diagramProps';
 
 const NODE_CACHE = new Map<string, DiagramNode>();
 

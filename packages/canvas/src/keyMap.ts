@@ -7,6 +7,7 @@ import {
   ToggleAction
 } from './action';
 import { EventEmitter } from '@diagram-craft/utils/event';
+import type { ActionMap } from '@diagram-craft/canvas/actions/action';
 
 type Alt = 'A-' | '';
 type Control = 'C-' | '';
@@ -35,9 +36,11 @@ const SHIFT = 'S-';
 export type KeyMap = Partial<Record<KeyBinding, keyof ActionMap>>;
 
 declare global {
-  interface ActionMap
-    // biome-ignore lint/suspicious/noExplicitAny: false positive
-    extends Record<string, (Action<any> | ToggleAction<any>) & EventEmitter<ActionEvents>> {}
+  namespace DiagramCraft {
+    interface ActionMapExtensions
+      // biome-ignore lint/suspicious/noExplicitAny: false positive
+      extends Record<string, (Action<any> | ToggleAction<any>) & EventEmitter<ActionEvents>> {}
+  }
 }
 
 export type Actions = {

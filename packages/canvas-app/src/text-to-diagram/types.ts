@@ -1,4 +1,5 @@
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
+import type { EdgeProps, ElementMetadata, NodeProps } from '@diagram-craft/model/diagramProps';
 
 /**
  * Interface for parsing text into diagram elements

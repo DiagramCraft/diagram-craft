@@ -1,6 +1,7 @@
 import { assert } from '@diagram-craft/utils/assert';
 import { deepIsEmpty } from '@diagram-craft/utils/object';
 import type { EdgeEditorRegistry, NodeEditorRegistry } from './editors';
+import type { EdgeProps, NodeProps } from '@diagram-craft/model/diagramProps';
 
 /**
  * Supports editing of ElementProps using partial editors.

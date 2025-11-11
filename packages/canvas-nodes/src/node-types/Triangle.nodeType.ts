@@ -4,7 +4,7 @@ import {
   BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
-import { PathListBuilder, fromUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
+import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
@@ -17,8 +17,10 @@ type ExtraProps = {
 };
 
 declare global {
-  interface CustomNodeProps {
-    triangle?: ExtraProps;
+  namespace DiagramCraft {
+    interface CustomNodePropsExtensions {
+      triangle?: ExtraProps;
+    }
   }
 }
 

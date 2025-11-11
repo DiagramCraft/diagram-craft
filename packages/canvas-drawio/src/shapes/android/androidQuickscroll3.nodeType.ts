@@ -8,10 +8,12 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 const THUMB = { w: 6, h: 20 };
 
 declare global {
-  interface CustomNodeProps {
-    androidQuickscroll3?: {
-      dy?: number;
-    };
+  namespace DiagramCraft {
+    interface CustomNodePropsExtensions {
+      androidQuickscroll3?: {
+        dy?: number;
+      };
+    }
   }
 }
 

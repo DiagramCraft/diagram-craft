@@ -27,6 +27,7 @@ import { renderElement } from './renderElement';
 import { CanvasDomHelper } from '../utils/canvasDomHelper';
 import type { EdgeCapability } from '@diagram-craft/model/edgeDefinition';
 import { EffectsRegistry } from '@diagram-craft/model/effect';
+import type { EdgeProps } from '@diagram-craft/model/diagramProps';
 
 export type EdgeComponentProps = {
   element: DiagramEdge;

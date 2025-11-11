@@ -27,6 +27,7 @@ import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
 import { MappedCRDTProp } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtProp';
 import { CRDTProp } from '@diagram-craft/collaboration/datatypes/crdtProp';
 import type { CRDTMap } from '@diagram-craft/collaboration/crdt';
+import type { CustomEdgeProps, EdgeProps, ElementMetadata } from './diagramProps';
 
 export type DiagramEdgeSnapshot = SerializedEdge & {
   _snapshotType: 'edge';

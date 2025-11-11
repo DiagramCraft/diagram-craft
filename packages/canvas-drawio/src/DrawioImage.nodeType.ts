@@ -5,25 +5,27 @@ import {
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import * as svg from '@diagram-craft/canvas/component/vdom-svg';
-import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { Transforms } from '@diagram-craft/canvas/component/vdom-svg';
+import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { HAlign, VAlign } from '@diagram-craft/model/diagramProps';
 
 declare global {
-  interface CustomNodeProps {
-    drawioImage?: {
-      imageWidth?: string;
-      imageHeight?: string;
-      imageAlign?: HAlign;
-      imageValign?: VAlign;
-      imageMargin?: number;
-      backgroundColor?: string;
-      stylename?: string;
-      keepAspect?: boolean;
-      flipV?: boolean;
-      flipH?: boolean;
-      showLabel?: boolean;
-    };
+  namespace DiagramCraft {
+    interface CustomNodePropsExtensions {
+      drawioImage?: {
+        imageWidth?: string;
+        imageHeight?: string;
+        imageAlign?: HAlign;
+        imageValign?: VAlign;
+        imageMargin?: number;
+        backgroundColor?: string;
+        stylename?: string;
+        keepAspect?: boolean;
+        flipV?: boolean;
+        flipH?: boolean;
+        showLabel?: boolean;
+      };
+    }
   }
 }
 

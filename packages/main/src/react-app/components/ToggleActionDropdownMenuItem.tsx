@@ -5,6 +5,7 @@ import { useRedraw } from '../hooks/useRedraw';
 import { ToggleAction } from '@diagram-craft/canvas/action';
 import { findKeyBindingsForAction, formatKeyBinding } from '@diagram-craft/canvas/keyMap';
 import { useApplication } from '../../application';
+import type { ActionMap } from '@diagram-craft/canvas/actions/action';
 
 export function ToggleActionDropdownMenuItem<
   K extends keyof ActionMap,

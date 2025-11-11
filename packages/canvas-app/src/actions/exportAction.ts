@@ -10,7 +10,9 @@ export const exportActions = (context: ActionContext) => ({
 });
 
 declare global {
-  interface ActionMap extends ReturnType<typeof exportActions> {}
+  namespace DiagramCraft {
+    interface ActionMapExtensions extends ReturnType<typeof exportActions> {}
+  }
 }
 
 const downloadImage = (data: string, filename = 'untitled.png') => {

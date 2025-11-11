@@ -168,17 +168,23 @@ type AssertType = {
  * @example
  * ```ts
  * declare global {
- *   interface AssertTypeExtensions {
- *     isPositive: (arg: number, msg?: string) => asserts arg is number;
+ *   namespace DiagramCraft {
+ *     interface AssertTypeExtensions {
+ *       isPositive: (arg: number, msg?: string) => asserts arg is number;
+ *     }
  *   }
  * }
  * ```
  */
 declare global {
-  interface AssertTypeExtensions {}
+  namespace DiagramCraft {
+    interface AssertTypeExtensions {}
+  }
 }
 
-const makeAssertions = (error: (m: string) => never): AssertType & AssertTypeExtensions => ({
+const makeAssertions = (
+  error: (m: string) => never
+): AssertType & DiagramCraft.AssertTypeExtensions => ({
   present: <T = unknown>(arg: T, msg?: string): asserts arg is NonNullable<T> => {
     if (!is.present(arg)) error(msg ?? 'not present');
   },
@@ -208,7 +214,7 @@ const makeAssertions = (error: (m: string) => never): AssertType & AssertTypeExt
   fail: (msg?: string) => {
     error(msg ?? 'fail');
   },
-  ...({} as AssertTypeExtensions)
+  ...({} as DiagramCraft.AssertTypeExtensions)
 });
 
 /**
@@ -228,12 +234,12 @@ const makeAssertions = (error: (m: string) => never): AssertType & AssertTypeExt
  *
  * @group Assertions
  */
-export const assert: AssertType & AssertTypeExtensions = makeAssertions(m => {
+export const assert: AssertType & DiagramCraft.AssertTypeExtensions = makeAssertions(m => {
   throw new Error(m);
 });
 
 /** @internal */
-export const notImplemented: AssertType & AssertTypeExtensions = makeAssertions(m => {
+export const notImplemented: AssertType & DiagramCraft.AssertTypeExtensions = makeAssertions(m => {
   throw new NotImplementedYet(m);
 });
 
@@ -254,7 +260,7 @@ export const notImplemented: AssertType & AssertTypeExtensions = makeAssertions(
  *
  * @group Assertions
  */
-export const precondition: { is: AssertType & AssertTypeExtensions } = { is: assert };
+export const precondition: { is: AssertType & DiagramCraft.AssertTypeExtensions } = { is: assert };
 
 /**
  * Postcondition assertions for validating function outputs and final state.
@@ -274,7 +280,7 @@ export const precondition: { is: AssertType & AssertTypeExtensions } = { is: ass
  *
  * @group Assertions
  */
-export const postcondition: { is: AssertType & AssertTypeExtensions } = { is: assert };
+export const postcondition: { is: AssertType & DiagramCraft.AssertTypeExtensions } = { is: assert };
 
 /**
  * Invariant assertions for validating internal state that must always be true.
@@ -296,7 +302,7 @@ export const postcondition: { is: AssertType & AssertTypeExtensions } = { is: as
  *
  * @group Assertions
  */
-export const invariant: { is: AssertType & AssertTypeExtensions } = { is: assert };
+export const invariant: { is: AssertType & DiagramCraft.AssertTypeExtensions } = { is: assert };
 
 /**
  * Ensures that the provided argument is defined and not undefined.

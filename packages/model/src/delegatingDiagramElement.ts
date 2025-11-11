@@ -19,6 +19,7 @@ import { FlatObject } from '@diagram-craft/utils/types';
 import type { PropertyInfo } from './property';
 import type { CRDTMap } from '@diagram-craft/collaboration/crdt';
 import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
+import type { EdgeProps, ElementMetadata, ElementProps, NodeProps } from './diagramProps';
 
 // biome-ignore lint/suspicious/noExplicitAny: false positive
 type Snapshot = any;

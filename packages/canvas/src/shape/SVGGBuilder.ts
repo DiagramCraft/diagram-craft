@@ -8,6 +8,7 @@ import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { Point } from '@diagram-craft/geometry/point';
 import { Path } from '@diagram-craft/geometry/path';
 import { RenderedStyledPath, StyledPath } from './PathRenderer';
+import type { NodeProps } from '@diagram-craft/model/diagramProps';
 
 type Renderer = (p: StyledPath) => RenderedStyledPath[];
 

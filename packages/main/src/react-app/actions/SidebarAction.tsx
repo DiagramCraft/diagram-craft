@@ -2,7 +2,9 @@ import { AbstractToggleAction, ActionContext } from '@diagram-craft/canvas/actio
 import { UserState } from '../../UserState';
 
 declare global {
-  interface ActionMap extends ReturnType<typeof sidebarActions> {}
+  namespace DiagramCraft {
+    interface ActionMapExtensions extends ReturnType<typeof sidebarActions> {}
+  }
 }
 
 export const sidebarActions = (context: ActionContext) => ({

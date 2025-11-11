@@ -40,7 +40,12 @@ import { FileDialog } from './react-app/FileDialog';
 import { newid } from '@diagram-craft/utils/id';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { ContextMenuTarget, DialogCommand, Help, UIActions } from '@diagram-craft/canvas/context';
+import {
+  type ContextMenus,
+  ContextMenuTarget,
+  DialogCommand,
+  Help
+} from '@diagram-craft/canvas/context';
 import { ImageInsertDialog } from './react-app/ImageInsertDialog';
 import { TableInsertDialog } from './react-app/TableInsertDialog';
 import { RectTool } from '@diagram-craft/canvas-app/tools/rectTool';
@@ -165,11 +170,11 @@ export const App = (props: {
   };
 
   const uiActions: ApplicationUIActions = {
-    showContextMenu: <T extends keyof UIActions.ContextMenus>(
+    showContextMenu: <T extends keyof ContextMenus>(
       type: T,
       point: Point,
       mouseEvent: MouseEvent,
-      args: UIActions.ContextMenus[T]
+      args: ContextMenus[T]
     ) => {
       oncePerEvent(mouseEvent, () => {
         contextMenuTarget.current = { type, ...args, pos: point };

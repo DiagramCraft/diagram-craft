@@ -2,6 +2,7 @@ import * as ContextMenu from '@radix-ui/react-context-menu';
 import React from 'react';
 import { findKeyBindingsForAction, formatKeyBinding } from '@diagram-craft/canvas/keyMap';
 import { useApplication } from '../../application';
+import type { ActionMap } from '@diagram-craft/canvas/actions/action';
 
 export function ActionContextMenuItem<
   K extends keyof ActionMap,

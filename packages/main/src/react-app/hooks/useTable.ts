@@ -11,6 +11,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { useEventListener } from './useEventListener';
 import { nodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { assert } from '@diagram-craft/utils/assert';
+import type { NodeProps } from '@diagram-craft/model/diagramProps';
 
 export const useTable = (diagram: Diagram) => {
   const [element, setElement] = useState<DiagramNode | undefined>(undefined);

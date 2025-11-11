@@ -2,7 +2,9 @@ import { Application } from '../../application';
 import { AbstractAction } from '@diagram-craft/canvas/action';
 
 declare global {
-  interface ActionMap extends ReturnType<typeof previewActions> {}
+  namespace DiagramCraft {
+    interface ActionMapExtensions extends ReturnType<typeof previewActions> {}
+  }
 }
 
 export const previewActions = (context: Application) => ({
@@ -10,7 +12,6 @@ export const previewActions = (context: Application) => ({
 });
 
 export class PreviewAction extends AbstractAction<void, Application> {
-
   execute(): void {
     this.context.ui.showPreview();
   }
