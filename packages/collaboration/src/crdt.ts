@@ -23,6 +23,10 @@ type CRDTCompatibleInnerObject =
 
 declare global {
   namespace DiagramCraft {
+    /**
+     * Extend this interface to add additional properties of types which
+     * should be considered compatible with CRDT storage
+     */
     interface AdditionalCRDTCompatibleInnerObjects {}
   }
 }
