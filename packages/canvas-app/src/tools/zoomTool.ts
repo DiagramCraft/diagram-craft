@@ -5,14 +5,6 @@ import { Point } from '@diagram-craft/geometry/point';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { fitInAspectRatio } from '@diagram-craft/model/viewBox';
 
-declare global {
-  namespace DiagramCraft {
-    interface Tools {
-      zoom: ZoomTool;
-    }
-  }
-}
-
 export class ZoomTool extends AbstractTool {
   private clickPoint: Point | undefined = undefined;
   private lastPoint: Point | undefined = undefined;

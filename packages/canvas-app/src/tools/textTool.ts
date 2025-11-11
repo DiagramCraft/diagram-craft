@@ -17,14 +17,6 @@ import { ResizeDrag } from '@diagram-craft/canvas/drag/resizeDrag';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
-declare global {
-  namespace DiagramCraft {
-    interface Tools {
-      text: TextTool;
-    }
-  }
-}
-
 export class TextTool extends AbstractTool {
   private node: DiagramNode | undefined;
   private startPoint: Point | undefined;

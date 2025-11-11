@@ -8,14 +8,6 @@ import { isNode } from '@diagram-craft/model/diagramElement';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 
-declare global {
-  namespace DiagramCraft {
-    interface Tools {
-      node: NodeTool;
-    }
-  }
-}
-
 export class NodeTool extends AbstractTool {
   constructor(
     diagram: Diagram,

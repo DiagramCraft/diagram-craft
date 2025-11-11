@@ -27,14 +27,6 @@ import { assert } from '@diagram-craft/utils/assert';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
-declare global {
-  namespace DiagramCraft {
-    interface Tools {
-      edge: EdgeTool;
-    }
-  }
-}
-
 class EdgeToolEdgeEndpointMoveDrag extends EdgeEndpointMoveDrag {
   onDragEnd() {
     super.onDragEnd();

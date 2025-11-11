@@ -14,14 +14,6 @@ type DeferredMouseAction = {
   callback: () => void;
 };
 
-declare global {
-  namespace DiagramCraft {
-    interface Tools {
-      move: MoveTool;
-    }
-  }
-}
-
 export class MoveTool extends AbstractTool {
   private deferredMouseAction: DeferredMouseAction | undefined;
 
