@@ -11,7 +11,9 @@ export const shapeInsertActions = (application: Application) => ({
 });
 
 declare global {
-  interface ActionMap extends ReturnType<typeof shapeInsertActions> {}
+  namespace DiagramCraft {
+    interface ActionMap extends ReturnType<typeof shapeInsertActions> {}
+  }
 }
 
 class ShapeInsertAction extends AbstractAction<undefined, Application> {

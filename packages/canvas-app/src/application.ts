@@ -13,7 +13,7 @@ export class Application<U extends UIActions = UIActions> implements BaseApplica
   model = model;
   #ui: U | undefined;
   #help: Help | undefined;
-  actions: Partial<ActionMap> = {};
+  actions: Partial<DiagramCraft.ActionMap> = {};
   tool = new Observable<ToolType>('move');
   marquee = new Marquee();
 

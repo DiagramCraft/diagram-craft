@@ -110,7 +110,7 @@ export const createLinkedNode = (
   // In case the stylesheet doesn't include an end arrow, we add
   // a default one
   const styles = diagram.document.styles.activeEdgeStylesheet.props;
-  const additionalStyles: Partial<EdgeProps> = {};
+  const additionalStyles: Partial<DiagramCraft.EdgeProps> = {};
   if (!styles.arrow?.end?.type) {
     additionalStyles.arrow = { end: { type: 'SQUARE_STICK_ARROW' } };
   }

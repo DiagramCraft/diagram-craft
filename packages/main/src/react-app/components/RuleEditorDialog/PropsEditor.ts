@@ -9,7 +9,7 @@ import type { EdgeEditorRegistry, NodeEditorRegistry } from './editors';
 export class PropsEditor {
   constructor(
     private readonly editors: NodeEditorRegistry | EdgeEditorRegistry,
-    private readonly props?: NodeProps | EdgeProps
+    private readonly props?: DiagramCraft.NodeProps | DiagramCraft.EdgeProps
   ) {}
 
   getEntries() {

@@ -13,7 +13,9 @@ import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 declare global {
-  interface ActionMap extends ReturnType<typeof selectionChangeShapeActions> {}
+  namespace DiagramCraft {
+    interface ActionMap extends ReturnType<typeof selectionChangeShapeActions> {}
+  }
 }
 
 export const selectionChangeShapeActions = (context: Application) => ({

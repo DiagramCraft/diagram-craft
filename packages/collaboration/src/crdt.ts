@@ -18,11 +18,13 @@ type CRDTCompatibleInnerObject =
   | CRDTMap<any>
   // biome-ignore lint/suspicious/noExplicitAny: false positive
   | CRDTList<any>
-  | AdditionalCRDTCompatibleInnerObjects[keyof AdditionalCRDTCompatibleInnerObjects]
+  | DiagramCraft.AdditionalCRDTCompatibleInnerObjects[keyof DiagramCraft.AdditionalCRDTCompatibleInnerObjects]
   | { [key: string]: Pick<CRDTCompatibleInnerObject, keyof CRDTCompatibleInnerObject> };
 
 declare global {
-  interface AdditionalCRDTCompatibleInnerObjects {}
+  namespace DiagramCraft {
+    interface AdditionalCRDTCompatibleInnerObjects {}
+  }
 }
 
 export interface CRDTFactory {

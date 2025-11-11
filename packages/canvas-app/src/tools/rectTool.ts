@@ -19,10 +19,8 @@ import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 declare global {
   namespace DiagramCraft {
-    namespace Extensions {
-      interface Tools {
-        rect: RectTool;
-      }
+    interface Tools {
+      rect: RectTool;
     }
   }
 }

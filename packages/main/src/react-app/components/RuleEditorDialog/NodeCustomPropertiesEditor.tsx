@@ -12,7 +12,7 @@ import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 export const NodeCustomPropertiesEditor: Editor = props => {
-  const $p = props.props as NodeProps;
+  const $p = props.props as DiagramCraft.NodeProps;
   const $d = useDiagram();
 
   const [type, setType] = useState('');

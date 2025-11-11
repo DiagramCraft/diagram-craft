@@ -16,10 +16,8 @@ import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 declare global {
   namespace DiagramCraft {
-    namespace Extensions {
-      interface Tools {
-        pen: PenTool;
-      }
+    interface Tools {
+      pen: PenTool;
     }
   }
 }

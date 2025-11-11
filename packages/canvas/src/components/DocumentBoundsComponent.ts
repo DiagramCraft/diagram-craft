@@ -19,7 +19,7 @@ export class DocumentBoundsComponent extends Component<CanvasState> {
     const children: VNode[] = [];
 
     const fill = nodeDefaults.applyDefaults({ fill: diagram.props.background })
-      .fill as DeepRequired<NodeProps['fill']>;
+      .fill as DeepRequired<DiagramCraft.NodeProps['fill']>;
     assert.present(fill);
 
     const fillType = diagram.props.background?.type ?? 'solid';

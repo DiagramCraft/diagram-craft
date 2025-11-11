@@ -13,19 +13,22 @@ import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 const makeShape = (
   type: string,
-  setProps: (s: StyleManager, p: NodeProps & { custom: CustomNodeProps }) => void = () => {}
+  setProps: (
+    s: StyleManager,
+    p: DiagramCraft.NodeProps & { custom: DiagramCraft.CustomNodeProps }
+  ) => void = () => {}
 ) => {
   return async (
     id: string,
     bounds: Box,
-    props: NodeProps,
-    metadata: ElementMetadata,
+    props: DiagramCraft.NodeProps,
+    metadata: DiagramCraft.ElementMetadata,
     texts: NodeTexts,
     style: StyleManager,
     layer: RegularLayer
   ) => {
     props.custom ??= {};
-    setProps(style, props as NodeProps & { custom: CustomNodeProps });
+    setProps(style, props as DiagramCraft.NodeProps & { custom: DiagramCraft.CustomNodeProps });
     return ElementFactory.node(id, type, bounds, layer, props, metadata, texts);
   };
 };
@@ -54,8 +57,8 @@ export const parsePartialRect = makeShape('partial-rect', (style, props) => {
 export const parseRect = async (
   id: string,
   bounds: Box,
-  props: NodeProps,
-  metadata: ElementMetadata,
+  props: DiagramCraft.NodeProps,
+  metadata: DiagramCraft.ElementMetadata,
   texts: NodeTexts,
   style: StyleManager,
   layer: RegularLayer
@@ -164,8 +167,8 @@ export const parseDiamond = makeShape('diamond');
 export const parseArrow = async (
   id: string,
   bounds: Box,
-  props: NodeProps,
-  metadata: ElementMetadata,
+  props: DiagramCraft.NodeProps,
+  metadata: DiagramCraft.ElementMetadata,
   texts: NodeTexts,
   style: StyleManager,
   layer: RegularLayer
@@ -189,8 +192,8 @@ export const parseArrow = async (
 export const parseImage = async (
   id: string,
   bounds: Box,
-  props: NodeProps,
-  metadata: ElementMetadata,
+  props: DiagramCraft.NodeProps,
+  metadata: DiagramCraft.ElementMetadata,
   texts: NodeTexts,
   style: StyleManager,
   layer: RegularLayer,
@@ -298,8 +301,8 @@ export const parseImage = async (
 export const parseRoundedRect = async (
   id: string,
   bounds: Box,
-  props: NodeProps,
-  metadata: ElementMetadata,
+  props: DiagramCraft.NodeProps,
+  metadata: DiagramCraft.ElementMetadata,
   texts: NodeTexts,
   style: StyleManager,
   layer: RegularLayer

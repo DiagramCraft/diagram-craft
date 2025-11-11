@@ -15,7 +15,9 @@ import { ActionCriteria } from '@diagram-craft/canvas/action';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 
 declare global {
-  interface ActionMap extends ReturnType<typeof selectionAddToModificationLayerActions> {}
+  namespace DiagramCraft {
+    interface ActionMap extends ReturnType<typeof selectionAddToModificationLayerActions> {}
+  }
 }
 
 export const selectionAddToModificationLayerActions = (context: Application) => ({

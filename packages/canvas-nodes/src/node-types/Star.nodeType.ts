@@ -15,11 +15,13 @@ import { round } from '@diagram-craft/utils/math';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
 declare global {
-  interface CustomNodeProps {
-    star?: {
-      numberOfSides?: number;
-      innerRadius?: number;
-    };
+  namespace DiagramCraft {
+    interface CustomNodeProps {
+      star?: {
+        numberOfSides?: number;
+        innerRadius?: number;
+      };
+    }
   }
 }
 

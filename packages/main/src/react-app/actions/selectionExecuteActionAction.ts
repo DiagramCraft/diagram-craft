@@ -11,7 +11,9 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { isEmptyString } from '@diagram-craft/utils/strings';
 
 declare global {
-  interface ActionMap extends ReturnType<typeof selectionExecuteActionActions> {}
+  namespace DiagramCraft {
+    interface ActionMap extends ReturnType<typeof selectionExecuteActionActions> {}
+  }
 }
 
 export const selectionExecuteActionActions = (context: Application) => ({

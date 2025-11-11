@@ -6,10 +6,8 @@ import { Diagram } from '@diagram-craft/model/diagram';
 
 declare global {
   namespace DiagramCraft {
-    namespace Extensions {
-      interface Tools {
-        pan: PanTool;
-      }
+    interface Tools {
+      pan: PanTool;
     }
   }
 }

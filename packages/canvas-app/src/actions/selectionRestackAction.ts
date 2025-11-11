@@ -6,7 +6,9 @@ import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 declare global {
-  interface ActionMap extends ReturnType<typeof selectionRestackActions> {}
+  namespace DiagramCraft {
+    interface ActionMap extends ReturnType<typeof selectionRestackActions> {}
+  }
 }
 
 export const selectionRestackActions = (context: ActionContext) => ({

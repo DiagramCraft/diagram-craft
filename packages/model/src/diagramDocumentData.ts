@@ -37,7 +37,7 @@ const makeDataListener =
         if (externalData.length === 0) continue;
 
         for (const dt of data.data) {
-          const predicate = (e: ElementDataEntry) => e.external?.uid === dt._uid;
+          const predicate = (e: DiagramCraft.ElementDataEntry) => e.external?.uid === dt._uid;
 
           const existing = externalData.find(predicate);
           if (!existing) continue;

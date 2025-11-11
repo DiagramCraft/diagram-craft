@@ -40,7 +40,7 @@ import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 const NODE_CACHE = new Map<string, DiagramNode>();
 
-const makeDataReference = (item: Data, schema: DataSchema): ElementDataEntry => {
+const makeDataReference = (item: Data, schema: DataSchema): DiagramCraft.ElementDataEntry => {
   return {
     type: 'external',
     external: {

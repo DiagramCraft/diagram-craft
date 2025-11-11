@@ -151,8 +151,10 @@ export const parseArrowNotation = (arrowString: string): ParsedArrowNotation | u
 /**
  * Converts parsed arrow notation to EdgeProps
  */
-export const arrowNotationToProps = (notation: ParsedArrowNotation): Partial<EdgeProps> => {
-  const props: Partial<EdgeProps> = {
+export const arrowNotationToProps = (
+  notation: ParsedArrowNotation
+): Partial<DiagramCraft.EdgeProps> => {
+  const props: Partial<DiagramCraft.EdgeProps> = {
     stroke: {
       width: notation.strokeWidth
     }
@@ -185,7 +187,7 @@ export const arrowNotationToProps = (notation: ParsedArrowNotation): Partial<Edg
  * Converts EdgeProps to arrow notation string if it matches a standard pattern
  * Returns null if the props don't match a standard pattern
  */
-export const propsToArrowNotation = (props: EdgeProps): string | undefined => {
+export const propsToArrowNotation = (props: DiagramCraft.EdgeProps): string | undefined => {
   // Extract relevant properties
   const strokeWidth = props.stroke?.width ?? 1;
   const strokePattern = props.stroke?.pattern;
@@ -228,7 +230,9 @@ export const propsToArrowNotation = (props: EdgeProps): string | undefined => {
  * Parses a full arrow notation string and returns EdgeProps
  * Returns null if the notation is invalid
  */
-export const parseArrowNotationToProps = (notation: string): Partial<EdgeProps> | undefined => {
+export const parseArrowNotationToProps = (
+  notation: string
+): Partial<DiagramCraft.EdgeProps> | undefined => {
   const parsed = parseArrowNotation(notation);
   if (!parsed) return undefined;
 

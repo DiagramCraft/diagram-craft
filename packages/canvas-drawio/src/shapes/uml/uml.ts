@@ -28,8 +28,8 @@ import { ElementFactory } from '@diagram-craft/model/elementFactory';
 export const parseUMLShapes = async (
   id: string,
   bounds: Box,
-  props: NodeProps,
-  metadata: ElementMetadata,
+  props: DiagramCraft.NodeProps,
+  metadata: DiagramCraft.ElementMetadata,
   texts: NodeTexts,
   style: StyleManager,
   layer: RegularLayer
@@ -68,7 +68,7 @@ export const registerUMLShapes = async (r: NodeDefinitionRegistry) => {
     }
   });
 
-  const mergedProps: (p: Partial<NodeProps>) => MakeStencilNodeOptsProps = p => () =>
+  const mergedProps: (p: Partial<DiagramCraft.NodeProps>) => MakeStencilNodeOptsProps = p => () =>
     deepMerge(props('picker'), p);
 
   registerStencil(r, umlStencils, new UmlActor(), { aspectRatio: 0.6, props });

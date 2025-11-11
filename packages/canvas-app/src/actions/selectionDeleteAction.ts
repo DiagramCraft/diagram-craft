@@ -5,7 +5,9 @@ import { ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 declare global {
-  interface ActionMap extends ReturnType<typeof selectionDeleteActions> {}
+  namespace DiagramCraft {
+    interface ActionMap extends ReturnType<typeof selectionDeleteActions> {}
+  }
 }
 
 export const selectionDeleteActions = (context: ActionContext) => ({

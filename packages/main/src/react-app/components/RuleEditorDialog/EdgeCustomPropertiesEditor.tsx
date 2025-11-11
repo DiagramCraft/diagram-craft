@@ -13,7 +13,7 @@ import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 export const EdgeCustomPropertiesEditor: Editor = props => {
-  const $p = props.props as EdgeProps;
+  const $p = props.props as DiagramCraft.EdgeProps;
   const $d = useDiagram();
 
   const [type, setType] = useState('');

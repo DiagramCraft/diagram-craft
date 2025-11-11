@@ -17,15 +17,17 @@ import { hasHighlight, Highlights } from '../highlight';
 import { renderElement } from '../components/renderElement';
 
 declare global {
-  interface CustomNodeProps {
-    swimlane?: {
-      horizontalBorder?: boolean;
-      outerBorder?: boolean;
-      title?: boolean;
-      titleBorder?: boolean;
-      titleSize?: number;
-      fill?: boolean;
-    };
+  namespace DiagramCraft {
+    interface CustomNodeProps {
+      swimlane?: {
+        horizontalBorder?: boolean;
+        outerBorder?: boolean;
+        title?: boolean;
+        titleBorder?: boolean;
+        titleSize?: number;
+        fill?: boolean;
+      };
+    }
   }
 }
 

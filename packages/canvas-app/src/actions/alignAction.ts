@@ -6,7 +6,9 @@ import { assert } from '@diagram-craft/utils/assert';
 import { ActionContext } from '@diagram-craft/canvas/action';
 
 declare global {
-  interface ActionMap extends ReturnType<typeof alignActions> {}
+  namespace DiagramCraft {
+    interface ActionMap extends ReturnType<typeof alignActions> {}
+  }
 }
 
 export const alignActions = (context: ActionContext) => ({

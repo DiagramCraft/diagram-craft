@@ -5,7 +5,7 @@ import { FileSystem } from '@diagram-craft/canvas-app/loaders';
 export type DrawioStencil = {
   key: string;
   group: string;
-  props: NodeProps;
+  props: DiagramCraft.NodeProps;
   dimensions: { w: number; h: number };
 };
 

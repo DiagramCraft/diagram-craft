@@ -21,8 +21,10 @@ type ExtraProps = {
 };
 
 declare global {
-  interface CustomNodeProps {
-    curlyBracket?: ExtraProps;
+  namespace DiagramCraft {
+    interface CustomNodeProps {
+      curlyBracket?: ExtraProps;
+    }
   }
 }
 

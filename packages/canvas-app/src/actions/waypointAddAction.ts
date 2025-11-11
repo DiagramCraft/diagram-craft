@@ -4,7 +4,9 @@ import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { Point } from '@diagram-craft/geometry/point';
 
 declare global {
-  interface ActionMap extends ReturnType<typeof waypointAddActions> {}
+  namespace DiagramCraft {
+    interface ActionMap extends ReturnType<typeof waypointAddActions> {}
+  }
 }
 
 export const waypointAddActions = (context: ActionContext) => ({

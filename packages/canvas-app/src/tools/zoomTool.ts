@@ -7,10 +7,8 @@ import { fitInAspectRatio } from '@diagram-craft/model/viewBox';
 
 declare global {
   namespace DiagramCraft {
-    namespace Extensions {
-      interface Tools {
-        zoom: ZoomTool;
-      }
+    interface Tools {
+      zoom: ZoomTool;
     }
   }
 }

@@ -6,7 +6,9 @@ import { isNode } from '@diagram-craft/model/diagramElement';
 import { ActionContext } from '@diagram-craft/canvas/action';
 
 declare global {
-  interface ActionMap extends ReturnType<typeof distributeActions> {}
+  namespace DiagramCraft {
+    interface ActionMap extends ReturnType<typeof distributeActions> {}
+  }
 }
 
 export const distributeActions = (context: ActionContext) => ({

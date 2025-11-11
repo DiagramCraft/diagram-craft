@@ -25,7 +25,9 @@ export const collectElementIds = (elements: ParsedElement[]): MultiMap<string, n
 /**
  * Parse a props string like "fill.color=#ff0000;stroke.width=2" into a nested object
  */
-export const parsePropsString = (propsStr: string): Partial<NodeProps | EdgeProps> => {
+export const parsePropsString = (
+  propsStr: string
+): Partial<DiagramCraft.NodeProps | DiagramCraft.EdgeProps> => {
   const result: Record<string, unknown> = {};
 
   for (const pair of propsStr.split(';')) {
@@ -56,14 +58,14 @@ export const parsePropsString = (propsStr: string): Partial<NodeProps | EdgeProp
     }
   }
 
-  return result as Partial<NodeProps | EdgeProps>;
+  return result as Partial<DiagramCraft.NodeProps | DiagramCraft.EdgeProps>;
 };
 
 /**
  * Parse metadata string like "name=value" into an object
  */
-export const parseMetadataString = (metadataStr: string): Partial<ElementMetadata> => {
-  const result: Partial<ElementMetadata> = {};
+export const parseMetadataString = (metadataStr: string): Partial<DiagramCraft.ElementMetadata> => {
+  const result: Partial<DiagramCraft.ElementMetadata> = {};
 
   for (const pair of metadataStr.split(';')) {
     const [key, value] = pair.split('=');

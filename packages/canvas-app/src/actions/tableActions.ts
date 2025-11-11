@@ -10,7 +10,9 @@ import { TableHelper } from '@diagram-craft/canvas/node-types/Table.nodeType';
 import { assert } from '@diagram-craft/utils/assert';
 
 declare global {
-  interface ActionMap extends ReturnType<typeof tableActions> {}
+  namespace DiagramCraft {
+    interface ActionMap extends ReturnType<typeof tableActions> {}
+  }
 }
 
 export const tableActions = (context: ActionContext) => ({

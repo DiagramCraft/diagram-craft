@@ -30,6 +30,6 @@ export const ActionCheckbox = (props: Props) => {
 };
 
 type Props = {
-  action: keyof ActionMap;
+  action: keyof DiagramCraft.ActionMap;
   children: React.ReactNode;
 };

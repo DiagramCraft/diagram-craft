@@ -6,11 +6,13 @@ import {
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 
 declare global {
-  interface CustomNodeProps {
-    androidProgressScrubber?: {
-      dx?: number;
-      state?: 'disabled' | 'focused' | 'pressed';
-    };
+  namespace DiagramCraft {
+    interface CustomNodeProps {
+      androidProgressScrubber?: {
+        dx?: number;
+        state?: 'disabled' | 'focused' | 'pressed';
+      };
+    }
   }
 }
 

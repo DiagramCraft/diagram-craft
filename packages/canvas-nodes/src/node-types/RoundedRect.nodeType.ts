@@ -15,10 +15,12 @@ import { Box } from '@diagram-craft/geometry/box';
 import { round } from '@diagram-craft/utils/math';
 
 declare global {
-  interface CustomNodeProps {
-    roundedRect?: {
-      radius?: number;
-    };
+  namespace DiagramCraft {
+    interface CustomNodeProps {
+      roundedRect?: {
+        radius?: number;
+      };
+    }
   }
 }
 

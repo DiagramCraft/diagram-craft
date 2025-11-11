@@ -55,7 +55,7 @@ export type DiagramEdgeSnapshot = SerializedEdge & {
 export type StylesheetSnapshot = {
   id: string;
   name: string;
-  props: NodeProps | EdgeProps;
+  props: DiagramCraft.NodeProps | DiagramCraft.EdgeProps;
   type: StylesheetType;
   _snapshotType: 'stylesheet';
 };

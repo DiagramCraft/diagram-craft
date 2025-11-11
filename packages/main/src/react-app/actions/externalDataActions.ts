@@ -33,7 +33,9 @@ export const externalDataActions = (application: Application) => ({
 });
 
 declare global {
-  interface ActionMap extends ReturnType<typeof externalDataActions> {}
+  namespace DiagramCraft {
+    interface ActionMap extends ReturnType<typeof externalDataActions> {}
+  }
 }
 
 type SchemaArg = { schemaId: string };

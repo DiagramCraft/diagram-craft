@@ -13,7 +13,9 @@ export const toolActions = (context: Application) => ({
 });
 
 declare global {
-  interface ActionMap extends ReturnType<typeof toolActions> {}
+  namespace DiagramCraft {
+    interface ActionMap extends ReturnType<typeof toolActions> {}
+  }
 }
 
 export class ToolAction extends AbstractToggleAction<undefined, Application> {

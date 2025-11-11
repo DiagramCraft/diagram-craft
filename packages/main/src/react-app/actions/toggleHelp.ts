@@ -2,7 +2,9 @@ import { AbstractToggleAction, ActionContext } from '@diagram-craft/canvas/actio
 import { UserState } from '../../UserState';
 
 declare global {
-  interface ActionMap extends ReturnType<typeof toggleHelpActions> {}
+  namespace DiagramCraft {
+    interface ActionMap extends ReturnType<typeof toggleHelpActions> {}
+  }
 }
 
 export const toggleHelpActions = (context: ActionContext) => ({

@@ -24,8 +24,10 @@ type ExtraProps = {
 };
 
 declare global {
-  interface CustomEdgeProps {
-    blockArrow?: ExtraProps;
+  namespace DiagramCraft {
+    interface CustomEdgeProps {
+      blockArrow?: ExtraProps;
+    }
   }
 }
 
@@ -205,7 +207,7 @@ export class BlockArrowEdgeDefinition extends ShapeEdgeDefinition {
     // Note: Override getArrow to return undefined to disable arrows
     protected getArrow(
       _type: 'start' | 'end',
-      _edgeProps: DeepReadonly<DeepRequired<EdgeProps>>
+      _edgeProps: DeepReadonly<DeepRequired<DiagramCraft.EdgeProps>>
     ): ArrowShape | undefined {
       return undefined;
     }

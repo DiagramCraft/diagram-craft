@@ -19,10 +19,8 @@ import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 declare global {
   namespace DiagramCraft {
-    namespace Extensions {
-      interface Tools {
-        text: TextTool;
-      }
+    interface Tools {
+      text: TextTool;
     }
   }
 }

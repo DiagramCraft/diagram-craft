@@ -8,7 +8,9 @@ export const fileNewActions = (application: Application) => ({
 });
 
 declare global {
-  interface ActionMap extends ReturnType<typeof fileNewActions> {}
+  namespace DiagramCraft {
+    interface ActionMap extends ReturnType<typeof fileNewActions> {}
+  }
 }
 
 class FileNewAction extends AbstractAction<undefined, Application> {

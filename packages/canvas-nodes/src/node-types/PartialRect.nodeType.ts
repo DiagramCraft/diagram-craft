@@ -18,8 +18,10 @@ type ExtraProps = {
 };
 
 declare global {
-  interface CustomNodeProps {
-    partialRect?: ExtraProps;
+  namespace DiagramCraft {
+    interface CustomNodeProps {
+      partialRect?: ExtraProps;
+    }
   }
 }
 
@@ -48,7 +50,7 @@ class PartialRectComponent extends BaseNodeComponent {
         enabled: false,
         color: 'transparent'
       }
-    } as NodeProps);
+    } as DiagramCraft.NodeProps);
 
     if (props.node.renderProps.custom.partialRect.north) {
       shapeBuilder.path(

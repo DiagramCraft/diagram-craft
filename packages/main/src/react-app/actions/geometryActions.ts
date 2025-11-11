@@ -21,7 +21,9 @@ import { transformPathList } from '@diagram-craft/geometry/pathListUtils';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 declare global {
-  interface ActionMap extends ReturnType<typeof geometryActions> {}
+  namespace DiagramCraft {
+    interface ActionMap extends ReturnType<typeof geometryActions> {}
+  }
 }
 
 export const geometryActions = (context: Application) => ({

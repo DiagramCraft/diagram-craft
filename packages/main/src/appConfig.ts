@@ -126,13 +126,15 @@ export type AppConfig = {
   };
 };
 
-type StencilRegistryConfigEntry<K extends keyof StencilLoaderOpts> = {
+type StencilRegistryConfigEntry<K extends keyof DiagramCraft.StencilLoaderOpts> = {
   type: K;
   shapes?: RegExp;
-  opts: StencilLoaderOpts[K];
+  opts: DiagramCraft.StencilLoaderOpts[K];
 };
 
-export type StencilRegistryConfig = Array<StencilRegistryConfigEntry<keyof StencilLoaderOpts>>;
+export type StencilRegistryConfig = Array<
+  StencilRegistryConfigEntry<keyof DiagramCraft.StencilLoaderOpts>
+>;
 
 let CONFIG_IN_USE: AppConfig | undefined;
 

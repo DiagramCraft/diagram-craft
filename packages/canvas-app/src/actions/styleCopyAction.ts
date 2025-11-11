@@ -7,7 +7,9 @@ import { isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import { ActionContext } from '@diagram-craft/canvas/action';
 
 declare global {
-  interface ActionMap extends ReturnType<typeof styleCopyActions> {}
+  namespace DiagramCraft {
+    interface ActionMap extends ReturnType<typeof styleCopyActions> {}
+  }
 }
 
 export const styleCopyActions = (context: ActionContext) => ({
@@ -15,8 +17,8 @@ export const styleCopyActions = (context: ActionContext) => ({
   STYLE_PASTE: new StylePasteAction(context)
 });
 
-let currentNodeStyle: NodeProps = {};
-let currentEdgeStyle: EdgeProps = {};
+let currentNodeStyle: DiagramCraft.NodeProps = {};
+let currentEdgeStyle: DiagramCraft.EdgeProps = {};
 
 export class StyleCopyAction extends AbstractSelectionAction {
   constructor(context: ActionContext) {

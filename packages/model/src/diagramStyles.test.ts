@@ -13,7 +13,7 @@ describe.each(Backends.all())('Stylesheet [%s]', (_name, backend) => {
       const type = 'node';
       const id = '123';
       const name = 'Test stylesheet';
-      const props: NodeProps = { fill: { color: 'blue' } };
+      const props: DiagramCraft.NodeProps = { fill: { color: 'blue' } };
 
       const stylesheet = Stylesheet.fromSnapshot(type, { id, name, props }, new NoOpCRDTFactory());
 

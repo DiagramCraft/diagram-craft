@@ -10,7 +10,9 @@ import { TextArea } from '@diagram-craft/app-components/TextArea';
 export const ElementStylesheetDialog = (props: Props) => {
   const redraw = useRedraw();
 
-  const [data, setData] = useState<NodeProps | EdgeProps>(deepClone(props.props));
+  const [data, setData] = useState<DiagramCraft.NodeProps | DiagramCraft.EdgeProps>(
+    deepClone(props.props)
+  );
   useEffect(() => setData(deepClone(props.props)), [props.props]);
 
   let name = 'Element Stylesheet';
@@ -78,10 +80,10 @@ export const ElementStylesheetDialog = (props: Props) => {
 };
 
 type Props = {
-  props: NodeProps | EdgeProps;
+  props: DiagramCraft.NodeProps | DiagramCraft.EdgeProps;
   type: StylesheetType;
   open: boolean;
   onClose: () => void;
-  onSave: (props: NodeProps | EdgeProps) => void;
+  onSave: (props: DiagramCraft.NodeProps | DiagramCraft.EdgeProps) => void;
   editors: Array<{ name: string; editor: Editor }>;
 };

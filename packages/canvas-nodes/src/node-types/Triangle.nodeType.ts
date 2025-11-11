@@ -17,8 +17,10 @@ type ExtraProps = {
 };
 
 declare global {
-  interface CustomNodeProps {
-    triangle?: ExtraProps;
+  namespace DiagramCraft {
+    interface CustomNodeProps {
+      triangle?: ExtraProps;
+    }
   }
 }
 

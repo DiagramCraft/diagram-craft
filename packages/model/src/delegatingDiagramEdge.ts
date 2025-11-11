@@ -41,7 +41,7 @@ type DelegatingDiagramEdgeCRDT = DiagramEdgeCRDT & {
 export class DelegatingDiagramEdge extends DelegatingDiagramElement implements DiagramEdge {
   declare protected readonly delegate: DiagramEdge;
 
-  readonly #localProps: CRDTObject<EdgeProps>;
+  readonly #localProps: CRDTObject<DiagramCraft.EdgeProps>;
 
   readonly #localWaypoints: MappedCRDTProp<DelegatingDiagramEdgeCRDT, 'waypoints'>;
   readonly #hasLocalWaypoints: CRDTProp<DelegatingDiagramEdgeCRDT, 'hasLocalWaypoints'>;
@@ -58,11 +58,11 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
     layer: RegularLayer | ModificationLayer,
     opts?: {
       crdt?: CRDTMap<DiagramEdgeCRDT>;
-      props?: EdgeProps;
+      props?: DiagramCraft.EdgeProps;
       start?: Endpoint;
       end?: Endpoint;
       waypoints?: ReadonlyArray<Waypoint>;
-      metadata?: ElementMetadata;
+      metadata?: DiagramCraft.ElementMetadata;
     }
   ) {
     super(id, 'delegating-edge', delegate, layer, opts?.crdt);
@@ -75,7 +75,7 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
       [edgeCrdt] as const
     );
 
-    this.#localProps = new CRDTObject<EdgeProps>(propsMap, () => {
+    this.#localProps = new CRDTObject<DiagramCraft.EdgeProps>(propsMap, () => {
       this.invalidate(UnitOfWork.immediate(this.diagram));
       this.diagram.emit('elementChange', { element: this });
       this.clearCache();
@@ -167,18 +167,18 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
     return deepMerge({}, delegateProps, overriddenProps) as EdgePropsForRendering;
   }
 
-  updateProps(callback: (props: EdgeProps) => void, uow: UnitOfWork): void {
+  updateProps(callback: (props: DiagramCraft.EdgeProps) => void, uow: UnitOfWork): void {
     uow.snapshot(this);
-    const props = this.#localProps.getClone() as EdgeProps;
+    const props = this.#localProps.getClone() as DiagramCraft.EdgeProps;
     callback(props);
     this.#localProps.set(props);
     uow.updateElement(this);
     this.clearCache();
   }
 
-  updateCustomProps<K extends keyof CustomEdgeProps>(
+  updateCustomProps<K extends keyof DiagramCraft.CustomEdgeProps>(
     key: K,
-    callback: (props: NonNullable<CustomEdgeProps[K]>) => void,
+    callback: (props: NonNullable<DiagramCraft.CustomEdgeProps[K]>) => void,
     uow: UnitOfWork
   ): void {
     this.updateProps(p => {
@@ -188,7 +188,9 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
     }, uow);
   }
 
-  getPropsInfo<T extends PropPath<EdgeProps>>(path: T): PropertyInfo<PropPathValue<EdgeProps, T>> {
+  getPropsInfo<T extends PropPath<DiagramCraft.EdgeProps>>(
+    path: T
+  ): PropertyInfo<PropPathValue<DiagramCraft.EdgeProps, T>> {
     return this.delegate.getPropsInfo(path);
   }
 

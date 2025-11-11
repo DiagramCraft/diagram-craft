@@ -12,11 +12,13 @@ import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 
 declare global {
-  interface CustomNodeProps {
-    trapezoid?: {
-      slantLeft?: number;
-      slantRight?: number;
-    };
+  namespace DiagramCraft {
+    interface CustomNodeProps {
+      trapezoid?: {
+        slantLeft?: number;
+        slantRight?: number;
+      };
+    }
   }
 }
 

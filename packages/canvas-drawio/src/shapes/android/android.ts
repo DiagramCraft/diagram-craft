@@ -39,8 +39,8 @@ const registerStencil = (
 export const parseAndroidShapes = async (
   id: string,
   bounds: Box,
-  props: NodeProps,
-  metadata: ElementMetadata,
+  props: DiagramCraft.NodeProps,
+  metadata: DiagramCraft.ElementMetadata,
   texts: NodeTexts,
   style: StyleManager,
   layer: RegularLayer

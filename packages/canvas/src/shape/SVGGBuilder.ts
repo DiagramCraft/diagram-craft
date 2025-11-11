@@ -26,16 +26,16 @@ export class SVGGBuilder {
   readonly #w: number;
   readonly #h: number;
 
-  readonly #initialStroke: NodeProps['stroke'];
-  readonly #initialFill: NodeProps['fill'];
+  readonly #initialStroke: DiagramCraft.NodeProps['stroke'];
+  readonly #initialFill: DiagramCraft.NodeProps['fill'];
 
-  #fill: NodeProps['fill'] = { color: 'red' };
+  #fill: DiagramCraft.NodeProps['fill'] = { color: 'red' };
   #fillGradientId: string | undefined;
-  #stroke: NodeProps['stroke'] = { color: 'black' };
-  #font: NodeProps['text'] = {};
+  #stroke: DiagramCraft.NodeProps['stroke'] = { color: 'black' };
+  #font: DiagramCraft.NodeProps['text'] = {};
 
-  #strokeStack: NodeProps['stroke'][] = [];
-  #fillStack: NodeProps['fill'][] = [];
+  #strokeStack: DiagramCraft.NodeProps['stroke'][] = [];
+  #fillStack: DiagramCraft.NodeProps['fill'][] = [];
 
   #shapes: (Path | PathListBuilder)[] = [];
 
@@ -179,7 +179,7 @@ export class SVGGBuilder {
     return this;
   }
 
-  setFill(fill: NodeProps['fill']) {
+  setFill(fill: DiagramCraft.NodeProps['fill']) {
     this.#fillGradientId = undefined;
 
     this.#fill = fill;
@@ -198,17 +198,17 @@ export class SVGGBuilder {
     return this;
   }
 
-  setStroke(stroke: NodeProps['stroke']) {
+  setStroke(stroke: DiagramCraft.NodeProps['stroke']) {
     this.#stroke = stroke;
     return this;
   }
 
-  setFont(font: Omit<NodeProps['text'], 'text'>) {
+  setFont(font: Omit<DiagramCraft.NodeProps['text'], 'text'>) {
     this.#font = font;
     return this;
   }
 
-  fill(fill?: NodeProps['fill']) {
+  fill(fill?: DiagramCraft.NodeProps['fill']) {
     if (fill) this.setFill(fill);
 
     this.renderWithStyle({ ...this.fillProps(), strokeWidth: '0' });
@@ -218,7 +218,11 @@ export class SVGGBuilder {
     return this;
   }
 
-  fillAndStroke(stroke?: NodeProps['stroke'], fill?: NodeProps['fill'], backing = false) {
+  fillAndStroke(
+    stroke?: DiagramCraft.NodeProps['stroke'],
+    fill?: DiagramCraft.NodeProps['fill'],
+    backing = false
+  ) {
     if (stroke) this.setStroke(stroke);
     if (fill) this.setFill(fill);
 
@@ -231,7 +235,7 @@ export class SVGGBuilder {
     return this;
   }
 
-  stroke(stroke?: NodeProps['stroke'], backing = false) {
+  stroke(stroke?: DiagramCraft.NodeProps['stroke'], backing = false) {
     if (stroke) this.setStroke(stroke);
 
     if (backing) this.applyBacking();
@@ -331,7 +335,7 @@ export class SVGGBuilder {
     return this;
   }
 
-  text(x: number, y: number, s: string, font?: Omit<NodeProps['text'], 'text'>) {
+  text(x: number, y: number, s: string, font?: Omit<DiagramCraft.NodeProps['text'], 'text'>) {
     if (font) this.setFont(font);
     this.g.children.push(
       svg.text(

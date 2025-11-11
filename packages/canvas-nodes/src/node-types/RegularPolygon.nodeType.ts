@@ -14,10 +14,12 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
 declare global {
-  interface CustomNodeProps {
-    regularPolygon?: {
-      numberOfSides?: number;
-    };
+  namespace DiagramCraft {
+    interface CustomNodeProps {
+      regularPolygon?: {
+        numberOfSides?: number;
+      };
+    }
   }
 }
 

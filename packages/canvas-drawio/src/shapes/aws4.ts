@@ -34,8 +34,8 @@ const registerStencil = (
 export const parseAWS4Shapes = async (
   id: string,
   bounds: Box,
-  props: NodeProps,
-  metadata: ElementMetadata,
+  props: DiagramCraft.NodeProps,
+  metadata: DiagramCraft.ElementMetadata,
   texts: NodeTexts,
   style: StyleManager,
   layer: RegularLayer

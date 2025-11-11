@@ -20,8 +20,10 @@ type ExtraProps = {
 };
 
 declare global {
-  interface CustomNodeProps {
-    process?: ExtraProps;
+  namespace DiagramCraft {
+    interface CustomNodeProps {
+      process?: ExtraProps;
+    }
   }
 }
 

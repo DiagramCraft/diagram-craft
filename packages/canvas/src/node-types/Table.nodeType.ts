@@ -18,15 +18,17 @@ import { renderElement } from '../components/renderElement';
 import type { Diagram } from '@diagram-craft/model/diagram';
 
 declare global {
-  interface CustomNodeProps {
-    table?: {
-      gap?: number;
-      horizontalBorder?: boolean;
-      verticalBorder?: boolean;
-      outerBorder?: boolean;
-      title?: boolean;
-      titleSize?: number;
-    };
+  namespace DiagramCraft {
+    interface CustomNodeProps {
+      table?: {
+        gap?: number;
+        horizontalBorder?: boolean;
+        verticalBorder?: boolean;
+        outerBorder?: boolean;
+        title?: boolean;
+        titleSize?: number;
+      };
+    }
   }
 }
 

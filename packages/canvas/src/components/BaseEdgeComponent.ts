@@ -39,7 +39,7 @@ export type EdgeComponentProps = {
 const makeArrowMarker = (
   id: string,
   arrow: ArrowShape | undefined,
-  edgeProps: DeepReadonly<DeepRequired<EdgeProps>>
+  edgeProps: DeepReadonly<DeepRequired<DiagramCraft.EdgeProps>>
 ) => {
   if (!arrow) return null;
 
@@ -270,7 +270,7 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
 
   protected getArrow(
     type: 'start' | 'end',
-    edgeProps: DeepReadonly<DeepRequired<EdgeProps>>
+    edgeProps: DeepReadonly<DeepRequired<DiagramCraft.EdgeProps>>
   ): ArrowShape | undefined {
     const size = (1 + (edgeProps.stroke.width - 1) * 10 + edgeProps.arrow[type].size) / 100;
     return ARROW_SHAPES[edgeProps.arrow[type].type as ArrowType]?.(size, edgeProps.stroke.width);
@@ -287,7 +287,7 @@ export class SimpleEdgeDefinition extends ShapeEdgeDefinition {
       path: Path,
       shapeBuilder: ShapeBuilder,
       edge: DiagramEdge,
-      props: DeepReadonly<DeepRequired<EdgeProps>>
+      props: DeepReadonly<DeepRequired<DiagramCraft.EdgeProps>>
     ) {
       const paths = applyLineHops(path, edge, undefined, undefined, edge.intersections);
       shapeBuilder.edge(

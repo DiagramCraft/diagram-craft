@@ -115,7 +115,7 @@ export interface SerializedNode {
   edges?: Record<string, ReadonlyArray<Reference>>;
   children?: ReadonlyArray<SerializedElement>;
   props: NodePropsForEditing;
-  metadata: ElementMetadata;
+  metadata: DiagramCraft.ElementMetadata;
   texts: NodeTexts;
   tags?: ReadonlyArray<string>;
 }
@@ -149,7 +149,7 @@ export interface SerializedEdge {
   start: SerializedEndpoint;
   end: SerializedEndpoint;
   props: EdgePropsForEditing;
-  metadata: ElementMetadata;
+  metadata: DiagramCraft.ElementMetadata;
   children?: ReadonlyArray<SerializedElement>;
   tags?: ReadonlyArray<string>;
 }

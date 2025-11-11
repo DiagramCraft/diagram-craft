@@ -9,7 +9,9 @@ import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 declare global {
-  interface ActionMap extends ReturnType<typeof edgeTextAddActions> {}
+  namespace DiagramCraft {
+    interface ActionMap extends ReturnType<typeof edgeTextAddActions> {}
+  }
 }
 
 export const edgeTextAddActions = (context: ActionContext) => ({

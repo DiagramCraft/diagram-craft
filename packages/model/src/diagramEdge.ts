@@ -87,12 +87,14 @@ const intersectionListIsSame = (a: Intersection[], b: Intersection[]) => {
   return true;
 };
 
-export type EdgePropsForEditing = DeepReadonly<EdgeProps>;
-export type EdgePropsForRendering = DeepReadonly<DeepRequired<EdgeProps>>;
+export type EdgePropsForEditing = DeepReadonly<DiagramCraft.EdgeProps>;
+export type EdgePropsForRendering = DeepReadonly<DeepRequired<DiagramCraft.EdgeProps>>;
 
 declare global {
-  interface AdditionalCRDTCompatibleInnerObjects {
-    reference: Reference;
+  namespace DiagramCraft {
+    interface AdditionalCRDTCompatibleInnerObjects {
+      reference: Reference;
+    }
   }
 }
 
@@ -139,16 +141,18 @@ const makeEndpointMapper = (edge: DiagramEdge): CRDTMapper<Endpoint, SerializedE
 
 export interface DiagramEdge extends DiagramElement {
   getDefinition(): EdgeDefinition;
-  getPropsInfo<T extends PropPath<EdgeProps>>(path: T): PropertyInfo<PropPathValue<EdgeProps, T>>;
+  getPropsInfo<T extends PropPath<DiagramCraft.EdgeProps>>(
+    path: T
+  ): PropertyInfo<PropPathValue<DiagramCraft.EdgeProps, T>>;
 
-  readonly storedProps: DeepReadonly<EdgeProps>;
-  readonly storedPropsCloned: DeepReadonly<EdgeProps>;
+  readonly storedProps: DeepReadonly<DiagramCraft.EdgeProps>;
+  readonly storedPropsCloned: DeepReadonly<DiagramCraft.EdgeProps>;
   readonly editProps: DeepReadonly<EdgePropsForEditing>;
   readonly renderProps: DeepReadonly<EdgePropsForRendering>;
-  updateProps(callback: (props: EdgeProps) => void, uow: UnitOfWork): void;
-  updateCustomProps<K extends keyof CustomEdgeProps>(
+  updateProps(callback: (props: DiagramCraft.EdgeProps) => void, uow: UnitOfWork): void;
+  updateCustomProps<K extends keyof DiagramCraft.CustomEdgeProps>(
     key: K,
-    callback: (props: NonNullable<CustomEdgeProps[K]>) => void,
+    callback: (props: NonNullable<DiagramCraft.CustomEdgeProps[K]>) => void,
     uow: UnitOfWork
   ): void;
   inferControlPoints(i: number): ControlPoints;
@@ -193,7 +197,7 @@ export class SimpleDiagramEdge
   readonly #labelNodes: MappedCRDTOrderedMap<ResolvedLabelNode, LabelNodeCRDTEntry>;
   readonly #start: MappedCRDTProp<DiagramEdgeCRDT, 'start', Endpoint>;
   readonly #end: MappedCRDTProp<DiagramEdgeCRDT, 'end', Endpoint>;
-  readonly #props: CRDTObject<EdgeProps>;
+  readonly #props: CRDTObject<DiagramCraft.EdgeProps>;
 
   protected constructor(
     id: string,
@@ -240,7 +244,7 @@ export class SimpleDiagramEdge
       [edgeCrdt] as const
     );
 
-    this.#props = new CRDTObject<EdgeProps>(propsMap, () => {
+    this.#props = new CRDTObject<DiagramCraft.EdgeProps>(propsMap, () => {
       getRemoteUnitOfWork(this.diagram).updateElement(this);
       this.clearCache();
     });
@@ -261,7 +265,7 @@ export class SimpleDiagramEdge
     start: Endpoint,
     end: Endpoint,
     props: EdgePropsForEditing,
-    metadata: ElementMetadata,
+    metadata: DiagramCraft.ElementMetadata,
     midpoints: ReadonlyArray<Waypoint>,
     layer: RegularLayer | ModificationLayer
   ) {
@@ -269,7 +273,7 @@ export class SimpleDiagramEdge
 
     edge.#start.set(start);
     edge.#end.set(end);
-    edge.#props.set(props as EdgeProps);
+    edge.#props.set(props as DiagramCraft.EdgeProps);
     if (midpoints.length > 0) edge.#waypoints.set(midpoints);
 
     metadata.style ??= DefaultStyles.edge.default;
@@ -289,21 +293,23 @@ export class SimpleDiagramEdge
 
   /* Props *************************************************************************************************** */
 
-  getPropsInfo<T extends PropPath<EdgeProps>>(path: T): PropertyInfo<PropPathValue<EdgeProps, T>> {
+  getPropsInfo<T extends PropPath<DiagramCraft.EdgeProps>>(
+    path: T
+  ): PropertyInfo<PropPathValue<DiagramCraft.EdgeProps, T>> {
     const { styleProps, ruleProps, ruleStyleProps } = this.getPropsSources();
 
-    const accessor = new DynamicAccessor<EdgeProps>();
+    const accessor = new DynamicAccessor<DiagramCraft.EdgeProps>();
 
-    const dest: PropertyInfo<PropPathValue<EdgeProps, T>> = [];
+    const dest: PropertyInfo<PropPathValue<DiagramCraft.EdgeProps, T>> = [];
 
     dest.push({
-      val: edgeDefaults.get(path) as PropPathValue<EdgeProps, T>,
+      val: edgeDefaults.get(path) as PropPathValue<DiagramCraft.EdgeProps, T>,
       type: 'default'
     });
 
     if (styleProps) {
       dest.push({
-        val: accessor.get(styleProps, path) as PropPathValue<EdgeProps, T>,
+        val: accessor.get(styleProps, path) as PropPathValue<DiagramCraft.EdgeProps, T>,
         type: 'style',
         id: this.metadata.style
       });
@@ -311,19 +317,19 @@ export class SimpleDiagramEdge
 
     if (ruleStyleProps) {
       dest.push({
-        val: accessor.get(ruleStyleProps, path) as PropPathValue<EdgeProps, T>,
+        val: accessor.get(ruleStyleProps, path) as PropPathValue<DiagramCraft.EdgeProps, T>,
         type: 'ruleStyle'
       });
     }
 
     dest.push({
-      val: accessor.get(this.#props.get(), path) as PropPathValue<EdgeProps, T>,
+      val: accessor.get(this.#props.get(), path) as PropPathValue<DiagramCraft.EdgeProps, T>,
       type: 'stored'
     });
 
     for (const rp of ruleProps) {
       dest.push({
-        val: accessor.get(rp[1], path) as PropPathValue<EdgeProps, T>,
+        val: accessor.get(rp[1], path) as PropPathValue<DiagramCraft.EdgeProps, T>,
         type: 'rule',
         id: rp[0]
       });
@@ -344,14 +350,18 @@ export class SimpleDiagramEdge
       .at(-1);
     const ruleStyleProps = this.diagram.document.styles.getEdgeStyle(ruleElementStyle)?.props;
 
-    return { styleProps, ruleProps: ruleProps as [string, EdgeProps][], ruleStyleProps };
+    return {
+      styleProps,
+      ruleProps: ruleProps as [string, DiagramCraft.EdgeProps][],
+      ruleStyleProps
+    };
   }
 
   private populatePropsCache() {
     const { styleProps, ruleProps, ruleStyleProps } = this.getPropsSources();
 
     const consolidatedRulesProps = ruleProps.reduce(
-      (p, c) => deepMerge<EdgeProps>({}, p, c[1]),
+      (p, c) => deepMerge<DiagramCraft.EdgeProps>({}, p, c[1]),
       {}
     );
 
@@ -360,7 +370,7 @@ export class SimpleDiagramEdge
       styleProps ?? {},
       ruleStyleProps ?? {},
       this.#props.get()
-    ) as DeepRequired<EdgeProps>;
+    ) as DeepRequired<DiagramCraft.EdgeProps>;
 
     const propsForRendering = edgeDefaults.applyDefaults(
       deepMerge({}, propsForEditing, consolidatedRulesProps)
@@ -393,7 +403,7 @@ export class SimpleDiagramEdge
       this.populatePropsCache().forRendering) as EdgePropsForRendering;
   }
 
-  updateProps(callback: (props: EdgeProps) => void, uow: UnitOfWork) {
+  updateProps(callback: (props: DiagramCraft.EdgeProps) => void, uow: UnitOfWork) {
     uow.snapshot(this);
 
     const oldType = this.#props.get().type;
@@ -420,9 +430,9 @@ export class SimpleDiagramEdge
     this.clearCache();
   }
 
-  updateCustomProps<K extends keyof CustomEdgeProps>(
+  updateCustomProps<K extends keyof DiagramCraft.CustomEdgeProps>(
     key: K,
-    callback: (props: NonNullable<CustomEdgeProps[K]>) => void,
+    callback: (props: NonNullable<DiagramCraft.CustomEdgeProps[K]>) => void,
     uow: UnitOfWork
   ) {
     this.updateProps(p => {
@@ -830,7 +840,7 @@ export class SimpleDiagramEdge
       id: this.id,
       type: 'edge',
       props: this.#props.getClone(),
-      metadata: this._metadata.getClone() as ElementMetadata,
+      metadata: this._metadata.getClone() as DiagramCraft.ElementMetadata,
       start: this.start.serialize(),
       end: this.end.serialize(),
       waypoints: deepClone(this.waypoints),
@@ -845,7 +855,7 @@ export class SimpleDiagramEdge
 
   // TODO: Add assertions for lookups
   restore(snapshot: DiagramEdgeSnapshot, uow: UnitOfWork) {
-    this.#props.set(snapshot.props as EdgeProps);
+    this.#props.set(snapshot.props as DiagramCraft.EdgeProps);
     this.setStart(Endpoint.deserialize(snapshot.start, this.diagram.nodeLookup), uow);
     this.setEnd(Endpoint.deserialize(snapshot.end, this.diagram.nodeLookup), uow);
     this.#waypoints.set((snapshot.waypoints ?? []) as Array<Waypoint>);
@@ -873,7 +883,7 @@ export class SimpleDiagramEdge
       id ?? newid(),
       this.start,
       this.end,
-      deepClone(this.#props) as EdgeProps,
+      deepClone(this.#props) as DiagramCraft.EdgeProps,
       deepClone(this.metadata),
       deepClone(this.waypoints) as Array<Waypoint>,
       this.layer

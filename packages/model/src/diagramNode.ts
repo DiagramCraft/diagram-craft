@@ -57,8 +57,8 @@ export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;
 };
 
-export type NodePropsForRendering = DeepReadonly<DeepRequired<NodeProps>>;
-export type NodePropsForEditing = DeepReadonly<NodeProps>;
+export type NodePropsForRendering = DeepReadonly<DeepRequired<DiagramCraft.NodeProps>>;
+export type NodePropsForEditing = DeepReadonly<DiagramCraft.NodeProps>;
 
 export type NodeTexts = { text: string } & Record<string, string>;
 
@@ -147,20 +147,20 @@ export interface DiagramNode extends DiagramElement {
   setText(text: string, uow: UnitOfWork, id?: string): void;
   readonly texts: NodeTexts;
   readonly textsCloned: NodeTexts;
-  getPropsInfo<T extends PropPath<NodeProps>>(
+  getPropsInfo<T extends PropPath<DiagramCraft.NodeProps>>(
     path: T,
-    defaultValue?: PropPathValue<NodeProps, T>
-  ): PropertyInfo<PropPathValue<NodeProps, T>>;
+    defaultValue?: PropPathValue<DiagramCraft.NodeProps, T>
+  ): PropertyInfo<PropPathValue<DiagramCraft.NodeProps, T>>;
 
   readonly props: NodePropsForRendering;
-  readonly storedProps: NodeProps;
-  readonly storedPropsCloned: NodeProps;
+  readonly storedProps: DiagramCraft.NodeProps;
+  readonly storedPropsCloned: DiagramCraft.NodeProps;
   readonly editProps: NodePropsForEditing;
   readonly renderProps: NodePropsForRendering;
-  updateProps(callback: (props: NodeProps) => void, uow: UnitOfWork): void;
-  updateCustomProps<K extends keyof CustomNodeProps>(
+  updateProps(callback: (props: DiagramCraft.NodeProps) => void, uow: UnitOfWork): void;
+  updateCustomProps<K extends keyof DiagramCraft.CustomNodeProps>(
     key: K,
-    callback: (props: NonNullable<CustomNodeProps[K]>) => void,
+    callback: (props: NonNullable<DiagramCraft.CustomNodeProps[K]>) => void,
     uow: UnitOfWork
   ): void;
   readonly dataForTemplate: FlatObject;
@@ -199,7 +199,7 @@ export class SimpleDiagramNode
   // Note, we use MappedCRDTProp here for performance reasons
   readonly #bounds: MappedCRDTProp<DiagramNodeCRDT, 'bounds', Box>;
   readonly #text: CRDTObject<NodeTexts>;
-  readonly #props: CRDTObject<NodeProps>;
+  readonly #props: CRDTObject<DiagramCraft.NodeProps>;
   readonly #anchors: CRDTProp<DiagramNodeCRDT, 'anchors'>;
 
   protected constructor(
@@ -253,7 +253,7 @@ export class SimpleDiagramNode
       ([parent]) => parent.get().get('props', () => layer.crdt.factory.makeMap())!,
       [nodeCrdt] as const
     );
-    this.#props = new CRDTObject<NodeProps>(propsMap, () => {
+    this.#props = new CRDTObject<DiagramCraft.NodeProps>(propsMap, () => {
       getRemoteUnitOfWork(this.diagram).updateElement(this);
       this.clearCache();
     });
@@ -302,7 +302,7 @@ export class SimpleDiagramNode
     bounds: Box,
     layer: RegularLayer | ModificationLayer,
     props: NodePropsForEditing,
-    metadata: ElementMetadata,
+    metadata: DiagramCraft.ElementMetadata,
     text: NodeTexts = { text: '' },
     anchorCache?: ReadonlyArray<Anchor>
   ) {
@@ -318,14 +318,14 @@ export class SimpleDiagramNode
     nodeType: 'group' | string,
     bounds: Box,
     props: NodePropsForEditing,
-    metadata: ElementMetadata,
+    metadata: DiagramCraft.ElementMetadata,
     text: NodeTexts = { text: '' }
   ) {
     node.#bounds.set(bounds);
     node.#nodeType.set(nodeType);
     node.#text.set(text);
 
-    node.#props.set(props as NodeProps);
+    node.#props.set(props as DiagramCraft.NodeProps);
 
     metadata.style ??= nodeType === 'text' ? DefaultStyles.node.text : DefaultStyles.node.default;
     metadata.textStyle ??= DefaultStyles.text.default;
@@ -379,10 +379,10 @@ export class SimpleDiagramNode
 
   /* Props *************************************************************************************************** */
 
-  getPropsInfo<T extends PropPath<NodeProps>>(
+  getPropsInfo<T extends PropPath<DiagramCraft.NodeProps>>(
     path: T,
-    defaultValue?: PropPathValue<NodeProps, T>
-  ): PropertyInfo<PropPathValue<NodeProps, T>> {
+    defaultValue?: PropPathValue<DiagramCraft.NodeProps, T>
+  ): PropertyInfo<PropPathValue<DiagramCraft.NodeProps, T>> {
     const {
       parentProps,
       styleProps,
@@ -392,9 +392,9 @@ export class SimpleDiagramNode
       ruleTextStyleProps
     } = this.getPropsSources();
 
-    const accessor = new DynamicAccessor<NodeProps>();
+    const accessor = new DynamicAccessor<DiagramCraft.NodeProps>();
 
-    const dest: PropertyInfo<PropPathValue<NodeProps, T>> = [];
+    const dest: PropertyInfo<PropPathValue<DiagramCraft.NodeProps, T>> = [];
 
     if (defaultValue !== undefined) {
       dest.push({
@@ -403,14 +403,14 @@ export class SimpleDiagramNode
       });
     } else {
       dest.push({
-        val: nodeDefaults.get(path) as PropPathValue<NodeProps, T>,
+        val: nodeDefaults.get(path) as PropPathValue<DiagramCraft.NodeProps, T>,
         type: 'default'
       });
     }
 
     if (styleProps) {
       dest.push({
-        val: accessor.get(styleProps, path) as PropPathValue<NodeProps, T>,
+        val: accessor.get(styleProps, path) as PropPathValue<DiagramCraft.NodeProps, T>,
         type: 'style',
         id: this.metadata.style
       });
@@ -418,7 +418,7 @@ export class SimpleDiagramNode
 
     if (textStyleProps) {
       dest.push({
-        val: accessor.get(textStyleProps, path) as PropPathValue<NodeProps, T>,
+        val: accessor.get(textStyleProps, path) as PropPathValue<DiagramCraft.NodeProps, T>,
         type: 'textStyle',
         id: this.metadata.textStyle
       });
@@ -426,31 +426,34 @@ export class SimpleDiagramNode
 
     if (ruleStyleProps) {
       dest.push({
-        val: accessor.get(ruleStyleProps, path) as PropPathValue<NodeProps, T>,
+        val: accessor.get(ruleStyleProps, path) as PropPathValue<DiagramCraft.NodeProps, T>,
         type: 'ruleStyle'
       });
     }
 
     if (ruleTextStyleProps) {
       dest.push({
-        val: accessor.get(ruleTextStyleProps, path) as PropPathValue<NodeProps, T>,
+        val: accessor.get(ruleTextStyleProps, path) as PropPathValue<DiagramCraft.NodeProps, T>,
         type: 'ruleTextStyle'
       });
     }
 
     dest.push({
-      val: accessor.get(parentProps, path) as PropPathValue<NodeProps, T>,
+      val: accessor.get(parentProps, path) as PropPathValue<DiagramCraft.NodeProps, T>,
       type: 'parent'
     });
 
     dest.push({
-      val: accessor.get(this.#props.get() as NodeProps, path) as PropPathValue<NodeProps, T>,
+      val: accessor.get(this.#props.get() as DiagramCraft.NodeProps, path) as PropPathValue<
+        DiagramCraft.NodeProps,
+        T
+      >,
       type: 'stored'
     });
 
     for (const rp of ruleProps) {
       dest.push({
-        val: accessor.get(rp[1], path) as PropPathValue<NodeProps, T>,
+        val: accessor.get(rp[1], path) as PropPathValue<DiagramCraft.NodeProps, T>,
         type: 'rule',
         id: rp[0]
       });
@@ -466,7 +469,7 @@ export class SimpleDiagramNode
       this.metadata.textStyle
     )?.props;
 
-    const parentProps: Partial<NodeProps & EdgeProps> = deepClone(
+    const parentProps: Partial<DiagramCraft.NodeProps & DiagramCraft.EdgeProps> = deepClone(
       this._parent.get() && this.#props.get().capabilities?.inheritStyle
         ? // @ts-expect-error this.#parent.editProps cannot be properly typed
           makeWriteable(this._parent.get().editProps)
@@ -492,7 +495,7 @@ export class SimpleDiagramNode
       parentProps,
       styleProps,
       textStyleProps,
-      ruleProps: ruleProps as [string, NodeProps][],
+      ruleProps: ruleProps as [string, DiagramCraft.NodeProps][],
       ruleStyleProps,
       ruleTextStyleProps
     };
@@ -513,19 +516,19 @@ export class SimpleDiagramNode
     parentProps.debug = {};
 
     const consolidatedRulesProps = ruleProps.reduce(
-      (p, c) => deepMerge<NodeProps>({}, p, c[1]),
+      (p, c) => deepMerge<DiagramCraft.NodeProps>({}, p, c[1]),
       {}
     );
 
-    const propsForEditing = deepMerge<NodeProps>(
+    const propsForEditing = deepMerge<DiagramCraft.NodeProps>(
       {},
       styleProps ?? {},
       textStyleProps ?? {},
       ruleStyleProps,
       ruleTextStyleProps,
       parentProps,
-      this.#props.get() as NodeProps
-    ) as DeepRequired<NodeProps>;
+      this.#props.get() as DiagramCraft.NodeProps
+    ) as DeepRequired<DiagramCraft.NodeProps>;
 
     const propsForRendering = nodeDefaults.applyDefaults(
       deepMerge({}, propsForEditing, consolidatedRulesProps)
@@ -547,11 +550,11 @@ export class SimpleDiagramNode
   }
 
   get storedProps() {
-    return this.#props.get() as NodeProps;
+    return this.#props.get() as DiagramCraft.NodeProps;
   }
 
   get storedPropsCloned() {
-    return this.#props.getClone() as NodeProps;
+    return this.#props.getClone() as DiagramCraft.NodeProps;
   }
 
   get editProps(): NodePropsForEditing {
@@ -564,7 +567,7 @@ export class SimpleDiagramNode
       this._populatePropsCache().forRendering) as NodePropsForRendering;
   }
 
-  updateProps(callback: (props: NodeProps) => void, uow: UnitOfWork) {
+  updateProps(callback: (props: DiagramCraft.NodeProps) => void, uow: UnitOfWork) {
     this.crdt.get().transact(() => {
       uow.snapshot(this);
       this.#props.update(callback);
@@ -576,9 +579,9 @@ export class SimpleDiagramNode
     });
   }
 
-  updateCustomProps<K extends keyof CustomNodeProps>(
+  updateCustomProps<K extends keyof DiagramCraft.CustomNodeProps>(
     key: K,
-    callback: (props: NonNullable<CustomNodeProps[K]>) => void,
+    callback: (props: NonNullable<DiagramCraft.CustomNodeProps[K]>) => void,
     uow: UnitOfWork
   ) {
     this.updateProps(p => {
@@ -704,7 +707,7 @@ export class SimpleDiagramNode
       nodeType: this.nodeType,
       bounds: deepClone(this.bounds),
       props: this.#props.getClone(),
-      metadata: this._metadata.getClone() as ElementMetadata,
+      metadata: this._metadata.getClone() as DiagramCraft.ElementMetadata,
       children: this.children.map(c => c.id),
       edges: Object.fromEntries(
         Array.from(this.#edges.entries).map(([k, v]) => [k, v.map(e => ({ id: e }))])
@@ -715,7 +718,7 @@ export class SimpleDiagramNode
 
   restore(snapshot: DiagramNodeSnapshot, uow: UnitOfWork) {
     this.setBounds(snapshot.bounds, uow);
-    this.#props.set(snapshot.props as NodeProps);
+    this.#props.set(snapshot.props as DiagramCraft.NodeProps);
     this.#nodeType.set(snapshot.nodeType);
     this.#text.set(snapshot.texts);
     this.forceUpdateMetadata(snapshot.metadata);
@@ -768,8 +771,8 @@ export class SimpleDiagramNode
       this.nodeType,
       deepClone(this.bounds),
       this.layer,
-      this.#props.getClone() as NodeProps,
-      this._metadata.getClone() as ElementMetadata,
+      this.#props.getClone() as DiagramCraft.NodeProps,
+      this._metadata.getClone() as DiagramCraft.ElementMetadata,
       this.#text.getClone() as NodeTexts,
       deepClone(this.#anchors.get())
     );

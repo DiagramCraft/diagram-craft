@@ -18,7 +18,9 @@ import { ELEMENTS_CONTENT_TYPE } from '../clipboardConstants';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 declare global {
-  interface ActionMap extends ReturnType<typeof clipboardActions> {}
+  namespace DiagramCraft {
+    interface ActionMap extends ReturnType<typeof clipboardActions> {}
+  }
 }
 
 export const clipboardActions = (context: ActionContext) => ({

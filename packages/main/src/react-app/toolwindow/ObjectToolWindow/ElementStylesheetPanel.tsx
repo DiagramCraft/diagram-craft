@@ -54,7 +54,7 @@ export const ElementStylesheetPanel = (props: Props) => {
   const [dialogProps, setDialogProps] = useState<
     | undefined
     | {
-        props: NodeProps | EdgeProps;
+        props: DiagramCraft.NodeProps | DiagramCraft.EdgeProps;
         style: Stylesheet<'text'> | Stylesheet<'node'> | Stylesheet<'edge'>;
       }
   >(undefined);
@@ -145,7 +145,7 @@ export const ElementStylesheetPanel = (props: Props) => {
                       if (stylesheet) {
                         const commonProps = getCommonProps(
                           $d.selection.elements.map(e => e.editProps)
-                        ) as NodeProps & EdgeProps;
+                        ) as DiagramCraft.NodeProps & DiagramCraft.EdgeProps;
                         stylesheet.setProps(
                           isText ? { text: commonProps.text } : commonProps,
                           $d.document.styles,
@@ -173,7 +173,7 @@ export const ElementStylesheetPanel = (props: Props) => {
                             const id = newid();
                             const commonProps = getCommonProps(
                               $d.selection.elements.map(e => e.editProps)
-                            ) as NodeProps & EdgeProps;
+                            ) as DiagramCraft.NodeProps & DiagramCraft.EdgeProps;
                             const s = Stylesheet.fromSnapshot(
                               isText ? 'text' : isNode($d.selection.elements[0]) ? 'node' : 'edge',
                               {

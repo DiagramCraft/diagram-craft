@@ -27,10 +27,12 @@ import { xNum } from '@diagram-craft/utils/xml';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
 
 declare global {
-  interface CustomNodeProps {
-    drawio?: {
-      shape?: string;
-    };
+  namespace DiagramCraft {
+    interface CustomNodeProps {
+      drawio?: {
+        shape?: string;
+      };
+    }
   }
 }
 
@@ -303,7 +305,7 @@ class DrawioShapeComponent extends BaseNodeComponent {
     let style = cloneAsWriteable(props.nodeProps);
     let savedStyle = { style, strokeAlpha, strokeColor, fillAlpha, fillColor };
 
-    let currentShape: (p: NodeProps) => void = p => {
+    let currentShape: (p: DiagramCraft.NodeProps) => void = p => {
       return shapeBuilder.boundaryPath(boundary.all(), p);
     };
 
@@ -508,7 +510,7 @@ class DrawioShapeComponent extends BaseNodeComponent {
 
         if (pathBuilder.getPaths().all().length === 0) continue;
 
-        currentShape = (p: NodeProps) => {
+        currentShape = (p: DiagramCraft.NodeProps) => {
           shapeBuilder.path(pathBuilder.getPaths().all(), p);
         };
       } else {

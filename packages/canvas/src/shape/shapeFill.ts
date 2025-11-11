@@ -310,7 +310,7 @@ export const addFillComponents = (
   type: 'diagram' | 'node',
   id: string,
   fillType: FillType,
-  fill: DeepRequired<NodeProps>['fill'],
+  fill: DeepRequired<DiagramCraft.NodeProps>['fill'],
   diagram: Diagram,
   bounds: Omit<Box, 'r'>,
   style: Partial<CSSStyleDeclaration> = {},

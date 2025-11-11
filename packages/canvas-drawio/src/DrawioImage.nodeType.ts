@@ -10,20 +10,22 @@ import { Transforms } from '@diagram-craft/canvas/component/vdom-svg';
 import { HAlign, VAlign } from '@diagram-craft/model/diagramProps';
 
 declare global {
-  interface CustomNodeProps {
-    drawioImage?: {
-      imageWidth?: string;
-      imageHeight?: string;
-      imageAlign?: HAlign;
-      imageValign?: VAlign;
-      imageMargin?: number;
-      backgroundColor?: string;
-      stylename?: string;
-      keepAspect?: boolean;
-      flipV?: boolean;
-      flipH?: boolean;
-      showLabel?: boolean;
-    };
+  namespace DiagramCraft {
+    interface CustomNodeProps {
+      drawioImage?: {
+        imageWidth?: string;
+        imageHeight?: string;
+        imageAlign?: HAlign;
+        imageValign?: VAlign;
+        imageMargin?: number;
+        backgroundColor?: string;
+        stylename?: string;
+        keepAspect?: boolean;
+        flipV?: boolean;
+        flipH?: boolean;
+        showLabel?: boolean;
+      };
+    }
   }
 }
 

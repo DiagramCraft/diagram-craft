@@ -72,7 +72,7 @@ export abstract class AbstractEdgeDefinition implements EdgeDefinition {
       newid(),
       new AnchorEndpoint(element, anchor),
       edge.end,
-      deepClone(edge.editProps) as EdgeProps,
+      deepClone(edge.editProps) as DiagramCraft.EdgeProps,
       edge.metadataCloned,
       [],
       edge.layer

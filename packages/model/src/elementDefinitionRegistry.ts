@@ -112,34 +112,36 @@ if (typeof window !== 'undefined') {
 
 // TODO: Rename this to NodeTypeLoader
 declare global {
-  interface StencilLoaderOpts {}
+  namespace DiagramCraft {
+    interface StencilLoaderOpts {}
+  }
 }
 
-export type StencilLoader<T extends keyof StencilLoaderOpts> = (
+export type StencilLoader<T extends keyof DiagramCraft.StencilLoaderOpts> = (
   nodeDefinition: NodeDefinitionRegistry,
-  opts: StencilLoaderOpts[T]
+  opts: DiagramCraft.StencilLoaderOpts[T]
 ) => Promise<void>;
 
 export const stencilLoaderRegistry: Partial<{
-  [K in keyof StencilLoaderOpts]: () => Promise<StencilLoader<K>>;
+  [K in keyof DiagramCraft.StencilLoaderOpts]: () => Promise<StencilLoader<K>>;
 }> = {};
 
-type PreregistrationEntry<K extends keyof StencilLoaderOpts> = {
+type PreregistrationEntry<K extends keyof DiagramCraft.StencilLoaderOpts> = {
   type: K;
   shapes: RegExp;
-  opts: StencilLoaderOpts[K];
+  opts: DiagramCraft.StencilLoaderOpts[K];
 };
 
 export class NodeDefinitionRegistry {
   private nodes = new Map<string, NodeDefinition>();
-  private preRegistrations: Array<PreregistrationEntry<keyof StencilLoaderOpts>> = [];
+  private preRegistrations: Array<PreregistrationEntry<keyof DiagramCraft.StencilLoaderOpts>> = [];
 
   public stencilRegistry = new StencilRegistry();
 
-  preregister<K extends keyof StencilLoaderOpts>(
+  preregister<K extends keyof DiagramCraft.StencilLoaderOpts>(
     shapes: RegExp,
     type: K,
-    opts: StencilLoaderOpts[K]
+    opts: DiagramCraft.StencilLoaderOpts[K]
   ) {
     this.preRegistrations.push({ shapes, type, opts });
   }
@@ -228,11 +230,11 @@ export type MakeStencilNodeOpts = {
   aspectRatio?: number;
   size?: { w: number; h: number };
   props?: MakeStencilNodeOptsProps;
-  metadata?: ElementMetadata;
+  metadata?: DiagramCraft.ElementMetadata;
   texts?: NodeTexts;
 };
 
-export type MakeStencilNodeOptsProps = (t: 'picker' | 'canvas') => Partial<NodeProps>;
+export type MakeStencilNodeOptsProps = (t: 'picker' | 'canvas') => Partial<DiagramCraft.NodeProps>;
 
 export const makeStencilNode =
   (type: string | NodeDefinition, t: 'picker' | 'canvas', opts?: MakeStencilNodeOpts) =>

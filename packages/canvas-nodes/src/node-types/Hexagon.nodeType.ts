@@ -19,8 +19,10 @@ type ExtraProps = {
 };
 
 declare global {
-  interface CustomNodeProps {
-    hexagon?: ExtraProps;
+  namespace DiagramCraft {
+    interface CustomNodeProps {
+      hexagon?: ExtraProps;
+    }
   }
 }
 

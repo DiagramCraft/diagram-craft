@@ -5,7 +5,7 @@ import { useDiagram } from '../../../application';
 import { makeProperty } from './utils';
 
 export const NodeEffectsEditor: Editor = props => {
-  const $p = props.props as NodeProps;
+  const $p = props.props as DiagramCraft.NodeProps;
 
   const diagram = useDiagram();
 

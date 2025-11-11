@@ -11,7 +11,7 @@ const path = (id: string, rest: string): any => `indicators.${id}.${rest}`;
 
 export const NamedIndicatorEditor: Editor = props => {
   const [id, setId] = useState<string>('name');
-  const $p = props.props as NodeProps;
+  const $p = props.props as DiagramCraft.NodeProps;
 
   const onChange = () => {
     props.onChange();

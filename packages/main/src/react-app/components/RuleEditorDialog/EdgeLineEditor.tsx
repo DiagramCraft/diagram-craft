@@ -8,7 +8,7 @@ import { makeProperty } from './utils';
 export const EdgeLineEditor: Editor = props => {
   const $d = useDiagram();
   const $cfg = useConfiguration();
-  const $p = props.props as EdgeProps;
+  const $p = props.props as DiagramCraft.EdgeProps;
 
   const onChange = () => {
     props.onChange();

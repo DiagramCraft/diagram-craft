@@ -104,11 +104,11 @@ const elementToText = (element: DiagramElement, lines: string[], indent = '') =>
     let propsWithoutArrow: ElementProps = propsCloned;
 
     if (propsCloned) {
-      arrowNotation = propsToArrowNotation(propsCloned as EdgeProps);
+      arrowNotation = propsToArrowNotation(propsCloned as DiagramCraft.EdgeProps);
 
       if (arrowNotation) {
         // Remove arrow and stroke properties from props since they're in the notation
-        const cloned = deepClone(propsCloned) as DeepWriteable<EdgeProps>;
+        const cloned = deepClone(propsCloned) as DeepWriteable<DiagramCraft.EdgeProps>;
         delete cloned.arrow;
         if (cloned.stroke && Object.keys(cloned.stroke).length === 0) {
           delete cloned.stroke;

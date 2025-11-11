@@ -111,7 +111,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   readonly #id: CRDTProp<DiagramCRDT, 'id'>;
   readonly #parent: CRDTProp<DiagramCRDT, 'parent'>;
   readonly _: CRDTProp<DiagramCRDT, 'canvas'>;
-  readonly #props: CRDTObject<DiagramProps>;
+  readonly #props: CRDTObject<DiagramCraft.DiagramProps>;
   readonly #guides: CRDTMap<Record<string, Guide>>;
 
   readonly layers: LayerManager;
@@ -164,7 +164,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
       initialValue: initialCanvas
     });
 
-    this.#props = new CRDTObject<DiagramProps>(
+    this.#props = new CRDTObject<DiagramCraft.DiagramProps>(
       watch(this._crdt.get().get('props', () => document.root.factory.makeMap())!),
       () => this.emitDiagramChange('content')
     );
@@ -235,7 +235,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     return this.#props.get();
   }
 
-  updateProps(callback: (props: DiagramProps) => void) {
+  updateProps(callback: (props: DiagramCraft.DiagramProps) => void) {
     this.#props.update(callback);
     this.emitDiagramChange('content');
   }

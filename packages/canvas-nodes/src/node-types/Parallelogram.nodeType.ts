@@ -12,10 +12,12 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
 declare global {
-  interface CustomNodeProps {
-    parallelogram?: {
-      slant?: number;
-    };
+  namespace DiagramCraft {
+    interface CustomNodeProps {
+      parallelogram?: {
+        slant?: number;
+      };
+    }
   }
 }
 

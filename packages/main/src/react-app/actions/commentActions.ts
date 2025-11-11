@@ -18,7 +18,9 @@ export const commentActions = (application: Application) => ({
 });
 
 declare global {
-  interface ActionMap extends ReturnType<typeof commentActions> {}
+  namespace DiagramCraft {
+    interface ActionMap extends ReturnType<typeof commentActions> {}
+  }
 }
 
 class CommentAddAction extends AbstractSelectionAction<Application, { elementId: string }> {

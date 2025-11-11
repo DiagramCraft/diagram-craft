@@ -4,7 +4,7 @@ import { EdgeEffectsPanelForm } from '../../toolwindow/ObjectToolWindow/EdgeEffe
 import { makeProperty } from './utils';
 
 export const EdgeEffectsEditor: Editor = props => {
-  const $p = props.props as EdgeProps;
+  const $p = props.props as DiagramCraft.EdgeProps;
 
   const onChange = () => {
     props.onChange();

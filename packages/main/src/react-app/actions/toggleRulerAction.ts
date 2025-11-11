@@ -2,7 +2,9 @@ import { AbstractToggleAction, ActionContext, ActionCriteria } from '@diagram-cr
 import { UserState } from '../../UserState';
 
 declare global {
-  interface ActionMap extends ReturnType<typeof toggleRulerActions> {}
+  namespace DiagramCraft {
+    interface ActionMap extends ReturnType<typeof toggleRulerActions> {}
+  }
 }
 
 export const toggleRulerActions = (context: ActionContext) => ({
@@ -10,7 +12,6 @@ export const toggleRulerActions = (context: ActionContext) => ({
 });
 
 export class ToggleRulerAction extends AbstractToggleAction {
-
   getStateCriteria() {
     return ActionCriteria.EventTriggered(UserState.get(), 'change', () => {
       return UserState.get().showRulers ?? true;

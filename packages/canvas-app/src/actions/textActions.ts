@@ -7,7 +7,9 @@ import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSe
 import { htmlStringToMarkdown, markdownToHTML } from '@diagram-craft/markdown';
 
 declare global {
-  interface ActionMap extends ReturnType<typeof textActions> {}
+  namespace DiagramCraft {
+    interface ActionMap extends ReturnType<typeof textActions> {}
+  }
 }
 
 export const textActions = (context: Application) => ({

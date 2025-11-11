@@ -5,13 +5,11 @@ import type { Context } from './context';
 
 declare global {
   namespace DiagramCraft {
-    namespace Extensions {
-      interface Tools {}
-    }
+    interface Tools {}
   }
 }
 
-export interface Tools extends DiagramCraft.Extensions.Tools {}
+export interface Tools extends DiagramCraft.Tools {}
 
 export type ToolType = keyof Tools;
 

@@ -17,7 +17,9 @@ export const ruleLayerActions = (application: Application) => ({
 });
 
 declare global {
-  interface ActionMap extends ReturnType<typeof ruleLayerActions> {}
+  namespace DiagramCraft {
+    interface ActionMap extends ReturnType<typeof ruleLayerActions> {}
+  }
 }
 
 type LayerActionArg = { id?: string };

@@ -31,7 +31,7 @@ function getValue<T>(value: TypeOrPropsFn<T>, props: NodePropsForRendering): T {
 
 type TextConfig = {
   id: string;
-  text?: NodeProps['text'];
+  text?: DiagramCraft.NodeProps['text'];
   bounds?: Box;
 };
 
@@ -45,23 +45,25 @@ type FlexShapeNodeDefinitionConfig<T extends ShapeNodeDefinition> = {
     nodeType?: TypeOrPropsFn<string>;
     bounds?: TypeOrPropsFn<Box>;
     offset?: TypeOrPropsFn<Omit<Box, 'r'>>;
-    props?: TypeOrPropsFn<NodeProps>;
+    props?: TypeOrPropsFn<DiagramCraft.NodeProps>;
     text?: TypeOrPropsFn<TextConfig>;
   }>;
 };
 
 declare global {
-  interface CustomNodeProps {
-    flex?: {
-      components?: Array<{
-        id: string;
-        nodeType?: string | null;
-        bounds?: Box | null;
-        offset?: Omit<Box, 'r'> | null;
-        props?: NodeProps | null;
-        text?: TextConfig | null;
-      }> | null;
-    };
+  namespace DiagramCraft {
+    interface CustomNodeProps {
+      flex?: {
+        components?: Array<{
+          id: string;
+          nodeType?: string | null;
+          bounds?: Box | null;
+          offset?: Omit<Box, 'r'> | null;
+          props?: NodeProps | null;
+          text?: TextConfig | null;
+        }> | null;
+      };
+    }
   }
 }
 

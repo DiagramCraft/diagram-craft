@@ -127,7 +127,7 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
         // Update props
         if (parsedElement.props) {
           existingElement.updateProps(props => {
-            deepMerge(props, parsedElement.props as Partial<NodeProps>);
+            deepMerge(props, parsedElement.props as Partial<DiagramCraft.NodeProps>);
           }, uow);
         }
 
@@ -165,7 +165,7 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
         // Update edge props
         if (parsedElement.props) {
           existingElement.updateProps(props => {
-            deepMerge(props, parsedElement.props as Partial<EdgeProps>);
+            deepMerge(props, parsedElement.props as Partial<DiagramCraft.EdgeProps>);
           }, uow);
         }
 
@@ -236,7 +236,7 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
         }
 
         const props: NodePropsForEditing = {};
-        const metadata: ElementMetadata = {};
+        const metadata: DiagramCraft.ElementMetadata = {};
 
         if (parsedElement.props) Object.assign(props, parsedElement.props);
         if (parsedElement.metadata) Object.assign(metadata, parsedElement.metadata);
@@ -275,7 +275,7 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
       } else if (parsedElement.type === 'edge') {
         // Create new edge
         const props: EdgePropsForEditing = {};
-        const metadata: ElementMetadata = {};
+        const metadata: DiagramCraft.ElementMetadata = {};
 
         // Apply props
         if (parsedElement.props) {

@@ -4,7 +4,7 @@ import { makeProperty } from './utils';
 import { NodeAdvancedPropertiesPanelForm } from '../../toolwindow/ObjectToolWindow/NodeAdvancedPropertiesPanel';
 
 export const NodeAdvancedPropertiesEditor: Editor = props => {
-  const $p = props.props as NodeProps;
+  const $p = props.props as DiagramCraft.NodeProps;
 
   const onChange = () => {
     props.onChange();

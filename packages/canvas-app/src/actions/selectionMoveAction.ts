@@ -7,7 +7,9 @@ import { ActionContext } from '@diagram-craft/canvas/action';
 import { transformElements } from '@diagram-craft/model/diagramElement';
 
 declare global {
-  interface ActionMap extends ReturnType<typeof selectionMoveActions> {}
+  namespace DiagramCraft {
+    interface ActionMap extends ReturnType<typeof selectionMoveActions> {}
+  }
 }
 
 export const selectionMoveActions = (context: ActionContext) => {

@@ -7,7 +7,9 @@ import { smallest } from '@diagram-craft/utils/array';
 import { Point } from '@diagram-craft/geometry/point';
 
 declare global {
-  interface ActionMap extends ReturnType<typeof waypointDeleteActions> {}
+  namespace DiagramCraft {
+    interface ActionMap extends ReturnType<typeof waypointDeleteActions> {}
+  }
 }
 
 export const waypointDeleteActions = (context: ActionContext) => ({

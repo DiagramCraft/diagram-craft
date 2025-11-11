@@ -17,7 +17,9 @@ export const groupActions = (context: ActionContext) => ({
 });
 
 declare global {
-  interface ActionMap extends ReturnType<typeof groupActions> {}
+  namespace DiagramCraft {
+    interface ActionMap extends ReturnType<typeof groupActions> {}
+  }
 }
 
 class UndoableGroupAction implements UndoableAction {

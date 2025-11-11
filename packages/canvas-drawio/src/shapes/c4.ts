@@ -16,8 +16,8 @@ export const registerC4Shapes = async (r: NodeDefinitionRegistry) => {
           nodeType: 'rounded-rect',
           bounds: { x: 0, y: 0, w: 1, h: 1, r: 0 },
           offset: { x: 0, y: 60, w: 0, h: -60 },
-          props: (p): NodeProps => ({
-            ...(p as NodeProps),
+          props: (p): DiagramCraft.NodeProps => ({
+            ...(p as DiagramCraft.NodeProps),
             custom: {
               roundedRect: {
                 radius: 40
@@ -35,8 +35,8 @@ export const registerC4Shapes = async (r: NodeDefinitionRegistry) => {
           nodeType: 'circle',
           bounds: { x: 0.5, y: 0, w: 0, h: 0, r: 0 },
           offset: { x: -40, y: 0, h: 80, w: 80 },
-          props: (p): NodeProps => ({
-            ...(p as NodeProps),
+          props: (p): DiagramCraft.NodeProps => ({
+            ...(p as DiagramCraft.NodeProps),
             text: {}
           })
         }
@@ -56,8 +56,8 @@ export const registerC4Shapes = async (r: NodeDefinitionRegistry) => {
           nodeType: 'rounded-rect',
           bounds: { x: 0, y: 0, w: 1, h: 1, r: 0 },
           offset: { x: 0, y: 0, w: 0, h: 0 },
-          props: (p): NodeProps => ({
-            ...(p as NodeProps),
+          props: (p): DiagramCraft.NodeProps => ({
+            ...(p as DiagramCraft.NodeProps),
             fill: {
               enabled: true,
               type: 'solid',
@@ -70,8 +70,8 @@ export const registerC4Shapes = async (r: NodeDefinitionRegistry) => {
           nodeType: 'rounded-rect',
           bounds: { x: 0, y: 0, w: 1, h: 0, r: 0 },
           offset: { x: 5, y: 5, w: -60, h: 12 },
-          props: (p): NodeProps => ({
-            ...(p as NodeProps),
+          props: (p): DiagramCraft.NodeProps => ({
+            ...(p as DiagramCraft.NodeProps),
             custom: {
               roundedRect: {
                 radius: 4
@@ -88,8 +88,8 @@ export const registerC4Shapes = async (r: NodeDefinitionRegistry) => {
           nodeType: 'rounded-rect',
           bounds: { x: 1, y: 0, w: 0, h: 0, r: 0 },
           offset: { x: -50, y: 5, w: 12, h: 12 },
-          props: (p): NodeProps => ({
-            ...(p as NodeProps),
+          props: (p): DiagramCraft.NodeProps => ({
+            ...(p as DiagramCraft.NodeProps),
             custom: {
               roundedRect: {
                 radius: 4
@@ -106,8 +106,8 @@ export const registerC4Shapes = async (r: NodeDefinitionRegistry) => {
           nodeType: 'rounded-rect',
           bounds: { x: 1, y: 0, w: 0, h: 0, r: 0 },
           offset: { x: -34, y: 5, w: 12, h: 12 },
-          props: (p): NodeProps => ({
-            ...(p as NodeProps),
+          props: (p): DiagramCraft.NodeProps => ({
+            ...(p as DiagramCraft.NodeProps),
             custom: {
               roundedRect: {
                 radius: 4
@@ -124,8 +124,8 @@ export const registerC4Shapes = async (r: NodeDefinitionRegistry) => {
           nodeType: 'rounded-rect',
           bounds: { x: 1, y: 0, w: 0, h: 0, r: 0 },
           offset: { x: -17, y: 5, w: 12, h: 12 },
-          props: (p): NodeProps => ({
-            ...(p as NodeProps),
+          props: (p): DiagramCraft.NodeProps => ({
+            ...(p as DiagramCraft.NodeProps),
             custom: {
               roundedRect: {
                 radius: 4
@@ -145,8 +145,8 @@ export const registerC4Shapes = async (r: NodeDefinitionRegistry) => {
           text: {
             id: '1'
           },
-          props: (p): NodeProps => ({
-            ...(p as NodeProps),
+          props: (p): DiagramCraft.NodeProps => ({
+            ...(p as DiagramCraft.NodeProps),
             custom: {
               roundedRect: {
                 radius: 8

@@ -10,10 +10,8 @@ import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 
 declare global {
   namespace DiagramCraft {
-    namespace Extensions {
-      interface Tools {
-        node: NodeTool;
-      }
+    interface Tools {
+      node: NodeTool;
     }
   }
 }

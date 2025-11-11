@@ -46,14 +46,16 @@ function assertIsGapTypeOrUndefined(
 }
 
 declare global {
-  interface CustomNodeProps {
-    container?: {
-      containerResize?: ContainerResize;
-      childResize?: ChildResize;
-      layout?: LayoutType;
-      gap?: number;
-      gapType?: GapType;
-    };
+  namespace DiagramCraft {
+    interface CustomNodeProps {
+      container?: {
+        containerResize?: ContainerResize;
+        childResize?: ChildResize;
+        layout?: LayoutType;
+        gap?: number;
+        gapType?: GapType;
+      };
+    }
   }
 }
 

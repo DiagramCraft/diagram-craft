@@ -11,7 +11,7 @@ export type AdjustmentRule = {
 export type AdjustmentRuleAction = { id: string } & (
   | {
       type: 'set-props';
-      props: ElementProps;
+      props: DiagramCraft.ElementProps;
       // where?: 'before' | 'after';
     }
   | {
@@ -27,7 +27,7 @@ export type AdjustmentRuleAction = { id: string } & (
 );
 
 export type Adjustment = {
-  props: NodeProps | EdgeProps;
+  props: DiagramCraft.NodeProps | DiagramCraft.EdgeProps;
   textStyle?: string;
   elementStyle?: string;
 };

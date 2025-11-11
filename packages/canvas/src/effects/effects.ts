@@ -14,12 +14,14 @@ import type { ArrowShape } from '../arrowShapes';
 import { EffectsRegistry } from '@diagram-craft/model/effect';
 
 declare global {
-  interface Effect {
-    getSVGFilter?: (props: NodePropsForRendering) => VNode[];
-    getCSSFilter?: (props: NodePropsForRendering) => string;
-    getExtraSVGElements?: (node: DiagramNode, shapeNodes: VNode[]) => VNode[];
-    getPathRenderer?: () => PathRenderer;
-    getArrowPath?: (id: string, arrow: ArrowShape) => string;
+  namespace DiagramCraft {
+    interface Effect {
+      getSVGFilter?: (props: NodePropsForRendering) => VNode[];
+      getCSSFilter?: (props: NodePropsForRendering) => string;
+      getExtraSVGElements?: (node: DiagramNode, shapeNodes: VNode[]) => VNode[];
+      getPathRenderer?: () => PathRenderer;
+      getArrowPath?: (id: string, arrow: ArrowShape) => string;
+    }
   }
 }
 

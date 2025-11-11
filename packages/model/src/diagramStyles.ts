@@ -19,9 +19,9 @@ import { MappedCRDTMap } from '@diagram-craft/collaboration/datatypes/mapped/map
 
 export type StylesheetType = 'node' | 'edge' | 'text';
 
-type TextStyleProps = { text: Omit<NodeProps['text'], 'text' | 'style'> };
-type NodeStyleProps = Omit<NodeProps, 'name' | 'text' | 'data' | 'style'>;
-type EdgeStyleProps = Omit<EdgeProps, 'name' | 'text' | 'data' | 'style'>;
+type TextStyleProps = { text: Omit<DiagramCraft.NodeProps['text'], 'text' | 'style'> };
+type NodeStyleProps = Omit<DiagramCraft.NodeProps, 'name' | 'text' | 'data' | 'style'>;
+type EdgeStyleProps = Omit<DiagramCraft.EdgeProps, 'name' | 'text' | 'data' | 'style'>;
 
 type TypeMap = {
   node: NodeStyleProps;
@@ -64,7 +64,10 @@ export class Stylesheet<T extends StylesheetType, P = TypeMap[T]>
 
   setProps(props: Partial<P>, manager: DiagramStyles, uow: UnitOfWork): void {
     uow.snapshot(this);
-    this.crdt.set('props', this.cleanProps(props) as NodeProps | EdgeProps);
+    this.crdt.set(
+      'props',
+      this.cleanProps(props) as DiagramCraft.NodeProps | DiagramCraft.EdgeProps
+    );
     uow.updateElement(this);
     manager.emit('stylesheetUpdated', { stylesheet: this });
   }
@@ -95,7 +98,7 @@ export class Stylesheet<T extends StylesheetType, P = TypeMap[T]>
       _snapshotType: 'stylesheet',
       id: this.id,
       name: this.name,
-      props: deepClone(this.props) as NodeProps | EdgeProps,
+      props: deepClone(this.props) as DiagramCraft.NodeProps | DiagramCraft.EdgeProps,
       type: this.type
     };
   }
@@ -107,18 +110,18 @@ export class Stylesheet<T extends StylesheetType, P = TypeMap[T]>
 
   private cleanProps(props: Partial<P>): Partial<P> {
     if (this.type === 'edge') {
-      const p = deepClone(props) as NodeProps;
+      const p = deepClone(props) as DiagramCraft.NodeProps;
       delete p.text;
       return p as P;
     } else if (this.type === 'text') {
-      const p = deepClone(props) as NodeProps;
+      const p = deepClone(props) as DiagramCraft.NodeProps;
       // TODO: Not sure why this is needed?
       /*if (p.text && Object.keys(p.text).length === 0) {
         delete p.text;
       }*/
       return { text: p.text } as P;
     } else {
-      const p = deepClone(props) as NodeProps;
+      const p = deepClone(props) as DiagramCraft.NodeProps;
       delete p.text;
       return p as P;
     }
@@ -216,9 +219,11 @@ export const isSelectionDirty = ($d: Diagram, isText: boolean) => {
 };
 
 declare global {
-  interface AdditionalCRDTCompatibleInnerObjects {
-    nodeProps: NodeProps;
-    edgeProps: EdgeProps;
+  namespace DiagramCraft {
+    interface AdditionalCRDTCompatibleInnerObjects {
+      nodeProps: NodeProps;
+      edgeProps: EdgeProps;
+    }
   }
 }
 
@@ -374,7 +379,7 @@ export class DiagramStyles extends EventEmitter<DiagramStylesEvents> {
       }
 
       if (resetLocalProps) {
-        el.updateProps((props: NodeProps & EdgeProps) => {
+        el.updateProps((props: DiagramCraft.NodeProps & DiagramCraft.EdgeProps) => {
           const shapeToClear = stylesheet.getPropsFromElement(el);
 
           // For custom properties, we keep all custom properties that are
@@ -494,9 +499,9 @@ export class DiagramStyles extends EventEmitter<DiagramStylesEvents> {
     stylesheet: Stylesheet<StylesheetType>,
     uow: UnitOfWork
   ) {
-    el.updateProps((props: NodeProps & EdgeProps) => {
+    el.updateProps((props: DiagramCraft.NodeProps & DiagramCraft.EdgeProps) => {
       Object.keys(stylesheet.props).forEach(key => {
-        const validKey = key as keyof (NodeProps | EdgeStyleProps);
+        const validKey = key as keyof (DiagramCraft.NodeProps | EdgeStyleProps);
         // @ts-expect-error
         props[validKey] = deepMerge({}, props[validKey], stylesheet.props[validKey]);
       });

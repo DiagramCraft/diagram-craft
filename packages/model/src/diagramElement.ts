@@ -66,13 +66,16 @@ export interface DiagramElement {
   readonly dataForTemplate: FlatObject;
   readonly editProps: ElementPropsForEditing;
   readonly renderProps: ElementPropsForRendering;
-  readonly storedProps: ElementProps;
+  readonly storedProps: DiagramCraft.ElementProps;
 
-  getPropsInfo<T extends PropPath<ElementProps>>(
+  getPropsInfo<T extends PropPath<DiagramCraft.ElementProps>>(
     path: T
-  ): PropertyInfo<PropPathValue<ElementProps, T>>;
+  ): PropertyInfo<PropPathValue<DiagramCraft.ElementProps, T>>;
 
-  updateProps(callback: (props: NodeProps | EdgeProps) => void, uow: UnitOfWork): void;
+  updateProps(
+    callback: (props: DiagramCraft.NodeProps | DiagramCraft.EdgeProps) => void,
+    uow: UnitOfWork
+  ): void;
 
   snapshot(): Snapshot;
   restore(snapshot: Snapshot, uow: UnitOfWork): void;
@@ -92,9 +95,9 @@ export interface DiagramElement {
   readonly parent: DiagramElement | undefined;
   _setParent(parent: DiagramElement | undefined): void;
 
-  readonly metadata: ElementMetadata;
-  readonly metadataCloned: ElementMetadata;
-  updateMetadata(callback: (props: ElementMetadata) => void, uow: UnitOfWork): void;
+  readonly metadata: DiagramCraft.ElementMetadata;
+  readonly metadataCloned: DiagramCraft.ElementMetadata;
+  updateMetadata(callback: (props: DiagramCraft.ElementMetadata) => void, uow: UnitOfWork): void;
 
   readonly tags: ReadonlyArray<string>;
   setTags(tags: ReadonlyArray<string>, uow: UnitOfWork): void;
@@ -128,7 +131,7 @@ export abstract class AbstractDiagramElement implements DiagramElement, Attachme
   private _cache: Map<CacheKeys, unknown> | undefined = undefined;
 
   // Shared properties
-  protected readonly _metadata: CRDTObject<ElementMetadata>;
+  protected readonly _metadata: CRDTObject<DiagramCraft.ElementMetadata>;
   protected readonly _children: MappedCRDTOrderedMap<DiagramElement, DiagramElementCRDT>;
   protected readonly _parent: MappedCRDTProp<
     DiagramElementCRDT,
@@ -198,7 +201,7 @@ export abstract class AbstractDiagramElement implements DiagramElement, Attachme
       [this._crdt] as const
     );
 
-    this._metadata = new CRDTObject<ElementMetadata>(metadataMap, () => {
+    this._metadata = new CRDTObject<DiagramCraft.ElementMetadata>(metadataMap, () => {
       this.invalidate(UnitOfWork.immediate(this._diagram));
       this._diagram.emit('elementChange', { element: this });
       this.clearCache();
@@ -223,13 +226,16 @@ export abstract class AbstractDiagramElement implements DiagramElement, Attachme
   abstract readonly dataForTemplate: FlatObject;
   abstract editProps: ElementPropsForEditing;
   abstract renderProps: ElementPropsForRendering;
-  abstract storedProps: ElementProps;
+  abstract storedProps: DiagramCraft.ElementProps;
 
-  abstract getPropsInfo<T extends PropPath<ElementProps>>(
+  abstract getPropsInfo<T extends PropPath<DiagramCraft.ElementProps>>(
     path: T
-  ): PropertyInfo<PropPathValue<ElementProps, T>>;
+  ): PropertyInfo<PropPathValue<DiagramCraft.ElementProps, T>>;
 
-  abstract updateProps(callback: (props: NodeProps | EdgeProps) => void, uow: UnitOfWork): void;
+  abstract updateProps(
+    callback: (props: DiagramCraft.NodeProps | DiagramCraft.EdgeProps) => void,
+    uow: UnitOfWork
+  ): void;
 
   abstract snapshot(): Snapshot;
   abstract restore(snapshot: Snapshot, uow: UnitOfWork): void;
@@ -293,20 +299,20 @@ export abstract class AbstractDiagramElement implements DiagramElement, Attachme
   /* Metadata ************************************************************************************************ */
 
   get metadata() {
-    return (this._metadata.get() ?? {}) as ElementMetadata;
+    return (this._metadata.get() ?? {}) as DiagramCraft.ElementMetadata;
   }
 
   get metadataCloned() {
-    return this._metadata.getClone() as ElementMetadata;
+    return this._metadata.getClone() as DiagramCraft.ElementMetadata;
   }
 
-  protected forceUpdateMetadata(metadata: ElementMetadata) {
+  protected forceUpdateMetadata(metadata: DiagramCraft.ElementMetadata) {
     this._metadata.set(metadata);
   }
 
-  updateMetadata(callback: (props: ElementMetadata) => void, uow: UnitOfWork) {
+  updateMetadata(callback: (props: DiagramCraft.ElementMetadata) => void, uow: UnitOfWork) {
     uow.snapshot(this);
-    const metadata = this._metadata.getClone() as ElementMetadata;
+    const metadata = this._metadata.getClone() as DiagramCraft.ElementMetadata;
     callback(metadata);
     this._metadata.set(metadata);
     uow.updateElement(this);
@@ -531,9 +537,11 @@ export const isEdge = (e: DiagramElement | undefined): e is DiagramEdge =>
   !!e && (e.type === 'edge' || e.type === 'delegating-edge');
 
 declare global {
-  interface AssertTypeExtensions {
-    node: (e: DiagramElement) => asserts e is DiagramNode;
-    edge: (e: DiagramElement) => asserts e is DiagramEdge;
+  namespace DiagramCraft {
+    interface AssertTypeExtensions {
+      node: (e: DiagramElement) => asserts e is DiagramNode;
+      edge: (e: DiagramElement) => asserts e is DiagramEdge;
+    }
   }
 }
 

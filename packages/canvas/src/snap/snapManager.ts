@@ -66,8 +66,10 @@ export type SnapManagerConfig = {
 };
 
 declare global {
-  interface DiagramProps {
-    snap?: SnapManagerConfig;
+  namespace DiagramCraft {
+    interface DiagramProps {
+      snap?: SnapManagerConfig;
+    }
   }
 }
 

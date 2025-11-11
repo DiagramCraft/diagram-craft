@@ -490,7 +490,7 @@ class Parser {
     let from: string | undefined;
     let to: string | undefined;
     let label: string | undefined;
-    let arrowNotationProps: Partial<EdgeProps> | undefined;
+    let arrowNotationProps: Partial<DiagramCraft.EdgeProps> | undefined;
 
     // Optional: from -> to (must be before newline or brace)
     // IDs can be either ID or STRING tokens (for quoted IDs with spaces)
@@ -586,15 +586,15 @@ class Parser {
    * Explicit props take precedence over arrow notation props
    */
   private mergeProps(
-    arrowNotationProps: Partial<EdgeProps>,
-    explicitProps?: Partial<NodeProps | EdgeProps>
-  ): Partial<EdgeProps> {
+    arrowNotationProps: Partial<DiagramCraft.EdgeProps>,
+    explicitProps?: Partial<DiagramCraft.NodeProps | DiagramCraft.EdgeProps>
+  ): Partial<DiagramCraft.EdgeProps> {
     if (!explicitProps) {
       return arrowNotationProps;
     }
 
     // Deep merge props - explicit props override arrow notation props
-    const merged: Partial<EdgeProps> = { ...arrowNotationProps };
+    const merged: Partial<DiagramCraft.EdgeProps> = { ...arrowNotationProps };
 
     // Handle stroke properties
     if (explicitProps.stroke) {
@@ -630,8 +630,8 @@ class Parser {
   }
 
   private parseBody(): {
-    props?: Partial<NodeProps | EdgeProps>;
-    metadata?: Partial<ElementMetadata>;
+    props?: Partial<DiagramCraft.NodeProps | DiagramCraft.EdgeProps>;
+    metadata?: Partial<DiagramCraft.ElementMetadata>;
     stylesheet?: string;
     textStylesheet?: string;
     children?: ParsedElement[];
@@ -647,8 +647,8 @@ class Parser {
       };
     }
 
-    let props: Partial<NodeProps | EdgeProps> | undefined;
-    let metadata: Partial<ElementMetadata> | undefined;
+    let props: Partial<DiagramCraft.NodeProps | DiagramCraft.EdgeProps> | undefined;
+    let metadata: Partial<DiagramCraft.ElementMetadata> | undefined;
     let stylesheet: string | undefined;
     let textStylesheet: string | undefined;
     const children: ParsedElement[] = [];

@@ -20,7 +20,7 @@ export const ElementFactory = {
     start: Endpoint,
     end: Endpoint,
     props: EdgePropsForEditing,
-    metadata: ElementMetadata,
+    metadata: DiagramCraft.ElementMetadata,
     midpoints: ReadonlyArray<Waypoint>,
     layer: RegularLayer | ModificationLayer
   ) {
@@ -49,7 +49,7 @@ export const ElementFactory = {
     bounds: Box,
     layer: RegularLayer | ModificationLayer,
     props: NodePropsForEditing,
-    metadata: ElementMetadata,
+    metadata: DiagramCraft.ElementMetadata,
     text: NodeTexts = { text: '' },
     anchorCache?: ReadonlyArray<Anchor>
   ) {

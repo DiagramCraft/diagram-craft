@@ -32,30 +32,32 @@ const CTRL = 'C-';
 const META = 'M-';
 const SHIFT = 'S-';
 
-export type KeyMap = Partial<Record<KeyBinding, keyof ActionMap>>;
+export type KeyMap = Partial<Record<KeyBinding, keyof DiagramCraft.ActionMap>>;
 
 declare global {
-  interface ActionMap
-    // biome-ignore lint/suspicious/noExplicitAny: false positive
-    extends Record<string, (Action<any> | ToggleAction<any>) & EventEmitter<ActionEvents>> {}
+  namespace DiagramCraft {
+    interface ActionMap
+      // biome-ignore lint/suspicious/noExplicitAny: false positive
+      extends Record<string, (Action<any> | ToggleAction<any>) & EventEmitter<ActionEvents>> {}
+  }
 }
 
 export type Actions = {
-  actionMap: Partial<ActionMap>;
+  actionMap: Partial<DiagramCraft.ActionMap>;
   keyMap: KeyMap;
 };
 
 export type ActionMapFactory<A extends ActionContext = ActionContext> = (
   context: A
-) => Partial<ActionMap>;
+) => Partial<DiagramCraft.ActionMap>;
 
-export type ActionName = keyof ActionMap & string;
+export type ActionName = keyof DiagramCraft.ActionMap & string;
 
 export const makeActionMap = <K extends ActionContext>(
   ...factories: ActionMapFactory<K>[]
 ): ActionMapFactory<K> => {
   return (context: K) => {
-    const actions: Partial<ActionMap> = {};
+    const actions: Partial<DiagramCraft.ActionMap> = {};
     for (const factory of factories) {
       Object.assign(actions, factory(context));
     }
@@ -73,7 +75,7 @@ export const makeActionMap = <K extends ActionContext>(
 const findAction = (
   e: KeyboardEvent,
   keyMap: KeyMap,
-  actionMap: Partial<ActionMap>
+  actionMap: Partial<DiagramCraft.ActionMap>
 ): Action<unknown> | undefined => {
   const actionKey: KeyBinding = `${e.altKey ? ALT : ''}${e.ctrlKey ? CTRL : ''}${e.metaKey ? META : ''}${
     e.shiftKey ? SHIFT : ''
@@ -86,7 +88,7 @@ export const findAndExecuteAction = (
   e: KeyboardEvent,
   actionArg: Pick<BaseActionArgs, 'point'>,
   keyMap: KeyMap,
-  actionMap: Partial<ActionMap>
+  actionMap: Partial<DiagramCraft.ActionMap>
 ): boolean => {
   const target: HTMLElement = e.target as HTMLElement;
 
@@ -107,7 +109,10 @@ export const findAndExecuteAction = (
   return true;
 };
 
-export const findKeyBindingsForAction = (action: keyof ActionMap, keyMap: KeyMap): KeyBinding[] => {
+export const findKeyBindingsForAction = (
+  action: keyof DiagramCraft.ActionMap,
+  keyMap: KeyMap
+): KeyBinding[] => {
   return Object.entries(keyMap)
     .filter(([, a]) => a === action)
     .map(([k]) => k as KeyBinding);

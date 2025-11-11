@@ -37,7 +37,7 @@ export interface Context {
   ui: UIActions;
   help: Help;
   tool: Observable<ToolType>;
-  actions: Partial<ActionMap>;
+  actions: Partial<DiagramCraft.ActionMap>;
   marquee: Marquee;
 }
 
@@ -71,7 +71,7 @@ export class MessageDialogCommand implements DialogCommand<MessageDialogProps, E
 }
 
 export namespace UIActions {
-  export interface ContextMenus extends DiagramCraft.Extensions.ContextMenus {
+  export interface ContextMenus extends DiagramCraft.ContextMenus {
     canvas: object;
     selection: object;
   }
@@ -87,8 +87,6 @@ export type ContextMenuTarget<
 
 declare global {
   namespace DiagramCraft {
-    namespace Extensions {
-      interface ContextMenus {}
-    }
+    interface ContextMenus {}
   }
 }

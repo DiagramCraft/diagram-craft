@@ -21,7 +21,7 @@ const withPx = (n?: number) => (n ? `${n}px` : undefined);
 export type ShapeTextProps = {
   id: string;
   metadata: DeepReadonly<FlatObject> | undefined;
-  textProps: NodeProps['text'];
+  textProps: DiagramCraft.NodeProps['text'];
   text: string;
   bounds: Box;
   onMouseDown: (e: MouseEvent) => void;

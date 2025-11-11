@@ -22,7 +22,9 @@ export const createNavigateNodeActions = (context: ActionContext) => {
 };
 
 declare global {
-  interface ActionMap extends ReturnType<typeof createNavigateNodeActions> {}
+  namespace DiagramCraft {
+    interface ActionMap extends ReturnType<typeof createNavigateNodeActions> {}
+  }
 }
 
 export class NavigateNodeAction extends AbstractSelectionAction {

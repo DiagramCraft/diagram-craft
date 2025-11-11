@@ -16,10 +16,8 @@ import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 declare global {
   namespace DiagramCraft {
-    namespace Extensions {
-      interface Tools {
-        freehand: FreehandTool;
-      }
+    interface Tools {
+      freehand: FreehandTool;
     }
   }
 }
