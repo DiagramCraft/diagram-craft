@@ -19,7 +19,7 @@ export const commentActions = (application: Application) => ({
 
 declare global {
   namespace DiagramCraft {
-    interface ActionMap extends ReturnType<typeof commentActions> {}
+    interface ActionMapExtensions extends ReturnType<typeof commentActions> {}
   }
 }
 

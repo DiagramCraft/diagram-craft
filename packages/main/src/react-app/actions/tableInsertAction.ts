@@ -14,7 +14,7 @@ export const tableInsertActions = (application: Application) => ({
 
 declare global {
   namespace DiagramCraft {
-    interface ActionMap extends ReturnType<typeof tableInsertActions> {}
+    interface ActionMapExtensions extends ReturnType<typeof tableInsertActions> {}
   }
 }
 

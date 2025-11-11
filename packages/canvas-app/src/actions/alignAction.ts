@@ -7,7 +7,7 @@ import { ActionContext } from '@diagram-craft/canvas/action';
 
 declare global {
   namespace DiagramCraft {
-    interface ActionMap extends ReturnType<typeof alignActions> {}
+    interface ActionMapExtensions extends ReturnType<typeof alignActions> {}
   }
 }
 

@@ -11,7 +11,7 @@ export const exportActions = (context: ActionContext) => ({
 
 declare global {
   namespace DiagramCraft {
-    interface ActionMap extends ReturnType<typeof exportActions> {}
+    interface ActionMapExtensions extends ReturnType<typeof exportActions> {}
   }
 }
 

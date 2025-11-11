@@ -19,7 +19,7 @@ import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 declare global {
   namespace DiagramCraft {
-    interface ActionMap extends ReturnType<typeof clipboardActions> {}
+    interface ActionMapExtensions extends ReturnType<typeof clipboardActions> {}
   }
 }
 

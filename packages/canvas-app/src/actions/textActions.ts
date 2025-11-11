@@ -8,7 +8,7 @@ import { htmlStringToMarkdown, markdownToHTML } from '@diagram-craft/markdown';
 
 declare global {
   namespace DiagramCraft {
-    interface ActionMap extends ReturnType<typeof textActions> {}
+    interface ActionMapExtensions extends ReturnType<typeof textActions> {}
   }
 }
 

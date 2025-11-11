@@ -15,7 +15,7 @@ export const fileSaveActions = (application: Application) =>
 
 declare global {
   namespace DiagramCraft {
-    interface ActionMap extends ReturnType<typeof fileSaveActions> {}
+    interface ActionMapExtensions extends ReturnType<typeof fileSaveActions> {}
   }
 }
 

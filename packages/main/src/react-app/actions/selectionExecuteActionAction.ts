@@ -12,7 +12,7 @@ import { isEmptyString } from '@diagram-craft/utils/strings';
 
 declare global {
   namespace DiagramCraft {
-    interface ActionMap extends ReturnType<typeof selectionExecuteActionActions> {}
+    interface ActionMapExtensions extends ReturnType<typeof selectionExecuteActionActions> {}
   }
 }
 

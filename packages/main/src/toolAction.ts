@@ -14,7 +14,7 @@ export const toolActions = (context: Application) => ({
 
 declare global {
   namespace DiagramCraft {
-    interface ActionMap extends ReturnType<typeof toolActions> {}
+    interface ActionMapExtensions extends ReturnType<typeof toolActions> {}
   }
 }
 

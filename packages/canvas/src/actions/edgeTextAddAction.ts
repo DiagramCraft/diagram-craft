@@ -10,7 +10,7 @@ import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 declare global {
   namespace DiagramCraft {
-    interface ActionMap extends ReturnType<typeof edgeTextAddActions> {}
+    interface ActionMapExtensions extends ReturnType<typeof edgeTextAddActions> {}
   }
 }
 

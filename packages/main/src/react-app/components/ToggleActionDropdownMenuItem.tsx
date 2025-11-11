@@ -5,10 +5,11 @@ import { useRedraw } from '../hooks/useRedraw';
 import { ToggleAction } from '@diagram-craft/canvas/action';
 import { findKeyBindingsForAction, formatKeyBinding } from '@diagram-craft/canvas/keyMap';
 import { useApplication } from '../../application';
+import type { ActionMap } from '@diagram-craft/canvas/actions/action';
 
 export function ToggleActionDropdownMenuItem<
-  K extends keyof DiagramCraft.ActionMap,
-  P = Parameters<DiagramCraft.ActionMap[K]['execute']>[0]
+  K extends keyof ActionMap,
+  P = Parameters<ActionMap[K]['execute']>[0]
 >(props: Props<K, P>) {
   const redraw = useRedraw();
   const application = useApplication();
@@ -38,10 +39,7 @@ export function ToggleActionDropdownMenuItem<
   );
 }
 
-type Props<
-  K extends keyof DiagramCraft.ActionMap,
-  P = Parameters<DiagramCraft.ActionMap[K]['execute']>[0]
-> = {
+type Props<K extends keyof ActionMap, P = Parameters<ActionMap[K]['execute']>[0]> = {
   action: K;
   children: React.ReactNode;
 } & (P extends undefined ? { arg?: never } : { arg: P });

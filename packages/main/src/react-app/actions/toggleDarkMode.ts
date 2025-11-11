@@ -2,7 +2,7 @@ import { AbstractToggleAction, ActionContext } from '@diagram-craft/canvas/actio
 
 declare global {
   namespace DiagramCraft {
-    interface ActionMap extends ReturnType<typeof toggleDarkModeActions> {}
+    interface ActionMapExtensions extends ReturnType<typeof toggleDarkModeActions> {}
   }
 }
 

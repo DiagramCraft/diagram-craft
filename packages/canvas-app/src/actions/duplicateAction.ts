@@ -18,7 +18,7 @@ import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 declare global {
   namespace DiagramCraft {
-    interface ActionMap extends ReturnType<typeof duplicateActions> {}
+    interface ActionMapExtensions extends ReturnType<typeof duplicateActions> {}
   }
 }
 

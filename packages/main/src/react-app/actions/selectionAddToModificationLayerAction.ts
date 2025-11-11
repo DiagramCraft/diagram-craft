@@ -16,7 +16,8 @@ import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 
 declare global {
   namespace DiagramCraft {
-    interface ActionMap extends ReturnType<typeof selectionAddToModificationLayerActions> {}
+    interface ActionMapExtensions
+      extends ReturnType<typeof selectionAddToModificationLayerActions> {}
   }
 }
 

@@ -9,7 +9,7 @@ import type { EdgeProps, NodeProps } from '@diagram-craft/model/diagramProps';
 
 declare global {
   namespace DiagramCraft {
-    interface ActionMap extends ReturnType<typeof styleCopyActions> {}
+    interface ActionMapExtensions extends ReturnType<typeof styleCopyActions> {}
   }
 }
 

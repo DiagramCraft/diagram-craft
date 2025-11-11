@@ -11,7 +11,7 @@ import { assert } from '@diagram-craft/utils/assert';
 
 declare global {
   namespace DiagramCraft {
-    interface ActionMap extends ReturnType<typeof tableActions> {}
+    interface ActionMapExtensions extends ReturnType<typeof tableActions> {}
   }
 }
 

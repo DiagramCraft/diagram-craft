@@ -2,9 +2,10 @@ import * as ReactToolbar from '@radix-ui/react-toolbar';
 import React, { useState } from 'react';
 import { ToggleAction } from '@diagram-craft/canvas/action';
 import { useApplication } from '../../application';
+import type { ActionMap } from '@diagram-craft/canvas/actions/action';
 
 type ActionToggleGroupContextType = {
-  setActionState(action: keyof DiagramCraft.ActionMap, state: boolean): void;
+  setActionState(action: keyof ActionMap, state: boolean): void;
 };
 
 export const ActionToggleGroupContext = React.createContext<
@@ -19,7 +20,7 @@ export const ActionToggleGroup = (props: Props) => {
   return (
     <ActionToggleGroupContext.Provider
       value={{
-        setActionState(action: keyof DiagramCraft.ActionMap, state: boolean) {
+        setActionState(action: keyof ActionMap, state: boolean) {
           if (state) {
             if (!values[action]) {
               setValues({ ...values, [action]: true });
@@ -40,9 +41,9 @@ export const ActionToggleGroup = (props: Props) => {
         onValueChange={value => {
           for (const action of Object.keys(values)) {
             if (value.includes(action) && !values[action]) {
-              (actionMap[action as keyof DiagramCraft.ActionMap] as ToggleAction).execute({});
+              (actionMap[action as keyof ActionMap] as ToggleAction).execute({});
             } else if (!value.includes(action) && values[action]) {
-              (actionMap[action as keyof DiagramCraft.ActionMap] as ToggleAction).execute({});
+              (actionMap[action as keyof ActionMap] as ToggleAction).execute({});
             }
           }
         }}

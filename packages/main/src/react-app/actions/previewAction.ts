@@ -3,7 +3,7 @@ import { AbstractAction } from '@diagram-craft/canvas/action';
 
 declare global {
   namespace DiagramCraft {
-    interface ActionMap extends ReturnType<typeof previewActions> {}
+    interface ActionMapExtensions extends ReturnType<typeof previewActions> {}
   }
 }
 

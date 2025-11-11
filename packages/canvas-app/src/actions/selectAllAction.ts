@@ -2,7 +2,7 @@ import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
 
 declare global {
   namespace DiagramCraft {
-    interface ActionMap extends ReturnType<typeof selectAllActions> {}
+    interface ActionMapExtensions extends ReturnType<typeof selectAllActions> {}
   }
 }
 

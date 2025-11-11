@@ -18,7 +18,7 @@ export const groupActions = (context: ActionContext) => ({
 
 declare global {
   namespace DiagramCraft {
-    interface ActionMap extends ReturnType<typeof groupActions> {}
+    interface ActionMapExtensions extends ReturnType<typeof groupActions> {}
   }
 }
 

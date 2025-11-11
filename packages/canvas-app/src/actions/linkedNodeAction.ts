@@ -21,7 +21,7 @@ export const createLinkedNodeActions = (context: ActionContext) => {
 
 declare global {
   namespace DiagramCraft {
-    interface ActionMap extends ReturnType<typeof createLinkedNodeActions> {}
+    interface ActionMapExtensions extends ReturnType<typeof createLinkedNodeActions> {}
   }
 }
 

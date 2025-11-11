@@ -5,7 +5,7 @@ import { Point } from '@diagram-craft/geometry/point';
 
 declare global {
   namespace DiagramCraft {
-    interface ActionMap extends ReturnType<typeof waypointAddActions> {}
+    interface ActionMapExtensions extends ReturnType<typeof waypointAddActions> {}
   }
 }
 

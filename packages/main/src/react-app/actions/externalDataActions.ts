@@ -34,7 +34,7 @@ export const externalDataActions = (application: Application) => ({
 
 declare global {
   namespace DiagramCraft {
-    interface ActionMap extends ReturnType<typeof externalDataActions> {}
+    interface ActionMapExtensions extends ReturnType<typeof externalDataActions> {}
   }
 }
 

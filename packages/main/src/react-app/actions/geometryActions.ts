@@ -22,7 +22,7 @@ import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 declare global {
   namespace DiagramCraft {
-    interface ActionMap extends ReturnType<typeof geometryActions> {}
+    interface ActionMapExtensions extends ReturnType<typeof geometryActions> {}
   }
 }
 

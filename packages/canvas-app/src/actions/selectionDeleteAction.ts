@@ -6,7 +6,7 @@ import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 declare global {
   namespace DiagramCraft {
-    interface ActionMap extends ReturnType<typeof selectionDeleteActions> {}
+    interface ActionMapExtensions extends ReturnType<typeof selectionDeleteActions> {}
   }
 }
 

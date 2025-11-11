@@ -3,10 +3,11 @@ import { useEventListener } from '../hooks/useEventListener';
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
 import { Tooltip } from '@diagram-craft/app-components/Tooltip';
 import { useApplication } from '../../application';
+import type { ActionMap } from '@diagram-craft/canvas/actions/action';
 
 export function ActionToolbarButton<
-  K extends keyof DiagramCraft.ActionMap,
-  P = Parameters<DiagramCraft.ActionMap[K]['execute']>[0]
+  K extends keyof ActionMap,
+  P = Parameters<ActionMap[K]['execute']>[0]
 >(props: Props<K, P>) {
   const application = useApplication();
   const actionMap = application.actions;
@@ -38,10 +39,7 @@ export function ActionToolbarButton<
   );
 }
 
-type Props<
-  K extends keyof DiagramCraft.ActionMap,
-  P = Parameters<DiagramCraft.ActionMap[K]['execute']>[0]
-> = {
+type Props<K extends keyof ActionMap, P = Parameters<ActionMap[K]['execute']>[0]> = {
   action: K;
   children: React.ReactNode;
 } & (P extends undefined ? { arg?: never } : { arg: P });

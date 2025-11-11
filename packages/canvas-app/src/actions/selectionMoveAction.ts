@@ -8,7 +8,7 @@ import { transformElements } from '@diagram-craft/model/diagramElement';
 
 declare global {
   namespace DiagramCraft {
-    interface ActionMap extends ReturnType<typeof selectionMoveActions> {}
+    interface ActionMapExtensions extends ReturnType<typeof selectionMoveActions> {}
   }
 }
 

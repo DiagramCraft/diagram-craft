@@ -14,7 +14,7 @@ export const fileOpenActions = (application: Application) =>
 
 declare global {
   namespace DiagramCraft {
-    interface ActionMap extends ReturnType<typeof fileOpenActions> {}
+    interface ActionMapExtensions extends ReturnType<typeof fileOpenActions> {}
   }
 }
 

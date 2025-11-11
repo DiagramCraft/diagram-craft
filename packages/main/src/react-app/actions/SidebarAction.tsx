@@ -3,7 +3,7 @@ import { UserState } from '../../UserState';
 
 declare global {
   namespace DiagramCraft {
-    interface ActionMap extends ReturnType<typeof sidebarActions> {}
+    interface ActionMapExtensions extends ReturnType<typeof sidebarActions> {}
   }
 }
 

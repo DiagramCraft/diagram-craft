@@ -8,7 +8,7 @@ import { Point } from '@diagram-craft/geometry/point';
 
 declare global {
   namespace DiagramCraft {
-    interface ActionMap extends ReturnType<typeof waypointDeleteActions> {}
+    interface ActionMapExtensions extends ReturnType<typeof waypointDeleteActions> {}
   }
 }
 

@@ -13,7 +13,7 @@ export const imageInsertActions = (application: Application) => ({
 
 declare global {
   namespace DiagramCraft {
-    interface ActionMap extends ReturnType<typeof imageInsertActions> {}
+    interface ActionMapExtensions extends ReturnType<typeof imageInsertActions> {}
   }
 }
 

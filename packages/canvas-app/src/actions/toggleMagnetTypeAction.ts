@@ -4,7 +4,7 @@ import { DEFAULT_SNAP_CONFIG, getSnapConfig } from '@diagram-craft/canvas/snap/s
 
 declare global {
   namespace DiagramCraft {
-    interface ActionMap extends ReturnType<typeof toggleMagnetTypeActions> {}
+    interface ActionMapExtensions extends ReturnType<typeof toggleMagnetTypeActions> {}
   }
 }
 

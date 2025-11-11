@@ -2,7 +2,7 @@ import { AbstractAction, ActionContext, ActionCriteria } from '@diagram-craft/ca
 
 declare global {
   namespace DiagramCraft {
-    interface ActionMap extends ReturnType<typeof undoActions> {}
+    interface ActionMapExtensions extends ReturnType<typeof undoActions> {}
   }
 }
 
