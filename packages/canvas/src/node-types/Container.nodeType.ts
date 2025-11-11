@@ -47,7 +47,7 @@ function assertIsGapTypeOrUndefined(
 
 declare global {
   namespace DiagramCraft {
-    interface CustomNodeProps {
+    interface CustomNodePropsExtensions {
       container?: {
         containerResize?: ContainerResize;
         childResize?: ChildResize;

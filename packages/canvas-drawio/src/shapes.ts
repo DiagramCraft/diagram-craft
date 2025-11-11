@@ -16,13 +16,11 @@ import { StyleManager } from './styleManager';
 import { parseNum } from '@diagram-craft/utils/number';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
+import type { WithRequired } from '@diagram-craft/utils/types';
 
 const makeShape = (
   type: string,
-  setProps: (
-    s: StyleManager,
-    p: NodeProps & { custom: DiagramCraft.CustomNodeProps }
-  ) => void = () => {}
+  setProps: (s: StyleManager, p: WithRequired<NodeProps, 'custom'>) => void = () => {}
 ) => {
   return async (
     id: string,
@@ -34,7 +32,7 @@ const makeShape = (
     layer: RegularLayer
   ) => {
     props.custom ??= {};
-    setProps(style, props as NodeProps & { custom: DiagramCraft.CustomNodeProps });
+    setProps(style, props as WithRequired<NodeProps, 'custom'>);
     return ElementFactory.node(id, type, bounds, layer, props, metadata, texts);
   };
 };

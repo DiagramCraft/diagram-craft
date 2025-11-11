@@ -26,7 +26,7 @@ import { MappedCRDTProp } from '@diagram-craft/collaboration/datatypes/mapped/ma
 import { CRDTProp } from '@diagram-craft/collaboration/datatypes/crdtProp';
 import type { CRDTMap, FlatCRDTMap } from '@diagram-craft/collaboration/crdt';
 import type { LabelNode } from './labelNode';
-import type { ElementMetadata, NodeProps } from './diagramProps';
+import type { CustomNodeProps, ElementMetadata, NodeProps } from './diagramProps';
 
 export type DelegatingDiagramNodeCRDT = DiagramElementCRDT & {
   bounds: Box;
@@ -153,9 +153,9 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
     this.clearCache();
   }
 
-  updateCustomProps<K extends keyof DiagramCraft.CustomNodeProps>(
+  updateCustomProps<K extends keyof CustomNodeProps>(
     key: K,
-    callback: (props: NonNullable<DiagramCraft.CustomNodeProps[K]>) => void,
+    callback: (props: NonNullable<CustomNodeProps[K]>) => void,
     uow: UnitOfWork
   ): void {
     this.updateProps(p => {

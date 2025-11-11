@@ -132,3 +132,12 @@ export type NOrMoreElementArray<
       ? [...D, ...T[]]
       : NOrMoreElementArray<T, L, [T, ...D]>
   : never;
+
+/**
+ * Makes specific properties of a type required by removing the optional modifier
+ * from the specified keys.
+ *
+ * @template T - The base type
+ * @template K - The keys to make required
+ */
+export type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };

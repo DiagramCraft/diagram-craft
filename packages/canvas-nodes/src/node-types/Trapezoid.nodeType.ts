@@ -4,7 +4,7 @@ import {
   BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
-import { PathListBuilder, fromUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
+import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -13,7 +13,7 @@ import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinition
 
 declare global {
   namespace DiagramCraft {
-    interface CustomNodeProps {
+    interface CustomNodePropsExtensions {
       trapezoid?: {
         slantLeft?: number;
         slantRight?: number;

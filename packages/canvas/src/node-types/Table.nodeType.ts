@@ -1,6 +1,6 @@
 import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../components/BaseNodeComponent';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
-import { PathListBuilder, PathBuilderHelper } from '@diagram-craft/geometry/pathListBuilder';
+import { PathBuilderHelper, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -19,7 +19,7 @@ import type { Diagram } from '@diagram-craft/model/diagram';
 
 declare global {
   namespace DiagramCraft {
-    interface CustomNodeProps {
+    interface CustomNodePropsExtensions {
       table?: {
         gap?: number;
         horizontalBorder?: boolean;

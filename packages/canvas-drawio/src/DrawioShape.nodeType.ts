@@ -9,8 +9,7 @@ import {
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { Box } from '@diagram-craft/geometry/box';
 import { Extent } from '@diagram-craft/geometry/extent';
-import { deepClone } from '@diagram-craft/utils/object';
-import { cloneAsWriteable } from '@diagram-craft/utils/object';
+import { cloneAsWriteable, deepClone } from '@diagram-craft/utils/object';
 import { Anchor } from '@diagram-craft/model/anchor';
 import {
   assertHAlign,
@@ -29,7 +28,7 @@ import { TransformFactory } from '@diagram-craft/geometry/transform';
 
 declare global {
   namespace DiagramCraft {
-    interface CustomNodeProps {
+    interface CustomNodePropsExtensions {
       drawio?: {
         shape?: string;
       };

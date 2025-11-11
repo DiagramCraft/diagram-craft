@@ -16,7 +16,7 @@ import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 declare global {
   namespace DiagramCraft {
-    interface CustomNodeProps {
+    interface CustomNodePropsExtensions {
       umlLifeline?: {
         participant?: string;
       };

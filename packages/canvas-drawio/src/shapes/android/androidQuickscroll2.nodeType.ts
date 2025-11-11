@@ -9,7 +9,7 @@ const THUMB = { w: 6, h: 20 };
 
 declare global {
   namespace DiagramCraft {
-    interface CustomNodeProps {
+    interface CustomNodePropsExtensions {
       androidQuickscroll2?: {
         dy?: number;
       };

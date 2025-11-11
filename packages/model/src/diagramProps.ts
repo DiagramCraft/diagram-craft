@@ -165,13 +165,16 @@ export interface EdgeProps extends ElementProps {
     end?: number;
   };
 
-  custom?: DiagramCraft.CustomEdgeProps;
+  custom?: CustomEdgeProps;
 
   effects?: ElementEffectProps & {
     marchingAnts?: boolean;
     marchingAntsSpeed?: number;
   };
 }
+
+export interface CustomEdgeProps extends DiagramCraft.CustomEdgePropsExtensions {}
+export interface CustomNodeProps extends DiagramCraft.CustomNodePropsExtensions {}
 
 export interface NodeProps extends ElementProps {
   action?: {
@@ -258,7 +261,7 @@ export interface NodeProps extends ElementProps {
     constraint?: 'none' | Direction;
   };
 
-  custom?: DiagramCraft.CustomNodeProps;
+  custom?: CustomNodeProps;
 }
 
 export interface DiagramProps extends DiagramCraft.DiagramPropsExtensions {
@@ -280,9 +283,8 @@ export interface DiagramProps extends DiagramCraft.DiagramPropsExtensions {
 declare global {
   namespace DiagramCraft {
     interface DiagramPropsExtensions {}
-
-    interface CustomNodeProps {}
-    interface CustomEdgeProps {}
+    interface CustomNodePropsExtensions {}
+    interface CustomEdgePropsExtensions {}
   }
 }
 

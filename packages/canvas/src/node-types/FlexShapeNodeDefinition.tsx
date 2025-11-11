@@ -53,7 +53,7 @@ type FlexShapeNodeDefinitionConfig<T extends ShapeNodeDefinition> = {
 
 declare global {
   namespace DiagramCraft {
-    interface CustomNodeProps {
+    interface CustomNodePropsExtensions {
       flex?: {
         components?: Array<{
           id: string;

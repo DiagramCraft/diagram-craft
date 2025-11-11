@@ -22,7 +22,7 @@ type ExtraProps = {
 
 declare global {
   namespace DiagramCraft {
-    interface CustomNodeProps {
+    interface CustomNodePropsExtensions {
       umlModule?: ExtraProps;
     }
   }

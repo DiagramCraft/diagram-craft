@@ -55,7 +55,7 @@ import type { CRDTMapper } from '@diagram-craft/collaboration/datatypes/mapped/t
 import { CRDTProp } from '@diagram-craft/collaboration/datatypes/crdtProp';
 import { MappedCRDTProp } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtProp';
 import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
-import type { EdgeProps, ElementMetadata } from './diagramProps';
+import type { CustomEdgeProps, EdgeProps, ElementMetadata } from './diagramProps';
 
 const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
   endpoint instanceof ConnectedEndpoint;
@@ -149,9 +149,9 @@ export interface DiagramEdge extends DiagramElement {
   readonly editProps: DeepReadonly<EdgePropsForEditing>;
   readonly renderProps: DeepReadonly<EdgePropsForRendering>;
   updateProps(callback: (props: EdgeProps) => void, uow: UnitOfWork): void;
-  updateCustomProps<K extends keyof DiagramCraft.CustomEdgeProps>(
+  updateCustomProps<K extends keyof CustomEdgeProps>(
     key: K,
-    callback: (props: NonNullable<DiagramCraft.CustomEdgeProps[K]>) => void,
+    callback: (props: NonNullable<CustomEdgeProps[K]>) => void,
     uow: UnitOfWork
   ): void;
   inferControlPoints(i: number): ControlPoints;
@@ -427,9 +427,9 @@ export class SimpleDiagramEdge
     this.clearCache();
   }
 
-  updateCustomProps<K extends keyof DiagramCraft.CustomEdgeProps>(
+  updateCustomProps<K extends keyof CustomEdgeProps>(
     key: K,
-    callback: (props: NonNullable<DiagramCraft.CustomEdgeProps[K]>) => void,
+    callback: (props: NonNullable<CustomEdgeProps[K]>) => void,
     uow: UnitOfWork
   ) {
     this.updateProps(p => {

@@ -52,7 +52,7 @@ import { MappedCRDTProp } from '@diagram-craft/collaboration/datatypes/mapped/ma
 import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
 import type { LabelNode } from './labelNode';
 import { EffectsRegistry } from './effect';
-import type { EdgeProps, ElementMetadata, NodeProps } from './diagramProps';
+import type { CustomNodeProps, EdgeProps, ElementMetadata, NodeProps } from './diagramProps';
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;
@@ -159,9 +159,9 @@ export interface DiagramNode extends DiagramElement {
   readonly editProps: NodePropsForEditing;
   readonly renderProps: NodePropsForRendering;
   updateProps(callback: (props: NodeProps) => void, uow: UnitOfWork): void;
-  updateCustomProps<K extends keyof DiagramCraft.CustomNodeProps>(
+  updateCustomProps<K extends keyof CustomNodeProps>(
     key: K,
-    callback: (props: NonNullable<DiagramCraft.CustomNodeProps[K]>) => void,
+    callback: (props: NonNullable<CustomNodeProps[K]>) => void,
     uow: UnitOfWork
   ): void;
   readonly dataForTemplate: FlatObject;
@@ -577,9 +577,9 @@ export class SimpleDiagramNode
     });
   }
 
-  updateCustomProps<K extends keyof DiagramCraft.CustomNodeProps>(
+  updateCustomProps<K extends keyof CustomNodeProps>(
     key: K,
-    callback: (props: NonNullable<DiagramCraft.CustomNodeProps[K]>) => void,
+    callback: (props: NonNullable<CustomNodeProps[K]>) => void,
     uow: UnitOfWork
   ) {
     this.updateProps(p => {

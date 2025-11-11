@@ -26,7 +26,7 @@ type ExtraProps = {
 
 declare global {
   namespace DiagramCraft {
-    interface CustomEdgeProps {
+    interface CustomEdgePropsExtensions {
       blockArrow?: ExtraProps;
     }
   }

@@ -5,7 +5,13 @@ import type { EdgePropsForRendering } from './diagramEdge';
 import type { ElementPropsForRendering } from './diagramElement';
 import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { assert } from '@diagram-craft/utils/assert';
-import type { EdgeProps, ElementProps, NodeProps } from './diagramProps';
+import type {
+  CustomEdgeProps,
+  CustomNodeProps,
+  EdgeProps,
+  ElementProps,
+  NodeProps
+} from './diagramProps';
 
 /** @namespace */
 export const DiagramDefaultsPrivate = {
@@ -412,20 +418,20 @@ elementDefaults.addPattern('indicators.*', {
   offset: 10
 });
 
-export function registerCustomNodeDefaults<K extends keyof DiagramCraft.CustomNodeProps>(
+export function registerCustomNodeDefaults<K extends keyof CustomNodeProps>(
   k: K,
-  v: DeepRequired<DiagramCraft.CustomNodeProps[K]>
+  v: DeepRequired<CustomNodeProps[K]>
 ) {
   nodeDefaults.add(`custom.${k}`, v as PropPathValue<NodeProps, `custom.${K}`>);
 
-  return (d?: DiagramCraft.CustomNodeProps[K]) => deepMerge({}, v, d ?? undefined);
+  return (d?: CustomNodeProps[K]) => deepMerge({}, v, d ?? undefined);
 }
 
-export function registerCustomEdgeDefaults<K extends keyof DiagramCraft.CustomEdgeProps>(
+export function registerCustomEdgeDefaults<K extends keyof CustomEdgeProps>(
   k: K,
-  v: DeepRequired<DiagramCraft.CustomEdgeProps[K]>
+  v: DeepRequired<CustomEdgeProps[K]>
 ) {
   edgeDefaults.add(`custom.${k}`, v as PropPathValue<EdgeProps, `custom.${K}`>);
 
-  return (d?: DiagramCraft.CustomEdgeProps[K]) => deepMerge({}, v, d ?? {});
+  return (d?: CustomEdgeProps[K]) => deepMerge({}, v, d ?? {});
 }

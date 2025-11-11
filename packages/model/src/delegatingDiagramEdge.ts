@@ -27,7 +27,7 @@ import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
 import { MappedCRDTProp } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtProp';
 import { CRDTProp } from '@diagram-craft/collaboration/datatypes/crdtProp';
 import type { CRDTMap } from '@diagram-craft/collaboration/crdt';
-import type { EdgeProps, ElementMetadata } from './diagramProps';
+import type { CustomEdgeProps, EdgeProps, ElementMetadata } from './diagramProps';
 
 export type DiagramEdgeSnapshot = SerializedEdge & {
   _snapshotType: 'edge';
@@ -177,9 +177,9 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
     this.clearCache();
   }
 
-  updateCustomProps<K extends keyof DiagramCraft.CustomEdgeProps>(
+  updateCustomProps<K extends keyof CustomEdgeProps>(
     key: K,
-    callback: (props: NonNullable<DiagramCraft.CustomEdgeProps[K]>) => void,
+    callback: (props: NonNullable<CustomEdgeProps[K]>) => void,
     uow: UnitOfWork
   ): void {
     this.updateProps(p => {

@@ -17,7 +17,7 @@ import { Zoom } from '../components/zoom';
 
 declare global {
   namespace DiagramCraft {
-    interface CustomNodeProps {
+    interface CustomNodePropsExtensions {
       genericPath?: {
         path?: string;
       };
