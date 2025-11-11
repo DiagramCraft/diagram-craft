@@ -261,25 +261,25 @@ export interface NodeProps extends ElementProps {
   custom?: DiagramCraft.CustomNodeProps;
 }
 
+export interface DiagramProps extends DiagramCraft.DiagramPropsExtensions {
+  background?: NodeProps['fill'];
+  grid?: {
+    enabled?: boolean;
+    size?: number;
+    majorCount?: number;
+    color?: string;
+    majorColor?: string;
+    type?: GridType;
+    majorType?: GridType;
+  };
+  guides?: {
+    enabled?: boolean;
+  };
+}
+
 declare global {
   namespace DiagramCraft {
-    interface DiagramProps {
-      background?: NodeProps['fill'];
-      grid?: {
-        enabled?: boolean;
-        size?: number;
-        majorCount?: number;
-        color?: string;
-        majorColor?: string;
-        type?: GridType;
-        majorType?: GridType;
-      };
-      guides?: {
-        enabled?: boolean;
-      };
-    }
-
-    // TODO: Move from global namespace
+    interface DiagramPropsExtensions {}
 
     interface CustomNodeProps {}
     interface CustomEdgeProps {}

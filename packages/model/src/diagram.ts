@@ -26,6 +26,7 @@ import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
 import { type DiagramBounds, DEFAULT_CANVAS } from './diagramBounds';
 import type { Guide } from './guides';
 import { SpatialIndex } from './spatialIndex';
+import type { DiagramProps } from './diagramProps';
 
 export type DiagramIteratorOpts = {
   nest?: boolean;
@@ -111,7 +112,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   readonly #id: CRDTProp<DiagramCRDT, 'id'>;
   readonly #parent: CRDTProp<DiagramCRDT, 'parent'>;
   readonly _: CRDTProp<DiagramCRDT, 'canvas'>;
-  readonly #props: CRDTObject<DiagramCraft.DiagramProps>;
+  readonly #props: CRDTObject<DiagramProps>;
   readonly #guides: CRDTMap<Record<string, Guide>>;
 
   readonly layers: LayerManager;
@@ -164,7 +165,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
       initialValue: initialCanvas
     });
 
-    this.#props = new CRDTObject<DiagramCraft.DiagramProps>(
+    this.#props = new CRDTObject<DiagramProps>(
       watch(this._crdt.get().get('props', () => document.root.factory.makeMap())!),
       () => this.emitDiagramChange('content')
     );
@@ -235,7 +236,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     return this.#props.get();
   }
 
-  updateProps(callback: (props: DiagramCraft.DiagramProps) => void) {
+  updateProps(callback: (props: DiagramProps) => void) {
     this.#props.update(callback);
     this.emitDiagramChange('content');
   }

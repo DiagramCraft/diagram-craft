@@ -19,34 +19,37 @@ import {
   nodeDefaults
 } from '@diagram-craft/model/diagramDefaults';
 import type {
+  DiagramProps,
   EdgeProps,
   ElementMetadata,
   ElementProps,
   NodeProps
 } from '@diagram-craft/model/diagramProps';
 
-export const useDiagramProperty: PropertyHook<Diagram, DiagramCraft.DiagramProps> =
-  makePropertyHook<Diagram, DiagramCraft.DiagramProps>(
-    diagram => diagram.props,
-    (diagram, callback) => diagram.updateProps(callback),
-    (diagram, handler) => {
-      useEventListener(diagram, 'diagramChange', handler);
-    },
-    {
-      onAfterSet: (diagram, path, oldValue, newValue) => {
-        diagram.undoManager.add(
-          new PropertyUndoableAction<Diagram>(
-            diagram.props,
-            path,
-            oldValue,
-            newValue,
-            `Change diagram ${path}`,
-            () => diagram.emitDiagramChange('content')
-          )
-        );
-      }
+export const useDiagramProperty: PropertyHook<Diagram, DiagramProps> = makePropertyHook<
+  Diagram,
+  DiagramProps
+>(
+  diagram => diagram.props,
+  (diagram, callback) => diagram.updateProps(callback),
+  (diagram, handler) => {
+    useEventListener(diagram, 'diagramChange', handler);
+  },
+  {
+    onAfterSet: (diagram, path, oldValue, newValue) => {
+      diagram.undoManager.add(
+        new PropertyUndoableAction<Diagram>(
+          diagram.props,
+          path,
+          oldValue,
+          newValue,
+          `Change diagram ${path}`,
+          () => diagram.emitDiagramChange('content')
+        )
+      );
     }
-  );
+  }
+);
 
 export const useEdgeProperty: PropertyArrayHook<Diagram, EdgeProps> = makePropertyArrayHook<
   Diagram,
