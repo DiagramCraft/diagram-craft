@@ -9,7 +9,7 @@ import { toRegularStencil } from './drawioStencilUtils';
 
 declare global {
   namespace DiagramCraft {
-    interface StencilLoaderOpts {
+    interface StencilLoaderOptsExtensions {
       drawioManual: {
         callback: () => Promise<(def: NodeDefinitionRegistry) => Promise<void>>;
       };

@@ -1,7 +1,10 @@
 import { fileLoaderRegistry } from '@diagram-craft/canvas-app/loaders';
 import { assert } from '@diagram-craft/utils/assert';
 import type { Autosave } from './react-app/autosave/Autosave';
-import type { stencilLoaderRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
+import type {
+  StencilLoaderOpts,
+  stencilLoaderRegistry
+} from '@diagram-craft/model/elementDefinitionRegistry';
 
 /**
  * Main application configuration type that defines all configurable aspects of the application.
@@ -126,15 +129,13 @@ export type AppConfig = {
   };
 };
 
-type StencilRegistryConfigEntry<K extends keyof DiagramCraft.StencilLoaderOpts> = {
+type StencilRegistryConfigEntry<K extends keyof StencilLoaderOpts> = {
   type: K;
   shapes?: RegExp;
-  opts: DiagramCraft.StencilLoaderOpts[K];
+  opts: StencilLoaderOpts[K];
 };
 
-export type StencilRegistryConfig = Array<
-  StencilRegistryConfigEntry<keyof DiagramCraft.StencilLoaderOpts>
->;
+export type StencilRegistryConfig = Array<StencilRegistryConfigEntry<keyof StencilLoaderOpts>>;
 
 let CONFIG_IN_USE: AppConfig | undefined;
 
