@@ -18,6 +18,7 @@ import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults
 import { hasHighlight, Highlights } from '../highlight';
 import { renderElement } from '../components/renderElement';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
+import type { NodeProps } from '@diagram-craft/model/diagramProps';
 
 type TypeOrPropsFn<T> = T | ((p: NodePropsForRendering) => T);
 
@@ -31,7 +32,7 @@ function getValue<T>(value: TypeOrPropsFn<T>, props: NodePropsForRendering): T {
 
 type TextConfig = {
   id: string;
-  text?: DiagramCraft.NodeProps['text'];
+  text?: NodeProps['text'];
   bounds?: Box;
 };
 
@@ -45,7 +46,7 @@ type FlexShapeNodeDefinitionConfig<T extends ShapeNodeDefinition> = {
     nodeType?: TypeOrPropsFn<string>;
     bounds?: TypeOrPropsFn<Box>;
     offset?: TypeOrPropsFn<Omit<Box, 'r'>>;
-    props?: TypeOrPropsFn<DiagramCraft.NodeProps>;
+    props?: TypeOrPropsFn<NodeProps>;
     text?: TypeOrPropsFn<TextConfig>;
   }>;
 };

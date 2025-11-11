@@ -8,6 +8,7 @@ import type { AdjustmentRule } from './diagramLayerRuleTypes';
 import type { LayerManager } from './diagramLayerManager';
 import { newid } from '@diagram-craft/utils/id';
 import type { ModificationCRDT } from './diagramLayerModification';
+import type { EdgeProps, NodeProps } from './diagramProps';
 
 type ActionCallback = () => void;
 
@@ -55,7 +56,7 @@ export type DiagramEdgeSnapshot = SerializedEdge & {
 export type StylesheetSnapshot = {
   id: string;
   name: string;
-  props: DiagramCraft.NodeProps | DiagramCraft.EdgeProps;
+  props: NodeProps | EdgeProps;
   type: StylesheetType;
   _snapshotType: 'stylesheet';
 };

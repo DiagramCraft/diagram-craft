@@ -27,6 +27,7 @@ import { renderElement } from './renderElement';
 import { CanvasDomHelper } from '../utils/canvasDomHelper';
 import type { EdgeCapability } from '@diagram-craft/model/edgeDefinition';
 import { EffectsRegistry } from '@diagram-craft/model/effect';
+import type { EdgeProps } from '@diagram-craft/model/diagramProps';
 
 export type EdgeComponentProps = {
   element: DiagramEdge;
@@ -39,7 +40,7 @@ export type EdgeComponentProps = {
 const makeArrowMarker = (
   id: string,
   arrow: ArrowShape | undefined,
-  edgeProps: DeepReadonly<DeepRequired<DiagramCraft.EdgeProps>>
+  edgeProps: DeepReadonly<DeepRequired<EdgeProps>>
 ) => {
   if (!arrow) return null;
 
@@ -270,7 +271,7 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
 
   protected getArrow(
     type: 'start' | 'end',
-    edgeProps: DeepReadonly<DeepRequired<DiagramCraft.EdgeProps>>
+    edgeProps: DeepReadonly<DeepRequired<EdgeProps>>
   ): ArrowShape | undefined {
     const size = (1 + (edgeProps.stroke.width - 1) * 10 + edgeProps.arrow[type].size) / 100;
     return ARROW_SHAPES[edgeProps.arrow[type].type as ArrowType]?.(size, edgeProps.stroke.width);
@@ -287,7 +288,7 @@ export class SimpleEdgeDefinition extends ShapeEdgeDefinition {
       path: Path,
       shapeBuilder: ShapeBuilder,
       edge: DiagramEdge,
-      props: DeepReadonly<DeepRequired<DiagramCraft.EdgeProps>>
+      props: DeepReadonly<DeepRequired<EdgeProps>>
     ) {
       const paths = applyLineHops(path, edge, undefined, undefined, edge.intersections);
       shapeBuilder.edge(

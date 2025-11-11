@@ -4,9 +4,10 @@ import { NodeTextPanelForm } from '../../toolwindow/ObjectToolWindow/NodeTextPan
 import { useConfiguration } from '../../context/ConfigurationContext';
 import { useDiagram } from '../../../application';
 import { makeProperty } from './utils';
+import type { NodeProps } from '@diagram-craft/model/diagramProps';
 
 export const NodeTextEditor: Editor = props => {
-  const $p = props.props as DiagramCraft.NodeProps;
+  const $p = props.props as NodeProps;
 
   const diagram = useDiagram();
   const config = useConfiguration();

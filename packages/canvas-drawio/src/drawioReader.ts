@@ -12,7 +12,13 @@ import { assert } from '@diagram-craft/utils/assert';
 import { LengthOffsetOnPath, TimeOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { clipPath } from '@diagram-craft/model/diagramEdgeUtils';
-import { assertHAlign, assertVAlign } from '@diagram-craft/model/diagramProps';
+import {
+  assertHAlign,
+  assertVAlign,
+  type EdgeProps,
+  type ElementMetadata,
+  type NodeProps
+} from '@diagram-craft/model/diagramProps';
 import { ARROW_SHAPES } from '@diagram-craft/canvas/arrowShapes';
 import { Angle } from '@diagram-craft/geometry/angle';
 import { Line } from '@diagram-craft/geometry/line';
@@ -83,8 +89,8 @@ export class WorkQueue {
 export type ShapeParser = (
   id: string,
   bounds: Box,
-  props: DiagramCraft.NodeProps,
-  metadata: DiagramCraft.ElementMetadata,
+  props: NodeProps,
+  metadata: ElementMetadata,
   texts: NodeTexts,
   style: StyleManager,
   layer: RegularLayer,
@@ -206,11 +212,7 @@ const arrows: Record<string, keyof typeof ARROW_SHAPES> = {
   'manyOptional-outline': 'CROWS_FEET_BALL'
 };
 
-const parseEdgeArrow = (
-  t: 'start' | 'end',
-  style: StyleManager,
-  props: DiagramCraft.EdgeProps & DiagramCraft.NodeProps
-) => {
+const parseEdgeArrow = (t: 'start' | 'end', style: StyleManager, props: EdgeProps & NodeProps) => {
   let type = style.get(`${t}Arrow`);
   const size = style.get(`${t}Size`);
   const fill = style.get(`${t}Fill`);
@@ -311,7 +313,7 @@ const createLabelNode = (
   id: string,
   edge: DiagramEdge,
   text: string,
-  props: DiagramCraft.NodeProps,
+  props: NodeProps,
   bgColor: string,
   uow: UnitOfWork
 ) => {
@@ -434,7 +436,7 @@ const getNodeProps = (style: StyleManager, isEdge: boolean) => {
   const valign = style.str('verticalAlign');
   assertVAlign(valign);
 
-  const props: DiagramCraft.NodeProps = {
+  const props: NodeProps = {
     text: {
       fontSize: style.num('fontSize', isEdge ? 11 : 12),
       font: style.str('fontFamily', 'Helvetica'),
@@ -753,7 +755,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
       const layer = p instanceof Layer ? p : p.layer;
       assertRegularLayer(layer);
 
-      const metadata: DiagramCraft.ElementMetadata = {};
+      const metadata: ElementMetadata = {};
 
       const props = getNodeProps(style, $cell.getAttribute('edge') === '1');
       const texts: NodeTexts = {
@@ -864,7 +866,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         if (!style.has('endArrow')) style.set('endArrow', 'classic');
         parseEdgeArrow('end', style, props);
 
-        const edgeProps = props as DiagramCraft.EdgeProps;
+        const edgeProps = props as EdgeProps;
 
         const isNonCurveEdgeStyle =
           style.str('edgeStyle') === 'orthogonalEdgeStyle' ||

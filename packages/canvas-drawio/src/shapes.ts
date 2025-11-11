@@ -3,7 +3,13 @@ import { NodeTexts } from '@diagram-craft/model/diagramNode';
 import type { WorkQueue } from './drawioReader';
 import { Angle } from '@diagram-craft/geometry/angle';
 import { dataURItoBlob } from './blobUtils';
-import { assertHAlign, assertVAlign, HAlign } from '@diagram-craft/model/diagramProps';
+import {
+  assertHAlign,
+  assertVAlign,
+  type ElementMetadata,
+  HAlign,
+  type NodeProps
+} from '@diagram-craft/model/diagramProps';
 import { FullDirection } from '@diagram-craft/geometry/direction';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { StyleManager } from './styleManager';
@@ -15,20 +21,20 @@ const makeShape = (
   type: string,
   setProps: (
     s: StyleManager,
-    p: DiagramCraft.NodeProps & { custom: DiagramCraft.CustomNodeProps }
+    p: NodeProps & { custom: DiagramCraft.CustomNodeProps }
   ) => void = () => {}
 ) => {
   return async (
     id: string,
     bounds: Box,
-    props: DiagramCraft.NodeProps,
-    metadata: DiagramCraft.ElementMetadata,
+    props: NodeProps,
+    metadata: ElementMetadata,
     texts: NodeTexts,
     style: StyleManager,
     layer: RegularLayer
   ) => {
     props.custom ??= {};
-    setProps(style, props as DiagramCraft.NodeProps & { custom: DiagramCraft.CustomNodeProps });
+    setProps(style, props as NodeProps & { custom: DiagramCraft.CustomNodeProps });
     return ElementFactory.node(id, type, bounds, layer, props, metadata, texts);
   };
 };
@@ -57,8 +63,8 @@ export const parsePartialRect = makeShape('partial-rect', (style, props) => {
 export const parseRect = async (
   id: string,
   bounds: Box,
-  props: DiagramCraft.NodeProps,
-  metadata: DiagramCraft.ElementMetadata,
+  props: NodeProps,
+  metadata: ElementMetadata,
   texts: NodeTexts,
   style: StyleManager,
   layer: RegularLayer
@@ -167,8 +173,8 @@ export const parseDiamond = makeShape('diamond');
 export const parseArrow = async (
   id: string,
   bounds: Box,
-  props: DiagramCraft.NodeProps,
-  metadata: DiagramCraft.ElementMetadata,
+  props: NodeProps,
+  metadata: ElementMetadata,
   texts: NodeTexts,
   style: StyleManager,
   layer: RegularLayer
@@ -192,8 +198,8 @@ export const parseArrow = async (
 export const parseImage = async (
   id: string,
   bounds: Box,
-  props: DiagramCraft.NodeProps,
-  metadata: DiagramCraft.ElementMetadata,
+  props: NodeProps,
+  metadata: ElementMetadata,
   texts: NodeTexts,
   style: StyleManager,
   layer: RegularLayer,
@@ -301,8 +307,8 @@ export const parseImage = async (
 export const parseRoundedRect = async (
   id: string,
   bounds: Box,
-  props: DiagramCraft.NodeProps,
-  metadata: DiagramCraft.ElementMetadata,
+  props: NodeProps,
+  metadata: ElementMetadata,
   texts: NodeTexts,
   style: StyleManager,
   layer: RegularLayer

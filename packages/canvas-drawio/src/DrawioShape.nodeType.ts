@@ -16,7 +16,8 @@ import {
   assertHAlign,
   assertLineCap,
   assertLineJoin,
-  assertVAlign
+  assertVAlign,
+  type NodeProps
 } from '@diagram-craft/model/diagramProps';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { coalesce } from '@diagram-craft/utils/strings';
@@ -305,7 +306,7 @@ class DrawioShapeComponent extends BaseNodeComponent {
     let style = cloneAsWriteable(props.nodeProps);
     let savedStyle = { style, strokeAlpha, strokeColor, fillAlpha, fillColor };
 
-    let currentShape: (p: DiagramCraft.NodeProps) => void = p => {
+    let currentShape: (p: NodeProps) => void = p => {
       return shapeBuilder.boundaryPath(boundary.all(), p);
     };
 
@@ -510,7 +511,7 @@ class DrawioShapeComponent extends BaseNodeComponent {
 
         if (pathBuilder.getPaths().all().length === 0) continue;
 
-        currentShape = (p: DiagramCraft.NodeProps) => {
+        currentShape = (p: NodeProps) => {
           shapeBuilder.path(pathBuilder.getPaths().all(), p);
         };
       } else {

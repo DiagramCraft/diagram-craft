@@ -11,9 +11,10 @@ import { EdgeEffectsEditor } from './EdgeEffectsEditor';
 import { EdgeLineEditor } from './EdgeLineEditor';
 import { NamedIndicatorEditor } from './NamedIndicatorEditor';
 import { NodeActionPropertiesEditor } from './NodeActionPropertiesEditor';
+import type { EdgeProps, NodeProps } from '@diagram-craft/model/diagramProps';
 
 export type Editor = (props: {
-  props: DiagramCraft.NodeProps | DiagramCraft.EdgeProps;
+  props: NodeProps | EdgeProps;
   onChange: () => void;
 }) => ReactElement;
 
@@ -22,9 +23,7 @@ export type EditorTypes = 'node' | 'edge';
 type Entry<E> = {
   editor: E;
   name: string;
-  pick: (
-    props: DiagramCraft.NodeProps | DiagramCraft.EdgeProps
-  ) => Partial<DiagramCraft.NodeProps | DiagramCraft.EdgeProps>;
+  pick: (props: NodeProps | EdgeProps) => Partial<NodeProps | EdgeProps>;
 };
 
 export type NodeEditorRegistry = Record<
@@ -49,56 +48,56 @@ export const NODE_EDITORS: NodeEditorRegistry = {
   fill: {
     name: 'Fill',
     editor: NodeFillEditor,
-    pick: (props: DiagramCraft.NodeProps | DiagramCraft.EdgeProps) => ({ fill: props.fill })
+    pick: (props: NodeProps | EdgeProps) => ({ fill: props.fill })
   },
   stroke: {
     name: 'Stroke',
     editor: NodeStrokeEditor,
-    pick: (props: DiagramCraft.NodeProps | DiagramCraft.EdgeProps) => ({ stroke: props.stroke })
+    pick: (props: NodeProps | EdgeProps) => ({ stroke: props.stroke })
   },
   shadow: {
     name: 'Shadow',
     editor: ElementShadowEditor,
-    pick: (props: DiagramCraft.NodeProps | DiagramCraft.EdgeProps) => ({ shadow: props.shadow })
+    pick: (props: NodeProps | EdgeProps) => ({ shadow: props.shadow })
   },
   effects: {
     name: 'Effects',
     editor: NodeEffectsEditor,
-    pick: (props: DiagramCraft.NodeProps | DiagramCraft.EdgeProps) => ({ effects: props.effects })
+    pick: (props: NodeProps | EdgeProps) => ({ effects: props.effects })
   },
   text: {
     name: 'Text',
     editor: NodeTextEditor,
-    pick: (props: DiagramCraft.NodeProps | DiagramCraft.EdgeProps) => ({
-      text: (props as DiagramCraft.NodeProps).text
+    pick: (props: NodeProps | EdgeProps) => ({
+      text: (props as NodeProps).text
     })
   },
   nodeCustom: {
     name: 'Type specific properties',
     editor: NodeCustomPropertiesEditor,
-    pick: (props: DiagramCraft.NodeProps | DiagramCraft.EdgeProps) => ({
-      custom: (props as DiagramCraft.NodeProps).custom
+    pick: (props: NodeProps | EdgeProps) => ({
+      custom: (props as NodeProps).custom
     })
   },
   indicators: {
     name: 'Indicator',
     editor: NamedIndicatorEditor,
-    pick: (props: DiagramCraft.NodeProps | DiagramCraft.EdgeProps) => ({
-      indicators: (props as DiagramCraft.NodeProps).indicators
+    pick: (props: NodeProps | EdgeProps) => ({
+      indicators: (props as NodeProps).indicators
     })
   },
   action: {
     name: 'Action',
     editor: NodeActionPropertiesEditor,
-    pick: (props: DiagramCraft.NodeProps | DiagramCraft.EdgeProps) => ({
-      action: (props as DiagramCraft.NodeProps).action
+    pick: (props: NodeProps | EdgeProps) => ({
+      action: (props as NodeProps).action
     })
   },
   advanced: {
     name: 'Advanced',
     editor: NodeAdvancedPropertiesEditor,
-    pick: (props: DiagramCraft.NodeProps | DiagramCraft.EdgeProps) => ({
-      capabilities: (props as DiagramCraft.NodeProps).capabilities
+    pick: (props: NodeProps | EdgeProps) => ({
+      capabilities: (props as NodeProps).capabilities
     })
   }
 };
@@ -107,29 +106,29 @@ export const EDGE_EDITORS: EdgeEditorRegistry = {
   shadow: {
     name: 'Shadow',
     editor: ElementShadowEditor,
-    pick: (props: DiagramCraft.NodeProps | DiagramCraft.EdgeProps) => ({ shadow: props.shadow })
+    pick: (props: NodeProps | EdgeProps) => ({ shadow: props.shadow })
   },
   edgeCustom: {
     name: 'Type specific properties',
     editor: EdgeCustomPropertiesEditor,
-    pick: (props: DiagramCraft.NodeProps | DiagramCraft.EdgeProps) => ({
-      custom: (props as DiagramCraft.EdgeProps).custom
+    pick: (props: NodeProps | EdgeProps) => ({
+      custom: (props as EdgeProps).custom
     })
   },
   edgeEffects: {
     name: 'Effects',
     editor: EdgeEffectsEditor,
-    pick: (props: DiagramCraft.NodeProps | DiagramCraft.EdgeProps) => ({ effects: props.effects })
+    pick: (props: NodeProps | EdgeProps) => ({ effects: props.effects })
   },
   edgeLine: {
     name: 'Line',
     editor: EdgeLineEditor,
-    pick: (props: DiagramCraft.NodeProps | DiagramCraft.EdgeProps) => ({
+    pick: (props: NodeProps | EdgeProps) => ({
       stroke: props.stroke,
       fill: props.fill,
-      type: (props as DiagramCraft.EdgeProps).type,
-      arrow: (props as DiagramCraft.EdgeProps).arrow,
-      lineHops: (props as DiagramCraft.EdgeProps).lineHops
+      type: (props as EdgeProps).type,
+      arrow: (props as EdgeProps).arrow,
+      lineHops: (props as EdgeProps).lineHops
     })
   }
 };

@@ -16,6 +16,7 @@ import { safeSplit } from '@diagram-craft/utils/safe';
 import { ElementFactory } from './elementFactory';
 import type { Property } from './property';
 import type { EdgeDefinition } from './edgeDefinition';
+import type { ElementMetadata, NodeProps } from './diagramProps';
 
 export type NodeCapability =
   | 'children'
@@ -230,11 +231,11 @@ export type MakeStencilNodeOpts = {
   aspectRatio?: number;
   size?: { w: number; h: number };
   props?: MakeStencilNodeOptsProps;
-  metadata?: DiagramCraft.ElementMetadata;
+  metadata?: ElementMetadata;
   texts?: NodeTexts;
 };
 
-export type MakeStencilNodeOptsProps = (t: 'picker' | 'canvas') => Partial<DiagramCraft.NodeProps>;
+export type MakeStencilNodeOptsProps = (t: 'picker' | 'canvas') => Partial<NodeProps>;
 
 export const makeStencilNode =
   (type: string | NodeDefinition, t: 'picker' | 'canvas', opts?: MakeStencilNodeOpts) =>

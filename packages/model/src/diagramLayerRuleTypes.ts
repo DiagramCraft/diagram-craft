@@ -1,4 +1,5 @@
 import type { ElementSearchClause } from './diagramElementSearch';
+import type { EdgeProps, ElementProps, NodeProps } from './diagramProps';
 
 export type AdjustmentRule = {
   id: string;
@@ -11,7 +12,7 @@ export type AdjustmentRule = {
 export type AdjustmentRuleAction = { id: string } & (
   | {
       type: 'set-props';
-      props: DiagramCraft.ElementProps;
+      props: ElementProps;
       // where?: 'before' | 'after';
     }
   | {
@@ -27,7 +28,7 @@ export type AdjustmentRuleAction = { id: string } & (
 );
 
 export type Adjustment = {
-  props: DiagramCraft.NodeProps | DiagramCraft.EdgeProps;
+  props: NodeProps | EdgeProps;
   textStyle?: string;
   elementStyle?: string;
 };

@@ -25,6 +25,7 @@ import { newid } from '@diagram-craft/utils/id';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { EffectsRegistry } from '@diagram-craft/model/effect';
+import type { EdgeProps, ElementProps, NodeProps } from '@diagram-craft/model/diagramProps';
 
 const defaultOnChange = (element: DiagramNode) => (text: string) => {
   const uow = new UnitOfWork(element.diagram, true);
@@ -34,7 +35,7 @@ const defaultOnChange = (element: DiagramNode) => (text: string) => {
 
 type ShapeBuilderProps = {
   element: DiagramElement;
-  elementProps: DeepReadonly<DiagramCraft.ElementProps>;
+  elementProps: DeepReadonly<ElementProps>;
   isSingleSelected: boolean;
   onMouseDown: (e: MouseEvent) => void;
   onDoubleClick?: (e: MouseEvent) => void;
@@ -103,7 +104,7 @@ export class ShapeBuilder {
     id: string = '1',
     // TODO: Do we really need to pass text if we have the id and the node itself
     text?: string,
-    textProps?: DiagramCraft.NodeProps['text'],
+    textProps?: NodeProps['text'],
     bounds?: Box,
     onSizeChange?: (size: Extent) => void
   ) {
@@ -113,7 +114,7 @@ export class ShapeBuilder {
           key: `text_${id}_${this.props.element.id}`,
           id: `text_${id}_${this.props.element.id}`,
           metadata: this.props.element.dataForTemplate,
-          textProps: textProps ?? (this.props.elementProps as DiagramCraft.NodeProps).text,
+          textProps: textProps ?? (this.props.elementProps as NodeProps).text,
           text: text ?? this.props.element.getText(),
           bounds: bounds ?? this.props.element.bounds,
           onMouseDown: this.props.onMouseDown,
@@ -193,7 +194,7 @@ export class ShapeBuilder {
 
   edge(
     paths: Path[],
-    props: DiagramCraft.EdgeProps | DeepReadonly<DiagramCraft.EdgeProps> | undefined = undefined,
+    props: EdgeProps | DeepReadonly<EdgeProps> | undefined = undefined,
     startArrow: ArrowShape | undefined = undefined,
     endArrow: ArrowShape | undefined = undefined,
     opts?: Opts
@@ -316,7 +317,7 @@ export class ShapeBuilder {
     },
     paths: Path[]
   ) {
-    const propsInEffect = props ?? (this.props.element.renderProps as DiagramCraft.NodeProps);
+    const propsInEffect = props ?? (this.props.element.renderProps as NodeProps);
 
     const pathRenderer = this.getPathRenderer(propsInEffect);
 
@@ -342,7 +343,7 @@ export class ShapeBuilder {
     return joinedPaths;
   }
 
-  private getPathRenderer(propsInEffect: DiagramCraft.ElementProps) {
+  private getPathRenderer(propsInEffect: ElementProps) {
     // TODO: Can we apply multiple path renderers
     return (
       EffectsRegistry.get(propsInEffect, propsInEffect, 'getPathRenderer').map(e =>

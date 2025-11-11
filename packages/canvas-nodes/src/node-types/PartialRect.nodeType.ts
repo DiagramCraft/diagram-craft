@@ -7,6 +7,7 @@ import {
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import type { NodeProps } from '@diagram-craft/model/diagramProps';
 
 // NodeProps extension for custom props *****************************************
 
@@ -50,7 +51,7 @@ class PartialRectComponent extends BaseNodeComponent {
         enabled: false,
         color: 'transparent'
       }
-    } as DiagramCraft.NodeProps);
+    } as NodeProps);
 
     if (props.node.renderProps.custom.partialRect.north) {
       shapeBuilder.path(

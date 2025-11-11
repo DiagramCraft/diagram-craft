@@ -6,6 +6,7 @@ import { TestModel } from './test-support/testModel';
 import { NoOpCRDTFactory } from '@diagram-craft/collaboration/noopCrdt';
 import type { CRDTRoot } from '@diagram-craft/collaboration/crdt';
 import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
+import type { NodeProps } from './diagramProps';
 
 describe.each(Backends.all())('Stylesheet [%s]', (_name, backend) => {
   describe('from', () => {
@@ -13,7 +14,7 @@ describe.each(Backends.all())('Stylesheet [%s]', (_name, backend) => {
       const type = 'node';
       const id = '123';
       const name = 'Test stylesheet';
-      const props: DiagramCraft.NodeProps = { fill: { color: 'blue' } };
+      const props: NodeProps = { fill: { color: 'blue' } };
 
       const stylesheet = Stylesheet.fromSnapshot(type, { id, name, props }, new NoOpCRDTFactory());
 

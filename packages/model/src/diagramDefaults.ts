@@ -5,6 +5,7 @@ import type { EdgePropsForRendering } from './diagramEdge';
 import type { ElementPropsForRendering } from './diagramElement';
 import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { assert } from '@diagram-craft/utils/assert';
+import type { EdgeProps, ElementProps, NodeProps } from './diagramProps';
 
 /** @namespace */
 export const DiagramDefaultsPrivate = {
@@ -390,12 +391,12 @@ const _mergedEdgeDefaults = makeWriteable(
   deepMerge<EdgePropsForRendering>({}, { ..._nodeDefaults, effects: undefined }, _edgeDefaults)
 );
 
-export const nodeDefaults = new Defaults<DiagramCraft.NodeProps>(_nodeDefaults);
-export const edgeDefaults = new Defaults<DiagramCraft.EdgeProps>(_mergedEdgeDefaults);
-export const elementDefaults = new ParentDefaults<DiagramCraft.ElementProps>(
+export const nodeDefaults = new Defaults<NodeProps>(_nodeDefaults);
+export const edgeDefaults = new Defaults<EdgeProps>(_mergedEdgeDefaults);
+export const elementDefaults = new ParentDefaults<ElementProps>(
   [
-    nodeDefaults as unknown as Defaults<DiagramCraft.ElementProps>,
-    edgeDefaults as unknown as Defaults<DiagramCraft.ElementProps>
+    nodeDefaults as unknown as Defaults<ElementProps>,
+    edgeDefaults as unknown as Defaults<ElementProps>
   ],
   _elementDefaults
 );
@@ -415,7 +416,7 @@ export function registerCustomNodeDefaults<K extends keyof DiagramCraft.CustomNo
   k: K,
   v: DeepRequired<DiagramCraft.CustomNodeProps[K]>
 ) {
-  nodeDefaults.add(`custom.${k}`, v as PropPathValue<DiagramCraft.NodeProps, `custom.${K}`>);
+  nodeDefaults.add(`custom.${k}`, v as PropPathValue<NodeProps, `custom.${K}`>);
 
   return (d?: DiagramCraft.CustomNodeProps[K]) => deepMerge({}, v, d ?? undefined);
 }
@@ -424,7 +425,7 @@ export function registerCustomEdgeDefaults<K extends keyof DiagramCraft.CustomEd
   k: K,
   v: DeepRequired<DiagramCraft.CustomEdgeProps[K]>
 ) {
-  edgeDefaults.add(`custom.${k}`, v as PropPathValue<DiagramCraft.EdgeProps, `custom.${K}`>);
+  edgeDefaults.add(`custom.${k}`, v as PropPathValue<EdgeProps, `custom.${K}`>);
 
   return (d?: DiagramCraft.CustomEdgeProps[K]) => deepMerge({}, v, d ?? {});
 }

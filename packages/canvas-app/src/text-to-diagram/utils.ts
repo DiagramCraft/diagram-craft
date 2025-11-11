@@ -1,5 +1,6 @@
 import { MultiMap } from '@diagram-craft/utils/multimap';
 import type { ParsedElement } from './types';
+import type { EdgeProps, ElementMetadata, NodeProps } from '@diagram-craft/model/diagramProps';
 
 /**
  * Recursively collect all element IDs and their line numbers from parsed elements
@@ -25,9 +26,7 @@ export const collectElementIds = (elements: ParsedElement[]): MultiMap<string, n
 /**
  * Parse a props string like "fill.color=#ff0000;stroke.width=2" into a nested object
  */
-export const parsePropsString = (
-  propsStr: string
-): Partial<DiagramCraft.NodeProps | DiagramCraft.EdgeProps> => {
+export const parsePropsString = (propsStr: string): Partial<NodeProps | EdgeProps> => {
   const result: Record<string, unknown> = {};
 
   for (const pair of propsStr.split(';')) {
@@ -58,14 +57,14 @@ export const parsePropsString = (
     }
   }
 
-  return result as Partial<DiagramCraft.NodeProps | DiagramCraft.EdgeProps>;
+  return result as Partial<NodeProps | EdgeProps>;
 };
 
 /**
  * Parse metadata string like "name=value" into an object
  */
-export const parseMetadataString = (metadataStr: string): Partial<DiagramCraft.ElementMetadata> => {
-  const result: Partial<DiagramCraft.ElementMetadata> = {};
+export const parseMetadataString = (metadataStr: string): Partial<ElementMetadata> => {
+  const result: Partial<ElementMetadata> = {};
 
   for (const pair of metadataStr.split(';')) {
     const [key, value] = pair.split('=');

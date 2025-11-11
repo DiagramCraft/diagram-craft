@@ -18,6 +18,7 @@ import { type ParsedElement } from './types';
 import { newid } from '@diagram-craft/utils/id';
 import { collectElementIds } from './utils';
 import { placeNode } from '@diagram-craft/canvas/utils/placeNode';
+import type { EdgeProps, ElementMetadata, NodeProps } from '@diagram-craft/model/diagramProps';
 
 /**
  * Update or create a label node for an edge
@@ -127,7 +128,7 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
         // Update props
         if (parsedElement.props) {
           existingElement.updateProps(props => {
-            deepMerge(props, parsedElement.props as Partial<DiagramCraft.NodeProps>);
+            deepMerge(props, parsedElement.props as Partial<NodeProps>);
           }, uow);
         }
 
@@ -165,7 +166,7 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
         // Update edge props
         if (parsedElement.props) {
           existingElement.updateProps(props => {
-            deepMerge(props, parsedElement.props as Partial<DiagramCraft.EdgeProps>);
+            deepMerge(props, parsedElement.props as Partial<EdgeProps>);
           }, uow);
         }
 
@@ -236,7 +237,7 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
         }
 
         const props: NodePropsForEditing = {};
-        const metadata: DiagramCraft.ElementMetadata = {};
+        const metadata: ElementMetadata = {};
 
         if (parsedElement.props) Object.assign(props, parsedElement.props);
         if (parsedElement.metadata) Object.assign(metadata, parsedElement.metadata);
@@ -275,7 +276,7 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
       } else if (parsedElement.type === 'edge') {
         // Create new edge
         const props: EdgePropsForEditing = {};
-        const metadata: DiagramCraft.ElementMetadata = {};
+        const metadata: ElementMetadata = {};
 
         // Apply props
         if (parsedElement.props) {

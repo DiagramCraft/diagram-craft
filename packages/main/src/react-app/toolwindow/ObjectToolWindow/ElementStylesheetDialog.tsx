@@ -6,13 +6,12 @@ import { StylesheetType } from '@diagram-craft/model/diagramStyles';
 import { deepClone } from '@diagram-craft/utils/object';
 import { useRedraw } from '../../hooks/useRedraw';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
+import type { EdgeProps, NodeProps } from '@diagram-craft/model/diagramProps';
 
 export const ElementStylesheetDialog = (props: Props) => {
   const redraw = useRedraw();
 
-  const [data, setData] = useState<DiagramCraft.NodeProps | DiagramCraft.EdgeProps>(
-    deepClone(props.props)
-  );
+  const [data, setData] = useState<NodeProps | EdgeProps>(deepClone(props.props));
   useEffect(() => setData(deepClone(props.props)), [props.props]);
 
   let name = 'Element Stylesheet';
@@ -80,10 +79,10 @@ export const ElementStylesheetDialog = (props: Props) => {
 };
 
 type Props = {
-  props: DiagramCraft.NodeProps | DiagramCraft.EdgeProps;
+  props: NodeProps | EdgeProps;
   type: StylesheetType;
   open: boolean;
   onClose: () => void;
-  onSave: (props: DiagramCraft.NodeProps | DiagramCraft.EdgeProps) => void;
+  onSave: (props: NodeProps | EdgeProps) => void;
   editors: Array<{ name: string; editor: Editor }>;
 };

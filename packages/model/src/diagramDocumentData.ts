@@ -27,6 +27,7 @@ import {
 import { CRDTMap, CRDTMapEvents, CRDTRoot } from '@diagram-craft/collaboration/crdt';
 import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { DefaultDataProvider, DefaultDataProviderId } from './data-providers/dataProviderDefault';
+import type { ElementDataEntry } from './diagramProps';
 
 const makeDataListener =
   (document: DiagramDocument, mode: 'update' | 'delete') => (data: { data: Data[] }) => {
@@ -37,7 +38,7 @@ const makeDataListener =
         if (externalData.length === 0) continue;
 
         for (const dt of data.data) {
-          const predicate = (e: DiagramCraft.ElementDataEntry) => e.external?.uid === dt._uid;
+          const predicate = (e: ElementDataEntry) => e.external?.uid === dt._uid;
 
           const existing = externalData.find(predicate);
           if (!existing) continue;

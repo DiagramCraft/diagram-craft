@@ -19,6 +19,7 @@ import { FlatObject } from '@diagram-craft/utils/types';
 import type { PropertyInfo } from './property';
 import type { CRDTMap } from '@diagram-craft/collaboration/crdt';
 import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
+import type { EdgeProps, ElementMetadata, ElementProps, NodeProps } from './diagramProps';
 
 // biome-ignore lint/suspicious/noExplicitAny: false positive
 type Snapshot = any;
@@ -28,7 +29,7 @@ export abstract class DelegatingDiagramElement implements DiagramElement {
 
   protected readonly delegate: DiagramElement;
 
-  protected _metadata: CRDTObject<DiagramCraft.ElementMetadata>;
+  protected _metadata: CRDTObject<ElementMetadata>;
   protected readonly _crdt: WatchableValue<CRDTMap<DiagramElementCRDT>>;
   private _layer: RegularLayer | ModificationLayer;
   private _diagram: Diagram;
@@ -54,7 +55,7 @@ export abstract class DelegatingDiagramElement implements DiagramElement {
       [this._crdt] as const
     );
 
-    this._metadata = new CRDTObject<DiagramCraft.ElementMetadata>(metadataMap, () => {
+    this._metadata = new CRDTObject<ElementMetadata>(metadataMap, () => {
       this.invalidate(UnitOfWork.immediate(this.diagram));
       this.diagram.emit('elementChange', { element: this });
       this.clearCache();
@@ -79,7 +80,7 @@ export abstract class DelegatingDiagramElement implements DiagramElement {
 
   /* Metadata with merging ****************************************************************************** */
 
-  get metadata(): DiagramCraft.ElementMetadata {
+  get metadata(): ElementMetadata {
     const delegateMetadata = this.delegate.metadata;
     const localMetadata = this._metadata.get() ?? {};
 
@@ -99,14 +100,14 @@ export abstract class DelegatingDiagramElement implements DiagramElement {
     };
   }
 
-  get metadataCloned(): DiagramCraft.ElementMetadata {
+  get metadataCloned(): ElementMetadata {
     const merged = this.metadata;
     return JSON.parse(JSON.stringify(merged));
   }
 
-  updateMetadata(callback: (props: DiagramCraft.ElementMetadata) => void, uow: UnitOfWork) {
+  updateMetadata(callback: (props: ElementMetadata) => void, uow: UnitOfWork) {
     uow.snapshot(this);
-    const metadata = this._metadata.getClone() as DiagramCraft.ElementMetadata;
+    const metadata = this._metadata.getClone() as ElementMetadata;
     callback(metadata);
     this._metadata.set(metadata);
     uow.updateElement(this);
@@ -160,16 +161,13 @@ export abstract class DelegatingDiagramElement implements DiagramElement {
   abstract readonly dataForTemplate: FlatObject;
   abstract editProps: ElementPropsForEditing;
   abstract renderProps: ElementPropsForRendering;
-  abstract storedProps: DiagramCraft.ElementProps;
+  abstract storedProps: ElementProps;
 
-  abstract getPropsInfo<T extends PropPath<DiagramCraft.ElementProps>>(
+  abstract getPropsInfo<T extends PropPath<ElementProps>>(
     path: T
-  ): PropertyInfo<PropPathValue<DiagramCraft.ElementProps, T>>;
+  ): PropertyInfo<PropPathValue<ElementProps, T>>;
 
-  abstract updateProps(
-    callback: (props: DiagramCraft.NodeProps | DiagramCraft.EdgeProps) => void,
-    uow: UnitOfWork
-  ): void;
+  abstract updateProps(callback: (props: NodeProps | EdgeProps) => void, uow: UnitOfWork): void;
 
   abstract snapshot(): Snapshot;
   abstract restore(snapshot: Snapshot, uow: UnitOfWork): void;

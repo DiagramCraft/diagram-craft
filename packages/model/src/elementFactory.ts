@@ -13,6 +13,7 @@ import {
 } from './diagramNode';
 import type { CRDTMap } from '@diagram-craft/collaboration/crdt';
 import type { DiagramElementCRDT } from './diagramElement';
+import type { ElementMetadata } from './diagramProps';
 
 export const ElementFactory = {
   edge(
@@ -20,7 +21,7 @@ export const ElementFactory = {
     start: Endpoint,
     end: Endpoint,
     props: EdgePropsForEditing,
-    metadata: DiagramCraft.ElementMetadata,
+    metadata: ElementMetadata,
     midpoints: ReadonlyArray<Waypoint>,
     layer: RegularLayer | ModificationLayer
   ) {
@@ -49,7 +50,7 @@ export const ElementFactory = {
     bounds: Box,
     layer: RegularLayer | ModificationLayer,
     props: NodePropsForEditing,
-    metadata: DiagramCraft.ElementMetadata,
+    metadata: ElementMetadata,
     text: NodeTexts = { text: '' },
     anchorCache?: ReadonlyArray<Anchor>
   ) {

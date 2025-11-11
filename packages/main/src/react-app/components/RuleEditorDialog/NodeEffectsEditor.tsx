@@ -3,9 +3,10 @@ import type { Editor } from './editors';
 import { NodeEffectsPanelForm } from '../../toolwindow/ObjectToolWindow/NodeEffectsPanel';
 import { useDiagram } from '../../../application';
 import { makeProperty } from './utils';
+import type { NodeProps } from '@diagram-craft/model/diagramProps';
 
 export const NodeEffectsEditor: Editor = props => {
-  const $p = props.props as DiagramCraft.NodeProps;
+  const $p = props.props as NodeProps;
 
   const diagram = useDiagram();
 

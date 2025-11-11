@@ -6,6 +6,7 @@ import { addFillComponents } from '../shape/shapeFill';
 import { assert } from '@diagram-craft/utils/assert';
 import { nodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { DeepRequired } from '@diagram-craft/utils/types';
+import type { NodeProps } from '@diagram-craft/model/diagramProps';
 
 export class DocumentBoundsComponent extends Component<CanvasState> {
   render(props: CanvasState) {
@@ -19,7 +20,7 @@ export class DocumentBoundsComponent extends Component<CanvasState> {
     const children: VNode[] = [];
 
     const fill = nodeDefaults.applyDefaults({ fill: diagram.props.background })
-      .fill as DeepRequired<DiagramCraft.NodeProps['fill']>;
+      .fill as DeepRequired<NodeProps['fill']>;
     assert.present(fill);
 
     const fillType = diagram.props.background?.type ?? 'solid';

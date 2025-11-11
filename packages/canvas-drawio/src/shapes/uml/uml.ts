@@ -24,12 +24,13 @@ import { StyleManager } from '../../styleManager';
 import { loadStencilsFromYaml } from '@diagram-craft/model/elementDefinitionLoader';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
+import type { ElementMetadata, NodeProps } from '@diagram-craft/model/diagramProps';
 
 export const parseUMLShapes = async (
   id: string,
   bounds: Box,
-  props: DiagramCraft.NodeProps,
-  metadata: DiagramCraft.ElementMetadata,
+  props: NodeProps,
+  metadata: ElementMetadata,
   texts: NodeTexts,
   style: StyleManager,
   layer: RegularLayer
@@ -68,7 +69,7 @@ export const registerUMLShapes = async (r: NodeDefinitionRegistry) => {
     }
   });
 
-  const mergedProps: (p: Partial<DiagramCraft.NodeProps>) => MakeStencilNodeOptsProps = p => () =>
+  const mergedProps: (p: Partial<NodeProps>) => MakeStencilNodeOptsProps = p => () =>
     deepMerge(props('picker'), p);
 
   registerStencil(r, umlStencils, new UmlActor(), { aspectRatio: 0.6, props });

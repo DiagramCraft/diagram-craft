@@ -5,7 +5,7 @@ import { Box } from '@diagram-craft/geometry/box';
 import { NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { Angle } from '@diagram-craft/geometry/angle';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { FillType } from '@diagram-craft/model/diagramProps';
+import { FillType, type NodeProps } from '@diagram-craft/model/diagramProps';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { DeepRequired } from '@diagram-craft/utils/types';
 
@@ -310,7 +310,7 @@ export const addFillComponents = (
   type: 'diagram' | 'node',
   id: string,
   fillType: FillType,
-  fill: DeepRequired<DiagramCraft.NodeProps>['fill'],
+  fill: DeepRequired<NodeProps>['fill'],
   diagram: Diagram,
   bounds: Omit<Box, 'r'>,
   style: Partial<CSSStyleDeclaration> = {},

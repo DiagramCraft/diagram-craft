@@ -1,4 +1,5 @@
 import { type ArrowType } from '@diagram-craft/canvas/arrowShapes';
+import type { EdgeProps } from '@diagram-craft/model/diagramProps';
 
 /**
  * Master mapping from arrow type to symbols (left and right variants)
@@ -151,10 +152,8 @@ export const parseArrowNotation = (arrowString: string): ParsedArrowNotation | u
 /**
  * Converts parsed arrow notation to EdgeProps
  */
-export const arrowNotationToProps = (
-  notation: ParsedArrowNotation
-): Partial<DiagramCraft.EdgeProps> => {
-  const props: Partial<DiagramCraft.EdgeProps> = {
+export const arrowNotationToProps = (notation: ParsedArrowNotation): Partial<EdgeProps> => {
+  const props: Partial<EdgeProps> = {
     stroke: {
       width: notation.strokeWidth
     }
@@ -187,7 +186,7 @@ export const arrowNotationToProps = (
  * Converts EdgeProps to arrow notation string if it matches a standard pattern
  * Returns null if the props don't match a standard pattern
  */
-export const propsToArrowNotation = (props: DiagramCraft.EdgeProps): string | undefined => {
+export const propsToArrowNotation = (props: EdgeProps): string | undefined => {
   // Extract relevant properties
   const strokeWidth = props.stroke?.width ?? 1;
   const strokePattern = props.stroke?.pattern;
@@ -230,9 +229,7 @@ export const propsToArrowNotation = (props: DiagramCraft.EdgeProps): string | un
  * Parses a full arrow notation string and returns EdgeProps
  * Returns null if the notation is invalid
  */
-export const parseArrowNotationToProps = (
-  notation: string
-): Partial<DiagramCraft.EdgeProps> | undefined => {
+export const parseArrowNotationToProps = (notation: string): Partial<EdgeProps> | undefined => {
   const parsed = parseArrowNotation(notation);
   if (!parsed) return undefined;
 

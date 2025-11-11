@@ -26,6 +26,7 @@ import { MappedCRDTProp } from '@diagram-craft/collaboration/datatypes/mapped/ma
 import { CRDTProp } from '@diagram-craft/collaboration/datatypes/crdtProp';
 import type { CRDTMap, FlatCRDTMap } from '@diagram-craft/collaboration/crdt';
 import type { LabelNode } from './labelNode';
+import type { ElementMetadata, NodeProps } from './diagramProps';
 
 export type DelegatingDiagramNodeCRDT = DiagramElementCRDT & {
   bounds: Box;
@@ -37,7 +38,7 @@ export type DelegatingDiagramNodeCRDT = DiagramElementCRDT & {
 export class DelegatingDiagramNode extends DelegatingDiagramElement implements DiagramNode {
   declare protected readonly delegate: DiagramNode;
 
-  readonly #localProps: CRDTObject<DiagramCraft.NodeProps>;
+  readonly #localProps: CRDTObject<NodeProps>;
   readonly #localTexts: CRDTObject<NodeTexts>;
 
   readonly #localBounds: MappedCRDTProp<DelegatingDiagramNodeCRDT, 'bounds', Box>;
@@ -51,7 +52,7 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
       crdt?: CRDTMap<DiagramElementCRDT>;
       bounds?: Box | undefined;
       props?: NodePropsForEditing;
-      metadata?: DiagramCraft.ElementMetadata;
+      metadata?: ElementMetadata;
       texts?: NodeTexts;
     }
   ) {
@@ -65,7 +66,7 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
       [nodeCrdt] as const
     );
 
-    this.#localProps = new CRDTObject<DiagramCraft.NodeProps>(propsMap, () => {
+    this.#localProps = new CRDTObject<NodeProps>(propsMap, () => {
       this.invalidate(UnitOfWork.immediate(this.diagram));
       this.diagram.emit('elementChange', { element: this });
       this.clearCache();
@@ -105,7 +106,7 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
 
     if (opts?.texts) this.#localTexts.set(opts?.texts);
 
-    if (opts?.props) this.#localProps.set(opts?.props as DiagramCraft.NodeProps);
+    if (opts?.props) this.#localProps.set(opts?.props as NodeProps);
     // TODO: Fix this
     this.updateProps(p => {
       p.hidden = false;
@@ -116,13 +117,13 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
 
   /* Props with merging ********************************************************************************** */
 
-  get storedProps(): DiagramCraft.NodeProps {
+  get storedProps(): NodeProps {
     const delegateProps = this.delegate.storedProps;
     const overriddenProps = this.#localProps.get() ?? {};
-    return deepMerge({}, delegateProps, overriddenProps) as DiagramCraft.NodeProps;
+    return deepMerge({}, delegateProps, overriddenProps) as NodeProps;
   }
 
-  get storedPropsCloned(): DiagramCraft.NodeProps {
+  get storedPropsCloned(): NodeProps {
     return JSON.parse(JSON.stringify(this.storedProps));
   }
 
@@ -143,9 +144,9 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
     return this.renderProps;
   }
 
-  updateProps(callback: (props: DiagramCraft.NodeProps) => void, uow: UnitOfWork): void {
+  updateProps(callback: (props: NodeProps) => void, uow: UnitOfWork): void {
     uow.snapshot(this);
-    const props = this.#localProps.getClone() as DiagramCraft.NodeProps;
+    const props = this.#localProps.getClone() as NodeProps;
     callback(props);
     this.#localProps.set(props);
     uow.updateElement(this);
@@ -164,10 +165,10 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
     }, uow);
   }
 
-  getPropsInfo<T extends PropPath<DiagramCraft.NodeProps>>(
+  getPropsInfo<T extends PropPath<NodeProps>>(
     path: T,
-    defaultValue?: PropPathValue<DiagramCraft.NodeProps, T>
-  ): PropertyInfo<PropPathValue<DiagramCraft.NodeProps, T>> {
+    defaultValue?: PropPathValue<NodeProps, T>
+  ): PropertyInfo<PropPathValue<NodeProps, T>> {
     return this.delegate.getPropsInfo(path, defaultValue);
   }
 

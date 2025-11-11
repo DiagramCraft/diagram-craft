@@ -26,6 +26,7 @@ import { ElementStylesheetDialog } from './ElementStylesheetDialog';
 import { NodeTextEditor } from '../../components/RuleEditorDialog/NodeTextEditor';
 import { useState } from 'react';
 import { EDGE_EDITORS, NODE_EDITORS } from '../../components/RuleEditorDialog/editors';
+import type { EdgeProps, NodeProps } from '@diagram-craft/model/diagramProps';
 
 const EDITORS = {
   text: [{ name: 'Text', editor: NodeTextEditor }],
@@ -54,7 +55,7 @@ export const ElementStylesheetPanel = (props: Props) => {
   const [dialogProps, setDialogProps] = useState<
     | undefined
     | {
-        props: DiagramCraft.NodeProps | DiagramCraft.EdgeProps;
+        props: NodeProps | EdgeProps;
         style: Stylesheet<'text'> | Stylesheet<'node'> | Stylesheet<'edge'>;
       }
   >(undefined);
@@ -145,7 +146,7 @@ export const ElementStylesheetPanel = (props: Props) => {
                       if (stylesheet) {
                         const commonProps = getCommonProps(
                           $d.selection.elements.map(e => e.editProps)
-                        ) as DiagramCraft.NodeProps & DiagramCraft.EdgeProps;
+                        ) as NodeProps & EdgeProps;
                         stylesheet.setProps(
                           isText ? { text: commonProps.text } : commonProps,
                           $d.document.styles,
@@ -173,7 +174,7 @@ export const ElementStylesheetPanel = (props: Props) => {
                             const id = newid();
                             const commonProps = getCommonProps(
                               $d.selection.elements.map(e => e.editProps)
-                            ) as DiagramCraft.NodeProps & DiagramCraft.EdgeProps;
+                            ) as NodeProps & EdgeProps;
                             const s = Stylesheet.fromSnapshot(
                               isText ? 'text' : isNode($d.selection.elements[0]) ? 'node' : 'edge',
                               {

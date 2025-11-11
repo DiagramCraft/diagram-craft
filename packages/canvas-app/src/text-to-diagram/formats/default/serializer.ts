@@ -5,6 +5,7 @@ import type { DiagramSerializer } from '../../types';
 import { propsToArrowNotation } from './arrowNotation';
 import { deepClone } from '@diagram-craft/utils/object';
 import type { DeepWriteable } from '@diagram-craft/utils/types';
+import type { EdgeProps } from '@diagram-craft/model/diagramProps';
 
 type ElementMetadata = {
   name?: string;
@@ -104,11 +105,11 @@ const elementToText = (element: DiagramElement, lines: string[], indent = '') =>
     let propsWithoutArrow: ElementProps = propsCloned;
 
     if (propsCloned) {
-      arrowNotation = propsToArrowNotation(propsCloned as DiagramCraft.EdgeProps);
+      arrowNotation = propsToArrowNotation(propsCloned as EdgeProps);
 
       if (arrowNotation) {
         // Remove arrow and stroke properties from props since they're in the notation
-        const cloned = deepClone(propsCloned) as DeepWriteable<DiagramCraft.EdgeProps>;
+        const cloned = deepClone(propsCloned) as DeepWriteable<EdgeProps>;
         delete cloned.arrow;
         if (cloned.stroke && Object.keys(cloned.stroke).length === 0) {
           delete cloned.stroke;

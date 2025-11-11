@@ -26,6 +26,7 @@ import {
 } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
 import { MappedCRDTProp } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtProp';
+import type { EdgeProps, ElementMetadata, ElementProps, NodeProps } from './diagramProps';
 
 // biome-ignore lint/suspicious/noExplicitAny: false positive
 type Snapshot = any;
@@ -66,16 +67,13 @@ export interface DiagramElement {
   readonly dataForTemplate: FlatObject;
   readonly editProps: ElementPropsForEditing;
   readonly renderProps: ElementPropsForRendering;
-  readonly storedProps: DiagramCraft.ElementProps;
+  readonly storedProps: ElementProps;
 
-  getPropsInfo<T extends PropPath<DiagramCraft.ElementProps>>(
+  getPropsInfo<T extends PropPath<ElementProps>>(
     path: T
-  ): PropertyInfo<PropPathValue<DiagramCraft.ElementProps, T>>;
+  ): PropertyInfo<PropPathValue<ElementProps, T>>;
 
-  updateProps(
-    callback: (props: DiagramCraft.NodeProps | DiagramCraft.EdgeProps) => void,
-    uow: UnitOfWork
-  ): void;
+  updateProps(callback: (props: NodeProps | EdgeProps) => void, uow: UnitOfWork): void;
 
   snapshot(): Snapshot;
   restore(snapshot: Snapshot, uow: UnitOfWork): void;
@@ -95,9 +93,9 @@ export interface DiagramElement {
   readonly parent: DiagramElement | undefined;
   _setParent(parent: DiagramElement | undefined): void;
 
-  readonly metadata: DiagramCraft.ElementMetadata;
-  readonly metadataCloned: DiagramCraft.ElementMetadata;
-  updateMetadata(callback: (props: DiagramCraft.ElementMetadata) => void, uow: UnitOfWork): void;
+  readonly metadata: ElementMetadata;
+  readonly metadataCloned: ElementMetadata;
+  updateMetadata(callback: (props: ElementMetadata) => void, uow: UnitOfWork): void;
 
   readonly tags: ReadonlyArray<string>;
   setTags(tags: ReadonlyArray<string>, uow: UnitOfWork): void;
@@ -131,7 +129,7 @@ export abstract class AbstractDiagramElement implements DiagramElement, Attachme
   private _cache: Map<CacheKeys, unknown> | undefined = undefined;
 
   // Shared properties
-  protected readonly _metadata: CRDTObject<DiagramCraft.ElementMetadata>;
+  protected readonly _metadata: CRDTObject<ElementMetadata>;
   protected readonly _children: MappedCRDTOrderedMap<DiagramElement, DiagramElementCRDT>;
   protected readonly _parent: MappedCRDTProp<
     DiagramElementCRDT,
@@ -201,7 +199,7 @@ export abstract class AbstractDiagramElement implements DiagramElement, Attachme
       [this._crdt] as const
     );
 
-    this._metadata = new CRDTObject<DiagramCraft.ElementMetadata>(metadataMap, () => {
+    this._metadata = new CRDTObject<ElementMetadata>(metadataMap, () => {
       this.invalidate(UnitOfWork.immediate(this._diagram));
       this._diagram.emit('elementChange', { element: this });
       this.clearCache();
@@ -226,16 +224,13 @@ export abstract class AbstractDiagramElement implements DiagramElement, Attachme
   abstract readonly dataForTemplate: FlatObject;
   abstract editProps: ElementPropsForEditing;
   abstract renderProps: ElementPropsForRendering;
-  abstract storedProps: DiagramCraft.ElementProps;
+  abstract storedProps: ElementProps;
 
-  abstract getPropsInfo<T extends PropPath<DiagramCraft.ElementProps>>(
+  abstract getPropsInfo<T extends PropPath<ElementProps>>(
     path: T
-  ): PropertyInfo<PropPathValue<DiagramCraft.ElementProps, T>>;
+  ): PropertyInfo<PropPathValue<ElementProps, T>>;
 
-  abstract updateProps(
-    callback: (props: DiagramCraft.NodeProps | DiagramCraft.EdgeProps) => void,
-    uow: UnitOfWork
-  ): void;
+  abstract updateProps(callback: (props: NodeProps | EdgeProps) => void, uow: UnitOfWork): void;
 
   abstract snapshot(): Snapshot;
   abstract restore(snapshot: Snapshot, uow: UnitOfWork): void;
@@ -299,20 +294,20 @@ export abstract class AbstractDiagramElement implements DiagramElement, Attachme
   /* Metadata ************************************************************************************************ */
 
   get metadata() {
-    return (this._metadata.get() ?? {}) as DiagramCraft.ElementMetadata;
+    return (this._metadata.get() ?? {}) as ElementMetadata;
   }
 
   get metadataCloned() {
-    return this._metadata.getClone() as DiagramCraft.ElementMetadata;
+    return this._metadata.getClone() as ElementMetadata;
   }
 
-  protected forceUpdateMetadata(metadata: DiagramCraft.ElementMetadata) {
+  protected forceUpdateMetadata(metadata: ElementMetadata) {
     this._metadata.set(metadata);
   }
 
-  updateMetadata(callback: (props: DiagramCraft.ElementMetadata) => void, uow: UnitOfWork) {
+  updateMetadata(callback: (props: ElementMetadata) => void, uow: UnitOfWork) {
     uow.snapshot(this);
-    const metadata = this._metadata.getClone() as DiagramCraft.ElementMetadata;
+    const metadata = this._metadata.getClone() as ElementMetadata;
     callback(metadata);
     this._metadata.set(metadata);
     uow.updateElement(this);

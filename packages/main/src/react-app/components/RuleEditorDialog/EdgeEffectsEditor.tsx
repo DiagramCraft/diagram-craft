@@ -2,9 +2,10 @@ import { edgeDefaults } from '@diagram-craft/model/diagramDefaults';
 import type { Editor } from './editors';
 import { EdgeEffectsPanelForm } from '../../toolwindow/ObjectToolWindow/EdgeEffectsPanel';
 import { makeProperty } from './utils';
+import type { EdgeProps } from '@diagram-craft/model/diagramProps';
 
 export const EdgeEffectsEditor: Editor = props => {
-  const $p = props.props as DiagramCraft.EdgeProps;
+  const $p = props.props as EdgeProps;
 
   const onChange = () => {
     props.onChange();

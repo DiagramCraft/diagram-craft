@@ -9,6 +9,7 @@ import { HTMLParser, stripTags } from '@diagram-craft/utils/html';
 import { hash64 } from '@diagram-craft/utils/hash';
 import { applyLineBreaks, applyTemplate } from '@diagram-craft/utils/template';
 import { HTMLToSvgTransformer, SvgTextHelper } from './svgTextUtils';
+import type { NodeProps } from '@diagram-craft/model/diagramProps';
 
 const VALIGN_TO_FLEX_JUSTIFY = {
   top: 'flex-start',
@@ -21,7 +22,7 @@ const withPx = (n?: number) => (n ? `${n}px` : undefined);
 export type ShapeTextProps = {
   id: string;
   metadata: DeepReadonly<FlatObject> | undefined;
-  textProps: DiagramCraft.NodeProps['text'];
+  textProps: NodeProps['text'];
   text: string;
   bounds: Box;
   onMouseDown: (e: MouseEvent) => void;

@@ -16,6 +16,7 @@ import type { Story } from '../documentStories';
 import type { DiagramBounds } from '../diagramBounds';
 import type { LabelNode } from '../labelNode';
 import type { Guide } from '../guides';
+import type { ElementMetadata } from '../diagramProps';
 
 export interface Reference {
   id: string;
@@ -115,7 +116,7 @@ export interface SerializedNode {
   edges?: Record<string, ReadonlyArray<Reference>>;
   children?: ReadonlyArray<SerializedElement>;
   props: NodePropsForEditing;
-  metadata: DiagramCraft.ElementMetadata;
+  metadata: ElementMetadata;
   texts: NodeTexts;
   tags?: ReadonlyArray<string>;
 }
@@ -149,7 +150,7 @@ export interface SerializedEdge {
   start: SerializedEndpoint;
   end: SerializedEndpoint;
   props: EdgePropsForEditing;
-  metadata: DiagramCraft.ElementMetadata;
+  metadata: ElementMetadata;
   children?: ReadonlyArray<SerializedElement>;
   tags?: ReadonlyArray<string>;
 }

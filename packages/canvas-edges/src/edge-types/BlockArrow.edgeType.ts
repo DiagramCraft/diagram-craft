@@ -14,6 +14,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { round } from '@diagram-craft/utils/math';
 import { registerCustomEdgeDefaults } from '@diagram-craft/model/diagramDefaults';
 import type { EdgeCapability } from '@diagram-craft/model/edgeDefinition';
+import type { EdgeProps } from '@diagram-craft/model/diagramProps';
 
 // EdgeProps extension for custom props *****************************************
 
@@ -207,7 +208,7 @@ export class BlockArrowEdgeDefinition extends ShapeEdgeDefinition {
     // Note: Override getArrow to return undefined to disable arrows
     protected getArrow(
       _type: 'start' | 'end',
-      _edgeProps: DeepReadonly<DeepRequired<DiagramCraft.EdgeProps>>
+      _edgeProps: DeepReadonly<DeepRequired<EdgeProps>>
     ): ArrowShape | undefined {
       return undefined;
     }

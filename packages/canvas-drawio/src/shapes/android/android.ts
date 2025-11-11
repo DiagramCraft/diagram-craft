@@ -23,6 +23,7 @@ import { AndroidIndeterminateSpinner } from './androidIndeterminateSpinner.nodeT
 import { StyleManager } from '../../styleManager';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
+import type { ElementMetadata, NodeProps } from '@diagram-craft/model/diagramProps';
 
 const registerStencil = (
   registry: NodeDefinitionRegistry,
@@ -39,8 +40,8 @@ const registerStencil = (
 export const parseAndroidShapes = async (
   id: string,
   bounds: Box,
-  props: DiagramCraft.NodeProps,
-  metadata: DiagramCraft.ElementMetadata,
+  props: NodeProps,
+  metadata: ElementMetadata,
   texts: NodeTexts,
   style: StyleManager,
   layer: RegularLayer

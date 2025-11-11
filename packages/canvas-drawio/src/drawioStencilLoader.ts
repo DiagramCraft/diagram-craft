@@ -1,11 +1,12 @@
 import { assert } from '@diagram-craft/utils/assert';
 import { xNum } from '@diagram-craft/utils/xml';
 import { FileSystem } from '@diagram-craft/canvas-app/loaders';
+import type { NodeProps } from '@diagram-craft/model/diagramProps';
 
 export type DrawioStencil = {
   key: string;
   group: string;
-  props: DiagramCraft.NodeProps;
+  props: NodeProps;
   dimensions: { w: number; h: number };
 };
 

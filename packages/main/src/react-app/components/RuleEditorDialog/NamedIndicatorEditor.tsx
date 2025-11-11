@@ -5,13 +5,14 @@ import { useState } from 'react';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { makeProperty } from './utils';
 import { IndicatorForm } from '../../toolwindow/ObjectToolWindow/IndicatorForm';
+import type { NodeProps } from '@diagram-craft/model/diagramProps';
 
 // biome-ignore lint/suspicious/noExplicitAny: false positive
 const path = (id: string, rest: string): any => `indicators.${id}.${rest}`;
 
 export const NamedIndicatorEditor: Editor = props => {
   const [id, setId] = useState<string>('name');
-  const $p = props.props as DiagramCraft.NodeProps;
+  const $p = props.props as NodeProps;
 
   const onChange = () => {
     props.onChange();

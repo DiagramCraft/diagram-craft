@@ -2,6 +2,7 @@ import type { NodePropsForRendering } from './diagramNode';
 import type { EdgePropsForRendering } from './diagramEdge';
 import type { Box } from '@diagram-craft/geometry/box';
 import type { Point } from '@diagram-craft/geometry/point';
+import type { EdgeProps, NodeProps } from './diagramProps';
 
 declare global {
   namespace DiagramCraft {
@@ -18,8 +19,8 @@ const effects: Array<[DiagramCraft.Effect, number]> = [];
 export const EffectsRegistry = {
   all: () => effects.map(e => e[0]),
   get: <K extends keyof DiagramCraft.Effect>(
-    nodeProps: DiagramCraft.NodeProps | NodePropsForRendering | undefined,
-    edgeProps: DiagramCraft.EdgeProps | EdgePropsForRendering | undefined,
+    nodeProps: NodeProps | NodePropsForRendering | undefined,
+    edgeProps: EdgeProps | EdgePropsForRendering | undefined,
     fn: K
   ): Array<Omit<DiagramCraft.Effect, K> & Required<Pick<DiagramCraft.Effect, K>>> => {
     return effects

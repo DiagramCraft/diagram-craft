@@ -1,4 +1,5 @@
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
+import type { EdgeProps, ElementMetadata, NodeProps } from '@diagram-craft/model/diagramProps';
 
 /**
  * Interface for parsing text into diagram elements
@@ -67,8 +68,8 @@ export interface DiagramFormat {
 export type ParsedElement = {
   id: string;
   line: number; // Line number where this element is defined
-  props?: Partial<DiagramCraft.NodeProps | DiagramCraft.EdgeProps>;
-  metadata?: Partial<DiagramCraft.ElementMetadata>;
+  props?: Partial<NodeProps | EdgeProps>;
+  metadata?: Partial<ElementMetadata>;
   stylesheet?: string;
   children?: ParsedElement[];
 } & (

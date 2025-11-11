@@ -37,10 +37,11 @@ import { ToolWindow } from '../ToolWindow';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { ModelCenterDialogCommand } from '../../components/ModelCenterDialog/ModelCenterDialog';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
+import type { ElementDataEntry } from '@diagram-craft/model/diagramProps';
 
 const NODE_CACHE = new Map<string, DiagramNode>();
 
-const makeDataReference = (item: Data, schema: DataSchema): DiagramCraft.ElementDataEntry => {
+const makeDataReference = (item: Data, schema: DataSchema): ElementDataEntry => {
   return {
     type: 'external',
     external: {
