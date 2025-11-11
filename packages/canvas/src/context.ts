@@ -10,11 +10,11 @@ export type OnMouseDown = (id: string, coord: Point, modifiers: Modifiers) => vo
 export type OnDoubleClick = (id: string, coord: Point) => void;
 
 export interface UIActions {
-  showContextMenu: <T extends keyof UIActions.ContextMenus>(
+  showContextMenu: <T extends keyof ContextMenus>(
     type: T,
     point: Point,
     mouseEvent: MouseEvent,
-    args: UIActions.ContextMenus[T]
+    args: ContextMenus[T]
   ) => void;
 
   showNodeLinkPopup: (point: Point, sourceNodeId: string, edgeId: string) => void;
@@ -24,6 +24,11 @@ export interface UIActions {
    */
   // biome-ignore lint/suspicious/noExplicitAny: false positive
   showDialog: (command: DialogCommand<any, any>) => void;
+}
+
+export interface ContextMenus {
+  canvas: object;
+  selection: object;
 }
 
 export interface Help {
@@ -70,23 +75,9 @@ export class MessageDialogCommand implements DialogCommand<MessageDialogProps, E
   ) {}
 }
 
-export namespace UIActions {
-  export interface ContextMenus extends DiagramCraft.ContextMenus {
-    canvas: object;
-    selection: object;
-  }
-}
-
-export type ContextMenuTarget<
-  T extends keyof UIActions.ContextMenus = keyof UIActions.ContextMenus
-> = UIActions.ContextMenus[T] & {
-  pos: Point;
-} & {
-  type: T;
-};
-
-declare global {
-  namespace DiagramCraft {
-    interface ContextMenus {}
-  }
-}
+export type ContextMenuTarget<T extends keyof ContextMenus = keyof ContextMenus> =
+  ContextMenus[T] & {
+    pos: Point;
+  } & {
+    type: T;
+  };
