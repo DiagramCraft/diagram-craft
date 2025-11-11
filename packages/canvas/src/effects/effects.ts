@@ -8,20 +8,21 @@ import { makeOpacity } from './opacity';
 import { makeShadowFilter } from './shadow';
 import { makeReflection } from './reflection';
 import { applySketchEffectToArrow, SketchPathRenderer } from './sketch';
-import type { PathRenderer } from '../shape/PathRenderer';
 import { RoundingPathRenderer } from './rounding';
 import type { ArrowShape } from '../arrowShapes';
 import { EffectsRegistry } from '@diagram-craft/model/effect';
+import type { PathRenderer } from '../shape/PathRenderer';
 
-declare global {
-  namespace DiagramCraft {
-    interface Effect {
-      getSVGFilter?: (props: NodePropsForRendering) => VNode[];
-      getCSSFilter?: (props: NodePropsForRendering) => string;
-      getExtraSVGElements?: (node: DiagramNode, shapeNodes: VNode[]) => VNode[];
-      getPathRenderer?: () => PathRenderer;
-      getArrowPath?: (id: string, arrow: ArrowShape) => string;
-    }
+/**
+ * Extend Effect interface with rendering methods
+ */
+declare module '@diagram-craft/model/effect' {
+  interface Effect {
+    getSVGFilter?: (props: NodePropsForRendering) => VNode[];
+    getCSSFilter?: (props: NodePropsForRendering) => string;
+    getExtraSVGElements?: (node: DiagramNode, shapeNodes: VNode[]) => VNode[];
+    getPathRenderer?: () => PathRenderer;
+    getArrowPath?: (id: string, arrow: ArrowShape) => string;
   }
 }
 
