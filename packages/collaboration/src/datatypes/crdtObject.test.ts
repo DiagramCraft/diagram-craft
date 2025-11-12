@@ -221,6 +221,108 @@ describe('CRDTObject', () => {
     });
   });
 
+  describe('JSON serialization', () => {
+    it('should serialize and deserialize a CRDTObject directly', () => {
+      const map = new NoOpCRDTMap();
+      const obj = new CRDTObject<TestObject>(watch<CRDTMap>(map), vi.fn());
+
+      // Create a complex object with nested structures and arrays
+      obj.update(p => {
+        p.name = 'John Doe';
+        p.age = 35;
+        p.address = {
+          street: '123 Main St',
+          city: 'New York'
+        };
+        p.people = [
+          {
+            firstName: 'Alice',
+            lastName: 'Smith',
+            hobbies: ['reading', 'cycling']
+          },
+          {
+            firstName: 'Bob',
+            lastName: 'Johnson',
+            hobbies: ['cooking', 'gaming', 'hiking']
+          }
+        ];
+      });
+
+      // Serialize to JSON directly without calling getClone
+      const json = JSON.stringify(obj);
+
+      // Verify JSON string is valid
+      expect(json).toBeDefined();
+      expect(typeof json).toBe('string');
+
+      // Parse JSON back to object
+      const parsed = JSON.parse(json);
+
+      // Verify parsed object matches original structure
+      expect(parsed).toEqual({
+        name: 'John Doe',
+        age: 35,
+        address: {
+          street: '123 Main St',
+          city: 'New York'
+        },
+        people: [
+          {
+            firstName: 'Alice',
+            lastName: 'Smith',
+            hobbies: ['reading', 'cycling']
+          },
+          {
+            firstName: 'Bob',
+            lastName: 'Johnson',
+            hobbies: ['cooking', 'gaming', 'hiking']
+          }
+        ]
+      });
+
+      // Verify nested arrays are preserved correctly
+      expect(Array.isArray(parsed.people)).toBe(true);
+      expect(Array.isArray(parsed.people[0].hobbies)).toBe(true);
+      expect(parsed.people[0].hobbies.length).toBe(2);
+      expect(parsed.people[1].hobbies.length).toBe(3);
+    });
+
+    it('should serialize an empty CRDTObject', () => {
+      const map = new NoOpCRDTMap();
+      const obj = new CRDTObject<TestObject>(watch<CRDTMap>(map), vi.fn());
+
+      const json = JSON.stringify(obj);
+      const parsed = JSON.parse(json);
+
+      expect(parsed).toEqual({});
+    });
+
+    it('should handle undefined values during serialization', () => {
+      const map = new NoOpCRDTMap();
+      const obj = new CRDTObject<TestObject>(watch<CRDTMap>(map), vi.fn());
+
+      obj.update(p => {
+        p.name = 'Jane';
+        p.age = undefined;
+        p.address = {
+          street: '456 Oak Ave',
+          city: 'Boston'
+        };
+      });
+
+      const json = JSON.stringify(obj);
+      const parsed = JSON.parse(json);
+
+      // Note: JSON.stringify omits undefined values
+      expect(parsed.name).toBe('Jane');
+      expect(parsed.age).toBeUndefined();
+      expect(parsed.address).toEqual({
+        street: '456 Oak Ave',
+        city: 'Boston'
+      });
+    });
+  });
+
   describe('set method with nested property deletion', () => {
     it('should properly delete nested properties when using set method', () => {
       const map = new NoOpCRDTMap();

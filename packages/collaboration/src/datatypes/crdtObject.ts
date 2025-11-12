@@ -116,6 +116,10 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
     }
   }
 
+  toJSON(): DeepReadonly<T> {
+    return this.getClone();
+  }
+
   private createProxy(target = {}, path = ''): T {
     const that = this;
     return new Proxy<T>(target as unknown as T, {
