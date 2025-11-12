@@ -74,7 +74,7 @@ export abstract class AbstractEdgeDefinition implements EdgeDefinition {
       new AnchorEndpoint(element, anchor),
       edge.end,
       deepClone(edge.editProps) as EdgeProps,
-      edge.metadataCloned,
+      deepClone(edge.metadata),
       [],
       edge.layer
     );
