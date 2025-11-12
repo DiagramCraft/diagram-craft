@@ -299,6 +299,7 @@ export class ShapeBuilder {
       style.fill = `url(#${gradientId})`;
     }
 
+    // TODO: Why do we now use the effects stuff here?
     if (props.shadow?.enabled) {
       style.filter = makeShadowFilter(props.shadow);
     }

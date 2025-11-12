@@ -5,13 +5,14 @@ import type { Box } from '@diagram-craft/geometry/box';
 import type { VNode } from '../component/vdom';
 import { makeBlur } from './blur';
 import { makeOpacity } from './opacity';
-import { makeShadowFilter } from './shadow';
+import { makeShadowFilter, makeSvgShadowFilter } from './shadow';
 import { makeReflection } from './reflection';
 import { applySketchEffectToArrow, SketchPathRenderer } from './sketch';
 import { RoundingPathRenderer } from './rounding';
 import type { ArrowShape } from '../arrowShapes';
 import { EffectsRegistry } from '@diagram-craft/model/effect';
 import type { PathRenderer } from '../shape/PathRenderer';
+import { Browser } from '../browser';
 
 /**
  * Extend Effect interface with rendering methods
@@ -85,6 +86,12 @@ export const registerDefaultEffects = () => {
   EffectsRegistry.register({
     isUsedForEdge: () => false,
     isUsedForNode: props => !!props.shadow?.enabled,
-    getCSSFilter: props => makeShadowFilter(props.shadow)
+    ...(Browser.isSafari()
+      ? {
+          getSVGFilter: props => [makeSvgShadowFilter(props.shadow)]
+        }
+      : {
+          getCSSFilter: props => makeShadowFilter(props.shadow)
+        })
   });
 };
