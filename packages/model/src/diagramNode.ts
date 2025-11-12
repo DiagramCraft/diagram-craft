@@ -154,7 +154,6 @@ export interface DiagramNode extends DiagramElement {
 
   readonly props: NodePropsForRendering;
   readonly storedProps: NodeProps;
-  readonly storedPropsCloned: NodeProps;
   readonly editProps: NodePropsForEditing;
   readonly renderProps: NodePropsForRendering;
   updateProps(callback: (props: NodeProps) => void, uow: UnitOfWork): void;
@@ -544,10 +543,6 @@ export class SimpleDiagramNode
 
   get storedProps() {
     return this.#props.get() as NodeProps;
-  }
-
-  get storedPropsCloned() {
-    return this.#props.getClone() as NodeProps;
   }
 
   get editProps(): NodePropsForEditing {

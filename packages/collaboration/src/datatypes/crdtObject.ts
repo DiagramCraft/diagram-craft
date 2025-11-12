@@ -1,6 +1,6 @@
 import { unique } from '@diagram-craft/utils/array';
 import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
-import { isPrimitive } from '@diagram-craft/utils/object';
+import { deepCloneOverride, isPrimitive } from '@diagram-craft/utils/object';
 import { DeepReadonly } from '@diagram-craft/utils/types';
 import type { CRDTCompatibleObject, CRDTMap } from '../crdt';
 import type { WatchableValue } from '@diagram-craft/utils/watchableValue';
@@ -116,15 +116,12 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
     }
   }
 
-  toJSON(): DeepReadonly<T> {
-    return this.getClone();
-  }
-
   private createProxy(target = {}, path = ''): T {
     const that = this;
+    const isTopLevel = path === '';
     return new Proxy<T>(target as unknown as T, {
-      ownKeys(_target: T): ArrayLike<string | symbol> {
-        const keys = unique(
+      ownKeys(_target: T) {
+        const keys: Array<string | symbol> = unique(
           Array.from(that.#current.keys())
             .filter(k => path === '' || k.startsWith(`${path}.`))
             .map(k => (path === '' ? k : k.substring(path.length + 1)))
@@ -137,28 +134,43 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
           keys.push('length');
         }
 
+        if (isTopLevel) {
+          keys.push('toJSON');
+          keys.push(deepCloneOverride);
+        }
+
         return keys;
       },
 
-      getOwnPropertyDescriptor(_target, _prop) {
+      getOwnPropertyDescriptor(_target, prop) {
+        if (isTopLevel && (prop === 'toJSON' || prop === deepCloneOverride)) return undefined;
+        if (prop === 'length') return { writable: true, enumerable: false, configurable: false };
         return { enumerable: true, configurable: true, writable: true };
       },
 
-      get: (_target, prop) => {
-        const isValidTarget = _target === undefined || Array.isArray(_target);
-        const propKey = prop as keyof typeof _target;
+      get: (target, prop) => {
+        const isValidTarget = target === undefined || Array.isArray(target);
+        const propKey = prop as keyof typeof target;
+
+        if (isTopLevel) {
+          if (prop === 'toJSON') {
+            return () => that.getClone();
+          } else if (prop === deepCloneOverride) {
+            return () => that.getClone();
+          }
+        }
 
         if (prop === Symbol.iterator) {
           if (!isValidTarget) return undefined;
-          return _target[Symbol.iterator] ?? undefined;
+          return target[Symbol.iterator] ?? undefined;
         }
         if (prop === Symbol.toStringTag) {
           if (!isValidTarget) return undefined;
-          return _target[propKey] ?? undefined;
+          return target[propKey] ?? undefined;
         }
         if (typeof prop !== 'string') return VERIFY_NOT_REACHED();
 
-        if (_target[propKey] !== undefined) return _target[propKey];
+        if (target[propKey] !== undefined) return target[propKey];
 
         // Handle 'length' property for array-like objects
         if (prop === 'length') {

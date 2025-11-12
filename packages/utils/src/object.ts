@@ -117,22 +117,82 @@ export const deepMerge = <T extends Props>(
 /**
  * Creates a deep clone of the provided target object.
  *
- * @param target - The object to be cloned.
- * @returns A deep clone of the target object.
+ * This function uses the browser's native `structuredClone` algorithm by default,
+ * but supports custom cloning behavior through the {@link deepCloneOverride} symbol.
+ * If an object has a function defined at the `deepCloneOverride` property, that
+ * function will be called instead of using `structuredClone`.
+ *
+ * **Note:** The override only applies to the top-level object being cloned. Nested
+ * objects with overrides inside a parent object will not have their override functions
+ * called - they will be cloned using `structuredClone` along with the parent.
+ *
+ * @param v - The object to clone
+ * @returns A deep clone of the target object
  *
  * @example
- * // returns a new object with the same properties as the original
+ * // Standard cloning
  * deepClone({ a: 1, b: 2 });
  *
  * @example
- * // returns a new array with the same elements as the original
+ * // Array cloning
  * deepClone([1, 2, 3]);
  *
  * @example
- * // returns a new date object with the same time as the original
+ * // Date cloning
  * deepClone(new Date());
+ *
+ * @example
+ * // Custom clone behavior using deepCloneOverride
+ * const obj = {
+ *   data: 'value',
+ *   [deepCloneOverride]: function() {
+ *     return { data: this.data, cloned: true };
+ *   }
+ * };
+ * const clone = deepClone(obj); // { data: 'value', cloned: true }
  */
-export const deepClone = structuredClone;
+export const deepClone = <T>(v: T): T =>
+  // @ts-expect-error we check for existence, so this is ok
+  v?.[deepCloneOverride] ? v[deepCloneOverride]() : structuredClone(v);
+
+/**
+ * Symbol used to define a custom clone function on objects that need special
+ * cloning behavior beyond the standard `structuredClone` algorithm.
+ *
+ * Objects can implement a method at this property to control how they are cloned
+ * when passed to {@link deepClone}. This is useful for:
+ * - Proxy objects that need to return their underlying data
+ * - Objects with non-cloneable properties (like functions)
+ * - Objects that need custom serialization logic
+ * - Performance optimization for large objects
+ *
+ * The override function is called on the object being cloned and should return
+ * the cloned value. It has access to `this` context of the original object.
+ *
+ * **Important:** The override only works at the top level of the cloned object.
+ * If a parent object without an override contains nested objects with overrides,
+ * those nested overrides will not be invoked.
+ *
+ * @example
+ * // Simple override returning a modified clone
+ * const obj = {
+ *   value: 42,
+ *   [deepCloneOverride]: function() {
+ *     return { value: this.value, timestamp: Date.now() };
+ *   }
+ * };
+ *
+ * @example
+ * // Class implementing custom clone behavior
+ * class CustomData {
+ *   constructor(public data: string) {}
+ *
+ *   [deepCloneOverride]() {
+ *     return { data: this.data, type: 'CustomData' };
+ *   }
+ * }
+ */
+export const deepCloneOverride = '__deepCloneOverride';
 
 /**
  * Creates a deep clone of the provided target object. It handles objects such as

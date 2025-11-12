@@ -3,12 +3,14 @@ import { type CRDTMap } from '../crdt';
 import { NoOpCRDTMap } from '../noopCrdt';
 import { CRDTObject } from './crdtObject';
 import { watch } from '@diagram-craft/utils/watchableValue';
+import { deepClone } from '@diagram-craft/utils/object';
 
 type TestObject = {
   name?: string;
   age?: number;
   address?: { street: string; city: string };
   people?: Array<{ firstName: string; lastName: string; hobbies?: string[] }>;
+  values?: Array<number>;
 };
 
 describe('CRDTObject', () => {
@@ -249,7 +251,7 @@ describe('CRDTObject', () => {
       });
 
       // Serialize to JSON directly without calling getClone
-      const json = JSON.stringify(obj);
+      const json = JSON.stringify(obj.get());
 
       // Verify JSON string is valid
       expect(json).toBeDefined();
@@ -310,7 +312,7 @@ describe('CRDTObject', () => {
         };
       });
 
-      const json = JSON.stringify(obj);
+      const json = JSON.stringify(obj.get());
       const parsed = JSON.parse(json);
 
       // Note: JSON.stringify omits undefined values
@@ -422,6 +424,33 @@ describe('CRDTObject', () => {
       expect((proxy as any).indicators.warning).toBeDefined();
       expect((proxy as any).indicators.error).toBeUndefined();
       expect((proxy as any).indicators.info).toBeDefined();
+    });
+  });
+
+  describe('deepClone integration', () => {
+    it('should clone objects from get() using deepClone', () => {
+      const map = new NoOpCRDTMap();
+      const obj = new CRDTObject<TestObject>(watch<CRDTMap>(map), vi.fn());
+
+      // Set up a simple object
+      obj.update(p => {
+        p.name = 'John';
+        p.age = 30;
+        p.values = [1, 2, 3];
+      });
+
+      const proxy = obj.get();
+      const cloned = deepClone(proxy);
+
+      // Verify the cloned object matches the original
+      expect(cloned).toEqual({
+        name: 'John',
+        age: 30,
+        values: [1, 2, 3]
+      });
+
+      // Verify it's not the same reference
+      expect(cloned).not.toBe(proxy);
     });
   });
 });

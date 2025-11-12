@@ -1,6 +1,6 @@
 import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSelectionAction';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
-import { deepMerge } from '@diagram-craft/utils/object';
+import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { isEdge, isNode } from '@diagram-craft/model/diagramElement';
@@ -28,9 +28,13 @@ export class StyleCopyAction extends AbstractSelectionAction {
 
   execute(): void {
     if (this.context.model.activeDiagram.selection.isNodesOnly()) {
-      currentNodeStyle = this.context.model.activeDiagram.selection.nodes[0]!.storedPropsCloned;
+      currentNodeStyle = deepClone(
+        this.context.model.activeDiagram.selection.nodes[0]!.storedProps
+      );
     } else if (this.context.model.activeDiagram.selection.isEdgesOnly()) {
-      currentEdgeStyle = this.context.model.activeDiagram.selection.edges[0]!.storedPropsCloned;
+      currentEdgeStyle = deepClone(
+        this.context.model.activeDiagram.selection.edges[0]!.storedProps
+      );
     } else {
       VERIFY_NOT_REACHED();
     }

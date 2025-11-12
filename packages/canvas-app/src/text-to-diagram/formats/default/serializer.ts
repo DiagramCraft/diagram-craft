@@ -65,7 +65,7 @@ const elementToText = (element: DiagramElement, lines: string[], indent = '') =>
     }
 
     const metadataCloned = element.metadataCloned;
-    const propsCloned = element.storedPropsCloned;
+    const propsCloned = element.storedProps;
 
     let style = metadataCloned.style;
     let textStyle = metadataCloned.textStyle;

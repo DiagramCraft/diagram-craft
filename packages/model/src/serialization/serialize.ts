@@ -190,7 +190,7 @@ export const serializeDiagramElement = (element: DiagramElement): SerializedElem
       bounds: node.bounds,
       anchors: node.anchors,
       children: node.children.map(serializeDiagramElement) as SerializedNode[],
-      props: node.storedPropsCloned,
+      props: node.storedProps,
       metadata: node.metadataCloned,
       texts: node.texts,
       tags: node.tags.length > 0 ? node.tags : undefined
