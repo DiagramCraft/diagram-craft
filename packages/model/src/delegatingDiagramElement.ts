@@ -20,7 +20,6 @@ import type { PropertyInfo } from './property';
 import type { CRDTMap } from '@diagram-craft/collaboration/crdt';
 import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
 import type { EdgeProps, ElementMetadata, ElementProps, NodeProps } from './diagramProps';
-import { deepClone } from '@diagram-craft/utils/object';
 
 // biome-ignore lint/suspicious/noExplicitAny: false positive
 type Snapshot = any;
@@ -108,7 +107,7 @@ export abstract class DelegatingDiagramElement implements DiagramElement {
 
   updateMetadata(callback: (props: ElementMetadata) => void, uow: UnitOfWork) {
     uow.snapshot(this);
-    const metadata = deepClone(this._metadata.get()) as ElementMetadata;
+    const metadata = this._metadata.getClone() as ElementMetadata;
     callback(metadata);
     this._metadata.set(metadata);
     uow.updateElement(this);

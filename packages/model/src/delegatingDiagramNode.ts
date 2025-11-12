@@ -13,7 +13,7 @@ import { DiagramNodeSnapshot, getRemoteUnitOfWork, UnitOfWork } from './unitOfWo
 import { Box } from '@diagram-craft/geometry/box';
 import type { NodeDefinition } from './elementDefinitionRegistry';
 import { WatchableValue } from '@diagram-craft/utils/watchableValue';
-import { deepClone, deepMerge } from '@diagram-craft/utils/object';
+import { deepMerge } from '@diagram-craft/utils/object';
 import { PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { DiagramElement, type DiagramElementCRDT } from './diagramElement';
@@ -123,10 +123,6 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
     return deepMerge({}, delegateProps, overriddenProps) as NodeProps;
   }
 
-  get storedPropsCloned(): NodeProps {
-    return JSON.parse(JSON.stringify(this.storedProps));
-  }
-
   get editProps(): NodePropsForEditing {
     const delegateProps = this.delegate.editProps;
     const overriddenProps = this.#localProps.get() ?? {};
@@ -146,7 +142,7 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
 
   updateProps(callback: (props: NodeProps) => void, uow: UnitOfWork): void {
     uow.snapshot(this);
-    const props = deepClone(this.#localProps.get()) as NodeProps;
+    const props = this.#localProps.getClone() as NodeProps;
     callback(props);
     this.#localProps.set(props);
     uow.updateElement(this);
@@ -207,7 +203,7 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
 
   setText(text: string, uow: UnitOfWork, id?: string): void {
     uow.snapshot(this);
-    const texts = deepClone(this.#localTexts.get()) as NodeTexts;
+    const texts = this.#localTexts.getClone() as NodeTexts;
     const key = id ?? 'text';
     texts[key] = text;
     this.#localTexts.set(texts);
