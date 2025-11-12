@@ -145,7 +145,6 @@ export interface DiagramEdge extends DiagramElement {
   getPropsInfo<T extends PropPath<EdgeProps>>(path: T): PropertyInfo<PropPathValue<EdgeProps, T>>;
 
   readonly storedProps: DeepReadonly<EdgeProps>;
-  readonly storedPropsCloned: DeepReadonly<EdgeProps>;
   readonly editProps: DeepReadonly<EdgePropsForEditing>;
   readonly renderProps: DeepReadonly<EdgePropsForRendering>;
   updateProps(callback: (props: EdgeProps) => void, uow: UnitOfWork): void;
@@ -384,10 +383,6 @@ export class SimpleDiagramEdge
 
   get storedProps() {
     return this.#props.get();
-  }
-
-  get storedPropsCloned() {
-    return this.#props.getClone();
   }
 
   get editProps(): EdgePropsForEditing {

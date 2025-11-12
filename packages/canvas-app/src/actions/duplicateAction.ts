@@ -15,6 +15,7 @@ import {
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { newid } from '@diagram-craft/utils/id';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
+import { deepClone } from '@diagram-craft/utils/object';
 
 declare global {
   namespace DiagramCraft {
@@ -97,7 +98,7 @@ export class DuplicateAction extends AbstractSelectionAction {
         newid(),
         newStart,
         newEnd,
-        originalEdge.storedPropsCloned,
+        deepClone(originalEdge.storedProps),
         originalEdge.metadata,
         [...originalEdge.waypoints],
         originalEdge.layer

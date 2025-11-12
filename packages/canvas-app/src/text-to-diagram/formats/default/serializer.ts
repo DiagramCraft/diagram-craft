@@ -100,7 +100,7 @@ const elementToText = (element: DiagramElement, lines: string[], indent = '') =>
     edge += `${formatId(element.id)}: edge`;
 
     // Try to generate arrow notation from edge props
-    const propsCloned = element.storedPropsCloned;
+    const propsCloned = deepClone(element.storedProps);
     let arrowNotation: string | undefined;
     let propsWithoutArrow: ElementProps = propsCloned;
 

@@ -191,7 +191,7 @@ export const serializeDiagramElement = (element: DiagramElement): SerializedElem
       anchors: node.anchors,
       children: node.children.map(serializeDiagramElement) as SerializedNode[],
       props: node.storedProps,
-      metadata: node.metadataCloned,
+      metadata: node.metadata,
       texts: node.texts,
       tags: node.tags.length > 0 ? node.tags : undefined
     };
@@ -209,8 +209,8 @@ export const serializeDiagramElement = (element: DiagramElement): SerializedElem
         timeOffset: e.timeOffset
       })),
       waypoints: edge.waypoints,
-      props: edge.storedPropsCloned,
-      metadata: edge.metadataCloned,
+      props: edge.storedProps,
+      metadata: edge.metadata,
       children: edge.children.map(serializeDiagramElement) as SerializedNode[],
       tags: edge.tags.length > 0 ? edge.tags : undefined
     };
