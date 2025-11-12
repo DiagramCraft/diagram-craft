@@ -14,7 +14,7 @@ import { Endpoint } from './endpoint';
 import { Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
 import { WatchableValue } from '@diagram-craft/utils/watchableValue';
-import { deepMerge } from '@diagram-craft/utils/object';
+import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import type { Path } from '@diagram-craft/geometry/path';
 import { Transform } from '@diagram-craft/geometry/transform';
@@ -170,7 +170,7 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
 
   updateProps(callback: (props: EdgeProps) => void, uow: UnitOfWork): void {
     uow.snapshot(this);
-    const props = this.#localProps.getClone() as EdgeProps;
+    const props = deepClone(this.#localProps.get()) as EdgeProps;
     callback(props);
     this.#localProps.set(props);
     uow.updateElement(this);

@@ -27,6 +27,7 @@ import {
 import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
 import { MappedCRDTProp } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtProp';
 import type { EdgeProps, ElementMetadata, ElementProps, NodeProps } from './diagramProps';
+import { deepClone } from '@diagram-craft/utils/object';
 
 // biome-ignore lint/suspicious/noExplicitAny: false positive
 type Snapshot = any;
@@ -302,7 +303,7 @@ export abstract class AbstractDiagramElement implements DiagramElement, Attachme
 
   updateMetadata(callback: (props: ElementMetadata) => void, uow: UnitOfWork) {
     uow.snapshot(this);
-    const metadata = this._metadata.getClone() as ElementMetadata;
+    const metadata = deepClone(this._metadata.get()) as ElementMetadata;
     callback(metadata);
     this._metadata.set(metadata);
     uow.updateElement(this);

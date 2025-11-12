@@ -694,13 +694,13 @@ export class SimpleDiagramNode
       type: 'node',
       nodeType: this.nodeType,
       bounds: deepClone(this.bounds),
-      props: this.#props.getClone(),
-      metadata: this._metadata.getClone() as ElementMetadata,
+      props: deepClone(this.#props.get()),
+      metadata: deepClone(this._metadata.get()) as ElementMetadata,
       children: this.children.map(c => c.id),
       edges: Object.fromEntries(
         Array.from(this.#edges.entries).map(([k, v]) => [k, v.map(e => ({ id: e }))])
       ),
-      texts: this.#text.getClone()
+      texts: deepClone(this.#text.get())
     };
   }
 
@@ -759,9 +759,9 @@ export class SimpleDiagramNode
       this.nodeType,
       deepClone(this.bounds),
       this.layer,
-      this.#props.getClone() as NodeProps,
-      this._metadata.getClone() as ElementMetadata,
-      this.#text.getClone() as NodeTexts,
+      deepClone(this.#props.get()) as NodeProps,
+      deepClone(this._metadata.get()) as ElementMetadata,
+      deepClone(this.#text.get()) as NodeTexts,
       deepClone(this.#anchors.get())
     );
 
