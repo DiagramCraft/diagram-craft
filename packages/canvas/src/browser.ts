@@ -9,7 +9,7 @@ export const Browser = {
     );
   },
   isSafari: () => {
-    return navigator.userAgent.includes('Safari');
+    return navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome');
   },
   isFirefox: () => {
     return navigator.userAgent.includes('Firefox');
