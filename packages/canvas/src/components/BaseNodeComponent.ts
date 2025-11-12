@@ -242,7 +242,29 @@ export class BaseNodeComponent<
       const filterId = `node-${props.element.id}-filter`;
       style.filter = `${style.filter ?? ''} url(#${filterId})`;
 
-      children.push(svg.filter({ id: filterId, filterUnits: 'objectBoundingBox' }, ...svgFilters));
+      // This ensure that filters such as gaussian blur that "increases" the size
+      // of the node, we need to calculate a border
+      // By default, the border is 10% which for small elements is not sufficient
+      // We cannot use fixed numbers (instead of percentages) due to rendering
+      // issues in Safari
+      // Hence, we calculate the percentage based on a fixed border size (in pixels)
+      const filterBorder = 40;
+      const hBorderPct = Math.max(10, Math.ceil((100 * filterBorder) / props.element.bounds.w));
+      const vBorderPct = Math.max(10, Math.ceil((100 * filterBorder) / props.element.bounds.h));
+
+      children.push(
+        svg.filter(
+          {
+            id: filterId,
+            filterUnits: 'objectBoundingBox',
+            x: `-${hBorderPct}%`,
+            y: `-${vBorderPct}%`,
+            width: `${100 + 2 * hBorderPct}%`,
+            height: `${100 + 2 * vBorderPct}%`
+          },
+          ...svgFilters
+        )
+      );
     }
 
     const extraNodes = EffectsRegistry.get(nodeProps, undefined, 'getExtraSVGElements').flatMap(e =>
