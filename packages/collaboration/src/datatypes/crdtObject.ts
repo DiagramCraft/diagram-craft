@@ -149,16 +149,12 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
       },
 
       get: (target, prop) => {
+        if (isTopLevel && (prop === 'toJSON' || prop === deepCloneOverride)) {
+          return () => that.getClone();
+        }
+
         const isValidTarget = target === undefined || Array.isArray(target);
         const propKey = prop as keyof typeof target;
-
-        if (isTopLevel) {
-          if (prop === 'toJSON') {
-            return () => that.getClone();
-          } else if (prop === deepCloneOverride) {
-            return () => that.getClone();
-          }
-        }
 
         if (prop === Symbol.iterator) {
           if (!isValidTarget) return undefined;
