@@ -290,6 +290,18 @@ export const feColorMatrix = (attrs: Attr<FeColorMatrixAttributes>, ...children:
   return s('feColorMatrix', attrs, ...children);
 };
 
+type FeDropShadowAttributes = ElementAttributes & {
+  'dx'?: string | number;
+  'dy'?: string | number;
+  'stdDeviation'?: string | number;
+  'flood-color'?: string;
+  'flood-opacity'?: string | number;
+};
+
+export const feDropShadow = (attrs: Attr<FeDropShadowAttributes>, ...children: VNode[]) => {
+  return s('feDropShadow', attrs, ...children);
+};
+
 type FeBlendAttributes = ElementAttributes & {
   in?: string;
   in2?: string;
@@ -342,6 +354,10 @@ export const feFuncB = (attrs: Attr<FeFuncAttributes>) => {
 
 type FilterAttributes = ElementAttributes & {
   filterUnits?: string;
+  x?: string | number;
+  y?: string | number;
+  width?: string | number;
+  height?: string | number;
 };
 
 export const filter = (attrs: Attr<FilterAttributes>, ...children: (VNode | null)[]) => {
