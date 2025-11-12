@@ -147,7 +147,6 @@ export interface DiagramNode extends DiagramElement {
   getText(id?: string): string;
   setText(text: string, uow: UnitOfWork, id?: string): void;
   readonly texts: NodeTexts;
-  readonly textsCloned: NodeTexts;
   getPropsInfo<T extends PropPath<NodeProps>>(
     path: T,
     defaultValue?: PropPathValue<NodeProps, T>
@@ -372,10 +371,6 @@ export class SimpleDiagramNode
 
   get texts() {
     return this.#text.get();
-  }
-
-  get textsCloned() {
-    return this.#text.getClone();
   }
 
   /* Props *************************************************************************************************** */

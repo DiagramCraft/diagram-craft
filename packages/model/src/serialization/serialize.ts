@@ -192,7 +192,7 @@ export const serializeDiagramElement = (element: DiagramElement): SerializedElem
       children: node.children.map(serializeDiagramElement) as SerializedNode[],
       props: node.storedPropsCloned,
       metadata: node.metadataCloned,
-      texts: node.textsCloned,
+      texts: node.texts,
       tags: node.tags.length > 0 ? node.tags : undefined
     };
   } else if (isEdge(element)) {
