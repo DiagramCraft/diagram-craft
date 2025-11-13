@@ -77,9 +77,6 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
   }
 
   createProxy(): T {
-    return FlatObjectMapProxy.create<T, CRDTCompatibleObject>(
-      new DynamicValue(() => this.crdt),
-      () => this.getClone()
-    );
+    return FlatObjectMapProxy.create<T, CRDTCompatibleObject>(new DynamicValue(() => this.crdt));
   }
 }
