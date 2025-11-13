@@ -1,9 +1,55 @@
+/**
+ * Flat Object utilities for working with nested data structures as flat key-value maps.
+ *
+ * A "flat object" is a key-value representation where nested object hierarchies are
+ * flattened into a single level using dot-notation paths. For example, instead of
+ * storing `{user: {name: "John", address: {city: "NYC"}}}`, a flat object stores:
+ * - `"user.name" => "John"`
+ * - `"user.address.city" => "NYC"`
+ *
+ * The main purpose is for simple serialization and change tracking
+ *
+ * This module provides:
+ * - {@link FlatObjectMapProxy}: A Proxy-based interface for accessing flat maps as nested objects
+ * - {@link fromFlatObjectMap}: Utility to reconstruct nested objects from flat representations
+ * - {@link FlatObject}: Type definition for simple flat object structures
+ *
+ * Arrays are supported through numeric indices (e.g., "items.0", "items.1") and are
+ * automatically detected and reconstructed during access or conversion.
+ *
+ * @example
+ * ```ts
+ * // Create a flat map
+ * const map = new Map([
+ *   ['user.name', 'John'],
+ *   ['user.settings.theme', 'dark'],
+ *   ['items.0', 'first'],
+ *   ['items.1', 'second']
+ * ]);
+ *
+ * // Access as nested object using proxy
+ * const proxy = FlatObjectMapProxy.create(DynamicValue.of(map));
+ * console.log(proxy.user.name);  // "John"
+ * console.log(proxy.items[0]);   // "first"
+ *
+ * // Or convert to nested structure
+ * const nested = fromFlatObjectMap(map);
+ * // { user: { name: "John", settings: { theme: "dark" } }, items: ["first", "second"] }
+ * ```
+ *
+ * @module flatObject
+ */
 import { DeepReadonly } from './types';
 import { DynamicValue } from './dynamicValue';
 import { assert, VERIFY_NOT_REACHED } from './assert';
 import { deepCloneOverride, isPrimitive } from './object';
 import { unique } from './array';
 
+/**
+ * A Map-like interface supporting basic key-value operations.
+ * Used to abstract over different map implementations for flat object storage.
+ * @template V - The type of values stored in the map
+ */
 type MapLike<V> = {
   keys(): Iterable<string>;
   set(k: string, v: V | undefined): void;
@@ -13,6 +59,10 @@ type MapLike<V> = {
   entries(): Iterable<[string, V]>;
 };
 
+/**
+ * Primitive value types supported in flat object representations.
+ * These are the basic types that can be stored without nesting.
+ */
 type DefaultValue = string | number | boolean | undefined;
 
 /**
@@ -21,6 +71,30 @@ type DefaultValue = string | number | boolean | undefined;
  */
 export type FlatObject = Record<string, DefaultValue>;
 
+/**
+ * Converts a flat map with dot-notation keys into a nested object structure.
+ *
+ * This function reconstructs a hierarchical object from a flat representation where
+ * nested properties are encoded using dot notation (e.g., "user.name" becomes {user: {name: value}}).
+ * It automatically detects and creates arrays when keys contain numeric indices.
+ *
+ * @template T - The expected type of the resulting nested object
+ * @template V - The type of values in the flat map (defaults to DefaultValue)
+ * @param map - A map-like object containing dot-notation keys and their values
+ * @returns A deeply readonly nested object structure reconstructed from the flat map
+ *
+ * @example
+ * ```ts
+ * const map = new Map([
+ *   ['user.name', 'John'],
+ *   ['user.age', 30],
+ *   ['tags.0', 'admin'],
+ *   ['tags.1', 'user']
+ * ]);
+ * const obj = fromFlatObjectMap(map);
+ * // Result: { user: { name: 'John', age: 30 }, tags: ['admin', 'user'] }
+ * ```
+ */
 export const fromFlatObjectMap = <T, V = DefaultValue>(map: MapLike<V>) => {
   const result: Record<string, unknown> = {};
 
@@ -67,6 +141,30 @@ export const fromFlatObjectMap = <T, V = DefaultValue>(map: MapLike<V>) => {
   return result as DeepReadonly<T>;
 };
 
+/**
+ * A Proxy handler that provides a nested object interface over a flat map structure.
+ *
+ * This class implements a JavaScript Proxy that allows accessing and modifying flat map data
+ * (with dot-notation keys) as if it were a nested object structure. It handles both object
+ * and array access patterns, automatically detecting and creating the appropriate structure
+ * based on key patterns.
+ *
+ * The proxy is lazy - nested objects are only created when accessed, and changes are
+ * written back to the underlying flat map structure.
+ *
+ * @template T - The type of the proxied object
+ * @template V - The type of values stored in the flat map (defaults to DefaultValue)
+ *
+ * @example
+ * ```ts
+ * const map = new Map();
+ * const proxy = FlatObjectMapProxy.create<{user: {name: string, age: number}}>(DynamicValue.of(map));
+ * proxy.user.name = 'John';  // Sets map key "user.name" to "John"
+ * proxy.user.age = 30;       // Sets map key "user.age" to 30
+ * console.log(proxy.user.name);  // Reads from map key "user.name" -> "John"
+ * console.log(map);  // Map { "user.name" => "John", "user.age" => 30 }
+ * ```
+ */
 export class FlatObjectMapProxy<T extends object, V = DefaultValue> implements ProxyHandler<T> {
   readonly #isTopLevel: boolean;
 
@@ -77,20 +175,41 @@ export class FlatObjectMapProxy<T extends object, V = DefaultValue> implements P
     this.#isTopLevel = path === '';
   }
 
+  /**
+   * Creates a new proxy instance over a flat map structure.
+   *
+   * @template T - The expected type of the proxied object
+   * @template V - The type of values in the flat map (defaults to DefaultValue)
+   * @param obj - A DynamicValue wrapping the map-like object to proxy
+   * @returns A proxy object that provides nested access to the flat map
+   */
   static create<T extends object, V = DefaultValue>(obj: DynamicValue<MapLike<V>>): T {
     return new Proxy<T>({} as unknown as T, new FlatObjectMapProxy(obj, ''));
   }
 
+  /**
+   * Creates a sub-proxy for a nested path in the flat map.
+   * @private
+   */
   private subProxy(path: string, target = {}) {
     return new Proxy<T>(target as unknown as T, new FlatObjectMapProxy(this.obj, path));
   }
 
+  /**
+   * Proxy trap for getting property descriptors.
+   * Returns appropriate descriptors for enumerable properties and special cases like length.
+   */
   getOwnPropertyDescriptor(_target: T, prop: string | symbol): PropertyDescriptor | undefined {
     if (this.#isTopLevel && (prop === 'toJSON' || prop === deepCloneOverride)) return undefined;
     if (prop === 'length') return { writable: true, enumerable: false, configurable: false };
     return { enumerable: true, configurable: true, writable: true };
   }
 
+  /**
+   * Proxy trap for enumerating object keys.
+   * Returns all unique property names at the current nesting level in the flat map.
+   * For array-like objects, includes a 'length' property.
+   */
   ownKeys(_target: T): ArrayLike<string | symbol> {
     const keys: Array<string | symbol> = unique(
       Array.from(this.obj.get().keys())
@@ -113,6 +232,15 @@ export class FlatObjectMapProxy<T extends object, V = DefaultValue> implements P
     return keys;
   }
 
+  /**
+   * Proxy trap for getting property values.
+   * Retrieves values from the flat map using dot-notation paths.
+   * Automatically creates sub-proxies for nested objects and handles array-like structures.
+   *
+   * @param target - The proxy target object
+   * @param prop - The property name or symbol being accessed
+   * @returns The property value, which may be a primitive, sub-proxy, or undefined
+   */
   // biome-ignore lint/suspicious/noExplicitAny: Valid any
   get(target: T, prop: string | symbol, _receiver: any): any {
     if (this.#isTopLevel && (prop === 'toJSON' || prop === deepCloneOverride)) {
@@ -177,6 +305,17 @@ export class FlatObjectMapProxy<T extends object, V = DefaultValue> implements P
     return this.subProxy(fullPath);
   }
 
+  /**
+   * Proxy trap for setting property values.
+   * Writes values to the flat map using dot-notation paths.
+   * When setting nested objects, recursively flattens them into dot-notation keys.
+   * Setting a value to undefined removes the key and all nested keys from the map.
+   *
+   * @param _target - The proxy target object
+   * @param prop - The property name or symbol being set
+   * @param value - The value to set (primitive, object, or undefined)
+   * @returns Always returns true to indicate success
+   */
   // biome-ignore lint/suspicious/noExplicitAny: Valid use
   set(_target: T, prop: string | symbol, value: any): boolean {
     if (typeof prop !== 'string') return VERIFY_NOT_REACHED();

@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 Magnus Johansson
+ * SPDX-License-Identifier: ISC
+ */
+
 /**
  * A wrapper class that provides dynamic evaluation of values through a callback function.
  *
@@ -37,6 +42,10 @@ export class DynamicValue<T> {
    *                 This function should return a value of type T.
    */
   constructor(private readonly callback: () => T) {}
+
+  static of<T>(v: T) {
+    return new DynamicValue(() => v);
+  }
 
   /**
    * Executes the callback function and returns its result.
