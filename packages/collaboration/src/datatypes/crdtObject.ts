@@ -4,14 +4,7 @@ import { deepCloneOverride, isPrimitive } from '@diagram-craft/utils/object';
 import { DeepReadonly } from '@diagram-craft/utils/types';
 import type { CRDTCompatibleObject, CRDTMap } from '../crdt';
 import type { WatchableValue } from '@diagram-craft/utils/watchableValue';
-
-class DynamicValue<T> {
-  constructor(private readonly callback: () => T) {}
-
-  get() {
-    return this.callback();
-  }
-}
+import { DynamicValue } from '@diagram-craft/utils/dynamicValue';
 
 type MapLike<V> = {
   keys(): Iterable<string>;
