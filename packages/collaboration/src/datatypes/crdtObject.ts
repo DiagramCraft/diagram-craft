@@ -5,32 +5,91 @@ import { DeepReadonly } from '@diagram-craft/utils/types';
 import type { CRDTCompatibleObject, CRDTMap } from '../crdt';
 import type { WatchableValue } from '@diagram-craft/utils/watchableValue';
 
-type OnDemandValue<T> = () => T;
+class DynamicValue<T> {
+  constructor(private readonly callback: () => T) {}
 
-class CRDTObjectProxyHandler<T extends object> implements ProxyHandler<T> {
+  get() {
+    return this.callback();
+  }
+}
+
+type MapLike<V> = {
+  keys(): Iterable<string>;
+  set(k: string, v: V | undefined): void;
+  delete(k: string): void;
+  has(k: string): boolean;
+  get(k: string): V | undefined;
+  entries(): Iterable<[string, V]>;
+};
+
+const fromFlatObjectMap = <T, V = string | number | undefined>(map: MapLike<V>) => {
+  const result: Record<string, unknown> = {};
+
+  for (const [path, value] of map.entries()) {
+    const parts = path.split('.');
+    // biome-ignore lint/suspicious/noExplicitAny: false positive
+    let current: any = result;
+
+    for (let i = 0; i < parts.length - 1; i++) {
+      const part = parts[i]!;
+
+      if (!(part in current)) {
+        // If the next part is a number, create an array, otherwise create an object
+        const nextPart = i + 1 < parts.length ? parts[i + 1] : '';
+        const nextIsArrayIndex = !Number.isNaN(Number(nextPart));
+
+        const isArrayIndex = !Number.isNaN(Number(part));
+        if (isArrayIndex && !Array.isArray(current)) {
+          assert.true(Object.keys(current).length === 0);
+          current = [];
+        }
+
+        current[part] = nextIsArrayIndex ? [] : {};
+      }
+
+      current = current[part] as Record<string, unknown>;
+    }
+
+    const lastPart = parts[parts.length - 1]!;
+    if (value !== undefined) {
+      current[lastPart] = value;
+    } else if (!(lastPart in current)) {
+      // Check if this is part of an array
+      const isArrayIndex = !Number.isNaN(Number(lastPart));
+      if (isArrayIndex && !Array.isArray(current)) {
+        assert.true(Object.keys(current).length === 0);
+        current = [];
+      }
+
+      current[lastPart] = {};
+    }
+  }
+
+  return result as DeepReadonly<T>;
+};
+
+class FlatObjectMapProxy<T extends object, V = string | number | undefined>
+  implements ProxyHandler<T>
+{
   readonly #isTopLevel: boolean;
 
   constructor(
-    private readonly crdtObject: CRDTObject<any>,
-    private readonly path: string
+    private readonly obj: DynamicValue<MapLike<V>>,
+    private readonly path: string,
+    private readonly clone: () => DeepReadonly<T>
   ) {
     this.#isTopLevel = path === '';
   }
 
-  static create<T extends CRDTCompatibleObject & object>(
-    obj: CRDTObject<T>,
-
-    v: OnDemandValue<{
-      keys(): Iterable<string>;
-      set(k: string, v: string | number): void;
-      delete(k: string): void;
-    }>
+  static create<T extends object, V = string | number | undefined>(
+    obj: DynamicValue<MapLike<V>>,
+    clone: () => DeepReadonly<T>
   ): T {
-    return new Proxy<T>({} as unknown as T, new CRDTObjectProxyHandler(obj, ''));
+    return new Proxy<T>({} as unknown as T, new FlatObjectMapProxy(obj, '', clone));
   }
 
   private subProxy(path: string, target = {}) {
-    return new Proxy<T>(target as unknown as T, new CRDTObjectProxyHandler(this.crdtObject, path));
+    return new Proxy<T>(target as unknown as T, new FlatObjectMapProxy(this.obj, path, this.clone));
   }
 
   getOwnPropertyDescriptor(_target: T, prop: string | symbol): PropertyDescriptor | undefined {
@@ -41,7 +100,7 @@ class CRDTObjectProxyHandler<T extends object> implements ProxyHandler<T> {
 
   ownKeys(_target: T): ArrayLike<string | symbol> {
     const keys: Array<string | symbol> = unique(
-      Array.from(this.crdtObject.crdt.keys())
+      Array.from(this.obj.get().keys())
         .filter(k => this.path === '' || k.startsWith(`${this.path}.`))
         .map(k => (this.path === '' ? k : k.substring(this.path.length + 1)))
         .map(k => k.split('.')[0]!)
@@ -63,7 +122,7 @@ class CRDTObjectProxyHandler<T extends object> implements ProxyHandler<T> {
 
   get(target: T, prop: string | symbol, _receiver: any): any {
     if (this.#isTopLevel && (prop === 'toJSON' || prop === deepCloneOverride)) {
-      return () => this.crdtObject.getClone();
+      return () => this.clone();
     }
 
     const isValidTarget = target === undefined || Array.isArray(target);
@@ -83,7 +142,7 @@ class CRDTObjectProxyHandler<T extends object> implements ProxyHandler<T> {
 
     // Handle 'length' property for array-like objects
     if (prop === 'length') {
-      const keys = Array.from(this.crdtObject.crdt.keys())
+      const keys = Array.from(this.obj.get().keys())
         .filter(k => this.path === '' || k.startsWith(`${this.path}.`))
         .map(k => (this.path === '' ? k : k.substring(this.path.length + 1)))
         .map(k => k.split('.')[0])
@@ -95,7 +154,7 @@ class CRDTObjectProxyHandler<T extends object> implements ProxyHandler<T> {
       return 0;
     }
 
-    const map = this.crdtObject.crdt;
+    const map = this.obj.get();
 
     const fullPath = this.path ? `${this.path}.${prop}` : prop;
     const value = map.get(fullPath);
@@ -103,9 +162,7 @@ class CRDTObjectProxyHandler<T extends object> implements ProxyHandler<T> {
     if (value === undefined) {
       if (map.has(fullPath)) return this.subProxy(fullPath);
 
-      const keys = Array.from(this.crdtObject.crdt.keys()).filter(k =>
-        k.startsWith(`${fullPath}.`)
-      );
+      const keys = Array.from(this.obj.get().keys()).filter(k => k.startsWith(`${fullPath}.`));
       if (keys.length === 0) {
         return undefined;
       } else if (
@@ -131,11 +188,11 @@ class CRDTObjectProxyHandler<T extends object> implements ProxyHandler<T> {
 
     const fullPath = this.path ? `${this.path}.${prop}` : prop;
 
-    const map = this.crdtObject.crdt;
+    const map = this.obj.get();
 
     if (value === undefined) {
       map.delete(fullPath);
-      for (const k of this.crdtObject.crdt.keys()) {
+      for (const k of this.obj.get().keys()) {
         if (k.startsWith(`${fullPath}.`)) {
           map.delete(k);
         }
@@ -148,7 +205,7 @@ class CRDTObjectProxyHandler<T extends object> implements ProxyHandler<T> {
         map.set(fullPath, undefined);
       } else {
         // First, remove all existing nested properties under this path
-        for (const k of Array.from(this.crdtObject.crdt.keys())) {
+        for (const k of Array.from(this.obj.get().keys())) {
           if (k.startsWith(`${fullPath}.`)) {
             map.delete(k);
           }
@@ -203,50 +260,7 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
   }
 
   getClone(): DeepReadonly<T> {
-    const result: Record<string, unknown> = {};
-    const map = this.#current;
-
-    for (const [path, value] of map.entries()) {
-      const parts = path.split('.');
-      // biome-ignore lint/suspicious/noExplicitAny: false positive
-      let current: any = result;
-
-      for (let i = 0; i < parts.length - 1; i++) {
-        const part = parts[i]!;
-
-        if (!(part in current)) {
-          // If the next part is a number, create an array, otherwise create an object
-          const nextPart = i + 1 < parts.length ? parts[i + 1] : '';
-          const nextIsArrayIndex = !Number.isNaN(Number(nextPart));
-
-          const isArrayIndex = !Number.isNaN(Number(part));
-          if (isArrayIndex && !Array.isArray(current)) {
-            assert.true(Object.keys(current).length === 0);
-            current = [];
-          }
-
-          current[part] = nextIsArrayIndex ? [] : {};
-        }
-
-        current = current[part] as Record<string, unknown>;
-      }
-
-      const lastPart = parts[parts.length - 1]!;
-      if (value !== undefined) {
-        current[lastPart] = value;
-      } else if (!(lastPart in current)) {
-        // Check if this is part of an array
-        const isArrayIndex = !Number.isNaN(Number(lastPart));
-        if (isArrayIndex && !Array.isArray(current)) {
-          assert.true(Object.keys(current).length === 0);
-          current = [];
-        }
-
-        current[lastPart] = {};
-      }
-    }
-
-    return result as DeepReadonly<T>;
+    return fromFlatObjectMap(this.#current) as DeepReadonly<T>;
   }
 
   update(callback: (obj: T) => void) {
@@ -290,6 +304,9 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
   }
 
   createProxy(): T {
-    return CRDTObjectProxyHandler.create(this, () => this.crdt);
+    return FlatObjectMapProxy.create<T, CRDTCompatibleObject>(
+      new DynamicValue(() => this.crdt),
+      () => this.getClone()
+    );
   }
 }
