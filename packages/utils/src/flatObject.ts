@@ -70,23 +70,19 @@ export const fromFlatObjectMap = <T, V = DefaultValue>(map: MapLike<V>) => {
 export class FlatObjectMapProxy<T extends object, V = DefaultValue> implements ProxyHandler<T> {
   readonly #isTopLevel: boolean;
 
-  constructor(
+  protected constructor(
     private readonly obj: DynamicValue<MapLike<V>>,
-    private readonly path: string,
-    private readonly clone: () => DeepReadonly<T>
+    private readonly path: string
   ) {
     this.#isTopLevel = path === '';
   }
 
-  static create<T extends object, V = DefaultValue>(
-    obj: DynamicValue<MapLike<V>>,
-    clone: () => DeepReadonly<T>
-  ): T {
-    return new Proxy<T>({} as unknown as T, new FlatObjectMapProxy(obj, '', clone));
+  static create<T extends object, V = DefaultValue>(obj: DynamicValue<MapLike<V>>): T {
+    return new Proxy<T>({} as unknown as T, new FlatObjectMapProxy(obj, ''));
   }
 
   private subProxy(path: string, target = {}) {
-    return new Proxy<T>(target as unknown as T, new FlatObjectMapProxy(this.obj, path, this.clone));
+    return new Proxy<T>(target as unknown as T, new FlatObjectMapProxy(this.obj, path));
   }
 
   getOwnPropertyDescriptor(_target: T, prop: string | symbol): PropertyDescriptor | undefined {
@@ -120,7 +116,7 @@ export class FlatObjectMapProxy<T extends object, V = DefaultValue> implements P
   // biome-ignore lint/suspicious/noExplicitAny: Valid any
   get(target: T, prop: string | symbol, _receiver: any): any {
     if (this.#isTopLevel && (prop === 'toJSON' || prop === deepCloneOverride)) {
-      return () => this.clone();
+      return () => fromFlatObjectMap(this.obj.get());
     }
 
     const isValidTarget = target === undefined || Array.isArray(target);
