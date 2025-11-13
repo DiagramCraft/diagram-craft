@@ -1,6 +1,7 @@
-import { DeepWriteable, FlatObject } from '@diagram-craft/utils/types';
+import { DeepWriteable } from '@diagram-craft/utils/types';
 import { deepClone } from '@diagram-craft/utils/object';
 import { Direction } from '@diagram-craft/geometry/direction';
+import type { FlatObject } from '@diagram-craft/utils/flatObject';
 
 type GridType = 'lines' | 'dots';
 

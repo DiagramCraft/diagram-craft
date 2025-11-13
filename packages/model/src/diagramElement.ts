@@ -10,7 +10,7 @@ import { Box } from '@diagram-craft/geometry/box';
 import { getRemoteUnitOfWork, UnitOfWork } from './unitOfWork';
 import type { Diagram } from './diagram';
 import { AttachmentConsumer } from './attachment';
-import { FlatObject } from '@diagram-craft/utils/types';
+import { FlatObject } from '@diagram-craft/utils/flatObject';
 import { PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { assert } from '@diagram-craft/utils/assert';
 import type { RegularLayer } from './diagramLayerRegular';

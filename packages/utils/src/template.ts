@@ -13,7 +13,7 @@
  * @module
  */
 
-import { FlatObject } from '@diagram-craft/utils/types';
+import { FlatObject } from '@diagram-craft/utils/flatObject';
 
 /**
  * Applies template variable substitution to a text string.

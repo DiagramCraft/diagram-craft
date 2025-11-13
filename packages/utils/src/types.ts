@@ -83,12 +83,6 @@ export const isStringUnion = <T extends string>(o: unknown, values: T[]): o is T
 export type EmptyObject = Record<string, never>;
 
 /**
- * Represents an object with string keys and primitive values.
- * Useful for typing simple key-value objects.
- */
-export type FlatObject = Record<string, string | number | boolean | undefined>;
-
-/**
  * Represents a JSON-compatible value.
  * This type can be used to type values that will be serialized to JSON.
  */

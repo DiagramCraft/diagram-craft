@@ -15,7 +15,7 @@ import { Transform } from '@diagram-craft/geometry/transform';
 import type { Box } from '@diagram-craft/geometry/box';
 import type { DuplicationContext } from './diagramNode';
 import { PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
-import { FlatObject } from '@diagram-craft/utils/types';
+import { FlatObject } from '@diagram-craft/utils/flatObject';
 import type { PropertyInfo } from './property';
 import type { CRDTMap } from '@diagram-craft/collaboration/crdt';
 import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';

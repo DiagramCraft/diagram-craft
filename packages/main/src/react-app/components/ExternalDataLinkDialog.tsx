@@ -4,7 +4,7 @@ import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { Button } from '@diagram-craft/app-components/Button';
 import { ExternalDataLinkActionProps } from '../actions/externalDataActions';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
-import type { FlatObject } from '@diagram-craft/utils/types';
+import type { FlatObject } from '@diagram-craft/utils/flatObject';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { newid } from '@diagram-craft/utils/id';
 
@@ -135,9 +135,7 @@ export const ExternalDataLinkDialog = (props: Props) => {
                 marginTop: '1rem'
               }}
             >
-              <div style={{ fontWeight: 'bold', marginBottom: '0.25rem' }}>
-                Data to be created:
-              </div>
+              <div style={{ fontWeight: 'bold', marginBottom: '0.25rem' }}>Data to be created:</div>
               {props.elementData &&
                 Object.entries(props.elementData)
                   .filter(([key]) => !key.startsWith('_'))

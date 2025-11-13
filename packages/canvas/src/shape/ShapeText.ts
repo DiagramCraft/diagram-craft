@@ -4,12 +4,13 @@ import * as html from '../component/vdom-html';
 import { rawHTML, VNode } from '../component/vdom';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { Box } from '@diagram-craft/geometry/box';
-import { DeepReadonly, FlatObject } from '@diagram-craft/utils/types';
+import { DeepReadonly } from '@diagram-craft/utils/types';
 import { HTMLParser, stripTags } from '@diagram-craft/utils/html';
 import { hash64 } from '@diagram-craft/utils/hash';
 import { applyLineBreaks, applyTemplate } from '@diagram-craft/utils/template';
 import { HTMLToSvgTransformer, SvgTextHelper } from './svgTextUtils';
 import type { NodeProps } from '@diagram-craft/model/diagramProps';
+import type { FlatObject } from '@diagram-craft/utils/flatObject';
 
 const VALIGN_TO_FLEX_JUSTIFY = {
   top: 'flex-start',

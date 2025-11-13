@@ -17,12 +17,7 @@ import {
   FreeEndpoint,
   PointInNodeEndpoint
 } from './endpoint';
-import {
-  DeepReadonly,
-  DeepRequired,
-  type FlatObject,
-  makeWriteable
-} from '@diagram-craft/utils/types';
+import { DeepReadonly, DeepRequired, makeWriteable } from '@diagram-craft/utils/types';
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { assert, mustExist, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { newid } from '@diagram-craft/utils/id';
@@ -53,6 +48,7 @@ import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
 import type { LabelNode } from './labelNode';
 import { EffectsRegistry } from './effect';
 import type { CustomNodeProps, EdgeProps, ElementMetadata, NodeProps } from './diagramProps';
+import type { FlatObject } from '@diagram-craft/utils/flatObject';
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;
