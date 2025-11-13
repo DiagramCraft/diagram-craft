@@ -41,7 +41,7 @@
  */
 import { DeepReadonly } from './types';
 import { DynamicValue } from './dynamicValue';
-import { assert, VERIFY_NOT_REACHED } from './assert';
+import { VERIFY_NOT_REACHED } from './assert';
 import { deepCloneOverride, isPrimitive } from './object';
 import { unique } from './array';
 
@@ -59,10 +59,6 @@ type MapLike<V> = {
   entries(): Iterable<[string, V]>;
 };
 
-/**
- * Primitive value types supported in flat object representations.
- * These are the basic types that can be stored without nesting.
- */
 type DefaultValue = string | number | boolean | undefined;
 
 /**
@@ -100,46 +96,42 @@ export const fromFlatObjectMap = <T, V = DefaultValue>(map: MapLike<V>) => {
 
   for (const [path, value] of map.entries()) {
     const parts = path.split('.');
-    // biome-ignore lint/suspicious/noExplicitAny: false positive
-    let current: any = result;
+    let current = result;
 
+    // Navigate through intermediate parts, creating structure as needed
     for (let i = 0; i < parts.length - 1; i++) {
       const part = parts[i]!;
 
       if (!(part in current)) {
-        // If the next part is a number, create an array, otherwise create an object
-        const nextPart = i + 1 < parts.length ? parts[i + 1] : '';
-        const nextIsArrayIndex = !Number.isNaN(Number(nextPart));
-
-        const isArrayIndex = !Number.isNaN(Number(part));
-        if (isArrayIndex && !Array.isArray(current)) {
-          assert.true(Object.keys(current).length === 0);
-          current = [];
-        }
-
-        current[part] = nextIsArrayIndex ? [] : {};
+        // Create array or object based on what the next part looks like
+        const nextPart = parts[i + 1]!;
+        current[part] = isNumeric(nextPart) ? [] : {};
       }
 
       current = current[part] as Record<string, unknown>;
     }
 
-    const lastPart = parts[parts.length - 1]!;
+    // Set the leaf value
+    const lastPart = parts.at(-1)!;
     if (value !== undefined) {
       current[lastPart] = value;
     } else if (!(lastPart in current)) {
-      // Check if this is part of an array
-      const isArrayIndex = !Number.isNaN(Number(lastPart));
-      if (isArrayIndex && !Array.isArray(current)) {
-        assert.true(Object.keys(current).length === 0);
-        current = [];
-      }
-
       current[lastPart] = {};
     }
   }
 
   return result as DeepReadonly<T>;
 };
+
+const toJSONProp = 'toJSON';
+const lengthProp = 'length';
+
+// Check if all keys are numeric, and then we assume an array
+const isArrayLike = (keys: Array<string | symbol>) =>
+  keys.length > 0 && keys.every(k => !Number.isNaN(Number(k)));
+
+// Helper to check if a string represents a numeric array index
+const isNumeric = (s: string): boolean => !Number.isNaN(Number(s));
 
 /**
  * A Proxy handler that provides a nested object interface over a flat map structure.
@@ -200,9 +192,13 @@ export class FlatObjectMapProxy<T extends object, V = DefaultValue> implements P
    * Returns appropriate descriptors for enumerable properties and special cases like length.
    */
   getOwnPropertyDescriptor(_target: T, prop: string | symbol): PropertyDescriptor | undefined {
-    if (this.#isTopLevel && (prop === 'toJSON' || prop === deepCloneOverride)) return undefined;
-    if (prop === 'length') return { writable: true, enumerable: false, configurable: false };
-    return { enumerable: true, configurable: true, writable: true };
+    if (this.#isTopLevel && (prop === toJSONProp || prop === deepCloneOverride)) {
+      return undefined;
+    } else if (prop === lengthProp) {
+      return { writable: true, enumerable: false, configurable: false };
+    } else {
+      return { enumerable: true, configurable: true, writable: true };
+    }
   }
 
   /**
@@ -211,25 +207,28 @@ export class FlatObjectMapProxy<T extends object, V = DefaultValue> implements P
    * For array-like objects, includes a 'length' property.
    */
   ownKeys(_target: T): ArrayLike<string | symbol> {
-    const keys: Array<string | symbol> = unique(
-      Array.from(this.obj.get().keys())
-        .filter(k => this.path === '' || k.startsWith(`${this.path}.`))
-        .map(k => (this.path === '' ? k : k.substring(this.path.length + 1)))
-        .map(k => k.split('.')[0]!)
-    );
+    const keys = this.getKeys();
 
-    // If this is an array-like object (all keys are numeric), include 'length'
-    const isArrayLike = keys.length > 0 && keys.every(k => !Number.isNaN(Number(k)));
-    if (isArrayLike && !keys.includes('length')) {
-      keys.push('length');
+    if (isArrayLike(keys)) {
+      keys.push(lengthProp);
     }
 
     if (this.#isTopLevel) {
-      keys.push('toJSON');
+      keys.push(toJSONProp);
       keys.push(deepCloneOverride);
     }
 
     return keys;
+  }
+
+  private getKeys() {
+    const prefix = `${this.path}.`;
+    return unique(
+      Array.from(this.obj.get().keys())
+        .filter(k => this.#isTopLevel || k.startsWith(prefix))
+        .map(k => (this.#isTopLevel ? k : k.substring(prefix.length)))
+        .map(k => k.split('.')[0]!)
+    );
   }
 
   /**
@@ -241,44 +240,29 @@ export class FlatObjectMapProxy<T extends object, V = DefaultValue> implements P
    * @param prop - The property name or symbol being accessed
    * @returns The property value, which may be a primitive, sub-proxy, or undefined
    */
-  // biome-ignore lint/suspicious/noExplicitAny: Valid any
-  get(target: T, prop: string | symbol, _receiver: any): any {
-    if (this.#isTopLevel && (prop === 'toJSON' || prop === deepCloneOverride)) {
-      return () => fromFlatObjectMap(this.obj.get());
-    }
-
+  get(target: T, prop: string | symbol): unknown {
     const isValidTarget = target === undefined || Array.isArray(target);
     const propKey = prop as keyof typeof target;
 
-    if (prop === Symbol.iterator) {
-      if (!isValidTarget) return undefined;
-      return target[Symbol.iterator] ?? undefined;
-    }
-    if (prop === Symbol.toStringTag) {
-      if (!isValidTarget) return undefined;
-      return target[propKey] ?? undefined;
-    }
-    if (typeof prop !== 'string') return VERIFY_NOT_REACHED();
-
-    if (target[propKey] !== undefined) return target[propKey];
-
-    // Handle 'length' property for array-like objects
-    if (prop === 'length') {
-      const keys = Array.from(this.obj.get().keys())
-        .filter(k => this.path === '' || k.startsWith(`${this.path}.`))
-        .map(k => (this.path === '' ? k : k.substring(this.path.length + 1)))
-        .map(k => k.split('.')[0])
-        .filter(k => !Number.isNaN(Number(k)));
-
-      if (keys.length > 0) {
-        return Math.max(...keys.map(k => Number(k))) + 1;
-      }
-      return 0;
+    if (this.#isTopLevel && (prop === toJSONProp || prop === deepCloneOverride)) {
+      return () => fromFlatObjectMap(this.obj.get());
+    } else if (prop === Symbol.iterator) {
+      return isValidTarget ? target[Symbol.iterator] : undefined;
+    } else if (prop === Symbol.toStringTag) {
+      return isValidTarget ? target[propKey] : undefined;
+    } else if (prop === lengthProp) {
+      const arrayKeys = this.getKeys().filter(k => !Number.isNaN(Number(k)));
+      if (arrayKeys.length === 0) return 0;
+      return Math.max(...arrayKeys.map(Number)) + 1;
+    } else if (target[propKey] !== undefined) {
+      return target[propKey];
+    } else if (typeof prop !== 'string') {
+      return VERIFY_NOT_REACHED();
     }
 
     const map = this.obj.get();
 
-    const fullPath = this.path ? `${this.path}.${prop}` : prop;
+    const fullPath = this.#isTopLevel ? prop : `${this.path}.${prop}`;
     const value = map.get(fullPath);
 
     if (value === undefined) {
