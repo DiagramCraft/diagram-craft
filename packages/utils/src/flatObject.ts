@@ -41,7 +41,7 @@
  */
 import { DeepReadonly } from './types';
 import { DynamicValue } from './dynamicValue';
-import { VERIFY_NOT_REACHED } from './assert';
+import { NOT_IMPLEMENTED_YET, VERIFY_NOT_REACHED } from './assert';
 import { deepCloneOverride, isPrimitive } from './object';
 import { unique } from './array';
 
@@ -128,10 +128,10 @@ const lengthProp = 'length';
 
 // Check if all keys are numeric, and then we assume an array
 const isArrayLike = (keys: Array<string | symbol>) =>
-  keys.length > 0 && keys.every(k => !Number.isNaN(Number(k)));
+  keys.length > 0 && keys.every(k => isNumeric(k));
 
 // Helper to check if a string represents a numeric array index
-const isNumeric = (s: string): boolean => !Number.isNaN(Number(s));
+const isNumeric = (s: unknown): boolean => !Number.isNaN(Number(s));
 
 /**
  * A Proxy handler that provides a nested object interface over a flat map structure.
@@ -180,14 +180,6 @@ export class FlatObjectMapProxy<T extends object, V = DefaultValue> implements P
   }
 
   /**
-   * Creates a sub-proxy for a nested path in the flat map.
-   * @private
-   */
-  private subProxy(path: string, target = {}) {
-    return new Proxy<T>(target as unknown as T, new FlatObjectMapProxy(this.obj, path));
-  }
-
-  /**
    * Proxy trap for getting property descriptors.
    * Returns appropriate descriptors for enumerable properties and special cases like length.
    */
@@ -221,60 +213,61 @@ export class FlatObjectMapProxy<T extends object, V = DefaultValue> implements P
     return keys;
   }
 
-  private getKeys() {
-    const prefix = `${this.path}.`;
-    return unique(
-      Array.from(this.obj.get().keys())
-        .filter(k => this.#isTopLevel || k.startsWith(prefix))
-        .map(k => (this.#isTopLevel ? k : k.substring(prefix.length)))
-        .map(k => k.split('.')[0]!)
-    );
-  }
-
   /**
    * Proxy trap for getting property values.
    * Retrieves values from the flat map using dot-notation paths.
    * Automatically creates sub-proxies for nested objects and handles array-like structures.
-   *
-   * @param target - The proxy target object
-   * @param prop - The property name or symbol being accessed
-   * @returns The property value, which may be a primitive, sub-proxy, or undefined
    */
   get(target: T, prop: string | symbol): unknown {
-    const isValidTarget = target === undefined || Array.isArray(target);
     const propKey = prop as keyof typeof target;
 
+    // Handle top level special methods to support JSON and cloning
     if (this.#isTopLevel && (prop === toJSONProp || prop === deepCloneOverride)) {
       return () => fromFlatObjectMap(this.obj.get());
-    } else if (prop === Symbol.iterator) {
-      return isValidTarget ? target[Symbol.iterator] : undefined;
-    } else if (prop === Symbol.toStringTag) {
-      return isValidTarget ? target[propKey] : undefined;
-    } else if (prop === lengthProp) {
+    }
+
+    // Handle iterator and length property for arrays
+    if (prop === Symbol.iterator) {
+      return Array.isArray(target) ? target[Symbol.iterator] : undefined;
+    }
+
+    if (prop === lengthProp) {
       const arrayKeys = this.getKeys().filter(k => !Number.isNaN(Number(k)));
       if (arrayKeys.length === 0) return 0;
       return Math.max(...arrayKeys.map(Number)) + 1;
-    } else if (target[propKey] !== undefined) {
+    }
+
+    // Handle to string
+    if (prop === Symbol.toStringTag) {
       return target[propKey];
-    } else if (typeof prop !== 'string') {
-      return VERIFY_NOT_REACHED();
+    }
+
+    // Check if there's a value for the property as is on the target
+    if (target[propKey] !== undefined) {
+      return target[propKey];
+    }
+
+    // At this point, no additional symbol properties are implements
+    // Unclear if any such properties exists
+    if (typeof prop !== 'string') {
+      return NOT_IMPLEMENTED_YET();
     }
 
     const map = this.obj.get();
 
-    const fullPath = this.#isTopLevel ? prop : `${this.path}.${prop}`;
+    const fullPath = this.buildFullPath(prop);
     const value = map.get(fullPath);
 
     if (value === undefined) {
       if (map.has(fullPath)) return this.subProxy(fullPath);
 
-      const keys = Array.from(this.obj.get().keys()).filter(k => k.startsWith(`${fullPath}.`));
+      const keys = this.getKeysWithPrefix(`${fullPath}.`);
       if (keys.length === 0) {
         return undefined;
-      } else if (
-        keys.every(k => !Number.isNaN(Number(k.substring(fullPath.length + 1).split('.')[0])))
-      ) {
-        const numericKeys = keys.map(k => Number(k.substring(fullPath.length + 1).split('.')[0]));
+      }
+
+      const numericKeys = keys.map(k => Number(k.substring(fullPath.length + 1).split('.')[0]));
+      if (!numericKeys.some(Number.isNaN)) {
         return this.subProxy(
           fullPath,
           unique(numericKeys.sort((a, b) => a - b)).map(key => this.subProxy(`${fullPath}.${key}`))
@@ -294,27 +287,17 @@ export class FlatObjectMapProxy<T extends object, V = DefaultValue> implements P
    * Writes values to the flat map using dot-notation paths.
    * When setting nested objects, recursively flattens them into dot-notation keys.
    * Setting a value to undefined removes the key and all nested keys from the map.
-   *
-   * @param _target - The proxy target object
-   * @param prop - The property name or symbol being set
-   * @param value - The value to set (primitive, object, or undefined)
-   * @returns Always returns true to indicate success
    */
-  // biome-ignore lint/suspicious/noExplicitAny: Valid use
-  set(_target: T, prop: string | symbol, value: any): boolean {
+  set(_target: T, prop: string | symbol, value: unknown): boolean {
     if (typeof prop !== 'string') return VERIFY_NOT_REACHED();
 
-    const fullPath = this.path ? `${this.path}.${prop}` : prop;
+    const fullPath = this.buildFullPath(prop);
 
     const map = this.obj.get();
 
     if (value === undefined) {
       map.delete(fullPath);
-      for (const k of this.obj.get().keys()) {
-        if (k.startsWith(`${fullPath}.`)) {
-          map.delete(k);
-        }
-      }
+      this.deleteKeysWithPrefix(`${fullPath}.`);
     } else {
       if (isPrimitive(value)) {
         // biome-ignore lint/suspicious/noExplicitAny: false positive
@@ -323,28 +306,64 @@ export class FlatObjectMapProxy<T extends object, V = DefaultValue> implements P
         map.set(fullPath, undefined);
       } else {
         // First, remove all existing nested properties under this path
-        for (const k of Array.from(this.obj.get().keys())) {
-          if (k.startsWith(`${fullPath}.`)) {
-            map.delete(k);
-          }
-        }
-
-        // Then set the new nested values
-        // biome-ignore lint/suspicious/noExplicitAny: false positive
-        const setNestedValue = (nestedValue: any, currentPath: string) => {
-          if (isPrimitive(nestedValue)) {
-            // biome-ignore lint/suspicious/noExplicitAny: false positive
-            map.set(currentPath, nestedValue as any);
-          } else if (nestedValue !== null && typeof nestedValue === 'object') {
-            for (const key in nestedValue) {
-              const nextPath = currentPath ? `${currentPath}.${key}` : key;
-              setNestedValue(nestedValue[key], nextPath);
-            }
-          }
-        };
-        setNestedValue(value, fullPath);
+        this.deleteKeysWithPrefix(`${fullPath}.`);
+        this.setNestedValuesRecursively(value, fullPath);
       }
     }
     return true;
+  }
+
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
+  private setNestedValuesRecursively(value: any, basePath: string): void {
+    if (isPrimitive(value)) {
+      // biome-ignore lint/suspicious/noExplicitAny: false positive
+      this.obj.get().set(basePath, value as any);
+    } else if (value !== null && typeof value === 'object') {
+      for (const key in value) {
+        const nextPath = `${basePath}.${key}`;
+        this.setNestedValuesRecursively(value[key], nextPath);
+      }
+    }
+  }
+
+  private getKeys() {
+    const prefix = `${this.path}.`;
+    return unique(
+      Array.from(this.obj.get().keys())
+        .filter(k => this.#isTopLevel || k.startsWith(prefix))
+        .map(k => (this.#isTopLevel ? k : k.substring(prefix.length)))
+        .map(k => k.split('.')[0]!)
+    );
+  }
+
+  /**
+   * Creates a sub-proxy for a nested path in the flat map.
+   */
+  private subProxy(path: string, target = {}) {
+    return new Proxy<T>(target as unknown as T, new FlatObjectMapProxy(this.obj, path));
+  }
+
+  /**
+   * Constructs the full path for a property by combining the current path with the property name.
+   */
+  private buildFullPath(prop: string): string {
+    return this.#isTopLevel ? prop : `${this.path}.${prop}`;
+  }
+
+  /**
+   * Returns all keys from the map that start with the given prefix.
+   */
+  private getKeysWithPrefix(prefix: string): string[] {
+    return Array.from(this.obj.get().keys()).filter(k => k.startsWith(prefix));
+  }
+
+  /**
+   * Deletes all keys from the map that start with the given prefix.
+   */
+  private deleteKeysWithPrefix(prefix: string): void {
+    const map = this.obj.get();
+    for (const k of this.getKeysWithPrefix(prefix)) {
+      map.delete(k);
+    }
   }
 }
