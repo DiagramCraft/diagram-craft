@@ -298,6 +298,15 @@ export class SimpleEdgeDefinition extends ShapeEdgeDefinition {
         this.getArrow('end', props),
         { style: { fill: 'none' } }
       );
+
+      const extraNodes = EffectsRegistry.get(
+        undefined,
+        edge.renderProps,
+        'getExtraSVGElements'
+      ).flatMap(e => e.getExtraSVGElements(edge, shapeBuilder.nodes));
+      if (extraNodes.length > 0) {
+        (shapeBuilder.nodes[1]!.children as VNode[]).push(...extraNodes);
+      }
     }
   };
 
