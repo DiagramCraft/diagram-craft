@@ -64,11 +64,8 @@ const elementToText = (element: DiagramElement, lines: string[], indent = '') =>
       elementToText(child, sublines, `${indent}  `);
     }
 
-    const metadataCloned = element.metadataCloned;
-    const propsCloned = element.storedPropsCloned;
-
-    let style = metadataCloned.style;
-    let textStyle = metadataCloned.textStyle;
+    let style = element.metadata.style;
+    let textStyle = element.metadata.textStyle;
     if (style === 'default' || style === 'default-text') style = undefined;
     if (textStyle === 'default-text-default') textStyle = undefined;
 
@@ -78,12 +75,12 @@ const elementToText = (element: DiagramElement, lines: string[], indent = '') =>
       );
     }
 
-    const propsS = serializeProps(propsCloned);
+    const propsS = serializeProps(element.storedProps);
     if (propsS) {
       sublines.push(`${indent}  props: "${propsS}"`);
     }
 
-    const metadataS = serializeMetadata(metadataCloned);
+    const metadataS = serializeMetadata(element.metadata);
     if (metadataS) {
       sublines.push(`${indent}  metadata: "${metadataS}"`);
     }
@@ -100,7 +97,7 @@ const elementToText = (element: DiagramElement, lines: string[], indent = '') =>
     edge += `${formatId(element.id)}: edge`;
 
     // Try to generate arrow notation from edge props
-    const propsCloned = element.storedPropsCloned;
+    const propsCloned = deepClone(element.storedProps);
     let arrowNotation: string | undefined;
     let propsWithoutArrow: ElementProps = propsCloned;
 

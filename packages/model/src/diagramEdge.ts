@@ -30,7 +30,7 @@ import {
   isVertical,
   type LabelNode
 } from './labelNode';
-import { DeepReadonly, DeepRequired, type FlatObject } from '@diagram-craft/utils/types';
+import { DeepReadonly, DeepRequired } from '@diagram-craft/utils/types';
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { newid } from '@diagram-craft/utils/id';
 import { isDifferent } from '@diagram-craft/utils/math';
@@ -56,6 +56,7 @@ import { CRDTProp } from '@diagram-craft/collaboration/datatypes/crdtProp';
 import { MappedCRDTProp } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtProp';
 import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
 import type { CustomEdgeProps, EdgeProps, ElementMetadata } from './diagramProps';
+import type { FlatObject } from '@diagram-craft/utils/flatObject';
 
 const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
   endpoint instanceof ConnectedEndpoint;
@@ -145,7 +146,6 @@ export interface DiagramEdge extends DiagramElement {
   getPropsInfo<T extends PropPath<EdgeProps>>(path: T): PropertyInfo<PropPathValue<EdgeProps, T>>;
 
   readonly storedProps: DeepReadonly<EdgeProps>;
-  readonly storedPropsCloned: DeepReadonly<EdgeProps>;
   readonly editProps: DeepReadonly<EdgePropsForEditing>;
   readonly renderProps: DeepReadonly<EdgePropsForRendering>;
   updateProps(callback: (props: EdgeProps) => void, uow: UnitOfWork): void;
@@ -384,10 +384,6 @@ export class SimpleDiagramEdge
 
   get storedProps() {
     return this.#props.get();
-  }
-
-  get storedPropsCloned() {
-    return this.#props.getClone();
   }
 
   get editProps(): EdgePropsForEditing {

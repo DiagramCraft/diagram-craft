@@ -123,10 +123,6 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
     return deepMerge({}, delegateProps, overriddenProps) as NodeProps;
   }
 
-  get storedPropsCloned(): NodeProps {
-    return JSON.parse(JSON.stringify(this.storedProps));
-  }
-
   get editProps(): NodePropsForEditing {
     const delegateProps = this.delegate.editProps;
     const overriddenProps = this.#localProps.get() ?? {};

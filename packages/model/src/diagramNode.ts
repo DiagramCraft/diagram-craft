@@ -17,12 +17,7 @@ import {
   FreeEndpoint,
   PointInNodeEndpoint
 } from './endpoint';
-import {
-  DeepReadonly,
-  DeepRequired,
-  type FlatObject,
-  makeWriteable
-} from '@diagram-craft/utils/types';
+import { DeepReadonly, DeepRequired, makeWriteable } from '@diagram-craft/utils/types';
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { assert, mustExist, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { newid } from '@diagram-craft/utils/id';
@@ -53,6 +48,7 @@ import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
 import type { LabelNode } from './labelNode';
 import { EffectsRegistry } from './effect';
 import type { CustomNodeProps, EdgeProps, ElementMetadata, NodeProps } from './diagramProps';
+import type { FlatObject } from '@diagram-craft/utils/flatObject';
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;
@@ -147,7 +143,6 @@ export interface DiagramNode extends DiagramElement {
   getText(id?: string): string;
   setText(text: string, uow: UnitOfWork, id?: string): void;
   readonly texts: NodeTexts;
-  readonly textsCloned: NodeTexts;
   getPropsInfo<T extends PropPath<NodeProps>>(
     path: T,
     defaultValue?: PropPathValue<NodeProps, T>
@@ -155,7 +150,6 @@ export interface DiagramNode extends DiagramElement {
 
   readonly props: NodePropsForRendering;
   readonly storedProps: NodeProps;
-  readonly storedPropsCloned: NodeProps;
   readonly editProps: NodePropsForEditing;
   readonly renderProps: NodePropsForRendering;
   updateProps(callback: (props: NodeProps) => void, uow: UnitOfWork): void;
@@ -374,10 +368,6 @@ export class SimpleDiagramNode
     return this.#text.get();
   }
 
-  get textsCloned() {
-    return this.#text.getClone();
-  }
-
   /* Props *************************************************************************************************** */
 
   getPropsInfo<T extends PropPath<NodeProps>>(
@@ -549,10 +539,6 @@ export class SimpleDiagramNode
 
   get storedProps() {
     return this.#props.get() as NodeProps;
-  }
-
-  get storedPropsCloned() {
-    return this.#props.getClone() as NodeProps;
   }
 
   get editProps(): NodePropsForEditing {

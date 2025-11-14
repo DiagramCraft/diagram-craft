@@ -10,7 +10,7 @@ import { Box } from '@diagram-craft/geometry/box';
 import { getRemoteUnitOfWork, UnitOfWork } from './unitOfWork';
 import type { Diagram } from './diagram';
 import { AttachmentConsumer } from './attachment';
-import { FlatObject } from '@diagram-craft/utils/types';
+import { FlatObject } from '@diagram-craft/utils/flatObject';
 import { PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { assert } from '@diagram-craft/utils/assert';
 import type { RegularLayer } from './diagramLayerRegular';
@@ -94,7 +94,6 @@ export interface DiagramElement {
   _setParent(parent: DiagramElement | undefined): void;
 
   readonly metadata: ElementMetadata;
-  readonly metadataCloned: ElementMetadata;
   updateMetadata(callback: (props: ElementMetadata) => void, uow: UnitOfWork): void;
 
   readonly tags: ReadonlyArray<string>;
@@ -295,10 +294,6 @@ export abstract class AbstractDiagramElement implements DiagramElement, Attachme
 
   get metadata() {
     return (this._metadata.get() ?? {}) as ElementMetadata;
-  }
-
-  get metadataCloned() {
-    return this._metadata.getClone() as ElementMetadata;
   }
 
   protected forceUpdateMetadata(metadata: ElementMetadata) {

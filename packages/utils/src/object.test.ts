@@ -3,6 +3,7 @@ import {
   common,
   deepClear,
   deepClone,
+  deepCloneOverride,
   deepEquals,
   deepIsEmpty,
   deepMerge,
@@ -13,7 +14,7 @@ import {
   shallowEquals,
   unfoldObject
 } from './object';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 import { UNSAFE } from './testUtils';
 
 describe('isObj function', () => {
@@ -221,6 +222,42 @@ describe('deepClone function', () => {
     expect(result.a).not.toBe(complex.a);
     expect(result.a[2]).not.toBe(complex.a[2]);
     expect(result).toEqual(complex);
+  });
+});
+
+describe('deepCloneOverride functionality', () => {
+  test('should call the override function when present', () => {
+    const customCloneFn = vi.fn(() => ({ cloned: true }));
+    const obj = {
+      data: 'test',
+      [deepCloneOverride]: customCloneFn
+    };
+
+    const result = deepClone(obj);
+
+    expect(customCloneFn).toHaveBeenCalledOnce();
+    expect(result).toEqual({ cloned: true });
+  });
+
+  test('should use standard clone when override is not present', () => {
+    const obj = { a: 1, b: 2 };
+    const result = deepClone(obj);
+
+    expect(result).not.toBe(obj);
+    expect(result).toEqual(obj);
+  });
+
+  test('should return the exact value from override function', () => {
+    const customData = { x: 10, y: 20, nested: { z: 30 } };
+    const obj = {
+      original: 'value',
+      [deepCloneOverride]: () => customData
+    };
+
+    const result = deepClone(obj);
+
+    expect(result).toBe(customData);
+    expect(result).toEqual({ x: 10, y: 20, nested: { z: 30 } });
   });
 });
 
