@@ -383,7 +383,7 @@ const _edgeDefaults: Omit<EdgePropsForRendering, 'custom' | 'shape' | 'indicator
     sketchFillType: 'fill',
     opacity: 1,
     marchingAnts: false,
-    marchingAntsSpeed: 0.5,
+    marchingAntsSpeed: 0.25,
     rounding: false,
     roundingAmount: 10
   },

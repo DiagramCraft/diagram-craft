@@ -366,7 +366,7 @@ export class SVGGBuilder {
       d['stroke-dasharray'] = DASH_PATTERNS[this.#stroke?.pattern ?? 'SOLID']!(
         (this.#stroke?.patternSpacing ?? 100) / 100,
         (this.#stroke?.patternSize ?? 100) / 100
-      );
+      ).join(',');
     }
     return d;
   }

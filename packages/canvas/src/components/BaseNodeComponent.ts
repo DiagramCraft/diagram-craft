@@ -149,7 +149,7 @@ export class BaseNodeComponent<
       style.strokeDasharray = DASH_PATTERNS[nodeProps.stroke.pattern]?.(
         nodeProps.stroke.patternSize / 100,
         nodeProps.stroke.patternSpacing / 100
-      );
+      ).join(',');
     }
 
     if (nodeProps.stroke.enabled === false) {

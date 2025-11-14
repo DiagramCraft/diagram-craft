@@ -30,7 +30,11 @@ export const DashSelector = (props: Props) => {
             const pattern = DASH_PATTERNS[type];
             return (
               <Select.Item key={type} value={type}>
-                <DashPatternPreview type={type} pattern={pattern?.(0.5, 0.5)} width={30} />
+                <DashPatternPreview
+                  type={type}
+                  pattern={pattern?.(0.5, 0.5).join(',')}
+                  width={30}
+                />
               </Select.Item>
             );
           })}
@@ -51,7 +55,7 @@ export const DashSelector = (props: Props) => {
           >
             <DashPatternPreview
               type={type}
-              pattern={pattern?.(0.5, 0.5)}
+              pattern={pattern?.(0.5, 0.5).join(',')}
               width={30}
               color={'var(--cmp-fg)'}
             />
