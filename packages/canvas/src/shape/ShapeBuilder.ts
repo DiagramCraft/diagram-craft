@@ -265,7 +265,7 @@ export class ShapeBuilder {
         style.strokeDasharray = p(
           (props.stroke!.patternSize ?? 50) / 100,
           (props.stroke!.patternSpacing ?? 50) / 100
-        );
+        ).join(',');
       }
     }
 

@@ -112,14 +112,10 @@ export const registerDefaultEffects = () => {
       const edge = el as DiagramEdge;
       const props = edge.renderProps;
 
-      // TODO: Perhaps change DASH_PATTERNS to be a list of numbers instead
       const length = DASH_PATTERNS[props.stroke.pattern!]!(
         props.stroke.patternSize / 100,
         props.stroke.patternSpacing / 100
-      )
-        .split(',')
-        .map(e => Number(e.trim()))
-        .reduce((a, b) => a + b, 0);
+      ).reduce((a, b) => a + b, 0);
 
       const duration = 0.2 / (props.effects.marchingAntsSpeed ?? 0.25);
 
