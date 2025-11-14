@@ -228,106 +228,108 @@ export const StoriesPanel = () => {
       title={'Stories'}
       style={{ padding: '0.25rem 0' }}
     >
-      <Tree.Root className={'cmp-story-list'}>
-        {stories.map(story => (
-          <Tree.Node key={story.id} isOpen={true}>
-            <Tree.NodeLabel>
-              <TbMovie /> &nbsp;{story.name}
-            </Tree.NodeLabel>
-            <Tree.NodeCell className="cmp-tree__node__action">
-              <span style={{ cursor: 'pointer' }} onClick={handlePlayStory} title="Play story">
-                <TbPlayerPlay />
-              </span>
-              <span
-                style={{ cursor: 'pointer' }}
-                onClick={() => {
-                  setSelectedStoryIdForNewStep(story.id);
-                  setShowNewStepDialog(true);
-                }}
-                title="Add step"
-              >
-                <TbPlus />
-              </span>
-              <span
-                style={{ cursor: 'pointer' }}
-                onClick={() => handleDeleteStory(story.id)}
-                title="Delete story"
-              >
-                <TbTrash />
-              </span>
-            </Tree.NodeCell>
-            <Tree.Children>
-              {story.steps.length === 0 && (
-                <Tree.Node>
-                  <Tree.NodeLabel style={{ fontStyle: 'italic', color: 'var(--base-fg-dim)' }}>
-                    No steps yet
-                  </Tree.NodeLabel>
-                </Tree.Node>
-              )}
-              {story.steps.map((step, stepIndex) => (
-                <Tree.Node key={step.id} isOpen={true}>
-                  <Tree.NodeLabel>
-                    <TbList /> &nbsp;{stepIndex + 1}. {step.title}
-                  </Tree.NodeLabel>
-                  <Tree.NodeCell className="cmp-tree__node__action">
-                    <span
-                      style={{ cursor: 'pointer' }}
-                      onClick={() => handleReRecordStep(story.id, step.id)}
-                      title="Re-record current state"
-                    >
-                      <TbCapture />
-                    </span>
-                    <span
-                      style={{ cursor: 'pointer' }}
-                      onClick={() => handleDeleteStep(story.id, step.id)}
-                      title="Delete step"
-                    >
-                      <TbTrash />
-                    </span>
-                  </Tree.NodeCell>
-                  <Tree.Children>
-                    {(() => {
-                      const previousStep = stepIndex > 0 ? story.steps[stepIndex - 1] : undefined;
-                      const actionsToDisplay = getStepDelta(step, previousStep);
+      {stories.length === 0 && (
+        <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--base-fg-dim)' }}>
+          No stories yet. Create one to get started.
+        </div>
+      )}
+      {stories.length > 0 && (
+        <Tree.Root className={'cmp-story-list'}>
+          {stories.map(story => (
+            <Tree.Node key={story.id} isOpen={true}>
+              <Tree.NodeLabel>
+                <TbMovie /> &nbsp;{story.name}
+              </Tree.NodeLabel>
+              <Tree.NodeCell className="cmp-tree__node__action">
+                <span style={{ cursor: 'pointer' }} onClick={handlePlayStory} title="Play story">
+                  <TbPlayerPlay />
+                </span>
+                <span
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => {
+                    setSelectedStoryIdForNewStep(story.id);
+                    setShowNewStepDialog(true);
+                  }}
+                  title="Add step"
+                >
+                  <TbPlus />
+                </span>
+                <span
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => handleDeleteStory(story.id)}
+                  title="Delete story"
+                >
+                  <TbTrash />
+                </span>
+              </Tree.NodeCell>
+              <Tree.Children>
+                {story.steps.length === 0 && (
+                  <Tree.Node>
+                    <Tree.NodeLabel style={{ fontStyle: 'italic', color: 'var(--base-fg-dim)' }}>
+                      No steps yet
+                    </Tree.NodeLabel>
+                  </Tree.Node>
+                )}
+                {story.steps.map((step, stepIndex) => (
+                  <Tree.Node key={step.id} isOpen={true}>
+                    <Tree.NodeLabel>
+                      <TbList /> &nbsp;{stepIndex + 1}. {step.title}
+                    </Tree.NodeLabel>
+                    <Tree.NodeCell className="cmp-tree__node__action">
+                      <span
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => handleReRecordStep(story.id, step.id)}
+                        title="Re-record current state"
+                      >
+                        <TbCapture />
+                      </span>
+                      <span
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => handleDeleteStep(story.id, step.id)}
+                        title="Delete step"
+                      >
+                        <TbTrash />
+                      </span>
+                    </Tree.NodeCell>
+                    <Tree.Children>
+                      {(() => {
+                        const previousStep = stepIndex > 0 ? story.steps[stepIndex - 1] : undefined;
+                        const actionsToDisplay = getStepDelta(step, previousStep);
 
-                      return actionsToDisplay.length > 0 ? (
-                        actionsToDisplay.map((action, actionIndex) => (
-                          <Tree.Node key={actionIndex}>
-                            <Tree.NodeLabel>
-                              {getActionIcon(action)} &nbsp;{getActionDescription(action)}
+                        return actionsToDisplay.length > 0 ? (
+                          actionsToDisplay.map((action, actionIndex) => (
+                            <Tree.Node key={actionIndex}>
+                              <Tree.NodeLabel>
+                                {getActionIcon(action)} &nbsp;{getActionDescription(action)}
+                              </Tree.NodeLabel>
+                            </Tree.Node>
+                          ))
+                        ) : stepIndex === 0 ? (
+                          <Tree.Node>
+                            <Tree.NodeLabel
+                              style={{ fontStyle: 'italic', color: 'var(--base-fg-dim)' }}
+                            >
+                              No state recorded yet
                             </Tree.NodeLabel>
                           </Tree.Node>
-                        ))
-                      ) : stepIndex === 0 ? (
-                        <Tree.Node>
-                          <Tree.NodeLabel
-                            style={{ fontStyle: 'italic', color: 'var(--base-fg-dim)' }}
-                          >
-                            No state recorded yet
-                          </Tree.NodeLabel>
-                        </Tree.Node>
-                      ) : (
-                        <Tree.Node>
-                          <Tree.NodeLabel
-                            style={{ fontStyle: 'italic', color: 'var(--base-fg-dim)' }}
-                          >
-                            No changes from previous step
-                          </Tree.NodeLabel>
-                        </Tree.Node>
-                      );
-                    })()}
-                  </Tree.Children>
-                </Tree.Node>
-              ))}
-            </Tree.Children>
-          </Tree.Node>
-        ))}
-        {stories.length === 0 && (
-          <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--base-fg-dim)' }}>
-            No stories yet. Create one to get started.
-          </div>
-        )}
-      </Tree.Root>
+                        ) : (
+                          <Tree.Node>
+                            <Tree.NodeLabel
+                              style={{ fontStyle: 'italic', color: 'var(--base-fg-dim)' }}
+                            >
+                              No changes from previous step
+                            </Tree.NodeLabel>
+                          </Tree.Node>
+                        );
+                      })()}
+                    </Tree.Children>
+                  </Tree.Node>
+                ))}
+              </Tree.Children>
+            </Tree.Node>
+          ))}
+        </Tree.Root>
+      )}
 
       <Dialog
         title="New Step"
