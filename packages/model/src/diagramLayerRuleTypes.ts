@@ -4,10 +4,31 @@ import type { EdgeProps, ElementProps, NodeProps } from './diagramProps';
 export type AdjustmentRule = {
   id: string;
   name: string;
-  type: 'edge' | 'node';
-  clauses: ElementSearchClause[];
-  actions: AdjustmentRuleAction[];
-};
+} & (
+  | {
+      type: 'edge' | 'node';
+      clauses: ElementSearchClause[];
+      actions: AdjustmentRuleAction[];
+    }
+  | {
+      type: 'advanced';
+      rule: string;
+      triggers: Array<
+        | {
+            type: 'interval';
+            interval: number;
+          }
+        | {
+            type: 'element';
+            elementType: 'edge' | 'node';
+          }
+        | {
+            type: 'data';
+            schema: string;
+          }
+      >;
+    }
+);
 
 export type AdjustmentRuleAction = { id: string } & (
   | {

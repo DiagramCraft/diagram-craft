@@ -3,7 +3,7 @@ import type { LayerCRDT } from './diagramLayer';
 import { Layer } from './diagramLayer';
 import type { Diagram } from './diagram';
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
-import { notImplemented } from '@diagram-craft/utils/assert';
+import { notImplemented, NotImplementedYet } from '@diagram-craft/utils/assert';
 import { nodeDefaults } from './diagramDefaults';
 import {
   type Adjustment,
@@ -109,34 +109,40 @@ export class RuleLayer extends Layer<RuleLayer> {
   runRule(rule: AdjustmentRule): Result {
     const res: Result = new Map<string, Adjustment>();
 
-    const results = searchByElementSearchClauses(this.diagram, rule.clauses);
+    if (rule.type === 'edge' || rule.type === 'node') {
+      const results = searchByElementSearchClauses(this.diagram, rule.clauses);
 
-    const result = results.reduce((p, c) => p.intersection(c), results[0]!);
-    for (const k of result) {
-      for (const action of rule.actions) {
-        notImplemented.true(
-          action.type === 'set-props' || action.type === 'set-stylesheet' || action.type === 'hide',
-          'Not implemented yet'
-        );
-        if (!res.has(k)) res.set(k, deepClone(DEFAULT_ADJUSTMENT_RULE));
-
-        if (action.type === 'set-props') {
-          res.set(k, deepMerge(res.get(k)!, { props: deepClone(action.props) } as Adjustment));
-        } else if (action.type === 'set-stylesheet') {
-          res.set(
-            k,
-            deepMerge(res.get(k)!, {
-              elementStyle: action.elementStyle,
-              textStyle: action.textStyle
-            } as Adjustment)
+      const result = results.reduce((p, c) => p.intersection(c), results[0]!);
+      for (const k of result) {
+        for (const action of rule.actions) {
+          notImplemented.true(
+            action.type === 'set-props' ||
+              action.type === 'set-stylesheet' ||
+              action.type === 'hide',
+            'Not implemented yet'
           );
-        } else if (action.type === 'hide') {
-          res.set(k, deepMerge(res.get(k)!, { props: { hidden: true } } as Adjustment));
+          if (!res.has(k)) res.set(k, deepClone(DEFAULT_ADJUSTMENT_RULE));
+
+          if (action.type === 'set-props') {
+            res.set(k, deepMerge(res.get(k)!, { props: deepClone(action.props) } as Adjustment));
+          } else if (action.type === 'set-stylesheet') {
+            res.set(
+              k,
+              deepMerge(res.get(k)!, {
+                elementStyle: action.elementStyle,
+                textStyle: action.textStyle
+              } as Adjustment)
+            );
+          } else if (action.type === 'hide') {
+            res.set(k, deepMerge(res.get(k)!, { props: { hidden: true } } as Adjustment));
+          }
         }
       }
-    }
 
-    return res;
+      return res;
+    } else {
+      throw new NotImplementedYet();
+    }
   }
 
   get rules() {
