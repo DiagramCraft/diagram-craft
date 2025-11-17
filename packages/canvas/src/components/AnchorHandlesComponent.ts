@@ -87,30 +87,24 @@ export class AnchorHandlesComponent extends Component<Props> {
       return () => diagram.off('elementRemove', cb);
     }, [diagram]);
 
-    if (
-      this.hoverNode === undefined ||
-      !isNode(this.hoverNode) ||
-      (DRAG_DROP_MANAGER.current() && !(DRAG_DROP_MANAGER.current() instanceof MoveDrag))
-    ) {
+    const isMove =
+      DRAG_DROP_MANAGER.current() && !(DRAG_DROP_MANAGER.current() instanceof MoveDrag);
+    if (!this.hoverNode || !isNode(this.hoverNode) || isMove || selection.isDragging()) {
       return svg.g({});
     }
 
     const node = this.hoverNode;
-
-    if (selection.isDragging()) return svg.g({});
-
-    const z = new Zoom(diagram.viewBox.zoomLevel);
-    const anchorSizeInEffect = z.num(ANCHOR_SIZE, 2);
-
     if (node.layer.type !== 'regular' || node.layer.isLocked()) {
       return svg.g({});
     }
 
+    const z = new Zoom(diagram.viewBox.zoomLevel);
+    const anchorSizeInEffect = z.num(ANCHOR_SIZE, 2);
+
     const children: VNode[] = [];
 
     node.anchors.forEach(a => {
-      if (a.clip) return;
-      if (!a.isPrimary) return;
+      if (a.clip || !a.isPrimary) return;
 
       const p1 = node._getPositionInBounds(a.start, false);
 
