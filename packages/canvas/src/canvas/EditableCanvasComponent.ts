@@ -409,7 +409,8 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
           this.tool.type === 'move'
             ? this.subComponent($cmp(AnchorHandlesComponent), {
                 ...canvasState,
-                hoverElement: this.hoverElement
+                hoverElement: this.hoverElement,
+                point: this.point
               })
             : svg.g({}),
 
