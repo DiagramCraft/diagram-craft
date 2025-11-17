@@ -8,7 +8,7 @@ import { DRAG_DROP_MANAGER, Modifiers } from '../dragDropManager';
 import { AbstractTool, Tool, ToolConstructor, ToolType } from '../tool';
 import { DragLabelComponent } from '../components/DragLabelComponent';
 import { AnchorHandlesComponent } from '@diagram-craft/canvas/components/AnchorHandlesComponent';
-import { $cmp, createEffect, Observable } from '../component/component';
+import { $cmp, createEffect, Observable, onEvent } from '../component/component';
 import * as svg from '../component/vdom-svg';
 import * as html from '../component/vdom-html';
 import { Point } from '@diagram-craft/geometry/point';
@@ -16,7 +16,7 @@ import { Box } from '@diagram-craft/geometry/box';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { ViewboxEvents } from '@diagram-craft/model/viewBox';
 import { DiagramElement, getTopMostNode, isNode } from '@diagram-craft/model/diagramElement';
-import { Selection, SelectionEvents } from '@diagram-craft/model/selection';
+import { Selection } from '@diagram-craft/model/selection';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
 import { rawHTML } from '../component/vdom';
 import styles from './canvas.css?inline';
@@ -102,8 +102,10 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
       resetTool
     );
 
-    createEffect(() => {
-      const cb = (s: { newValue: ToolType }) => {
+    onEvent(
+      props.context.tool,
+      'change',
+      (s: { newValue: ToolType }) => {
         this.setTool(
           new props.tools[s.newValue]!(
             diagram,
@@ -114,10 +116,9 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
           )
         );
         this.updateToolClassOnSvg(s.newValue);
-      };
-      props.context.tool.on('change', cb);
-      return () => props.context.tool.off('change', cb);
-    }, [diagram, props.context.tool]);
+      },
+      [diagram]
+    );
 
     // ---> start useCanvasZoomAndPan
 
@@ -168,47 +169,25 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
       return () => document.removeEventListener('keyup', cb);
     }, [diagram]);
 
-    createEffect(() => {
-      const highlightCb = (e: { element: DiagramElement }) => this.redrawElements([e.element]);
-      diagram.on('elementHighlighted', highlightCb);
-      return () => {
-        diagram.off('elementHighlighted', highlightCb);
-      };
-    }, [diagram]);
+    onEvent(diagram, 'elementHighlighted', (e: { element: DiagramElement }) =>
+      this.redrawElements([e.element])
+    );
 
-    createEffect(() => {
-      const commitCb = (e: { updated: DiagramElement[] }) => this.redrawElements(e.updated);
-      diagram.on('elementBatchChange', commitCb);
-      return () => {
-        diagram.off('elementBatchChange', commitCb);
-      };
-    }, [diagram]);
+    onEvent(diagram, 'elementBatchChange', (e: { updated: DiagramElement[] }) =>
+      this.redrawElements(e.updated)
+    );
 
     // Subscribe to tag selection updates
-    createEffect(() => {
-      const tagSelectionCb = () => {
-        this.redraw();
-      };
-      diagram.document.tags.on('selectionUpdate', tagSelectionCb);
-      return () => {
-        diagram.document.tags.off('selectionUpdate', tagSelectionCb);
-      };
-    }, [diagram]);
+    this.onEventRedraw(diagram.document.tags, 'selectionUpdate');
 
     // Need to redraw each selected element on zoom or pan
     // as some of the control nodes will change dimensions
-    createEffect(() => {
-      const cb = ({ type }: ViewboxEvents['viewbox']) => {
-        if (type === 'pan') return;
-        for (const e of this.currentProps?.diagram?.selection.elements ?? []) {
-          this.redrawElements([e]);
-        }
-      };
-      diagram.viewBox.on('viewbox', cb);
-      return () => {
-        diagram.viewBox.off('viewbox', cb);
-      };
-    }, [diagram]);
+    onEvent(diagram.viewBox, 'viewbox', ({ type }: ViewboxEvents['viewbox']) => {
+      if (type === 'pan') return;
+      for (const e of this.currentProps?.diagram?.selection.elements ?? []) {
+        this.redrawElements([e]);
+      }
+    });
 
     this.onEventRedraw(diagram, 'elementAdd');
     this.onEventRedraw(diagram, 'elementRemove');
@@ -444,19 +423,8 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
   };
 
   private onSelectionRedrawElement(selection: Selection) {
-    createEffect(() => {
-      const cb = (e: SelectionEvents['add'] | SelectionEvents['remove']) =>
-        this.redrawElements([e.element]);
-      selection.on('add', cb);
-      return () => selection.off('add', cb);
-    }, [selection]);
-
-    createEffect(() => {
-      const cb = (e: SelectionEvents['add'] | SelectionEvents['remove']) =>
-        this.redrawElements([e.element]);
-      selection.on('remove', cb);
-      return () => selection.off('remove', cb);
-    }, [selection]);
+    onEvent(selection, 'add', e => this.redrawElements([e.element]));
+    onEvent(selection, 'remove', e => this.redrawElements([e.element]));
   }
 
   private adjustViewbox(diagram: Diagram) {

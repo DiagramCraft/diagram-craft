@@ -1,9 +1,9 @@
 import type { CanvasState } from '../canvas/EditableCanvasComponent';
-import { Component, createEffect } from '../component/component';
+import { Component, onEvent } from '../component/component';
 import * as svg from '../component/vdom-svg';
 import { getHighlightValue, hasHighlight, Highlights } from '../highlight';
 import { Zoom } from './zoom';
-import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
+import { isNode } from '@diagram-craft/model/diagramElement';
 import type { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { getAnchorPosition } from '@diagram-craft/model/anchor';
 
@@ -16,22 +16,16 @@ export class AnchorHighlightComponent extends Component<Props> {
     const $d = props.diagram;
     const z = new Zoom($d.viewBox.zoomLevel);
 
-    createEffect(() => {
-      const cb = (arg: { element: DiagramElement }) => {
-        if (!isNode(arg.element)) return;
+    onEvent($d, 'elementHighlighted', arg => {
+      if (!isNode(arg.element)) return;
 
-        if (hasHighlight(arg.element, Highlights.NODE__EDGE_CONNECT)) {
-          this.highlightedElements.add(arg.element);
-        } else {
-          this.highlightedElements.delete(arg.element);
-        }
-        this.redraw();
-      };
-      $d.on('elementHighlighted', cb);
-      return () => {
-        $d.off('elementHighlighted', cb);
-      };
-    }, [$d]);
+      if (hasHighlight(arg.element, Highlights.NODE__EDGE_CONNECT)) {
+        this.highlightedElements.add(arg.element);
+      } else {
+        this.highlightedElements.delete(arg.element);
+      }
+      this.redraw();
+    });
 
     return svg.g(
       {},

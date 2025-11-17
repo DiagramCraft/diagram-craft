@@ -5,9 +5,9 @@ import { Modifiers } from '../dragDropManager';
 import { rawHTML } from '../component/vdom';
 import styles from './canvas.css?inline';
 import { BaseCanvasComponent, BaseCanvasProps } from './BaseCanvasComponent';
-import { createEffect } from '../component/component';
+import { createEffect, onEvent } from '../component/component';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
-import { Viewbox, ViewboxEvents } from '@diagram-craft/model/viewBox';
+import { Viewbox } from '@diagram-craft/model/viewBox';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { isResolvableToRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
@@ -16,14 +16,15 @@ export const createUpdateOnViewboxChangeEffect = (
   viewbox: Viewbox,
   diagram: Diagram
 ) => {
-  createEffect(() => {
-    const cb = ({ viewbox }: ViewboxEvents['viewbox']) => {
+  onEvent(
+    viewbox,
+    'viewbox',
+    ({ viewbox }) => {
       svgRef()?.setAttribute('viewBox', viewbox.svgViewboxString);
       svgRef()?.style.setProperty('--zoom', viewbox.zoomLevel.toString());
-    };
-    viewbox.on('viewbox', cb);
-    return () => viewbox.off('viewbox', cb);
-  }, [diagram, viewbox]);
+    },
+    [diagram]
+  );
 };
 
 export const createZoomPanOnMouseEventEffect = (

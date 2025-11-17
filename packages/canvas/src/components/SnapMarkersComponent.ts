@@ -1,4 +1,4 @@
-import { Component, createEffect } from '../component/component';
+import { Component, onEvent } from '../component/component';
 import * as svg from '../component/vdom-svg';
 import { text, VNode } from '../component/vdom';
 import { Point } from '@diagram-craft/geometry/point';
@@ -59,12 +59,7 @@ export class SnapMarkersComponent extends Component<Props> {
   render(props: Props) {
     const mgr = SnapMarkers.get(props.diagram);
 
-    createEffect(() => {
-      const cb = () => this.redraw();
-
-      mgr.on('clear', cb);
-      return () => mgr.off('clear', cb);
-    }, [mgr]);
+    onEvent(mgr, 'clear', () => this.redraw());
 
     const z = new Zoom(props.diagram.viewBox.zoomLevel);
     return svg.g(

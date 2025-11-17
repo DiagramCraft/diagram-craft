@@ -1,16 +1,11 @@
-import { Component, createEffect } from '../component/component';
+import { Component, onEvent } from '../component/component';
 import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
 import type { CanvasState } from '../canvas/EditableCanvasComponent';
 
 export class SelectionMarqueeComponent extends Component<CanvasState> {
   render(props: CanvasState) {
-    createEffect(() => {
-      const cb = () => this.redraw();
-
-      props.context.marquee.on('change', cb);
-      return () => props.context.marquee.off('change', cb);
-    }, [props.context.marquee]);
+    onEvent(props.context.marquee, 'change', () => this.redraw());
 
     const bounds = props.context.marquee.bounds;
     if (!bounds) return svg.g({});

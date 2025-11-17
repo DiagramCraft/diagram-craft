@@ -4,35 +4,23 @@ import { SnapMarkersComponent } from './SnapMarkersComponent';
 import { RotationHandleComponent } from '@diagram-craft/canvas/components/RotationHandleComponent';
 import { ResizeHandlesComponent } from '@diagram-craft/canvas/components/ResizeHandlesComponent';
 import { EdgeSelectionComponent } from '@diagram-craft/canvas/components/EdgeSelectionComponent';
-import { $cmp, Component, createEffect } from '../component/component';
+import { $cmp, Component, onEvent } from '../component/component';
 import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
 import type { CanvasState } from '../canvas/EditableCanvasComponent';
 import { $c } from '@diagram-craft/utils/classname';
-import { ViewboxEvents } from '@diagram-craft/model/viewBox';
 
 export class SelectionComponent extends Component<CanvasState> {
   render(props: CanvasState) {
     const diagram = props.diagram;
     const selection = diagram.selection;
 
-    createEffect(() => {
-      const cb = ({ type }: ViewboxEvents['viewbox']) => {
-        if (type === 'pan') return;
-        this.redraw();
-      };
-      diagram.viewBox.on('viewbox', cb);
-      return () => {
-        diagram.viewBox.off('viewbox', cb);
-      };
-    }, [diagram]);
+    onEvent(diagram.viewBox, 'viewbox', ({ type }) => {
+      if (type === 'pan') return;
+      this.redraw();
+    });
 
-    createEffect(() => {
-      const cb = () => this.redraw();
-
-      selection.on('change', cb);
-      return () => selection.off('change', cb);
-    }, [selection]);
+    onEvent(selection, 'change', () => this.redraw());
 
     if (selection.isEmpty()) return svg.g({});
 

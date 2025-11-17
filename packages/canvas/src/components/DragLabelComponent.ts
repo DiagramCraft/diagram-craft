@@ -1,5 +1,5 @@
 import { DRAG_DROP_MANAGER, State } from '../dragDropManager';
-import { Component, createEffect } from '../component/component';
+import { Component, createEffect, onEvent } from '../component/component';
 import * as html from '../component/vdom-html';
 import { text } from '../component/vdom';
 import type { CanvasState } from '../canvas/EditableCanvasComponent';
@@ -18,19 +18,11 @@ export class DragLabelComponent extends Component<CanvasState> {
   }
 
   render() {
-    createEffect(() => {
-      const cb = () => this.setState(DRAG_DROP_MANAGER.current()?.state);
+    onEvent(DRAG_DROP_MANAGER, 'dragStateChange', () =>
+      this.setState(DRAG_DROP_MANAGER.current()?.state)
+    );
 
-      DRAG_DROP_MANAGER.on('dragStateChange', cb);
-      return () => DRAG_DROP_MANAGER.off('dragStateChange', cb);
-    }, []);
-
-    createEffect(() => {
-      const cb = () => this.setState(undefined);
-
-      DRAG_DROP_MANAGER.on('dragEnd', cb);
-      return () => DRAG_DROP_MANAGER.off('dragEnd', cb);
-    }, []);
+    onEvent(DRAG_DROP_MANAGER, 'dragEnd', () => this.setState(undefined));
 
     createEffect(() => {
       const cb = (e: MouseEvent) => {
