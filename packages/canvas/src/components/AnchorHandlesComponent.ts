@@ -92,7 +92,15 @@ export class AnchorHandlesComponent extends Component<Props> {
     });
 
     // When the selection is changes, we reset the state
-    onEvent(diagram.selection, 'change', () => this.setState(undefined, 'background'));
+    onEvent(diagram.selection, 'change', () => {
+      // If we are hovering over an element that is selected, we don't reset the state - instead
+      // we redraw in order to show the handles offset from the edges
+      if (this.hoverNode && diagram.selection.elements.includes(this.hoverNode)) {
+        this.redraw();
+        return;
+      }
+      this.setState(undefined, 'background');
+    });
 
     onEvent(diagram, 'elementRemove', ({ element }) => {
       if (element === this.hoverNode) {
