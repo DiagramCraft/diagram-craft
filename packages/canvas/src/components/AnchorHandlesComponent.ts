@@ -9,108 +9,123 @@ import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
 import { AnchorHandleDrag } from '../drag/anchorHandleDrag';
 import { Zoom } from './zoom';
-import { ViewboxEvents } from '@diagram-craft/model/viewBox';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { Point } from '@diagram-craft/geometry/point';
+import {
+  EventEmitter,
+  type EventKey,
+  type EventMap,
+  type EventReceiver
+} from '@diagram-craft/utils/event';
 
 type State = 'background' | 'node' | 'handle';
 
 const ANCHOR_SIZE = 4;
 const SCALE = 10;
+const ANCHOR_MOUSEOUT_DISTANCE = 20;
 
-type Props = CanvasState & { hoverElement: Observable<string | undefined> };
+const onEvent = <E extends EventMap, K extends EventKey<E>>(
+  emitter: EventEmitter<E>,
+  event: K,
+  callback: EventReceiver<E[K]>
+) => {
+  createEffect(() => {
+    emitter.on(event, callback);
+    return () => emitter.off(event, callback);
+  }, [emitter]);
+};
 
-// TODO: All these timeouts are a bit ugly... should find a better way
-//       to describe the state machine - or somehow subscribe to mouse move events
-//       to trigger the hiding of the handles
-//
-// TODO: Can we change this logic to be more around distance from the element and the anchor
-//       rather than the angle between the anchor and the element?
-//       Maybe in combination with a timeout - potentially a delay when hovering over new elements
+type Props = CanvasState & {
+  hoverElement: Observable<string | undefined>;
+  point: Observable<Point>;
+};
+
 export class AnchorHandlesComponent extends Component<Props> {
   private hoverNode: DiagramElement | undefined;
   private state: State = 'background';
-  private timeout: number | undefined = undefined;
 
   render(props: Props) {
     const diagram = props.diagram;
-
-    createEffect(() => {
-      const cb = ({ type }: ViewboxEvents['viewbox']) => {
-        if (type === 'pan') return;
-        this.redraw();
-      };
-      diagram.viewBox.on('viewbox', cb);
-      return () => diagram.viewBox.off('viewbox', cb);
-    }, [diagram]);
-
     const selection = diagram.selection;
     const shouldScale = selection.nodes.length === 1 && selection.nodes[0] === this.hoverNode;
 
+    onEvent(diagram.viewBox, 'viewbox', ({ type }) => {
+      if (type === 'pan') return;
+      this.redraw();
+    });
+
     // Whenever an element is hovered, we capture the element (and reset any previous state)
-    createEffect(() => {
-      const cb = (p: { newValue: string | undefined }) => {
-        const element = p.newValue;
-        this.clearTimeout();
+    onEvent(props.hoverElement, 'change', p => {
+      if (this.state === 'handle') return;
 
-        if (element === undefined) {
-          this.triggerMouseOut(shouldScale);
-        } else {
-          const el = diagram.lookup(element);
-          if (isNode(el) && el.isLabelNode()) return;
+      const element = p.newValue;
 
-          this.setState(el, 'node');
-        }
-      };
-      props.hoverElement.on('change', cb);
-      return () => props.hoverElement.off('change', cb);
-    }, [props.hoverElement]);
+      if (element === undefined) {
+        this.state = 'background';
+      } else {
+        const el = diagram.lookup(element);
+        if (isNode(el) && el.isLabelNode()) return;
+        this.setState(el, 'node');
+      }
+    });
+
+    // Whenever the mouse moves, we check if the mouse has moved away from the anchors
+    // of the hovered element. If so, we reset the state.
+    onEvent(props.point, 'change', () => {
+      if (!this.hoverNode || !isNode(this.hoverNode)) return;
+
+      // If we are within the bounds of the hovered element, we don't ever reset the state'
+      if (this.hoverNode.id === props.hoverElement.get()) return;
+
+      let minDistance = Infinity;
+      const node = this.hoverNode;
+      node.anchors.forEach(a => {
+        if (a.clip || !a.isPrimary) return;
+
+        const p1 = node._getPositionInBounds(a.start, false);
+        minDistance = Math.min(minDistance, Point.distance(p1, props.point.get()));
+      });
+
+      if (minDistance > ANCHOR_MOUSEOUT_DISTANCE) {
+        this.setState(undefined, 'background');
+      }
+    });
 
     // When the selection is changes, we reset the state
-    createEffect(() => {
-      const cb = () => {
-        this.clearTimeout();
+    onEvent(diagram.selection, 'change', () => {
+      // If we are hovering over an element that is selected, we don't reset the state - instead
+      // we redraw in order to show the handles offset from the edges
+      if (this.hoverNode && diagram.selection.elements.includes(this.hoverNode)) {
+        this.redraw();
+        return;
+      }
+      this.setState(undefined, 'background');
+    });
+
+    onEvent(diagram, 'elementRemove', ({ element }) => {
+      if (element === this.hoverNode) {
         this.setState(undefined, 'background');
-      };
-      diagram.selection.on('change', cb);
-      return () => diagram.selection.off('change', cb);
-    }, [diagram.selection]);
+      }
+    });
 
-    createEffect(() => {
-      const cb = ({ element }: { element: DiagramElement }) => {
-        this.clearTimeout();
-        if (element === this.hoverNode) {
-          this.setState(undefined, 'background');
-        }
-      };
-      diagram.on('elementRemove', cb);
-      return () => diagram.off('elementRemove', cb);
-    }, [diagram]);
-
-    if (
-      this.hoverNode === undefined ||
-      !isNode(this.hoverNode) ||
-      (DRAG_DROP_MANAGER.current() && !(DRAG_DROP_MANAGER.current() instanceof MoveDrag))
-    ) {
+    const isMove =
+      DRAG_DROP_MANAGER.current() && !(DRAG_DROP_MANAGER.current() instanceof MoveDrag);
+    if (!this.hoverNode || !isNode(this.hoverNode) || isMove || selection.isDragging()) {
       return svg.g({});
     }
 
     const node = this.hoverNode;
-
-    if (selection.isDragging()) return svg.g({});
-
-    const z = new Zoom(diagram.viewBox.zoomLevel);
-    const anchorSizeInEffect = z.num(ANCHOR_SIZE, 2);
-
     if (node.layer.type !== 'regular' || node.layer.isLocked()) {
       return svg.g({});
     }
 
+    const z = new Zoom(diagram.viewBox.zoomLevel);
+    const anchorSizeInEffect = z.num(ANCHOR_SIZE, 2);
+
     const children: VNode[] = [];
 
     node.anchors.forEach(a => {
-      if (a.clip) return;
-      if (!a.isPrimary) return;
+      if (a.clip || !a.isPrimary) return;
 
       const p1 = node._getPositionInBounds(a.start, false);
 
@@ -148,18 +163,13 @@ export class AnchorHandlesComponent extends Component<Props> {
           r: anchorSizeInEffect,
           on: {
             mouseover: () => (this.state = 'handle'),
-            mouseout: () => {
-              this.state = 'background';
-              this.clearTimeout();
-              this.triggerMouseOut(shouldScale);
-            },
+            mouseout: () => (this.state = 'background'),
             mousedown: e => {
               if (diagram.activeLayer.type !== 'regular') return;
 
               DRAG_DROP_MANAGER.initiate(
                 new AnchorHandleDrag(node, a.id, EventHelper.point(e), props.context)
               );
-              this.clearTimeout();
               this.setState(undefined, 'background');
               e.preventDefault();
               e.stopPropagation();
@@ -182,22 +192,5 @@ export class AnchorHandlesComponent extends Component<Props> {
     this.state = state;
     this.hoverNode = node;
     this.redraw();
-  }
-
-  private clearTimeout() {
-    if (this.timeout) {
-      clearTimeout(this.timeout);
-      this.timeout = undefined;
-    }
-  }
-
-  private triggerMouseOut(shouldScale: boolean) {
-    this.timeout = window.setTimeout(
-      () => {
-        if (this.state === 'handle') return;
-        this.setState(undefined, 'background');
-      },
-      shouldScale ? 250 : 250
-    );
   }
 }

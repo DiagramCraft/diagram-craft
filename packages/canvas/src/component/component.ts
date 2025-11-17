@@ -6,6 +6,7 @@ type Callback = () => void | (() => void);
 
 let CURRENT_EFFECT_MANAGER: EffectManager | undefined;
 
+// TODO: Isn't this basically the same as WatchableValue
 export class Observable<T> extends EventEmitter<{ change: { newValue: T } }> {
   #value: T;
 

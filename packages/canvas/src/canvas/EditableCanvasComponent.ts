@@ -76,7 +76,7 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
   private svgRef: SVGSVGElement | null = null;
   private tool: Tool | undefined;
 
-  private point: Point = { x: 0, y: 0 };
+  private point: Observable<Point> = new Observable({ x: 0, y: 0 });
 
   private hoverElement = new Observable<string | undefined>(undefined);
 
@@ -153,7 +153,7 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
           return;
         }
 
-        if (!findAndExecuteAction(e, { point: this.point }, keyMap, actionMap)) {
+        if (!findAndExecuteAction(e, { point: this.point.get() }, keyMap, actionMap)) {
           this.tool?.onKeyDown(e);
         }
       };
@@ -311,14 +311,16 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
                 e.currentTarget!
               );
               if (e.x >= b.left && e.x <= b.right && e.y >= b.top && e.y <= b.bottom) {
-                this.point = diagram.viewBox.toDiagramPoint({
-                  x: e.x - b.left,
-                  y: e.y - b.top
-                });
+                this.point.set(
+                  diagram.viewBox.toDiagramPoint({
+                    x: e.x - b.left,
+                    y: e.y - b.top
+                  })
+                );
               }
 
               CollaborationConfig.Backend.awareness?.updateCursor({
-                ...this.point,
+                ...this.point.get(),
                 activeDiagramId: diagram.id
               });
             },
@@ -407,7 +409,8 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
           this.tool.type === 'move'
             ? this.subComponent($cmp(AnchorHandlesComponent), {
                 ...canvasState,
-                hoverElement: this.hoverElement
+                hoverElement: this.hoverElement,
+                point: this.point
               })
             : svg.g({}),
 
