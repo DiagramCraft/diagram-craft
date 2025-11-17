@@ -1,6 +1,11 @@
 import { apply, DOMElement, insert, VNode, VNodeData } from './vdom';
 import { shallowEquals } from '@diagram-craft/utils/object';
-import { EventEmitter, type EventKey, type EventMap } from '@diagram-craft/utils/event';
+import {
+  EventEmitter,
+  type EventKey,
+  type EventMap,
+  type EventReceiver
+} from '@diagram-craft/utils/event';
 
 type Callback = () => void | (() => void);
 
@@ -46,6 +51,18 @@ export const createEffect = (callback: Callback, deps: unknown[]) => {
     throw new Error('Effect must be run inside a component');
   }
   CURRENT_EFFECT_MANAGER.add(callback, deps);
+};
+
+export const onEvent = <E extends EventMap, K extends EventKey<E>>(
+  emitter: EventEmitter<E>,
+  event: K,
+  callback: EventReceiver<E[K]>,
+  dependencies?: unknown[]
+) => {
+  createEffect(() => {
+    emitter.on(event, callback);
+    return () => emitter.off(event, callback);
+  }, [emitter, ...(dependencies ?? [])]);
 };
 
 export const isInComponent = () => {

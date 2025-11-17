@@ -1,6 +1,6 @@
 import { DRAG_DROP_MANAGER } from '../dragDropManager';
 import { CanvasState } from '../canvas/EditableCanvasComponent';
-import { Component, createEffect, Observable } from '../component/component';
+import { Component, Observable, onEvent } from '../component/component';
 import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
 import { VNode } from '../component/vdom';
@@ -11,29 +11,12 @@ import { AnchorHandleDrag } from '../drag/anchorHandleDrag';
 import { Zoom } from './zoom';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { Point } from '@diagram-craft/geometry/point';
-import {
-  EventEmitter,
-  type EventKey,
-  type EventMap,
-  type EventReceiver
-} from '@diagram-craft/utils/event';
 
 type State = 'background' | 'node' | 'handle';
 
 const ANCHOR_SIZE = 4;
 const SCALE = 10;
 const ANCHOR_MOUSEOUT_DISTANCE = 20;
-
-const onEvent = <E extends EventMap, K extends EventKey<E>>(
-  emitter: EventEmitter<E>,
-  event: K,
-  callback: EventReceiver<E[K]>
-) => {
-  createEffect(() => {
-    emitter.on(event, callback);
-    return () => emitter.off(event, callback);
-  }, [emitter]);
-};
 
 type Props = CanvasState & {
   hoverElement: Observable<string | undefined>;

@@ -1,5 +1,5 @@
 import { DRAG_DROP_MANAGER } from '../dragDropManager';
-import { Component, createEffect } from '../component/component';
+import { Component, onEvent } from '../component/component';
 import * as svg from '../component/vdom-svg';
 import { EdgeEndpointMoveDrag } from '../drag/edgeEndpointMoveDrag';
 import { Diagram } from '@diagram-craft/model/diagram';
@@ -12,19 +12,8 @@ export class EdgeSelectionComponent extends Component<Props> {
   render(props: Props) {
     const { diagram, edge } = props;
 
-    createEffect(() => {
-      const cb = () => this.redraw();
-
-      DRAG_DROP_MANAGER.on('dragStart', cb);
-      return () => DRAG_DROP_MANAGER.off('dragStart', cb);
-    }, []);
-
-    createEffect(() => {
-      const cb = () => this.redraw();
-
-      DRAG_DROP_MANAGER.on('dragEnd', cb);
-      return () => DRAG_DROP_MANAGER.off('dragEnd', cb);
-    }, []);
+    onEvent(DRAG_DROP_MANAGER, 'dragStart', () => this.redraw());
+    onEvent(DRAG_DROP_MANAGER, 'dragEnd', () => this.redraw());
 
     const z = new Zoom(diagram.viewBox.zoomLevel);
 

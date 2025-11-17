@@ -1,4 +1,4 @@
-import { Component, createEffect } from '../component/component';
+import { Component, createEffect, onEvent } from '../component/component';
 import * as svg from '../component/vdom-svg';
 import type { CanvasState } from '../canvas/EditableCanvasComponent';
 import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
@@ -9,18 +9,12 @@ export class AwarenessCursorComponent extends Component<CanvasState> {
   render(props: CanvasState) {
     const diagram = props.diagram;
 
-    createEffect(() => {
-      const cb = () => this.redraw();
-      diagram.viewBox.on('viewbox', cb);
-      return () => diagram.viewBox.off('viewbox', cb);
-    }, [diagram]);
+    onEvent(diagram.viewBox, 'viewbox', () => this.redraw());
 
     createEffect(() => {
       const awareness = CollaborationConfig.Backend.awareness;
 
-      const cb = () => {
-        this.redraw();
-      };
+      const cb = () => this.redraw();
 
       awareness?.on('changeCursor', cb);
       return () => awareness?.off('changeCursor', cb);
