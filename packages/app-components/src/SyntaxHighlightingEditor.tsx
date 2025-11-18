@@ -90,6 +90,7 @@ export const SyntaxHighlightingEditor = React.forwardRef<HTMLTextAreaElement, Pr
         className={`${styles.cmpSyntaxHighlightingEditor} ${props.className ?? ''}`}
         {...extractDataAttributes(props)}
         style={props.style ?? {}}
+        data-rows={props.rows ?? 10}
       >
         <textarea
           ref={ref ?? textareaRef}

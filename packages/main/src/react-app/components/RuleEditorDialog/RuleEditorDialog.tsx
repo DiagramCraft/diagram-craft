@@ -22,7 +22,6 @@ import { AdjustmentRule, AdjustmentRuleAction } from '@diagram-craft/model/diagr
 import { ElementSearchClause } from '@diagram-craft/model/diagramElementSearch';
 import { HideAction } from './HideAction';
 import { RuleEditorDialogProps } from '@diagram-craft/canvas-app/dialogs';
-import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { MultiSelect } from '@diagram-craft/app-components/MultiSelect';
 import { useDiagram } from '../../../application';
@@ -91,7 +90,9 @@ const ClauseList = (props: ClauseListProps) => {
 
             <div className={styles.ruleEditorClause__props}>
               {c.type === 'query' && (
-                <TextArea
+                <SyntaxHighlightingEditor
+                  highlighter={jsonHighlighter}
+                  rows={3}
                   className={styles.ruleEditorClause__queryTextArea}
                   value={c.query ?? ''}
                   onKeyDown={e => {

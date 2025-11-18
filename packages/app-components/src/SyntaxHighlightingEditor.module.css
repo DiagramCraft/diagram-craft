@@ -4,7 +4,9 @@
   border-radius: var(--cmp-radius);
   outline: none;
   position: relative;
-  min-height: 200px;
+
+  /* TODO: This doesn't work in Safari */
+  min-height: calc(attr(data-rows number, 3) * 15px + 20px);
   background-color: var(--cmp-bg);
 
   &:focus-within {
