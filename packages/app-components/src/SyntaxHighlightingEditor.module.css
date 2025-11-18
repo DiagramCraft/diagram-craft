@@ -1,0 +1,90 @@
+.cmp-syntax-highlighting-editor {
+  font: 11px / 15px monospace;
+  border: 1px solid var(--cmp-border);
+  border-radius: var(--cmp-radius);
+  outline: none;
+  position: relative;
+  min-height: 200px;
+
+  &:focus-within {
+    border-color: var(--accent-border);
+  }
+
+  textarea {
+    font: 11px / 15px monospace;
+    color: transparent;
+    white-space: nowrap;
+    overflow: auto;
+    caret-color: var(--base-fg);
+    border: 1px solid transparent;
+
+    position: absolute;
+    inset: 0;
+    padding: 10px;
+
+    resize: none;
+    z-index: 100;
+    background: transparent;
+
+    &:focus {
+      outline: none;
+      border: 1px solid var(--accent-border);
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      caret-color: transparent;
+    }
+  }
+}
+
+.syntax-highlighter {
+  border: 1px solid var(--base-bg);
+  margin: 0;
+  overflow: scroll;
+  position: absolute;
+  inset: 0;
+  padding: 10px;
+
+  &:focus {
+    border: 1px solid var(--accent-chroma);
+    outline: none;
+  }
+
+  .syntax-label {
+    color: var(--accent-fg);
+  }
+
+  .syntax-string {
+    color: var(--green-9);
+  }
+
+  .syntax-bracket {
+    color: var(--base-fg);
+  }
+
+  .syntax-props {
+    color: var(--accent-chroma);
+  }
+
+  .syntax-error {
+    text-decoration: underline;
+    text-decoration-color: var(--red-9);
+    text-decoration-style: wavy;
+  }
+}
+
+.tooltip {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-size: 11px;
+  position: fixed;
+  background: var(--red-9);
+  color: white;
+  padding: 6px 10px;
+  border-radius: 4px;
+  z-index: 1000;
+  pointer-events: none;
+  max-width: 300px;
+  word-wrap: break-word;
+  white-space: normal;
+}
