@@ -48,12 +48,14 @@ export const SyntaxHighlightingEditor = React.forwardRef<HTMLTextAreaElement, Pr
 
         const textarea = e.currentTarget;
         const rect = textarea.getBoundingClientRect();
+        const computedStyle = window.getComputedStyle(textarea);
 
-        // Calculate which line the mouse is over based on line height
-        const padding = 10; // matches CSS: padding: 10px;
-        const lineHeight = 15; // matches CSS: 11px / 15px monospace
+        // Read padding and line-height from computed styles
+        const paddingTop = parseFloat(computedStyle.paddingTop);
+        const lineHeight = parseFloat(computedStyle.lineHeight);
+
         const scrollTop = textarea.scrollTop;
-        const mouseY = e.clientY - rect.top - padding + scrollTop;
+        const mouseY = e.clientY - rect.top - paddingTop + scrollTop;
         const lineIndex = Math.floor(mouseY / lineHeight);
 
         // Check if there's an error on this line

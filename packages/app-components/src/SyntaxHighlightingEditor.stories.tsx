@@ -41,11 +41,11 @@ export const WithSyntaxHighlighting: Story = {
       return lines.map(line => {
         // Simple highlighting: keywords in blue, strings in green
         return line
+          .replace(/"([^"]*)"/g, '<span class="syntax-string">"$1"</span>')
           .replace(
             /\b(rectangle|circle|arrow|from|to|at)\b/g,
             '<span class="syntax-label">$1</span>'
           )
-          .replace(/"([^"]*)"/g, '<span class="syntax-string">"$1"</span>')
           .replace(/\(/g, '<span class="syntax-bracket">(</span>')
           .replace(/\)/g, '<span class="syntax-bracket">)</span>');
       });
@@ -81,11 +81,11 @@ another error`);
       return lines.map((line, index) => {
         const hasError = errors?.has(index);
         let highlighted = line
+          .replace(/"([^"]*)"/g, '<span class="syntax-string">"$1"</span>')
           .replace(
             /\b(rectangle|circle|arrow|from|to|at)\b/g,
             '<span class="syntax-label">$1</span>'
-          )
-          .replace(/"([^"]*)"/g, '<span class="syntax-string">"$1"</span>');
+          );
 
         if (hasError) {
           highlighted = `<span class="syntax-error">${highlighted}</span>`;
