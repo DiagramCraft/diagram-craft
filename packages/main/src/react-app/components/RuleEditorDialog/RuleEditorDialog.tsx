@@ -94,7 +94,7 @@ const ClauseList = (props: ClauseListProps) => {
                   highlighter={jsonHighlighter}
                   rows={3}
                   className={styles.ruleEditorClause__queryTextArea}
-                  value={c.query ?? ''}
+                  defaultValue={c.query ?? ''}
                   onKeyDown={e => {
                     // TODO: Why is this needed?
                     e.stopPropagation();

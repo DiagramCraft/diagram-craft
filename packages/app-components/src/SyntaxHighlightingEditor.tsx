@@ -6,10 +6,25 @@ import { assert } from '@diagram-craft/utils/assert';
 export const SyntaxHighlightingEditor = React.forwardRef<HTMLTextAreaElement, Props>(
   (props, ref) => {
     const [tooltip, setTooltip] = useState<{ x: number; y: number; message: string } | null>(null);
+    const [internalValue, setInternalValue] = useState(props.defaultValue ?? '');
 
     const codeElementRef = useRef<HTMLElement>(null);
     const preElementRef = useRef<HTMLPreElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    // Determine if component is controlled or uncontrolled
+    const isControlled = props.value !== undefined;
+    const value = isControlled ? (props.value ?? '') : internalValue;
+
+    const handleChange = useCallback(
+      (newValue: string) => {
+        if (!isControlled) {
+          setInternalValue(newValue);
+        }
+        props.onChange?.(newValue);
+      },
+      [isControlled, props]
+    );
 
     const onKeydown = useCallback(
       (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -26,12 +41,12 @@ export const SyntaxHighlightingEditor = React.forwardRef<HTMLTextAreaElement, Pr
           $el.selectionStart = pos;
           $el.selectionEnd = pos;
 
-          props.onChange?.($el.value);
+          handleChange($el.value);
         }
 
         props.onKeyDown?.(e);
       },
-      [props.onChange, props]
+      [handleChange, props]
     );
 
     const onScroll = useCallback((source: HTMLElement) => {
@@ -82,7 +97,7 @@ export const SyntaxHighlightingEditor = React.forwardRef<HTMLTextAreaElement, Pr
       [props]
     );
 
-    const lines = props.value.split('\n');
+    const lines = value.split('\n');
     const highlightedLines = props.highlighter ? props.highlighter(lines, props.errors) : lines;
 
     return (
@@ -98,7 +113,7 @@ export const SyntaxHighlightingEditor = React.forwardRef<HTMLTextAreaElement, Pr
           disabled={props.disabled}
           onKeyDown={onKeydown}
           onInput={e => {
-            props.onChange?.((e.target as HTMLTextAreaElement).value);
+            handleChange((e.target as HTMLTextAreaElement).value);
             onScroll(e.target as HTMLElement);
             props.onInput?.(e as React.FormEvent<HTMLTextAreaElement>);
           }}
@@ -108,7 +123,7 @@ export const SyntaxHighlightingEditor = React.forwardRef<HTMLTextAreaElement, Pr
           }}
           onMouseMove={onMouseMove}
           onMouseLeave={onMouseLeave}
-          value={props.value}
+          value={value}
         />
 
         <pre className={styles.syntaxHighlighter} ref={preElementRef}>
@@ -134,7 +149,8 @@ export const SyntaxHighlightingEditor = React.forwardRef<HTMLTextAreaElement, Pr
 );
 
 type Props = {
-  value: string;
+  value?: string;
+  defaultValue?: string;
   onChange?: (value: string) => void;
   highlighter?: (lines: string[], errors?: Map<number, string>) => string[];
   errors?: Map<number, string>;
@@ -143,5 +159,5 @@ type Props = {
   style?: React.CSSProperties;
 } & Omit<
   React.DetailedHTMLProps<React.TextareaHTMLAttributes<HTMLTextAreaElement>, HTMLTextAreaElement>,
-  'onChange' | 'value'
+  'onChange' | 'value' | 'defaultValue'
 >;

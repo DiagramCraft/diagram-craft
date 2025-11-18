@@ -149,3 +149,23 @@ export const WithKeyboardShortcut: Story = {
     );
   }
 };
+
+export const Uncontrolled: Story = {
+  args: {
+    defaultValue: sampleCode
+  },
+  render: () => {
+    const [changeCount, setChangeCount] = useState(0);
+
+    return (
+      <div>
+        <SyntaxHighlightingEditor
+          defaultValue={sampleCode}
+          onChange={() => setChangeCount(c => c + 1)}
+          style={{ width: '500px', height: '300px' }}
+        />
+        <div style={{ marginTop: '10px' }}>Changes: {changeCount}</div>
+      </div>
+    );
+  }
+};
