@@ -1,7 +1,6 @@
 import { Select } from '@diagram-craft/app-components/Select';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbArrowDownRight, TbChevronDown, TbChevronRight, TbClipboardCopy } from 'react-icons/tb';
-import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useDiagram } from '../../../application';
@@ -14,6 +13,10 @@ import { addHighlight, Highlights, removeHighlight } from '@diagram-craft/canvas
 import { ToolWindow } from '../ToolWindow';
 import { SearchToolMenu } from './SearchToolMenu';
 import { QueryDiagram, QueryDocument, QueryLayer } from '@diagram-craft/model/queryModel';
+import {
+  jsonHighlighter,
+  SyntaxHighlightingEditor
+} from '@diagram-craft/app-components/SyntaxHighlightingEditor';
 
 const replacer = (key: string, value: unknown) => {
   // Skip private properties (starting with _)
@@ -144,7 +147,12 @@ export const DJQLSearchTab = () => {
             </Select.Root>
           </div>
 
-          <TextArea ref={ref} value={djqlQuery} style={{ minHeight: '100px' }} />
+          <SyntaxHighlightingEditor
+            ref={ref}
+            defaultValue={djqlQuery}
+            style={{ minHeight: '100px' }}
+            highlighter={jsonHighlighter}
+          />
           <div
             style={{
               display: 'flex',

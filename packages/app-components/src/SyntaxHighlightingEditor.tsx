@@ -161,3 +161,15 @@ type Props = {
   React.DetailedHTMLProps<React.TextareaHTMLAttributes<HTMLTextAreaElement>, HTMLTextAreaElement>,
   'onChange' | 'value' | 'defaultValue'
 >;
+
+export const jsonHighlighter = (lines: string[]): string[] => {
+  return lines.map(line => {
+    // Simple highlighting: keywords in blue, strings in green
+    return line
+      .replace(/"([^"]*)"/g, '<span class="syntax-string">"$1"</span>')
+      .replace(/\}/g, '<span class="syntax-bracket">}</span>')
+      .replace(/\{/g, '<span class="syntax-bracket">{</span>')
+      .replace(/\]/g, '<span class="syntax-bracket">]</span>')
+      .replace(/\[/g, '<span class="syntax-bracket">[</span>');
+  });
+};
