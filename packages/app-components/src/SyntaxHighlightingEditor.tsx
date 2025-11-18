@@ -27,14 +27,11 @@ export const SyntaxHighlightingEditor = React.forwardRef<HTMLTextAreaElement, Pr
           $el.selectionEnd = pos;
 
           props.onChange?.($el.value);
-        } else if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-          e.preventDefault();
-          props.onSubmit?.();
         }
 
         props.onKeyDown?.(e);
       },
-      [props.onChange, props.onSubmit, props]
+      [props.onChange, props]
     );
 
     const onScroll = useCallback((source: HTMLElement) => {
@@ -136,11 +133,12 @@ export const SyntaxHighlightingEditor = React.forwardRef<HTMLTextAreaElement, Pr
 type Props = {
   value: string;
   onChange?: (value: string) => void;
-  onSubmit?: () => void;
   highlighter?: (lines: string[], errors?: Map<number, string>) => string[];
   errors?: Map<number, string>;
   disabled?: boolean;
+  className?: string;
+  style?: React.CSSProperties;
 } & Omit<
   React.DetailedHTMLProps<React.TextareaHTMLAttributes<HTMLTextAreaElement>, HTMLTextAreaElement>,
-  'onChange' | 'value' | 'onSubmit'
+  'onChange' | 'value'
 >;

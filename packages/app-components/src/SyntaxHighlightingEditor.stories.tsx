@@ -116,7 +116,7 @@ export const Disabled: Story = {
   }
 };
 
-export const WithSubmit: Story = {
+export const WithKeyboardShortcut: Story = {
   args: {
     value: sampleCode
   },
@@ -132,7 +132,12 @@ export const WithSubmit: Story = {
             setValue(v);
             setSubmitted(false);
           }}
-          onSubmit={() => setSubmitted(true)}
+          onKeyDown={e => {
+            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+              e.preventDefault();
+              setSubmitted(true);
+            }
+          }}
           style={{ width: '500px', height: '300px' }}
         />
         {submitted && (

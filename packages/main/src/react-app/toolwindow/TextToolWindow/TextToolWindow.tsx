@@ -108,7 +108,12 @@ export const TextToolWindow = () => {
             <SyntaxHighlightingEditor
               value={text}
               onChange={onChange}
-              onSubmit={applyChanges}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                  e.preventDefault();
+                  applyChanges();
+                }
+              }}
               highlighter={highlighter}
               errors={errors}
               className={styles.textEditorContainer}
