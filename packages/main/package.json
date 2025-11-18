@@ -25,7 +25,7 @@
     "@diagram-craft/geometry": "workspace:^",
     "@diagram-craft/collaboration": "workspace:^",
     "@diagram-craft/model": "workspace:^",
-    "embeddable-jq": "^1.0.0",
+    "embeddable-jq": "^1.0.4",
     "@diagram-craft/app-components": "workspace:^",
     "@diagram-craft/utils": "workspace:^",
     "@diagram-craft/canvas-drawio": "workspace:^",

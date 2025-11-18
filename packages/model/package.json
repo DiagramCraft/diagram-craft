@@ -10,7 +10,7 @@
   "keywords": [],
   "author": "Magnus Johansson",
   "dependencies": {
-    "embeddable-jq": "^1.0.0",
+    "embeddable-jq": "^1.0.4",
     "@diagram-craft/geometry": "workspace:^",
     "@diagram-craft/utils": "workspace:^",
     "@diagram-craft/collaboration": "workspace:^"

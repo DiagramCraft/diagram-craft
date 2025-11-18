@@ -195,18 +195,6 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     this.emit('diagramChanged', { diagram: diagram });
   }
 
-  /*
-  TODO: Delete this if not needed
-  toJSON() {
-    return {
-      diagrams: this.#diagrams.values,
-      styles: this.styles,
-      props: this.props,
-      customPalette: this.customPalette
-    };
-  }
-   */
-
   getAttachmentsInUse() {
     return [...this.diagramIterator({ nest: true }).flatMap(e => e.getAttachmentsInUse())];
   }

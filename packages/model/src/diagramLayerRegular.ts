@@ -185,13 +185,6 @@ export class RegularLayer extends Layer<RegularLayer> {
     );
   }
 
-  toJSON() {
-    return {
-      ...super.toJSON(),
-      elements: this.elements
-    };
-  }
-
   snapshot(): LayerSnapshot {
     return {
       ...super.snapshot(),

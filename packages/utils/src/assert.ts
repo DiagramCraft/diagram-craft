@@ -317,8 +317,8 @@ export const invariant: { is: AssertType & DiagramCraft.AssertTypeExtensions } =
  *
  * @group Assertions
  */
-export const mustExist = <T>(arg: T | undefined): T => {
-  if (is.notPresent(arg)) {
+export const mustExist = <T>(arg: T | undefined | null): T => {
+  if (is.notPresent(arg) || arg === null) {
     throw new VerifyNotReached();
   }
   return arg;

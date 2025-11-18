@@ -116,14 +116,6 @@ export abstract class Layer<
 
   /* Snapshot ************************************************************************************************ */
 
-  toJSON() {
-    return {
-      name: this.name,
-      locked: this.isLocked(),
-      type: this.type
-    };
-  }
-
   snapshot(): LayerSnapshot {
     return {
       _snapshotType: 'layer',

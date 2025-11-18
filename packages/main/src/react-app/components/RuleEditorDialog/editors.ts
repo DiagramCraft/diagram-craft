@@ -12,13 +12,14 @@ import { EdgeLineEditor } from './EdgeLineEditor';
 import { NamedIndicatorEditor } from './NamedIndicatorEditor';
 import { NodeActionPropertiesEditor } from './NodeActionPropertiesEditor';
 import type { EdgeProps, NodeProps } from '@diagram-craft/model/diagramProps';
+import type { AdjustmentRule } from '@diagram-craft/model/diagramLayerRuleTypes';
 
 export type Editor = (props: {
   props: NodeProps | EdgeProps;
   onChange: () => void;
 }) => ReactElement;
 
-export type EditorTypes = 'node' | 'edge';
+export type EditorTypes = AdjustmentRule['type'];
 
 type Entry<E> = {
   editor: E;

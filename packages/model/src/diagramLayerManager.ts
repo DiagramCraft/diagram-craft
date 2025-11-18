@@ -238,14 +238,6 @@ export class LayerManager
     uow.updateElement(this);
   }
 
-  toJSON() {
-    return {
-      layers: this.#layers,
-      activeLayers: this.#activeLayer,
-      visibleLayers: this.#visibleLayers.values()
-    };
-  }
-
   // TODO: Doesn't this always return an empty array?
   getAttachmentsInUse() {
     return this.#layers.values.flatMap(e => e.getAttachmentsInUse());

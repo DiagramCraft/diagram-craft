@@ -400,8 +400,8 @@ importers:
         specifier: ^1.1.4
         version: 1.2.7(@types/react-dom@18.3.7(@types/react@18.3.23))(@types/react@18.3.23)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       embeddable-jq:
-        specifier: ^1.0.0
-        version: 1.0.0
+        specifier: ^1.0.4
+        version: 1.0.4
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -473,8 +473,8 @@ importers:
         specifier: workspace:^
         version: link:../utils
       embeddable-jq:
-        specifier: ^1.0.0
-        version: 1.0.0
+        specifier: ^1.0.4
+        version: 1.0.4
     devDependencies:
       vitest:
         specifier: ^3.2.4
@@ -2861,8 +2861,8 @@ packages:
     engines: {node: '>= 12.20.55'}
     hasBin: true
 
-  embeddable-jq@1.0.0:
-    resolution: {integrity: sha512-Bj8vmS69oOjbK/Je89sUU4FDdsjKf6coR6D5d00/UzrJueaiAzP03d0JgG6LF2HG7dayku2DCmOKtYfxK7eITg==}
+  embeddable-jq@1.0.4:
+    resolution: {integrity: sha512-DhW5oaBXdJtE5MXdjzunUK4E+TaQDB+Mwl0LrJ31dEUKN97KbapUH+KPbyKdrsRBJAOVC7i5nI3H2OOugRkQdw==}
 
   emoji-regex@10.4.0:
     resolution: {integrity: sha512-EC+0oUMY1Rqm4O6LLrgjtYDvcVYTy7chDnM4Q7030tP4Kwj3u/pR6gP9ygnp2CJMK5Gq+9Q2oqmrFJAz01DXjw==}
@@ -8039,7 +8039,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  embeddable-jq@1.0.0: {}
+  embeddable-jq@1.0.4: {}
 
   emoji-regex@10.4.0: {}
 
