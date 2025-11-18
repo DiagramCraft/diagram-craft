@@ -251,17 +251,15 @@ const AdvancedRuleEditorSubDialog = forwardRef<
     rule: AdjustmentRule & { type: 'advanced' };
     type: EditorTypes;
   }
->((_props, ref) => {
+>((props, ref) => {
   const diagram = useDiagram();
-  const [rule, setRule] = useState('');
+  const [rule, setRule] = useState(props.rule.rule);
   const [result, setResult] = useState('');
 
   useImperativeHandle(ref, () => ({
     apply: (dest: AdjustmentRule) => {
       if (dest.type !== 'advanced') throw new VerifyNotReached();
-
       dest.rule = rule;
-      console.log('ADVANCED');
     }
   }));
 

@@ -12,6 +12,8 @@ import {
 } from './diagramLayerRuleTypes';
 import { searchByElementSearchClauses } from './diagramElementSearch';
 import type { CRDTList, CRDTMap } from '@diagram-craft/collaboration/crdt';
+import { QueryDiagram } from './queryModel';
+import { parseAndQuery } from 'embeddable-jq';
 
 type Result = Map<string, Adjustment>;
 
@@ -140,6 +142,18 @@ export class RuleLayer extends Layer<RuleLayer> {
       }
 
       return res;
+    } else if (rule.type === 'advanced') {
+      const result = new Map<string, Adjustment>();
+
+      const queryResult = parseAndQuery(rule.rule, [new QueryDiagram(this.diagram)]);
+      // biome-ignore lint/suspicious/noExplicitAny: valid use for now
+      for (const e of queryResult as any[]) {
+        if (!e.id) continue;
+
+        result.set(e.id, { props: e.props ?? {} } as Adjustment);
+      }
+
+      return result;
     } else {
       throw new NotImplementedYet();
     }
