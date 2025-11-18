@@ -4,6 +4,7 @@ import { assert, notImplemented } from '@diagram-craft/utils/assert';
 import { RegularLayer } from './diagramLayerRegular';
 import { DiagramElement, isNode } from './diagramElement';
 import { isSubsequence } from '@diagram-craft/utils/strings';
+import { QueryElement } from './queryModel';
 
 export type ElementSearchClause = { id: string } & (
   | {
@@ -74,7 +75,9 @@ export const searchByElementSearchClauses = (
     if (clause.type === 'query') {
       const r = parseAndQuery(
         clause.query,
-        diagram.layers.visible.flatMap(l => (l instanceof RegularLayer ? l.elements : []))
+        diagram.layers.visible
+          .flatMap(l => (l instanceof RegularLayer ? l.elements : []))
+          .map(e => QueryElement.fromElement(e))
       );
       results.push(new Set(...(r as string[])));
     } else if (clause.type === 'any') {

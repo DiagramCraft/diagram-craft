@@ -148,7 +148,6 @@ export interface DiagramNode extends DiagramElement {
     defaultValue?: PropPathValue<NodeProps, T>
   ): PropertyInfo<PropPathValue<NodeProps, T>>;
 
-  readonly props: NodePropsForRendering;
   readonly storedProps: NodeProps;
   readonly editProps: NodePropsForEditing;
   readonly renderProps: NodePropsForRendering;
@@ -1008,25 +1007,5 @@ export class SimpleDiagramNode
 
   _getNestedElements(): DiagramElement[] {
     return [this, ...this.children.flatMap(c => (isNode(c) ? c._getNestedElements() : c))];
-  }
-
-  /* Query Support ***************************************************************************************** */
-
-  // This is used for query purposes
-  toJSON() {
-    return {
-      id: this.id,
-      parent: this.parent,
-      type: 'node',
-      nodeType: this.nodeType,
-      bounds: this.bounds,
-      edges: this.edges,
-      props: this.renderProps,
-      children: this.children
-    };
-  }
-
-  get props() {
-    return this.renderProps;
   }
 }

@@ -13,6 +13,7 @@ import { ToolWindowPanel } from '../ToolWindowPanel';
 import { addHighlight, Highlights, removeHighlight } from '@diagram-craft/canvas/highlight';
 import { ToolWindow } from '../ToolWindow';
 import { SearchToolMenu } from './SearchToolMenu';
+import { QueryDiagram, QueryDocument, QueryLayer } from '@diagram-craft/model/queryModel';
 
 const replacer = (key: string, value: unknown) => {
   // Skip private properties (starting with _)
@@ -42,13 +43,13 @@ const replacer = (key: string, value: unknown) => {
 const getSource = (source: string, diagram: Diagram) => {
   switch (source) {
     case 'active-layer':
-      return diagram.activeLayer;
+      return QueryLayer.fromLayer(diagram.activeLayer);
     case 'active-diagram':
-      return diagram;
+      return new QueryDiagram(diagram);
     case 'active-document':
-      return diagram.document;
+      return new QueryDocument(diagram.document);
     case 'selection':
-      return diagram.selection;
+      return new QueryDiagram(diagram).selection;
   }
 };
 

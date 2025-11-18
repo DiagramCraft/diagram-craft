@@ -28,6 +28,8 @@ import { MultiSelect } from '@diagram-craft/app-components/MultiSelect';
 import { useDiagram } from '../../../application';
 import styles from './RuleEditorDialog.module.css';
 import { mustExist, NotImplementedYet, VerifyNotReached } from '@diagram-craft/utils/assert';
+import { parseAndQuery } from 'embeddable-jq';
+import { QueryDiagram } from '@diagram-craft/model/queryModel';
 
 export type EditableAdjustmentRuleAction = Partial<AdjustmentRuleAction> & { kind?: string };
 export type EditableElementSearchClause = Partial<ElementSearchClause>;
@@ -250,7 +252,9 @@ const AdvancedRuleEditorSubDialog = forwardRef<
     type: EditorTypes;
   }
 >((_props, ref) => {
+  const diagram = useDiagram();
   const [rule, setRule] = useState('');
+  const [result, setResult] = useState('');
 
   useImperativeHandle(ref, () => ({
     apply: (dest: AdjustmentRule) => {
@@ -260,6 +264,11 @@ const AdvancedRuleEditorSubDialog = forwardRef<
       console.log('ADVANCED');
     }
   }));
+
+  const run = () => {
+    const r = parseAndQuery(rule, [new QueryDiagram(diagram)]);
+    setResult(JSON.stringify(r, null, 2));
+  };
 
   return (
     <div style={{ marginTop: '0.5rem', display: 'grid', gap: '0.5rem' }}>
@@ -280,12 +289,14 @@ const AdvancedRuleEditorSubDialog = forwardRef<
           Code:
           <TextArea value={rule} rows={10} onChange={v => setRule(v ?? '')} />
           <div style={{ marginTop: '0.5rem', display: 'flex', justifyContent: 'flex-end' }}>
-            <Button type={'secondary'}>Run...</Button>
+            <Button type={'secondary'} onClick={() => run()}>
+              Run...
+            </Button>
           </div>
         </div>
         <div>
           Result:
-          <TextArea value={''} rows={10} />
+          <TextArea value={result} rows={10} />
         </div>
       </div>
     </div>

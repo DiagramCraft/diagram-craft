@@ -243,12 +243,4 @@ export class Selection extends EventEmitter<SelectionEvents> {
     this.#bounds = this.isEmpty() ? EMPTY_BOX : Box.boundingBox(this.#elements.map(e => e.bounds));
     this.emitAsyncWithDebounce('change', { selection: this });
   }
-
-  toJSON() {
-    return {
-      bounds: this.bounds,
-      elements: this.elements,
-      type: this.type
-    };
-  }
 }

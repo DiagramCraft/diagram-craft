@@ -1179,21 +1179,4 @@ export class SimpleDiagramEdge
   getAttachmentsInUse(): Array<string> {
     return [];
   }
-
-  /* Query Support ***************************************************************************************** */
-
-  toJSON() {
-    return {
-      id: this.id,
-      parent: this.parent,
-      type: 'edge',
-      bounds: this.bounds,
-      props: this.renderProps,
-      children: this.children
-    };
-  }
-
-  get props() {
-    return this.renderProps;
-  }
 }

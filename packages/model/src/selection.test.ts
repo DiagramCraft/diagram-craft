@@ -219,19 +219,6 @@ describe('selection', () => {
     expect(selection.bounds.r).toBe(0);
   });
 
-  test('toJSON()', () => {
-    const selection = new Selection(diagram);
-    const node = layer.addNode();
-    const edge = layer.addEdge();
-
-    selection.setElements([node, edge]);
-
-    const json = selection.toJSON();
-    expect(json.bounds).toBeDefined();
-    expect(json.elements).toHaveLength(2);
-    expect(json.type).toBe('mixed');
-  });
-
   test('filterSelectionToVisibleElements()', () => {
     const selection = new Selection(diagram);
     const layer2 = diagram.newLayer();
