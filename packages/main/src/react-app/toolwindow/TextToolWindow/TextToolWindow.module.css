@@ -13,6 +13,11 @@
   top: anchor(bottom);
   margin-top: -1px;
   margin-right: 1px;
+  background-color: transparent !important;
+
+  .syntax-highlighter {
+    border: 1px solid var(--base-bg);
+  }
 
   textarea {
     border: 1px solid transparent !important;

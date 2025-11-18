@@ -30,6 +30,7 @@ import styles from './RuleEditorDialog.module.css';
 import { mustExist, NotImplementedYet, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { parseAndQuery } from 'embeddable-jq';
 import { QueryDiagram } from '@diagram-craft/model/queryModel';
+import { SyntaxHighlightingEditor } from '@diagram-craft/app-components/SyntaxHighlightingEditor';
 
 export type EditableAdjustmentRuleAction = Partial<AdjustmentRuleAction> & { kind?: string };
 export type EditableElementSearchClause = Partial<ElementSearchClause>;
@@ -285,7 +286,12 @@ const AdvancedRuleEditorSubDialog = forwardRef<
       >
         <div>
           Code:
-          <TextArea value={rule} rows={10} onChange={v => setRule(v ?? '')} />
+          <SyntaxHighlightingEditor
+            value={rule}
+            rows={10}
+            onChange={v => setRule(v ?? '')}
+            highlighter={jsonHighlighter}
+          />
           <div style={{ marginTop: '0.5rem', display: 'flex', justifyContent: 'flex-end' }}>
             <Button type={'secondary'} onClick={() => run()}>
               Run...
@@ -294,12 +300,24 @@ const AdvancedRuleEditorSubDialog = forwardRef<
         </div>
         <div>
           Result:
-          <TextArea value={result} rows={10} />
+          <SyntaxHighlightingEditor value={result} rows={10} highlighter={jsonHighlighter} />
         </div>
       </div>
     </div>
   );
 });
+
+const jsonHighlighter = (lines: string[]): string[] => {
+  return lines.map(line => {
+    // Simple highlighting: keywords in blue, strings in green
+    return line
+      .replace(/"([^"]*)"/g, '<span class="syntax-string">"$1"</span>')
+      .replace(/\}/g, '<span class="syntax-bracket">}</span>')
+      .replace(/\{/g, '<span class="syntax-bracket">{</span>')
+      .replace(/\]/g, '<span class="syntax-bracket">]</span>')
+      .replace(/\[/g, '<span class="syntax-bracket">[</span>');
+  });
+};
 
 const SimpleRuleEditorSubDialog = forwardRef<
   SubRuleEditorDialogRef,
