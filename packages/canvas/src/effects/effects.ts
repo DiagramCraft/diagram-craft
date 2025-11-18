@@ -12,11 +12,11 @@ import { RoundingPathRenderer } from './rounding';
 import type { ArrowShape } from '../arrowShapes';
 import { EffectsRegistry } from '@diagram-craft/model/effect';
 import type { PathRenderer } from '../shape/PathRenderer';
-import { Browser } from '../browser';
 import type { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { DASH_PATTERNS } from '../dashPatterns';
 import * as svg from '../component/vdom-svg';
 import type { DiagramElement } from '@diagram-craft/model/diagramElement';
+import { Browser } from '@diagram-craft/utils/browser';
 
 /**
  * Extend Effect interface with rendering methods

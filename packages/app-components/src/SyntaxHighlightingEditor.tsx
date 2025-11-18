@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { extractDataAttributes } from './utils';
 import styles from './SyntaxHighlightingEditor.module.css';
 import { assert } from '@diagram-craft/utils/assert';
-import { Browser } from '@diagram-craft/canvas/browser';
+import { Browser } from '@diagram-craft/utils/browser';
 
 export const SyntaxHighlightingEditor = React.forwardRef<HTMLTextAreaElement, Props>(
   (props, ref) => {

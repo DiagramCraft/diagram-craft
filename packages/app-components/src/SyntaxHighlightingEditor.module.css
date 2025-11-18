@@ -5,7 +5,6 @@
   outline: none;
   position: relative;
 
-  /* TODO: This doesn't work in Safari */
   min-height: calc(attr(data-rows number, 3) * 15px + 20px);
   background-color: var(--cmp-bg);
 
