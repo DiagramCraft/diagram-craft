@@ -1,13 +1,15 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { extractDataAttributes } from './utils';
 import styles from './SyntaxHighlightingEditor.module.css';
 import { assert } from '@diagram-craft/utils/assert';
+import { Browser } from '@diagram-craft/canvas/browser';
 
 export const SyntaxHighlightingEditor = React.forwardRef<HTMLTextAreaElement, Props>(
   (props, ref) => {
     const [tooltip, setTooltip] = useState<{ x: number; y: number; message: string } | null>(null);
     const [internalValue, setInternalValue] = useState(props.defaultValue ?? '');
 
+    const containerRef = useRef<HTMLDivElement>(null);
     const codeElementRef = useRef<HTMLElement>(null);
     const preElementRef = useRef<HTMLPreElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -15,6 +17,19 @@ export const SyntaxHighlightingEditor = React.forwardRef<HTMLTextAreaElement, Pr
     // Determine if component is controlled or uncontrolled
     const isControlled = props.value !== undefined;
     const value = isControlled ? (props.value ?? '') : internalValue;
+
+    // Calculate min-height for browsers that don't support attr() in calc()
+    useEffect(() => {
+      if (!Browser.isChrome() && containerRef.current && textareaRef.current) {
+        const rows = props.rows ?? 3;
+        const computedStyle = window.getComputedStyle(textareaRef.current);
+        const lineHeight = parseFloat(computedStyle.lineHeight);
+        const paddingTop = parseFloat(computedStyle.paddingTop);
+        const paddingBottom = parseFloat(computedStyle.paddingBottom);
+        const minHeight = rows * lineHeight + paddingTop + paddingBottom;
+        containerRef.current.style.minHeight = `${minHeight}px`;
+      }
+    }, [props.rows]);
 
     const handleChange = useCallback(
       (newValue: string) => {
@@ -102,6 +117,7 @@ export const SyntaxHighlightingEditor = React.forwardRef<HTMLTextAreaElement, Pr
 
     return (
       <div
+        ref={containerRef}
         className={`${styles.cmpSyntaxHighlightingEditor} ${props.className ?? ''}`}
         {...extractDataAttributes(props)}
         style={props.style ?? {}}
