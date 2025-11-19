@@ -13,6 +13,7 @@ export type AdjustmentRule = {
   | {
       type: 'advanced';
       rule: string;
+      debug?: boolean;
       triggers: Array<
         | {
             type: 'interval';

@@ -260,6 +260,7 @@ const AdvancedRuleEditorSubDialog = forwardRef<
   const diagram = useDiagram();
   const [rule, setRule] = useState(props.rule.rule);
   const [triggers, setTriggers] = useState(props.rule.triggers ?? []);
+  const [debug, setDebug] = useState(props.rule.debug ?? false);
   const [result, setResult] = useState('');
 
   useImperativeHandle(ref, () => ({
@@ -267,6 +268,7 @@ const AdvancedRuleEditorSubDialog = forwardRef<
       if (dest.type !== 'advanced') throw new VerifyNotReached();
       dest.rule = rule;
       dest.triggers = triggers;
+      dest.debug = debug;
     }
   }));
 
@@ -294,7 +296,7 @@ const AdvancedRuleEditorSubDialog = forwardRef<
   };
 
   return (
-    <div style={{ marginTop: '0.5rem', display: 'grid', gap: '0.5rem' }}>
+    <div style={{ marginTop: '0.5rem', display: 'grid', gap: '0.25rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', marginTop: '0.25rem' }}>
         <h4 className={styles.ruleEditor__sectionTitle} style={{ margin: 0 }}>
           Triggers
@@ -363,13 +365,19 @@ const AdvancedRuleEditorSubDialog = forwardRef<
             )}
             {trigger.type === 'data' && (
               <div className={styles.ruleEditorClause__propsRow}>
-                <TextInput
+                <Select.Root
                   value={trigger.schema}
-                  onChange={v => {
-                    updateTrigger(idx, { type: 'data', schema: v ?? '' });
+                  placeholder="Select schema"
+                  onChange={schemaId => {
+                    updateTrigger(idx, { type: 'data', schema: schemaId ?? '' });
                   }}
-                  placeholder="Schema name"
-                />
+                >
+                  {diagram.document.data.db.schemas.map(schema => (
+                    <Select.Item key={schema.id} value={schema.id}>
+                      {schema.name}
+                    </Select.Item>
+                  ))}
+                </Select.Root>
               </div>
             )}
           </div>
@@ -387,7 +395,7 @@ const AdvancedRuleEditorSubDialog = forwardRef<
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
           gap: '0.5rem',
-          marginTop: '1rem'
+          marginTop: '0.25rem'
         }}
       >
         <div>
@@ -397,11 +405,25 @@ const AdvancedRuleEditorSubDialog = forwardRef<
             rows={10}
             onChange={v => setRule(v ?? '')}
             highlighter={jsonHighlighter}
+            onKeyDown={e => {
+              if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                e.preventDefault();
+                run();
+              }
+            }}
           />
-          <div style={{ marginTop: '0.5rem', display: 'flex', justifyContent: 'flex-end' }}>
-            <Button type={'secondary'} onClick={() => run()}>
-              Run...
-            </Button>
+          <div
+            style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+          >
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <input type="checkbox" checked={debug} onChange={e => setDebug(e.target.checked)} />
+              Debug mode
+            </label>
+            <div style={{ marginLeft: 'auto' }}>
+              <Button type={'secondary'} onClick={() => run()}>
+                Run...
+              </Button>
+            </div>
           </div>
         </div>
         <div>
