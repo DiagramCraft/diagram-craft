@@ -22,7 +22,6 @@ import { AdjustmentRule, AdjustmentRuleAction } from '@diagram-craft/model/diagr
 import { ElementSearchClause } from '@diagram-craft/model/diagramElementSearch';
 import { HideAction } from './HideAction';
 import { RuleEditorDialogProps } from '@diagram-craft/canvas-app/dialogs';
-import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { MultiSelect } from '@diagram-craft/app-components/MultiSelect';
 import { useDiagram } from '../../../application';
@@ -30,6 +29,10 @@ import styles from './RuleEditorDialog.module.css';
 import { mustExist, NotImplementedYet, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { parseAndQuery } from 'embeddable-jq';
 import { QueryDiagram } from '@diagram-craft/model/queryModel';
+import {
+  jsonHighlighter,
+  SyntaxHighlightingEditor
+} from '@diagram-craft/app-components/SyntaxHighlightingEditor';
 
 export type EditableAdjustmentRuleAction = Partial<AdjustmentRuleAction> & { kind?: string };
 export type EditableElementSearchClause = Partial<ElementSearchClause>;
@@ -90,9 +93,11 @@ const ClauseList = (props: ClauseListProps) => {
 
             <div className={styles.ruleEditorClause__props}>
               {c.type === 'query' && (
-                <TextArea
+                <SyntaxHighlightingEditor
+                  highlighter={jsonHighlighter}
+                  rows={3}
                   className={styles.ruleEditorClause__queryTextArea}
-                  value={c.query ?? ''}
+                  defaultValue={c.query ?? ''}
                   onKeyDown={e => {
                     // TODO: Why is this needed?
                     e.stopPropagation();
@@ -285,7 +290,12 @@ const AdvancedRuleEditorSubDialog = forwardRef<
       >
         <div>
           Code:
-          <TextArea value={rule} rows={10} onChange={v => setRule(v ?? '')} />
+          <SyntaxHighlightingEditor
+            value={rule}
+            rows={10}
+            onChange={v => setRule(v ?? '')}
+            highlighter={jsonHighlighter}
+          />
           <div style={{ marginTop: '0.5rem', display: 'flex', justifyContent: 'flex-end' }}>
             <Button type={'secondary'} onClick={() => run()}>
               Run...
@@ -294,7 +304,7 @@ const AdvancedRuleEditorSubDialog = forwardRef<
         </div>
         <div>
           Result:
-          <TextArea value={result} rows={10} />
+          <SyntaxHighlightingEditor value={result} rows={10} highlighter={jsonHighlighter} />
         </div>
       </div>
     </div>

@@ -16,7 +16,7 @@ import { NodeComponentProps } from '@diagram-craft/canvas/components/BaseNodeCom
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 import { EventEmitter, EventKey, type EventMap } from '@diagram-craft/utils/event';
 import * as svg from '@diagram-craft/canvas/component/vdom-svg';
-import { Browser } from '@diagram-craft/canvas/browser';
+import { Browser } from '@diagram-craft/utils/browser';
 import * as html from '../component/vdom-html';
 import { rawHTML, VNode } from '../component/vdom';
 import styles from './canvas.css?inline';

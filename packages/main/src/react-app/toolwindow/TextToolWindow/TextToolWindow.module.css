@@ -1,39 +1,3 @@
-.textEditor {
-  border: 1px solid var(--base-bg);
-  margin: 0;
-  overflow: scroll;
-  position: absolute;
-  inset: 0;
-  padding: 10px;
-
-  &:focus {
-    border: 1px solid var(--accent-chroma);
-    outline: none;
-  }
-
-  .syntax-label {
-    color: var(--accent-fg);
-  }
-
-  .syntax-string {
-    color: var(--green-9);
-  }
-
-  .syntax-bracket {
-    color: var(--base-fg);
-  }
-
-  .syntax-props {
-    color: var(--accent-chroma);
-  }
-
-  .syntax-error {
-    text-decoration: underline;
-    text-decoration-color: var(--red-9);
-    text-decoration-style: wavy;
-  }
-}
-
 .textEditorDirtyIndicator {
   background-color: var(--highlight-reverse-bg);
   border-radius: 50%;
@@ -42,54 +6,27 @@
 }
 
 .textEditorContainer {
-  font: 11px / 15px monospace;
-  border: 1px solid var(--base-bg);
-  outline: none;
-
-  position: absolute;
+  position: absolute !important;
+  border-width: 0 !important;
   inset: 0;
   position-anchor: --content;
   top: anchor(bottom);
+  margin-top: -1px;
+  margin-right: 1px;
+  background-color: transparent !important;
+
+  --_padding: 10px;
+
+  .syntax-highlighter {
+    border: 1px solid var(--base-bg);
+  }
+
+  textarea {
+    border: 1px solid transparent !important;
+  }
 
   /* Safari doesn't support position-anchor before v26 */
   @supports not (position-anchor: --content) {
     top: 35px;
   }
-
-  textarea {
-    font: 11px / 15px monospace;
-    color: transparent;
-    white-space: nowrap;
-    overflow: auto;
-    caret-color: var(--base-fg);
-    border: 1px solid transparent;
-
-    position: absolute;
-    inset: 0;
-    padding: 10px;
-
-    resize: none;
-    z-index: 100;
-    background: transparent;
-
-    &:focus {
-      outline: none;
-      border: 1px solid var(--accent-border);
-    }
-  }
-}
-
-.tooltip {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  font-size: 11px;
-  position: fixed;
-  background: var(--red-9);
-  color: white;
-  padding: 6px 10px;
-  border-radius: 4px;
-  z-index: 1000;
-  pointer-events: none;
-  max-width: 300px;
-  word-wrap: break-word;
-  white-space: normal;
 }
