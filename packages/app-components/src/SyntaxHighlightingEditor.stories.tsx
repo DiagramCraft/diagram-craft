@@ -77,21 +77,14 @@ another error`);
       [3, 'Invalid command format']
     ]);
 
-    const highlighter = (lines: string[], errors?: Map<number, string>) => {
-      return lines.map((line, index) => {
-        const hasError = errors?.has(index);
-        let highlighted = line
+    const highlighter = (lines: string[]) => {
+      return lines.map(line => {
+        return line
           .replace(/"([^"]*)"/g, '<span class="syntax-string">"$1"</span>')
           .replace(
             /\b(rectangle|circle|arrow|from|to|at)\b/g,
             '<span class="syntax-label">$1</span>'
           );
-
-        if (hasError) {
-          highlighted = `<span class="syntax-error">${highlighted}</span>`;
-        }
-
-        return highlighted;
       });
     };
 

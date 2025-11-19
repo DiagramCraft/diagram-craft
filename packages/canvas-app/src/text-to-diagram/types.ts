@@ -32,10 +32,9 @@ export interface SyntaxHighlighter {
   /**
    * Apply syntax highlighting to lines of text
    * @param lines - Lines of text to highlight
-   * @param errors - Parse errors indexed by line number
    * @returns Array of HTML strings with syntax highlighting
    */
-  highlight(lines: string[], errors: ParseErrors): string[];
+  highlight(lines: string[]): string[];
 }
 
 /**

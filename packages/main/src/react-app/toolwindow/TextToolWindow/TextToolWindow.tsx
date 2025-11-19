@@ -75,9 +75,9 @@ export const TextToolWindow = () => {
   );
 
   const highlighter = useCallback(
-    (lines: string[], errors?: Map<number, string>) => {
+    (lines: string[]) => {
       if (!format?.syntaxHighlighter) return lines;
-      return format.syntaxHighlighter.highlight(lines, errors ?? new Map());
+      return format.syntaxHighlighter.highlight(lines);
     },
     [format]
   );

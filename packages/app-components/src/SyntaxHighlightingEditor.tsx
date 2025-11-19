@@ -113,7 +113,12 @@ export const SyntaxHighlightingEditor = React.forwardRef<HTMLTextAreaElement, Pr
     );
 
     const lines = value.split('\n');
-    const highlightedLines = props.highlighter ? props.highlighter(lines, props.errors) : lines;
+    const highlightedLines = (props.highlighter ? props.highlighter(lines) : lines).map(
+      (l, idx) => {
+        const error = props.errors?.get(idx);
+        return `<span class="${error ? 'syntax-error' : ''}">${l}</span>`;
+      }
+    );
 
     return (
       <div
@@ -168,7 +173,7 @@ type Props = {
   value?: string;
   defaultValue?: string;
   onChange?: (value: string) => void;
-  highlighter?: (lines: string[], errors?: Map<number, string>) => string[];
+  highlighter?: (lines: string[]) => string[];
   errors?: Map<number, string>;
   disabled?: boolean;
   className?: string;

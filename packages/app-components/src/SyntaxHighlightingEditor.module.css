@@ -1,11 +1,13 @@
 .cmp-syntax-highlighting-editor {
+  --_padding: 3px;
+
   font: 11px / 15px monospace;
   border: 1px solid var(--cmp-border);
   border-radius: var(--cmp-radius);
   outline: none;
   position: relative;
 
-  min-height: calc(attr(data-rows number, 3) * 15px + 20px);
+  min-height: calc(attr(data-rows number, 3) * 15px + 2 * var(--_padding));
   background-color: var(--cmp-bg);
 
   &:focus-within {
@@ -22,7 +24,7 @@
 
     position: absolute;
     inset: 0;
-    padding: 10px;
+    padding: var(--_padding);
 
     resize: none;
     z-index: 100;
@@ -46,7 +48,7 @@
   overflow: scroll;
   position: absolute;
   inset: 0;
-  padding: 10px;
+  padding: var(--_padding);
 
   &:focus {
     border: 1px solid var(--accent-chroma);
