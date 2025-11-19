@@ -9,6 +9,7 @@ export const CanvasOutline = () => {
 
   useEventListener($d, 'diagramChange', () => queueMicrotask(() => redraw()));
   useEventListener($d.layers, 'layerStructureChange', () => queueMicrotask(() => redraw()));
+  useEventListener(UserState.get(), 'change', () => queueMicrotask(() => redraw()));
 
   if ($d.layers.active.type === 'regular' && !$d.layers.active.isLocked()) {
     return null;
