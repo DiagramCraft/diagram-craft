@@ -1,6 +1,6 @@
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { Select } from '@diagram-craft/app-components/Select';
-import { validProps } from '@diagram-craft/model/diagramLayerRule';
+import { queryInput, validProps } from '@diagram-craft/model/diagramLayerRule';
 import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbLine, TbPencilCode, TbPentagon, TbPlus, TbTrash } from 'react-icons/tb';
@@ -28,7 +28,6 @@ import { useDiagram } from '../../../application';
 import styles from './RuleEditorDialog.module.css';
 import { mustExist, NotImplementedYet, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { parseAndQuery } from 'embeddable-jq';
-import { QueryDiagram } from '@diagram-craft/model/queryModel';
 import {
   jsonHighlighter,
   SyntaxHighlightingEditor
@@ -273,12 +272,7 @@ const AdvancedRuleEditorSubDialog = forwardRef<
   }));
 
   const run = () => {
-    const r = parseAndQuery(rule, [
-      {
-        diagram: new QueryDiagram(diagram),
-        time: Date.now()
-      }
-    ]);
+    const r = parseAndQuery(rule, [queryInput(diagram)]);
     setResult(JSON.stringify(r, null, 2));
   };
 

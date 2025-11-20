@@ -20,6 +20,7 @@ import type { CRDTList, CRDTMap } from '@diagram-craft/collaboration/crdt';
 import { QueryDiagram } from './queryModel';
 import { parseAndQuery } from 'embeddable-jq';
 import { type DiagramElement, isEdge, isNode } from './diagramElement';
+import { MultiMap } from '@diagram-craft/utils/multimap';
 
 type Result = Map<string, Adjustment>;
 
@@ -61,9 +62,12 @@ export const validProps = (_type: 'edge' | 'node'): Prop[] => {
   ];
 };
 
-const RESULT = 'result';
+export const queryInput = (diagram: Diagram) => ({
+  time: Date.now(),
+  diagram: new QueryDiagram(diagram)
+});
 
-type DataHandler = { rule: string; schema: string };
+const RESULT = Symbol('result');
 
 const resultEquals = (a: Result | undefined, b: Result) => {
   if (!a) return false;
@@ -74,15 +78,20 @@ const resultEquals = (a: Result | undefined, b: Result) => {
   return true;
 };
 
+type DataTrigger = { rule: string; schema: string };
+
+type TimerTrigger = { rule: string; timer: ReturnType<typeof setInterval>; timeout: number };
+
+// TODO: Timers are created but never cleaned up when the RuleLayer is destroyed. This will cause memory leaks
 export class RuleLayer extends Layer<RuleLayer> {
   #rules: CRDTList<AdjustmentRule>;
-  #cache = new Map<string, Result>();
+  #cache = new Map<string | symbol, Result>();
 
   #dependencies = {
     node: new Set<string>(),
     edge: new Set<string>(),
-    timers: [] as Array<{ rule: string; timer: ReturnType<typeof setInterval>; timeout: number }>,
-    data: [] as Array<DataHandler>
+    timers: [] as Array<TimerTrigger>,
+    data: new MultiMap<string, DataTrigger>()
   };
 
   constructor(
@@ -119,10 +128,12 @@ export class RuleLayer extends Layer<RuleLayer> {
     this.diagram.document.data.db.on('updateData', ({ data }) => {
       const updatedElements = new Set<DiagramElement>();
 
-      const handlers = new Set<DataHandler>();
+      const handlers = new Set<DataTrigger>();
       for (const d of data) {
-        for (const handler of this.#dependencies.data) {
-          if (handler.schema !== d._schemaId) continue;
+        const schemaHandlers = this.#dependencies.data.get(d._schemaId);
+        if (!schemaHandlers) continue;
+
+        for (const handler of schemaHandlers) {
           handlers.add(handler);
         }
       }
@@ -179,7 +190,7 @@ export class RuleLayer extends Layer<RuleLayer> {
     // Clear existing dependencies
     this.#dependencies.node.clear();
     this.#dependencies.edge.clear();
-    this.#dependencies.data.length = 0;
+    this.#dependencies.data.clear();
 
     // Re-add dependencies based on the new rules
     for (const rule of this.#rules.toArray()) {
@@ -228,7 +239,7 @@ export class RuleLayer extends Layer<RuleLayer> {
               timeout: trigger.interval
             });
           } else if (trigger.type === 'data') {
-            this.#dependencies.data.push({ rule: rule.id, schema: trigger.schema });
+            this.#dependencies.data.add(trigger.schema, { rule: rule.id, schema: trigger.schema });
           } else if (trigger.type === 'element') {
             if (trigger.elementType === 'node') {
               this.#dependencies.node.add(rule.id);
@@ -279,8 +290,10 @@ export class RuleLayer extends Layer<RuleLayer> {
     if (rule.type === 'edge' || rule.type === 'node') {
       const results = searchByElementSearchClauses(this.diagram, rule.clauses);
 
-      const result = results.reduce((p, c) => p.intersection(c), results[0]!);
-      for (const k of result) {
+      if (results.length === 0) return res;
+
+      const result = results.reduce((p, c) => p!.intersection(c), results[0]);
+      for (const k of result!) {
         for (const action of rule.actions) {
           notImplemented.true(
             action.type === 'set-props' ||
@@ -310,17 +323,16 @@ export class RuleLayer extends Layer<RuleLayer> {
     } else if (rule.type === 'advanced') {
       const result = new Map<string, Adjustment>();
 
-      const queryResult = parseAndQuery(rule.rule, [
-        {
-          time: Date.now(),
-          diagram: new QueryDiagram(this.diagram)
-        }
-      ]);
-      // biome-ignore lint/suspicious/noExplicitAny: valid use for now
-      for (const e of queryResult as any[]) {
-        if (!e.id) continue;
+      try {
+        const queryResult = parseAndQuery(rule.rule, [queryInput(this.diagram)]);
+        // biome-ignore lint/suspicious/noExplicitAny: valid use for now
+        for (const e of queryResult as any[]) {
+          if (!e.id) continue;
 
-        result.set(e.id, { props: e.props ?? {} } as Adjustment);
+          result.set(e.id, { props: e.props ?? {} } as Adjustment);
+        }
+      } catch (error) {
+        console.error(`[RULE] Error running rule '${rule.name}':`, error);
       }
 
       return result;
