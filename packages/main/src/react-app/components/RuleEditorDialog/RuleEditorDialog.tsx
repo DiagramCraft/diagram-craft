@@ -273,12 +273,17 @@ const AdvancedRuleEditorSubDialog = forwardRef<
   }));
 
   const run = () => {
-    const r = parseAndQuery(rule, [new QueryDiagram(diagram)]);
+    const r = parseAndQuery(rule, [
+      {
+        diagram: new QueryDiagram(diagram),
+        time: Date.now()
+      }
+    ]);
     setResult(JSON.stringify(r, null, 2));
   };
 
   const addTrigger = () => {
-    setTriggers([...triggers, { type: 'interval', interval: 1000 }]);
+    setTriggers([...triggers, { type: 'interval', interval: 60 }]);
   };
 
   const removeTrigger = (index: number) => {

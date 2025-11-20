@@ -2,8 +2,13 @@ import type { LayerSnapshot, UnitOfWork } from './unitOfWork';
 import type { LayerCRDT } from './diagramLayer';
 import { Layer } from './diagramLayer';
 import type { Diagram } from './diagram';
-import { deepClone, deepMerge } from '@diagram-craft/utils/object';
-import { notImplemented, NotImplementedYet } from '@diagram-craft/utils/assert';
+import { deepClone, deepEquals, deepMerge } from '@diagram-craft/utils/object';
+import {
+  mustExist,
+  notImplemented,
+  NotImplementedYet,
+  VERIFY_NOT_REACHED
+} from '@diagram-craft/utils/assert';
 import { nodeDefaults } from './diagramDefaults';
 import {
   type Adjustment,
@@ -14,6 +19,7 @@ import { searchByElementSearchClauses } from './diagramElementSearch';
 import type { CRDTList, CRDTMap } from '@diagram-craft/collaboration/crdt';
 import { QueryDiagram } from './queryModel';
 import { parseAndQuery } from 'embeddable-jq';
+import { type DiagramElement, isEdge, isNode } from './diagramElement';
 
 type Result = Map<string, Adjustment>;
 
@@ -55,9 +61,29 @@ export const validProps = (_type: 'edge' | 'node'): Prop[] => {
   ];
 };
 
+const RESULT = 'result';
+
+type DataHandler = { rule: string; schema: string };
+
+const resultEquals = (a: Result | undefined, b: Result) => {
+  if (!a) return false;
+  if (a.size !== b.size) return false;
+  for (const [k, v] of a) {
+    if (!b.has(k) || !deepEquals(v, b.get(k)!)) return false;
+  }
+  return true;
+};
+
 export class RuleLayer extends Layer<RuleLayer> {
   #rules: CRDTList<AdjustmentRule>;
-  #cache = new Map<string, unknown>();
+  #cache = new Map<string, Result>();
+
+  #dependencies = {
+    node: new Set<string>(),
+    edge: new Set<string>(),
+    timers: [] as Array<{ rule: string; timer: ReturnType<typeof setInterval>; timeout: number }>,
+    data: [] as Array<DataHandler>
+  };
 
   constructor(
     id: string,
@@ -73,10 +99,148 @@ export class RuleLayer extends Layer<RuleLayer> {
       this.#rules.push(rule);
     }
 
+    this.#rules.on('remoteAfterTransaction', () => this.updateDependencies());
+
+    this.updateDependencies();
+
     this.diagram.on('diagramChange', () => this.#cache.clear());
-    this.diagram.on('elementChange', () => this.#cache.clear());
-    this.diagram.on('elementAdd', () => this.#cache.clear());
-    this.diagram.on('elementRemove', () => this.#cache.clear());
+    this.diagram.on('elementChange', ({ element }) => {
+      if (isNode(element)) this.#dependencies.node.forEach(id => this.#cache.delete(id));
+      if (isEdge(element)) this.#dependencies.edge.forEach(id => this.#cache.delete(id));
+      this.#cache.delete(RESULT);
+    });
+    this.diagram.on('elementAdd', () => this.#cache.delete(RESULT));
+    this.diagram.on('elementRemove', ({ element }) => {
+      if (isNode(element)) this.#dependencies.node.forEach(id => this.#cache.delete(id));
+      if (isEdge(element)) this.#dependencies.edge.forEach(id => this.#cache.delete(id));
+      this.#cache.delete(RESULT);
+    });
+
+    this.diagram.document.data.db.on('updateData', ({ data }) => {
+      const updatedElements = new Set<DiagramElement>();
+
+      const handlers = new Set<DataHandler>();
+      for (const d of data) {
+        for (const handler of this.#dependencies.data) {
+          if (handler.schema !== d._schemaId) continue;
+          handlers.add(handler);
+        }
+      }
+
+      let updates = false;
+      for (const h of handlers) {
+        const rule = mustExist(this.rules.find(r => r.id === h.rule));
+        if (rule.type !== 'advanced') VERIFY_NOT_REACHED();
+
+        const oldResults = this.#cache.get(h.rule);
+        const result = this.runRule(rule);
+
+        if (!resultEquals(oldResults, result)) {
+          if (rule.debug) {
+            console.log(`[RULE] data triggered '${rule.name}' ->`, result);
+          }
+
+          updates = true;
+          this.#cache.delete(h.rule);
+
+          this.#cache.set(h.rule, result);
+          for (const key of Object.keys(result)) {
+            const e = this.diagram.lookup(key);
+            if (!e) continue;
+
+            e.clearCache();
+            updatedElements.add(e);
+          }
+        } else {
+          if (rule.debug) {
+            console.log(`[RULE] data triggered '${rule.name}' -> no change`);
+          }
+        }
+      }
+
+      if (updates) {
+        this.#cache.delete(RESULT);
+
+        this.diagram.emit('elementBatchChange', {
+          added: [],
+          removed: [],
+          updated: [...updatedElements.values()]
+        });
+      }
+    });
+  }
+
+  private updateDependencies() {
+    // Clear existing timers
+    for (const { timer } of this.#dependencies.timers) {
+      clearInterval(timer);
+    }
+
+    // Clear existing dependencies
+    this.#dependencies.node.clear();
+    this.#dependencies.edge.clear();
+    this.#dependencies.data.length = 0;
+
+    // Re-add dependencies based on the new rules
+    for (const rule of this.#rules.toArray()) {
+      if (rule.type === 'edge') {
+        this.#dependencies.edge.add(rule.id);
+      } else if (rule.type === 'node') {
+        this.#dependencies.node.add(rule.id);
+      } else if (rule.type === 'advanced') {
+        for (const trigger of rule.triggers) {
+          if (trigger.type === 'interval') {
+            this.#dependencies.timers.push({
+              rule: rule.id,
+              timer: setInterval(() => {
+                const oldResult = this.#cache.get(rule.id);
+                const result = this.runRule(rule);
+
+                if (!resultEquals(oldResult, result)) {
+                  if (rule.debug) {
+                    console.log(`[RULE] timer triggered '${rule.name}' ->`, result);
+                  }
+
+                  this.#cache.delete(rule.id);
+                  this.#cache.delete(RESULT);
+                  this.#cache.set(rule.id, result);
+
+                  const elements: DiagramElement[] = [];
+                  for (const k of result.keys()) {
+                    const e = this.diagram.lookup(k);
+                    if (!e) continue;
+
+                    elements.push(e);
+                    e.clearCache();
+                  }
+
+                  this.diagram.emit('elementBatchChange', {
+                    added: [],
+                    removed: [],
+                    updated: elements
+                  });
+                } else {
+                  if (rule.debug) {
+                    console.log(`[RULE] timer triggered '${rule.name}' -> no change`);
+                  }
+                }
+              }, trigger.interval * 1000),
+              timeout: trigger.interval
+            });
+          } else if (trigger.type === 'data') {
+            this.#dependencies.data.push({ rule: rule.id, schema: trigger.schema });
+          } else if (trigger.type === 'element') {
+            if (trigger.elementType === 'node') {
+              this.#dependencies.node.add(rule.id);
+            } else {
+              this.#dependencies.edge.add(rule.id);
+            }
+          }
+        }
+      } else {
+        VERIFY_NOT_REACHED();
+      }
+    }
   }
 
   isLocked(): boolean {
@@ -88,18 +252,19 @@ export class RuleLayer extends Layer<RuleLayer> {
   }
 
   adjustments(): Result {
-    if (this.#cache.has('result')) return this.#cache.get('result') as Result;
+    if (this.#cache.has(RESULT)) return this.#cache.get(RESULT)!;
 
     const res: Result = new Map<string, Adjustment>();
     for (const rule of this.#rules.toArray()) {
-      const interim = this.runRule(rule);
+      const interim = this.#cache.get(rule.id) ?? this.runRule(rule);
       for (const k of interim.keys()) {
         // biome-ignore lint/suspicious/noExplicitAny: false positive
         res.set(k, deepMerge((res.get(k) ?? {}) as any, interim.get(k) as any));
       }
+      this.#cache.set(rule.id, interim);
     }
 
-    this.#cache.set('result', res);
+    this.#cache.set(RESULT, res);
 
     return res;
   }
@@ -145,7 +310,12 @@ export class RuleLayer extends Layer<RuleLayer> {
     } else if (rule.type === 'advanced') {
       const result = new Map<string, Adjustment>();
 
-      const queryResult = parseAndQuery(rule.rule, [new QueryDiagram(this.diagram)]);
+      const queryResult = parseAndQuery(rule.rule, [
+        {
+          time: Date.now(),
+          diagram: new QueryDiagram(this.diagram)
+        }
+      ]);
       // biome-ignore lint/suspicious/noExplicitAny: valid use for now
       for (const e of queryResult as any[]) {
         if (!e.id) continue;
@@ -168,6 +338,7 @@ export class RuleLayer extends Layer<RuleLayer> {
     this.#rules.push(rule);
     this.#cache.clear();
     uow.updateElement(this);
+    this.updateDependencies();
   }
 
   removeRule(rule: AdjustmentRule, uow: UnitOfWork) {
@@ -177,6 +348,7 @@ export class RuleLayer extends Layer<RuleLayer> {
     this.#cache.clear();
 
     uow.updateElement(this);
+    this.updateDependencies();
   }
 
   replaceRule(existing: AdjustmentRule, newRule: AdjustmentRule, uow: UnitOfWork) {
@@ -188,6 +360,7 @@ export class RuleLayer extends Layer<RuleLayer> {
     this.#cache.clear();
 
     uow.updateElement(this);
+    this.updateDependencies();
   }
 
   snapshot(): LayerSnapshot {

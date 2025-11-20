@@ -3,13 +3,12 @@ import {
   DataProvider,
   DataProviderEventMap,
   DataProviderQuery,
+  type DataWithSchema,
   RefreshableDataProvider,
   RefreshableSchemaProvider
 } from '../dataProvider';
 import { DataSchema } from '../diagramDocumentDataSchemas';
 import { EventEmitter } from '@diagram-craft/utils/event';
-
-type DataWithSchema = Data & { _schemaId: string };
 
 export abstract class BaseHTTPDataProvider
   extends EventEmitter<DataProviderEventMap>
@@ -59,9 +58,9 @@ export abstract class BaseHTTPDataProvider
     const newDataIds = new Set();
     newData.forEach(d => newDataIds.add(d._uid));
 
-    const updates: Data[] = [];
-    const adds: Data[] = [];
-    const deletes: Data[] = [];
+    const updates: DataWithSchema[] = [];
+    const adds: DataWithSchema[] = [];
+    const deletes: DataWithSchema[] = [];
 
     this.data = [];
     for (const d of newData) {

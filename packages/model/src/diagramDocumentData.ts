@@ -493,11 +493,11 @@ export class DataManager extends EventEmitter<DataProviderEventMap> {
 
     // Emit events to notify listeners
     if (operation.type === 'add') {
-      this.emit('addData', { data: [operation.data] });
+      this.emit('addData', { data: [{ ...operation.data, _schemaId: schemaId }] });
     } else if (operation.type === 'update') {
-      this.emit('updateData', { data: [operation.data] });
+      this.emit('updateData', { data: [{ ...operation.data, _schemaId: schemaId }] });
     } else if (operation.type === 'delete') {
-      this.emit('deleteData', { data: [operation.data] });
+      this.emit('deleteData', { data: [{ ...operation.data, _schemaId: schemaId }] });
     }
   }
 
