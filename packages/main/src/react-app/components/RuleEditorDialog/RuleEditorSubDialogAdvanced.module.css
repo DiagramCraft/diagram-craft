@@ -1,0 +1,30 @@
+.ruleEditor__sectionTitle {
+  margin: 1rem 0 0 0;
+}
+
+/* TODO: These are duplicates of styles in RuleEditorDialog.simple.module.css */
+.ruleEditor__clause {
+  width: 100%;
+  display: grid;
+  gap: 0.5rem;
+  grid-template-areas: "select select props buttons" "empty extra extra extra";
+  grid-template-columns: 1rem max-content 1fr max-content;
+  grid-template-rows: min-content max-content;
+}
+
+.ruleEditorClause__select {
+  grid-area: select;
+}
+
+.ruleEditorClause__props {
+  grid-area: props;
+}
+
+.ruleEditorClause__propsRow {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.ruleEditorClause__buttons {
+  grid-area: buttons;
+}

@@ -10,8 +10,8 @@ import { RuleEditorDialogProps } from '@diagram-craft/canvas-app/dialogs';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import styles from './RuleEditorDialog.module.css';
 import { mustExist } from '@diagram-craft/utils/assert';
-import { RuleEditorSubDialogSimple } from './RuleEditorDialog.simple';
-import { RuleEditorSubDialogAdvanced } from './RuleEditorDialog.advanced';
+import { RuleEditorSubDialogSimple } from './RuleEditorSubDialogSimple';
+import { RuleEditorSubDialogAdvanced } from './RuleEditorSubDialogAdvanced';
 
 export type EditableAdjustmentRuleAction = Partial<AdjustmentRuleAction> & { kind?: string };
 export type EditableElementSearchClause = Partial<ElementSearchClause>;

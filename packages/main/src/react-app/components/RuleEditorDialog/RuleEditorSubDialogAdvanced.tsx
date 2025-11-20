@@ -7,7 +7,7 @@ import { VerifyNotReached } from '@diagram-craft/utils/assert';
 import { queryInput } from '@diagram-craft/model/diagramLayerRule';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbPlus, TbTrash } from 'react-icons/tb';
-import styles from './RuleEditorDialog.module.css';
+import styles from './RuleEditorSubDialogAdvanced.module.css';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
 import {
