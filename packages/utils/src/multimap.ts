@@ -115,4 +115,11 @@ export class MultiMap<K, V> {
   entries() {
     return this.delegate.entries();
   }
+
+  /**
+   * Removes all key-value pairs from the multimap.
+   */
+  clear() {
+    this.delegate.clear();
+  }
 }

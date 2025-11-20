@@ -173,7 +173,9 @@ describe.each(Backends.all())('DefaultDataProvider [%s]', (_name, backend) => {
       expect(provider.getData(testSchema)).toHaveLength(1);
       expect(provider.getData(testSchema)[0]!._uid).toBe(testData._uid);
       expect(addDataSpy).toHaveBeenCalledTimes(1);
-      expect(addDataSpy).toHaveBeenCalledWith({ data: [testData] });
+      expect(addDataSpy).toHaveBeenCalledWith({
+        data: [{ ...testData, _schemaId: testSchema.id }]
+      });
     });
   });
 
@@ -193,7 +195,9 @@ describe.each(Backends.all())('DefaultDataProvider [%s]', (_name, backend) => {
       expect(remainingData).toHaveLength(1);
       expect(remainingData[0]!._uid).toBe(testData2._uid);
       expect(deleteDataSpy).toHaveBeenCalledTimes(1);
-      expect(deleteDataSpy).toHaveBeenCalledWith({ data: [testData] });
+      expect(deleteDataSpy).toHaveBeenCalledWith({
+        data: [{ ...testData, _schemaId: testSchema.id }]
+      });
     });
 
     it('should do nothing if data does not exist', () => {
@@ -230,7 +234,9 @@ describe.each(Backends.all())('DefaultDataProvider [%s]', (_name, backend) => {
       const data = provider.getById([testData._uid])[0]!;
       expect(data.value).toBe('Updated Value');
       expect(updateDataSpy).toHaveBeenCalledTimes(1);
-      expect(updateDataSpy).toHaveBeenCalledWith({ data: [updatedData] });
+      expect(updateDataSpy).toHaveBeenCalledWith({
+        data: [{ ...updatedData, _schemaId: testSchema.id }]
+      });
     });
 
     it('should do nothing if data does not exist', () => {

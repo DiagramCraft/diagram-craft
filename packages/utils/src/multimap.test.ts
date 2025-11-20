@@ -32,11 +32,25 @@ describe('MultiMap', () => {
   test('should check if key has values', () => {
     const map = new MultiMap<string, number>();
     expect(map.has('a')).toBe(false);
-    
+
     map.add('a', 1);
     expect(map.has('a')).toBe(true);
-    
+
     map.remove('a', 1);
     expect(map.has('a')).toBe(false);
+  });
+
+  test('should clear all entries', () => {
+    const map = new MultiMap<string, number>();
+    map.add('a', 1);
+    map.add('a', 2);
+    map.add('b', 3);
+
+    map.clear();
+
+    expect(map.get('a')).toEqual([]);
+    expect(map.get('b')).toEqual([]);
+    expect(map.has('a')).toBe(false);
+    expect(map.has('b')).toBe(false);
   });
 });

@@ -21,11 +21,12 @@ export interface MutableSchemaProvider extends SchemaProvider {
  * Represents a data record with string key-value pairs and a unique identifier.
  */
 export type Data = Record<string, string> & { _uid: string };
+export type DataWithSchema = Data & { _schemaId: string };
 
 export type DataProviderEventMap = {
-  deleteData: { data: Data[] };
-  updateData: { data: Data[] };
-  addData: { data: Data[] };
+  deleteData: { data: Array<DataWithSchema> };
+  updateData: { data: Array<DataWithSchema> };
+  addData: { data: Array<DataWithSchema> };
 
   deleteSchema: DataSchema;
   updateSchema: DataSchema;

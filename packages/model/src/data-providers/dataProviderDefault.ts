@@ -2,6 +2,7 @@ import {
   Data,
   DataProviderEventMap,
   DataProviderQuery,
+  type DataWithSchema,
   MutableDataProvider,
   MutableSchemaProvider
 } from '../dataProvider';
@@ -10,8 +11,6 @@ import { EventEmitter } from '@diagram-craft/utils/event';
 import { assert } from '@diagram-craft/utils/assert';
 import { newid } from '@diagram-craft/utils/id';
 import type { CRDTMap, CRDTRoot } from '@diagram-craft/collaboration/crdt';
-
-type DataWithSchema = Data & { _schemaId: string };
 
 export const DefaultDataProviderId = 'defaultDataProvider';
 
@@ -122,17 +121,17 @@ export class DefaultDataProvider
     assert.present(this.#crdtData);
 
     this.#crdtData.set(data._uid, { ...data, _schemaId: schema.id });
-    this.emit('addData', { data: [data] });
+    this.emit('addData', { data: [{ ...data, _schemaId: schema.id }] });
   }
 
-  async deleteData(_schema: DataSchema, data: Data): Promise<void> {
+  async deleteData(schema: DataSchema, data: Data): Promise<void> {
     assert.present(this.#crdtData);
 
     const exists = this.#crdtData.has(data._uid);
     if (!exists) return;
 
     this.#crdtData.delete(data._uid);
-    this.emit('deleteData', { data: [data] });
+    this.emit('deleteData', { data: [{ ...data, _schemaId: schema.id }] });
   }
 
   async updateData(schema: DataSchema, data: Data): Promise<void> {
@@ -143,7 +142,7 @@ export class DefaultDataProvider
 
     this.#crdtData.set(data._uid, { ...data, _schemaId: schema.id });
 
-    this.emit('updateData', { data: [data] });
+    this.emit('updateData', { data: [{ ...data, _schemaId: schema.id }] });
   }
 
   async addSchema(schema: DataSchema): Promise<void> {

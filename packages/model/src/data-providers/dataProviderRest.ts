@@ -1,9 +1,12 @@
 import { BaseHTTPDataProvider } from './dataProviderBaseHttp';
-import { Data, MutableDataProvider, MutableSchemaProvider } from '../dataProvider';
+import {
+  Data,
+  type DataWithSchema,
+  MutableDataProvider,
+  MutableSchemaProvider
+} from '../dataProvider';
 import { DataSchema } from '../diagramDocumentDataSchemas';
 import { assert } from '@diagram-craft/utils/assert';
-
-type DataWithSchema = Data & { _schemaId: string };
 
 export const RestDataProviderId = 'restDataProvider';
 
@@ -107,7 +110,7 @@ export class RESTDataProvider
     }
   }
 
-  async deleteData(_schema: DataSchema, data: Data): Promise<void> {
+  async deleteData(schema: DataSchema, data: Data): Promise<void> {
     assert.present(this.baseUrl);
 
     const res = await this.fetchWithTimeout(`${this.baseUrl}/data/${data._uid}`, {
@@ -121,7 +124,7 @@ export class RESTDataProvider
     const index = this.data.findIndex(d => d._uid === data._uid);
     if (index !== -1) {
       this.data.splice(index, 1);
-      this.emit('deleteData', { data: [data] });
+      this.emit('deleteData', { data: [{ ...data, _schemaId: schema.id }] });
     }
   }
 
