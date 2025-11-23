@@ -169,7 +169,7 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> implemen
 
   private rebuildDataManager() {
     if (this.#dataManager) {
-      this.#dataManager.destroy();
+      this.#dataManager.release();
     }
 
     this.#dataManager = new DataManager(this.#providers, this.#schemas, this.#root);
@@ -250,7 +250,7 @@ type OverrideOperation =
   | { type: 'update'; data: Data }
   | { type: 'delete'; data: Data };
 
-export class DataManager extends EventEmitter<DataProviderEventMap> {
+export class DataManager extends EventEmitter<DataProviderEventMap> implements Releasable {
   // CRDT-backed store for overrides: schemaId -> uid -> operation
   private readonly overrides: CRDTMap<Record<string, CRDTMap<Record<string, OverrideOperation>>>>;
 
@@ -263,7 +263,7 @@ export class DataManager extends EventEmitter<DataProviderEventMap> {
     this.overrides = root.getMap('dataOverrides');
   }
 
-  destroy() {
+  release() {
     this.clearListeners();
   }
 

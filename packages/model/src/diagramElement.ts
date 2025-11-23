@@ -27,7 +27,7 @@ import {
 import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
 import { MappedCRDTProp } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtProp';
 import type { EdgeProps, ElementMetadata, ElementProps, NodeProps } from './diagramProps';
-import type { Releasables } from '@diagram-craft/utils/releasable';
+import type { Releasable, Releasables } from '@diagram-craft/utils/releasable';
 
 // biome-ignore lint/suspicious/noExplicitAny: false positive
 type Snapshot = any;
@@ -115,7 +115,9 @@ export interface DiagramElement {
   comments: ReadonlyArray<Comment>;
 }
 
-export abstract class AbstractDiagramElement implements DiagramElement, AttachmentConsumer {
+export abstract class AbstractDiagramElement
+  implements DiagramElement, AttachmentConsumer, Releasable
+{
   readonly trackableType = 'element';
 
   // Transient properties
@@ -205,6 +207,8 @@ export abstract class AbstractDiagramElement implements DiagramElement, Attachme
       this.clearCache();
     });
   }
+
+  release() {}
 
   abstract getAttachmentsInUse(): Array<string>;
 

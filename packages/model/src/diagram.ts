@@ -232,6 +232,8 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     this.selection.release();
     this.layers.release();
     this.commentManager.release();
+    this.undoManager.release();
+    this.viewBox.release();
     this.#spatialIndex?.release();
     this.#spatialIndex = undefined;
   }

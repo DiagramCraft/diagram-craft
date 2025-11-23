@@ -3,6 +3,7 @@ import type { Step, Story, StoryAction } from './documentStories';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import type { Diagram } from './diagram';
 import { assert } from '@diagram-craft/utils/assert';
+import type { Releasable } from '@diagram-craft/utils/releasable';
 
 type StoryPlayerEvents = {
   stateChange: {
@@ -21,7 +22,7 @@ type SavedState = {
   };
 };
 
-export class StoryPlayer extends EventEmitter<StoryPlayerEvents> {
+export class StoryPlayer extends EventEmitter<StoryPlayerEvents> implements Releasable {
   #currentStory: Story | undefined;
   #currentStepIndex = -1;
   #savedState: SavedState | undefined;
@@ -32,6 +33,8 @@ export class StoryPlayer extends EventEmitter<StoryPlayerEvents> {
   ) {
     super();
   }
+
+  release() {}
 
   get currentStory() {
     return this.#currentStory;

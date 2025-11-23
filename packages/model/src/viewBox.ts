@@ -3,12 +3,13 @@ import { Extent } from '@diagram-craft/geometry/extent';
 import { AbsoluteOffset, Point } from '@diagram-craft/geometry/point';
 import { Transform, TransformFactory } from '@diagram-craft/geometry/transform';
 import { newid } from '@diagram-craft/utils/id';
+import type { Releasable } from '@diagram-craft/utils/releasable';
 
 export type ViewboxEvents = {
   viewbox: { viewbox: Viewbox; type: 'pan' | 'zoom' | 'pan+zoom' };
 };
 
-export class Viewbox extends EventEmitter<ViewboxEvents> {
+export class Viewbox extends EventEmitter<ViewboxEvents> implements Releasable {
   #dimensions: Extent;
   #offset: AbsoluteOffset = {
     x: 0,
@@ -36,6 +37,8 @@ export class Viewbox extends EventEmitter<ViewboxEvents> {
       this.windowSize = p;
     }
   }
+
+  release() {}
 
   duplicate() {
     return new Viewbox(this);
