@@ -5,6 +5,7 @@ import { DiagramElement, isEdge, isNode } from './diagramElement';
 import { Box } from '@diagram-craft/geometry/box';
 import type { Diagram } from './diagram';
 import { debounceMicrotask } from '@diagram-craft/utils/debounce';
+import { type Releasable, Releasables } from '@diagram-craft/utils/releasable';
 
 const EMPTY_BOX: Box = {
   x: Number.MIN_SAFE_INTEGER,
@@ -50,7 +51,7 @@ export const excludeLabelNodes: ElementPredicate = (n: DiagramElement) =>
 
 export const includeAll: ElementPredicate = () => true;
 
-export class Selection extends EventEmitter<SelectionEvents> {
+export class Selection extends EventEmitter<SelectionEvents> implements Releasable {
   #bounds: Box;
   //#highlights: ReadonlyArray<Highlight> = [];
   #elements: ReadonlyArray<DiagramElement> = [];
@@ -61,6 +62,7 @@ export class Selection extends EventEmitter<SelectionEvents> {
   };
   #forcedRotation: boolean = false;
   #dragging: boolean = false;
+  readonly #releasables = new Releasables();
 
   constructor(private diagram: Diagram) {
     super();
@@ -70,7 +72,11 @@ export class Selection extends EventEmitter<SelectionEvents> {
     const recalculateBoundingBox = debounceMicrotask(() => {
       this.recalculateBoundingBox();
     });
-    diagram.on('elementChange', recalculateBoundingBox);
+    this.#releasables.add(diagram.on('elementChange', recalculateBoundingBox));
+  }
+
+  release(): void {
+    this.#releasables.release();
   }
 
   filterSelectionToVisibleElements() {

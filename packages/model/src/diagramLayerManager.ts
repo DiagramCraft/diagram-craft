@@ -17,6 +17,7 @@ import {
   type MappedCRDTOrderedMapMapType
 } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import type { CRDTMapper } from '@diagram-craft/collaboration/datatypes/mapped/types';
+import { type Releasable, Releasables } from '@diagram-craft/utils/releasable';
 
 export type LayerManagerCRDT = {
   // TODO: Should we move visibility to be a property of the layer instead
@@ -70,7 +71,7 @@ export type LayerManagerEvents = {
 
 export class LayerManager
   extends EventEmitter<LayerManagerEvents>
-  implements UOWTrackable<LayersSnapshot>, AttachmentConsumer
+  implements UOWTrackable<LayersSnapshot>, AttachmentConsumer, Releasable
 {
   readonly id = 'layers';
   readonly trackableType = 'layerManager';
@@ -81,6 +82,7 @@ export class LayerManager
 
   // Unshared properties
   #activeLayer: Layer | undefined;
+  readonly #releasables = new Releasables();
 
   constructor(
     readonly diagram: Diagram,
@@ -100,34 +102,48 @@ export class LayerManager
     this.#activeLayer = undefined;
 
     this.#visibleLayers = crdt.get('visibleLayers', () => diagram.document.root.factory.makeMap())!;
-    this.#visibleLayers.on('remoteUpdate', () => this.emit('layerStructureChange', {}));
-    this.#visibleLayers.on('remoteInsert', () => this.emit('layerStructureChange', {}));
-    this.#visibleLayers.on('remoteDelete', () => this.emit('layerStructureChange', {}));
+    this.#releasables.add(
+      this.#visibleLayers.on('remoteUpdate', () => this.emit('layerStructureChange', {}))
+    );
+    this.#releasables.add(
+      this.#visibleLayers.on('remoteInsert', () => this.emit('layerStructureChange', {}))
+    );
+    this.#releasables.add(
+      this.#visibleLayers.on('remoteDelete', () => this.emit('layerStructureChange', {}))
+    );
 
-    this.diagram.selection.on('add', () => {
-      // We don't want to change active layer in case we are in a modification layer, as
-      // this prevents the ability to manage the modification layer
-      if (this.active.type === 'modification') return;
+    this.#releasables.add(
+      this.diagram.selection.on('add', () => {
+        // We don't want to change active layer in case we are in a modification layer, as
+        // this prevents the ability to manage the modification layer
+        if (this.active.type === 'modification') return;
 
-      const firstRegularLayer = this.diagram.selection.elements
-        .map(e => e.layer)
-        .filter(e => e.type === 'regular')[0];
-      if (!this.diagram.selection.isEmpty() && !!firstRegularLayer) {
-        this.active = firstRegularLayer;
-      }
-    });
-    this.diagram.selection.on('remove', () => {
-      // We don't want to change active layer in case we are in a modification layer, as
-      // this prevents the ability to manage the modification layer
-      if (this.active.type === 'modification') return;
+        const firstRegularLayer = this.diagram.selection.elements
+          .map(e => e.layer)
+          .filter(e => e.type === 'regular')[0];
+        if (!this.diagram.selection.isEmpty() && !!firstRegularLayer) {
+          this.active = firstRegularLayer;
+        }
+      })
+    );
+    this.#releasables.add(
+      this.diagram.selection.on('remove', () => {
+        // We don't want to change active layer in case we are in a modification layer, as
+        // this prevents the ability to manage the modification layer
+        if (this.active.type === 'modification') return;
 
-      const firstRegularLayer = this.diagram.selection.elements
-        .map(e => e.layer)
-        .filter(e => e.type === 'regular')[0];
-      if (!this.diagram.selection.isEmpty() && !!firstRegularLayer) {
-        this.active = firstRegularLayer;
-      }
-    });
+        const firstRegularLayer = this.diagram.selection.elements
+          .map(e => e.layer)
+          .filter(e => e.type === 'regular')[0];
+        if (!this.diagram.selection.isEmpty() && !!firstRegularLayer) {
+          this.active = firstRegularLayer;
+        }
+      })
+    );
+  }
+
+  release(): void {
+    this.#releasables.release();
   }
 
   isAbove(a: DiagramElement, b: DiagramElement) {

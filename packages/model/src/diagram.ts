@@ -227,6 +227,15 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     bindElementListeners(this, this.#releasables);
   }
 
+  release(): void {
+    this.#releasables.release();
+    this.selection.release();
+    this.layers.release();
+    this.commentManager.release();
+    this.#spatialIndex?.release();
+    this.#spatialIndex = undefined;
+  }
+
   get id() {
     return this.#id.getNonNull();
   }
@@ -461,10 +470,5 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     if (type === 'metadata') {
       this.document.emit('diagramChanged', { diagram: this });
     }
-  }
-
-  release(): void {
-    this.#releasables.release();
-    this.#spatialIndex = undefined;
   }
 }
