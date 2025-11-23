@@ -1,6 +1,7 @@
 import { CRDTMap, CRDTRoot } from '@diagram-craft/collaboration/crdt';
 import { assert } from '@diagram-craft/utils/assert';
 import { NumericalString, numberToString } from '@diagram-craft/utils/number';
+import type { Releasable } from '@diagram-craft/utils/releasable';
 
 const DEFAULT_COLOR = '#000000';
 
@@ -9,7 +10,7 @@ type PaletteType = {
   count: number;
 };
 
-export class DiagramPalette {
+export class DiagramPalette implements Releasable {
   private readonly palette: CRDTMap<PaletteType>;
 
   constructor(
@@ -26,6 +27,8 @@ export class DiagramPalette {
       });
     }
   }
+
+  release() {}
 
   private get count() {
     return this.palette.get('count') ?? 0;

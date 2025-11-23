@@ -3,25 +3,40 @@ import { EventEmitter } from '@diagram-craft/utils/event';
 import { assert } from '@diagram-craft/utils/assert';
 import { deepClone } from '@diagram-craft/utils/object';
 import type { CRDTMap, CRDTRoot } from '@diagram-craft/collaboration/crdt';
+import { type Releasable, Releasables } from '@diagram-craft/utils/releasable';
 
-export class DiagramDocumentDataTemplates extends EventEmitter<{
-  update: { template: DataTemplate };
-  add: { template: DataTemplate };
-  remove: { template: DataTemplate };
-}> {
+export class DiagramDocumentDataTemplates
+  extends EventEmitter<{
+    update: { template: DataTemplate };
+    add: { template: DataTemplate };
+    remove: { template: DataTemplate };
+  }>
+  implements Releasable
+{
   readonly #templates: CRDTMap<Record<string, DataTemplate>>;
+  readonly #releasables = new Releasables();
 
   constructor(root: CRDTRoot, templates?: DataTemplate[]) {
     super();
     this.#templates = root.getMap('templates');
 
-    this.#templates.on('remoteInsert', p => this.emit('add', { template: p.value }));
-    this.#templates.on('remoteUpdate', p => this.emit('update', { template: p.value }));
-    this.#templates.on('remoteDelete', p => this.emit('remove', { template: p.value }));
+    this.#releasables.add(
+      this.#templates.on('remoteInsert', p => this.emit('add', { template: p.value }))
+    );
+    this.#releasables.add(
+      this.#templates.on('remoteUpdate', p => this.emit('update', { template: p.value }))
+    );
+    this.#releasables.add(
+      this.#templates.on('remoteDelete', p => this.emit('remove', { template: p.value }))
+    );
 
     if (templates && this.all.length === 0) {
       this.replaceBy(templates);
     }
+  }
+
+  release() {
+    this.#releasables.release();
   }
 
   add(template: DataTemplate) {

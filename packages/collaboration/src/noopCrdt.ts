@@ -101,7 +101,9 @@ export class NoOpCRDTMap<T extends { [key: string]: CRDTCompatibleObject }>
     return callback();
   }
 
-  on() {}
+  on() {
+    return () => {};
+  }
   off() {}
 }
 
@@ -162,7 +164,9 @@ export class NoOpCRDTList<T extends CRDTCompatibleObject>
     return callback();
   }
 
-  on() {}
+  on() {
+    return () => {};
+  }
   off() {}
 }
 

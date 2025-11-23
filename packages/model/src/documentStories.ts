@@ -10,6 +10,7 @@ import {
   MappedCRDTOrderedMap,
   type MappedCRDTOrderedMapMapType
 } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtOrderedMap';
+import type { Releasable } from '@diagram-craft/utils/releasable';
 
 export type StoryAction =
   | {
@@ -83,7 +84,7 @@ export type DocumentStoriesEvents = {
   change: EmptyObject;
 };
 
-export class DocumentStories extends EventEmitter<DocumentStoriesEvents> {
+export class DocumentStories extends EventEmitter<DocumentStoriesEvents> implements Releasable {
   #stories: MappedCRDTOrderedMap<Story, StoredStory>;
 
   constructor(root: CRDTRoot, document: DiagramDocument) {
@@ -91,6 +92,8 @@ export class DocumentStories extends EventEmitter<DocumentStoriesEvents> {
     const storiesMap = root.getMap<MappedCRDTOrderedMapMapType<StoredStory>>('stories');
     this.#stories = new MappedCRDTOrderedMap(watch(storiesMap), makeStoryMapper(document));
   }
+
+  release() {}
 
   get stories(): Story[] {
     return this.#stories.values;

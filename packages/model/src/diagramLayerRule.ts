@@ -21,6 +21,7 @@ import { QueryDiagram } from './queryModel';
 import { parseAndQuery } from 'embeddable-jq';
 import { type DiagramElement, isEdge, isNode } from './diagramElement';
 import { MultiMap } from '@diagram-craft/utils/multimap';
+import { type Releasable, TimerReleasable } from '@diagram-craft/utils/releasable';
 
 type Result = Map<string, Adjustment>;
 
@@ -80,9 +81,13 @@ const resultEquals = (a: Result | undefined, b: Result) => {
 
 type DataTrigger = { rule: string; schema: string };
 
-type TimerTrigger = { rule: string; timer: ReturnType<typeof setInterval>; timeout: number };
+type TimerTrigger = {
+  rule: string;
+  timer: ReturnType<typeof setInterval>;
+  timeout: number;
+  releasable: Releasable;
+};
 
-// TODO: Timers are created but never cleaned up when the RuleLayer is destroyed. This will cause memory leaks
 export class RuleLayer extends Layer<RuleLayer> {
   #rules: CRDTList<AdjustmentRule>;
   #cache = new Map<string | symbol, Result>();
@@ -108,89 +113,107 @@ export class RuleLayer extends Layer<RuleLayer> {
       this.#rules.push(rule);
     }
 
-    this.#rules.on('remoteAfterTransaction', () => this.updateDependencies());
+    this._releasables.add(
+      this.#rules.on('remoteAfterTransaction', () => this.updateDependencies())
+    );
 
     this.updateDependencies();
 
-    this.diagram.on('diagramChange', () => this.#cache.clear());
-    this.diagram.on('elementChange', ({ element }) => {
-      if (isNode(element)) this.#dependencies.node.forEach(id => this.#cache.delete(id));
-      if (isEdge(element)) this.#dependencies.edge.forEach(id => this.#cache.delete(id));
-      this.#cache.delete(RESULT);
-    });
-    this.diagram.on('elementAdd', () => this.#cache.delete(RESULT));
-    this.diagram.on('elementRemove', ({ element }) => {
-      if (isNode(element)) this.#dependencies.node.forEach(id => this.#cache.delete(id));
-      if (isEdge(element)) this.#dependencies.edge.forEach(id => this.#cache.delete(id));
-      this.#cache.delete(RESULT);
-    });
-
-    this.diagram.document.data.db.on('updateData', ({ data }) => {
-      const updatedElements = new Set<DiagramElement>();
-
-      const handlers = new Set<DataTrigger>();
-      for (const d of data) {
-        const schemaHandlers = this.#dependencies.data.get(d._schemaId);
-        if (!schemaHandlers) continue;
-
-        for (const handler of schemaHandlers) {
-          handlers.add(handler);
-        }
-      }
-
-      let updates = false;
-      for (const h of handlers) {
-        const rule = mustExist(this.rules.find(r => r.id === h.rule));
-        if (rule.type !== 'advanced') VERIFY_NOT_REACHED();
-
-        const oldResults = this.#cache.get(h.rule);
-        const result = this.runRule(rule);
-
-        if (!resultEquals(oldResults, result)) {
-          if (rule.debug) {
-            console.log(`[RULE] data triggered '${rule.name}' ->`, result);
-          }
-
-          updates = true;
-          this.#cache.delete(h.rule);
-
-          this.#cache.set(h.rule, result);
-          for (const key of Object.keys(result)) {
-            const e = this.diagram.lookup(key);
-            if (!e) continue;
-
-            e.clearCache();
-            updatedElements.add(e);
-          }
-        } else {
-          if (rule.debug) {
-            console.log(`[RULE] data triggered '${rule.name}' -> no change`);
-          }
-        }
-      }
-
-      if (updates) {
+    this._releasables.add(this.diagram.on('diagramChange', () => this.#cache.clear()));
+    this._releasables.add(
+      this.diagram.on('elementChange', ({ element }) => {
+        if (isNode(element)) this.#dependencies.node.forEach(id => this.#cache.delete(id));
+        if (isEdge(element)) this.#dependencies.edge.forEach(id => this.#cache.delete(id));
         this.#cache.delete(RESULT);
+      })
+    );
+    this._releasables.add(this.diagram.on('elementAdd', () => this.#cache.delete(RESULT)));
+    this._releasables.add(
+      this.diagram.on('elementRemove', ({ element }) => {
+        if (isNode(element)) this.#dependencies.node.forEach(id => this.#cache.delete(id));
+        if (isEdge(element)) this.#dependencies.edge.forEach(id => this.#cache.delete(id));
+        this.#cache.delete(RESULT);
+      })
+    );
 
-        this.diagram.emit('elementBatchChange', {
-          added: [],
-          removed: [],
-          updated: [...updatedElements.values()]
-        });
-      }
-    });
+    this._releasables.add(
+      this.diagram.document.data.db.on('updateData', ({ data }) => {
+        const updatedElements = new Set<DiagramElement>();
+
+        const handlers = new Set<DataTrigger>();
+        for (const d of data) {
+          const schemaHandlers = this.#dependencies.data.get(d._schemaId);
+          if (!schemaHandlers) continue;
+
+          for (const handler of schemaHandlers) {
+            handlers.add(handler);
+          }
+        }
+
+        let updates = false;
+        for (const h of handlers) {
+          const rule = mustExist(this.rules.find(r => r.id === h.rule));
+          if (rule.type !== 'advanced') VERIFY_NOT_REACHED();
+
+          const oldResults = this.#cache.get(h.rule);
+          const result = this.runRule(rule);
+
+          if (!resultEquals(oldResults, result)) {
+            if (rule.debug) {
+              console.log(`[RULE] data triggered '${rule.name}' ->`, result);
+            }
+
+            updates = true;
+            this.#cache.delete(h.rule);
+
+            this.#cache.set(h.rule, result);
+            for (const key of Object.keys(result)) {
+              const e = this.diagram.lookup(key);
+              if (!e) continue;
+
+              e.clearCache();
+              updatedElements.add(e);
+            }
+          } else {
+            if (rule.debug) {
+              console.log(`[RULE] data triggered '${rule.name}' -> no change`);
+            }
+          }
+        }
+
+        if (updates) {
+          this.#cache.delete(RESULT);
+
+          this.diagram.emit('elementBatchChange', {
+            added: [],
+            removed: [],
+            updated: [...updatedElements.values()]
+          });
+        }
+      })
+    );
+  }
+
+  release(): void {
+    super.release();
+    this.#cache.clear();
+    this.#dependencies.node.clear();
+    this.#dependencies.edge.clear();
+    this.#dependencies.data.clear();
+    this.#dependencies.timers = [];
   }
 
   private updateDependencies() {
-    // Clear existing timers
-    for (const { timer } of this.#dependencies.timers) {
-      clearInterval(timer);
+    // Release existing timers
+    for (const { releasable } of this.#dependencies.timers) {
+      releasable.release();
     }
 
     // Clear existing dependencies
     this.#dependencies.node.clear();
     this.#dependencies.edge.clear();
     this.#dependencies.data.clear();
+    this.#dependencies.timers = [];
 
     // Re-add dependencies based on the new rules
     for (const rule of this.#rules.toArray()) {
@@ -201,42 +224,48 @@ export class RuleLayer extends Layer<RuleLayer> {
       } else if (rule.type === 'advanced') {
         for (const trigger of rule.triggers) {
           if (trigger.type === 'interval') {
+            const timer = setInterval(() => {
+              const oldResult = this.#cache.get(rule.id);
+              const result = this.runRule(rule);
+
+              if (!resultEquals(oldResult, result)) {
+                if (rule.debug) {
+                  console.log(`[RULE] timer triggered '${rule.name}' ->`, result);
+                }
+
+                this.#cache.delete(rule.id);
+                this.#cache.delete(RESULT);
+                this.#cache.set(rule.id, result);
+
+                const elements: DiagramElement[] = [];
+                for (const k of result.keys()) {
+                  const e = this.diagram.lookup(k);
+                  if (!e) continue;
+
+                  elements.push(e);
+                  e.clearCache();
+                }
+
+                this.diagram.emit('elementBatchChange', {
+                  added: [],
+                  removed: [],
+                  updated: elements
+                });
+              } else {
+                if (rule.debug) {
+                  console.log(`[RULE] timer triggered '${rule.name}' -> no change`);
+                }
+              }
+            }, trigger.interval * 1000);
+
+            const releasable = new TimerReleasable(timer, true);
+            this._releasables.add(releasable);
+
             this.#dependencies.timers.push({
               rule: rule.id,
-              timer: setInterval(() => {
-                const oldResult = this.#cache.get(rule.id);
-                const result = this.runRule(rule);
-
-                if (!resultEquals(oldResult, result)) {
-                  if (rule.debug) {
-                    console.log(`[RULE] timer triggered '${rule.name}' ->`, result);
-                  }
-
-                  this.#cache.delete(rule.id);
-                  this.#cache.delete(RESULT);
-                  this.#cache.set(rule.id, result);
-
-                  const elements: DiagramElement[] = [];
-                  for (const k of result.keys()) {
-                    const e = this.diagram.lookup(k);
-                    if (!e) continue;
-
-                    elements.push(e);
-                    e.clearCache();
-                  }
-
-                  this.diagram.emit('elementBatchChange', {
-                    added: [],
-                    removed: [],
-                    updated: elements
-                  });
-                } else {
-                  if (rule.debug) {
-                    console.log(`[RULE] timer triggered '${rule.name}' -> no change`);
-                  }
-                }
-              }, trigger.interval * 1000),
-              timeout: trigger.interval
+              timer,
+              timeout: trigger.interval,
+              releasable
             });
           } else if (trigger.type === 'data') {
             this.#dependencies.data.add(trigger.schema, { rule: rule.id, schema: trigger.schema });

@@ -12,6 +12,7 @@ import type { ModificationCRDT, ModificationLayer } from './diagramLayerModifica
 import { CRDTProp } from '@diagram-craft/collaboration/datatypes/crdtProp';
 import type { CRDTList, CRDTMap } from '@diagram-craft/collaboration/crdt';
 import type { MappedCRDTOrderedMapMapType } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtOrderedMap';
+import { type Releasable, Releasables } from '@diagram-craft/utils/releasable';
 
 export type LayerType = 'regular' | 'rule' | 'reference' | 'modification';
 export type StackPosition = { element: DiagramElement; idx: number };
@@ -26,7 +27,7 @@ export abstract class Layer<
       | RuleLayer
       | ModificationLayer
   >
-  implements UOWTrackable<LayerSnapshot>, AttachmentConsumer
+  implements UOWTrackable<LayerSnapshot>, AttachmentConsumer, Releasable
 {
   #locked = false;
   #id: CRDTProp<LayerCRDT, 'id'>;
@@ -34,6 +35,7 @@ export abstract class Layer<
   protected _type: LayerType = 'regular';
 
   readonly diagram: Diagram;
+  protected readonly _releasables = new Releasables();
 
   readonly crdt: CRDTMap<LayerCRDT>;
   readonly trackableType = 'layer';
@@ -60,6 +62,10 @@ export abstract class Layer<
     this.#id = new CRDTProp(watch(this.crdt), 'id');
 
     this.diagram = diagram;
+  }
+
+  release() {
+    this._releasables.release();
   }
 
   get type() {

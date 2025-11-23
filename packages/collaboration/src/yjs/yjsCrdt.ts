@@ -273,7 +273,7 @@ export class YJSMap<T extends { [key: string]: CRDTCompatibleObject }> implement
     eventName: K,
     fn: EventReceiver<CRDTMapEvents<T[string]>[K]>
   ) {
-    this.emitter.on(eventName, fn);
+    return this.emitter.on(eventName, fn);
   }
 
   off<K extends EventKey<CRDTMapEvents<T[string]>>>(
@@ -404,7 +404,7 @@ export class YJSList<T extends CRDTCompatibleObject> implements CRDTList<T> {
   }
 
   on<K extends EventKey<CRDTListEvents<T>>>(eventName: K, fn: EventReceiver<CRDTListEvents<T>[K]>) {
-    this.emitter.on(eventName, fn);
+    return this.emitter.on(eventName, fn);
   }
 
   off<K extends EventKey<CRDTListEvents<T>>>(

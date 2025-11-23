@@ -64,12 +64,13 @@ export interface Emitter<T extends EventMap> {
    * @param eventName - The name of the event to listen for
    * @param fn - The callback function to execute when the event is emitted
    * @param opts - Optional subscription options (id, priority)
+   * @returns Unsubscribe function to remove the listener
    */
   on<K extends EventKey<T>>(
     eventName: K,
     fn: EventReceiver<T[K]>,
     opts?: EventSubscriptionOpts
-  ): void;
+  ): () => void;
 
   /**
    * Unregisters an event listener.
@@ -96,8 +97,13 @@ export interface Emitter<T extends EventMap> {
  * };
  *
  * const emitter = new EventEmitter<MyEvents>();
- * emitter.on('save', ({ id }) => console.log('Saved:', id));
+ *
+ * // Register listener and get unsubscribe function
+ * const unsubscribe = emitter.on('save', ({ id }) => console.log('Saved:', id));
  * emitter.emit('save', { id: '123' });
+ *
+ * // Later, remove listener
+ * unsubscribe();
  * ```
  */
 export class EventEmitter<T extends EventMap> implements Emitter<T> {
@@ -119,24 +125,38 @@ export class EventEmitter<T extends EventMap> implements Emitter<T> {
    * @param eventName - The event to listen for
    * @param fn - The callback function
    * @param opts - Optional configuration (id, priority)
+   * @returns Unsubscribe function to remove this listener
    *
    * @example
    * ```ts
-   * emitter.on('save', ({ id }) => {
+   * // Simple usage
+   * const unsubscribe = emitter.on('save', ({ id }) => {
    *   console.log('Saving:', id);
    * }, { priority: 10 });
+   *
+   * // Later, remove listener
+   * unsubscribe();
    * ```
    */
-  on<K extends EventKey<T>>(eventName: K, fn: EventReceiver<T[K]>, opts?: EventSubscriptionOpts) {
+  on<K extends EventKey<T>>(
+    eventName: K,
+    fn: EventReceiver<T[K]>,
+    opts?: EventSubscriptionOpts
+  ): () => void {
     this.listeners[eventName] ??= [];
+
+    const listenerId = opts?.id ?? newid();
+
     this.listeners[eventName].push({
-      id: opts?.id ?? newid(),
+      id: listenerId,
       fn: fn,
       fnDebounce: debounceMicrotask(fn),
       fnAsync: e => queueMicrotask(() => fn(e)),
       priority: opts?.priority ?? 0
     });
     this.listeners[eventName].sort((a, b) => b.priority - a.priority);
+
+    return () => this.off(eventName, listenerId);
   }
 
   /**

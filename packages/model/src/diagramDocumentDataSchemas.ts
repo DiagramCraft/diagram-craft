@@ -4,6 +4,7 @@ import { deepClone } from '@diagram-craft/utils/object';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { assert } from '@diagram-craft/utils/assert';
 import type { CRDTMap, CRDTRoot } from '@diagram-craft/collaboration/crdt';
+import { type Releasable, Releasables } from '@diagram-craft/utils/releasable';
 
 export type DataSchemaField =
   | {
@@ -42,9 +43,13 @@ type DiagramDocumentDataSchemasEvents = {
   remove: { schema: DataSchema };
 };
 
-export class DiagramDocumentDataSchemas extends EventEmitter<DiagramDocumentDataSchemasEvents> {
+export class DiagramDocumentDataSchemas
+  extends EventEmitter<DiagramDocumentDataSchemasEvents>
+  implements Releasable
+{
   readonly #schemas: CRDTMap<Record<string, DataSchema>>;
   readonly #schemaMetadata: CRDTMap<Record<string, SchemaMetadata>>;
+  readonly #releasables = new Releasables();
 
   constructor(
     private readonly root: CRDTRoot,
@@ -56,16 +61,30 @@ export class DiagramDocumentDataSchemas extends EventEmitter<DiagramDocumentData
     this.#schemas = root.getMap('schemas');
     this.#schemaMetadata = root.getMap('schemaMetadata');
 
-    this.#schemas.on('remoteUpdate', p => this.emit('update', { schema: p.value }));
-    this.#schemas.on('remoteDelete', p => this.emit('remove', { schema: p.value }));
-    this.#schemas.on('remoteInsert', p => this.emit('add', { schema: p.value }));
+    this.#releasables.add(
+      this.#schemas.on('remoteUpdate', p => this.emit('update', { schema: p.value }))
+    );
+    this.#releasables.add(
+      this.#schemas.on('remoteDelete', p => this.emit('remove', { schema: p.value }))
+    );
+    this.#releasables.add(
+      this.#schemas.on('remoteInsert', p => this.emit('add', { schema: p.value }))
+    );
 
-    this.#schemaMetadata.on('remoteUpdate', p => this.emit('update', { schema: this.get(p.key) }));
-    this.#schemaMetadata.on('remoteInsert', p => this.emit('update', { schema: this.get(p.key) }));
+    this.#releasables.add(
+      this.#schemaMetadata.on('remoteUpdate', p => this.emit('update', { schema: this.get(p.key) }))
+    );
+    this.#releasables.add(
+      this.#schemaMetadata.on('remoteInsert', p => this.emit('update', { schema: this.get(p.key) }))
+    );
 
     if (this.all.length === 0 && schemas) {
       this.replaceBy(schemas);
     }
+  }
+
+  release() {
+    this.#releasables.release();
   }
 
   get all() {
