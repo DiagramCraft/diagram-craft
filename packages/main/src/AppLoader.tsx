@@ -174,11 +174,12 @@ export const AppLoader = (props: Props) => {
         console.log('Reloading from server');
 
         // Reset
+        doc.deactivate(() => {});
+        doc.release();
         setDoc(undefined);
         setLoaded(false);
         setProgress(undefined);
 
-        doc.deactivate(() => {});
         load({ url: url });
       },
       { id: 'doc-cleared' }

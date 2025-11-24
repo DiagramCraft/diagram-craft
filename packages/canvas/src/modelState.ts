@@ -26,7 +26,10 @@ class ModelState extends EventEmitter<ModelStateEvents> {
 
     const isUrlChange = this.#activeDocument?.url !== document.url;
 
-    if (isUrlChange) this.#activeDocument?.deactivate(callback);
+    if (isUrlChange) {
+      this.#activeDocument?.deactivate(callback);
+      this.#activeDocument?.release();
+    }
     this.#activeDocument = document;
     if (isUrlChange) this.#activeDocument?.activate(userState, callback);
     this.emit('activeDocumentChange', { document: document });
