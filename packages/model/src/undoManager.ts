@@ -2,6 +2,7 @@ import { UnitOfWork } from './unitOfWork';
 import type { Diagram } from './diagram';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+import type { Releasable } from '@diagram-craft/utils/releasable';
 
 export const makeUndoableAction = (
   description: string,
@@ -72,7 +73,7 @@ export type UndoEvents = {
 
 const MAX_HISTORY = 100;
 
-export class UndoManager extends EventEmitter<UndoEvents> {
+export class UndoManager extends EventEmitter<UndoEvents> implements Releasable {
   undoableActions: UndoableAction[];
   redoableActions: UndoableAction[];
   mark: UndoableAction | undefined = undefined;
@@ -83,6 +84,8 @@ export class UndoManager extends EventEmitter<UndoEvents> {
     this.undoableActions = [];
     this.redoableActions = [];
   }
+
+  release() {}
 
   setMark() {
     this.mark = this.undoableActions.at(-1);

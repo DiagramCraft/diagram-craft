@@ -17,6 +17,7 @@ import type { CRDTFactory, CRDTMap, CRDTRoot } from '@diagram-craft/collaboratio
 import type { CRDTMapper } from '@diagram-craft/collaboration/datatypes/mapped/types';
 import { MappedCRDTMap } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtMap';
 import type { EdgeProps, NodeProps } from './diagramProps';
+import type { Releasable } from '@diagram-craft/utils/releasable';
 
 export type StylesheetType = 'node' | 'edge' | 'text';
 
@@ -248,7 +249,7 @@ export type DiagramStylesEvents = {
   stylesheetRemoved: { stylesheet: string };
 };
 
-export class DiagramStyles extends EventEmitter<DiagramStylesEvents> {
+export class DiagramStyles extends EventEmitter<DiagramStylesEvents> implements Releasable {
   #textStyles: MappedCRDTMap<Stylesheet<'text'>, StylesheetSnapshot>;
   #nodeStyles: MappedCRDTMap<Stylesheet<'node'>, StylesheetSnapshot>;
   #edgeStyles: MappedCRDTMap<Stylesheet<'edge'>, StylesheetSnapshot>;
@@ -304,6 +305,8 @@ export class DiagramStyles extends EventEmitter<DiagramStylesEvents> {
       });
     }
   }
+
+  release() {}
 
   get nodeStyles(): Stylesheet<'node'>[] {
     return Array.from(this.#nodeStyles.values);

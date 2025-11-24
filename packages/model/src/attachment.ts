@@ -2,6 +2,7 @@ import type { DiagramDocument } from './diagramDocument';
 import { hash64 } from '@diagram-craft/utils/hash';
 import { blobToDataURL } from '@diagram-craft/utils/blobUtils';
 import type { CRDTMap, CRDTRoot } from '@diagram-craft/collaboration/crdt';
+import type { Releasable } from '@diagram-craft/utils/releasable';
 
 /**
  * Represents a binary attachment (image, etc.) in the diagram.
@@ -61,7 +62,7 @@ type AttachmentCRDT = {
  * Manages attachments for a diagram with CRDT synchronization.
  * Provides deduplication and garbage collection of unused attachments.
  */
-export class AttachmentManager {
+export class AttachmentManager implements Releasable {
   #attachments: CRDTMap<Record<string, AttachmentCRDT>>;
   #consumers: Array<AttachmentConsumer> = [];
 
@@ -72,6 +73,8 @@ export class AttachmentManager {
     this.#consumers.push(diagramDocument);
     this.#attachments = root.getMap('attachmentManager');
   }
+
+  release() {}
 
   /**
    * Adds an attachment to the manager.

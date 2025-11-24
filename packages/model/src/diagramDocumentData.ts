@@ -28,6 +28,7 @@ import { CRDTMap, CRDTMapEvents, CRDTRoot } from '@diagram-craft/collaboration/c
 import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { DefaultDataProvider, DefaultDataProviderId } from './data-providers/dataProviderDefault';
 import type { ElementDataEntry } from './diagramProps';
+import { type Releasable, Releasables } from '@diagram-craft/utils/releasable';
 
 const makeDataListener =
   (document: DiagramDocument, mode: 'update' | 'delete') => (data: { data: Data[] }) => {
@@ -100,7 +101,7 @@ const DEFAULT_SCHEMA: DataSchema[] = [
   }
 ];
 
-export class DiagramDocumentData extends EventEmitter<{ change: void }> {
+export class DiagramDocumentData extends EventEmitter<{ change: void }> implements Releasable {
   // Shared properties
   readonly #schemas: DiagramDocumentDataSchemas;
   readonly #templates: DiagramDocumentDataTemplates;
@@ -109,6 +110,7 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
   // Transient properties
   #providers: Array<DataProvider> = [];
   readonly #crdt: CRDTMap<Record<string, string>>;
+  readonly #releasables = new Releasables();
 
   #dataManager: DataManager | undefined;
 
@@ -130,12 +132,12 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
     this.#deleteSchemaListener = makeDeleteSchemaListener(document);
     this.#updateSchemaListener = makeUpdateSchemaListener(document);
 
-    this.#schemas.on('add', () => this.emit('change'));
-    this.#schemas.on('remove', () => this.emit('change'));
-    this.#schemas.on('update', () => this.emit('change'));
-    this.#templates.on('add', () => this.emit('change'));
-    this.#templates.on('remove', () => this.emit('change'));
-    this.#templates.on('update', () => this.emit('change'));
+    this.#releasables.add(this.#schemas.on('add', () => this.emit('change')));
+    this.#releasables.add(this.#schemas.on('remove', () => this.emit('change')));
+    this.#releasables.add(this.#schemas.on('update', () => this.emit('change')));
+    this.#releasables.add(this.#templates.on('add', () => this.emit('change')));
+    this.#releasables.add(this.#templates.on('remove', () => this.emit('change')));
+    this.#releasables.add(this.#templates.on('update', () => this.emit('change')));
 
     const updateProvider = (e: CRDTMapEvents['remoteUpdate'] | CRDTMapEvents['remoteInsert']) => {
       if (e.key !== 'provider') return;
@@ -155,13 +157,19 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> {
 
     if (this.#providers.length === 0) this.setProviders([]);
 
-    this.#crdt.on('remoteUpdate', updateProvider);
-    this.#crdt.on('remoteInsert', updateProvider);
+    this.#releasables.add(this.#crdt.on('remoteUpdate', updateProvider));
+    this.#releasables.add(this.#crdt.on('remoteInsert', updateProvider));
+  }
+
+  release() {
+    this.#releasables.release();
+    this.#schemas.release();
+    this.#templates.release();
   }
 
   private rebuildDataManager() {
     if (this.#dataManager) {
-      this.#dataManager.destroy();
+      this.#dataManager.release();
     }
 
     this.#dataManager = new DataManager(this.#providers, this.#schemas, this.#root);
@@ -242,7 +250,7 @@ type OverrideOperation =
   | { type: 'update'; data: Data }
   | { type: 'delete'; data: Data };
 
-export class DataManager extends EventEmitter<DataProviderEventMap> {
+export class DataManager extends EventEmitter<DataProviderEventMap> implements Releasable {
   // CRDT-backed store for overrides: schemaId -> uid -> operation
   private readonly overrides: CRDTMap<Record<string, CRDTMap<Record<string, OverrideOperation>>>>;
 
@@ -255,7 +263,7 @@ export class DataManager extends EventEmitter<DataProviderEventMap> {
     this.overrides = root.getMap('dataOverrides');
   }
 
-  destroy() {
+  release() {
     this.clearListeners();
   }
 
@@ -468,7 +476,8 @@ export class DataManager extends EventEmitter<DataProviderEventMap> {
     fn: EventReceiver<DataProviderEventMap[K]>,
     opts?: EventSubscriptionOpts
   ) {
-    this.providers.forEach(p => p.on(eventName, fn, opts));
+    const unsubscribes = this.providers.map(p => p.on(eventName, fn, opts));
+    return () => unsubscribes.forEach(unsub => unsub());
   }
 
   off<K extends EventKey<DataProviderEventMap>>(

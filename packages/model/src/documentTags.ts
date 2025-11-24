@@ -1,6 +1,7 @@
 import { CRDTRoot, CRDTMap } from '@diagram-craft/collaboration/crdt';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import type { EmptyObject } from '@diagram-craft/utils/types';
+import type { Releasable } from '@diagram-craft/utils/releasable';
 
 export type DocumentTagsEvents = {
   update: EmptyObject;
@@ -10,7 +11,7 @@ export type DocumentTagsEvents = {
 /**
  * Manages a set of tags for the document using CRDT for collaboration
  */
-export class DocumentTags extends EventEmitter<DocumentTagsEvents> {
+export class DocumentTags extends EventEmitter<DocumentTagsEvents> implements Releasable {
   #tags: CRDTMap<Record<string, boolean>>;
   #selectedTags: Set<string> = new Set();
 
@@ -18,6 +19,8 @@ export class DocumentTags extends EventEmitter<DocumentTagsEvents> {
     super();
     this.#tags = root.getMap('tags');
   }
+
+  release() {}
 
   get tags(): readonly string[] {
     return Array.from(this.#tags.keys()).sort();

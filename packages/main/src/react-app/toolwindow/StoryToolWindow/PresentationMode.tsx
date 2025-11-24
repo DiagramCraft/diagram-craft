@@ -156,6 +156,16 @@ export const PresentationMode = (props: Props) => {
     };
   }, [handleClose, handleNext, handlePrevious]);
 
+  // Cleanup documents when component unmounts
+  useEffect(() => {
+    return () => {
+      doc1.release();
+      doc2.release();
+      player1.release();
+      player2.release();
+    };
+  }, [doc1, doc2, player1, player2]);
+
   const currentStep = player1.currentStep;
 
   return (

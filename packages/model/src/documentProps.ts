@@ -2,6 +2,7 @@ import type { DiagramDocument } from './diagramDocument';
 import type { EmptyObject } from '@diagram-craft/utils/types';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import type { CRDTList, CRDTRoot } from '@diagram-craft/collaboration/crdt';
+import type { Releasable } from '@diagram-craft/utils/releasable';
 
 export type QueryType = 'advanced' | 'simple' | 'djql';
 
@@ -147,7 +148,7 @@ class RecentStencils {
  * By design; changing the extra data field, the document is not to be
  * considered dirty. This must be handled manually
  */
-export class DocumentProps {
+export class DocumentProps implements Releasable {
   readonly query: Query;
   readonly recentStencils: RecentStencils;
 
@@ -155,4 +156,6 @@ export class DocumentProps {
     this.query = new Query(root, document);
     this.recentStencils = new RecentStencils(root);
   }
+
+  release() {}
 }

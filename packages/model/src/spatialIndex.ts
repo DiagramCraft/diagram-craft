@@ -5,6 +5,7 @@ import { isEdge } from './diagramElement';
 import type { Diagram } from './diagram';
 import type { RegularLayer } from './diagramLayerRegular';
 import { assert } from '@diagram-craft/utils/assert';
+import { type Releasable, Releasables } from '@diagram-craft/utils/releasable';
 
 type Direction = 'n' | 's' | 'e' | 'w';
 
@@ -32,8 +33,9 @@ const getElementBounds = (element: DiagramElement): Box => {
 const getVisibleElements = (source: Diagram | RegularLayer): readonly DiagramElement[] =>
   isRegularLayer(source) ? source.elements : source.visibleElements();
 
-export class SpatialIndex {
+export class SpatialIndex implements Releasable {
   #index: GridCell[][] | undefined;
+  readonly #releasables = new Releasables();
 
   private readonly elementAddHandler = () => this.invalidate();
   private readonly elementRemoveHandler = () => this.invalidate();
@@ -44,7 +46,16 @@ export class SpatialIndex {
 
   constructor(private readonly source: Diagram | RegularLayer) {
     this.#diagram = isRegularLayer(source) ? source.diagram : source;
-    this.setupListeners();
+
+    this.#releasables.add(this.#diagram.on('elementAdd', this.elementAddHandler));
+    this.#releasables.add(this.#diagram.on('elementRemove', this.elementRemoveHandler));
+    this.#releasables.add(this.#diagram.on('elementChange', this.elementChangeHandler));
+    this.#releasables.add(this.#diagram.on('elementBatchChange', this.elementBatchChangeHandler));
+  }
+
+  release(): void {
+    this.#releasables.release();
+    this.#index = undefined;
   }
 
   invalidate(): void {
@@ -171,13 +182,6 @@ export class SpatialIndex {
         yield element;
       }
     }
-  }
-
-  private setupListeners(): void {
-    this.#diagram.on('elementAdd', this.elementAddHandler);
-    this.#diagram.on('elementRemove', this.elementRemoveHandler);
-    this.#diagram.on('elementChange', this.elementChangeHandler);
-    this.#diagram.on('elementBatchChange', this.elementBatchChangeHandler);
   }
 
   private rebuildIndexIfNeeded(): void {

@@ -27,6 +27,7 @@ import {
 import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
 import { MappedCRDTProp } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtProp';
 import type { EdgeProps, ElementMetadata, ElementProps, NodeProps } from './diagramProps';
+import type { Releasable, Releasables } from '@diagram-craft/utils/releasable';
 
 // biome-ignore lint/suspicious/noExplicitAny: false positive
 type Snapshot = any;
@@ -114,7 +115,9 @@ export interface DiagramElement {
   comments: ReadonlyArray<Comment>;
 }
 
-export abstract class AbstractDiagramElement implements DiagramElement, AttachmentConsumer {
+export abstract class AbstractDiagramElement
+  implements DiagramElement, AttachmentConsumer, Releasable
+{
   readonly trackableType = 'element';
 
   // Transient properties
@@ -204,6 +207,8 @@ export abstract class AbstractDiagramElement implements DiagramElement, Attachme
       this.clearCache();
     });
   }
+
+  release() {}
 
   abstract getAttachmentsInUse(): Array<string>;
 
@@ -469,7 +474,7 @@ export const transformElements = (
   }
 };
 
-export const bindElementListeners = (diagram: Diagram) => {
+export const bindElementListeners = (diagram: Diagram, releasables: Releasables) => {
   /* On comment change ----------------------------------------------- */
   const commentListener = (elementId: string | undefined) => {
     if (!elementId) return;
@@ -481,44 +486,56 @@ export const bindElementListeners = (diagram: Diagram) => {
     diagram.emit('elementBatchChange', { updated: [element], removed: [], added: [] });
   };
 
-  diagram.commentManager.on('commentUpdated', c => commentListener(c.comment.element?.id));
-  diagram.commentManager.on('commentRemoved', c => commentListener(c.comment.elementId));
-  diagram.commentManager.on('commentAdded', c => commentListener(c.comment.element?.id));
+  releasables.add(
+    diagram.commentManager.on('commentUpdated', c => commentListener(c.comment.element?.id))
+  );
+  releasables.add(
+    diagram.commentManager.on('commentRemoved', c => commentListener(c.comment.elementId))
+  );
+  releasables.add(
+    diagram.commentManager.on('commentAdded', c => commentListener(c.comment.element?.id))
+  );
 
   /* On stylesheet change -------------------------------------------- */
-  diagram.document.styles.on('stylesheetUpdated', s => {
-    const id = s.stylesheet.id;
+  releasables.add(
+    diagram.document.styles.on('stylesheetUpdated', s => {
+      const id = s.stylesheet.id;
 
-    const elements = new Set<DiagramElement>();
-    for (const el of diagram.allElements()) {
-      if (el.metadata.style === id || (isNode(el) && el.metadata.textStyle === id)) {
-        elements.add(el);
+      const elements = new Set<DiagramElement>();
+      for (const el of diagram.allElements()) {
+        if (el.metadata.style === id || (isNode(el) && el.metadata.textStyle === id)) {
+          elements.add(el);
+        }
       }
-    }
-    elements.forEach(e => {
-      e.clearCache();
-      e.diagram.emit('elementChange', { element: e });
-    });
-    diagram.emit('elementBatchChange', { added: [], removed: [], updated: [...elements] });
-  });
+      elements.forEach(e => {
+        e.clearCache();
+        e.diagram.emit('elementChange', { element: e });
+      });
+      diagram.emit('elementBatchChange', { added: [], removed: [], updated: [...elements] });
+    })
+  );
 
   /* On layer change ------------------------------------------------- */
-  diagram.layers.on(
-    'layerStructureChange',
-    () => {
-      diagram.allElements().forEach(e => e.clearCache());
-    },
-    {
-      priority: 1000
-    }
+  releasables.add(
+    diagram.layers.on(
+      'layerStructureChange',
+      () => {
+        diagram.allElements().forEach(e => e.clearCache());
+      },
+      {
+        priority: 1000
+      }
+    )
   );
   // TODO: Ideally we should have this logic in BaseCanvasComponent instead
   //       ... and not reemit a layerStructureChange event, but rather just redraw in this case
-  diagram.layers.on('layerUpdated', l => {
-    if (l.layer.type === 'rule' || l.layer.type === 'modification') {
-      diagram.layers.emit('layerStructureChange');
-    }
-  });
+  releasables.add(
+    diagram.layers.on('layerUpdated', l => {
+      if (l.layer.type === 'rule' || l.layer.type === 'modification') {
+        diagram.layers.emit('layerStructureChange');
+      }
+    })
+  );
 };
 
 export const isNode = (e: DiagramElement | undefined): e is DiagramNode =>

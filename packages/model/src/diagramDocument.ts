@@ -25,6 +25,7 @@ import { MappedCRDTOrderedMap } from '@diagram-craft/collaboration/datatypes/map
 import type { AwarenessUserState } from '@diagram-craft/collaboration/awareness';
 import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
 import type { CRDTMapper } from '@diagram-craft/collaboration/datatypes/mapped/types';
+import { type Releasable, Releasables } from '@diagram-craft/utils/releasable';
 
 const makeDiagramMapper = (doc: DiagramDocument): CRDTMapper<Diagram, CRDTMap<DiagramCRDT>> => {
   return {
@@ -47,7 +48,10 @@ export type DataTemplate = {
   template: SerializedElement;
 };
 
-export class DiagramDocument extends EventEmitter<DocumentEvents> implements AttachmentConsumer {
+export class DiagramDocument
+  extends EventEmitter<DocumentEvents>
+  implements AttachmentConsumer, Releasable
+{
   readonly root: CRDTRoot;
 
   readonly attachments: AttachmentManager;
@@ -64,6 +68,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
   // Transient properties
   url: string | undefined;
   hash: string | undefined;
+  readonly #releasables = new Releasables();
 
   constructor(
     readonly nodeDefinitions: NodeDefinitionRegistry,
@@ -98,7 +103,18 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
       }
     );
 
-    this.root.on('remoteClear', () => this.emit('cleared'));
+    this.#releasables.add(this.root.on('remoteClear', () => this.emit('cleared')));
+  }
+
+  release() {
+    this.#releasables.release();
+    this.data.release();
+    this.customPalette.release();
+    this.styles.release();
+    this.attachments.release();
+    this.props.release();
+    this.tags.release();
+    this.stories.release();
   }
 
   activate(userState: AwarenessUserState, callback: ProgressCallback) {

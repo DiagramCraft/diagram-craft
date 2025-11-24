@@ -27,6 +27,7 @@ import { type DiagramBounds, DEFAULT_CANVAS } from './diagramBounds';
 import type { Guide } from './guides';
 import { SpatialIndex } from './spatialIndex';
 import type { DiagramProps } from './diagramProps';
+import { Releasables, type Releasable } from '@diagram-craft/utils/releasable';
 
 export type DiagramIteratorOpts = {
   nest?: boolean;
@@ -98,10 +99,11 @@ export type DiagramCRDT = {
   comments: CRDTMap<Record<string, SerializedComment>>;
 };
 
-export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentConsumer {
+export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentConsumer, Releasable {
   // Transient properties
   #document: DiagramDocument | undefined;
   #spatialIndex: SpatialIndex | undefined;
+  readonly #releasables = new Releasables();
 
   readonly uid = newid();
   readonly _crdt: WatchableValue<CRDTMap<DiagramCRDT>>;
@@ -176,7 +178,9 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     );
 
     this.#guides = this._crdt.get().get('guides', () => document.root.factory.makeMap())!;
-    this.#guides.on('remoteAfterTransaction', () => this.emitDiagramChange('content'));
+    this.#releasables.add(
+      this.#guides.on('remoteAfterTransaction', () => this.emitDiagramChange('content'))
+    );
 
     this.viewBox = new Viewbox(this.bounds);
 
@@ -204,9 +208,13 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
         uow.commit();
       }
     };
-    this.on('elementChange', e => toggleHasEdgesWithLineHops('change', e.element));
-    this.on('elementAdd', e => toggleHasEdgesWithLineHops('add', e.element));
-    this.on('elementRemove', e => toggleHasEdgesWithLineHops('remove', e.element));
+    this.#releasables.add(
+      this.on('elementChange', e => toggleHasEdgesWithLineHops('change', e.element))
+    );
+    this.#releasables.add(this.on('elementAdd', e => toggleHasEdgesWithLineHops('add', e.element)));
+    this.#releasables.add(
+      this.on('elementRemove', e => toggleHasEdgesWithLineHops('remove', e.element))
+    );
 
     this.commentManager = new CommentManager(
       this,
@@ -216,7 +224,18 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     // TODO: Is this still needed?
     //this.on('change', () => clearCacheForDiagram(this));
 
-    bindElementListeners(this);
+    bindElementListeners(this, this.#releasables);
+  }
+
+  release(): void {
+    this.#releasables.release();
+    this.selection.release();
+    this.layers.release();
+    this.commentManager.release();
+    this.undoManager.release();
+    this.viewBox.release();
+    this.#spatialIndex?.release();
+    this.#spatialIndex = undefined;
   }
 
   get id() {

@@ -1,6 +1,6 @@
 import { PickerCanvas } from './PickerCanvas';
 import { assert } from '@diagram-craft/utils/assert';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
@@ -106,6 +106,13 @@ export const NodeTypePopup = (props: Props) => {
       return [n, dest];
     });
   }, [diagram]);
+
+  // Cleanup documents when they change or component unmounts
+  useEffect(() => {
+    return () => {
+      diagramsAndNodes.forEach(([_, d]) => d.document.release());
+    };
+  }, [diagramsAndNodes]);
 
   if (!(diagram.activeLayer instanceof RegularLayer)) return <div></div>;
 

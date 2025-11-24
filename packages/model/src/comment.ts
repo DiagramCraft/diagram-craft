@@ -3,6 +3,7 @@ import { DiagramElement } from './diagramElement';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { assert, precondition } from '@diagram-craft/utils/assert';
 import type { CRDTMap } from '@diagram-craft/collaboration/crdt';
+import { type Releasable, Releasables } from '@diagram-craft/utils/releasable';
 
 /**
  * Represents the state of a comment, either unresolved or resolved.
@@ -141,24 +142,36 @@ type CommentManagerEvents = {
  * Manages comments for a diagram using CRDT-based storage for collaboration support.
  * Handles comment threads, staleness detection, and emits events for remote changes.
  */
-export class CommentManager extends EventEmitter<CommentManagerEvents> {
+export class CommentManager extends EventEmitter<CommentManagerEvents> implements Releasable {
+  readonly #releasables = new Releasables();
+
   constructor(
     private diagram: Diagram,
     private commentsMap: CRDTMap<Record<string, SerializedComment>>
   ) {
     super();
     // Forward CRDT remote events as local events for UI to react to
-    this.commentsMap.on('remoteDelete', p => {
-      this.emit('commentRemoved', { comment: p.value });
-    });
-    this.commentsMap.on('remoteInsert', p => {
-      const comment = this.getComment(p.key)!;
-      this.emit('commentAdded', { comment: comment });
-    });
-    this.commentsMap.on('remoteUpdate', p => {
-      const comment = this.getComment(p.key)!;
-      this.emit('commentUpdated', { comment: comment });
-    });
+    this.#releasables.add(
+      this.commentsMap.on('remoteDelete', p => {
+        this.emit('commentRemoved', { comment: p.value });
+      })
+    );
+    this.#releasables.add(
+      this.commentsMap.on('remoteInsert', p => {
+        const comment = this.getComment(p.key)!;
+        this.emit('commentAdded', { comment: comment });
+      })
+    );
+    this.#releasables.add(
+      this.commentsMap.on('remoteUpdate', p => {
+        const comment = this.getComment(p.key)!;
+        this.emit('commentUpdated', { comment: comment });
+      })
+    );
+  }
+
+  release(): void {
+    this.#releasables.release();
   }
 
   /** Returns all comments including stale and resolved ones */
