@@ -307,7 +307,7 @@ const ModificationEntry = (props: {
         }
       }}
     >
-      <Tree.NodeLabel style={{ width: 'calc(100% + 15px)', color }}>
+      <Tree.NodeLabel style={{ color }}>
         <Tree.NodeLabelIcon>{icon}</Tree.NodeLabelIcon>
         <Tree.NodeLabelText>{element?.name ?? m.id}</Tree.NodeLabelText>
       </Tree.NodeLabel>
@@ -403,7 +403,7 @@ const ElementEntry = (props: { element: DiagramElement }) => {
         diagram.selection.toggle(e);
       }}
     >
-      <Tree.NodeLabel style={{ width: 'calc(100% + 15px)' }}>
+      <Tree.NodeLabel style={{ gridColumn: '1/4' }}>
         <Tree.NodeLabelIcon>{icon}</Tree.NodeLabelIcon>
         <Tree.NodeLabelText>{e.name}</Tree.NodeLabelText>
       </Tree.NodeLabel>

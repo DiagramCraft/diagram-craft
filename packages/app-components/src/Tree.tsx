@@ -106,7 +106,7 @@ const NodeCell = (props: { children: React.ReactNode } & React.HTMLAttributes<HT
   return (
     <div
       {...PropsUtils.filterDomProperties(props)}
-      className={`cmp-tree-node-cell ${props.className ?? ''}`}
+      className={`cmp-tree__node__cell ${props.className ?? ''}`}
     >
       {props.children}
     </div>

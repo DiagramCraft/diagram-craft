@@ -1,6 +1,6 @@
 .cmp-tree {
   display: grid;
-  grid-template-columns: minmax(min-content, 1fr) max-content;
+  grid-template-columns: 1fr max-content;
   grid-auto-rows: 24px;
   max-width: 100%;
   width: 100%;
@@ -34,11 +34,6 @@
     }
   }
 
-  .cmp-tree__node__label {
-    width: 100px;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
 
   .cmp-tree__node__action {
     display: flex;
@@ -81,6 +76,7 @@
   }
 
   .cmp-tree__node__label {
+    min-width: 100px;
     display: flex;
     align-items: center;
     padding-right: 0.25rem;
@@ -99,7 +95,7 @@
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      width: 100%;
+      flex-grow: 1;
     }
   }
 
@@ -117,5 +113,9 @@
       background: none;
       color: var(--panel-fg);
     }
+  }
+
+  .cmp-tree__node__cell {
+    white-space: wrap;
   }
 }
