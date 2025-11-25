@@ -726,14 +726,10 @@ foreignObject {
 }
 
 .cmp-layer-list {
-  grid-template-columns: 1fr max-content !important;
-  max-width: 100% !important;
-  width: 100% !important;
-
   .cmp-tree__node__label__text {
-    white-space: initial !important;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
-
 
   .cmp-tree__node {
     position: relative;
