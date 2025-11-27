@@ -96,7 +96,7 @@ export class EdgeEndpointMoveDrag extends Drag {
     this.modifiers = modifiers;
 
     if (this.hoverElement && this.diagram.nodeLookup.has(this.hoverElement)) {
-      if (modifiers.metaKey) {
+      if (this.shouldAttachToPoint()) {
         this.attachToPoint(offset);
       } else {
         this.attachToClosestAnchor(offset);
@@ -116,7 +116,7 @@ export class EdgeEndpointMoveDrag extends Drag {
   }
 
   onDragEnd(): void {
-    if (this.modifiers?.shiftKey) {
+    if (this.shouldAttachToPoint()) {
       this.attachToPoint(this.point!);
     } else {
       this.attachToClosestAnchor(this.point!);
@@ -174,6 +174,10 @@ export class EdgeEndpointMoveDrag extends Drag {
 
       this.setEndpoint(new PointInNodeEndpoint(hoverNode, undefined, offset, 'relative'));
     }
+  }
+
+  private shouldAttachToPoint() {
+    return this.modifiers?.metaKey;
   }
 
   private attachToPoint(p: Point) {
