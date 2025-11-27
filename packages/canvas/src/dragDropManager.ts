@@ -135,21 +135,28 @@ export class DragDopManager extends EventEmitter<{
   dragStateChange: { drag: Drag; state: State };
 }> {
   private drag?: Drag;
+  private dragStarted = false;
 
   initiate(drag: Drag, onEndCallback = () => {}) {
     this.drag = drag;
+    this.dragStarted = false;
+
     this.emit('dragStart', { drag });
+    this.drag.on('drag', () => {
+      this.dragStarted = true;
+    });
     this.drag.on('stateChange', ({ state }) => {
       this.emit('dragStateChange', { drag: this.drag!, state });
     });
     this.drag.on('dragEnd', () => {
       onEndCallback();
       this.drag = undefined;
+      this.dragStarted = false;
     });
   }
 
   isDragging() {
-    return !!this.drag;
+    return !!this.drag && this.dragStarted;
   }
 
   current() {
@@ -159,6 +166,7 @@ export class DragDopManager extends EventEmitter<{
   clear() {
     this.emit('dragEnd', { drag: this.drag! });
     this.drag = undefined;
+    this.dragStarted = false;
   }
 }
 
