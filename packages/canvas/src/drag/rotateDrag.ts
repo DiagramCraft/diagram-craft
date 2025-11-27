@@ -54,6 +54,8 @@ export class RotateDrag extends Drag {
 
     // This is mainly a performance optimization and not strictly necessary
     this.diagram.selection.recalculateBoundingBox();
+
+    this.emit('drag', { coord: event.offset, modifiers: event.modifiers });
   }
 
   onDragEnd(): void {

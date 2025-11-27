@@ -31,6 +31,8 @@ export class ShapeControlPointDrag extends Drag {
     const label = this.callback(transformedCoord, this.uow);
     this.setState({ label });
     this.uow.notify();
+
+    this.emit('drag', { coord: event.offset, modifiers: event.modifiers });
   }
 
   onDragEnd(): void {

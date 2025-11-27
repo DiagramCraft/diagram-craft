@@ -30,7 +30,7 @@ export class NodeDrag extends Drag {
     this.context.help.push('NodeDrag', 'Move waypoints');
   }
 
-  onDrag({ offset }: DragEvents.DragStart) {
+  onDrag({ offset, modifiers }: DragEvents.DragStart) {
     if (!this.lastPoint) {
       this.startPoint = offset;
     }
@@ -47,6 +47,8 @@ export class NodeDrag extends Drag {
     this.uow.notify();
 
     this.lastPoint = offset;
+
+    this.emit('drag', { coord: offset, modifiers });
   }
 
   onDragEnd(): void {
@@ -54,8 +56,7 @@ export class NodeDrag extends Drag {
     if (
       this.lastPoint === undefined ||
       this.startPoint === undefined ||
-      (Date.now()- this.startTime < 200 &&
-        Point.distance(this.lastPoint, this.startPoint) < 5)
+      (Date.now() - this.startTime < 200 && Point.distance(this.lastPoint, this.startPoint) < 5)
     ) {
       this.uow.abort();
       return;

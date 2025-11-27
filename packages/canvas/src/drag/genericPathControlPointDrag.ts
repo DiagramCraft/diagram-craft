@@ -32,6 +32,8 @@ export class GenericPathControlPointDrag extends Drag {
 
     this.editablePath.commitToNode(this.uow);
     this.uow.notify();
+
+    this.emit('drag', { coord: offset, modifiers });
   }
 
   onDragEnd(): void {

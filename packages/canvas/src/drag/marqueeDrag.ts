@@ -19,7 +19,7 @@ export class MarqueeDrag extends Drag {
     );
   }
 
-  onDrag({ offset }: DragEvents.DragStart) {
+  onDrag({ offset, modifiers }: DragEvents.DragStart) {
     this.context.marquee.bounds = Box.normalize({
       ...this.offset,
       w: offset.x - this.offset.x,
@@ -28,6 +28,8 @@ export class MarqueeDrag extends Drag {
     });
 
     this.updatePendingElements(this.diagram);
+
+    this.emit('drag', { coord: offset, modifiers });
   }
 
   onDragEnd(): void {

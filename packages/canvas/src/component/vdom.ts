@@ -170,7 +170,7 @@ const updateAttrs = (oldVNode: VNode, newVNode: VNode) => {
   const newNode = newVNode.el!;
 
   for (const key in newAttrs) {
-    if (key === 'on' || key === 'hooks' || key === 'component') return;
+    if (key === 'on' || key === 'hooks' || key === 'component') continue;
 
     const value = newAttrs[key];
     if (oldAttrs[key] !== value) {

@@ -20,7 +20,7 @@ export class EdgeSelectionComponent extends Component<Props> {
     return svg.g(
       {},
       svg.circle({
-        class: $c('svg-handle svg-selection__handle-edge', { connected: edge.start.isConnected }),
+        class: `svg-handle ${$c('svg-selection__handle-edge', { connected: edge.start.isConnected })}`,
         cx: edge.start.position.x,
         cy: edge.start.position.y,
         r: z.num(4, 1.5),
@@ -36,7 +36,7 @@ export class EdgeSelectionComponent extends Component<Props> {
         style: `pointer-events: ${DRAG_DROP_MANAGER.isDragging() ? 'none' : 'unset'}`
       }),
       svg.circle({
-        class: $c('svg-handle svg-selection__handle-edge', { connected: edge.end.isConnected }),
+        class: `svg-handle ${$c('svg-selection__handle-edge', { connected: edge.end.isConnected })}`,
         cx: edge.end.position.x,
         cy: edge.end.position.y,
         r: z.num(4, 1.5),

@@ -36,6 +36,8 @@ export class LabelAttachmentPointDrag extends Drag {
       .updateLabelNode({ timeOffset: timeOffset.pathT, offset: offset }, this.uow);
 
     this.uow.notify();
+
+    this.emit('drag', { coord: event.offset, modifiers: event.modifiers });
   }
 
   onDragEnd(): void {

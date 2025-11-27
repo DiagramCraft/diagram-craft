@@ -18,9 +18,11 @@ export class EdgeWaypointDrag extends Drag {
     this.context.help.push('EdgeWaypointDrag', 'Move waypoint');
   }
 
-  onDrag({ offset }: DragEvents.DragStart) {
+  onDrag({ offset, modifiers }: DragEvents.DragStart) {
     this.edge.moveWaypoint(this.edge.waypoints[this.waypointIdx]!, offset, this.uow);
     this.uow.notify();
+
+    this.emit('drag', { coord: offset, modifiers });
   }
 
   onDragEnd(): void {
