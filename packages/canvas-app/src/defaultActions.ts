@@ -26,6 +26,7 @@ import { styleCopyActions } from './actions/styleCopyAction';
 import { ruleLayerActions } from './actions/ruleLayerActions';
 import { Application } from './application';
 import { createNavigateNodeActions } from './actions/navigateNodeAction';
+import { elementActions } from './actions/elementActions';
 
 export const defaultCanvasActions: ActionMapFactory<Application> = application => ({
   ...edgeTextAddActions(application),
@@ -53,7 +54,8 @@ export const defaultCanvasActions: ActionMapFactory<Application> = application =
   ...debugActions(application),
   ...exportActions(application),
   ...layerActions(application),
-  ...ruleLayerActions(application)
+  ...ruleLayerActions(application),
+  ...elementActions(application)
 });
 
 export const defaultMacKeymap: KeyMap = {

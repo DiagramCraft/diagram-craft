@@ -156,6 +156,10 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
             </ContextMenu.SubTrigger>
             <ContextMenu.Portal>
               <ContextMenu.SubContent className="cmp-context-menu" sideOffset={2} alignOffset={-5}>
+                <ActionContextMenuItem action={'ELEMENT_CONVERT_TO_NAME_ELEMENT'}>
+                  Convert to named element
+                </ActionContextMenuItem>
+                <ContextMenu.Separator className="cmp-context-menu__separator" />
                 {diagram.document.data.db.schemas.map(schema => {
                   return (
                     <ContextMenu.Sub key={schema.id}>
