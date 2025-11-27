@@ -56,6 +56,8 @@ export class EdgeControlPointDrag extends Drag {
     this.edge.replaceWaypoint(this.waypointIdx, { ...wp, controlPoints: controlPoints }, this.uow);
 
     this.uow.notify();
+
+    this.emit('drag', { coord: offset, modifiers });
   }
 
   onDragEnd(): void {

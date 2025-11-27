@@ -64,6 +64,8 @@ export class GuideMoveDrag extends BaseGuideDrag {
 
     this.diagram.updateGuide(this.guide.id, { position: round(snappedPosition) });
     this.setState({ label: `${this.guide.type} guide: ${round(snappedPosition)}px` });
+
+    this.emit('drag', { coord: event.offset, modifiers: event.modifiers });
   }
 
   onDragEnd(_event: DragEvents.DragEnd): void {
@@ -116,6 +118,8 @@ export class GuideCreateDrag extends BaseGuideDrag {
     }
 
     this.setState({ label: `Creating ${this.guideType} guide: ${round(snappedPosition)}px` });
+
+    this.emit('drag', { coord: event.offset, modifiers: event.modifiers });
   }
 
   onDragEnd(_event: DragEvents.DragEnd): void {

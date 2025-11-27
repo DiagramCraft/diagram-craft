@@ -57,6 +57,8 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
         setPosition(this.#dragImage, event.offset);
       }
     }
+
+    this.emit('drag', { coord: event.offset, modifiers: event.modifiers });
   }
 
   onDragEnd() {

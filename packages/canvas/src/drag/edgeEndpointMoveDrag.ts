@@ -111,6 +111,8 @@ export class EdgeEndpointMoveDrag extends Drag {
     }
 
     this.uow.notify();
+
+    this.emit('drag', { coord: offset, modifiers });
   }
 
   onDragEnd(): void {
