@@ -33,7 +33,7 @@
       display: flex;
       color: var(--accent-fg);
 
-      > a {
+      > a, > div > a {
         display: flex;
         color: var(--cmp-fg);
 
