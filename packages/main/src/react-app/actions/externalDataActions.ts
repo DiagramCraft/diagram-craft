@@ -30,7 +30,8 @@ export const externalDataActions = (application: Application) => ({
   EXTERNAL_DATA_LINK: new ExternalDataLinkAction(application),
   EXTERNAL_DATA_CLEAR: new ExternalDataClear(application),
   EXTERNAL_DATA_LINK_REMOVE_TEMPLATE: new ExternalDataLinkRemoveTemplate(application),
-  EXTERNAL_DATA_LINK_RENAME_TEMPLATE: new ExternalDataLinkRenameTemplate(application)
+  EXTERNAL_DATA_LINK_RENAME_TEMPLATE: new ExternalDataLinkRenameTemplate(application),
+  EXTERNAL_DATA_LINK_UPDATE_TEMPLATE: new ExternalDataLinkUpdateTemplate(application)
 });
 
 declare global {
@@ -313,5 +314,75 @@ export class ExternalDataLinkRenameTemplate extends AbstractAction<
         );
       }
     });
+  }
+}
+
+export class ExternalDataLinkUpdateTemplate extends AbstractSelectionAction<Application, SchemaArg> {
+  constructor(application: Application) {
+    super(application, MultipleType.SingleOnly, ElementType.Node);
+  }
+
+  isEnabled(arg: Partial<SchemaArg>): boolean {
+    if (!super.isEnabled(arg)) return false;
+
+    const $d = this.context.model.activeDiagram;
+    const selectedElement = $d.selection.elements[0];
+
+    // Check if the selected element has external data linked to this schema
+    const dataEntry = selectedElement?.metadata.data?.data?.find(
+      d => d.schema === arg.schemaId && d.type === 'external'
+    );
+
+    if (!dataEntry?.external?.uid) return false;
+
+    // Check if there are any templates for this schema
+    const $doc = this.context.model.activeDocument;
+    const templates = $doc.data.templates.bySchema(arg.schemaId!);
+
+    return templates.length > 0;
+  }
+
+  execute(arg: Partial<SchemaArg>): void {
+    const $d = this.context.model.activeDiagram;
+    const $doc = this.context.model.activeDocument;
+
+    const selectedElement = $d.selection.elements[0];
+    assert.present(selectedElement);
+
+    const templates = $doc.data.templates.bySchema(arg.schemaId!);
+
+    const updateTemplate = (template: DataTemplate) => {
+      const oldTemplate = deepClone(template);
+      const newTemplate = deepClone(template);
+      newTemplate.template = serializeDiagramElement(selectedElement);
+
+      $d.undoManager.addAndExecute(
+        makeUndoableAction('Update template', {
+          redo: () => $doc.data.templates.update(newTemplate),
+          undo: () => $doc.data.templates.update(oldTemplate)
+        })
+      );
+    };
+
+    // If only one template, update it directly
+    if (templates.length === 1) {
+      updateTemplate(templates[0]!);
+    } else {
+      // Show dialog to select which template to update
+      this.context.ui.showDialog({
+        id: 'selectTemplate',
+        props: {
+          title: 'Update Template',
+          label: 'Select template to update',
+          templates: templates
+        },
+        onCancel: () => {},
+        onOk: (templateId: string) => {
+          const template = $doc.data.templates.byId(templateId);
+          assert.present(template);
+          updateTemplate(template);
+        }
+      });
+    }
   }
 }

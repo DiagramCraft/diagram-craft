@@ -397,9 +397,23 @@ export const ModelPickerTab = () => {
     };
   }, [db, redraw]);
 
+  const clearTemplateCache = (templateId: string) => {
+    for (const key of NODE_CACHE.keys()) {
+      if (key.endsWith(`/${templateId}`)) {
+        NODE_CACHE.delete(key);
+      }
+    }
+  };
+
   useEventListener(document.data.templates, 'add', redraw);
-  useEventListener(document.data.templates, 'update', redraw);
-  useEventListener(document.data.templates, 'remove', redraw);
+  useEventListener(document.data.templates, 'update', e => {
+    clearTemplateCache(e.template.id);
+    redraw();
+  });
+  useEventListener(document.data.templates, 'remove', e => {
+    clearTemplateCache(e.template.id);
+    redraw();
+  });
 
   const [selectedSchema, setSelectedSchema] = useState<string | undefined>(db.schemas[0]!.id);
 

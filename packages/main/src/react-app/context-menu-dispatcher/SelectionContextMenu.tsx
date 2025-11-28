@@ -199,6 +199,12 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
                           >
                             Make template
                           </ActionContextMenuItem>
+                          <ActionContextMenuItem
+                            action={'EXTERNAL_DATA_LINK_UPDATE_TEMPLATE'}
+                            arg={{ schemaId: schema.id }}
+                          >
+                            Update template
+                          </ActionContextMenuItem>
                         </ContextMenu.SubContent>
                       </ContextMenu.Portal>
                     </ContextMenu.Sub>

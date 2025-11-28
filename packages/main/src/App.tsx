@@ -68,6 +68,7 @@ import { bindDocumentDragAndDrop } from '@diagram-craft/canvas/dragDropManager';
 import { ExternalDataLinkDialog } from './react-app/components/ExternalDataLinkDialog';
 import { Preview } from './react-app/Preview';
 import { ShapeSelectDialog } from './react-app/ShapeSelectDialog';
+import { SelectTemplateDialog } from './react-app/SelectTemplateDialog';
 import { ZoomTool } from '@diagram-craft/canvas-app/tools/zoomTool';
 import { AwarenessToolbar } from './react-app/AwarenessToolbar';
 import { CommentDialog } from './react-app/components/CommentDialog';
@@ -517,6 +518,19 @@ export const App = (props: {
             return (
               <div key={item.id} style={{ zIndex: item.zIndex }}>
                 <ShapeSelectDialog
+                  open={true}
+                  {...item.dialog.props}
+                  onOk={item.dialog.onOk}
+                  onCancel={item.dialog.onCancel}
+                />
+              </div>
+            );
+          })}
+          {dialogStack.map(item => {
+            if (item.dialog.id !== 'selectTemplate') return null;
+            return (
+              <div key={item.id} style={{ zIndex: item.zIndex }}>
+                <SelectTemplateDialog
                   open={true}
                   {...item.dialog.props}
                   onOk={item.dialog.onOk}
