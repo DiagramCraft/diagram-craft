@@ -22,6 +22,7 @@ import { makeUndoableAction } from '@diagram-craft/model/undoManager';
 import { deepClone } from '@diagram-craft/utils/object';
 import type { Data } from '@diagram-craft/model/dataProvider';
 import { DataManagerUndoableFacade } from '@diagram-craft/model/diagramDocumentDataUndoActions';
+import type { FlatObject } from '@diagram-craft/utils/flatObject';
 
 export const externalDataActions = (application: Application) => ({
   EXTERNAL_DATA_UNLINK: new ExternalDataUnlinkAction(application),
@@ -138,22 +139,27 @@ export class ExternalDataLinkAction extends AbstractSelectionAction<Application,
     this.context.ui.showDialog({
       id: 'externalDataLink',
       onCancel: () => {},
-      onOk: async (uid: string) => {
+      onOk: async (data: { uid: string; formData?: FlatObject }) => {
+        const { uid, formData } = data;
+
         const db = $d.document.data.db;
         const dbUndoable = new DataManagerUndoableFacade($d.undoManager, db);
 
         // Check if this uid exists in the database
         const existingData = db.getById(schema, [uid]);
 
-        // If it doesn't exist and we have element data, create it
-        if (existingData.length === 0 && elementDataEntry?.data) {
-          const newData: Data = {
-            _uid: uid,
-            ...elementDataEntry.data
-          };
+        // If it doesn't exist, create it with form data or element data
+        if (existingData.length === 0) {
+          const dataToUse = formData ?? elementDataEntry?.data;
+          if (dataToUse) {
+            const newData: Data = {
+              _uid: uid,
+              ...dataToUse
+            };
 
-          // Create the shared data entry
-          await dbUndoable.addData(schema, newData);
+            // Create the shared data entry
+            await dbUndoable.addData(schema, newData);
+          }
         }
 
         // Link to the data (either newly created or existing)
@@ -196,7 +202,8 @@ export class ExternalDataLinkAction extends AbstractSelectionAction<Application,
         schema,
         hasElementData,
         elementData: elementDataEntry?.data,
-        canCreateData
+        canCreateData,
+        elementName: element.name
       }
     });
   }

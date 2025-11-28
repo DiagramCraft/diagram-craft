@@ -1,74 +1,14 @@
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
-import { MultiSelect, MultiSelectItem } from '@diagram-craft/app-components/MultiSelect';
 import { Data } from '@diagram-craft/model/dataProvider';
-import {
-  DataSchemaField,
-  decodeDataReferences,
-  encodeDataReferences
-} from '@diagram-craft/model/diagramDocumentDataSchemas';
+import { decodeDataReferences, encodeDataReferences } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { newid } from '@diagram-craft/utils/id';
 import { assert } from '@diagram-craft/utils/assert';
 import React, { useState } from 'react';
 import { useDiagram, useDocument } from '../../application';
 import { DataManagerUndoableFacade } from '@diagram-craft/model/diagramDocumentDataUndoActions';
-
-type ReferenceFieldEditorProps = {
-  field: DataSchemaField & { type: 'reference' };
-  selectedValues: string[];
-  onSelectionChange: (values: string[]) => void;
-};
-
-const ReferenceFieldEditor = ({
-  field,
-  selectedValues,
-  onSelectionChange
-}: ReferenceFieldEditorProps) => {
-  const document = useDocument();
-  const db = document.data.db;
-
-  const referencedSchema = db.schemas.find(s => s.id === field.schemaId);
-  if (!referencedSchema) {
-    return <div>Referenced schema not found</div>;
-  }
-
-  const referencedData = db.getData(referencedSchema);
-  const displayField = referencedSchema.fields[0]!.id; // Use first field for display
-
-  // Convert data to MultiSelectItem format
-  const availableItems: MultiSelectItem[] = referencedData.map(item => {
-    const fieldValue = item[displayField];
-    let label: string = item._uid; // Default fallback
-
-    if (fieldValue) {
-      label = fieldValue;
-    }
-
-    return {
-      value: item._uid,
-      label: label
-    };
-  });
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-      <MultiSelect
-        selectedValues={selectedValues}
-        availableItems={availableItems}
-        onSelectionChange={onSelectionChange}
-        placeholder={`Search ${referencedSchema.name}...`}
-      />
-
-      {/* Info about constraints */}
-      <div style={{ fontSize: '0.8em', color: 'var(--cmp-fg-dim)' }}>
-        {field.minCount > 0 && `Minimum ${field.minCount} required. `}
-        {field.maxCount < Number.MAX_SAFE_INTEGER && `Maximum ${field.maxCount} allowed.`}
-        {selectedValues.length > 0 && ` (${selectedValues.length} selected)`}
-      </div>
-    </div>
-  );
-};
+import { ReferenceFieldEditor } from './ReferenceFieldEditor';
 
 type EditItemDialogProps = {
   open: boolean;
