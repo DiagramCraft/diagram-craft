@@ -1,19 +1,23 @@
 import { Accordion } from '@diagram-craft/app-components/Accordion';
-import { useApplication, useDiagram, useDocument } from '../../../application';
+import { Application, useApplication, useDiagram, useDocument } from '../../../application';
 import { Select } from '@diagram-craft/app-components/Select';
 import { Data } from '@diagram-craft/model/dataProvider';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useRedraw } from '../../hooks/useRedraw';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { newid } from '@diagram-craft/utils/id';
 import {
   TbChevronDown,
   TbChevronRight,
+  TbLayoutGrid,
+  TbLayoutList,
+  TbPencil,
   TbPlus,
   TbRefresh,
   TbSearch,
-  TbSettings
+  TbSettings,
+  TbTrash
 } from 'react-icons/tb';
 import { DRAG_DROP_MANAGER } from '@diagram-craft/canvas/dragDropManager';
 import { ObjectPickerDrag } from './objectPickerDrag';
@@ -38,8 +42,75 @@ import { ToolWindowPanel } from '../ToolWindowPanel';
 import { ModelCenterDialogCommand } from '../../components/ModelCenterDialog/ModelCenterDialog';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import type { ElementDataEntry } from '@diagram-craft/model/diagramProps';
+import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
+import type { Diagram } from '@diagram-craft/model/diagram';
 
 const NODE_CACHE = new Map<string, DiagramNode>();
+const PICKER_CANVAS_SIZE = 42;
+
+const useSchemaAndData = (selectedSchema: string, search: string) => {
+  const diagram = useDiagram();
+  const db = diagram.document.data.db;
+
+  const [, setDataVersion] = useState<number>(0);
+
+  // Redraw on any data changes
+  useEffect(() => {
+    const handleDataChange = () => setDataVersion(prev => prev + 1);
+
+    db.on('addData', handleDataChange);
+    db.on('updateData', handleDataChange);
+    db.on('deleteData', handleDataChange);
+
+    return () => {
+      db.off('addData', handleDataChange);
+      db.off('updateData', handleDataChange);
+      db.off('deleteData', handleDataChange);
+    };
+  }, [db]);
+
+  const schema = db.schemas.find(s => s.id === selectedSchema) ?? db.schemas[0];
+  const data = schema ? (search.trim() ? db.queryData(schema, search) : db.getData(schema)) : [];
+
+  return { schema, data, document: diagram.document, diagram, db };
+};
+
+const ItemContextMenu = (props: {
+  item: Data;
+  onEditItem: (item: Data) => void;
+  onDeleteItem: (item: Data) => void;
+}) => (
+  <ContextMenu.Content className="cmp-context-menu">
+    <ContextMenu.Item
+      className="cmp-context-menu__item"
+      onClick={() => props.onEditItem(props.item)}
+    >
+      Edit Item
+    </ContextMenu.Item>
+    <ContextMenu.Item
+      className="cmp-context-menu__item"
+      onClick={() => props.onDeleteItem(props.item)}
+    >
+      Delete Item
+    </ContextMenu.Item>
+  </ContextMenu.Content>
+);
+
+const handleDragStart = (
+  ev: React.MouseEvent,
+  node: DiagramNode,
+  diagram: Diagram,
+  app: Application,
+  isRegularLayer: boolean
+) => {
+  if (!isRegularLayer) return;
+  if (ev.button !== 0) return;
+
+  DRAG_DROP_MANAGER.initiate(new ObjectPickerDrag(ev.nativeEvent, node, diagram, undefined, app));
+
+  ev.preventDefault();
+  ev.stopPropagation();
+};
 
 const makeDataReference = (item: Data, schema: DataSchema): ElementDataEntry => {
   return {
@@ -111,198 +182,280 @@ const makeDefaultNode = (item: Data, schema: DataSchema, definitions: Definition
   ).node;
 };
 
-const DataProviderResponse = (props: {
-  selectedSchema: string;
-  search: string;
+const TemplateGridItem = (props: {
+  item: Data;
+  schema: DataSchema;
+  node: DiagramNode;
   onEditItem: (item: Data) => void;
   onDeleteItem: (item: Data) => void;
 }) => {
   const app = useApplication();
   const diagram = useDiagram();
-  const document = diagram.document;
-  const db = document.data.db;
-  const [expanded, setExpanded] = useState<string[]>([]);
-  const [, setDataVersion] = useState<number>(0);
-
-  useEffect(() => {
-    const handleDataChange = () => setDataVersion(prev => prev + 1);
-
-    db.on('addData', handleDataChange);
-    db.on('updateData', handleDataChange);
-    db.on('deleteData', handleDataChange);
-
-    return () => {
-      db.off('addData', handleDataChange);
-      db.off('updateData', handleDataChange);
-      db.off('deleteData', handleDataChange);
-    };
-  }, [db]);
-
-  const schema = db.schemas.find(s => s.id === props.selectedSchema) ?? db.schemas[0];
-  if (!schema) return <div>Loading...</div>;
-
-  const data = props.search.trim() !== '' ? db.queryData(schema, props.search) : db.getData(schema);
-  const isRuleLayer = diagram.activeLayer.type === 'rule';
+  const { item, schema, node } = props;
 
   return (
-    <div className={'cmp-query-response'}>
-      {data.map(item => {
-        const dataTemplates = document.data.templates.bySchema(schema.id);
-        return (
-          <ContextMenu.Root key={item._uid}>
-            <ContextMenu.Trigger asChild>
-              <div
-                className={`util-draggable cmp-query-response__item ${expanded.includes(item._uid) ? 'cmp-query-response__item--expanded' : ''}`}
-                style={{ cursor: isRuleLayer ? 'default' : 'pointer' }}
-              >
+    <div
+      key={item._uid}
+      style={{ background: 'transparent' }}
+      data-width={node.diagram.viewBox.dimensions.w}
+    >
+      <ContextMenu.Root>
+        <ContextMenu.Trigger asChild>
+          <div
+            onMouseDown={ev =>
+              handleDragStart(ev, node, diagram, app, isRegularLayer(diagram.activeLayer))
+            }
+            className={'light-theme'}
+          >
+            <PickerCanvas
+              width={PICKER_CANVAS_SIZE}
+              height={PICKER_CANVAS_SIZE}
+              diagramWidth={node.diagram.viewBox.dimensions.w}
+              diagramHeight={node.diagram.viewBox.dimensions.h}
+              diagram={node.diagram}
+              showHover={true}
+              name={item[schema.fields[0]!.id] as string}
+              onMouseDown={() => {}}
+            />
+          </div>
+        </ContextMenu.Trigger>
+        <ContextMenu.Portal>
+          <ItemContextMenu
+            item={item}
+            onEditItem={props.onEditItem}
+            onDeleteItem={props.onDeleteItem}
+          />
+        </ContextMenu.Portal>
+      </ContextMenu.Root>
+    </div>
+  );
+};
+
+type DataViewProps = {
+  selectedSchema: string;
+  search: string;
+  onEditItem: (item: Data) => void;
+  onDeleteItem: (item: Data) => void;
+};
+
+const DataProviderGridView = (props: DataViewProps) => {
+  const app = useApplication();
+  const { schema, data, document } = useSchemaAndData(props.selectedSchema, props.search);
+
+  if (!schema) return <div>Loading...</div>;
+
+  const dataTemplates = document.data.templates.bySchema(schema.id);
+
+  const handleDeleteTemplate = (template: DataTemplate) => {
+    app.ui.showDialog(
+      new MessageDialogCommand(
+        {
+          title: 'Delete Template',
+          message: `Are you sure you want to delete the template "${template.name}"?`,
+          okLabel: 'Delete',
+          okType: 'danger',
+          cancelLabel: 'Cancel'
+        },
+        () => {
+          app.actions['EXTERNAL_DATA_LINK_REMOVE_TEMPLATE']?.execute({
+            templateId: template.id
+          });
+        }
+      )
+    );
+  };
+
+  return dataTemplates.map(t => (
+    <ToolWindowPanel
+      id={t.id}
+      key={t.id}
+      title={t.name}
+      mode={'accordion'}
+      value={true}
+      headerButtons={
+        <div style={{ gap: '0.5rem', display: 'flex' }}>
+          <a
+            className={'cmp-button--icon-only'}
+            onClick={() => {
+              app.actions['EXTERNAL_DATA_LINK_RENAME_TEMPLATE']?.execute({
+                templateId: t.id
+              });
+            }}
+          >
+            <TbPencil />
+          </a>
+          <a
+            className={'cmp-button--icon-only'}
+            onClick={() => handleDeleteTemplate(t)}
+          >
+            <TbTrash />
+          </a>
+        </div>
+      }
+    >
+      <div className={'cmp-object-picker'}>
+        {data.map(item => (
+          <TemplateGridItem
+            key={item._uid}
+            item={item}
+            schema={schema}
+            node={makeTemplateNode(item, schema, document.definitions, t)}
+            onEditItem={props.onEditItem}
+            onDeleteItem={props.onDeleteItem}
+          />
+        ))}
+      </div>
+    </ToolWindowPanel>
+  ));
+};
+
+const DataProviderListView = (props: DataViewProps) => {
+  const app = useApplication();
+  const { schema, data, document, diagram } = useSchemaAndData(props.selectedSchema, props.search);
+  const [expanded, setExpanded] = useState<string[]>([]);
+
+  if (!schema) return <div>Loading...</div>;
+
+  const isRuleLayer = diagram.activeLayer.type === 'rule';
+  const dataTemplates = document.data.templates.bySchema(schema.id);
+
+  return (
+    <ToolWindowPanel id={'response'} title={'Data'} mode={'accordion'}>
+      <div className={'cmp-query-response'}>
+        {data.map(item => {
+          return (
+            <ContextMenu.Root key={item._uid}>
+              <ContextMenu.Trigger asChild>
                 <div
-                  style={{ cursor: 'default' }}
-                  onClick={() => {
-                    if (expanded.includes(item._uid)) {
-                      setExpanded(expanded.filter(e => e !== item._uid));
-                    } else {
-                      setExpanded([...expanded, item._uid]);
-                    }
-                  }}
+                  className={`util-draggable cmp-query-response__item ${expanded.includes(item._uid) ? 'cmp-query-response__item--expanded' : ''}`}
+                  style={{ cursor: isRuleLayer ? 'default' : 'pointer' }}
                 >
-                  {expanded.includes(item._uid) ? <TbChevronDown /> : <TbChevronRight />}
-                </div>
+                  <div
+                    style={{ cursor: 'default' }}
+                    onClick={() => {
+                      if (expanded.includes(item._uid)) {
+                        setExpanded(expanded.filter(e => e !== item._uid));
+                      } else {
+                        setExpanded([...expanded, item._uid]);
+                      }
+                    }}
+                  >
+                    {expanded.includes(item._uid) ? <TbChevronDown /> : <TbChevronRight />}
+                  </div>
 
-                <div
-                  style={{ color: isRuleLayer ? 'var(--base-fg-more-dim)' : 'default' }}
-                  onMouseDown={ev => {
-                    if (!isRegularLayer(diagram.activeLayer)) return;
-                    if (ev.button !== 0) return; // Only handle left mouse button
+                  <div
+                    style={{ color: isRuleLayer ? 'var(--base-fg-more-dim)' : 'default' }}
+                    onMouseDown={ev => {
+                      const node =
+                        dataTemplates.length > 0
+                          ? makeTemplateNode(item, schema, document.definitions, dataTemplates[0]!)
+                          : makeDefaultNode(item, schema, document.definitions);
+                      handleDragStart(ev, node, diagram, app, isRegularLayer(diagram.activeLayer));
+                    }}
+                  >
+                    {item[schema.fields[0]!.id]}
 
-                    const node =
-                      dataTemplates.length > 0
-                        ? makeTemplateNode(item, schema, document.definitions, dataTemplates[0]!)
-                        : makeDefaultNode(item, schema, document.definitions);
-
-                    DRAG_DROP_MANAGER.initiate(
-                      new ObjectPickerDrag(ev.nativeEvent, node, diagram, undefined, app)
-                    );
-                  }}
-                >
-                  {item[schema.fields[0]!.id]}
-
-                  {expanded.includes(item._uid) && (
-                    <>
-                      <div>
-                        {schema.fields
-                          .filter(f => f.type !== 'reference')
-                          .map(k => (
-                            <div key={k.id}>
-                              {k.name}: {item[k.id] ?? '-'}
-                            </div>
-                          ))}
-                      </div>
-
-                      {dataTemplates.length > 0 && (
-                        <div
-                          className={'cmp-object-picker'}
-                          style={{
-                            border: '1px solid var(--cmp-border)',
-                            borderRadius: 'var(--cmp-radius)',
-                            background: 'var(--cmp-bg)',
-                            padding: '0.25rem',
-                            margin: '0.25rem 0.5rem 0 0'
-                          }}
-                        >
-                          {dataTemplates
-                            .map(
-                              t =>
-                                [t, makeTemplateNode(item, schema, document.definitions, t)] as [
-                                  DataTemplate,
-                                  DiagramNode
-                                ]
-                            )
-                            .map(([t, n]) => (
-                              <div
-                                key={n.id}
-                                style={{ background: 'transparent' }}
-                                data-width={n.diagram.viewBox.dimensions.w}
-                              >
-                                <ContextMenu.Root>
-                                  <ContextMenu.Trigger asChild>
-                                    <div
-                                      onMouseDown={ev => {
-                                        if (!isRegularLayer(diagram.activeLayer)) return;
-                                        if (ev.button !== 0) return;
-
-                                        DRAG_DROP_MANAGER.initiate(
-                                          new ObjectPickerDrag(
-                                            ev.nativeEvent,
-                                            n,
-                                            diagram,
-                                            undefined,
-                                            app
-                                          )
-                                        );
-
-                                        ev.preventDefault();
-                                        ev.stopPropagation();
-                                      }}
-                                      className={'light-theme'}
-                                    >
-                                      <PickerCanvas
-                                        width={42}
-                                        height={42}
-                                        diagramWidth={n.diagram.viewBox.dimensions.w}
-                                        diagramHeight={n.diagram.viewBox.dimensions.h}
-                                        diagram={n.diagram}
-                                        showHover={true}
-                                        name={t.name}
-                                        onMouseDown={() => {}}
-                                      />
-                                    </div>
-                                  </ContextMenu.Trigger>
-                                  <ContextMenu.Portal>
-                                    <ContextMenu.Content className="cmp-context-menu">
-                                      <ActionContextMenuItem
-                                        action={'EXTERNAL_DATA_LINK_RENAME_TEMPLATE'}
-                                        arg={{ templateId: t.id }}
-                                      >
-                                        Rename...
-                                      </ActionContextMenuItem>
-                                      <ActionContextMenuItem
-                                        action={'EXTERNAL_DATA_LINK_REMOVE_TEMPLATE'}
-                                        arg={{ templateId: t.id }}
-                                      >
-                                        Remove
-                                      </ActionContextMenuItem>
-                                    </ContextMenu.Content>
-                                  </ContextMenu.Portal>
-                                </ContextMenu.Root>
+                    {expanded.includes(item._uid) && (
+                      <>
+                        <div>
+                          {schema.fields
+                            .filter(f => f.type !== 'reference')
+                            .map(k => (
+                              <div key={k.id}>
+                                {k.name}: {item[k.id] ?? '-'}
                               </div>
                             ))}
                         </div>
-                      )}
-                    </>
-                  )}
+
+                        {dataTemplates.length > 0 && (
+                          <div
+                            className={'cmp-object-picker'}
+                            style={{
+                              border: '1px solid var(--cmp-border)',
+                              borderRadius: 'var(--cmp-radius)',
+                              background: 'var(--cmp-bg)',
+                              padding: '0.25rem',
+                              margin: '0.25rem 0.5rem 0 0'
+                            }}
+                          >
+                            {dataTemplates
+                              .map(
+                                t =>
+                                  [t, makeTemplateNode(item, schema, document.definitions, t)] as [
+                                    DataTemplate,
+                                    DiagramNode
+                                  ]
+                              )
+                              .map(([t, n]) => (
+                                <div
+                                  key={n.id}
+                                  style={{ background: 'transparent' }}
+                                  data-width={n.diagram.viewBox.dimensions.w}
+                                >
+                                  <ContextMenu.Root>
+                                    <ContextMenu.Trigger asChild>
+                                      <div
+                                        onMouseDown={ev =>
+                                          handleDragStart(
+                                            ev,
+                                            n,
+                                            diagram,
+                                            app,
+                                            isRegularLayer(diagram.activeLayer)
+                                          )
+                                        }
+                                        className={'light-theme'}
+                                      >
+                                        <PickerCanvas
+                                          width={PICKER_CANVAS_SIZE}
+                                          height={PICKER_CANVAS_SIZE}
+                                          diagramWidth={n.diagram.viewBox.dimensions.w}
+                                          diagramHeight={n.diagram.viewBox.dimensions.h}
+                                          diagram={n.diagram}
+                                          showHover={true}
+                                          name={t.name}
+                                          onMouseDown={() => {}}
+                                        />
+                                      </div>
+                                    </ContextMenu.Trigger>
+                                    <ContextMenu.Portal>
+                                      <ContextMenu.Content className="cmp-context-menu">
+                                        <ActionContextMenuItem
+                                          action={'EXTERNAL_DATA_LINK_RENAME_TEMPLATE'}
+                                          arg={{ templateId: t.id }}
+                                        >
+                                          Rename...
+                                        </ActionContextMenuItem>
+                                        <ActionContextMenuItem
+                                          action={'EXTERNAL_DATA_LINK_REMOVE_TEMPLATE'}
+                                          arg={{ templateId: t.id }}
+                                        >
+                                          Remove
+                                        </ActionContextMenuItem>
+                                      </ContextMenu.Content>
+                                    </ContextMenu.Portal>
+                                  </ContextMenu.Root>
+                                </div>
+                              ))}
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </ContextMenu.Trigger>
-            <ContextMenu.Portal>
-              <ContextMenu.Content className="cmp-context-menu">
-                <ContextMenu.Item
-                  className="cmp-context-menu__item"
-                  onClick={() => props.onEditItem(item)}
-                >
-                  Edit Item
-                </ContextMenu.Item>
-                <ContextMenu.Item
-                  className="cmp-context-menu__item"
-                  onClick={() => props.onDeleteItem(item)}
-                >
-                  Delete Item
-                </ContextMenu.Item>
-              </ContextMenu.Content>
-            </ContextMenu.Portal>
-          </ContextMenu.Root>
-        );
-      })}
-    </div>
+              </ContextMenu.Trigger>
+              <ContextMenu.Portal>
+                <ItemContextMenu
+                  item={item}
+                  onEditItem={props.onEditItem}
+                  onDeleteItem={props.onDeleteItem}
+                />
+              </ContextMenu.Portal>
+            </ContextMenu.Root>
+          );
+        })}
+      </div>
+    </ToolWindowPanel>
   );
 };
 
@@ -310,6 +463,9 @@ const DataProviderQueryView = (props: {
   selectedSchema: string;
   onChangeSchema: (s: string | undefined) => void;
   onSearch: (s: string) => void;
+  displayMode: 'list' | 'grid';
+  onChangeDisplayMode: (mode: 'list' | 'grid') => void;
+  showItemAddDialog: () => void;
 }) => {
   const document = useDocument();
   const db = document.data.db;
@@ -319,7 +475,7 @@ const DataProviderQueryView = (props: {
   return (
     <div style={{ width: '100%' }} className={'util-vstack'}>
       <div className={'util-hstack'}>
-        <div style={{ flexGrow: 1 }}>
+        <div style={{ flexGrow: 1, display: 'flex' }}>
           <Select.Root value={props.selectedSchema} onChange={props.onChangeSchema}>
             {db.schemas.map(schema => (
               <Select.Item key={schema.id} value={schema.id}>
@@ -328,6 +484,14 @@ const DataProviderQueryView = (props: {
             ))}
           </Select.Root>
         </div>
+
+        <Button
+          type={'secondary'}
+          onClick={() => props.showItemAddDialog()}
+          disabled={!('addData' in db)}
+        >
+          <TbPlus />
+        </Button>
       </div>
       <div className={'util-hstack'}>
         <TextInput
@@ -366,6 +530,21 @@ const DataProviderQueryView = (props: {
         >
           <TbSearch />
         </Button>
+
+        <div style={{ marginLeft: '0.5rem' }}>
+          <ToggleButtonGroup.Root
+            onChange={e => props.onChangeDisplayMode(e as 'list' | 'grid')}
+            value={props.displayMode}
+            type={'single'}
+          >
+            <ToggleButtonGroup.Item value={'list'}>
+              <TbLayoutList />
+            </ToggleButtonGroup.Item>
+            <ToggleButtonGroup.Item value={'grid'}>
+              <TbLayoutGrid />
+            </ToggleButtonGroup.Item>
+          </ToggleButtonGroup.Root>
+        </div>
       </div>
     </div>
   );
@@ -381,6 +560,7 @@ export const ModelPickerTab = () => {
   });
   const document = $diagram.document;
   const [search, setSearch] = useState<string>('');
+  const [displayMode, setDisplayMode] = useState<'list' | 'grid'>('list');
 
   const db = document.data.db;
 
@@ -498,29 +678,30 @@ export const ModelPickerTab = () => {
               onSearch={setSearch}
               selectedSchema={selectedSchema!}
               onChangeSchema={setSelectedSchema}
+              displayMode={displayMode}
+              onChangeDisplayMode={setDisplayMode}
+              showItemAddDialog={() => setAddItemDialog(true)}
             />
           </div>
         </ToolWindowPanel>
 
-        <ToolWindowPanel
-          id={'response'}
-          title={'Data'}
-          mode={'accordion'}
-          headerButtons={
-            'addData' in db && (
-              <a className={'cmp-button--icon-only'} onClick={() => setAddItemDialog(true)}>
-                <TbPlus />
-              </a>
-            )
-          }
-        >
-          <DataProviderResponse
+        {displayMode === 'list' && (
+          <DataProviderListView
             selectedSchema={selectedSchema!}
             search={search}
             onEditItem={item => setEditItemDialog({ open: true, item })}
             onDeleteItem={handleDeleteItem}
           />
-        </ToolWindowPanel>
+        )}
+
+        {displayMode === 'grid' && (
+          <DataProviderGridView
+            selectedSchema={selectedSchema!}
+            search={search}
+            onEditItem={item => setEditItemDialog({ open: true, item })}
+            onDeleteItem={handleDeleteItem}
+          />
+        )}
       </Accordion.Root>
 
       <EditItemDialog
