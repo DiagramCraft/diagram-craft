@@ -260,6 +260,7 @@ export const SchemasTab = () => {
         onOk={(s: DataSchema) => handleAddSchema(addSchemaDialog.providerId!, s)}
         onCancel={() => setAddSchemaDialog({ open: false })}
         availableSchemas={schemas}
+        document={document}
       />
       <EditSchemaDialog
         title="Edit Schema"
@@ -268,6 +269,7 @@ export const SchemasTab = () => {
         onCancel={() => setEditSchemaDialog({ open: false })}
         schema={editSchemaDialog.schema}
         availableSchemas={schemas}
+        document={document}
       />
     </>
   );
