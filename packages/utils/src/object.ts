@@ -117,14 +117,13 @@ export const deepMerge = <T extends Props>(
 /**
  * Creates a deep clone of the provided target object.
  *
- * This function uses the browser's native `structuredClone` algorithm by default,
- * but supports custom cloning behavior through the {@link deepCloneOverride} symbol.
+ * This function manually clones objects, arrays, and other values recursively,
+ * and supports custom cloning behavior through the {@link deepCloneOverride} symbol.
  * If an object has a function defined at the `deepCloneOverride` property, that
- * function will be called instead of using `structuredClone`.
+ * function will be called instead of performing standard cloning.
  *
- * **Note:** The override only applies to the top-level object being cloned. Nested
- * objects with overrides inside a parent object will not have their override functions
- * called - they will be cloned using `structuredClone` along with the parent.
+ * The override is checked at every level of the object tree, so nested objects
+ * with overrides will have their override functions called during the cloning process.
  *
  * @param v - The object to clone
  * @returns A deep clone of the target object
@@ -151,13 +150,45 @@ export const deepMerge = <T extends Props>(
  * };
  * const clone = deepClone(obj); // { data: 'value', cloned: true }
  */
-export const deepClone = <T>(v: T): T =>
+export const deepClone = <T>(v: T): T => {
+  // Check for custom clone override first
   // @ts-expect-error we check for existence, so this is ok
-  v?.[deepCloneOverride] ? v[deepCloneOverride]() : structuredClone(v);
+  if (v?.[deepCloneOverride]) {
+    // @ts-expect-error we check for existence, so this is ok
+    return v[deepCloneOverride]();
+  }
+
+  // Handle null
+  if (v === null) {
+    return v;
+  }
+
+  // Handle Date objects
+  if (v instanceof Date) {
+    return new Date(v.getTime()) as T;
+  }
+
+  // Handle arrays
+  if (Array.isArray(v)) {
+    return (v as T extends unknown[] ? T : never).map(item => deepClone(item)) as T;
+  }
+
+  // Handle objects
+  if (typeof v === 'object') {
+    const cp = { ...(v as Record<string, unknown>) };
+    Object.keys(cp).forEach(key => {
+      cp[key] = deepClone(cp[key]);
+    });
+    return cp as T;
+  }
+
+  // Return primitives as-is
+  return v;
+};
 
 /**
  * Symbol used to define a custom clone function on objects that need special
- * cloning behavior beyond the standard `structuredClone` algorithm.
+ * cloning behavior.
  *
  * Objects can implement a method at this property to control how they are cloned
  * when passed to {@link deepClone}. This is useful for:
@@ -169,9 +200,8 @@ export const deepClone = <T>(v: T): T =>
  * The override function is called on the object being cloned and should return
  * the cloned value. It has access to `this` context of the original object.
  *
- * **Important:** The override only works at the top level of the cloned object.
- * If a parent object without an override contains nested objects with overrides,
- * those nested overrides will not be invoked.
+ * The override is checked recursively at all levels of the object tree, so nested
+ * objects with overrides will have their override functions called during cloning.
  *
  * @example
  * // Simple override returning a modified clone

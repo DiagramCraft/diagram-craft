@@ -259,6 +259,44 @@ describe('deepCloneOverride functionality', () => {
     expect(result).toBe(customData);
     expect(result).toEqual({ x: 10, y: 20, nested: { z: 30 } });
   });
+
+  test('should call override function on nested objects', () => {
+    const nestedCloneFn = vi.fn(() => ({ nestedCloned: true }));
+    const nested = {
+      value: 'nested',
+      [deepCloneOverride]: nestedCloneFn
+    };
+
+    const parent = {
+      name: 'parent',
+      child: nested
+    };
+
+    const result = deepClone(parent);
+
+    expect(nestedCloneFn).toHaveBeenCalledOnce();
+    expect(result).toEqual({ name: 'parent', child: { nestedCloned: true } });
+    expect(result).not.toBe(parent);
+  });
+
+  test('should call override function on nested objects in arrays', () => {
+    const itemCloneFn = vi.fn(function (this: { id: number }) {
+      return { id: this.id, cloned: true };
+    });
+
+    const item = {
+      id: 42,
+      [deepCloneOverride]: itemCloneFn
+    };
+
+    const array = [item, { id: 99 }];
+
+    const result = deepClone(array);
+
+    expect(itemCloneFn).toHaveBeenCalledOnce();
+    expect(result).toEqual([{ id: 42, cloned: true }, { id: 99 }]);
+    expect(result).not.toBe(array);
+  });
 });
 
 describe('resilientDeepClone function', () => {
