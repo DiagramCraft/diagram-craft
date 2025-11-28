@@ -5,6 +5,7 @@ import { Select } from '@diagram-craft/app-components/Select';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbPlus, TbTrash } from 'react-icons/tb';
 import type { DataSchema, DataSchemaField } from '@diagram-craft/model/diagramDocumentDataSchemas';
+import type { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { newid } from '@diagram-craft/utils/id';
 
 type Props = {
@@ -14,6 +15,7 @@ type Props = {
   onCancel: () => void;
   schema?: DataSchema;
   availableSchemas?: DataSchema[];
+  document?: DiagramDocument;
 };
 
 const INITIAL_SCHEMA_FIELDS: DataSchemaField[] = [
@@ -21,27 +23,48 @@ const INITIAL_SCHEMA_FIELDS: DataSchemaField[] = [
   { id: 'field2', name: 'Field 2', type: 'longtext' }
 ];
 
+const schemaHasAssociatedData = (
+  document: DiagramDocument | undefined,
+  schemaId: string
+): boolean => {
+  if (!document) return false;
+
+  try {
+    const schema = document.data.db.schemas.find(s => s.id === schemaId);
+    if (!schema) return false;
+
+    const data = document.data.db.getData(schema);
+    return data.length > 0;
+  } catch (error) {
+    return true;
+  }
+};
+
 export const EditSchemaDialog = (props: Props) => {
   const [name, setName] = useState('');
   const [fields, setFields] = useState<DataSchemaField[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [originalFieldIds, setOriginalFieldIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (props.open && props.schema) {
       setName(props.schema.name);
       setFields([...props.schema.fields]);
+      setOriginalFieldIds(new Set(props.schema.fields.map(f => f.id)));
       setErrors({});
     } else if (props.open && !props.schema) {
       setName('New schema');
       setFields(INITIAL_SCHEMA_FIELDS);
+      setOriginalFieldIds(new Set());
       setErrors({});
     }
   }, [props.open, props.schema]);
 
   const addFieldAfter = (index: number) => {
+    const fieldNumber = fields.length + 1;
     const newField: DataSchemaField = {
-      id: newid(),
-      name: `Field ${fields.length + 1}`,
+      id: `field${fieldNumber}`,
+      name: `Field ${fieldNumber}`,
       type: 'text'
     };
     setFields(fields.toSpliced(index + 1, 0, newField));
@@ -74,6 +97,13 @@ export const EditSchemaDialog = (props: Props) => {
         newErrors[`field-${index}-name`] = 'Field name must be unique';
       }
       fieldNames.add(field.name.toLowerCase());
+
+      if (!field.id.trim()) {
+        newErrors[`field-${index}-id`] = 'Field ID is required';
+      } else if (!/^[a-zA-Z0-9_]+$/.test(field.id)) {
+        newErrors[`field-${index}-id`] =
+          'Field ID must contain only letters, numbers, and underscores';
+      }
 
       if (fieldIds.has(field.id)) {
         newErrors[`field-${index}-id`] = 'Field ID must be unique';
@@ -163,132 +193,165 @@ export const EditSchemaDialog = (props: Props) => {
               borderTop: '1px solid var(--cmp-border)'
             }}
           >
-            {fields.map((field, index) => (
-              <div
-                key={field.id}
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.5rem',
-                  paddingBottom: '0.5rem',
-                  borderBottom: '1px solid var(--cmp-border)'
-                }}
-              >
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'start' }}>
-                  <div style={{ flex: 2 }}>
-                    <TextInput
-                      value={field.name}
-                      onChange={value => updateField(field.id, { name: value ?? '' })}
-                      placeholder="Field name"
-                    />
-                    {errors[`field-${index}-name`] && (
-                      <div className="cmp-error" style={{ fontSize: '0.8em', marginTop: '0.2rem' }}>
-                        {errors[`field-${index}-name`]}
-                      </div>
-                    )}
-                  </div>
+            {fields.map((field, index) => {
+              const hasData = props.schema
+                ? schemaHasAssociatedData(props.document, props.schema.id)
+                : false;
+              const isOriginalField = originalFieldIds.has(field.id);
+              const isFieldIdReadOnly = hasData && isOriginalField;
 
-                  <div style={{ flex: 1 }}>
-                    <Select.Root
-                      value={field.type}
-                      onChange={value => {
-                        const newType = (value ?? 'text') as 'text' | 'longtext' | 'reference';
-                        if (newType === 'reference') {
-                          updateField(field.id, {
-                            type: newType,
-                            schemaId: props.availableSchemas?.[0]?.id ?? '',
-                            minCount: 0,
-                            maxCount: 1
-                          });
-                        } else {
-                          updateField(field.id, { type: newType });
-                        }
-                      }}
-                    >
-                      <Select.Item value="text">Text</Select.Item>
-                      <Select.Item value="longtext">Long Text</Select.Item>
-                      <Select.Item value="reference">Reference</Select.Item>
-                    </Select.Root>
-                  </div>
-
-                  <Button
-                    type="icon-only"
-                    onClick={() => addFieldAfter(index)}
-                    title="Add field below"
-                  >
-                    <TbPlus />
-                  </Button>
-
-                  <Button
-                    type="icon-only"
-                    onClick={() => removeField(index)}
-                    disabled={fields.length === 1}
-                    title={fields.length === 1 ? 'Cannot remove the last field' : 'Remove field'}
-                  >
-                    <TbTrash />
-                  </Button>
-                </div>
-
-                {field.type === 'reference' && (
+              return (
+                <div
+                  key={field.id}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.5rem',
+                    paddingBottom: '0.5rem',
+                    borderBottom: '1px solid var(--cmp-border)'
+                  }}
+                >
                   <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'start' }}>
+                    <div style={{ flex: 1 }}>
+                      <TextInput
+                        value={field.id}
+                        onChange={value => updateField(field.id, { id: value ?? '' })}
+                        placeholder="Field ID"
+                        disabled={isFieldIdReadOnly}
+                        title={
+                          isFieldIdReadOnly
+                            ? 'Field ID cannot be changed when schema has data'
+                            : 'Field ID (letters, numbers, hyphens, and underscores only)'
+                        }
+                      />
+                      {errors[`field-${index}-id`] && (
+                        <div
+                          className="cmp-error"
+                          style={{ fontSize: '0.8em', marginTop: '0.2rem' }}
+                        >
+                          {errors[`field-${index}-id`]}
+                        </div>
+                      )}
+                    </div>
+
                     <div style={{ flex: 2 }}>
-                      <label style={{ display: 'block' }}>Referenced Schema:</label>
+                      <TextInput
+                        value={field.name}
+                        onChange={value => updateField(field.id, { name: value ?? '' })}
+                        placeholder="Field name"
+                      />
+                      {errors[`field-${index}-name`] && (
+                        <div
+                          className="cmp-error"
+                          style={{ fontSize: '0.8em', marginTop: '0.2rem' }}
+                        >
+                          {errors[`field-${index}-name`]}
+                        </div>
+                      )}
+                    </div>
+
+                    <div style={{ flex: 1 }}>
                       <Select.Root
-                        value={field.schemaId}
-                        onChange={value => updateField(field.id, { schemaId: value ?? '' })}
+                        value={field.type}
+                        onChange={value => {
+                          const newType = (value ?? 'text') as 'text' | 'longtext' | 'reference';
+                          if (newType === 'reference') {
+                            updateField(field.id, {
+                              type: newType,
+                              schemaId: props.availableSchemas?.[0]?.id ?? '',
+                              minCount: 0,
+                              maxCount: 1
+                            });
+                          } else {
+                            updateField(field.id, { type: newType });
+                          }
+                        }}
                       >
-                        {props.availableSchemas
-                          ?.filter(s => s.id !== props.schema?.id)
-                          .map(schema => (
-                            <Select.Item key={schema.id} value={schema.id}>
-                              {schema.name}
-                            </Select.Item>
-                          ))}
+                        <Select.Item value="text">Text</Select.Item>
+                        <Select.Item value="longtext">Long Text</Select.Item>
+                        <Select.Item value="reference">Reference</Select.Item>
                       </Select.Root>
-                      {errors[`field-${index}-schemaId`] && (
-                        <div className="cmp-error" style={{ marginTop: '0.125rem' }}>
-                          {errors[`field-${index}-schemaId`]}
-                        </div>
-                      )}
                     </div>
 
-                    <div style={{ flex: 1 }}>
-                      <label style={{ display: 'block' }}>Min Count:</label>
-                      <TextInput
-                        type="number"
-                        value={field.minCount.toString()}
-                        onChange={value =>
-                          updateField(field.id, { minCount: parseInt(value ?? '0', 10) || 0 })
-                        }
-                        placeholder="0"
-                      />
-                      {errors[`field-${index}-minCount`] && (
-                        <div className="cmp-error" style={{ marginTop: '0.12rem' }}>
-                          {errors[`field-${index}-minCount`]}
-                        </div>
-                      )}
-                    </div>
+                    <Button
+                      type="icon-only"
+                      onClick={() => addFieldAfter(index)}
+                      title="Add field below"
+                    >
+                      <TbPlus />
+                    </Button>
 
-                    <div style={{ flex: 1 }}>
-                      <label style={{ display: 'block' }}>Max Count:</label>
-                      <TextInput
-                        type="number"
-                        value={field.maxCount.toString()}
-                        onChange={value =>
-                          updateField(field.id, { maxCount: parseInt(value ?? '1', 10) || 1 })
-                        }
-                        placeholder="1"
-                      />
-                      {errors[`field-${index}-maxCount`] && (
-                        <div className="cmp-error" style={{ marginTop: '0.125rem' }}>
-                          {errors[`field-${index}-maxCount`]}
-                        </div>
-                      )}
-                    </div>
+                    <Button
+                      type="icon-only"
+                      onClick={() => removeField(index)}
+                      disabled={fields.length === 1}
+                      title={fields.length === 1 ? 'Cannot remove the last field' : 'Remove field'}
+                    >
+                      <TbTrash />
+                    </Button>
                   </div>
-                )}
-              </div>
-            ))}
+
+                  {field.type === 'reference' && (
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'start' }}>
+                      <div style={{ flex: 2 }}>
+                        <label style={{ display: 'block' }}>Referenced Schema:</label>
+                        <Select.Root
+                          value={field.schemaId}
+                          onChange={value => updateField(field.id, { schemaId: value ?? '' })}
+                        >
+                          {props.availableSchemas
+                            ?.filter(s => s.id !== props.schema?.id)
+                            .map(schema => (
+                              <Select.Item key={schema.id} value={schema.id}>
+                                {schema.name}
+                              </Select.Item>
+                            ))}
+                        </Select.Root>
+                        {errors[`field-${index}-schemaId`] && (
+                          <div className="cmp-error" style={{ marginTop: '0.125rem' }}>
+                            {errors[`field-${index}-schemaId`]}
+                          </div>
+                        )}
+                      </div>
+
+                      <div style={{ flex: 1 }}>
+                        <label style={{ display: 'block' }}>Min Count:</label>
+                        <TextInput
+                          type="number"
+                          value={field.minCount.toString()}
+                          onChange={value =>
+                            updateField(field.id, { minCount: parseInt(value ?? '0', 10) || 0 })
+                          }
+                          placeholder="0"
+                        />
+                        {errors[`field-${index}-minCount`] && (
+                          <div className="cmp-error" style={{ marginTop: '0.12rem' }}>
+                            {errors[`field-${index}-minCount`]}
+                          </div>
+                        )}
+                      </div>
+
+                      <div style={{ flex: 1 }}>
+                        <label style={{ display: 'block' }}>Max Count:</label>
+                        <TextInput
+                          type="number"
+                          value={field.maxCount.toString()}
+                          onChange={value =>
+                            updateField(field.id, { maxCount: parseInt(value ?? '1', 10) || 1 })
+                          }
+                          placeholder="1"
+                        />
+                        {errors[`field-${index}-maxCount`] && (
+                          <div className="cmp-error" style={{ marginTop: '0.125rem' }}>
+                            {errors[`field-${index}-maxCount`]}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
