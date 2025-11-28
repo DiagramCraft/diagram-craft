@@ -28,9 +28,7 @@ export const cloneElements = (
   targetLayer: RegularLayer,
   uow: UnitOfWork
 ) => {
-  const source = elements.map(e => {
-    return deepClone(serializeDiagramElement(e));
-  });
+  const source = elements.map(e => deepClone(serializeDiagramElement(e)));
 
   for (const e of source) {
     assignNewIdsToSerializedElements(e);
