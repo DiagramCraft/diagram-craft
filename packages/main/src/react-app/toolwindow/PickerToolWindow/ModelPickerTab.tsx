@@ -226,7 +226,7 @@ const DataProviderResponse = (props: {
                                 <ContextMenu.Root>
                                   <ContextMenu.Trigger asChild>
                                     <div
-                                      onPointerDown={ev => {
+                                      onMouseDown={ev => {
                                         if (!isRegularLayer(diagram.activeLayer)) return;
                                         if (ev.button !== 0) return;
 
@@ -239,7 +239,11 @@ const DataProviderResponse = (props: {
                                             app
                                           )
                                         );
+
+                                        ev.preventDefault();
+                                        ev.stopPropagation();
                                       }}
+                                      className={'light-theme'}
                                     >
                                       <PickerCanvas
                                         width={42}
