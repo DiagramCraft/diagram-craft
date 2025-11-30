@@ -150,6 +150,8 @@ const makeTemplateNode = (
     cb.data.data = cb.data.data.filter(e => e.schema !== schema.id);
 
     cb.data.data.push(makeDataReference(item, schema));
+
+    cb.data.templateId = template.id;
   }, UnitOfWork.immediate(node.diagram));
 
   diagram.viewBox.dimensions = { w: node.bounds.w + 10, h: node.bounds.h + 10 };
@@ -284,10 +286,7 @@ const DataProviderGridView = (props: DataViewProps) => {
           >
             <TbPencil />
           </a>
-          <a
-            className={'cmp-button--icon-only'}
-            onClick={() => handleDeleteTemplate(t)}
-          >
+          <a className={'cmp-button--icon-only'} onClick={() => handleDeleteTemplate(t)}>
             <TbTrash />
           </a>
         </div>

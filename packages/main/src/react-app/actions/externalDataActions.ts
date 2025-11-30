@@ -14,7 +14,7 @@ import {
   getExternalDataStatus,
   hasDataForSchema
 } from '@diagram-craft/canvas-app/externalDataHelpers';
-import { DataTemplate } from '@diagram-craft/model/diagramDocument';
+import { DataTemplate, DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { newid } from '@diagram-craft/utils/id';
 import { serializeDiagramElement } from '@diagram-craft/model/serialization/serialize';
 import { AbstractAction } from '@diagram-craft/canvas/action';
@@ -23,6 +23,8 @@ import { deepClone } from '@diagram-craft/utils/object';
 import type { Data } from '@diagram-craft/model/dataProvider';
 import { DataManagerUndoableFacade } from '@diagram-craft/model/diagramDocumentDataUndoActions';
 import type { FlatObject } from '@diagram-craft/utils/flatObject';
+import type { SerializedElement } from '@diagram-craft/model/serialization/serializedTypes';
+import type { NodeProps, EdgeProps } from '@diagram-craft/model/diagramProps';
 
 export const externalDataActions = (application: Application) => ({
   EXTERNAL_DATA_UNLINK: new ExternalDataUnlinkAction(application),
@@ -317,7 +319,10 @@ export class ExternalDataLinkRenameTemplate extends AbstractAction<
   }
 }
 
-export class ExternalDataLinkUpdateTemplate extends AbstractSelectionAction<Application, SchemaArg> {
+export class ExternalDataLinkUpdateTemplate extends AbstractSelectionAction<
+  Application,
+  SchemaArg
+> {
   constructor(application: Application) {
     super(application, MultipleType.SingleOnly, ElementType.Node);
   }
@@ -356,6 +361,14 @@ export class ExternalDataLinkUpdateTemplate extends AbstractSelectionAction<Appl
       const newTemplate = deepClone(template);
       newTemplate.template = serializeDiagramElement(selectedElement);
 
+      // Update all elements that use this template
+      this.updateElementsUsingTemplate(
+        $doc,
+        template.id,
+        oldTemplate.template,
+        newTemplate.template
+      );
+
       $d.undoManager.addAndExecute(
         makeUndoableAction('Update template', {
           redo: () => $doc.data.templates.update(newTemplate),
@@ -384,5 +397,144 @@ export class ExternalDataLinkUpdateTemplate extends AbstractSelectionAction<Appl
         }
       });
     }
+  }
+
+  private updateElementsUsingTemplate(
+    $doc: DiagramDocument,
+    templateId: string,
+    oldTemplate: SerializedElement,
+    newTemplate: SerializedElement
+  ): void {
+    // Iterate through all diagrams in the document
+    for (const diagram of $doc.diagrams) {
+      const uow = new UnitOfWork(diagram, true);
+      let hasUpdates = false;
+
+      // Find all elements that use this template
+      for (const element of diagram.visibleElements()) {
+        if (element.metadata.data?.templateId !== templateId) continue;
+
+        // Update the element's props based on the template change
+        element.updateProps(props => {
+          // Remove old template props that haven't been customized
+          this.removeOldTemplateProps(props, oldTemplate.props as NodeProps | EdgeProps);
+
+          // Add new template props (only if not already set)
+          this.addNewTemplateProps(props, newTemplate.props as NodeProps | EdgeProps);
+        }, uow);
+
+        hasUpdates = true;
+      }
+
+      if (hasUpdates) {
+        commitWithUndo(uow, 'Update elements from template');
+      }
+    }
+  }
+
+  private removeOldTemplateProps(
+    elementProps: NodeProps | EdgeProps,
+    oldTemplateProps: NodeProps | EdgeProps
+  ): void {
+    // Helper to check if two values are equal (deep comparison for objects)
+    const valuesEqual = (a: unknown, b: unknown): boolean => {
+      if (a === b) return true;
+      if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) return false;
+
+      const keysA = Object.keys(a);
+      const keysB = Object.keys(b);
+      if (keysA.length !== keysB.length) return false;
+
+      return keysA.every(key =>
+        valuesEqual((a as Record<string, unknown>)[key], (b as Record<string, unknown>)[key])
+      );
+    };
+
+    // Recursively remove props that match the old template
+    const removeMatchingProps = (
+      target: Record<string, unknown>,
+      template: Record<string, unknown>
+    ) => {
+      for (const key of Object.keys(template)) {
+        if (!(key in target)) continue;
+
+        const targetValue = target[key];
+        const templateValue = template[key];
+
+        if (
+          typeof templateValue === 'object' &&
+          templateValue !== null &&
+          !Array.isArray(templateValue)
+        ) {
+          // Recursively handle nested objects
+          if (
+            typeof targetValue === 'object' &&
+            targetValue !== null &&
+            !Array.isArray(targetValue)
+          ) {
+            removeMatchingProps(
+              targetValue as Record<string, unknown>,
+              templateValue as Record<string, unknown>
+            );
+
+            // Remove the parent key if it's now empty
+            if (Object.keys(targetValue as Record<string, unknown>).length === 0) {
+              delete target[key];
+            }
+          }
+        } else if (valuesEqual(targetValue, templateValue)) {
+          // Remove the property if it matches the old template value
+          delete target[key];
+        }
+      }
+    };
+
+    removeMatchingProps(
+      elementProps as Record<string, unknown>,
+      oldTemplateProps as Record<string, unknown>
+    );
+  }
+
+  private addNewTemplateProps(
+    elementProps: NodeProps | EdgeProps,
+    newTemplateProps: NodeProps | EdgeProps
+  ): void {
+    // Recursively add props from the new template (only if not already set)
+    const addMissingProps = (
+      target: Record<string, unknown>,
+      template: Record<string, unknown>
+    ) => {
+      for (const key of Object.keys(template)) {
+        const templateValue = template[key];
+
+        if (!(key in target)) {
+          // Property doesn't exist in element, add it from template
+          target[key] = deepClone(templateValue);
+        } else if (
+          typeof templateValue === 'object' &&
+          templateValue !== null &&
+          !Array.isArray(templateValue)
+        ) {
+          // Recursively handle nested objects
+          const targetValue = target[key];
+          if (
+            typeof targetValue === 'object' &&
+            targetValue !== null &&
+            !Array.isArray(targetValue)
+          ) {
+            addMissingProps(
+              targetValue as Record<string, unknown>,
+              templateValue as Record<string, unknown>
+            );
+          }
+        }
+        // If property exists and is not an object, skip it (element has been customized)
+      }
+    };
+
+    addMissingProps(
+      elementProps as Record<string, unknown>,
+      newTemplateProps as Record<string, unknown>
+    );
   }
 }
