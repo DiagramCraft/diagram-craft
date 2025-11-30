@@ -64,6 +64,7 @@ import { UserState } from './UserState';
 import { HelpState } from './react-app/HelpState';
 import { JSONDialog } from './react-app/components/JSONDialog';
 import { CanvasOutline } from './react-app/CanvasOutline';
+import { CanvasTooltip } from './react-app/CanvasTooltip';
 import { bindDocumentDragAndDrop } from '@diagram-craft/canvas/dragDropManager';
 import { ExternalDataLinkDialog } from './react-app/components/ExternalDataLinkDialog';
 import { Preview } from './react-app/Preview';
@@ -636,6 +637,7 @@ export const App = (props: {
                 <Ruler orientation={'horizontal'} />
                 <Ruler orientation={'vertical'} />
                 <CanvasOutline />
+                <CanvasTooltip />
 
                 <NodeTypePopup
                   {...popoverState}

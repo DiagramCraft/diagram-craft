@@ -1,0 +1,77 @@
+.canvasTooltip {
+  min-width: 220px;
+  position: fixed;
+  background-color: var(--cmp-bg);
+  border-radius: 6px;
+  color: var(--cmp-fg);
+  box-shadow: var(--popover-shadow);
+  border: 1px solid var(--cmp-border);
+  padding: 5px;
+  max-width: 400px;
+  pointer-events: none;
+  z-index: 10000;
+  font-size: 12px;
+  line-height: 1.5;
+
+  h1 {
+    font-size: 12px;
+    margin-bottom: 0.125rem;
+  }
+
+  h2 {
+    font-size: 12px;
+    font-style: italic;
+    font-weight: normal;
+    margin-bottom: 0.125rem;
+  }
+}
+
+.canvasTooltip > h1:first-of-type {
+  margin-top: 0;
+}
+
+.canvasTooltip p {
+  margin: 0 0 0.5em 0;
+}
+
+.canvasTooltip p:last-child {
+  margin-bottom: 0;
+}
+
+.canvasTooltip ul,
+.canvasTooltip ol {
+  margin: 0.5em 0;
+  padding-left: 1.5em;
+}
+
+.canvasTooltip code {
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: monospace;
+}
+
+.canvasTooltip pre {
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 8px;
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
+.canvasTooltip pre code {
+  background-color: transparent;
+  padding: 0;
+}
+
+.canvasTooltip strong {
+  font-weight: 600;
+}
+
+.canvasTooltip em {
+  font-style: italic;
+}
+
+.canvasTooltip a {
+  color: var(--accent-fg);
+  text-decoration: underline;
+}
