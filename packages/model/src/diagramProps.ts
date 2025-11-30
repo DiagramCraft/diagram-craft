@@ -66,6 +66,7 @@ export type ElementMetadata = {
   data?: {
     data?: Array<ElementDataEntry>;
     customData?: FlatObject;
+    templateId?: string;
   };
 };
 
