@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { MultiSelect } from '@diagram-craft/app-components/MultiSelect';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { useElementMetadata } from '../../hooks/useProperty';
@@ -17,6 +18,7 @@ export const ObjectNamePanel = ({ mode }: ObjectNamePanelProps) => {
   const $d = useDiagram();
   const redraw = useRedraw();
   const name = useElementMetadata($d, 'name', '');
+  const tooltip = useElementMetadata($d, 'tooltip', '');
 
   // Custom hook logic for managing element tags
   const selectedTags = unique($d.selection.elements.flatMap(e => [...e.tags]));
@@ -60,6 +62,15 @@ export const ObjectNamePanel = ({ mode }: ObjectNamePanelProps) => {
             allowCustomValues={true}
             isIndeterminate={isIndeterminate}
             placeholder="Add tags..."
+          />
+        </div>
+        <div className={'cmp-labeled-table__label util-a-top-center'}>Tooltip:</div>
+        <div className={'cmp-labeled-table__value'}>
+          <TextArea
+            value={tooltip.val}
+            onChange={v => tooltip.set(v)}
+            style={{ minHeight: '60px' }}
+            placeholder="Enter tooltip text..."
           />
         </div>
       </div>

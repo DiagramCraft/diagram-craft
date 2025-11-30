@@ -68,6 +68,7 @@ export type ElementMetadata = {
     customData?: FlatObject;
     templateId?: string;
   };
+  tooltip?: string;
 };
 
 type ElementEffectProps = {
