@@ -146,8 +146,12 @@ export function createSystemMessage(currentDiagram?: SimplifiedDiagram): string 
     message += '```json\n';
     message += JSON.stringify(currentDiagram, null, 2);
     message += '\n```\n\n';
-    message +=
-      'When the user asks to modify or add to "this diagram" or "the current diagram", use action="add" or action="modify" to work with these existing elements.';
+    message += '**IMPORTANT:** When adding or modifying this diagram:\n';
+    message += '- Use action="add" to add new nodes to the existing diagram\n';
+    message += '- The existing node IDs are: ' + currentDiagram.nodes.map(n => `"${n.id}"`).join(', ') + '\n';
+    message += '- If you create edges connecting to existing nodes, you MUST use these exact node IDs\n';
+    message += '- For new nodes, create NEW unique IDs (like "new_database", "db_1", etc.)\n';
+    message += '- Only create edges where both "from" and "to" nodes exist (either existing or newly created in the same response)\n';
   }
 
   return message;

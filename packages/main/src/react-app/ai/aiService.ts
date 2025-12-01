@@ -211,4 +211,4 @@ export class AIService {
 }
 
 // Singleton instance
-export const aiService = new AIService();
+export const aiService = new AIService('http://localhost:3000');

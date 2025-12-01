@@ -170,11 +170,14 @@ export class DiagramConverter {
   }
 
   private createEdge(simpleEdge: SimplifiedEdge): DiagramEdge | null {
-    const fromNode = this.nodeMap.get(simpleEdge.from);
-    const toNode = this.nodeMap.get(simpleEdge.to);
+    // Look in nodeMap first (newly created nodes), then fall back to diagram lookup (existing nodes)
+    const fromNode = this.nodeMap.get(simpleEdge.from) || this.diagram.nodeLookup.get(simpleEdge.from);
+    const toNode = this.nodeMap.get(simpleEdge.to) || this.diagram.nodeLookup.get(simpleEdge.to);
 
     if (!fromNode || !toNode) {
       console.warn(`Cannot create edge: node not found (from: ${simpleEdge.from}, to: ${simpleEdge.to})`);
+      console.warn(`Available nodes in nodeMap: ${Array.from(this.nodeMap.keys()).join(', ')}`);
+      console.warn(`Available nodes in diagram: ${Array.from(this.diagram.nodeLookup.keys()).join(', ')}`);
       return null;
     }
 

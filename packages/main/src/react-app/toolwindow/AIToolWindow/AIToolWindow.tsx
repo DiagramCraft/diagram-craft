@@ -50,6 +50,8 @@ export const AIToolWindow = () => {
     setError(undefined);
     setStreamingContent('');
 
+    let accumulatedContent = '';
+
     try {
       // Get current diagram context
       const converter = new DiagramConverter(diagram);
@@ -80,16 +82,16 @@ export const AIToolWindow = () => {
         },
         chunk => {
           if (!chunk.done) {
-            setStreamingContent(prev => prev + chunk.content);
+            accumulatedContent += chunk.content;
+            setStreamingContent(accumulatedContent);
           }
         }
       );
 
       // Extract and apply diagram changes
-      const assistantContent = streamingContent || '';
       const assistantMessage: ConversationMessage = {
         role: 'assistant',
-        content: assistantContent,
+        content: accumulatedContent,
         timestamp: Date.now()
       };
 
@@ -97,7 +99,7 @@ export const AIToolWindow = () => {
       setStreamingContent('');
 
       // Try to extract and apply diagram JSON
-      await applyDiagramFromResponse(assistantContent);
+      await applyDiagramFromResponse(accumulatedContent);
     } catch (err) {
       const errorMessage = (err as Error).message;
       setError(errorMessage);
@@ -118,7 +120,8 @@ export const AIToolWindow = () => {
 
   const applyDiagramFromResponse = async (content: string) => {
     // Try to extract JSON from markdown code blocks
-    const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/) || content.match(/```\n([\s\S]*?)\n```/);
+    const jsonMatch =
+      content.match(/```json\n([\s\S]*?)\n```/) || content.match(/```\n([\s\S]*?)\n```/);
 
     let jsonStr: string = jsonMatch ? jsonMatch[1] : content;
 
@@ -132,12 +135,26 @@ export const AIToolWindow = () => {
       const diagramSpec: SimplifiedDiagram = JSON.parse(jsonStr);
 
       // Validate it's a diagram specification
-      if (diagramSpec.action && (diagramSpec.nodes || diagramSpec.edges || diagramSpec.modifications)) {
+      if (
+        diagramSpec.action &&
+        (diagramSpec.nodes || diagramSpec.edges || diagramSpec.modifications)
+      ) {
         const converter = new DiagramConverter(diagram);
-        converter.convert(diagramSpec);
+
+        // Log for debugging
+        console.log('Applying diagram spec:', diagramSpec);
+
+        try {
+          converter.convert(diagramSpec);
+          console.log('Diagram updated successfully');
+        } catch (conversionError) {
+          console.error('Error converting diagram:', conversionError);
+          setError(`Failed to apply diagram: ${(conversionError as Error).message}`);
+        }
       }
-    } catch {
+    } catch (parseError) {
       // Not a valid diagram JSON, that's okay - might be a conversational response
+      console.log('No valid diagram JSON found in response');
     }
   };
 
@@ -158,9 +175,7 @@ export const AIToolWindow = () => {
     return (
       <div className={styles.unavailable}>
         <p>AI features are not available.</p>
-        <p className={styles.hint}>
-          The server needs an OpenRouter API key to enable AI features.
-        </p>
+        <p className={styles.hint}>The server needs an OpenRouter API key to enable AI features.</p>
       </div>
     );
   }
@@ -175,22 +190,12 @@ export const AIToolWindow = () => {
                 <div className={styles.welcome}>
                   <h3>AI Diagram Assistant</h3>
                   <p>Ask me to create or modify diagrams!</p>
-                  <div className={styles.examples}>
-                    <p><strong>Try saying:</strong></p>
-                    <ul>
-                      <li>"Create a flowchart for user login"</li>
-                      <li>"Add a database node to this diagram"</li>
-                      <li>"Create a system architecture diagram"</li>
-                    </ul>
-                  </div>
                 </div>
               )}
 
               {messages.map((msg, idx) => (
                 <div key={idx} className={`${styles.message} ${styles[msg.role]}`}>
-                  <div className={styles.messageRole}>
-                    {msg.role === 'user' ? 'You' : 'AI'}
-                  </div>
+                  <div className={styles.messageRole}>{msg.role === 'user' ? 'You' : 'AI'}</div>
                   <div className={styles.messageContent}>{msg.content}</div>
                 </div>
               ))}
@@ -217,7 +222,7 @@ export const AIToolWindow = () => {
             <div className={styles.inputArea}>
               <TextArea
                 value={input}
-                onChange={e => setInput((e.target as HTMLTextAreaElement).value)}
+                onChange={value => setInput(value ?? '')}
                 onKeyDown={handleKeyDown}
                 placeholder="Describe the diagram you want to create..."
                 rows={3}
