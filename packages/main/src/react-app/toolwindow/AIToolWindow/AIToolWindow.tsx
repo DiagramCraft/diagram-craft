@@ -8,6 +8,7 @@ import { DiagramConverter } from '../../ai/diagramConverter';
 import { SimplifiedDiagram } from '../../ai/aiDiagramTypes';
 import { createSystemMessage } from '../../ai/aiSystemPrompt';
 import styles from './AIToolWindow.module.css';
+import { mustExist } from '@diagram-craft/utils/assert';
 
 interface ConversationMessage {
   role: 'user' | 'assistant';
@@ -123,7 +124,7 @@ export const AIToolWindow = () => {
     const jsonMatch =
       content.match(/```json\n([\s\S]*?)\n```/) || content.match(/```\n([\s\S]*?)\n```/);
 
-    let jsonStr: string = jsonMatch ? jsonMatch[1] : content;
+    let jsonStr: string = mustExist(jsonMatch ? jsonMatch[1] : content);
 
     // Try to find JSON object in the response
     const jsonObjectMatch = jsonStr.match(/\{[\s\S]*\}/);
@@ -173,9 +174,11 @@ export const AIToolWindow = () => {
 
   if (isAvailable === false) {
     return (
-      <div className={styles.unavailable}>
+      <div className={styles['cmp-ai-unavailable']}>
         <p>AI features are not available.</p>
-        <p className={styles.hint}>The server needs an OpenRouter API key to enable AI features.</p>
+        <p className={styles['cmp-ai-hint']}>
+          The server needs an OpenRouter API key to enable AI features.
+        </p>
       </div>
     );
   }
@@ -184,34 +187,36 @@ export const AIToolWindow = () => {
     <ToolWindow.Root id={'ai-tool'} defaultTab={'chat'}>
       <ToolWindow.Tab id={'chat'} title={'Chat'}>
         <ToolWindow.TabContent>
-          <div className={styles.container}>
-            <div className={styles.messages}>
+          <div className={styles['cmp-ai-container']}>
+            <div className={styles['cmp-ai-messages']}>
               {messages.length === 0 && (
-                <div className={styles.welcome}>
+                <div className={styles['cmp-ai-welcome']}>
                   <h3>AI Diagram Assistant</h3>
                   <p>Ask me to create or modify diagrams!</p>
                 </div>
               )}
 
               {messages.map((msg, idx) => (
-                <div key={idx} className={`${styles.message} ${styles[msg.role]}`}>
-                  <div className={styles.messageRole}>{msg.role === 'user' ? 'You' : 'AI'}</div>
-                  <div className={styles.messageContent}>{msg.content}</div>
+                <div key={idx} className={`${styles['cmp-ai-message']} ${styles[msg.role]}`}>
+                  <div className={styles['cmp-ai-message-role']}>
+                    {msg.role === 'user' ? 'You' : 'AI'}
+                  </div>
+                  <div className={styles['cmp-ai-message-content']}>{msg.content}</div>
                 </div>
               ))}
 
               {streamingContent && (
-                <div className={`${styles.message} ${styles.assistant}`}>
-                  <div className={styles.messageRole}>AI</div>
-                  <div className={styles.messageContent}>
+                <div className={`${styles['cmp-ai-message']} ${styles.assistant}`}>
+                  <div className={styles['cmp-ai-message-role']}>AI</div>
+                  <div className={styles['cmp-ai-message-content']}>
                     {streamingContent}
-                    <span className={styles.cursor}>|</span>
+                    <span className={styles['cmp-ai-cursor']}>|</span>
                   </div>
                 </div>
               )}
 
               {error && (
-                <div className={styles.error}>
+                <div className={styles['cmp-ai-error']}>
                   <strong>Error:</strong> {error}
                 </div>
               )}
@@ -219,7 +224,7 @@ export const AIToolWindow = () => {
               <div ref={messagesEndRef} />
             </div>
 
-            <div className={styles.inputArea}>
+            <div className={styles['cmp-ai-input-area']}>
               <TextArea
                 value={input}
                 onChange={value => setInput(value ?? '')}
@@ -227,9 +232,9 @@ export const AIToolWindow = () => {
                 placeholder="Describe the diagram you want to create..."
                 rows={3}
                 disabled={loading}
-                className={styles.input}
+                className={styles['cmp-ai-input']}
               />
-              <div className={styles.actions}>
+              <div className={styles['cmp-ai-actions']}>
                 <Button onClick={handleClear} disabled={loading} type="secondary">
                   Clear
                 </Button>
