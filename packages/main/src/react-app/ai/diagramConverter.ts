@@ -13,16 +13,16 @@ import {
   ANCHOR_POSITION_MAP,
   ARROW_TYPE_MAP
 } from './aiDiagramTypes';
-import type { RegularLayer } from '@diagram-craft/model/diagramLayer';
+import type { Layer } from '@diagram-craft/model/diagramLayer';
 
 export class DiagramConverter {
   private diagram: Diagram;
-  private layer: RegularLayer;
+  private layer: Layer;
   private nodeMap: Map<string, DiagramNode> = new Map();
 
   constructor(diagram: Diagram) {
     this.diagram = diagram;
-    this.layer = diagram.layers.active as RegularLayer;
+    this.layer = diagram.layers.active;
   }
 
   /**
@@ -226,20 +226,20 @@ export class DiagramConverter {
   private updateNode(node: DiagramNode, updates: Partial<SimplifiedNode>, uow: UnitOfWork): void {
     // Update bounds if position or size changed
     if (updates.x !== undefined || updates.y !== undefined || updates.width !== undefined || updates.height !== undefined) {
-      const newBounds = {
+      uow.snapshot(node);
+      node.setBounds({
         x: updates.x ?? node.bounds.x,
         y: updates.y ?? node.bounds.y,
         w: updates.width ?? node.bounds.w,
         h: updates.height ?? node.bounds.h,
         r: node.bounds.r
-      };
-      node.updateBounds(newBounds, uow);
+      });
+      uow.updateElement(node);
     }
 
     // Update text if changed
     if (updates.text !== undefined) {
-      const newTexts = { ...node.getText(), text: updates.text };
-      node.updateText(newTexts, uow);
+      node.setText(updates.text, uow);
     }
 
     // Update props if colors changed
@@ -280,13 +280,18 @@ export class DiagramConverter {
       strokeWidth: node.renderProps.stroke?.width
     }));
 
-    const edges: SimplifiedEdge[] = Array.from(this.diagram.edgeLookup.values()).map(edge => ({
-      from: edge.start.node?.id ?? '',
-      to: edge.end.node?.id ?? '',
-      type: edge.renderProps.type as any,
-      stroke: edge.renderProps.stroke?.color,
-      strokeWidth: edge.renderProps.stroke?.width
-    }));
+    const edges: SimplifiedEdge[] = Array.from(this.diagram.edgeLookup.values()).map(edge => {
+      const startNode = edge.start.isConnected ? (edge.start as any).node as DiagramNode : undefined;
+      const endNode = edge.end.isConnected ? (edge.end as any).node as DiagramNode : undefined;
+
+      return {
+        from: startNode?.id ?? '',
+        to: endNode?.id ?? '',
+        type: edge.renderProps.type as any,
+        stroke: edge.renderProps.stroke?.color,
+        strokeWidth: edge.renderProps.stroke?.width
+      };
+    });
 
     return {
       action: 'create',
