@@ -127,6 +127,11 @@ export type AppConfig = {
     provider: 'none' | 'remote' | 'local';
     endpoint: string;
   };
+
+  ai: {
+    provider: 'none' | 'remote';
+    endpoint?: string;
+  };
 };
 
 type StencilRegistryConfigEntry<K extends keyof StencilLoaderOpts> = {

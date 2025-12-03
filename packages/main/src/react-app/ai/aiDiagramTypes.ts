@@ -98,11 +98,11 @@ export const SIMPLIFIED_DEFAULTS = {
 
 // Map simplified anchor positions to internal anchor IDs
 export const ANCHOR_POSITION_MAP: Record<SimplifiedAnchorPosition, string> = {
-  center: 'c',
-  top: '1',
-  right: '3',
-  bottom: '2',
-  left: '4',
+  'center': 'c',
+  'top': '1',
+  'right': '3',
+  'bottom': '2',
+  'left': '4',
   'top-left': 'tl',
   'top-right': 'tr',
   'bottom-left': 'bl',

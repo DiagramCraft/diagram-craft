@@ -1,5 +1,7 @@
 // AI Service for interacting with the OpenRouter proxy
 
+import { AppConfig } from '../../appConfig';
+
 export interface AIMessage {
   role: 'system' | 'user' | 'assistant';
   content: string;
@@ -211,4 +213,4 @@ export class AIService {
 }
 
 // Singleton instance
-export const aiService = new AIService('http://localhost:3000');
+export const aiService = new AIService(AppConfig.get().ai.endpoint);

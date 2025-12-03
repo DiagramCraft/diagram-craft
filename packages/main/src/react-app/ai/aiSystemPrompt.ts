@@ -131,6 +131,7 @@ For "Create a simple login flow diagram":
 4. Edge "from" and "to" must reference existing node IDs
 5. If the user's request is unclear, ask for clarification
 6. For modifications, only include the "modifications" array with specific nodeIds and updates
+7. When updating the diagram, provide only a very brief summary of the changed
 
 Remember: Your goal is to help users visualize their ideas quickly and clearly. Be creative but practical with your diagram designs.`;
 
@@ -147,11 +148,18 @@ export function createSystemMessage(currentDiagram?: SimplifiedDiagram): string 
     message += JSON.stringify(currentDiagram, null, 2);
     message += '\n```\n\n';
     message += '**IMPORTANT:** When adding or modifying this diagram:\n';
+    message +=
+      '- Only use action="replace" when asked to replace the full diagram with new elements removing all old elements\n';
     message += '- Use action="add" to add new nodes to the existing diagram\n';
-    message += '- The existing node IDs are: ' + currentDiagram.nodes.map(n => `"${n.id}"`).join(', ') + '\n';
-    message += '- If you create edges connecting to existing nodes, you MUST use these exact node IDs\n';
+    message +=
+      '- The existing node IDs are: ' +
+      currentDiagram.nodes.map(n => `"${n.id}"`).join(', ') +
+      '\n';
+    message +=
+      '- If you create edges connecting to existing nodes, you MUST use these exact node IDs\n';
     message += '- For new nodes, create NEW unique IDs (like "new_database", "db_1", etc.)\n';
-    message += '- Only create edges where both "from" and "to" nodes exist (either existing or newly created in the same response)\n';
+    message +=
+      '- Only create edges where both "from" and "to" nodes exist (either existing or newly created in the same response)\n';
   }
 
   return message;

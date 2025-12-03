@@ -17,6 +17,7 @@ import { StoryToolWindow } from './toolwindow/StoryToolWindow/StoryToolWindow';
 import { AIToolWindow } from './toolwindow/AIToolWindow/AIToolWindow';
 import { ActionToolbarButton } from './toolbar/ActionToolbarButton';
 import { TextToolWindow } from './toolwindow/TextToolWindow/TextToolWindow';
+import { AppConfig } from '../appConfig';
 
 export const LeftSidebar = () => {
   return (
@@ -48,9 +49,11 @@ export const LeftSidebar = () => {
       <SideBarPage icon={TbCodeAsterisk}>
         <TextToolWindow />
       </SideBarPage>
-      <SideBarPage icon={TbSparkles}>
-        <AIToolWindow />
-      </SideBarPage>
+      {AppConfig.get().ai.provider !== 'none' && (
+        <SideBarPage icon={TbSparkles}>
+          <AIToolWindow />
+        </SideBarPage>
+      )}
     </SideBar>
   );
 };

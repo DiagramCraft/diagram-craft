@@ -3,25 +3,32 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
+import { AnchorEndpoint, ConnectedEndpoint } from '@diagram-craft/model/endpoint';
 import { newid } from '@diagram-craft/utils/id';
 import {
-  SimplifiedDiagram,
-  SimplifiedNode,
-  SimplifiedEdge,
-  SIMPLIFIED_DEFAULTS,
   ANCHOR_POSITION_MAP,
-  ARROW_TYPE_MAP
+  ARROW_TYPE_MAP,
+  SIMPLIFIED_DEFAULTS,
+  SimplifiedDiagram,
+  SimplifiedEdge,
+  type SimplifiedEdgeType,
+  SimplifiedNode,
+  type SimplifiedNodeType
 } from './aiDiagramTypes';
-import type { Layer } from '@diagram-craft/model/diagramLayer';
+import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
+import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
+import { isRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 
 export class DiagramConverter {
-  private diagram: Diagram;
-  private layer: Layer;
+  private readonly diagram: Diagram;
+  private readonly layer: RegularLayer;
   private nodeMap: Map<string, DiagramNode> = new Map();
 
   constructor(diagram: Diagram) {
     this.diagram = diagram;
+
+    if (!isRegularLayer(diagram.layers.active)) VERIFY_NOT_REACHED();
     this.layer = diagram.layers.active;
   }
 
@@ -30,7 +37,7 @@ export class DiagramConverter {
    * and adds them to the diagram
    */
   convert(simplified: SimplifiedDiagram): void {
-    const uow = UnitOfWork.immediate(this.diagram);
+    const uow = new UnitOfWork(this.diagram, true);
 
     // Handle different action types
     switch (simplified.action) {
@@ -45,6 +52,8 @@ export class DiagramConverter {
         this.handleReplace(simplified, uow);
         break;
     }
+
+    commitWithUndo(uow, 'AI Changes');
   }
 
   private handleCreateOrAdd(simplified: SimplifiedDiagram, uow: UnitOfWork): void {
@@ -53,10 +62,10 @@ export class DiagramConverter {
 
     // Apply auto-layout if requested and positions not specified
     const needsLayout = simplified.layout === 'auto' || this.needsAutoLayout(nodes);
-    const layoutedNodes = needsLayout ? this.applyAutoLayout(nodes) : nodes;
+    const nodesWithLayout = needsLayout ? this.applyAutoLayout(nodes) : nodes;
 
     // Create nodes first
-    for (const simpleNode of layoutedNodes) {
+    for (const simpleNode of nodesWithLayout) {
       const node = this.createNode(simpleNode);
       this.layer.addElement(node, uow);
       this.nodeMap.set(simpleNode.id, node);
@@ -82,10 +91,12 @@ export class DiagramConverter {
     }
   }
 
+  // TODO: Need to use undoable action here
   private handleReplace(simplified: SimplifiedDiagram, uow: UnitOfWork): void {
     // Clear existing elements
     const allElements = [...this.layer.elements];
     for (const element of allElements) {
+      uow.snapshot(element);
       this.layer.removeElement(element, uow);
     }
 
@@ -125,14 +136,8 @@ export class DiagramConverter {
   }
 
   private createNode(simpleNode: SimplifiedNode): DiagramNode {
-    const {
-      nodeType,
-      nodeWidth,
-      nodeHeight,
-      nodeFill,
-      nodeStroke,
-      nodeStrokeWidth
-    } = SIMPLIFIED_DEFAULTS;
+    const { nodeType, nodeWidth, nodeHeight, nodeFill, nodeStroke, nodeStrokeWidth } =
+      SIMPLIFIED_DEFAULTS;
 
     const bounds = {
       x: simpleNode.x ?? 0,
@@ -171,13 +176,18 @@ export class DiagramConverter {
 
   private createEdge(simpleEdge: SimplifiedEdge): DiagramEdge | null {
     // Look in nodeMap first (newly created nodes), then fall back to diagram lookup (existing nodes)
-    const fromNode = this.nodeMap.get(simpleEdge.from) || this.diagram.nodeLookup.get(simpleEdge.from);
+    const fromNode =
+      this.nodeMap.get(simpleEdge.from) || this.diagram.nodeLookup.get(simpleEdge.from);
     const toNode = this.nodeMap.get(simpleEdge.to) || this.diagram.nodeLookup.get(simpleEdge.to);
 
     if (!fromNode || !toNode) {
-      console.warn(`Cannot create edge: node not found (from: ${simpleEdge.from}, to: ${simpleEdge.to})`);
+      console.warn(
+        `Cannot create edge: node not found (from: ${simpleEdge.from}, to: ${simpleEdge.to})`
+      );
       console.warn(`Available nodes in nodeMap: ${Array.from(this.nodeMap.keys()).join(', ')}`);
-      console.warn(`Available nodes in diagram: ${Array.from(this.diagram.nodeLookup.keys()).join(', ')}`);
+      console.warn(
+        `Available nodes in diagram: ${Array.from(this.diagram.nodeLookup.keys()).join(', ')}`
+      );
       return null;
     }
 
@@ -187,9 +197,7 @@ export class DiagramConverter {
     const fromAnchor = ANCHOR_POSITION_MAP[simpleEdge.fromAnchor ?? anchorPosition];
     const toAnchor = ANCHOR_POSITION_MAP[simpleEdge.toAnchor ?? anchorPosition];
 
-    const startArrowType = simpleEdge.startArrow
-      ? ARROW_TYPE_MAP[simpleEdge.startArrow]
-      : null;
+    const startArrowType = simpleEdge.startArrow ? ARROW_TYPE_MAP[simpleEdge.startArrow] : null;
     const endArrowType = simpleEdge.endArrow
       ? ARROW_TYPE_MAP[simpleEdge.endArrow]
       : ARROW_TYPE_MAP[edgeEndArrow];
@@ -228,16 +236,22 @@ export class DiagramConverter {
 
   private updateNode(node: DiagramNode, updates: Partial<SimplifiedNode>, uow: UnitOfWork): void {
     // Update bounds if position or size changed
-    if (updates.x !== undefined || updates.y !== undefined || updates.width !== undefined || updates.height !== undefined) {
-      uow.snapshot(node);
-      node.setBounds({
-        x: updates.x ?? node.bounds.x,
-        y: updates.y ?? node.bounds.y,
-        w: updates.width ?? node.bounds.w,
-        h: updates.height ?? node.bounds.h,
-        r: node.bounds.r
-      });
-      uow.updateElement(node);
+    if (
+      updates.x !== undefined ||
+      updates.y !== undefined ||
+      updates.width !== undefined ||
+      updates.height !== undefined
+    ) {
+      node.setBounds(
+        {
+          x: updates.x ?? node.bounds.x,
+          y: updates.y ?? node.bounds.y,
+          w: updates.width ?? node.bounds.w,
+          h: updates.height ?? node.bounds.h,
+          r: node.bounds.r
+        },
+        uow
+      );
     }
 
     // Update text if changed
@@ -246,7 +260,11 @@ export class DiagramConverter {
     }
 
     // Update props if colors changed
-    if (updates.fill !== undefined || updates.stroke !== undefined || updates.strokeWidth !== undefined) {
+    if (
+      updates.fill !== undefined ||
+      updates.stroke !== undefined ||
+      updates.strokeWidth !== undefined
+    ) {
       const newProps = {
         ...node.renderProps,
         fill: updates.fill !== undefined ? { color: updates.fill } : node.renderProps.fill,
@@ -272,7 +290,7 @@ export class DiagramConverter {
   exportToSimplified(): SimplifiedDiagram {
     const nodes: SimplifiedNode[] = Array.from(this.diagram.nodeLookup.values()).map(node => ({
       id: node.id,
-      type: node.nodeType as any,
+      type: node.nodeType as SimplifiedNodeType,
       x: node.bounds.x,
       y: node.bounds.y,
       width: node.bounds.w,
@@ -284,13 +302,17 @@ export class DiagramConverter {
     }));
 
     const edges: SimplifiedEdge[] = Array.from(this.diagram.edgeLookup.values()).map(edge => {
-      const startNode = edge.start.isConnected ? (edge.start as any).node as DiagramNode : undefined;
-      const endNode = edge.end.isConnected ? (edge.end as any).node as DiagramNode : undefined;
+      const startNode = edge.start.isConnected
+        ? ((edge.start as ConnectedEndpoint).node as DiagramNode)
+        : undefined;
+      const endNode = edge.end.isConnected
+        ? ((edge.end as ConnectedEndpoint).node as DiagramNode)
+        : undefined;
 
       return {
         from: startNode?.id ?? '',
         to: endNode?.id ?? '',
-        type: edge.renderProps.type as any,
+        type: edge.renderProps.type as SimplifiedEdgeType,
         stroke: edge.renderProps.stroke?.color,
         strokeWidth: edge.renderProps.stroke?.width
       };
