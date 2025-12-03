@@ -83,6 +83,7 @@ export class AIService {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
+        temperature: 0.7,
         ...request,
         stream: shouldStream
       })

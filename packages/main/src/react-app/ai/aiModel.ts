@@ -20,7 +20,7 @@ import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { isRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 
-export class DiagramConverter {
+export class AIModel {
   private readonly diagram: Diagram;
   private readonly layer: RegularLayer;
   private nodeMap: Map<string, DiagramNode> = new Map();
@@ -36,7 +36,7 @@ export class DiagramConverter {
    * Converts a simplified diagram format to internal Diagram elements
    * and adds them to the diagram
    */
-  convert(simplified: SimplifiedDiagram): void {
+  applyChange(simplified: SimplifiedDiagram): void {
     const uow = new UnitOfWork(this.diagram, true);
 
     // Handle different action types
@@ -304,7 +304,7 @@ export class DiagramConverter {
   /**
    * Exports current diagram to simplified format
    */
-  exportToSimplified(): SimplifiedDiagram {
+  asAIView(): SimplifiedDiagram {
     const nodes: SimplifiedNode[] = Array.from(this.diagram.nodeLookup.values()).map(node => ({
       id: node.id,
       type: node.nodeType as SimplifiedNodeType,

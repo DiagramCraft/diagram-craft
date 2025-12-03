@@ -1,20 +1,22 @@
-import { useState, useRef, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ToolWindow } from '../ToolWindow';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { useDiagram } from '../../../application';
-import { aiService, AIMessage } from '../../ai/aiService';
-import { DiagramConverter } from '../../ai/diagramConverter';
+import { AIMessage, aiService } from '../../ai/aiService';
+import { AIModel } from '../../ai/aiModel';
 import { SimplifiedDiagram } from '../../ai/aiDiagramTypes';
 import { createSystemMessage } from '../../ai/aiSystemPrompt';
 import styles from './AIToolWindow.module.css';
-import { mustExist } from '@diagram-craft/utils/assert';
+import { isEmptyString } from '@diagram-craft/utils/strings';
+import { extractJSON, filterJsonFromContent } from './aiContentParser';
 
-interface ConversationMessage {
-  role: 'user' | 'assistant';
-  content: string;
+interface ConversationMessage extends AIMessage {
   timestamp: number;
 }
+
+const isValidDiagramSpec = (diagramSpec: SimplifiedDiagram) =>
+  diagramSpec.action && (diagramSpec.nodes || diagramSpec.edges || diagramSpec.modifications);
 
 export const AIToolWindow = () => {
   const diagram = useDiagram();
@@ -22,22 +24,17 @@ export const AIToolWindow = () => {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | undefined>();
-  const [isAvailable, setIsAvailable] = useState<boolean | undefined>();
   const [streamingContent, setStreamingContent] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [textAreaKey, setTextAreaKey] = useState(0);
 
-  // Check AI availability on mount
+  // biome-ignore lint/correctness/useExhaustiveDependencies: we need this to trigger when the stream changes
   useEffect(() => {
-    aiService.checkAvailability().then(setIsAvailable);
-  }, []);
-
-  // Auto-scroll to bottom when messages change
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
   }, [messages, streamingContent]);
 
-  const handleSend = async () => {
-    if (!input.trim() || loading) return;
+  const sendMessage = async () => {
+    if (isEmptyString(input) || loading) return;
 
     const userMessage: ConversationMessage = {
       role: 'user',
@@ -47,6 +44,8 @@ export const AIToolWindow = () => {
 
     setMessages(prev => [...prev, userMessage]);
     setInput('');
+    setTextAreaKey(prev => prev + 1); // Force TextArea to remount with empty value
+
     setLoading(true);
     setError(undefined);
     setStreamingContent('');
@@ -55,8 +54,8 @@ export const AIToolWindow = () => {
 
     try {
       // Get current diagram context
-      const converter = new DiagramConverter(diagram);
-      const currentDiagram = converter.exportToSimplified();
+      const aiModel = new AIModel(diagram);
+      const currentDiagram = aiModel.asAIView();
 
       // Build conversation history
       const conversationMessages: AIMessage[] = [
@@ -64,22 +63,15 @@ export const AIToolWindow = () => {
           role: 'system',
           content: createSystemMessage(currentDiagram)
         },
-        ...messages.map(m => ({
-          role: m.role as 'user' | 'assistant',
-          content: m.content
-        })),
-        {
-          role: 'user',
-          content: userMessage.content
-        }
+        ...messages,
+        userMessage
       ];
 
       // Call AI service with streaming
       await aiService.generate(
         {
           messages: conversationMessages,
-          stream: true,
-          temperature: 0.7
+          stream: true
         },
         chunk => {
           if (!chunk.done) {
@@ -89,14 +81,14 @@ export const AIToolWindow = () => {
         }
       );
 
-      // Extract and apply diagram changes
-      const assistantMessage: ConversationMessage = {
-        role: 'assistant',
-        content: accumulatedContent,
-        timestamp: Date.now()
-      };
-
-      setMessages(prev => [...prev, assistantMessage]);
+      setMessages(prev => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: accumulatedContent,
+          timestamp: Date.now()
+        }
+      ]);
       setStreamingContent('');
 
       // Try to extract and apply diagram JSON
@@ -120,68 +112,39 @@ export const AIToolWindow = () => {
   };
 
   const applyDiagramFromResponse = async (content: string) => {
-    // Try to extract JSON from markdown code blocks
-    const jsonMatch =
-      content.match(/```json\n([\s\S]*?)\n```/) || content.match(/```\n([\s\S]*?)\n```/);
+    const json = extractJSON(content);
+    if (!json) return;
 
-    let jsonStr: string = mustExist(jsonMatch ? jsonMatch[1] : content);
+    const diagramSpec = json as SimplifiedDiagram;
 
-    // Try to find JSON object in the response
-    const jsonObjectMatch = jsonStr.match(/\{[\s\S]*\}/);
-    if (jsonObjectMatch) {
-      jsonStr = jsonObjectMatch[0];
-    }
+    // Validate it's a diagram specification
+    if (isValidDiagramSpec(diagramSpec)) {
+      const aiModel = new AIModel(diagram);
 
-    try {
-      const diagramSpec: SimplifiedDiagram = JSON.parse(jsonStr);
-
-      // Validate it's a diagram specification
-      if (
-        diagramSpec.action &&
-        (diagramSpec.nodes || diagramSpec.edges || diagramSpec.modifications)
-      ) {
-        const converter = new DiagramConverter(diagram);
-
-        // Log for debugging
-        console.log('Applying diagram spec:', diagramSpec);
-
-        try {
-          converter.convert(diagramSpec);
-          console.log('Diagram updated successfully');
-        } catch (conversionError) {
-          console.error('Error converting diagram:', conversionError);
-          setError(`Failed to apply diagram: ${(conversionError as Error).message}`);
-        }
+      try {
+        aiModel.applyChange(diagramSpec);
+      } catch (e) {
+        setError(`Failed to apply diagram: ${(e as Error).message}`);
       }
-    } catch (parseError) {
-      // Not a valid diagram JSON, that's okay - might be a conversational response
-      console.log('No valid diagram JSON found in response');
     }
   };
 
-  const handleClear = () => {
+  const clear = () => {
     setMessages([]);
     setError(undefined);
     setStreamingContent('');
+    setInput('');
+
+    // Force TextArea to remount with empty value
+    setTextAreaKey(prev => prev + 1);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSend();
+      sendMessage();
     }
   };
-
-  if (isAvailable === false) {
-    return (
-      <div className={styles['cmp-ai-unavailable']}>
-        <p>AI features are not available.</p>
-        <p className={styles['cmp-ai-hint']}>
-          The server needs an OpenRouter API key to enable AI features.
-        </p>
-      </div>
-    );
-  }
 
   return (
     <ToolWindow.Root id={'ai-tool'} defaultTab={'chat'}>
@@ -201,7 +164,9 @@ export const AIToolWindow = () => {
                   <div className={styles['cmp-ai-message-role']}>
                     {msg.role === 'user' ? 'You' : 'AI'}
                   </div>
-                  <div className={styles['cmp-ai-message-content']}>{msg.content}</div>
+                  <div className={styles['cmp-ai-message-content']}>
+                    {msg.role === 'assistant' ? filterJsonFromContent(msg.content) : msg.content}
+                  </div>
                 </div>
               ))}
 
@@ -209,7 +174,7 @@ export const AIToolWindow = () => {
                 <div className={`${styles['cmp-ai-message']} ${styles.assistant}`}>
                   <div className={styles['cmp-ai-message-role']}>AI</div>
                   <div className={styles['cmp-ai-message-content']}>
-                    {streamingContent}
+                    {filterJsonFromContent(streamingContent)}
                     <span className={styles['cmp-ai-cursor']}>|</span>
                   </div>
                 </div>
@@ -226,6 +191,7 @@ export const AIToolWindow = () => {
 
             <div className={styles['cmp-ai-input-area']}>
               <TextArea
+                key={textAreaKey}
                 value={input}
                 onChange={value => setInput(value ?? '')}
                 onKeyDown={handleKeyDown}
@@ -235,10 +201,10 @@ export const AIToolWindow = () => {
                 className={styles['cmp-ai-input']}
               />
               <div className={styles['cmp-ai-actions']}>
-                <Button onClick={handleClear} disabled={loading} type="secondary">
+                <Button onClick={clear} disabled={loading} type="secondary">
                   Clear
                 </Button>
-                <Button onClick={handleSend} disabled={loading || !input.trim()}>
+                <Button onClick={sendMessage} disabled={loading || !input.trim()}>
                   {loading ? 'Generating...' : 'Send'}
                 </Button>
               </div>

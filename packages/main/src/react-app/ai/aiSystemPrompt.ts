@@ -1,6 +1,7 @@
 import { SimplifiedDiagram } from './aiDiagramTypes';
 
-export const AI_SYSTEM_PROMPT = `You are an AI assistant that helps users create and modify diagrams. You generate diagrams in a simplified JSON format that is easy to understand and modify.
+export const AI_SYSTEM_PROMPT = `
+You are an AI assistant that helps users create and modify diagrams. You generate diagrams in a simplified JSON format that is easy to understand and modify.
 
 ## Your Capabilities
 
@@ -155,25 +156,23 @@ Remember: Your goal is to help users visualize their ideas quickly and clearly. 
 export function createSystemMessage(currentDiagram?: SimplifiedDiagram): string {
   let message = AI_SYSTEM_PROMPT;
 
-  if (currentDiagram && currentDiagram.nodes && currentDiagram.nodes.length > 0) {
-    message += '\n\n## Current Diagram Context\n\n';
-    message += 'The user has an existing diagram with the following elements:\n\n';
-    message += '```json\n';
-    message += JSON.stringify(currentDiagram, null, 2);
-    message += '\n```\n\n';
-    message += '**IMPORTANT:** When adding or modifying this diagram:\n';
-    message +=
-      '- Only use action="replace" when asked to replace the full diagram with new elements removing all old elements\n';
-    message += '- Use action="add" to add new nodes to the existing diagram\n';
-    message +=
-      '- The existing node IDs are: ' +
-      currentDiagram.nodes.map(n => `"${n.id}"`).join(', ') +
-      '\n';
-    message +=
-      '- If you create edges connecting to existing nodes, you MUST use these exact node IDs\n';
-    message += '- For new nodes, create NEW unique IDs (like "new_database", "db_1", etc.)\n';
-    message +=
-      '- Only create edges where both "from" and "to" nodes exist (either existing or newly created in the same response)\n';
+  if (currentDiagram?.nodes && currentDiagram.nodes.length > 0) {
+    message += `  
+## Current Diagram Context
+
+The user has an existing diagram with the following elements:
+
+\`\`\`json
+${JSON.stringify(currentDiagram, null, 2)}
+\`\`\`
+
+**IMPORTANT:** When adding or modifying this diagram:
+- Only use action="replace" when asked to replace the full diagram with new elements removing all old elements
+- Use action="add" to add new nodes to the existing diagram
+- The existing node IDs are: ${currentDiagram.nodes.map(n => `"${n.id}"`).join(', ')}
+- If you create edges connecting to existing nodes, you MUST use these exact node IDs
+- For new nodes, create NEW unique IDs (like "new_database", "db_1", etc.)
+- Only create edges where both "from" and "to" nodes exist (either existing or newly created in the same response)`;
   }
 
   return message;
