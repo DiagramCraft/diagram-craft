@@ -1,7 +1,7 @@
 // Simplified diagram format for LLM generation
 // This format is designed to be easy for LLMs to generate and understand
 
-export type SimplifiedAction = 'create' | 'add' | 'modify' | 'replace';
+export type SimplifiedAction = 'create' | 'add' | 'modify' | 'replace' | 'remove' | 'delete';
 
 export type SimplifiedNodeType =
   | 'rect'
@@ -74,6 +74,7 @@ export interface SimplifiedDiagram {
   nodes?: SimplifiedNode[];
   edges?: SimplifiedEdge[];
   modifications?: SimplifiedNodeModification[];
+  removeIds?: string[];
   layout?: 'auto' | 'manual';
 }
 

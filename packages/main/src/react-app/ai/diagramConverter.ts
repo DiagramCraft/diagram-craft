@@ -51,6 +51,10 @@ export class DiagramConverter {
       case 'replace':
         this.handleReplace(simplified, uow);
         break;
+      case 'remove':
+      case 'delete':
+        this.handleRemove(simplified, uow);
+        break;
     }
 
     commitWithUndo(uow, 'AI Changes');
@@ -87,6 +91,19 @@ export class DiagramConverter {
       const existingNode = this.diagram.nodeLookup.get(mod.nodeId);
       if (existingNode) {
         this.updateNode(existingNode, mod.updates, uow);
+      }
+    }
+  }
+
+  private handleRemove(simplified: SimplifiedDiagram, uow: UnitOfWork): void {
+    const removeIds = simplified.removeIds ?? [];
+
+    for (const id of removeIds) {
+      // Try to find the element by ID (could be a node or edge)
+      const element = this.diagram.lookup(id);
+      if (element) {
+        uow.snapshot(element);
+        this.layer.removeElement(element, uow);
       }
     }
   }
