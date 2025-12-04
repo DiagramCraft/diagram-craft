@@ -11,6 +11,7 @@ A standalone REST API server that provides data and schema endpoints for the RES
 - **CLI bootstrap**: Initialize with existing data files
 - **CORS enabled**: Works with web clients
 - **Type safety**: Local type definitions ensure data consistency
+- **AI-powered generation**: OpenRouter proxy for AI-powered diagram generation (optional)
 
 ## API Endpoints
 
@@ -35,6 +36,10 @@ A standalone REST API server that provides data and schema endpoints for the RES
 - `GET /api/fs` - List files in root directory
 - `GET /api/fs/**` - Get file content or list directory
 - `PUT /api/fs/**` - Create directory or write file
+
+### AI Endpoints
+
+- `POST /api/ai/generate` - Generate AI responses via OpenRouter (requires API key)
 
 ## Usage
 
@@ -67,7 +72,101 @@ node src/main.ts \
 - `--fs-root <path>` - Root directory for filesystem API (default: `../main/public`)
 - `--bootstrap-data <path>` - JSON file to bootstrap initial data from
 - `--bootstrap-schemas <path>` - JSON file to bootstrap initial schemas from
+- `--openrouter-api-key <key>` - OpenRouter API key (can also use `OPENROUTER_API_KEY` env var)
+- `--openrouter-model <model>` - Default model to use (default: `anthropic/claude-3.5-sonnet`)
+- `--openrouter-site-url <url>` - Site URL for OpenRouter analytics
+- `--openrouter-app-name <name>` - App name for OpenRouter analytics
 - `--help` - Show help message
+
+## AI Configuration
+
+The server includes AI-powered diagram generation capabilities via OpenRouter. To enable AI features:
+
+### Set up OpenRouter API Key
+
+**Option 1: Environment Variable (Recommended)**
+
+```bash
+export OPENROUTER_API_KEY=sk-or-v1-your-api-key-here
+pnpm dev
+```
+
+**Option 2: CLI Argument**
+
+```bash
+node src/main.ts --openrouter-api-key sk-or-v1-your-api-key-here
+```
+
+### Configure Model (Optional)
+
+By default, the server uses `anthropic/claude-3.5-sonnet`. To use a different model:
+
+```bash
+export OPENROUTER_DEFAULT_MODEL=openai/gpt-4-turbo
+pnpm dev
+```
+
+Or:
+
+```bash
+node src/main.ts --openrouter-model openai/gpt-4-turbo
+```
+
+### OpenRouter Analytics (Optional)
+
+For usage tracking on the OpenRouter dashboard:
+
+```bash
+export OPENROUTER_SITE_URL=https://your-site.com
+export OPENROUTER_APP_NAME=DiagramCraft
+pnpm dev
+```
+
+### Example: Full AI Configuration
+
+```bash
+export OPENROUTER_API_KEY=sk-or-v1-your-api-key-here
+export OPENROUTER_DEFAULT_MODEL=anthropic/claude-3.5-sonnet
+export OPENROUTER_SITE_URL=https://diagram-craft.app
+export OPENROUTER_APP_NAME=DiagramCraft
+pnpm dev
+```
+
+### Using the AI API
+
+**Generate AI Response:**
+
+```bash
+curl -X POST http://localhost:3000/api/ai/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are a helpful assistant that generates diagram specifications."
+      },
+      {
+        "role": "user",
+        "content": "Create a simple flowchart with 3 steps"
+      }
+    ],
+    "stream": true
+  }'
+```
+
+### Response Format
+
+The `/api/ai/generate` endpoint supports both streaming (default) and non-streaming responses:
+
+**Streaming Response** (default):
+- Returns `text/event-stream` with server-sent events
+- Each chunk contains a portion of the AI response
+- Suitable for real-time updates in UI
+
+**Non-Streaming Response**:
+- Set `"stream": false` in the request body
+- Returns complete response as JSON
+- Suitable for simple request/response patterns
 
 ## Data Format
 

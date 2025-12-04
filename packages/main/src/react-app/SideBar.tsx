@@ -144,6 +144,7 @@ export const SideBar = (props: Props) => {
         <Toolbar.ToggleGroup type={'single'}>
           {props.children.map((c, idx) => {
             const element = c as ReactElement<SideBarPageProps>;
+            if (!element) return element;
             const icon = element.props.icon;
             return (
               <div

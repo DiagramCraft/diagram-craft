@@ -156,5 +156,9 @@ export const defaultAppConfig: AppConfig = {
   filesystem: {
     provider: import.meta.env.VITE_FS_PROVIDER ?? 'remote',
     endpoint: import.meta.env.VITE_FS_ENDPOINT ?? 'http://localhost:3000'
+  },
+  ai: {
+    provider: import.meta.env.VITE_AI_PROVIDER ?? 'none',
+    endpoint: import.meta.env.VITE_AI_ENDPOINT ?? 'http://localhost:3000'
   }
 };
