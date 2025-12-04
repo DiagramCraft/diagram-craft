@@ -13,6 +13,7 @@
     "embeddable-jq": "^1.0.4",
     "@diagram-craft/geometry": "workspace:^",
     "@diagram-craft/utils": "workspace:^",
+    "@diagram-craft/graph": "workspace:^",
     "@diagram-craft/collaboration": "workspace:^"
   },
   "devDependencies": {

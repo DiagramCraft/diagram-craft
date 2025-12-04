@@ -66,6 +66,31 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
         </>
       )}
 
+      <ContextMenu.Sub>
+        <ContextMenu.SubTrigger className="cmp-context-menu__sub-trigger">
+          Selection
+          <div className="cmp-context-menu__right-slot">
+            <TbChevronRight />
+          </div>
+        </ContextMenu.SubTrigger>
+        <ContextMenu.Portal>
+          <ContextMenu.SubContent className="cmp-context-menu" sideOffset={2} alignOffset={-5}>
+            <ActionContextMenuItem action={'SELECT_ALL'}>Select All</ActionContextMenuItem>
+            <ActionContextMenuItem action={'SELECT_ALL_NODES'}>
+              Select All Nodes
+            </ActionContextMenuItem>
+            <ActionContextMenuItem action={'SELECT_ALL_EDGES'}>
+              Select All Edges
+            </ActionContextMenuItem>
+            <ContextMenu.Separator className="cmp-context-menu__separator" />
+            <ActionContextMenuItem action={'SELECTION_SELECT_CONNECTED'}>
+              Select Connected
+            </ActionContextMenuItem>
+          </ContextMenu.SubContent>
+        </ContextMenu.Portal>
+      </ContextMenu.Sub>
+      <ContextMenu.Separator className="cmp-context-menu__separator" />
+
       <ActionContextMenuItem action={'CLIPBOARD_CUT'}>Cut</ActionContextMenuItem>
       <ActionContextMenuItem action={'CLIPBOARD_COPY'}>Copy</ActionContextMenuItem>
       <ActionContextMenuItem action={'DUPLICATE'}>Duplicate</ActionContextMenuItem>

@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'vitest';
-import { findShortestPathAStar, type HeuristicFunction, SimpleGraph } from './graph';
+import { findShortestPathAStar, type HeuristicFunction } from './paths';
+import { SimpleGraph } from './graph';
 
-describe('Graph utilities', () => {
+describe('Path algorithms', () => {
   describe('findShortestPathAStar', () => {
     // Simple heuristic that returns 0 (essentially makes A* behave like Dijkstra)
     const zeroHeuristic: HeuristicFunction = () => 0;

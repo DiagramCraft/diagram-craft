@@ -1,9 +1,10 @@
 /**
- * Graph data structures and A* shortest path algorithm.
+ * Shortest path algorithms for graphs.
  *
  * @example
  * ```ts
- * import { SimpleGraph, findShortestPathAStar } from '@diagram-craft/utils/graph';
+ * import { findShortestPathAStar } from '@diagram-craft/graph/paths';
+ * import { SimpleGraph } from '@diagram-craft/graph/graph';
  *
  * const graph = new SimpleGraph();
  * graph.addVertex({ id: 'A', data: {} });
@@ -21,104 +22,8 @@
  * @module
  */
 
-import { PriorityQueue } from './priorityQueue';
-import { MultiMap } from './multimap';
-
-/** A vertex in a graph with optional typed data */
-export interface Vertex<T = unknown, K = string> {
-  id: K;
-  data: T;
-}
-
-/** An edge connecting two vertices with optional weight and typed data */
-export interface Edge<T = unknown, K = string, VK = string> {
-  id: K;
-  from: VK;
-  to: VK;
-  weight: number;
-  data: T;
-  disabled?: boolean;
-}
-
-/** A graph containing vertices and edges with method-based access */
-export interface Graph<V = unknown, E = unknown, VK = string, EK = string> {
-  /** Get a vertex by its ID */
-  getVertex(id: VK): Vertex<V, VK> | undefined;
-
-  /** Get an edge by its ID */
-  getEdge(id: EK): Edge<E, EK, VK> | undefined;
-
-  /** Get an iterable of all vertices */
-  vertices(): Iterable<Vertex<V, VK>>;
-
-  /** Get an iterable of all edges */
-  edges(): Iterable<Edge<E, EK, VK>>;
-
-  adjacencyList(): MultiMap<
-    VK,
-    {
-      vertexId: VK;
-      edge: Edge<E, EK, VK>;
-    }
-  >;
-}
-
-/** A simple implementation of the Graph interface using Maps */
-export class SimpleGraph<V = unknown, E = unknown, VK = string, EK = string>
-  implements Graph<V, E, VK, EK>
-{
-  protected _vertices = new Map<VK, Vertex<V, VK>>();
-  protected _edges = new Map<EK, Edge<E, EK, VK>>();
-  protected _adjacencyList: MultiMap<VK, { vertexId: VK; edge: Edge<E, EK, VK> }> | undefined =
-    undefined;
-
-  adjacencyList(): MultiMap<VK, { vertexId: VK; edge: Edge<E, EK, VK> }> {
-    if (this._adjacencyList) return this._adjacencyList;
-
-    // Build adjacency list for efficient lookup
-    this._adjacencyList = new MultiMap<VK, { vertexId: VK; edge: Edge<E, EK, VK> }>();
-    for (const edge of this.edges()) {
-      this._adjacencyList.add(edge.from, { vertexId: edge.to, edge });
-    }
-
-    return this._adjacencyList;
-  }
-  getVertex(id: VK): Vertex<V, VK> | undefined {
-    return this._vertices.get(id);
-  }
-
-  getEdge(id: EK): Edge<E, EK, VK> | undefined {
-    return this._edges.get(id);
-  }
-
-  vertices(): Iterable<Vertex<V, VK>> {
-    return this._vertices.values();
-  }
-
-  edges(): Iterable<Edge<E, EK, VK>> {
-    return this._edges.values();
-  }
-
-  /** Add a vertex to the graph */
-  addVertex(vertex: Vertex<V, VK>): Vertex<V, VK> {
-    this._vertices.set(vertex.id, vertex);
-    return vertex;
-  }
-
-  /** Add an edge to the graph */
-  addEdge(edge: Edge<E, EK, VK>): Edge<E, EK, VK> {
-    this._edges.set(edge.id, edge);
-    return edge;
-  }
-
-  removeEdge(edge: EK): boolean {
-    return this._edges.delete(edge);
-  }
-
-  removeVertex(vertex: VK): boolean {
-    return this._vertices.delete(vertex);
-  }
-}
+import { PriorityQueue } from '@diagram-craft/utils/priorityQueue';
+import type { Edge, Graph, Vertex } from './graph';
 
 /** Result of shortest path calculation */
 export interface ShortestPathResult<V = unknown, E = unknown, VK = string, EK = string> {
@@ -129,6 +34,7 @@ export interface ShortestPathResult<V = unknown, E = unknown, VK = string, EK = 
 
 /**
  * Edge penalty function for A* algorithm that calculates additional penalty for an edge.
+ * @param previousEdge The edge we came from (undefined if at start vertex)
  * @param currentVertex The vertex we're currently at
  * @param proposedEdge The edge we're considering taking
  * @param graph The graph being searched
