@@ -20,10 +20,10 @@
     "electron-log": "^5.4.3"
   },
   "devDependencies": {
-    "electron": "^38.1.0",
+    "electron": "^39.2.5",
     "electron-builder": "^26.0.12",
     "npm-run-all": "^4.1.5",
-    "rimraf": "^6.0.1",
+    "rimraf": "^6.1.2",
     "typescript": "^5.9.3",
     "wait-on": "^8.0.5"
   },
