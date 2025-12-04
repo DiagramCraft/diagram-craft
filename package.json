@@ -53,9 +53,9 @@
     "typedoc-github-theme": "^0.3.1",
     "typedoc-plugin-missing-exports": "^4.1.2",
     "typescript": "^5.9.3",
-    "vite-node": "^3.2.4",
+    "vite-node": "^5.2.0",
     "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^3.2.4"
+    "vitest": "^4.0.15"
   },
   "dependencies": {
     "globals": "^16.5.0"
