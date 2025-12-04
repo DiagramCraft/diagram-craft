@@ -591,57 +591,6 @@
           }
         }
       }
-    },
-    "/api/ai/models": {
-      "get": {
-        "tags": ["AI"],
-        "summary": "Get available models",
-        "description": "Retrieves list of available models from OpenRouter",
-        "operationId": "getAIModels",
-        "responses": {
-          "200": {
-            "description": "List of available models",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/AIModel"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "500": {
-            "$ref": "#/components/responses/InternalServerError"
-          }
-        }
-      }
-    },
-    "/api/ai/config": {
-      "get": {
-        "tags": ["AI"],
-        "summary": "Get AI configuration",
-        "description": "Returns current AI configuration (without sensitive data like API keys)",
-        "operationId": "getAIConfig",
-        "responses": {
-          "200": {
-            "description": "Current AI configuration",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AIConfig"
-                }
-              }
-            }
-          }
-        }
-      }
     }
   },
   "components": {
@@ -885,52 +834,6 @@
                 }
               }
             }
-          }
-        }
-      },
-      "AIModel": {
-        "type": "object",
-        "description": "Information about an available AI model",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "Model identifier"
-          },
-          "name": {
-            "type": "string",
-            "description": "Human-readable model name"
-          },
-          "description": {
-            "type": "string",
-            "description": "Model description"
-          },
-          "pricing": {
-            "type": "object",
-            "description": "Pricing information"
-          }
-        }
-      },
-      "AIConfig": {
-        "type": "object",
-        "description": "Current AI configuration",
-        "required": ["defaultModel", "hasApiKey"],
-        "properties": {
-          "defaultModel": {
-            "type": "string",
-            "description": "Default model being used",
-            "example": "anthropic/claude-3.5-sonnet"
-          },
-          "hasApiKey": {
-            "type": "boolean",
-            "description": "Whether an API key is configured"
-          },
-          "appName": {
-            "type": "string",
-            "description": "Application name for OpenRouter"
-          },
-          "siteUrl": {
-            "type": "string",
-            "description": "Site URL for OpenRouter analytics"
           }
         }
       }

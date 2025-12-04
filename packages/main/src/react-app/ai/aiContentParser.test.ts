@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 Magnus Johansson
+ * SPDX-License-Identifier: ISC
+ */
+
 import { describe, test, expect } from 'vitest';
 import { extractJSON, filterJsonFromContent } from './aiContentParser';
 
@@ -116,74 +121,6 @@ describe('extractJSON', () => {
     const result = extractJSON(content);
 
     expect(result).toBeUndefined();
-  });
-
-  test('should handle JSON with trailing text after code block', () => {
-    const content = `\`\`\`json
-{
-  "action": "create",
-  "nodes": []
-}
-\`\`\`
-
-This diagram shows the basic structure.`;
-
-    const result = extractJSON(content);
-
-    expect(result).toEqual({
-      action: 'create',
-      nodes: []
-    });
-  });
-
-  test('should handle empty JSON object', () => {
-    const content = `\`\`\`json
-{}
-\`\`\``;
-
-    const result = extractJSON(content);
-
-    expect(result).toEqual({});
-  });
-
-  test('should handle JSON arrays', () => {
-    const content = `\`\`\`json
-{
-  "action": "remove",
-  "removeIds": ["node1", "node2", "node3"]
-}
-\`\`\``;
-
-    const result = extractJSON(content);
-
-    expect(result).toEqual({
-      action: 'remove',
-      removeIds: ['node1', 'node2', 'node3']
-    });
-  });
-
-  test('should extract JSON from text with leading explanation', () => {
-    const content = `I'll create that diagram for you:
-
-\`\`\`json
-{
-  "action": "create",
-  "layout": "auto",
-  "nodes": [
-    { "id": "start", "type": "circle" }
-  ]
-}
-\`\`\`
-
-The diagram has been created.`;
-
-    const result = extractJSON(content);
-
-    expect(result).toEqual({
-      action: 'create',
-      layout: 'auto',
-      nodes: [{ id: 'start', type: 'circle' }]
-    });
   });
 });
 

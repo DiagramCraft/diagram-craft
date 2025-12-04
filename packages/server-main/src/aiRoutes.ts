@@ -220,44 +220,5 @@ export function createAIRoutes(config: AIConfig) {
     })
   );
 
-  // GET /api/ai/models - Get available models (optional endpoint)
-  router.get(
-    `${API_AI_PATH}/models`,
-    defineEventHandler(async _event => {
-      try {
-        const response = await fetch('https://openrouter.ai/api/v1/models', {
-          headers: {
-            Authorization: `Bearer ${config.apiKey}`
-          }
-        });
-
-        if (!response.ok) {
-          throw createError({
-            status: response.status,
-            statusMessage: response.statusText,
-            data: { message: 'Failed to fetch models from OpenRouter' }
-          });
-        }
-
-        return response.json();
-      } catch (error: unknown) {
-        handleError(error, 'Failed to fetch available models');
-      }
-    })
-  );
-
-  // GET /api/ai/config - Get current AI configuration (without sensitive data)
-  router.get(
-    `${API_AI_PATH}/config`,
-    defineEventHandler(async _event => {
-      return {
-        defaultModel: config.defaultModel ?? 'anthropic/claude-3.5-sonnet',
-        hasApiKey: !!config.apiKey,
-        appName: config.appName ?? 'DiagramCraft',
-        siteUrl: config.siteUrl ?? 'http://localhost'
-      };
-    })
-  );
-
   return router;
 }

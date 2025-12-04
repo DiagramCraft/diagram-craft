@@ -40,8 +40,6 @@ A standalone REST API server that provides data and schema endpoints for the RES
 ### AI Endpoints
 
 - `POST /api/ai/generate` - Generate AI responses via OpenRouter (requires API key)
-- `GET /api/ai/models` - Get available models from OpenRouter
-- `GET /api/ai/config` - Get current AI configuration
 
 ## Usage
 
@@ -154,18 +152,6 @@ curl -X POST http://localhost:3000/api/ai/generate \
     ],
     "stream": true
   }'
-```
-
-**Get Available Models:**
-
-```bash
-curl http://localhost:3000/api/ai/models
-```
-
-**Check AI Configuration:**
-
-```bash
-curl http://localhost:3000/api/ai/config
 ```
 
 ### Response Format

@@ -10,7 +10,7 @@ import {
 } from '@diagram-craft/canvas-app/defaultRegistry';
 import { ConnectedEndpoint } from '@diagram-craft/model/endpoint';
 
-describe('DiagramConverter', () => {
+describe('AIModel', () => {
   let document: DiagramDocument;
   let aiModel: AIModel;
 
