@@ -38,16 +38,20 @@ export const standardTestModel = (backend: Backend): StandardTestModel => {
   const diagram2 = root2 ? doc2!.diagrams[0]! : undefined;
   const layer2 = root2 ? (diagram2!.layers.all[0] as RegularLayer) : undefined;
 
-  const elementChange: [ReturnType<typeof vi.fn>, ReturnType<typeof vi.fn>] = [vi.fn(), vi.fn()];
+  // biome-ignore lint/suspicious/noExplicitAny: needed
+  const elementChange: [any, any] = [vi.fn(), vi.fn()];
   diagram1.on('elementChange', elementChange[0]);
   if (diagram2) diagram2.on('elementChange', elementChange[1]);
 
-  const elementAdd: [ReturnType<typeof vi.fn>, ReturnType<typeof vi.fn>] = [vi.fn(), vi.fn()];
+  // biome-ignore lint/suspicious/noExplicitAny: needed
+  const elementAdd: [any, any] = [vi.fn(), vi.fn()];
   diagram1.on('elementAdd', elementAdd[0]);
   if (diagram2) diagram2.on('elementAdd', elementAdd[1]);
 
-  const elementRemove: [ReturnType<typeof vi.fn>, ReturnType<typeof vi.fn>] = [vi.fn(), vi.fn()];
+  // biome-ignore lint/suspicious/noExplicitAny: needed
+  const elementRemove: [any, any] = [vi.fn(), vi.fn()];
   diagram1.on('elementRemove', elementRemove[0]);
+
   if (diagram2) diagram2.on('elementRemove', elementRemove[1]);
 
   return {
