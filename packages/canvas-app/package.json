@@ -15,6 +15,7 @@
     "@diagram-craft/canvas-edges": "workspace:^",
     "@diagram-craft/collaboration": "workspace:^",
     "@diagram-craft/utils": "workspace:^",
+    "@diagram-craft/graph": "workspace:^",
     "@diagram-craft/geometry": "workspace:^",
     "@diagram-craft/model": "workspace:^",
     "@diagram-craft/markdown": "workspace:^"

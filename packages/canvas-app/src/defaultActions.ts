@@ -27,6 +27,7 @@ import { ruleLayerActions } from './actions/ruleLayerActions';
 import { Application } from './application';
 import { createNavigateNodeActions } from './actions/navigateNodeAction';
 import { elementActions } from './actions/elementActions';
+import { selectionModifyActions } from './actions/selectionModifyActions';
 
 export const defaultCanvasActions: ActionMapFactory<Application> = application => ({
   ...edgeTextAddActions(application),
@@ -42,6 +43,7 @@ export const defaultCanvasActions: ActionMapFactory<Application> = application =
   ...createLinkedNodeActions(application),
   ...createNavigateNodeActions(application),
   ...selectionRestackActions(application),
+  ...selectionModifyActions(application),
   ...alignActions(application),
   ...toggleMagnetTypeActions(application),
   ...distributeActions(application),
