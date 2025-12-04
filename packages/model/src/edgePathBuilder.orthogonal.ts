@@ -1,10 +1,7 @@
 import { _p, Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
 import { SimpleGraph, type Edge, type Vertex } from '@diagram-craft/graph/graph';
-import {
-  findShortestPathAStar,
-  type HeuristicFunction
-} from '@diagram-craft/graph/paths';
+import { findShortestPathAStar, type HeuristicFunction } from '@diagram-craft/graph/paths';
 import { Direction } from '@diagram-craft/geometry/direction';
 import type { DiagramEdge } from './diagramEdge';
 import { ConnectedEndpoint, type Endpoint } from './endpoint';

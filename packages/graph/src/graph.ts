@@ -53,6 +53,17 @@ export interface Graph<V = unknown, E = unknown, VK = string, EK = string> {
       edge: Edge<E, EK, VK>;
     }
   >;
+
+  /**
+   * Creates a new subgraph containing only the specified vertices and edges.
+   * @param vertices Array of vertices to include in the subgraph
+   * @param edges Array of edges to include in the subgraph
+   * @returns A new SimpleGraph containing the specified vertices and edges
+   */
+  subgraph(
+    vertices: Iterable<Vertex<V, VK>>,
+    edges: Iterable<Edge<E, EK, VK>>
+  ): Graph<V, E, VK, EK>;
 }
 
 /** A simple implementation of the Graph interface using Maps */
@@ -109,5 +120,22 @@ export class SimpleGraph<V = unknown, E = unknown, VK = string, EK = string>
 
   removeVertex(vertex: VK): boolean {
     return this._vertices.delete(vertex);
+  }
+
+  subgraph(
+    vertices: Iterable<Vertex<V, VK>>,
+    edges: Iterable<Edge<E, EK, VK>>
+  ): SimpleGraph<V, E, VK, EK> {
+    const subgraph = new SimpleGraph<V, E, VK, EK>();
+
+    for (const vertex of vertices) {
+      subgraph.addVertex(vertex);
+    }
+
+    for (const edge of edges) {
+      subgraph.addEdge(edge);
+    }
+
+    return subgraph;
   }
 }

@@ -107,5 +107,71 @@ describe('Graph data structures', () => {
 
       expect(adjacencyList1).toBe(adjacencyList2);
     });
+
+    test('creates subgraph with specified vertices and edges', () => {
+      const graph = new SimpleGraph();
+      graph.addVertex({ id: 'A', data: undefined });
+      graph.addVertex({ id: 'B', data: undefined });
+      graph.addVertex({ id: 'C', data: undefined });
+      graph.addEdge({ id: 'AB', from: 'A', to: 'B', weight: 1, data: undefined });
+      graph.addEdge({ id: 'BC', from: 'B', to: 'C', weight: 2, data: undefined });
+
+      const vertexA = graph.getVertex('A')!;
+      const vertexB = graph.getVertex('B')!;
+      const edgeAB = graph.getEdge('AB')!;
+
+      const subgraph = graph.subgraph([vertexA, vertexB], [edgeAB]);
+
+      expect(Array.from(subgraph.vertices()).map(v => v.id)).toEqual(['A', 'B']);
+      expect(Array.from(subgraph.edges()).map(e => e.id)).toEqual(['AB']);
+      expect(subgraph.getVertex('C')).toBeUndefined();
+      expect(subgraph.getEdge('BC')).toBeUndefined();
+    });
+
+    test('creates empty subgraph from empty arrays', () => {
+      const graph = new SimpleGraph();
+      graph.addVertex({ id: 'A', data: undefined });
+
+      const subgraph = graph.subgraph([], []);
+
+      expect(Array.from(subgraph.vertices())).toHaveLength(0);
+      expect(Array.from(subgraph.edges())).toHaveLength(0);
+    });
+
+    test('createSubgraph preserves vertex and edge data', () => {
+      const graph = new SimpleGraph<string, number>();
+      graph.addVertex({ id: 'A', data: 'vertex-a' });
+      graph.addVertex({ id: 'B', data: 'vertex-b' });
+      graph.addEdge({ id: 'AB', from: 'A', to: 'B', weight: 5, data: 42 });
+
+      const vertices = Array.from(graph.vertices());
+      const edges = Array.from(graph.edges());
+      const subgraph = graph.subgraph(vertices, edges);
+
+      const vertexA = subgraph.getVertex('A');
+      expect(vertexA?.data).toBe('vertex-a');
+
+      const edge = subgraph.getEdge('AB');
+      expect(edge?.data).toBe(42);
+      expect(edge?.weight).toBe(5);
+    });
+
+    test('createSubgraph returns independent graph', () => {
+      const graph = new SimpleGraph();
+      graph.addVertex({ id: 'A', data: undefined });
+      graph.addVertex({ id: 'B', data: undefined });
+      graph.addEdge({ id: 'AB', from: 'A', to: 'B', weight: 1, data: undefined });
+
+      const vertices = Array.from(graph.vertices());
+      const edges = Array.from(graph.edges());
+      const subgraph = graph.subgraph(vertices, edges);
+
+      // Add vertex to subgraph
+      subgraph.addVertex({ id: 'C', data: undefined });
+
+      // Original graph should not be affected
+      expect(graph.getVertex('C')).toBeUndefined();
+      expect(subgraph.getVertex('C')).toBeDefined();
+    });
   });
 });

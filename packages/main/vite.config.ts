@@ -51,6 +51,7 @@ export default defineConfig(({ command, mode, isSsrBuild, isPreview }) => {
         '@diagram-craft/collaboration': path.join(__dirname, '../../packages/collaboration/src'),
         '@diagram-craft/model': path.join(__dirname, '../../packages/model/src'),
         '@diagram-craft/utils': path.join(__dirname, '../../packages/utils/src'),
+        '@diagram-craft/graph': path.join(__dirname, '../../packages/graph/src'),
         '@diagram-craft/app-components': path.join(__dirname, '../../packages/app-components/src')
       }
     }
