@@ -35,7 +35,7 @@ const schemaHasAssociatedData = (
 
     const data = document.data.db.getData(schema);
     return data.length > 0;
-  } catch (error) {
+  } catch (_e) {
     return true;
   }
 };
