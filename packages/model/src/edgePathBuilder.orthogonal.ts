@@ -6,7 +6,7 @@ import {
   type HeuristicFunction,
   SimpleGraph,
   type Vertex
-} from '@diagram-craft/utils/graph';
+} from '@diagram-craft/graph/graph';
 import { Direction } from '@diagram-craft/geometry/direction';
 import type { DiagramEdge } from './diagramEdge';
 import { ConnectedEndpoint, type Endpoint } from './endpoint';

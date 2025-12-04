@@ -3,7 +3,7 @@
  *
  * @example
  * ```ts
- * import { SimpleGraph, findShortestPathAStar } from '@diagram-craft/utils/graph';
+ * import { SimpleGraph, findShortestPathAStar } from '@diagram-craft/graph';
  *
  * const graph = new SimpleGraph();
  * graph.addVertex({ id: 'A', data: {} });
@@ -21,8 +21,8 @@
  * @module
  */
 
-import { PriorityQueue } from './priorityQueue';
-import { MultiMap } from './multimap';
+import { PriorityQueue } from '@diagram-craft/utils/priorityQueue';
+import { MultiMap } from '@diagram-craft/utils/multimap';
 
 /** A vertex in a graph with optional typed data */
 export interface Vertex<T = unknown, K = string> {

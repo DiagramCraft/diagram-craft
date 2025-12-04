@@ -1,0 +1,12 @@
+{
+  "name": "@diagram-craft/graph",
+  "version": "1.0.0",
+  "description": "Graph data structures and algorithms",
+  "type": "module",
+  "main": "src/graph.ts",
+  "scripts": {
+    "test": "vitest"
+  },
+  "keywords": [],
+  "author": "Magnus Johansson"
+}

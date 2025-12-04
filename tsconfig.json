@@ -26,6 +26,7 @@
       "@diagram-craft/app-components/*": ["./packages/app-components/src/*"],
       "@diagram-craft/utils/*": ["./packages/utils/src/*"],
       "@diagram-craft/geometry/*": ["./packages/geometry/src/*"],
+      "@diagram-craft/graph/*": ["./packages/graph/src/*"],
       "@diagram-craft/model/*": ["./packages/model/src/*"],
       "@diagram-craft/electron-client-api/*": ["./packages/electron-client-api/src/*"],
       "@diagram-craft/canvas/*": ["./packages/canvas/src/*"],
