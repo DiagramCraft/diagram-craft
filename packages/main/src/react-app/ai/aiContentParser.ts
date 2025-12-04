@@ -1,27 +1,39 @@
-import { mustExist } from '@diagram-craft/utils/assert';
+const EXTRACTION_STRATEGIES: ((p: string) => string | undefined)[] = [
+  // Strategy 1: Extract from ```json code block
+  (content: string) => {
+    const match = content.match(/```json\n([\s\S]*?)\n```/);
+    return match?.[1];
+  },
+  // Strategy 2: Extract from ``` code block (no language specified)
+  (content: string) => {
+    const match = content.match(/```\n([\s\S]*?)\n```/);
+    return match?.[1];
+  },
+  // Strategy 3: Find any JSON object in the text
+  (content: string) => {
+    const match = content.match(/\{[\s\S]*\}/);
+    return match?.[0];
+  }
+];
 
 /**
  * Extracts JSON from various content formats (markdown code blocks, plain text)
  * Returns undefined if no valid JSON is found
  */
 export const extractJSON = (content: string): unknown | undefined => {
-  // Try to extract JSON from markdown code blocks
-  const jsonMatch =
-    content.match(/```json\n([\s\S]*?)\n```/) || content.match(/```\n([\s\S]*?)\n```/);
-
-  let jsonStr = mustExist(jsonMatch ? jsonMatch[1] : content);
-
-  // Try to find JSON object in the response
-  const jsonObjectMatch = jsonStr.match(/\{[\s\S]*\}/);
-  if (jsonObjectMatch) {
-    jsonStr = jsonObjectMatch[0];
+  // Try each strategy in order
+  for (const strategy of EXTRACTION_STRATEGIES) {
+    const jsonStr = strategy(content);
+    if (jsonStr) {
+      try {
+        return JSON.parse(jsonStr);
+      } catch {
+        // This strategy didn't produce valid JSON, try the next one
+      }
+    }
   }
 
-  try {
-    return JSON.parse(jsonStr);
-  } catch (_e) {
-    return undefined;
-  }
+  return undefined;
 };
 
 /**

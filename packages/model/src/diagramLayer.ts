@@ -1,4 +1,4 @@
-import type { DiagramElement, DiagramElementCRDT } from './diagramElement';
+import { type DiagramElement, type DiagramElementCRDT } from './diagramElement';
 import type { LayerSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
 import type { Diagram } from './diagram';
 import { AttachmentConsumer } from './attachment';
@@ -13,6 +13,7 @@ import { CRDTProp } from '@diagram-craft/collaboration/datatypes/crdtProp';
 import type { CRDTList, CRDTMap } from '@diagram-craft/collaboration/crdt';
 import type { MappedCRDTOrderedMapMapType } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import { type Releasable, Releasables } from '@diagram-craft/utils/releasable';
+import { isRegularLayer } from './diagramLayerUtils';
 
 export type LayerType = 'regular' | 'rule' | 'reference' | 'modification';
 export type StackPosition = { element: DiagramElement; idx: number };
@@ -171,3 +172,14 @@ export type LayerCRDT = {
   // Modification layer
   modifications: CRDTMap<MappedCRDTOrderedMapMapType<ModificationCRDT>>;
 };
+
+declare global {
+  namespace DiagramCraft {
+    interface AssertTypeExtensions {
+      isRegularLayer: (e: Layer) => asserts e is RegularLayer;
+    }
+  }
+}
+
+assert.isRegularLayer = (e: Layer): asserts e is RegularLayer =>
+  assert.true(isRegularLayer(e), 'not regular layer');

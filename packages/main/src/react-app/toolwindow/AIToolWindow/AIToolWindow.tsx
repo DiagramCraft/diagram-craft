@@ -9,7 +9,9 @@ import { SimplifiedDiagram } from '../../ai/aiDiagramTypes';
 import { createSystemMessage } from '../../ai/aiSystemPrompt';
 import styles from './AIToolWindow.module.css';
 import { isEmptyString } from '@diagram-craft/utils/strings';
-import { extractJSON, filterJsonFromContent } from './aiContentParser';
+import { extractJSON, filterJsonFromContent } from '../../ai/aiContentParser';
+import { useRedraw } from '../../hooks/useRedraw';
+import { useEventListener } from '../../hooks/useEventListener';
 
 interface ConversationMessage extends AIMessage {
   timestamp: number;
@@ -20,6 +22,7 @@ const isValidDiagramSpec = (diagramSpec: SimplifiedDiagram) =>
 
 export const AIToolWindow = () => {
   const diagram = useDiagram();
+  const redraw = useRedraw();
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -27,6 +30,11 @@ export const AIToolWindow = () => {
   const [streamingContent, setStreamingContent] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [textAreaKey, setTextAreaKey] = useState(0);
+
+  const activeLayer = diagram.activeLayer;
+  const isDisabled = activeLayer.type !== 'regular' || activeLayer.isLocked() || loading;
+
+  useEventListener(diagram.layers, 'layerStructureChange', redraw);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: we need this to trigger when the stream changes
   useEffect(() => {
@@ -185,7 +193,6 @@ export const AIToolWindow = () => {
                   <strong>Error:</strong> {error}
                 </div>
               )}
-
               <div ref={messagesEndRef} />
             </div>
 
@@ -197,14 +204,14 @@ export const AIToolWindow = () => {
                 onKeyDown={handleKeyDown}
                 placeholder="Describe the diagram you want to create..."
                 rows={3}
-                disabled={loading}
+                disabled={isDisabled}
                 className={styles['cmp-ai-input']}
               />
               <div className={styles['cmp-ai-actions']}>
-                <Button onClick={clear} disabled={loading} type="secondary">
+                <Button onClick={clear} disabled={isDisabled} type="secondary">
                   Clear
                 </Button>
-                <Button onClick={sendMessage} disabled={loading || !input.trim()}>
+                <Button onClick={sendMessage} disabled={isDisabled || !input.trim()}>
                   {loading ? 'Generating...' : 'Send'}
                 </Button>
               </div>

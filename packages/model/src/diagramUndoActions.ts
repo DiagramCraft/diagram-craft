@@ -153,9 +153,11 @@ export class ElementDeleteUndoableAction implements UndoableAction {
     private readonly diagram: Diagram,
     private readonly layer: RegularLayer,
     elements: ReadonlyArray<DiagramElement>,
-    private readonly restoreSelection: boolean
+    private readonly restoreSelection: boolean,
+    description?: string
   ) {
     this.elements = [...elements];
+    if (description) this.description = description;
   }
 
   undo(uow: UnitOfWork): void {

@@ -1,6 +1,5 @@
-// AI Service for interacting with the OpenRouter proxy
-
 import { AppConfig } from '../../appConfig';
+import { fetchWithTimeout } from '@diagram-craft/utils/fetch';
 
 export interface AIMessage {
   role: 'system' | 'user' | 'assistant';
@@ -23,50 +22,15 @@ export interface AIGenerateResponse {
   }>;
 }
 
-export interface AIConfig {
-  defaultModel: string;
-  hasApiKey: boolean;
-  appName?: string;
-  siteUrl?: string;
-}
-
 export interface AIStreamChunk {
   content: string;
   done: boolean;
 }
 
 export class AIService {
-  private baseUrl: string;
-  private fetchTimeout: number = 120000; // 2 minutes for AI requests
+  #fetchTimeout: number = 2 * 60 * 1000;
 
-  constructor(baseUrl: string = '') {
-    this.baseUrl = baseUrl;
-  }
-
-  /**
-   * Check if AI features are available
-   */
-  async checkAvailability(): Promise<boolean> {
-    try {
-      const config = await this.getConfig();
-      return config.hasApiKey;
-    } catch {
-      return false;
-    }
-  }
-
-  /**
-   * Get current AI configuration
-   */
-  async getConfig(): Promise<AIConfig> {
-    const response = await this.fetchWithTimeout(`${this.baseUrl}/api/ai/config`);
-
-    if (!response.ok) {
-      throw new Error(`Failed to get AI config: ${response.statusText}`);
-    }
-
-    return response.json();
-  }
+  constructor(private readonly baseUrl: string = '') {}
 
   /**
    * Generate AI response with streaming support
@@ -77,11 +41,9 @@ export class AIService {
   ): Promise<AIGenerateResponse> {
     const shouldStream = request.stream ?? true;
 
-    const response = await this.fetchWithTimeout(`${this.baseUrl}/api/ai/generate`, {
+    const response = await fetchWithTimeout(`${this.baseUrl}/api/ai/generate`, this.#fetchTimeout, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         temperature: 0.7,
         ...request,
@@ -176,42 +138,6 @@ export class AIService {
       ]
     };
   }
-
-  /**
-   * Fetch with timeout using AbortController
-   */
-  private async fetchWithTimeout(url: string, options?: RequestInit): Promise<Response> {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), this.fetchTimeout);
-
-    try {
-      return await fetch(url, {
-        ...options,
-        signal: controller.signal
-      });
-    } catch (error) {
-      if ((error as Error).name === 'AbortError') {
-        throw new Error('Request timed out');
-      }
-      throw error;
-    } finally {
-      clearTimeout(timeoutId);
-    }
-  }
-
-  /**
-   * Get available models from OpenRouter
-   */
-  async getModels(): Promise<any> {
-    const response = await this.fetchWithTimeout(`${this.baseUrl}/api/ai/models`);
-
-    if (!response.ok) {
-      throw new Error(`Failed to get models: ${response.statusText}`);
-    }
-
-    return response.json();
-  }
 }
 
-// Singleton instance
 export const aiService = new AIService(AppConfig.get().ai.endpoint);

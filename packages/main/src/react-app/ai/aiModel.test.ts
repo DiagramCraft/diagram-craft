@@ -12,7 +12,7 @@ import { ConnectedEndpoint } from '@diagram-craft/model/endpoint';
 
 describe('DiagramConverter', () => {
   let document: DiagramDocument;
-  let converter: AIModel;
+  let aiModel: AIModel;
 
   beforeEach(() => {
     // Use the default registries with all node types registered
@@ -21,7 +21,7 @@ describe('DiagramConverter', () => {
 
     document = new DiagramDocument(nodeRegistry, edgeRegistry);
     const { diagram } = DocumentBuilder.empty(newid(), 'Test Diagram', document);
-    converter = new AIModel(diagram);
+    aiModel = new AIModel(diagram);
   });
 
   test('creates nodes with default values', () => {
@@ -33,9 +33,9 @@ describe('DiagramConverter', () => {
       ]
     };
 
-    converter.applyChange(simplified);
+    aiModel.applyChange(simplified);
 
-    const diagram = converter['diagram'];
+    const diagram = aiModel['diagram'];
     const nodes = Array.from(diagram.nodeLookup.values());
     const edges = Array.from(diagram.edgeLookup.values());
 
@@ -53,9 +53,9 @@ describe('DiagramConverter', () => {
       layout: 'manual'
     };
 
-    converter.applyChange(simplified);
+    aiModel.applyChange(simplified);
 
-    const diagram = converter['diagram'];
+    const diagram = aiModel['diagram'];
     const nodes = Array.from(diagram.nodeLookup.values());
 
     expect(nodes[0]!.bounds.x).toBe(100);
@@ -76,9 +76,9 @@ describe('DiagramConverter', () => {
       layout: 'auto'
     };
 
-    converter.applyChange(simplified);
+    aiModel.applyChange(simplified);
 
-    const diagram = converter['diagram'];
+    const diagram = aiModel['diagram'];
     const nodes = Array.from(diagram.nodeLookup.values());
 
     // Verify nodes have positions assigned
@@ -98,9 +98,9 @@ describe('DiagramConverter', () => {
       edges: [{ from: 'A', to: 'B', fromAnchor: 'right', toAnchor: 'left' }]
     };
 
-    converter.applyChange(simplified);
+    aiModel.applyChange(simplified);
 
-    const diagram = converter['diagram'];
+    const diagram = aiModel['diagram'];
     const edges = Array.from(diagram.edgeLookup.values());
     const nodes = Array.from(diagram.nodeLookup.values());
 
@@ -130,9 +130,9 @@ describe('DiagramConverter', () => {
       ]
     };
 
-    converter.applyChange(simplified);
+    aiModel.applyChange(simplified);
 
-    const diagram = converter['diagram'];
+    const diagram = aiModel['diagram'];
     const edge = Array.from(diagram.edgeLookup.values())[0]!;
 
     expect(edge.renderProps.type).toBe('curved');
@@ -155,9 +155,9 @@ describe('DiagramConverter', () => {
       ]
     };
 
-    converter.applyChange(simplified);
+    aiModel.applyChange(simplified);
 
-    const diagram = converter['diagram'];
+    const diagram = aiModel['diagram'];
     const node = Array.from(diagram.nodeLookup.values())[0]!;
 
     expect(node.nodeType).toBe('circle');
@@ -174,9 +174,9 @@ describe('DiagramConverter', () => {
     };
 
     // Should not throw
-    expect(() => converter.applyChange(simplified)).not.toThrow();
+    expect(() => aiModel.applyChange(simplified)).not.toThrow();
 
-    const diagram = converter['diagram'];
+    const diagram = aiModel['diagram'];
     const edges = Array.from(diagram.edgeLookup.values());
     expect(edges.length).toBe(0);
   });
@@ -191,8 +191,8 @@ describe('DiagramConverter', () => {
       edges: [{ from: 'A', to: 'B' }]
     };
 
-    converter.applyChange(simplified);
-    const exported = converter.asAIView();
+    aiModel.applyChange(simplified);
+    const exported = aiModel.asAIView();
 
     expect(exported.nodes).toHaveLength(2);
     expect(exported.edges).toHaveLength(1);
@@ -207,16 +207,16 @@ describe('DiagramConverter', () => {
       action: 'create',
       nodes: [{ id: 'A', text: 'Node A' }]
     };
-    converter.applyChange(initial);
+    aiModel.applyChange(initial);
 
     // Then add more nodes
     const additional: SimplifiedDiagram = {
       action: 'add',
       nodes: [{ id: 'B', text: 'Node B' }]
     };
-    converter.applyChange(additional);
+    aiModel.applyChange(additional);
 
-    const diagram = converter['diagram'];
+    const diagram = aiModel['diagram'];
     const nodes = Array.from(diagram.nodeLookup.values());
     expect(nodes.length).toBe(2);
   });
@@ -230,16 +230,16 @@ describe('DiagramConverter', () => {
         { id: 'B', text: 'Node B' }
       ]
     };
-    converter.applyChange(initial);
+    aiModel.applyChange(initial);
 
     // Then replace with new nodes
     const replacement: SimplifiedDiagram = {
       action: 'replace',
       nodes: [{ id: 'C', text: 'Node C' }]
     };
-    converter.applyChange(replacement);
+    aiModel.applyChange(replacement);
 
-    const diagram = converter['diagram'];
+    const diagram = aiModel['diagram'];
     const nodes = Array.from(diagram.nodeLookup.values());
     expect(nodes.length).toBe(1);
     expect(nodes[0]!.getText()).toBe('Node C');

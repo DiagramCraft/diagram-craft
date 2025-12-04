@@ -1,6 +1,6 @@
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
+import { DiagramEdge, type EdgePropsForEditing } from '@diagram-craft/model/diagramEdge';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { AnchorEndpoint, ConnectedEndpoint } from '@diagram-craft/model/endpoint';
@@ -15,20 +15,25 @@ import {
   SimplifiedNode,
   type SimplifiedNodeType
 } from './aiDiagramTypes';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
+import {
+  commitWithUndo,
+  ElementAddUndoableAction,
+  ElementDeleteUndoableAction
+} from '@diagram-craft/model/diagramUndoActions';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
-import { isRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
-import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+import { assert } from '@diagram-craft/utils/assert';
+import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
+import type { DiagramElement } from '@diagram-craft/model/diagramElement';
+import type { DeepWriteable } from '@diagram-craft/utils/types';
 
 export class AIModel {
   private readonly diagram: Diagram;
   private readonly layer: RegularLayer;
-  private nodeMap: Map<string, DiagramNode> = new Map();
 
   constructor(diagram: Diagram) {
     this.diagram = diagram;
 
-    if (!isRegularLayer(diagram.layers.active)) VERIFY_NOT_REACHED();
+    assert.isRegularLayer(diagram.layers.active);
     this.layer = diagram.layers.active;
   }
 
@@ -37,30 +42,28 @@ export class AIModel {
    * and adds them to the diagram
    */
   applyChange(simplified: SimplifiedDiagram): void {
-    const uow = new UnitOfWork(this.diagram, true);
-
-    // Handle different action types
     switch (simplified.action) {
       case 'create':
       case 'add':
-        this.handleCreateOrAdd(simplified, uow);
+        this.diagram.undoManager.addAndExecute(this.handleCreateOrAdd(simplified));
         break;
-      case 'modify':
+      case 'modify': {
+        const uow = new UnitOfWork(this.diagram, true);
         this.handleModify(simplified, uow);
+        commitWithUndo(uow, 'AI Changes');
         break;
+      }
       case 'replace':
-        this.handleReplace(simplified, uow);
+        this.diagram.undoManager.addAndExecute(this.handleReplace(simplified));
         break;
       case 'remove':
       case 'delete':
-        this.handleRemove(simplified, uow);
+        this.diagram.undoManager.addAndExecute(this.handleRemove(simplified));
         break;
     }
-
-    commitWithUndo(uow, 'AI Changes');
   }
 
-  private handleCreateOrAdd(simplified: SimplifiedDiagram, uow: UnitOfWork): void {
+  private handleCreateOrAdd(simplified: SimplifiedDiagram) {
     const nodes = simplified.nodes ?? [];
     const edges = simplified.edges ?? [];
 
@@ -68,20 +71,23 @@ export class AIModel {
     const needsLayout = simplified.layout === 'auto' || this.needsAutoLayout(nodes);
     const nodesWithLayout = needsLayout ? this.applyAutoLayout(nodes) : nodes;
 
+    const elements: DiagramElement[] = [];
+
     // Create nodes first
+    const newNodes = new Map<string, DiagramNode>();
     for (const simpleNode of nodesWithLayout) {
-      const node = this.createNode(simpleNode);
-      this.layer.addElement(node, uow);
-      this.nodeMap.set(simpleNode.id, node);
+      const e = this.createNode(simpleNode);
+      elements.push(e);
+      newNodes.set(simpleNode.id, e);
     }
 
     // Create edges after all nodes exist
     for (const simpleEdge of edges) {
-      const edge = this.createEdge(simpleEdge);
-      if (edge) {
-        this.layer.addElement(edge, uow);
-      }
+      const e = this.createEdge(simpleEdge, newNodes);
+      if (e) elements.push(e);
     }
+
+    return new ElementAddUndoableAction(elements, this.diagram, this.layer, 'AI Additions');
   }
 
   private handleModify(simplified: SimplifiedDiagram, uow: UnitOfWork): void {
@@ -95,33 +101,21 @@ export class AIModel {
     }
   }
 
-  private handleRemove(simplified: SimplifiedDiagram, uow: UnitOfWork): void {
-    const removeIds = simplified.removeIds ?? [];
-
-    for (const id of removeIds) {
-      // Try to find the element by ID (could be a node or edge)
+  private handleRemove(simplified: SimplifiedDiagram) {
+    const elements: DiagramElement[] = [];
+    for (const id of simplified.removeIds ?? []) {
       const element = this.diagram.lookup(id);
-      if (element) {
-        uow.snapshot(element);
-        this.layer.removeElement(element, uow);
-      }
+      if (element) elements.push(element);
     }
+
+    return new ElementDeleteUndoableAction(this.diagram, this.layer, elements, true, 'AI Removals');
   }
 
-  // TODO: Need to use undoable action here
-  private handleReplace(simplified: SimplifiedDiagram, uow: UnitOfWork): void {
-    // Clear existing elements
-    const allElements = [...this.layer.elements];
-    for (const element of allElements) {
-      uow.snapshot(element);
-      this.layer.removeElement(element, uow);
-    }
-
-    // Clear node map
-    this.nodeMap.clear();
-
-    // Add new elements
-    this.handleCreateOrAdd(simplified, uow);
+  private handleReplace(simplified: SimplifiedDiagram) {
+    return new CompoundUndoableAction([
+      new ElementDeleteUndoableAction(this.diagram, this.layer, [...this.layer.elements], true),
+      this.handleCreateOrAdd(simplified)
+    ]);
   }
 
   private needsAutoLayout(nodes: SimplifiedNode[]): boolean {
@@ -191,20 +185,15 @@ export class AIModel {
     );
   }
 
-  private createEdge(simpleEdge: SimplifiedEdge): DiagramEdge | null {
+  private createEdge(
+    simpleEdge: SimplifiedEdge,
+    nodes: Map<string, DiagramNode>
+  ): DiagramEdge | null {
     // Look in nodeMap first (newly created nodes), then fall back to diagram lookup (existing nodes)
-    const fromNode =
-      this.nodeMap.get(simpleEdge.from) || this.diagram.nodeLookup.get(simpleEdge.from);
-    const toNode = this.nodeMap.get(simpleEdge.to) || this.diagram.nodeLookup.get(simpleEdge.to);
+    const fromNode = nodes.get(simpleEdge.from) ?? this.diagram.nodeLookup.get(simpleEdge.from);
+    const toNode = nodes.get(simpleEdge.to) ?? this.diagram.nodeLookup.get(simpleEdge.to);
 
     if (!fromNode || !toNode) {
-      console.warn(
-        `Cannot create edge: node not found (from: ${simpleEdge.from}, to: ${simpleEdge.to})`
-      );
-      console.warn(`Available nodes in nodeMap: ${Array.from(this.nodeMap.keys()).join(', ')}`);
-      console.warn(
-        `Available nodes in diagram: ${Array.from(this.diagram.nodeLookup.keys()).join(', ')}`
-      );
       return null;
     }
 
@@ -219,7 +208,7 @@ export class AIModel {
       ? ARROW_TYPE_MAP[simpleEdge.endArrow]
       : ARROW_TYPE_MAP[edgeEndArrow];
 
-    const props: any = {
+    const props: DeepWriteable<EdgePropsForEditing> = {
       type: simpleEdge.type ?? edgeType,
       stroke: {
         color: simpleEdge.stroke ?? edgeStroke,
@@ -230,15 +219,11 @@ export class AIModel {
     // Add arrow configuration
     if (startArrowType || endArrowType) {
       props.arrow = {};
-      if (startArrowType) {
-        props.arrow.start = { type: startArrowType, size: 10 };
-      }
-      if (endArrowType) {
-        props.arrow.end = { type: endArrowType, size: 10 };
-      }
+      if (startArrowType) props.arrow.start = { type: startArrowType, size: 10 };
+      if (endArrowType) props.arrow.end = { type: endArrowType, size: 10 };
     }
 
-    const edge = ElementFactory.edge(
+    return ElementFactory.edge(
       newid(),
       new AnchorEndpoint(fromNode, fromAnchor),
       new AnchorEndpoint(toNode, toAnchor),
@@ -247,29 +232,19 @@ export class AIModel {
       [],
       this.layer
     );
-
-    return edge;
   }
 
   private updateNode(node: DiagramNode, updates: Partial<SimplifiedNode>, uow: UnitOfWork): void {
-    // Update bounds if position or size changed
-    if (
-      updates.x !== undefined ||
-      updates.y !== undefined ||
-      updates.width !== undefined ||
-      updates.height !== undefined
-    ) {
-      node.setBounds(
-        {
-          x: updates.x ?? node.bounds.x,
-          y: updates.y ?? node.bounds.y,
-          w: updates.width ?? node.bounds.w,
-          h: updates.height ?? node.bounds.h,
-          r: node.bounds.r
-        },
-        uow
-      );
-    }
+    node.setBounds(
+      {
+        x: updates.x ?? node.bounds.x,
+        y: updates.y ?? node.bounds.y,
+        w: updates.width ?? node.bounds.w,
+        h: updates.height ?? node.bounds.h,
+        r: node.bounds.r
+      },
+      uow
+    );
 
     // Update text if changed
     if (updates.text !== undefined) {
@@ -292,13 +267,6 @@ export class AIModel {
       };
       node.updateProps(p => ({ ...p, ...newProps }), uow);
     }
-  }
-
-  /**
-   * Gets all node IDs in the current diagram
-   */
-  getExistingNodeIds(): string[] {
-    return Array.from(this.diagram.nodeLookup.values()).map(node => node.id);
   }
 
   /**
@@ -335,11 +303,6 @@ export class AIModel {
       };
     });
 
-    return {
-      action: 'create',
-      nodes,
-      edges,
-      layout: 'manual'
-    };
+    return { action: 'create', nodes, edges, layout: 'manual' };
   }
 }
