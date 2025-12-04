@@ -7,6 +7,9 @@
   "scripts": {
     "test": "vitest"
   },
+  "dependencies": {
+    "@diagram-craft/utils": "workspace:^"
+  },
   "keywords": [],
   "author": "Magnus Johansson"
 }

@@ -322,7 +322,11 @@ importers:
         specifier: ^3.2.4
         version: 3.2.4(@types/debug@4.1.12)(@types/node@22.18.0)(jsdom@26.1.0)(tsx@4.20.6)(yaml@2.8.1)
 
-  packages/graph: {}
+  packages/graph:
+    dependencies:
+      '@diagram-craft/utils':
+        specifier: workspace:^
+        version: link:../utils
 
   packages/main:
     dependencies:
