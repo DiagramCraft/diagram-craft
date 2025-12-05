@@ -15,11 +15,6 @@ export default defineConfig({
     },
     css: false,
     pool: 'threads',
-    poolOptions: {
-      threads: {
-        useAtomics: true
-      }
-    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'json-summary'],
