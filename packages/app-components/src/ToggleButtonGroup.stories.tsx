@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { fn } from 'storybook/test';
 import { themeDecorator } from '../.storybook/common';
 import { ToggleButtonGroup } from './ToggleButtonGroup';
 import { TbBold, TbItalic, TbUnderline } from 'react-icons/tb';
@@ -22,7 +21,7 @@ export const Primary: Story = {
   args: {
     type: 'single',
     value: 'bold',
-    onChange: fn(),
+    onChange: () => {},
     children: [
       <ToggleButtonGroup.Item key={1} value={'bold'}>
         <TbBold />
@@ -41,7 +40,7 @@ export const Multiple: Story = {
   args: {
     type: 'multiple',
     value: ['bold', 'italic'],
-    onChange: fn(),
+    onChange: () => {},
     children: [
       <ToggleButtonGroup.Item key={1} value={'bold'}>
         <TbBold />
@@ -60,7 +59,7 @@ export const Focus: Story = {
   args: {
     type: 'single',
     value: 'bold',
-    onChange: fn(),
+    onChange: () => {},
     children: [
       <ToggleButtonGroup.Item key={1} value={'bold'}>
         <TbBold />
@@ -79,7 +78,7 @@ export const Hover: Story = {
   args: {
     type: 'single',
     value: 'bold',
-    onChange: fn(),
+    onChange: () => {},
     children: [
       <ToggleButtonGroup.Item key={1} value={'bold'}>
         <TbBold />
@@ -98,7 +97,7 @@ export const Disabled: Story = {
   args: {
     type: 'single',
     value: 'bold',
-    onChange: fn(),
+    onChange: () => {},
     children: [
       <ToggleButtonGroup.Item key={1} value={'bold'}>
         <TbBold />
@@ -118,7 +117,7 @@ export const AllDisabled: Story = {
     type: 'single',
     value: 'bold',
     disabled: true,
-    onChange: fn(),
+    onChange: () => {},
     children: [
       <ToggleButtonGroup.Item key={1} value={'bold'}>
         <TbBold />

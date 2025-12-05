@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { themeDecorator } from '../.storybook/common';
 import { Button } from './Button';
-import { fn } from 'storybook/test';
 import { TbBold } from 'react-icons/tb';
 
 const meta = {
@@ -22,14 +21,14 @@ export const Primary: Story = {
   args: {
     type: 'primary',
     children: ['Lorem'],
-    onClick: fn()
+    onClick: () => {}
   }
 };
 export const PrimaryHover: Story = {
   args: {
     'type': 'primary',
     'children': ['Lorem'],
-    'onClick': fn(),
+    'onClick': () => {},
     'data-hover': 'true'
   }
 };
@@ -37,7 +36,7 @@ export const PrimaryFocus: Story = {
   args: {
     'type': 'primary',
     'children': ['Lorem'],
-    'onClick': fn(),
+    'onClick': () => {},
     'data-focus': 'true'
   }
 };
@@ -45,7 +44,7 @@ export const PrimaryDisabled: Story = {
   args: {
     type: 'primary',
     children: ['Lorem'],
-    onClick: fn(),
+    onClick: () => {},
     disabled: true
   }
 };
@@ -54,14 +53,14 @@ export const Secondary: Story = {
   args: {
     type: 'secondary',
     children: ['Lorem'],
-    onClick: fn()
+    onClick: () => {}
   }
 };
 export const SecondaryHover: Story = {
   args: {
     'type': 'secondary',
     'children': ['Lorem'],
-    'onClick': fn(),
+    'onClick': () => {},
     'data-hover': 'true'
   }
 };
@@ -69,7 +68,7 @@ export const SecondaryFocus: Story = {
   args: {
     'type': 'secondary',
     'children': ['Lorem'],
-    'onClick': fn(),
+    'onClick': () => {},
     'data-focus': 'true'
   }
 };
@@ -77,7 +76,7 @@ export const SecondaryDisabled: Story = {
   args: {
     type: 'secondary',
     children: ['Lorem'],
-    onClick: fn(),
+    onClick: () => {},
     disabled: true
   }
 };
@@ -86,14 +85,14 @@ export const Danger: Story = {
   args: {
     type: 'danger',
     children: ['Lorem'],
-    onClick: fn()
+    onClick: () => {}
   }
 };
 export const DangerHover: Story = {
   args: {
     'type': 'danger',
     'children': ['Lorem'],
-    'onClick': fn(),
+    'onClick': () => {},
     'data-hover': 'true'
   }
 };
@@ -101,7 +100,7 @@ export const DangerFocus: Story = {
   args: {
     'type': 'danger',
     'children': ['Lorem'],
-    'onClick': fn(),
+    'onClick': () => {},
     'data-focus': 'true'
   }
 };
@@ -109,7 +108,7 @@ export const DangerDisabled: Story = {
   args: {
     type: 'danger',
     children: ['Lorem'],
-    onClick: fn(),
+    onClick: () => {},
     disabled: true
   }
 };
@@ -118,6 +117,6 @@ export const IconOnly: Story = {
   args: {
     type: 'icon-only',
     children: [<TbBold />],
-    onClick: fn()
+    onClick: () => {}
   }
 };

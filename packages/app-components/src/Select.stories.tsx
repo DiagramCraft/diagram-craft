@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { fn } from 'storybook/test';
 import { themeDecorator } from '../.storybook/common';
 import { Select } from './Select';
 
@@ -37,7 +36,7 @@ export const Primary: Story = {
         Amet
       </Select.Item>
     ],
-    onChange: fn()
+    onChange: () => {}
   }
 };
 
@@ -61,7 +60,7 @@ export const Hover: Story = {
         Amet
       </Select.Item>
     ],
-    'onChange': fn(),
+    'onChange': () => {},
     // @ts-ignore
     'data-hover': true
   }
@@ -87,7 +86,7 @@ export const Focus: Story = {
         Amet
       </Select.Item>
     ],
-    'onChange': fn(),
+    'onChange': () => {},
     // @ts-ignore
     'data-focus': true
   }
@@ -113,7 +112,7 @@ export const Disabled: Story = {
         Amet
       </Select.Item>
     ],
-    onChange: fn(),
+    onChange: () => {},
     disabled: true
   }
 };
@@ -138,7 +137,7 @@ export const Indeterminate: Story = {
         Amet
       </Select.Item>
     ],
-    onChange: fn(),
+    onChange: () => {},
     isIndeterminate: true
   }
 };
@@ -154,7 +153,7 @@ export const Open: Story = {
         Ipsum
       </Select.Item>
     ],
-    'onChange': fn(),
+    'onChange': () => {},
     'open': true,
     // @ts-ignore
     'data-focus': true

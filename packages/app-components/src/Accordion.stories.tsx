@@ -104,3 +104,12 @@ export const ItemHover: Story = {
     ]
   }
 };
+
+export const Multiple: Story = {
+  render,
+  args: {
+    type: 'multiple',
+    value: ['lorem', 'dolor'],
+    children: CHILDREN
+  }
+};

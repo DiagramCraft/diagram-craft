@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { fn } from 'storybook/test';
 import { themeDecorator } from '../.storybook/common';
 import { TreeSelect } from './TreeSelect';
 
@@ -35,7 +34,7 @@ export const Primary: Story = {
       { value: 'sit', label: 'Sit' },
       { value: 'amet', label: 'Amet' }
     ],
-    onValueChange: fn()
+    onValueChange: () => {}
   }
 };
 
@@ -49,7 +48,7 @@ export const Hover: Story = {
       { value: 'sit', label: 'Sit' },
       { value: 'amet', label: 'Amet' }
     ],
-    'onValueChange': fn(),
+    'onValueChange': () => {},
     // @ts-ignore
     'data-hover': true
   }
@@ -65,7 +64,7 @@ export const Focus: Story = {
       { value: 'sit', label: 'Sit' },
       { value: 'amet', label: 'Amet' }
     ],
-    'onValueChange': fn(),
+    'onValueChange': () => {},
     // @ts-ignore
     'data-focus': true
   }
@@ -81,7 +80,7 @@ export const Disabled: Story = {
       { value: 'sit', label: 'Sit' },
       { value: 'amet', label: 'Amet' }
     ],
-    onValueChange: fn(),
+    onValueChange: () => {},
     disabled: true
   }
 };
@@ -93,7 +92,7 @@ export const Open: Story = {
       { value: 'lorem', label: 'Lorem' },
       { value: 'ipsum', label: 'Ipsum' }
     ],
-    'onValueChange': fn(),
+    'onValueChange': () => {},
     'open': true,
     // @ts-ignore
     'data-focus': true
