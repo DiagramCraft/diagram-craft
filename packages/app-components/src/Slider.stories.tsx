@@ -1,5 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { fn } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { themeDecorator } from '../.storybook/common';
 import { Slider } from './Slider';
 
@@ -22,7 +21,7 @@ export const Primary: Story = {
     value: 70,
     max: 100,
     unit: 'px',
-    onChange: fn()
+    onChange: () => {}
   }
 };
 
@@ -31,7 +30,7 @@ export const ThumbHover: Story = {
     'value': 70,
     'max': 100,
     'unit': 'px',
-    'onChange': fn(),
+    'onChange': () => {},
     // @ts-ignore
     'data-thumb-hover': true
   }
@@ -42,7 +41,7 @@ export const ThumbFocus: Story = {
     'value': 70,
     'max': 100,
     'unit': 'px',
-    'onChange': fn(),
+    'onChange': () => {},
     // @ts-ignore
     'data-thumb-focus': true
   }
@@ -53,7 +52,7 @@ export const Disabled: Story = {
     value: 70,
     max: 100,
     unit: 'px',
-    onChange: fn(),
+    onChange: () => {},
     disabled: true
   }
 };
@@ -63,7 +62,7 @@ export const Indeterminate: Story = {
     value: 70,
     max: 100,
     unit: 'px',
-    onChange: fn(),
+    onChange: () => {},
     isIndeterminate: true
   }
 };

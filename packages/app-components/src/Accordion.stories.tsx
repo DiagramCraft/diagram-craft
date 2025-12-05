@@ -1,7 +1,7 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { themeDecorator } from '../.storybook/common';
 import { Accordion } from './Accordion';
-import { useArgs } from '@storybook/preview-api';
+import { useArgs } from 'storybook/preview-api';
 
 const meta = {
   title: 'Components/Accordion',
@@ -102,5 +102,14 @@ export const ItemHover: Story = {
       </Accordion.Item>,
       ...CHILDREN.slice(1)
     ]
+  }
+};
+
+export const Multiple: Story = {
+  render,
+  args: {
+    type: 'multiple',
+    value: ['lorem', 'dolor'],
+    children: CHILDREN
   }
 };

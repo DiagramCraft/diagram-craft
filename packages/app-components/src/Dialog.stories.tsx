@@ -1,6 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Dialog } from './Dialog';
-import { fn } from '@storybook/test';
 import { PortalContextProvider } from './PortalContext';
 
 const meta = {
@@ -42,11 +41,11 @@ export const Light: Story = {
     open: true,
     children: [<div key={1}>Lorem ipsum dolor sit amet</div>],
     title: 'Sample dialog',
-    onClose: fn(),
+    onClose: () => {},
     buttons: [
-      { label: 'Delete', type: 'danger', onClick: fn() },
-      { label: 'Cancel', type: 'cancel', onClick: fn() },
-      { label: 'Ok', type: 'default', onClick: fn() }
+      { label: 'Delete', type: 'danger', onClick: () => {} },
+      { label: 'Cancel', type: 'cancel', onClick: () => {} },
+      { label: 'Ok', type: 'default', onClick: () => {} }
     ]
   }
 };
@@ -57,11 +56,11 @@ export const Dark: Story = {
     open: true,
     children: [<div key={1}>Lorem ipsum dolor sit amet</div>],
     title: 'Sample dialog',
-    onClose: fn(),
+    onClose: () => {},
     buttons: [
-      { label: 'Delete', type: 'danger', onClick: fn() },
-      { label: 'Cancel', type: 'cancel', onClick: fn() },
-      { label: 'Ok', type: 'default', onClick: fn() }
+      { label: 'Delete', type: 'danger', onClick: () => {} },
+      { label: 'Cancel', type: 'cancel', onClick: () => {} },
+      { label: 'Ok', type: 'default', onClick: () => {} }
     ]
   }
 };

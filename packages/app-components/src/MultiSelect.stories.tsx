@@ -1,7 +1,6 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { MultiSelect, MultiSelectItem } from './MultiSelect';
-import { fn } from '@storybook/test';
 import { themeDecorator } from '../.storybook/common';
 
 const meta: Meta<typeof MultiSelect> = {
@@ -113,8 +112,8 @@ export const Primary: Story = {
     selectedValues: [],
     availableItems: frameworkItems,
     placeholder: 'Select frameworks...',
-    onSelectionChange: fn(),
-    onInputChange: fn()
+    onSelectionChange: () => {},
+    onInputChange: () => {}
   }
 };
 
@@ -124,8 +123,8 @@ export const WithPreselectedItems: Story = {
     selectedValues: ['react', 'ts', 'nextjs'],
     availableItems: frameworkItems,
     placeholder: 'Add more frameworks...',
-    onSelectionChange: fn(),
-    onInputChange: fn()
+    onSelectionChange: () => {},
+    onInputChange: () => {}
   }
 };
 
@@ -136,8 +135,8 @@ export const LimitedSuggestions: Story = {
     availableItems: frameworkItems,
     placeholder: 'Max 3 suggestions...',
     maxSuggestions: 3,
-    onSelectionChange: fn(),
-    onInputChange: fn()
+    onSelectionChange: () => {},
+    onInputChange: () => {}
   }
 };
 
@@ -148,8 +147,8 @@ export const Disabled: Story = {
     availableItems: frameworkItems,
     disabled: true,
     placeholder: 'Disabled input...',
-    onSelectionChange: fn(),
-    onInputChange: fn()
+    onSelectionChange: () => {},
+    onInputChange: () => {}
   }
 };
 
@@ -160,8 +159,8 @@ export const Indeterminate: Story = {
     availableItems: frameworkItems,
     isIndeterminate: true,
     placeholder: 'Indeterminate state...',
-    onSelectionChange: fn(),
-    onInputChange: fn()
+    onSelectionChange: () => {},
+    onInputChange: () => {}
   }
 };
 
@@ -171,8 +170,8 @@ export const WithSetState: Story = {
     selectedValues: ['react'],
     availableItems: frameworkItems,
     state: 'set',
-    onSelectionChange: fn(),
-    onInputChange: fn()
+    onSelectionChange: () => {},
+    onInputChange: () => {}
   }
 };
 
@@ -182,8 +181,8 @@ export const WithUnsetState: Story = {
     selectedValues: [],
     availableItems: frameworkItems,
     state: 'unset',
-    onSelectionChange: fn(),
-    onInputChange: fn()
+    onSelectionChange: () => {},
+    onInputChange: () => {}
   }
 };
 
@@ -193,8 +192,8 @@ export const WithOverriddenState: Story = {
     selectedValues: ['vue'],
     availableItems: frameworkItems,
     state: 'overridden',
-    onSelectionChange: fn(),
-    onInputChange: fn()
+    onSelectionChange: () => {},
+    onInputChange: () => {}
   }
 };
 
@@ -204,8 +203,8 @@ export const EmptyOptions: Story = {
     selectedValues: [],
     availableItems: [],
     placeholder: 'No options available...',
-    onSelectionChange: fn(),
-    onInputChange: fn()
+    onSelectionChange: () => {},
+    onInputChange: () => {}
   }
 };
 
@@ -228,8 +227,8 @@ export const ManyOptions: Story = {
       { value: 'elasticsearch', label: 'Elasticsearch' }
     ],
     placeholder: 'Search from many options...',
-    onSelectionChange: fn(),
-    onInputChange: fn()
+    onSelectionChange: () => {},
+    onInputChange: () => {}
   }
 };
 
@@ -252,8 +251,8 @@ export const TagInputStyle: Story = {
     ],
     allowCustomValues: true,
     placeholder: 'Add tags...',
-    onSelectionChange: fn(),
-    onInputChange: fn()
+    onSelectionChange: () => {},
+    onInputChange: () => {}
   }
 };
 
@@ -275,8 +274,8 @@ export const TagInputWithPreselected: Story = {
     ],
     allowCustomValues: true,
     placeholder: 'Add more tags...',
-    onSelectionChange: fn(),
-    onInputChange: fn()
+    onSelectionChange: () => {},
+    onInputChange: () => {}
   }
 };
 
@@ -287,7 +286,7 @@ export const TagInputCustomOnly: Story = {
     availableItems: [],
     allowCustomValues: true,
     placeholder: 'Type and press Enter to add tags...',
-    onSelectionChange: fn(),
-    onInputChange: fn()
+    onSelectionChange: () => {},
+    onInputChange: () => {}
   }
 };

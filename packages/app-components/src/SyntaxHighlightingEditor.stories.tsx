@@ -1,6 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { SyntaxHighlightingEditor } from './SyntaxHighlightingEditor';
-import { fn } from '@storybook/test';
 import { themeDecorator } from '../.storybook/common';
 import { useState } from 'react';
 
@@ -25,7 +24,7 @@ arrow from "My Box" to "My Circle"`;
 export const Primary: Story = {
   args: {
     value: sampleCode,
-    onChange: fn(),
+    onChange: () => {},
     style: { width: '500px', height: '300px' }
   }
 };
@@ -103,7 +102,7 @@ another error`);
 export const Disabled: Story = {
   args: {
     value: sampleCode,
-    onChange: fn(),
+    onChange: () => {},
     disabled: true,
     style: { width: '500px', height: '300px' }
   }
