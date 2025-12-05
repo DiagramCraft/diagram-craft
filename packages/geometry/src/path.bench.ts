@@ -28,15 +28,17 @@ const randomPath = (d: number): Path => {
 const dimension = 100;
 
 const opts = { time: 2000 };
+const runIntersection = () => {
+  const p1 = randomPath(dimension);
+  const p2 = randomPath(dimension);
+  p1.intersections(p2);
+};
 
 bench(
   'intersection',
   () => {
     for (let i = 0; i < 100; i++) {
-      const p1 = randomPath(dimension);
-      const p2 = randomPath(dimension);
-
-      p1.intersections(p2);
+      runIntersection();
     }
   },
   opts
