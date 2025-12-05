@@ -1,6 +1,6 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { SyntaxHighlightingEditor } from './SyntaxHighlightingEditor';
-import { fn } from '@storybook/test';
+import { fn } from 'storybook/test';
 import { themeDecorator } from '../.storybook/common';
 import { useState } from 'react';
 

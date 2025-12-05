@@ -1,6 +1,6 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { TextArea } from './TextArea';
-import { fn } from '@storybook/test';
+import { fn } from 'storybook/test';
 import { themeDecorator } from '../.storybook/common';
 
 const meta = {

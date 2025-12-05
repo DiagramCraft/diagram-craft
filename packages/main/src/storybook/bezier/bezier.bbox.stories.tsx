@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import React, { useState } from 'react';
 import { CubicBezier } from '@diagram-craft/geometry/bezier';
 import { Point } from '@diagram-craft/geometry/point';
