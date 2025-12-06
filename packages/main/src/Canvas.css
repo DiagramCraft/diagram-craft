@@ -79,6 +79,10 @@
       fill: none;
     }
 
+    .svg-selection__individual-node {
+      fill: none;
+    }
+
     /* This includes both rotation and resize handles */
 
     .svg-selection__handle {

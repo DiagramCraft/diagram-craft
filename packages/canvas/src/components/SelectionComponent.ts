@@ -32,6 +32,9 @@ export class SelectionComponent extends Component<CanvasState> {
       selection.type === 'single-label-node' ? selection.nodes[0]!.labelNode()! : undefined;
     const shouldHaveRotation = !(labelNode && labelNode.type !== 'independent');
 
+    const hasMultipleElements = selection.nodes.length + selection.edges.length > 1;
+    const nonLabelNodes = selection.nodes.filter(n => !n.labelEdge());
+
     return svg.g(
       {},
       !isOnlyEdges && this.subComponent($cmp(SnapMarkersComponent), { diagram }),
@@ -59,6 +62,21 @@ export class SelectionComponent extends Component<CanvasState> {
                     this.subComponent($cmp(RotationHandleComponent), { diagram }),
                   this.subComponent($cmp(ResizeHandlesComponent), { diagram })
                 )
+            )
+          ),
+        hasMultipleElements &&
+          svg.g(
+            {},
+            ...nonLabelNodes.map(node =>
+              svg.g(
+                {
+                  transform: Transforms.rotate(node.bounds)
+                },
+                svg.rectFromBox(node.bounds, {
+                  'class': 'svg-selection__individual-node',
+                  'pointer-events': 'none'
+                })
+              )
             )
           ),
         ...selection.edges.map(e =>
