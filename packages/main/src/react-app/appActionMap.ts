@@ -81,5 +81,9 @@ export const defaultMacAppKeymap: KeyMap = {
   'M-Digit0': 'ZOOM_FIT',
 
   'M-Slash': 'TOGGLE_HELP',
-  'M-S-KeyR': 'TOGGLE_RULER'
+  'M-S-KeyR': 'TOGGLE_RULER',
+
+  // Selection Operations
+  'A-ArrowUp': 'SELECTION_SELECT_GROW',
+  'A-ArrowDown': 'SELECTION_SELECT_SHRINK'
 };
