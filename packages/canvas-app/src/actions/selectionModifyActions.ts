@@ -1,6 +1,6 @@
 import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSelectionAction';
 import { ActionContext } from '@diagram-craft/canvas/action';
-import { getConnectedComponent } from '@diagram-craft/graph/connectivity';
+import { getConnectedComponent, getConnectedComponents } from '@diagram-craft/graph/connectivity';
 import { DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { assert } from '@diagram-craft/utils/assert';
@@ -115,28 +115,50 @@ export class SelectionSelectShrinkAction extends AbstractSelectionAction {
     const diagram = this.context.model.activeDiagram;
     const selection = diagram.selection;
 
-    const elementSet = new Set(selection.elements);
-    const toRemove = new Set<DiagramElement>();
+    assert.isRegularLayer(diagram.activeLayer);
+    const graph = new DiagramGraph(diagram.activeLayer as RegularLayer);
 
-    // Phase 1: Remove elements not connected to any other element in the selection
-    for (const element of elementSet) {
-      if (this.countConnectedElements(element, elementSet) === 0) {
-        toRemove.add(element);
-      }
-    }
+    let elementSet = new Set(selection.elements);
+    if (elementSet.size === 0) return;
 
-    // If Phase 1 found nothing to remove, try Phase 2
-    if (toRemove.size === 0) {
+    // Helper to get connected components for a set of elements
+    const getComponents = (elements: Set<DiagramElement>) => {
+      const nodeIds = new Set([...elements].filter(isNode).map(n => n.id));
+      return getConnectedComponents(graph, nodeIds);
+    };
+
+    const initialComponents = getComponents(elementSet);
+
+    // Try progressively higher connection counts
+    for (let targetCount = 0; targetCount < elementSet.size; targetCount++) {
+      const toRemove = new Set<DiagramElement>();
+
+      // Find elements with exactly targetCount connections
       for (const element of elementSet) {
-        if (this.countConnectedElements(element, elementSet) === 1) {
+        if (this.countConnectedElements(element, elementSet) === targetCount) {
           toRemove.add(element);
         }
       }
-    }
 
-    // Remove the identified elements
-    for (const element of toRemove) {
-      elementSet.delete(element);
+      if (toRemove.size === 0) continue;
+
+      // Create a test set without the elements we want to remove
+      const testSet = new Set(elementSet);
+      for (const element of toRemove) {
+        testSet.delete(element);
+      }
+
+      // Check if removing these elements would eliminate any connected component
+      const testComponents = getComponents(testSet);
+
+      // If we would lose a connected component, stop shrinking
+      if (testComponents.length < initialComponents.length) {
+        break;
+      }
+
+      // Safe to remove - update elementSet and continue
+      elementSet = testSet;
+      break;
     }
 
     selection.setElements(Array.from(elementSet));

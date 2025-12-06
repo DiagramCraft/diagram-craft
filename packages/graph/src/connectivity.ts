@@ -66,3 +66,39 @@ export const getConnectedComponent = <V = unknown, E = unknown, VK = string, EK 
 
   return { vertices, edges };
 };
+
+/**
+ * Gets all connected components in a graph, optionally starting from a specific set of vertices.
+ * Returns the full connected components, not just the subset.
+ *
+ * @param graph The graph to analyze
+ * @param vertexIds Optional set of vertex IDs to use as starting points. If provided, only components
+ *                  containing at least one of these vertices will be returned. If not provided, all
+ *                  components in the graph are returned.
+ * @returns An array of connected components, each containing the full set of vertices and edges
+ */
+export const getConnectedComponents = <V = unknown, E = unknown, VK = string, EK = string>(
+  graph: Graph<V, E, VK, EK>,
+  vertexIds?: Set<VK>
+): ConnectedComponent<V, E, VK, EK>[] => {
+  const visited = new Set<VK>();
+  const components: ConnectedComponent<V, E, VK, EK>[] = [];
+
+  const verticesToConsider = vertexIds
+    ? Array.from(vertexIds).map(id => graph.getVertex(id)).filter((v): v is Vertex<V, VK> => v !== undefined)
+    : Array.from(graph.vertices());
+
+  for (const vertex of verticesToConsider) {
+    if (visited.has(vertex.id)) continue;
+
+    const component = getConnectedComponent(graph, vertex.id);
+    if (component) {
+      components.push(component);
+      for (const v of component.vertices) {
+        visited.add(v.id);
+      }
+    }
+  }
+
+  return components;
+};
