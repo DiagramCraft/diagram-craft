@@ -7,13 +7,14 @@ import { Diagram } from '../diagram';
 import { UnitOfWork } from '../unitOfWork';
 import { RegularLayer } from '../diagramLayerRegular';
 import { Box } from '@diagram-craft/geometry/box';
-import { SimpleDiagramNode } from '../diagramNode';
+import { type DiagramNode, SimpleDiagramNode } from '../diagramNode';
 import { ResolvedLabelNode } from '../diagramEdge';
-import { FreeEndpoint } from '../endpoint';
+import { AnchorEndpoint, FreeEndpoint } from '../endpoint';
 import { newid } from '@diagram-craft/utils/id';
 import { assertRegularLayer } from '../diagramLayerUtils';
 import { ElementFactory } from '../elementFactory';
 import type { CRDTRoot } from '@diagram-craft/collaboration/crdt';
+import { Point } from '@diagram-craft/geometry/point';
 
 export class TestModel {
   static newDiagram(root?: CRDTRoot) {
@@ -52,7 +53,13 @@ export class TestDiagramBuilder extends Diagram {
 }
 
 export type NodeCreateOptions = { id?: string; type?: string; bounds?: Box };
-export type EdgeCreateOptions = { id?: string };
+export type EdgeCreateOptions = {
+  id?: string;
+  startNodeId?: string;
+  endNodeId?: string;
+  startAnchor?: string;
+  endAnchor?: string;
+};
 
 export class TestLayerBuilder extends RegularLayer {
   constructor(id: string, diagram: Diagram) {
@@ -87,15 +94,18 @@ export class TestLayerBuilder extends RegularLayer {
   }
 
   createEdge(options?: EdgeCreateOptions) {
-    return ElementFactory.edge(
-      options?.id ?? newid(),
-      new FreeEndpoint({ x: 0, y: 0 }),
-      new FreeEndpoint({ x: 100, y: 100 }),
-      {},
-      {},
-      [],
-      this
-    );
+    const startNode = options?.startNodeId ? this.diagram.lookup(options.startNodeId) : undefined;
+    const endNode = options?.endNodeId ? this.diagram.lookup(options.endNodeId) : undefined;
+
+    const start = startNode
+      ? new AnchorEndpoint(startNode as DiagramNode, options?.startAnchor ?? 'c', Point.ORIGIN)
+      : new FreeEndpoint({ x: 0, y: 0 });
+
+    const end = endNode
+      ? new AnchorEndpoint(endNode as DiagramNode, options?.endAnchor ?? 'c', Point.ORIGIN)
+      : new FreeEndpoint({ x: 100, y: 100 });
+
+    return ElementFactory.edge(options?.id ?? newid(), start, end, {}, {}, [], this);
   }
 }
 
