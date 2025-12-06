@@ -86,6 +86,8 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
             <ActionContextMenuItem action={'SELECTION_SELECT_CONNECTED'}>
               Select Connected
             </ActionContextMenuItem>
+            <ActionContextMenuItem action={'SELECTION_SELECT_GROW'}>Grow</ActionContextMenuItem>
+            <ActionContextMenuItem action={'SELECTION_SELECT_SHRINK'}>Shrink</ActionContextMenuItem>
           </ContextMenu.SubContent>
         </ContextMenu.Portal>
       </ContextMenu.Sub>
