@@ -133,17 +133,17 @@ describe('extractMaximalTree', () => {
     // A is root, has no ancestors
     expect(result!.ancestors.get('A')).toEqual([]);
 
-    // B's ancestors: [A]
+    // B's ancestors: [A] (immediate parent to root)
     expect(result!.ancestors.get('B')?.map(v => v.id)).toEqual(['A']);
 
-    // C's ancestors: [B, A]
+    // C's ancestors: [B, A] (immediate parent to root)
     expect(result!.ancestors.get('C')?.map(v => v.id)).toEqual(['B', 'A']);
 
-    // D's ancestors: [C, B, A]
+    // D's ancestors: [C, B, A] (immediate parent to root)
     expect(result!.ancestors.get('D')?.map(v => v.id)).toEqual(['C', 'B', 'A']);
   });
 
-  test('children and ancestors are empty for single vertex', () => {
+  test('children and ancestors are correct for single vertex', () => {
     const graph = new SimpleGraph();
     graph.addVertex({ id: 'A', data: {} });
 

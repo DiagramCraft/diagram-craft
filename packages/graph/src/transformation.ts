@@ -15,7 +15,7 @@ import { MultiMap } from '@diagram-craft/utils/multimap';
  *   - vertices: Array of vertices in the tree
  *   - edges: Array of edges in the tree
  *   - children: MultiMap from parent vertex ID to child vertices
- *   - ancestors: MultiMap from vertex ID to all ancestors (path to root)
+ *   - ancestors: Map from vertex ID to array of ancestors (ordered from immediate parent to root)
  *   Returns undefined if root doesn't exist
  */
 export function extractMaximalTree<V = unknown, E = unknown, VK = string, EK = string>(
@@ -25,7 +25,7 @@ export function extractMaximalTree<V = unknown, E = unknown, VK = string, EK = s
   vertices: Vertex<V, VK>[];
   edges: Edge<E, EK, VK>[];
   children: MultiMap<VK, Vertex<V, VK>>;
-  ancestors: MultiMap<VK, Vertex<V, VK>>;
+  ancestors: Map<VK, Vertex<V, VK>[]>;
 } | undefined {
   const rootVertex = graph.getVertex(rootId);
   if (!rootVertex) {
@@ -35,37 +35,29 @@ export function extractMaximalTree<V = unknown, E = unknown, VK = string, EK = s
   const vertices: Vertex<V, VK>[] = [];
   const edges: Edge<E, EK, VK>[] = [];
   const children = new MultiMap<VK, Vertex<V, VK>>();
-  const ancestors = new MultiMap<VK, Vertex<V, VK>>();
-
-  // Map to track parent of each vertex
-  const parentMap = new Map<VK, VK>();
+  const ancestors = new Map<VK, Vertex<V, VK>[]>();
 
   for (const { vertex, edge } of bfs(graph, rootId)) {
     vertices.push(vertex);
 
     if (edge) {
       edges.push(edge);
-      // Track parent relationship
-      parentMap.set(edge.to, edge.from);
 
       // Add to children map
       const childVertex = graph.getVertex(edge.to);
       if (childVertex) {
         children.add(edge.from, childVertex);
-      }
-    }
-  }
 
-  // Build ancestors map by walking up the parent chain for each vertex
-  for (const vertex of vertices) {
-    let currentId: VK | undefined = parentMap.get(vertex.id);
-
-    while (currentId !== undefined) {
-      const ancestorVertex = graph.getVertex(currentId);
-      if (ancestorVertex) {
-        ancestors.add(vertex.id, ancestorVertex);
+        // Build ancestors path by copying parent's ancestors and adding parent
+        const parentVertex = graph.getVertex(edge.from);
+        if (parentVertex) {
+          const parentAncestors = ancestors.get(edge.from) ?? [];
+          ancestors.set(edge.to, [parentVertex, ...parentAncestors]);
+        }
       }
-      currentId = parentMap.get(currentId);
+    } else {
+      // Root vertex has no ancestors
+      ancestors.set(vertex.id, []);
     }
   }
 
