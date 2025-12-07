@@ -17,6 +17,7 @@ export class Application<U extends UIActions = UIActions> implements BaseApplica
   actions: Partial<ActionMap> = {};
   tool = new Observable<ToolType>('move');
   marquee = new Marquee();
+  actionState = new Observable<'enabled' | 'disabled'>('enabled');
 
   get ui() {
     return this.#ui!;
