@@ -1,7 +1,45 @@
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
-import { MouseEventHandler, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  MouseEventHandler,
+  ReactNode,
+  useEffect,
+  useRef
+} from 'react';
 import { usePortal } from './PortalContext';
+import { assert } from '@diagram-craft/utils/assert';
 import styles from './Dialog.module.css';
+
+type DialogContextType = {
+  onDialogShow: () => void;
+  onDialogHide: () => void;
+};
+
+const DialogContext = createContext<DialogContextType | undefined>(undefined);
+
+const useDialogContext = () => {
+  const context = useContext(DialogContext);
+  assert.present(context, 'Dialog must be used within a DialogProvider');
+  return context;
+};
+
+type DialogProviderProps = {
+  onDialogShow: () => void;
+  onDialogHide: () => void;
+  children: React.ReactNode;
+};
+
+export const DialogContextProvider = (props: DialogProviderProps) => {
+  const contextValue = useRef<DialogContextType>({
+    onDialogShow: props.onDialogShow,
+    onDialogHide: props.onDialogHide
+  });
+
+  return (
+    <DialogContext.Provider value={contextValue.current}>{props.children}</DialogContext.Provider>
+  );
+};
 
 const DialogButton = (props: Button) => {
   if (props.type === 'cancel') {
@@ -33,16 +71,40 @@ const DialogButton = (props: Button) => {
 
 export const Dialog = (props: Props) => {
   const portal = usePortal();
+  const dialogContext = useDialogContext();
+  const isOpenRef = useRef(false);
+
+  // Notify context when dialog opens/closes via onOpenChange
+  const handleOpenChange = (open: boolean) => {
+    const isOpen = isOpenRef.current;
+    if (open && !isOpen) {
+      dialogContext.onDialogShow();
+      isOpenRef.current = true;
+    } else if (!open && isOpen) {
+      dialogContext.onDialogHide();
+      isOpenRef.current = false;
+      props.onClose();
+    }
+  };
+
+  // Handle initial mount with open=true
+  useEffect(() => {
+    if (props.open && !isOpenRef.current) {
+      dialogContext.onDialogShow();
+      isOpenRef.current = true;
+    }
+
+    // Cleanup: if component unmounts while dialog is open
+    return () => {
+      if (isOpenRef.current) {
+        dialogContext.onDialogHide();
+        isOpenRef.current = false;
+      }
+    };
+  }, [props.open, dialogContext]);
+
   return (
-    <AlertDialog.Root
-      open={props.open}
-      defaultOpen={props.open}
-      onOpenChange={open => {
-        if (!open) {
-          props.onClose();
-        }
-      }}
-    >
+    <AlertDialog.Root open={props.open} defaultOpen={props.open} onOpenChange={handleOpenChange}>
       <AlertDialog.Portal container={portal}>
         <div className={styles.cmpDialog}>
           <AlertDialog.Overlay className={styles.cmpDialogOverlay} />

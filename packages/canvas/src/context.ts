@@ -45,6 +45,7 @@ export interface Context {
   tool: Observable<ToolType>;
   actions: Partial<ActionMap>;
   marquee: Marquee;
+  actionState: Observable<'enabled' | 'disabled'>;
 }
 
 /**

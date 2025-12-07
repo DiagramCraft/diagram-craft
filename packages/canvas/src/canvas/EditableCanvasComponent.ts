@@ -135,6 +135,8 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
 
     createEffect(() => {
       const cb = (e: KeyboardEvent) => {
+        if (props.context.actionState.get() === 'disabled') return;
+
         const target = e.target as HTMLElement | undefined;
         const tagName = target?.tagName?.toLowerCase();
 
