@@ -6,6 +6,7 @@ import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { assert } from '@diagram-craft/utils/assert';
 import { DiagramGraph } from '@diagram-craft/model/diagramGraph';
 import { ConnectedEndpoint } from '@diagram-craft/model/endpoint';
+import { extractMaximalTree } from '@diagram-craft/graph/transformation';
 
 declare global {
   namespace DiagramCraft {
@@ -15,6 +16,7 @@ declare global {
 
 export const selectionModifyActions = (context: ActionContext) => ({
   SELECTION_SELECT_CONNECTED: new SelectionSelectConnectedAction(context),
+  SELECTION_SELECT_TREE: new SelectionSelectTreeAction(context),
   SELECTION_SELECT_GROW: new SelectionSelectGrowAction(context),
   SELECTION_SELECT_SHRINK: new SelectionSelectShrinkAction(context)
 });
@@ -41,6 +43,39 @@ export class SelectionSelectConnectedAction extends AbstractSelectionAction {
         }
         for (const edge of component?.edges ?? []) {
           elements.add(edge.data);
+        }
+      }
+    }
+
+    selection.setElements(Array.from(elements));
+    this.emit('actionTriggered', {});
+  }
+}
+
+export class SelectionSelectTreeAction extends AbstractSelectionAction {
+  constructor(context: ActionContext) {
+    super(context, MultipleType.SingleOnly, ElementType.Node);
+  }
+
+  execute(): void {
+    const diagram = this.context.model.activeDiagram;
+    const selection = diagram.selection;
+
+    assert.isRegularLayer(diagram.activeLayer);
+    const graph = new DiagramGraph(diagram.activeLayer as RegularLayer);
+
+    const elements = new Set<DiagramElement>();
+
+    for (const element of selection.elements) {
+      if (isNode(element)) {
+        const tree = extractMaximalTree(graph, element.id);
+        if (tree) {
+          for (const node of tree.vertices) {
+            elements.add(node.data);
+          }
+          for (const edge of tree.edges) {
+            elements.add(edge.data);
+          }
         }
       }
     }
