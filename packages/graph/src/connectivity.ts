@@ -48,8 +48,8 @@ export const getConnectedComponent = <V = unknown, E = unknown, VK = string, EK 
 
   const vertices: Vertex<V, VK>[] = [];
 
-  for (const v of dfs(graph, startId)) {
-    vertices.push(v);
+  for (const { vertex } of dfs(graph, startId)) {
+    vertices.push(vertex);
   }
 
   const vertexIds = new Set(vertices.map(v => v.id));
