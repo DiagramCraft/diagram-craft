@@ -26,6 +26,7 @@ import { modelCenterActions } from './actions/modelCenterAction';
 import { selectionAddToModificationLayerActions } from './actions/selectionAddToModificationLayerAction';
 import { layoutTreeActions } from './actions/layoutTreeAction';
 import { layoutForceDirectedActions } from './actions/layoutForceDirectedAction';
+import { layoutLayeredActions } from './actions/layoutLayeredAction';
 
 export const defaultAppActions: ActionMapFactory<Application> = application => ({
   ...toolActions(application),
@@ -53,7 +54,8 @@ export const defaultAppActions: ActionMapFactory<Application> = application => (
   ...modelCenterActions(application),
   ...selectionAddToModificationLayerActions(application),
   ...layoutTreeActions(application),
-  ...layoutForceDirectedActions(application)
+  ...layoutForceDirectedActions(application),
+  ...layoutLayeredActions(application)
 });
 
 export const defaultMacAppKeymap: KeyMap = {

@@ -86,6 +86,7 @@ import type { Progress, ProgressCallback } from '@diagram-craft/utils/progress';
 import { DialogContextProvider } from '@diagram-craft/app-components/Dialog';
 import { LayoutTreeActionDialog } from './react-app/actions/layoutTreeAction.dialog';
 import { LayoutForceDirectedActionDialog } from './react-app/actions/layoutForceDirectedAction.dialog';
+import { LayoutLayeredActionDialog } from './react-app/actions/layoutLayeredAction.dialog';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // biome-ignore lint/suspicious/noExplicitAny: false positive
@@ -595,6 +596,18 @@ export const App = (props: {
               return (
                 <div key={item.id} style={{ zIndex: item.zIndex }}>
                   <LayoutForceDirectedActionDialog
+                    onChange={d => item.dialog.props.onChange(d)}
+                    onApply={d => item.dialog.onOk?.(d)}
+                    onCancel={() => item.dialog.onCancel?.()}
+                  />
+                </div>
+              );
+            })}
+            {dialogStack.map(item => {
+              if (item.dialog.id !== 'toolLayoutLayered') return null;
+              return (
+                <div key={item.id} style={{ zIndex: item.zIndex }}>
+                  <LayoutLayeredActionDialog
                     onChange={d => item.dialog.props.onChange(d)}
                     onApply={d => item.dialog.onOk?.(d)}
                     onCancel={() => item.dialog.onCancel?.()}
