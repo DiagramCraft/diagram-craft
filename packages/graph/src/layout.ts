@@ -95,6 +95,8 @@ const buildTree = <V, E, VK, EK>(
     return undefined;
   }
 
+  console.log(treeData);
+
   const createNode = (id: VK): TreeNode<VK> => {
     const node: TreeNode<VK> = {
       id,

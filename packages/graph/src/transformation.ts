@@ -21,12 +21,14 @@ import { MultiMap } from '@diagram-craft/utils/multimap';
 export function extractMaximalTree<V = unknown, E = unknown, VK = string, EK = string>(
   graph: Graph<V, E, VK, EK>,
   rootId: VK
-): {
-  vertices: Vertex<V, VK>[];
-  edges: Edge<E, EK, VK>[];
-  children: MultiMap<VK, Vertex<V, VK>>;
-  ancestors: Map<VK, Vertex<V, VK>[]>;
-} | undefined {
+):
+  | {
+      vertices: Vertex<V, VK>[];
+      edges: Edge<E, EK, VK>[];
+      children: MultiMap<VK, Vertex<V, VK>>;
+      ancestors: Map<VK, Vertex<V, VK>[]>;
+    }
+  | undefined {
   const rootVertex = graph.getVertex(rootId);
   if (!rootVertex) {
     return undefined;
@@ -43,16 +45,21 @@ export function extractMaximalTree<V = unknown, E = unknown, VK = string, EK = s
     if (edge) {
       edges.push(edge);
 
+      // Determine effective parent and child based on which vertex was already visited
+      // Since BFS is bidirectional, edge.from might not be the actual parent
+      const parentId = vertex.id === edge.from ? edge.to : edge.from;
+      const childId = parentId === edge.from ? edge.to : edge.from;
+
       // Add to children map
-      const childVertex = graph.getVertex(edge.to);
+      const childVertex = graph.getVertex(childId);
       if (childVertex) {
-        children.add(edge.from, childVertex);
+        children.add(parentId, childVertex);
 
         // Build ancestors path by copying parent's ancestors and adding parent
-        const parentVertex = graph.getVertex(edge.from);
+        const parentVertex = graph.getVertex(parentId);
         if (parentVertex) {
-          const parentAncestors = ancestors.get(edge.from) ?? [];
-          ancestors.set(edge.to, [parentVertex, ...parentAncestors]);
+          const parentAncestors = ancestors.get(parentId) ?? [];
+          ancestors.set(childId, [parentVertex, ...parentAncestors]);
         }
       }
     } else {
