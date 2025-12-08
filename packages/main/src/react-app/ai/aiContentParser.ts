@@ -1,8 +1,3 @@
-/*
- * Copyright (c) 2025 Magnus Johansson
- * SPDX-License-Identifier: ISC
- */
-
 const EXTRACTION_STRATEGIES: ((p: string) => string | undefined)[] = [
   // Strategy 1: Extract from ```json code block
   (content: string) => {

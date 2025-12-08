@@ -1,8 +1,3 @@
-/*
- * Copyright (c) 2025 Magnus Johansson
- * SPDX-License-Identifier: ISC
- */
-
 import type { Point } from '@diagram-craft/geometry/point';
 import type { Graph } from '../graph';
 import { getConnectedComponent } from '../connectivity';

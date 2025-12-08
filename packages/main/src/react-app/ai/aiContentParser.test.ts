@@ -1,8 +1,3 @@
-/*
- * Copyright (c) 2025 Magnus Johansson
- * SPDX-License-Identifier: ISC
- */
-
 import { describe, test, expect } from 'vitest';
 import { extractJSON, filterJsonFromContent } from './aiContentParser';
 
