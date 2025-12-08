@@ -1,6 +1,11 @@
+/*
+ * Copyright (c) 2025 Magnus Johansson
+ * SPDX-License-Identifier: ISC
+ */
+
 import { describe, test, expect } from 'vitest';
-import { SimpleGraph } from './graph';
-import { layoutTree } from './layout';
+import { SimpleGraph } from '../graph';
+import { layoutTree } from './treeLayout';
 
 describe('layoutTree', () => {
   test('single node returns position at origin', () => {

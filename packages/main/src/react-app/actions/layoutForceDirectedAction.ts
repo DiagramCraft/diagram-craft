@@ -9,7 +9,7 @@ import { isNode } from '@diagram-craft/model/diagramElement';
 import { assert } from '@diagram-craft/utils/assert';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { DiagramGraph } from '@diagram-craft/model/diagramGraph';
-import { layoutForceDirected } from '@diagram-craft/graph/forceDirectedLayout';
+import { layoutForceDirected } from '@diagram-craft/graph/layout/forceDirectedLayout';
 import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
 import type { Application } from '../../application';
 import type { Point } from '@diagram-craft/geometry/point';

@@ -1,6 +1,11 @@
+/*
+ * Copyright (c) 2025 Magnus Johansson
+ * SPDX-License-Identifier: ISC
+ */
+
 import type { Point } from '@diagram-craft/geometry/point';
-import type { Graph } from './graph';
-import { getConnectedComponent } from './connectivity';
+import type { Graph } from '../graph';
+import { getConnectedComponent } from '../connectivity';
 
 /**
  * Layout options for force-directed graph layout algorithm
@@ -132,7 +137,7 @@ export const layoutForceDirected = <V = unknown, E = unknown, VK = string, EK = 
     } else {
       // Random initial position in a circle
       const angle = (i / vertices.length) * 2 * Math.PI;
-      const radius = k * Math.sqrt(vertices.length) / 2;
+      const radius = (k * Math.sqrt(vertices.length)) / 2;
       initialPos = {
         x: radius * Math.cos(angle),
         y: radius * Math.sin(angle)

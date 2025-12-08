@@ -32,7 +32,7 @@ export const LayoutTreeActionDialog = (props: LayoutTreeActionDialogProps) => {
       <div style={{ marginLeft: '0.5rem' }}>Direction:</div>
       <ToggleButtonGroup.Root
         value={direction}
-        onChange={d => setDirection(d as any as LayoutTreeActionDirection)}
+        onChange={d => setDirection(d as unknown as LayoutTreeActionDirection)}
         aria-label="Formatting options"
         type={'single'}
       >

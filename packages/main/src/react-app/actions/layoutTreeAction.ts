@@ -9,7 +9,7 @@ import { isNode } from '@diagram-craft/model/diagramElement';
 import { assert } from '@diagram-craft/utils/assert';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { DiagramGraph } from '@diagram-craft/model/diagramGraph';
-import { layoutTree } from '@diagram-craft/graph/layout';
+import { layoutTree } from '@diagram-craft/graph/layout/treeLayout';
 import { extractMaximalTree } from '@diagram-craft/graph/transformation';
 import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
 import type { Application } from '../../application';
