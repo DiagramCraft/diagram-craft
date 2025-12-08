@@ -88,6 +88,7 @@ import { LayoutTreeActionDialog } from './react-app/actions/layoutTreeAction.dia
 import { LayoutForceDirectedActionDialog } from './react-app/actions/layoutForceDirectedAction.dialog';
 import { LayoutLayeredActionDialog } from './react-app/actions/layoutLayeredAction.dialog';
 import { LayoutOrthogonalActionDialog } from './react-app/actions/layoutOrthogonalAction.dialog';
+import { LayoutSeriesParallelActionDialog } from './react-app/actions/layoutSeriesParallelAction.dialog';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // biome-ignore lint/suspicious/noExplicitAny: false positive
@@ -621,6 +622,18 @@ export const App = (props: {
               return (
                 <div key={item.id} style={{ zIndex: item.zIndex }}>
                   <LayoutOrthogonalActionDialog
+                    onChange={d => item.dialog.props.onChange(d)}
+                    onApply={d => item.dialog.onOk?.(d)}
+                    onCancel={() => item.dialog.onCancel?.()}
+                  />
+                </div>
+              );
+            })}
+            {dialogStack.map(item => {
+              if (item.dialog.id !== 'toolLayoutSeriesParallel') return null;
+              return (
+                <div key={item.id} style={{ zIndex: item.zIndex }}>
+                  <LayoutSeriesParallelActionDialog
                     onChange={d => item.dialog.props.onChange(d)}
                     onApply={d => item.dialog.onOk?.(d)}
                     onCancel={() => item.dialog.onCancel?.()}
