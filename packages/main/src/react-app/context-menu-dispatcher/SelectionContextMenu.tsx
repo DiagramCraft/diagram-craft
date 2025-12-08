@@ -295,6 +295,9 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
             <ActionContextMenuItem action={'LAYOUT_ORTHOGONAL'}>
               Orthogonal
             </ActionContextMenuItem>
+            <ActionContextMenuItem action={'LAYOUT_SERIES_PARALLEL'}>
+              Series-Parallel
+            </ActionContextMenuItem>
           </ContextMenu.SubContent>
         </ContextMenu.Portal>
       </ContextMenu.Sub>

@@ -28,6 +28,7 @@ import { layoutTreeActions } from './actions/layoutTreeAction';
 import { layoutForceDirectedActions } from './actions/layoutForceDirectedAction';
 import { layoutLayeredActions } from './actions/layoutLayeredAction';
 import { layoutOrthogonalActions } from './actions/layoutOrthogonalAction';
+import { layoutSeriesParallelActions } from './actions/layoutSeriesParallelAction';
 
 export const defaultAppActions: ActionMapFactory<Application> = application => ({
   ...toolActions(application),
@@ -57,7 +58,8 @@ export const defaultAppActions: ActionMapFactory<Application> = application => (
   ...layoutTreeActions(application),
   ...layoutForceDirectedActions(application),
   ...layoutLayeredActions(application),
-  ...layoutOrthogonalActions(application)
+  ...layoutOrthogonalActions(application),
+  ...layoutSeriesParallelActions(application)
 });
 
 export const defaultMacAppKeymap: KeyMap = {
