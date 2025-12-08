@@ -16,7 +16,7 @@ import type { Application } from '../../application';
 
 declare global {
   namespace DiagramCraft {
-    interface ActionMapExtensions extends ReturnType<typeof layoutActions> {}
+    interface ActionMapExtensions extends ReturnType<typeof layoutTreeActions> {}
   }
 }
 
@@ -27,7 +27,7 @@ export type LayoutTreeActionArgs = {
   direction: LayoutTreeActionDirection;
 };
 
-export const layoutActions = (context: Application) => ({
+export const layoutTreeActions = (context: Application) => ({
   LAYOUT_TREE: new LayoutTreeAction(context)
 });
 
