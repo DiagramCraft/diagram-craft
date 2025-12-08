@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@diagram-craft/canvas": "workspace:^",
+    "@diagram-craft/graph": "workspace:^",
     "@diagram-craft/canvas-app": "workspace:^",
     "@diagram-craft/canvas-edges": "workspace:^",
     "@diagram-craft/canvas-nodes": "workspace:^",

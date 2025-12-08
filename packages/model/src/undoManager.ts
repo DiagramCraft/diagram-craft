@@ -101,6 +101,12 @@ export class UndoManager extends EventEmitter<UndoEvents> implements Releasable 
     return actions;
   }
 
+  undoToMark() {
+    while (this.undoableActions.at(-1) !== this.mark) {
+      this.undo();
+    }
+  }
+
   combine(callback: () => void) {
     const top = this.undoableActions.at(-1);
     callback();

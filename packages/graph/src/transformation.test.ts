@@ -94,4 +94,63 @@ describe('extractMaximalTree', () => {
     expect(result!.edges).toHaveLength(1);
     expect(result!.vertices.map(v => v.id)).toEqual(['A', 'B']);
   });
+
+  test('builds children map correctly', () => {
+    const graph = new SimpleGraph();
+    graph.addVertex({ id: 'A', data: {} });
+    graph.addVertex({ id: 'B', data: {} });
+    graph.addVertex({ id: 'C', data: {} });
+    graph.addVertex({ id: 'D', data: {} });
+
+    graph.addEdge({ id: 'e1', from: 'A', to: 'B', weight: 1, data: {} });
+    graph.addEdge({ id: 'e2', from: 'A', to: 'C', weight: 1, data: {} });
+    graph.addEdge({ id: 'e3', from: 'B', to: 'D', weight: 1, data: {} });
+
+    const result = extractMaximalTree(graph, 'A');
+
+    expect(result).toBeDefined();
+    expect(result!.children.get('A')?.map(v => v.id).sort()).toEqual(['B', 'C']);
+    expect(result!.children.get('B')?.map(v => v.id)).toEqual(['D']);
+    expect(result!.children.get('C')).toEqual([]);
+    expect(result!.children.get('D')).toEqual([]);
+  });
+
+  test('builds ancestors map correctly', () => {
+    const graph = new SimpleGraph();
+    graph.addVertex({ id: 'A', data: {} });
+    graph.addVertex({ id: 'B', data: {} });
+    graph.addVertex({ id: 'C', data: {} });
+    graph.addVertex({ id: 'D', data: {} });
+
+    graph.addEdge({ id: 'e1', from: 'A', to: 'B', weight: 1, data: {} });
+    graph.addEdge({ id: 'e2', from: 'B', to: 'C', weight: 1, data: {} });
+    graph.addEdge({ id: 'e3', from: 'C', to: 'D', weight: 1, data: {} });
+
+    const result = extractMaximalTree(graph, 'A');
+
+    expect(result).toBeDefined();
+
+    // A is root, has no ancestors
+    expect(result!.ancestors.get('A')).toEqual([]);
+
+    // B's ancestors: [A] (immediate parent to root)
+    expect(result!.ancestors.get('B')?.map(v => v.id)).toEqual(['A']);
+
+    // C's ancestors: [B, A] (immediate parent to root)
+    expect(result!.ancestors.get('C')?.map(v => v.id)).toEqual(['B', 'A']);
+
+    // D's ancestors: [C, B, A] (immediate parent to root)
+    expect(result!.ancestors.get('D')?.map(v => v.id)).toEqual(['C', 'B', 'A']);
+  });
+
+  test('children and ancestors are correct for single vertex', () => {
+    const graph = new SimpleGraph();
+    graph.addVertex({ id: 'A', data: {} });
+
+    const result = extractMaximalTree(graph, 'A');
+
+    expect(result).toBeDefined();
+    expect(result!.children.get('A')).toEqual([]);
+    expect(result!.ancestors.get('A')).toEqual([]);
+  });
 });

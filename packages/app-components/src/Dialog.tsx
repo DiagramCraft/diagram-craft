@@ -18,7 +18,7 @@ type DialogContextType = {
 
 const DialogContext = createContext<DialogContextType | undefined>(undefined);
 
-const useDialogContext = () => {
+export const useDialogContext = () => {
   const context = useContext(DialogContext);
   assert.present(context, 'Dialog must be used within a DialogProvider');
   return context;

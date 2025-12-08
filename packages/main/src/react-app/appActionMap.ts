@@ -24,6 +24,7 @@ import { commentActions } from './actions/commentActions';
 import { commandPaletteActions } from './actions/commandPaletteAction';
 import { modelCenterActions } from './actions/modelCenterAction';
 import { selectionAddToModificationLayerActions } from './actions/selectionAddToModificationLayerAction';
+import { layoutActions } from './actions/layoutAction';
 
 export const defaultAppActions: ActionMapFactory<Application> = application => ({
   ...toolActions(application),
@@ -49,7 +50,8 @@ export const defaultAppActions: ActionMapFactory<Application> = application => (
   ...commentActions(application),
   ...commandPaletteActions(application),
   ...modelCenterActions(application),
-  ...selectionAddToModificationLayerActions(application)
+  ...selectionAddToModificationLayerActions(application),
+  ...layoutActions(application)
 });
 
 export const defaultMacAppKeymap: KeyMap = {

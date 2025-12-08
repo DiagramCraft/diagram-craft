@@ -327,6 +327,9 @@ importers:
 
   packages/graph:
     dependencies:
+      '@diagram-craft/geometry':
+        specifier: workspace:^
+        version: link:../geometry
       '@diagram-craft/utils':
         specifier: workspace:^
         version: link:../utils
@@ -363,6 +366,9 @@ importers:
       '@diagram-craft/geometry':
         specifier: workspace:^
         version: link:../geometry
+      '@diagram-craft/graph':
+        specifier: workspace:^
+        version: link:../graph
       '@diagram-craft/markdown':
         specifier: workspace:^
         version: link:../markdown

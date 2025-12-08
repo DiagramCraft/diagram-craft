@@ -279,6 +279,20 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
       </ContextMenu.Sub>
 
       <ContextMenu.Sub>
+        <ContextMenu.SubTrigger className="cmp-context-menu__sub-trigger">
+          Layout
+          <div className="cmp-context-menu__right-slot">
+            <TbChevronRight />
+          </div>
+        </ContextMenu.SubTrigger>
+        <ContextMenu.Portal>
+          <ContextMenu.SubContent className="cmp-context-menu" sideOffset={2} alignOffset={-5}>
+            <ActionContextMenuItem action={'LAYOUT_TREE'}>Tree</ActionContextMenuItem>
+          </ContextMenu.SubContent>
+        </ContextMenu.Portal>
+      </ContextMenu.Sub>
+
+      <ContextMenu.Sub>
         <ContextMenu.SubTrigger
           className="cmp-context-menu__sub-trigger"
           disabled={diagram.selection.elements.length === 1}
