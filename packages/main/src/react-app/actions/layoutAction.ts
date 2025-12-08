@@ -12,6 +12,7 @@ import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { DiagramGraph } from '@diagram-craft/model/diagramGraph';
 import { layoutTree } from '@diagram-craft/graph/layout';
 import { extractMaximalTree } from '@diagram-craft/graph/transformation';
+import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
 
 declare global {
   namespace DiagramCraft {
@@ -52,6 +53,17 @@ export class LayoutTreeAction extends AbstractSelectionAction {
     if (positions.size === 0) return;
 
     const uow = new UnitOfWork(diagram, true);
+
+    // Ensure all anchors are centered
+    for (const edge of tree.edges) {
+      const e = edge.data;
+      if (e.start instanceof AnchorEndpoint) {
+        edge.data.setStart(new AnchorEndpoint(e.start.node, 'c', e.start.offset), uow);
+      }
+      if (e.end instanceof AnchorEndpoint) {
+        edge.data.setEnd(new AnchorEndpoint(e.end.node, 'c', e.end.offset), uow);
+      }
+    }
 
     // Get the root's current position to keep it in place
     const rootPosition = positions.get(rootElement.id);
