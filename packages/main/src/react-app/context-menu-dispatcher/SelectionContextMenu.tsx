@@ -292,6 +292,9 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
             <ActionContextMenuItem action={'LAYOUT_FORCE_DIRECTED'}>
               Force-Directed
             </ActionContextMenuItem>
+            <ActionContextMenuItem action={'LAYOUT_ORTHOGONAL'}>
+              Orthogonal
+            </ActionContextMenuItem>
           </ContextMenu.SubContent>
         </ContextMenu.Portal>
       </ContextMenu.Sub>
