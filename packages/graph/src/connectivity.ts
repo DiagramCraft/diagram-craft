@@ -21,14 +21,9 @@
  * @module
  */
 
-import type { Edge, Graph, Vertex } from './graph';
+import type { Edge, Graph, Vertex, VerticesAndEdges } from './graph';
 import { assert } from '@diagram-craft/utils/assert';
 import { dfs } from './traversal';
-
-export type ConnectedComponent<V = unknown, E = unknown, VK = string, EK = string> = {
-  vertices: Vertex<V, VK>[];
-  edges: Edge<E, EK, VK>[];
-};
 
 /**
  * Gets the connected component containing a specific vertex.
@@ -43,7 +38,7 @@ export type ConnectedComponent<V = unknown, E = unknown, VK = string, EK = strin
 export const getConnectedComponent = <V = unknown, E = unknown, VK = string, EK = string>(
   graph: Graph<V, E, VK, EK>,
   startId: VK
-): ConnectedComponent<V, E, VK, EK> | undefined => {
+): VerticesAndEdges<V, E, VK, EK> | undefined => {
   assert.present(graph.getVertex(startId));
 
   const vertices: Vertex<V, VK>[] = [];
@@ -80,12 +75,14 @@ export const getConnectedComponent = <V = unknown, E = unknown, VK = string, EK 
 export const getConnectedComponents = <V = unknown, E = unknown, VK = string, EK = string>(
   graph: Graph<V, E, VK, EK>,
   vertexIds?: Set<VK>
-): ConnectedComponent<V, E, VK, EK>[] => {
+): VerticesAndEdges<V, E, VK, EK>[] => {
   const visited = new Set<VK>();
-  const components: ConnectedComponent<V, E, VK, EK>[] = [];
+  const components: VerticesAndEdges<V, E, VK, EK>[] = [];
 
   const verticesToConsider = vertexIds
-    ? Array.from(vertexIds).map(id => graph.getVertex(id)).filter((v): v is Vertex<V, VK> => v !== undefined)
+    ? Array.from(vertexIds)
+        .map(id => graph.getVertex(id))
+        .filter((v): v is Vertex<V, VK> => v !== undefined)
     : Array.from(graph.vertices());
 
   for (const vertex of verticesToConsider) {

@@ -16,6 +16,11 @@
 
 import { MultiMap } from '@diagram-craft/utils/multimap';
 
+export type VerticesAndEdges<V = unknown, E = unknown, VK = string, EK = string> = {
+  vertices: Vertex<V, VK>[];
+  edges: Edge<E, EK, VK>[];
+};
+
 /** A vertex in a graph with optional typed data */
 export interface Vertex<T = unknown, K = string> {
   id: K;
@@ -67,9 +72,12 @@ export interface Graph<V = unknown, E = unknown, VK = string, EK = string> {
 }
 
 /** A simple implementation of the Graph interface using Maps */
-export class SimpleGraph<V = unknown, E = unknown, VK = string, EK = string>
-  implements Graph<V, E, VK, EK>
-{
+export class SimpleGraph<V = unknown, E = unknown, VK = string, EK = string> implements Graph<
+  V,
+  E,
+  VK,
+  EK
+> {
   protected _vertices = new Map<VK, Vertex<V, VK>>();
   protected _edges = new Map<EK, Edge<E, EK, VK>>();
   protected _adjacencyList: MultiMap<VK, { vertexId: VK; edge: Edge<E, EK, VK> }> | undefined =
