@@ -1,0 +1,32 @@
+.toolDialog {
+  position: absolute;
+  left: 200px;
+  top: 100px;
+  width: 400px;
+  height: 50px;
+  background: linear-gradient(var(--accent-bg-selected), var(--accent-bg));
+  color: var(--accent-fg);
+  font-size: 12px;
+  border-bottom: 1px solid var(--accent-border);
+  z-index: 10;
+}
+
+.toolDialogContent {
+  padding: 0 8px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.toolDialogTitle {
+  font-weight: bold;
+  font-size: 12px;
+}
+
+.toolDialogDescription {
+  margin-left: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}

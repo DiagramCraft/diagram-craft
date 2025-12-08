@@ -3,7 +3,6 @@ import {
   ElementType,
   MultipleType
 } from '@diagram-craft/canvas-app/actions/abstractSelectionAction';
-import { ActionContext } from '@diagram-craft/canvas/action';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { isNode } from '@diagram-craft/model/diagramElement';
@@ -13,6 +12,7 @@ import { DiagramGraph } from '@diagram-craft/model/diagramGraph';
 import { layoutTree } from '@diagram-craft/graph/layout';
 import { extractMaximalTree } from '@diagram-craft/graph/transformation';
 import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
+import type { Application } from '../../application';
 
 declare global {
   namespace DiagramCraft {
@@ -20,16 +20,46 @@ declare global {
   }
 }
 
-export const layoutActions = (context: ActionContext) => ({
+export type LayoutTreeActionDirection = 'down' | 'up' | 'left' | 'right';
+
+export type LayoutTreeActionArgs = {
+  gap: number;
+  direction: LayoutTreeActionDirection;
+};
+
+export const layoutActions = (context: Application) => ({
   LAYOUT_TREE: new LayoutTreeAction(context)
 });
 
-export class LayoutTreeAction extends AbstractSelectionAction {
-  constructor(context: ActionContext) {
+export class LayoutTreeAction extends AbstractSelectionAction<Application> {
+  constructor(context: Application) {
     super(context, MultipleType.SingleOnly, ElementType.Node);
   }
 
   execute(): void {
+    const undoManager = this.context.model.activeDiagram.undoManager;
+    undoManager.setMark();
+
+    this.context.ui.showDialog({
+      id: 'toolLayoutTree',
+      props: {
+        onChange: (d: LayoutTreeActionArgs) => {
+          undoManager.undoToMark();
+          this.applyChanges(d);
+        }
+      },
+      onCancel: () => {
+        undoManager.undoToMark();
+      },
+      onOk: (d: LayoutTreeActionArgs) => {
+        undoManager.undoToMark();
+        this.applyChanges(d);
+        this.emit('actionTriggered', {});
+      }
+    });
+  }
+
+  private applyChanges(d: LayoutTreeActionArgs) {
     const diagram = this.context.model.activeDiagram;
     const selection = diagram.selection;
 
@@ -45,9 +75,9 @@ export class LayoutTreeAction extends AbstractSelectionAction {
 
     // Get the tree layout positions
     const positions = layoutTree(graph, rootElement.id, {
-      horizontalSpacing: tree.vertices.reduce((a, b) => Math.max(a, b.data.bounds.w), 0) + 50,
-      verticalSpacing: tree.vertices.reduce((a, b) => Math.max(a, b.data.bounds.h), 0) + 50,
-      direction: 'down'
+      horizontalSpacing: tree.vertices.reduce((a, b) => Math.max(a, b.data.bounds.w), 0) + d.gap,
+      verticalSpacing: tree.vertices.reduce((a, b) => Math.max(a, b.data.bounds.h), 0) + d.gap,
+      direction: d.direction
     });
 
     if (positions.size === 0) return;
@@ -88,7 +118,5 @@ export class LayoutTreeAction extends AbstractSelectionAction {
     }
 
     commitWithUndo(uow, 'Layout tree');
-
-    this.emit('actionTriggered', {});
   }
 }
