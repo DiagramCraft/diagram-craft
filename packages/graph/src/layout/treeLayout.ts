@@ -1,6 +1,11 @@
+/*
+ * Copyright (c) 2025 Magnus Johansson
+ * SPDX-License-Identifier: ISC
+ */
+
 import type { Point } from '@diagram-craft/geometry/point';
-import type { Graph } from './graph';
-import { extractMaximalTree } from './transformation';
+import type { Graph } from '../graph';
+import { extractMaximalTree } from '../transformation';
 
 /**
  * Layout options for tree layout algorithm
@@ -102,6 +107,7 @@ const buildTree = <V, E, VK, EK>(
       x: 0,
       y: 0,
       mod: 0,
+      // biome-ignore lint/suspicious/noExplicitAny: initialization
       ancestor: undefined as any,
       prelim: 0,
       change: 0,

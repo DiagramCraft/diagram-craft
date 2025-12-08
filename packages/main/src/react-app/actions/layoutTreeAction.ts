@@ -9,14 +9,14 @@ import { isNode } from '@diagram-craft/model/diagramElement';
 import { assert } from '@diagram-craft/utils/assert';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { DiagramGraph } from '@diagram-craft/model/diagramGraph';
-import { layoutTree } from '@diagram-craft/graph/layout';
+import { layoutTree } from '@diagram-craft/graph/layout/treeLayout';
 import { extractMaximalTree } from '@diagram-craft/graph/transformation';
 import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
 import type { Application } from '../../application';
 
 declare global {
   namespace DiagramCraft {
-    interface ActionMapExtensions extends ReturnType<typeof layoutActions> {}
+    interface ActionMapExtensions extends ReturnType<typeof layoutTreeActions> {}
   }
 }
 
@@ -27,7 +27,7 @@ export type LayoutTreeActionArgs = {
   direction: LayoutTreeActionDirection;
 };
 
-export const layoutActions = (context: Application) => ({
+export const layoutTreeActions = (context: Application) => ({
   LAYOUT_TREE: new LayoutTreeAction(context)
 });
 

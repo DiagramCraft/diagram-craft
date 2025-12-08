@@ -1,4 +1,4 @@
-import type { Edge, Graph, Vertex } from './graph';
+import type { Edge, Graph, Vertex, VerticesAndEdges } from './graph';
 import { bfs } from './traversal';
 import { MultiMap } from '@diagram-craft/utils/multimap';
 
@@ -22,12 +22,10 @@ export function extractMaximalTree<V = unknown, E = unknown, VK = string, EK = s
   graph: Graph<V, E, VK, EK>,
   rootId: VK
 ):
-  | {
-      vertices: Vertex<V, VK>[];
-      edges: Edge<E, EK, VK>[];
+  | (VerticesAndEdges<V, E, VK, EK> & {
       children: MultiMap<VK, Vertex<V, VK>>;
       ancestors: Map<VK, Vertex<V, VK>[]>;
-    }
+    })
   | undefined {
   const rootVertex = graph.getVertex(rootId);
   if (!rootVertex) {

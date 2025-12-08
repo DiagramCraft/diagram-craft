@@ -3,26 +3,26 @@ import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { useEffect, useState } from 'react';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
 import { TbArrowDown, TbArrowLeft, TbArrowRight, TbArrowUp } from 'react-icons/tb';
-import type { LayoutTreeActionArgs, LayoutTreeActionDirection } from './layoutAction';
+import type { LayoutTreeActionArgs, LayoutTreeActionDirection } from './layoutTreeAction';
 
-type LayoutActionDialogProps = {
+type LayoutTreeActionDialogProps = {
   onCancel: () => void;
   onApply: (state: LayoutTreeActionArgs) => void;
   onChange: (state: LayoutTreeActionArgs) => void;
 };
 
-export const LayoutActionDialog = (props: LayoutActionDialogProps) => {
+export const LayoutTreeActionDialog = (props: LayoutTreeActionDialogProps) => {
   const [gap, setGap] = useState(45);
   const [direction, setDirection] = useState<LayoutTreeActionDirection>('down');
 
   useEffect(() => {
     props.onChange({ gap, direction });
-  }, [gap, direction]);
+  }, [gap, direction, props.onChange]);
 
   return (
     <ToolDialog
       open={true}
-      title={'Tree Layout'}
+      title={'Tree'}
       onCancel={props.onCancel}
       onOk={() => props.onApply({ gap, direction })}
     >
@@ -32,7 +32,7 @@ export const LayoutActionDialog = (props: LayoutActionDialogProps) => {
       <div style={{ marginLeft: '0.5rem' }}>Direction:</div>
       <ToggleButtonGroup.Root
         value={direction}
-        onChange={d => setDirection(d as any as LayoutTreeActionDirection)}
+        onChange={d => setDirection(d as unknown as LayoutTreeActionDirection)}
         aria-label="Formatting options"
         type={'single'}
       >
