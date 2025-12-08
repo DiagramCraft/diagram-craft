@@ -9,6 +9,38 @@
   font-size: 12px;
   border-bottom: 1px solid var(--accent-border);
   z-index: 10;
+
+  .cmp-number-input {
+    background: var(--accent-bg);
+    border: 1px solid var(--accent-border);
+  }
+
+  .cmp-toggle-button-group {
+    border: 1px solid var(--accent-border);
+    background: var(--accent-border);
+  }
+
+  .cmp-toggle-button-group__item {
+    background: var(--accent-bg-selected);
+    color: var(--accent-fg);
+    margin-left: 1px;
+
+    &[data-state='on'] {
+      color: var(--base-fg);
+    }
+  }
+
+  .cmp-button--primary {
+    background: var(--accent-bg);
+    border: 1px solid var(--accent-border);
+    outline: none;
+  }
+
+  .cmp-button--secondary {
+    background: var(--accent-bg);
+    color: var(--accent-fg);
+    border: 1px solid var(--accent-border);
+  }
 }
 
 .toolDialogContent {
