@@ -85,6 +85,7 @@ import { CanvasDomHelper } from '@diagram-craft/canvas/utils/canvasDomHelper';
 import type { Progress, ProgressCallback } from '@diagram-craft/utils/progress';
 import { DialogContextProvider } from '@diagram-craft/app-components/Dialog';
 import { LayoutTreeActionDialog } from './react-app/actions/layoutTreeAction.dialog';
+import { AutoAlignActionDialog } from './react-app/actions/autoAlignAction.dialog';
 import { LayoutForceDirectedActionDialog } from './react-app/actions/layoutForceDirectedAction.dialog';
 import { LayoutLayeredActionDialog } from './react-app/actions/layoutLayeredAction.dialog';
 import { LayoutOrthogonalActionDialog } from './react-app/actions/layoutOrthogonalAction.dialog';
@@ -586,6 +587,18 @@ export const App = (props: {
               return (
                 <div key={item.id} style={{ zIndex: item.zIndex }}>
                   <LayoutTreeActionDialog
+                    onChange={d => item.dialog.props.onChange(d)}
+                    onApply={d => item.dialog.onOk?.(d)}
+                    onCancel={() => item.dialog.onCancel?.()}
+                  />
+                </div>
+              );
+            })}
+            {dialogStack.map(item => {
+              if (item.dialog.id !== 'toolAutoAlign') return null;
+              return (
+                <div key={item.id} style={{ zIndex: item.zIndex }}>
+                  <AutoAlignActionDialog
                     onChange={d => item.dialog.props.onChange(d)}
                     onApply={d => item.dialog.onOk?.(d)}
                     onCancel={() => item.dialog.onCancel?.()}
