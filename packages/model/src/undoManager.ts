@@ -107,6 +107,10 @@ export class UndoManager extends EventEmitter<UndoEvents> implements Releasable 
     }
   }
 
+  clearRedo() {
+    this.redoableActions = [];
+  }
+
   combine(callback: () => void) {
     const top = this.undoableActions.at(-1);
     callback();

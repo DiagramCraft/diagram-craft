@@ -49,6 +49,7 @@ export class LayoutOrthogonalAction extends AbstractSelectionAction<Application>
       },
       onCancel: () => {
         undoManager.undoToMark();
+        undoManager.clearRedo();
       },
       onOk: (d: LayoutOrthogonalActionArgs) => {
         undoManager.undoToMark();
