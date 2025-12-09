@@ -58,7 +58,7 @@ export const SearchTab = () => {
   };
 
   return (
-    <ToolWindow.TabContent>
+    <>
       <ToolWindow.TabActions>
         <SearchToolMenu
           type={'simple'}
@@ -72,27 +72,28 @@ export const SearchTab = () => {
           }}
         />
       </ToolWindow.TabActions>
-
-      <Accordion.Root type="multiple" defaultValue={['search-input', 'search-results']}>
-        <SearchPanel
-          searchText={inputText}
-          onSearchTextChange={text => {
-            setInputText(text);
-            // Only clear search results when text is completely cleared
-            if (!text.trim()) {
-              setSearchQuery('');
-            }
-          }}
-          onSearch={handleSearch}
-          scope={scope}
-          onScopeChange={(value: string) => setScope(value as SearchScope)}
-        />
-        <SearchResultsPanel
-          results={results}
-          searchText={searchQuery}
-          onElementClick={handleElementClick}
-        />
-      </Accordion.Root>
-    </ToolWindow.TabContent>
+      <ToolWindow.TabContent>
+        <Accordion.Root type="multiple" defaultValue={['search-input', 'search-results']}>
+          <SearchPanel
+            searchText={inputText}
+            onSearchTextChange={text => {
+              setInputText(text);
+              // Only clear search results when text is completely cleared
+              if (!text.trim()) {
+                setSearchQuery('');
+              }
+            }}
+            onSearch={handleSearch}
+            scope={scope}
+            onScopeChange={(value: string) => setScope(value as SearchScope)}
+          />
+          <SearchResultsPanel
+            results={results}
+            searchText={searchQuery}
+            onElementClick={handleElementClick}
+          />
+        </Accordion.Root>
+      </ToolWindow.TabContent>
+    </>
   );
 };

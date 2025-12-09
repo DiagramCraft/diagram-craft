@@ -459,7 +459,6 @@ table {
   position: relative;
 
   .cmp-tabs__content {
-    background-color: red;
     height: initial;
     padding: 0;
 

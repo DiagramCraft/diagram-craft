@@ -630,7 +630,7 @@ export const ModelPickerTab = () => {
   };
 
   return (
-    <ToolWindow.TabContent>
+    <>
       <ToolWindow.TabActions>
         <a
           className={'cmp-button cmp-button--icon-only'}
@@ -663,57 +663,58 @@ export const ModelPickerTab = () => {
           <TbSettings />
         </a>
       </ToolWindow.TabActions>
+      <ToolWindow.TabContent>
+        <Accordion.Root type="multiple" defaultValue={['query', 'response']}>
+          <ToolWindowPanel id={'query'} title={'Data Source'} mode={'headless'}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}
+            >
+              <DataProviderQueryView
+                onSearch={setSearch}
+                selectedSchema={selectedSchema!}
+                onChangeSchema={setSelectedSchema}
+                displayMode={displayMode}
+                onChangeDisplayMode={setDisplayMode}
+                showItemAddDialog={() => setAddItemDialog(true)}
+              />
+            </div>
+          </ToolWindowPanel>
 
-      <Accordion.Root type="multiple" defaultValue={['query', 'response']}>
-        <ToolWindowPanel id={'query'} title={'Data Source'} mode={'headless'}>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}
-          >
-            <DataProviderQueryView
-              onSearch={setSearch}
+          {displayMode === 'list' && (
+            <DataProviderListView
               selectedSchema={selectedSchema!}
-              onChangeSchema={setSelectedSchema}
-              displayMode={displayMode}
-              onChangeDisplayMode={setDisplayMode}
-              showItemAddDialog={() => setAddItemDialog(true)}
+              search={search}
+              onEditItem={item => setEditItemDialog({ open: true, item })}
+              onDeleteItem={handleDeleteItem}
             />
-          </div>
-        </ToolWindowPanel>
+          )}
 
-        {displayMode === 'list' && (
-          <DataProviderListView
-            selectedSchema={selectedSchema!}
-            search={search}
-            onEditItem={item => setEditItemDialog({ open: true, item })}
-            onDeleteItem={handleDeleteItem}
-          />
-        )}
+          {displayMode === 'grid' && (
+            <DataProviderGridView
+              selectedSchema={selectedSchema!}
+              search={search}
+              onEditItem={item => setEditItemDialog({ open: true, item })}
+              onDeleteItem={handleDeleteItem}
+            />
+          )}
+        </Accordion.Root>
 
-        {displayMode === 'grid' && (
-          <DataProviderGridView
-            selectedSchema={selectedSchema!}
-            search={search}
-            onEditItem={item => setEditItemDialog({ open: true, item })}
-            onDeleteItem={handleDeleteItem}
-          />
-        )}
-      </Accordion.Root>
-
-      <EditItemDialog
-        open={addItemDialog}
-        onClose={() => setAddItemDialog(false)}
-        selectedSchema={selectedSchema}
-      />
-      <EditItemDialog
-        open={editItemDialog.open}
-        onClose={() => setEditItemDialog({ open: false })}
-        selectedSchema={selectedSchema}
-        editItem={editItemDialog.item}
-      />
-    </ToolWindow.TabContent>
+        <EditItemDialog
+          open={addItemDialog}
+          onClose={() => setAddItemDialog(false)}
+          selectedSchema={selectedSchema}
+        />
+        <EditItemDialog
+          open={editItemDialog.open}
+          onClose={() => setEditItemDialog({ open: false })}
+          selectedSchema={selectedSchema}
+          editItem={editItemDialog.item}
+        />
+      </ToolWindow.TabContent>
+    </>
   );
 };

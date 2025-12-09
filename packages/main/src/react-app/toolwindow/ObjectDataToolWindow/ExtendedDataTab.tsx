@@ -177,16 +177,16 @@ export const ExtendedDataTab = () => {
 
   return (
     <>
+      <ToolWindow.TabActions>
+        <a
+          className={'cmp-button cmp-button--icon-only'}
+          style={{ color: !editMode ? 'var(--accent-fg)' : undefined }}
+          onClick={() => setEditMode(v => !v)}
+        >
+          {editMode ? <TbFilterOff /> : <TbFilter />}
+        </a>
+      </ToolWindow.TabActions>
       <ToolWindow.TabContent>
-        <ToolWindow.TabActions>
-          <a
-            className={'cmp-button cmp-button--icon-only'}
-            style={{ color: !editMode ? 'var(--accent-fg)' : undefined }}
-            onClick={() => setEditMode(v => !v)}
-          >
-            {editMode ? <TbFilterOff /> : <TbFilter />}
-          </a>
-        </ToolWindow.TabActions>
         <ToolWindowPanel
           id={'extended'}
           title={'Extended data'}

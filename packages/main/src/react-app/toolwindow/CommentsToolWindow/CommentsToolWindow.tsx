@@ -92,7 +92,7 @@ export const CommentsToolWindow = () => {
 
   // Get current user name for "My Threads" tab
   const currentUserName = UserState.get().awarenessState.name;
-  
+
   // Filter threads for "My Threads" tab
   const myThreads = filterThreadsByUserParticipation(commentThreads, currentUserName);
   const myGroupedThreads =
@@ -110,9 +110,7 @@ export const CommentsToolWindow = () => {
         grouped.map(group => (
           <div key={group.key} className={styles['comments-tool-window__group']}>
             {group.title && (
-              <div className={styles['comments-tool-window__group-title']}>
-                {group.title}
-              </div>
+              <div className={styles['comments-tool-window__group-title']}>{group.title}</div>
             )}
             {group.threads.map(thread => (
               <div key={thread.root.id} className={styles['comments-tool-window__thread']}>
@@ -139,40 +137,40 @@ export const CommentsToolWindow = () => {
   return (
     <ToolWindow.Root id={'comments'} defaultTab={'comments'}>
       <ToolWindow.Tab title={'Comments'} id={'comments'}>
+        <ToolWindow.TabActions>
+          <Button type={'icon-only'} onClick={() => application.actions.COMMENT_ADD!.execute()}>
+            <TbPlus />
+          </Button>
+          <CommentsSortMenu
+            sortBy={sortBy}
+            groupBy={groupBy}
+            hideResolved={hideResolved}
+            onSortChange={setSortBy}
+            onGroupChange={setGroupBy}
+            onHideResolvedChange={setHideResolved}
+          />
+        </ToolWindow.TabActions>
         <ToolWindow.TabContent>
-          <ToolWindow.TabActions>
-            <Button type={'icon-only'} onClick={() => application.actions.COMMENT_ADD!.execute()}>
-              <TbPlus />
-            </Button>
-            <CommentsSortMenu
-              sortBy={sortBy}
-              groupBy={groupBy}
-              hideResolved={hideResolved}
-              onSortChange={setSortBy}
-              onGroupChange={setGroupBy}
-              onHideResolvedChange={setHideResolved}
-            />
-          </ToolWindow.TabActions>
           <ToolWindowPanel mode={'headless'} id={'comments'} title={'Comments'}>
             {renderThreadsContent(commentThreads, groupedThreads)}
           </ToolWindowPanel>
         </ToolWindow.TabContent>
       </ToolWindow.Tab>
       <ToolWindow.Tab title={'My Threads'} id={'my-threads'}>
+        <ToolWindow.TabActions>
+          <Button type={'icon-only'} onClick={() => application.actions.COMMENT_ADD!.execute()}>
+            <TbPlus />
+          </Button>
+          <CommentsSortMenu
+            sortBy={sortBy}
+            groupBy={groupBy}
+            hideResolved={hideResolved}
+            onSortChange={setSortBy}
+            onGroupChange={setGroupBy}
+            onHideResolvedChange={setHideResolved}
+          />
+        </ToolWindow.TabActions>
         <ToolWindow.TabContent>
-          <ToolWindow.TabActions>
-            <Button type={'icon-only'} onClick={() => application.actions.COMMENT_ADD!.execute()}>
-              <TbPlus />
-            </Button>
-            <CommentsSortMenu
-              sortBy={sortBy}
-              groupBy={groupBy}
-              hideResolved={hideResolved}
-              onSortChange={setSortBy}
-              onGroupChange={setGroupBy}
-              onHideResolvedChange={setHideResolved}
-            />
-          </ToolWindow.TabActions>
           <ToolWindowPanel mode={'headless'} id={'my-threads'} title={'My Threads'}>
             {renderThreadsContent(myThreads, myGroupedThreads)}
           </ToolWindowPanel>

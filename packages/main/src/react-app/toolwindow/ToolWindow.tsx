@@ -79,28 +79,37 @@ const Root = (props: RootProps) => {
 
   return (
     <ToolWindowContext.Provider value={contextValue}>
-      <Tabs.Root value={tab} onValueChange={updateTab}>
-        <Tabs.List>
-          {React.Children.map(props.children, child => {
-            if (!child) return null;
-            assert.present(child);
-            if (!isReactElement(child)) throw new VerifyNotReached('Invalid element');
-            assert.true(child.type === Tab);
+      <div className={styles.sidebarTabs}>
+        <Tabs.Root value={tab} onValueChange={updateTab}>
+          <Tabs.List>
+            {React.Children.map(props.children, child => {
+              if (!child) return null;
+              assert.present(child);
+              if (!isReactElement(child)) throw new VerifyNotReached('Invalid element');
+              assert.true(child.type === Tab);
 
-            const tabProps = child.props as TabProps;
-            return (
-              <Tabs.Trigger value={tabProps.id} disabled={tabProps.disabled}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '6px', position: 'relative' }}>
-                  {tabProps.title}
-                  {tabProps.indicator}
-                </span>
-              </Tabs.Trigger>
-            );
-          })}
-        </Tabs.List>
+              const tabProps = child.props as TabProps;
+              return (
+                <Tabs.Trigger value={tabProps.id} disabled={tabProps.disabled}>
+                  <span
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      position: 'relative'
+                    }}
+                  >
+                    {tabProps.title}
+                    {tabProps.indicator}
+                  </span>
+                </Tabs.Trigger>
+              );
+            })}
+          </Tabs.List>
 
-        {props.children}
-      </Tabs.Root>
+          {props.children}
+        </Tabs.Root>
+      </div>
     </ToolWindowContext.Provider>
   );
 };
@@ -120,7 +129,11 @@ const Tab = (props: TabProps) => {
 type TabContentProps = { children: React.ReactNode };
 
 const TabContent = (props: TabContentProps) => {
-  return <ErrorBoundary>{props.children}</ErrorBoundary>;
+  return (
+    <div className={styles.sidebarTabsContentInner}>
+      <ErrorBoundary>{props.children}</ErrorBoundary>
+    </div>
+  );
 };
 
 type TabActions = {
