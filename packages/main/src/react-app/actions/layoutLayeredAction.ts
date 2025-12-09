@@ -49,6 +49,7 @@ export class LayoutLayeredAction extends AbstractSelectionAction<Application> {
       },
       onCancel: () => {
         undoManager.undoToMark();
+        undoManager.clearRedo();
       },
       onOk: (d: LayoutLayeredActionArgs) => {
         undoManager.undoToMark();

@@ -49,6 +49,7 @@ export class LayoutSeriesParallelAction extends AbstractSelectionAction<Applicat
       },
       onCancel: () => {
         undoManager.undoToMark();
+        undoManager.clearRedo();
       },
       onOk: (d: LayoutSeriesParallelActionArgs) => {
         undoManager.undoToMark();

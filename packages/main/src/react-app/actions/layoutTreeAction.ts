@@ -50,6 +50,7 @@ export class LayoutTreeAction extends AbstractSelectionAction<Application> {
       },
       onCancel: () => {
         undoManager.undoToMark();
+        undoManager.clearRedo();
       },
       onOk: (d: LayoutTreeActionArgs) => {
         undoManager.undoToMark();

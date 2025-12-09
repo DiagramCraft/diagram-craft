@@ -51,6 +51,7 @@ export class LayoutForceDirectedAction extends AbstractSelectionAction<Applicati
       },
       onCancel: () => {
         undoManager.undoToMark();
+        undoManager.clearRedo();
       },
       onOk: (d: LayoutForceDirectedActionArgs) => {
         undoManager.undoToMark();
