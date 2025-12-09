@@ -27,6 +27,15 @@ function buildAdjacencyMap<V = unknown, E = unknown, VK = string, EK = string>(
   return adjacencyMap;
 }
 
+/**
+ * Performs DFS traversal starting from a given vertex, yielding vertices and edges
+ * that form a spanning tree.
+ *
+ * @param graph - The graph to traverse
+ * @param startId - The ID of the starting vertex
+ * @param options - Traversal options
+ * @returns Generator yielding vertices and edges in DFS order
+ */
 export function* dfs<V = unknown, E = unknown, VK = string, EK = string>(
   graph: Graph<V, E, VK, EK>,
   startId: VK,
@@ -37,10 +46,10 @@ export function* dfs<V = unknown, E = unknown, VK = string, EK = string>(
   const adjacencyMap = buildAdjacencyMap(graph, options?.respectDirectionality ?? false);
 
   const visited = new Set<VK>();
-  const queue: Array<{ vertexId: VK; edge?: Edge<E, EK, VK> }> = [{ vertexId: startId }];
-  // BFS to find all connected vertices
-  while (queue.length > 0) {
-    const current = queue.shift()!;
+  const stack: Array<{ vertexId: VK; edge?: Edge<E, EK, VK> }> = [{ vertexId: startId }];
+
+  while (stack.length > 0) {
+    const current = stack.pop()!;
 
     if (visited.has(current.vertexId)) continue;
     visited.add(current.vertexId);
@@ -53,7 +62,7 @@ export function* dfs<V = unknown, E = unknown, VK = string, EK = string>(
     const neighbors = adjacencyMap.get(current.vertexId) ?? [];
     for (const { vertexId: neighborId, edge } of neighbors) {
       if (!visited.has(neighborId)) {
-        queue.push({ vertexId: neighborId, edge });
+        stack.push({ vertexId: neighborId, edge });
       }
     }
   }

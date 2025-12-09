@@ -119,11 +119,16 @@ export class SimpleGraph<V = unknown, E = unknown, VK = string, EK = string> imp
   /** Add an edge to the graph */
   addEdge(edge: Edge<E, EK, VK>): Edge<E, EK, VK> {
     this._edges.set(edge.id, edge);
+    this._adjacencyList = undefined;
     return edge;
   }
 
   removeEdge(edge: EK): boolean {
-    return this._edges.delete(edge);
+    const result = this._edges.delete(edge);
+    if (result) {
+      this._adjacencyList = undefined;
+    }
+    return result;
   }
 
   removeVertex(vertex: VK): boolean {
