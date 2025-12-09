@@ -7,6 +7,7 @@
   align-items: center;
   padding-right: 0.5rem;
   gap: 0.5rem;
+  z-index: 100;
 
   color: var(--base-fg-more-dim);
 
@@ -17,4 +18,12 @@
   > button {
     color: var(--base-fg-dim);
   }
+}
+
+.sidebarTabsContentInner {
+  position: absolute;
+  inset: 0;
+  overflow: scroll;
+  top: calc(var(--tab-height) + 1px);
+  background-color: var(--panel-bg);
 }
