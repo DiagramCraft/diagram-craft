@@ -292,9 +292,7 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
             <ActionContextMenuItem action={'LAYOUT_FORCE_DIRECTED'}>
               Force-Directed
             </ActionContextMenuItem>
-            <ActionContextMenuItem action={'LAYOUT_ORTHOGONAL'}>
-              Orthogonal
-            </ActionContextMenuItem>
+            <ActionContextMenuItem action={'LAYOUT_ORTHOGONAL'}>Orthogonal</ActionContextMenuItem>
             <ActionContextMenuItem action={'LAYOUT_SERIES_PARALLEL'}>
               Series-Parallel
             </ActionContextMenuItem>
@@ -303,10 +301,7 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
       </ContextMenu.Sub>
 
       <ContextMenu.Sub>
-        <ContextMenu.SubTrigger
-          className="cmp-context-menu__sub-trigger"
-          disabled={diagram.selection.elements.length === 1}
-        >
+        <ContextMenu.SubTrigger className="cmp-context-menu__sub-trigger">
           Align
           <div className="cmp-context-menu__right-slot">
             <TbChevronRight />
@@ -314,6 +309,8 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
         </ContextMenu.SubTrigger>
         <ContextMenu.Portal>
           <ContextMenu.SubContent className="cmp-context-menu" sideOffset={2} alignOffset={-5}>
+            <ActionContextMenuItem action={'AUTO_ALIGN'}>Auto-Align...</ActionContextMenuItem>
+            <ContextMenu.Separator className="cmp-context-menu__separator" />
             <ActionContextMenuItem action={'ALIGN_TOP'}>Align Top Edges</ActionContextMenuItem>
             <ActionContextMenuItem action={'ALIGN_BOTTOM'}>
               Align Bottom Edges

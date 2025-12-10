@@ -414,5 +414,14 @@ export const Box = {
           : (max1Y + max1Y) / 2;
 
     return { x, y };
+  },
+
+  /**
+   * Calculates the area of a box
+   * @param box the box to calculate the area of
+   * @returns the area of the box
+   */
+  area(box: Box) {
+    return Math.abs(box.w * box.h);
   }
 };
