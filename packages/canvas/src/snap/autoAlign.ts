@@ -218,17 +218,17 @@ const calculateResizedBounds = (
       case 'w': // Left edge
         newBounds.x -= distance;
         newBounds.w += distance;
-        return WritableBox.asBox(newBounds);
+        break;
       case 'n': // Top edge
         newBounds.y -= distance;
         newBounds.h += distance;
-        return WritableBox.asBox(newBounds);
+        break;
       case 'e': // Right edge
         newBounds.w -= distance;
-        return WritableBox.asBox(newBounds);
+        break;
       case 's': // Bottom edge
         newBounds.h -= distance;
-        return WritableBox.asBox(newBounds);
+        break;
     }
   }
 
