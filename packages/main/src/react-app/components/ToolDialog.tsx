@@ -59,6 +59,20 @@ export const ToolDialog = (props: ToolDialogProps) => {
     dialogRef.current.style.height = toolbarElement?.clientHeight - 0.5 + 'px';
   });
 
+  useEffect(() => {
+    if (!props.open) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        props.onOk();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [props.open, props.onOk]);
+
   return (
     <AlertDialog.Root open={props.open} defaultOpen={props.open} onOpenChange={handleOpenChange}>
       <AlertDialog.Portal container={portal}>
