@@ -20,10 +20,9 @@ type Story = StoryObj<typeof meta>;
 const render = function Component(args: Story['args']) {
   const [, setArgs] = useArgs();
 
-  // biome-ignore lint/suspicious/noExplicitAny: false positive
   const onValueChange = (value: any) => {
     args.onValueChange?.(value);
-    setArgs({ value: value });
+    setArgs((a: any) => ({ ...a, value: value }));
   };
 
   return (
@@ -60,7 +59,7 @@ export const Primary: Story = {
   render,
   args: {
     type: 'single',
-    value: 'lorem',
+    defaultValue: 'lorem',
     children: CHILDREN
   }
 };
@@ -69,7 +68,7 @@ export const Disabled: Story = {
   render,
   args: {
     type: 'single',
-    value: 'lorem',
+    defaultValue: 'lorem',
     children: CHILDREN,
     disabled: true
   }
@@ -79,7 +78,7 @@ export const ItemFocus: Story = {
   render,
   args: {
     type: 'single',
-    value: 'lorem',
+    defaultValue: 'lorem',
     children: [
       <Accordion.Item key={1} value={'lorem'}>
         <Accordion.ItemHeader data-focus={true}>Lorem</Accordion.ItemHeader>
@@ -94,7 +93,7 @@ export const ItemHover: Story = {
   render,
   args: {
     type: 'single',
-    value: 'lorem',
+    defaultValue: 'lorem',
     children: [
       <Accordion.Item key={1} value={'lorem'}>
         <Accordion.ItemHeader data-hover={true}>Lorem</Accordion.ItemHeader>
@@ -109,7 +108,7 @@ export const Multiple: Story = {
   render,
   args: {
     type: 'multiple',
-    value: ['lorem', 'dolor'],
+    defaultValue: ['lorem', 'dolor'],
     children: CHILDREN
   }
 };
