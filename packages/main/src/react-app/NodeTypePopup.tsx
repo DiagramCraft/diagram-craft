@@ -1,6 +1,6 @@
 import { PickerCanvas } from './PickerCanvas';
 import { assert } from '@diagram-craft/utils/assert';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
@@ -19,6 +19,7 @@ import type { DiagramNode } from '@diagram-craft/model/diagramNode';
 
 export const NodeTypePopup = (props: Props) => {
   const diagram = useDiagram();
+  const anchorRef = useRef<HTMLDivElement>(null);
 
   const addNode = useCallback(
     (registration: Stencil) => {
@@ -117,45 +118,46 @@ export const NodeTypePopup = (props: Props) => {
   if (!(diagram.activeLayer instanceof RegularLayer)) return <div></div>;
 
   return (
-    <Popover.Root
-      open={props.isOpen}
-      onOpenChange={s => {
-        if (!s) {
-          undo();
-          props.onClose();
-        }
-      }}
-    >
-      <Popover.Anchor>
-        <div
-          style={{
-            position: 'absolute',
-            left: `${props.position.x}px`,
-            top: `${props.position.y}px`
-          }}
-        ></div>
-      </Popover.Anchor>
-      <Popover.Content className="cmp-node-type-popup" sideOffset={5}>
-        <div
-          className={'cmp-object-picker'}
-          style={{ marginTop: '0.1rem', border: '1px solid transparent' }}
-        >
-          {diagramsAndNodes.map(([stencil, d], idx) => (
-            <div key={idx} style={{ background: 'transparent' }}>
-              <PickerCanvas
-                name={d.name}
-                width={size}
-                height={size}
-                diagramWidth={d.viewBox.dimensions.w}
-                diagramHeight={d.viewBox.dimensions.h}
-                diagram={d}
-                onClick={() => addNode(stencil)}
-              />
-            </div>
-          ))}
-        </div>
-      </Popover.Content>
-    </Popover.Root>
+    <>
+      <div
+        ref={anchorRef}
+        style={{
+          position: 'absolute',
+          left: `${props.position.x}px`,
+          top: `${props.position.y}px`
+        }}
+      ></div>
+      <Popover.Root
+        open={props.isOpen}
+        onOpenChange={s => {
+          if (!s) {
+            undo();
+            props.onClose();
+          }
+        }}
+      >
+        <Popover.Content className="cmp-node-type-popup" sideOffset={5} anchor={anchorRef}>
+          <div
+            className={'cmp-object-picker'}
+            style={{ marginTop: '0.1rem', border: '1px solid transparent' }}
+          >
+            {diagramsAndNodes.map(([stencil, d], idx) => (
+              <div key={idx} style={{ background: 'transparent' }}>
+                <PickerCanvas
+                  name={d.name}
+                  width={size}
+                  height={size}
+                  diagramWidth={d.viewBox.dimensions.w}
+                  diagramHeight={d.viewBox.dimensions.h}
+                  diagram={d}
+                  onClick={() => addNode(stencil)}
+                />
+              </div>
+            ))}
+          </div>
+        </Popover.Content>
+      </Popover.Root>
+    </>
   );
 };
 

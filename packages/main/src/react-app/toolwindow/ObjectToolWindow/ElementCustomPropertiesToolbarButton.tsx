@@ -41,11 +41,13 @@ export const ElementCustomPropertiesToolbarButton = () => {
 
   return (
     <Popover.Root>
-      <Popover.Trigger>
-        <Toolbar.Button disabled={disabled}>
-          <TbSettings />
-        </Toolbar.Button>
-      </Popover.Trigger>
+      <Popover.Trigger
+        element={
+          <Toolbar.Button disabled={disabled}>
+            <TbSettings />
+          </Toolbar.Button>
+        }
+      />
       <Popover.Content sideOffset={5}>
         <ElementCustomPropertiesPanel mode={'panel'} />
       </Popover.Content>

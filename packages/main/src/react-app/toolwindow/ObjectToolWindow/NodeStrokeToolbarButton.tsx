@@ -11,22 +11,24 @@ export const NodeStrokeToolbarButton = () => {
 
   return (
     <Popover.Root>
-      <Popover.Trigger>
-        <Toolbar.Button>
-          <TbBorderStyle2 />
-          <div
-            style={{
-              marginLeft: '5px',
-              width: '15px',
-              height: '12px',
-              backgroundColor: fill.val,
-              marginRight: '3px',
-              border: '1px solid var(--panel-fg)',
-              borderRadius: '3px'
-            }}
-          ></div>
-        </Toolbar.Button>
-      </Popover.Trigger>
+      <Popover.Trigger
+        element={
+          <Toolbar.Button>
+            <TbBorderStyle2 />
+            <div
+              style={{
+                marginLeft: '5px',
+                width: '15px',
+                height: '12px',
+                backgroundColor: fill.val,
+                marginRight: '3px',
+                border: '1px solid var(--panel-fg)',
+                borderRadius: '3px'
+              }}
+            ></div>
+          </Toolbar.Button>
+        }
+      />
       <Popover.Content sideOffset={5}>
         <NodeStrokePanel mode={'panel'} />
       </Popover.Content>
