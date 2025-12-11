@@ -51,9 +51,9 @@ export const StringInputDialog = (props: Props) => {
           type={'text'}
           size={40}
           value={props.value ?? ''}
-          onKeyDown={e => {
+          onKeyDown={_e => {
             // TODO: Why is this needed?
-            e.stopPropagation();
+            //e.stopPropagation();
           }}
         />
       )}
@@ -63,9 +63,9 @@ export const StringInputDialog = (props: Props) => {
           cols={40}
           rows={10}
           value={props.value ?? ''}
-          onKeyDown={e => {
+          onKeyDown={_e => {
             // TODO: Why is this needed?
-            e.stopPropagation();
+            //e.stopPropagation();
           }}
         />
       )}

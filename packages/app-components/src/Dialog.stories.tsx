@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Dialog } from './Dialog';
+import { Dialog, DialogContextProvider } from './Dialog';
 import { PortalContextProvider } from './PortalContext';
 
 const meta = {
@@ -18,9 +18,11 @@ type Story = StoryObj<typeof meta>;
 const renderLight = function Component(args: Story['args']) {
   return (
     <div className={'light-theme'}>
-      <PortalContextProvider>
-        <Dialog {...args}>{args.children}</Dialog>
-      </PortalContextProvider>
+      <DialogContextProvider onDialogShow={() => {}} onDialogHide={() => {}}>
+        <PortalContextProvider>
+          <Dialog {...args}>{args.children}</Dialog>
+        </PortalContextProvider>
+      </DialogContextProvider>
     </div>
   );
 };
@@ -28,9 +30,11 @@ const renderLight = function Component(args: Story['args']) {
 const renderDark = function Component(args: Story['args']) {
   return (
     <div className={'dark-theme'}>
-      <PortalContextProvider>
-        <Dialog {...args}>{args.children}</Dialog>
-      </PortalContextProvider>
+      <DialogContextProvider onDialogShow={() => {}} onDialogHide={() => {}}>
+        <PortalContextProvider>
+          <Dialog {...args}>{args.children}</Dialog>
+        </PortalContextProvider>
+      </DialogContextProvider>
     </div>
   );
 };
