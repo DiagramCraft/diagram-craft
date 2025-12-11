@@ -60,6 +60,10 @@
   --cmp-radius: 4px;
 }
 
+#root {
+  isolation: isolate;
+}
+
 .light-theme {
   --base-bg: var(--gray-1);
   --base-fg: var(--gray-12);
