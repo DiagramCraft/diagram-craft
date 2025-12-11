@@ -9,11 +9,13 @@
       margin-top: 0;
     }
 
+    /* TODO: Not sure this is needed
     &:focus-within,
     & .cmp-accordion__trigger[data-focus="true"] {
       position: relative;
       z-index: 1;
     }
+     */
 
     &[data-disabled] {
       .cmp-accordion__chevron {
@@ -49,7 +51,6 @@
     }
 
     .cmp-accordion__trigger {
-      border: none;
       font-family: inherit;
       padding: 10px 10px;
       flex: 1;
@@ -61,15 +62,18 @@
       line-height: 1;
       color: var(--cmp-fg);
       background-color: transparent;
+      border: 1px solid transparent;
 
       &:focus,
       &[data-focus="true"] {
         outline: none;
+        border: 1px solid var(--cmp-border-focus);
       }
 
       &:hover,
       &[data-hover="true"] {
         background-color: var(--cmp-bg-hover);
+        border: 1px solid var(--cmp-bg-hover);
       }
     }
   }
