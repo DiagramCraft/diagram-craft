@@ -1,24 +1,24 @@
-import * as RadixToggleGroup from '@radix-ui/react-toggle-group';
 import React from 'react';
 import { extractDataAttributes, extractMouseEvents } from './utils';
 import styles from './ToggleButtonGroup.module.css';
+import { Toggle as BaseUIToggle } from '@base-ui-components/react/toggle';
+import { ToggleGroup as BaseUIToggleGroup } from '@base-ui-components/react/toggle-group';
 
 const Root = (props: RootProps) => {
   return (
-    /* @ts-expect-error */
-    <RadixToggleGroup.Root
+    <BaseUIToggleGroup
       className={styles.cmpToggleButtonGroup}
       data-field-state={props.isIndeterminate ? 'indeterminate' : props.state}
       aria-label={props['aria-label']}
-      type={props.type}
-      value={props.value}
-      onValueChange={props.onChange}
+      multiple={props.type === 'multiple'}
+      value={props.type === 'single' ? [props.value] : props.value}
+      onValueChange={v => props.onChange(props.type === 'single' ? v[0] : v)}
       disabled={props.disabled}
       {...extractDataAttributes(props)}
       {...extractMouseEvents(props)}
     >
       {props.children}
-    </RadixToggleGroup.Root>
+    </BaseUIToggleGroup>
   );
 };
 
@@ -44,14 +44,14 @@ type RootProps = {
 
 const Item = (props: ItemProps) => {
   return (
-    <RadixToggleGroup.Item
+    <BaseUIToggle
       className={styles.cmpToggleButtonGroupItem}
       value={props.value}
       disabled={props.disabled}
       {...extractDataAttributes(props)}
     >
       {props.children}
-    </RadixToggleGroup.Item>
+    </BaseUIToggle>
   );
 };
 

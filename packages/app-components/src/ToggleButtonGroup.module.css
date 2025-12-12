@@ -42,7 +42,7 @@
       margin-left: 0;
     }
 
-    &[data-state='on'] {
+    &[data-pressed] {
       background-color: var(--accent-bg);
       color: var(--accent-fg);
     }
