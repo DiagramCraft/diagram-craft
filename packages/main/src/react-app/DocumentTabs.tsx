@@ -1,4 +1,4 @@
-import * as Tabs from '@radix-ui/react-tabs';
+import { Tabs as BaseUITabs } from '@base-ui-components/react/tabs';
 import { useRedraw } from './hooks/useRedraw';
 import { useEventListener } from './hooks/useEventListener';
 import { TbCheck, TbFiles, TbPlus } from 'react-icons/tb';
@@ -115,15 +115,15 @@ export const DocumentTabs = (props: Props) => {
 
   return (
     <div className={'cmp-document-tabs'}>
-      <Tabs.Root
+      <BaseUITabs.Root
         value={selection}
         onValueChange={d => {
           application.model.activeDiagram = props.document.byId(d)!;
         }}
       >
-        <Tabs.List className="cmp-document-tabs__tabs" aria-label="Diagrams in document">
+        <BaseUITabs.List className="cmp-document-tabs__tabs" aria-label="Diagrams in document">
           {props.document.diagrams.map(d => (
-            <Tabs.Trigger
+            <BaseUITabs.Tab
               key={d.id}
               className="cmp-document-tabs__tab-trigger util-vcenter"
               value={d.id}
@@ -147,10 +147,10 @@ export const DocumentTabs = (props: Props) => {
                   )}
                 </div>
               </DocumentsContextMenu>
-            </Tabs.Trigger>
+            </BaseUITabs.Tab>
           ))}
-        </Tabs.List>
-      </Tabs.Root>
+        </BaseUITabs.List>
+      </BaseUITabs.Root>
       <button
         className={'cmp-document-tabs__add'}
         type="button"

@@ -845,7 +845,7 @@ foreignObject {
         background-color: var(--cmp-bg-hover);
       }
 
-      &[data-state='active'] {
+      &[data-active] {
         color: var(--cmp-fg);
         border-bottom: 2px solid var(--accent-chroma);
       }
