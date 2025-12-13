@@ -1,8 +1,8 @@
 import React, { ReactElement } from 'react';
 import { useRedraw } from '../hooks/useRedraw';
-import * as RadixTooltip from '@radix-ui/react-tooltip';
 import styles from '@diagram-craft/app-components/Tooltip.module.css';
 import type { Property } from '@diagram-craft/model/property';
+import { Tooltip as BaseUITooltip } from '@base-ui-components/react/tooltip';
 
 export function PropertyEditor<T>(props: Props<T>) {
   const redraw = useRedraw();
@@ -31,121 +31,125 @@ export function PropertyEditor<T>(props: Props<T>) {
     ));
 
   return (
-    <RadixTooltip.Provider>
-      <RadixTooltip.Root>
-        <RadixTooltip.Trigger asChild>
-          <span>
-            {props.render({
-              value: presentValue(props.property.val),
-              onChange: v => {
-                if (v === undefined) {
-                  props.property.set(undefined);
-                } else {
-                  props.property.set(storeValue(v));
-                }
-              },
-              isIndeterminate: props.property.hasMultipleValues,
-              state: state
-            })}
-          </span>
-        </RadixTooltip.Trigger>
-        <RadixTooltip.Portal>
-          <RadixTooltip.Content className={styles.cmpTooltip} sideOffset={5} side={'bottom'}>
-            {props.property.hasMultipleValues && (
-              <div style={{ marginBottom: '0.5rem', fontWeight: 'bold' }}>Multiple values</div>
-            )}
-            <div style={{ display: 'flex', gap: '0.5rem', flexDirection: 'column' }}>
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'max-content 1fr min-content',
-                  gap: '0.5rem',
-                  alignItems: 'center'
-                }}
-              >
-                {props.property.hasMultipleValues &&
-                  props.property.values !== undefined &&
-                  props.property.values?.map((e, i) => (
+    <BaseUITooltip.Provider>
+      <BaseUITooltip.Root>
+        <BaseUITooltip.Trigger
+          render={
+            <div style={{ display: 'inline-block' }}>
+              {props.render({
+                value: presentValue(props.property.val),
+                onChange: v => {
+                  if (v === undefined) {
+                    props.property.set(undefined);
+                  } else {
+                    props.property.set(storeValue(v));
+                  }
+                },
+                isIndeterminate: props.property.hasMultipleValues,
+                state: state
+              })}
+            </div>
+          }
+        />
+        <BaseUITooltip.Portal>
+          <BaseUITooltip.Positioner sideOffset={5} side={'bottom'}>
+            <BaseUITooltip.Popup className={styles.cmpTooltip}>
+              {props.property.hasMultipleValues && (
+                <div style={{ marginBottom: '0.5rem', fontWeight: 'bold' }}>Multiple values</div>
+              )}
+              <div style={{ display: 'flex', gap: '0.5rem', flexDirection: 'column' }}>
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'max-content 1fr min-content',
+                    gap: '0.5rem',
+                    alignItems: 'center'
+                  }}
+                >
+                  {props.property.hasMultipleValues &&
+                    props.property.values !== undefined &&
+                    props.property.values?.map((e, i) => (
+                      <React.Fragment key={i}>
+                        <div>{e.count}</div>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          {renderValue({
+                            value: presentValue(e.val)
+                          })}
+                        </div>
+                        <div>
+                          <a
+                            href={'#'}
+                            onClick={() => {
+                              props.property.set(e.val);
+                              redraw();
+                            }}
+                          >
+                            Use
+                          </a>
+                        </div>
+                      </React.Fragment>
+                    ))}
+
+                  {props.property.hasMultipleValues && props.property.values === undefined && (
+                    <div>Multiple values</div>
+                  )}
+
+                  {info.length === 0 && state === 'set' && (
+                    <div>
+                      <a
+                        href={'#'}
+                        onClick={() => {
+                          props.property.set(undefined);
+                          redraw();
+                        }}
+                      >
+                        Reset
+                      </a>
+                    </div>
+                  )}
+
+                  {info.length === 0 && state !== 'set' && <div>State: {state}</div>}
+
+                  {info.map((e, i) => (
                     <React.Fragment key={i}>
-                      <div>{e.count}</div>
+                      <div>
+                        {e.type === 'default' && 'Default value'}
+                        {e.type === 'stored' && 'Element value'}
+                        {e.type === 'style' && 'Element stylesheet'}
+                        {e.type === 'textStyle' && 'Text stylesheet'}
+                        {e.type === 'rule' && 'Layer rule'}
+                        {e.type === 'ruleStyle' && 'Layer rule element stylesheet'}
+                        {e.type === 'ruleTextStyle' && 'Layer rule text stylesheet'}
+                        {e.type === 'parent' && 'Parent element'}
+                      </div>
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
                         {renderValue({
                           value: presentValue(e.val)
                         })}
                       </div>
                       <div>
-                        <a
-                          href={'#'}
-                          onClick={() => {
-                            props.property.set(e.val);
-                            redraw();
-                          }}
-                        >
-                          Use
-                        </a>
+                        {e.type === 'stored' && info.length > 1 && (
+                          <a
+                            href={'#'}
+                            onClick={() => {
+                              props.property.set(undefined);
+                              redraw();
+                            }}
+                          >
+                            Reset
+                          </a>
+                        )}
                       </div>
                     </React.Fragment>
                   ))}
-
-                {props.property.hasMultipleValues && props.property.values === undefined && (
-                  <div>Multiple values</div>
-                )}
-
-                {info.length === 0 && state === 'set' && (
-                  <div>
-                    <a
-                      href={'#'}
-                      onClick={() => {
-                        props.property.set(undefined);
-                        redraw();
-                      }}
-                    >
-                      Reset
-                    </a>
-                  </div>
-                )}
-
-                {info.length === 0 && state !== 'set' && <div>State: {state}</div>}
-
-                {info.map((e, i) => (
-                  <React.Fragment key={i}>
-                    <div>
-                      {e.type === 'default' && 'Default value'}
-                      {e.type === 'stored' && 'Element value'}
-                      {e.type === 'style' && 'Element stylesheet'}
-                      {e.type === 'textStyle' && 'Text stylesheet'}
-                      {e.type === 'rule' && 'Layer rule'}
-                      {e.type === 'ruleStyle' && 'Layer rule element stylesheet'}
-                      {e.type === 'ruleTextStyle' && 'Layer rule text stylesheet'}
-                      {e.type === 'parent' && 'Parent element'}
-                    </div>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      {renderValue({
-                        value: presentValue(e.val)
-                      })}
-                    </div>
-                    <div>
-                      {e.type === 'stored' && info.length > 1 && (
-                        <a
-                          href={'#'}
-                          onClick={() => {
-                            props.property.set(undefined);
-                            redraw();
-                          }}
-                        >
-                          Reset
-                        </a>
-                      )}
-                    </div>
-                  </React.Fragment>
-                ))}
+                </div>
               </div>
-            </div>
-            <RadixTooltip.Arrow className={styles.cmpTooltipArrow} />
-          </RadixTooltip.Content>
-        </RadixTooltip.Portal>
-      </RadixTooltip.Root>
-    </RadixTooltip.Provider>
+              <BaseUITooltip.Arrow className={styles.cmpTooltipArrow} />
+            </BaseUITooltip.Popup>
+          </BaseUITooltip.Positioner>
+        </BaseUITooltip.Portal>
+      </BaseUITooltip.Root>
+    </BaseUITooltip.Provider>
   );
 }
 
