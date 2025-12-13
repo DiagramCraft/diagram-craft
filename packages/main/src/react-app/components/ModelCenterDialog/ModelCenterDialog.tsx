@@ -1,4 +1,3 @@
-import * as AlertDialog from '@radix-ui/react-alert-dialog';
 import { useState, useEffect } from 'react';
 import { usePortal } from '@diagram-craft/app-components/PortalContext';
 import styles from './ModelCenterDialog.module.css';
@@ -9,6 +8,7 @@ import { DataTab } from './DataTab';
 import { SchemasTab } from './SchemasTab';
 import { ModelProvidersTab } from './ModelProvidersTab';
 import { DialogCommand } from '@diagram-craft/canvas/context';
+import { AlertDialog as BaseUIAlertDialog } from '@base-ui-components/react/alert-dialog';
 
 type Props = {
   open: boolean;
@@ -42,65 +42,66 @@ export const ModelCenterDialog = (props: Props) => {
   }, [props.open, props.defaultTab]);
 
   return (
-    <AlertDialog.Root
+    <BaseUIAlertDialog.Root
       open={props.open}
       defaultOpen={props.open}
-      onOpenChange={open => {
+      onOpenChange={(open: boolean) => {
         if (!open) {
           props.onClose();
         }
       }}
     >
-      <AlertDialog.Portal container={portal}>
+      <BaseUIAlertDialog.Portal container={portal}>
         <div className={styles.modelCenterDialog}>
-          <AlertDialog.Overlay className={styles.modelCenterDialogOverlay} />
-          <AlertDialog.Content
-            className={styles.modelCenterDialogContent}
-            onOpenAutoFocus={e => e.preventDefault()}
-          >
-            <AlertDialog.Title className={styles.modelCenterDialogTitle}>
-              Model Center
-              <div className={styles.modelCenterDialogActions}>
-                <AlertDialog.Cancel asChild>
-                  <Button
-                    className={`${styles.modelCenterDialogButton} ${styles.modelCenterDialogButtonCancel}`}
-                    onClick={() => {}}
-                    type={'icon-only'}
-                  >
-                    <TbX size={'14px'} />
-                  </Button>
-                </AlertDialog.Cancel>
+          <BaseUIAlertDialog.Backdrop className={styles.modelCenterDialogOverlay} />
+          <BaseUIAlertDialog.Viewport className={styles.modelCenterDialogContent}>
+            <BaseUIAlertDialog.Popup initialFocus={false}>
+              <BaseUIAlertDialog.Title className={styles.modelCenterDialogTitle}>
+                Model Center
+                <div className={styles.modelCenterDialogActions}>
+                  <BaseUIAlertDialog.Close
+                    render={
+                      <Button
+                        className={`${styles.modelCenterDialogButton} ${styles.modelCenterDialogButtonCancel}`}
+                        onClick={() => {}}
+                        type={'icon-only'}
+                      >
+                        <TbX size={'14px'} />
+                      </Button>
+                    }
+                  />
+                </div>
+              </BaseUIAlertDialog.Title>
+              <div className={styles.modelCenterDialogMainContent}>
+                <Tabs.Root
+                  value={activeTab}
+                  onValueChange={value =>
+                    setActiveTab(value as 'data' | 'schemas' | 'model-providers')
+                  }
+                >
+                  <Tabs.List>
+                    <Tabs.Trigger value="data">Data</Tabs.Trigger>
+                    <Tabs.Trigger value="schemas">Schemas</Tabs.Trigger>
+                    <Tabs.Trigger value="model-providers">Model Providers</Tabs.Trigger>
+                  </Tabs.List>
+
+                  <Tabs.Content value="data">
+                    <DataTab />
+                  </Tabs.Content>
+
+                  <Tabs.Content value="schemas">
+                    <SchemasTab />
+                  </Tabs.Content>
+
+                  <Tabs.Content value="model-providers">
+                    <ModelProvidersTab />
+                  </Tabs.Content>
+                </Tabs.Root>
               </div>
-            </AlertDialog.Title>
-            <div className={styles.modelCenterDialogMainContent}>
-              <Tabs.Root
-                value={activeTab}
-                onValueChange={value =>
-                  setActiveTab(value as 'data' | 'schemas' | 'model-providers')
-                }
-              >
-                <Tabs.List>
-                  <Tabs.Trigger value="data">Data</Tabs.Trigger>
-                  <Tabs.Trigger value="schemas">Schemas</Tabs.Trigger>
-                  <Tabs.Trigger value="model-providers">Model Providers</Tabs.Trigger>
-                </Tabs.List>
-
-                <Tabs.Content value="data">
-                  <DataTab />
-                </Tabs.Content>
-
-                <Tabs.Content value="schemas">
-                  <SchemasTab />
-                </Tabs.Content>
-
-                <Tabs.Content value="model-providers">
-                  <ModelProvidersTab />
-                </Tabs.Content>
-              </Tabs.Root>
-            </div>
-          </AlertDialog.Content>
+            </BaseUIAlertDialog.Popup>
+          </BaseUIAlertDialog.Viewport>
         </div>
-      </AlertDialog.Portal>
-    </AlertDialog.Root>
+      </BaseUIAlertDialog.Portal>
+    </BaseUIAlertDialog.Root>
   );
 };
