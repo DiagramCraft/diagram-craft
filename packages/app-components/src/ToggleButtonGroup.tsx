@@ -45,10 +45,10 @@ type RootProps = {
 const Item = (props: ItemProps) => {
   return (
     <BaseUIToggle
-      className={styles.cmpToggleButtonGroupItem}
+      {...props}
+      className={props.className ?? styles.cmpToggleButtonGroupItem}
       value={props.value}
       disabled={props.disabled}
-      {...extractDataAttributes(props)}
     >
       {props.children}
     </BaseUIToggle>
@@ -59,7 +59,8 @@ type ItemProps = {
   value: string;
   disabled?: boolean;
   children: React.ReactNode;
-};
+  ref?: React.Ref<HTMLButtonElement>;
+} & React.HTMLAttributes<HTMLButtonElement>;
 
 export const ToggleButtonGroup = {
   Root,

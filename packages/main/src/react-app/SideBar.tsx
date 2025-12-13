@@ -141,7 +141,7 @@ export const SideBar = (props: Props) => {
   return (
     <>
       <Toolbar.Root id={`${props.side}-buttons`} direction={'vertical'}>
-        <Toolbar.ToggleGroup type={'single'}>
+        <div>
           {props.children.map((c, idx) => {
             const element = c as ReactElement<SideBarPageProps>;
             if (!element) return element;
@@ -168,7 +168,7 @@ export const SideBar = (props: Props) => {
               </div>
             );
           })}
-        </Toolbar.ToggleGroup>
+        </div>
       </Toolbar.Root>
       <div
         id={`${props.side}`}

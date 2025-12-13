@@ -39,12 +39,14 @@
     }
   }
 
-  .cmp-toolbar__button[data-state='on'] {
+  .cmp-toolbar__button[data-state='on'],
+  .cmp-toolbar__button[data-pressed] {
     color: var(--accent-fg);
     background-color: var(--cmp-bg);
   }
 
-  .cmp-toolbar__button[data-state='on'] + .cmp-toolbar__button--more {
+  .cmp-toolbar__button[data-state='on'] + .cmp-toolbar__button--more,
+  .cmp-toolbar__button[data-pressed] + .cmp-toolbar__button--more {
     color: var(--accent-fg);
     background-color: var(--cmp-bg);
   }
@@ -68,7 +70,7 @@
     color: var(--accent-fg);
     background-color: var(--accent-bg);
   }
-  
+
   .cmp-toolbar__button:disabled {
     color: var(--cmp-fg-disabled);
     /* TODO: Is there a better way to disable hover when in disabled state */
