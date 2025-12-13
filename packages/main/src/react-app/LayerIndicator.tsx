@@ -13,8 +13,8 @@ import { useEventListener } from './hooks/useEventListener';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { ActionDropdownMenuItem } from './components/ActionDropdownMenuItem';
 import { ToggleActionDropdownMenuItem } from './components/ToggleActionDropdownMenuItem';
-import { Tooltip } from '@diagram-craft/app-components/Tooltip';
 import { useApplication, useDiagram } from '../application';
+import { Tooltip } from '@diagram-craft/app-components/Tooltip';
 
 export const LayerIndicator = () => {
   const redraw = useRedraw();
@@ -46,9 +46,11 @@ export const LayerIndicator = () => {
             </div>
           )}
 
-          <Tooltip message={`Layer: ${diagram.activeLayer.name}`}>
-            <span>{diagram.activeLayer.name}</span>
-          </Tooltip>
+          <Tooltip
+            message={`Layer: ${diagram.activeLayer.name}`}
+            element={<span>{diagram.activeLayer.name}</span>}
+          />
+
           {diagram.activeLayer.isLocked() && (
             <div className={'cmp-layer-indicator__lock'}>
               <TbLock />

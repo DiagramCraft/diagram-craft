@@ -35,11 +35,14 @@ export const CommentToolbarButton = () => {
 
   return (
     <div style={{ position: 'relative', display: 'inline-block' }}>
-      <Tooltip message={tooltipMessage}>
-        <Toolbar.Button onClick={() => application.actions.COMMENT_ADD!.execute()}>
-          <TbMessageCircle />
-        </Toolbar.Button>
-      </Tooltip>
+      <Tooltip
+        message={tooltipMessage}
+        element={
+          <Toolbar.Button onClick={() => application.actions.COMMENT_ADD!.execute()}>
+            <TbMessageCircle />
+          </Toolbar.Button>
+        }
+      />
       {commentCount > 0 && (
         <div
           style={{

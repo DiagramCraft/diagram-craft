@@ -121,21 +121,24 @@ export const CommentItem = ({
       className={`${styles.comment} ${comment.isReply() ? styles['comment--reply'] : comment.state === 'unresolved' ? styles['comment--unresolved'] : styles['comment--resolved']}`}
     >
       <div className={styles.comment__header}>
-        <Tooltip message={comment.author}>
-          <div
-            className={styles.comment__avatar}
-            style={{
-              background: comment.userColor ?? '#336633'
-            }}
-          >
-            {comment.author
-              .split(' ')
-              .map(e => e[0])
-              .slice(0, 2)
-              .join('')
-              .toUpperCase()}
-          </div>
-        </Tooltip>
+        <Tooltip
+          message={comment.author}
+          element={
+            <div
+              className={styles.comment__avatar}
+              style={{
+                background: comment.userColor ?? '#336633'
+              }}
+            >
+              {comment.author
+                .split(' ')
+                .map(e => e[0])
+                .slice(0, 2)
+                .join('')
+                .toUpperCase()}
+            </div>
+          }
+        />
         <div>
           <div>{comment.author}</div>
           <div>{formatDate(comment.date)}</div>

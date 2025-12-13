@@ -212,30 +212,39 @@ export const NamedIndicatorPanel = (_props: { mode?: 'accordion' | 'panel' }) =>
 
                       {isRuleAdded && (
                         <Accordion.ItemHeaderButtons>
-                          <Tooltip message={'Added by rule'}>
-                            <span>
-                              <TbFilterCog />
-                            </span>
-                          </Tooltip>
+                          <Tooltip
+                            message={'Added by rule'}
+                            element={
+                              <span>
+                                <TbFilterCog />
+                              </span>
+                            }
+                          />
                         </Accordion.ItemHeaderButtons>
                       )}
 
                       {!isRuleAdded && (
                         <Accordion.ItemHeaderButtons>
-                          <Tooltip message={'Delete indicator'}>
-                            <a
-                              href={'#'}
-                              style={{ marginRight: '0.5rem' }}
-                              onClick={() => deleteIndicator(k)}
-                            >
-                              <TbTrash />
-                            </a>
-                          </Tooltip>
-                          <Tooltip message={'Rename indicator'}>
-                            <a href={'#'} onClick={() => rename(k)}>
-                              <TbPencil />
-                            </a>
-                          </Tooltip>
+                          <Tooltip
+                            message={'Delete indicator'}
+                            element={
+                              <a
+                                href={'#'}
+                                style={{ marginRight: '0.5rem' }}
+                                onClick={() => deleteIndicator(k)}
+                              >
+                                <TbTrash />
+                              </a>
+                            }
+                          />
+                          <Tooltip
+                            message={'Rename indicator'}
+                            element={
+                              <a href={'#'} onClick={() => rename(k)}>
+                                <TbPencil />
+                              </a>
+                            }
+                          />
                         </Accordion.ItemHeaderButtons>
                       )}
                     </Accordion.ItemHeader>
