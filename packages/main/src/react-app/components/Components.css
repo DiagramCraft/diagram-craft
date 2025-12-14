@@ -197,7 +197,7 @@
       justify-content: center;
       color: var(--accent-fg);
 
-      &[data-state='unchecked'] {
+      &[data-checked] {
         color: var(--cmp-fg-dimmed);
       }
     }
@@ -219,7 +219,7 @@
     }
   }
 
-  .cmp-context-menu__sub-trigger[data-state='open'] {
+  .cmp-context-menu__sub-trigger[data-popup-open] {
     background-color: var(--accent-bg-selected);
     color: var(--panel-fg);
   }

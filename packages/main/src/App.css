@@ -317,7 +317,7 @@ table {
     width: 2rem;
     background-color: var(--panel-bg);
 
-    &[data-state='open'] {
+    &[data-popup-open] {
       background-color: var(--accent-bg-selected);
       border: 1px solid var(--panel-border);
       border-radius: 6px;
@@ -348,7 +348,7 @@ table {
     display: flex;
     gap: 0.25rem;
 
-    .cmp-toolbar__button[data-state='on'] {
+    .cmp-toolbar__button[data-pressed] {
       background-color: var(--accent-bg);
       color: var(--accent-fg);
     }
@@ -404,7 +404,7 @@ table {
   border-top: 1px solid var(--panel-border);
   width: auto;
 
-  .cmp-toolbar__button[data-state='on'] {
+  .cmp-toolbar__button[data-pressed] {
     background-color: var(--accent-bg);
     color: var(--accent-fg);
   }
@@ -435,7 +435,7 @@ table {
   border-top: 1px solid var(--panel-border);
   width: auto;
 
-  .cmp-toolbar__button[data-state='on'] {
+  .cmp-toolbar__button[data-pressed] {
     background-color: var(--accent-bg);
     color: var(--accent-fg);
   }
@@ -1036,16 +1036,6 @@ foreignObject {
     font-size: 10px;
   }
 }
-
-/*
-body[data-dragmimetype='application/x-diagram-craft-element-instances'] *[data-dragmimetype='application/x-diagram-craft-element-instances'] {
-  outline: 3px solid var(--blue-11) !important;
-  outline-offset: -3px;
-  z-index: 10000;
-  position: relative;
-}
- */
-
 
 /* Util */
 

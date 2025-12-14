@@ -1,4 +1,3 @@
-import { ToolWindowButton } from './toolwindow/ToolWindowButton';
 import React, { type ReactElement, useCallback, useEffect, useRef, useState } from 'react';
 import { useEventListener } from './hooks/useEventListener';
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
@@ -141,19 +140,18 @@ export const SideBar = (props: Props) => {
   return (
     <>
       <Toolbar.Root id={`${props.side}-buttons`} direction={'vertical'}>
-        <div>
+        <Toolbar.ToggleGroup type={'single'} value={selected.toString()} onChange={() => {}}>
           {props.children.map((c, idx) => {
             const element = c as ReactElement<SideBarPageProps>;
             if (!element) return element;
-            const icon = element.props.icon;
+            const Icon = element.props.icon;
             return (
               <div
                 key={idx}
                 style={{ position: 'relative', display: 'flex', justifyContent: 'center' }}
               >
-                <ToolWindowButton
-                  icon={icon}
-                  isSelected={selected === idx}
+                <Toolbar.ToggleItem
+                  value={idx.toString()}
                   onClick={() => {
                     if (selected === idx) {
                       updateSelected(-1);
@@ -163,12 +161,15 @@ export const SideBar = (props: Props) => {
 
                     userState[propName] = idx;
                   }}
-                />
+                >
+                  <Icon size={'16px'} />
+                </Toolbar.ToggleItem>
+
                 {element.props.extra && element.props.extra}
               </div>
             );
           })}
-        </div>
+        </Toolbar.ToggleGroup>
       </Toolbar.Root>
       <div
         id={`${props.side}`}
