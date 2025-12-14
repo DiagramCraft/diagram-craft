@@ -1,4 +1,3 @@
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { TbChevronRight, TbMenu2 } from 'react-icons/tb';
 import { ActionDropdownMenuItem } from './components/ActionDropdownMenuItem';
 import { urlToName } from '@diagram-craft/utils/url';
@@ -7,6 +6,7 @@ import { Application, useApplication } from '../application';
 import { mainMenuStructure } from './mainMenuData';
 import type { MenuEntry } from '@diagram-craft/electron-client-api/electron-api';
 import type { UserState } from '../UserState';
+import { Menu as BaseUIMenu } from '@base-ui-components/react/menu';
 
 const renderMenuItem = (
   item: MenuEntry,
@@ -14,7 +14,7 @@ const renderMenuItem = (
   userState: UserState
 ): JSX.Element => {
   if (item.type === 'separator') {
-    return <DropdownMenu.Separator key={item.label} className="cmp-context-menu__separator" />;
+    return <BaseUIMenu.Separator key={item.label} className="cmp-context-menu__separator" />;
   }
 
   if (item.type === 'submenu' || item.type === 'recent') {
@@ -35,32 +35,34 @@ const renderMenuItem = (
     }
 
     return (
-      <DropdownMenu.Sub key={item.label}>
-        <DropdownMenu.SubTrigger className="cmp-context-menu__sub-trigger" disabled={isDisabled}>
+      <BaseUIMenu.SubmenuRoot key={item.label}>
+        <BaseUIMenu.SubmenuTrigger className="cmp-context-menu__sub-trigger" disabled={isDisabled}>
           {item.label}
           <div className="cmp-context-menu__right-slot">
             <TbChevronRight />
           </div>
-        </DropdownMenu.SubTrigger>
-        <DropdownMenu.Portal>
-          <DropdownMenu.SubContent className="cmp-context-menu" sideOffset={2} alignOffset={-5}>
-            {submenuItems.map(subItem => {
-              if (item.label === 'Open Recent...') {
-                return (
-                  <DropdownMenu.Item
-                    key={subItem.action}
-                    className="cmp-context-menu__item"
-                    onSelect={() => application.file.loadDocument(subItem.action!)}
-                  >
-                    {subItem.label}
-                  </DropdownMenu.Item>
-                );
-              }
-              return renderMenuItem(subItem, application, userState);
-            })}
-          </DropdownMenu.SubContent>
-        </DropdownMenu.Portal>
-      </DropdownMenu.Sub>
+        </BaseUIMenu.SubmenuTrigger>
+        <BaseUIMenu.Portal>
+          <BaseUIMenu.Positioner sideOffset={2} alignOffset={-5}>
+            <BaseUIMenu.Popup className="cmp-context-menu">
+              {submenuItems.map(subItem => {
+                if (item.label === 'Open Recent...') {
+                  return (
+                    <BaseUIMenu.Item
+                      key={subItem.action}
+                      className="cmp-context-menu__item"
+                      onSelect={() => application.file.loadDocument(subItem.action!)}
+                    >
+                      {subItem.label}
+                    </BaseUIMenu.Item>
+                  );
+                }
+                return renderMenuItem(subItem, application, userState);
+              })}
+            </BaseUIMenu.Popup>
+          </BaseUIMenu.Positioner>
+        </BaseUIMenu.Portal>
+      </BaseUIMenu.SubmenuRoot>
     );
   }
 
@@ -88,19 +90,19 @@ export const MainMenu = () => {
   const userState = application.userState;
 
   return (
-    <DropdownMenu.Root>
-      <DropdownMenu.Trigger asChild>
-        <button className={'_menu-button'} id={'main-menu'} type="button">
-          <TbMenu2 size={'24px'} />
-        </button>
-      </DropdownMenu.Trigger>
+    <BaseUIMenu.Root>
+      <BaseUIMenu.Trigger className={'_menu-button'} id={'main-menu'} type="button">
+        <TbMenu2 size={'24px'} />
+      </BaseUIMenu.Trigger>
 
-      <DropdownMenu.Portal>
-        <DropdownMenu.Content className="cmp-context-menu" sideOffset={2} align={'start'}>
-          {mainMenuStructure.map(item => renderMenuItem(item, application, userState))}
-          <DropdownMenu.Arrow className="cmp-context-menu__arrow" />
-        </DropdownMenu.Content>
-      </DropdownMenu.Portal>
-    </DropdownMenu.Root>
+      <BaseUIMenu.Portal>
+        <BaseUIMenu.Positioner sideOffset={2} align={'start'}>
+          <BaseUIMenu.Popup className="cmp-context-menu">
+            {mainMenuStructure.map(item => renderMenuItem(item, application, userState))}
+            <BaseUIMenu.Arrow className="cmp-context-menu__arrow" />
+          </BaseUIMenu.Popup>
+        </BaseUIMenu.Positioner>
+      </BaseUIMenu.Portal>
+    </BaseUIMenu.Root>
   );
 };

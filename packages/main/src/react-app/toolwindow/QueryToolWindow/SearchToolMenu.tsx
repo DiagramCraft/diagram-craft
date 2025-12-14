@@ -1,4 +1,3 @@
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { TbChevronRight, TbDots } from 'react-icons/tb';
 import type { QueryType } from '@diagram-craft/model/documentProps';
 import { useApplication, useDocument } from '../../../application';
@@ -16,6 +15,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { ManageSavedSearchesDialog } from './ManageSavedSearchesDialog';
+import { Menu as BaseUIMenu } from '@base-ui-components/react/menu';
 
 type SearchToolMenuProps = {
   type: QueryType;
@@ -150,89 +150,97 @@ export const SearchToolMenu = (props: SearchToolMenuProps) => {
   }, [props, document, setDjqlQuery, switchTab]);
 
   return (
-    <DropdownMenu.Root>
-      <DropdownMenu.Trigger asChild>
-        <a className={'cmp-button cmp-button--icon-only'}>
-          <TbDots />
-        </a>
-      </DropdownMenu.Trigger>
-      <DropdownMenu.Portal>
-        <DropdownMenu.Content className="cmp-context-menu" align={'start'}>
-          <DropdownMenu.Sub>
-            <DropdownMenu.SubTrigger
+    <BaseUIMenu.Root>
+      <BaseUIMenu.Trigger
+        render={
+          <a className={'cmp-button cmp-button--icon-only'}>
+            <TbDots />
+          </a>
+        }
+      />
+      <BaseUIMenu.Portal>
+        <BaseUIMenu.Positioner align={'start'}>
+          <BaseUIMenu.Popup className="cmp-context-menu">
+            <BaseUIMenu.SubmenuRoot>
+              <BaseUIMenu.SubmenuTrigger
+                className="cmp-context-menu__item"
+                disabled={history.length === 0}
+              >
+                Recent Searches
+                <div className="cmp-context-menu__right-slot">
+                  <TbChevronRight />
+                </div>
+              </BaseUIMenu.SubmenuTrigger>
+              <BaseUIMenu.Portal>
+                <BaseUIMenu.Positioner>
+                  <BaseUIMenu.Popup className="cmp-context-menu">
+                    {history.map(({ scope, value, label }) => (
+                      <BaseUIMenu.Item
+                        key={value}
+                        className="cmp-context-menu__item"
+                        onClick={() => props.onQuerySelect(scope, value)}
+                      >
+                        {label}
+                      </BaseUIMenu.Item>
+                    ))}
+                  </BaseUIMenu.Popup>
+                </BaseUIMenu.Positioner>
+              </BaseUIMenu.Portal>
+            </BaseUIMenu.SubmenuRoot>
+            <BaseUIMenu.Separator className="cmp-context-menu__separator" />
+            <BaseUIMenu.SubmenuRoot>
+              <BaseUIMenu.SubmenuTrigger
+                className="cmp-context-menu__item"
+                disabled={saved.length === 0}
+              >
+                Saved Searches
+                <div className="cmp-context-menu__right-slot">
+                  <TbChevronRight />
+                </div>
+              </BaseUIMenu.SubmenuTrigger>
+              <BaseUIMenu.Portal>
+                <BaseUIMenu.Positioner>
+                  <BaseUIMenu.Popup className="cmp-context-menu">
+                    {saved.map(({ scope, value, label }) => (
+                      <BaseUIMenu.Item
+                        key={value}
+                        className="cmp-context-menu__item"
+                        onClick={() => props.onQuerySelect(scope, value)}
+                      >
+                        {label}
+                      </BaseUIMenu.Item>
+                    ))}
+                  </BaseUIMenu.Popup>
+                </BaseUIMenu.Positioner>
+              </BaseUIMenu.Portal>
+            </BaseUIMenu.SubmenuRoot>
+            <BaseUIMenu.Item className="cmp-context-menu__item" onClick={saveSearch}>
+              Save Search
+            </BaseUIMenu.Item>
+            <BaseUIMenu.Item
               className="cmp-context-menu__item"
-              disabled={history.length === 0}
+              onClick={() => setIsManageDialogOpen(true)}
             >
-              Recent Searches
-              <div className="cmp-context-menu__right-slot">
-                <TbChevronRight />
-              </div>
-            </DropdownMenu.SubTrigger>
-            <DropdownMenu.Portal>
-              <DropdownMenu.SubContent className="cmp-context-menu">
-                {history.map(({ scope, value, label }) => (
-                  <DropdownMenu.Item
-                    key={value}
-                    className="cmp-context-menu__item"
-                    onClick={() => props.onQuerySelect(scope, value)}
-                  >
-                    {label}
-                  </DropdownMenu.Item>
-                ))}
-              </DropdownMenu.SubContent>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Sub>
-          <DropdownMenu.Separator className="cmp-context-menu__separator" />
-          <DropdownMenu.Sub>
-            <DropdownMenu.SubTrigger
-              className="cmp-context-menu__item"
-              disabled={saved.length === 0}
-            >
-              Saved Searches
-              <div className="cmp-context-menu__right-slot">
-                <TbChevronRight />
-              </div>
-            </DropdownMenu.SubTrigger>
-            <DropdownMenu.Portal>
-              <DropdownMenu.SubContent className="cmp-context-menu">
-                {saved.map(({ scope, value, label }) => (
-                  <DropdownMenu.Item
-                    key={value}
-                    className="cmp-context-menu__item"
-                    onClick={() => props.onQuerySelect(scope, value)}
-                  >
-                    {label}
-                  </DropdownMenu.Item>
-                ))}
-              </DropdownMenu.SubContent>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Sub>
-          <DropdownMenu.Item className="cmp-context-menu__item" onClick={saveSearch}>
-            Save Search
-          </DropdownMenu.Item>
-          <DropdownMenu.Item
-            className="cmp-context-menu__item"
-            onClick={() => setIsManageDialogOpen(true)}
-          >
-            Manage Saved Searches
-          </DropdownMenu.Item>
-          <DropdownMenu.Separator className="cmp-context-menu__separator" />
-          {props.type !== 'djql' && (
-            <DropdownMenu.Item className="cmp-context-menu__item" onClick={convertToDJQL}>
-              Convert to DJQL
-            </DropdownMenu.Item>
-          )}
-          <DropdownMenu.Item className="cmp-context-menu__item" onClick={createRuleLayer}>
-            Create Rule Layer
-          </DropdownMenu.Item>
-        </DropdownMenu.Content>
-      </DropdownMenu.Portal>
+              Manage Saved Searches
+            </BaseUIMenu.Item>
+            <BaseUIMenu.Separator className="cmp-context-menu__separator" />
+            {props.type !== 'djql' && (
+              <BaseUIMenu.Item className="cmp-context-menu__item" onClick={convertToDJQL}>
+                Convert to DJQL
+              </BaseUIMenu.Item>
+            )}
+            <BaseUIMenu.Item className="cmp-context-menu__item" onClick={createRuleLayer}>
+              Create Rule Layer
+            </BaseUIMenu.Item>
+          </BaseUIMenu.Popup>
+        </BaseUIMenu.Positioner>
+      </BaseUIMenu.Portal>
 
       <ManageSavedSearchesDialog
         open={isManageDialogOpen}
         onClose={() => setIsManageDialogOpen(false)}
         initialSearchType={props.type}
       />
-    </DropdownMenu.Root>
+    </BaseUIMenu.Root>
   );
 };

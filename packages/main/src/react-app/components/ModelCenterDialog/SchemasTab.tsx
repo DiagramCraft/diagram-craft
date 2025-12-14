@@ -5,12 +5,12 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { Select } from '@diagram-craft/app-components/Select';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { TbPencil, TbPlus, TbTrash } from 'react-icons/tb';
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { EditSchemaDialog } from '../EditSchemaDialog';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { useRedraw } from '../../hooks/useRedraw';
 import styles from './SchemasTab.module.css';
 import { DataManagerUndoableFacade } from '@diagram-craft/model/diagramDocumentDataUndoActions';
+import { Menu as BaseUIMenu } from '@base-ui-components/react/menu';
 
 const getProviderTypeName = (providerId: string): string => {
   switch (providerId) {
@@ -116,32 +116,36 @@ export const SchemasTab = () => {
       <div className={styles.schemasTabHeader}>
         <p className={styles.schemasTabTitle}>Schemas</p>
         {providers.length > 0 && (
-          <DropdownMenu.Root>
-            <DropdownMenu.Trigger asChild>
-              <Button
-                type="secondary"
-                disabled={!canMutateSchemas}
-                style={{ display: 'flex', gap: '0.25rem' }}
-              >
-                <TbPlus /> Add Schema
-              </Button>
-            </DropdownMenu.Trigger>
-            <DropdownMenu.Portal>
-              <DropdownMenu.Content className="cmp-context-menu" sideOffset={5}>
-                {providers.map(provider => (
-                  <DropdownMenu.Item
-                    key={provider.id}
-                    className="cmp-context-menu__item"
-                    disabled={!db.isSchemasEditable(provider.id)}
-                    onSelect={() => setAddSchemaDialog({ open: true, providerId: provider.id })}
-                  >
-                    {getProviderTypeName(provider.providerId)}: {provider.id}
-                  </DropdownMenu.Item>
-                ))}
-                <DropdownMenu.Arrow className="cmp-context-menu__arrow" />
-              </DropdownMenu.Content>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Root>
+          <BaseUIMenu.Root>
+            <BaseUIMenu.Trigger
+              render={
+                <Button
+                  type="secondary"
+                  disabled={!canMutateSchemas}
+                  style={{ display: 'flex', gap: '0.25rem' }}
+                >
+                  <TbPlus /> Add Schema
+                </Button>
+              }
+            />
+            <BaseUIMenu.Portal>
+              <BaseUIMenu.Positioner sideOffset={5}>
+                <BaseUIMenu.Popup className="cmp-context-menu">
+                  {providers.map(provider => (
+                    <BaseUIMenu.Item
+                      key={provider.id}
+                      className="cmp-context-menu__item"
+                      disabled={!db.isSchemasEditable(provider.id)}
+                      onSelect={() => setAddSchemaDialog({ open: true, providerId: provider.id })}
+                    >
+                      {getProviderTypeName(provider.providerId)}: {provider.id}
+                    </BaseUIMenu.Item>
+                  ))}
+                  <BaseUIMenu.Arrow className="cmp-context-menu__arrow" />
+                </BaseUIMenu.Popup>
+              </BaseUIMenu.Positioner>
+            </BaseUIMenu.Portal>
+          </BaseUIMenu.Root>
         )}
       </div>
 

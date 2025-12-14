@@ -1,8 +1,8 @@
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import React from 'react';
 import { findKeyBindingsForAction, formatKeyBinding } from '@diagram-craft/canvas/keyMap';
 import { useApplication } from '../../application';
 import type { ActionMap } from '@diagram-craft/canvas/actions/action';
+import { Menu as BaseUIMenu } from '@base-ui-components/react/menu';
 
 export function ActionDropdownMenuItem<
   K extends keyof ActionMap,
@@ -13,7 +13,7 @@ export function ActionDropdownMenuItem<
   const keyMap = application.keyMap;
 
   return (
-    <DropdownMenu.Item
+    <BaseUIMenu.Item
       className="cmp-context-menu__item"
       disabled={!actionMap[props.action]?.isEnabled(props.arg ?? {})}
       onSelect={async () => {
@@ -25,7 +25,7 @@ export function ActionDropdownMenuItem<
       <div className="cmp-context-menu__right-slot">
         {formatKeyBinding(findKeyBindingsForAction(props.action, keyMap)[0])}
       </div>
-    </DropdownMenu.Item>
+    </BaseUIMenu.Item>
   );
 }
 

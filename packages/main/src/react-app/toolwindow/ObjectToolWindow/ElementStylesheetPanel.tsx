@@ -16,7 +16,7 @@ import { useEventListener } from '../../hooks/useEventListener';
 import { useElementMetadata } from '../../hooks/useProperty';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { Select } from '@diagram-craft/app-components/Select';
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
+import { Menu as BaseUIMenu } from '@base-ui-components/react/menu';
 import { TbDots } from 'react-icons/tb';
 import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 import { useApplication, useDiagram } from '../../../application';
@@ -116,172 +116,176 @@ export const ElementStylesheetPanel = (props: Props) => {
                 </Select.Item>
               ))}
             </Select.Root>
-            <DropdownMenu.Root>
-              <DropdownMenu.Trigger asChild>
-                <button type="button" className={'cmp-button'}>
-                  <TbDots />
-                </button>
-              </DropdownMenu.Trigger>
+            <BaseUIMenu.Root>
+              <BaseUIMenu.Trigger type="button" className={'cmp-button'}>
+                <TbDots />
+              </BaseUIMenu.Trigger>
 
-              <DropdownMenu.Portal>
-                <DropdownMenu.Content className="cmp-context-menu" sideOffset={5}>
-                  <DropdownMenu.Item
-                    className="cmp-context-menu__item"
-                    onSelect={() => {
-                      const uow = new UnitOfWork($d, true);
-                      $d.selection.elements.forEach(n => {
-                        $d.document.styles.setStylesheet(n, $s.val, uow, true);
-                      });
-                      commitWithUndo(uow, 'Reapply style');
-                    }}
-                  >
-                    Reset
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Item
-                    className="cmp-context-menu__item"
-                    onSelect={() => {
-                      // TODO: Maybe to ask confirmation to apply to all selected nodes or copy
-                      const uow = new UnitOfWork($d, true);
-                      const stylesheet = $d.document.styles.get($s.val);
-                      if (stylesheet) {
-                        const commonProps = getCommonProps(
-                          $d.selection.elements.map(e => e.editProps)
-                        ) as NodeProps & EdgeProps;
-                        stylesheet.setProps(
-                          isText ? { text: commonProps.text } : commonProps,
-                          $d.document.styles,
-                          uow
-                        );
-                        $d.document.styles.reapplyStylesheet(stylesheet, uow);
-                      }
-                      commitWithUndo(uow, 'Redefine style');
-                    }}
-                  >
-                    Save
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Item
-                    className="cmp-context-menu__item"
-                    onSelect={() => {
-                      application.ui.showDialog(
-                        new StringInputDialogCommand(
-                          {
-                            label: 'Name',
-                            title: 'New style',
-                            saveButtonLabel: 'Create',
-                            value: ''
-                          },
-                          v => {
-                            const id = newid();
-                            const commonProps = getCommonProps(
-                              $d.selection.elements.map(e => e.editProps)
-                            ) as NodeProps & EdgeProps;
-                            const s = Stylesheet.fromSnapshot(
-                              isText ? 'text' : isNode($d.selection.elements[0]) ? 'node' : 'edge',
-                              {
+              <BaseUIMenu.Portal>
+                <BaseUIMenu.Positioner sideOffset={5}>
+                  <BaseUIMenu.Popup className="cmp-context-menu">
+                    <BaseUIMenu.Item
+                      className="cmp-context-menu__item"
+                      onSelect={() => {
+                        const uow = new UnitOfWork($d, true);
+                        $d.selection.elements.forEach(n => {
+                          $d.document.styles.setStylesheet(n, $s.val, uow, true);
+                        });
+                        commitWithUndo(uow, 'Reapply style');
+                      }}
+                    >
+                      Reset
+                    </BaseUIMenu.Item>
+                    <BaseUIMenu.Item
+                      className="cmp-context-menu__item"
+                      onSelect={() => {
+                        // TODO: Maybe to ask confirmation to apply to all selected nodes or copy
+                        const uow = new UnitOfWork($d, true);
+                        const stylesheet = $d.document.styles.get($s.val);
+                        if (stylesheet) {
+                          const commonProps = getCommonProps(
+                            $d.selection.elements.map(e => e.editProps)
+                          ) as NodeProps & EdgeProps;
+                          stylesheet.setProps(
+                            isText ? { text: commonProps.text } : commonProps,
+                            $d.document.styles,
+                            uow
+                          );
+                          $d.document.styles.reapplyStylesheet(stylesheet, uow);
+                        }
+                        commitWithUndo(uow, 'Redefine style');
+                      }}
+                    >
+                      Save
+                    </BaseUIMenu.Item>
+                    <BaseUIMenu.Item
+                      className="cmp-context-menu__item"
+                      onSelect={() => {
+                        application.ui.showDialog(
+                          new StringInputDialogCommand(
+                            {
+                              label: 'Name',
+                              title: 'New style',
+                              saveButtonLabel: 'Create',
+                              value: ''
+                            },
+                            v => {
+                              const id = newid();
+                              const commonProps = getCommonProps(
+                                $d.selection.elements.map(e => e.editProps)
+                              ) as NodeProps & EdgeProps;
+                              const s = Stylesheet.fromSnapshot(
+                                isText
+                                  ? 'text'
+                                  : isNode($d.selection.elements[0])
+                                    ? 'node'
+                                    : 'edge',
+                                {
+                                  id,
+                                  name: v,
+                                  props: {
+                                    ...(isText ? { text: commonProps.text } : commonProps)
+                                  }
+                                },
+                                $d.document.styles.crdt.factory
+                              );
+                              const uow = new UnitOfWork($d, true);
+
+                              $d.document.styles.addStylesheet(s.id, s, uow);
+                              $d.document.styles.setStylesheet(
+                                $d.selection.elements[0]!,
                                 id,
-                                name: v,
-                                props: {
-                                  ...(isText ? { text: commonProps.text } : commonProps)
-                                }
-                              },
-                              $d.document.styles.crdt.factory
-                            );
-                            const uow = new UnitOfWork($d, true);
+                                uow,
+                                true
+                              );
 
-                            $d.document.styles.addStylesheet(s.id, s, uow);
-                            $d.document.styles.setStylesheet(
-                              $d.selection.elements[0]!,
-                              id,
-                              uow,
-                              true
-                            );
+                              const snapshots = uow.commit();
+                              uow.diagram.undoManager.add(
+                                new CompoundUndoableAction([
+                                  new AddStylesheetUndoableAction(uow.diagram, s),
+                                  new SnapshotUndoableAction('Delete style', uow.diagram, snapshots)
+                                ])
+                              );
+                            }
+                          )
+                        );
+                      }}
+                    >
+                      Save As...
+                    </BaseUIMenu.Item>
+                    <BaseUIMenu.Item
+                      className="cmp-context-menu__item"
+                      onSelect={() => {
+                        application.ui.showDialog(
+                          new MessageDialogCommand(
+                            {
+                              title: 'Confirm delete',
+                              message: 'Are you sure you want to delete this style?',
+                              okLabel: 'Yes',
+                              okType: 'danger',
+                              cancelLabel: 'No'
+                            },
+                            () => {
+                              const uow = new UnitOfWork($d, true);
 
-                            const snapshots = uow.commit();
-                            uow.diagram.undoManager.add(
-                              new CompoundUndoableAction([
-                                new AddStylesheetUndoableAction(uow.diagram, s),
-                                new SnapshotUndoableAction('Delete style', uow.diagram, snapshots)
-                              ])
-                            );
-                          }
-                        )
-                      );
-                    }}
-                  >
-                    Save As...
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Item
-                    className="cmp-context-menu__item"
-                    onSelect={() => {
-                      application.ui.showDialog(
-                        new MessageDialogCommand(
-                          {
-                            title: 'Confirm delete',
-                            message: 'Are you sure you want to delete this style?',
-                            okLabel: 'Yes',
-                            okType: 'danger',
-                            cancelLabel: 'No'
-                          },
-                          () => {
-                            const uow = new UnitOfWork($d, true);
+                              const s = $d.document.styles.get($s.val)!;
+                              $d.document.styles.deleteStylesheet($s.val, uow);
 
-                            const s = $d.document.styles.get($s.val)!;
-                            $d.document.styles.deleteStylesheet($s.val, uow);
-
-                            const snapshots = uow.commit();
-                            uow.diagram.undoManager.add(
-                              new CompoundUndoableAction([
-                                new DeleteStylesheetUndoableAction(uow.diagram, s),
-                                new SnapshotUndoableAction('Delete style', uow.diagram, snapshots)
-                              ])
-                            );
-                          }
-                        )
-                      );
-                    }}
-                  >
-                    Delete
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Item
-                    className="cmp-context-menu__item"
-                    onSelect={() => {
-                      const style = $d.document.styles.get($s.val);
-                      setDialogProps({
-                        props: style?.props ?? {},
-                        style: style!
-                      });
-                    }}
-                  >
-                    Modify
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Item
-                    className="cmp-context-menu__item"
-                    onSelect={() => {
-                      application.ui.showDialog(
-                        new StringInputDialogCommand(
-                          {
-                            label: 'Name',
-                            title: 'Rename style',
-                            description: 'Enter a new name for the style.',
-                            saveButtonLabel: 'Rename',
-                            value: $d.document.styles.get($s.val)?.name ?? ''
-                          },
-                          v => {
-                            const uow = new UnitOfWork($d, true);
-                            const stylesheet = $d.document.styles.get($s.val)!;
-                            stylesheet.setName(v, $d.document.styles, uow);
-                            commitWithUndo(uow, 'Rename style');
-                          }
-                        )
-                      );
-                    }}
-                  >
-                    Rename
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Arrow className="cmp-context-menu__arrow" />
-                </DropdownMenu.Content>
-              </DropdownMenu.Portal>
-            </DropdownMenu.Root>
+                              const snapshots = uow.commit();
+                              uow.diagram.undoManager.add(
+                                new CompoundUndoableAction([
+                                  new DeleteStylesheetUndoableAction(uow.diagram, s),
+                                  new SnapshotUndoableAction('Delete style', uow.diagram, snapshots)
+                                ])
+                              );
+                            }
+                          )
+                        );
+                      }}
+                    >
+                      Delete
+                    </BaseUIMenu.Item>
+                    <BaseUIMenu.Item
+                      className="cmp-context-menu__item"
+                      onSelect={() => {
+                        const style = $d.document.styles.get($s.val);
+                        setDialogProps({
+                          props: style?.props ?? {},
+                          style: style!
+                        });
+                      }}
+                    >
+                      Modify
+                    </BaseUIMenu.Item>
+                    <BaseUIMenu.Item
+                      className="cmp-context-menu__item"
+                      onSelect={() => {
+                        application.ui.showDialog(
+                          new StringInputDialogCommand(
+                            {
+                              label: 'Name',
+                              title: 'Rename style',
+                              description: 'Enter a new name for the style.',
+                              saveButtonLabel: 'Rename',
+                              value: $d.document.styles.get($s.val)?.name ?? ''
+                            },
+                            v => {
+                              const uow = new UnitOfWork($d, true);
+                              const stylesheet = $d.document.styles.get($s.val)!;
+                              stylesheet.setName(v, $d.document.styles, uow);
+                              commitWithUndo(uow, 'Rename style');
+                            }
+                          )
+                        );
+                      }}
+                    >
+                      Rename
+                    </BaseUIMenu.Item>
+                    <BaseUIMenu.Arrow className="cmp-context-menu__arrow" />
+                  </BaseUIMenu.Popup>
+                </BaseUIMenu.Positioner>
+              </BaseUIMenu.Portal>
+            </BaseUIMenu.Root>
           </div>
         </div>
       </ToolWindowPanel>
