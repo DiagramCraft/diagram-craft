@@ -1,8 +1,8 @@
-import * as ContextMenu from '@radix-ui/react-context-menu';
 import React from 'react';
 import { findKeyBindingsForAction, formatKeyBinding } from '@diagram-craft/canvas/keyMap';
 import { useApplication } from '../../application';
 import type { ActionMap } from '@diagram-craft/canvas/actions/action';
+import { ContextMenu as BaseUIContextMenu } from '@base-ui-components/react/context-menu';
 
 export function ActionContextMenuItem<
   K extends keyof ActionMap,
@@ -13,10 +13,10 @@ export function ActionContextMenuItem<
   const keyMap = application.keyMap;
 
   return (
-    <ContextMenu.Item
+    <BaseUIContextMenu.Item
       className="cmp-context-menu__item"
       disabled={!actionMap[props.action]?.isEnabled(props.arg ?? {})}
-      onSelect={async () => {
+      onClick={async () => {
         const a = actionMap[props.action]!;
         a.execute(props.arg ?? {});
       }}
@@ -25,7 +25,7 @@ export function ActionContextMenuItem<
       <div className="cmp-context-menu__right-slot">
         {formatKeyBinding(findKeyBindingsForAction(props.action, keyMap)[0])}
       </div>
-    </ContextMenu.Item>
+    </BaseUIContextMenu.Item>
   );
 }
 

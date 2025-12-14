@@ -60,6 +60,10 @@
   --cmp-radius: 4px;
 }
 
+#root {
+  isolation: isolate;
+}
+
 .light-theme {
   --base-bg: var(--gray-1);
   --base-fg: var(--gray-12);
@@ -313,7 +317,7 @@ table {
     width: 2rem;
     background-color: var(--panel-bg);
 
-    &[data-state='open'] {
+    &[data-popup-open] {
       background-color: var(--accent-bg-selected);
       border: 1px solid var(--panel-border);
       border-radius: 6px;
@@ -344,7 +348,7 @@ table {
     display: flex;
     gap: 0.25rem;
 
-    .cmp-toolbar__button[data-state='on'] {
+    .cmp-toolbar__button[data-pressed] {
       background-color: var(--accent-bg);
       color: var(--accent-fg);
     }
@@ -400,7 +404,7 @@ table {
   border-top: 1px solid var(--panel-border);
   width: auto;
 
-  .cmp-toolbar__button[data-state='on'] {
+  .cmp-toolbar__button[data-pressed] {
     background-color: var(--accent-bg);
     color: var(--accent-fg);
   }
@@ -431,7 +435,7 @@ table {
   border-top: 1px solid var(--panel-border);
   width: auto;
 
-  .cmp-toolbar__button[data-state='on'] {
+  .cmp-toolbar__button[data-pressed] {
     background-color: var(--accent-bg);
     color: var(--accent-fg);
   }
@@ -841,7 +845,7 @@ foreignObject {
         background-color: var(--cmp-bg-hover);
       }
 
-      &[data-state='active'] {
+      &[data-active] {
         color: var(--cmp-fg);
         border-bottom: 2px solid var(--accent-chroma);
       }
@@ -1033,16 +1037,6 @@ foreignObject {
   }
 }
 
-/*
-body[data-dragmimetype='application/x-diagram-craft-element-instances'] *[data-dragmimetype='application/x-diagram-craft-element-instances'] {
-  outline: 3px solid var(--blue-11) !important;
-  outline-offset: -3px;
-  z-index: 10000;
-  position: relative;
-}
- */
-
-
 /* Util */
 
 .util-vcenter {
@@ -1104,69 +1098,6 @@ body[data-dragmimetype='application/x-diagram-craft-element-instances'] *[data-d
 
 
 /* Animations */
-
-@keyframes slideUpAndFade {
-  from {
-    opacity: 0;
-    transform: translateY(2px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideRightAndFade {
-  from {
-    opacity: 0;
-    transform: translateX(-2px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes slideDownAndFade {
-  from {
-    opacity: 0;
-    transform: translateY(-2px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideLeftAndFade {
-  from {
-    opacity: 0;
-    transform: translateX(2px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes slideDown {
-  from {
-    height: 0;
-  }
-  to {
-    height: var(--radix-accordion-content-height);
-  }
-}
-
-@keyframes slideUp {
-  from {
-    height: var(--radix-accordion-content-height);
-  }
-  to {
-    height: 0;
-  }
-}
-
 
 @keyframes overlayShow {
   from {

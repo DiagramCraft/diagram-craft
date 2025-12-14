@@ -11,22 +11,24 @@ export const ElementTextToolbarButton = () => {
 
   return (
     <Popover.Root>
-      <Popover.Trigger>
-        <Toolbar.Button>
-          <TbTextSize />
-          <div
-            style={{
-              marginLeft: '5px',
-              width: '15px',
-              height: '12px',
-              backgroundColor: color.val,
-              marginRight: '3px',
-              border: '1px solid var(--panel-fg)',
-              borderRadius: '3px'
-            }}
-          ></div>
-        </Toolbar.Button>
-      </Popover.Trigger>
+      <Popover.Trigger
+        element={
+          <Toolbar.Button>
+            <TbTextSize />
+            <div
+              style={{
+                marginLeft: '5px',
+                width: '15px',
+                height: '12px',
+                backgroundColor: color.val,
+                marginRight: '3px',
+                border: '1px solid var(--panel-fg)',
+                borderRadius: '3px'
+              }}
+            ></div>
+          </Toolbar.Button>
+        }
+      />
       <Popover.Content sideOffset={5}>
         <NodeTextPanel mode={'panel'} />
       </Popover.Content>

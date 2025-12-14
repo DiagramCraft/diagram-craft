@@ -1,26 +1,36 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useEventListener } from '../hooks/useEventListener';
-import { useRedraw } from '../hooks/useRedraw';
-import { ToggleAction } from '@diagram-craft/canvas/action';
+import { type Action, ToggleAction } from '@diagram-craft/canvas/action';
 import { ActionName } from '@diagram-craft/canvas/keyMap';
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
 import { useApplication } from '../../application';
 
+const getActionValue = (action: Action<unknown>) =>
+  (action as ToggleAction).getState({}) ? 'on' : 'off';
+
 export const ActionToggleButton = (props: Props) => {
   const application = useApplication();
   const actionMap = application.actions;
-  const redraw = useRedraw();
-  useEventListener(actionMap[props.action]!, 'actionChanged', () => queueMicrotask(redraw));
+
+  useEventListener(actionMap[props.action]!, 'actionChanged', () => {
+    setValue(getActionValue(actionMap[props.action]!));
+  });
+
+  const [value, setValue] = useState<'on' | 'off'>(getActionValue(actionMap[props.action]!));
+
+  useEffect(() => {
+    const actionState = getActionValue(actionMap[props.action]!);
+    if (actionState !== value) {
+      actionMap[props.action]!.execute({});
+      setValue(getActionValue(actionMap[props.action]!));
+    }
+  }, [value, actionMap[props.action], props.action]);
 
   return (
-    <Toolbar.ToggleGroup type={'single'}>
+    <Toolbar.ToggleGroup type={'single'} value={value} onChange={v => setValue(v as 'on' | 'off')}>
       <Toolbar.ToggleItem
-        data-state={(actionMap[props.action]! as ToggleAction).getState({}) ? 'on' : 'off'}
-        value={props.action}
+        value={'on'}
         aria-label={props.action}
-        onClick={() => {
-          actionMap[props.action]!.execute({});
-        }}
         disabled={!actionMap[props.action]!.isEnabled(undefined)}
       >
         {props.children}

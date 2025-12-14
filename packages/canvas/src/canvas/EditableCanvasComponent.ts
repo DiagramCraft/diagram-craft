@@ -346,6 +346,8 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
                 }
               }
 
+              // @ts-expect-error Need to fake a react event here
+              event.nativeEvent = event;
               props.onContextMenu?.(event);
             },
 

@@ -1,4 +1,4 @@
-import * as ReactDropdownMenu from '@radix-ui/react-dropdown-menu';
+import { Menu as BaseUIMenu } from '@base-ui-components/react/menu';
 import { TbChevronRight, TbDots } from 'react-icons/tb';
 import { usePortal } from './PortalContext';
 import styles from './Select.module.css';
@@ -13,33 +13,31 @@ const ItemsList = (props: { items: Item[]; onValueChange: (v: string) => void })
       {props.items.map(item => {
         if (item.items && item.items.length > 0) {
           return (
-            <ReactDropdownMenu.Sub key={item.value}>
-              <ReactDropdownMenu.SubTrigger className="cmp-context-menu__sub-trigger">
+            <BaseUIMenu.SubmenuRoot key={item.value}>
+              <BaseUIMenu.SubmenuTrigger className="cmp-context-menu__sub-trigger">
                 {item.label}
                 <div className="cmp-context-menu__right-slot">
                   <TbChevronRight />
                 </div>
-              </ReactDropdownMenu.SubTrigger>
-              <ReactDropdownMenu.Portal container={portal}>
-                <ReactDropdownMenu.SubContent
-                  className="cmp-context-menu"
-                  sideOffset={2}
-                  alignOffset={-5}
-                >
-                  <ItemsList items={item.items} onValueChange={props.onValueChange} />
-                </ReactDropdownMenu.SubContent>
-              </ReactDropdownMenu.Portal>
-            </ReactDropdownMenu.Sub>
+              </BaseUIMenu.SubmenuTrigger>
+              <BaseUIMenu.Portal container={portal}>
+                <BaseUIMenu.Positioner sideOffset={2} alignOffset={-5}>
+                  <BaseUIMenu.Popup className="cmp-context-menu">
+                    <ItemsList items={item.items} onValueChange={props.onValueChange} />
+                  </BaseUIMenu.Popup>
+                </BaseUIMenu.Positioner>
+              </BaseUIMenu.Portal>
+            </BaseUIMenu.SubmenuRoot>
           );
         } else {
           return (
-            <ReactDropdownMenu.Item
+            <BaseUIMenu.Item
               key={item.value}
               className={'cmp-context-menu__item'}
               onClick={() => props.onValueChange(item.value)}
             >
               {item.label}
-            </ReactDropdownMenu.Item>
+            </BaseUIMenu.Item>
           );
         }
       })}
@@ -69,43 +67,38 @@ const Root = (props: RootProps) => {
   const valueLabel = recursiveFind(props.items, value ?? '');
 
   return (
-    <ReactDropdownMenu.Root open={props.open}>
-      <ReactDropdownMenu.Trigger asChild>
-        <button
-          className={styles.cmpSelectTrigger}
-          {...extractDataAttributes(props)}
-          disabled={props.disabled}
-        >
-          {props.hasMultipleValues ? (
-            <div style={{ color: 'var(--panel-fg)' }}>···</div>
-          ) : (
-            (valueLabel ?? props.placeholder ?? '')
-          )}
-          <div className={styles.cmpSelectTriggerIcon}>
-            <TbDots />
-          </div>
-        </button>
-      </ReactDropdownMenu.Trigger>
+    <BaseUIMenu.Root open={props.open}>
+      <BaseUIMenu.Trigger
+        className={styles.cmpSelectTrigger}
+        {...extractDataAttributes(props)}
+        disabled={props.disabled}
+      >
+        {props.hasMultipleValues ? (
+          <div style={{ color: 'var(--panel-fg)' }}>···</div>
+        ) : (
+          (valueLabel ?? props.placeholder ?? '')
+        )}
+        <div className={styles.cmpSelectTriggerIcon}>
+          <TbDots />
+        </div>
+      </BaseUIMenu.Trigger>
 
-      <ReactDropdownMenu.Portal container={portal}>
-        <ReactDropdownMenu.Content
-          className={'cmp-context-menu'}
-          sideOffset={1}
-          align={'start'}
-          alignOffset={0}
-        >
-          <ItemsList
-            items={props.items}
-            onValueChange={v => {
-              props.onValueChange(v);
-              setValue(v);
-            }}
-          />
+      <BaseUIMenu.Portal container={portal}>
+        <BaseUIMenu.Positioner sideOffset={1} align={'start'} alignOffset={0}>
+          <BaseUIMenu.Popup className={'cmp-context-menu'}>
+            <ItemsList
+              items={props.items}
+              onValueChange={v => {
+                props.onValueChange(v);
+                setValue(v);
+              }}
+            />
 
-          <ReactDropdownMenu.Arrow className="cmp-context-menu__arrow" />
-        </ReactDropdownMenu.Content>
-      </ReactDropdownMenu.Portal>
-    </ReactDropdownMenu.Root>
+            <BaseUIMenu.Arrow className="cmp-context-menu__arrow" />
+          </BaseUIMenu.Popup>
+        </BaseUIMenu.Positioner>
+      </BaseUIMenu.Portal>
+    </BaseUIMenu.Root>
   );
 };
 type RootProps = {

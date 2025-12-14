@@ -15,22 +15,24 @@ export const NodeFillToolbarButton = () => {
 
   return (
     <Popover.Root>
-      <Popover.Trigger>
-        <Toolbar.Button disabled={disabled}>
-          <TbPaint />
-          <div
-            style={{
-              marginLeft: '5px',
-              width: '30px',
-              height: '12px',
-              backgroundColor: disabled ? 'var(--cmp-fg-disabled)' : fill.val,
-              marginRight: '3px',
-              border: `1px solid ${disabled ? 'var(--cmp-fg-disabled)' : 'var(--panel-fg)'}`,
-              borderRadius: '3px'
-            }}
-          ></div>
-        </Toolbar.Button>
-      </Popover.Trigger>
+      <Popover.Trigger
+        element={
+          <Toolbar.Button disabled={disabled}>
+            <TbPaint />
+            <div
+              style={{
+                marginLeft: '5px',
+                width: '30px',
+                height: '12px',
+                backgroundColor: disabled ? 'var(--cmp-fg-disabled)' : fill.val,
+                marginRight: '3px',
+                border: `1px solid ${disabled ? 'var(--cmp-fg-disabled)' : 'var(--panel-fg)'}`,
+                borderRadius: '3px'
+              }}
+            ></div>
+          </Toolbar.Button>
+        }
+      />
       <Popover.Content sideOffset={5}>
         <NodeFillPanel mode={'panel'} />
       </Popover.Content>

@@ -17,7 +17,7 @@
       display: flex;
       justify-content: space-between;
 
-      &[data-state='open'],
+      &[data-panel-open],
       &:hover {
         color: var(--cmp-fg);
       }
@@ -35,32 +35,13 @@
     overflow: hidden;
     padding-left: 0.5rem;
     border-left: 4px solid var(--cmp-border);
+    height: var(--collapsible-panel-height);
 
-    &[data-state='open'] {
-      animation: slideDownCollapsible 200ms ease-in-out;
+    transition: all 200ms ease-out;
+
+    &[data-starting-style],
+    &[data-ending-style] {
+      height: 0;
     }
-
-    &[data-state='closed'] {
-      animation: slideUpCollapsible 200ms ease-in-out;
-    }
-  }
-}
-
-
-@keyframes slideDownCollapsible {
-  from {
-    height: 0;
-  }
-  to {
-    height: var(--radix-collapsible-content-height);
-  }
-}
-
-@keyframes slideUpCollapsible {
-  from {
-    height: var(--radix-collapsible-content-height);
-  }
-  to {
-    height: 0;
   }
 }

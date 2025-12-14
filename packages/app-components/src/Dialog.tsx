@@ -1,15 +1,15 @@
-import * as AlertDialog from '@radix-ui/react-alert-dialog';
 import React, {
   createContext,
-  useContext,
   MouseEventHandler,
   ReactNode,
+  useContext,
   useEffect,
   useRef
 } from 'react';
 import { usePortal } from './PortalContext';
 import { assert } from '@diagram-craft/utils/assert';
 import styles from './Dialog.module.css';
+import { AlertDialog as BaseUIAlertDialog } from '@base-ui-components/react/alert-dialog';
 
 type DialogContextType = {
   onDialogShow: () => void;
@@ -44,27 +44,21 @@ export const DialogContextProvider = (props: DialogProviderProps) => {
 const DialogButton = (props: Button) => {
   if (props.type === 'cancel') {
     return (
-      <AlertDialog.Cancel asChild>
-        <button
-          type="button"
-          className={`${styles.cmpDialogButton} ${styles.cmpDialogButtonSecondary}`}
-          onClick={props.onClick}
-        >
-          {props.label}
-        </button>
-      </AlertDialog.Cancel>
+      <BaseUIAlertDialog.Close
+        className={`${styles.cmpDialogButton} ${styles.cmpDialogButtonSecondary}`}
+      >
+        {props.label}
+      </BaseUIAlertDialog.Close>
     );
   } else {
     return (
-      <AlertDialog.Action asChild>
-        <button
-          type="button"
-          className={`${styles.cmpDialogButton} cmp-dialog__button--${props.type}`}
-          onClick={props.onClick}
-        >
-          {props.label}
-        </button>
-      </AlertDialog.Action>
+      <button
+        type="button"
+        className={`${styles.cmpDialogButton} cmp-dialog__button--${props.type}`}
+        onClick={props.onClick}
+      >
+        {props.label}
+      </button>
     );
   }
 };
@@ -103,29 +97,48 @@ export const Dialog = (props: Props) => {
     };
   }, [props.open, dialogContext]);
 
+  useEffect(() => {
+    if (!props.open) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        props.onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [props.open, props.onClose]);
+
   return (
-    <AlertDialog.Root open={props.open} defaultOpen={props.open} onOpenChange={handleOpenChange}>
-      <AlertDialog.Portal container={portal}>
-        <div className={styles.cmpDialog}>
-          <AlertDialog.Overlay className={styles.cmpDialogOverlay} />
-          <AlertDialog.Content
-            className={styles.cmpDialogContent}
-            onOpenAutoFocus={e => e.preventDefault()}
-          >
-            <AlertDialog.Title className={styles.cmpDialogTitle}>{props.title}</AlertDialog.Title>
-            <AlertDialog.Description asChild>
-              <div className={styles.cmpDialogDescription}>{props.children}</div>
-            </AlertDialog.Description>
+    <BaseUIAlertDialog.Root
+      open={props.open}
+      defaultOpen={props.open}
+      onOpenChange={handleOpenChange}
+    >
+      <BaseUIAlertDialog.Portal container={portal}>
+        <BaseUIAlertDialog.Backdrop className={styles.cmpDialogOverlay} />
+        <BaseUIAlertDialog.Viewport className={styles.cmpDialogContent}>
+          <BaseUIAlertDialog.Popup initialFocus={true}>
+            <BaseUIAlertDialog.Title
+              className={styles.cmpDialogTitle}
+              render={p => <div {...p}>{props.title}</div>}
+            />
+            <BaseUIAlertDialog.Description
+              className={styles.cmpDialogDescription}
+              render={p => <div {...p}>{props.children}</div>}
+            />
 
             <div style={{ display: 'flex', gap: 25, justifyContent: 'flex-end' }}>
               {props.buttons.map(btn => (
                 <DialogButton key={btn.label} {...btn} />
               ))}
             </div>
-          </AlertDialog.Content>
-        </div>
-      </AlertDialog.Portal>
-    </AlertDialog.Root>
+          </BaseUIAlertDialog.Popup>
+        </BaseUIAlertDialog.Viewport>
+      </BaseUIAlertDialog.Portal>
+    </BaseUIAlertDialog.Root>
   );
 };
 

@@ -3,7 +3,6 @@ import { Comment, type CommentState } from '@diagram-craft/model/comment';
 import React, { useCallback, useState } from 'react';
 import { TbCheck, TbDots, TbEdit, TbLink, TbMessageReply, TbTrash } from 'react-icons/tb';
 import { UserState } from '../../../UserState';
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Tooltip } from '@diagram-craft/app-components/Tooltip';
@@ -12,6 +11,7 @@ import { newid } from '@diagram-craft/utils/id';
 import { getElementNameFromComment } from './utils';
 import { addHighlight, Highlights, removeHighlight } from '@diagram-craft/canvas/highlight';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
+import { Menu as BaseUIMenu } from '@base-ui-components/react/menu';
 
 export type CommentItemProps = {
   comment: Comment;
@@ -30,39 +30,43 @@ type CommentItemMenuProps = {
 };
 
 const CommentItemMenu = (props: CommentItemMenuProps) => (
-  <DropdownMenu.Root>
-    <DropdownMenu.Trigger asChild>
-      <button type="button" className={styles['comment__menu-button']}>
-        <TbDots size={14} />
-      </button>
-    </DropdownMenu.Trigger>
-    <DropdownMenu.Portal>
-      <DropdownMenu.Content className="cmp-context-menu" side="left">
-        <DropdownMenu.Item className="cmp-context-menu__item" onSelect={props.onEditComment}>
-          <DropdownMenu.ItemIndicator className="cmp-context-menu__item-icon" forceMount={true}>
-            <TbEdit size={14} />
-          </DropdownMenu.ItemIndicator>
-          Edit Comment
-        </DropdownMenu.Item>
-        <DropdownMenu.Item
-          className="cmp-context-menu__item"
-          onSelect={props.onChangeState}
-          disabled={!props.canChangeState}
-        >
-          <DropdownMenu.ItemIndicator className="cmp-context-menu__item-icon" forceMount={true}>
-            <TbCheck size={14} />
-          </DropdownMenu.ItemIndicator>
-          {props.state === 'resolved' ? 'Unresolve' : 'Resolve'}
-        </DropdownMenu.Item>
-        <DropdownMenu.Item className="cmp-context-menu__item" onSelect={props.onDeleteComment}>
-          <DropdownMenu.ItemIndicator className="cmp-context-menu__item-icon" forceMount={true}>
-            <TbTrash size={14} />
-          </DropdownMenu.ItemIndicator>
-          Delete Comment
-        </DropdownMenu.Item>
-      </DropdownMenu.Content>
-    </DropdownMenu.Portal>
-  </DropdownMenu.Root>
+  <BaseUIMenu.Root>
+    <BaseUIMenu.Trigger
+      render={
+        <button type="button" className={styles['comment__menu-button']}>
+          <TbDots size={14} />
+        </button>
+      }
+    />
+    <BaseUIMenu.Portal>
+      <BaseUIMenu.Positioner side="left">
+        <BaseUIMenu.Popup className="cmp-context-menu">
+          <BaseUIMenu.Item className="cmp-context-menu__item" onClick={props.onEditComment}>
+            <div className="cmp-context-menu__item-icon">
+              <TbEdit size={14} />
+            </div>
+            Edit Comment
+          </BaseUIMenu.Item>
+          <BaseUIMenu.Item
+            className="cmp-context-menu__item"
+            onClick={props.onChangeState}
+            disabled={!props.canChangeState}
+          >
+            <div className="cmp-context-menu__item-icon">
+              <TbCheck size={14} />
+            </div>
+            {props.state === 'resolved' ? 'Unresolve' : 'Resolve'}
+          </BaseUIMenu.Item>
+          <BaseUIMenu.Item className="cmp-context-menu__item" onClick={props.onDeleteComment}>
+            <div className="cmp-context-menu__item-icon">
+              <TbTrash size={14} />
+            </div>
+            Delete Comment
+          </BaseUIMenu.Item>
+        </BaseUIMenu.Popup>
+      </BaseUIMenu.Positioner>
+    </BaseUIMenu.Portal>
+  </BaseUIMenu.Root>
 );
 
 export const CommentItem = ({
@@ -121,21 +125,24 @@ export const CommentItem = ({
       className={`${styles.comment} ${comment.isReply() ? styles['comment--reply'] : comment.state === 'unresolved' ? styles['comment--unresolved'] : styles['comment--resolved']}`}
     >
       <div className={styles.comment__header}>
-        <Tooltip message={comment.author}>
-          <div
-            className={styles.comment__avatar}
-            style={{
-              background: comment.userColor ?? '#336633'
-            }}
-          >
-            {comment.author
-              .split(' ')
-              .map(e => e[0])
-              .slice(0, 2)
-              .join('')
-              .toUpperCase()}
-          </div>
-        </Tooltip>
+        <Tooltip
+          message={comment.author}
+          element={
+            <div
+              className={styles.comment__avatar}
+              style={{
+                background: comment.userColor ?? '#336633'
+              }}
+            >
+              {comment.author
+                .split(' ')
+                .map(e => e[0])
+                .slice(0, 2)
+                .join('')
+                .toUpperCase()}
+            </div>
+          }
+        />
         <div>
           <div>{comment.author}</div>
           <div>{formatDate(comment.date)}</div>

@@ -1,6 +1,6 @@
 import { ActionContextMenuItem } from '../components/ActionContextMenuItem';
-import * as ContextMenu from '@radix-ui/react-context-menu';
 import { ContextMenuTarget } from '@diagram-craft/canvas/context';
+import { ContextMenu as BaseUIContextMenu } from '@base-ui-components/react/context-menu';
 
 export const CanvasContextMenu = (props: Props) => {
   return (
@@ -8,12 +8,12 @@ export const CanvasContextMenu = (props: Props) => {
       <ActionContextMenuItem action={'CLIPBOARD_PASTE'} arg={{ point: props.target.pos }}>
         Paste
       </ActionContextMenuItem>
-      <ContextMenu.Separator className="cmp-context-menu__separator" />
+      <BaseUIContextMenu.Separator className="cmp-context-menu__separator" />
       <ActionContextMenuItem action={'UNDO'}>Undo</ActionContextMenuItem>
       <ActionContextMenuItem action={'REDO'}>Redo</ActionContextMenuItem>
-      <ContextMenu.Separator className="cmp-context-menu__separator" />
+      <BaseUIContextMenu.Separator className="cmp-context-menu__separator" />
       <ActionContextMenuItem action={'COMMENT_ADD'}>Add Comment</ActionContextMenuItem>
-      <ContextMenu.Separator className="cmp-context-menu__separator" />
+      <BaseUIContextMenu.Separator className="cmp-context-menu__separator" />
       <ActionContextMenuItem action={'SELECT_ALL'}>Select All</ActionContextMenuItem>
       <ActionContextMenuItem action={'SELECT_ALL_NODES'}>Select Nodes</ActionContextMenuItem>
       <ActionContextMenuItem action={'SELECT_ALL_EDGES'}>Select Edges</ActionContextMenuItem>

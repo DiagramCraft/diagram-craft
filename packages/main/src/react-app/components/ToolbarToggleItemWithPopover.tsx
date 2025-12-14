@@ -17,11 +17,13 @@ export const ToolbarToggleItemWithPopover = (props: Props) => {
       </Toolbar.Button>
 
       <Popover.Root>
-        <Popover.Trigger>
-          <Toolbar.Button isOverflow>
-            <TbChevronDown />
-          </Toolbar.Button>
-        </Popover.Trigger>
+        <Popover.Trigger
+          element={
+            <Toolbar.Button isOverflow>
+              <TbChevronDown />
+            </Toolbar.Button>
+          }
+        />
         <Popover.Content sideOffset={5}>{props.children}</Popover.Content>
       </Popover.Root>
     </>

@@ -1,22 +1,25 @@
-import * as RadixAccordion from '@radix-ui/react-accordion';
 import { TbChevronDown } from 'react-icons/tb';
 import React from 'react';
 import styles from './Accordion.module.css';
 import { extractDataAttributes } from './utils';
+import { Accordion as BaseUIAccordion } from '@base-ui-components/react/accordion';
+
+const asArray = (v: string | string[] | undefined) => (Array.isArray(v) ? v : v ? [v] : undefined);
 
 const Root = (props: RootProps) => {
   return (
-    // @ts-expect-error
-    <RadixAccordion.Root
+    <BaseUIAccordion.Root
       className={styles.cmpAccordion}
-      type={props.type}
+      multiple={props.type === 'multiple'}
       disabled={props.disabled}
-      value={props.value}
-      defaultValue={props.defaultValue}
-      onValueChange={props.onValueChange}
+      value={asArray(props.value)}
+      defaultValue={asArray(props.defaultValue)}
+      onValueChange={v =>
+        props.type === 'single' ? props.onValueChange?.(v[0]) : props.onValueChange?.(v)
+      }
     >
       {props.children}
-    </RadixAccordion.Root>
+    </BaseUIAccordion.Root>
   );
 };
 
@@ -40,9 +43,9 @@ type RootProps = {
 
 const Item = (props: ItemProps) => {
   return (
-    <RadixAccordion.Item className={styles.cmpAccordionItem} value={props.value}>
+    <BaseUIAccordion.Item className={styles.cmpAccordionItem} value={props.value}>
       {props.children}
-    </RadixAccordion.Item>
+    </BaseUIAccordion.Item>
   );
 };
 
@@ -53,8 +56,8 @@ type ItemProps = {
 
 const ItemHeader = React.forwardRef<HTMLButtonElement, ItemHeaderProps>((props, forwardedRef) => {
   return (
-    <RadixAccordion.Header className={styles.cmpAccordionHeader}>
-      <RadixAccordion.Trigger
+    <BaseUIAccordion.Header className={styles.cmpAccordionHeader}>
+      <BaseUIAccordion.Trigger
         ref={forwardedRef}
         className={styles.cmpAccordionTrigger}
         {...extractDataAttributes(props)}
@@ -63,8 +66,8 @@ const ItemHeader = React.forwardRef<HTMLButtonElement, ItemHeaderProps>((props, 
         <div className={styles.cmpAccordionChevron}>
           <TbChevronDown />
         </div>
-      </RadixAccordion.Trigger>
-    </RadixAccordion.Header>
+      </BaseUIAccordion.Trigger>
+    </BaseUIAccordion.Header>
   );
 });
 
@@ -86,13 +89,12 @@ type ItemHeaderButtonsProps = {
 
 const ItemContent = (props: ItemContentProps) => {
   return (
-    <RadixAccordion.Content
+    <BaseUIAccordion.Panel
       className={styles.cmpAccordionContent}
-      // @ts-expect-error
-      forceMount={props.forceMount ?? false}
+      keepMounted={props.forceMount ?? false}
     >
       <div className={styles.cmpAccordionContentText}>{props.children}</div>
-    </RadixAccordion.Content>
+    </BaseUIAccordion.Panel>
   );
 };
 

@@ -6,7 +6,6 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TbPencil, TbPlus, TbSearch, TbTrash } from 'react-icons/tb';
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { EditItemDialog } from '../EditItemDialog';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import styles from './DataTab.module.css';
@@ -14,6 +13,7 @@ import type { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { asyncExecuteWithErrorDialog } from '../../ErrorBoundary';
 import { shorten } from '@diagram-craft/utils/strings';
 import { DataManagerUndoableFacade } from '@diagram-craft/model/diagramDocumentDataUndoActions';
+import { Menu as BaseUIMenu } from '@base-ui-components/react/menu';
 
 type DataItemWithSchema = Data & {
   _schema: DataSchema;
@@ -278,33 +278,37 @@ export const DataTab = () => {
           >
             Clear Overrides
           </Button>
-          <DropdownMenu.Root>
-            <DropdownMenu.Trigger asChild>
-              <Button
-                type="secondary"
-                className={styles.dataTabAddButton}
-                disabled={!(canMutateData && hasSchemas)}
-                style={{ display: 'flex', gap: '0.25rem' }}
-              >
-                <TbPlus /> Add Data
-              </Button>
-            </DropdownMenu.Trigger>
-            <DropdownMenu.Portal>
-              <DropdownMenu.Content className="cmp-context-menu" sideOffset={5}>
-                {db.schemas.map(schema => (
-                  <DropdownMenu.Item
-                    key={schema.id}
-                    className="cmp-context-menu__item"
-                    onSelect={() => setAddItemDialog({ open: true, schemaId: schema.id })}
-                    disabled={!db.isDataEditable(schema)}
-                  >
-                    {schema.name}
-                  </DropdownMenu.Item>
-                ))}
-                <DropdownMenu.Arrow className="cmp-context-menu__arrow" />
-              </DropdownMenu.Content>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Root>
+          <BaseUIMenu.Root>
+            <BaseUIMenu.Trigger
+              render={
+                <Button
+                  type="secondary"
+                  className={styles.dataTabAddButton}
+                  disabled={!(canMutateData && hasSchemas)}
+                  style={{ display: 'flex', gap: '0.25rem' }}
+                >
+                  <TbPlus /> Add Data
+                </Button>
+              }
+            />
+            <BaseUIMenu.Portal>
+              <BaseUIMenu.Positioner sideOffset={5}>
+                <BaseUIMenu.Popup className="cmp-context-menu">
+                  {db.schemas.map(schema => (
+                    <BaseUIMenu.Item
+                      key={schema.id}
+                      className="cmp-context-menu__item"
+                      onClick={() => setAddItemDialog({ open: true, schemaId: schema.id })}
+                      disabled={!db.isDataEditable(schema)}
+                    >
+                      {schema.name}
+                    </BaseUIMenu.Item>
+                  ))}
+                  <BaseUIMenu.Arrow className="cmp-context-menu__arrow" />
+                </BaseUIMenu.Popup>
+              </BaseUIMenu.Positioner>
+            </BaseUIMenu.Portal>
+          </BaseUIMenu.Root>
         </div>
       </div>
 

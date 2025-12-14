@@ -85,24 +85,26 @@ export const ColorPicker = (props: Props) => {
           }
         }}
       >
-        <Popover.Trigger>
-          <button
-            {...extractMouseEvents(props)}
-            data-field-state={props.isIndeterminate ? 'indeterminate' : props.state}
-            disabled={props.disabled}
-          >
-            <div
-              className={'cmp-color-picker__well'}
-              style={{
-                backgroundColor: props.value,
-                border: props.isIndeterminate ? '1px dotted var(--cmp-fg-disabled)' : undefined
-              }}
+        <Popover.Trigger
+          element={
+            <button
+              {...extractMouseEvents(props)}
+              data-field-state={props.isIndeterminate ? 'indeterminate' : props.state}
+              disabled={props.disabled}
             >
-              {props.isIndeterminate && <TbDots style={{ margin: '0px' }} />}
-            </div>
-            <TbChevronDown size={'11px'} />
-          </button>
-        </Popover.Trigger>
+              <div
+                className={'cmp-color-picker__well'}
+                style={{
+                  backgroundColor: props.value,
+                  border: props.isIndeterminate ? '1px dotted var(--cmp-fg-disabled)' : undefined
+                }}
+              >
+                {props.isIndeterminate && <TbDots style={{ margin: '0px' }} />}
+              </div>
+              <TbChevronDown size={'11px'} />
+            </button>
+          }
+        />
         <Popover.Content sideOffset={5} ref={contentRef}>
           <div className={'cmp-color-grid'}>
             <h2>Colors</h2>
