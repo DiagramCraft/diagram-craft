@@ -3,11 +3,11 @@ import { useRedraw } from './hooks/useRedraw';
 import { useEventListener } from './hooks/useEventListener';
 import { TbCheck, TbFiles, TbPlus } from 'react-icons/tb';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
-import * as ContextMenu from '@radix-ui/react-context-menu';
 import { ActionContextMenuItem } from './components/ActionContextMenuItem';
-import React, { ReactNode } from 'react';
+import React, { type ReactElement } from 'react';
 import { useApplication } from '../application';
 import { Diagram } from '@diagram-craft/model/diagram';
+import { ContextMenu as BaseUIContextMenu } from '@base-ui-components/react/context-menu';
 
 const DiagramList = (props: {
   list: readonly Diagram[];
@@ -19,19 +19,19 @@ const DiagramList = (props: {
       {props.list.map(diagram => {
         return (
           <React.Fragment key={diagram.id}>
-            <ContextMenu.RadioItem
+            <BaseUIContextMenu.RadioItem
               className="cmp-context-menu__item"
-              onSelect={() => {
+              onClick={() => {
                 props.onChange(diagram.id);
               }}
               value={diagram.id}
             >
-              <ContextMenu.ItemIndicator className={'cmp-context-menu__item-indicator'}>
+              <BaseUIContextMenu.RadioItemIndicator className={'cmp-context-menu__item-indicator'}>
                 <TbCheck />
-              </ContextMenu.ItemIndicator>
+              </BaseUIContextMenu.RadioItemIndicator>
               <span style={{ width: `${props.level * 10}px`, display: 'inline-block' }} />
               {diagram.name}
-            </ContextMenu.RadioItem>
+            </BaseUIContextMenu.RadioItem>
             <DiagramList
               list={diagram.diagrams}
               level={props.level + 1}
@@ -53,52 +53,56 @@ const DocumentsContextMenu = (props: DocumentsContextMenuProps) => {
   };
 
   return (
-    <ContextMenu.Root>
-      <ContextMenu.Trigger asChild={true}>{props.children}</ContextMenu.Trigger>
-      <ContextMenu.Portal>
-        <ContextMenu.Content className="cmp-context-menu">
-          <ActionContextMenuItem action={'DIAGRAM_RENAME'} arg={{ diagramId: props.diagramId }}>
-            Rename...
-          </ActionContextMenuItem>
-          <ActionContextMenuItem action={'DIAGRAM_ADD'} arg={{}}>
-            Add
-          </ActionContextMenuItem>
-          <ActionContextMenuItem action={'DIAGRAM_ADD'} arg={{ parentId: props.diagramId }}>
-            Add subpage
-          </ActionContextMenuItem>
-          <ActionContextMenuItem action={'DIAGRAM_REMOVE'} arg={{ diagramId: props.diagramId }}>
-            Delete
-          </ActionContextMenuItem>
-          {diagram.diagrams.length > 0 && (
-            <>
-              <ContextMenu.Separator className="cmp-context-menu__separator" />
+    <BaseUIContextMenu.Root>
+      <BaseUIContextMenu.Trigger render={props.element} />
+      <BaseUIContextMenu.Portal>
+        <BaseUIContextMenu.Positioner>
+          <BaseUIContextMenu.Popup className="cmp-context-menu">
+            <ActionContextMenuItem action={'DIAGRAM_RENAME'} arg={{ diagramId: props.diagramId }}>
+              Rename...
+            </ActionContextMenuItem>
+            <ActionContextMenuItem action={'DIAGRAM_ADD'} arg={{}}>
+              Add
+            </ActionContextMenuItem>
+            <ActionContextMenuItem action={'DIAGRAM_ADD'} arg={{ parentId: props.diagramId }}>
+              Add subpage
+            </ActionContextMenuItem>
+            <ActionContextMenuItem action={'DIAGRAM_REMOVE'} arg={{ diagramId: props.diagramId }}>
+              Delete
+            </ActionContextMenuItem>
+            {diagram.diagrams.length > 0 && (
+              <>
+                <BaseUIContextMenu.Separator className="cmp-context-menu__separator" />
 
-              <ContextMenu.RadioGroup value={props.diagramId}>
-                <ContextMenu.RadioItem
-                  className="cmp-context-menu__item"
-                  onSelect={() => change(props.rootId)}
-                  value={props.rootId}
-                >
-                  <ContextMenu.ItemIndicator className={'cmp-context-menu__item-indicator'}>
-                    <TbCheck />
-                  </ContextMenu.ItemIndicator>
-                  {diagram.name}
-                </ContextMenu.RadioItem>
+                <BaseUIContextMenu.RadioGroup value={props.diagramId}>
+                  <BaseUIContextMenu.RadioItem
+                    className="cmp-context-menu__item"
+                    onClick={() => change(props.rootId)}
+                    value={props.rootId}
+                  >
+                    <BaseUIContextMenu.RadioItemIndicator
+                      className={'cmp-context-menu__item-indicator'}
+                    >
+                      <TbCheck />
+                    </BaseUIContextMenu.RadioItemIndicator>
+                    {diagram.name}
+                  </BaseUIContextMenu.RadioItem>
 
-                <DiagramList level={1} list={diagram.diagrams} onChange={change} />
-              </ContextMenu.RadioGroup>
-            </>
-          )}
-        </ContextMenu.Content>
-      </ContextMenu.Portal>
-    </ContextMenu.Root>
+                  <DiagramList level={1} list={diagram.diagrams} onChange={change} />
+                </BaseUIContextMenu.RadioGroup>
+              </>
+            )}
+          </BaseUIContextMenu.Popup>
+        </BaseUIContextMenu.Positioner>
+      </BaseUIContextMenu.Portal>
+    </BaseUIContextMenu.Root>
   );
 };
 
 type DocumentsContextMenuProps = {
   diagramId: string;
   rootId: string;
-  children: ReactNode;
+  element: ReactElement;
 };
 
 export const DocumentTabs = (props: Props) => {
@@ -132,21 +136,22 @@ export const DocumentTabs = (props: Props) => {
               <DocumentsContextMenu
                 rootId={d.id}
                 diagramId={path[0] === d ? path.at(-1)!.id : d.id}
-              >
-                <div>
-                  {d.name}
+                element={
+                  <div>
+                    {d.name}
 
-                  {path[0] === d &&
-                    path.length > 1 &&
-                    path.slice(1).map((e, k) => <span key={k}>&nbsp;&gt;&nbsp;{e.name}</span>)}
+                    {path[0] === d &&
+                      path.length > 1 &&
+                      path.slice(1).map((e, k) => <span key={k}>&nbsp;&gt;&nbsp;{e.name}</span>)}
 
-                  {d.diagrams.length > 0 && (
-                    <div style={{ marginLeft: '0.35rem', marginTop: '0.1rem' }}>
-                      <TbFiles />
-                    </div>
-                  )}
-                </div>
-              </DocumentsContextMenu>
+                    {d.diagrams.length > 0 && (
+                      <div style={{ marginLeft: '0.35rem', marginTop: '0.1rem' }}>
+                        <TbFiles />
+                      </div>
+                    )}
+                  </div>
+                }
+              ></DocumentsContextMenu>
             </BaseUITabs.Tab>
           ))}
         </BaseUITabs.List>

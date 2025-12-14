@@ -42,7 +42,7 @@ type RootProps = {
   children: React.ReactNode;
 } & React.HTMLAttributes<HTMLDivElement>;
 
-const Node = (props: NodeProps) => {
+const Node = React.forwardRef<HTMLDivElement, NodeProps>((props, ref) => {
   const [open, setOpen] = useState(props.isOpen);
   const ctx = useContext(TreeContext);
 
@@ -53,6 +53,7 @@ const Node = (props: NodeProps) => {
   return (
     <TreeContext.Provider value={{ depth: ctx!.depth + 1, open, setOpen, hasChildren }}>
       <div
+        ref={ref}
         {...PropsUtils.filterDomProperties(props)}
         className={`${styles.cmpTreeNode} ${props.className ?? ''}`}
         data-depth={ctx!.depth}
@@ -71,7 +72,7 @@ const Node = (props: NodeProps) => {
         })}
     </TreeContext.Provider>
   );
-};
+});
 
 type NodeProps = {
   isOpen?: boolean;

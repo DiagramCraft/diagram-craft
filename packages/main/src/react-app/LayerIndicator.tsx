@@ -70,7 +70,7 @@ export const LayerIndicator = () => {
             </ActionDropdownMenuItem>
             <BaseUIMenu.Item
               className="cmp-context-menu__item"
-              onSelect={() => {
+              onClick={() => {
                 actions['SIDEBAR_LAYERS']?.execute();
               }}
             >
@@ -86,7 +86,7 @@ export const LayerIndicator = () => {
             {layers.map(layer => (
               <BaseUIMenu.Item
                 className="cmp-context-menu__item"
-                onSelect={() => {
+                onClick={() => {
                   diagram.layers.active = layer;
                 }}
                 key={layer.id}

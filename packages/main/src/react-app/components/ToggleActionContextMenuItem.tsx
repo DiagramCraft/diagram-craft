@@ -1,4 +1,3 @@
-import * as ContextMenu from '@radix-ui/react-context-menu';
 import React from 'react';
 import { TbCheck } from 'react-icons/tb';
 import { useRedraw } from '../hooks/useRedraw';
@@ -6,6 +5,7 @@ import { ToggleAction } from '@diagram-craft/canvas/action';
 import { findKeyBindingsForAction, formatKeyBinding } from '@diagram-craft/canvas/keyMap';
 import { useApplication } from '../../application';
 import type { ActionMap } from '@diagram-craft/canvas/actions/action';
+import { ContextMenu as BaseUIContextMenu } from '@base-ui-components/react/context-menu';
 
 export function ToggleActionContextMenuItem<K extends keyof ActionMap>(props: Props<K>) {
   const redraw = useRedraw();
@@ -16,7 +16,7 @@ export function ToggleActionContextMenuItem<K extends keyof ActionMap>(props: Pr
   const action = actionMap[props.action]!;
 
   return (
-    <ContextMenu.CheckboxItem
+    <BaseUIContextMenu.CheckboxItem
       className="cmp-context-menu__item"
       disabled={!actionMap[props.action]?.isEnabled(props.arg ?? {})}
       checked={(action as ToggleAction).getState(props.arg ?? {})}
@@ -25,14 +25,14 @@ export function ToggleActionContextMenuItem<K extends keyof ActionMap>(props: Pr
         redraw();
       }}
     >
-      <ContextMenu.ItemIndicator className="cmp-context-menu__item-indicator" forceMount={true}>
+      <BaseUIContextMenu.CheckboxItemIndicator className="cmp-context-menu__item-indicator">
         <TbCheck />
-      </ContextMenu.ItemIndicator>
+      </BaseUIContextMenu.CheckboxItemIndicator>
       {props.children}{' '}
       <div className="cmp-context-menu__right-slot">
         {formatKeyBinding(findKeyBindingsForAction(props.action, keyMap)[0])}
       </div>
-    </ContextMenu.CheckboxItem>
+    </BaseUIContextMenu.CheckboxItem>
   );
 }
 

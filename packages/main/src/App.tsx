@@ -1,6 +1,6 @@
 import './App.css';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import * as ContextMenu from '@radix-ui/react-context-menu';
+import { ContextMenu as BaseUIContextMenu } from '@base-ui-components/react/context-menu';
 import { CanvasContextMenu } from './react-app/context-menu-dispatcher/CanvasContextMenu';
 import { ContextMenuDispatcher } from './react-app/context-menu-dispatcher/ContextMenuDispatcher';
 import { SelectionContextMenu } from './react-app/context-menu-dispatcher/SelectionContextMenu';
@@ -678,55 +678,59 @@ export const App = (props: {
 
                 <div id="canvas-area">
                   <ErrorBoundary>
-                    <ContextMenu.Root>
-                      <ContextMenu.Trigger asChild={true}>
-                        <EditableCanvas
-                          id={CanvasDomHelper.diagramId($d)}
-                          ref={svgRef}
-                          diagram={$d}
-                          /* Note: this uid here to force redraw in case the diagram is reloaded */
-                          key={$d.uid}
-                          actionMap={actionMap}
-                          tools={tools}
-                          keyMap={application.current.keyMap}
-                          offset={
-                            (userState.current.panelLeft ?? -1) >= 0
-                              ? {
-                                  x: 250, // Corresponding to left panel width
-                                  y: 0
-                                }
-                              : Point.ORIGIN
-                          }
-                          onDrop={canvasDropHandler($d)}
-                          onDragOver={canvasDragOverHandler($d)}
-                          context={application.current}
-                        />
-                      </ContextMenu.Trigger>
-                      <ContextMenu.Portal>
-                        <ContextMenu.Content className="cmp-context-menu">
-                          <ContextMenuDispatcher
-                            state={contextMenuTarget}
-                            createContextMenu={state => {
-                              if (state.type === 'canvas') {
-                                return (
-                                  <CanvasContextMenu
-                                    target={state as ContextMenuTarget<'canvas'>}
-                                  />
-                                );
-                              } else if (state.type === 'selection') {
-                                return (
-                                  <SelectionContextMenu
-                                    target={state as ContextMenuTarget<'selection'>}
-                                  />
-                                );
-                              } else {
-                                VERIFY_NOT_REACHED();
-                              }
-                            }}
+                    <BaseUIContextMenu.Root>
+                      <BaseUIContextMenu.Trigger
+                        render={
+                          <EditableCanvas
+                            id={CanvasDomHelper.diagramId($d)}
+                            ref={svgRef}
+                            diagram={$d}
+                            /* Note: this uid here to force redraw in case the diagram is reloaded */
+                            key={$d.uid}
+                            actionMap={actionMap}
+                            tools={tools}
+                            keyMap={application.current.keyMap}
+                            offset={
+                              (userState.current.panelLeft ?? -1) >= 0
+                                ? {
+                                    x: 250, // Corresponding to left panel width
+                                    y: 0
+                                  }
+                                : Point.ORIGIN
+                            }
+                            onDrop={canvasDropHandler($d)}
+                            onDragOver={canvasDragOverHandler($d)}
+                            context={application.current}
                           />
-                        </ContextMenu.Content>
-                      </ContextMenu.Portal>
-                    </ContextMenu.Root>
+                        }
+                      />
+                      <BaseUIContextMenu.Portal>
+                        <BaseUIContextMenu.Positioner>
+                          <BaseUIContextMenu.Popup className="cmp-context-menu">
+                            <ContextMenuDispatcher
+                              state={contextMenuTarget}
+                              createContextMenu={state => {
+                                if (state.type === 'canvas') {
+                                  return (
+                                    <CanvasContextMenu
+                                      target={state as ContextMenuTarget<'canvas'>}
+                                    />
+                                  );
+                                } else if (state.type === 'selection') {
+                                  return (
+                                    <SelectionContextMenu
+                                      target={state as ContextMenuTarget<'selection'>}
+                                    />
+                                  );
+                                } else {
+                                  VERIFY_NOT_REACHED();
+                                }
+                              }}
+                            />
+                          </BaseUIContextMenu.Popup>
+                        </BaseUIContextMenu.Positioner>
+                      </BaseUIContextMenu.Portal>
+                    </BaseUIContextMenu.Root>
                   </ErrorBoundary>
 
                   <Ruler orientation={'horizontal'} />

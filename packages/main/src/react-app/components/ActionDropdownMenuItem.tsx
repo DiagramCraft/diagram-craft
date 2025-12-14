@@ -16,7 +16,7 @@ export function ActionDropdownMenuItem<
     <BaseUIMenu.Item
       className="cmp-context-menu__item"
       disabled={!actionMap[props.action]?.isEnabled(props.arg ?? {})}
-      onSelect={async () => {
+      onClick={async () => {
         const a = actionMap[props.action]!;
         a.execute(props.arg ?? {});
       }}

@@ -126,7 +126,7 @@ export const ElementStylesheetPanel = (props: Props) => {
                   <BaseUIMenu.Popup className="cmp-context-menu">
                     <BaseUIMenu.Item
                       className="cmp-context-menu__item"
-                      onSelect={() => {
+                      onClick={() => {
                         const uow = new UnitOfWork($d, true);
                         $d.selection.elements.forEach(n => {
                           $d.document.styles.setStylesheet(n, $s.val, uow, true);
@@ -138,7 +138,7 @@ export const ElementStylesheetPanel = (props: Props) => {
                     </BaseUIMenu.Item>
                     <BaseUIMenu.Item
                       className="cmp-context-menu__item"
-                      onSelect={() => {
+                      onClick={() => {
                         // TODO: Maybe to ask confirmation to apply to all selected nodes or copy
                         const uow = new UnitOfWork($d, true);
                         const stylesheet = $d.document.styles.get($s.val);
@@ -160,7 +160,7 @@ export const ElementStylesheetPanel = (props: Props) => {
                     </BaseUIMenu.Item>
                     <BaseUIMenu.Item
                       className="cmp-context-menu__item"
-                      onSelect={() => {
+                      onClick={() => {
                         application.ui.showDialog(
                           new StringInputDialogCommand(
                             {
@@ -215,7 +215,7 @@ export const ElementStylesheetPanel = (props: Props) => {
                     </BaseUIMenu.Item>
                     <BaseUIMenu.Item
                       className="cmp-context-menu__item"
-                      onSelect={() => {
+                      onClick={() => {
                         application.ui.showDialog(
                           new MessageDialogCommand(
                             {
@@ -247,7 +247,7 @@ export const ElementStylesheetPanel = (props: Props) => {
                     </BaseUIMenu.Item>
                     <BaseUIMenu.Item
                       className="cmp-context-menu__item"
-                      onSelect={() => {
+                      onClick={() => {
                         const style = $d.document.styles.get($s.val);
                         setDialogProps({
                           props: style?.props ?? {},
@@ -259,7 +259,7 @@ export const ElementStylesheetPanel = (props: Props) => {
                     </BaseUIMenu.Item>
                     <BaseUIMenu.Item
                       className="cmp-context-menu__item"
-                      onSelect={() => {
+                      onClick={() => {
                         application.ui.showDialog(
                           new StringInputDialogCommand(
                             {

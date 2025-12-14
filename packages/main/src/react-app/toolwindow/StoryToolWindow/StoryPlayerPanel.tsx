@@ -15,8 +15,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { StoryPlayer } from '@diagram-craft/model/storyPlayer';
 import { mustExist } from '@diagram-craft/utils/assert';
 import { PresentationMode } from './PresentationMode';
-import { usePortal } from '@diagram-craft/app-components/PortalContext';
-import { Portal } from '@radix-ui/react-portal';
+import { createPortal } from 'react-dom';
 
 export const StoryPlayerPanel = () => {
   const redraw = useRedraw();
@@ -24,7 +23,6 @@ export const StoryPlayerPanel = () => {
   const application = useApplication();
   const stories = document.stories.stories;
   const [showPresentation, setShowPresentation] = useState(false);
-  const portal = usePortal();
 
   const player = useMemo(
     () => new StoryPlayer(document, d => (application.model.activeDiagram = d)),
@@ -197,14 +195,15 @@ export const StoryPlayerPanel = () => {
         )}
       </div>
 
-      {showPresentation && selectedStoryId && (
-        <Portal container={portal}>
+      {showPresentation &&
+        selectedStoryId &&
+        createPortal(
           <PresentationMode
             story={mustExist(document.stories.getStory(selectedStoryId))}
             onClose={() => setShowPresentation(false)}
-          />
-        </Portal>
-      )}
+          />,
+          window.document.body
+        )}
     </ToolWindowPanel>
   );
 };

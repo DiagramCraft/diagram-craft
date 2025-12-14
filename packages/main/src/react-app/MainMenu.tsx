@@ -51,7 +51,7 @@ const renderMenuItem = (
                     <BaseUIMenu.Item
                       key={subItem.action}
                       className="cmp-context-menu__item"
-                      onSelect={() => application.file.loadDocument(subItem.action!)}
+                      onClick={() => application.file.loadDocument(subItem.action!)}
                     >
                       {subItem.label}
                     </BaseUIMenu.Item>

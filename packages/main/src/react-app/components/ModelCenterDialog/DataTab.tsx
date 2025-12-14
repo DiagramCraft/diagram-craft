@@ -298,7 +298,7 @@ export const DataTab = () => {
                     <BaseUIMenu.Item
                       key={schema.id}
                       className="cmp-context-menu__item"
-                      onSelect={() => setAddItemDialog({ open: true, schemaId: schema.id })}
+                      onClick={() => setAddItemDialog({ open: true, schemaId: schema.id })}
                       disabled={!db.isDataEditable(schema)}
                     >
                       {schema.name}

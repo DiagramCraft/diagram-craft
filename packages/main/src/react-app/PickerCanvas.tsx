@@ -1,13 +1,13 @@
 import { Canvas } from '@diagram-craft/canvas-react/Canvas';
 import { Diagram } from '@diagram-craft/model/diagram';
 import React, { useCallback, useRef, useState } from 'react';
-import * as Portal from '@radix-ui/react-portal';
 import { Point } from '@diagram-craft/geometry/point';
 import { useApplication, useDiagram } from '../application';
 import {
   StaticCanvasComponent,
   StaticCanvasProps
 } from '@diagram-craft/canvas/canvas/StaticCanvasComponent';
+import { createPortal } from 'react-dom';
 
 export const PickerCanvas = (props: PickerCanvasProps) => {
   const application = useApplication();
@@ -55,8 +55,9 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
       style={{ filter: isRuleLayer ? 'opacity(0.3)' : 'none' }}
       onPointerDown={isRuleLayer ? () => {} : e => props.onMouseDown?.(e.nativeEvent) ?? (() => {})}
     >
-      {hover && props.showHover && (
-        <Portal.Root>
+      {hover &&
+        props.showHover &&
+        createPortal(
           <div
             style={{
               position: 'absolute',
@@ -101,9 +102,9 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
             >
               {props.name}
             </div>
-          </div>
-        </Portal.Root>
-      )}
+          </div>,
+          document.body
+        )}
 
       <Canvas<StaticCanvasComponent, StaticCanvasProps>
         id={`picker-canvas-${props.diagram.id}`}

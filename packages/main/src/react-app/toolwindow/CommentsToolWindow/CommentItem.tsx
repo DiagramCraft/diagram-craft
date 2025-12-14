@@ -41,7 +41,7 @@ const CommentItemMenu = (props: CommentItemMenuProps) => (
     <BaseUIMenu.Portal>
       <BaseUIMenu.Positioner side="left">
         <BaseUIMenu.Popup className="cmp-context-menu">
-          <BaseUIMenu.Item className="cmp-context-menu__item" onSelect={props.onEditComment}>
+          <BaseUIMenu.Item className="cmp-context-menu__item" onClick={props.onEditComment}>
             <div className="cmp-context-menu__item-icon">
               <TbEdit size={14} />
             </div>
@@ -49,7 +49,7 @@ const CommentItemMenu = (props: CommentItemMenuProps) => (
           </BaseUIMenu.Item>
           <BaseUIMenu.Item
             className="cmp-context-menu__item"
-            onSelect={props.onChangeState}
+            onClick={props.onChangeState}
             disabled={!props.canChangeState}
           >
             <div className="cmp-context-menu__item-icon">
@@ -57,7 +57,7 @@ const CommentItemMenu = (props: CommentItemMenuProps) => (
             </div>
             {props.state === 'resolved' ? 'Unresolve' : 'Resolve'}
           </BaseUIMenu.Item>
-          <BaseUIMenu.Item className="cmp-context-menu__item" onSelect={props.onDeleteComment}>
+          <BaseUIMenu.Item className="cmp-context-menu__item" onClick={props.onDeleteComment}>
             <div className="cmp-context-menu__item-icon">
               <TbTrash size={14} />
             </div>

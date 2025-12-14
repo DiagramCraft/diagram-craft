@@ -123,97 +123,100 @@ const LayerEntry = (props: { layer: Layer }) => {
   );
 
   return (
-    <LayerContextMenu layer={layer}>
-      <Tree.Node
-        key={layer.id}
-        isOpen={true}
-        className={diagram.activeLayer === layer ? 'cmp-layer-list__layer--selected' : ''}
-        {...drag.eventHandlers}
-        {...dropTarget.eventHandlers}
-        onClick={() => {
-          diagram.layers.active = layer;
-        }}
-      >
-        <Tree.NodeLabel>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.1rem'
-            }}
-          >
-            {layer.type === 'reference' ? <TbLink /> : undefined}
-            {layer.resolveForced().type === 'rule' ? <TbAdjustments /> : undefined}
-            {layer.type === 'modification' ? <TbLayersSelectedBottom /> : undefined}
-            {layer.name}
-          </div>
-        </Tree.NodeLabel>
-        <Tree.NodeCell className="cmp-tree__node__action">
-          {layer.type !== 'reference' && layer.type !== 'rule' ? (
-            <LockToggle layer={layer} diagram={diagram} />
-          ) : (
-            ''
-          )}
-          <VisibilityToggle layer={layer} diagram={diagram} />
-        </Tree.NodeCell>
-        {!(layer instanceof ReferenceLayer) && (
-          <Tree.Children>
-            {layer instanceof RegularLayer && (
-              <div style={{ display: 'contents' }}>
-                {layer.elements.toReversed().map(e => (
-                  <ElementEntry key={e.id} element={e} />
-                ))}
-              </div>
-            )}
-            {layer instanceof RuleLayer && (
-              <div style={{ display: 'contents' }}>
-                {layer.rules.toReversed().map(e => (
-                  <RuleEntry key={e.id} diagram={diagram} rule={e} layer={layer} />
-                ))}
-              </div>
-            )}
-            {layer instanceof ModificationLayer && (
-              <div style={{ display: 'contents' }}>
-                {layer.modifications.length === 0 ? (
-                  <Tree.Node>
-                    <Tree.NodeLabel style={{ fontStyle: 'italic' }}>
-                      No modifications
-                    </Tree.NodeLabel>
-                  </Tree.Node>
-                ) : (
-                  layer.modifications
-                    .toReversed()
-                    .map(m => (
-                      <ModificationEntry
-                        key={m.id}
-                        diagram={diagram}
-                        modification={m}
-                        layer={layer as ModificationLayer}
-                      />
-                    ))
-                )}
-              </div>
-            )}
-            {!(layer instanceof RegularLayer) &&
-              !(layer instanceof RuleLayer) &&
-              !(layer instanceof ModificationLayer) && (
-                <div style={{ color: 'red' }}>Not implemented yet</div>
-              )}
-          </Tree.Children>
-        )}
-        {layer instanceof ReferenceLayer && (
-          <Tree.Children>
-            <div style={{ display: 'contents' }}>
-              <Tree.Node>
-                <Tree.NodeLabel style={{ fontStyle: 'italic' }}>
-                  <TbArrowNarrowRight /> {layer.referenceName()}
-                </Tree.NodeLabel>
-              </Tree.Node>
+    <LayerContextMenu
+      layer={layer}
+      element={
+        <Tree.Node
+          key={layer.id}
+          isOpen={true}
+          className={diagram.activeLayer === layer ? 'cmp-layer-list__layer--selected' : ''}
+          {...drag.eventHandlers}
+          {...dropTarget.eventHandlers}
+          onClick={() => {
+            diagram.layers.active = layer;
+          }}
+        >
+          <Tree.NodeLabel>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.1rem'
+              }}
+            >
+              {layer.type === 'reference' ? <TbLink /> : undefined}
+              {layer.resolveForced().type === 'rule' ? <TbAdjustments /> : undefined}
+              {layer.type === 'modification' ? <TbLayersSelectedBottom /> : undefined}
+              {layer.name}
             </div>
-          </Tree.Children>
-        )}
-      </Tree.Node>
-    </LayerContextMenu>
+          </Tree.NodeLabel>
+          <Tree.NodeCell className="cmp-tree__node__action">
+            {layer.type !== 'reference' && layer.type !== 'rule' ? (
+              <LockToggle layer={layer} diagram={diagram} />
+            ) : (
+              ''
+            )}
+            <VisibilityToggle layer={layer} diagram={diagram} />
+          </Tree.NodeCell>
+          {!(layer instanceof ReferenceLayer) && (
+            <Tree.Children>
+              {layer instanceof RegularLayer && (
+                <div style={{ display: 'contents' }}>
+                  {layer.elements.toReversed().map(e => (
+                    <ElementEntry key={e.id} element={e} />
+                  ))}
+                </div>
+              )}
+              {layer instanceof RuleLayer && (
+                <div style={{ display: 'contents' }}>
+                  {layer.rules.toReversed().map(e => (
+                    <RuleEntry key={e.id} diagram={diagram} rule={e} layer={layer} />
+                  ))}
+                </div>
+              )}
+              {layer instanceof ModificationLayer && (
+                <div style={{ display: 'contents' }}>
+                  {layer.modifications.length === 0 ? (
+                    <Tree.Node>
+                      <Tree.NodeLabel style={{ fontStyle: 'italic' }}>
+                        No modifications
+                      </Tree.NodeLabel>
+                    </Tree.Node>
+                  ) : (
+                    layer.modifications
+                      .toReversed()
+                      .map(m => (
+                        <ModificationEntry
+                          key={m.id}
+                          diagram={diagram}
+                          modification={m}
+                          layer={layer as ModificationLayer}
+                        />
+                      ))
+                  )}
+                </div>
+              )}
+              {!(layer instanceof RegularLayer) &&
+                !(layer instanceof RuleLayer) &&
+                !(layer instanceof ModificationLayer) && (
+                  <div style={{ color: 'red' }}>Not implemented yet</div>
+                )}
+            </Tree.Children>
+          )}
+          {layer instanceof ReferenceLayer && (
+            <Tree.Children>
+              <div style={{ display: 'contents' }}>
+                <Tree.Node>
+                  <Tree.NodeLabel style={{ fontStyle: 'italic' }}>
+                    <TbArrowNarrowRight /> {layer.referenceName()}
+                  </Tree.NodeLabel>
+                </Tree.Node>
+              </div>
+            </Tree.Children>
+          )}
+        </Tree.Node>
+      }
+    />
   );
 };
 
@@ -226,40 +229,44 @@ const RuleEntry = (props: { rule: AdjustmentRule; layer: RuleLayer; diagram: Dia
   const icon = <TbFilterCog />;
 
   return (
-    <RuleContextMenu layer={props.layer} rule={props.rule}>
-      <Tree.Node
-        key={e.id}
-        onClick={() => {
-          const keys = [...props.layer.runRule(props.rule).keys()];
-          for (const key of keys) {
-            addHighlight(props.diagram.lookup(key)!, 'search-match');
-          }
-          setTimeout(() => {
+    <RuleContextMenu
+      layer={props.layer}
+      rule={props.rule}
+      element={
+        <Tree.Node
+          key={e.id}
+          onClick={() => {
+            const keys = [...props.layer.runRule(props.rule).keys()];
             for (const key of keys) {
-              removeHighlight(props.diagram.lookup(key), 'search-match');
+              addHighlight(props.diagram.lookup(key)!, 'search-match');
             }
-          }, 1000);
-        }}
-      >
-        <Tree.NodeLabel>
-          {icon} &nbsp;{shorten(e.name, 25)}
-        </Tree.NodeLabel>
-        <Tree.NodeCell className="cmp-tree__node__action">
-          <span
-            style={{ cursor: 'pointer' }}
-            onClick={e => {
-              actions['RULE_LAYER_EDIT']!.execute({
-                id: `${props.layer.id}:${props.rule.id}`
-              });
-              e.preventDefault();
-              e.stopPropagation();
-            }}
-          >
-            <TbPencil />
-          </span>
-        </Tree.NodeCell>
-      </Tree.Node>
-    </RuleContextMenu>
+            setTimeout(() => {
+              for (const key of keys) {
+                removeHighlight(props.diagram.lookup(key), 'search-match');
+              }
+            }, 1000);
+          }}
+        >
+          <Tree.NodeLabel>
+            {icon} &nbsp;{shorten(e.name, 25)}
+          </Tree.NodeLabel>
+          <Tree.NodeCell className="cmp-tree__node__action">
+            <span
+              style={{ cursor: 'pointer' }}
+              onClick={e => {
+                actions['RULE_LAYER_EDIT']!.execute({
+                  id: `${props.layer.id}:${props.rule.id}`
+                });
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+            >
+              <TbPencil />
+            </span>
+          </Tree.NodeCell>
+        </Tree.Node>
+      }
+    />
   );
 };
 
@@ -475,9 +482,7 @@ export const LayerListPanel = () => {
           <LayerEntry key={l.id} layer={l} />
         ))}
       </Tree.Root>
-      <LayerContextMenu>
-        <div style={{ height: '100%' }}></div>
-      </LayerContextMenu>
+      <LayerContextMenu element={<div style={{ height: '100%' }}></div>} />
     </ToolWindowPanel>
   );
 };

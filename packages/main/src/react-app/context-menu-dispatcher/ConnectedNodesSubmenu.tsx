@@ -1,4 +1,3 @@
-import * as ContextMenu from '@radix-ui/react-context-menu';
 import { TbChevronRight, TbLink, TbLinkOff, TbPentagon } from 'react-icons/tb';
 import { useDiagram } from '../../application';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
@@ -12,6 +11,7 @@ import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { decodeDataReferences } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { assert } from '@diagram-craft/utils/assert';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
+import { ContextMenu as BaseUIContextMenu } from '@base-ui-components/react/context-menu';
 
 type ConnectionItem = {
   id: string;
@@ -230,8 +230,8 @@ export const ConnectedNodesSubmenu = () => {
   const connectedItems = getConnectedItems(diagram);
 
   return (
-    <ContextMenu.Sub>
-      <ContextMenu.SubTrigger
+    <BaseUIContextMenu.SubmenuRoot>
+      <BaseUIContextMenu.SubmenuTrigger
         className="cmp-context-menu__sub-trigger"
         disabled={connectedItems.length === 0}
       >
@@ -239,91 +239,93 @@ export const ConnectedNodesSubmenu = () => {
         <div className="cmp-context-menu__right-slot">
           <TbChevronRight />
         </div>
-      </ContextMenu.SubTrigger>
-      <ContextMenu.Portal>
-        <ContextMenu.SubContent className="cmp-context-menu" sideOffset={2} alignOffset={-5}>
-          {connectedItems.length === 0 ? (
-            <ContextMenu.Item className="cmp-context-menu__item" disabled>
-              No connected items
-            </ContextMenu.Item>
-          ) : (
-            connectedItems.map(item => {
-              // Create display name with type indicator
-              const displayName =
-                item.type === 'data' ? `${item.name} (${item.schemaName})` : item.name;
+      </BaseUIContextMenu.SubmenuTrigger>
+      <BaseUIContextMenu.Portal>
+        <BaseUIContextMenu.Positioner sideOffset={2} alignOffset={-5}>
+          <BaseUIContextMenu.Popup className="cmp-context-menu">
+            {connectedItems.length === 0 ? (
+              <BaseUIContextMenu.Item className="cmp-context-menu__item" disabled>
+                No connected items
+              </BaseUIContextMenu.Item>
+            ) : (
+              connectedItems.map(item => {
+                // Create display name with type indicator
+                const displayName =
+                  item.type === 'data' ? `${item.name} (${item.schemaName})` : item.name;
 
-              // Get the appropriate icon component
-              const IconComponent = getConnectionIcon(item);
+                // Get the appropriate icon component
+                const IconComponent = getConnectionIcon(item);
 
-              return (
-                <ContextMenu.Sub key={item.id}>
-                  <ContextMenu.SubTrigger className="cmp-context-menu__sub-trigger">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1 }}>
-                      <IconComponent style={{ fontSize: '0.9em', color: 'var(--cmp-fg-dim)' }} />
-                      <div>{displayName}</div>
-                    </div>
-                    <div className="cmp-context-menu__right-slot">
-                      <TbChevronRight />
-                    </div>
-                  </ContextMenu.SubTrigger>
-                  <ContextMenu.Portal>
-                    <ContextMenu.SubContent
-                      className="cmp-context-menu"
-                      sideOffset={2}
-                      alignOffset={-5}
-                    >
-                      {/* Data-specific actions */}
-                      {(item.type === 'data' || item.type === 'both') && item.data && (
-                        <>
-                          <ContextMenu.Item className="cmp-context-menu__item" disabled>
-                            Data Entry ({item.schemaName})
-                          </ContextMenu.Item>
-
-                          {item.type === 'data' && (
+                return (
+                  <BaseUIContextMenu.SubmenuRoot key={item.id}>
+                    <BaseUIContextMenu.SubmenuTrigger className="cmp-context-menu__sub-trigger">
+                      <div
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1 }}
+                      >
+                        <IconComponent style={{ fontSize: '0.9em', color: 'var(--cmp-fg-dim)' }} />
+                        <div>{displayName}</div>
+                      </div>
+                      <div className="cmp-context-menu__right-slot">
+                        <TbChevronRight />
+                      </div>
+                    </BaseUIContextMenu.SubmenuTrigger>
+                    <BaseUIContextMenu.Portal>
+                      <BaseUIContextMenu.Positioner sideOffset={2} alignOffset={-5}>
+                        <BaseUIContextMenu.Popup className="cmp-context-menu">
+                          {/* Data-specific actions */}
+                          {(item.type === 'data' || item.type === 'both') && item.data && (
                             <>
-                              <ContextMenu.Separator className="cmp-context-menu__separator" />
-                              <ContextMenu.Item
-                                className="cmp-context-menu__item"
-                                onClick={() => {
-                                  createNodeForData(item.data!, item.schemaName!, diagram);
-                                }}
-                              >
-                                Create Node
-                              </ContextMenu.Item>
+                              <BaseUIContextMenu.Item className="cmp-context-menu__item" disabled>
+                                Data Entry ({item.schemaName})
+                              </BaseUIContextMenu.Item>
+
+                              {item.type === 'data' && (
+                                <>
+                                  <BaseUIContextMenu.Separator className="cmp-context-menu__separator" />
+                                  <BaseUIContextMenu.Item
+                                    className="cmp-context-menu__item"
+                                    onClick={() => {
+                                      createNodeForData(item.data!, item.schemaName!, diagram);
+                                    }}
+                                  >
+                                    Create Node
+                                  </BaseUIContextMenu.Item>
+                                </>
+                              )}
                             </>
                           )}
-                        </>
-                      )}
 
-                      {/* Node-specific actions */}
-                      {(item.type === 'node' || item.type === 'both') && item.node && (
-                        <>
-                          <ContextMenu.Item
-                            className="cmp-context-menu__item"
-                            onClick={() => {
-                              diagram.selection.setElements([item.node!]);
-                            }}
-                          >
-                            Select Node
-                          </ContextMenu.Item>
-                          <ContextMenu.Item
-                            className="cmp-context-menu__item"
-                            onClick={() => {
-                              diagram.selection.toggle(item.node!);
-                            }}
-                          >
-                            Add Node to Selection
-                          </ContextMenu.Item>
-                        </>
-                      )}
-                    </ContextMenu.SubContent>
-                  </ContextMenu.Portal>
-                </ContextMenu.Sub>
-              );
-            })
-          )}
-        </ContextMenu.SubContent>
-      </ContextMenu.Portal>
-    </ContextMenu.Sub>
+                          {/* Node-specific actions */}
+                          {(item.type === 'node' || item.type === 'both') && item.node && (
+                            <>
+                              <BaseUIContextMenu.Item
+                                className="cmp-context-menu__item"
+                                onClick={() => {
+                                  diagram.selection.setElements([item.node!]);
+                                }}
+                              >
+                                Select Node
+                              </BaseUIContextMenu.Item>
+                              <BaseUIContextMenu.Item
+                                className="cmp-context-menu__item"
+                                onClick={() => {
+                                  diagram.selection.toggle(item.node!);
+                                }}
+                              >
+                                Add Node to Selection
+                              </BaseUIContextMenu.Item>
+                            </>
+                          )}
+                        </BaseUIContextMenu.Popup>
+                      </BaseUIContextMenu.Positioner>
+                    </BaseUIContextMenu.Portal>
+                  </BaseUIContextMenu.SubmenuRoot>
+                );
+              })
+            )}
+          </BaseUIContextMenu.Popup>
+        </BaseUIContextMenu.Positioner>
+      </BaseUIContextMenu.Portal>
+    </BaseUIContextMenu.SubmenuRoot>
   );
 };

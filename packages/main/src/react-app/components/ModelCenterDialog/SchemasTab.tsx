@@ -136,7 +136,7 @@ export const SchemasTab = () => {
                       key={provider.id}
                       className="cmp-context-menu__item"
                       disabled={!db.isSchemasEditable(provider.id)}
-                      onSelect={() => setAddSchemaDialog({ open: true, providerId: provider.id })}
+                      onClick={() => setAddSchemaDialog({ open: true, providerId: provider.id })}
                     >
                       {getProviderTypeName(provider.providerId)}: {provider.id}
                     </BaseUIMenu.Item>
