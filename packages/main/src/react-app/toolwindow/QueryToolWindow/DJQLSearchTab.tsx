@@ -60,7 +60,7 @@ export const DJQLSearchTab = () => {
   const redraw = useRedraw();
   const diagram = useDiagram();
   const { djqlQuery, djqlScope, setDjqlQuery } = useQueryToolWindowContext();
-  const ref = useRef<HTMLTextAreaElement>(null);
+  const ref = useRef<SyntaxHighlightingEditor.Ref>(null);
   const downloadRef = useRef<HTMLAnchorElement>(null);
   const [expanded, setExpanded] = useState<number[]>([]);
   const [downloadLink, setDownloadLink] = useState('');
@@ -119,10 +119,10 @@ export const DJQLSearchTab = () => {
           type={'djql'}
           onQuerySelect={(scope, query) => {
             setDjqlQuery(query, scope);
-            ref.current!.value = query;
+            ref.current!.setValue(query);
           }}
-          getQuery={() => ref.current!.value}
-          getLabel={() => ref.current!.value}
+          getQuery={() => ref.current!.getValue()}
+          getLabel={() => ref.current!.getValue()}
           getScope={() => djqlScope}
         />
       </ToolWindow.TabActions>
@@ -183,13 +183,13 @@ export const DJQLSearchTab = () => {
               </a>
               <Button
                 onClick={() => {
-                  if (ref.current?.value === djqlQuery) {
+                  if (ref.current?.getValue() === djqlQuery) {
                     redraw();
                   } else {
                     setQueryIdx(0);
                     setQueryInput({});
                     setExpanded([]);
-                    setDjqlQuery(ref.current?.value ?? '', djqlScope);
+                    setDjqlQuery(ref.current?.getValue() ?? '', djqlScope);
                   }
                 }}
               >
