@@ -21,13 +21,9 @@ export const CommentsSortMenu = ({
 }: CommentsSortMenuProps) => {
   return (
     <BaseUIMenu.Root>
-      <BaseUIMenu.Trigger
-        render={
-          <a className={'cmp-button cmp-button--icon-only'}>
-            <TbArrowsSort />
-          </a>
-        }
-      />
+      <BaseUIMenu.Trigger className={'cmp-button cmp-button--icon-only'}>
+        <TbArrowsSort />
+      </BaseUIMenu.Trigger>
       <BaseUIMenu.Portal>
         <BaseUIMenu.Positioner align={'end'}>
           <BaseUIMenu.Popup className="cmp-context-menu">
