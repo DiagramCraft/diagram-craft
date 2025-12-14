@@ -1,10 +1,17 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { extractDataAttributes } from './utils';
 import styles from './SyntaxHighlightingEditor.module.css';
 import { assert } from '@diagram-craft/utils/assert';
 import { Browser } from '@diagram-craft/utils/browser';
 
-export const SyntaxHighlightingEditor = React.forwardRef<HTMLTextAreaElement, Props>(
+export namespace SyntaxHighlightingEditor {
+  export type Ref = {
+    setValue: (value: string) => void;
+    getValue: () => string;
+  };
+}
+
+export const SyntaxHighlightingEditor = React.forwardRef<SyntaxHighlightingEditor.Ref, Props>(
   (props, ref) => {
     const [tooltip, setTooltip] = useState<{ x: number; y: number; message: string } | null>(null);
     const [internalValue, setInternalValue] = useState(props.defaultValue ?? '');
@@ -17,6 +24,11 @@ export const SyntaxHighlightingEditor = React.forwardRef<HTMLTextAreaElement, Pr
     // Determine if component is controlled or uncontrolled
     const isControlled = props.value !== undefined;
     const value = isControlled ? (props.value ?? '') : internalValue;
+
+    useImperativeHandle(ref, () => ({
+      getValue: () => value,
+      setValue: value => setInternalValue(value)
+    }));
 
     // Calculate min-height for browsers that don't support attr() in calc()
     useEffect(() => {
@@ -129,7 +141,7 @@ export const SyntaxHighlightingEditor = React.forwardRef<HTMLTextAreaElement, Pr
         data-rows={props.rows ?? 10}
       >
         <textarea
-          ref={ref ?? textareaRef}
+          ref={textareaRef}
           spellCheck={false}
           disabled={props.disabled}
           onKeyDown={onKeydown}

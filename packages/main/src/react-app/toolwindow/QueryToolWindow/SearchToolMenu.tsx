@@ -151,13 +151,9 @@ export const SearchToolMenu = (props: SearchToolMenuProps) => {
 
   return (
     <BaseUIMenu.Root>
-      <BaseUIMenu.Trigger
-        render={
-          <a className={'cmp-button cmp-button--icon-only'}>
-            <TbDots />
-          </a>
-        }
-      />
+      <BaseUIMenu.Trigger className={'cmp-button cmp-button--icon-only'}>
+        <TbDots />
+      </BaseUIMenu.Trigger>
       <BaseUIMenu.Portal>
         <BaseUIMenu.Positioner align={'start'}>
           <BaseUIMenu.Popup className="cmp-context-menu">

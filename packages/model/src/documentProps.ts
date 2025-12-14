@@ -3,6 +3,7 @@ import type { EmptyObject } from '@diagram-craft/utils/types';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import type { CRDTList, CRDTRoot } from '@diagram-craft/collaboration/crdt';
 import type { Releasable } from '@diagram-craft/utils/releasable';
+import { isEmptyString } from '@diagram-craft/utils/strings';
 
 export type QueryType = 'advanced' | 'simple' | 'djql';
 
@@ -40,14 +41,17 @@ class Query extends EventEmitter<{ change: EmptyObject }> {
   }
 
   get history(): Array<QueryEntry> {
-    return this._history.toArray().map(e => {
-      return {
-        type: e[0],
-        label: e[1],
-        scope: e[2],
-        value: e[3]
-      };
-    });
+    return this._history
+      .toArray()
+      .filter(e => !isEmptyString(e[3]))
+      .map(e => {
+        return {
+          type: e[0],
+          label: e[1],
+          scope: e[2],
+          value: e[3]
+        };
+      });
   }
 
   addHistory(type: QueryType, label: string, scope: string, value: string) {
