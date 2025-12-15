@@ -25,13 +25,14 @@ const Trigger = (props: TriggerProps) => {
 
 type MenuProps = {
   children: React.ReactNode;
-} & Pick<React.HTMLAttributes<'div'>, 'className'>;
+  className?: string;
+};
 
 const Menu = (props: MenuProps) => {
   return (
     <BaseUIContextMenu.Portal>
       <BaseUIContextMenu.Positioner>
-        <BaseUIContextMenu.Popup className={styles.cmpMenu} {...props}>
+        <BaseUIContextMenu.Popup className={props.className ?? styles.cmpMenu}>
           {props.children}
         </BaseUIContextMenu.Popup>
       </BaseUIContextMenu.Positioner>

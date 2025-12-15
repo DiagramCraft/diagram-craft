@@ -34,13 +34,14 @@ type MenuProps = {
   children: React.ReactNode;
   container?: HTMLElement;
   align?: 'start' | 'center' | 'end';
-} & Pick<React.HTMLAttributes<'div'>, 'className'>;
+  className?: string;
+};
 
 const Menu = (props: MenuProps) => {
   return (
     <BaseUIMenu.Portal container={props.container}>
       <BaseUIMenu.Positioner sideOffset={5} align={props.align}>
-        <BaseUIMenu.Popup className={styles.cmpMenu} {...props}>
+        <BaseUIMenu.Popup className={props.className ?? styles.cmpMenu}>
           {props.children}
           <BaseUIMenu.Arrow className={styles.cmpMenuArrow} />
         </BaseUIMenu.Popup>

@@ -26,13 +26,14 @@ type ItemProps = {
   icon?: ReactElement;
   indicator?: ReactElement;
   keybinding?: ReactElement | string;
-} & Pick<React.HTMLAttributes<'div'>, 'className'>;
+  className?: string;
+};
 
 const Item = (props: ItemProps) => {
   const type = useMenuContext();
   if (type === 'context') {
     return (
-      <BaseUIContextMenu.Item className={styles.cmpMenuItem} {...props}>
+      <BaseUIContextMenu.Item className={props.className ?? styles.cmpMenuItem}>
         {props.icon && <div className={styles.cmpMenuItemIcon}>{props.icon}</div>}
         {props.indicator && <div className={styles.cmpMenuItemIndicator}>{props.indicator}</div>}
         <span>{props.children}</span>
@@ -41,7 +42,7 @@ const Item = (props: ItemProps) => {
     );
   } else {
     return (
-      <BaseUIMenu.Item className={styles.cmpMenuItem} {...props}>
+      <BaseUIMenu.Item className={props.className ?? styles.cmpMenuItem}>
         {props.icon && <div className={styles.cmpMenuItemIcon}>{props.icon}</div>}
         {props.indicator && <div className={styles.cmpMenuItemIndicator}>{props.indicator}</div>}
         <span>{props.children}</span>
@@ -190,7 +191,13 @@ const SubMenu = (props: SubMenuProps) => {
     return (
       <BaseUIMenu.SubmenuRoot>
         <BaseUIMenu.SubmenuTrigger className={styles.cmpMenuSubTrigger} disabled={props.disabled}>
-          {props.label}
+          {props.icon && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1 }}>
+              {props.icon}
+              <div>{props.label}</div>
+            </div>
+          )}
+          {!props.icon && props.label}
           <div className={styles.cmpMenuRightSlot}>
             <TbChevronRight />
           </div>
