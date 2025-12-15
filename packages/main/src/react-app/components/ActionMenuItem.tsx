@@ -19,7 +19,7 @@ export function ActionMenuItem<
         const a = actionMap[props.action]!;
         a.execute(props.arg ?? {});
       }}
-      keybinding={formatKeyBinding(findKeyBindingsForAction(props.action, keyMap)[0])}
+      rightSlot={formatKeyBinding(findKeyBindingsForAction(props.action, keyMap)[0])}
     >
       {props.children}
     </Menu.Item>

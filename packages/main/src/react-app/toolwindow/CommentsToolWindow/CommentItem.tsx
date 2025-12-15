@@ -36,17 +36,17 @@ const CommentItemMenu = (props: CommentItemMenuProps) => (
       <TbDots size={14} />
     </MenuButton.Trigger>
     <MenuButton.Menu>
-      <Menu.Item onClick={props.onEditComment} icon={<TbEdit size={14} />}>
+      <Menu.Item onClick={props.onEditComment} leftSlot={<TbEdit size={14} />}>
         Edit Comment
       </Menu.Item>
       <Menu.Item
         onClick={props.onChangeState}
         disabled={!props.canChangeState}
-        icon={<TbCheck size={14} />}
+        leftSlot={<TbCheck size={14} />}
       >
         {props.state === 'resolved' ? 'Unresolve' : 'Resolve'}
       </Menu.Item>
-      <Menu.Item onClick={props.onDeleteComment} icon={<TbTrash size={14} />}>
+      <Menu.Item onClick={props.onDeleteComment} leftSlot={<TbTrash size={14} />}>
         Delete Comment
       </Menu.Item>
     </MenuButton.Menu>

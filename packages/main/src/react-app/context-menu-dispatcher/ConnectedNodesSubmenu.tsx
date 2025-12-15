@@ -244,11 +244,7 @@ export const ConnectedNodesSubmenu = () => {
           const IconComponent = getConnectionIcon(item);
 
           return (
-            <Menu.SubMenu
-              key={item.id}
-              label={displayName}
-              icon={<IconComponent style={{ fontSize: '0.9em', color: 'var(--cmp-fg-dim)' }} />}
-            >
+            <Menu.SubMenu key={item.id} label={displayName} leftSlot={<IconComponent />}>
               {/* Data-specific actions */}
               {(item.type === 'data' || item.type === 'both') && item.data && (
                 <>

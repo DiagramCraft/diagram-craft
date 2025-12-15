@@ -7,7 +7,8 @@ import styles from './Menu.module.css';
 
 const MenuContext = React.createContext<{ type: 'context' | 'menu' } | undefined>(undefined);
 
-const useMenuContext = () => {
+// @ts-ignore
+const _useMenuContext = () => {
   const context = React.useContext(MenuContext);
   assert.present(context);
   return context.type;
@@ -23,33 +24,23 @@ type ItemProps = {
   children: React.ReactNode;
   disabled?: boolean;
   onClick?: () => void;
-  icon?: ReactElement;
-  indicator?: ReactElement;
-  keybinding?: ReactElement | string;
+  leftSlot?: ReactElement;
+  rightSlot?: ReactElement | string;
   className?: string;
 };
 
 const Item = (props: ItemProps) => {
-  const type = useMenuContext();
-  if (type === 'context') {
-    return (
-      <BaseUIContextMenu.Item className={props.className ?? styles.cmpMenuItem}>
-        {props.icon && <div className={styles.cmpMenuItemIcon}>{props.icon}</div>}
-        {props.indicator && <div className={styles.cmpMenuItemIndicator}>{props.indicator}</div>}
-        <span>{props.children}</span>
-        {props.keybinding && <div className={styles.cmpMenuRightSlot}>{props.keybinding}</div>}
-      </BaseUIContextMenu.Item>
-    );
-  } else {
-    return (
-      <BaseUIMenu.Item className={props.className ?? styles.cmpMenuItem}>
-        {props.icon && <div className={styles.cmpMenuItemIcon}>{props.icon}</div>}
-        {props.indicator && <div className={styles.cmpMenuItemIndicator}>{props.indicator}</div>}
-        <span>{props.children}</span>
-        {props.keybinding && <div className={styles.cmpMenuRightSlot}>{props.keybinding}</div>}
-      </BaseUIMenu.Item>
-    );
-  }
+  return (
+    <BaseUIMenu.Item
+      className={props.className ?? styles.cmpMenuItem}
+      disabled={props.disabled}
+      onClick={props.onClick}
+    >
+      {props.leftSlot && <div className={styles.cmpMenuLeftSlot}>{props.leftSlot}</div>}
+      <span>{props.children}</span>
+      {props.rightSlot && <div className={styles.cmpMenuRightSlot}>{props.rightSlot}</div>}
+    </BaseUIMenu.Item>
+  );
 };
 
 type SeparatorProps = {
@@ -57,12 +48,7 @@ type SeparatorProps = {
 };
 
 const Separator = (props: SeparatorProps) => {
-  const type = useMenuContext();
-  if (type === 'context') {
-    return <BaseUIContextMenu.Separator className={styles.cmpMenuSeparator} {...props} />;
-  } else {
-    return <BaseUIMenu.Separator className={styles.cmpMenuSeparator} {...props} />;
-  }
+  return <BaseUIMenu.Separator className={props.className ?? styles.cmpMenuSeparator} />;
 };
 
 type RadioItemProps = {
@@ -70,33 +56,25 @@ type RadioItemProps = {
   value: string;
   onClick?: () => void;
   children: React.ReactNode;
+  disabled?: boolean;
+  rightSlot?: string | ReactElement;
 };
 
 const RadioItem = (props: RadioItemProps) => {
-  const type = useMenuContext();
-  if (type === 'context') {
-    return (
-      <BaseUIContextMenu.RadioItem
-        className={styles.cmpMenuRadioItem}
-        {...props}
-        value={props.value}
-      >
-        <BaseUIContextMenu.RadioItemIndicator className={styles.cmpMenuItemIndicator}>
-          <TbCheck />
-        </BaseUIContextMenu.RadioItemIndicator>
-        {props.children}
-      </BaseUIContextMenu.RadioItem>
-    );
-  } else {
-    return (
-      <BaseUIMenu.RadioItem className={styles.cmpMenuRadioItem} {...props} value={props.value}>
-        <BaseUIMenu.RadioItemIndicator className={styles.cmpMenuItemIndicator}>
-          <TbCheck />
-        </BaseUIMenu.RadioItemIndicator>
-        {props.children}
-      </BaseUIMenu.RadioItem>
-    );
-  }
+  return (
+    <BaseUIMenu.RadioItem
+      className={styles.cmpMenuRadioItem}
+      disabled={props.disabled}
+      value={props.value}
+      onClick={props.onClick}
+    >
+      <BaseUIMenu.RadioItemIndicator className={styles.cmpMenuLeftSlot}>
+        <TbCheck />
+      </BaseUIMenu.RadioItemIndicator>
+      {props.children}
+      {props.rightSlot && <div className={styles.cmpMenuRightSlot}>{props.rightSlot}</div>}
+    </BaseUIMenu.RadioItem>
+  );
 };
 
 type RadioGroupProps = {
@@ -105,16 +83,7 @@ type RadioGroupProps = {
 };
 
 const RadioGroup = (props: RadioGroupProps) => {
-  const type = useMenuContext();
-  if (type === 'context') {
-    return (
-      <BaseUIContextMenu.RadioGroup value={props.value}>
-        {props.children}
-      </BaseUIContextMenu.RadioGroup>
-    );
-  } else {
-    return <BaseUIMenu.RadioGroup value={props.value}>{props.children}</BaseUIMenu.RadioGroup>;
-  }
+  return <BaseUIMenu.RadioGroup value={props.value}>{props.children}</BaseUIMenu.RadioGroup>;
 };
 
 type CheckboxItemProps = {
@@ -123,95 +92,52 @@ type CheckboxItemProps = {
   children: React.ReactNode;
   checked?: boolean;
   disabled?: boolean;
-  keybinding?: string;
+  rightSlot?: string;
 };
 
 const CheckboxItem = (props: CheckboxItemProps) => {
-  const type = useMenuContext();
-  if (type === 'context') {
-    return (
-      <BaseUIContextMenu.CheckboxItem className={styles.cmpMenuCheckboxItem} {...props}>
-        <BaseUIContextMenu.CheckboxItemIndicator className={styles.cmpMenuItemIndicator}>
-          <TbCheck />
-        </BaseUIContextMenu.CheckboxItemIndicator>
-        {props.children}
-        {props.keybinding && <div className={styles.cmpMenuRightSlot}>{props.keybinding}</div>}
-      </BaseUIContextMenu.CheckboxItem>
-    );
-  } else {
-    return (
-      <BaseUIMenu.CheckboxItem className={styles.cmpMenuCheckboxItem} {...props}>
-        <BaseUIMenu.CheckboxItemIndicator className={styles.cmpMenuItemIndicator}>
-          <TbCheck />
-        </BaseUIMenu.CheckboxItemIndicator>
-        {props.children}
-        {props.keybinding && <div className={styles.cmpMenuRightSlot}>{props.keybinding}</div>}
-      </BaseUIMenu.CheckboxItem>
-    );
-  }
+  return (
+    <BaseUIMenu.CheckboxItem
+      className={props.className ?? styles.cmpMenuCheckboxItem}
+      disabled={props.disabled}
+      checked={props.checked}
+      onCheckedChange={props.onCheckedChange}
+    >
+      <BaseUIMenu.CheckboxItemIndicator className={styles.cmpMenuLeftSlot}>
+        <TbCheck />
+      </BaseUIMenu.CheckboxItemIndicator>
+      {props.children}
+      {props.rightSlot && <div className={styles.cmpMenuRightSlot}>{props.rightSlot}</div>}
+    </BaseUIMenu.CheckboxItem>
+  );
 };
 
 type SubMenuProps = {
   label: string;
   children: React.ReactNode;
-  icon?: ReactElement;
+  leftSlot?: ReactElement;
   disabled?: boolean;
 };
 
 const SubMenu = (props: SubMenuProps) => {
-  const type = useMenuContext();
-  if (type === 'context') {
-    return (
-      <BaseUIContextMenu.SubmenuRoot>
-        <BaseUIContextMenu.SubmenuTrigger
-          className={styles.cmpMenuSubTrigger}
-          disabled={props.disabled}
-        >
-          {props.icon && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1 }}>
-              {props.icon}
-              <div>{props.label}</div>
-            </div>
-          )}
-          {!props.icon && props.label}
-          <div className={styles.cmpMenuRightSlot}>
-            <TbChevronRight />
-          </div>
-        </BaseUIContextMenu.SubmenuTrigger>
-        <BaseUIContextMenu.Portal>
-          <BaseUIContextMenu.Positioner sideOffset={2} alignOffset={-5}>
-            <BaseUIContextMenu.Popup className={styles.cmpMenu}>
-              {props.children}
-            </BaseUIContextMenu.Popup>
-          </BaseUIContextMenu.Positioner>
-        </BaseUIContextMenu.Portal>
-      </BaseUIContextMenu.SubmenuRoot>
-    );
-  } else {
-    return (
-      <BaseUIMenu.SubmenuRoot>
-        <BaseUIMenu.SubmenuTrigger className={styles.cmpMenuSubTrigger} disabled={props.disabled}>
-          {props.icon && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1 }}>
-              {props.icon}
-              <div>{props.label}</div>
-            </div>
-          )}
-          {!props.icon && props.label}
-          <div className={styles.cmpMenuRightSlot}>
-            <TbChevronRight />
-          </div>
-        </BaseUIMenu.SubmenuTrigger>
-        <BaseUIMenu.Portal>
-          <BaseUIMenu.Positioner sideOffset={2} alignOffset={-5}>
-            <BaseUIContextMenu.Popup className={styles.cmpMenu}>
-              {props.children}
-            </BaseUIContextMenu.Popup>
-          </BaseUIMenu.Positioner>
-        </BaseUIMenu.Portal>
-      </BaseUIMenu.SubmenuRoot>
-    );
-  }
+  return (
+    <BaseUIMenu.SubmenuRoot>
+      <BaseUIMenu.SubmenuTrigger className={styles.cmpMenuSubTrigger} disabled={props.disabled}>
+        {props.leftSlot && <div className={styles.cmpMenuLeftSlot}>{props.leftSlot}</div>}
+        {props.label}
+        <div className={styles.cmpMenuRightSlot}>
+          <TbChevronRight />
+        </div>
+      </BaseUIMenu.SubmenuTrigger>
+      <BaseUIMenu.Portal>
+        <BaseUIMenu.Positioner sideOffset={2} alignOffset={-5}>
+          <BaseUIContextMenu.Popup className={styles.cmpMenu}>
+            {props.children}
+          </BaseUIContextMenu.Popup>
+        </BaseUIMenu.Positioner>
+      </BaseUIMenu.Portal>
+    </BaseUIMenu.SubmenuRoot>
+  );
 };
 
 export const Menu = {

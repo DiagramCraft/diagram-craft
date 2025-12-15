@@ -76,8 +76,8 @@ export const LayerIndicator = () => {
           <Menu.Item
             onClick={() => (diagram.layers.active = layer)}
             key={layer.id}
-            indicator={diagram.activeLayer === layer ? <TbCheck /> : undefined}
-            keybinding={
+            leftSlot={diagram.activeLayer === layer ? <TbCheck /> : undefined}
+            rightSlot={
               <>
                 {layer.isLocked() ? (
                   <span style={{ color: 'var(--error-fg)' }}>

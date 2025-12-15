@@ -22,7 +22,7 @@ export function ActionToggleMenuItem<K extends keyof ActionMap>(props: Props<K>)
         action.execute(props.arg ?? {});
         redraw();
       }}
-      keybinding={formatKeyBinding(findKeyBindingsForAction(props.action, keyMap)[0])}
+      rightSlot={formatKeyBinding(findKeyBindingsForAction(props.action, keyMap)[0])}
     >
       {props.children}
     </Menu.CheckboxItem>

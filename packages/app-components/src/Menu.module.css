@@ -38,7 +38,7 @@
       background-color: var(--accent-bg-selected);
     }
 
-    .cmp-menu__item-indicator {
+    .cmp-menu__left-slot {
       position: absolute;
       left: 0;
       width: 25px;
@@ -48,7 +48,7 @@
       color: var(--accent-fg);
 
       &[data-checked] {
-        color: var(--cmp-fg-dimmed);
+        color: var(--cmp-fg);
       }
     }
 
@@ -64,7 +64,8 @@
       color: var(--accent-fg);
     }
 
-    &[data-disabled] .cmp-menu__right-slot {
+    &[data-disabled] .cmp-menu__right-slot,
+    &[data-disabled] .cmp-menu__left-slot {
       color: var(--cmp-fg-disabled);
     }
   }
@@ -74,36 +75,10 @@
     color: var(--panel-fg);
   }
 
-  .cmp-menu__label {
-    padding-left: 25px;
-    font-size: 12px;
-    line-height: 25px;
-    color: var(--cmp-fg);
-  }
-
   .cmp-menu__separator {
     height: 1px;
     background-color: var(--cmp-border);
     margin: 5px;
-  }
-
-  .cmp-menu__item-indicator {
-    position: absolute;
-    left: 0;
-    width: 25px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .cmp-menu__item-icon {
-    position: absolute;
-    left: 0;
-    width: 25px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--accent-fg);
   }
 
   .cmp-menu__arrow {
