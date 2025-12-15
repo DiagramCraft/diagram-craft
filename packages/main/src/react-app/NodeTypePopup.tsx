@@ -150,7 +150,7 @@ export const NodeTypePopup = (props: Props) => {
                   diagramWidth={d.viewBox.dimensions.w}
                   diagramHeight={d.viewBox.dimensions.h}
                   diagram={d}
-                  onClick={() => addNode(stencil)}
+                  onMouseDown={() => addNode(stencil)}
                 />
               </div>
             ))}
