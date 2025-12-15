@@ -30,7 +30,7 @@ import { deserializeDiagramElements } from '@diagram-craft/model/serialization/d
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { deepClone } from '@diagram-craft/utils/object';
 import { Definitions } from '@diagram-craft/model/elementDefinitionRegistry';
-import { ActionContextMenuItem } from '../../components/ActionContextMenuItem';
+import { ActionMenuItem } from '../../components/ActionMenuItem';
 import { useEventListener } from '../../hooks/useEventListener';
 import { createThumbnailDiagramForNode } from '@diagram-craft/canvas-app/diagramThumbnail';
 import { isRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
@@ -423,18 +423,18 @@ const DataProviderListView = (props: DataViewProps) => {
                                         }
                                       />
                                       <ContextMenu.Menu>
-                                        <ActionContextMenuItem
+                                        <ActionMenuItem
                                           action={'EXTERNAL_DATA_LINK_RENAME_TEMPLATE'}
                                           arg={{ templateId: t.id }}
                                         >
                                           Rename...
-                                        </ActionContextMenuItem>
-                                        <ActionContextMenuItem
+                                        </ActionMenuItem>
+                                        <ActionMenuItem
                                           action={'EXTERNAL_DATA_LINK_REMOVE_TEMPLATE'}
                                           arg={{ templateId: t.id }}
                                         >
                                           Remove
-                                        </ActionContextMenuItem>
+                                        </ActionMenuItem>
                                       </ContextMenu.Menu>
                                     </ContextMenu.Root>
                                   </div>

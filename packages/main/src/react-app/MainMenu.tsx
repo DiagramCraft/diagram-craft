@@ -1,13 +1,13 @@
 import { TbMenu2 } from 'react-icons/tb';
-import { ActionDropdownMenuItem } from './components/ActionDropdownMenuItem';
 import { urlToName } from '@diagram-craft/utils/url';
-import { ToggleActionDropdownMenuItem } from './components/ToggleActionDropdownMenuItem';
 import { Application, useApplication } from '../application';
 import { mainMenuStructure } from './mainMenuData';
 import type { MenuEntry } from '@diagram-craft/electron-client-api/electron-api';
 import type { UserState } from '../UserState';
 import { Menu } from '@diagram-craft/app-components/Menu';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
+import { ActionMenuItem } from './components/ActionMenuItem';
+import { ActionToggleMenuItem } from './components/ActionToggleMenuItem';
 
 const renderMenuItem = (
   item: MenuEntry,
@@ -56,17 +56,17 @@ const renderMenuItem = (
 
   if (item.type === 'toggle' && item.action) {
     return (
-      <ToggleActionDropdownMenuItem key={item.label} action={item.action} arg={{}}>
+      <ActionToggleMenuItem key={item.label} action={item.action} arg={{}}>
         {item.label}
-      </ToggleActionDropdownMenuItem>
+      </ActionToggleMenuItem>
     );
   }
 
   if (item.action) {
     return (
-      <ActionDropdownMenuItem key={item.label} action={item.action} arg={{}}>
+      <ActionMenuItem key={item.label} action={item.action} arg={{}}>
         {item.label}
-      </ActionDropdownMenuItem>
+      </ActionMenuItem>
     );
   }
 

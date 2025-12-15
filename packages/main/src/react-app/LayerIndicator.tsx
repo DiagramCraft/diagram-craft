@@ -10,12 +10,12 @@ import {
 } from 'react-icons/tb';
 import { useRedraw } from './hooks/useRedraw';
 import { useEventListener } from './hooks/useEventListener';
-import { ActionDropdownMenuItem } from './components/ActionDropdownMenuItem';
-import { ToggleActionDropdownMenuItem } from './components/ToggleActionDropdownMenuItem';
 import { useApplication, useDiagram } from '../application';
 import { Tooltip } from '@diagram-craft/app-components/Tooltip';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { Menu } from '@diagram-craft/app-components/Menu';
+import { ActionMenuItem } from './components/ActionMenuItem';
+import { ActionToggleMenuItem } from './components/ActionToggleMenuItem';
 
 export const LayerIndicator = () => {
   const redraw = useRedraw();
@@ -63,19 +63,14 @@ export const LayerIndicator = () => {
       />
 
       <MenuButton.Menu>
-        <ActionDropdownMenuItem action={'LAYER_ADD'}>New layer...</ActionDropdownMenuItem>
+        <ActionMenuItem action={'LAYER_ADD'}>New layer...</ActionMenuItem>
 
-        <ActionDropdownMenuItem action={'LAYER_ADD_REFERENCE'}>
-          New reference layer...
-        </ActionDropdownMenuItem>
-        <ActionDropdownMenuItem action={'LAYER_ADD_RULE'}>New rule layer...</ActionDropdownMenuItem>
+        <ActionMenuItem action={'LAYER_ADD_REFERENCE'}>New reference layer...</ActionMenuItem>
+        <ActionMenuItem action={'LAYER_ADD_RULE'}>New rule layer...</ActionMenuItem>
         <Menu.Item onClick={() => actions['SIDEBAR_LAYERS']?.execute()}>Show layer panel</Menu.Item>
-        <ToggleActionDropdownMenuItem
-          action={'LAYER_TOGGLE_LOCK'}
-          arg={{ id: diagram.activeLayer.id }}
-        >
+        <ActionToggleMenuItem action={'LAYER_TOGGLE_LOCK'} arg={{ id: diagram.activeLayer.id }}>
           Locked
-        </ToggleActionDropdownMenuItem>
+        </ActionToggleMenuItem>
         <Menu.Separator />
         {layers.map(layer => (
           <Menu.Item onClick={() => (diagram.layers.active = layer)} key={layer.id}>

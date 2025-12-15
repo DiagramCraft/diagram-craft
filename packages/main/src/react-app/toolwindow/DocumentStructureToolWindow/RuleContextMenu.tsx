@@ -1,4 +1,4 @@
-import { ActionContextMenuItem } from '../../components/ActionContextMenuItem';
+import { ActionMenuItem } from '../../components/ActionMenuItem';
 import { type ReactElement } from 'react';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { AdjustmentRule } from '@diagram-craft/model/diagramLayerRuleTypes';
@@ -9,18 +9,18 @@ export const RuleContextMenu = (props: Props) => {
     <ContextMenu.Root>
       <ContextMenu.Trigger element={props.element} />
       <ContextMenu.Menu>
-        <ActionContextMenuItem
+        <ActionMenuItem
           action={'RULE_LAYER_EDIT'}
           arg={{ id: `${props.layer.id}:${props.rule.id}` }}
         >
           Edit
-        </ActionContextMenuItem>
-        <ActionContextMenuItem
+        </ActionMenuItem>
+        <ActionMenuItem
           action={'RULE_LAYER_DELETE'}
           arg={{ id: `${props.layer.id}:${props.rule.id}` }}
         >
           Delete
-        </ActionContextMenuItem>
+        </ActionMenuItem>
       </ContextMenu.Menu>
     </ContextMenu.Root>
   );

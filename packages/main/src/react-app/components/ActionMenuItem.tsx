@@ -2,9 +2,9 @@ import React from 'react';
 import { findKeyBindingsForAction, formatKeyBinding } from '@diagram-craft/canvas/keyMap';
 import { useApplication } from '../../application';
 import type { ActionMap } from '@diagram-craft/canvas/actions/action';
-import { ContextMenu as BaseUIContextMenu } from '@base-ui-components/react/context-menu';
+import { Menu } from '@diagram-craft/app-components/Menu';
 
-export function ActionContextMenuItem<
+export function ActionMenuItem<
   K extends keyof ActionMap,
   P = Parameters<ActionMap[K]['execute']>[0]
 >(props: Props<K, P>) {
@@ -13,19 +13,16 @@ export function ActionContextMenuItem<
   const keyMap = application.keyMap;
 
   return (
-    <BaseUIContextMenu.Item
-      className="cmp-context-menu__item"
+    <Menu.Item
       disabled={!actionMap[props.action]?.isEnabled(props.arg ?? {})}
       onClick={async () => {
         const a = actionMap[props.action]!;
         a.execute(props.arg ?? {});
       }}
+      keybinding={formatKeyBinding(findKeyBindingsForAction(props.action, keyMap)[0])}
     >
-      {props.children}{' '}
-      <div className="cmp-context-menu__right-slot">
-        {formatKeyBinding(findKeyBindingsForAction(props.action, keyMap)[0])}
-      </div>
-    </BaseUIContextMenu.Item>
+      {props.children}
+    </Menu.Item>
   );
 }
 

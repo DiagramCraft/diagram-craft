@@ -163,6 +163,11 @@
   border: 1px solid var(--cmp-border);
   z-index: 250;
 
+  &:focus,
+  &:focus-visible {
+    outline: none;
+  }
+
   .cmp-context-menu__item,
   .cmp-context-menu__checkbox-item,
   .cmp-context-menu__radio-item,

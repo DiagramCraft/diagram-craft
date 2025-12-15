@@ -3,7 +3,7 @@ import { useRedraw } from './hooks/useRedraw';
 import { useEventListener } from './hooks/useEventListener';
 import { TbFiles, TbPlus } from 'react-icons/tb';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
-import { ActionContextMenuItem } from './components/ActionContextMenuItem';
+import { ActionMenuItem } from './components/ActionMenuItem';
 import React, { type ReactElement } from 'react';
 import { useApplication } from '../application';
 import { Diagram } from '@diagram-craft/model/diagram';
@@ -48,18 +48,18 @@ const DocumentsContextMenu = (props: DocumentsContextMenuProps) => {
     <ContextMenu.Root>
       <ContextMenu.Trigger element={props.element} />
       <ContextMenu.Menu>
-        <ActionContextMenuItem action={'DIAGRAM_RENAME'} arg={{ diagramId: props.diagramId }}>
+        <ActionMenuItem action={'DIAGRAM_RENAME'} arg={{ diagramId: props.diagramId }}>
           Rename...
-        </ActionContextMenuItem>
-        <ActionContextMenuItem action={'DIAGRAM_ADD'} arg={{}}>
+        </ActionMenuItem>
+        <ActionMenuItem action={'DIAGRAM_ADD'} arg={{}}>
           Add
-        </ActionContextMenuItem>
-        <ActionContextMenuItem action={'DIAGRAM_ADD'} arg={{ parentId: props.diagramId }}>
+        </ActionMenuItem>
+        <ActionMenuItem action={'DIAGRAM_ADD'} arg={{ parentId: props.diagramId }}>
           Add subpage
-        </ActionContextMenuItem>
-        <ActionContextMenuItem action={'DIAGRAM_REMOVE'} arg={{ diagramId: props.diagramId }}>
+        </ActionMenuItem>
+        <ActionMenuItem action={'DIAGRAM_REMOVE'} arg={{ diagramId: props.diagramId }}>
           Delete
-        </ActionContextMenuItem>
+        </ActionMenuItem>
         {diagram.diagrams.length > 0 && (
           <>
             <Menu.Separator />

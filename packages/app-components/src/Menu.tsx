@@ -23,6 +23,7 @@ type ItemProps = {
   disabled?: boolean;
   onClick?: () => void;
   icon?: ReactElement;
+  keybinding?: string;
 } & Pick<React.HTMLAttributes<'div'>, 'className'>;
 
 const Item = (props: ItemProps) => {
@@ -31,14 +32,16 @@ const Item = (props: ItemProps) => {
     return (
       <BaseUIContextMenu.Item className="cmp-context-menu__item" {...props}>
         {props.icon && <div className="cmp-context-menu__item-icon">{props.icon}</div>}
-        {props.children}
+        <span>{props.children}</span>
+        {props.keybinding && <div className="cmp-context-menu__right-slot">{props.keybinding}</div>}
       </BaseUIContextMenu.Item>
     );
   } else {
     return (
       <BaseUIMenu.Item className="cmp-context-menu__item" {...props}>
         {props.icon && <div className="cmp-menu__item-icon">{props.icon}</div>}
-        {props.children}
+        <span>{props.children}</span>
+        {props.keybinding && <div className="cmp-context-menu__right-slot">{props.keybinding}</div>}
       </BaseUIMenu.Item>
     );
   }
@@ -114,6 +117,8 @@ type CheckboxItemProps = {
   onCheckedChange?: (state: boolean) => void;
   children: React.ReactNode;
   checked?: boolean;
+  disabled?: boolean;
+  keybinding?: string;
 };
 
 const CheckboxItem = (props: CheckboxItemProps) => {
@@ -125,6 +130,7 @@ const CheckboxItem = (props: CheckboxItemProps) => {
           <TbCheck />
         </BaseUIContextMenu.CheckboxItemIndicator>
         {props.children}
+        {props.keybinding && <div className="cmp-context-menu__right-slot">{props.keybinding}</div>}
       </BaseUIContextMenu.CheckboxItem>
     );
   } else {
@@ -134,6 +140,7 @@ const CheckboxItem = (props: CheckboxItemProps) => {
           <TbCheck />
         </BaseUIMenu.CheckboxItemIndicator>
         {props.children}
+        {props.keybinding && <div className="cmp-context-menu__right-slot">{props.keybinding}</div>}
       </BaseUIMenu.CheckboxItem>
     );
   }
