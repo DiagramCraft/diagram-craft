@@ -6,6 +6,36 @@ import { useEventListener } from '../../hooks/useEventListener';
 import { makeActionMap } from '@diagram-craft/canvas/keyMap';
 import { defaultAppActions } from '../../appActionMap';
 import { ToolWindowPanel } from '../ToolWindowPanel';
+import { ContextMenu } from '@diagram-craft/app-components/ContextMenu';
+import { ActionMenuItem } from '../../components/ActionMenuItem';
+import { type ReactElement } from 'react';
+
+const DocumentsContextMenu = (props: DocumentsContextMenuProps) => {
+  return (
+    <ContextMenu.Root>
+      <ContextMenu.Trigger element={props.element} />
+      <ContextMenu.Menu>
+        <ActionMenuItem action={'DIAGRAM_RENAME'} arg={{ diagramId: props.diagramId }}>
+          Rename...
+        </ActionMenuItem>
+        <ActionMenuItem action={'DIAGRAM_ADD'} arg={{}}>
+          Add
+        </ActionMenuItem>
+        <ActionMenuItem action={'DIAGRAM_ADD'} arg={{ parentId: props.diagramId }}>
+          Add subpage
+        </ActionMenuItem>
+        <ActionMenuItem action={'DIAGRAM_REMOVE'} arg={{ diagramId: props.diagramId }}>
+          Delete
+        </ActionMenuItem>
+      </ContextMenu.Menu>
+    </ContextMenu.Root>
+  );
+};
+
+type DocumentsContextMenuProps = {
+  diagramId: string;
+  element: ReactElement;
+};
 
 const DiagramLabel = (props: { diagram: Diagram; onValueChange: (v: string) => void }) => {
   return (
@@ -29,9 +59,14 @@ const DiagramTreeNode = (props: {
     <>
       {props.diagram.diagrams.map(node => (
         <Tree.Node key={node.id} isOpen={true}>
-          <Tree.NodeLabel>
-            <DiagramLabel diagram={node} onValueChange={props.onValueChange} />
-          </Tree.NodeLabel>
+          <DocumentsContextMenu
+            diagramId={node.id}
+            element={
+              <Tree.NodeLabel>
+                <DiagramLabel diagram={node} onValueChange={props.onValueChange} />
+              </Tree.NodeLabel>
+            }
+          />
           <Tree.NodeCell>{props.value === node.id ? 'Active' : ''}</Tree.NodeCell>
           {node.diagrams.length > 0 && (
             <Tree.Children>
@@ -72,9 +107,14 @@ export const DocumentPanel = () => {
       <Tree.Root>
         {document.diagrams.map(node => (
           <Tree.Node key={node.id} isOpen={true} data-state={diagram.id === node.id ? 'on' : 'off'}>
-            <Tree.NodeLabel>
-              <DiagramLabel diagram={node} onValueChange={onValueChange} />
-            </Tree.NodeLabel>
+            <DocumentsContextMenu
+              diagramId={node.id}
+              element={
+                <Tree.NodeLabel>
+                  <DiagramLabel diagram={node} onValueChange={onValueChange} />
+                </Tree.NodeLabel>
+              }
+            />
             <Tree.NodeCell>{diagram.id === node.id ? 'Active' : ''}</Tree.NodeCell>
             {node.diagrams.length > 0 && (
               <Tree.Children>
