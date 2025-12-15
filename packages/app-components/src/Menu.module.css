@@ -107,7 +107,39 @@
   }
 
   .cmp-menu__arrow {
-    transform: translateY(-1px);
+    --__size: 5px;
+
+    background: transparent;
+
+    width: 0;
+    height: 0;
+
+    border-left: var(--__size) solid transparent;
+    border-right: var(--__size) solid transparent;
+    border-bottom: var(--__size) solid var(--cmp-bg);
+
+    display: flex;
+
+    &[data-side='top'] {
+      bottom: calc(-1 * var(--__size) + 1px);
+      rotate: 180deg;
+    }
+
+    &[data-side='bottom'] {
+      top: calc(-1 * var(--__size) + 1px);
+      rotate: 0deg;
+    }
+
+    &[data-side='left'] {
+      right: calc(-1 * var(--__size) - 1px);
+      rotate: 90deg;
+    }
+
+    &[data-side='right'] {
+      left: calc(-1 * var(--__size) - 1px);
+      rotate: -90deg;
+    }
+
     fill: var(--panel-bg);
   }
 }

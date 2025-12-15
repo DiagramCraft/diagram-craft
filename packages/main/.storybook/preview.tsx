@@ -5,7 +5,7 @@ import '../src/index.css';
 const preview: Preview = {
   decorators: [
     Story => (
-      <div>
+      <div style={{ isolation: 'isolate' }} className={'root'}>
         <Story />
       </div>
     )

@@ -7,12 +7,13 @@ import styles from './Menu.module.css';
 
 type RootProps = {
   children: React.ReactNode;
+  open?: boolean;
 };
 
 const Root = (props: RootProps) => {
   return (
     <_Menu.Context type={'menu'}>
-      <BaseUIMenu.Root>{props.children}</BaseUIMenu.Root>
+      <BaseUIMenu.Root open={props.open}>{props.children}</BaseUIMenu.Root>
     </_Menu.Context>
   );
 };
@@ -31,12 +32,14 @@ const Trigger = (props: TriggerProps) => {
 
 type MenuProps = {
   children: React.ReactNode;
+  container?: HTMLElement;
+  align?: 'start' | 'center' | 'end';
 } & Pick<React.HTMLAttributes<'div'>, 'className'>;
 
 const Menu = (props: MenuProps) => {
   return (
-    <BaseUIMenu.Portal>
-      <BaseUIMenu.Positioner sideOffset={5}>
+    <BaseUIMenu.Portal container={props.container}>
+      <BaseUIMenu.Positioner sideOffset={5} align={props.align}>
         <BaseUIMenu.Popup className={styles.cmpMenu} {...props}>
           {props.children}
           <BaseUIMenu.Arrow className={styles.cmpMenuArrow} />
