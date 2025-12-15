@@ -11,7 +11,8 @@ import { newid } from '@diagram-craft/utils/id';
 import { getElementNameFromComment } from './utils';
 import { addHighlight, Highlights, removeHighlight } from '@diagram-craft/canvas/highlight';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
-import { Menu as BaseUIMenu } from '@base-ui-components/react/menu';
+import { MenuButton } from '@diagram-craft/app-components/MenuButton';
+import { Menu } from '@diagram-craft/app-components/Menu';
 
 export type CommentItemProps = {
   comment: Comment;
@@ -30,43 +31,26 @@ type CommentItemMenuProps = {
 };
 
 const CommentItemMenu = (props: CommentItemMenuProps) => (
-  <BaseUIMenu.Root>
-    <BaseUIMenu.Trigger
-      render={
-        <button type="button" className={styles['comment__menu-button']}>
-          <TbDots size={14} />
-        </button>
-      }
-    />
-    <BaseUIMenu.Portal>
-      <BaseUIMenu.Positioner side="left">
-        <BaseUIMenu.Popup className="cmp-context-menu">
-          <BaseUIMenu.Item className="cmp-context-menu__item" onClick={props.onEditComment}>
-            <div className="cmp-context-menu__item-icon">
-              <TbEdit size={14} />
-            </div>
-            Edit Comment
-          </BaseUIMenu.Item>
-          <BaseUIMenu.Item
-            className="cmp-context-menu__item"
-            onClick={props.onChangeState}
-            disabled={!props.canChangeState}
-          >
-            <div className="cmp-context-menu__item-icon">
-              <TbCheck size={14} />
-            </div>
-            {props.state === 'resolved' ? 'Unresolve' : 'Resolve'}
-          </BaseUIMenu.Item>
-          <BaseUIMenu.Item className="cmp-context-menu__item" onClick={props.onDeleteComment}>
-            <div className="cmp-context-menu__item-icon">
-              <TbTrash size={14} />
-            </div>
-            Delete Comment
-          </BaseUIMenu.Item>
-        </BaseUIMenu.Popup>
-      </BaseUIMenu.Positioner>
-    </BaseUIMenu.Portal>
-  </BaseUIMenu.Root>
+  <MenuButton.Root>
+    <MenuButton.Trigger className={styles['comment__menu-button']}>
+      <TbDots size={14} />
+    </MenuButton.Trigger>
+    <MenuButton.Menu>
+      <Menu.Item onClick={props.onEditComment} leftSlot={<TbEdit size={14} />}>
+        Edit Comment
+      </Menu.Item>
+      <Menu.Item
+        onClick={props.onChangeState}
+        disabled={!props.canChangeState}
+        leftSlot={<TbCheck size={14} />}
+      >
+        {props.state === 'resolved' ? 'Unresolve' : 'Resolve'}
+      </Menu.Item>
+      <Menu.Item onClick={props.onDeleteComment} leftSlot={<TbTrash size={14} />}>
+        Delete Comment
+      </Menu.Item>
+    </MenuButton.Menu>
+  </MenuButton.Root>
 );
 
 export const CommentItem = ({

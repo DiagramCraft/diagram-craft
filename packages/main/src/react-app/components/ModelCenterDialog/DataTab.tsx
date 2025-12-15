@@ -13,7 +13,8 @@ import type { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { asyncExecuteWithErrorDialog } from '../../ErrorBoundary';
 import { shorten } from '@diagram-craft/utils/strings';
 import { DataManagerUndoableFacade } from '@diagram-craft/model/diagramDocumentDataUndoActions';
-import { Menu as BaseUIMenu } from '@base-ui-components/react/menu';
+import { MenuButton } from '@diagram-craft/app-components/MenuButton';
+import { Menu } from '@diagram-craft/app-components/Menu';
 
 type DataItemWithSchema = Data & {
   _schema: DataSchema;
@@ -278,37 +279,27 @@ export const DataTab = () => {
           >
             Clear Overrides
           </Button>
-          <BaseUIMenu.Root>
-            <BaseUIMenu.Trigger
-              render={
-                <Button
-                  type="secondary"
-                  className={styles.dataTabAddButton}
-                  disabled={!(canMutateData && hasSchemas)}
-                  style={{ display: 'flex', gap: '0.25rem' }}
+          <MenuButton.Root>
+            <MenuButton.Trigger
+              type="secondary"
+              className={styles.dataTabAddButton}
+              disabled={!(canMutateData && hasSchemas)}
+              style={{ display: 'flex', gap: '0.25rem' }}
+            >
+              <TbPlus /> Add Data
+            </MenuButton.Trigger>
+            <MenuButton.Menu>
+              {db.schemas.map(schema => (
+                <Menu.Item
+                  key={schema.id}
+                  onClick={() => setAddItemDialog({ open: true, schemaId: schema.id })}
+                  disabled={!db.isDataEditable(schema)}
                 >
-                  <TbPlus /> Add Data
-                </Button>
-              }
-            />
-            <BaseUIMenu.Portal>
-              <BaseUIMenu.Positioner sideOffset={5}>
-                <BaseUIMenu.Popup className="cmp-context-menu">
-                  {db.schemas.map(schema => (
-                    <BaseUIMenu.Item
-                      key={schema.id}
-                      className="cmp-context-menu__item"
-                      onClick={() => setAddItemDialog({ open: true, schemaId: schema.id })}
-                      disabled={!db.isDataEditable(schema)}
-                    >
-                      {schema.name}
-                    </BaseUIMenu.Item>
-                  ))}
-                  <BaseUIMenu.Arrow className="cmp-context-menu__arrow" />
-                </BaseUIMenu.Popup>
-              </BaseUIMenu.Positioner>
-            </BaseUIMenu.Portal>
-          </BaseUIMenu.Root>
+                  {schema.name}
+                </Menu.Item>
+              ))}
+            </MenuButton.Menu>
+          </MenuButton.Root>
         </div>
       </div>
 

@@ -30,7 +30,7 @@ import { deserializeDiagramElements } from '@diagram-craft/model/serialization/d
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { deepClone } from '@diagram-craft/utils/object';
 import { Definitions } from '@diagram-craft/model/elementDefinitionRegistry';
-import { ActionContextMenuItem } from '../../components/ActionContextMenuItem';
+import { ActionMenuItem } from '../../components/ActionMenuItem';
 import { useEventListener } from '../../hooks/useEventListener';
 import { createThumbnailDiagramForNode } from '@diagram-craft/canvas-app/diagramThumbnail';
 import { isRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
@@ -43,7 +43,8 @@ import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import type { ElementDataEntry } from '@diagram-craft/model/diagramProps';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
 import type { Diagram } from '@diagram-craft/model/diagram';
-import { ContextMenu as BaseUIContextMenu } from '@base-ui-components/react/context-menu';
+import { ContextMenu } from '@diagram-craft/app-components/ContextMenu';
+import { Menu } from '@diagram-craft/app-components/Menu';
 
 const NODE_CACHE = new Map<string, DiagramNode>();
 const PICKER_CANVAS_SIZE = 42;
@@ -80,20 +81,10 @@ const ItemContextMenu = (props: {
   onEditItem: (item: Data) => void;
   onDeleteItem: (item: Data) => void;
 }) => (
-  <BaseUIContextMenu.Popup className="cmp-context-menu">
-    <BaseUIContextMenu.Item
-      className="cmp-context-menu__item"
-      onClick={() => props.onEditItem(props.item)}
-    >
-      Edit Item
-    </BaseUIContextMenu.Item>
-    <BaseUIContextMenu.Item
-      className="cmp-context-menu__item"
-      onClick={() => props.onDeleteItem(props.item)}
-    >
-      Delete Item
-    </BaseUIContextMenu.Item>
-  </BaseUIContextMenu.Popup>
+  <ContextMenu.Menu>
+    <Menu.Item onClick={() => props.onEditItem(props.item)}>Edit Item</Menu.Item>
+    <Menu.Item onClick={() => props.onDeleteItem(props.item)}>Delete Item</Menu.Item>
+  </ContextMenu.Menu>
 );
 
 const handleDragStart = (
@@ -201,9 +192,9 @@ const TemplateGridItem = (props: {
       style={{ background: 'transparent' }}
       data-width={node.diagram.viewBox.dimensions.w}
     >
-      <BaseUIContextMenu.Root>
-        <BaseUIContextMenu.Trigger
-          render={
+      <ContextMenu.Root>
+        <ContextMenu.Trigger
+          element={
             <div
               onMouseDown={ev =>
                 handleDragStart(ev, node, diagram, app, isRegularLayer(diagram.activeLayer))
@@ -223,16 +214,12 @@ const TemplateGridItem = (props: {
             </div>
           }
         />
-        <BaseUIContextMenu.Portal>
-          <BaseUIContextMenu.Positioner>
-            <ItemContextMenu
-              item={item}
-              onEditItem={props.onEditItem}
-              onDeleteItem={props.onDeleteItem}
-            />
-          </BaseUIContextMenu.Positioner>
-        </BaseUIContextMenu.Portal>
-      </BaseUIContextMenu.Root>
+        <ItemContextMenu
+          item={item}
+          onEditItem={props.onEditItem}
+          onDeleteItem={props.onDeleteItem}
+        />
+      </ContextMenu.Root>
     </div>
   );
 };
@@ -327,9 +314,9 @@ const DataProviderListView = (props: DataViewProps) => {
       <div className={'cmp-query-response'}>
         {data.map(item => {
           return (
-            <BaseUIContextMenu.Root key={item._uid}>
-              <BaseUIContextMenu.Trigger
-                render={
+            <ContextMenu.Root key={item._uid}>
+              <ContextMenu.Trigger
+                element={
                   <div
                     className={`util-draggable cmp-query-response__item ${expanded.includes(item._uid) ? 'cmp-query-response__item--expanded' : ''}`}
                     style={{ cursor: isRuleLayer ? 'default' : 'pointer' }}
@@ -407,9 +394,9 @@ const DataProviderListView = (props: DataViewProps) => {
                                     style={{ background: 'transparent' }}
                                     data-width={n.diagram.viewBox.dimensions.w}
                                   >
-                                    <BaseUIContextMenu.Root>
-                                      <BaseUIContextMenu.Trigger
-                                        render={
+                                    <ContextMenu.Root>
+                                      <ContextMenu.Trigger
+                                        element={
                                           <div
                                             onMouseDown={ev =>
                                               handleDragStart(
@@ -435,25 +422,21 @@ const DataProviderListView = (props: DataViewProps) => {
                                           </div>
                                         }
                                       />
-                                      <BaseUIContextMenu.Portal>
-                                        <BaseUIContextMenu.Positioner>
-                                          <BaseUIContextMenu.Popup className="cmp-context-menu">
-                                            <ActionContextMenuItem
-                                              action={'EXTERNAL_DATA_LINK_RENAME_TEMPLATE'}
-                                              arg={{ templateId: t.id }}
-                                            >
-                                              Rename...
-                                            </ActionContextMenuItem>
-                                            <ActionContextMenuItem
-                                              action={'EXTERNAL_DATA_LINK_REMOVE_TEMPLATE'}
-                                              arg={{ templateId: t.id }}
-                                            >
-                                              Remove
-                                            </ActionContextMenuItem>
-                                          </BaseUIContextMenu.Popup>
-                                        </BaseUIContextMenu.Positioner>
-                                      </BaseUIContextMenu.Portal>
-                                    </BaseUIContextMenu.Root>
+                                      <ContextMenu.Menu>
+                                        <ActionMenuItem
+                                          action={'EXTERNAL_DATA_LINK_RENAME_TEMPLATE'}
+                                          arg={{ templateId: t.id }}
+                                        >
+                                          Rename...
+                                        </ActionMenuItem>
+                                        <ActionMenuItem
+                                          action={'EXTERNAL_DATA_LINK_REMOVE_TEMPLATE'}
+                                          arg={{ templateId: t.id }}
+                                        >
+                                          Remove
+                                        </ActionMenuItem>
+                                      </ContextMenu.Menu>
+                                    </ContextMenu.Root>
                                   </div>
                                 ))}
                             </div>
@@ -464,16 +447,12 @@ const DataProviderListView = (props: DataViewProps) => {
                   </div>
                 }
               />
-              <BaseUIContextMenu.Portal>
-                <BaseUIContextMenu.Positioner>
-                  <ItemContextMenu
-                    item={item}
-                    onEditItem={props.onEditItem}
-                    onDeleteItem={props.onDeleteItem}
-                  />
-                </BaseUIContextMenu.Positioner>
-              </BaseUIContextMenu.Portal>
-            </BaseUIContextMenu.Root>
+              <ItemContextMenu
+                item={item}
+                onEditItem={props.onEditItem}
+                onDeleteItem={props.onDeleteItem}
+              />
+            </ContextMenu.Root>
           );
         })}
       </div>

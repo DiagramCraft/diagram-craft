@@ -1,13 +1,14 @@
 import { Tabs as BaseUITabs } from '@base-ui-components/react/tabs';
 import { useRedraw } from './hooks/useRedraw';
 import { useEventListener } from './hooks/useEventListener';
-import { TbCheck, TbFiles, TbPlus } from 'react-icons/tb';
+import { TbFiles, TbPlus } from 'react-icons/tb';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
-import { ActionContextMenuItem } from './components/ActionContextMenuItem';
+import { ActionMenuItem } from './components/ActionMenuItem';
 import React, { type ReactElement } from 'react';
 import { useApplication } from '../application';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { ContextMenu as BaseUIContextMenu } from '@base-ui-components/react/context-menu';
+import { ContextMenu } from '@diagram-craft/app-components/ContextMenu';
+import { Menu } from '@diagram-craft/app-components/Menu';
 
 const DiagramList = (props: {
   list: readonly Diagram[];
@@ -19,19 +20,10 @@ const DiagramList = (props: {
       {props.list.map(diagram => {
         return (
           <React.Fragment key={diagram.id}>
-            <BaseUIContextMenu.RadioItem
-              className="cmp-context-menu__item"
-              onClick={() => {
-                props.onChange(diagram.id);
-              }}
-              value={diagram.id}
-            >
-              <BaseUIContextMenu.RadioItemIndicator className={'cmp-context-menu__item-indicator'}>
-                <TbCheck />
-              </BaseUIContextMenu.RadioItemIndicator>
+            <Menu.RadioItem onClick={() => props.onChange(diagram.id)} value={diagram.id}>
               <span style={{ width: `${props.level * 10}px`, display: 'inline-block' }} />
               {diagram.name}
-            </BaseUIContextMenu.RadioItem>
+            </Menu.RadioItem>
             <DiagramList
               list={diagram.diagrams}
               level={props.level + 1}
@@ -53,49 +45,36 @@ const DocumentsContextMenu = (props: DocumentsContextMenuProps) => {
   };
 
   return (
-    <BaseUIContextMenu.Root>
-      <BaseUIContextMenu.Trigger render={props.element} />
-      <BaseUIContextMenu.Portal>
-        <BaseUIContextMenu.Positioner>
-          <BaseUIContextMenu.Popup className="cmp-context-menu">
-            <ActionContextMenuItem action={'DIAGRAM_RENAME'} arg={{ diagramId: props.diagramId }}>
-              Rename...
-            </ActionContextMenuItem>
-            <ActionContextMenuItem action={'DIAGRAM_ADD'} arg={{}}>
-              Add
-            </ActionContextMenuItem>
-            <ActionContextMenuItem action={'DIAGRAM_ADD'} arg={{ parentId: props.diagramId }}>
-              Add subpage
-            </ActionContextMenuItem>
-            <ActionContextMenuItem action={'DIAGRAM_REMOVE'} arg={{ diagramId: props.diagramId }}>
-              Delete
-            </ActionContextMenuItem>
-            {diagram.diagrams.length > 0 && (
-              <>
-                <BaseUIContextMenu.Separator className="cmp-context-menu__separator" />
+    <ContextMenu.Root>
+      <ContextMenu.Trigger element={props.element} />
+      <ContextMenu.Menu>
+        <ActionMenuItem action={'DIAGRAM_RENAME'} arg={{ diagramId: props.diagramId }}>
+          Rename...
+        </ActionMenuItem>
+        <ActionMenuItem action={'DIAGRAM_ADD'} arg={{}}>
+          Add
+        </ActionMenuItem>
+        <ActionMenuItem action={'DIAGRAM_ADD'} arg={{ parentId: props.diagramId }}>
+          Add subpage
+        </ActionMenuItem>
+        <ActionMenuItem action={'DIAGRAM_REMOVE'} arg={{ diagramId: props.diagramId }}>
+          Delete
+        </ActionMenuItem>
+        {diagram.diagrams.length > 0 && (
+          <>
+            <Menu.Separator />
 
-                <BaseUIContextMenu.RadioGroup value={props.diagramId}>
-                  <BaseUIContextMenu.RadioItem
-                    className="cmp-context-menu__item"
-                    onClick={() => change(props.rootId)}
-                    value={props.rootId}
-                  >
-                    <BaseUIContextMenu.RadioItemIndicator
-                      className={'cmp-context-menu__item-indicator'}
-                    >
-                      <TbCheck />
-                    </BaseUIContextMenu.RadioItemIndicator>
-                    {diagram.name}
-                  </BaseUIContextMenu.RadioItem>
+            <Menu.RadioGroup value={props.diagramId}>
+              <Menu.RadioItem onClick={() => change(props.rootId)} value={props.rootId}>
+                {diagram.name}
+              </Menu.RadioItem>
 
-                  <DiagramList level={1} list={diagram.diagrams} onChange={change} />
-                </BaseUIContextMenu.RadioGroup>
-              </>
-            )}
-          </BaseUIContextMenu.Popup>
-        </BaseUIContextMenu.Positioner>
-      </BaseUIContextMenu.Portal>
-    </BaseUIContextMenu.Root>
+              <DiagramList level={1} list={diagram.diagrams} onChange={change} />
+            </Menu.RadioGroup>
+          </>
+        )}
+      </ContextMenu.Menu>
+    </ContextMenu.Root>
   );
 };
 

@@ -1,69 +1,44 @@
-import { ActionContextMenuItem } from '../../components/ActionContextMenuItem';
+import { ActionMenuItem } from '../../components/ActionMenuItem';
 import { type ReactElement } from 'react';
-import { ToggleActionContextMenuItem } from '../../components/ToggleActionContextMenuItem';
+import { ActionToggleMenuItem } from '../../components/ActionToggleMenuItem';
 import { Layer } from '@diagram-craft/model/diagramLayer';
-import { TbChevronRight } from 'react-icons/tb';
-import { ContextMenu as BaseUIContextMenu } from '@base-ui-components/react/context-menu';
+import { ContextMenu } from '@diagram-craft/app-components/ContextMenu';
+import { Menu } from '@diagram-craft/app-components/Menu';
 
 export const LayerContextMenu = (props: Props) => {
   return (
-    <BaseUIContextMenu.Root>
-      <BaseUIContextMenu.Trigger render={props.element} />
-      <BaseUIContextMenu.Portal>
-        <BaseUIContextMenu.Positioner>
-          <BaseUIContextMenu.Popup className="cmp-context-menu">
-            <BaseUIContextMenu.SubmenuRoot>
-              <BaseUIContextMenu.SubmenuTrigger className="cmp-context-menu__sub-trigger">
-                New
-                <div className="cmp-context-menu__right-slot">
-                  <TbChevronRight />
-                </div>
-              </BaseUIContextMenu.SubmenuTrigger>
-              <BaseUIContextMenu.Portal>
-                <BaseUIContextMenu.Positioner sideOffset={2} alignOffset={-5}>
-                  <BaseUIContextMenu.Popup className="cmp-context-menu">
-                    <ActionContextMenuItem action={'LAYER_ADD'}>Layer...</ActionContextMenuItem>
-                    <ActionContextMenuItem action={'LAYER_ADD_REFERENCE'}>
-                      Reference layer...
-                    </ActionContextMenuItem>
-                    <ActionContextMenuItem action={'LAYER_ADD_RULE'}>
-                      Rule layer...
-                    </ActionContextMenuItem>
-                    <ActionContextMenuItem action={'LAYER_ADD_MODIFICATION'}>
-                      Modification layer...
-                    </ActionContextMenuItem>
-                  </BaseUIContextMenu.Popup>
-                </BaseUIContextMenu.Positioner>
-              </BaseUIContextMenu.Portal>
-            </BaseUIContextMenu.SubmenuRoot>
+    <ContextMenu.Root>
+      <ContextMenu.Trigger element={props.element} />
+      <ContextMenu.Menu>
+        <Menu.SubMenu label={'New'}>
+          <ActionMenuItem action={'LAYER_ADD'}>Layer...</ActionMenuItem>
+          <ActionMenuItem action={'LAYER_ADD_REFERENCE'}>Reference layer...</ActionMenuItem>
+          <ActionMenuItem action={'LAYER_ADD_RULE'}>Rule layer...</ActionMenuItem>
+          <ActionMenuItem action={'LAYER_ADD_MODIFICATION'}>Modification layer...</ActionMenuItem>
+        </Menu.SubMenu>
 
-            <BaseUIContextMenu.Separator className="cmp-context-menu__separator" />
+        <Menu.Separator />
 
-            <ActionContextMenuItem action={'LAYER_RENAME'} arg={{ id: props.layer?.id }}>
-              Rename...
-            </ActionContextMenuItem>
-            <ToggleActionContextMenuItem
-              action={'LAYER_TOGGLE_VISIBILITY'}
-              arg={{ id: props.layer?.id }}
-            >
-              Visible
-            </ToggleActionContextMenuItem>
-            <ToggleActionContextMenuItem action={'LAYER_TOGGLE_LOCK'} arg={{ id: props.layer?.id }}>
-              Locked
-            </ToggleActionContextMenuItem>
-            <ActionContextMenuItem action={'LAYER_DELETE_LAYER'} arg={{ id: props.layer?.id }}>
-              Delete
-            </ActionContextMenuItem>
+        <ActionMenuItem action={'LAYER_RENAME'} arg={{ id: props.layer?.id }}>
+          Rename...
+        </ActionMenuItem>
+        <ActionToggleMenuItem action={'LAYER_TOGGLE_VISIBILITY'} arg={{ id: props.layer?.id }}>
+          Visible
+        </ActionToggleMenuItem>
+        <ActionToggleMenuItem action={'LAYER_TOGGLE_LOCK'} arg={{ id: props.layer?.id }}>
+          Locked
+        </ActionToggleMenuItem>
+        <ActionMenuItem action={'LAYER_DELETE_LAYER'} arg={{ id: props.layer?.id }}>
+          Delete
+        </ActionMenuItem>
 
-            <BaseUIContextMenu.Separator className="cmp-context-menu__separator" />
+        <Menu.Separator />
 
-            <ActionContextMenuItem action={'RULE_LAYER_ADD'} arg={{ id: props.layer?.id }}>
-              Add rule
-            </ActionContextMenuItem>
-          </BaseUIContextMenu.Popup>
-        </BaseUIContextMenu.Positioner>
-      </BaseUIContextMenu.Portal>
-    </BaseUIContextMenu.Root>
+        <ActionMenuItem action={'RULE_LAYER_ADD'} arg={{ id: props.layer?.id }}>
+          Add rule
+        </ActionMenuItem>
+      </ContextMenu.Menu>
+    </ContextMenu.Root>
   );
 };
 
