@@ -207,7 +207,7 @@ export const PresentationMode = (props: Props) => {
           <div className={styles.presentationHeaderDescription}>{currentStep.description}</div>
         </div>
       )}
-      <div className={`${styles.presentationCanvas}  light-theme`}>
+      <div className={`${styles.presentationCanvas} light-theme`}>
         <Canvas<InteractiveCanvasComponent, InteractiveCanvasProps>
           id={`presentation-canvas-other-canvas`}
           key={`presentation-canvas-other-${activeDiagram2.id}`}
