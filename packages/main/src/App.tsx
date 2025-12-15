@@ -1,6 +1,5 @@
 import './App.css';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ContextMenu as BaseUIContextMenu } from '@base-ui-components/react/context-menu';
 import { CanvasContextMenu } from './react-app/context-menu-dispatcher/CanvasContextMenu';
 import { ContextMenuDispatcher } from './react-app/context-menu-dispatcher/ContextMenuDispatcher';
 import { SelectionContextMenu } from './react-app/context-menu-dispatcher/SelectionContextMenu';
@@ -90,6 +89,7 @@ import { LayoutForceDirectedActionDialog } from './react-app/actions/layoutForce
 import { LayoutLayeredActionDialog } from './react-app/actions/layoutLayeredAction.dialog';
 import { LayoutOrthogonalActionDialog } from './react-app/actions/layoutOrthogonalAction.dialog';
 import { LayoutSeriesParallelActionDialog } from './react-app/actions/layoutSeriesParallelAction.dialog';
+import { ContextMenu } from '@diagram-craft/app-components/ContextMenu';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // biome-ignore lint/suspicious/noExplicitAny: false positive
@@ -678,9 +678,9 @@ export const App = (props: {
 
                 <div id="canvas-area">
                   <ErrorBoundary>
-                    <BaseUIContextMenu.Root>
-                      <BaseUIContextMenu.Trigger
-                        render={
+                    <ContextMenu.Root>
+                      <ContextMenu.Trigger
+                        element={
                           <EditableCanvas
                             id={CanvasDomHelper.diagramId($d)}
                             ref={svgRef}
@@ -704,33 +704,27 @@ export const App = (props: {
                           />
                         }
                       />
-                      <BaseUIContextMenu.Portal>
-                        <BaseUIContextMenu.Positioner>
-                          <BaseUIContextMenu.Popup className="cmp-context-menu">
-                            <ContextMenuDispatcher
-                              state={contextMenuTarget}
-                              createContextMenu={state => {
-                                if (state.type === 'canvas') {
-                                  return (
-                                    <CanvasContextMenu
-                                      target={state as ContextMenuTarget<'canvas'>}
-                                    />
-                                  );
-                                } else if (state.type === 'selection') {
-                                  return (
-                                    <SelectionContextMenu
-                                      target={state as ContextMenuTarget<'selection'>}
-                                    />
-                                  );
-                                } else {
-                                  VERIFY_NOT_REACHED();
-                                }
-                              }}
-                            />
-                          </BaseUIContextMenu.Popup>
-                        </BaseUIContextMenu.Positioner>
-                      </BaseUIContextMenu.Portal>
-                    </BaseUIContextMenu.Root>
+                      <ContextMenu.Menu>
+                        <ContextMenuDispatcher
+                          state={contextMenuTarget}
+                          createContextMenu={state => {
+                            if (state.type === 'canvas') {
+                              return (
+                                <CanvasContextMenu target={state as ContextMenuTarget<'canvas'>} />
+                              );
+                            } else if (state.type === 'selection') {
+                              return (
+                                <SelectionContextMenu
+                                  target={state as ContextMenuTarget<'selection'>}
+                                />
+                              );
+                            } else {
+                              VERIFY_NOT_REACHED();
+                            }
+                          }}
+                        />
+                      </ContextMenu.Menu>
+                    </ContextMenu.Root>
                   </ErrorBoundary>
 
                   <Ruler orientation={'horizontal'} />
