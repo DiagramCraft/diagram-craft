@@ -1,5 +1,6 @@
 import React, {
   createContext,
+  forwardRef,
   JSXElementConstructor,
   ReactElement,
   ReactNode,
@@ -79,10 +80,13 @@ type NodeProps = {
   children?: React.ReactNode;
 } & React.HTMLAttributes<HTMLDivElement>;
 
-const NodeLabel = (props: { children: React.ReactNode } & React.HTMLAttributes<HTMLDivElement>) => {
+type NodeLabelProps = { children: React.ReactNode } & React.HTMLAttributes<HTMLDivElement>;
+
+const NodeLabel = forwardRef<HTMLDivElement, NodeLabelProps>((props, ref) => {
   const ctx = useContext(TreeContext)!;
   return (
     <div
+      ref={ref}
       {...PropsUtils.filterDomProperties(props)}
       className={`${styles.cmpTreeNodeLabel} ${props.className ?? ''}`}
     >
@@ -101,7 +105,7 @@ const NodeLabel = (props: { children: React.ReactNode } & React.HTMLAttributes<H
       {props.children}
     </div>
   );
-};
+});
 
 const NodeCell = (props: { children: React.ReactNode } & React.HTMLAttributes<HTMLDivElement>) => {
   return (
