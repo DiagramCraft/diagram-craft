@@ -5,7 +5,7 @@ import { Menu as BaseUIMenu } from '@base-ui-components/react/menu';
 import { PortalContextProvider, usePortal } from './PortalContext';
 import { TbCircle, TbEye, TbLock, TbRectangle } from 'react-icons/tb';
 
-export const decorator = () => {
+const decorator = () => {
   // @ts-ignore
   return Story => (
     <div style={{ fontSize: '11px' }}>
