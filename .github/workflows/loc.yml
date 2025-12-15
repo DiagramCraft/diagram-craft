@@ -27,7 +27,7 @@ jobs:
           sudo mv scc /usr/local/bin/
 
       - name: Run SCC on PR
-        run: scc -f json --remap-all "describe(":"TypeScript Tests" . > scc-pr.json
+        run: scc -f json --remap-all "describe(":"TypeScript Tests","StoryObj":"Storybook" . > scc-pr.json
 
       - name: Upload PR SCC artifact
         uses: actions/upload-artifact@v4
