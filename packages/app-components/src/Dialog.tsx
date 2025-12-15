@@ -117,7 +117,7 @@ export const Dialog = (props: Props) => {
       defaultOpen={props.open}
       onOpenChange={handleOpenChange}
     >
-      <BaseUIAlertDialog.Portal container={portal}>
+      <BaseUIAlertDialog.Portal container={portal} className={props.className}>
         <BaseUIAlertDialog.Backdrop className={styles.cmpDialogOverlay} />
         <BaseUIAlertDialog.Viewport className={styles.cmpDialogContent}>
           <BaseUIAlertDialog.Popup initialFocus={true}>
@@ -148,6 +148,7 @@ type Props = {
   title: string;
   children: ReactNode | string;
   buttons: Button[];
+  className?: string;
 };
 
 export type Button = {

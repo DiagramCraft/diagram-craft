@@ -40,3 +40,54 @@
     }
   }
 }
+
+.cmp-text-area__resize {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  padding: 0.125rem;
+  background: transparent;
+  color: var(--cmp-fg-dimmed);
+  display: flex;
+  align-Items: center;
+  justify-content: center;
+  z-index: 200;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--cmp-fg);
+  }
+}
+
+.cmp-text-area__max_dialog {
+  .cmp-dialog__content {
+    max-width: 100vw;
+    max-height: 100vh;
+
+    left: 0;
+    top: 46px;
+    bottom: 0;
+    right: 0;
+    transform: none;
+
+    & > div {
+      height: 100%;
+
+    }
+
+    textarea {
+      height: calc(100% - 5px) !important;
+    }
+
+    animation: none;
+    padding: 10px 15px 80px 15px;
+  }
+
+  .cmp-dialog__description {
+    height: 100%;
+  }
+
+  .cmp-dialog__description > * {
+    height: 100%;
+  }
+}
