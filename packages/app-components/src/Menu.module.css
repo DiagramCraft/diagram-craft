@@ -1,0 +1,113 @@
+.cmp-menu {
+  min-width: 220px;
+  background-color: var(--cmp-bg);
+  border-radius: 6px;
+  overflow: hidden;
+  padding: 5px;
+  box-shadow: var(--popover-shadow);
+  border: 1px solid var(--cmp-border);
+  z-index: 250;
+
+  &:focus,
+  &:focus-visible {
+    outline: none;
+  }
+
+  .cmp-menu__item,
+  .cmp-menu__checkbox-item,
+  .cmp-menu__radio-item,
+  .cmp-menu__sub-trigger {
+    font-size: 11px;
+    line-height: 1;
+    color: var(--cmp-fg);
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    height: 25px;
+    padding: 0 5px 0 25px;
+    position: relative;
+    user-select: none;
+    outline: none;
+
+    &[data-disabled] {
+      color: var(--cmp-fg-disabled);
+      pointer-events: none;
+    }
+
+    &[data-highlighted] {
+      background-color: var(--accent-bg-selected);
+    }
+
+    .cmp-menu__item-indicator {
+      position: absolute;
+      left: 0;
+      width: 25px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent-fg);
+
+      &[data-checked] {
+        color: var(--cmp-fg-dimmed);
+      }
+    }
+
+    .cmp-menu__right-slot {
+      display: flex;
+      gap: 0.25rem;
+      margin-left: auto;
+      padding-left: 20px;
+      color: var(--accent-fg);
+    }
+
+    &[data-highlighted] > .cmp-menu__right-slot {
+      color: var(--accent-fg);
+    }
+
+    &[data-disabled] .cmp-menu__right-slot {
+      color: var(--cmp-fg-disabled);
+    }
+  }
+
+  .cmp-menu__sub-trigger[data-popup-open] {
+    background-color: var(--accent-bg-selected);
+    color: var(--panel-fg);
+  }
+
+  .cmp-menu__label {
+    padding-left: 25px;
+    font-size: 12px;
+    line-height: 25px;
+    color: var(--cmp-fg);
+  }
+
+  .cmp-menu__separator {
+    height: 1px;
+    background-color: var(--cmp-border);
+    margin: 5px;
+  }
+
+  .cmp-menu__item-indicator {
+    position: absolute;
+    left: 0;
+    width: 25px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .cmp-menu__item-icon {
+    position: absolute;
+    left: 0;
+    width: 25px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent-fg);
+  }
+
+  .cmp-menu__arrow {
+    transform: translateY(-1px);
+    fill: var(--panel-bg);
+  }
+}

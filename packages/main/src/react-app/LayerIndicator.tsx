@@ -73,21 +73,22 @@ export const LayerIndicator = () => {
         </ActionToggleMenuItem>
         <Menu.Separator />
         {layers.map(layer => (
-          <Menu.Item onClick={() => (diagram.layers.active = layer)} key={layer.id}>
-            {diagram.activeLayer === layer && (
-              <div className="cmp-context-menu__item-indicator">
-                <TbCheck />
-              </div>
-            )}
+          <Menu.Item
+            onClick={() => (diagram.layers.active = layer)}
+            key={layer.id}
+            indicator={diagram.activeLayer === layer ? <TbCheck /> : undefined}
+            keybinding={
+              <>
+                {layer.isLocked() ? (
+                  <span style={{ color: 'var(--error-fg)' }}>
+                    <TbLock />
+                  </span>
+                ) : undefined}
+                {diagram.layers.visible.includes(layer) ? <TbEye /> : <TbEyeOff />}
+              </>
+            }
+          >
             {layer.name}
-            <div className={'cmp-context-menu__right-slot'} style={{ color: 'var(--panel-fg)' }}>
-              {layer.isLocked() && (
-                <span style={{ color: 'var(--error-fg)' }}>
-                  <TbLock />
-                </span>
-              )}
-              {diagram.layers.visible.includes(layer) ? <TbEye /> : <TbEyeOff />}
-            </div>
           </Menu.Item>
         ))}
       </MenuButton.Menu>

@@ -3,6 +3,7 @@ import { Menu as _Menu } from './Menu';
 import { Button } from './Button';
 import React from 'react';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+import styles from './Menu.module.css';
 
 type RootProps = {
   children: React.ReactNode;
@@ -36,9 +37,9 @@ const Menu = (props: MenuProps) => {
   return (
     <BaseUIMenu.Portal>
       <BaseUIMenu.Positioner sideOffset={5}>
-        <BaseUIMenu.Popup className="cmp-context-menu" {...props}>
+        <BaseUIMenu.Popup className={styles.cmpMenu} {...props}>
           {props.children}
-          <BaseUIMenu.Arrow className="cmp-context-menu__arrow" />
+          <BaseUIMenu.Arrow className={styles.cmpMenuArrow} />
         </BaseUIMenu.Popup>
       </BaseUIMenu.Positioner>
     </BaseUIMenu.Portal>

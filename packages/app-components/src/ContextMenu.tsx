@@ -1,6 +1,7 @@
 import { ContextMenu as BaseUIContextMenu } from '@base-ui-components/react/context-menu';
 import React, { type ReactElement } from 'react';
 import { Menu as _Menu } from './Menu';
+import styles from './Menu.module.css';
 
 type RootProps = {
   children: React.ReactNode;
@@ -30,7 +31,7 @@ const Menu = (props: MenuProps) => {
   return (
     <BaseUIContextMenu.Portal>
       <BaseUIContextMenu.Positioner>
-        <BaseUIContextMenu.Popup className="cmp-context-menu" {...props}>
+        <BaseUIContextMenu.Popup className={styles.cmpMenu} {...props}>
           {props.children}
         </BaseUIContextMenu.Popup>
       </BaseUIContextMenu.Positioner>
