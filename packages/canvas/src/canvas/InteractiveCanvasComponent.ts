@@ -136,6 +136,7 @@ export class InteractiveCanvasComponent extends BaseCanvasComponent<InteractiveC
         hooks: {
           onInsert: node => {
             this.svgRef = node.el! as SVGSVGElement;
+            this.adjustViewbox(viewbox);
 
             // Note: this causes an extra redraw, but it's necessary to ensure that
             //       the wheel events (among others) are bound correctly
