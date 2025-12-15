@@ -10,7 +10,8 @@ import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { useRedraw } from '../../hooks/useRedraw';
 import styles from './SchemasTab.module.css';
 import { DataManagerUndoableFacade } from '@diagram-craft/model/diagramDocumentDataUndoActions';
-import { Menu as BaseUIMenu } from '@base-ui-components/react/menu';
+import { MenuButton } from '@diagram-craft/app-components/MenuButton';
+import { Menu } from '@diagram-craft/app-components/Menu';
 
 const getProviderTypeName = (providerId: string): string => {
   switch (providerId) {
@@ -116,36 +117,26 @@ export const SchemasTab = () => {
       <div className={styles.schemasTabHeader}>
         <p className={styles.schemasTabTitle}>Schemas</p>
         {providers.length > 0 && (
-          <BaseUIMenu.Root>
-            <BaseUIMenu.Trigger
-              render={
-                <Button
-                  type="secondary"
-                  disabled={!canMutateSchemas}
-                  style={{ display: 'flex', gap: '0.25rem' }}
+          <MenuButton.Root>
+            <MenuButton.Trigger
+              type="secondary"
+              disabled={!canMutateSchemas}
+              style={{ display: 'flex', gap: '0.25rem' }}
+            >
+              <TbPlus /> Add Schema
+            </MenuButton.Trigger>
+            <MenuButton.Menu>
+              {providers.map(provider => (
+                <Menu.Item
+                  key={provider.id}
+                  disabled={!db.isSchemasEditable(provider.id)}
+                  onClick={() => setAddSchemaDialog({ open: true, providerId: provider.id })}
                 >
-                  <TbPlus /> Add Schema
-                </Button>
-              }
-            />
-            <BaseUIMenu.Portal>
-              <BaseUIMenu.Positioner sideOffset={5}>
-                <BaseUIMenu.Popup className="cmp-context-menu">
-                  {providers.map(provider => (
-                    <BaseUIMenu.Item
-                      key={provider.id}
-                      className="cmp-context-menu__item"
-                      disabled={!db.isSchemasEditable(provider.id)}
-                      onClick={() => setAddSchemaDialog({ open: true, providerId: provider.id })}
-                    >
-                      {getProviderTypeName(provider.providerId)}: {provider.id}
-                    </BaseUIMenu.Item>
-                  ))}
-                  <BaseUIMenu.Arrow className="cmp-context-menu__arrow" />
-                </BaseUIMenu.Popup>
-              </BaseUIMenu.Positioner>
-            </BaseUIMenu.Portal>
-          </BaseUIMenu.Root>
+                  {getProviderTypeName(provider.providerId)}: {provider.id}
+                </Menu.Item>
+              ))}
+            </MenuButton.Menu>
+          </MenuButton.Root>
         )}
       </div>
 

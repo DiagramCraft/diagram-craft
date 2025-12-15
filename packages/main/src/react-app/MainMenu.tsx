@@ -1,4 +1,4 @@
-import { TbChevronRight, TbMenu2 } from 'react-icons/tb';
+import { TbMenu2 } from 'react-icons/tb';
 import { ActionDropdownMenuItem } from './components/ActionDropdownMenuItem';
 import { urlToName } from '@diagram-craft/utils/url';
 import { ToggleActionDropdownMenuItem } from './components/ToggleActionDropdownMenuItem';
@@ -6,7 +6,8 @@ import { Application, useApplication } from '../application';
 import { mainMenuStructure } from './mainMenuData';
 import type { MenuEntry } from '@diagram-craft/electron-client-api/electron-api';
 import type { UserState } from '../UserState';
-import { Menu as BaseUIMenu } from '@base-ui-components/react/menu';
+import { Menu } from '@diagram-craft/app-components/Menu';
+import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 
 const renderMenuItem = (
   item: MenuEntry,
@@ -14,7 +15,7 @@ const renderMenuItem = (
   userState: UserState
 ): JSX.Element => {
   if (item.type === 'separator') {
-    return <BaseUIMenu.Separator key={item.label} className="cmp-context-menu__separator" />;
+    return <Menu.Separator key={item.label} />;
   }
 
   if (item.type === 'submenu' || item.type === 'recent') {
@@ -35,34 +36,21 @@ const renderMenuItem = (
     }
 
     return (
-      <BaseUIMenu.SubmenuRoot key={item.label}>
-        <BaseUIMenu.SubmenuTrigger className="cmp-context-menu__sub-trigger" disabled={isDisabled}>
-          {item.label}
-          <div className="cmp-context-menu__right-slot">
-            <TbChevronRight />
-          </div>
-        </BaseUIMenu.SubmenuTrigger>
-        <BaseUIMenu.Portal>
-          <BaseUIMenu.Positioner sideOffset={2} alignOffset={-5}>
-            <BaseUIMenu.Popup className="cmp-context-menu">
-              {submenuItems.map(subItem => {
-                if (item.label === 'Open Recent...') {
-                  return (
-                    <BaseUIMenu.Item
-                      key={subItem.action}
-                      className="cmp-context-menu__item"
-                      onClick={() => application.file.loadDocument(subItem.action!)}
-                    >
-                      {subItem.label}
-                    </BaseUIMenu.Item>
-                  );
-                }
-                return renderMenuItem(subItem, application, userState);
-              })}
-            </BaseUIMenu.Popup>
-          </BaseUIMenu.Positioner>
-        </BaseUIMenu.Portal>
-      </BaseUIMenu.SubmenuRoot>
+      <Menu.SubMenu key={item.label} label={item.label} disabled={isDisabled}>
+        {submenuItems.map(subItem => {
+          if (item.label === 'Open Recent...') {
+            return (
+              <Menu.Item
+                key={subItem.action}
+                onClick={() => application.file.loadDocument(subItem.action!)}
+              >
+                {subItem.label}
+              </Menu.Item>
+            );
+          }
+          return renderMenuItem(subItem, application, userState);
+        })}
+      </Menu.SubMenu>
     );
   }
 
@@ -90,19 +78,18 @@ export const MainMenu = () => {
   const userState = application.userState;
 
   return (
-    <BaseUIMenu.Root>
-      <BaseUIMenu.Trigger className={'_menu-button'} id={'main-menu'} type="button">
-        <TbMenu2 size={'24px'} />
-      </BaseUIMenu.Trigger>
+    <MenuButton.Root>
+      <MenuButton.Trigger
+        element={
+          <button id={'main-menu'} type={'button'} className={'_menu-button'}>
+            <TbMenu2 size={'24px'} />
+          </button>
+        }
+      />
 
-      <BaseUIMenu.Portal>
-        <BaseUIMenu.Positioner sideOffset={2} align={'start'}>
-          <BaseUIMenu.Popup className="cmp-context-menu">
-            {mainMenuStructure.map(item => renderMenuItem(item, application, userState))}
-            <BaseUIMenu.Arrow className="cmp-context-menu__arrow" />
-          </BaseUIMenu.Popup>
-        </BaseUIMenu.Positioner>
-      </BaseUIMenu.Portal>
-    </BaseUIMenu.Root>
+      <MenuButton.Menu>
+        {mainMenuStructure.map(item => renderMenuItem(item, application, userState))}
+      </MenuButton.Menu>
+    </MenuButton.Root>
   );
 };
