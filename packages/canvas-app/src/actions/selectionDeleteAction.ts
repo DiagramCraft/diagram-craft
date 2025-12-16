@@ -15,6 +15,8 @@ export const selectionDeleteActions = (context: ActionContext) => ({
 });
 
 export class SelectionDeleteAction extends AbstractSelectionAction {
+  name = 'Delete';
+
   constructor(context: ActionContext) {
     super(context, 'both');
   }

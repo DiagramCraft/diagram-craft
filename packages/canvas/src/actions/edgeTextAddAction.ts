@@ -24,6 +24,8 @@ type EdgeTextAddActionArg = {
 };
 
 export class EdgeTextAddAction extends AbstractAction<EdgeTextAddActionArg> {
+  name = 'Add text';
+
   getCriteria(context: ActionContext) {
     return ActionCriteria.EventTriggered(
       context.model.activeDiagram,

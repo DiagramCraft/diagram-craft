@@ -22,6 +22,8 @@ export const selectionModifyActions = (context: ActionContext) => ({
 });
 
 export class SelectionSelectConnectedAction extends AbstractSelectionAction {
+  name = 'Select Connected';
+
   constructor(context: ActionContext) {
     super(context, MultipleType.Both, ElementType.Both);
   }
@@ -53,6 +55,8 @@ export class SelectionSelectConnectedAction extends AbstractSelectionAction {
 }
 
 export class SelectionSelectTreeAction extends AbstractSelectionAction {
+  name = 'Select Tree';
+
   constructor(context: ActionContext) {
     super(context, MultipleType.SingleOnly, ElementType.Node);
   }
@@ -86,6 +90,8 @@ export class SelectionSelectTreeAction extends AbstractSelectionAction {
 }
 
 export class SelectionSelectGrowAction extends AbstractSelectionAction {
+  name = 'Grow';
+
   constructor(context: ActionContext) {
     super(context, MultipleType.Both, ElementType.Both);
   }
@@ -119,6 +125,8 @@ export class SelectionSelectGrowAction extends AbstractSelectionAction {
 }
 
 export class SelectionSelectShrinkAction extends AbstractSelectionAction {
+  name = 'Shrink';
+
   constructor(context: ActionContext) {
     super(context, MultipleType.Both, ElementType.Both);
   }

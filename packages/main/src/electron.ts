@@ -99,6 +99,8 @@ export const ElectronIntegration = {
 };
 
 class ElectronFileSaveAction extends AbstractAction<undefined, Application> {
+  name = 'Save';
+
   getCriteria(application: Application) {
     return [ActionCriteria.Simple(() => !!application.model.activeDocument.url)];
   }
@@ -122,6 +124,8 @@ class ElectronFileSaveAction extends AbstractAction<undefined, Application> {
 }
 
 class ElectronFileSaveAsAction extends AbstractAction<undefined, Application> {
+  name = 'Save As...';
+
   getCriteria(application: Application) {
     return [ActionCriteria.Simple(() => !!application.model.activeDocument.url)];
   }
@@ -146,6 +150,8 @@ class ElectronFileSaveAsAction extends AbstractAction<undefined, Application> {
 }
 
 class ElectronFileOpenAction extends AbstractAction<unknown, Application> {
+  name = 'Open File...';
+
   execute(): void {
     window.electronAPI?.fileOpen()?.then(async (result: { url: string } | undefined) => {
       if (!result) throw new Error();

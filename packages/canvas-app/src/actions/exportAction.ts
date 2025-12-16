@@ -99,6 +99,8 @@ const prepareSvgForExport = async (context: ActionContext) => {
 };
 
 class ExportImageAction extends AbstractAction {
+  name = 'Export as Image';
+
   execute(): void {
     const run = async () => {
       const { clonedSvg, bounds } = await prepareSvgForExport(this.context);
@@ -146,6 +148,8 @@ class ExportImageAction extends AbstractAction {
 }
 
 class ExportSVGAction extends AbstractAction {
+  name = 'Export as SVG';
+
   execute(): void {
     const run = async () => {
       const { clonedSvg, bounds } = await prepareSvgForExport(this.context);

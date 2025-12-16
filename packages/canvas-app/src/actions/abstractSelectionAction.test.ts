@@ -5,6 +5,8 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { ActionContext } from '@diagram-craft/canvas/action';
 
 class TestAction extends AbstractSelectionAction {
+  name = 'Test Action';
+
   public constructor(
     protected readonly context: ActionContext,
     protected readonly multipleType: MultipleType,

@@ -23,6 +23,8 @@ export const selectionChangeShapeActions = (context: Application) => ({
 });
 
 export class SelectionChangeShapeAction extends AbstractSelectionAction<Application> {
+  name = 'Change Shape...';
+
   constructor(context: Application) {
     super(context, MultipleType.SingleOnly, ElementType.Node);
   }

@@ -24,6 +24,8 @@ declare global {
 }
 
 class CommentAddAction extends AbstractSelectionAction<Application, { elementId: string }> {
+  name = 'Add Comment';
+
   constructor(application: Application) {
     super(application, MultipleType.SingleOnly, ElementType.Both, undefined, true);
   }
@@ -69,6 +71,8 @@ class CommentAddAction extends AbstractSelectionAction<Application, { elementId:
 }
 
 class CommentEditAction extends AbstractAction<{ comment: Comment }, Application> {
+  name = 'Edit Comment';
+
   execute(arg: Partial<{ comment: Comment }>): void {
     const comment = arg.comment;
     assert.present(comment);

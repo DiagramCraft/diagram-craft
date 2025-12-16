@@ -32,7 +32,7 @@ export type ActionContext = {
 export interface Action<T = undefined> extends Emitter<ActionEvents> {
   execute: (arg: Partial<T>) => void;
   isEnabled: (arg: Partial<T> | T) => boolean;
-  description?: string;
+  name: string;
   availableInCommandPalette: boolean;
 }
 
@@ -76,6 +76,8 @@ export abstract class AbstractAction<T = undefined, C extends ActionContext = Ac
   extends EventEmitter<ActionEvents>
   implements Action<T>
 {
+  abstract name: string;
+
   private criteria: Array<ActionCriteria> = [];
   private enabled: boolean = true;
   protected context: C;
@@ -128,6 +130,8 @@ export abstract class AbstractToggleAction<T = undefined, C extends ActionContex
   extends AbstractAction<T, C>
   implements ToggleAction<T>
 {
+  abstract name: string;
+
   private stateCriteria: Array<ActionCriteria> = [];
   protected state: boolean = false;
 
@@ -194,5 +198,6 @@ export class ToggleActionUndoableAction<T = undefined> implements UndoableAction
 }
 
 export class NoopAction extends AbstractAction {
+  name = 'No-op';
   execute() {}
 }

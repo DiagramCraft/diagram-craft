@@ -12,6 +12,8 @@ export const toggleRulerActions = (context: ActionContext) => ({
 });
 
 export class ToggleRulerAction extends AbstractToggleAction {
+  name = 'Ruler';
+
   getStateCriteria() {
     return ActionCriteria.EventTriggered(UserState.get(), 'change', () => {
       return UserState.get().showRulers ?? true;

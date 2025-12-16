@@ -31,6 +31,8 @@ export const layoutSeriesParallelActions = (context: Application) => ({
 });
 
 export class LayoutSeriesParallelAction extends AbstractSelectionAction<Application> {
+  name = 'Series-Parallel';
+
   constructor(context: Application) {
     super(context, MultipleType.Both, ElementType.Node);
   }

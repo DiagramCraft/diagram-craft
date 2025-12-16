@@ -16,6 +16,8 @@ export const elementActions = (context: ActionContext) => ({
 });
 
 class ElementConvertToNameAction extends AbstractSelectionAction {
+  name = 'Convert to named element';
+
   constructor(context: ActionContext) {
     super(context, MultipleType.SingleOnly, ElementType.Node);
   }

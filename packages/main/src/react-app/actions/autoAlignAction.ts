@@ -34,6 +34,8 @@ export const autoAlignActions = (context: Application) => ({
 });
 
 export class AutoAlignAction extends AbstractSelectionAction<Application> {
+  name = 'Auto-Align...';
+
   constructor(context: Application) {
     super(context, MultipleType.Both, ElementType.Node);
   }

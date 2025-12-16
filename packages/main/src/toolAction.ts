@@ -18,12 +18,25 @@ declare global {
   }
 }
 
+const TOOL_NAME_MAP: Record<ToolType, string> = {
+  'move': 'Move Tool',
+  'text': 'Text Tool',
+  'edge': 'Edge Tool',
+  'node': 'Node Tool',
+  'pen': 'Pen Tool',
+  'freehand': 'Freehand Tool',
+  'rect': 'Rectangle Tool'
+};
+
 export class ToolAction extends AbstractToggleAction<undefined, Application> {
+  name: string;
+
   constructor(
     private readonly tool: ToolType,
     context: Application
   ) {
     super(context);
+    this.name = TOOL_NAME_MAP[tool] ?? `${tool} Tool`;
     this.state = context.tool.value === tool;
   }
 

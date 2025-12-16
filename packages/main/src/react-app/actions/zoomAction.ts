@@ -14,11 +14,14 @@ export const zoomActions = (context: ActionContext) => ({
 });
 
 export class ZoomAction extends AbstractAction {
+  name: string;
+
   constructor(
     private readonly direction: 'in' | 'out',
     context: ActionContext
   ) {
     super(context);
+    this.name = direction === 'in' ? 'Zoom In' : 'Zoom Out';
   }
 
   execute(): void {
@@ -34,6 +37,8 @@ export class ZoomAction extends AbstractAction {
 const OFFSET = 40;
 
 class ZoomFitAction extends AbstractAction<{ rulerWidth?: number }> {
+  name = 'Zoom Fit';
+
   execute(props: { rulerWidth?: number }): void {
     const diagram = this.context.model.activeDiagram;
     // TODO: Use width/height of ruler

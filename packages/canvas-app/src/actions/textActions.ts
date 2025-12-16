@@ -22,12 +22,20 @@ export const textActions = (context: Application) => ({
 // TODO: Maybe we can create an AbstractPropertyAction that takes a prop name and a value and
 //       to make all of this a bit more streamlined
 
+const TEXT_ACTION_NAME_MAP: Record<'bold' | 'italic', string> = {
+  'bold': 'Bold',
+  'italic': 'Italic'
+};
+
 export class TextAction extends AbstractToggleAction {
+  name: string;
+
   constructor(
     private readonly prop: 'bold' | 'italic',
     context: ActionContext
   ) {
     super(context);
+    this.name = TEXT_ACTION_NAME_MAP[prop];
   }
 
   getStateCriteria(context: ActionContext) {
@@ -85,12 +93,21 @@ export class TextAction extends AbstractToggleAction {
   }
 }
 
+const TEXT_DECORATION_NAME_MAP: Record<'underline' | 'line-through' | 'overline', string> = {
+  'underline': 'Underline',
+  'line-through': 'Line Through',
+  'overline': 'Overline'
+};
+
 export class TextDecorationAction extends AbstractToggleAction {
+  name: string;
+
   constructor(
     private readonly prop: 'underline' | 'line-through' | 'overline',
     context: ActionContext
   ) {
     super(context);
+    this.name = TEXT_DECORATION_NAME_MAP[prop];
   }
 
   getStateCriteria(context: ActionContext) {
@@ -147,6 +164,8 @@ export class TextDecorationAction extends AbstractToggleAction {
 }
 
 export class TextEditAction extends AbstractSelectionAction<Application> {
+  name = 'Edit...';
+
   constructor(application: Application) {
     super(application, MultipleType.SingleOnly, ElementType.Node);
   }

@@ -14,6 +14,8 @@ declare global {
 }
 
 class FileNewAction extends AbstractAction<undefined, Application> {
+  name = 'New File';
+
   execute(): void {
     const margin = 30;
 

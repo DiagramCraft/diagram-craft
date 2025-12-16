@@ -45,6 +45,8 @@ declare global {
 type SchemaArg = { schemaId: string };
 
 export class ExternalDataUnlinkAction extends AbstractSelectionAction<Application, SchemaArg> {
+  name = 'Unlink';
+
   constructor(application: Application) {
     super(application, MultipleType.SingleOnly, ElementType.Both);
   }
@@ -80,6 +82,8 @@ export class ExternalDataUnlinkAction extends AbstractSelectionAction<Applicatio
 }
 
 export class ExternalDataClear extends AbstractSelectionAction<Application, SchemaArg> {
+  name = 'Unlink & Clear';
+
   constructor(application: Application) {
     super(application, MultipleType.SingleOnly, ElementType.Both);
   }
@@ -116,6 +120,8 @@ export type ExternalDataLinkActionProps = {
 };
 
 export class ExternalDataLinkAction extends AbstractSelectionAction<Application, SchemaArg> {
+  name = 'Link';
+
   constructor(application: Application) {
     super(application, MultipleType.SingleOnly, ElementType.Both);
   }
@@ -216,6 +222,8 @@ export class ExternalDataMakeTemplateAction extends AbstractSelectionAction<
   Application,
   SchemaArg
 > {
+  name = 'Make template';
+
   constructor(application: Application) {
     super(application, MultipleType.SingleOnly, ElementType.Both);
   }
@@ -266,6 +274,8 @@ export class ExternalDataLinkRemoveTemplate extends AbstractAction<
   { templateId: string },
   Application
 > {
+  name = 'Remove Template';
+
   execute(arg: Partial<{ templateId: string }>): void {
     const $d = this.context.model.activeDiagram;
     const $doc = this.context.model.activeDocument;
@@ -286,6 +296,8 @@ export class ExternalDataLinkRenameTemplate extends AbstractAction<
   { templateId: string },
   Application
 > {
+  name = 'Rename Template';
+
   execute(arg: Partial<{ templateId: string }>): void {
     const $d = this.context.model.activeDiagram;
     const $doc = this.context.model.activeDocument;
@@ -323,6 +335,8 @@ export class ExternalDataLinkUpdateTemplate extends AbstractSelectionAction<
   Application,
   SchemaArg
 > {
+  name = 'Update template';
+
   constructor(application: Application) {
     super(application, MultipleType.SingleOnly, ElementType.Node);
   }

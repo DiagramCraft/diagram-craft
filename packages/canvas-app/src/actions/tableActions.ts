@@ -81,11 +81,14 @@ const swapPositions = (
 };
 
 export class TableDistributeAction extends AbstractSelectionAction {
+  name: string;
+
   constructor(
     private readonly type: 'row' | 'column',
     context: ActionContext
   ) {
     super(context, MultipleType.SingleOnly, ElementType.Node);
+    this.name = type === 'row' ? 'Distribute rows' : 'Distribute columns';
   }
 
   getCriteria(context: ActionContext) {
@@ -119,11 +122,14 @@ export class TableDistributeAction extends AbstractSelectionAction {
 }
 
 export class TableRemoveAction extends AbstractSelectionAction {
+  name: string;
+
   constructor(
     private readonly type: 'row' | 'column',
     context: ActionContext
   ) {
     super(context, MultipleType.SingleOnly, ElementType.Node);
+    this.name = type === 'row' ? 'Remove row' : 'Remove column';
   }
 
   getCriteria(context: ActionContext) {
@@ -156,12 +162,19 @@ export class TableRemoveAction extends AbstractSelectionAction {
 }
 
 export class TableInsertAction extends AbstractSelectionAction {
+  name: string;
+
   constructor(
     private readonly type: 'row' | 'column',
     private readonly position: -1 | 1,
     context: ActionContext
   ) {
     super(context, MultipleType.SingleOnly, ElementType.Node);
+    if (type === 'row') {
+      this.name = position === -1 ? 'Insert row before' : 'Insert row after';
+    } else {
+      this.name = position === -1 ? 'Insert column before' : 'Insert column after';
+    }
   }
 
   getCriteria(context: ActionContext) {
@@ -229,11 +242,14 @@ export class TableInsertAction extends AbstractSelectionAction {
 }
 
 export class TableRowMoveAction extends AbstractSelectionAction {
+  name: string;
+
   constructor(
     private readonly direction: -1 | 1,
     context: ActionContext
   ) {
     super(context, MultipleType.SingleOnly, ElementType.Node);
+    this.name = direction === -1 ? 'Move row up' : 'Move row down';
   }
 
   getCriteria(context: ActionContext) {
@@ -284,11 +300,14 @@ export class TableRowMoveAction extends AbstractSelectionAction {
 }
 
 export class TableColumnMoveAction extends AbstractSelectionAction {
+  name: string;
+
   constructor(
     private readonly direction: -1 | 1,
     context: ActionContext
   ) {
     super(context, MultipleType.SingleOnly, ElementType.Node);
+    this.name = direction === -1 ? 'Move column left' : 'Move column right';
   }
 
   getCriteria(context: ActionContext) {

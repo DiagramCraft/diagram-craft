@@ -44,17 +44,9 @@ export const CommandPalette = ({ open, onClose }: CommandPaletteProps) => {
       const keyBindings = findKeyBindingsForAction(actionId, keyMap);
       const keyBinding = keyBindings.length > 0 ? formatKeyBinding(keyBindings[0]) : undefined;
 
-      // Use description if available, otherwise generate label from action ID
-      const label =
-        action.description ??
-        actionId
-          .split('_')
-          .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
-          .join(' ');
-
       result.push({
         id: actionId,
-        label,
+        label: action.name,
         keyBinding,
         isEnabled: action.isEnabled({})
       });
