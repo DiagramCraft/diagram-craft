@@ -4,6 +4,7 @@ import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import { $tStr, TranslatedString } from '@diagram-craft/utils/localize';
 
 declare global {
   namespace DiagramCraft {
@@ -12,30 +13,37 @@ declare global {
 }
 
 export const selectionRestackActions = (context: ActionContext) => ({
-  SELECTION_RESTACK_BOTTOM: new SelectionRestackAction('bottom', context),
-  SELECTION_RESTACK_DOWN: new SelectionRestackAction('down', context),
-  SELECTION_RESTACK_TOP: new SelectionRestackAction('top', context),
-  SELECTION_RESTACK_UP: new SelectionRestackAction('up', context)
+  SELECTION_RESTACK_BOTTOM: new SelectionRestackAction(
+    'bottom',
+    $tStr('action.SELECTION_RESTACK_BOTTOM.name', 'Move to back'),
+    context
+  ),
+  SELECTION_RESTACK_DOWN: new SelectionRestackAction(
+    'down',
+    $tStr('action.SELECTION_RESTACK_DOWN.name', 'Move backward'),
+    context
+  ),
+  SELECTION_RESTACK_TOP: new SelectionRestackAction(
+    'top',
+    $tStr('action.SELECTION_RESTACK_TOP.name', 'Move to front'),
+    context
+  ),
+  SELECTION_RESTACK_UP: new SelectionRestackAction(
+    'up',
+    $tStr('action.SELECTION_RESTACK_UP.name', 'Move forward'),
+    context
+  )
 });
 
 type RestackMode = 'up' | 'down' | 'top' | 'bottom';
 
-const NAME_MAP: Record<RestackMode, string> = {
-  'up': 'Move forward',
-  'down': 'Move backward',
-  'top': 'Move to front',
-  'bottom': 'Move to back'
-};
-
 export class SelectionRestackAction extends AbstractSelectionAction {
-  name: string;
-
   constructor(
     private readonly mode: RestackMode = 'up',
+    public readonly name: TranslatedString,
     context: ActionContext
   ) {
     super(context, MultipleType.Both, ElementType.Both, ['regular']);
-    this.name = NAME_MAP[mode];
   }
 
   getCriteria(context: ActionContext): ActionCriteria[] {

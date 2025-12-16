@@ -11,6 +11,7 @@ import {
   MultipleType
 } from '@diagram-craft/canvas-app/actions/abstractSelectionAction';
 import type { DiagramElement } from '@diagram-craft/model/diagramElement';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 export const commentActions = (application: Application) => ({
   COMMENT_ADD: new CommentAddAction(application),
@@ -24,7 +25,7 @@ declare global {
 }
 
 class CommentAddAction extends AbstractSelectionAction<Application, { elementId: string }> {
-  name = 'Add Comment';
+  name = $tStr('action.COMMENT_ADD.name', 'Add Comment');
 
   constructor(application: Application) {
     super(application, MultipleType.SingleOnly, ElementType.Both, undefined, true);
@@ -71,7 +72,7 @@ class CommentAddAction extends AbstractSelectionAction<Application, { elementId:
 }
 
 class CommentEditAction extends AbstractAction<{ comment: Comment }, Application> {
-  name = 'Edit Comment';
+  name = $tStr('action.COMMENT_EDIT.name', 'Edit Comment');
 
   execute(arg: Partial<{ comment: Comment }>): void {
     const comment = arg.comment;

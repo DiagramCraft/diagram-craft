@@ -3,6 +3,7 @@ import { assert } from '@diagram-craft/utils/assert';
 import { serializeDiagramDocument } from '@diagram-craft/model/serialization/serialize';
 import { Application } from '../../application';
 import { AppConfig } from '../../appConfig';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 export const fileSaveActions = (application: Application) =>
   AppConfig.get().filesystem.provider === 'none'
@@ -20,7 +21,7 @@ declare global {
 }
 
 class FileSaveAction extends AbstractAction<undefined, Application> {
-  name = 'Save';
+  name = $tStr('action.FILE_SAVE.name', 'Save');
 
   getCriteria(application: Application) {
     return [ActionCriteria.Simple(() => !!application.model.activeDocument.url)];

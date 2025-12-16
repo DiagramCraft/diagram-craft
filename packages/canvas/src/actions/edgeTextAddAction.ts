@@ -7,6 +7,7 @@ import { Point } from '@diagram-craft/geometry/point';
 import { ResolvedLabelNode } from '@diagram-craft/model/diagramEdge';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 declare global {
   namespace DiagramCraft {
@@ -24,7 +25,7 @@ type EdgeTextAddActionArg = {
 };
 
 export class EdgeTextAddAction extends AbstractAction<EdgeTextAddActionArg> {
-  name = 'Add text';
+  name = $tStr('action.EDGE_TEXT_ADD.name', 'Add text');
 
   getCriteria(context: ActionContext) {
     return ActionCriteria.EventTriggered(

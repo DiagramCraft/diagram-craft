@@ -12,6 +12,7 @@ import { DiagramGraph } from '@diagram-craft/model/diagramGraph';
 import { layoutLayered } from '@diagram-craft/graph/layout/layeredLayout';
 import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
 import type { Application } from '../../application';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 declare global {
   namespace DiagramCraft {
@@ -31,7 +32,7 @@ export const layoutLayeredActions = (context: Application) => ({
 });
 
 export class LayoutLayeredAction extends AbstractSelectionAction<Application> {
-  name = 'Layered';
+  name = $tStr('action.LAYOUT_LAYERED.name', 'Layered');
 
   constructor(context: Application) {
     super(context, MultipleType.Both, ElementType.Node);

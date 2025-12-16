@@ -6,6 +6,7 @@ import {
 } from '@diagram-craft/canvas/keyMap';
 import { useApplication } from '../../application';
 import styles from './CommandPalette.module.css';
+import { $t } from '@diagram-craft/utils/localize';
 
 type CommandInfo = {
   id: ActionName;
@@ -46,7 +47,7 @@ export const CommandPalette = ({ open, onClose }: CommandPaletteProps) => {
 
       result.push({
         id: actionId,
-        label: action.name,
+        label: $t(action.name),
         keyBinding,
         isEnabled: action.isEnabled({})
       });

@@ -1,6 +1,7 @@
 import { AbstractToggleAction, ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 import { MagnetType } from '@diagram-craft/canvas/snap/magnet';
 import { DEFAULT_SNAP_CONFIG, getSnapConfig } from '@diagram-craft/canvas/snap/snapManager';
+import { $tStr, type TranslatedString } from '@diagram-craft/utils/localize';
 
 declare global {
   namespace DiagramCraft {
@@ -9,33 +10,45 @@ declare global {
 }
 
 export const toggleMagnetTypeActions = (context: ActionContext) => ({
-  TOGGLE_MAGNET_TYPE_SIZE: new ToggleMagnetTypeAction('size', context),
-  TOGGLE_MAGNET_TYPE_GRID: new ToggleMagnetTypeAction('grid', context),
-  TOGGLE_MAGNET_TYPE_GUIDES: new ToggleMagnetTypeAction('guide', context),
-  TOGGLE_MAGNET_TYPE_CANVAS: new ToggleMagnetTypeAction('canvas', context),
-  TOGGLE_MAGNET_TYPE_NODE: new ToggleMagnetTypeAction('node', context),
-  TOGGLE_MAGNET_TYPE_DISTANCE: new ToggleMagnetTypeAction('distance', context)
+  TOGGLE_MAGNET_TYPE_SIZE: new ToggleMagnetTypeAction(
+    'size',
+    $tStr('action.TOGGLE_MAGNET_TYPE_SIZE.name', 'Toggle Size Magnet'),
+    context
+  ),
+  TOGGLE_MAGNET_TYPE_GRID: new ToggleMagnetTypeAction(
+    'grid',
+    $tStr('action.TOGGLE_MAGNET_TYPE_GRID.name', 'Toggle Grid Magnet'),
+    context
+  ),
+  TOGGLE_MAGNET_TYPE_GUIDES: new ToggleMagnetTypeAction(
+    'guide',
+    $tStr('action.TOGGLE_MAGNET_TYPE_GUIDES.name', 'Toggle Guide Magnet'),
+    context
+  ),
+  TOGGLE_MAGNET_TYPE_CANVAS: new ToggleMagnetTypeAction(
+    'canvas',
+    $tStr('action.TOGGLE_MAGNET_TYPE_CANVAS.name', 'Toggle Canvas Magnet'),
+    context
+  ),
+  TOGGLE_MAGNET_TYPE_NODE: new ToggleMagnetTypeAction(
+    'node',
+    $tStr('action.TOGGLE_MAGNET_TYPE_NODE.name', 'Toggle Node Magnet'),
+    context
+  ),
+  TOGGLE_MAGNET_TYPE_DISTANCE: new ToggleMagnetTypeAction(
+    'distance',
+    $tStr('action.TOGGLE_MAGNET_TYPE_DISTANCE.name', 'Toggle Distance Magnet'),
+    context
+  )
 });
 
-const MAGNET_TYPE_NAME_MAP: Record<MagnetType, string> = {
-  'size': 'Toggle Size Magnet',
-  'grid': 'Toggle Grid Magnet',
-  'guide': 'Toggle Guide Magnet',
-  'canvas': 'Toggle Canvas Magnet',
-  'node': 'Toggle Node Magnet',
-  'distance': 'Toggle Distance Magnet',
-  'source': 'Toggle Source Magnet'
-};
-
 export class ToggleMagnetTypeAction extends AbstractToggleAction {
-  name: string;
-
   constructor(
     private readonly magnetType: MagnetType,
+    public readonly name: TranslatedString,
     context: ActionContext
   ) {
     super(context);
-    this.name = MAGNET_TYPE_NAME_MAP[magnetType];
     this.state = getSnapConfig(context.model.activeDiagram).magnetTypes[magnetType] === true;
   }
 

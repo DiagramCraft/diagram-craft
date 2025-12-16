@@ -13,6 +13,7 @@ import { layoutTree } from '@diagram-craft/graph/layout/treeLayout';
 import { extractMaximalTree } from '@diagram-craft/graph/transformation';
 import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
 import type { Application } from '../../application';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 declare global {
   namespace DiagramCraft {
@@ -32,7 +33,7 @@ export const layoutTreeActions = (context: Application) => ({
 });
 
 export class LayoutTreeAction extends AbstractSelectionAction<Application> {
-  name = 'Tree';
+  name = $tStr('action.LAYOUT_TREE.name', 'Tree');
 
   constructor(context: Application) {
     super(context, MultipleType.SingleOnly, ElementType.Node);

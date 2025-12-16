@@ -9,6 +9,7 @@ import type { DiagramNode } from '@diagram-craft/model/diagramNode';
 import type { Application } from '../../application';
 import { autoAlign, type AutoAlignMode } from '@diagram-craft/canvas/snap/autoAlign';
 import type { MagnetType } from '@diagram-craft/canvas/snap/magnet';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 declare global {
   namespace DiagramCraft {
@@ -34,7 +35,7 @@ export const autoAlignActions = (context: Application) => ({
 });
 
 export class AutoAlignAction extends AbstractSelectionAction<Application> {
-  name = 'Auto-Align...';
+  name = $tStr('action.AUTO_ALIGN.name', 'Auto-Align...');
 
   constructor(context: Application) {
     super(context, MultipleType.Both, ElementType.Node);

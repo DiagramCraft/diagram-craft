@@ -6,6 +6,7 @@ import { Application } from '../../application';
 import { ImageInsertDialog } from '../ImageInsertDialog';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 export const imageInsertActions = (application: Application) => ({
   IMAGE_INSERT: new ImageInsertAction(application)
@@ -18,7 +19,7 @@ declare global {
 }
 
 class ImageInsertAction extends AbstractAction<undefined, Application> {
-  name = 'Insert Image';
+  name = $tStr('action.IMAGE_INSERT.name', 'Insert Image');
 
   getCriteria(application: Application) {
     return ActionCriteria.EventTriggered(

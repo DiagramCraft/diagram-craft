@@ -5,6 +5,7 @@ import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { precondition } from '@diagram-craft/utils/assert';
 import { smallest } from '@diagram-craft/utils/array';
 import { Point } from '@diagram-craft/geometry/point';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 declare global {
   namespace DiagramCraft {
@@ -22,7 +23,7 @@ type WaypointDeleteActionArg = {
 };
 
 export class WaypointDeleteAction extends AbstractAction<WaypointDeleteActionArg> {
-  name = 'Delete waypoint';
+  name = $tStr('action.WAYPOINT_DELETE.name', 'Delete waypoint');
 
   execute(context: WaypointDeleteActionArg): void {
     precondition.is.present(context.point);

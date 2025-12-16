@@ -5,6 +5,7 @@ import { assignNewBounds, cloneElements } from '@diagram-craft/model/diagramElem
 import { assert } from '@diagram-craft/utils/assert';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 export const shapeInsertActions = (application: Application) => ({
   SHAPE_INSERT: new ShapeInsertAction(application)
@@ -17,7 +18,7 @@ declare global {
 }
 
 class ShapeInsertAction extends AbstractAction<undefined, Application> {
-  name = 'Insert Shape';
+  name = $tStr('action.SHAPE_INSERT.name', 'Insert Shape');
 
   getCriteria(application: Application) {
     return ActionCriteria.EventTriggered(

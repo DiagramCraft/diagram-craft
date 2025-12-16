@@ -25,6 +25,7 @@ import { DataManagerUndoableFacade } from '@diagram-craft/model/diagramDocumentD
 import type { FlatObject } from '@diagram-craft/utils/flatObject';
 import type { SerializedElement } from '@diagram-craft/model/serialization/serializedTypes';
 import type { NodeProps, EdgeProps } from '@diagram-craft/model/diagramProps';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 export const externalDataActions = (application: Application) => ({
   EXTERNAL_DATA_UNLINK: new ExternalDataUnlinkAction(application),
@@ -45,7 +46,7 @@ declare global {
 type SchemaArg = { schemaId: string };
 
 export class ExternalDataUnlinkAction extends AbstractSelectionAction<Application, SchemaArg> {
-  name = 'Unlink';
+  name = $tStr('action.EXTERNAL_DATA_UNLINK.name', 'Unlink');
 
   constructor(application: Application) {
     super(application, MultipleType.SingleOnly, ElementType.Both);
@@ -82,7 +83,7 @@ export class ExternalDataUnlinkAction extends AbstractSelectionAction<Applicatio
 }
 
 export class ExternalDataClear extends AbstractSelectionAction<Application, SchemaArg> {
-  name = 'Unlink & Clear';
+  name = $tStr('action.EXTERNAL_DATA_CLEAR.name', 'Unlink & Clear');
 
   constructor(application: Application) {
     super(application, MultipleType.SingleOnly, ElementType.Both);
@@ -120,7 +121,7 @@ export type ExternalDataLinkActionProps = {
 };
 
 export class ExternalDataLinkAction extends AbstractSelectionAction<Application, SchemaArg> {
-  name = 'Link';
+  name = $tStr('action.EXTERNAL_DATA_LINK.name', 'Link');
 
   constructor(application: Application) {
     super(application, MultipleType.SingleOnly, ElementType.Both);
@@ -222,7 +223,7 @@ export class ExternalDataMakeTemplateAction extends AbstractSelectionAction<
   Application,
   SchemaArg
 > {
-  name = 'Make template';
+  name = $tStr('action.EXTERNAL_DATA_MAKE_TEMPLATE.name', 'Make template');
 
   constructor(application: Application) {
     super(application, MultipleType.SingleOnly, ElementType.Both);
@@ -274,7 +275,7 @@ export class ExternalDataLinkRemoveTemplate extends AbstractAction<
   { templateId: string },
   Application
 > {
-  name = 'Remove Template';
+  name = $tStr('action.EXTERNAL_DATA_LINK_REMOVE_TEMPLATE.name', 'Remove Template');
 
   execute(arg: Partial<{ templateId: string }>): void {
     const $d = this.context.model.activeDiagram;
@@ -296,7 +297,7 @@ export class ExternalDataLinkRenameTemplate extends AbstractAction<
   { templateId: string },
   Application
 > {
-  name = 'Rename Template';
+  name = $tStr('action.EXTERNAL_DATA_LINK_RENAME_TEMPLATE.name', 'Rename Template');
 
   execute(arg: Partial<{ templateId: string }>): void {
     const $d = this.context.model.activeDiagram;
@@ -335,7 +336,7 @@ export class ExternalDataLinkUpdateTemplate extends AbstractSelectionAction<
   Application,
   SchemaArg
 > {
-  name = 'Update template';
+  name = $tStr('action.EXTERNAL_DATA_LINK_UPDATE_TEMPLATE.name', 'Update template');
 
   constructor(application: Application) {
     super(application, MultipleType.SingleOnly, ElementType.Node);

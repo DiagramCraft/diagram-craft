@@ -4,6 +4,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { ActionContext } from '@diagram-craft/canvas/action';
+import { $tStr, TranslatedString } from '@diagram-craft/utils/localize';
 
 declare global {
   namespace DiagramCraft {
@@ -12,8 +13,16 @@ declare global {
 }
 
 export const distributeActions = (context: ActionContext) => ({
-  DISTRIBUTE_HORIZONTAL: new DistributeAction('horizontal', context),
-  DISTRIBUTE_VERTICAL: new DistributeAction('vertical', context)
+  DISTRIBUTE_HORIZONTAL: new DistributeAction(
+    'horizontal',
+    $tStr('action.DISTRIBUTE_HORIZONTAL.name', 'Distribute Horizontally'),
+    context
+  ),
+  DISTRIBUTE_VERTICAL: new DistributeAction(
+    'vertical',
+    $tStr('action.DISTRIBUTE_VERTICAL.name', 'Distribute Vertically'),
+    context
+  )
 });
 
 const minBounds = (b: Box) => {
@@ -24,20 +33,13 @@ const maxBounds = (b: Box) => {
   return { x: Math.max(b.x, b.x + b.w), y: Math.max(b.y, b.y + b.h) };
 };
 
-const NAME_MAP: Record<'vertical' | 'horizontal', string> = {
-  'vertical': 'Distribute Vertically',
-  'horizontal': 'Distribute Horizontally'
-};
-
 export class DistributeAction extends AbstractSelectionAction {
-  name: string;
-
   constructor(
     private readonly mode: 'vertical' | 'horizontal',
+    public readonly name: TranslatedString,
     context: ActionContext
   ) {
     super(context, 'multiple-only');
-    this.name = NAME_MAP[mode];
   }
 
   execute(): void {

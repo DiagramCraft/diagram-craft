@@ -4,6 +4,7 @@ import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { assert } from '@diagram-craft/utils/assert';
 import { ActionContext } from '@diagram-craft/canvas/action';
+import { $tStr, TranslatedString } from '@diagram-craft/utils/localize';
 
 declare global {
   namespace DiagramCraft {
@@ -12,34 +13,39 @@ declare global {
 }
 
 export const alignActions = (context: ActionContext) => ({
-  ALIGN_TOP: new AlignAction('top', context),
-  ALIGN_BOTTOM: new AlignAction('bottom', context),
-  ALIGN_CENTER_HORIZONTAL: new AlignAction('center-horizontal', context),
-  ALIGN_LEFT: new AlignAction('left', context),
-  ALIGN_RIGHT: new AlignAction('right', context),
-  ALIGN_CENTER_VERTICAL: new AlignAction('center-vertical', context)
+  ALIGN_TOP: new AlignAction('top', $tStr('action.ALIGN_TOP.name', 'Align Top Edges'), context),
+  ALIGN_BOTTOM: new AlignAction(
+    'bottom',
+    $tStr('action.ALIGN_BOTTOM.name', 'Align Bottom Edges'),
+    context
+  ),
+  ALIGN_CENTER_HORIZONTAL: new AlignAction(
+    'center-horizontal',
+    $tStr('action.ALIGN_CENTER_HORIZONTAL.name', 'Align Centers Horizontally'),
+    context
+  ),
+  ALIGN_LEFT: new AlignAction('left', $tStr('action.ALIGN_LEFT.name', 'Align Left Edges'), context),
+  ALIGN_RIGHT: new AlignAction(
+    'right',
+    $tStr('action.ALIGN_RIGHT.name', 'Align Right Edges'),
+    context
+  ),
+  ALIGN_CENTER_VERTICAL: new AlignAction(
+    'center-vertical',
+    $tStr('action.ALIGN_CENTER_VERTICAL.name', 'Align Centers Vertically'),
+    context
+  )
 });
 
 type Mode = 'top' | 'bottom' | 'right' | 'left' | 'center-vertical' | 'center-horizontal';
 
-const ALIGN_NAMES: Record<Mode, string> = {
-  'top': 'Align Top Edges',
-  'bottom': 'Align Bottom Edges',
-  'left': 'Align Left Edges',
-  'right': 'Align Right Edges',
-  'center-vertical': 'Align Centers Vertically',
-  'center-horizontal': 'Align Centers Horizontally'
-};
-
 export class AlignAction extends AbstractSelectionAction {
-  name: string;
-
   constructor(
     private readonly mode: Mode,
+    public readonly name: TranslatedString,
     context: ActionContext
   ) {
     super(context, MultipleType.MultipleOnly, ElementType.Node);
-    this.name = ALIGN_NAMES[mode];
   }
 
   execute(): void {

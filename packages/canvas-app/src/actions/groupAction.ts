@@ -10,6 +10,7 @@ import { ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
+import { $tStr, TranslatedString } from '@diagram-craft/utils/localize';
 
 export const groupActions = (context: ActionContext) => ({
   GROUP_GROUP: new GroupAction('group', context),
@@ -108,13 +109,13 @@ class UndoableGroupAction implements UndoableAction {
   }
 }
 
-const NAME_MAP: Record<'group' | 'ungroup', string> = {
-  'group': 'Group',
-  'ungroup': 'Ungroup'
+const NAME_MAP: Record<'group' | 'ungroup', TranslatedString> = {
+  group: $tStr('action.GROUP_GROUP.name', 'Group'),
+  ungroup: $tStr('action.GROUP_UNGROUP.name', 'Ungroup')
 };
 
 export class GroupAction extends AbstractSelectionAction {
-  name: string;
+  name: TranslatedString;
 
   constructor(
     private readonly type: 'group' | 'ungroup',

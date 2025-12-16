@@ -5,6 +5,7 @@ import { Translation } from '@diagram-craft/geometry/transform';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ActionContext } from '@diagram-craft/canvas/action';
 import { transformElements } from '@diagram-craft/model/diagramElement';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 declare global {
   namespace DiagramCraft {
@@ -28,7 +29,7 @@ export const selectionMoveActions = (context: ActionContext) => {
 };
 
 export class SelectionMoveAction extends AbstractSelectionAction {
-  name = 'Move Selection';
+  name = $tStr('action.SELECTION_MOVE.name', 'Move Selection');
 
   constructor(
     context: ActionContext,

@@ -11,6 +11,7 @@ import { deepClone, getTypedKeys } from '@diagram-craft/utils/object';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 declare global {
   namespace DiagramCraft {
@@ -23,7 +24,7 @@ export const selectionChangeShapeActions = (context: Application) => ({
 });
 
 export class SelectionChangeShapeAction extends AbstractSelectionAction<Application> {
-  name = 'Change Shape...';
+  name = $tStr('action.SELECTION_CHANGE_SHAPE.name', 'Change Shape...');
 
   constructor(context: Application) {
     super(context, MultipleType.SingleOnly, ElementType.Node);

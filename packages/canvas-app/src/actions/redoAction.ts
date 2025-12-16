@@ -1,4 +1,5 @@
 import { AbstractAction, ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 declare global {
   namespace DiagramCraft {
@@ -11,7 +12,7 @@ export const redoActions = (context: ActionContext) => ({
 });
 
 export class RedoAction extends AbstractAction {
-  name = 'Redo';
+  name = $tStr('action.REDO.name', 'Redo');
 
   getCriteria(context: ActionContext) {
     return ActionCriteria.EventTriggered(

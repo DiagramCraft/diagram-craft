@@ -6,6 +6,7 @@ import {
 import { Translation } from '@diagram-craft/geometry/transform';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { assert } from '@diagram-craft/utils/assert';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 export const debugActions = (context: ActionContext) => ({
   DOCUMENT_DUMP: new DumpDocument(context),
@@ -20,7 +21,7 @@ declare global {
 }
 
 class DumpDocument extends AbstractAction {
-  name = 'Dump Document';
+  name = $tStr('action.DOCUMENT_DUMP.name', 'Dump Document');
 
   execute(): void {
     serializeDiagramDocument(this.context.model.activeDiagram.document).then(e => {
@@ -30,7 +31,7 @@ class DumpDocument extends AbstractAction {
 }
 
 class DumpSelectionAction extends AbstractAction {
-  name = 'Dump';
+  name = $tStr('action.SELECTION_DUMP.name', 'Dump');
 
   execute(): void {
     this.context.model.activeDiagram.selection.elements.forEach(e => {
@@ -41,7 +42,7 @@ class DumpSelectionAction extends AbstractAction {
 }
 
 class RedrawAction extends AbstractAction {
-  name = 'Redraw';
+  name = $tStr('action.SELECTION_REDRAW.name', 'Redraw');
 
   execute(): void {
     const diagram = this.context.model.activeDiagram;

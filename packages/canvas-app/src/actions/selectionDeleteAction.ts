@@ -3,6 +3,7 @@ import { ElementDeleteUndoableAction } from '@diagram-craft/model/diagramUndoAct
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 declare global {
   namespace DiagramCraft {
@@ -15,7 +16,7 @@ export const selectionDeleteActions = (context: ActionContext) => ({
 });
 
 export class SelectionDeleteAction extends AbstractSelectionAction {
-  name = 'Delete';
+  name = $tStr('action.SELECTION_DELETE.name', 'Delete');
 
   constructor(context: ActionContext) {
     super(context, 'both');

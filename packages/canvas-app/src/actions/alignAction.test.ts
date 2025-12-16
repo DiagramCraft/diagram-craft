@@ -8,6 +8,7 @@ import {
 import { Diagram } from '@diagram-craft/model/diagram';
 import { ActionContext } from '@diagram-craft/canvas/action';
 import type { DiagramElement } from '@diagram-craft/model/diagramElement';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 const mkContext = (d: Diagram) => {
   return {
@@ -34,19 +35,19 @@ describe('AlignActions', () => {
   describe('enabled', () => {
     test('should not be enabled when there the selection is only one or empty', () => {
       diagram.selection.setElements([]);
-      const action1 = new AlignAction('top', mkContext(diagram));
+      const action1 = new AlignAction('top', $tStr('', ''), mkContext(diagram));
       action1.bindCriteria();
       expect(action1.isEnabled(undefined)).toBe(false);
 
       diagram.selection.setElements([layer.elements[0]!]);
-      const action2 = new AlignAction('top', mkContext(diagram));
+      const action2 = new AlignAction('top', $tStr('', ''), mkContext(diagram));
       action2.bindCriteria();
       expect(action2.isEnabled(undefined)).toBe(false);
     });
 
     test('should be enabled when there are more than one element selected', () => {
       diagram.selection.setElements(layer.elements);
-      const action = new AlignAction('top', mkContext(diagram));
+      const action = new AlignAction('top', $tStr('', ''), mkContext(diagram));
       action.bindCriteria();
       expect(action.isEnabled(undefined)).toBe(true);
     });
@@ -57,7 +58,7 @@ describe('AlignActions', () => {
       const [e1, e2, e3] = layer.elements as [DiagramElement, DiagramElement, DiagramElement];
       diagram.selection.setElements([e1, e2, e3]);
 
-      new AlignAction('top', mkContext(diagram)).execute();
+      new AlignAction('top', $tStr('', ''), mkContext(diagram)).execute();
       expect(e1.bounds.y).toBe(10);
       expect(e2.bounds.y).toBe(10);
       expect(e3.bounds.y).toBe(10);
@@ -67,7 +68,7 @@ describe('AlignActions', () => {
       const [e1, e2, e3] = layer.elements as [DiagramElement, DiagramElement, DiagramElement];
       diagram.selection.setElements([e1, e2, e3]);
 
-      new AlignAction('bottom', mkContext(diagram)).execute();
+      new AlignAction('bottom', $tStr('', ''), mkContext(diagram)).execute();
       expect(e1.bounds.y).toBe(10);
       expect(e2.bounds.y).toBe(-40);
       expect(e3.bounds.y).toBe(50);
@@ -77,7 +78,7 @@ describe('AlignActions', () => {
       const [e1, e2, e3] = layer.elements as [DiagramElement, DiagramElement, DiagramElement];
       diagram.selection.setElements([e1, e2, e3]);
 
-      new AlignAction('center-horizontal', mkContext(diagram)).execute();
+      new AlignAction('center-horizontal', $tStr('', ''), mkContext(diagram)).execute();
       expect(e1.bounds.y).toBe(10);
       expect(e2.bounds.y).toBe(-15);
       expect(e3.bounds.y).toBe(30);
@@ -87,7 +88,7 @@ describe('AlignActions', () => {
       const [e1, e2, e3] = layer.elements as [DiagramElement, DiagramElement, DiagramElement];
       diagram.selection.setElements([e1, e2, e3]);
 
-      new AlignAction('left', mkContext(diagram)).execute();
+      new AlignAction('left', $tStr('', ''), mkContext(diagram)).execute();
       expect(e1.bounds.x).toBe(10);
       expect(e2.bounds.x).toBe(10);
       expect(e3.bounds.x).toBe(10);
@@ -97,7 +98,7 @@ describe('AlignActions', () => {
       const [e1, e2, e3] = layer.elements as [DiagramElement, DiagramElement, DiagramElement];
       diagram.selection.setElements([e1, e2, e3]);
 
-      new AlignAction('right', mkContext(diagram)).execute();
+      new AlignAction('right', $tStr('', ''), mkContext(diagram)).execute();
       expect(e1.bounds.x).toBe(10);
       expect(e2.bounds.x).toBe(40);
       expect(e3.bounds.x).toBe(10);
@@ -107,7 +108,7 @@ describe('AlignActions', () => {
       const [e1, e2, e3] = layer.elements as [DiagramElement, DiagramElement, DiagramElement];
       diagram.selection.setElements([e1, e2, e3]);
 
-      new AlignAction('center-vertical', mkContext(diagram)).execute();
+      new AlignAction('center-vertical', $tStr('', ''), mkContext(diagram)).execute();
       expect(e1.bounds.x).toBe(10);
       expect(e2.bounds.x).toBe(25);
       expect(e3.bounds.x).toBe(10);

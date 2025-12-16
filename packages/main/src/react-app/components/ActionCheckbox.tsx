@@ -4,6 +4,7 @@ import React, { useId } from 'react';
 import { ToggleAction } from '@diagram-craft/canvas/action';
 import { useApplication } from '../../application';
 import type { ActionMap } from '@diagram-craft/canvas/actions/action';
+import { $t } from '@diagram-craft/utils/localize';
 
 export const ActionCheckbox = (props: Props) => {
   const application = useApplication();
@@ -25,7 +26,7 @@ export const ActionCheckbox = (props: Props) => {
           (actionMap[props.action] as ToggleAction).execute({});
         }}
       />
-      <label htmlFor={id}>{props.children ?? actionMap[props.action]!.name}</label>
+      <label htmlFor={id}>{props.children ?? $t(actionMap[props.action]!.name)}</label>
     </>
   );
 };

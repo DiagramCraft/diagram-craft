@@ -1,5 +1,6 @@
 import { AbstractToggleAction, ActionContext } from '@diagram-craft/canvas/action';
 import { UserState } from '../../UserState';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 declare global {
   namespace DiagramCraft {
@@ -12,7 +13,7 @@ export const toggleHelpActions = (context: ActionContext) => ({
 });
 
 export class ToggleHelpAction extends AbstractToggleAction {
-  name = 'Toggle Help';
+  name = $tStr('action.TOGGLE_HELP.name', 'Toggle Help');
   private userState: UserState;
 
   constructor(context: ActionContext) {

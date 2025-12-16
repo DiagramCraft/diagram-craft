@@ -13,11 +13,13 @@ import { ModificationLayer } from '@diagram-craft/model/diagramLayerModification
 import { newid } from '@diagram-craft/utils/id';
 import { ActionCriteria } from '@diagram-craft/canvas/action';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 declare global {
   namespace DiagramCraft {
-    interface ActionMapExtensions
-      extends ReturnType<typeof selectionAddToModificationLayerActions> {}
+    interface ActionMapExtensions extends ReturnType<
+      typeof selectionAddToModificationLayerActions
+    > {}
   }
 }
 
@@ -26,7 +28,7 @@ export const selectionAddToModificationLayerActions = (context: Application) => 
 });
 
 export class SelectionAddToModificationLayerAction extends AbstractSelectionAction<Application> {
-  name = 'Add to modification layer';
+  name = $tStr('action.SELECTION_ADD_TO_MODIFICATION_LAYER.name', 'Add to modification layer');
 
   constructor(context: Application) {
     super(context, MultipleType.Both, ElementType.Both);

@@ -8,6 +8,7 @@ import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSelectionAction';
 import { TableHelper } from '@diagram-craft/canvas/node-types/Table.nodeType';
 import { assert } from '@diagram-craft/utils/assert';
+import { $tStr, TranslatedString } from '@diagram-craft/utils/localize';
 
 declare global {
   namespace DiagramCraft {
@@ -81,14 +82,17 @@ const swapPositions = (
 };
 
 export class TableDistributeAction extends AbstractSelectionAction {
-  name: string;
+  name: TranslatedString;
 
   constructor(
     private readonly type: 'row' | 'column',
     context: ActionContext
   ) {
     super(context, MultipleType.SingleOnly, ElementType.Node);
-    this.name = type === 'row' ? 'Distribute rows' : 'Distribute columns';
+    this.name =
+      type === 'row'
+        ? $tStr('action.TABLE_ROW_DISTRIBUTE.name', 'Distribute rows')
+        : $tStr('action.TABLE_COLUMN_DISTRIBUTE.name', 'Distribute columns');
   }
 
   getCriteria(context: ActionContext) {
@@ -122,14 +126,17 @@ export class TableDistributeAction extends AbstractSelectionAction {
 }
 
 export class TableRemoveAction extends AbstractSelectionAction {
-  name: string;
+  name: TranslatedString;
 
   constructor(
     private readonly type: 'row' | 'column',
     context: ActionContext
   ) {
     super(context, MultipleType.SingleOnly, ElementType.Node);
-    this.name = type === 'row' ? 'Remove row' : 'Remove column';
+    this.name =
+      type === 'row'
+        ? $tStr('action.TABLE_ROW_REMOVE.name', 'Remove row')
+        : $tStr('action.TABLE_COLUMN_REMOVE.name', 'Remove column');
   }
 
   getCriteria(context: ActionContext) {
@@ -162,7 +169,7 @@ export class TableRemoveAction extends AbstractSelectionAction {
 }
 
 export class TableInsertAction extends AbstractSelectionAction {
-  name: string;
+  name: TranslatedString;
 
   constructor(
     private readonly type: 'row' | 'column',
@@ -171,9 +178,15 @@ export class TableInsertAction extends AbstractSelectionAction {
   ) {
     super(context, MultipleType.SingleOnly, ElementType.Node);
     if (type === 'row') {
-      this.name = position === -1 ? 'Insert row before' : 'Insert row after';
+      this.name =
+        position === -1
+          ? $tStr('action.TABLE_ROW_INSERT_BEFORE.name', 'Insert row before')
+          : $tStr('action.TABLE_ROW_INSERT_AFTER.name', 'Insert row after');
     } else {
-      this.name = position === -1 ? 'Insert column before' : 'Insert column after';
+      this.name =
+        position === -1
+          ? $tStr('action.TABLE_COLUMN_INSERT_BEFORE.name', 'Insert column before')
+          : $tStr('action.TABLE_COLUMN_INSERT_AFTER.name', 'Insert column after');
     }
   }
 
@@ -242,14 +255,17 @@ export class TableInsertAction extends AbstractSelectionAction {
 }
 
 export class TableRowMoveAction extends AbstractSelectionAction {
-  name: string;
+  name: TranslatedString;
 
   constructor(
     private readonly direction: -1 | 1,
     context: ActionContext
   ) {
     super(context, MultipleType.SingleOnly, ElementType.Node);
-    this.name = direction === -1 ? 'Move row up' : 'Move row down';
+    this.name =
+      direction === -1
+        ? $tStr('action.TABLE_ROW_MOVE_UP.name', 'Move row up')
+        : $tStr('action.TABLE_ROW_MOVE_DOWN.name', 'Move row down');
   }
 
   getCriteria(context: ActionContext) {
@@ -300,14 +316,17 @@ export class TableRowMoveAction extends AbstractSelectionAction {
 }
 
 export class TableColumnMoveAction extends AbstractSelectionAction {
-  name: string;
+  name: TranslatedString;
 
   constructor(
     private readonly direction: -1 | 1,
     context: ActionContext
   ) {
     super(context, MultipleType.SingleOnly, ElementType.Node);
-    this.name = direction === -1 ? 'Move column left' : 'Move column right';
+    this.name =
+      direction === -1
+        ? $tStr('action.TABLE_COLUMN_MOVE_LEFT.name', 'Move column left')
+        : $tStr('action.TABLE_COLUMN_MOVE_RIGHT.name', 'Move column right');
   }
 
   getCriteria(context: ActionContext) {
