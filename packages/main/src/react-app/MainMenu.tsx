@@ -63,11 +63,7 @@ const renderMenuItem = (
   }
 
   if (item.action) {
-    return (
-      <ActionMenuItem key={item.label} action={item.action} arg={{}}>
-        {item.label}
-      </ActionMenuItem>
-    );
+    return <ActionMenuItem key={item.label} action={item.action} arg={{}} />;
   }
 
   return <div key={item.label}>{item.label}</div>;

@@ -34,9 +34,7 @@ export const LayerContextMenu = (props: Props) => {
 
         <Menu.Separator />
 
-        <ActionMenuItem action={'RULE_LAYER_ADD'} arg={{ id: props.layer?.id }}>
-          Add rule
-        </ActionMenuItem>
+        <ActionMenuItem action={'RULE_LAYER_ADD'} arg={{ id: props.layer?.id }} />
       </ContextMenu.Menu>
     </ContextMenu.Root>
   );

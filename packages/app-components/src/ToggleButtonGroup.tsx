@@ -42,10 +42,11 @@ type RootProps = {
     }
 );
 
-const Item = (props: ItemProps) => {
+const Item = React.forwardRef<HTMLButtonElement, ItemProps>((props: ItemProps, ref) => {
   return (
     <BaseUIToggle
       {...props}
+      ref={ref}
       className={props.className ?? styles.cmpToggleButtonGroupItem}
       value={props.value}
       disabled={props.disabled}
@@ -53,7 +54,7 @@ const Item = (props: ItemProps) => {
       {props.children}
     </BaseUIToggle>
   );
-};
+});
 
 type ItemProps = {
   value: string;

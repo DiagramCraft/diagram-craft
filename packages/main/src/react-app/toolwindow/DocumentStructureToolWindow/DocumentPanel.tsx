@@ -15,18 +15,14 @@ const DocumentsContextMenu = (props: DocumentsContextMenuProps) => {
     <ContextMenu.Root>
       <ContextMenu.Trigger element={props.element} />
       <ContextMenu.Menu>
-        <ActionMenuItem action={'DIAGRAM_RENAME'} arg={{ diagramId: props.diagramId }}>
-          Rename...
-        </ActionMenuItem>
+        <ActionMenuItem action={'DIAGRAM_RENAME'} arg={{ diagramId: props.diagramId }} />
         <ActionMenuItem action={'DIAGRAM_ADD'} arg={{}}>
           Add
         </ActionMenuItem>
         <ActionMenuItem action={'DIAGRAM_ADD'} arg={{ parentId: props.diagramId }}>
           Add subpage
         </ActionMenuItem>
-        <ActionMenuItem action={'DIAGRAM_REMOVE'} arg={{ diagramId: props.diagramId }}>
-          Delete
-        </ActionMenuItem>
+        <ActionMenuItem action={'DIAGRAM_REMOVE'} arg={{ diagramId: props.diagramId }} />
       </ContextMenu.Menu>
     </ContextMenu.Root>
   );

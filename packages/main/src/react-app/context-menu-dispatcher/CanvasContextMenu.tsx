@@ -5,18 +5,16 @@ import { Menu } from '@diagram-craft/app-components/Menu';
 export const CanvasContextMenu = (props: Props) => {
   return (
     <>
-      <ActionMenuItem action={'CLIPBOARD_PASTE'} arg={{ point: props.target.pos }}>
-        Paste
-      </ActionMenuItem>
+      <ActionMenuItem action={'CLIPBOARD_PASTE'} arg={{ point: props.target.pos }} />
       <Menu.Separator />
-      <ActionMenuItem action={'UNDO'}>Undo</ActionMenuItem>
-      <ActionMenuItem action={'REDO'}>Redo</ActionMenuItem>
+      <ActionMenuItem action={'UNDO'} />
+      <ActionMenuItem action={'REDO'} />
       <Menu.Separator />
-      <ActionMenuItem action={'COMMENT_ADD'}>Add Comment</ActionMenuItem>
+      <ActionMenuItem action={'COMMENT_ADD'} />
       <Menu.Separator />
-      <ActionMenuItem action={'SELECT_ALL'}>Select All</ActionMenuItem>
-      <ActionMenuItem action={'SELECT_ALL_NODES'}>Select Nodes</ActionMenuItem>
-      <ActionMenuItem action={'SELECT_ALL_EDGES'}>Select Edges</ActionMenuItem>
+      <ActionMenuItem action={'SELECT_ALL'} />
+      <ActionMenuItem action={'SELECT_ALL_NODES'} />
+      <ActionMenuItem action={'SELECT_ALL_EDGES'} />
     </>
   );
 };
