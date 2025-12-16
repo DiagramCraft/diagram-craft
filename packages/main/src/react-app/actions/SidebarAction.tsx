@@ -9,44 +9,67 @@ declare global {
 }
 
 export const sidebarActions = (context: ActionContext) => ({
-  SIDEBAR_SHAPES: new SidebarAction(
+  SIDEBAR_OBJECTS: new SidebarAction(
     'left',
     0,
-    $tStr('action.SIDEBAR_SHAPES', 'Shapes Panel'),
+    $tStr('action.SIDEBAR_OBJECTS.name', 'Object Panel'),
     context
   ),
-  SIDEBAR_LAYERS: new SidebarAction(
+  SIDEBAR_STRUCTURE: new SidebarAction(
     'left',
     1,
-    $tStr('action.SIDEBAR_LAYERS', 'Layers Panel'),
-    context
-  ),
-  SIDEBAR_SELECT: new SidebarAction(
-    'left',
-    2,
-    $tStr('action.SIDEBAR_SELECT', 'Select Panel'),
-    context
-  ),
-  SIDEBAR_DOCUMENT: new SidebarAction(
-    'left',
-    3,
-    $tStr('action.SIDEBAR_DOCUMENT', 'Document Panel'),
+    $tStr('action.SIDEBAR_STRUCTURE.name', 'Structure Panel'),
     context
   ),
   SIDEBAR_HISTORY: new SidebarAction(
     'left',
-    4,
-    $tStr('action.SIDEBAR_HISTORY', 'History Panel'),
+    2,
+    $tStr('action.SIDEBAR_HISTORY.name', 'History Panel'),
     context
   ),
+  SIDEBAR_SEARCH: new SidebarAction(
+    'left',
+    3,
+    $tStr('action.SIDEBAR_SEARCH.name', 'Search Panel'),
+    context
+  ),
+  SIDEBAR_STORY_PLAYER: new SidebarAction(
+    'left',
+    4,
+    $tStr('action.SIDEBAR_STORY_PLAYER.name', 'Story Player Panel'),
+    context
+  ),
+  SIDEBAR_DIAGRAM_CODE: new SidebarAction(
+    'left',
+    5,
+    $tStr('action.SIDEBAR_DIAGRAM_CODE.name', 'Diagram as Code Panel'),
+    context
+  ),
+  SIDEBAR_AI: new SidebarAction('left', 6, $tStr('action.SIDEBAR_AI.name', 'AI Panel'), context),
   SIDEBAR_STYLE: new SidebarAction(
     'right',
     0,
-    $tStr('action.SIDEBAR_STYLE', 'Sidebar Panel'),
+    $tStr('action.SIDEBAR_STYLE.name', 'Style Panel'),
     context
   ),
-  SIDEBAR_INFO: new SidebarAction('right', 1, $tStr('action.SIDEBAR_INFO', 'Info Panel'), context),
-  SIDEBAR_DATA: new SidebarAction('right', 2, $tStr('action.SIDEBAR_DATA', 'Data Panel'), context)
+  SIDEBAR_INFO: new SidebarAction(
+    'right',
+    1,
+    $tStr('action.SIDEBAR_INFO.name', 'Info Panel'),
+    context
+  ),
+  SIDEBAR_DATA: new SidebarAction(
+    'right',
+    2,
+    $tStr('action.SIDEBAR_DATA.name', 'Data Panel'),
+    context
+  ),
+  SIDEBAR_COMMENT: new SidebarAction(
+    'right',
+    3,
+    $tStr('action.SIDEBAR_COMMENT.name', 'Comments Panel'),
+    context
+  )
 });
 
 export class SidebarAction extends AbstractToggleAction {

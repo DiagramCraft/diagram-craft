@@ -18,8 +18,11 @@ import { AIToolWindow } from './toolwindow/AIToolWindow/AIToolWindow';
 import { ActionToolbarButton } from './toolbar/ActionToolbarButton';
 import { TextToolWindow } from './toolwindow/TextToolWindow/TextToolWindow';
 import { AppConfig } from '../appConfig';
+import { useApplication } from '../application';
+import { $t } from '@diagram-craft/utils/localize';
 
 export const LeftSidebar = () => {
+  const app = useApplication();
   return (
     <SideBar
       side={'left'}
@@ -31,26 +34,26 @@ export const LeftSidebar = () => {
         </SideBarBottomToolbar>
       }
     >
-      <SideBarPage icon={TbPentagonPlus} tooltip={'Objects'}>
+      <SideBarPage icon={TbPentagonPlus} tooltip={$t(app.actions['SIDEBAR_OBJECTS']!.name)}>
         <PickerToolWindow />
       </SideBarPage>
-      <SideBarPage icon={TbStack} tooltip={'Structure'}>
+      <SideBarPage icon={TbStack} tooltip={$t(app.actions['SIDEBAR_STRUCTURE']!.name)}>
         <DocumentStructureToolWindow />
       </SideBarPage>
-      <SideBarPage icon={TbHistory} tooltip={'History'}>
+      <SideBarPage icon={TbHistory} tooltip={$t(app.actions['SIDEBAR_HISTORY']!.name)}>
         <HistoryToolWindow />
       </SideBarPage>
-      <SideBarPage icon={TbSearch} tooltip={'Search'}>
+      <SideBarPage icon={TbSearch} tooltip={$t(app.actions['SIDEBAR_SEARCH']!.name)}>
         <QueryToolWindow />
       </SideBarPage>
-      <SideBarPage icon={TbPresentation} tooltip={'Story Player'}>
+      <SideBarPage icon={TbPresentation} tooltip={$t(app.actions['SIDEBAR_STORY_PLAYER']!.name)}>
         <StoryToolWindow />
       </SideBarPage>
-      <SideBarPage icon={TbCodeAsterisk} tooltip={'Diagram as Code'}>
+      <SideBarPage icon={TbCodeAsterisk} tooltip={$t(app.actions['SIDEBAR_DIAGRAM_CODE']!.name)}>
         <TextToolWindow />
       </SideBarPage>
       {AppConfig.get().ai.provider !== 'none' && (
-        <SideBarPage icon={TbSparkles} tooltip={'AI'}>
+        <SideBarPage icon={TbSparkles} tooltip={$t(app.actions['SIDEBAR_AI']!.name)}>
           <AIToolWindow />
         </SideBarPage>
       )}
