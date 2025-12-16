@@ -34,6 +34,8 @@ export const selectionResizeActions = (context: ActionContext) => {
 };
 
 export class SelectionResizeAction extends AbstractSelectionAction {
+  name = 'Resize Selection';
+
   constructor(
     protected readonly offset: () => Point,
     context: ActionContext

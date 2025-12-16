@@ -27,13 +27,25 @@ declare global {
   }
 }
 
+const DIRECTION_NAME_MAP: Record<Direction, string> = {
+  'e': 'East',
+  'w': 'West',
+  'n': 'North',
+  's': 'South'
+};
+
 export class NavigateNodeAction extends AbstractSelectionAction {
+  name: string;
+
   constructor(
     context: ActionContext,
     protected readonly direction: Direction,
     protected readonly extendSelection: boolean = false
   ) {
     super(context, MultipleType.SingleOnly, ElementType.Node, ['regular']);
+    this.name = extendSelection
+      ? `Navigate ${DIRECTION_NAME_MAP[direction]} (Extend Selection)`
+      : `Navigate ${DIRECTION_NAME_MAP[direction]}`;
   }
 
   execute(): void {

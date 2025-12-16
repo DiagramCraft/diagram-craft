@@ -31,6 +31,8 @@ export const layoutOrthogonalActions = (context: Application) => ({
 });
 
 export class LayoutOrthogonalAction extends AbstractSelectionAction<Application> {
+  name = 'Orthogonal';
+
   constructor(context: Application) {
     super(context, MultipleType.Both, ElementType.Node);
   }

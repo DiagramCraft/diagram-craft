@@ -33,6 +33,8 @@ export const layoutForceDirectedActions = (context: Application) => ({
 });
 
 export class LayoutForceDirectedAction extends AbstractSelectionAction<Application> {
+  name = 'Force-Directed';
+
   constructor(context: Application) {
     super(context, MultipleType.Both, ElementType.Node);
   }

@@ -12,12 +12,21 @@ export const selectAllActions = (context: ActionContext) => ({
   SELECT_ALL_EDGES: new SelectAllAction('edges', context)
 });
 
+const NAME_MAP: Record<'all' | 'nodes' | 'edges', string> = {
+  'all': 'Select All',
+  'nodes': 'Select All Nodes',
+  'edges': 'Select All Edges'
+};
+
 export class SelectAllAction extends AbstractAction {
+  name: string;
+
   constructor(
     private readonly mode: 'all' | 'nodes' | 'edges' = 'all',
     context: ActionContext
   ) {
     super(context);
+    this.name = NAME_MAP[mode];
   }
 
   execute(): void {

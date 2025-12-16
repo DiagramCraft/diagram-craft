@@ -21,10 +21,8 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
 
   return (
     <>
-      <ActionMenuItem action={'TEXT_EDIT'}>Edit...</ActionMenuItem>
-      <ActionMenuItem action={'SELECTION_EXECUTE_ACTION'} arg={{}}>
-        Act
-      </ActionMenuItem>
+      <ActionMenuItem action={'TEXT_EDIT'} />
+      <ActionMenuItem action={'SELECTION_EXECUTE_ACTION'} arg={{}} />
       <Menu.Separator />
 
       {diagram.selection.type === 'single-edge' && (
@@ -33,29 +31,23 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
           <ActionMenuItem
             action={'EDGE_TEXT_ADD'}
             arg={{ point: props.target.pos, id: diagram.selection.edges[0]!.id }}
-          >
-            Add text
-          </ActionMenuItem>
+          />
           <ActionMenuItem
             action={'WAYPOINT_ADD'}
             arg={{ point: props.target.pos, id: diagram.selection.edges[0]!.id }}
-          >
-            Add waypoint
-          </ActionMenuItem>
+          />
           <ActionMenuItem
             action={'WAYPOINT_DELETE'}
             arg={{ point: props.target.pos, id: diagram.selection.edges[0]!.id }}
-          >
-            Delete waypoint
-          </ActionMenuItem>
-          <ActionMenuItem action={'EDGE_FLIP'}>Flip edge</ActionMenuItem>
+          />
+          <ActionMenuItem action={'EDGE_FLIP'} />
           <Menu.Separator />
         </>
       )}
 
       {diagram.selection.type === 'single-node' && (
         <>
-          <ActionMenuItem action={'SELECTION_CHANGE_SHAPE'}>Change Shape...</ActionMenuItem>
+          <ActionMenuItem action={'SELECTION_CHANGE_SHAPE'} />
 
           <ConnectedNodesSubmenu />
 
@@ -64,50 +56,50 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
       )}
 
       <Menu.SubMenu label={'Selection'}>
-        <ActionMenuItem action={'SELECT_ALL'}>Select All</ActionMenuItem>
-        <ActionMenuItem action={'SELECT_ALL_NODES'}>Select All Nodes</ActionMenuItem>
-        <ActionMenuItem action={'SELECT_ALL_EDGES'}>Select All Edges</ActionMenuItem>
+        <ActionMenuItem action={'SELECT_ALL'} />
+        <ActionMenuItem action={'SELECT_ALL_NODES'} />
+        <ActionMenuItem action={'SELECT_ALL_EDGES'} />
         <Menu.Separator />
-        <ActionMenuItem action={'SELECTION_SELECT_CONNECTED'}>Select Connected</ActionMenuItem>
-        <ActionMenuItem action={'SELECTION_SELECT_TREE'}>Select Tree</ActionMenuItem>
-        <ActionMenuItem action={'SELECTION_SELECT_GROW'}>Grow</ActionMenuItem>
-        <ActionMenuItem action={'SELECTION_SELECT_SHRINK'}>Shrink</ActionMenuItem>
+        <ActionMenuItem action={'SELECTION_SELECT_CONNECTED'} />
+        <ActionMenuItem action={'SELECTION_SELECT_TREE'} />
+        <ActionMenuItem action={'SELECTION_SELECT_GROW'} />
+        <ActionMenuItem action={'SELECTION_SELECT_SHRINK'} />
       </Menu.SubMenu>
       <Menu.Separator />
 
-      <ActionMenuItem action={'CLIPBOARD_CUT'}>Cut</ActionMenuItem>
-      <ActionMenuItem action={'CLIPBOARD_COPY'}>Copy</ActionMenuItem>
-      <ActionMenuItem action={'DUPLICATE'}>Duplicate</ActionMenuItem>
+      <ActionMenuItem action={'CLIPBOARD_CUT'} />
+      <ActionMenuItem action={'CLIPBOARD_COPY'} />
+      <ActionMenuItem action={'DUPLICATE'} />
       <Menu.Separator />
 
-      <ActionMenuItem action={'STYLE_COPY'}>Copy Style</ActionMenuItem>
-      <ActionMenuItem action={'STYLE_PASTE'}>Paste Style</ActionMenuItem>
+      <ActionMenuItem action={'STYLE_COPY'} />
+      <ActionMenuItem action={'STYLE_PASTE'} />
       <Menu.Separator />
 
-      <ActionMenuItem action={'GROUP_GROUP'}>Group</ActionMenuItem>
-      <ActionMenuItem action={'GROUP_UNGROUP'}>Ungroup</ActionMenuItem>
+      <ActionMenuItem action={'GROUP_GROUP'} />
+      <ActionMenuItem action={'GROUP_UNGROUP'} />
       <Menu.Separator />
 
       <Menu.SubMenu label={'Table'} disabled={!isSingleElementInTableRow}>
-        <ActionMenuItem action={'TABLE_COLUMN_INSERT_BEFORE'}>Insert column before</ActionMenuItem>
-        <ActionMenuItem action={'TABLE_COLUMN_INSERT_AFTER'}>Insert column after</ActionMenuItem>
-        <ActionMenuItem action={'TABLE_COLUMN_REMOVE'}>Remove column</ActionMenuItem>
-        <ActionMenuItem action={'TABLE_COLUMN_DISTRIBUTE'}>Distribute columns</ActionMenuItem>
-        <ActionMenuItem action={'TABLE_COLUMN_MOVE_LEFT'}>Move column left</ActionMenuItem>
-        <ActionMenuItem action={'TABLE_COLUMN_MOVE_RIGHT'}>Move column right</ActionMenuItem>
+        <ActionMenuItem action={'TABLE_COLUMN_INSERT_BEFORE'} />
+        <ActionMenuItem action={'TABLE_COLUMN_INSERT_AFTER'} />
+        <ActionMenuItem action={'TABLE_COLUMN_REMOVE'} />
+        <ActionMenuItem action={'TABLE_COLUMN_DISTRIBUTE'} />
+        <ActionMenuItem action={'TABLE_COLUMN_MOVE_LEFT'} />
+        <ActionMenuItem action={'TABLE_COLUMN_MOVE_RIGHT'} />
         <Menu.Separator />
-        <ActionMenuItem action={'TABLE_ROW_INSERT_BEFORE'}>Insert row before</ActionMenuItem>
-        <ActionMenuItem action={'TABLE_ROW_INSERT_AFTER'}>Insert row after</ActionMenuItem>
-        <ActionMenuItem action={'TABLE_ROW_REMOVE'}>Remove row</ActionMenuItem>
-        <ActionMenuItem action={'TABLE_ROW_DISTRIBUTE'}>Distribute rows</ActionMenuItem>
-        <ActionMenuItem action={'TABLE_ROW_MOVE_UP'}>Move row up</ActionMenuItem>
-        <ActionMenuItem action={'TABLE_ROW_MOVE_DOWN'}>Move row down</ActionMenuItem>
+        <ActionMenuItem action={'TABLE_ROW_INSERT_BEFORE'} />
+        <ActionMenuItem action={'TABLE_ROW_INSERT_AFTER'} />
+        <ActionMenuItem action={'TABLE_ROW_REMOVE'} />
+        <ActionMenuItem action={'TABLE_ROW_DISTRIBUTE'} />
+        <ActionMenuItem action={'TABLE_ROW_MOVE_UP'} />
+        <ActionMenuItem action={'TABLE_ROW_MOVE_DOWN'} />
       </Menu.SubMenu>
       <Menu.Separator />
 
       <Menu.SubMenu label={'Debug'}>
-        <ActionMenuItem action={'SELECTION_DUMP'}>Dump</ActionMenuItem>
-        <ActionMenuItem action={'SELECTION_REDRAW'}>Redraw</ActionMenuItem>
+        <ActionMenuItem action={'SELECTION_DUMP'} />
+        <ActionMenuItem action={'SELECTION_REDRAW'} />
       </Menu.SubMenu>
       <Menu.Separator />
 
@@ -121,27 +113,17 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
             {diagram.document.data.db.schemas.map(schema => {
               return (
                 <Menu.SubMenu key={schema.id} label={schema.name}>
-                  <ActionMenuItem action={'EXTERNAL_DATA_LINK'} arg={{ schemaId: schema.id }}>
-                    Link
-                  </ActionMenuItem>
-                  <ActionMenuItem action={'EXTERNAL_DATA_UNLINK'} arg={{ schemaId: schema.id }}>
-                    Unlink
-                  </ActionMenuItem>
-                  <ActionMenuItem action={'EXTERNAL_DATA_CLEAR'} arg={{ schemaId: schema.id }}>
-                    Unlink & Clear
-                  </ActionMenuItem>
+                  <ActionMenuItem action={'EXTERNAL_DATA_LINK'} arg={{ schemaId: schema.id }} />
+                  <ActionMenuItem action={'EXTERNAL_DATA_UNLINK'} arg={{ schemaId: schema.id }} />
+                  <ActionMenuItem action={'EXTERNAL_DATA_CLEAR'} arg={{ schemaId: schema.id }} />
                   <ActionMenuItem
                     action={'EXTERNAL_DATA_MAKE_TEMPLATE'}
                     arg={{ schemaId: schema.id }}
-                  >
-                    Make template
-                  </ActionMenuItem>
+                  />
                   <ActionMenuItem
                     action={'EXTERNAL_DATA_LINK_UPDATE_TEMPLATE'}
                     arg={{ schemaId: schema.id }}
-                  >
-                    Update template
-                  </ActionMenuItem>
+                  />
                 </Menu.SubMenu>
               );
             })}
@@ -151,49 +133,43 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
       )}
 
       <Menu.SubMenu label={'Geometry'}>
-        <ActionMenuItem action={'SELECTION_GEOMETRY_CONVERT_TO_CURVES'}>
-          Convert to curves
-        </ActionMenuItem>
-        <ActionMenuItem action={'SELECTION_GEOMETRY_BOOLEAN_UNION'}>Union</ActionMenuItem>
-        <ActionMenuItem action={'SELECTION_GEOMETRY_BOOLEAN_INTERSECTION'}>
-          Intersect
-        </ActionMenuItem>
-        <ActionMenuItem action={'SELECTION_GEOMETRY_BOOLEAN_A_NOT_B'}>Subtract</ActionMenuItem>
-        <ActionMenuItem action={'SELECTION_GEOMETRY_BOOLEAN_XOR'}>Exclusive Or</ActionMenuItem>
-        <ActionMenuItem action={'SELECTION_GEOMETRY_BOOLEAN_DIVIDE'}>Divide</ActionMenuItem>
+        <ActionMenuItem action={'SELECTION_GEOMETRY_CONVERT_TO_CURVES'} />
+        <ActionMenuItem action={'SELECTION_GEOMETRY_BOOLEAN_UNION'} />
+        <ActionMenuItem action={'SELECTION_GEOMETRY_BOOLEAN_INTERSECTION'} />
+        <ActionMenuItem action={'SELECTION_GEOMETRY_BOOLEAN_A_NOT_B'} />
+        <ActionMenuItem action={'SELECTION_GEOMETRY_BOOLEAN_XOR'} />
+        <ActionMenuItem action={'SELECTION_GEOMETRY_BOOLEAN_DIVIDE'} />
       </Menu.SubMenu>
 
       <Menu.SubMenu label={'Layout'}>
-        <ActionMenuItem action={'LAYOUT_TREE'}>Tree</ActionMenuItem>
-        <ActionMenuItem action={'LAYOUT_LAYERED'}>Layered</ActionMenuItem>
-        <ActionMenuItem action={'LAYOUT_FORCE_DIRECTED'}>Force-Directed</ActionMenuItem>
-        <ActionMenuItem action={'LAYOUT_ORTHOGONAL'}>Orthogonal</ActionMenuItem>
-        <ActionMenuItem action={'LAYOUT_SERIES_PARALLEL'}>Series-Parallel</ActionMenuItem>
+        <ActionMenuItem action={'LAYOUT_TREE'} />
+        <ActionMenuItem action={'LAYOUT_LAYERED'} />
+        <ActionMenuItem action={'LAYOUT_FORCE_DIRECTED'} />
+        <ActionMenuItem action={'LAYOUT_ORTHOGONAL'} />
+        <ActionMenuItem action={'LAYOUT_SERIES_PARALLEL'} />
       </Menu.SubMenu>
 
       <Menu.SubMenu label={'Align'}>
-        <ActionMenuItem action={'AUTO_ALIGN'}>Auto-Align...</ActionMenuItem>
+        <ActionMenuItem action={'AUTO_ALIGN'} />
         <Menu.Separator />
-        <ActionMenuItem action={'ALIGN_TOP'}>Align Top Edges</ActionMenuItem>
-        <ActionMenuItem action={'ALIGN_BOTTOM'}>Align Bottom Edges</ActionMenuItem>
-        <ActionMenuItem action={'ALIGN_LEFT'}>Align Left Edges</ActionMenuItem>
-        <ActionMenuItem action={'ALIGN_RIGHT'}>Align Right Edges</ActionMenuItem>
+        <ActionMenuItem action={'ALIGN_TOP'} />
+        <ActionMenuItem action={'ALIGN_BOTTOM'} />
+        <ActionMenuItem action={'ALIGN_LEFT'} />
+        <ActionMenuItem action={'ALIGN_RIGHT'} />
         <Menu.Separator />
-        <ActionMenuItem action={'ALIGN_CENTER_HORIZONTAL'}>
-          Align Centers Horizontally
-        </ActionMenuItem>
-        <ActionMenuItem action={'ALIGN_CENTER_VERTICAL'}>Align Centers Vertically</ActionMenuItem>
+        <ActionMenuItem action={'ALIGN_CENTER_HORIZONTAL'} />
+        <ActionMenuItem action={'ALIGN_CENTER_VERTICAL'} />
       </Menu.SubMenu>
 
       <Menu.SubMenu label={'Arrange'} disabled={diagram.selection.elements.length === 1}>
-        <ActionMenuItem action={'SELECTION_RESTACK_TOP'}>Move to front</ActionMenuItem>
-        <ActionMenuItem action={'SELECTION_RESTACK_UP'}>Move forward</ActionMenuItem>
-        <ActionMenuItem action={'SELECTION_RESTACK_BOTTOM'}>Move to back</ActionMenuItem>
-        <ActionMenuItem action={'SELECTION_RESTACK_DOWN'}>Move backward</ActionMenuItem>
+        <ActionMenuItem action={'SELECTION_RESTACK_TOP'} />
+        <ActionMenuItem action={'SELECTION_RESTACK_UP'} />
+        <ActionMenuItem action={'SELECTION_RESTACK_BOTTOM'} />
+        <ActionMenuItem action={'SELECTION_RESTACK_DOWN'} />
       </Menu.SubMenu>
 
       <Menu.SubMenu label={'Move to'}>
-        <ActionMenuItem action={'LAYER_SELECTION_MOVE_NEW'}>Create new layer</ActionMenuItem>
+        <ActionMenuItem action={'LAYER_SELECTION_MOVE_NEW'} />
         <Menu.Separator />
         {layers.map(layer => (
           <ActionMenuItem key={layer.id} action={'LAYER_SELECTION_MOVE'} arg={{ id: layer.id }}>
@@ -203,11 +179,9 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
       </Menu.SubMenu>
 
       <Menu.Separator />
-      <ActionMenuItem action={'SELECTION_ADD_TO_MODIFICATION_LAYER'}>
-        Add to modification layer
-      </ActionMenuItem>
+      <ActionMenuItem action={'SELECTION_ADD_TO_MODIFICATION_LAYER'} />
       <Menu.Separator />
-      <ActionMenuItem action={'COMMENT_ADD'}>Add Comment</ActionMenuItem>
+      <ActionMenuItem action={'COMMENT_ADD'} />
     </>
   );
 };

@@ -12,6 +12,7 @@ export const toggleHelpActions = (context: ActionContext) => ({
 });
 
 export class ToggleHelpAction extends AbstractToggleAction {
+  name = 'Toggle Help';
   private userState: UserState;
 
   constructor(context: ActionContext) {

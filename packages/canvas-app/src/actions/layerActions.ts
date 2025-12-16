@@ -44,6 +44,8 @@ declare global {
 type LayerActionArg = { id?: string };
 
 export class LayerDeleteAction extends AbstractAction<LayerActionArg, Application> {
+  name = 'Delete Layer';
+
   isEnabled({ id }: LayerActionArg): boolean {
     return id !== undefined && this.context.model.activeDiagram.layers.byId(id) !== undefined;
   }
@@ -145,6 +147,8 @@ class LayerDeleteUndoableAction implements UndoableAction {
 }
 
 export class LayerToggleVisibilityAction extends AbstractToggleAction<LayerActionArg> {
+  name = 'Toggle Layer Visibility';
+
   isEnabled({ id }: LayerActionArg): boolean {
     return id !== undefined && this.context.model.activeDiagram.layers.byId(id) !== undefined;
   }
@@ -174,6 +178,8 @@ export class LayerToggleVisibilityAction extends AbstractToggleAction<LayerActio
 }
 
 export class LayerToggleLockedAction extends AbstractToggleAction<LayerActionArg> {
+  name = 'Toggle Layer Locked';
+
   isEnabled({ id }: LayerActionArg): boolean {
     const diagram = this.context.model.activeDiagram;
     return (
@@ -204,6 +210,8 @@ export class LayerToggleLockedAction extends AbstractToggleAction<LayerActionArg
 }
 
 export class LayerRenameAction extends AbstractAction<LayerActionArg, Application> {
+  name = 'Rename Layer';
+
   isEnabled({ id }: LayerActionArg): boolean {
     return id !== undefined && this.context.model.activeDiagram.layers.byId(id) !== undefined;
   }
@@ -232,12 +240,22 @@ export class LayerRenameAction extends AbstractAction<LayerActionArg, Applicatio
   }
 }
 
+const LAYER_ADD_NAME_MAP: Record<LayerType, string> = {
+  regular: 'New Layer',
+  reference: 'New Reference Layer',
+  rule: 'New Rule Layer',
+  modification: 'New Modification Layer'
+};
+
 export class LayerAddAction extends AbstractAction<undefined, Application> {
+  name: string;
+
   constructor(
     private readonly type: LayerType,
     context: Application
   ) {
     super(context);
+    this.name = LAYER_ADD_NAME_MAP[type];
   }
 
   execute(): void {
@@ -332,6 +350,8 @@ class LayerAddUndoableAction implements UndoableAction {
 }
 
 export class LayerSelectionMoveAction extends AbstractAction<LayerActionArg> {
+  name = 'Move to Layer';
+
   execute({ id }: LayerActionArg): void {
     precondition.is.present(id);
 
@@ -347,6 +367,8 @@ export class LayerSelectionMoveAction extends AbstractAction<LayerActionArg> {
 }
 
 export class LayerSelectionMoveNewAction extends AbstractAction {
+  name = 'Create new layer';
+
   execute(): void {
     const diagram = this.context.model.activeDiagram;
     const uow = new UnitOfWork(diagram, true);

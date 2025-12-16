@@ -22,6 +22,8 @@ let currentNodeStyle: NodeProps = {};
 let currentEdgeStyle: EdgeProps = {};
 
 export class StyleCopyAction extends AbstractSelectionAction {
+  name = 'Copy Style';
+
   constructor(context: ActionContext) {
     super(context, MultipleType.SingleOnly, ElementType.Both);
   }
@@ -42,6 +44,8 @@ export class StyleCopyAction extends AbstractSelectionAction {
 }
 
 export class StylePasteAction extends AbstractSelectionAction {
+  name = 'Paste Style';
+
   constructor(context: ActionContext) {
     super(context, MultipleType.Both, ElementType.Both);
   }

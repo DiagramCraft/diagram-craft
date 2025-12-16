@@ -25,13 +25,25 @@ declare global {
   }
 }
 
+const DIRECTION_NAME_MAP: Record<Direction, string> = {
+  'e': 'East',
+  'w': 'West',
+  'n': 'North',
+  's': 'South'
+};
+
 export class CreateLinkedNodeAction extends AbstractSelectionAction {
+  name: string;
+
   constructor(
     context: ActionContext,
     protected readonly direction: Direction,
     protected readonly keepSelection: boolean = false
   ) {
     super(context, MultipleType.SingleOnly, ElementType.Node, ['regular']);
+    this.name = keepSelection
+      ? `Create Linked Node ${DIRECTION_NAME_MAP[direction]} (Keep Selection)`
+      : `Create Linked Node ${DIRECTION_NAME_MAP[direction]}`;
   }
 
   execute(): void {

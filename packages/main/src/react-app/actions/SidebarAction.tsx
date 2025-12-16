@@ -18,7 +18,19 @@ export const sidebarActions = (context: ActionContext) => ({
   SIDEBAR_DATA: new SidebarAction('right', 2, context)
 });
 
+const SIDEBAR_NAME_MAP: Record<string, string> = {
+  'left-0': 'Shapes Panel',
+  'left-1': 'Layers Panel',
+  'left-2': 'Select Panel',
+  'left-3': 'Document Panel',
+  'left-4': 'History Panel',
+  'right-0': 'Style Panel',
+  'right-1': 'Info Panel',
+  'right-2': 'Data Panel'
+};
+
 export class SidebarAction extends AbstractToggleAction {
+  name: string;
   private readonly userState: UserState;
 
   constructor(
@@ -28,6 +40,7 @@ export class SidebarAction extends AbstractToggleAction {
   ) {
     super(context);
 
+    this.name = SIDEBAR_NAME_MAP[`${side}-${idx}`] ?? `${side} Panel ${idx}`;
     this.userState = UserState.get();
 
     const key = side === 'left' ? 'panelLeft' : 'panelRight';

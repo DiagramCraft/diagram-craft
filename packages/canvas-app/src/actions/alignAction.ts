@@ -22,12 +22,24 @@ export const alignActions = (context: ActionContext) => ({
 
 type Mode = 'top' | 'bottom' | 'right' | 'left' | 'center-vertical' | 'center-horizontal';
 
+const ALIGN_NAMES: Record<Mode, string> = {
+  'top': 'Align Top Edges',
+  'bottom': 'Align Bottom Edges',
+  'left': 'Align Left Edges',
+  'right': 'Align Right Edges',
+  'center-vertical': 'Align Centers Vertically',
+  'center-horizontal': 'Align Centers Horizontally'
+};
+
 export class AlignAction extends AbstractSelectionAction {
+  name: string;
+
   constructor(
     private readonly mode: Mode,
     context: ActionContext
   ) {
     super(context, MultipleType.MultipleOnly, ElementType.Node);
+    this.name = ALIGN_NAMES[mode];
   }
 
   execute(): void {

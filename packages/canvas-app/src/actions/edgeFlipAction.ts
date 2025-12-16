@@ -14,6 +14,8 @@ declare global {
 }
 
 export class EdgeFlipAction extends AbstractSelectionAction {
+  name = 'Flip edge';
+
   constructor(context: ActionContext) {
     super(context, MultipleType.Both, ElementType.Edge);
   }

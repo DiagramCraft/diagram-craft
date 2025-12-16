@@ -21,12 +21,12 @@ export function ActionMenuItem<
       }}
       rightSlot={formatKeyBinding(findKeyBindingsForAction(props.action, keyMap)[0])}
     >
-      {props.children}
+      {props.children ?? actionMap[props.action]!.name}
     </Menu.Item>
   );
 }
 
 type Props<K extends keyof ActionMap, P = Parameters<ActionMap[K]['execute']>[0]> = {
   action: K;
-  children: React.ReactNode;
+  children?: React.ReactNode;
 } & (P extends undefined ? { arg?: never } : { arg: P });

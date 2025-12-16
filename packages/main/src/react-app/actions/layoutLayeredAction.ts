@@ -31,6 +31,8 @@ export const layoutLayeredActions = (context: Application) => ({
 });
 
 export class LayoutLayeredAction extends AbstractSelectionAction<Application> {
+  name = 'Layered';
+
   constructor(context: Application) {
     super(context, MultipleType.Both, ElementType.Node);
   }

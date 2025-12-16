@@ -58,6 +58,8 @@ const reconnectEndpoint = (
 };
 
 export class DuplicateAction extends AbstractSelectionAction {
+  name = 'Duplicate';
+
   constructor(context: ActionContext) {
     super(context, 'both');
   }

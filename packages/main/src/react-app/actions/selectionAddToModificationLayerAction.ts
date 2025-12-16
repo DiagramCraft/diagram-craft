@@ -26,6 +26,8 @@ export const selectionAddToModificationLayerActions = (context: Application) => 
 });
 
 export class SelectionAddToModificationLayerAction extends AbstractSelectionAction<Application> {
+  name = 'Add to modification layer';
+
   constructor(context: Application) {
     super(context, MultipleType.Both, ElementType.Both);
   }

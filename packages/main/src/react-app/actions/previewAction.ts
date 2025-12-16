@@ -12,6 +12,8 @@ export const previewActions = (context: Application) => ({
 });
 
 export class PreviewAction extends AbstractAction<void, Application> {
+  name = 'Preview';
+
   execute(): void {
     this.context.ui.showPreview();
   }

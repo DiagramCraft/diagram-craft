@@ -17,6 +17,8 @@ declare global {
 }
 
 class ShapeInsertAction extends AbstractAction<undefined, Application> {
+  name = 'Insert Shape';
+
   getCriteria(application: Application) {
     return ActionCriteria.EventTriggered(
       application.model.activeDiagram.layers,

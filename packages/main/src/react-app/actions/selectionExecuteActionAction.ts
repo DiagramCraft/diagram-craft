@@ -21,6 +21,8 @@ export const selectionExecuteActionActions = (context: Application) => ({
 });
 
 export class SelectionExecuteAction extends AbstractSelectionAction<Application, { id?: string }> {
+  name = 'Act';
+
   constructor(context: Application) {
     super(context, MultipleType.SingleOnly, ElementType.Node);
   }

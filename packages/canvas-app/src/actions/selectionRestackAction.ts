@@ -20,12 +20,22 @@ export const selectionRestackActions = (context: ActionContext) => ({
 
 type RestackMode = 'up' | 'down' | 'top' | 'bottom';
 
+const NAME_MAP: Record<RestackMode, string> = {
+  'up': 'Move forward',
+  'down': 'Move backward',
+  'top': 'Move to front',
+  'bottom': 'Move to back'
+};
+
 export class SelectionRestackAction extends AbstractSelectionAction {
+  name: string;
+
   constructor(
     private readonly mode: RestackMode = 'up',
     context: ActionContext
   ) {
     super(context, MultipleType.Both, ElementType.Both, ['regular']);
+    this.name = NAME_MAP[mode];
   }
 
   getCriteria(context: ActionContext): ActionCriteria[] {

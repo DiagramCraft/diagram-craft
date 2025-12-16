@@ -32,6 +32,8 @@ export const layoutTreeActions = (context: Application) => ({
 });
 
 export class LayoutTreeAction extends AbstractSelectionAction<Application> {
+  name = 'Tree';
+
   constructor(context: Application) {
     super(context, MultipleType.SingleOnly, ElementType.Node);
   }

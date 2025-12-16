@@ -22,6 +22,8 @@ type WaypointDeleteActionArg = {
 };
 
 export class WaypointDeleteAction extends AbstractAction<WaypointDeleteActionArg> {
+  name = 'Delete waypoint';
+
   execute(context: WaypointDeleteActionArg): void {
     precondition.is.present(context.point);
 

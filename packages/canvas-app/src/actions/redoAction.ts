@@ -11,6 +11,8 @@ export const redoActions = (context: ActionContext) => ({
 });
 
 export class RedoAction extends AbstractAction {
+  name = 'Redo';
+
   getCriteria(context: ActionContext) {
     return ActionCriteria.EventTriggered(
       context.model.activeDiagram.undoManager,

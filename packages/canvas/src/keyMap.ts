@@ -153,5 +153,7 @@ export const formatKeyBinding = (
     .replace(ALT, formattingConfig[ALT])
     .replace(CTRL, formattingConfig[CTRL])
     .replace(META, formattingConfig[META])
-    .replace(SHIFT, formattingConfig[SHIFT]);
+    .replace(SHIFT, formattingConfig[SHIFT])
+    .replace('ArrowUp', '↑')
+    .replace('ArrowDown', '↓');
 };

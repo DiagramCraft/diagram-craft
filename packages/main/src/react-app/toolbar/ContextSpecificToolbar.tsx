@@ -103,52 +103,6 @@ export const ContextSpecificToolbar = () => {
 
       {(isNodeSelection || isMixedSelection || isEdgeSelection) && <Toolbar.Separator />}
 
-      {/*selectionType !== 'empty' && selectionType !== undefined && (
-        <>
-          <ActionToolbarButton action={'ALIGN_TOP'}>
-            <TbLayoutAlignTop />
-          </ActionToolbarButton>
-          <ActionToolbarButton action={'ALIGN_BOTTOM'}>
-            <TbLayoutAlignBottom />
-          </ActionToolbarButton>
-          <ActionToolbarButton action={'ALIGN_LEFT'}>
-            <TbLayoutAlignLeft />
-          </ActionToolbarButton>
-          <ActionToolbarButton action={'ALIGN_RIGHT'}>
-            <TbLayoutAlignRight />
-          </ActionToolbarButton>
-          <ActionToolbarButton action={'ALIGN_CENTER_VERTICAL'}>
-            <TbLayoutAlignCenter />
-          </ActionToolbarButton>
-          <ActionToolbarButton action={'ALIGN_CENTER_HORIZONTAL'}>
-            <TbLayoutAlignMiddle />
-          </ActionToolbarButton>
-          <ActionToolbarButton action={'DISTRIBUTE_VERTICAL'}>
-            <TbLayoutDistributeHorizontal />
-          </ActionToolbarButton>
-          <ActionToolbarButton action={'DISTRIBUTE_HORIZONTAL'}>
-            <TbLayoutDistributeVertical />
-          </ActionToolbarButton>
-
-          <Toolbar.Separator />
-
-          <ActionToolbarButton action={'SELECTION_RESTACK_BOTTOM'}>
-            <TbStackBack />
-          </ActionToolbarButton>
-          <ActionToolbarButton action={'SELECTION_RESTACK_TOP'}>
-            <TbStackFront />
-          </ActionToolbarButton>
-          <ActionToolbarButton action={'SELECTION_RESTACK_UP'}>
-            <TbStackPop />
-          </ActionToolbarButton>
-          <ActionToolbarButton action={'SELECTION_RESTACK_DOWN'}>
-            <TbStackPush />
-          </ActionToolbarButton>
-
-          <Toolbar.Separator />
-        </>
-      )*/}
-
       <CanvasGridToolbarButton />
 
       <CanvasGuidesToolbarButton />

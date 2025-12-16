@@ -28,6 +28,8 @@ export const selectionMoveActions = (context: ActionContext) => {
 };
 
 export class SelectionMoveAction extends AbstractSelectionAction {
+  name = 'Move Selection';
+
   constructor(
     context: ActionContext,
     protected readonly offset: () => Point

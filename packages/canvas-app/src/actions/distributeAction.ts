@@ -24,12 +24,20 @@ const maxBounds = (b: Box) => {
   return { x: Math.max(b.x, b.x + b.w), y: Math.max(b.y, b.y + b.h) };
 };
 
+const NAME_MAP: Record<'vertical' | 'horizontal', string> = {
+  'vertical': 'Distribute Vertically',
+  'horizontal': 'Distribute Horizontally'
+};
+
 export class DistributeAction extends AbstractSelectionAction {
+  name: string;
+
   constructor(
     private readonly mode: 'vertical' | 'horizontal',
     context: ActionContext
   ) {
     super(context, 'multiple-only');
+    this.name = NAME_MAP[mode];
   }
 
   execute(): void {

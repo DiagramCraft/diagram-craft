@@ -40,6 +40,8 @@ export const geometryActions = (context: Application) => ({
 });
 
 class SelectionGeometryConvertToCurves extends AbstractSelectionAction<Application> {
+  name = 'Convert to curves';
+
   constructor(context: Application) {
     super(context, MultipleType.Both, ElementType.Node);
   }
@@ -69,12 +71,24 @@ class SelectionGeometryConvertToCurves extends AbstractSelectionAction<Applicati
   }
 }
 
+const BOOLEAN_OP_NAME_MAP: Record<BooleanOperation, string> = {
+  'A union B': 'Union',
+  'A not B': 'Subtract',
+  'B not A': 'Subtract (B not A)',
+  'A intersection B': 'Intersect',
+  'A xor B': 'Exclusive Or',
+  'A divide B': 'Divide'
+};
+
 class SelectionBooleanOperation extends AbstractSelectionAction<Application> {
+  name: string;
+
   constructor(
     context: Application,
     private type: BooleanOperation
   ) {
     super(context, MultipleType.Both, ElementType.Node);
+    this.name = BOOLEAN_OP_NAME_MAP[type];
   }
 
   getCriteria(context: Application) {

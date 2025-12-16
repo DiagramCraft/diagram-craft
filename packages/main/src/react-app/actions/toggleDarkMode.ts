@@ -11,6 +11,8 @@ export const toggleDarkModeActions = (context: ActionContext) => ({
 });
 
 export class ToggleDarkModeAction extends AbstractToggleAction {
+  name = 'Toggle Dark Mode';
+
   constructor(context: ActionContext) {
     super(context);
     setTimeout(() => {

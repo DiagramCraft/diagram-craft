@@ -20,6 +20,8 @@ declare global {
 }
 
 class DumpDocument extends AbstractAction {
+  name = 'Dump Document';
+
   execute(): void {
     serializeDiagramDocument(this.context.model.activeDiagram.document).then(e => {
       console.log(JSON.stringify(e, undefined, '  '));
@@ -28,6 +30,8 @@ class DumpDocument extends AbstractAction {
 }
 
 class DumpSelectionAction extends AbstractAction {
+  name = 'Dump';
+
   execute(): void {
     this.context.model.activeDiagram.selection.elements.forEach(e => {
       const s = serializeDiagramElement(e);
@@ -37,6 +41,8 @@ class DumpSelectionAction extends AbstractAction {
 }
 
 class RedrawAction extends AbstractAction {
+  name = 'Redraw';
+
   execute(): void {
     const diagram = this.context.model.activeDiagram;
     assert.arrayNotEmpty(diagram.selection.nodes);

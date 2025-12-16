@@ -21,6 +21,8 @@ declare global {
 }
 
 class FileSaveAsAction extends AbstractAction<undefined, Application> {
+  name = 'Save As...';
+
   async execute(): Promise<void> {
     const currentFilename = this.context.model.activeDocument.url?.split('/').pop()!;
 

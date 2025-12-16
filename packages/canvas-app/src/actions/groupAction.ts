@@ -108,7 +108,14 @@ class UndoableGroupAction implements UndoableAction {
   }
 }
 
+const NAME_MAP: Record<'group' | 'ungroup', string> = {
+  'group': 'Group',
+  'ungroup': 'Ungroup'
+};
+
 export class GroupAction extends AbstractSelectionAction {
+  name: string;
+
   constructor(
     private readonly type: 'group' | 'ungroup',
     context: ActionContext
@@ -119,6 +126,7 @@ export class GroupAction extends AbstractSelectionAction {
       ElementType.Both,
       ['regular']
     );
+    this.name = NAME_MAP[type];
   }
 
   getCriteria(context: ActionContext) {

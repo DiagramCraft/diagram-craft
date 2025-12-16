@@ -18,6 +18,8 @@ declare global {
 }
 
 class ImageInsertAction extends AbstractAction<undefined, Application> {
+  name = 'Insert Image';
+
   getCriteria(application: Application) {
     return ActionCriteria.EventTriggered(
       application.model.activeDiagram.layers,

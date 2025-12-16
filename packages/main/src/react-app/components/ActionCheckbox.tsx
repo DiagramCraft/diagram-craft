@@ -25,12 +25,12 @@ export const ActionCheckbox = (props: Props) => {
           (actionMap[props.action] as ToggleAction).execute({});
         }}
       />
-      <label htmlFor={id}>{props.children}</label>
+      <label htmlFor={id}>{props.children ?? actionMap[props.action]!.name}</label>
     </>
   );
 };
 
 type Props = {
   action: keyof ActionMap;
-  children: React.ReactNode;
+  children?: React.ReactNode;
 };

@@ -39,6 +39,7 @@ const PASTE_HANDLERS = {
 };
 
 export class ClipboardPasteAction extends AbstractAction<BaseActionArgs> {
+  name = 'Paste';
   layer: RegularLayer | undefined;
 
   getCriteria(context: ActionContext) {
@@ -73,11 +74,14 @@ export class ClipboardPasteAction extends AbstractAction<BaseActionArgs> {
 }
 
 export class ClipboardCopyAction extends AbstractSelectionAction {
+  name: string;
+
   constructor(
     private readonly mode: 'copy' | 'cut',
     context: ActionContext
   ) {
     super(context, MultipleType.Both, ElementType.Both, ['regular']);
+    this.name = mode === 'copy' ? 'Copy' : 'Cut';
   }
 
   execute(): void {

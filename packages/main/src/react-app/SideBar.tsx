@@ -4,6 +4,7 @@ import { Toolbar } from '@diagram-craft/app-components/Toolbar';
 import { ErrorBoundary } from './ErrorBoundary';
 import { UserState } from '../UserState';
 import { IconType } from 'react-icons';
+import { Tooltip } from '@diagram-craft/app-components/Tooltip';
 
 const MIN_WIDTH = 248;
 const MAX_WIDTH = 1024;
@@ -17,6 +18,7 @@ export const SideBarPage = (props: SideBarPageProps) => {
 
 type SideBarPageProps = {
   icon: IconType;
+  tooltip: string;
   children: React.ReactNode;
   extra?: React.ReactNode;
 };
@@ -150,20 +152,25 @@ export const SideBar = (props: Props) => {
                 key={idx}
                 style={{ position: 'relative', display: 'flex', justifyContent: 'center' }}
               >
-                <Toolbar.ToggleItem
-                  value={idx.toString()}
-                  onClick={() => {
-                    if (selected === idx) {
-                      updateSelected(-1);
-                      return;
-                    }
-                    updateSelected(idx);
+                <Tooltip
+                  message={element.props.tooltip}
+                  element={
+                    <Toolbar.ToggleItem
+                      value={idx.toString()}
+                      onClick={() => {
+                        if (selected === idx) {
+                          updateSelected(-1);
+                          return;
+                        }
+                        updateSelected(idx);
 
-                    userState[propName] = idx;
-                  }}
-                >
-                  <Icon size={'16px'} />
-                </Toolbar.ToggleItem>
+                        userState[propName] = idx;
+                      }}
+                    >
+                      <Icon size={'16px'} />
+                    </Toolbar.ToggleItem>
+                  }
+                />
 
                 {element.props.extra && element.props.extra}
               </div>
