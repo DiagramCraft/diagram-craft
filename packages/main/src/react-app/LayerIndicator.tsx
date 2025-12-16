@@ -67,7 +67,9 @@ export const LayerIndicator = () => {
 
         <ActionMenuItem action={'LAYER_ADD_REFERENCE'}>New reference layer...</ActionMenuItem>
         <ActionMenuItem action={'LAYER_ADD_RULE'}>New rule layer...</ActionMenuItem>
-        <Menu.Item onClick={() => actions['SIDEBAR_LAYERS']?.execute()}>Show layer panel</Menu.Item>
+        <Menu.Item onClick={() => actions['SIDEBAR_STRUCTURE']?.execute()}>
+          Show layer panel
+        </Menu.Item>
         <ActionToggleMenuItem action={'LAYER_TOGGLE_LOCK'} arg={{ id: diagram.activeLayer.id }}>
           Locked
         </ActionToggleMenuItem>
