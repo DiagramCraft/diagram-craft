@@ -1,5 +1,6 @@
 import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
 import { UserState } from '../../UserState';
+import { $tStr, type TranslatedString } from '@diagram-craft/utils/localize';
 
 declare global {
   namespace DiagramCraft {
@@ -14,14 +15,16 @@ export const zoomActions = (context: ActionContext) => ({
 });
 
 export class ZoomAction extends AbstractAction {
-  name: string;
+  name!: TranslatedString;
 
   constructor(
     private readonly direction: 'in' | 'out',
     context: ActionContext
   ) {
     super(context);
-    this.name = direction === 'in' ? 'Zoom In' : 'Zoom Out';
+    const actionKey = direction === 'in' ? 'ZOOM_IN' : 'ZOOM_OUT';
+    const defaultName = direction === 'in' ? 'Zoom In' : 'Zoom Out';
+    this.name = $tStr(`action.${actionKey}.name`, defaultName);
   }
 
   execute(): void {
@@ -37,7 +40,7 @@ export class ZoomAction extends AbstractAction {
 const OFFSET = 40;
 
 class ZoomFitAction extends AbstractAction<{ rulerWidth?: number }> {
-  name = 'Zoom Fit';
+  name = $tStr('action.ZOOM_FIT.name', 'Zoom Fit');
 
   execute(props: { rulerWidth?: number }): void {
     const diagram = this.context.model.activeDiagram;

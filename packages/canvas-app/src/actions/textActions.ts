@@ -5,6 +5,7 @@ import { Application } from '../application';
 import { StringInputDialogCommand } from '../dialogs';
 import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSelectionAction';
 import { htmlStringToMarkdown, markdownToHTML } from '@diagram-craft/markdown';
+import { $tStr, type TranslatedString } from '@diagram-craft/utils/localize';
 
 declare global {
   namespace DiagramCraft {
@@ -13,29 +14,26 @@ declare global {
 }
 
 export const textActions = (context: Application) => ({
-  TEXT_BOLD: new TextAction('bold', context),
-  TEXT_ITALIC: new TextAction('italic', context),
-  TEXT_UNDERLINE: new TextDecorationAction('underline', context),
+  TEXT_BOLD: new TextAction('bold', $tStr('action.TEXT_BOLD.name', 'Bold'), context),
+  TEXT_ITALIC: new TextAction('italic', $tStr('action.TEXT_ITALIC.name', 'Italic'), context),
+  TEXT_UNDERLINE: new TextDecorationAction(
+    'underline',
+    $tStr('action.TEXT_UNDERLINE.name', 'Underline'),
+    context
+  ),
   TEXT_EDIT: new TextEditAction(context)
 });
 
 // TODO: Maybe we can create an AbstractPropertyAction that takes a prop name and a value and
 //       to make all of this a bit more streamlined
 
-const TEXT_ACTION_NAME_MAP: Record<'bold' | 'italic', string> = {
-  'bold': 'Bold',
-  'italic': 'Italic'
-};
-
 export class TextAction extends AbstractToggleAction {
-  name: string;
-
   constructor(
     private readonly prop: 'bold' | 'italic',
+    public readonly name: TranslatedString,
     context: ActionContext
   ) {
     super(context);
-    this.name = TEXT_ACTION_NAME_MAP[prop];
   }
 
   getStateCriteria(context: ActionContext) {
@@ -93,21 +91,13 @@ export class TextAction extends AbstractToggleAction {
   }
 }
 
-const TEXT_DECORATION_NAME_MAP: Record<'underline' | 'line-through' | 'overline', string> = {
-  'underline': 'Underline',
-  'line-through': 'Line Through',
-  'overline': 'Overline'
-};
-
 export class TextDecorationAction extends AbstractToggleAction {
-  name: string;
-
   constructor(
     private readonly prop: 'underline' | 'line-through' | 'overline',
+    public readonly name: TranslatedString,
     context: ActionContext
   ) {
     super(context);
-    this.name = TEXT_DECORATION_NAME_MAP[prop];
   }
 
   getStateCriteria(context: ActionContext) {
@@ -164,7 +154,7 @@ export class TextDecorationAction extends AbstractToggleAction {
 }
 
 export class TextEditAction extends AbstractSelectionAction<Application> {
-  name = 'Edit...';
+  name = $tStr('action.TEXT_EDIT.name', 'Edit...');
 
   constructor(application: Application) {
     super(application, MultipleType.SingleOnly, ElementType.Node);

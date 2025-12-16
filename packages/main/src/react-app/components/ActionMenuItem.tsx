@@ -3,6 +3,7 @@ import { findKeyBindingsForAction, formatKeyBinding } from '@diagram-craft/canva
 import { useApplication } from '../../application';
 import type { ActionMap } from '@diagram-craft/canvas/actions/action';
 import { Menu } from '@diagram-craft/app-components/Menu';
+import { $t } from '@diagram-craft/utils/localize';
 
 export function ActionMenuItem<
   K extends keyof ActionMap,
@@ -21,7 +22,7 @@ export function ActionMenuItem<
       }}
       rightSlot={formatKeyBinding(findKeyBindingsForAction(props.action, keyMap)[0])}
     >
-      {props.children ?? actionMap[props.action]!.name}
+      {props.children ?? $t(actionMap[props.action]!.name)}
     </Menu.Item>
   );
 }

@@ -16,6 +16,7 @@ import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { newid } from '@diagram-craft/utils/id';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { deepClone } from '@diagram-craft/utils/object';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 declare global {
   namespace DiagramCraft {
@@ -58,7 +59,7 @@ const reconnectEndpoint = (
 };
 
 export class DuplicateAction extends AbstractSelectionAction {
-  name = 'Duplicate';
+  name = $tStr('action.DUPLICATE.name', 'Duplicate');
 
   constructor(context: ActionContext) {
     super(context, 'both');

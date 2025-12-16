@@ -1,4 +1,5 @@
 import { AbstractAction, ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 declare global {
   namespace DiagramCraft {
@@ -11,7 +12,7 @@ export const undoActions = (context: ActionContext) => ({
 });
 
 export class UndoAction extends AbstractAction {
-  name = 'Undo';
+  name = $tStr('action.UNDO.name', 'Undo');
 
   getCriteria(context: ActionContext) {
     return ActionCriteria.EventTriggered(

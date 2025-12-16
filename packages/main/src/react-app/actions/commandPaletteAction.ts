@@ -1,8 +1,9 @@
 import { AbstractAction } from '@diagram-craft/canvas/action';
 import { Application } from '../../application';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 export class CommandPaletteAction extends AbstractAction<undefined, Application> {
-  name = 'Command Palette';
+  name = $tStr('action.COMMAND_PALETTE.name', 'Command Palette');
   availableInCommandPalette = false;
 
   execute() {

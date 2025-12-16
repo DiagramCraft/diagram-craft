@@ -35,7 +35,7 @@ export const setTranslations = (translations: Record<string, string>) => {
  * Used to create translatable strings outside of React components that
  * will then be translated on demand when rendered
  */
-export type TranslationRef = {
+export type TranslatedString = {
   /** Unique identifier for the translation */
   id: string;
   /** Default message to use if translation is not found */
@@ -57,7 +57,7 @@ export type TranslationRef = {
  * const translated = $t(WELCOME_MSG);
  * ```
  */
-export const $tRef = (id: string, message: string) => {
+export const $tStr = (id: string, message: string) => {
   return { id, message };
 };
 
@@ -68,7 +68,7 @@ export const $tRef = (id: string, message: string) => {
  * @param translation - A TranslationRef object containing the translation ID and fallback message
  * @returns The translated string or the fallback message
  */
-function t(translation: TranslationRef): string;
+function t(translation: TranslatedString): string;
 
 /**
  * Translates a string using a translation ID and fallback message.
@@ -90,7 +90,7 @@ function t(obj: unknown, message?: string): string {
   if (typeof obj === 'string') {
     return TRANSLATIONS[obj] ?? mustExist(message);
   } else {
-    const ref = obj as TranslationRef;
+    const ref = obj as TranslatedString;
     return TRANSLATIONS[ref.id] ?? ref.message;
   }
 }

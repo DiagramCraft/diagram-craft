@@ -5,6 +5,7 @@ import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ActionContext } from '@diagram-craft/canvas/action';
 import { transformElements } from '@diagram-craft/model/diagramElement';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 declare global {
   namespace DiagramCraft {
@@ -34,7 +35,7 @@ export const selectionResizeActions = (context: ActionContext) => {
 };
 
 export class SelectionResizeAction extends AbstractSelectionAction {
-  name = 'Resize Selection';
+  name = $tStr('action.SELECTION_RESIZE.name', 'Resize Selection');
 
   constructor(
     protected readonly offset: () => Point,

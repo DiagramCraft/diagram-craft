@@ -21,16 +21,33 @@ import { ReferenceLayerDialogCommand, StringInputDialogCommand } from '../dialog
 import { RuleLayer } from '@diagram-craft/model/diagramLayerRule';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { ModificationLayer } from '@diagram-craft/model/diagramLayerModification';
+import { $tStr, TranslatedString } from '@diagram-craft/utils/localize';
 
 export const layerActions = (application: Application) => ({
   LAYER_DELETE_LAYER: new LayerDeleteAction(application),
   LAYER_TOGGLE_VISIBILITY: new LayerToggleVisibilityAction(application),
   LAYER_TOGGLE_LOCK: new LayerToggleLockedAction(application),
   LAYER_RENAME: new LayerRenameAction(application),
-  LAYER_ADD: new LayerAddAction('regular', application),
-  LAYER_ADD_REFERENCE: new LayerAddAction('reference', application),
-  LAYER_ADD_RULE: new LayerAddAction('rule', application),
-  LAYER_ADD_MODIFICATION: new LayerAddAction('modification', application),
+  LAYER_ADD: new LayerAddAction(
+    'regular',
+    $tStr('action.LAYER_ADD.name', 'New Layer'),
+    application
+  ),
+  LAYER_ADD_REFERENCE: new LayerAddAction(
+    'reference',
+    $tStr('action.LAYER_ADD_REFERENCE.name', 'New Reference Layer'),
+    application
+  ),
+  LAYER_ADD_RULE: new LayerAddAction(
+    'rule',
+    $tStr('action.LAYER_ADD_RULE.name', 'New Rule Layer'),
+    application
+  ),
+  LAYER_ADD_MODIFICATION: new LayerAddAction(
+    'modification',
+    $tStr('action.LAYER_ADD_MODIFICATION.name', 'New Modification Layer'),
+    application
+  ),
   LAYER_SELECTION_MOVE: new LayerSelectionMoveAction(application),
   LAYER_SELECTION_MOVE_NEW: new LayerSelectionMoveNewAction(application)
 });
@@ -44,7 +61,7 @@ declare global {
 type LayerActionArg = { id?: string };
 
 export class LayerDeleteAction extends AbstractAction<LayerActionArg, Application> {
-  name = 'Delete Layer';
+  name = $tStr('action.LAYER_DELETE_LAYER.name', 'Delete Layer');
 
   isEnabled({ id }: LayerActionArg): boolean {
     return id !== undefined && this.context.model.activeDiagram.layers.byId(id) !== undefined;
@@ -147,7 +164,7 @@ class LayerDeleteUndoableAction implements UndoableAction {
 }
 
 export class LayerToggleVisibilityAction extends AbstractToggleAction<LayerActionArg> {
-  name = 'Toggle Layer Visibility';
+  name = $tStr('action.LAYER_TOGGLE_VISIBILITY.name', 'Toggle Layer Visibility');
 
   isEnabled({ id }: LayerActionArg): boolean {
     return id !== undefined && this.context.model.activeDiagram.layers.byId(id) !== undefined;
@@ -178,7 +195,7 @@ export class LayerToggleVisibilityAction extends AbstractToggleAction<LayerActio
 }
 
 export class LayerToggleLockedAction extends AbstractToggleAction<LayerActionArg> {
-  name = 'Toggle Layer Locked';
+  name = $tStr('action.LAYER_TOGGLE_LOCK.name', 'Toggle Layer Locked');
 
   isEnabled({ id }: LayerActionArg): boolean {
     const diagram = this.context.model.activeDiagram;
@@ -210,7 +227,7 @@ export class LayerToggleLockedAction extends AbstractToggleAction<LayerActionArg
 }
 
 export class LayerRenameAction extends AbstractAction<LayerActionArg, Application> {
-  name = 'Rename Layer';
+  name = $tStr('action.LAYER_RENAME.name', 'Rename Layer');
 
   isEnabled({ id }: LayerActionArg): boolean {
     return id !== undefined && this.context.model.activeDiagram.layers.byId(id) !== undefined;
@@ -240,22 +257,13 @@ export class LayerRenameAction extends AbstractAction<LayerActionArg, Applicatio
   }
 }
 
-const LAYER_ADD_NAME_MAP: Record<LayerType, string> = {
-  regular: 'New Layer',
-  reference: 'New Reference Layer',
-  rule: 'New Rule Layer',
-  modification: 'New Modification Layer'
-};
-
 export class LayerAddAction extends AbstractAction<undefined, Application> {
-  name: string;
-
   constructor(
     private readonly type: LayerType,
+    public readonly name: TranslatedString,
     context: Application
   ) {
     super(context);
-    this.name = LAYER_ADD_NAME_MAP[type];
   }
 
   execute(): void {
@@ -350,7 +358,7 @@ class LayerAddUndoableAction implements UndoableAction {
 }
 
 export class LayerSelectionMoveAction extends AbstractAction<LayerActionArg> {
-  name = 'Move to Layer';
+  name = $tStr('action.LAYER_SELECTION_MOVE.name', 'Move to Layer');
 
   execute({ id }: LayerActionArg): void {
     precondition.is.present(id);
@@ -367,7 +375,7 @@ export class LayerSelectionMoveAction extends AbstractAction<LayerActionArg> {
 }
 
 export class LayerSelectionMoveNewAction extends AbstractAction {
-  name = 'Create new layer';
+  name = $tStr('action.LAYER_SELECTION_MOVE_NEW.name', 'Create new layer');
 
   execute(): void {
     const diagram = this.context.model.activeDiagram;

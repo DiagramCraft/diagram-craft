@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach } from 'vitest';
-import { setTranslations, $t, $tRef } from './localize';
+import { setTranslations, $t, $tStr } from './localize';
 
 describe('localize', () => {
   beforeEach(() => {
@@ -29,7 +29,7 @@ describe('localize', () => {
 
   describe('$t with id and message', () => {
     test('should return translation when available', () => {
-      setTranslations({ 'greeting': 'Hello' });
+      setTranslations({ greeting: 'Hello' });
 
       expect($t('greeting', 'Hi')).toBe('Hello');
     });
@@ -45,15 +45,15 @@ describe('localize', () => {
     });
 
     test('should handle special characters in translations', () => {
-      setTranslations({ 'special': 'Hello "World" & <Friends>' });
+      setTranslations({ special: 'Hello "World" & <Friends>' });
 
       expect($t('special', 'fallback')).toBe('Hello "World" & <Friends>');
     });
   });
 
-  describe('$tRef', () => {
-    test('should create TranslationRef object', () => {
-      const ref = $tRef('app.title', 'Diagram Craft');
+  describe('$tStr', () => {
+    test('should create TranslatedString object', () => {
+      const ref = $tStr('app.title', 'Diagram Craft');
 
       expect(ref).toEqual({
         id: 'app.title',
@@ -62,8 +62,8 @@ describe('localize', () => {
     });
 
     test('should create multiple independent refs', () => {
-      const ref1 = $tRef('key1', 'Message 1');
-      const ref2 = $tRef('key2', 'Message 2');
+      const ref1 = $tStr('key1', 'Message 1');
+      const ref2 = $tStr('key2', 'Message 2');
 
       expect(ref1.id).toBe('key1');
       expect(ref2.id).toBe('key2');
@@ -72,24 +72,24 @@ describe('localize', () => {
     });
   });
 
-  describe('$t with TranslationRef', () => {
+  describe('$t with TranslatedString', () => {
     test('should return translation when available', () => {
       setTranslations({ 'app.welcome': 'Welcome Back' });
-      const ref = $tRef('app.welcome', 'Welcome');
+      const ref = $tStr('app.welcome', 'Welcome');
 
       expect($t(ref)).toBe('Welcome Back');
     });
 
     test('should return fallback message when translation not found', () => {
       setTranslations({});
-      const ref = $tRef('missing.key', 'Default Message');
+      const ref = $tStr('missing.key', 'Default Message');
 
       expect($t(ref)).toBe('Default Message');
     });
 
     test('should work with stored refs', () => {
-      const SAVE_ACTION = $tRef('action.save', 'Save');
-      const CANCEL_ACTION = $tRef('action.cancel', 'Cancel');
+      const SAVE_ACTION = $tStr('action.save', 'Save');
+      const CANCEL_ACTION = $tStr('action.cancel', 'Cancel');
 
       setTranslations({
         'action.save': 'Speichern',
@@ -105,20 +105,20 @@ describe('localize', () => {
     test('should handle both ref and direct calls with same translations', () => {
       setTranslations({ 'common.ok': 'OK' });
 
-      const ref = $tRef('common.ok', 'Okay');
+      const ref = $tStr('common.ok', 'Okay');
 
       expect($t(ref)).toBe('OK');
       expect($t('common.ok', 'Okay')).toBe('OK');
     });
 
     test('should handle updates to translations affecting both call styles', () => {
-      const ref = $tRef('dynamic', 'Original');
+      const ref = $tStr('dynamic', 'Original');
 
-      setTranslations({ 'dynamic': 'First Translation' });
+      setTranslations({ dynamic: 'First Translation' });
       expect($t(ref)).toBe('First Translation');
       expect($t('dynamic', 'Original')).toBe('First Translation');
 
-      setTranslations({ 'dynamic': 'Second Translation' });
+      setTranslations({ dynamic: 'Second Translation' });
       expect($t(ref)).toBe('Second Translation');
       expect($t('dynamic', 'Original')).toBe('Second Translation');
     });

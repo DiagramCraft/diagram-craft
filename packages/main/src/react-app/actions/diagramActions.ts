@@ -6,6 +6,7 @@ import { assert, precondition } from '@diagram-craft/utils/assert';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { StringInputDialogCommand } from '@diagram-craft/canvas-app/dialogs';
 import { makeUndoableAction } from '@diagram-craft/model/undoManager';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 export const diagramActions = (application: Application) => ({
   DIAGRAM_ADD: new DiagramAddAction(application),
@@ -20,7 +21,7 @@ declare global {
 }
 
 class DiagramAddAction extends AbstractAction<{ parentId?: string }, Application> {
-  name = 'Add Diagram';
+  name = $tStr('action.DIAGRAM_ADD.name', 'Add Diagram');
 
   execute(props: { parentId?: string }): void {
     const document = this.context.model.activeDocument;
@@ -61,7 +62,7 @@ class DiagramAddAction extends AbstractAction<{ parentId?: string }, Application
 }
 
 class DiagramRemoveAction extends AbstractAction<{ diagramId?: string }, Application> {
-  name = 'Remove Diagram';
+  name = $tStr('action.DIAGRAM_REMOVE.name', 'Remove Diagram');
 
   execute(props: { diagramId?: string }): void {
     assert.present(props.diagramId);
@@ -106,7 +107,7 @@ class DiagramRemoveAction extends AbstractAction<{ diagramId?: string }, Applica
 }
 
 class DiagramRenameAction extends AbstractAction<{ diagramId?: string }, Application> {
-  name = 'Rename Diagram';
+  name = $tStr('action.DIAGRAM_RENAME.name', 'Rename Diagram');
 
   execute({ diagramId }: { diagramId?: string }): void {
     precondition.is.present(diagramId);

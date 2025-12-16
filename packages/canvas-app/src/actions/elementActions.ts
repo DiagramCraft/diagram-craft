@@ -4,6 +4,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { isEmptyString } from '@diagram-craft/utils/strings';
 import { assert } from '@diagram-craft/utils/assert';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 declare global {
   namespace DiagramCraft {
@@ -16,7 +17,7 @@ export const elementActions = (context: ActionContext) => ({
 });
 
 class ElementConvertToNameAction extends AbstractSelectionAction {
-  name = 'Convert to named element';
+  name = $tStr('action.ELEMENT_CONVERT_TO_NAME_ELEMENT.name', 'Convert to named element');
 
   constructor(context: ActionContext) {
     super(context, MultipleType.SingleOnly, ElementType.Node);

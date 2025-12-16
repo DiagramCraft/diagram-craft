@@ -12,6 +12,7 @@ import { DiagramGraph } from '@diagram-craft/model/diagramGraph';
 import { layoutSeriesParallel } from '@diagram-craft/graph/layout/seriesParallelLayout';
 import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
 import type { Application } from '../../application';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 declare global {
   namespace DiagramCraft {
@@ -31,7 +32,7 @@ export const layoutSeriesParallelActions = (context: Application) => ({
 });
 
 export class LayoutSeriesParallelAction extends AbstractSelectionAction<Application> {
-  name = 'Series-Parallel';
+  name = $tStr('action.LAYOUT_SERIES_PARALLEL.name', 'Series-Parallel');
 
   constructor(context: Application) {
     super(context, MultipleType.Both, ElementType.Node);

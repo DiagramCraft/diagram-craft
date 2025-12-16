@@ -6,6 +6,7 @@ import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import { ActionContext } from '@diagram-craft/canvas/action';
 import type { EdgeProps, NodeProps } from '@diagram-craft/model/diagramProps';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 declare global {
   namespace DiagramCraft {
@@ -22,7 +23,7 @@ let currentNodeStyle: NodeProps = {};
 let currentEdgeStyle: EdgeProps = {};
 
 export class StyleCopyAction extends AbstractSelectionAction {
-  name = 'Copy Style';
+  name = $tStr('action.STYLE_COPY.name', 'Copy Style');
 
   constructor(context: ActionContext) {
     super(context, MultipleType.SingleOnly, ElementType.Both);
@@ -44,7 +45,7 @@ export class StyleCopyAction extends AbstractSelectionAction {
 }
 
 export class StylePasteAction extends AbstractSelectionAction {
-  name = 'Paste Style';
+  name = $tStr('action.STYLE_PASTE.name', 'Paste Style');
 
   constructor(context: ActionContext) {
     super(context, MultipleType.Both, ElementType.Both);

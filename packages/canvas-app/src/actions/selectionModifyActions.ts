@@ -7,6 +7,7 @@ import { assert } from '@diagram-craft/utils/assert';
 import { DiagramGraph } from '@diagram-craft/model/diagramGraph';
 import { ConnectedEndpoint } from '@diagram-craft/model/endpoint';
 import { extractMaximalTree } from '@diagram-craft/graph/transformation';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 declare global {
   namespace DiagramCraft {
@@ -22,7 +23,7 @@ export const selectionModifyActions = (context: ActionContext) => ({
 });
 
 export class SelectionSelectConnectedAction extends AbstractSelectionAction {
-  name = 'Select Connected';
+  name = $tStr('action.SELECTION_SELECT_CONNECTED.name', 'Select Connected');
 
   constructor(context: ActionContext) {
     super(context, MultipleType.Both, ElementType.Both);
@@ -55,7 +56,7 @@ export class SelectionSelectConnectedAction extends AbstractSelectionAction {
 }
 
 export class SelectionSelectTreeAction extends AbstractSelectionAction {
-  name = 'Select Tree';
+  name = $tStr('action.SELECTION_SELECT_TREE.name', 'Select Tree');
 
   constructor(context: ActionContext) {
     super(context, MultipleType.SingleOnly, ElementType.Node);
@@ -90,7 +91,7 @@ export class SelectionSelectTreeAction extends AbstractSelectionAction {
 }
 
 export class SelectionSelectGrowAction extends AbstractSelectionAction {
-  name = 'Grow';
+  name = $tStr('action.SELECTION_SELECT_GROW.name', 'Grow');
 
   constructor(context: ActionContext) {
     super(context, MultipleType.Both, ElementType.Both);
@@ -125,7 +126,7 @@ export class SelectionSelectGrowAction extends AbstractSelectionAction {
 }
 
 export class SelectionSelectShrinkAction extends AbstractSelectionAction {
-  name = 'Shrink';
+  name = $tStr('action.SELECTION_SELECT_SHRINK.name', 'Shrink');
 
   constructor(context: ActionContext) {
     super(context, MultipleType.Both, ElementType.Both);

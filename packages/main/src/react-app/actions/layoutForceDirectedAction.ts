@@ -14,6 +14,7 @@ import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
 import type { Application } from '../../application';
 import type { Point } from '@diagram-craft/geometry/point';
 import type { DiagramEdge } from '@diagram-craft/model/diagramEdge';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 declare global {
   namespace DiagramCraft {
@@ -33,7 +34,7 @@ export const layoutForceDirectedActions = (context: Application) => ({
 });
 
 export class LayoutForceDirectedAction extends AbstractSelectionAction<Application> {
-  name = 'Force-Directed';
+  name = $tStr('action.LAYOUT_FORCE_DIRECTED.name', 'Force-Directed');
 
   constructor(context: Application) {
     super(context, MultipleType.Both, ElementType.Node);

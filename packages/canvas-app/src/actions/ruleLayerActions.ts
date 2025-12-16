@@ -9,6 +9,7 @@ import { Application } from '../application';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { RuleEditorDialogCommand } from '../dialogs';
 import { safeSplit } from '@diagram-craft/utils/safe';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 export const ruleLayerActions = (application: Application) => ({
   RULE_LAYER_EDIT: new RuleLayerEditAction(application),
@@ -25,7 +26,7 @@ declare global {
 type LayerActionArg = { id?: string };
 
 export class RuleLayerDeleteAction extends AbstractAction<LayerActionArg, Application> {
-  name = 'Delete Rule';
+  name = $tStr('action.RULE_LAYER_DELETE.name', 'Delete Rule');
 
   isEnabled({ id }: LayerActionArg): boolean {
     return id !== undefined;
@@ -65,7 +66,7 @@ export class RuleLayerDeleteAction extends AbstractAction<LayerActionArg, Applic
 }
 
 export class RuleLayerEditAction extends AbstractAction<LayerActionArg, Application> {
-  name = 'Edit Rule';
+  name = $tStr('action.RULE_LAYER_EDIT.name', 'Edit Rule');
 
   isEnabled({ id }: LayerActionArg): boolean {
     return id !== undefined;
@@ -98,7 +99,7 @@ export class RuleLayerEditAction extends AbstractAction<LayerActionArg, Applicat
 }
 
 export class RuleLayerAddAction extends AbstractAction<LayerActionArg, Application> {
-  name = 'Add Rule';
+  name = $tStr('action.RULE_LAYER_ADD.name', 'Add Rule');
 
   isEnabled({ id }: LayerActionArg): boolean {
     return (

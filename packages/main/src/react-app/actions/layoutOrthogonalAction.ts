@@ -12,6 +12,7 @@ import { DiagramGraph } from '@diagram-craft/model/diagramGraph';
 import { layoutOrthogonal } from '@diagram-craft/graph/layout/orthogonalLayout';
 import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
 import type { Application } from '../../application';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 declare global {
   namespace DiagramCraft {
@@ -31,7 +32,7 @@ export const layoutOrthogonalActions = (context: Application) => ({
 });
 
 export class LayoutOrthogonalAction extends AbstractSelectionAction<Application> {
-  name = 'Orthogonal';
+  name = $tStr('action.LAYOUT_ORTHOGONAL.name', 'Orthogonal');
 
   constructor(context: Application) {
     super(context, MultipleType.Both, ElementType.Node);

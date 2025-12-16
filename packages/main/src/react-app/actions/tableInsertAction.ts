@@ -7,6 +7,7 @@ import { Application } from '../../application';
 import { TableInsertDialog } from '../TableInsertDialog';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 export const tableInsertActions = (application: Application) => ({
   TABLE_INSERT: new TableInsertAction(application)
@@ -19,7 +20,7 @@ declare global {
 }
 
 class TableInsertAction extends AbstractAction<undefined, Application> {
-  name = 'Insert Table';
+  name = $tStr('action.TABLE_INSERT.name', 'Insert Table');
 
   getCriteria(application: Application) {
     return ActionCriteria.EventTriggered(

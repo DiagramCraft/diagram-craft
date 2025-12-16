@@ -19,6 +19,7 @@ import { ActionCriteria } from '@diagram-craft/canvas/action';
 import { toUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
 import { transformPathList } from '@diagram-craft/geometry/pathListUtils';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
+import { $tStr, type TranslatedString } from '@diagram-craft/utils/localize';
 
 declare global {
   namespace DiagramCraft {
@@ -28,19 +29,40 @@ declare global {
 
 export const geometryActions = (context: Application) => ({
   SELECTION_GEOMETRY_CONVERT_TO_CURVES: new SelectionGeometryConvertToCurves(context),
-  SELECTION_GEOMETRY_BOOLEAN_UNION: new SelectionBooleanOperation(context, 'A union B'),
-  SELECTION_GEOMETRY_BOOLEAN_A_NOT_B: new SelectionBooleanOperation(context, 'A not B'),
-  SELECTION_GEOMETRY_BOOLEAN_B_NOT_A: new SelectionBooleanOperation(context, 'B not A'),
+  SELECTION_GEOMETRY_BOOLEAN_UNION: new SelectionBooleanOperation(
+    context,
+    $tStr('action.SELECTION_GEOMETRY_BOOLEAN_UNION.name', 'Union'),
+    'A union B'
+  ),
+  SELECTION_GEOMETRY_BOOLEAN_A_NOT_B: new SelectionBooleanOperation(
+    context,
+    $tStr('action.SELECTION_GEOMETRY_BOOLEAN_A_NOT_B.name', 'Subtract'),
+    'A not B'
+  ),
+  SELECTION_GEOMETRY_BOOLEAN_B_NOT_A: new SelectionBooleanOperation(
+    context,
+    $tStr('action.SELECTION_GEOMETRY_BOOLEAN_B_NOT_A.name', 'Subtract (B not A)'),
+    'B not A'
+  ),
   SELECTION_GEOMETRY_BOOLEAN_INTERSECTION: new SelectionBooleanOperation(
     context,
+    $tStr('action.SELECTION_GEOMETRY_BOOLEAN_INTERSECTION.name', 'Intersect'),
     'A intersection B'
   ),
-  SELECTION_GEOMETRY_BOOLEAN_XOR: new SelectionBooleanOperation(context, 'A xor B'),
-  SELECTION_GEOMETRY_BOOLEAN_DIVIDE: new SelectionBooleanOperation(context, 'A divide B')
+  SELECTION_GEOMETRY_BOOLEAN_XOR: new SelectionBooleanOperation(
+    context,
+    $tStr('action.SELECTION_GEOMETRY_BOOLEAN_INTERSECTION.name', 'Exclusive Or'),
+    'A xor B'
+  ),
+  SELECTION_GEOMETRY_BOOLEAN_DIVIDE: new SelectionBooleanOperation(
+    context,
+    $tStr('action.SELECTION_GEOMETRY_BOOLEAN_INTERSECTION.name', 'Divide'),
+    'A divide B'
+  )
 });
 
 class SelectionGeometryConvertToCurves extends AbstractSelectionAction<Application> {
-  name = 'Convert to curves';
+  name = $tStr('action.SELECTION_GEOMETRY_CONVERT_TO_CURVES.name', 'Convert to curves');
 
   constructor(context: Application) {
     super(context, MultipleType.Both, ElementType.Node);
@@ -71,24 +93,13 @@ class SelectionGeometryConvertToCurves extends AbstractSelectionAction<Applicati
   }
 }
 
-const BOOLEAN_OP_NAME_MAP: Record<BooleanOperation, string> = {
-  'A union B': 'Union',
-  'A not B': 'Subtract',
-  'B not A': 'Subtract (B not A)',
-  'A intersection B': 'Intersect',
-  'A xor B': 'Exclusive Or',
-  'A divide B': 'Divide'
-};
-
 class SelectionBooleanOperation extends AbstractSelectionAction<Application> {
-  name: string;
-
   constructor(
     context: Application,
+    public readonly name: TranslatedString,
     private type: BooleanOperation
   ) {
     super(context, MultipleType.Both, ElementType.Node);
-    this.name = BOOLEAN_OP_NAME_MAP[type];
   }
 
   getCriteria(context: Application) {
