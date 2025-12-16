@@ -31,26 +31,26 @@ export const LeftSidebar = () => {
         </SideBarBottomToolbar>
       }
     >
-      <SideBarPage icon={TbPentagonPlus}>
+      <SideBarPage icon={TbPentagonPlus} tooltip={'Objects'}>
         <PickerToolWindow />
       </SideBarPage>
-      <SideBarPage icon={TbStack}>
+      <SideBarPage icon={TbStack} tooltip={'Structure'}>
         <DocumentStructureToolWindow />
       </SideBarPage>
-      <SideBarPage icon={TbHistory}>
+      <SideBarPage icon={TbHistory} tooltip={'History'}>
         <HistoryToolWindow />
       </SideBarPage>
-      <SideBarPage icon={TbSearch}>
+      <SideBarPage icon={TbSearch} tooltip={'Search'}>
         <QueryToolWindow />
       </SideBarPage>
-      <SideBarPage icon={TbPresentation}>
+      <SideBarPage icon={TbPresentation} tooltip={'Story Player'}>
         <StoryToolWindow />
       </SideBarPage>
-      <SideBarPage icon={TbCodeAsterisk}>
+      <SideBarPage icon={TbCodeAsterisk} tooltip={'Diagram as Code'}>
         <TextToolWindow />
       </SideBarPage>
       {AppConfig.get().ai.provider !== 'none' && (
-        <SideBarPage icon={TbSparkles}>
+        <SideBarPage icon={TbSparkles} tooltip={'AI'}>
           <AIToolWindow />
         </SideBarPage>
       )}

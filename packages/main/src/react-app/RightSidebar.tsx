@@ -25,16 +25,16 @@ export const RightSidebar = () => {
         </SideBarBottomToolbar>
       }
     >
-      <SideBarPage icon={TbPalette}>
+      <SideBarPage icon={TbPalette} tooltip={'Style'}>
         <ObjectToolWindow />
       </SideBarPage>
-      <SideBarPage icon={TbInfoCircle}>
+      <SideBarPage icon={TbInfoCircle} tooltip={'Info'}>
         <ObjectInfoToolWindow />
       </SideBarPage>
-      <SideBarPage icon={TbDatabaseEdit}>
+      <SideBarPage icon={TbDatabaseEdit} tooltip={'Data'}>
         <ObjectDataToolWindow />
       </SideBarPage>
-      <SideBarPage icon={TbMessageCircle} extra={<CommentsToolWindowBadge />}>
+      <SideBarPage icon={TbMessageCircle} extra={<CommentsToolWindowBadge />} tooltip={'Comments'}>
         <CommentsToolWindow />
       </SideBarPage>
     </SideBar>
