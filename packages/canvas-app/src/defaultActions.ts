@@ -132,5 +132,11 @@ export const defaultMacKeymap: KeyMap = {
   // Text
   'M-KeyB': 'TEXT_BOLD',
   'M-KeyI': 'TEXT_ITALIC',
-  'M-KeyU': 'TEXT_UNDERLINE'
+  'M-KeyU': 'TEXT_UNDERLINE',
+
+  // Restack (Arrange menu)
+  'M-S-BracketRight': 'SELECTION_RESTACK_UP',
+  'M-BracketRight': 'SELECTION_RESTACK_TOP',
+  'M-S-BracketLeft': 'SELECTION_RESTACK_DOWN',
+  'M-BracketLeft': 'SELECTION_RESTACK_BOTTOM'
 };

@@ -24,6 +24,8 @@ type KeyCode =
   | 'ArrowRight'
   | 'ArrowUp'
   | 'ArrowDown'
+  | 'BracketLeft'
+  | 'BracketRight'
   | `Digit${number}`;
 
 type KeyBinding = `${Alt}${Control}${Meta}${Shift}${KeyCode}` | KeyCode;
@@ -154,6 +156,8 @@ export const formatKeyBinding = (
     .replace(CTRL, formattingConfig[CTRL])
     .replace(META, formattingConfig[META])
     .replace(SHIFT, formattingConfig[SHIFT])
+    .replace('BracketRight', ']')
+    .replace('BracketLeft', '[')
     .replace('ArrowUp', '↑')
     .replace('ArrowDown', '↓');
 };
