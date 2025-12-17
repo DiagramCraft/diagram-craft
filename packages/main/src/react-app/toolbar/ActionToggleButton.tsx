@@ -5,7 +5,7 @@ import { ActionName } from '@diagram-craft/canvas/keyMap';
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
 import { useApplication } from '../../application';
 import { Tooltip } from '@diagram-craft/app-components/Tooltip';
-import { $t } from '@diagram-craft/utils/localize';
+import { ActionTooltip } from '../components/ActionTooltip';
 
 const getActionValue = (action: Action<unknown>) =>
   (action as ToggleAction).getState({}) ? 'on' : 'off';
@@ -31,7 +31,7 @@ export const ActionToggleButton = (props: Props) => {
   return (
     <Toolbar.ToggleGroup type={'single'} value={value} onChange={v => setValue(v as 'on' | 'off')}>
       <Tooltip
-        message={$t(actionMap[props.action]!.name)}
+        message={<ActionTooltip action={props.action} />}
         element={
           <Toolbar.ToggleItem
             value={'on'}

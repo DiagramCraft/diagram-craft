@@ -18,11 +18,9 @@ import { AIToolWindow } from './toolwindow/AIToolWindow/AIToolWindow';
 import { ActionToolbarButton } from './toolbar/ActionToolbarButton';
 import { TextToolWindow } from './toolwindow/TextToolWindow/TextToolWindow';
 import { AppConfig } from '../appConfig';
-import { useApplication } from '../application';
-import { $t } from '@diagram-craft/utils/localize';
+import { ActionTooltip } from './components/ActionTooltip';
 
 export const LeftSidebar = () => {
-  const app = useApplication();
   return (
     <SideBar
       side={'left'}
@@ -34,26 +32,32 @@ export const LeftSidebar = () => {
         </SideBarBottomToolbar>
       }
     >
-      <SideBarPage icon={TbPentagonPlus} tooltip={$t(app.actions['SIDEBAR_OBJECTS']!.name)}>
+      <SideBarPage icon={TbPentagonPlus} tooltip={<ActionTooltip action={'SIDEBAR_OBJECTS'} />}>
         <PickerToolWindow />
       </SideBarPage>
-      <SideBarPage icon={TbStack} tooltip={$t(app.actions['SIDEBAR_STRUCTURE']!.name)}>
+      <SideBarPage icon={TbStack} tooltip={<ActionTooltip action={'SIDEBAR_STRUCTURE'} />}>
         <DocumentStructureToolWindow />
       </SideBarPage>
-      <SideBarPage icon={TbHistory} tooltip={$t(app.actions['SIDEBAR_HISTORY']!.name)}>
+      <SideBarPage icon={TbHistory} tooltip={<ActionTooltip action={'SIDEBAR_HISTORY'} />}>
         <HistoryToolWindow />
       </SideBarPage>
-      <SideBarPage icon={TbSearch} tooltip={$t(app.actions['SIDEBAR_SEARCH']!.name)}>
+      <SideBarPage icon={TbSearch} tooltip={<ActionTooltip action={'SIDEBAR_SEARCH'} />}>
         <QueryToolWindow />
       </SideBarPage>
-      <SideBarPage icon={TbPresentation} tooltip={$t(app.actions['SIDEBAR_STORY_PLAYER']!.name)}>
+      <SideBarPage
+        icon={TbPresentation}
+        tooltip={<ActionTooltip action={'SIDEBAR_STORY_PLAYER'} />}
+      >
         <StoryToolWindow />
       </SideBarPage>
-      <SideBarPage icon={TbCodeAsterisk} tooltip={$t(app.actions['SIDEBAR_DIAGRAM_CODE']!.name)}>
+      <SideBarPage
+        icon={TbCodeAsterisk}
+        tooltip={<ActionTooltip action={'SIDEBAR_DIAGRAM_CODE'} />}
+      >
         <TextToolWindow />
       </SideBarPage>
       {AppConfig.get().ai.provider !== 'none' && (
-        <SideBarPage icon={TbSparkles} tooltip={$t(app.actions['SIDEBAR_AI']!.name)}>
+        <SideBarPage icon={TbSparkles} tooltip={<ActionTooltip action={'SIDEBAR_AI'} />}>
           <AIToolWindow />
         </SideBarPage>
       )}

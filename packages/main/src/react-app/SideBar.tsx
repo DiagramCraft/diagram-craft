@@ -18,7 +18,7 @@ export const SideBarPage = (props: SideBarPageProps) => {
 
 type SideBarPageProps = {
   icon: IconType;
-  tooltip: string;
+  tooltip: React.ReactNode;
   children: React.ReactNode;
   extra?: React.ReactNode;
 };

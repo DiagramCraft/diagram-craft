@@ -14,7 +14,8 @@ export const toolActions = (context: Application) => ({
     $tStr('action.TOOL_FREEHAND.name', 'Freehand Tool'),
     context
   ),
-  TOOL_RECT: new ToolAction('rect', $tStr('action.TOOL_RECT.name', 'Rectangle Tool'), context)
+  TOOL_RECT: new ToolAction('rect', $tStr('action.TOOL_RECT.name', 'Rectangle Tool'), context),
+  TOOL_ZOOM: new ToolAction('zoom', $tStr('action.TOOL_ZOOM.name', 'Zoom Tool'), context)
 });
 
 declare global {
