@@ -11,6 +11,17 @@ export type FontCombination = {
   italic: boolean;
   elements: DiagramNode[];
   count: number;
+  stylesheetId: string | null;
+  stylesheetName: string;
+  isDirty: boolean;
+};
+
+export type StylesheetGroup = {
+  stylesheetId: string | null;
+  stylesheetName: string;
+  stylesheetType: 'text' | null;
+  fonts: FontCombination[];
+  totalElements: number;
 };
 
 export type FontScope = 'current-diagram' | 'entire-document';
@@ -25,8 +36,36 @@ const getAllNodesFromDiagram = (diagram: Diagram): DiagramNode[] =>
 const getAllNodesFromDocument = (document: DiagramDocument): DiagramNode[] =>
   document.diagrams.flatMap(d => getAllNodesFromDiagram(d));
 
-export const collectFonts = (scope: FontScope, diagram: Diagram): Map<string, FontCombination> => {
-  const fontMap = new Map<string, FontCombination>();
+const checkFontDirty = (
+  node: DiagramNode,
+  stylesheetTextProps: { font?: string; fontSize?: number; bold?: boolean; italic?: boolean } | undefined
+): boolean => {
+  if (!stylesheetTextProps) return false;
+
+  const nodeTextProps = node.renderProps.text;
+  if (!nodeTextProps) return false;
+
+  const nodeFont = nodeTextProps.font ?? 'sans-serif';
+  const nodeFontSize = nodeTextProps.fontSize ?? 10;
+  const nodeBold = nodeTextProps.bold ?? false;
+  const nodeItalic = nodeTextProps.italic ?? false;
+
+  const stylesheetFont = stylesheetTextProps.font;
+  const stylesheetFontSize = stylesheetTextProps.fontSize;
+  const stylesheetBold = stylesheetTextProps.bold;
+  const stylesheetItalic = stylesheetTextProps.italic;
+
+  // Check if any text property differs from stylesheet
+  if (stylesheetFont !== undefined && nodeFont !== stylesheetFont) return true;
+  if (stylesheetFontSize !== undefined && nodeFontSize !== stylesheetFontSize) return true;
+  if (stylesheetBold !== undefined && nodeBold !== stylesheetBold) return true;
+  if (stylesheetItalic !== undefined && nodeItalic !== stylesheetItalic) return true;
+
+  return false;
+};
+
+export const collectFonts = (scope: FontScope, diagram: Diagram): StylesheetGroup[] => {
+  const fontMap = new Map<string, FontCombination & { anyDirty: boolean }>();
 
   const elements =
     scope === 'current-diagram'
@@ -45,7 +84,19 @@ export const collectFonts = (scope: FontScope, diagram: Diagram): Map<string, Fo
     const bold = textProps?.bold ?? false;
     const italic = textProps?.italic ?? false;
 
-    const key = `${fontFamily}|${fontSize}|${bold}|${italic}`;
+    // Get text stylesheet info
+    const textStylesheetId = node.metadata.textStyle ?? null;
+    const textStylesheet = textStylesheetId
+      ? diagram.document.styles.getTextStyle(textStylesheetId)
+      : undefined;
+    const stylesheetName = textStylesheet?.name ?? 'No stylesheet';
+
+    // Check if this node's font properties differ from stylesheet
+    const isDirty = textStylesheet
+      ? checkFontDirty(node, textStylesheet.props.text)
+      : false;
+
+    const key = `${fontFamily}|${fontSize}|${bold}|${italic}|${textStylesheetId}`;
 
     if (!fontMap.has(key)) {
       fontMap.set(key, {
@@ -54,16 +105,95 @@ export const collectFonts = (scope: FontScope, diagram: Diagram): Map<string, Fo
         bold,
         italic,
         elements: [],
-        count: 0
+        count: 0,
+        stylesheetId: textStylesheetId,
+        stylesheetName,
+        isDirty: false,
+        anyDirty: false
       });
     }
 
     const combo = fontMap.get(key)!;
     combo.elements.push(node);
     combo.count++;
+    if (isDirty) {
+      combo.anyDirty = true;
+    }
   }
 
-  return fontMap;
+  // Set isDirty flag based on anyDirty
+  for (const combo of fontMap.values()) {
+    combo.isDirty = combo.anyDirty;
+  }
+
+  // Group by stylesheet
+  const groupMap = new Map<string | null, StylesheetGroup>();
+  for (const font of fontMap.values()) {
+    const key = font.stylesheetId;
+    if (!groupMap.has(key)) {
+      const stylesheet = key ? diagram.document.styles.getTextStyle(key) : undefined;
+      groupMap.set(key, {
+        stylesheetId: key,
+        stylesheetName: font.stylesheetName,
+        stylesheetType: stylesheet?.type ?? null,
+        fonts: [],
+        totalElements: 0
+      });
+    }
+
+    const group = groupMap.get(key)!;
+    group.fonts.push(font);
+    group.totalElements += font.count;
+  }
+
+  // Add default stylesheet fonts if not already present
+  for (const group of groupMap.values()) {
+    if (group.stylesheetId) {
+      const stylesheet = diagram.document.styles.getTextStyle(group.stylesheetId);
+      if (stylesheet?.props) {
+        const props = stylesheet.props as { text?: { font?: string; fontSize?: number; bold?: boolean; italic?: boolean } };
+        const textProps = props.text;
+        if (textProps) {
+          const defaultFont = textProps.font ?? 'sans-serif';
+          const defaultSize = textProps.fontSize ?? 10;
+          const defaultBold = textProps.bold ?? false;
+          const defaultItalic = textProps.italic ?? false;
+
+          // Check if this font combination already exists
+          const exists = group.fonts.some(
+            f =>
+              f.fontFamily === defaultFont &&
+              f.fontSize === defaultSize &&
+              f.bold === defaultBold &&
+              f.italic === defaultItalic
+          );
+
+          if (!exists) {
+            // Add the default font with 0 count at the beginning
+            group.fonts.unshift({
+              fontFamily: defaultFont,
+              fontSize: defaultSize,
+              bold: defaultBold,
+              italic: defaultItalic,
+              elements: [],
+              count: 0,
+              stylesheetId: group.stylesheetId,
+              stylesheetName: group.stylesheetName,
+              isDirty: false
+            });
+          }
+        }
+      }
+    }
+  }
+
+  // Sort groups: named stylesheets first (alphabetically), then "No stylesheet"
+  const groups = Array.from(groupMap.values());
+  return groups.sort((a, b) => {
+    if (a.stylesheetId === null) return 1;
+    if (b.stylesheetId === null) return -1;
+    return a.stylesheetName.localeCompare(b.stylesheetName);
+  });
 };
 
 export const sortFonts = (

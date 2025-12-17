@@ -3,7 +3,7 @@ import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
 import { useCallback, useState } from 'react';
 import { StylesPanel } from './StylesPanel';
-import { StylesScopeMenu } from './StylesScopeMenu';
+import { StylesMenu } from './StylesMenu';
 import { ToolWindow } from '../ToolWindow';
 import { collectStyles, type StyleCombination, type StyleScope } from './stylesPanelUtils';
 import { debounce } from '@diagram-craft/utils/debounce';
@@ -40,7 +40,7 @@ export const StylesTab = () => {
   return (
     <>
       <ToolWindow.TabActions>
-        <StylesScopeMenu scope={scope} onScopeChange={setScope} />
+        <StylesMenu scope={scope} onScopeChange={setScope} />
       </ToolWindow.TabActions>
       <ToolWindow.TabContent>
         <StylesPanel groups={groups} onStyleClick={handleStyleClick} />

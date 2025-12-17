@@ -1,5 +1,6 @@
 import { Diagram } from '@diagram-craft/model/diagram';
 import type { DiagramNode } from '@diagram-craft/model/diagramNode';
+import type { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
@@ -13,7 +14,7 @@ import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 export type StyleCombination = {
   styleHash: string;
-  elements: DiagramNode[];
+  elements: DiagramElement[];
   count: number;
   previewDiagram: Diagram;
   previewNode: DiagramNode;
@@ -36,26 +37,34 @@ export type StyleScope = 'current-diagram' | 'entire-document';
 
 const PREVIEW_CACHE = new Map<string, { diagram: Diagram; node: DiagramNode }>();
 
-const getAllNodesFromDiagram = (diagram: Diagram): DiagramNode[] =>
+const getAllElementsFromDiagram = (diagram: Diagram): DiagramElement[] =>
   diagram.layers.all
     .filter((layer): layer is RegularLayer => layer.type === 'regular')
-    .flatMap(layer => Array.from(layer.elements))
-    .filter(isNode);
+    .flatMap(layer => Array.from(layer.elements));
 
-const getAllNodesFromDocument = (document: DiagramDocument): DiagramNode[] =>
-  document.diagrams.flatMap(d => getAllNodesFromDiagram(d));
+const getAllElementsFromDocument = (document: DiagramDocument): DiagramElement[] =>
+  document.diagrams.flatMap(d => getAllElementsFromDiagram(d));
 
-export const extractAppearanceProps = (node: DiagramNode): Partial<NodeProps> => {
-  const props = node.renderProps;
-
-  return {
-    fill: props.fill,
-    stroke: props.stroke,
-    shadow: props.shadow,
-    effects: props.effects,
-    text: props.text,
-    geometry: props.geometry
-  };
+export const extractAppearanceProps = (element: DiagramElement): Partial<NodeProps> => {
+  if (isNode(element)) {
+    const props = element.renderProps;
+    return {
+      fill: props.fill,
+      stroke: props.stroke,
+      shadow: props.shadow,
+      effects: props.effects,
+      text: props.text,
+      geometry: props.geometry
+    };
+  } else {
+    // For edges, only include stroke, shadow, effects
+    const props = element.renderProps;
+    return {
+      stroke: props.stroke,
+      shadow: props.shadow,
+      effects: props.effects
+    };
+  }
 };
 
 const sortKeys = (obj: unknown): unknown => {
@@ -140,8 +149,8 @@ const isPropsDirty = (
 };
 
 export const checkStyleDirty = (
-  element: DiagramNode,
-  stylesheet: Stylesheet<'node'> | undefined
+  element: DiagramElement,
+  stylesheet: Stylesheet<'node'> | Stylesheet<'edge'> | undefined
 ): boolean => {
   if (!stylesheet) return false;
 
@@ -154,23 +163,25 @@ export const checkStyleDirty = (
 
 export const collectStyles = (scope: StyleScope, diagram: Diagram): StylesheetGroup[] => {
   const styleMap = new Map<string, StyleCombination & { nodeTypes: Set<string> }>();
-  const nodes =
+  const elements =
     scope === 'current-diagram'
-      ? getAllNodesFromDiagram(diagram)
-      : getAllNodesFromDocument(diagram.document);
+      ? getAllElementsFromDiagram(diagram)
+      : getAllElementsFromDocument(diagram.document);
 
-  // First pass: collect all nodes by style and track their node types
-  for (const node of nodes) {
-    const appearanceProps = extractAppearanceProps(node);
+  // First pass: collect all elements by style and track their node types
+  for (const element of elements) {
+    const appearanceProps = extractAppearanceProps(element);
     const styleHash = createStyleHash(appearanceProps);
 
-    const stylesheetId = node.metadata.style ?? null;
+    const stylesheetId = element.metadata.style ?? null;
     const stylesheet = stylesheetId
-      ? diagram.document.styles.getNodeStyle(stylesheetId)
+      ? isNode(element)
+        ? diagram.document.styles.getNodeStyle(stylesheetId)
+        : diagram.document.styles.getEdgeStyle(stylesheetId)
       : undefined;
     const stylesheetName = stylesheet?.name ?? 'No stylesheet';
 
-    const isDirty = stylesheet ? checkStyleDirty(node, stylesheet) : false;
+    const isDirty = stylesheet ? checkStyleDirty(element, stylesheet) : false;
 
     if (!styleMap.has(styleHash)) {
       styleMap.set(styleHash, {
@@ -189,9 +200,10 @@ export const collectStyles = (scope: StyleScope, diagram: Diagram): StylesheetGr
     }
 
     const combo = styleMap.get(styleHash)!;
-    combo.elements.push(node);
+    combo.elements.push(element);
     combo.count++;
-    combo.nodeTypes.add(node.nodeType);
+    // For edges, use 'edge' as the type; for nodes, use their nodeType
+    combo.nodeTypes.add(isNode(element) ? element.nodeType : 'edge');
   }
 
   // Second pass: create preview diagrams using the appropriate node type
@@ -217,7 +229,10 @@ export const collectStyles = (scope: StyleScope, diagram: Diagram): StylesheetGr
   for (const style of styleMap.values()) {
     const key = style.stylesheetId;
     if (!groupMap.has(key)) {
-      const stylesheet = key ? diagram.document.styles.getNodeStyle(key) : undefined;
+      // Try to get stylesheet as node or edge style
+      const stylesheet = key
+        ? diagram.document.styles.getNodeStyle(key) ?? diagram.document.styles.getEdgeStyle(key)
+        : undefined;
       groupMap.set(key, {
         stylesheetId: key,
         stylesheetName: style.stylesheetName,
@@ -230,6 +245,57 @@ export const collectStyles = (scope: StyleScope, diagram: Diagram): StylesheetGr
     const group = groupMap.get(key)!;
     group.styles.push(style);
     group.totalElements += style.count;
+  }
+
+  // Add default stylesheet style if not already present
+  for (const group of groupMap.values()) {
+    if (group.stylesheetId) {
+      const stylesheet = diagram.document.styles.getNodeStyle(group.stylesheetId) ?? diagram.document.styles.getEdgeStyle(group.stylesheetId);
+      if (stylesheet?.props) {
+        // Extract appearance props from stylesheet
+        const stylesheetProps = stylesheet.props as Partial<NodeProps>;
+        const appearanceProps: Partial<NodeProps> = {
+          fill: stylesheetProps.fill,
+          stroke: stylesheetProps.stroke,
+          shadow: stylesheetProps.shadow,
+          effects: stylesheetProps.effects,
+          text: stylesheetProps.text,
+          geometry: stylesheetProps.geometry
+        };
+
+        const styleHash = createStyleHash(appearanceProps);
+
+        // Check if this style already exists
+        const exists = group.styles.some(s => s.styleHash === styleHash);
+
+        if (!exists) {
+          // Determine node type for preview (use 'rect' for nodes, 'edge' for edges)
+          const nodeType = stylesheet.type === 'edge' ? 'edge' : 'rect';
+
+          // Create preview diagram
+          const cacheKey = `${styleHash}-${nodeType}`;
+          let preview = PREVIEW_CACHE.get(cacheKey);
+          if (!preview) {
+            preview = createPreviewDiagram(appearanceProps, nodeType, diagram.document.definitions);
+            PREVIEW_CACHE.set(cacheKey, preview);
+          }
+
+          // Add the default style with 0 count at the beginning
+          group.styles.unshift({
+            styleHash,
+            elements: [],
+            count: 0,
+            previewDiagram: preview.diagram,
+            previewNode: preview.node,
+            stylesheetId: group.stylesheetId,
+            stylesheetName: group.stylesheetName,
+            isDirty: false,
+            sampleProps: appearanceProps,
+            nodeType
+          });
+        }
+      }
+    }
   }
 
   // Sort groups: named stylesheets first (alphabetically), then "No stylesheet"

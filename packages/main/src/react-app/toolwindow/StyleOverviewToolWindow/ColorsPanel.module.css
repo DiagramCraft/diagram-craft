@@ -1,56 +1,70 @@
-.colorList {
+.stylesheetName {
+  font-weight: 500;
+  font-size: 0.75rem;
+  color: var(--base-fg);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.colorTypeSection {
+  margin-bottom: 0.75rem;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.colorTypeTitle {
+  font-size: 0.625rem;
+  font-weight: 500;
+  color: var(--base-fg-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.375rem;
+  padding: 0 0.25rem;
+}
+
+.colorGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(35px, 1fr));
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+}
+
+.colorItem {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 0.25rem;
-  margin-top: -5px;
+  cursor: pointer;
+  position: relative;
 
-  .colorItem {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.375rem 10px;
-    margin-left: -5px;
-    margin-right: -5px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.1s;
+  &:hover .colorSwatch {
+    outline: 2px solid var(--accent-fg);
+    outline-offset: 2px;
   }
+}
 
-  .colorItem:hover {
-    background-color: var(--accent-bg);
-  }
+.colorSwatch {
+  width: 35px;
+  height: 35px;
+  border: 1px solid var(--cmp-fg-dimmed);
+  border-radius: 2px;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: outline 0.1s;
+}
 
-  .colorSwatch {
-    width: 16px;
-    height: 16px;
-    border: 1px solid var(--cmp-fg-dimmed);
-    border-radius: 2px;
-    flex-shrink: 0;
-    cursor: pointer;
-    transition: transform 0.1s;
-  }
+.colorCount {
+  font-size: 0.625rem;
+  color: var(--base-fg-dim);
+  text-align: center;
+}
 
-  .colorSwatch:hover {
-    transform: scale(1.1);
-  }
-
-  .usageBadges {
-    display: flex;
-    gap: 0.25rem;
-    flex-wrap: wrap;
-  }
-
-  .usageBadge {
-    padding: 0.125rem 0.375rem;
-    font-size: 0.625rem;
-    color: var(--cmp-fg);
-    border-radius: 3px;
-    cursor: pointer;
-    transition: background-color 0.1s;
-  }
-
-  .usageBadge:hover {
-    background-color: var(--panel-bg);
-  }
+.colorDirty {
+  color: var(--accent-fg);
+  font-weight: bold;
+  margin-left: 0.125rem;
 }
 

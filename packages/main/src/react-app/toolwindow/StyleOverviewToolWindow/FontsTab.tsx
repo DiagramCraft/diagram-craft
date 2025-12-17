@@ -3,25 +3,17 @@ import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
 import { useCallback, useState } from 'react';
 import { FontsPanel } from './FontsPanel';
-import { FontsSortMenu } from './FontsSortMenu';
+import { FontsMenu } from './FontsMenu';
 import { ToolWindow } from '../ToolWindow';
-import {
-  collectFonts,
-  type FontCombination,
-  type FontScope,
-  type FontSortOrder,
-  sortFonts
-} from './fontsPanelUtils';
+import { collectFonts, type FontCombination, type FontScope } from './fontsPanelUtils';
 
 export const FontsTab = () => {
   const diagram = useDiagram();
   const redraw = useRedraw();
 
   const [scope, setScope] = useState<FontScope>('current-diagram');
-  const [sortOrder, setSortOrder] = useState<FontSortOrder>('count-desc');
 
-  const fontMap = collectFonts(scope, diagram);
-  const fonts = sortFonts(Array.from(fontMap.values()), sortOrder);
+  const groups = collectFonts(scope, diagram);
 
   useEventListener(diagram, 'elementChange', redraw);
   useEventListener(diagram, 'elementAdd', redraw);
@@ -46,15 +38,10 @@ export const FontsTab = () => {
   return (
     <>
       <ToolWindow.TabActions>
-        <FontsSortMenu
-          scope={scope}
-          sortOrder={sortOrder}
-          onScopeChange={setScope}
-          onSortOrderChange={setSortOrder}
-        />
+        <FontsMenu scope={scope} onScopeChange={setScope} />
       </ToolWindow.TabActions>
       <ToolWindow.TabContent>
-        <FontsPanel fonts={fonts} onFontClick={handleFontClick} />
+        <FontsPanel groups={groups} onFontClick={handleFontClick} />
       </ToolWindow.TabContent>
     </>
   );
