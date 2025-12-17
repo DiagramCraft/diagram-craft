@@ -9,11 +9,7 @@ import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { ActionMenuItem } from './components/ActionMenuItem';
 import { ActionToggleMenuItem } from './components/ActionToggleMenuItem';
 
-const renderMenuItem = (
-  item: MenuEntry,
-  application: Application,
-  userState: UserState
-): JSX.Element => {
+const renderMenuItem = (item: MenuEntry, application: Application, userState: UserState) => {
   if (item.type === 'separator') {
     return <Menu.Separator key={item.label} />;
   }
@@ -77,7 +73,7 @@ export const MainMenu = () => {
     <MenuButton.Root>
       <MenuButton.Trigger
         element={
-          <button id={'main-menu'} type={'button'} className={'_menu-button'}>
+          <button type={'button'} className={'_menu-button'}>
             <TbMenu2 size={'24px'} />
           </button>
         }

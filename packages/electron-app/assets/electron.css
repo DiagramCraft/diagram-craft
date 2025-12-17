@@ -11,7 +11,7 @@
   }
 }
 
-#main-menu {
+#menu ._menu-button {
   > * {
     display: none !important;
   }
@@ -42,7 +42,7 @@
   }
 }
 
-body.fullscreen #main-menu {
+body.fullscreen #menu ._menu-button {
   display: none;
 }
 
