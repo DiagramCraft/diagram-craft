@@ -21,6 +21,7 @@ export type StyleCombination = {
   stylesheetName: string;
   isDirty: boolean;
   sampleProps: Partial<NodeProps>;
+  nodeType: string;
 };
 
 export type StylesheetGroup = {
@@ -77,13 +78,14 @@ export const createStyleHash = (props: Partial<NodeProps>): string => {
 
 export const createPreviewDiagram = (
   props: Partial<NodeProps>,
+  nodeType: string,
   definitions: Definitions
 ): { diagram: Diagram; node: DiagramNode } => {
   const { diagram, node } = createThumbnailDiagramForNode(
     (_d: Diagram, l: RegularLayer) => {
       return ElementFactory.node(
         newid(),
-        'rect',
+        nodeType,
         { x: 0, y: 0, w: 40, h: 40, r: 0 },
         l,
         props,
@@ -151,51 +153,63 @@ export const checkStyleDirty = (
 };
 
 export const collectStyles = (scope: StyleScope, diagram: Diagram): StylesheetGroup[] => {
-  const styleMap = new Map<string, StyleCombination>();
+  const styleMap = new Map<string, StyleCombination & { nodeTypes: Set<string> }>();
   const nodes =
     scope === 'current-diagram'
       ? getAllNodesFromDiagram(diagram)
       : getAllNodesFromDocument(diagram.document);
 
+  // First pass: collect all nodes by style and track their node types
   for (const node of nodes) {
-    // Extract appearance props
     const appearanceProps = extractAppearanceProps(node);
     const styleHash = createStyleHash(appearanceProps);
 
-    // Get stylesheet info
     const stylesheetId = node.metadata.style ?? null;
     const stylesheet = stylesheetId
       ? diagram.document.styles.getNodeStyle(stylesheetId)
       : undefined;
     const stylesheetName = stylesheet?.name ?? 'No stylesheet';
 
-    // Check if dirty
     const isDirty = stylesheet ? checkStyleDirty(node, stylesheet) : false;
 
     if (!styleMap.has(styleHash)) {
-      // Create preview diagram (cached)
-      let preview = PREVIEW_CACHE.get(styleHash);
-      if (!preview) {
-        preview = createPreviewDiagram(appearanceProps, diagram.document.definitions);
-        PREVIEW_CACHE.set(styleHash, preview);
-      }
-
       styleMap.set(styleHash, {
         styleHash,
         elements: [],
         count: 0,
-        previewDiagram: preview.diagram,
-        previewNode: preview.node,
+        previewDiagram: null as any,
+        previewNode: null as any,
         stylesheetId,
         stylesheetName,
         isDirty,
-        sampleProps: appearanceProps
+        sampleProps: appearanceProps,
+        nodeType: 'rect',
+        nodeTypes: new Set()
       });
     }
 
     const combo = styleMap.get(styleHash)!;
     combo.elements.push(node);
     combo.count++;
+    combo.nodeTypes.add(node.nodeType);
+  }
+
+  // Second pass: create preview diagrams using the appropriate node type
+  for (const combo of styleMap.values()) {
+    // Use the common node type if all nodes share the same type, otherwise use rect
+    const nodeType = combo.nodeTypes.size === 1 ? Array.from(combo.nodeTypes)[0]! : 'rect';
+    combo.nodeType = nodeType;
+
+    // Create preview diagram (cached by style hash + node type)
+    const cacheKey = `${combo.styleHash}-${nodeType}`;
+    let preview = PREVIEW_CACHE.get(cacheKey);
+    if (!preview) {
+      preview = createPreviewDiagram(combo.sampleProps, nodeType, diagram.document.definitions);
+      PREVIEW_CACHE.set(cacheKey, preview);
+    }
+
+    combo.previewDiagram = preview.diagram;
+    combo.previewNode = preview.node;
   }
 
   // Group by stylesheet
