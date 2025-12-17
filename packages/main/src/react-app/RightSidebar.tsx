@@ -12,11 +12,9 @@ import { ObjectDataToolWindow } from './toolwindow/ObjectDataToolWindow/ObjectDa
 import { CommentsToolWindow } from './toolwindow/CommentsToolWindow/CommentsToolWindow';
 import { ActionToggleButton } from './toolbar/ActionToggleButton';
 import { CommentsToolWindowBadge } from './toolwindow/CommentsToolWindow/CommentsToolWindowBadge';
-import { useApplication } from '../application';
-import { $t } from '@diagram-craft/utils/localize';
+import { ActionTooltip } from './components/ActionTooltip';
 
 export const RightSidebar = () => {
-  const app = useApplication();
   return (
     <SideBar
       side={'right'}
@@ -28,19 +26,19 @@ export const RightSidebar = () => {
         </SideBarBottomToolbar>
       }
     >
-      <SideBarPage icon={TbPalette} tooltip={$t(app.actions['SIDEBAR_STYLE']!.name)}>
+      <SideBarPage icon={TbPalette} tooltip={<ActionTooltip action={'SIDEBAR_STYLE'} />}>
         <ObjectToolWindow />
       </SideBarPage>
-      <SideBarPage icon={TbInfoCircle} tooltip={$t(app.actions['SIDEBAR_INFO']!.name)}>
+      <SideBarPage icon={TbInfoCircle} tooltip={<ActionTooltip action={'SIDEBAR_INFO'} />}>
         <ObjectInfoToolWindow />
       </SideBarPage>
-      <SideBarPage icon={TbDatabaseEdit} tooltip={$t(app.actions['SIDEBAR_DATA']!.name)}>
+      <SideBarPage icon={TbDatabaseEdit} tooltip={<ActionTooltip action={'SIDEBAR_DATA'} />}>
         <ObjectDataToolWindow />
       </SideBarPage>
       <SideBarPage
         icon={TbMessageCircle}
         extra={<CommentsToolWindowBadge />}
-        tooltip={$t(app.actions['SIDEBAR_COMMENT']!.name)}
+        tooltip={<ActionTooltip action={'SIDEBAR_COMMENT'} />}
       >
         <CommentsToolWindow />
       </SideBarPage>

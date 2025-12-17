@@ -1,4 +1,4 @@
-import { type ReactElement } from 'react';
+import React, { type ReactElement } from 'react';
 import styles from './Tooltip.module.css';
 import { Tooltip as BaseUITooltip } from '@base-ui-components/react/tooltip';
 
@@ -36,6 +36,6 @@ export const Tooltip = (props: Props) => {
 };
 
 type Props = {
-  message: string;
+  message: React.ReactNode;
   element: ReactElement;
 };

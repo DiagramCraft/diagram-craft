@@ -4,6 +4,8 @@ import { Toolbar } from '@diagram-craft/app-components/Toolbar';
 import { useApplication } from '../../application';
 import type { ActionMap } from '@diagram-craft/canvas/actions/action';
 import { Tooltip } from '@diagram-craft/app-components/Tooltip';
+import { ActionTooltip } from '../components/ActionTooltip';
+import type { ActionName } from '@diagram-craft/canvas/keyMap';
 
 export function ActionToolbarButton<
   K extends keyof ActionMap,
@@ -27,7 +29,7 @@ export function ActionToolbarButton<
 
   return (
     <Tooltip
-      message={props.action as string}
+      message={<ActionTooltip action={props.action as ActionName} />}
       element={
         <Toolbar.Button
           disabled={!enabled}
