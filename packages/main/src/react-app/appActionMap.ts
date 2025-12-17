@@ -101,5 +101,9 @@ export const defaultMacAppKeymap: KeyMap = {
 
   // Selection Operations
   'A-ArrowUp': 'SELECTION_SELECT_GROW',
-  'A-ArrowDown': 'SELECTION_SELECT_SHRINK'
+  'A-ArrowDown': 'SELECTION_SELECT_SHRINK',
+
+  // Preview and Center
+  'M-S-KeyP': 'PREVIEW',
+  'M-S-KeyM': 'MODEL_CENTER'
 };
