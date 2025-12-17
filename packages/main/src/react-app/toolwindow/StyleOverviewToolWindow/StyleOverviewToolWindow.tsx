@@ -1,6 +1,7 @@
 import { ToolWindow } from '../ToolWindow';
 import { FontsTab } from './FontsTab';
 import { ColorsTab } from './ColorsTab';
+import { StylesTab } from './StylesTab';
 
 export const StyleOverviewToolWindow = () => {
   return (
@@ -10,6 +11,9 @@ export const StyleOverviewToolWindow = () => {
       </ToolWindow.Tab>
       <ToolWindow.Tab title={'Colors'} id={'colors'}>
         <ColorsTab />
+      </ToolWindow.Tab>
+      <ToolWindow.Tab title={'Styles'} id={'styles'}>
+        <StylesTab />
       </ToolWindow.Tab>
     </ToolWindow.Root>
   );

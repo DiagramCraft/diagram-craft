@@ -1,0 +1,89 @@
+.stylesheetGroup {
+  margin-bottom: 0.5rem;
+}
+
+.stylesheetHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  user-select: none;
+
+  &:hover {
+    background-color: var(--accent-bg);
+  }
+}
+
+.stylesheetName {
+  font-weight: 500;
+  font-size: 0.75rem;
+  color: var(--base-fg);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.styleList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(35px, 1fr));
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+}
+
+.styleItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  cursor: pointer;
+  position: relative;
+
+  &:hover .stylePreview {
+    outline: 2px solid var(--accent-fg);
+    outline-offset: 2px;
+  }
+}
+
+.stylePreview {
+  width: 35px;
+  height: 35px;
+  border-radius: 2px;
+  overflow: hidden;
+  background-color: var(--canvas-bg);
+  transition: outline 0.1s;
+  cursor: pointer;
+
+  & .svg-node {
+    cursor: pointer !important;
+  }
+
+  & svg {
+    cursor: pointer !important;
+  }
+}
+
+.styleInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+}
+
+.styleCount {
+  font-size: 0.625rem;
+  color: var(--base-fg-dim);
+  text-align: center;
+}
+
+.styleDirty {
+  color: var(--accent-fg);
+  font-weight: bold;
+  margin-left: 0.125rem;
+}
+
+.emptyState {
+  padding: 0.625rem 1rem;
+  text-align: center;
+  color: var(--base-fg-dim);
+}
