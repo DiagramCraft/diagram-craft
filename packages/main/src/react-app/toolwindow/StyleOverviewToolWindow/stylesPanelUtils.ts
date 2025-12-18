@@ -11,6 +11,8 @@ import { nodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { newid } from '@diagram-craft/utils/id';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
+export type StyleFilterType = 'all' | 'fill' | 'stroke' | 'shadow' | 'effects' | 'text';
+
 export type StyleCombination = {
   styleHash: string;
   elements: DiagramElement[];
@@ -24,11 +26,32 @@ export type StyleCombination = {
   nodeType: string;
 };
 
+export type TextStyleCombination = {
+  fontFamily: string;
+  fontSize: number;
+  bold: boolean;
+  italic: boolean;
+  color: string | undefined;
+  elements: DiagramElement[];
+  count: number;
+  stylesheetId: string | null;
+  stylesheetName: string;
+  isDirty: boolean;
+};
+
 export type StylesheetGroup = {
   stylesheetId: string | null;
   stylesheetName: string;
   stylesheetType: 'node' | 'edge' | 'text' | null;
   styles: StyleCombination[];
+  totalElements: number;
+};
+
+export type TextStylesheetGroup = {
+  stylesheetId: string | null;
+  stylesheetName: string;
+  stylesheetType: 'node' | 'edge' | 'text' | null;
+  styles: TextStyleCombination[];
   totalElements: number;
 };
 
@@ -58,6 +81,33 @@ export const extractAppearanceProps = (element: DiagramElement): Partial<NodePro
       shadow: props.shadow,
       effects: props.effects
     };
+  }
+};
+
+export const extractFilteredProps = (
+  element: DiagramElement,
+  filterType: StyleFilterType
+): Partial<NodeProps> => {
+  switch (filterType) {
+    case 'fill':
+      if (isNode(element)) {
+        return { fill: element.renderProps.fill };
+      }
+      return {};
+    case 'stroke':
+      return { stroke: element.renderProps.stroke };
+    case 'shadow':
+      return { shadow: element.renderProps.shadow };
+    case 'effects':
+      return { effects: element.renderProps.effects };
+    case 'text':
+      if (isNode(element)) {
+        return { text: element.renderProps.text };
+      }
+      return {};
+    case 'all':
+    default:
+      return extractAppearanceProps(element);
   }
 };
 
@@ -155,7 +205,110 @@ export const checkStyleDirty = (
   );
 };
 
-export const collectStyles = (diagram: Diagram, selectedElements?: DiagramElement[]): StylesheetGroup[] => {
+export const collectTextStyles = (diagram: Diagram, selectedElements?: DiagramElement[]): TextStylesheetGroup[] => {
+  const textStyleMap = new Map<string, TextStyleCombination & { anyDirty: boolean }>();
+
+  // Use selected elements if provided, otherwise all elements from diagram
+  const elements = selectedElements && selectedElements.length > 0
+    ? selectedElements
+    : getAllElementsFromDiagram(diagram);
+
+  // Only process nodes (edges don't have text)
+  const nodes = elements.filter(isNode);
+
+  for (const node of nodes) {
+    const text = node.getText();
+    if (!text || text.trim() === '') {
+      continue;
+    }
+
+    const textProps = node.renderProps.text;
+    const fontFamily = textProps?.font ?? 'sans-serif';
+    const fontSize = textProps?.fontSize ?? 10;
+    const bold = textProps?.bold ?? false;
+    const italic = textProps?.italic ?? false;
+    const color = textProps?.color;
+
+    // Get text stylesheet info
+    const textStylesheetId = node.metadata.textStyle ?? null;
+    const textStylesheet = textStylesheetId
+      ? diagram.document.styles.getTextStyle(textStylesheetId)
+      : undefined;
+    const stylesheetName = textStylesheet?.name ?? 'No stylesheet';
+
+    // Check if this node's text properties differ from stylesheet
+    const isDirty = textStylesheet
+      ? isPropsDirty(
+          { text: textProps } as Record<string, unknown>,
+          { text: textStylesheet.props.text } as Record<string, unknown>
+        )
+      : false;
+
+    const key = `${fontFamily}|${fontSize}|${bold}|${italic}|${color}|${textStylesheetId}`;
+
+    if (!textStyleMap.has(key)) {
+      textStyleMap.set(key, {
+        fontFamily,
+        fontSize,
+        bold,
+        italic,
+        color,
+        elements: [],
+        count: 0,
+        stylesheetId: textStylesheetId,
+        stylesheetName,
+        isDirty: false,
+        anyDirty: false
+      });
+    }
+
+    const combo = textStyleMap.get(key)!;
+    combo.elements.push(node);
+    combo.count++;
+    if (isDirty) {
+      combo.anyDirty = true;
+    }
+  }
+
+  // Set isDirty flag based on anyDirty
+  for (const combo of textStyleMap.values()) {
+    combo.isDirty = combo.anyDirty;
+  }
+
+  // Group by stylesheet
+  const groupMap = new Map<string | null, TextStylesheetGroup>();
+  for (const textStyle of textStyleMap.values()) {
+    const key = textStyle.stylesheetId;
+    if (!groupMap.has(key)) {
+      const stylesheet = key ? diagram.document.styles.getTextStyle(key) : undefined;
+      groupMap.set(key, {
+        stylesheetId: key,
+        stylesheetName: textStyle.stylesheetName,
+        stylesheetType: stylesheet?.type ?? null,
+        styles: [],
+        totalElements: 0
+      });
+    }
+
+    const group = groupMap.get(key)!;
+    group.styles.push(textStyle);
+    group.totalElements += textStyle.count;
+  }
+
+  // Sort groups: named stylesheets first (alphabetically), then "No stylesheet"
+  const groups = Array.from(groupMap.values());
+  return groups.sort((a, b) => {
+    if (a.stylesheetId === null) return 1;
+    if (b.stylesheetId === null) return -1;
+    return a.stylesheetName.localeCompare(b.stylesheetName);
+  });
+};
+
+export const collectStyles = (
+  diagram: Diagram,
+  selectedElements?: DiagramElement[],
+  filterType: StyleFilterType = 'all'
+): StylesheetGroup[] => {
   const styleMap = new Map<string, StyleCombination & { nodeTypes: Set<string> }>();
 
   // Use selected elements if provided, otherwise all elements from diagram
@@ -165,7 +318,7 @@ export const collectStyles = (diagram: Diagram, selectedElements?: DiagramElemen
 
   // First pass: collect all elements by style and track their node types
   for (const element of elements) {
-    const appearanceProps = extractAppearanceProps(element);
+    const appearanceProps = extractFilteredProps(element, filterType);
     const styleHash = createStyleHash(appearanceProps);
 
     const stylesheetId = element.metadata.style ?? null;

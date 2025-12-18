@@ -1,39 +1,55 @@
 import styles from './StylesPanel.module.css';
 import { ToolWindowPanel } from '../ToolWindowPanel';
-import type { StyleCombination, StylesheetGroup } from './stylesPanelUtils';
+import type { StyleCombination, StylesheetGroup, TextStyleCombination, TextStylesheetGroup, StyleFilterType } from './stylesPanelUtils';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { PickerCanvas } from '../../PickerCanvas';
 import { PickerConfig } from '../PickerToolWindow/pickerConfig';
 import { useMemo } from 'react';
+import { TbLetterCase } from 'react-icons/tb';
+import { Select } from '@diagram-craft/app-components/Select';
 
 type StylesPanelProps = {
   groups: StylesheetGroup[];
   onStyleClick: (combo: StyleCombination) => void;
+  filterType: StyleFilterType;
+  onFilterTypeChange: (filterType: StyleFilterType) => void;
 };
 
-export const StylesPanel = ({ groups, onStyleClick }: StylesPanelProps) => {
+type TextStylesPanelProps = {
+  groups: TextStylesheetGroup[];
+  onTextStyleClick: (combo: TextStyleCombination) => void;
+  filterType: StyleFilterType;
+  onFilterTypeChange: (filterType: StyleFilterType) => void;
+};
+
+export const StylesPanel = ({ groups, onStyleClick, filterType, onFilterTypeChange }: StylesPanelProps) => {
   // Keep all accordions open by default
   const openItems = useMemo(
     () => groups.map(g => g.stylesheetId ?? 'no-stylesheet'),
     [groups]
   );
 
-  if (groups.length === 0) {
-    return (
-      <ToolWindowPanel mode={'headless'} id={'styles-list'} title={'Styles'}>
+  return (
+    <ToolWindowPanel mode={'headless-no-padding'} id={'styles-list'} title={'Styles'}>
+      <div style={{ padding: '0.5rem 1rem', borderBottom: '1px solid var(--cmp-border)' }}>
+        <Select.Root value={filterType} onChange={(value) => onFilterTypeChange(value as StyleFilterType)}>
+          <Select.Item value="all">All Properties</Select.Item>
+          <Select.Item value="fill">Fill</Select.Item>
+          <Select.Item value="stroke">Stroke</Select.Item>
+          <Select.Item value="shadow">Shadow</Select.Item>
+          <Select.Item value="effects">Effects</Select.Item>
+          <Select.Item value="text">Text</Select.Item>
+        </Select.Root>
+      </div>
+      {groups.length === 0 ? (
         <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--base-fg-dim)' }}>
           No styles found
         </div>
-      </ToolWindowPanel>
-    );
-  }
-
-  return (
-    <ToolWindowPanel mode={'headless-no-padding'} id={'styles-list'} title={'Styles'}>
-      <Accordion.Root
-        type={'multiple'}
-        value={openItems}
-      >
+      ) : (
+        <Accordion.Root
+          type={'multiple'}
+          value={openItems}
+        >
         {groups.map(group => {
           const groupId = group.stylesheetId ?? 'no-stylesheet';
 
@@ -79,7 +95,101 @@ export const StylesPanel = ({ groups, onStyleClick }: StylesPanelProps) => {
             </Accordion.Item>
           );
         })}
-      </Accordion.Root>
+        </Accordion.Root>
+      )}
+    </ToolWindowPanel>
+  );
+};
+
+export const TextStylesPanel = ({ groups, onTextStyleClick, filterType, onFilterTypeChange }: TextStylesPanelProps) => {
+  // Keep all accordions open by default
+  const openItems = useMemo(
+    () => groups.map(g => g.stylesheetId ?? 'no-stylesheet'),
+    [groups]
+  );
+
+  return (
+    <ToolWindowPanel mode={'headless-no-padding'} id={'text-styles-list'} title={'Text Styles'}>
+      <div style={{ padding: '0.5rem 1rem', borderBottom: '1px solid var(--cmp-border)' }}>
+        <Select.Root value={filterType} onChange={(value) => onFilterTypeChange(value as StyleFilterType)}>
+          <Select.Item value="all">All Properties</Select.Item>
+          <Select.Item value="fill">Fill</Select.Item>
+          <Select.Item value="stroke">Stroke</Select.Item>
+          <Select.Item value="shadow">Shadow</Select.Item>
+          <Select.Item value="effects">Effects</Select.Item>
+          <Select.Item value="text">Text</Select.Item>
+        </Select.Root>
+      </div>
+      {groups.length === 0 ? (
+        <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--base-fg-dim)' }}>
+          No text styles found
+        </div>
+      ) : (
+        <Accordion.Root
+          type={'multiple'}
+          value={openItems}
+        >
+        {groups.map(group => {
+          const groupId = group.stylesheetId ?? 'no-stylesheet';
+
+          return (
+            <Accordion.Item key={groupId} value={groupId}>
+              <Accordion.ItemHeader>
+                <div className={styles.stylesheetName}>
+                  <span>{group.stylesheetName}</span>
+                  {group.stylesheetType && (
+                    <span style={{ fontSize: '0.625rem', opacity: 0.7 }}>
+                      ({group.stylesheetType})
+                    </span>
+                  )}
+                </div>
+              </Accordion.ItemHeader>
+              <Accordion.ItemContent>
+                <div className={styles.fontList}>
+                  {group.styles.map((textStyle, idx) => {
+                    const key = `${groupId}-${idx}`;
+                    const fontStyle = {
+                      fontFamily: textStyle.fontFamily,
+                      fontSize: `${Math.min(textStyle.fontSize, 14)}px`,
+                      fontWeight: textStyle.bold ? 'bold' : 'normal',
+                      fontStyle: textStyle.italic ? 'italic' : 'normal'
+                    };
+
+                    const metaParts = [
+                      `${textStyle.fontSize}px`,
+                      textStyle.bold && 'Bold',
+                      textStyle.italic && 'Italic',
+                      textStyle.color
+                    ].filter(Boolean);
+
+                    return (
+                      <div
+                        key={key}
+                        className={styles.fontItem}
+                        onClick={() => onTextStyleClick(textStyle)}
+                      >
+                        <div className={styles.fontIcon}>
+                          <TbLetterCase size={18} />
+                        </div>
+                        <div className={styles.fontDetails}>
+                          <div className={styles.fontPreview} style={fontStyle}>
+                            {textStyle.fontFamily}
+                          </div>
+                          <div className={styles.fontCount}>
+                            {metaParts.join(', ')} · {textStyle.count} element{textStyle.count !== 1 ? 's' : ''}
+                            {textStyle.isDirty && <span className={styles.fontDirty}>*</span>}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </Accordion.ItemContent>
+            </Accordion.Item>
+          );
+        })}
+        </Accordion.Root>
+      )}
     </ToolWindowPanel>
   );
 };
