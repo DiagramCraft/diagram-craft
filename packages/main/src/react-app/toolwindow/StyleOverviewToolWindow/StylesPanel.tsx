@@ -4,6 +4,7 @@ import type { StyleCombination, StylesheetGroup } from './stylesPanelUtils';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { PickerCanvas } from '../../PickerCanvas';
 import { PickerConfig } from '../PickerToolWindow/pickerConfig';
+import { useMemo } from 'react';
 
 type StylesPanelProps = {
   groups: StylesheetGroup[];
@@ -11,6 +12,12 @@ type StylesPanelProps = {
 };
 
 export const StylesPanel = ({ groups, onStyleClick }: StylesPanelProps) => {
+  // Keep all accordions open by default
+  const openItems = useMemo(
+    () => groups.map(g => g.stylesheetId ?? 'no-stylesheet'),
+    [groups]
+  );
+
   if (groups.length === 0) {
     return (
       <ToolWindowPanel mode={'headless'} id={'styles-list'} title={'Styles'}>
@@ -25,7 +32,7 @@ export const StylesPanel = ({ groups, onStyleClick }: StylesPanelProps) => {
     <ToolWindowPanel mode={'headless-no-padding'} id={'styles-list'} title={'Styles'}>
       <Accordion.Root
         type={'multiple'}
-        defaultValue={groups.map(g => g.stylesheetId ?? 'no-stylesheet')}
+        value={openItems}
       >
         {groups.map(group => {
           const groupId = group.stylesheetId ?? 'no-stylesheet';

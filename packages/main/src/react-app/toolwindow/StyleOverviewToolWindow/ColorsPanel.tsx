@@ -3,6 +3,7 @@ import { ToolWindowPanel } from '../ToolWindowPanel';
 import type { ColorInfo, StylesheetGroup } from './colorsPanelUtils';
 import { Tooltip } from '@diagram-craft/app-components/Tooltip';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
+import { useMemo } from 'react';
 
 type ColorsPanelProps = {
   groups: StylesheetGroup[];
@@ -48,6 +49,12 @@ const ColorTypeSection = ({
 };
 
 export const ColorsPanel = ({ groups, onColorClick }: ColorsPanelProps) => {
+  // Keep all accordions open by default
+  const openItems = useMemo(
+    () => groups.map(g => g.stylesheetId ?? 'no-stylesheet'),
+    [groups]
+  );
+
   if (groups.length === 0) {
     return (
       <ToolWindowPanel mode={'headless'} id={'colors-list'} title={'Colors'}>
@@ -62,7 +69,7 @@ export const ColorsPanel = ({ groups, onColorClick }: ColorsPanelProps) => {
     <ToolWindowPanel mode={'headless-no-padding'} id={'colors-list'} title={'Colors'}>
       <Accordion.Root
         type={'multiple'}
-        defaultValue={groups.map(g => g.stylesheetId ?? 'no-stylesheet')}
+        value={openItems}
       >
         {groups.map(group => {
           const groupId = group.stylesheetId ?? 'no-stylesheet';

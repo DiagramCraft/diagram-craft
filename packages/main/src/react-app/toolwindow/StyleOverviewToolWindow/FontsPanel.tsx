@@ -3,6 +3,7 @@ import { ToolWindowPanel } from '../ToolWindowPanel';
 import type { FontCombination, StylesheetGroup } from './fontsPanelUtils';
 import { TbLetterCase } from 'react-icons/tb';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
+import { useMemo } from 'react';
 
 type FontsPanelProps = {
   groups: StylesheetGroup[];
@@ -10,6 +11,12 @@ type FontsPanelProps = {
 };
 
 export const FontsPanel = ({ groups, onFontClick }: FontsPanelProps) => {
+  // Keep all accordions open by default
+  const openItems = useMemo(
+    () => groups.map(g => g.stylesheetId ?? 'no-stylesheet'),
+    [groups]
+  );
+
   if (groups.length === 0) {
     return (
       <ToolWindowPanel mode={'headless'} id={'fonts-list'} title={'Fonts'}>
@@ -24,7 +31,7 @@ export const FontsPanel = ({ groups, onFontClick }: FontsPanelProps) => {
     <ToolWindowPanel mode={'headless-no-padding'} id={'fonts-list'} title={'Fonts'}>
       <Accordion.Root
         type={'multiple'}
-        defaultValue={groups.map(g => g.stylesheetId ?? 'no-stylesheet')}
+        value={openItems}
       >
         {groups.map(group => {
           const groupId = group.stylesheetId ?? 'no-stylesheet';
