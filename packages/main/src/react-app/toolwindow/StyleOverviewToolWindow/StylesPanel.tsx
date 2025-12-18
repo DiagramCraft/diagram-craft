@@ -2,10 +2,10 @@ import styles from './StylesPanel.module.css';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import type {
   StyleCombination,
+  StyleFilterType,
   StylesheetGroup,
   TextStyleCombination,
-  TextStylesheetGroup,
-  StyleFilterType
+  TextStylesheetGroup
 } from './stylesPanelUtils';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { PickerCanvas } from '../../PickerCanvas';
@@ -78,11 +78,19 @@ export const StylesPanel = ({
                   <div className={styles.styleList}>
                     {group.styles.map((style, idx) => {
                       // Use cached differences
-                      const tooltipContent = style.differences.length > 0 ? (
-                        <div style={{ whiteSpace: 'pre-line', fontFamily: 'monospace', fontSize: '0.75rem' }}>
-                          {style.differences.join('\n')}
-                        </div>
-                      ) : null;
+                      const tooltipContent =
+                        style.differences.length > 0 ? (
+                          <div
+                            key={`${groupId}-${idx}`}
+                            style={{
+                              whiteSpace: 'pre-line',
+                              fontFamily: 'monospace',
+                              fontSize: '0.75rem'
+                            }}
+                          >
+                            {style.differences.join('\n')}
+                          </div>
+                        ) : null;
 
                       const styleItem = (
                         <div
@@ -109,7 +117,11 @@ export const StylesPanel = ({
                       );
 
                       return tooltipContent ? (
-                        <Tooltip key={`${groupId}-${idx}`} message={tooltipContent} element={styleItem} />
+                        <Tooltip
+                          key={`${groupId}-${idx}`}
+                          message={tooltipContent}
+                          element={styleItem}
+                        />
                       ) : (
                         styleItem
                       );
@@ -175,25 +187,33 @@ export const TextStylesPanel = ({
                     {group.styles.map((textStyle, idx) => {
                       const key = `${groupId}-${idx}`;
                       const fontStyle = {
-                        fontFamily: textStyle.fontFamily,
-                        fontSize: `${Math.min(textStyle.fontSize, 14)}px`,
-                        fontWeight: textStyle.bold ? 'bold' : 'normal',
-                        fontStyle: textStyle.italic ? 'italic' : 'normal'
+                        fontFamily: textStyle.props.text.font,
+                        fontSize: `${Math.min(textStyle.props.text.fontSize, 14)}px`,
+                        fontWeight: textStyle.props.text.bold ? 'bold' : 'normal',
+                        fontStyle: textStyle.props.text.italic ? 'italic' : 'normal'
                       };
 
                       const metaParts = [
-                        `${textStyle.fontSize}px`,
-                        textStyle.bold && 'Bold',
-                        textStyle.italic && 'Italic',
-                        textStyle.color
+                        `${textStyle.props.text.fontSize}px`,
+                        textStyle.props.text.bold && 'Bold',
+                        textStyle.props.text.italic && 'Italic',
+                        textStyle.props.text.color
                       ].filter(Boolean);
 
                       // Use cached differences
-                      const tooltipContent = textStyle.differences.length > 0 ? (
-                        <div style={{ whiteSpace: 'pre-line', fontFamily: 'monospace', fontSize: '0.75rem' }}>
-                          {textStyle.differences.join('\n')}
-                        </div>
-                      ) : null;
+                      const tooltipContent =
+                        textStyle.differences.length > 0 ? (
+                          <div
+                            key={key}
+                            style={{
+                              whiteSpace: 'pre-line',
+                              fontFamily: 'monospace',
+                              fontSize: '0.75rem'
+                            }}
+                          >
+                            {textStyle.differences.join('\n')}
+                          </div>
+                        ) : null;
 
                       const fontItem = (
                         <div
@@ -206,14 +226,16 @@ export const TextStylesPanel = ({
                           </div>
                           <div className={styles.fontDetails}>
                             <div className={styles.fontPreview} style={fontStyle}>
-                              {textStyle.fontFamily}
+                              {textStyle.props.text.font}
                             </div>
                             <div className={styles.fontCount}>
                               {metaParts.join(', ')}
                               <div>
-                                {textStyle.count} element
-                                {textStyle.count !== 1 ? 's' : ''}
-                                {textStyle.isDirty && <span className={styles.fontDirty}>*</span>}
+                                {textStyle.elements.length} element
+                                {textStyle.elements.length !== 1 ? 's' : ''}
+                                {textStyle.differences.length > 0 && (
+                                  <span className={styles.fontDirty}>*</span>
+                                )}
                               </div>
                             </div>
                           </div>

@@ -1,5 +1,5 @@
 import { Diagram } from '@diagram-craft/model/diagram';
-import type { DiagramNode } from '@diagram-craft/model/diagramNode';
+import type { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import type { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import type { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { isNode } from '@diagram-craft/model/diagramElement';
@@ -11,11 +11,12 @@ import {
 } from '@diagram-craft/canvas-app/diagramThumbnail';
 import { Stylesheet } from '@diagram-craft/model/diagramStyles';
 import { type EdgeProps, type ElementProps, NodeProps } from '@diagram-craft/model/diagramProps';
-import { nodeDefaults, edgeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { edgeDefaults, nodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { newid } from '@diagram-craft/utils/id';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { deepMerge } from '@diagram-craft/utils/object';
+import { isEmptyString } from '@diagram-craft/utils/strings';
 
 export type StyleFilterType = 'all' | 'fill' | 'stroke' | 'shadow' | 'effects' | 'text';
 
@@ -34,17 +35,19 @@ export type StyleCombination = {
 };
 
 export type TextStyleCombination = {
-  fontFamily: string;
-  fontSize: number;
-  bold: boolean;
-  italic: boolean;
-  color: string | undefined;
   elements: DiagramElement[];
-  count: number;
-  stylesheetId: string | null;
+  stylesheetId: string | undefined;
   stylesheetName: string;
-  isDirty: boolean;
-  differences: string[]; // Cached differences from stylesheet
+  differences: string[];
+  props: NodePropsForRendering;
+};
+
+export type TextStylesheetGroup = {
+  stylesheetId: string | undefined;
+  stylesheetName: string;
+  stylesheetType: 'node' | 'edge' | 'text' | null;
+  styles: TextStyleCombination[];
+  totalElements: number;
 };
 
 export type StylesheetGroup = {
@@ -55,39 +58,9 @@ export type StylesheetGroup = {
   totalElements: number;
 };
 
-export type TextStylesheetGroup = {
-  stylesheetId: string | null;
-  stylesheetName: string;
-  stylesheetType: 'node' | 'edge' | 'text' | null;
-  styles: TextStyleCombination[];
-  totalElements: number;
-};
-
 const PREVIEW_CACHE = new Map<string, { diagram: Diagram; element: DiagramNode | DiagramEdge }>();
 
-export const extractAppearanceProps = (element: DiagramElement): Partial<NodeProps | EdgeProps> => {
-  if (isNode(element)) {
-    const props = element.storedProps;
-    return {
-      fill: props.fill,
-      stroke: props.stroke,
-      shadow: props.shadow,
-      effects: props.effects,
-      text: props.text,
-      geometry: props.geometry
-    };
-  } else {
-    const props = element.storedProps as Partial<EdgeProps>;
-    return {
-      stroke: props.stroke,
-      shadow: props.shadow,
-      effects: props.effects,
-      arrow: props.arrow
-    };
-  }
-};
-
-export const extractFilteredProps = (
+const extractPropsToConsider = (
   el: DiagramElement,
   filter: StyleFilterType
 ): Partial<NodeProps | EdgeProps> => {
@@ -119,7 +92,25 @@ export const extractFilteredProps = (
       }
 
     default:
-      return extractAppearanceProps(el);
+      if (isNode(el)) {
+        const props = el.storedProps;
+        return {
+          fill: props.fill,
+          stroke: props.stroke,
+          shadow: props.shadow,
+          effects: props.effects,
+          text: props.text,
+          geometry: props.geometry
+        };
+      } else {
+        const props = el.storedProps as Partial<EdgeProps>;
+        return {
+          stroke: props.stroke,
+          shadow: props.shadow,
+          effects: props.effects,
+          arrow: props.arrow
+        };
+      }
   }
 };
 
@@ -231,90 +222,43 @@ export const checkStyleDirty = (
 
 export const collectTextStyles = (
   diagram: Diagram,
-  selectedElements?: DiagramElement[]
+  elements: DiagramElement[]
 ): TextStylesheetGroup[] => {
-  const textStyleMap = new Map<string, TextStyleCombination & { anyDirty: boolean }>();
+  const textStyleMap = new Map<string, TextStyleCombination>();
 
-  // Use selected elements if provided, otherwise all elements from diagram
-  const elements =
-    selectedElements && selectedElements.length > 0 ? selectedElements : [...diagram.allElements()];
-
-  // Only process nodes (edges don't have text)
   const nodes = elements.filter(isNode);
-
   for (const node of nodes) {
     const text = node.getText();
-    if (!text || text.trim() === '') {
-      continue;
-    }
+    if (isEmptyString(text)) continue;
 
-    const textProps = node.renderProps.text;
-    const fontFamily = textProps?.font ?? 'sans-serif';
-    const fontSize = textProps?.fontSize ?? 10;
-    const bold = textProps?.bold ?? false;
-    const italic = textProps?.italic ?? false;
-    const color = textProps?.color;
+    const props = extractPropsToConsider(node, 'text');
 
     // Get text stylesheet info
-    const textStylesheetId = node.metadata.textStyle ?? null;
-    const textStylesheet = textStylesheetId
-      ? diagram.document.styles.getTextStyle(textStylesheetId)
+    const stylesheetId = node.metadata.textStyle ?? undefined;
+    const textStylesheet = stylesheetId
+      ? diagram.document.styles.getTextStyle(stylesheetId)
       : undefined;
     const stylesheetName = textStylesheet?.name ?? 'No stylesheet';
 
-    // Check if this node's text properties differ from stylesheet
-    const isDirty = textStylesheet ? checkStyleDirty(node, textStylesheet) : false;
+    const differences = computeStyleDifferences(props, textStylesheet?.props, isNode(node));
 
-    // Compute differences for dirty styles - this will be used as the hash
-    const differences = isDirty
-      ? computeTextStyleDifferences(
-          fontFamily,
-          fontSize,
-          bold,
-          italic,
-          color,
-          textStylesheet?.props.text
-        )
-      : [];
-
-    // Use differences as the hash if dirty, otherwise use the text properties
-    const baseKey = differences.length > 0
-      ? differences.join('|')
-      : `${fontFamily}|${fontSize}|${bold}|${italic}|${color}`;
-    const key = `${baseKey}|${textStylesheetId}`;
+    const key = `${differences.join('|')}|${stylesheetId}`;
 
     if (!textStyleMap.has(key)) {
       textStyleMap.set(key, {
-        fontFamily,
-        fontSize,
-        bold,
-        italic,
-        color,
-        elements: [],
-        count: 0,
-        stylesheetId: textStylesheetId,
+        stylesheetId,
         stylesheetName,
-        isDirty: false,
-        anyDirty: false,
-        differences
+        differences,
+        props: deepMerge({}, node.renderProps) as NodePropsForRendering,
+        elements: []
       });
     }
 
-    const combo = textStyleMap.get(key)!;
-    combo.elements.push(node);
-    combo.count++;
-    if (isDirty) {
-      combo.anyDirty = true;
-    }
-  }
-
-  // Set isDirty flag based on anyDirty
-  for (const combo of textStyleMap.values()) {
-    combo.isDirty = combo.anyDirty;
+    textStyleMap.get(key)!.elements.push(node);
   }
 
   // Group by stylesheet
-  const groupMap = new Map<string | null, TextStylesheetGroup>();
+  const groupMap = new Map<string | undefined, TextStylesheetGroup>();
   for (const textStyle of textStyleMap.values()) {
     const key = textStyle.stylesheetId;
     if (!groupMap.has(key)) {
@@ -323,74 +267,26 @@ export const collectTextStyles = (
         stylesheetId: key,
         stylesheetName: textStyle.stylesheetName,
         stylesheetType: stylesheet?.type ?? null,
-        styles: [],
+        styles: [
+          {
+            elements: [],
+            stylesheetId: key,
+            stylesheetName: textStyle.stylesheetName,
+            differences: [],
+            props: textStyle.props
+          }
+        ],
         totalElements: 0
       });
     }
 
     const group = groupMap.get(key)!;
-    group.styles.push(textStyle);
-    group.totalElements += textStyle.count;
-  }
-
-  // Add default stylesheet text styles if not already present, or merge with existing
-  for (const group of groupMap.values()) {
-    if (group.stylesheetId) {
-      const stylesheet = diagram.document.styles.getTextStyle(group.stylesheetId);
-      if (stylesheet?.props) {
-        const props = stylesheet.props as {
-          text?: {
-            font?: string;
-            fontSize?: number;
-            bold?: boolean;
-            italic?: boolean;
-            color?: string;
-          };
-        };
-        const textProps = props.text;
-        if (!textProps) continue;
-
-        const defaultFont = textProps.font ?? 'sans-serif';
-        const defaultSize = textProps.fontSize ?? 10;
-        const defaultBold = textProps.bold ?? false;
-        const defaultItalic = textProps.italic ?? false;
-        const defaultColor = textProps.color;
-
-        // Check if this text style already exists
-        const existingStyle = group.styles.find(
-          s =>
-            s.fontFamily === defaultFont &&
-            s.fontSize === defaultSize &&
-            s.bold === defaultBold &&
-            s.italic === defaultItalic &&
-            s.color === defaultColor
-        );
-
-        if (existingStyle) {
-          // Move existing style to the beginning if it's not dirty (clean stylesheet usage)
-          if (!existingStyle.isDirty) {
-            const index = group.styles.indexOf(existingStyle);
-            group.styles.splice(index, 1);
-            group.styles.unshift(existingStyle);
-          }
-        } else {
-          // Add the default text style with 0 count at the beginning
-          group.styles.unshift({
-            fontFamily: defaultFont,
-            fontSize: defaultSize,
-            bold: defaultBold,
-            italic: defaultItalic,
-            color: defaultColor,
-            elements: [],
-            count: 0,
-            stylesheetId: group.stylesheetId,
-            stylesheetName: group.stylesheetName,
-            isDirty: false,
-            differences: []
-          });
-        }
-      }
+    if (textStyle.differences.length === 0) {
+      group.styles[0] = textStyle;
+    } else {
+      group.styles.push(textStyle);
     }
+    group.totalElements += textStyle.elements.length;
   }
 
   // Sort groups: named stylesheets first (alphabetically), then "No stylesheet"
@@ -460,7 +356,9 @@ export const collectStyles = (
       }
     } else {
       // Use element's actual rendered props
-      appearanceProps = extractFilteredProps(element, filterType);
+      appearanceProps = extractPropsToConsider(element, filterType) as Partial<
+        NodeProps | EdgeProps
+      >;
     }
 
     // Compute differences for dirty styles - this will be used as the hash
@@ -476,7 +374,8 @@ export const collectStyles = (
     // Include stylesheet ID and type in the hash to separate node and edge styles
     // Use differences as the hash if dirty, otherwise use the appearance props
     const stylesheetType = stylesheet?.type ?? null;
-    const baseHash = differences.length > 0 ? differences.join('|') : createStyleHash(appearanceProps);
+    const baseHash =
+      differences.length > 0 ? differences.join('|') : createStyleHash(appearanceProps);
     const styleHash = `${baseHash}|${stylesheetId}|${stylesheetType}`;
 
     if (!styleMap.has(styleHash)) {
@@ -560,7 +459,6 @@ export const collectStyles = (
     group.totalElements += style.count;
   }
 
-
   // Sort groups: named stylesheets first (alphabetically), then "No stylesheet"
   const groups = Array.from(groupMap.values());
   return groups.sort((a, b) => {
@@ -603,11 +501,7 @@ export const computeStyleDifferences = (
   };
 
   // Helper to deep compare and find differences
-  const compareProps = (
-    stylesheetValue: unknown,
-    elementValue: unknown,
-    path: string
-  ): void => {
+  const compareProps = (stylesheetValue: unknown, elementValue: unknown, path: string): void => {
     // If element doesn't have this prop, skip
     if (elementValue === undefined) {
       return;

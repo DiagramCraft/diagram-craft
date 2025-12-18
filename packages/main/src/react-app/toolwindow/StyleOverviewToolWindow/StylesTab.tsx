@@ -43,10 +43,9 @@ export const StylesTab = () => {
     }
 
     if (filterType === 'text') {
-      const textGroups = collectTextStyles(
-        diagram,
-        selectedElements.length > 0 ? [...selectedElements] : undefined
-      );
+      const textGroups = collectTextStyles(diagram, [
+        ...(selectedElements.length > 0 ? selectedElements : diagram.allElements())
+      ]);
       setCachedTextGroups(textGroups);
     }
   }, [diagram, filterType]);
