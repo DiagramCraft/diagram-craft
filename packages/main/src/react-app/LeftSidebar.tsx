@@ -3,7 +3,6 @@ import {
   TbCodeAsterisk,
   TbDatabaseCog,
   TbHistory,
-  TbListDetails,
   TbPentagonPlus,
   TbPresentation,
   TbSearch,
@@ -18,7 +17,6 @@ import { StoryToolWindow } from './toolwindow/StoryToolWindow/StoryToolWindow';
 import { AIToolWindow } from './toolwindow/AIToolWindow/AIToolWindow';
 import { ActionToolbarButton } from './toolbar/ActionToolbarButton';
 import { TextToolWindow } from './toolwindow/TextToolWindow/TextToolWindow';
-import { StyleOverviewToolWindow } from './toolwindow/StyleOverviewToolWindow/StyleOverviewToolWindow';
 import { AppConfig } from '../appConfig';
 import { ActionTooltip } from './components/ActionTooltip';
 
@@ -63,12 +61,6 @@ export const LeftSidebar = () => {
           <AIToolWindow />
         </SideBarPage>
       )}
-      <SideBarPage
-        icon={TbListDetails}
-        tooltip={<ActionTooltip action={'SIDEBAR_STYLE_OVERVIEW'} />}
-      >
-        <StyleOverviewToolWindow />
-      </SideBarPage>
     </SideBar>
   );
 };

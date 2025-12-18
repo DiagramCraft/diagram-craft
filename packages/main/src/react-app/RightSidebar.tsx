@@ -3,6 +3,7 @@ import {
   TbDatabaseEdit,
   TbHelpSquare,
   TbInfoCircle,
+  TbListDetails,
   TbMessageCircle,
   TbPalette
 } from 'react-icons/tb';
@@ -10,6 +11,7 @@ import { ObjectToolWindow } from './toolwindow/ObjectToolWindow/ObjectToolWindow
 import { ObjectInfoToolWindow } from './toolwindow/ObjectInfoToolWindow/ObjectInfoToolWindow';
 import { ObjectDataToolWindow } from './toolwindow/ObjectDataToolWindow/ObjectDataToolWindow';
 import { CommentsToolWindow } from './toolwindow/CommentsToolWindow/CommentsToolWindow';
+import { StyleOverviewToolWindow } from './toolwindow/StyleOverviewToolWindow/StyleOverviewToolWindow';
 import { ActionToggleButton } from './toolbar/ActionToggleButton';
 import { CommentsToolWindowBadge } from './toolwindow/CommentsToolWindow/CommentsToolWindowBadge';
 import { ActionTooltip } from './components/ActionTooltip';
@@ -41,6 +43,12 @@ export const RightSidebar = () => {
         tooltip={<ActionTooltip action={'SIDEBAR_COMMENT'} />}
       >
         <CommentsToolWindow />
+      </SideBarPage>
+      <SideBarPage
+        icon={TbListDetails}
+        tooltip={<ActionTooltip action={'SIDEBAR_STYLE_OVERVIEW'} />}
+      >
+        <StyleOverviewToolWindow />
       </SideBarPage>
     </SideBar>
   );

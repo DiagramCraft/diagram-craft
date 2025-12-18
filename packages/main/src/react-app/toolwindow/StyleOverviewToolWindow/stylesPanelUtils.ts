@@ -3,7 +3,6 @@ import type { DiagramNode } from '@diagram-craft/model/diagramNode';
 import type { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
-import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { Definitions } from '@diagram-craft/model/elementDefinitionRegistry';
 import { createThumbnailDiagramForNode } from '@diagram-craft/canvas-app/diagramThumbnail';
 import { Stylesheet } from '@diagram-craft/model/diagramStyles';
@@ -33,17 +32,12 @@ export type StylesheetGroup = {
   totalElements: number;
 };
 
-export type StyleScope = 'current-diagram' | 'entire-document';
-
 const PREVIEW_CACHE = new Map<string, { diagram: Diagram; node: DiagramNode }>();
 
 const getAllElementsFromDiagram = (diagram: Diagram): DiagramElement[] =>
   diagram.layers.all
     .filter((layer): layer is RegularLayer => layer.type === 'regular')
     .flatMap(layer => Array.from(layer.elements));
-
-const getAllElementsFromDocument = (document: DiagramDocument): DiagramElement[] =>
-  document.diagrams.flatMap(d => getAllElementsFromDiagram(d));
 
 export const extractAppearanceProps = (element: DiagramElement): Partial<NodeProps> => {
   if (isNode(element)) {
@@ -161,12 +155,13 @@ export const checkStyleDirty = (
   );
 };
 
-export const collectStyles = (scope: StyleScope, diagram: Diagram): StylesheetGroup[] => {
+export const collectStyles = (diagram: Diagram, selectedElements?: DiagramElement[]): StylesheetGroup[] => {
   const styleMap = new Map<string, StyleCombination & { nodeTypes: Set<string> }>();
-  const elements =
-    scope === 'current-diagram'
-      ? getAllElementsFromDiagram(diagram)
-      : getAllElementsFromDocument(diagram.document);
+
+  // Use selected elements if provided, otherwise all elements from diagram
+  const elements = selectedElements && selectedElements.length > 0
+    ? selectedElements
+    : getAllElementsFromDiagram(diagram);
 
   // First pass: collect all elements by style and track their node types
   for (const element of elements) {

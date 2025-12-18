@@ -2,7 +2,6 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
-import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 
 export type ColorInfo = {
   color: string;
@@ -25,8 +24,6 @@ export type StylesheetGroup = {
   colors: ColorsByType;
   totalElements: number;
 };
-
-export type ColorScope = 'current-diagram' | 'entire-document';
 
 const resolveCSSVariable = (color: string | undefined): string => {
   if (!color || !color.startsWith('var(')) {
@@ -52,9 +49,6 @@ const getAllElementsFromDiagram = (diagram: Diagram): DiagramElement[] =>
   diagram.layers.all
     .filter((layer): layer is RegularLayer => layer.type === 'regular')
     .flatMap(layer => Array.from(layer.elements));
-
-const getAllElementsFromDocument = (document: DiagramDocument): DiagramElement[] =>
-  document.diagrams.flatMap(d => getAllElementsFromDiagram(d));
 
 const checkColorDirty = (
   element: DiagramElement,
@@ -110,7 +104,7 @@ const addColorUsage = (
   }
 };
 
-export const collectColors = (scope: ColorScope, diagram: Diagram): StylesheetGroup[] => {
+export const collectColors = (diagram: Diagram, selectedElements?: DiagramElement[]): StylesheetGroup[] => {
   // Map of stylesheet ID to color maps by type
   const groupMap = new Map<string | null, {
     stylesheetName: string;
@@ -120,10 +114,10 @@ export const collectColors = (scope: ColorScope, diagram: Diagram): StylesheetGr
     borders: Map<string, ColorInfo & { anyDirty: boolean }>;
   }>();
 
-  const elements =
-    scope === 'current-diagram'
-      ? getAllElementsFromDiagram(diagram)
-      : getAllElementsFromDocument(diagram.document);
+  // Use selected elements if provided, otherwise all elements from diagram
+  const elements = selectedElements && selectedElements.length > 0
+    ? selectedElements
+    : getAllElementsFromDiagram(diagram);
 
   for (const element of elements) {
     // Get stylesheet info for background and borders

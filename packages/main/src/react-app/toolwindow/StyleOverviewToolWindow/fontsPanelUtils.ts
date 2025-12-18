@@ -2,7 +2,6 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
-import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 
 export type FontCombination = {
   fontFamily: string;
@@ -24,17 +23,11 @@ export type StylesheetGroup = {
   totalElements: number;
 };
 
-export type FontScope = 'current-diagram' | 'entire-document';
-export type FontSortOrder = 'count-desc' | 'count-asc' | 'alpha-asc' | 'alpha-desc';
-
 const getAllNodesFromDiagram = (diagram: Diagram): DiagramNode[] =>
   diagram.layers.all
     .filter((layer): layer is RegularLayer => layer.type === 'regular')
     .flatMap(layer => Array.from(layer.elements))
     .filter(isNode);
-
-const getAllNodesFromDocument = (document: DiagramDocument): DiagramNode[] =>
-  document.diagrams.flatMap(d => getAllNodesFromDiagram(d));
 
 const checkFontDirty = (
   node: DiagramNode,
@@ -64,13 +57,13 @@ const checkFontDirty = (
   return false;
 };
 
-export const collectFonts = (scope: FontScope, diagram: Diagram): StylesheetGroup[] => {
+export const collectFonts = (diagram: Diagram, selectedNodes?: DiagramNode[]): StylesheetGroup[] => {
   const fontMap = new Map<string, FontCombination & { anyDirty: boolean }>();
 
-  const elements =
-    scope === 'current-diagram'
-      ? getAllNodesFromDiagram(diagram)
-      : getAllNodesFromDocument(diagram.document);
+  // Use selected nodes if provided, otherwise all nodes from diagram
+  const elements = selectedNodes && selectedNodes.length > 0
+    ? selectedNodes
+    : getAllNodesFromDiagram(diagram);
 
   for (const node of elements) {
     const text = node.getText();
@@ -196,26 +189,3 @@ export const collectFonts = (scope: FontScope, diagram: Diagram): StylesheetGrou
   });
 };
 
-export const sortFonts = (
-  fonts: FontCombination[],
-  sortOrder: FontSortOrder
-): FontCombination[] => {
-  const sorted = [...fonts];
-
-  switch (sortOrder) {
-    case 'count-desc':
-      return sorted.sort((a, b) => b.count - a.count);
-    case 'count-asc':
-      return sorted.sort((a, b) => a.count - b.count);
-    case 'alpha-asc':
-      return sorted.sort(
-        (a, b) => a.fontFamily.localeCompare(b.fontFamily) || a.fontSize - b.fontSize
-      );
-    case 'alpha-desc':
-      return sorted.sort(
-        (a, b) => b.fontFamily.localeCompare(a.fontFamily) || b.fontSize - a.fontSize
-      );
-    default:
-      return sorted;
-  }
-};
