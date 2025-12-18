@@ -1,17 +1,16 @@
 import { useDiagram } from '../../../application';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
-import { useCallback, useState, useRef, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { StylesPanel, TextStylesPanel } from './StylesPanel';
 import { ToolWindow } from '../ToolWindow';
 import {
   collectStyles,
   collectTextStyles,
   type StyleCombination,
-  type TextStyleCombination,
   type StyleFilterType,
   type StylesheetGroup,
-  type TextStylesheetGroup
+  type TextStyleCombination
 } from './stylesPanelUtils';
 import { debounce } from '@diagram-craft/utils/debounce';
 
@@ -26,8 +25,12 @@ export const StylesTab = () => {
   const isInternalSelectionRef = useRef(false);
 
   // Cache the currently displayed groups
-  const [cachedVisualGroups, setCachedVisualGroups] = useState<StylesheetGroup[]>([]);
-  const [cachedTextGroups, setCachedTextGroups] = useState<TextStylesheetGroup[]>([]);
+  const [cachedVisualGroups, setCachedVisualGroups] = useState<StylesheetGroup<StyleCombination>[]>(
+    []
+  );
+  const [cachedTextGroups, setCachedTextGroups] = useState<StylesheetGroup<TextStyleCombination>[]>(
+    []
+  );
 
   // Function to recalculate groups based on current selection
   const recalculateGroups = useCallback(() => {
@@ -36,7 +39,7 @@ export const StylesTab = () => {
     if (filterType !== 'text') {
       const visualGroups = collectStyles(
         diagram,
-        selectedElements.length > 0 ? [...selectedElements] : undefined,
+        [...(selectedElements.length > 0 ? selectedElements : diagram.allElements())],
         filterType
       );
       setCachedVisualGroups(visualGroups);

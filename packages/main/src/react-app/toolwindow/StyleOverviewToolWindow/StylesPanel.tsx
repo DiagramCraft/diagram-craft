@@ -4,8 +4,7 @@ import type {
   StyleCombination,
   StyleFilterType,
   StylesheetGroup,
-  TextStyleCombination,
-  TextStylesheetGroup
+  TextStyleCombination
 } from './stylesPanelUtils';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { PickerCanvas } from '../../PickerCanvas';
@@ -14,16 +13,17 @@ import { useMemo } from 'react';
 import { TbLetterCase } from 'react-icons/tb';
 import { Select } from '@diagram-craft/app-components/Select';
 import { Tooltip } from '@diagram-craft/app-components/Tooltip';
+import { mustExist } from '@diagram-craft/utils/assert';
 
 type StylesPanelProps = {
-  groups: StylesheetGroup[];
+  groups: StylesheetGroup<StyleCombination>[];
   onStyleClick: (combo: StyleCombination) => void;
   filterType: StyleFilterType;
   onFilterTypeChange: (filterType: StyleFilterType) => void;
 };
 
 type TextStylesPanelProps = {
-  groups: TextStylesheetGroup[];
+  groups: StylesheetGroup<TextStyleCombination>[];
   onTextStyleClick: (combo: TextStyleCombination) => void;
   filterType: StyleFilterType;
   onFilterTypeChange: (filterType: StyleFilterType) => void;
@@ -36,7 +36,7 @@ export const StylesPanel = ({
   onFilterTypeChange
 }: StylesPanelProps) => {
   // Keep all accordions open by default
-  const openItems = useMemo(() => groups.map(g => g.stylesheetId ?? 'no-stylesheet'), [groups]);
+  const openItems = useMemo(() => groups.map(g => g.stylesheet?.id ?? 'no-stylesheet'), [groups]);
 
   return (
     <ToolWindowPanel mode={'headless-no-padding'} id={'styles-list'} title={'Styles'}>
@@ -60,16 +60,16 @@ export const StylesPanel = ({
       ) : (
         <Accordion.Root type={'multiple'} value={openItems}>
           {groups.map(group => {
-            const groupId = group.stylesheetId ?? 'no-stylesheet';
+            const groupId = group.stylesheet?.id ?? 'no-stylesheet';
 
             return (
               <Accordion.Item key={groupId} value={groupId}>
                 <Accordion.ItemHeader>
                   <div className={styles.stylesheetName}>
-                    <span>{group.stylesheetName}</span>
-                    {group.stylesheetType && (
+                    <span>{group.stylesheet?.name}</span>
+                    {group.stylesheet?.type && (
                       <span style={{ fontSize: '0.625rem', opacity: 0.7, marginLeft: '0.25rem' }}>
-                        ({group.stylesheetType})
+                        ({group.stylesheet?.type})
                       </span>
                     )}
                   </div>
@@ -102,15 +102,17 @@ export const StylesPanel = ({
                             <PickerCanvas
                               width={PickerConfig.size}
                               height={PickerConfig.size}
-                              diagram={style.previewDiagram}
+                              diagram={mustExist(style.previewDiagram)}
                               showHover={false}
                               onMouseDown={() => onStyleClick(style)}
                             />
                           </div>
                           <div className={styles.styleInfo}>
                             <div className={styles.styleCount}>
-                              {style.count}
-                              {style.isDirty && <span className={styles.styleDirty}>*</span>}
+                              {style.differences.length}
+                              {style.differences.length > 0 && (
+                                <span className={styles.styleDirty}>*</span>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -144,7 +146,7 @@ export const TextStylesPanel = ({
   onFilterTypeChange
 }: TextStylesPanelProps) => {
   // Keep all accordions open by default
-  const openItems = useMemo(() => groups.map(g => g.stylesheetId ?? 'no-stylesheet'), [groups]);
+  const openItems = useMemo(() => groups.map(g => g.stylesheet?.id ?? 'no-stylesheet'), [groups]);
 
   return (
     <ToolWindowPanel mode={'headless-no-padding'} id={'text-styles-list'} title={'Text Styles'}>
@@ -168,16 +170,16 @@ export const TextStylesPanel = ({
       ) : (
         <Accordion.Root type={'multiple'} value={openItems}>
           {groups.map(group => {
-            const groupId = group.stylesheetId ?? 'no-stylesheet';
+            const groupId = group.stylesheet?.id ?? 'no-stylesheet';
 
             return (
               <Accordion.Item key={groupId} value={groupId}>
                 <Accordion.ItemHeader>
                   <div className={styles.stylesheetName}>
-                    <span>{group.stylesheetName}</span>
-                    {group.stylesheetType && (
+                    <span>{group.stylesheet?.name}</span>
+                    {group.stylesheet?.type && (
                       <span style={{ fontSize: '0.625rem', opacity: 0.7, marginLeft: '0.25rem' }}>
-                        ({group.stylesheetType})
+                        ({group.stylesheet?.type})
                       </span>
                     )}
                   </div>

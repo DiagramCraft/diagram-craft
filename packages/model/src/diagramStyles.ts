@@ -31,9 +31,10 @@ type TypeMap = {
   text: TextStyleProps;
 };
 
-export class Stylesheet<T extends StylesheetType, P = TypeMap[T]>
-  implements UOWTrackable<StylesheetSnapshot>
-{
+export class Stylesheet<
+  T extends StylesheetType,
+  P = TypeMap[T]
+> implements UOWTrackable<StylesheetSnapshot> {
   type: T;
 
   readonly trackableType = 'stylesheet';
@@ -357,6 +358,10 @@ export class DiagramStyles extends EventEmitter<DiagramStylesEvents> implements 
   getNodeStyle(id: string | undefined): Stylesheet<'node'> | undefined {
     if (id === undefined) return undefined;
     return this.#nodeStyles.get(id);
+  }
+
+  getStyle(id: string | undefined): Stylesheet<'edge'> | Stylesheet<'node'> | Stylesheet<'text'> {
+    return this.getEdgeStyle(id) ?? this.getNodeStyle(id) ?? this.getTextStyle(id)!;
   }
 
   getTextStyle(id: string | undefined): Stylesheet<'text'> | undefined {
