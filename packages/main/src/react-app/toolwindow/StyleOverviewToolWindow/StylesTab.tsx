@@ -1,10 +1,10 @@
 import { useDiagram } from '../../../application';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useRef, useEffect } from 'react';
 import { StylesPanel, TextStylesPanel } from './StylesPanel';
 import { ToolWindow } from '../ToolWindow';
-import { collectStyles, collectTextStyles, type StyleCombination, type TextStyleCombination, type StyleFilterType } from './stylesPanelUtils';
+import { collectStyles, collectTextStyles, type StyleCombination, type TextStyleCombination, type StyleFilterType, type StylesheetGroup, type TextStylesheetGroup } from './stylesPanelUtils';
 import { debounce } from '@diagram-craft/utils/debounce';
 
 export const StylesTab = () => {
@@ -14,41 +14,100 @@ export const StylesTab = () => {
 
   const [filterType, setFilterType] = useState<StyleFilterType>('all');
 
-  // Get selected elements if any
-  const selectedElements = diagram.selection.elements;
+  // Track if selection change is from clicking in this panel
+  const isInternalSelectionRef = useRef(false);
 
-  // Collect styles based on filter type
-  const visualGroups = filterType !== 'text'
-    ? collectStyles(diagram, selectedElements.length > 0 ? [...selectedElements] : undefined, filterType)
-    : [];
+  // Cache the currently displayed groups
+  const [cachedVisualGroups, setCachedVisualGroups] = useState<StylesheetGroup[]>([]);
+  const [cachedTextGroups, setCachedTextGroups] = useState<TextStylesheetGroup[]>([]);
 
-  const textGroups = filterType === 'text'
-    ? collectTextStyles(diagram, selectedElements.length > 0 ? [...selectedElements] : undefined)
-    : [];
+  // Function to recalculate groups based on current selection
+  const recalculateGroups = useCallback(() => {
+    const selectedElements = diagram.selection.elements;
 
-  useEventListener(diagram, 'elementChange', redrawDebounce);
-  useEventListener(diagram, 'elementAdd', redrawDebounce);
-  useEventListener(diagram, 'elementRemove', redrawDebounce);
-  useEventListener(diagram, 'diagramChange', redrawDebounce);
-  useEventListener(diagram.document, 'diagramChanged', redrawDebounce);
-  useEventListener(diagram.selection, 'change', redraw);
+    if (filterType !== 'text') {
+      const visualGroups = collectStyles(
+        diagram,
+        selectedElements.length > 0 ? [...selectedElements] : undefined,
+        filterType
+      );
+      setCachedVisualGroups(visualGroups);
+    }
+
+    if (filterType === 'text') {
+      const textGroups = collectTextStyles(
+        diagram,
+        selectedElements.length > 0 ? [...selectedElements] : undefined
+      );
+      setCachedTextGroups(textGroups);
+    }
+  }, [diagram, filterType]);
+
+  // Initialize cache on mount and when filter changes
+  useEffect(() => {
+    recalculateGroups();
+  }, [recalculateGroups]);
+
+  // Handle selection changes - only update cache for external changes
+  const handleSelectionChange = useCallback(() => {
+    if (isInternalSelectionRef.current) {
+      // Internal selection - don't update cache, just redraw
+      isInternalSelectionRef.current = false;
+      redraw();
+    } else {
+      // External selection - update cache and redraw
+      recalculateGroups();
+      redraw();
+    }
+  }, [recalculateGroups, redraw]);
+
+  // Element changes should always update the cache
+  useEventListener(diagram, 'elementChange', () => {
+    recalculateGroups();
+    redrawDebounce();
+  });
+  useEventListener(diagram, 'elementAdd', () => {
+    recalculateGroups();
+    redrawDebounce();
+  });
+  useEventListener(diagram, 'elementRemove', () => {
+    recalculateGroups();
+    redrawDebounce();
+  });
+  useEventListener(diagram, 'diagramChange', () => {
+    recalculateGroups();
+    redrawDebounce();
+  });
+  useEventListener(diagram.document, 'diagramChanged', () => {
+    recalculateGroups();
+    redrawDebounce();
+  });
+
+  // Selection changes need conditional handling
+  useEventListener(diagram.selection, 'change', handleSelectionChange);
 
   const handleStyleClick = useCallback(
     (combo: StyleCombination) => {
+      // Mark as internal selection
+      isInternalSelectionRef.current = true;
+
       diagram.selection.clear();
       diagram.selection.setElements(combo.elements);
-      redraw();
+      // Note: redraw will be called by handleSelectionChange
     },
-    [diagram, redraw]
+    [diagram]
   );
 
   const handleTextStyleClick = useCallback(
     (combo: TextStyleCombination) => {
+      // Mark as internal selection
+      isInternalSelectionRef.current = true;
+
       diagram.selection.clear();
       diagram.selection.setElements(combo.elements);
-      redraw();
+      // Note: redraw will be called by handleSelectionChange
     },
-    [diagram, redraw]
+    [diagram]
   );
 
   return (
@@ -56,14 +115,14 @@ export const StylesTab = () => {
       <ToolWindow.TabContent>
         {filterType === 'text' ? (
           <TextStylesPanel
-            groups={textGroups}
+            groups={cachedTextGroups}
             onTextStyleClick={handleTextStyleClick}
             filterType={filterType}
             onFilterTypeChange={setFilterType}
           />
         ) : (
           <StylesPanel
-            groups={visualGroups}
+            groups={cachedVisualGroups}
             onStyleClick={handleStyleClick}
             filterType={filterType}
             onFilterTypeChange={setFilterType}

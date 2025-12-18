@@ -1,5 +1,6 @@
-import { Diagram } from '@diagram-craft/model/diagram';
+import { Diagram, type DiagramCRDT } from '@diagram-craft/model/diagram';
 import type { DiagramNode } from '@diagram-craft/model/diagramNode';
+import type { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import type { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
@@ -10,6 +11,10 @@ import { NodeProps } from '@diagram-craft/model/diagramProps';
 import { nodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { newid } from '@diagram-craft/utils/id';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
+import { FreeEndpoint } from '@diagram-craft/model/endpoint';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
+import { NoOpCRDTMap, NoOpCRDTRoot } from '@diagram-craft/collaboration/noopCrdt';
 
 export type StyleFilterType = 'all' | 'fill' | 'stroke' | 'shadow' | 'effects' | 'text';
 
@@ -18,7 +23,7 @@ export type StyleCombination = {
   elements: DiagramElement[];
   count: number;
   previewDiagram: Diagram;
-  previewNode: DiagramNode;
+  previewElement: DiagramNode | DiagramEdge;
   stylesheetId: string | null;
   stylesheetName: string;
   isDirty: boolean;
@@ -55,7 +60,7 @@ export type TextStylesheetGroup = {
   totalElements: number;
 };
 
-const PREVIEW_CACHE = new Map<string, { diagram: Diagram; node: DiagramNode }>();
+const PREVIEW_CACHE = new Map<string, { diagram: Diagram; element: DiagramNode | DiagramEdge }>();
 
 const getAllElementsFromDiagram = (diagram: Diagram): DiagramElement[] =>
   diagram.layers.all
@@ -133,7 +138,43 @@ export const createPreviewDiagram = (
   props: Partial<NodeProps>,
   nodeType: string,
   definitions: Definitions
-): { diagram: Diagram; node: DiagramNode } => {
+): { diagram: Diagram; element: DiagramNode | DiagramEdge } => {
+  // For edges, create a simple horizontal edge
+  if (nodeType === 'edge') {
+    const dest = new Diagram(
+      newid(),
+      newid(),
+      new DiagramDocument(
+        definitions.nodeDefinitions,
+        definitions.edgeDefinitions,
+        true,
+        new NoOpCRDTRoot()
+      ),
+      new NoOpCRDTMap<DiagramCRDT>()
+    );
+
+    const uow = UnitOfWork.immediate(dest);
+    const layer = new RegularLayer(newid(), newid(), [], dest);
+    dest.layers.add(layer, uow);
+
+    const edge = ElementFactory.edge(
+      newid(),
+      new FreeEndpoint({ x: 5, y: 25 }),
+      new FreeEndpoint({ x: 45, y: 25 }),
+      props as any,
+      {},
+      [],
+      layer
+    );
+    layer.addElement(edge, uow);
+
+    dest.viewBox.dimensions = { w: 50, h: 50 };
+    dest.viewBox.offset = { x: -5, y: -5 };
+
+    return { diagram: dest, element: edge };
+  }
+
+  // For nodes, use existing node creation logic
   const { diagram, node } = createThumbnailDiagramForNode(
     (_d: Diagram, l: RegularLayer) => {
       return ElementFactory.node(
@@ -152,7 +193,7 @@ export const createPreviewDiagram = (
   diagram.viewBox.dimensions = { w: 50, h: 50 };
   diagram.viewBox.offset = { x: -5, y: -5 };
 
-  return { diagram, node };
+  return { diagram, element: node };
 };
 
 const isPropsDirty = (
@@ -425,7 +466,7 @@ export const collectStyles = (
         elements: [],
         count: 0,
         previewDiagram: null as any,
-        previewNode: null as any,
+        previewElement: null as any,
         stylesheetId,
         stylesheetName,
         isDirty,
@@ -457,7 +498,7 @@ export const collectStyles = (
     }
 
     combo.previewDiagram = preview.diagram;
-    combo.previewNode = preview.node;
+    combo.previewElement = preview.element;
   }
 
   // Group by stylesheet
@@ -550,7 +591,7 @@ export const collectStyles = (
             elements: [],
             count: 0,
             previewDiagram: preview.diagram,
-            previewNode: preview.node,
+            previewElement: preview.element,
             stylesheetId: group.stylesheetId,
             stylesheetName: group.stylesheetName,
             isDirty: false,
