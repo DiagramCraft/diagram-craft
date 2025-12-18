@@ -11,10 +11,11 @@ import {
 } from '@diagram-craft/canvas-app/diagramThumbnail';
 import { Stylesheet } from '@diagram-craft/model/diagramStyles';
 import { type EdgeProps, type ElementProps, NodeProps } from '@diagram-craft/model/diagramProps';
-import { nodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { nodeDefaults, edgeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { newid } from '@diagram-craft/utils/id';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { FreeEndpoint } from '@diagram-craft/model/endpoint';
+import { deepMerge } from '@diagram-craft/utils/object';
 
 export type StyleFilterType = 'all' | 'fill' | 'stroke' | 'shadow' | 'effects' | 'text';
 
@@ -64,7 +65,7 @@ const PREVIEW_CACHE = new Map<string, { diagram: Diagram; element: DiagramNode |
 
 export const extractAppearanceProps = (element: DiagramElement): Partial<NodeProps | EdgeProps> => {
   if (isNode(element)) {
-    const props = element.renderProps;
+    const props = element.storedProps;
     return {
       fill: props.fill,
       stroke: props.stroke,
@@ -74,7 +75,7 @@ export const extractAppearanceProps = (element: DiagramElement): Partial<NodePro
       geometry: props.geometry
     };
   } else {
-    const props = element.renderProps as Partial<EdgeProps>;
+    const props = element.storedProps as Partial<EdgeProps>;
     return {
       stroke: props.stroke,
       shadow: props.shadow,
@@ -91,26 +92,26 @@ export const extractFilteredProps = (
   switch (filter) {
     case 'fill':
       if (isNode(el)) {
-        return { fill: el.renderProps.fill };
+        return { fill: el.storedProps.fill };
       } else {
         return {};
       }
     case 'stroke':
       if (isNode(el)) {
-        return { stroke: el.renderProps.stroke };
+        return { stroke: el.storedProps.stroke };
       } else {
         return {
-          stroke: el.renderProps.stroke,
-          arrow: (el.renderProps as Partial<EdgeProps>).arrow
+          stroke: el.storedProps.stroke,
+          arrow: (el.storedProps as Partial<EdgeProps>).arrow
         };
       }
     case 'shadow':
-      return { shadow: el.renderProps.shadow };
+      return { shadow: el.storedProps.shadow };
     case 'effects':
-      return { effects: el.renderProps.effects };
+      return { effects: el.storedProps.effects };
     case 'text':
       if (isNode(el)) {
-        return { text: el.renderProps.text };
+        return { text: el.storedProps.text };
       } else {
         return {};
       }
@@ -215,7 +216,7 @@ const isPropsDirty = (
 
 export const checkStyleDirty = (
   element: DiagramElement,
-  stylesheet: Stylesheet<'node'> | Stylesheet<'edge'> | undefined
+  stylesheet: Stylesheet<'node'> | Stylesheet<'edge'> | Stylesheet<'text'> | undefined
 ): boolean => {
   if (!stylesheet) return false;
 
@@ -260,12 +261,7 @@ export const collectTextStyles = (
     const stylesheetName = textStylesheet?.name ?? 'No stylesheet';
 
     // Check if this node's text properties differ from stylesheet
-    const isDirty = textStylesheet
-      ? isPropsDirty(
-          { text: textProps } as Record<string, unknown>,
-          { text: textStylesheet.props.text } as Record<string, unknown>
-        )
-      : false;
+    const isDirty = textStylesheet ? checkStyleDirty(node, textStylesheet) : false;
 
     const key = `${fontFamily}|${fontSize}|${bold}|${italic}|${color}|${textStylesheetId}`;
 
@@ -447,7 +443,9 @@ export const collectStyles = (
       appearanceProps = extractFilteredProps(element, filterType);
     }
 
-    const styleHash = createStyleHash(appearanceProps);
+    // Include stylesheet ID and type in the hash to separate node and edge styles
+    const stylesheetType = stylesheet?.type ?? null;
+    const styleHash = createStyleHash(appearanceProps) + `|${stylesheetId}|${stylesheetType}`;
 
     if (!styleMap.has(styleHash)) {
       styleMap.set(styleHash, {
@@ -468,6 +466,10 @@ export const collectStyles = (
     const combo = styleMap.get(styleHash)!;
     combo.elements.push(element);
     combo.count++;
+    // Track if ANY element is dirty
+    if (isDirty) {
+      combo.isDirty = true;
+    }
     // For edges, use 'edge' as the type; for nodes, use their nodeType
     combo.nodeTypes.add(isNode(element) ? element.nodeType : 'edge');
   }
@@ -490,109 +492,41 @@ export const collectStyles = (
     combo.previewElement = preview.element;
   }
 
-  // Group by stylesheet
-  const groupMap = new Map<string | null, StylesheetGroup>();
+  // Group by stylesheet - need to include type to distinguish node vs edge stylesheets with same ID
+  const groupMap = new Map<string, StylesheetGroup>();
   for (const style of styleMap.values()) {
-    const key = style.stylesheetId;
-    if (!groupMap.has(key)) {
-      // Try to get stylesheet as node or edge style
-      const stylesheet = key
-        ? (diagram.document.styles.getNodeStyle(key) ?? diagram.document.styles.getEdgeStyle(key))
-        : undefined;
-      groupMap.set(key, {
-        stylesheetId: key,
+    // Determine stylesheet type from the elements in this style
+    const hasNodes = style.elements.some(isNode);
+
+    // Get the appropriate stylesheet based on element type
+    const stylesheet = style.stylesheetId
+      ? hasNodes
+        ? diagram.document.styles.getNodeStyle(style.stylesheetId)
+        : diagram.document.styles.getEdgeStyle(style.stylesheetId)
+      : undefined;
+
+    const stylesheetType = stylesheet?.type ?? null;
+
+    // Use a composite key that includes both stylesheet ID and type
+    const groupKey = style.stylesheetId
+      ? `${style.stylesheetId}|${stylesheetType}`
+      : 'no-stylesheet';
+
+    if (!groupMap.has(groupKey)) {
+      groupMap.set(groupKey, {
+        stylesheetId: style.stylesheetId,
         stylesheetName: style.stylesheetName,
-        stylesheetType: stylesheet?.type ?? null,
+        stylesheetType,
         styles: [],
         totalElements: 0
       });
     }
 
-    const group = groupMap.get(key)!;
+    const group = groupMap.get(groupKey)!;
     group.styles.push(style);
     group.totalElements += style.count;
   }
 
-  // Add default stylesheet style if not already present, or merge with existing
-  for (const group of groupMap.values()) {
-    if (group.stylesheetId) {
-      const stylesheet =
-        diagram.document.styles.getNodeStyle(group.stylesheetId) ??
-        diagram.document.styles.getEdgeStyle(group.stylesheetId);
-      if (stylesheet?.props) {
-        // Extract filtered appearance props from stylesheet based on filterType
-        const stylesheetProps = stylesheet.props as Partial<NodeProps>;
-        let appearanceProps: Partial<NodeProps>;
-
-        switch (filterType) {
-          case 'fill':
-            appearanceProps = { fill: stylesheetProps.fill };
-            break;
-          case 'stroke':
-            appearanceProps = { stroke: stylesheetProps.stroke };
-            break;
-          case 'shadow':
-            appearanceProps = { shadow: stylesheetProps.shadow };
-            break;
-          case 'effects':
-            appearanceProps = { effects: stylesheetProps.effects };
-            break;
-          case 'text':
-            appearanceProps = { text: stylesheetProps.text };
-            break;
-          case 'all':
-          default:
-            appearanceProps = {
-              fill: stylesheetProps.fill,
-              stroke: stylesheetProps.stroke,
-              shadow: stylesheetProps.shadow,
-              effects: stylesheetProps.effects,
-              text: stylesheetProps.text,
-              geometry: stylesheetProps.geometry
-            };
-        }
-
-        const styleHash = createStyleHash(appearanceProps);
-
-        // Check if this style already exists
-        const existingStyle = group.styles.find(s => s.styleHash === styleHash);
-
-        if (existingStyle) {
-          // Move existing style to the beginning if it's not dirty (clean stylesheet usage)
-          if (!existingStyle.isDirty) {
-            const index = group.styles.indexOf(existingStyle);
-            group.styles.splice(index, 1);
-            group.styles.unshift(existingStyle);
-          }
-        } else {
-          // Determine node type for preview (use 'rect' for nodes, 'edge' for edges)
-          const nodeType = stylesheet.type === 'edge' ? 'edge' : 'rect';
-
-          // Create preview diagram
-          const cacheKey = `${styleHash}-${nodeType}`;
-          let preview = PREVIEW_CACHE.get(cacheKey);
-          if (!preview) {
-            preview = createPreview(appearanceProps, nodeType, diagram.document.definitions);
-            PREVIEW_CACHE.set(cacheKey, preview);
-          }
-
-          // Add the default style with 0 count at the beginning
-          group.styles.unshift({
-            styleHash,
-            elements: [],
-            count: 0,
-            previewDiagram: preview.diagram,
-            previewElement: preview.element,
-            stylesheetId: group.stylesheetId,
-            stylesheetName: group.stylesheetName,
-            isDirty: false,
-            sampleProps: appearanceProps,
-            nodeType
-          });
-        }
-      }
-    }
-  }
 
   // Sort groups: named stylesheets first (alphabetically), then "No stylesheet"
   const groups = Array.from(groupMap.values());
@@ -601,4 +535,144 @@ export const collectStyles = (
     if (b.stylesheetId === null) return -1;
     return a.stylesheetName.localeCompare(b.stylesheetName);
   });
+};
+
+/**
+ * Compute the differences between element props and the merged default + stylesheet props
+ * Returns an array of formatted strings like "text.fontSize = 14" or "fill.color = #ff0000"
+ */
+export const computeStyleDifferences = (
+  diagram: Diagram,
+  style: StyleCombination
+): string[] => {
+  if (!style.stylesheetId) {
+    return [];
+  }
+
+  // Get the stylesheet
+  const hasNodes = style.elements.some(isNode);
+  const stylesheet = hasNodes
+    ? diagram.document.styles.getNodeStyle(style.stylesheetId)
+    : diagram.document.styles.getEdgeStyle(style.stylesheetId);
+
+  if (!stylesheet) {
+    return [];
+  }
+
+  // Get default props and merge with stylesheet props based on element type
+  const mergedStylesheetProps = hasNodes
+    ? deepMerge({}, nodeDefaults.applyDefaults({}), stylesheet.props as Partial<NodeProps>)
+    : deepMerge({}, edgeDefaults.applyDefaults({}), stylesheet.props as Partial<EdgeProps>);
+
+  const elementProps = style.sampleProps;
+  const differences: string[] = [];
+
+  // Helper function to format property path and value
+  const formatDiff = (path: string, value: unknown): string => {
+    if (typeof value === 'object' && value !== null) {
+      return `${path} = ${JSON.stringify(value)}`;
+    }
+    return `${path} = ${value}`;
+  };
+
+  // Helper to deep compare and find differences
+  const compareProps = (
+    stylesheetValue: unknown,
+    elementValue: unknown,
+    path: string
+  ): void => {
+    // If element doesn't have this prop, skip
+    if (elementValue === undefined) {
+      return;
+    }
+
+    // If values are objects, recurse
+    if (
+      typeof stylesheetValue === 'object' &&
+      stylesheetValue !== null &&
+      typeof elementValue === 'object' &&
+      elementValue !== null &&
+      !Array.isArray(stylesheetValue) &&
+      !Array.isArray(elementValue)
+    ) {
+      // Compare nested properties
+      const elementObj = elementValue as Record<string, unknown>;
+      const stylesheetObj = stylesheetValue as Record<string, unknown>;
+
+      for (const key of Object.keys(elementObj)) {
+        compareProps(stylesheetObj[key], elementObj[key], `${path}.${key}`);
+      }
+      return;
+    }
+
+    // Compare primitive values or arrays
+    if (JSON.stringify(stylesheetValue) !== JSON.stringify(elementValue)) {
+      differences.push(formatDiff(path, elementValue));
+    }
+  };
+
+  // Compare all top-level properties
+  for (const key of Object.keys(elementProps)) {
+    const mergedValue = (mergedStylesheetProps as Record<string, unknown>)[key];
+    const elementValue = (elementProps as Record<string, unknown>)[key];
+    compareProps(mergedValue, elementValue, key);
+  }
+
+  return differences;
+};
+
+/**
+ * Compute the differences between text style props and the merged default + stylesheet props
+ * Returns an array of formatted strings like "text.fontSize = 14" or "text.color = #ff0000"
+ */
+export const computeTextStyleDifferences = (
+  diagram: Diagram,
+  textStyle: TextStyleCombination
+): string[] => {
+  if (!textStyle.stylesheetId) {
+    return [];
+  }
+
+  // Get the text stylesheet
+  const stylesheet = diagram.document.styles.getTextStyle(textStyle.stylesheetId);
+  if (!stylesheet) {
+    return [];
+  }
+
+  // Get default text props
+  const defaultTextProps = nodeDefaults.applyDefaults({}).text ?? {};
+
+  // Merge default props with stylesheet props
+  // TextStyleProps is { text: ... }, so we need to access the nested text property
+  const stylesheetTextProps = stylesheet.props.text ?? {};
+  const mergedStylesheetProps = deepMerge({}, defaultTextProps, stylesheetTextProps);
+
+  const differences: string[] = [];
+
+  // Compare font family
+  if (textStyle.fontFamily !== mergedStylesheetProps.font) {
+    differences.push(`text.font = ${textStyle.fontFamily}`);
+  }
+
+  // Compare font size
+  if (textStyle.fontSize !== mergedStylesheetProps.fontSize) {
+    differences.push(`text.fontSize = ${textStyle.fontSize}`);
+  }
+
+  // Compare bold
+  if (textStyle.bold !== (mergedStylesheetProps.bold ?? false)) {
+    differences.push(`text.bold = ${textStyle.bold}`);
+  }
+
+  // Compare italic
+  if (textStyle.italic !== (mergedStylesheetProps.italic ?? false)) {
+    differences.push(`text.italic = ${textStyle.italic}`);
+  }
+
+  // Compare color
+  if (textStyle.color !== mergedStylesheetProps.color) {
+    differences.push(`text.color = ${textStyle.color}`);
+  }
+
+  return differences;
 };

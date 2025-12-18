@@ -7,12 +7,15 @@ import type {
   TextStylesheetGroup,
   StyleFilterType
 } from './stylesPanelUtils';
+import { computeStyleDifferences, computeTextStyleDifferences } from './stylesPanelUtils';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { PickerCanvas } from '../../PickerCanvas';
 import { PickerConfig } from '../PickerToolWindow/pickerConfig';
 import { useMemo } from 'react';
 import { TbLetterCase } from 'react-icons/tb';
 import { Select } from '@diagram-craft/app-components/Select';
+import { Tooltip } from '@diagram-craft/app-components/Tooltip';
+import { useDiagram } from '../../../application';
 
 type StylesPanelProps = {
   groups: StylesheetGroup[];
@@ -34,6 +37,8 @@ export const StylesPanel = ({
   filterType,
   onFilterTypeChange
 }: StylesPanelProps) => {
+  const diagram = useDiagram();
+
   // Keep all accordions open by default
   const openItems = useMemo(() => groups.map(g => g.stylesheetId ?? 'no-stylesheet'), [groups]);
 
@@ -75,29 +80,45 @@ export const StylesPanel = ({
                 </Accordion.ItemHeader>
                 <Accordion.ItemContent>
                   <div className={styles.styleList}>
-                    {group.styles.map((style, idx) => (
-                      <div
-                        key={`${groupId}-${idx}`}
-                        className={styles.styleItem}
-                        onClick={() => onStyleClick(style)}
-                      >
-                        <div className={styles.stylePreview}>
-                          <PickerCanvas
-                            width={PickerConfig.size}
-                            height={PickerConfig.size}
-                            diagram={style.previewDiagram}
-                            showHover={false}
-                            onMouseDown={() => onStyleClick(style)}
-                          />
+                    {group.styles.map((style, idx) => {
+                      // Only compute differences for dirty styles
+                      const differences = style.isDirty ? computeStyleDifferences(diagram, style) : [];
+                      const tooltipContent = differences.length > 0 ? (
+                        <div style={{ whiteSpace: 'pre-line', fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                          {differences.join('\n')}
                         </div>
-                        <div className={styles.styleInfo}>
-                          <div className={styles.styleCount}>
-                            {style.count}
-                            {style.isDirty && <span className={styles.styleDirty}>*</span>}
+                      ) : null;
+
+                      const styleItem = (
+                        <div
+                          key={`${groupId}-${idx}`}
+                          className={styles.styleItem}
+                          onClick={() => onStyleClick(style)}
+                        >
+                          <div className={styles.stylePreview}>
+                            <PickerCanvas
+                              width={PickerConfig.size}
+                              height={PickerConfig.size}
+                              diagram={style.previewDiagram}
+                              showHover={false}
+                              onMouseDown={() => onStyleClick(style)}
+                            />
+                          </div>
+                          <div className={styles.styleInfo}>
+                            <div className={styles.styleCount}>
+                              {style.count}
+                              {style.isDirty && <span className={styles.styleDirty}>*</span>}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+
+                      return tooltipContent ? (
+                        <Tooltip key={`${groupId}-${idx}`} message={tooltipContent} element={styleItem} />
+                      ) : (
+                        styleItem
+                      );
+                    })}
                   </div>
                 </Accordion.ItemContent>
               </Accordion.Item>
@@ -115,6 +136,8 @@ export const TextStylesPanel = ({
   filterType,
   onFilterTypeChange
 }: TextStylesPanelProps) => {
+  const diagram = useDiagram();
+
   // Keep all accordions open by default
   const openItems = useMemo(() => groups.map(g => g.stylesheetId ?? 'no-stylesheet'), [groups]);
 
@@ -172,7 +195,17 @@ export const TextStylesPanel = ({
                         textStyle.color
                       ].filter(Boolean);
 
-                      return (
+                      // Only compute differences for dirty text styles
+                      const differences = textStyle.isDirty
+                        ? computeTextStyleDifferences(diagram, textStyle)
+                        : [];
+                      const tooltipContent = differences.length > 0 ? (
+                        <div style={{ whiteSpace: 'pre-line', fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                          {differences.join('\n')}
+                        </div>
+                      ) : null;
+
+                      const fontItem = (
                         <div
                           key={key}
                           className={styles.fontItem}
@@ -195,6 +228,12 @@ export const TextStylesPanel = ({
                             </div>
                           </div>
                         </div>
+                      );
+
+                      return tooltipContent ? (
+                        <Tooltip key={key} message={tooltipContent} element={fontItem} />
+                      ) : (
+                        fontItem
                       );
                     })}
                   </div>
