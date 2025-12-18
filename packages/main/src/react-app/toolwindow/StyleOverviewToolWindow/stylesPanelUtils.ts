@@ -30,6 +30,7 @@ export type StyleCombination = {
   isDirty: boolean;
   sampleProps: Partial<NodeProps | EdgeProps>;
   nodeType: string;
+  differences: string[]; // Cached differences from stylesheet
 };
 
 export type TextStyleCombination = {
@@ -43,6 +44,7 @@ export type TextStyleCombination = {
   stylesheetId: string | null;
   stylesheetName: string;
   isDirty: boolean;
+  differences: string[]; // Cached differences from stylesheet
 };
 
 export type StylesheetGroup = {
@@ -263,7 +265,23 @@ export const collectTextStyles = (
     // Check if this node's text properties differ from stylesheet
     const isDirty = textStylesheet ? checkStyleDirty(node, textStylesheet) : false;
 
-    const key = `${fontFamily}|${fontSize}|${bold}|${italic}|${color}|${textStylesheetId}`;
+    // Compute differences for dirty styles - this will be used as the hash
+    const differences = isDirty
+      ? computeTextStyleDifferences(
+          fontFamily,
+          fontSize,
+          bold,
+          italic,
+          color,
+          textStylesheet?.props.text
+        )
+      : [];
+
+    // Use differences as the hash if dirty, otherwise use the text properties
+    const baseKey = differences.length > 0
+      ? differences.join('|')
+      : `${fontFamily}|${fontSize}|${bold}|${italic}|${color}`;
+    const key = `${baseKey}|${textStylesheetId}`;
 
     if (!textStyleMap.has(key)) {
       textStyleMap.set(key, {
@@ -277,7 +295,8 @@ export const collectTextStyles = (
         stylesheetId: textStylesheetId,
         stylesheetName,
         isDirty: false,
-        anyDirty: false
+        anyDirty: false,
+        differences
       });
     }
 
@@ -366,7 +385,8 @@ export const collectTextStyles = (
             count: 0,
             stylesheetId: group.stylesheetId,
             stylesheetName: group.stylesheetName,
-            isDirty: false
+            isDirty: false,
+            differences: []
           });
         }
       }
@@ -443,9 +463,21 @@ export const collectStyles = (
       appearanceProps = extractFilteredProps(element, filterType);
     }
 
+    // Compute differences for dirty styles - this will be used as the hash
+    const isNodeStyle = isNode(element);
+    const differences = isDirty
+      ? computeStyleDifferences(
+          appearanceProps,
+          stylesheet?.props as Partial<NodeProps | EdgeProps>,
+          isNodeStyle
+        )
+      : [];
+
     // Include stylesheet ID and type in the hash to separate node and edge styles
+    // Use differences as the hash if dirty, otherwise use the appearance props
     const stylesheetType = stylesheet?.type ?? null;
-    const styleHash = createStyleHash(appearanceProps) + `|${stylesheetId}|${stylesheetType}`;
+    const baseHash = differences.length > 0 ? differences.join('|') : createStyleHash(appearanceProps);
+    const styleHash = `${baseHash}|${stylesheetId}|${stylesheetType}`;
 
     if (!styleMap.has(styleHash)) {
       styleMap.set(styleHash, {
@@ -459,7 +491,8 @@ export const collectStyles = (
         isDirty,
         sampleProps: appearanceProps,
         nodeType: 'rect',
-        nodeTypes: new Set()
+        nodeTypes: new Set(),
+        differences
       });
     }
 
@@ -540,31 +573,25 @@ export const collectStyles = (
 /**
  * Compute the differences between element props and the merged default + stylesheet props
  * Returns an array of formatted strings like "text.fontSize = 14" or "fill.color = #ff0000"
+ *
+ * @param elementProps - The element's appearance props (extracted)
+ * @param stylesheetProps - The stylesheet's props (optional)
+ * @param isNodeStyle - Whether this is a node style (true) or edge style (false)
  */
 export const computeStyleDifferences = (
-  diagram: Diagram,
-  style: StyleCombination
+  elementProps: Partial<NodeProps | EdgeProps>,
+  stylesheetProps: Partial<NodeProps | EdgeProps> | undefined,
+  isNodeStyle: boolean
 ): string[] => {
-  if (!style.stylesheetId) {
-    return [];
-  }
-
-  // Get the stylesheet
-  const hasNodes = style.elements.some(isNode);
-  const stylesheet = hasNodes
-    ? diagram.document.styles.getNodeStyle(style.stylesheetId)
-    : diagram.document.styles.getEdgeStyle(style.stylesheetId);
-
-  if (!stylesheet) {
+  if (!stylesheetProps) {
     return [];
   }
 
   // Get default props and merge with stylesheet props based on element type
-  const mergedStylesheetProps = hasNodes
-    ? deepMerge({}, nodeDefaults.applyDefaults({}), stylesheet.props as Partial<NodeProps>)
-    : deepMerge({}, edgeDefaults.applyDefaults({}), stylesheet.props as Partial<EdgeProps>);
+  const mergedStylesheetProps = isNodeStyle
+    ? deepMerge({}, nodeDefaults.applyDefaults({}), stylesheetProps as Partial<NodeProps>)
+    : deepMerge({}, edgeDefaults.applyDefaults({}), stylesheetProps as Partial<EdgeProps>);
 
-  const elementProps = style.sampleProps;
   const differences: string[] = [];
 
   // Helper function to format property path and value
@@ -624,18 +651,23 @@ export const computeStyleDifferences = (
 /**
  * Compute the differences between text style props and the merged default + stylesheet props
  * Returns an array of formatted strings like "text.fontSize = 14" or "text.color = #ff0000"
+ *
+ * @param fontFamily - The element's font family
+ * @param fontSize - The element's font size
+ * @param bold - Whether the text is bold
+ * @param italic - Whether the text is italic
+ * @param color - The text color
+ * @param stylesheetTextProps - The stylesheet's text props (nested under 'text' property)
  */
 export const computeTextStyleDifferences = (
-  diagram: Diagram,
-  textStyle: TextStyleCombination
+  fontFamily: string,
+  fontSize: number,
+  bold: boolean,
+  italic: boolean,
+  color: string | undefined,
+  stylesheetTextProps: Record<string, unknown> | undefined
 ): string[] => {
-  if (!textStyle.stylesheetId) {
-    return [];
-  }
-
-  // Get the text stylesheet
-  const stylesheet = diagram.document.styles.getTextStyle(textStyle.stylesheetId);
-  if (!stylesheet) {
+  if (!stylesheetTextProps) {
     return [];
   }
 
@@ -643,35 +675,33 @@ export const computeTextStyleDifferences = (
   const defaultTextProps = nodeDefaults.applyDefaults({}).text ?? {};
 
   // Merge default props with stylesheet props
-  // TextStyleProps is { text: ... }, so we need to access the nested text property
-  const stylesheetTextProps = stylesheet.props.text ?? {};
   const mergedStylesheetProps = deepMerge({}, defaultTextProps, stylesheetTextProps);
 
   const differences: string[] = [];
 
   // Compare font family
-  if (textStyle.fontFamily !== mergedStylesheetProps.font) {
-    differences.push(`text.font = ${textStyle.fontFamily}`);
+  if (fontFamily !== mergedStylesheetProps.font) {
+    differences.push(`text.font = ${fontFamily}`);
   }
 
   // Compare font size
-  if (textStyle.fontSize !== mergedStylesheetProps.fontSize) {
-    differences.push(`text.fontSize = ${textStyle.fontSize}`);
+  if (fontSize !== mergedStylesheetProps.fontSize) {
+    differences.push(`text.fontSize = ${fontSize}`);
   }
 
   // Compare bold
-  if (textStyle.bold !== (mergedStylesheetProps.bold ?? false)) {
-    differences.push(`text.bold = ${textStyle.bold}`);
+  if (bold !== (mergedStylesheetProps.bold ?? false)) {
+    differences.push(`text.bold = ${bold}`);
   }
 
   // Compare italic
-  if (textStyle.italic !== (mergedStylesheetProps.italic ?? false)) {
-    differences.push(`text.italic = ${textStyle.italic}`);
+  if (italic !== (mergedStylesheetProps.italic ?? false)) {
+    differences.push(`text.italic = ${italic}`);
   }
 
   // Compare color
-  if (textStyle.color !== mergedStylesheetProps.color) {
-    differences.push(`text.color = ${textStyle.color}`);
+  if (color !== mergedStylesheetProps.color) {
+    differences.push(`text.color = ${color}`);
   }
 
   return differences;
