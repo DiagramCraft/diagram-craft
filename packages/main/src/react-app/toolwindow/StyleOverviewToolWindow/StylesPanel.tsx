@@ -1,6 +1,12 @@
 import styles from './StylesPanel.module.css';
 import { ToolWindowPanel } from '../ToolWindowPanel';
-import type { StyleCombination, StylesheetGroup, TextStyleCombination, TextStylesheetGroup, StyleFilterType } from './stylesPanelUtils';
+import type {
+  StyleCombination,
+  StylesheetGroup,
+  TextStyleCombination,
+  TextStylesheetGroup,
+  StyleFilterType
+} from './stylesPanelUtils';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { PickerCanvas } from '../../PickerCanvas';
 import { PickerConfig } from '../PickerToolWindow/pickerConfig';
@@ -22,17 +28,22 @@ type TextStylesPanelProps = {
   onFilterTypeChange: (filterType: StyleFilterType) => void;
 };
 
-export const StylesPanel = ({ groups, onStyleClick, filterType, onFilterTypeChange }: StylesPanelProps) => {
+export const StylesPanel = ({
+  groups,
+  onStyleClick,
+  filterType,
+  onFilterTypeChange
+}: StylesPanelProps) => {
   // Keep all accordions open by default
-  const openItems = useMemo(
-    () => groups.map(g => g.stylesheetId ?? 'no-stylesheet'),
-    [groups]
-  );
+  const openItems = useMemo(() => groups.map(g => g.stylesheetId ?? 'no-stylesheet'), [groups]);
 
   return (
     <ToolWindowPanel mode={'headless-no-padding'} id={'styles-list'} title={'Styles'}>
-      <div style={{ padding: '0.5rem 1rem', borderBottom: '1px solid var(--cmp-border)' }}>
-        <Select.Root value={filterType} onChange={(value) => onFilterTypeChange(value as StyleFilterType)}>
+      <div className={styles.styleSelect}>
+        <Select.Root
+          value={filterType}
+          onChange={value => onFilterTypeChange(value as StyleFilterType)}
+        >
           <Select.Item value="all">All Properties</Select.Item>
           <Select.Item value="fill">Fill</Select.Item>
           <Select.Item value="stroke">Stroke</Select.Item>
@@ -46,72 +57,74 @@ export const StylesPanel = ({ groups, onStyleClick, filterType, onFilterTypeChan
           No styles found
         </div>
       ) : (
-        <Accordion.Root
-          type={'multiple'}
-          value={openItems}
-        >
-        {groups.map(group => {
-          const groupId = group.stylesheetId ?? 'no-stylesheet';
+        <Accordion.Root type={'multiple'} value={openItems}>
+          {groups.map(group => {
+            const groupId = group.stylesheetId ?? 'no-stylesheet';
 
-          return (
-            <Accordion.Item key={groupId} value={groupId}>
-              <Accordion.ItemHeader>
-                <div className={styles.stylesheetName}>
-                  <span>{group.stylesheetName}</span>
-                  {group.stylesheetType && (
-                    <span style={{ fontSize: '0.625rem', opacity: 0.7 }}>
-                      ({group.stylesheetType})
-                    </span>
-                  )}
-                </div>
-              </Accordion.ItemHeader>
-              <Accordion.ItemContent>
-                <div className={styles.styleList}>
-                  {group.styles.map((style, idx) => (
-                    <div
-                      key={`${groupId}-${idx}`}
-                      className={styles.styleItem}
-                      onClick={() => onStyleClick(style)}
-                    >
-                      <div className={styles.stylePreview}>
-                        <PickerCanvas
-                          width={PickerConfig.size}
-                          height={PickerConfig.size}
-                          diagram={style.previewDiagram}
-                          showHover={false}
-                          onMouseDown={() => onStyleClick(style)}
-                        />
-                      </div>
-                      <div className={styles.styleInfo}>
-                        <div className={styles.styleCount}>
-                          {style.count}
-                          {style.isDirty && <span className={styles.styleDirty}>*</span>}
+            return (
+              <Accordion.Item key={groupId} value={groupId}>
+                <Accordion.ItemHeader>
+                  <div className={styles.stylesheetName}>
+                    <span>{group.stylesheetName}</span>
+                    {group.stylesheetType && (
+                      <span style={{ fontSize: '0.625rem', opacity: 0.7, marginLeft: '0.25rem' }}>
+                        ({group.stylesheetType})
+                      </span>
+                    )}
+                  </div>
+                </Accordion.ItemHeader>
+                <Accordion.ItemContent>
+                  <div className={styles.styleList}>
+                    {group.styles.map((style, idx) => (
+                      <div
+                        key={`${groupId}-${idx}`}
+                        className={styles.styleItem}
+                        onClick={() => onStyleClick(style)}
+                      >
+                        <div className={styles.stylePreview}>
+                          <PickerCanvas
+                            width={PickerConfig.size}
+                            height={PickerConfig.size}
+                            diagram={style.previewDiagram}
+                            showHover={false}
+                            onMouseDown={() => onStyleClick(style)}
+                          />
+                        </div>
+                        <div className={styles.styleInfo}>
+                          <div className={styles.styleCount}>
+                            {style.count}
+                            {style.isDirty && <span className={styles.styleDirty}>*</span>}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </Accordion.ItemContent>
-            </Accordion.Item>
-          );
-        })}
+                    ))}
+                  </div>
+                </Accordion.ItemContent>
+              </Accordion.Item>
+            );
+          })}
         </Accordion.Root>
       )}
     </ToolWindowPanel>
   );
 };
 
-export const TextStylesPanel = ({ groups, onTextStyleClick, filterType, onFilterTypeChange }: TextStylesPanelProps) => {
+export const TextStylesPanel = ({
+  groups,
+  onTextStyleClick,
+  filterType,
+  onFilterTypeChange
+}: TextStylesPanelProps) => {
   // Keep all accordions open by default
-  const openItems = useMemo(
-    () => groups.map(g => g.stylesheetId ?? 'no-stylesheet'),
-    [groups]
-  );
+  const openItems = useMemo(() => groups.map(g => g.stylesheetId ?? 'no-stylesheet'), [groups]);
 
   return (
     <ToolWindowPanel mode={'headless-no-padding'} id={'text-styles-list'} title={'Text Styles'}>
-      <div style={{ padding: '0.5rem 1rem', borderBottom: '1px solid var(--cmp-border)' }}>
-        <Select.Root value={filterType} onChange={(value) => onFilterTypeChange(value as StyleFilterType)}>
+      <div className={styles.styleSelect}>
+        <Select.Root
+          value={filterType}
+          onChange={value => onFilterTypeChange(value as StyleFilterType)}
+        >
           <Select.Item value="all">All Properties</Select.Item>
           <Select.Item value="fill">Fill</Select.Item>
           <Select.Item value="stroke">Stroke</Select.Item>
@@ -125,69 +138,70 @@ export const TextStylesPanel = ({ groups, onTextStyleClick, filterType, onFilter
           No text styles found
         </div>
       ) : (
-        <Accordion.Root
-          type={'multiple'}
-          value={openItems}
-        >
-        {groups.map(group => {
-          const groupId = group.stylesheetId ?? 'no-stylesheet';
+        <Accordion.Root type={'multiple'} value={openItems}>
+          {groups.map(group => {
+            const groupId = group.stylesheetId ?? 'no-stylesheet';
 
-          return (
-            <Accordion.Item key={groupId} value={groupId}>
-              <Accordion.ItemHeader>
-                <div className={styles.stylesheetName}>
-                  <span>{group.stylesheetName}</span>
-                  {group.stylesheetType && (
-                    <span style={{ fontSize: '0.625rem', opacity: 0.7 }}>
-                      ({group.stylesheetType})
-                    </span>
-                  )}
-                </div>
-              </Accordion.ItemHeader>
-              <Accordion.ItemContent>
-                <div className={styles.fontList}>
-                  {group.styles.map((textStyle, idx) => {
-                    const key = `${groupId}-${idx}`;
-                    const fontStyle = {
-                      fontFamily: textStyle.fontFamily,
-                      fontSize: `${Math.min(textStyle.fontSize, 14)}px`,
-                      fontWeight: textStyle.bold ? 'bold' : 'normal',
-                      fontStyle: textStyle.italic ? 'italic' : 'normal'
-                    };
+            return (
+              <Accordion.Item key={groupId} value={groupId}>
+                <Accordion.ItemHeader>
+                  <div className={styles.stylesheetName}>
+                    <span>{group.stylesheetName}</span>
+                    {group.stylesheetType && (
+                      <span style={{ fontSize: '0.625rem', opacity: 0.7, marginLeft: '0.25rem' }}>
+                        ({group.stylesheetType})
+                      </span>
+                    )}
+                  </div>
+                </Accordion.ItemHeader>
+                <Accordion.ItemContent>
+                  <div className={styles.fontList}>
+                    {group.styles.map((textStyle, idx) => {
+                      const key = `${groupId}-${idx}`;
+                      const fontStyle = {
+                        fontFamily: textStyle.fontFamily,
+                        fontSize: `${Math.min(textStyle.fontSize, 14)}px`,
+                        fontWeight: textStyle.bold ? 'bold' : 'normal',
+                        fontStyle: textStyle.italic ? 'italic' : 'normal'
+                      };
 
-                    const metaParts = [
-                      `${textStyle.fontSize}px`,
-                      textStyle.bold && 'Bold',
-                      textStyle.italic && 'Italic',
-                      textStyle.color
-                    ].filter(Boolean);
+                      const metaParts = [
+                        `${textStyle.fontSize}px`,
+                        textStyle.bold && 'Bold',
+                        textStyle.italic && 'Italic',
+                        textStyle.color
+                      ].filter(Boolean);
 
-                    return (
-                      <div
-                        key={key}
-                        className={styles.fontItem}
-                        onClick={() => onTextStyleClick(textStyle)}
-                      >
-                        <div className={styles.fontIcon}>
-                          <TbLetterCase size={18} />
-                        </div>
-                        <div className={styles.fontDetails}>
-                          <div className={styles.fontPreview} style={fontStyle}>
-                            {textStyle.fontFamily}
+                      return (
+                        <div
+                          key={key}
+                          className={styles.fontItem}
+                          onClick={() => onTextStyleClick(textStyle)}
+                        >
+                          <div className={styles.fontIcon}>
+                            <TbLetterCase size={18} />
                           </div>
-                          <div className={styles.fontCount}>
-                            {metaParts.join(', ')} · {textStyle.count} element{textStyle.count !== 1 ? 's' : ''}
-                            {textStyle.isDirty && <span className={styles.fontDirty}>*</span>}
+                          <div className={styles.fontDetails}>
+                            <div className={styles.fontPreview} style={fontStyle}>
+                              {textStyle.fontFamily}
+                            </div>
+                            <div className={styles.fontCount}>
+                              {metaParts.join(', ')}
+                              <div>
+                                {textStyle.count} element
+                                {textStyle.count !== 1 ? 's' : ''}
+                                {textStyle.isDirty && <span className={styles.fontDirty}>*</span>}
+                              </div>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </Accordion.ItemContent>
-            </Accordion.Item>
-          );
-        })}
+                      );
+                    })}
+                  </div>
+                </Accordion.ItemContent>
+              </Accordion.Item>
+            );
+          })}
         </Accordion.Root>
       )}
     </ToolWindowPanel>

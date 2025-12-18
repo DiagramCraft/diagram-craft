@@ -1,20 +1,20 @@
-import { Diagram, type DiagramCRDT } from '@diagram-craft/model/diagram';
+import { Diagram } from '@diagram-craft/model/diagram';
 import type { DiagramNode } from '@diagram-craft/model/diagramNode';
 import type { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import type { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { Definitions } from '@diagram-craft/model/elementDefinitionRegistry';
-import { createThumbnailDiagramForNode } from '@diagram-craft/canvas-app/diagramThumbnail';
+import {
+  createThumbnailDiagramForEdge,
+  createThumbnailDiagramForNode
+} from '@diagram-craft/canvas-app/diagramThumbnail';
 import { Stylesheet } from '@diagram-craft/model/diagramStyles';
-import { NodeProps } from '@diagram-craft/model/diagramProps';
+import { type EdgeProps, type ElementProps, NodeProps } from '@diagram-craft/model/diagramProps';
 import { nodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { newid } from '@diagram-craft/utils/id';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { FreeEndpoint } from '@diagram-craft/model/endpoint';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
-import { NoOpCRDTMap, NoOpCRDTRoot } from '@diagram-craft/collaboration/noopCrdt';
 
 export type StyleFilterType = 'all' | 'fill' | 'stroke' | 'shadow' | 'effects' | 'text';
 
@@ -27,7 +27,7 @@ export type StyleCombination = {
   stylesheetId: string | null;
   stylesheetName: string;
   isDirty: boolean;
-  sampleProps: Partial<NodeProps>;
+  sampleProps: Partial<NodeProps | EdgeProps>;
   nodeType: string;
 };
 
@@ -62,12 +62,7 @@ export type TextStylesheetGroup = {
 
 const PREVIEW_CACHE = new Map<string, { diagram: Diagram; element: DiagramNode | DiagramEdge }>();
 
-const getAllElementsFromDiagram = (diagram: Diagram): DiagramElement[] =>
-  diagram.layers.all
-    .filter((layer): layer is RegularLayer => layer.type === 'regular')
-    .flatMap(layer => Array.from(layer.elements));
-
-export const extractAppearanceProps = (element: DiagramElement): Partial<NodeProps> => {
+export const extractAppearanceProps = (element: DiagramElement): Partial<NodeProps | EdgeProps> => {
   if (isNode(element)) {
     const props = element.renderProps;
     return {
@@ -79,40 +74,49 @@ export const extractAppearanceProps = (element: DiagramElement): Partial<NodePro
       geometry: props.geometry
     };
   } else {
-    // For edges, only include stroke, shadow, effects
-    const props = element.renderProps;
+    const props = element.renderProps as Partial<EdgeProps>;
     return {
       stroke: props.stroke,
       shadow: props.shadow,
-      effects: props.effects
+      effects: props.effects,
+      arrow: props.arrow
     };
   }
 };
 
 export const extractFilteredProps = (
-  element: DiagramElement,
-  filterType: StyleFilterType
-): Partial<NodeProps> => {
-  switch (filterType) {
+  el: DiagramElement,
+  filter: StyleFilterType
+): Partial<NodeProps | EdgeProps> => {
+  switch (filter) {
     case 'fill':
-      if (isNode(element)) {
-        return { fill: element.renderProps.fill };
+      if (isNode(el)) {
+        return { fill: el.renderProps.fill };
+      } else {
+        return {};
       }
-      return {};
     case 'stroke':
-      return { stroke: element.renderProps.stroke };
-    case 'shadow':
-      return { shadow: element.renderProps.shadow };
-    case 'effects':
-      return { effects: element.renderProps.effects };
-    case 'text':
-      if (isNode(element)) {
-        return { text: element.renderProps.text };
+      if (isNode(el)) {
+        return { stroke: el.renderProps.stroke };
+      } else {
+        return {
+          stroke: el.renderProps.stroke,
+          arrow: (el.renderProps as Partial<EdgeProps>).arrow
+        };
       }
-      return {};
-    case 'all':
+    case 'shadow':
+      return { shadow: el.renderProps.shadow };
+    case 'effects':
+      return { effects: el.renderProps.effects };
+    case 'text':
+      if (isNode(el)) {
+        return { text: el.renderProps.text };
+      } else {
+        return {};
+      }
+
     default:
-      return extractAppearanceProps(element);
+      return extractAppearanceProps(el);
   }
 };
 
@@ -129,71 +133,47 @@ const sortKeys = (obj: unknown): unknown => {
   return sorted;
 };
 
-export const createStyleHash = (props: Partial<NodeProps>): string => {
+export const createStyleHash = (props: Partial<NodeProps | EdgeProps>): string => {
   const sorted = sortKeys(props);
   return JSON.stringify(sorted);
 };
 
-export const createPreviewDiagram = (
-  props: Partial<NodeProps>,
-  nodeType: string,
-  definitions: Definitions
-): { diagram: Diagram; element: DiagramNode | DiagramEdge } => {
-  // For edges, create a simple horizontal edge
-  if (nodeType === 'edge') {
-    const dest = new Diagram(
-      newid(),
-      newid(),
-      new DiagramDocument(
-        definitions.nodeDefinitions,
-        definitions.edgeDefinitions,
-        true,
-        new NoOpCRDTRoot()
-      ),
-      new NoOpCRDTMap<DiagramCRDT>()
-    );
+export const createPreview = (props: Partial<ElementProps>, type: string, defs: Definitions) => {
+  if (type === 'edge') {
+    const { diagram, edge } = createThumbnailDiagramForEdge((_: Diagram, layer: RegularLayer) => {
+      return ElementFactory.edge(
+        newid(),
+        new FreeEndpoint({ x: 5, y: 25 }),
+        new FreeEndpoint({ x: 45, y: 25 }),
+        props as Partial<EdgeProps>,
+        {},
+        [],
+        layer
+      );
+    }, defs);
 
-    const uow = UnitOfWork.immediate(dest);
-    const layer = new RegularLayer(newid(), newid(), [], dest);
-    dest.layers.add(layer, uow);
+    diagram.viewBox.dimensions = { w: 50, h: 50 };
+    diagram.viewBox.offset = { x: 0, y: 0 };
 
-    const edge = ElementFactory.edge(
-      newid(),
-      new FreeEndpoint({ x: 5, y: 25 }),
-      new FreeEndpoint({ x: 45, y: 25 }),
-      props as any,
-      {},
-      [],
-      layer
-    );
-    layer.addElement(edge, uow);
-
-    dest.viewBox.dimensions = { w: 50, h: 50 };
-    dest.viewBox.offset = { x: -5, y: -5 };
-
-    return { diagram: dest, element: edge };
-  }
-
-  // For nodes, use existing node creation logic
-  const { diagram, node } = createThumbnailDiagramForNode(
-    (_d: Diagram, l: RegularLayer) => {
+    return { diagram, element: edge };
+  } else {
+    const { diagram, node } = createThumbnailDiagramForNode((_: Diagram, layer: RegularLayer) => {
       return ElementFactory.node(
         newid(),
-        nodeType,
-        { x: 0, y: 0, w: 40, h: 40, r: 0 },
-        l,
-        props,
+        type,
+        { x: 5, y: 5, w: 40, h: 40, r: 0 },
+        layer,
+        props as Partial<NodeProps>,
         {}
       );
-    },
-    definitions
-  );
+    }, defs);
 
-  // Set viewBox to show the node with padding
-  diagram.viewBox.dimensions = { w: 50, h: 50 };
-  diagram.viewBox.offset = { x: -5, y: -5 };
+    // Set viewBox to show the node with padding
+    diagram.viewBox.dimensions = { w: 50, h: 50 };
+    diagram.viewBox.offset = { x: 0, y: 0 };
 
-  return { diagram, element: node };
+    return { diagram, element: node };
+  }
 };
 
 const isPropsDirty = (
@@ -246,13 +226,15 @@ export const checkStyleDirty = (
   );
 };
 
-export const collectTextStyles = (diagram: Diagram, selectedElements?: DiagramElement[]): TextStylesheetGroup[] => {
+export const collectTextStyles = (
+  diagram: Diagram,
+  selectedElements?: DiagramElement[]
+): TextStylesheetGroup[] => {
   const textStyleMap = new Map<string, TextStyleCombination & { anyDirty: boolean }>();
 
   // Use selected elements if provided, otherwise all elements from diagram
-  const elements = selectedElements && selectedElements.length > 0
-    ? selectedElements
-    : getAllElementsFromDiagram(diagram);
+  const elements =
+    selectedElements && selectedElements.length > 0 ? selectedElements : [...diagram.allElements()];
 
   // Only process nodes (edges don't have text)
   const nodes = elements.filter(isNode);
@@ -341,7 +323,15 @@ export const collectTextStyles = (diagram: Diagram, selectedElements?: DiagramEl
     if (group.stylesheetId) {
       const stylesheet = diagram.document.styles.getTextStyle(group.stylesheetId);
       if (stylesheet?.props) {
-        const props = stylesheet.props as { text?: { font?: string; fontSize?: number; bold?: boolean; italic?: boolean; color?: string } };
+        const props = stylesheet.props as {
+          text?: {
+            font?: string;
+            fontSize?: number;
+            bold?: boolean;
+            italic?: boolean;
+            color?: string;
+          };
+        };
         const textProps = props.text;
         if (!textProps) continue;
 
@@ -404,9 +394,8 @@ export const collectStyles = (
   const styleMap = new Map<string, StyleCombination & { nodeTypes: Set<string> }>();
 
   // Use selected elements if provided, otherwise all elements from diagram
-  const elements = selectedElements && selectedElements.length > 0
-    ? selectedElements
-    : getAllElementsFromDiagram(diagram);
+  const elements =
+    selectedElements && selectedElements.length > 0 ? selectedElements : [...diagram.allElements()];
 
   // First pass: collect all elements by style and track their node types
   for (const element of elements) {
@@ -422,7 +411,7 @@ export const collectStyles = (
 
     // If element has a stylesheet and is not dirty, use stylesheet props for hashing
     // This ensures clean stylesheet usage gets grouped together
-    let appearanceProps: Partial<NodeProps>;
+    let appearanceProps: Partial<NodeProps | EdgeProps>;
     if (stylesheet && !isDirty) {
       // Use filtered stylesheet props
       const stylesheetProps = stylesheet.props as Partial<NodeProps>;
@@ -493,7 +482,7 @@ export const collectStyles = (
     const cacheKey = `${combo.styleHash}-${nodeType}`;
     let preview = PREVIEW_CACHE.get(cacheKey);
     if (!preview) {
-      preview = createPreviewDiagram(combo.sampleProps, nodeType, diagram.document.definitions);
+      preview = createPreview(combo.sampleProps, nodeType, diagram.document.definitions);
       PREVIEW_CACHE.set(cacheKey, preview);
     }
 
@@ -508,7 +497,7 @@ export const collectStyles = (
     if (!groupMap.has(key)) {
       // Try to get stylesheet as node or edge style
       const stylesheet = key
-        ? diagram.document.styles.getNodeStyle(key) ?? diagram.document.styles.getEdgeStyle(key)
+        ? (diagram.document.styles.getNodeStyle(key) ?? diagram.document.styles.getEdgeStyle(key))
         : undefined;
       groupMap.set(key, {
         stylesheetId: key,
@@ -527,7 +516,9 @@ export const collectStyles = (
   // Add default stylesheet style if not already present, or merge with existing
   for (const group of groupMap.values()) {
     if (group.stylesheetId) {
-      const stylesheet = diagram.document.styles.getNodeStyle(group.stylesheetId) ?? diagram.document.styles.getEdgeStyle(group.stylesheetId);
+      const stylesheet =
+        diagram.document.styles.getNodeStyle(group.stylesheetId) ??
+        diagram.document.styles.getEdgeStyle(group.stylesheetId);
       if (stylesheet?.props) {
         // Extract filtered appearance props from stylesheet based on filterType
         const stylesheetProps = stylesheet.props as Partial<NodeProps>;
@@ -581,7 +572,7 @@ export const collectStyles = (
           const cacheKey = `${styleHash}-${nodeType}`;
           let preview = PREVIEW_CACHE.get(cacheKey);
           if (!preview) {
-            preview = createPreviewDiagram(appearanceProps, nodeType, diagram.document.definitions);
+            preview = createPreview(appearanceProps, nodeType, diagram.document.definitions);
             PREVIEW_CACHE.set(cacheKey, preview);
           }
 

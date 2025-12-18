@@ -4,7 +4,15 @@ import { useEventListener } from '../../hooks/useEventListener';
 import { useCallback, useState, useRef, useEffect } from 'react';
 import { StylesPanel, TextStylesPanel } from './StylesPanel';
 import { ToolWindow } from '../ToolWindow';
-import { collectStyles, collectTextStyles, type StyleCombination, type TextStyleCombination, type StyleFilterType, type StylesheetGroup, type TextStylesheetGroup } from './stylesPanelUtils';
+import {
+  collectStyles,
+  collectTextStyles,
+  type StyleCombination,
+  type TextStyleCombination,
+  type StyleFilterType,
+  type StylesheetGroup,
+  type TextStylesheetGroup
+} from './stylesPanelUtils';
 import { debounce } from '@diagram-craft/utils/debounce';
 
 export const StylesTab = () => {
@@ -111,24 +119,22 @@ export const StylesTab = () => {
   );
 
   return (
-    <>
-      <ToolWindow.TabContent>
-        {filterType === 'text' ? (
-          <TextStylesPanel
-            groups={cachedTextGroups}
-            onTextStyleClick={handleTextStyleClick}
-            filterType={filterType}
-            onFilterTypeChange={setFilterType}
-          />
-        ) : (
-          <StylesPanel
-            groups={cachedVisualGroups}
-            onStyleClick={handleStyleClick}
-            filterType={filterType}
-            onFilterTypeChange={setFilterType}
-          />
-        )}
-      </ToolWindow.TabContent>
-    </>
+    <ToolWindow.TabContent>
+      {filterType === 'text' ? (
+        <TextStylesPanel
+          groups={cachedTextGroups}
+          onTextStyleClick={handleTextStyleClick}
+          filterType={filterType}
+          onFilterTypeChange={setFilterType}
+        />
+      ) : (
+        <StylesPanel
+          groups={cachedVisualGroups}
+          onStyleClick={handleStyleClick}
+          filterType={filterType}
+          onFilterTypeChange={setFilterType}
+        />
+      )}
+    </ToolWindow.TabContent>
   );
 };
