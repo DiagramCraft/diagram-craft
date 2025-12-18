@@ -295,6 +295,57 @@ export const collectTextStyles = (diagram: Diagram, selectedElements?: DiagramEl
     group.totalElements += textStyle.count;
   }
 
+  // Add default stylesheet text styles if not already present, or merge with existing
+  for (const group of groupMap.values()) {
+    if (group.stylesheetId) {
+      const stylesheet = diagram.document.styles.getTextStyle(group.stylesheetId);
+      if (stylesheet?.props) {
+        const props = stylesheet.props as { text?: { font?: string; fontSize?: number; bold?: boolean; italic?: boolean; color?: string } };
+        const textProps = props.text;
+        if (!textProps) continue;
+
+        const defaultFont = textProps.font ?? 'sans-serif';
+        const defaultSize = textProps.fontSize ?? 10;
+        const defaultBold = textProps.bold ?? false;
+        const defaultItalic = textProps.italic ?? false;
+        const defaultColor = textProps.color;
+
+        // Check if this text style already exists
+        const existingStyle = group.styles.find(
+          s =>
+            s.fontFamily === defaultFont &&
+            s.fontSize === defaultSize &&
+            s.bold === defaultBold &&
+            s.italic === defaultItalic &&
+            s.color === defaultColor
+        );
+
+        if (existingStyle) {
+          // Move existing style to the beginning if it's not dirty (clean stylesheet usage)
+          if (!existingStyle.isDirty) {
+            const index = group.styles.indexOf(existingStyle);
+            group.styles.splice(index, 1);
+            group.styles.unshift(existingStyle);
+          }
+        } else {
+          // Add the default text style with 0 count at the beginning
+          group.styles.unshift({
+            fontFamily: defaultFont,
+            fontSize: defaultSize,
+            bold: defaultBold,
+            italic: defaultItalic,
+            color: defaultColor,
+            elements: [],
+            count: 0,
+            stylesheetId: group.stylesheetId,
+            stylesheetName: group.stylesheetName,
+            isDirty: false
+          });
+        }
+      }
+    }
+  }
+
   // Sort groups: named stylesheets first (alphabetically), then "No stylesheet"
   const groups = Array.from(groupMap.values());
   return groups.sort((a, b) => {
@@ -318,9 +369,6 @@ export const collectStyles = (
 
   // First pass: collect all elements by style and track their node types
   for (const element of elements) {
-    const appearanceProps = extractFilteredProps(element, filterType);
-    const styleHash = createStyleHash(appearanceProps);
-
     const stylesheetId = element.metadata.style ?? null;
     const stylesheet = stylesheetId
       ? isNode(element)
@@ -330,6 +378,46 @@ export const collectStyles = (
     const stylesheetName = stylesheet?.name ?? 'No stylesheet';
 
     const isDirty = stylesheet ? checkStyleDirty(element, stylesheet) : false;
+
+    // If element has a stylesheet and is not dirty, use stylesheet props for hashing
+    // This ensures clean stylesheet usage gets grouped together
+    let appearanceProps: Partial<NodeProps>;
+    if (stylesheet && !isDirty) {
+      // Use filtered stylesheet props
+      const stylesheetProps = stylesheet.props as Partial<NodeProps>;
+      switch (filterType) {
+        case 'fill':
+          appearanceProps = { fill: stylesheetProps.fill };
+          break;
+        case 'stroke':
+          appearanceProps = { stroke: stylesheetProps.stroke };
+          break;
+        case 'shadow':
+          appearanceProps = { shadow: stylesheetProps.shadow };
+          break;
+        case 'effects':
+          appearanceProps = { effects: stylesheetProps.effects };
+          break;
+        case 'text':
+          appearanceProps = { text: stylesheetProps.text };
+          break;
+        case 'all':
+        default:
+          appearanceProps = {
+            fill: stylesheetProps.fill,
+            stroke: stylesheetProps.stroke,
+            shadow: stylesheetProps.shadow,
+            effects: stylesheetProps.effects,
+            text: stylesheetProps.text,
+            geometry: stylesheetProps.geometry
+          };
+      }
+    } else {
+      // Use element's actual rendered props
+      appearanceProps = extractFilteredProps(element, filterType);
+    }
+
+    const styleHash = createStyleHash(appearanceProps);
 
     if (!styleMap.has(styleHash)) {
       styleMap.set(styleHash, {
@@ -395,28 +483,56 @@ export const collectStyles = (
     group.totalElements += style.count;
   }
 
-  // Add default stylesheet style if not already present
+  // Add default stylesheet style if not already present, or merge with existing
   for (const group of groupMap.values()) {
     if (group.stylesheetId) {
       const stylesheet = diagram.document.styles.getNodeStyle(group.stylesheetId) ?? diagram.document.styles.getEdgeStyle(group.stylesheetId);
       if (stylesheet?.props) {
-        // Extract appearance props from stylesheet
+        // Extract filtered appearance props from stylesheet based on filterType
         const stylesheetProps = stylesheet.props as Partial<NodeProps>;
-        const appearanceProps: Partial<NodeProps> = {
-          fill: stylesheetProps.fill,
-          stroke: stylesheetProps.stroke,
-          shadow: stylesheetProps.shadow,
-          effects: stylesheetProps.effects,
-          text: stylesheetProps.text,
-          geometry: stylesheetProps.geometry
-        };
+        let appearanceProps: Partial<NodeProps>;
+
+        switch (filterType) {
+          case 'fill':
+            appearanceProps = { fill: stylesheetProps.fill };
+            break;
+          case 'stroke':
+            appearanceProps = { stroke: stylesheetProps.stroke };
+            break;
+          case 'shadow':
+            appearanceProps = { shadow: stylesheetProps.shadow };
+            break;
+          case 'effects':
+            appearanceProps = { effects: stylesheetProps.effects };
+            break;
+          case 'text':
+            appearanceProps = { text: stylesheetProps.text };
+            break;
+          case 'all':
+          default:
+            appearanceProps = {
+              fill: stylesheetProps.fill,
+              stroke: stylesheetProps.stroke,
+              shadow: stylesheetProps.shadow,
+              effects: stylesheetProps.effects,
+              text: stylesheetProps.text,
+              geometry: stylesheetProps.geometry
+            };
+        }
 
         const styleHash = createStyleHash(appearanceProps);
 
         // Check if this style already exists
-        const exists = group.styles.some(s => s.styleHash === styleHash);
+        const existingStyle = group.styles.find(s => s.styleHash === styleHash);
 
-        if (!exists) {
+        if (existingStyle) {
+          // Move existing style to the beginning if it's not dirty (clean stylesheet usage)
+          if (!existingStyle.isDirty) {
+            const index = group.styles.indexOf(existingStyle);
+            group.styles.splice(index, 1);
+            group.styles.unshift(existingStyle);
+          }
+        } else {
           // Determine node type for preview (use 'rect' for nodes, 'edge' for edges)
           const nodeType = stylesheet.type === 'edge' ? 'edge' : 'rect';
 
