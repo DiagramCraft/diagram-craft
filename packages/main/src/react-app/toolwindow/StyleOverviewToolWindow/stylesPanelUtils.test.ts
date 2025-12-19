@@ -1,11 +1,11 @@
 import { describe, expect, test } from 'vitest';
-import type { StylesheetGroup } from './stylesPanelUtils';
+import { extractPropsToConsider, type StylesheetGroup } from './stylesPanelUtils';
 import { _test } from './stylesPanelUtils';
 import { TestModel } from '@diagram-craft/model/test-support/testModel';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import type { ElementProps } from '@diagram-craft/model/diagramProps';
 
-const { computeStyleDifferences, sortGroups, extractPropsToConsider } = _test;
+const { computeStyleDifferences, sortGroups } = _test;
 
 describe('stylesPanelUtils', () => {
   describe('extractPropsToConsider', () => {
@@ -17,7 +17,7 @@ describe('stylesPanelUtils', () => {
         props.stroke = { color: '#00ff00' };
       }, UnitOfWork.immediate(diagram));
 
-      const result = extractPropsToConsider(node, 'fill');
+      const result = extractPropsToConsider(node.storedProps, 'fill', true);
 
       expect(result).toEqual({ fill: { color: '#ff0000' } });
       expect(result).not.toHaveProperty('stroke');
@@ -29,7 +29,7 @@ describe('stylesPanelUtils', () => {
       layer.addNode({ id: 'end' });
       const edge = layer.addEdge({ startNodeId: 'start', endNodeId: 'end' });
 
-      const result = extractPropsToConsider(edge, 'fill');
+      const result = extractPropsToConsider(edge.storedProps, 'fill', false);
 
       expect(result).toEqual({});
     });
@@ -42,7 +42,7 @@ describe('stylesPanelUtils', () => {
         props.fill = { color: '#ff0000' };
       }, UnitOfWork.immediate(diagram));
 
-      const result = extractPropsToConsider(node, 'stroke');
+      const result = extractPropsToConsider(node.storedProps, 'stroke', true);
 
       expect(result).toEqual({ stroke: { color: '#00ff00', width: 2 } });
       expect(result).not.toHaveProperty('fill');
@@ -58,7 +58,7 @@ describe('stylesPanelUtils', () => {
         props.arrow = { start: { type: 'SQUARE' }, end: { type: 'ARROW' } };
       }, UnitOfWork.immediate(diagram));
 
-      const result = extractPropsToConsider(edge, 'stroke');
+      const result = extractPropsToConsider(edge.storedProps, 'stroke', false);
 
       expect(result).toHaveProperty('stroke');
       expect(result).toHaveProperty('arrow');
@@ -72,7 +72,7 @@ describe('stylesPanelUtils', () => {
         props.fill = { color: '#ff0000' };
       }, UnitOfWork.immediate(diagram));
 
-      const result = extractPropsToConsider(node, 'shadow');
+      const result = extractPropsToConsider(node.storedProps, 'shadow', true);
 
       expect(result).toEqual({ shadow: { enabled: true, color: '#000000' } });
       expect(result).not.toHaveProperty('fill');
@@ -86,7 +86,7 @@ describe('stylesPanelUtils', () => {
         props.fill = { color: '#ff0000' };
       }, UnitOfWork.immediate(diagram));
 
-      const result = extractPropsToConsider(node, 'effects');
+      const result = extractPropsToConsider(node.storedProps, 'effects', true);
 
       expect(result).toEqual({ effects: { blur: 5, opacity: 0.8 } });
       expect(result).not.toHaveProperty('fill');
@@ -100,7 +100,7 @@ describe('stylesPanelUtils', () => {
         props.fill = { color: '#ff0000' };
       }, UnitOfWork.immediate(diagram));
 
-      const result = extractPropsToConsider(node, 'text');
+      const result = extractPropsToConsider(node.storedProps, 'text', true);
 
       expect(result).toEqual({ text: { font: 'Arial', fontSize: 14 } });
       expect(result).not.toHaveProperty('fill');
@@ -112,7 +112,7 @@ describe('stylesPanelUtils', () => {
       layer.addNode({ id: 'end' });
       const edge = layer.addEdge({ startNodeId: 'start', endNodeId: 'end' });
 
-      const result = extractPropsToConsider(edge, 'text');
+      const result = extractPropsToConsider(edge.storedProps, 'text', false);
 
       expect(result).toEqual({});
     });
@@ -129,7 +129,7 @@ describe('stylesPanelUtils', () => {
         props.geometry = { flipV: true };
       }, UnitOfWork.immediate(diagram));
 
-      const result = extractPropsToConsider(node, 'all');
+      const result = extractPropsToConsider(node.storedProps, 'all', true);
 
       expect(result).toHaveProperty('fill');
       expect(result).toHaveProperty('stroke');
@@ -151,7 +151,7 @@ describe('stylesPanelUtils', () => {
         props.arrow = { start: { type: 'SQUARE' } };
       }, UnitOfWork.immediate(diagram));
 
-      const result = extractPropsToConsider(edge, 'all');
+      const result = extractPropsToConsider(edge.storedProps, 'all', false);
 
       expect(result).toHaveProperty('stroke');
       expect(result).toHaveProperty('shadow');

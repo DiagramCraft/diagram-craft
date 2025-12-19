@@ -72,8 +72,8 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
       <ActionMenuItem action={'DUPLICATE'} />
       <Menu.Separator />
 
-      <ActionMenuItem action={'STYLE_COPY'} />
-      <ActionMenuItem action={'STYLE_PASTE'} />
+      <ActionMenuItem action={'STYLE_COPY'} arg={{}} />
+      <ActionMenuItem action={'STYLE_PASTE'} arg={{}} />
       <Menu.Separator />
 
       <ActionMenuItem action={'GROUP_GROUP'} />
