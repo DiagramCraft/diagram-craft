@@ -15,7 +15,7 @@ import { edgeDefaults, nodeDefaults } from '@diagram-craft/model/diagramDefaults
 import { newid } from '@diagram-craft/utils/id';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { FreeEndpoint } from '@diagram-craft/model/endpoint';
-import { deepClone, deepMerge } from '@diagram-craft/utils/object';
+import { deepMerge } from '@diagram-craft/utils/object';
 import { isEmptyString } from '@diagram-craft/utils/strings';
 import { unique } from '@diagram-craft/utils/array';
 
@@ -99,7 +99,7 @@ const extractPropsToConsider = (
   }
 };
 
-export const createPreview = (props: Partial<ElementProps>, type: string, defs: Definitions) => {
+const createPreview = (props: Partial<ElementProps>, type: string, defs: Definitions) => {
   if (type === 'edge') {
     const { diagram, edge } = createThumbnailDiagramForEdge((_: Diagram, layer: RegularLayer) => {
       return ElementFactory.edge(
@@ -146,61 +146,19 @@ export const createPreview = (props: Partial<ElementProps>, type: string, defs: 
   }
 };
 
-const isPropsDirty = (
-  props: Record<string, unknown>,
-  stylesheetProps: Record<string, unknown>,
-  path: string[] = []
-): boolean => {
-  for (const key of Object.keys(props)) {
-    const value = props[key];
-    const stylesheetValue = stylesheetProps[key];
-
-    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-      if (stylesheetValue === undefined) {
-        // Empty object is equivalent to undefined
-        if (Object.keys(value).length === 0) continue;
-
-        // Check if all properties match defaults
-        const isAllDefaults = Object.keys(value).every(k => {
-          const fullPath = [...path, key, k].join('.');
-          return nodeDefaults.isSameAsDefaults(props, fullPath as keyof NodeProps);
-        });
-        if (isAllDefaults) continue;
-
-        return true;
-      } else if (typeof stylesheetValue === 'object' && stylesheetValue !== null) {
-        const dirty = isPropsDirty(
-          value as Record<string, unknown>,
-          stylesheetValue as Record<string, unknown>,
-          [...path, key]
-        );
-        if (dirty) return true;
-      }
-    } else if (value !== undefined && value !== stylesheetValue) {
-      return true;
-    }
-  }
-  return false;
-};
-
-export const checkStyleDirty = (
-  element: DiagramElement,
-  stylesheet: Stylesheet<'node'> | Stylesheet<'edge'> | Stylesheet<'text'> | undefined
-): boolean => {
-  if (!stylesheet) return false;
-
-  const propsFromElement = stylesheet.getPropsFromElement(element);
-  return isPropsDirty(
-    propsFromElement as Record<string, unknown>,
-    stylesheet.props as Record<string, unknown>
-  );
-};
+const sortGroups = <T>(groups: StylesheetGroup<T>[]) =>
+  groups.sort((a, b) => {
+    // Groups without stylesheet or with null id go to the end
+    if (!a.stylesheet || a.stylesheet.id === null) return 1;
+    if (!b.stylesheet || b.stylesheet.id === null) return -1;
+    return a.stylesheet.name.localeCompare(b.stylesheet.name);
+  });
 
 export const collectTextStyles = (
   diagram: Diagram,
   elements: DiagramElement[]
 ): StylesheetGroup<TextStyleCombination>[] => {
-  const textStyleMap = new Map<string, TextStyleCombination>();
+  const styleMap = new Map<string, TextStyleCombination>();
 
   const nodes = elements.filter(isNode);
   for (const node of nodes) {
@@ -217,21 +175,16 @@ export const collectTextStyles = (
 
     const key = `${differences.join('|')}|${stylesheetId}`;
 
-    if (!textStyleMap.has(key)) {
-      textStyleMap.set(key, {
-        stylesheet,
-        differences,
-        props: deepClone(node.renderProps),
-        elements: []
-      });
+    if (!styleMap.has(key)) {
+      styleMap.set(key, { stylesheet, differences, props: node.renderProps, elements: [] });
     }
 
-    textStyleMap.get(key)!.elements.push(node);
+    styleMap.get(key)!.elements.push(node);
   }
 
   // Group by stylesheet
   const groupMap = new Map<string | undefined, StylesheetGroup<TextStyleCombination>>();
-  for (const textStyle of textStyleMap.values()) {
+  for (const textStyle of styleMap.values()) {
     const key = textStyle.stylesheet?.id;
     if (!groupMap.has(key)) {
       groupMap.set(key, {
@@ -257,13 +210,7 @@ export const collectTextStyles = (
     group.totalElements += textStyle.elements.length;
   }
 
-  // Sort groups: named stylesheets first (alphabetically), then "No stylesheet"
-  const groups = Array.from(groupMap.values());
-  return groups.sort((a, b) => {
-    if (a.stylesheet?.id === null) return 1;
-    if (b.stylesheet?.id === null) return -1;
-    return a.stylesheet!.name.localeCompare(b.stylesheet!.name);
-  });
+  return sortGroups(Array.from(groupMap.values()));
 };
 
 export const collectStyles = (
@@ -287,12 +234,7 @@ export const collectStyles = (
     const key = `${differences.join('|')}|${stylesheetId}`;
 
     if (!styleMap.has(key)) {
-      styleMap.set(key, {
-        stylesheet,
-        differences,
-        props: deepClone(element.renderProps),
-        elements: []
-      });
+      styleMap.set(key, { stylesheet, differences, props: element.renderProps, elements: [] });
     }
 
     styleMap.get(key)!.elements.push(element);
@@ -304,7 +246,6 @@ export const collectStyles = (
 
     const nodeType = nodeTypes.length === 1 ? nodeTypes[0]! : 'rect';
 
-    // Create preview diagram (cached by style hash + node type)
     const cacheKey = `${key}-${nodeType}`;
     let preview = PREVIEW_CACHE.get(cacheKey);
     if (!preview) {
@@ -324,12 +265,7 @@ export const collectStyles = (
       groupMap.set(key, {
         stylesheet: style.stylesheet,
         styles: [
-          {
-            elements: [],
-            stylesheet: style.stylesheet,
-            differences: [],
-            props: style.props
-          }
+          { elements: [], stylesheet: style.stylesheet, differences: [], props: style.props }
         ],
         totalElements: 0
       });
@@ -344,13 +280,7 @@ export const collectStyles = (
     group.totalElements += style.elements.length;
   }
 
-  // Sort groups: named stylesheets first (alphabetically), then "No stylesheet"
-  const groups = Array.from(groupMap.values());
-  return groups.sort((a, b) => {
-    if (a.stylesheet?.id === null) return 1;
-    if (b.stylesheet?.id === null) return -1;
-    return a.stylesheet!.name.localeCompare(b.stylesheet!.name);
-  });
+  return sortGroups(Array.from(groupMap.values()));
 };
 
 /**
@@ -361,7 +291,7 @@ export const collectStyles = (
  * @param stylesheetProps - The stylesheet's props (optional)
  * @param isNodeStyle - Whether this is a node style (true) or edge style (false)
  */
-export const computeStyleDifferences = (
+const computeStyleDifferences = (
   elementProps: Partial<NodeProps | EdgeProps>,
   stylesheetProps: Partial<NodeProps | EdgeProps> | undefined,
   isNodeStyle: boolean
@@ -425,4 +355,10 @@ export const computeStyleDifferences = (
   }
 
   return differences;
+};
+
+export const _test = {
+  computeStyleDifferences,
+  sortGroups,
+  extractPropsToConsider
 };

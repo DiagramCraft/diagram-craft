@@ -29,34 +29,46 @@ type TextStylesPanelProps = {
   onFilterTypeChange: (filterType: StyleFilterType) => void;
 };
 
+type FilterSelectProps = {
+  filterType: StyleFilterType;
+  onFilterTypeChange: (filterType: StyleFilterType) => void;
+};
+
+const FilterSelect = ({ filterType, onFilterTypeChange }: FilterSelectProps) => (
+  <div className={styles.styleSelect}>
+    <Select.Root
+      value={filterType}
+      onChange={value => onFilterTypeChange(value as StyleFilterType)}
+    >
+      <Select.Item value="all">All Properties</Select.Item>
+      <Select.Item value="fill">Fill</Select.Item>
+      <Select.Item value="stroke">Stroke</Select.Item>
+      <Select.Item value="shadow">Shadow</Select.Item>
+      <Select.Item value="effects">Effects</Select.Item>
+      <Select.Item value="text">Text</Select.Item>
+    </Select.Root>
+  </div>
+);
+
+const EmptyStyleComponent = () => (
+  <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--base-fg-dim)' }}>
+    No styles found
+  </div>
+);
+
 export const StylesPanel = ({
   groups,
   onStyleClick,
   filterType,
   onFilterTypeChange
 }: StylesPanelProps) => {
-  // Keep all accordions open by default
   const openItems = useMemo(() => groups.map(g => g.stylesheet?.id ?? 'no-stylesheet'), [groups]);
 
   return (
     <ToolWindowPanel mode={'headless-no-padding'} id={'styles-list'} title={'Styles'}>
-      <div className={styles.styleSelect}>
-        <Select.Root
-          value={filterType}
-          onChange={value => onFilterTypeChange(value as StyleFilterType)}
-        >
-          <Select.Item value="all">All Properties</Select.Item>
-          <Select.Item value="fill">Fill</Select.Item>
-          <Select.Item value="stroke">Stroke</Select.Item>
-          <Select.Item value="shadow">Shadow</Select.Item>
-          <Select.Item value="effects">Effects</Select.Item>
-          <Select.Item value="text">Text</Select.Item>
-        </Select.Root>
-      </div>
+      <FilterSelect filterType={filterType} onFilterTypeChange={onFilterTypeChange} />
       {groups.length === 0 ? (
-        <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--base-fg-dim)' }}>
-          No styles found
-        </div>
+        <EmptyStyleComponent />
       ) : (
         <Accordion.Root type={'multiple'} value={openItems}>
           {groups.map(group => {
@@ -77,21 +89,6 @@ export const StylesPanel = ({
                 <Accordion.ItemContent>
                   <div className={styles.styleList}>
                     {group.styles.map((style, idx) => {
-                      // Use cached differences
-                      const tooltipContent =
-                        style.differences.length > 0 ? (
-                          <div
-                            key={`${groupId}-${idx}`}
-                            style={{
-                              whiteSpace: 'pre-line',
-                              fontFamily: 'monospace',
-                              fontSize: '0.75rem'
-                            }}
-                          >
-                            {style.differences.join('\n')}
-                          </div>
-                        ) : null;
-
                       const styleItem = (
                         <div
                           key={`${groupId}-${idx}`}
@@ -118,10 +115,14 @@ export const StylesPanel = ({
                         </div>
                       );
 
-                      return tooltipContent ? (
+                      return style.differences.length > 0 ? (
                         <Tooltip
                           key={`${groupId}-${idx}`}
-                          message={tooltipContent}
+                          message={
+                            <div className={styles.styleTooltip}>
+                              {style.differences.join('\n')}
+                            </div>
+                          }
                           element={styleItem}
                         />
                       ) : (
@@ -145,28 +146,13 @@ export const TextStylesPanel = ({
   filterType,
   onFilterTypeChange
 }: TextStylesPanelProps) => {
-  // Keep all accordions open by default
   const openItems = useMemo(() => groups.map(g => g.stylesheet?.id ?? 'no-stylesheet'), [groups]);
 
   return (
     <ToolWindowPanel mode={'headless-no-padding'} id={'text-styles-list'} title={'Text Styles'}>
-      <div className={styles.styleSelect}>
-        <Select.Root
-          value={filterType}
-          onChange={value => onFilterTypeChange(value as StyleFilterType)}
-        >
-          <Select.Item value="all">All Properties</Select.Item>
-          <Select.Item value="fill">Fill</Select.Item>
-          <Select.Item value="stroke">Stroke</Select.Item>
-          <Select.Item value="shadow">Shadow</Select.Item>
-          <Select.Item value="effects">Effects</Select.Item>
-          <Select.Item value="text">Text</Select.Item>
-        </Select.Root>
-      </div>
+      <FilterSelect filterType={filterType} onFilterTypeChange={onFilterTypeChange} />
       {groups.length === 0 ? (
-        <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--base-fg-dim)' }}>
-          No text styles found
-        </div>
+        <EmptyStyleComponent />
       ) : (
         <Accordion.Root type={'multiple'} value={openItems}>
           {groups.map(group => {
@@ -202,21 +188,6 @@ export const TextStylesPanel = ({
                         textStyle.props.text.color
                       ].filter(Boolean);
 
-                      // Use cached differences
-                      const tooltipContent =
-                        textStyle.differences.length > 0 ? (
-                          <div
-                            key={key}
-                            style={{
-                              whiteSpace: 'pre-line',
-                              fontFamily: 'monospace',
-                              fontSize: '0.75rem'
-                            }}
-                          >
-                            {textStyle.differences.join('\n')}
-                          </div>
-                        ) : null;
-
                       const fontItem = (
                         <div
                           key={key}
@@ -233,8 +204,7 @@ export const TextStylesPanel = ({
                             <div className={styles.fontCount}>
                               {metaParts.join(', ')}
                               <div>
-                                {textStyle.elements.length} element
-                                {textStyle.elements.length !== 1 ? 's' : ''}
+                                {textStyle.elements.length} element(s)
                                 {textStyle.differences.length > 0 && (
                                   <span className={styles.fontDirty}>*</span>
                                 )}
@@ -244,8 +214,16 @@ export const TextStylesPanel = ({
                         </div>
                       );
 
-                      return tooltipContent ? (
-                        <Tooltip key={key} message={tooltipContent} element={fontItem} />
+                      return textStyle.differences.length > 0 ? (
+                        <Tooltip
+                          key={key}
+                          message={
+                            <div className={styles.styleTooltip}>
+                              {textStyle.differences.join('\n')}
+                            </div>
+                          }
+                          element={fontItem}
+                        />
                       ) : (
                         fontItem
                       );

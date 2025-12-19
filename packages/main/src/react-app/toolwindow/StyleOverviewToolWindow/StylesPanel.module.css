@@ -11,6 +11,12 @@
   }
 }
 
+.styleTooltip {
+  white-space: pre-line;
+  font-family: monospace;
+  font-size: 10px;
+}
+
 .styleList {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(35px, 1fr));

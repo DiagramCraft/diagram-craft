@@ -72,44 +72,22 @@ export const StylesTab = () => {
   }, [recalculateGroups, redraw]);
 
   // Element changes should always update the cache
-  useEventListener(diagram, 'elementChange', () => {
+  const handleElementChange = useCallback(() => {
     recalculateGroups();
     redrawDebounce();
-  });
-  useEventListener(diagram, 'elementAdd', () => {
-    recalculateGroups();
-    redrawDebounce();
-  });
-  useEventListener(diagram, 'elementRemove', () => {
-    recalculateGroups();
-    redrawDebounce();
-  });
-  useEventListener(diagram, 'diagramChange', () => {
-    recalculateGroups();
-    redrawDebounce();
-  });
-  useEventListener(diagram.document, 'diagramChanged', () => {
-    recalculateGroups();
-    redrawDebounce();
-  });
+  }, [recalculateGroups, redrawDebounce]);
+
+  useEventListener(diagram, 'elementChange', handleElementChange);
+  useEventListener(diagram, 'elementAdd', handleElementChange);
+  useEventListener(diagram, 'elementRemove', handleElementChange);
+  useEventListener(diagram, 'diagramChange', handleElementChange);
+  useEventListener(diagram.document, 'diagramChanged', handleElementChange);
 
   // Selection changes need conditional handling
   useEventListener(diagram.selection, 'change', handleSelectionChange);
 
   const handleStyleClick = useCallback(
-    (combo: StyleCombination) => {
-      // Mark as internal selection
-      isInternalSelectionRef.current = true;
-
-      diagram.selection.clear();
-      diagram.selection.setElements(combo.elements);
-      // Note: redraw will be called by handleSelectionChange
-    },
-    [diagram]
-  );
-
-  const handleTextStyleClick = useCallback(
-    (combo: TextStyleCombination) => {
+    (combo: StyleCombination | TextStyleCombination) => {
       // Mark as internal selection
       isInternalSelectionRef.current = true;
 
@@ -125,7 +103,7 @@ export const StylesTab = () => {
       {filterType === 'text' ? (
         <TextStylesPanel
           groups={cachedTextGroups}
-          onTextStyleClick={handleTextStyleClick}
+          onTextStyleClick={handleStyleClick}
           filterType={filterType}
           onFilterTypeChange={setFilterType}
         />
