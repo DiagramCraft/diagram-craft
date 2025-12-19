@@ -205,7 +205,7 @@ export const StylesTab = () => {
         elements: combo.elements
       });
     },
-    [diagram, application]
+    [application]
   );
 
   return (

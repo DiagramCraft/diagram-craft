@@ -50,6 +50,39 @@ const FilterSelect = ({ filterType, onFilterTypeChange }: FilterSelectProps) => 
   </div>
 );
 
+type StyleContextMenuProps<T> = {
+  style: T;
+  onStyleReset: (elements: DiagramElement[], differences: Partial<ElementProps>) => void;
+  onCreateStylesheet: (combo: T) => void;
+  onCopyStyle: (combo: T) => void;
+  onPasteStyle: (combo: T) => void;
+};
+
+const StyleContextMenu = <T extends StyleCombination | TextStyleCombination>({
+  style,
+  onStyleReset,
+  onCreateStylesheet,
+  onCopyStyle,
+  onPasteStyle
+}: StyleContextMenuProps<T>) => (
+  <ContextMenu.Menu>
+    <Menu.Item
+      disabled={style.differences.length === 0}
+      onClick={() => onStyleReset(style.elements, style.propsDifferences)}
+    >
+      Reset
+    </Menu.Item>
+    <Menu.Item
+      disabled={style.differences.length === 0}
+      onClick={() => onCreateStylesheet(style)}
+    >
+      Create Stylesheet
+    </Menu.Item>
+    <Menu.Item onClick={() => onCopyStyle(style)}>Copy Style</Menu.Item>
+    <Menu.Item onClick={() => onPasteStyle(style)}>Paste Style</Menu.Item>
+  </ContextMenu.Menu>
+);
+
 const EmptyStyleComponent = () => (
   <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--base-fg-dim)' }}>
     No styles found
@@ -134,22 +167,13 @@ export const StylesPanel = ({
                                 ) : null
                               }
                             />
-                            <ContextMenu.Menu>
-                              <Menu.Item
-                                disabled={style.differences.length === 0}
-                                onClick={() => onStyleReset(style.elements, style.propsDifferences)}
-                              >
-                                Reset
-                              </Menu.Item>
-                              <Menu.Item
-                                disabled={style.differences.length === 0}
-                                onClick={() => onCreateStylesheet(style)}
-                              >
-                                Create Stylesheet
-                              </Menu.Item>
-                              <Menu.Item onClick={() => onCopyStyle(style)}>Copy Style</Menu.Item>
-                              <Menu.Item onClick={() => onPasteStyle(style)}>Paste Style</Menu.Item>
-                            </ContextMenu.Menu>
+                            <StyleContextMenu
+                              style={style}
+                              onStyleReset={onStyleReset}
+                              onCreateStylesheet={onCreateStylesheet}
+                              onCopyStyle={onCopyStyle}
+                              onPasteStyle={onPasteStyle}
+                            />
                           </ContextMenu.Root>
                         );
                       })}
@@ -254,28 +278,13 @@ export const TextStylesPanel = ({
                                 ) : null
                               }
                             />
-                            <ContextMenu.Menu>
-                              <Menu.Item
-                                disabled={textStyle.differences.length === 0}
-                                onClick={() =>
-                                  onStyleReset(textStyle.elements, textStyle.propsDifferences)
-                                }
-                              >
-                                Reset
-                              </Menu.Item>
-                              <Menu.Item
-                                disabled={textStyle.differences.length === 0}
-                                onClick={() => onCreateStylesheet(textStyle)}
-                              >
-                                Create Stylesheet
-                              </Menu.Item>
-                              <Menu.Item onClick={() => onCopyStyle(textStyle)}>
-                                Copy Style
-                              </Menu.Item>
-                              <Menu.Item onClick={() => onPasteStyle(textStyle)}>
-                                Paste Style
-                              </Menu.Item>
-                            </ContextMenu.Menu>
+                            <StyleContextMenu
+                              style={textStyle}
+                              onStyleReset={onStyleReset}
+                              onCreateStylesheet={onCreateStylesheet}
+                              onCopyStyle={onCopyStyle}
+                              onPasteStyle={onPasteStyle}
+                            />
                           </ContextMenu.Root>
                         );
                       })}
