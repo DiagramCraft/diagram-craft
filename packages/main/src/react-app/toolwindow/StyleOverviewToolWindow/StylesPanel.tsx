@@ -118,8 +118,8 @@ export const StylesPanel = ({
                                   </div>
                                   <div className={styles.styleInfo}>
                                     <div className={styles.styleCount}>
-                                      {style.differences.length}
-                                      {style.differences.length > 0 && (
+                                      {style.elements.length}
+                                      {style.elements.length > 0 && (
                                         <span className={styles.styleDirty}>*</span>
                                       )}
                                     </div>
