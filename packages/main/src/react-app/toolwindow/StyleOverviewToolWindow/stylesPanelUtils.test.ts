@@ -168,7 +168,7 @@ describe('stylesPanelUtils', () => {
 
       const result = computeStyleDifferences(elementProps, undefined, true);
 
-      expect(result).toEqual([]);
+      expect(result.differences).toEqual([]);
     });
 
     test('detects fill color difference for nodes', () => {
@@ -177,7 +177,7 @@ describe('stylesPanelUtils', () => {
 
       const result = computeStyleDifferences(elementProps, stylesheetProps, true);
 
-      expect(result).toContain('fill.color = #ff0000');
+      expect(result.differences).toContain('fill.color = #ff0000');
     });
 
     test('detects stroke width difference', () => {
@@ -186,7 +186,7 @@ describe('stylesPanelUtils', () => {
 
       const result = computeStyleDifferences(elementProps, stylesheetProps, true);
 
-      expect(result).toContain('stroke.width = 3');
+      expect(result.differences).toContain('stroke.width = 3');
     });
 
     test('detects multiple nested property differences', () => {
@@ -201,9 +201,9 @@ describe('stylesPanelUtils', () => {
 
       const result = computeStyleDifferences(elementProps, stylesheetProps, true);
 
-      expect(result).toContain('fill.color = #ff0000');
-      expect(result).toContain('stroke.width = 3');
-      expect(result).not.toContain('stroke.color');
+      expect(result.differences).toContain('fill.color = #ff0000');
+      expect(result.differences).toContain('stroke.width = 3');
+      expect(result.differences).not.toContain('stroke.color');
     });
 
     test('ignores properties not present in element props', () => {
@@ -215,7 +215,7 @@ describe('stylesPanelUtils', () => {
 
       const result = computeStyleDifferences(elementProps, stylesheetProps, true);
 
-      expect(result).toEqual([]);
+      expect(result.differences).toEqual([]);
     });
 
     test('handles text properties', () => {
@@ -228,9 +228,9 @@ describe('stylesPanelUtils', () => {
 
       const result = computeStyleDifferences(elementProps, stylesheetProps, true);
 
-      expect(result).toContain('text.font = Arial');
-      expect(result).toContain('text.fontSize = 16');
-      expect(result).toContain('text.bold = true');
+      expect(result.differences).toContain('text.font = Arial');
+      expect(result.differences).toContain('text.fontSize = 16');
+      expect(result.differences).toContain('text.bold = true');
     });
 
     test('detects deep nested property differences', () => {
@@ -243,7 +243,7 @@ describe('stylesPanelUtils', () => {
 
       const result = computeStyleDifferences(elementProps, stylesheetProps, true);
 
-      expect(result).toContain('shadow.blur = 5');
+      expect(result.differences).toContain('shadow.blur = 5');
     });
 
     test('compares arrays correctly', () => {
@@ -256,7 +256,7 @@ describe('stylesPanelUtils', () => {
 
       const result = computeStyleDifferences(elementProps, stylesheetProps, true);
 
-      expect(result.length).toBeGreaterThan(0);
+      expect(result.differences.length).toBeGreaterThan(0);
     });
 
     test('handles edge props with isNodeStyle=false', () => {
@@ -269,7 +269,7 @@ describe('stylesPanelUtils', () => {
 
       const result = computeStyleDifferences(elementProps, stylesheetProps, false);
 
-      expect(result.some(diff => diff.includes('arrow.start'))).toBe(true);
+      expect(result.differences.some(diff => diff.includes('arrow.start'))).toBe(true);
     });
 
     test('returns empty array when all properties match', () => {
@@ -284,7 +284,7 @@ describe('stylesPanelUtils', () => {
 
       const result = computeStyleDifferences(elementProps, stylesheetProps, true);
 
-      expect(result).toEqual([]);
+      expect(result.differences).toEqual([]);
     });
   });
 

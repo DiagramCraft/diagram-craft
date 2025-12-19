@@ -12,19 +12,16 @@ import { PickerConfig } from '../PickerToolWindow/pickerConfig';
 import { useMemo } from 'react';
 import { TbLetterCase } from 'react-icons/tb';
 import { Select } from '@diagram-craft/app-components/Select';
-import { Tooltip } from '@diagram-craft/app-components/Tooltip';
 import { mustExist } from '@diagram-craft/utils/assert';
+import { ContextMenu } from '@diagram-craft/app-components/ContextMenu';
+import { Menu } from '@diagram-craft/app-components/Menu';
+import type { DiagramElement } from '@diagram-craft/model/diagramElement';
+import type { ElementProps } from '@diagram-craft/model/diagramProps';
 
-type StylesPanelProps = {
-  groups: StylesheetGroup<StyleCombination>[];
-  onStyleClick: (combo: StyleCombination) => void;
-  filterType: StyleFilterType;
-  onFilterTypeChange: (filterType: StyleFilterType) => void;
-};
-
-type TextStylesPanelProps = {
-  groups: StylesheetGroup<TextStyleCombination>[];
-  onTextStyleClick: (combo: TextStyleCombination) => void;
+type StylesPanelProps<T> = {
+  groups: StylesheetGroup<T>[];
+  onStyleClick: (combo: T) => void;
+  onStyleReset: (elements: DiagramElement[], differences: Partial<ElementProps>) => void;
   filterType: StyleFilterType;
   onFilterTypeChange: (filterType: StyleFilterType) => void;
 };
@@ -59,9 +56,10 @@ const EmptyStyleComponent = () => (
 export const StylesPanel = ({
   groups,
   onStyleClick,
+  onStyleReset,
   filterType,
   onFilterTypeChange
-}: StylesPanelProps) => {
+}: StylesPanelProps<StyleCombination>) => {
   const openItems = useMemo(() => groups.map(g => g.stylesheet?.id ?? 'no-stylesheet'), [groups]);
 
   return (
@@ -89,44 +87,54 @@ export const StylesPanel = ({
                 <Accordion.ItemContent>
                   <div className={styles.styleList}>
                     {group.styles.map((style, idx) => {
-                      const styleItem = (
-                        <div
-                          key={`${groupId}-${idx}`}
-                          className={styles.styleItem}
-                          onClick={() => onStyleClick(style)}
-                        >
-                          <div className={styles.stylePreview}>
-                            <PickerCanvas
-                              width={PickerConfig.size}
-                              height={PickerConfig.size}
-                              diagram={mustExist(style.previewDiagram)}
-                              showHover={false}
-                              onMouseDown={() => onStyleClick(style)}
-                            />
-                          </div>
-                          <div className={styles.styleInfo}>
-                            <div className={styles.styleCount}>
-                              {style.differences.length}
-                              {style.differences.length > 0 && (
-                                <span className={styles.styleDirty}>*</span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      );
-
-                      return style.differences.length > 0 ? (
-                        <Tooltip
-                          key={`${groupId}-${idx}`}
-                          message={
-                            <div className={styles.styleTooltip}>
-                              {style.differences.join('\n')}
-                            </div>
-                          }
-                          element={styleItem}
-                        />
-                      ) : (
-                        styleItem
+                      return (
+                        <ContextMenu.Root key={`${groupId}-${idx}`}>
+                          <ContextMenu.Trigger
+                            element={
+                              <div
+                                key={`${groupId}-${idx}`}
+                                className={styles.styleItem}
+                                onClick={() => onStyleClick(style)}
+                              >
+                                <div className={styles.stylePreview}>
+                                  <PickerCanvas
+                                    width={PickerConfig.size}
+                                    height={PickerConfig.size}
+                                    diagram={mustExist(style.previewDiagram)}
+                                    showHover={false}
+                                    onMouseDown={e => {
+                                      if (e.button !== 1) return;
+                                      onStyleClick(style);
+                                    }}
+                                  />
+                                </div>
+                                <div className={styles.styleInfo}>
+                                  <div className={styles.styleCount}>
+                                    {style.differences.length}
+                                    {style.differences.length > 0 && (
+                                      <span className={styles.styleDirty}>*</span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            }
+                            tooltip={
+                              style.differences.length > 0 ? (
+                                <div className={styles.styleTooltip}>
+                                  {style.differences.join('\n')}
+                                </div>
+                              ) : null
+                            }
+                          />
+                          <ContextMenu.Menu>
+                            <Menu.Item
+                              disabled={style.differences.length === 0}
+                              onClick={() => onStyleReset(style.elements, style.propsDifferences)}
+                            >
+                              Reset
+                            </Menu.Item>
+                          </ContextMenu.Menu>
+                        </ContextMenu.Root>
                       );
                     })}
                   </div>
@@ -142,10 +150,11 @@ export const StylesPanel = ({
 
 export const TextStylesPanel = ({
   groups,
-  onTextStyleClick,
+  onStyleClick,
+  onStyleReset,
   filterType,
   onFilterTypeChange
-}: TextStylesPanelProps) => {
+}: StylesPanelProps<TextStyleCombination>) => {
   const openItems = useMemo(() => groups.map(g => g.stylesheet?.id ?? 'no-stylesheet'), [groups]);
 
   return (
@@ -188,44 +197,53 @@ export const TextStylesPanel = ({
                         textStyle.props.text.color
                       ].filter(Boolean);
 
-                      const fontItem = (
-                        <div
-                          key={key}
-                          className={styles.fontItem}
-                          onClick={() => onTextStyleClick(textStyle)}
-                        >
-                          <div className={styles.fontIcon}>
-                            <TbLetterCase size={18} />
-                          </div>
-                          <div className={styles.fontDetails}>
-                            <div className={styles.fontPreview} style={fontStyle}>
-                              {textStyle.props.text.font}
-                            </div>
-                            <div className={styles.fontCount}>
-                              {metaParts.join(', ')}
-                              <div>
-                                {textStyle.elements.length} element(s)
-                                {textStyle.differences.length > 0 && (
-                                  <span className={styles.fontDirty}>*</span>
-                                )}
+                      return (
+                        <ContextMenu.Root key={key}>
+                          <ContextMenu.Trigger
+                            element={
+                              <div
+                                key={key}
+                                className={styles.fontItem}
+                                onClick={() => onStyleClick(textStyle)}
+                              >
+                                <div className={styles.fontIcon}>
+                                  <TbLetterCase size={18} />
+                                </div>
+                                <div className={styles.fontDetails}>
+                                  <div className={styles.fontPreview} style={fontStyle}>
+                                    {textStyle.props.text.font}
+                                  </div>
+                                  <div className={styles.fontCount}>
+                                    {metaParts.join(', ')}
+                                    <div>
+                                      {textStyle.elements.length} element(s)
+                                      {textStyle.differences.length > 0 && (
+                                        <span className={styles.fontDirty}>*</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
                               </div>
-                            </div>
-                          </div>
-                        </div>
-                      );
-
-                      return textStyle.differences.length > 0 ? (
-                        <Tooltip
-                          key={key}
-                          message={
-                            <div className={styles.styleTooltip}>
-                              {textStyle.differences.join('\n')}
-                            </div>
-                          }
-                          element={fontItem}
-                        />
-                      ) : (
-                        fontItem
+                            }
+                            tooltip={
+                              textStyle.differences.length > 0 ? (
+                                <div className={styles.styleTooltip}>
+                                  {textStyle.differences.join('\n')}
+                                </div>
+                              ) : null
+                            }
+                          />
+                          <ContextMenu.Menu>
+                            <Menu.Item
+                              disabled={textStyle.differences.length === 0}
+                              onClick={() =>
+                                onStyleReset(textStyle.elements, textStyle.propsDifferences)
+                              }
+                            >
+                              Reset
+                            </Menu.Item>
+                          </ContextMenu.Menu>
+                        </ContextMenu.Root>
                       );
                     })}
                   </div>

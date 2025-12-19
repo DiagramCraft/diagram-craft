@@ -3,7 +3,7 @@ import { useState } from 'react';
 import type { DataTemplate } from '@diagram-craft/model/diagramDocument';
 import { PickerCanvas } from './PickerCanvas';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { createThumbnailDiagramForNode } from '@diagram-craft/canvas-app/diagramThumbnail';
+import { createThumbnailForNode } from '@diagram-craft/canvas-app/diagramThumbnail';
 import { deserializeDiagramElements } from '@diagram-craft/model/serialization/deserialize';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { deepClone } from '@diagram-craft/utils/object';
@@ -18,7 +18,7 @@ const makeTemplatePreview = (template: DataTemplate, definitions: Definitions): 
   }
 
   const tpl = deepClone(template.template);
-  const { node, diagram } = createThumbnailDiagramForNode(
+  const { node, diagram } = createThumbnailForNode(
     (diagram, layer) => deserializeDiagramElements([tpl], diagram, layer)[0] as DiagramNode,
     definitions
   );
