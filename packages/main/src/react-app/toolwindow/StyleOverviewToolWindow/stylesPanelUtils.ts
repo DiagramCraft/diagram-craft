@@ -18,6 +18,7 @@ import { FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { deepMerge } from '@diagram-craft/utils/object';
 import { isEmptyString } from '@diagram-craft/utils/strings';
 import { unique } from '@diagram-craft/utils/array';
+import { DynamicAccessor, type PropPath } from '@diagram-craft/utils/propertyPath';
 
 export type StyleFilterType = 'all' | 'fill' | 'stroke' | 'shadow' | 'effects' | 'text';
 
@@ -27,6 +28,7 @@ export type StyleCombination = {
   previewDiagram?: Diagram;
   previewElement?: DiagramNode | DiagramEdge;
   differences: string[];
+  propsDifferences: Partial<ElementProps>;
   props: ElementPropsForRendering;
 };
 
@@ -34,6 +36,7 @@ export type TextStyleCombination = {
   elements: DiagramElement[];
   stylesheet: Stylesheet<'text'> | undefined;
   differences: string[];
+  propsDifferences: Partial<ElementProps>;
   props: NodePropsForRendering;
 };
 
@@ -171,12 +174,22 @@ export const collectTextStyles = (
     const stylesheetId = node.metadata.textStyle ?? undefined;
     const stylesheet = diagram.document.styles.getTextStyle(stylesheetId);
 
-    const differences = computeStyleDifferences(props, stylesheet?.props, isNode(node));
+    const { differences, propsDifferences } = computeStyleDifferences(
+      props,
+      stylesheet?.props,
+      isNode(node)
+    );
 
     const key = `${differences.join('|')}|${stylesheetId}`;
 
     if (!styleMap.has(key)) {
-      styleMap.set(key, { stylesheet, differences, props: node.renderProps, elements: [] });
+      styleMap.set(key, {
+        stylesheet,
+        differences,
+        propsDifferences,
+        props: node.renderProps,
+        elements: []
+      });
     }
 
     styleMap.get(key)!.elements.push(node);
@@ -194,6 +207,7 @@ export const collectTextStyles = (
             elements: [],
             stylesheet: textStyle.stylesheet,
             differences: [],
+            propsDifferences: {},
             props: textStyle.props
           }
         ],
@@ -229,12 +243,22 @@ export const collectStyles = (
       | Stylesheet<'edge'>
       | undefined;
 
-    const differences = computeStyleDifferences(props, stylesheet?.props, isNode(element));
+    const { differences, propsDifferences } = computeStyleDifferences(
+      props,
+      stylesheet?.props,
+      isNode(element)
+    );
 
     const key = `${differences.join('|')}|${stylesheetId}`;
 
     if (!styleMap.has(key)) {
-      styleMap.set(key, { stylesheet, differences, props: element.renderProps, elements: [] });
+      styleMap.set(key, {
+        stylesheet,
+        differences,
+        propsDifferences,
+        props: element.renderProps,
+        elements: []
+      });
     }
 
     styleMap.get(key)!.elements.push(element);
@@ -242,7 +266,7 @@ export const collectStyles = (
 
   // Generate previews
   for (const [key, combo] of styleMap.entries()) {
-    const nodeTypes = unique(combo.elements.map(el => el.type));
+    const nodeTypes = unique(combo.elements.filter(e => isNode(e)).map(el => el.nodeType));
 
     const nodeType = nodeTypes.length === 1 ? nodeTypes[0]! : 'rect';
 
@@ -265,7 +289,13 @@ export const collectStyles = (
       groupMap.set(key, {
         stylesheet: style.stylesheet,
         styles: [
-          { elements: [], stylesheet: style.stylesheet, differences: [], props: style.props }
+          {
+            elements: [],
+            stylesheet: style.stylesheet,
+            differences: [],
+            propsDifferences: {},
+            props: style.props
+          }
         ],
         totalElements: 0
       });
@@ -295,9 +325,9 @@ const computeStyleDifferences = (
   elementProps: Partial<NodeProps | EdgeProps>,
   stylesheetProps: Partial<NodeProps | EdgeProps> | undefined,
   isNodeStyle: boolean
-): string[] => {
+): { differences: string[]; propsDifferences: Partial<ElementProps> } => {
   if (!stylesheetProps) {
-    return [];
+    return { differences: [], propsDifferences: {} };
   }
 
   // Get default props and merge with stylesheet props based on element type
@@ -306,6 +336,9 @@ const computeStyleDifferences = (
     : deepMerge({}, edgeDefaults.applyDefaults({}), stylesheetProps as Partial<EdgeProps>);
 
   const differences: string[] = [];
+  const propsDifferences: Partial<ElementProps> = {};
+
+  const props = new DynamicAccessor<Partial<ElementProps>>();
 
   // Helper function to format property path and value
   const formatDiff = (path: string, value: unknown): string => {
@@ -344,6 +377,7 @@ const computeStyleDifferences = (
     // Compare primitive values or arrays
     if (JSON.stringify(stylesheetValue) !== JSON.stringify(elementValue)) {
       differences.push(formatDiff(path, elementValue));
+      props.set(propsDifferences, path as PropPath<ElementProps>, elementValue);
     }
   };
 
@@ -354,7 +388,7 @@ const computeStyleDifferences = (
     compareProps(mergedValue, elementValue, key);
   }
 
-  return differences;
+  return { differences, propsDifferences };
 };
 
 export const _test = {
