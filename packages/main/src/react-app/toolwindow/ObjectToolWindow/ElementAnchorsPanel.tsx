@@ -9,7 +9,7 @@ import { newid } from '@diagram-craft/utils/id';
 import { TbPlus, TbTrash } from 'react-icons/tb';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { useMemo } from 'react';
-import { createThumbnailDiagramForNode } from '@diagram-craft/canvas-app/diagramThumbnail';
+import { createThumbnailForNode } from '@diagram-craft/canvas-app/diagramThumbnail';
 import { getAnchorPosition } from '@diagram-craft/model/anchor';
 import { serializeDiagramElement } from '@diagram-craft/model/serialization/serialize';
 import { deserializeDiagramElements } from '@diagram-craft/model/serialization/deserialize';
@@ -43,7 +43,7 @@ const ShapePreviewWithAnchors = ({ diagram }: { diagram: ReturnType<typeof useDi
   const previewDiagram = useMemo(() => {
     if (!selectedNode) return null;
 
-    const { diagram: thumbnailDiagram, node: duplicatedNode } = createThumbnailDiagramForNode(
+    const { diagram: thumbnailDiagram, node: duplicatedNode } = createThumbnailForNode(
       (d, layer) => {
         const serializedNode = serializeDiagramElement(selectedNode);
         const uow = UnitOfWork.immediate(d);

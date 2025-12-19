@@ -15,7 +15,7 @@ import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 import { clamp } from '@diagram-craft/utils/math';
 import { insert } from '@diagram-craft/canvas/component/vdom';
 import { StaticCanvasComponent } from '@diagram-craft/canvas/canvas/StaticCanvasComponent';
-import { createThumbnailDiagramForNode } from '@diagram-craft/canvas-app/diagramThumbnail';
+import { createThumbnailForNode } from '@diagram-craft/canvas-app/diagramThumbnail';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 enum State {
@@ -150,7 +150,7 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
 
     const scale = clamp(this.diagram.viewBox.zoomLevel, 0.3, 3);
 
-    const { diagram: dest } = createThumbnailDiagramForNode(
+    const { diagram: dest } = createThumbnailForNode(
       () => this.source.duplicate(),
       this.diagram.document.definitions
     );

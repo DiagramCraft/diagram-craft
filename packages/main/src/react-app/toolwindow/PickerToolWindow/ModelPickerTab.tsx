@@ -32,7 +32,7 @@ import { deepClone } from '@diagram-craft/utils/object';
 import { Definitions } from '@diagram-craft/model/elementDefinitionRegistry';
 import { ActionMenuItem } from '../../components/ActionMenuItem';
 import { useEventListener } from '../../hooks/useEventListener';
-import { createThumbnailDiagramForNode } from '@diagram-craft/canvas-app/diagramThumbnail';
+import { createThumbnailForNode } from '@diagram-craft/canvas-app/diagramThumbnail';
 import { isRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { EditItemDialog } from '../../components/EditItemDialog';
@@ -128,7 +128,7 @@ const makeTemplateNode = (
   }
 
   const tpl = deepClone(template.template);
-  const { node, diagram } = createThumbnailDiagramForNode(
+  const { node, diagram } = createThumbnailForNode(
     (diagram, layer) => deserializeDiagramElements([tpl], diagram, layer)[0] as DiagramNode,
     definitions
   );
@@ -154,7 +154,7 @@ const makeTemplateNode = (
 };
 
 const makeDefaultNode = (item: Data, schema: DataSchema, definitions: Definitions): DiagramNode => {
-  return createThumbnailDiagramForNode(
+  return createThumbnailForNode(
     (_diagram, layer) =>
       ElementFactory.node(
         newid(),

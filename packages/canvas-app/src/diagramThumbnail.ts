@@ -18,7 +18,7 @@ const createDiagram = (defs: Definitions) => {
   );
 };
 
-export const createThumbnailDiagramForNode = (
+export const createThumbnailForNode = (
   factory: (diagram: Diagram, layer: RegularLayer) => DiagramNode,
   definitions: Definitions
 ) => {
@@ -34,7 +34,7 @@ export const createThumbnailDiagramForNode = (
   return { diagram, layer, node };
 };
 
-export const createThumbnailDiagramForEdge = (
+export const createThumbnailForEdge = (
   factory: (diagram: Diagram, layer: RegularLayer) => DiagramEdge,
   definitions: Definitions
 ) => {

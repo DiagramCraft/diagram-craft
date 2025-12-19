@@ -6,8 +6,8 @@ import { isNode } from '@diagram-craft/model/diagramElement';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { Definitions } from '@diagram-craft/model/elementDefinitionRegistry';
 import {
-  createThumbnailDiagramForEdge,
-  createThumbnailDiagramForNode
+  createThumbnailForEdge,
+  createThumbnailForNode
 } from '@diagram-craft/canvas-app/diagramThumbnail';
 import { Stylesheet } from '@diagram-craft/model/diagramStyles';
 import { type EdgeProps, type ElementProps, NodeProps } from '@diagram-craft/model/diagramProps';
@@ -18,7 +18,7 @@ import { FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { deepMerge } from '@diagram-craft/utils/object';
 import { isEmptyString } from '@diagram-craft/utils/strings';
 import { unique } from '@diagram-craft/utils/array';
-import { DynamicAccessor, type PropPath } from '@diagram-craft/utils/propertyPath';
+import { DynamicAccessor } from '@diagram-craft/utils/propertyPath';
 
 export type StyleFilterType = 'all' | 'fill' | 'stroke' | 'shadow' | 'effects' | 'text';
 
@@ -104,14 +104,11 @@ const extractPropsToConsider = (
 
 const createPreview = (props: Partial<ElementProps>, type: string, defs: Definitions) => {
   if (type === 'edge') {
-    const { diagram, edge } = createThumbnailDiagramForEdge((_: Diagram, layer: RegularLayer) => {
+    const { diagram, edge } = createThumbnailForEdge((_: Diagram, layer: RegularLayer) => {
       return ElementFactory.edge(
         newid(),
         new FreeEndpoint({ x: 5, y: 25 }),
-        new FreeEndpoint({
-          x: 45,
-          y: 25
-        }),
+        new FreeEndpoint({ x: 45, y: 25 }),
         props as Partial<EdgeProps>,
         {},
         [],
@@ -124,17 +121,11 @@ const createPreview = (props: Partial<ElementProps>, type: string, defs: Definit
 
     return { diagram, element: edge };
   } else {
-    const { diagram, node } = createThumbnailDiagramForNode((_: Diagram, layer: RegularLayer) => {
+    const { diagram, node } = createThumbnailForNode((_: Diagram, layer: RegularLayer) => {
       return ElementFactory.node(
         newid(),
         type,
-        {
-          x: 5,
-          y: 5,
-          w: 40,
-          h: 40,
-          r: 0
-        },
+        { x: 5, y: 5, w: 40, h: 40, r: 0 },
         layer,
         props as Partial<NodeProps>,
         {}
@@ -313,6 +304,12 @@ export const collectStyles = (
   return sortGroups(Array.from(groupMap.values()));
 };
 
+const formatDiff = (path: string, value: unknown): string => {
+  return typeof value === 'object' && value !== null
+    ? `${path} = ${JSON.stringify(value)}`
+    : `${path} = ${value}`;
+};
+
 /**
  * Compute the differences between element props and the merged default + stylesheet props
  * Returns an array of formatted strings like "text.fontSize = 14" or "fill.color = #ff0000"
@@ -326,66 +323,34 @@ const computeStyleDifferences = (
   stylesheetProps: Partial<NodeProps | EdgeProps> | undefined,
   isNodeStyle: boolean
 ): { differences: string[]; propsDifferences: Partial<ElementProps> } => {
-  if (!stylesheetProps) {
-    return { differences: [], propsDifferences: {} };
-  }
+  if (!stylesheetProps) return { differences: [], propsDifferences: {} };
 
   // Get default props and merge with stylesheet props based on element type
-  const mergedStylesheetProps = isNodeStyle
+  const stylePropsToUse = isNodeStyle
     ? deepMerge({}, nodeDefaults.applyDefaults({}), stylesheetProps as Partial<NodeProps>)
     : deepMerge({}, edgeDefaults.applyDefaults({}), stylesheetProps as Partial<EdgeProps>);
 
   const differences: string[] = [];
   const propsDifferences: Partial<ElementProps> = {};
 
-  const props = new DynamicAccessor<Partial<ElementProps>>();
+  const accessor = new DynamicAccessor<Partial<ElementProps>>();
 
-  // Helper function to format property path and value
-  const formatDiff = (path: string, value: unknown): string => {
-    if (typeof value === 'object' && value !== null) {
-      return `${path} = ${JSON.stringify(value)}`;
-    }
-    return `${path} = ${value}`;
-  };
+  const paths = accessor.paths(elementProps);
 
-  // Helper to deep compare and find differences
-  const compareProps = (stylesheetValue: unknown, elementValue: unknown, path: string): void => {
-    // If element doesn't have this prop, skip
-    if (elementValue === undefined) {
-      return;
-    }
+  // Compare each path
+  for (const path of paths) {
+    const elementValue = accessor.get(elementProps, path);
+    const stylesheetValue = accessor.get(stylePropsToUse, path);
 
-    // If values are objects, recurse
-    if (
-      typeof stylesheetValue === 'object' &&
-      stylesheetValue !== null &&
-      typeof elementValue === 'object' &&
-      elementValue !== null &&
-      !Array.isArray(stylesheetValue) &&
-      !Array.isArray(elementValue)
-    ) {
-      // Compare nested properties
-      const elementObj = elementValue as Record<string, unknown>;
-      const stylesheetObj = stylesheetValue as Record<string, unknown>;
+    if (elementValue === undefined) continue;
 
-      for (const key of Object.keys(elementObj)) {
-        compareProps(stylesheetObj[key], elementObj[key], `${path}.${key}`);
+    // Only compare leaf values (non-objects)
+    if (typeof elementValue !== 'object' || elementValue === null || Array.isArray(elementValue)) {
+      if (JSON.stringify(stylesheetValue) !== JSON.stringify(elementValue)) {
+        differences.push(formatDiff(path, elementValue));
+        accessor.set(propsDifferences, path, elementValue);
       }
-      return;
     }
-
-    // Compare primitive values or arrays
-    if (JSON.stringify(stylesheetValue) !== JSON.stringify(elementValue)) {
-      differences.push(formatDiff(path, elementValue));
-      props.set(propsDifferences, path as PropPath<ElementProps>, elementValue);
-    }
-  };
-
-  // Compare all top-level properties
-  for (const key of Object.keys(elementProps)) {
-    const mergedValue = (mergedStylesheetProps as Record<string, unknown>)[key];
-    const elementValue = (elementProps as Record<string, unknown>)[key];
-    compareProps(mergedValue, elementValue, key);
   }
 
   return { differences, propsDifferences };
