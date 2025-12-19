@@ -48,55 +48,54 @@ export type StylesheetGroup<T> = {
 
 const PREVIEW_CACHE = new Map<string, { diagram: Diagram; element: DiagramNode | DiagramEdge }>();
 
-const extractPropsToConsider = (
-  el: DiagramElement,
-  filter: StyleFilterType
+export const extractPropsToConsider = (
+  props: Partial<ElementProps>,
+  filter: StyleFilterType,
+  isNode: boolean
 ): Partial<NodeProps | EdgeProps> => {
   switch (filter) {
     case 'fill':
-      if (isNode(el)) {
-        return { fill: el.storedProps.fill };
+      if (isNode) {
+        return { fill: props.fill };
       } else {
         return {};
       }
     case 'stroke':
-      if (isNode(el)) {
-        return { stroke: el.storedProps.stroke };
+      if (isNode) {
+        return { stroke: props.stroke };
       } else {
         return {
-          stroke: el.storedProps.stroke,
-          arrow: (el.storedProps as Partial<EdgeProps>).arrow
+          stroke: props.stroke,
+          arrow: (props as Partial<EdgeProps>).arrow
         };
       }
     case 'shadow':
-      return { shadow: el.storedProps.shadow };
+      return { shadow: props.shadow };
     case 'effects':
-      return { effects: el.storedProps.effects };
+      return { effects: props.effects };
     case 'text':
-      if (isNode(el)) {
-        return { text: el.storedProps.text };
+      if (isNode) {
+        return { text: (props as Partial<NodeProps>).text };
       } else {
         return {};
       }
 
     default:
-      if (isNode(el)) {
-        const props = el.storedProps;
+      if (isNode) {
         return {
           fill: props.fill,
           stroke: props.stroke,
           shadow: props.shadow,
           effects: props.effects,
-          text: props.text,
+          text: (props as Partial<NodeProps>).text,
           geometry: props.geometry
         };
       } else {
-        const props = el.storedProps as Partial<EdgeProps>;
         return {
           stroke: props.stroke,
           shadow: props.shadow,
           effects: props.effects,
-          arrow: props.arrow
+          arrow: (props as Partial<EdgeProps>).arrow
         };
       }
   }
@@ -159,7 +158,7 @@ export const collectTextStyles = (
     const text = node.getText();
     if (isEmptyString(text)) continue;
 
-    const props = extractPropsToConsider(node, 'text');
+    const props = extractPropsToConsider(node.storedProps, 'text', isNode(node));
 
     // Get text stylesheet info
     const stylesheetId = node.metadata.textStyle ?? undefined;
@@ -226,7 +225,7 @@ export const collectStyles = (
   const styleMap = new Map<string, StyleCombination>();
 
   for (const element of elements) {
-    const props = extractPropsToConsider(element, filterType);
+    const props = extractPropsToConsider(element.storedProps, filterType, isNode(element));
 
     const stylesheetId = element.metadata.style ?? undefined;
     const stylesheet = diagram.document.styles.getStyle(stylesheetId) as
@@ -358,6 +357,5 @@ const computeStyleDifferences = (
 
 export const _test = {
   computeStyleDifferences,
-  sortGroups,
-  extractPropsToConsider
+  sortGroups
 };

@@ -7,6 +7,7 @@ import { ToolWindow } from '../ToolWindow';
 import {
   collectStyles,
   collectTextStyles,
+  extractPropsToConsider,
   type StyleCombination,
   type StyleFilterType,
   type StylesheetGroup,
@@ -16,14 +17,16 @@ import { debounce } from '@diagram-craft/utils/debounce';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo, SnapshotUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import type { DiagramElement } from '@diagram-craft/model/diagramElement';
+import { isNode } from '@diagram-craft/model/diagramElement';
 import type { ElementProps } from '@diagram-craft/model/diagramProps';
 import { DynamicAccessor } from '@diagram-craft/utils/propertyPath';
 import { StringInputDialogCommand } from '@diagram-craft/canvas-app/dialogs';
 import { AddStylesheetUndoableAction, Stylesheet } from '@diagram-craft/model/diagramStyles';
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { newid } from '@diagram-craft/utils/id';
-import { isNode } from '@diagram-craft/model/diagramElement';
 import { deepMerge } from '@diagram-craft/utils/object';
+import { edgeDefaults, nodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { mustExist } from '@diagram-craft/utils/assert';
 
 export const StylesTab = () => {
   const diagram = useDiagram();
@@ -85,7 +88,6 @@ export const StylesTab = () => {
     (combo: StyleCombination | TextStyleCombination) => {
       isInternalSelectionRef.current = true;
 
-      diagram.selection.clear();
       diagram.selection.setElements(combo.elements);
     },
     [diagram]
@@ -175,6 +177,37 @@ export const StylesTab = () => {
     [diagram, application, filterType]
   );
 
+  const handleCopyStyle = useCallback(
+    (combo: StyleCombination | TextStyleCombination) => {
+      const isNodeStyle = combo.elements.every(isNode);
+
+      const defaultProps = (isNodeStyle ? nodeDefaults : edgeDefaults).applyDefaults(
+        combo.stylesheet?.props ?? {}
+      );
+
+      const props = extractPropsToConsider(
+        deepMerge({}, defaultProps as any, combo.props as any),
+        filterType,
+        isNodeStyle
+      );
+
+      mustExist(application.actions['STYLE_COPY']).execute({
+        props,
+        type: isNodeStyle ? 'node' : 'edge'
+      });
+    },
+    [application, filterType]
+  );
+
+  const handlePasteStyle = useCallback(
+    (combo: StyleCombination | TextStyleCombination) => {
+      application.actions.STYLE_PASTE?.execute({
+        elements: combo.elements
+      });
+    },
+    [application]
+  );
+
   return (
     <ToolWindow.TabContent>
       {filterType === 'text' ? (
@@ -183,6 +216,8 @@ export const StylesTab = () => {
           onStyleClick={handleStyleClick}
           onStyleReset={handleStyleReset}
           onCreateStylesheet={handleCreateStylesheet}
+          onCopyStyle={handleCopyStyle}
+          onPasteStyle={handlePasteStyle}
           filterType={filterType}
           onFilterTypeChange={setFilterType}
         />
@@ -192,6 +227,8 @@ export const StylesTab = () => {
           onStyleClick={handleStyleClick}
           onStyleReset={handleStyleReset}
           onCreateStylesheet={handleCreateStylesheet}
+          onCopyStyle={handleCopyStyle}
+          onPasteStyle={handlePasteStyle}
           filterType={filterType}
           onFilterTypeChange={setFilterType}
         />

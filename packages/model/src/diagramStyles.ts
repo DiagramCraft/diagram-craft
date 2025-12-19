@@ -4,7 +4,6 @@ import { StylesheetSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
 import type { DiagramDocument } from './diagramDocument';
 import type { Diagram } from './diagram';
 import { common, deepClear, deepClone, deepMerge, isObj } from '@diagram-craft/utils/object';
-import { assert } from '@diagram-craft/utils/assert';
 import { Defaults, DefaultStyles, edgeDefaults, nodeDefaults } from './diagramDefaults';
 import {
   DEFAULT_EDGE_STYLES,
@@ -204,7 +203,10 @@ export const isSelectionDirty = ($d: Diagram, isText: boolean) => {
   const stylesheet = isText
     ? styles.get(metadata.textStyle ?? DefaultStyles.text.default)
     : styles.get(metadata.style ?? DefaultStyles.node.default);
-  assert.present(stylesheet);
+
+  if (!stylesheet) {
+    return false;
+  }
 
   return $d.selection.elements.some(e => {
     const propsFromElement = stylesheet.getPropsFromElement(e);
