@@ -315,3 +315,24 @@ export const convertColorTo = <S extends ColorType, T extends ColorType>(
 
   return current as Color<T>;
 };
+
+/**
+ * Calculates the perceptual color difference (Delta E) between two colors.
+ * Uses Euclidean distance in OKLab color space, which is designed to be
+ * perceptually uniform. This provides a simpler and more accurate measure
+ * than older Delta E algorithms (CIE76, CIE94, CIEDE2000).
+ *
+ * @param color1 - First color (any color space)
+ * @param color2 - Second color (any color space)
+ * @returns The Delta E value (0 = identical, larger = more different)
+ */
+export const deltaE = (color1: Color<ColorType>, color2: Color<ColorType>): number => {
+  const oklab1 = convertColorTo(color1, 'oklab');
+  const oklab2 = convertColorTo(color2, 'oklab');
+
+  const deltaL = oklab2.l - oklab1.l;
+  const deltaA = oklab2.a - oklab1.a;
+  const deltaB = oklab2.b - oklab1.b;
+
+  return Math.sqrt(deltaL * deltaL + deltaA * deltaA + deltaB * deltaB);
+};

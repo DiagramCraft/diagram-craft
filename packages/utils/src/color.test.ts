@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { parseCSSColor, srgbToOklch, oklchToSrgb, convertColorTo } from './color';
+import { parseCSSColor, srgbToOklch, oklchToSrgb, convertColorTo, deltaE } from './color';
 
 describe('parseCSSColor', () => {
   describe('valid color strings', () => {
@@ -324,5 +324,78 @@ describe('convertColorTo', () => {
 
     const oklch = convertColorTo(oklab, 'oklch');
     expect(oklch.alpha).toBe(0.3);
+  });
+});
+
+describe('deltaE', () => {
+  test('returns 0 for identical colors in same color space', () => {
+    const color1 = { type: 'srgb' as const, r: 0.5, g: 0.6, b: 0.7, alpha: 1 };
+    const color2 = { type: 'srgb' as const, r: 0.5, g: 0.6, b: 0.7, alpha: 1 };
+
+    expect(deltaE(color1, color2)).toBeCloseTo(0, 10);
+  });
+
+  test('returns 0 for same color in different color spaces', () => {
+    const srgb = { type: 'srgb' as const, r: 1, g: 0, b: 0, alpha: 1 };
+    const oklch = convertColorTo(srgb, 'oklch');
+
+    expect(deltaE(srgb, oklch)).toBeCloseTo(0, 10);
+  });
+
+  test('calculates difference between black and white', () => {
+    const black = { type: 'srgb' as const, r: 0, g: 0, b: 0, alpha: 1 };
+    const white = { type: 'srgb' as const, r: 1, g: 1, b: 1, alpha: 1 };
+
+    const diff = deltaE(black, white);
+    // Black has L≈0, white has L≈1 in OKLab
+    expect(diff).toBeGreaterThan(0.9);
+    expect(diff).toBeLessThan(1.1);
+  });
+
+  test('calculates small difference between similar colors', () => {
+    const color1 = { type: 'srgb' as const, r: 0.5, g: 0.5, b: 0.5, alpha: 1 };
+    const color2 = { type: 'srgb' as const, r: 0.51, g: 0.5, b: 0.5, alpha: 1 };
+
+    const diff = deltaE(color1, color2);
+    expect(diff).toBeGreaterThan(0);
+    expect(diff).toBeLessThan(0.1);
+  });
+
+  test('calculates difference between red and green', () => {
+    const red = { type: 'srgb' as const, r: 1, g: 0, b: 0, alpha: 1 };
+    const green = { type: 'srgb' as const, r: 0, g: 1, b: 0, alpha: 1 };
+
+    const diff = deltaE(red, green);
+    expect(diff).toBeGreaterThan(0.2);
+  });
+
+  test('calculates difference between red and blue', () => {
+    const red = { type: 'srgb' as const, r: 1, g: 0, b: 0, alpha: 1 };
+    const blue = { type: 'srgb' as const, r: 0, g: 0, b: 1, alpha: 1 };
+
+    const diff = deltaE(red, blue);
+    expect(diff).toBeGreaterThan(0.2);
+  });
+
+  test('works with colors in different color spaces', () => {
+    const srgb = { type: 'srgb' as const, r: 0.8, g: 0.4, b: 0.6, alpha: 1 };
+    const oklab = { type: 'oklab' as const, l: 0.7, a: 0.1, b: 0.05, alpha: 1 };
+
+    const diff = deltaE(srgb, oklab);
+    expect(diff).toBeGreaterThan(0);
+  });
+
+  test('is symmetric', () => {
+    const color1 = { type: 'srgb' as const, r: 0.3, g: 0.5, b: 0.7, alpha: 1 };
+    const color2 = { type: 'oklch' as const, l: 0.6, c: 0.1, h: 180, alpha: 1 };
+
+    expect(deltaE(color1, color2)).toBeCloseTo(deltaE(color2, color1), 10);
+  });
+
+  test('alpha does not affect color difference', () => {
+    const color1 = { type: 'srgb' as const, r: 0.5, g: 0.6, b: 0.7, alpha: 1 };
+    const color2 = { type: 'srgb' as const, r: 0.5, g: 0.6, b: 0.7, alpha: 0.5 };
+
+    expect(deltaE(color1, color2)).toBeCloseTo(0, 10);
   });
 });
