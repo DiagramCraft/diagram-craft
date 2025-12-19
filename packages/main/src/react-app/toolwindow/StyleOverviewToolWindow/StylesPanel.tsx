@@ -22,6 +22,7 @@ type StylesPanelProps<T> = {
   groups: StylesheetGroup<T>[];
   onStyleClick: (combo: T) => void;
   onStyleReset: (elements: DiagramElement[], differences: Partial<ElementProps>) => void;
+  onCreateStylesheet?: (combo: T) => void;
   filterType: StyleFilterType;
   onFilterTypeChange: (filterType: StyleFilterType) => void;
 };
@@ -57,6 +58,7 @@ export const StylesPanel = ({
   groups,
   onStyleClick,
   onStyleReset,
+  onCreateStylesheet,
   filterType,
   onFilterTypeChange
 }: StylesPanelProps<StyleCombination>) => {
@@ -133,6 +135,14 @@ export const StylesPanel = ({
                             >
                               Reset
                             </Menu.Item>
+                            {onCreateStylesheet && (
+                              <Menu.Item
+                                disabled={style.differences.length === 0}
+                                onClick={() => onCreateStylesheet(style)}
+                              >
+                                Create Stylesheet
+                              </Menu.Item>
+                            )}
                           </ContextMenu.Menu>
                         </ContextMenu.Root>
                       );
@@ -152,6 +162,7 @@ export const TextStylesPanel = ({
   groups,
   onStyleClick,
   onStyleReset,
+  onCreateStylesheet,
   filterType,
   onFilterTypeChange
 }: StylesPanelProps<TextStyleCombination>) => {
@@ -242,6 +253,14 @@ export const TextStylesPanel = ({
                             >
                               Reset
                             </Menu.Item>
+                            {onCreateStylesheet && (
+                              <Menu.Item
+                                disabled={textStyle.differences.length === 0}
+                                onClick={() => onCreateStylesheet(textStyle)}
+                              >
+                                Create Stylesheet
+                              </Menu.Item>
+                            )}
                           </ContextMenu.Menu>
                         </ContextMenu.Root>
                       );

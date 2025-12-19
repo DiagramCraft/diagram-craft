@@ -195,7 +195,7 @@ export const ElementStylesheetPanel = (props: Props) => {
                           uow.diagram.undoManager.add(
                             new CompoundUndoableAction([
                               new AddStylesheetUndoableAction(uow.diagram, s),
-                              new SnapshotUndoableAction('Delete style', uow.diagram, snapshots)
+                              new SnapshotUndoableAction('Add style', uow.diagram, snapshots)
                             ])
                           );
                         }

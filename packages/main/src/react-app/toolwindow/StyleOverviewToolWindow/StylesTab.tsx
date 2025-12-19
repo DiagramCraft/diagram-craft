@@ -1,4 +1,4 @@
-import { useDiagram } from '../../../application';
+import { useApplication, useDiagram } from '../../../application';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -14,13 +14,20 @@ import {
 } from './stylesPanelUtils';
 import { debounce } from '@diagram-craft/utils/debounce';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
+import { commitWithUndo, SnapshotUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import type { DiagramElement } from '@diagram-craft/model/diagramElement';
 import type { ElementProps } from '@diagram-craft/model/diagramProps';
 import { DynamicAccessor } from '@diagram-craft/utils/propertyPath';
+import { StringInputDialogCommand } from '@diagram-craft/canvas-app/dialogs';
+import { AddStylesheetUndoableAction, Stylesheet } from '@diagram-craft/model/diagramStyles';
+import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
+import { newid } from '@diagram-craft/utils/id';
+import { isNode } from '@diagram-craft/model/diagramElement';
+import { deepMerge } from '@diagram-craft/utils/object';
 
 export const StylesTab = () => {
   const diagram = useDiagram();
+  const application = useApplication();
   const redraw = useRedraw();
   const redrawDebounce = debounce(redraw, 200);
 
@@ -107,6 +114,67 @@ export const StylesTab = () => {
     [diagram]
   );
 
+  const handleCreateStylesheet = useCallback(
+    (combo: StyleCombination | TextStyleCombination) => {
+      application.ui.showDialog(
+        new StringInputDialogCommand(
+          {
+            label: 'Name',
+            title: 'New stylesheet',
+            saveButtonLabel: 'Create',
+            value: ''
+          },
+          name => {
+            const id = newid();
+            const isTextStyle = filterType === 'text';
+            const isNodeStyle = combo.elements.every(isNode);
+
+            // Determine stylesheet type
+            const type = isTextStyle ? 'text' : isNodeStyle ? 'node' : 'edge';
+
+            // Get base stylesheet props
+            // biome-ignore lint/suspicious/noExplicitAny: Type merging across different prop types
+            const baseProps = (combo.stylesheet?.props ?? {}) as any;
+
+            // Merge base props with differences to create the new stylesheet props
+            // biome-ignore lint/suspicious/noExplicitAny: Type merging across different prop types
+            const newProps = deepMerge({}, baseProps, combo.propsDifferences as any);
+
+            // Create the new stylesheet
+            const stylesheet = Stylesheet.fromSnapshot(
+              type,
+              {
+                id,
+                name,
+                props: newProps
+              },
+              diagram.document.styles.crdt.factory
+            );
+
+            const uow = new UnitOfWork(diagram, true);
+
+            // Add stylesheet to document
+            diagram.document.styles.addStylesheet(id, stylesheet, uow);
+
+            // Set the stylesheet on all matching elements
+            for (const element of combo.elements) {
+              diagram.document.styles.setStylesheet(element, id, uow, true);
+            }
+
+            const snapshots = uow.commit();
+            diagram.undoManager.add(
+              new CompoundUndoableAction([
+                new AddStylesheetUndoableAction(diagram, stylesheet),
+                new SnapshotUndoableAction('Create stylesheet', diagram, snapshots)
+              ])
+            );
+          }
+        )
+      );
+    },
+    [diagram, application, filterType]
+  );
+
   return (
     <ToolWindow.TabContent>
       {filterType === 'text' ? (
@@ -114,6 +182,7 @@ export const StylesTab = () => {
           groups={textGroups}
           onStyleClick={handleStyleClick}
           onStyleReset={handleStyleReset}
+          onCreateStylesheet={handleCreateStylesheet}
           filterType={filterType}
           onFilterTypeChange={setFilterType}
         />
@@ -122,6 +191,7 @@ export const StylesTab = () => {
           groups={visualGroups}
           onStyleClick={handleStyleClick}
           onStyleReset={handleStyleReset}
+          onCreateStylesheet={handleCreateStylesheet}
           filterType={filterType}
           onFilterTypeChange={setFilterType}
         />
