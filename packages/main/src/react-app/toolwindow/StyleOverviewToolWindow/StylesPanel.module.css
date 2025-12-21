@@ -49,10 +49,16 @@
       width: 35px;
       height: 35px;
       border-radius: 2px;
-      overflow: hidden;
       background-color: var(--canvas-bg);
       transition: outline 0.1s;
       cursor: pointer;
+
+      > div {
+        width: 35px;
+        height: 35px;
+        border-radius: 2px;
+        overflow: hidden;
+      }
 
       & .svg-node {
         cursor: pointer !important;

@@ -21,32 +21,11 @@ import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 import { useApplication, useDiagram } from '../../../application';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { StringInputDialogCommand } from '@diagram-craft/canvas-app/dialogs';
-import { ElementStylesheetDialog } from './ElementStylesheetDialog';
-import { NodeTextEditor } from '../../components/RuleEditorDialog/NodeTextEditor';
+import { ElementStylesheetDialog, STYLESHEET_EDITORS } from './ElementStylesheetDialog';
 import { useState } from 'react';
-import { EDGE_EDITORS, NODE_EDITORS } from '../../components/RuleEditorDialog/editors';
 import type { EdgeProps, NodeProps } from '@diagram-craft/model/diagramProps';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { Menu } from '@diagram-craft/app-components/Menu';
-
-const EDITORS = {
-  text: [{ name: 'Text', editor: NodeTextEditor }],
-  node: [
-    { name: 'Fill', editor: NODE_EDITORS['fill'].editor },
-    { name: 'Stroke', editor: NODE_EDITORS['stroke'].editor },
-    { name: 'Shadow', editor: NODE_EDITORS['shadow'].editor },
-    { name: 'Effects', editor: NODE_EDITORS['effects'].editor },
-    { name: 'Custom', editor: NODE_EDITORS['nodeCustom'].editor },
-    { name: 'Advanced', editor: NODE_EDITORS['advanced'].editor },
-    { name: 'Action', editor: NODE_EDITORS['action'].editor }
-  ],
-  edge: [
-    { name: 'Line', editor: EDGE_EDITORS['edgeLine'].editor },
-    { name: 'Shadow', editor: EDGE_EDITORS['shadow'].editor },
-    { name: 'Effects', editor: EDGE_EDITORS['edgeEffects'].editor },
-    { name: 'Custom', editor: EDGE_EDITORS['edgeCustom'].editor }
-  ]
-};
 
 export const ElementStylesheetPanel = (props: Props) => {
   const $d = useDiagram();
@@ -295,7 +274,7 @@ export const ElementStylesheetPanel = (props: Props) => {
 
             setDialogProps(undefined);
           }}
-          editors={EDITORS[dialogProps.style.type]}
+          editors={STYLESHEET_EDITORS[dialogProps.style.type]}
         />
       )}
     </>

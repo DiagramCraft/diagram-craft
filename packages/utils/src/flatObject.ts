@@ -291,6 +291,8 @@ export class FlatObjectMapProxy<T extends object, V = DefaultValue> implements P
   set(_target: T, prop: string | symbol, value: unknown): boolean {
     if (typeof prop !== 'string') return VERIFY_NOT_REACHED();
 
+    console.log('set', prop, value);
+
     const fullPath = this.buildFullPath(prop);
 
     const map = this.obj.get();
@@ -310,6 +312,23 @@ export class FlatObjectMapProxy<T extends object, V = DefaultValue> implements P
         this.setNestedValuesRecursively(value, fullPath);
       }
     }
+    return true;
+  }
+
+  /**
+   * Proxy trap for deleting properties.
+   * Removes the property and all nested properties from the flat map.
+   * Works similarly to setting the property to undefined.
+   */
+  deleteProperty(_target: T, prop: string | symbol): boolean {
+    if (typeof prop !== 'string') return VERIFY_NOT_REACHED();
+
+    const fullPath = this.buildFullPath(prop);
+    const map = this.obj.get();
+
+    map.delete(fullPath);
+    this.deleteKeysWithPrefix(`${fullPath}.`);
+
     return true;
   }
 
