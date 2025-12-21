@@ -186,6 +186,7 @@ export const StylesTab = () => {
       );
 
       const props = extractPropsToConsider(
+        // biome-ignore lint/suspicious/noExplicitAny: just copying properties
         deepMerge({}, defaultProps as any, combo.props as any),
         filterType,
         isNodeStyle

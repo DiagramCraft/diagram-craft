@@ -21,7 +21,7 @@ import {
   ElementStylesheetDialog,
   STYLESHEET_EDITORS
 } from '../ObjectToolWindow/ElementStylesheetDialog';
-import { isNode } from '@diagram-craft/model/diagramElement';
+import { type DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { createPreview } from './stylesPanelUtils';
 
 type StylesheetsPanelProps = {
@@ -98,7 +98,7 @@ const TextStylesheetItem = ({
   onRename,
   onApply
 }: TextStylesheetProps) => {
-  const textProps = (stylesheet.props as any).text;
+  const textProps = (stylesheet.props as NodeProps).text;
 
   const fontStyle = {
     fontFamily: textProps?.font ?? 'Arial',
@@ -209,7 +209,7 @@ export const StylesheetsPanel = ({ stylesheets }: StylesheetsPanelProps) => {
     const selectedElements = diagram.selection.elements;
     if (selectedElements.length === 0) return;
 
-    let elementsToApply;
+    let elementsToApply: DiagramElement[];
     if (stylesheet.type === 'text') {
       elementsToApply = selectedElements.filter(isNode);
     } else if (stylesheet.type === 'node') {
