@@ -7,7 +7,7 @@ import styles from './Menu.module.css';
 
 const MenuContext = React.createContext<{ type: 'context' | 'menu' } | undefined>(undefined);
 
-// @ts-ignore
+// @ts-expect-error Keeping for reference
 const _useMenuContext = () => {
   const context = React.useContext(MenuContext);
   assert.present(context);

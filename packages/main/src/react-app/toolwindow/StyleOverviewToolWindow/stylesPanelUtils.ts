@@ -46,8 +46,6 @@ export type StylesheetGroup<T> = {
   totalElements: number;
 };
 
-const PREVIEW_CACHE = new Map<string, { diagram: Diagram; element: DiagramNode | DiagramEdge }>();
-
 export const extractPropsToConsider = (
   props: Partial<ElementProps>,
   filter: StyleFilterType,
@@ -101,7 +99,12 @@ export const extractPropsToConsider = (
   }
 };
 
-const createPreview = (props: Partial<ElementProps>, type: string, defs: Definitions) => {
+export const createPreview = (
+  props: Partial<ElementProps>,
+  type: string,
+  nodeType: string,
+  defs: Definitions
+) => {
   if (type === 'edge') {
     const { diagram, edge } = createThumbnailForEdge((_: Diagram, layer: RegularLayer) => {
       return ElementFactory.edge(
@@ -123,7 +126,7 @@ const createPreview = (props: Partial<ElementProps>, type: string, defs: Definit
     const { diagram, node } = createThumbnailForNode((_: Diagram, layer: RegularLayer) => {
       return ElementFactory.node(
         newid(),
-        type,
+        nodeType,
         { x: 5, y: 5, w: 40, h: 40, r: 0 },
         layer,
         props as Partial<NodeProps>,
@@ -255,17 +258,17 @@ export const collectStyles = (
   }
 
   // Generate previews
-  for (const [key, combo] of styleMap.entries()) {
+  for (const [_key, combo] of styleMap.entries()) {
     const nodeTypes = unique(combo.elements.filter(e => isNode(e)).map(el => el.nodeType));
 
     const nodeType = nodeTypes.length === 1 ? nodeTypes[0]! : 'rect';
 
-    const cacheKey = `${key}-${nodeType}`;
-    let preview = PREVIEW_CACHE.get(cacheKey);
-    if (!preview) {
-      preview = createPreview(combo.props, nodeType, diagram.document.definitions);
-      PREVIEW_CACHE.set(cacheKey, preview);
-    }
+    const preview = createPreview(
+      combo.props,
+      combo.elements[0]!.type,
+      nodeType,
+      diagram.document.definitions
+    );
 
     combo.previewDiagram = preview.diagram;
     combo.previewElement = preview.element;
@@ -276,6 +279,13 @@ export const collectStyles = (
   for (const style of styleMap.values()) {
     const key = style.stylesheet?.id;
     if (!groupMap.has(key)) {
+      const preview = createPreview(
+        style.stylesheet?.props ?? {},
+        style.elements[0]!.type,
+        'rect',
+        diagram.document.definitions
+      );
+
       groupMap.set(key, {
         stylesheet: style.stylesheet,
         styles: [
@@ -284,7 +294,9 @@ export const collectStyles = (
             stylesheet: style.stylesheet,
             differences: [],
             propsDifferences: {},
-            props: style.props
+            props: style.props,
+            previewDiagram: preview.diagram,
+            previewElement: preview.element
           }
         ],
         totalElements: 0
