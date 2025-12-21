@@ -291,8 +291,6 @@ export class FlatObjectMapProxy<T extends object, V = DefaultValue> implements P
   set(_target: T, prop: string | symbol, value: unknown): boolean {
     if (typeof prop !== 'string') return VERIFY_NOT_REACHED();
 
-    console.log('set', prop, value);
-
     const fullPath = this.buildFullPath(prop);
 
     const map = this.obj.get();
