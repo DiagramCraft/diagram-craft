@@ -1,4 +1,4 @@
-import styles from './StylesPanel.module.css';
+import styles from './StyleOverviewToolWindow.module.css';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import type { Stylesheet, StylesheetType } from '@diagram-craft/model/diagramStyles';
 import { DeleteStylesheetUndoableAction } from '@diagram-craft/model/diagramStyles';
@@ -9,15 +9,7 @@ import { useApplication, useDiagram } from '../../../application';
 import { useMemo, useState } from 'react';
 import { TbLetterCase } from 'react-icons/tb';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
-import { ElementFactory } from '@diagram-craft/model/elementFactory';
-import { newid } from '@diagram-craft/utils/id';
 import type { EdgeProps, NodeProps } from '@diagram-craft/model/diagramProps';
-import { FreeEndpoint } from '@diagram-craft/model/endpoint';
-import {
-  createThumbnailForNode,
-  createThumbnailForEdge
-} from '@diagram-craft/canvas-app/diagramThumbnail';
 import { ContextMenu } from '@diagram-craft/app-components/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/Menu';
 import { StringInputDialogCommand } from '@diagram-craft/canvas-app/dialogs';
@@ -25,8 +17,12 @@ import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo, SnapshotUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
-import { ElementStylesheetDialog, STYLESHEET_EDITORS } from '../ObjectToolWindow/ElementStylesheetDialog';
+import {
+  ElementStylesheetDialog,
+  STYLESHEET_EDITORS
+} from '../ObjectToolWindow/ElementStylesheetDialog';
 import { isNode } from '@diagram-craft/model/diagramElement';
+import { createPreview } from './stylesPanelUtils';
 
 type StylesheetsPanelProps = {
   stylesheets: Array<Stylesheet<'node'> | Stylesheet<'edge'> | Stylesheet<'text'>>;
@@ -37,64 +33,26 @@ type StylesheetGroup = {
   stylesheets: Array<Stylesheet<'node'> | Stylesheet<'edge'> | Stylesheet<'text'>>;
 };
 
-const createPreviewDiagram = (
-  stylesheet: Stylesheet<'node'> | Stylesheet<'edge'>,
-  type: 'node' | 'edge',
-  definitions: any
-): Diagram => {
-  if (type === 'edge') {
-    const { diagram } = createThumbnailForEdge((_: Diagram, layer: RegularLayer) => {
-      return ElementFactory.edge(
-        newid(),
-        new FreeEndpoint({ x: 5, y: 25 }),
-        new FreeEndpoint({ x: 45, y: 25 }),
-        stylesheet.props as Partial<EdgeProps>,
-        {},
-        [],
-        layer
-      );
-    }, definitions);
-
-    diagram.viewBox.dimensions = { w: 50, h: 50 };
-    diagram.viewBox.offset = { x: 0, y: 0 };
-
-    return diagram;
-  } else {
-    const { diagram } = createThumbnailForNode((_: Diagram, layer: RegularLayer) => {
-      return ElementFactory.node(
-        newid(),
-        'rect',
-        { x: 5, y: 5, w: 40, h: 40, r: 0 },
-        layer,
-        stylesheet.props as Partial<NodeProps>,
-        {}
-      );
-    }, definitions);
-
-    diagram.viewBox.dimensions = { w: 50, h: 50 };
-    diagram.viewBox.offset = { x: 0, y: 0 };
-
-    return diagram;
-  }
-};
-
-const NodeEdgeStylesheetItem = ({
-  stylesheet,
-  diagram,
-  onModify,
-  onDelete,
-  onRename,
-  onApply
-}: {
+type ElementStylesheetItemProps = {
   stylesheet: Stylesheet<'node'> | Stylesheet<'edge'>;
   diagram: Diagram;
   onModify: (stylesheet: Stylesheet<'node'> | Stylesheet<'edge'>) => void;
   onDelete: (stylesheet: Stylesheet<'node'> | Stylesheet<'edge'>) => void;
   onRename: (stylesheet: Stylesheet<'node'> | Stylesheet<'edge'>) => void;
   onApply: (stylesheet: Stylesheet<'node'> | Stylesheet<'edge'>) => void;
-}) => {
+};
+const ElementStylesheetItem = ({
+  stylesheet,
+  diagram,
+  onModify,
+  onDelete,
+  onRename,
+  onApply
+}: ElementStylesheetItemProps) => {
   const previewDiagram = useMemo(
-    () => createPreviewDiagram(stylesheet, stylesheet.type, diagram.document.definitions),
+    () =>
+      createPreview(stylesheet.props, stylesheet.type, 'rect', diagram.document.definitions)
+        .diagram,
     [stylesheet, diagram]
   );
 
@@ -126,19 +84,20 @@ const NodeEdgeStylesheetItem = ({
   );
 };
 
+type TextStylesheetProps = {
+  stylesheet: Stylesheet<'text'>;
+  onModify: (stylesheet: Stylesheet<'text'>) => void;
+  onDelete: (stylesheet: Stylesheet<'text'>) => void;
+  onRename: (stylesheet: Stylesheet<'text'>) => void;
+  onApply: (stylesheet: Stylesheet<'text'>) => void;
+};
 const TextStylesheetItem = ({
   stylesheet,
   onModify,
   onDelete,
   onRename,
   onApply
-}: {
-  stylesheet: Stylesheet<'text'>;
-  onModify: (stylesheet: Stylesheet<'text'>) => void;
-  onDelete: (stylesheet: Stylesheet<'text'>) => void;
-  onRename: (stylesheet: Stylesheet<'text'>) => void;
-  onApply: (stylesheet: Stylesheet<'text'>) => void;
-}) => {
+}: TextStylesheetProps) => {
   const textProps = (stylesheet.props as any).text;
 
   const fontStyle = {
@@ -187,26 +146,21 @@ const typeLabels = {
   text: 'Text Styles'
 };
 
+type AnyStylesheet = Stylesheet<'text'> | Stylesheet<'node'> | Stylesheet<'edge'>;
+
 export const StylesheetsPanel = ({ stylesheets }: StylesheetsPanelProps) => {
   const diagram = useDiagram();
   const application = useApplication();
 
   const [dialogProps, setDialogProps] = useState<
-    | undefined
-    | {
-        props: NodeProps | EdgeProps;
-        style: Stylesheet<'text'> | Stylesheet<'node'> | Stylesheet<'edge'>;
-      }
+    undefined | { props: NodeProps | EdgeProps; style: AnyStylesheet }
   >(undefined);
 
-  const handleModify = (stylesheet: Stylesheet<'node'> | Stylesheet<'edge'> | Stylesheet<'text'>) => {
-    setDialogProps({
-      props: stylesheet.props ?? {},
-      style: stylesheet
-    });
+  const handleModify = (stylesheet: AnyStylesheet) => {
+    setDialogProps({ props: stylesheet.props ?? {}, style: stylesheet });
   };
 
-  const handleDelete = (stylesheet: Stylesheet<'node'> | Stylesheet<'edge'> | Stylesheet<'text'>) => {
+  const handleDelete = (stylesheet: AnyStylesheet) => {
     application.ui.showDialog(
       new MessageDialogCommand(
         {
@@ -232,7 +186,7 @@ export const StylesheetsPanel = ({ stylesheets }: StylesheetsPanelProps) => {
     );
   };
 
-  const handleRename = (stylesheet: Stylesheet<'node'> | Stylesheet<'edge'> | Stylesheet<'text'>) => {
+  const handleRename = (stylesheet: AnyStylesheet) => {
     application.ui.showDialog(
       new StringInputDialogCommand(
         {
@@ -251,20 +205,16 @@ export const StylesheetsPanel = ({ stylesheets }: StylesheetsPanelProps) => {
     );
   };
 
-  const handleApplyStylesheet = (stylesheet: Stylesheet<'node'> | Stylesheet<'edge'> | Stylesheet<'text'>) => {
+  const handleApplyStylesheet = (stylesheet: AnyStylesheet) => {
     const selectedElements = diagram.selection.elements;
     if (selectedElements.length === 0) return;
 
-    // Filter elements based on stylesheet type
-    let elementsToApply = selectedElements;
+    let elementsToApply;
     if (stylesheet.type === 'text') {
-      // Text stylesheets can only be applied to nodes
       elementsToApply = selectedElements.filter(isNode);
     } else if (stylesheet.type === 'node') {
-      // Node stylesheets can only be applied to nodes
       elementsToApply = selectedElements.filter(isNode);
     } else {
-      // Edge stylesheets can only be applied to edges
       elementsToApply = selectedElements.filter(el => !isNode(el));
     }
 
@@ -285,10 +235,7 @@ export const StylesheetsPanel = ({ stylesheets }: StylesheetsPanelProps) => {
     for (const stylesheet of stylesheets) {
       const type = stylesheet.type;
       if (!groupMap.has(type)) {
-        groupMap.set(type, {
-          type,
-          stylesheets: []
-        });
+        groupMap.set(type, { type, stylesheets: [] });
       }
       groupMap.get(type)!.stylesheets.push(stylesheet);
     }
@@ -341,7 +288,7 @@ export const StylesheetsPanel = ({ stylesheets }: StylesheetsPanelProps) => {
                     ) : (
                       <div className={styles.styleList}>
                         {group.stylesheets.map(stylesheet => (
-                          <NodeEdgeStylesheetItem
+                          <ElementStylesheetItem
                             key={stylesheet.id}
                             stylesheet={stylesheet as Stylesheet<'node'> | Stylesheet<'edge'>}
                             diagram={diagram}

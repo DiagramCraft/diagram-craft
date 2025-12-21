@@ -99,7 +99,7 @@ export const extractPropsToConsider = (
   }
 };
 
-const createPreview = (
+export const createPreview = (
   props: Partial<ElementProps>,
   type: string,
   nodeType: string,

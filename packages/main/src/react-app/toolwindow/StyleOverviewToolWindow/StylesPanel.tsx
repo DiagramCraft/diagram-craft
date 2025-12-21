@@ -1,4 +1,4 @@
-import styles from './StylesPanel.module.css';
+import styles from './StyleOverviewToolWindow.module.css';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import type {
   StyleCombination,
