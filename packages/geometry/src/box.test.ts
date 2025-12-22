@@ -294,4 +294,18 @@ describe('Box', () => {
       expect(Box.midpoint(box1, box2)).toStrictEqual({ x: 10, y: 10 });
     });
   });
+
+  describe('fromString', () => {
+    test('fromString converts string to box', () => {
+      const s = '1,2,3,4,5';
+      expect(Box.fromString(s)).toStrictEqual({ x: 1, y: 2, w: 3, h: 4, r: 5 });
+    });
+  });
+
+  describe('toString', () => {
+    test('toString converts box to string', () => {
+      const box = { x: 1, y: 2, w: 3, h: 4, r: 5 };
+      expect(Box.toString(box)).toBe('1,2,3,4,5');
+    });
+  });
 });
