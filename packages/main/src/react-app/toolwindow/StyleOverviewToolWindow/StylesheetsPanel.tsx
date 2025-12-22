@@ -67,6 +67,11 @@ const ElementStylesheetItem = ({
                 height={PickerConfig.size}
                 diagram={previewDiagram}
                 showHover={false}
+                onMouseDown={e => {
+                  if (e.button === 1) {
+                    onApply(stylesheet);
+                  }
+                }}
               />
             </div>
             <div className={styles.styleInfo}>
