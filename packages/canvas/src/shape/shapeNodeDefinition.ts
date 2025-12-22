@@ -15,6 +15,7 @@ import { round } from '@diagram-craft/utils/math';
 import { Anchor, AnchorStrategy, BoundaryDirection } from '@diagram-craft/model/anchor';
 import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { PathList } from '@diagram-craft/geometry/pathList';
+import type { Component } from '../component/component';
 
 type NodeShapeConstructor<T extends ShapeNodeDefinition> = {
   new (shapeNodeDefinition: T): BaseNodeComponent<T>;
@@ -26,6 +27,7 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
   public readonly name: string;
   public readonly type: string;
   public readonly component: NodeShapeConstructor<this>;
+  public readonly overlayComponent?: { new (): Component<{ node: DiagramNode }> };
 
   // biome-ignore lint/suspicious/noExplicitAny: false positive
   protected constructor(type: string, component: NodeShapeConstructor<any>);

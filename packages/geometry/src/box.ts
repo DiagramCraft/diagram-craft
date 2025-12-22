@@ -39,6 +39,7 @@ import { Extent } from './extent';
 import { DeepWriteable } from '@diagram-craft/utils/types';
 import { round } from '@diagram-craft/utils/math';
 import { assert } from '@diagram-craft/utils/assert';
+import { safeSplit } from '@diagram-craft/utils/safe';
 
 /**
  * Represents a rectangle with position, dimensions, and rotation.
@@ -423,5 +424,14 @@ export const Box = {
    */
   area(box: Box) {
     return Math.abs(box.w * box.h);
+  },
+
+  toString(b: Box) {
+    return `${b.x},${b.y},${b.w},${b.h},${b.r}`;
+  },
+
+  fromString(s: string): Box {
+    const [x, y, w, h, r] = safeSplit(s, ',', 5, 5);
+    return { x: Number(x), y: Number(y), w: Number(w), h: Number(h), r: Number(r) };
   }
 };
