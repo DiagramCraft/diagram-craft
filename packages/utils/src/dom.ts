@@ -28,7 +28,10 @@
  * const modal = getAncestorWithClass(button, 'modal');
  * ```
  */
-export const getAncestorWithClass = (el: HTMLElement | undefined, className: string) => {
+export const getAncestorWithClass = (
+  el: HTMLElement | SVGElement | undefined,
+  className: string
+) => {
   const c = el?.closest(`.${className}`);
   return c === null ? undefined : c;
 };
