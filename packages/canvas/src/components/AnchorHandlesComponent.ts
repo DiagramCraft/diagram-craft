@@ -1,5 +1,5 @@
 import { DRAG_DROP_MANAGER } from '../dragDropManager';
-import { CanvasState } from '../canvas/EditableCanvasComponent';
+import type { CanvasState } from '../canvas/EditableCanvasComponent';
 import { Component, Observable, onEvent } from '../component/component';
 import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
