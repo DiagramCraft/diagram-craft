@@ -311,6 +311,15 @@
   }
 }
 
+.svg-container__toggle {
+  stroke: var(--accent-9);
+  fill: var(--accent-3);
+  cursor: pointer;
+}
+
+.svg-container__toggle:hover {
+}
+
 @keyframes search-match {
   from {
     stroke: var(--blue-8) !important;

@@ -7,7 +7,7 @@ import { DocumentBoundsComponent } from '../components/DocumentBoundsComponent';
 import { DRAG_DROP_MANAGER, Modifiers } from '../dragDropManager';
 import { AbstractTool, Tool, ToolConstructor, ToolType } from '../tool';
 import { DragLabelComponent } from '../components/DragLabelComponent';
-import { AnchorHandlesComponent } from '@diagram-craft/canvas/components/AnchorHandlesComponent';
+import { AnchorHandlesComponent } from '../components/AnchorHandlesComponent';
 import { $cmp, createEffect, Observable, onEvent } from '../component/component';
 import * as svg from '../component/vdom-svg';
 import * as html from '../component/vdom-html';
@@ -36,6 +36,8 @@ import {
 import { AnchorHighlightComponent } from '../components/AnchorHighlightComponent';
 import { MoveTool } from '../tools/moveTool';
 import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
+import { HoverOverlayComponent } from '../components/HoverOverlayComponent';
+import { getAncestorWithClass } from '@diagram-craft/utils/dom';
 
 const removeSuffix = (s: string) => {
   return s.replace(/---.+$/, '');
@@ -268,6 +270,14 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
             mouseover: e => {
               const el = getAncestorDiagramElement(e.target as SVGElement);
               if (!el) return;
+
+              const target = e.target as SVGElement;
+              const overlay = getAncestorWithClass(target, 'svg-hover-overlay');
+
+              if (overlay) {
+                return;
+              }
+
               this.tool!.onMouseOver(el.id, EventHelper.point(e), e.currentTarget!);
               props.onMouseOver?.(e, el);
               this.hoverElement.value = el.id;
@@ -275,6 +285,13 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
             mouseout: e => {
               const el = getAncestorDiagramElement(e.target as SVGElement);
               if (!el) return;
+
+              const target = e.relatedTarget as SVGElement;
+              const overlay = getAncestorWithClass(target, 'svg-hover-overlay');
+              if (overlay) {
+                return;
+              }
+
               this.tool!.onMouseOut(el.id, EventHelper.point(e), e.currentTarget!);
               props.onMouseOut?.(e, el);
               this.hoverElement.value = undefined;
@@ -396,6 +413,11 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
                 point: this.point
               })
             : svg.g({}),
+
+          this.subComponent($cmp(HoverOverlayComponent), {
+            ...canvasState,
+            hoverElement: this.hoverElement
+          }),
 
           this.subComponent($cmp(AwarenessCursorComponent), { ...canvasState })
         ]

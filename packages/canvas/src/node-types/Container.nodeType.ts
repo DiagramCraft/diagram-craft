@@ -16,6 +16,9 @@ import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults
 import { hasHighlight, Highlights } from '../highlight';
 import { isStringUnion } from '@diagram-craft/utils/types';
 import { renderElement } from '../components/renderElement';
+import type { VNode } from '../component/vdom';
+import { Component } from '../component/component';
+import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 
 type ContainerResize = 'none' | 'shrink' | 'grow' | 'both';
 function assertIsContainerResizeOrUndefined(
@@ -54,6 +57,9 @@ declare global {
         layout?: LayoutType;
         gap?: number;
         gapType?: GapType;
+        collapsible?: boolean;
+        bounds?: string;
+        mode?: 'collapsed' | 'expanded';
       };
     }
   }
@@ -64,7 +70,10 @@ registerCustomNodeDefaults('container', {
   childResize: 'fixed',
   layout: 'manual',
   gap: 0,
-  gapType: 'between'
+  gapType: 'between',
+  collapsible: false,
+  bounds: '',
+  mode: 'expanded'
 });
 
 type ContainerProps = NodePropsForRendering['custom']['container'];
@@ -184,6 +193,8 @@ const LAYOUTS: Record<string, Layout> = {
 };
 
 export class ContainerNodeDefinition extends ShapeNodeDefinition {
+  overlayComponent = ContainerComponentOverlay;
+
   constructor(id = 'container', name = 'Container', component = ContainerComponent) {
     super(id, name, component);
 
@@ -336,6 +347,41 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
     }
   }
 
+  toggle(node: DiagramNode, uow: UnitOfWork) {
+    const mode = node.renderProps.custom.container.mode;
+
+    const currentBounds = Box.toString(node.bounds);
+    const previousBounds =
+      node.renderProps.custom.container.bounds === ''
+        ? Box.fromCorners(
+            Point.of(node.bounds.x, node.bounds.y),
+            Point.of(node.bounds.x + 100, node.bounds.y + 50)
+          )
+        : Box.fromString(node.renderProps.custom.container.bounds);
+
+    node.setBounds(previousBounds, uow);
+
+    if (mode === 'expanded') {
+      node.updateCustomProps(
+        'container',
+        props => {
+          props.mode = 'collapsed';
+          props.bounds = currentBounds;
+        },
+        uow
+      );
+    } else {
+      node.updateCustomProps(
+        'container',
+        props => {
+          props.mode = 'expanded';
+          props.bounds = currentBounds;
+        },
+        uow
+      );
+    }
+  }
+
   getCustomPropertyDefinitions(node: DiagramNode): Array<CustomPropertyDefinition> {
     return [
       {
@@ -412,6 +458,16 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
           assertIsChildResizeOrUndefined(value);
           node.updateCustomProps('container', props => (props.childResize = value), uow);
         }
+      },
+      {
+        id: 'collapsible',
+        type: 'boolean',
+        label: 'Collapsible',
+        value: node.renderProps.custom.container.collapsible,
+        isSet: node.storedProps.custom?.container?.collapsible !== undefined,
+        onChange: (value: boolean | undefined, uow: UnitOfWork) => {
+          node.updateCustomProps('container', props => (props.collapsible = value), uow);
+        }
       }
     ];
   }
@@ -441,13 +497,100 @@ export class ContainerComponent extends BaseNodeComponent {
       })
     );
 
-    props.node.children.forEach(child => {
-      builder.add(
-        svg.g(
-          { transform: Transforms.rotateBack(props.node.bounds) },
-          renderElement(this, child, props)
-        )
-      );
-    });
+    if (props.node.renderProps.custom.container.mode === 'expanded') {
+      props.node.children.forEach(child => {
+        builder.add(
+          svg.g(
+            { transform: Transforms.rotateBack(props.node.bounds) },
+            renderElement(this, child, props)
+          )
+        );
+      });
+    }
+  }
+}
+
+export class ContainerComponentOverlay extends Component<{ node: DiagramNode }> {
+  render(props: { node: DiagramNode }): VNode {
+    const containerProps = props.node.renderProps.custom.container;
+
+    const iconSize = 8;
+    const iconPadding = 4;
+    const iconX = props.node.bounds.x + iconPadding;
+    const iconY = props.node.bounds.y + iconPadding;
+
+    const minusIcon = svg.g(
+      {
+        class: 'svg-container__toggle svg-hover-overlay',
+        on: {
+          pointerdown: () => {
+            const uow = new UnitOfWork(props.node.diagram, true);
+            nodeDefinition.toggle(props.node, uow);
+            commitWithUndo(uow, 'Toggle container');
+            this.redraw();
+          }
+        }
+      },
+      svg.rect({
+        'x': iconX,
+        'y': iconY,
+        'width': iconSize,
+        'height': iconSize,
+        'stroke-width': 1,
+        'rx': 1.5
+      }),
+      svg.line({
+        'x1': iconX + iconSize * 0.15,
+        'y1': iconY + iconSize * 0.5,
+        'x2': iconX + iconSize * 0.85,
+        'y2': iconY + iconSize * 0.5,
+        'stroke-width': 1.5
+      })
+    );
+
+    const plusIcon = svg.g(
+      {
+        'class': 'svg-container__toggle svg-hover-overlay',
+        'data-hover': 'true',
+        'on': {
+          pointerdown: () => {
+            const uow = new UnitOfWork(props.node.diagram, true);
+            nodeDefinition.toggle(props.node, uow);
+            commitWithUndo(uow, 'Toggle container');
+            this.redraw();
+          }
+        }
+      },
+      svg.rect({
+        'x': iconX,
+        'y': iconY,
+        'width': iconSize,
+        'height': iconSize,
+        'stroke-width': 1,
+        'rx': 1.5
+      }),
+      svg.line({
+        'x1': iconX + iconSize * 0.15,
+        'y1': iconY + iconSize * 0.5,
+        'x2': iconX + iconSize * 0.85,
+        'y2': iconY + iconSize * 0.5,
+        'stroke-width': 1.5
+      }),
+      svg.line({
+        'x1': iconX + iconSize * 0.5,
+        'y1': iconY + iconSize * 0.15,
+        'x2': iconX + iconSize * 0.5,
+        'y2': iconY + iconSize * 0.85,
+        'stroke-width': 1.5
+      })
+    );
+
+    const nodeDefinition = props.node.getDefinition() as ContainerNodeDefinition;
+
+    if (containerProps.mode === 'expanded') {
+      return minusIcon;
+    } else {
+      return plusIcon;
+    }
   }
 }
