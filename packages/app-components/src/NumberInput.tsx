@@ -4,19 +4,25 @@ import { PropsUtils } from '@diagram-craft/utils/propsUtils';
 import { extractDataAttributes } from './utils';
 import styles from './NumberInput.module.css';
 import { safeReMatch } from '@diagram-craft/utils/safe';
+import { round } from '@diagram-craft/utils/math';
 
-type UnitAndValue = [string, string | undefined];
+type UnitAndValue = [number, string | undefined];
 
 const parseNumberAndUnit = (value: string): UnitAndValue | undefined => {
   const m = safeReMatch(value, /^ ?(-?\d+\.?\d*) ?([^ ]*)$/, 3);
   if (!m) return undefined;
-  if (m[2] === '') return [m[1], undefined];
-  return [m[1], m[2]];
+  if (m[2] === '') return [parseFloat(m[1]), undefined];
+  return [parseFloat(m[1]), m[2]];
 };
 
-const formatValue = (value: string, defaultUnit: string | undefined, fallback: string) => {
+const formatValue = (
+  value: string,
+  defaultUnit: string | undefined,
+  fallback: string,
+  numberOfDecimals: number
+) => {
   const [number, unit] = parseNumberAndUnit(value) ?? [];
-  return number ? `${number} ${unit ?? defaultUnit ?? ''}` : fallback;
+  return number ? `${round(number, numberOfDecimals)} ${unit ?? defaultUnit ?? ''}` : fallback;
 };
 
 let idx = 0;
@@ -67,16 +73,20 @@ const AdjustButton = (props: {
 };
 
 export const NumberInput = (props: Props) => {
+  const numberOfDecimals = props.numberOfDecimals ?? 1;
+
   const [error, setError] = useState(false);
   const [origValue, setOrigValue] = useState(props.value.toString());
   const [currentValue, setCurrentValue] = useState(
-    formatValue(props.value.toString(), props.defaultUnit, props.value.toString())
+    formatValue(props.value.toString(), props.defaultUnit, props.value.toString(), numberOfDecimals)
   );
   const hasFocus = useRef(false);
 
   const updateCurrentValue = useCallback(() => {
-    setCurrentValue(formatValue(props.value.toString(), props.defaultUnit, currentValue));
-  }, [props.value, props.defaultUnit, currentValue]);
+    setCurrentValue(
+      formatValue(props.value.toString(), props.defaultUnit, currentValue, numberOfDecimals)
+    );
+  }, [props.value, props.defaultUnit, currentValue, numberOfDecimals]);
 
   const adjust = useCallback(
     (delta: number) => {
@@ -84,7 +94,7 @@ export const NumberInput = (props: Props) => {
         const p = parseNumberAndUnit(prev);
         if (!p) return prev;
 
-        const newValue = parseFloat(p[0]) + delta;
+        const newValue = p[0] + delta;
 
         if (props.min !== undefined && newValue < Number(props.min)) return prev;
         if (props.max !== undefined && newValue > Number(props.max)) return prev;
@@ -141,7 +151,7 @@ export const NumberInput = (props: Props) => {
           }
 
           setError(false);
-          props.onChange(parseFloat(p[0]), p[1] ?? props.defaultUnit);
+          props.onChange(p[0], p[1] ?? props.defaultUnit);
           return;
         }}
         {...extractDataAttributes(props)}
@@ -172,6 +182,7 @@ type Props = {
   isIndeterminate?: boolean;
   state?: 'set' | 'unset' | 'overridden';
   onChange: (value: number | undefined, unit?: string) => void;
+  numberOfDecimals?: number;
 } & Omit<
   React.DetailedHTMLProps<React.InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>,
   'onChange' | 'value'
