@@ -109,7 +109,8 @@ type NumKey =
   | 'indicatorHeight'
   | 'perimeterSpacing'
   | 'sourcePerimeterSpacing'
-  | 'targetPerimeterSpacing';
+  | 'targetPerimeterSpacing'
+  | 'container';
 
 type AllKeys = StringKey | BooleanKey | NumKey;
 

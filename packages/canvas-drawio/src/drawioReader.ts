@@ -984,6 +984,33 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         } else if (style.styleName === 'swimlane' && style.str('childLayout') === 'stackLayout') {
           node = await parseSwimlane(id, bounds, props, metadata, texts, style, layer);
           nodes.push(node);
+        } else if (style.num('container') === 1) {
+          const alternateBoundsRect = $geometry.getElementsByTagName('mxRectangle').item(0);
+          node = ElementFactory.node(
+            id,
+            'container',
+            bounds,
+            layer,
+            {
+              ...props,
+              custom: {
+                container: {
+                  collapsible: true,
+                  mode: $cell.getAttribute('collapsed') === '1' ? 'collapsed' : 'expanded',
+                  ...(alternateBoundsRect
+                    ? {
+                        bounds: `${alternateBoundsRect.getAttribute('x')},${alternateBoundsRect.getAttribute('y')},${alternateBoundsRect.getAttribute('width')},${alternateBoundsRect.getAttribute('height')},0`
+                      }
+                    : {}),
+                  // TODO: Here we would like to use the proper shape instead - but this is somewhat complicated
+                  shape: 'rect'
+                }
+              }
+            },
+            metadata,
+            texts
+          );
+          nodes.push(node);
         } else {
           node = ElementFactory.node(id, 'group', bounds, layer, props, metadata, texts);
           nodes.push(node);
