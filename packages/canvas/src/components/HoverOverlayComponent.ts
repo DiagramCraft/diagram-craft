@@ -2,7 +2,6 @@ import type { CanvasState } from '../canvas/EditableCanvasComponent';
 import { Component, Observable, onEvent } from '../component/component';
 import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
-import { mustExist } from '@diagram-craft/utils/assert';
 import { isEdge } from '@diagram-craft/model/diagramElement';
 import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
 import type { DiagramNode } from '@diagram-craft/model/diagramNode';
@@ -19,7 +18,10 @@ export class HoverOverlayComponent extends Component<Props> {
 
     if (props.hoverElement.get() === undefined) return svg.g({});
 
-    const node = mustExist(props.diagram.lookup(props.hoverElement.get()!)) as DiagramNode;
+    const hoverElement = props.diagram.lookup(props.hoverElement.get()!);
+    if (!hoverElement) return svg.g({});
+
+    const node = hoverElement as DiagramNode;
     if (isEdge(node)) return svg.g({});
 
     const nodeDefinition = props.diagram.document.nodeDefinitions.get(node.nodeType);

@@ -48,6 +48,7 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
       {diagram.selection.type === 'single-node' && (
         <>
           <ActionMenuItem action={'SELECTION_CHANGE_SHAPE'} />
+          <ActionMenuItem action={'SELECTION_CHANGE_TO_CONTAINER'} />
 
           <ConnectedNodesSubmenu />
 

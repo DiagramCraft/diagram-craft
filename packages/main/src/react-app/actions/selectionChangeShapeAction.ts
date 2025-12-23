@@ -4,7 +4,7 @@ import {
   ElementType,
   MultipleType
 } from '@diagram-craft/canvas-app/actions/abstractSelectionAction';
-import { assert } from '@diagram-craft/utils/assert';
+import { assert, mustExist } from '@diagram-craft/utils/assert';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { deepClone, getTypedKeys } from '@diagram-craft/utils/object';
@@ -12,6 +12,7 @@ import { isNode } from '@diagram-craft/model/diagramElement';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { $tStr } from '@diagram-craft/utils/localize';
+import { ActionCriteria } from '@diagram-craft/canvas/action';
 
 declare global {
   namespace DiagramCraft {
@@ -20,7 +21,8 @@ declare global {
 }
 
 export const selectionChangeShapeActions = (context: Application) => ({
-  SELECTION_CHANGE_SHAPE: new SelectionChangeShapeAction(context)
+  SELECTION_CHANGE_SHAPE: new SelectionChangeShapeAction(context),
+  SELECTION_CHANGE_TO_CONTAINER: new SelectionChangeToContainerAction(context)
 });
 
 export class SelectionChangeShapeAction extends AbstractSelectionAction<Application> {
@@ -90,5 +92,50 @@ export class SelectionChangeShapeAction extends AbstractSelectionAction<Applicat
     } else {
       performChangeShape();
     }
+  }
+}
+
+export class SelectionChangeToContainerAction extends AbstractSelectionAction<Application> {
+  name = $tStr('action.SELECTION_CHANGE_TO_CONTAINER.name', 'Make container');
+
+  constructor(context: Application) {
+    super(context, MultipleType.SingleOnly, ElementType.Node);
+  }
+
+  getCriteria(context: Application): Array<ActionCriteria> {
+    const cb = () => {
+      const $s = context.model.activeDiagram.selection;
+      if ($s.nodes.length !== 1) return false;
+
+      const node = $s.nodes[0];
+      if (!node) return false;
+
+      const definition = node.getDefinition();
+      return definition.supports('can-be-container');
+    };
+
+    return [
+      ActionCriteria.EventTriggered(context.model.activeDiagram.selection, 'add', cb),
+      ActionCriteria.EventTriggered(context.model.activeDiagram.selection, 'remove', cb)
+    ];
+  }
+
+  execute(): void {
+    const diagram = this.context.model.activeDiagram;
+    assertRegularLayer(diagram.activeLayer);
+
+    const uow = new UnitOfWork(diagram, true);
+
+    const node = mustExist(diagram.selection.nodes[0]);
+    const originalShape = node.nodeType;
+
+    node.changeNodeType('container', uow);
+    node.updateProps(props => {
+      props.custom ??= {};
+      props.custom.container ??= {};
+      props.custom.container.shape = originalShape;
+    }, uow);
+
+    commitWithUndo(uow, 'Change shape');
   }
 }

@@ -1131,6 +1131,11 @@ foreignObject {
   stroke: var(--accent-fg) !important;
 }
 
+.svg-node--highlight-node__drop-target .svg-node__boundary {
+  stroke-width: 3px !important;
+  stroke: #30A46C !important;
+}
+
 .svg-node--highlight-node__edge-connect---point .svg-node__boundary {
   stroke-width: 2px !important;
   stroke: var(--accent-7) !important;

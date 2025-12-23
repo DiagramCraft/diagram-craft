@@ -14,6 +14,7 @@ export class TableRowNodeDefinition extends ShapeNodeDefinition {
     this.capabilities.fill = false;
     this.capabilities.select = false;
     this.capabilities.children = true;
+    this.capabilities['can-be-container'] = false;
   }
 
   layoutChildren(_node: DiagramNode, _uow: UnitOfWork) {

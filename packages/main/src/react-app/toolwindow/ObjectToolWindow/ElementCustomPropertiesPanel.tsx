@@ -85,6 +85,15 @@ export const ElementCustomPropertiesPanelForm = ({
               </div>
             </React.Fragment>
           );
+        } else if (value.type === 'delimiter') {
+          return (
+            <React.Fragment key={key}>
+              <div className={'cmp-labeled-table__label'} style={{ marginTop: '0.5rem' }}>
+                <b>{value.label}:</b>
+              </div>
+              <div className={'cmp-labeled-table__value'}></div>
+            </React.Fragment>
+          );
         }
       })}
     </div>
