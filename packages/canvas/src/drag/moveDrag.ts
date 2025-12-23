@@ -35,14 +35,18 @@ import { SnapManager, SnapMarkers } from '../snap/snapManager';
 
 const enablePointerEvents = (elements: ReadonlyArray<DiagramElement>) => {
   for (const e of elements) {
-    CanvasDomHelper.elementElement(e)!.style.pointerEvents = '';
+    const $el = CanvasDomHelper.elementElement(e)!;
+    if (!$el) continue;
+    $el.style.pointerEvents = '';
     if (isNode(e)) enablePointerEvents(e.children);
   }
 };
 
 const disablePointerEvents = (elements: ReadonlyArray<DiagramElement>) => {
   for (const e of elements) {
-    CanvasDomHelper.elementElement(e)!.style.pointerEvents = 'none';
+    const $el = CanvasDomHelper.elementElement(e)!;
+    if (!$el) continue;
+    $el.style.pointerEvents = 'none';
     if (isNode(e)) disablePointerEvents(e.children);
   }
 };
