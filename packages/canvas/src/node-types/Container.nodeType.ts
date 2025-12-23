@@ -19,6 +19,8 @@ import { renderElement } from '../components/renderElement';
 import type { VNode } from '../component/vdom';
 import { Component } from '../component/component';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
+import type { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
+import type { Anchor } from '@diagram-craft/model/anchor';
 
 type ContainerResize = 'none' | 'shrink' | 'grow' | 'both';
 function assertIsContainerResizeOrUndefined(
@@ -60,6 +62,7 @@ declare global {
         collapsible?: boolean;
         bounds?: string;
         mode?: 'collapsed' | 'expanded';
+        shape?: string;
       };
     }
   }
@@ -73,7 +76,8 @@ registerCustomNodeDefaults('container', {
   gapType: 'between',
   collapsible: false,
   bounds: '',
-  mode: 'expanded'
+  mode: 'expanded',
+  shape: ''
 });
 
 type ContainerProps = NodePropsForRendering['custom']['container'];
@@ -94,6 +98,13 @@ type LayoutFn = (
 type Layout = {
   fn: LayoutFn;
   primaryAxis: 'x' | 'y' | undefined;
+};
+
+const getShape = (node: DiagramNode): ShapeNodeDefinition | undefined => {
+  const shape = node.renderProps.custom.container.shape;
+  if (shape === '') return undefined;
+
+  return node.diagram.document.nodeDefinitions.get(shape) as ShapeNodeDefinition | undefined;
 };
 
 const horizontalLayout: LayoutFn = (
@@ -198,7 +209,7 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
   constructor(id = 'container', name = 'Container', component = ContainerComponent) {
     super(id, name, component);
 
-    this.capabilities.fill = false;
+    this.capabilities.fill = true;
     this.capabilities.children = true;
   }
 
@@ -359,7 +370,10 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
           )
         : Box.fromString(node.renderProps.custom.container.bounds);
 
-    node.setBounds(previousBounds, uow);
+    node.setBounds(
+      { ...previousBounds, x: node.bounds.x, y: node.bounds.y, r: node.bounds.r },
+      uow
+    );
 
     if (mode === 'expanded') {
       node.updateCustomProps(
@@ -383,6 +397,7 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
   }
 
   getCustomPropertyDefinitions(node: DiagramNode): Array<CustomPropertyDefinition> {
+    const shape = getShape(node);
     return [
       {
         id: 'containerResize',
@@ -468,34 +483,78 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
         onChange: (value: boolean | undefined, uow: UnitOfWork) => {
           node.updateCustomProps('container', props => (props.collapsible = value), uow);
         }
-      }
+      },
+      ...(shape
+        ? [
+            {
+              id: 'delimiter',
+              type: 'delimiter',
+              label: shape.name,
+              isSet: false
+            } as CustomPropertyDefinition,
+            ...shape.getCustomPropertyDefinitions(node)
+          ]
+        : [])
     ];
+  }
+
+  getBoundingPathBuilder(node: DiagramNode): PathListBuilder {
+    const shape = getShape(node);
+    if (shape) {
+      return shape.getBoundingPathBuilder(node);
+    } else {
+      return super.getBoundingPathBuilder(node);
+    }
+  }
+
+  getAnchors(node: DiagramNode): Anchor[] {
+    const shape = getShape(node);
+    if (shape) {
+      return shape.getAnchors(node);
+    } else {
+      return super.getAnchors(node);
+    }
   }
 }
 
 export class ContainerComponent extends BaseNodeComponent {
+  delegateComponent: BaseNodeComponent | undefined;
+
   buildShape(props: BaseShapeBuildShapeProps, builder: ShapeBuilder) {
-    const paths = new ContainerNodeDefinition().getBoundingPathBuilder(props.node).getPaths();
+    const shape = getShape(props.node);
+    if (shape) {
+      if (!this.delegateComponent) {
+        this.delegateComponent = new shape.component(shape);
+      } else if (this.delegateComponent.constructor !== shape.component) {
+        this.delegateComponent = new shape.component(shape);
+      }
+    }
 
-    const path = paths.singular();
-    const svgPath = path.asSvgPath();
+    if (this.delegateComponent) {
+      this.delegateComponent.buildShape(props, builder);
+    } else {
+      const paths = new ContainerNodeDefinition().getBoundingPathBuilder(props.node).getPaths();
 
-    builder.noBoundaryNeeded();
-    builder.add(
-      svg.path({
-        'd': svgPath,
-        'x': props.node.bounds.x,
-        'y': props.node.bounds.y,
-        'width': props.node.bounds.w,
-        'height': props.node.bounds.h,
-        'stroke': hasHighlight(props.node, Highlights.NODE__DROP_TARGET) ? '#30A46C' : '#d5d5d4',
-        'stroke-width': hasHighlight(props.node, Highlights.NODE__DROP_TARGET) ? 3 : 1,
-        'fill': 'transparent',
-        'on': {
-          mousedown: props.onMouseDown
-        }
-      })
-    );
+      const path = paths.singular();
+      const svgPath = path.asSvgPath();
+
+      builder.noBoundaryNeeded();
+      builder.add(
+        svg.path({
+          'd': svgPath,
+          'x': props.node.bounds.x,
+          'y': props.node.bounds.y,
+          'width': props.node.bounds.w,
+          'height': props.node.bounds.h,
+          'stroke': hasHighlight(props.node, Highlights.NODE__DROP_TARGET) ? '#30A46C' : '#d5d5d4',
+          'stroke-width': hasHighlight(props.node, Highlights.NODE__DROP_TARGET) ? 3 : 1,
+          'fill': 'transparent',
+          'on': {
+            mousedown: props.onMouseDown
+          }
+        })
+      );
+    }
 
     if (props.node.renderProps.custom.container.mode === 'expanded') {
       props.node.children.forEach(child => {
@@ -513,6 +572,8 @@ export class ContainerComponent extends BaseNodeComponent {
 export class ContainerComponentOverlay extends Component<{ node: DiagramNode }> {
   render(props: { node: DiagramNode }): VNode {
     const containerProps = props.node.renderProps.custom.container;
+
+    if (!containerProps.collapsible) return svg.g({});
 
     const iconSize = 8;
     const iconPadding = 4;

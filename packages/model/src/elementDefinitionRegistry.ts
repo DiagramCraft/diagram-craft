@@ -24,7 +24,8 @@ export type NodeCapability =
   | 'rounding'
   | 'select'
   | 'connect-to-boundary'
-  | 'anchors-configurable';
+  | 'anchors-configurable'
+  | 'can-be-container';
 
 // TODO: Make make this into an interface in the global namespace we can extend
 export type CustomPropertyDefinition = {
@@ -51,6 +52,12 @@ export type CustomPropertyDefinition = {
       type: 'boolean';
       value: boolean;
       onChange: (value: boolean | undefined, uow: UnitOfWork) => void;
+    }
+  | {
+      // TODO: Fix this
+      type: 'delimiter';
+      value: unknown;
+      onChange: (value: unknown | undefined, uow: UnitOfWork) => void;
     }
 );
 
